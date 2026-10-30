@@ -15705,24 +15705,14 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   Crypt, Spore, Ember Mine, Hive and Root from their worlds, Lantern from the Lantern Night Market) for everyone in the
   run within 96. The first bell gives the handbell and the bell frame, and six seconds later the Signal's one line:
   "There were a hundred. Find them. Ring them all and I can show you the bottom."
-  Sleeping places (`BellSites`; saved data `bells`, schema 1): each 640-block cell past the ridge (+120) may hold one, its
-  rank by distance from the centre (E to 1,300 blocks at 85%, D to 2,800 at 70%, C to 4,800 at 60%) and its bell from the
-  band's three; every home's own (the Wren Bell) is buried 90 to 160 blocks out, away from the city. Each is built in one
-  go when a player comes within 96 (never in the city or a Hearth; a bell over water deeper than 12 is lost). Kinds:
-  buried (dig it out), kept (a themed elite of the bell's rank comes out when a player is within 16 and must die first;
-  on Peaceful none comes), sunk (on a pond's bed), high (on a crag). Grey moss, coarse earth and dead bushes over radius
-  7 mark the place asleep. It hums every 8 s to a player within 64 who doesn't hold it: a Heard lead with a bearing;
-  heard again from 32 or more blocks away at a different angle, the two bearings cross into an area whose middle sits up
-  to 20 blocks off the bell. Within 24 it's Seen. Struck free, it wakes: bronze, a toll heard 256 blocks off, the Fault
-  mend for players within 48, the bell home with everyone within 48, and the land turned back over radius 14, ring by
-  ring.
+  Sleeping places out in the land (`BellSites`) were retired on 30 Oct (§43.16): nothing is planned, built or heard in
+  open country, and an old world's built places are cleared.
   The tower (`BellTower`): the bell frame, set inside your own Hearth (anywhere else it pops off), one per home; every
   bell held by anyone who lives there hangs in it, and a bell once hung stays. At 20 bells a timber belfry goes up round
   it (5 by 5, 10 high, four bells under its beams, a deepslate-tile roof); at 50 a stone tower (5 by 5, an arch on the
   frame's side) with a nine-bell belfry on top, 15 high. Each goes up only into clear space; otherwise a note once a
   play-day, and it tries again at every song. The song at dawn (clock 23,600 to 400, so a night slept through wakes to
-  it) and dusk (11,600 to 12,400): bell #n's note at step n (D major pentatonic, 15 tuned bells, D3 to B5) or a dull
-  knock where it's missing, 4 ticks a step (20 s), heard 256 blocks out. Beasts living there: under 20 bells they hide,
+  it) and dusk (11,600 to 12,400), played as §43.16 lays it out (missing bells are silence), heard 256 blocks out. Beasts living there: under 20 bells they hide,
   20 to 49 hunker, 50 to 79 listen, 80 to 99 gather within 4 of the tower, 100 sing; under 100 the land's wild beasts
   within 48 run for 30 s.
   Voices, counted over the home's hung bells: Rest (Regeneration I by your fire, II from 3 bells), Growth (a crop that
@@ -15738,7 +15728,7 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   payloads `bells_song`, `bells_page`, `bells_ask`, `bells_track`; Track puts the lead's area (or the start of its one
   bearing) on the top-right card. Recipes: handbell (a stick over two copper ingots), bell frame (planks, logs, a bell).
   Sounds `bells.note_0..14`, `gap`, `handbell`, `toll`, `hum`, `wake` (`tools/art/specs/audio_bells.py`); art from
-  `tools/art/specs/bells.py`. Commands `/awaken admin bells give <id> | tower <n> | song | site <id> | wake | page`.
+  `tools/art/specs/bells.py`. Commands `/awaken admin bells give <id> | tower <n> | song | belfry | ilse | deep | page`.
 
 ### 43.8 Faults and Big Days
 - A Fault is one reusable director: tell, break, words in the black, held cut, aftermath, mend. Sizes: flicker (under
@@ -16046,10 +16036,51 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   before the first bell rings. The Signal's line at the first bell is unchanged.
 - **The Deep's answer** (43.14) now ends "It's pushing back from the very bottom, from the Seed. That's where this ends."
 - **Quiet ground** (`BellHooks.quiet`, `Bells.QUIET` = 100): the Director's own gates (its pass and the first gate's
-  first two tries) never form within 100 blocks (flat) of a woken bell's place (`Site.AWAKE`) or of a home's bell frame;
+  first two tries) never form within 100 blocks (flat) of a home's bell frame (woken places are gone, §43.16);
   the trace says how many spots a bell's earshot passed over. The first gate's last try and `/awaken gate open` ignore
   it, so a first gate always comes and commands work anywhere. Test (CI): `bells_story_start` (the lead opens the Book;
-  quiet near a woken site and a frame, not 150 away).
+  quiet near a frame, not 150 away).
+
+### 43.16 Bells you can see (plan docs/director/BELLS.md, page https://claude.ai/artifact/Fzj7qtDKBjVaonkgWCaeHa; Euan 2026-10-30: "100 is great. Go ahead with the full plan. Just inside of gates, let's not make hidden bells ... drops by bosses is probably the best thing, like the boss is hiding the bell")
+- **The rule**: no bell lies in the open. Every bell is somewhere a story puts it (a gate swallowed it and its Lord sits
+  on it, a village hid it, the Deep took it, a dream keeps it, a spirit holds it) and you win it there; only the six
+  people still ring (Carillon's Roost, Square, Market and Harbour bells, the holdfasts' Watch and Curfew) stay where they
+  hang. A hundred bells, as Ilse and Bram say.
+- **Retired** (stage 1): `BellSites` plans and builds nothing. A saved place that was only planned is dropped; a built
+  one within 96 of a player in the overworld is cleared (its sleeping bell taken out, its keeper gone, the grey ground
+  painted back over radius 14) and dropped. Nothing hums in the land. A Bell Book at schema 3 or below loses its leads to
+  the 23 bells that lay there (`BellSites.RETIRED`), with one line: "[Some of the bells in your Book weren't where they
+  seemed to be after all. The gates may have them.]" Chimewrens' Sung leads and Snufflets' Found letters have nothing to
+  tell of (the Rookery and the Snufflet give their other finds); the city's people no longer tell of the villages'
+  bells until their quests come. Quiet ground is round a home's frame only.
+- **Gates' Lords keep the swallowed bells** (no hidden rooms, nothing to search for or ring inside a gate): Wren, Barrow,
+  Mere, Wayside (E); Cairn, Spire, Reed, Lintel (D); Thorn, Crag, Fen (C); Thaw (B); Boulder, Leviathan's (A). When a
+  gate's Lord falls, each player in the run within 96 gets, in order: its gate world's own bell if the gate is at that
+  bell's rank or above (as before); else, if this Lord kept one for them, a swallowed bell of the gate's rank or below,
+  lowest rank first. The first Lord a player ever kills keeps the Wren; after that never two Lords in a row, then one in
+  three (a roll from the Lord's and the player's ids), and always by the fourth since the last
+  (`Bells.LORDS_WITHOUT` 3, `LORD_ODDS` 3; Book `lords_since`). With it comes the woken clapper (the Chime Perch's), and
+  the first time: "[The Lord was keeping a bell the gate took. Ilse said a lot of them fell in. Bring it home and it'll
+  ring there.]" The Lintel no longer comes from a Grand room.
+- **Nothing from nowhere**: a bell that becomes yours plays nothing at your feet. Its card says where it is, truly: "It's
+  hanging on your bell frame now", "It'll hang by your fire once you set your Bell Frame down there", or "once you have
+  a home and set a Bell Frame there". A home with no frame set down rings no song (the bare fire never sings). The
+  frame and handbell given with the first bell are explained once ("[You've got a Bell Frame and a handbell. Set the
+  frame down by your fire and your bells hang on it ...]"), and to an old Book that has them and no frame, once.
+- **The song** (`SongPlan`, the same on both sides): missing bells are silence, never a knock. One bell: three strokes, 3
+  s apart, about 9 s. Two to nine: rounds, each bell once from the highest note to the lowest, 0.6 s apart, three times
+  over with a beat between, then the deepest once more after a rest (8 to 21 s). Ten or more: the tune, each bell at its
+  step, a run of missing steps one beat, 6 ticks a beat up to 50 beats and 4 above, then every note the home has struck
+  together (at most 25 s). Each note is played from where its bell is (`bells_song` carries places; a bell more than 200
+  blocks off is heard from its bearing 24 blocks out, fainter the further it is). The first song a member hears says:
+  "[Your bells, ringing for dusk (dawn). They ring at dawn and dusk, and every bell you hang joins in.]" Beasts listen
+  for the song's length.
+- **Sounds you can follow**: every `bells.*` sound is mono (`audio_bells.py`, `mono=True`), so it has a direction and fades
+  with distance. Subtitles: "A bell rings", "A great bell tolls", "Your handbell rings", "A hidden bell hums".
+- **Book** schema 4: `said` (lines said once ever), `lords_since`; `schema` is the saved one, so an old Book is brought up
+  to date once. **World** data unchanged (old `sites` read, then cleared).
+- Tests (CI): `bells_none_in_the_open`, `bells_song_arrangement`, `bells_sounds_placed`, `bells_lord_keeps`,
+  `bells_story_start` (a frame keeps gates off, no frame rings nothing).
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 

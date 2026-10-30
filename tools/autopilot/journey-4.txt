@@ -1,7 +1,7 @@
 # The Journey, stage 4 (SPEC §43.7): the bells. A home 320 east of the city square (/awaken admin kin yard) with a
 # Burrowbun and a Pebblepup; twelve bells rung home (the card) and the bell frame by the Hearth; twenty (the belfry) and
-# the dusk song with the beasts; fifty (the stone tower); the Bell Book in the Codex; a sleeping place asleep, struck
-# awake and turned green again; a kept place with its keeper; the handbell in hand.
+# the dusk song with the beasts; fifty (the stone tower); the Bell Book in the Codex; the handbell in hand. (Sleeping
+# places in the land were retired, SPEC 43.16.)
 # ci knobs: PACK=perf,world TECTONIC=awakened
 #   tools/tour-ci.sh tools/autopilot/journey-4.txt 2400 PACK=perf,world TECTONIC=awakened
 world autopilot_journey_4 creative 29102026
@@ -111,38 +111,8 @@ shotnow j4_09_book_tower
 screen close
 hud off
 
-# ---- 5. a sleeping place: asleep, struck awake, green again ----
-cmd spreadplayers ~ ~90 0 5 false @s
-wait 200
-cmd summon minecraft:marker ~16 ~ ~ {Tags:["site"]}
-cmd awaken admin bells site barrow
-wait 60
-cmd gamemode spectator
-cmd execute at @e[type=marker,tag=site,limit=1] positioned over motion_blocking_no_leaves run tp @s ~-6 ~6 ~10 210 30
-wait 60
-shot j4_10_site_asleep
+# ---- 5. the handbell (sleeping places were retired, SPEC 43.16) ----
 cmd gamemode creative
-cmd awaken admin bells wake
-wait 30
-hud on
-shotnow j4_11_site_waking
-wait 160
-hud off
-cmd gamemode spectator
-cmd execute at @e[type=marker,tag=site,limit=1] positioned over motion_blocking_no_leaves run tp @s ~-6 ~6 ~10 210 30
-wait 40
-shot j4_12_site_woken
-
-# ---- 6. a kept place and its keeper; the handbell ----
-cmd gamemode creative
-cmd spreadplayers ~ ~90 0 5 false @s
-wait 200
-cmd summon minecraft:marker ~16 ~ ~ {Tags:["kept"]}
-cmd awaken admin bells site wayside
-wait 20
-cmd execute at @e[type=marker,tag=kept,limit=1] positioned over motion_blocking_no_leaves run tp @s ~-9 ~1 ~ 270 15
-wait 160
-shot j4_13_kept_site_keeper
 cmd item replace entity @s weapon.mainhand with awaken:handbell
 camera first
 hud on

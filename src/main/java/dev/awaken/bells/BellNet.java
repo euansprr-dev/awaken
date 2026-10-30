@@ -18,14 +18,33 @@ public final class BellNet {
 
     private static final StreamCodec<ByteBuf, List<List<String>>> ROWS = ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(16)).apply(ByteBufCodecs.list(128));
 
-    /** Server → player: a tower rings its song from {@code at}; bell #n plays if bit n of (lo, hi) is set, else a knock. */
-    public record Song(BlockPos at, long lo, long hi) implements CustomPacketPayload {
+    /** One bell's own place in a song, for a bell that doesn't hang where the song is rung from. */
+    public record Placed(int no, BlockPos pos) {
+        public static final StreamCodec<ByteBuf, Placed> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Placed::no,
+                BlockPos.STREAM_CODEC, Placed::pos, Placed::new);
+    }
+
+    /**
+     * Server → player: a home's song rings (SPEC §43.16). Bell #n is in it if bit n of (lo, hi) is set; it rings from its
+     * {@code placed} spot if it has one, else from {@code at}.
+     */
+    public record Song(BlockPos at, long lo, long hi, List<Placed> placed) implements CustomPacketPayload {
         public static final Type<Song> TYPE = new Type<>(Awaken.id("bells_song"));
         public static final StreamCodec<ByteBuf, Song> STREAM_CODEC = StreamCodec.composite(BlockPos.STREAM_CODEC, Song::at,
-                ByteBufCodecs.LONG, Song::lo, ByteBufCodecs.LONG, Song::hi, Song::new);
+                ByteBufCodecs.LONG, Song::lo, ByteBufCodecs.LONG, Song::hi, Placed.STREAM_CODEC.apply(ByteBufCodecs.list(128)), Song::placed, Song::new);
+
+        public Song(BlockPos at, long lo, long hi) {
+            this(at, lo, hi, List.of());
+        }
 
         public boolean has(int no) {
             return no < 64 ? (lo >>> no & 1L) != 0 : (hi >>> (no - 64) & 1L) != 0;
+        }
+
+        /** Where bell #n rings from. */
+        public BlockPos place(int no) {
+            for (Placed p : placed) if (p.no() == no) return p.pos();
+            return at;
         }
 
         @Override

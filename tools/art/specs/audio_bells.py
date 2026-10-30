@@ -1,11 +1,12 @@
-"""The hundred bells (SPEC §43.7; JOURNEY part 4): the tower's song, the handbell and the sleeping bells
-(tools/art/audio_build.py renders them).
+"""The hundred bells (SPEC §43.7, §43.16; JOURNEY part 4): the home's song, the handbell and a bell's toll
+(tools/art/audio_build.py renders them). Every one is mono: each is played in the world from its bell, so it has a
+direction and fades with distance (OpenAL only places mono sources).
 
   bell_note_0..14  the tower's fifteen tuned bells, D major pentatonic from D3 to B5: each note of the song is one of these
   bell_gap         a gap in the song: a dull knock of wood where a bell should be
   bell_handbell    the band's handbell: a bright little bell shaken twice
   bell_toll        a bell waking: one great low strike that rolls out over the land
-  bell_hum         a sleeping bell's hum under the world's sound: low, beating, with no strike at all
+  bell_hum         a hidden bell's hum under the world's sound: low, beating, with no strike at all
   bell_wake        the place waking round it: a warm rising shimmer
 """
 import numpy as np
@@ -93,24 +94,24 @@ def wake(seed):
 
 
 def sounds(Snd):
-    out = [Snd("bell_note_%d" % k, note(k), rms=-21.0, seed=200 + k) for k in range(len(NOTES))]
+    out = [Snd("bell_note_%d" % k, note(k), rms=-21.0, seed=200 + k, mono=True) for k in range(len(NOTES))]
     out += [
-        Snd("bell_gap", gap, rms=-24.0, seed=220),
-        Snd("bell_handbell", handbell, rms=-22.0, seed=221),
-        Snd("bell_toll", toll, rms=-19.0, seed=222),
-        Snd("bell_hum", hum, rms=-24.0, seed=223),
-        Snd("bell_wake", wake, rms=-23.0, seed=224),
+        Snd("bell_gap", gap, rms=-24.0, seed=220, mono=True),
+        Snd("bell_handbell", handbell, rms=-22.0, seed=221, mono=True),
+        Snd("bell_toll", toll, rms=-19.0, seed=222, mono=True),
+        Snd("bell_hum", hum, rms=-24.0, seed=223, mono=True),
+        Snd("bell_wake", wake, rms=-23.0, seed=224, mono=True),
     ]
     return out
 
 
 def events(Evt):
-    out = [Evt("bells.note_%d" % k, "Your tower's bell rings", files=["bell_note_%d" % k], folder="bells") for k in range(len(NOTES))]
+    out = [Evt("bells.note_%d" % k, "A bell rings", files=["bell_note_%d" % k], folder="bells") for k in range(len(NOTES))]
     out += [
-        Evt("bells.gap", "A gap in the song", files=["bell_gap"], folder="bells"),
-        Evt("bells.handbell", "Handbell rings", files=["bell_handbell"], folder="bells"),
+        Evt("bells.gap", "A dull knock", files=["bell_gap"], folder="bells"),
+        Evt("bells.handbell", "Your handbell rings", files=["bell_handbell"], folder="bells"),
         Evt("bells.toll", "A great bell tolls", files=["bell_toll"], folder="bells"),
-        Evt("bells.hum", "A sleeping bell hums", files=["bell_hum"], folder="bells"),
+        Evt("bells.hum", "A hidden bell hums", files=["bell_hum"], folder="bells"),
         Evt("bells.wake", "The place wakes", files=["bell_wake"], folder="bells"),
     ]
     return out

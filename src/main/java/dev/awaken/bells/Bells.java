@@ -7,8 +7,6 @@ import dev.awaken.core.api.Destinations;
 import dev.awaken.delve.DelveContent;
 import dev.awaken.hearth.HearthRecord;
 import dev.awaken.hearth.HearthService;
-import dev.awaken.hearth.room.Reading;
-import dev.awaken.hearth.room.Room;
 import dev.awaken.kin.KinWorld;
 import dev.awaken.progression.Counters;
 import dev.awaken.progression.Progression;
@@ -37,10 +35,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The hundred bells (SPEC §43.7), the public face: who holds which bell, ringing one home, the leads that file
- * themselves in the Bell Book, and each home's voices. A bell comes from a moment (your Ember, your first beast at home,
- * a Grand room, a Proving, a raid held, a gate world's Lord, the Deep, a dream, a spirit) or from a sleeping place
- * woken ({@link BellSites}). Every bell held by anyone who lives at a home hangs in its tower and sings in its song.
+ * The hundred bells (SPEC §43.7, §43.16), the public face: who holds which bell, ringing one home, the leads that file
+ * themselves in the Bell Book, and each home's voices. No bell lies in the open: each comes from somewhere a story puts
+ * it (your Ember, your first beast at home, a gate's Lord that kept one the gate swallowed, a Proving, a raid held, the
+ * Deep, a dream, a spirit). Every bell held by anyone who lives at a home hangs on its frame and sings in its song.
  */
 public final class Bells {
     private Bells() {}
@@ -88,11 +86,11 @@ public final class Bells {
         b.given = true;
         save(p, b);
         Progression.setCounter(p, COUNTER, b.count());
-        p.level().playSound(null, p.blockPosition(), BellContent.note(d.no()), SoundSource.PLAYERS, 2F, 1F);
+        // nothing plays at your feet: a bell is heard where it hangs, when your song rings
         Optional<HearthRecord> home = HearthService.data(server).home(p.getUUID());
         home.ifPresent(h -> BellTower.hang(server, h));
         StringBuilder body = new StringBuilder(d.rank().label + "-rank. ");
-        body.append(home.isPresent() ? "It's gone home to your tower." : "It'll hang in your tower once you have a home.");
+        body.append(where(server, home.orElse(null)));
         body.append(' ').append(d.voice().words);
         for (BellCatalog.Peal pl : BellCatalog.PEALS)
             if (pl.bells().contains(d.id()) && pl.complete(b::has))
@@ -103,9 +101,23 @@ public final class Bells {
             give(p, new ItemStack(BellContent.HANDBELL.get()));
             give(p, new ItemStack(BellContent.BELL_FRAME_ITEM.get()));
             ONCE.put(p.getUUID(), p.level().getGameTime() + 20 * 6);
+            b.once("frame_told");
+            save(p, b);
+            say(p, FRAME_TOLD);
         }
         Awaken.LOG.info("[bells] {} rang {} {} home ({})", p.getName().getString(), d.number(), d.id(), where);
         return true;
+    }
+
+    /** What the frame and the handbell are, said once to whoever is given them. */
+    static final String FRAME_TOLD = "[You've got a Bell Frame and a handbell. Set the frame down by your fire and your bells hang on it; "
+            + "they ring from there at dawn and dusk. The handbell sends wild beasts running, and rings the peals your bells make.]";
+
+    /** Where a new bell is, in the card's words: true whether or not there's a frame to hang it on yet. */
+    private static String where(MinecraftServer server, @Nullable HearthRecord h) {
+        if (h == null) return "It'll hang by your fire once you have a home and set a Bell Frame there.";
+        BellWorld.Home home = BellWorld.get(server).peek(h.pos);
+        return home != null && home.frame != null ? "It's hanging on your bell frame now." : "It'll hang by your fire once you set your Bell Frame down there.";
     }
 
     private static void give(ServerPlayer p, ItemStack s) {
@@ -121,118 +133,20 @@ public final class Bells {
 
     // ---- leads ------------------------------------------------------------------------------------------------------
 
-    /** A sleeping bell's hum reached this player from {@code bell}: a Heard lead, its two bearings crossed into an area. */
-    static void heard(ServerPlayer p, BellCatalog.Def d, BlockPos bell) {
-        heard(p, d, bell, "A");
-    }
-
-    /** A hum heard: {@code a} starts the line ("A", or "Heard in spirit: a" for the Veil's bells). */
-    static void heard(ServerPlayer p, BellCatalog.Def d, BlockPos bell, String a) {
-        BellBook b = book(p);
-        BellBook.Lead l = b.leads.get(d.no());
-        boolean fresh = l == null;
-        if (fresh) {
-            l = new BellBook.Lead();
-            l.since = PlayDays.current(p.level().getServer());
-            b.leads.put(d.no(), l);
-        }
-        double dx = bell.getX() - p.getX(), dz = bell.getZ() - p.getZ();
-        if (!l.has(BellBook.How.HEARD)) {
-            l.hows |= 1 << BellBook.How.HEARD.ordinal();
-            l.bearings = 1;
-            l.hx = p.getX();
-            l.hz = p.getZ();
-            l.lines.add(a + " bell's note, faint, " + toward(dx, dz) + ". Your song is missing this note.");
-            say(p, "[" + a + " bell's note, faint, " + toward(dx, dz) + ". It's in your Bell Book.]");
-        } else if (l.bearings == 1 && Math.hypot(p.getX() - l.hx, p.getZ() - l.hz) >= 32
-                && Math.abs(angle(bell.getX() - l.hx, bell.getZ() - l.hz) - angle(dx, dz)) >= 0.25) {
-            // the second bearing from somewhere else: the System crosses them and shades the area round the crossing
-            l.bearings = 2;
-            RandomOffset o = new RandomOffset(bell.asLong());
-            l.tx = bell.getX() + o.x;
-            l.tz = bell.getZ() + o.z;
-            l.lines.add("Heard again from another side. The two bearings cross: it's somewhere in that stretch.");
-            say(p, "[You heard it again from here. The Book has crossed the two bearings.]");
-        } else return;
-        save(p, b);
-        if (b.tracked == d.no()) track(p, d.no());
-    }
-
-    /** Where the shaded area's middle sits from the real bell: up to 20 blocks off, always the same for one bell. */
-    private record RandomOffset(int x, int z) {
-        RandomOffset(long seed) {
-            this((int) (Math.floorMod(seed * 0x9E3779B97F4A7C15L >>> 20, 41) - 20), (int) (Math.floorMod(seed * 0xC2B2AE3D27D4EB4FL >>> 20, 41) - 20));
-        }
-    }
-
-    /** A sleeping place seen up close. */
-    static void seen(ServerPlayer p, BellCatalog.Def d) {
-        seen(p, d, "This place is asleep. Something here is keeping it that way.");
-    }
-
-    /** A sleeping place seen (or, for a spirit bell, felt) up close, in the System's words. */
-    static void seen(ServerPlayer p, BellCatalog.Def d, String line) {
-        BellBook b = book(p);
-        BellBook.Lead l = b.leads.computeIfAbsent(d.no(), k -> {
-            BellBook.Lead n = new BellBook.Lead();
-            n.since = PlayDays.current(p.level().getServer());
-            return n;
-        });
-        if (l.has(BellBook.How.SEEN)) return;
-        l.hows |= 1 << BellBook.How.SEEN.ordinal();
-        l.lines.add(line);
-        save(p, b);
-        say(p, "[" + line + "]");
-    }
-
-    /** How far a Rookery's wrens and a Snufflet's letters reach for a sleeping bell. */
-    static final int SUNG_REACH = 1200, FOUND_REACH = 800;
-
     /**
-     * A Chimewren came home to the Rookery singing a note this player's song is missing (SPEC §43.12): a Sung lead, one
-     * bearing from home toward the nearest sleeping bell they don't hold. A direction, never the place. False when none.
+     * A Chimewren came home to the Rookery singing a note this player's song is missing (SPEC §43.12). Nothing lies in the
+     * open to sing of any more (§43.16), so there's nothing to tell: false, and the Rookery gives what it else would.
      */
     public static boolean sung(ServerPlayer p, BlockPos home) {
-        Map.Entry<BellCatalog.Def, BellWorld.Site> s = sleeping(p, home, SUNG_REACH, BellBook.How.SUNG);
-        if (s == null) return false;
-        BellBook b = book(p);
-        BellBook.Lead l = lead(p, b, s.getKey());
-        l.hows |= 1 << BellBook.How.SUNG.ordinal();
-        String way = toward(s.getValue().pos.getX() - home.getX(), s.getValue().pos.getZ() - home.getZ()).substring(3);
-        if (l.bearings == 0) {
-            l.bearings = 1;
-            l.hx = home.getX();
-            l.hz = home.getZ();
-        }
-        l.lines.add("Your Chimewrens came home singing a note your song is missing. They flew in from " + way + ".");
-        save(p, b);
-        say(p, "[Your Chimewrens came home singing a note you're missing. They flew in from " + way + ". It's in your Bell Book.]");
-        return true;
+        return false;
     }
 
     /**
-     * An old letter dug up where a Snufflet was snuffling (SPEC §43.12): a Found lead that names a stretch of land round
-     * the nearest sleeping bell within 800 blocks the player doesn't hold. False when there's none to tell of.
+     * An old letter dug up where a Snufflet was snuffling (SPEC §43.12). Nothing lies in the open to tell of any more
+     * (§43.16): false, and the Snufflet digs up something else.
      */
     public static boolean found(ServerPlayer p, BlockPos at) {
-        Map.Entry<BellCatalog.Def, BellWorld.Site> s = sleeping(p, at, FOUND_REACH, BellBook.How.FOUND);
-        if (s == null) return false;
-        BellBook b = book(p);
-        BellBook.Lead l = lead(p, b, s.getKey());
-        l.hows |= 1 << BellBook.How.FOUND.ordinal();
-        BlockPos bell = s.getValue().pos;
-        RandomOffset o = new RandomOffset(bell.asLong());
-        l.bearings = 2;
-        l.tx = bell.getX() + o.x;
-        l.tz = bell.getZ() + o.z;
-        String way = toward(bell.getX() - at.getX(), bell.getZ() - at.getZ()).substring(3);
-        long far = Math.max(50, Math.round(Math.hypot(bell.getX() - at.getX(), bell.getZ() - at.getZ()) / 50.0) * 50);
-        l.lines.add("An old letter dug out of the ground. It says the bell was kept " + way + " of where it was buried, " + far
-                + " paces or so. The Book has marked the stretch it means.");
-        save(p, b);
-        if (b.tracked < 0) track(p, s.getKey().no());
-        say(p, "[An old letter, half rotted. It tells of a bell kept " + way + " of here. It's in your Bell Book.]");
-        return true;
+        return false;
     }
 
     private static BellBook.Lead lead(ServerPlayer p, BellBook b, BellCatalog.Def d) {
@@ -241,27 +155,6 @@ public final class Bells {
             n.since = PlayDays.current(p.level().getServer());
             return n;
         });
-    }
-
-    /** The nearest place still asleep within {@code r} whose bell this player doesn't hold and has no lead of this sort to. */
-    private static Map.@Nullable Entry<BellCatalog.Def, BellWorld.Site> sleeping(ServerPlayer p, BlockPos at, int r, BellBook.How how) {
-        BellBook b = book(p);
-        ServerLevel level = p.level().getServer().overworld();
-        Map.Entry<BellCatalog.Def, BellWorld.Site> best = null;
-        double bd = Double.MAX_VALUE;
-        for (BellWorld.Site s : BellSites.near(level, at, r).values()) {
-            if (s.state == BellWorld.Site.AWAKE || s.state == BellWorld.Site.GONE) continue;
-            BellCatalog.Def d = BellCatalog.of(s.bell);
-            if (d == null || b.held.containsKey(d.no())) continue;
-            BellBook.Lead l = b.leads.get(d.no());
-            if (l != null && l.has(how)) continue;
-            double dd = Math.hypot(s.pos.getX() - at.getX(), s.pos.getZ() - at.getZ());
-            if (dd < bd) {
-                bd = dd;
-                best = Map.entry(d, s);
-            }
-        }
-        return best;
     }
 
     /** The holdfast's bells this player hasn't rung yet, in order. A holdfast's bell is awake already. */
@@ -410,51 +303,8 @@ public final class Bells {
             }
             remembered(p, BellCatalog.of(c.id()), at, c.remembered());
         }
-        // the homes people left: once a play-day, someone in the city remembers the bell of one that's still asleep
-        BellBook b = book(p);
-        long day = PlayDays.current(level.getServer());
-        if (b.rememberedDay == day) return;
-        Map.Entry<BellCatalog.Def, BellWorld.Site> s = sleepingPeople(p);
-        if (s == null) return;
-        b.rememberedDay = day;
-        save(p, b);
-        String way = toward(s.getValue().pos.getX() - p.getX(), s.getValue().pos.getZ() - p.getZ());
-        RandomOffset o = new RandomOffset(s.getValue().pos.asLong());
-        remembered(p, s.getKey(), new BlockPos(s.getValue().pos.getX() + o.x, 64, s.getValue().pos.getZ() + o.z),
-                PEOPLE_LINES.getOrDefault(s.getKey().id(), "Someone remembers a bell at the home they left") + ", " + way + ".");
+        // the homes people left: their bells wait for the villages' quests (§43.16), so nobody tells of them yet
     }
-
-    /** What people in the city say about the bells of the homes they left. */
-    private static final Map<String, String> PEOPLE_LINES = Map.of(
-            "fenwick", "An old woman in the square says Fenwick had a bell, by the lake",
-            "mill", "A carter says the mill he grew up at had a bell under the floor",
-            "shepherd", "A drover says the shepherds' bell still hangs where the flocks summered, and something sits with it",
-            "hill", "A woman on the terrace says her village's bell hung on the hill above it",
-            "ford", "A ferryman says there was a bell at the ford, and it went into the river when the water rose");
-
-    /** The nearest place still asleep, of the homes people left, whose bell this player has no Remembered lead to. */
-    private static Map.@Nullable Entry<BellCatalog.Def, BellWorld.Site> sleepingPeople(ServerPlayer p) {
-        BellBook b = book(p);
-        ServerLevel level = p.level().getServer().overworld();
-        Map.Entry<BellCatalog.Def, BellWorld.Site> best = null;
-        double bd = Double.MAX_VALUE;
-        for (BellWorld.Site s : BellSites.near(level, p.blockPosition(), REMEMBERED_REACH).values()) {
-            BellCatalog.Def d = BellCatalog.of(s.bell);
-            if (d == null || d.source() != BellCatalog.Source.PEOPLE || s.state == BellWorld.Site.AWAKE || s.state == BellWorld.Site.GONE
-                    || b.held.containsKey(d.no())) continue;
-            BellBook.Lead l = b.leads.get(d.no());
-            if (l != null && l.has(BellBook.How.REMEMBERED)) continue;
-            double dd = Math.hypot(s.pos.getX() - p.getX(), s.pos.getZ() - p.getZ());
-            if (dd < bd) {
-                bd = dd;
-                best = Map.entry(d, s);
-            }
-        }
-        return best;
-    }
-
-    /** How far from the city people remember: the C and B bands' homes. */
-    static final int REMEMBERED_REACH = 7200;
 
     /** A Dreamt lead: a dream bell rang and got away. */
     static void dreamt(ServerPlayer p, BellCatalog.Def d, String line) {
@@ -476,16 +326,14 @@ public final class Bells {
         remembered(p, d, null, "Ilse says there were a hundred bells across the land. The first will ring by your own fire, once you set her coal down.");
     }
 
-    /** How far a woken bell or a home's tower keeps new gates off (SPEC §43.15). */
+    /** How far a home's bells keep new gates off (SPEC §43.15). */
     static final int QUIET = 100;
 
-    /** Whether a woken bell's place or a home's tower is within {@link #QUIET} blocks of {@code at} (overworld only). */
+    /** Whether a home's bell frame is within {@link #QUIET} blocks of {@code at} (overworld only). */
     public static boolean quiet(ServerLevel level, BlockPos at) {
         if (level.dimension() != Level.OVERWORLD) return false;
         BellWorld w = BellWorld.get(level.getServer());
         long r2 = (long) QUIET * QUIET;
-        for (BellWorld.Site s : w.sites.values())
-            if (s.state == BellWorld.Site.AWAKE && flat(s.pos, at) <= r2) return true;
         for (BellWorld.Home h : w.homes.values())
             if (h.frame != null && flat(h.frame, at) <= r2) return true;
         return false;
@@ -511,7 +359,44 @@ public final class Bells {
         say(p, "[" + line + " It's in your Bell Book.]");
     }
 
-    /** A gate's Lord fell: its world's bell goes home with everyone in the run, if the gate was at its bell's rank. */
+    /**
+     * The bells the gates swallowed (SPEC §43.16), by rank. A gate's Lord sits on what its gate took: kill one and a bell
+     * may be lying in its room. Your first Lord always kept the Wren; after that about one in three keeps one (never two
+     * in a row, and never four without), of the gate's rank or below, the lowest rank first.
+     */
+    static final Map<Rank, List<String>> SWALLOWED = Map.of(
+            Rank.E, List.of("wren", "barrow", "mere", "wayside"),
+            Rank.D, List.of("cairn", "spire", "reed", "lintel"),
+            Rank.C, List.of("thorn", "crag", "fen"),
+            Rank.B, List.of("thaw"),
+            Rank.A, List.of("boulder", "leviathan"));
+
+    /** Lords since the last that kept a bell, before one always does again; and the odds in between. */
+    static final int LORDS_WITHOUT = 3, LORD_ODDS = 3;
+
+    /** The swallowed bell this Lord kept for this player, or null: the first ever is the Wren. */
+    static BellCatalog.@Nullable Def swallowed(ServerPlayer p, Rank gate, long roll) {
+        BellBook b = book(p);
+        BellCatalog.Def wren = BellCatalog.of("wren");
+        boolean first = b.once("first_lord");
+        if (first) save(p, b);
+        if (first && wren != null && !b.held.containsKey(wren.no())) return wren;
+        if (b.lordsSince == 0 && !first) return null;
+        if (b.lordsSince < LORDS_WITHOUT && Math.floorMod(roll, LORD_ODDS) != 0) return null;
+        for (Rank r : Rank.values()) {
+            if (r.ordinal() > gate.ordinal()) break;
+            for (String id : SWALLOWED.getOrDefault(r, List.of())) {
+                BellCatalog.Def d = BellCatalog.of(id);
+                if (d != null && !b.held.containsKey(d.no())) return d;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * A gate's Lord fell: for each player in the run nearby, the bell it kept. Its world's own bell first (a gate world's
+     * Lord at its bell's rank), else one the gate swallowed, if this Lord kept one for them.
+     */
     public static void lordFell(ServerLevel level, LivingEntity lord, Rank rank, String theme, Collection<UUID> party, @Nullable ServerPlayer killer) {
         // the deepest room of an S-rank gate holds the Heart-clapper (SPEC §43.14)
         if (rank.ordinal() >= Rank.S.ordinal())
@@ -519,10 +404,32 @@ public final class Bells {
                 if ((p == killer || party.contains(p.getUUID())) && p.distanceToSqr(lord) < 96 * 96)
                     belfryPiece(p, BellContent.HEART_CLAPPER.get(), "[In the Lord's hoard there's a clapper as long as your arm, black iron with something red and warm in it. It's the Heart-clapper. A Great Belfry is hung on one.]");
         String id = GATE_BELLS.get(theme);
-        BellCatalog.Def d = id == null ? null : BellCatalog.of(id);
-        if (d == null || rank.ordinal() < d.rank().ordinal()) return;
-        for (ServerPlayer p : level.players())
-            if ((p == killer || party.contains(p.getUUID())) && p.distanceToSqr(lord) < 96 * 96) ring(p, d, "at a " + Rank.valueOf(rank.name()).label + " gate's Lord");
+        BellCatalog.Def own = id == null ? null : BellCatalog.of(id);
+        String label = Rank.valueOf(rank.name()).label;
+        for (ServerPlayer p : level.players()) {
+            if (!(p == killer || party.contains(p.getUUID())) || p.distanceToSqr(lord) >= 96 * 96) continue;
+            BellBook b = book(p);
+            if (own != null && rank.ordinal() >= own.rank().ordinal() && !b.held.containsKey(own.no())) {
+                ring(p, own, "in the hoard of a " + label + " gate's Lord");
+                continue;
+            }
+            BellCatalog.Def d = swallowed(p, rank, lord.getUUID().getLeastSignificantBits() ^ p.getUUID().getMostSignificantBits());
+            b = book(p);
+            if (d == null) {
+                b.lordsSince++;
+                save(p, b);
+                continue;
+            }
+            b.lordsSince = 0;
+            save(p, b);
+            ring(p, d, "under a " + label + " gate's Lord, where the gate had taken it");
+            // its clapper has come loose in the fall (a Chime Perch is built round one), and wild Chimewrens love the sound
+            dev.awaken.kin.KinApi.clapper(p);
+            if (b.once("first_swallowed")) {
+                save(p, b);
+                say(p, "[The Lord was keeping a bell the gate took. Ilse said a lot of them fell in. Bring it home and it'll ring there.]");
+            }
+        }
     }
 
     static final int ILSE_DAYS = 3, ILSE_NEAR = 24, ILSE_PATH = 28;
@@ -571,23 +478,25 @@ public final class Bells {
     /** Checks the moments that are states rather than events, for one player. */
     private static void moments(ServerPlayer p) {
         MinecraftServer server = p.level().getServer();
+        upgrade(p);
         Optional<HearthRecord> home = HearthService.data(server).home(p.getUUID());
         if (home.isPresent()) {
             HearthRecord h = home.get();
             ring(p, "ember", "by your fire, the night you lit it");
             if (!KinWorld.get(server).at(h.pos).isEmpty()) ring(p, "nook", "the day a beast came to live with you");
-            for (Room r : h.rooms)
-                if (r.reading().grade() == Reading.Grade.GRAND) {
-                    ring(p, "lintel", "over the door of " + r.reading().name());
-                    break;
-                }
             if (h.tier >= 2) ring(p, "founding", "the day your Hearth grew");
             // the Great Belfry and the Hundred Peal reach a member who was away when they happened (SPEC §43.14)
             BellWorld.Home tower = BellWorld.get(server).peek(h.pos);
             if (tower != null && tower.stage >= 3) GreatBelfry.seed(p);
             if (tower != null && tower.pealed >= 0) HundredPeal.pealed(p);
             ilse(p, h);
-            if (p.level() instanceof ServerLevel sl && sl.dimension() == Level.OVERWORLD) BellSites.planHome(sl, h.pos);
+            BellWorld.Home tower2 = BellWorld.get(server).peek(h.pos);
+            BellBook b = book(p);
+            if (b.given && (tower2 == null || tower2.frame == null) && b.once("frame_told")) {
+                // a Book from before the frame was explained
+                save(p, b);
+                say(p, FRAME_TOLD);
+            }
         }
         var prof = Progression.profile(p);
         if (prof.counter(Counters.GATES_CLEARED) >= 1) ring(p, "registry", "rung by the Registry for your first gate");
@@ -629,6 +538,16 @@ public final class Bells {
                 ring(p, "eclipse", "under the dark of the moon");
         }
         city(p);
+    }
+
+    /** A Book from before (SPEC §43.16): leads to bells that lay in the land close, said once. */
+    private static void upgrade(ServerPlayer p) {
+        BellBook b = book(p);
+        if (b.schema >= BellBook.SCHEMA) return;
+        boolean closed = BellSites.closeOldLeads(b);
+        b.schema = BellBook.SCHEMA;
+        save(p, b);
+        if (closed) say(p, "[Some of the bells in your Book weren't where they seemed to be after all. The gates may have them.]");
     }
 
     /**
@@ -701,7 +620,6 @@ public final class Bells {
     static void tick(MinecraftServer server) {
         ServerLevel ow = server.overworld();
         BellSites.tickPaint(ow);
-        BellSites.tickSpirits(ow);
         DreamBells.tick(server);
         BellTower.tick(server);
         GreatBelfry.tick(server);
