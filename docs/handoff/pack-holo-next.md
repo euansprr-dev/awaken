@@ -1,7 +1,8 @@
 # pack/holo-next: the holo inventory (P3), holo sounds and the calm HUD's tier 1 (P5)
 
-Cloud session, 2026-10-24, branched from `build/awaken-v1` at 2e05a76. Built and tested in the VM (`./gradlew build`,
-`runGameTestServer`: all 328 GameTests pass, 4 of them new). CI: see the last section. Nothing here has been seen on a
+Cloud session, 2026-10-24, branched from `build/awaken-v1` at 2e05a76 (and carrying pack/throughput's flake fixes, see
+CI). Built and tested in the VM (`./gradlew build`, `runGameTestServer`: all 328 GameTests pass, 4 of them new). CI
+green: run 40105621182. Nothing here has been seen on a
 screen yet: every screenshot tour below needs the Mac's GPU.
 
 ## What's done
@@ -27,7 +28,8 @@ screen yet: every screenshot tour below needs the Mac's GPU.
 - `HoloTimeline` moved to `dev.awaken.holo.ui` (side-agnostic, with a speed and `landed()`), beside `InventoryWells`,
   `HoverTick` and `HudFade`, which the new GameTests check: `holo_inventory_timeline`, `holo_inventory_wells`,
   `holo_hover_tick`, `holo_hud_fade`.
-- No other module's code changed. Touched outside `dev.awaken.holo`: `tools/art/audio_build.py` (one spec added to its
+- No other module's code changed by this work (pack/throughput's merged test fixes aside). Touched outside
+  `dev.awaken.holo`: `tools/art/audio_build.py` (one spec added to its
   list), `docs/modules/audio.md` (one paragraph pointing here), the SPEC, and `src/main/merge/holo/`.
 
 ## Tours to run on the Mac
@@ -62,4 +64,13 @@ screen yet: every screenshot tour below needs the Mac's GPU.
   the pack perf tour with panels open).
 
 ## CI
-(filled in below once the run finishes)
+- **Green: run 40105621182** on ae25126 (https://github.com/euansprr-dev/awaken/actions/runs/40105621182). Locally, all
+  328 GameTests pass on every commit pushed.
+- Before it, the runs on this branch failed only on the rotating timing flakes the cloud hand-off lists for
+  pack/throughput, never on a holo test: 40102755874 (gates_surface_respects_builds, twice; then also
+  gates_interior_build_budget), 40104258373 (fauna_p3_caves_spawn and fauna_p3_talents, then terrain_hero_blueprints on
+  its re-run). The same tests fail on build/awaken-v1 and the other pack branches today.
+- So this branch **merges pack/throughput** (ae25126, its exact commits, green on its own CI three times), which fixes
+  them at the cause; its two gates fixes were cherry-picked first and merge as the same change. When the main session
+  merges both branches the second merge of those commits is a no-op. If pack/throughput should land later than this
+  branch, merge pack/throughput first.
