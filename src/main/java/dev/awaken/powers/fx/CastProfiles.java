@@ -43,16 +43,23 @@ public final class CastProfiles {
      * @param fallback  the vanilla pose used when the animation library is not installed (from PowerFxDefs)
      * @param begin3p   third-person clip started at the press; {@code hold3p} the loop it moves into after {@code holdAt} ticks
      *                  (null: none); {@code end3p} the clip that lets go (a strike or a plain fade)
-     * @param begin1p   first-person clip started at the press; {@code hold1p} the loop it moves into when {@code begin1p} ends
+     * @param begin1p   first-person clip started at the press; {@code hold1p} the loop it moves into when {@code begin1p} ends;
+     *                  {@code end1p} a channel's let-go (null: the hands just go back)
      * @param moment    the screen moment at the release tick ({@code CastFeel.MOMENTS}), {@code endMoment} at a channel's let-go
      * @param lens      a Lens look id, or null
-     * @param origin    where a beam or bolt starts: "palm" or "core"
+     * @param origin    where a beam or bolt starts: "palm", "core", or "ball" (between both hands, {@link CastPoints#ball})
+     * @param holdSound a sound event id that follows the origin while a channel is held and stops on its let-go (null: none)
      */
     public record Profile(int id, String power, int windup, int release, CastAnim fallback, String begin3p, @Nullable String hold3p,
-                          int holdAt, @Nullable String end3p, String begin1p, @Nullable String hold1p, boolean channel, String moment,
-                          String endMoment, @Nullable String lens, String origin, @Nullable String beginSound) {
+                          int holdAt, @Nullable String end3p, String begin1p, @Nullable String hold1p, @Nullable String end1p, boolean channel,
+                          String moment, String endMoment, @Nullable String lens, String origin, @Nullable String beginSound,
+                          @Nullable String holdSound) {
         public boolean core() {
             return "core".equals(origin);
+        }
+
+        public boolean ball() {
+            return "ball".equals(origin);
         }
     }
 
@@ -77,8 +84,8 @@ public final class CastProfiles {
                 if (fallback == CastAnim.NONE) fallback = CastAnim.PALM;
                 Profile p = new Profile(LIST.size() + 1, power, r.get("windup").getAsInt(), r.get("release").getAsInt(), fallback,
                         r.get("begin3p").getAsString(), str(r, "hold3p"), r.get("holdAt").getAsInt(), str(r, "end3p"), r.get("begin1p").getAsString(),
-                        str(r, "hold1p"), channel, r.get("moment").getAsString(), r.get("endMoment").getAsString(), str(r, "lens"),
-                        r.get("origin").getAsString(), str(r, "beginSound"));
+                        str(r, "hold1p"), str(r, "end1p"), channel, r.get("moment").getAsString(), r.get("endMoment").getAsString(),
+                        str(r, "lens"), r.get("origin").getAsString(), str(r, "beginSound"), str(r, "holdSound"));
                 LIST.add(p);
                 BY_POWER.put(power, p);
                 JsonObject lv = r.has("levels") ? r.getAsJsonObject("levels") : null;
@@ -95,8 +102,9 @@ public final class CastProfiles {
         JsonObject r = levels.getAsJsonObject(key);
         return new Profile(p.id(), p.power(), p.windup(), p.release(), p.fallback(), r.has("begin3p") ? r.get("begin3p").getAsString() : p.begin3p(),
                 r.has("hold3p") ? str(r, "hold3p") : p.hold3p(), p.holdAt(), r.has("end3p") ? str(r, "end3p") : p.end3p(),
-                r.has("begin1p") ? r.get("begin1p").getAsString() : p.begin1p(), r.has("hold1p") ? str(r, "hold1p") : p.hold1p(), p.channel(),
-                p.moment(), p.endMoment(), r.has("lens") ? str(r, "lens") : p.lens(), p.origin(), p.beginSound());
+                r.has("begin1p") ? r.get("begin1p").getAsString() : p.begin1p(), r.has("hold1p") ? str(r, "hold1p") : p.hold1p(),
+                r.has("end1p") ? str(r, "end1p") : p.end1p(), p.channel(), p.moment(), p.endMoment(), r.has("lens") ? str(r, "lens") : p.lens(),
+                p.origin(), p.beginSound(), p.holdSound());
     }
 
     /**
@@ -154,6 +162,7 @@ public final class CastProfiles {
         for (Profile p : allLevels()) {
             out.add(p.begin1p());
             if (p.hold1p() != null) out.add(p.hold1p());
+            if (p.end1p() != null) out.add(p.end1p());
         }
         return out;
     }

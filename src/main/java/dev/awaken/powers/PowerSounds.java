@@ -87,6 +87,14 @@ public final class PowerSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> BEAM_GATHER = s("power.beam_gather");
     public static final DeferredHolder<SoundEvent, SoundEvent> BEAM_LOOP = s("power.beam_loop");
     public static final DeferredHolder<SoundEvent, SoundEvent> BEAM_END = s("power.beam_end");
+    // Charged Shot's lightning (SPEC 32): the charge that follows the hands (HoldSound), the cue at full, the release's crack and
+    // its boom, the bolt's sizzle in flight and its thunder where it lands
+    public static final DeferredHolder<SoundEvent, SoundEvent> LIGHTNING_CHARGE = s("power.lightning_charge");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LIGHTNING_FULL = s("power.lightning_full");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LIGHTNING_RELEASE = s("power.lightning_release");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LIGHTNING_BOOM = s("power.lightning_boom");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LIGHTNING_SIZZLE = s("power.lightning_sizzle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LIGHTNING_THUNDER = s("power.lightning_thunder");
 
     private static DeferredHolder<SoundEvent, SoundEvent> s(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));

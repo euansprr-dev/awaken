@@ -206,14 +206,23 @@ def barrier_push(a):
     return spec([(0, NEUTRAL, L), (2, pre, EQ), (3, push, EOX), (9, push, L), (13, PC.E_SETTLE, EIOS)], 16, 3)
 
 
+# Charged Shot's ball, held up before the face between both hands, the arms following the look. Fitted by forward kinematics
+# (SPEC 32, "Charged Shot") so the palms' midpoint is powers.fx.CastPoints.ball (0.58 along the look, 0.17 under it, from
+# the eyes) at a level look, 0.34 apart: the server fires from there.
+BALL_HOLD = pose(lean=-2, ra=(-104, -18, 0), la=(-104, 18, 0), ra_aim=True, la_aim=True, re=30, le=30, rl=(14, 0, 8), ll=(-10, 0, -8),
+                 rk=24, lk=28)
+BALL_PUSH = pose(lean=12, shift=1.5, ra=(-94, -10, 0), la=(-94, 10, 0), ra_aim=True, la_aim=True, re=0, le=0, rl=(24, 0, 9), ll=(-16, 0, -9),
+                 rk=10, lk=40)
+
+
 @gesture
-def core_gather_shot(a):
-    """Charged Shot: the hands gather at the core and tremble harder the longer it is held; the let-go thrusts the arm out."""
-    gather = pose(PC.BC_GATHER, lean=-5, ra=(-62, -34, 0), la=(-62, 34, 0))
-    jit = [nudge(gather, ra=(3, 2, 0), la=(-3, -2, 0), rise=0.3), nudge(gather, ra=(-2, -1, 0), la=(2, 1, 0))]
-    thrust = pose(PC.BC_AIM, lean=14)
-    return spec([(0, NEUTRAL, L), (3, gather, EQ)], 4, 3, end=3, hold=(gather, jit, 4), hold_at=3,
-                finish=([(0, gather, L), (1, pose(gather, lean=-9, twist=18), EQ), (2, thrust, EOX), (6, pose(thrust, lean=8), EOS), (10, PC.E_SETTLE, EIOS)], 13, 10))
+def lightning_ball(a):
+    """Charged Shot: the hands cup low at the core, then lift the ball up before the face and hold it there, trembling; the let-go
+    drives both hands straight out from it."""
+    cup = pose(lean=3, ra=(-48, -34, 0), la=(-48, 34, 0), re=95, le=95, rl=(14, 0, 8), ll=(-10, 0, -8), rk=28, lk=30)
+    jit = [nudge(BALL_HOLD, ra=(2.5, 1.5, 0), la=(-2.5, -1.5, 0), rise=0.2), nudge(BALL_HOLD, ra=(-1.5, -1, 0), la=(1.5, 1, 0))]
+    return spec([(0, NEUTRAL, L), (2, cup, EQ), (3, BALL_HOLD, EOC)], 4, 3, end=3, hold=(BALL_HOLD, jit, 4), hold_at=3,
+                finish=([(0, BALL_HOLD, L), (1, BALL_PUSH, EOX), (4, pose(BALL_PUSH, lean=9), EOS), (9, PC.E_SETTLE, EIOS)], 12, 9))
 
 
 @gesture
@@ -475,7 +484,7 @@ def write_table(root=None):
             assert r["windup"] == p["release"], f"{power}: the wind-up ({r['windup']}) is the release tick ({p['release']})"
         row = OrderedDict(power=power, windup=r["windup"], release=p["release"], begin3p=p["begin3p"], hold3p=p["hold3p"], holdAt=p["holdAt"],
                           end3p=p["end3p"], channel=r["channel"], moment=r["moment"], endMoment=r["endMoment"], lens=r["lens"], origin=r["origin"],
-                          beginSound=r["beginSound"])
+                          beginSound=r["beginSound"], holdSound=r["holdSound"])
         import fp_gestures
         import power_level_gestures
         row.update(fp_gestures.table_fields(power, r, p))

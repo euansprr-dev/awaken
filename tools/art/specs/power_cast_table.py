@@ -20,9 +20,9 @@ R = OrderedDict()
 
 
 def row(power, g3=None, g1=None, a3=None, a1=None, raw3p=None, windup=0, moment="none", endMoment="none", lens=None, origin="palm",
-        beginSound=None, channel=False):
+        beginSound=None, channel=False, holdSound=None):
     R[power] = dict(g3=g3, g1=g1, a3=a3 or {}, a1=a1 or {}, raw3p=raw3p, windup=windup, moment=moment, endMoment=endMoment, lens=lens,
-                    origin=origin, beginSound=beginSound, channel=channel)
+                    origin=origin, beginSound=beginSound, channel=channel, holdSound=holdSound)
 
 
 # Kinetic: heavy, low, grounded
@@ -44,7 +44,9 @@ row("gravity_flip", "flip_hands", "flip_hands", windup=5, moment="release_big")
 # Energy: channelled from the core
 row("nova", "nova_burst", "nova_burst", moment="release_big")
 row("barrier", "barrier_push", "push2", moment="thump_light")
-row("charged_shot", "core_gather_shot", "gather_shot", channel=True, endMoment="recoil_light")
+# Charged Shot: a ball of lightning held up between both hands, pushed out from there (origin "ball": powers.fx.CastPoints)
+row("charged_shot", "lightning_ball", "lightning_ball", channel=True, endMoment="recoil_light", origin="ball",
+    holdSound="awaken:power.lightning_charge")
 row("overload", "overload_open", "overload_open", moment="release_big", lens="awaken:cast_overload")
 row("prism_lance", "core_open", "core_open", channel=True, origin="core", moment="recoil_light", lens="awaken:cast_prism")
 # Shadow: low and quiet

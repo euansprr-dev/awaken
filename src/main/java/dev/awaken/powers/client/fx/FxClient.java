@@ -242,9 +242,10 @@ public final class FxClient {
         boolean channel = type.mode == PowerType.Mode.CHANNEL;
         CastProfiles.Profile prof = CastProfiles.at(CastProfiles.byPower(type.path), level);
         CastAnim anim = channel && def.windAnim() != null ? def.windAnim() : def.anim();
-        if (prof != null && animations()) {
+        if (prof != null) {
+            // the profile runs even with cast animations off (its fallback pose, its held sound), as it does for everyone watching
             CastAnims.playProfile(p.getId(), prof, type.family);
-            FirstPerson.play(prof.begin1p());
+            if (animations()) FirstPerson.play(prof.begin1p());
         } else if (anim != CastAnim.NONE) {
             CastAnims.play(p.getId(), anim, 0, type.family);
         }

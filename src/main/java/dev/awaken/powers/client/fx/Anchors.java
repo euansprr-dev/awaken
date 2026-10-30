@@ -23,6 +23,8 @@ final class Anchors {
     static final int PLANT = 7;
     /** The sternum: the core (Muzzles). */
     static final int CORE = 8;
+    /** Between both palms: the ball a two-handed charge holds (Muzzles). */
+    static final int BALL = 9;
 
     /** Writes the anchor's world position into out[0..2]. */
     static void of(Entity e, int anchor, float pt, double[] out) {
@@ -53,6 +55,7 @@ final class Anchors {
             case HAND, OFFHAND -> hand(e, anchor == OFFHAND, pt, x, y, z, out);
             case PLANT -> Muzzles.plant(e, pt, out);
             case CORE -> Muzzles.core(e, pt, out);
+            case BALL -> Muzzles.ball(e, pt, out);
             case BACK -> {
                 float yaw = e.getViewYRot(pt) * Mth.DEG_TO_RAD;
                 out[0] = x + Mth.sin(yaw) * 0.35;

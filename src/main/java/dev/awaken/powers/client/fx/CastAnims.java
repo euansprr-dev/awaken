@@ -188,6 +188,12 @@ final class CastAnims {
             if (a.profile != null) {
                 momentFor(entityId, a.profile.endMoment(), a.profile);
                 lensFor(entityId, a.profile, true);
+                // your hands let go in first person too (a push out of the hold), from the pose the hold is in
+                if (a.profile.end1p() != null && entityId == mcPlayerId() && PowerFxConfig.animations()) {
+                    dev.awaken.core.api.FirstPerson.stop(a.profile.begin1p());
+                    if (a.profile.hold1p() != null) dev.awaken.core.api.FirstPerson.stop(a.profile.hold1p());
+                    dev.awaken.core.api.FirstPerson.play(a.profile.end1p());
+                }
             }
         }
     }
@@ -225,7 +231,8 @@ final class CastAnims {
             }
             float age = FxWorld.ticks - a.start;
             boolean done = a.held ? (a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt > 5) || age > 20 * 30 : age > a.ticks + 2;
-            // a held clip lets go a moment after release, so a release cast arriving just behind it takes over smoothly
+            // a held clip lets go a moment after release, so a release cast arriving just behind it takes over smoothly; a cast
+            // profile has no release cast to wait for, so its let-go starts with the shot
             // the profile's screen moment lands on the tick its clips release on
             if (a.profile != null && !a.momentPlayed && age >= a.profile.release()) {
                 a.momentPlayed = true;
@@ -237,7 +244,7 @@ final class CastAnims {
                 a.holdStarted = true;
                 if (!PalCasts.play(a.entity, a.profile.hold3p(), 2)) a.pal = false;
             }
-            if (a.pal && a.held && !a.palLetGo && (done || a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt >= 2)) {
+            if (a.pal && a.held && !a.palLetGo && (done || a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt >= (a.profile != null ? 0 : 2))) {
                 a.palLetGo = true;
                 String clip = a.profile != null ? a.profile.end3p() : CastClips.letGo(a.family, a.kind);
                 if (clip == null || !PalCasts.play(a.entity, clip, 2)) PalCasts.stop(a.entity);
@@ -248,6 +255,7 @@ final class CastAnims {
     }
 
     static void reset() {
+        HoldSound.reset();
         for (Anim a : SLOTS) {
             if (a.entity >= 0 && a.pal) PalCasts.stop(a.entity);
             a.entity = -1;

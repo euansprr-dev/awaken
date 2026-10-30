@@ -116,7 +116,9 @@ def beam_end(seed):
 
 
 SUBTITLES = {"stomp_lift": "A knee drives up", "stomp_plant": "A foot stamps", "beam_gather": "Light gathers",
-             "beam_loop": "A beam hums", "beam_end": "A beam fades"}
+             "beam_loop": "A beam hums", "beam_end": "A beam fades",
+             "lightning_charge": "Lightning crackles", "lightning_full": "Lightning is fully charged", "lightning_release": "A bolt cracks",
+             "lightning_boom": "The air booms", "lightning_sizzle": "A bolt sizzles past", "lightning_thunder": "Thunder strikes"}
 
 # event: (render, variants, rms dBFS in the power window, attenuation blocks, crest dB)
 EVENTS = OrderedDict([

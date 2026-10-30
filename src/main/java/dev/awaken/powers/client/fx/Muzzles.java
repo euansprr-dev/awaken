@@ -1,6 +1,7 @@
 package dev.awaken.powers.client.fx;
 
 import dev.awaken.core.api.FirstPerson;
+import dev.awaken.powers.fx.CastPoints;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -113,6 +114,42 @@ final class Muzzles {
         if (firstPerson && CastAnims.profileOf(e.getId()) != 0 && fist(off, out)) return true;
         if (sampled(e.getId(), off ? PALM_OFF : PALM, out)) return true;
         return baked(e, off ? PALM_OFF : PALM, pt, out);
+    }
+
+    /**
+     * Between both palms (a profile whose origin is "ball"): your fists' midpoint in first person, the drawn model's palms'
+     * otherwise, else the server's own point ({@link CastPoints#ball}) at the frame's look, so the orb is always where
+     * the shot will leave.
+     */
+    static void ball(Entity e, float pt, double[] out) {
+        Minecraft mc = Minecraft.getInstance();
+        boolean firstPerson = e == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
+        if (firstPerson && CastAnims.profileOf(e.getId()) != 0 && fist(false, out)) {
+            double x = out[0], y = out[1], z = out[2];
+            if (fist(true, out)) {
+                out[0] = (out[0] + x) * 0.5;
+                out[1] = (out[1] + y) * 0.5;
+                out[2] = (out[2] + z) * 0.5;
+                return;
+            }
+        }
+        if (!firstPerson && sampled(e.getId(), PALM, out)) {
+            double x = out[0], y = out[1], z = out[2];
+            if (sampled(e.getId(), PALM_OFF, out)) {
+                out[0] = (out[0] + x) * 0.5;
+                out[1] = (out[1] + y) * 0.5;
+                out[2] = (out[2] + z) * 0.5;
+                return;
+            }
+        }
+        double ex = Mth.lerp(pt, e.xo, e.getX()), ey = Mth.lerp(pt, e.yo, e.getY()) + e.getEyeHeight(), ez = Mth.lerp(pt, e.zo, e.getZ());
+        float xr = e.getViewXRot(pt) * Mth.DEG_TO_RAD, yr = e.getViewYRot(pt) * Mth.DEG_TO_RAD;
+        // Entity.calculateViewVector, and its up vector (the look turned 90 degrees up)
+        double lx = -Mth.sin(yr) * Mth.cos(xr), ly = -Mth.sin(xr), lz = Mth.cos(yr) * Mth.cos(xr);
+        double ux = -Mth.sin(yr) * Mth.sin(xr), uy = Mth.cos(xr), uz = Mth.cos(yr) * Mth.sin(xr);
+        out[0] = ex + lx * CastPoints.BALL_FORWARD + ux * CastPoints.BALL_UP;
+        out[1] = ey + ly * CastPoints.BALL_FORWARD + uy * CastPoints.BALL_UP;
+        out[2] = ez + lz * CastPoints.BALL_FORWARD + uz * CastPoints.BALL_UP;
     }
 
     /** The ground under the stamping foot (CastProfiles "shockwave"): the foot's x and z, the ground at the body's feet. */

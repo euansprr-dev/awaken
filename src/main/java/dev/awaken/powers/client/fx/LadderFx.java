@@ -272,7 +272,7 @@ final class LadderFx {
             }
             default -> {
                 if (caster != null) {
-                    Anchors.of(caster, ANCHOR[l.at], 1f, P);
+                    Anchors.of(caster, anchor(l.at, caster), 1f, P);
                     return caster;
                 }
             }
@@ -388,7 +388,7 @@ final class LadderFx {
                             alpha(st.edge, 0), nx, ny, nz);
                     if (r == null) break;
                     r.age = -(l.delay + i * Math.max(1, l.gap));
-                    if (on != null) FxRecipes.attach(r, on, ANCHOR[l.at]);
+                    if (on != null) FxRecipes.attach(r, on, anchor(l.at, on));
                     r.ladTag = l.tag;
                 }
             }
@@ -432,7 +432,7 @@ final class LadderFx {
                 d.fadeIn = 2;
                 d.fadeOut = 6;
                 d.age = -l.delay;
-                if (on != null) FxRecipes.attach(d, on, ANCHOR[l.at]);
+                if (on != null) FxRecipes.attach(d, on, anchor(l.at, on));
             }
             case TRAIL -> {
                 // a trail on the struck body needs one (a punch into the air has none)
@@ -440,7 +440,7 @@ final class LadderFx {
                 if (follow == null) return;
                 int life = lifeOf(l, e, 14);
                 if (refresh(follow, Shape.TRAIL, l, life)) return;
-                Shape t = FxRecipes.attach(FxWorld.shape(Shape.TRAIL, life), follow, l.at >= AT_HAND ? ANCHOR[l.at] : Anchors.BODY);
+                Shape t = FxRecipes.attach(FxWorld.shape(Shape.TRAIL, life), follow, l.at >= AT_HAND ? anchor(l.at, follow) : Anchors.BODY);
                 if (t == null) return;
                 t.a = l.a;
                 t.c0 = alpha(col, 0.85f);
@@ -474,7 +474,12 @@ final class LadderFx {
         s.x = x;
         s.y = y;
         s.z = z;
-        if (on != null) FxRecipes.attach(s, on, l.at == AT_TARGET ? Anchors.BODY : ANCHOR[l.at]);
+        if (on != null) FxRecipes.attach(s, on, l.at == AT_TARGET ? Anchors.BODY : anchor(l.at, on));
+    }
+
+    /** A place's anchor on an entity: "hand" is where its cast leaves (the palm, or the core or the ball its profile names). */
+    private static int anchor(int at, Entity e) {
+        return at == AT_HAND ? FxRecipes.originAnchor(e) : ANCHOR[at];
     }
 
     /** Strands round the beams this event drew (or the held beam it refreshed). */

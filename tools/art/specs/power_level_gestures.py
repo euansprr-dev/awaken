@@ -156,8 +156,10 @@ L5 = {
     "gravity_flip": dict(flourish=[(2, d(ra=S((-140, -4, -30)), la=S((-140, 4, 30)), rise=1.0), EOC), (4, d(), EIX)]),
     # Energy
     "beam": dict(held=d(rl=(8, 0, 6), ll=(-6, 0, -6), rk=10, lk=10, la=S((-88, 40, 0)), le=S(60)), end=dict(hit=d(re=30))),
-    "charged_shot": dict(held=d(ra=S((-20, 0, 85)), re=S(110), twist=18, la=S((-80, 20, 0)), le=S(20)),
-                         end=dict(hit=d(ra=S((-100, -6, 0)), ra_aim=True, re=S(0), twist=-24, lean=10, shift=1.5), hang=1)),
+    # the ball stays between the hands (the shot leaves from there, SPEC 32): a wider, lower stance holds it, and the let-go is a
+    # two-handed spear's hurl with the body behind it
+    "charged_shot": dict(held=d(lean=-3, rl=(6, 0, 4), ll=(-6, 0, -4), rk=10, lk=14),
+                         end=dict(hit=d(ra=S((-100, -4, 0)), la=S((-100, 4, 0)), lean=10, shift=1.6, rl=(14, 0, 0), ll=(-12, 0, 0), lk=10), hang=1)),
     "nova": dict(hit=d(head_x=S(-20), ra=(-20, 0, 10), la=(-20, 0, -10), lean=-4), hang=2),
     "barrier": dict(hang=1, flourish=[(2, d(ra=(-34, 0, 24), la=(-34, 0, -24)), EIOS), (4, d(ra=(0, 0, 46), la=(0, 0, -46)), EIOS),
                                       (6, d(ra=(26, 0, 20), la=(26, 0, -20)), EIOS), (8, d(), EIOS)]),
@@ -265,7 +267,7 @@ def _three_p(power, level, spec):
 def _first_person(power, level, spec, row):
     """The first-person twin of an instant cast: the hands hold the release as long as the body does and reach further at
     level 5. A channel keeps its first-person clips (its hold hands over on a keyed event)."""
-    base_name, hold1p = G1.NAMES[power]
+    base_name, hold1p, _ = G1.NAMES[power]
     if row["channel"] or hold1p is not None or base_name not in FC.CLIPS:
         return dict(begin1p=base_name, hold1p=hold1p)
     c = FC.CLIPS[base_name]

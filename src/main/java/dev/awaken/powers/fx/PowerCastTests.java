@@ -38,6 +38,7 @@ final class PowerCastTests {
         AwakenTests.register("power_cast_profiles", 20, PowerCastTests::profiles);
         AwakenTests.registerIsolated("power_cast_windup", 200, PowerCastTests::windup);
         AwakenTests.registerIsolated("power_cast_beats", 300, PowerCastTests::beats);
+        AwakenTests.registerIsolated("power_cast_ball", 200, PowerCastTests::ball);
     }
 
     private static void profiles(net.minecraft.gametest.framework.GameTestHelper h) {
@@ -100,6 +101,11 @@ final class PowerCastTests {
             h.assertTrue(says, p.power() + ": " + p.begin1p() + " has its release event on tick " + p.release());
             h.assertTrue(p.channel() == (t.mode == PowerType.Mode.CHANNEL), p.power() + ": the profile matches the power's lifetime");
             h.assertTrue(p.hold1p() == null || p.channel() && fp.get(p.hold1p()).loop, p.power() + ": only a channel has a first-person hold");
+            h.assertTrue(p.end1p() == null || p.channel() && fp.containsKey(p.end1p()) && !fp.get(p.end1p()).loop,
+                    p.power() + ": a first-person let-go is a channel's, exists and ends by itself");
+            h.assertTrue(p.holdSound() == null || p.channel() && net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.containsKey(
+                    net.minecraft.resources.Identifier.parse(p.holdSound())), p.power() + ": a held sound is a channel's and exists");
+            h.assertTrue(List.of("palm", "core", "ball").contains(p.origin()), p.power() + ": its origin is a named cast point");
             if (!p.channel()) {
                 h.assertTrue(!c.loop, p.power() + ": an instant first-person cast ends by itself");
                 for (String event : c.events) h.assertTrue(!event.equals("hold"), p.power() + ": an instant cast never starts a held loop");
@@ -152,6 +158,62 @@ final class PowerCastTests {
         h.assertTrue(silent.isEmpty(), "these powers sent no profile beat, so others would not see their pose: " + silent);
         h.assertTrue(posed.isEmpty(), "these powers also sent a family pose beside their profile: " + posed);
         h.succeed();
+    }
+
+    /**
+     * Charged Shot leaves from between the hands (SPEC 32): at a short and a full charge, looking up, level and down, the muzzle
+     * burst is at {@link CastPoints#ball} (centred on the look, not off to the right hand as it was), and the bolt's first step
+     * starts there.
+     */
+    private static void ball(net.minecraft.gametest.framework.GameTestHelper h) {
+        for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        Vec3 at = h.absoluteVec(Vec3.atBottomCenterOf(new BlockPos(0, 1, 0)));
+        sp.setGameMode(GameType.SURVIVAL);
+        PowerType t = PowerRegistry.get("charged_shot");
+        CastProfiles.Profile prof = CastProfiles.byPower("charged_shot");
+        h.assertTrue(t != null && prof != null && prof.ball(), "charged_shot's profile fires from the ball");
+        Powers.learn(sp, t.id, 0);
+        List<FxEvent> seen = new ArrayList<>();
+        Fx.testSink = seen::add;
+        List<Vec3> balls = new ArrayList<>();
+        try {
+            float yaw = 37f;
+            for (float pitch : new float[] {-30f, 0f, 30f}) {
+                for (int held : new int[] {6, 30}) {
+                    sp.snapTo(at.x, at.y, at.z, yaw, pitch);
+                    Powers.resetCooldowns(sp);
+                    Powers.fillEnergy(sp);
+                    Casting.endAll(sp, Running.Why.CANCELLED);
+                    seen.clear();
+                    PowerType.Result r = Casting.cast(sp, t, 0, false, yaw, pitch);
+                    h.assertTrue(r.ok(), "the charge starts: " + r.reason());
+                    Fx.testTick(sp, held);
+                    Casting.endAll(sp, Running.Why.RELEASED);
+                    Vec3 ball = CastPoints.ball(sp);
+                    FxEvent muzzle = seen.stream().filter(e -> e.kind() == FxKind.IMPACT).findFirst().orElse(null);
+                    h.assertTrue(muzzle != null, "a shot at pitch " + pitch + " after " + held + " ticks");
+                    Vec3 m = new Vec3(muzzle.x(), muzzle.y(), muzzle.z());
+                    Vec3 right = sp.getLookAngle().cross(sp.getUpVector(1f));
+                    double side = m.subtract(sp.getEyePosition()).dot(right);
+                    h.assertTrue(m.distanceTo(ball) < 1e-3, "pitch " + pitch + ", " + held + " ticks: the shot leaves the ball " + ball + ", not " + m);
+                    h.assertTrue(Math.abs(side) < 1e-3, "pitch " + pitch + ": the shot is centred between the hands (" + side + " to the side)");
+                    balls.add(ball);
+                }
+            }
+        } catch (RuntimeException ex) {
+            Fx.testSink = null;
+            throw ex;
+        }
+        // each bolt's own first step (bolts move with the server's tick, after this one)
+        h.runAfterDelay(2, () -> {
+            Fx.testSink = null;
+            for (Vec3 ball : balls) {
+                h.assertTrue(seen.stream().anyMatch(e -> e.kind() == FxKind.BOLT && new Vec3(e.x(), e.y(), e.z()).distanceTo(ball) < 1e-3),
+                        "a bolt's first step starts at its ball " + ball);
+            }
+            h.succeed();
+        });
     }
 
     private static boolean hasKeyAt(JsonObject clip, double seconds) {

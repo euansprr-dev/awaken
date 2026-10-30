@@ -88,5 +88,11 @@
   "subtitles.awaken.power.tier3_tech": "Power swells",
   "subtitles.awaken.power.tier5_tech": "Awakened power roars",
   "subtitles.awaken.power.tier3_spirit": "Power swells",
-  "subtitles.awaken.power.tier5_spirit": "Awakened power roars"
+  "subtitles.awaken.power.tier5_spirit": "Awakened power roars",
+  "subtitles.awaken.power.lightning_charge": "Lightning crackles",
+  "subtitles.awaken.power.lightning_full": "Lightning is fully charged",
+  "subtitles.awaken.power.lightning_release": "A bolt cracks",
+  "subtitles.awaken.power.lightning_boom": "The air booms",
+  "subtitles.awaken.power.lightning_sizzle": "A bolt sizzles past",
+  "subtitles.awaken.power.lightning_thunder": "Thunder strikes"
 }
