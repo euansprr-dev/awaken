@@ -88,7 +88,7 @@ floorReward(r,f) = SHARE[r] * xpToNext(RANK_MID[r]) * 1.4^(f-1)
    60% is the floor bonus, carried as "Satchel XP" and banked only on extraction or boss kill
 gate below your rank pays x0.3
 home activity XP ~ 1.2% of a level per active minute (capped per minute; see §4.3)
-Daily Regimen    = 0.25 * xpToNext(L) + 1 stat point
+Daily Regimen    = 0.25 * xpToNext(L) + 1 stat point   (gone since §27.13)
 death            = lose Satchel (items + Satchel XP), keep gear & kill XP, gain Insight, Fracture 8 min (Hunter mode)
 story length     = config multiplier on all XP: 2.0 (≈50 h), 1.0 (≈100 h, default), 0.67 (≈150 h)
 ```
@@ -804,7 +804,8 @@ Story effects on the world:
 
 Plan v2 · onboarding and progression (details in docs/modules/onboarding.md):
 - Rank floor-reward shares E .28, D .16, C .065, B .22, A .60, S .55, Sovereign .50 (sim: level 50 ≈ 56 h, 135 ≈ 101 h for a
-  balanced player, 120 h careful); Daily Regimen = 0.1 × xpToNext + 1 point.
+  balanced player, 120 h careful); Daily Regimen = 0.1 × xpToNext + 1 point (the Regimen is gone since §27.13; floors pay
+  more through `Curve.WILDS_TRIM` 0.94).
 - §4.3 is replaced: home XP = kill 4% × min(2, hp/20), ore 1%, block 0.05% of a level, each through diminishing returns per
   source (10-minute tally; budgets kill .15, ore .06, build .03, other .25 of a level per 10 min), tapered by
   1/(1 + levels above the content / 10). Discoveries (`Progression.discover`) are uncapped.
@@ -945,7 +946,8 @@ Plan v2 · the Hearth guide (details in docs/modules/hearth.md):
   made (only terrain, plants and up to three natural trees give way); 9×9 outside, 7×7×4 inside, ten biome palettes,
   raised over ~7 s; its room is a Sanctuary on completion.
 
-Plan v2 · Anchor requests (details in docs/modules/requests.md):
+Plan v2 · Anchor requests (details in docs/modules/requests.md; **gone since §27.13**: none is offered, handed-in items
+come back, earned Forge credit still pays, Core Shards still drop):
 - Once a player has a Hearth Anchor, the System asks for materials they can really get (sightings, vanilla stats, depth,
   rank): one request at a time, two from C-rank, offered quietly with a one play-day ttl, renewed per free slot each
   play-day and after each delivery; nothing lost for ignoring, declining or dropping one.
@@ -7859,7 +7861,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   Lumen canopy: `LivingNet.CampSmoke`, `PulseFx.campfire`), lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
   so from the gate there was nothing there yet).
 - **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
-  the player (4 play-days), "Your first gate will open somewhere outside the city walls." Accepted Directives show on the Now
+  the player (4 play-days; since §27.13 "Your first job", never fading), "Your first gate will open somewhere outside the city walls." Accepted Directives show on the Now
   line with their progress ("· 50%", priority 58). Before, the Registry's was a random roll offered quietly, its waiting
   line gone in 30 s, and accepted ones never showed outside K.
 - **The first gate, on purpose** (`Director.firstGate`, SPEC §21.0.14 finally built): a player's first gate waits until
@@ -10257,6 +10259,9 @@ band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); 
   | Truths | the Path choice (0), Truths (10–30), THE ROAD (35), TITLES (40), LATENTS (50) |
   | Codex | THE BOARD (0), HAPPENINGS WITNESSED (460) |
   | Map | the map in the world (§30.5), or the Atlas table |
+  Since §27.13 (2026-10-30) the Truths page's sections stand on Status (700-750), NOW, DIRECTIVES, DAILY REGIMEN and
+  ANCHOR REQUESTS are gone from the Journal (Now is the Tasks page's), the Hearth sections are the Hearth page's, and
+  the Codex is the Journal's LORE & PLACES category (§27.13 "The Journal is a catalogue").
 
 - **Gates on the Atlas** (`MapMarks.Gate`, `MapMarks.registerGates`, `MapMarks.gates`):
   - Every gate whose pillar you can see (the gates module, from the synced beacons) and each gate your scanner read (the
@@ -10384,16 +10389,16 @@ really sharp, with the clouds and everything".
   the sockets it fits light amber with corner ticks. Esc lets go of a pick before it closes the band. The card's height
   fits the longest description you own, so the page never jumps.
 - **Journal:**
-  - **Filters** across the top (`progression.client.JournalFilters`): EVERYTHING, TASKS, FINDS, MESSAGES; click one or
-    Q / E. Each section names its filter (`StatusSections.Section.shelf()`, TASKS by default; the filed lines and
-    RECORDS are FINDS, RECENT MESSAGES is MESSAGES; null shows under every filter). Screens ask
-    `StatusSections.shows(tab, section)`.
+  - **Categories** across the top (`progression.client.JournalFilters`; since §27.13 in place of EVERYTHING, TASKS,
+    FINDS, MESSAGES): CREATURES, BEASTS, BELLS, GATE WORLDS, CAVE REGIONS, HAPPENINGS, LORE & PLACES, YOUR STORY, each
+    with how many you've found; click one or Q / E. Each section names its category (`StatusSections.Section.shelf()`,
+    YOUR STORY by default; null shows under every one). Screens ask `StatusSections.shows(tab, section)`.
   - **TRACKING** leads (`living.client.JournalSection`, order −40): the tracked chain's name in white on a lit horizon
     bar and "▸" the step you're on; the other chains and bounties follow under ALSO ON, one line each with their step
     in small type. With nothing tracked the heading is CHAINS.
   - The page's filed lines are its **LOG** ("LOG · 2 NEW"); the Status page keeps "JOURNAL".
 - **Truths:** each Truth on its own card of glass, its bar amber while it waits on you and green once true; "Gives:"
-  instead of "Reward:".
+  instead of "Reward:". Since §27.13 on Status: TRUTHS (yours) and CLOSEST TO TRUE (the three nearest), no declaring.
 - **Narration** (`StatusSections.narrate`, spoken only when the vanilla narrator is on): a page change ("Journal
   page"), a stat's focus ("Agility 22. You move faster, and Flow builds sooner. 3 points to place."), a power picked
   (its name, what it does, what to press), a gate picked on the map (its name, distance, when it breaks, "Press T to be
