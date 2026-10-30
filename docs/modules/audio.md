@@ -315,7 +315,8 @@ context of four stems; each level sounds exactly the stems up to its own; every 
 exactly the manifest's length, whole bars at the tempo; combat attacks within a second), `audio_layers_loudness`
 (every theme's stems decoded in Java with JOrbis to exactly the loop's frames; every level's mix -19 ± 2 dBFS gated RMS
 and ≤ -1 dBTP; each stem alone ≤ -1 dBTP; runs off the server thread, in a batch of its own so its load never skews
-another test's timing), `audio_layers_watch` (a husk near and then hunting a player, a pig ignored, the whole loop
+another test's timing, and each tick waits up to 20 ms on the decode: alone, the server ticks so fast that its tick
+ceiling once passed in three minutes, before the decode finished), `audio_layers_watch` (a husk near and then hunting a player, a pig ignored, the whole loop
 with a real blow and a real Lord: tension, combat, Lord, the Lord's fall), `audio_layers_payload`,
 `compat_spr_dry_list` (the pack's SPR config: every key a real event set to 0, every `music.*` and `ui.*` event, the
 System's five and the Ritual's six voices dry; mods.json ships it).
