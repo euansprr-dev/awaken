@@ -54,11 +54,14 @@ So, **changes to BELLS.md that are not written down yet** (do this first, small 
   bosses; looks are bold; no daily tasks.
 
 ## State
-- `35b38bae5`: the plan docs. `f91e0dbad`: base merged. **`70c02badc`: stage 1, pushed.** CI run 41036534030
-  (dispatched 09:52 UTC) was still running at hand-off. Check it:
-  `gh run view 41036534030 --repo euansprr-dev/awaken --json conclusion`. If a `bells_` test failed, fix it first:
-  `gh run view <id> --repo euansprr-dev/awaken --log-failed | grep -iE "bells_|fail"`.
-  (`build/awaken-v1` itself had a red run, 41033510874; that one isn't ours.)
+- **Stage 1 is merged into `build/awaken-v1` at 8c7de144b.** Its last CI run was green: 41042539142 on 500813d3f.
+  Our branch was then fast-forwarded to 8c7de144b, so it also carries the tasks session's first batch and the kin
+  test fixes. Start stage 2 from here; no merge is needed first. The orchestrator wants each stage handed back green
+  on CI, with the run id.
+- Test lesson from stage 1: `makeMockServerPlayerInLevel` puts the player at world spawn. In the full CI batch that's
+  far from your test's structure, so if a rule depends on distance, `snapTo` the player next to the thing first.
+  (`bells_lord_keeps` failed on CI for this reason; fixed in 500813d3f.)
+- To check a failure: `gh run view <id> --repo euansprr-dev/awaken --log-failed | grep -iE "bells_|fail"`.
 - Stage 1 delivered:
   - Nothing lies in the open. `BellSites` is retired: old built places are cleared when a player comes within 96, and old
     leads close once, with a line.
