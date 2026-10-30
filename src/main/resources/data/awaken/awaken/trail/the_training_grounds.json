@@ -12,6 +12,9 @@
     {
       "id": "course",
       "text": "Place a Start Gate, numbered Checkpoint Rings and a Finish Gate.",
+      "done": [
+        "counter:awaken:training_laps"
+      ],
       "hint": "Rings join the nearest Start Gate in the order you place them.",
       "manual": true
     },

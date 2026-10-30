@@ -218,6 +218,47 @@ final class HomeTests {
             }
         });
 
+        // Euan, 2026-10-30: the guide lit a Kitchen's crafting table and furnace that stood in his bedroom, and the
+        // Sanctuary's "all of it in one room" (a door icon) stayed red in a closed room. What's green must be true.
+        AwakenTests.registerIsolated("hearth_guide_one_room", 600, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos origin = h.absolutePos(BlockPos.ZERO);
+            BlockPos base = new BlockPos((origin.getX() & ~15) + 4, origin.getY() + 110, (origin.getZ() & ~15) + 4);
+            HearthData data = HearthData.get(level.getServer());
+            UUID owner = UUID.randomUUID();
+            HearthRecord rec = new HearthRecord(owner, "test", base.offset(4, 12, 4), HearthService.OVERWORLD);
+            level.setBlock(rec.pos, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
+            data.put(rec);
+            BlockPos loose = base.offset(-3, 1, 4);
+            try {
+                fineRoom(level, base); // a bed and a furnace in one closed room
+                level.setBlock(base.offset(5, 1, 6), Blocks.CRAFTING_TABLE.defaultBlockState(), 3);
+                level.setBlock(loose, Blocks.BARREL.defaultBlockState(), 3); // out in the open: it counts for no room
+                HearthService.scanNow(level, rec);
+                var kitchen = dev.awaken.hearth.guide.Guide.card(RoomType.KITCHEN, rec);
+                int inRoom = dev.awaken.hearth.room.Furniture.CRAFTING.bit() | dev.awaken.hearth.room.Furniture.COOKER.bit();
+                h.assertTrue(kitchen.have() == inRoom && !kitchen.room().isEmpty() && kitchen.roomKind().equals("Bedroom"),
+                        "the Kitchen ticks the table and stove in the bedroom, not the loose barrel: have " + kitchen.have() + ", room '"
+                                + kitchen.room() + "', kind '" + kitchen.roomKind() + "'");
+                var sanctuary = dev.awaken.hearth.guide.Guide.card(RoomType.SANCTUARY, rec);
+                h.assertTrue(sanctuary.have() == dev.awaken.hearth.room.Furniture.BED.bit() && !sanctuary.room().isEmpty(),
+                        "the Sanctuary ticks the bed and names its closed room: " + sanctuary.have() + " '" + sanctuary.room() + "'");
+                // a barrel in that same room: it's a Kitchen and still a Bedroom
+                level.setBlock(base.offset(6, 1, 4), Blocks.BARREL.defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                Room both = at(rec, base.offset(3, 1, 3));
+                h.assertTrue(both != null && both.types().contains(RoomType.KITCHEN) && both.types().contains(RoomType.BEDROOM),
+                        "one room, two kinds: " + (both == null ? "gone" : both.types()));
+                h.assertFalse(dev.awaken.hearth.guide.Guide.card(RoomType.KITCHEN, rec).built().isEmpty(), "the guide says the Kitchen is built");
+                h.succeed();
+            } finally {
+                data.remove(owner);
+                level.removeBlock(rec.pos, false);
+                level.removeBlock(loose, false);
+                clear(level, base, 9, 6, 9);
+            }
+        });
+
         AwakenTests.registerIsolated("hearth_rested", 600, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer sp = h.makeMockServerPlayerInLevel();

@@ -94,7 +94,13 @@ public final class Tips {
         TipRules.Count c = count(id);
         COUNTS.put(id, new TipRules.Count(c.shown(), c.done() + 1));
         save();
-        if (id.equals(current) && endAt < 0) endAt = ticks; // done: it goes at once, felt as done
+        if (id.equals(current)) {
+            if (endAt < 0) endAt = ticks; // done: it goes at once, felt as done
+        } else {
+            // still waiting for a quiet moment: done already, so it never shows (SPEC §27.12)
+            SINCE.remove(id);
+            UNTIL.remove(id);
+        }
     }
 
     static boolean on() {

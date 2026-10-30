@@ -1,0 +1,775 @@
+<title>One Tasks Page</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Pixelify+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column for the plan; the band mockups sit wider than the text, drawn in the game's own glass.
+   The page follows the viewer's theme; the mockups keep the in-game look in both. */
+:root {
+  --bg: #f2f4f6;
+  --panel: #e5e9ed;
+  --ink: #16202a;
+  --muted: #56636f;
+  --rule: #cfd7de;
+  --accent: #1d6a93;     /* the band's edge, darkened for paper */
+  --amber: #9d5c0b;      /* the Hearth's lantern */
+  --good: #2c7342;
+  --gone: #a6422a;
+  --display: "Saira Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --pixel: "Pixelify Sans", "Courier New", monospace;
+  /* the game's glass: the same in both themes on purpose */
+  --g-bg: #0c1420;
+  --g-rail: #0a1019;
+  --g-tile: #111d2c;
+  --g-edge: #86c9f0;
+  --g-text: #f2f6fa;
+  --g-label: #8fa3b8;
+  --g-dim: #4f6175;
+  --g-amber: #f0b45a;
+  --g-good: #8fd49a;
+  --g-lit: #16263a;
+  --g-wood: #a8754a;
+  --g-stone: #8e98a3;
+  --g-iron: #c9d2db;
+  --g-cloth: #c45a4a;
+  --g-copper: #d07a43;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141a; --panel: #18202a; --ink: #e2e8ee; --muted: #93a1af; --rule: #28323d;
+  --accent: #86c9f0; --amber: #e8a64e; --good: #8cc98a; --gone: #e47f63; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f141a; --panel: #18202a; --ink: #e2e8ee; --muted: #93a1af; --rule: #28323d;
+  --accent: #86c9f0; --amber: #e8a64e; --good: #8cc98a; --gone: #e47f63; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16.5px; line-height: 1.58; }
+.wrap { max-width: 800px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 18px; }
+.wide { max-width: 1080px; width: 100%; margin-inline: auto; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.1; margin: 0; }
+h1 { font-size: clamp(2.6rem, 8vw, 4.2rem); font-weight: 700; letter-spacing: 0.01em; }
+h2 { font-size: 1.8rem; font-weight: 700; margin-top: 40px; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+ul, ol { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; max-width: 68ch; }
+a { color: var(--accent); }
+b, strong { font-weight: 700; }
+code { font-family: var(--mono); font-size: 0.84em; }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.2rem; line-height: 1.5; }
+.muted { color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--mono); font-size: 0.78rem; color: var(--muted);
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding-block: 10px; }
+.meta b { color: var(--ink); font-weight: 600; }
+.quotes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 760px) { .quotes { grid-template-columns: minmax(0, 1fr); } }
+.quote { border-left: 3px solid var(--amber); padding: 2px 0 2px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.quote p { font-style: italic; font-size: 0.93rem; }
+.quote cite { font-style: normal; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+
+/* findings */
+.findings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.find { background: var(--panel); padding: 14px 16px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.find .big { font-family: var(--display); font-size: 2.2rem; font-weight: 700; line-height: 1; color: var(--accent); }
+.find p { font-size: 0.88rem; color: var(--muted); }
+@media (max-width: 760px) { .findings { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* tables */
+.tbl { overflow-x: auto; border-top: 1px solid var(--rule); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th { text-align: left; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  font-weight: 600; padding: 10px 10px 8px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td:first-child { font-weight: 700; }
+td .sub { display: block; font-weight: 400; color: var(--muted); font-size: 0.82rem; }
+tr.group td { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+  font-weight: 600; padding-top: 18px; border-bottom: none; }
+.where { display: inline-block; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 1px 7px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap; }
+.w-tasks { color: var(--accent); }
+.w-hearth { color: var(--amber); }
+.w-journal, .w-status, .w-stays { color: var(--good); }
+.w-gone { color: var(--gone); }
+
+/* the three ways */
+.ways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.way { background: var(--panel); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.way.pick { box-shadow: inset 0 0 0 2px var(--accent); }
+.way .eyebrow { color: var(--muted); }
+.way.pick .eyebrow { color: var(--accent); }
+.way p { font-size: 0.9rem; color: var(--muted); }
+.way p b { color: var(--ink); }
+@media (max-width: 760px) { .ways { grid-template-columns: minmax(0, 1fr); } }
+
+/* the goal ladder */
+.ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.rung { background: var(--panel); border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.rung .eyebrow { font-size: 0.66rem; color: var(--muted); }
+.rung h3 { font-size: 1rem; }
+.rung p { font-size: 0.84rem; color: var(--muted); }
+@media (max-width: 760px) { .ladder { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* the band mockups: the game's glass */
+.mock { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.mock > p { font-size: 0.92rem; color: var(--muted); max-width: none; }
+.mock > p b { color: var(--ink); }
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 900px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+.band { display: grid; grid-template-columns: 64px minmax(0, 1fr); background: var(--g-bg);
+  border: 1px solid color-mix(in srgb, var(--g-edge) 45%, transparent); border-radius: 4px; font-family: var(--pixel);
+  color: var(--g-text); font-size: 13px; line-height: 1.35; overflow: hidden; }
+.rail { background: var(--g-rail); border-right: 1px solid color-mix(in srgb, var(--g-edge) 25%, transparent); display: flex; flex-direction: column; padding-block: 6px; }
+.node { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px; color: var(--g-dim);
+  font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; }
+.node svg { width: 14px; height: 14px; }
+.node.lit { background: var(--g-lit); color: var(--g-text); }
+.node.lit::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--g-edge); }
+.node b { position: absolute; top: 3px; right: 8px; min-width: 13px; height: 13px; border-radius: 7px; background: var(--g-edge); color: var(--g-bg);
+  font-size: 9px; line-height: 13px; text-align: center; font-weight: 500; }
+.content { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tabs { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-dim);
+  border-bottom: 1px solid color-mix(in srgb, var(--g-edge) 20%, transparent); padding-bottom: 5px; }
+.tabs span { position: relative; padding-bottom: 2px; }
+.tabs .on { color: var(--g-text); }
+.tabs .on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; background: var(--g-edge); }
+.tabs .dot::before { content: "• "; color: var(--g-edge); }
+.st { font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--g-label); }
+.lbl { color: var(--g-label); font-size: 12px; }
+.amb { color: var(--g-amber); }
+.ok { color: var(--g-good); }
+.dim { color: var(--g-dim); }
+.btn { font-size: 11px; padding: 1px 7px; border: 1px solid color-mix(in srgb, var(--g-edge) 55%, transparent); color: var(--g-edge); border-radius: 2px; white-space: nowrap; }
+.next { border: 1px solid color-mix(in srgb, var(--g-edge) 55%, transparent); background: color-mix(in srgb, var(--g-edge) 8%, transparent);
+  padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; }
+.next .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.next .what { font-size: 15px; }
+.why { color: var(--g-label); font-size: 12px; }
+.opts { display: flex; flex-direction: column; }
+.opt { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 5px 0;
+  border-top: 1px solid color-mix(in srgb, var(--g-edge) 10%, transparent); }
+.opt .tag { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--g-edge); }
+.opt .tag.h { color: var(--g-amber); }
+.opt .why { display: block; }
+.opt .r { color: var(--g-label); font-size: 12px; white-space: nowrap; }
+.opt.optional .tag { color: var(--g-dim); }
+.need { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 0;
+  border-top: 1px solid color-mix(in srgb, var(--g-edge) 10%, transparent); }
+.need svg { width: 20px; height: 20px; }
+.need .src { display: block; color: var(--g-label); font-size: 11.5px; }
+.need .n { font-size: 12px; white-space: nowrap; }
+.sets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.set { background: var(--g-tile); border: 1px solid color-mix(in srgb, var(--g-edge) 15%, transparent); padding: 6px 4px; display: flex;
+  flex-direction: column; align-items: center; gap: 3px; text-align: center; font-size: 11px; min-width: 0; }
+.set svg { width: 30px; height: 30px; }
+.set.pick { border-color: var(--g-edge); background: var(--g-lit); }
+.set small { color: var(--g-label); font-size: 9.5px; }
+
+/* hearth page */
+.home { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.crest { width: 44px; height: 44px; border: 1px solid color-mix(in srgb, var(--g-amber) 60%, transparent); display: grid; place-items: center; }
+.crest svg { width: 30px; height: 30px; }
+.home .name { font-size: 17px; color: var(--g-amber); }
+.pips { display: inline-flex; gap: 2px; vertical-align: middle; }
+.pips i { width: 7px; height: 7px; background: var(--g-dim); }
+.pips i.on { background: var(--g-amber); }
+.rooms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.room { background: var(--g-tile); border: 1px solid color-mix(in srgb, var(--g-edge) 12%, transparent); padding: 6px 5px; display: flex;
+  flex-direction: column; gap: 3px; align-items: center; text-align: center; min-width: 0; }
+.room svg { width: 26px; height: 26px; }
+.room .rn { font-size: 11.5px; }
+.room .rg { font-size: 9.5px; color: var(--g-label); line-height: 1.2; }
+.room.built { border-color: color-mix(in srgb, var(--g-good) 70%, transparent); }
+.room.built .rn { color: var(--g-good); }
+.room.doing { border-color: var(--g-amber); }
+.room.doing .rn { color: var(--g-amber); }
+.room.locked { opacity: 0.45; }
+.room.optional { border-style: dashed; }
+.beasts { display: flex; gap: 6px; flex-wrap: wrap; }
+.nook { width: 46px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9.5px; color: var(--g-label); }
+.nook div { width: 30px; height: 30px; border: 1px dashed var(--g-dim); display: grid; place-items: center; }
+.nook.full div { border: 1px solid var(--g-amber); }
+.nook svg { width: 22px; height: 22px; }
+.look { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; font-size: 12px; }
+.bars { display: inline-flex; gap: 3px; }
+.bars span { display: inline-flex; flex-direction: column; align-items: center; font-size: 8px; color: var(--g-label); gap: 1px; }
+.bars i { width: 14px; height: 4px; background: var(--g-dim); }
+.bars i.l1 { background: #a2793f; } .bars i.l2 { background: #c99a4c; } .bars i.l3 { background: var(--g-good); }
+
+/* journal catalogue */
+.cats { display: flex; flex-wrap: wrap; gap: 4px; }
+.cat { font-size: 10.5px; padding: 2px 6px; border: 1px solid color-mix(in srgb, var(--g-edge) 25%, transparent); color: var(--g-label); }
+.cat.on { border-color: var(--g-edge); color: var(--g-text); background: var(--g-lit); }
+.cat em { font-style: normal; color: var(--g-dim); margin-left: 4px; }
+.cat.on em { color: var(--g-edge); }
+.slots { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.slot { background: var(--g-tile); border: 1px solid color-mix(in srgb, var(--g-edge) 12%, transparent); aspect-ratio: 1 / 1.1; max-width: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 9px; color: var(--g-label); min-width: 0; }
+.slot svg { width: 24px; height: 24px; }
+.slot .no { color: var(--g-dim); font-size: 8.5px; }
+.slot.unknown { color: var(--g-dim); }
+.slot.unknown b { font-size: 16px; font-weight: 400; }
+.slot.sel { border-color: var(--g-edge); background: var(--g-lit); color: var(--g-text); }
+.entry { border-top: 1px solid color-mix(in srgb, var(--g-edge) 20%, transparent); padding-top: 7px; display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 8px; }
+.entry .pic { width: 54px; height: 54px; background: var(--g-tile); display: grid; place-items: center; }
+.entry .pic svg { width: 40px; height: 40px; }
+.entry p { font-size: 12px; color: var(--g-label); margin: 0; }
+.entry .t { color: var(--g-text); font-size: 14px; }
+
+/* before / after */
+.cases { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--rule); }
+.case { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 20px; padding-block: 14px; border-bottom: 1px solid var(--rule); }
+.case h3 { grid-column: 1 / -1; font-size: 1.05rem; }
+.case div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.case .eyebrow { font-size: 0.66rem; }
+.case .before .eyebrow { color: var(--gone); }
+.case .after .eyebrow { color: var(--good); }
+.case p { font-size: 0.92rem; }
+@media (max-width: 640px) { .case { grid-template-columns: minmax(0, 1fr); } }
+
+/* contract rules */
+.rules { display: flex; flex-direction: column; border-top: 1px solid var(--rule); }
+.rule { display: grid; grid-template-columns: 11em minmax(0, 1fr); gap: 4px 16px; padding-block: 11px; border-bottom: 1px solid var(--rule); }
+.rule h3 { font-family: var(--body); font-size: 0.95rem; font-weight: 700; }
+.rule p { font-size: 0.92rem; color: var(--muted); }
+.rule p b { color: var(--ink); }
+@media (max-width: 640px) { .rule { grid-template-columns: minmax(0, 1fr); } }
+
+/* phases */
+.phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.phase { background: var(--panel); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.phase p { font-size: 0.86rem; color: var(--muted); }
+@media (max-width: 860px) { .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .phases { grid-template-columns: minmax(0, 1fr); } }
+
+/* decisions */
+.decisions { display: flex; flex-direction: column; gap: 10px; counter-reset: d; }
+.decision { background: var(--panel); border-radius: 6px; padding: 14px 16px 14px 52px; position: relative; display: flex; flex-direction: column; gap: 6px; }
+.decision::before { counter-increment: d; content: counter(d); position: absolute; left: 16px; top: 12px; font-family: var(--display);
+  font-weight: 700; font-size: 1.5rem; color: var(--accent); }
+.decision p { font-size: 0.93rem; }
+.decision .rec { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.06em; color: var(--good); text-transform: uppercase; }
+.decision .alt { color: var(--muted); font-size: 0.88rem; }
+.done-box { background: var(--panel); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.done-box p, .done-box li { font-size: 0.92rem; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-status" viewBox="0 0 16 16"><rect x="5" y="2" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2 15c0-4 3-5 6-5s6 1 6 5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="i-tasks" viewBox="0 0 16 16"><path d="M2 4h2M6 4h8M2 8h2M6 8h8M2 12h2M6 12h8" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-hearth" viewBox="0 0 16 16"><path d="M2 8l6-5 6 5v6H2z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 13c-2 0-2-2-1-3 0 1 1 1 1 0s1-2 1-2c1 1 2 2 1 4-.3.6-1 1-2 1z" fill="currentColor"/></symbol>
+    <symbol id="i-powers" viewBox="0 0 16 16"><path d="M9 1L3 9h4l-1 6 6-8H8z" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+    <symbol id="i-journal" viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 6h4M6 9h4" stroke="currentColor" stroke-width="1.4"/></symbol>
+    <symbol id="i-map" viewBox="0 0 16 16"><path d="M1 3l4.5-1.5 5 2L15 2v11l-4.5 1.5-5-2L1 14z M5.5 1.5v11 M10.5 3.5v11" fill="none" stroke="currentColor" stroke-width="1.3"/></symbol>
+    <symbol id="p-bed" viewBox="0 0 16 16"><rect x="1" y="8" width="14" height="4" fill="#c45a4a"/><rect x="1" y="7" width="4" height="3" fill="#e9e3d6"/><rect x="1" y="12" width="2" height="3" fill="#a8754a"/><rect x="13" y="12" width="2" height="3" fill="#a8754a"/></symbol>
+    <symbol id="p-stove" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="#8e98a3"/><rect x="5" y="8" width="6" height="4" fill="#20262c"/><rect x="6" y="9" width="4" height="2" fill="#f0b45a"/></symbol>
+    <symbol id="p-anvil" viewBox="0 0 16 16"><rect x="1" y="4" width="14" height="3" fill="#c9d2db"/><rect x="5" y="7" width="6" height="4" fill="#9aa5b1"/><rect x="3" y="11" width="10" height="3" fill="#7f8a96"/></symbol>
+    <symbol id="p-stand" viewBox="0 0 16 16"><rect x="5" y="2" width="6" height="7" fill="#c45a4a"/><rect x="4" y="3" width="8" height="2" fill="#d07a43"/><rect x="7.3" y="9" width="1.4" height="5" fill="#a8754a"/><rect x="4" y="14" width="8" height="1" fill="#a8754a"/></symbol>
+    <symbol id="p-table" viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="4" fill="#a8754a"/><rect x="3" y="3" width="3" height="2" fill="#6b4a2c"/><rect x="9" y="3" width="4" height="2" fill="#6b4a2c"/><rect x="2" y="7" width="12" height="7" fill="#8a5f3a"/></symbol>
+    <symbol id="p-mat" viewBox="0 0 16 16"><rect x="1" y="10" width="14" height="3" fill="#7b62b0"/><rect x="7" y="9" width="2" height="2" fill="#c7a7ff"/></symbol>
+    <symbol id="p-barrel" viewBox="0 0 16 16"><rect x="3" y="2" width="10" height="12" fill="#8a5f3a"/><rect x="3" y="4" width="10" height="1.5" fill="#5d4127"/><rect x="3" y="10.5" width="10" height="1.5" fill="#5d4127"/></symbol>
+    <symbol id="p-forge" viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="11" fill="#8b4a3a"/><rect x="4" y="7" width="8" height="5" fill="#20262c"/><rect x="5" y="9" width="6" height="2" fill="#ff8a3d"/></symbol>
+    <symbol id="p-book" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="#8a5f3a"/><rect x="3" y="4" width="2" height="4" fill="#3c6aa6"/><rect x="6" y="4" width="2" height="4" fill="#a63c3c"/><rect x="9" y="4" width="2" height="4" fill="#3ca65e"/><rect x="3" y="10" width="2" height="3" fill="#c9a33c"/></symbol>
+    <symbol id="p-leaf" viewBox="0 0 16 16"><path d="M3 13c0-6 4-10 10-10 0 6-4 10-10 10z" fill="#5fa04e"/><path d="M3 13l7-7" stroke="#2f5d27" stroke-width="1"/></symbol>
+    <symbol id="p-bell" viewBox="0 0 16 16"><path d="M4 12c0-5 1-8 4-8s4 3 4 8z" fill="#d6a94a"/><rect x="3" y="12" width="10" height="1.5" fill="#b8892f"/><rect x="7" y="13.5" width="2" height="1.5" fill="#8a6420"/></symbol>
+    <symbol id="p-iron" viewBox="0 0 16 16"><path d="M2 11l3-5h8l-3 5z" fill="#c9d2db"/><path d="M2 11h8l3-5v2l-3 5H2z" fill="#8e98a3"/></symbol>
+    <symbol id="p-copper" viewBox="0 0 16 16"><path d="M2 11l3-5h8l-3 5z" fill="#e39a63"/><path d="M2 11h8l3-5v2l-3 5H2z" fill="#a8582c"/></symbol>
+    <symbol id="p-hide" viewBox="0 0 16 16"><path d="M3 3h10l-1 4 1 6H3l1-6z" fill="#9b6b42"/><path d="M5 5h6" stroke="#6e4a2c"/></symbol>
+    <symbol id="p-wool" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" fill="#e9e3d6"/><path d="M2 6h12M2 9h12" stroke="#c9c1b0"/></symbol>
+    <symbol id="p-heart" viewBox="0 0 16 16"><path d="M8 14L2 7.5C.5 5.5 2 2.5 4.5 2.5 6 2.5 7 3.5 8 5c1-1.5 2-2.5 3.5-2.5C14 2.5 15.5 5.5 14 7.5z" fill="#b02a3a"/><path d="M5 5l2 2" stroke="#ff7b8a"/></symbol>
+    <symbol id="p-helm" viewBox="0 0 32 32"><path d="M7 18c0-8 4-12 9-12s9 4 9 12v6h-5v-6h-8v6H7z" fill="currentColor"/></symbol>
+    <symbol id="c-lamp" viewBox="0 0 16 16"><ellipse cx="8" cy="9" rx="4" ry="3" fill="#e8c27a"/><path d="M4 8L1 5l3 1zM12 8l3-3-3 1z" fill="#cfa45c"/><circle cx="8" cy="9" r="1.4" fill="#fff3c4"/></symbol>
+    <symbol id="c-bun" viewBox="0 0 16 16"><ellipse cx="8" cy="10" rx="5" ry="3.5" fill="#b9946b"/><rect x="5" y="3" width="1.6" height="5" fill="#b9946b"/><rect x="9" y="3" width="1.6" height="5" fill="#b9946b"/></symbol>
+    <symbol id="c-boar" viewBox="0 0 16 16"><rect x="2" y="6" width="11" height="6" fill="#6b4a3a"/><rect x="11" y="7" width="4" height="4" fill="#7d5a48"/><rect x="3" y="12" width="2" height="2" fill="#4a3226"/><rect x="10" y="12" width="2" height="2" fill="#4a3226"/></symbol>
+    <symbol id="c-wisp" viewBox="0 0 16 16"><circle cx="8" cy="7" r="4" fill="#9fd8ff" opacity="0.8"/><path d="M6 11c0 2 2 3 2 4M10 11c0 2-1 3-1 4" stroke="#9fd8ff"/></symbol>
+    <symbol id="c-sprite" viewBox="0 0 16 16"><circle cx="8" cy="7" r="3" fill="#f6d2e8"/><path d="M5 7L1 4l2 5zM11 7l4-3-2 5z" fill="#ffe2f2" opacity="0.85"/><circle cx="8" cy="7" r="1.2" fill="#fff"/><path d="M7 10l1 4 1-4" fill="#d9a3c4"/></symbol>
+    <symbol id="c-fish" viewBox="0 0 16 16"><ellipse cx="7" cy="8" rx="5" ry="3" fill="#7fd1c3"/><path d="M12 8l3-3v6z" fill="#5fb3a5"/></symbol>
+    <symbol id="c-stag" viewBox="0 0 16 16"><rect x="3" y="7" width="9" height="5" fill="#a77a52"/><rect x="11" y="4" width="3" height="4" fill="#a77a52"/><path d="M12 4l-2-3M13 4l2-3" stroke="#e3d2b0"/><rect x="4" y="12" width="1.5" height="3" fill="#6e4a2c"/><rect x="10" y="12" width="1.5" height="3" fill="#6e4a2c"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <span class="eyebrow">AWAKEN · plan for approval · 30 October 2026 · branch claude/tasks-one-list-15b9e8</span>
+  <h1>One Tasks page</h1>
+  <p class="lede">Core goals drive everything. The band gets one Tasks page with a tab for each goal, every need saying
+    where it comes from; a Hearth page you read at a glance; and a Journal that's a catalogue of everything you can
+    discover, with the slots you haven't filled yet. The Truths page, the Codex page and every list that asks you to pick
+    from a menu go, and what each gave you lands somewhere sensible.</p>
+  <div class="meta">
+    <span>Pages <b>7 → 6</b></span>
+    <span>Lists to choose from <b>5 → 0</b></span>
+    <span>Places that hold to-dos <b>11 → 1</b></span>
+    <span>New blocks or items <b>none</b></span>
+  </div>
+
+  <div class="quotes">
+    <div class="quote"><p>"Let's only have tasks and not truths or other things to choose. Let's just keep the journal for
+      discoveries, then one single tasks tab which contains all the things you can do right now, and also a tab for your
+      hearth specifically."</p><cite>Euan, 30 October, playing 748dfae3</cite></div>
+    <div class="quote"><p>"You have core goals that then naturally make you know what you need to do next ... if I need
+      iron and this and this, then I know that I'm going to do some mining."</p><cite>Euan, the same day</cite></div>
+    <div class="quote"><p>"The Hearth page is just like too much text ... big blocks of text everywhere ... make it more clear
+      what you need to do to actually improve your hearth and make it look good."</p><cite>Euan, the same day</cite></div>
+  </div>
+
+  <h2>What you're after</h2>
+  <p><b>The job:</b> at any moment, know what you're working toward and what to do next for it, and trust that nothing on
+    the list is done already. <b>The pain:</b> the game told you to do things you'd done; its offers are scattered over
+    eleven sections, half of them menus; the Hearth page is walls of text; and when you got home with a bed built, nothing
+    said whether to go mining, build a kitchen, make armour or take a gate. Asked for amethyst, it listed creatures you'd
+    never seen instead of "mine a geode".</p>
+  <p><b>What it should feel like:</b> a few big goals (your home, your armour, your weapon, your beasts, the bells, your
+    rank), each showing exactly what it needs and where each need comes from, so "I need iron, so I'll go mining" follows
+    on its own. One clear next step on top, the other options under it with why they matter, optional upgrades marked
+    optional.</p>
+  <p><b>Strong:</b> back home with a bed, the Tasks page says "Build your Armoury: a Fitting Stand and a crafting table in
+    one room", and under it your first armour, your first gate and its Lord's Heart with the distance, the humming bell and
+    the Burrowbuns, each with one line of why. <b>Weak:</b> the same lists regrouped into tabs. <b>Unacceptable:</b> a done thing anywhere, the same
+    goal twice, a wall of text, a basic need hidden behind a room without saying so, or a reward the game used to give
+    lost.</p>
+  <p><b>Keep:</b> the top-right card and the top-left place (one each), Status first on K, Powers and Map as they are, E
+    armour makeable in the first hour, the Mat's amethyst recipe, and "found, not told": no daily lists, nothing naming a
+    boss before you meet it. <b>Not in this plan:</b> new quests or content, the Powers and Map pages, the toasts' look,
+    and the bell frame's own design (bells-early's; the Bells tab is where its first step goes).</p>
+
+  <h2>Part 1 is built</h2>
+  <div class="done-box">
+    <p>Done first and on CI now (run 41028411837 on c90b25820), with the two Hearth guide bugs you found:</p>
+    <ul>
+      <li><b>No done goal shows anywhere.</b> The Lampwing on the top left was the Hearth page's Track, which only cleared when
+        you walked within 16 blocks. Every destination now carries the goal it's for and drops the moment that goal is met,
+        however it was met. Set Your Fire stayed offered because its "level ground" step waited for a manual tick; a trail
+        step now counts as done once a later one is. Saved for later, Bell Book leads and tips drop what's done too. One
+        test sweeps every place a goal can show.</li>
+      <li><b>The guide's green is true.</b> A room card lit any crafting table or furnace anywhere in your radius. Now it
+        ticks only what stands together in one closed room, names that room, and says plainly that one room can be several
+        kinds ("It stays your Bedroom too"): a crafting table, a furnace and a barrel in your bedroom do make it a Kitchen
+        as well. The door icon was "all of it in one room", red until the room was finished; it now reads "in a closed
+        room" and turns green as soon as your pieces stand in one.</li>
+      <li><b>Amethyst says "geode" first.</b> The Mat's recipe line, its guide card and its tooltip say to mine amethyst in a
+        geode underground (every land has them). The recipe is unchanged.</li>
+    </ul>
+  </div>
+
+  <h2>What I found</h2>
+  <div class="findings">
+    <div class="find"><span class="big">11</span><p>sections on the Journal page; 7 are things to do, mixed in with the log of what you found</p></div>
+    <div class="find"><span class="big">5</span><p>lists that ask you to choose: Truths to declare, Titles to equip, Directives to accept, Trails to follow, Anchor requests to take</p></div>
+    <div class="find"><span class="big">2</span><p>systems the Journey plan removed on 29 October still run: the Daily Regimen and Anchor requests</p></div>
+    <div class="find"><span class="big">0</span><p>places that say what you're working toward; the Armoury's tier cards are the only screen that shows needs with where each comes from</p></div>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Part</th><th>What it does today</th><th>What that means</th><th>Plan</th></tr></thead>
+      <tbody>
+        <tr><td>Task card and the top-left place</td><td>One task and its steps; one place</td><td>Works; fixed in part 1</td><td><span class="where w-stays">keep</span> they show the pinned step</td></tr>
+        <tr><td>Now suggestions<span class="sub">23 sources</span></td><td>The nearest gate, a trial ready, what you can make, a star fell</td><td>Useful lines in a section most players never open, none saying why</td><td><span class="where w-tasks">Tasks</span> under their goal</td></tr>
+        <tr><td>The Armoury's tier cards<span class="sub">arms.ArmsArmoury</span></td><td>Each weapon tier with have/need and where each need comes from</td><td>The model a goal should follow; only weapons have it</td><td><span class="where w-tasks">reuse</span> for every goal</td></tr>
+        <tr><td>Where things come from<span class="sub">arms/sources.json, JEI</span></td><td>Built from recipes and creature loot tables</td><td>Lists every creature that drops amethyst; never "mine a geode"</td><td><span class="where w-tasks">extend</span> the easy way first</td></tr>
+        <tr><td>Hearth guide<span class="sub">hearth.guide</span></td><td>Room cards as paragraphs; the town; upgrades</td><td>Walls of text; green that wasn't true (fixed)</td><td><span class="where w-hearth">redraw</span> as the Hearth page</td></tr>
+        <tr><td>Journal page</td><td>Now, chains, trails, Directives, Regimen, Saved for later, the log, Hearth, requests, messages, records</td><td>To-dos, offers and the log in one scroll</td><td><span class="where w-tasks">split</span></td></tr>
+        <tr><td>Truths page</td><td>The Path choice, 32 Truths, the road, 38 Titles, 20 Latents</td><td>A page that's only for choosing</td><td><span class="where w-gone">goes</span></td></tr>
+        <tr><td>Codex page</td><td>The Board, happenings witnessed, the Atlas of Gates, the Bell Book</td><td>Your discoveries, in four different shapes</td><td><span class="where w-journal">Journal</span> one catalogue</td></tr>
+        <tr><td>Regimen, requests, Directives</td><td>Daily drills; Anchor deliveries; morning offers</td><td>Two approved gone and still running; one a daily menu</td><td><span class="where w-gone">remove</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Three ways to do it</h2>
+  <div class="ways">
+    <div class="way">
+      <span class="eyebrow">A · Tidy the pages</span>
+      <h3>Move sections around</h3>
+      <p>Put the to-do sections on a new page and leave each list as it is.</p>
+      <p><b>Loses:</b> no goals, so still no "why"; the same goal shows two or three times; every list still asks you to choose.</p>
+    </div>
+    <div class="way pick">
+      <span class="eyebrow">B · Recommended</span>
+      <h3>Goals, with needs and sources</h3>
+      <p>A few standing goals, each a tab. Each system says what its goal needs; every need carries where it comes from,
+        the easy way first. The server merges the same need from two systems, drops anything done, and picks one next step.</p>
+      <p><b>Why:</b> it answers "what am I doing and why", reuses the Armoury's have/need cards and part 1's sweep, and keeps
+        each system's rules where they are.</p>
+    </div>
+    <div class="way">
+      <span class="eyebrow">C · A quest log</span>
+      <h3>Rewrite as quests</h3>
+      <p>Turn every system into scripted quest chains.</p>
+      <p><b>Loses:</b> weeks of rework, a fixed order in a sandbox, and the "list of chores" feel you turned down on 29 October.</p>
+    </div>
+  </div>
+
+  <h2>Core goals</h2>
+  <p>Six standing goals, each a tab on Tasks. A goal always shows its current step: what it needs, how many you have, and
+    where each need comes from. Finishing a step shows the next; nothing past what you've seen is named.</p>
+  <div class="ladder">
+    <div class="rung"><span class="eyebrow">Hearth</span><h3>Grow your home</h3><p>Fire, a bed, the Armoury, the Anchor (a Lord's Heart), then each tier's rooms. Optional rooms are marked optional.</p></div>
+    <div class="rung"><span class="eyebrow">Armour</span><h3>Wear better armour</h3><p>Your first E set at a Fitting Stand, then the Forge for D and up.</p></div>
+    <div class="rung"><span class="eyebrow">Weapons</span><h3>Wield a better weapon</h3><p>Hale's weapon, then patterns from gates and raises at the Forge (the Armoury's cards).</p></div>
+    <div class="rung"><span class="eyebrow">Beasts</span><h3>Win the kin</h3><p>Rumours to follow, wants you've read, nooks to fill.</p></div>
+    <div class="rung"><span class="eyebrow">Bells</span><h3>Find the Hundred</h3><p>The leads you have, the hum nearby, your tower. The bell frame's first step comes from bells-early.</p></div>
+    <div class="rung"><span class="eyebrow">Gates and rank</span><h3>Rise in rank</h3><p>The next gate, the level for your trial, the trial when it's ready.</p></div>
+    <div class="rung"><span class="eyebrow">Out there</span><h3>What's near you</h3><p>A star fell, a rift, a lair: things you can do now that belong to no goal. Shown on Now only.</p></div>
+    <div class="rung"><span class="eyebrow">Now</span><h3>The first tab</h3><p>One next step on top, the other goals' steps under it, each with one line of why.</p></div>
+  </div>
+  <p><b>The next step on top</b> follows the main path: your fire, a bed, the Armoury and your first armour, your first
+    gate and its Lord's Heart for the Anchor, the Forge, then your rank's trial. A step you pin wins over it. <b>Where it comes from</b> leads
+    with what your rank can do where you are: mine it (with the depth and the land), gather it, craft or smelt it; a
+    creature drop comes after, saying where that creature lives and whether that's near you.</p>
+
+  <h2>The pages</h2>
+  <p>Six pages: <b>Status · Tasks · Hearth · Powers · Journal · Map</b>. K still opens on Status. The mock-ups show your own
+    moment: back home on day 3 with the Hearthfire set and a bed built. Names and numbers in them are examples.</p>
+
+  <div class="pair wide">
+    <div class="mock">
+      <div class="band" role="img" aria-label="Mockup of the Tasks page on its Now tab">
+        <div class="rail">
+          <span class="node"><svg><use href="#i-status"/></svg>Status</span>
+          <span class="node lit"><svg><use href="#i-tasks"/></svg>Tasks<b>2</b></span>
+          <span class="node"><svg><use href="#i-hearth"/></svg>Hearth</span>
+          <span class="node"><svg><use href="#i-powers"/></svg>Powers</span>
+          <span class="node"><svg><use href="#i-journal"/></svg>Journal</span>
+          <span class="node"><svg><use href="#i-map"/></svg>Map</span>
+        </div>
+        <div class="content">
+          <div class="tabs"><span class="on">Now</span><span>Hearth</span><span class="dot">Armour</span><span>Weapons</span><span>Beasts</span><span class="dot">Bells</span><span>Gates</span></div>
+          <div class="next">
+            <span class="st">Do this next</span>
+            <div class="head"><span class="what">Build your Armoury</span><span class="lbl">Hearth · 1 of 2 pieces</span></div>
+            <span class="why">A Fitting Stand and a crafting table in one closed room. Your first armour is made there, before your first gate.</span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <span class="ok"><svg width="16" height="16" style="vertical-align:-3px"><use href="#p-table"/></svg> crafting table ✓</span>
+              <span class="amb"><svg width="16" height="16" style="vertical-align:-3px"><use href="#p-stand"/></svg> Fitting Stand: a copper ingot short</span>
+              <span class="btn">On screen ✓</span>
+            </div>
+          </div>
+          <span class="st">Also open to you</span>
+          <div class="opts">
+            <div class="opt"><span class="tag">Armour</span><span>Choose your first armour<span class="why">An E set before the gate: 9 to 12 armour. Bellguard is copper, so go mining.</span></span><span class="r">›</span></div>
+            <div class="opt"><span class="tag">Gates</span><span>Clear your first gate<span class="why">Its Lord drops a Lord's Heart; set it on your fire to raise the Anchor.</span></span><span class="r">↗ 270 m</span></div>
+            <div class="opt"><span class="tag">Bells</span><span>Something near your home is humming<span class="why">A sleeping bell. Follow the sound.</span></span><span class="r">nearby</span></div>
+            <div class="opt"><span class="tag">Beasts</span><span>Burrowbuns live in the plains to the north-east<span class="why">Win one and it harvests your crops for you.</span></span><span class="r">↗ ~400 m</span></div>
+            <div class="opt optional"><span class="tag">Optional</span><span class="dim">Make your Bedroom a Sanctuary: add a Meditation Mat<span class="why">Heals a Fracture while you sleep.</span></span><span class="r"></span></div>
+          </div>
+        </div>
+      </div>
+      <p><b>Tasks, Now.</b> One step on top, chosen by the main path; it's on your card and its place in the corner. Under it,
+        each goal's next step and why it matters. Optional upgrades sit last, dimmed and labelled. A dot on a tab means
+        something new there.</p>
+    </div>
+
+    <div class="mock">
+      <div class="band" role="img" aria-label="Mockup of the Tasks page on its Armour tab">
+        <div class="rail">
+          <span class="node"><svg><use href="#i-status"/></svg>Status</span>
+          <span class="node lit"><svg><use href="#i-tasks"/></svg>Tasks<b>2</b></span>
+          <span class="node"><svg><use href="#i-hearth"/></svg>Hearth</span>
+          <span class="node"><svg><use href="#i-powers"/></svg>Powers</span>
+          <span class="node"><svg><use href="#i-journal"/></svg>Journal</span>
+          <span class="node"><svg><use href="#i-map"/></svg>Map</span>
+        </div>
+        <div class="content">
+          <div class="tabs"><span>Now</span><span>Hearth</span><span class="on">Armour</span><span>Weapons</span><span>Beasts</span><span class="dot">Bells</span><span>Gates</span></div>
+          <div class="st">Your first armour · choose a set</div>
+          <div class="sets">
+            <div class="set pick"><svg style="color:#d07a43"><use href="#p-helm"/></svg>Bellguard<small>12 · Bulwark</small></div>
+            <div class="set"><svg style="color:#6f8f4a"><use href="#p-helm"/></svg>Rootwarden<small>9 · Channeler</small></div>
+            <div class="set"><svg style="color:#c9973c"><use href="#p-helm"/></svg>Amberwing<small>10 · Duelist</small></div>
+            <div class="set"><svg style="color:#9b6b42"><use href="#p-helm"/></svg>Wildhide<small>Hunter set</small></div>
+          </div>
+          <div class="st">Bellguard needs</div>
+          <div>
+            <div class="need"><svg><use href="#p-stand"/></svg><span>A Fitting Stand with a crafting table within 6 blocks<span class="src">Craft: a stick, a copper ingot, wool and planks. Any stand works; your Armoury is where home keeps one.</span></span><span class="n ok">✓</span></div>
+            <div class="need"><svg><use href="#p-copper"/></svg><span>Copper ingots<span class="src">Mine copper ore in hills and caves; smelt it in a furnace.</span></span><span class="n amb">6/21</span></div>
+            <div class="need"><svg><use href="#p-hide"/></svg><span>Leather or rabbit hide<span class="src">Cows and rabbits, in the fields round home.</span></span><span class="n amb">2/8</span></div>
+          </div>
+          <div class="st dim">After this: D-rank sets, forged at an anvil and the Forge</div>
+        </div>
+      </div>
+      <p><b>Tasks, Armour.</b> The goal's step with its real choice: the E sets your pack covers. The picked set's needs, each
+        with have/need and where it comes from, the easy way first. Copper says "mine it", so you know to go mining. The next
+        step is named, nothing further.</p>
+    </div>
+
+    <div class="mock">
+      <div class="band" role="img" aria-label="Mockup of the Hearth page">
+        <div class="rail">
+          <span class="node"><svg><use href="#i-status"/></svg>Status</span>
+          <span class="node"><svg><use href="#i-tasks"/></svg>Tasks</span>
+          <span class="node lit"><svg><use href="#i-hearth"/></svg>Hearth</span>
+          <span class="node"><svg><use href="#i-powers"/></svg>Powers</span>
+          <span class="node"><svg><use href="#i-journal"/></svg>Journal</span>
+          <span class="node"><svg><use href="#i-map"/></svg>Map</span>
+        </div>
+        <div class="content">
+          <div class="home">
+            <div class="crest"><svg style="color:#f0b45a"><use href="#i-hearth"/></svg></div>
+            <div><div class="name">Ashford</div><div class="lbl">Hearthfire · Comfort <span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span> · <span class="amb">Rested 6 min</span></div></div>
+          </div>
+          <div class="next">
+            <span class="st">Next for your home</span>
+            <div class="head"><span class="what">Build your Armoury</span><span class="lbl">your first workshop</span></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <span class="ok"><svg width="18" height="18" style="vertical-align:-4px"><use href="#p-table"/></svg> crafting table ✓</span>
+              <span class="amb"><svg width="18" height="18" style="vertical-align:-4px"><use href="#p-stand"/></svg> Fitting Stand · copper ingot</span>
+              <span class="ok">▣ closed room ✓</span>
+            </div>
+          </div>
+          <div class="st">Rooms</div>
+          <div class="rooms">
+            <div class="room built"><svg><use href="#p-bed"/></svg><span class="rn">Bedroom</span><span class="rg">Rested when you wake</span></div>
+            <div class="room doing"><svg><use href="#p-stand"/></svg><span class="rn">Armoury</span><span class="rg">your armour, made here · 1/2</span></div>
+            <div class="room doing"><svg><use href="#p-stove"/></svg><span class="rn">Kitchen</span><span class="rg">meals last longer · 2/3</span></div>
+            <div class="room optional"><svg><use href="#p-mat"/></svg><span class="rn">Sanctuary</span><span class="rg">optional · heals a Fracture</span></div>
+            <div class="room"><svg><use href="#p-anvil"/></svg><span class="rn">Forge</span><span class="rg">D armour, raises, tempering</span></div>
+            <div class="room"><svg><use href="#p-book"/></svg><span class="rn">Study</span><span class="rg">a place to read</span></div>
+            <div class="room"><svg><use href="#p-leaf"/></svg><span class="rn">Greenhouse</span><span class="rg">herbs, under glass</span></div>
+            <div class="room"><b style="font-size:20px;font-weight:400;line-height:26px">+</b><span class="rn">11 more</span><span class="rg">Stable, Hall… and ? ? ?</span></div>
+          </div>
+          <div class="st">Make it look good</div>
+          <div class="look">
+            <span>The snug timber bedroom</span>
+            <span class="bars"><span><i class="l3"></i>Clo</span><span><i class="l2"></i>Lit</span><span><i class="l1"></i>Wrm</span><span><i class="l2"></i>Rm</span><span><i class="l2"></i>Care</span><span><i class="l1"></i>Det</span></span>
+            <span class="amb" style="grid-column:1/-1">Light a fire or a stove in it and it's Fine: warmth is its weakest.</span>
+          </div>
+          <div class="st">Your beasts</div>
+          <div class="beasts">
+            <div class="nook full"><div><svg><use href="#c-lamp"/></svg></div>Lampwing</div>
+            <div class="nook"><div></div>empty</div>
+            <span class="lbl" style="align-self:center">2 nooks at the fire; the Anchor gives 4</span>
+          </div>
+        </div>
+      </div>
+      <p><b>Hearth.</b> Your home at a glance: name, tier, Comfort as pips. One next step with its pieces as icons. Every room
+        kind as a tile: built (green), started (amber, pieces counted), open to build, or optional (dashed); the page scrolls to
+        the rest, and a kind whose piece you haven't come across yet (a Lode Heart, a perch) shows as "?". Click a tile for its pieces, recipes and where they are. "Make it look good" shows each room's six readings
+        and the one thing that lifts it. Your beasts and their nooks.</p>
+    </div>
+
+    <div class="mock">
+      <div class="band" role="img" aria-label="Mockup of the Journal catalogue">
+        <div class="rail">
+          <span class="node"><svg><use href="#i-status"/></svg>Status</span>
+          <span class="node"><svg><use href="#i-tasks"/></svg>Tasks</span>
+          <span class="node"><svg><use href="#i-hearth"/></svg>Hearth</span>
+          <span class="node"><svg><use href="#i-powers"/></svg>Powers</span>
+          <span class="node lit"><svg><use href="#i-journal"/></svg>Journal<b>1</b></span>
+          <span class="node"><svg><use href="#i-map"/></svg>Map</span>
+        </div>
+        <div class="content">
+          <div class="cats">
+            <span class="cat on">Creatures<em>5</em></span><span class="cat">Kin<em>2/16</em></span><span class="cat">Lands<em>4</em></span>
+            <span class="cat">Places<em>3</em></span><span class="cat">Gate worlds<em>1</em></span><span class="cat">Bells<em>1/100</em></span>
+            <span class="cat">Lore<em>2</em></span><span class="cat">Happenings<em>1</em></span><span class="cat">Ores<em>3</em></span><span class="cat">Your story</span>
+          </div>
+          <div class="slots">
+            <div class="slot"><svg><use href="#c-wisp"/></svg>Lumen Moth<span class="no">#001</span></div>
+            <div class="slot"><svg><use href="#c-sprite"/></svg>Bloom Sprite<span class="no">#002</span></div>
+            <div class="slot unknown"><b>?</b><span class="no">#003</span></div>
+            <div class="slot unknown"><b>?</b><span class="no">#004</span></div>
+            <div class="slot"><svg><use href="#c-fish"/></svg>Dune Ray<span class="no">#005</span></div>
+            <div class="slot unknown"><b>?</b><span class="no">#006</span></div>
+            <div class="slot sel"><svg><use href="#c-stag"/></svg>Frost Stag<span class="no">#007</span></div>
+            <div class="slot"><svg><use href="#c-wisp"/></svg>Dream Wisp<span class="no">#008</span></div>
+            <div class="slot unknown"><b>?</b><span class="no">#009</span></div>
+            <div class="slot unknown"><b>?</b><span class="no">#010</span></div>
+            <div class="slot unknown"><b>?</b><span class="no">#011</span></div>
+            <div class="slot unknown"><b>?</b><span class="no">#012</span></div>
+          </div>
+          <div class="entry">
+            <div class="pic"><svg><use href="#c-stag"/></svg></div>
+            <div>
+              <span class="t">Frost Stag</span>
+              <p>Grazes at the tree line in the frost lands. It bolts from running feet; corner it and it charges.</p>
+              <p>You've seen 6 · felled 2 · first seen on day 2, north of Ashford</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p><b>Journal.</b> A catalogue of everything you can discover, in categories along the top with how many you've found.
+        Each slot fills when you find its thing; the rest are numbered "?" slots, so you can see how much is left. A "?"
+        never shows a name, a picture or a hint, Lords included. Click a slot for what you've learned. Your story (the log
+        of what happened, messages and records) is the last category.</p>
+    </div>
+  </div>
+
+  <h2>Your moment, before and after</h2>
+  <div class="cases">
+    <div class="case">
+      <h3>Home, Hearthfire set, a bed built: "Should I go mining? Build a kitchen? The armour stuff?"</h3>
+      <div class="before"><span class="eyebrow">Before</span><p>The guide pushed a Sanctuary as if it were the main path. The Mat
+        needed amethyst, and the source list named a dreamling, a dream wisp, a silver knight, a glass duelist, a seep heart
+        and guardians, none of which you'd met. Nothing mentioned an Armoury, the gate, or why anything mattered.</p></div>
+      <div class="after"><span class="eyebrow">After</span><p>Tasks › Now: "Build your Armoury" on top, 1 of 2 pieces, with
+        why. Under it your first armour (Bellguard's copper says "mine it"), your first gate and its Lord's Heart with the
+        distance, the humming bell and the Burrowbuns, each with a line of why. The Sanctuary sits last as optional.
+        Amethyst, if you look, says "mine it in a geode underground" first.</p></div>
+    </div>
+    <div class="case">
+      <h3>You tamed the Lampwing at your fire</h3>
+      <div class="before"><span class="eyebrow">Before</span><p>The top left kept "Where Lampwings live (roughly)". The beast said
+        "[It doesn't trust you.]" and nothing said what it wanted.</p></div>
+      <div class="after"><span class="eyebrow">After</span><p>Beasts tab, before you've watched it: "Something has been watching your
+        fire from the trees. Go out at night and watch it for a moment." Then: "Set a warm light near the Lampwing at your
+        fire, where it can see it 1/3". Once it trusts you the row and the rumour are gone (part 1).</p></div>
+    </div>
+    <div class="case">
+      <h3>You need iron for the Forge</h3>
+      <div class="before"><span class="eyebrow">Before</span><p>The Forge's recipe in JEI; nothing tied it to anything you wanted.</p></div>
+      <div class="after"><span class="eyebrow">After</span><p>Hearth tab: "Grow the Armoury into a Forge: an anvil and the Forge",
+        why "D-rank armour, weapon raises and tempering", needs "Iron ingots 4/38 · mine iron ore in hills and caves, most
+        below sea level; smelt it". You go mining because the goal says so.</p></div>
+    </div>
+    <div class="case">
+      <h3>Nothing open, or a source breaks</h3>
+      <div class="before"><span class="eyebrow">Before</span><p>Empty sections, each with its own "nothing here".</p></div>
+      <div class="after"><span class="eyebrow">After</span><p>A goal with nothing to do says what it waits on ("Your next armour
+        opens at D-rank: level 10"). A failing source is logged and skipped; the rest still show.</p></div>
+    </div>
+  </div>
+
+  <h2>The Armoury, your first workshop</h2>
+  <p>Today E armour needs only a Fitting Stand with a crafting table within 6 blocks, D and up need an anvil and the Forge,
+    and the Forge room (anvil, Forge, Fitting Stand) only lets the Forge temper higher. Nothing walks you there. The plan:</p>
+  <ul>
+    <li><b>The Armoury</b> is a new room kind: a Fitting Stand and a crafting table in one closed room, all copper and wood,
+      the first hour. The Hearth asks for it right after your first room. It opens the Armour tab's "Choose your first armour".</li>
+    <li><b>It grows into the Forge:</b> add an anvil and the Forge to the same room and it's both (one room can be several
+      kinds). That opens D-rank armour, weapon raises and tempering, and the Weapons tab's raise step.</li>
+    <li><b>Nothing basic hides behind it.</b> Any Fitting Stand with a table near it still makes E armour, and the Armour tab
+      says so. What the room itself gives is decision 3.</li>
+  </ul>
+
+  <h2>Where everything goes</h2>
+  <p>Every list, choice, Truth and discovery page in the game today, and where it and what it gave you end up. Rewards that
+    stay keep their numbers.</p>
+  <div class="tbl wide">
+    <table>
+      <thead><tr><th>Today</th><th>What it is</th><th>After</th><th>What it gave you</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="4">On the screen</td></tr>
+        <tr><td>Task card, top right</td><td>One task and its steps</td><td><span class="where w-stays">stays</span> shows the next step or the one you pinned</td><td>Unchanged</td></tr>
+        <tr><td>Place, top left</td><td>A destination or the card's place</td><td><span class="where w-stays">stays</span></td><td>Unchanged; done goals drop (part 1)</td></tr>
+        <tr><td>Toasts</td><td>Messages as things happen</td><td><span class="where w-stays">stay</span> minus the Truth, Regimen, Directive and request offers</td><td>See their rows</td></tr>
+        <tr><td>Questions in the world</td><td>Leave with your loot? Build Tier II? Mark it on my map?</td><td><span class="where w-stays">stay</span> one left unanswered waits on Tasks › Now</td><td>Unchanged</td></tr>
+
+        <tr class="group"><td colspan="4">The Journal page today</td></tr>
+        <tr><td>Now<span class="sub">23 sources</span></td><td>"Clear a floor", "A star fell", "You can make…"</td><td><span class="where w-tasks">Tasks</span> under their goal, or Out there on Now</td><td>Nothing; they point</td></tr>
+        <tr><td>Chains and bounties</td><td>The tracked chain's steps, bounties you took</td><td><span class="where w-tasks">Tasks</span> Gates and rank, or Out there</td><td>Unchanged</td></tr>
+        <tr><td>Trails<span class="sub">24</span></td><td>Follow, Stop, Steps, Not for me, All trails</td><td><span class="where w-tasks">Tasks</span> each open trail's step joins its goal's tab; Pin replaces Follow; the All trails browser goes</td><td>No rewards; tokens and data stay</td></tr>
+        <tr><td>Directives<span class="sub">50</span></td><td>A morning offer to take on or let pass</td><td><span class="where w-gone">gone</span> the Registry's own, "clear a floor of any gate", becomes a first-thread step</td><td>A stat point or a sixth of a level each; the first floor keeps its 0.15</td></tr>
+        <tr><td>Daily Regimen<span class="sub">22 drills</span></td><td>3 drills every morning</td><td><span class="where w-gone">gone</span> as JOURNEY part 9 said</td><td>A stat point and a tenth of a level a day; Hardline's Penalty Zone retires with it</td></tr>
+        <tr><td>Saved for later</td><td>Places that need something first</td><td><span class="where w-tasks">Tasks</span> on its goal's tab as "waits on: the Leaper"; it becomes a step the day it opens</td><td>Unchanged</td></tr>
+        <tr><td>Hearth section</td><td>Tier, comfort, rooms, the Mat</td><td><span class="where w-hearth">Hearth</span></td><td>Unchanged</td></tr>
+        <tr><td>Anchor requests<span class="sub">96</span></td><td>Deliveries the Anchor asks for</td><td><span class="where w-gone">gone</span> as JOURNEY part 9 said; the Hearth tab's needs replace them</td><td>Essence, XP, Forge credit. Anything handed in for an open request comes back to you</td></tr>
+        <tr><td>The log, messages, records</td><td>What happened</td><td><span class="where w-journal">Journal</span> "Your story"</td><td>Unchanged</td></tr>
+
+        <tr class="group"><td colspan="4">The Truths page today</td></tr>
+        <tr><td>The Path choice<span class="sub">C-rank, 12 paths</span></td><td>Pick one of three after the Second Awakening</td><td><span class="where w-tasks">Tasks</span> on Now while it waits; your Path then on Status</td><td>Unchanged</td></tr>
+        <tr><td>Truths<span class="sub">32</span></td><td>Offered three at a time; declare up to three</td><td><span class="where w-status">Status</span> a Truth comes true by itself when you do it; no offers, no declaring</td><td>Each reward unchanged; all 32 can be earned</td></tr>
+        <tr><td>The road<span class="sub">69 steps</span></td><td>What each level opens</td><td><span class="where w-status">Status</span></td><td>Unchanged</td></tr>
+        <tr><td>Titles<span class="sub">38</span></td><td>Earned by deeds; wear one</td><td><span class="where w-status">Status</span> your title under your name; Change lists those you've earned</td><td>Unchanged</td></tr>
+        <tr><td>Latents<span class="sub">20</span></td><td>Hidden, awaken on their own</td><td><span class="where w-status">Status</span> "Awakened in you"</td><td>Unchanged</td></tr>
+
+        <tr class="group"><td colspan="4">The Codex page today</td></tr>
+        <tr><td>The Board</td><td>Creatures, the Descent, the Above, the Delvers, Precursor machines and logs, ruins, revelations, rumours, deaths</td><td><span class="where w-journal">Journal</span> Creatures, Lore, Places; deaths to Your story; a rumour you can act on is also a step on Tasks</td><td>Unchanged</td></tr>
+        <tr><td>Happenings witnessed</td><td>The Almanac</td><td><span class="where w-journal">Journal</span> Happenings</td><td>Unchanged</td></tr>
+        <tr><td>Atlas of Gates</td><td>Gate worlds found</td><td><span class="where w-journal">Journal</span> Gate worlds</td><td>Unchanged</td></tr>
+        <tr><td>The Bell Book</td><td>The Hundred, leads, your tower</td><td><span class="where w-journal">Journal</span> Bells (the Hundred); leads on <span class="where w-tasks">Tasks</span> Bells; your tower on <span class="where w-hearth">Hearth</span></td><td>Unchanged</td></tr>
+
+        <tr class="group"><td colspan="4">The Status page and others</td></tr>
+        <tr><td>Waiting for you, points to spend</td><td>Unanswered questions; "Press K to spend 3 points"</td><td><span class="where w-tasks">Tasks</span> Now</td><td>Unchanged</td></tr>
+        <tr><td>This room</td><td>The room you stand in at home</td><td><span class="where w-hearth">Hearth</span></td><td>Unchanged</td></tr>
+        <tr><td>Hearth guide screen</td><td>Rooms as paragraphs, the town, upgrades</td><td><span class="where w-hearth">Hearth</span> page; right-clicking your Anchor opens it</td><td>Unchanged</td></tr>
+        <tr><td>Kin list and cards</td><td>Every kind: met, rumoured, trusted</td><td><span class="where w-journal">Journal</span> Kin (16 slots); yours on <span class="where w-hearth">Hearth</span>; wants and rumours on <span class="where w-tasks">Tasks</span> Beasts</td><td>Unchanged</td></tr>
+        <tr><td>Track buttons<span class="sub">Hearth, Bell Book, Armoury</span></td><td>Each set its own destination or card</td><td><span class="where w-tasks">Pin</span> one pin for everything</td><td>Unchanged</td></tr>
+        <tr><td>The Signal Relay</td><td>Its job was a fresh Directive once a play-day</td><td><span class="where w-tasks">new job</span> near your Hearth it hears the nearest bell you haven't found, once a play-day</td><td>Parts and recipe unchanged</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted"><b>Pacing:</b> the Regimen and Directives gave about a sixth of a level per play-day in
+    <code>tools/sim/pacing_sim.py</code>. I rerun the sim without them; if the road to level 50 slips past its target, gate
+    floors make the difference back.</p>
+
+  <h2>How it behaves</h2>
+  <div class="rules">
+    <div class="rule"><h3>A goal</h3><p>Each tab is one standing goal with its <b>current step</b>: what it needs, have/need, and
+      where each need comes from. A step that waits on something says what ("opens at D-rank: level 10"). Nothing past the
+      next step is named.</p></div>
+    <div class="rule"><h3>Where it comes from</h3><p>One service for every item a step needs, ordered by what you can do now:
+      mine or gather it (depth, land), craft or smelt it, then creature drops with where the creature lives and "near you"
+      when it's in your land. It grows from the Armoury's <code>arms/sources.json</code> plus a short hand list of the
+      world's easy ways (geodes, ores, trees, plants).</p></div>
+    <div class="rule"><h3>One step per need</h3><p>Every step carries a key (<code>hearth/armoury</code>, <code>armour/first</code>,
+      <code>kin/lampwing</code>, <code>bell/12</code>). Two systems giving the same key make one row, with the most specific
+      words, the place and the count kept.</p></div>
+    <div class="rule"><h3>Never done</h3><p>Built from live state on the server and dropped before it's sent once met, through
+      part 1's done checks. The sweep test covers every source.</p></div>
+    <div class="rule"><h3>The next step</h3><p>Now's top step follows the main path; a pinned step wins. A pinned step that's done
+      unpins itself. Track on the Hearth, Journal and Armoury pins the same way. The card and the corner show it.</p></div>
+    <div class="rule"><h3>At a glance</h3><p>No paragraph longer than two lines on any page. Pieces and needs are icons with
+      counts; rooms and slots are tiles; readings are bars. Rows never reorder while a page is open. Nothing expires daily.</p></div>
+    <div class="rule"><h3>Optional</h3><p>An upgrade that isn't on the main path (a Sanctuary over a Bedroom) is labelled
+      optional, dimmed, and never the top step.</p></div>
+    <div class="rule"><h3>Unknown slots</h3><p>Categories with a fixed set (creatures, kin, bells, gate worlds, cave regions,
+      happenings, ores) show numbered "?" slots. Open-ended ones (landmarks, lairs, settlements) show a count only. A "?"
+      never names or hints.</p></div>
+    <div class="rule"><h3>Sent when it changes</h3><p>At most once a second while a page is open, every 5 seconds otherwise,
+      only when something changed. Per player, so multiplayer-safe.</p></div>
+    <div class="rule"><h3>Old saves</h3><p>A followed trail becomes the pin. Declared Truths already met come true on first
+      login in one line. Directives, the Regimen and request offers drop quietly; anything handed in comes back. A new small
+      save (<code>awaken:tasks</code>, versioned) holds the pin and what you've seen. Discoveries already made fill their
+      slots from the counters you have.</p></div>
+  </div>
+
+  <h2>Tests and building</h2>
+  <p>One GameTest per mechanism, on CI: <code>tasks_one_row_per_need</code> (the Ember from three sources is one step),
+    <code>tasks_done_never_shows</code> (part 1's sweep over every source), <code>tasks_next_step_follows_path</code> (your
+    moment: bed built, the Armoury on top, armour and the gate under it, Sanctuary last and optional), <code>tasks_sources_easy_first</code>
+    (amethyst leads with a geode; a drop names its land), <code>hearth_armoury_room</code> (stand and table make an Armoury;
+    add an anvil and the Forge and it's a Forge too), <code>kin_want_on_tasks</code>, <code>truths_by_themselves</code>,
+    <code>journal_slots</code> (a find fills its slot; a "?" carries no name), and the band layout check with six pages. One CI
+    tour shoots Tasks (Now and Armour), Hearth and Journal.</p>
+  <div class="phases">
+    <div class="phase"><span class="eyebrow">Phase 1</span><h3>Goals</h3><p>The goal model, needs and sources, keys and merging,
+      the next step and the pin, the Tasks page with its tabs. Old sections stay until phase 3, so nothing goes missing.</p></div>
+    <div class="phase"><span class="eyebrow">Phase 2</span><h3>The Hearth page</h3><p>The redrawn page and the Anchor screen, the
+      Armoury room, the room tiles, "make it look good", the beasts' nooks.</p></div>
+    <div class="phase"><span class="eyebrow">Phase 3</span><h3>Journal and the rest</h3><p>The catalogue with the Codex folded in;
+      Truths, titles, road and latents to Status; Directives, Regimen and requests out; trails folded; old saves.</p></div>
+    <div class="phase"><span class="eyebrow">Phase 4</span><h3>Check</h3><p>CI tour shots, the pacing sim, SPEC §27.13, §30 and §28,
+      the full suite. Each phase hands back green and merges on its own.</p></div>
+  </div>
+  <p class="muted">About two days of building in this session, phase 1 the largest. What could change that: a system whose
+    goal has no clean key (it then matches on words, with a test), or the pacing sim showing a bigger gap than expected.</p>
+
+  <h2>Decisions for you</h2>
+  <div class="decisions">
+    <div class="decision"><span class="rec">Recommend yes</span><p><b>Six pages:</b> Status · Tasks · Hearth · Powers · Journal · Map.
+      The Truths and Codex pages go; the Codex becomes the Journal's catalogue. K still opens on Status.</p></div>
+    <div class="decision"><span class="rec">Recommend yes</span><p><b>Tasks by goal:</b> tabs Now, Hearth, Armour, Weapons, Beasts,
+      Bells, Gates and rank. Now's top step follows the main path, and a pin overrides it. Every need says where it comes
+      from, the easy way first.</p></div>
+    <div class="decision"><span class="rec">Recommend yes</span><p><b>The Armoury room</b> (a Fitting Stand and a crafting table) is
+      the Hearth's first workshop, growing into the Forge. E armour still works at any stand. I'd give the room one real
+      gift: armour made at its stand lasts a quarter longer.</p><p class="alt">Instead: no gift; the room only guides.</p></div>
+    <div class="decision"><span class="rec">Recommend yes</span><p><b>The Journal is a catalogue</b> with numbered "?" slots for what
+      you haven't found, Lords included, never named or hinted.</p><p class="alt">Instead: no slots for Lords and Sovereigns,
+      only a count once you've met one.</p></div>
+    <div class="decision"><span class="rec">Recommend yes</span><p><b>Truths come true by themselves</b>, with their rewards, listed on
+      Status. You still wear one title, changed on Status.</p><p class="alt">Instead: remove Truths and their 32 rewards.</p></div>
+    <div class="decision"><span class="rec">Recommend yes</span><p><b>Directives go, and the Daily Regimen and Anchor requests finally
+      go.</b> Hardline's Penalty Zone retires with the Regimen; the Signal Relay hears the nearest bell you haven't found,
+      once a play-day.</p></div>
+    <div class="decision"><span class="rec">Recommend yes</span><p><b>Trails become steps</b> on their goal's tab; Pin replaces Follow;
+      the All trails browser goes. <b>A beast's want, once you've read it all, is a plain step</b> with its count: "Set a warm
+      light near the Lampwing at your fire, where it can see it 1/3". This changes one rule in SPEC 43.5, where the help was
+      never stated.</p><p class="alt">Instead: keep the help unstated; the step shows the want lines you've read and the
+      count, and you work out the act.</p></div>
+  </div>
+  <p>Say "go" to approve all seven, or name the ones you'd change. Nothing in part 2 is built until you do.</p>
+</div>

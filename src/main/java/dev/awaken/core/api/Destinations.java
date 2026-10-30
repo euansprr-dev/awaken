@@ -5,7 +5,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 /**
@@ -29,6 +32,16 @@ public final class Destinations {
         Optional<Target> get(ServerPlayer p);
 
         void set(ServerPlayer p, @Nullable Target t);
+
+        /** As {@link #set(ServerPlayer, Target)}, for a goal ("kin/lampwing"; "" for none). */
+        default void set(ServerPlayer p, @Nullable Target t, String goal) {
+            set(p, t);
+        }
+
+        /** The goal the destination was set for, "" for none (the Atlas's own picks). */
+        default String goal(ServerPlayer p) {
+            return "";
+        }
     }
 
     private static Server server = new Server() {
@@ -49,8 +62,40 @@ public final class Destinations {
         server.set(p, t);
     }
 
+    /**
+     * Sets the destination for one of a module's goals ("kin/lampwing": find a Lampwing). It drops itself, quietly, the
+     * moment that goal is met by whatever route ({@link #doneWhen}), not only on arrival (SPEC §27.12).
+     */
+    public static void set(ServerPlayer p, @Nullable Target t, String goal) {
+        server.set(p, t, goal);
+    }
+
+    public static String goal(ServerPlayer p) {
+        return server.goal(p);
+    }
+
     public static void clear(ServerPlayer p) {
         server.set(p, null);
+    }
+
+    // ---- goals: a destination that knows when its job is done ----------------------------------------------------------
+
+    private static final Map<String, BiPredicate<ServerPlayer, String>> DONE = new ConcurrentHashMap<>();
+
+    /**
+     * The owner of a goal family ("kin") says when one of its goals is met: {@code done} gets the player and the rest of
+     * the goal after the family's slash ("lampwing"). Server side, asked about once a second while such a destination is set.
+     */
+    public static void doneWhen(String family, BiPredicate<ServerPlayer, String> done) {
+        DONE.put(family, done);
+    }
+
+    /** Whether the goal ("family/rest") is met; a goal with no owner, or none at all, never is. */
+    public static boolean done(ServerPlayer p, String goal) {
+        int slash = goal.indexOf('/');
+        if (slash <= 0) return false;
+        BiPredicate<ServerPlayer, String> test = DONE.get(goal.substring(0, slash));
+        return test != null && test.test(p, goal.substring(slash + 1));
     }
 
     // ---- the client's copy (no client classes here: the signal module's client fills it and sends the requests) -----

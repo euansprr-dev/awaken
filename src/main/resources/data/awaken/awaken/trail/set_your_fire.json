@@ -20,8 +20,10 @@
     {
       "id": "ground",
       "text": "Find open, level ground away from gates and the city.",
-      "hint": "The Ember refuses soft or open air, the city, anywhere within 64 blocks of a gate, and another Hearth's ground.",
-      "manual": true
+      "done": [
+        "hearth"
+      ],
+      "hint": "The Ember refuses soft or open air, the city, anywhere within 64 blocks of a gate, and another Hearth's ground."
     },
     {
       "id": "set",

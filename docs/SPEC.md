@@ -571,6 +571,12 @@ of `AwakenConfig.Client`.
   dimension, at, kind)`; server `get(ServerPlayer)`, `set(ServerPlayer, Target | null)`, `clear`; client `mine()` (the
   server's last word), `request(Optional<Target>)` (the Atlas asks; empty clears). `ARRIVED` 16, `ARRIVED_UP` 48. The
   signal module installs both sides (`signal.Destination`, payloads `signal_destination`, `signal_set_destination`).
+  Since §27.12 (2026-10-30): `set(ServerPlayer, Target | null, String goal)` sets one for a goal ("kin/lampwing"),
+  `goal(ServerPlayer)`, and `doneWhen(String family, BiPredicate<ServerPlayer, String rest>)` / `done(ServerPlayer, goal)`:
+  the goal's owner says when it's met, and the destination drops itself quietly then.
+- `dev.awaken.core.api.Shown` (§27.12; 2026-10-30) — every line a module puts in front of the player as something to do:
+  `register(String source, Source)`, `all(ServerPlayer)` (`Line(source, text)`), `mentioning(player, words)`,
+  `sources()`. Server side, for the sweep's checks; not for a hot path.
 - `dev.awaken.core.api.Passage` (§28.9, "Arrivals"; 2026-10-29) — Awaken's own teleports wait for their land off the
   server thread: `go(player, level, x, z, move)` runs `move` at once when every chunk within `EdgeHold.BODY` of (x, z)
   is loaded at FULL, else puts the `awaken:arrival` ticket on the 3×3 round it and runs `move` once those are made (no
@@ -8081,6 +8087,51 @@ over "△ Sealed Vault · a sealed… ↘ 381 m", two places two ways.)
   (the current step's place, named, in the task's dimension; an unnamed one says its own words),
   `signal_corner_destination_wins`; with §16.8's `signal_destination_arrival` and `signal_destination_saved`.
 
+### 27.12 A done goal never shows (Euan's playtest, 2026-10-30)
+"Lampwing was already flying near me and even after taming it, the task still shows to find it top left." "I've already
+set my fire but it's still a choice in my tasks." "Overall the task system is broken and shows stuff you've already done.
+This needs to be fixed for ALL the game." The rule: whatever is in front of the player as a thing to do goes the moment
+it's done, by any route, including one met before the line appeared or one the line didn't expect. A checklist may keep a
+done row ticked beside its open ones (the card's tick and fade, a tier's list); nothing done is ever a current step, a
+suggestion, a rumour, a lead, a decision waiting or a destination.
+- **The top left had the Track** (`KinPage.track`): "Where Lampwings live (roughly)" was a destination, cleared only on
+  arriving within 16 blocks, so a Lampwing met or homed anywhere else left it there for good. **A destination now carries
+  its goal** (`Destinations.set(p, target, goal)`; saved as `goal` in `signal.Destination.Saved`, an optional field,
+  schema 1), and the signal module drops it quietly (no "Destination reached") within a second of its owner saying the
+  goal is met (`Destinations.doneWhen`). Goals: `kin/<kind>` (one met anywhere, or one living with you), `kin/<kind>/home`
+  (back to where you met one: one living with you), `bell/<n>` (the bell held), `metal/<metal>` (the Delvers' mouth: the
+  home no longer short of that metal), `raid/<pos>` (the raid's chest emptied or gone), `stilled/opened:<settlement>` (the
+  key's chest opened), `stilled/done:<figure>` (the keepsake shown to its family). A place picked on the Atlas has no goal
+  and clears on arrival as before.
+- **The first fire's Lampwing has no Track**: its need row says it's by your fire (Track pointed at a wild site instead).
+- **Trails**: in a linear trail a step is done once any later step is (`TrailEngine.latch`). Set Your Fire's "Find open,
+  level ground" was manual, so after the fire was set from Ilse's coal it never ticked and kept the trail on "What you can
+  do now"; it also reads `hearth` now, and The Training Grounds' course reads a lap run. A trail whose every step is done
+  when it opens opens quietly (no "A new trail" toast) and finishes at once.
+- **Saved for later**: a land answered and then stood in leaves the list (`PromiseKeeper.walkedIn`, every 2 s); a sealed
+  stratum is kept on arriving in it (`stratum:<n>`), the Halo on being seen (`halo`), the Veil's creature on wearing one
+  (`possession`).
+- **Bell Book**: a held bell's lead is never listed. **Tips**: one still waiting for a quiet moment is dropped when you
+  do the thing first.
+- **The sweep** (`core.api.Shown`): each module registers the lines it shows as things to do: `card` (the task card's
+  open rows), `now` (the Now suggestions the band lists), `destination`, `choices` (decisions waiting), `saved` (Saved
+  for later), `trails` ("What you can do now"), `hearth` (the Hearth page's needs with rumours, the Kin list's rumours),
+  `bells` (the Bell Book's leads). Tests: `trail_done_never_shows` (every source is swept; the fire set as the coal sets
+  it finishes Set Your Fire and nothing anywhere still asks for the Ember), `kin_done_never_shows` (a Track is done on
+  meeting one anywhere; the lesson Lampwing has no Track; once it lives with you its Track goes by itself and nothing asks
+  for a Lampwing).
+- **The Hearth guide's green is true** (Euan, the same day: "the door isn't green ... kitchen already has a crafting
+  table and furnace green, but that's not even in the kitchen"). A room card ticks only the pieces standing together in
+  one closed room, the one holding the most of that kind (`Guide.card`; before, any piece anywhere in the radius lit
+  up), and names it (`RoomCard.room`). The door-icon item reads "in a closed room" and is green once the pieces stand in
+  one, not only once the kind is built. One room can be several kinds (`Room.types` is a set; a bed, a furnace, a
+  crafting table and a barrel make a Bedroom and a Kitchen), so a card whose pieces stand in a room that's already
+  another kind says "It stays your Bedroom too" (`RoomCard.roomKind`). The Meditation Mat's recipe line, its guide
+  card and its tooltip say where amethyst comes from first: a geode underground (every land has them; the recipe is
+  unchanged). Tests: `hearth_guide_one_room` (real blocks: the bedroom's table and stove tick for the Kitchen, a loose
+  barrel outside doesn't; a barrel inside makes the room a Kitchen and still a Bedroom), `hearth_guide_matches_roomtype`
+  (loose furniture ticks nothing).
+
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
 Euan, 2026-10-26: "Go ahead with all recommendations." PLAN.md is the long form and its audits (`docs/world-depth/
@@ -15581,6 +15632,9 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   The right act gets the beast's tell, the band's chime and a line; a near miss gets a nudge line; after a few misses
   the line points closer, never naming the act. The Kin list always holds at least one rumour not yet followed.
 - The System translates beasts in brackets as subtitles do, only up close and only for kinds read, more as Kinship grows.
+  Only the beast you're looking at (within 8 blocks, a 20° cone, in sight), at most one line every 25 s, and a line is
+  given once until what it says changes (Euan 2026-10-30: a Lampwing asleep by the fire said so every 25 s;
+  `KinWatch.fresh`, test `kin_lines_once`).
 
 ### 43.6 The Hearth, run by beasts
 - **Beasts do the boring work only.** Nothing at home produces ore, gems, gate loot, essence or XP from nothing. Beasts

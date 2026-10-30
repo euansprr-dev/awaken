@@ -22,6 +22,7 @@ final class TrailsTests {
         AwakenTests.register("trail_open_once", 60, TrailsTests::openOnce);
         AwakenTests.register("trail_follow_card", 60, TrailsTests::followCard);
         AwakenTests.register("trail_silhouette", 60, TrailsTests::silhouette);
+        AwakenTests.register("trail_done_never_shows", 60, TrailsTests::doneNeverShows);
     }
 
     private static TrailDef.Step step(String id, String text, String... done) {
@@ -167,6 +168,39 @@ final class TrailsTests {
             h.assertTrue(view.trails().stream().noneMatch(r -> r.id().equals("awaken:t_hidden") || r.id().equals("awaken:t_mixed")), "a lock you have not met is not listed");
             h.assertTrue(view.now().isEmpty(), "and a silhouette is never something to do now");
         });
+        h.succeed();
+    }
+
+    /**
+     * A done goal never shows, swept over every place one can (SPEC §27.12, core.api.Shown): the fire set from Ilse's coal
+     * rather than by the trail finishes Set Your Fire, its "find your ground" step too, and nothing anywhere still asks
+     * for the Ember. Every place a goal shows is in the sweep.
+     */
+    static void doneNeverShows(GameTestHelper h) {
+        for (String s : List.of("card", "now", "destination", "choices", "saved", "trails", "hearth", "bells"))
+            h.assertTrue(dev.awaken.core.api.Shown.sources().contains(s), "the sweep covers " + s + " (" + dev.awaken.core.api.Shown.sources() + ")");
+        ServerPlayer p = player(h);
+        String id = "awaken:set_your_fire";
+        p.getInventory().add(new net.minecraft.world.item.ItemStack(dev.awaken.hearth.HearthContent.EMBER_ITEM.get()));
+        TrailEngine.update(p);
+        h.assertTrue(TrailState.of(p).opened.contains(id), "holding the Ember opens Set Your Fire");
+        TrailEngine.act(p, new TrailPayloads.Act(TrailPayloads.FOLLOW, id, ""));
+        h.assertFalse(dev.awaken.core.api.Shown.mentioning(p, "Find open, level ground").isEmpty(), "before the fire its ground step shows: " + dev.awaken.core.api.Shown.all(p));
+        h.assertFalse(dev.awaken.core.api.Shown.mentioning(p, "Place your Ember").isEmpty(), "before the fire the Ember is asked for: " + dev.awaken.core.api.Shown.all(p));
+        // the fire, set the way Ilse's coal sets it: never through the trail's own steps
+        p.getInventory().clearContent();
+        var homes = dev.awaken.hearth.HearthService.data(h.getLevel().getServer());
+        var rec = new dev.awaken.hearth.HearthRecord(p.getUUID(), "test", h.absolutePos(new net.minecraft.core.BlockPos(1, 1, 1)), dev.awaken.hearth.HearthService.OVERWORLD);
+        rec.name = "Ashford";
+        homes.put(rec);
+        try {
+            TrailEngine.update(p);
+            h.assertTrue(TrailState.of(p).finished.contains(id), "the fire finishes the trail, the step it never saw included");
+            for (String gone : new String[] {"Find open, level ground", "Set the Ember", "Set Your Fire", "Place your Ember", "no home yet"})
+                h.assertTrue(dev.awaken.core.api.Shown.mentioning(p, gone).isEmpty(), "'" + gone + "' still shows: " + dev.awaken.core.api.Shown.mentioning(p, gone));
+        } finally {
+            homes.remove(p.getUUID());
+        }
         h.succeed();
     }
 }

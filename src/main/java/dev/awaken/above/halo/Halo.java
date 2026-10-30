@@ -90,6 +90,7 @@ public final class Halo {
         AboveData d = Above.data(player);
         if (d.haloSeen()) return;
         d.setHaloSeen(true);
+        dev.awaken.core.api.Promises.kept(player, "halo"); // what waited past the sky, seen (SPEC §27.12)
         if (Progression.profile(player).counter(Above.HALO_SEEN) == 0) Progression.count(player, Above.HALO_SEEN, 1);
         Progression.markNewThing(player, "halo_seen");
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The Halo"))

@@ -48,6 +48,8 @@ public final class KinModule {
             KinHelp.serverStopped();
             KinWorks.serverStopped();
         });
+        dev.awaken.core.api.Destinations.doneWhen("kin", KinPage::trackDone);
+        dev.awaken.core.api.Shown.register("hearth", KinPage::shown);
         KinCommands.register();
         KinTests.register();
     }
