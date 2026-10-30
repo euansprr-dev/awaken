@@ -230,14 +230,20 @@ final class BellTests {
      */
     static void lordKeeps(GameTestHelper h) {
         ServerLevel level = h.getLevel();
+        // a mock player starts at the world's spawn, which in a full batch is far from this test: stand beside the Lord
         ServerPlayer p = h.makeMockServerPlayerInLevel();
-        java.util.Set<java.util.UUID> party = Set.of(p.getUUID());
+        net.minecraft.world.phys.Vec3 by = h.absoluteVec(new net.minecraft.world.phys.Vec3(3.5, 1, 3.5));
+        p.snapTo(by.x, by.y, by.z, 0F, 0F);
+        ServerPlayer away = h.makeMockServerPlayerInLevel();
+        away.snapTo(by.x + 200, by.y, by.z, 0F, 0F);
+        java.util.Set<java.util.UUID> party = Set.of(p.getUUID(), away.getUUID());
         java.util.function.Supplier<net.minecraft.world.entity.LivingEntity> lord = () -> {
             net.minecraft.world.entity.monster.zombie.Zombie z = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(2, 1, 2));
             return z;
         };
         Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
         h.assertTrue(Bells.has(p, "wren") && Bells.count(p) == 1, "the first Lord kept the Wren");
+        h.assertTrue(Bells.count(away) == 0, "a party member 200 away wasn't there to find it");
         Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
         h.assertTrue(Bells.count(p) == 1, "the next Lord never keeps one");
         for (int i = 0; i < 3; i++) Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
