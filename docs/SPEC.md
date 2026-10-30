@@ -8253,11 +8253,13 @@ each piece comes from is said plainly; what the world holds beyond it is still f
 - **The Journal is a catalogue** (phase 3, `progression.client.Catalogue`, `JournalFilters`): a tab per category along
   its top with how many you've found (Q / E step through them; they wrap on a narrow band): CREATURES (every overworld
   creature in the bestiary, `CreatureCodex.slots`, found once seen, with its egg), BEASTS (the kin kinds that live in the
-  world, found once met; read off the Hearth page's words, `KinPageSection.slots`), BELLS (the Hundred's own board is
-  the slots; the tab counts held / 100), GATE WORLDS (the Atlas, found / total), CAVE REGIONS (`RegionCodex.slots`),
-  HAPPENINGS (the Almanac; open-ended, a count), LORE & PLACES (the Codex board without its Creatures and Cave regions,
-  which have their own; found entries counted) and YOUR STORY last (the log, Records, the chains, Saved for later,
-  Recent; its tab says "n NEW" while the log has unread lines). A fixed category shows every slot numbered; one not
+  world, found once met; read off the Hearth page's words, `KinPageSection.slots`), LANDS (biomes found, a count),
+  PLACES (landmarks, lairs, wonders and secrets found, a count), GATE WORLDS (the Atlas, found / total), CAVE REGIONS
+  (`RegionCodex.slots`), BELLS (the Hundred's own board is the slots; the tab counts held / 100), LORE (the Codex board
+  without its Creatures and Cave regions, which have their own; found entries counted), HAPPENINGS (the Almanac, a
+  count: the kinds are the server's data, so the client can't number them), ORES (the twelve of
+  `ProgressionModule.OreXp`, found once mined, with what each is for) and YOUR STORY last (the log, Records, the chains,
+  Saved for later, Recent; its tab says "n NEW" while the log has unread lines). A fixed category shows every slot numbered; one not
   found is a "?" with its number and nothing else, never a name, a picture or a hint; click a found one for what you've
   learned. A section says its category (`Section.shelf()`, YOUR STORY by default); a note link to the Journal opens on
   the linking section's category (`StatusSections.follow`: the Status page's "ALL n ›" opens Your story). The Now list

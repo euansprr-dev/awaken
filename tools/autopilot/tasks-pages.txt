@@ -1,6 +1,7 @@
 # One Tasks page (SPEC §27.13): Euan's moment, back home with the fire set and a bed built. The Tasks page (Now, the
 # Hearth tab, the Armour tab and its sets worn), the Hearth page at a glance (next for your home, the room tiles, make it
-# look good), the Journal as a catalogue (Creatures and Beasts as "?" slots, Bells, Your story), and Status's Truths.
+# look good), the Journal as a catalogue (Creatures, Beasts and Ores as "?" slots, Bells, Lore, Your story), and Status's
+# Truths.
 # Run on CI: tools/tour-ci.sh tools/autopilot/tasks-pages.txt 1200
 world autopilot_tasks_pages creative 27132713
 waitworld
@@ -91,6 +92,9 @@ shot t11_journal_bells
 journal lore
 wait 30
 shot t12_journal_lore
+journal ores
+wait 30
+shot t12b_journal_ores
 journal story
 wait 30
 shot t13_journal_story

@@ -365,7 +365,7 @@ public final class ProgressionModule {
         // banked before awakening
         if (ore != null && ore.weight > 0 && isHome(sp.level())) homeXp(sp, ore.deep(y) ? XpBudget.DEEP : XpBudget.ORE, ORE_XP * ore.weight, ore.contentLevel(y));
         if (ore != null && Progression.discover(sp, "ore/" + ore.id(), ORE_DISCOVERY) && Progression.profile(sp).awakened()) {
-            // a paced toast that says what the ore is for (ores aren't Journal entries, so not Finds' "kept in your Journal")
+            // a paced toast that says what the ore is for (its slot in the Journal's Ores fills quietly: SPEC §27.13)
             Signal.send(sp, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE,
                             Component.literal("New ore · " + ore.title).withColor(ore.colour))
                     .body(Component.literal(ore.hint)).presentation(dev.awaken.signal.SignalWindow.Presentation.TOAST)

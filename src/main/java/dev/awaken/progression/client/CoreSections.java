@@ -59,7 +59,43 @@ final class CoreSections {
         // (SPEC §27.13) the Codex is the Journal's now: what you've found
         StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new CodexBoard(), 600, StatusSections.Shelf.LORE));
         Catalogue.count(StatusSections.Shelf.LORE, CodexBoard::found);
+        // open-ended finds count; the ores are a fixed set (SPEC §27.13)
+        Catalogue.count(StatusSections.Shelf.LANDS, () -> Catalogue.discovered("awaken:discovered/biome/"));
+        Catalogue.count(StatusSections.Shelf.PLACES, () -> Catalogue.discovered("awaken:discovered/landmark/", "awaken:discovered/lair/",
+                "awaken:discovered/wonder/", "awaken:discovered/secret/"));
+        Catalogue.fixed(StatusSections.Shelf.ORES, CoreSections::ores);
         CodexEntries.addSource(CoreSections::insightEntries);
+    }
+
+    /** The Journal's Ores (SPEC §27.13): every ore in order, a "?" until you've mined one, then what it's for. */
+    static List<Catalogue.Slot> ores() {
+        Profile p = profile();
+        List<Catalogue.Slot> out = new ArrayList<>();
+        for (var o : dev.awaken.progression.ProgressionModule.OreXp.values()) {
+            if (p.counter("awaken:discovered/ore/" + o.id()) <= 0) {
+                out.add(Catalogue.Slot.unknown());
+                continue;
+            }
+            out.add(new Catalogue.Slot(o.title, true, o.hint + ".", new net.minecraft.world.item.ItemStack(oreIcon(o))));
+        }
+        return out;
+    }
+
+    private static net.minecraft.world.item.Item oreIcon(dev.awaken.progression.ProgressionModule.OreXp o) {
+        return switch (o) {
+            case COAL -> net.minecraft.world.item.Items.COAL;
+            case COPPER -> net.minecraft.world.item.Items.RAW_COPPER;
+            case IRON -> net.minecraft.world.item.Items.RAW_IRON;
+            case GOLD -> net.minecraft.world.item.Items.RAW_GOLD;
+            case REDSTONE -> net.minecraft.world.item.Items.REDSTONE;
+            case LAPIS -> net.minecraft.world.item.Items.LAPIS_LAZULI;
+            case EMERALD -> net.minecraft.world.item.Items.EMERALD;
+            case DIAMOND -> net.minecraft.world.item.Items.DIAMOND;
+            case DEEPGLASS -> net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("deepglass_shard"));
+            case QUARTZ -> net.minecraft.world.item.Items.QUARTZ;
+            case DEBRIS -> net.minecraft.world.item.Items.ANCIENT_DEBRIS;
+            case AMETHYST -> net.minecraft.world.item.Items.AMETHYST_SHARD;
+        };
     }
 
     private static String plural(long n, String word) {

@@ -59,6 +59,22 @@ public final class Catalogue {
         FRESH.put(shelf, unread);
     }
 
+    /** How many discovery counters under these prefixes ("awaken:discovered/landmark/") this player has. */
+    public static int[] discovered(String... prefixes) {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        int n = 0;
+        if (mc.player != null) {
+            for (var e : dev.awaken.progression.Progression.profile(mc.player).counters().entrySet()) {
+                if (e.getValue() <= 0) continue;
+                for (String pre : prefixes) if (e.getKey().startsWith(pre)) {
+                    n++;
+                    break;
+                }
+            }
+        }
+        return new int[]{n, -1};
+    }
+
     /** What the category strip says beside a category's name: "12/40", "7", "3 NEW" or "". */
     static String tally(StatusSections.Shelf shelf) {
         var f = FRESH.get(shelf);

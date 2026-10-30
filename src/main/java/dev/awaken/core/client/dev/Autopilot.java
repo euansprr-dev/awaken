@@ -450,7 +450,7 @@ public final class Autopilot {
             }
             case "trails" -> dev.awaken.trails.client.TrailsClient.debug(arg); // trails <now|browse [area]|open>: the Journal's TRAILS section
             case "tasks" -> dev.awaken.tasks.client.TasksClient.debug(arg); // tasks <now|hearth|armour|weapons|bells|gates|worn>: the Tasks page
-            case "journal" -> { // journal <creatures|kin|bells|gates|caves|happenings|lore|story>: the Journal's category
+            case "journal" -> { // journal <creatures|kin|lands|places|gates|caves|bells|lore|happenings|ores|story>: the Journal's category
                 try {
                     dev.awaken.progression.client.StatusSections.journalFilter(dev.awaken.progression.client.StatusSections.Shelf.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
                 } catch (IllegalArgumentException e) {
