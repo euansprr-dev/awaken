@@ -70,4 +70,7 @@ it says so: open another). `/awaken gate rig start` fires the room's trigger, `/
 
 ## CI
 
-Run id: filled in after the push (see the commit message of the last push and the GitHub Actions page for pack/gate-rig).
+GameTests run 40119034105 (https://github.com/euansprr-dev/awaken/actions/runs/40119034105): green on 10fc53e, all
+380 tests (the VM's own `runGameTestServer`: 380 of 380 too). build/awaken-v1 then moved on (pack/wilds-base,
+pack/ascent); it's merged in here (only SPEC §17 conflicted: The Wilds and the Gate Rig, both kept), so this branch
+merges cleanly. The latest run on pack/gate-rig is the one to read before merging.
