@@ -83,7 +83,10 @@ public final class MotionTags {
     private static void loaded(ChunkEvent.Load e) {
         if (!(e.getLevel() instanceof ServerLevel)) return;
         Integer seen = e.getChunk().getExistingDataOrNull(HEIGHTS_SEEN.get());
-        if (seen == null || seen < HEIGHTS) reprime(e.getChunk());
+        if (seen != null && seen >= HEIGHTS) return;
+        // A chunk generated now built its heightmaps under today's tags: mark it, no second pass over its blocks.
+        if (e.isNewChunk()) e.getChunk().setData(HEIGHTS_SEEN.get(), HEIGHTS);
+        else reprime(e.getChunk());
     }
 
     /**
