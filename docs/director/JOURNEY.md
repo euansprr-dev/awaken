@@ -130,11 +130,14 @@ a **holdfast**: a walled town far out that kept its bell ringing and still has p
 too; you meet him in the city and in gates, and any of his beats that today happen in the wild move to one of those.
 
 ### Why: the Lull
-The Deep is everything the world refuses to feel (STORY.md). Where the gates leak it, it settles over the land, and
-ordinary people out in it stop feeling things. First they get tired. Then they sit down somewhere. Then they don't get
-up: they go still, and over the months they turn to stone. That's **the Lull**. Nobody in the city knows whether the
-stone ones are dead. Teodor at the archive thinks they're only stilled, and the city hopes he's right. The Choir's bells keep it off: that's why Carillon is a city of bells, why they ring every
-hour, and why everyone lives within their sound.
+The Deep is a place under the world, and whatever's down there wants to get out; gates are the cracks it comes up
+through. Every gate leaks a bit of it into the air, and ordinary people who breathe it for long get tired. Then they sit
+down somewhere. Then they don't get up: they go still, and over the months they turn to stone. That's **the Lull**.
+Nobody in the city knows whether the stone ones are dead. Teodor at the archive thinks they're only stilled, and the city
+hopes he's right. The old bells keep it off because the Deep can't stand their sound: wherever one can be heard, the
+Lull can't settle and the ground stays shut, so no gate opens there (Euan 2026-10-30 asked for this plain rule instead of
+"stop feeling things"; SPEC §43.15). That's why Carillon is a city of bells, why they ring every hour, and why everyone
+lives within their sound.
 
 The Awakened are the one exception. You died inside a gate and kept thinking. Whatever the Lull does, it can't do it to
 someone who has already come back. That's what a hunter's licence really means, and Ilse says so.
@@ -211,19 +214,33 @@ went back".
 The Wayfarer camp, 450 blocks up the north road, becomes **the Last Fire**: the furthest point where the city's bells
 can still just be heard, and the last place anyone lives. Ilse keeps it for new hunters. Bram's brief at the Registry
 already sends you there; his line changes to "Ilse keeps the last fire up the north road. Past it, it's only hunters."
+Before that, Bram tells you what a gate is ("a crack where the Deep pushes through"), that the old bells keep the Deep
+down because it can't stand their sound, that there were a hundred, that they went quiet eleven years ago, and that this
+morning a gate opened under the city's own bells (2026-10-30, SPEC §43.15). Ilse tells the rest, and your Bell Book opens
+at 0 / 100 when she gives you the coal.
 
 Her scene (plain speech, read aloud; Ilse sitting by the fire, the ridge and the wild behind her):
 - "You're the one from the square. Sit down, the kettle's nearly on."
 - "This is the last fire. Past that ridge the bells don't carry, and that's where the Lull starts."
-- "Ordinary people who stay out there get tired. Then they sit down somewhere, and they don't get up again. That's why
-  we all live in the city now."
+- "You've been inside a gate now. There's a place under the world called the Deep, and whatever's down there wants to
+  get out. The gates are the cracks it comes up through."
+- "Every gate leaks a bit of it into the air. Ordinary people who breathe it for long get tired. Then they sit down
+  somewhere, and they don't get up again. That's the Lull."
+- "The old bells are the one thing that stops it. The Deep can't stand their sound. Wherever one can be heard, the Lull
+  can't settle and the ground stays shut. That's why the city rings every hour."
+- "There used to be a hundred of them across the land, and you could hear one from anywhere. A gate was something out
+  of a story back then."
+- "Eleven years ago they went quiet, one after another. Nobody knows why. The gates started opening after that, and a
+  lot of the bells fell right into them. The Lull came down the valleys, and we all walked to the city."
 - "Some went back out anyway. For a dog, or a ring, or their mam's grave. You'll pass them on the road. They sat down,
   and they've gone to stone. Leave them be."
 - "The first one's on the milestone just past the ridge. That's Aldo. He went back for his dog. Say hello to him for
   me."
 - "They say a few walled towns far out kept their bells going and never left. I've never seen one."
-- "Not you, though. You died once and came back. Whatever the Lull does, it can't do it to you. That's what the licence
-  really means."
+- "If someone found all hundred and got them ringing again, the whole land would be covered. The gates might stop.
+  People could go home. Nobody from the city can stay out there long enough to look."
+- "Not you, though. You died in a gate and came back. Whatever the Lull does, it can't do it to you. That's what the
+  licence really means. If anyone can find them, it's you."
 - "Here. It's a coal from this fire. Put it down wherever you want to live, and that's your home. Nobody will come and
   bother you out there. Nobody can."
 - "And don't believe everything the Association says. It isn't all monsters out there. Most of what lives out there

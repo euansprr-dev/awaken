@@ -23,6 +23,46 @@ final class BellTests {
         AwakenTests.register("bells_tower_plans", 20, BellTests::towerPlans);
         AwakenTests.register("bells_site_wakes", 60, BellTests::siteWakes);
         AwakenTests.register("bells_hundred_peal", 20, BellTests::hundredPeal);
+        AwakenTests.register("bells_story_start", 20, BellTests::storyStart);
+    }
+
+    /**
+     * Ilse's telling (SPEC §43.15) files the Ember's Remembered lead once (the Book opens at 0 / 100), none once it's held;
+     * the ground is quiet within 100 of a woken bell's place or a tower's frame, and not 150 away.
+     */
+    static void storyStart(GameTestHelper h) {
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        int ember = BellCatalog.of("ember").no();
+        Bells.told(p);
+        Bells.told(p);
+        BellBook.Lead l = Bells.book(p).leads.get(ember);
+        h.assertTrue(l != null && l.has(BellBook.How.REMEMBERED) && l.lines.size() == 1, "Ilse's telling files the Ember's lead, once");
+        ServerPlayer q = h.makeMockServerPlayerInLevel();
+        Bells.ring(q, "ember", "in a test");
+        Bells.told(q);
+        BellBook.Lead m = Bells.book(q).leads.get(ember);
+        h.assertTrue(m == null || !m.has(BellBook.How.REMEMBERED), "no lead for a bell already held");
+        ServerLevel level = h.getLevel();
+        BellWorld w = BellWorld.get(level.getServer());
+        BlockPos site = new BlockPos(2_000_000, 70, 2_000_000), frame = new BlockPos(-2_000_000, 70, 2_000_000);
+        BellWorld.Site s = new BellWorld.Site("ember", BellSites.Kind.values()[0], site);
+        BellWorld.Home home = new BellWorld.Home();
+        home.frame = frame;
+        try {
+            h.assertTrue(!Bells.quiet(level, site), "nothing is heard where nothing rings");
+            s.state = BellWorld.Site.ASLEEP;
+            w.sites.put("test_story", s);
+            h.assertTrue(!Bells.quiet(level, site.east(50)), "a sleeping bell keeps nothing off");
+            s.state = BellWorld.Site.AWAKE;
+            h.assertTrue(Bells.quiet(level, site.east(99)), "a woken bell's place keeps gates off within 100");
+            h.assertTrue(!Bells.quiet(level, site.east(150)), "and not 150 away");
+            w.homes.put(frame.below(4).asLong(), home);
+            h.assertTrue(Bells.quiet(level, frame.south(80)), "a tower's frame keeps them off too");
+        } finally {
+            w.sites.remove("test_story");
+            w.homes.remove(frame.below(4).asLong());
+        }
+        h.succeed();
     }
 
     /** A hundred bells numbered in order, every one built (100); a bell rings home once, and the first brings the handbell. */

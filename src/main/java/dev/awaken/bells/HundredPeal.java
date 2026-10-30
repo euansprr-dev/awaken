@@ -148,7 +148,8 @@ final class HundredPeal {
         Vec3 tower = Vec3.atCenterOf(a.at());
         Fault f = new Fault(Fault.Size.GREAT, "deep_answer",
                 List.of("[ERROR] … SIGNAL HEARD BELOW", "100 / 100 · ANSWERING ▮▮▮▮▮"), "[ERROR] it knows where the song came from",
-                "The Deep heard your bells. Gates will break sooner now, and harder, and the Gnawed will spread wherever the Kinsong doesn't reach.",
+                "The Deep heard your bells. Gates will break sooner now, and harder, and the Gnawed will spread wherever the Kinsong doesn't reach. "
+                        + "It's pushing back from the very bottom, from the Seed. That's where this ends.",
                 tower.add(26, 10, 26), tower, 90, false);
         for (UUID id : a.heard())
             if (level.getServer().getPlayerList().getPlayer(id) instanceof ServerPlayer p && p.level() == level) Faults.play(p, f);
@@ -245,6 +246,16 @@ final class HundredPeal {
         @Override
         public String belfry(ServerPlayer player) {
             return GreatBelfry.line(player);
+        }
+
+        @Override
+        public void told(ServerPlayer player) {
+            Bells.told(player);
+        }
+
+        @Override
+        public boolean quiet(ServerLevel level, BlockPos at) {
+            return Bells.quiet(level, at);
         }
 
         @Override

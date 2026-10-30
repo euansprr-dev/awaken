@@ -469,6 +469,33 @@ public final class Bells {
     }
 
     /** A Remembered lead: what someone said, and the area it points at if it points anywhere. */
+    /** Ilse told them of the hundred (SPEC §43.15): the Ember's lead opens the Bell Book at 0 / 100 before a bell rings. */
+    public static void told(ServerPlayer p) {
+        BellCatalog.Def d = BellCatalog.of("ember");
+        if (d == null || has(p, "ember")) return;
+        remembered(p, d, null, "Ilse says there were a hundred bells across the land. The first will ring by your own fire, once you set her coal down.");
+    }
+
+    /** How far a woken bell or a home's tower keeps new gates off (SPEC §43.15). */
+    static final int QUIET = 100;
+
+    /** Whether a woken bell's place or a home's tower is within {@link #QUIET} blocks of {@code at} (overworld only). */
+    public static boolean quiet(ServerLevel level, BlockPos at) {
+        if (level.dimension() != Level.OVERWORLD) return false;
+        BellWorld w = BellWorld.get(level.getServer());
+        long r2 = (long) QUIET * QUIET;
+        for (BellWorld.Site s : w.sites.values())
+            if (s.state == BellWorld.Site.AWAKE && flat(s.pos, at) <= r2) return true;
+        for (BellWorld.Home h : w.homes.values())
+            if (h.frame != null && flat(h.frame, at) <= r2) return true;
+        return false;
+    }
+
+    private static long flat(BlockPos a, BlockPos b) {
+        long dx = a.getX() - b.getX(), dz = a.getZ() - b.getZ();
+        return dx * dx + dz * dz;
+    }
+
     private static void remembered(ServerPlayer p, BellCatalog.Def d, @Nullable BlockPos at, String line) {
         BellBook b = book(p);
         BellBook.Lead l = lead(p, b, d);
