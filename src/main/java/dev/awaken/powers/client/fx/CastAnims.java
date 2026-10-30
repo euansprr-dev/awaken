@@ -11,6 +11,7 @@ import dev.awaken.powers.fx.FxStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
@@ -21,6 +22,7 @@ import net.minecraft.util.context.ContextKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
@@ -188,6 +190,12 @@ final class CastAnims {
             if (a.profile != null) {
                 momentFor(entityId, a.profile.endMoment(), a.profile);
                 lensFor(entityId, a.profile, true);
+                // your hands let go in first person too (a push out of the hold), from the pose the hold is in
+                if (a.profile.end1p() != null && entityId == mcPlayerId() && PowerFxConfig.animations()) {
+                    dev.awaken.core.api.FirstPerson.stop(a.profile.begin1p());
+                    if (a.profile.hold1p() != null) dev.awaken.core.api.FirstPerson.stop(a.profile.hold1p());
+                    dev.awaken.core.api.FirstPerson.play(a.profile.end1p());
+                }
             }
         }
     }
@@ -225,7 +233,8 @@ final class CastAnims {
             }
             float age = FxWorld.ticks - a.start;
             boolean done = a.held ? (a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt > 5) || age > 20 * 30 : age > a.ticks + 2;
-            // a held clip lets go a moment after release, so a release cast arriving just behind it takes over smoothly
+            // a held clip lets go a moment after release, so a release cast arriving just behind it takes over smoothly; a cast
+            // profile has no release cast to wait for, so its let-go starts with the shot
             // the profile's screen moment lands on the tick its clips release on
             if (a.profile != null && !a.momentPlayed && age >= a.profile.release()) {
                 a.momentPlayed = true;
@@ -237,7 +246,7 @@ final class CastAnims {
                 a.holdStarted = true;
                 if (!PalCasts.play(a.entity, a.profile.hold3p(), 2)) a.pal = false;
             }
-            if (a.pal && a.held && !a.palLetGo && (done || a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt >= 2)) {
+            if (a.pal && a.held && !a.palLetGo && (done || a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt >= (a.profile != null ? 0 : 2))) {
                 a.palLetGo = true;
                 String clip = a.profile != null ? a.profile.end3p() : CastClips.letGo(a.family, a.kind);
                 if (clip == null || !PalCasts.play(a.entity, clip, 2)) PalCasts.stop(a.entity);
@@ -248,6 +257,8 @@ final class CastAnims {
     }
 
     static void reset() {
+        HoldSound.reset();
+        BALL_SEEN.clear();
         for (Anim a : SLOTS) {
             if (a.entity >= 0 && a.pal) PalCasts.stop(a.entity);
             a.entity = -1;
@@ -295,6 +306,28 @@ final class CastAnims {
     // ---- third person -----------------------------------------------------------------------------------------------
 
     /** Render-state modifier: poses the arms and twists the body of any humanoid with a running cast animation. */
+    private static final it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap BALL_SEEN = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
+    private static final int EMPTY_AFTER = 10;
+
+    /**
+     * Registered last (after Arms fills the hands): both hands are on the ball (Charged Shot's hold and push), so whatever
+     * they held is not drawn; only the drawn state changes, never the inventory.
+     */
+    static void emptyHands(Entity entity, EntityRenderState state) {
+        if (!(state instanceof ArmedEntityRenderState hands) || !PowerFxConfig.animations()) return;
+        Anim a = find(entity.getId());
+        if (a != null && a.profile != null && a.profile.ball()) BALL_SEEN.put(entity.getId(), FxWorld.ticks);
+        // the push and settle outlive the profile's pose by a few ticks: the item comes back once the arms are down
+        else if (!BALL_SEEN.containsKey(entity.getId())) return;
+        else if (FxWorld.ticks - BALL_SEEN.get(entity.getId()) > EMPTY_AFTER) {
+            BALL_SEEN.remove(entity.getId());
+            return;
+        }
+        hands.rightHandItemState.clear();
+        hands.leftHandItemState.clear();
+        hands.rightHandItemStack = hands.leftHandItemStack = ItemStack.EMPTY;
+    }
+
     static void modify(Entity entity, EntityRenderState state) {
         if (!(state instanceof HumanoidRenderState s)) return;
         Anim a = PowerFxConfig.animations() ? find(entity.getId()) : null;

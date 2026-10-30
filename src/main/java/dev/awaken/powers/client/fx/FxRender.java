@@ -472,9 +472,12 @@ final class FxRender {
         }
     }
 
-    /** A shape held in the local player's hand while the camera is in first person. */
+    /**
+     * A shape held in the local player's hand (or between both, Charged Shot's ball) while the camera is in first person: it
+     * is drawn small and never faded for being near the eye (the ball is 0.58 from it, where the near fade hid it whole).
+     */
     static boolean ownHand(Shape sh) {
-        if (sh.anchor != Anchors.HAND && sh.anchor != Anchors.OFFHAND) return false;
+        if (sh.anchor != Anchors.HAND && sh.anchor != Anchors.OFFHAND && sh.anchor != Anchors.BALL) return false;
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         return mc.player != null && sh.follow == mc.player.getId() && mc.options.getCameraType().isFirstPerson();
     }

@@ -50,6 +50,8 @@ public final class FxClient {
         modBus.addListener(RegisterGuiLayersEvent.class, FxScreen::register);
         modBus.addListener(RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, CastAnims::modify));
+        modBus.addListener(EventPriority.LOWEST, RegisterRenderStateModifiersEvent.class,
+                e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, CastAnims::emptyHands));
         // where a cast's palm, core and foot are on a drawn body (Muzzles)
         modBus.addListener(EntityRenderersEvent.AddLayers.class, e -> {
             for (var type : e.getSkins()) {
@@ -242,9 +244,10 @@ public final class FxClient {
         boolean channel = type.mode == PowerType.Mode.CHANNEL;
         CastProfiles.Profile prof = CastProfiles.at(CastProfiles.byPower(type.path), level);
         CastAnim anim = channel && def.windAnim() != null ? def.windAnim() : def.anim();
-        if (prof != null && animations()) {
+        if (prof != null) {
+            // the profile runs even with cast animations off (its fallback pose, its held sound), as it does for everyone watching
             CastAnims.playProfile(p.getId(), prof, type.family);
-            FirstPerson.play(prof.begin1p());
+            if (animations()) FirstPerson.play(prof.begin1p());
         } else if (anim != CastAnim.NONE) {
             CastAnims.play(p.getId(), anim, 0, type.family);
         }

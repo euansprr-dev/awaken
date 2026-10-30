@@ -108,10 +108,10 @@ final class FxRecipes {
         LadderFx.tierSound(e, level);
     }
 
-    /** Where a caster's beams and orbs start: their palm, or the core for a profile that opens the chest. */
+    /** Where a caster's beams and orbs start: their palm, the core for a profile that opens the chest, or the ball between both hands. */
     static int originAnchor(Entity caster) {
         var prof = dev.awaken.powers.fx.CastProfiles.byId(CastAnims.profileOf(caster.getId()));
-        return prof != null && prof.core() ? Anchors.CORE : Anchors.HAND;
+        return prof == null ? Anchors.HAND : prof.core() ? Anchors.CORE : prof.ball() ? Anchors.BALL : Anchors.HAND;
     }
 
     // ---- shared layers ----------------------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ final class FxRecipes {
 
     private static void cast(FxEvent e, FxStyle st, Entity caster) {
         if (caster == null) return;
-        Anchors.of(caster, Anchors.HAND, 1f, P);
+        Anchors.of(caster, originAnchor(caster), 1f, P);
         for (int i = 0; i < n(5); i++) {
             int s = FxWorld.sprite(MOTE, P[0] + R.s() * 0.15, P[1] + R.s() * 0.15, P[2] + R.s() * 0.15, R.s() * 0.04, R.f(0.01f, 0.05f), R.s() * 0.04,
                     10 + R.i(6), 0.18f, 0.04f, st.core, alpha(st.mid, 0), FxPool.ADD);
@@ -327,6 +327,9 @@ final class FxRecipes {
     static void startCharge(Entity caster, FxStyle st, float scale, int life, int seed) {
         float sc = Math.max(0.5f, scale) * 1.3f;
         int origin = originAnchor(caster);
+        // a profile's held sound starts with its orb (a variant that never charges, such as Volley, never sends one)
+        var prof = CastAnims.profile(caster.getId());
+        if (prof != null && prof.holdSound() != null) HoldSound.start(caster.getId(), prof);
         Shape halo = attach(disc(0, 0, 0, HALO, 0.5f * sc, 1.8f * sc, life, alpha(st.mid, 0.9f), alpha(st.mid, 1f)), caster, origin);
         if (halo != null) {
             halo.emitter = E_CHARGE;
@@ -366,7 +369,7 @@ final class FxRecipes {
         FxWorld.endAttached(caster.getId(), E_CHARGE);
         CastAnims.release(caster.getId());
         if (e.has(FxEvent.FULL)) {
-            Anchors.of(caster, Anchors.HAND, 1f, P);
+            Anchors.of(caster, originAnchor(caster), 1f, P);
             flare(P[0], P[1], P[2], 1.2f, st, 5);
             sparks(P[0], P[1], P[2], n(10), 0.35f, st, 6, 0, 0, 0, 0, 0);
         }

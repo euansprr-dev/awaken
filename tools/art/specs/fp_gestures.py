@@ -111,10 +111,22 @@ def clap(a, rel):
     return fist_clip(rel, [(rel * 0.5, WIDE), (rel, fist(0.04, -0.28, -0.75))], [(rel * 0.5, WIDE_OFF), (rel, fist(-0.04, -0.28, -0.75))], tail=6)
 
 
+# Charged Shot's ball between the fists, up where it is seen above the hotbar: the palms' midpoint (each fist plus Muzzles'
+# PALM_FORWARD, 0.10) is powers.fx.CastPoints.ball, (0, -0.17, -0.58) from the eyes, so the bolt leaves from between them.
+# Apart enough that the orb shows between them (at 0.15 the fists met in the middle and hid it; the hands draw over the world).
+BALL = fist(0.25, -0.17, -0.48)
+BALL_OFF = fist(-0.25, -0.17, -0.48)
+
+
 @g1
-def gather_shot(a, rel):
-    """Charged Shot: the fists gather at the core and tremble; the let-go (the third-person thrust) is the hold ending."""
-    return channel(rel, GATHER, GATHER_OFF, GATHER, GATHER_OFF, events=[(rel, "hold")])
+def lightning_ball(a, rel):
+    """Charged Shot: the fists cup low, then lift the ball up between them and hold it, trembling; the let-go drives both out."""
+    s = channel(rel, fist(0.12, -0.40, -0.55), fist(-0.12, -0.42, -0.56), BALL, BALL_OFF, events=[(rel, "hold")])
+    s["hold"] = hold_clip(BALL, BALL_OFF, jitter=0.008)
+    push, push_off = fist(0.18, -0.13, -0.80), fist(-0.18, -0.13, -0.80)
+    s["end"] = ([(0, BALL, L), (1, push, EOC), (3, push, L), (10, REST_FIST, EIOS)],
+                [(0, BALL_OFF, L), (1, push_off, EOC), (3, push_off, L), (10, OFF_OUT, EIOS)])
+    return s
 
 
 @g1
@@ -350,7 +362,7 @@ def register_all():
         p = PG.PROFILES[power]
         rel = float(p["release"])
         if power in ("shockwave", "beam"):
-            NAMES[power] = ("fp_stomp", None) if power == "shockwave" else ("fp_beam_gather", "fp_beam_hold")
+            NAMES[power] = ("fp_stomp", None, None) if power == "shockwave" else ("fp_beam_gather", "fp_beam_hold", None)
             continue
         if r["g1"] == "stomp":  # spire: the stomp with the arms driven down (offsets)
             s = off_clip(rel, [(2, hand(0.0, 0.02, 0.0, 6), EOC), (3, hand(0.04, 0.02, 0.0, 4), EOS), (4, hand(0.04, 0.02, 0.0, 4), L),
@@ -370,12 +382,17 @@ def register_all():
             hm, ho = s["hold"]
             hold_name = name + "_hold"
             FC.clip(hold_name, 4, main=hm, off=ho, both=True, loop=True, fists=True, stow=True, note=f"{power}: held")
-        NAMES[power] = (name, hold_name)
+        end_name = None
+        if s.get("end"):
+            em, eo = s["end"]
+            end_name = name + "_end"
+            FC.clip(end_name, em[-1][0] + 1, main=em, off=eo, both=True, fists=True, stow=True, note=f"{power}: let go")
+        NAMES[power] = (name, hold_name, end_name)
 
 
 register_all()
 
 
 def table_fields(power, row, profile):
-    b, h = NAMES[power]
-    return {"begin1p": b, "hold1p": h}
+    b, h, e = NAMES[power]
+    return {"begin1p": b, "hold1p": h, "end1p": e}

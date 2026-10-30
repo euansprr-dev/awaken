@@ -161,7 +161,7 @@ P("charged_shot", "Charged Shot", "Energy", "active",
   ("Arc", "On a hit the bolt jumps to a second foe.", "The jump hits for half."),
   ("Overcharge", "Hold past full and the orb turns white and spits sparks.", "An overcharged bolt pierces."),
   ("Thunder Lance", "A full charge fires a lance that leaves a crackling line for 2 s, and a bolt from the sky strikes the target.",
-   "The line shocks foes that cross it.", "The bolt hand pulled back to the ear, then thrown like a spear."), starter=True)
+   "The line shocks foes that cross it.", "Both hands drive the ball out like a thrown spear, the whole body behind it."), starter=True)
 P("nova", "Nova", "Energy", "active",
   ("Orbits", "Two rings of light orbit the shell as it grows.", "10% wider."),
   ("Searing Shell", "The shell holds a second longer.", "Foes touching it burn."),

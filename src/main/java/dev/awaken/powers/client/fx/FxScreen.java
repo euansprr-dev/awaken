@@ -35,6 +35,8 @@ final class FxScreen {
     private static float fov, fovDecay;
     private static float kickPitch, kickYaw, kickRoll;
     private static int speedTicks, speedTotal;
+    /** Tours only (/awaken fx sidecam): the third-person camera swung this many degrees round the player, 0 off. */
+    static float sideCam;
 
     static void register(RegisterGuiLayersEvent e) {
         e.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, LAYER, FxScreen::render);
@@ -121,6 +123,8 @@ final class FxScreen {
     }
 
     static void onAngles(ViewportEvent.ComputeCameraAngles e) {
+        // the angles are set before third person pulls back along them, so turning them here orbits the camera
+        if (sideCam != 0 && !Minecraft.getInstance().options.getCameraType().isFirstPerson()) e.setYaw(e.getYaw() + sideCam);
         if (Math.abs(kickPitch) + Math.abs(kickYaw) + Math.abs(kickRoll) < 0.01f) return;
         float k = 1 - (float) e.getPartialTick() * 0.38f;
         e.setPitch(e.getPitch() + kickPitch * k);

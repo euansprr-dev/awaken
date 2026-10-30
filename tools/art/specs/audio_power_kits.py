@@ -335,6 +335,92 @@ def ev_steam(s):
     return mix(0.9, [(air_burst(0.8, 3800, s, 0.8), 0, 0.8), (whoosh(0.7, 800, 3200, 0.2, s + 1), 0, 0.4)], "field", 0.1, 1.1)
 
 
+# ---- Charged Shot's lightning (SPEC 32): one sound for each moment of the cast -------------------------------------------------
+
+def _ramp(n, at, to, curve=1.0):
+    """0 before `at` seconds, rising to 1 at `to`, held after."""
+    t = K.tvec(n)
+    return np.clip((t - at) / max(1e-6, to - at), 0, 1) ** curve
+
+
+def soft(x, crest=10.0):
+    """A sparse layer (a crackle, a crack) at unit RMS with its spikes rounded off at `crest` dB, so one spark cannot set the
+    whole sound's level."""
+    c = 10 ** (crest / 20)
+    return c * np.tanh(R.unit(x) / c)
+
+
+def arc_buzz(dur, f0, f1, seed, curve=1.6):
+    """An arc's mains buzz: a gliding square-ish tone (odd harmonics), wobbling, as a held spark does."""
+    n = K.ns(dur)
+    t = K.tvec(n)
+    f = f0 * np.exp(np.log(f1 / f0) * np.minimum(1.0, t / dur) ** curve) * (1 + 0.012 * K.smooth_noise(n, 9.0, seed))
+    x = sum(K.sine(f * m, n) / m for m in (1, 3, 5, 7, 9))
+    return R.unit(K.lowpass(x, 3200, 2))
+
+
+def ev_lightning_charge(s):
+    """The ball builds between the hands (1.5 s to full, then held): a hum that climbs and swells, a whine rising over it, and
+    the crackle going from a few sparks to a storm. HoldSound plays it from the hands and cuts it on the let-go."""
+    dur = 1.8
+    n = K.ns(dur)
+    t = K.tvec(n)
+    grow = np.minimum(1.0, t / 1.5)
+    hum = arc_buzz(dur, 62, 128, s, 1.4) * (0.25 + 0.75 * grow ** 1.4)
+    whine = R.unit(K.sine(900 * np.exp(np.log(3.4) * grow ** 1.6), n) + 0.3 * K.sine(1810 * np.exp(np.log(3.4) * grow ** 1.6), n)) * grow ** 2.2
+    sparks = soft(K.crackle(n, 22.0, s + 1, 0.85, 0.9), 9.0) * (0.5 + 0.5 * grow)
+    storm = soft(K.crackle(n, 260.0, s + 2, 0.9, 0.6), 9.0) * _ramp(n, 0.5, 1.5, 1.8)
+    air = R.unit(R.sweep(K.noise(n, "pink", s + 3), lambda u: 300 + 2600 * min(1.0, max(0.0, u) / 1.5) ** 1.5, 2.2)) * grow ** 1.5
+    sub = AA.sub(dur, 40, 58, dur, 1.3) * _ramp(n, 0.2, 1.5, 1.2)
+    x = hum * 0.8 + whine * 0.16 + sparks * 0.45 + storm * 0.55 + air * 0.3 + sub * 0.5
+    x *= np.minimum(1.0, t / 0.04)
+    return R.fade_out(x, 0.12)
+
+
+def ev_lightning_full(s):
+    """Full: a bright ring with a snap in it and the hum lifting under it, so you know without looking."""
+    return mix(0.75, [(shimmer(2350, 0.7, s, 0.6, 1.0), 0.0, 0.7), (bell(1175, 0.7, s + 1, 0.9, 0.7), 0.0, 0.4),
+                      (zap(0.18, s + 2, 3000), 0.0, 0.8), (rise(160, 420, 0.25, s + 3, 0.5), 0.0, 0.35),
+                      (thump(0.25, 90, 55, 0.12, 1.4), 0.0, 0.35)], "field", 0.18, 1.4, 0.3)
+
+
+def ev_lightning_release(s):
+    """The let-go: the crack of the bolt leaving (a split-second snap, the air torn), the hands' push in a thump, a zap off the
+    ball and the bolt's hiss going away."""
+    return mix(0.9, [(R.crack(s, 1.1, 0.25), 0.0, 1.0), (air_burst(0.12, 5200, s + 1, 0.9), 0.0, 0.8), (zap(0.3, s + 2, 1800), 0.004, 0.7),
+                     (punch(s + 3, 0.95, False, 0.25), 0.0, 0.45), (thump(0.3, 120, 45, 0.14, 1.8), 0.0, 0.8),
+                     (whoosh(0.6, 900, 4200, 0.12, s + 4, 1.2), 0.01, 0.55)], "field", 0.14, 2.0, 0.35)
+
+
+def ev_lightning_boom(s):
+    """Under a strong release: the boom the air makes when it closes behind the bolt, felt more than heard."""
+    return mix(1.6, [(thump(1.0, 64, 24, 0.55, 2.2), 0.0, 1.0), (rumble(1.5, 140, 0.9, s), 0.02, 0.7),
+                     (rumble(1.2, 420, 0.4, s + 1), 0.0, 0.25), (R.crack(s + 2, 0.7, 0.2), 0.0, 0.3)], "stone", 0.32, 2.2, 0.5)
+
+
+def ev_lightning_sizzle(s):
+    """The bolt going by: a frying hiss and a buzz, close and gone (the bolt plays one every 3 ticks along its flight)."""
+    n = K.ns(0.32)
+    t = K.tvec(n)
+    hiss = R.unit(K.bandpass(K.noise(n, "white", s), 4200, 0.8)) * (0.6 + 0.4 * K.smooth_noise(n, 40.0, s + 1))
+    fry = R.unit(K.crackle(n, 420.0, s + 2, 0.95, 0.4))
+    buzz = arc_buzz(0.32, 150, 120, s + 3, 1.0)
+    env = np.sin(np.pi * np.minimum(1.0, t / 0.32)) ** 0.8
+    return (hiss * 0.5 + fry * 0.6 + buzz * 0.35) * env
+
+
+def ev_lightning_thunder(s):
+    """Where it lands: the strike's crack, then thunder rolling away in two or three swells."""
+    r = K.rng(s)
+    layers = [(R.crack(s, 1.2, 0.35), 0.0, 1.0), (air_burst(0.15, 4500, s + 1), 0.0, 0.4), (punch(s + 2, 0.55, True, 0.4), 0.004, 0.7),
+              (thump(0.9, 62, 26, 0.45, 2.2), 0.0, 1.0)]
+    at = 0.12
+    for k in range(int(r.integers(2, 4))):
+        layers.append((rumble(1.4 - 0.25 * k, 160 - 30 * k, 0.6, s + 3 + k), at, 0.75 - 0.18 * k))
+        at += float(r.uniform(0.25, 0.45))
+    return mix(2.4, layers, "stone", 0.35, 2.0, 0.5)
+
+
 # event: (function, variants, rms dBFS, attenuation blocks, crest dB)
 KIT = {
     "slam": (ev_slam, 3, -13.0, 32, 12.0), "whoosh": (ev_whoosh, 3, -19.0, 18, 12.0), "punch": (ev_punch, 3, -15.0, 22, 12.0),
@@ -353,4 +439,7 @@ KIT = {
     "void": (ev_void, 2, -14.0, 36, 12.0), "dream": (ev_dream, 2, -21.0, 20, 12.0), "frost": (ev_frost, 2, -16.0, 26, 12.0),
     "ember": (ev_ember, 2, -18.0, 22, 12.0), "blast": (ev_blast, 2, -15.5, 40, 12.0), "stun": (ev_stun, 2, -17.0, 22, 12.0),
     "shatter": (ev_shatter, 2, -16.0, 24, 12.0), "steam": (ev_steam, 2, -20.0, 22, 12.0),
+    "lightning_charge": (ev_lightning_charge, 2, -20.0, 20, 16.0), "lightning_full": (ev_lightning_full, 2, -17.0, 20, 12.0),
+    "lightning_release": (ev_lightning_release, 3, -15.5, 32, 12.0), "lightning_boom": (ev_lightning_boom, 2, -14.0, 40, 12.0),
+    "lightning_sizzle": (ev_lightning_sizzle, 3, -20.0, 16, 12.0), "lightning_thunder": (ev_lightning_thunder, 3, -15.5, 56, 12.0),
 }

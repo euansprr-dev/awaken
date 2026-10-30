@@ -16,8 +16,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": "awaken:power.stomp_lift",
+   "holdSound": null,
    "begin1p": "fp_stomp",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_shockwave_l3",
@@ -49,8 +51,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_haymaker",
    "hold1p": "fp_p_haymaker_hold",
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_haymaker_l3",
@@ -82,8 +86,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_terrain_rip",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_terrain_rip_l3",
@@ -115,8 +121,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_brace",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_brace_l3",
@@ -148,8 +156,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_thunderclap",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_thunderclap_l3",
@@ -181,8 +191,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_dash",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_dash_l3",
@@ -214,8 +226,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_afterimage",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_afterimage_l3",
@@ -247,8 +261,10 @@
    "lens": "awaken:cast_flow",
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_flow",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_flow_l3",
@@ -281,8 +297,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_lightning_step",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_lightning_step_l3",
@@ -314,8 +332,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_gravity_well",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_gravity_well_l3",
@@ -348,8 +368,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_telekinesis",
    "hold1p": "fp_p_telekinesis_hold",
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_telekinesis_l3",
@@ -381,8 +403,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_gravity_flip",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_gravity_flip_l3",
@@ -414,8 +438,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_nova",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_nova_l3",
@@ -448,8 +474,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_barrier",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_barrier_l3",
@@ -479,10 +507,12 @@
    "moment": "none",
    "endMoment": "recoil_light",
    "lens": null,
-   "origin": "palm",
+   "origin": "ball",
    "beginSound": null,
+   "holdSound": "awaken:power.lightning_charge",
    "begin1p": "fp_p_charged_shot",
    "hold1p": "fp_p_charged_shot_hold",
+   "end1p": "fp_p_charged_shot_end",
    "levels": {
     "3": {
      "begin3p": "p_charged_shot_l3",
@@ -514,8 +544,10 @@
    "lens": "awaken:cast_overload",
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_overload",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_overload_l3",
@@ -548,8 +580,10 @@
    "lens": "awaken:cast_prism",
    "origin": "core",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_prism_lance",
    "hold1p": "fp_p_prism_lance_hold",
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_prism_lance_l3",
@@ -581,8 +615,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_shadow_step",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_shadow_step_l3",
@@ -614,8 +650,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_cloak",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_cloak_l3",
@@ -647,8 +685,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_echo_swap",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_echo_swap_l3",
@@ -680,8 +720,10 @@
    "lens": "awaken:cast_legion",
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_legion",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_legion_l3",
@@ -714,8 +756,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_dominate",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_dominate_l3",
@@ -747,8 +791,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_read_intent",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_read_intent_l3",
@@ -780,8 +826,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_decoy",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_decoy_l3",
@@ -813,8 +861,10 @@
    "lens": "awaken:cast_foresight",
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_foresight",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_foresight_l3",
@@ -846,8 +896,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_wall",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_wall_l3",
@@ -879,8 +931,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_ramp",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_ramp_l3",
@@ -912,8 +966,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_floor",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_floor_l3",
@@ -945,8 +1001,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_cone",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_cone_l3",
@@ -978,8 +1036,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_rampart",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_rampart_l3",
@@ -1011,8 +1071,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_spire",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_spire_l3",
@@ -1044,8 +1106,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_collapse",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_collapse_l3",
@@ -1077,8 +1141,10 @@
    "lens": "awaken:cast_citadel",
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_citadel",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_citadel_l3",
@@ -1110,8 +1176,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_grapple",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_grapple_l3",
@@ -1143,8 +1211,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_jet_burst",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_jet_burst_l3",
@@ -1176,8 +1246,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_drone",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_drone_l3",
@@ -1209,8 +1281,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_turret",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_turret_l3",
@@ -1242,8 +1316,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_railgun",
    "hold1p": "fp_p_railgun_hold",
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_railgun_l3",
@@ -1275,8 +1351,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_nanite_skin",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_nanite_skin_l3",
@@ -1308,8 +1386,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_drone_swarm",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_drone_swarm_l3",
@@ -1341,8 +1421,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_spirit_palm",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_spirit_palm_l3",
@@ -1374,8 +1456,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_mend",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_mend_l3",
@@ -1407,8 +1491,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_third_eye",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_third_eye_l3",
@@ -1440,8 +1526,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_cord_lash",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_cord_lash_l3",
@@ -1473,8 +1561,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_bulwark",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_bulwark_l3",
@@ -1506,8 +1596,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_hundred_palms",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_hundred_palms_l3",
@@ -1539,8 +1631,10 @@
    "lens": "awaken:cast_void",
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_void_maw",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_void_maw_l3",
@@ -1572,8 +1666,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_waking_dream",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_waking_dream_l3",
@@ -1605,8 +1701,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_storm_call",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_storm_call_l3",
@@ -1638,8 +1736,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_ember_step",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_ember_step_l3",
@@ -1671,8 +1771,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_frost_nova",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_frost_nova_l3",
@@ -1704,8 +1806,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_ghost_step",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_ghost_step_l3",
@@ -1737,8 +1841,10 @@
    "lens": null,
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_p_twin_strike",
    "hold1p": null,
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_twin_strike_l3",
@@ -1770,8 +1876,10 @@
    "lens": "awaken:cast_beam",
    "origin": "palm",
    "beginSound": null,
+   "holdSound": null,
    "begin1p": "fp_beam_gather",
    "hold1p": "fp_beam_hold",
+   "end1p": null,
    "levels": {
     "3": {
      "begin3p": "p_beam_l3",

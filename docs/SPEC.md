@@ -10504,6 +10504,49 @@ setting (D13).
 - **Open** (needs the game or Euan): the first-person gestures are authored from the numbers, not yet seen except the stamp and the beam; the weapon pops out of
   view on a fist clip; the sounds are unheard; `ground_slam`, `meteor_dive`, `hover`, `flight` and `leap` first person and the Lens look timings are untouched.
 
+**Charged Shot: the ball between the hands (Euan 2026-10-30: "hands higher and ball shoots from them ... the sounds are so underwhelming").**
+It is one of the starter powers, so it is a first impression. Its charge is now a ball of lightning held up between both hands, and the shot leaves
+from that ball.
+- **One point for the server and every pose** (`powers.fx.CastPoints.ball`, profile `origin: "ball"`): from the eyes, 0.58 along the look and 0.17
+  down the view's up, centred. The bolt (`Bolts.fire`), the muzzle burst and the let-go flash all start there, at every charge and pitch; the old
+  `EnergyPowers.hand` (0.35 to the right) is no longer used by Charged Shot.
+- **First person** (`fp_gestures.py` `lightning_ball`): the fists cup low, then lift to `BALL` (±0.25, -0.17, -0.48 in the hand pass's view
+  space; at ±0.15 the tour showed the fists meeting in the middle and hiding the orb, since the hands draw over the world). The palms' midpoint (`Muzzles` adds 0.10 of depth) is exactly the ball point, and it sits about 40% down from the centre of the screen,
+  clear of the hotbar. The hold trembles (`fp_p_charged_shot_hold`). A new profile field, `end1p` (`fp_p_charged_shot_end`), drives both fists
+  straight out on the let-go; `CastAnims.release` plays it in place of the hold.
+- **Third person** (`power_gestures.py` `lightning_ball`, `BALL_HOLD`): both arms follow the look (aimed). The palms are 0.34 apart and their
+  midpoint is the ball point at a level look, within about a sixth of a block at 20 degrees up or down; the arms turn at the shoulders, not the eyes.
+  This was fitted with the rig's forward kinematics at the 0.9375 player scale. Levels 3 and 5 keep the same hold: level 3 adds the family accent,
+  level 5 a lower, wider stance and a two-handed spear's hurl as the let-go. The level-5 body line now reads "Both hands drive the ball out like a
+  thrown spear, the whole body behind it." A profile's third-person let-go now starts on the release tick (it used to wait 2 ticks for a release
+  cast that profiles never send), so the push lands with the bolt. While a ball profile plays, whatever the hands held is not drawn
+  (`CastAnims.emptyHands`, a render-state modifier registered last, after Arms fills the hands; the inventory is untouched), and for 10 ticks
+  after, while the push settles. In your own first-person view the orb at the ball counts as held in the hand (`FxRender.ownHand`): drawn small
+  and never faded for being near the eye (the near fade had hidden it whole, 0.58 from the eye).
+- **The orb follows the drawn hands** (`Anchors.BALL`, `Muzzles.ball`): your fists' midpoint in first person, the sampled palms' midpoint on a drawn
+  body, otherwise the server's point at the frame's look. Ladder looks placed `"at": "hand"` (Coil's orbit, Thunder Lance's sigil) follow a
+  profile's origin (`LadderFx.anchor`). At a field of view other than 70, your first-person orb (drawn by the 70-degree hand pass) and the world
+  point drift apart a little, as with any hand-anchored effect.
+- **Sound, layered** (`audio_power_kits.py`, `power.lightning_*`, original synthesis):
+  - `lightning_charge`: a 1.8 s build that rises about 14 dB to full at 1.5 s and then holds. A climbing arc hum, a rising whine, crackle that
+    thickens from a few sparks to a storm, air and a sub swell. A new profile field, `holdSound`, plays it from the ball on every client through
+    `HoldSound`, which follows the hands and cuts it with a two-tick fade on the let-go.
+  - `lightning_full`: a bright ring and snap one tick before full.
+  - `lightning_release`: a crack, torn air, a zap and a push thump, louder and lower the more it was charged.
+  - `lightning_boom`: added under a release past half charge.
+  - `lightning_sizzle`: the bolt's hiss along its flight (`Bolts.Bolt.fly`, every 3 ticks).
+  - `lightning_thunder`: a crack and two or three rolling swells where it lands (`Bolts.Bolt.hitSound`, louder with charge; it takes the place of the
+    blast sound).
+  - Volley fires from the ball too and uses the release and a lighter thunder.
+- **Tests**: `power_cast_ball`: at pitch -30, 0 and 30, after 6 and 30 ticks, the muzzle burst is at the ball and centred, and each bolt's first
+  step starts there. `power_cast_profiles` also holds `end1p`, `holdSound` and the origin names.
+- **Tour**: `tools/autopilot/charged-shot.txt` (a CI look tour, PACK=feel) films the charge and the shot in first person, from the side and from
+  three quarters in front. Third person is turned round the player by the tours-only client command `/awaken fx sidecam <degrees>` (0 is off): it
+  turns the camera angles before third person pulls back along them, so the camera orbits the player.
+- **With cast animations off**, your own key press now starts the profile as well, the way it already did for everyone watching you. Its fallback
+  pose, held sound and screen moment run; the first-person clips still follow the setting, and the boot checks the setting itself. The held sound
+  starts with the charge orb (`FxRecipes.startCharge`), so Volley, which never charges, has none.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 33. Trails (optional guidance for everything; plan docs/trails/PLAN.md, page https://claude.ai/artifact/QvuzZLthjqdy1dmXFgNit4; Euan approved all ten recommendations 2026-10-27)

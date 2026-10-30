@@ -1,6 +1,7 @@
 package dev.awaken.powers.catalog;
 
 import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.CastPoints;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.powers.fx.FxStyle;
@@ -340,54 +341,65 @@ final class EnergyPowers {
     }
 
     static Result chargedShot(Cast c) {
+        // the ball is held between both hands, and every shot leaves from there (CastPoints.ball; the poses are authored to it)
+        Vec3 ball = CastPoints.ball(c.player);
         if (c.is(2)) {
-            Fx.at(c, FxKind.CAST, hand(c.player)).anim(CastAnim.PUSH2).send();
+            Fx.at(c, FxKind.CAST, ball).anim(CastAnim.PUSH2).send();
             for (int i = -1; i <= 1; i++) {
                 Vec3 d = c.look().yRot((float) Math.toRadians(i * 6));
-                var b = Bolts.fire(c.level, c.player, c.player, hand(c.player), d, 2.4f, c.dmg(), Forces.Force.CHARGE, 0xFF9AD8FF, 40, 0f);
+                var b = Bolts.fire(c.level, c.player, c.player, ball, d, 2.4f, c.dmg(), Forces.Force.CHARGE, 0xFF9AD8FF, 40, 0f);
                 b.stun = 6;
                 b.cast = c;
+                b.fly = i == 0 ? PowerSounds.LIGHTNING_SIZZLE.get() : null;
+                b.hitSound = PowerSounds.LIGHTNING_THUNDER.get();
+                b.hitVolume = 0.45f;
+                b.hitPitch = 1.35f;
             }
-            c.sound(PowerSounds.SHOT, 1f, 1.4f);
+            c.sound(PowerSounds.LIGHTNING_RELEASE, 0.9f, 1.25f);
             return Result.OK;
         }
-        c.sound(PowerSounds.CHARGE_UP, 0.7f, 1.2f);
-        // crackling orb at the hand; the bolt itself is drawn as it flies (Bolts)
-        Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(0.9).send();
+        // the charge itself is heard from the hands while it is held (the profile's holdSound; HoldSound on every client)
+        Fx.at(c, FxKind.CHARGE, ball).ticks(c.type.maxDuration).scale(0.9).send();
         Running r = Casting.channel(c, c.type.maxDuration);
         int fullAt = c.chargeTicks(30); // Coil (2): charges sooner
         r.tick(rr -> {
-            if (rr.age == fullAt - 1) c.sound(PowerSounds.CHARGE_UP, 0.6f, 2f);
+            if (rr.age == fullAt - 1) c.sound(PowerSounds.LIGHTNING_FULL, 0.9f, 1f);
         }).end((rr, why) -> {
             double charge = Math.min(1.0, rr.age / (double) fullAt);
             // Overcharge (4): held past full, the orb turns white and the bolt pierces
             boolean over = c.step(4) && rr.age >= fullAt + c.num(4, "over", 10);
-            Fx.at(c, FxKind.CHARGE_END, hand(c.player)).flag(FxEvent.FULL, charge > 0.95).noAnim().send();
+            Vec3 muzzle = CastPoints.ball(c.player);
+            Fx.at(c, FxKind.CHARGE_END, muzzle).flag(FxEvent.FULL, charge > 0.95).noAnim().send();
             if (why == Running.Why.CANCELLED) return;
-            Fx.at(c, FxKind.CAST, hand(c.player)).anim(CastAnim.AIM).send();
+            Fx.at(c, FxKind.CAST, muzzle).anim(CastAnim.AIM).send();
             float dmg = c.dmg(c.type.damage + 14f * (float) charge);
-            var b = Bolts.fire(c.level, c.player, c.player, hand(c.player), c.player.getLookAngle(), 2.6f, dmg, Forces.Force.CHARGE,
+            Vec3 look = c.player.getLookAngle();
+            var b = Bolts.fire(c.level, c.player, c.player, muzzle, look, 2.6f, dmg, Forces.Force.CHARGE,
                     0xFF9AD8FF, 40, charge > 0.95 ? 2.5f : 0f);
             b.stun = 10 + (int) (20 * charge);
             b.cast = c;
             if (over) b.pierce = 1;
             if (c.is(1)) b.bounces = 2;
-            // a muzzle burst at the palm, and the bolt's landing where the aim meets something (it flies 2.6 blocks a tick)
-            Fx.at(c, FxKind.IMPACT, hand(c.player)).dir(c.player.getLookAngle()).scale(1 + charge).noAnim().send();
-            BeamHit aim = trace(c.player, c.player.getEyePosition(), c.player.getLookAngle(), 48);
-            int flight = Math.max(1, (int) Math.ceil(hand(c.player).distanceTo(aim.end()) / 2.6));
+            b.fly = PowerSounds.LIGHTNING_SIZZLE.get();
+            b.hitSound = PowerSounds.LIGHTNING_THUNDER.get();
+            b.hitVolume = 0.6f + 0.6f * (float) charge;
+            b.hitPitch = 1.25f - 0.3f * (float) charge;
+            // a muzzle burst pushed out of the ball, and the bolt's landing where the aim meets something (it flies 2.6 blocks a tick)
+            Fx.at(c, FxKind.IMPACT, muzzle).dir(look).scale(1 + charge).noAnim().send();
+            BeamHit aim = trace(c.player, c.player.getEyePosition(), look, 48);
+            int flight = Math.max(1, (int) Math.ceil(muzzle.distanceTo(aim.end()) / 2.6));
             Vec3 lands = aim.end();
-            Vec3 look = c.player.getLookAngle();
             float landing = (float) (1.2 + 1.4 * charge);
             boolean full = charge > 0.95;
-            Vec3 muzzle = hand(c.player);
             dev.awaken.powers.Scheduler.after(flight, () -> {
                 if (c.player.isRemoved()) return;
                 Fx.at(c, FxKind.IMPACT, lands).dir(look).scale(landing).flag(FxEvent.FULL, full).noAnim().send();
                 if (full) Fx.at(c, FxKind.NOVA, lands).scale(2.5).noAnim().send();
                 if (full && c.step(5)) thunderLance(c, muzzle, lands);
             });
-            c.sound(PowerSounds.SHOT, 1f, 1.4f - 0.5f * (float) charge);
+            // the crack grows with the charge; past half, a boom under it
+            c.sound(PowerSounds.LIGHTNING_RELEASE, 0.75f + 0.35f * (float) charge, 1.2f - 0.3f * (float) charge);
+            if (charge > 0.5) c.sound(PowerSounds.LIGHTNING_BOOM, (float) (charge - 0.3) * 1.4f, 1.1f - 0.2f * (float) charge);
             c.feel(null, 0, 0.8f + 1.5f * (float) charge);
         });
         return Result.OK;

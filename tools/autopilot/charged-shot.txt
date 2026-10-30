@@ -1,0 +1,119 @@
+# Charged Shot (SPEC §32 "Charged Shot"): the ball of lightning held up between both hands and the shot leaving from it,
+# in first person, from the side (/awaken fx sidecam 90: third person swung round to the player's flank) and from three
+# quarters in front, filmed in slow motion (/tick rate 4; the admin cast charges the full 30 ticks, then lets go). Stills
+# per view: cs_<view>_cup (the hands coming up), _mid (half charged), _full (the full cue), _push (the release), _fly
+# (the bolt away); clips run-autopilot/clips/cs_<view>. Watch: the hands at chest height and above the HUD, the orb between
+# the palms, the bolt starting at the orb (not the right hand), the push out from that point. Sound can't be judged here.
+# Look tour: tools/tour-ci.sh tools/autopilot/charged-shot.txt 1500 PACK=feel
+world chargedshot survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 12000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:slow_falling 60 1 true
+cmd tp @s 0.5 201 0.5 0 12
+wait 400
+cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
+cmd fill -14 200 -6 14 214 30 minecraft:air
+cmd fill -14 200 26 14 210 26 minecraft:deepslate_tiles
+wait 40
+cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
+cmd fill -14 200 26 14 210 26 minecraft:deepslate_tiles
+cmd tp @s 0.5 200 0.5 0 0
+wait 60
+cmd awaken admin power learn charged_shot
+cmd summon minecraft:husk 0.5 200 12.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 20.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+wait 60
+# first person
+cmd awaken admin power reset
+cmd awaken admin energy full
+camera first
+look 0 0
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec cs_fp 44 2
+cmd awaken admin power cast charged_shot
+shotnow cs_fp_cup
+wait 9
+shotnow cs_fp_mid
+wait 11
+shotnow cs_fp_full
+wait 3
+shotnow cs_fp_push
+wait 1
+shotnow cs_fp_push2
+wait 2
+shotnow cs_fp_fly
+wait 20
+cmd tick rate 20
+wait 40
+# from the side
+cmd awaken admin power reset
+cmd awaken admin energy full
+camera front
+cmd awaken fx sidecam 90
+look 0 0
+wait 24
+shotnow cs_side_rest
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec cs_side 44 2
+cmd awaken admin power cast charged_shot
+shotnow cs_side_cup
+wait 9
+shotnow cs_side_mid
+wait 11
+shotnow cs_side_full
+wait 3
+shotnow cs_side_push
+wait 1
+shotnow cs_side_push2
+wait 2
+shotnow cs_side_fly
+wait 20
+cmd tick rate 20
+wait 40
+# three quarters in front
+cmd awaken admin power reset
+cmd awaken admin energy full
+cmd awaken fx sidecam 40
+look 0 0
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec cs_q 44 2
+cmd awaken admin power cast charged_shot
+shotnow cs_q_cup
+wait 9
+shotnow cs_q_mid
+wait 11
+shotnow cs_q_full
+wait 3
+shotnow cs_q_push
+wait 1
+shotnow cs_q_push2
+wait 2
+shotnow cs_q_fly
+wait 20
+cmd tick rate 20
+cmd awaken fx sidecam 0
+wait 40
+quit

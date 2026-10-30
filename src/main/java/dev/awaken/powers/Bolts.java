@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -53,6 +54,10 @@ public final class Bolts {
         public float pierceShare = 1f;
         /** A cast's bolt whose power sends no landing of its own (a drone's shot): the bolt draws it. */
         public boolean land;
+        /** Heard along its flight every few ticks (Charged Shot's sizzle), and where it lands in place of the blast's sound. */
+        public @Nullable SoundEvent fly, hitSound;
+        public float hitVolume = 1f, hitPitch = 1f;
+        int age;
         float scaleNext = 1f;
         int hits;
         final Set<Integer> hit = new HashSet<>();
@@ -73,6 +78,8 @@ public final class Bolts {
     }
 
     private static final List<Bolt> BOLTS = new ArrayList<>();
+    /** Ticks between a bolt's flight sounds (each file is longer, so they run together). */
+    private static final int FLY_EVERY = 3;
 
     public static Bolt fire(ServerLevel level, ServerPlayer owner, @Nullable Entity shooter, Vec3 from, Vec3 dir, float speed, float damage,
                             Forces.@Nullable Force force, int argb, int life, float blast) {
@@ -103,6 +110,9 @@ public final class Bolts {
         Vec3 end = wall.getType() == HitResult.Type.MISS ? to : wall.getLocation();
         LivingEntity target = firstTarget(b, from, end);
         Vec3 streakTo = target != null ? target.getBoundingBox().getCenter() : end;
+        if (b.fly != null && b.age++ % FLY_EVERY == 0) {
+            b.level.playSound(null, from.x, from.y, from.z, b.fly, SoundSource.PLAYERS, 0.6f, 0.9f + 0.2f * b.level.getRandom().nextFloat());
+        }
         if (b.cast != null) Fx.streak(b.level, from, streakTo, b.argb, 2, 3, PowerRegistry.index(b.cast.type) + 1, b.cast.powerLevel);
         else Fx.streak(b.level, from, streakTo, b.argb, 2, 3);
         if (target != null) {
@@ -167,8 +177,9 @@ public final class Bolts {
             }
             if (b.cast != null) Fx.at(b.cast, FxKind.NOVA, at).scale(b.blast).plain().send();
             else b.level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y, at.z, 1, 0, 0, 0, 0);
-            b.level.playSound(null, at.x, at.y, at.z, PowerSounds.BLAST.get(), SoundSource.PLAYERS, 0.7f, 1.4f);
+            if (b.hitSound == null) b.level.playSound(null, at.x, at.y, at.z, PowerSounds.BLAST.get(), SoundSource.PLAYERS, 0.7f, 1.4f);
         }
+        if (b.hitSound != null) b.level.playSound(null, at.x, at.y, at.z, b.hitSound, SoundSource.PLAYERS, b.hitVolume, b.hitPitch);
         if (b.cast != null) {
             // a cast's bolt: the power sends its own landing; the foes a pierce goes on through get theirs here
             if (b.hits > 1 || b.land) Fx.at(b.cast, FxKind.IMPACT, at).dir(b.vel).scale(b.land && b.hits <= 1 ? 0.6 : 0.9).plain().send();
