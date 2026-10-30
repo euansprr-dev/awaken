@@ -15621,6 +15621,9 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   The right act gets the beast's tell, the band's chime and a line; a near miss gets a nudge line; after a few misses
   the line points closer, never naming the act. The Kin list always holds at least one rumour not yet followed.
 - The System translates beasts in brackets as subtitles do, only up close and only for kinds read, more as Kinship grows.
+  Only the beast you're looking at (within 8 blocks, a 20° cone, in sight), at most one line every 25 s, and a line is
+  given once until what it says changes (Euan 2026-10-30: a Lampwing asleep by the fire said so every 25 s;
+  `KinWatch.fresh`, test `kin_lines_once`).
 
 ### 43.6 The Hearth, run by beasts
 - **Beasts do the boring work only.** Nothing at home produces ore, gems, gate loot, essence or XP from nothing. Beasts

@@ -24,6 +24,21 @@ final class KinTests {
         AwakenTests.register("kin_fields_harvest", 400, KinTests::fieldsHarvest);
         AwakenTests.register("kin_rumours_real", 100, KinTests::rumoursReal);
         AwakenTests.register("kin_done_never_shows", 200, KinTests::doneNeverShows);
+        AwakenTests.register("kin_lines_once", 20, KinTests::linesOnce);
+    }
+
+    /** Up close, a beast's line is given once until it changes, per beast and per player. */
+    static void linesOnce(GameTestHelper h) {
+        java.util.UUID me = java.util.UUID.randomUUID(), you = java.util.UUID.randomUUID();
+        java.util.UUID wing = java.util.UUID.randomUUID(), bun = java.util.UUID.randomUUID();
+        String asleep = "[It's asleep. Its breathing is very slow.]";
+        h.assertTrue(KinWatch.fresh(me, wing, asleep), "the first time, it's said");
+        h.assertFalse(KinWatch.fresh(me, wing, asleep), "said again while nothing changed: no");
+        h.assertTrue(KinWatch.fresh(you, wing, asleep), "another player hears it too");
+        h.assertTrue(KinWatch.fresh(me, bun, asleep), "another beast's line is its own");
+        h.assertTrue(KinWatch.fresh(me, wing, "[It calls you Warm One. It's happy here.]"), "it woke: a new line");
+        h.assertTrue(KinWatch.fresh(me, wing, asleep), "asleep again the next day: said once more");
+        h.succeed();
     }
 
     /** Help raises Kinship through its steps; a killing drops it far and the kind runs for days. */

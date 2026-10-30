@@ -37,17 +37,21 @@ public final class KinWatch {
     static final double READ_COS = Math.cos(Math.toRadians(9)), READ_COS_GLASS = Math.cos(Math.toRadians(3.5));
     /** Watching: within this, for this long while it shows its want; and at least this long between two lines. */
     static final int WATCH_RANGE = 16, WATCH_TICKS = 60, WATCH_GAP = 400, LESSON_WATCH_TICKS = 30, LESSON_WATCH_GAP = 80;
-    /** Up close, a translation at most this often per player. */
+    /** Up close, a translation at most this often per player, and only of a beast you're looking at (this cone). */
     static final int SUBTITLE_RANGE = 8, SUBTITLE_GAP = 20 * 25;
+    static final double SUBTITLE_COS = Math.cos(Math.toRadians(20));
 
     private record Reading(int entity, int ticks) {}
 
     private static final Map<UUID, Reading> READING = new HashMap<>();
     private static final Map<UUID, Long> NEXT_SUBTITLE = new HashMap<>(), NEXT_OFFER = new HashMap<>();
+    /** The last line each player was given for each beast. */
+    private static final Map<UUID, Map<UUID, String>> SAID = new HashMap<>();
 
     static void serverStopped() {
         READING.clear();
         NEXT_SUBTITLE.clear();
+        SAID.clear();
         NEXT_OFFER.clear();
         NEXT_GNAWED.clear();
     }
@@ -181,13 +185,27 @@ public final class KinWatch {
         Kinship.Kind s = ks.kinds.get(b.kind());
         if (s == null || !s.met) return;
         long now = p.level().getGameTime();
-        if (NEXT_SUBTITLE.getOrDefault(p.getUUID(), 0L) > now) return;
-        NEXT_SUBTITLE.put(p.getUUID(), now + SUBTITLE_GAP);
+        if (NEXT_SUBTITLE.getOrDefault(p.getUUID(), 0L) > now || !lookingAt(p, b)) return;
         String line = translation(p, ks, b);
-        if (line.isEmpty()) return;
+        if (line.isEmpty() || !fresh(p.getUUID(), b.getUUID(), line)) return;
+        NEXT_SUBTITLE.put(p.getUUID(), now + SUBTITLE_GAP);
         s.lastLine = line;
         Kinship.save(p, ks);
         p.sendSystemMessage(Component.literal(line).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC), true);
+    }
+
+    /**
+     * Whether this line is news for this player about this beast, recording it: a line is given once, until what it
+     * says changes (Euan 2026-10-30: a Lampwing asleep by the fire said so every 25 s).
+     */
+    static boolean fresh(UUID player, UUID beast, String line) {
+        return !line.equals(SAID.computeIfAbsent(player, u -> new HashMap<>()).put(beast, line));
+    }
+
+    private static boolean lookingAt(ServerPlayer p, KinBeast b) {
+        Vec3 to = b.position().add(0, b.getBbHeight() * 0.5, 0).subtract(p.getEyePosition());
+        double len = to.length();
+        return len > 1e-3 && to.scale(1 / len).dot(p.getViewVector(1F)) >= SUBTITLE_COS && p.hasLineOfSight(b);
     }
 
     /** The System's words for its sounds, by Kinship (JOURNEY part 2, "The System is the link"). */
