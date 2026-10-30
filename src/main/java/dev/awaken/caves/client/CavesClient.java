@@ -3,7 +3,9 @@ package dev.awaken.caves.client;
 import com.mojang.brigadier.Command;
 import dev.awaken.Awaken;
 import dev.awaken.caves.skin.CaveSkin;
+import dev.awaken.progression.client.Catalogue;
 import dev.awaken.progression.client.CodexEntries;
+import dev.awaken.progression.client.StatusSections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.commands.Commands;
@@ -36,6 +38,8 @@ public final class CavesClient {
         modBus.addListener(RegisterRenderPipelinesEvent.class, DrawnLight::onRegister);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, RegionClient::tick);
         CodexEntries.addSource(RegionCodex::entries);
+        Catalogue.fixed(StatusSections.Shelf.CAVES, RegionCodex::slots);
+        Catalogue.ownShelf(RegionCodex.CATEGORY);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, Underlife::tick);
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, UnderlifeRender::submit);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, DrawnLight::tick);

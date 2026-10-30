@@ -57,7 +57,8 @@ final class CoreSections {
         StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new Titles(), 740, null));
         StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new Latents(), 750, null));
         // (SPEC §27.13) the Codex is the Journal's now: what you've found
-        StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new CodexBoard(), 600, StatusSections.Shelf.FINDS));
+        StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new CodexBoard(), 600, StatusSections.Shelf.LORE));
+        Catalogue.count(StatusSections.Shelf.LORE, CodexBoard::found);
         CodexEntries.addSource(CoreSections::insightEntries);
     }
 
@@ -110,7 +111,7 @@ final class CoreSections {
         public String title() { return "RECORDS"; }
 
         @Override
-        public StatusSections.Shelf shelf() { return StatusSections.Shelf.FINDS; }
+        public StatusSections.Shelf shelf() { return StatusSections.Shelf.STORY; }
         public int order() { return 900; }
         public boolean visible() { return !lines().isEmpty(); }
 
@@ -316,11 +317,18 @@ final class CoreSections {
 
         private static Map<String, List<CodexEntries.Entry>> grouped() {
             Map<String, List<CodexEntries.Entry>> m = new java.util.LinkedHashMap<>();
-            for (var e : CodexEntries.all()) m.computeIfAbsent(e.category(), k -> new ArrayList<>()).add(e);
+            for (var e : CodexEntries.all()) if (Catalogue.onBoard(e.category())) m.computeIfAbsent(e.category(), k -> new ArrayList<>()).add(e);
             return m;
         }
 
-        public boolean visible() { return !CodexEntries.all().isEmpty(); }
+        /** Lore and places found: the board's found entries (creatures and cave regions have their own categories). */
+        static int[] found() {
+            int n = 0;
+            for (var e : CodexEntries.all()) if (e.found() && Catalogue.onBoard(e.category())) n++;
+            return new int[]{n, -1};
+        }
+
+        public boolean visible() { return !grouped().isEmpty(); }
 
         @Override
         protected void build(Ui ui) {

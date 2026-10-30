@@ -2,6 +2,7 @@ package dev.awaken.bells.client;
 
 import dev.awaken.bells.BellNet;
 import dev.awaken.progression.Rank;
+import dev.awaken.progression.client.Catalogue;
 import dev.awaken.progression.client.StatusSections;
 import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.Ui;
@@ -33,7 +34,17 @@ final class BellBookSection extends UiSection {
     }
 
     static void register() {
-        for (Part p : Part.values()) StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new BellBookSection(p), 640 + p.ordinal(), StatusSections.Shelf.FINDS));
+        for (Part p : Part.values()) StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new BellBookSection(p), 640 + p.ordinal(), StatusSections.Shelf.BELLS));
+        // the Hundred's board is this category's slots already (numbered, lit once held); the strip counts the held
+        Catalogue.count(StatusSections.Shelf.BELLS, BellBookSection::held);
+    }
+
+    private static int[] held() {
+        ask();
+        BellNet.Page p = page;
+        int n = 0;
+        if (p != null) for (List<String> r : p.hundred()) if (r.get(3).equals("held")) n++;
+        return new int[]{n, 100};
     }
 
     static void ask() {

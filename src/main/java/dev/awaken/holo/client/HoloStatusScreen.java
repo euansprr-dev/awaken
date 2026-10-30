@@ -264,7 +264,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             for (StatusSections.Section s : StatusSections.of(tab)) {
                 if (!StatusSections.shows(tab, s)) continue;
                 if (s.notePage() != null && dev.awaken.progression.client.BandHeader.onNote(font, s, c.x(), y, c.w(), mx, my)) {
-                    selectTab(s.notePage());
+                    selectTab(dev.awaken.progression.client.StatusSections.follow(s));
                     return true;
                 }
                 y += dev.awaken.progression.client.BandHeader.height(s);

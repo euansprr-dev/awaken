@@ -61,15 +61,16 @@ public final class StatusSections {
         /** A key while this section's page is open (place a point, confirm, undo). Return true if consumed. */
         default boolean key(net.minecraft.client.input.KeyEvent event) { return false; }
 
-        /** Which of the Journal page's filters shows it (SPEC §30.6); null shows it under every filter. */
-        default @Nullable Shelf shelf() { return Shelf.TASKS; }
+        /** Which of the Journal's categories shows it (SPEC §27.13); null shows it under every one. */
+        default @Nullable Shelf shelf() { return Shelf.STORY; }
     }
 
-    // ---- the Journal page's filters (SPEC §30.6) -------------------------------------------------------------------
+    // ---- the Journal's categories (SPEC §27.13) ----------------------------------------------------------------------
 
-    /** The Journal page's filters past EVERYTHING: what you're doing, what you've found, what you were told. */
+    /** The Journal as a catalogue: a category per kind of find, your story (what happened, what you were told) last. */
     public enum Shelf {
-        TASKS("TASKS"), FINDS("FINDS"), MESSAGES("MESSAGES");
+        CREATURES("CREATURES"), KIN("BEASTS"), BELLS("BELLS"), GATES("GATE WORLDS"), CAVES("CAVE REGIONS"), HAPPENINGS("HAPPENINGS"),
+        LORE("LORE & PLACES"), STORY("YOUR STORY");
 
         public final String label;
 
@@ -78,21 +79,21 @@ public final class StatusSections {
         }
     }
 
-    /** The filter picked on the Journal page, null for everything; kept for the session. */
-    private static @Nullable Shelf journalFilter;
+    /** The category picked on the Journal page; kept for the session. */
+    private static Shelf journalFilter = Shelf.CREATURES;
 
-    public static @Nullable Shelf journalFilter() {
+    public static Shelf journalFilter() {
         return journalFilter;
     }
 
-    public static void journalFilter(@Nullable Shelf f) {
+    public static void journalFilter(Shelf f) {
         journalFilter = f;
     }
 
     /** Whether a section shows on its page now: visible, and on the Journal page under the filter picked. */
     public static boolean shows(Tab tab, Section s) {
         if (!s.visible()) return false;
-        if (tab != Tab.JOURNAL || journalFilter == null) return true;
+        if (tab != Tab.JOURNAL) return true;
         Shelf on = s.shelf();
         return on == null || on == journalFilter;
     }
@@ -132,6 +133,13 @@ public final class StatusSections {
     }
 
     /** A section asks the open band to show another page ("Journal ›"); the screen takes it on its next frame. */
+    /** Follows a section's note link; to the Journal, it opens on that section's own category. */
+    public static @Nullable Tab follow(Section s) {
+        Tab t = s.notePage();
+        if (t == Tab.JOURNAL && s.shelf() != null) journalFilter = s.shelf();
+        return t;
+    }
+
     public static void go(Tab page) {
         request = page;
     }

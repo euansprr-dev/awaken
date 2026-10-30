@@ -91,7 +91,7 @@ final class KinGoals {
             why = cut < 0 ? "" : need.substring(cut + 2);
         }
         Goals.Builder b = Step.of(key, Goal.HEARTH, title).why(why.trim()).priority(priority);
-        if (at != null) b.at(at);
+        if (at != null) b.at(KinSpawner.rough(p, k, at)); // roughly, as Track points: never the spot
         return b.build();
     }
 

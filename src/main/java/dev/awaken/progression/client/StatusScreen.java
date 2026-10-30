@@ -186,7 +186,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             for (StatusSections.Section s : sections) {
                 if (!StatusSections.shows(tab, s)) continue;
                 if (s.notePage() != null && BandHeader.onNote(font, s, cx, y, cw, mx, my)) {
-                    select(s.notePage());
+                    select(StatusSections.follow(s));
                     return true;
                 }
                 y += BandHeader.height(s);

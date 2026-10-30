@@ -62,7 +62,9 @@ public final class KinNet {
         });
         r.playToServer(Track.TYPE, Track.STREAM_CODEC, (m, ctx) -> {
             if (ctx.player() instanceof ServerPlayer p) {
-                KinPage.track(p, KinKind.of(m.kind()));
+                // one pin (SPEC §27.13): the kind's step on the Tasks page when it has one, else the rough bearing as before
+                String id = m.kind();
+                if (!dev.awaken.core.api.Goals.pin(p, "kin/need/" + id) && !dev.awaken.core.api.Goals.pin(p, "kin/want/" + id)) KinPage.track(p, KinKind.of(id));
                 send(p);
             }
         });

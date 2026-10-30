@@ -14,7 +14,7 @@ final class SignalSections {
     private SignalSections() {}
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.JOURNAL, new NowSection());
+        // the Now line's list is the Tasks page's now (SPEC §27.13)
         StatusSections.add(StatusSections.Tab.STATUS, new NowRow()); // the context row above the Journal (SPEC §30.3)
         StatusSections.add(StatusSections.Tab.STATUS, new WaitingSection());
         StatusSections.add(StatusSections.Tab.JOURNAL, new RecentSection());
@@ -22,7 +22,7 @@ final class SignalSections {
 
     /**
      * The Status page's context row: the one thing you're doing (the Now line's first), its compass, and how many more
-     * wait on the Journal page; a click opens it. The decisions waiting, a gate run, the Deep Pack and the room you stand
+     * wait on the Tasks page; a click opens it. The decisions waiting, a gate run, the Deep Pack and the room you stand
      * in show above it when they apply.
      */
     static final class NowRow implements StatusSections.Section {
@@ -45,7 +45,7 @@ final class SignalSections {
             String t = SignalText.ellipsize(KeyText.resolve(s.text().getString()), w - 10, f::width);
             g.text(f, t, x + 6, y + 3, Glass.a(0xFFFFFF, 1f), false);
             float small = StatusSections.small();
-            String more = list.size() > 1 ? "NOW · " + (list.size() - 1) + " more on the Journal page ›" : "NOW · on the Journal page ›";
+            String more = list.size() > 1 ? "NOW · " + (list.size() - 1) + " more on the Tasks page ›" : "NOW · on the Tasks page ›";
             g.pose().pushMatrix();
             g.pose().translate(x + 6, y + 12.5f);
             g.pose().scale(small, small);
@@ -61,7 +61,7 @@ final class SignalSections {
         }
 
         public boolean click(double mx, double my, int x, int y, int w) {
-            StatusSections.go(StatusSections.Tab.JOURNAL);
+            StatusSections.go(StatusSections.Tab.TASKS); // what you can do is the Tasks page's (SPEC §27.13)
             return true;
         }
     }
@@ -121,7 +121,7 @@ final class SignalSections {
         public String title() { return "RECENT MESSAGES"; }
 
         @Override
-        public StatusSections.Shelf shelf() { return StatusSections.Shelf.MESSAGES; }
+        public StatusSections.Shelf shelf() { return StatusSections.Shelf.STORY; }
         public int order() { return 800; } // the Journal page, after the log, before Records
         public boolean visible() { return !RecentLog.entries().isEmpty(); }
 

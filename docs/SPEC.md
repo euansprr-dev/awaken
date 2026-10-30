@@ -8150,8 +8150,8 @@ preview of each set too". This changes §43.5's "the help is never stated" for t
 each piece comes from is said plainly; what the world holds beyond it is still found. Phase 1 as built:
 - **The band has six pages:** Status · Tasks · Hearth · Powers · Journal · Map (`StatusSections.Tab`). The Truths page's
   sections stand on Status (the path choice 700, the Truths 710-730, the road 735, titles 740, latents 750:
-  `StatusSections.placed`); the Codex's board, the Atlas list, the Almanac and the Bell Book stand on the Journal under
-  FINDS (600-640). The holo rail has six nodes (`BandLayout.PAGES` 6); Tasks carries a badge for steps you haven't seen.
+  `StatusSections.placed`); the Codex's board, the Atlas list, the Almanac and the Bell Book stand on the Journal (600-640;
+  phase 3 gives each its category). The holo rail has six nodes (`BandLayout.PAGES` 6); Tasks carries a badge for steps you haven't seen.
 - **Goals** (`core.api.Goals`, §12): a module says what a player can do now as `Step`s under one of six goals (Hearth,
   Armour, Weapons, Bells, Gates and rank, Out there), each with its needs (an item, a tag or a condition, have and
   need), a place, a place on the main path, optional or not, choices (the armour sets) and the Now suggestions it
@@ -8248,6 +8248,22 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   section and its All trails browser go; trails still open, tick, hide and finish (with their share of a level) as before.
 - **One pin** (`Goals.Pin`, installed by tasks: `pinned`, `pin`, `pinIfFree`): the Bell Book's Track is Pin now (its
   lead's step `bell/<no>` leads the card; a lead found by a letter pins itself only when nothing else is pinned).
+- **The Journal is a catalogue** (phase 3, `progression.client.Catalogue`, `JournalFilters`): a tab per category along
+  its top with how many you've found (Q / E step through them; they wrap on a narrow band): CREATURES (every overworld
+  creature in the bestiary, `CreatureCodex.slots`, found once seen, with its egg), BEASTS (the kin kinds that live in the
+  world, found once met; read off the Hearth page's words, `KinPageSection.slots`), BELLS (the Hundred's own board is
+  the slots; the tab counts held / 100), GATE WORLDS (the Atlas, found / total), CAVE REGIONS (`RegionCodex.slots`),
+  HAPPENINGS (the Almanac; open-ended, a count), LORE & PLACES (the Codex board without its Creatures and Cave regions,
+  which have their own; found entries counted) and YOUR STORY last (the log, Records, the chains, Saved for later,
+  Recent; its tab says "n NEW" while the log has unread lines). A fixed category shows every slot numbered; one not
+  found is a "?" with its number and nothing else, never a name, a picture or a hint; click a found one for what you've
+  learned. A section says its category (`Section.shelf()`, YOUR STORY by default); a note link to the Journal opens on
+  the linking section's category (`StatusSections.follow`: the Status page's "ALL n ›" opens Your story). The Now list
+  leaves the Journal (Tasks has it; Recent's links go to Tasks). Autopilot: `journal <category>`. Not moved: the chains
+  and Saved for later stay under Your story rather than on Tasks.
+- **Track is Pin on the kin list too** (phase 3): a kind with a step on the Tasks page (`kin/need/<id>` or
+  `kin/want/<id>`) pins it; one without falls back to the rough bearing as before. A kin step's place is that rough
+  bearing (`KinSpawner.rough`), never the spot. The Armoury's weapon Track stays its own (no weapon steps yet).
 - **Tests:** `tasks_book_rules` (order, the top rule, covers, merge, NowMap, the saved state), `tasks_choose_and_pin`
   (the first armour's sets, one row per need, a refused pin, chosen and pinned: the card lists that set's needs),
   `tasks_next_step_follows_path` (Euan's moment in a real home: the Armoury on top, then the armour, then the gate, the
