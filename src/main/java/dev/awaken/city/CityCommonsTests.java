@@ -279,7 +279,8 @@ final class CityCommonsTests {
                     net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(ev);
                     if (ev.getResult() == net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck.Result.FAIL) failed++;
                 }
-                h.assertTrue(failed >= 340 && failed <= 385, "the natural spawner's position check turns most away over the fields (" + failed + " of 400)");
+                // about 360 of 400 (one in ten kept), sd 6: five sd either side, so a fair roll never fails (339 did, 30 Oct)
+                h.assertTrue(failed >= 330 && failed <= 390, "the natural spawner's position check turns most away over the fields (" + failed + " of 400)");
             } finally {
                 City.install(before);
             }
