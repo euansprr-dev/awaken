@@ -57,4 +57,5 @@ The Wilds' foundations from docs/plan-ascent.html §6: everything that doesn't w
 ## CI
 - VM, one full run at the end: every test passed except `wilds_arrival_history`, whose walk passed back over its own
   tower block (a test bug: the rule was right). Fixed; the wilds, Horizon and System layout tests then passed (16/16).
-- GitHub Actions: the GameTests workflow on `pack/wilds-base` (run id in the hand-off message to the pack session).
+- GitHub Actions: GameTests run **40117631141** (#73) on 0ad0301: **success**
+  (https://github.com/euansprr-dev/awaken/actions/runs/40117631141). Ready for the pack session to merge.
