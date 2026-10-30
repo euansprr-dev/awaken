@@ -258,6 +258,7 @@ final class CastAnims {
 
     static void reset() {
         HoldSound.reset();
+        BALL_SEEN.clear();
         for (Anim a : SLOTS) {
             if (a.entity >= 0 && a.pal) PalCasts.stop(a.entity);
             a.entity = -1;
@@ -305,6 +306,9 @@ final class CastAnims {
     // ---- third person -----------------------------------------------------------------------------------------------
 
     /** Render-state modifier: poses the arms and twists the body of any humanoid with a running cast animation. */
+    private static final it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap BALL_SEEN = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
+    private static final int EMPTY_AFTER = 10;
+
     /**
      * Registered last (after Arms fills the hands): both hands are on the ball (Charged Shot's hold and push), so whatever
      * they held is not drawn; only the drawn state changes, never the inventory.
@@ -312,7 +316,13 @@ final class CastAnims {
     static void emptyHands(Entity entity, EntityRenderState state) {
         if (!(state instanceof ArmedEntityRenderState hands) || !PowerFxConfig.animations()) return;
         Anim a = find(entity.getId());
-        if (a == null || a.profile == null || !a.profile.ball()) return;
+        if (a != null && a.profile != null && a.profile.ball()) BALL_SEEN.put(entity.getId(), FxWorld.ticks);
+        // the push and settle outlive the profile's pose by a few ticks: the item comes back once the arms are down
+        else if (!BALL_SEEN.containsKey(entity.getId())) return;
+        else if (FxWorld.ticks - BALL_SEEN.get(entity.getId()) > EMPTY_AFTER) {
+            BALL_SEEN.remove(entity.getId());
+            return;
+        }
         hands.rightHandItemState.clear();
         hands.leftHandItemState.clear();
         hands.rightHandItemStack = hands.leftHandItemStack = ItemStack.EMPTY;

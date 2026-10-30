@@ -10520,7 +10520,9 @@ from that ball.
   level 5 a lower, wider stance and a two-handed spear's hurl as the let-go. The level-5 body line now reads "Both hands drive the ball out like a
   thrown spear, the whole body behind it." A profile's third-person let-go now starts on the release tick (it used to wait 2 ticks for a release
   cast that profiles never send), so the push lands with the bolt. While a ball profile plays, whatever the hands held is not drawn
-  (`CastAnims.emptyHands`, a render-state modifier registered last, after Arms fills the hands; the inventory is untouched).
+  (`CastAnims.emptyHands`, a render-state modifier registered last, after Arms fills the hands; the inventory is untouched), and for 10 ticks
+  after, while the push settles. In your own first-person view the orb at the ball counts as held in the hand (`FxRender.ownHand`): drawn small
+  and never faded for being near the eye (the near fade had hidden it whole, 0.58 from the eye).
 - **The orb follows the drawn hands** (`Anchors.BALL`, `Muzzles.ball`): your fists' midpoint in first person, the sampled palms' midpoint on a drawn
   body, otherwise the server's point at the frame's look. Ladder looks placed `"at": "hand"` (Coil's orbit, Thunder Lance's sigil) follow a
   profile's origin (`LadderFx.anchor`). At a field of view other than 70, your first-person orb (drawn by the 70-degree hand pass) and the world
