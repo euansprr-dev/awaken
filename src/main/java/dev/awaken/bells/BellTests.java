@@ -246,8 +246,18 @@ final class BellTests {
         h.assertTrue(Bells.count(away) == 0, "a party member 200 away wasn't there to find it");
         Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
         h.assertTrue(Bells.count(p) == 1, "the next Lord never keeps one");
-        for (int i = 0; i < 3; i++) Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
-        h.assertTrue(Bells.count(p) == 2, "by the fourth since, a Lord has kept another (" + Bells.count(p) + ")");
+        // one in three between, never two in a row, always by the fourth since: one or two more from the next three
+        boolean last = false;
+        int kept = 0;
+        for (int i = 0; i < 3; i++) {
+            int had = Bells.count(p);
+            Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
+            boolean now = Bells.count(p) > had;
+            h.assertFalse(now && last, "two Lords in a row never both keep one");
+            if (now) kept++;
+            last = now;
+        }
+        h.assertTrue(kept >= 1, "by the fourth since, a Lord has kept another (" + Bells.count(p) + ")");
         Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.D, "BELL_CRYPT", party, p);
         h.assertTrue(Bells.has(p, "crypt"), "a gate world's Lord at its bell's rank keeps that bell");
         h.succeed();
