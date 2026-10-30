@@ -12080,8 +12080,7 @@ should show a boss bar of our own. What he approved (PLAN §7):
 - **Textures.** `textures/entity/kit/<id>.png`, `_glow` (drawn emissive) and `_blink`/`_glow_blink` (the life layer's
   blink). They are separate from `textures/entity/mobs/<id>.png`, so the old body keeps its own texture as the fallback.
 - **Size.** Bodies are modelled at true size (the renderer draws them at scale 1). The def's scale still sets the
-  hitbox, so it is chosen to fit the body: the Ember Tyrant 3.0 (1.8 × 5.85 blocks), Unit Zero 1.65 (1 × 3), Mother of
-  Spores 0.75 (3 × 3).
+  hitbox, so it is chosen to fit the body: round the trunk and as tall as the whole body (35.11, "Hitboxes").
 - **Feet.** Every key pose of a planted move has its feet solved by two-bone IK in the hip's frame (`core.plant`):
   the thighs, knees and ankles are recomputed so a body that crouches, twists or leans keeps both feet exactly where it
   stood. The library's crouch depths scale with the leg (`rig.size` = leg / 36 px).
@@ -12302,8 +12301,8 @@ Tyrant first, and nothing rolls out to more creatures until the Tyrant passes Eu
   - **Value order.** Heat brightest (the core behind bone ribs, the vents, the fist's fissures, the eyes, the axe's
     edge), then bone (the skull, horns, ribs, claws), then iron (belt, tassets, shoulder band, shackle, chimneys),
     then dark rock.
-  - **Not changed yet.** The hitbox stays 1.8 by 5.85 blocks (the body is wider: the fist reaches past it) and the
-    moves are today's, re-sided; both are R2 and R3 work.
+  - **Not changed yet.** The moves are today's, re-sided (R2 and R3 work). The hitbox was 1.8 by 5.85 blocks until
+    2026-10-30; it is now 3.6 x 8.25 (size 1.2 x 2.75 at scale 3.0), round its trunk (35.11, "Hitboxes").
 - **R2, motion: built (35.10).** R3, the Tyrant's fight; then R4 Unit Zero and R5 Mother: as the plan; each lands
   here when built.
 
@@ -12443,6 +12442,14 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   Serpent: B, the Hourglass. The Hive Regent: A, the Empress. The Drowned Archivist: A, the Lectern. The Lantern Broker:
   A, the Pedlar. The Abbot of Frost: B, the Pilgrim. Picked here (2026-10-29): the Mirror Knight: C, the Masked
   Duelist. The Sleeper: B, the Four-Poster. The Sky Leviathan: B, the Ray. The Hollow Herald: C, the Ring-Head.
+- **Hitboxes** (2026-10-30). A kit boss's hitbox (`.size()` x its def's scale) is round its trunk, its main body
+  without the limbs, and as tall as its whole body at rest; its arms, tail and head reach past it, as the Forge's fist
+  does. `kit/checks/extents.py` gives the whole body; where both its width and depth are limbs, the trunk is measured
+  bone by bone. The first six Lords kept their old vanilla model's box until 2026-10-30, far smaller than their new
+  bodies (the Forge's was 1.8 x 5.85 under a body 8.3 tall), so swings missed them and they could clip into walls.
+  They now have: the Forge 3.6 x 8.25, Unit Zero 1.0 x 4.3, Mother of Spores 1.8 x 5.8, the Colossus 1.5 x 8.4, the
+  Root Saint 1.8 x 5.4, the Bell Warden 2.8 x 4.6. Each design's `half` is the hitbox's half width, so a blow's range
+  is measured from the box's edge (`core.fit_range`).
 - **Unit Zero, the Sentinel** (body and motion, `kit/bosses/unit_zero.py`). A cathedral statue that moves, 3.6 blocks to
   the helm and 4.3 with its halo, 107 cubes on the Duelist plan (leg 30 px): ceramic plates over black joints, a slate
   tabard between the legs (so a stride never meets it) and split coat-tails behind, each a short cloth chain on springs;
@@ -12451,7 +12458,7 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   blue line under a heavy brow and a crest swept back; and a square halo stood on its point on a stalk from its back:
   outer frame, an inner frame of light, twelve dial marks between them, nodes on the points, a hub and a stem. Values:
   the blue brightest, the ceramic lightest high on the body and weathering toward the floor, slate cloth, black joints
-  and blades; the glaze crazed with a few cracks holding the blue. Its hitbox grows to 1.1 x 3.3 (scale 1.85).
+  and blades; the glaze crazed with a few cracks holding the blue. Its hitbox is 1.0 x 4.3 (size 0.56 x 2.32 at scale 1.85), round its chest.
   - **The blades' edges** run down the little finger's side, as a hand-edge cut leads, so the cuts turn the blade little
     (Severing 30°, -30°, -5°; the spin 50°). `moves.chop` and `moves.spin_cut` take `edge` (and the spin a weapon bone).
   - **Ground.** The blades never go into the ground in any clip but the fall (the wrist, then the elbow and the
@@ -12468,8 +12475,8 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
     into the step. Deploy Coils (30%) and the intro (50%) hold their poses on purpose. The meter now counts angles the
     short way round, so a spinning halo's whole turns don't read as pose.
 - **Mother of Spores, the Crowned Host** (body and motion, `kit/bosses/mother_of_spores.py`). The fungus wears her: a
-  pale woman hung in the air as if from strings (hips 2 blocks up, 6 blocks to the top of the crown, the hitbox stays
-  3 x 3), back arched, head fallen to one side, arms limp and open, her legs one root tail of five segments on springs
+  pale woman hung in the air as if from strings (hips 2 blocks up, 6 blocks to the top of the crown, the hitbox 1.8 x
+  5.8 round her body), back arched, head fallen to one side, arms limp and open, her legs one root tail of five segments on springs
   with a glowing tip; a ruff of gills at her neck, shelf fungus on her left shoulder, a ragged frill where the legs
   became the tail, dark growth with three spore sacs on her back. Out of her back and skull a crown of twelve stalks
   fans out, each over its own side, each in two segments with a stepped glowing club, four forking. 106 cubes, no plan
@@ -12497,8 +12504,8 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   hands, flat blades on cogs at its shoulders, the minute hand (left, 54 px) longer than the hour hand (right, 38 px),
   splayed out at rest. A brass pendulum with an iron weight hangs between its legs and swings in time with the clock.
   119 cubes on the Brute plan (leg 51). Values: the dial and the lamps (belfry, the hands' inlays, the weight) the
-  white-blue of an arc, then brass, then green copper, then dark iron. The hitbox stays the golem's at scale 1.8
-  (2.5 x 4.9), the body modelled at true size above it.
+  white-blue of an arc, then brass, then green copper, then dark iron. The hitbox is 1.5 x 8.4 (size 0.83 x 4.66
+  at scale 1.8), round the tower.
   - **It moves like a drinking bird**: too tall to reach you standing, the tower stays rigid and tips at the hips, the
     legs folding under it and the hips drawing back over its heels, and it rights itself after every blow. The minute
     hand sweeps across the front at a standing player's waist (reach 4.7 blocks); the hour hand climbs to twelve, its
@@ -12539,7 +12546,7 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   run out from under the hem along the floor in a ring, arching between the hem and their tips; the ring is a bone of
   its own, so the saint can fall out of it. 141 cubes (846 faces) on the new Caster plan. Values: the heart, the eyes and
   the censers' windows lit amber; the stone weathered pale (hands and head lightest, the hem darkest, moss creeping up
-  it), the cloth red, the roots dark bark. The hitbox stays the creaking's at scale 1.8 (1.6 x 4.9).
+  it), the cloth red, the roots dark bark. The hitbox is 1.8 x 5.4 (size 1.0 x 3.02 at scale 1.8), round its robe.
   - **It moves like a statue that prays**: it never walks; it slides on its roots, the planted tips pulling back exactly
     as far as it travels and the lifted ones reaching ahead (2 blocks a cycle walking, 3 running), its censers swinging.
     Most of its bend is at the waist, with a fold at the robe's knee for the deepest bows. Its blows leave one hand in
@@ -12580,7 +12587,7 @@ Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
   and inside the mouth, in the dark, a pale gold face watches you, its jaw dropping as it rings. 75 cubes (450 faces).
   Values: old bronze from pale gold at the lip to dark at the waist, verdigris dripping off every ledge, an inscription
   round its waist and a crack up its side lit ghost gold, the throat dark with a faint glow, the legs dark bronze with
-  green at the joints and polished points, the yoke and knee caps crypt stone. The hitbox stays 1.4 x 3.0 at scale 1.
+  green at the joints and polished points, the yoke and knee caps crypt stone. The hitbox is 2.8 x 4.6 at scale 1, round the bell.
   - **It moves like a crab carrying a bell**: a trot, the front left with the back right, each pair lifting its points
     high and reaching on as the other carries it, the planted points pulling back exactly as far as it travels (1.7
     blocks a stride walking, 2.8 running). The bell rides low into each step and rolls toward the pair that holds it,

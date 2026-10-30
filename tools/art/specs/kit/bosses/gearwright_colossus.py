@@ -735,4 +735,4 @@ def design():
     r = body()
     r.pack()
     mv = clips(r)
-    return {"rig": r, "plan": P, "moves": mv, "fight": FIGHT, "paint": paint, "scale": SCALE, "half": 1.26, "sounds": SOUNDS, "move_sounds": MOVE_SOUNDS}
+    return {"rig": r, "plan": P, "moves": mv, "fight": FIGHT, "paint": paint, "scale": SCALE, "half": 0.75, "sounds": SOUNDS, "move_sounds": MOVE_SOUNDS}

@@ -52,7 +52,7 @@ final class GateBestiary {
                 .ab(a(SLAM, "Bell Slam").power(1.6F).heavy(), a(CHARGE, "Coffin Rush")).build());
         out.add(m("the_sexton", "The Sexton", Theme.BELL, Tier.WARDEN, Model.WARDEN, "Hunts by the toll of your footsteps; its Knell tears at the spirit").hp(34).dmg(6).spd(0.28).traits(HUNTER)
                 .ab(a(BEAM, "Knell").bolt(BoltKind.SPIRIT).power(1.8F).wind(34).heavy(), a(SLAM, "Grave Stamp").radius(4), a(DARKNESS, "Last Light").radius(14)).build());
-        out.add(m("bell_warden", "The Bell Warden", Theme.BELL, Tier.LORD, Model.BELL, "Toll Waves you dodge by stepping in; halfway through, the statues move").hp(30).dmg(4.5).spd(0.24).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("bell_warden", "The Bell Warden", Theme.BELL, Tier.LORD, Model.BELL, "Toll Waves you dodge by stepping in; halfway through, the statues move").hp(30).dmg(4.5).spd(0.24).size(2.8F, 4.64F).bar(BossBarColor.BLUE).arena(22)
                 .intro("The bell above you is not a bell.")
                 .phase(1.0F, "The Bell Warden rings once.", a(BURST, "Toll Wave").radius(10).inner(3.0F).power(1.6F), a(SLAM, "Clapper Strike").radius(4), a(BOLT, "Echo Bolts").n(3).bolt(BoltKind.SPIRIT))
                 .phase(0.66F, "The statues move.", a(SUMMON, "The Statues Move").summon("toll_ghoul").n(3), a(CHARGE, "Bell Rush").heavy(), a(BURST, "Toll Wave").radius(11).inner(3.0F))
@@ -72,7 +72,7 @@ final class GateBestiary {
                 .ab(a(HEAL, "Tend the Colony"), a(BOLT, "Spore Lob").bolt(BoltKind.SPORE), a(CLOUD, "Rot Bloom").fx(MobEffects.POISON, 80, 0)).build());
         out.add(m("the_rot", "The Rot", Theme.FUNGAL, Tier.WARDEN, Model.RAVAGER, "Rot Charge: lowers its head, then a charge that leaves spores behind").hp(36).dmg(6).spd(0.3).traits(HUNTER)
                 .ab(a(CHARGE, "Rot Charge").power(1.6F).heavy(), a(NOVA, "Spore Burst").n(12).bolt(BoltKind.SPORE), a(CLOUD, "Choking Field").radius(4).fx(MobEffects.POISON, 100, 1)).build());
-        out.add(m("mother_of_spores", "Mother of Spores", Theme.FUNGAL, Tier.LORD, Model.GHAST, "Spore Rain from above, then she births the colony").hp(28).dmg(4).spd(0.2).scale(0.75F).bar(BossBarColor.PURPLE).arena(24)
+        out.add(m("mother_of_spores", "Mother of Spores", Theme.FUNGAL, Tier.LORD, Model.GHAST, "Spore Rain from above, then she births the colony").hp(28).dmg(4).spd(0.2).scale(0.75F).size(2.4F, 7.78F).bar(BossBarColor.PURPLE).arena(24)
                 .intro("Something above you breathes in.")
                 .phase(1.0F, "Mother of Spores exhales.", a(RAIN, "Spore Rain").n(4).bolt(BoltKind.SPORE).fx(MobEffects.POISON, 60, 0), a(BOLT, "Spore Lob").n(3).bolt(BoltKind.SPORE))
                 .phase(0.66F, "She births.", a(SUMMON, "Birth").summon("sporeling").n(4), a(NOVA, "Spore Halo").n(14).bolt(BoltKind.SPORE))
@@ -93,7 +93,7 @@ final class GateBestiary {
                 .ab(a(CHARGE, "Slag Charge").bolt(BoltKind.FIRE).heavy(), a(GUST, "Tusk Toss").radius(3.5F).power(0.8F)).build());
         out.add(m("the_overseer", "The Overseer", Theme.EMBER, Tier.WARDEN, Model.WITHER_SKELETON, "Walks through fire to reach you, ringed in embers").hp(34).dmg(6.5).spd(0.27).scale(1.35F).hold(Items.NETHERITE_AXE).traits(FIRE_IMMUNE, IGNITE, HUNTER)
                 .ab(a(CHARGE, "Furnace Walk"), a(NOVA, "Ember Ring").n(10).bolt(BoltKind.FIRE), a(AURA, "Heat Haze").bolt(BoltKind.FIRE)).build());
-        out.add(m("ember_tyrant", "The Ember Tyrant", Theme.EMBER, Tier.LORD, Model.PIGLIN_BRUTE, "Magma Fist and Eruption, then a Meltdown you have to step out of").hp(30).dmg(5).spd(0.25).scale(3.0F).hold(Items.NETHERITE_AXE).wear(EquipmentSlot.HEAD, Items.GOLDEN_HELMET).traits(FIRE_IMMUNE, IGNITE).bar(BossBarColor.RED).arena(22)
+        out.add(m("ember_tyrant", "The Ember Tyrant", Theme.EMBER, Tier.LORD, Model.PIGLIN_BRUTE, "Magma Fist and Eruption, then a Meltdown you have to step out of").hp(30).dmg(5).spd(0.25).scale(3.0F).size(1.2F, 2.75F).hold(Items.NETHERITE_AXE).wear(EquipmentSlot.HEAD, Items.GOLDEN_HELMET).traits(FIRE_IMMUNE, IGNITE).bar(BossBarColor.RED).arena(22)
                 .intro("The mine was dug to keep something in.")
                 .phase(1.0F, "The Ember Tyrant draws itself up.", a(SLAM, "Magma Fist").radius(4).bolt(BoltKind.FIRE).heavy(), a(CHARGE, "Tyrant's Advance"))
                 .phase(0.66F, "The mountain answers.", a(RAIN, "Eruption").n(5).bolt(BoltKind.FIRE), a(SUMMON, "Stoke the Imps").summon("ember_imp").n(1), a(SLAM, "Magma Fist").radius(4).bolt(BoltKind.FIRE))
@@ -133,7 +133,7 @@ final class GateBestiary {
                 .ab(a(CHARGE, "Steam Charge").heavy(), a(SLAM, "Piston Slam")).build());
         out.add(m("the_regulator", "The Regulator", Theme.CLOCKWORK, Tier.WARDEN, Model.IRON_GOLEM, "Overclocks as it nears you; Governor Slam and a spark ring").hp(38).dmg(7).spd(0.27).tint(0xE6B860).traits(HUNTER)
                 .ab(a(SLAM, "Governor Slam").radius(4).heavy(), a(NOVA, "Spark Ring").n(12).bolt(BoltKind.CHARGE), a(FRENZY, "Overclock")).build());
-        out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").hp(34).dmg(5).spd(0.22).scale(1.8F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
+        out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").hp(34).dmg(5).spd(0.22).scale(1.8F).size(0.83F, 4.66F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry built one thing. It is still building it.")
                 .phase(1.0F, "The Colossus engages.", a(SLAM, "Piston Slam").radius(4.5F).heavy(), a(NOVA, "Spark Halo").n(12).bolt(BoltKind.CHARGE))
                 .phase(0.66F, "Gears engage.", a(SUMMON, "Release Drones").summon("spark_drone").n(3), a(CHARGE, "Colossal Stride"), a(SLAM, "Piston Slam").radius(4.5F))
@@ -190,7 +190,7 @@ final class GateBestiary {
                 .ab(a(FANGS, "Root Fangs"), a(HEAL, "Incense"), a(CLOUD, "Incense Smoke").fx(MobEffects.WEAKNESS, 80, 0)).build());
         out.add(m("the_overgrowth", "The Overgrowth", Theme.TEMPLE, Tier.WARDEN, Model.IRON_GOLEM, "A temple statue grown through with roots; rings of fangs").hp(38).dmg(7).spd(0.25).tint(0x8AB070).traits(HUNTER)
                 .ab(a(SLAM, "Temple Fist").radius(4).heavy(), a(FANGS_RING, "Root Ring").n(10), a(ROOT, "Strangling Vines").radius(2.5F)).build());
-        out.add(m("root_saint", "The Root Saint", Theme.TEMPLE, Tier.LORD, Model.CREAKING, "Root Lances in lines, then the whole temple grabs for you").hp(30).dmg(4.5).spd(0.24).scale(1.8F).bar(BossBarColor.GREEN).arena(22)
+        out.add(m("root_saint", "The Root Saint", Theme.TEMPLE, Tier.LORD, Model.CREAKING, "Root Lances in lines, then the whole temple grabs for you").hp(30).dmg(4.5).spd(0.24).scale(1.8F).size(1.0F, 3.02F).bar(BossBarColor.GREEN).arena(22)
                 .intro("Incense and wet roots.")
                 .phase(1.0F, "The Root Saint opens its eyes.", a(FANGS, "Root Lance").n(14), a(SLAM, "Saint's Palm").radius(4))
                 .phase(0.66F, "The temple grows.", a(SUMMON, "Grow Creakers").summon("vine_creaker").n(2), a(ROOT, "Root Grasp").radius(3), a(FANGS_RING, "Root Ring").n(10))
@@ -267,7 +267,7 @@ final class GateBestiary {
                 .ab(a(LEAP, "Containment Breach").radius(3).heavy()).build());
         out.add(m("the_sweeper", "The Sweeper", Theme.PRECURSOR, Tier.WARDEN, Model.RAVAGER, "Purge Protocol: a charge, a sweep, a decontamination blast").hp(38).dmg(7).spd(0.3).tint(0x9CC0F0).traits(HUNTER)
                 .ab(a(CHARGE, "Purge Protocol").heavy(), a(NOVA, "Sweep").n(12).bolt(BoltKind.CHARGE), a(GUST, "Decon Blast").radius(6)).build());
-        out.add(m("unit_zero", "Unit Zero", Theme.PRECURSOR, Tier.LORD, Model.HUMAN, "Counts down in no language: lances, orbital marks, Zero Point").hp(28).dmg(4.5).spd(0.3).scale(1.85F).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("unit_zero", "Unit Zero", Theme.PRECURSOR, Tier.LORD, Model.HUMAN, "Counts down in no language: lances, orbital marks, Zero Point").hp(28).dmg(4.5).spd(0.3).scale(1.85F).size(0.56F, 2.32F).bar(BossBarColor.BLUE).arena(22)
                 .intro("A voice counting down in no language.")
                 .phase(1.0F, "Unit Zero activates.", a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE), a(BLINK, "Phase Step"))
                 .phase(0.66F, "Countdown: three.", a(SUMMON, "Deploy Coils").summon("coil_unit").n(2), a(RAIN, "Orbital Mark").n(4).bolt(BoltKind.CHARGE), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE))
