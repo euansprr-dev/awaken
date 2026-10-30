@@ -92,6 +92,11 @@ final class FxStats {
 
     static void commands(RegisterClientCommandsEvent e) {
         e.getDispatcher().register(Commands.literal("awaken").then(Commands.literal("fx")
+                // tours: third person seen from the side (degrees round the player, 0 back to normal)
+                .then(Commands.literal("sidecam").then(Commands.argument("degrees", IntegerArgumentType.integer(-180, 180)).executes(c -> {
+                    FxScreen.sideCam = IntegerArgumentType.getInteger(c, "degrees");
+                    return 1;
+                })))
                 .then(Commands.literal("stats").executes(c -> {
                     report("stats");
                     reset();

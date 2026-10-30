@@ -10537,6 +10537,9 @@ from that ball.
   - Volley fires from the ball too and uses the release and a lighter thunder.
 - **Tests**: `power_cast_ball`: at pitch -30, 0 and 30, after 6 and 30 ticks, the muzzle burst is at the ball and centred, and each bolt's first
   step starts there. `power_cast_profiles` also holds `end1p`, `holdSound` and the origin names.
+- **Tour**: `tools/autopilot/charged-shot.txt` (a CI look tour, PACK=feel) films the charge and the shot in first person, from the side and from
+  three quarters in front. Third person is turned round the player by the tours-only client command `/awaken fx sidecam <degrees>` (0 is off): it
+  turns the camera angles before third person pulls back along them, so the camera orbits the player.
 - **With cast animations off**, your own key press now starts the profile as well, the way it already did for everyone watching you. Its fallback
   pose, held sound and screen moment run; the first-person clips still follow the setting, and the boot checks the setting itself. The held sound
   starts with the charge orb (`FxRecipes.startCharge`), so Volley, which never charges, has none.
