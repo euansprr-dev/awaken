@@ -101,6 +101,7 @@ final class KinTests {
         java.util.UUID owner = java.util.UUID.randomUUID();
         BlockPos anchor = h.absolutePos(new BlockPos(0, 2, 0));
         dev.awaken.hearth.HearthData homes = dev.awaken.hearth.HearthService.data(level.getServer());
+        level.setBlock(anchor, dev.awaken.hearth.HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3); // upkeep drops an Anchor-less home
         homes.put(new dev.awaken.hearth.HearthRecord(owner, "test", anchor, dev.awaken.hearth.HearthService.OVERWORLD));
         b.settle(anchor, h.absolutePos(new BlockPos(3, 2, 3)), owner);
         h.succeedWhen(() -> {
