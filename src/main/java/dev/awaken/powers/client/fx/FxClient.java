@@ -50,6 +50,8 @@ public final class FxClient {
         modBus.addListener(RegisterGuiLayersEvent.class, FxScreen::register);
         modBus.addListener(RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, CastAnims::modify));
+        modBus.addListener(EventPriority.LOWEST, RegisterRenderStateModifiersEvent.class,
+                e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, CastAnims::emptyHands));
         // where a cast's palm, core and foot are on a drawn body (Muzzles)
         modBus.addListener(EntityRenderersEvent.AddLayers.class, e -> {
             for (var type : e.getSkins()) {

@@ -11,6 +11,7 @@ import dev.awaken.powers.fx.FxStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
@@ -21,6 +22,7 @@ import net.minecraft.util.context.ContextKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
@@ -303,6 +305,19 @@ final class CastAnims {
     // ---- third person -----------------------------------------------------------------------------------------------
 
     /** Render-state modifier: poses the arms and twists the body of any humanoid with a running cast animation. */
+    /**
+     * Registered last (after Arms fills the hands): both hands are on the ball (Charged Shot's hold and push), so whatever
+     * they held is not drawn; only the drawn state changes, never the inventory.
+     */
+    static void emptyHands(Entity entity, EntityRenderState state) {
+        if (!(state instanceof ArmedEntityRenderState hands) || !PowerFxConfig.animations()) return;
+        Anim a = find(entity.getId());
+        if (a == null || a.profile == null || !a.profile.ball()) return;
+        hands.rightHandItemState.clear();
+        hands.leftHandItemState.clear();
+        hands.rightHandItemStack = hands.leftHandItemStack = ItemStack.EMPTY;
+    }
+
     static void modify(Entity entity, EntityRenderState state) {
         if (!(state instanceof HumanoidRenderState s)) return;
         Anim a = PowerFxConfig.animations() ? find(entity.getId()) : null;

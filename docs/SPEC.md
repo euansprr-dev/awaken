@@ -10510,8 +10510,8 @@ from that ball.
 - **One point for the server and every pose** (`powers.fx.CastPoints.ball`, profile `origin: "ball"`): from the eyes, 0.58 along the look and 0.17
   down the view's up, centred. The bolt (`Bolts.fire`), the muzzle burst and the let-go flash all start there, at every charge and pitch; the old
   `EnergyPowers.hand` (0.35 to the right) is no longer used by Charged Shot.
-- **First person** (`fp_gestures.py` `lightning_ball`): the fists cup low, then lift to `BALL` (±0.15, -0.17, -0.48 in the hand pass's view
-  space). The palms' midpoint (`Muzzles` adds 0.10 of depth) is exactly the ball point, and it sits about 40% down from the centre of the screen,
+- **First person** (`fp_gestures.py` `lightning_ball`): the fists cup low, then lift to `BALL` (±0.25, -0.17, -0.48 in the hand pass's view
+  space; at ±0.15 the tour showed the fists meeting in the middle and hiding the orb, since the hands draw over the world). The palms' midpoint (`Muzzles` adds 0.10 of depth) is exactly the ball point, and it sits about 40% down from the centre of the screen,
   clear of the hotbar. The hold trembles (`fp_p_charged_shot_hold`). A new profile field, `end1p` (`fp_p_charged_shot_end`), drives both fists
   straight out on the let-go; `CastAnims.release` plays it in place of the hold.
 - **Third person** (`power_gestures.py` `lightning_ball`, `BALL_HOLD`): both arms follow the look (aimed). The palms are 0.34 apart and their
@@ -10519,7 +10519,8 @@ from that ball.
   This was fitted with the rig's forward kinematics at the 0.9375 player scale. Levels 3 and 5 keep the same hold: level 3 adds the family accent,
   level 5 a lower, wider stance and a two-handed spear's hurl as the let-go. The level-5 body line now reads "Both hands drive the ball out like a
   thrown spear, the whole body behind it." A profile's third-person let-go now starts on the release tick (it used to wait 2 ticks for a release
-  cast that profiles never send), so the push lands with the bolt.
+  cast that profiles never send), so the push lands with the bolt. While a ball profile plays, whatever the hands held is not drawn
+  (`CastAnims.emptyHands`, a render-state modifier registered last, after Arms fills the hands; the inventory is untouched).
 - **The orb follows the drawn hands** (`Anchors.BALL`, `Muzzles.ball`): your fists' midpoint in first person, the sampled palms' midpoint on a drawn
   body, otherwise the server's point at the frame's look. Ladder looks placed `"at": "hand"` (Coil's orbit, Thunder Lance's sigil) follow a
   profile's origin (`LadderFx.anchor`). At a field of view other than 70, your first-person orb (drawn by the 70-degree hand pass) and the world

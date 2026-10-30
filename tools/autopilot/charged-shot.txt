@@ -54,9 +54,9 @@ cmd awaken admin power cast charged_shot
 shotnow cs_fp_cup
 wait 9
 shotnow cs_fp_mid
-wait 14
+wait 11
 shotnow cs_fp_full
-wait 2
+wait 3
 shotnow cs_fp_push
 wait 1
 shotnow cs_fp_push2
@@ -80,9 +80,9 @@ cmd awaken admin power cast charged_shot
 shotnow cs_side_cup
 wait 9
 shotnow cs_side_mid
-wait 14
+wait 11
 shotnow cs_side_full
-wait 2
+wait 3
 shotnow cs_side_push
 wait 1
 shotnow cs_side_push2
@@ -104,9 +104,9 @@ cmd awaken admin power cast charged_shot
 shotnow cs_q_cup
 wait 9
 shotnow cs_q_mid
-wait 14
+wait 11
 shotnow cs_q_full
-wait 2
+wait 3
 shotnow cs_q_push
 wait 1
 shotnow cs_q_push2
