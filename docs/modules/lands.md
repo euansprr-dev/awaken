@@ -279,7 +279,8 @@ litter, ferns; Spire: lumen moss and caps) is laid round the foot first.
 GameTests: `terrain_lands_blocks`, `terrain_lands_trees_grow` (6 seeds of each data tree on a platform: grows, wood
 and canopy, no leaf born decaying, nothing loose, reach ≤ 13, height range), `terrain_lands_biomes`,
 `terrain_hero_blueprints` (8 seeds each: sizes, the Colossus trunk ending inside its crown, nothing disconnected, few
-persistent leaves; cost: the fastest seed ≤ 8 ms, so a loaded machine can't fail it; fastest, average and worst logged),
+persistent leaves; cost: the fastest seed ≤ 8 ms, in a batch of its own so no other test's chunk generation shares the
+cores while it times; fastest, average and worst logged; `terrain_landmark_shapes` likewise),
 `terrain_hero_builds_in_box` (a Colossus on a slope and a Spire, chunk by chunk: inside the box, on the ground,
 nothing loose, no decaying leaves; cost per chunk logged, not asserted), `terrain_hero_sites` (site search on a real
 overworld). Data-tree cost is logged, not asserted.

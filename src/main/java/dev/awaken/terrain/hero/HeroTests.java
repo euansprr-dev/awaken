@@ -44,8 +44,10 @@ public final class HeroTests {
     private HeroTests() {}
 
     public static void register() {
-        // Every blueprint from eight seeds is the tree the art direction describes, and what building one costs.
-        AwakenTests.register("terrain_hero_blueprints", 100, h -> {
+        // Every blueprint from eight seeds is the tree the art direction describes, and what building one costs. A batch
+        // of its own: in the shared one the chunk workers generate round every other test while this one times CPU work
+        // on the same cores (a Colossus measured 8.3 ms at its fastest there on CI, 5 ms alone).
+        AwakenTests.registerIsolated("terrain_hero_blueprints", 100, h -> {
             StringBuilder log = new StringBuilder();
             for (HeroTree tree : HeroTree.values()) {
                 double total = 0, worst = 0, best = Double.MAX_VALUE;

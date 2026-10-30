@@ -64,6 +64,8 @@ land (docs/modules/lands.md, SPEC §15). Branch `lands/biomes-3`, from `lands/bi
     Shattered Highlands 4.6%, Lumen Forest 2.5%, Mirror Marsh 0.7%.
   - After, vanilla shapes: 41.5%. `terrain_lands_placement` now fails outside 34–48% and logs each biome's claim of
     its archetypes and the field's deciles.
+- The two timed shape tests (`terrain_hero_blueprints`, `terrain_landmark_shapes`) run in batches of their own: in
+  the shared batch, other tests' chunk generation pushed the Colossus past its bound on CI (see CI below).
 - `/awaken terrain lands2cost` is now `landscost`. It covers every pair's features and landmarks; both biomes-2 tours
   are updated.
 
@@ -99,4 +101,12 @@ land (docs/modules/lands.md, SPEC §15). Branch `lands/biomes-3`, from `lands/bi
 
 ## CI
 
-Filled when the run is green.
+- **Green:** GameTests run 40117471853 on 7f23e88 (https://github.com/euansprr-dev/awaken/actions/runs/40117471853),
+  all required tests passed. The full local run on the tuned state passed too (339 required tests, `./gradlew build
+  runGameTestServer`).
+- **The red run before it:** 40116629951 on 90d3153 failed one test. `terrain_hero_blueprints` measured the Elder
+  Colossus at 8.27 ms at its fastest against its 8 ms bound; the Colossus is about 5 ms alone, and its code is
+  unchanged here.
+  - Cause: the test timed CPU work inside the shared default batch, where the chunk workers generate round a couple
+    of hundred other tests on the same cores. This branch's new tests made that batch heavier.
+  - Fix (7f23e88): it and `terrain_landmark_shapes`, the other timed test, now run in batches of their own.
