@@ -124,13 +124,28 @@ final class SetPreviewScreen extends Screen implements dev.awaken.signal.client.
             InventoryScreen.extractEntityInInventoryFollowsMouse(g, x, y0 + 6, x + w, y0 + bh - 4, (int) (bh * 0.36f), 0.0625F, mouseX, mouseY,
                     figures.get(i));
             int ty = y0 + bh + 5;
-            g.centeredText(font, Component.literal(c.title()), x + w / 2, ty, on ? 0xFF000000 | Glass.GOOD : 0xFFFFFFFF);
-            g.centeredText(font, Component.literal(c.sub()), x + w / 2, ty + 11, Glass.a(Glass.LABEL, 1f));
+            fit(g, c.title(), x, ty, w, on ? 0xFF000000 | Glass.GOOD : 0xFFFFFFFF);
+            fit(g, c.sub(), x, ty + 11, w, Glass.a(Glass.LABEL, 1f));
             int ready = 0;
             for (TaskPayloads.NeedRow n : c.needs()) if (n.met()) ready++;
             String state = on ? "CHOSEN" : c.needs().isEmpty() ? "Every piece is yours" : ready + " of " + c.needs().size() + " materials ready";
-            g.centeredText(font, Component.literal(state), x + w / 2, ty + 24, on ? 0xFF000000 | Glass.GOOD : Glass.a(Glass.LABEL, 0.8f));
+            fit(g, state, x, ty + 24, w, on ? 0xFF000000 | Glass.GOOD : Glass.a(Glass.LABEL, 0.8f));
         }
+    }
+
+    /** A line centred under its column, drawn smaller when it's wider than the column (four sets side by side). */
+    private void fit(GuiGraphicsExtractor g, String s, int x, int y, int w, int color) {
+        int tw = font.width(s), room = w - 4;
+        if (tw <= room) {
+            g.centeredText(font, Component.literal(s), x + w / 2, y, color);
+            return;
+        }
+        float k = room / (float) tw;
+        g.pose().pushMatrix();
+        g.pose().translate(x + 2, y + (font.lineHeight - font.lineHeight * k) / 2f);
+        g.pose().scale(k, k);
+        g.text(font, s, 0, 0, color, true);
+        g.pose().popMatrix();
     }
 
     @Override
