@@ -230,8 +230,34 @@ public final class Bells {
         l.lines.add("An old letter dug out of the ground. It says the bell was kept " + way + " of where it was buried, " + far
                 + " paces or so. The Book has marked the stretch it means.");
         save(p, b);
-        if (b.tracked < 0) track(p, s.getKey().no());
+        if (b.tracked < 0 && dev.awaken.core.api.Goals.pinned(p).isEmpty()) track(p, s.getKey().no()); // never over your pin
         say(p, "[An old letter, half rotted. It tells of a bell kept " + way + " of here. It's in your Bell Book.]");
+        return true;
+    }
+
+    /** How far a Signal Relay listens for a sleeping bell. */
+    static final int RELAY_REACH = 1500;
+
+    /**
+     * A Signal Relay near your Hearth listened (SPEC §27.13): a Heard lead on the nearest sleeping bell you don't hold and
+     * haven't heard, one bearing from the relay. Heard again from somewhere else, the bearings cross as a hum's do.
+     * A direction, never the place. False when there's none within reach.
+     */
+    public static boolean relayed(ServerPlayer p, BlockPos relay) {
+        Map.Entry<BellCatalog.Def, BellWorld.Site> s = sleeping(p, relay, RELAY_REACH, BellBook.How.HEARD);
+        if (s == null) return false;
+        BellBook b = book(p);
+        BellBook.Lead l = lead(p, b, s.getKey());
+        l.hows |= 1 << BellBook.How.HEARD.ordinal();
+        String way = toward(s.getValue().pos.getX() - relay.getX(), s.getValue().pos.getZ() - relay.getZ()).substring(3);
+        if (l.bearings == 0) {
+            l.bearings = 1;
+            l.hx = relay.getX();
+            l.hz = relay.getZ();
+        }
+        l.lines.add("Your Signal Relay picked up a bell's note your song is missing, coming from " + way + ".");
+        save(p, b);
+        say(p, "[Your Signal Relay picked up a bell's note from " + way + ". It's in your Bell Book.]");
         return true;
     }
 
@@ -295,11 +321,21 @@ public final class Bells {
         }
     }
 
-    /** Track a lead: the top-right card's rough bearing to its area (or along its one bearing). */
+    /**
+     * Track a lead: since §27.13 that's the one pin, the lead's step on the Tasks page leading the card with its rough
+     * bearing. Before the Tasks page has the step (or without the tasks module) the old way: the top-right card's bearing.
+     */
     static void track(ServerPlayer p, int no) {
         BellBook b = book(p);
         BellBook.Lead l = b.leads.get(no);
         if (l == null || l.bearings == 0) return;
+        if (dev.awaken.core.api.Goals.pin(p, "bell/" + no)) {
+            if (b.tracked >= 0) { // the pin follows the lead itself: the old card goes
+                b.tracked = -1;
+                save(p, b);
+            }
+            return;
+        }
         b.tracked = no;
         save(p, b);
         BellCatalog.Def d = BellCatalog.of(no);

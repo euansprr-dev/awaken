@@ -111,13 +111,8 @@ public final class ProgressionModule {
         });
         bus.addListener(RecipeUnlocks::onPlayerTick);
         LevelRoad.init();
-        // Truths wait for level 5 (plan v2 §4.6). Players awakened before v2 already hold theirs: never a second set.
-        LevelRoad.onFlag("awaken:truths", p -> {
-            Profile prof = Progression.profile(p);
-            if (prof.truthsOffered().isEmpty() && prof.truthsDeclared().isEmpty() && prof.truthsTrue().isEmpty()) {
-                Progression.offerTruths(p, 3);
-            }
-        });
+        // Truths open at level 5 (plan v2 §4.6) and come true by themselves (SPEC §27.13): any already lived come true now
+        LevelRoad.onFlag("awaken:truths", Progression::truthsCatchUp);
         ProgressionNow.register();
         PromiseKeeper.init(); // the locks you met, and the call back when you hold their key (SPEC §27)
         Checklist.init(); // the current task, top right (SPEC §27.10)
@@ -126,13 +121,9 @@ public final class ProgressionModule {
             if (yes) Progression.openBand(p, action.endsWith(":ascent") ? Progression.BAND_PAGE_ASCENT : 0);
         });
         Lessons.init(); // teaching in play and the level road's goals (P3)
-        Signal.onAction(Directives.ACTION, Directives::answer);
+        // the morning's Directive and Daily Regimen are gone (SPEC §27.13): the Tasks page says what's next
         PlayDays.onMorning((server, day) -> {
-            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-                startDay(p, day);
-                Regimen.morning(p);
-                Directives.tryOffer(p, "morning");
-            }
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) startDay(p, day);
         });
         ProgressionCommands.register();
         WorldLatents.init();
@@ -156,8 +147,6 @@ public final class ProgressionModule {
                     try { Progression.spendPoint(sp, Stat.valueOf(msg.arg())); } catch (IllegalArgumentException ignored) {}
                 }
                 case "spend_many" -> Progression.spendPoints(sp, msg.arg()); // the band's Confirm (SPEC §30.3)
-                case "declare" -> Progression.declareTruth(sp, msg.arg());
-                case "undeclare" -> Progression.undeclareTruth(sp, msg.arg());
                 case "title" -> Progression.equipTitle(sp, msg.arg());
                 case "path" -> Progression.choosePath(sp, msg.arg());
                 default -> {}
@@ -180,6 +169,8 @@ public final class ProgressionModule {
         Progression.applyAttributes(sp);
         // older saves get the level-road steps they missed (ids, not positions: nothing is granted twice)
         LevelRoad.catchUp(sp, true);
+        Directives.retire(sp);
+        Progression.truthsCatchUp(sp); // an old save's offers and declarations drop; Truths it had lived come true (SPEC §27.13)
         Progression.syncNow(sp);
         startDay(sp, PlayDays.current(sp.level().getServer()));
     }
@@ -223,9 +214,6 @@ public final class ProgressionModule {
                     prof.fractureUntil = 0;
                     Progression.applyAttributes(p);
                     Signal.toast(p, Component.literal("Fracture healed"));
-                }
-                if (Progression.minutesSinceNewThing(p) > 20 && p.getRandom().nextInt(4) == 0) {
-                    Directives.tryOffer(p, "gap since last new thing");
                 }
             }
         }

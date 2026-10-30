@@ -185,6 +185,45 @@ public final class Goals {
         SOURCES.add(source);
     }
 
+    /** The one pin (SPEC §27.13): what leads the task card. Installed by the tasks module. */
+    public interface Pin {
+        String pinned(ServerPlayer p);
+
+        /** Pins the step if it's on the page now; false when it isn't, or when {@code onlyIfFree} and another is pinned. */
+        boolean pin(ServerPlayer p, String key, boolean onlyIfFree);
+    }
+
+    private static Pin pins = new Pin() {
+        @Override
+        public String pinned(ServerPlayer p) {
+            return "";
+        }
+
+        @Override
+        public boolean pin(ServerPlayer p, String key, boolean onlyIfFree) {
+            return false;
+        }
+    };
+
+    public static void installPin(Pin p) {
+        pins = p;
+    }
+
+    /** The pinned step's key, or "". */
+    public static String pinned(ServerPlayer p) {
+        return pins.pinned(p);
+    }
+
+    /** A Pin (or an old Track) pressed somewhere else: this step leads the card. False when it isn't a step now. */
+    public static boolean pin(ServerPlayer p, String key) {
+        return pins.pin(p, key, false);
+    }
+
+    /** Pins this step unless something else is pinned (an old save's followed trail). */
+    public static boolean pinIfFree(ServerPlayer p, String key) {
+        return pins.pin(p, key, true);
+    }
+
     /** Every step every source offers this player now, in registration order; a failing source is skipped with a warning. */
     public static List<Step> all(ServerPlayer p) {
         List<Step> out = new ArrayList<>();

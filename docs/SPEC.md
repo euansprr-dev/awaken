@@ -26,7 +26,7 @@ Hard rules:
 |---|---|
 | `core` | mod entry, config, shared registries helpers, `AwakenNet`, commands root `/awaken`, `Forces` tags, the motion tags rule (`MotionTags`), `PlayDays`, `Rng`, debug |
 | `signal` | Signal windows (server API + client HUD), toast queue, Day's End card |
-| `progression` | Level/XP/ranks/stats (`Profile` attachment), counters, Reassessment, Truths, Titles, Latents, Paths, Directives, Daily Regimen, Director (pacing + "new thing" rhythm), Status screen (4 tabs) |
+| `progression` | Level/XP/ranks/stats (`Profile` attachment), counters, Reassessment, Truths (true by themselves, §27.13), Titles, Latents, Paths, the Registry's one Directive, Director (pacing + "new thing" rhythm), Status screen (4 tabs) |
 | `powers` | power framework, all powers, Power Cores, energy, cooldowns, keybind casting, Five Forces interactions, a power's shake (its hit-stop is every blow's, `core.api.CombatFeedback`) |
 | `mobs` | `AwakenMob` base, gate bestiary, Gate Lords / bosses, Hollow Court, mob scaling by level, renderers |
 | `gates` | gate registry/SavedData, overworld gate block + pillar render, gate card, gate dimension + chunk generator, layouts, themes, modifiers, twists, runs, Satchel, Shrines/Seals/Caches, gate pressure, breaks + blight, claims, cleanup |
@@ -154,6 +154,7 @@ Pass → rank++, Signal Reassessment window, town celebration, new tier of gates
 ### 4.5 Truths
 Data: `data/awaken/awaken/truth/*.json` `{id, text, hint?, condition, reward}`. Offered 3 at awakening and 3 at each rank
 (plus emergent ones when a hidden condition is met). Declare up to 3 → "NOT TRUE YET" → condition met → TRUE (permanent).
+**Since §27.13 (2026-10-30)** none are offered or declared: from level 5 each comes true by itself when lived.
 Conditions (`progression/Condition`): `counter_at_least`, `streak_at_least` (counter that resets on a reset-counter),
 `event` (one-shot flag), `all/any`.
 
@@ -169,11 +170,13 @@ power + passive + aura colour.
 ### 4.8 Directives
 Rule tables in data `directive/*.json` with `when` (context filters), `text`, `condition`, `reward`, `expires_days`.
 One new offer per morning or notable event, max 3 active, no repeats within 5 play-days, ≥1 in 4 must be "fresh".
-Accept with Y, ignore and it fades.
+Accept with Y, ignore and it fades. **Gone since §27.13 (2026-10-30)**: only the Registry's own, the first floor of a gate,
+stays (§27.6); the Tasks page says what's next.
 
 ### 4.9 Daily Regimen
 Each in-game morning: 3 drills tuned to Path (sprint distance, Flow seconds, kills, Training Grounds lap, meditate 30 s,
 mine N). Reward per §2. Skip = nothing, unless Hardline (Penalty Zone: survive 4 min in a desert night arena).
+**Gone since §27.13 (2026-10-30)**, the Penalty Zone with it.
 
 ### 4.10 Director
 Runs every 1000 ticks per online player: gates upkeep, directive offers, new-thing rhythm, break warnings.
@@ -8209,12 +8212,49 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   Track had it), and the tower's next step when it's yours to do (set the frame down at home, clear room for the belfry
   or the stone tower, raise the Great Belfry, ring the Hundred Peal). A tower that only wants more bells adds nothing:
   the leads are that. Reads the Book, never changes it.
+- **The beasts' wants** (phase 3): a want you've read by watching a beast three times is a plain Hearth step ("Give the
+  Burrowbun what it wants", its third watch line, "Help one three times and it trusts you; then it follows you home"),
+  until one of its kind lives with you; the first fire's Lampwing, before you've watched it, is "Watch what's been
+  watching your fire". Both under `kin.KinGoals`.
+- **Truths come true by themselves** (phase 3, `Progression.truthDue`, `truthsCatchUp`): from level 5 (the road's
+  `awaken:truths`), a Truth whose rank has come, whose emergence (if any) has happened and whose deed is done is true,
+  its reward unchanged; no offers, no declaring, all 32 can be earned. Lived before level 5 or before its rank, it comes
+  true at the flag, the rank-up or the next login, told in one line. Status shows TRUTHS · n OF 32 (yours, green) and
+  CLOSEST TO TRUE (the three you're nearest, with what each takes and gives, a bar). The Truths offered toast, the
+  Declare and Withdraw buttons and the `declare` / `undeclare` actions are gone; an old save's offered and declared lists
+  drop at its next catch-up (the saved fields stay so old saves read). Two Truths counted removed systems and get new
+  deeds: "I keep my word." is ten helps to beasts you meet (`awaken:kin_helped` 10, +3% XP in place of the Directive
+  slot), "I choose my path." thirty floors past your comfort (`awaken:floors_pushed_past_comfort` 30). The Titles
+  Keeper of Promises (seven helps to beasts) and The Regimen, now The Drilled (ten Gauntlet runs), and the hidden
+  Wanderer path (25 landmarks reached) move the same way.
+- **Directives and the Daily Regimen are gone** (phase 3): no morning offers, no gap offers, no drills; `Regimen.java` is
+  deleted and Hardline's Penalty Zone retires with it (a pending one is cleared at login). Only the Registry's own stays,
+  "clear the first floor of a gate" (§27.6), taken on at the opening, never fading, paid as before, shown on Now and
+  folded into the Hearth's "Clear your first gate" step (`covers("progression:directive/")`). An old save's other
+  Directives and its Regimen drop quietly at login (`Directives.retire`). The Journal's DIRECTIVES and DAILY REGIMEN
+  sections and the Directive glossary entry go. The pacing sim drops their sixth of a level a day (phase 4).
+- **Anchor requests are gone** (phase 3, as JOURNEY part 9 said): none is offered; one waiting is withdrawn; anything
+  handed in for an open request comes back to your pack (a tag's first item); Forge credit already earned still pays;
+  the Journal's request section goes. Core Shards still drop from C-rank gate floors. Tests:
+  `hearth_requests_retired`, the saved state and the shard fusing; the offer tests go with the offers.
+- **The Signal Relay** (phase 3): near your Hearth, once a play-day, Listen (its Essence cost unchanged) puts the
+  nearest sleeping bell within 1,500 blocks you don't hold and haven't heard in your Bell Book as a heard note, one
+  bearing from the relay (`BellHooks.relay`, `Bells.relayed`); heard again from elsewhere, the bearings cross as a hum's
+  do. The +1 Directive slot and `awaken:relay_linked_day` go.
+- **Trails fold into Tasks** (phase 3, `trails.TrailGoals`): each open trail you haven't finished or hidden gives its next
+  step (key `trail/<id>`, optional, its trail and "n of m done" as why, its place) under its area's goal: home → Hearth,
+  weapons → Weapons, gates, powers and the body → Gates and rank, the rest Out there. Pin replaces Follow: the trail card
+  and its Now line go, and an old save's followed trail becomes the pin if nothing is pinned. The Journal's TRAILS
+  section and its All trails browser go; trails still open, tick, hide and finish (with their share of a level) as before.
+- **One pin** (`Goals.Pin`, installed by tasks: `pinned`, `pin`, `pinIfFree`): the Bell Book's Track is Pin now (its
+  lead's step `bell/<no>` leads the card; a lead found by a letter pins itself only when nothing else is pinned).
 - **Tests:** `tasks_book_rules` (order, the top rule, covers, merge, NowMap, the saved state), `tasks_choose_and_pin`
   (the first armour's sets, one row per need, a refused pin, chosen and pinned: the card lists that set's needs),
   `tasks_next_step_follows_path` (Euan's moment in a real home: the Armoury on top, then the armour, then the gate, the
   Sanctuary optional; the Hearth page's tiles and looks, the beasts' first need as a step; built, the armour is on top and
   the Forge waits), `hearth_armoury_room` (the room, and the gift: a helmet made at its stand lasts 1.25×, one made
-  outside doesn't).
+  outside doesn't), `progression_truths_by_themselves`, `progression_first_job`, `trail_steps_on_tasks`, and the kin
+  sweep (`kin_done_never_shows`) checks a met kind is named and a read want is the step.
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 

@@ -13,7 +13,6 @@ import dev.awaken.hearth.trial.Trials;
 import dev.awaken.hearth.trophy.Trophies;
 import dev.awaken.progression.DaysEnd;
 import dev.awaken.progression.RankHooks;
-import dev.awaken.progression.Regimen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -166,7 +165,6 @@ public final class HearthModule {
                         .flatMap(h -> h.roomAt(pos, dev.awaken.hearth.room.RoomType.FITTING)).isPresent();
             }
         });
-        Regimen.penaltyHandler = Trials::penalty;
         RankHooks.onRankUp((sp, rank) -> {
             if (!HearthService.enabled()) return;
             Town.onRankUp(sp, rank);

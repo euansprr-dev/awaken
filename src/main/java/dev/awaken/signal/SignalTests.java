@@ -206,10 +206,11 @@ final class SignalTests {
 
         AwakenTests.register("signal_glossary_terms", 20, h -> {
             for (String w : List.of("Satchel", "Extract", "Extraction", "Seal", "play-days", "Veil", "Fractured", "Reassessment",
-                    "Flow", "Kinetic", "Truths", "Directive", "Latents")) {
+                    "Flow", "Kinetic", "Truths", "Latents")) {
                 h.assertTrue(Glossary.lookup(w).isPresent(), "glossary explains " + w);
             }
             h.assertTrue(Glossary.lookup("Echoes").isEmpty(), "Echoes are gone (SPEC §43.4), so the glossary doesn't explain them");
+            h.assertTrue(Glossary.lookup("Directive").isEmpty(), "Directives are gone (SPEC §27.13)");
             h.assertTrue(Glossary.lookup("Flowers").isEmpty() && Glossary.lookup("Sealant").isEmpty(), "no false friends");
             h.succeed();
         });

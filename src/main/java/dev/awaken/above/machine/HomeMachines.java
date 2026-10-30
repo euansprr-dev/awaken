@@ -11,7 +11,6 @@ import dev.awaken.core.DirectorLog;
 import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.DreamHooks;
 import dev.awaken.core.api.HearthHooks;
-import dev.awaken.progression.Directives;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
@@ -94,31 +93,27 @@ final class HomeMachines {
             return b.text("Out of range", "The relay needs your Hearth within " + RELAY_RANGE + " blocks.", Machines.WARN).footer(t.blurb).build();
         }
         long today = PlayDays.current(player.level().getServer());
-        // A powered relay near your Hearth links for seven play-days: +1 Directive slot (see Above.RELAY_LINK).
-        if (Progression.profile(player).counter(Above.RELAY_LINK) != today + 1) Progression.setCounter(player, Above.RELAY_LINK, today + 1);
         AboveData d = Above.data(player);
-        Profile p = Progression.profile(player);
         boolean used = d.relayDay() == today;
-        boolean full = p.directives().size() >= Directives.slots(player);
-        String detail = used ? "Boosted today. It recharges with the next play-day."
-                : full ? "Your Directives are full. Finish or let one fade first."
-                : "Ask the Signal for a fresh Directive now.";
-        b.button("Boost the Signal", detail, used || full ? Machines.LABEL : Machines.GOOD, "boost", 0, "Boost (" + RELAY_COST + ")",
-                !used && !full && stored >= RELAY_COST && p.awakened());
-        return b.footer("Linked: your Signal holds one more Directive while the relay stays powered.").build();
+        String detail = used ? "It listened today. It can listen again with the next play-day."
+                : "Listen for the nearest sleeping bell you haven't found. It goes in your Bell Book.";
+        b.button("Listen for bells", detail, used ? Machines.LABEL : Machines.GOOD, "boost", 0, "Listen (" + RELAY_COST + ")",
+                !used && stored >= RELAY_COST && Progression.profile(player).awakened());
+        return b.footer("Near your Hearth, the relay picks up a sleeping bell's note once a play-day.").build();
     }
 
+    /** (SPEC §27.13) The relay's job since the Directives went: once a play-day, the nearest sleeping bell you don't hold. */
     static void relayAction(ServerPlayer player, MachineBlockEntity be, String action, int index) {
         if (!action.equals("boost") || !nearHearth(player, be)) return;
         long today = PlayDays.current(player.level().getServer());
         AboveData d = Above.data(player);
-        if (d.relayDay() == today || Progression.profile(player).directives().size() >= Directives.slots(player)) return;
+        if (d.relayDay() == today) return;
         if (!be.draw(RELAY_COST)) return;
         d.setRelayDay(today);
         Above.sync(player);
-        int before = Progression.profile(player).directives().size();
-        Directives.tryOffer(player, "signal_relay");
-        if (Progression.profile(player).directives().size() == before) Signal.toast(player, Component.literal("The Signal had nothing new to say."));
+        if (!dev.awaken.core.api.BellHooks.relay(player, be.getBlockPos())) {
+            Signal.toast(player, Component.literal("The relay listened, but no sleeping bell is near enough to hear."));
+        }
     }
 
     // ---- Recalibrator ---------------------------------------------------------------------------------------------

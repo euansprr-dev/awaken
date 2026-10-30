@@ -50,13 +50,10 @@ final class CoreSections {
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
         // (SPEC §27.13) the Truths page's sections stand on Status until they become Status's own
         StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new RoadSection(), 735, null));
-        StatusSections.add(StatusSections.Tab.JOURNAL, new DirectivesSection());
-        StatusSections.add(StatusSections.Tab.JOURNAL, new RegimenSection());
         StatusSections.add(StatusSections.Tab.JOURNAL, new Records());
         StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new PathChoice(), 700, null));
-        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.DECLARED), 710, null));
-        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.OFFERED), 720, null));
-        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.TRUE), 730, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.TRUE), 710, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.NEAR), 720, null));
         StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new Titles(), 740, null));
         StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new Latents(), 750, null));
         // (SPEC §27.13) the Codex is the Journal's now: what you've found
@@ -69,64 +66,6 @@ final class CoreSections {
     }
 
     // ---- Status tab -------------------------------------------------------------------------------------------------
-
-    static final class DirectivesSection extends UiSection {
-        public String title() { return "DIRECTIVES"; }
-        public int order() { return -15; } // the Journal page: right after what you track
-
-        @Override
-        protected void build(Ui ui) {
-            Profile p = profile();
-            if (p.directives().isEmpty()) {
-                ui.text("Nothing offered right now. New Directives come with the morning or after something notable.", Glass.LABEL);
-                return;
-            }
-            long today = clientPlayDay();
-            List<Profile.DirectiveState> list = List.copyOf(p.directives());
-            for (int i = 0; i < list.size(); i++) {
-                Profile.DirectiveState d = list.get(i);
-                var def = Content.DIRECTIVES.get(d.id());
-                ui.text(def == null ? d.id() : def.text(), Glass.TITLE);
-                long left = Math.max(0, d.expiresDay() - today + 1);
-                String meta = (def == null ? "" : "Reward: " + Rewards.describe(def.reward()) + " · ") + "fades in " + plural(left, "play-day");
-                ui.text(meta, Glass.LABEL, 4, false);
-                if (d.accepted()) {
-                    ui.gap(1);
-                    ui.bar(Directives.progress(p, d), Glass.GOOD);
-                } else {
-                    ui.gap(1);
-                    Ui.Flow row = ui.flow();
-                    String action = Directives.ACTION + ":" + d.id();
-                    if (row.button("Accept", Glass.GOOD, true)) ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(action, true));
-                    if (row.button("Dismiss", Glass.LABEL, true)) ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(action, false));
-                    row.end();
-                }
-                if (i < list.size() - 1) ui.rule();
-            }
-        }
-    }
-
-    static long clientPlayDay() {
-        // The client doesn't know play-days exactly; directives store absolute days, so approximate with the profile's
-        // day log which the server keeps current.
-        return Math.max(0, profile().day().day());
-    }
-
-    static final class RegimenSection extends UiSection {
-        public String title() { return "DAILY REGIMEN"; }
-        public int order() { return -12; }
-        public boolean visible() { return !profile().regimen().drills().isEmpty(); }
-
-        @Override
-        protected void build(Ui ui) {
-            var r = profile().regimen();
-            for (String id : r.drills()) {
-                var def = Content.DRILLS.get(id);
-                boolean done = r.done().contains(id);
-                ui.text((done ? "✓ " : "· ") + (def == null ? id : def.text()), done ? Glass.GOOD : Glass.TEXT);
-            }
-        }
-    }
 
     /** Lifetime records from the counters, two columns when there's room, only what you've actually done. */
     static final class Records extends UiSection {
@@ -231,8 +170,15 @@ final class CoreSections {
         }
     }
 
+    /**
+     * The Truths on Status (SPEC §27.13): they come true by themselves, so there's nothing to declare. TRUE lists yours and
+     * what each gave; CLOSEST TO TRUE shows the three you're nearest, with what each takes and gives.
+     */
     static final class TruthList extends UiSection {
-        enum Kind { DECLARED, OFFERED, TRUE }
+        enum Kind { TRUE, NEAR }
+
+        /** Truths shown under CLOSEST TO TRUE. */
+        static final int NEAR_SHOWN = 3;
 
         private final Kind kind;
 
@@ -242,66 +188,49 @@ final class CoreSections {
 
         List<String> ids() {
             Profile p = profile();
-            return switch (kind) {
-                case DECLARED -> List.copyOf(p.truthsDeclared());
-                case OFFERED -> List.copyOf(p.truthsOffered());
-                case TRUE -> new ArrayList<>(p.truthsTrue());
-            };
+            if (kind == Kind.TRUE) return new ArrayList<>(p.truthsTrue());
+            if (!dev.awaken.progression.Progression.truthsOpen(p)) return List.of();
+            List<String> out = new ArrayList<>();
+            for (var e : Content.TRUTHS.map.entrySet()) {
+                String key = e.getKey().toString();
+                var d = e.getValue();
+                if (p.truthsTrue().contains(key) || p.rank().ordinal() < d.minRank().ordinal()) continue;
+                if (d.emergent().isPresent() && !d.emergent().get().test(p, null)) continue; // a hidden one stays hidden
+                out.add(key);
+            }
+            out.sort(java.util.Comparator.comparingDouble((String k) -> -Content.TRUTHS.get(k).condition().progress(p, null)).thenComparing(k -> k));
+            return out.size() > NEAR_SHOWN ? List.copyOf(out.subList(0, NEAR_SHOWN)) : out;
         }
 
         public String title() {
-            return switch (kind) {
-                case DECLARED -> "DECLARED TRUTHS · " + profile().truthsDeclared().size() + " / 3";
-                case OFFERED -> "TRUTHS WAITING TO BE DECLARED";
-                case TRUE -> "TRUE";
-            };
+            return kind == Kind.TRUE ? "TRUTHS · " + profile().truthsTrue().size() + " OF " + Content.TRUTHS.map.size() : "CLOSEST TO TRUE";
         }
 
         public int order() { return 10 + kind.ordinal() * 10; }
 
-        public boolean visible() { return kind != Kind.OFFERED || !ids().isEmpty(); }
+        public boolean visible() { return kind == Kind.TRUE || !ids().isEmpty(); }
 
         @Override
         protected void build(Ui ui) {
             Profile p = profile();
             List<String> ids = ids();
             if (ids.isEmpty()) {
-                ui.text(kind == Kind.DECLARED ? "Declare who you're becoming from the Truths waiting below. Each one shows what it gives."
-                        : "None yet. Live one of your declared Truths.", Glass.LABEL);
+                ui.text(dev.awaken.progression.Progression.truthsOpen(p)
+                        ? "None yet. A Truth comes true by itself when you live it; the closest are below."
+                        : "Truths open at level 5. Anything you've done by then counts.", Glass.LABEL);
                 return;
             }
-            // each Truth on its own card (SPEC §30.6): the words in white, how to make it true, what it gives, and its key;
-            // the card's bar says where it stands (amber waits on you, green is true)
+            // each Truth on its own card (SPEC §30.6): the words in white, what it takes, what it gives; green is true
             for (int i = 0; i < ids.size(); i++) {
                 String id = ids.get(i);
                 var d = Content.TRUTHS.get(id);
-                int accent = kind == Kind.TRUE ? Glass.GOOD : Glass.AMBER;
-                ui.card(accent, c -> {
-                    c.text(d == null ? id : "“" + d.text() + "”", kind == Kind.TRUE ? Glass.GOOD : Glass.TITLE, 0, true);
-                    if (d != null && kind != Kind.TRUE) d.hint().ifPresent(h -> c.text(h, Glass.LABEL));
-                    if (d != null)
-                        c.text((kind == Kind.TRUE ? "Granted: " : "Gives: ") + Rewards.describe(d.reward()), kind == Kind.TRUE ? Glass.LABEL : Glass.AMBER);
-                    switch (kind) {
-                        case DECLARED -> {
-                            if (d != null) c.bar(d.condition().progress(p, null), Glass.AMBER);
-                            Ui.Flow row = c.flow();
-                            row.chip("NOT TRUE YET", Glass.AMBER);
-                            if (row.button("Withdraw", Glass.LABEL, true)) send("undeclare", id);
-                            row.end();
-                        }
-                        case OFFERED -> {
-                            boolean can = p.truthsDeclared().size() < 3;
-                            Ui.Flow row = c.flow();
-                            if (row.button("Declare", Glass.AMBER, can)) send("declare", id);
-                            if (!can) row.text("3 of 3 declared: withdraw one first", Glass.LABEL);
-                            row.end();
-                        }
-                        case TRUE -> {
-                            Ui.Flow row = c.flow();
-                            row.chip("TRUE", Glass.GOOD);
-                            row.end();
-                        }
-                    }
+                boolean got = kind == Kind.TRUE;
+                ui.card(got ? Glass.GOOD : Glass.AMBER, c -> {
+                    c.text(d == null ? id : "“" + d.text() + "”", got ? Glass.GOOD : Glass.TITLE, 0, true);
+                    if (d == null) return;
+                    if (!got) d.hint().ifPresent(h -> c.text(h, Glass.LABEL));
+                    c.text((got ? "Granted: " : "Gives: ") + Rewards.describe(d.reward()), got ? Glass.LABEL : Glass.AMBER);
+                    if (!got) c.bar(d.condition().progress(p, null), Glass.AMBER);
                 });
                 if (i < ids.size() - 1) ui.gap(4);
             }

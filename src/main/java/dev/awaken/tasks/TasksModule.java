@@ -47,6 +47,21 @@ public final class TasksModule {
         bus.addListener(TasksModule::onPlayerTick);
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> forget(e.getEntity().getUUID()));
         bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> forget(e.getEntity().getUUID()));
+        Goals.installPin(new Goals.Pin() {
+            @Override
+            public String pinned(ServerPlayer p) {
+                return TaskState.of(p).pinned();
+            }
+
+            @Override
+            public boolean pin(ServerPlayer p, String key, boolean onlyIfFree) {
+                if (onlyIfFree && !TaskState.of(p).pinned().isEmpty()) return false;
+                TaskBook.forget(p.getUUID());
+                if (TaskBook.of(p).get(key) == null) return false;
+                act(p, new TaskPayloads.Act(TaskPayloads.PIN, key));
+                return true;
+            }
+        });
         // what you pinned leads the card; the step on top shows there when nothing else is on
         Checklist.registerLeading(p -> card(p, true));
         Checklist.registerLast(p -> card(p, false));

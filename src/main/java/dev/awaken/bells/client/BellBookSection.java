@@ -182,8 +182,8 @@ final class BellBookSection extends UiSection {
                 for (String l : lines.split("\n")) if (!l.isEmpty()) body.text(l, 0xFF000000 | Glass.TEXT);
                 if (trackable) {
                     Ui.Flow f = body.flow();
-                    if (tracked) f.chip("Tracking", 0xFF000000 | Glass.AMBER);
-                    else if (f.button("Track", Glass.EDGE, true)) ClientPacketDistributor.sendToServer(new BellNet.Track(Integer.parseInt(no.substring(1))));
+                    if (tracked) f.chip("Pinned", 0xFF000000 | Glass.AMBER);
+                    else if (f.button("Pin", Glass.EDGE, true)) ClientPacketDistributor.sendToServer(new BellNet.Track(Integer.parseInt(no.substring(1))));
                     f.end();
                 }
             });
