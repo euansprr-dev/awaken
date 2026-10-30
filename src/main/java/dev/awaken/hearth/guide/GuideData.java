@@ -38,11 +38,14 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
             COTTAGE_DECLINED = 5;
 
     /**
-     * One room type: which of its furniture the radius already holds ({@code have}, a bit per Furniture ordinal), whether
-     * some of it already stands in a closed room, the rooms of this type (their centres), why it isn't recognised yet
-     * ("" when nothing to say), where to put a marker, and whether Oren's cottage is one of these rooms.
+     * One room type: which of its furniture already stands together in one closed room ({@code have}, a bit per Furniture
+     * ordinal; furniture elsewhere doesn't count), whether some of it stands in a closed room, the rooms of this type
+     * (their centres), why it isn't recognised yet ("" when nothing to say), where to put a marker, whether Oren's
+     * cottage is one of these rooms, the name of the room the ticked pieces stand in ("" for none), and that room's
+     * own kind when it's already another one ("Bedroom"; a room can be several kinds at once).
      */
-    public record RoomCard(int type, int have, boolean closed, List<BlockPos> built, String why, Optional<BlockPos> mark, boolean byOren) {}
+    public record RoomCard(int type, int have, boolean closed, List<BlockPos> built, String why, Optional<BlockPos> mark, boolean byOren,
+                           String room, String roomKind) {}
 
     /** A crafting grid row by row ({@code slots}: the items an ingredient accepts, empty = an empty slot). */
     public record RecipeView(int furniture, int width, int height, List<List<Identifier>> slots, Identifier result, int count) {}
@@ -83,6 +86,7 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
             b.writeUtf(c.why, 512);
             b.writeOptional(c.mark, (buf, p) -> buf.writeBlockPos(p));
             b.writeBoolean(c.byOren);
+            b.writeUtf(c.room, 128).writeUtf(c.roomKind, 64);
         }
         b.writeVarInt(d.recipes.size());
         for (RecipeView r : d.recipes) {
@@ -131,7 +135,8 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
             for (int j = 0; j < bn; j++) built.add(b.readBlockPos());
             String why = b.readUtf(512);
             Optional<BlockPos> mark = b.readOptional(buf -> buf.readBlockPos());
-            rooms.add(new RoomCard(type, have, closed, built, why, mark, b.readBoolean()));
+            boolean byOren = b.readBoolean();
+            rooms.add(new RoomCard(type, have, closed, built, why, mark, byOren, b.readUtf(128), b.readUtf(64)));
         }
         int rn = Math.min(32, b.readVarInt());
         List<RecipeView> recipes = new ArrayList<>(rn);
@@ -197,7 +202,7 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
 
     public RoomCard card(int type) {
         for (RoomCard c : rooms) if (c.type == type) return c;
-        return new RoomCard(type, 0, false, List.of(), "", Optional.empty(), false);
+        return new RoomCard(type, 0, false, List.of(), "", Optional.empty(), false, "", "");
     }
 
     public Optional<RecipeView> recipe(int furniture) {

@@ -8120,6 +8120,17 @@ suggestion, a rumour, a lead, a decision waiting or a destination.
   it finishes Set Your Fire and nothing anywhere still asks for the Ember), `kin_done_never_shows` (a Track is done on
   meeting one anywhere; the lesson Lampwing has no Track; once it lives with you its Track goes by itself and nothing asks
   for a Lampwing).
+- **The Hearth guide's green is true** (Euan, the same day: "the door isn't green ... kitchen already has a crafting
+  table and furnace green, but that's not even in the kitchen"). A room card ticks only the pieces standing together in
+  one closed room, the one holding the most of that kind (`Guide.card`; before, any piece anywhere in the radius lit
+  up), and names it (`RoomCard.room`). The door-icon item reads "in a closed room" and is green once the pieces stand in
+  one, not only once the kind is built. One room can be several kinds (`Room.types` is a set; a bed, a furnace, a
+  crafting table and a barrel make a Bedroom and a Kitchen), so a card whose pieces stand in a room that's already
+  another kind says "It stays your Bedroom too" (`RoomCard.roomKind`). The Meditation Mat's recipe line, its guide
+  card and its tooltip say where amethyst comes from first: a geode underground (every land has them; the recipe is
+  unchanged). Tests: `hearth_guide_one_room` (real blocks: the bedroom's table and stove tick for the Kitchen, a loose
+  barrel outside doesn't; a barrel inside makes the room a Kitchen and still a Bedroom), `hearth_guide_matches_roomtype`
+  (loose furniture ticks nothing).
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 

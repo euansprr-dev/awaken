@@ -38,12 +38,27 @@ public final class GuideTests {
             for (RoomType t : RoomType.values()) {
                 int mask = 0;
                 for (Furniture f : t.furniture) mask |= f.bit();
-                // nothing in the radius: nothing ticked; everything the room lists: exactly those ticked
+                // nothing in the radius: nothing ticked; loose furniture in the radius: still nothing (it counts only in a
+                // room); everything the room lists, together in one closed room: exactly those ticked, and the room named
                 rec.furniture = new int[Furniture.COUNT];
+                rec.rooms = List.of();
                 h.assertTrue(Guide.card(t, rec).have() == 0, t + ": empty radius ticks nothing");
                 for (Furniture f : Furniture.values()) rec.furniture[f.ordinal()] = 1;
+                h.assertTrue(Guide.card(t, rec).have() == 0, t + ": loose furniture ticks nothing");
+                int[] held = new int[Furniture.COUNT];
+                for (Furniture f : t.furniture) held[f.ordinal()] = f.needed();
+                java.util.Set<String> lords = new java.util.HashSet<>();
+                for (int k = 0; k < Furniture.TROPHY.needed(); k++) lords.add("lord" + k);
+                rec.rooms = List.of(new Room(java.util.EnumSet.noneOf(RoomType.class), BlockPos.ZERO, new BlockPos(4, 3, 4),
+                        new it.unimi.dsi.fastutil.longs.LongOpenHashSet(), held, new int[dev.awaken.hearth.room.Tally.F_COUNT], lords,
+                        new dev.awaken.hearth.room.Reading(3, 3, 3, 3, 3, 3, dev.awaken.hearth.room.Reading.Grade.GRAND, "the grand test room", "",
+                                RoomType.BEDROOM)));
                 GuideData.RoomCard card = Guide.card(t, rec);
                 h.assertTrue(card.have() == mask, t + ": the checklist is RoomType's furniture, was " + card.have() + " vs " + mask);
+                h.assertTrue(card.room().equals(t.furniture.isEmpty() ? "" : "the grand test room")
+                        && card.roomKind().equals(t.furniture.isEmpty() || t == RoomType.BEDROOM ? "" : "Bedroom"),
+                        t + ": names the room the pieces stand in (" + card.room() + ", " + card.roomKind() + ")");
+                rec.rooms = List.of();
                 h.assertTrue(card.type() == t.ordinal() && card.built().isEmpty(), t + ": not built without a room");
                 // classify reads the same list: all of it (and the kind's condition) makes the room, any one short doesn't
                 int[] counts = new int[Furniture.COUNT];
@@ -80,7 +95,8 @@ public final class GuideTests {
             h.assertTrue(Fit.px("Within 48 blocks: yours.") <= Fit.TOAST && Fit.px("Free: your first Sanctuary.") <= Fit.TOAST, "welcome and offer lines fit");
             // the guide's data survives the wire
             GuideData d = new GuideData(2, 56, 26, 13, true, new BlockPos(1, 2, 3),
-                    List.of(new GuideData.RoomCard(0, 3, true, List.of(new BlockPos(4, 5, 6)), "why", Optional.of(new BlockPos(7, 8, 9)), true)),
+                    List.of(new GuideData.RoomCard(0, 3, true, List.of(new BlockPos(4, 5, 6)), "why", Optional.of(new BlockPos(7, 8, 9)), true,
+                            "the snug timber bedroom", "Bedroom")),
                     List.of(new GuideData.RecipeView(1, 3, 1, List.of(List.of(net.minecraft.resources.Identifier.withDefaultNamespace("white_wool")), List.of(),
                             List.of(net.minecraft.resources.Identifier.withDefaultNamespace("amethyst_shard"))), dev.awaken.Awaken.id("meditation_mat"), 1)),
                     List.of(new GuideData.Person("Oren", "Blacksmith", "")), List.of(new GuideData.Person("Mira", "Scout", "D-rank")),
