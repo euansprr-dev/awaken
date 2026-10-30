@@ -125,17 +125,18 @@ public final class GateWorldTests {
             h.succeed();
         });
 
-        // "Today's rooms run inside the new frame unchanged": the same rooms, painted block for block, only moved
+        // "Today's rooms run inside the new frame unchanged": the same rooms, painted block for block, only moved (against
+        // version 7: version 8 moves the Lords' arena props and gives big keepers the full arena on purpose, SPEC §38.15)
         AwakenTests.register("gateworlds_same_rooms", 900, h -> {
             for (int i = 0; i < PLANS; i++) {
-                GatePlan p = plan(i, GatePlan.CONTENT_VERSION);
+                GatePlan p = plan(i, 7);
                 List<FloorLayout> a = floors(FloorBuilder.build(p.rebuilt(5))), b = floors(FloorBuilder.build(p));
                 h.assertTrue(a.size() == b.size(), "the same floors");
                 for (int fi = 0; fi < a.size(); fi++) h.assertTrue(signature(a.get(fi)).equals(signature(b.get(fi))),
                         "floor " + a.get(fi).area + ":" + a.get(fi).floor + " has the same rooms on version 6: " + p);
             }
             for (int i = 3; i < 3 + 40; i += 3) {
-                GatePlan p = plan(i, GatePlan.CONTENT_VERSION);
+                GatePlan p = plan(i, 7);
                 GateLayout la = FloorBuilder.build(p.rebuilt(5)), lb = FloorBuilder.build(p);
                 FloorLayout fa = la.main.get(0), fb = lb.main.get(0);
                 Map<Long, BlockState> ba = InteriorTests.paintFloor(la, fa, 21), bb = InteriorTests.paintFloor(lb, fb, 21);

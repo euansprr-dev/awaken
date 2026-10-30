@@ -40,6 +40,7 @@ public final class InteriorTests {
 
     static void register() {
         registerArenaTest();
+        registerLordSpaceTest();
         registerLightTest();
         RitualHallTests.register();
         // The P3 targets hold: the gates the game builds today are the gates tools/sim/pacing_sim.py was run on
@@ -253,6 +254,79 @@ public final class InteriorTests {
             h.succeed();
         });
     }
+
+    /**
+     * Room for the Lords (SPEC §38.15): in every Lord's arena, the main one and the inner gate's keeper's, nothing solid
+     * stands inside its sweep from the floor up to the top of its body (three more over a flyer); the four big keepers
+     * get the full 3x3 arena. Version 7's arenas are measured beside them for the report.
+     */
+    static void registerLordSpaceTest() {
+        AwakenTests.register("gates_interior_lord_space", 600, h -> {
+            StringBuilder report = new StringBuilder();
+            List<String> fails = new ArrayList<>();
+            Theme[] all = Theme.values();
+            for (Theme t : all) {
+                for (int version : new int[]{7, GatePlan.CONTENT_VERSION}) {
+                    for (boolean keeper : new boolean[]{false, true}) {
+                        Theme host = all[(t.ordinal() + 1) % all.length];
+                        GatePlan plan = keeper
+                                ? new GatePlan(0x5ACEL + t.ordinal(), version, Rank.C, host, Layout.LABYRINTH, List.of(), Twist.GATE_WITHIN, 2, host.bossId(), t, 0)
+                                : new GatePlan(0x5ACEL + t.ordinal(), version, Rank.C, t, Layout.LABYRINTH, List.of(), Twist.NONE, 2, t.bossId(), host, 0);
+                        GateLayout l = GateTestAccess.build(plan);
+                        FloorLayout f = keeper ? l.annex.get(1) : l.main.get(l.main.size() - 1);
+                        Room r = f.room(f.end);
+                        String where = t.id + (keeper ? " keeper" : "") + " v" + version;
+                        if (r.type != Room.Type.BOSS || r.piece != SetPiece.arenaFor(t)) {
+                            fails.add(where + ": the boss room isn't its Lord's arena");
+                            continue;
+                        }
+                        double sweep = PiecesArenas.sweep(r.piece), tall = TALLEST.get(t.bossId().substring(t.bossId().indexOf(':') + 1));
+                        boolean flies = FLYERS.contains(t);
+                        int up = (int) Math.ceil(tall) + (flies ? 3 : 1);
+                        Map<Long, BlockState> b = paintRoom(l, f, r, 22);
+                        int walkY = f.baseY + r.dy;
+                        double scx = r.centerX() + 0.5, scz = r.centerZ() + 0.5;
+                        int in = 0, clear = Integer.MAX_VALUE;
+                        double near = 99;
+                        String first = null;
+                        for (int x = (int) Math.floor(scx - sweep - 2); x <= (int) Math.ceil(scx + sweep + 2); x++) {
+                            for (int z = (int) Math.floor(scz - sweep - 2); z <= (int) Math.ceil(scz + sweep + 2); z++) {
+                                double d = Math.hypot(x + 0.5 - scx, z + 0.5 - scz);
+                                int y = walkY;
+                                while (y < walkY + 40 && passable(b.get(key(x, y, z)))) y++;
+                                if (d <= sweep) clear = Math.min(clear, y - walkY);
+                                if (y >= walkY + up) continue;
+                                near = Math.min(near, d);
+                                if (d <= sweep) {
+                                    in++;
+                                    if (first == null) first = b.get(key(x, y, z)) + " at " + String.format(Locale.ROOT, "%.1f", d) + " out, " + (y - walkY) + " up";
+                                }
+                            }
+                        }
+                        report.append(String.format(Locale.ROOT, "%s: arena %dx%d, sweep %.0f, body %d up, nearest solid %.1f, clear overhead %d, %d inside%s%n",
+                                where, r.gw, r.gh, sweep, up, near, clear, in, first == null ? "" : " (" + first + ")"));
+                        if (version < 8) continue;
+                        if (in > 0) fails.add(where + ": " + in + " solid blocks inside the Lord's sweep of " + sweep + ", first " + first);
+                        if (keeper && PiecesArenas.needsFullArena(t) && r.gw < 3) fails.add(where + ": a big keeper got the small arena");
+                        if (r.gw >= 3 && r.height < 17) fails.add(where + ": the full arena is only " + r.height + " high");
+                    }
+                }
+            }
+            Awaken.LOG.info("[gates] lord space\n{}", report);
+            h.assertTrue(fails.isEmpty(), String.join("; ", fails));
+            h.succeed();
+        });
+    }
+
+    /** The tallest each gate Lord's body reaches in any clip (boss-plan's measure of the true-size rigs, 2026-10-30). */
+    private static final Map<String, Double> TALLEST = Map.ofEntries(Map.entry("ember_tyrant", 11.1), Map.entry("unit_zero", 5.2),
+            Map.entry("mother_of_spores", 6.1), Map.entry("gearwright_colossus", 8.8), Map.entry("root_saint", 6.1),
+            Map.entry("bell_warden", 5.6), Map.entry("glass_serpent", 6.8), Map.entry("hive_regent", 6.0), Map.entry("drowned_archivist", 5.5),
+            Map.entry("lantern_broker", 6.3), Map.entry("abbot_of_frost", 6.3), Map.entry("mirror_knight", 4.9), Map.entry("the_sleeper", 5.3),
+            Map.entry("sky_leviathan", 9.1), Map.entry("hollow_herald", 6.7));
+
+    /** The Lords that fly, rising on top of their body's height. */
+    private static final Set<Theme> FLYERS = EnumSet.of(Theme.FUNGAL_HOLLOW, Theme.GLASS_DESERT, Theme.HIVE, Theme.SKY_ARCHIPELAGO, Theme.ABYSSAL_SHRINE);
 
     /**
      * The gate dimension has no ambient light, so the floor is only as readable as its block light. Every theme, on

@@ -96,6 +96,11 @@ public final class Room {
     public boolean dark;
     /** The set piece or Lord's arena dressing this room (null: the theme's plain dressing). Content version 2+. */
     public SetPiece piece;
+    /**
+     * A Lord's arena: how far its body sweeps round its spot, which cover, props and hanging lights stay out of (content
+     * version 8+, SPEC §38.15; 0 before: the arena as version 7 built it).
+     */
+    public double space;
     /** On the shortest way from the floor's start to its end. */
     public boolean onPath;
     /** On the critical path: the door you came in by and the door that leads on (null at the start and the end). */

@@ -68,12 +68,11 @@ final class FloorBuilder {
                 annex.add(a1.finish());
             }
             // the annex's second floor is always a Lord's: the inner gate's keeper (a small arena) or the echo's
-            boolean innerBoss = plan.twist() == Twist.GATE_WITHIN;
             FloorLayout w2 = worldFloor(plan, at, 1, 2, true);
             if (w2 != null) annex.add(w2);
             else {
                 Builder a2 = new Builder(plan, at, 1, 2, Hash.of(plan.seed(), 1, 2));
-                a2.bossFloor(innerBoss);
+                a2.bossFloor(smallKeeper(plan, at));
                 annex.add(a2.finish());
             }
         }
@@ -90,9 +89,17 @@ final class FloorBuilder {
             if (floor == plan.floors()) b.bossFloor(false);
             else b.layout(plan.layout());
         } else if (floor == 1) b.labyrinth(4, 4);
-        else b.bossFloor(plan.twist() == Twist.GATE_WITHIN);
+        else b.bossFloor(smallKeeper(plan, theme));
         b.finishRooms();
         return b;
+    }
+
+    /**
+     * Whether the annex's Lord floor gets the small 2x2 arena: the inner gate's keeper does, except from version 8 a
+     * keeper whose body would swing through that arena's cover (SPEC §38.15), which gets the full 3x3 one.
+     */
+    static boolean smallKeeper(GatePlan plan, Theme keeper) {
+        return plan.twist() == Twist.GATE_WITHIN && !(plan.contentVersion() >= 8 && PiecesArenas.needsFullArena(keeper));
     }
 
     /** Every floor of a plan in plot order: [area, floor] (main floors, then the annex's two). */
@@ -708,6 +715,7 @@ final class FloorBuilder {
                 if (r.type == Room.Type.BOSS) {
                     r.piece = SetPiece.arenaFor(lordTheme());
                     r.shape = r.piece.shape;
+                    if (plan.contentVersion() >= 8) r.space = PiecesArenas.sweep(r.piece);
                     continue;
                 }
                 if (pool.isEmpty() || !takesPiece(r)) continue;

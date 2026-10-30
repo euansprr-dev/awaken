@@ -28,12 +28,14 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
      * world and mood picked per floor ({@link #worlds}); a floor with no world builds today's rooms inside its plot.
      * 7: depth in the worlds' places (SPEC §38.14): ground that rises and falls, walls and roofs that change with height,
      * growth that thickens away from the way; a version 6 floor carves exactly as before.
+     * 8: room for the Lords (SPEC §38.15): every arena's cover and props stand a block clear of its Lord's sweep, and the
+     * inner gate's keeper gets the full arena when its body is too big for the small one; a version 7 arena is unchanged.
      */
-    public static final int CONTENT_VERSION = 7;
+    public static final int CONTENT_VERSION = 8;
 
     /**
-     * The version a new gate is made at: {@link #CONTENT_VERSION}, or the one before the depth (6) while the server's
-     * {@code gateWorldsDepth} switch is off (SPEC §38.14).
+     * The version a new gate is made at: {@link #CONTENT_VERSION}, or the one before the depth (6, its arenas as they
+     * were) while the server's {@code gateWorldsDepth} switch is off (SPEC §38.14).
      */
     public static int current() {
         try {
