@@ -11720,10 +11720,12 @@ death), the **tallest** the highest any part reaches. Version 8 builds every Lor
   Lords that would swing through its cover: the Ember Tyrant, the Sky Leviathan, the Glass Serpent and the Gearwright
   Colossus get the full 3x3 arena (`FloorBuilder.smallKeeper`, `PiecesArenas.needsFullArena`). The 2x2 arena is 13
   high, and the tallest keeper left in it (the Hollow Herald, 6.7 and three more flying) has 18 clear.
-- **True-size hitboxes:** if Euan OKs boss-plan's true-size hitboxes for the first six Lords (the Forge's 5.9 × 8.3 is
-  the biggest), they fit. The medallion and its band reach 3.0, the Forge's clear disc is 10, and
-  `gates_interior_arenas_fit_lords` checks the spawned Lord's real box (a block round it, one over) at its spot, so it
-  checks the new boxes when they come. A Lord never leaves its arena, so doors needn't fit it.
+- **True-size hitboxes:** the first six Lords' boxes now cover the main body (without the limbs) and are as tall as the
+  whole body. boss-plan set them at 5e72de99 with Euan's OK: the Forge 3.6 × 8.25, Unit Zero 1.0 × 4.3, the Mother of
+  Spores 1.8 × 5.8, the Colossus 1.5 × 8.4, the Root Saint 1.8 × 5.4, the Bell Warden 2.8 × 4.6. They fit: the
+  medallion and its band reach 3.0, the Forge's clear disc is 10 with 13 clear over it, and
+  `gates_interior_arenas_fit_lords` checks the spawned Lord's real box (a block round it, one over) at its spot. A Lord
+  never leaves its arena, so doors needn't fit it.
 - **Versions:** version 8 is `GatePlan.CONTENT_VERSION`. Entered gates keep their version. A version 7 arena is
   unchanged, since everything above keys on `Room.space > 0` or the plan's version. With `gateWorldsDepth` off, new
   gates are still made at 6 with their arenas as they were. `gateworlds_same_rooms` now compares version 5's rooms
