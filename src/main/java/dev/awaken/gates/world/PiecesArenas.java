@@ -1,6 +1,7 @@
 package dev.awaken.gates.world;
 
 import dev.awaken.gates.GatesRegistry;
+import dev.awaken.gates.content.Theme;
 import net.minecraft.world.level.block.state.BlockState;
 
 import static dev.awaken.gates.world.Pieces.*;
@@ -11,6 +12,7 @@ import static dev.awaken.gates.world.Pieces.*;
  * cloud sea) vaulting up to the top of the floor's band. The Lord appears on a lit medallion at the centre; the door
  * axis and a disc of radius 4 round the spot stay clear. Sizes scale with the room, so the inner gate's keeper arena
  * (2x2) works too. Cover sits at about 0.55 of the radius: far enough out that the fight has room, close enough to use.
+ * From content version 8 every ring of cover and props also stands a block clear of its Lord's sweep ({@link Room#space}).
  */
 final class PiecesArenas {
     private PiecesArenas() {}
@@ -20,23 +22,66 @@ final class PiecesArenas {
     static boolean blocks(Room r, int x, int z) {
         double dx = dx(r, x), dz = dz(r, z), R = radius(r);
         return switch (r.piece) {
-            case ARENA_BELL -> ringPoint(dx, dz, R * 0.6, 8, 0.5, 1.5);
-            case ARENA_SPORES -> ringPoint(dx, dz, R * 0.58, 6, 0.5, 1.0);
-            case ARENA_EMBER -> ringPoint(dx, dz, R * 0.45, 6, 0.5, 1.0);
-            case ARENA_ARCHIVE -> ringPoint(dx, dz, R * 0.55, 8, 0.5, 1.0);
-            case ARENA_GEARS -> ringPoint(dx, dz, R * 0.55, 6, 0.5, 0.5);
-            case ARENA_GLASS -> ringPoint(dx, dz, R * 0.55, 6, 0.5, 1.0);
-            case ARENA_HIVE -> ringPoint(dx, dz, R * 0.55, 6, 0.5, 1.5);
+            case ARENA_BELL -> ringPoint(dx, dz, cover(r, 0.6, 1.5), 8, 0.5, 1.5);
+            case ARENA_SPORES -> ringPoint(dx, dz, cover(r, 0.58, capR(r) + 0.5), 6, 0.5, 1.0);
+            case ARENA_EMBER -> ringPoint(dx, dz, cover(r, 0.45, 1.0), 6, 0.5, 1.0);
+            case ARENA_ARCHIVE -> ringPoint(dx, dz, cover(r, 0.55, 1.0), 8, 0.5, 1.0);
+            case ARENA_GEARS -> ringPoint(dx, dz, cover(r, 0.55, 0.5), 6, 0.5, 0.5);
+            case ARENA_GLASS -> ringPoint(dx, dz, cover(r, 0.55, 1.0), 6, 0.5, 1.0);
+            case ARENA_HIVE -> ringPoint(dx, dz, cover(r, 0.55, 4.2), 6, 0.5, 1.5);
             case ARENA_ROOTS -> rootPillar(r, dx, dz);
             case ARENA_MARKET -> marketCounter(r, dx, dz);
-            case ARENA_FROST -> ringPoint(dx, dz, R * 0.55, 8, 0.5, 0.5) || choirArc(r, dx, dz) != 0;
+            case ARENA_FROST -> ringPoint(dx, dz, cover(r, 0.55, 0.5), 8, 0.5, 0.5) || choirArc(r, dx, dz) != 0;
             case ARENA_MIRROR -> mirrorArc(r, dx, dz);
-            case ARENA_LAB -> ringPoint(dx, dz, R * 0.5, 6, 0.5, 1.0);
+            case ARENA_LAB -> ringPoint(dx, dz, cover(r, 0.5, 1.0), 6, 0.5, 1.0);
             case ARENA_DREAM -> bed(r, dx, dz) != 0;
             case ARENA_SKY -> false;
-            case ARENA_ABYSS -> ringPoint(dx, dz, R * 0.6, 6, 0.5, 1.0);
+            case ARENA_ABYSS -> ringPoint(dx, dz, cover(r, 0.6, 1.0), 6, 0.5, 1.0);
             default -> false;
         };
+    }
+
+    // ---- the Lord's space (content version 8, SPEC §38.15) ------------------------------------------------------------
+
+    /**
+     * How far each Lord's body sweeps round its spot in any clip (strikes, tails, its death), rounded up: boss-plan's
+     * measure of the true-size rigs, 2026-10-30. Its arena keeps this clear from version 8.
+     */
+    static double sweep(SetPiece arena) {
+        return switch (arena) {
+            case ARENA_EMBER, ARENA_SKY -> 10;
+            case ARENA_GLASS -> 9;
+            case ARENA_GEARS, ARENA_BELL, ARENA_ROOTS -> 7;
+            case ARENA_MARKET, ARENA_FROST -> 6;
+            default -> 4;
+        };
+    }
+
+    /** The Lords that swing through the inner gate's 2x2 keeper arena's cover: as a keeper they get the full 3x3 arena. */
+    static boolean needsFullArena(Theme lord) {
+        return switch (lord) {
+            case EMBER_MINES, SKY_ARCHIPELAGO, GLASS_DESERT, CLOCKWORK_FOUNDRY -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * The radius of a ring of props reaching {@code half} either side of it: {@code R * k} as version 7 built it, pushed
+     * out from version 8 until the props stand a block clear of the Lord's sweep.
+     */
+    static double cover(Room r, double k, double half) {
+        double R = radius(r);
+        return r.space > 0 ? Math.max(R * k, r.space + half + 1) : R * k;
+    }
+
+    /** Whether the Lord's sweep (and a block to spare) reaches a spot: no prop there from version 8. */
+    static boolean inSweep(Room r, double dx, double dz) {
+        return r.space > 0 && Math.hypot(dx, dz) < r.space + 1;
+    }
+
+    /** The Mother of Spores's caps: their radius. */
+    static double capR(Room r) {
+        return Math.min(5.0, radius(r) * 0.24);
     }
 
     static int floorDelta(Room r, int x, int z) {
@@ -173,11 +218,12 @@ final class PiecesArenas {
                     c.lightless ? null : s("minecraft:pearlescent_froglight"));
             claimed = true;
         }
-        if (ringPoint(dx, dz, R * 0.6, 8, 0.5, 1.5) && free(r, x, z)) {
+        double rs = cover(r, 0.6, 1.5);
+        if (ringPoint(dx, dz, rs, 8, 0.5, 1.5) && free(r, x, z)) {
             // a robed statue on a plinth: the plus-shaped body, shoulders, a hooded head holding up a soul lantern
             int k = spoke(dx, dz, 8, 0.5);
             double a = (k + 0.5) * Math.PI / 4;
-            double sx = Math.floor(Math.cos(a) * R * 0.6) + 0.5, sz = Math.floor(Math.sin(a) * R * 0.6) + 0.5;
+            double sx = Math.floor(Math.cos(a) * rs) + 0.5, sz = Math.floor(Math.sin(a) * rs) + 0.5;
             double lx = dx - sx, lz = dz - sz;
             boolean centre = Math.abs(lx) < 0.5 && Math.abs(lz) < 0.5, cross = Math.abs(lx) < 0.5 || Math.abs(lz) < 0.5;
             c.set(bx, walk, bz, c.k.trim());
@@ -209,8 +255,8 @@ final class PiecesArenas {
         // the six caps: find the nearest one
         int k = spoke(dx, dz, 6, 0.5);
         double a = (k + 0.5) * Math.PI / 3;
-        double mx = Math.round(Math.cos(a) * R * 0.58), mz = Math.round(Math.sin(a) * R * 0.58);
-        double capR = Math.min(5.0, R * 0.24);
+        double capR = capR(r), rc = cover(r, 0.58, capR + 0.5);
+        double mx = Math.round(Math.cos(a) * rc), mz = Math.round(Math.sin(a) * rc);
         if (Math.hypot(dx - mx, dz - mz) <= capR + 0.5)
             claimed = PiecesRooms.mushroom(c, bx, bz, dx - mx, dz - mz, walk, 7 + k % 2, capR, ceil, free(r, x, z)) || claimed;
         // the hanging cap over the Lord
@@ -257,13 +303,13 @@ final class PiecesArenas {
         double a = Math.atan2(dz, dx);
         double off = a - Math.round(a / (Math.PI / 4)) * (Math.PI / 4);
         if (d > 4.5 && d < R * 0.68 && Math.abs(off) * d < 0.55) c.set(bx, walk - 1, bz, GatesRegistry.EMBER_ORE.get().defaultBlockState());
-        if (ringPoint(dx, dz, R * 0.45, 6, 0.5, 1.0) && free(r, x, z)) {
+        if (ringPoint(dx, dz, cover(r, 0.45, 1.0), 6, 0.5, 1.0) && free(r, x, z)) {
             for (int y = walk; y < Math.min(ceil - 1, walk + 7); y++) c.set(bx, y, bz, y == walk ? s("minecraft:polished_blackstone") : s("minecraft:polished_basalt[axis=y]"));
             c.set(bx, Math.min(ceil - 1, walk + 7), bz, s("minecraft:gilded_blackstone"));
             return true;
         }
-        // timber beams across the vault, lanterns under them
-        int by = walk + 13;
+        // timber beams across the vault, lanterns under them (from version 8 a block higher, over the Tyrant's chop)
+        int by = walk + (r.space > 0 ? 14 : 13);
         if (by < ceil - 1 && (Math.abs(dx) < 0.6 || Math.abs(dz) < 0.6)) {
             c.set(bx, by, bz, GatePainter.axis(s("minecraft:stripped_dark_oak_log"), Math.abs(dx) < 0.6 ? "z" : "x"));
             if (!c.lightless && d > 4 && Math.floorMod((int) Math.round(d), 5) == 0) c.set(bx, by - 1, bz, s("minecraft:lantern[hanging=true]"));
@@ -284,7 +330,7 @@ final class PiecesArenas {
             c.set(bx, walk, bz, s("minecraft:water"));
             return true;
         }
-        if (ringPoint(dx, dz, R * 0.55, 8, 0.5, 1.0) && free(r, x, z)) {
+        if (ringPoint(dx, dz, cover(r, 0.55, 1.0), 8, 0.5, 1.0) && free(r, x, z)) {
             int top = Math.min(ceil - 2, walk + 7);
             for (int y = walk; y < top; y++) c.set(bx, y, bz, Hash.unit(r.seed, x + y, z) < 0.35 ? GatesRegistry.SODDEN_SHELF.get().defaultBlockState() : s("minecraft:bookshelf"));
             c.set(bx, top, bz, s("minecraft:dark_prismarine_slab[type=bottom]"));
@@ -302,7 +348,7 @@ final class PiecesArenas {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
         if (d > 4.2 && (ring(dx, dz, R * 0.3, 0.5) || ring(dx, dz, R * 0.72, 0.5))) c.set(bx, walk - 1, bz, s("minecraft:waxed_copper_grate"));
-        if (ringPoint(dx, dz, R * 0.55, 6, 0.5, 0.5) && free(r, x, z)) {
+        if (ringPoint(dx, dz, cover(r, 0.55, 0.5), 6, 0.5, 0.5) && free(r, x, z)) {
             c.set(bx, walk, bz, s("minecraft:iron_block"));
             for (int y = walk + 1; y < walk + 5; y++) c.set(bx, y, bz, y == walk + 3 && !c.lightless ? s("minecraft:waxed_copper_bulb[lit=true]") : s("minecraft:waxed_cut_copper"));
             c.set(bx, walk + 5, bz, s("minecraft:waxed_lightning_rod[facing=up]"));
@@ -334,7 +380,7 @@ final class PiecesArenas {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
         if (d > 4.2) c.set(bx, walk - 1, bz, ring(dx, dz, R * 0.3, 0.6) ? s("minecraft:cut_sandstone") : s("minecraft:sand"));
-        if (ringPoint(dx, dz, R * 0.55, 6, 0.5, 1.0) && free(r, x, z)) {
+        if (ringPoint(dx, dz, cover(r, 0.55, 1.0), 6, 0.5, 1.0) && free(r, x, z)) {
             int k = spoke(dx, dz, 6, 0.5);
             int h = 4 + (k * 3 + (int) Math.floorMod(Math.round(dx + dz), 3L)) % 4;
             c.set(bx, walk - 1, bz, c.lightless ? s("minecraft:sandstone") : s("minecraft:glowstone"));
@@ -365,7 +411,8 @@ final class PiecesArenas {
         boolean claimed = false;
         int k = spoke(dx, dz, 6, 0.5);
         double a = (k + 0.5) * Math.PI / 3;
-        double px = Math.floor(Math.cos(a) * R * 0.55) + 0.5, pz = Math.floor(Math.sin(a) * R * 0.55) + 0.5;
+        double rp = cover(r, 0.55, 4.2);
+        double px = Math.floor(Math.cos(a) * rp) + 0.5, pz = Math.floor(Math.sin(a) * rp) + 0.5;
         double pd = Math.hypot(dx - px, dz - pz);
         if (Math.abs(dx - px) < 1.5 && Math.abs(dz - pz) < 1.5 && free(r, x, z)) {
             for (int y = walk; y < ceil; y++) c.set(bx, y, bz, (y + x + z) % 3 == 0 ? GatesRegistry.BROOD_CELL.get().defaultBlockState() : s("minecraft:honeycomb_block"));
@@ -396,6 +443,8 @@ final class PiecesArenas {
         if (d < 6 || d > R * 0.82) return false;
         double gx = dx / 7.0, gz = dz / 7.0;
         double fx = gx - Math.round(gx), fz = gz - Math.round(gz);
+        // from version 8 the pillars inside the Saint's sweep (and a block to spare) aren't raised
+        if (r.space > 0 && Math.hypot(Math.round(gx) * 7.0, Math.round(gz) * 7.0) < r.space + 2) return false;
         return Math.abs(fx) * 7 < 1.0 && Math.abs(fz) * 7 < 1.0;
     }
 
@@ -492,7 +541,7 @@ final class PiecesArenas {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
         if (d > R * 0.3 && d < R * 0.45) c.set(bx, walk - 1, bz, Hash.noise(r.seed, x, z, 3) < 0.6 ? s("minecraft:packed_ice") : s("minecraft:blue_ice"));
-        if (ringPoint(dx, dz, R * 0.55, 8, 0.5, 0.5) && free(r, x, z)) {
+        if (ringPoint(dx, dz, cover(r, 0.55, 0.5), 8, 0.5, 0.5) && free(r, x, z)) {
             c.set(bx, walk, bz, s("minecraft:quartz_bricks"));
             for (int y = walk + 1; y < ceil; y++) c.set(bx, y, bz, (y - walk) % 6 == 5 ? s("minecraft:chiseled_quartz_block") : s("minecraft:quartz_pillar[axis=y]"));
             return true;
@@ -560,7 +609,7 @@ final class PiecesArenas {
             if (Math.floorMod((int) Math.floor(d), 4) == 0) c.set(bx, walk - 1, bz, s("minecraft:cyan_concrete"));
             if (d > R * 0.88) c.set(bx, walk - 1, bz, s(Math.floorMod((int) Math.floor(Math.atan2(dz, dx) * R / 1.5), 2) == 0 ? "minecraft:yellow_concrete" : "minecraft:black_concrete"));
         }
-        if (ringPoint(dx, dz, R * 0.5, 6, 0.5, 1.0) && free(r, x, z)) {
+        if (ringPoint(dx, dz, cover(r, 0.5, 1.0), 6, 0.5, 1.0) && free(r, x, z)) {
             c.set(bx, walk, bz, s("awaken:precursor_plating"));
             c.set(bx, walk + 1, bz, s("awaken:precursor_plating"));
             c.set(bx, walk + 2, bz, Math.floorMod(x + z, 2) == 0 && !c.lightless ? GatesRegistry.LAB_PANEL.get().defaultBlockState() : s("minecraft:smooth_stone_slab[type=bottom]"));
@@ -643,7 +692,7 @@ final class PiecesArenas {
             return true;
         }
         // floating stones high in the sky
-        if (Hash.unit(r.seed, x * 11, z * 7) < 0.012 && ceil - walk > 12) {
+        if (Hash.unit(r.seed, x * 11, z * 7) < 0.012 && ceil - walk > 12 && !inSweep(r, dx, dz)) {
             c.set(bx, walk + 9 + (int) (Hash.unit(r.seed, z, x) * 5), bz, s("minecraft:mossy_cobblestone"));
             return true;
         }
@@ -659,13 +708,14 @@ final class PiecesArenas {
         double R = radius(r), d = Math.hypot(dx, dz);
         if (ring(dx, dz, R * 0.4, 0.8)) c.set(bx, walk - 1, bz, GatesRegistry.VOID_GLASS.get().defaultBlockState());
         if (d > R * 0.8 && Hash.noise(r.seed, x, z, 3) < 0.5) c.set(bx, walk - 1, bz, s("minecraft:sculk"));
-        if (ringPoint(dx, dz, R * 0.6, 6, 0.5, 1.0) && free(r, x, z)) {
+        if (ringPoint(dx, dz, cover(r, 0.6, 1.0), 6, 0.5, 1.0) && free(r, x, z)) {
             int k = spoke(dx, dz, 6, 0.5);
             int h = 8 + k % 3;
             for (int y = walk; y < Math.min(ceil - 1, walk + h); y++) c.set(bx, y, bz, Hash.unit(r.seed, x + y * 3, z) < 0.18 ? s("minecraft:crying_obsidian") : s("minecraft:obsidian"));
             return true;
         }
-        if (!c.lightless && ring(dx, dz, R * 0.25, 0.5) && ringPoint(dx, dz, R * 0.25, 12, 0, 0.5) && free(r, x, z)) {
+        double rc = cover(r, 0.25, 0.5);
+        if (!c.lightless && ring(dx, dz, rc, 0.5) && ringPoint(dx, dz, rc, 12, 0, 0.5) && free(r, x, z)) {
             c.set(bx, walk, bz, s("minecraft:black_candle[candles=4,lit=true]"));
             return true;
         }

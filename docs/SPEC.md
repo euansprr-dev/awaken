@@ -11491,6 +11491,55 @@ now, fought-on second storeys in a later plan.
   plan puts the camera 10 over an open plaza looking 28 degrees down (cause not found), so those keep `place`, which
   faces a bank or a house there (and an isle's stands in the cloud).
 
+### 38.15 Room for the Lords (content version 8; boss-plan's measure of the true-size bosses, sent at Euan's request 2026-10-30)
+
+Every boss now has its own body drawn at true size, so the room a Lord needs is set by its body, not its hitbox.
+boss-plan measured each body in every clip (shared notes `boss-plan-boss-space.md`, from the rigs in
+`assets/awaken/kit/rigs`): the **sweep** is the furthest any part of it reaches from its centre (strikes, tails, its
+death), the **tallest** the highest any part reaches. Version 8 builds every Lord's arena round those numbers.
+
+- **The sweep each arena keeps clear** (`PiecesArenas.sweep`, rounded up): 10 for the Ember Tyrant (the Forge) and the
+  Sky Leviathan, 9 for the Glass Serpent, 7 for the Gearwright Colossus, the Bell Warden and the Root Saint, 6 for the
+  Lantern Broker and the Abbot of Frost, 4 for the rest. It's set on the boss room as `Room.space` from version 8 (0
+  before) and carried to a world floor's built arena.
+- **Cover and props stand a block clear of it.** A ring at `R × k` whose props reach `half` either side moves out to
+  `space + half + 1` when that's further (`PiecesArenas.cover`), the same in the painting and in `blocks` (the walk
+  map). In the full 3x3 arena (radius 22) that moves only the Forge's six basalt columns (from 9.9 to 12, still inside
+  the lava moat at 15.4) and leaves out the Root Saint's four pillars on the grid's axes at 7. In the keeper's 2x2
+  arena (radius 14) the Bell Warden's statues move from 8.4 to 9.5, the Hive Regent's comb pillars from 7.7 to 9.2
+  (their canopies reach 4.2), the Mother of Spores's caps from 8.1 to 8.9 and the Hollow Herald's candles from 3.5 to
+  5.5.
+- **The room's own props stay out too:** nothing from the room's decoration (floor props, clutter, the Nightmare's
+  floating things, hanging props) is placed inside the sweep and a block past it (`Ctx.inLordSpace`), nor the Sky
+  Archipelago island's lamp posts or the Sky Leviathan arena's floating stones.
+- **Over the Forge:** its overhead chop reaches 11.1, so the timber beams across its vault go from 13 to 14 over the
+  floor (the lanterns under them from 12 to 13).
+- **Height:** each arena is clear from the floor to the top of its Lord's body plus one, plus three over the five that
+  fly (the Mother of Spores, the Glass Serpent, the Hive Regent, the Sky Leviathan and the Hollow Herald), who rise
+  on top of their body's height. The full arena stays 17+ high; within the sweep 13 to 26 is clear overhead (13 over
+  the Forge, under its lanterns).
+- **Arenas in a world:** a world floor never hosts its Lord on one of the world's places. Its boss room is always built
+  (`WorldPlan.built`): painted by the rooms painter at the plan room's size and height (17+) in its own band, with the
+  world carved round it. So a cave, a sea or the islands give every Lord the full arena's headroom.
+- **The inner gate's keeper:** Gate within a Gate's annex Lord floor keeps the small 2x2 arena, except for the four
+  Lords that would swing through its cover: the Ember Tyrant, the Sky Leviathan, the Glass Serpent and the Gearwright
+  Colossus get the full 3x3 arena (`FloorBuilder.smallKeeper`, `PiecesArenas.needsFullArena`). The 2x2 arena is 13
+  high, and the tallest keeper left in it (the Hollow Herald, 6.7 and three more flying) has 18 clear.
+- **True-size hitboxes:** if Euan OKs boss-plan's true-size hitboxes for the first six Lords (the Forge's 5.9 × 8.3 is
+  the biggest), they fit. The medallion and its band reach 3.0, the Forge's clear disc is 10, and
+  `gates_interior_arenas_fit_lords` checks the spawned Lord's real box (a block round it, one over) at its spot, so it
+  checks the new boxes when they come. A Lord never leaves its arena, so doors needn't fit it.
+- **Versions:** version 8 is `GatePlan.CONTENT_VERSION`. Entered gates keep their version. A version 7 arena is
+  unchanged, since everything above keys on `Room.space > 0` or the plan's version. With `gateWorldsDepth` off, new
+  gates are still made at 6 with their arenas as they were. `gateworlds_same_rooms` now compares version 5's rooms
+  with version 7's, because 8 changes arenas on purpose.
+- **Test `gates_interior_lord_space`:** checks every theme's Lord in its main arena and as the keeper, at 7 and at 8.
+  At 8, nothing solid may be inside the sweep from the floor to the body's top, big keepers must get the full arena,
+  and full arenas must be 17+ high. Version 7 is measured beside it for the report. At 7 the Forge had 21 blocks in
+  its sweep (columns and lanterns), 83 as a keeper. The Glass Serpent as a keeper had 26, the Hive Regent as a keeper
+  13, the Root Saint 9 (pillars), the Sky Leviathan 3 (an island post), and the Bell Warden, the Colossus and the
+  Mother of Spores had some as keepers. At 8 every arena has none.
+
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
 Builds on §28.3 (W2) and §28.5 (W5); the plan's audit (`docs/mining/proof/`) is what it was designed against: Tectonic

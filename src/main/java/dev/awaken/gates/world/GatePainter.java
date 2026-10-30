@@ -708,6 +708,11 @@ public final class GatePainter {
             }
         }
 
+        /** Inside a Lord's sweep in its arena (version 8): the room's own props stay out (SPEC §38.15). */
+        boolean inLordSpace(int x, int z) {
+            return r.space > 0 && PiecesArenas.inSweep(r, Pieces.dx(r, x), Pieces.dz(r, z));
+        }
+
         void decorate(int bx, int bz, int x, int z, int walk, int ceil, int edge) {
             int headroom = ceil - walk;
             boolean nearFeature = false;
@@ -728,7 +733,7 @@ public final class GatePainter {
                 int part = chandelierOffset(x, z);
                 if (part >= 0 && !k.has(Kit.SKY)) chandelier(bx, bz, part, walk, ceil);
             }
-            if (nearFeature) return;
+            if (nearFeature || inLordSpace(x, z)) return;
             if (brazier(bx, bz, x, z, walk)) return;
             boolean axis = RoomGeometry.onDoorAxis(r, x, z, 1);
             if (onRunner(x, z)) {
@@ -900,7 +905,7 @@ public final class GatePainter {
             double roll = u(x, z, 12);
             boolean axis = RoomGeometry.onDoorAxis(r, x, z, 1);
             if (!axis && roll < 0.22) set(bx, floorY, bz, pick(p.floorDecor(), x, z, 13));
-            else if (!axis && roll > 0.993 && ceil - floorY >= 7) {
+            else if (!axis && roll > 0.993 && ceil - floorY >= 7 && !inLordSpace(x, z)) {
                 for (int y = floorY; y < floorY + 3; y++) set(bx, y, bz, k.pilaster());
                 set(bx, floorY + 3, bz, p.clutter().get(0));
             }

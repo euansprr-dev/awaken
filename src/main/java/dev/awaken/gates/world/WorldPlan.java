@@ -462,6 +462,7 @@ final class WorldPlan {
             if (w.type == Room.Type.BOSS) {
                 if (w.gw != L.gw || w.gh != L.gh) return WorldEngine.fail("the Lord's arena changed size");
                 w.piece = L.piece;
+                w.space = L.space;
                 w.shape = L.shape;
                 w.height = L.height;
             }
