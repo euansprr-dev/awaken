@@ -27,10 +27,11 @@ wait 240
 cmd gamerule advance_time false
 cmd time set 6000
 # ---- the fire, set on open ground ----
-cmd awaken admin ember camp
-wait 30
-cmd spreadplayers ~ ~-80 0 10 false @s
-wait 160
+# well outside the city's walls (a home can't be made inside them)
+cmd spreadplayers ~1400 ~ 0 10 false @s
+wait 200
+cmd awaken admin ember give
+wait 20
 cmd awaken admin ember set
 wait 120
 screen close

@@ -57,6 +57,9 @@ final class SetPreviewScreen extends Screen implements dev.awaken.signal.client.
         if (!figures.isEmpty() || minecraft.level == null) return;
         for (TaskPayloads.ChoiceRow c : choices()) {
             ClientMannequin m = new ClientMannequin(minecraft.level, minecraft.playerSkinRenderCache());
+            // a client level gives no entity ids (they come from the server) and the renderer reads one: a negative id
+            // per figure, which no server entity ever has
+            m.setId(-1000 - figures.size());
             m.setPos(0, -4096, 0); // far from the camera: no name tag, no line under it
             for (String id : c.show()) {
                 ItemStack piece = WhereFrom.icon(id);
