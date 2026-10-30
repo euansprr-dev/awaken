@@ -7,6 +7,9 @@ Remastered dry list); this session finished it in the cloud VM.
 ## Done
 
 - **Merged `origin/build/awaken-v1`** (2e05a76: lands/slice and pack/holo-ui) into the branch; no conflicts.
+- **Merged `origin/pack/throughput`** (e1138f3) too, to port its flake fixes (see CI). It is a merge, not
+  cherry-picks, so it is a no-op once build/awaken-v1 carries pack/throughput, and the two land in either order.
+  pack/sound therefore contains pack/throughput: merge that one first or with this one.
 - **The WIP commit (393a28b) is finished and built.** It meant to stop the layers waiting on a vanilla song that a
   teleport had already silenced, but it cached a flag from `SelectMusicEvent`, and 26.3's `MusicManager.tick` returns
   before firing that event while it fades its gain, which is exactly when the stale song lingers, so the flag stayed
@@ -34,9 +37,13 @@ Remastered dry list); this session finished it in the cloud VM.
   **`awaken:city/<district>`** (ambience slot, `source` ambient, its four levels the district's crowd, pinned by the
   city's provider from its density, answering only inside the city site). §12 names the `Signals` a provider may set.
   `docs/modules/audio.md` matches.
-- **Build and tests in the VM**: `./gradlew build` green; `runGameTestServer`: **all 330 required tests passed**
-  (the 324 of before, plus the merge's).
-- **CI**: see "CI" below.
+- **`audio_layers_loudness` runs in a batch of its own.** It decodes all 56 stems on a worker thread (a minute of CPU
+  and hundreds of MB of heap) while its batch runs; after the merge that batch holds build/awaken-v1's
+  `terrain_hero_blueprints` (the Elder Colossus's fastest of 8 seeds under 8 ms), which failed twice on CI at
+  11.9-15.4 ms against 5.7 ms on the base. Alone, its numbers are back to normal (VM: 23.4 ms avg / 146 worst before,
+  4.6 / 6.6 after; CI: 7.6 ms fastest).
+- **Build and tests in the VM** (on the final code, 18ecf02): `./gradlew build` green; `runGameTestServer`: **all 330
+  required tests passed**, and again on two cores each shared with a busy loop (pack/throughput's CI stand-in).
 
 ## Left
 
@@ -47,6 +54,7 @@ Remastered dry list); this session finished it in the cloud VM.
 - Nobody has heard the layers in game yet; the tours below are the proof the logic runs, the sheet is the proof of
   taste.
 - Not built (by design, reserved in SPEC): the Descent's and the city's contexts.
+- Not this branch's, still open: `hearth_why_not_reasons` flakes on CI now and then (see CI).
 
 ## Tours for the Mac (they need its GPU)
 
@@ -59,4 +67,20 @@ Remastered dry list); this session finished it in the cloud VM.
 
 ## CI
 
-GameTests workflow on `pack/sound`: run id and result are filled in below once the run finishes.
+- **Green: [40104662443](https://github.com/euansprr-dev/awaken/actions/runs/40104662443) on 18ecf02 (the final
+  code), attempt 2: all 330 required tests passed.** Attempt 1 failed only on `hearth_why_not_reasons` (an opening
+  at y 126 taken for a roof hole): the flake pack/throughput's hand-off lists under Left, cause not established,
+  seen on lands/slice too, in no code this branch touches; the Elder Colossus measured 4.45 ms there.
+- Before it, for the record:
+  - [40100497841](https://github.com/euansprr-dev/awaken/actions/runs/40100497841) (743102f), two attempts:
+    `terrain_hero_blueprints` both times, this branch's (above), plus the known `gates_surface_respects_builds` and
+    `fauna_p3_caves_spawn`.
+  - [40102394688](https://github.com/euansprr-dev/awaken/actions/runs/40102394688) (4eb5188, the hero test fixed: 7.63 ms),
+    two attempts, a different known flake each: `anomaly_grove_bends_the_rules`, then `fauna_p3_caves_spawn`.
+    build/awaken-v1 is red the same way (its last three runs; last green 6e6f44e). pack/throughput fixes these at
+    their cause, hence the merge.
+- The VM can't fetch Actions logs (the network policy blocks GitHub's log storage); the GitHub connector's job-log
+  tool reads them.
+- For terrain (not touched here): `terrain_hero_blueprints` measures wall time, 5.7-7.6 ms on an undisturbed CI
+  runner against its 8 ms budget, and 6.4 ms on two contended cores. pack/throughput's note stands: if it flakes,
+  time it with thread CPU time.
