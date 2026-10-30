@@ -558,7 +558,7 @@ of `AwakenConfig.Client`.
   filter closed and nature held back while renewed). `/awaken audio world [off|on]` (client).
   Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
-  `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
+  `hearthsOf`, `household`, `shareHearth`, `within`, `armoury`: is this spot in an Armoury, §27.13), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
@@ -8179,7 +8179,9 @@ each piece comes from is said plainly; what the world holds beyond it is still f
 - **The Armoury** (`RoomType.FITTING`, label "Armoury", id `armoury`): a Fitting Stand and a crafting table in one closed
   room, your first workshop, right after a bed (`HearthNow.ORDER`: Shelter, Bedroom, Armoury, then the rest). An anvil,
   the Forge and an armour stand in the same room make it the Forge too (one room, both kinds). `Furniture.FITTING_STAND`
-  is appended (saved counts go by ordinal). Its gift: armour made at its stand lasts a quarter longer (phase 2).
+  is appended (saved counts go by ordinal). Its gift: armour finished at a Fitting Stand inside an Armoury lasts a quarter
+  longer (`MAX_DAMAGE` × 1.25, `ArmourForge.ARMOURY_WEAR`; the stand asks `HearthHooks.armoury(level, pos)`, §12; the
+  tooltip says "Made in your Armoury: it lasts a quarter longer"; `ArmourForge.fromArmoury` reads it off the stack).
 - **The Hearth's steps** (`hearth.HearthGoals`): Build your Armoury (its pieces ticked where they stand in one closed room,
   as the guide ticks them); Clear your first gate (at the Hearthfire: the nearest enterable gate within 600 blocks, for
   its Lord's Heart) or, with a Heart in the pack, Set the Lord's Heart on your fire; Grow your Armoury into a Forge;
@@ -8187,10 +8189,32 @@ each piece comes from is said plainly; what the world holds beyond it is still f
 - **The Armour's steps** (`armour.ArmourGoals`): until every piece you wear is your rank's, "Choose your first armour"
   (on the path) or "Make your X-rank armour", its choices your rank's known sets with what the pieces you don't own
   still take, summed; once you wear your rank's, when the next comes.
+- **The Hearth page** (phase 2, `hearth.client.HomePage`, replacing the old Hearth section): your home at a glance (name,
+  tier, the Forge, Comfort as pips, style, town, trophies, "Rooms and upgrades ›" to the guide); NEXT FOR YOUR HOME, the
+  Hearth's first step in full with "Everything for your home (N more) ›" to the Tasks page's Hearth tab
+  (`tasks.client.HearthNext`); ROOMS, every room kind as a tile in `HearthNow.ORDER`: built (green), started (amber, its
+  pieces counted), open, the Sanctuary dashed (optional), and "?" for a kind whose rare piece (a trophy, a machine, a lode
+  heart, a vent stone, a perch, a crucible, a drop, a ledger) you've never had at home or in your pack; click a tile for
+  its pieces, where each comes from and the closed room it needs; MAKE IT LOOK GOOD, each room (weakest first, up to 8)
+  with its grade, kinds, its six readings as pips (the weakest amber) and the one thing that lifts it. Then the kin
+  sections as before (your beasts and nooks, the kin list, rumours and wants). Sent in `HearthView` as `tiles` and
+  `looks` (optional fields, so an old client's view still reads).
+- **The beasts' steps** (`kin.KinGoals`, Hearth goal): the home's first two needs (`KinPage.NEEDS` order) with no beast of
+  that kind living there yet, while a nook is free. A kind you've met or heard of is named ("Bring a Burrowbun home", the
+  need and where: "You've met one: ..." or the rumour you already have, with its place); one you haven't stays the need
+  itself ("Nothing lights your yard at night."). Looking never learns a rumour: it reads `Kinship`, never asks
+  `KinSpawner`.
+- **The Bells' steps** (`bells.BellGoals`): a step per lead in the Bell Book you don't hold yet, newest first, up to 4
+  ("Find the Barrow Bell" once seen or narrowed, else "Find where that bell's note came from"; its last line; its place as
+  Track had it), and the tower's next step when it's yours to do (set the frame down at home, clear room for the belfry
+  or the stone tower, raise the Great Belfry, ring the Hundred Peal). A tower that only wants more bells adds nothing:
+  the leads are that. Reads the Book, never changes it.
 - **Tests:** `tasks_book_rules` (order, the top rule, covers, merge, NowMap, the saved state), `tasks_choose_and_pin`
   (the first armour's sets, one row per need, a refused pin, chosen and pinned: the card lists that set's needs),
   `tasks_next_step_follows_path` (Euan's moment in a real home: the Armoury on top, then the armour, then the gate, the
-  Sanctuary optional; built, the armour is on top and the Forge waits), `hearth_armoury_room`.
+  Sanctuary optional; the Hearth page's tiles and looks, the beasts' first need as a step; built, the armour is on top and
+  the Forge waits), `hearth_armoury_room` (the room, and the gift: a helmet made at its stand lasts 1.25×, one made
+  outside doesn't).
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 

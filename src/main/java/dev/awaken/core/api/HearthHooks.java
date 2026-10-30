@@ -49,6 +49,8 @@ public final class HearthHooks {
         default boolean greenhouse(net.minecraft.world.level.Level level, BlockPos pos) { return false; }
         /** Whether the player stands at a Hearth they belong to that has a Study: Blueprints take half the paper (SPEC §28.8). */
         default boolean study(ServerPlayer player) { return false; }
+        /** Whether {@code pos} lies in an Armoury room at a Hearth: armour made at a stand there lasts a quarter longer (SPEC §27.13). */
+        default boolean armoury(ServerLevel level, BlockPos pos) { return false; }
         /**
          * Moves the player's respawn point for one of our own systems; {@code lent}: a bed for the next fall only (an inn
          * room), else the point given back. The Hearth never reads either as the player choosing another bed (SPEC §28.10).
@@ -144,6 +146,11 @@ public final class HearthHooks {
     /** Whether the player stands at home with a Study: the Blueprints' paper is halved. */
     public static boolean study(ServerPlayer player) {
         return lookup.study(player);
+    }
+
+    /** Whether {@code pos} lies in an Armoury room at a Hearth: armour made at a stand there lasts a quarter longer. */
+    public static boolean armoury(ServerLevel level, BlockPos pos) {
+        return lookup.armoury(level, pos);
     }
 
     /** An inn room: the player wakes at {@code bed} if they fall before it's given back, and at their Hearth after. */

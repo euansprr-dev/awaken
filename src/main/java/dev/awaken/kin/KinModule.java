@@ -50,6 +50,7 @@ public final class KinModule {
         });
         dev.awaken.core.api.Destinations.doneWhen("kin", KinPage::trackDone);
         dev.awaken.core.api.Shown.register("hearth", KinPage::shown);
+        KinGoals.register(); // the beasts' needs on the Tasks page's Hearth tab (SPEC §27.13)
         KinCommands.register();
         KinTests.register();
     }

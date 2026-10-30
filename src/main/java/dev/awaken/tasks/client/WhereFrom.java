@@ -31,13 +31,13 @@ import java.util.Map;
  * source line the Armoury and the tooltips already use ({@code awaken.source.*}), else the creatures that drop it and
  * where they live, "near you" when you stand in their land. Client only: the words live in the lang files.
  */
-final class WhereFrom {
+public final class WhereFrom {
     private WhereFrom() {}
 
     private static final Map<String, String> CACHE = new HashMap<>();
 
     /** A need's item ("ns:path", "#ns:path" for a tag, "" for a condition) → one plain line, or "". */
-    static String line(String item) {
+    public static String line(String item) {
         if (item.isEmpty()) return "";
         String base = CACHE.computeIfAbsent(item, WhereFrom::lookup);
         String near = near(item);

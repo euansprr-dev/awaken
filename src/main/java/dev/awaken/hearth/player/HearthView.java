@@ -14,7 +14,43 @@ import java.util.List;
  * rumour board. Rebuilt on the server whenever something it shows changes.
  */
 public record HearthView(boolean has, BlockPos pos, int tier, int radius, int forgeTier, List<String> rooms, List<String> town,
-                         int trophies, List<HearthPlayer.Rumour> rumours, int records, Home home) {
+                         int trophies, List<HearthPlayer.Rumour> rumours, int records, Home home, List<Tile> tiles, List<Look> looks) {
+
+    public HearthView(boolean has, BlockPos pos, int tier, int radius, int forgeTier, List<String> rooms, List<String> town,
+                      int trophies, List<HearthPlayer.Rumour> rumours, int records, Home home) {
+        this(has, pos, tier, radius, forgeTier, rooms, town, trophies, rumours, records, home, List.of(), List.of());
+    }
+
+    /**
+     * (SPEC §27.13) One room kind on the band's Hearth page: its {@code RoomType} name; built, started (some of its pieces
+     * stand together in a room), open, or hidden (a kind whose rare piece you haven't come across: "?"); which pieces
+     * stand in its best room (a {@code Furniture} bit mask) and whether that room is closed.
+     */
+    public record Tile(String kind, int state, int have, boolean closed) {
+        public static final int HIDDEN = 0, OPEN = 1, STARTED = 2, BUILT = 3;
+
+        public static final Codec<Tile> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("kind").forGetter(Tile::kind),
+                Codec.INT.fieldOf("state").forGetter(Tile::state),
+                Codec.INT.optionalFieldOf("have", 0).forGetter(Tile::have),
+                Codec.BOOL.optionalFieldOf("closed", false).forGetter(Tile::closed)
+        ).apply(i, Tile::new));
+    }
+
+    /**
+     * (SPEC §27.13) One room as it reads ("Make it look good"): its name ("the snug timber bedroom"), its grade (the
+     * {@code Reading.Grade} ordinal), its six readings 0-3 (closed, light, warmth, room, care, detail), the one thing that
+     * lifts it, and its kinds ("Bedroom · Kitchen").
+     */
+    public record Look(String name, int grade, List<Integer> readings, String lift, String kinds) {
+        public static final Codec<Look> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("name").forGetter(Look::name),
+                Codec.INT.fieldOf("grade").forGetter(Look::grade),
+                Codec.INT.listOf().fieldOf("readings").forGetter(Look::readings),
+                Codec.STRING.optionalFieldOf("lift", "").forGetter(Look::lift),
+                Codec.STRING.optionalFieldOf("kinds", "").forGetter(Look::kinds)
+        ).apply(i, Look::new));
+    }
 
     /**
      * The home as its people see it (W1): its name (the place caption on walking in), when this player's Rested ends
@@ -61,7 +97,9 @@ public record HearthView(boolean has, BlockPos pos, int tier, int radius, int fo
             Codec.INT.fieldOf("trophies").forGetter(HearthView::trophies),
             HearthPlayer.Rumour.CODEC.listOf().fieldOf("rumours").forGetter(HearthView::rumours),
             Codec.INT.fieldOf("records").forGetter(HearthView::records),
-            Home.CODEC.optionalFieldOf("home", Home.NONE).forGetter(HearthView::home)
+            Home.CODEC.optionalFieldOf("home", Home.NONE).forGetter(HearthView::home),
+            Tile.CODEC.listOf().optionalFieldOf("tiles", List.of()).forGetter(HearthView::tiles),
+            Look.CODEC.listOf().optionalFieldOf("looks", List.of()).forGetter(HearthView::looks)
     ).apply(i, HearthView::new));
 
     public static final StreamCodec<ByteBuf, HearthView> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);

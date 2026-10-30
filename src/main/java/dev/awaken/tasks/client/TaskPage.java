@@ -137,7 +137,7 @@ final class TaskPage extends UiSection {
 
     // ---- one step in full ------------------------------------------------------------------------------------------
 
-    private static void step(Ui ui, TaskPayloads.View v, StepRow s, boolean lead) {
+    static void step(Ui ui, TaskPayloads.View v, StepRow s, boolean lead) {
         if (s.fresh() && ui.drawing()) TaskCache.drawnFresh(s.key());
         boolean pinned = s.key().equals(v.pinned()), top = s.key().equals(v.top());
         int accent = pinned ? Glass.GOOD : top ? Glass.AMBER : s.optional() ? Glass.LABEL : Glass.EDGE;

@@ -15,6 +15,7 @@ public final class TasksClient {
     public static void init(IEventBus modBus) {
         StatusSections.add(StatusSections.Tab.TASKS, new TaskTabs());
         StatusSections.add(StatusSections.Tab.TASKS, new TaskPage());
+        StatusSections.add(StatusSections.Tab.HEARTH, new HearthNext());
         dev.awaken.core.api.UiHooks.installTasksNew(() -> TaskCache.fresh(null));
         modBus.addListener(TasksClient::onPayloads);
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> TaskCache.tick());

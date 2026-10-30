@@ -158,6 +158,13 @@ public final class HearthModule {
             public boolean study(net.minecraft.server.level.ServerPlayer player) {
                 return HearthService.sharedAt(player, player.blockPosition()).map(h -> h.hasRoom(dev.awaken.hearth.room.RoomType.STUDY)).orElse(false);
             }
+
+            @Override
+            public boolean armoury(ServerLevel level, BlockPos pos) {
+                if (level.dimension() != net.minecraft.world.level.Level.OVERWORLD) return false;
+                return HearthData.get(level.getServer()).containing(pos, HearthService.OVERWORLD)
+                        .flatMap(h -> h.roomAt(pos, dev.awaken.hearth.room.RoomType.FITTING)).isPresent();
+            }
         });
         Regimen.penaltyHandler = Trials::penalty;
         RankHooks.onRankUp((sp, rank) -> {

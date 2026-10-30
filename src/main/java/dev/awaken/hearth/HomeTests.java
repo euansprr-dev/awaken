@@ -8,6 +8,7 @@ import dev.awaken.core.api.TheLull;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.hearth.room.Reading;
 import dev.awaken.hearth.room.Room;
+import dev.awaken.hearth.player.HearthView;
 import dev.awaken.hearth.room.RoomType;
 import dev.awaken.progression.Progression;
 import net.minecraft.core.BlockPos;
@@ -291,6 +292,16 @@ final class HomeTests {
                 Room room = at(rec, base.offset(3, 1, 3));
                 h.assertTrue(room != null && room.types().contains(RoomType.FITTING) && room.types().contains(RoomType.BEDROOM),
                         "the bedroom with a stand and a table is an Armoury too: " + (room == null ? "gone" : room.types()));
+                // its gift: a piece fitted at the stand in it lasts a quarter longer; one made out in the open doesn't
+                BlockPos stand = base.offset(6, 1, 4);
+                ItemStack helm = dev.awaken.armour.ArmourForge.make(dev.awaken.armour.ArmourSet.WILDHIDE, net.minecraft.world.item.equipment.ArmorType.HELMET);
+                int wear = helm.getMaxDamage();
+                dev.awaken.armour.ArmourForge.armoury(level, stand, helm);
+                h.assertTrue(helm.getMaxDamage() == Math.round(wear * 1.25F) && dev.awaken.armour.ArmourForge.fromArmoury(helm),
+                        "made in the Armoury it lasts a quarter longer: " + wear + " → " + helm.getMaxDamage());
+                ItemStack open = dev.awaken.armour.ArmourForge.make(dev.awaken.armour.ArmourSet.WILDHIDE, net.minecraft.world.item.equipment.ArmorType.HELMET);
+                dev.awaken.armour.ArmourForge.armoury(level, base.offset(-3, 1, 4), open);
+                h.assertTrue(open.getMaxDamage() == wear && !dev.awaken.armour.ArmourForge.fromArmoury(open), "made outside it, no gift");
                 h.succeed();
             } finally {
                 data.remove(owner);
@@ -336,6 +347,17 @@ final class HomeTests {
                 var needs = book.get("hearth/armoury").needs();
                 h.assertTrue(needs.size() == 3 && !needs.get(0).met() && !needs.get(1).met() && needs.get(2).item().isEmpty(),
                         "the Armoury's pieces, one row each, and one closed room: " + needs);
+                // the Hearth page: the bedroom built, the Armoury not, kinds whose piece he's never come across are "?"
+                var tiles = HearthViews.tiles(sp, rec);
+                h.assertTrue(tile(tiles, RoomType.BEDROOM) == HearthView.Tile.BUILT && tile(tiles, RoomType.FITTING) != HearthView.Tile.BUILT
+                        && tile(tiles, RoomType.MINE_HEAD) == HearthView.Tile.HIDDEN && tile(tiles, RoomType.ROOKERY) == HearthView.Tile.HIDDEN
+                        && tiles.size() == RoomType.values().length, "a tile per kind: " + tiles);
+                var looks = HearthViews.looks(rec);
+                h.assertTrue(!looks.isEmpty() && looks.getFirst().readings().size() == 6 && (looks.getFirst().grade() == 3 || !looks.getFirst().lift().isEmpty()),
+                        "each room's six readings and what lifts it: " + looks);
+                var light = book.get("kin/need/lampwing");
+                h.assertTrue(light != null && light.goal() == dev.awaken.core.api.Goals.Goal.HEARTH && light.title().equals("Nothing lights your yard at night."),
+                        "the beasts' first need is a Hearth step, the kind unnamed until met: " + all);
                 // build it in the bedroom: the Armoury is done and never shows again; the armour is next, the Forge waits
                 level.setBlock(base.offset(5, 1, 6), Blocks.CRAFTING_TABLE.defaultBlockState(), 3);
                 level.setBlock(base.offset(6, 1, 4), dev.awaken.armour.ArmourContent.STAND.get().defaultBlockState(), 3);
@@ -424,6 +446,11 @@ final class HomeTests {
             level.setBlock(base.offset(x, y, z), shell ? Blocks.DIRT.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
         }
         level.setBlock(base.offset(1, 1, 1), Blocks.CHEST.defaultBlockState(), 3);
+    }
+
+    private static int tile(java.util.List<HearthView.Tile> tiles, RoomType t) {
+        for (HearthView.Tile x : tiles) if (x.kind().equals(t.name())) return x.state();
+        return -1;
     }
 
     private static String keys(dev.awaken.tasks.TaskBook.Book book) {
