@@ -214,7 +214,7 @@ public final class Director {
             return null;
         }
         DirectorLog.log(p, "gate", String.format("%d open within %d blocks, chance %.0f%%, roll %.2f → spawn", standing, MAX_DIST, chance * 100, r));
-        return spawnFor(server, p, null, null, MIN_DIST, MAX_DIST);
+        return spawnFor(server, p, null, null, MIN_DIST, MAX_DIST, false, Double.NaN, 0, Integer.MAX_VALUE, true);
     }
 
     // ---- the first gate, placed on purpose (SPEC §27.6; §21.0.14 asked for it and it was never built) ---------------
@@ -244,9 +244,9 @@ public final class Director {
         double angle = dx * dx + dz * dz < 48 * 48 ? -Math.PI / 2 : Math.atan2(dz, dx);
         // on land no harder than the player's level + 5, and never below the heartland's 12 (SPEC §21.10)
         int landCap = Math.max(prof.level() + 5, 12);
-        GateRecord g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.toRadians(25), landCap);
+        GateRecord g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.toRadians(25), landCap, true);
         // the way on is sea, a river or a beach: any way at all, rather than no first gate for someone on a coast
-        if (g == null) g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.PI, landCap);
+        if (g == null) g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.PI, landCap, true);
         if (g == null) g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.PI);
         if (g == null) return null;
         Progression.setCounter(p, FIRST_GATE, g.id + 1L);
@@ -302,17 +302,20 @@ public final class Director {
     /** As above, toward {@code towards} (radians, x = cos, z = sin) within {@code spread} either side; NaN: any way. */
     static GateRecord spawnFor(MinecraftServer server, ServerPlayer p, Rank forceRank, Theme forceTheme, int minDist, int maxDist,
                                boolean wantRig, double towards, double spread) {
-        return spawnFor(server, p, forceRank, forceTheme, minDist, maxDist, wantRig, towards, spread, Integer.MAX_VALUE);
+        return spawnFor(server, p, forceRank, forceTheme, minDist, maxDist, wantRig, towards, spread, Integer.MAX_VALUE, false);
     }
 
-    /** As above, never on land of a level above {@code landCap} (SPEC §21.10: the first gate is not a trap). */
+    /**
+     * As above, never on land of a level above {@code landCap} (SPEC §21.10: the first gate is not a trap), and with
+     * {@code heedBells} (the Director's own gates, not commands) never in earshot of a woken bell or a tower (SPEC §43.15).
+     */
     static GateRecord spawnFor(MinecraftServer server, ServerPlayer p, Rank forceRank, Theme forceTheme, int minDist, int maxDist,
-                               boolean wantRig, double towards, double spread, int landCap) {
+                               boolean wantRig, double towards, double spread, int landCap, boolean heedBells) {
         ServerLevel over = server.overworld();
         GateRegistry reg = GateRegistry.get(server);
         BlockPos spot = null;
         String dir = "";
-        int dist = 0;
+        int dist = 0, belled = 0;
         for (int attempt = 0; attempt < 10 && spot == null; attempt++) {
             double angle = Double.isNaN(towards) ? p.getRandom().nextDouble() * Math.PI * 2 : towards + (p.getRandom().nextDouble() * 2 - 1) * spread;
             dist = minDist + p.getRandom().nextInt(Math.max(1, maxDist - minDist));
@@ -328,12 +331,18 @@ public final class Director {
             // never within a break's reach of a Hearth the player doesn't share: a veteran's gates stay off a newcomer's home
             if (nearForeignHearth(over, c, p)) continue;
             if (landCap != Integer.MAX_VALUE && dev.awaken.living.api.Regions.levelAt(over, c.getX(), c.getZ()) > landCap) continue;
+            // the Deep can't stand the old bells: the ground stays shut where a woken one or a tower can be heard
+            if (heedBells && dev.awaken.core.api.BellHooks.quiet(over, c)) {
+                belled++;
+                continue;
+            }
             spot = c;
             int d = (int) Math.round(((Math.toDegrees(Math.atan2(Math.sin(angle), Math.cos(angle))) + 90 + 360) % 360) / 45.0) % 8;
             dir = DIRS[d];
         }
         if (spot == null) {
-            DirectorLog.log(p, "gate", "no dry ground found around you → try again later");
+            DirectorLog.log(p, "gate", belled > 0 ? "no ground out of the bells' earshot (" + belled + " spots heard one) → try again later"
+                    : "no dry ground found around you → try again later");
             return null;
         }
         if (!reg.hasFreeCell()) {
@@ -348,7 +357,8 @@ public final class Director {
         List<String> trace = new ArrayList<>(roll.trace());
         trace.add(0, "seed      " + Long.toHexString(roll.plan().seed()) + " · rolled for " + p.getGameProfile().name());
         trace.add("place     " + dist + " m " + dir + " at " + spot.getX() + " " + spot.getY() + " " + spot.getZ()
-                + (HearthHooks.nearest(over, spot, 256).isPresent() ? " (within 256 of a Hearth)" : ""));
+                + (HearthHooks.nearest(over, spot, 256).isPresent() ? " (within 256 of a Hearth)" : "")
+                + (belled > 0 ? " (" + belled + " spots in a bell's earshot passed over)" : ""));
         GateRecord g = GateService.create(server, id, tourPlan == null ? roll.plan() : tourPlan.apply(roll.plan()), spot, p.getRandom().nextInt(2), Optional.of(p.getUUID()),
                 roll.breaksInDays(), trace, false);
         g.nearHearth = HearthHooks.nearest(over, spot, 256).isPresent();

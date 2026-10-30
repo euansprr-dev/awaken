@@ -19,6 +19,8 @@ public final class BellHooks {
         default boolean pealed(ServerPlayer player) { return false; }
         default boolean kinsongNear(ServerLevel level, BlockPos at, int reach, int days) { return false; }
         default String belfry(ServerPlayer player) { return ""; }
+        default void told(ServerPlayer player) {}
+        default boolean quiet(ServerLevel level, BlockPos at) { return false; }
     }
 
     private static Access access = new Access() {};
@@ -45,5 +47,15 @@ public final class BellHooks {
     /** Whether the Kinsong rang within {@code reach} blocks of {@code at} in the last {@code days} play-days. */
     public static boolean kinsongNear(ServerLevel level, BlockPos at, int reach, int days) {
         return access.kinsongNear(level, at, reach, days);
+    }
+
+    /** Ilse has told this player about the hundred (SPEC §43.15): the Bell Book opens on the Ember's lead. */
+    public static void told(ServerPlayer player) {
+        access.told(player);
+    }
+
+    /** Whether a woken bell or a home's tower can be heard at {@code at}: no new gate opens there (SPEC §43.15). */
+    public static boolean quiet(ServerLevel level, BlockPos at) {
+        return access.quiet(level, at);
     }
 }

@@ -41,8 +41,8 @@ final class OpeningRegistry {
     static final int WALK = 0, READ = 1, SIGN = 2, BAND = 3, WEAR = 4, BOOT = 5, BRIEF = 6, OPEN = 7, STATUS = 8, ATLAS = 9,
             POWER = 10, DIRECTIVE = 11, YOURS = 12, LETTERS = 13;
     /** How long each clocked step plays, and the most a screen or a scene waits. */
-    static final int READ_TICKS = 110, BRIEF_TICKS = 20 * 28, SCREEN_MAX = 20 * 75, DIRECTIVE_TICKS = 220, YOURS_TICKS = 140,
-            LETTERS_OUT = 150,
+    static final int READ_TICKS = 110, BRIEF_TICKS = 20 * 33, SCREEN_MAX = 20 * 75, DIRECTIVE_TICKS = 220, YOURS_TICKS = 140,
+            LETTERS_OUT = 620,
             SCENE_MAX = 20 * 20, BOOT_MAX = 20 * 12;
     /** Close enough to the Lens to be read; to the desk to sign; to Bram to take the band. */
     static final double MARK = 2.2, DESK = 2.0, HAND = 3.4;
@@ -140,9 +140,9 @@ final class OpeningRegistry {
                 if (lead) toDesk(p, at, w, "", "");
                 if (age == 10) say(p, at, w, "The band keeps track of everything about you: what you can do, what you've done, and what you've earned.");
                 if (age == 140) say(p, at, w, "You get better at whatever you practise. The more you run, the faster you get. The more you fight, the harder you hit.");
-                if (age == 280) say(p, at, w, "Gates are how hunters get stronger. Every floor you clear makes you tougher, and once you've cleared enough, the Lens raises your rank.");
-                // where new hunters go first: Ilse at the Last Fire, whose coal founds a Hearth (SPEC §28 W1, §43.1)
-                if (age == 430) say(p, at, w, "The bells keep the city safe. Outside the walls it's up to hunters. Ilse keeps the last fire up the north road, and she looks after new hunters.");
+                // what a gate is, before what it does for you (SPEC §43.15)
+                if (age == 280) say(p, at, w, "A gate is a crack where the Deep pushes through, and everything inside it is made of the Deep. If nobody clears one, it breaks, and whatever's inside comes out. That's what hunters are for.");
+                if (age == 500) say(p, at, w, "Gates are how hunters get stronger. Every floor you clear makes you tougher, and once you've cleared enough, the Lens raises your rank.");
                 if (age >= BRIEF_TICKS) step(p, OPEN);
             }
             case OPEN -> {
@@ -184,6 +184,9 @@ final class OpeningRegistry {
             case LETTERS -> {
                 // what a hunter is for, and where to go first: the Last Fire, with letters he hands you like the band
                 if (age == 10) say(p, at, w, "Oh, and one more thing. As a hunter, your job is to protect the city from whatever is out in the wilds, beyond the walls.");
+                // the world rule and the goal, told once (SPEC §43.15): Ilse tells the rest at the Last Fire
+                if (age == 160) say(p, at, w, "The old bells keep the Deep down. It can't stand their sound. There used to be a hundred of them across the land, and back then you'd hear about a gate maybe once in your life.");
+                if (age == 380) say(p, at, w, "Eleven years ago they went quiet, and the gates have been coming ever since. This morning one opened inside the walls, right under the city's bells. They're ringing on their own now, and it isn't enough anymore.");
                 if (age == LETTERS_OUT) say(p, at, w, "Ilse keeps the last fire up the north road. Past it, it's only hunters. Take these letters to her, and she'll explain the rest.");
                 if (lead) toDesk(p, at, w, age >= LETTERS_OUT ? "serve" : "hands_behind", age >= LETTERS_OUT ? "letters" : "");
                 if (w.ready || !client && age > LETTERS_OUT + 20 || age > LETTERS_OUT + SCREEN_MAX) {

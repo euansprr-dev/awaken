@@ -7819,7 +7819,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   never for a player who has it or did it). At the end of the Registry (its step `LETTERS`, after the Directive) Bram
   says what a hunter is for ("Oh, and one more thing. As a hunter, your job is to protect the city from whatever is out
   in the wilds, beyond the walls.") and where to go first ("Ilse runs a camp for new hunters up the north road. Take
-  these letters to her, and she'll explain the rest."), and holds out **Letters for Ilse** (`awaken:ilse_letters`, an
+  these letters to her, and she'll explain the rest."; 2026-10-30: between them the bells and the gates, §43.15), and holds out **Letters for Ilse** (`awaken:ilse_letters`, an
   errand item; Bram's prop "letters"), which you take from his hand the way you took the band ("Take the letters").
   A player who skipped the Registry is given them at registration. The steps: take the letters from Bram (done the
   moment they're in your pack; it keeps the old first step's place, so saves hold), out through the High Gate, to the
@@ -15412,9 +15412,11 @@ here as it goes.
 ### 43.1 The world rule
 - About nine-tenths of the world is wild and empty of people. Outside Carillon the only living people are players (the
   Awakened) and the people of the rare **holdfasts** (43.2). Nobody else lives, walks or camps in the wild.
-- **The Lull** is why: where the gates leak the Deep, ordinary people stop feeling, sit down, go still and turn to stone
-  over months. Bells keep it off; the Awakened are immune. Eleven years ago the land's bells fell asleep and the villages
-  walked to Carillon.
+- **The Lull** is why: every gate leaks a bit of the Deep into the air, and ordinary people who breathe it for long get
+  tired, sit down, go still and turn to stone over months. The old bells keep it off because the Deep can't stand their
+  sound: wherever one can be heard, the Lull can't settle and the ground stays shut (no gate opens; 43.15). The
+  Awakened are immune. Eleven years ago the land's bells fell asleep, many fell into the gates that followed, and the
+  villages walked to Carillon. How the player is told: 43.15.
 - Every settlement AWAKEN places (§28 W0, W3, W7) still generates, emptied: no citizens, troubles, settlers or found
   scenes of people. Furniture, letters, silent chimes, loot and beasts stay. Village troubles become beast troubles (W4's
   rules unchanged).
@@ -15921,6 +15923,36 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
 - Commands: `/awaken admin bells belfry` (grows the tower if needed, sets both pieces, raises it now), `bells deep`
   (the Deep has answered), `bells tower <n>` (now skips the Seed), `/awaken admin kin gnaw <kind>`. Test (CI):
   `bells_hundred_peal` (the Great Belfry's plan; no Kinsong or Wake before the Peal, both after).
+
+### 43.15 The story told at the start (Euan 2026-10-30: the bells are the goal from the opening, the gates part of the lore, "logical and easy to understand"; "Go ahead")
+- **The rule, in one line**: the Deep can't stand the sound of the old bells. Wherever one can be heard, the Lull can't
+  settle and the ground stays shut. Gates are cracks where the Deep pushes through; everything inside one is made of
+  it; an uncleared gate breaks and what's inside comes out. A hundred bells once covered the land (a gate was "something
+  out of a story"); eleven years ago they went quiet, nobody knows why, gates followed and swallowed many of them, the
+  Lull came down the valleys and everyone walked to the city. Ringing all hundred again is the player's goal, said as
+  folk hope ("the gates might stop, people could go home"); the Peal's real answer is the Deep pushing back (43.14) and
+  only the Wake at the Seed lifts the Lull.
+- **Bram at the Registry** (`OpeningRegistry`): BRIEF (33 s) keeps the band and practise lines, then at 280 ticks "A gate
+  is a crack where the Deep pushes through ... That's what hunters are for." and at 500 the gates-make-you-stronger line;
+  the old "bells keep the city safe" line is gone. LETTERS keeps "Oh, and one more thing ..." at 10, then at 160 "The
+  old bells keep the Deep down. It can't stand their sound. There used to be a hundred ...", at 380 "Eleven years ago
+  they went quiet ... This morning one opened inside the walls, right under the city's bells. They're ringing on their
+  own now, and it isn't enough anymore.", and the Ilse letters line at 620 (`LETTERS_OUT`).
+- **Ilse by the fire** (`FirstScenes.ILSE`, fifteen lines, the coal at index 12): the last fire; the Deep and the gates;
+  the leak and the Lull; the bells and their sound; a hundred of them; eleven years ago; the ones who went back; Aldo;
+  the walled towns; "If someone found all hundred and got them ringing again ..."; "Not you, though. You died in a gate
+  and came back ... If anyone can find them, it's you."; the coal; the Association; "Go on, then". A held skip still
+  goes to the coal. JOURNEY part 1 has the lines.
+- **The Bell Book from the coal**: when Ilse's step completes (`BellHooks.told` from `FirstScenes.complete`) a player who
+  doesn't hold the Ember Bell gets its Remembered lead ("Ilse says there were a hundred bells across the land. The first
+  will ring by your own fire, once you set her coal down. It's in your Bell Book."), so the Book's Hundred shows 0 / 100
+  before the first bell rings. The Signal's line at the first bell is unchanged.
+- **The Deep's answer** (43.14) now ends "It's pushing back from the very bottom, from the Seed. That's where this ends."
+- **Quiet ground** (`BellHooks.quiet`, `Bells.QUIET` = 100): the Director's own gates (its pass and the first gate's
+  first two tries) never form within 100 blocks (flat) of a woken bell's place (`Site.AWAKE`) or of a home's bell frame;
+  the trace says how many spots a bell's earshot passed over. The first gate's last try and `/awaken gate open` ignore
+  it, so a first gate always comes and commands work anywhere. Test (CI): `bells_story_start` (the lead opens the Book;
+  quiet near a woken site and a frame, not 150 away).
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 

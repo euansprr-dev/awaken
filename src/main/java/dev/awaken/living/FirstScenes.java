@@ -59,16 +59,23 @@ public final class FirstScenes {
     static final String[] ILSE = {
             "You're the one from the square. Sit down, the kettle's nearly on.",
             "This is the last fire. Past that ridge the bells don't carry, and that's where the Lull starts.",
-            "Ordinary people who stay out there get tired. Then they sit down somewhere, and they don't get up again. That's why we all live in the city now.",
+            // the world rule, in her words (SPEC §43.15): the Deep, the gates, the Lull, the bells
+            "You've been inside a gate now. There's a place under the world called the Deep, and whatever's down there wants to get out. The gates are the cracks it comes up through.",
+            "Every gate leaks a bit of it into the air. Ordinary people who breathe it for long get tired. Then they sit down somewhere, and they don't get up again. That's the Lull.",
+            "The old bells are the one thing that stops it. The Deep can't stand their sound. Wherever one can be heard, the Lull can't settle and the ground stays shut. That's why the city rings every hour.",
+            "There used to be a hundred of them across the land, and you could hear one from anywhere. A gate was something out of a story back then.",
+            "Eleven years ago they went quiet, one after another. Nobody knows why. The gates started opening after that, and a lot of the bells fell right into them. The Lull came down the valleys, and we all walked to the city.",
             "Some went back out anyway. For a dog, or a ring, or their mam's grave. You'll pass them on the road. They sat down, and they've gone to stone. Leave them be.",
             "The first one's on the milestone just past the ridge. That's Aldo. He went back for his dog. Say hello to him for me.",
             "They say a few walled towns far out kept their bells going and never left. I've never seen one.",
-            "Not you, though. You died once and came back. Whatever the Lull does, it can't do it to you. That's what the licence really means.",
+            // the goal: all hundred ringing again
+            "If someone found all hundred and got them ringing again, the whole land would be covered. The gates might stop. People could go home. Nobody from the city can stay out there long enough to look.",
+            "Not you, though. You died in a gate and came back. Whatever the Lull does, it can't do it to you. That's what the licence really means. If anyone can find them, it's you.",
             "Here. It's a coal from this fire. Put it down wherever you want to live, and that's your home. Nobody will come and bother you out there. Nobody can.",
             "And don't believe everything the Association says. It isn't all monsters out there. Most of what lives out there just wants to be left alone. Watch before you draw.",
             "Go on, then. Good luck. Come back now and then and tell me what it looks like. I haven't seen past that ridge in eleven years."};
     /** The line that holds the coal out. */
-    static final int COAL = 7;
+    static final int COAL = 12;
     /** Her first line (ticks into the scene), the letters a moment after it, the pause between lines, and how long her hand stays out. */
     static final int L1 = 16, DELIVER = 70, GAP = 12, WAIT = 20 * 30;
     /** After the coal is taken, before her next line. */
@@ -345,6 +352,8 @@ public final class FirstScenes {
         r.completing = true;
         try {
             QuestEngine.advance(p, "talk", "ilse", 1);
+            // the hundred, told: the Bell Book opens on the Ember's lead (SPEC §43.15)
+            dev.awaken.core.api.BellHooks.told(p);
         } finally {
             r.completing = false;
         }
