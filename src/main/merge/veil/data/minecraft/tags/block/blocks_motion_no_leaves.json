@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:stillpoint_cloud",
+    "awaken:stillpoint_shrine",
+    "awaken:veil_glyph",
+    "awaken:veil_stone"
+  ]
+}

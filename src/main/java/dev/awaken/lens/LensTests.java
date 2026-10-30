@@ -85,9 +85,9 @@ final class LensTests {
     }
 
     /**
-     * Lens 2's heightfield sees a roof the game's heightmaps skip (SPEC §22): a mod block outside
-     * #minecraft:blocks_motion (Carillon's clay tiles) covers its column, under leaves too; a stone-brick roof and a
-     * torch read exactly as the heightmaps say.
+     * Lens 2's heightfield sees every roof (SPEC §22): Carillon's clay tiles cover their column (in the motion tag since
+     * SPEC §1's rule, so the heightmaps count them themselves), under leaves too; a stone-brick roof and a torch read
+     * exactly as the heightmaps say; a sign or a cobweb, which vanilla leaves out of the tag, is no roof.
      */
     private static void skippedRoof(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -97,9 +97,11 @@ final class LensTests {
         }
         Block tiles = BuiltInRegistries.BLOCK.getValue(Awaken.id("clay_tiles"));
         h.assertTrue(tiles != Blocks.AIR, "Carillon's clay tiles are registered");
-        h.assertTrue(LensHeights.skipped(tiles.defaultBlockState()), "clay tiles stand solid outside the motion tag");
+        h.assertFalse(LensHeights.skipped(tiles.defaultBlockState()), "the heightmaps count clay tiles themselves");
         h.assertFalse(LensHeights.skipped(Blocks.STONE_BRICKS.defaultBlockState()), "the heightmaps count stone bricks themselves");
         h.assertFalse(LensHeights.skipped(Blocks.TORCH.defaultBlockState()), "a torch is no roof");
+        h.assertFalse(LensHeights.skipped(Blocks.OAK_SIGN.defaultBlockState()), "a sign is no roof");
+        h.assertFalse(LensHeights.skipped(Blocks.COBWEB.defaultBlockState()), "a cobweb is no roof");
         for (int dx = 1; dx <= 3; dx += 2) for (int dz = 1; dz <= 3; dz += 2) {
             level.setBlock(o.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
         }

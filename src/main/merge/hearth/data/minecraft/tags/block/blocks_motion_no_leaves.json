@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:forge",
+    "awaken:hearth_anchor",
+    "awaken:reassessment_monolith",
+    "awaken:spire_board",
+    "awaken:target_dummy"
+  ]
+}
