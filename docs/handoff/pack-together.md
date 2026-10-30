@@ -7,8 +7,10 @@ the story starts together, friends share one Hearth as members, and a Hearth can
 - **The WIP (ebf8841) finished.** It built as it was; its one failing test (`together_server_throttle_and_as`) passed
   a UUID to `/awaken as`, which vanilla's player argument never takes. The test now names its two players.
 - **origin/build/awaken-v1 merged in** as it moved during the session: 2e05a76 (the CI workflow, the cloud hand-off,
-  holo cards, lands polish), 90801b4 (adaptive gate music) and 1dc0a2e (the Look switch, JEI/Jade). One SPEC §12
-  conflict: both sides added an API line; both are kept.
+  holo cards, lands polish), 90801b4 (adaptive gate music), 1dc0a2e (the Look switch, JEI/Jade), aea2876, and finally
+  41492e5, where the main session had merged this branch (at 4d12c7a) with pack/throughput's GameTest fixes. One SPEC
+  §12 conflict on the way: both sides added an API line; both are kept. pack/together's code is now the same as
+  build/awaken-v1's.
 - **All 17 audit items are fixed**, each with GameTests of two or more players; the audit doc lists them per item with
   the player count, and a "Deferred" section for what is left.
 - **Found and fixed while testing:**
@@ -83,16 +85,20 @@ Entity)` (who of the party shares a kill; `Parties.SHARE_RANGE` 32).
   `Parties.sharing` as the tested home kills), and the stop test can't fill hearth `Breaks.ACTIVE` or Echo `Duty`
   before clearing them.
 - Not this branch: earlier tests leave awakened mock players and blocks at the shared isolated-test spot, which trips
-  order-dependent tests. `gates_surface_respects_builds` failed twice locally that way (each time right after
-  `hearth_cottage_is_a_sanctuary`); pack/throughput's fix for it (bb3dc21) is ported here unchanged. The Together tests
-  clean up after themselves. `fauna_p3_caves_spawn` failed once locally: it is on the hand-off's known-flake list until
-  pack/throughput lands.
+  order-dependent tests ("nearest player" and "untouched ground" checks). pack/throughput fixed the two that showed up
+  here (`gates_surface_respects_builds`, `fauna_p3_caves_spawn`), and the Together tests clean up after themselves, but
+  the leaks themselves remain: worth a small task of its own (remove every player a test creates, success or failure).
 
 ## Tours for the Mac
 No new looks, so no screenshot tour. Worth one manual two-client LAN session before release: invite and share a
 Hearth, a party gate (sealing, shared kills), and a shared dream.
 
 ## CI
-Built and tested in the cloud VM (JDK 25.0.5 from foojay): `./gradlew build runGameTestServer`, "All 362 required tests
-passed" on the final merged code (346 before the sound, look and comfort tests came in with the later merges). GitHub Actions: the
-GameTests run for this branch's head on pack/together.
+- Cloud VM (JDK 25.0.5 from foojay): `./gradlew build runGameTestServer`, "All 362 required tests passed" on the merged
+  code before the last build merge.
+- GitHub Actions, pack/together at 925d95a: run 40107267413, **green**
+  (https://github.com/euansprr-dev/awaken/actions/runs/40107267413). The same tree is build/awaken-v1 at 41492e5,
+  green in run 40106636455.
+- Earlier runs on this branch (40103832305, 40105135696) caught one real test bug of mine
+  (`together_dream_cells_come_back` assumed the order cells come back in; fixed in 23df1d0); everything else red there
+  was the known timing flakes pack/throughput has since fixed.
