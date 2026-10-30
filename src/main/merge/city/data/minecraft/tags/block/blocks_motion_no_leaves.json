@@ -1,0 +1,33 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:arrow_loop",
+    "awaken:ashlar",
+    "awaken:bench",
+    "awaken:cart",
+    "awaken:cask",
+    "awaken:chimney_bricks",
+    "awaken:city_bricks",
+    "awaken:clay_tile_slab",
+    "awaken:clay_tile_stairs",
+    "awaken:clay_tiles",
+    "awaken:crate",
+    "awaken:flower_box",
+    "awaken:goods_shelf",
+    "awaken:hay_cart",
+    "awaken:lit_window",
+    "awaken:loading_door",
+    "awaken:market_table",
+    "awaken:notice_board",
+    "awaken:planter",
+    "awaken:plaster",
+    "awaken:portcullis",
+    "awaken:produce",
+    "awaken:sack",
+    "awaken:slate_tile_slab",
+    "awaken:slate_tile_stairs",
+    "awaken:slate_tiles",
+    "awaken:stall_counter",
+    "awaken:timber"
+  ]
+}

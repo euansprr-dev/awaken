@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "awaken:foundry_crucible",
+    "awaken:granary_keystone",
+    "awaken:ledger_desk",
+    "awaken:pond_rot",
+    "awaken:storehouse_drop",
+    "awaken:vent_stone"
+  ]
+}

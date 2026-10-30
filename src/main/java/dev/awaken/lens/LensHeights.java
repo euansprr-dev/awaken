@@ -1,5 +1,6 @@
 package dev.awaken.lens;
 
+import dev.awaken.core.MotionTags;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -14,7 +15,8 @@ import java.util.function.Predicate;
  * {@code #minecraft:blocks_motion}, which holds the game's blocks and only the mod blocks a tag adds, so a room of
  * Carillon's city bricks under clay tiles read as open sky: Lens lit it like the street, and only the screen-space
  * contact shadows (the door frame's, a few blocks long) shaped that light, sliding as you walked (Euan 2026-10-29).
- * Pure rules over a chunk, nothing allocated.
+ * Awaken's own blocks are in the tag since 2026-10-30 ({@link MotionTags}), so this now catches only another mod's
+ * untagged block. Pure rules over a chunk, nothing allocated.
  */
 public final class LensHeights {
     private static final Predicate<BlockState> SKIPPED = LensHeights::skipped;
@@ -23,11 +25,12 @@ public final class LensHeights {
 
     /**
      * A block the heightmaps skip that stands as solid as one they count: the rule the tag replaced (a collision box
-     * most of a block, or a whole block high; the game still keeps it as {@code isSolid}).
+     * most of a block, or a whole block high; the game still keeps it as {@code isSolid}), less the kinds vanilla leaves
+     * out on purpose (signs, webs, layers: {@link MotionTags#leftOut}), which are no roof here either.
      */
     @SuppressWarnings("deprecation")
     public static boolean skipped(BlockState st) {
-        return st.isSolid() && !st.is(BlockTags.BLOCKS_MOTION_IN_HEIGHTMAP);
+        return st.isSolid() && !st.is(BlockTags.BLOCKS_MOTION_IN_HEIGHTMAP) && !MotionTags.leftOut(st.getBlock());
     }
 
     /**

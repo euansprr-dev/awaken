@@ -24,7 +24,7 @@ Hard rules:
 
 | Module (package `dev.awaken.*`) | Owns |
 |---|---|
-| `core` | mod entry, config, shared registries helpers, `AwakenNet`, commands root `/awaken`, `Forces` tags, `PlayDays`, `Rng`, debug |
+| `core` | mod entry, config, shared registries helpers, `AwakenNet`, commands root `/awaken`, `Forces` tags, the motion tags rule (`MotionTags`), `PlayDays`, `Rng`, debug |
 | `signal` | Signal windows (server API + client HUD), toast queue, Day's End card |
 | `progression` | Level/XP/ranks/stats (`Profile` attachment), counters, Reassessment, Truths, Titles, Latents, Paths, Directives, Daily Regimen, Director (pacing + "new thing" rhythm), Status screen (4 tabs) |
 | `powers` | power framework, all powers, Power Cores, energy, cooldowns, keybind casting, Five Forces interactions, a power's shake (its hit-stop is every blow's, `core.api.CombatFeedback`) |
@@ -54,6 +54,23 @@ Rules for builders:
   (as `/awaken <module> ...` subcommands via `AwakenCommands.register(...)`), and GameTests.
 - Cross-module calls go through the small public API classes listed in §12. Never reach into another module's internals.
 - Verify every Minecraft/NeoForge API against `/Volumes/MEDIA/Awaken/.ref` and `docs/api/*.md`. 26.3 differs from 1.21.1.
+- **Blocks that stop motion** (`core.MotionTags`; Euan 2026-10-30, "get the rain inside Awaken houses fixed"). 26.3
+  builds the heightmaps that rain, snow, lightning, spawning and Lens read from `#minecraft:blocks_motion`, and
+  suffocation, fluid push, teleport targets and lava's fire from the tags it feeds, so a mod block is air to all of
+  them until a tag adds it (rain fell inside Carillon's clay-tile houses). The rule is vanilla's own and gives
+  vanilla's list back exactly: a block stops motion when any of its states is solid (`BlockState.isSolid`: a collision
+  box most of a block or a whole block high, or `forceSolidOn`), except webs (they slow, never stop), layer blocks (snow
+  layers, our drifts: thin layers would float the rain), standing and wall signs, and the bamboo sapling. Such a block
+  goes in `#minecraft:blocks_motion_no_leaves` from its module's
+  `src/main/merge/<module>/data/minecraft/tags/block/blocks_motion_no_leaves.json`; leaves go in `#minecraft:leaves`.
+  322 blocks joined on 2026-10-30. GameTest `core_blocks_motion` walks every `awaken:` block and names each one the rule
+  says should stop motion and no tag holds (exceptions in `BlocksMotionTests.EXCEPT`, each with its reason; none
+  today), checks the rule against vanilla's own tag, and builds a city-brick house under clay tiles whose heightmaps
+  must sit on its roof. Old saves keep their saved heightmaps, so a chunk that loads without the
+  `awaken:motion_heights` mark at `MotionTags.HEIGHTS` (1) re-primes its two motion heightmaps once (only when a
+  section's palette holds one of our tagged blocks), before it reaches the client, and is marked; bump `HEIGHTS`
+  whenever blocks join the tags. Every reader of those heightmaps (citizens' footing, room scans, village growth,
+  spawns, Far Sight, Delve's sense) now sees Awaken roofs and walls the way it sees vanilla's.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -5304,8 +5321,9 @@ magic.
   walked, so land without one costs one palette check a section and a chunk read. Swift's camera cover (texel 21)
   takes the same rule at the camera's column. A room of any block now reads as covered: the model's fade under cover
   and the 85% floor hold inside it, and its light no longer rests on the screen-space contact shadows alone, so it
-  stays put as you walk. The game's own heightmaps (rain, spawning, fire) still skip those blocks: a module that
-  builds with its own blocks adds them to `#minecraft:blocks_motion_no_leaves`. GameTest `lens_heights_skipped_roof`;
+  stays put as you walk. Since 2026-10-30 every solid Awaken block is in the tag (§1, "Blocks that stop motion"), so
+  the walk catches only another mod's untagged block; the kinds vanilla leaves out (signs, webs, layers) are no roof
+  here either. GameTest `lens_heights_skipped_roof`;
   tour `tools/autopilot/lens-door-light-look.txt` (the same room in stone bricks and in city bricks under clay tiles,
   a door toward the morning sun, from four places across it).
   A ring addressed by world block modulo 1024, a 64×64-chunk window centred on the camera's chunk: a chunk
