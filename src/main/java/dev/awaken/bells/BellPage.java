@@ -33,7 +33,8 @@ final class BellPage {
         }
 
         List<List<String>> leads = new ArrayList<>();
-        b.leads.entrySet().stream().sorted((x, y) -> Long.compare(y.getValue().since, x.getValue().since)).forEach(e -> {
+        // a held bell's lead is done: never listed, even from a save made before ringing it dropped its lead (SPEC §27.12)
+        b.leads.entrySet().stream().filter(e -> !b.held.containsKey(e.getKey())).sorted((x, y) -> Long.compare(y.getValue().since, x.getValue().since)).forEach(e -> {
             BellCatalog.Def d = BellCatalog.of(e.getKey());
             BellBook.Lead l = e.getValue();
             List<String> hows = new ArrayList<>();

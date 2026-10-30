@@ -109,6 +109,7 @@ public final class DescentTravel {
         ServerPlayer p = moved != null ? moved : player;
         p.resetFallDistance();
         GRACE.put(p.getUUID(), target.getGameTime() + 120);
+        dev.awaken.core.api.Promises.kept(p, "stratum:" + depth); // the sealed way down, taken (SPEC §27.12)
         onArrive(p, depth, arrival, from, strain);
     }
 

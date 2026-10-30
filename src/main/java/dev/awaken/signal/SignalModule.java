@@ -33,6 +33,19 @@ public final class SignalModule {
             HorizonSync.clear();
             SignalCommands.clear();
         });
+        // what this module puts in front of a player as something to do (SPEC §27.12): the destination, the Now
+        // suggestions the band lists, decisions waiting
+        dev.awaken.core.api.Shown.register("destination", p -> dev.awaken.core.api.Destinations.get(p).map(t -> java.util.List.of(t.name())).orElse(java.util.List.of()));
+        dev.awaken.core.api.Shown.register("now", p -> {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (var s : dev.awaken.core.api.NowHooks.collect(p, 64)) out.add(s.text().getString());
+            return out;
+        });
+        dev.awaken.core.api.Shown.register("choices", p -> {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (SignalWindow w : Signal.pending(p)) out.add(w.title().getString() + w.body().map(b -> " · " + b.getString()).orElse(""));
+            return out;
+        });
         SignalCommands.register();
         SignalTests.register();
         NoticeHistoryTests.register();

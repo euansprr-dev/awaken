@@ -39,6 +39,8 @@ public final class MouthPointer {
 
     static final int RADIUS = 400, AT_HOME = 160, LODE_NEAR = 48, LODE_MIN = 20;
     static final String ACTION = "delve_mark";
+    /** A marked mouth's goal: the home still short of this metal ("metal/iron"). */
+    static final String GOAL = "metal/";
 
     /**
      * What the search found for one home and metal: the mouth, or nothing (a finished search with no answer), and the cave
@@ -56,20 +58,25 @@ public final class MouthPointer {
     /** The answers whose window was sent, per player (home + metal), so it's offered once. */
     private static final Map<UUID, String> OFFERED = new HashMap<>();
     private static final Map<UUID, Destinations.Target> PENDING = new HashMap<>();
+    /** The metal each pending mark is for: its goal, so the mark goes once the home has enough (SPEC §27.12). */
+    private static final Map<UUID, String> PENDING_METAL = new HashMap<>();
 
     static void register() {
         Checklist.register(MouthPointer::task);
+        Destinations.doneWhen("metal", (p, metal) -> HearthHooks.metalNeed(p).map(n -> !n.metal().equals(metal)).orElse(true));
         Signal.onAction(ACTION, MouthPointer::answer);
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
             UUID id = e.getEntity().getUUID();
             ASKED.remove(id);
             OFFERED.remove(id);
             PENDING.remove(id);
+            PENDING_METAL.remove(id);
         });
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, e -> {
             ASKED.clear();
             OFFERED.clear();
             PENDING.clear();
+            PENDING_METAL.clear();
         });
     }
 
@@ -187,6 +194,7 @@ public final class MouthPointer {
         };
         PENDING.put(p.getUUID(), new Destinations.Target(name, Level.OVERWORLD.identifier(),
                 new BlockPos(s.x(), s.y(), s.z()), "spot"));
+        PENDING_METAL.put(p.getUUID(), a.metal());
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Old workings"))
                 .body(Component.literal(line(s, a.home(), a.metal(), a.place())))
                 .choice(ACTION + ":mark", "Mark it on my map", "Not now").topic("delve_mark").ttl(20 * 60).build());
@@ -194,7 +202,8 @@ public final class MouthPointer {
 
     private static void answer(ServerPlayer p, String action, boolean yes) {
         Destinations.Target t = PENDING.remove(p.getUUID());
-        if (yes && t != null) Destinations.set(p, t);
+        String metal = PENDING_METAL.remove(p.getUUID());
+        if (yes && t != null) Destinations.set(p, t, metal == null ? "" : GOAL + metal);
     }
 
     static @Nullable Ore ore(String metal) {

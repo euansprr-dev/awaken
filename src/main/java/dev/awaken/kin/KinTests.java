@@ -23,6 +23,7 @@ final class KinTests {
         AwakenTests.register("kin_ore_shed_limits", 40, KinTests::oreShedLimits);
         AwakenTests.register("kin_fields_harvest", 400, KinTests::fieldsHarvest);
         AwakenTests.register("kin_rumours_real", 100, KinTests::rumoursReal);
+        AwakenTests.register("kin_done_never_shows", 200, KinTests::doneNeverShows);
     }
 
     /** Help raises Kinship through its steps; a killing drops it far and the kind runs for days. */
@@ -118,5 +119,51 @@ final class KinTests {
         h.assertFalse(page.home().isEmpty(), "the page's Home always says something");
         if (any) h.assertFalse(page.kin().isEmpty(), "the Kin list holds a rumour");
         h.succeed();
+    }
+
+    /**
+     * A done goal never shows, for the beasts (SPEC §27.12, swept with core.api.Shown): a Track is done the moment its kind
+     * is met anywhere; the first fire's Lampwing has no Track (it's by your fire); and once it lives with you the Track
+     * goes on its own and nothing anywhere still asks for a Lampwing.
+     */
+    static void doneNeverShows(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        dev.awaken.progression.Progression.awaken(p);
+        BlockPos anchor = h.absolutePos(new BlockPos(1, 2, 1)), nook = h.absolutePos(new BlockPos(3, 2, 3));
+        dev.awaken.hearth.HearthData homes = dev.awaken.hearth.HearthService.data(level.getServer());
+        dev.awaken.hearth.HearthRecord rec = new dev.awaken.hearth.HearthRecord(p.getUUID(), "test", anchor, dev.awaken.hearth.HearthService.OVERWORLD);
+        rec.name = "Ashford";
+        homes.put(rec);
+        // met before its rumour was followed: the Track's job is done wherever one was met
+        h.assertFalse(dev.awaken.core.api.Destinations.done(p, "kin/burrowbun"), "a Burrowbun not met yet: still to find");
+        Kinship ks = Kinship.of(p);
+        ks.kind(KinKind.BURROWBUN).met = true;
+        Kinship.save(p, ks);
+        h.assertTrue(dev.awaken.core.api.Destinations.done(p, "kin/burrowbun"), "met anywhere: done");
+        h.assertFalse(dev.awaken.core.api.Destinations.done(p, "kin/burrowbun/home"), "going back for one waits until one lives with you");
+        // the first fire's Lampwing, tamed at the fire
+        ks = Kinship.of(p);
+        ks.lesson = 1;
+        Kinship.save(p, ks);
+        h.assertFalse(dev.awaken.core.api.Shown.mentioning(p, "watching your fire").isEmpty(), "the page says where it is: " + dev.awaken.core.api.Shown.all(p));
+        KinPage.track(p, KinKind.LAMPWING);
+        h.assertTrue(dev.awaken.core.api.Destinations.get(p).isEmpty(), "nothing to Track: it's by your fire");
+        dev.awaken.core.api.Destinations.set(p, new dev.awaken.core.api.Destinations.Target("Where Lampwings live (roughly)",
+                net.minecraft.world.level.Level.OVERWORLD.identifier(), anchor.offset(300, 0, 0), "rumour"), "kin/lampwing");
+        h.assertFalse(dev.awaken.core.api.Shown.mentioning(p, "Lampwings live").isEmpty(), "a Track shows while it's still to do");
+        KinBeast b = KinHome.spawn(level, KinKind.LAMPWING, nook, EntitySpawnReason.COMMAND);
+        h.assertTrue(b != null, "a Lampwing spawns");
+        b.addTag("awaken_kin_lesson");
+        KinHome.settle(level, b, anchor, nook, p);
+        h.assertTrue(Kinship.of(p).lesson == 2, "settling it ends the lesson");
+        h.succeedWhen(() -> {
+            h.assertTrue(dev.awaken.core.api.Destinations.get(p).isEmpty(), "the Track went on its own once a Lampwing lives with you");
+            for (String gone : new String[] {"Lampwing", "Nothing lights your yard", "watching your fire"})
+                h.assertTrue(dev.awaken.core.api.Shown.mentioning(p, gone).isEmpty(), "'" + gone + "' still shows: " + dev.awaken.core.api.Shown.mentioning(p, gone));
+            KinWorld.get(level.getServer()).leave(anchor, b.getUUID());
+            b.discard();
+            homes.remove(p.getUUID());
+        });
     }
 }

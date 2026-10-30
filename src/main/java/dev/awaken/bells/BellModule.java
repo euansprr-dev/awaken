@@ -38,6 +38,19 @@ public final class BellModule {
     public static void init(IEventBus modBus) {
         BellContent.register(modBus);
         modBus.addListener(BellNet::register);
+        // a tracked lead's card goes the moment its bell is held, however it came home (SPEC §27.12)
+        dev.awaken.core.api.Destinations.doneWhen("bell", (p, no) -> {
+            try {
+                return Bells.book(p).held.containsKey(Integer.parseInt(no));
+            } catch (NumberFormatException e) {
+                return true;
+            }
+        });
+        dev.awaken.core.api.Shown.register("bells", p -> {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (java.util.List<String> l : BellPage.build(p).leads()) out.add(l.get(1) + ": " + l.get(2).replace('\n', ' '));
+            return out;
+        });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener((ServerTickEvent.Post e) -> Bells.tick(e.getServer()));
         bus.addListener((LivingDeathEvent e) -> {

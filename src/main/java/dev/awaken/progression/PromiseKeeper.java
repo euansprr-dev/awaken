@@ -70,6 +70,30 @@ public final class PromiseKeeper {
         RankHooks.onRankUp((p, r) -> recheck(p, true));
         Progression.onLevelReached((p, level) -> recheck(p, true));
         HorizonHooks.register(PromiseKeeper::horizon);
+        // Saved for later, as the band lists it (SPEC §27.12)
+        dev.awaken.core.api.Shown.register("saved", p -> {
+            List<String> out = new ArrayList<>();
+            for (PromiseBook.Entry e : book(p).entries()) out.add(e.answered() ? ready(e) : e.what() + " · needs " + e.need().words());
+            return out;
+        });
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, e -> {
+            if (e.getServer().getTickCount() % 40 != 17) return;
+            for (ServerPlayer p : e.getServer().getPlayerList().getPlayers()) walkedIn(p);
+        });
+    }
+
+    /**
+     * A land that was too dangerous, answered, and now stood in: you've gone, so it's done and leaves the list (SPEC
+     * §27.12). A land you're in only while it's still too dangerous stays.
+     */
+    static boolean walkedIn(ServerPlayer p) {
+        PromiseBook b = book(p);
+        for (PromiseBook.Entry e : b.entries) {
+            if (!e.answered() || !inside(p, e)) continue;
+            if (b.remove(e.key())) changed(p, b, "walked into " + e.key());
+            return true;
+        }
+        return false;
     }
 
     public static PromiseBook book(ServerPlayer p) {

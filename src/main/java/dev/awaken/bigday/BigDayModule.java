@@ -29,6 +29,7 @@ public final class BigDayModule {
     public static void init(IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> BigDays.tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener((LivingDeathEvent e) -> BigDays.died(e));
+        dev.awaken.core.api.Destinations.doneWhen("raid", BigDays::raidDone);
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("admin").requires(AwakenCommands.admin()).then(Commands.literal("bigday")
                 .then(Commands.literal("raid").executes(c -> BigDays.force(c.getSource().getPlayerOrException(), false) ? 1 : 0)
                         .then(Commands.literal("first").executes(c -> BigDays.force(c.getSource().getPlayerOrException(), true) ? 1 : 0)))

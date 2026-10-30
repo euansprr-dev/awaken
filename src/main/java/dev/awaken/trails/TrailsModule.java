@@ -23,6 +23,12 @@ public final class TrailsModule {
     public static void init(IEventBus modBus) {
         TrailsContent.register(modBus);
         modBus.addListener(TrailsModule::registerPayloads);
+        // "What you can do now" in the Journal's trails, swept with every other place a goal shows (SPEC §27.12)
+        dev.awaken.core.api.Shown.register("trails", p -> {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (var r : TrailEngine.view(p, TrailState.of(p)).now()) out.add(r.title() + ": " + r.step());
+            return out;
+        });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(Trails::addReload);
         bus.addListener(TrailsModule::onPlayerTick);

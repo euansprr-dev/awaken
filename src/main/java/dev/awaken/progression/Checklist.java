@@ -103,6 +103,14 @@ public final class Checklist {
     private static final Map<UUID, BlockPos> LEDGE = new HashMap<>();
 
     static void init() {
+        // the card's rows still to do, swept with every other place a goal shows (SPEC §27.12)
+        dev.awaken.core.api.Shown.register("card", p -> {
+            Task t = now(p);
+            if (t == null) return List.of();
+            List<String> out = new ArrayList<>();
+            for (Row r : t.rows()) if (!r.done()) out.add(t.title() + ": " + r.text());
+            return out;
+        });
         NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
             SENT.remove(e.getEntity().getUUID());

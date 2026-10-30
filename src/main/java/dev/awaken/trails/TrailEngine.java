@@ -56,6 +56,7 @@ public final class TrailEngine {
             String id = e.getKey();
             TrailDef def = e.getValue();
             if (st.finished.contains(id)) continue;
+            boolean opening = false;
             if (!st.opened.contains(id)) {
                 if (!canOpen(p, st, def)) {
                     String lock = lockToken(p, st, def);
@@ -63,19 +64,16 @@ public final class TrailEngine {
                             "The " + def.title() + " trail"); // What waits: a lock you have met (idempotent)
                     continue;
                 }
-                open(p, st, id, def, true);
-                dirty = true;
+                opening = true;
             }
+            if (latch(p, st, id, def)) dirty = true;
             boolean all = true;
-            for (TrailDef.Step s : def.steps()) {
-                String k = TrailState.key(id, s.id());
-                if (st.latched.contains(k)) continue;
-                if (!s.done().isEmpty() && Conditions.allMet(p, s.done())) {
-                    st.latched.add(k);
-                    dirty = true;
-                } else {
-                    all = false;
-                }
+            for (TrailDef.Step s : def.steps()) all &= done(st, id, s);
+            if (opening) {
+                // a trail whose every step is already done opens quietly and finishes at once: never "a new trail" for
+                // something you've done (SPEC §27.12)
+                open(p, st, id, def, !all);
+                dirty = true;
             }
             if (all) {
                 finish(p, st, id, def);
@@ -86,6 +84,23 @@ public final class TrailEngine {
         offerTip(p, st);
         send(p, view(p, st));
         return true;
+    }
+
+    /**
+     * Latches every step seen done; true when one was new. In a linear trail a later step done means every step before it
+     * is done, whatever route got there (SPEC §27.12): the fire set from Ilse's coal ticks "find your ground" too.
+     */
+    static boolean latch(ServerPlayer p, TrailState st, String id, TrailDef def) {
+        boolean changed = false, later = false;
+        List<TrailDef.Step> steps = def.steps();
+        for (int i = steps.size() - 1; i >= 0; i--) {
+            TrailDef.Step s = steps.get(i);
+            String k = TrailState.key(id, s.id());
+            boolean d = st.latched.contains(k) || def.linear() && later || !s.done().isEmpty() && Conditions.allMet(p, s.done());
+            if (d && st.latched.add(k)) changed = true;
+            later |= d;
+        }
+        return changed;
     }
 
     static boolean canOpen(ServerPlayer p, TrailState st, TrailDef def) {
