@@ -82,6 +82,12 @@ public final class Stilled extends SavedData {
         return get(p.level().getServer()).marks.getOrDefault(p.getUUID(), Set.of()).contains(mark);
     }
 
+    /**
+     * A Track's goal (SPEC §27.12): "stilled/opened:<settlement>" (the key's chest opened) or "stilled/done:<figure>" (the
+     * keepsake shown to its family); the card goes the moment the mark is made, wherever you are.
+     */
+    static final String GOAL = "stilled/";
+
     static boolean mark(ServerPlayer p, String mark) {
         Stilled s = get(p.level().getServer());
         boolean added = s.marks.computeIfAbsent(p.getUUID(), u -> new HashSet<>()).add(mark);
@@ -221,7 +227,8 @@ public final class Stilled extends SavedData {
         String where = far < 24 ? "You're nearly there." : "That's about " + far + " blocks " + StilledText.bearing(dx, dz) + ".";
         String tag = name.isEmpty() ? "The tag says \"By the well.\" The rest of it has worn away. " : "The tag says \"" + name + ", by the well.\" ";
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("[" + tag + where + "]")).topic("stilled").ttl(20 * 8).build());
-        if (far >= 24) Destinations.set(p, new Destinations.Target(name.isEmpty() ? "The key's chest" : name, Level.OVERWORLD.identifier(), at, "spot"));
+        if (far >= 24) Destinations.set(p, new Destinations.Target(name.isEmpty() ? "The key's chest" : name, Level.OVERWORLD.identifier(), at, "spot"),
+                GOAL + "opened:" + d.settlement());
     }
 
     /**
@@ -256,7 +263,7 @@ public final class Stilled extends SavedData {
         BlockPos at = BlockPos.containing(where);
         String person = city.personName(best);
         say(p, "[" + family + " live in Carillon. " + person + " is in " + city.district(at) + " right now. Show them the " + thing + ".]");
-        Destinations.set(p, new Destinations.Target(person, Level.OVERWORLD.identifier(), at, "spot"));
+        Destinations.set(p, new Destinations.Target(person, Level.OVERWORLD.identifier(), at, "spot"), GOAL + "done:" + d.figure());
     }
 
     static boolean ofFamily(Settlement s, int rec, String family) {

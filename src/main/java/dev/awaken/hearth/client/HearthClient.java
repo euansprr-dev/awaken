@@ -72,6 +72,7 @@ public final class HearthClient {
     private static void tooltip(ItemTooltipEvent e) {
         if (e.getItemStack().is(HearthContent.MEDITATION_MAT.get().asItem())) {
             e.getToolTip().add(Component.literal("Crafting table: wool · amethyst shard · wool").withStyle(ChatFormatting.GRAY));
+            e.getToolTip().add(Component.literal("Amethyst: mine it in a geode underground").withStyle(ChatFormatting.GRAY));
             e.getToolTip().add(Component.literal("Any wool colours · Details in Journal › Hearth").withStyle(ChatFormatting.DARK_GRAY));
         }
         int t = e.getItemStack().getOrDefault(HearthContent.TEMPER.get(), 0);

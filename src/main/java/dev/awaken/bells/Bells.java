@@ -309,7 +309,7 @@ public final class Bells {
             // one bearing: it's within a hum's reach along it
             at = BlockPos.containing(l.hx, 64, l.hz);
         }
-        Destinations.set(p, new Destinations.Target(title(d, l), Level.OVERWORLD.identifier(), at, "bell"));
+        Destinations.set(p, new Destinations.Target(title(d, l), Level.OVERWORLD.identifier(), at, "bell"), "bell/" + no);
     }
 
     /** "The Barrow Bell?" once it's been seen or narrowed down, else "A bell's note". */

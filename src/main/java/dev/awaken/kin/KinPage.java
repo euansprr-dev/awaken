@@ -55,7 +55,7 @@ public final class KinPage {
                 if (living.containsKey(k) || shown >= NEEDS_SHOWN) continue;
                 String need = need(level, info, k);
                 if (need == null) continue;
-                home.add(List.of(need, full ? "" : rumour(p, k, from, true), full ? "" : k.id(), "need"));
+                home.add(List.of(need, full ? "" : rumour(p, k, from, true), full || lessonHere(p, k) ? "" : k.id(), "need"));
                 shown++;
             }
             for (String line : dev.awaken.kin.works.WorkPlans.lines(level, info.anchor(), Math.max(info.radius(), 32))) home.add(List.of(line, "", "", "need"));
@@ -97,6 +97,15 @@ public final class KinPage {
             }
         }
         return new KinNet.Page(home, beasts, kin);
+    }
+
+    /** The page's needs with their rumours, and the Kin list's rumours not yet followed (SPEC §27.12's sweep). */
+    static List<String> shown(ServerPlayer p) {
+        KinNet.Page page = build(p);
+        List<String> out = new ArrayList<>();
+        for (List<String> r : page.home()) if (r.get(3).equals("need")) out.add(r.get(1).isEmpty() ? r.get(0) : r.get(0) + " " + r.get(1));
+        for (List<String> r : page.kin()) if (!r.get(8).isEmpty()) out.add(r.get(1) + ": " + r.get(8));
+        return out;
     }
 
     /** What the home can't do yet without this kind, in the System's words; null when it isn't a need yet. */
@@ -205,15 +214,40 @@ public final class KinPage {
                 s.lastLine, rumour, Integer.toHexString(k.colour));
     }
 
-    /** Track: a rough bearing to where the kind lives (never the spot). */
+    /**
+     * Track: a rough bearing to where the kind lives (never the spot). Its goal goes with it (SPEC §27.12): finding one
+     * ends it the moment you meet one anywhere, and going back for one you met ends when one lives with you.
+     */
     static void track(ServerPlayer p, KinKind k) {
-        if (!k.built) return;
+        if (!k.built || lessonHere(p, k)) return;
         BlockPos from = Hearth.home(p).map(Hearth.HearthInfo::anchor).orElse(p.blockPosition());
         Kinship.Kind s = Kinship.of(p).kind(k);
-        BlockPos at = s.met && !s.rumour ? new BlockPos(s.metX, 64, s.metZ) : KinSpawner.rumourFor(p, k, from);
-        if (at == null) return;
-        Destinations.set(p, new Destinations.Target("Where " + plural(k) + " live (roughly)", Level.OVERWORLD.identifier(), KinSpawner.rough(p, k, at), "rumour"));
+        boolean back = s.met && !s.rumour;
+        BlockPos at = back ? new BlockPos(s.metX, 64, s.metZ) : KinSpawner.rumourFor(p, k, from);
+        if (at == null || trackDone(p, k.id() + (back ? HOME_GOAL : ""))) return;
+        Destinations.set(p, new Destinations.Target("Where " + plural(k) + " live (roughly)", Level.OVERWORLD.identifier(), KinSpawner.rough(p, k, at), "rumour"),
+                TRACK_GOAL + k.id() + (back ? HOME_GOAL : ""));
         KinWatch.say(p, "[Tracking roughly where " + plural(k) + " live. The card points the way, never the spot.]", 6);
+    }
+
+    /** The goal family of a kind's Track ("kin/lampwing", "kin/lampwing/home"). */
+    static final String TRACK_GOAL = "kin/", HOME_GOAL = "/home";
+
+    /**
+     * Whether a Track's goal is met: one of the kind met (any way: read, helped, or come to your fire), or for "/home",
+     * one living with you. Either way, one living with you ends it.
+     */
+    static boolean trackDone(ServerPlayer p, String goal) {
+        boolean home = goal.endsWith(HOME_GOAL);
+        KinKind k = KinKind.of(home ? goal.substring(0, goal.length() - HOME_GOAL.length()) : goal);
+        if (KinApi.livingWith(p.level(), p, k) > 0) return true;
+        Kinship.Kind s = Kinship.of(p).kinds.get(k);
+        return !home && s != null && s.met;
+    }
+
+    /** The first fire's Lampwing is by your fire, not out in the wild: nothing to track, the page says where it is. */
+    static boolean lessonHere(ServerPlayer p, KinKind k) {
+        return k == KinKind.LAMPWING && Kinship.of(p).lesson == 1;
     }
 
     static String plural(KinKind k) {

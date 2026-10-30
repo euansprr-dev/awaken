@@ -84,6 +84,7 @@ public final class Possession {
             return;
         }
         s.possessed = m;
+        dev.awaken.core.api.Promises.kept(sp, "possession"); // saved for later, and now done (SPEC §27.12)
         s.possessedHadNoGravity = m.isNoGravity();
         s.ignited = false;
         s.input = new VeilPayloads.PossessInput(0, 0, false, false, m.getYRot(), m.getXRot());

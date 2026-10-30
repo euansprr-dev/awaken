@@ -84,6 +84,21 @@ public final class BigDays {
     static final int MAX_BROKEN = 10, CARRIED = 9;
     /** One broken block is put back this often. */
     static final int MEND_EVERY = 300;
+    /** The raid's chest on your card (SPEC §27.12): "raid/<packed pos>", done once it's emptied or gone. */
+    static final String RAID_GOAL = "raid/";
+
+    /** Whether the chest a raid dropped what it carried in has been emptied or is gone (unloaded: not yet). */
+    static boolean raidDone(ServerPlayer p, String packed) {
+        BlockPos at;
+        try {
+            at = BlockPos.of(Long.parseLong(packed));
+        } catch (NumberFormatException e) {
+            return true;
+        }
+        ServerLevel level = p.level().getServer().overworld();
+        if (!level.isLoaded(at)) return false;
+        return !(level.getBlockEntity(at) instanceof ChestBlockEntity c) || c.isEmpty();
+    }
     static final String TAG = "awaken_raid", LORD = "awaken_raid_lord";
 
     // ---- what other modules ask -----------------------------------------------------------------------------------
@@ -396,7 +411,8 @@ public final class BigDays {
         for (ServerPlayer p : household(level, h, Integer.MAX_VALUE)) {
             String what = broke.isEmpty() ? "" : "They broke " + broke.size() + (broke.size() == 1 ? " door or window" : " doors and windows") + " on the " + compass(h.pos, r.breach) + " side. It'll be put right over the day. ";
             String took = cache == null ? "" : "They carried off food from your larder and dropped it in a chest along their trail. It's on your card.";
-            if (cache != null) Destinations.set(p, new Destinations.Target("What the raid carried off", Level.OVERWORLD.identifier(), cache, "raid"));
+            if (cache != null) Destinations.set(p, new Destinations.Target("What the raid carried off", Level.OVERWORLD.identifier(), cache, "raid"),
+                    RAID_GOAL + cache.asLong());
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("A raid came while you were away"))
                     .body(Component.literal((what + took).isEmpty() ? "Your home held. Nothing was taken." : what + took)).priority(6).ttl(20 * 12).build());
         }

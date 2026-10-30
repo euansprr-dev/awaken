@@ -242,8 +242,16 @@ final class GuideSections {
                     boolean ok = built || (c.have() & f.bit()) != 0;
                     flow.item(ICONS.computeIfAbsent(f, Furniture::icon), (ok ? "✓ " : "✗ ") + f.label, Glass.a(ok ? Glass.GOOD : Glass.AMBER, 1f));
                 }
-                flow.item(DOOR, (built ? "✓ " : "✗ ") + "all of it in one room", Glass.a(built ? Glass.GOOD : Glass.AMBER, 1f));
+                // where the ticked pieces stand: true to what's built (Euan, 2026-10-30: the door icon read as "no door")
+                boolean inRoom = built || !c.room().isEmpty();
+                flow.item(DOOR, (inRoom ? "✓ " : "✗ ") + (inRoom ? "in a closed room" : "all of it in one closed room"),
+                        Glass.a(inRoom ? Glass.GOOD : Glass.AMBER, 1f));
                 flow.end();
+                if (!built && !c.room().isEmpty()) {
+                    in.text("Ticked: what's in " + c.room() + ". Add the rest to that same room."
+                            + (c.roomKind().isEmpty() ? "" : " It stays your " + c.roomKind() + " too: one room can be several kinds."),
+                            Glass.a(Glass.GOOD, 0.9f));
+                }
                 if (t.condition != null) in.text("And " + t.condition + ".", Glass.a(built ? Glass.GOOD : Glass.AMBER, 0.9f));
                 if (!built) {
                     in.text(RULE, Glass.a(Glass.LABEL, 0.85f));
@@ -273,6 +281,9 @@ final class GuideSections {
             List<ItemStack> cells = new ArrayList<>(r.slots().size());
             for (List<Identifier> opts : r.slots()) cells.add(opts.isEmpty() ? ItemStack.EMPTY : stack(opts.get((int) (second % opts.size()))));
             ui.recipe(r.width(), r.height(), cells, result, r.count());
+            // the easy way first (Euan, 2026-10-30: the drop lists named creatures he'd never seen)
+            if (f == Furniture.MAT) ui.text("Amethyst: mine the purple crystal inside a geode underground. There are geodes in every land.",
+                    Glass.a(Glass.LABEL, 1f));
         }
     }
 

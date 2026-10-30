@@ -29,6 +29,7 @@ public final class StilledModule {
             if (e.getState().is(StilledContent.STILLED.get()) || e.getState().is(StilledContent.LEFT_CHEST.get())) e.setCanceled(true);
         });
         Settlements.onShown(Stilled::shown);
+        dev.awaken.core.api.Destinations.doneWhen("stilled", Stilled::has);
         Sources.declare("a Stilled hands it over when you read them (world.stilled.Stilled)", "stilled_letter", "stilled_key", "stilled_keepsake");
         Sources.declare("sat down along the roads and at empty settlements' edges as players come near (world.stilled.StilledPlacer)", "stilled");
         Sources.declare("stands by an empty settlement's well when a key's holder comes near (world.stilled.LeftChests)", "left_chest");

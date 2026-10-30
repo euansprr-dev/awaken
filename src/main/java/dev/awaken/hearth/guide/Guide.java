@@ -62,7 +62,8 @@ public final class Guide {
     public static final String TIP_SEEN = "guide_seen";
 
     /** The mat's basic crafting guidance, shared by its item tooltip and the existing Journal's Hearth page. */
-    public static final String MAT_RECIPE = "At a crafting table, put wool, an amethyst shard, then wool across one row. Any wool colours work.";
+    public static final String MAT_RECIPE = "At a crafting table, put wool, an amethyst shard, then wool across one row. Any wool colours work."
+            + " Amethyst: mine the purple crystal inside a geode underground; there are geodes in every land.";
     public static final String MAT_USE = "Place it beside your bed for better dreams. You can meditate without a mat.";
 
     /** Recipes the Anchor teaches when it takes root: the Hearth's furniture. */
@@ -208,18 +209,38 @@ public final class Guide {
                 dev.awaken.hearth.Comfort.landWords(h.land), dev.awaken.hearth.Comfort.restedMinutes(h.comfort), views);
     }
 
-    /** One room card from the last scan. Public for the tests. */
+    /**
+     * One room card from the last scan. Public for the tests. A piece is ticked only where it counts: in the one closed
+     * room that already holds the most of this kind (Euan, 2026-10-30: a Kitchen lit a crafting table and a furnace that
+     * stood anywhere in the radius, and "all of it in one room" read as a door that wasn't there; SPEC §27.12).
+     */
     public static GuideData.RoomCard card(RoomType t, HearthRecord h) {
-        int have = 0;
-        for (Furniture f : t.furniture) if (h.furniture.length > f.ordinal() && h.furniture[f.ordinal()] > 0) have |= f.bit();
         boolean closed = false;
         boolean byOren = false;
         List<BlockPos> built = new ArrayList<>();
+        Room best = null;
+        int bestHave = 0;
         for (Room r : h.rooms) {
-            for (Furniture f : t.furniture) if (r.count(f) > 0) closed = true;
+            int n = 0;
+            for (Furniture f : t.furniture) if (r.count(f) >= f.needed()) n++;
+            if (n > 0) closed = true;
+            if (n > bestHave || r.types().contains(t) && (best == null || !best.types().contains(t))) {
+                best = r;
+                bestHave = n;
+            }
             if (!r.types().contains(t)) continue;
             built.add(r.centre());
             if (h.cottage != null && r.contains(h.cottage)) byOren = true;
+        }
+        int have = 0;
+        String room = "", roomKind = "";
+        if (best != null) {
+            for (Furniture f : t.furniture) if (best.count(f) >= f.needed()) have |= f.bit();
+            RoomType kind = best.reading().purpose();
+            room = dev.awaken.hearth.settle.Settlers.roomName(h, best);
+            if (room.isEmpty()) room = kind == RoomType.SHELTER ? "that room" : "the " + kind.noun;
+            // a room can be several kinds at once: say so when the pieces stand in a room that's already something else
+            if (!best.types().contains(t) && kind != RoomType.SHELTER && kind != t) roomKind = kind.label;
         }
         String why = "";
         Optional<BlockPos> mark = Optional.empty();
@@ -230,7 +251,8 @@ public final class Guide {
                 if (reason.get().mark() && reason.get().at() != null) mark = Optional.of(reason.get().at());
             }
         }
-        return new GuideData.RoomCard(t.ordinal(), have, closed, built.size() > 8 ? List.copyOf(built.subList(0, 8)) : built, why, mark, byOren);
+        return new GuideData.RoomCard(t.ordinal(), have, closed, built.size() > 8 ? List.copyOf(built.subList(0, 8)) : built, why, mark, byOren,
+                room, roomKind);
     }
 
     private static Optional<GuideData.RecipeView> recipe(ServerPlayer sp, Furniture f) {

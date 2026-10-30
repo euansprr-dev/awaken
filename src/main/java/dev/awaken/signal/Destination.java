@@ -45,20 +45,22 @@ public final class Destination {
         ).apply(i, Data::new));
     }
 
-    public record Saved(String name, Identifier dimension, BlockPos at, String kind) {
+    /** {@code goal}: what it was set for ("kin/lampwing"), "" for a place the player picked (SPEC §27.12). */
+    public record Saved(String name, Identifier dimension, BlockPos at, String kind, String goal) {
         static final Codec<Saved> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("name").forGetter(Saved::name),
                 Identifier.CODEC.fieldOf("dimension").forGetter(Saved::dimension),
                 BlockPos.CODEC.fieldOf("at").forGetter(Saved::at),
-                Codec.STRING.optionalFieldOf("kind", "place").forGetter(Saved::kind)
+                Codec.STRING.optionalFieldOf("kind", "place").forGetter(Saved::kind),
+                Codec.STRING.optionalFieldOf("goal", "").forGetter(Saved::goal)
         ).apply(i, Saved::new));
 
         Destinations.Target target() {
             return new Destinations.Target(name, dimension, at, kind);
         }
 
-        static Saved of(Destinations.Target t) {
-            return new Saved(t.name(), t.dimension(), t.at().immutable(), t.kind());
+        static Saved of(Destinations.Target t, String goal) {
+            return new Saved(t.name(), t.dimension(), t.at().immutable(), t.kind(), goal);
         }
     }
 
@@ -77,13 +79,21 @@ public final class Destination {
             }
 
             @Override public void set(ServerPlayer p, Destinations.@Nullable Target t) {
-                Destination.set(p, t);
+                Destination.set(p, t, "");
+            }
+
+            @Override public void set(ServerPlayer p, Destinations.@Nullable Target t, String goal) {
+                Destination.set(p, t, goal);
+            }
+
+            @Override public String goal(ServerPlayer p) {
+                return p.getData(DATA).target().map(Saved::goal).orElse("");
             }
         });
     }
 
-    static void set(ServerPlayer p, Destinations.@Nullable Target t) {
-        Optional<Saved> next = Optional.ofNullable(t).map(Saved::of);
+    static void set(ServerPlayer p, Destinations.@Nullable Target t, String goal) {
+        Optional<Saved> next = Optional.ofNullable(t).map(x -> Saved.of(x, goal));
         if (p.getData(DATA).target().equals(next)) return;
         p.setData(DATA, new Data(SCHEMA, next));
         sync(p);
@@ -92,14 +102,14 @@ public final class Destination {
     /** The client asked (from the Atlas): a place in the dimension they stand in, named in a few words; or none. */
     static void request(ServerPlayer p, SignalPayloads.SetDestination msg) {
         if (!msg.set()) {
-            set(p, null);
+            set(p, null, "");
             return;
         }
         String name = msg.name().strip();
         if (name.isEmpty() || !p.level().isInWorldBounds(msg.at())) return;
         if (name.length() > NAME_MAX) name = name.substring(0, NAME_MAX - 1) + "…";
         String kind = KINDS.contains(msg.kind()) ? msg.kind() : "place";
-        set(p, new Destinations.Target(name, p.level().dimension().identifier(), msg.at(), kind));
+        set(p, new Destinations.Target(name, p.level().dimension().identifier(), msg.at(), kind), "");
     }
 
     static void sync(ServerPlayer p) {
@@ -119,12 +129,20 @@ public final class Destination {
         for (ServerPlayer p : server.getPlayerList().getPlayers()) check(p);
     }
 
-    /** Arrived: the destination has done its job, and says so in passing (a toast that isn't filed). */
+    /**
+     * Arrived: the destination has done its job, and says so in passing (a toast that isn't filed). One set for a goal
+     * also goes, quietly, the moment the goal is met by any route (SPEC §27.12): the Lampwing tracked but met at your fire.
+     */
     static boolean check(ServerPlayer p) {
         Optional<Saved> d = p.getData(DATA).target();
-        if (d.isEmpty() || p.isSpectator() || !p.level().dimension().identifier().equals(d.get().dimension())) return false;
+        if (d.isEmpty()) return false;
+        if (!d.get().goal().isEmpty() && Destinations.done(p, d.get().goal())) {
+            set(p, null, "");
+            return true;
+        }
+        if (p.isSpectator() || !p.level().dimension().identifier().equals(d.get().dimension())) return false;
         if (!arrived(p.blockPosition(), d.get().at(), d.get().kind())) return false;
-        set(p, null);
+        set(p, null, "");
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Destination reached · " + d.get().name()))
                 .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 4).fleeting().build());
         return true;
