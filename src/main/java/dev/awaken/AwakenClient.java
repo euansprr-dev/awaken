@@ -63,6 +63,7 @@ public final class AwakenClient {
         dev.awaken.atlas.client.AtlasClient.init(modBus);
         dev.awaken.arms.client.ArmsClient.init(modBus);
         dev.awaken.trails.client.TrailsClient.init(modBus);
+        dev.awaken.tasks.client.TasksClient.init(modBus);
         dev.awaken.wildlife.client.WildlifeClient.init(modBus);
         dev.awaken.delve.client.DelveClient.init(modBus);
         dev.awaken.caves.client.CavesClient.init(modBus);

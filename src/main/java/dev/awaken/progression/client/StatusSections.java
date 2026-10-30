@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Extension points for the band (key K): seven pages and never more (SPEC §30, §43.6): Status, Powers, Journal,
- * Hearth, Truths, Codex, Map. Modules add sections to a page from their client init; sections stack inside the page and scroll. A page can
+ * Extension points for the band (key K): six pages and never more (SPEC §30, §27.13): Status, Tasks, Hearth, Powers,
+ * Journal, Map. Modules add sections to a page from their client init; sections stack inside the page and scroll. A page can
  * instead open something of its own (the Map opens the Atlas table): {@link #setPageAction}.
  */
 public final class StatusSections {
@@ -17,7 +17,7 @@ public final class StatusSections {
 
     /** The band's pages, in the order of the rail. */
     public enum Tab {
-        STATUS("Status"), POWERS("Powers"), JOURNAL("Journal"), HEARTH("Hearth"), TRUTHS("Truths"), CODEX("Codex"), MAP("Map");
+        STATUS("Status"), TASKS("Tasks"), HEARTH("Hearth"), POWERS("Powers"), JOURNAL("Journal"), MAP("Map");
 
         private final String label;
 
@@ -177,6 +177,28 @@ public final class StatusSections {
     public static void add(Tab tab, Section section) {
         SECTIONS[tab.ordinal()].add(section);
         SECTIONS[tab.ordinal()].sort((a, b) -> Integer.compare(a.order(), b.order()));
+    }
+
+    /**
+     * A section shown on another page than the one it was written for (the Truths page's on Status, the Codex's on the
+     * Journal, SPEC §27.13): its own drawing, with a new place in the page's order and on the Journal's filters.
+     */
+    public static Section placed(Section s, int order, @Nullable Shelf shelf) {
+        return new Section() {
+            @Override public String title() { return s.title(); }
+            @Override public int order() { return order; }
+            @Override public boolean visible() { return s.visible(); }
+            @Override public int height(int width) { return s.height(width); }
+            @Override public void render(GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY, float partialTick) {
+                s.render(g, x, y, width, mouseX, mouseY, partialTick);
+            }
+            @Override public boolean click(double mouseX, double mouseY, int x, int y, int width) { return s.click(mouseX, mouseY, x, y, width); }
+            @Override public String note() { return s.note(); }
+            @Override public int noteColour() { return s.noteColour(); }
+            @Override public @Nullable Tab notePage() { return s.notePage(); }
+            @Override public boolean key(net.minecraft.client.input.KeyEvent event) { return s.key(event); }
+            @Override public @Nullable Shelf shelf() { return shelf; }
+        };
     }
 
     public static List<Section> of(Tab tab) {

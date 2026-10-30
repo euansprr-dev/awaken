@@ -47,7 +47,7 @@ public final class GatesClient {
             WorldBed.stop();
         });
         StatusSections.add(StatusSections.Tab.STATUS, new RunSection()); // a run's summary on the band's Status page
-        StatusSections.add(StatusSections.Tab.CODEX, new AtlasSection()); // the Atlas of Gates (SPEC §38.7)
+        StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new AtlasSection(), 620, StatusSections.Shelf.FINDS)); // the Atlas of Gates (SPEC §38.7)
         dev.awaken.core.api.MapMarks.registerGates(RunSection::marks); // the gates on the Atlas (the Gate Map is gone, SPEC §30)
         RigClient.init(modBus);
     }

@@ -84,7 +84,7 @@ final class ArmourNow {
         return true;
     }
 
-    private static double armour(ItemStack s, EquipmentSlot slot) {
+    static double armour(ItemStack s, EquipmentSlot slot) {
         double sum = 0;
         for (ItemAttributeModifiers.Entry e : s.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers())
             if (e.attribute().value() == Attributes.ARMOR.value() && e.slot().test(slot)) sum += e.modifier().amount();

@@ -47,6 +47,10 @@ public enum RoomType {
             "Meals made here are home-cooked: eating one makes what it gives you last half again as long.", "Home-cooked meals."),
     ARMORY("Forge", "forge", List.of(ANVIL, FORGE, STAND), null, 16, 3, "the Forge can temper higher",
             "Your Forge tempers gear past level I here: two levels for every Forge tier.", "Your Forge tempers higher."),
+    /** (SPEC §27.13) the first workshop: a Fitting Stand and a crafting table. It grows into the Forge (one room, both kinds). */
+    FITTING("Armoury", "armoury", List.of(Furniture.FITTING_STAND, CRAFTING), null, 12, 3, "armour made here lasts longer",
+            "A Fitting Stand and a crafting table: your armour is made here, and armour made at this stand lasts a quarter longer. Add an anvil and the Forge and it's your Forge too.",
+            "Your Armoury: armour made here lasts longer."),
     STUDY("Study", "study", List.of(LECTERN, BOOKSHELF), null, 16, 3, "a place to read",
             "A lectern and shelves of books. Blueprints and the reading of relics will come here.", "A room to read in."),
     GREENHOUSE("Greenhouse", "greenhouse", List.of(GROWING), "under a glass roof", 20, 3, "a place for herbs",
@@ -85,7 +89,7 @@ public enum RoomType {
     public static final int SHAFT_DEPTH = 16;
 
     /** The order a room takes its purpose (and its name) in: the most particular first, a plain shelter last. */
-    public static final List<RoomType> PURPOSE = List.of(STOREHOUSE, FOUNDRY, SMELTERY, ROOKERY, SANCTUARY, HALL, KITCHEN, ARMORY, STUDY, GREENHOUSE, STABLE, BELL_TOWER,
+    public static final List<RoomType> PURPOSE = List.of(STOREHOUSE, FOUNDRY, SMELTERY, ROOKERY, SANCTUARY, HALL, KITCHEN, ARMORY, FITTING, STUDY, GREENHOUSE, STABLE, BELL_TOWER,
             LOOKOUT, MINE_HEAD, TROPHY_HALL, WORKSHOP, BEDROOM, SHELTER);
 
     public final String label;

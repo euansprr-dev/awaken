@@ -117,4 +117,17 @@ public final class UiHooks {
         TopRight t = topRight;
         return t == null ? 0.5f : t.scale();
     }
+
+    // ---- the Tasks page's new steps (SPEC §27.13): the band's rail shows them on the page's node -----------------------
+
+    private static java.util.function.IntSupplier tasksNew = () -> 0;
+
+    public static void installTasksNew(java.util.function.IntSupplier source) {
+        tasksNew = source;
+    }
+
+    /** Steps on the Tasks page the player hasn't seen yet (0 when the Tasks client isn't there). */
+    public static int tasksNew() {
+        return tasksNew.getAsInt();
+    }
 }

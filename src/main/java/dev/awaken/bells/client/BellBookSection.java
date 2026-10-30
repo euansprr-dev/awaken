@@ -33,7 +33,7 @@ final class BellBookSection extends UiSection {
     }
 
     static void register() {
-        for (Part p : Part.values()) StatusSections.add(StatusSections.Tab.CODEX, new BellBookSection(p));
+        for (Part p : Part.values()) StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new BellBookSection(p), 640 + p.ordinal(), StatusSections.Shelf.FINDS));
     }
 
     static void ask() {

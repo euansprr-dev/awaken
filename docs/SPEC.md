@@ -44,6 +44,7 @@ Hard rules:
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
 | `arms` | Weapons and combat (§25): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
 | `trails` | Trails (§33): optional guidance for every part of the game, short lists of things to try that open at a moment, wait in the Journal and reach the task card only when followed |
+| `tasks` | Tasks (§27.13): the band's Tasks page, one list of what you can do now from every module's goals (`core.api.Goals`) and the Now suggestions, a tab per goal, where each need comes from, the pin, the armour sets worn |
 | `aim` | Lock-on (§40): the mark and the lock, their look, the arcs for tells out of view, the dot; `core.api.Aim` (the server's check of the creature a press meant) |
 
 Rules for builders:
@@ -204,7 +205,7 @@ Without presses everything still plays on its own timing. The Opening's speech g
 citizen's reply over their head goes when you look at them (within 6 blocks) and press. Timing, rewards and handovers
 stay server-owned. Test `signal_dialogue_use_once`, `veil_dialogue_continuation`.
 
-The band (key **K**, §30): six pages, Status · Powers · Journal · Truths · Codex · Map. Status shows level, rank, path,
+The band (key **K**, §30): six pages, Status · Tasks · Hearth · Powers · Journal · Map (§27.13). Status shows level, rank, path,
 title and XP, the stats with + buttons when points are unspent, then the Journal; Powers holds the loadout (provided by
 `powers` via `StatusSections`); the Map page is the Atlas.
 
@@ -577,6 +578,12 @@ of `AwakenConfig.Client`.
 - `dev.awaken.core.api.Shown` (§27.12; 2026-10-30) — every line a module puts in front of the player as something to do:
   `register(String source, Source)`, `all(ServerPlayer)` (`Line(source, text)`), `mentioning(player, words)`,
   `sources()`. Server side, for the sweep's checks; not for a hot path.
+- `dev.awaken.core.api.Goals` (§27.13; 2026-10-30) — what a player can do now, for the Tasks page: `Goal` (HEARTH,
+  ARMOUR, WEAPONS, BELLS, RANK, OUT), `Need(item, label, have, need)` (`of`, `item`, `tag`; item "" a condition, "#id" a
+  tag), `Choice(id, title, sub, show, needs)`, `Step` (`Step.of(key, goal, title)` → `Builder`: `why`, `need(s)`, `at`,
+  `path`, `priority` (50), `optional`, `choice`, `covers`), the path's places `PATH_START` .. `PATH_TRIAL` and `NO_PATH`;
+  `register(Source)`, `all(ServerPlayer)` (a source that throws is skipped and logged), `count(Inventory, Item | TagKey)`.
+  Server side. What a step says is done must leave it (§27.12).
 - `dev.awaken.core.api.Passage` (§28.9, "Arrivals"; 2026-10-29) — Awaken's own teleports wait for their land off the
   server thread: `go(player, level, x, z, move)` runs `move` at once when every chunk within `EdgeHold.BODY` of (x, z)
   is loaded at FULL, else puts the `awaken:arrival` ticket on the 3×3 round it and runs `move` once those are made (no
@@ -8132,6 +8139,59 @@ suggestion, a rumour, a lead, a decision waiting or a destination.
   barrel outside doesn't; a barrel inside makes the room a Kitchen and still a Bedroom), `hearth_guide_matches_roomtype`
   (loose furniture ticks nothing).
 
+### 27.13 One Tasks page, a tab per goal (Euan, 2026-10-30; page docs/tasks/page.html, https://claude.ai/artifact/RbQNkY1tvFB6QKcP2n3NWU)
+Euan: "one single tasks tab which contains all the things you can do right now", and his moment: back home with the
+Hearthfire set and a bed built, what next? Approved in full with two changes: "The kin should be part of the hearth tab"
+(no Beasts tab; kin steps and the kin list, rumours and wants live on the Hearth) and "The armour tab should show a real
+preview of each set too". This changes §43.5's "the help is never stated" for the main path: what to do next and where
+each piece comes from is said plainly; what the world holds beyond it is still found. Phase 1 as built:
+- **The band has six pages:** Status · Tasks · Hearth · Powers · Journal · Map (`StatusSections.Tab`). The Truths page's
+  sections stand on Status (the path choice 700, the Truths 710-730, the road 735, titles 740, latents 750:
+  `StatusSections.placed`); the Codex's board, the Atlas list, the Almanac and the Bell Book stand on the Journal under
+  FINDS (600-640). The holo rail has six nodes (`BandLayout.PAGES` 6); Tasks carries a badge for steps you haven't seen.
+- **Goals** (`core.api.Goals`, §12): a module says what a player can do now as `Step`s under one of six goals (Hearth,
+  Armour, Weapons, Bells, Gates and rank, Out there), each with its needs (an item, a tag or a condition, have and
+  need), a place, a place on the main path, optional or not, choices (the armour sets) and the Now suggestions it
+  covers. The main path: start 0, the fire 10, a first room 20, the Armoury 30, the first armour 40, the first gate 50
+  (for its Lord's Heart), the Anchor 55, the Forge 60, the trial 70. An optional upgrade (the Sanctuary) is never on top.
+- **The book** (`tasks.TaskBook`, cached 10 ticks): every module's steps and every Now suggestion (`tasks.NowMap` maps a
+  suggestion to its goal and place on the path by its id: `kin:` and `request:` go to the Hearth) as one list, one row
+  per key (two of one key: the one with more needs or choices, the place from either), nothing a goal step covers twice.
+  Order: the path, then priority, then key. On top: something urgent (priority 90 and up: the opening, a ritual's
+  doors), else the pinned step, else the path's next that isn't optional, else the most pressing of the rest.
+- **The page** (`tasks.client.TaskTabs`, `TaskPage`): tabs NOW, HEARTH, ARMOUR, WEAPONS, BELLS, GATES (Q / E; a dot on
+  a goal with a step you haven't had in front of you for 1.5 s). Now: "Do this next" in full; "Also open to you", the
+  first open step of each goal with how many of its needs are ready and Open ›; "Out there" (suggestions no goal
+  claims); "When you want" (optional upgrades). A goal's tab: every step in order, each need with its icon, count, a tick,
+  and under a missing one where it comes from (`WhereFrom`: the page's own line `awaken.where.<ns>.<path>` or
+  `awaken.where.tag.<path>`, else the Armoury's `awaken.source.*`, else the creatures that drop it with their land, and
+  "Some live round here." in their land); a place as "About 310 blocks north-east." **Pin** puts a step on the task card
+  (one pin for everything: pinning stops a followed trail). An armour step shows each set as a tile (its four pieces,
+  name, role and armour, materials ready, Choose); **See them worn ›** opens `SetPreviewScreen` over the band: a vanilla
+  `ClientMannequin` per set wearing its pieces, turning to the cursor; click one to choose it, Esc goes back. The set
+  chosen is saved and the card then lists what that set still takes.
+- **The task card:** the pinned step leads it (`Checklist.registerLeading`); with nothing else on, the step on top shows
+  last when it has needs. Swept with every other place a goal shows (`Shown` source `tasks`, §27.12).
+- **Sync:** `tasks_view` (server → client) when it changes, looked at every 20 ticks while the page is open and every 100
+  otherwise; `tasks_act` (client → server): PIN, UNPIN, OPEN, CLOSED, SEEN (a goal's ordinal or one step's key), CHOOSE
+  ("step|choice"). Saved: attachment `awaken:tasks` (`TaskState`, schema 1: pinned, seen (the last 256), chosen), kept
+  through death. `/awaken tasks` lists the page, `/awaken tasks pin <key>`, `/awaken tasks unpin`.
+- **The Armoury** (`RoomType.FITTING`, label "Armoury", id `armoury`): a Fitting Stand and a crafting table in one closed
+  room, your first workshop, right after a bed (`HearthNow.ORDER`: Shelter, Bedroom, Armoury, then the rest). An anvil,
+  the Forge and an armour stand in the same room make it the Forge too (one room, both kinds). `Furniture.FITTING_STAND`
+  is appended (saved counts go by ordinal). Its gift: armour made at its stand lasts a quarter longer (phase 2).
+- **The Hearth's steps** (`hearth.HearthGoals`): Build your Armoury (its pieces ticked where they stand in one closed room,
+  as the guide ticks them); Clear your first gate (at the Hearthfire: the nearest enterable gate within 600 blocks, for
+  its Lord's Heart) or, with a Heart in the pack, Set the Lord's Heart on your fire; Grow your Armoury into a Forge;
+  Make your Bedroom a Sanctuary (optional); Grow your home to the next tier (its rules, the rank, the price).
+- **The Armour's steps** (`armour.ArmourGoals`): until every piece you wear is your rank's, "Choose your first armour"
+  (on the path) or "Make your X-rank armour", its choices your rank's known sets with what the pieces you don't own
+  still take, summed; once you wear your rank's, when the next comes.
+- **Tests:** `tasks_book_rules` (order, the top rule, covers, merge, NowMap, the saved state), `tasks_choose_and_pin`
+  (the first armour's sets, one row per need, a refused pin, chosen and pinned: the card lists that set's needs),
+  `tasks_next_step_follows_path` (Euan's moment in a real home: the Armoury on top, then the armour, then the gate, the
+  Sanctuary optional; built, the armour is on top and the Forge waits), `hearth_armoury_room`.
+
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
 Euan, 2026-10-26: "Go ahead with all recommendations." PLAN.md is the long form and its audits (`docs/world-depth/
@@ -10086,7 +10146,7 @@ band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); 
 
 ### 30.1 Pages (phase 1, built)
 - **Six pages, in the rail's order:** Status · Powers · Journal · Truths · Codex · Map (`StatusSections.Tab`;
-  `Tab.label()`). `Tab.GATE_MAP` is gone.
+  `Tab.label()`). `Tab.GATE_MAP` is gone. Since §27.13 (2026-10-30): Status · Tasks · Hearth · Powers · Journal · Map.
 - **The rail** (holo, `holo.ui.BandLayout`, `HoloStatusScreen`):
   - It runs down the panel's wrist edge, 30 units wide: six nodes 31 units tall, one every 34 from y 9.
   - Each node has a 12×12 pixel icon and its label in spaced capitals at two framebuffer pixels fewer per font pixel

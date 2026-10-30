@@ -48,17 +48,19 @@ final class CoreSections {
         StatusSections.add(StatusSections.Tab.JOURNAL, new JournalFilters());
         StatusSections.add(StatusSections.Tab.JOURNAL, new WaitingSection());
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
-        StatusSections.add(StatusSections.Tab.TRUTHS, new RoadSection());
+        // (SPEC §27.13) the Truths page's sections stand on Status until they become Status's own
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new RoadSection(), 735, null));
         StatusSections.add(StatusSections.Tab.JOURNAL, new DirectivesSection());
         StatusSections.add(StatusSections.Tab.JOURNAL, new RegimenSection());
         StatusSections.add(StatusSections.Tab.JOURNAL, new Records());
-        StatusSections.add(StatusSections.Tab.TRUTHS, new PathChoice());
-        StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.DECLARED));
-        StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.OFFERED));
-        StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.TRUE));
-        StatusSections.add(StatusSections.Tab.TRUTHS, new Titles());
-        StatusSections.add(StatusSections.Tab.TRUTHS, new Latents());
-        StatusSections.add(StatusSections.Tab.CODEX, new CodexBoard());
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new PathChoice(), 700, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.DECLARED), 710, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.OFFERED), 720, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.TRUE), 730, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new Titles(), 740, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new Latents(), 750, null));
+        // (SPEC §27.13) the Codex is the Journal's now: what you've found
+        StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new CodexBoard(), 600, StatusSections.Shelf.FINDS));
         CodexEntries.addSource(CoreSections::insightEntries);
     }
 

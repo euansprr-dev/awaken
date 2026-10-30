@@ -19,7 +19,7 @@ final class AlmanacSection implements StatusSections.Section {
     static final int ROW = 12;
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.CODEX, new AlmanacSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new AlmanacSection(), 610, StatusSections.Shelf.FINDS));
     }
 
     private static List<String> seen() {

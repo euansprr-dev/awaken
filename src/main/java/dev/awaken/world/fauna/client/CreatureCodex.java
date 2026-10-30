@@ -16,7 +16,7 @@ import java.util.List;
  * The Codex's Creatures column: every overworld creature this player has seen (the profile's discovery counters,
  * synced to the client), what it is for and where it lives. A named beast is threaded to the creatures of its family.
  */
-final class CreatureCodex {
+public final class CreatureCodex {
     private CreatureCodex() {}
 
     static final String CATEGORY = "Creatures";
@@ -65,7 +65,7 @@ final class CreatureCodex {
         };
     }
 
-    static String where(Theme t) {
+    public static String where(Theme t) {
         return switch (t) {
             case GREENWILD -> "the Greenwild: forests, plains, meadows";
             case SUNSCORCH -> "the Sunscorch: deserts, savannas, badlands";
