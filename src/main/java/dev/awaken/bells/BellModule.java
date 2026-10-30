@@ -56,8 +56,6 @@ public final class BellModule {
         bus.addListener((LivingDeathEvent e) -> {
             LivingEntity dead = e.getEntity();
             if (!(dead.level() instanceof ServerLevel level) || !dead.hasData(CoreApi.MOB_ROLE.get())) return;
-            String id = dead.getData(CoreApi.MOB_ROLE.get()).gateId();
-            if (id.startsWith("bell:")) BellSites.keeperDied(level, id.substring(5));
             Bells.sovereignFell(level, dead);
         });
         bus.addListener((PlayerInteractEvent.RightClickBlock e) -> {
@@ -85,13 +83,12 @@ public final class BellModule {
         });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
-                BellSites.forget(p);
                 Peals.forget(p.getUUID());
                 DreamBells.forget(p.getUUID());
             }
         });
         Sources.declare("given with your first bell, and made again at a table (bells.Bells)", "handbell", "bell_frame");
-        Sources.neverHeld("set out in the land by bells.BellSites; it can't be broken or moved and drops nothing", "sleeping_bell");
+        Sources.neverHeld("an old world's sleeping bell (retired, SPEC §43.16) and a dream's bell; it can't be broken or moved and drops nothing", "sleeping_bell");
         Sources.declare("the Lord of any S-rank gate gives it to a hunter not carrying one (bells.Bells.lordFell)", "heart_clapper");
         Sources.declare("every Sovereign felled gives one to a hunter not carrying one (bells.Bells.sovereignFell)", "sovereign_relic");
         dev.awaken.core.api.BellHooks.install(new HundredPeal.Access());

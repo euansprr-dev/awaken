@@ -32,9 +32,9 @@ import java.util.Optional;
  * Your bell tower (SPEC §43.7). The bell frame, set inside your own Hearth, is where your bells hang. At twenty bells a
  * timber belfry goes up round it, at fifty a stone tower under the belfry, and with the Heart-clapper and a Sovereign's
  * relic the Great Belfry on top (§43.14; each built only into clear space; if something's in the way the System says what
- * room it needs and tries again at the next song). At dawn and dusk it rings your song, every bell held by anyone who
- * lives there in its place and a dull knock for each one missing, heard 256 blocks off; and your beasts take it by how
- * many bells there are. With all hundred in the Great Belfry, the next song is the Hundred Peal.
+ * room it needs and tries again at the next song). At dawn and dusk it rings your song as {@link SongPlan} lays it out,
+ * missing bells silent, heard 256 blocks off; with no frame set down nothing rings. Your beasts take it by how many bells
+ * there are. With all hundred in the Great Belfry, the next song is the Hundred Peal.
  */
 final class BellTower {
     private BellTower() {}
@@ -288,16 +288,23 @@ final class BellTower {
         }
     }
 
-    /** Rings one home's song now. */
-    static void song(ServerLevel level, HearthRecord h, BellWorld.Home home) {
+    /** Where a home's song rings from: its frame (or the belfry over it), or null with no frame or no bell (no song). */
+    static @Nullable BlockPos ringsFrom(ServerLevel level, BellWorld.Home home) {
+        BlockPos f = frame(level, home);
+        if (f == null || home.hung.isEmpty()) return null;
+        return home.stage == 3 ? f.above(14) : home.stage == 2 ? f.above(10) : home.stage == 1 ? f.above(5) : f;
+    }
+
+    /** Rings one home's song now. False when nothing rang: no frame set down (the bare fire never sings). */
+    static boolean song(ServerLevel level, HearthRecord h, BellWorld.Home home) {
         hang(level.getServer(), h);
         // both pieces in and nobody to raise it: it goes up now, by the song
         if (GreatBelfry.ready(home) && home.raising == 0) GreatBelfry.build(level, h, home);
-        BlockPos f = frame(level, home);
-        BlockPos at = f != null ? (home.stage == 3 ? f.above(14) : home.stage == 2 ? f.above(10) : home.stage == 1 ? f.above(5) : f) : h.pos;
+        BlockPos at = ringsFrom(level, home);
+        if (at == null) return false;
         if (HundredPeal.due(home)) {
             HundredPeal.ring(level, h, home, at);
-            return;
+            return true;
         }
         long lo = 0, hi = 0;
         for (int no : home.hung) {
@@ -305,11 +312,22 @@ final class BellTower {
             else hi |= 1L << (no - 64);
         }
         BellNet.Song s = new BellNet.Song(at, lo, hi);
+        SongPlan.Plan plan = SongPlan.of(s::has);
+        long tod = Math.floorMod(level.getOverworldClockTime(), 24000L);
+        boolean dusk = tod >= DUSK_SONG && tod < DAWN_SONG;
         for (ServerPlayer p : level.players())
-            if (p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(at)) < (double) HEAR * HEAR) PacketDistributor.sendToPlayer(p, s);
-        long until = level.getGameTime() + 100L * BellCatalog.STEP + 40;
+            if (p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(at)) < (double) HEAR * HEAR) {
+                PacketDistributor.sendToPlayer(p, s);
+                // the first song a member hears says what it is, once
+                if (h.belongs(p.getUUID()) && Bells.book(p).once("song")) {
+                    Bells.save(p, Bells.book(p));
+                    Bells.say(p, "[Your bells, ringing for " + (dusk ? "dusk" : "dawn") + ". They ring at dawn and dusk, and every bell you hang joins in.]");
+                }
+            }
+        long until = level.getGameTime() + plan.length() + 40;
         KinHome.song(level, h.pos, at, home.hung.size(), until);
-        Awaken.LOG.info("[bells] the song rang at {} ({} bells)", at.toShortString(), home.hung.size());
+        Awaken.LOG.info("[bells] the song rang at {} ({} bells, {} s)", at.toShortString(), home.hung.size(), plan.length() / 20);
+        return true;
     }
 
     /** The home a player belongs to's song, rung now (admin). */
@@ -317,7 +335,6 @@ final class BellTower {
         Optional<HearthRecord> h = HearthService.data(p.level().getServer()).home(p.getUUID());
         if (h.isEmpty()) return false;
         BellWorld.Home home = BellWorld.get(p.level().getServer()).home(h.get().pos);
-        song(p.level().getServer().overworld(), h.get(), home);
-        return true;
+        return song(p.level().getServer().overworld(), h.get(), home);
     }
 }

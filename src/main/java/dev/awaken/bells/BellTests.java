@@ -21,14 +21,17 @@ final class BellTests {
         AwakenTests.register("bells_catalog_ring", 40, BellTests::catalogRing);
         AwakenTests.register("bells_peals", 40, BellTests::peals);
         AwakenTests.register("bells_tower_plans", 20, BellTests::towerPlans);
-        AwakenTests.register("bells_site_wakes", 60, BellTests::siteWakes);
+        AwakenTests.register("bells_none_in_the_open", 40, BellTests::noneInTheOpen);
+        AwakenTests.register("bells_song_arrangement", 20, BellTests::songArrangement);
+        AwakenTests.register("bells_sounds_placed", 20, BellTests::soundsPlaced);
+        AwakenTests.register("bells_lord_keeps", 40, BellTests::lordKeeps);
         AwakenTests.register("bells_hundred_peal", 20, BellTests::hundredPeal);
         AwakenTests.register("bells_story_start", 20, BellTests::storyStart);
     }
 
     /**
      * Ilse's telling (SPEC §43.15) files the Ember's Remembered lead once (the Book opens at 0 / 100), none once it's held;
-     * the ground is quiet within 100 of a woken bell's place or a tower's frame, and not 150 away.
+     * the ground is quiet within 100 of a home's frame and not 150 away; with no frame nothing rings.
      */
     static void storyStart(GameTestHelper h) {
         ServerPlayer p = h.makeMockServerPlayerInLevel();
@@ -44,22 +47,19 @@ final class BellTests {
         h.assertTrue(m == null || !m.has(BellBook.How.REMEMBERED), "no lead for a bell already held");
         ServerLevel level = h.getLevel();
         BellWorld w = BellWorld.get(level.getServer());
-        BlockPos site = new BlockPos(2_000_000, 70, 2_000_000), frame = new BlockPos(-2_000_000, 70, 2_000_000);
-        BellWorld.Site s = new BellWorld.Site("ember", BellSites.Kind.values()[0], site);
+        BlockPos frame = new BlockPos(-2_000_000, 70, 2_000_000);
         BellWorld.Home home = new BellWorld.Home();
         home.frame = frame;
         try {
-            h.assertTrue(!Bells.quiet(level, site), "nothing is heard where nothing rings");
-            s.state = BellWorld.Site.ASLEEP;
-            w.sites.put("test_story", s);
-            h.assertTrue(!Bells.quiet(level, site.east(50)), "a sleeping bell keeps nothing off");
-            s.state = BellWorld.Site.AWAKE;
-            h.assertTrue(Bells.quiet(level, site.east(99)), "a woken bell's place keeps gates off within 100");
-            h.assertTrue(!Bells.quiet(level, site.east(150)), "and not 150 away");
+            h.assertTrue(!Bells.quiet(level, frame), "nothing is heard where nothing rings");
             w.homes.put(frame.below(4).asLong(), home);
-            h.assertTrue(Bells.quiet(level, frame.south(80)), "a tower's frame keeps them off too");
+            h.assertTrue(Bells.quiet(level, frame.south(80)), "a home's frame keeps gates off within 100");
+            h.assertTrue(!Bells.quiet(level, frame.south(150)), "and not 150 away");
+            // the bare fire never sings: no frame, no song
+            BellWorld.Home bare = new BellWorld.Home();
+            bare.hung.add(7);
+            h.assertTrue(BellTower.ringsFrom(level, bare) == null, "a home with bells and no frame rings nothing");
         } finally {
-            w.sites.remove("test_story");
             w.homes.remove(frame.below(4).asLong());
         }
         h.succeed();
@@ -136,24 +136,120 @@ final class BellTests {
         h.succeed();
     }
 
-    /** A sleeping bell struck with nothing keeping it wakes, and its bell goes home with whoever struck it. */
-    static void siteWakes(GameTestHelper h) {
+    /**
+     * No bell lies in the open (SPEC §43.16): an old world's built sleeping place near a player is cleared (its bell gone,
+     * the place dropped from the world's state), one never built is dropped, and an old Book's leads to such bells close.
+     */
+    static void noneInTheOpen(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         ServerPlayer p = h.makeMockServerPlayerInLevel();
         BlockPos at = h.absolutePos(new BlockPos(2, 1, 2));
         level.setBlockAndUpdate(at, BellContent.SLEEPING_BELL.get().defaultBlockState());
         BellWorld w = BellWorld.get(level.getServer());
-        String key = "test" + at.asLong();
+        String key = "test" + at.asLong(), planned = "test_planned" + at.asLong();
         BellWorld.Site s = new BellWorld.Site("barrow", BellSites.Kind.BURIED, at);
         s.state = BellWorld.Site.ASLEEP;
         w.sites.put(key, s);
-        BellSites.strike(level, at, p);
-        BellSites.strike(level, at, p);
-        boolean awake = s.state == BellWorld.Site.AWAKE && level.getBlockState(at).getValue(SleepingBellBlock.AWAKE);
-        boolean held = Bells.has(p, "barrow");
+        w.sites.put(planned, new BellWorld.Site("mere", BellSites.Kind.SUNK, at.east(4000)));
+        p.snapTo(at.getX() + 0.5, at.getY() + 1, at.getZ() + 3.5, 0, 0);
+        boolean overworld = level.dimension() == net.minecraft.world.level.Level.OVERWORLD;
+        if (overworld) BellSites.tick(p);
+        else BellSites.clear(level, s);
+        boolean gone = !level.getBlockState(at).is(BellContent.SLEEPING_BELL.get());
+        boolean dropped = !overworld || !w.sites.containsKey(key) && !w.sites.containsKey(planned);
         w.sites.remove(key);
-        h.assertTrue(awake, "the bell woke");
-        h.assertTrue(held, "the Barrow Bell went home with the one who struck it");
+        w.sites.remove(planned);
+        h.assertTrue(gone, "the old sleeping bell is gone from the land");
+        h.assertTrue(dropped, "the built place and the planned one are both dropped");
+        BellBook b = new BellBook();
+        b.leads.put(BellCatalog.of("barrow").no(), new BellBook.Lead());
+        b.leads.put(BellCatalog.of("watch").no(), new BellBook.Lead());
+        h.assertTrue(BellSites.closeOldLeads(b), "a lead to a bell that lay in the land closes");
+        h.assertTrue(b.leads.size() == 1 && b.leads.containsKey(BellCatalog.of("watch").no()), "a holdfast's lead stays");
+        h.succeed();
+    }
+
+    /**
+     * The song (SPEC §43.16): one bell tolls three times; four ring three rounds, highest first, and the deepest once more;
+     * thirty play the tune with each run of missing steps one beat long; never a knock, never over 25 seconds.
+     */
+    static void songArrangement(GameTestHelper h) {
+        h.assertTrue(SongPlan.of(no -> false).strikes().isEmpty(), "no bells, no song");
+        SongPlan.Plan one = SongPlan.of(no -> no == 7);
+        h.assertTrue(one.strikes().size() == 3 && one.strikes().stream().allMatch(x -> x.no() == 7), "one bell tolls three times");
+        h.assertTrue(one.strikes().get(1).tick() - one.strikes().get(0).tick() >= 40, "slowly, each stroke left to ring out");
+        java.util.Set<Integer> four = Set.of(7, 12, 17, 40);
+        SongPlan.Plan rounds = SongPlan.of(four::contains);
+        h.assertTrue(rounds.strikes().size() == 13, "four bells: three rounds and the deepest once more (" + rounds.strikes().size() + ")");
+        int top = rounds.strikes().getFirst().no(), last = rounds.strikes().getLast().no();
+        for (int no : four) {
+            h.assertTrue(SongPlan.height(top) >= SongPlan.height(no), "rounds start on the highest bell");
+            h.assertTrue(SongPlan.height(last) <= SongPlan.height(no), "and end on the deepest");
+        }
+        java.util.Set<Integer> thirty = new java.util.HashSet<>();
+        for (int no = 0; no < 100 && thirty.size() < 30; no += 3) thirty.add(no);
+        SongPlan.Plan tune = SongPlan.of(thirty::contains);
+        int gap = 0;
+        for (int i = 1; i < tune.strikes().size(); i++) gap = Math.max(gap, tune.strikes().get(i).tick() - tune.strikes().get(i - 1).tick());
+        h.assertTrue(gap <= 2 * SongPlan.SLOW_BEAT, "a run of missing bells is one beat, not a long silence (" + gap + ")");
+        for (int n : new int[]{1, 2, 9, 10, 30, 64, 100}) {
+            SongPlan.Plan pl = SongPlan.of(no -> no < n);
+            h.assertTrue(pl.length() <= 20 * 25, n + " bells: the song is 25 seconds at most (" + pl.length() / 20 + ")");
+            for (SongPlan.Strike x : pl.strikes()) h.assertTrue(x.no() < n, "only bells in the song ring: no knock for a missing one");
+        }
+        h.succeed();
+    }
+
+    /** Every bell sound played in the world is mono, so it comes from where its bell is and fades with distance. */
+    static void soundsPlaced(GameTestHelper h) {
+        java.util.List<String> files = new java.util.ArrayList<>(java.util.List.of("bell_handbell", "bell_toll", "bell_hum", "bell_wake", "bell_gap"));
+        for (int k = 0; k < 15; k++) files.add("bell_note_" + k);
+        for (String f : files) {
+            int ch = channels("/assets/awaken/sounds/" + f + ".ogg");
+            h.assertTrue(ch == 1, f + ".ogg is mono (" + ch + " channels)");
+        }
+        h.succeed();
+    }
+
+    /** The channel count in an Ogg Vorbis file's identification header, or -1. */
+    static int channels(String resource) {
+        try (java.io.InputStream in = BellTests.class.getResourceAsStream(resource)) {
+            if (in == null) return -1;
+            byte[] b = in.readNBytes(256);
+            for (int i = 0; i + 12 < b.length; i++)
+                if (b[i] == 1 && b[i + 1] == 'v' && b[i + 2] == 'o' && b[i + 3] == 'r' && b[i + 4] == 'b' && b[i + 5] == 'i' && b[i + 6] == 's') return b[i + 11] & 0xFF;
+            return -1;
+        } catch (java.io.IOException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * A gate's Lord keeps what its gate swallowed (SPEC §43.16): the first Lord ever kept the Wren; the next never keeps one
+     * (never two in a row), and by the fourth since, one has; a Lord of a gate world at its bell's rank keeps that bell.
+     */
+    static void lordKeeps(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        // a mock player starts at the world's spawn, which in a full batch is far from this test: stand beside the Lord
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        net.minecraft.world.phys.Vec3 by = h.absoluteVec(new net.minecraft.world.phys.Vec3(3.5, 1, 3.5));
+        p.snapTo(by.x, by.y, by.z, 0F, 0F);
+        ServerPlayer away = h.makeMockServerPlayerInLevel();
+        away.snapTo(by.x + 200, by.y, by.z, 0F, 0F);
+        java.util.Set<java.util.UUID> party = Set.of(p.getUUID(), away.getUUID());
+        java.util.function.Supplier<net.minecraft.world.entity.LivingEntity> lord = () -> {
+            net.minecraft.world.entity.monster.zombie.Zombie z = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(2, 1, 2));
+            return z;
+        };
+        Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
+        h.assertTrue(Bells.has(p, "wren") && Bells.count(p) == 1, "the first Lord kept the Wren");
+        h.assertTrue(Bells.count(away) == 0, "a party member 200 away wasn't there to find it");
+        Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
+        h.assertTrue(Bells.count(p) == 1, "the next Lord never keeps one");
+        for (int i = 0; i < 3; i++) Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
+        h.assertTrue(Bells.count(p) == 2, "by the fourth since, a Lord has kept another (" + Bells.count(p) + ")");
+        Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.D, "BELL_CRYPT", party, p);
+        h.assertTrue(Bells.has(p, "crypt"), "a gate world's Lord at its bell's rank keeps that bell");
         h.succeed();
     }
 }

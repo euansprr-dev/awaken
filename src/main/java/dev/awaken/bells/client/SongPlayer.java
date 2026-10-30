@@ -1,33 +1,45 @@
 package dev.awaken.bells.client;
 
-import dev.awaken.bells.BellCatalog;
 import dev.awaken.bells.BellContent;
 import dev.awaken.bells.BellNet;
+import dev.awaken.bells.SongPlan;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.sounds.SoundEvent;
+import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Plays a tower's song as it rings (SPEC §43.7): a hundred steps, four ticks apart. Bell #n's note plays at step n if
- * the home holds it, else a dull knock at that pitch, so the song's holes are heard where they fall. Sounds come from
- * the tower and carry 256 blocks; one song plays at a time, a newer one taking over.
+ * Plays a home's song as it rings (SPEC §43.16), as {@link SongPlan} lays it out: each bell struck from where it hangs
+ * (the tower's spot for one the packet doesn't place), so the song comes from the bells you can see. A far bell's note
+ * is heard from its bearing, fainter the further it is. Missing bells are silence. One song at a time, a newer one
+ * taking over; the Book's "Play your song" plays it at the listener instead.
  */
 public final class SongPlayer {
     private SongPlayer() {}
 
+    /** Past this, a bell is heard from its bearing at {@link #FAR_AT} blocks off rather than from where it is. */
+    static final double FAR = 200, FAR_AT = 24;
+
     private static BellNet.@Nullable Song song;
-    private static int step, wait;
-    /** The song is played back at the listener, not from a tower (the Book's "Play the song"). */
+    private static SongPlan.@Nullable Plan plan;
+    private static int tick, next;
+    /** The song is played back at the listener, not from its bells (the Book's "Play your song"). */
     private static boolean here;
+    /** When each bell's spot was last struck (client game time), for the renderers' swing. */
+    private static final Map<Long, Long> STRUCK = new HashMap<>();
 
     public static void start(BellNet.Song s, boolean atListener) {
         song = s;
+        plan = SongPlan.of(s::has);
         here = atListener;
-        step = 0;
-        wait = 0;
+        tick = 0;
+        next = 0;
     }
 
     public static boolean playing() {
@@ -36,24 +48,44 @@ public final class SongPlayer {
 
     public static void stop() {
         song = null;
+        plan = null;
+    }
+
+    /** Game time the bell hanging at {@code pos} was last struck by a song, or a long time ago. */
+    public static long struck(BlockPos pos) {
+        return STRUCK.getOrDefault(pos.asLong(), Long.MIN_VALUE / 2);
     }
 
     static void tick(ClientTickEvent.Post e) {
         BellNet.Song s = song;
-        if (s == null) return;
+        SongPlan.Plan p = plan;
+        if (s == null || p == null) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) {
-            song = null;
+            stop();
             return;
         }
-        if (mc.isPaused() || wait-- > 0) return;
-        wait = BellCatalog.STEP - 1;
-        double x = here ? mc.player.getX() : s.at().getX() + 0.5, y = here ? mc.player.getEyeY() : s.at().getY() + 0.5,
-                z = here ? mc.player.getZ() : s.at().getZ() + 0.5;
-        boolean has = s.has(step);
-        SoundEvent snd = has ? BellContent.note(step) : BellContent.GAP.get();
-        float vol = here ? (has ? 0.8F : 0.35F) : has ? 16F : 6F;
-        mc.getSoundManager().play(new SimpleSoundInstance(snd, SoundSource.BLOCKS, vol, has ? 1F : BellContent.pitch(step), mc.player.getRandom(), x, y, z));
-        if (++step >= 100) song = null;
+        if (mc.isPaused()) return;
+        while (next < p.strikes().size() && p.strikes().get(next).tick() <= tick) strike(mc, s, p.strikes().get(next++).no());
+        if (++tick > p.length()) stop();
+    }
+
+    private static void strike(Minecraft mc, BellNet.Song s, int no) {
+        if (here) {
+            Vec3 at = mc.player.getEyePosition();
+            mc.getSoundManager().play(new SimpleSoundInstance(BellContent.note(no), SoundSource.BLOCKS, 0.8F, 1F, mc.player.getRandom(), at.x, at.y, at.z));
+            return;
+        }
+        BlockPos where = s.place(no);
+        if (mc.level != null) STRUCK.put(where.asLong(), mc.level.getGameTime());
+        Vec3 at = Vec3.atCenterOf(where), ear = mc.player.getEyePosition();
+        double d = at.distanceTo(ear);
+        float vol = 16F;
+        if (d > FAR) {
+            // too far to carry from where it is: heard from its bearing, fainter the further it is
+            at = ear.add(at.subtract(ear).normalize().scale(FAR_AT));
+            vol = (float) Math.max(1.6, 4.0 * FAR / d);
+        }
+        mc.getSoundManager().play(new SimpleSoundInstance(BellContent.note(no), SoundSource.BLOCKS, vol, 1F, mc.player.getRandom(), at.x, at.y, at.z));
     }
 }

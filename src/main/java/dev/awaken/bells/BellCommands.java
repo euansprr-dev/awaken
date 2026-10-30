@@ -20,9 +20,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Admin tools for the bells: {@code /awaken admin bells give <id> | tower <n> | song | site <id> | wake | page}.
- * {@code tower} rings the first n bells home and sets a frame by the player's Hearth (for tours); {@code site} builds a
- * bell's sleeping place 16 blocks east of the player; {@code wake} wakes the nearest one as if struck free.
+ * Admin tools for the bells: {@code /awaken admin bells give <id> | tower <n> | song | belfry | ilse | deep | page}.
+ * {@code tower} rings the first n bells home and sets a frame by the player's Hearth (for tours).
  */
 final class BellCommands {
     private BellCommands() {}
@@ -44,20 +43,6 @@ final class BellCommands {
                     if (w.deepAnswered < 0) w.deepAnswered = dev.awaken.core.PlayDays.current(c.getSource().getServer());
                     w.setDirty();
                     c.getSource().sendSuccess(() -> Component.literal("The Deep has answered (play-day " + w.deepAnswered + ")."), false);
-                    return 1;
-                }))
-                .then(Commands.literal("site").then(Commands.argument("id", StringArgumentType.word())
-                        .suggests((c, b) -> SharedSuggestionProvider.suggest(BellSites.KIND.keySet(), b)).executes(c ->
-                                site(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "id")))))
-                .then(Commands.literal("wake").executes(c -> {
-                    ServerPlayer p = c.getSource().getPlayerOrException();
-                    ServerLevel level = p.level();
-                    Map.Entry<String, BellWorld.Site> best = null;
-                    for (Map.Entry<String, BellWorld.Site> e : BellSites.near(level, p.blockPosition(), 64).entrySet())
-                        if (e.getValue().state == BellWorld.Site.ASLEEP
-                                && (best == null || e.getValue().pos.distSqr(p.blockPosition()) < best.getValue().pos.distSqr(p.blockPosition()))) best = e;
-                    if (best == null) return 0;
-                    BellSites.wake(level, best.getKey(), best.getValue(), p);
                     return 1;
                 }))
                 .then(Commands.literal("page").executes(c -> {
@@ -105,19 +90,5 @@ final class BellCommands {
             BellTower.placed(level, at, p);
         } else BellTower.hang(level.getServer(), h.get());
         return rung;
-    }
-
-    /** Builds bell {@code id}'s sleeping place 16 blocks east of the player, now. */
-    private static int site(ServerPlayer p, String id) {
-        BellSites.Kind kind = BellSites.KIND.get(id);
-        if (kind == null) return 0;
-        ServerLevel level = p.level();
-        String key = "a" + p.blockPosition().offset(16, 0, 0).asLong();
-        BellWorld.Site s = new BellWorld.Site(id, kind, new BlockPos(p.getBlockX() + 16, 0, p.getBlockZ()));
-        BellSites.build(level, key, s);
-        BellWorld w = BellWorld.get(level.getServer());
-        w.sites.put(key, s);
-        w.setDirty();
-        return s.state == BellWorld.Site.ASLEEP ? 1 : 0;
     }
 }
