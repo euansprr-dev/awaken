@@ -8,7 +8,6 @@ import dev.awaken.above.net.Panel;
 import dev.awaken.above.ruin.RuinKind;
 import dev.awaken.above.ruin.RuinLocator;
 import dev.awaken.core.DirectorLog;
-import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.DreamHooks;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.progression.Profile;
@@ -31,7 +30,6 @@ final class HomeMachines {
     private HomeMachines() {}
 
     static final int REPLAY_COST = 100;
-    static final int RELAY_COST = 150;
     static final int RELAY_RANGE = 48;
     static final int SURVEY_RANGE = 3000;
     /** The Halo shows itself to B-rank eyes ("late in Act II"). */
@@ -92,28 +90,13 @@ final class HomeMachines {
         if (!nearHearth(player, be)) {
             return b.text("Out of range", "The relay needs your Hearth within " + RELAY_RANGE + " blocks.", Machines.WARN).footer(t.blurb).build();
         }
-        long today = PlayDays.current(player.level().getServer());
-        AboveData d = Above.data(player);
-        boolean used = d.relayDay() == today;
-        String detail = used ? "It listened today. It can listen again with the next play-day."
-                : "Listen for the nearest sleeping bell you haven't found. It goes in your Bell Book.";
-        b.button("Listen for bells", detail, used ? Machines.LABEL : Machines.GOOD, "boost", 0, "Listen (" + RELAY_COST + ")",
-                !used && stored >= RELAY_COST && Progression.profile(player).awakened());
-        return b.footer("Near your Hearth, the relay picks up a sleeping bell's note once a play-day.").build();
+        // §43.16: no bell lies in the open, so there is nothing to listen for and nothing to spend Essence on
+        return b.text("Nothing to hear", "Every bell is kept somewhere now, by a gate's Lord or in a place a story tells of. "
+                + "None is lying out where the relay could hear it.", Machines.LABEL).footer(t.blurb).build();
     }
 
-    /** (SPEC §27.13) The relay's job since the Directives went: once a play-day, the nearest sleeping bell you don't hold. */
+    /** (SPEC §27.13) The relay listened for bells; since §43.16 there are none in the open to hear, so it does nothing. */
     static void relayAction(ServerPlayer player, MachineBlockEntity be, String action, int index) {
-        if (!action.equals("boost") || !nearHearth(player, be)) return;
-        long today = PlayDays.current(player.level().getServer());
-        AboveData d = Above.data(player);
-        if (d.relayDay() == today) return;
-        if (!be.draw(RELAY_COST)) return;
-        d.setRelayDay(today);
-        Above.sync(player);
-        if (!dev.awaken.core.api.BellHooks.relay(player, be.getBlockPos())) {
-            Signal.toast(player, Component.literal("The relay listened, but no sleeping bell is near enough to hear."));
-        }
     }
 
     // ---- Recalibrator ---------------------------------------------------------------------------------------------

@@ -12,10 +12,11 @@ import java.util.Map;
 /**
  * One player's Bell Book (SPEC §43.7): the bells they hold (when and where each rang), their leads (how they learned of
  * each bell they don't hold yet, in the System's words, and where it seems to be), the lead they track, the peal their
- * handbell is set to, and what's been said once. Saved on the player (schema 1), kept through death.
+ * handbell is set to, and what's been said once. Saved on the player, kept through death. Schema 4 (SPEC §43.16): the
+ * lines said once, and how many Lords have fallen since one last kept a bell for you.
  */
 public final class BellBook {
-    public static final int SCHEMA = 3;
+    public static final int SCHEMA = 4;
 
     /** How a lead was learned (JOURNEY part 4). Sung comes with the Chimewren (stage 5), Found with the Stilled's letters. */
     public enum How { HEARD, SEEN, SUNG, FOUND, RUNG, REMEMBERED, DREAMT }
@@ -67,7 +68,7 @@ public final class BellBook {
     }
 
     static final MapCodec<BellBook> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(b -> SCHEMA),
+            Codec.INT.optionalFieldOf("schema", 1).forGetter(b -> b.schema),
             Codec.unboundedMap(Codec.STRING, Held.CODEC).optionalFieldOf("held", Map.of()).forGetter(b -> keys(b.held)),
             Codec.unboundedMap(Codec.STRING, Lead.CODEC).optionalFieldOf("leads", Map.of()).forGetter(b -> keys(b.leads)),
             Codec.INT.optionalFieldOf("tracked", -1).forGetter(b -> b.tracked),
@@ -76,9 +77,12 @@ public final class BellBook {
             Codec.LONG.optionalFieldOf("homeward_at", 0L).forGetter(b -> b.homewardAt),
             Codec.LONG.optionalFieldOf("remembered_day", -1L).forGetter(b -> b.rememberedDay),
             Codec.BOOL.optionalFieldOf("pealed", false).forGetter(b -> b.pealed),
-            Codec.LONG.optionalFieldOf("kinsong_at", 0L).forGetter(b -> b.kinsongAt)
-    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay, pealed, kinsongAt) -> {
+            Codec.LONG.optionalFieldOf("kinsong_at", 0L).forGetter(b -> b.kinsongAt),
+            Codec.STRING.listOf().optionalFieldOf("said", List.of()).forGetter(b -> new ArrayList<>(b.said)),
+            Codec.INT.optionalFieldOf("lords_since", 0).forGetter(b -> b.lordsSince)
+    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay, pealed, kinsongAt, said, lordsSince) -> {
         BellBook b = new BellBook();
+        b.schema = schema;
         held.forEach((k, v) -> b.held.put(Integer.parseInt(k), v));
         leads.forEach((k, v) -> b.leads.put(Integer.parseInt(k), v));
         b.tracked = tracked;
@@ -88,6 +92,8 @@ public final class BellBook {
         b.rememberedDay = rememberedDay;
         b.pealed = pealed;
         b.kinsongAt = kinsongAt;
+        b.said.addAll(said);
+        b.lordsSince = lordsSince;
         return b;
     }));
 
@@ -97,6 +103,8 @@ public final class BellBook {
         return out;
     }
 
+    /** The schema this Book was saved at; a Book from before is brought up to date once, then saved at {@link #SCHEMA}. */
+    public int schema = SCHEMA;
     public final Map<Integer, Held> held = new HashMap<>();
     public final Map<Integer, Lead> leads = new HashMap<>();
     /** The lead on the top-right card, or -1. */
@@ -113,10 +121,19 @@ public final class BellBook {
     public boolean pealed;
     /** Game time the Deep's things may next come for this player's Kinsong (schema 3). */
     public long kinsongAt;
+    /** The lines said once ever (schema 4): "song", "first_lord", ... */
+    public final java.util.Set<String> said = new java.util.HashSet<>();
+    /** Gate Lords fallen with this player there since one last kept a bell for them (schema 4). */
+    public int lordsSince;
 
     public boolean has(String id) {
         BellCatalog.Def d = BellCatalog.of(id);
         return d != null && held.containsKey(d.no());
+    }
+
+    /** Whether {@code key} hasn't been said yet, marking it said. */
+    public boolean once(String key) {
+        return said.add(key);
     }
 
     public int count() {

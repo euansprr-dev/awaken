@@ -61,8 +61,8 @@ public final class BellHooks {
     }
 
     /**
-     * A Signal Relay near this player's Hearth listened (SPEC §27.13): the nearest sleeping bell they don't hold yet goes
-     * in their Bell Book as a heard note, one bearing from the relay. False when none is near enough.
+     * A Signal Relay near this player's Hearth listened (SPEC §27.13). Since §43.16 no bell lies in the open to hear, so
+     * it's always false.
      */
     public static boolean relay(ServerPlayer player, BlockPos relay) {
         return access.relay(player, relay);

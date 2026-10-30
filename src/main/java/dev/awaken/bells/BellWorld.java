@@ -22,8 +22,7 @@ import java.util.UUID;
 /**
  * The bells' world state (schema 2, SPEC §43.7, §43.14): each home's tower (where its bell frame stands, how far it has
  * grown, the bells hung there from everyone who lives in it, the Great Belfry's two pieces, its Hundred Peal, Ilse's
- * visit) and each sleeping place out in the land (its bell, its kind, where it was built, whether it's awake, the keeper
- * that gathered round it); and the land's: the play-day the Deep answered the Hundred Peal, and where the Kinsong last
+ * visit), an old world's sleeping places out in the land, kept only until they're cleared (SPEC §43.16); and the land's: the play-day the Deep answered the Hundred Peal, and where the Kinsong last
  * rang.
  */
 final class BellWorld extends SavedData {

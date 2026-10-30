@@ -17,8 +17,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * A sleeping bell (SPEC §43.7): a great bell half sunk where it fell, grey-green and dull. Strike it (use it, or hit it)
- * and, once nothing keeps it, it wakes: bronze again, and the place round it with it. It can't be broken.
+ * A bell set in place that can't be broken: an old world's sleeping bell (cleared the next time anyone comes near, SPEC
+ * §43.16) and, awake, the bell a dream sets down for you to strike.
  */
 public final class SleepingBellBlock extends Block {
     public static final BooleanProperty AWAKE = BooleanProperty.create("awake");
@@ -41,12 +41,16 @@ public final class SleepingBellBlock extends Block {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player instanceof ServerPlayer sp && level instanceof ServerLevel sl) BellSites.strike(sl, pos, sp);
+        if (player instanceof ServerPlayer sp && level instanceof ServerLevel sl) strike(sl, pos, sp);
         return InteractionResult.SUCCESS;
     }
 
     @Override
     protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
-        if (player instanceof ServerPlayer sp && level instanceof ServerLevel sl) BellSites.strike(sl, pos, sp);
+        if (player instanceof ServerPlayer sp && level instanceof ServerLevel sl) strike(sl, pos, sp);
+    }
+
+    private static void strike(ServerLevel level, BlockPos pos, ServerPlayer p) {
+        if (!DreamBells.strike(p, pos)) level.playSound(null, pos, BellContent.HANDBELL_RING.get(), net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 0.6F);
     }
 }
