@@ -3,6 +3,7 @@
 Same 64×256 atlas footprint and UV density as the game. Sparse, one-pixel streaks with
 uneven lengths and tapered opacity, no blue pigment or opaque white bars. Generation
 uses no Minecraft asset as input. Snow and the Rolling Storm's distant curtain are separate.
+The rain particle's splash where drops land gets its own grey sprites the same way.
 
     python3 tools/art/build_all.py lens_rain
     python3 tools/art/specs/lens_rain.py preview /path/to/preview.png
@@ -36,11 +37,42 @@ def rain():
     return out
 
 
+# The splash where a drop lands: vanilla's rain particle shares the water splash's deep-blue sprites, so rain met the
+# ground in blue. Ours are their own sprites, a drop of the streaks' grey; the water splash keeps vanilla's.
+# The particle draws on the opaque layer, so every pixel is fully on or off: a bright crown over a duller body.
+CROWN, BODY = 200, 170
+SPLASHES = [
+    [(2, 6, CROWN), (4, 6, CROWN), (3, 7, BODY)],
+    [(3, 6, CROWN), (4, 7, BODY)],
+    [(3, 7, BODY)],
+    [(4, 6, CROWN), (3, 7, BODY)],
+]
+
+
+def splash(i):
+    out = Image.new("RGBA", (8, 8), (0, 0, 0, 0))
+    for x, y, grey in SPLASHES[i]:
+        out.putpixel((x, y), (grey, grey, grey, 255))
+    return out
+
+
 def write(root):
     path = os.path.join(root, "assets/minecraft/textures/environment/rain.png")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     rain().save(path)
-    return ["minecraft/environment/rain"]
+    written = ["minecraft/environment/rain"]
+    for i in range(len(SPLASHES)):
+        path = os.path.join(root, f"assets/awaken/textures/particle/rain_splash_{i}.png")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        splash(i).save(path)
+        written.append(f"awaken/particle/rain_splash_{i}")
+    # Only the rain particle moves to the new sprites; minecraft:splash (water) still names vanilla's.
+    path = os.path.join(root, "assets/minecraft/particles/rain.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        textures = ",\n".join(f'    "awaken:rain_splash_{i}"' for i in range(len(SPLASHES)))
+        f.write('{\n  "textures": [\n' + textures + "\n  ]\n}\n")
+    return written
 
 
 def build(out):

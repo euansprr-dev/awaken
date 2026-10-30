@@ -5237,10 +5237,15 @@ magic.
   The vanilla lightmap, world/storm rain strength, roof/ground heightmap clipping, dry biomes, weather radius setting,
   snowfall, sound and splash rules remain vanilla; Lens grades the same frame afterwards. Lens off still gets neutral
   rain under vanilla lighting; an external resource pack may override this texture normally. Rolling Storm's distant
-  rain shafts/curtain are unchanged. No mixin, custom renderer, shader change, scene copy, extra particle, draw or post
-  pass. Static incremental work: the same 64 KiB base texture, samplers, vertices and draws; no new per-frame CPU work.
+  rain shafts/curtain are unchanged. **Splash** (Euan, 2026-10-30: the splash on the ground was still blue): vanilla's
+  `minecraft:rain` particle shares `minecraft:splash`'s deep-blue sprites, so `minecraft:particles/rain.json` now names
+  `awaken:rain_splash_0..3` (same generator): 8×8, one to three fully opaque pixels (the particle draws on the opaque
+  layer), a crown of grey 200 over a body of grey 170, the streaks' grey without their fade. The water splash
+  (`minecraft:splash`: swimming, fish, a bobber) keeps vanilla's blue. No mixin, custom renderer, shader change, scene
+  copy, extra particle, draw or post pass. Static incremental work: the same 64 KiB base texture, samplers, vertices and draws; no new per-frame CPU work.
   Lower alpha does not reduce the existing quad overdraw, so no frame-time saving or measured GPU cost is claimed.
-  `lens_rain_texture` checks the packaged dimensions, neutral colour, sparse coverage and opacity. Offline contact-sheet
+  `lens_rain_texture` checks the packaged dimensions, neutral colour, sparse coverage and opacity, and that the rain
+  particle names the four grey splash sprites, each opaque and neutral. Offline contact-sheet
   inspection covers overcast, forest, night and lamplight; roof/dry/snow/settings preservation follows from leaving the
   extraction/rendering path unchanged. No client, GPU timing or in-game visual acceptance was performed.
 - **Chain** (Cinematic, Ultra): far-depth probe and trust (two 1-px passes) → **sun map** (`lens_sunmap.fsh`, L2) →

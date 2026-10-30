@@ -45,11 +45,43 @@ final class LensTests {
                 double mean = alpha / (64.0 * 256);
                 h.assertTrue(mean >= 0.5 && mean <= 2.5, "restrained total opacity: " + mean);
                 h.assertTrue(maxRow <= 6, "individual thin drops, no horizontal band: " + maxRow);
+                rainSplash(h);
                 h.succeed();
             } catch (java.io.IOException ex) {
                 h.fail("rain texture did not decode: " + ex.getMessage());
             }
         });
+    }
+
+    /**
+     * Rain lands in the streaks' grey (SPEC §22): the rain particle names our splash sprites, each a few opaque neutral
+     * pixels (the particle's layer is opaque), while the water splash keeps vanilla's.
+     */
+    private static void rainSplash(GameTestHelper h) throws java.io.IOException {
+        String rain;
+        try (var in = LensTests.class.getResourceAsStream("/assets/minecraft/particles/rain.json")) {
+            h.assertTrue(in != null, "the rain particle's definition is packaged");
+            rain = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        h.assertTrue(!rain.contains("minecraft:splash"), "rain no longer lands in the water splash's blue sprites");
+        for (int i = 0; i < 4; i++) {
+            h.assertTrue(rain.contains("\"awaken:rain_splash_" + i + "\""), "rain names splash sprite " + i);
+            try (var in = LensTests.class.getResourceAsStream("/assets/awaken/textures/particle/rain_splash_" + i + ".png")) {
+                h.assertTrue(in != null, "splash sprite " + i + " is packaged");
+                var image = javax.imageio.ImageIO.read(in);
+                h.assertTrue(image != null && image.getWidth() == 8 && image.getHeight() == 8, "splash " + i + " is 8 by 8");
+                int visible = 0;
+                for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) {
+                    int rgba = image.getRGB(x, y), a = rgba >>> 24;
+                    if (a == 0) continue;
+                    int r = rgba >> 16 & 255, g = rgba >> 8 & 255, b = rgba & 255;
+                    h.assertTrue(a == 255, "splash " + i + " is fully on or off for the opaque layer");
+                    h.assertTrue(r == g && g == b && r >= 150 && r <= 215, "splash " + i + " is the rain's neutral grey");
+                    visible++;
+                }
+                h.assertTrue(visible >= 1 && visible <= 4, "splash " + i + " is a few drops: " + visible);
+            }
+        }
     }
 
     /**
