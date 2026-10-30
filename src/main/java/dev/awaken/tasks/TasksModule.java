@@ -40,6 +40,7 @@ public final class TasksModule {
         // every step on the page, swept with every other place a goal shows (SPEC §27.12)
         dev.awaken.core.api.Shown.register("tasks", p -> {
             List<String> out = new ArrayList<>();
+            TaskBook.forget(p.getUUID()); // the sweep reads what shows now, not the book of up to 10 ticks ago (tests only)
             for (Goals.Step s : TaskBook.of(p).steps()) out.add(s.title());
             return out;
         });

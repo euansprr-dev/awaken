@@ -50,7 +50,7 @@ public enum RoomType {
     /** (SPEC §27.13) the first workshop: a Fitting Stand and a crafting table. It grows into the Forge (one room, both kinds). */
     FITTING("Armoury", "armoury", List.of(Furniture.FITTING_STAND, CRAFTING), null, 12, 3, "armour made here lasts longer",
             "A Fitting Stand and a crafting table: your armour is made here, and armour made at this stand lasts a quarter longer. Add an anvil and the Forge and it's your Forge too.",
-            "Your Armoury: armour made here lasts longer."),
+            "Your armour is made here."),
     STUDY("Study", "study", List.of(LECTERN, BOOKSHELF), null, 16, 3, "a place to read",
             "A lectern and shelves of books. Blueprints and the reading of relics will come here.", "A room to read in."),
     GREENHOUSE("Greenhouse", "greenhouse", List.of(GROWING), "under a glass roof", 20, 3, "a place for herbs",

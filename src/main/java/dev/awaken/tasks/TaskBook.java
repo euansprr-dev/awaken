@@ -102,10 +102,12 @@ public final class TaskBook {
     /** Two steps with one key: the one with more needs (or choices), the first on a tie; the place kept from either. */
     static Step merge(Step a, Step b) {
         Step keep = b.needs().size() + b.choices().size() > a.needs().size() + a.choices().size() ? b : a, other = keep == a ? b : a;
-        if (keep.where().isPresent() || other.where().isEmpty()) return keep;
-        return new Step(keep.key(), keep.goal(), keep.title(), keep.why().isEmpty() ? other.why() : keep.why(), keep.needs(), other.where(),
-                Math.min(keep.path(), other.path()), keep.optional() && other.optional(), Math.max(keep.priority(), other.priority()),
-                keep.choices(), keep.covers());
+        // the words and needs of the one that says more; the place, the path, the priority and what's covered from either
+        List<String> covers = new java.util.ArrayList<>(keep.covers());
+        for (String c : other.covers()) if (!covers.contains(c)) covers.add(c);
+        return new Step(keep.key(), keep.goal(), keep.title(), keep.why().isEmpty() ? other.why() : keep.why(), keep.needs(),
+                keep.where().isPresent() ? keep.where() : other.where(), Math.min(keep.path(), other.path()), keep.optional() && other.optional(),
+                Math.max(keep.priority(), other.priority()), keep.choices(), List.copyOf(covers));
     }
 
     /**
