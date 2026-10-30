@@ -21,6 +21,7 @@ public final class BellHooks {
         default String belfry(ServerPlayer player) { return ""; }
         default void told(ServerPlayer player) {}
         default boolean quiet(ServerLevel level, BlockPos at) { return false; }
+        default boolean relay(ServerPlayer player, BlockPos relay) { return false; }
     }
 
     private static Access access = new Access() {};
@@ -57,5 +58,13 @@ public final class BellHooks {
     /** Whether a woken bell or a home's tower can be heard at {@code at}: no new gate opens there (SPEC §43.15). */
     public static boolean quiet(ServerLevel level, BlockPos at) {
         return access.quiet(level, at);
+    }
+
+    /**
+     * A Signal Relay near this player's Hearth listened (SPEC §27.13). Since §43.16 no bell lies in the open to hear, so
+     * it's always false.
+     */
+    public static boolean relay(ServerPlayer player, BlockPos relay) {
+        return access.relay(player, relay);
     }
 }

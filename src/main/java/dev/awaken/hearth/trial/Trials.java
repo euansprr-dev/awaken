@@ -642,14 +642,14 @@ public final class Trials {
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer sp)) return;
         if (sp.level().dimension() == DIMENSION && !inTrial(sp)) sp.level().getServer().execute(() -> sendHome(sp));
-        if (HearthService.player(sp).penaltyPending) PENDING_CHECK.add(sp.getUUID());
+        HearthService.player(sp).penaltyPending = false; // the Penalty Zone retired with the Regimen (SPEC §27.13)
     }
 
     // ---- Hardline Penalty Zone --------------------------------------------------------------------------------------
 
     private static final java.util.Set<UUID> PENDING_CHECK = new java.util.HashSet<>();
 
-    /** Installed as {@code Regimen.penaltyHandler}: a missed Regimen on Hardline opens the Penalty Zone. */
+    /** A missed Regimen on Hardline opened the Penalty Zone; both retired (SPEC §27.13), kept for the trial grounds' tests. */
     public static void penalty(ServerPlayer sp) {
         HearthPlayer hp = HearthService.player(sp);
         hp.penaltyPending = true;

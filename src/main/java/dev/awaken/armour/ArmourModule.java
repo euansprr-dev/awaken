@@ -42,6 +42,7 @@ public final class ArmourModule {
             for (String piece : new String[]{"helmet", "chestplate", "leggings", "boots"}) hunter[i++] = s.id + "_" + piece;
         }
         ArmourNow.register();
+        ArmourGoals.register();
         Sources.declare("forged at a Fitting Stand, in the Forge Song (SPEC §44.4); E sets by hand at a works table", hunter);
         Sources.declare("forged at a Fitting Stand, in the Forge Song, once its set's pattern is known (SPEC §44.4)", ArmourItems.pieceIds());
         Sources.declare("carried by gate creatures of its rank: elites and wardens sometimes, the gate's Lord always (SPEC §44.4)",

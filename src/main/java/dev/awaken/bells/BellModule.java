@@ -46,6 +46,7 @@ public final class BellModule {
                 return true;
             }
         });
+        BellGoals.register(); // the Bell Book's leads and the tower's next step on the Tasks page's Bells tab (SPEC §27.13)
         dev.awaken.core.api.Shown.register("bells", p -> {
             java.util.List<String> out = new java.util.ArrayList<>();
             for (java.util.List<String> l : BellPage.build(p).leads()) out.add(l.get(1) + ": " + l.get(2).replace('\n', ' '));

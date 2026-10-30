@@ -453,6 +453,7 @@ public final class ArmourForge {
         }
         piece.set(ArmourContent.FORGED.get(), story);
         if (q.temper > 0) Upgrades.applyTemper(piece, q.temper);
+        armoury(level, be.getBlockPos(), piece);
 
         int slot = ForgeSong.slot(w.piece);
         ItemStack old = be.suit(slot);
@@ -479,8 +480,23 @@ public final class ArmourForge {
         }
     }
 
+    /** What a piece made in an Armoury room gains: it lasts a quarter longer (SPEC §27.13). */
+    static final float ARMOURY_WEAR = 1.25F;
+
+    /** The Armoury's gift: a piece fitted at a stand that stands in an Armoury room at a Hearth wears out a quarter slower. */
+    public static void armoury(ServerLevel level, BlockPos stand, ItemStack piece) {
+        if (!piece.isDamageableItem() || !dev.awaken.core.api.HearthHooks.armoury(level, stand)) return;
+        piece.set(net.minecraft.core.component.DataComponents.MAX_DAMAGE, Math.round(piece.getMaxDamage() * ARMOURY_WEAR));
+    }
+
+    /** Whether a piece carries the Armoury's gift (more wear than its kind has). */
+    public static boolean fromArmoury(ItemStack piece) {
+        Integer base = piece.getPrototype().get(net.minecraft.core.component.DataComponents.MAX_DAMAGE);
+        return base != null && piece.isDamageableItem() && piece.getMaxDamage() > base;
+    }
+
     /** The set's item for a piece (the Hunter sets' own ids; later sets bring their own). */
-    static ItemStack make(ArmourSet set, ArmorType piece) {
+    public static ItemStack make(ArmourSet set, ArmorType piece) {
         String name = switch (piece) {
             case HELMET -> "helmet";
             case CHESTPLATE -> "chestplate";

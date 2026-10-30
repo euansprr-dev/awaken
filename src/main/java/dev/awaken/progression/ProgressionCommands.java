@@ -60,8 +60,7 @@ final class ProgressionCommands {
                         return 1;
                     }))));
             admin.then(Commands.literal("truths").executes(c -> {
-                Progression.offerTruths(c.getSource().getPlayerOrException(), 3);
-                return 1;
+                return Progression.truthsCatchUp(c.getSource().getPlayerOrException());
             }));
             admin.then(Commands.literal("paths").executes(c -> {
                 var offers = Progression.offerPaths(c.getSource().getPlayerOrException());
@@ -69,13 +68,7 @@ final class ProgressionCommands {
                 return offers.size();
             }));
             admin.then(Commands.literal("directive").executes(c -> {
-                Directives.tryOffer(c.getSource().getPlayerOrException(), "command");
-                return 1;
-            }));
-            admin.then(Commands.literal("regimen").executes(c -> {
-                ServerPlayer sp = c.getSource().getPlayerOrException();
-                Progression.profile(sp).regimen = Profile.RegimenState.EMPTY;
-                Regimen.morning(sp);
+                Directives.tryOffer(c.getSource().getPlayerOrException(), "opening"); // the Registry's, the only one left
                 return 1;
             }));
             admin.then(Commands.literal("daysend").executes(c -> {

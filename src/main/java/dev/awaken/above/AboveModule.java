@@ -20,7 +20,6 @@ public final class AboveModule {
     private AboveModule() {}
 
     public static void init(IEventBus modBus) {
-        Above.registerRelaySlot();
         AboveComponents.init(modBus);
         AboveBlocks.init(modBus);
         dev.awaken.above.ruin.RuinBlocks.init(modBus);

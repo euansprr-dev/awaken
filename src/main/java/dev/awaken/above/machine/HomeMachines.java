@@ -8,10 +8,8 @@ import dev.awaken.above.net.Panel;
 import dev.awaken.above.ruin.RuinKind;
 import dev.awaken.above.ruin.RuinLocator;
 import dev.awaken.core.DirectorLog;
-import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.DreamHooks;
 import dev.awaken.core.api.HearthHooks;
-import dev.awaken.progression.Directives;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
@@ -32,7 +30,6 @@ final class HomeMachines {
     private HomeMachines() {}
 
     static final int REPLAY_COST = 100;
-    static final int RELAY_COST = 150;
     static final int RELAY_RANGE = 48;
     static final int SURVEY_RANGE = 3000;
     /** The Halo shows itself to B-rank eyes ("late in Act II"). */
@@ -93,32 +90,13 @@ final class HomeMachines {
         if (!nearHearth(player, be)) {
             return b.text("Out of range", "The relay needs your Hearth within " + RELAY_RANGE + " blocks.", Machines.WARN).footer(t.blurb).build();
         }
-        long today = PlayDays.current(player.level().getServer());
-        // A powered relay near your Hearth links for seven play-days: +1 Directive slot (see Above.RELAY_LINK).
-        if (Progression.profile(player).counter(Above.RELAY_LINK) != today + 1) Progression.setCounter(player, Above.RELAY_LINK, today + 1);
-        AboveData d = Above.data(player);
-        Profile p = Progression.profile(player);
-        boolean used = d.relayDay() == today;
-        boolean full = p.directives().size() >= Directives.slots(player);
-        String detail = used ? "Boosted today. It recharges with the next play-day."
-                : full ? "Your Directives are full. Finish or let one fade first."
-                : "Ask the Signal for a fresh Directive now.";
-        b.button("Boost the Signal", detail, used || full ? Machines.LABEL : Machines.GOOD, "boost", 0, "Boost (" + RELAY_COST + ")",
-                !used && !full && stored >= RELAY_COST && p.awakened());
-        return b.footer("Linked: your Signal holds one more Directive while the relay stays powered.").build();
+        // §43.16: no bell lies in the open, so there is nothing to listen for and nothing to spend Essence on
+        return b.text("Nothing to hear", "Every bell is kept somewhere now, by a gate's Lord or in a place a story tells of. "
+                + "None is lying out where the relay could hear it.", Machines.LABEL).footer(t.blurb).build();
     }
 
+    /** (SPEC §27.13) The relay listened for bells; since §43.16 there are none in the open to hear, so it does nothing. */
     static void relayAction(ServerPlayer player, MachineBlockEntity be, String action, int index) {
-        if (!action.equals("boost") || !nearHearth(player, be)) return;
-        long today = PlayDays.current(player.level().getServer());
-        AboveData d = Above.data(player);
-        if (d.relayDay() == today || Progression.profile(player).directives().size() >= Directives.slots(player)) return;
-        if (!be.draw(RELAY_COST)) return;
-        d.setRelayDay(today);
-        Above.sync(player);
-        int before = Progression.profile(player).directives().size();
-        Directives.tryOffer(player, "signal_relay");
-        if (Progression.profile(player).directives().size() == before) Signal.toast(player, Component.literal("The Signal had nothing new to say."));
     }
 
     // ---- Recalibrator ---------------------------------------------------------------------------------------------

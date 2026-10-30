@@ -1,10 +1,10 @@
 {
   "name": "Wanderer",
-  "description": "You refused the Signal's choices. You'll take a little of everything.",
+  "description": "You went everywhere and settled nowhere. You'll take a little of everything.",
   "colour": 10592168,
   "scoring": {},
   "evidence": {
-    "awaken:directives_dismissed": "You turned the Signal down %d times"
+    "awaken:landmarks_reached": "You reached %d landmarks"
   },
   "perks": [
     {
@@ -23,7 +23,7 @@
   "available": true,
   "hidden": {
     "type": "counter",
-    "counter": "awaken:directives_dismissed",
+    "counter": "awaken:landmarks_reached",
     "value": 25
   }
 }

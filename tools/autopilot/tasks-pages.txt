@@ -1,0 +1,112 @@
+# One Tasks page (SPEC §27.13): Euan's moment, back home with the fire set and a bed built. The Tasks page (Now, the
+# Hearth tab, the Armour tab and its sets worn), the Hearth page at a glance (next for your home, the room tiles, make it
+# look good), the Journal as a catalogue (Creatures, Beasts and Ores as "?" slots, Bells, Lore, Your story), and Status's
+# Truths.
+# Run on CI: tools/tour-ci.sh tools/autopilot/tasks-pages.txt 1200
+world autopilot_tasks_pages creative 27132713
+waitworld
+gui 0
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin levels 6
+wait 40
+key dismiss
+wait 10
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+# ---- the fire, set on open ground ----
+# well outside the city's walls (a home can't be made inside them)
+cmd spreadplayers ~1400 ~ 0 10 false @s
+wait 200
+cmd awaken admin ember give
+wait 20
+cmd awaken admin ember set
+wait 120
+screen close
+# ---- a bedroom: timber, a door, a window, a bed, two lanterns ----
+cmd fill ~4 ~-1 ~-3 ~10 ~3 ~3 minecraft:spruce_planks hollow
+cmd setblock ~4 ~ ~ minecraft:oak_door[half=lower,facing=west]
+cmd setblock ~4 ~1 ~ minecraft:oak_door[half=upper,facing=west]
+cmd setblock ~10 ~1 ~ minecraft:glass_pane
+cmd setblock ~6 ~ ~-1 minecraft:red_bed[part=foot,facing=north]
+cmd setblock ~6 ~ ~-2 minecraft:red_bed[part=head,facing=north]
+cmd setblock ~8 ~ ~-2 minecraft:lantern
+cmd setblock ~8 ~ ~2 minecraft:lantern
+wait 20
+cmd awaken admin hearth read
+wait 200
+screen close
+# ---- the Tasks page ----
+screen holo tasks
+tasks now
+wait 60
+shot t01_tasks_now
+tasks hearth
+wait 30
+shot t02_tasks_hearth
+tasks armour
+wait 30
+shot t03_tasks_armour
+scroll -6
+wait 10
+shot t04_tasks_armour_lower
+tasks worn
+wait 60
+shot t05_sets_worn
+screen close
+wait 10
+# ---- the Hearth page ----
+screen holo hearth
+wait 60
+shot t06_hearth_page
+scroll -6
+wait 10
+shot t07_hearth_page_rooms
+scroll -6
+wait 10
+shot t08_hearth_page_lower
+screen close
+wait 10
+# ---- the Journal as a catalogue ----
+screen holo journal
+journal creatures
+wait 60
+shot t09_journal_creatures
+journal kin
+wait 40
+shot t10_journal_beasts
+journal bells
+wait 40
+shot t11_journal_bells
+journal lore
+wait 30
+shot t12_journal_lore
+journal ores
+wait 30
+shot t12b_journal_ores
+journal story
+wait 30
+shot t13_journal_story
+screen close
+wait 10
+# ---- Status: the Truths come true by themselves ----
+screen holo status
+wait 40
+scroll -12
+wait 10
+shot t14_status_truths
+screen close
+wait 10
+quit

@@ -40,7 +40,7 @@ public final class HearthClient {
             dev.awaken.hearth.player.ClientHome.set(null);
         });
         StatusSections.add(StatusSections.Tab.STATUS, new RoomSection());
-        StatusSections.add(StatusSections.Tab.JOURNAL, new HearthSection());
+        HomePage.register(); // the band's Hearth page at a glance (SPEC §27.13; it was the Journal's HEARTH section)
         dev.awaken.citizens.client.CityGlow.source(HomeClient.GLOW);
         CodexEntries.addSource(HearthClient::rumours);
         // (W6) from Tier IV your village has its name on the Atlas, as the settlements of the world do

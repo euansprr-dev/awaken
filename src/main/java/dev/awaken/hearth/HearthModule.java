@@ -13,7 +13,6 @@ import dev.awaken.hearth.trial.Trials;
 import dev.awaken.hearth.trophy.Trophies;
 import dev.awaken.progression.DaysEnd;
 import dev.awaken.progression.RankHooks;
-import dev.awaken.progression.Regimen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -60,6 +59,7 @@ public final class HearthModule {
         RoomEffects.init();
         HomeCrafting.init();
         HearthNow.register();
+        HearthGoals.register();
         HearthTask.register(); // the home's steps on the task card (SPEC §28.2)
         dev.awaken.hearth.guide.Guide.init(modBus);
         Offers.init();
@@ -157,8 +157,14 @@ public final class HearthModule {
             public boolean study(net.minecraft.server.level.ServerPlayer player) {
                 return HearthService.sharedAt(player, player.blockPosition()).map(h -> h.hasRoom(dev.awaken.hearth.room.RoomType.STUDY)).orElse(false);
             }
+
+            @Override
+            public boolean armoury(ServerLevel level, BlockPos pos) {
+                if (level.dimension() != net.minecraft.world.level.Level.OVERWORLD) return false;
+                return HearthData.get(level.getServer()).containing(pos, HearthService.OVERWORLD)
+                        .flatMap(h -> h.roomAt(pos, dev.awaken.hearth.room.RoomType.FITTING)).isPresent();
+            }
         });
-        Regimen.penaltyHandler = Trials::penalty;
         RankHooks.onRankUp((sp, rank) -> {
             if (!HearthService.enabled()) return;
             Town.onRankUp(sp, rank);

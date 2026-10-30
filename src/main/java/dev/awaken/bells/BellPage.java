@@ -40,7 +40,7 @@ final class BellPage {
             List<String> hows = new ArrayList<>();
             for (BellBook.How w : BellBook.How.values()) if (l.has(w)) hows.add(w.name().charAt(0) + w.name().substring(1).toLowerCase(java.util.Locale.ROOT));
             leads.add(List.of(d.number(), Bells.title(d, l), String.join("\n", l.lines), String.join(" · ", hows), l.bearings > 0 ? "1" : "0",
-                    b.tracked == d.no() ? "1" : "0"));
+                    dev.awaken.core.api.Goals.pinned(p).equals("bell/" + d.no()) || b.tracked == d.no() ? "1" : "0"));
         });
 
         List<List<String>> tower = new ArrayList<>();

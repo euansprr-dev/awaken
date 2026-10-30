@@ -58,7 +58,9 @@ public enum Furniture {
     PERCH("a Chime Perch", "perch", "the Chime Perch", "chime_perch"),
     CRUCIBLE("a Crucible", "crucible", "the Crucible", "foundry_crucible"),
     DROP("the Drop", "Drop", "the Drop", "storehouse_drop"),
-    LEDGER("a Ledger desk", "ledger", "the Ledger desk", "ledger_desk");
+    LEDGER("a Ledger desk", "ledger", "the Ledger desk", "ledger_desk"),
+    /** (SPEC §27.13) the Armoury's stand, where armour is made (the Forge room's stand is a vanilla armour stand). */
+    FITTING_STAND("a Fitting Stand", "Fitting Stand", "the Fitting Stand", "fitting_stand");
 
     public static final int COUNT = values().length;
 
@@ -104,6 +106,7 @@ public enum Furniture {
         if (b instanceof dev.awaken.kin.works.DropBlock) return DROP;
         if (b instanceof dev.awaken.kin.works.LedgerDeskBlock) return LEDGER;
         if (b instanceof ForgeBlock) return FORGE;
+        if (b instanceof dev.awaken.armour.FittingStandBlock) return FITTING_STAND;
         if (b instanceof TrophyMountBlock) return TROPHY;
         if (s.is(BlockTags.ANVIL)) return ANVIL;
         if (s.is(BlockTags.BEDS)) {
@@ -151,6 +154,7 @@ public enum Furniture {
             case CRUCIBLE -> new ItemStack(dev.awaken.kin.works.WorksContent.CRUCIBLE_ITEM.get());
             case DROP -> new ItemStack(dev.awaken.kin.works.WorksContent.DROP_ITEM.get());
             case LEDGER -> new ItemStack(dev.awaken.kin.works.WorksContent.LEDGER_ITEM.get());
+            case FITTING_STAND -> new ItemStack(dev.awaken.armour.ArmourContent.STAND_ITEM.get());
         };
     }
 

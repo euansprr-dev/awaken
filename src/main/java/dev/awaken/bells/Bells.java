@@ -149,6 +149,14 @@ public final class Bells {
         return false;
     }
 
+    /**
+     * A Signal Relay near your Hearth listened (SPEC §27.13). Nothing lies in the open to hear any more (§43.16): false,
+     * and the relay's panel no longer offers to listen.
+     */
+    public static boolean relayed(ServerPlayer p, BlockPos relay) {
+        return false;
+    }
+
     private static BellBook.Lead lead(ServerPlayer p, BellBook b, BellCatalog.Def d) {
         return b.leads.computeIfAbsent(d.no(), k -> {
             BellBook.Lead n = new BellBook.Lead();
@@ -188,11 +196,21 @@ public final class Bells {
         }
     }
 
-    /** Track a lead: the top-right card's rough bearing to its area (or along its one bearing). */
+    /**
+     * Track a lead: since §27.13 that's the one pin, the lead's step on the Tasks page leading the card with its rough
+     * bearing. Before the Tasks page has the step (or without the tasks module) the old way: the top-right card's bearing.
+     */
     static void track(ServerPlayer p, int no) {
         BellBook b = book(p);
         BellBook.Lead l = b.leads.get(no);
         if (l == null || l.bearings == 0) return;
+        if (dev.awaken.core.api.Goals.pin(p, "bell/" + no)) {
+            if (b.tracked >= 0) { // the pin follows the lead itself: the old card goes
+                b.tracked = -1;
+                save(p, b);
+            }
+            return;
+        }
         b.tracked = no;
         save(p, b);
         BellCatalog.Def d = BellCatalog.of(no);

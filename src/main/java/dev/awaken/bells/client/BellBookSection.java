@@ -2,6 +2,7 @@ package dev.awaken.bells.client;
 
 import dev.awaken.bells.BellNet;
 import dev.awaken.progression.Rank;
+import dev.awaken.progression.client.Catalogue;
 import dev.awaken.progression.client.StatusSections;
 import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.Ui;
@@ -33,7 +34,17 @@ final class BellBookSection extends UiSection {
     }
 
     static void register() {
-        for (Part p : Part.values()) StatusSections.add(StatusSections.Tab.CODEX, new BellBookSection(p));
+        for (Part p : Part.values()) StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new BellBookSection(p), 640 + p.ordinal(), StatusSections.Shelf.BELLS));
+        // the Hundred's board is this category's slots already (numbered, lit once held); the strip counts the held
+        Catalogue.count(StatusSections.Shelf.BELLS, BellBookSection::held);
+    }
+
+    private static int[] held() {
+        ask();
+        BellNet.Page p = page;
+        int n = 0;
+        if (p != null) for (List<String> r : p.hundred()) if (r.get(3).equals("held")) n++;
+        return new int[]{n, 100};
     }
 
     static void ask() {
@@ -75,7 +86,8 @@ final class BellBookSection extends UiSection {
         boolean any = false;
         for (List<String> r : p.hundred()) if (!r.get(3).isEmpty()) any = true;
         return switch (part) {
-            case HUNDRED, TOWER -> any;
+            case HUNDRED -> true; // the Journal's Bells: the hundred numbered slots, lit as you find them
+            case TOWER -> any;
             case LEADS -> any && !p.leads().isEmpty();
         };
     }
@@ -140,7 +152,8 @@ final class BellBookSection extends UiSection {
             two = "Dim: a housemate has it. Ringed: you have a lead.";
         } else {
             String rank = Rank.valueOf(over.get(2)).label + "-rank";
-            one = over.get(0) + " · " + (over.get(1).isEmpty() ? "unknown" : over.get(1)) + " · " + rank;
+            // a bell you know nothing of is its number and nothing else (SPEC §27.13: a "?" never hints)
+            one = over.get(3).isEmpty() ? over.get(0) : over.get(0) + " · " + (over.get(1).isEmpty() ? "unknown" : over.get(1)) + " · " + rank;
             two = switch (over.get(3)) {
                 case "held" -> "Rung home " + over.get(4) + ".";
                 case "hung" -> "Someone you live with rang it home. It hangs in your tower.";
@@ -182,8 +195,8 @@ final class BellBookSection extends UiSection {
                 for (String l : lines.split("\n")) if (!l.isEmpty()) body.text(l, 0xFF000000 | Glass.TEXT);
                 if (trackable) {
                     Ui.Flow f = body.flow();
-                    if (tracked) f.chip("Tracking", 0xFF000000 | Glass.AMBER);
-                    else if (f.button("Track", Glass.EDGE, true)) ClientPacketDistributor.sendToServer(new BellNet.Track(Integer.parseInt(no.substring(1))));
+                    if (tracked) f.chip("Pinned", 0xFF000000 | Glass.AMBER);
+                    else if (f.button("Pin", Glass.EDGE, true)) ClientPacketDistributor.sendToServer(new BellNet.Track(Integer.parseInt(no.substring(1))));
                     f.end();
                 }
             });

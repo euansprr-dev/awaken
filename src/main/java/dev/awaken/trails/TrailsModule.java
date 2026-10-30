@@ -34,10 +34,12 @@ public final class TrailsModule {
         bus.addListener(TrailsModule::onPlayerTick);
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> TrailEngine.forget(e.getEntity().getUUID()));
         bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
-            if (e.getEntity() instanceof ServerPlayer sp) TrailEngine.forget(sp.getUUID()); // the screen's copy is sent afresh
+            if (!(e.getEntity() instanceof ServerPlayer sp)) return;
+            TrailEngine.forget(sp.getUUID()); // the screen's copy is sent afresh
+            TrailGoals.followedToPin(sp);
         });
-        Checklist.registerLeading(TrailEngine::task);
-        NowHooks.register(TrailEngine::now);
+        // (SPEC §27.13) trails are steps on the Tasks page now: each open trail's next step under its goal, Pin in place of Follow
+        TrailGoals.register();
         TrailsApi.install(new TrailsApi.Hooks() {
             @Override
             public void unlock(ServerPlayer p, String id) {

@@ -56,7 +56,7 @@ final class UiProbeScreen extends Screen {
         Glass.chip(g, font, "chip", x + 150, cy + 12, Glass.LANTERN);
         // the Truths tab (the TruthList cards and the Paths rows draw through the ported canvas calls)
         int sx = x + w + 16, sy = 8, sw = Math.max(120, width - sx - 8);
-        for (StatusSections.Section s : StatusSections.of(StatusSections.Tab.TRUTHS)) {
+        for (StatusSections.Section s : StatusSections.of(StatusSections.Tab.STATUS)) {
             if (!s.visible()) continue;
             int h = s.height(sw);
             s.render(g, sx, sy, sw, -10000, -10000, 0f);

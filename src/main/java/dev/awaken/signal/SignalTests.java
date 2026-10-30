@@ -157,7 +157,7 @@ final class SignalTests {
         });
 
         AwakenTests.register("signal_status_screen_frame", 20, h -> {
-            List<String> tabs = List.of("Status", "Powers", "Journal", "Truths", "Codex", "Map"); // the band's pages (SPEC §30)
+            List<String> tabs = List.of("Status", "Tasks", "Hearth", "Powers", "Journal", "Map"); // the band's pages (SPEC §30, §27.13)
             for (int[] s : SIZES) {
                 String at = s[0] + "x" + s[1];
                 StatusLayout.Frame f = StatusLayout.of(s[0], s[1], tabs, "K to close", SignalText::approxWidth);
@@ -206,10 +206,11 @@ final class SignalTests {
 
         AwakenTests.register("signal_glossary_terms", 20, h -> {
             for (String w : List.of("Satchel", "Extract", "Extraction", "Seal", "play-days", "Veil", "Fractured", "Reassessment",
-                    "Flow", "Kinetic", "Truths", "Directive", "Latents")) {
+                    "Flow", "Kinetic", "Truths", "Latents")) {
                 h.assertTrue(Glossary.lookup(w).isPresent(), "glossary explains " + w);
             }
             h.assertTrue(Glossary.lookup("Echoes").isEmpty(), "Echoes are gone (SPEC §43.4), so the glossary doesn't explain them");
+            h.assertTrue(Glossary.lookup("Directive").isEmpty(), "Directives are gone (SPEC §27.13)");
             h.assertTrue(Glossary.lookup("Flowers").isEmpty() && Glossary.lookup("Sealant").isEmpty(), "no false friends");
             h.succeed();
         });

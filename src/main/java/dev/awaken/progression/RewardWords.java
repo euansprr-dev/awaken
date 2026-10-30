@@ -31,7 +31,7 @@ public final class RewardWords {
             case Perks.HEARTH_SHIELD -> "gate breaks can't damage buildings near your Hearth while anyone in your household with this perk is online";
             case Perks.FLOW_DURATION -> "Flow lasts " + pct + "% longer";
             case Perks.CHEAT_DEATH_PER_GATE -> "once in each gate, you survive a hit that would have killed you";
-            case Perks.EXTRA_DIRECTIVE_SLOT -> "room for " + n + " more directive" + (p.amount() == 1 ? "" : "s") + " at a time";
+            case Perks.EXTRA_DIRECTIVE_SLOT -> "nothing any more (Directives are gone)";
             case Perks.MOVE_SPEED -> "you move " + pct + "% faster";
             case Perks.MAX_HEALTH -> n + " more maximum health";
             case Perks.ENERGY_REGEN -> "energy comes back " + pct + "% faster";

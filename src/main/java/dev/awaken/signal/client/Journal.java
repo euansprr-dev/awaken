@@ -92,9 +92,10 @@ public final class Journal {
     }
 
     static void register() {
-        // right under your stats on the Status page (Euan, 2026-10-26), and again on the Journal page under your tasks
+        // right under your stats on the Status page (Euan, 2026-10-26), and the whole log under the Journal's Your Story
         StatusSections.add(StatusSections.Tab.STATUS, new Section(20, 4));
         StatusSections.add(StatusSections.Tab.JOURNAL, new Section(10, SHORT));
+        dev.awaken.progression.client.Catalogue.fresh(StatusSections.Shelf.STORY, Journal::unread);
     }
 
     private static final int SHORT = 8;
@@ -133,7 +134,7 @@ public final class Journal {
 
         @Override
         public dev.awaken.progression.client.StatusSections.Shelf shelf() {
-            return null; // Recent explanations stay reachable under every Journal filter.
+            return StatusSections.Shelf.STORY; // the log is Your Story's (SPEC §27.13); "ALL n ›" opens the Journal there
         }
 
         public boolean visible() { return !ENTRIES.isEmpty() || !SAVED.isEmpty(); }

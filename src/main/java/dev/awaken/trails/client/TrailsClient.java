@@ -6,12 +6,11 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-/** Client side of trails: the Journal's TRAILS section and the copy it draws from. */
+/** Client side of trails: the copy the engine sends. Their steps show on the Tasks page now (SPEC §27.13). */
 public final class TrailsClient {
     private TrailsClient() {}
 
     public static void init(IEventBus modBus) {
-        TrailSection.register();
         modBus.addListener(TrailsClient::onPayloads);
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> TrailCache.reset());
     }
