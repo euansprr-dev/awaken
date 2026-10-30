@@ -134,6 +134,21 @@ final class LandmarkWatch {
         return true;
     }
 
+    /**
+     * Seen through the binoculars (SPEC §39.10): the kind's discovery as if reached, and the place on the Gate Map. Not
+     * reached: the Horizon line keeps pointing, the explorer's count and a climb site's rope promise wait for the walk.
+     * Returns whether it was a new find.
+     */
+    static boolean spot(ServerPlayer p, LandmarkKind kind, String id, BlockPos at) {
+        if (!Progression.discover(p, kind.discoveryKey(), Landmarks.DISCOVERY)) return false;
+        if (Landmarks.memory(p).place(id, kind, at)) Landmarks.sync(p);
+        Progression.markNewThing(p, kind.display);
+        Finds.tell(p, Finds.Find.of("landmark", "New landmark · " + kind.display, kind.display, kind.found, 0x9FE6D6, true));
+        DirectorLog.log(p, "landmark", "spotted " + kind.display + " (" + id + ") through the binoculars: the first of its kind, a discovery");
+        Playtest.log(p, "landmark", "kind", kind.id);
+        return true;
+    }
+
     /** A gate of a theme this player has never stood at: a discovery per theme. */
     static boolean reachGate(ServerPlayer p, GateHooks.GateView g) {
         String theme = g.theme();

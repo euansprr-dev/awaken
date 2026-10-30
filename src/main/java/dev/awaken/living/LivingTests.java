@@ -677,6 +677,31 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("forms_fit", 20, h -> {
+            // with Fresh Animations on, every form keeps the vanilla body and its own pieces ride it (SPEC 21.13 item 17): every bone that
+            // isn't the body becomes a piece on a vanilla part, none is lost, and each sits by the part it grows from
+            java.util.Set<String> seen = new java.util.HashSet<>();
+            for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                if (!seen.add(sp.layout)) continue;
+                for (int r = dev.awaken.living.forms.FormRigs.FIRST; r <= dev.awaken.living.forms.FormRigs.LAST; r++) {
+                    var rig = dev.awaken.living.forms.FormRigs.get(sp, r);
+                    var pieces = dev.awaken.living.forms.FormFit.fit(rig, sp.layout, dev.awaken.living.combat.FormShape.heightFactor(sp.layout, r));
+                    long extras = rig.bones.stream().filter(b -> !dev.awaken.living.forms.FormFit.body(b.name())).count();
+                    h.assertTrue(extras > 0 && pieces.size() == extras, rig.id + ": " + pieces.size() + " of its " + extras + " pieces ride the vanilla body");
+                    for (var pc : pieces) {
+                        var part = dev.awaken.living.forms.FormFit.part(sp.layout, pc.anchor());
+                        h.assertTrue(part != null, rig.id + " " + pc.bone() + " rides a vanilla part");
+                        float[] box = dev.awaken.living.forms.FormFit.box(part);
+                        float out = Math.max(Math.max(Math.max(box[0] - pc.x(), pc.x() - box[3]), Math.max(box[1] - pc.y(), pc.y() - box[4])),
+                                Math.max(box[2] - pc.z(), pc.z() - box[5]));
+                        h.assertTrue(Float.isFinite(pc.xRot() + pc.yRot() + pc.zRot()) && out < 8F,
+                                rig.id + " " + pc.bone() + " sits by its " + pc.anchor() + " (" + out + " px off)");
+                    }
+                }
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("forms_bodies", 20, h -> {
             // every species has a body at every rung from C to S: a clean rig within the bone budget, the clips the game asks for (its
             // moves at that rung, the crowned's move below, an alpha's roar, the creeper's cues), and its paint in all three families

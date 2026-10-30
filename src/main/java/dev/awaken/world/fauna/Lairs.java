@@ -203,17 +203,32 @@ public final class Lairs {
         FaunaState.KnownLair k = s.lair(e.key());
         if (k != null && k.found()) return false;
         know(p, e.key(), e.beast(), e.den(), true);
-        boolean fresh = Progression.discover(p, "lair/" + e.beast(), FOUND_XP);
-        MobDef d = Bestiary.get(e.beast());
-        LairStyle style = LairStyle.byBeast(e.beast());
-        String place = style != null ? capital(style.title) : "A lair";
-        if (fresh) {
-            Finds.tell(p, Finds.Find.of("lair", "Lair found · " + place, place, d != null ? possessive(d.name) + " den" : "A beast's den",
-                    d != null ? d.glow : 0xFFFFFF, true));
-        }
+        if (Progression.discover(p, "lair/" + e.beast(), FOUND_XP)) tellFound(p, e);
         Playtest.log(p, "lair", "found", e.beast());
         DirectorLog.log(p, "fauna", "found the lair of " + e.beast() + " at " + e.den().toShortString());
         return true;
+    }
+
+    /**
+     * Seen through the binoculars (SPEC §39.10): the lair's discovery as if found, and the den goes on the tracker; it
+     * is found (the band stops pointing at it) when the player stands in it. Returns whether it was a new find.
+     */
+    static boolean spotted(ServerPlayer p, LairRegistry.Entry e) {
+        if (!Progression.discover(p, "lair/" + e.beast(), FOUND_XP)) return false;
+        FaunaState.KnownLair k = p.getData(FaunaModule.STATE.get()).lair(e.key());
+        if (k == null) know(p, e.key(), e.beast(), e.den(), false);
+        tellFound(p, e);
+        Playtest.log(p, "lair", "spotted", e.beast());
+        DirectorLog.log(p, "fauna", "spotted the lair of " + e.beast() + " at " + e.den().toShortString() + " through the binoculars");
+        return true;
+    }
+
+    private static void tellFound(ServerPlayer p, LairRegistry.Entry e) {
+        MobDef d = Bestiary.get(e.beast());
+        LairStyle style = LairStyle.byBeast(e.beast());
+        String place = style != null ? capital(style.title) : "A lair";
+        Finds.tell(p, Finds.Find.of("lair", "Lair found · " + place, place, d != null ? possessive(d.name) + " den" : "A beast's den",
+                d != null ? d.glow : 0xFFFFFF, true));
     }
 
     /** Remembers a lair for this player (the tracker reads it) and marks the beast's lair as heard of (the Codex). */

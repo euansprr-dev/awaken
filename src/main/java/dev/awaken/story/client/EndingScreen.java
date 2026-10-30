@@ -8,7 +8,10 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
-/** The choice at the Seed. Three doors, no going back. */
+/**
+ * The choice at the Seed. Three doors, no going back. Wake up needs the Hundred Peal (SPEC §43.14): without it its card
+ * says so and can't be chosen. "Not yet" leaves the Seed waiting.
+ */
 public final class EndingScreen extends Screen {
     private record Choice(String id, String title, String line, int colour) {}
 
@@ -19,9 +22,20 @@ public final class EndingScreen extends Screen {
     };
 
     private long opened = -1;
+    private final boolean wake;
+    private static final String WAKE_LOCKED = "Needs the Hundred Peal: all hundred bells ringing together in your Great Belfry.";
 
-    public EndingScreen() {
+    public EndingScreen(boolean wake) {
         super(Component.literal("The Seed"));
+        this.wake = wake;
+    }
+
+    private boolean open(Choice c) {
+        return wake || !c.id().equals("wake");
+    }
+
+    private int laterY() {
+        return height / 2 + 64;
     }
 
     @Override
@@ -55,15 +69,18 @@ public final class EndingScreen extends Screen {
         for (int i = 0; i < CHOICES.length; i++) {
             Choice c = CHOICES[i];
             int x = cardX(i, w), y = height / 2 - 40;
-            boolean hover = Glass.inside(mouseX, mouseY, x, y, w, h);
-            Glass.panel(g, x, y, w, h, c.colour(), t * (hover ? 1f : 0.8f));
-            g.centeredText(font, c.title(), x + w / 2, y + 12, Glass.a(c.colour(), t));
+            boolean on = open(c), hover = on && Glass.inside(mouseX, mouseY, x, y, w, h);
+            float ca = t * (on ? (hover ? 1f : 0.8f) : 0.4f);
+            Glass.panel(g, x, y, w, h, c.colour(), ca);
+            g.centeredText(font, c.title(), x + w / 2, y + 12, Glass.a(c.colour(), ca));
             int ty = y + 30;
-            for (var line : font.split(Component.literal(c.line()), w - 16)) {
-                g.centeredText(font, line, x + w / 2, ty, Glass.a(Glass.TEXT, t));
+            for (var line : font.split(Component.literal(on ? c.line() : WAKE_LOCKED), w - 16)) {
+                g.centeredText(font, line, x + w / 2, ty, Glass.a(Glass.TEXT, ca));
                 ty += 10;
             }
         }
+        boolean later = Glass.inside(mouseX, mouseY, width / 2 - 40, laterY() - 4, 80, 16);
+        g.centeredText(font, "Not yet", width / 2, laterY(), Glass.a(Glass.TEXT, t * (later ? 1f : 0.55f)));
     }
 
     @Override
@@ -72,10 +89,16 @@ public final class EndingScreen extends Screen {
         for (int i = 0; i < CHOICES.length; i++) {
             int x = cardX(i, w), y = height / 2 - 40;
             if (Glass.inside(event.x(), event.y(), x, y, w, h)) {
+                if (!open(CHOICES[i])) return true;
                 ClientPacketDistributor.sendToServer(new StoryPayloads.ChooseEnding(CHOICES[i].id()));
                 onClose();
                 return true;
             }
+        }
+        if (Glass.inside(event.x(), event.y(), width / 2 - 40, laterY() - 4, 80, 16)) {
+            ClientPacketDistributor.sendToServer(new StoryPayloads.ChooseEnding("later"));
+            onClose();
+            return true;
         }
         return super.mouseClicked(event, doubleClick);
     }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "about": "The life layer's temperaments (SPEC §23): every creature on one of Awaken's own bodies gets one, from its role unless named below. Times in seconds, rates in Hz, angles in radians, offsets in model pixels. A creature entry may override any field of its temperament.",
+  "about": "The life layer's temperaments (SPEC §23): every creature on one of Awaken's own bodies gets one, from its role unless named below. Times in seconds, rates in Hz, angles in radians, offsets in model pixels; neck: how far the head turns from the body. A creature entry may override any field of its temperament.",
   "temperaments": {
     "default": {
       "breath": 0.3, "breathDepth": 1.0, "blink": [3.0, 7.0],
@@ -9,61 +9,71 @@
       "bob": 0.5, "sway": 1.5, "lean": 1.0,
       "fidget": [5.0, 10.0],
       "idles": {"look": 3, "sniff": 1, "flick": 2, "perk": 1},
-      "arms": 0.0, "stagger": 1.0, "mass": 1.0
+      "arms": 0.0, "stagger": 1.0, "mass": 1.0, "neck": 1.15
     },
     "cute": {
+      "neck": 1.3,
       "breath": 0.6, "blink": [1.8, 4.5], "headSpeed": 14.0, "headDamping": 0.55, "eyeLead": 0.4,
       "springHz": 3.4, "springDamping": 0.2, "springGain": 1.3, "bob": 0.7, "sway": 2.0, "fidget": [2.5, 6.0],
       "idles": {"look": 3, "sniff": 2, "flick": 3, "shake": 1, "scratch": 1, "perk": 2, "yawn": 1},
       "stagger": 1.3, "mass": 0.6
     },
     "grazer": {
+      "neck": 1.0,
       "breath": 0.38, "blink": [2.5, 6.0], "headSpeed": 9.0, "headDamping": 0.75,
       "springHz": 2.6, "springDamping": 0.28, "bob": 0.6, "sway": 1.8, "fidget": [3.0, 7.0],
       "idles": {"look": 4, "sniff": 2, "flick": 3, "shake": 1, "stretch": 1, "perk": 2, "scratch": 1, "graze": 6}
     },
     "hunter": {
+      "neck": 1.2,
       "breath": 0.3, "blink": [5.0, 11.0], "headSpeed": 7.0, "headDamping": 1.0, "eyeLead": 0.25,
       "springHz": 2.2, "springDamping": 0.4, "bob": 0.3, "sway": 0.8, "lean": 1.4, "fidget": [5.0, 11.0],
       "idles": {"look": 3, "sniff": 3, "flick": 1, "stretch": 1, "yawn": 1, "settle": 1},
       "mass": 0.9
     },
     "beast": {
+      "neck": 0.8,
       "breath": 0.2, "breathDepth": 1.3, "blink": [4.0, 9.0], "headSpeed": 3.6, "headDamping": 0.9, "eyeLead": 0.2,
       "springHz": 1.4, "springDamping": 0.32, "springGain": 1.2, "bob": 1.3, "sway": 2.6, "lean": 0.7, "fidget": [6.0, 12.0],
       "idles": {"look": 3, "sniff": 2, "shake": 2, "stretch": 1, "yawn": 1, "settle": 2, "flick": 1, "graze": 3},
       "stagger": 0.7, "mass": 2.2
     },
     "lord": {
+      "neck": 0.75,
       "breath": 0.17, "breathDepth": 1.2, "blink": [5.0, 10.0], "headSpeed": 3.2, "headDamping": 0.95,
       "springHz": 1.3, "springDamping": 0.3, "bob": 1.1, "sway": 2.0, "fidget": [7.0, 14.0],
       "idles": {"look": 3, "settle": 2, "flick": 1},
       "arms": 0.6, "stagger": 0.6, "mass": 2.5
     },
     "monster": {
+      "neck": 1.1,
       "breath": 0.28, "blink": [4.0, 9.0], "headSpeed": 6.0, "headDamping": 0.9,
       "springHz": 2.0, "springDamping": 0.3, "bob": 0.6, "sway": 1.4,
       "idles": {"look": 3, "flick": 1, "settle": 1},
       "arms": 0.5, "mass": 1.3
     },
     "spirit": {
+      "neck": 1.4,
       "breath": 0.12, "blink": [6.0, 12.0], "headSpeed": 4.0, "headDamping": 0.7,
       "springHz": 0.8, "springDamping": 0.16, "springGain": 1.4, "bob": 0.0, "sway": 0.8, "lean": 0.6, "fidget": [6.0, 12.0],
       "idles": {"look": 3, "settle": 1, "flick": 1},
       "arms": 0.8, "stagger": 0.9, "mass": 0.8
     },
     "insect": {
+      "neck": 0.6,
       "breath": 0.9, "breathDepth": 0.6, "blink": [0, 0], "headSpeed": 16.0, "headDamping": 0.6,
       "springHz": 4.4, "springDamping": 0.3, "springGain": 1.2, "bob": 0.3, "sway": 1.0, "fidget": [2.0, 5.0],
       "idles": {"look": 2, "flick": 4, "perk": 1},
       "stagger": 1.2, "mass": 0.4
     },
     "swimmer": {
+      "neck": 0.45,
       "breath": 0.35, "blink": [0, 0], "headSpeed": 6.0, "headDamping": 0.8,
       "springHz": 1.2, "springDamping": 0.22, "springGain": 1.3, "bob": 0.0, "sway": 0.6, "lean": 1.2, "fidget": [4.0, 9.0],
       "idles": {"look": 2, "flick": 3}
     },
     "citizen": {
+      "neck": 1.2,
       "breath": 0.26, "blink": [2.5, 6.5], "headSpeed": 7.0, "headDamping": 0.9, "eyeLead": 0.0,
       "springHz": 2.0, "springDamping": 0.35, "springGain": 0.6, "bob": 0.0, "sway": 0.0, "lean": 0.4, "fidget": [6.0, 14.0],
       "idles": {"look": 3, "settle": 2},

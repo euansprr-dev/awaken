@@ -172,6 +172,11 @@ public final class Life {
         return far;
     }
 
+    /** 0..1: how much the motion layer's planted feet own the legs (0 with no gait): a body's own walk swing gives way. */
+    public float feet() {
+        return legs != null ? legs.weight : 0.0F;
+    }
+
     /** The beat's pace for a body that beats its own wings or tail (1 when it has no flight): see {@link Flight#pace}. */
     public float pace() {
         return fly != null ? Flight.pace(climb, cruise) : 1.0F;
@@ -208,7 +213,7 @@ public final class Life {
             ly = s.y;
             lz = s.z;
             lastBody = s.bodyRot;
-            headYaw = targetYaw = Mth.clamp(s.yRot, -170, 170) * Mth.DEG_TO_RAD;
+            headYaw = targetYaw = Mth.clamp(Mth.wrapDegrees(s.yRot) * Mth.DEG_TO_RAD, -p.neck(), p.neck());
             headPitch = targetPitch = Mth.clamp(s.xRot, -75, 75) * Mth.DEG_TO_RAD;
         }
         float step = (age - lastAge) / 20.0F;
@@ -296,9 +301,12 @@ public final class Life {
         jawOpen = idleJaw + roarJaw + (dead ? 0.25F * Math.min(1.0F, dying / 0.6F) : 0.0F);
         if (roarT >= 0 && roarT < 0.35F) depth += 1.2F * (roarT / 0.35F); // it fills its chest before the roar
         // the head: toward what it looks at, plus its fidget's look, leading into a turn
-        float rawYaw = Mth.clamp(s.yRot, -170, 170) * Mth.DEG_TO_RAD, rawPitch = Mth.clamp(s.xRot, -75, 75) * Mth.DEG_TO_RAD;
+        // never further than its neck reaches (a look over its shoulder would wring it round); a look that passes behind
+        // it holds the side the head already turned to, so the face never swings across its back
+        float neck = p.neck(), rawYaw = Mth.wrapDegrees(s.yRot) * Mth.DEG_TO_RAD, rawPitch = Mth.clamp(s.xRot, -75, 75) * Mth.DEG_TO_RAD;
+        if (Math.abs(rawYaw) > neck) rawYaw = (Math.abs(rawYaw) > 2.0F && Math.abs(headYaw) > 0.1F ? Math.signum(headYaw) : Math.signum(rawYaw)) * neck;
         float into = moving > 0.2F ? Mth.clamp(yawRate * 0.16F, -0.45F, 0.45F) : 0.0F;
-        targetYaw = rawYaw * lookWeight + fYaw + into;
+        targetYaw = Mth.clamp(rawYaw * lookWeight + fYaw + into, -neck, neck);
         targetPitch = rawPitch * lookWeight + fPitch;
         if (dead) {
             targetYaw = headYaw;
@@ -313,7 +321,10 @@ public final class Life {
             headYaw += headYawV * h;
             headPitch += headPitchV * h;
         }
-        headYaw = Mth.clamp(headYaw, -3.0F, 3.0F);
+        if (Math.abs(headYaw) > neck) { // the spring's overshoot stops at the neck's reach too
+            headYaw = Math.copySign(neck, headYaw);
+            headYawV = 0;
+        }
         headPitch = Mth.clamp(headPitch, -1.3F, 1.3F);
         float lead = far ? 0.0F : p.eyeLead();
         eyeYaw = Mth.clamp(targetYaw - headYaw, -lead, lead);
@@ -713,7 +724,7 @@ public final class Life {
      * Returns true if it drew the fall (skip vanilla's flip then).
      */
     public boolean rootPose(PoseStack pose, LivingEntityRenderState s) {
-        if (rig.rootMotion) {
+        if (rig.rootMotion && !rig.rootCarries) { // a body walking on its feet has these on its root part (LifeRig.apply)
             // model space to the pose stack: model x and y are flipped here, so pitch turns the other way
             pose.translate(0.0F, -dip / 16.0F, 0.0F);
             if (bodyPitch != 0 || bodyRoll != 0) {
@@ -837,6 +848,12 @@ public final class Life {
             x -= tw * dX;
             y -= tw * dY;
             zz -= tw * dZ;
+            int hg = r.hinge[j];
+            if (hg == 0) { // a hanging plate turns about the edge it hangs from, never off it
+                y = zz = vyy = vzz = 0;
+            } else if (hg == 2) {
+                x = y = vxx = vyy = 0;
+            }
             float m = r.maxAngle[j], mag = x * x + y * y + zz * zz;
             if (mag > m * m) {
                 float sc = m / Mth.sqrt(mag);

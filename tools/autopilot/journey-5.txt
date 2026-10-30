@@ -1,0 +1,222 @@
+# The Journey, stage 5 (SPEC §43.12): what Euan sees after it. The eight working kin close in a studio by day (front and
+# side) and the lit ones by night; the new blocks and items in the inventory; then a home (/awaken admin kin yard) with
+# the works raised beside it (/awaken admin kin works: a Smeltery, a Storehouse with a heap on its Drop, a Foundry with
+# Sung Iron's metal, a Rookery), kin at home in each, a Work Plan close, the Hearth page, and the works at night.
+# The studio floats 300 east of the city at y 260: inside the ridge, so no wild figure can be placed on it.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/journey-5.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_journey_5 creative 29102026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 6000
+cmd clear @s
+
+# ---- 1. the studio: the eight working kin, close, by day (held still: wild ones keep their distance) ----
+cmd awaken city view square
+wait 300
+cmd tp @s ~300 262 ~
+wait 200
+cmd summon minecraft:marker ~ 261 ~ {Tags:["studio"]}
+cmd execute at @e[type=marker,tag=studio,limit=1] run fill ~-6 ~-2 ~-14 ~70 ~-2 ~6 minecraft:dirt
+cmd execute at @e[type=marker,tag=studio,limit=1] run fill ~-6 ~-1 ~-14 ~70 ~-1 ~6 minecraft:grass_block
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~0 ~ ~-8 90 0
+cmd awaken admin kin summon totter
+wait 5
+cmd data merge entity @e[type=awaken:kin_totter,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~8 ~ ~-8 90 0
+cmd awaken admin kin summon thatchback
+wait 5
+cmd data merge entity @e[type=awaken:kin_thatchback,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~16 ~ ~-8 90 0
+cmd awaken admin kin summon emberkit
+wait 5
+cmd data merge entity @e[type=awaken:kin_emberkit,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~24 ~ ~-8 90 0
+cmd awaken admin kin summon puffwool
+wait 5
+cmd data merge entity @e[type=awaken:kin_puffwool,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~32 ~ ~-8 90 0
+cmd awaken admin kin summon dumplin
+wait 5
+cmd data merge entity @e[type=awaken:kin_dumplin,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~40 ~ ~-8 90 0
+cmd awaken admin kin summon pondling
+wait 5
+cmd data merge entity @e[type=awaken:kin_pondling,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~48 ~ ~-8 90 0
+cmd awaken admin kin summon snufflet
+wait 5
+cmd data merge entity @e[type=awaken:kin_snufflet,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~56 ~ ~-8 90 0
+cmd awaken admin kin summon chimewren
+wait 5
+cmd data merge entity @e[type=awaken:kin_chimewren,limit=1,sort=nearest] {NoAI:1b}
+wait 40
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~5.6 ~-0.5 ~-5.4 151 15
+wait 40
+shot j5_01_totter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~1.4 ~-0.4 ~-8 270 12
+wait 30
+shot j5_02_totter_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~13.8 ~-0.3 ~-4.9 151 14
+wait 40
+shot j5_03_thatchback
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~8.9 ~-0.3 ~-8 270 11
+wait 30
+shot j5_04_thatchback_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~21.3 ~-0.6 ~-5.8 151 16
+wait 40
+shot j5_05_emberkit
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~17.8 ~-0.4 ~-8 270 12
+wait 30
+shot j5_06_emberkit_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~29.8 ~-0.3 ~-4.9 151 14
+wait 40
+shot j5_07_puffwool
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~24.9 ~-0.3 ~-8 270 11
+wait 30
+shot j5_08_puffwool_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~37 ~-0.7 ~-6.2 151 20
+wait 40
+shot j5_09_dumplin
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~34.2 ~-0.6 ~-8 270 16
+wait 30
+shot j5_10_dumplin_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~45.3 ~-0.6 ~-5.8 151 16
+wait 40
+shot j5_11_pondling
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~41.8 ~-0.4 ~-8 270 12
+wait 30
+shot j5_12_pondling_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~53.4 ~-0.6 ~-5.6 151 16
+wait 40
+shot j5_13_snufflet
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~49.6 ~-0.4 ~-8 270 12
+wait 30
+shot j5_14_snufflet_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~61 ~-0.7 ~-6.2 151 20
+wait 40
+shot j5_15_chimewren
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~58.2 ~-0.6 ~-8 270 16
+wait 30
+shot j5_16_chimewren_side
+# the lit ones by night: the Emberkit's back, the Pondling's gills, the Chimewren's crest
+cmd time set 18000
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~21.3 ~-0.6 ~-5.8 151 16
+wait 60
+shot j5_17_emberkit_night
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~45.3 ~-0.6 ~-5.8 151 16
+wait 30
+shot j5_18_pondling_night
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~61 ~-0.7 ~-6.2 151 20
+wait 30
+shot j5_19_chimewren_night
+cmd gamemode creative
+cmd time set 6000
+
+# ---- 2. the new blocks and items in the inventory ----
+cmd clear @s
+cmd give @s awaken:work_plan
+cmd give @s awaken:storehouse_drop
+cmd give @s awaken:ledger_desk
+cmd give @s awaken:foundry_crucible
+cmd give @s awaken:chime_perch
+cmd give @s awaken:woken_clapper
+cmd give @s awaken:vent_stone
+cmd give @s awaken:granary_keystone
+cmd gamemode survival
+hud on
+compat inventory
+wait 20
+shotnow j5_20_new_things
+screen close
+hud off
+cmd gamemode creative
+cmd clear @s
+
+# ---- 3. a home out west with the works raised north of it, kin at home in them ----
+cmd awaken city view square
+wait 200
+cmd spreadplayers ~-800 ~ 0 40 false @s
+wait 400
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin works
+wait 40
+cmd execute at @e[type=marker,tag=yard,limit=1] run setblock ~2 ~ ~3 awaken:work_plan[facing=south]
+cmd awaken admin kin home emberkit
+cmd awaken admin kin home totter
+cmd awaken admin kin home chimewren
+cmd awaken admin kin home puffwool
+cmd tick sprint 300
+wait 160
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~16 ~16 180 34
+wait 60
+shot j5_21_home_and_works
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-5 ~0.3 ~-8.7 180 22
+wait 30
+shot j5_22_storehouse_drop
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-15 ~0.4 ~-9.2 180 25
+wait 30
+shot j5_23_smeltery
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~5 ~0.4 ~-9.2 180 25
+wait 30
+shot j5_24_foundry
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~15 ~0.4 ~-9.2 180 25
+wait 30
+shot j5_25_rookery
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~3.2 ~0 ~4.6 143 30
+wait 30
+shot j5_26_work_plan
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~4.5 180 10
+hud on
+screen holo hearth
+wait 80
+shotnow j5_27_hearth_page
+screen close
+hud off
+
+# ---- 4. night: the works lit ----
+cmd time set 18000
+wait 100
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~16 ~16 180 34
+wait 60
+shot j5_28_works_night
+cmd gamemode creative
+quit

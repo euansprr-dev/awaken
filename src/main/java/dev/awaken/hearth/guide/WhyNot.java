@@ -75,7 +75,6 @@ public final class WhyNot {
             case HALL -> "a bigger floor";
             case BELL_TOWER -> "higher up";
             case LOOKOUT -> "higher, windows round";
-            case MINE_HEAD -> "a deeper shaft";
             default -> "not yet";
         };
         String tracker = Fit.first(Fit.TRACKER, type.label + ": " + type.condition, type.label + ": " + brief, type.label + ": not yet");

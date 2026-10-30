@@ -1,0 +1,180 @@
+# The Journey, stage 3 (SPEC §43.8), and stage 2's home shots the last tour lost to a CI GPU hang. A home 320 east of the
+# city square (/awaken admin kin yard: a Hearthfire, a field and an Ore Shed) with a Burrowbun and a Pebblepup at work,
+# the Hearth page by day and at the first fire's lesson, the Lampwing home at night; then a Great Fault frame by frame
+# (the tell, the tear, the words, the held cut, the line after with the edge flickering, the mend), a flicker; then the
+# first raid: the warning, its Great Fault at dusk, the waves seen from above, first light; and a raid while away.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/journey-3.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_journey_3 creative 29102026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 3500
+cmd clear @s
+
+# ---- 1. a home near the city: the Hearthfire, a field and an Ore Shed ----
+cmd awaken city view square
+wait 300
+cmd time set 6000
+cmd spreadplayers ~320 ~40 0 20 false @s
+wait 300
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin home burrowbun
+cmd awaken admin kin home pebblepup
+cmd tick sprint 600
+wait 160
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1 ~8 ~17 180 24
+wait 60
+shot j3_01_yard_day
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8 ~2.5 ~6 180 28
+wait 30
+shot j3_02_field_burrowbun
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-6.4 ~0.2 ~1.6 125 25
+wait 30
+shot j3_03_ore_shed_pebblepup
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~4.5 180 10
+cmd awaken admin kin meet mossback
+cmd awaken admin kin watch mossback 2
+hud on
+screen holo hearth
+wait 80
+shotnow j3_04_hearth_page_day
+screen close
+hud off
+
+# ---- 2. night: the first fire's lesson, then the Lampwing home ----
+cmd awaken admin kin lesson
+wait 120
+hud on
+screen holo hearth
+wait 80
+shotnow j3_05_hearth_page_lesson
+screen close
+hud off
+cmd awaken admin kin home lampwing
+wait 200
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~4.5 ~0.3 ~4 160 10
+wait 60
+shot j3_06_lampwing_at_the_fire
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1 ~8 ~17 180 24
+wait 40
+shot j3_07_yard_night
+cmd gamemode creative
+
+# ---- 3. a Great Fault, frame by frame (by day, at the yard) ----
+cmd time set 6000
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~4.5 180 5
+hud on
+wait 40
+cmd awaken admin fault great tour_show
+wait 12
+shotnow j3_08_fault_tell
+wait 43
+shotnow j3_09_fault_tear
+wait 75
+shotnow j3_10_fault_words
+wait 65
+shotnow j3_11_fault_words_leak
+wait 35
+shotnow j3_12_fault_cut
+wait 60
+shotnow j3_13_fault_after_edge
+wait 60
+cmd awaken admin fault mend
+wait 7
+shotnow j3_14_fault_mend_sweep
+wait 60
+cmd awaken admin fault flicker
+wait 6
+shotnow j3_15_fault_flicker
+
+# ---- 4. the first raid: warned, the Great Fault at dusk, the waves, first light ----
+cmd time set 11600
+wait 20
+cmd awaken admin bigday raid first
+wait 30
+shotnow j3_16_raid_warning
+wait 120
+cmd time set 12300
+wait 200
+shotnow j3_17_raid_fault_words
+wait 60
+shotnow j3_18_raid_fault_cut
+wait 400
+hud off
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~ ~90 ~ 0 90
+wait 60
+shot j3_19_raid_from_above
+wait 400
+shot j3_20_raid_from_above_later
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~4.5 180 5
+hud on
+cmd awaken admin bigday dawn
+wait 8
+shotnow j3_21_raid_dawn_mend
+wait 60
+shotnow j3_22_raid_dawn_card
+
+# ---- 5. a raid while nobody's home: what it broke and carried, and the mend ----
+cmd time set 11600
+# a larder (food in the field's chest) and glass on every side, so whichever way it comes there's something to take and break
+cmd execute at @e[type=marker,tag=yard,limit=1] run item replace block ~13 ~ ~ container.0 with minecraft:bread 32
+cmd execute at @e[type=marker,tag=yard,limit=1] run item replace block ~13 ~ ~ container.1 with minecraft:cooked_beef 16
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~15 ~ ~-2 ~15 ~1 ~2 minecraft:glass
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-13 ~ ~-2 ~-13 ~1 ~2 minecraft:glass
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-2 ~ ~-6 ~2 ~1 ~-6 minecraft:glass
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-2 ~ ~6 ~2 ~1 ~6 minecraft:glass
+cmd awaken admin bigday raid
+wait 40
+cmd gamemode spectator
+cmd time set 12300
+wait 80
+cmd awaken admin bigday dawn
+cmd gamemode creative
+wait 20
+shotnow j3_23_away_raid_note
+hud off
+cmd time set 1000
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1 ~8 ~17 180 24
+wait 40
+shot j3_24_away_raid_yard
+cmd gamemode creative
+quit

@@ -1,0 +1,257 @@
+# The Journey, stage 1 (SPEC §43.1-43.6): what Euan sees after it. The Stilled in a studio (all twelve poses, close, then
+# the row), their three things in the inventory, the first hamlet standing empty, the north road's figures where the world
+# put them (Aldo on his milestone, read for real), the key the third one carries opening the left chest by the hamlet's
+# well, the Last Fire with Ilse alone, Hettie in Carillon's market square, and the first holdfast with its people and bell.
+# The studio floats 300 east of the city at y 260: inside the ridge, so no wild figure can be placed on it.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/journey-1.txt 2400
+world autopilot_journey_1 creative 29102026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 3500
+cmd clear @s
+
+# ---- 1. the studio: every pose, close, from the front and a little to its right ----
+cmd awaken city view square
+wait 300
+cmd tp @s ~300 262 ~
+wait 200
+cmd summon minecraft:marker ~ 261 ~ {Tags:["studio"]}
+cmd execute at @e[type=marker,tag=studio,limit=1] run fill ~-6 ~-2 ~-8 ~78 ~-2 ~10 minecraft:dirt
+cmd execute at @e[type=marker,tag=studio,limit=1] run fill ~-6 ~-1 ~-8 ~78 ~-1 ~10 minecraft:grass_block
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~0 ~ ~ 180 0
+cmd awaken stilled place milestone letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~6 ~ ~ 180 0
+cmd awaken stilled place walking keepsake
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~12 ~ ~ 180 0
+cmd awaken stilled place grave letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~18 ~ ~ 180 0
+cmd awaken stilled place pair key
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~24 ~ ~ 180 0
+cmd awaken stilled place lead letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~30 ~ ~ 180 0
+cmd awaken stilled place reaching key
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~36 ~ ~ 180 0
+cmd awaken stilled place looking_back keepsake
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~42 ~ ~ 180 0
+cmd awaken stilled place waiting letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~48 ~ ~ 180 0
+cmd awaken stilled place lantern key
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~54 ~ ~ 180 0
+cmd awaken stilled place child keepsake
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~60 ~ ~ 180 0
+cmd awaken stilled place curled letter
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~66 ~ ~ 180 0
+cmd awaken stilled place bundle key
+wait 40
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~2.3 ~ ~3.1 145.3 11
+wait 60
+shot j1_01_pose_milestone
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~8.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_02_pose_walking
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~14.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_03_pose_grave
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~20.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_04_pose_pair
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~26.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_05_pose_lead
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~32.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_06_pose_reaching
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~38.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_07_pose_looking_back
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~44.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_08_pose_waiting
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~50.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_09_pose_lantern
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~56.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_10_pose_child
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~62.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_11_pose_curled
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~68.3 ~ ~3.1 145.3 11
+wait 30
+shot j1_12_pose_bundle
+# the walking one from its side and from behind: the pack and the stride
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~9.6 ~ ~0.5 90 14
+wait 30
+shot j1_13_walking_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~6.5 ~ ~-2.6 0 14
+wait 30
+shot j1_14_walking_back
+# the row from the south (a spectator, so the camera holds in the air)
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~33 ~3 ~22 180 8
+wait 40
+shot j1_15_the_row
+cmd gamemode creative
+
+# ---- 2. what they carry, in the inventory ----
+cmd clear @s
+cmd give @s awaken:stilled_letter
+cmd give @s awaken:stilled_key
+cmd give @s awaken:stilled_keepsake
+cmd gamemode survival
+hud on
+compat inventory
+wait 20
+shotnow j1_16_their_things
+screen close
+hud off
+cmd gamemode creative
+cmd clear @s
+
+# ---- 3. the first hamlet up the north road, standing empty ----
+cmd awaken village view first green
+wait 500
+shot j1_17_first_hamlet_empty
+cmd awaken village view first street
+wait 200
+shot j1_18_first_hamlet_street
+
+# ---- 4. the north road's figures where the world put them ----
+cmd awaken stilled view aldo
+wait 400
+cmd awaken stilled view aldo
+wait 200
+shot j1_19_aldo
+cmd awaken stilled view aldo 11 25
+wait 100
+shot j1_20_aldo_by_the_road
+cmd awaken stilled view aldo 2.4 0
+wait 40
+hud on
+use
+wait 80
+shot j1_21_aldo_read
+screen close
+cmd clear @s awaken:stilled_letter
+cmd clear @s awaken:stilled_keepsake
+cmd item replace entity @s weapon.mainhand with minecraft:air
+hud off
+cmd awaken stilled view north1
+wait 400
+cmd awaken stilled view north1
+wait 200
+shot j1_22_north1
+cmd awaken stilled view north1 11 -30
+wait 100
+shot j1_23_north1_wide
+cmd awaken stilled view north1 2.4 0
+wait 40
+hud on
+use
+wait 80
+shot j1_24_north1_read
+screen close
+cmd clear @s awaken:stilled_letter
+cmd clear @s awaken:stilled_keepsake
+cmd item replace entity @s weapon.mainhand with minecraft:air
+hud off
+cmd awaken stilled view north2
+wait 400
+cmd awaken stilled view north2
+wait 200
+shot j1_25_north2
+cmd awaken stilled view north2 2.4 0
+wait 40
+hud on
+use
+wait 80
+shot j1_26_north2_read
+screen close
+cmd clear @s awaken:stilled_letter
+cmd clear @s awaken:stilled_keepsake
+cmd item replace entity @s weapon.mainhand with minecraft:air
+hud off
+# (only when the first hamlet lies off the road: its own figure at its edge)
+cmd awaken stilled view hamlet
+wait 400
+cmd awaken stilled view hamlet
+wait 200
+shot j1_27_hamlet_edge
+
+# ---- 5. the key at the hamlet's well: the left chest ----
+cmd awaken village view first green
+wait 300
+cmd awaken stilled view chest
+wait 150
+shot j1_28_left_chest
+cmd awaken stilled view chest 2.2 0
+wait 40
+hud on
+use
+wait 80
+shot j1_29_left_chest_opened
+screen close
+cmd gamemode survival
+compat inventory
+wait 20
+shotnow j1_30_what_was_inside
+screen close
+cmd gamemode creative
+hud off
+
+# ---- 6. the Last Fire: Ilse alone ----
+cmd awaken living first camp
+wait 300
+shot j1_31_the_last_fire
+hud on
+cmd awaken living talk
+wait 60
+shot j1_32_ilse_talks
+screen close
+hud off
+
+# ---- 7. Hettie in Carillon's market square ----
+cmd awaken city view hettie
+wait 300
+shot j1_33_hettie_in_the_market
+
+# ---- 8. the first holdfast: people, and the bell ----
+cmd awaken village view first_holdfast green
+wait 600
+shot j1_34_holdfast_green
+cmd awaken village view first_holdfast street
+wait 200
+shot j1_35_holdfast_street
+cmd awaken village view first_holdfast bell
+wait 200
+shot j1_36_holdfast_bell
+quit

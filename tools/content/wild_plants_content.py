@@ -5,7 +5,8 @@ have a tinted layer and which an overlay, and makes the models fit). Run: python
 
 Models: a plant with both layers is a cross whose tinted blades (tint index 0, the grass colour) and untinted overlay lie on
 the same planes, the way vanilla lays a grass block's side overlay; a plant with one layer is vanilla's (tinted_)cross. The
-halves of a two-block plant pick their versions from one seed (vanilla's double plant seed), so the arrays line up.
+halves of a two-block plant never pick at random: the block's `shape` (0..2, set the same on both halves) names one drawing
+for each, the lower drawn to meet its own upper (SPEC §41.2; the art spec's seam check proves the seams meet).
 """
 import json
 import os
@@ -148,13 +149,14 @@ def single(name, sprites, item_sprite=None):
 
 
 def double(name, bottoms, tops_by_look, item_sprite):
-    """A two-block plant: lower and upper sprites per look (0..2); looks it lacks fall back to look 0."""
+    """A two-block plant: lower and upper sprites per look (0..2), one per shape (0..2); looks it lacks fall back to look 0."""
     v = {}
     for look in range(3):
         tops = tops_by_look.get(look, tops_by_look[0])
         lows = bottoms.get(look, bottoms[0]) if isinstance(bottoms, dict) else bottoms
-        v[f"half=lower,look={look}"] = variants(lows)
-        v[f"half=upper,look={look}"] = variants(tops)
+        for shape in range(3):
+            v[f"half=lower,look={look},shape={shape}"] = {"model": sprite_model(lows[shape])}
+            v[f"half=upper,look={look},shape={shape}"] = {"model": sprite_model(tops[shape])}
     write(f"{ASSETS}/blockstates/{name}.json", {"variants": v})
     if item_sprite:
         item_generated(name, item_sprite)
@@ -172,7 +174,7 @@ def plants():
     # wild rye: the foot (its item) and the two blocks above it
     write(f"{ASSETS}/blockstates/wild_rye.json", {"variants": {"": variants([f"wild_rye_stems_{i}" for i in range(2)])}})
     item_generated("wild_rye", "wild_rye_top_gold_0")
-    double("wild_rye_top", [f"wild_rye_middle_{i}" for i in range(2)],
+    double("wild_rye_top", [f"wild_rye_middle_{i}" for i in range(3)],
            {0: [f"wild_rye_top_gold_{i}" for i in range(3)], 1: [f"wild_rye_top_glass_{i}" for i in range(3)]}, None)
     double("cow_parsley", [f"cow_parsley_bottom_{i}" for i in range(3)], {0: [f"cow_parsley_top_{i}" for i in range(3)]}, "cow_parsley_top_0")
     double("foxglove", [f"foxglove_bottom_{i}" for i in range(3)], {0: [f"foxglove_top_{i}" for i in range(3)]}, "foxglove_top_0")

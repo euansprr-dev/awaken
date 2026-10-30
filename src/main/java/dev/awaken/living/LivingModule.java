@@ -109,6 +109,21 @@ public final class LivingModule {
             public boolean ledgered(net.minecraft.server.level.ServerLevel level, String speciesId) {
                 return dev.awaken.living.population.Ledger.ledgered(speciesId) && dev.awaken.living.population.Ledger.herdsOn(level);
             }
+
+            @Override
+            public int calm(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, int reach) {
+                return dev.awaken.living.pulse.Pulse.calm(level, at, reach);
+            }
+
+            @Override
+            public void risen(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, String name, net.minecraft.core.BlockPos toward) {
+                dev.awaken.living.wayfarer.Wayfarers.risen(level, at, name, toward);
+            }
+
+            @Override
+            public boolean visit(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos fire) {
+                return dev.awaken.living.wayfarer.Wayfarers.visit(level, from, fire);
+            }
         });
         Progression.onXpGranted(XpStream::granted);
         var bus = NeoForge.EVENT_BUS;
@@ -122,6 +137,7 @@ public final class LivingModule {
         bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.combat.MarkEvents::onDamage);
         bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);
         bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.wonder.WonderWatch::onPlayerTick);
+        dev.awaken.living.wonder.WonderSpotting.register(); // seen through the binoculars (SPEC §39.10)
         bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.combat.MarkEvents::onPlayerTick);
         bus.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, dev.awaken.living.combat.MarkEvents::onTick);
         bus.addListener(net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition.class, dev.awaken.living.combat.MarkEvents::onSound);

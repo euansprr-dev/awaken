@@ -42,6 +42,7 @@ public final class LandmarkModule {
         Scanning.addEchoSource(LandmarkModule::echoes);
         Scanning.setVisitedRuins((p, pos) -> Landmarks.reached(p, Landmarks.ruinIdAt(pos)));
         LandmarkHorizon.register();
+        LandmarkSpotting.register(); // seen through the binoculars (SPEC §39.10)
         dev.awaken.core.api.WorldHooks.installRumours(p -> Landmarks.enabled()
                 ? Landmarks.rumour(p).map(r -> new dev.awaken.core.api.WorldHooks.Rumour(r.id(), r.title(), r.body()))
                 : java.util.Optional.empty());

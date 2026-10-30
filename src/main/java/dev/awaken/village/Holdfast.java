@@ -157,6 +157,14 @@ public final class Holdfast extends SavedData {
         if (k != null && k.inside) return;
         mine.put(key, new Known(k != null ? k.bell : bell.asLong(), true));
         st.setDirty();
+        dev.awaken.bells.Bells.holdfastHeard(p, key, k != null ? BlockPos.of(k.bell) : bell);
+    }
+
+    /** The holdfast whose bell hangs at (or right by) {@code pos}, among those this player has stood inside, or null. */
+    public static @org.jspecify.annotations.Nullable String bellAt(ServerPlayer p, BlockPos pos) {
+        for (var e : get(p.level().getServer()).known.getOrDefault(p.getUUID(), Map.of()).entrySet())
+            if (e.getValue().inside() && BlockPos.of(e.getValue().bell()).distSqr(pos) <= 9) return e.getKey();
+        return null;
     }
 
     /** "to the north-east": the way from a player to a place (north is -z). */

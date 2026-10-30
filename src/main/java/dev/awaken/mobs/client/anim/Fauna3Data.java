@@ -1054,7 +1054,7 @@ public final class Fauna3Data {
                 bone hear_r hhead -3 -2 -1 0 1.0472 0.6109
                 cube 0 0 0 -6 -1 0 8 7 1 0
                 bone harm_l body 3 0 -3 -0.4363 0 -0.1396
-                cube 40 10 -1 0 -1 2 6 2 0 0
+                cube 40 10 -1 0 -1 2 7 2 0 0
                 bone hfore_l harm_l 0 6 0 0.3491 0 0
                 cube 56 10 -0.5 0 -0.5 1 6 1 0 0
                 bone hhand_l hfore_l 0 6 0 -0.5236 0 0
@@ -1064,7 +1064,7 @@ public final class Fauna3Data {
                 bone hshin_l hthigh_l 0 4.5 0 1.5708 0 0
                 cube 60 10 -0.5 0 -0.5 1 4 1 0 0
                 bone harm_r body -3 0 -3 -0.4363 0 0.1396
-                cube 40 10 -1 0 -1 2 6 2 1 0
+                cube 40 10 -1 0 -1 2 7 2 1 0
                 bone hfore_r harm_r 0 6 0 0.3491 0 0
                 cube 56 10 -0.5 0 -0.5 1 6 1 1 0
                 bone hhand_r hfore_r 0 6 0 -0.5236 0 0

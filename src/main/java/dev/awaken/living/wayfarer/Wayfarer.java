@@ -68,6 +68,27 @@ public class Wayfarer extends PathfinderMob implements Npc {
         return scene;
     }
 
+    /**
+     * After the Wake (SPEC §43.14): where a risen Stilled is walking (toward the bells), or the fire Ilse is walking to
+     * on her one visit. {@code visiting} marks that visit; {@code visitLine} is how far through what she came to say.
+     */
+    @org.jspecify.annotations.Nullable BlockPos walkTo;
+    boolean visiting;
+    int visitLine;
+
+    /** One of the Stilled, stood up: walks toward {@code bells} until nobody's near enough to see. */
+    public void walkHome(BlockPos bells) {
+        walkTo = bells.immutable();
+        clearHome();
+    }
+
+    /** Ilse's one visit: she walks to {@code fire}, says her piece, and goes home at dusk. */
+    public void visit(BlockPos fire) {
+        walkTo = fire.immutable();
+        visiting = true;
+        setHomeTo(walkTo, 4);
+    }
+
     /** Sets who it is, where it belongs (it strolls at most a few blocks from there) and which scene it belongs to. */
     public void become(String who, BlockPos home, int roam, long scene) {
         entityData.set(DATA_WHO, who);
@@ -103,9 +124,56 @@ public class Wayfarer extends PathfinderMob implements Npc {
     @Override
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
+        if (who().equals("risen")) {
+            risen(level);
+            return;
+        }
+        if (visiting) {
+            visiting(level);
+            return;
+        }
         if (tickCount % 200 != 0 || level.getNearestPlayer(this, 16) != null) return;
         if (scene != 0 && Scenes.scene(level.getServer(), scene) == null) discard();
         else if (scene == 0 && who().equals("hettie") && !dev.awaken.core.api.CityHooks.inCity(level, blockPosition())) discard();
+    }
+
+    /** A risen Stilled: a step at a time toward the bells, gone once nobody is within 48 or it's nearly there. */
+    private void risen(ServerLevel level) {
+        if (walkTo == null || (tickCount > 200 && tickCount % 100 == 0 && !watched(level, 48))) {
+            discard();
+            return;
+        }
+        if (tickCount % 40 != 0) return;
+        net.minecraft.world.phys.Vec3 d = net.minecraft.world.phys.Vec3.atCenterOf(walkTo).subtract(position()).multiply(1, 0, 1);
+        double len = d.length();
+        if (len < 8) {
+            discard();
+            return;
+        }
+        net.minecraft.world.phys.Vec3 step = position().add(d.scale(Math.min(1, 20 / len)));
+        getNavigation().moveTo(step.x, getY(), step.z, 0.6);
+    }
+
+    /** Anyone within {@code reach}, a spectator too (one watching shouldn't see them vanish). */
+    private boolean watched(ServerLevel level, double reach) {
+        for (net.minecraft.server.level.ServerPlayer p : level.players()) if (p.distanceToSqr(this) < reach * reach) return true;
+        return false;
+    }
+
+    /** Ilse visiting: walks to the fire and stays by it; at dusk (or after a long while with nobody about) she goes home. */
+    private void visiting(ServerLevel level) {
+        if (walkTo == null) {
+            discard();
+            return;
+        }
+        long tod = Math.floorMod(level.getOverworldClockTime(), 24000L);
+        boolean alone = !watched(level, 24);
+        if (tickCount % 100 == 0 && alone && (tod >= 12500 || tickCount > 20 * 60 * 20)) {
+            discard();
+            return;
+        }
+        if (tickCount % 40 == 0 && distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(walkTo)) > 9)
+            getNavigation().moveTo(walkTo.getX() + 0.5, walkTo.getY(), walkTo.getZ() + 1.5, 0.55);
     }
 
     @Override
@@ -128,6 +196,9 @@ public class Wayfarer extends PathfinderMob implements Npc {
         super.addAdditionalSaveData(out);
         out.putString("awaken_who", who());
         out.putLong("awaken_scene", scene);
+        if (walkTo != null) out.putLong("awaken_walk_to", walkTo.asLong());
+        out.putBoolean("awaken_visiting", visiting);
+        out.putInt("awaken_visit_line", visitLine);
     }
 
     @Override
@@ -135,5 +206,9 @@ public class Wayfarer extends PathfinderMob implements Npc {
         super.readAdditionalSaveData(in);
         entityData.set(DATA_WHO, in.getStringOr("awaken_who", ""));
         scene = in.getLongOr("awaken_scene", 0L);
+        long w = in.getLongOr("awaken_walk_to", Long.MIN_VALUE);
+        walkTo = w == Long.MIN_VALUE ? null : BlockPos.of(w);
+        visiting = in.getBooleanOr("awaken_visiting", false);
+        visitLine = in.getIntOr("awaken_visit_line", 0);
     }
 }

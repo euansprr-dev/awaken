@@ -115,52 +115,52 @@ final class DeepBestiary {
     }
 
     private static void guardians(List<MobDef> out) {
-        out.add(m("guardian_rim", "The Rootmother", Theme.RIM, Tier.GUARDIAN, Model.SPIDER, "Moss webs and root lances; the Rim wakes with her").hp(30).dmg(4.5).spd(0.3).scale(2.4F).tint(0x98C878).bar(BossBarColor.GREEN).arena(22)
+        out.add(m("guardian_rim", "The Rootmother", Theme.RIM, Tier.GUARDIAN, Model.SPIDER, "Moss webs and root lances; the Rim wakes with her").hp(30).dmg(4.5).spd(0.3).scale(2.4F).size(0.85F, 1.45F).tint(0x98C878).bar(BossBarColor.GREEN).arena(22)
                 .intro("The roots under the Rim are hers.")
                 .phase(1.0F, "The Rootmother descends.", a(ROOT, "Moss Web").radius(3), a(LEAP, "Rootfall").radius(3.5F).heavy())
                 .phase(0.5F, "The Rim wakes.", a(SUMMON, "Brood").summon("rim_crawler").n(3), a(FANGS, "Root Lances").n(14), a(LEAP, "Rootfall").radius(3.5F))
                 .parts(P("rootmother_silk", "Rootmother Silk", "moss")).build());
-        out.add(m("guardian_gardens", "The Thornback", Theme.GARDENS, Tier.GUARDIAN, Model.RAVAGER, "Charges along the ledges and blows petals hard enough to knock you off").hp(32).dmg(5).spd(0.3).tint(0xA0D090).bar(BossBarColor.GREEN).arena(24)
+        out.add(m("guardian_gardens", "The Thornback", Theme.GARDENS, Tier.GUARDIAN, Model.RAVAGER, "Charges along the ledges and blows petals hard enough to knock you off").hp(32).dmg(5).spd(0.3).size(2.2F, 2.3F).tint(0xA0D090).bar(BossBarColor.GREEN).arena(24)
                 .intro("Something heavy moves in the hanging gardens.")
                 .phase(1.0F, "The Thornback lowers its horns.", a(CHARGE, "Thornback Charge").heavy(), a(GUST, "Gale of Petals").radius(10).power(0.8F))
                 .phase(0.5F, "The vines tighten.", a(NOVA, "Thorn Spray").n(14).bolt(BoltKind.THORN), a(SUMMON, "Lurkers").summon("vine_lurker").n(2), a(CHARGE, "Thornback Charge"))
                 .parts(P("thornback_horn", "Thornback Horn", "leaf")).build());
-        out.add(m("guardian_choir", "The Choirmaster", Theme.CHOIR, Tier.GUARDIAN, Model.WITCH, "Hymns of salt; when the water rises, the choir sings with her").hp(30).dmg(4.5).spd(0.25).scale(2.0F).tint(0x90C8E0).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("guardian_choir", "The Choirmaster", Theme.CHOIR, Tier.GUARDIAN, Model.WITCH, "Hymns of salt; when the water rises, the choir sings with her").hp(30).dmg(4.5).spd(0.25).scale(2.0F).size(0.8F, 1.9F).tint(0x90C8E0).bar(BossBarColor.BLUE).arena(22)
                 .intro("The singing was coming from her all along.")
                 .phase(1.0F, "The Choirmaster takes a breath.", a(BOLT, "Hymn of Salt").n(4).bolt(BoltKind.WATER), a(HEAL, "Refrain").power(0.1F))
                 .phase(0.5F, "The water rises.", a(AURA, "Rising Tide").radius(9).bolt(BoltKind.WATER).fx(MobEffects.SLOWNESS, 40, 1).heavy(), a(SUMMON, "The Choir").summon("choir_drowned").n(2), a(PULL, "Undertow"))
                 .parts(P("choirmaster_pearl", "Choirmaster's Pearl", "water")).build());
-        out.add(m("guardian_orchard", "The Ossuary King", Theme.ORCHARD, Tier.GUARDIAN, Model.WITHER_SKELETON, "Rib Spikes and a court of the dead; he gets up once").hp(28).dmg(5).spd(0.26).scale(2.0F).tint(0xF0E8D8).hold(Items.STONE_SWORD).traits(RISES).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("guardian_orchard", "The Ossuary King", Theme.ORCHARD, Tier.GUARDIAN, Model.WITHER_SKELETON, "Rib Spikes and a court of the dead; he gets up once").hp(28).dmg(5).spd(0.26).scale(2.0F).size(0.8F, 2.3F).tint(0xF0E8D8).hold(Items.STONE_SWORD).traits(RISES).bar(BossBarColor.WHITE).arena(22)
                 .intro("The orchard grew from his ribs.")
                 .phase(1.0F, "The Ossuary King stands.", a(SLAM, "Bone Crush").radius(4).heavy(), a(NOVA, "Rib Spikes").n(12).bolt(BoltKind.SPIRIT))
                 .phase(0.5F, "The dead get up.", a(SUMMON, "Rise").summon("orchard_dead").n(3), a(CHARGE, "Royal March"), a(SLAM, "Bone Crush").radius(4))
                 .parts(P("ossuary_crown", "Ossuary Crown", "bone")).build());
-        out.add(m("guardian_silent", "The Great Listener", Theme.SILENT, Tier.GUARDIAN, Model.LISTENER, "It hears your heartbeat; scream, and it screams back").hp(30).dmg(5.5).spd(0.3).scale(1.8F).traits(LISTENER).bar(BossBarColor.WHITE).arena(24)
+        out.add(m("guardian_silent", "The Great Listener", Theme.SILENT, Tier.GUARDIAN, Model.LISTENER, "It hears your heartbeat; scream, and it screams back").hp(30).dmg(5.5).spd(0.3).scale(1.8F).size(1.6F, 2.2F).traits(LISTENER).bar(BossBarColor.WHITE).arena(24)
                 .intro("Every Listener in the halls is one of its ears.")
                 .phase(1.0F, "The Great Listener turns its head.", a(SLAM, "Found You").radius(3.5F).power(1.6F).heavy(), a(BEAM, "Echo Scream").bolt(BoltKind.VOID))
                 .phase(0.5F, "It stops breathing.", a(DARKNESS, "Absolute Silence").radius(20), a(SUMMON, "Ears").summon("listener").n(2), a(SLAM, "Found You").radius(3.5F).power(1.6F))
                 .parts(P("listener_ear", "Great Listener's Ear", "stone")).build());
-        out.add(m("guardian_foundry", "The Furnace Engine", Theme.FOUNDRY, Tier.GUARDIAN, Model.IRON_GOLEM, "Arc welds and rivet rain; the machines wake around it").hp(32).dmg(5).spd(0.24).scale(1.8F).tint(0x98B0D0).bar(BossBarColor.YELLOW).arena(24)
+        out.add(m("guardian_foundry", "The Furnace Engine", Theme.FOUNDRY, Tier.GUARDIAN, Model.IRON_GOLEM, "Arc welds and rivet rain; the machines wake around it").hp(32).dmg(5).spd(0.24).scale(1.8F).size(1.6F, 2.3F).tint(0x98B0D0).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry's heart is still warm.")
                 .phase(1.0F, "The Furnace Engine powers up.", a(SLAM, "Engine Slam").radius(4.5F).heavy(), a(BEAM, "Arc Weld").bolt(BoltKind.CHARGE))
                 .phase(0.5F, "Machines wake.", a(SUMMON, "Wake the Drones").summon("arc_drone").n(3), a(RAIN, "Rivet Rain").n(5).bolt(BoltKind.CHARGE), a(SLAM, "Engine Slam").radius(4.5F))
                 .parts(P("furnace_engine_core", "Furnace Engine Core", "precursor")).build());
-        out.add(m("guardian_inverted", "The Drowned Moon", Theme.INVERTED, Tier.GUARDIAN, Model.ELDER_GUARDIAN, "Moonbeams and the tide-turn that lifts you off the floor").hp(30).dmg(5).spd(0.22).scale(1.6F).tint(0x9CB8F0).bar(BossBarColor.BLUE).arena(26)
+        out.add(m("guardian_inverted", "The Drowned Moon", Theme.INVERTED, Tier.GUARDIAN, Model.ELDER_GUARDIAN, "Moonbeams and the tide-turn that lifts you off the floor").hp(30).dmg(5).spd(0.22).scale(1.6F).size(2.0F, 2.8F).tint(0x9CB8F0).bar(BossBarColor.BLUE).arena(26)
                 .intro("The sea above you has a moon in it.")
                 .phase(1.0F, "The Drowned Moon rises.", a(BEAM, "Moonbeam").bolt(BoltKind.WATER).power(1.8F).heavy(), a(LIFT, "Tide Turn").radius(4))
                 .phase(0.5F, "The tide turns.", a(PULL, "Undertow").radius(14), a(NOVA, "Tide Halo").n(14).bolt(BoltKind.WATER), a(LIFT, "Tide Turn").radius(5))
                 .parts(P("moon_scale", "Drowned Moon Scale", "water")).build());
-        out.add(m("guardian_dreaming", "The Architect of Rooms", Theme.DREAMING, Tier.GUARDIAN, Model.EVOKER, "The floor shifts, doors open behind you, the ceiling falls").hp(30).dmg(5).spd(0.26).scale(1.8F).tint(0xE0B0E0).bar(BossBarColor.PINK).arena(22)
+        out.add(m("guardian_dreaming", "The Architect of Rooms", Theme.DREAMING, Tier.GUARDIAN, Model.EVOKER, "The floor shifts, doors open behind you, the ceiling falls").hp(30).dmg(5).spd(0.26).scale(1.8F).size(2.0F, 3.0F).tint(0xE0B0E0).bar(BossBarColor.PINK).arena(22)
                 .intro("You didn't come in through that door.")
                 .phase(1.0F, "The Architect redraws the room.", a(FANGS, "Shifting Floor").n(14), a(BLINK, "Door Step"))
                 .phase(0.5F, "The room changes.", a(DECOY, "Other Rooms").n(2), a(RAIN, "Falling Ceiling").n(5).bolt(BoltKind.DREAM), a(FANGS, "Shifting Floor").n(16))
                 .parts(P("architect_key", "Architect's Key", "dream")).build());
-        out.add(m("guardian_court", "The Shadow Regent", Theme.COURT, Tier.GUARDIAN, Model.MIMIC, "Your shadow on a throne: your parry, your charge, your moves").hp(32).dmg(5.5).spd(0.3).scale(1.6F).hold(Items.NETHERITE_SWORD).traits(MIMIC).bar(BossBarColor.PURPLE).arena(22)
+        out.add(m("guardian_court", "The Shadow Regent", Theme.COURT, Tier.GUARDIAN, Model.MIMIC, "Your shadow on a throne: your parry, your charge, your moves").hp(32).dmg(5.5).spd(0.3).scale(1.6F).size(0.8F, 2.9F).hold(Items.NETHERITE_SWORD).traits(MIMIC).bar(BossBarColor.PURPLE).arena(22)
                 .intro("It sits the way you sit.")
                 .phase(1.0F, "Your shadow rises from the throne.", a(GUARD, "Your Parry"), a(CHARGE, "Your Charge"))
                 .phase(0.5F, "It learns your moves.", a(DECOY, "Your Reflections").n(2), a(BLINK, "Shadowstep"), a(NOVA, "Hollow Halo").n(12).bolt(BoltKind.VOID))
                 .parts(P("regent_shadow", "Regent's Shadow", "obsidian")).build());
-        out.add(m("guardian_seed", "The Seed Warden", Theme.SEED, Tier.GUARDIAN, Model.SHADE, "Lances of signal light around the Seed's last door").hp(34).dmg(5.5).spd(0.28).scale(1.6F).bar(BossBarColor.WHITE).arena(24)
+        out.add(m("guardian_seed", "The Seed Warden", Theme.SEED, Tier.GUARDIAN, Model.SHADE, "Lances of signal light around the Seed's last door").hp(34).dmg(5.5).spd(0.28).scale(1.6F).size(1.8F, 3.1F).bar(BossBarColor.WHITE).arena(24)
                 .intro("The last door. It has been waiting.")
                 .phase(1.0F, "The Seed Warden unfolds.", a(BEAM, "Signal Lance").bolt(BoltKind.SIGNAL), a(RAIN, "Signal Marks").n(4).bolt(BoltKind.SIGNAL))
                 .phase(0.5F, "The door opens a crack.", a(SUMMON, "Motes").summon("seed_mote").n(3), a(BURST, "Door Light").radius(13).inner(3.5F).bolt(BoltKind.SIGNAL).heavy())
@@ -168,55 +168,55 @@ final class DeepBestiary {
     }
 
     private static void sovereigns(List<MobDef> out) {
-        out.add(m("sovereign_hunger", "Sovereign of Hunger", Theme.COURT, Tier.SOVEREIGN, Model.RAVAGER, "Hunger gone wrong: devours, gorges, and only gets hungrier").hp(34).dmg(5.5).spd(0.3).scale(1.8F).tint(0xC86060).glow(0xFF4A4A).bar(BossBarColor.RED).arena(26)
+        out.add(m("sovereign_hunger", "Sovereign of Hunger", Theme.COURT, Tier.SOVEREIGN, Model.RAVAGER, "Hunger gone wrong: devours, gorges, and only gets hungrier").hp(34).dmg(5.5).spd(0.3).scale(1.8F).size(1.6F, 2.0F).tint(0xC86060).glow(0xFF4A4A).bar(BossBarColor.RED).arena(26)
                 .intro("It ate the direction it came from.")
                 .phase(1.0F, "The Sovereign of Hunger opens its jaws.", a(CHARGE, "Devour").power(1.6F).heavy(), a(PULL, "Gnawing Pull").radius(12))
                 .phase(0.66F, "It is still hungry.", a(SUMMON, "Hounds of the Court").summon("court_hound").n(2), a(SLAM, "Gorge").radius(4.5F), a(CHARGE, "Devour"))
                 .phase(0.33F, "Starving.", a(FRENZY, "Starving Frenzy"), a(AURA, "Famine").radius(8).bolt(BoltKind.VOID).fx(MobEffects.HUNGER, 100, 2).heavy(), a(CHARGE, "Devour"))
                 .parts(P("hunger_fang", "Fang of Hunger", "crimson")).build());
-        out.add(m("sovereign_silence", "Sovereign of Silence", Theme.COURT, Tier.SOVEREIGN, Model.LISTENER, "The Veil gone wrong: hunts every sound, swallows every light").hp(34).dmg(5.5).spd(0.3).scale(1.9F).tint(0x8890A8).glow(0xE6F0FF).traits(LISTENER).bar(BossBarColor.WHITE).arena(26)
+        out.add(m("sovereign_silence", "Sovereign of Silence", Theme.COURT, Tier.SOVEREIGN, Model.LISTENER, "The Veil gone wrong: hunts every sound, swallows every light").hp(34).dmg(5.5).spd(0.3).scale(1.9F).size(0.95F, 3.1F).tint(0x8890A8).glow(0xE6F0FF).traits(LISTENER).bar(BossBarColor.WHITE).arena(26)
                 .intro("It listened until there was nothing left to hear.")
                 .phase(1.0F, "The Sovereign of Silence tilts its head.", a(SLAM, "Found You").radius(4).power(1.6F).heavy(), a(DARKNESS, "No Sound At All").radius(20))
                 .phase(0.66F, "It hears your heartbeat.", a(BEAM, "Inverted Scream").bolt(BoltKind.VOID).power(2.0F).heavy(), a(SUMMON, "Ears").summon("listener").n(2))
                 .phase(0.33F, "Silence.", a(BURST, "Deafening Silence").radius(15).inner(4).bolt(BoltKind.VOID).heavy(), a(PULL, "Hush").radius(14), a(SLAM, "Found You").radius(4))
                 .parts(P("silence_ear", "Ear of Silence", "stone")).build());
-        out.add(m("sovereign_sleep", "Sovereign of Sleep", Theme.COURT, Tier.SOVEREIGN, Model.PHANTOM, "The Lucidium gone wrong: lullabies that make you heavy, dives from the dark").hp(32).dmg(5.5).spd(0.38).scale(3.2F).tint(0xC898D0).glow(0xF6C6E6).bar(BossBarColor.PINK).arena(28)
+        out.add(m("sovereign_sleep", "Sovereign of Sleep", Theme.COURT, Tier.SOVEREIGN, Model.PHANTOM, "The Lucidium gone wrong: lullabies that make you heavy, dives from the dark").hp(32).dmg(5.5).spd(0.38).scale(3.2F).size(0.88F, 1.72F).tint(0xC898D0).glow(0xF6C6E6).bar(BossBarColor.PINK).arena(28)
                 .intro("It never let anyone wake up.")
                 .phase(1.0F, "The Sovereign of Sleep spreads its wings.", a(CHARGE, "Night Dive").heavy(), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 1))
                 .phase(0.66F, "You feel heavy.", a(SUMMON, "Lullabies").summon("lullaby_phantom").n(3), a(RAIN, "Dream Fall").n(5).bolt(BoltKind.DREAM), a(CHARGE, "Night Dive"))
                 .phase(0.33F, "Never wake.", a(BURST, "Never Wake").radius(15).inner(4).bolt(BoltKind.DREAM).heavy(), a(CHARGE, "Night Dive"), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 2))
                 .parts(P("sleep_feather", "Feather of Sleep", "dream")).build());
-        out.add(m("sovereign_machines", "Sovereign of Machines", Theme.COURT, Tier.SOVEREIGN, Model.IRON_GOLEM, "The Above gone wrong: every move calculated, every strike from orbit").hp(36).dmg(5.5).spd(0.24).scale(1.9F).tint(0xB8C8E0).glow(0xFFD060).bar(BossBarColor.YELLOW).arena(26)
+        out.add(m("sovereign_machines", "Sovereign of Machines", Theme.COURT, Tier.SOVEREIGN, Model.IRON_GOLEM, "The Above gone wrong: every move calculated, every strike from orbit").hp(36).dmg(5.5).spd(0.24).scale(1.9F).size(1.2F, 3.05F).tint(0xB8C8E0).glow(0xFFD060).bar(BossBarColor.YELLOW).arena(26)
                 .intro("It built until nothing was left to build with.")
                 .phase(1.0F, "The Sovereign of Machines computes you.", a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE).power(1.8F), a(SLAM, "Hydraulic Slam").radius(4.5F).heavy())
                 .phase(0.66F, "Subroutines.", a(SUMMON, "Drones").summon("arc_drone").n(3), a(RAIN, "Orbital Strike").n(6).bolt(BoltKind.CHARGE), a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Shutdown.", a(BURST, "Shutdown").radius(15).inner(4).bolt(BoltKind.CHARGE).heavy(), a(NOVA, "Spark Lattice").n(16).bolt(BoltKind.CHARGE), a(SLAM, "Hydraulic Slam").radius(5))
                 .parts(P("machine_crown", "Crown of Machines", "precursor")).build());
-        out.add(m("sovereign_mirrors", "Sovereign of Mirrors", Theme.COURT, Tier.SOVEREIGN, Model.MIMIC, "The self gone wrong: your face, perfect parries, a hall of reflections").hp(32).dmg(5.5).spd(0.3).scale(1.8F).hold(Items.DIAMOND_SWORD).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(24)
+        out.add(m("sovereign_mirrors", "Sovereign of Mirrors", Theme.COURT, Tier.SOVEREIGN, Model.MIMIC, "The self gone wrong: your face, perfect parries, a hall of reflections").hp(32).dmg(5.5).spd(0.3).scale(1.8F).size(0.9F, 3.25F).hold(Items.DIAMOND_SWORD).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(24)
                 .intro("It only ever looked at itself.")
                 .phase(1.0F, "The Sovereign of Mirrors smiles your smile.", a(GUARD, "Flawless Parry"), a(CHARGE, "Mirrored Lunge"))
                 .phase(0.66F, "A hall of you.", a(DECOY, "Hall of Mirrors").n(3), a(BLINK, "Through the Glass"), a(CHARGE, "Mirrored Lunge"))
                 .phase(0.33F, "Shatter.", a(NOVA, "Shatter").n(20).bolt(BoltKind.GLASS).heavy(), a(DECOY, "Hall of Mirrors").n(2), a(GUARD, "Flawless Parry"))
                 .parts(P("mirror_heart", "Heart of Mirrors", "mirror")).build());
-        out.add(m("sovereign_storms", "Sovereign of Storms", Theme.COURT, Tier.SOVEREIGN, Model.BREEZE, "Speed and power gone wrong: lightning on every circle, thunder that throws you").hp(32).dmg(5.5).spd(0.32).scale(2.4F).tint(0xB8D8FF).glow(0x7FC3FF).bar(BossBarColor.BLUE).arena(28)
+        out.add(m("sovereign_storms", "Sovereign of Storms", Theme.COURT, Tier.SOVEREIGN, Model.BREEZE, "Speed and power gone wrong: lightning on every circle, thunder that throws you").hp(32).dmg(5.5).spd(0.32).scale(2.4F).size(1.2F, 1.48F).tint(0xB8D8FF).glow(0x7FC3FF).bar(BossBarColor.BLUE).arena(28)
                 .intro("It went so fast it left itself behind.")
                 .phase(1.0F, "The Sovereign of Storms crackles.", a(RAIN, "Lightning").n(4).bolt(BoltKind.CHARGE), a(GUST, "Thunderclap").radius(10).power(0.8F))
                 .phase(0.66F, "The storm thickens.", a(BOLT, "Storm Spears").n(5).bolt(BoltKind.CHARGE), a(LIFT, "Updraft").radius(4), a(RAIN, "Lightning").n(5).bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Eye of the storm.", a(RAIN, "Lightning").n(8).bolt(BoltKind.CHARGE).heavy(), a(FRENZY, "Overdrive"), a(GUST, "Thunderclap").radius(12).power(0.9F))
                 .parts(P("storm_core", "Storm Core", "signal")).build());
-        out.add(m("sovereign_roots", "Sovereign of Roots", Theme.COURT, Tier.SOVEREIGN, Model.CREAKING, "Home gone wrong: it holds you fast and never lets you leave").hp(36).dmg(5.5).spd(0.26).scale(1.9F).tint(0x806848).glow(0xD4AF37).bar(BossBarColor.GREEN).arena(24)
+        out.add(m("sovereign_roots", "Sovereign of Roots", Theme.COURT, Tier.SOVEREIGN, Model.CREAKING, "Home gone wrong: it holds you fast and never lets you leave").hp(36).dmg(5.5).spd(0.26).scale(1.9F).size(1.9F, 1.95F).tint(0x806848).glow(0xD4AF37).bar(BossBarColor.GREEN).arena(24)
                 .intro("It made a home and closed every door.")
                 .phase(1.0F, "The Sovereign of Roots takes hold.", a(FANGS, "Root Lance").n(16), a(ROOT, "Hold Fast").radius(3))
                 .phase(0.66F, "Stay.", a(SUMMON, "Rooted Ones").summon("vine_creaker").n(2), a(FANGS_RING, "Hearth Ring").n(12), a(FANGS, "Root Lance").n(16))
                 .phase(0.33F, "Never leave.", a(ROOT, "Hold Fast").radius(4.5F).heavy(), a(NOVA, "Thorn Halo").n(16).bolt(BoltKind.THORN), a(FANGS_RING, "Hearth Ring").n(14))
                 .parts(P("root_heart", "Heart of Roots", "wood")).build());
-        out.add(m("sovereign_ash", "Sovereign of Ash", Theme.COURT, Tier.SOVEREIGN, Model.BLAZE, "Burnout gone wrong: cinders, ashfall, and a burnout you have to outrun").hp(32).dmg(5.5).spd(0.3).scale(2.4F).tint(0x9A9090).glow(0xFF7A2A).traits(FIRE_IMMUNE).bar(BossBarColor.RED).arena(26)
+        out.add(m("sovereign_ash", "Sovereign of Ash", Theme.COURT, Tier.SOVEREIGN, Model.BLAZE, "Burnout gone wrong: cinders, ashfall, and a burnout you have to outrun").hp(32).dmg(5.5).spd(0.3).scale(2.4F).size(1.25F, 1.65F).tint(0x9A9090).glow(0xFF7A2A).traits(FIRE_IMMUNE).bar(BossBarColor.RED).arena(26)
                 .intro("It burned everything to keep going.")
                 .phase(1.0F, "The Sovereign of Ash smoulders.", a(BOLT, "Cinders").n(5).bolt(BoltKind.FIRE), a(CLOUD, "Ash Cloud").radius(3.5F).fx(MobEffects.BLINDNESS, 60, 0))
                 .phase(0.66F, "Ashfall.", a(RAIN, "Ashfall").n(6).bolt(BoltKind.FIRE), a(SUMMON, "Embers").summon("ember_imp").n(2), a(BOLT, "Cinders").n(5).bolt(BoltKind.FIRE))
                 .phase(0.33F, "Burnout.", a(AURA, "Burnout").radius(9).bolt(BoltKind.FIRE).heavy(), a(NOVA, "Last Embers").n(16).bolt(BoltKind.FIRE), a(RAIN, "Ashfall").n(7).bolt(BoltKind.FIRE))
                 .parts(P("ash_heart", "Heart of Ash", "ember")).build());
-        out.add(m("signals_shadow", "The Signal's Shadow", Theme.SEED, Tier.FINAL, Model.SHADE, "It has your voice: every gate, every lance, then the Seed collapses").hp(40).dmg(6).spd(0.3).scale(2.0F).bar(BossBarColor.WHITE).arena(30)
+        out.add(m("signals_shadow", "The Signal's Shadow", Theme.SEED, Tier.FINAL, Model.SHADE, "It has your voice: every gate, every lance, then the Seed collapses").hp(40).dmg(6).spd(0.3).scale(2.0F).size(1.15F, 1.13F).bar(BossBarColor.WHITE).arena(30)
                 .intro("It has your voice.")
                 .phase(1.0F, "The Signal's Shadow speaks.", a(BEAM, "Instruction").bolt(BoltKind.SIGNAL).power(1.8F), a(BLINK, "Signal Step"), a(BOLT, "Directive").n(5).bolt(BoltKind.SIGNAL))
                 .phase(0.66F, "It remembers every gate.", a(SUMMON, "Echoes").summon("signal_echo").n(2), a(RAIN, "Signal Marks").n(6).bolt(BoltKind.SIGNAL), a(DECOY, "Your Echoes").n(2))
@@ -225,31 +225,31 @@ final class DeepBestiary {
     }
 
     private static void nightmares(List<MobDef> out) {
-        out.add(m("nightmare_falling", "The Long Drop", Theme.FEAR, Tier.NIGHTMARE, Model.PHANTOM, "Lifts you up and lets you fall").hp(22).dmg(4).spd(0.4).scale(2.4F).bar(BossBarColor.PURPLE).arena(22)
+        out.add(m("nightmare_falling", "The Long Drop", Theme.FEAR, Tier.NIGHTMARE, Model.PHANTOM, "Lifts you up and lets you fall").hp(22).dmg(4).spd(0.4).scale(2.4F).size(0.67F, 1.62F).bar(BossBarColor.PURPLE).arena(22)
                 .intro("You never hit the ground. You always nearly do.")
                 .phase(1.0F, "The ground falls away.", a(LIFT, "Lift").radius(3.5F), a(CHARGE, "Fall With Me").heavy())
                 .phase(0.5F, "Further down.", a(LIFT, "Lift").radius(4.5F), a(DARKNESS, "No Bottom"), a(CHARGE, "Fall With Me")).build());
-        out.add(m("nightmare_burning", "The Pyre", Theme.FEAR, Tier.NIGHTMARE, Model.BLAZE, "Fire that follows you").hp(22).dmg(4).spd(0.3).scale(2.0F).traits(FIRE_IMMUNE).glow(0xFF6A2A).bar(BossBarColor.RED).arena(22)
+        out.add(m("nightmare_burning", "The Pyre", Theme.FEAR, Tier.NIGHTMARE, Model.BLAZE, "Fire that follows you").hp(22).dmg(4).spd(0.3).scale(2.0F).size(0.70F, 2.55F).traits(FIRE_IMMUNE).glow(0xFF6A2A).bar(BossBarColor.RED).arena(22)
                 .intro("It smells like the last time.")
                 .phase(1.0F, "The Pyre catches.", a(BOLT, "Cinders").n(4).bolt(BoltKind.FIRE), a(AURA, "Pyre").radius(6).bolt(BoltKind.FIRE))
                 .phase(0.5F, "It spreads.", a(RAIN, "Firefall").n(5).bolt(BoltKind.FIRE), a(NOVA, "Flare").n(12).bolt(BoltKind.FIRE)).build());
-        out.add(m("nightmare_drowning", "The Undertow", Theme.FEAR, Tier.NIGHTMARE, Model.DROWNED, "Pulls you under and holds you there").hp(22).dmg(4).spd(0.26).scale(2.0F).glow(0x3DD8C8).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("nightmare_drowning", "The Undertow", Theme.FEAR, Tier.NIGHTMARE, Model.DROWNED, "Pulls you under and holds you there").hp(22).dmg(4).spd(0.26).scale(2.0F).size(1.10F, 1.29F).glow(0x3DD8C8).bar(BossBarColor.BLUE).arena(22)
                 .intro("You can't remember which way is up.")
                 .phase(1.0F, "The water closes.", a(PULL, "Undertow").radius(12), a(CONE, "Rush of Water").bolt(BoltKind.WATER).radius(6))
                 .phase(0.5F, "No air.", a(AURA, "Lungful").radius(7).bolt(BoltKind.WATER).fx(MobEffects.SLOWNESS, 40, 1), a(BOLT, "Black Water").n(4).bolt(BoltKind.WATER)).build());
-        out.add(m("nightmare_undead", "The Hollow Crowd", Theme.FEAR, Tier.NIGHTMARE, Model.ZOMBIE, "More of them every time you look; it gets up once").hp(22).dmg(4).spd(0.26).scale(1.7F).traits(RISES).bar(BossBarColor.GREEN).arena(22)
+        out.add(m("nightmare_undead", "The Hollow Crowd", Theme.FEAR, Tier.NIGHTMARE, Model.ZOMBIE, "More of them every time you look; it gets up once").hp(22).dmg(4).spd(0.26).scale(1.7F).size(1.43F, 3.54F).traits(RISES).bar(BossBarColor.GREEN).arena(22)
                 .intro("They all have the same face.")
                 .phase(1.0F, "The crowd shuffles closer.", a(SLAM, "Crush").radius(3.5F), a(SUMMON, "More of Them").summon("sleepwalker").n(2))
                 .phase(0.5F, "Closer.", a(SUMMON, "More of Them").summon("sleepwalker").n(3), a(CHARGE, "Surge").heavy()).build());
-        out.add(m("nightmare_arthropod", "The Thousand Legs", Theme.FEAR, Tier.NIGHTMARE, Model.SPIDER, "Webs, and the sound of a thousand legs").hp(22).dmg(4).spd(0.32).scale(2.6F).bar(BossBarColor.PURPLE).arena(22)
+        out.add(m("nightmare_arthropod", "The Thousand Legs", Theme.FEAR, Tier.NIGHTMARE, Model.SPIDER, "Webs, and the sound of a thousand legs").hp(22).dmg(4).spd(0.32).scale(2.6F).size(1.50F, 0.85F).bar(BossBarColor.PURPLE).arena(22)
                 .intro("You can hear them in the walls.")
                 .phase(1.0F, "Legs everywhere.", a(ROOT, "Web").radius(2.5F), a(LEAP, "Drop").radius(3).heavy())
                 .phase(0.5F, "The walls open.", a(SUMMON, "Hatchlings").summon("capweaver").n(3), a(ROOT, "Web").radius(3)).build());
-        out.add(m("nightmare_explosion", "The Fuse", Theme.FEAR, Tier.NIGHTMARE, Model.CREEPER, "A hiss you can't find, and lines of fire to dodge").hp(22).dmg(4).spd(0.26).scale(2.0F).glow(0xFFFFFF).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("nightmare_explosion", "The Fuse", Theme.FEAR, Tier.NIGHTMARE, Model.CREEPER, "A hiss you can't find, and lines of fire to dodge").hp(22).dmg(4).spd(0.26).scale(2.0F).size(1.10F, 2.78F).glow(0xFFFFFF).bar(BossBarColor.WHITE).arena(22)
                 .intro("Hsssss.")
                 .phase(1.0F, "Somewhere, a fuse.", a(RAIN, "Fuse Lines").n(4).bolt(BoltKind.FIRE), a(BURST, "Blast Ring").radius(10).inner(3).heavy())
                 .phase(0.5F, "Shorter fuse.", a(RAIN, "Fuse Lines").n(6).bolt(BoltKind.FIRE).wind(26), a(BURST, "Blast Ring").radius(12).inner(3).heavy()).build());
-        out.add(m("nightmare_generic", "The Faceless", Theme.FEAR, Tier.NIGHTMARE, Model.HUMAN, "No face: always in the corner of your eye").hp(22).dmg(4).spd(0.28).bar(BossBarColor.PINK).arena(22)
+        out.add(m("nightmare_generic", "The Faceless", Theme.FEAR, Tier.NIGHTMARE, Model.HUMAN, "No face: always in the corner of your eye").hp(22).dmg(4).spd(0.28).scale(1.8F).size(0.41F, 2.31F).bar(BossBarColor.PINK).arena(22)
                 .intro("It was standing there the whole time.")
                 .phase(1.0F, "The Faceless turns.", a(BLINK, "Corner of Your Eye"), a(DARKNESS, "Lights Off"))
                 .phase(0.5F, "It is closer.", a(DECOY, "Everywhere").n(2), a(BEAM, "Stare").bolt(BoltKind.DREAM).heavy(), a(BLINK, "Corner of Your Eye")).build());

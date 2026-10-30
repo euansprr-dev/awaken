@@ -1,0 +1,172 @@
+{
+ "schemaVersion": 1,
+ "id": "signals_shadow",
+ "moves": "signals_shadow",
+ "intro": {
+  "pose": "kneel",
+  "move": "arrive"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "grasp"
+      ],
+      [
+       "grasp",
+       "lance"
+      ]
+     ]
+    },
+    {
+     "move": "grasp",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "lance",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "lash"
+      ]
+     ]
+    },
+    {
+     "move": "instruction",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "directive",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "step",
+     "weight": 1
+    },
+    {
+     "move": "recoil",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "echoes",
+   "pool": [
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "grasp"
+      ],
+      [
+       "grasp",
+       "recoil"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "lash",
+       "grasp"
+      ]
+     ]
+    },
+    {
+     "move": "marks",
+     "weight": 2
+    },
+    {
+     "move": "decoy",
+     "weight": 1
+    },
+    {
+     "move": "instruction",
+     "weight": 2,
+     "when": "FAR"
+    },
+    {
+     "move": "step",
+     "weight": 1
+    },
+    {
+     "move": "recoil",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "collapse",
+   "pool": [
+    {
+     "move": "come_down",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lash"
+      ]
+     ]
+    },
+    {
+     "move": "halo",
+     "weight": 2
+    },
+    {
+     "move": "lash",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "grasp",
+       "halo"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "grasp"
+      ]
+     ]
+    },
+    {
+     "move": "last",
+     "weight": 1
+    },
+    {
+     "move": "collapse",
+     "weight": 1
+    },
+    {
+     "move": "recoil",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

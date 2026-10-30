@@ -13,7 +13,8 @@ import net.minecraft.util.ARGB;
 import java.util.List;
 
 /**
- * What you see through them (SPEC §39.4): our lens edge (twin, single or none), the readout on the glass, and the focus
+ * What you see through them (SPEC §39.4): our lens edge (twin, single or none), the spotting ring ({@link GlassSpot},
+ * §39.10), the readout on the glass, and the focus
  * pull's softness as stepped blur chains in the player's active post effects (like the screen moments). The edge stays
  * under F1; the readout doesn't.
  */
@@ -49,7 +50,9 @@ final class GlassOverlay {
                 g.fill(x + tw, 0, w, h, black);
             }
         }
-        if (!GlassConfig.readout() || mc.gui.hud.isHidden()) return;
+        if (mc.gui.hud.isHidden()) return;
+        GlassSpot.render(g, a, w * 0.5F, h * 0.5F);
+        if (!GlassConfig.readout()) return;
         LocalPlayer p = mc.player;
         String s = Rangefinder.words(Glass.stepMag(), p.getYRot());
         Font font = mc.font;

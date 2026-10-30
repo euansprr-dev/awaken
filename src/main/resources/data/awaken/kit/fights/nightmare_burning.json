@@ -1,0 +1,114 @@
+{
+ "schemaVersion": 1,
+ "id": "nightmare_burning",
+ "moves": "nightmare_burning",
+ "intro": {
+  "pose": "kneel",
+  "move": "arrive"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "strike",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "trample"
+      ],
+      [
+       "trample",
+       "charge"
+      ]
+     ]
+    },
+    {
+     "move": "trample",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "charge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "strike"
+      ]
+     ]
+    },
+    {
+     "move": "cinders",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "pyre",
+     "weight": 2
+    },
+    {
+     "move": "buck",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "firefall",
+   "pool": [
+    {
+     "move": "strike",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "trample"
+      ],
+      [
+       "trample",
+       "flare"
+      ]
+     ]
+    },
+    {
+     "move": "charge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "strike",
+       "trample"
+      ]
+     ]
+    },
+    {
+     "move": "firefall",
+     "weight": 2
+    },
+    {
+     "move": "flare",
+     "weight": 2
+    },
+    {
+     "move": "cinders",
+     "weight": 1,
+     "when": "FAR"
+    },
+    {
+     "move": "wildfire",
+     "weight": 2
+    },
+    {
+     "move": "buck",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

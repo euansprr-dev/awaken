@@ -2,15 +2,12 @@
   "schema": 1,
   "level": 3,
   "title": "Hunter gear · E",
-  "text": "Hide from creatures, a bone or flint, a string or feather, and one Essence Shard for each piece. Creatures drop all of it. The recipes are in your recipe book.",
+  "text": "Hide from creatures, a bone or flint, a string or feather, and one Essence Shard for each piece. Creatures drop all of it. Wildhide armour is cut and riveted by hand at a Fitting Stand with a crafting table near it. The blade, focus and mattock recipes are in your recipe book.",
   "grants": [
     {
       "type": "recipe",
       "ids": [
-        "awaken:wildhide_helmet",
-        "awaken:wildhide_chestplate",
-        "awaken:wildhide_leggings",
-        "awaken:wildhide_boots",
+        "awaken:fitting_stand",
         "awaken:wildhide_blade",
         "awaken:wildhide_focus",
         "awaken:wildhide_mattock"

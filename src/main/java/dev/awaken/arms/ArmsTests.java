@@ -65,6 +65,7 @@ final class ArmsTests {
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
+        AwakenTests.register("arms_attack_key", 20, ArmsTests::attackKey);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
         AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
         AwakenTests.register("arms_shots", 80, ArmsTests::shots);
@@ -91,7 +92,8 @@ final class ArmsTests {
             }
             checked++;
         }
-        h.assertTrue(checked >= 138, "the gear and arms recipes were read (42 gear pieces and 96 weapons): " + checked);
+        // Hunter armour is forged at a Fitting Stand (SPEC §44.4): 18 gear pieces keep recipes
+        h.assertTrue(checked >= 114, "the gear and arms recipes were read (18 gear pieces and 96 weapons): " + checked);
         java.util.Set<String> lang = new java.util.HashSet<>();
         try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/lang/en_us.json")) {
             h.assertTrue(in != null, "the merged lang file is on the classpath");
@@ -644,6 +646,50 @@ final class ArmsTests {
     }
 
     // ---- pure rules -------------------------------------------------------------------------------------------------
+
+    /**
+     * The attack key and the fight window (SPEC §40 "One press is one press"; Euan 2026-10-29: "I can't use a normal axe
+     * to break trees because it charges the hit like an attack"). Chopping a tree: a swing into the leaves or the air
+     * strikes but means no fight, so the next press on a log mines it; a mining hold keeps mining over the leaves, a
+     * strike's hold stays the strike over a log. A press after a blow, or at a creature in reach, strikes a block for the
+     * window. A sword at the ground swings. Every fighting axe and sword cuts what the rule leaves to vanilla.
+     */
+    static void attackKey(GameTestHelper h) {
+        double reach = ArmsRules.markReach(longsword());
+        long fight = -1000, t = 0;
+        h.assertTrue(ArmsRules.attack(false, false, t - fight, false) == ArmsRules.Attack.STRIKE, "a press at the leaves swings");
+        h.assertTrue(!ArmsRules.meansFight(false, false, Double.POSITIVE_INFINITY, reach), "and with no creature meant, opens no fight");
+        t = 6;
+        h.assertTrue(ArmsRules.attack(false, false, t - fight, true) == ArmsRules.Attack.MINE, "so the next press on a log chops it");
+        h.assertTrue(ArmsRules.attack(false, true, t - fight, false) == ArmsRules.Attack.MINE, "a chop held on over the leaves keeps mining");
+        h.assertTrue(ArmsRules.attack(true, false, t - fight, true) == ArmsRules.Attack.HELD, "a strike held on over a log stays the strike");
+        h.assertTrue(!ArmsRules.meansFight(false, false, reach + 4, reach), "a mark beyond reach (a cow across the field) is no fight");
+        h.assertTrue(ArmsRules.meansFight(false, false, reach - 0.5, reach) && ArmsRules.meansFight(true, false, 30, reach)
+                && ArmsRules.meansFight(false, true, Double.POSITIVE_INFINITY, reach), "the mark in reach, a lock or a creature under the crosshair is");
+        fight = 10;
+        t = 20;
+        h.assertTrue(ArmsRules.attack(false, false, t - fight, true) == ArmsRules.Attack.STRIKE, "a press on a log right after a hit strikes");
+        t = fight + ArmsRules.FIGHT_TICKS + 1;
+        h.assertTrue(ArmsRules.attack(false, false, t - fight, true) == ArmsRules.Attack.MINE, "and once the fight is over, chops again");
+        h.assertTrue(ArmsRules.attack(false, false, 10_000, false) == ArmsRules.Attack.STRIKE, "a sword at the ground swings, never mines");
+        int axes = 0, swords = 0;
+        for (Item item : BuiltInRegistries.ITEM) {
+            ItemStack st = new ItemStack(item);
+            if (Arms.styleOf(item) == null) continue;
+            if (st.is(ItemTags.AXES)) {
+                axes++;
+                h.assertTrue(st.getDestroySpeed(Blocks.OAK_LOG.defaultBlockState()) > 1F && st.getDestroySpeed(Blocks.OAK_PLANKS.defaultBlockState()) > 1F,
+                        item + " cuts logs and planks faster than a hand");
+            }
+            if (st.is(ItemTags.SWORDS)) {
+                swords++;
+                h.assertTrue(st.getDestroySpeed(Blocks.COBWEB.defaultBlockState()) > 1F && st.getDestroySpeed(Blocks.BAMBOO.defaultBlockState()) > 1F,
+                        item + " cuts webs and bamboo faster than a hand");
+            }
+        }
+        h.assertTrue(axes > 0 && swords > 0, "plain axes and swords fight (" + axes + " axes, " + swords + " swords)");
+        h.succeed();
+    }
 
     static void timeline(GameTestHelper h) {
         Archetypes.Loaded a = longsword();

@@ -478,6 +478,7 @@ public final class Autopilot {
                     var tab = switch (t) {
                         case "powers" -> dev.awaken.progression.client.StatusSections.Tab.POWERS;
                         case "journal" -> dev.awaken.progression.client.StatusSections.Tab.JOURNAL;
+                        case "hearth" -> dev.awaken.progression.client.StatusSections.Tab.HEARTH;
                         case "map" -> dev.awaken.progression.client.StatusSections.Tab.MAP;
                         case "codex" -> dev.awaken.progression.client.StatusSections.Tab.CODEX;
                         case "truths" -> dev.awaken.progression.client.StatusSections.Tab.TRUTHS;
@@ -666,8 +667,9 @@ public final class Autopilot {
         else Awaken.LOG.warn("[autopilot] the Map page opens nothing");
     }
 
-    private static final Map<String, KeyMapping> KEYS = Map.of(
-            "status", AwakenKeys.STATUS, "accept", AwakenKeys.ACCEPT, "dismiss", AwakenKeys.DISMISS,
-            "power1", AwakenKeys.POWER_1, "power2", AwakenKeys.POWER_2, "movement", AwakenKeys.MOVEMENT,
-            "ultimate", AwakenKeys.ULTIMATE, "focus", AwakenKeys.FOCUS, "bind", AwakenKeys.BIND, "rope", AwakenKeys.ROPE);
+    private static final Map<String, KeyMapping> KEYS = Map.ofEntries(
+            Map.entry("status", AwakenKeys.STATUS), Map.entry("accept", AwakenKeys.ACCEPT), Map.entry("dismiss", AwakenKeys.DISMISS),
+            Map.entry("power1", AwakenKeys.POWER_1), Map.entry("power2", AwakenKeys.POWER_2), Map.entry("movement", AwakenKeys.MOVEMENT),
+            Map.entry("ultimate", AwakenKeys.ULTIMATE), Map.entry("focus", AwakenKeys.FOCUS), Map.entry("bind", AwakenKeys.BIND),
+            Map.entry("rope", AwakenKeys.ROPE), Map.entry("binoculars", dev.awaken.binoculars.client.Glass.KEY));
 }

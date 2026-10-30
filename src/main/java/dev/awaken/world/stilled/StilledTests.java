@@ -113,8 +113,12 @@ final class StilledTests {
             StilledBlockEntity be = (StilledBlockEntity) level.getBlockEntity(feet);
             h.assertTrue(be != null && be.carry.equals("letter") && be.n == StilledText.ALDO && be.name.equals("Aldo") && be.yaw() == 90F, "as himself");
             StilledPlacer.place(level, data, new StilledPlacer.Ready(fixed.get(1), new BlockPos(x + 3, 0, z), 0F, null), fixed);
-            h.assertTrue(data.placed.get("north1") == Stilled.SKIPPED && !level.getBlockState(feet.east(3)).is(StilledContent.STILLED.get()),
-                    "none within 150 of another");
+            h.assertTrue(data.placed.get("north1") != null && data.placed.get("north1") != Stilled.SKIPPED,
+                    "the named ones stand where the story puts them, however close");
+            StilledSpots.Spot land = new StilledSpots.Spot("cell_test", x + 4, z, StilledSpots.Where.CELL, StilledText.Pose.WAITING,
+                    StilledText.Look.MAN, "letter", -1, "", 1L);
+            StilledPlacer.place(level, data, new StilledPlacer.Ready(land, new BlockPos(x + 4, 0, z), 0F, null), fixed);
+            h.assertTrue(data.placed.get("cell_test") == Stilled.SKIPPED, "the land's own keep 150 from another");
 
             // Aldo's letter: once, again once lost
             Stilled.read(p, level, be);

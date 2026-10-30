@@ -1,0 +1,151 @@
+# The Journey, stage 4 (SPEC §43.7): the bells. A home 320 east of the city square (/awaken admin kin yard) with a
+# Burrowbun and a Pebblepup; twelve bells rung home (the card) and the bell frame by the Hearth; twenty (the belfry) and
+# the dusk song with the beasts; fifty (the stone tower); the Bell Book in the Codex; a sleeping place asleep, struck
+# awake and turned green again; a kept place with its keeper; the handbell in hand.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/journey-4.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_journey_4 creative 29102026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 3500
+cmd clear @s
+
+# ---- 1. a home near the city, and its first bells ----
+cmd awaken city view square
+wait 300
+cmd time set 6000
+cmd spreadplayers ~320 ~40 0 20 false @s
+wait 300
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin home burrowbun
+cmd awaken admin kin home pebblepup
+cmd tick sprint 400
+wait 120
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+wait 20
+hud on
+cmd awaken admin bells tower 12
+wait 30
+shotnow j4_01_bell_card
+wait 200
+hud off
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~2 ~5 180 15
+wait 40
+shot j4_02_bell_frame
+
+# ---- 2. twenty bells: the belfry, then the dusk song with the beasts ----
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+cmd awaken admin bells tower 20
+wait 80
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~5 ~13 180 12
+wait 60
+shot j4_03_belfry
+cmd time set 11500
+cmd awaken admin bells song
+wait 100
+shot j4_04_song_beasts
+
+# ---- 3. fifty bells: the stone tower ----
+cmd gamemode creative
+cmd time set 6000
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+cmd awaken admin bells tower 50
+wait 80
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~8 ~24 180 14
+wait 80
+shot j4_05_tower
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~1.5 ~3 180 -8
+wait 40
+shot j4_06_tower_arch_frame
+
+# ---- 4. the Bell Book ----
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+hud on
+screen holo codex
+wait 80
+shotnow j4_07_book_codex
+scroll -4
+wait 20
+shotnow j4_08_book_hundred
+scroll -8
+wait 20
+shotnow j4_09_book_tower
+screen close
+hud off
+
+# ---- 5. a sleeping place: asleep, struck awake, green again ----
+cmd spreadplayers ~ ~90 0 5 false @s
+wait 200
+cmd summon minecraft:marker ~16 ~ ~ {Tags:["site"]}
+cmd awaken admin bells site barrow
+wait 60
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=site,limit=1] positioned over motion_blocking_no_leaves run tp @s ~-6 ~6 ~10 210 30
+wait 60
+shot j4_10_site_asleep
+cmd gamemode creative
+cmd awaken admin bells wake
+wait 30
+hud on
+shotnow j4_11_site_waking
+wait 160
+hud off
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=site,limit=1] positioned over motion_blocking_no_leaves run tp @s ~-6 ~6 ~10 210 30
+wait 40
+shot j4_12_site_woken
+
+# ---- 6. a kept place and its keeper; the handbell ----
+cmd gamemode creative
+cmd spreadplayers ~ ~90 0 5 false @s
+wait 200
+cmd summon minecraft:marker ~16 ~ ~ {Tags:["kept"]}
+cmd awaken admin bells site wayside
+wait 20
+cmd execute at @e[type=marker,tag=kept,limit=1] positioned over motion_blocking_no_leaves run tp @s ~-9 ~1 ~ 270 15
+wait 160
+shot j4_13_kept_site_keeper
+cmd item replace entity @s weapon.mainhand with awaken:handbell
+camera first
+hud on
+wait 20
+shotnow j4_14_handbell
+quit

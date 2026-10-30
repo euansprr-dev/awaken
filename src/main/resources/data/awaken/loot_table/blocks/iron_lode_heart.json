@@ -28,6 +28,15 @@
           ]
         }
       ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:iron_lode_heart"
+        }
+      ]
     }
   ],
   "random_sequence": "awaken:blocks/iron_lode_heart"

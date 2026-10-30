@@ -1516,7 +1516,8 @@ def hushling():
         def sh(n, side=side):
             return None if side > 0 else n
         arm = body.bone("harm_" + nm, (side * 3, 0, -3), (-25, 0, side * -8))
-        arm.cube("harm_" + nm, -1, 0, -1, 2, 6, 2, mirror=mir, share=sh("harm_l"))
+        # a px past the elbow, over the thinner forearm's top: the arm bends planting a hand without opening its joint
+        arm.cube("harm_" + nm, -1, 0, -1, 2, 7, 2, mirror=mir, share=sh("harm_l"))
         fore = arm.bone("hfore_" + nm, (0, 6, 0), (20, 0, 0))
         fore.cube("hfore_" + nm, -0.5, 0, -0.5, 1, 6, 1, mirror=mir, share=sh("hfore_l"))
         fore.bone("hhand_" + nm, (0, 6, 0), (-30, 0, 0)).cube("hhand_" + nm, -1.5, 0, -2, 3, 0, 3, mirror=mir, share=sh("hhand_l"))

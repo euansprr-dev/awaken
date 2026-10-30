@@ -38,7 +38,7 @@ final class ArmsHud {
         boolean fights = ArmsPredict.fights(mc.player);
         float charge = ArmsPredict.charge();
         float res = ArmsPredict.resonance / (float) ArmsRules.RESONANCE_MAX;
-        boolean busy = fights && (charge >= 0 || res > 0 || ArmsPredict.ticks - ArmsPredict.fightAt < 100);
+        boolean busy = fights && (charge >= 0 || res > 0 || ArmsPredict.ticks - ArmsPredict.busyAt() < 100);
         shown += ((busy ? 1F : 0F) - shown) * 0.15F;
         if (shown < 0.02F) return;
         // under the lock's ring when there is one (SPEC §40.4), else under the middle of the screen

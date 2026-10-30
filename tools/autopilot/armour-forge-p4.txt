@@ -1,0 +1,98 @@
+# The Forge Song at S (SPEC §44.4, P4): a Starfall cuirass, forged in the P1 smithy by autoplay. The heat, the shaping,
+# then A's Fold (three folds struck in quick pairs) and S's Starfire (the metal goes white, a fast chain of marks that
+# light and fade), the quench, the tune, the result card and the fit.
+# ci knobs: LENS=cinematic
+world armourforge4 creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+# the smithy's chunks first: a busy runner's server can fall seconds behind the script (fills there fail unloaded)
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+# the smithy: a deepslate floor, timber walls and roof, three lanterns; open to the north
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd fill -6 201 9 6 205 9 minecraft:spruce_planks
+cmd fill -6 201 -3 -6 205 9 minecraft:spruce_planks
+cmd fill 6 201 -3 6 205 9 minecraft:spruce_planks
+cmd fill -6 206 -3 6 206 9 minecraft:dark_oak_planks
+cmd setblock -3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 0 205 1 minecraft:lantern[hanging=true]
+# the stand faces the open side; the anvil to its east, the Forge to its west, a works table behind the anvil
+cmd setblock 0 201 4 awaken:fitting_stand[facing=north]
+cmd setblock 2 201 3 minecraft:anvil[facing=east]
+cmd setblock -2 201 4 awaken:forge[facing=north]
+cmd setblock 2 201 6 minecraft:crafting_table
+wait 20
+cmd awaken admin rankup
+wait 20
+screen close
+cmd awaken admin rankup
+wait 20
+screen close
+cmd awaken admin rankup
+wait 20
+screen close
+cmd awaken admin rankup
+wait 20
+screen close
+cmd awaken admin rankup
+wait 20
+screen close
+cmd item replace entity @s weapon.mainhand with awaken:starfall_pattern
+cmd tp @s 0.5 201 1.5 0 -70
+wait 10
+use
+wait 20
+screen close
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd awaken armour autoplay true
+hud off
+camera first
+cmd tp @s 0.5 201 1.5 0 15
+wait 20
+use
+wait 30
+shot forge4_list
+screenkey tab
+wait 6
+shot forge4_list_cuirass
+screenkey space
+wait 30
+shot forge4_heat
+wait 100
+shotnow forge4_shape
+wait 250
+shotnow forge4_fold_a
+wait 30
+shotnow forge4_fold_b
+wait 70
+shotnow forge4_starfire_a
+wait 20
+shotnow forge4_starfire_b
+wait 20
+shotnow forge4_starfire_c
+wait 50
+shotnow forge4_quench
+wait 40
+shotnow forge4_tune
+wait 60
+shot forge4_done
+wait 70
+shot forge4_fit
+screen close
+wait 10
+quit

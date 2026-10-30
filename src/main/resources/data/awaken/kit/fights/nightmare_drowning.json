@@ -1,0 +1,118 @@
+{
+ "schemaVersion": 1,
+ "id": "nightmare_drowning",
+ "moves": "nightmare_drowning",
+ "intro": {
+  "pose": "kneel",
+  "move": "arrive"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "snap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake"
+      ],
+      [
+       "rake",
+       "lunge"
+      ]
+     ]
+    },
+    {
+     "move": "rake",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "lunge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "snap"
+      ]
+     ]
+    },
+    {
+     "move": "undertow",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "rush",
+     "weight": 2
+    },
+    {
+     "move": "tail",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "lungful",
+   "pool": [
+    {
+     "move": "snap",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "rake"
+      ],
+      [
+       "rake",
+       "undertow"
+      ]
+     ]
+    },
+    {
+     "move": "lunge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "snap",
+       "rake"
+      ]
+     ]
+    },
+    {
+     "move": "black_water",
+     "weight": 3,
+     "when": "FAR"
+    },
+    {
+     "move": "undertow",
+     "weight": 2
+    },
+    {
+     "move": "lungful",
+     "weight": 2
+    },
+    {
+     "move": "rush",
+     "weight": 1
+    },
+    {
+     "move": "which_way",
+     "weight": 2
+    },
+    {
+     "move": "tail",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

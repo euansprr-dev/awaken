@@ -459,6 +459,9 @@ of `AwakenConfig.Client`.
   binoculars' magnification now, 1 when none, §39: Far Sight's panorama steps aside while it is over 1.05).
   `core.api.FarGround` (client): `install(Sampler, BooleanSupplier ready)`, `ground(x, z)` (the far land's ground top, NaN when
   unknown; thread-safe, sampled off the render thread), `ready()` (the far land drew lately). Far Sight installs it (§39.8).
+  `core.api.Spotting` (server): `register(Source)`, `sources()`; `Source.moves()`, `gather(player, reach, Sink)`, `find(player,
+  ref)`; `Sink.place(key, bounds, ref)`, `Sink.entity(entity, ref)`: what the binoculars can spot (§39.10). Fauna, landmarks
+  and wonders register sources.
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -619,17 +622,25 @@ of `AwakenConfig.Client`.
   retired or tips are off: skip the probe). Installed by the signal module in M4 B6; until then every call does nothing.
   Tip text and triggers are data; any module may offer its own tips (the Ascent for its tiers).
 - `dev.awaken.mobs.client.life.CreatureLife` (client, §23) — the life layer for any module's bodies:
-  `LifeRig rig(ModelPart root, String temperament)` once per model; `Life life(Object held, LifeRig rig, int seed)` once
+  `LifeRig rig(ModelPart root, String temperament)` once per model, or `rig(root, temperament, String motion)` for a body
+  whose feet plant by the `motion.json` profile of that id (its rig's id; none there, exactly as the two-argument form;
+  §23.1 "The wild's and the city's walkers"); `Life life(Object held, LifeRig rig, int seed)` once
   per creature (keep it on the entity's client data); `tick(Life, LivingEntityRenderState, boolean steerHead)` once a frame
   in `extractRenderState`; `apply(LifeRig, Life, LivingEntityRenderState)` at the end of `setupAnim` (safe to run once per
   layer); optional `rootPose(Life, PoseStack, state)` in `setupRotations`; `eyesClosed(Life)` 0..1 for a texture blink.
-  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`).
+  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`;
+  for planted feet `grounded`, `legsFree`, `gaitRun`, `bodyScale`).
 - `dev.awaken.core.api.Strikes` (§24) — how a blow can be answered: `enum Kind {LIGHT, HEAVY, PERILOUS, GRAB, NONE}`
   (`deflectable()`, `blockable()`, `dodgeable()`); `deliver(Entity by, Kind, BooleanSupplier blow)` names the class of
   the blow it runs (a mob's swing, an ability's hit); `of(DamageSource)` reads it back (defaults: an untold melee or a
   projectile LIGHT, a blast with an entity PERILOUS, fire, falls, drowning, freezing and the void NONE). Tells:
   `installTells(TellSource)`, `tell(Entity)` → `Tell(ticks, kind)` or null (both sides). Stagger: `installStaggers`,
   `stagger(LivingEntity, ticks)` (server). The mobs module installs both for its creatures.
+- `dev.awaken.core.api.FightMoments` (§44.5) — the moments of a fight, told by whoever owns them so others can answer
+  without reaching in: `enum Moment {HIT, FINISHER, DEFLECT, PERFECT_DODGE, BREAK, KILL, GUARD, PERFECT_HEAVY, CAST}`,
+  `listen(Listener)` (`on(ServerPlayer, Moment, @Nullable LivingEntity target)`), `report(player, moment, target)`
+  (server). Arms reports its eight through `Marks.fire` (the same moments its marks answer), powers reports CAST from
+  `Casting` after each cast. The armour module listens (set abilities).
 - `dev.awaken.core.api.BodyMaterial` (§24) — what a blade meets: `FLESH, ARMOR, BONE, WOOD, STONE, SPIRIT, SLIME`;
   `of(Entity)` (both sides; armour ≥ 10 over flesh or bone answers ARMOR), `install(Source)` (the mobs module answers for
   its bodies through `MobDef.material()`), vanilla defaults by type.
@@ -670,6 +681,9 @@ of `AwakenConfig.Client`.
   The holo module installs the director; until then everything shows as it always has.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
+- `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
+  (`favours(ore, x, y, z)`, `place(x, y, z)`: pure, any thread) and `homes(seed, homes)`: where each ore is at home
+  underground, installed on the overworld's load by the caves in a world made with the cave regions (null at server stop).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -928,7 +942,7 @@ Plan v2 · the road to 50 (details in docs/modules/road.md):
 Plan v2 · Hunter gear (details in docs/modules/gear.md):
 - Module `gear`: tiers E Wildhide, D Beastbound, C Gatewrought, B Veilwoven; 4 armour pieces, a blade, a power focus
   and a mattock each, at vanilla stone/copper, iron, diamond and netherite strength. A and S are designed only.
-- Set bonuses at 2 and 4 pieces per tier (E Perception: quiet sneaking, Hunter's Sense; D Strength/Vitality: hearts,
+- Set bonuses at 2 and 4 pieces per tier (E Perception: quiet sneaking, Pounce (§44.6); D Strength/Vitality: hearts,
   Cornered; C Five Forces: Force ward, primed strikes; B Veil/Spirit: Spirit ward, meditation heal, Veil Flicker).
   Numbers live in `gear/SetBonus`.
 - A focus adds +6/9/12/15% power damage in either hand (+2% per temper level), under the boss cap.
@@ -2559,6 +2573,8 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       residents, children, the Watch, porters, washers, shopkeepers and millers. Boats: one moored every 24 blocks along
       each quay inside the wall (a quarter left empty, none within 6 of a bridge); two rowed up and down the river, one
       round the canal; rowing from 23000 to 18000, bow lanterns lit after dusk (a third of the moored ones too).
+      Tours only: client command `/awaken critters lineup pace|pace_<pigeon|gull|cat|dog>|off` sets the walkers
+      pacing 5-block lanes before the camera (a walk out, a stand turning round, a trot back) for §23.1's feet.
     - Hand lanterns and lit street lamps are drawn light (`citizens.client.CityGlow`: an additive core, halo and pool on
       the ground), never light blocks; `/awaken citizens lanterns blocks|glow` keeps the old path for measuring only.
       Choir Square's festoons: paper lanterns strung between the bowl's eight lamp posts, lit 12200-19500.
@@ -5177,13 +5193,28 @@ Replaces §21.11 decision 18's kit. Built 2026-10-28 by one builder, no sub-agen
     tips a forward-faller onto its side, never into the striker). The walkers fall forward; the creeper, the chicken and the beasts onto
     their left; a spider rolls over in place and does not turn. A vanilla body at D keeps its glow's fade though Fight Feel's own fall
     clears the state's `deathTime` (the layer reads the fall from its own render data).
+17. **With Fresh Animations, its moves 1:1** (Euan 2026-10-29: "for all vanilla mob upgrades, literally just use the fresh animations 1:1, they are
+    perfect already"; he chose to keep the rung's size, eyes and extras). When EMF is loaded and the resource packs hold a model for the
+    species (`minecraft:optifine/cem/<id>.jem` or `emf/cem/`), read on each renderer rebuild, a form from C up keeps the vanilla body, which the
+    pack animates, at the rung's height (`state.scale *= FormShape.heightFactor`, about the feet; the walkers stay near vanilla's height in their
+    wider box). Nothing of the pack is shipped or read beyond that check: its terms forbid redistribution and our repo is public, so the moves
+    come from the player's own install (a modpack may bundle FA by its terms). The rig's extras ride the vanilla parts (`living.forms.FormFit`,
+    pure): every bone that isn't the body (body = base, hips, torso, head, neck, abdomen, tail, spinner, legs, shins, arms, forearms, hands,
+    coxae, ears, wings, eyes, jaws, fangs) is anchored to the vanilla part its body bone maps to (walkers: torso and hips on `body`, `arm_r` on
+    `right_arm`...; beasts and the chicken: `neck` and `head` on `head`; spider: torso on `body0`, abdomen on `body1`) and moved from the form's
+    box onto vanilla's grown to the rung: a point outside keeps its distance from the face it's beside, one inside spreads with it; plates on a
+    body bone move cube by cube, a chain (crowns, horns, claws, petals, crystals) moves with its root. Vanilla rest boxes are read from 26.3's
+    models (FA keeps vanilla's joints). `living.client.forms.FormExtras`, one layer per species' vanilla renderer, draws each part's pieces as
+    one baked model, carried by that part's pose from its own fields times the inverse of its vanilla rest (not `translateAndRotate`, which EMF
+    moves to the hand on an arm), in the form's skin and glow. The form's own clips, cued moves, life layer, halos and fall don't run then: FA
+    acts it all. The forms' eyes are `FormLayers`' as at D. LITE and OFF, no EMF, or no model for a species: as before.
 14. **Perf.** Per entity one `FormBody`, created on first sight, reused; no allocation per frame; halos past 48 blocks skipped; the life layer's
     springs past 32 as elsewhere. Rigs: at most 60 bones (tested). Server: one cue per move, one dimension refresh per form change.
 - Not yet (F3 follow-ups): presence motes at A and S and heavy footfalls, distance LOD for sub-pixel growth, a voice layer per family
   (`audio_living.py`), the wind-up light trail at S, a gallery command. The vanilla cow and pig variants (warm, cold) are not read: the form's
   own family paints them.
 - Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formrow <species> [family]`; tour `tools/autopilot/forms-parade.txt`.
-- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_size` (the hitbox follows the form on the server),
+- Tests: `forms_bodies` (every species and rung has a rig that passes its checks, its clips, its paints and coats), `forms_fit` (with a model pack every non-body bone rides a vanilla part, none lost, each by its part), `forms_size` (the hitbox follows the form on the server),
   `forms_cue` (the cue codec round-trips; the second blow's caps), plus `living_form_mix`, `living_form_state`, `living_form_moves`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
@@ -5206,10 +5237,15 @@ magic.
   The vanilla lightmap, world/storm rain strength, roof/ground heightmap clipping, dry biomes, weather radius setting,
   snowfall, sound and splash rules remain vanilla; Lens grades the same frame afterwards. Lens off still gets neutral
   rain under vanilla lighting; an external resource pack may override this texture normally. Rolling Storm's distant
-  rain shafts/curtain are unchanged. No mixin, custom renderer, shader change, scene copy, extra particle, draw or post
-  pass. Static incremental work: the same 64 KiB base texture, samplers, vertices and draws; no new per-frame CPU work.
+  rain shafts/curtain are unchanged. **Splash** (Euan, 2026-10-30: the splash on the ground was still blue): vanilla's
+  `minecraft:rain` particle shares `minecraft:splash`'s deep-blue sprites, so `minecraft:particles/rain.json` now names
+  `awaken:rain_splash_0..3` (same generator): 8×8, one to three fully opaque pixels (the particle draws on the opaque
+  layer), a crown of grey 200 over a body of grey 170, the streaks' grey without their fade. The water splash
+  (`minecraft:splash`: swimming, fish, a bobber) keeps vanilla's blue. No mixin, custom renderer, shader change, scene
+  copy, extra particle, draw or post pass. Static incremental work: the same 64 KiB base texture, samplers, vertices and draws; no new per-frame CPU work.
   Lower alpha does not reduce the existing quad overdraw, so no frame-time saving or measured GPU cost is claimed.
-  `lens_rain_texture` checks the packaged dimensions, neutral colour, sparse coverage and opacity. Offline contact-sheet
+  `lens_rain_texture` checks the packaged dimensions, neutral colour, sparse coverage and opacity, and that the rain
+  particle names the four grey splash sprites, each opaque and neutral. Offline contact-sheet
   inspection covers overcast, forest, night and lamplight; roof/dry/snow/settings preservation follows from leaving the
   extraction/rendering path unchanged. No client, GPU timing or in-game visual acceptance was performed.
 - **Chain** (Cinematic, Ultra): far-depth probe and trust (two 1-px passes) → **sun map** (`lens_sunmap.fsh`, L2) →
@@ -5261,8 +5297,23 @@ magic.
     user's CPU estimate, for A/B; check: the latest roll read back).
 - **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RG16F, mips 1-4 hold the max of their 2×2; about
   5.6 MB on the GPU and the same off-heap mirror): from the client chunks' own heightmaps (26.3 sends MOTION_BLOCKING
-  and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g without
-  leaves. A ring addressed by world block modulo 1024, a 64×64-chunk window centred on the camera's chunk: a chunk
+  and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g
+  without leaves. **The heightfield sees every solid block** (`LensHeights`, Euan 2026-10-29: "in a closed room the
+  shadow on the wall moves with me instead of staying where it is. It's the shadow of the light coming through the
+  door"): 26.3 builds those heightmaps from `#minecraft:blocks_motion`, which holds the game's blocks and only the mod
+  blocks a tag adds, so a room of Carillon's city bricks under clay tiles read as open sky. Lens lit it as it lights
+  the street, and only the screen-space contact shadows (the door frame's, at most 3 blocks long) shaped that light,
+  so it slid with the view. Each column also takes in, from its highest block of any kind down to the heightmap's own
+  top, the first block the tag skips that the game still counts as solid (`isSolid`: a collision box most of a block,
+  or a whole block high; never leaves, which the tag holds) as the top of both. Only sections whose palettes hold such a block are
+  walked, so land without one costs one palette check a section and a chunk read. Swift's camera cover (texel 21)
+  takes the same rule at the camera's column. A room of any block now reads as covered: the model's fade under cover
+  and the 85% floor hold inside it, and its light no longer rests on the screen-space contact shadows alone, so it
+  stays put as you walk. The game's own heightmaps (rain, spawning, fire) still skip those blocks: a module that
+  builds with its own blocks adds them to `#minecraft:blocks_motion_no_leaves`. GameTest `lens_heights_skipped_roof`;
+  tour `tools/autopilot/lens-door-light-look.txt` (the same room in stone bricks and in city bricks under clay tiles,
+  a door toward the morning sun, from four places across it).
+  A ring addressed by world block modulo 1024, a 64×64-chunk window centred on the camera's chunk: a chunk
   entering the window clears its slot and is read nearest first (40 a tick), a loaded chunk is read when it arrives
   (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 10 ticks and the rest of the
   window 12 a tick in turn (block changes show within about ten seconds; halved for the CPU after L3), and a slot uploads only when its hash changed,
@@ -5339,7 +5390,7 @@ magic.
   pixel, 0.5 to 1.5 blocks of solid heightfield (`g`) over the air in front of the surface (its point 0.3 blocks
   toward the camera, so a trunk's or a cliff's own column never counts as its cover; a dark doorway seen from the
   street does count; not the open sky, far terrain or Holo plates; not past the heightfield's trusted reach); Swift by the
-  camera (texel 21 r: the client's MOTION_BLOCKING_NO_LEAVES top above the eye + 0.5, eased over about a sixth of a
+  camera (texel 21 r: the client's MOTION_BLOCKING_NO_LEAVES top, with the blocks it skips, above the eye + 0.5, eased over about a sixth of a
   second). The open land, by day and by night, is untouched.
 - **Within arm's reach, never darker than the game at all** (Euan, 2026-10-29, "some more shadow issues with
   underground torches held here": the torch in his hand was dark): every tier, right after the cover floor, a pixel
@@ -5668,11 +5719,27 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   and `<id>_glow_blink.png` (the eyes' light out); the renderer draws them while the eyes are shut. 14 creatures have
   them; existing textures are byte-identical.
 - **The look reaches the model** (fixed 2026-10-29): NeoForge clears a render state's data right after
-  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there was
-  gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and flash
-  never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a modifier)
-  had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the clear. Bosses
-  (the kit's renderer, and `AwMobRenderer`'s boss tiers) are left out until the boss work takes it.
+  `extractRenderState` (`RenderStateExtensions.onUpdateEntityRenderState`), so the `AwLook` our renderers set there
+  was gone by `setupAnim`: `Life.from` was null and the layer's pose (legs, flight, springs, blinks), tint, glow and
+  flash never drew on the Hero, Wild and hand-built (`AwMobRenderer`) bodies; only form bodies (extracted from a
+  modifier) had it. `MobsClient` registers a render state modifier that puts the entity's same look back after the
+  clear, on every Hero and Wild body, the gate wardens among them (Euan: the weaver queen spun and the thousandfoot
+  glided, their feet never planted). Since 2026-10-29 (the boss work) it covers bosses too: the kit's renderer (so a
+  kit body's springs, breath, blinks and wind-up glow draw, SPEC §35), `AwMobRenderer`'s boss tiers, and the humanoid
+  and skinned renderers (`AwHumanoidRenderer`, `AwSkinRenderer`), which set the same look and had lost their tint,
+  see-through and flash. Modifiers match by renderer class, so each renderer that doesn't extend another is registered
+  by name.
+- **The neck's reach** (Euan 2026-10-29: the Briar Sow swung its head round almost backwards in a second): the head
+  turns no further from the body than its temperament's `neck` (radians; default 1.15, cute 1.3, grazer 1.0, hunter
+  1.2, beast 0.8, lord 0.75, monster 1.1, spirit 1.4, insect 0.6, swimmer 0.45, citizen 1.2), its spring's overshoot
+  included; a look that passes behind it (beyond 115°) holds the side the head already turned to, so the face never
+  swings across the back. It was ±172°, and every body's look code draws `Life`'s head.
+- **Hanging plates** (Euan 2026-10-29: the Stonehorn's fleece came off its barrel): a DANGLE spring whose own cubes are
+  a plane with height (a skirt, a beard, a curtain of moss) swings only about the edge it hangs from, the plane's level
+  axis: one along the body flares out, one across it flaps fore and aft. Turned any other way, a plate hinged at one
+  end of its top edge lifts the other end off what it hangs from. The Stonehorn's own clips did that too (its side
+  skirts pitched 6° walking and 22° running about their front corners, 2-8 px off the barrel at the back): they flare
+  out now (2.5±2.5° walking, 7±5° running) and only the front skirt and the beard swing fore and aft.
 - **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
   off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
   (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
@@ -5697,7 +5764,11 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
 - **Data**: `assets/awaken/life/motion.json` (schemaVersion 1), by rig id. A body not listed moves exactly as before (the
   kit's bosses have no entry). `gait`: `pattern` (`ripple`: one pair at a time from the back forward, each `lag` of a
   cycle after the pair behind it, the two sides half a cycle apart (`lag` 0: one wave over the side); `alternate`:
-  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out), `duty` (share of
+  opposite sets; `ripple-alternate`: the first walking, the second once it runs, 0.45 in and 0.25 out; `bound`: a
+  ripple walking and, once it runs, the forefeet together and the hind pair half a cycle later, the right foot of each
+  pair 0.06 of a cycle behind the left (an otter's lope); `hop`: every foot at once, the body rising with them (a
+  negative `bob`) and pitching by `rock` radians, nose up as it leaves the ground and down as it comes in, its single
+  re-steps rocking nothing (a rabbit, a cricket)), `duty` (share of
   a cycle a foot stands, walking and running), `lift` (px a step rises), `stride` (blocks a cycle covers; 0 the rig's
   own), `reach` (blocks a planted foot may trail before it steps at once), `settle` (blocks from home a foot may rest
   when the body stops), `crouch` (px the body sinks on its legs), `radius` and `fan` (where each foot stands: px out
@@ -5709,7 +5780,8 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   clips while the body rears: a wind-up, a strike or a cue, a roar, or a still threat; a roar lets one pair more go),
   `knees` (`auto`, `forward`, `back`: which way a leg that stands straight at rest bends; `auto` breaks the forelegs of a
   body with legs one behind another forward and every other leg back, a bird's and a biped's back; a leg bent at rest
-  keeps its own bulge).
+  keeps its own bulge), `mixed` (a one-bone leg walks rigid beside legs that bend: `LegRig.stiff`, per leg), `hindBack`
+  (px the hind feet stand behind their rest spot: a leg lying nearly straight at rest can step no further forward).
   `body`: `headLevel` (the head holds level against the gait's and the ground's pitch and roll), `twist` (the body turns
   this share of its look, at most 0.35 rad), `slope` (it pitches and rolls with the ground under its planted feet),
   `land` (a landing squashes it by how far it fell: a spring at 3 Hz kicked by the fall speed), `still` (a stalking
@@ -5726,7 +5798,26 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   it). Applied last in `LifeRig.apply` (after the clips, the look and the springs), blended over the clips by the feet's
   weight; out of reach the leg points straight at its target. Only bodies whose body bone carries the head (the feet
   ride the body bone; a pose-stack body would carry them off their spots), or that have no head bone at all and a motion
-  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion).
+  profile (the weaver queen's face is on its thorax; a headless body without one keeps its old pose-stack motion), or
+  hand-built bodies the root carries (below). A gait with `arms` walks on its arms too: ARM-role chains are found as
+  legs are (the Hushling's long arms plant like forelegs). Toes: several LEG-role bones under a knee with nothing
+  below them (the Mycelord's roots) ride the knee's block, which is then the shin. A flat pad (a block thinner than it
+  is long and wide, not pointing down: a toad's foot, a walking mushroom's) reaches with its sole's far edge, not
+  halfway up it, so it stands on the ground instead of sunk into it.
+- **One-bone legs and the root's carry** (batch 4, 2026-10-29: the hand-built walkers): a rigid gait (or a `mixed`
+  one, its other legs bending) also takes a one-bone leg, a LEG-role bone with cubes and no leg below it (a vanilla-shaped body's block of a leg), its own block
+  the whole leg (`knee` -1), swung as any rigid leg. A hand-built body (`LifeModel`, no hero rig) with a gait whose legs
+  don't all hang from its body bone, or whose body bone doesn't carry its head (the stag's legs and neck hang off the
+  model root), has its body's motions carried by the root part (`LifeRig.rootCarries`): the dip, lean and roll the pose
+  stack had, and the gait's crouch, ground, step, vault, drift and twist, turned about the body bone's pivot (the root
+  translated by pivot − R·pivot), so the legs' tops ride the body and the feet's solve, which starts from the root, sees
+  it; `Life.rootPose` skips them then. `AwMobRenderer` feeds the feet: grounded unless `P_AIR`, legs free in the body's
+  own held poses (`LifeModel.legsHeld`: resting and burrowing; the mossback tucked or guarding, the scarab and marmot
+  digging in, the marmot up on its haunches, the basilisk sprinting upright), and how much it runs from its pace: a
+  mob's ground pace goes nearly as its speed squared (1.6·speed² blocks a tick at a goal's 1.0), so it runs from
+  1.25× that to 2.3×. A body's own walk bob and roll give way to the feet (`Life.feet()`: the shroomlet's waddle, the
+  mossback's shell bob). The feet test checks the hand-built walkers from plain data mirroring their models
+  (`LifeTests.HAND_FEET`; keep in sync).
 - **Rigid legs** (`knees: rigid`; Euan 2026-10-29, the form cow's shins came off its thighs): a blocky leg whose shin
   pivots right on the thigh's end face opens a wedge at any knee bend, so it has no knee, as Fresh Animations' cows,
   pigs, sheep, chickens and horses have none. Its knee holds its rest whatever the clips do; the whole leg turns toward
@@ -5804,9 +5895,12 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   steps (1/1.6 px high, stride 0.35/0.6 blocks, 0.15 s swings, reach 0.18), its spine wave from the clip bending over the
   planted feet, a lizard's roll (0.04); head level 0.4, twist 0.4, shift 0.25. Ripening it rears on its hind feet and its
   forefeet, drawn up off the ground, knead the air in turn while the tail braces.
-- **Hushling** (`hushling`; two two-bone hind legs, long arms swung by its clips): a crouched biped's alternating steps,
-  duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up, as a biped's does, and
-  rolls off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
+- **Hushling** (`hushling`; two two-bone hind legs and long two-bone arms it lopes on, `arms`): its hands plant like
+  forefeet (Euan 2026-10-29: swung by its clips alone they sank into the floor under its crouch and never stepped); its
+  upper arm runs a px past the elbow over the thinner forearm, so the elbow bends to plant a hand without opening (it
+  hid none: a straight arm whose block ends on its elbow's pivot must not bend, and a stiff one couldn't reach the floor
+  under the crouch), a diagonal lope, duty 0.6/0.4, 2/3.5 px, stride 0.9/1.5 blocks; its body rises (bob -0.6) while a foot is up and rolls
+  off it (0.05); a hunter: `still`, creep 1.5; head level 0.5, twist 0.3, shift 0.5.
 - **Weaver Queen** (`weaver_queen`, named beast; eight three-bone legs, femur 12, tibia 14, tarsus 6 px, no head bone):
   an alternating tetrapod on long reaching steps (4/7 px high, stride 1.4/2.6 blocks, reach 0.9, 0.32 s swings), bob 0.5;
   twist 0.15, slope 0.85, shift 0.9 (the heaviest drift: a big body settling over eight feet).
@@ -5846,6 +5940,68 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   (head level 0.45, nod 0.05); the **Stonehorn** (`stonehorn`; 12 px legs) a ram's sure-footed walk (0.96/1.79 blocks,
   2.5/4.5 px) that pitches and rolls with the rock under it (slope 0.9), nod 0.07, shift 0.8. All `rear` 1: a still
   threat or a wind-up hands the front pair to the clip (the sow's snort and paw, the ram's stamp).
+- **Hand-built walkers** (batch 4; one-bone legs, rigid, the root's carry where their legs hang off it; strides from the
+  longest planted sweep a vault of a quarter leg allows, at about 0.9 of it): the **Frost Stag** (`frost_stag`; 12 px
+  legs off the root) the Old Antler's walk scaled to its legs (0.85/1.4 blocks, 2/3.6 px high, 0.28 s swings), about
+  1.5 steps a second at its wander; the **Mossback** (`mossback`; 5 px legs under its shell) a tortoise's slow
+  lateral sequence, three feet always down (duty 0.8/0.6, 0.3/0.42 blocks, 1/1.5 px, 0.35 s swings), a step about every
+  two seconds, nodding (0.05); the **Crested Basilisk** (`crested_basilisk`; 4 px sprawled legs on its body) a
+  lizard's diagonal trot (0.2/0.32 blocks, crouch 1 so its sprawled feet reach the ground, quick 0.12 s swings) with its
+  own clip's spine wiggle over planted feet, its upright sprint left to the clip; the **Glass Scarab** (`glass_scarab`;
+  six 3 px legs, the front and back pairs splayed 0.25 rad fore and aft, was 0.5: a stiff leg pointing forward can't
+  reach further forward without the body dropping) an insect's alternating tripod (0.22/0.28 blocks, 0.08 s swings),
+  about six steps a second; the
+  **Shroomlet** (`shroomlet`; two 3 px legs off the root) a toddler's waddle (0.22/0.32 blocks, roll 0.08); the
+  **Listener** (`listener`; two 16 px legs off the root) a long stalking stride (1.2/1.9 blocks, 2.5/4.5 px, shoulder
+  0.3, `still`, creep 1).
+- **Batch 5** (2026-10-29: the rest of our walkers, and the legless; strides from the feet test, about 0.9 of the most
+  it allows): the **Mire Mother** (`mire_mother`, named beast; `arms`: her two-bone arms plant their hands, the hand
+  the shin, the wrist bending over it; folded hind legs with flat feet) a toad's crawl, a ripple walking and a trot when
+  she lunges (duty 0.75/0.5, 0.45/0.7 blocks, 3/4.5 px, 0.42 s swings, bob 0.6), her hind feet 4 px behind their rest
+  spot (`hindBack`), and her haunches 2.5 px lower in the spec (`fauna_heroes.py`): her hind feet hung 2.5 px above the
+  ground; the **Mycelord** (`mycelord`, named beast; two stubby rigid legs on flat feet, the roots riding them as toes)
+  a heavy biped's waddle (0.32/0.45 blocks, 0.4 s swings, roll 0.06); the **Tidesteed** (`tidesteed`; two three-bone
+  forelegs, the flipper riding the shin) an alternating walk (0.7/1.1 blocks), its swim as before; the **Brook Otter**
+  (`brook_otter`; `mixed`: one-bone forelegs stiff, two-bone hind legs bending, the paw the shin) a ripple walk and a
+  bound when it runs (duty 0.55/0.35, 0.34/0.52 blocks), the body arching with each pair (rock −0.08: forefeet up lift
+  the chest, hind feet up the rump), its swim as before; the **Scree Marmot** (`scree_marmot`; 2 px one-bone legs off
+  the root) a scurry and a bound (duty 0.62/0.3, 0.24/0.5 blocks; reach 0.12 and settle 0.02, so a 2 px leg never
+  leans past its limit; a walking duty under a half left neighbouring feet always up, blocking each other's catch-up
+  steps); the **Mudskipper** (`mudskipper`; the basilisk's body at 0.75, `HAND_FEET` shared) skipping on its fins
+  (`hop`, duty 0.3/0.27, 0.45/0.5 blocks, rising 1.6 px, rock 0.2); the **Chime Cricket** (`chime_cricket`; only its
+  two-bone hind legs plant, its four small one-bone legs keep their clip) hopping (`hop`, duty 0.25/0.22, 0.6/0.8
+  blocks, rising 2 px, rock 0.25). Legless: the **snails** (Gloam and Sporeback, `WildModels.Snail`) crawl on a wave
+  whose pace is the ground's: the foot stretches out from a tail that stays put and gathers it in after, the shell and
+  head keep their own length, the shell rocks with each push and sways side to side once in two, the eye stalks sweep
+  back under way and now and then one draws halfway in and out (a snail's blink); the **Breathbell** (`breathbell`; a
+  `fly` block with no wings or spine) leans into its drift (tilt 0.35 at 2 blocks a second, bank 0.12), its pulse,
+  skirt and trailing tentacles its clips' and springs'. The **walking forms** (`form_zombie_2`..`_5`,
+  `form_skeleton_2`..`_5`, SPEC 21.13; two 12 px one-bone legs from the hips, rigid, shoulder 0.3) a biped's walk off
+  the Listener's scaled to their legs (duty 0.62/0.4, 0.85/1.35 blocks, 2/3.4 px, 0.32 s swings, roll 0.05); the
+  **creeper forms** (`form_creeper_2`..`_5`; four one-bone legs of 6, 7, 7 and 8 px) a diagonal shuffle at every
+  speed (`alternate`, duty 0.66/0.42, about 0.1 and 0.18 blocks a cycle per px of leg; the largest's run 1.4).
+  These are the forms' own bodies; with Fresh Animations installed every vanilla species' form moves by FA 1:1 instead (SPEC 21.13
+  item 17, Euan 2026-10-29), its pieces riding FA's parts.
+- **The wild's and the city's walkers** (2026-10-29; a cross-module edit the orchestrator approved: client code only,
+  the wildlife module's `WildModel` and `WildRenderer`, the citizens module's `CritterModel` and `CritterRenderer`; no
+  server, entity, spawn or data change). Each model binds `CreatureLife.rig(root, temperament, rig.id)` (§12); a rig
+  with no `motion.json` profile behaves exactly as before. The renderer sets `grounded` (not flying or landing, a city
+  cat not mid-leap), `legsFree` (a perched bird, a sitting animal, a swimming duck, or any clip but idle, walk, trot,
+  sniff, listen, peck, caw and call: a sit, a loaf, a groom, a pant, a pounce, a hop, the fox's bolt keep their legs),
+  `gaitRun` (a trot clip's weight, or the speed between the rig's `runFrom` and `runFull`, whichever is more) and
+  `bodyScale` (the model's own scale, so the feet land where it is drawn). Profiles: the **fox** (`wild_fox`; `mixed`:
+  8 px one-bone forelegs stiff, the hind leg and hock bending) and the city **cat** and **dog** (`city_cat`,
+  `city_dog`, the same build at 7 and 9 px) a ripple walk and a trot (duty 0.66/0.45, 0.66/0.42, 0.64/0.42; strides
+  0.6/0.9, 0.55/0.95, 0.7/1.2 blocks), the cat's crouch 1.1 px (its hind feet are drawn 1 px off the ground); the
+  **crow** (`wild_crow`) and the city **pigeon** and **gull** (`city_pigeon`, `city_gull`; rigid 3 and 4 px legs whose
+  toe plates put the foot 1 px ahead of the hip, so a forward step runs out of leg first: a deeper crouch, 0.5 to 0.6
+  px, and the pigeon's duty 0.5/0.45 keep the hips within their drop) an alternating walk (0.34 to 0.5 blocks; the
+  feet never take a cycle under 0.2 blocks, so a pigeon at 0.6 can't go shorter). Not planted: the **city horse** (its
+  walk clip bends knee and hock in time with the cart; `fknee` and `hhock` aren't leg names, and rigid legs would lose
+  that), the **heron** (it wades: its feet would reach for the bed under the water), and the hoppers and climbers
+  (songbird, woodpecker, squirrel, rabbit, frog), whose clips are their gait. Test: `creature_fauna_feet` (every walker
+  here has its gait, its rig in its module's sources, and every leg plants); `creature_motion_feet` checks their
+  strides with the rest.
 - **Flight** (`Flight`, plain math checked on the server; a `fly` block, by rig id or, for a hand-built body, by its
   creature id): while airborne or swimming (or `always`, for a body always under way: serpents, the ray) the body noses
   into a cruise (`tilt` at `fast` blocks a second) and pitches along its path's climb or dive (`climb`, the share), banks
@@ -6172,8 +6328,45 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   stays down over a block (its mining, `Minecraft.continueAttack` through `onClickInput`), and each of those was taken
   as a new press, restarting the swing every tick; now only a press the key was not already down for counts, and the
   repeats are swallowed. Every new press strikes wherever it points; outside a fight (100 ticks) a block the weapon
-  cuts faster than a bare hand (a web, bamboo, leaves; never in creative) is still cut. The old rule (any block under the
-  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, full at the glint, 16;
+  cuts faster than a bare hand (a log or planks with an axe, a web, bamboo or leaves with a sword; never in creative)
+  is still mined. The old rule (any block under the crosshair outside a fight is mined) meant a click at the ground
+  mined with no swing at all. **Only a fight opens the window** (Euan 2026-10-29: "I can't use a normal axe to break
+  trees because it charges the hit like an attack"): every strike opened it, so one swing that missed a log, or hit
+  leaves (an axe cuts them no faster than a hand), made every press for the next 5 s a strike, and each one kept it
+  open. The window now opens only on something that means a fight (`ArmsRules.meansFight`):
+  - a press at a creature: locked, under the crosshair, or the mark within the style's longest blow plus its step in
+    (`ArmsRules.markReach`; a cow marked across a field is no fight);
+  - a blow either way, a guard's answer, a dodge, or a blow landing on you.
+  A strike at the air or a block still swings but leaves the window shut, so the next press on a log chops it. The
+  HUD's busy look, the combat camera and the dodge still count any swing (`ArmsPredict.busyAt`). A hold goes on as its
+  press began (`ArmsRules.attack`): a strike's hold stays the strike over a log, and a mining hold keeps mining whatever
+  the crosshair slides onto, as vanilla does. `arms_attack_key` holds the rule, and checks that every fighting axe and
+  sword (vanilla's and ours) cuts logs and planks, or webs and bamboo. **The chop** (Euan 2026-10-29: "Even without the
+  timer, when it does cut, there is no animation"; the hands were posed only from Arms' own moves, so vanilla's mining
+  wave never showed): while vanilla mines with a fighting weapon, the hands cut in a loop of their own, baked per style
+  by `tools/art/swing_choreo.py`'s lever (`tools/art/swing_chop.py` into `fp_swings.json`'s `chop` and `hack`,
+  `FpSwings.Loop`):
+  - the chop (any axe, `minecraft:axes`, 8 ticks): set high on the hand's side, driven down through a mark just under
+    the crosshair, stopped in the wood with a small kick back; the hack (a blade, 6 ticks): a quicker diagonal from low
+    on the hand's side that carries on through. Each loop starts and ends on its blow and is entered on the way up
+    (3 ticks in, 2.5 for the hack); it eases out to rest over 4 ticks when the mining stops (`ArmsChop`).
+  - Each blow lands on the frame the block breaks (the last frame before the tick vanilla breaks it): every tick the loop's rate is solved from the block's own break
+    time (the progress vanilla's `MultiPlayerGameMode` adds a tick, read through `BlockState.getDestroyProgress`,
+    counted only on ticks it adds some: its 5-tick wait after a break is kept until the next mining spends it) so
+    the next blow, or the one a loop later, lands then, held to 0.6-1.7 of its pace; between blocks (vanilla's 5-tick
+    wait) and in third person it runs at its own pace. An iron axe's log and wait (16 ticks) are two blows.
+  - A blow plays the block's own hit sound, louder and lower than vanilla's tap, an axe on wood adds `hit_wood`,
+    chips fly off where the blade struck, and the first-person view kicks a little; the drive's whoosh as it leaves
+    the set. Vanilla's own hit sound (every 4 ticks, out of step with the blows) is hushed on a block a chop is
+    showing (NeoForge's `PlaySoundEvent`).
+  - Third person: the body plays `arms_chop` / `arms_hack` (loops with `_end` settles, `ArmsClips`; posed for
+    vanilla's hold, the item square to the forearm: the axe cocked high beside the head and driven down until its
+    head points into the wood, the blade set out at the side clear of the head and cut down across the front), each
+    clip's tick 0 where the hands enter the loop, so the body's blow lands with the sound; it starts again on the hands' next
+    entry after the view turns to third person. Everyone else's chop is read from what every client already sees: a
+    miner's arm swing (sent every few ticks while it mines; one swing alone, a block placed or a log stripped, is no
+    chop), a fighting weapon in hand, no move of theirs in the last second, their look on a block it cuts; their
+    blows play at the block on the clip's clock. No packet, no server change. Held = a heavy (charges from 6 ticks, full at the glint, 16;
   a release on the glint or any time after is the full blow: motion 2.4, posture 20, 110 ms hit-stop; held on to 24
   with Resonance full it is the Art). **The glint is the full charge** (Euan 2026-10-29: "the yellow ting happens before
   the full charge, and then nothing different happens for that attack sometimes"): it was a window of 2 ticks either
@@ -7395,7 +7588,8 @@ The rules below replace that.
   (`AttackEntityEvent`, `EntityInteract`). Proximity alone never counts, except something big in plain view: a named
   beast or a creature ≥2.5 blocks tall, within 16 blocks and within 60° of the view (`Sightings`). Biomes and
   happenings are big and in plain view: standing in one, witnessing one counts (but they never carry the lesson).
-  Lairs (reach the den), landmarks and gates (reach them) are found by going there.
+  Lairs (reach the den), landmarks and gates (reach them) are found by going there. **Through the binoculars** (§39.10),
+  holding the glass on a creature, lair, landmark, gate or wonder you haven't found for 2 s finds it from afar.
 - **Telling** (`Finds.tell(player, Find)` after `Progression.discover` returned true):
   1. the first find ever made on purpose (`intent`) is the **lesson**: a moment with the name, its hint, and "A
      discovery. You studied something new: it pays a little XP, and what you learned is kept in your Journal and Codex
@@ -9799,7 +9993,8 @@ hundred glow quads, culled by distance and view.
 **API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
 `citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
 `/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
-can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage;
+`lineup pace` or `pace_fox`/`pace_crow`: the walkers pace 5-block lanes, a walk out and a trot back, for §23.1's feet); tours
 log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
 day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
 
@@ -11949,8 +12144,8 @@ should show a boss bar of our own. What he approved (PLAN §7):
   - `enrage`: `below` (0.15) and `speed` (1.2): faster, never more damage;
   - `death`: optional and unused for now (the body plays its rig's `death` clip).
 - **Checks** (load and `kit_*` tests). A missing or broken file means the boss wears its old body and fights as before,
-  logged once. Every move's clips exist (`<move>_windup`, `_active`, `_recover`), and their lengths match the ticks
-  within one tick. Every wind-up is at least its class's minimum: LIGHT 8, HEAVY 12, PERILOUS 14 and GRAB 12. A hold
+  logged once. Every move's one clip exists (`move_<id>`, 35.10), and its length matches the ticks within one tick; a
+  move's `link` is within its recovery. Every wind-up is at least its class's minimum: LIGHT 8, HEAVY 12, PERILOUS 14 and GRAB 12. A hold
   is only on a HEAVY move. Every boss's script covers gap, combo, delay, area, ranged, behind and signature.
 
 ### 35.3 The fight runner (server, `mobs.entity.FightRunner`, beside `AwakenBoss`)
@@ -11973,6 +12168,12 @@ should show a boss bar of our own. What he approved (PLAN §7):
     that the boss can see. Each is hit once a move, through `Strikes.deliver` (Arms' deflect, block and posture apply).
     Root motion moves the body by `advance`.
   - **Recover.** It doesn't turn. This is the opening you can punish.
+  - **A step (a BLINK move with capsules, Unit Zero's Phase Step).** The landing spot is picked when it strikes (behind
+    where you stand then, not where you stood when the tell began), it lands facing you, and the blink itself deals
+    nothing: the move's cut is the one blow. If it couldn't land within its close moves' reach + 1 of you (a wall at
+    the spot), the move ends there with its string, so it never cuts the air across the room.
+  - **A beam's aim** follows you until the lock tick; from then its line shows bright (Unit Zero's lance: the last
+    half second of its tell), and it fires down that line.
 - **Picking moves.** Between moves the runner waits 6-14 ticks, then picks by weight from the phase's pool among the
   entries whose `when` and `range` hold, and whose ability has room (`AbilityRunner.room`: a summon its budget,
   `Mobs.minionRoom`; a decoy its cap; a heal someone hurt). Without that, Unit Zero, at 3-8 blocks where only Deploy
@@ -12003,16 +12204,29 @@ should show a boss bar of our own. What he approved (PLAN §7):
 ### 35.4 The kit runtime (client, `mobs.client.kit`)
 - `KitRenderer` draws an `AwakenBoss` whose rig loaded, through `HeroModel` (extended in place, not forked). The layers:
   1. **Locomotion**: idle, then walk and run blended by speed and locked to distance (as hero rigs are).
-  2. **The action layer**: the synced move's `_windup` (played over the wind-up, then held still on its last key
-     through the hold), `_active` and `_recover`; the previous move fades out over 0.15 s under the new one.
-  3. **Turn steps**: while no move plays and the body turns faster than 3° a tick, `turn_l` or `turn_r` (0.4 s) loops,
-     weighted by how fast it turns (full at 45° in 0.4 s).
-  4. **Ground contact**: within 32 blocks and on the ground, each foot finds the ground's top under it (collision
+  2. **The action layer**: the synced move's one clip `move_<id>` (35.10), its wind-up and recovery stretched to the
+     ticks played, staying at the peak (trembling) through a hold; every change of what plays eases out on the body's
+     transition spring (`KitBlend`) instead of a crossfade.
+  3. **Turn steps**: while no move plays and the body turns, `turn_l` or `turn_r` (0.4 s) loops, weighted by how fast
+     it turns (from 1° a tick, full at 45° in 0.4 s). The rate is eased on the boss (35% a tick), so the step fades in
+     and out with the turn and never pops off at a threshold.
+  4. **Ground contact** (through moves too, since 35.10): within 32 blocks and on the ground, each foot finds the ground's top under it (collision
      shapes); the body lowers to the lower one (at most 0.6 block) and the higher foot's leg reaches up by two-bone IK
      (`HeroModel.Leg`).
   5. **Reactions**: the blow's direction (`CombatFeedback`) picks `hurt_l`, `hurt_r` or `hurt` (from the front). A
-     broken stance holds `kneel`, then plays `rise`.
+     broken stance holds `kneel`, then plays `rise`. A body that gets up once (`RISES`, Echoing; it lies fallen for
+     `AwakenMob.FALL_TICKS`, 2.5 s) falls by its `collapse` if its rig has one (else the kneel) and lies still: the live
+     graph (idle, walk, the look; `HeroRenderState.kitStill`) lets go over 0.3 s. Its `reassemble` (else `rise`) is
+     timed to end as it stands, the graph coming back over its last 40%; it holds its end while the body still lies,
+     and after it stands plays on to its end unless a move starts. Turn steps and the feet's ground reach wait for it.
   6. **The life layer** on top, unchanged.
+- **Turning.** A kit body with a fight script turns as one heavy thing: vanilla's `BodyRotationControl` (the body
+  waits until the head is 75° off, then lurches) is replaced. On the server the body is the facing the script sets; on
+  the client it eases after the synced facing (30% of the gap a tick, at most 18°), and the head turns within its
+  range of the body.
+- **Its own colours.** A kit body is painted in its own colours, so the Bestiary's tint (the creature's or its
+  theme's) is not multiplied over it: only frost, charge, the risen pall and a haunting tint it (`AwLook.kitTint`,
+  the same mixes from white). A rig marked translucent draws with `entityTranslucent` (ice, water).
 - **The setting.** `kitBodies` (client, `awaken-mobs-client.toml`) is on by default. Off draws every creature's old
   body after the next resource reload (renderers are made then); the server's moves still run.
 
@@ -12055,12 +12269,1987 @@ GIFs are not made yet. The checks (`core.check`) stop the build, and the sheet r
     0.7 (its Magma Fist ring is 1.5), the eruption 0.8, Phase Step 0.85.
   - **Summons come with the second phase**, as in GateBestiary: Deploy Coils and Birth are not in either first pool.
   - **Middle range has its own moves**, so a signature or a summon doesn't fill the gap: Unit Zero's lance fires from
-    4 blocks in its first two phases, and Mother's lob (from 4) and swoop (from 5) need no `far`. Spore Rain is
+    6 blocks in its first two phases (it was 4, where a beam from the palm read as a cut you couldn't dodge; 3-6
+    blocks out it walks in), its aim locked for the last 10 ticks, and Mother's lob (from 4) and swoop (from 5) need no `far`. Spore Rain is
     weight 1 in every phase.
   - **Unit Zero's cuts:** sever_a and sever_b 1.75, sever_c 2.5, spin 1.5. Its told melee had dealt half again as much
     as its first cuts.
+  - **One imp.** Stoke the Imps (phase 2's transition) calls one Ember Imp, not two: Euan, 2026-10-28, parried the
+    Tyrant well and was "ripped apart" by its imps. The fight's weight is the boss, not minions.
   - **Health under the sim's recommended curve:** the Tyrant 30.5, Unit Zero 30 and Mother 22.5. These go in with
     that curve, after Euan's look. Until then GateBestiary keeps 30, 28 and 28.
+
+### 35.8 Sound (the move table's palette, `mobs.boss.KitSounds`)
+Euan's first look (2026-10-28): stomps and floor hits had no sound, the whooshes were weak, a roar could play silent
+and Unit Zero's warning was a cheap beep. A kit body now sounds its own moves:
+- **The palette.** The move table's optional `sounds`: named sets, each a few layers (`sound` id, `volume`, `pitch`)
+  played together at the body on the server, the whole set drifting ±5% in pitch. Sets: `tell_light`, `tell_heavy`,
+  `tell_perilous`, `tell_grab`, `swing_light`, `swing_heavy`, `cast`, `impact`, `roar`, `step`. The showcase palettes
+  are vanilla sounds layered low (the Tyrant: metal, fire and beasts; Unit Zero: shutters, machinery and air; Mother:
+  sculk, wings and breath), written in the bosses' specs (`SOUNDS`), chosen on paper and not yet heard in game.
+- **The moments.**
+  - **Wind-up start:** `tell_<class>`. When the body has it, it replaces Arms' class voice (the glow still tells the
+    class); else Arms' voice plays as before.
+  - **First active tick:** `swing_light` (LIGHT) or `swing_heavy` (HEAVY, PERILOUS, GRAB). A move with no capsules
+    plays `cast` (its ability sounds too), and a NONE move (intro, transition, summon) `roar`, else the boss's own
+    voice, loud and low.
+  - **Impact:** an `area` move plays `impact` on its first tick with a capsule (the blow meets the ground), or on its
+    first active tick if it has none.
+  - **Steps:** `step` under the block's own step sound, a footfall about every width walked (not every block).
+- **Overrides.** A move's own `sounds` maps a moment (`tell`, `swing`, `impact`) to another set, or to `""` for
+  silence (Spore Rain and Orbital Mark fall from the sky: no impact at the body).
+- **Test.** `kit_sounds_resolve`: every layer is a real sound, every set a move names is in its palette, and every
+  kit has an `impact` and a `roar`.
+
+
+### 35.9 The premium rework (plan `docs/bosses/REWORK.md`, page https://claude.ai/artifact/3MpmzQ6mv8LGNH7TyURkfJ; Euan approved all eight recommendations 2026-10-28: "Go ahead")
+Phase 1's look was a no-go (35.7). The kit's systems stay; the art, motion and choreography are rebuilt, the Ember
+Tyrant first, and nothing rolls out to more creatures until the Tyrant passes Euan's play.
+- **Decisions.** The structural rework on the kit, the Tyrant first. A silhouette gate before modelling (Euan picks
+  one of three). No summons in the three showcase fights (Stoke, Deploy and Birth become boss moves). A delayed strike
+  only with a visible held tell. Camera shake and a 2-frame hit pause, client only, behind a setting. Today's sound
+  palettes (35.8) are judged in game first; custom-made sounds are their own plan if they still sound cheap. No
+  Blockbench export now. The Lord damage and health curve stays tied to this gate.
+- **R0, tools (built).**
+  - `kit_bodies.py motion DIR [ids] [--no-gif]` (`kit/motion.py`): every move and every string of the fight script,
+    played the way KitRenderer layers them (idle under, stage clips stretched to their ticks, 0.15 s fades, the
+    recovery letting go), as a GIF and measured into `<id>_motion.json`: still seconds (no bone of the move layer over
+    15°/s for 0.15 s or more), kinks (a bone's speed changing over 3° a frame between frames), held share (70% of
+    posed bones still), the dip to rest between blows of a string, and the peak bone speed.
+  - `combat_sim.py --cadence`: the share of fight time the boss threatens, recovers, idles, shows off and stands
+    opened; blows a minute; the longest still spell; and phrase lengths.
+  - The baseline: `docs/bosses/baseline-2026-10-28.md`.
+- **R1, the Tyrant's look.** `kit_bodies.py silhouettes DIR` (`kit/silhouettes.py`) draws three directions in plain
+  blocks at true size beside a player (front, side, a value-blocked 3/4): A the Furnace King, B the Iron Warlord, C the
+  Living Forge, and today's body for scale. **Euan picked C, the Living Forge (2026-10-28).** The model
+  (`kit/bosses/ember_tyrant.py`, built from `kit/parts.py`: stepped tapers, angled plates on their own bones, stepped
+  horn chains, hanging chains, bars) keeps the Brute plan's bone names, so the moves, foot planting and look still bind:
+  - **Shape.** 130 cubes on 55 bones, a 1024² sheet, about 8.3 blocks to the chimney tops. Short thick legs, the
+    torso pitched 36° forward, five shingled carapace slabs climbing to the shoulders with three chimneys, a long neck
+    carrying a horned skull level and low in front, a right arm burst into a molten fist (knuckles, folded fingers,
+    thumb, a broken shackle and its chain), and a slighter left arm dragging the great axe behind it.
+  - **Sides.** The fist is the right (the backhand and the shoulder charge); the axe is the left (both chops). The
+    hammer's left-hand hit is the left fist's own size.
+  - **Value order.** Heat brightest (the core behind bone ribs, the vents, the fist's fissures, the eyes, the axe's
+    edge), then bone (the skull, horns, ribs, claws), then iron (belt, tassets, shoulder band, shackle, chimneys),
+    then dark rock.
+  - **Not changed yet.** The hitbox stays 1.8 by 5.85 blocks (the body is wider: the fist reaches past it) and the
+    moves are today's, re-sided; both are R2 and R3 work.
+- **R2, motion: built (35.10).** R3, the Tyrant's fight; then R4 Unit Zero and R5 Mother: as the plan; each lands
+  here when built.
+
+### 35.10 The motion kit (R2 of 35.9)
+One continuous clip per move, eased hand-overs, secondary parts that swing, and sounds and feel on the clip's marks.
+For all three kit bodies (the tools write every body the same way).
+- **One clip** (`kit/core.py stage_clips`, `move_<id>`). Its keys, in order:
+  - rest;
+  - a counter-move at 0.3 of the wind-up (the arms 14% the other way from the peak, the hips down 1.2 px), only for
+    a blow whose own wind-up keys start after 0.35;
+  - the wind-up keys, then the peak;
+  - the strike keys, then contact;
+  - the follow-through a quarter into the recovery, carried past contact by a quarter of the swing (at most 25°);
+  - the recovery's own keys;
+  - a settle at 0.82 of the recovery, 7% past rest the other way;
+  - rest.
+  Every key has its planted feet solved. A pose held over two keys swells by 7%, so no body stands frozen.
+  Successive breaking: every joint past the chest trails its parent by 0.018 s (`BREAK`), so the hips lead, then the
+  chest, the shoulder, the elbow, the hand and the weapon. Legs and hips are never lagged, and the strike still lands
+  inside its own ticks (`hold_until`). A move's own lag of 0 keeps that bone on its parent's time: the cleave's arm,
+  hand and weapon, so the blade lands on its mark.
+- **Spacing.** A strike key that moves under 8° from the one before (`CARRY`) is dropped, so the blow carries through
+  contact into the follow-through instead of stopping dead. The recovery's own keys sit at least 0.15 of the recovery
+  apart, counting from the follow-through, so no big pose change lands in two ticks.
+- **The curve** (`bake`). The keys are re-keyed at one key a tick on a monotone cubic curve that knows the keys'
+  times (Fritsch-Butland slopes: the harmonic mean of the slopes either side, zero where the curve turns back). The
+  game's Catmull-Rom treats every gap between keys as the same length, so uneven keys would jump in speed where a
+  long wind-up meets a two-tick strike. On even keys it runs the baked curve smoothly, and a strike after a slow drift
+  starts from almost still and speeds up inside its own ticks.
+- **Marks** (`marks()`, in the move table's `marks`, ticks of base timing): `peak`, `contact` (the first tick with a
+  capsule), `whoosh` (where the weapon's tip is fastest, never before the peak) and `step0..` (a foot lifts over 3 px
+  and comes back under 1 px). `KitMoves.Played.at` maps a base tick to the tick it plays at: the wind-up and recovery
+  stretch, the hold sits after the peak, and the strike keeps its ticks. `Played.base` is the inverse, which is what
+  the client plays the clip by.
+- **Links.** `time.link` is a quarter of the recovery: the follow-through. In a string, FightRunner starts the next
+  move at `windup + hold + active + link` (scaled with the recovery) if the target is in that move's range and no
+  phase is waiting. Otherwise the recovery plays out. Outside a string a move always plays to its end.
+- **Link poses.** On a link the hand-over is not the spring: the last blow's pose and speed ease out on a cubic that
+  reaches nothing exactly at the new move's peak (its played wind-up and hold). So the next wind-up starts where the
+  last blow ended and arrives at its own peak.
+- **The transition spring** (`KitBlend`, per body, client). After every layer, the feet and the look, when what plays
+  changes (a move begins or links on, a reaction starts, the kneel or rise, the fall), each part keeps last frame's
+  pose as an offset over the new one: six channels, angles the short way round. The offset carries the part's last
+  speed and eases out on a critically damped spring with a half-life of 0.07 s (a link uses its cubic instead). No
+  crossfade, no snap.
+  Allocation-free per frame.
+- **Secondary parts** (rig `spring <bone> <gain> <hz> <damping>`). A spring part is left behind by `gain` of its
+  parents' pitch and roll change (and half the body's turn), then swings back on its spring. Every spring reads its
+  parents before any spring moves them, so a chain's links never feed each other. Its swing eases into ±0.7 rad
+  (tanh), never stopping dead. It steps in slices of at most 1/120 s (at most 16 a frame, `KitBlend.STEP`), so a stiff
+  spring stays steady at any frame rate: the carapace's 6 Hz slabs shook at 20 fps on whole-frame steps. Today:
+  - the Forge's fist chain (1.0, 2.2 Hz, 0.18), tassets (0.6, 3.5 Hz, 0.3) and carapace slabs (0.08, 6 Hz, 0.5);
+  - Mother's veils (0.5, 3 Hz, 0.3) and tendril tips (0.8, 2.5 Hz, 0.25).
+- **Feet through moves.** Ground contact (35.4) now runs during moves too; it was off while a move played.
+- **The ground rule** (`core.ground_pass`, `Move.ground`, `rig.guard`). A weapon or a fist never goes into the ground
+  (y 24 in model space) in any clip but the fall. The build fails past 2 px (`SINK`), checked every tick of every
+  clip for `rig.guard` (the Forge: the axe) and of each move for its own guards.
+  - Each move names its guards and their adjusters, `[(guard bones, [(bone, axis, most degrees)])]`, the wrist first,
+    then the elbow and the shoulder.
+  - **Guards are bones.** `core.lowest` walks a bone's cubes, and a name that is not a bone (a cube's name) is skipped
+    without a word, so both its check and its pass do nothing. The sweep of 2026-10-29 found cube names in the
+    Rootmother's, the Bell Warden's, the Sleeper's, the Thornback's and the Root Saint's lists (the Bell's shins went
+    33 px into the floor when it sat, the Rootmother's brood 8 px); they name bones now. An adjuster that turns a
+    guard on its own pivot can't lift the guard's lowest corner (the Thornback's head): turn the bone above it first.
+  - **Out of reach the knee turns down.** A two-bone leg whose target is nearer its hip than the shin's length less
+    the thigh's has no bend left, and its knee points straight away from the foot: with the body on the floor and the
+    foot above the hip that is down through the floor. Poses on the floor keep their feet far enough out (the
+    Rootmother's death, the Bell Warden's sitting pose).
+  - Down on a knee, back up and dead, the Lantern Broker's, the Abbot's and the Hollow Herald's feet tip at the ankle to
+    lie on the floor, then the knee (a pass over kneel, rise and death; their toes went 5-8 px in).
+  - **The pass.** At every tick where a guard would sink, the adjusters turn by the least that clears it, starting
+    from the last tick's turn, so the correction moves on smoothly and never flips side. The correction then grows and
+    fades by at most 14° a tick (`EASE`), with a soft average for the corners, and never drops below a tick's need.
+    The adjusters' tracks are re-keyed a tick apart with it added, twice over. A move's clip has its own pass. The
+    rig-wide pass covers the other clips (locomotion, reactions), never a move twice.
+  - **Bite.** A blow that hits the ground (`Move.bite`, its share of the active stage) has its contact key solved so
+    the guard's lowest point lands on the ground (within 0.2-1 px above it). Its weapon arm is stuck through the
+    follow-through: the ground stopped it, and the body carries on down.
+  - A long weapon can't pass under a low hand from in front of the body to behind it without going through the ground.
+    So a recovery that brings it back raises the hand and lets the head swing under it (the cleave's hoist, the
+    sweep's rise), and a blow from rest whose weapon trails behind lifts it the same way first (the sweep's lift).
+- **The edge leads** (`Move.edge`, `core.edge_twist`, Euan 2026-10-28: "his axe sharp edge isn't facing the direction
+  of the swing"). A bladed weapon names its blade's middle and its edge in its own space. At contact the weapon turns
+  on its haft (its own y) by the angle, in 5° steps, that best sets the edge along the blade's path into contact
+  (taken from 85% of the way from the peak). It turns into that over the wind-up (eased), holds through the
+  follow-through, and turns back by the settle. The weapon hangs from a grip bone that holds its tilt (the Forge's
+  `grip_l`, 84°), so its own y really is the haft. Today: the cleave turns 135° (edge along the blow at impact 0.72;
+  just before it, the head is pulled along its haft as in a real chop, which no turn can lead), and the sweep turns -75°
+  (0.98-0.99). At the bite the edge faces the ground under the haft.
+- **The Forge's moves** (one-handed, Euan 2026-10-28: "he hits as if he had two hands instead of one axe in one
+  hand"). The axe rests at 84° in the left hand, its head on the ground behind it.
+  - **The cleave** (`moves.cleave`, chop_a, LIGHT 12/4/18): the axe hauled up over its left shoulder, the body coiled
+    left and the fist thrown forward. Then the body unwinds, the arm and haft come down across the front in near one
+    line, and the edge bites the ground some 7 blocks out. The fist yanks back to the hip. It hoists the axe out (the
+    arm up, the head under the hand) and lets it trail behind again. Range 1.5-6.5 blocks.
+  - **The sweep** (`moves.sweep`, chop_b, LIGHT 9/4/16): the blade held low across the front on its right, about a
+    block off the ground, ripped flat across to its left at waist height, the free arm flung the other way. Range
+    0-6.5: in the string it links on wherever the cleave's step left the target.
+  - **Magma Fist and Eruption** (`moves.fist_slam`): the fist alone, raised high and brought down on the ground
+    dead ahead, some 5 blocks out (the hunched shoulder is already 3 out, so a long arm meets the ground there). The
+    axe arm swings out and back for balance and never joins in; it stays out of the ground too. Magma Fist's burst
+    (`Move.disc` 2.8 with `disc_at="hit"`) is a shockwave round where the fist lands, so it covers the ground between
+    the fist and the body, and nothing behind (`kit_hit_volume`: someone 2.5 blocks in front is hit, someone behind
+    is not).
+- **Sound on the marks** (server, `FightRunner.marks`):
+  - the swing at the whoosh mark;
+  - an area blow's impact at its contact mark;
+  - the step set (0.8 volume) on each step mark of a move that doesn't travel;
+  - the tell, roar and cast stay where they were.
+- **Feel** (client, `KitRenderer.feel`, setting `hitFeel`, on by default; plain words in `awaken-mobs-client.toml`):
+  - **Shake.** At a heavy, perilous or area blow's contact mark, within 24 blocks, the view kicks once. The kick fades
+    with distance: area ×1, a heavy ×0.6, perilous ×1.4, alternating sides. Also needs `cameraShake` on.
+  - **Hit pause.** The body's move clock stops for 0.04 s (two frames at 60 fps, a touch more so it reads at 40)
+    when its blow hurts you inside its strike within its reach, or when it is hurt. Wall clock, client only; the
+    server's ticks never stop.
+- **The meter** (`kit/motion.py`, now playing the game's way: one clip, links, the transition spring, the springs).
+  It reports kinks outside the strike (wind-up, hold, follow-through, recovery, every hand-over) and the strike's snap
+  separately: a fast blow has to snap, and that is reported, not a fault. Targets: no kink outside the strike over
+  4°, held under 15% on a blow, and the dip toward rest inside a string under 40%.
+- **Tests.** `kit_string_links`: the Forge's chop string with a target in reach starts its second chop inside the
+  first one's recovery. `kit_tables_load` checks every move's one clip and its link.
+
+### 35.11 Every boss to the Forge's bar (tracker `docs/bosses/ROLLOUT.md`; Euan 2026-10-28: "every boss needs to be revamped to this level of standard ... all unique")
+All 41 boss-tier creatures go through the Forge's steps: a silhouette round of three (Euan picks), a body from
+`kit/parts.py` on its family's plan, the motion kit (35.10) with the ground and edge rules and the meter's targets, then
+the fight (R3). This session builds every one itself, in batches of four (Lords, then guardians, Sovereigns and the
+Shadow, then Nightmares). The 15 Wardens and 12 named beasts wait on Euan.
+- **Rounds.** `kit_bodies.py silhouettes DIR BOSS`; each boss's options live in `kit/sil/<boss>.py` with its own
+  materials (`Mass(..., mats)`), fliers framed down to the ground so they hang at their true height. Euan picks on the
+  pick page (https://claude.ai/artifact/MUoruSXr8xmWNVk4JyAAbc, one document per boss in its `picks` store) for batches
+  1-3. From batch 4 on (Euan, 2026-10-29: "pick the most unique and interesting forms of each that avoid too much
+  repetition and are CLEAR high quality ones ... keep going until fully finished") this session picks: the shape that
+  reads clearest and looks least like the bosses already built, and the tracker says why. The ask is a full body and
+  motion on a par with Fresh Animations for every boss; the fight (R3) comes after.
+- **Picks so far** (2026-10-28). Unit Zero: A, the Sentinel. Mother of Spores: C, the Crowned Host. The Gearwright
+  Colossus: C, the Clock Tower. The Root Saint: A, the Rooted Saint. The Bell Warden: A, the Bell That Walks. The Glass
+  Serpent: B, the Hourglass. The Hive Regent: A, the Empress. The Drowned Archivist: A, the Lectern. The Lantern Broker:
+  A, the Pedlar. The Abbot of Frost: B, the Pilgrim. Picked here (2026-10-29): the Mirror Knight: C, the Masked
+  Duelist. The Sleeper: B, the Four-Poster. The Sky Leviathan: B, the Ray. The Hollow Herald: C, the Ring-Head.
+- **Unit Zero, the Sentinel** (body and motion, `kit/bosses/unit_zero.py`). A cathedral statue that moves, 3.6 blocks to
+  the helm and 4.3 with its halo, 107 cubes on the Duelist plan (leg 30 px): ceramic plates over black joints, a slate
+  tabard between the legs (so a stride never meets it) and split coat-tails behind, each a short cloth chain on springs;
+  flat pauldrons stepping up into a pinnacle that ride a third of the arm's turn (`_follow`); hands fused into flat
+  blades (`blade_l|r`, under the hand, so the edge rule turns the blade on its own length like a wrist); a helm with one
+  blue line under a heavy brow and a crest swept back; and a square halo stood on its point on a stalk from its back:
+  outer frame, an inner frame of light, twelve dial marks between them, nodes on the points, a hub and a stem. Values:
+  the blue brightest, the ceramic lightest high on the body and weathering toward the floor, slate cloth, black joints
+  and blades; the glaze crazed with a few cracks holding the blue. Its hitbox grows to 1.1 x 3.3 (scale 1.85).
+  - **The blades' edges** run down the little finger's side, as a hand-edge cut leads, so the cuts turn the blade little
+    (Severing 30°, -30°, -5°; the spin 50°). `moves.chop` and `moves.spin_cut` take `edge` (and the spin a weapon bone).
+  - **Ground.** The blades never go into the ground in any clip but the fall (the wrist, then the elbow and the
+    shoulder turn); the coat-tails and the tabard lift back off the floor where they would meet it, the fall included.
+    Deploy Coils sets both points to the floor (0.3 px above it).
+  - **Moves.** The lance draws the blade back along the arm and drives it out level, the beam down its line. Phase Step
+    sinks most of the way in its first third with the blade already pointed at you (from a lance it goes straight on).
+    Severing: whichever blade isn't cutting is held out forward in guard, and after a cut the blade stays out low a
+    moment (recoveries 10, 10, 14 ticks). The spin cuts at a standing player's waist (out flat at its shoulder the blade
+    passed over their head and the move's reach came out at half a block). The halo's spin is its own track written
+    after the body's (`_halo`): it ends on the nearest whole turn, so it never spins back. The idle keeps the halo on
+    its point, rocking 3°. The intro ends in the salute from its round, right blade before its face.
+  - **Meter.** Worst kink outside a strike 4.1°; held 0-11% on its blows; dips 26% in Severing and 2% from the lance
+    into the step. Deploy Coils (30%) and the intro (50%) hold their poses on purpose. The meter now counts angles the
+    short way round, so a spinning halo's whole turns don't read as pose.
+- **Mother of Spores, the Crowned Host** (body and motion, `kit/bosses/mother_of_spores.py`). The fungus wears her: a
+  pale woman hung in the air as if from strings (hips 2 blocks up, 6 blocks to the top of the crown, the hitbox stays
+  3 x 3), back arched, head fallen to one side, arms limp and open, her legs one root tail of five segments on springs
+  with a glowing tip; a ruff of gills at her neck, shelf fungus on her left shoulder, a ragged frill where the legs
+  became the tail, dark growth with three spore sacs on her back. Out of her back and skull a crown of twelve stalks
+  fans out, each over its own side, each in two segments with a stepped glowing club, four forking. 106 cubes, no plan
+  (a Flier). Values: the sea-green glow brightest, then her bone-pale skin, the pale gills and stalks, the mauve flesh,
+  the dark plum growth.
+  - **The crown is the weapon** and she is the puppet it jerks. Crown Lash: one side of the crown rears back over her
+    shoulder as she twists away, then whips over and down in front, the clubs landing at a standing player's chest
+    (reach 1.0-1.2 blocks past the hitbox). The swoop pitches her forward with the crown swept back like folded wings and
+    rakes it down as she arrives. Spore Lob: the tallest stalk winds back round the side with her body rolling after it
+    (so lobs in a row loop on) and lets go reaching up and out, the spore leaving its club 4.7 blocks up. The Drop: she
+    is hauled up, arms out, the crown shut into a spire, hangs the hold, and falls with the crown bursting open onto the
+    floor. Spore Rain: arms up, face to the sky, the crown open like a wheel and pulsing twice. Birth: curled round
+    herself and shuddering, then arched back as the sacs burst. Spore Halo: the crown shuts, she turns once (`_spin`, a
+    whole turn added after the clip is staged, so it never spins back) and it flares. Bloom: the crown closes over her
+    like a bud, then everything opens at once; the intro opens the same bud.
+  - **Ground.** The tail's tip curls up off the floor in every clip; a club that would go in lifts on its stalk; at the
+    end of the fall the arms, threads and frill lift to lie along the floor.
+  - **Meter.** Worst kink outside a strike 4.8° (the lob's wind-up loop); held 0-15%; dips 32-37% (the lashes, the swoop
+    into a lash, lob into lob). The intro holds its bud on purpose (32%).
+- **The Gearwright Colossus, the Clock Tower** (body and motion, `kit/bosses/gearwright_colossus.py`). A clock tower that
+  walked out of the foundry, 8.4 blocks to its weathervane: hips 3.2 blocks up on long jointed iron legs (the knee
+  forward, the shin raked back, the foot flat, cogs at the knees), a riveted green-copper shaft with brass cornices and
+  iron buttresses to 5.75 blocks, a lit dial on its chest whose small hands go round (the minute hand once an idle
+  loop), an open belfry for a head with a bell swinging inside it, and a stepped iron spire. Its arms are the clock's
+  hands, flat blades on cogs at its shoulders, the minute hand (left, 54 px) longer than the hour hand (right, 38 px),
+  splayed out at rest. A brass pendulum with an iron weight hangs between its legs and swings in time with the clock.
+  119 cubes on the Brute plan (leg 51). Values: the dial and the lamps (belfry, the hands' inlays, the weight) the
+  white-blue of an arc, then brass, then green copper, then dark iron. The hitbox stays the golem's at scale 1.8
+  (2.5 x 4.9), the body modelled at true size above it.
+  - **It moves like a drinking bird**: too tall to reach you standing, the tower stays rigid and tips at the hips, the
+    legs folding under it and the hips drawing back over its heels, and it rights itself after every blow. The minute
+    hand sweeps across the front at a standing player's waist (reach 4.7 blocks); the hour hand climbs to twelve, its
+    blade turning edge-on first, and chops down to six (4.0). Piston Slam swings the pendulum up behind it, holds, and
+    brings it down through its legs onto the floor in front (5.2). Colossal Stride is two great strides at you, braking
+    back on its heels. Whoever is behind it gets the weight whipped back between its legs (3.2). Spark Halo: both hands
+    to ten and two while the face's hands race round (the minute hand three turns, the hour hand one), then the hours
+    fly off as sparks. Overload Arc: both hands to twelve, then down together onto you, the face's hands spinning. Arc
+    Strikes: the hands cross, climb to twelve, and the belfry throws back as the bell tolls. Release Drones lifts the
+    spire off the belfry like a lid. The intro is the clock striking three, the hands clicking a step out on each stroke.
+    The walk rocks onto each planted foot, the pendulum swinging across the stride (3.9 blocks a cycle, run 5.6).
+  - **The death**: the clock stops with a jolt, the knees give with the feet still under it, it sinks up onto its
+    knees, the shins back along the floor, and the tower tips forward, hinged over its knees, until it lies on its face
+    with its legs out behind it. A key between each pair keeps the legs above the floor on the way down.
+  - **Ground.** The weight and the hands' points stay out of the floor everywhere but the fall (the slam meets it on
+    purpose); in the fall the legs, hands and weight lift back where they would go in. Feet dip 1-2 px at most.
+  - **Meter.** Worst kink outside a strike 3.7°; held 0-14% on its blows; dips up to 34%.
+- **Kit changes with the Clock Tower** (all bodies; the Tyrant and Unit Zero rebuilt with them):
+  - `core.plant` measures the foot against its rest pose (it had taken the rest rotation twice) and takes `at` (each
+    ankle's offset from where it stands) and `turn` (each foot's heading about the vertical).
+  - `core.ground_feet`: a move that advances or rises can't plant its feet, so a foot its pose puts more than 1.5 px
+    into the floor is set on it instead, where the step had it and pointing the way it pointed; a foot in the air stays.
+    `stage_clips` uses it on every key it doesn't plant. (Unit Zero's feet had gone 4-6 px under in its steps.)
+  - `keep_above` and `ground_pass` take an optional preferred way for each turn (a fourth value, +1 or -1), so a fist
+    reaches forward to the floor rather than flipping back.
+  - **Reactions for any biped** (`plans.biped_reactions`): the kneel goes down onto one knee with the front foot planted
+    and the fist reaching to the floor from the shoulder first (`kneel_on`), the bow on the way already reaching half of
+    it; the rise comes back through a crouch; both blend through extra keys (`_blend`), which ease the hips and lift a
+    moving foot just clear of the floor instead of rolling it through. The death (`biped_fall`) sags, drops to a tall
+    kneel on both shins and topples forward on its knees as far as its body allows without going into the floor, the arms
+    flung forward. The Tyrant's and Unit Zero's kneel, rise and death come from it (worst snap 36-62°, nothing deeper
+    than 5.4 px), except Unit Zero's blades in its own fall.
+- **The Root Saint, the Rooted Saint** (body and motion, `kit/bosses/root_saint.py`). A robed stone saint in prayer that
+  the temple's roots have grown through, about 5.3 blocks to the top of its sunburst (the hood at 4.4): a hooded head
+  with amber slit eyes, a stone sunburst on a stalk at its back (a disc, twelve rays, roots wound through it), the hands
+  pressed together before a glowing amber heart in its chest, gold-edged stoles, a red scapular hanging from its belt,
+  two bronze censers on chains at its hips, and a robe that widens to a hem with a band of root at the knee. Eight roots
+  run out from under the hem along the floor in a ring, arching between the hem and their tips; the ring is a bone of
+  its own, so the saint can fall out of it. 141 cubes (846 faces) on the new Caster plan. Values: the heart, the eyes and
+  the censers' windows lit amber; the stone weathered pale (hands and head lightest, the hem darkest, moss creeping up
+  it), the cloth red, the roots dark bark. The hitbox stays the creaking's at scale 1.8 (1.6 x 4.9).
+  - **It moves like a statue that prays**: it never walks; it slides on its roots, the planted tips pulling back exactly
+    as far as it travels and the lifted ones reaching ahead (2 blocks a cycle walking, 3 running), its censers swinging.
+    Most of its bend is at the waist, with a fold at the robe's knee for the deepest bows. Its blows leave one hand in
+    prayer. The backhand sweep draws the hand back across its chest, then the straight arm sweeps flat across the front
+    between a player's waist and head, right hand then left (reach 3.1 blocks). Saint's Palm raises the right hand high
+    overhead, holds, then folds the statue over at the knee and slams the palm flat on the floor 2.5 blocks ahead (5.6
+    with the shockwave). Root Lance raises the hand as the three front roots coil, then drives both down toward you.
+    Root Grasp reaches the open left hand down at you and closes it into a fist as the front roots grip. Whoever is
+    behind it gets the three back roots whipped up and over, the hood looking back over its shoulder (2.6). Root Ring
+    raises the joined hands over its head as every root rears, holds, then drives them down to its chest as the roots
+    plunge. Grow Creakers presses its palms toward the floor, then lifts them palms up. Thorn Halo (the signature) throws
+    its arms wide to the sky and arches back while the sunburst turns a whole turn. The haul shoots the front roots out
+    and reels the saint five blocks along them, its straight right arm driving out at the end. The intro lifts its bowed
+    head, opens its hands to you and closes them again.
+  - **The death**: its prayer stops with a jolt and the hands fall to its sides. Then the whole statue tips forward on
+    the front edge of its hem, slowly and then all at once, out of its ring of roots. It lands on its face with its arms
+    flung ahead and bounces, and the sunburst is knocked flat to one side.
+  - **Ground.** The roots' tips, the censers and the scapular stay out of the floor in every clip; the hands too, except
+    the palm, which meets it on purpose. In the fall the hands and censers lift back where they would go in.
+  - **Meter.** Worst kink outside a strike 5.1° (sweep); held 1-15%. Dips up to 30% where the strike comes at the
+    start of the active stage; 41-51% in strings that open with the lance or the haul. The meter counts a move's contact
+    from its first active tick, and the lance has no hit shapes while the haul lands only after its slide, so those
+    numbers include each move's own swing from wind-up to blow.
+- **Kit changes with the Rooted Saint:**
+  - **The Caster plan** (`plans.caster`): an upper body on a base, with no feet:
+    base > robe > pelvis > spine > chest > neck > head, and chest > shoulder > arm > forearm > hand.
+  - `core.ground_feet`'s own 1.5 px is now `FOOT_SINK`. It had shadowed the guard check's `SINK` (2 px) for every body.
+  - `stage_clips` adds its counter-move at 0.3 of the wind-up whenever a move's first wind-up key is at 0.35 or later.
+    A key just after the counter brakes the limb hard, so the Saint keeps its first wind-up keys at 0.6. Recovery keys
+    past 0.74 are dropped.
+  - The Saint's hand and arm turns come from matrices. Of their two Euler forms, it writes the one nearest its rest, so
+    keys never spin a bone the long way between them.
+- **The Bell Warden, the Bell That Walks** (body and motion, `kit/bosses/bell_warden.py`). "The bell above you is not
+  a bell." A great bronze bell, 2.75 blocks across the lip, its mouth hanging 1.8 blocks up on four long crab legs that
+  unfold from under the rim: up and out to knees above its shoulder (4.25 blocks), then down to points on the floor 3.5
+  blocks out on the diagonals, a wide stance you can walk into. Its crown still carries the crypt-stone yoke it hung from, with a broken
+  chain and a cut rope trailing from it (4.6 blocks to the top). The clapper hangs out of the mouth like a heavy tongue,
+  and inside the mouth, in the dark, a pale gold face watches you, its jaw dropping as it rings. 75 cubes (450 faces).
+  Values: old bronze from pale gold at the lip to dark at the waist, verdigris dripping off every ledge, an inscription
+  round its waist and a crack up its side lit ghost gold, the throat dark with a faint glow, the legs dark bronze with
+  green at the joints and polished points, the yoke and knee caps crypt stone. The hitbox stays 1.4 x 3.0 at scale 1.
+  - **It moves like a crab carrying a bell**: a trot, the front left with the back right, each pair lifting its points
+    high and reaching on as the other carries it, the planted points pulling back exactly as far as it travels (1.7
+    blocks a stride walking, 2.8 running). The bell rides low into each step and rolls toward the pair that holds it,
+    and the clapper swings fore and aft in its mouth. Every leg is solved to its point on the floor on every tick.
+  - **Its blows.** The stab rears a front leg high over its knee as the bell leans away, then stabs it down a block and
+    a half ahead and the bell's weight comes down onto it (3.1 blocks), the other front leg next. Clapper Strike rocks
+    back on its hind legs, the mouth lifting toward you and the tongue swinging far back inside it, holds, then pitches
+    forward hard and lashes the tongue out onto the floor two blocks ahead (5.1 with its shockwave). Toll Wave draws its
+    tongue and face up into the mouth and rises on its legs, holds, then slams its rim on the floor, the points sliding
+    out under its weight, and hums there a moment. Echo Bolts tips its mouth up at you so you can see the face, which
+    hums three times, the jaw dropping and a front point tapping with each. Whoever is behind it gets a back leg raked
+    across behind it, the face turned round to look back under the rim (4.0). The Statues Move rings itself: three great
+    swings side to side on braced legs, the clapper flung against each side of its mouth. Bell Rush crouches low and
+    scuttles at you rim first (8.9). Shattered Bronze crouches and shudders faster and faster, then throws itself up on
+    its points. The Grand Peal (the signature) rises on its points and swings itself ringing, wider each time, the rope
+    and chain flying, then slams its rim down. Its intro, once it has risen, is a single swing that rings it once.
+  - **Waiting and rising.** It waits sitting on its rim like any bell, its legs folded up its sides like a shut umbrella
+    (the intro's "kneel"), the knees low at its sides and the points up by its crown (its hips sit only a few pixels up
+    on its rim, so knees sent down from them went into the floor); its face drawn right up into its mouth once it is
+    down, or its jaw meets the floor. It rises by throwing its legs out, setting the points down far out round it and
+    pushing itself up.
+  - **The death**: a shudder, the front left leg gives and it lurches down that way, the others give, and it drops onto
+    its rim with a last dull ring. It rattles round on its rim the way a dropped bell does, lower and lower, and comes to
+    rest with its legs flat out round it like a dead crab's. The face is shut inside.
+  - **Ground.** The points, the clapper's ball and the ends of the rope and chain stay out of the floor in every clip;
+    the clapper meets it on purpose in Clapper Strike.
+  - **Meter.** Worst kink outside a strike 4.5° (the rake); held 1-13%; dips 0-30%, and 52% in the strings that open
+    with the stab, whose blow swings through a smaller pose than its peak just after the first active tick.
+- **Kit changes with the Bell That Walks:**
+  - `kit/ik.py`: two-bone limbs set by where their ends go (`limb`, `rest_limb`), a bone laid along a direction
+    (`orient`: the clapper and the rope hang plumb whatever the bell does), turns written the shortest way, and `retrack`,
+    which rewrites a baked clip tick by tick. The Bell's standing legs are retracked after staging, so its points never
+    slide in a follow-through or a settle.
+  - `Move(through=...)`: a move can give its follow-through key whole. The library carries only arm bones on past
+    contact, so a body without them held its contact pose still for the first quarter of every recovery.
+- **The Glass Serpent, the Hourglass** (body and motion, `kit/bosses/glass_serpent.py`). "Your reflection blinks
+  first." A serpent you can see through: its body is a chain of fourteen hollow glass frames, each one an hourglass with
+  sand pouring through its waist, strung on a spine of black glass. It lies coiled on the floor like a spring, 3 blocks
+  across, and raises its neck out of the middle, five empty frames (the sand has run down out of them into the coil), to
+  a horned skull of black glass with two mirror eyes, 4.5 blocks to the horns. 178 cubes (1068 faces), no plan. Values:
+  the mirror eyes and the pouring sand brightest, then the pale glass frames lit along the back with a glint across
+  every plate, the warm sand heaps, the black spine and skull with a bright rim and a few cracks; a sand-coloured glow
+  deep in the mouth. It walks: the old cube serpent flew, so `MobDef.grounded()` keeps it to the floor (a model that
+  flies, a body that doesn't). The hitbox grows to 3.1 x 4.0 (size 1.4 x 1.8 at scale 2.2).
+  - **Every pose is a line**: where the coil lies (a spiral from the root out, drawn tighter, wider, risen into a
+    spring or rippled) and where the neck rises, and which way the skull looks. The frames are laid along the line one
+    after another, each exactly its own length on from the last, upright where they lie on the floor and carried on
+    where the body rises, so a frame never turns over on itself.
+  - **It moves like a coiled spring**: it slides along coiled, a ripple running round the coil from the neck to the
+    tail, the coil drawn out a little behind it and the neck leaning into the way it goes (2 blocks a cycle walking, 3
+    running). Idle, the neck sways in a slow S like a cobra's while the skull keeps still on the end of it.
+  - **Its blows.** The bite draws the head back into a tall S, the jaw opening, and strikes down at you, snapping shut;
+    the second bite comes from the side. Glass Lunge winds the coil tight and rears the head back high, holds, and then
+    the spring lets go: the head shoots out low along the floor and the whole body pours out straight behind it, a
+    spear of glass, sliding on; it gathers itself in again through an S and a hook round its left. Shard Spray rises
+    the coil into a tall spring with the skull thrown back at the top, holds, and slams it flat on the floor, wider than
+    it was, the glass ringing. Burrow Strike rears, dives head first into the sand with the coil pouring down after it
+    until it's gone, comes round under the floor (the blink) and bursts up out of the sand at you skull first with its
+    jaw wide, arcing down on you as the coil comes up after it. Erupting Glass rears up tall and looks straight down
+    at where you stand, the coil clenching, then drives its jaw down into the sand before it while the floor erupts
+    there, and wrenches its head back out. Whoever
+    is behind it gets the tail's end raised high off the floor and whipped across, the skull turned to look back over
+    the coil. The Glass Storm (the signature) rises on its coil and turns on itself faster and faster, the coil a spout
+    of glass with the skull at its top, bursts at its fastest, and drops back, turning slower until it stops: three
+    whole turns written on the root after staging (`_whirl`), so it hands back exactly as it was. Its intro lifts its
+    head off the coil, rears over you, opens its jaw and hisses.
+  - **Waiting and the death.** It waits coiled tight with its neck laid down across its own coil and the skull resting
+    on it (the intro's "kneel"). It dies rearing up as high as it can with the skull thrown back, shudders, and crashes
+    down across its coil and out onto the sand, the skull bouncing once with the jaw falling open; the coil slackens out
+    flat.
+  - **Ground.** The frames lie on the floor in every clip and the skull and jaw stay out of it, except Burrow Strike
+    (the whole of it goes under) and Erupting Glass (the jaw driven into the sand). The lunge's in-betweens sagged up to
+    11 px into the floor; they are laid back on it (below).
+  - **Meter.** Worst kink outside a strike 5.6° (the lash); held 7-16% on its blows; dips 8-16%, and 42% from the bites
+    into Shard Spray, whose slam swings through its rise. The intro holds its rear on purpose (28%).
+- **Kit changes with the Hourglass:**
+  - `rig.under`: clips that go into the floor on purpose skip the guard check (a dive, a jaw driven into the sand).
+  - **Laying a chain back on the floor** (`_floored`, the Hourglass's own): between a coil and a straight line the
+    frames' turns blend through shapes that sag into the floor. A clip that goes in more than 1 px is rewritten tick by
+    tick: each joint of the body is eased up onto the floor where it would go in (a curve that meets the floor with the
+    same slope, so a joint slows onto it) and the frames are laid along the joints again; the root and the neck stay.
+  - `MobDef.grounded()` (above), and `KitRenderer` grows the culling box by the body's reach (its longest chain of
+    pivots laid end to end, plus a block), so a body that stretches out of its box (the lunge, 8 blocks behind it) never
+    vanishes while its box is off screen.
+
+- **The Hive Regent, the Empress** (body and motion, `kit/bosses/hive_regent.py`). An upright queen hanging in the air on
+  the hum of four tall glass wings. Her gown is a skep: three stiff tiers of wax comb, honey glowing in the cells and a
+  gold hem, swinging on hinges. Her banded abdomen leaves from under the back hem as a train, gold and chitin with fur
+  between the bands, ending in a stinger. A violet-black chitin bodice with a jewel and a wax ruff; two upper arms with
+  amber daggers and two small lower arms held at her waist; a narrow crowned head with big amber compound eyes,
+  mandibles and feelers. 88 cubes (528 faces), no plan; the first translucent kit rig (the wings are glass, painted with
+  an outline, a vein along the leading edge and a fan of veins). The hitbox is 1.2 x 4.8 (size 0.6 x 2.4 at scale 2); she
+  flies, as the bee model did.
+  - **She never stops humming**: the wings beat three times a second, each pair a beat apart, the body bobbing on every
+    stroke, while she sways slowly and her feelers search. Flying, she leans in with the wings swept and the train and
+    gown streaming behind.
+  - **Her blows.** Regal Cut draws one dagger up behind her shoulder, her body turning away with it, and cuts it down
+    across you (the second cut comes from the other hand). The Sting rears with the train drawn up behind her, holds,
+    then whips it forward under her like a scorpion's tail, the stinger driving out at your chest. Royal Dive climbs
+    with both daggers drawn back, holds at the top and dives at you daggers first, the wings swept flat. Stinger Volley
+    swings the train forward under her to aim and pumps it twice. Brood lifts and curls the train, which pulses three
+    times as the brood crawls out. Honey Rain (the signature) sinks, gathering, then rises with all four arms up, her
+    face to the roof and the wings beating wide. Royal Jelly folds her wings down and lifts the jelly to her mouth in the
+    lower hands; Frenzy throws her head back and shrieks with every arm flung out and the train thrashing. Whoever is
+    behind her sees her look back over her shoulder and gets the train whipped across at knee height. Her intro
+    rises curled up, the wings flat down her back, then opens them, shows herself with every arm wide and settles to
+    face you.
+  - **Broken and the death.** Broken, the hum fails and she sinks with her wings drooping. She dies on a last shriek
+    with every wing flung out, slumps as the hum stops and falls, the wings folding over her.
+  - **Ground.** The train swings under her in the Sting and the Volley; it hooks up as it passes each way (its first
+    joints keep the body's time, `lag` 0), and a floor pass keeps the stinger and the hem out of the floor.
+  - **Meter.** Worst kink outside a strike 3.7°; held under 12% on every move, 10% on the intro; dips 14-22%.
+
+- **The Drowned Archivist, the Lectern** (body and motion, `kit/bosses/drowned_archivist.py`). "Every book here was written
+  by someone who drowned." A tall drowned scholar grown into his own reading stand: from the waist down he is a lectern
+  of black, waterlogged oak on a barnacled plinth, his sodden robe hanging over its carved column in a ragged hem. A great
+  book lies open on the desk before him, chained to it the way books were chained in the old libraries, a ship's anchor
+  hanging off the chain for a weight, and the sea pours off its pages over the desk's edge in three falls and spreads
+  across the floor. He stoops over it in a peaked hood with weed in its brim and over his shoulders, worn brass thread
+  round his hems, a bloated blue-grey face with no eyes, only a drowned green prick of light deep in each pit; his left
+  hand flat on the page, his right holding a quill as long as a spear (a gull's flight feather, a brass nib). 5.0 blocks
+  to the hood's tip; 94 cubes (564 faces), no plan, translucent (the falls and the pool). His light story is the sea-green of that
+  water: the falls, the pool, the words that swim on the pages, the pricks in his eyes. The hitbox is 1.7 x 4.6 (size
+  0.9 x 2.4 at scale 1.9).
+  - **His hands go where they're sent** (`ik.limb` on every key): the left stays on the book through nearly everything,
+    the quill is laid along a direction (`ik.orient`). He has no feet: the lectern drifts on the water it pours, leaning
+    into the way it goes and rocking like a moored boat.
+  - **Reading.** Idle, he reads: his face follows the lines from his left across to his right and flicks back, two lines
+    every four seconds, a finger tracing down the page with it, while the lectern rocks on the swell, the leaves stir,
+    the falls ripple and the anchor swings.
+  - **His blows.** Quill Thrust draws the quill back over his right shoulder, nib on you, and leans in to drive it down
+    over the desk like a spear; the rake sweeps on across to his left from there and back across you. The Shutting takes
+    the book's left board and lifts it up past upright, rearing, holds, and slams the book shut with all his weight, the
+    sea flung out at you; he opens it again. Tidal Page lifts a leaf high and turns it over with all his strength, the
+    other leaves flying after it, the quill pointed at you as the sea surges off the desk. Ink Volley dips the nib in the
+    book and flicks it at you three times. Loose Pages lifts both hands off the book and rears back with his face to the
+    roof while it riffles faster and faster. Ink Cloud bows right down over the book, hands spread on it, and heaves ink
+    out of his jaw. Undertow is the one time his left hand leaves the book: it reaches out at you, open, and draws back
+    to his chest, closing. The Flood (the signature) sinks over the book, then straightens him to his full height for the
+    first time, arms flung wide, quill raised, face to the roof and jaw hanging, every leaf flying up as the sea pours;
+    he shudders there and folds back down. Whoever is behind him sees his top half turn right round on the lectern, face
+    first, and the quill driven down at them; he turns back. His intro: reading, he turns the last leaf over slowly and
+    lifts his face to you, the jaw falling open, the quill raised.
+  - **Broken and the death.** Broken, he slumps over the book, the left hand slid off it and hanging, leaning on the
+    quill's nib. He dies with the sea going out of him, head thrown back and every limb flung out; slumps on the book,
+    which shuts under him; and the lectern goes down into the water he made, tilting, the hood the last of him under the
+    floor (3.2 s).
+  - **Meter.** Worst kink outside a strike 5.3°; held under 15% on every move; dips 13-22%. Every recovery eases back
+    in two steps from where its move ends (`_back`), and every blow carries on a little past contact (`_on`).
+
+- **The Lantern Broker, the Pedlar** (body and motion, `kit/bosses/lantern_broker.py`). "A duel, then. Lanterns down." A
+  tall, thin travelling merchant in a long lacquered coat to the floor, carrying his whole shop on his back: a pack frame
+  that towers over him like a little roofed stall, a chest of drawers at its foot, rolled carpet and scrolls, a
+  merchant's scale, two moth cages and eleven lanterns of paper and glass, every one swinging on its own. A wide stepped
+  hat with four tiny lanterns hung from its brim; under it his face is shadow, two old brass cash coins with square holes
+  for eyes, lit from behind, and a dark silk veil over his mouth. A tall bamboo crook staff in his right hand with a glass
+  lantern on its hook, a sickle in his left with a chain looped from its pommel to a brass weight. Dark lacquer, red
+  silk, brass, paper, a moth's grey and one warm lantern light. 4.5 blocks to his hat, 6.1 to the pack's spire; 170
+  cubes (1,020 faces) on the biped plan. The hitbox is 1.2 x 4.4 (size 0.6 x 2.2 at scale 2.0). He is upright and quick,
+  a showman who carries his load with pride (the Abbot's Pilgrim is the crushed, trudging back-load).
+  - **The staff is a walking stick** (`_staff`): the fist turns along the shaft and the shaft slides through it so its
+    foot stays on the ground, every key and every tick of the hurts and turns. Walking, it plants with his left foot
+    and travels a stride a cycle; running, he carries it. Where a turning staff would dip into the ground between keys,
+    it slides up through the fist by just that much (`_staff_floor`). His hands go where they're sent (`ik.limb` on
+    every key; a hand can go to a point on a bone: the hat's brim, a cage door, his heart, the lantern).
+  - **The idle.** He tilts his head at you, eases his weight, nods, lifts the staff a little and taps it down, while the
+    pack's lanterns, the hat's lanterns, the scale, the cage doors and the chain sway on their own springs.
+  - **His blows.** The Chain Lash flings the weighted chain out straight at you and yanks it back; the Crook Sweep
+    swings the staff's hook across after it. Whoever is behind him gets the pack: he twists from the hips, the frame
+    clubbing round. Lantern Bolts lifts the staff off the ground and pumps its lantern at you three times, a bolt off
+    each pump. The Market Step takes his hat by the brim and lifts it in a bow with his right foot drawn back, then spins
+    once on his heel and is somewhere else, flourishing the chain. Release the Moths reaches back over his shoulder,
+    swings a cage door open and shrugs the pack. Paper Lanterns throws his arms wide and turns right round on his heel,
+    every lantern swinging out. Lights Out (the signature) lifts the staff and plants it a stride ahead, leaning back to
+    him with its hook turned to his face so the lantern swings back to his mouth; he cups it in his left hand, draws
+    breath and blows it out, and it lights again only when the staff is back at his side. His intro: he sets the staff
+    down hard, bows with his left hand on his heart, and straightening lets the chain fall from its loop, ready.
+  - **The death.** He staggers, his knees buckle and he sits down hard against his pack, which tips back onto the
+    ground; the hat slides over his face, he slumps, and last of all the staff tips and falls (3.4 s).
+  - **Meter.** Worst kink outside a strike 5.4° (the lash's chain arm); held at most 5% on every move; dips 1-25%.
+
+- **The Abbot of Frost, the Pilgrim** (body and motion, `kit/bosses/abbot_of_frost.py`). "Chanting above a sea of
+  clouds." A huge monk bent nearly double under a block of glacier ice bigger than he is, roped and chained to his back,
+  and frozen deep in it, glowing gold through the ice, the monastery's heart. Indigo wool gone grey with frost, snow
+  thick on his hood, his shoulders and the ice, hemp straps over his shoulders that his fists never let go of, a rope
+  belt; his face is a dark hollow in the hood with two pale eyes and a frost-white beard hanging icicles, a string of
+  ice beads at his neck, rags round his hands and feet, faded prayer flags strung between the ice's spikes, and his
+  breath smoking out of the hood. He has no staff and no weapon: his fists, his weight and the glacier. 3.6 blocks to
+  his hood, 5.3 to the ice's crown; 100 cubes (about 640 faces), translucent (the ice, its drips, the beads and his
+  breath). The ice is no box but a core with lumps of older ice frozen onto it, in layers, cracked; the heart is drawn
+  before it and the ice round the heart glows gold. The hitbox is 1.7 x 3.8 (size 0.9 x 2.0 at scale 1.9).
+  - **The robe pools.** Where he sinks low enough that the robe's hem would meet the ground, the lower robe shortens
+    into the knee by just that much, tick by tick (`_pool`, a scale track), instead of being flung out of the floor.
+  - **The idle.** Slow, laboured breaths that lift the glacier a little and let it down, his breath smoking on each;
+    his head turning to look round from under the hood; now and then he hitches the load up his back with a shrug and
+    it settles with a thump. **The walk is a trudge**: his whole body lurches onto each planted foot, the head bobs,
+    the glacier sways a beat behind, and his fists stay on the straps.
+  - **His blows.** The Backhand takes his right fist off its strap back to his left shoulder and swings it out across
+    in front of him with all his weight turning behind it; Two Fists raises both over the hood as high as the ice lets
+    him, holds, and brings them down together on the ground before him. Whoever is behind him gets the Weight: he
+    throws himself back on his heels so the glacier swings down onto them. The Frost Hymn opens his left hand off its
+    strap palm up like a cantor's and lifts his face to sing five notes, a breath of frost on each. Ice Spikes sinks him
+    low hauling on the straps, then heaves so the glacier jumps off his back and drops on him again with a thump he
+    takes in his knees. The Choir presses his palms together before his face; he bows and rocks, praying, and the heart
+    beats in the ice with each rock (a scale track on the heart). Blizzard flings his arms wide, face to the sky, and
+    sways him side to side under the ice. The Avalanche puts his head down and charges crouched, three heavy strides,
+    and skids to a stop leaning back against the weight. Frost Nova curls him up tight on himself and then throws him open with a
+    roar. The Glacial Vow (the signature) gathers him low with his fists on the glacier's sides, then straightens
+    him to his full height for the only time, and throws him down on his knees, swinging the whole glacier up over his
+    head and down onto the ground before him like a hammer; he hauls it back over onto his back, gets a foot under
+    him and rises. His intro: palms together,
+    chanting, he sinks onto one knee under the weight, heaves himself up off it, hitches the glacier up and lifts his
+    face to you.
+  - **The death.** His knees give and he goes down on both; his fists slide off the straps to the ground, and the
+    glacier presses him down flat onto his face (4.0 s).
+  - **Meter.** Worst kink outside a strike 4.8° (the Choir's hands parting); held at most 11% on every move; dips
+    30-38%.
+
+- **The Mirror Knight, the Masked Duelist** (body and motion, `kit/bosses/mirror_knight.py`). "Footsteps that match
+  yours." A lean, tall swordsman of the old court, side-on in his guard: a blue twill doublet with silver frogging, a
+  leather baldric, slashed sleeves showing lace, a falling lace collar, cloth breeches and turned-down bucket boots, buff
+  gloves; a wide felt hat cocked up on one side with a great white plume sweeping back, and his hair tied in a queue with
+  a blue ribbon. Where his face should be there is a mirror: a blank, bright glass mask with a silver rim, one streak of
+  light across it and a hairline crack, two black slits for eyes with a violet glow behind. Mirror panes are set into
+  his thigh guards and skirts. A swept-hilt rapier in his right hand, a shell-guard dagger in his left, the scabbard
+  hanging from his belt. Blue, silver, lace, felt and glass. 3.0 blocks to his crown, 3.4 to the hat's; 85 cubes (510
+  faces) on the biped plan. The hitbox is 1.1 x 3.4 (size 0.6 x 1.8 at scale 1.9). He stands like a fencer, light and
+  turned, where the Pedlar is a showman and the Pilgrim a crushed weight.
+  - **The rest pose is his guard.** Hips turned 40° off you, the front foot pointing at you and the back foot across,
+    the rapier's point level at your eyes and the dagger held low across his body. The legs' rest is the planter's own
+    solution, so every planted key starts where the rest does.
+  - **The idle.** A light bounce in the knees, the point drawing slow circles at your eyes, a tilt of the head to look
+    you over and now and then a sharp beat of the blade. **The walk is a fencer's advance**: the front foot reaches and
+    lands heel first, the back foot follows low, the body glides level and side-on with the point on you. Running, he
+    squares his hips and carries the blade out ahead, the dagger arm pumping.
+  - **His blows.** The Quick Thrust draws the hand back a little and shoots the arm straight out ahead of a step, the
+    back leg straightening. The Cutover flicks the point up and over to his right shoulder and cuts down across to his
+    left hip, his body turning through behind it. The Feint rises with the hilt over his head and the point hanging
+    down at you, holds it (you dodge too early), then drops into a long low thrust under your guard. The Mirror Lunge
+    sinks onto his back leg with the blade level by his face, runs at you with the point arriving first, and lands in
+    a long lunge. The Perfect Parry crosses both blades in a high bind before his mask, and each blow that lands on it
+    jolts them up; the Riposte after it drops the blade to his left hip and whips it up across to his right shoulder,
+    the back of the hand leading. Whoever is behind him gets the Blind Thrust: he looks back over his left shoulder
+    and thrusts straight back under his own raised arm. The Mirror Split squares him up with both arms flung wide, the
+    blades level out like a mirror's wings; he turns his mask left and right and stamps, and his reflections step out of
+    him. Through the Glass draws him in small, blade upright before the mask, and slips him sideways as through a pane.
+    Shatter (the signature) takes the rapier in both hands, raises it point-down over his hat as he rises tall looking
+    up at it, then drops him onto his left knee and drives it into the floor, and the palace breaks. His intro: heels
+    together, he salutes with the hilt to his mask, sweeps the blade down and out, and steps into his guard with a
+    stamp.
+  - **The death.** He staggers back, his knee goes, he leans on the blade like a cane and it slides; he tips over onto
+    his side, the hat rolls off, and last of all the mask falls from his face (4.4 s).
+  - **Meter.** Worst kink outside a strike 5.0° (the Split's hands); held at most 11% on every move; dips at most 34%.
+
+- **The Sleeper, the Four-Poster** (body and motion, `kit/bosses/the_sleeper.py`). "You've been here before. You
+  haven't." A great old four-poster bed that walks on its posts. Below the frame each post is a turned leg with a carved
+  knee and a claw gripping a ball for a foot; above it the posts carry a canopy with a gilt-fringed valance and torn
+  velvet curtains bunched at the posts, and a dreamcatcher hangs from its front, its web glowing pink. A crescent moon
+  and stars are carved on the headboard and a shut eye on the footboard. In the bed, propped on his pillows under a
+  faded patchwork quilt (moth holes and all) with the sheet turned down over it, the Sleeper: an ashen grey giant in a
+  striped nightcap, asleep with his mouth open, one hand clutching the sheet, the other arm far too long and hanging
+  out over the side so that its fist drags on the floor. Under the bed, behind the torn dust ruffle, it is dark, and
+  pink eyes look out. Rose, plum, faded dusk and ochre patches, cream linen, dark wood and gilt. 38 x 54 px, the
+  finials 4.4 blocks up; 164 cubes (984 faces). The hitbox is 2.2 x 4.0 (size 1.0 x 1.8 at scale 2.2). It is the only
+  boss that is furniture: a quadruped whose rider never wakes until the signature.
+  - **One pose call drives it all** (`_pose`): the bed's lift, pitch, roll, yaw and shift, where each foot stands (leg
+    IK, every foot set plumb), the Sleeper's torso, head, jaw and lids (they sink into his head to open his eyes), where
+    his fist goes (arm IK; by default dragging on the floor beside the bed, wherever the bed has turned), the
+    dreamcatcher's swing and spin, and the dark under the bed (drawn up into the frame when it rears or lies down).
+    Every curtain bunch, the dreamcatcher and the tattered canopy cloth are hung plumb on every key, and springs swing
+    them on top. The curtains draw shut by scale tracks on their bunches.
+  - **The idle.** He breathes slowly, the quilt lifting and the bed rising a little on each breath, and snores; the bed
+    rests a front leg and sets it down again; he twitches in his sleep, his head rolling and his knuckles curling on the
+    floor. **The walk** is a heavy four-beat walk on its posts, the frame rolling over each leg as it takes the weight
+    and the fist dragging; **running**, it bounds like a rocking horse, front pair then back pair, pitching fore and aft.
+    It turns by stepping its diagonal pairs round.
+  - **Its blows.** The stomp rears a front post high with the bed's weight sitting back, then stamps it down a long step
+    ahead as the bed drops onto it (one post, then the other, in a string). The Restless Fist: the bed braces and rolls
+    away as he drags his fist back, then he heaves the arm up high over the bed's side half sitting up, holds it, and
+    brings it down by the bed's front corner with all its weight rolling after. Whoever is behind gets kicked by both
+    back posts, like a mule. Runaway Bed sinks back with its foot end lowered, paws the floor with a front claw, and
+    bolts at you in three bounds, skidding up on its back legs. Heavy Eyelids: he yawns, the bed settles lower like
+    someone getting comfortable, and the curtains draw shut all round; behind them it breathes and rocks deep asleep
+    until it stirs and they open. Night Terrors: he tosses and turns, the bed rocking with him on braced legs. Dreamstep
+    sinks him into his pillows and the bed into a crouch with the curtains half shut, shivering, and it rises somewhere
+    else. Sleepwalkers sits him half up with his head lolling and reaches his arm straight out ahead of the bed, the hand
+    hanging limp. Rude Awakening (the signature): the bed shudders and rears up on its back posts, its front claws
+    pawing high, and the Sleeper sits bolt upright with his eyes open for the first time, flings his arm up and screams;
+    the bed crashes down onto its front posts and his fist with it, then he sinks back and his eyes close. It waits
+    lying low on its folded legs like any bed; its intro shakes it like a wet dog from foot end to canopy, and his fist
+    thumps the floor once.
+  - **The death.** A front leg gives, all four splay and it crashes onto its frame; he sits up one last time with his
+    eyes open and looks round, lies back, and the curtains draw shut round him (4.6 s).
+  - **Meter.** Worst kink outside a strike 5.5° (the Sleepwalkers' arm); held at most 14% on every move; dips at most
+    35%. A first windup key at 0.35 of the windup or later gets the kit's counter key at 0.3, which holds every bone
+    but the arms at rest there; the Sleeper's first keys are all at 0.3 or earlier.
+- **The Sky Leviathan, the Ray** (body and motion, `kit/bosses/sky_leviathan.py`). "The ground is much too far below."
+  A ray ten blocks across that flies the way a manta swims. On top it is storm slate veined with lightning that branches
+  out from its spine to its wingtips, with pale cloud patches on its shoulders; beneath it is pale as a cloud's
+  underside, with its gill slits in two rows of five. Two ringed horns curl up either side of its wide mouth (gill
+  rakers inside it), its small eyes glow at the corners of its head, six pearls glow along its spine, and behind it
+  trails a whip of a tail that ends in a fork of lightning. 160 px from wingtip to wingtip, 92 from the horns to the
+  back of the disc and the tail 112 more; it flies 16 px over the bottom of its box. 79 cubes (474 faces) on 43 bones.
+  The hitbox is 4.5 x 1.9 (size 1.4 x 0.6 at scale 3.2), a flat box under the disc. It is the only boss that is a flier
+  with no legs at all: everything it does, it does with its wings and its tail.
+  - **Chains, not panels.** Each wing is a chain of six segments (three strips each, so the edges step a pixel at a
+    time), root to tip, and the tail a chain of eight; every beat is a wave that runs out along them, the tips lagging
+    the roots, and springs swing the outer segments, the tail and the horns' tips on top. One pose call (`_pose`) sets
+    the disc's pitch, yaw, roll and shift, each wing's lift, curl, sweep and twist, the tail's lift, curl and sway, the
+    head, jaw, horns (curled tighter or unrolled into a scoop) and the pelvic fins. The pearls swell and dim by scale
+    tracks.
+  - **The idle.** Flying in place, two slow beats a loop, each running out to the wingtips with the leading edge
+    feathering down on the downstroke; the tail waves behind it in an S, the mouth opens and closes, and a glow runs
+    down the pearls. **Flying**, it lowers its nose, sweeps its wings back and streams its tail, a ripple running along
+    the wings' edges faster the faster it goes; it banks into its turns.
+  - **Its blows.** The slap banks it with the near wing raised high over its back and curled, then brings the wing down
+    like a whip, the tip cracking down ahead of it and the disc rolling after it, the tail whipping across (one wing,
+    then the other, in a string). The Horn Ram draws it back nose up, its horns unrolling into a scoop either side of
+    its gaping mouth, and it surges at you head first with its wings swept back. The Wingbeat sinks it and raises both
+    wings high over its back, curled until their tips nearly meet, holds them, and brings them down in one enormous
+    stroke that throws it up into the air. The Leviathan Dive climbs on two strong beats nose high, tips over at the
+    top and dives at you like a dart, wings swept back, then pulls up out of it with its wings flared. Whoever is
+    behind gets the tail: it rises in an arc over its back like a scorpion's, the fork crackling, and cracks down.
+    Gravity Tide rolls it over onto its back, pale belly to the sky and its wings cupped, and it swims there upside down
+    while the sky tilts, then rolls back. The Pearl Barrage arches its back with its wings lifted and the pearls fire
+    one after another down its spine, each a jolt through it. The Storm Eye (the signature) lifts it with its wings
+    curling up into a bowl and its tail raised over it, the disc wheeling faster and faster, the pearls swelling one by
+    one; then it throws its wings flat and wide, the tail cracks down, the pearls flare and the lightning comes down.
+    Its intro draws its wings round itself like a cloak and throws them up and out in one great beat with a call.
+    Broken, it sags in the air nose down with its wings drooping, and rises out of it with one great beat.
+  - **The death.** It convulses with its wings flung up, beats once more, weakly, then rolls over onto its back and
+    sinks, wings limp and tail trailing, and its pearls go out (4.4 s).
+  - **Meter.** Worst kink outside a strike 3.1°; held at most 5% on every move; dips at most 36%. The readability check
+    averages every keyed bone's largest angle, so on a rig of long chains the outer segments (which a wave keeps small)
+    pull the mean down: the Ray's windup peaks are drawn big (the slap's near wing at lift 52 and curl 70) to clear 12°.
+    A slap after the dive kept its horns and tail carried through the link (the wings cross zero there).
+- **The Hollow Herald, the Ring-Head** (body and motion, `kit/bosses/hollow_herald.py`). "Nothing. No sound at all."
+  Very tall and thin, 82 px to the top of its head, in a long blue-black tailcoat cut away at the front, the tails
+  lined in violet and hanging to the backs of its knees. Where its head should be a ring of violet-black glass stands on
+  its high collar, lit along its inner edge, with nothing inside it: you see straight through its head. Black trousers
+  with a violet stripe, white spats over long pointed shoes; arms longer than its legs, the right hanging so low its
+  white-gloved fingers nearly touch the floor, the left folded up like an insect's, holding a blank scroll to its breast
+  (a black wax seal on a ribbon). A herald's pewter chain across its shoulders, an empty ring for its badge. 63 cubes
+  (378 faces) on 27 bones. The hitbox is 1.2 x 5.1 (size 0.85 x 3.65 at scale 1.4); its SHADE model would fly, so it is
+  `grounded()` and walks.
+  - **One pose call.** `_pose` sets the hips' turn and shift, the spine, chest and neck, the ring's own turn on its
+    collar, where each wrist goes (a point in the room or on a bone, by IK), the right hand's line (keeping the
+    forearm's twist, so the wrist hinges and never spins), the scroll kept level, the way its sheet hangs, the finger
+    curls, and the feet planted, or the legs as whole turns when it kneels (`_knees` puts both knees on the floor
+    whatever the hips do). `_ring_at` puts the ring's middle anywhere at any turn, so it can be lifted off its collar,
+    held overhead or rolled away across the floor; scale tracks swell it.
+  - **The idle.** It stands still, very tall, swaying a little like something tall in a wind; the ring turns to look
+    about and tilts the way a bird's head does, and the fingers of its hanging hand curl now and then. It walks in long
+    high-kneed strides, the long arm swinging late.
+  - **Its blows.** The rake: the body turns away with the arm drawn back low, then the arm sweeps round across you at
+    waist height, the fingers spread like tines; the backhand brings it back the other way (a string). The Long Step
+    rears and takes one enormous stride, its hand reaching for you along the floor. Whoever is behind gets the upper
+    body turned right round on its hips. Draw Near holds the arm out to you, palm up, and beckons three times, its knees
+    giving and its hips turning toward you with each curl of the fingers. Void Bolts holds the blank scroll up and
+    points at you with the other hand, jabbing, the ring pulsing with each of five bolts. Unlit covers the ring with
+    both hands and rocks behind them. Spawn of Nothing bows until the ring faces the floor, its hand flat on the floor;
+    each of three shudders jolts it at the hips and swings the scroll arm back. Collapse spreads its arms high and wide,
+    arching back, holds them, and brings its hands together before its ring in a clap that makes no sound. Void Halo
+    lifts the ring off its collar and holds it flat overhead, turning, while the body sways under it and the scroll arm
+    is thrown out with each burst. The Event Horizon (the signature) spreads its arms and leans back while the ring
+    rises and grows to nearly three times its size, turning a quarter turn; it strains against the pull, knees giving,
+    the tails streaming and shivering; at the end it snaps shut and the Herald jerks forward, hunched. Its intro stands
+    bowed and folded, breathing in its bow, straightens to its height, holds out the blank scroll and tilts its ring at
+    you. Broken, it folds onto both knees, the right hand turning forward as it reaches down to lie flat on the floor.
+  - **The death.** It goes rigid on its toes, the ring looking about; its knees go; it bows until its collar points at
+    the floor and the ring tumbles forward off it, lands on its edge, rolls away to its left and falls flat with a
+    wobble (4.8 s).
+  - **Meter.** Worst kink outside a strike 4.1°; held at most 13% on every move; dips at most 19%. The strike and the
+    recovery are chained backward from rest (`_unwrap`): IK solves each key on its own, and the two ways of writing one
+    turn (x+180, 180-y, z+180) agree only at rest, so a recovery chained forward could spin the long way round to get
+    home. A snap belongs on the active's last key or the follow-through: stage_clips keeps recovery keys only between
+    0.33 and 0.74 of the recovery, and the Horizon's first snap (at 0.2) was dropped.
+- **The Rootmother, the Long-Legs** (body and motion, `kit/bosses/guardian_rim.py`). "The Rootmother descends."
+  A harvestman of root and moss: a small knot of a body, bark-grained, capped with moss, carried 44 px up on eight long
+  legs of root bark whose mossy knees ride high above her, each femur 38 px and each shin 70, so her claws stand three
+  blocks out from her middle. An eye turret on her back, two root fangs and two feelers under her front, a silk sac of
+  glowing eggs slung under her body, and three streamers of moss and silk swaying from it. 109 cubes (654 faces) on 50
+  bones. The hitbox is 2.0 x 3.5 (size 0.85 x 1.45 at scale 2.4); the legs stay out of it, as a spider's do.
+  - **The legs.** Every pose places each claw by IK (`_pose`'s feet, poles that send the knees up and out) and the
+    standing legs are re-planted every tick (`_plant`), so the body can bob, lean and swing between them while the
+    claws stay where they stand. Each hip is turned to face down its leg: a leg straight out to her side has its knee's
+    hinge along the body's z, where ZYX Euler angles lock (y = 90), and its keys spun x against z by a hundred degrees
+    a tick. A raised leg aims about 0.6 of its length from the hip, or it folds.
+  - **The idle.** She bobs slowly between her legs; one front leg on each side lifts and feels the air; the feelers
+    work and the egg sac sways. She walks in alternating fours like a harvestman, each leg a ripple behind the last,
+    and runs in long reaching strides.
+  - **Her blows.** The stab: a front leg rears up high over her and stabs down two blocks before her as her body drops
+    after it, then the other side (a string, then the Scythe). The Scythe swings her body away and lifts a second leg
+    far out to her left, holds, and sweeps it round low across the floor in front of her and on out past her right.
+    Whoever is behind gets a back leg raised high over her and stabbed down. Moss Web lifts both front legs to throw.
+    Rootfall rises tall, springs, and lands on you with all eight legs spread. Root Lances (the signature) raises four
+    legs high like spears, holds them shaking, and drives them down into the floor round her. Brood shakes the egg sac
+    and lowers it to the floor. Her intro rises tall, lifts her front legs to feel the air, her body swaying out of
+    step with them, then lets herself down toward you.
+  - **The death.** She shudders up on her legs; her front legs give, then the rest, and her body drops to the floor
+    and bounces; her claws draw in along the floor so her knees rise and lean in over her until all eight meet high
+    over her back, a closed tent of root like a dead stump; one claw twitches up off the floor, and she is still
+    (4.6 s). A claw drawn in nearer than about 54 px from her middle is closer to the hip than the 70 px shin can fold,
+    and the knee turns down through the floor instead. The death's keys are unwrapped (each turn within half a turn
+    of the key before), and the streamers swing forward under her as she falls (swung back they run out of room once
+    she is down).
+  - **On the floor.** Her guards and ground lists name bones (`foot`, `shin`, `brood`, `fang`, `palpb`, the streamer
+    links): `core.lowest` walks a bone's cubes, and cube names in them were skipped without a word, which had let the
+    brood sink 8 px whenever she sat. Down on the floor the brood swings back (the way her floor poses swing it, so the
+    correction never flips through plumb as she comes down), her fangs fold forward against the floor and her feelers
+    lift. Every clip stays within 1.2 px of the floor.
+  - **Meter.** Worst kink outside a strike 3.5°; held at most 12% on every move; dips at most 39%.
+- **The Thornback, the Thorn Pangolin** (body and motion, `kit/bosses/guardian_gardens.py`). "Something heavy moves in
+  the hanging gardens." A pangolin the length of a cart, 7 blocks from snout to tail tip, the arch of its back 2.3
+  blocks up. Its scales are broad holly leaves, dark glossy green with pale rims and midribs and ochre thorns at their
+  tips and edges, in eight rows that lift on their own bones (neck, shoulders, middle, hips and four down the tail);
+  its flanks are scaled in smaller overlapping leaves, and pink garden roses grow between the rows. Soft brown skin
+  under them, a small head low on a long snout with a tongue that flicks out of it. It walks on its knuckles, its
+  great front claws folded back under its hands. 116 cubes (696 faces) on 35 bones. The hitbox is 2.2 x 2.3, round its
+  body (the tail out behind it).
+  - **The ball.** A `roll` bone sits at the curled body's middle (found once the body is built), and `curl` (0 to 1)
+    rolls it up: the back and neck curl forward, the head tucks under, the tail comes under and round, and the legs
+    fold in under it over the first 60% of the curl. Curled, it is 1.5 blocks wide and 2.8 long. Every pose that
+    lies on the floor (the ball, the body on its side) is let down or lifted on the roll bone until its lowest part
+    rests on the floor.
+  - **The idle.** It breathes, its snout low and sniffing from side to side over the floor, its tongue flicking out;
+    it lifts its head to scent the air, one front foot rising; a ripple runs back down its scales from its neck to
+    its tail. It walks one foot at a time, its back rolling with the steps and its snout swinging low; it runs in a
+    lumbering trot.
+  - **Its blows.** The claw rakes one great front claw out wide from its side and across in front of it, then the
+    other (a string, then the Maul); its scales stay up through the string. The Maul rears half up on its hind legs
+    with both claws spread over you, holds, and drops its front onto you. Whoever is behind gets its body bent round
+    to look back along itself and its tail swung across. The Thornback Charge tucks its head, rolls up into a ball
+    and rocks back, holds, and rolls 8 blocks at you, turning 326 degrees as it goes (a radian for every 22.5 px it
+    rolls), clenching and loosening, its scales clattering; it skids, rocks and unrolls, its snout first and its legs
+    coming out over the whole recovery. The Gale of Petals rears right up on its hind legs with its tail set on the
+    floor as a prop (`_prop` lifts the tail's root until none of it is under the floor) and its arms tucked to its
+    chest, shakes itself from snout to tail like a dog, and comes down reaching for the floor with its front feet.
+    Thorn Spray (the signature) hunches with its tail up while its scales rise row by row from its neck to its tail,
+    rattling, then throws itself open with every scale on end. Lurkers puts its snout to the floor and digs with one
+    claw and then the other. Its intro (from its ball) scents the air, rises half up on its hind legs with its scales
+    lifting, and comes down onto its claws.
+  - **The spin.** The library's settle and follow-through scale the last pose's turns, which would spin a ball that
+    rolled a whole turn most of the way back. So the Charge's clip is keyed from its own keys (`_own`), and its roll
+    bone's turn is keyed again from unwrapped turns, ending at 360 (KitBlend wraps a turn into the next move, and the
+    tail tip's springs read the parents' turn the short way round, as the meter now does too).
+  - **The death.** It rears up a little with its head flung back and its scales lifting, staggers to its left, goes
+    over onto its side and bounces, draws itself in loosely round itself with its tail coming over, breathes once and
+    is still (4.8 s). Its hands and feet rest 0.3 px above the floor: the ground pass takes anything 0.2 px or less
+    above it as in it, and was twisting the arms at rest.
+  - **Meter.** Worst kink outside a strike 4.8°; held at most 11% on every move; dips at most 27%.
+- **The Choirmaster, the Cantor** (body and motion, `kit/bosses/guardian_choir.py`). "The singing was coming from her all
+  along." A great octopus 3.7 blocks tall. She stands on six arms that arch out from under her crown and spread along
+  the floor, their tips curling up; her two front arms are raised and curled like a conductor's. Her mantle swells up
+  behind her head and leans back. At her front a horn (her siphon) opens into a bell whose throat glows. Her skin is
+  mottled dusky pink, darker over the tops of her arms and her mantle, with blue rings (cyan round a dark heart), pale
+  sucker discs under her arms, and gold eyes barred with black. 114 cubes (684 faces) on 64 bones. The hitbox is
+  0.8 x 1.9 at the def's scale 2 (1.6 x 3.8 blocks), round her crown and mantle.
+  - **Standing arms.** Each standing arm's first four segments are solved in its own upright plane from the crown to
+    where it meets the floor, from three numbers: the root's pitch and a bend that grows along the arm. The fifth lies
+    along the floor and the last two curl up. The rest is solved exactly. Posed, the solve is a least-squares one: the
+    tip goes onto its point, the arm's angle onto the floor may give, each joint stays over the floor, and the arm stays
+    near its rest shape. Her arms stand near their full reach, and an exact solve there swung them by 60 degrees for a
+    3 px move of the tip. Each clip's solves start from the rest and follow on tick by tick, so a loop meets itself. On
+    top of the solve, the arm writhes along its length in the two ways that leave its tip where it is (`_null`), so no
+    standing arm is ever still and none slides. Through a blow they brace: they grip and curl tighter through the
+    wind-up, hold it into the recovery (a string's next blow links on still braced), and let go before it ends. A
+    pinned arm's tick is dropped where the curve through its neighbours passes within 1.5 degrees of it, so slow
+    stretches are keyed every other tick and fast ones every tick. In each move, the arms off the floor (her front arms,
+    or all eight in the Jet) are ground-passed along their whole length, lifted at the joints above, so a blow that
+    comes down on the floor lies along it and never goes into it.
+  - **The idle.** She breathes, her mantle swelling (a scale track) and swaying up behind her, and hums, her horn's
+    mouth opening a little with each breath. Her front arms lead a slow measure, rising and falling out of step. Her
+    standing arms writhe, and now and then one lifts its tip off the floor and sets it down again. She walks on her arms
+    one after another round her, each stride centred inside that arm's reach (the front arms step behind their rest,
+    the back ones ahead of it, and the back ones gather under her as they come forward). She runs on two threes by
+    turns, low, her front arms reaching out before her.
+  - **Her blows.** The Lash draws a front arm up and across to her far side, her body winding after it and her other
+    front arm flung up behind her for balance. Then she whips it across low in front of her: it flies out straight in
+    the middle of the swing, the lag down its length is the whip, and it cracks out past her other side. Then the other
+    arm (a string, then the Breaker). The Breaker gathers both front arms low and wide, scoops them out round her
+    sides and up high over her like a wave about to break, holds, and crashes them down on the floor before her.
+    Whoever is behind gets a back arm swept low across the floor behind her. The Jet crouches with her arms drawn in
+    under her and her mantle swelling, her horn turned back under her. She shoots 7 blocks along the floor at you,
+    streamlined, every arm streaming out behind and rippling, and lands spreading every arm wide over you.
+  - **Her songs.** The Hymn of Salt: she rises tall and beats four beats with both front arms, her horn's mouth flaring
+    and her mantle pulsing on each. The Refrain: she wraps her front arms crossed round herself and sways, humming. The
+    Choir: one long note with her mantle swollen, her front arms reaching down to the floor and sweeping up from it
+    twice. Undertow: both front arms reach far out at you, then haul back hand over hand. Rising Tide (the signature):
+    her four front arms rise round her one after another, rippling, her body rising tall on the back four and
+    trembling, and she brings all four down at once. She waits sunk down on her curled arms, her front arms rolled up
+    on the floor before her and her mantle drooping. Her intro rises out of it: she draws herself up, takes a breath,
+    lifts her front arms wide like a conductor before the first note, and sings it.
+  - **The death.** She rears up with her front arms flung up, shudders, and sinks. Every arm slides out flat over the
+    floor in a limp curve, and her mantle slumps forward over her head. She breathes once, two arms curl their tips up,
+    and she is still (4.6 s). The ground pass skips deaths, so she is laid out by hand: each arm slopes down onto the
+    floor against her crown's lean, its tip resting on it.
+  - **Wind-ups.** The kit's readability check averages every posed bone, and 42 of hers are standing arms. Their brace,
+    and her body and other arm wound further, carry every blow's wind-up past it (at least 14 degrees).
+  - **Meter.** Worst kink outside a strike 4.1°; held at most 11% on every move; dips at most 38%.
+- **The Ossuary King, the Orchard King** (body and motion, `kit/bosses/guardian_orchard.py`). "The orchard grew from his
+  ribs." A giant crowned skeleton, gaunt and tall (5.1 blocks to the top of his leaves), with an apple tree grown up
+  through him: its roots grip his hips, its trunk rises out of his pelvis through his ribcage and throat into his
+  skull, and its boughs break out of the top of his skull inside a tarnished crown and spread over him to his left,
+  hung with glowing red apples. One apple hangs inside his ribs where his heart was. A rotten fur mantle and a royal
+  cloak gone to rags hang from his shoulders, and he carries a bone greatsword, serrated down one edge with a small
+  skull for its pommel, on his right shoulder. Old ivory bone mossed at the joints; the apples, his heart and his eyes
+  are the only warm things on him and the brightest. 137 cubes (822 faces) on 56 bones. The hitbox is 0.8 x 2.3 at the
+  def's scale 2 (1.6 x 4.6 blocks), round his body to his skull.
+  - **The idle.** He stands tall with the sword on his shoulder, his dead weight swaying; his skull tilts to look you
+    over, his jaw falls open and clacks shut, the finger bones of his left hand curl and loosen, and now and then the
+    blade lifts off his shoulder and taps back down. He walks like a king in procession, long slow steps landing heavy,
+    the cloak swinging and his left arm a beat behind; he runs leaning, the sword bouncing on his shoulder.
+  - **His blows.** The Royal Cleave draws the blade back high over his shoulder and brings it over and down across in
+    front of him in one long diagonal, ending low on his left; the backhand brings it back up across him to high over
+    his right shoulder (a string, then Bone Crush). Bone Crush takes the hilt in both hands, swings the blade back to
+    hang down his back as he rises tall, holds, and brings it over into the floor before him in a lunge. Whoever is
+    behind gets the sword swept low round behind him from his right, his arm straight and the blade on along it, as he
+    turns into it looking back over his right shoulder. The Royal March trails the blade low behind him, strides 7 blocks at you with his left arm pumping, and
+    heaves it up through you in both hands. Rise drives the sword into the floor and leans on it while his left hand
+    lifts slowly, palm up, its fingers spreading, and closes. Rib Spikes (the signature) flings his arms wide, arching
+    back: his ribs crack open from his breastbone and tremble, the heart blazing between them, and burst wide like
+    doors as the spikes fly. He waits kneeling on his left knee with both hands on the planted sword's hilt, his head
+    bowed; his intro gets up off it, swings the sword out wide round in front of him, and lays it back with a clack.
+  - **The arms.** Each cut is keyed along its own arc (the blade's line turned through the plane of the cut), so it
+    never swings out of the cut between keys. Each hand is solved with its elbow and its blade's roll free: of 12 ways
+    round the shoulder-to-hand line and 12 rolls, a key takes the one that leaves the wrist and shoulder least turned
+    from rest (a steep cost past 150 and 160 degrees, what a joint does) and least moved from the key before. Then every
+    turn track with three keys or more is resampled each tick along the shortest way between its keys (quaternions eased
+    through the keys either side), written as the angles nearest the tick before; a track that would end a whole turn
+    from its own last key is left as it was. A
+    turn up his spine of + yaw turns him to his right (his front toward his right, his right side back). The ground pass keeps the blade and both hands out of the floor in every
+    clip but the death, the collapse and the kneel and rise (its point is driven into the floor there, `r.under`).
+  - **Getting up once.** Struck down, his skull snaps back, his knees go and his hips drop, his ribcage falls back over
+    his splayed legs and the sword clatters down; his skull comes down last onto the heap, bounces, and settles upright
+    with the tree standing out of it (1.4 s). He puts himself back together in 1 s: the heap shudders, his legs draw in
+    and his hips rise, his ribcage swings up onto them and the sword comes up off the floor into his hand, his skull
+    hangs over his neck and drops onto it with a twist, and his jaw clacks shut. His death staggers, the sword slides off
+    his shoulder, he drops to his knees and looks up into his tree; his ribs fall open, he comes down into the heap, and
+    the tree bows over his bones (4.6 s).
+  - **Meter.** Worst kink outside a strike 5.1°; held at most 12% on every move; dips at most 33%.
+- **The Great Listener, the Hush Bat** (body and motion, `kit/bosses/guardian_silent.py`). "Every Listener in the halls is
+  one of its ears." A blind bat as big as a barn that walks on its folded wings, as a vampire bat does: its wrists and
+  hooked thumbs on the floor before it, its elbows standing up in two sharp peaks over its back with the folded wings
+  hanging inside them like a hood, its short hind legs splayed out behind with their knees up. Its ears are enormous,
+  taller than its head, ribbed inside, pink and faintly lit; its eyes are stitched shut with pale thread; a spear of a
+  nose-leaf stands on its wrinkled snout over long fangs. A ruff of pale ash fur round its neck, soot fur elsewhere,
+  dark leather wings veined paler; its throat glows violet when it screams. 103 cubes (618 faces) on 37 bones. The
+  hitbox is 1.6 x 2.2 at the def's scale 1.8 (2.9 x 4.0 blocks), round its body to its ears.
+  - **The idle.** It crouches on its wrists breathing, its head low, its ears turning on their own and its nose-leaf
+    twitching; then it stops and listens: its head cocks, its ears turn hard toward the sound and then the other way,
+    and it lets the breath go; now and then one wrist lifts and sets down, its elbow's peak rising. It creeps a wrist
+    and then the opposite foot at a time; it runs in a bound, both wrists vaulting it forward and its feet landing after.
+  - **Its blows.** The rake rocks back onto its other wrist, lifts this wrist high and out with the elbow thrown up and
+    the thumb's hooked claw cocked, and rakes it down across in front of it, its weight thrown forward into it; then
+    the other wing (a string, then Found You). Found You listens with its head cocked, crouches, rears up on its hind
+    legs and throws its wings wide over you, the whole span of them, and crashes down on its wrists, the wings sweeping
+    down after them and flexing on the floor. Whoever is behind gets its right wing flung open and swept round behind it
+    as it looks back over its shoulder. The Bound vaults at you on its wrists twice, flying low with its wings flashing
+    half open, and bites as it lands (7 blocks). Echo Scream (the signature) folds its ears forward, draws its head back
+    and swells, then screams with its mouth wide and its throat lit, its wings half raised out to its sides like a
+    mantle and shaking. Absolute Silence sits it back wrapped in its wings like a cloak, its ears flat down its back and
+    its head bowed into them; it holds its breath, shivering, the wings drawing tighter, and at the end its ears rise,
+    one and then the other. Ears lifts its head and clicks, its jaw chattering and its ears turning, and the Listeners
+    come. It waits wrapped in its wings; its intro unfurls its ears and hunts, finds you, gives one shriek in the mantle
+    and drops onto its wrists. Its death rears up with its mouth wide and no sound coming, its wings thrown open and
+    shaking, and falls onto its side; one wing lies spread along the floor, the other lifts once and folds slowly over
+    it, and its ears droop (4.6 s).
+  - **On the floor.** Its arms fold no shorter than the forearm less the humerus (38 px), so its wrists stand far
+    enough out (21 px out, 42 forward) for it to fold them still when its chest dips. Between keys a wrist or a foot can
+    sag a hair into the floor: wherever one would, that tick its limb turns by only the difference between two solves
+    (where it reaches and where it must), so it keeps the twist it was posed with; an arm folded as far as it goes slides
+    its wrist out along the floor instead. Each thumb turns only about its wrist's own sideways axis (any other way sits
+    near a gimbal lock and spins between keys), its claw cut on the side that faces the floor. A wing brought down onto
+    the floor flexes on it: the ground pass bends each finger out of the wing's plane, tip first. The death has a ground
+    pass of its own for the arms, ears and fingers, so what lands on the floor rests on it.
+  - **Meter.** Worst kink outside a strike 5.1°; held at most 11% on every move; dips at most 46% (Found You opens by
+    going still to listen).
+- **The Furnace Engine, the Iron Horse** (body and motion, `kit/bosses/guardian_foundry.py`). "The foundry's heart is
+  still warm." A steam locomotive that grew legs and woke, built like a cart horse. Its body is the engine: a long black
+  boiler riveted in plates and banded in brass, a steam dome and a sand dome on its back, the firebox and cab at its
+  rear, the cab's windows lit by the fire and the grate glowing under its belly. Its head is the smokebox, a sooty drum
+  on a saddle ring at the boiler's front with a tall flared chimney on it, a lamp on its brow for its one eye, and its
+  round door for a mouth: hinged at its foot, it drops open on the fire inside. A red buffer beam and two buffers stand
+  under its face like tusks, and a slatted cowcatcher hangs under them like a beard. Four red driving wheels turn on its
+  flanks; its legs hang from the wheels' hubs, each a riveted iron casing, a brass knee, a cylinder and a polished rod
+  down to an iron hoof rimmed like a wheel's flange. Its coupling chain hangs behind for a tail. 133 cubes (798 faces) on
+  29 bones; 4.8 blocks from its cowcatcher to its cab and 4.25 to its chimney's crown. The hitbox is 1.6 x 2.3 at the
+  def's scale 1.8 (2.9 x 4.1 blocks), round its body.
+  - **The idle.** It stands breathing like an engine at rest: two slow chuffs a loop, its boiler swelling, its chimney
+    rocking on its seat with each one and its door rattling; its wheels ease round and back; it looks about, its lamp
+    turning; and it paws the floor with a forehoof, impatient, looking down at it, as a horse does. It walks like a cart
+    horse, one hoof at a time, its head nodding with each forehoof and its boiler rocking on its rear, its wheels
+    turning once a stride; it runs in a pounding trot, the diagonals together, its wheels turning twice a stride.
+    Turning on the spot, its wheels rock against each other.
+  - **Its blows.** The stamp shifts its weight back and away, lifts one forehoof high with its knee up by its chest, and
+    strikes it out and down onto the floor before it, its whole front driving after it and its door banging (LIGHT; a
+    string, the other hoof, then the slam). The Engine Slam crouches and rears right up on its hind legs, its
+    forehooves pawing the air, its chimney thrown back, its door open and its wheels spinning up; holds; and slams them
+    down (a 4.5 block shockwave), its head driving down and its wheels running down after. Whoever is behind gets a
+    buck: its head down, its weight on its forelegs, both hind hooves kicked out behind and its chain flung up. Full
+    Steam lowers its head and paws the floor twice, its wheels spinning up, then charges in a bound, the hind pair and
+    then the fore pair, and rams with its cowcatcher (8 blocks); it skids to a stop on braced forelegs and rocks back.
+    The Arc Weld (the signature) sets its forehooves out wide one at a time and lowers its head; its door drops open on
+    the fire and a shaking takes it, harder and harder; the arc burns from its lamp while it shakes and heaves, its
+    wheels driving round, and its door clangs shut with a jolt that runs through it. Rivet Rain sits it back, its head
+    reared and its chimney to the sky, and it chuffs five times, its whole body pumping, its wheels driving round with
+    each chuff. Wake the Drones throws its head up and blows its whistle, its head tossing, its door chattering and a
+    forehoof pawing. It waits lying cold in its stall: down on its belly, its forelegs folded under with the knees
+    forward, its hind legs folded with the hocks back, its cowcatcher folded up under its chin. It goes down and gets up
+    as a horse does: onto its front knees first, then its rear; up onto its forelegs first, sitting, then heaving its
+    rear up. Its intro opens its door a crack as the fire catches, looks about, stamps twice with its wheels jerking
+    round, blows its whistle and shakes its head out. Its death shudders with its head thrown up and its door banging
+    open, buckles on its right foreleg onto its knees, and keels over onto its right side with its legs out stiff; it
+    rocks, its upper legs droop across the lower onto the floor, its door swings open on its hinge, its boiler breathes
+    out once, and its wheels run down and stop (5 s).
+  - **The wheels.** Their turns are written into each clip after it is made, at speeds eased between keys and scaled to
+    whole turns, so a move hands back to the idle with its wheels where they were; the walk and the run turn them whole
+    turns a loop at the pace of the stride.
+  - **On the floor.** Its legs are 26 px and stand at 24.8 of it, nearly straight under it like a cart horse's, so no
+    pose that keeps a hoof on the floor lifts its body more than a pixel, and a hoof set further out is kept inside the
+    leg's reach. Between keys a hoof can sag a hair into the floor: wherever one would, that tick its leg turns by only
+    the difference between two solves, as the Hush Bat's limbs do; the ground pass flexes the fetlock for what is left.
+    The cowcatcher folds back off the floor on its hinge (lying down, kneeling).
+  - **Meter.** Worst kink outside a strike 4.3°; held at most 13% on every move; dips at most 36%.
+- **The Drowned Moon, the Moon Angler** (body and motion, `kit/bosses/guardian_inverted.py`). "The sea above you has a
+  moon in it." The moon is bait. It hangs on a long rod from the brow of an anglerfish as big as a house, swimming in
+  the dark behind it with its mouth open: a domed black head that is nearly all mouth, the lower jaw thrust out past
+  the upper and lined with long glassy fangs standing up outside its lips, more hanging from the upper lip, a red-black
+  throat inside; two small pale eyes high on its head; ragged gill covers behind its cheeks; fans of rays either side
+  that scull; a short tail flattened side to side with a ragged fan; threads hanging from its chin. Its skin is rough
+  and black-blue, a shade paler on the jaw and grey under the belly, with rows of pale cyan lights down its flanks. The
+  moon is the brightest thing on it, pale and cratered and lit, with kelp hanging off it; it always hangs plumb below
+  the rod's tip, whatever the rod does. 81 cubes (486 faces) on 27 bones; 3 blocks wide and 6 long at true size from
+  the moon to the tail fan. Its middle hangs 26 px over the floor, its chin threads just clear of it. The hitbox is
+  2.0 x 2.8 at the def's scale 1.6 (3.2 x 4.5 blocks), round its head.
+  - **The idle.** It hangs in the deep: its fins scull in figures of eight, its tail sweeps slow strokes and its body
+    bobs and yaws against them; it breathes, its jaw working open and shut and its gill covers flaring after it; the
+    rod sways and the moon swells and settles. Swimming, it lowers its nose, lays its fins back and drives its tail
+    harder; it banks into its turns.
+  - **Its moves.** The bite draws back with its head turned aside and its jaw gaping, then lunges and snaps it shut,
+    the head tossing across (LIGHT; a string, the other side, then the Tide Turn). The Engulf (HEAVY, a gap closer)
+    brakes with its fins, coils its tail and unhinges its jaw wider than its head, surges at you mouth first on two
+    great strokes and slams it shut (8 blocks). Whoever is behind gets the lash: it bends into a curve and whips its
+    tail fan across. The Moonbeam (HEAVY) lifts the rod straight up until the moon hangs high over its head, swelling,
+    then tips it down at you and the beam comes out of the moon. The Tide Turn sinks with its fins pressed down, sweeps
+    them up and rises with them, and holds the sea up off the floor, beating them. The Undertow (the signature) backs
+    away, lifts the moon out of the way and opens its jaw wider and wider, trembling, its gill covers flared; it gulps
+    the sea in three great heaves, the covers clapping and its fins stroking back, and shuts its mouth (then it bites).
+    The Tide Halo (into the second phase) curls round its moon with the rod bowed until the moon hangs before its mouth
+    and its fins cupped about it; the moon blazes and it flings itself open. It waits sunk in the dark with its jaw
+    hanging and the moon dim; its intro lifts the rod first, the moon brightening, then rises on great strokes of its
+    tail and opens its jaw and calls. Its death convulses with its mouth stretched and the moon flaring, gasps once
+    more, then sinks nose first onto the floor and lists over, its jaw falling open on the stones and its rod bowing
+    until the moon lies before it, going dim (5 s). The moon's swells are scale tracks.
+  - **The swim layer.** A fish never stops swimming: under every move, after it is made, its tail keeps stroking, its
+    fins sculling, its gill covers pumping and its spines working, faded in and out over a quarter second at each end so
+    it hands back to the idle exactly as it was.
+  - **On the floor.** Every clip is checked tick by tick: where a pose would put a part under the floor, the body is
+    lifted by as much, spread three ticks either side, so it comes to rest on its jaw rather than through it. The chin
+    threads and the kelp may lie on the floor.
+  - **Meter.** No kinks outside a strike (worst 2.8°); held at most 3% on every move; dips at most 42%. Through a snap its
+    gill covers stay flared, its spines up and its rod lifted, so the whole body never crosses rest at once.
+- **The Architect of Rooms, the Hermit House** (body and motion, `kit/bosses/guardian_dreaming.py`). "You didn't come in
+  through that door." A hermit crab as big as a cottage that has made its shell of a house: a crooked two-storey house
+  of lilac clapboard on a stone footing, its upper storey turned askew on the lower like a house in a dream, a stepped
+  slate roof, a leaning brick chimney, a lamp hanging by the door, and every window lit from inside. Where the front door
+  should be the crab looks out: a coral carapace, two black eyes on stalks that swivel each its own way, long feelers,
+  mouthparts that never stop working, one huge granular claw held folded before its face and a small one for picking,
+  and four long banded legs that carry the house tipped back on its back. The door hangs open on its hinge beside it;
+  through the doorway, past the crab, there is a room with another lit door in it. 81 cubes (486 faces) on 42 bones;
+  2.5 blocks wide, 3.5 long and 3 tall at true size. The hitbox is 2.0 x 3.0 at the def's scale 1.8 (3.6 x 5.4 blocks),
+  round its house. Its legs stand by two-bone solves to where they stand, their knees riding up and out.
+  - **The idle.** Its house rocks a little on its back and the upper storey sways on the lower; its eyes look about,
+    each its own way; its feelers sweep; the big claw twitches open and shut; once a loop the small claw picks at the
+    floor and brings it to its mouth; a back leg shifts on each side in turn; the door creaks and the lamp swings. It
+    walks on its diagonal pairs by turns, the house rocking from side to side and nodding, the upper storey swaying
+    after it; running it goes low and the house lurches. Turning, each pair steps round while the other holds.
+  - **Its moves.** The snip of its small claw and the crush of its big one (LIGHT, a string, then the Claw Hammer): drawn
+    back open beside its face, then out and shut, leaning out of its door. The Claw Hammer (HEAVY, a hold) rears back in
+    its doorway with the big claw raised high over its house, trembling, and brings it down on the floor before it. The
+    Scuttle (HEAVY, a gap closer, 8 blocks) crouches with the big claw thrust out open and rushes at you on all four
+    legs, the house lurching, and shuts it. Whoever is behind it gets the house: it braces its front legs, tips the
+    house forward and heaves it back into them. The Shifting Floor rises on its legs with its claws up and drums them on
+    the floor in a running ripple, three times round, the house juddering and the door rattling. The Door Step backs
+    into its house, folding its legs in under the walls, and swings the door shut; the house sits shut on the floor
+    rocking while the crab turns about inside it; the door opens and it comes out eyes first, somewhere else. Other
+    Rooms (into the second phase) draws in with its claws up while its house shakes, rocking hard from side to side,
+    the upper storey twisting on the lower and the door banging open and shut. The Falling Ceiling (the signature)
+    rears up on its back legs, the house tipped back to the floor and its front legs lifted, and reaches both claws up
+    as high as they go, open and trembling; it takes hold of the air, shuts both claws on it and pulls the ceiling
+    down, coming down hard on its front legs and holding it there, juddering. It waits shut in its house, its legs
+    folded under the walls and its big claw across the doorway as a lid; its intro brings its eyes up out of the
+    doorway to look one way and the other, stands up out of the house and raises both claws wide at you, clacking them.
+    Its death rears with its claws flung up, lurches to its right, then goes over to its left, slowly and then all at
+    once, and lands on its side on the floor with a bounce, the upper storey jolting and the chimney rocking; the crab
+    spills half out of the door with it, its claws falling open, and its legs on the high side kick in the air and curl
+    in, one twitching after; its door swings open and hangs (5 s). Its mouthparts flutter under every clip, written in
+    after it is made.
+  - **On the floor.** Every pose of its death is lifted or lowered as a whole so the lowest part of the fallen house
+    lies on the floor; its legs there are placed in the crab's own frame, so they fall with it. Drawn in, the house sits
+    level on its footing just clear of the floor. The ground pass bends the knees, the claws and (in its death) the
+    feelers back off the floor.
+  - **Meter.** Worst kink outside a strike 4.5°; held at most 14% on every move; dips at most 27%. Shut in its house on
+    the Door Step it never stops: the house rocks, the crab turns inside it and its eyes look about the room.
+
+- **The Shadow Regent, the Long Shadow** (body and motion, `kit/bosses/guardian_court.py`). "It sits the way you sit."
+  Your shadow, stood up off the floor and stretched the way a shadow stretches at dusk: half again as tall as a man and
+  thin, its arms hanging to its knees, its body as flat as a shadow is. It has a court's shape: a spiked crown, a tall
+  fan collar standing up behind its head, puffed shoulders over a narrow waist, a long cape falling in tatters nearly
+  to the floor. It is black-violet all through, rimmed in cold violet light along its edges like a shadow with a lamp
+  behind it, with two pale points for eyes. In its right hand a long black sword edged with violet; its left hand is
+  empty, the long fingers spread. Its feet stand in a pool of shadow that goes everywhere with it, and its own flat
+  cast shadow lies on the floor behind it; only the outline of the two glows. Out of the pool rises the throne it sits
+  on. 87 cubes (522 faces) on 38 bones; 46 px to its crown's points at true size (2.9 blocks). The hitbox is 0.8 x 2.9
+  at the def's scale 1.6 (1.3 x 4.6 blocks). Each arm hangs from a shoulder bone and each hand from a wrist bone that
+  hold its rest turns and are never keyed, so the arms and hands rest at nothing and their turns stay clear of the
+  Euler triple's fold at 90 degrees.
+  - **The idle.** It stands tall with its point low before it: its fingers flex one after another and spread, its head
+    tilts to look you over, its sword's point traces slow circles near the floor, its cape stirs, and once a loop it
+    rolls its shoulders and straightens, taller, like a shadow when the candle flares. Its whole shape wavers, a slow
+    stretch and narrowing written into the idle, the walk, the run and the turns after they are made. It walks slow
+    and long, its head level as if it glided, the point trailing low; it runs bent forward with its left hand reaching
+    ahead and the cape streaming. Struck, its whole shape ripples (it narrows and stretches and snaps back).
+  - **Its moves.** The Cut and the Backcut (LIGHT, a string, then the Long Reach): up past its right shoulder and down
+    across to its left hip with a long step, then back up across to its right shoulder. The Long Reach (HEAVY, a hold)
+    draws the sword back beside its head with the point at you, its arm drawn in short; then it thrusts and its arm
+    stretches out nearly twice as long (a scale track on the arm and forearm) and snaps back. The Rake (LIGHT) draws its
+    left hand up high with the fingers flung open and rakes down across in front of it, the forearm stretching after
+    you and the fingers closing like a claw. Your Parry holds the blade across before its face with its long fingers
+    spread on the flat, jolting up as each blow lands, then the Riposte drives the point in under your guard from low
+    at its hip. Your Charge (HEAVY, a gap closer, 8 blocks) flings its arms up over its head and falls flat along the
+    floor as a cast shadow falls, stretched long, and slides at you; it stands up out of the floor all at once,
+    pivoting on its feet like a hinge, and brings the sword down. Whoever is behind it gets the Turnabout: its head
+    turns right round on its shoulders to look at you, its sword arm swings out long to its side and round behind it,
+    and it stabs straight back. The Shadowstep folds it down into its pool until nothing of it stands over the floor,
+    and it rises up out of the pool somewhere else, taller than it is for a moment (a linear scale track: a curve
+    through its flattest would overshoot past nothing and turn it inside out). Your Reflections (into the second phase)
+    flings its arms wide and throws its head back while its whole shape shudders, stretching, narrowing and widening.
+    The Hollow Halo (the signature) lifts its fingers to its crown and its sword high; the crown rises off its head and
+    widens into a ring over it, level and turning, growing and trembling; then its arms come down, the ring comes down
+    round its chest on a whole turn and breaks outward, and is gone (it winds back while it is gone); its crown comes
+    back on its head after. Its intro sits on its throne the way you sit, its chin on its long fingers, its right foot
+    tapping and the pommel turning in its hand; its head turns to you; it stands, the throne sinks back into the pool,
+    and it lifts its sword before its face in a salute, bows over it and lowers the point. Broken, it sits on its
+    throne, which rises out of the pool behind it, and stands up out of it as the throne sinks. Its death reels back
+    with its arms flung out; its sword falls from its hand and lies on the floor before it; it sinks to its knees
+    reaching up with its long fingers; its crown slips off and rolls away; it lies back down into its own shadow and
+    flattens into it, the last of it its hand (5 s).
+  - **How its keys are written.** Its sword moves are poses given as specs, and between two specs each hand swings
+    round its shoulder (its reach and its bearing turning between the two) with the blade's line turning between its
+    two, the point kept over the floor; the wrist bends by the least turn from where the forearm carries the hand, with
+    no twist. Every clip's turns are then written by a shortest-path pass (each key's turn in whichever of its two Euler
+    triples, give or take whole turns, makes the way from the clip's start to its end shortest, both ends on rest's own
+    numbers): IK solves each key alone, and a clip is read angle by angle. Poses that loosen a part (the crown, the
+    fallen sword) put it at a place in the room wherever its parent lies.
+  - **On the floor.** Its hands, its sword, its long fingers and its cape are kept out of the floor by the ground pass;
+    the in-between keys of its death and of the charge's rise are lifted as a whole just enough to keep its legs clear;
+    seated, its thighs lie on the seat's top. The pool and the cast shadow lie flush on the floor.
+  - **Meter.** Worst kink outside a strike 5.9° (the Cut into the Rake), most moves under 5°; held at most 13% on every
+    move; dips at most 26%.
+- **The Seed Warden, the Husk That Opens** (body and motion, `kit/bosses/guardian_seed.py`). "The last door. It has
+  been waiting." A seed as big as a house hanging in the dark at the bottom of everything, in four great valves of husk
+  that close round it the way a chestnut's case does: dark cool slate, lacquered, each valve stepping out from thin
+  edges to a pale keel up its middle that a thread of light runs along, the lower edge of each scale lipped over the
+  one below and the tip hooked over the top; their insides are pale satin gold, ribbed and veined with light. Through
+  the seams you see the seed, grey-white stone with a fine grain and a crack of light down its face. The seed is two
+  halves hinged down its back; when they part, the light inside stands in the shape of a door, white in a gold frame.
+  It sits in a dark cup with a broken stalk under it frayed into three threads, and three small seeds with lit tips
+  circle it. 86 cubes (516 faces) on 36 bones; 50 px to its hooked tips at true size (3.1 blocks), hanging 14 px off
+  the floor. The hitbox is 1.8 x 3.1 at its scale of 1.6.
+  - **Its idle.** It breathes like a jellyfish: its valves close quickly and open slowly, twice in six seconds, a ripple
+    running round the four so they never move as one; each close lifts it a little and it sinks back as they open. Its
+    seed turns inside them looking about (it is the look bone), its halves easing apart a little as it breathes out and
+    the door's light swelling; the stalk swings after the body, and the small seeds rock on their orbit and bob (they
+    never spin round: a loop that turns a whole way would unwind at the wrap and on every blend). Moving, it leans its
+    top into the way it goes and pulses harder, its back valves flaring like a skirt and the stalk streaming back.
+  - **Its moves.** The Swipe and its mirror (LIGHT, a string): one front valve opens out, swings round back past its
+    side and the body leans in and turns away with it while the back valves clench and the other front valve reaches
+    across as a counterweight; then it turns back hard and the valve sweeps across in front of it, low, like a scythe.
+    An open valve sweeps by turning about the upright at its hinge; its roll only leans it while it stands up. The
+    Clasp (HEAVY, a gap closer, 8 blocks): it draws up and back and opens all four valves like a claw over you, their
+    tips hooked, then drops on you top first and clasps them shut. Whoever is behind it gets the Whip: its valves
+    splay out flat like blades and the ring of them winds back round it, then whips round the other way. The Signal
+    Lance (HEAVY, a hold): its front valves swing apart round the ring and its back ones clench, the seed opens and the
+    door swells; it leans back, then tips its top at you and the lance leaves the door. The Signal Marks: it sinks and
+    shuts, then opens to the sky like a flower with its valves bent back and its seed looking up, and four times it
+    clenches and flares, a light going up each time. The Motes (into the second phase, "The door opens a crack"): it
+    shakes like a seed head in the wind, its valves rattling, then the seed opens a crack and its three small seeds
+    fly out and go (a linear scale track to nothing) while it shudders on; they grow back over its recovery. The Door
+    Light (the signature): it shuts tight in a quarter of its wind-up and trembles harder and harder, its valves
+    clenching in growing beats, then rises and flings every valve back and down like a flower turned inside out, the
+    seed's halves opening right back and the door of light standing open; it folds back slowly. Its intro starts
+    where the kneel leaves it, shut on the floor, light leaking from its seams; it shudders, lifts, and unfolds on one
+    great pulse. Broken, it sinks to the floor shut on its cup, its stalk laid over under it and one valve slack; it
+    rises on one great pulse of its valves. Its death flings its valves open and the light flares, pulses once more,
+    weakly, then drops and its valves fall open round it on the floor like a spent flower, the seed lying open in the
+    middle with its light going out and the small seeds lying beside it (5 s).
+  - **How its keys are written.** One pose function over its parts (each valve's open, curl, splay and sweep, the ring,
+    the seed's parting and its turn, the stalk, the orbit); the door of light and the small seeds are scale tracks of
+    their own. Every move's follow-through is a pose of its own, not the last active key again (that held the body
+    still for a quarter of its recovery). Under every move its hooked tips stir, its stalk swings and the small seeds
+    bob, faded in and out at the ends. Where a pose would put a part into the floor the body is lifted by as much.
+  - **On the floor.** Nothing of it goes into the floor but its three threads, which brush it by at most 1.6 px.
+  - **Meter.** Worst kink outside a strike 4.5° (the intro); held at most 12% on every move; the swipe strings dip 38%,
+    the Clasp into a swipe 44% (its own valves close through rest as it clasps).
+- **The Sovereign of Hunger, the Gorged King** (body and motion, `kit/bosses/sovereign_hunger.py`). "It ate the
+  direction it came from." A king who ate his court, grown so heavy he crawls on his knuckles. His crimson robe falls in
+  folds over a hunched back, gold at its hems, his crest on the back of it in gold thread (a crowned mouth), an ermine
+  capelet over his shoulders and his chain of office across his breast. Under it hangs a belly so swollen the robe has
+  split open over its top: pale, stretched shiny, thin purple veins and pale stretch marks over it. Across its front
+  runs a second mouth, its lips dark and wet, a row of yellow teeth along each, and inside a dark tongue and a red lit
+  gullet; the lower lip is a hinge at the back, so the front drops open. His arms are long and starved, grey, with puffed
+  sleeves, ermine cuffs, gold bangles and a gold ring on every finger; he walks on his fingers folded under his palms
+  and spreads them to slap. His short legs are bent under him, the train dragging behind in three links. His head is
+  small and starved, sunk cheeks and two red sparks in dark sockets, a thin beard, and his gold crown with its red stone
+  has slipped down to one side. 72 cubes (432 faces) on 25 bones; 63 px to the crown's points at true size (3.9 blocks),
+  the hump 3.4 blocks, the belly 2.5 blocks across and hanging 0.8 blocks off the floor. The hitbox is 1.6 x 2.0 at
+  its scale of 1.8.
+  - **His idle.** He breathes hard, three breaths in six seconds, the belly swelling with each (a scale track) and
+    swaying after him; the belly mouth chews on nothing, twice; his small head jerks from one place to another and holds
+    there, looking for food; the fingers of one hand drum on the floor; he shifts his weight from hand to hand and his
+    crown rocks. Walking he knuckle-walks one limb at a time, each long arm swinging round and planting its fist, the
+    belly swinging from side to side under him and the train dragging; running he lopes, both arms thrown forward
+    together and his legs hopping after, the belly bouncing.
+  - **His moves.** The Slap and its mirror (LIGHT, a string): one long arm lifted high and out to his side, the ringed
+    fingers spread, as he leans onto his other hand and turns away; then he lunges after it, low and forward, and rakes
+    the open hand across in front of him, the belly swinging out the other way. Devour (HEAVY, a gap closer, 7 blocks):
+    he crouches, rocks back onto his legs with his arms flung wide and the belly mouth gaping, holds, then throws
+    himself forward and lands belly first, the mouth snapping shut on you; he chews and pushes himself up. Whoever is
+    behind him gets the Sweep: he looks back over his shoulder, draws his right arm up over his hump and swings it round
+    behind him, low over the floor, and brings it back round his side. Gnawing Pull: hands planted wide, he lowers his
+    front and breathes in, the belly mouth gaping at you and the belly swelling (a scale track to 1.13), his train
+    blown toward him, then the mouth gnaws at the air. Hounds of the Court (into the second phase, "It is still
+    hungry"): he sits back on his haunches and claps his long hands twice over the belly, then throws his head back and
+    roars with both mouths, his arms wide. Gorge (HEAVY): he crouches, rises, rears up over the floor in front of him and
+    drops the belly mouth on it, and worries the bite from side to side like a dog with meat, the floor breaking round
+    him. Starving Frenzy (into the third phase, "Starving"): he rears half up and claws at the air, left and right,
+    faster and faster, the belly mouth snapping with each. Famine (the signature): he folds over his belly with his arms
+    round it and his head bowed, shuddering, and breathes in until the belly caves in to his ribs (a scale track to
+    0.78); then he throws his arms wide and his head back and howls with the belly mouth gaping, and the belly slowly
+    swells again. His intro starts where the kneel leaves him, slumped on his belly with his arms out in front of him:
+    he lifts his head and sniffs one way and the other, pushes himself up, sits back and yawns with the belly mouth,
+    and comes forward onto his knuckles to look at you. Broken, his arms slide out from under him and he flops onto
+    his belly; he rises by pushing himself up. His death: he rears back on his legs clutching his belly, its mouth
+    gaping, sways, falls forward onto it, and it spreads under him; his arms reach out ahead along the floor, his crown
+    tips forward off his head, the belly mouth opens once more, slowly, and closes (5 s).
+  - **How his keys are written.** One pose function over his parts (his hips and chest, the belly's swing and sag, the
+    mouth's opening, each hand and foot by two-bone IK, how they lie, the fingers' spread, the train, the crown). A pose
+    on his belly is solved where it lies: its height is found from the belly and the mouth first, then the hands and
+    feet reach for their places (letting the solved body down afterwards would sink them into the floor). On his belly
+    his legs fold under him like a frog's with the knees out to the sides, and they stay that way as he pushes himself
+    up, so the knees never swing from one side to the other in a tick. The belly mouth opens wide only where his front
+    is raised: on the floor its lip would dig in.
+  - **On the floor.** His hands, his feet, the belly's lower lip, his head and the train's end are kept out of the
+    floor by the ground pass; nothing goes into it by more than 1.5 px in any clip.
+  - **Meter.** Worst kink outside a strike 5.6° (the Sweep's planted hand as he turns), every other move under 4.5°;
+    held at most 14% (the intro); the slap strings dip 36 to 40%, the slaps into the Gorge 41%.
+- **The Sovereign of Silence, the Stone Ear** (body and motion, `kit/bosses/sovereign_silence.py`). "It listened until
+  there was nothing left to hear." A stooped giant of pale stone with a faint violet cast, long legged and long in the
+  arm, its short body bent 36 degrees forward and its hands hanging to its knees. Its whole head is one great ear on a
+  long neck rising out of the hunch: no face, only a plate of stone shaped like an ear, its rim curling over the top and
+  down the back into a hanging lobe, the ridge inside it, the flap before the canal, the back of it rounded like a
+  shell. The rim and ridges are the palest stone on it; inside them the ear is dusky flesh darkening down into the bowl
+  and to black at the canal, whose upper and back lip holds a thin cold light (a crescent, not a ring, so it never reads
+  as an eye). At rest the ear stands turned 34 degrees to its left and cocked 12, as you turn an ear to a sound; the
+  moves that aim it turn it square to you. A black veil hangs from its shoulders to its knees, gathered round the root
+  of its neck, a pale thread along its hem and its tatters; six small ears grow out of its shoulders and back through
+  it and twitch on springs. Its long hands have their fingers on one bone (they close into a fist) and the index on its
+  own (it points). 82 cubes (492 faces) on 32 bones; 96 px to the top of the ear at true size (6 blocks), the canal at
+  4.7 blocks, 3 blocks across the hands. The hitbox is 0.95 x 3.1 at its scale of 1.9 (1.8 x 5.9 blocks).
+  - **Its idle.** It stands still, listening: the ear turns slowly to one side and stops, gives a small sharp tilt as a
+    dog's head tilts, holds, and turns slowly back the other way; the small ears twitch round now and then, the long
+    fingers flex once, it breathes slowly (7 s). It walks as a stalk, long slow strides with the knees lifted high, its
+    body low and leaning into them, the arms swinging a little and the fingers trailing, the ear turning from side to
+    side as it goes.
+  - **Its moves.** The Rake and its mirror (LIGHT, a string): one long arm reaches up and back over its shoulder, the
+    other hand reaching forward, its body turning away; the hand comes down across in front of it, the fingers raking.
+    Found You (HEAVY, its gap closer, 5 blocks): it goes still and turns its ear square to you and tilts it, leaning in,
+    its fingers curling; then rears up straight with both fists over the ear, holds, and lunges at you in one long
+    stride, bringing them down together where you stand, its knees giving. No Sound At All: it straightens and lays one long finger straight up across the canal, as across lips (the
+    hand is turned to the ear's own frame, so the finger lies on the canal however the ear stands), the ear bowing over
+    it, the small ears flat, its other hand spread low at its side while the light goes out of the room. Whoever is
+    behind it gets the back-kick: it pitches forward onto its long arms and kicks its right leg straight back like a
+    mule. Inverted Scream (HEAVY, a beam from the canal as it pours, 3.6 blocks up and 2.5 forward): it grips the rim of
+    its ear in both hands and tips it right back, shuddering, the canal swelling (a scale track to 1.5); then it lets
+    go, braces, throws its arms wide and thrusts the ear at you, and the canal judders as it pours. Ears (into the second
+    phase, "It hears your heartbeat"): it reaches over each shoulder in turn, plucks an ear off it (a scale track to 0)
+    and throws it down in front of it; they grow back. Hush (into the third phase, "Silence."): it cups both hands
+    behind the rim of its ear and leans far toward you, the ear turning a little one way and the other to find you.
+    Deafening Silence (the signature): it claps both hands over its ear and curls over them, sinking, and shakes harder
+    and harder; then it straightens all at once and throws its arms wide and its ear back, the canal opening wide. Its
+    intro: it stands with its ear turned right away from you, listening to something far off; the small ears turn toward
+    you; the ear comes round slowly and stops on you, tilts, and it lowers itself into its stoop and spreads its fingers.
+    Broken, it sinks onto its right knee, the left foot planted ahead and its left hand flat on the floor, its ear
+    hanging; it rises with a push off the hand. Its death: it staggers, claps its hands over its ear, sinks onto both
+    knees and rocks, tips to its left onto that hand, and topples onto its side with its legs still folded, its left arm
+    stretched out along the floor past its head and its right hand still over its ear, the veil falling flat (4.6 s).
+  - **How its keys are written.** One pose function over its parts (its hips, spine, chest, neck and ear, each wrist by
+    two-bone IK to a point in the body or on a bone, how the hands lie, the fingers' curl and the pointing index, the
+    small ears, the veil, and how far the ear turns to you). Lying keys are solved where they lie: the body is set down
+    on its lowest solid part (the veil drapes) and the bottom leg's thigh turned at the hip, the least it can, so the
+    leg lies on the floor too. Kneeling, the shins lie flat and the feet on their insteps, soles up; on one knee the
+    front foot is planted by IK.
+  - **On the floor.** Its hands, fingers, ear and the veil's end are kept out of the floor by the ground pass, its feet
+    in the kneel, the rise, the run and the death; nothing goes into it by more than 1.5 px in any clip.
+  - **Meter.** Worst kink outside a strike 4.5° (the back-kick's kicking foot as it comes down), every other move under 4°; held at most
+    35% (the intro, which holds still on purpose); the rakes dip 14 to 17%, the Hush into Found You 41%.
+- **The Sovereign of Sleep, the Night Owl** (body and motion, `kit/bosses/sovereign_sleep.py`). "It never let anyone
+  wake up." A great owl that hangs in the air asleep, 148 px from wingtip to wingtip at true size (9 blocks). Its eyes
+  are shut under heavy pale lids with a dark lash line, and it dozes as it hovers. Its back and the tops of its wings
+  are the night: dark plum speckled with small pale stars that glow, barred darker toward the tips. Beneath, it is pale
+  dusk lilac barred with plum, the breast flecked with chevrons. Its face is a pale heart-shaped disc rimmed in dark
+  plum, with a small hooked beak and two long ear tufts that sweep back like a crown, a pale crescent moon glowing on
+  its brow between them. Its legs are feathered to the toes and the talons are dark. Each wing is three bones (arm,
+  forearm, hand) with its coverts and secondaries, and every primary at the tip is a bone of its own, so they spread
+  like fingers. The body is built level, as it flies, and at rest it hangs pitched 50 degrees nose up with its head and
+  legs turned back level, as a hovering bird does. Under each lid is the eye: a great black pupil in a thin ring of
+  glowing pink, one white catchlight; the lid is scaled to nothing to open it. 74 cubes (444 faces) on 36 bones; the
+  top of its tufts 93 px up (5.8 blocks), its toes 20 px off the ground. The hitbox is 0.88 x 1.72 at its scale of 3.2
+  (2.8 x 5.5 blocks), round its body and not its wings.
+  - **Its idle.** It hangs in the air asleep (8 s): slow deep beats, its body rising on each downstroke; its head nods
+    slowly forward as it drops off and jerks up again, and it shakes its head; later it turns its head slowly right
+    round to one side and back. Its legs dangle and its toes flex, its tail fans, and its throat swells with a soft
+    hoot. Flying, it levels out nose down and its beats go long and low, the legs tucked back under it; it banks into
+    its turns with its head held level. It has no walk or run: like the Sky Leviathan it has fly and its two turns.
+  - **Its moves.** The Talon and its mirror (LIGHT, a string): it rears back in the air, its wings lifting, and draws
+    one foot up with its talons open, then lunges and rakes it down and across in front of it, the talons closing. The
+    Buffet (LIGHT): it turns in the air and draws its right wing far back, then sweeps it round in front of it in one
+    heavy beat, the primaries spread like a hand. Night Dive (HEAVY, its gap closer, 8 blocks, held 6 ticks at the
+    top): two strong beats carry it up, its head tipping to keep you in sight; it folds its wings and drops on you head
+    first, and at the last throws its talons forward with its wings flaring wide to brake. Lullaby: it wraps itself in
+    its wings like a blanket, its head bowed into them, and rocks slowly from side to side, hooting softly (the throat
+    swells with each hoot, a scale track) while the dark comes down. Lullabies (into the second phase): it fluffs itself
+    up until it is round (the body scales to 1.16) and shakes like a wet bird, then throws its wings open and three small
+    owls fly out of its feathers. Dream Fall (ranged and area): it rises with its wings high over its back and beats
+    down hard three times, each beat throwing it up, and the dreams fall round you. Whoever is behind it gets Over Its
+    Back: its head turns slowly right round until its face looks back over its back (its own track, 170 degrees and held
+    through the blow, then back the long way slowly), and it rolls and swings a wing back at them. Never Wake (the
+    signature, into the third phase): it hides its face in its wings, folding them round its head and bowing into them,
+    and trembles; then it throws them wide, lifts its head, opens its eyes for the first time and screams. Its intro: it
+    hangs wrapped in its wings with its head tucked down into them; its tufts lift, it raises its head (the eyes still
+    shut) and turns it toward you, shakes its feathers out and unfolds its wings with one great beat. Broken, it nods off
+    and sinks in the air, its head hanging and its wings drooping; it rises out of it with one great beat. Its death: it
+    opens its eyes and looks at you, they close slowly, its head falls, and it drops out of the air onto its back with
+    its wings spread on the floor (4.6 s).
+  - **How its keys are written.** One pose function over its parts (the body's pitch, yaw, roll and height, each wing's
+    lift, curl, sweep, fold, fan and twist with a travelling wave for the beats, the head, beak, throat, legs, tail and
+    tufts), and a wingbeat function by phase. Every move's keys start and end on its hovering rest, not the bind pose,
+    with a wind-up key early enough that no counter key is added. The lids are scaled on straight lines: a curve would
+    overshoot past open and fold them down over the eyes.
+  - **On the floor.** Its wings, primaries, tail, head and tufts are kept out of the floor by the ground pass in every
+    clip (it lies there only in its death); nothing goes into it by more than 1.5 px.
+  - **Meter.** Worst kink outside a strike 4.8° (Lullabies, as it shakes), every other move under 3.7°; held at most 25%
+    (the Lullaby, which rocks slowly on purpose); the talon strings dip 36 to 40%.
+- **The Sovereign of Machines, the Armillary** (body and motion, `kit/bosses/sovereign_machines.py`). "It built until
+  nothing was left to build with." A hulking engine of deep pale-blue enamel plates over a nearly black iron frame,
+  broad in the chest and narrow at the waist, with long heavy arms like a great ape's. Its forearms are sleeved
+  gauntlets on chrome rams that drive the clamp fists out 6 px along the forearm when it punches; each clamp is a palm,
+  knuckles, a thumb and three fingers on one bone. Brass at the knees, the elbows, the shoulder caps, the turntable of
+  its waist and five short prongs round its collar. It has no head: on a short axle above its shoulders sits an
+  armillary sphere, a gold core like a small sun (white-hot at its middle, glowing) with one dark lens and a white
+  pupil, three bronze rings round it marked like dials (the inner ring's marks glow gold), each ring on its own tilt,
+  and two pale moons on long arms going round them. A furnace grille glows gold between its chest plates and a gold
+  seam runs along each plate's inner edge; three satellites ride docked in a row on a rack on its back, their eyes
+  lit. The core and the lens are bones of their own so each can swell and dim. 88 cubes (528 faces) on 39 bones; the
+  top of its outer ring 93 px up (5.8 blocks), 4.2 blocks across the arms. The hitbox is 1.2 x 3.05 at its scale of
+  1.9 (2.3 x 5.8 blocks), round its chest.
+  - **Its idle.** It stands heavy and still, working (6 s): its chest pumps like a slow engine; the sphere turns to one
+    side in a quick mechanical sweep and stops dead, holds, sweeps to the other side, stops and comes back; one clamp
+    closes and opens as if testing its grip, then the other; a ram twitches out and back with a hiss. It walks as a
+    stomp (1.6 s), heavy flat-footed strides with the body dropping onto each foot and the chest jolting, the long arms
+    swinging late, the sphere held level and square to the way it goes; it runs the same, longer and lower (0.9 s).
+  - **Its moves.** The punch and its mirror (LIGHT, a string): it draws one fist back with the off hand up on guard,
+    then drives it out with the ram firing. Hydraulic Slam (HEAVY, its gap closer, 6 blocks, held 10 ticks): it crouches
+    with both fists high and leaps at you, bringing them down together. Calculated Lance (HEAVY, ranged, held 8 ticks):
+    it plants its feet and points at you while its rings whirl and stop and turn to face you, lined up into a sight round
+    the lens by the end of the wind-up; the lens swells to 1.5 and the core to 1.25 and the beam leaves the lens.
+    Drones (into the second phase): it rolls its shoulders and the three satellites lift off its back one after another
+    and are gone; they fold out of the rack again as it recovers. Orbital Strike (ranged and area): it raises one open
+    hand to the sky, its rings and moons whirling, and brings it down to point at you. Spark Lattice: it strikes its
+    fists together twice like flints. Whoever is behind it gets the Turntable (LIGHT): its waist turns right round on
+    its own track with its arms out. Shutdown (the signature, into the third phase): everything stops, its core dims to
+    0.6, its arms drop and its sphere sags; then it jolts awake, the core blazing to 1.55 and its rings whipping round
+    three times, and throws its arms wide. Its intro: it stands dark and still, then its rings start one after another
+    and the core flickers on. Broken, it drops onto its right knee and its right fist, the right foot lifting back off
+    the floor first so it never sweeps through it; it rises with a push off the fist. Its death is a shutdown: its rings
+    slow and stop one after another and its core dims, its arms drop, its legs give way (both feet fold up off the
+    floor as it drops onto its knees), it sags and tips forward and falls on its face, and its rings close round the
+    lens into one plane, which lies flat on the floor when the sphere faces it (4.6 s; the outer ring is wider than the
+    sphere and would dig in on any other tilt).
+  - **How its keys are written.** One pose function over its parts (its hips, waist, chest, axle and sphere, each wrist
+    by two-bone IK to a point in the body or on a bone, how the hands lie, the clamps' curl, the rams' reach, and how
+    far the rings turn toward the sight). The clamps' bind pose is their resting curl, so nothing snaps at a clip's end.
+    The rings work like clockwork, because the idle plays under everything at partial weight (0.45 under the walk) and
+    a spin under it would show as part of a turn and snap: in the idle they rock to and fro like a balance wheel (the
+    inner ring 50 degrees each way every 2 s, the outer 26 every 6 s, the moons swinging round and back); in a move,
+    which plays at full weight, each whirls round a whole number of turns in one smooth flick and is set back the instant
+    the flick ends (a whole turn is no turn), so the move adds nothing to them between flicks and ends on nothing; the
+    walk and the run key none. The core's swell and dimming are scale tracks on its own bone.
+  - **On the floor.** Its hands and clamps are kept out of the floor by the ground pass in every clip, its feet in the
+    kneel, the rise, the walk and the run, and in its death its hands, feet, core, lens, rings and moons too; nothing
+    goes into it by more than 1.5 px in any clip. The keys are written to clear the floor themselves, so the ground pass
+    only trims: the kneel's lift plants the right foot 12 px up and 12 px back, the death's buckle folds both feet 15 px
+    up, the kneeling feet stand on their toes at 76 degrees, and the landing key is set 1.5 px high because the curve
+    carries the weight a little past it.
+  - **Meter.** Worst kink outside a strike 4.0° (the Spark Lattice), every other move under 3.9°; held at most 33% (the
+    Turntable); the punch strings dip 40 to 41%.
+- **The Sovereign of Mirrors, the Vanity** (body and motion, `kit/bosses/sovereign_mirrors.py`). "It only ever looked
+  at itself." A tall slender figure in a white satin coat with silver brocade dots, a lattice bodice and a rose sash, a
+  short peplum and a coat tail hanging behind to its knees on a spring; long legs in dove-grey hose and black heeled
+  boots with pointed toes. Its face is porcelain with a small painted smile, its black hair lacquered up into a tall
+  knot with a silver pin through it and a pearl at each ear. It has six arms: the top pair in satin sleeves with puffed
+  caps and lace cuffs, the lower two pairs bare porcelain growing from its chest and waist. Five hands hold round hand
+  mirrors in bright rose-gold frames (the great one in its top left hand, half again the size of the others); the
+  glass shows a sky and a glowing glint, the great mirror the ghost of its face, and each back is polished silver with a
+  rose-gold rosette. The sixth hand holds a long blade of glass on a silver hilt, its edges glowing. Every mirror is
+  turned to its own face, wherever that is: each pose solves the hand round the handle and lays the glass toward the
+  middle of its face, so the mirrors follow its head through every clip without keys of their own. 98 cubes (588
+  faces) on 36 bones; the top of its knot 94 px up (5.9 blocks). The hitbox is 0.9 x 3.25 at its scale of 1.8 (1.6 x
+  5.85 blocks), round its body.
+  - **Its idle.** It stands admiring itself (8 s): its weight shifts from one hip to the other, it turns its face to the
+    great mirror and tilts it, glances into the mirror over its right shoulder to see its profile, lifts its chin
+    proudly with the high mirrors rising, and turns the glass blade over in its fingers; it breathes. It walks as on a
+    stage (1.4 s), each foot set down in front of the other on one line, the hips swaying and the head held high; it
+    runs gliding and leaning in (0.8 s), the mirrors drawn in close round its face.
+  - **Its moves.** The forehand and the rising backhand (LIGHT, a string) with the glass blade, its face never leaving
+    the great mirror. Mirrored Lunge (HEAVY, its gap closer, held 6 ticks): it turns side-on with the blade drawn back
+    level beside its face and every mirror swings round to face you, then it lunges, the front foot reaching far ahead
+    and the blade arm straight out. Flawless Parry (a guard): it raises the great mirror before it like a shield, the
+    blade crossed low, and every blow jolts the mirror back; the Reflection follows it (LIGHT), a straight thrust past
+    the mirror's edge. Whoever is behind it gets Over the Shoulder (LIGHT): the low right mirror swings out so it sees
+    you in it, its face turning down into the glass, and it thrusts the blade straight back under its arm. Hall of
+    Mirrors (into the second phase): all six arms spread wide with every mirror turned out on you and it turns once
+    round on its toes like a dancer. Through the Glass: it lifts the great mirror high over its head and draws it down
+    in front of itself as it bows into it. Shatter (the signature, into the third phase): it draws every mirror in close
+    round its face and turns from one to the next faster and faster, then flings all six arms wide with its head thrown
+    back as the five mirrors burst (scale 1 to 1.2 to 0 in two ticks); they grow back out of their frames one after
+    another as it recovers. Its intro: its arms hang with the mirrors face down and its head bowed; it raises them round
+    its face one after another, looking into each, and settles with a tilt of its chin. Broken, it sinks onto its right
+    knee with the blade's point on the floor and holds every mirror up round its face to see that it is not marked; it
+    rises with a push on the blade. Its death (4.8 s): it gazes into the great mirror while the other four break one
+    after another and it starts at each, then its legs give way onto its knees and it lies down on its side, curled,
+    with the last mirror held to its face.
+  - **How its keys are written.** One pose function over the body (its hips, waist, chest, neck and head), each wrist
+    by two-bone IK to a point, the blade's line, and each mirror's aim (its face, a point, or a direction). The rest is
+    the bind pose: the arms are solved onto their rest wrists, the blade's hand turned to its line and the mirrors to
+    the face, so nothing snaps at a clip's end. The aim is taken from above the wrist, not from the glass, so solving
+    it again changes nothing. A hand that has to turn a long way (the Reflection's wind-up) is solved along the way at
+    eased steps, the wrist travelling straight and the mirror's aim blended, so its turn never takes the long way
+    round; the blade keeps its flat to one side through its thrusts for the same reason. The Hall's turn is a whole
+    turn of the hips on top of its keys, a key a tick; the mirrors' bursts are scale tracks on their own bones.
+  - **On the floor.** Its hands, mirrors and blade are kept out of the floor by the ground pass in every clip, its
+    feet in the kneel, the rise, the walk and the run, and in its death its head and the great mirror too. Nothing
+    goes into it by more than 1.5 px, but for the Mirrored Lunge's back foot (1.8 px for a frame as it drives off).
+    The kneel's lift carries the right foot 12 px up and 12 px back; the death's halfway key to lying down is set
+    2.5 px high and the bow of Through the Glass has a key between set 1.5 px high.
+  - **Meter.** Worst kink outside a strike 5.1° (Shatter's head, flicking from mirror to mirror on purpose), every
+    other move under 5°; the Reflection alone from rest 7.1° (in the fight it always follows the parry, 4.9°); held at
+    most 50% (the Hall, which turns slowly on purpose); the cut strings dip 6 to 30%.
+- **The Sovereign of Storms, the Gale Hound** (body and motion, `kit/bosses/sovereign_storms.py`). "It went so fast it
+  left itself behind." A huge lean hound built for speed: a deep chest and a tucked waist, long legs with big dark pads
+  and claws, a long narrow head with a deep muzzle, black lips and fangs, and tall ears swept back. Its hide is slate
+  blue-black run through with zig-zag veins of lightning down its flanks, legs and neck, and a glowing ridge along its
+  spine. Its ruff, the crest down its neck and back, its cheeks and its long plume of a tail are thundercloud, pale
+  grey billowing to white, with sparks in them: the tail is the wind it left behind, four bones long, each piece
+  wider than the last. Its eyes are white-hot under a heavy brow, its throat glows when its jaws open, and its ears
+  glow faintly inside. 62 cubes (372 faces) on 28 bones; the tips of its ears 3.5 blocks up. The hitbox is 1.2 x 1.48
+  at its scale of 2.4 (2.9 x 3.55 blocks), round its trunk.
+  - **Its idle.** It stands panting (6 s), its ribs and jaw working; it looks to one side, sniffs the air with its nose
+    up, flicks an ear, looks to the other side, and shifts a forepaw. It walks paw by paw (1.2 s), its head low, and
+    runs at a hound's gallop (0.6 s): the hind pair and then the fore pair, two flights a stride, its back flexing and
+    stretching and the plume streaming out behind.
+  - **Its moves.** The Snap (LIGHT): it draws back on its haunches with its lips up off its fangs, then lunges in from
+    the shoulders and snaps its jaws shut. The Rake (LIGHT, after the Snap): it rears its front up off its left forepaw,
+    the paw high with the claws out, and rakes it down across in front of it. The Bolt (HEAVY, its gap closer, held 8
+    ticks): it drops into a crouch with its hind legs bunched under it and its hackles up, quivers, and leaps 8 blocks
+    at you stretched out flat with its forelegs reaching, landing on braced forelegs with its jaws snapping shut.
+    Thunderclap (HEAVY, held 8 ticks): it rears right up on its hind legs with its forelegs curled to its chest, and
+    comes down on its forepaws with all its weight, as a fox comes down on a mouse. Lightning: it sits back on its
+    haunches as a dog sits (its hips drawn back over its hind paws, the hocks down) and howls at the sky, its throat
+    working. Storm Spears (into the second phase): head low and hackles up, it barks five times, its front jolting up
+    with each. Updraft: it whirls once round on the spot after its own tail, its paws dancing, and stops dead facing
+    you. Whoever is behind it gets the Tail Lash (LIGHT): it looks back over its shoulder and whips its plume across
+    behind it. Overdrive (the signature, into the third phase): it plants its legs wide and shakes itself like a wet
+    dog from its nose to the end of its plume, harder and faster, the shake running down its body a joint behind the
+    one before, and at its end its ruff and plume swell (scale 1 to 1.35) as the storm bursts off it; it drops into a
+    sprinter's crouch. Its intro: it stands still as if listening, then the wind it outran catches it up and blows its
+    plume up and forward over its back and its ruff up; they settle, it shakes its head and lowers it at you, growling.
+    Broken, it drops onto its belly with its forelegs out and lies panting; it rises with a push of its forelegs and
+    shakes its head. Struck from one side it yelps and twists away to the other. Its death (5.2 s): it staggers, sways,
+    goes down on its chest and rolls over onto its side, its legs stiff and then slack, while its ruff and plume thin
+    away to half.
+  - **How its keys are written.** One pose function over the body (its hips, loin and chest, neck, head and jaw, ears,
+    hackles and plume), each leg by two-bone IK to a paw (or from its hips in their own axes), the paws turned flat on
+    the floor heading the way it heads. The paws it stands on through a move are held where they stand, every tick.
+    The Updraft's whirl is a whole turn of its roll bone on top of its keys, a key a tick; the Overdrive's swell is
+    scale tracks on its ruff and plume. In its pose function a turn and a lean are + to its right, a plume's sweep + to
+    its left, a plume's lift and the hackles + up.
+  - **On the floor.** Between keys any paw that would sag into the floor has its leg solved again that tick to stand on
+    it; the ground pass then keeps every paw out (a flex of the wrist or hock), in the death and the kneel its head
+    too. Nothing goes into it by more than 1.5 px.
+  - **Meter.** Worst kink outside a strike 5.5° (the Rake's paw starting up), 6.6° in the Bolt into the Snap and the
+    Rake; held at most 21%; the cut strings dip 3 to 33%.
+- **The Sovereign of Roots, the Hearthstone Toad** (body and motion, `kit/bosses/sovereign_roots.py`). "It made a
+  home and closed every door." A toad as big as a cottage that has sat under a hearth so long the hearth has grown
+  into it. Its back is the old hearthstone, split in two across the middle, pale grey and black with soot at its edges,
+  cracked, with moss in the cracks and a fern growing out of the split; roots have come down through the crack and
+  hang off its flanks to the floor. It sits as a toad sits, low and broad, up on splayed forelegs with its great hind
+  legs folded at its sides. Its skin is warty olive-brown with dark bands across its legs, pale and mottled underneath,
+  with a great swollen gland behind each eye. Its eyes are gold with a black bar of a pupil across each, and they
+  glow. When it opens its wide mouth there is firelight inside, the hearth it swallowed, and the same fire shows
+  through its throat sac in ember veins that stretch and brighten as the sac swells. Its tongue is dark red. 80 cubes
+  (480 faces) on 47 bones; its fern stands 4 blocks up. The hitbox is 1.9 x 1.95 at its scale of 1.9 (3.6 x 3.7
+  blocks), round its trunk.
+  - **Its idle.** It sits like a stone and breathes (8 s), its throat fluttering all the while. It blinks, drawing its
+    eyes down into its head, and turns its head slowly one way and then the other. Its tongue flicks out at a fly, and
+    it swallows with its eyes sinking. It wipes one eye with a hand and shifts its weight on its forelegs. It walks
+    hand by hand and foot by foot (1.6 s). It runs in hops (0.75 s): it crouches, its hind legs fling it up and
+    forward, it flies with its hands reaching and its feet trailing, lands on its hands and swings its feet in under it.
+  - **Its moves.** The Tongue (LIGHT): it rises on its arms as it draws its head back with its eyes on you and its mouth
+    opening on the fire, then drops low as its tongue flicks out at you (5.5 times its length), slaps and goes back in.
+    The Gulp (LIGHT, after the Tongue): it sits back on its haunches with its mouth opening, lunges with its whole front,
+    its mouth gaping, snaps it shut and swallows, its eyes sinking into its head. The Leap (HEAVY, its gap closer, held
+    6 ticks): it sinks back with its hind legs bunched at its sides, jumps 7 blocks at you with its hands reaching and its
+    long feet trailing, and comes down on its belly with its legs splayed. Hearth Ring (HEAVY, held 8 ticks): it rises
+    as high as its legs will lift it with its throat swelling, and drops flat on its belly with all its weight. Root
+    Lance: it leans over its hands and presses them flat on the floor ahead of it, its head low, and its body heaves
+    twice. Hold Fast: its tongue shoots out the whole way to you (9.5 times its length) and holds; each tug pulls the
+    toad back on its haunches with its head coming up; it reels the tongue in, shuts its mouth on it, swallows hard with
+    its eyes sunk in, then lifts its head and opens its eyes on you. Rooted Ones (into the second phase): it sits up on
+    its forelegs and croaks three times, its throat swelling huge each time and its whole body shaking. Whoever is
+    behind it gets the Kick (LIGHT): it drops onto its hands, draws its feet up under it and kicks both hind legs out
+    straight behind. Thorn Halo (the signature, into the third phase): it blows itself up as a toad does when something
+    means to eat it, swelling (scale 1 to 1.27) and rising high on stiff legs, its head lowered and tipping toward you,
+    trembling; at its fullest the air goes out of it. Its intro: it sits as still as a stone with its eyes shut, opens
+    them on you, blinks slowly, croaks once long and lowers itself, watching you. Broken, it sinks flat on its belly with
+    its legs splayed and its throat heaving; it pushes itself up on its hands and draws its feet in under it. Struck, it
+    flinches flat with its eyes pulled down; from the side it twists away from the blow. Its death (5 s): it blows itself
+    up one last time and lets the air out, sinks flat, draws its hands and feet in under it, lays its chin on the floor
+    and shuts its eyes, as still as the stone on its back; its throat flutters twice more and stops.
+  - **How its keys are written.** Every length is written in half pixels and built at twice that (K = 2), so the toad
+    is posed and painted as finely as a small mob at four times the size. One pose function over the body (its roll,
+    hips, chest, head and jaw, eyes, tongue), each leg by two-bone IK to a hand or foot, the hands and feet turned flat
+    on the floor with their toes splayed. The hands and feet it stands on through a move are held where they stand,
+    every tick. Its swelling is a scale on two leafless "puff" bones that carry its rump, chest, belly and the stone,
+    never on a bone above a leg: the legs' IK takes each parent as a pure rotation and would miss the floor under a
+    scaled one. Its throat sac and its tongue are scale tracks too (the tongue scales its length and its tip the inverse,
+    so the pad at the end keeps its size). In its pose function a turn is + to its right and a pitch or bend + dips its
+    front.
+  - **On the floor.** Between keys any hand or foot that would sag into the floor has its leg solved again that tick to
+    stand on it; the ground pass then keeps every hand and foot out, in the death and the kneel its head, jaw and throat
+    too. Nothing goes into it by more than 1.5 px, the long tongue included.
+  - **Meter.** Worst kink outside a strike 6.1° (the Kick's feet drawing up), 5.7° in the Tongue into the Gulp; held at
+    most 30% outside the croak (43%: three croaks on held haunches) and the intro (50%, its stone stillness); the Leap into
+    the Tongue dips 21%. The Tongue into the Gulp dips 77% for one frame: the planted arms swing through rest at full
+    speed as the body rocks over its hands in the flick. That is a crossing, not a stall.
+- **The Sovereign of Ash, the Cinder Wyrm** (body and motion, `kit/bosses/sovereign_ash.py`). "It burned everything to
+  keep going." A four-legged dragon that has burned so long it is nearly burnt out. Its hide is charcoal: rows of dark
+  charred scales with thin ember cracks wandering through them that glow hot only at their middles, grey ash lying on
+  its back and flaking down its sides, and pale bone at its horns, teeth, claws and the plates along its spine. On its
+  left flank the hide has burnt away and its ribs stand open, one of them burnt short, and between them its heart glows
+  (the Heart of Ash it drops). Its wings are burnt leather on charred spars, holed through and ragged along their
+  trailing edges (the holes and the rags are see-through), with glowing rims; folded, they lie along its sides with
+  their thumb claws at its shoulders. It stands low and heavy, its head up on a long neck of three bones and a long tail
+  of five ending in a spade. Slit fire eyes, fire in its nostrils and down its throat. 117 cubes on 43 bones; its head
+  stands 4.5 blocks up. The hitbox is 1.25 x 1.65 at its scale of 2.4 (3.0 x 4.0 blocks), round its trunk.
+  - **Its idle.** It stands breathing slow and deep (8 s), its sides heaving and its tail sweeping slowly over the floor.
+    It looks one way; it lowers its head and snorts; its folded wings lift and shiver the ash off them and settle; it
+    looks the other way; it shifts its weight off one forefoot and back.
+  - **Its walk and run.** It walks heavily, one foot at a time, its shoulders rolling and its head swinging low from side
+    to side, its tail sweeping behind (1.6 s a stride, 1.1 blocks). It runs in a heavy bounding trot, the diagonal pairs
+    together, its wings half open and lifting with each stride to steady it, its head low and its tail stretched out
+    (0.8 s, 2.6 blocks). It turns on the spot a foot at a time.
+  - **Struck, broken and its death.** Struck, it throws its head up and back and its wings jerk half open; from the side
+    it twists away from the blow. Broken, it sinks onto its belly with its forelegs folded under it, its neck along the
+    floor and its wings slumped open, panting; it gets up with a push of its forelegs and shakes its head and wings. Its
+    death (5.5 s): its heart flares, it rears its head with its wings half open and shakes; they fall, its forelegs fold
+    and it goes down onto its chest, rolls over onto its right side with its burnt-open side up, lifts its head once and
+    lets it fall along the floor, and its wings crumble to their bones (their fingers shrink to half).
+  - **Its moves.** The Claw (LIGHT): it rears its front up off one forefoot, the foot high with the claws spread, its
+    weight going back onto the other (never so far that leg locks straight), and rakes it down across in front of it.
+    The Bite (LIGHT, after the Claw): it draws its neck back in an S with its wings flaring and its jaws opening on the
+    fire in its throat, and strikes down and forward and snaps them shut, its wings kept half open through the lunge.
+    The Wing Rush (HEAVY, its gap closer, 8 blocks, a 6-tick hold): it crouches with its wings raised high over its back,
+    beats them down once and throws itself at you low over the floor, forefeet reaching and jaws wide, and lands on
+    braced forefeet with its wings flung out. The Tail Sweep (for whoever is behind it): it looks back over its
+    shoulder, that wing lifting out of the way, and swings its hindquarters round, its tail sweeping low behind it.
+    Cinders: it draws its head back high and spits five times, its head snapping forward with each. Ash Cloud: it rears
+    up on its hind legs with its wings spread high and beats them down twice, hard, and comes down on its forefeet.
+    Ashfall (into the second phase): it springs up on a great downbeat and hangs in the air two blocks up, beating its
+    wings slowly with its legs hanging and its tail swinging, shakes the ash off itself in a rain, and drops back onto
+    its four feet. Embers: it hunches and heaves three times like a cat bringing something up, its burnt-open side
+    clenching, and shakes its head. Last Embers (HEAVY): it rears right up with its wings flung back, holds, and comes
+    down on its forefeet with all its weight, wings, head and jaws flung out. Burnout (the signature, into the third
+    phase): it wraps its wings over itself like a cloak, their arms up over its shoulders and the leather hanging down
+    its sides and over its neck, and curls down inside them trembling harder and harder as it swells; then it throws
+    them wide and its head up with its jaws open, and sags, smoking. Its intro: it lies curled like a burnt-out log with
+    its chin on the floor, lifts its head and looks at you, gets up, shakes the ash off and spreads its wings wide.
+  - **Its fight.** First: the Claw into the Bite (and on into the Wing Rush), the Bite, the Wing Rush into the Claw,
+    Cinders, Ash Cloud close, the Tail Sweep behind. After Ashfall: the same with Embers and Ashfall itself, the Claw
+    into the Bite into Ash Cloud. After Burnout: Last Embers close, the Claw into the Bite into Last Embers, the Wing
+    Rush, Ashfall, Cinders, Burnout again. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over the body (its roll, hips, loin, chest, the three neck bones
+    sharing a nod and a turn, the head and jaw, the tail sharing a lift and a sweep with a curl at its end, and the
+    wings), each leg by two-bone IK to a wrist or hock, the feet turned flat on the floor. A wing's bind pose is folded,
+    and the fold is solved from where its bones should point (the arm back and down along its side, the forearm
+    forward, the hand back), not guessed. Its turns blend from that fold to fully open by how far it spreads, plus a
+    lift and a sweep at its root, a bend along its length (+ down), a bend forward round its body at the elbow and
+    wrist, its fingers fanning as it opens, and a wingbeat run out along it from the root. The right wing mirrors the
+    left. In its pose function a turn is + to its right and a pitch or bend + dips its front.
+  - **On the floor.** Between keys any foot that would sag into the floor has its leg solved again that tick to stand on
+    it; the ground pass then keeps every foot and the tail tip out, in the death, the kneel, the rise and its intro its
+    head and jaw too. In the death the wing it lies on rests on the floor.
+  - **Its sounds** (chosen on paper, not heard in game): the ender dragon's growl and wingbeats pitched low, a blaze's
+    breath, burning and shot, a fire's crackle and a lava pop, a ravager's step.
+  - **Meter.** Worst kink outside a strike 4.4° (the Claw's rake); held at most 19%; no still spells; the strings dip at
+    most 31% (into and after the Bite). Wind-ups 13.4 (the Claw) to 43.9 (Last Embers).
+- **The Signal's Shadow, the Signal Cuttlefish** (body and motion, `kit/bosses/signals_shadow.py`). "It has your
+  voice." The Deep's last boss: a cuttlefish as long as a cart hanging in the dark at the bottom of the Well. A
+  cuttlefish talks with its skin, and this one's skin talks the way the Signal does: over its black mantle drift bands
+  of the Signal's own windows, pale glass with bright corner brackets and lines of writing in them, here and there one
+  in amber, the colour of "NOT TRUE YET". Its fin ripples all down both sides, edged with the Signal's blue. Its eyes are
+  big and pale with a black W across each. Its eight arms are held together in a crown in front of its face, and inside
+  them lie the two long tentacles it shoots out like lances. 73 cubes on 49 bones; it hangs with its eyes at your eye
+  height, 5.1 blocks long. The hitbox is 1.15 x 1.13 at its scale of 2.0 (2.3 x 2.3 blocks), round its mantle.
+  - **Its idle.** It hangs breathing (8 s), its fin rippling down both sides and never still, its arms stirring and its
+    crown slowly opening and closing. It turns side-on to look at you with one eye, then with the other; it lifts its top
+    arms and lowers them; it flares its crown once; its mantle swells as it breathes.
+  - **How it moves.** A quicker ripple runs down its fin as it goes, its arm tips trailing. It cruises on its fin with
+    its arms drawn into a point ahead of it (1.2 s, 1.4 blocks) and runs in jets, squeezing water through its funnel, its
+    fin wrapping down against its sides on each jet and its arms streaming (0.8 s, 2.6 blocks). Turning, the fin on the
+    outside works harder and its arms sweep round.
+  - **Struck, broken and its death.** Struck, it jolts back with its crown flaring and its fin flicking up; from the side
+    it rolls away from the blow. Broken, it sinks to the floor with its arms spread limp round its head, and rises out of
+    it on its fin, pushing off with its arms. Its death (5 s): it convulses with its crown flung open, writhes as it sinks
+    and turns, settles on the floor, its fin slows and stops, its arms curl in under its head one after another and its
+    mantle goes flat.
+  - **Its moves.** The Lash (LIGHT): its crown of arms rises and flares open over its head, the tips hooked down like
+    snakes about to strike, and whips down across you, fanning wide and closing as it comes, the bottom pair kept off the
+    floor. The Grasp (LIGHT, after the Lash): it draws back with its arms curled in under its face, flings them out open
+    and closes them on you like a fist. The Lance (HEAVY, its gap closer, 7 blocks, a 6-tick hold): its fin wraps down
+    and its crown parts wide, the two tentacles pale inside; it holds, then jets at you and the tentacles shoot out to
+    4.6 times their length, their clubs snapping shut, and whip back. The Recoil (for whoever is behind it): it gathers
+    its arms into a point, squeezes and jets backwards hard into them, its mantle squashing. Instruction: it draws its
+    arms into a cone at you and holds you in its eyes while the beam runs from the point, its body trembling. Signal Step:
+    it squeezes, jets backwards and is gone (it shrinks away to nothing). Directive: it lifts its top arms and flicks five
+    bolts. Echoes (into the second phase): it spreads its arms and its skin pulses, and its echoes come. Signal Marks: it
+    rises with its arms hanging like a chandelier and pulses six times. Your Echoes: it jets aside twice. Come Down: it
+    reaches every arm and both tentacles at you and draws them in. Signal Halo: it rises and flares its arms out in a star
+    round its face. Last Instruction: it rears its arms up over its head in a warning display and shudders. Seed Collapse
+    (the signature, into the third phase): it draws every arm in and squeezes itself small and tight, trembling, and
+    bursts open with its arms flung wide. Its intro: it lies on the floor of the Seed as if broken, lifts off it, opens
+    its crown of arms and looks at you.
+  - **Its fight.** First: the Lash into the Grasp (and on into the Lance), the Grasp, the Lance into the Lash,
+    Instruction and the Directive at range, Signal Step, the Recoil behind. After Echoes: the Lash into the Grasp into the
+    Recoil, the Lance into the Lash and the Grasp, Signal Marks, Your Echoes, Instruction, Signal Step. After Seed
+    Collapse: Come Down into the Lash, Signal Halo, the Lash into the Grasp into Signal Halo, the Lance into the Grasp,
+    Last Instruction, Seed Collapse again. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over the body (its float, the arch of its mantle's end, its head),
+    its eight arms (spread, droop, curl, bend, reach, a lift of the top pair and a writhe run out along each, a little
+    behind the one before), its fin (a ripple run from head to tail, a lift and a side) and its two tentacles. The
+    tentacles' stretch is a scale track written every tick with their clubs scaled back by the same amount, so a club
+    keeps its size. Under every move a drift layer stirs its arm tips and ripples its fin, so it is never still.
+  - **On the floor.** The ground pass keeps its arm tips, its fin and its tentacles' clubs out of the floor in every clip;
+    on the floor its body rests on its mantle.
+  - **Its sounds** (chosen on paper, not heard in game): a glow squid's voice and a squid's squirt kept low for its
+    jets, the conduit's and the beacon's hum for the Signal, the sculk sensor's clicking like writing, the amethyst's
+    ring, the illusioner's mirror move as it vanishes, the warden's heartbeat under Seed Collapse.
+  - **Meter.** Worst kink outside a strike 3.7° (the Directive); held at most 2%; no still spells; the strings dip at
+    most 35% (Come Down into the Lash). Wind-ups 13.0 (the Recoil) to 17.5 (the Lash).
+- **The Long Drop, the Hand from Above** (body and motion, `kit/bosses/nightmare_falling.py`). "Lifts you up and lets
+  you fall." A hand as big as a cart, pale as something that has never seen daylight, hanging down out of the dark on an
+  arm that goes up into it and never ends. Its fingers are too long, the middle one longer than its palm, with knuckles
+  like knots and long yellowed nails hooked at their ends, and their tips have gone the violet of a dead hand's. It
+  hangs with its fingers down and forward and its palm turned down, the way a hand comes down to pick something up,
+  and the lines of its palm glow faint violet: you see them as it comes down on you. Veins on the back of its hand and
+  up its forearm; the arm goes from the pale of its wrist to black up in the dark. 70 cubes on 20 bones; its wrist hangs
+  3.6 blocks up and its fingertips just clear the floor. The hitbox is 0.67 x 1.62 at its scale of 2.4 (1.6 x 3.9
+  blocks), round its hand.
+  - **Its idle.** It hangs in the dark (8 s), swaying a little on its arm like something hung up, its fingers never
+    still: a ripple runs across them like drumming on a table, twice; it turns its palm to you and back; its thumb rubs
+    across the ends of its fingers; it curls slowly half into a fist and lets go; its index finger taps once.
+  - **How it moves.** It glides as if drawn along by its arm, its fingers trailing back behind it (1.4 s, 1.6 blocks),
+    and races with them streaming out behind and spread (0.9 s, 2.8 blocks). Turning, its fingers sweep round after it.
+  - **Struck, broken and its death.** Struck, it jerks back with its fingers flung out stiff and splayed; from the side
+    it jerks away from the blow. Broken, it drops to the floor palm down, its fingers lying out limp; it gets up on its
+    fingertips like something standing and lifts away. Its death (5 s): its fingers claw at the air, stiff and shaking;
+    it clenches into a fist, trembling, and slowly opens and goes limp; and it is drawn back up into the dark it came
+    from, shrinking away until it is gone.
+  - **Its moves.** The Backhand (LIGHT): it swings out to its left, drawing its fingers in, and swings back across with
+    the backs of its fingers leading, its nails raking across you. The Clutch (LIGHT, after the Backhand): it draws back
+    with its fingers flung wide open at you and snatches down, closing into a fist as it comes. Fall With Me (HEAVY,
+    its gap closer, 8 blocks, a 6-tick hold): it rises high, its fingers turning down at you spread wide like a spider
+    dropping on its thread, holds, dives, and slams flat on the floor palm down with its fingers splayed. Lift: it
+    reaches down in front of it with its fingers spread, closes them round you like a cage, slowly, and lifts, its
+    fingers trembling with the weight, then lets go, its fingers springing open. No Bottom (into the second phase): it
+    closes into a fist and trembles harder and harder, then opens over you palm down, its fingers flung wide and stiff
+    and shaking. The Flick (for whoever is behind it): it swings its hand back under itself, curls its middle finger
+    tight against its thumb and flicks it out behind it. The Long Drop (the signature): it rises up into the dark,
+    curling into a fist and trembling, falls like a stone, opening as it comes, and slams flat on the floor, its
+    fingers twitching before it lifts. Its intro: it lies on the floor palm down as if it had been dropped there; its
+    fingers twitch one at a time; it gets up on its fingertips, lifts off the floor, turns its palm to you and beckons
+    twice with its index finger.
+  - **Its fight.** First: the Backhand into the Clutch (and on into Fall With Me), the Clutch, Fall With Me into the
+    Backhand, Lift, the Flick behind. After No Bottom: the Backhand into the Clutch into Lift, Fall With Me into the
+    Backhand and the Clutch, Lift, No Bottom, the Long Drop, the Flick. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over where it hangs (its pos and a turn round its wrist), its wrist,
+    its arm (turned back against the hand's own pitch and roll so it keeps reaching up into the dark), its four fingers
+    (a curl, a claw, a spread and a ripple across them, each with a share at each knuckle) and its thumb. Under every
+    move a drift layer stirs its fingertips and thumb, each finger at its own pace.
+  - **On the floor.** The ground pass uncurls its fingers and thumb, forward and up, wherever they meet the floor. When
+    it stands on its fingertips the pose is let down until they rest on the floor.
+  - **Its sounds** (chosen on paper, not heard in game): the phantom it was, kept low and slow, its swoop and flap for
+    the air it moves; cracking bone for its knuckles and the Flick; a body falling a long way and a door broken in for
+    its slams; the elder guardian's curse and the sculk shrieker under the Long Drop.
+  - **Meter.** Worst kink outside a strike 3.6° (the Flick); held at most 8%; no still spells; the strings dip at most
+    38% (out of Fall With Me into the Backhand). Wind-ups 18.7 (the Clutch) to 45.1 (the Long Drop).
+- **The Pyre, the Pyre Mare** (body and motion, `kit/bosses/nightmare_burning.py`). "Fire that follows you." A horse
+  bigger than a cart, black as the inside of a chimney with a sheen on it like oil, and everything that would be hair on
+  it is fire: its mane runs in flames down the crest of its neck, its tail is a long streamer of fire, its fetlocks are
+  feathered with flame and a flame stands up between its ears. Its eyes are white-hot, its nostrils glow and there is
+  fire behind its teeth. A burnt bridle still hangs on its head, its iron rings gone black. It never touches the ground:
+  it stands and gallops on the air a hand's breadth over the floor, and its hooves glow underneath like coals. 77 cubes
+  on 37 bones; its withers stand 3.3 blocks up and its ears 4.6. The hitbox is 0.70 x 2.55 at its scale of 2.0 (1.4 x
+  5.1 blocks), round its body.
+  - **Its idle.** It stands on the air breathing (8 s), its weight shifting from one hind leg to the other; it lifts its
+    head and looks round with its ears pricked; it paws the air with a forehoof three times, the way a horse paws the
+    ground; it snorts and tosses its head; its tail swishes. Its fire is never still: every flame leaps and falls to its
+    own beat, under everything it does.
+  - **How it moves.** It walks on the air a foot at a time, nodding (1.2 s, 1.6 blocks), and gallops on it, its body
+    rocking and its neck pumping, its ears pinned and its mane and tail streaming out behind (0.6 s, 3 blocks).
+    Turning, it steps its forelegs round with its head leading.
+  - **Struck, broken and its death.** Struck, it throws its head up and shies back with its ears pinned; from the side
+    it shies away from the blow. Broken, it goes down on its knees and then lies with its legs folded under it, its head
+    low and its fire sunk to under half; it gets up front first, heaving, and shakes its head. Its death (5.5 s): it
+    rears and screams with its fire flaring, comes down and staggers, goes down on its knees and rolls over onto its
+    side, lifts its head once and lets it fall; and its fire goes out, the flames sinking into it until there is
+    nothing but black.
+  - **Its moves.** The Strike (LIGHT): it rears a little with its ears pinned, a forehoof drawn up, and strikes it down
+    and out at you, its head snaking after it with its teeth bared. The Trample (LIGHT, after the Strike): it rears
+    higher with both forelegs folded and brings both forehooves down on you, landing braced. The Charge (HEAVY, its gap
+    closer, 9 blocks, a 6-tick hold): it drops its head with its ears pinned, paws the air once, gathers its hind legs
+    under it and holds, its fire streaming back; then it gallops at you stretched out and rears to a stop. Cinders: it
+    lifts its head and tosses it four times, flinging fire off its mane at you, stamping the air between. Pyre: it rears
+    and stamps, and stands braced while its fire roars up twice as tall all over it, shaking with the heat. Firefall
+    (into the second phase): it rears right up on its hind legs and thrashes its head from side to side, and the fire
+    flies off its mane and rains down. Flare: it gathers with its head down between its knees and its fire drawn in
+    to half, trembling, then flings its head up and its legs out and flares, its fire bursting out more than twice as
+    big. The Buck (for whoever is behind it): it drops its head and its weight onto its forelegs and kicks out behind
+    with both hind legs. Wildfire (the signature): it rears up as high as it can, screaming, pawing the air by turns,
+    its fire roaring higher and higher, holds at the top shaking, and crashes down on both forehooves. Its intro: it
+    lies burnt out with its fire down to embers; its fire catches again; it lifts its chest and looks at you, brings
+    one knee forward and unrolls that foreleg flat in front of it, then the other, sits up on them and heaves itself up,
+    shakes its head, and rears up screaming with its fire roaring.
+  - **Its fight.** First: the Strike into the Trample (and on into the Charge), the Trample, the Charge into the Strike,
+    Cinders from afar, Pyre, the Buck behind. After Firefall: the Strike into the Trample into Flare, the Charge into the
+    Strike and the Trample, Firefall, Flare, Cinders, Wildfire, the Buck. It enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over its body (rearing lifts it and sets it back so it rises on its
+    hind legs), its back's arch, its neck and head, its jaw and ears, each leg (a swing, a fold that brings the hoof up
+    behind in front and forward behind, the hoof and a spread), its tail and its mane. Its fire's size is a scale track
+    on every flame at once, after the clip is staged (`mv._fire`). Under every move a drift layer works its ears, jaw,
+    tail and breathing, stirs its legs and licks its mane and fetlock flames back and forth.
+  - **On the floor.** The ground pass folds a hoof up out of the floor and lifts its head and tail off it. Lying, it
+    rests on its body and its folded legs, never its fire; on its side its fetlocks' fire lies on the floor too. The
+    get-up's foreleg angles are solved so the hooves pass over the floor.
+  - **Its sounds** (chosen on paper, not heard in game): a horse's scream and snorting pitched low, its gallop and
+    landing, a skeleton horse's cry under them; a blaze's breath and shot, a fire's crackle, a fire charge flung, a
+    ghast's shot for the flares.
+  - **Meter.** Worst kink outside a strike 4.1° (the Trample); held at most 1%; no still spells; the strings dip at most 32% (out
+    of the Trample). Wind-ups 12.3 (the Strike) to 19.1 (the Trample). The intro's first frames show kinks in the meter
+    only: it blends there from standing, and in game the Pyre waits lying in its kneel.
+
+- **The Undertow, the Old Snapper** (body and motion, `kit/bosses/nightmare_drowning.py`). "Pulls you under and holds
+  you there." An alligator snapping turtle as big as a boat, so old the bottom of the river has grown over it. Its
+  shell is three rows of ridged keels, black-green with slime and patched with weed, weed hanging off its rim in long
+  rags and a length of rusted chain still caught on it, and its back edge is a row of teeth. Its head is huge and flat
+  with a hooked beak and small teal eyes set high, its skin grey-brown and warty, its throat and belly a dirty yellow.
+  On its tongue is a worm of cold teal light. It never touches the ground: it swims through the air the way it swims
+  along a river bottom, paddling with clawed webbed feet, its weed and chain trailing after it. 88 cubes on 33 bones;
+  its shell is 2.6 blocks long and 2.1 wide and its belly 1.3 blocks over the floor. The hitbox is 1.10 x 1.29 at its
+  scale of 2.0 (2.2 x 2.6 blocks), round its shell.
+  - **Its idle.** It hangs in the water (8 s), bobbing and rocking a little, paddling slowly in diagonal pairs to hold
+    its place. It lowers its head and opens its mouth and the worm on its tongue wriggles, the way a snapper waits on
+    the bottom, then shuts it; it draws its head in a little and turns to look; its tail sways and its weed stirs.
+  - **How it moves.** It swims slowly, paddling in diagonal pairs and rocking (1.6 s, 1.4 blocks). Hurrying, it strokes
+    both forefeet together and its hind feet after them, its neck out and its weed streaming back (0.9 s, 2.6 blocks).
+    Turning, the feet on the outside of the turn stroke and the others hold.
+  - **Struck, broken and its death.** Struck, its head snaps back into its shell, its feet flinch in and it lurches
+    back; from the side it rolls away from the blow, its head turning to it. Broken, it sinks to the floor and draws
+    its head and legs half in, its weed lying out round it; it puts its feet out and pushes itself up. Its death
+    (5.5 s): it gapes with its neck stretched up and paddles at nothing, then rolls slowly over onto its back as it
+    sinks, and lies belly up on the floor with its head hanging out to one side, its feet curling in; one hind foot
+    kicks once, and it is still.
+  - **Its moves.** The Snap (LIGHT): it draws its head back into its shell with its forefeet braced, and its neck
+    shoots out and its beak snaps shut on you. The Rake (LIGHT, after the Snap): it rolls toward you with a forefoot
+    raised high and rakes it down and back across you. The Lunge (HEAVY, its gap closer, 8 blocks, a 6-tick hold): it
+    draws its head in and all four feet forward and holds, then shoots forward with one stroke of all four, its mouth
+    wide, and snaps it shut. The Undertow: it lowers its head and opens its mouth as wide as it goes, the worm on its
+    tongue wriggling hard and its forefeet sculling to hold it in place while the water pulls you in, then snaps shut.
+    The Rush of Water: it rears its front up with both forefeet high and sweeps them down and back together, and the
+    water rushes out ahead. Lungful (into the second phase): it draws its head and legs into its shell and sinks,
+    trembling harder and harder, then bursts out with its legs flung wide and its mouth gaping. Black Water: it lifts
+    its head and spits four times, its neck jerking out with each. The Tail (for whoever is behind it): it turns one
+    way and sweeps its saw-ridged tail across behind it. Which Way Is Up (the signature): it rises over you, rolling
+    slowly onto its back as it goes, hangs belly up with its feet paddling at nothing, trembles, and drops on you shell
+    first; then it rolls back over, its feet pulled half in, and lifts off the floor. Its intro: it lies on the floor
+    like a rock grown over with weed, head and legs drawn in; its head slides out and looks at you; its mouth opens and
+    the worm wriggles; it shuts it, puts out its feet and lifts off the floor with a slow stroke.
+  - **Its fight.** First: the Snap into the Rake (and on into the Lunge), the Rake, the Lunge into the Snap, the
+    Undertow from afar, the Rush of Water, the Tail behind. After Lungful: the Snap into the Rake into the Undertow, the
+    Lunge into the Snap and the Rake, Black Water, the Undertow, Lungful, the Rush, Which Way Is Up, the Tail. It
+    enrages below 15% (1.2 x speed).
+  - **How its keys are written.** One pose function over its body, its neck (drawn into the shell and shot out by
+    moving the neck bones, a nod and a turn shared between them), its head, its jaw and the worm (a wriggle and its
+    phase), each leg (a stroke, a raise out from the body, a curl and a flex of the foot), a tuck that draws its legs
+    and head toward its shell, its tail, and its weed and chain swung out from where they hang. Its swimming stroke is
+    one function: each foot sweeps back low and flat, then comes forward raised and folded. Under every move a drift
+    layer sculls its feet, sways its tail, weed and chain, works its jaw and wriggles the worm (hard in the Undertow).
+  - **On the floor.** The ground pass lifts its feet out of the floor and its head and tail off it, and swings its
+    weed and chain out. Lying, it rests on its shell and legs; rolling over it is lifted just clear of the floor, its
+    feet pulled half in.
+  - **Its sounds** (chosen on paper, not heard in game): a turtle's swimming, hurt and death kept low and slow, the
+    drowned's gurgling under them; a splash, a bubble column's churn and a whirlpool's pull for the Undertow, an elder
+    guardian's curse under Lungful and Which Way Is Up; a beak's crunch and a chain's clank.
+  - **Meter.** Worst kink outside a strike 4.0° (the Lunge into the Snap and the Rake); held at most 3%; no still spells; the strings dip at most 37% (the
+    Snap into the Rake into the Lunge). Wind-ups 12.6 (the Snap) to 52.2 (Which Way Is Up). The intro's first frames
+    show kinks in the meter only, where it blends from swimming into the lying start.
+- **The Hollow Crowd, the Throng** (body and motion, `kit/bosses/nightmare_undead.py`). "More of them every time you
+  look; it gets up once." A hunched giant made of people pressed together into one body. Its back is a hill of
+  shoulders, coats and bare backs, with someone's legs sticking out of it and a torn cloak over it; its legs are
+  bundles of legs bound in rags; its long arms drag their knuckles. Six heads stand out of its shoulders, back and
+  belly, and every one has the same face: grey and slack, the mouth hanging open, two black holes for eyes. Its own
+  head sits low on its front like a gorilla's, bigger than the rest, the same face. Four thin pale arms grow out of it
+  and grope at the air. Nothing glows. 90 cubes on 44 bones; it stands 6.0 blocks tall and 4.6 across its arms. The
+  hitbox is 1.43 x 3.54 at its scale of 1.7 (2.4 x 6.0 blocks).
+  - **Its idle.** It stands swaying (6 s), its weight going slowly from foot to foot like a crowd shifting, breathing
+    heavily. Every head moves on its own, one tilting, one turning, one nodding, and now and then one jerks. Its small
+    arms grope and its jaw works. Once in a while a shudder runs through the whole crowd of it, every head at once.
+  - **How it moves.** It shambles (1.8 s, 2.2 blocks): its body rolls over each foot and drops onto it, the right
+    foot scuffs, the long arms swing slack and the heads bob out of time with each other. Hurrying, it lurches into a
+    run (0.95 s, 3.8 blocks).
+  - **Struck, broken, down and its death.** Struck, the whole crowd of it flinches: every head jerks back, the small
+    arms snatch in, its jaw drops. Broken, it sinks onto its right knee and its knuckles, every head hanging, and
+    pushes itself up. Struck down the first time (it RISES), it pitches forward onto its face, the small arms flopping
+    out and the heads lolling; then the heads lift off the floor one by one and turn to you, the small arms push at
+    the floor, and it heaves itself up onto its knees and its feet, every head snapping round to you. Its death (6 s):
+    it staggers and sinks onto its knees, and its heads look every way, lost, turning and turning; it sags, slumps over
+    onto its side, and its small arms reach on a while, and stop.
+  - **Its moves.** The Swipe (LIGHT): its right arm swings back and sweeps across in front of it at chest height, the
+    back of the big hand leading, every head turning with it. The Grab (LIGHT, after the Swipe): it draws its left hand
+    back, lunges a step and snatches with the big hand open, every small arm reaching with it. Crush (HEAVY, an 8-tick
+    hold): it rears up with both fists together over its heads, every face turned up, holds, and brings them down on
+    the floor in front of it, its knees giving under the blow. Surge (HEAVY, its gap closer, a 10-tick hold): it drops
+    onto its knuckles, every face on you, holds, and drives at you in one long lunge, arms sweeping in to scoop you up.
+    More of Them (its answer to a player who keeps away; it throws nothing): it tears a person off one shoulder and
+    then the other and throws them down, and they get up. Closer (into the second phase): every head turns to you at
+    once, a shudder runs up it and people fall off it, and it leans in at you. The Elbow (for whoever is behind it):
+    its heads turn round first, then it twists and swings its right arm back behind it. All of Them (the signature):
+    it rears up to its whole height with its arms flung wide and every face on you, then falls on you, the whole crowd
+    of it, flat on its face with its arms flung out ahead, and gathers itself up off the floor onto one knee and its
+    feet. Its intro: every head on it is bowed; they lift one by one to look at you, the same face each time, with a
+    jerk, the belly first and the back last; its own head lifts last, its jaw drops, and it settles into its stoop.
+  - **On the floor.** The ground pass lifts its hands, heads and small arms out of the floor (its feet too in the
+    kneeling, lying and running clips). Lying, its small arms are turned out of the floor at the shoulder by the least
+    it takes, and All of Them keeps the arms where they fell through the first key of getting up, so none of them
+    swings through the floor.
+  - **Its sounds** (chosen on paper, not heard in game): zombies, husks and zombie villagers groaning together, kept low
+    and slow, a warden's heartbeat under the heavy tells and its agitation under All of Them; a zombie's infection for
+    More of Them; a mace's ground smash, breaking mud and a door being beaten for its blows; a ravager's heavy step.
+  - **Meter.** Worst kink outside a strike 4.3° (Crush); held at most 14% (the intro, the heads bowed and waiting); no
+    still spells; the strings dip at most 31% (the Swipe into the Grab into Crush). Wind-ups 14.4 (the Grab) to 31.1
+    (Crush).
+- **The Thousand Legs, the House Centipede** (body and motion, `kit/bosses/nightmare_arthropod.py`). "Webs, and the
+  sound of a thousand legs." A house centipede as long as a cart. Its body is a short row of six dusty grey-yellow
+  plates with three dark violet stripes down its back; out from under it fan ten pairs of long thin legs banded pale
+  and violet, each bowed up to a knee and down to a fine claw well out from it, longer toward the back, so the whole
+  of it is a ring of legs round a thin body. Its last pair, the longest, is held up behind it like a second pair of
+  feelers, so you can't tell which end is its head; its real feelers are as long again. Its head is small and flat,
+  with two big black eyes and a pair of curved poison claws under its front. Nothing glows. 120 cubes on 82 bones;
+  its middle is 1.1 blocks up, its knees 1.4 to 2.1, its claws stand 4.8 blocks apart across it and 5.2 from front to
+  back, and its feelers reach 3 blocks. The hitbox is 1.50 x 0.85 at its scale of 2.6 (3.9 x 2.2 blocks: its ring of
+  legs, not its feelers). Its legs reach their claws by two-bone IK, a plate's frame carrying each knee's pole.
+  - **Its idle.** It stands low on its legs, nearly still (6 s); its feelers never stop, sweeping and tasting the air
+    one after the other, its back legs sway and its head turns a little. Now and then a shiver runs up its legs from
+    the back pair to the front, each pair lifting and setting down in turn, the way they do in a wall.
+  - **How it moves.** A wave of steps runs up each side from its back legs to its front ones, the two sides out of
+    step, so its legs ripple (0.8 s, 1.75 blocks a stride); its body rides low with a little sway, its feelers held
+    forward. Running it goes lower and much faster (0.45 s, 3.0 blocks) with its feelers swept back. It turns on the
+    spot with the same ripple swung round.
+  - **Struck, broken, down and its death.** Struck, it jerks back with its front flung up, feelers back and poison
+    claws open; from the side it curls away from the blow. Broken, its legs slide out and it drops flat on its belly;
+    it gathers them in and lifts itself. Its death (5 s): it rears and thrashes, its front whipping one way and the
+    other, drops as its legs slide out, and curls up on the floor into a hook while its legs fold in one pair after
+    another from the back; one twitches, and it is still.
+  - **Its moves.** The Bite (LIGHT): it draws its head up and back off the floor with its poison claws spread, then
+    plunges, the claws snapping shut and its front legs slamming down before it, and worries at you. The Lasso (LIGHT,
+    after the Bite): its front three pairs lift back over its head, then it lunges and throws them over you in a ring
+    and folds them back to its jaws. The Drop (HEAVY, its gap closer, ability Drop): it crouches, rears its front up
+    high with its front legs spread, holds, and springs, its legs swept back along it, then flung out wide as it comes
+    down flat on you with every leg splayed. Web (ability Web): it rears with its front legs drawn in under its jaws
+    and flings them out at you wide apart; the threads tug, its front bobbing and rocking. The Lash (LIGHT, for
+    whoever is behind it): the whole of it twists, its back end swinging out with its long back legs high, then whips
+    round across behind it. Hatchlings (ability Hatchlings): it presses itself flat and shudders, its back heaving.
+    The Walls Open (into the second phase, ability Hatchlings): it rears up with its front legs spread round its head
+    like a crown and trembles, then drops flat and shudders. A Thousand Legs (PERILOUS, the signature): it rears up
+    over you with its front five pairs fanned out high round its head, comes down with them slamming into a ring round
+    you, and its legs hammer the floor pair after pair, and it settles. Its intro, "You can hear them in the walls.":
+    it lies flat with its legs pressed out and its feelers laid back; a feeler lifts, then the other; a shiver runs
+    up its legs from the back, each pair drawing in under it, and it rises onto them all and sweeps its feelers at you.
+    Under every move its feelers keep tasting, its back legs sway and its poison claws work.
+  - **On the floor.** The legs that stand through a move keep their claws where they stand every tick; the ground
+    pass lifts its claws and knees, its head and poison claws and the tips of its feelers and back legs out of the
+    floor.
+  - **Its sounds** (chosen on paper, not heard in game): a silverfish's skitter and a spider's hiss under its tells,
+    an endermite's under A Thousand Legs; scaffolding's clatter for its legs on the floor and its landing, a cobweb
+    for Web, a pointed dripstone landing under its blows.
+  - **Meter.** Worst kink outside a strike 3.8° (the Lasso's throw); held at most 11% (the Bite into the Lasso into
+    the Bite); no still spells; the strings dip at most 38% (the Drop into the Bite). Wind-ups 12.9 (the Bite) to 28.4
+    (A Thousand Legs).
+- **The Fuse, the Jack** (body and motion, `kit/bosses/nightmare_explosion.py`). "Hsssss." A jack-in-the-box as big
+  as a cart: a black lacquered toy box on brass ball feet, bound in tarnished brass, a faded red and cream harlequin
+  painted on its sides and scorched along the bottom, its lid thrown back on its hinge and lined with the same
+  harlequin. A crank on its right side turns on its own, ticking, and a lit fuse hangs from it. Out of the box on a
+  long iron spring of ten coils stands the Jack: its head is a round black iron bomb with a wide grin and two diamond
+  eyes painted on in chipped white, and in place of a jester's cap three lit fuses curl out of its crown, a spark at
+  the end of each. Under its head a sooty ruff with tattered harlequin flaps, and two long thin arms in harlequin
+  sleeves with white gloves and fingers too long. Deep in the box something burns white, seen past the spring and
+  through the keyhole; the sparks glow too. 97 cubes on 46 bones; the box is 2.25 blocks across and 2.3 tall to its
+  rim, its open lid stands 4.5, the Jack's head is 4 to 5.2 blocks up and its sparks reach 5.6. The hitbox is
+  1.10 x 2.78 at its scale of 2.0 (2.2 x 5.6 blocks). The spring's links carry its squash and stretch (each coil
+  closes or opens along the spring) and its bend; the Jack's arms and head keep the spring's time, and their own
+  springs (forearms, fingers, head, ruff flaps, fuses) give the overlap.
+  - **Its idle.** It sways on its spring in a slow loop, its head rolling the other way a beat behind, its arms
+    hanging and swinging after it, its fingers flexing, its fuses bobbing; the crank ticks round a click at a time
+    (6 s). Now and then the Jack jerks its head over to one side and holds it there, grinning, and lets it come back;
+    once it bobs on its spring three times, quickly, as if it were laughing.
+  - **How it moves.** It hops: the box lands, the Jack bounces down on its spring and up again as it pushes off, and
+    in the air it hangs at full stretch, its arms floating up and its fuses streaming; each landing bounces the lid
+    and ticks the crank (0.75 s, 1.2 blocks a hop). Running it bounds, longer and higher (0.5 s, 2.4 blocks), the
+    Jack thrown back as it jumps and forward as it lands. It turns with two small hops.
+  - **Struck, broken, down and its death.** Struck, the Jack is knocked back on its spring and comes wobbling back,
+    its arms flung up; from the side it bends away from the blow. Broken, it flops forward over the front of the box,
+    its arms hanging down outside it and its head lolling, and bounces itself upright again. Its death (5 s): the Jack
+    jerks up out of the box at full stretch and shudders there, its arms flailing; the spring goes slack and it sags
+    down into the box, swaying, its head lolling out over the front and its hands on the floor; the lid falls onto its
+    neck, the crank turns back one click, and a finger twitches.
+  - **Its moves.** The Pop (LIGHT): it sinks down on its spring with its hands drawn up beside its head, then springs
+    out at you head first, the spring flung out long and bent over toward you, its hands grabbing. The Slap (LIGHT,
+    after the Pop): it twists away with its right arm drawn back behind it, then swings a long backhand across in
+    front of it, the spring twisting with it. Pop Goes (HEAVY, its delay): it sinks slowly into the box and the lid
+    comes down over it; the crank ticks, and ticks, and the box trembles; then the lid bursts open and it springs up
+    at you with its arms wide. The Bound (HEAVY, its gap closer): it sinks deep onto its spring and the box tips back;
+    the whole box jumps, the Jack flung up at full stretch over it, and comes down on you, the Jack slammed down into
+    the box by the landing and springing up again. Fuse Lines (ability Fuse Lines): it rises high and throws its head
+    back with its arms spread like a showman's, then whips its head down at you twice, flinging its sparks. The Lid
+    (LIGHT, for whoever is behind it): it ducks forward and the lid comes up off its hinge, then slams back over the
+    hinge onto the floor behind the box. Shorter Fuse (into the second phase): it shakes and bounces on its spring,
+    cackling, its head thrown back and its arms hugging itself and flung out, while the crank whirls round. The Blast
+    Ring (PERILOUS, the signature, ability Blast Ring): it crams itself down into the box and the lid slams shut; the
+    box shudders and jolts, light leaking from under the lid; then the lid is blown back, the Jack shoots up out of
+    the box with its arms flung wide and the ring goes out; only right beside the box are you safe. Its intro,
+    "Hsssss.": the box stands shut; the crank turns a click at a time on its own and the box trembles; the lid flies
+    open and the Jack springs up with its back to you, wobbling, and turns its head round, slowly, all the way, to
+    grin at you. Every recovery wobbles on the spring, less each time; under every move its fuses bob, its fingers
+    flex and the crank's fuse sways.
+  - **On the floor.** The ground pass lifts its fingers, hands and forearms, its head (by the top coils) and its lid
+    out of the floor in every clip, its death included.
+  - **Its sounds** (chosen on paper, not heard in game): a creeper's hiss and a trapdoor's creak under its tells, a
+    lit TNT and a note block's chime under the heavy ones and the Blast Ring; a sweep and a chain for its swings;
+    TNT and fire for Fuse Lines; an explosion, falling wood and a chain under its blows; a creeper's hiss, a bell and
+    a witch's cackle for Shorter Fuse and its intro; wood and chain for its hops.
+  - **Meter.** Worst kink outside a strike 4.1° (the Lid); held at most 1% (its intro); no still spells; the strings
+    dip at most 33% (the Pop into the Slap into the Pop). Wind-ups 20.9 (the Pop) to 39.0 (Pop Goes).
+- **The Faceless, the Mannequin** (body and motion, `kit/bosses/nightmare_generic.py`). "It was standing there the
+  whole time." An artist's jointed wooden drawing mannequin, the kind that stands on a desk to be drawn from, grown
+  twice as tall as a door: pale beech worn smooth, a ball at every joint (greyer and darker where hands have worn
+  them), brass hinge pins in its elbows and knees, an egg for a head, long flat hands with their fingers jointed once
+  and grey with handling, and the broken-off peg in the small of its back where it stood on its stand. It has no face.
+  Someone began to draw one on it in pencil, the way you do: the line down the middle of its head, over the top and
+  down the back, and the line across it for the eyes, going on round its head; where the eyes would go the pencil has
+  been rubbed out, more than once, and a faint mouth line is left. It is cracked down its breast and chipped at its
+  left shoulder, and a shop's paper tag hangs from its left wrist on a string. Nothing on it glows. 60 cubes on 22
+  bones; it stands 4.2 blocks tall and 1.3 across. The hitbox is 0.41 x 2.31 at its scale of 1.8 (0.74 x 4.2
+  blocks). Its legs are planted by the leg solver on every pose; its fingers, fingertips, head and tag have their own
+  springs for the overlap.
+  - **Its idle.** It stands quite still, the way a thing stands that has never had to balance: its weight settles from
+    one hip to the other over a long while; its head tilts over to one side and stays there, looking at you, and comes
+    back; its right fingers tap three times on nothing; then its head turns, in small clicks, a little further than you
+    would like, and slowly back (6 s).
+  - **How it moves.** It walks too smoothly: its hips glide level, its head stays level and on you, and its arms swing
+    loose a beat behind, like things hung from it (1.0 s, 1.3 blocks a stride). It runs leaning in, long strides, its
+    arms hanging straight back behind it and not swinging at all (0.62 s, 2.6 blocks). It turns in two small steps
+    (0.48 s).
+  - **Struck, broken, down and its death.** Struck, it jolts back and its joints flop loose (its head lolls, its arms
+    swing) and it snaps back into its pose; from the side it bends away from the blow. Broken, it drops onto its knees
+    as if its strings were cut, slumped forward with its arms hanging and its head down, and rises the way a puppet is
+    lifted, head first. Its death (5 s): it stands rigid a moment with its head tilted; its knees go and it drops onto
+    them, slumped, and folds forward until its chest lies on its knees and its hands on the floor; its head comes loose
+    on its neck, drops off and rolls away to the side; a finger twitches.
+  - **Its moves.** The Reach (LIGHT): it turns a little away and cocks its right hand back by its ear, fingers flat,
+    its head turning to keep you; then the arm spears straight out at you as it steps in, the fingers leading. The
+    Grasp (LIGHT, after the Reach): its body turns the other way and its left hand goes out wide at its side, fingers
+    spread, then sweeps across in front of it and clutches shut. Folding (HEAVY, its delay): it bends forward at its
+    waist ball, slowly, too far, until its head hangs by its knees and its hands lie on the floor; it stays there; then
+    it unfolds in one snap, standing tall with both arms flung up over its head through whoever is in front of it.
+    Corner of Your Eye (its gap closer, ability Corner of Your Eye): it goes still and listens, its fingers curling,
+    then turns its head right away from you as if it heard something; and then it is just there in front of you,
+    crouched low with its hands reaching further, its head snapping back round to you. Lights Off (ability Lights
+    Off): it raises its right hand high over its head with the fingers spread, its head tilting back to look up at
+    it, and closes them in two jerks as if pinching out a candle, its body swaying with each; its head drops. Stare
+    (ability Stare): it leans its blank face at you and tilts it over to one side, then the other way, then further
+    than a neck should go, and holds it there trembling, its body swaying over its feet and its fingers working; then
+    it straightens. Everywhere (ability Everywhere): it snaps from pose to pose like a model for drawing, holding each:
+    pointing straight at you, both arms up over its head, wrapped round itself and crouched, and back to pointing. Wrong
+    Way Round (LIGHT, for whoever is behind it): its head turns round over its shoulder to look behind it; then its
+    whole chest swivels round on its waist ball after it, its legs staying where they are, and its right arm swings
+    across behind it. It Is Closer (into the second phase): its joints crack one after another (its neck, its right
+    wrist, its left, its neck again), each one jolting through its chest and arms, and it takes a step toward you, its
+    head jerking round to you. Hold Still (PERILOUS, the signature): it rises tall with its arms straight out at its
+    sides, lifting them higher as its head tips back; it creaks, and winds its body back round on its waist ball; then
+    it spins round on it twice, its arms out at full reach and dipping and rising as it goes, and stops dead facing
+    you, its arms swinging on after it. Its intro: it stands posed the way someone left it to be drawn, its right arm
+    raised high (trembling a little) and its left bent at its side, its head turned away and down; its fingers stop;
+    its head turns round to you in three clicks, the turn going down through its chest as its arm sinks; its arm comes
+    down; and it takes a step. Under every move its fingertips flex, one hand after the other.
+  - **On the floor.** The ground pass lifts its fingers, hands and tag and its head out of the floor in every clip,
+    and its shins and feet in kneeling, rising and its death; its death keeps its hands and its fallen head above the
+    floor.
+  - **Its sounds** (chosen on paper, not heard in game): wood. An armour stand's knock and a note block's hat under its
+    light tells, a wooden door's creak under the heavy ones and Hold Still (with the warden's close heartbeat and a
+    snare); a sweep and bamboo for its light swings, a heavy knock and wood for the heavy; a door shutting and an
+    armour stand set down for Everywhere; a candle snuffed for Lights Off; an enderman's stare for Stare; an armour
+    stand's hit and breaking wood under its blows; a door, an armour stand falling and the cave's breath for It Is
+    Closer; bamboo and a skeleton's step for its feet.
+  - **Meter.** Worst kink outside a strike 4.3° (Folding, Wrong Way Round); held at most 10% (the Grasp); no still
+    spells; the strings dip at most 28% (the Reach into the Grasp). Wind-ups 19.1 (the Reach, the Grasp) to 22.8
+    (Folding).
 
 ## 39. Binoculars (zoom on a key; plan docs/binoculars/plan.html, page https://claude.ai/artifact/N9drETNDkCRsLbwQqwbSvx; Euan approved all of it 2026-10-28)
 
@@ -12154,6 +14343,51 @@ readout says "Too far to tell" for a moment and nothing is set. The server check
   hold on (`PlateRules.lookRange(per, zoom)`, used by `LivingClient.plates`; a far creature joins the candidates by itself, the
   40-block box stays). Uses only what your game already has about it; nothing new from the server. Tested in `living_plate_rules`.
 - **Creatures** beyond the server's tracking range (animals 160, monsters 128) aren't there to draw; not changed.
+
+### 39.10 Spotting: discover by looking (`Spotter`, `core.api.Spotting`, `client.GlassSpot`; Euan 2026-10-29: "Make it so I can discover things if I look at them a few s with my binauculars")
+With the binoculars up, holding the centre of the view on something you haven't found for **2 s** finds it, through the same
+discovery path as going there (`Progression.discover` → `Finds.tell`: the cue, the Journal, the Codex, a first-of-kind toast or
+the lesson), on purpose (`intent`), so it shows at once (§26.3).
+- **The rule (server, `binoculars.Spotter`).** Every `PERIOD` (4) ticks, for each player whose binoculars are up
+  (`BinocularsRelay.looking`: a change still held by the relay's rate limit counts), the server casts the player's own look
+  (eyes and view as it has them) against what the sources offer. Each thing's bounds are widened by `SLACK_DEG` (0.6°) at its
+  distance; the nearest the look enters wins. It then needs a clear line through loaded blocks by what you see (`VISUAL` shapes:
+  glass and water hide nothing, leaves and stone do; an unloaded chunk hides it; a block inside the thing's own bounds is the
+  thing), aimed where the look meets its bounds, else at their middle. The same thing on `HOLD` (40) ticks of looks finds it;
+  one missed look is forgiven (`GRACE` 1: a leaf, the sway), a second or another thing starts over. Reach: the server's view
+  distance in blocks, held to 64..512 (`REACH_MIN`/`REACH_MAX`): the loaded land, since the server can't see Far Sight's land.
+  No spotting by a spectator, the dead, before awakening, or inside Carillon's walls; a thing inside the walls is never spotted
+  (§26.3b). Standing things are gathered once a second (`STANDING_EVERY` 20), creatures at every look; candidates live in a
+  fixed pool of 64 per player (no allocation per look beyond the sources' own gathering).
+- **The API (`core.api.Spotting`).** A module registers a `Source` (`moves()`, `gather(player, reach, Sink)`, `find(player,
+  ref)`); `Sink.place(key, bounds, ref)` for a standing thing, `Sink.entity(entity, ref)` for a moving one. A source offers only
+  what the player hasn't found, never loads a chunk, and re-checks in `find` (it may have gone).
+- **What counts** (the sources):
+  - **Creatures** (`world.fauna.FaunaSpotting`): any fauna kind you haven't studied, out to the reach (past `Sightings.RANGE`
+    24 / `BEAST_RANGE` 48); found by `Sightings.discover`, so a named beast is its moment and its lair rumour follows.
+  - **Lairs** (same file): a den (its clearing, 13×10×13 round the den block) of a beast whose lair discovery you haven't had;
+    `Lairs.spotted` pays the lair's discovery and puts the den on your tracker. It is "found" in the band's sense (the tracker
+    stops pointing) when you stand in it, which then pays nothing more. A cave lair is underground, so the clear line hides it.
+  - **Landmarks and gates** (`world.landmark.LandmarkSpotting`): the Well (17×11×17 round its centre), a Precursor ruin of a kind
+    you haven't found (its real bounds, where its start chunk is loaded; ruins are found by the placement maths, no chunk
+    generated), a gate of a theme you haven't stood at (9×12×9 round its block). Seeing one pays the same discovery as reaching
+    it and puts it on the Gate Map (`LandmarkWatch.spot`, `reachGate`). **Kept separate from "reached"**: the landmark's
+    reached flag, `awaken:landmarks_reached` (directives count places stood at), the Horizon line and a climb site's rope promise
+    (`Promises.seen`) stay for standing there. A gate's break clock still waits for someone to come close (§7).
+  - **Wonders** (`living.wonder.WonderSpotting`): a wonder you haven't found, by its plan's real bounds; seeing it is finding it
+    (`WonderWatch.find`: remembered, on the Atlas, `awaken:wonders_found`). A wonder is made to be looked at from afar.
+  - Not spotted: biomes (stood in), happenings (witnessed; they come and go too fast for a hold), secrets and caves (small or
+    underground), ores and lodes (mined), forms (hit).
+- **The look (client, `GlassSpot`).** A ring of 24 ticks round the centre of the glass (radius 11 GUI px, dim cream) lights
+  amber one by one, clockwise from the top, over the hold, the leading tick white; four corner brackets close in from 19 to 13
+  px as it fills. The last tick waits for the server's word. When the find lands the ring flashes white and spreads 6 px, the
+  brackets turn 45° and close into the find cue's diamond, and it all fades over 650 ms with a high focus click
+  (`binoculars.step` at pitch 1.7); slipping off fades it where it stood (180 ms). Nothing shows over something already found:
+  the ring is drawn only from the server's `awaken:binoculars_spot` (S2C, `Spot(phase, hold)`: lost, holding, found). Hidden
+  under F1 like the readout; reduced motion keeps the flash and fade without the turn and spread.
+- **Test** `binoculars_spotting`: beside it past the slack finds nothing; held on it, a hold starts, runs and finds at 40 ticks,
+  then nothing shows over it; a wall hides it; one slip is forgiven, two lose it and a lost hold finds nothing; a moving thing's
+  bounds are read at each look; the glass down stops the looking.
 
 ### 39.9 Settings (`config/awaken-binoculars-client.toml`) and commands
 - `enabled` (true; off frees the key), `key_mode` (TAP_HOLD, HOLD, TOGGLE), `look_speed` (100, 50..150 %), `sway` (true), `edge`
@@ -12512,6 +14746,15 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
     itself: its random tick is the grass block's, so it spreads grass; hoes and shovels treat it as grass).
 - **Sway** comes by class from `terrain.PlantSway`: double plants sway as lower and upper halves, bushes rooted, clover as a
   flower bed (gain 3), hawthorn as leaves; rye's stems and the ground blocks stand still.
+- **Halves that meet** (Euan's play 2026-10-29: bracken and long grass floated off their stems): a two-block plant never
+  leaves its drawing to the model's random pick, which chose each half on its own. `WildDoubleBlock.SHAPE` (0..2) names one
+  drawing for each half; both halves carry the same shape and look, set together wherever a plant is placed or grows
+  (`WildDoubleBlock.grown`: worldgen, regrowth, bone meal, rye on its stems, and by hand), and the shape is the column's
+  (`WildLooks.shape(x, z)`), so a plant grows back as it was. Plants in older worlds load at shape 0 on both halves, so they
+  match too. In the art every upper drawing grows out of its own lower one: each pixel on the lower's top row carries on in
+  the upper's bottom row in the same layer and shade, and nothing else is on that row (tawny long grass is green at its
+  foot and dries from a few pixels up; the rye's foot keeps its stems in fixed columns, so either foot meets any middle).
+  `python3 tools/art/specs/wild_plants.py check` (and every texture build) fails when any of the 39 seams do not meet.
 - **Drops** (vanilla's manner, 26.3's loot format): grasses give themselves to shears and otherwise wheat seeds now and then
   (1 in 8; rye 1 in 4; bracken nothing); two-high plants drop from the lower half; flowers, fungus, antler, wallow and salt
   lick drop themselves; clover by patches; hawthorn to shears or silk touch, else a stick 1 in 20; bramble to shears, else 0-2
@@ -12534,7 +14777,8 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   `tools/art/specs/audio_wild_plants.py`; content from `tools/content/wild_plants_content.py`.
 - **Not in stage 1a** (follow-ups): the seamless wrap for the sward's sides; a game rule to turn living grass off; wallows, salt
   licks and sheds placed in the world (stage 3).
-- **Tests** `wild_plants_blocks`, `_crop`, `_trample`, `_cover`.
+- **Tests** `wild_plants_blocks`, `_crop`, `_trample`, `_cover`, `_pairs` (both halves the same shape, grown by worldgen, by hand
+  and back from a trail).
 
 ### 41.3 The land (Stage 1b; `dev.awaken.ground.wild.gen`, the `awaken:awakened_ground` pack, new chunks only)
 - **Wildness in worldgen** (`WildLattice`): the field worked out at a chunk's 5×5 corners four blocks apart, edges included
@@ -13086,6 +15330,51 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
 - **A jump** (a teleport, a respawn): the region at the camera is read again at once, not on the next second, and what
   belongs to the region you left (glow-worms, rust beetles, swifts, crayfish, glass and ash moths, crawlers) fades away.
 
+### 42.9 Mining ties (P4)
+- **Lodes by region** (`caves.RegionHomes`, delve's `Lodes.Homes`): a region favours the ores its rock has twins for: the
+  Rootways coal and copper, the Pale Halls and the Ochre Deep iron, the Windcleft gold, the Drowned Galleries lapis and
+  copper, the Glimmer Hollows redstone, the Black Vaults diamond, and the Violet Deep Deepglass (its seeps are there).
+  `LodePlans` rolls each deep lode's heart as before; when it isn't in one of its ore's regions it rolls a second spot in
+  the same 256-block lode region and takes it only if that one is. Every lode region keeps its lodes of every ore; the
+  wall lodes (§34.2) stay on the walls they find. The region at a point is read from the world's noise as the pack's
+  injectors read it (the band's field at y 0, the land's climate, the depth: seven uncached samples), so it answers for
+  chunks nobody has made, on any thread. An ore's band decides how much it matters: redstone lies below y -4 and the
+  Glimmer Hollows above y 0, so the Hollows' redstone stays vanilla's; lapis and gold meet their Middle Dark regions only
+  from y 0 to 8 and 16; emerald has no region.
+- **Which worlds**: only a world made with the regions (flag `awaken:awakened_caves`) whose first load comes with P4 (no
+  `awaken:caves` record and its clock at 0): the record (schema 1, `lodes_by_region`) is written then, and a regions
+  world from P2 or P3 records `false` and keeps the plans its chunks were laid by. The GameTest world loads the pack too
+  and keeps its plans (delve's tests stand on them); the region tests plan through `LodePlans.planWith`.
+- **The Hearth's line** (§34.1): when the mouth's way in goes down into a region (where its throat ends, else where it
+  joins the caves), the line ends "It goes down into the Ochre Deep." Without one (and in every world without the
+  regions) the line is as it was.
+- **The Journal** (`caves.RegionFinds`): the first time an awakened player stands in a region (the biome underfoot, every
+  2 s, staggered, under y 63) it's counted (`awaken:discovered/cave_region/<id>`, no XP: the Wilds' biome discovery pays
+  for the same steps and shows its find) and its page is filed without a toast (category "Cave region"): what it is, the
+  metal at home there and what to take home.
+- **The Codex** (`caves.client.RegionCodex`, category "Cave regions"): once you've found one, all eight; the ones you've
+  stood in show what they are, their metal and keepsake, the rest only where to look ("Below y 0, under any land.").
+- **Trails**: "The Regions Below" (deep, free, opens with the first region found: a step per region, the hint where it
+  lies; finish 0.05 of a level) and "Keepsakes from Below" (deep, free, the same opening: hold each region's keepsake;
+  finish 0.03): root amber, cave pearls, the Delvers' old rope, driftwood, an amber or glacial crystal, ember lichen, a
+  Hollow's shed shell. The Black Vaults have none yet (their cooled flows and column stumps aren't built).
+- **The finds**: each keepsake is a piece the region already lays and that drops itself, so it can go home and be set
+  down. The Rootways' is root amber (`awaken:root_amber`, style sheet section 6, OK'd by Euan 2026-10-29): beads of old
+  resin like cave pearls (no collision, instant break, three bead models), laid on the rock floor under one root curtain
+  in twenty (`CaveSkinFeature.ROOT_AMBER` 0.05) where the curtain's room is under seven blocks tall.
+- **Pacing** (`tools/sim/pacing_sim.py`, re-run 2026-10-29): the sim counts lodes found per mining minute, not per region,
+  and lodes by region keep every region's count, so its numbers hold within run-to-run noise (balanced: level 10 at 3.9 h,
+  25 at 16.8 h, 50 at 51.3 h; D metal at 1.1 h, C at 12.8 h; all 15 target checks pass).
+- **Tests**: `caves_lodes_by_region` (seed 777's overworld noise, 400 lode regions round the origin: every region keeps
+  each ore's count; no homes, or homes everywhere, plan as before; iron at home at least 1.6 times as often, all ores 1.4;
+  the homes are the rock's twins), `caves_region_rock` (root amber only in the Rootways, on rock under a root curtain),
+  `caves_region_journal` (once, filed under the region's name; every keepsake is an item;
+  both trails name every region and keepsake), and `delve_hearth_points` (the region's line, and none without one).
+- **Measured 2026-10-29** (`caves_lodes_by_region`): lodes in their ore's regions without and with homes: iron 134 to 254
+  of 1,200 (1.9 times), copper 67 to 116, coal 70 to 104, Deepglass 63 to 96, diamond 56 to 72 of 330, gold 4 to 8, lapis
+  5 to 7, redstone 0; all 399 to 657 of 4,867 (1.65 times). Where a lode region lies wholly outside an ore's regions its
+  second roll can't reach one, so the rise is under twice for the patchier regions. 800 plans and the counting: 176 ms.
+
 ## 43. The Journey (one city and the wild, the beasts' Hearth, the bells' song, Faults; plan docs/director/JOURNEY.md, page https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D; Euan approved the entire plan 2026-10-29: "Go ahead with the entire plan")
 
 Source of truth for the rules below; `docs/director/JOURNEY.md` has the detail, the lines and the hour-by-hour journey.
@@ -13152,12 +15441,21 @@ here as it goes.
   Twinblades), else the first of the six old relics they haven't had from one, else three essence; and supplies.
 - Most carry a letter (a Found bell lead), a key (a chest in a nearby empty settlement) or a keepsake with a name that
   someone in Carillon reacts to. The System reads them in brackets ("[She got as far as the bridge.]").
-- At the Wake they stand and walk home over one play-day (stage 7).
+- At the Wake they stand and walk toward the bells (built in stage 7, §43.14).
 
 Built (stage 1, `dev.awaken.world.stilled`): blocks `awaken:stilled` (a block entity, drawn by its own jointed model:
 knees, elbows, the body pivoting at the hips; twelve hand-set poses: milestone, walking, grave, a pair on a cart's
 tail, a lead with no dog, reaching, looking back, waiting, a lantern, a parent with a child, curled, sat on a bundle;
-five looks, man, woman, old man, old woman, girl; textures from `tools/art/stilled.py`) and `awaken:left_chest` (a
+six looks, man, woman, old man, old woman, girl, child. Rebuilt 29 Oct after the first tour read as a mob with a
+stone skin: they are Carillon's own people turned to stone, on the citizens' player-shaped body with split elbows and
+knees and joint fillers; each look has six stone skins made from real citizens' closed-eyes skins (their own light and
+dark and a ghost of their colours under weathered stone, moss where the sky fell on them, damp moss at the feet, lichen
+on the back, cracks), the block's place picking one (no save change). Props are their own material: what they carried
+in their stone, the milestone the road's sandstone, the headstone slate, the cart and the pack the world's own. One rig,
+`assets/awaken/rigs/stilled.json`, holds parts, poses and the second figure of two; `tools/art/stilled.py` writes it
+(each pose lifted so its lowest point meets the ground) and the textures, `tools/art/rig.py` draws it as the game does
+(`python3 tools/art/stilled.py preview OUT.png [pose...]`), and `StilledModel` reads the same file). The named figures on the north road are never dropped for standing near another (a winding road once dropped
+the second beside Aldo); only the land's own figures keep 150 apart and `awaken:left_chest` (a
 locked trunk), both bedrock-hard, immovable, dragon- and wither-immune, cancelled on any break (only `/awaken stilled
 remove`, which also keeps the spot from ever being used again). Spots (`StilledSpots`, pure from the seed and the
 centre): the north road's three at the ridge +12, +170 and +330 (Aldo's letter to Ilse is letter 0); the first
@@ -13235,8 +15533,28 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   Totter fetches it to the desk, or "Show me" lights its bay. Home crafting takes from it. It only holds what the player
   brings; at B the Works' lines link it to every work. Items are counted data, not entities; the heap and shelves draw
   at most a capped number of item models, simpler far away. Detail: JOURNEY part 3, "The Storehouse".
+- **Built (stage 5)**: the other eight kin, the works to the Foundry and the Storehouse: §43.12.
 - **The Hearth page** is a band page (Home, Your beasts, Kin) between Journal and Truths. Nothing on it expires or
   renews daily. No Board, no requests, no Daily Regimen.
+- **Built (stage 2, `dev.awaken.kin`; rows in LEDGER.md "Stage 2")**: four kin walk the world (Lampwing, Burrowbun,
+  Mossback, Pebblepup; art `tools/art/specs/kin.py` → `textures/entity/kin/`, `kin.client.KinData`), each a hero rig
+  whose synced act (idle, want, flee, tell, nudge, work, sleep, follow, hide, sniff, carry) picks its clip. Wild sites:
+  one per 128-block cell in about half the cells, kind by biome tag (forest; plains or meadow; swamp or river; mountain,
+  windswept or stony shore), filled 24 to 96 blocks from a player, again three days after they're gone. Kinship numbers:
+  steps at 10, 40, 100; help +10, a day at home +4, hurt −15, killed −60 and three days' fear; SPI warms gains +1% a
+  point to +30%. Reading: 1 s in a 9° cone at 32 blocks with the band, 3.5° at 128 with Binoculars. Watching: 3 s within
+  16 blocks for each of three want lines, 20 s apart (the lesson Lampwing 1.5 s, 4 s). Trust after three helps of one
+  beast. Nooks 2, 4, 8, 12, 18, 24 by tier plus 2 for the Ore Shed. Work: the Lampwing's roost holds a real light
+  (level 13) at night and stops natural hostile spawns within 32 blocks; Burrowbuns harvest within 14 of their nook,
+  replant, and carry to a chest within 8; a Mossback gives crops within 8 six random ticks every 5 s by day; Pebblepups
+  work one item every 2 s from barrels within 4 of the heart (rubble to gravel, gravel to flint 1 in 4 or sand, ore
+  blocks to an iron pick's drops, a nugget 1 in 32). The Ore Shed is `RoomType.MINE_HEAD` relabelled (a lode heart and a
+  barrel; the shaft rule is gone); lode hearts drop themselves, and a heart a player set down gives only itself back.
+  The band has seven pages (rail nodes every 29 units). Never stuck: a rumour unfollowed for 24,000 ticks of play names
+  its distance to 50 blocks and the land; after 48,000 Track's offset narrows from ±48 to ±8. Commands:
+  `/awaken admin kin summon|home|meet|watch|points|trust|lesson|site|yard|page` (`yard`, for tours: a Hearthfire where the player stands, whatever the Lull says, with a field of ripe wheat and a chest east of it and an Ore Shed with an iron lode heart and a barrel of rubble west of it). Look tour: `tools/autopilot/journey-2.txt`. Tests (CI): `kin_kinship_steps`,
+  `kin_ore_shed_limits`, `kin_fields_harvest`, `kin_rumours_real`, `hearth_ore_shed`. Sounds are pitched vanilla events
+  for now (`kin.<kind>.call/tell/worry`, `kin.chime`); the kin's own suite comes with the style pass Euan judges.
 
 ### 43.7 The bells and the beasts
 - The tower rings the player's song at dawn and dusk. The player's beasts react by bells held: under 20 bolt for their
@@ -13245,6 +15563,56 @@ once, in plain words what it was and why the owner went back, and you keep it (`
 - The Hundred Peal (the only big moment that doesn't glitch) raises Kinship a step for many kinds land-wide and gives
   the Kinsong. Then the Deep answers: harder breaks, the Gnawed spread, Grieving Sovereigns. Fighting never ends.
 - Leads: Heard, Seen, Sung, Found, Rung, Remembered. None told by people at home.
+- **Built (stage 4, `dev.awaken.bells`; rows in LEDGER.md "Stage 4")**. The hundred (`BellCatalog`): numbered 00 to 99
+  with a name, rank, source and voice; a bell's number is its step in the song. Thirty are built: Registry 03, Ember 07,
+  Nook 12, Wren 17, Barrow 21, Mere 26, Wayside 34, Tenor 40, Lintel 44, Founding 46, Night 50, Watch 52, Curfew 55,
+  Crypt 58, Second 60, Spore 61, Ember Mine 63, Hive 66, Root 68, Cairn 71, Spire 73, Reed 76, Garden 79, Drowned Choir
+  82, Dreaming 85, Spirit 88, Thorn 91, Crag 93, Fen 95, Lantern 97. 00 (the Seed) and 31 (the Thaw) keep their places
+  for later stages; every other slot shows its rank, empty. The Bell Book is the attachment `bell_book` (schema 1, kept
+  through death): bells held (play-day and where), leads (how learned, the System's lines, bearings), the tracked lead,
+  the handbell's peal, Homeward's next time.
+  Moments ring a bell home (states checked every 5 s per player, events when they happen): a Hearth (Ember), a beast
+  living with you (Nook), a Grand room (Lintel), the Hearth's tier 2 (Founding), the first gate cleared (Registry), D and
+  C rank (Tenor, Second), Descent strata 2 and 3 (Garden, Drowned Choir), the first lucid dream (Dreaming), the first
+  spirit spoken to (Spirit), a raid held to dawn (Night), a holdfast's bell rung from inside its walls (Watch, then
+  Curfew; standing inside files a Rung lead), and a gate world's Lord at the bell's rank or above (Crypt from the Bell
+  Crypt, Spore, Ember Mine, Hive and Root from their worlds, Lantern from the Lantern Night Market) for everyone in the
+  run within 96. The first bell gives the handbell and the bell frame, and six seconds later the Signal's one line:
+  "There were a hundred. Find them. Ring them all and I can show you the bottom."
+  Sleeping places (`BellSites`; saved data `bells`, schema 1): each 640-block cell past the ridge (+120) may hold one, its
+  rank by distance from the centre (E to 1,300 blocks at 85%, D to 2,800 at 70%, C to 4,800 at 60%) and its bell from the
+  band's three; every home's own (the Wren Bell) is buried 90 to 160 blocks out, away from the city. Each is built in one
+  go when a player comes within 96 (never in the city or a Hearth; a bell over water deeper than 12 is lost). Kinds:
+  buried (dig it out), kept (a themed elite of the bell's rank comes out when a player is within 16 and must die first;
+  on Peaceful none comes), sunk (on a pond's bed), high (on a crag). Grey moss, coarse earth and dead bushes over radius
+  7 mark the place asleep. It hums every 8 s to a player within 64 who doesn't hold it: a Heard lead with a bearing;
+  heard again from 32 or more blocks away at a different angle, the two bearings cross into an area whose middle sits up
+  to 20 blocks off the bell. Within 24 it's Seen. Struck free, it wakes: bronze, a toll heard 256 blocks off, the Fault
+  mend for players within 48, the bell home with everyone within 48, and the land turned back over radius 14, ring by
+  ring.
+  The tower (`BellTower`): the bell frame, set inside your own Hearth (anywhere else it pops off), one per home; every
+  bell held by anyone who lives there hangs in it, and a bell once hung stays. At 20 bells a timber belfry goes up round
+  it (5 by 5, 10 high, four bells under its beams, a deepslate-tile roof); at 50 a stone tower (5 by 5, an arch on the
+  frame's side) with a nine-bell belfry on top, 15 high. Each goes up only into clear space; otherwise a note once a
+  play-day, and it tries again at every song. The song at dawn (clock 23,600 to 400, so a night slept through wakes to
+  it) and dusk (11,600 to 12,400): bell #n's note at step n (D major pentatonic, 15 tuned bells, D3 to B5) or a dull
+  knock where it's missing, 4 ticks a step (20 s), heard 256 blocks out. Beasts living there: under 20 bells they hide,
+  20 to 49 hunker, 50 to 79 listen, 80 to 99 gather within 4 of the tower, 100 sing; under 100 the land's wild beasts
+  within 48 run for 30 s.
+  Voices, counted over the home's hung bells: Rest (Regeneration I by your fire, II from 3 bells), Growth (a crop that
+  didn't grow on its tick gets 5% a bell, up to 5 bells), Kin (help warms 10% more a bell, up to 5), Ward (natural night
+  creatures inside the Hearth fail to spawn 20% a bell, up to 80%), Stride (Speed I inside, II from 3), Glow (a raid's
+  creatures glow), Shed (the Ore Shed's nugget odds: one in 32 rubble, 4 fewer a bell, down to 16), Raid (warned two
+  days ahead, not one), Homeward (the peal takes 2 s, not 5).
+  The handbell: use rings it (2 s cooldown; outside a Hearth the land's beasts within 24 run for a minute); sneak-use
+  sets the peal. Homeward (Ember, Wren, Wayside): stand still 5 s (2 with the Registry Handbell hung), then you're beside your Anchor; every 5 minutes,
+  overworld only, broken by moving or a hit. Gather (Nook, Founding, Root): your beasts come to the tower and wait a
+  minute. Stillness (Tenor, Night, Watch): a raid's creatures within 48 get Slowness IV and Weakness II for 10 s, once
+  a raid night. The Bell Book page is in the Codex (The Hundred Bells, Bell Leads, Your Tower, with "Play the song");
+  payloads `bells_song`, `bells_page`, `bells_ask`, `bells_track`; Track puts the lead's area (or the start of its one
+  bearing) on the top-right card. Recipes: handbell (a stick over two copper ingots), bell frame (planks, logs, a bell).
+  Sounds `bells.note_0..14`, `gap`, `handbell`, `toll`, `hum`, `wake` (`tools/art/specs/audio_bells.py`); art from
+  `tools/art/specs/bells.py`. Commands `/awaken admin bells give <id> | tower <n> | song | site <id> | wake | page`.
 
 ### 43.8 Faults and Big Days
 - A Fault is one reusable director: tell, break, words in the black, held cut, aftermath, mend. Sizes: flicker (under
@@ -13256,6 +15624,25 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   no help (a level-12 player in D gear who stands and fights holds it). A raid while away breaks what it reaches and
   takes at most a chest's worth from the larder, never a beast, never the Forge's racks.
 
+- **Built (stage 3).** Faults: `fault.Faults.play/playNear/mend/mendNear` (public API), payloads `fault_play` and
+  `fault_mend`; sizes flicker 14 ticks, Fault (tell 10, break 22, black at least 34, cut up to 40), Great Fault (tell 22,
+  break 60, black at least 110, cut up to 90); words type at 1.1 characters a tick with a 10-tick beat between lines,
+  each glyph arriving broken for 3 ticks; a Great Fault's key plays once per player (`awaken:fault_<key>`), then as a
+  Fault. Client config `faults` (FULL, GENTLE, STILL) in `awaken-faults-client.toml`; screen flashes or camera shake
+  off make FULL play GENTLE; band layouts change at most every 7 ticks. Sounds `fault.tell/tear/voice/drop/mend/flicker`
+  (`tools/art/specs/audio_fault.py`). The Ringer's Great Fault (`ringer`) opens the D Reassessment (the waves trial
+  stands in for the Ringer's hall) and the trial's end mends it. Raids (`bigday.BigDays`, saved `big_days` schema 1):
+  a home is ready once its owner is D rank; never in the first 2 h of play (144,000 ticks); one every 5 play-days at
+  most; due 1 to 2 play-days later the first time, 1 to 3 after; warned the morning before; dusk at 12,200, dawn at
+  23,200; within 160 blocks counts as home. Waves 4/6/8 normals with 0/1/2 elites, 52 blocks out along the breach's
+  bearing, the next at 2 or fewer left or after a minute, then the Lord (role BREAK, level 12 the first time); the
+  Lord's death drops a Lord's Heart. The breach: the nearest standing gate within 700 blocks (over 120 away), else 400
+  blocks on one of eight bearings from the home's position. The first raid's Great Fault is `first_raid`. Away: at most
+  10 doors/trapdoors/fence gates/wooden fences/glass on the breach side, mended one per 300 ticks; at most 9 stacks of
+  food from the fullest chest, left in a chest 70 blocks out and tracked. Commands `/awaken admin fault
+  flicker|fault|great <key>|mend`, `/awaken admin bigday raid [first]|dawn`. Tests (CI): `fault_great_once`,
+  `bigday_away_raid`.
+
 ### 43.9 Changes to earlier sections
 §10 (Echoes, Barracks, town NPCs at the Hearth), §28 W0/W1/W3/W4/W6/W7 (citizens, troubles, settlers, the Mine head
 and Mine Echo), §41 (tamers: Carillon, its farmland, roads, holdfasts, Hearths; hunts take quarry and the Gnawed only),
@@ -13265,7 +15652,7 @@ SPI's line in the stat table, GOALS.md's Hearth Board, Echo Hall and Generals. J
 1. The world rule (43.1 to 43.4). 2. The first beasts, Kinship, the Hearth page, Fields and the Ore Shed (43.5, 43.6).
 3. Faults, the Ringer's Great Fault, the first raid (43.8). 4. The first thirty bells and the tower's song (43.7).
 5. The rest of the kin and the works to the Foundry, with the Storehouse. 6. The second half's bells and beasts. 7. The Hundred Peal, the
-Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8).
+Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY part 8). **Built (stage 7, §43.14)**.
 
 ### 43.11 The bar (Euan, 29 Oct: "fully featured ... everything has a recipe, everything has a path ... never left unsure about how to keep going")
 - **Ledger**: `docs/director/LEDGER.md`, a row for everything the Journey adds or changes (source, use, how you come to
@@ -13289,3 +15676,591 @@ Kinsong, the Deep's answer, the Stilled waking, and the journey test (JOURNEY pa
 - **Creatures**: Fresh Animations level (own model, three idles or more, look-at, blink, breathing, follow-through,
   own gaits, reactions, own sounds and particles). The Lampwing passes Euan in game before any other kind.
 - **Hand-off**: the Ledger re-read against the code, the diff reviewed, the full suite green on CI.
+
+### 43.12 The working kin and the works (stage 5; rows in LEDGER.md "Stage 5")
+Built in `dev.awaken.kin` (`KinWorks`, `KinHelp`, `KinHome`, `KinSpawner`) and `dev.awaken.kin.works`; art
+`tools/art/specs/kin.py` (rigs) and `tools/art/specs/works.py` (blocks).
+- **Eight more kin** walk the world, each its own rig and clips (idle, move, run, want, tell, nudge, work, sleep, sniff,
+  carry, hide), sounds `kin.<kind>.call/tell/worry` (pitched vanilla events until the style pass):
+  Totter (a round blue beetle, wing cases with a row of pale spots), Thatchback (a beaver-badger with a paddle tail),
+  Emberkit (a salamander kitten glowing down its back; fire-immune), Puffwool (a cloud of a sheep), Dumplin (a round
+  bird that can't fly, flocks of 4), Pondling (a frog-axolotl with glowing gill tips), Snufflet (a striped wild piglet),
+  Chimewren (a blue songbird with a brass crest, flocks of 3). Groups: Totter and Puffwool 2.
+- **Where they live** (site kind by biome): Totter forest but not old growth; Thatchback river; Emberkit hot and not wet;
+  Puffwool meadow, plateau or cherry grove; Dumplin plains or savanna; Pondling swamp; Snufflet old growth or dark
+  forest; Chimewren plains, meadow, savanna or forest. Each site is dressed for its want: the Totter's ground strewn
+  with sticks, flint, bone and feathers (items that never despawn); logs along the Thatchback's bank; a 2×2 hot spring
+  with two vent stones for the Emberkit; berry bushes round the Puffwool; a hay nest for the Dumplins, who start lost
+  16 to 24 blocks from it; a 3×3 pond for the Pondling, mud-bottomed with two blocks of pond rot; a spot of ground the
+  Snufflet keeps snuffling at. Rumours name each place in plain words.
+- **Helps** (the System never names them; a near miss is a nudge): Totter, toss it one of the scattered things;
+  Thatchback, toss it logs (planks get "not that"); Emberkit, something warm near it (a lit campfire, magma, a vent
+  stone, fire, or flint and steel); Puffwool, a brush (shears only frighten it); Dumplins, stand somewhere a block and
+  a half above them within 10 and they follow you (32 blocks' leash) to their nest; a flock left alone for 2,400 ticks
+  wanders off again; Pondling, break every block of pond rot (it regrows one every 2,400 ticks while any is left; a
+  water bucket is a nudge); Snufflet, dig the block it's snuffling at (above it: "deeper"): bone, flint, a mushroom, a
+  gold nugget or an amethyst shard, or 1 in 4 an old letter (a Found lead), and it picks a new spot; Chimewrens, ring
+  or wake a bell near them (only a player who holds a bell; a peal reaches 24 blocks, a waking 48). A note block or bell used
+  near them is a nudge. Handbell peals never scare Chimewrens.
+- **Nooks**: Totter the Storehouse's Drop, else any room with chests; Thatchback the nearest Work Plan within 64, else
+  a stack of logs; Emberkit above a Smeltery's vent stone, else beside a lit campfire; Puffwool and Dumplin a hay bale;
+  Pondling (like the Mossback) water open to the sky; Snufflet open grass; Chimewren a Rookery's Chime Perch. Each
+  checks its nook every 1,200 ticks and moves to a better one.
+- **Work Plans** (`awaken:work_plan`, paper, coal and planks): set one down facing the door, sneak-use it to choose
+  (Smeltery, Rookery, Foundry, Storehouse, Ore Shed), use it to read the bill or how far it's got. A Thatchback at that home lays one block every 10 ticks
+  from the chests and barrels within eight blocks that hold it (not just the nearest: the plan's own barrels would hide
+  yours): floor, walls with log corners, a door toward the front, a window each side (walled up with no glass), a flat
+  roof (the Storehouse's has a skylight over the Drop), lanterns if there are any, the furniture, the work's rare thing
+  last in the middle. Blocks already right count; anything of yours in the way is built round; it waits, saying on
+  what. Sizes: 7×7 rooms, the Storehouse 7×9. A player can build any work by hand; the room reads the same.
+- **Smeltery** (a vent stone and a furnace in a room): an Emberkit smelts ore and raw metal from the room's chests and
+  barrels at its vent, one every 100 ticks, 15 faster for each Smeltery bell (SMELT voice), never under 40; no fuel; the
+  results go back into the room's chests. Only what you bring: nothing else is smelted.
+- **Storehouse** (the Drop, `awaken:storehouse_drop`: planks, a granary keystone and barrels): use it holding
+  something to tip that stack in, sneak-use to empty your bag (all but the hotbar, armour and marked items), use it
+  empty-handed to hear how it stands. The heap holds 64 stacks
+  as data and draws at most 24 items near, 8 past 24 blocks, each landing with its kind's sound (`works.land_*`).
+  Totters take three stacks an armful to the bay of its sort (§43.6's eleven), or to an empty chest or barrel that
+  becomes a new bay with a painted sign; a full hall puts the armful back and the Totter rests 1,200 ticks; the Drop
+  says the hall is full. Between works, Totters carry the Smeltery's ingots, nuggets and gems to an Armoury chest (or
+  the Drop) and the Burrowbun field chests' crops and food to a Kitchen chest (or the Drop), leaving 32 of each seed crop
+  in the field chest for planting.
+- **The Ledger** (`awaken:ledger_desk`: a book and quill over planks): lists everything shelved or on the heap, by bay,
+  with a search. "Fetch it": a Totter brings the stack to the desk (with no Totter free, or none back within 1,200 ticks, it's set
+  out on the desk); "Show me": a light over its bay. Payloads `works_ledger` (to the client) and `works_ledger_ask`.
+- **Rookery** (a Chime Perch, `awaken:chime_perch`: planks over a woken clapper and a stick; a clapper comes loose from
+  every bell you wake): its Chimewrens bring each online member one Sung lead a day: one bearing toward the nearest
+  sleeping bell they hold no lead on, within 1,200 blocks of home, with a line naming the direction.
+- **Foundry** (the Crucible, `awaken:foundry_crucible`: bell bronze, deepglass shards and a furnace): casts the Singing
+  Deep's five bells in order when the room's chests hold the metal: Sung Iron (12 iron, 4 bell bronze), Sung Copper (16
+  copper, 4), Sung Gold (12 gold, 6), Deepglass (16 deepglass shards, 8), Starmetal (4 starmetal, 8). A cast takes 600
+  ticks (300 with a Thatchback at home), the Crucible glowing; the metal is taken only when it's done (a cut-off cast
+  starts again). Each member gets the bell (online at once, the rest when they next come home; saved per home in
+  `kin` world data, field `cast`). Using the Crucible says what's next and what's missing.
+- **Found leads**: an old letter dug up with a Snufflet names a stretch of land round a sleeping bell within 800 blocks
+  (two bearings' worth: an area 20 blocks off the bell), and Tracks it if nothing else is tracked.
+- **Bells' voices** (stage 5): 14 Sung Iron and 45 Sung Copper, SMELT ("The Smeltery's Emberkits smelt faster."); 28
+  Deepglass GLOW; 49 Sung Gold SHED; 51 Starmetal STRIDE. The True Bell (36) keeps none until stage 7.
+- **Wool**: a Puffwool at home gives three wool a day to a member who brushes it. Dumplins leave 2 eggs a day (one
+  every 2,400 ticks) in the nearest chest; Pondlings fish 4 a day (one every 1,200 ticks) from water by their nook;
+  Snufflets forage 4 a day (mushrooms, berries, herbs) round home. Never ore, gems, gate loot or XP.
+- **Granary keystone** (`awaken:granary_keystone`): set against a wall on the ground floor of every town granary.
+- **Saves**: `KinBeast` schema 2 (adds `mark`, `brushed_day`; what it carries shows on its back), `DropBlockEntity`
+  schema 1, `WorkPlanBlockEntity` schema 1 (`work`, `step`, `waiting`), `KinWorld.cast`. Errands are not saved: a
+  restart puts an armful back down where the Totter stood.
+- **Sources** (`journey_ledger`): recipes for the perch, Crucible, Drop, Ledger and Work Plan; vent stones from Emberkit
+  springs, the clapper from waking bells, the keystone from granaries, pond rot never held (it drops nothing). Every
+  block drops itself.
+- **Tests** (CI): `works_plan_builds`, `works_bays_sort`, with stage 2's kin tests. `/awaken admin kin works` raises a Smeltery, a Storehouse (a heap on its Drop), a Foundry (Sung Iron's metal) and a Rookery north of your home from their plans; tour `journey-5`.
+
+### 43.13 The second half's bells and beasts (stage 6; rows in LEDGER.md "Stage 6")
+Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) with one line each in `bigday.BigDays`
+(Siege) and `kin.KinWorks` (Founders).
+- **Every bell but two has a voice now** (the Seed, 00, and the True Bell, 36, came with stage 7, §43.14). New voices, felt inside
+  your own Hearth: Sight (night vision), Breath (no drowning under water), Feather (a fall doesn't hurt), Haste (I, II from
+  3), Warmth (fire and lava don't burn), Might (Strength I, II from 3), Guard (Resistance I, II from 3).
+- **Moments** (checked every 5 s with stage 4's): the Great Bells of the B, A, S and Sovereign Provings (Third, Fourth,
+  Fifth, the Bourdon) with the rank; the Toll Bell for the twenty-fifth gate cleared; the Descent's bells on reaching
+  each stratum (Shallows at the Rim, Bone in the Bone Orchard, Echo in the Silent Halls, Furnace in the Precursor
+  Foundry, Black Water under the Inverted Sea, Weight in the Dreaming Stratum, the Deepest at the Seed); the Crystal
+  Bell the first time Deepglass is in your inventory; the Above's: Wind for the first Tether Spire scanned, Island for
+  the first sky platform, the Halo Bell aboard the Halo, the Star Bell at the Halo at S rank, the Storm Bell in the air
+  above y 160 in a thunderstorm.
+- **Gate worlds**: every theme now has its bell from its Lord at the bell's rank or above (Archive C, Gear C, Glass C,
+  Frost B, Mirror B, Counting B for the Precursor Lab, Sleeper B for the Nightmare, Sky A, Herald S for the Abyssal
+  Shrine).
+- **The Court**: each Sovereign that a player fells rings its domain's bell for everyone within 96 (Hunger, Silence, the
+  Sorrow Bell for Sleep, the Throne Bell for Machines, the Oath Bell for Mirrors, the Crown Bell for Storms, the Grief
+  Bell for Roots, Ash).
+- **Big Days**: the Siege Bell with the Night Bell when a home holds a raid and its member is B rank or above.
+- **The wild's big moments** (source WILDS; they were down as Big Days, but the World Pulse already holds them, §21.6):
+  from C rank, witnessing a Stampede rings the Stampede Bell and witnessing the Deep Tide (new moon) the Flood Bell
+  (`Bells.witnessed`, called from `Pulse.witness`); at A rank, standing under open sky between 16000 and 20000 on a new
+  moon's night rings the Eclipse Bell. Every bell but the Seed (00) and the True Bell (36) now has a source (both came with stage 7, §43.14).
+- **Carillon** (Remembered leads while you're in the city): the Roost's bell rings for you within 16 of the Roost at C
+  rank; Choir Square's within 20 of the square with 20 bells; the market's in the market district at B rank; the
+  Quay's (the Harbour Bell) on the Quay with 50 bells. A due bell you're away from is remembered aloud with where it is.
+  The Founders' Bell comes with your Foundry's first cast.
+- **The land, further out**: the C band also holds the homes people left (Fenwick's, sunk by a lake; the Mill Bell,
+  buried; the Shepherd's, kept); a B band (4,800 to 7,200 blocks, half its cells) holds the Hill (high), the Ford
+  (sunk) and the Thaw Bell (kept); an A band (7,200 to 9,600, two in five) the Boulder (kept) and the Leviathan's (high).
+  Once a play-day in Carillon someone remembers one of the people's bells still asleep within 7,200 blocks, in plain
+  words, with the area 20 blocks off it ("An old woman in the square says Fenwick had a bell, by the lake, to the
+  west."); the Bell Book keeps `remembered_day` (schema 2).
+- **Spirit bells** (the Veil: Ghost Lantern and Whisper in the C band, Wake and Mourner in B, the Veil Bell in A; two in
+  five cells of their own 960-block grid): nothing a body can touch, the ground round them asleep (radius 5) and the bell
+  hanging 7 above it. A body within 24 feels it ("The air here is cold and still, as if something hangs in it that only
+  a spirit could see." filed Seen). A spirit sees it drawn in cold light every 10 ticks, hears it hum within 64 ("Heard
+  in spirit: a bell's note ..."), and rings it by coming within 3. Its toll is sent only to spirits within 256, and it
+  goes home with the spirit and every other spirit within 48. The land turns back as usual.
+- **Dream bells** (the Lucidium: Daydream, Lullaby, Falling, Nightmare, Lucid, offered in that order, one a dream): in a
+  dream the next one not held is set down awake 24 to 40 blocks off on the dream's ground and rings its note every 5 s.
+  Strike it with lucidity at least 40 (C), 60 (B) or 80 (A) and you hold it ("Wake, and it's yours."); too dim and your
+  hands go through it. Wake holding it and it's yours ("carried out of a dream"); wake without it and the Book files a
+  Dreamt lead (the new lead kind). Not saved: a dream isn't.
+- **The last four kin** (`KinKind` built: all sixteen live now; fliers are `KinKind.flies()`: Lampwing, Bumblepuff,
+  Cloudcalf). Each has a rig in `tools/art/specs/kin.py` (11 clips), vanilla stand-in sounds and the usual watch lines.
+  - *Bumblepuff* (flower fields: `c:is_floral`; two at a site; health 10, speed 0.2). Its site is an old bee nest on a
+    stripped log, the meadow round it picked bare (flowers gone within 5, a third of the grass worn to coarse dirt). Help:
+    flowers round its nest, lots of them: a flower planted within 6 of the nest counts once there are 3 or more there (bone
+    meal that brings them up counts too); with fewer, "It wants lots". A sapling, a berry bush or an azalea is a nudge.
+    Nook: a bee nest or beehive at home (the POI manager finds it, no block scan). Work: 2 honeycomb and a honey bottle a
+    day into the nearest chest.
+  - *Loomworm* (old growth, dark forest, birch forest; health 10, speed 0.1). Its site is a fallen log of its own tree
+    (dark oak in dark forest, birch in birch forest, spruce in taiga, oak otherwise). Help: a branch of that tree (its
+    leaves or sapling) tossed by it; any other tree's is refused. Nook: leaves at home it can reach from the ground (within
+    3 above a column, or a hedge). Work: 4 string and a white wool a day.
+  - *Cloudcalf* (B land: 4,800 blocks or more from the centre, over mountain peaks; health 20, flying speed 0.3). Lost
+    alone 8 blocks above the peak, its pod calling now and then (the calf's call at low pitch and a cloud puff) from a
+    point 48 to 72 blocks off. The pod is heard, never seen as beasts: the JOURNEY's sky islands aren't overworld land, so
+    the calf lives over the high peaks instead and isn't a mount. Help: someone no more than 4 blocks under it, within 16,
+    and it follows them (lost again past 32); led within 12 blocks of the pod across the map it's home, helped, and its
+    guide hears the Cloud Bell ("the day you brought a Cloudcalf home to its pod"). Two minutes after it drifts off, lost
+    somewhere new 48 to 72 from the pod. Nook: farmland open to the sky at home, 6 above it. Work: rain: it hangs over the
+    field, falling-water drops under it, and every 5 s each crop within 4 across (2 to 10 below) has a one-in-four growth
+    step and farmland there is soaked to full.
+  - *Boulderback* (deep caves: a cave biome under the column at y -24 or -44, never the deep dark; health 30, speed 0.18).
+    It stands in cave air under its site (within 12 of it, from y -8 down), or in a 5 by 3 by 5 pocket cut at y -30 when
+    there's no cave there; moss and a few stones of cobbled deepslate make its den. Help: no light in either hand (any
+    item that would glow if set down) and keep still, or creep crouched, within 12 of it for 30 s; at 15 s it takes a step
+    closer. Walking about starts the wait again; a light and it backs off into the dark (a nudge every 10 s). Nook: a room
+    at home with block light 2 or less and no sky. Work: 16 cobbled deepslate a day, and while it's home every Thatchback
+    there lays a block every 4 ticks instead of 10.
+
+### 43.14 The Hundred Peal, the Kinsong, the Deep's answer and the Wake (stage 7; rows in LEDGER.md "Stage 7")
+Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with the Deep's answer read through
+`core.api.BellHooks` by `gates.Breaks`, `story.Court`, `kin.KinSpawner` and `kin.KinPage`, and the Wake's people in
+`living.wayfarer` and `world.stilled`.
+- **The last two bells.** The Seed Bell (00, S, voice Kin) is cast round the Heart-clapper the day a home's Great Belfry
+  goes up, and rings home for every member then or the next time they're about (so the hundredth bell is never the one
+  you can't get, and the Peal comes before the Seed, not after it). The True Bell (36, S, voice Glow) is the Foundry's
+  sixth mould: 8 Starmetal Ingots and 16 Bell Bronze, cast only while a member of S rank is online; the Foundry's status
+  says so while it waits. All hundred bells now have a source (`bells_catalog_ring` checks it).
+- **The Great Belfry** (tower stage 3): it needs the stone tower (50 bells) and two pieces set into the bell frame by
+  hand (each says why if it can't go in: not your frame, no tower yet, already set, already built). The **Heart-clapper**
+  drops from every S-rank (or higher) gate world's Lord to the killer and their party within 96; a **Sovereign's Relic**
+  from every Sovereign felled, to the same people. Each is epic, unstackable, fireproof, and given only to someone who
+  isn't already carrying one, whose home hasn't set that piece and has no Great Belfry yet; so a lost piece always
+  comes again from the next Lord or Sovereign. With both in, every beast living there gathers at the tower for 30 s
+  (dust, stone and timber knocks) and it goes up; with no beasts it goes up at the next song. It needs a clear 7 by 7,
+  23 high round the frame (otherwise a note, and it tries again every song); the tower's own belfry comes down under it.
+  The build: the tower's lower five floors, a stone-brick shaft (deepslate corners, windows), a deepslate-rimmed floor at
+  10, piers at the corners and mid-sides, dark-oak beams at 16 with 24 bells hung under them in two rings and the Seed
+  Bell in the middle, lanterns, a three-step roof and a gold-capped spire with a lightning rod at 22. The song then
+  rings from the Great Belfry. The Hearth page's pin names its needs from A rank and its state once built; the Bell
+  Book's next line names it when the tower is full.
+- **The Hundred Peal**: the first song after the Great Belfry holds all hundred bells rings all of them together, once
+  per home. Every player in the overworld hears it (the whole song, a mend of any Fault, a REVELATION "The Hundred
+  Peal"); the home's beasts sing; every wild kin within the tower's hearing (256) comes to the tower for the song's
+  length and any Gnawed among them are freed. Each member: every kind they've met goes a step up (Curious, Friendly,
+  Kin), the Chimewren to at least Friendly, fear cleared; a best moment; the Kinsong; the Wake opens to them
+  (`BellBook.pealed`, schema 3). It's the one big moment that doesn't glitch.
+- **The Deep answers** (the world's first Hundred Peal, saved as `deep_answered` in `bells`, schema 2): 30 s after the
+  Peal, every player who heard it sees the Great Fault `deep_answer` ("SIGNAL HEARD BELOW", the camera pulled up and back
+  from the tower over 90 ticks) and then, plainly: "The Deep heard your bells. Gates will break sooner now, and harder,
+  and the Gnawed will spread wherever the Kinsong doesn't reach." From then on: a gate's time to break is halved; a
+  break's spill is half as many again and its creatures and Lord are 10 levels higher; the Sovereigns come back angrier
+  (+10 levels), and once all eight are beaten each returns as a Grieving Sovereign (+20, "Grieving <name>"; felling one
+  grants half a level and a REVELATION once per Sovereign per player). Fighting never ends.
+- **The Gnawed**: a wild kin the Deep has got into (`KinBeast` with the synced flag `gnawed`: sunk purple-black, ember
+  eyes, ash, a low voice). After the Deep answers, a fresh kin site has a one-in-four chance that its first beast is
+  Gnawed, unless the Kinsong rang within 256 blocks in the last 3 play-days. A Gnawed beast hunts players (not creative
+  or spectator) with a melee hit (Boulderback 7; Mossback, Thatchback and Cloudcalf 5; others 3), doesn't panic, follow,
+  lead or want. You can't kill it: brought below 1 health it's freed, never dies, and the one who freed it gets a Help
+  step of Kinship; the Kinsong frees it at once; killing a Gnawed costs no Kinship. The first sight of one (24 blocks, in
+  view) plays a flicker and a line; after that a line every 2 minutes.
+- **The Kinsong** (the handbell's peal for anyone with the Peal; sneak-use cycles to it): the land's beasts within 48
+  stop (no target, no anger, a riled one slowed for 15 s; never monsters, gate things, wardens, bosses or camps); wild
+  kin within 48 come to listen for a minute and any Gnawed is freed; a Stampede within 80 slows and stops; it never
+  scares kin. Each one is kept (x, z, play-day; last 64, 8 days). After the Deep has answered, the Deep's creatures hear
+  it: 30 s later, at most once in 5 minutes, 2 to 4 of the player's rank (an elite first) from the Abyssal Shrine, the
+  Nightmare or the Bell Crypt come up 18 to 26 blocks off, hunting them.
+- **The Wake needs the Peal.** At the Seed, the ending screen shows the Wake dimmed until the player has rung (or
+  heard as a member) the Hundred Peal: "Needs the Hundred Peal: all hundred bells ringing together in your Great
+  Belfry." A **Not yet** under the cards closes it ("The Seed will wait."), and it's offered again the next time they
+  come back down to the Seed. The server refuses a Wake without the Peal.
+- **After the Wake** (the world's colour restored): no new Stilled sit down, and every placed one in a loaded chunk
+  stands up (stone dust, a grinding sound) as a risen Wayfarer with their name (or "Someone") in a stone-grey skin with
+  moss on the head and shoulders (`wayfarer/risen.png`), walking toward Carillon 20 blocks at a time; they're gone once
+  nobody's within 48 or they're nearly there, and their spot never fills again. Spoken to, they say one of three plain
+  lines ("I can hear the bells again. I'm going home."). Their letters and keys stay true. Three play-days after the
+  first Wake the bells see, Ilse walks out from the Last Fire to visit each home once: by day (1000 to 9000), when a
+  member is within 24 of the Anchor, she comes up the path 28 blocks out on the city's side, walks to the fire and stays
+  by it, saying four things in turn (she followed the bells; eleven years she meant to walk out; Aldo came back over the
+  ridge with the dog; "sit down and tell me what it's like out here"); she leaves at dusk or after 20 minutes with
+  nobody near. At the Last Fire after the Wake she talks about Aldo coming back, the risen on the roads and maybe
+  visiting. Decision (stage 7): JOURNEY's "legendary beasts come to your tower" for the Peal is the wild kin in hearing
+  coming instead; there are no legendary beasts in the game.
+- Commands: `/awaken admin bells belfry` (grows the tower if needed, sets both pieces, raises it now), `bells deep`
+  (the Deep has answered), `bells tower <n>` (now skips the Seed), `/awaken admin kin gnaw <kind>`. Test (CI):
+  `bells_hundred_peal` (the Great Belfry's plan; no Kinsong or Wake before the Peal, both after).
+
+## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
+
+Module `armour` (`dev.awaken.armour`, client `armour.client`). Built in phases P0-P5 (plan §6.2); this section grows
+with each phase. Abilities follow one rule: they change your body, your blows, your movement and what everyone in front
+of you sees, and never show you anything you could not see without them (no outlines, no glowing creatures, no ores or
+blocks through stone, no marks, no danger sense).
+
+**44.1 The look (P0).** Every set is drawn as sculpted meshes on the body's bones, never as vanilla's flat shell.
+- A piece is one mesh per bone it rides (`assets/awaken/armour/<set>/<piece>_<bone>.mesh`, bones `head body right_arm
+  left_arm right_leg left_leg cape0 cape1 cape2 front_cloth back_cloth`) and one texture a set
+  (`textures/entity/armour/<set>.png`, albedo left, material map right: metal, gloss, emissive, flow). `ArmourMeshes`
+  reads them on each resource reload; a set with no meshes is skipped (a Hunter set without them logs an error).
+- `ArmourLayer` draws each mesh where its bone is posed this frame (`ModelPart.translateAndRotate`), so armour follows
+  every animation. The cape hangs in three links from a yoke, swung by the avatar's cape lean and flap, each link
+  curling further; the leg cloth is pushed by the stride. It is on players and mannequins (both arm widths), armour
+  stands (legs a texel lower) and every living renderer whose model is a `HumanoidModel` (zombies, skeletons, piglins,
+  ours).
+- `ArmourClient.readWorn` (a render state modifier on every living renderer, only for entity types that got the layer):
+  each worn piece whose set has meshes for it is put in the state's render data (`awaken:armour_worn`), taken out of
+  `HumanoidRenderState.head/chest/legs/feetEquipment` (so vanilla's armour layer and the Hunter silhouettes draw nothing
+  for it), and the skin's outer layer under it is hidden (hat, jacket and sleeves, trousers); a helm is not drawn again
+  as a hat item; a set's cape hides the player's own. A piece without meshes is left to vanilla: the Hunter sets keep
+  their equipment assets and silhouettes as the fallback.
+- The shader `awaken:core/armour` (the weapons' kind, its own copy): metal catches a studio reflection, a sheen climbs
+  from feet to crown, emissive seams glow in the dark and pulse, enchanted pieces shimmer (the foil bit in the overlay
+  channel). If the pipeline doesn't build, the same mesh draws through vanilla's entity cutout.
+- First person: the empty hand wears the cuirass's arm mesh (`RenderArmEvent`). `ArmourClient.dressArm(player, side,
+  poseStack, collector, light)` is public for every other first-person arm drawer: the pose on the arm's bone, it draws
+  the worn cuirass's arm and returns whether it drew.
+- Nothing new is sent: equipment already syncs to everyone who sees you.
+- **Art kit** `tools/art/specs/armour_sets.py` (`build [set]`, `check`, `preview DIR [set]`): a set is a design in
+  texels (x your left, y up, z forward) of boxes, chains and mirrored parts with painters (hems, rims, scales, lames,
+  seams, sigils, gems, edge columns, side seams); 9,000 corners a set at most; `check` refuses unknown bones and two faces
+  in one plane on different grids. Proportion rules: the helm within a texel or two of the skull, its height from horns
+  or a crest; shoulders rise; cloth stops at the knee; gold hems only on the top plate of a stack; glow is few and
+  placed. Every set has its own silhouette a stranger would name and its own palette.
+
+**44.2 The roster.** `ArmourSet` (29) and `Archetype` (Bulwark, Strider, Channeler, Duelist, Lord-forged): four sets at
+E, five at each rank D-S (one of each archetype, plus a Lord-forged set). The six Hunter sets keep their item ids and
+are one set each (`ArmourSet.hunter`): Wildhide (E, Strider), Beastbound (D, Bulwark), Gatewrought (C, Duelist),
+Veilwoven (B, Channeler), Lordscale (A, Lord-forged), Sovereign Weave (S, Lord-forged). `ArmourLooks.of(stack)` names
+the set and piece a worn item is drawn as. The other 23 (plan §4.2) get items, recipes and art phase by phase
+(`ArmourSet.MADE_TO`: P2 made E and D, P3 C and B, P4 A and S: all of them). A made set with no Hunter items has its own (`ArmourItems`, `<set>_helmet`
+`_chestplate` `_leggings` `_boots`, a `ForgedArmourItem` each, and above E a `<set>_pattern`), in the Awakened Gear tab.
+- **P2's seven**, each with its own look (`armour_sets.py`; 32px icons drawn from the meshes, a pattern is a vellum sheet
+  with its helm in ink and a seal in its rank's colour, a Lord's in gold):
+  - **Bellguard** (E, Bulwark): a bell-founders' guard cast in bronze; a bell worn mouth down with a green-lit eye-slit
+    and its hanging loop, bell-dome pauldrons, a small bell cast on the breast, a copper skirt; patina drips.
+  - **Rootwarden** (E, Channeler): a moss hood under a bark circlet, a bark mask with two amber eyes, antlers of
+    branching wood, bark plates bound by roots to a sap heart, a leaf apron; its runes are amber seeds.
+  - **Amberwing** (E, Duelist): black leather, a closed helm with a band of lit amber across the eyes and a swept fin,
+    two pairs of amber wings crossing on the back (lit, holding dark motes), an amber sash.
+  - **Cleftrunner** (D, Strider): a dusk-blue hood, a long red scarf over mouth and nose whose tail streams behind,
+    blue lamellar laced in red on the breast and the right shoulder, iron only on forearms and shins.
+  - **Lanternlight** (D, Channeler): a deep cowl whose face is only dark with a little lamp at its brow, a tall iron
+    collar, charcoal robes trimmed in brass, a burning lantern caged on each shoulder; its runes are little lamps.
+  - **Bladeward** (D, Duelist): an oxblood brigandine studded in brass, a close steel helm cut in a dark T with a red
+    plume, one great layered pauldron on the left with a neck guard, a half cape.
+  - **Hornlord** (D, Lord-forged): blackened iron with embers in its cracks, a closed helm with a burning slit and great
+    pale horns banded in gold, a fur mantle and ragged fur cape, sabatons split like hooves.
+- **P3's eight** (the plan's Sunshard is named **Sunward**, so it isn't mistaken for the sunshard crystal it is made with):
+  - **Vaultbreaker** (C, Bulwark): diamond-studded steel; a closed helm under great curled ram's horns, a round shield
+    of a pauldron on the left with a pearl boss, heavy tassets.
+  - **Frostwalker** (C, Strider): clear ice plates over white wolf fur; a closed ice helm under a crown of icicles, a
+    fur mantle, a cape whose hem has frozen.
+  - **Sunward** (C, Channeler): a gold breast under a white coif; a great sun disc rayed in gold stands behind the
+    head, long white tabards with a sun rune; its runes are little suns.
+  - **Shardcrown** (C, Lord-forged): dark steel with violet crystal growing out of it; a crown of shards, shards at the
+    shoulders, a crystal cluster for a heart.
+  - **Deepcarapace** (B, Bulwark): black Deepglass chitin like a cave beetle's, cave-cyan seams; a ridged dome helm
+    with one horn, wing cases closed on the back.
+  - **Cloudrunner** (B, Strider): sky-white plate over slate; a closed helm with a storm-lit slit, feathered fins
+    swept back from the helm, shoulders and heels, a mantle of feathers.
+  - **Tidebreaker** (B, Duelist): sea-green scale edged in amethyst; a fin crest, fins at cheek and shoulder, a cape
+    cut in tongues like a breaking wave.
+  - **Hollowheart** (B, Lord-forged): bone over deep red; a crown of bone spikes, an open rib cage on the chest holding
+    the Lord's hollowed heart, glowing at its core, and a ragged red cape.
+- **P4's eight** (the A and S Lords are the Hunter sets Lordscale and Sovereign Weave). Blades and feathers are turned
+  toward the front (the kit's `facing`), so a set reads from the front as well as the side:
+  - **Leviathan** (A, Bulwark): drowned netherite, deep-water blue; a closed helm with a lure's glow for its slit, a
+    webbed fin down the crown and a great frill fanning back from each ear on bone spines; a sail down the back, bone
+    spines on the pauldrons.
+  - **Galewing** (A, Strider): netherite feathered; a storm-lit slit, a great white wing at each temple, folded wings on
+    the back rising over the shoulders and falling to the knee in a V.
+  - **Halo Choir** (A, Channeler): porcelain plate edged in gold; one upright slit of light framed in gold, behind it a
+    gold halo with two white wings; a gold bell on the breast, a bell skirt; its runes are little gold bells.
+  - **Dreamsteel** (A, Duelist): mirror-bright plate coming gently apart; a sallet with a pale slit under a broken crown
+    of mirror shards standing off the head; plates hanging a finger off a night-blue suit; pauldrons of three floating
+    plates.
+  - **Starfall** (S, Bulwark): a fallen star's dark metal burning white where it broke; a great helm with a slit of white
+    fire, a comet at each temple trailing silver past the crown, massive stepped pauldrons with fire in their seams, a
+    star burning in the breast.
+  - **Riftwalker** (S, Strider): dark violet plates hanging off black cloth with the rift's light between them; a hood
+    over darkness torn by one violet slit; behind the wearer a rift stands open, a tear of violet light taller than they
+    are; a ragged cape breaking into squares.
+  - **Nightcourt** (S, Duelist): the Hollow Court's duelists; a tall cocked hat with a silver band and a white plume, a
+    silver mask, a high-collared coat with two rows of silver buttons, fringed epaulettes and two long tails; riding boots.
+  - **Signal's Echo** (S, Channeler): the System's own look, worn; white robes and plate that glitch sideways, a deep hood
+    dark but for one cyan line, and over it the System's marker, a white diamond with a cyan core; its runes are little
+    framed squares of light.
+
+**44.3 Numbers.** A set sits on its rank's Hunter numbers (`HunterTier.Armour`). Bulwark +1 point on the cuirass and
+greaves, +0.5 toughness, +0.05 knockback; Strider -1 on the cuirass, +5% speed a piece; Channeler -1 on the cuirass, +3%
+power damage a piece; Duelist the rank's numbers; Lord-forged +1 on the cuirass (`ArmourItems.numbers`; durability,
+enchantability and sound are the rank's). The made sets (test `armour_numbers` holds this table):
+
+| Set | Rank | Archetype | Helm | Cuirass | Greaves | Boots | Total | Toughness | Knockback | A piece |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Bellguard | E | Bulwark | 2 | 5 | 4 | 1 | 12 | 0.5 | 0.05 | |
+| Rootwarden | E | Channeler | 2 | 3 | 3 | 1 | 9 | 0 | 0 | +3% power damage |
+| Amberwing | E | Duelist | 2 | 4 | 3 | 1 | 10 | 0 | 0 | |
+| Cleftrunner | D | Strider | 2 | 5 | 5 | 2 | 14 | 0.5 | 0 | +5% speed |
+| Lanternlight | D | Channeler | 2 | 5 | 5 | 2 | 14 | 0.5 | 0 | +3% power damage |
+| Bladeward | D | Duelist | 2 | 6 | 5 | 2 | 15 | 0.5 | 0 | |
+| Hornlord | D | Lord-forged | 2 | 7 | 5 | 2 | 16 | 0.5 | 0 | |
+| Vaultbreaker | C | Bulwark | 3 | 9 | 7 | 3 | 22 | 2.5 | 0.05 | |
+| Frostwalker | C | Strider | 3 | 7 | 6 | 3 | 19 | 2 | 0 | +5% speed |
+| Sunward | C | Channeler | 3 | 7 | 6 | 3 | 19 | 2 | 0 | +3% power damage |
+| Shardcrown | C | Lord-forged | 3 | 9 | 6 | 3 | 21 | 2 | 0 | |
+| Deepcarapace | B | Bulwark | 3 | 9 | 8 | 3 | 23 | 3 | 0.1 | |
+| Cloudrunner | B | Strider | 3 | 7 | 7 | 3 | 20 | 2.5 | 0.05 | +5% speed |
+| Tidebreaker | B | Duelist | 3 | 8 | 7 | 3 | 21 | 2.5 | 0.05 | |
+| Hollowheart | B | Lord-forged | 3 | 9 | 7 | 3 | 22 | 2.5 | 0.05 | |
+| Leviathan | A | Bulwark | 3 | 10 | 8 | 3 | 24 | 3.5 | 0.15 | |
+| Galewing | A | Strider | 3 | 8 | 7 | 3 | 21 | 3 | 0.1 | +5% speed |
+| Halo Choir | A | Channeler | 3 | 8 | 7 | 3 | 21 | 3 | 0.1 | +3% power damage |
+| Dreamsteel | A | Duelist | 3 | 9 | 7 | 3 | 22 | 3 | 0.1 | |
+| Starfall | S | Bulwark | 4 | 10 | 8 | 4 | 26 | 4 | 0.2 | |
+| Riftwalker | S | Strider | 4 | 8 | 7 | 4 | 23 | 3.5 | 0.15 | +5% speed |
+| Nightcourt | S | Duelist | 4 | 9 | 7 | 4 | 24 | 3.5 | 0.15 | |
+| Signal's Echo | S | Channeler | 4 | 8 | 7 | 4 | 23 | 3.5 | 0.15 | +3% power damage |
+
+Costs (`ForgeSong.SET_COSTS`, helm / cuirass / greaves / boots; hide, metal, core and bind are the rank's own tags, ess
+the essence shard): Bellguard copper 5, 7, 6, 3 with hide; Rootwarden logs, moss, resin and hide; Amberwing hide, resin
+and bind; Cleftrunner metal, wool and hide; Lanternlight wool and metal, its cuirass two lanterns; Bladeward metal, hide
+and core; Hornlord metal and core, its cuirass a Lord's heart. C on diamond: Vaultbreaker metal, hide and core;
+Frostwalker frostspar and hide; Sunward gold, sunshard and wool; Shardcrown amethyst and core, its cuirass a Lord's heart.
+B on Deepglass: Deepcarapace metal, hide and core; Cloudrunner feathers and wool; Tidebreaker amethyst and hide;
+Hollowheart bone and core, its cuirass a Lord's heart. A on netherite: Leviathan prismarine shards, hide and core;
+Galewing feathers and phantom membrane; Halo Choir gold, its cuirass a bell, its greaves wool; Dreamsteel glass, core and
+hide. S on starmetal: Starfall core, Riftwalker echo shards and bind, Nightcourt bind (the Court's thread), Signal's Echo
+core and bind. The A and S Lords (Lordscale, Sovereign Weave) keep the Hunter costs, a Lord's heart in each. E is cut by
+hand, D and up forged.
+
+**44.4 The Forge Song (P1).** Armour is never crafted on the grid: every Hunter armour recipe is gone and the pieces
+are forged at a **Fitting Stand** (`awaken:fitting_stand`, crafted from a stick, a copper ingot, wool and planks; a
+dress form that holds a suit). The level road's Hunter steps grant the weapon and tool recipes only, and the E step the
+Fitting Stand's; they say where armour is made. `ArmourNow` (Now line, priority 25): "You can forge a Wildhide Vest at
+a Fitting Stand" when the pack covers a piece your rank can forge that beats what you wear there and you don't own it
+or better (the highest rank first, then cuirass, greaves, helm, boots, then the rank's sets in order, its Hunter set first); `GearNow` no longer suggests armour.
+- **The place.** E sets are cut and riveted **by hand** at a crafting table (the works table) within 6 blocks of the
+  stand. D and up are forged: an anvil and the Hearth's Forge (`awaken:forge`) within 6 blocks. The stand's list says
+  plainly what's missing.
+- **The list** (`ArmourForge.offers`, payload `Offers`): every set your rank can forge (Hunter sets come with rank;
+  others need their pattern, P2), each piece with what it takes (have / need) and flags: can make now, known by heart,
+  forged whole before. Its costs are the old recipes' (`ForgeSong.HUNTER_COSTS`). Starting takes the materials into the
+  work (`ForgeWork.materials`; breaking the stand gives them back with the suit). Creative skips them.
+- **The song.** Times are game ticks from the stage's start; the client sends what it did and when (`Act`), the server
+  judges by its own clock within `LAG` 10 ticks behind and 2 ahead (`ArmourForge.clamp`). At the Forge: **Heat**, a bar
+  climbing over `HEAT_FULL` 120 ticks; pull it in the gold (0.55-0.75: heat score 1), early and the strikes count x0.7-1,
+  past 0.85 the piece keeps a scale flaw (never Flawless), at 1.15 it comes out burnt by itself. **Shape**: the anvil
+  counts in one bar of the set's rhythm (`ForgeSong.Song`: ticks a step and a bar of x and ., e.g. Wildhide 4
+  "x.x.xx..", Lordscale 7 "x...x...x.x....."), then each strike is due on the next x; the piece's marks (`marks`,
+  the same every time) are struck in turn; a strike scores 0.6 timing (1 within 1.5 ticks, 0 at 6) + 0.4 aim (1 inside
+  half a mark, 0 at two marks; the client reports the aim); 8 ticks either side is its window, a beat left unstruck is
+  a miss (0). Helm 8 strikes, cuirass 12, greaves 10, boots 6. A clean strike (0.8) rings the set's next melody note,
+  so a well-forged piece plays its tune. **Quench**: a bell rings 24-35 ticks in (`quenchCue`); plunge within 4 ticks
+  for 1, early hisses (0.35), late cools in the air (falling to 0.2, plunged for you after 24). By hand: **Cut**, the
+  knife drawn round the piece's outline (the client scores keeping to the line and finishing it), then **Rivets** on the
+  beat (half the strikes, ringing copper).
+- **Quality**: at the Forge 0.2 heat + 0.65 strikes (x early) + 0.15 quench; by hand 0.35 cut + 0.65 rivets. Plain
+  below 0.55, Fine, Masterwork from 0.75, Flawless from 0.9. A piece leaves with Temper 0/1/2/3 (the Hearth's Temper
+  goes on from there). Masterwork or better puts it **in memory**: from then on From memory forges it in one heat (or
+  cut) and one strike, always Fine.
+- **A helper** at the anvil (anyone else using the stand while it's shaped) strikes the off-beats, the rests after the
+  count-in, within 1.5 ticks: each adds 0.01 (0.05 at most); three make the piece **twin-struck**. A helper's blow on
+  the beat isn't taken.
+- **The rank's verbs (P3, P4).** At the Forge, from C a piece can be **inlaid** and from B its Deepglass is **tuned**,
+  both after the quench (the tune first); from A it is **folded** and at S struck **white** (Starfire), both after the
+  shaping and before the quench. Each done verb is a tenth of the quality (`ForgeSong.withVerbs`: the score times 1 - 0.1
+  a verb, plus 0.1 times each verb's mark). From memory none is played; a chosen inlay is still set.
+  - **Inlay (C and up).** The list offers the weapons' five catalysts (`ArmsForge.catalystItem`: Sunshard Heat, copper
+    Charge, Fault Seam Gravity, Deepglass Spirit, Frostspar Frost) or none; the one chosen goes in with the materials
+    (START's aim: its Force + 1). It turns in its socket, a turn every 40 ticks from half a turn off; seated within 12
+    degrees of the key it's 1, further falls to 0.3 (`inlayScore`); left 120 ticks it seats itself at 0.5. The piece keeps
+    the Force (`Forged.inlay`), takes its colour as its accent and gives one small stat a piece whatever set it's on
+    (`ArmourInlay`, counted with the set, modifiers `awaken:armour_inlay_<force>`): Heat +1.5% melee damage, Charge +1.5%
+    speed (both multiplied base), Gravity +0.03 knockback resistance, Spirit +0.5 health, Frost +0.25 toughness. The
+    tooltip says it ("Inlaid with Frostspar: +0.25 toughness").
+  - **Fold (A and up).** After the shaping the netherite is doubled over and struck in pairs: three folds, each two
+    strikes on one mark (`foldMarks`, down the middle of the piece), to the Fold's own rhythm (`FOLD_RHYTHM`, 4 ticks a
+    step, "xx......": quick-quick, then a rest), counted in like the shaping. Its strikes follow the shaping's in the same
+    list (`ForgeWork.stageFrom`/`strikesNeeded`); the fold's mark is their mean (`ForgeWork.fold`). They ring low (pitch
+    0.8). The metal flares back up a little with each fold.
+  - **Starfire (S).** After the fold the heat goes white: a fast chain of eight marks scattered over the face
+    (`starfireMarks`, new each time from the stage's start, each well away from the last) to `STARFIRE_RHYTHM` (4 ticks
+    a step, "x.x.x.x."); the screen shows only the next few, white, and a struck mark is gone. Its mark is the mean
+    (`ForgeWork.starfire`); they ring high (1.2). The strikes' mean the quality weighs stays the shaping's.
+  - **Tune (B and up).** The cold Deepglass rings true at one spot on the piece's face (`truePoint`, from the stage's
+    start: -0.5..0.5 across, -0.6..0.6 along, in the face's half-widths). Tap it (TAP: the tap's number, x and z; the
+    client finds the spot under the cursor): each note is clearer and nearer its pitch the nearer the spot (`clarity`,
+    1 - distance / 1.1); the screen marks each tap in its colour and says clearer or duller than before. Within 0.15 it
+    rings true: the tune is 1, the piece is marked rung true ("Its Deepglass rings true") and the tuning ends. Otherwise
+    the best of five taps counts; left 600 ticks, what was found.
+- **Stepping away.** The work lives on the stand (`ForgeWork`, schemaVersion 2: the P3 tune, taps and inlay and the P4
+  fold and starfire optional, the judged list growing to heat, cut, quench, tune, inlay, fold, starfire;
+  synced to everyone near so they see the bar glow and the shape form). It only moves while its smith is at it (`ArmourForge.AT`, not saved): Esc, logging out
+  or walking 12 blocks away holds it; coming back restarts the stage (counted in again).
+- **Finishing** fits the piece onto the stand (the piece there before goes to your pack) with its `awaken:forged`
+  story (§44.7). All four of one set on the stand wakes it (a flare and a sound); the first time you make a set whole
+  the System names it and what wearing it does (a Revelation window with its set bonus lines). Sneak-use takes the suit.
+- **Client** (`armour.client`): `FittingStandRenderer` draws the suit on its form and the work: a squat blank glowing in
+  the Forge's mouth, then laid face up on the anvil drawing toward the piece strike by strike and cooling (the armour
+  shader's heat mode: overlay bit 9, heat in the energy channel, dull red to white, lit from within). `ForgeCamera`
+  (a client-only camera entity, as the opening's): wide on stand, anvil and Forge while choosing, over the shoulder at
+  the fire, still and close above the metal for the strikes, low for the quench, down on the works table, a slow turn
+  round the stand for the fit; hands, block outline, your own body and the HUD (bar subtitles and chat) step aside.
+  `ForgeScreen` (the list) and `ForgeSongScreen` (the gauge, the marks projected onto the metal with approach rings, a
+  beat lane, pips per strike, the cut line, the helper's off-beats, the result card). The smith's client plays its own
+  pull, strikes, notes and quench the moment they happen (the server plays them to everyone else), the count-in and a
+  soft tap on each beat. Neither screen pauses the game.
+- Sounds `awaken:forge.*` (`tools/art/specs/audio_forge.py`, from CC0 recordings): a strike for each metal (hide,
+  copper, iron, diamond, Deepglass, netherite, starmetal by rank), bellows, pull, quench, count, note (a bell at C5,
+  pitched per note), cut, fit, wake, miss.
+- Progression counters `awaken:armour_started`, `awaken:armour_forged`.
+- **Patterns (P2).** The Hunter sets come with rank and the E sets are known from the start; every other set needs its
+  pattern (the stand lists it greyed, "Pattern not found", and says where patterns come from). A pattern is an item
+  (`PatternItem`, stacks to 16): use it to learn the set for good (`ArmouryMemory.patterns`); one already known says so
+  and can be given away. Patterns drop from gate creatures (`ArmourPatterns`, needs a player's kill and a gate id on
+  `MobRole`): an elite 20%, a warden 50%, the gate's Lord always. The set is one of the gate's rank (its content level as
+  `ArmsApi.rankOfLevel`) whose pattern the killer doesn't know; a Lord gives its rank's Lord-forged set first, other
+  creatures never give one (at A and S the Lord-forged sets are Hunter sets and need none, so a Lord gives one of its
+  rank's other four). Nothing drops once you know them all.
+
+**44.5 Set abilities (P2).** `ArmourAbilities` (server; state `awaken:armour_state`, unsaved: a relog starts empty).
+A made set's own pieces: **two** give its archetype's half bonus, **four** its archetype's ability and its own twist
+(§44.6). A Hunter set keeps its own bonuses (`gear/SetBonus`) and, whole, gains its archetype's ability too; the
+Lord-forged have no archetype ability, their twist is the Lord's move. Only one set is ever whole. Every piece is
+counted on each equipment change.
+- **Half bonuses** (two of a made set; one each even with two sets): Bulwark +1 heart; Strider falls hurt a third less
+  (fall damage multiplier -1/3); Channeler powers +10%; Duelist +6% attack speed; Lord-forged +1 heart and +0.2
+  knockback resistance. A Channeler piece adds its +3% power damage worn alone.
+- **The fight's moments** come from `FightMoments` (§12): arms' HIT, FINISHER, DEFLECT, PERFECT_DODGE, BREAK, KILL,
+  GUARD, PERFECT_HEAVY and powers' CAST.
+- **Bastion** (Bulwark): a charge to 100; a guarded blow +20, a deflect +30, a blow taken +8. Full, the next deflect,
+  guard or perfect heavy bursts: everyone hostile within 3.5 takes the ability's blow (4 + 2 a rank above E), is thrown
+  back (1.1, lifted 0.35) and staggered 30 ticks; a shockwave and a quake.
+- **Flow** (Strider): a perfect dodge +35, wall-running +2 a tick, sliding +1 a tick. Full, the next blow that would land
+  (any blow a fighter could answer: `Strikes.of` not NONE) strikes an afterimage instead, and you run 30% faster for
+  40 ticks. (The plan's "the dodge carries twice as far" needs the Runner's insides; this is the same promise kept from
+  outside.)
+- **Edge** (Duelist): a deflect +35, a finisher +30, a clean hit +6, a perfect dodge +20. Full, your next hit sends a
+  wave along its swing: everyone else within 5 blocks and 50° of your heading takes 80% of your attack damage.
+- **Runes** (Channeler): each power you cast puts a rune circling you, up to three, each lasting 400 ticks from the last
+  cast. A cast with three overchannels: the runes fly at the three nearest foes within 8 (the ability's blow, as
+  magic), and your powers hit 35% harder for 40 ticks.
+- An ability's own blow on a body of 150 health or more is held to 3% of it (at least 2): a Lord is never burst down by
+  armour.
+- **By rank (P3).** The ability grows with the set's own rank (a Hunter set's too; the set's lines say what it does):
+  - C: Bastion: a landing from 4 blocks or more with Bastion full bursts it. Flow: foes within 3 of the afterimage swing
+    at it and are staggered 20 ticks (the plan's "wall-runs last longer" is the Runner's insides; this is the Strider's
+    C step from outside). Runes: each rune stops one arrow or bolt (a projectile's blow cancelled, a rune spent). Edge: a
+    perfect dodge with Edge full cuts the wave at once, toward the creature dodged.
+  - B: Bastion: the burst carries the Force of your last power hit (its damage type, so the Forces' reactions follow;
+    its slam in the Force's colours). Flow: an afterimage left in the air rushes you on along your look (1.1, lifted
+    0.25). Runes: an overchannel gives back a quarter of your energy. Edge: those the wave cuts bleed, 1 every 10 ticks
+    for 60.
+  - A (P4): Bastion, Flow and Edge hold a **second charge** (filling to 200; a release spends 100, the rest waits); a
+    Channeler gathers a **fourth rune** and overchannels four.
+  - S (P4): everything the ability does **reaches half again as far** (`S_REACH` 1.5: the Bastion's burst, Edge's wave,
+    the runes' reach and the foes who reel from an afterimage).
+- **The look.** The charge and runes go to the wearer and everyone tracking them (`Charge` payload: entity, charge,
+  runes, flash; sent when the charge moves 5, fills or empties, the runes change, or something is released, and to
+  anyone who starts tracking). On the armour (`ArmourGlow`): as the charge fills its glowing parts brighten and its rim
+  takes the accent (energy up to two thirds); full it breathes (1.4 s); a release flares the whole set for 450 ms. A
+  Channeler's runes are its set's own little mesh (`armour/<set>/rune.mesh`: amber seeds, little lamps, Veil-stones)
+  circling at the chest once every 64 ticks, growing in over 300 ms, drawn full-bright.
+- **Sounds** `awaken:armour.*` (`audio_forge.py`): charged, bastion, flow, edge, rune (three notes of one chord, rising
+  as runes gather), overchannel, ring, rooted, gore.
+- **Mastery** (P2 to III; IV and V P3): blows dealt or taken with a whole set on +1, an elite's or a warden's kill
+  +5, a gate Lord's +60, written onto every worn piece of that set in tens (`Forged.mastery`). Steps at 0, 300, 1200,
+  3000, 6000 (I to V; `Forged.MASTERY`). The tooltip shows it ("Mastery II (420 / 1200)"); the System says when a set
+  grows into a new step. II: the trims catch more light. III: what glows of itself glows more, and when the wearer is
+  under 35% health it beats with their heart (a double beat about seventy a minute), seen by everyone. Shader: the
+  overlay's bits 10-12 the step, bit 13 the wearer is low. IV (P3): each piece at IV grows its set's awakened parts,
+  drawn over its own (the kit's `awake` geometry, written as `<piece>_<bone>_awakened.mesh`: longer horns, a further
+  crest, a longer cape, a set's own). V (P3): with all four of one drawn set at V its aura moves about the wearer
+  (`ArmourAura`: tiny full-bright motes worked out from the time alone, nothing spawned or kept), each set its own way:
+  rising off the shoulders, falling from the face, circling the head, drifting about the body, ringing out from the
+  chest in a heartbeat, winking on the plate, or streaming back as if in wind. Stands and everyone else show it too.
+
+**44.6 Set twists.** Each set's own full-set twist on top of its archetype's ability (§44.5).
+- **Wildhide: Pounce** (P0, replaces Hunter's Sense, which outlined creatures through walls). Crouch at least 10 ticks,
+  then jump: you leap along your look's heading (0.95 forward, 0.62 up; the jumping client applies it, movement being the
+  client's). The server sees the same jump (vanilla replays it) and holds the leap for 50 ticks: the first melee hit in
+  that time deals +50% and shoves the target 0.7 along your heading, with crit sparks; then the leap is spent. 60 ticks
+  cooldown. Numbers in `gear/SetBonus` (`POUNCE_*`), logic in `gear/Pounce`.
+- **Bellguard: Ring.** A deflect rings the armour like a bell: everyone hostile within 3 staggered 20 ticks; 60 ticks
+  cooldown.
+- **Rootwarden: Rooted.** A cast while standing still on the ground: no knockback for 40 ticks, and you mend half a
+  heart; 40 ticks cooldown.
+- **Amberwing: Tempo.** A deflect or a perfect dodge: +15% attack speed and +10% speed for 60 ticks (the plan's "rhythm
+  steps last twice as long" needs arms' insides; this is the same tempo from outside).
+- **Cleftrunner: Slipstream.** Coming out of a wall-run or a slide: +25% speed for 30 ticks.
+- **Lanternlight: Kindle.** While your runes burn, anyone who strikes you in melee within 4 catches fire for 60 ticks.
+- **Bladeward: Parry Ward.** After a deflect, blows that land in the next 40 ticks do half.
+- **Hornlord: Gore.** Sprint on the ground for 25 ticks and the horns lower (the set's glow fills as they do); the first
+  foe within 1.6 in front of you is gored: 6 + 2 a rank above E, thrown (1.5, lifted 0.45), staggered 30 ticks; 100
+  ticks cooldown.
+- **Vaultbreaker: Vault Wall.** A guarded blow glances off: its striker is thrown back (1.0) and staggered 15 ticks;
+  10 ticks cooldown.
+- **Frostwalker: Rime Path.** Still water under your feet freezes as you go (frosted ice in a disk of 3, as vanilla's
+  Frost Walker), and a perfect dodge breathes frost: foes within 3 are slowed (Slowness II, 60 ticks) and frosted.
+- **Sunward: Noon.** An overchannel flares the sun at your back: foes within 5 burn 80 ticks; you and allies within 5
+  mend a heart.
+- **Shardcrown: Shatter** (the C Lord's move). A blow that takes you under half health bursts crystal out of the
+  armour: foes within 3.5 take the ability's blow and are thrown (1.2, lifted 0.4); for 60 ticks blows do a third less;
+  600 ticks cooldown.
+- **Deepcarapace: Shell.** Crouching and standing still closes the shell: blows do 40% less and fill Bastion twice
+  (16 each).
+- **Cloudrunner: Featherfall.** Falls never hurt; crouching while falling in the air you drift down (Slow Falling, no
+  particles, renewed while you crouch).
+- **Tidebreaker: Undertow.** The cutting wave drags those it cuts toward you (0.7) instead of throwing them back; in
+  water or rain the Edge fills twice as fast.
+- **Leviathan: Abyss Pull.** Its Bastion first drags everyone hostile within 6 toward you (0.9), then bursts 8 ticks
+  later (the charge is spent at the pull). Under water you never run out of breath (Water Breathing, no particles,
+  renewed while under).
+- **Galewing: Gust.** A perfect dodge beats the wings: foes within 3 are thrown back (0.9) and you lift (0.35); 40 ticks
+  cooldown.
+- **Halo Choir: Hymn.** While three runes circle you, blows do a fifth less; an overchannel rings the halo, staggering
+  foes within 5 for 30 ticks.
+- **Dreamsteel: Mirror.** A deflect throws half the striker's attack damage back at them (as thorns); 20 ticks cooldown.
+- **Starfall: Meteor.** Falls never hurt you; a landing from 6 blocks or more strikes like a falling star: foes within
+  4 (6 at S) take the ability's blow as Heat, burn 80 ticks and are thrown (1.2, lifted 0.5); 100 ticks cooldown.
+- **Riftwalker: Riftstep.** When the afterimage takes a blow from a creature within 12, you step out of the rift 1.5
+  blocks behind it, facing it (if there's room), and run on faster.
+- **Nightcourt: Riposte.** After a deflect, your next blade blow within 40 ticks lands 60% harder.
+- **Signal's Echo: Echo.** An overchannel comes again 20 ticks later: its runes fly out once more at three quarters.
+- **Hollowheart: Hollow Pulse** (the B Lord's move). Every fifth blow you land the caged heart beats (the set's glow
+  fills a fifth a blow): foes within 4 take the ability's blow and you mend half a heart for each struck (four at
+  most).
+
+**44.7 A forged piece's story.** `awaken:forged` (`Forged`, schemaVersion 2): the set, quality (0-3), mastery (§44.5),
+a flaw, twin-struck, and who made it; from 2 (P3) the inlaid Force's name (empty: none), the look it wears (a set id,
+empty: its own), its accent (ARGB, 0: its set's own) and whether its Deepglass rang true. A schema 1 story reads with
+those empty. The tooltip says it plainly ("Masterwork, twin-struck", "Forged by Name"). A
+Hunter piece made before the Forge Song gains a Plain story the first time it's worn.
+
+**44.8 Looks and accents (P3).** Cosmetic: never a number. At a Fitting Stand, Looks (the button by the title, or L)
+lists what you wear piece by piece, with you turning beside it. Each piece can wear the look of its own set or of any
+set you've forged whole (`ArmouryMemory.forged`) in the same slot (LOOK: the slot, the set's ordinal + 1, 0 its own; the
+server checks the set). `ArmourLooks.drawn` is what every renderer draws, worn, on a stand and on the arm: the look's set
+if it is made, else the piece's own; its numbers, ability and mastery stay the piece's. An **accent** colours what glows:
+an inlay gives its Force's colour; one dye you carry colours the whole worn suit (ACCENT: the dye's id + 1, the dye used
+up); the first swatch gives each piece its own back (its inlay's colour, if it has one).
+
+**44.9 Settings and pacing (P5).** Client settings (`ArmourClientConfig`, `config/awaken-armour-client.toml`, in the mod's
+settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour camera cinematic|first`):
+- **Sculpted armour** ON (default) / NEAR / OFF. NEAR draws the sculpted look within 24 blocks of the camera and the flat
+  painted look beyond (the rank's Hunter look stands in for a set without its own; lighter with many armoured figures in
+  view); OFF always draws flat, and the first-person gauntlet with it. The Fitting Stand always shows the sculpted suit
+  and the work. (The plan's far meshes are not built: every set is 600-1,000 triangles, well under its 2,500 budget, so
+  NEAR is the fallback until the Mac's perf pass says more is needed.)
+- **Forge camera** CINEMATIC (default) / FIRST_PERSON: first person keeps the eye at yours, at your own field of view,
+  and turns it to each shot's subject (the stand, the Forge's mouth, the metal, the stand for the fit); the marks project
+  the same way.
+- **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
+  set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
+  III within the hour, IV in about two hours and V in about four.

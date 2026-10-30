@@ -1,0 +1,121 @@
+# The chop (SPEC §40 "The chop"), filmed in the real game before Euan plays it (run with PACK=perf,feel,comfort,world,
+# the pack he plays): in survival (a weapon mines nothing in creative), an oak trunk two blocks ahead, its middle log at
+# eye height. An iron axe chops the middle log out with the key held (vanilla's mining) and holds on past the break,
+# then lets go: the way up, each blow, the kick back, the ease out to rest. First person, then third person from behind
+# (the shoulder camera) and from in front (the camera stops at the trunk, looking back), then the forged axe in first
+# person, then an iron sword hacking a web in first person, from behind and from in front (the camera sees through a
+# web: the whole body). No camera films the side: both third-person views sit on the look line through the block. Every
+# frame is recorded (the clip recorder, run-autopilot/clips/<name>/) at under a sixth of the speed (/tick rate 3: the
+# runner draws a few frames a second), with arms trace logging the chop's clock, rate and blows each tick. Watch for the
+# blade through the log or the body, a pop going in or out, a blow landing off the break, and the hands back at rest.
+# ci knobs: PACK=perf,feel,comfort,world
+world armschop creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 2
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player]
+arms ribbonmode 0
+cmd setblock ~ ~ ~2 minecraft:oak_log
+cmd setblock ~ ~1 ~2 minecraft:oak_log
+cmd setblock ~ ~2 ~2 minecraft:oak_log
+cmd gamemode survival
+cmd effect give @s minecraft:resistance infinite 255 true
+cmd effect give @s minecraft:saturation infinite 255 true
+cmd item replace entity @s weapon.mainhand with minecraft:iron_axe
+wait 40
+camera first
+look 0 3
+wait 20
+shot chop_rest_fp
+# the runner draws few frames for a while after the first shot: let it settle before the first take
+wait 120
+cmd tick rate 3
+cmd awaken ascent pilot rec chop_axe_fp 36 2
+arms trace 36
+wait 2
+arms chop 24
+wait 34
+shot chop_after_fp
+cmd setblock ~ ~1 ~2 minecraft:oak_log
+cmd kill @e[type=minecraft:item]
+camera back
+look 0 3
+wait 8
+cmd awaken ascent pilot rec chop_axe_back 36 2
+arms trace 36
+wait 2
+arms chop 24
+wait 34
+cmd setblock ~ ~1 ~2 minecraft:oak_log
+cmd kill @e[type=minecraft:item]
+camera front
+look 0 3
+wait 8
+cmd awaken ascent pilot rec chop_axe_front 36 2
+arms trace 36
+wait 2
+arms chop 24
+wait 34
+cmd setblock ~ ~1 ~2 minecraft:oak_log
+cmd kill @e[type=minecraft:item]
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_axe
+camera first
+look 0 3
+wait 8
+cmd awaken ascent pilot rec chop_forged_fp 36 2
+arms trace 36
+wait 2
+arms chop 24
+wait 34
+shot chop_forged_after_fp
+cmd setblock ~ ~1 ~2 minecraft:cobweb
+cmd kill @e[type=minecraft:item]
+cmd item replace entity @s weapon.mainhand with minecraft:iron_sword
+camera first
+look 0 3
+wait 8
+cmd awaken ascent pilot rec hack_web_fp 30 2
+arms trace 30
+wait 2
+arms chop 18
+wait 28
+cmd setblock ~ ~1 ~2 minecraft:cobweb
+cmd kill @e[type=minecraft:item]
+camera back
+look 0 3
+wait 8
+cmd awaken ascent pilot rec hack_web_back 30 2
+arms trace 30
+wait 2
+arms chop 18
+wait 28
+cmd setblock ~ ~1 ~2 minecraft:cobweb
+cmd kill @e[type=minecraft:item]
+camera front
+look 0 3
+wait 8
+cmd awaken ascent pilot rec hack_web_front 30 2
+arms trace 30
+wait 2
+arms chop 18
+wait 28
+cmd tick rate 20
+camera first
+wait 20
+shot hack_after_fp
+quit

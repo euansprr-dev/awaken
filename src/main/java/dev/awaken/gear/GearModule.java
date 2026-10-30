@@ -20,6 +20,8 @@ public final class GearModule {
         GearItems.init(modBus);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(SetBonus::onPlayerTick);
+        bus.addListener(Pounce::onPlayerTick);
+        bus.addListener(Pounce::onJump);
         bus.addListener(EventPriority.LOW, GearCombat::onIncomingDamage);
         bus.addListener(EventPriority.HIGHEST, GearCombat::beforeDeath);
         bus.addListener(EventPriority.LOWEST, GearCombat::afterDeath);

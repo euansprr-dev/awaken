@@ -9,6 +9,8 @@ import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import dev.awaken.signal.ui.StoryPager;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
 
@@ -39,6 +41,41 @@ public final class Wayfarers {
                     "Hettie: If you're going out past the ridge, wrap up. It's colder out there than it looks from here.")),
             "hale", new Person("Hale", false, List.of("Hale: Licence? Fine. The Commons bite less than they look. Mostly.", "Hale: Board's there. Work for new licences.")));
 
+    /** What the risen say, stopped on the road (SPEC §43.14). */
+    static final List<String> RISEN = List.of(
+            "I only sat down for a minute. How long was it? Never mind. I can hear the bells again. I'm going home.",
+            "Do you know if the road to the city's still open? I've got people there. I think I've got people there.",
+            "I came out for something and I can't remember what. It doesn't matter now. I'm going back.");
+
+    /** Ilse on her one visit to your home, in order; the last line again after that. */
+    static final List<String> VISIT = List.of(
+            "Ilse: So this is it. I followed your bells. I could hear them from the ridge.",
+            "Ilse: Eleven years I sat by that fire, saying I'd walk out here one morning. This morning I did.",
+            "Ilse: Aldo came over the ridge the day after it all. With the dog. I put the kettle on and couldn't say a word to him.",
+            "Ilse: Go on, then. Sit down and tell me what it's like out here.");
+
+    /** Ilse at the Last Fire after the Wake. */
+    static final List<String> ILSE_AFTER = List.of(
+            "Ilse: Aldo came over the ridge the day after it all. With the dog. I put the kettle on and couldn't say a word to him.",
+            "Ilse: Every road's got someone walking it now, all going back toward the bells. I keep the kettle on for them.",
+            "Ilse: I might come and see that place of yours one of these days. I can, now.");
+
+    /** A Stilled stood up after the Wake, walking toward the bells from {@code at}. */
+    public static void risen(ServerLevel level, BlockPos at, String name, BlockPos bells) {
+        Wayfarer w = Scenes.spawn(level, "risen", at, 2, 0);
+        if (w == null) return;
+        w.setCustomName(net.minecraft.network.chat.Component.literal(name.isEmpty() ? "Someone" : name));
+        w.walkHome(bells);
+    }
+
+    /** Ilse's one visit after the Wake: she comes up the path at {@code from} and walks to the fire. */
+    public static boolean visit(ServerLevel level, BlockPos from, BlockPos fire) {
+        Wayfarer w = Scenes.spawn(level, "ilse", from, 3, 0);
+        if (w == null) return false;
+        w.visit(fire);
+        return true;
+    }
+
     public static @Nullable Person get(String who) {
         return PEOPLE.get(who);
     }
@@ -51,6 +88,21 @@ public final class Wayfarers {
 
     /** Use on a Wayfarer: whatever the chains want with them, else one of their own lines. */
     static void talk(ServerPlayer p, Wayfarer w) {
+        // after the Wake (SPEC §43.14): the risen on their way home, and Ilse on her one visit
+        if (w.who().equals("risen")) {
+            String name = w.hasCustomName() ? w.getCustomName().getString() : "Someone";
+            QuestEngine.sayLine(p, name + ": " + RISEN.get(Math.floorMod(w.getId(), RISEN.size())));
+            return;
+        }
+        if (w.visiting) {
+            QuestEngine.sayLine(p, VISIT.get(Math.min(w.visitLine, VISIT.size() - 1)));
+            w.visitLine = Math.min(w.visitLine + 1, VISIT.size() - 1);
+            return;
+        }
+        if (w.who().equals("ilse") && dev.awaken.core.api.StoryHooks.colourRestored(p.level().getServer()) && !talkAs(p, w.who(), w.scene())) {
+            QuestEngine.sayLine(p, ILSE_AFTER.get(p.getRandom().nextInt(ILSE_AFTER.size())));
+            return;
+        }
         if (talkAs(p, w.who(), w.scene())) return;
         Person person = get(w.who());
         String rumour = person == null ? null : dev.awaken.living.pulse.Rumours.tell(p, person.name(), w);

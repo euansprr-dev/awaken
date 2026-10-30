@@ -7,6 +7,7 @@ import static dev.awaken.hearth.room.Furniture.BARREL;
 import static dev.awaken.hearth.room.Furniture.BED;
 import static dev.awaken.hearth.room.Furniture.BELL;
 import static dev.awaken.hearth.room.Furniture.BOOKSHELF;
+import static dev.awaken.hearth.room.Furniture.LODE_HEART;
 import static dev.awaken.hearth.room.Furniture.COOKER;
 import static dev.awaken.hearth.room.Furniture.CRAFTING;
 import static dev.awaken.hearth.room.Furniture.FORGE;
@@ -20,6 +21,11 @@ import static dev.awaken.hearth.room.Furniture.SEAT;
 import static dev.awaken.hearth.room.Furniture.STAND;
 import static dev.awaken.hearth.room.Furniture.TABLE;
 import static dev.awaken.hearth.room.Furniture.TROPHY;
+import static dev.awaken.hearth.room.Furniture.LEDGER;
+import static dev.awaken.hearth.room.Furniture.DROP;
+import static dev.awaken.hearth.room.Furniture.CRUCIBLE;
+import static dev.awaken.hearth.room.Furniture.PERCH;
+import static dev.awaken.hearth.room.Furniture.VENT_STONE;
 
 /**
  * What rooms are for (SPEC §28.2, PLAN 4.6): each kind does something real. No menus: build it and it counts. A kind is
@@ -58,16 +64,28 @@ public enum RoomType {
             "Every different Lord's trophy hung here gives +1% damage and +0.5 max health.", "+1% damage for each Lord."),
     WORKSHOP("Workshop", "workshop", List.of(MACHINE), null, 16, 3, "machines spend a quarter less",
             "Precursor machines in this room spend a quarter less essence.", "Machines spend less here."),
-    /** (W6, PLAN 7.7) a hatch (a trapdoor in the floor) over a shaft you dug, with something to climb down it. */
-    MINE_HEAD("Mine head", "mine head", List.of(), "a hatch over a shaft 16 or more deep, with a ladder", 9, 3, "your own way down",
-            "A hatch over a shaft you dug, with a way down: your own way to the ore below home.",
-            "Your own mine.");
+    /** (SPEC §43.6) the Ore Shed (the constant keeps the old Mine head's name, so saved rooms read the same): a lode heart and a barrel. */
+    MINE_HEAD("Ore Shed", "ore shed", List.of(LODE_HEART, BARREL), null, 9, 3, "Pebblepups sort what you bring",
+            "Pebblepups sort and crush the ore and rubble you put in its barrels: gravel, flint and sand, a few nuggets from a lot of rubble, never ore by itself. It has two nooks of its own, for them.",
+            "An Ore Shed. Pebblepups can hear its heart."),
+    SMELTERY("Smeltery", "smeltery", List.of(VENT_STONE, COOKER), null, 12, 3, "Emberkits smelt what you drop in",
+            "A vent stone and a furnace: Emberkits smelt the ore you drop in the room's chest, with no fuel. It has two nooks of its own.",
+            "A Smeltery. Emberkits can feel its warmth."),
+    ROOKERY("Rookery", "rookery", List.of(PERCH), null, 9, 4, "Chimewrens sing your missing notes",
+            "A Chime Perch: Chimewrens roost here, and once a day they sing a note your song is missing, and which way it came from. Three nooks of its own.",
+            "A Rookery. Chimewrens can hear its clapper."),
+    FOUNDRY("Foundry", "foundry", List.of(CRUCIBLE, BARREL), null, 16, 4, "the Deep's bells are cast here",
+            "The Crucible and a barrel: put a Deep bell's metal and its lode heart in the barrel, and Emberkits cast the bell. A nook of its own.",
+            "A Foundry. The Deep's bells can be cast."),
+    STOREHOUSE("Storehouse", "storehouse", List.of(DROP, LEDGER), null, 30, 4, "drop anything; Totters shelve it",
+            "The Drop and the Ledger: tip anything into the Drop and the Totters shelve it in the room's chests and barrels, a bay for each sort of thing. The Ledger finds anything. Two nooks of its own.",
+            "A Storehouse. Totters can sort it.");
 
     /** How deep a Mine head's shaft must go from its floor (PLAN 4.6). */
     public static final int SHAFT_DEPTH = 16;
 
     /** The order a room takes its purpose (and its name) in: the most particular first, a plain shelter last. */
-    public static final List<RoomType> PURPOSE = List.of(SANCTUARY, HALL, KITCHEN, ARMORY, STUDY, GREENHOUSE, STABLE, BELL_TOWER,
+    public static final List<RoomType> PURPOSE = List.of(STOREHOUSE, FOUNDRY, SMELTERY, ROOKERY, SANCTUARY, HALL, KITCHEN, ARMORY, STUDY, GREENHOUSE, STABLE, BELL_TOWER,
             LOOKOUT, MINE_HEAD, TROPHY_HALL, WORKSHOP, BEDROOM, SHELTER);
 
     public final String label;
@@ -112,7 +130,6 @@ public enum RoomType {
             case HALL -> facts[Tally.F_FLOOR] >= 48;
             case BELL_TOWER -> facts[Tally.F_ELEVATION] >= 8;
             case LOOKOUT -> facts[Tally.F_ELEVATION] >= 12 && Integer.bitCount(facts[Tally.F_WINDOW_DIRS]) >= 3;
-            case MINE_HEAD -> facts.length > Tally.F_SHAFT && facts[Tally.F_SHAFT] >= SHAFT_DEPTH;
             default -> true;
         };
     }

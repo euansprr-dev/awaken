@@ -907,6 +907,7 @@ def bake(out=SWINGS, solve=False, round_=None):
     import arms_rig4 as R4
     import swing_studio as SS
     import swing_choreo as SC
+    import swing_chop as SCH
     before = json.load(open(SWINGS)) if os.path.exists(SWINGS) else {}  # the game's file: its wrists and round
     rig = R4.load()  # third person from first person's blade: its styles' wrists come with their arms
     if solve or not before:
@@ -977,6 +978,7 @@ def bake(out=SWINGS, solve=False, round_=None):
                        "moves": moves}
         if sid in SC.TRAIL_LOOK:  # the ribbon's root along the blade and its light in first person (round 14)
             styles[sid]["trail"] = SC.TRAIL_LOOK[sid]
+        styles[sid].update(SCH.bake(held))  # the cut's own motion while vanilla mines (SPEC §40 "One press is one press")
         gd, gR = SS.guard_pose(sid, held, Fs, side_s)  # the guard, up across the body in view (round 8)
         styles[sid]["guard"] = [round(float(v), 4) for v in gd] + [round(float(v), 5) for v in mat_quat(gR)]
         gap = SS.off_gap(sid)

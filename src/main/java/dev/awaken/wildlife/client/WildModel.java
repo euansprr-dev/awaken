@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * One of the wild's animals (tools/art/specs/wild_fauna.py), as Carillon's CritterModel: a hero rig whose clips the
@@ -32,6 +33,9 @@ final class WildModel extends EntityModel<WildRenderState> {
     private final ModelPart[] lookParts;
     private final float[] lookYaw, lookPitch;
     final LifeRig life;
+    /** Clips that stand or walk on the feet, which plant (SPEC §23.1); a bolt's run, a sit, a pounce or a hop keeps its legs. */
+    private static final Set<String> FEET = Set.of("idle", "walk", "trot", "sniff", "listen", "peck", "caw");
+    private final boolean[] onFeet, trots;
 
     WildModel(ModelPart root, HeroRig rig, String temperament) {
         super(root, RenderTypes::entityCutout);
@@ -51,7 +55,23 @@ final class WildModel extends EntityModel<WildRenderState> {
             lookYaw[i] = l.yaw();
             lookPitch[i] = l.pitch();
         }
-        life = CreatureLife.rig(root, temperament);
+        onFeet = new boolean[clips.size()];
+        trots = new boolean[clips.size()];
+        for (int i = 0; i < onFeet.length; i++) {
+            onFeet[i] = FEET.contains(clips.get(i).name());
+            trots[i] = clips.get(i).name().equals("trot");
+        }
+        life = CreatureLife.rig(root, temperament, rig.id);
+    }
+
+    /** A clip that doesn't stand or walk on the feet is playing: they let go to it. */
+    boolean legsFree(int clip) {
+        return clip >= 0 && clip < onFeet.length && !onFeet[clip];
+    }
+
+    /** 0..1 how much the clips trot, by their weights: the feet take their longer stride. */
+    float trot(int clip, int prev, float prevWeight) {
+        return (clip >= 0 && trots[clip] ? 1F - prevWeight : 0F) + (prev >= 0 && trots[prev] ? prevWeight : 0F);
     }
 
     int clip(String name) {

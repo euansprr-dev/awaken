@@ -20,20 +20,27 @@ import org.jspecify.annotations.Nullable;
 import java.util.EnumMap;
 import java.util.Map;
 
-/** Draws a Stilled (SPEC §43.3): the figure (twice for a pair or a parent with a child) turned the way they face. */
+/**
+ * Draws a Stilled (SPEC §43.3): the figure (twice for a pair or a parent with a child, the second where the rig puts it)
+ * turned the way they face. Each look has {@link #VARIANTS} stone skins, one citizen each; the block's place picks one.
+ */
 public final class StilledRenderer implements BlockEntityRenderer<StilledBlockEntity, StilledRenderer.State> {
-    /** The child beside a grown-up: this much smaller, this far to the side (model pixels). */
-    static final float KID = 0.62F, KID_SIDE = 9.5F;
-    private static final Map<StilledText.Look, Identifier> TEXTURES = new EnumMap<>(StilledText.Look.class);
+    static final int VARIANTS = 6;
+    private static final Map<StilledText.Look, Identifier[]> TEXTURES = new EnumMap<>(StilledText.Look.class);
 
     static {
-        for (StilledText.Look l : StilledText.Look.values()) TEXTURES.put(l, Awaken.id("textures/entity/stilled/" + l.texture() + ".png"));
+        for (StilledText.Look l : StilledText.Look.values()) {
+            Identifier[] v = new Identifier[VARIANTS];
+            for (int i = 0; i < VARIANTS; i++) v[i] = Awaken.id("textures/entity/stilled/" + l.texture() + "_" + i + ".png");
+            TEXTURES.put(l, v);
+        }
     }
 
     public static final class State extends BlockEntityRenderState {
         StilledText.Pose pose = StilledText.Pose.WALKING;
         StilledText.Look look = StilledText.Look.MAN, look2 = StilledText.Look.WOMAN;
         float yaw;
+        int variant;
     }
 
     private final StilledModel model;
@@ -54,6 +61,8 @@ public final class StilledRenderer implements BlockEntityRenderer<StilledBlockEn
         state.look = be.look();
         state.look2 = be.look2();
         state.yaw = be.yaw();
+        // no save needed: the same block always shows the same person
+        state.variant = Math.floorMod(Long.hashCode(be.getBlockPos().asLong() * 0x9E3779B97F4A7C15L), VARIANTS);
     }
 
     @Override
@@ -64,14 +73,18 @@ public final class StilledRenderer implements BlockEntityRenderer<StilledBlockEn
         pose.rotate(Axis.YP.rotationDegrees(180F - state.yaw));
         pose.scale(-1F, -1F, 1F);
         pose.translate(0F, -1.501F, 0F);
-        out.submitModel(model, new StilledModel.Figure(state.pose, false), pose, TEXTURES.get(state.look), state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
-        if (state.pose.two()) {
+        out.submitModel(model, new StilledModel.Figure(state.pose, false), pose, TEXTURES.get(state.look)[state.variant], state.lightCoords,
+                OverlayTexture.NO_OVERLAY, 0);
+        StilledModel.Second two = model.second(state.pose);
+        if (two != null) {
             pose.pushPose();
-            if (state.pose == StilledText.Pose.CHILD) {
-                pose.translate(KID_SIDE / 16F, 1.5F * (1F - KID), 0F);
-                pose.scale(KID, KID, KID);
-            }
-            out.submitModel(model, new StilledModel.Figure(state.pose, true), pose, TEXTURES.get(state.look2), state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
+            // as tools/art/rig.py's second(): moved, turned, and scaled about the feet (model y 24)
+            pose.translate(two.x() / 16F, 1.5F, two.z() / 16F);
+            pose.rotate(Axis.YP.rotationDegrees(two.yaw()));
+            pose.scale(two.scale(), two.scale(), two.scale());
+            pose.translate(0F, -1.5F, 0F);
+            out.submitModel(model, new StilledModel.Figure(state.pose, true), pose, TEXTURES.get(state.look2)[(state.variant + 3) % VARIANTS],
+                    state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
             pose.popPose();
         }
         pose.popPose();

@@ -148,7 +148,7 @@ public final class Wildlife {
             boolean seen = inView(c.getX(), c.getY() + 0.2, c.getZ(), 0.45F);
             boolean gone = c.leaving && (!seen || d > 48) || d > WildKinds.REACH[c.kind] + WildKinds.SLACK && (!seen || d > 72)
                     || d > WildKinds.REACH[c.kind] + 60;
-            if (c.state == SHOW) continue;
+            if (c.state == SHOW || c.state == PACE) continue;
             if (gone || Sites.get(c.home) == null) {
                 c.discard();
                 LIVE.remove(i);
@@ -229,14 +229,17 @@ public final class Wildlife {
 
     /** A held pose for the line-up: the brain only keeps the clip. */
     static final int SHOW = 99;
+    /** A line-up walker's beat (SPEC §23.1, its feet): out along its lane at a walk, a stand turning round, back at a trot. */
+    static final int PACE = 98;
 
     /**
      * One of each body in a row on the ground before the camera, 2.2 blocks apart, playing {@code clip} (or its idle),
      * facing the camera: the art's look and scale in the game's own light. Cleared by {@code lineup off}.
      */
     static String lineup(ClientLevel level, String clip, int variant) {
-        for (WildCritter c : LIVE) if (c.state == SHOW) c.discard();
+        for (WildCritter c : LIVE) if (c.state == SHOW || c.state == PACE) c.discard();
         LIVE.removeIf(WildCritter::isRemoved);
+        if (clip.startsWith("pace")) return pace(level, clip.length() > 5 ? clip.substring(5) : "");
         if (clip.equals("off")) {
             Insects.clear();
             return "line-up cleared";
@@ -275,6 +278,71 @@ public final class Wildlife {
         return n + " in the line-up playing " + clip;
     }
 
+    /**
+     * The walkers whose feet plant ({@code pace}, or {@code pace_fox}, {@code pace_crow} for one): each paces a 5-block
+     * lane across the view, side-on to the camera, the nearest 3 blocks out. Cleared by {@code lineup off}.
+     */
+    private static String pace(ClientLevel level, String only) {
+        float yaw = Minecraft.getInstance().player.getYRot() * Mth.DEG_TO_RAD;
+        double fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -fz, rz = fx;
+        int n = 0;
+        for (int k : new int[] {WildKinds.FOX, WildKinds.CROW}) {
+            if (!only.isEmpty() && !only.equals(WildKinds.NAMES[k])) continue;
+            double d = 3.0 + n * 1.5, x = px + fx * d - rx * 2.5, z = pz + fz * d - rz * 2.5, y = ground(level, x, z);
+            if (Double.isNaN(y)) continue;
+            WildCritter c = new WildCritter(WildlifeModule.CRITTER.get(), level);
+            c.kind = k;
+            c.seed = 1000 + k;
+            c.home = net.minecraft.world.level.ChunkPos.pack(Mth.floor(px) >> 4, Mth.floor(pz) >> 4);
+            c.state = PACE;
+            c.ax = x;
+            c.az = z;
+            c.tx = x + rx * 5;
+            c.tz = z + rz * 5;
+            c.timer = 30;
+            c.next = 0;
+            c.setPos(x, y, z);
+            c.setYRot((float) (Mth.atan2(pz - z, px - x) * Mth.RAD_TO_DEG) - 90F);
+            c.yRotO = c.getYRot();
+            c.xo = x;
+            c.yo = y;
+            c.zo = z;
+            c.setId(nextId--);
+            clip(c, "idle");
+            level.addEntity(c);
+            LIVE.add(c);
+            n++;
+        }
+        return n + " pacing in the line-up";
+    }
+
+    /** A step of the beat: at an end it stands, turning round on the spot, then goes back the other way. */
+    private static void paceStep(WildCritter c, ClientLevel level) {
+        boolean trot = c.next == 1 && CLIPS[c.kind].containsKey("trot");
+        if (c.timer > 0) {
+            face(c, c.tx - c.getX(), c.tz - c.getZ(), 9F);
+            if (--c.timer == 0) clip(c, trot ? "trot" : "walk");
+            return;
+        }
+        double dx = c.tx - c.getX(), dz = c.tz - c.getZ(), d = Math.sqrt(dx * dx + dz * dz);
+        double sp = trot ? 0.085 : 0.05; // the fox's trot (Critters.fox), the crow's stride (Birds.walkTo)
+        if (d < sp) {
+            double ox = c.ax, oz = c.az;
+            c.ax = c.tx;
+            c.az = c.tz;
+            c.tx = ox;
+            c.tz = oz;
+            c.next = 1 - c.next;
+            c.timer = 30;
+            clip(c, "idle");
+            return;
+        }
+        face(c, dx, dz, 12F);
+        double nx = c.getX() + dx / d * sp, nz = c.getZ() + dz / d * sp, ny = ground(level, nx, nz);
+        c.setPos(nx, Double.isNaN(ny) ? c.getY() : ny, nz);
+        c.speed = (float) sp;
+    }
+
     // ---- the brains' shared tools ----------------------------------------------------------------------------------
 
     private static void think(WildCritter c) {
@@ -286,6 +354,10 @@ public final class Wildlife {
         c.pitchO = c.pitch;
         c.speed = 0F;
         if (c.state == SHOW) return;
+        if (c.state == PACE) {
+            paceStep(c, (ClientLevel) c.level());
+            return;
+        }
         try {
             if (WildKinds.flies(c.kind)) Birds.think(c, (ClientLevel) c.level());
             else Critters.think(c, (ClientLevel) c.level());

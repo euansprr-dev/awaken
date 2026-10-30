@@ -70,7 +70,7 @@ final class GearCommands {
         if (SetBonus.cornered(p)) c.getSource().sendSuccess(() -> Component.literal("Cornered: you hit harder"), false);
         if (shown == 0) {
             c.getSource().sendSuccess(() -> Component.literal("No Hunter gear on you. Creature hide, bone and essence make the first set: "
-                    + "see the recipe book at a crafting table."), false);
+                    + "the blade, focus and mattock at a crafting table, the armour at a Fitting Stand."), false);
         }
         return shown;
     }

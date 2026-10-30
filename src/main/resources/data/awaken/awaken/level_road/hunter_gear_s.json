@@ -2,15 +2,11 @@
   "schema": 1,
   "level": 97,
   "title": "Sovereign Weave · S",
-  "text": "Sovereign gear is made from starmetal out of fallen stars, and parts from the Herald and the Court. The recipes are in your recipe book.",
+  "text": "Sovereign gear is made from starmetal out of fallen stars, and parts from the Herald and the Court. Its armour is forged at a Fitting Stand. The other recipes are in your recipe book.",
   "grants": [
     {
       "type": "recipe",
       "ids": [
-        "awaken:sovereign_helmet",
-        "awaken:sovereign_chestplate",
-        "awaken:sovereign_leggings",
-        "awaken:sovereign_boots",
         "awaken:sovereign_blade",
         "awaken:sovereign_focus",
         "awaken:sovereign_mattock"

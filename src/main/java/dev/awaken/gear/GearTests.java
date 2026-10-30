@@ -129,6 +129,10 @@ final class GearTests {
         for (HunterTier tier : HunterTier.values()) {
             for (Piece piece : Piece.values()) {
                 Item item = GearItems.get(tier, piece);
+                if (piece.isArmour()) { // forged at a Fitting Stand (SPEC §44.4), never crafted
+                    h.assertTrue(recipe(level, item).isEmpty(), tier.itemId(piece) + " has no crafting recipe");
+                    continue;
+                }
                 ShapedRecipe r = recipe(level, item).orElse(null);
                 h.assertTrue(r != null, "shaped recipe for " + tier.itemId(piece));
                 h.assertTrue(!r.placementInfo().isImpossibleToPlace(), "placeable: " + tier.itemId(piece));
@@ -167,6 +171,7 @@ final class GearTests {
         ServerLevel level = h.getLevel();
         int hide = 0, shards = 0;
         for (Piece piece : Piece.values()) {
+            if (piece.isArmour()) continue; // the armour's cost is the Forge's (ArmourTests)
             Item item = GearItems.get(HunterTier.E, piece);
             ShapedRecipe r = recipe(level, item).orElseThrow();
             for (var family : FAMILY_DROPS.entrySet()) {
@@ -202,13 +207,13 @@ final class GearTests {
     private static void recipesUnlock(GameTestHelper h) {
         ServerPlayer sp = h.makeMockServerPlayerInLevel();
         Progression.awaken(sp);
-        sp.getInventory().add(new ItemStack(Items.LEATHER));
-        ResourceKey<Recipe<?>> vest = key(HunterTier.E, Piece.CHESTPLATE);
-        for (int i = 0; i < 41 && !sp.getRecipeBook().contains(vest); i++) {
+        sp.getInventory().add(new ItemStack(Items.BONE));
+        ResourceKey<Recipe<?>> blade = key(HunterTier.E, Piece.BLADE);
+        for (int i = 0; i < 41 && !sp.getRecipeBook().contains(blade); i++) {
             sp.tickCount++;
             NeoForge.EVENT_BUS.post(new PlayerTickEvent.Post(sp));
         }
-        h.assertTrue(sp.getRecipeBook().contains(vest), "holding leather unlocks the Wildhide Vest");
+        h.assertTrue(sp.getRecipeBook().contains(blade), "holding a bone unlocks the Wildhide Blade");
         // the level road points at each tier and puts its whole recipe set in the book
         Map<HunterTier, Integer> want = Map.of(HunterTier.E, 3, HunterTier.D, 13, HunterTier.C, 22, HunterTier.B, 42,
                 HunterTier.A, 67, HunterTier.S, 97);
@@ -218,11 +223,15 @@ final class GearTests {
             h.assertTrue(step != null, "level-road step " + id);
             h.assertTrue(step.def().level() == want.get(tier), id + " at level " + want.get(tier) + ", got " + step.def().level());
             List<String> ids = step.def().grants().stream().flatMap(g -> g.ids().stream()).toList();
-            for (Piece piece : Piece.values()) h.assertTrue(ids.contains("awaken:" + tier.itemId(piece)), id + " grants " + tier.itemId(piece));
+            for (Piece piece : Piece.values()) {
+                if (piece.isArmour()) h.assertTrue(!ids.contains("awaken:" + tier.itemId(piece)), id + " grants no armour recipe (it's forged)");
+                else h.assertTrue(ids.contains("awaken:" + tier.itemId(piece)), id + " grants " + tier.itemId(piece));
+            }
         }
         Profile p = Progression.profile(sp);
         while (p.level() < 13) Progression.grantXp(sp, Curve.xpToNext(p.level()) + 1, Progression.XpSource.COMMAND);
         for (Piece piece : Piece.values()) {
+            if (piece.isArmour()) continue;
             h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.E, piece)), "level 3 put E " + piece.id + " in the book");
             h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.D, piece)), "level 13 put D " + piece.id + " in the book");
             h.assertTrue(!sp.getRecipeBook().contains(key(HunterTier.C, piece)), "C waits for level 22");
@@ -371,7 +380,8 @@ final class GearTests {
         SetBonus.refresh(sp);
         h.assertTrue(mod(sp, Attributes.MAX_HEALTH, SetBonus.HEALTH_ID) == 0 && sp.getMaxHealth() == base, "all off: health back to " + base);
         // the numbers behind the twists
-        h.assertTrue(SetBonus.senseRadius(5) == 14 && SetBonus.senseRadius(100) == 32, "sense radius 12 + PER/2, at most 32");
+        h.assertTrue(SetBonus.pounceVelocity(0).z > 0.9 && Math.abs(SetBonus.pounceVelocity(90).x + SetBonus.POUNCE_FORWARD) < 1e-9,
+                "the leap follows your heading");
         h.assertTrue(SetBonus.corneredBonus(5) == 0.15 && SetBonus.corneredBonus(100) == 0.30, "Cornered 15% to 30%");
         h.assertTrue(SetBonus.flickerChance(5) == 0.10 && SetBonus.flickerChance(100) == 0.35, "Flicker 10% to 35%");
         h.assertTrue(SetBonus.forceWard(1) == 0 && SetBonus.forceWard(2) == SetBonus.WARD_HALF && SetBonus.forceWard(4) == SetBonus.WARD_FULL, "ward steps");
@@ -411,6 +421,17 @@ final class GearTests {
         h.assertTrue(Math.abs(strike - 4 * (1 + SetBonus.PRIME_BONUS)) < 1e-4, "the primed strike hits +35%, got " + strike);
         h.assertTrue(b.hasEffect(MobEffects.SLOWNESS), "and Frost slows");
         h.assertTrue(!GearCombat.primed(sp) && hit(b, sources.playerAttack(sp), 4, null) == 4, "spent: the next hit is plain");
+        // Wildhide: a crouched jump is a Pounce; its first melee hit lands half again harder, then a cooldown
+        wear(sp, HunterTier.E, 4);
+        GearState.of(sp).crouched = SetBonus.POUNCE_CROUCH;
+        Pounce.onJump(new net.neoforged.neoforge.event.entity.living.LivingEvent.LivingJumpEvent(sp));
+        h.assertTrue(Pounce.leaping(sp), "a crouched jump in full Wildhide is a Pounce");
+        float leap = hit(b, sources.playerAttack(sp), 4, null);
+        h.assertTrue(Math.abs(leap - 4 * (1 + SetBonus.POUNCE_BONUS)) < 1e-4, "the leap's first hit +50%, got " + leap);
+        h.assertTrue(!Pounce.leaping(sp) && hit(b, sources.playerAttack(sp), 4, null) == 4, "spent: the next hit is plain");
+        GearState.of(sp).crouched = SetBonus.POUNCE_CROUCH;
+        Pounce.onJump(new net.neoforged.neoforge.event.entity.living.LivingEvent.LivingJumpEvent(sp));
+        h.assertTrue(!Pounce.leaping(sp), "a second Pounce waits out its cooldown");
         // Veilwoven: Spirit ward and the Veil Flicker
         wear(sp, HunterTier.B, 2);
         h.assertTrue(Math.abs(hit(sp, sources.source(Forces.SPIRIT), 10, null) - 7f) < 1e-4, "two Veilwoven: Spirit damage -30%");
@@ -608,14 +629,12 @@ final class GearTests {
         sp.getInventory().add(new ItemStack(Items.LEATHER, 5));
         sp.getInventory().add(new ItemStack(Items.STRING, 2));
         sp.getInventory().add(new ItemStack(CoreApi.ESSENCE_SHARD.get(), 1));
+        h.assertTrue(GearNow.next(sp) == null, "hide and sinew make armour, which the Fitting Stand's line suggests, not this one");
+        sp.getInventory().add(new ItemStack(Items.BONE, 2));
         Item next = GearNow.next(sp);
-        h.assertTrue(next == GearItems.get(HunterTier.E, Piece.CHESTPLATE), "hide, sinew and essence: the vest first, got " + next);
-        sp.setItemSlot(EquipmentSlot.CHEST, GearItems.stack(HunterTier.E, Piece.CHESTPLATE));
-        next = GearNow.next(sp);
-        h.assertTrue(next == GearItems.get(HunterTier.E, Piece.LEGGINGS), "own the vest: the leggings next, got " + next);
-        sp.setItemSlot(EquipmentSlot.LEGS, new ItemStack(Items.DIAMOND_LEGGINGS));
-        next = GearNow.next(sp);
-        h.assertTrue(next != GearItems.get(HunterTier.E, Piece.LEGGINGS), "never suggests a step down from diamond");
+        h.assertTrue(next == GearItems.get(HunterTier.E, Piece.BLADE), "bone, sinew and essence: the blade first, got " + next);
+        sp.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_SWORD));
+        h.assertTrue(GearNow.next(sp) != GearItems.get(HunterTier.E, Piece.BLADE), "never suggests a step down from diamond");
         var lines = GearNow.suggest(sp);
         h.assertTrue(lines.size() <= 1 && lines.stream().allMatch(s -> s.priority() == GearNow.PRIORITY), "one low-priority line at most");
         h.succeed();

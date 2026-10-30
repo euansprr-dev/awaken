@@ -1,0 +1,165 @@
+# The Journey, stage 6 (SPEC §43.13): what Euan sees after it. The last four kin close in a studio by day (front and
+# side) and the lit ones by night (the Boulderback's eyes, the Cloudcalf's freckles); a home with the works, a beehive
+# for a Bumblepuff, a hedge for a Loomworm and a Cloudcalf raining on the field; then 98 bells in the tower and the Book.
+# The studio floats 300 east of the city at y 260: inside the ridge, so no wild figure can be placed on it.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/journey-6.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_journey_6 creative 29102026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 6000
+cmd clear @s
+
+# ---- 1. the studio: the last four kin, close, by day (held still, turned to face the camera) ----
+cmd awaken city view square
+wait 300
+cmd tp @s ~300 262 ~
+wait 200
+cmd summon minecraft:marker ~ 261 ~ {Tags:["studio"]}
+cmd execute at @e[type=marker,tag=studio,limit=1] run fill ~-8 ~-2 ~-16 ~40 ~-2 ~6 minecraft:dirt
+cmd execute at @e[type=marker,tag=studio,limit=1] run fill ~-8 ~-1 ~-16 ~40 ~-1 ~6 minecraft:grass_block
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~0 ~ ~-8 0 0
+cmd awaken admin kin summon bumblepuff
+wait 5
+cmd data merge entity @e[type=awaken:kin_bumblepuff,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @e[type=awaken:kin_bumblepuff,limit=1,sort=nearest] ~0 ~1.2 ~-8 0 0
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~8 ~ ~-8 0 0
+cmd awaken admin kin summon loomworm
+wait 5
+cmd data merge entity @e[type=awaken:kin_loomworm,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @e[type=awaken:kin_loomworm,limit=1,sort=nearest] ~8 ~0 ~-8 0 0
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~18 ~ ~-8 0 0
+cmd awaken admin kin summon cloudcalf
+wait 5
+cmd data merge entity @e[type=awaken:kin_cloudcalf,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @e[type=awaken:kin_cloudcalf,limit=1,sort=nearest] ~18 ~2 ~-8 0 0
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~30 ~ ~-8 0 0
+cmd awaken admin kin summon boulderback
+wait 5
+cmd data merge entity @e[type=awaken:kin_boulderback,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @e[type=awaken:kin_boulderback,limit=1,sort=nearest] ~30 ~0 ~-8 0 0
+wait 40
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~1.5 ~2 ~-5.4 150 10
+wait 40
+shot j6_01_bumblepuff
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~2.8 ~1.8 ~-8 90 7
+wait 30
+shot j6_02_bumblepuff_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~9.4 ~0.8 ~-5.6 150 12
+wait 40
+shot j6_03_loomworm
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~10.6 ~0.5 ~-8 90 7
+wait 30
+shot j6_04_loomworm_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~20.8 ~3.6 ~-3.2 150 11
+wait 40
+shot j6_05_cloudcalf
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~23 ~2.8 ~-8 90 3
+wait 30
+shot j6_06_cloudcalf_side
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~32.8 ~1.9 ~-3.2 150 11
+wait 40
+shot j6_07_boulderback
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~35 ~1.1 ~-8 90 3
+wait 30
+shot j6_08_boulderback_side
+# the lit ones by night: the Boulderback's eyes, the Cloudcalf's freckles
+cmd time set 18000
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~32 ~1.2 ~-4.4 151 6
+wait 60
+shot j6_09_boulderback_night
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~21 ~6.5 ~-4 143 39
+wait 30
+shot j6_10_cloudcalf_night
+cmd gamemode creative
+cmd time set 6000
+
+# ---- 2. a home out west: the works, a beehive and a hedge, kin at home; the Cloudcalf rains on the field ----
+cmd awaken city view square
+wait 200
+cmd spreadplayers ~-800 ~ 0 40 false @s
+wait 400
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin works
+wait 40
+cmd execute at @e[type=marker,tag=yard,limit=1] run setblock ~-4 ~ ~5 minecraft:oak_log
+cmd execute at @e[type=marker,tag=yard,limit=1] run setblock ~-4 ~1 ~5 minecraft:beehive[facing=south]
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-8 ~ ~7 ~-6 ~ ~7 minecraft:oak_leaves[persistent=true]
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-5 ~ ~4 ~-3 ~ ~6 minecraft:poppy replace minecraft:air
+cmd awaken admin kin home bumblepuff
+cmd awaken admin kin home loomworm
+cmd awaken admin kin home cloudcalf
+cmd tick sprint 300
+wait 160
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0 ~16 ~16 180 34
+wait 60
+shot j6_11_home
+cmd execute at @e[type=awaken:kin_cloudcalf,limit=1] run tp @s ~-5 ~1 ~5 225 12
+wait 40
+shot j6_12_cloudcalf_raining
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-1 ~2 ~9 160 25
+wait 30
+shot j6_13_hive_and_hedge
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~4.5 180 10
+hud on
+screen holo hearth
+wait 80
+shotnow j6_14_hearth_page
+screen close
+hud off
+
+# ---- 3. ninety-eight bells: the tower, and the Book's hundred nearly full ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+cmd awaken admin bells tower 98
+wait 120
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~8 ~24 180 14
+wait 60
+shot j6_15_tower_98
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+hud on
+screen holo codex
+wait 80
+scroll -4
+wait 20
+shotnow j6_16_book_hundred
+screen close
+hud off
+quit

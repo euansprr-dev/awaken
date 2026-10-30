@@ -1,0 +1,144 @@
+{
+ "schemaVersion": 1,
+ "id": "guardian_court",
+ "moves": "guardian_court",
+ "intro": {
+  "pose": "kneel",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "backcut"
+      ],
+      [
+       "backcut",
+       "reach"
+      ]
+     ]
+    },
+    {
+     "move": "reach",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "rake",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "parry",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "charge",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "turnabout",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "reflections",
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "when": "NEAR",
+     "then": [
+      [
+       "backcut"
+      ],
+      [
+       "backcut",
+       "reach"
+      ],
+      [
+       "rake",
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "reach",
+     "weight": 2,
+     "when": "NEAR"
+    },
+    {
+     "move": "parry",
+     "weight": 2,
+     "when": "NEAR",
+     "then": [
+      [
+       "riposte"
+      ]
+     ]
+    },
+    {
+     "move": "halo",
+     "weight": 2
+    },
+    {
+     "move": "shadowstep",
+     "weight": 2,
+     "then": [
+      [
+       "cut",
+       "backcut"
+      ]
+     ]
+    },
+    {
+     "move": "reflections",
+     "weight": 1
+    },
+    {
+     "move": "charge",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "turnabout",
+     "weight": 3,
+     "when": "BEHIND"
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.25
+ }
+}

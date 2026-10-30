@@ -1,5 +1,6 @@
 package dev.awaken.delve;
 
+import dev.awaken.delve.api.Lodes;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import net.minecraft.core.BlockPos;
 import org.jspecify.annotations.Nullable;
@@ -140,8 +141,17 @@ public final class LodePlans {
         return plan(seed, rx, rz);
     }
 
+    /** A region's plan with these homes (null: none), made here and not kept (tests: what a world with them plans). */
+    public static List<Lode> planWith(long seed, int rx, int rz, Lodes.@Nullable Homes at) {
+        return plan(seed, rx, rz, at);
+    }
+
     private static List<Lode> plan(long seed, int rx, int rz) {
         if (Thread.currentThread() == serverThread) SERVER_PLANS.incrementAndGet();
+        return plan(seed, rx, rz, homesSeed == seed ? homes : null);
+    }
+
+    private static List<Lode> plan(long seed, int rx, int rz, Lodes.@Nullable Homes at) {
         List<Lode> out = new ArrayList<>();
         Columns cols = columnsSeed == seed ? columns : null;
         if (cols != null) out.addAll(walls(seed, rx, rz, cols));
@@ -152,6 +162,18 @@ public final class LodePlans {
                 int x = rx * REGION + 24 + r.nextInt(REGION - 48);
                 int z = rz * REGION + 24 + r.nextInt(REGION - 48);
                 int y = ore.minY + r.nextInt(ore.maxY - ore.minY + 1);
+                // a lode rolled outside its ore's homes rolls once more and takes the new spot only in one (SPEC §42.9):
+                // about twice the lodes where an ore is at home, the same lodes in every region
+                if (at != null && !at.favours(ore, x, y, z)) {
+                    int x2 = rx * REGION + 24 + r.nextInt(REGION - 48);
+                    int z2 = rz * REGION + 24 + r.nextInt(REGION - 48);
+                    int y2 = ore.minY + r.nextInt(ore.maxY - ore.minY + 1);
+                    if (at.favours(ore, x2, y2, z2)) {
+                        x = x2;
+                        y = y2;
+                        z = z2;
+                    }
+                }
                 int size = ore.minSize + r.nextInt(ore.maxSize - ore.minSize + 1);
                 out.add(walk(ore, x, y, z, size, r));
             }
@@ -239,6 +261,24 @@ public final class LodePlans {
         columnsSeed = seed;
         serverThread = c == null ? null : Thread.currentThread();
         CACHE.clear();
+    }
+
+    // ---- homes (SPEC §42.9): the places underground an ore favours ---------------------------------------------------
+
+    private static volatile Lodes.@Nullable Homes homes;
+    private static volatile long homesSeed;
+
+    /** The overworld's homes for its ores (see {@link Lodes#homes}): plans made after follow them. */
+    public static void homes(long seed, Lodes.@Nullable Homes h) {
+        homes = h;
+        homesSeed = seed;
+        CACHE.clear();
+    }
+
+    /** The named place underground at (x, y, z) in this world, or null (no homes, or none there). Pure; any thread. */
+    public static @Nullable String place(long seed, int x, int y, int z) {
+        Lodes.Homes h = homesSeed == seed ? homes : null;
+        return h == null ? null : h.place(x, y, z);
     }
 
     /** Wall lodes a region holds, per ore, and their band (y, inclusive): the first trips' metal. */

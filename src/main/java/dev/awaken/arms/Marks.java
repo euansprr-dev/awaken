@@ -229,6 +229,8 @@ public final class Marks {
      * struck, the attacker answered, the one broken or killed); a kill's rider and posture go to the foes around it.
      */
     static void fire(ServerPlayer p, Trigger trigger, @Nullable LivingEntity target) {
+        // every blade moment, marked or not, for armour's set abilities (SPEC §44.5)
+        dev.awaken.core.api.FightMoments.report(p, dev.awaken.core.api.FightMoments.Moment.valueOf(trigger.name()), target);
         Instance inst = of(p.getMainHandItem());
         if (inst.marks().isEmpty()) return;
         for (String id : inst.marks()) {

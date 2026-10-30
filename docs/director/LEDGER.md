@@ -217,3 +217,520 @@ happens).
   longer tame, so the wild grows into them.
 - **Edges**: a chunk's wildness is kept once worked out, so land already generated keeps its old value; new land follows
   the new tamers.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Stage 2: the first beasts, Kinship, the Hearth page, Fields and the Ore Shed (§43.5, §43.6)
+
+### The four kin (Lampwing, Burrowbun, Mossback, Pebblepup)
+- **Get**: entities `awaken:kin_lampwing`, `kin_burrowbun`, `kin_mossback`, `kin_pebblepup` (prefixed: `awaken:mossback` is the gate worlds' grazer), only past the ridge. The land is cut into
+  128-block cells; about half hold one site whose kind its biome picks (woods: a Lampwing; plains and meadow: two
+  Burrowbuns; swamps and rivers: a Mossback; mountains, windswept land and stony shores: two Pebblepups, with their
+  pile). A site fills when a player is 24 to 96 blocks from it and again three days after its beasts are gone. Never
+  where the bells carry, in the city's basin, on a settlement's ground or inside a Hearth.
+- **For**: each lives with you and does a boring job (below). Never hunted: no drops, and killing one costs Kinship.
+- **Know**: the Hearth page's needs each carry a rumour of a real site 100 to 600 blocks out ("A stone-skinned pup that
+  hoards shiny stones lives on the rocky slopes, about 300 blocks north-east of your home"), Track gives a rough
+  bearing; reading one with the band or Binoculars files its card ("Could live with you", its job).
+- **Source**: `kin.KinSpawner` (sites from the seed and biomes; no chunk loads), `kin.KinBeast`.
+- **Links**: the Hearth page; Kinship; the Lampwing lesson; Fields; the Ore Shed; §43.11's never stuck.
+- **Edges**: a rumour is promised to its site, so the kind it named is what fills there; a player standing on the spot
+  waits (nothing pops in at under 24 blocks); a befriended beast never dies (hurt, it hides at its nook and heals);
+  its Hearth gone, it goes back to the wild where it stands; `/kill` takes it off its home's list.
+
+### Kinship and the five steps
+- **Get**: per player, per kind (saved on the player, schema 1, kept through death): Wary, Curious (10), Friendly (40),
+  Kin (100). Help +10, each day one lives with you +4, hurt −15, killed −60 and that kind runs from you for three days.
+  Spirit warms it: +1% a point, to +30%.
+- **For**: how near a kind lets you come, how much the System puts its sounds into words, and at Kin its own name for
+  you (the Lampwing calls you Warm One).
+- **Know**: the card's standing line; the bracketed lines up close (only for kinds read).
+- **Source**: `kin.Kinship`, `kin.KinWatch` (read 1 s at 32 blocks with the band, 128 with Binoculars; watch 3 s at
+  16 to learn one want line of three), `kin.KinHelp` (the right act at its spot; three helps of one beast and it trusts
+  you).
+- **Links**: the Hearth page's Kin list; homes.
+- **Edges**: the help is never stated; a near miss gets a nudge line; after three misses the line points closer, never
+  naming the act; armed players scare a Wary kind (the lesson Lampwing doesn't scare).
+
+### The first fire's Lampwing (the lesson)
+- **Get**: once per player, the first night they're within 20 blocks of their own Hearth (any tier).
+- **For**: the whole loop in a few minutes: read it, watch it, set a warm light where it can see, it trusts you and
+  settles at your fire.
+- **Know**: "[Something's been watching your fire from the trees. It's on your Hearth page now.]"
+- **Source**: `KinHome.lessonTick`; `/awaken admin kin lesson` sends it now.
+- **Edges**: quick to read and trust, never scared unless you're armed; settling it ends the lesson; if it wanders off
+  the Hearth page still names it as "the one watching your fire".
+
+### Homes and nooks
+- **Get**: a trusted beast follows you if your Hearth has a free nook it likes (2 at the Hearthfire, 4, 8, 12, 18, 24 by
+  tier, plus 2 once the Ore Shed's heart is set down); it settles when you're both home.
+- **For**: daily Kinship, and its job.
+- **Know**: the offer line names what's missing ("It needs a tilled field at your home"); Your beasts on the page.
+- **Source**: `KinHome.offer/arrive/settle`, `KinWorld` (saved data `awaken:kin`, schema 1).
+- **Edges**: no Hearth, no free nook, or nothing it likes: a line saying so, and it stays wild and trusting; follows up to
+  48 blocks behind, then gives up until you come back.
+
+### The beasts' work
+- **Lampwing**: up at night over its roost, which is lit (a real light, level 13, gone by day); nothing from the dark
+  spawns naturally within 32 blocks of a Lampwing's roost.
+- **Burrowbun (Fields)**: harvests ripe crops within 14 of its nook, plants them again from what it picked (or seeds in
+  the field's chest), carries the harvest to the nearest chest or barrel within 8.
+- **Mossback**: crops within 8 grow faster (six random ticks every five seconds by day).
+- **Pebblepup (the Ore Shed)**: one item every two seconds from the shed's barrels (within 4 of the heart): rubble
+  (cobblestone, cobbled deepslate, tuff, andesite, diorite, granite, calcite, netherrack, blackstone) to gravel, gravel
+  to flint (1 in 4) or sand, an ore block to its drops as an iron pick would; one nugget in 32 from rubble or gravel.
+  Outputs go onto a barrel already holding them, else the emptiest. Never ore from nothing.
+- **Source**: `KinHome.work`; the page shows what each made today.
+- **Edges**: works only while its Hearth stands; sleeps by night (the Lampwing by day); a full chest leaves the harvest
+  carried until there's room.
+
+### The Ore Shed (was the Mine head)
+- **Get**: room type `MINE_HEAD` (constant kept so saved rooms read the same), now "Ore Shed": a closed room with a lode
+  heart (new furniture `LODE_HEART`) and a barrel.
+- **For**: the Pebblepups' work and their two nooks.
+- **Know**: the Hearth page ("The Ore Shed needs a lode heart. Hearts beat inside lodes, deep underground; break one free
+  and bring it home."); setting a heart down at home says to build the shed round it.
+- **Source**: every `*_lode_heart` loot table now also drops the heart itself (they left the never-held list); a heart a
+  player set down drops only itself when broken again (`KinWorld.placedHearts`, `KinHome.heartDrops`), so it never
+  gives its ore twice.
+
+### The Hearth page
+- **Get**: the band's seventh page, Hearth, between Journal and Truths.
+- **For**: Home (the tier and nooks, each beast need with its rumour and Track, the next tier's needs, the Great Belfry
+  pinned and dim), Your beasts (what each is doing now, how it's feeling, what it made today), Kin (met cards: where and
+  when, "Could live with you", its job, its want so far or "?", your standing, its latest line; heard-of kinds as dim
+  outlines with their rumour).
+- **Know**: the rail; the lesson's line; reading a kind.
+- **Source**: `KinPage` (server), `KinNet` (payloads `kin_page`, `kin_ask`, `kin_track`), `kin.client.KinPageSection`.
+- **Edges**: no home: "No home yet..."; the Kin list always holds a rumour not yet followed when one exists within 600
+  blocks; nothing on it expires or renews daily; a rumour unfollowed for a play-day gets plainer (distance to 50 blocks
+  and the land's name), after two Track's bearing narrows from ±48 to ±8.
+
+## Stage 3: Faults, the Ringer's Great Fault, the first raid (§43.8)
+
+### Faults (the kit)
+- **Get**: played by the server through `fault.Faults` (`play`, `playNear`, `mend`, `mendNear`): a flicker (14 ticks), a
+  Fault (about 4 s) or a Great Fault (10 to 20 s; each key plays once per player, counted `awaken:fault_<key>`, then as a
+  Fault).
+- **For**: the start of every Big Day that threatens you and of each Proving; the mend ends a woken event (and, from
+  stage 4, every bell).
+- **Know**: it is the opening's failure again (the tell, the tear, the System's words in the black, the held cut, the
+  plain line after), so the player learns it once.
+- **Source**: `fault.Fault`, `fault.Faults`, `fault.FaultNet` (`fault_play`, `fault_mend`), `fault.client.FaultHud`;
+  sounds `fault.tell/tear/voice/drop/mend/flicker` from `tools/art/specs/audio_fault.py`.
+- **Links**: the Ringer; raids; stage 4's bells (the mend).
+- **Edges**: client setting `faults` full/gentle/still (`config/awaken-faults-client.toml`); screen flashes or camera
+  shake off play FULL as GENTLE; band layouts change at most every 7 ticks (under three a second) and slide, never
+  strobe; a Fault replacing a running one ends its cut first; logout ends it and the edge; the edge gives up after 20
+  minutes without a mend; a client without the mod's channel is skipped; Lens off still plays it (the crush is extra).
+
+### The Ringer's Great Fault
+- **Get**: the D-rank Reassessment (the waves trial, until the Ringer's hall is built) opens on the Great Fault
+  `ringer`: "[ERROR] … THAT'S NOT OUR BELL / READING · RANK ▮ · RANK ▮ · RANK ▮", the leak "it rang for you last time too",
+  then "That isn't the Registry's bell. Something else is ringing it."
+- **For**: the first Proving's surprise; it ends on the mend when the trial ends, held or not.
+- **Know**: it comes unannounced, the first break since the awakening.
+- **Source**: `hearth.trial.Trials.begin` / `end`.
+- **Links**: Faults; raids (D rank opens them).
+- **Edges**: practice runs and every later D attempt play it as a plain Fault; the first wave waits for the screen to
+  come back; the Ringer itself (the Drowned Belfry, the Tether, the Tenor) is GOALS part 2's Proving, not built here.
+
+### Raids (the first Big Day)
+- **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):
+  never in a world's first two hours of play, at most one Big Day every five play-days, due a play-day or two later and
+  never said when.
+- **For**: the night you hold your home. Rewards: the Lord's Heart (dropped by the raid's Lord), Kinship a step with
+  every kind living there for each player who held (and a shiny stone from a Pebblepup), `awaken:raids_held`, a best
+  moment. The Big Day bell joins with stage 4's bells.
+- **Know**: the day before, a note (never an order): "Your beasts are frightened of something to the east." (with no
+  beasts: "The wild things are all moving away from the east."); four wild kin run past the house the other way; the
+  home's beasts carry things into their nooks and its Lampwings keep to their roosts.
+- **Source**: `bigday.BigDays` (schedule, warning, dusk, waves, Lord, dawn, the away raid, mending), `bigday.BigDayData`
+  (`big_days`, schema 1). Commands `/awaken admin bigday raid [first] | dawn`.
+- **Links**: Faults (a Great Fault `first_raid` the first time, a Fault after, with a held look along the breach's
+  bearing); the kin (`KinHome.hide`, `checkOn`, `stream`, the unease in `KinHome.work`); the gates (the breach is the
+  nearest standing gate within 700 blocks, its theme the raid's; else 400 blocks off on the home's own bearing and the
+  owner's D theme); the Lampwings' spawn guard keeps the yard free of risers.
+- **Edges**: waves 4, 6 and 8 (0, 1, 2 elites) come 52 blocks out along the bearing, the next when two or fewer are left
+  or after a minute, the Lord (a roaming break Lord, level 12 the first time, the owner's level after) when one is
+  left; they hunt whoever of the household is within 48, else walk to the Hearth; first light (or a slept night)
+  clears what's left and mends. Nobody home at dusk: at dawn it breaks at most 10 doors, trapdoors, gates, wooden fences
+  or glass on its side (never a chest, a rack, a bed, the fire or a beast; put back one every 15 s where nothing has
+  been put since) and carries at most 9 stacks of food out of the fullest larder chest, left in a chest 70 blocks along
+  its trail and tracked on the card. Peaceful: no raid (the gate settles). The server down at dusk or a skipped night:
+  it came while you were away. A Hearth taken up drops its Big Days. Shared Hearths: every member home counts and is
+  hunted; the warning and the away note go to every member online.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Stage 4: the first thirty bells and the tower's song (§43.7)
+
+### The hundred and the Bell Book
+- **Get**: the Book is yours from your first bell (it lives on you, kept through death). Thirty bells can be rung in
+  stage 4 (SPEC §43.7 "Built (stage 4)" lists them); 00 and 31 hold their places; the rest are empty slots with a rank.
+- **For**: the long goal of the game: a hundred bells, each a note in your song and most with a voice that helps your
+  home; three together make a peal.
+- **Know**: the first bell's card says where it went ("It's gone home to your tower") and what it does; six seconds
+  later the Signal says there were a hundred and to find them; the Codex shows the hundred, each slot's rank telling
+  how far off it is.
+- **Source**: `bells.BellCatalog`, `bells.BellBook` (attachment `bell_book`, schema 1), `bells.Bells` (public API: `ring`,
+  `has`, `count`, `voice`, `lordFell`, `holdfastHeard`), counter `awaken:bells`.
+- **Links**: every system that gives one (below); the tower; the voices; stage 5's leads (Sung, Found).
+- **Edges**: a bell rings home once per player; held bells stay held through death; the slots never name a bell you
+  have no lead on.
+
+### Bells from moments (Ember, Nook, Lintel, Founding, Registry, Tenor, Second, Garden, Drowned Choir, Dreaming, Spirit, Night, Watch, Curfew, and the gate worlds' six)
+- **Get**: doing the thing: a Hearth, a beast living with you, a Grand room, Hearth tier 2, the first gate cleared, D
+  and C rank, Descent strata 2 and 3, the first lucid dream, the first spirit spoken to, a raid held to dawn, ringing a
+  holdfast's bell from inside its walls (Watch, then Curfew), and the Lord of a Bell Crypt, Fungal Hollow, Ember Mine,
+  Hive, Overgrown Temple or Lantern Night Market gate at the bell's rank or above.
+- **For**: each is its voice in your tower and its note in your song.
+- **Know**: the moment itself (the card names the bell and where it rang); a holdfast's bell is filed as a Rung lead
+  the first time you stand inside its walls ("Ring it yourself and its note goes home with you").
+- **Source**: `Bells.moments` (every 5 s per player), `BigDays` dawn (Night), `gates.GateEvents` (a Lord's death),
+  `village.Holdfast.bellAt` with a right-click on its bell (`BellModule`).
+- **Links**: the Hearth, kin, the Registry, Provings, raids, holdfasts, the gates, the Descent, Lucidium, the Veil.
+- **Edges**: states already true in an old world ring at once the first time (an old Hearth rings the Ember); a gate
+  below the bell's rank gives nothing (the Crypt Bell wants D); the whole run's party within 96 of the Lord shares it;
+  without a home the bell is held and hangs once there is one.
+
+### Sleeping places (Wren, Barrow, Mere, Wayside, Cairn, Spire, Reed, Thorn, Crag, Fen)
+- **Get**: out in the land: the Wren Bell 90 to 160 blocks from every home; the others in the 640-block cells past the
+  ridge, E bells nearest, then D, then C. Strike the bell (use or hit) once it's free: dug out, dived for, climbed to, or
+  its keeper killed.
+- **For**: the bells nobody hands you, and the land put back: a grey, dead patch turns green again round a woken bell.
+- **Know**: the hum. Within 64 you hear a bell's note from its direction (a Heard lead with a bearing, in the Book);
+  from another side it crosses into an area you can Track; within 24 the grey ground is Seen ("Something here is keeping
+  it that way").
+- **Source**: `bells.BellSites` (planned from the seed, built when a player comes within 96), `bells.BellWorld` (saved
+  `bells`, schema 1), block `awaken:sleeping_bell` (no item: it can't be broken or moved, and drops nothing).
+- **Links**: the Book's leads and Track; the keeper is a themed elite (`MobHooks.spawnThemed`, gate id `bell:<key>`);
+  the Fault mend; the tower.
+- **Edges**: no site in the city, a Hearth or deep water (the cell stays empty); a home's Wren site avoids the city
+  (12 tries, else 120 east); Peaceful: no keeper, the bell is free; a keeper that despawns comes back next time someone
+  is within 16; everyone within 48 at the waking rings it home; a woken bell still rings home for a player who arrives
+  later and strikes it; the painting back finishes even if the player leaves.
+
+### Leads (Heard, Seen, Rung)
+- **Get**: filed by the System when you hear, see or stand at a bell (above). Sung (the Chimewren) and Found (the
+  Stilled's letters) are stage 5's sources; Remembered is the Deep's.
+- **For**: direction without telling: a bearing, then an area, then the place.
+- **Know**: the System's bracketed line when each is filed; the Book's Bell Leads lists them newest first.
+- **Source**: `Bells.heard/seen/holdfastHeard`, `Bells.track` (the top-right card, kind `bell`).
+- **Links**: `core.api.Destinations` (the card); the Book page.
+- **Edges**: one bearing: Track points to where you heard it; two bearings: the area's middle, up to 20 blocks off the
+  bell, so the last stretch is yours to search; ringing the bell clears its lead and the card.
+
+### The bell frame, the belfry and the tower
+- **Get**: the bell frame comes with your first bell; lost, make one (planks over logs and a bell). Set it down inside
+  your own Hearth.
+- **For**: where your bells hang and your song rings from; at 20 bells a belfry goes up round it, at 50 a stone tower.
+- **Know**: placing it says how many hang and that they ring at dawn and dusk; using it says how many more until the
+  belfry or tower; the Book's Your Tower says the same.
+- **Source**: block `awaken:bell_frame` (loot table drops itself), `bells.BellTower`; belfry and tower built from vanilla
+  blocks (stripped dark oak, dark oak planks, deepslate tiles, stone bricks, bells).
+- **Links**: the Hearth; every member's bells; the song; Gather's meeting place.
+- **Edges**: outside your own Hearth it pops off with a line; a second frame pops off and says where the first is; a
+  broken frame drops and the song rings from the Anchor until a new one is set; the belfry or tower waits for clear
+  space (a once-a-day note) and tries again at every song; a tower takes the belfry's leftovers down; shared Hearths
+  hang every member's bells and a bell once hung stays.
+
+### The song and the beasts
+- **Get**: every dawn and dusk at home, from the frame (the belfry's or tower's top once built).
+- **For**: hearing what you have and what's missing: each bell's note in its place, a knock where one's gone; and your
+  beasts' answer, which grows with your bells (hide, hunker, listen, gather, sing).
+- **Know**: it rings on its own; the Book has "Play the song" to hear it anywhere.
+- **Source**: `BellTower.tick/song`, payload `bells_song`, `bells.client.SongPlayer`, `KinHome.song`.
+- **Links**: the kin; the hundred; stage 7's Hundred Peal.
+- **Edges**: heard within 256; a night slept through still wakes to the dawn song; a restart in the song's window may
+  ring it again (harmless); no bells hung, no song.
+
+### Voices
+- **Get**: each bell's voice works while it hangs at home (the card and the Book say what it does).
+- **For**: Rest, Growth, Kin, Ward, Stride, Glow, Shed, Raid, Homeward (numbers in SPEC §43.7).
+- **Know**: the bell's card; Your Tower lists every voice your bells have, with counts.
+- **Source**: `Bells.voice` (public), used by `Bells.body`, `BellModule` (crops, spawns), `kin.Kinship`, `kin.KinHome`,
+  `bigday.BigDays`, `Peals`.
+- **Links**: the Hearth, kin, raids, the Ore Shed, the handbell.
+- **Edges**: counted over the home's hung bells, so a household shares them; caps keep them from running away (Growth
+  and Kin count 5 bells at most, Ward 80%, Shed 1 in 16).
+
+### The handbell and its peals
+- **Get**: with your first bell; lost, make one (a stick over two copper ingots).
+- **For**: a plain ring (out in the wild the land's beasts run from it for a minute), and the peals: Homeward (Ember,
+  Wren, Wayside), Gather (Nook, Founding, Root), Stillness (Tenor, Night, Watch).
+- **Know**: its tooltip ("Sneak and use to change the peal"); a bell's card names a peal it completes; Your Tower shows
+  peals you have and those one bell away.
+- **Source**: item `awaken:handbell`, `bells.Peals`.
+- **Links**: the Hearth (Homeward, Gather), kin (Gather, the scare), raids (Stillness).
+- **Edges**: Homeward: no home, not the overworld, moved or hit while it gathers, or rung again inside 5 minutes: it
+  says why; a restart cancels one gathering. Gather with no beasts says so. Stillness only during a raid's night at your
+  home, once a night. A peal whose bells you no longer all hold (never, today) falls back to a plain ring.
+
+### The Bell Book page
+- **Get**: the Codex, once you hold a bell: The Hundred Bells, Bell Leads, Your Tower.
+- **For**: seeing the whole goal at a glance, following leads, knowing your tower.
+- **Know**: the first bell's Signal line; the Codex tab.
+- **Source**: `bells.BellPage` (built on the server), `bells.BellNet` (`bells_page`, `bells_ask`, `bells_track`),
+  `bells.client.BellBookSection`.
+- **Links**: Track and the top-right card; the song player.
+- **Edges**: the page asks every two seconds while open; hovering never moves the page (two lines kept under the
+  board); a bell you have no lead on shows only its number and rank.
+
+## Stage 5: the rest of the kin and the works to the Foundry, with the Storehouse (§43.12)
+
+### The eight working kin (Totter, Thatchback, Emberkit, Puffwool, Dumplin, Pondling, Snufflet, Chimewren)
+- **Get**: meet one at its site (the biome table in §43.12), read it, watch its three want lines, help it three times,
+  and give it a nook it likes at home.
+- **For**: each runs one work: Totters carry and shelve, Thatchbacks build from plans, Emberkits smelt, Puffwools give
+  wool, Dumplins eggs, Pondlings fish, Snufflets forage, Chimewrens find bells.
+- **Know**: a rumour on the Hearth page names the sort of animal and its place; its site is dressed for its want (the
+  scattered heap, the short dam, the cold spring, the burrs, the empty nest, the rotten pond, the snuffled spot, the
+  same three notes); the want lines say it plainly by the third; the card says "Could live with you" and its job.
+- **Source**: `kin.KinSpawner` (sites and dressing), `kin.KinHelp` (helps and nudges), `kin.KinHome` (nooks),
+  `kin.KinWorks` (work), art `tools/art/specs/kin.py`.
+- **Links**: Kinship (§43.5); the Hearth page's needs (each new kind leads a need line once a work wants it); the works
+  below; bells (Chimewrens hear yours).
+- **Edges**: a help only counts from a player (a tossed item needs a thrower); Dumplins only follow a player standing
+  1.5 blocks above them, on the ground, within 10, and let go past 32; a flock left at its nest 2,400 ticks without
+  help is lost again 16 to 24 blocks off; pond rot regrows while any is left; the Snufflet's spot moves after each
+  dig; Chimewrens need a player who holds a bell; a frightened kind (a killing) won't take help for three days; an
+  Emberkit can't burn; a Puffwool brushed at home gives wool once a day per beast; a nook that goes away sends the
+  beast looking for a better one every 1,200 ticks.
+
+### Work Plans
+- **Get**: craft one (paper, coal, paper over planks and two sticks). Its recipe is in the book from the first paper.
+- **For**: a Thatchback builds the work for you: Smeltery, Rookery, Foundry, Storehouse or Ore Shed.
+- **Know**: using it reads the bill (only what isn't already standing) or how far it's got and what it waits on;
+  sneak-use changes the work; the Hearth page lists each plan's progress; with no Thatchback it says you can build the
+  room yourself.
+- **Source**: block `awaken:work_plan` (drops itself), `kin.works.WorkPlans`, `WorkPlanBlockEntity` (schema 1).
+- **Links**: Thatchbacks; every work; the Hearth's room scan (the built room reads as its work).
+- **Edges**: materials come from any chest or barrel within eight blocks that holds them (the plan's own barrels never
+  hide yours); no glass walls the window up; no lanterns leaves them out; a block of yours in the way is built round;
+  a block already right is counted; the work can't change once building starts (break the plan and lay it again);
+  plans more than 64 blocks from the Thatchback's nook are left for one nearer.
+
+### Smeltery and its Emberkit
+- **Get**: a room with a vent stone and a furnace (a Work Plan builds it; vent stones come from Emberkit springs).
+- **For**: ore and raw metal you bring are smelted with no fuel; the Forge stays yours.
+- **Know**: the Emberkit's need line names a Smeltery or a lit campfire; at work it lies at the vent and the furnace
+  crackles; the Smeltery bells say they speed it.
+- **Source**: `KinWorks.emberkit`, block `awaken:vent_stone` (drops itself).
+- **Links**: Totters carry its ingots to the Armoury; bells 14 and 45 (SMELT).
+- **Edges**: only ore and raw materials, never anything else; with every chest in the room full the ore waits; no Smeltery,
+  the Emberkit warms a campfire nook and smelts nothing.
+
+### The Storehouse, the Drop and the Ledger
+- **Get**: the Drop (planks, a granary keystone and two barrels; keystones stand in every town's granary), the Ledger
+  desk (a book and quill over planks and sticks), in a Storehouse room with chests or barrels; Totters living with you.
+- **For**: one place to drop everything; Totters shelve it by sort; the Ledger finds anything.
+- **Know**: the Drop says how full the heap is and whether the hall is full; new bays get a painted sign; the Ledger
+  lists every bay with a search; the Totter's need line names the Storehouse.
+- **Source**: `kin.works.Storehouse`, `DropBlockEntity` (schema 1, 64 stacks), `client.DropRenderer`,
+  `client.LedgerScreen`, payloads `works_ledger` and `works_ledger_ask`.
+- **Links**: Totters; the Smeltery's and fields' carrying; the Armoury and Kitchen.
+- **Edges**: a full heap refuses more and says so; a full hall puts the armful back and the Totter rests; "empty my
+  bag" keeps the hotbar, armour and marked items; a fetch with no Totter free is set out on the desk at once; a
+  restart drops a Totter's armful where it stood; the heap draws a capped number of items.
+
+### Rookery and the Chime Perch
+- **Get**: the Chime Perch (planks over a woken clapper and a stick; a clapper comes from every bell you wake) in a
+  room; Chimewrens living with you.
+- **For**: one Sung lead a day for each member: a bearing toward a sleeping bell you have no lead on.
+- **Know**: the Chimewren's need line names the Rookery; the lead's line names the direction; the Book files it.
+- **Source**: `KinWorks.chimewren`, `Bells.sung`, block `awaken:chime_perch` (drops itself).
+- **Links**: the Bell Book and Track; the hundred.
+- **Edges**: offline members get none that day; no unled sleeping bell within 1,200 blocks gives no lead and no line.
+
+### Foundry and the Crucible
+- **Get**: the Crucible (bell bronze, deepglass shards and a furnace) in a room with chests.
+- **For**: the Singing Deep's five bells cast from metal you bring (§43.12 lists the moulds).
+- **Know**: using the Crucible says which bell is next and what it still needs; it glows while casting; every member
+  hears the bell ring home.
+- **Source**: `KinWorks.foundry`, block `awaken:foundry_crucible` (drops itself), `KinWorld.cast`.
+- **Links**: the Singing Deep's metals; the Bell Book; Thatchbacks (they halve the time).
+- **Edges**: the metal is taken only at the end, so a cast cut off by a restart or an unloaded chunk starts again;
+  members away get the bell when they next come home; the True Bell is never cast.
+
+### Sung and Found leads
+- **Get**: Sung from a Rookery's Chimewrens; Found from an old letter a Snufflet's spot gives up (1 in 4 digs).
+- **For**: direction to a sleeping bell without being told where.
+- **Know**: the bracketed line when it's filed; the Book's Bell Leads list.
+- **Source**: `Bells.sung`, `Bells.found` (public API).
+- **Links**: Track; the sleeping places.
+- **Edges**: a Found lead points at an area 20 blocks off the bell; with no sleeping bell within 800 the letter is
+  something ordinary instead; Found tracks only if nothing else is tracked.
+
+### Home outputs (wool, eggs, fish, forage)
+- **Get**: a Puffwool brushed at home (3 wool a day), Dumplins (2 eggs a day), Pondlings (4 fish a day), Snufflets (4
+  finds a day: mushrooms, berries, herbs).
+- **For**: the tended things a home grows; never ore, gems, gate loot or XP.
+- **Know**: the beast's Your beasts line says what it made today.
+- **Source**: `KinWorks.dumplin/pondling/snufflet/brushed`.
+- **Links**: the nearest chest; Totters carry food to the Kitchen.
+- **Edges**: with no chest within eight blocks, or a full one, it's set down on the ground by the beast; Pondlings need
+  water by their nook; only members get wool; the day's count starts again each morning.
+
+### New blocks and items
+- **Vent stone**: two at every Emberkit spring; drops itself. **Pond rot**: on wild Pondling ponds; drops nothing, never
+  held. **Woken clapper**: from every bell you wake. **Granary keystone**: in every town granary; drops itself.
+- **Source**: `WorksModule` (`Sources.declare`), loot tables, recipes above.
+
+## Stage 6: the second half's bells and beasts (§43.13)
+
+### Bells from the second half (gates, the Court, the Above, the Deep, the city)
+- **Get**: a gate Lord felled at its bell's rank or above (every theme has one); a Sovereign felled (its domain's bell,
+  for everyone within 96); the Descent's strata reached; the Above's firsts (wind, island, Halo, star, storm); a Siege
+  with the Night Bell at B rank; the Carillon's four (Roost, Choir Square, market, Quay) by rank or bell count.
+- **For**: the hundred filling as you go through the whole game, each bell a mark of a place or a deed.
+- **Know**: the bracketed line and the Book; due city bells you're away from are remembered aloud with where they are.
+- **Source**: `Bells.lordFell`, `Bells.sovereignFell`, `Bells.moments`, `Bells.city`, `BigDays`.
+- **Links**: the tower's song; the voices.
+- **Edges**: a Sovereign's kill credit must be a player; a bell already held never rings twice; city bells ring only in
+  the city.
+
+### Bells of the land further out, and people remembering them
+- **Get**: the C, B and A bands' sleeping bells (the people's homes, the Hill, the Ford, the Thaw, the Boulder, the
+  Leviathan's), woken where they lie.
+- **For**: reasons to travel far out as rank rises.
+- **Know**: once a play-day in Carillon someone remembers one still asleep within 7,200 blocks (a Remembered lead with
+  an area 20 blocks off).
+- **Source**: `BellSites` (bands and pools), `Bells.city` (Remembered leads), `BellBook.rememberedDay` (schema 2).
+- **Links**: Track; the Book's leads.
+- **Edges**: none within reach and no lead is filed; a lead for a bell since woken drops from the Book.
+
+### Spirit bells and dream bells
+- **Get**: spirit bells (the Veil: five, on their own 960-block grid) rung by a spirit coming within 3; dream bells (the
+  Lucidium: five, one a dream) struck lucid enough (40, 60, 80) and carried out on waking.
+- **For**: the Veil and the Lucidium each holding part of the hundred.
+- **Know**: a body near a spirit bell feels "cold and still" (a Seen lead); a spirit hears its hum; a dream says a bell is
+  ringing; waking without it files a Dreamt lead.
+- **Source**: `BellSites.tickSpirits`, `DreamBells`.
+- **Links**: the Veil (`Veil.isSpirit`), the Lucidium (`Lucidium.isDreaming`, `lucidity`).
+- **Edges**: a dream isn't saved (logging out forgets it); too dim a strike says so plainly; a spirit bell's toll reaches
+  only spirits.
+
+### The four last kin (Bumblepuff, Loomworm, Cloudcalf, Boulderback)
+- **Get**: met in the wild (flower fields; old, dark and birch woods; the sky over peaks 4,800 out; caves under the
+  land), helped three times, then they follow you home to a nook.
+- **For**: honey and wax, thread and cloth, rain on the fields, stone and faster building.
+- **Know**: three watch lines each, vague to plain; rumours on the Hearth page with the sort of place and a real region.
+- **Source**: `KinSpawner` (sites), `KinHelp` (acts), `KinHome.nookFor`, `KinWorks.daily/rain`.
+- **Links**: the Cloud Bell (a Cloudcalf brought home); Thatchbacks build faster with a Boulderback home.
+- **Edges**: a Bumblepuff with one or two flowers asks for lots; a Loomworm refuses the wrong tree; a Cloudcalf won't
+  follow anyone more than 4 below it and is lost again two minutes after it's home; a Boulderback backs from any light
+  in either hand; with no cave under its site it gets a cut pocket at y -30; each day's output starts again each morning.
+
+### The wild's bells (Stampede, Flood, Eclipse)
+- **Get**: from C rank, witness a Stampede (Stampede Bell) or the Deep Tide on a new moon (Flood Bell); at A rank, stand
+  under open sky in the middle of a new moon's night (Eclipse Bell).
+- **For**: the last three of the hundred's sources; reasons to be out in the wild at its biggest moments.
+- **Know**: the bracketed ring line; the Book lists them under the wilds.
+- **Source**: `Bells.witnessed` (from `Pulse.witness`), `Bells.moments`.
+- **Links**: the World Pulse's happenings (§21.6); Stride, Breath and Sight voices.
+- **Edges**: witnessed below C rank it rings nothing then; the next Stampede or Deep Tide after C does; a roof over you
+  on the new moon's night and the Eclipse Bell waits.
+
+## Stage 7: the Hundred Peal, the Kinsong, the Deep's answer and the Wake (§43.14)
+
+### Heart-clapper (item)
+- **Get**: the Lord of any gate world at S rank or above, to the killer and their party within 96.
+- **For**: one of the Great Belfry's two pieces, set into your bell frame by hand.
+- **Know**: its tooltip says what it is and where it goes; the Hearth page's Great Belfry pin names it from A rank;
+  the Bell Book's next line names it once your tower is full.
+- **Source**: `Bells.lordFell` → `Bells.belfryPiece`; `Sources.declare` in `BellModule`.
+- **Links**: S-rank gates (§11), the stone tower (§43.7), the Seed Bell.
+- **Edges**: never given to someone already carrying one, or whose home has set it or has a Great Belfry; lost or
+  dropped, the next S-rank Lord gives another. Set into someone else's frame, or before your tower stands, it says why
+  and stays in your hand.
+
+### Sovereign's Relic (item)
+- **Get**: every Sovereign felled, to the killer and their party within 96.
+- **For**: the Great Belfry's other piece.
+- **Know**: as the Heart-clapper.
+- **Source**: `Bells.sovereignFell` → `Bells.belfryPiece`.
+- **Links**: the Court (§37), Grieving Sovereigns.
+- **Edges**: as the Heart-clapper; eight Sovereigns, and they come back, so it's never the last chance.
+
+### The Great Belfry (tower stage 3)
+- **Get**: both pieces in the frame of a stone tower (50 bells); your beasts raise it in 30 s, or with none it goes up
+  at the next song.
+- **For**: holds all hundred bells; the Seed Bell; the Hundred Peal rings from it.
+- **Know**: the frame's lines as each piece goes in; the Hearth page pin (needs, then "stands"); the Bell Book's next line.
+- **Source**: `GreatBelfry.offer/begin/tick/build`, `BellTower.great`, `BellTower.song`.
+- **Links**: kin gather (§43.6), the tower (§43.7).
+- **Edges**: needs a clear 7 by 7, 23 high; blocked, a note to members and it tries again every song. The old belfry
+  comes down under it. A member away when it goes up gets the Seed Bell the next time they're about.
+
+### The Seed Bell (00) and the True Bell (36)
+- **Get**: the Seed with the Great Belfry; the True Bell cast at your Foundry (8 Starmetal Ingots, 16 Bell Bronze) while
+  a member of S rank is online.
+- **For**: the last two of the hundred; Kin and Glow voices.
+- **Know**: the Seed's ring line; the Foundry's status says the True Bell waits for an S-rank member.
+- **Source**: `GreatBelfry.seed`, `KinWorks.MOULDS` ("true"), `KinWorks.next`, `KinWorks.foundryStatus`.
+- **Links**: Starmetal (§34), the Foundry (§43.12).
+- **Edges**: the Seed can't be the bell you're missing at 99: the Great Belfry needs only fifty. `bells tower <n>` skips it.
+
+### The Hundred Peal
+- **Get**: the first song after your Great Belfry holds all hundred bells; once per home.
+- **For**: a Kinship step for every kind you've met, the Kinsong, the Wake opening, a best moment; wild kin come to the tower.
+- **Know**: the REVELATION to everyone in the overworld, the members' summary line, the Bell Book ("Your song is whole.
+  Ring your bells..."), the ending screen's Wake card says it needs it.
+- **Source**: `HundredPeal.due/ring`, `KinApi.hundredPeal/peal`.
+- **Links**: Kinship (§43.5), the Wake (§43.14), the Deep's answer.
+- **Edges**: a member offline at the time gets the Kinsong and the Wake the next time they're about (`Bells.moments`);
+  another home's Peal later still steps up its own members but the Deep answers only once.
+
+### The Kinsong
+- **Get**: the handbell's peal for anyone with the Hundred Peal (sneak-use cycles to it).
+- **For**: calming the land's beasts and stampedes within reach, freeing the Gnawed, keeping the Gnawed off for 3 days
+  within 256.
+- **Know**: the Bell Book's tower list shows it with its words; the overlay says what it calmed.
+- **Source**: `Peals.ring` → `HundredPeal.kinsong`, `KinApi.kinsong`, `LivingHooks.calm` → `Pulse.calm`.
+- **Links**: stampedes (§21.6), the Gnawed.
+- **Edges**: never touches monsters, gate things, wardens, bosses or camps; after the Deep answers it draws 2 to 4 Deep
+  creatures, at most once in five minutes; creative and spectator players draw nothing.
+
+### The Deep's answer (world state)
+- **Get**: the world's first Hundred Peal; 30 s later the Great Fault `deep_answer`.
+- **For**: the endgame's pressure: gates break in half the time, spill half as many again, 10 levels higher; angrier
+  Sovereigns; the Gnawed.
+- **Know**: the Great Fault's plain line says exactly that.
+- **Source**: `HundredPeal.answer`, `BellHooks.deepAnswered` read by `Breaks`, `Court`, `KinSpawner`.
+- **Links**: breaks (§11), the Court (§37), the Gnawed.
+- **Edges**: saved (`deep_answered`), so a restart keeps it; a player offline at the time doesn't see the Fault (they
+  hear about it in the Gnawed's and the breaks' lines).
+
+### The Gnawed (kin state)
+- **Get**: after the Deep answers, one in four new kin sites, away from a recent Kinsong.
+- **For**: something to free rather than kill; a Help step of Kinship.
+- **Know**: a flicker and a line the first time; a line every 2 minutes after; the look (dark tint, ember eyes, ash).
+- **Source**: `KinSpawner`, `KinBeast.gnawed`, `KinWatch.sawGnawed/freed`, `KinApi.peal/kinsong`.
+- **Links**: Kinship, the Kinsong, the Hundred Peal.
+- **Edges**: can't be killed by a player (freed at 1 health); dies to other things like any beast with no Kinship cost.
+
+### Grieving Sovereigns
+- **Get**: after the Deep answers and all eight Sovereigns are beaten, each comes back Grieving (+20 levels).
+- **For**: endgame fights; half a level and a REVELATION the first time you fell each.
+- **Know**: the name ("Grieving <name>").
+- **Source**: `Court.courtTick`, the Court's death handler.
+- **Links**: the Court (§37), the Sovereign's Relic.
+- **Edges**: the reward once per Sovereign per player; they keep coming back.
+
+### The Wake's door (Not yet)
+- **Get**: the ending screen at the Seed.
+- **For**: the Wake needs the Peal; "Not yet" lets you leave and come back.
+- **Know**: the dimmed Wake card's words; "The Seed will wait."
+- **Source**: `Court.offer/choose/laterTick`, `EndingScreen`.
+- **Links**: the Descent (§8), the Hundred Peal.
+- **Edges**: offered again on coming back down to the Seed; the server refuses a Wake without the Peal (a re-offer).
+
+### The risen and Ilse's visit
+- **Get**: after the Wake: the Stilled stand up in loaded chunks; three play-days on, Ilse visits each home once by day.
+- **For**: the world waking up; the end of Ilse's and Aldo's story.
+- **Know**: they're in plain sight and talk when spoken to; a bracketed line when Ilse comes up the path.
+- **Source**: `StilledPlacer.rise`, `LivingHooks.risen/visit`, `Wayfarers.risen/visit`, `Wayfarer.risen/visiting`, `Bells.ilse`.
+- **Links**: the Stilled (§43.3), the Last Fire (§21), the Wake.
+- **Edges**: a Stilled in an unloaded chunk stands the next time its chunk loads near a player; Ilse doesn't come by night
+  or when nobody's at the fire, and comes the next fair day; she visits a home once (`ilse` in `bells`).

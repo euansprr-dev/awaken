@@ -23,6 +23,6 @@ final class WayfarerRenderer extends SkinnedMobRenderer<Wayfarer, SkinRenderStat
         super.extractRenderState(w, state, partialTicks);
         String who = w.who().isEmpty() ? "wren" : w.who();
         Wayfarers.Person p = Wayfarers.get(who);
-        state.wear(Awaken.id("textures/entity/wayfarer/" + who + ".png"), p != null && p.slim());
+        state.wear(Awaken.id("textures/entity/wayfarer/" + who + ".png"), p != null ? p.slim() : who.equals("risen"));
     }
 }
