@@ -4,6 +4,13 @@ Euan, 2026-10-30, playing a fresh world of `build/awaken-v1` at 748dfae3: "the n
 when I got my first Kin? That's weird. We need a physical bell system early on. idk how but the bell tower needs to be
 built earlier and actually make sense."
 
+Later the same day, after reading the first version of this plan: "I don't think there should be that many bells ...
+just around the world. I think they should mainly be found through gates or through different things ... through
+puzzles inside lucid dreams. Having to find a bell out in the wild doesn't make sense. It doesn't even follow the
+storyline well. Unless it's maybe deep underground or ... where you actually have a quest to follow ... I don't think
+we should just randomly place a bell in the world ... that removes all of the mystery and the fun and the lore."
+This version follows that: no bell lies in the open land without a story that leads to it (parts 3, 4.7, 4.8).
+
 This is a plan, not built. Approval page: https://claude.ai/artifact/Fzj7qtDKBjVaonkgWCaeHa. SPEC changes (a new §43.16 and the edits listed in part 6)
 go in with the first stage's commit.
 
@@ -83,27 +90,33 @@ Hearth "two or three bells that just went off, and now ... a drum beat ... as if
   pre-announce bosses. Plain speech. Every item and block has a recipe or a way in. Multiplayer-safe. The band pages,
   the task card and the Hearth page layout belong to the tasks-one-list session.
 - **Keep**: the hundred (numbers, names, ranks, voices), the song's tune and its times (dawn and dusk), leads and Track, the
-  sleeping bells' wake ceremony, the beasts' reactions by count, the peals, the Foundry's casts, the Great Belfry, the
+  the beasts' reactions by count, the peals, the Foundry's casts, the Great Belfry, the
   Hundred Peal, the Deep's answer, the Wake, quiet ground.
 
 **Strong result**: Euan sets the coal down, hangs Ilse's bell on a frame he made from planks and logs, and it rings
-once, by his fire, for the first time in eleven years. Far off over the hill something answers it, muffled, and he
-walks toward the sound until it's under his feet. That night the Lampwing comes out of a tree where it has been
-sleeping in an old bell, and the bell is his once it moves in. At dusk he sees his two bells swing and hears the Wren
-Bell, which he woke on the hill, answer from the north-east. When the Tenor is standing in his yard the next morning
-he builds a tower to hang it in. **Weak**: the same flow with bells that look like vanilla bells and a tower he copies
+once, by his fire, for the first time in eleven years. That night the Lampwing comes out of a tree where it has been
+sleeping in an old bell, and the bell is his once it moves in. At dusk he sees his two bells swing as they ring. In his
+first gate he hears a bell, muffled, somewhere inside, follows it to a shut room, works out how to open it, and carries
+the Wren Bell out: so that's where they went. When the Tenor is standing in his yard the next morning he builds a tower
+to hang it in. **Weak**: the same flow with bells that look like vanilla bells and a tower he copies
 from a plan. **Unacceptable**: any bell sound with no bell to see, a sound he can't follow or doesn't understand, a
 sound on a clock, a bell that's "yours" but nowhere, a tower that builds itself, or a bell he can lose for good.
 
 ## 3. The rule, in two sentences
 
-**A bell that still has its place, you wake where it is, and from then on it answers your song from there. A bell that
-lost its place, you bring home in your hands and hang in your tower.**
+**Nobody left a bell lying in the open. Every bell is somewhere a story puts it (a gate swallowed it, a village hid it,
+the Deep took it, a dream keeps it, a Lord hoards it) and you win it there and carry it home to hang; only the six that
+people still ring stay where they hang, and answer your song.**
 
-Why two kinds: a woken great bell is the land's. It keeps the ground shut round it (quiet ground, §43.15), the land
-turns back round it, and any player can come and ring it, so it has to stay. Everything else (bells swallowed by gates,
-lost in the Deep, fallen from the Above, carried into dreams, made for the Provings, the home bells) has nowhere to go
-back to, so it comes home with you. That's 29 bells that stay and 71 that come home (part 5 has every one).
+Why: it's the story Ilse and Bram already tell (§43.15). The bells went quiet eleven years ago and the gates came and
+swallowed many of them, so **the gates are where most of them are**: 31 of the hundred come out of gates. The villages
+that walked to the city hid theirs before they left, and their people in Carillon remember where: those five are
+quests. The rest are in the Deep, in dreams, in the Veil, in the Above, with the Court's Sovereigns, or are made for
+you. The six still ringing are Carillon's four and the two holdfasts', rung by people to this day.
+
+What goes: the random sleeping places across the land (`BellSites`' 640-block cells: 13 land bells, the 5 villages'
+and the Veil's 5) and each home's own buried Wren Bell. A bell is never just out there in a field. Part 4.8 has where
+every one of the hundred comes from.
 
 Why a tower: bells have always hung high so they carry. A small bell can hang on a frame by the fire, but everything
 after the first three has to hang high: **8 blocks or more above your fire**, and a Great Bell 12 or more. That's the
@@ -119,8 +132,8 @@ is, out there."
   my fire at home. I've carried it eleven years and never once rung it. Put the coal down wherever you want to live,
   and hang the bell beside it. A fire keeps you warm. A bell keeps the ground shut. That's all a home is, out there."
   She presses both into your hand. A player who already has a fire (her short scene) gets the bell with her last lines.
-- One line after it, so the hum means something before you ever hear it: "And if you're out there and you hear a low
-  note that seems to come up out of the ground, that's a bell, asleep. Walk toward it till it's loud. You'll find it."
+- One line after it, so a bell in a gate means something before you ever hear one: "The gates took a lot of them. If
+  you're ever in one and you hear a bell, low, like it's under something, find it and bring it out."
 - The Book's Remembered lead (§43.15) becomes: "Ilse gave you her bell. Hang it by your own fire and it'll ring there."
 - Setting the coal down: "[A fire and a bell make a home. Hang Ilse's bell by your fire on a Bell Frame: planks and
   logs.]" The frame's recipe unlocks when you first hold any bell.
@@ -154,8 +167,8 @@ is, out there."
 - Sneak-use a hung bell to take it down (only whoever hung it, or the home's owner). Breaking it drops it. Its hole
   comes back in the song until it hangs again.
 - **When a bell becomes yours** nothing plays at your feet. A carried bell is in your hands or set down where it was
-  won; a standing bell rings where it stands. The card says where it is: "Bell #58 · The Crypt Bell. It's yours. Take it
-  home and hang it." The Book shows three states: asleep (a lead), yours (to hang), in your song.
+  won; one of the six still rung by people rings where it hangs. The card says where it is: "Bell #58 · The Crypt Bell. It's yours. Take it
+  home and hang it." The Book shows three states: a lead, yours (to hang), in your song.
 
 ### 4.4 The tower you build: hang them high
 - **Bell Beam** (three logs and two iron nuggets): four hooks, any bell but a Great Bell. Its bells ring in your song
@@ -180,15 +193,15 @@ is, out there."
   are silence, never a knock: the knock leaves the song for good. How it's played grows with your bells (4.10): one
   bell tolls, a few ring rounds, ten or more ring the tune. Nothing at all rings until a bell hangs: the bare fire never
   sings again.
-- **Standing bells answer.** At its step, each standing bell in your song rings where it stands (swinging, if anyone is
-  near it), and at home you hear it from where it is: within 256 blocks from its real place, further off from its
+- **The far six answer.** Each of the six still rung by people (Carillon's four, the holdfasts' two) that's in your
+  song takes its turn from where it hangs, and at home you hear it from where it is: within 256 blocks from its real place, further off from its
   bearing, fainter the further it is. At the same moment a thin pulse of light leaves the top of your tower toward it.
-  So your song tells you, by ear and by eye, where your bells are.
+  So your song tells you, by ear and by eye, where they are.
 - The beasts take it as now, by how many bells are in your song (hung here and answering): under 20 they bolt for their
   nooks, 20 to 49 hunker, 50 to 79 listen, 80 to 99 gather at the frame, 100 sing. Wild beasts within 48 of your tower
   run from a song with gaps (unchanged).
-- Voices, the beasts, the peals, the Hundred Peal and the Book count **your song**: bells hung here plus standing bells
-  that anyone living here has rung.
+- Voices, the beasts, the peals, the Hundred Peal and the Book count **your song**: bells hung here plus those of the
+  far six that anyone living here has heard rung.
 
 ### 4.6 The Lampwing's old bell (the Nook Bell, #12)
 - When the first fire's Lampwing comes, it comes out of a tree where it's been sleeping in an old bell: green with age,
@@ -198,61 +211,82 @@ is, out there."
   "[The Lampwing's left its old bell in the tree. It's yours.]" You take it down and hang it.
 - This is the moment Euan noticed, made into a thing you can see: your first kin brought a bell with it.
 
-### 4.7 Sleeping bells: wake them, and they answer
-- Unchanged: Heard and Seen, crossing bearings, keepers, digging, the toll, the Fault mend, the land turning back, the
-  clapper that comes loose, the Chimewrens hearing it, quiet ground round it.
-- Changed: the hum (4.10), the strike (4.10), and the card: "[You woke it. It'll answer your bells from here every dawn
-  and dusk, and the ground round it stays shut.]" Nothing rings at your feet. Everyone within 48 who doesn't hold it
-  gets it in their song, as now, and anyone can come later and strike it.
-- **The Wren Bell teaches the hum.** It's each home's own, buried 90 to 160 out. The moment you hang your first bell,
-  the Wren answers it: one muffled note from where it lies, carried 320 blocks so it's clear at home, and a thin thread
-  of grey light rises from the spot for ten seconds, tall enough to see over the trees. "[Something answered your bell,
-  from over there. It sounded like a bell, asleep in the ground. Go and find it.]" The Book gets a lead with that
-  bearing, and the Bells tab's next line points at it. On the way its hum gets louder and comes more often the closer
-  you get (4.10), and at 24 the ground goes grey. When you wake it, it's the first to answer your song: that dusk its
-  note comes in over the hill.
+### 4.7 No bell lies in the open
+- **Retired**: the land's sleeping places (`BellSites`: one per 640-block cell past the ridge, rank by distance, the Veil's
+  on their own 960 grid) and every home's buried Wren Bell 90 to 160 out. Nothing is placed in open country for you to
+  stumble on, and nothing in the open hums. Their machinery lives on where a story puts a bell: the bell room in a gate,
+  a village's hiding place, a dream.
+- **Gates hold the swallowed bells.** It's what Ilse says happened, so it's where you look. A gate whose rank has a
+  swallowed bell you haven't found may hold one in a **bell room**: a room off the gate's main way (the gate rooms of
+  §38 and gate depth), its door shut by something you have to work out (a lever that's somewhere else in the gate, a
+  floor that has to be dug through, water to drain, or the gate's own creatures sitting round it). From the moment you
+  step into the gate you can hear it, faint, its own note muffled, from wherever it lies (4.10). Nothing outside the gate
+  says it's there: the Registry's board doesn't, the band doesn't. **Your first gate always holds one** (the Wren
+  Bell), so the first hour teaches it; after that about one gate in four of a rank with bells still to find holds one,
+  never two in a row. When you lift it, it rings once in your hands and the card says where it hung before: "Bell #17 ·
+  The Wren Bell. It hung over the green at Wrenford until the gate took it. It's yours now. Take it home and hang it."
+- **The villages hid theirs, and their people remember.** Five villages (Fenwick, the Mill, the Shepherds, the Hill, the
+  Ford) hid their bells before they walked to the city, so the gates couldn't have them. Each is a quest that starts with
+  someone in Carillon (the rumours they already tell, §43.13), goes to a real empty village chosen for it, where a letter
+  on a table or a stone person's keepsake says exactly where ("We sank it off the end of the jetty. Mam cried."), and
+  ends at the hiding place: sunk, buried under a floor, carried up the hill, or with something sitting on it. Only there,
+  within 32 of the spot the letter names, do you hear it. Bring it home, and next time you pass the person who told you,
+  they say so in their own words ("You found Fenwick's bell? My gran was married under that."). Never a task, never a
+  reward screen.
+- **Dreams keep theirs behind a puzzle.** Each of the six dream bells sits inside its dream's own small puzzle (the
+  Lucidium designs them; a sketch each: the Falling Bell at the foot of a fall that only ends when you stop looking down;
+  the Daydream Bell somewhere else each time you look away; the Lullaby Bell in a room where you mustn't wake what's
+  asleep; the Nightmare's Bell carried by the thing that chases you; the Lucid Bell only there once you've noticed what's
+  wrong with the dream; the Dreaming Bell, the first, simply waiting, so the first one teaches). You wake holding it.
+- **The Veil's are kept by spirits.** The Spirit Bell comes from the first spirit you speak to, as now. Each of the
+  other five is held by a spirit you can only meet in spirit; its words lead to what it stayed for, and it lets the
+  bell go when that's done. It comes home a pale ghost bell that rings clear only to
+  spirits and as a soft note to everyone else.
+- **Quiet ground** (§43.15) is now round your frame, Carillon and the holdfasts; there are no woken places in the land.
 
-### 4.8 Every other source becomes a place (stage 3)
-Nothing comes from a state any more. Each carried bell is found, given or set down somewhere:
+### 4.8 Where every one of the hundred comes from (stages 4 to 6)
+Nothing comes from a state any more, and nothing lies in the open. Each bell is given, won or found somewhere with a
+story, and all but six come home:
 
-| Bells | Today | Physical form |
+| Bells (count) | Today | After |
 |---|---|---|
-| Ember 07 | rings 5 s after the coal | Ilse gives it with the coal (4.1) |
-| Nook 12 | rings when a beast lives with you | the Lampwing's old roost in the tree (4.6) |
-| Lintel 44 | rings for a Grand room | hangs over the door of the nearest empty settlement's hall; Seen when you pass within 24, and a stone person's letter can lead to it; else buried near home like the Wren |
-| Founding 46 | rings at tier II | when your Hearth grows to a Steading, its new ground turns up an old bell that hums: the older home that stood here. Dig it up |
-| Registry 03, Toll 30 | ring for your 1st and 25th gate | Bram hands them over at the Registry (you're back there for the D Proving at about 4 h); the System says he has it |
-| Provings' six (Tenor, Second, Third, Fourth, Fifth, Bourdon) | ring with the rank | at the next dawn the Great Bell is standing in your yard (JOURNEY's Tenor). It needs a Great Beam |
-| Gate worlds' sixteen | ring at the Lord | in the Lord's hoard, beside the Lord's Heart |
-| The Court's eight | ring at the Sovereign | where it set down what it carried (as the words already say) |
-| The Descent's ten | ring on reaching a stratum | set in the stratum's threshold, half grown over; you take it as you arrive |
-| Crystal 62 | rings when Deepglass is in your bag | grown into the first Deepglass you mine |
+| Ember 07 (1) | rings 5 s after the coal | Ilse gives it with the coal (4.1) |
+| Nook 12 (1) | rings when a beast lives with you | the Lampwing's old roost in a tree by your fire (4.6) |
+| Registry 03, Toll 30 (2) | ring for your 1st and 25th gate | Bram hands them over at the Registry; the System says he has it |
+| Founders' 09, Founding 46 (2) | the Foundry's first cast; tier II | the Foundry casts them, the first with its first cast, the Founding Bell when your Hearth becomes a Steading; set down by the Crucible |
+| The Provings' six Great Bells | ring with the rank | the Registry has kept them in its cellar for eleven years; its wagons bring yours to your yard by the next morning. Each needs a Great Beam |
+| Swallowed by gates (14): Wren, Barrow, Mere, Wayside (E); Cairn, Spire, Reed, Lintel (D); Thorn, Crag, Fen (C); Thaw (B); Boulder, Leviathan's (A) | sleeping places in the land; Lintel for a Grand room | in a gate's bell room, heard from inside (4.7); the first gate always holds the Wren |
+| Gate worlds' fifteen | ring at the Lord | in the Lord's hoard, beside the Lord's Heart |
+| The villages' five: Fenwick's, Mill, Shepherd's, Hill, Ford | sleeping places, rumoured in Carillon | a quest from a Carillon rumour to an empty village to the hiding place (4.7) |
+| The Descent's ten | ring on reaching a stratum | set in the stratum's threshold, half grown over, deep underground; Crystal 62 grown into the first Deepglass you mine |
+| The Foundry's six sung bells | cast | cast and set down by the Crucible, one for the home (unchanged) |
+| Dreams' six | carried out of a dream | behind each dream's puzzle (4.7) |
+| The Veil's six | Spirit given; five sleeping in the land | kept by spirits (4.7); Spirit 88 from the first spirit, as now |
 | The Above's six | ring at a spire, platform, the Halo, a storm, the pod | in the spire or the platform's ruin; aboard the Halo; the storm and the Cloudcalf's pod drop theirs to you |
-| Dreams' six | carried out of a dream | unchanged: you wake holding it |
+| The Court's eight | ring at the Sovereign | where it set down what it carried (as the words already say) |
 | Night 50, Siege 38 | ring when a raid is held | at first light, lying where the breach was |
 | Stampede 11, Flood 87, Eclipse 54 | ring when witnessed | the herd leader's bell falls in its wake; the Deep Tide leaves one at your feet; the dark sky drops one |
-| Foundry six, Founders' 09 | rung for every member | cast and set down by the Crucible, one for the home |
+| **Still rung by people (6)**: Roost, Square, Market, Harbour; Watch, Curfew | rung for you in Carillon; at a holdfast | stay where they hang and answer your song: Carillon's from the city, far off; the holdfasts' from their towers |
 | The Seed 00 | cast in the Great Belfry | unchanged |
-| Spirit 88 | given by the first spirit | a ghost bell the spirit gives you; it hangs pale, and rings clear only to spirits |
 
-The 29 **standing** bells: the land's thirteen sleeping places (Wren, Barrow, Mere, Wayside, Cairn, Spire, Reed,
-Thorn, Crag, Fen, Thaw, Boulder, Leviathan), the five homes people left (Fenwick's, Mill, Shepherd's, Hill, Ford), the
-holdfasts' two (Watch, Curfew), Carillon's four (Roost, Square, Market, Harbour) and the Veil's five (Ghost Lantern,
-Whisper, Wake, Mourner's, Veil). They're rung as today, and answer your song from where they are. Carillon's answer
-from the city, far off, at dusk.
+That's 31 through gates (the swallowed fourteen, the Lords' fifteen, Bram's two), 5 quests, 16 from the Deep and the
+Foundry, 6 dreams, 6 spirits, 6 from the Above, 8 from the Court, 5 from the land's rare big days, 6 Great Bells, 4 from
+home and people, 6 still ringing, and the Seed. The count stays a hundred: it's the number Ilse and Bram already say,
+and now each has a reason to be where it is (decision 4).
 
-A party: every member in reach gets their own carried bell, as today. A shared home hangs one of each; a second copy
-says "[Your home's song already has this bell.]" and is yours to keep.
+A party: every member in reach gets their own bell, as today. A shared home hangs one of each; a second copy says
+"[Your home's song already has this bell.]" and is yours to keep.
 
 The Great Belfry (§43.14) keeps its rules and its look. When it rises, your beasts carry your Great Bells up into it and
 the Seed is cast in its middle; the rest stay where you hung them. "Only a Great Belfry holds all hundred" becomes "Only
-a Great Belfry can lead the Hundred Peal": every bell in your song, at home and across the land, rings at once.
+a Great Belfry can lead the Hundred Peal": every bell in your song, at home and the six far off, rings at once.
 
-### 4.9 How they look and sound (stage 4, Euan judges)
+### 4.9 How they look and sound (the last stage, Euan judges)
 - A style sheet first (the art pipeline: `tools/art/specs/bells.py`, preview, studio tour). Six sizes by rank. Metals by
   family: the land's bronze gone green, the Deep's dark iron with an ember glow in the lip, the Above's pale silver, the
   dream bells' pearl, the Veil's cold glass, the Court's black and gold, the Great Bells huge, with a band of old words.
-  The frame, the beams and the hooks in the same hand. Asleep bells keep today's grey-green.
+  The frame, the beams and the hooks in the same hand. A swallowed bell in a gate is dulled by the Deep, and comes
+  clean the day it hangs.
 - Sounds (`tools/art/specs/audio_bells.py`): the hang (iron on iron, then the bell), the first ring's swell, far
   answers (the same notes, darker and further), the muffled hum (4.10). Nobody will have heard them until Euan plays.
 
@@ -262,54 +296,54 @@ The rule: **every bell sound comes from a bell you can find, from where it is, a
 - **Placed, not stereo.** Every bell sound that plays in the world is rendered mono (`Snd(..., mono=True)` in
   `audio_bells.py`, the project's own rule), so it comes from its direction, gets louder as you get near, and fades with
   distance. That includes the dream bells. Only the Book's "Play your song", which plays at you on purpose, stays as is.
-- **A sleeping bell's hum: what it sounds like.** The bell's own note, muffled, as if something brushed it under the
-  ground: a soft damped strike, then a low hum that swells and fades over about four seconds. It's the same note the bell
-  rings when it wakes, so when you strike it, the note you followed comes out clear.
-- **How often, and from where.** No clock. Within 64 blocks of the nearest sleeping bell you don't hold:
-  - one hum the moment you come within 64 (again only after you've been away five minutes);
-  - then one each time you're 12 blocks closer than at its last hum, at most every 15 s, so walking toward it, it comes
+- **Nothing hums in the open.** A bell you haven't found is heard only where a story has already brought you: inside a
+  gate that holds one, within 32 of the spot a village's letter names, and in a dream. Out in the land, nothing.
+- **What a lost bell sounds like.** Its own note, muffled, as if something brushed it through stone: a soft damped
+  strike, then a low hum that swells and fades over about four seconds. It's the note it rings when it hangs, so when you
+  lift it, the note you followed comes out clear.
+- **How often, and from where.** No clock. Inside a gate (or in a quest's last stretch):
+  - one hum as you step in (or reach the spot), so you know at once there's a bell here;
+  - then one each time you're 8 blocks closer than at its last hum, at most every 10 s, so walking toward it, it comes
     louder and more often, like hot and cold;
-  - standing still or walking away, one every 90 s, so it doesn't vanish while you look round;
-  - only the nearest sleeping bell hums for you at a time; none inside your own Hearth; none once it's yours or awake.
-- **Learning what a hum means, with nobody explaining.** Ilse says it once (4.1); the Wren answers your first bell and
-  you walk to it with the hum growing (4.7); at 24 the place looks asleep and the line says what to do by its kind:
-  buried "[It's under your feet. Dig down and strike it.]", sunk "[It's under the water here. Dive for it.]", high
-  "[It's up there somewhere. Climb.]", kept "[Something's keeping it. You'll have to deal with that first.]". If a hum
-  ever reaches you before the Wren has answered (you went exploring first), the first one says it outright: "[That low
-  note is a bell, asleep somewhere near. Walk toward it till it's loud.]" After that each new bell's Heard line is
-  plain: "[A bell, asleep, somewhere to the north-east. Walk toward the sound.]"
-- **Waking one: a moment you know you caused.** You strike it. The muffled note you followed rings out clear at the same
-  pitch, and a beat later the great toll rolls out (today's). The grey lifts off the ground in a ring that sweeps out
-  from the bell over five seconds, and birds go up. If your home is within 256, your own hung bells answer once each,
-  faint, from home's direction: they heard it. Then the card, once, plain: "Bell #17 · The Wren Bell. You woke it. It'll
-  answer your bells from here every dawn and dusk, and the ground round it stays shut. 3 of 100." Nothing at your feet.
-  Lifting a carried bell from where it lay rings it once in your hands, its own note, small.
+  - standing still or walking away, one every 45 s, so it doesn't vanish while you fight;
+  - none once it's yours.
+- **Learning what a hum means, with nobody explaining.** Ilse says it once (4.1). In your first gate you hear it as you
+  step in, and the first time ever: "[That low note is a bell. The gate swallowed it, and it's in here somewhere. Follow
+  the sound.]" Bram's handbell answers you there (4.11). At its room the line says what stands between you and it, by
+  kind: "[It's under the floor. Dig.]", "[It's behind that door. Something in here opens it.]", "[It's under the water.
+  Drain it or dive.]", "[Something's sitting on it. You'll have to deal with that first.]". After the first, each gate
+  that holds one says only: "[There's a bell in this gate.]"
+- **Lifting one: a moment you know you caused.** You take it from where it lies. The muffled note you followed rings
+  out clear at the same pitch, in your hands; the room's dust lifts off it; the gate goes quiet for a breath, as if it
+  noticed. If your home is within 256 (a quest bell), your own hung bells answer once each, faint, from home's
+  direction. Then the card, once, plain: "Bell #17 · The Wren Bell. It hung over the green at Wrenford until the gate
+  took it. It's yours now. Take it home and hang it. 3 of 100." Nothing at your feet.
 - **The home song with few bells, growing to a hundred.** Silence, never knocks. By how many bells are in your song:
   - **One**: it tolls three times, slowly, three seconds apart, each stroke left to ring out: a village's one bell
     calling people home. About 9 s.
   - **Two to nine**: rounds, the way bell-ringers ring them: each bell once, highest to lowest, three times over, about
-    0.6 s apart, then the deepest once more, alone. 6 to 20 s. Standing bells take their turn from where they stand.
+    0.6 s apart, then the deepest once more, alone. 6 to 20 s.
   - **Ten or more**: the tune. The song's hundred-step tune plays with the notes you have; missing notes are rests, and
     a run of rests shortens to one beat so the tune never stalls. It's sparse at ten, you can hum it by sixty, and at a
     hundred the whole thing plays. It ends with all your hung bells struck together once. 10 to 25 s.
-  - Anyone within 256 hears it from your tower, quieter with distance; inside your Hearth it's full.
+  - The six still-ringing bells take their turn from where they hang, far off, with a pulse of light from your tower
+    toward them. Anyone within 256 hears your song from your tower, quieter with distance; inside your Hearth it's full.
 - **Knowing what just happened when it rings.** Every bell sound has something to see: a hung bell swings as it rings,
-  a standing bell's answer comes with a pulse of light from your tower toward it, a sleeping bell's answer with its grey
-  thread of light. The first of each, once ever, gets one plain line: the first song ("[Your bells, ringing for dusk.
-  They ring at dawn and dusk, and every bell you hang joins in.]"), the first standing bell to answer ("[Hear that? The
-  Wren Bell, answering your bells from where you woke it.]"). Subtitles say what each is: "Your bells ring for dusk",
-  "A sleeping bell hums", "A bell answers your song", "A bell wakes", "A bell is hung", "Your handbell rings". The
-  Bells tab keeps "Last song: dusk, 3 bells" and the next one.
+  a far bell's answer comes with a pulse of light toward it, a lost bell in a gate answers your handbell with a thread of
+  grey light through the walls. The first of each, once ever, gets one plain line: the first song ("[Your bells,
+  ringing for dusk. They ring at dawn and dusk, and every bell you hang joins in.]"), the first far answer ("[Hear that?
+  Carillon's Roost bell, answering yours from the city.]"). Subtitles say what each is: "Your bells ring for dusk",
+  "A lost bell hums", "A bell answers your song", "A bell is hung", "Your handbell rings". The Bells tab keeps "Last
+  song: dusk, 3 bells" and the next one.
 
-### 4.11 The handbell: ask the sleeping bells to answer
-- **What it is, said when you get it**: you find it at the Wren Bell when you wake it, lying in the grass where someone
-  last rang it: "[Someone left a handbell here, the last time anyone rang this bell. Ring it anywhere out in the land and
-  any bell asleep near you will answer.]" A spare is a stick over two copper ingots. Its tooltip says the same, plus
-  "Sneak and use it to choose a peal" once you have one.
-- **Ringing it** (plain ring, 10 s apart): every sleeping bell within 160 answers in turn, nearest first, each from
-  where it lies, muffled, with its grey thread of light for six seconds, and each gives you a Heard lead with that
-  bearing. None near: "[Nothing answered. No bell sleeps within earshot of here.]" It still scares wild beasts outside
-  your Hearth and calls Chimewrens, as now.
+### 4.11 The handbell: every hunter carries one
+- **What it is, said when you get it**: Bram gives it to you at the Registry before your first gate: "Take this. Every
+  hunter carries one. If a gate's holding a bell, ring this inside and it'll answer you." A spare is a stick over two
+  copper ingots. Its tooltip says the same, plus "Sneak and use it to choose a peal" once you have one.
+- **Ringing it** (plain ring, 10 s apart): inside a gate, a bell held there answers clearly from where it lies, with a
+  thread of grey light rising through the walls and floors over it for six seconds, so you can see which way. At a
+  quest's spot, the hidden bell does the same. Nothing to answer: "[Nothing answered. There's no bell in here.]" Out in
+  the land it still scares wild beasts outside your Hearth and calls Chimewrens, as now.
 - **Peals**: unchanged, and the System says so the first time three bells of a set make one: "[You can ring a peal on
   your handbell now. Sneak and use it to choose.]"
 - Bell #03, the Registry Handbell, is shown as **the Registry Bell** so nobody mixes it up with this one. It hangs like
@@ -319,17 +353,18 @@ The rule: **every bell sound comes from a bell you can find, from where it is, a
 
 | What Euan does | Today | After |
 |---|---|---|
-| Takes Ilse's coal | the Book opens at 0 of 100 | she gives him the coal and her bell; the Book opens at 0 of 100, the bell "yours, to hang" |
+| Registers with Bram | (nothing about bells he can hold) | Bram gives him a handbell: "Every hunter carries one. If a gate's holding a bell, ring this inside and it'll answer you." |
+| Takes Ilse's coal | the Book opens at 0 of 100 | she gives him the coal and her bell, and says the gates took a lot of them; the Book opens at 0 of 100, the bell "yours, to hang" |
 | Sets the coal down | 5 s later a bell note at his feet, "It's gone home to your tower"; a handbell and a frame appear in his bag | "[A fire and a bell make a home. Hang Ilse's bell by your fire on a Bell Frame: planks and logs.]" |
 | Makes and sets the frame, hangs the bell | (the frame does nothing he can see) | an outline by the fire shows where; the bell rings once, by the fire; 1 of 100; the Signal's line |
-| A moment later | (nothing) | something answers from over the hill, muffled, with a thread of grey light: "[Something answered your bell ... Go and find it.]" |
-| Walks out toward it | a hum every 10 s inside 64 blocks, the same loudness wherever he stands | the hum comes from the bell, louder and more often as he gets closer; at 24 the ground goes grey: "[It's under your feet. Dig down and strike it.]" |
-| Strikes it | a toll, and a bell note at his feet | the note he followed rings clear, the toll rolls out, the grey sweeps away; his bells at home answer; a handbell lies in the grass: "[... Ring it anywhere out in the land and any bell asleep near you will answer.]" |
+| Walks the land | a hum every 10 s within 64 blocks of any sleeping bell, the same loudness wherever he stands | nothing hums out here; the land is quiet |
 | The first night, the Lampwing | it comes out of the trees | it comes out of an old bell hanging in a tree, glowing through it |
 | It trusts him and settles | the Nook Bell's note at his feet, from nowhere | "[The Lampwing's left its old bell in the tree. It's yours.]" He takes it down and hangs it: 2 of 100 |
-| The first dusk | 2 notes, then 98 knocks, five a second, for 20 s, from his campfire (if no frame) or the frame, equally loud wherever he walks | his bells ring rounds from the frame, swinging, about 8 s, and the Wren answers from the north-east with a pulse of light from his frame toward it; "[Your bells, ringing for dusk ...]"; the Lampwing ducks into its nook |
-| Clears his first gate | the Registry Handbell at his feet | "[Bram has the Registry's bell for you.]"; he picks it up at the D Proving: 3 hooks full |
-| The Tenor (D) | a note at his feet | it's standing in his yard at dawn. "[It needs a Great Beam, 12 or more above your fire.]" He builds his first tower, or sets a Bell Tower plan for his Thatchbacks |
+| The first dusk | 2 notes, then 98 knocks, five a second, for 20 s, from his campfire (if no frame) or the frame, equally loud wherever he walks | his two bells ring rounds from the frame, swinging, about 8 s: "[Your bells, ringing for dusk. They ring at dawn and dusk, and every bell you hang joins in.]"; the Lampwing ducks into its nook |
+| Steps into his first gate | (nothing) | a low muffled note from somewhere inside: "[That low note is a bell. The gate swallowed it, and it's in here somewhere. Follow the sound.]" It comes louder as he closes in; his handbell makes it answer with a thread of grey light through the walls |
+| Finds its room | (nothing) | "[It's behind that door. Something in here opens it.]" He finds the lever, takes the bell, and it rings clear in his hands: "The Wren Bell. It hung over the green at Wrenford until the gate took it ... 3 of 100." |
+| Back at the Registry | the Registry Handbell at his feet when the gate clears | Bram gives him the Registry Bell for his first gate, and hears about the Wren: "So that's where they went." 4 of 100: his frame's full, and the next one needs a Bell Beam |
+| The Tenor (D) | a note at his feet | the Registry's wagon leaves it in his yard by morning: "[It needs a Great Beam, 12 or more above your fire.]" He builds his first tower, or sets a Bell Tower plan for his Thatchbacks |
 
 A failure case: he loses the Nook Bell in lava. Today there's nothing to lose. After: it can't burn; if it's gone
 anyway it's by his frame at dawn. A missing case: no tree near the fire for the Lampwing's bell: it hangs on a dead post
@@ -339,17 +374,24 @@ at the trees' edge.
 
 - `bell_book` schema 4: per bell, `state` (lead, yours, in song) beside today's fields; carried bells held but not hung
   are "yours". `bells` world data schema 3: each home's hung bells by place (`BlockPos` → number, who hung it), its
-  frame, and its standing bells; `hung` becomes derived. `awaken:hung_bell` block entity schema 1.
+  frame, and the far six in its song; `hung` becomes derived. `awaken:hung_bell` block entity schema 1.
 - **Old saves** (Euan's world included): every carried bell a player holds that isn't hanging anywhere comes to them as
   an item the first time they're home, with "[Your bells are waiting by your frame to be hung.]" (into the bag, the rest
-  in a chest by the frame). Standing bells go straight into the song. A frame already set down keeps its place and
+  in a chest by the frame). The far six go straight into the song. A frame already set down keeps its place and
   takes three. A belfry or tower that grew by itself stays, and its bell spots become Bell Beams that count wherever they
   are. Nobody loses a bell, a hook or a block. Euan's world: the Ember and the Nook come to him as two bells, and since
   he already holds a frame and a handbell, the first time he's home after the update: "[You've got a Bell Frame and a
-  handbell. Set the frame by your fire and hang your bells on it. Ring the handbell out in the land and any bell asleep
-  near you will answer.]" If the Wren still sleeps, it answers his first hung bell as in 4.7.
+  handbell. Set the frame by your fire and hang your bells on it. Ring the handbell inside a gate, and if there's a bell
+  in there it'll answer you.]"
+- **Sleeping places already built in an old world** (the grey patches round a bell, Euan's included): at a player's
+  next visit the bell is gone from them and the land there looks like land again; the bell joins the gates' pool (or
+  its village's quest). A bell already woken from one stays yours and comes to you as an item to hang; its place stops
+  counting as quiet ground. Sleeping places planned but not yet built are dropped. Leads to them in the Book become "[It
+  wasn't there after all. The gates may have it.]" and close.
 - SPEC: a new §43.16 with these rules; edits to §43.6 (tier II and IV needs), §43.7 (moments, the frame, the song, the
-  tower stages), §43.14 (the Great Belfry's line), §43.15 (Ilse's coal line and the lead); LEDGER rows for the bell, the
+  tower stages, the sleeping places retired), §43.13 (the land's bells, the villages', the Veil's), §43.14 (the Great
+  Belfry's line), §43.15 (Ilse's coal line, the lead, quiet ground without woken places), §38 (a gate's bell room,
+  agreed with the gates module's owner); JOURNEY parts 1 and 4 (bells no longer asleep in the open); LEDGER rows for the bell, the
   hung bell, the frame's recipe, the Bell Beam, the Great Beam, the two plans and the roost bell, before code.
 
 ## 7. Failure register (the ones that matter)
@@ -365,45 +407,54 @@ at the trees' edge.
 | A Great Bell and no Great Beam | it waits in the yard; the line says what it needs |
 | No tree for the roost bell | a dead post at the trees' edge |
 | Lesson Lampwing never befriended | the bell is free once any beast lives with you |
-| A standing bell's place unloaded at song time | its note still plays from its bearing (the song packet carries places) |
+| A far bell's place unloaded at song time | its note still plays from its bearing (the song packet carries places) |
 | A member leaves a shared home | bells stay hung; whoever hung them can take them down |
 | Old save | part 6 |
-| Two sleeping bells in reach | only the nearest hums; the other starts once the first is yours or you're nearer to it |
-| Wren unbuildable (city, water, another home) | today it's GONE; then the next sleeping bell within 320 answers the first hang instead, and if there's none, the first line still says what a hum means when one comes |
-| Handbell rung with nothing in 160 | "[Nothing answered ...]", no lead |
-| Several players near one sleeping bell | each hears its hum on their own cadence (the packet is per player, as today) |
+| The first gate can't fit a bell room | the bell lies in the gate's last room instead, still heard from the door |
+| A gate with a bell closes or breaks before you find it | the bell goes back to the pool; a later gate of that rank holds it |
+| A party in a gate with a bell | everyone in it hears it; each who doesn't have it gets their own when one lifts it, as today |
+| All of a rank's swallowed bells found | that rank's gates hold none; nothing says so |
+| A quest's village is gone (built over, a city) | the next empty village of the same kind along the rumour's bearing is chosen instead |
+| Handbell rung with nothing to answer | "[Nothing answered. There's no bell in here.]" |
 | Song while you're in a gate or the Deep | nothing reaches you there (as today, overworld only) |
 | Restart mid-song, Peaceful, other dimensions | as today (overworld homes only) |
 
 ## 8. Tests, looks, stages
 
 - **Tests** (CI, one per mechanism): `bells_nothing_from_nowhere` (no bell sound at a player when a bell becomes theirs;
-  the bare fire never sings; a carried bell is an item, a standing one stays), `bells_hang_rules` (three on the frame,
+  the bare fire never sings; a carried bell is an item, a still-ringing one stays), `bells_none_in_the_open` (no sleeping
+  place is planned or built in the land; an old world's built ones are cleared on the next visit), `bells_gate_holds`
+  (the first gate holds the Wren in a reachable room; a later gate of a rank with bells to find holds one at the set
+  odds; the hum plays only inside), `bells_village_quest` (the rumour, the letter, the hum within 32 of the spot, the
+  bell), `bells_hang_rules` (three on the frame,
   not a Great Bell; a beam 8 up takes four, 7 up refuses; a Great Beam 12 up; taking down brings the hole back),
-  `bells_song_from_bells` (each hung bell's place and each standing bell's place in the song; voices count the song),
-  `bells_roost_bell`, `bells_old_save`, `bells_catalog_ring` extended (each of the hundred yields an item, a placed bell
-  or a woken place), `journey_ledger` (every new item and block has a way in). For the sounds: `bells_sounds_placed`
+  `bells_song_from_bells` (each hung bell's place and each far bell's place in the song; voices count the song),
+  `bells_roost_bell`, `bells_old_save`, `bells_catalog_ring` extended (each of the hundred yields an item or is one of
+  the six still ringing), `journey_ledger` (every new item and block has a way in). For the sounds: `bells_sounds_placed`
   (every bell sound played in the world is mono, read from the files as `AudioLayerTests` already does),
-  `bells_hum_cadence` (standing still within 64: one hum, then none for 90 s; 12 closer: the next after 15 s; none
-  inside your Hearth; none for a bell you hold; only the nearest hums), `bells_song_arrangement` (1 bell: three
+  `bells_hum_cadence` (in a gate with a bell: one hum on entry, then none for 45 s standing still; 8 closer: the next
+  after 10 s; none for a bell you hold; none in the open land), `bells_song_arrangement` (1 bell: three
   strokes; 4: three rounds; 30: the tune with rests shortened; never `bells.gap`; never over 25 s),
-  `bells_handbell_answers` (sleeping bells within 160 answer nearest first and each gives a Heard lead).
+  `bells_handbell_answers` (a gate's bell answers with its thread; "nothing answered" in an empty gate).
 - **One look tour per stage** on CI (`tools/autopilot/bells-home-<n>.txt`): the frame with Ilse's bell at dusk, the
-  roost bell in a tree at night with the Lampwing, a hand-built tower's beams with empty hooks, the Tenor in the yard,
-  both Work Plans built, the pulse toward an answering bell.
+  roost bell in a tree at night with the Lampwing, a gate's bell room before and after its door opens, the grey thread
+  through a gate's walls, a hand-built tower's beams with empty hooks, the Tenor in the yard, both Work Plans built.
 
 | Stage | What | Rough size |
 |---|---|---|
-| 1 | **Sounds you can follow** (4.10, 4.11): every bell sound mono, the muffled hum and its cadence, the song with silence (toll, rounds, tune), the strike, the handbell's answers (still given with the first bell until stage 2), the plain lines and subtitles, nothing at your feet, a true card ("It'll hang by your fire once you set a Bell Frame there"), the frame and handbell explained to old saves | 2 to 3 h |
-| 2 | The bell as a thing, the frame (recipe, outline, three hooks), hanging, the first ring and the Wren's answer, the song from the bells, Ilse's bell and line, the roost bell, standing bells answer, the Bells tab's data, old saves | 3 to 4 h |
-| 3 | Bell Beam and Great Beam, the 8 and 12 rules, the Belfry and Bell Tower plans, the Hearth's bell tower folded in, tier II and IV needs, the Tenor in the yard | 2 to 3 h |
-| 4 | Every other source becomes a place (4.8), the Great Belfry's line | 3 to 4 h |
-| 5 | Looks and sounds: style sheet, bells by rank and metal, the frame and beams, the pulse and the grey thread, the new sounds | 2 to 3 h, then Euan's eye |
+| 1 | **Quiet land and sounds you can follow** (4.7's retirement, 4.10, 4.11): no sleeping place planned or built in the land and old ones cleared (the ding-ding stops), every bell sound mono, the song with silence (toll, rounds, tune), nothing at your feet, a true card ("It'll hang by your fire once you set a Bell Frame there"), plain lines and subtitles, the frame and handbell explained to old saves | 2 to 3 h |
+| 2 | The bell as a thing, the frame (recipe, outline, three hooks), hanging and the first ring, the song from the bells, Ilse's bell and lines, the roost bell, the still-ringing six answer, the Bells tab's data, old saves | 3 to 4 h |
+| 3 | Bell Beam and Great Beam, the 8 and 12 rules, the Belfry and Bell Tower plans, the Hearth's bell tower folded in, tier II and IV needs, the Tenor by wagon | 2 to 3 h |
+| 4 | **Bells in gates**: the bell room (with the gates module), the first gate's Wren, the swallowed fourteen's odds, the hum and the handbell inside, Bram's handbell and lines, the Lords' hoards | 4 to 5 h |
+| 5 | **Quests and puzzles**: the five villages' quests (rumour, letter, hiding place, the person's reaction), the six dream puzzles (with the Lucidium), the Veil's five spirits, and every other source as a place (4.8) | 5 to 7 h |
+| 6 | Looks and sounds: style sheet, bells by rank and metal, the frame and beams, the bell room, the pulse and the grey thread, the new sounds | 2 to 3 h, then Euan's eye |
 
 Each stage merges on green CI and a reviewed tour. A stage can stop without breaking the last: stage 1 changes only how
-bells sound and what the lines say, on today's systems, so it can go to Euan's play copy on its own the same day;
-stage 2 works with today's self-building belfry still in place; stage 4's sources fall back to today's rings until each
-is moved. Stage 1's sounds are checked by spectrogram and level only; nobody hears them before Euan.
+bells sound, what the lines say and that nothing new is placed in the land, so it can go to Euan's play copy on its own
+the same day; until stage 4 lands, each of the swallowed fourteen is yours when you clear a gate of its rank (a
+stand-in, with no sound at your feet), and the villages' five wait for stage 5 (their rumours pause); stage 2 works
+with today's self-building belfry still in place. Stage 1's sounds are checked by spectrogram
+and level only; nobody hears them before Euan.
 
 What could change the size: drawing 70 bells' block entities at once at a Great Belfry (if it costs, bells far from
 the camera bake to a still model); the 26.3 item model chosen by a data component (to verify in `.ref`); the Work Plan
@@ -416,44 +467,51 @@ Bells will register their lines through `core.api.Shown` and goals through `Dest
 - **Tasks**: "Hang Ilse's bell by your fire" (with "a Bell Frame: planks and logs"); "A bell to hang: the Nook Bell"
   (grouped as "3 bells to hang" past one; Track points at your frame when you're away); "Your frame's full: hang the
   next bell on a Bell Beam, 8 or more above your fire"; "The Tenor is in your yard: it needs a Great Beam, 12 or more
-  above your fire"; "The Lampwing's old bell is in the tree"; bell leads as today. Goals `bell/frame`, `bell/hang/<n>`,
-  `bell/beam`, `bell/great_beam`, `bell/roost`.
-- **Hearth page**, a "Your bells" part, from a new `BellHooks.home(player)`: bells in your song (hung here and answering)
+  above your fire"; "The Lampwing's old bell is in the tree"; "There's a bell in this gate" (while you're in one that
+  holds one); a village quest's step ("Someone in Carillon remembers Fenwick's bell, by the lake to the west", then the
+  letter's words); bell leads as today. Goals `bell/frame`, `bell/hang/<n>`, `bell/beam`, `bell/great_beam`,
+  `bell/roost`, `bell/gate`, `bell/quest/<id>`.
+- **Hearth page**, a "Your bells" part, from a new `BellHooks.home(player)`: bells in your song (hung here and the far six)
   of 100, bells waiting to be hung, free hooks, the next song, how your beasts take it now, voices on with their counts,
   and the Great Belfry pin (today's). Tier II and IV's need lines come from `TierRules` as now.
-- **Journal**: Ilse's bell, the Lampwing's bell, each bell woken (where), the first bell that answers at dusk; once each.
+- **Journal**: Ilse's bell, the Lampwing's bell, the first bell found in a gate, each bell and where it came from, each
+  village's bell brought home and what its person said, the first far bell that answers at dusk; once each.
 - **The top-right card**: Track to your frame for a bell waiting to be hung; leads as today.
 - **The Tasks page's Bells tab** (theirs to lay out), from one call, `BellHooks.tab(player)`, top to bottom:
   1. **Next**: the one most useful thing now, in this order: "Make a Bell Frame (planks and logs) and set it by your
      fire. Then hang Ilse's bell on it."; "Hang the Nook Bell: use it on your frame."; "Your frame's full. Build a Bell
      Beam (three logs, two iron nuggets) 8 or more above your fire."; "The Tenor is in your yard. It needs a Great Beam,
-     12 or more above your fire."; "Something answered your bell from the north-east, about 120 blocks out. Follow the
-     sound."; else "Ring your handbell out in the land. Any bell asleep near you will answer." Each with Track.
-  2. **Your song**: "3 of 100". The bells hung at home, by hook (frame 2 of 3, beams), and the standing bells that
-     answer, each with its direction. "Next: dusk, in about 4 minutes. Last: dawn, 3 bells." The Book's "Play your song".
+     12 or more above your fire."; in a gate that holds one, "There's a bell in this gate. Follow the sound, or ring
+     your handbell."; a village quest's next step ("Fenwick's bell: they sank it off the end of the jetty."); else the
+     nearest lead. Never "go and look for bells" with nothing behind it. Each with Track.
+  2. **Your song**: "3 of 100". The bells hung at home, by hook (frame 2 of 3, beams), and the far six that answer once
+     you've heard them, each with its direction. "Next: dusk, in about 4 minutes. Last: dawn, 3 bells." The Book's "Play your song".
   3. **To hang**: bells in your bag or yard, each with where it can go (frame, Bell Beam, Great Beam).
-  4. **Leads**: nearest first; "a bell" until you know its name; how you know (heard, seen, answered your handbell,
-     told); direction and rough distance; Track.
+  4. **Leads**: a village's quest by its step, a dream or spirit's words, a holdfast heard far off; "a bell" until you
+     know its name; how you know; direction and rough distance where there is one; Track.
   5. **Your handbell**: what it does, in one line, and the peals you can ring now.
   No timers, nothing daily; every line goes the moment it's done.
 
 ## 10. Decisions for Euan
 
-1. Ilse gives you her bell with the coal (one line of her scene changes). **Recommend yes.**
-2. The Nook Bell is the Lampwing's old roost in a tree by your fire. **Recommend yes.**
-3. Two kinds: standing bells stay and answer your song; the rest come home in your hands. The other choice is that
-   every bell comes home (one rule, but a woken great bell leaves the land it just woke, and two players can't both
-   have it). **Recommend two kinds.**
-4. Bells hang high (8 above your fire, Great Bells 12) on beams you place in a tower you build, or your Thatchbacks
+1. Ilse gives you her bell with the coal, and one line says the gates took a lot of them (two lines of her scene
+   change). **Recommend yes.**
+2. The Nook Bell is the Lampwing's old roost in a tree by your fire: it comes with the story of your first beast, not
+   lying in the open. **Recommend yes.**
+3. No bell lies in the open: the land's random sleeping places and each home's Wren go. Every bell is given, won or
+   found somewhere a story puts it, and all but the six people still ring (Carillon's four, the holdfasts' two) come
+   home to hang. **Recommend yes.**
+4. Where they come from (4.8): 31 through gates (the swallowed fourteen in bell rooms, your first gate always holding
+   the Wren; the Lords' fifteen; Bram's two), the villages' five as quests from Carillon, the dreams' six behind
+   puzzles, the Veil's six from spirits, the Deep's sixteen, the Above's six, the Court's eight, the Great Bells by the
+   Registry's wagon. The count stays a hundred, because that's the number Ilse and Bram already say. If you'd rather
+   have fewer, say how many and I'll cut from the gates' fourteen first. **Recommend this list, and a hundred.**
+5. Bells hang high (8 above your fire, Great Bells 12) on beams you place in a tower you build, or your Thatchbacks
    build a standard one; the self-building belfry and tower at 20 and 50 go. **Recommend yes.**
-5. The re-sourced bells in 4.8 (Lintel to an empty settlement's hall door, Founding from your home's new ground, the
-   Registry's two from Bram, the Great Bells in your yard, Spirit as a ghost bell). **Recommend yes.**
-6. The handbell is found at the Wren Bell when you wake it (a spare is a stick over two copper ingots), instead of
-   appearing with the first bell, and ringing it makes sleeping bells within 160 answer. **Recommend yes.**
-7. Sounds first: stage 1 (every bell sound placed, the hum on approach instead of a clock, the song with silence
-   instead of knocks, plain lines) goes on its own, straight to your play copy, ahead of the rest. It replaces the small
-   same-day fix offered before. **Recommend yes.**
+6. Bram gives every hunter a handbell before the first gate; inside a gate it makes a held bell answer with a thread of
+   light through the walls (a spare is a stick over two copper ingots). **Recommend yes.**
+7. First, on its own, straight to your play copy: stage 1 stops anything being placed in the open land (the ding-ding
+   ends), makes every bell sound placed, plays the song with silence instead of knocks, and says things plainly.
+   **Recommend yes.**
 8. The home song grows with your bells: one bell tolls, two to nine ring rounds, ten or more ring the tune, and missing
    bells are silence. **Recommend yes.**
-9. The Wren Bell answers the first bell you hang, and Ilse says one line about the hum, so you learn to follow a hum
-   without anyone telling you. **Recommend yes.**
