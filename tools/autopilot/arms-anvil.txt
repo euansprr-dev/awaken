@@ -1,0 +1,88 @@
+# The War Anvil (SPEC §46, stage 1). A smithy at y 200 (the War Anvil, the Hearth's Forge beside it, lanterns), D-rank,
+# creative (no materials), the song played on the beat by autoplay. The room; the anvil's list; the Beastbound
+# Longsword: the blade in the fire, the gold, the count-in on the anvil, the first strike, the strikes, the flip, the
+# last strikes, the carry to the trough, the quench, the hilt's taps, the card, the draw from the stone and after.
+# ci knobs: LENS=cinematic
+world waranvil creative 4343
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+cmd awaken admin rankup
+# the smithy's chunks first: a busy runner's server can fall seconds behind the script (fills there fail unloaded)
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+# the smithy: a deepslate floor, timber walls and roof, three lanterns; open to the north
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd fill -6 201 9 6 205 9 minecraft:spruce_planks
+cmd fill -6 201 -3 -6 205 9 minecraft:spruce_planks
+cmd fill 6 201 -3 6 205 9 minecraft:spruce_planks
+cmd fill -6 206 -3 6 206 9 minecraft:dark_oak_planks
+cmd setblock -3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 0 205 2 minecraft:lantern[hanging=true]
+# the anvil faces the open side (the smith stands north of it); the Forge to its west, its mouth turned east to the smith
+cmd setblock 0 201 4 awaken:war_anvil[facing=north]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+cmd setblock 2 201 6 minecraft:crafting_table
+wait 20
+cmd awaken arms anvil autoplay true
+hud off
+camera first
+# a wide look at the room first, then where the smith stands
+cmd tp @s 0.5 201 0.0 10 18
+wait 20
+shot anvil_room
+cmd tp @s 0.5 201 3.25 0 35
+wait 20
+shot anvil_stand
+use
+wait 30
+shot anvil_list
+screen close
+wait 6
+cmd awaken arms anvil forge
+wait 30
+shotnow anvil_heat
+wait 42
+shotnow anvil_heat_gold
+wait 40
+shotnow anvil_countin
+wait 34
+shotnow anvil_strike_first
+wait 36
+shotnow anvil_strikes
+wait 28
+shotnow anvil_flip
+wait 40
+shotnow anvil_strikes_late
+wait 40
+shotnow anvil_carry
+wait 30
+shotnow anvil_quench
+wait 34
+shotnow anvil_hilt
+wait 22
+shotnow anvil_hilt_taps
+wait 30
+shotnow anvil_card
+wait 30
+shotnow anvil_draw
+wait 40
+shot anvil_drawn
+screen close
+wait 20
+shot anvil_after
+quit
