@@ -54,14 +54,19 @@ final class MobsTests {
                     && MobLoot.rankFor(200) == dev.awaken.progression.Rank.SOVEREIGN, "rank for content level");
             h.assertTrue(MobLoot.count(0.4F, 0.04F, 64, 57, 0.99F) == 3 && MobLoot.count(6F, 0.4F, 64, 0, 0F) == 6, "level-scaled count");
             ServerLevel level = h.getLevel();
-            // Our permanent scaling must match the core fallback (MobHooks.scale) number for number.
+            // Our permanent scaling must match the core fallback (MobHooks.scale) number for number, health times decision
+            // 14's bump (SPEC §46.5: a B Lord x1.12; a B creature x1.0).
             for (MobRole.Role role : List.of(MobRole.Role.NORMAL, MobRole.Role.ELITE, MobRole.Role.WARDEN, MobRole.Role.BOSS)) {
                 Zombie a = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.MOB_SUMMONED);
                 Zombie b = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.MOB_SUMMONED);
                 MobRole mr = new MobRole(role, 57, "", Optional.empty(), "");
                 MobHooks.scale(a, 57, mr);
                 MobScaling.apply(b, 57, mr, Tier.NORMAL);
-                h.assertTrue(Math.abs(a.getMaxHealth() - b.getMaxHealth()) < 1e-3, role + " health " + a.getMaxHealth() + " vs " + b.getMaxHealth());
+                double bump = MobScaling.forgedBump(57, role);
+                double cap = ((net.minecraft.world.entity.ai.attributes.RangedAttribute) Attributes.MAX_HEALTH.value()).getMaxValue();
+                double want = Math.min(a.getAttribute(Attributes.MAX_HEALTH).getBaseValue() * MobScaling.totalHealth(57, role, Tier.NORMAL), cap);
+                h.assertTrue(Math.abs(Math.min(a.getMaxHealth() * bump, cap) - b.getMaxHealth()) < 1e-2 && Math.abs(want - b.getMaxHealth()) < 1e-2,
+                        role + " health " + a.getMaxHealth() + " x" + bump + " vs " + b.getMaxHealth());
                 h.assertTrue(Math.abs(a.getAttributeValue(Attributes.ATTACK_DAMAGE) - b.getAttributeValue(Attributes.ATTACK_DAMAGE)) < 1e-3, role + " damage");
                 h.assertTrue(Math.abs(a.getAttributeValue(Attributes.ARMOR) - b.getAttributeValue(Attributes.ARMOR)) < 1e-3, role + " armour");
                 a.discard();

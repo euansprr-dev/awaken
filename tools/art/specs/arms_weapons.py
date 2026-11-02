@@ -58,31 +58,33 @@ SCALE = 1.0             # design units to item units: a texel is an item unit (1
 # is always the tier's Hunter blade (X) with its core (C) and bind (B); each style its own shape, so no two share one.
 STYLES = {
     "longsword": ("Longsword", 0.0, -2.4, "swords", ["C", "X", "B"]),
-    "axe": ("Axe", 1.5, -3.0, "axes", ["XC", " B"]),
-    "maul": ("Maul", 3.0, -3.3, "enchantable/mace", ["CXC", " B "]),
-    "spear": ("Spear", 0.5, -2.9, "spears", ["  X", " C ", "B  "]),
-    "greatblade": ("Greatblade", 2.0, -3.0, "swords", ["XX", "CB"]),
+    "axe": ("Axe", 2.5, -3.0, "axes", ["XC", " B"]),
+    "maul": ("Maul", 4.0, -3.3, "enchantable/mace", ["CXC", " B "]),
+    "spear": ("Spear", 1.5, -2.9, "spears", ["  X", " C ", "B  "]),
+    "greatblade": ("Greatblade", 3.0, -3.0, "swords", ["XX", "CB"]),
     "rapier": ("Rapier", 0.0, -2.2, "swords", ["X", "B", "C"]),
     "daggers": ("Daggers", -1.5, -1.8, "swords", ["XB", "C "]),
     "katana": ("Katana", 1.0, -2.5, "swords", ["X  ", " B ", "  C"]),
     "twinblades": ("Twinblades", 0.5, -2.0, "swords", ["XCX", " B "]),
-    "glaive": ("Glaive", 1.0, -2.9, "swords", [" X", " C", "B "]),
-    "scythe": ("Scythe", 1.5, -3.0, "swords", ["XX", " C", " B"]),
+    "glaive": ("Glaive", 2.0, -2.9, "swords", [" X", " C", "B "]),
+    "scythe": ("Scythe", 2.5, -3.0, "swords", ["XX", " C", " B"]),
     "gauntlets": ("Gauntlets", -0.5, -1.6, "swords", ["BXB", " C "]),
-    "chainblade": ("Chainblade", 0.0, -2.7, "swords", ["XB", " B", " C"]),
+    "chainblade": ("Chainblade", 1.0, -2.7, "swords", ["XB", " B", " C"]),
     "shieldblade": ("Shieldblade", 0.5, -2.6, "swords", ["C C", "CXC", " B "]),
-    "warstaff": ("Warstaff", 0.0, -2.8, "swords", ["  C", " B ", "X  "]),
+    "warstaff": ("Warstaff", 1.0, -2.8, "swords", ["  C", " B ", "X  "]),
     "precursor": ("Precursor Arm", 1.0, -2.5, "swords", ["CX", "XB"]),
 }
 # The Hunter tiers: (tier, set, name, the Longsword's damage over the player's 1, uses, vanilla rarity, enchantability,
-# repair tag); every style of a tier keeps its uses, rarity, enchantability and repair
+# repair tag); every style of a tier keeps its uses, rarity, enchantability and repair. Decision 14 (SPEC §46.5): every
+# forged weapon a point over vanilla's same metal, the eight slower or longer styles two (their offsets above carry the
+# second), C and B outlasting diamond and netherite.
 TIERS = [
-    ("E", "wildhide", "Wildhide", 4.5, 220, "COMMON", 15, "hunter_core_e"),
-    ("D", "beastbound", "Beastbound", 5.5, 500, "UNCOMMON", 12, "hunter_bind_d"),
-    ("C", "gatewrought", "Gatewrought", 6.5, 1400, "RARE", 12, "hunter_bind_c"),
-    ("B", "veilwoven", "Veilwoven", 7.5, 1900, "EPIC", 15, "hunter_bind_b"),
-    ("A", "lordscale", "Lordscale", 8.5, 2300, "EPIC", 15, "hunter_bind_a"),
-    ("S", "sovereign", "Sovereign", 9.5, 2800, "EPIC", 18, "hunter_bind_s"),
+    ("E", "wildhide", "Wildhide", 5.5, 220, "COMMON", 15, "hunter_core_e"),
+    ("D", "beastbound", "Beastbound", 6.5, 500, "UNCOMMON", 12, "hunter_bind_d"),
+    ("C", "gatewrought", "Gatewrought", 7.5, 1700, "RARE", 12, "hunter_bind_c"),
+    ("B", "veilwoven", "Veilwoven", 8.5, 2200, "EPIC", 15, "hunter_bind_b"),
+    ("A", "lordscale", "Lordscale", 9.5, 2300, "EPIC", 15, "hunter_bind_a"),
+    ("S", "sovereign", "Sovereign", 10.5, 2800, "EPIC", 18, "hunter_bind_s"),
 ]
 # One row per weapon: (id, name, tier, damage, uses, rarity, enchantability, repair, style, speed); the Longswords first
 CATALOG = [(f"{sid}_{style}", f"{sname} {STYLES[style][0]}", tier, dmg + STYLES[style][1], dur, rarity, ench, repair, style,

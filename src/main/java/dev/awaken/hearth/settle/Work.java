@@ -134,7 +134,7 @@ public final class Work {
         int bestScore = Integer.MIN_VALUE;
         for (RecipeHolder<CraftingRecipe> r : sp.level().getServer().getRecipeManager().recipeMap().byType(RecipeType.CRAFTING)) {
             ItemStack out = result(r.value());
-            if (out.isEmpty() || !Upgrades.isTemperable(out) || blueprint(r.value())) continue;
+            if (out.isEmpty() || !Upgrades.isGear(out) || blueprint(r.value())) continue;
             if (!have.canCraft(r.value(), null)) continue;
             int score = (BuiltInRegistries.ITEM.getKey(out.getItem()).getNamespace().equals(Awaken.MODID) ? 1000 : 0)
                     + r.value().placementInfo().ingredients().size() * 10 + out.getRarity().ordinal();
@@ -381,6 +381,15 @@ public final class Work {
     }
 
     /** What the settlers kept to hand over that's this player's (or anyone's), into their pack. */
+    /** Whether anything Oren has waiting for this player is forged gear, which he tempers once as he hands it over. */
+    static boolean orenTempers(ServerPlayer sp, HearthRecord h) {
+        for (Folk.Stack s : h.folk.stash) {
+            if (!s.from().equals("oren") && !s.from().equals("oren:" + sp.getUUID())) continue;
+            if (Upgrades.isTemperable(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse(s.item()))))) return true;
+        }
+        return false;
+    }
+
     static int handOver(ServerPlayer sp, HearthRecord h, String from) {
         int n = 0;
         for (Folk.Stack s : List.copyOf(h.folk.stash)) {
@@ -390,7 +399,7 @@ public final class Work {
             h.folk.stash.remove(s);
             if (item == Items.AIR) continue;
             ItemStack st = new ItemStack(item, s.count());
-            if (from.equals("oren")) Upgrades.applyTemper(st, 1);
+            if (from.equals("oren") && Upgrades.isTemperable(st)) Upgrades.applyTemper(st, 1); // crafted gear stays as it is
             if (from.equals("ilse")) st.set(HearthContent.HOME_COOKED.get(), true);
             if (!sp.getInventory().add(st)) sp.drop(st, false, net.minecraft.util.Prediction.SERVER_ONLY);
             n += s.count();

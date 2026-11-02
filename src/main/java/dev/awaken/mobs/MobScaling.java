@@ -5,6 +5,7 @@ import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.MobHooks;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.mobs.def.Tier;
+import dev.awaken.progression.Rank;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
@@ -63,7 +64,29 @@ public final class MobScaling {
     /** Final max-health multiplier (over base) for a mob of this tier at level lv in this role. */
     public static double totalHealth(int lv, MobRole.Role role, Tier tier) {
         double extra = role == MobRole.Role.BOSS || role == MobRole.Role.BREAK ? tier.extraHealth : 1.0;
-        return healthMultiplier(lv) * roleHealth(role) * extra;
+        return healthMultiplier(lv) * roleHealth(role) * extra * forgedBump(lv, role);
+    }
+
+    /** A Lord's health by its rank (E to S), raised as much as decision 14 raised the forged weapon of that rank. */
+    static final double[] LORD_BUMP = {1.18, 1.15, 1.13, 1.12, 1.11, 1.10};
+    /** Every other creature's at E and D, where the bump took small ones from three hits to two. */
+    static final double LOW_BUMP = 1.15;
+
+    /**
+     * Decision 14 (SPEC §46.5, docs/weapon-forge/sim-2026-11-02.md): forged weapons hit a tenth or so harder, so health
+     * rises by the same and every fight stays as it was tuned. A Lord (a gate's boss, or one roaming from a broken gate)
+     * by its rank's bump; a normal creature, elite, warden or nightmare x1.15 at E and D; C and up, and everything else,
+     * as before. The rank is the one whose content a mob of this level belongs to.
+     */
+    public static double forgedBump(int lv, MobRole.Role role) {
+        int rank = 0;
+        Rank[] ranks = Rank.values();
+        for (int i = 1; i < LORD_BUMP.length; i++) if (lv >= ranks[i].levelRequired) rank = i;
+        return switch (role) {
+            case BOSS, BREAK -> LORD_BUMP[rank];
+            case NORMAL, ELITE, WARDEN, NIGHTMARE -> rank <= Rank.D.ordinal() ? LOW_BUMP : 1.0;
+            default -> 1.0;
+        };
     }
 
     public static void apply(LivingEntity e, int lv, MobRole role, Tier tier) {

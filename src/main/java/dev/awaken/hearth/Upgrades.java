@@ -276,10 +276,19 @@ public final class Upgrades {
 
     // ---- tempering --------------------------------------------------------------------------------------------------
 
+    /** What the Forge and Oren will temper: forged weapons and armour, ours only (SPEC §46.5, decision 14). */
     public static boolean isTemperable(ItemStack stack) {
+        return isGear(stack) && net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals(Awaken.MODID);
+    }
+
+    /** A weapon or armour piece of any make: vanilla's crafted gear among them, which stays as it is. */
+    public static boolean isGear(ItemStack stack) {
         if (stack.isEmpty() || stack.is(HearthContent.TROPHY_ITEM.get())) return false;
         return armourSlot(stack) != null || isWeapon(stack);
     }
+
+    /** What the Forge and Oren say of crafted gear held out to them, once, plainly. A piece tempered before keeps it. */
+    public static final String CRAFTED = "That's crafted gear. It stays as it is; Temper is for forged weapons and armour.";
 
     private static EquipmentSlot armourSlot(ItemStack stack) {
         Equippable eq = stack.get(DataComponents.EQUIPPABLE);

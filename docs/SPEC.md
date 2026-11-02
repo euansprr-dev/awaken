@@ -17391,6 +17391,16 @@ axe). Checked on 2026-11-02 against 26.3's numbers: 60 of the 192 style-tier che
   11, and the Parrier 5, from 12) and small E and D creatures to two hits. With each Lord's health x its rank's bump (E
   x1.18, D x1.15, C x1.13, B x1.12, A x1.11, S x1.10) and normal creatures at E and D x1.15, the fights are as tuned
   (Dodger 11, Parrier 12). So the numbers land with that health, which is the mobs module's.
+- **Built** (2026-11-02, the weapon-forge session): the generator's tiers run the Longsword 5.5 to 10.5 over the player's
+  1 and the eight styles' offsets carry their second point (`ArmsData` regenerated; Lord-forged follow). `Upgrades`
+  splits `isGear` (any weapon or armour piece) from `isTemperable` (gear in the `awaken` namespace only) and holds the
+  line (`Upgrades.CRAFTED`): the Forge shows it as a toast when crafted gear is used on it, Oren says it when you hold
+  some out to him (and his footer asks for "a forged weapon or armour piece"). Oren's commissions still make crafted gear
+  from what you carry but temper only forged pieces as he hands them over ("Here. Crafted work, so it stays as it is.").
+  `MobScaling.forgedBump(level, role)`: a mob's rank is the one whose content its level belongs to (Rank's
+  `levelRequired`); a Lord (BOSS or BREAK) takes its rank's bump, a NORMAL, ELITE, WARDEN or NIGHTMARE creature x1.15 at
+  E and D, everything else 1; it multiplies `totalHealth`, so every gate and overworld spawn takes it. The core fallback
+  (`MobHooks.scale`, the mobs module absent) is unchanged. The War Anvil's tooltip and the two lines above say it.
 
 **46.6 The smithy grows (plan §4.11, decision 15; approved with 14).** The War Anvil is rebuilt as you climb, each
 rebuild the gate for its rank's weapons and act (not a second ladder), each a Weapons tab step, shown on the block
@@ -17492,7 +17502,7 @@ forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-f
   Anvil" when you hold every part of a weapon you know, at a tier you've reached, better than any of its style you carry;
   the gear module's line no longer suggests blades. Its id is `arms:forge/<weapon>`, it points at your anvil when it's in
   your dimension, and both Weapons steps cover it (`covers("arms:forge/")`) while they show. **Words**: the level road's E step says weapons are made at a War
-  Anvil, from bone and flint by hand at E; Hale adds "To make your own, set up a War Anvil at home."; the
+  Anvil, from bone and flint by hand at E; Hale adds "A crafting table makes quick tools. For a real weapon, set up a War Anvil at home." (§46.5); the
   pattern notices say the War Anvil.
 - **JEI**: a **War Anvil** category (`Categories.WarAnvil`, `Recipes.forgings()`, the War Anvil its station) for every
   weapon and blade, from the cost table: the parts (a tag's items cycling in one slot), the result, a rank chip in the

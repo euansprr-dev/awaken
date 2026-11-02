@@ -42,7 +42,12 @@ public class ForgeBlock extends HorizontalDirectionalBlock {
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!Upgrades.isTemperable(stack)) return InteractionResult.TRY_WITH_EMPTY_HAND;
+        if (!Upgrades.isTemperable(stack)) {
+            if (!Upgrades.isGear(stack)) return InteractionResult.TRY_WITH_EMPTY_HAND;
+            // crafted gear stays as it is (SPEC §46.5)
+            if (player instanceof ServerPlayer sp) dev.awaken.signal.Signal.toast(sp, net.minecraft.network.chat.Component.literal(Upgrades.CRAFTED));
+            return InteractionResult.SUCCESS;
+        }
         if (level instanceof ServerLevel sl && player instanceof ServerPlayer sp) Upgrades.offerTemper(sp, sl, pos, hand, "forge");
         return InteractionResult.SUCCESS;
     }
