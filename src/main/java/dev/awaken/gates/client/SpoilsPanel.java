@@ -214,7 +214,9 @@ public final class SpoilsPanel {
             HudLook.text(g, font, title, b.x + PAD, hy, Glass.a(Glass.EDGE, k), false);
             head = b.x + PAD + font.width(title);
         }
-        String[] sub = t == SATCHEL ? new String[]{v.title(), v.title().replace("-rank", "")} : new String[]{"Click a stack to take it", "Click one to take it"};
+        String theme = v.title().substring(v.title().indexOf("· ") + 2); // five columns and the XP beside it: the theme alone
+        String[] sub = t == SATCHEL ? new String[]{v.title(), v.title().replace("-rank", ""), theme}
+                : new String[]{"Click a stack to take it", "Click one to take it", "Click to take one"};
         int subRight = b.x + b.w - PAD;
         if (t == SATCHEL) {
             String xp = v.xp() + " XP";
@@ -282,7 +284,7 @@ public final class SpoilsPanel {
             for (int i = 0; i < n; i++) HudLook.text(g, font, lines.get(i), b.x + PAD, ly + i * 9, Glass.a(colour, k), false);
         } else {
             int by = b.y + b.h - PAD - 14, bw = b.w - 2 * PAD;
-            HudLook.text(g, font, fit(font, bw, "Safe here. Nothing expires.", "Kept safe for you."), b.x + PAD, by - 11, Glass.a(Glass.LABEL, 0.7f * k), false);
+            HudLook.text(g, font, fit(font, bw, "Safe here. Nothing expires.", "Kept safe for you.", "Nothing expires.", "Kept safe."), b.x + PAD, by - 11, Glass.a(Glass.LABEL, 0.7f * k), false);
             boolean over = mx >= b.x + PAD && mx < b.x + PAD + bw && my >= by && my < by + 14;
             if (k > 0.5f) Glass.button(c, font, "Take all", b.x + PAD, by, bw, 14, over, true, Glass.EDGE);
         }

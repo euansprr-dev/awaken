@@ -516,7 +516,8 @@ final class GateTests {
                 ((net.minecraft.world.entity.LivingEntity) lord).hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
                 h.assertTrue(g.bossDead && g.state == GateState.CLEARED, "the gate is cleared, was " + g.state);
                 h.assertTrue(!reg.pendingFor(p.getUUID()).isEmpty(), "the hoard and Satchel wait in a claim");
-                h.assertTrue(Runs.run(p).satchel.isEmpty(), "the Satchel moved into the claim");
+                // the Lord's own drops fly into the Satchel after its claim is written; the exit portal pays them
+                h.assertTrue(Runs.run(p).satchel.stream().noneMatch(s -> s.is(Items.EMERALD)), "the Satchel moved into the claim");
                 Room.Feature exit = arena.feature(Room.FeatureKind.EXIT_ANCHOR);
                 BlockPos portal = GateService.world(g, bf, exit.x(), arena.dy + 1, exit.z());
                 h.assertTrue(level.getBlockState(portal).is(GatesRegistry.EXIT.get()), "an exit portal opened");

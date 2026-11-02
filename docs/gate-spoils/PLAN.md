@@ -2,7 +2,9 @@
 
 Session `gate-spoils`, branch `claude/gate-spoils-ef58b5`, 2 Nov 2026. Approval page: https://claude.ai/artifact/CbMF6oU8dgX5dJQAFbtA4p (`docs/gate-spoils/page.html`).
 Status: **approved by Euan, 2 Nov 2026: "go ahead with the gate loot plan"** (relayed by the orchestrator: all four
-decisions yes, as recommended). Building on this branch; SPEC §7 (the Satchel) and §13 (Gates, "Gate spoils") carry the rules.
+decisions yes, as recommended). **Built** on this branch (d33b17f91 and after; tests `gates_spoils_*`; CI tour
+`tools/autopilot/gate-spoils.txt`); SPEC §7 (the Satchel) and §13 (Gates, "Gate spoils") carry the rules. Not seen in
+game yet: page turns and takes by click, the Story, first-gate and Clone Vat death lines, the drops' flight, sounds.
 
 ## 1. What Euan asked
 

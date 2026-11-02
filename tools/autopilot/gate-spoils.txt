@@ -88,8 +88,9 @@ wait 10
 cmd give @s minecraft:cobblestone 2304
 wait 10
 cmd awaken gate leave
-wait 160
-shot spoils_05_claim_card
+# the claim card lives 10 s; "shot" waits for the terrain longer than that
+wait 100
+shotnow spoils_05_claim_card
 holo inv open
 wait 40
 shot spoils_06_held_outside

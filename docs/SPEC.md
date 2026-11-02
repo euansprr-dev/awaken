@@ -799,7 +799,8 @@ Gates:
   - Items tagged `awaken:never_in_satchel` (the Holo band, bell items; optional entries) never go into the Satchel: to
     your pockets, or held when they're full.
   - A gate monster's drops (after Fortune) go straight into its killer's Satchel (the killer as for kill XP: the
-    damage's player, else the kill credit, in a run in that gate; no killer, they fall as before). Nothing is spawned
+    damage's player, else the kill credit, in a run in that gate; no killer, they fall as before). A Lord's own drops
+    land after its claim is written, so they ride in the Satchel to the exit portal, which pays them. Nothing is spawned
     on the server: players within 64 blocks get `SpoilsFlight` and draw client-only copies that pop out of the monster,
     hang 10 ticks and fly into the killer with vanilla's pickup flight and sound (at most 8 stacks drawn per death).
   - **The E panel** (`gates.client.SpoilsPanel`, on the survival inventory, plain or holo; not the creative one): a
