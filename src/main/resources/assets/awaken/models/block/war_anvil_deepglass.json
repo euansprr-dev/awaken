@@ -10,7 +10,8 @@
     "iron": "awaken:block/war_anvil_ironbound",
     "face": "awaken:block/war_anvil_ironbound_face",
     "horn": "awaken:block/war_anvil_deepglass",
-    "band": "awaken:block/war_anvil_band"
+    "band": "awaken:block/war_anvil_band",
+    "rack": "awaken:block/pattern_stand_rack"
   },
   "elements": [
     {
@@ -1331,6 +1332,242 @@
             16.0
           ],
           "texture": "#iron"
+        }
+      }
+    },
+    {
+      "from": [
+        1.5,
+        8,
+        14.6
+      ],
+      "to": [
+        2.5,
+        24,
+        15.8
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            1.5,
+            0.2,
+            2.5,
+            1.4
+          ],
+          "texture": "#rack"
+        },
+        "up": {
+          "uv": [
+            1.5,
+            14.6,
+            2.5,
+            15.8
+          ],
+          "texture": "#rack"
+        },
+        "north": {
+          "uv": [
+            13.5,
+            0,
+            14.5,
+            16
+          ],
+          "texture": "#rack"
+        },
+        "south": {
+          "uv": [
+            1.5,
+            0,
+            2.5,
+            16
+          ],
+          "texture": "#rack"
+        },
+        "west": {
+          "uv": [
+            14.6,
+            0,
+            15.8,
+            16
+          ],
+          "texture": "#rack"
+        },
+        "east": {
+          "uv": [
+            0.2,
+            0,
+            1.4,
+            16
+          ],
+          "texture": "#rack"
+        }
+      }
+    },
+    {
+      "from": [
+        10.5,
+        8,
+        14.6
+      ],
+      "to": [
+        11.5,
+        24,
+        15.8
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            10.5,
+            0.2,
+            11.5,
+            1.4
+          ],
+          "texture": "#rack"
+        },
+        "up": {
+          "uv": [
+            10.5,
+            14.6,
+            11.5,
+            15.8
+          ],
+          "texture": "#rack"
+        },
+        "north": {
+          "uv": [
+            4.5,
+            0,
+            5.5,
+            16
+          ],
+          "texture": "#rack"
+        },
+        "south": {
+          "uv": [
+            10.5,
+            0,
+            11.5,
+            16
+          ],
+          "texture": "#rack"
+        },
+        "west": {
+          "uv": [
+            14.6,
+            0,
+            15.8,
+            16
+          ],
+          "texture": "#rack"
+        },
+        "east": {
+          "uv": [
+            0.2,
+            0,
+            1.4,
+            16
+          ],
+          "texture": "#rack"
+        }
+      }
+    },
+    {
+      "from": [
+        1.5,
+        20,
+        14.8
+      ],
+      "to": [
+        10.5,
+        21.2,
+        15.6
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            1.5,
+            0.4,
+            10.5,
+            1.2
+          ],
+          "texture": "#rack"
+        },
+        "up": {
+          "uv": [
+            1.5,
+            14.8,
+            10.5,
+            15.6
+          ],
+          "texture": "#rack"
+        },
+        "north": {
+          "uv": [
+            5.5,
+            0,
+            14.5,
+            1.2
+          ],
+          "texture": "#rack"
+        },
+        "south": {
+          "uv": [
+            1.5,
+            0,
+            10.5,
+            1.2
+          ],
+          "texture": "#rack"
+        }
+      }
+    },
+    {
+      "from": [
+        1.5,
+        12.5,
+        14.8
+      ],
+      "to": [
+        10.5,
+        13.5,
+        15.6
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            1.5,
+            0.4,
+            10.5,
+            1.2
+          ],
+          "texture": "#rack"
+        },
+        "up": {
+          "uv": [
+            1.5,
+            14.8,
+            10.5,
+            15.6
+          ],
+          "texture": "#rack"
+        },
+        "north": {
+          "uv": [
+            5.5,
+            2.5,
+            14.5,
+            3.5
+          ],
+          "texture": "#rack"
+        },
+        "south": {
+          "uv": [
+            1.5,
+            2.5,
+            10.5,
+            3.5
+          ],
+          "texture": "#rack"
         }
       }
     }

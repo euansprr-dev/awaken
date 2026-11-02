@@ -17463,7 +17463,10 @@ rebuild the gate for its rank's weapons and act (not a second ladder), each a We
   re-laid in iron. A C weapon forged in full (not from memory, not a Hunter blade alone) also needs a grindstone within
   6 blocks of the anvil (2 up or down), for its grind act (§46.9).
 - B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst shards): the horn in glowing Deepglass (light 10); the
-  balance act happens on it. A weapon rack (the Pattern Stand's rack make) for what you've forged comes in stage 4c.
+  balance act happens on it. A weapon rack goes up behind the anvil (the Pattern Stand's rack make: two posts on the
+  stone's back, two bars, in its texture), where copies of the last three weapons forged on it (in full or from memory,
+  not a blade alone) stand point down, turned to the smith's left and leaning on the bar, newest at the left
+  (`WarAnvilBlockEntity.rack`, saved and synced; copies to look at, never dropped, their flaws and acts showing).
 - A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots): netherite face and bands, a waking rune band (light 9),
   a Lord's Heart set in the front (light 12); the twist is clamped in it, and at S the starlight comes down onto it.
   The runes and the Heart are cut pale and lit in the colour of the last Gate Lord its smith killed (that Lord's
@@ -17701,8 +17704,9 @@ x each act's mark). None can fail, and one left alone settles itself.
   them. The tooltip reads "Flawless, twisted steel, quenched in starlight"; the card says "The twist shows in its steel."
   and "It drank the starlight, and its runes woke." (`Done` flags `RIPPLED` 64, `STARLIT` 128). Drawn by the weapon
   shader wherever the weapon is (UV1.y bits 13 and 14, beside the flaw), standing in the anvil's slot too.
-- **Still to come in stage 4**: the bellows and the rack (§46.6).
+- **Still to come in stage 4**: the bellows (§46.6).
 
 Tests: `arms_anvil_verbs` (the tenth rule and the twist's, balance's and starlight's curves; a C Longsword grinds after
 its quench and then takes its hilt; an S Longsword twists, draws out, takes the starlight, grinds twenty touches (one
-too quick refused), takes its hilt and balances, and a perfect song is Flawless with no flaw, rippled and starlit).
+too quick refused), takes its hilt and balances, and a perfect song is Flawless with no flaw, rippled and starlit,
+a copy of it in its Lord's anvil's rack).

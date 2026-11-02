@@ -956,7 +956,8 @@ happens).
   starlit one its runes woken. It is rebuilt as you climb (SPEC §46.6), each rebuild the gate for its
   rank: Ironbound for C (4 iron blocks, 2 diamonds; and a grindstone within six blocks), a Deepglass horn for B (4
   Deepglass shards, 4 amethyst shards), a Lord's anvil for A and S (a Lord's Heart, 2 netherite ingots), its runes
-  and Heart lit in the colour of the last Gate Lord you killed (gold if none).
+  and Heart lit in the colour of the last Gate Lord you killed (gold if none). From the Deepglass horn a rack behind it
+  shows copies of the last three weapons forged on it.
 - **Know**: the level road's level 3 step names it and its recipe; the recipe book; the Weapons tab ("Set up a War
   Anvil", "Forge your first weapon" with the styles you know as choices, "Make your C-rank weapon"); the Now line ("You
   can forge Beastbound Daggers at your War Anvil"); use it and the Armoury opens at its door with what each weapon takes,

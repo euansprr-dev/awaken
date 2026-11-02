@@ -559,7 +559,8 @@ final class AnvilTests {
      * The ranks' acts (SPEC §46.9): each done is a tenth of the score. At C the quench goes to the grind (no twist before,
      * no balance after). At S, from the heat: the bar twisted (three even turns), drawn out, quenched in starlight as its
      * ring closes, ground in two passes (a sample faster than the wheel isn't taken), the hilt, balanced on the horn; all
-     * true, it stands Flawless and unflawed, the twist's ripples and the starlight kept in its steel.
+     * true, it stands Flawless and unflawed, the twist's ripples and the starlight kept in its steel, and on its Lord's
+     * anvil a copy goes up in the rack.
      */
     private static void verbs(GameTestHelper h) {
         h.assertTrue(Math.abs(AnvilSong.withActs(0.5F, 1F, -1F, 1F, 1F) - (0.5F * 0.7F + 0.3F)) < 1e-6F, "each act done is a tenth");
@@ -582,6 +583,8 @@ final class AnvilTests {
         h.assertTrue(c.stage == AnvilSong.GRIND && c.taps.isEmpty(), "out of the water to the wheel");
         be.setWork(null);
 
+        // on a Lord's anvil (its rack up from the Deepglass horn)
+        level.setBlock(pos, level.getBlockState(pos).setValue(WarAnvilBlock.BUILD, 3), net.minecraft.world.level.block.Block.UPDATE_ALL);
         be.setWork(AnvilWork.fresh("sovereign_longsword", level.getGameTime(), java.util.List.of(), p.getUUID(), fire, AnvilWork.FORGE));
         AnvilWork w = be.work();
         pullInGold(h, p, be);
@@ -614,6 +617,7 @@ final class AnvilTests {
         h.assertTrue(be.work() == null && be.slot().is(WarAnvil.item("sovereign_longsword")) && f != null
                 && f.quality() == AnvilSong.Quality.FLAWLESS.ordinal() && f.flaw() == AnvilSong.NO_FLAW
                 && f.acts() == (WeaponForged.RIPPLES | WeaponForged.STARLIT), "all four true: Flawless, unflawed, rippled and starlit, got " + f);
+        h.assertTrue(be.rack().size() == 1 && be.rack().getFirst().is(WarAnvil.item("sovereign_longsword")), "a copy goes up in the rack: " + be.rack());
         h.succeed();
     }
 

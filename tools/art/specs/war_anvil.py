@@ -329,6 +329,15 @@ def model(build=0):
         ]
         for x0, z0 in ((-0.4, -0.4), (14.6, -0.4), (-0.4, 14.6), (14.6, 14.6)):
             els.append(el([x0, 0, z0], [x0 + 1.8, 8.3, z0 + 1.8], "#band", up="#iron", faces=("north", "south", "west", "east", "up")))
+    if build >= 2:
+        # the rack behind the anvil, the Pattern Stand's rack make: two posts on the stone's back and two bars between,
+        # where the last three weapons forged here stand (drawn by the block entity's renderer)
+        els += [
+            el([1.5, 8, 14.6], [2.5, 24, 15.8], "#rack"),
+            el([10.5, 8, 14.6], [11.5, 24, 15.8], "#rack"),
+            el([1.5, 20, 14.8], [10.5, 21.2, 15.6], "#rack", faces=("down", "up", "north", "south")),
+            el([1.5, 12.5, 14.8], [10.5, 13.5, 15.6], "#rack", faces=("down", "up", "north", "south")),
+        ]
     if build >= 3:
         # the rune band lit from within, the Lord's Heart set in it before the smith: both in the Lord's colour (tint 0)
         els += [
@@ -341,6 +350,8 @@ def model(build=0):
            "slot": B + "slot", "iron": B + body, "face": B + face, "horn": B + ("deepglass" if build >= 2 else body)}
     if build >= 1:
         tex["band"] = B + ("netherite_band" if build >= 3 else "band")
+    if build >= 2:
+        tex["rack"] = "awaken:block/pattern_stand_rack"
     if build >= 3:
         tex.update(runes=B + "runes", heart=B + "heart")
     return {"parent": "minecraft:block/block", "ambientocclusion": False, "textures": tex, "elements": els}

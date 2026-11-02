@@ -687,6 +687,8 @@ public final class WarAnvil {
             ForgeHooks.forged(smith, made, q.ordinal(), "war_anvil");
         }
         be.setSlot(made);
+        // from the Deepglass horn up, a copy goes up in the anvil's rack (§46.6)
+        if (!blade && build(be.getBlockState()) >= 2) be.racked(made);
         level.playSound(null, be.getBlockPos(), AnvilContent.FLIP.get(), SoundSource.BLOCKS, 1F, 0.7F);
         if (smith != null) AwakenNet.send(smith, new AnvilPayloads.Done(be.getBlockPos(), q.ordinal(), flaw, temper,
                 (twin ? TWIN : 0) | (w.memory() ? FROM_MEMORY : 0) | (armoury ? ARMOURY : 0)

@@ -204,6 +204,19 @@ final class AnvilScene {
         return out;
     }
 
+    /**
+     * In the rack behind the anvil (§46.6, from the Deepglass horn): the k-th of three standing point down on the stone
+     * between the rack's posts, turned to the smith's left and leaning back onto its bar.
+     */
+    static Lay inRack(Quaternionf frame, AnvilShape shape, int k, Lay out) {
+        out.scale.set(1F, 1F, 1F);
+        out.shape = shape;
+        out.mid = shape.tip;
+        model(frame, (3.8F + 2.7F * k) / 16F, 0.505F, 14.2F / 16F, out.at);
+        turn(dir(frame, 0F, -1F, -0.12F, A), dir(frame, -0.82F, 0F, -0.57F, U), out.turn);
+        return out;
+    }
+
     // ---- the smith's own moment (the song screen sets these) -----------------------------------------------------------
 
     /** The scene's anvil (the song screen open on it), or null. */

@@ -40,7 +40,8 @@ import org.jspecify.annotations.Nullable;
  * mouth, on the face drawn out strike by strike, in the trough, the hilt coming tap by tap), the hammer and tongs (in
  * the smith's hands, laid by, or on the peg), a catalyst being set in the guard while a weapon is attuned (§46.8), the
  * Deepglass weight on the grip as it's balanced and the column of starlight an S-rank weapon is quenched in (§46.9), and
- * a finished weapon standing hilt up in the slot, waking as it's set there. Where each is: {@link AnvilScene}.
+ * a finished weapon standing hilt up in the slot, waking as it's set there, and from the Deepglass horn the last three
+ * forged standing in the rack behind it (§46.6). Where each is: {@link AnvilScene}.
  */
 public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlockEntity, WarAnvilRenderer.State> {
     public static final class State extends BlockEntityRenderState {
@@ -54,6 +55,10 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         boolean hasGem;
         /** S's starlight (§46.9), drawn by its own geometry so a frame makes nothing new. */
         final Column column = new Column();
+        /** The rack's weapons (§46.6): their designs (null for none), where each stands and its flaw and acts. */
+        final @Nullable String[] rack = new String[WarAnvilBlockEntity.RACK];
+        final AnvilScene.Lay[] rackLay = {new AnvilScene.Lay(), new AnvilScene.Lay(), new AnvilScene.Lay()};
+        final int[] rackFlaw = new int[WarAnvilBlockEntity.RACK];
     }
 
     /** A soft column of starlight from high over the anvil down onto the work: a bright core in a wide fading sheath. */
@@ -149,6 +154,16 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             WeaponForged f = st.get(AnvilContent.FORGED.get());
             s.slotFlaw = f == null ? 0 : (f.flaw() & 3 | (f.acts() & 3) << 2) << 11; // its flaw and acts show as it stands there (SPEC §46.7, §46.9)
         }
+        var rack = be.rack();
+        for (int k = 0; k < s.rack.length; k++) {
+            ItemStack r = k < rack.size() ? rack.get(k) : ItemStack.EMPTY;
+            var rk = r.isEmpty() ? null : BuiltInRegistries.ITEM.getKey(r.getItem());
+            s.rack[k] = rk != null && rk.getNamespace().equals(Awaken.MODID) && WeaponDraw.mesh(AnvilShape.meshId(rk.getPath())) != null ? rk.getPath() : null;
+            if (s.rack[k] == null) continue;
+            AnvilScene.inRack(AnvilScene.frame(be.getBlockState(), FRAME), AnvilShape.of(s.rack[k]), k, s.rackLay[k]);
+            WeaponForged f = r.get(AnvilContent.FORGED.get());
+            s.rackFlaw[k] = f == null ? 0 : (f.flaw() & 3 | (f.acts() & 3) << 2) << 11;
+        }
     }
 
     @Override
@@ -182,6 +197,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         }
         tool(ps, out, p.stone ? "anvil/stone_hammer" : "anvil/hammer", p.stone ? STONE : HAMMER, p.hammer, s.lightCoords);
         if (p.hasTongs) tool(ps, out, "anvil/tongs", TONGS, p.tongs, p.inForge ? s.forgeLight : s.lightCoords);
+        rack(s, ps, out);
         if (s.slot != null) {
             WeaponMesh mesh = WeaponDraw.mesh(AnvilShape.meshId(s.slot));
             if (mesh != null) {
@@ -192,6 +208,17 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
                 WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.slot)), LightCoordsUtil.withBlock(s.lightCoords, Math.max(LightCoordsUtil.block(s.lightCoords), 12)), s.slotEnergy, s.slotFlash | s.slotFlaw, from);
                 ps.popPose();
             }
+        }
+    }
+
+    private static void rack(State s, PoseStack ps, SubmitNodeCollector out) {
+        for (int k = 0; k < s.rack.length; k++) {
+            WeaponMesh mesh = s.rack[k] == null ? null : WeaponDraw.mesh(AnvilShape.meshId(s.rack[k]));
+            if (mesh == null) continue;
+            ps.pushPose();
+            ps.mulPose(s.rackLay[k].matrix(M));
+            WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.rack[k])), s.lightCoords, 0, s.rackFlaw[k], 0F);
+            ps.popPose();
         }
     }
 
