@@ -17367,3 +17367,90 @@ rebuild the gate for its rank's weapons and act (not a second ladder), each a We
   at S the starlight comes down onto it.
 The Forge's own tiers (II at D, III at B) still set the temper limit. No quality ceiling: a perfect song is Flawless on
 any anvil. A rebuild keeps work in progress and what stands in the slot. Built in stage 4 with the ranks' acts.
+
+**46.7 Every weapon at the anvil (stage 2).** Weapons are never made on the crafting grid (decision 1): the 96 forged
+weapons (16 styles, six tiers) and the six Hunter blades (the Fang to the Sovereign blade) lose their grid recipes and are
+forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-forged (drops only) are unchanged.
+- **The cost table** `data/awaken/arms/anvil_costs.json` (schemaVersion 1; `AnvilCosts`), written by
+  `python3 tools/art/specs/arms_weapons.py costs` from the generator's own style shapes and the Hunter blades' (`gear.py`
+  `RECIPES`): each weapon costs exactly its old recipe minus the Blueprint (the tier's blade, its beast cores, its binding
+  at E or the tier's metal from D), each blade its old recipe. The generator no longer writes weapon recipes (it removes
+  them) and `gear.py` no longer writes the blades'. The Armoury, Track, Raise, the Weapons tab, the Now line, JEI and the
+  anvil all read this one table, and `tools/arms/sources.py` reads it for where each part comes from. A carried blade stands
+  in for its own parts; without it the blade's own cost is added (stage 1's rule, for every weapon); a blade forged alone
+  is a part to carry. Creative skips the cost.
+- **The list** (use the anvil with nothing to resume): the Armoury screen at the War Anvil's door
+  (`ArmsArmoury.ANVIL`, its position kept for three minutes): the styles you know, their six tiers, have and need for the
+  chosen tier and where each part comes from, Track, and **Forge it** on a tier you can make, with **From memory** beside
+  it when that weapon is in your memory, and **Forge the blade** for the tier's Hunter blade alone. What stands in the way
+  is one plain line under the buttons: the tier's level ("Gatewrought weapons open at level 22."), the Forge for D and up
+  ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks of this anvil."), a style you don't know yet
+  ("You don't know this pattern yet."), and the parts. A weapon standing in the slot is drawn before anything new starts.
+- **E by hand: knap and bind** (no Forge; about 20 s). Knap (stage 4): eight flake points down the bone or flint edge,
+  struck one by one at your own pace with the hammerstone (attack, aiming at the lit point; at least 6 ticks between
+  strikes; each scores its aim, the strike curve's 0.4 part alone, inside half a mark 1, two marks out 0). Bind (stage 5):
+  hold use and draw circles with the mouse to wind the cord round the grip: four turns, scored on how even they are
+  (each turn's time against their mean: within an eighth 1, half off 0; a hold under 24 ticks for the four, or a release
+  before them, scores what was wound). Quality by hand: 0.6 knap + 0.4 bind, the same bands; no flaws by hand. Then the
+  draw from the stone, as at D.
+- **D and up: the base song** (heat, draw out, quench, hilt, draw; stage 1's acts and scoring) on **each style's own
+  rhythm** (`AnvilSong.SONGS`, from each style's chain), its strikes 8 to 14 by weapon, flipped after half:
+
+  ```
+  longsword   4  x...x...x.x.....  10    rapier      3  x..x.x..x..x.x..  12    glaive      5  x....x....xx....  10
+  axe         5  x.....x.....x...   8    daggers     3  x.x.x.xx          14    scythe      5  x......x.x......   8
+  maul        4  x.......x.......   8    katana      4  x.......xx.x....  10    gauntlets   3  x.x.x.x.xx......  14
+  spear       4  x..x...x........  10    twinblades  3  x.xx.x.xx.......  12    chainblade  4  x..x....x..x.x..  10
+  greatblade  5  x.....x.......x.   8    shieldblade 4  x...x.x.....x...  10    warstaff    4  x.x...x.x...x...  10
+  precursor   4  x...x...x...x...  10
+  ```
+  (step ticks, bar, strikes). The Longsword keeps its ten marks (`MARKS`); the others are laid by one rule (the first half
+  on one face from the root out, the second on the other, along 0.22-0.82, across from a fixed set). A pair (Daggers,
+  Gauntlets, Twinblades' two ends) is worked as one piece. C and up are forged on the base song until stage 4 adds
+  their rank's act. A tier opens at its level (3, 13, 22, 42, 67, 97), as today.
+- **From memory** (`SmithMemory` schemaVersion 2: `masterwork`, "style:tier" forged Masterwork or better; `forged`, the
+  styles forged; `best`, the highest tier forged, -1 none; a v1 save reads with all empty): one heat, one strike, the
+  quench and the draw (at E one flake and the draw); about 8 s; the parts as ever; always **Fine**, no flaw.
+- **A helper**: anyone else who uses the anvil while it's being drawn out strikes an off-beat (at least 2 ticks from any
+  beat the smith is due on, 6 ticks apart): each clean one adds 0.01 to the score, 0.05 at most, and three make it
+  **twin-struck**. They hear their strike; the smith hears it ring.
+- **The story** (`awaken:weapon_forged` schemaVersion 2: + `twin`, + `memory`; a v1 story reads with both false). The
+  tooltip says it plainly: "Masterwork, twin-struck", "Fine, from memory", then "Forged by Euan". A weapon of ours with no
+  story (made on the grid before the War Anvil, or Hale's issue) gains a Plain one, no maker, the first time it is held; a
+  found weapon (Marked, or Lord-forged) never does.
+- **Flaws show on the weapon** (the weapon shader, its state's spare bits): a burnt tip is darker toward the point, a
+  brittle blade shows a pale hairline down its middle. Cosmetic.
+- **`core.api.ForgeHooks`** (§45.5): arms reads its quality from the story (0-3) and its rank from its tier; the War Anvil
+  fires `forged(smith, stack, quality, "war_anvil")` as the weapon goes into the slot, and the result card draws
+  `cardLines(stack)` under its words (10 px a line, counted in the card's height, colour A898FF).
+- **Patterns taught on use**: a Blueprint teaches its style when used (consumed: "You learned the Daggers pattern. Forge it
+  at a War Anvil."); used when known it stays ("You know the Daggers pattern already. Someone else could use this one.").
+  It no longer goes into anything. The five doors still teach at once and still put a copy in your pack; the Forge still
+  draws copies. Holding a Blueprint no longer counts as knowing it (old saves already learned what they held, §3.3's
+  backfill).
+- **The Hearth** (decision 11): the War Anvil is in `#minecraft:anvil` (vanilla reads that tag only for its anvil screen
+  and falling anvils), so it is the Hearth's anvil (the Forge room's) and the Fitting Stand's. A weapon forged at a War
+  Anvil standing in an Armoury room (`RoomType.FITTING`, `HearthHooks.armoury`) lasts a quarter longer (its uses x1.25,
+  as the armour's), and the card says so.
+- **The Weapons tab** (§46.4 grown): "Forge your first weapon" now offers the styles you know as choices at your best
+  reached tier, each with what it still takes (E by hand at the anvil, D and up by the Forge); after the first, "Make your
+  C-rank weapon" (`arms/rank_weapon`) shows when you've reached a tier above the best you've forged, its choices the
+  styles you know at that tier. **The Now line** (`AnvilNow`, priority 25): "You can forge Beastbound Daggers at your War
+  Anvil" when you hold every part of a weapon you know, at a tier you've reached, better than any of its style you carry;
+  the gear module's line no longer suggests blades. **Words**: the level road's E step says weapons are made at a War
+  Anvil, from bone and flint by hand at E; Hale adds "When you want to make your own, set up a War Anvil at home."; the
+  pattern notices say the War Anvil.
+- **JEI**: a War Anvil page (the compat module's build page) for every weapon and blade, from the cost table.
+- **The smith in third person**: others see the smith bent over the anvil, the hammer arm rising and falling on each
+  strike and tap (a full-body clip, `assets/awaken/player_animations/arms_anvil.json`, through `core.api.PlayerClips`;
+  without the animation library, vanilla's arm swing on each strike).
+- **Old saves**: every weapon already made keeps working and gains its Plain story when held; Blueprints held were
+  learned by the backfill; Fangs and the other blades still stand in. The grid recipes are gone, so their recipe-book
+  entries vanish; nothing is charged twice.
+
+Tests (one per mechanism): `arms_anvil_costs` (every weapon and blade has its cost, the old recipe minus the Blueprint;
+no crafting recipe makes any of them; a carried blade stands in, else its parts are added), `arms_anvil_hand` (E knap and
+bind judged by the server: aim, evenness, quality, no Forge needed), `arms_anvil_memory` (a Masterwork goes into memory;
+from memory is one strike and always Fine), `arms_anvil_song` (as before, on the Longsword, plus a helper's off-beats
+making it twin-struck). `arms_recipe_unlock` is retired (no weapon recipes); `arms_armoury` and `arms_raise` read needs
+from the cost table.
