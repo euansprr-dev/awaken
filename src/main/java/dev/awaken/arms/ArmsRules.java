@@ -39,6 +39,17 @@ public final class ArmsRules {
     public static final int MASTERY_LINK = 2;
     /** Hit-stop in a sweep: at most one freeze per this many ticks. */
     public static final int HITSTOP_GAP = 4;
+    /**
+     * Styles whose strike lands on the press even while it is still down (SPEC §25 "Hand-keyed moves"; the dagger audit,
+     * Euan 2026-11-02): a dagger stabs on the click, and a press held on charges the heavy from where the stab ended.
+     * Every other style's held press waits at its set until it is a tap or the charge.
+     */
+    private static final java.util.Set<String> STRIKE_ON_PRESS = java.util.Set.of("daggers");
+
+    /** Whether a strike begun by a press still down waits on that press (false: it lands as it comes). */
+    public static boolean waitsOnHold(String style) {
+        return !STRIKE_ON_PRESS.contains(style);
+    }
 
     // ---- the chain ---------------------------------------------------------------------------------------------------
 

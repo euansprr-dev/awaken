@@ -65,6 +65,7 @@ final class ArmsTests {
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
+        AwakenTests.register("arms_dagger_click", 40, ArmsTests::daggerClick);
         AwakenTests.register("arms_attack_key", 20, ArmsTests::attackKey);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
         AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
@@ -881,6 +882,37 @@ final class ArmsTests {
             if (pig.getHealth() < 200) landed = t;
         }
         h.assertTrue(landed == limit, "unanswered, the waiting strike lands " + limit + " ticks in (landed at " + landed + ")");
+        done(h, p);
+    }
+
+    /**
+     * A dagger strikes on the click (SPEC §25 "Hand-keyed moves"): a press still down lands its strike at its wind-up's
+     * end, as a tap's does, shown to everyone near at once; held on, the charge follows the stab and never takes it back.
+     * Every other style's held press still waits (arms_tap_or_hold).
+     */
+    static void daggerClick(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ArmsItems.item("gatewrought_daggers")));
+        LivingEntity pig = put(h, EntityTypes.PIG, 1.5, 2.3, 200);
+        ArmsState s = ArmsServer.state(p);
+        Archetypes.Loaded daggers = Archetypes.get("daggers");
+        Archetype.MoveDef s1 = daggers.move(Archetype.Move.STRIKE_1);
+        Archetype.Charge c = daggers.move(Archetype.Move.HEAVY).charge().orElseThrow();
+        long t0 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && !s.waitHit && !s.waitSeen, "a dagger's press starts strike 1, shown at once, never waiting on the press");
+        int landed = -1;
+        for (int t = 0; t < c.min(); t++) {
+            ArmsServer.moveTick(p, s, t0 + t);
+            if (landed < 0 && pig.getHealth() < 200) landed = t;
+        }
+        h.assertTrue(landed == s1.windup(), "held down, it lands at its wind-up's end all the same, " + s1.windup() + " ticks in (landed at " + landed + ")");
+        float struck = pig.getHealth();
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
+        h.assertTrue(s.chargeSeq == 1 && s.chargeStart != ArmsState.NO_CHARGE && pig.getHealth() == struck,
+                "held on, the charge follows the stab and the stab stands");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_RELEASE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.HEAVY, "let go: the heavy (" + s.move + ")");
         done(h, p);
     }
 

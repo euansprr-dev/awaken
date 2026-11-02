@@ -57,7 +57,8 @@ public final class ArmsPredict {
     /**
      * The press is still down and may become a charge (holdOpen), and the strike it began waits at its hit until the
      * press ends as a tap or becomes the charge (waitHit; the hands hold there: waitNanos of their clock): a held press
-     * never strikes once before it charges (Euan 2026-10-26), and a tap's swing still starts on the press.
+     * never strikes once before it charges (Euan 2026-10-26), and a tap's swing still starts on the press. A dagger's
+     * strike never waits: it lands on the click and a hold charges after it (ArmsRules.waitsOnHold).
      */
     static boolean holdOpen, waitHit;
     static long waitNanos;
@@ -258,7 +259,7 @@ public final class ArmsPredict {
         Archetype.MoveDef def = st.move(m);
         if (def == null) return;
         perfectHeavy = perfect;
-        waitHit = m.strike() && holdOpen && s == seq;
+        waitHit = m.strike() && holdOpen && s == seq && ArmsRules.waitsOnHold(st.id());
         ArmsFilm.event("begin " + m.key + " step " + st2 + " seq " + s + (waitHit ? " waits" : ""));
         waitNanos = 0;
         style = st;

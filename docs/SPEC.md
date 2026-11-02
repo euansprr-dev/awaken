@@ -6799,6 +6799,9 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     hands hold where the next starts until 7 ticks after the press (about a third of a second), then go home: the hands
     are never home between strikes of a chain. The free hand always sits in its guard. The heavy charges coiled on the
     crosshair's line and its release is the drive; the Plunge is armed raised, points down.
+  - *Strike on the click* (`ArmsRules.waitsOnHold`): a dagger's strike lands as it comes even while the press is still
+    down, and a press held on charges the heavy from where the stab ended (arms_dagger_click). Every other style's held
+    press waits at its set (arms_tap_or_hold).
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
