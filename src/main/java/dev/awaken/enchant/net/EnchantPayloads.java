@@ -72,16 +72,28 @@ public final class EnchantPayloads {
         @Override public Type<Closed> type() { return TYPE; }
     }
 
-    /** {@link Fx#kind}: a ward took some of a blow; a bane bit; an extra drop; a page learned; the old table turned. */
-    public static final int FX_WARD = 0, FX_BANE = 1, FX_SPOILS = 2, FX_LEARN = 3, FX_FLARE = 4;
+    /**
+     * {@link Fx#kind}: a ward took some of a blow; a bane bit; an extra drop; a page learned; the old table turned; a block
+     * came away whole (Silk Touch); an orb mended a piece; a fall softened (Feather Falling); and a swimmer's wake (Depth
+     * Strider), which the client makes itself and is never sent.
+     */
+    public static final int FX_WARD = 0, FX_BANE = 1, FX_SPOILS = 2, FX_LEARN = 3, FX_FLARE = 4, FX_SILK = 5, FX_MEND = 6,
+            FX_PUFF = 7, FX_WAKE = 8;
 
-    /** Server → everyone near: an enchantment at work, in its colour, at an entity (or a block's centre for a flare). */
-    public record Fx(int kind, int entity, double x, double y, double z, int colour, float strength) implements CustomPacketPayload {
+    /**
+     * Server → everyone near: an enchantment at work, in its colour, at an entity (or a place: a block's centre, an orb).
+     * {@code no} the enchantment's number whose mark it shows (0 none; for a mend, the slot mended), {@code dir} the
+     * angle on the ground toward where a blow came from (NaN when it came from nowhere in particular).
+     */
+    public record Fx(int kind, int entity, double x, double y, double z, int colour, float strength, int no, float dir) implements CustomPacketPayload {
+        public Fx(int kind, int entity, double x, double y, double z, int colour, float strength) {
+            this(kind, entity, x, y, z, colour, strength, 0, Float.NaN);
+        }
         public static final Type<Fx> TYPE = new Type<>(Awaken.id("enchant_fx"));
         public static final StreamCodec<ByteBuf, Fx> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Fx::kind, ByteBufCodecs.VAR_INT, Fx::entity, ByteBufCodecs.DOUBLE, Fx::x,
                 ByteBufCodecs.DOUBLE, Fx::y, ByteBufCodecs.DOUBLE, Fx::z, ByteBufCodecs.INT, Fx::colour,
-                ByteBufCodecs.FLOAT, Fx::strength, Fx::new);
+                ByteBufCodecs.FLOAT, Fx::strength, ByteBufCodecs.VAR_INT, Fx::no, ByteBufCodecs.FLOAT, Fx::dir, Fx::new);
         @Override public Type<Fx> type() { return TYPE; }
     }
 }

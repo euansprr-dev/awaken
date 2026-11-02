@@ -16819,3 +16819,25 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   installs the reader (`EnchantApi.glow`) on the client, and with none installed it is 0 and the shaders draw as before.
   `tools/art/mesh_render.py` mirrors the line (without the pixels, which need texel coordinates).
 - Vanilla's own items keep vanilla's glint.
+
+### 45.12 Enchantments at work, stage 2 (`EnchantFx`, `EnchantFxClient`)
+The `enchant_fx` message gains the mark to show (`no`, the enchantment's number; for a mend, the slot mended) and the
+angle on the ground the blow came from (`dir`, NaN when there's no telling). The client keeps at most 48 at once.
+- **Ward** (18 ticks): the ward's own mark stands where the blow landed, between you and where it came from (0.3 out
+  from your side, at the chest), white-hot and settling into the Force's colour as it grows a little, a ripple
+  spreading out of it, a faint ring round you. A blow from nowhere in particular keeps the closing rings.
+- **Bane** (16 ticks): the bane's mark burns on the creature's side the blow came from, red going from near-white, with
+  the three spears of light fainter behind it.
+- **Gold on extra drops** (34 ticks): a glint rides the drop down with a short trail of sparks and two rising off it.
+  Harvest's extra drop; with Looting (the killer's weapon) or Fortune (the tool), the first one or two drops that came
+  as a stack of more than one, with the spoils note once.
+- **Silk Touch** (20 ticks): when the block itself came away, its outline lifts 0.35 out of where it sat and fades,
+  a soft gold ring spreading at its foot. No sound (mining is loud enough).
+- **Mending** (14 ticks): each orb that will mend something (vanilla picks the piece; the thread aims at that slot's
+  place on the body, hands at your side) draws a thread arching from it into the piece, a bead of warm light running
+  it and the thread fading behind.
+- **Feather Falling** (20 ticks): a fall of four blocks or more on boots that carry it puffs a soft ring over the
+  ground and six motes lifting off it, brighter for a longer fall (full at twelve).
+- **Depth Strider** (24 ticks, the client's own, nothing sent): a player within 32 blocks moving through water on boots
+  that carry it leaves a faint blue V opening behind them on the water (at their feet when under it), one every three
+  ticks.

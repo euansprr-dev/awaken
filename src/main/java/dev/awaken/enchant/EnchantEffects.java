@@ -130,7 +130,7 @@ public final class EnchantEffects {
             float w = ward(target, force, spared(src.getEntity()));
             if (w > 0) {
                 e.setAmount(e.getAmount() * (1 - w));
-                if (target instanceof ServerPlayer sp) EnchantFx.warded(sp, force, w);
+                if (target instanceof ServerPlayer sp) EnchantFx.warded(sp, force, w, src.getSourcePosition());
             }
         }
     }
@@ -144,8 +144,18 @@ public final class EnchantEffects {
         float k = bane(p, p.getMainHandItem(), target);
         if (k > 0) {
             e.setAmount(e.getAmount() * (1 + k));
-            EnchantFx.baned(p, target);
+            EnchantFx.baned(p, target, baneNo(p, p.getMainHandItem(), target));
         }
+    }
+
+    /** The number of the bane that bit (its mark is the one shown). */
+    static int baneNo(ServerPlayer attacker, ItemStack weapon, LivingEntity target) {
+        for (var e : weapon.getEnchantments().entrySet()) {
+            Bane b = e.getKey().value().effects().get(EnchantContent.BANE.get());
+            Inscriptions.Entry en = Inscriptions.of(e.getKey());
+            if (b != null && en != null && is(b.kind(), attacker, target)) return en.no();
+        }
+        return 0;
     }
 
     /** The bane a weapon carries against this target (0 when none applies). */

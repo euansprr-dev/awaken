@@ -292,6 +292,9 @@ final class EnchantTests {
         ItemStack sword = with(new ItemStack(Items.IRON_SWORD), ench(h, "awaken:bane_of_the_dead"), 3);
         Zombie z = h.spawnWithNoFreeWill(EntityTypes.ZOMBIE, new BlockPos(1, 1, 1));
         h.assertTrue(Math.abs(EnchantEffects.bane(p, sword, z) - 0.24F) < 1e-4, "Bane of the Dead III bites a zombie 24%");
+        h.assertTrue(EnchantEffects.baneNo(p, sword, z) == 10, "the mark it leaves is Bane of the Dead's (SPEC §45.12)");
+        for (var f : dev.awaken.core.Forces.Force.values())
+            h.assertTrue(Inscriptions.ALL.get(EnchantFx.wardNo(f) - 1).force() == f, "a " + f + " blow flashes its own ward's mark");
         z.setData(CoreApi.MOB_ROLE, new MobRole(MobRole.Role.BOSS, 5, "awaken:bell_crypt", Optional.empty(), "test_gate"));
         h.assertTrue(EnchantEffects.bane(p, sword, z) == 0, "never a Lord");
         Zombie named = h.spawnWithNoFreeWill(EntityTypes.ZOMBIE, new BlockPos(2, 1, 1));

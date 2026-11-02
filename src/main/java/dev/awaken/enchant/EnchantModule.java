@@ -27,6 +27,10 @@ public final class EnchantModule {
         bus.addListener(EventPriority.LOWEST, LivingIncomingDamageEvent.class, EnchantEffects::onIncomingLast);
         bus.addListener(EnchantEffects::onPlayerTick);
         bus.addListener(EnchantEffects::onDrops);
+        bus.addListener(EnchantFx::onBlockDrops);
+        bus.addListener(EnchantFx::onLootingDrops);
+        bus.addListener(EnchantFx::onPickupXp);
+        bus.addListener(EnchantFx::onFall);
         bus.addListener(Pages::onDeath);
         bus.addListener(Pages::onUseItem);
         bus.addListener(Fold::onUseBlock);
