@@ -625,6 +625,15 @@ day each. The scene's camera and the shader line are the parts most likely to ta
   Silk Touch), the Delver's Pick's room by verse (`delve.api.Pick`), the room line on the Forge Song's card, Precursor
   Word Stones in every ruin; the book's lines fit a narrow page. SPEC §45.14.
 - **S3, after:** the wake's chord (each other enchantment on the piece adds its family's note over the new one's).
+- **Live polish** (2 Nov, Euan: "test all of this in-game ... until it's literally perfect"; driven in a real client by
+  `LiveHand`, a dev mouse through Minecraft's own input path): the trace follows the pen and scores by distance (it ran
+  ahead and called a careful hand sloppy), a slow frame costs nothing (a hitch to 19 fps had cost 0.54), the burin's
+  point at the pen, the off hand out of view, the mark scored into the piece, sparks, a climbing tick and a running cut
+  (`EngraveLoop`, metal or leather) on the line, a nudge when a press misses, each stroke sealed (a sweep, sparks, a nod),
+  the book down from trace to wake (it flashed up) and up through a scrape (it blinked), the wake's turn framed close,
+  the scrape's mark crumbling on the piece, the piece without vanilla's shimmer, lapis-centred pips, "from memory" off
+  the level, the Word Stone's hint stepping aside once learned. Checked live: Esc refunds (36/30 to 30/28 and back),
+  clean refund, memory, scrape, bane and ward marks, Feather Falling's puff, Mending's thread, a Word Stone learned.
 - **Not built:** the War Anvil's quality as weapon room arrives by itself when arms' `ForgeHooks.Reader.quality` returns it (until then our
   forged weapons hold two), and its result card shows the room line once it calls `ForgeHooks.cardLines`.
 - **Tours** (CI, `tools/autopilot/enchant-table.txt`): 41434309046 (S2 first look), 41436600832 (desk step, framing,

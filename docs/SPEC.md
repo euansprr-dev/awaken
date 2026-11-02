@@ -17021,29 +17021,54 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   to stand; otherwise you stay put. The eye is then your own: the view turns (`ComputeCameraAngles`, LOW) and narrows
   (`ComputeFovModifierEvent`) toward each beat, framing it in the middle of the band the screen leaves clear: the piece
   with the floating book behind it above the book's pages, close on the piece while you trace (above the line and
-  pips), a little back while it wakes (above the card). Eased per tick (0.22), in over 12 ticks, out over 10, a slight
+  pips), held close through the wake's turn (the payoff fills the view; measured live, framing for the card from the
+  first tick had the turn play out at a fifth of the screen), then a little back once the card comes (above it). Eased per tick (0.22), in over 12 ticks, out over 10, a slight
   breath. First person is forced for the scene and restored after: the world
   hands (`core.api.FirstPerson.world`, "enchant_table", priority 210) only draw from the player's own camera. The HUD
   steps aside (subtitles and chat stay), the block outline goes, the player model is hidden.
 - **Hands**: the off hand brings your piece down onto the slate over 14 ticks (the table holds off drawing it for you
-  meanwhile) and then pins its near end; the main hand holds the table's **burin** (`awaken:burin`, never held as an
+  meanwhile) and then draws back out of the view for the rest of the session (over the slate it would hide the piece in
+  the book and the mark in the trace); the main hand holds the table's **burin** (`awaken:burin`, never held as an
   item: `Sources.neverHeld`) resting at the slate's near corner, and while you trace, follows the cursor where it meets
   the slate; from memory it runs the mark by itself.
 - **The book's pages** (`InscribeScreen`): the left page is your piece (its name drawn large, rank, room line, what's
-  on it with **scrape**: a second click within two seconds takes it off, sent as its registry number, and how deep this
+  on it with **scrape**: a second click within two seconds takes it off, sent as its registry number (its mark flares on
+  the piece above the pages and crumbles from its first end into dust over 18 ticks; the book stays up), and how deep this
   table writes). The right page lists what you know that fits it: its mark, name and target level (the deepest this
   piece allows here by default; ‹ › step it between one above what's on it and that), "Up to II here (IV in your
-  Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory; the foot
+  Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory (at the
+  end of the second line, so the name keeps its line for the level and its arrows, and the price shortens round it); the foot
   of the page says what the one under the cursor does. Resting on a row for 4 ticks sends LOOK (watchers see the
   floating book turn) and lays that mark faintly on the piece.
-- **The trace**: the mark (`Marks`, the same strokes the server counts) lies on the piece, 0.4 blocks across, faint
-  at first. Each stroke is picked up at its glowing end (within 0.3 mark units), followed to its end (the pen may run
-  up to five samples ahead within 0.34), and counted on the line within 0.15. A finished stroke burns lapis in its core
-  and the family's colour round it, rings its family's note a step higher than the last (a dull scratch if under 60%
-  on the line) and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH follows 6 ticks after the
-  last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each stroke (bright when
-  clean), with a bar for how much of the current one is on the line; a first-trace hint says what to do and that Esc
-  gives the levels back.
+- **The trace**: the mark (`Marks`, the same strokes the server counts) lies on the piece, 0.4 blocks across, scored
+  into it (a dark rim either side of every line, so it reads on a bright piece) and faint at first; the view leans in
+  until the mark fills most of it. The stroke to draw now is brighter and wider than the ones to come, and while it
+  waits a light runs it from its glowing end to its far end (the way to draw it). Each stroke is picked up at its
+  glowing end (within 0.3 mark units; a press anywhere else taps the slate dully and the end flares). The pen's run
+  between frames is followed in steps of at most 0.03, each finding the nearest part of the stroke from two samples
+  behind to six ahead of the cut: the cut follows the pen (to the nearest sample it has reached, within 0.34 of the
+  line) and never runs ahead of it (on a slow frame it may look further on, as far as two and a half times the pen's run
+  along the stroke, never so far it could skip a loop to where the stroke crosses itself). The game sees the pen once a
+  frame, so a step between two frames is never judged further off the line than the two real points either side of it
+  (a slow frame's straight chord across a corner costs nothing; measured live, a frame drop to 19 fps had cost a careful
+  hand 0.54 on a chevron). The share on the line is by distance drawn, so it reads the same at any speed or
+  frame rate: inside 0.06 of the line (the drawn line's own width) counts fully, fading to nothing at 0.16. Measured
+  with a dev hand (eased, wobbling strokes of 0.1-0.8 s): a careful hand (wobble up to 0.1) scores about 0.9 and is
+  clean, a loose one (0.13) about 0.8, a shaky one (0.18) about 0.73, a sloppy one (0.24) under 0.6. While it cuts on
+  the line the burin throws lapis sparks (every 0.08 drawn) and ticks faintly (every 0.3, climbing in pitch toward the
+  stroke's end), and its cut runs under the hand (`EngraveLoop`, `enchant.cut_metal` or `cut_leather`): a loop that
+  swells with the pen's speed on the line (full at 0.15 a tick, volume 0.32, pitch 0.85-1.24) and falls quiet the
+  moment the hand stops or strays. Leather, wood and string pieces (leather armour, wooden tools, bows, crossbows, rods,
+  elytra, the turtle shell) take the burin's leather bite and drag; everything else metal. The burin's point, not the fist, is at the pen (the fist sits below and left of it on screen by the
+  burin's reach). The piece on the slate is drawn without vanilla's violet shimmer (`ENCHANTMENT_GLINT_OVERRIDE` off on
+  the table's copy), so the only light on it is the mark being written. A finished stroke
+  burns lapis in its core and the family's colour round it, rings its family's note a step higher than the last (a
+  dull scratch if under 60% on the line); one that rings is **sealed**: it blooms for 12 ticks while a white-hot light
+  sweeps it from end to end in 5, ten sparks leap off its far end, and the view nods in 0.8° and settles over 6 ticks and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH
+  follows 6 ticks after the last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each
+  stroke (bright when clean, with a lapis centre once done, so a pale family's pips still read as done), with a bar for how much of the current one is on the line; a first-trace hint says what
+  to do and that Esc gives the levels back. `LiveHand` (autopilot runs only) drives a live client's mouse for these
+  checks from `<game>/enchant-live/in.txt`.
 - **The wake**: the mark flares white-hot and settles into its colour over 50 ticks while a band of light runs the
   piece and the piece rises a hair (0.04), turns once on the slate (from 6 to 40 ticks, eased) and settles; at 42 ticks
   (it has turned) a card comes up and says what was written ("A clean hand" and the levels back,
@@ -17063,7 +17088,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   with what it does, its family, what it goes on and how deep, where you learned it and whether its mark is in memory;
   the rest stay blank.
 - **Sounds** (`tools/art/specs/audio_enchant.py`, audiokit synthesis with Kenney CC0 transients): book open, page turn,
-  burin on metal and on leather, scratch, the five family notes (C5), wake, learn, flare, drift, scrape.
+  burin on metal and on leather (a bite each, and a seamless two-second loop each for the running cut: synthesis only,
+  mastered by gain alone so the seam keeps no dip), scratch, the five family notes (C5), wake, learn, flare, drift, scrape.
 - **Art** (`tools/art/specs/enchant.py`): the table's slate top with its lapis channel, framed dark-wood panels (the
   front with a lapis ring and spear), the trim, brass, the book, the page item and the burin; blockstate by facing.
 - **Commands**: `/awaken admin enchant learn <all|id> | remember all | forget` (server, for testing and tours); the
@@ -17160,7 +17186,8 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
   - **The look**: while the nearest player is you and you haven't learned it, its letters (`awaken:enchant_letter`, in
     its colour) lift off the face every three ticks and gather above it, with the paper hum (0.14) every 4.2 seconds;
     the moment you learn it 28 letters stream from the face into you; known, it goes quiet. Looking at it says, in its
-    colour, "A Word Stone carved with Insight. Hold your hand to it to learn it." (or "You know this one.").
+    colour, "A Word Stone carved with Insight. Hold your hand to it to learn it." (or "You know this one."). Learned while
+    you look, the line clears at once for the chat line that says what you learned, and stays away until you look elsewhere.
   - Test `enchant_word_stone` (every ruin kind places one, in open air on a floor; the sea set; the same seed the same
     carving; a touch teaches once).
 - **The wake's chord**: with the wake sound, the new enchantment's family note (0.8), and each other enchantment on the

@@ -96,7 +96,7 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         ItemStack piece = be.piece();
         s.armour = EnchantRules.armour(piece);
         if (piece.isEmpty() || (s.mine && InscribeScene.laying(pt))) s.piece.clear();
-        else items.updateForTopItem(s.piece, piece, ItemDisplayContext.FIXED, be.getLevel(), null, (int) be.getBlockPos().asLong());
+        else items.updateForTopItem(s.piece, be.shownPiece(), ItemDisplayContext.FIXED, be.getLevel(), null, (int) be.getBlockPos().asLong());
     }
 
     @Override
