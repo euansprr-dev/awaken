@@ -335,6 +335,12 @@ def parse_duel():
     return out
 
 
+def parse_burn():
+    """How long a burn lasts, seconds (Abilities.BURN_SECONDS: a FIRE bolt's hit and an IGNITE body's blow)."""
+    m = re.search(r"BURN_SECONDS\s*=\s*([\d.]+)F?;", _read("src/main/java/dev/awaken/mobs/entity/Abilities.java"))
+    return float(m.group(1))
+
+
 def parse_kits():
     """Every kit boss's move table and fight script (FightRunner fights them instead of the AbilityRunner and ToldMelee)."""
     path = os.path.join(ROOT, P_KIT, "index.json")
@@ -366,7 +372,7 @@ def load_world():
     return {"arch": parse_archetype(), "rules": parse_rules(), "weapons": parse_weapons(), "tiers": parse_tiers(),
             "ranks": parse_ranks(), "themes": parse_themes(), "models": parse_models(), "bolts": parse_bolts(),
             "mobs": parse_bestiary(meta), "scaling": parse_scaling(), "melee": parse_told_melee(), "kits": parse_kits(),
-            "duel": parse_duel()}
+            "duel": parse_duel(), "burn_s": parse_burn()}
 
 
 # ---- CONFIG: the game's numbers (parsed) plus the ASSUMED play and geometry ------------------------------------------
@@ -401,8 +407,8 @@ def default_config(W):
         "reach": {"ground": 0.85, "flier": 0.30, "mother_of_spores": 0.15, "out_ground": 12, "out_flier": 20},
         # creature numbers the sim needs that are not in a def: vanilla's flat parts, and what-if knobs
         "mobs": {
-            "ignite_s": 4,          # AwakenMob.java:595 (IGNITE: a melee hit sets you alight 4 s)
-            "fire_bolt_s": 3,       # Abilities.java:77 (any FIRE ability hit: 3 s)
+            "ignite_s": W["burn_s"],     # Abilities.BURN_SECONDS (IGNITE: a melee hit sets you alight; AwakenMob.doHurtTarget)
+            "fire_bolt_s": W["burn_s"],  # Abilities.BURN_SECONDS (any FIRE ability hit)
             "fang_flat": 6.0,       # vanilla EvokerFangs bite (Abilities.java:248)
             "fang_scaled": 0,       # 1: the fang bite deals the ability's own scaled damage instead
             "poison_scale": 1.0,    # what-if: poison seconds x this
@@ -932,7 +938,7 @@ class Fight:
             # the hazard top-up lands first (LIGHT: the caster's own blow), the vanilla fang's flat 6 after it as
             # indirect magic: NONE, through armour (Abilities.java:248-250, vanilla EvokerFangs: bite 8 ticks after warm-up)
             d0 = 0 if k == "FANGS" else self.rng.choice((0, 3))
-            if self.MC["fang_scaled"]:
+            if self.MC["fang_scaled"] or self.duel:  # a duel's fang bites for the ability's own damage (DuelFangs, SPEC §46.5)
                 out.append((d0 + 9, Blow(name, told, told, land0 + d0 + 9, factor=a["power"], expose=EXPOSE[k],
                                          pos=POSITIONAL[k], force=force, fx=fx)))
             else:

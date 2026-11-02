@@ -16941,3 +16941,38 @@ Shadow fights in phrases, opens up after each, recoils and reels when it's turne
 - Tour `tools/autopilot/fights-stage4.txt` (CI): the tell, `parried`, `reel` and the reel low for one body of each
   build (the Ember Tyrant, the Thornback, the Sovereign of Machines, Mother of Spores, the Sky Leviathan), then the Briar
   Sow broken: going over, down, getting up.
+- **A duel's fangs bite for its own blow.** Vanilla's evoker fang bites for a flat 6 whatever raised it, so a Lord
+  tuned to hit softly was out-hit by its own roots: the Root Saint's parrier lost nine fights in ten at any damage, a
+  third of it to the Root Ring. A duel boss's fang now carries its ability's own damage (`DuelFangs`: marked when it's
+  raised, its bite set to that before armour, blocks or anything else reads it), with nothing riding on it (no burn, no
+  effect). Every other caster's fangs keep vanilla's 6 and the top-up past it, as before. The sim does the same.
+  Test `fights_fang_bite` (a marked fang bites for its mark, an unmarked one for 6).
+- **The sim's burn** reads `Abilities.BURN_SECONDS` (1 s, §46.2); it had modelled 4 s on a fire bolt and 3 on Ignite.
+- **Tuned with the sim** (200 seeds a cell, the rank's forged longsword): every gate Lord to the approved targets
+  (§46.3) and as hard as its rank allows. Lords of E and D stay easier than the D Warden (the Ringer: dodger 76%,
+  parrier 85%), so their dodger wins at least 80% and their parrier 87%; C and above at least 70% and 85% (their
+  Wardens sit far lower, PLAN §4.7). Health sets the length (a parrier's win near 84 s), damage the danger.
+  `GateBestiary`, health and damage (were):
+
+  | Lord (rank) | Health, damage (were) | Tank wins (dies at) | Dodger | Parrier | Expert (health left) |
+  |---|---|---|---|---|---|
+  | Ember Tyrant (E) | 154, 1.11 (30, 5) | 0% (52 s) | 100%, 110 s | 92%, 88 s | 100%, 75 s (96%) |
+  | Hive Regent (E) | 41, 0.67 (28, 4.5) | 6% (72 s) | 94%, 87 s | 90%, 82 s | 100%, 72 s (93%) |
+  | Mother of Spores (E) | 56, 1.06 (28, 4) | 0% (46 s) | 88%, 99 s | 94%, 85 s | 100%, 74 s (100%) |
+  | Root Saint (E) | 158, 0.86 (30, 4.5) | 0% (50 s) | 98%, 113 s | 90%, 87 s | 100%, 72 s (99%) |
+  | Drowned Archivist (D) | 109, 2.02 (30, 4.5) | 0% (47 s) | 92%, 100 s | 100%, 81 s | 100%, 70 s (97%) |
+  | Lantern Broker (D) | 120, 2.78 (28, 4.5) | 0% (30 s) | 82%, 103 s | 100%, 83 s | 100%, 72 s (100%) |
+  | Abbot of Frost (C) | 73.5, 4.3 (28, 4.5) | 0% (40 s) | 80%, 93 s | 96%, 81 s | 100%, 75 s (92%) |
+  | Mirror Knight (C) | 103, 2.38 (30, 5) | 0% (52 s) | 84%, 107 s | 100%, 80 s | 100%, 69 s (87%) |
+  | The Sleeper (C) | 40, 3.78 (30, 4.5) | 0% (31 s) | 96%, 90 s | 94%, 81 s | 100%, 67 s (90%) |
+  | Unit Zero (C) | 115, 1.71 (28, 4.5) | 0% (29 s) | 80%, 107 s | 100%, 81 s | 100%, 69 s (100%) |
+  | Sky Leviathan (B) | 41.5, 5.73 (34, 5) | 0% (28 s) | 82%, 81 s | 95%, 83 s | 100%, 70 s (98%) |
+  | Hollow Herald (A) | 51, 6.5 (32, 5) | 0% (35 s) | 80%, 87 s | 100%, 84 s | 100%, 72 s (100%) |
+
+  At their old numbers as duels eleven of the twelve missed: the E Lords killed the parrier in 40-60 s (it won 8-68%),
+  and from D up they fell in under 70 s while the tank won up to 16%. The pilots and the Ringer are unchanged and still
+  pass. All 15 gate Lords meet every target; the Ringer is harder than every E and D Lord, and the C Warden's target
+  (60 / 65) sits under every C Lord. From C up the parrier wins 94-100%; the dodger is
+  the profile those fights test hardest.
+- **Not tuned:** the Deep's bosses (the Guardians, Nightmares, Sovereigns and the Signal's Shadow) fight as duels at
+  their own numbers. The sim reads only `GateBestiary`, so their numbers are unverified as duels.

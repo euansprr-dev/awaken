@@ -29,6 +29,7 @@ public final class MobsModule {
         MobParticles.init(modBus);
         MobLoot.init(modBus);
         dev.awaken.mobs.entity.Topple.init(modBus); // big beasts go down on a broken stance (SPEC §46.5)
+        dev.awaken.mobs.entity.DuelFangs.init(modBus); // a duel's fangs bite for its own damage (SPEC §46.5)
         MobsEvents.init(modBus);
         dev.awaken.mobs.net.MobsNet.init(modBus);
         MobHooks.install(new MobsSpawner());

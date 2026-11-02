@@ -282,7 +282,14 @@ final class Abilities {
         } while (pos.getY() >= Mth.floor(minY) - 1);
         if (y < 0 && pos.getY() < level.getMinY()) return;
         if (y < 0) y = minY + 2;
-        level.addFreshEntity(new EvokerFangs(level, x, y, z, rot, delay, mob));
+        EvokerFangs fang = new EvokerFangs(level, x, y, z, rot, delay, mob);
+        if (mob instanceof AwakenBoss b && b.duel()) {
+            // a duel's fang bites for the boss's own blow, nothing riding on it (SPEC §46.5)
+            DuelFangs.mark(fang, damage(mob, a));
+            level.addFreshEntity(fang);
+            return;
+        }
+        level.addFreshEntity(fang);
         // Vanilla fangs bite for a flat 6; top up so the attack scales with the caster's level.
         float extra = damage(mob, a) - 6.0F;
         if (extra > 0) Hazards.strike(level, mob, new Vec3(x, y, z), 0.9F, delay + 2, extra, bolt(mob, a), effect(mob, a));

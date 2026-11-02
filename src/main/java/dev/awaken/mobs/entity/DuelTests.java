@@ -15,6 +15,7 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.pig.Pig;
+import net.minecraft.world.entity.projectile.EvokerFangs;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
@@ -35,6 +36,7 @@ public final class DuelTests {
         AwakenTests.register("fights_shot_returns", 100, DuelTests::shotReturns);
         AwakenTests.register("fights_duel_stance", 60, DuelTests::duelStance);
         AwakenTests.register("fights_topple", 100, DuelTests::topple);
+        AwakenTests.register("fights_fang_bite", 60, DuelTests::fangBite);
     }
 
     /** The Gearwright's sweep and chop, then nothing for at least the shortest opening, and it stands open through it. */
@@ -219,6 +221,28 @@ public final class DuelTests {
             beast.discard();
             pig.discard();
             h.succeed();
+        });
+    }
+
+    /** A duel's fang bites for what it was marked with (its boss's own blow); any other fang for vanilla's 6. */
+    static void fangBite(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        Pig a = pig(h, 2.5), b = pig(h, 6.5), owner = pig(h, 10.5);
+        boolean[] raised = {false};
+        h.onEachTick(() -> {
+            if (!raised[0]) {
+                raised[0] = true; // still pigs (no AI) never settle: the fangs rise where they hang
+                EvokerFangs marked = new EvokerFangs(level, a.getX(), a.getY(), a.getZ(), 0F, 0, owner);
+                DuelFangs.mark(marked, 2.5F);
+                level.addFreshEntity(marked);
+                level.addFreshEntity(new EvokerFangs(level, b.getX(), b.getY(), b.getZ(), 0F, 0, owner));
+                return;
+            }
+            if (a.getHealth() < 1000 && b.getHealth() < 1000) {
+                h.assertTrue(Math.abs(1000 - a.getHealth() - 2.5F) < 0.01F, "a duel's fang bites for its mark: " + (1000 - a.getHealth()));
+                h.assertTrue(Math.abs(1000 - b.getHealth() - 6F) < 0.01F, "any other fang for vanilla's 6: " + (1000 - b.getHealth()));
+                h.succeed();
+            }
         });
     }
 
