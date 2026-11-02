@@ -5,6 +5,8 @@ RitualAudio's mix (six voices with the bed, two heavy at once, per-sound gaps, t
 
     python3 tools/art/ritual_bounce.py today OUT.wav                 today's files and mix
     python3 tools/art/ritual_bounce.py v2 OUT.wav CUE_DIR            ritual_v2.py's cues and the proposed mix
+    python3 tools/art/ritual_bounce.py v3 OUT.wav CUE_DIR [nopulse]  v2 plus Euan's first listen: the plates' timers,
+                                                                      hits that land, and the hall's pulse under it all
 
 The listener stands in the nave 15 blocks in from the doors, facing the throne, and kneels at BOW (so no rule strike).
 It is a model of the game, not a recording of it: no Sound Physics, no occlusion, no Doppler.
@@ -55,9 +57,17 @@ class Mix:
         """Queued: the beats schedule their cues out of order; flush() plays them in time, as the game would."""
         self.queue.append((tick, len(self.queue), args, kw, self.reading_until))
 
+    def cut(self, tick, name, fade=0.08):
+        """Queued: stop every voice of `name` at this tick (SoundManager.stop on the instance, with a short fade)."""
+        self.queue.append((tick, len(self.queue), (name, fade), {"_cut": True}, self.reading_until))
+
     def flush(self):
         for tick, _, args, kw, reading in sorted(self.queue, key=lambda q: (q[0], q[1])):
             self.reading_until = reading
+            if kw.get("_cut"):
+                for v in [v for v in self.voices if v.get("name") == args[0] and v["end"] > tick]:
+                    self.stop(v, tick, args[1])
+                continue
             self.now(tick, *args, **kw)
         self.queue = []
 
@@ -127,7 +137,7 @@ class Mix:
                 seg[b:b + len(part), 1] = part * math.sin(pan * math.pi / 2)
             self.log.append((tick, name, f"world d {dist(at, LISTEN):.0f} vol {vol:.2f} att {att:.0f}"))
         self.out[i0:i0 + n] += seg
-        self.voices.append({"end": tick + int(n / SR / TICK) + 1, "group": group, "start": tick, "i0": i0, "seg": seg})
+        self.voices.append({"end": tick + int(n / SR / TICK) + 1, "group": group, "start": tick, "i0": i0, "seg": seg, "name": name})
 
     def stop(self, v, tick, fade):
         """Take back what a voice would still have played after this tick (with a fade, or cut)."""
@@ -174,8 +184,9 @@ def bed(mix, start_tick, end_tick, name, level, reading, r):
     mix.out[i0:i1] += loop * (vol * jv)[:, None]
 
 
-def run(mode, cue_dir=None):
-    v2 = mode == "v2"
+def run(mode, cue_dir=None, pulse=True):
+    v3 = mode == "v3"
+    v2 = mode in ("v2", "v3")
     r = {"voices": 6, "heavy": 2, "foot_gap": 4, "gaps": True, "read_duck": 0.45, "bed_read": 0.16,
          "json_volume": {}, "attenuation": {}, "dir": {}, "heavy_hits": []}
     if v2:
@@ -187,6 +198,10 @@ def run(mode, cue_dir=None):
                             "swing": 32, "swing2": 32, "windup": 32, "gaze_charge": 96, "gaze_fire": 96, "gaze_travel": 48,
                             "gaze_impact": 64, "pit": 64, "statue_rise": 96, "rumble": 96, "doors": 80, "flames_out": 80}
         r["json_volume"] = {"candle": 1.0}
+    if v3:
+        # hits land: louder and further than the steps; the plates' timers carry to the whole hall
+        r["attenuation"].update({"impact": 64, "impact2": 64, "plate_tick": 96, "plate_tock": 96, "plate_rise": 96})
+        r["v3"] = True
     total = sum(n for _, n in BEATS) + 200 + 60
     mix = Mix(total * TICK + 12, {}, r)
     G = (lambda old, new: new if v2 else old)
@@ -220,6 +235,8 @@ def run(mode, cue_dir=None):
     mix.reading_until = T + ring_read
     for k, at in enumerate((40, 140, 240)):
         mix.play(T + at, "bell", G(0.38, 0.6), 0, G(100, 10), PLATES[k], pitch=1.26 + k * 0.25, range_=96)
+        if v3:
+            plate_timer(mix, T + at, k)
     # BE JUDGED
     T = t0["JUDGED"]
     mix.play(T, "bell", G(0.6, 0.85), 0, G(100, 10), BELL, pitch=0.89, range_=96)
@@ -241,7 +258,7 @@ def run(mode, cue_dir=None):
         r["heavy_hits"].append((T + 92, 50))
     # beat 4: the Judgement
     T = t0["JUDGEMENT"]
-    judgement(mix, T, v2, r)
+    judgement(mix, T, v2, r, v3)
     # beat 5: the end
     T = t0["END"]
     if v2:
@@ -258,6 +275,8 @@ def run(mode, cue_dir=None):
     mix.play(end, "close", G(0.65, 1.0), 0, 20)
     # the hall's bed under it all
     bed(mix, 0, end, "hall", 0.5, reading, r)
+    if v3 and pulse:
+        hall_pulse(mix, t0, end, r)
     # the void: the black, a far bell, the heartbeat
     V = end + 8
     bed(mix, V, V + 200, "void", 0.25, [], r)
@@ -272,7 +291,7 @@ def run(mode, cue_dir=None):
     return y, mix.log, t0
 
 
-def judgement(mix, T, v2, r):
+def judgement(mix, T, v2, r, v3=False):
     """The statues advance (two at once for one player), wind up, swing; the gaze five times; pits."""
     statues = [list(s) for s in STATUES]
     busy = {}
@@ -306,7 +325,7 @@ def judgement(mix, T, v2, r):
                     w["acc"] -= plant_every
                     step_n += 1
                     name = f"footstep{(w['i'] + step_n) % (4 if v2 else 3) + 1}"
-                    mix.play(T + tick, name, G2(v2, 0.48, 0.9), 2, 0, tuple(s), range_=G2(v2, 36, 48))
+                    mix.play(T + tick, name, 0.8 if v3 else G2(v2, 0.48, 0.9), 2, 0, tuple(s), range_=G2(v2, 36, 48))
                 if dist(s, LISTEN) <= 3.0 or tick - w["since"] >= 80:
                     w["phase"], w["since"] = 1, tick
                     if v2:
@@ -320,12 +339,93 @@ def judgement(mix, T, v2, r):
                     fwd = (LISTEN[0] - s[0], LISTEN[1] - s[1])
                     ln = max(1e-6, math.hypot(*fwd))
                     hit = (s[0] + fwd[0] / ln * 2.5, s[1] + fwd[1] / ln * 2.5, 0.0)
-                    mix.play(T + tick, "impact" if not v2 or w["i"] % 2 == 0 else "impact2", G2(v2, 0.55, 1.0), 1, 4, hit, range_=G2(v2, 32, 56))
+                    mix.play(T + tick, "impact" if not v2 or w["i"] % 2 == 0 else "impact2", G2(v2, 0.55, 1.0), 1, 4, hit, range_=64 if v3 else G2(v2, 32, 56))
                     if v2:
                         r["heavy_hits"].append((T + tick, 24))
+                    # it caught you (the first two times; a player moves after that)
+                    if v3 and dist(s, LISTEN) <= 3.8 and r.setdefault("struck", 0) < 2:
+                        r["struck"] += 1
+                        mix.play(T + tick + 1, "struck", 0.9, 0, 10)
             elif tick - w["since"] >= 22:
                 swings.remove(w)
                 busy.pop(w["i"], None)
+
+
+# a plate's timer: ticks from the plate, faster and louder to its deadline (80 ticks), stopped when you stand on it
+PLATE_TICKS = (6, 14, 22, 29, 36, 42, 48, 53, 58, 62, 66, 70, 73, 76, 79)
+PLATE_ANSWER = (50, 57, 63)  # when the bounce's player reaches each plate (ticks after it lights)
+
+
+def plate_timer(mix, lit, k):
+    on = PLATE_ANSWER[k]
+    mix.play(lit, "plate_rise", 0.32, 0, 0, PLATES[k], range_=1e9)
+    for j, dt in enumerate(PLATE_TICKS):
+        if dt >= on:
+            break
+        u = dt / 80
+        mix.play(lit + dt, "plate_tick" if j % 2 == 0 else "plate_tock", 0.55 + 0.45 * u, 0, 0, PLATES[k],
+                 pitch=1.0 + 0.12 * u, range_=1e9)
+    mix.cut(lit + on, "plate_rise", 0.06)
+    mix.play(lit + on, "plate_lock", 0.8, 0, 0, pitch=1.0 + k * 0.19)
+
+
+def hall_pulse(mix, t0, end, r):
+    """The hall's pulse and the tone under it (music: its own channels, outside the effects budget). A soft drum
+    while it waits, quickening through the rings, racing to the god's eyes, driving the Judgement; gone when the hand
+    rises, the tone rising and bending up to the close, then cut with everything else."""
+    hits = []  # (tick, name, gain)
+
+    def every(a, b, step, name, gain, accent=None):
+        t = a
+        k = 0
+        while t < b:
+            g = gain if accent is None or k % accent else min(1.0, gain * 1.45)
+            hits.append((t, name if accent is None or k % accent else "pulse_hard", g))
+            t += step
+            k += 1
+    D, B, R, J, W, JU, E = (t0[b] for b in ("DOORS", "BOW", "RING", "JUDGED", "WAKING", "JUDGEMENT", "END"))
+    every(D + 60, B, 30, "pulse_soft", 0.32)
+    every(B, R, 30, "pulse_soft", 0.38)
+    every(R + 10, J, 20, "pulse_soft", 0.42)
+    every(J + 30, W, 25, "pulse_soft", 0.48)
+    # racing to the eyes: the gaps shrink from 16 ticks to 3 and land on the bloom
+    t = W + 58
+    gaps = [3, 3, 4, 4, 5, 5, 6, 7, 8, 10, 12, 14]
+    seq = []
+    for g in gaps:
+        t -= g
+        seq.append(t)
+    for i, tt in enumerate(sorted(seq)):
+        hits.append((tt, "pulse_soft", 0.4 + 0.3 * i / len(seq)))
+    hits.append((W + 58, "pulse_hard", 0.95))
+    hits.append((W + 92, "pulse_hard", 0.95))
+    every(W + 110, JU, 16, "pulse_soft", 0.5, accent=4)
+    every(JU, E, 16, "pulse_soft", 0.5, accent=4)
+    for tick, name, gain in hits:
+        x = mix.clip(name)
+        x = K.stereo(x) if x.ndim == 1 else x
+        i0 = K.ns(tick * TICK)
+        n = min(len(x), K.ns(end * TICK) - i0)
+        if n > 0:
+            duck = 0.55 if any(ht <= tick < ht + hd for ht, hd in r["heavy_hits"]) else 1.0
+            mix.out[i0:i0 + n] += x[:n] * gain * duck
+    # the tone: in with the flames dying, up beat by beat, bent up a minor third through the End
+    x = mix.clip("pulse_drone")
+    i0, i1 = K.ns((D + 34) * TICK), K.ns(end * TICK)
+    n = i1 - i0
+    lv = [(D + 34, 0.0), (D + 110, 0.22), (B, 0.26), (R, 0.32), (J, 0.42), (W, 0.5), (W + 58, 0.62), (JU, 0.5),
+          (E, 0.55), (end - 10, 0.95), (end, 0.95)]
+    ticks = np.arange(n) / SR / TICK + D + 34
+    level = np.interp(ticks, [a for a, _ in lv], [b for _, b in lv])
+    for ht, hd in r["heavy_hits"]:
+        m = (ticks >= ht) & (ticks < ht + hd)
+        level[m] *= 0.6
+    rate = np.where(ticks < E, 1.0, 2 ** ((3 * np.clip((ticks - E) / (end - E), 0, 1) ** 1.5) / 12))
+    pos = np.cumsum(rate)
+    loop = np.tile(x, (int(pos[-1] // len(x)) + 2, 1))
+    idx = np.arange(len(loop))
+    y = np.stack([np.interp(pos, idx, loop[:, c]) for c in (0, 1)], axis=1)
+    mix.out[i0:i1] += y * level[:, None]
 
 
 def G2(v2, old, new):
@@ -334,7 +434,7 @@ def G2(v2, old, new):
 
 if __name__ == "__main__":
     mode, out = sys.argv[1], sys.argv[2]
-    y, log, t0 = run(mode, sys.argv[3] if len(sys.argv) > 3 else None)
+    y, log, t0 = run(mode, sys.argv[3] if len(sys.argv) > 3 else None, pulse="nopulse" not in sys.argv[4:])
     data = np.clip(y, -1, 1).astype("<f4").tobytes()
     import subprocess
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ar", str(SR), "-ac", "2", "-i", "pipe:0", out], input=data, check=True)

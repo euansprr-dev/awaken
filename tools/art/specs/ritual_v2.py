@@ -244,30 +244,177 @@ def whoosh(v=0):
 
 
 def strike(v=0):
-    """The glaive's blade into the floor 2.5 blocks ahead: a crack, a crunch of stone, a boom felt in the chest,
-    rubble raining back down, dust, and the hall ringing."""
-    x = np.zeros(K.ns(3.6))
-    # the crack: rock on rock, two contacts a hair apart (blade, then the shaft's weight behind it)
-    for k, (h, rate, g) in enumerate(((HITS[(4 + v) % 8], 0.78, 1.0), (HITS[(6 + v) % 8], 0.66, 0.55))):
-        c = take("stone_fall", h - 0.003, 0.3, rate=rate)
-        c = env(K.highpass(c, 220, 2), [(0, 0), (0.001, 1), (0.04, 0.5), (0.15, 0.12), (0.3, 0)])
-        place(x, norm(c), 0.012 * k, 0.55 * g)
-    # a pick biting stone: the chink and the crunch
-    m = take(f"mine{(0, 1, 3)[v % 3]}", 0, 0.9, rate=0.72)
-    place(x, norm(K.lowpass(m, 3500, 2)), 0.0, 0.5)
-    # the boom: punch and pressure, and a felt drop
-    p = take(f"punch{2 + v}", 0, 0.5, rate=0.52)
-    place(x, norm(K.lowpass(p, 380, 2)), 0.0, 0.8)
-    bl = env(take("blast", 0.02, 1.6, rate=0.8), [(0, 0), (0.004, 1), (0.25, 0.45), (1.6, 0)])
-    place(x, norm(K.lowpass(bl, 420, 2)), 0.0, 0.6)
-    place(x, sub(1.8, 50, 26, 1.0), 0.0, 0.85)
-    # rubble raining back down and grit
-    d = take("stone_fall", RUBBLE[(v + 1) % 5], 1.6, rate=0.9)
-    d = env(K.highpass(d, 500, 2), [(0, 0), (0.06, 0.4), (0.25, 1), (0.9, 0.4), (1.6, 0)])
-    place(x, norm(d), 0.08, 0.16)
-    place(x, noise_env(1.2, 1200, 7000, [(0, 0), (0.005, 1), (0.2, 0.35), (1.2, 0)], 61 + v), 0.0, 0.07)
-    y = room(x, t60=2.8, wet=0.3, seed=11)
+    """The glaive's blade into the floor 2.5 blocks ahead, as crack + boom (v3, Euan 2026-11-02: "the hit feels really
+    bad"). v2 put nearly all its energy in the sub, so the -1 dBTP ceiling went to the boom, the crack sat 10 dB down
+    and on laptop speakers a hit read like a footstep. Now the crack leads: stone splitting and the blade's edge biting
+    (1-5 kHz), then the body a laptop can play (100-300 Hz), the boom under it, rubble raining back and the hall
+    answering. Lows and highs are limited apart so the boom can't eat the crack's headroom; about 6 LU louder than a
+    footstep at its peak."""
+    L = 3.4
+    hi = np.zeros(K.ns(L))
+    lo = np.zeros(K.ns(L))
+    # the crack: rock splitting under the blade, then the shaft's weight a hair behind it, near natural pitch
+    for k, (h, rate, g) in enumerate(((HITS[(4 + v) % 8], 0.96, 1.0), (HITS[(6 + v) % 8], 0.84, 0.6), (HITS[(1 + v) % 8], 1.1, 0.35))):
+        c = take("stone_fall", h - 0.002, 0.26, rate=rate)
+        c = env(K.highpass(c, 450, 2), [(0, 0), (0.0006, 1), (0.025, 0.45), (0.1, 0.1), (0.26, 0)])
+        place(hi, norm(c), (0.0, 0.011, 0.024)[k], g)
+    # the blade's edge biting stone: a pick's chink, and a short dark ring of the edge
+    m = take(f"mine{(0, 1, 3)[v % 3]}", 0, 0.5, rate=0.9)
+    place(hi, norm(K.highpass(m, 300, 2)), 0.0, 0.75)
+    e = take(f"plate{(2 + v) % 5}", 0, 0.5, rate=0.66)
+    e = env(K.bandpass(e, 1300, 1.4), [(0, 0), (0.001, 1), (0.08, 0.4), (0.5, 0)])
+    place(hi, norm(e), 0.002, 0.28)
+    # rubble raining back down, a second scatter as the chips land, grit and dust
+    d = take("stone_fall", RUBBLE[(v + 1) % 5], 1.6, rate=0.95)
+    d = env(K.highpass(d, 600, 2), [(0, 0), (0.04, 0.5), (0.2, 1), (0.9, 0.35), (1.6, 0)])
+    place(hi, norm(d), 0.06, 0.32)
+    d2 = take("stone_fall", RUBBLE[(v + 3) % 5], 0.9, rate=1.05)
+    d2 = env(K.highpass(d2, 900, 2), [(0, 0), (0.01, 1), (0.4, 0.3), (0.9, 0)])
+    place(hi, norm(d2), 0.48, 0.16)
+    place(hi, noise_env(1.3, 1400, 8000, [(0, 0), (0.004, 1), (0.15, 0.35), (1.3, 0)], 61 + v), 0.0, 0.1)
+    # the body a laptop can play: a heavy soft impact a fifth down, kept in 100-300 Hz
+    bd = take(f"soft{(v + 2) % 5}", 0, 0.6, rate=0.6)
+    place(lo, norm(K.bandpass(bd, 170, 0.8)), 0.003, 0.9)
+    pu = take(f"punch{2 + v}", 0, 0.5, rate=0.55)
+    place(lo, norm(K.lowpass(pu, 360, 2)), 0.004, 0.7)
+    # the boom: pressure and a felt drop, starting 6 ms after the crack so their peaks don't stack
+    bl = env(take("blast", 0.02, 1.4, rate=0.85), [(0, 0), (0.004, 1), (0.2, 0.4), (1.4, 0)])
+    place(lo, norm(K.lowpass(bl, 320, 2)), 0.006, 0.55)
+    place(lo, sub(1.3, 64, 30, 0.6, drive=2.6), 0.006, 0.8)
+    # each band through the hall, the highs with a slap off the far wall
+    hi = room(hi, t60=2.8, wet=0.32, bright=0.3, seed=11)
+    slap = K.lowpass(np.concatenate([np.zeros(K.ns(0.105)), hi[:K.ns(0.6)]]), 3000, 2)
+    hi = hi[:len(hi)]
+    place(hi, slap, 0.0, 0.18)
+    # each band limited on its own: the crack's needle-thin spike is shaved so its body comes up, the boom held
+    # under it
+    hi = K.limit(norm(hi) * K.dbamp(10), -1.0, release=0.04)
+    lo = room(lo, t60=2.4, wet=0.18, seed=11)
+    lo = K.limit(norm(lo) * K.dbamp(5), -1.0, release=0.12)
+    n = max(len(hi), len(lo))
+    y = K.pad_to(hi, n) * 1.0 + K.pad_to(lo, n) * K.dbamp(1.5)
     return trim(finish(y, -1.0, push=6.0))
+
+
+def struck():
+    """New (v3): the glaive catches YOU. A body blow in your own head (both ears): the hit, a felt thump, a scrape of
+    stone across armour, and a thin ring in the ears that fades as you get up."""
+    L = 1.8
+    x = np.zeros((K.ns(L), 2))
+    p = take("punch1", 0, 0.5, rate=0.78)
+    place(x, norm(K.lowpass(p, 2500, 2)), 0.0, 0.9)
+    so = take("soft0", 0, 0.5, rate=0.7)
+    place(x, norm(K.lowpass(so, 900, 2)), 0.002, 0.6)
+    place(x, sub(0.5, 82, 44, 0.28, drive=2.4), 0.0, 0.75)
+    sc = take("tomb", 4.2, 0.35, rate=0.95)
+    sc = env(K.bandpass(sc, 1800, 0.8), [(0, 0), (0.01, 1), (0.12, 0.4), (0.35, 0)])
+    place(x, norm(sc), 0.015, 0.22)
+    n = K.ns(1.6)
+    ring = (K.sine(3150, n) * 0.6 + K.sine(4410, n) * 0.4) * K.perc(n, 0.04, 2.0)
+    rl = np.stack([ring, np.roll(ring, 9)], axis=1)
+    place(x, rl, 0.06, 0.07)
+    return trim(finish(x, -1.0, push=5.0), floor_db=-64)
+
+
+# =====================================================================================================================
+# v3, from Euan's first listen (2026-11-02): "the rings should get some kind of tick timer ... so you actually feel the
+# pressure of needing to go there", and too many empty gaps where "everything stops in a weird way"
+# =====================================================================================================================
+
+def plate_tick(v=0):
+    """The plate's timer, from the lit plate itself so it says where to go: a stone escapement, tick (v 0) and tock
+    (v 1). The game plays them faster and louder toward the plate's deadline and stops them when you stand on it."""
+    L = 0.32
+    x = np.zeros(K.ns(L))
+    f0 = (1240.0, 830.0)[v]
+    n = K.ns(L)
+    place(x, K.modal(f0, (1.0, 2.31, 3.9, 5.6), (1.0, 0.45, 0.22, 0.1), (0.1, 0.07, 0.045, 0.03), n, attack=0.0008, seed=171 + v), 0.0, 0.8)
+    c = take("mine1", 0.0, 0.08, rate=(1.35, 1.15)[v])
+    c = env(K.highpass(c, 2200, 2), [(0, 0), (0.0005, 1), (0.012, 0.3), (0.05, 0)])
+    place(x, norm(c), 0.0, 0.6)
+    place(x, sub(0.12, (190, 150)[v], 120, 0.06, attack=0.001, drive=1.5), 0.0, 0.35)
+    y = room(x, t60=1.6, wet=0.16, bright=0.4, seed=13)
+    return trim(finish(y, -2.0, push=5.0), floor_db=-48)
+
+
+def plate_rise():
+    """Under the ticks, the plate's four seconds tightening: low stone pressure and a grinding air that rise and
+    brighten to the deadline, then cut. The game stops it the moment you stand on the plate."""
+    L = 4.0
+    n = K.ns(L)
+    t = K.tvec(n)
+    u = t / L
+    x = np.zeros(n)
+    g = take("tomb", 6.0, L, rate=0.62)
+    centre = lambda tc: 220 + 1400 * (tc / L) ** 2.2
+
+    def resp(tc, f):
+        c = centre(tc)
+        return 1.0 / np.sqrt(1 + ((f - c) / (0.5 * c)) ** 2) ** 2
+    g = norm(K.stft_filter(g, resp, frame=2048, hop=256))
+    x += g * (0.15 + 0.85 * u ** 1.8) * 0.5
+    w = take("wind", 12.0, L, rate=0.85)
+    w = norm(K.stft_filter(w, lambda tc, f: 1.0 / np.sqrt(1 + ((f - (400 + 2600 * (tc / L) ** 2)) / 600.0) ** 2) ** 2, frame=2048, hop=256))
+    x += w * u ** 2.4 * 0.35
+    f = 55 * 2 ** (u * 7 / 12)
+    x += sat(np.sin(2 * np.pi * np.cumsum(f) / SR) * (0.2 + 0.8 * u ** 1.5), 1.6) * 0.45
+    x = env(x, [(0, 0), (0.3, 1), (L - 0.03, 1), (L, 0)])
+    y = room(x, t60=2.4, wet=0.18, seed=13)[:n]
+    return finish(y, -3.0, push=1.5, tail=0.02)
+
+
+def plate_lock():
+    """You stood on it in time: the timer stops, a stone latch drops into place and the plate hums once, low and
+    settled (the game pitches it per plate, with the plate's toll)."""
+    L = 1.6
+    x = np.zeros(K.ns(L))
+    c = take("stone_fall", HITS[2] - 0.003, 0.3, rate=0.72)
+    place(x, norm(K.lowpass(env(c, [(0, 0), (0.001, 1), (0.05, 0.3), (0.3, 0)]), 2600, 2)), 0.0, 0.7)
+    s = take("soft3", 0, 0.4, rate=0.75)
+    place(x, norm(K.lowpass(s, 600, 2)), 0.004, 0.5)
+    n = K.ns(1.5)
+    hum = K.modal(146.8, (1.0, 2.0, 3.0, 4.2), (1.0, 0.5, 0.25, 0.08), (1.4, 1.0, 0.7, 0.4), n, attack=0.02, seed=181, detune_cents=3, pair=0.5)
+    place(x, hum, 0.03, 0.32)
+    y = room(x, t60=2.6, wet=0.25, seed=13)
+    return trim(finish(y, -2.0, push=2.5))
+
+
+def pulse_drum(v=0):
+    """The hall's pulse (v3): the beat that carries the ritual from the doors to the hand, so it never stops dead
+    between moments. A huge muffled stone drum far off in the dark: soft (v 0) for the waiting, hard (v 1) to drive
+    the Judgement. Scene sound, both ears; the game sets the tempo by beat."""
+    L = 2.6
+    x = np.zeros(K.ns(L))
+    so = take(f"soft{(1, 4)[v]}", 0, 0.7, rate=(0.48, 0.55)[v])
+    place(x, norm(K.lowpass(so, (240, 420)[v], 2)), 0.0, 0.9)
+    place(x, sub(1.1, (68, 82)[v], (46, 50)[v], (0.45, 0.38)[v], attack=0.006, drive=(1.6, 2.2)[v]), 0.004, 0.9)
+    if v:
+        pu = take("punch3", 0, 0.4, rate=0.6)
+        place(x, norm(K.lowpass(pu, 900, 2)), 0.0, 0.35)
+    skin = noise_env(0.25, 120, 900, [(0, 0), (0.002, 1), (0.05, 0.2), (0.25, 0)], 191 + v)
+    place(x, skin, 0.0, 0.12)
+    y = room(x, t60=3.6, wet=(0.45, 0.35)[v], bright=0.2, seed=19)
+    return trim(finish(y, -2.0, push=(2.5, 3.5)[v]))
+
+
+def pulse_drone():
+    """Under the pulse, a dark sustained tone that never lets the hall fall silent (v3): low strings on D with the
+    stone's own drone, a fifth above it faint. A seamless 20 s loop, stereo; the game raises it beat by beat and
+    bends it up through the End until the hand closes."""
+    L = 22.0
+    n = K.ns(L)
+    x = np.zeros((n, 2))
+    for c in (0, 1):
+        st = K.strings(73.42, n, voices=5, seed=201 + c, bright=0.32, vib_cents=6, spread=9.0)
+        fi = K.strings(110.0, n, voices=4, seed=211 + c, bright=0.28, vib_cents=5, spread=8.0)
+        x[:, c] += norm(K.lowpass(st, 1400, 2)) * 0.55 + norm(K.lowpass(fi, 1200, 2)) * 0.18
+    dr = K.drone(36.71, n, partials=(1, 2, 3), amps=(0.4, 0.6, 0.25), beat=0.09, seed=221)
+    x += norm(dr)[:, None] * 0.3
+    x *= (0.8 + 0.2 * K.smooth_noise(n, 0.12, 222))[:, None]
+    y = room(x, t60=3.8, wet=0.3, seed=19, stereo=True)[:n]
+    y = K.loop_seamless(y, 2.0)
+    y = K.highpass(y, 32, 4)
+    return y / max(np.max(np.abs(y)), 1e-9) * K.dbamp(-9)
 
 
 def rise():
@@ -590,6 +737,14 @@ CUES = {
     "swing2": (lambda: whoosh(1), "the glaive coming down, take 2 (new)"),
     "impact": (lambda: strike(0), "the blade into the floor"),
     "impact2": (lambda: strike(1), "the blade into the floor, take 2 (new)"),
+    "struck": (struck, "new (v3): the glaive catches you"),
+    "plate_tick": (lambda: plate_tick(0), "new (v3): a plate's timer, tick"),
+    "plate_tock": (lambda: plate_tick(1), "new (v3): a plate's timer, tock"),
+    "plate_rise": (plate_rise, "new (v3): a plate's four seconds tightening"),
+    "plate_lock": (plate_lock, "new (v3): you stood on it in time"),
+    "pulse_soft": (lambda: pulse_drum(0), "new (v3): the hall's pulse, waiting"),
+    "pulse_hard": (lambda: pulse_drum(1), "new (v3): the hall's pulse, judging"),
+    "pulse_drone": (pulse_drone, "new (v3): the tone under the pulse (loop)"),
     "statue_rise": (rise, "the twelve stand"),
     "eyes": (eyes, "its eyes open"),
     "gaze_charge": (gaze_charge, "the beam gathers (2.25 s, to the tick)"),
