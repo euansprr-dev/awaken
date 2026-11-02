@@ -46,6 +46,7 @@ final class BellTests {
         AwakenTests.register("bells_wagon", 20, BellTests::wagon);
         AwakenTests.register("bells_old_towers", 20, BellTests::oldTowers);
         AwakenTests.register("bells_lord_room", 20, BellTests::lordRoom);
+        AwakenTests.registerIsolated("bells_lord_bell_full_pockets", 100, BellTests::lordBellFullPockets);
     }
 
     /**
@@ -316,6 +317,35 @@ final class BellTests {
             if (h.getLevel().getBlockState(b).is(BellContent.FOUND_BELL.get())) FoundBells.lift(h.getLevel(), b.immutable(), p);
         for (BlockPos b : BlockPos.betweenClosed(c.offset(-6, -3, -6), c.offset(6, 3, 6)))
             if (h.getLevel().getBlockState(b).is(BellContent.FOUND_BELL.get())) h.getLevel().setBlock(b, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+    }
+
+    /**
+     * A Lord's bell lifted in a gate with full pockets (SPEC §43.16 stage 4, §7 "Held for you"): it isn't dropped on the
+     * floor but held for you, to take from the inventory's panel.
+     */
+    static void lordBellFullPockets(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        dev.awaken.gates.GateService.useTestLevel(level);
+        dev.awaken.gates.GateRecord g = null;
+        ServerPlayer p = null;
+        try {
+            g = dev.awaken.gates.GateLiveTests.standUp(h, dev.awaken.gates.GateLiveTests.plan(4307, dev.awaken.gates.content.Theme.BELL_CRYPT,
+                    dev.awaken.gates.content.Layout.LABYRINTH, dev.awaken.gates.content.Twist.NONE, 0), 0, 1);
+            p = dev.awaken.gates.GateLiveTests.player(h);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            for (int i = 0; i < p.getInventory().getNonEquipmentItems().size(); i++) p.getInventory().setItem(i, new ItemStack(Items.COBBLESTONE, 64));
+            h.assertTrue(dev.awaken.gates.run.Runs.enter(p, g), "entered");
+            BlockPos at = FoundBells.keep(level, p.blockPosition(), g.key(), BellCatalog.of("wren").no(), "under an E gate's Lord, where the gate had taken it", List.of(p.getUUID()));
+            h.assertTrue(at != null, "the bell lies on the floor");
+            int near = level.getEntitiesOfClass(ItemEntity.class, p.getBoundingBox().inflate(6)).size();
+            FoundBells.lift(level, at, p);
+            boolean held = dev.awaken.gates.run.Spoils.held(p).items.stream().anyMatch(s -> BellCatalog.of("wren").equals(BellItem.def(s)));
+            h.assertTrue(Bells.has(p, "wren") && held, "lifted with full pockets, the bell is held for you");
+            h.assertTrue(level.getEntitiesOfClass(ItemEntity.class, p.getBoundingBox().inflate(6)).size() == near, "and nothing fell to the floor");
+        } finally {
+            dev.awaken.gates.GateLiveTests.teardown(level, p, g);
+        }
+        h.succeed();
     }
 
     /**
