@@ -6157,7 +6157,8 @@ of the plan). No mixins.
   half the frame): drawn in the hand pass, each fist where the world puts it on screen but at 0.85 from the eye, the arm
   rising to it from under the frame's corner on its side (view (±0.5, -0.85, -0.1)); vanilla's hands step aside. No
   torso (from inside the head it is only a slab under the camera). Never in third person. Like vanilla's hands, none of
-  it shows with the HUD hidden (F1).
+  it shows with the HUD hidden (F1). It draws from your eyes, the furnace station's lowered view, or a scene's own camera
+  standing in for them (`FirstPerson.camera(owns)`, read only when the view isn't your eyes: the War Anvil's, §46.3).
 - **View layer** (`anims.client.Hands`, the one owner of `RenderHandEvent`, first for each hand and last for the off
   hand): every `ViewPose` stance adds moves (view space: x right, y up, z toward you, blocks; then pitch, yaw, roll in
   degrees) for both hands, the main or the off hand; the body's stances (sprint, slide, hang, mantle) and the rope's
@@ -8199,7 +8200,8 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   Armour, Weapons, Bells, Gates and rank, Out there), each with its needs (an item, a tag or a condition, have and
   need), a place, a place on the main path, optional or not, choices (the armour sets) and the Now suggestions it
   covers. The main path: start 0, the fire 10, a first room 20, the Armoury 30, the first armour 40, the first gate 50
-  (for its Lord's Heart), the Anchor 55, the Forge 60, the trial 70. An optional upgrade (the Sanctuary) is never on top.
+  (for its Lord's Heart), the Anchor 55, the Forge 60, a War Anvil 62 and the first weapon forged on it 64 (§46.4), the
+  trial 70. An optional upgrade (the Sanctuary) is never on top.
 - **The book** (`tasks.TaskBook`, cached 10 ticks): every module's steps and every Now suggestion (`tasks.NowMap` maps a
   suggestion to its goal and place on the path by its id: `kin:` and `request:` go to the Hearth) as one list, one row
   per key (two of one key: the one with more needs or choices, the place from either), nothing a goal step covers twice.
@@ -17167,3 +17169,174 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
 - **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
   so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
   without "here", then the price alone; the foot's hint wraps.
+
+## 46. The War Anvil (weapon forging; plan docs/weapon-forge/PLAN.md, page https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ; Euan approved all of it 2026-11-02: "go ahead with the weapon forge plan")
+
+Module `arms` (`dev.awaken.arms.anvil`, client `arms.anvil.client`). Built in the plan's stages (§7 there); this section
+grows with each. §45 is the enchanting plan's. The line between the two (plan §4.9): the War Anvil owns the metal
+(crafting, forging, tiers, quality, tempering, Reforge, attunement); enchanting owns what is written into an item after
+it exists, reads forge quality and rank through `core.api.ForgeHooks` (stage 2), and adds no step to the forge scene.
+
+**46.1 The War Anvil (stage 1).** `awaken:war_anvil` (`WarAnvilBlock`, `WarAnvilBlockEntity`): a horned soot-black
+anvil on a block of carved dark stone, facing the smith. In the stone's top before the anvil is a narrow slot lit dull
+orange from inside, where a finished weapon stands hilt up until it is drawn. A water trough is cut into the stone's right
+side; a hammer and tongs hang from an iron peg on its left, and are gone from the peg while a smith holds them. Crafted
+from three stone, a copper ingot and a log (`war_anvil.json`), granted at level 3 with the Fitting Stand (the level
+road's E step); mined with a pickaxe, it drops itself. Breaking it drops what the work took in and what stands in the slot.
+- **Use** (any hand): your own work waiting on it opens the scene where you left it (counted in again); otherwise its
+  list, a notice window: the Beastbound Longsword (the only weapon at the anvil in stage 1; every weapon comes in stage
+  2) with have and need for each part and **Forge it**. **Sneak-use** draws what stands in the slot, whoever made it.
+- **Needs**: rank D, and the Hearth's Forge (`awaken:forge`) within 6 blocks (2 up or down). The window says plainly
+  what's missing; nothing starts without it.
+- **Cost**: the Longsword's own recipe (a Hunter core, the Beastbound Blade, an iron ingot). Without the blade, the
+  blade's own recipe stands in for it (a Hunter core, an Essence Shard, an iron ingot and a binding metal), so the anvil
+  costs exactly what the grid does. Starting takes it into the work (`AnvilWork.materials`). Creative skips it.
+
+**46.2 The song (stage 1, D).** `AnvilSong` (both sides); the server judges by its own clock as the armour does (§44.4):
+the client sends what it did and when (`AnvilPayloads.Act`), held to `LAG` 10 ticks behind and 2 ahead (`WarAnvil.clamp`).
+The work only moves while its smith is at it (`WarAnvil.AT`, not saved): Esc, logging out or walking 12 blocks away holds
+it; coming back restarts the stage, counted in again.
+- **Heat** (stage 0): the blank lies in the Forge's mouth; the heat climbs over `HEAT_FULL` 120 ticks and the glow runs
+  from the tip toward the tongs. Pull in the gold (0.55-0.75: 1); early, the strikes count x0.7-1; past 0.85 the tip is
+  **burnt** (a flaw); at 1.15 it comes out burnt by itself.
+- **Draw out** (stage 1): the Longsword's rhythm, 4 ticks a step, `x...x...x.x.....` (two, then the finisher's pair),
+  counted in for one bar (64 ticks); then 10 strikes, each due on the next x, each on its mark (`AnvilSong.MARKS`, along
+  and across the blade, the same every time). A strike scores 0.6 timing (1 within 1.5 ticks, 0 at 6) + 0.4 aim (1
+  inside half a mark, 0 at two marks; the client reports the aim); 8 ticks either side is its window and a beat left
+  unstruck is a miss (0); a clean strike is 0.8. The blade draws out strike by strike, from a squat bar (half its length,
+  half again its width) to its own shape; after the fifth strike the tongs flip it over.
+- **Quench** (stage 2): the blade is held over the trough. Hold to plunge it (PLUNGE), let go to lift it (LIFT): the dark
+  line climbs from the point at 1/40 of the blade a tick and the gold notch is at 0.8, so the ideal hold is 32 ticks.
+  Within 2 ticks either side is 1; early is **soft** (falling to 0.35 at 12 ticks early); late is **brittle** (a flaw,
+  falling to 0.2 at 10 late); held to the top (40 ticks) it lifts itself, brittle. Not plunged within 160 ticks, it cools
+  in the air (0.35, no flaw).
+- **Hilt** (stage 3): three taps on the beat, 3 ticks a step, `x..x..x.`, counted in for one bar (24 ticks): guard,
+  grip, pommel. Timing only (the strikes' timing curve and window).
+- **Quality**: 0.2 heat + 0.55 strikes x early + 0.15 quench + 0.1 hilt; Plain below 0.55, Fine, Masterwork from 0.75,
+  Flawless from 0.9; burnt or brittle is never Flawless. Starting Temper Plain 0, Fine I, Masterwork II, Flawless III, then
+  Oren's Mark (`awaken:temper_start`) adds its levels, all **capped at the Forge's temper limit**
+  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in a Forge room, `RoomType.ARMORY`: an anvil, the Forge and an armour stand in one room;
+  the card says so plainly: "Put an anvil and an armour stand in the Forge's room and it'll go further"),
+  applied with `Upgrades.applyTemper`.
+- **The story**: `awaken:weapon_forged` (`WeaponForged`, schemaVersion 1): quality, flaw (0 none, 1 burnt, 2 brittle),
+  the maker's name. The tooltip says it plainly: "Masterwork", "a burnt tip" or "a brittle hairline", "Forged by Euan".
+- **The draw**: the finished weapon stands in the slot (`WarAnvilBlockEntity.slot`, saved). The smith holds use for 30
+  ticks to draw it out (DRAW); it goes to the main hand, what was there to the pack, else at your feet. A smith who left
+  before the draw finds it waiting; anyone can sneak-use to draw it. Then the result card, and an optional first cut
+  (a strike: the scene closes on the style's first blow).
+- **Sounds** (`awaken:anvil.*`, the forge kit's recordings until stage 5): bellows, pull, strike, ring (a clean strike),
+  miss, flip, quench, lift, tap, scrape (the draw beginning) and drawn. The smith's client plays its own as it acts; the
+  server plays them to everyone else.
+
+**46.3 The scene (stage 1, client).** `AnvilScene`: the view turns to the Forge's mouth for the heat, the anvil's face
+for the draw out and the hilt, the trough for the quench and the slot for the draw, gliding 14 ticks between
+(`ViewportEvent.ComputeCameraAngles`). The smith's view (`AnvilCamera`; Euan 2026-11-02 on the first tour's shots: "the
+arms hide the view a bit too much"): from your eyes the tools' grips sat between you and the work, your arms climbing
+across the middle of the frame; so the view leaves your eyes, as a smith bends over the anvil, for a place over its front
+edge (anvil blocks: x 0.5, y 1.75, z 0.05, the smith's side -z) looking down on the work at about 54°, a little back for
+the heat and the draw (z -0.35, -0.4), over the trough's side for the quench (x 0.62), gliding with the turn. Your hands
+come up from the bottom of the frame to the hammer and tongs, drawn at the tools' distance but never nearer than 0.9
+(the fists at 0.75 filled the frame's sides). A client-only camera entity (as the armour forge's §44.4),
+first person while it runs, your own body hidden, the real player never moving; your own field of view. A place in a
+block, or one your eyes can't reach without the view crossing a block (eight rays, the near plane's corners), leaves
+that look at your eyes, turned, at 0.85 of your field of view as before. The HUD steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,
+`arms_anvil`, priority 200): the main hand on the hammer, the off hand on the tongs; the hammer winds up before each
+beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, your arm clear of the hilt); the
+tongs hold the work wherever it is (in the Forge only when the Forge's mouth is near enough to reach). While the hammer
+is down (the fire, the carry and the quench) the main hand holds the tongs too: the hand pass puts a held item away
+only behind a world arm (SPEC §24), so a free hand would bring it back into view. The hammer and tongs are our own voxel meshes (`assets/awaken/arms/anvil/*.mesh`,
+`tools/art/specs/war_anvil.py`) drawn in the world through the weapon shader; the peg holds them when no one works.
+`AnvilSongScreen` (doesn't pause): the mark on the metal with a ring closing on the beat, a thin beat lane, the strikes
+counted, plain prompts for each act, the quench's notch, the draw's hold and the result card. Autoplay for tours:
+`/awaken arms anvil autoplay true` (client).
+- `WarAnvilRenderer` draws the work as the weapon's own mesh: only the blade until the hilt (the hilt's parts appear tap
+  by tap), drawn out by its progress, flipped at the halfway strike, carried on a short arc from the Forge to the anvil as
+  the view glides, over the trough and into it for the quench. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
+  x the heat, y's low byte the heat front along the blade, bit 10 the quench's side: the cooled part from the point) glows
+  dull red through orange and yellow to white, dark and soot-streaked where cool, over the whole blade whatever its
+  metal map (Beastbound's bone and bronze glow too). Sparks fly at each strike (on the screen, off the mark); steam
+  (vanilla's white smoke, two a tick) rises from the trough while the hot blade is in it.
+- Sizes: the work at 0.035 a block a texel (a little over its held size, so it reads on the anvil's face), a design
+  longer than 1.2 blocks at that laid a little smaller to fit; the hammer and tongs at 0.025, so they hang from the peg
+  clear of the floor. The trough is narrower than the blade: it goes in edge down, tip low, the point by the trough's far
+  end under the water and the rest rising back over the near rim, however long the blade. Your held items hide while the
+  scene runs (SPEC §24 view), your hands being on the tools.
+- Its own shape (`AnvilShape`, 2026-11-02, as weapon designs change length): nothing in the scene knows a blade's
+  length. Each weapon's heights are read from its own mesh once (64 bins of the mesh's "along", each at the mean design
+  height of its points): the point is the mesh's top, the blade's root is the height where the blade begins along it,
+  the middles of the blade and the whole weapon follow, the strikes' marks are fractions of root to point, the tongs
+  hold half a texel under the root (two thirds up the blade while the hilt goes on), the hilt's taps land at the middles
+  of the guard, the grip and the pommel, your hands on the hilt at the grip's upper and lower quarters, and a weapon
+  stands in the slot with its guard resting on the stone (the blade's root half a texel in). Where the blade, the guard, the grip and the pommel begin along it is
+  `AnvilSong.HILT_CUT` (the Beastbound Longsword's: 0.40, 0.24, 0.17, 0) until the weapon generator writes each weapon's
+  own; a mesh whose heights don't climb along it keeps today's hand-set layout.
+- The smith's own client plays their sounds the moment they act; the server plays them to everyone else. Observers see
+  the work, the tongs on it and the hammer at rest on the heel; the smith's swing in third person is stage 2.
+- With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.
+- The glow follows the texture's light and dark (bright metal runs hotter, dark scale cooler: the heat times 0.7 + 0.6
+  of the texel's luminance) and the faces turned from the light glow less, so the work reads as a shaped blade.
+- The result card stands to the left of the weapon in the stone, so the weapon stays in view while you draw it; a name
+  too long for its width takes a second line.
+
+**46.4 The Weapons tab (stage 1; Euan 2026-11-02: "Make sure this is also part of the quests/things to build so you
+actually know this is possilbe in the K menu").** `WeaponGoals` gives the Tasks page (§27.13) two steps under Weapons,
+from your awakening until you've forged a weapon (the progression counter `awaken:weapon_forged`):
+- **Set up a War Anvil** (`arms/war_anvil`): its recipe's three rows (or the anvil itself when you carry one); why: it
+  forges weapons by hand, Plain to Flawless, set within 6 blocks of the Hearth's Forge. Gone once you've set one down or
+  begun a forging at one; back if that anvil is broken (checked where its chunk is loaded).
+- **Forge your first weapon** (`arms/first_weapon`): needs D-rank, "A War Anvil by the Forge" (the Forge in reach of your
+  anvil, read at most every two seconds) and the Beastbound Longsword's materials (a carried blade stands in for its own);
+  it points at your anvil. Gone once you've forged one.
+- Both are on the main path from D-rank (`Goals.PATH_WAR_ANVIL` 62, `PATH_FIRST_WEAPON` 64, after the Forge 60), off it
+  before. Where your anvil is: player attachment `awaken:anvil_smith` (`SmithMemory`, schemaVersion 1, kept through
+  death: the last War Anvil you set down or began a forging at). Stage 2 adds the next steps (your rank's weapon, the
+  styles you know as choices), stage 3 tempering and reforging; Blueprints and Marks go into the Journal's catalogue
+  when those stages add them.
+
+Test (one per mechanism): `arms_anvil_goals` (a new hunter sees both steps on the Weapons tab, off the path until D and on
+it from D; an anvil set down drops the first and points the second at it; broken, the first comes back; a weapon forged
+drops both). `arms_anvil_song` (a D forge judged by the server's clock: early, gold and late heat; strikes
+on and off the beat; the quench soft, true and brittle; quality and the capped Temper; materials taken, and given back
+when the anvil breaks; the weapon stands in the slot and is drawn).
+
+**46.5 Vanilla stays vanilla (plan §4.10, decision 14; Euan approved 2026-11-02: "yes to 14 and 15, go ahead").**
+Vanilla swords, axes, tools and armour stay as they are, crafted on the grid, never at the War Anvil ("keep the vanilla
+ones normal, since those are kind of the quick tools"). A forged weapon must clearly beat the vanilla one of its own
+metal (E stone, D iron, C and B diamond, A and S netherite) and not lose to the next metal a player can reach early
+(diamonds from deep mining at any rank, netherite from about C): at least 10% better per hit or per second, and never
+more than 15% worse on the other (a style of 1.25 swings a second or more against the sword, a slower one against the
+axe). Checked on 2026-11-02 against 26.3's numbers: 60 of the 192 style-tier checks failed.
+- **Damage** (`ArmsData`, through the weapon generator `tools/art/specs/arms_weapons.py`): every forged weapon +1 at
+  every tier; the eight slower or longer styles (axe, maul, greatblade, scythe, glaive, spear, warstaff, chainblade) +2.
+  The longsword then runs 6.5 to 11.5, the axe 9 to 14. The 15 boss weapons take the same bump by their style, so
+  each stays above its tier's forged one (the Ember Tyrant's axe 10 against the Wildhide Axe's 9). 189 of 192
+  checks pass; the three left are E trades (Wildhide Daggers lighter but faster than an iron sword, the Wildhide
+  Warstaff faster than an axe).
+- **Durability**: C 1,700 (from 1,400), B 2,200 (from 1,900), over diamond's 1,561 and netherite's 2,031.
+- **Temper**: vanilla gear no longer takes it (`Upgrades.isTemperable`: our weapons and armour only); a vanilla piece
+  already tempered keeps its levels and bonus. The Forge and Oren say it once: "That's crafted gear. It stays as it is;
+  Temper is for forged weapons and armour."
+- **Said once, never nagging**: Hale's issue adds "A crafting table makes quick tools. For a real weapon, set up a War
+  Anvil at home."; the Weapons tab's "Set up a War Anvil" says "The War Anvil makes weapons stronger than anything from a
+  crafting table."; the War Anvil's tooltip "Forges weapons stronger than any crafted sword or axe." They land with the
+  numbers. Nothing comments on vanilla gear a player carries.
+- The combat sim on the new numbers (`tools/sim/forge_bump_sim.py`, report `docs/weapon-forge/sim-2026-11-02.md`): the
+  bump alone takes Lord fights about a tenth shorter (under the recommended curve the Dodger passes 3 of 15 Lords, from
+  11, and the Parrier 5, from 12) and small E and D creatures to two hits. With each Lord's health x its rank's bump (E
+  x1.18, D x1.15, C x1.13, B x1.12, A x1.11, S x1.10) and normal creatures at E and D x1.15, the fights are as tuned
+  (Dodger 11, Parrier 12). So the numbers land with that health, which is the mobs module's.
+
+**46.6 The smithy grows (plan §4.11, decision 15; approved with 14).** The War Anvil is rebuilt as you climb, each
+rebuild the gate for its rank's weapons and act (not a second ladder), each a Weapons tab step, shown on the block
+(`WarAnvilBlock` property `build` 0-3, kept in the block entity's save):
+- E: the War Anvil as built (carved stone, a copper-banded horn).
+- D: bellows by the Forge with Forge Tier II (§27); a kin beast set to the smithy works them (§43), and then the heat
+  climbs evenly and the gold band holds 10 ticks longer.
+- C, **Ironbound**: the face re-laid in iron and a grindstone set beside it (4 iron blocks, 2 diamonds); it is the C gate
+  ("a grindstone within 6 blocks").
+- B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst): the balance act happens on it; a weapon rack (the Pattern
+  Stand's rack make) goes up for what you've forged.
+- A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots), in that Lord's colour: the twist is clamped in it, and
+  at S the starlight comes down onto it.
+The Forge's own tiers (II at D, III at B) still set the temper limit. No quality ceiling: a perfect song is Flawless on
+any anvil. A rebuild keeps work in progress and what stands in the slot. Built in stage 4 with the ranks' acts.
