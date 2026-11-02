@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Util;
+import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -41,6 +42,29 @@ final class ArmsFilm {
 
     static boolean on() {
         return name != null;
+    }
+
+    /** The twin's own first-person draw (ArmsOffHand), whose blade has no state while it isn't striking. */
+    static boolean twinPass;
+
+    /**
+     * A blade of ours, whatever its ribbon does: everything first person draws is ours, and from outside one our body
+     * holds (WeaponRenderer gives a blade the wielder of its ribbon only while it traces).
+     */
+    static boolean ours(WeaponRenderer.@Nullable State s) {
+        if (twinPass) return true;
+        LocalPlayer p = Minecraft.getInstance().player;
+        if (s == null || p == null) return false;
+        return s.hand() || s.wielder() == p.getId() || s.holder() == p.getId();
+    }
+
+    /** 0 the main blade, 1 the twin (from outside, the one in the left arm). */
+    static int side(WeaponRenderer.@Nullable State s) {
+        return twinPass || s != null && (s.twin() || s.arm() == 2) ? 1 : 0;
+    }
+
+    static boolean firstPerson(WeaponRenderer.@Nullable State s) {
+        return twinPass || s != null && s.hand();
     }
 
     static String start(String clip, int ticks, float minGap, int downscale) {

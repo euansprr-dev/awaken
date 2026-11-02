@@ -4,6 +4,10 @@ import dev.awaken.arms.Archetype;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 
 import java.util.HashMap;
@@ -19,6 +23,9 @@ import java.util.Map;
  * arms strike [hold]                  a tap of the attack key (a real click, held 2 ticks as a finger does, or hold)
  * arms press                          Arms' press alone, without the key (the old line)
  * arms film &lt;name&gt; &lt;ticks&gt; [gap] [scale]  every frame's numbers and a picture every gap ticks (ArmsFilm)
+ * arms studio &lt;item id&gt;               the fight studio built on the server's thread, you armed, a husk (waits)
+ * arms waitserver [ticks]             waits until the server has ticked that often (a stalled server holds the line)
+ * arms rate &lt;ticks a second&gt;          the world's pace, waiting until this client runs at it
  * arms trace &lt;ticks&gt;                  logs the move, its clock and the hand's pose every tick for that long
  * arms trailfreeze on|off             blade ribbons stop ageing once laid (a still frame shows the whole ribbon)
  * arms heavy &lt;ticks&gt;                  the attack key held that long, then let go
@@ -53,6 +60,33 @@ public final class ArmsAutopilot {
                 KeyMapping.click(mc.options.keyAttack.getKey());
                 hold(mc.options.keyAttack, ticks);
                 return "attack key held for " + ticks;
+            }
+            case "studio" -> {
+                return studio(mc, p, a.length > 1 ? a[1] : "");
+            }
+            case "waitserver" -> {
+                IntegratedServer server = mc.getSingleplayerServer();
+                if (server == null) return "single player only";
+                int n = a.length > 1 ? Integer.parseInt(a[1]) : 20;
+                if (serverFrom < 0) serverFrom = server.getTickCount();
+                if (server.getTickCount() - serverFrom < n && ++serverTries < 20 * 180) return null;
+                String said = serverTries >= 20 * 180 ? "gave up: the server ticked " + (server.getTickCount() - serverFrom) : "the server ticked " + n;
+                serverFrom = -1;
+                serverTries = 0;
+                return said;
+            }
+            case "rate" -> {
+                IntegratedServer server = mc.getSingleplayerServer();
+                if (server == null || a.length < 2) return "arms rate <ticks a second> (single player)";
+                float rate = Float.parseFloat(a[1]);
+                if (!rateAsked) {
+                    rateAsked = true;
+                    server.execute(() -> server.tickRateManager().setTickRate(rate));
+                }
+                if ((mc.level == null || Math.abs(mc.level.tickRateManager().tickrate() - rate) > 0.01F) && ++serverTries < 20 * 180) return null;
+                rateAsked = false;
+                serverTries = 0;
+                return "the world at " + rate + " ticks a second";
             }
             case "film" -> {
                 if (a.length < 3) return "arms film <name> <ticks> [gap] [downscale]";
@@ -132,6 +166,49 @@ public final class ArmsAutopilot {
     private static void hold(KeyMapping key, int ticks) {
         key.setDown(true);
         HELD.put(key, ArmsPredict.ticks + ticks);
+    }
+
+    private static int serverFrom = -1, serverTries;
+    private static boolean rateAsked;
+    private static volatile int studioState; // 0 none, 1 being built on the server, 2 built
+
+    /**
+     * The fight studio, built on the server's own thread (the autopilot's {@code cmd} lines wait on client ticks, so
+     * when the server stalls they pile up and run in one tick, before the ground they fill has loaded): its chunks
+     * loaded first, a stone floor at y 199 with the air cleared over it, a deepslate wall at z 4, you at 0.5 200 0.9
+     * facing south with the item in hand and resistance, and a husk at 0.5 200 3.5 that can't walk or hurt (1000 health).
+     * Not ready (null) until it stands.
+     */
+    private static String studio(Minecraft mc, LocalPlayer p, String item) {
+        IntegratedServer server = mc.getSingleplayerServer();
+        if (server == null || item.isEmpty()) return "arms studio <item id> (single player)";
+        if (studioState == 2) {
+            studioState = 0;
+            return "studio built with " + item;
+        }
+        if (studioState == 0) {
+            studioState = 1;
+            java.util.UUID id = p.getUUID();
+            server.execute(() -> {
+                ServerPlayer sp = server.getPlayerList().getPlayer(id);
+                if (sp != null) {
+                    ServerLevel level = sp.level();
+                    for (int cx = -1; cx <= 0; cx++) for (int cz = -1; cz <= 0; cz++) level.getChunk(cx, cz);
+                    CommandSourceStack src = sp.createCommandSourceStack().withSuppressedOutput();
+                    for (String c : new String[] {"tp @s 0.5 201 0.5 0 0", "fill -10 199 -8 10 199 12 minecraft:smooth_stone",
+                            "fill -10 200 -8 10 210 12 minecraft:air", "fill -10 200 4 10 203 4 minecraft:deepslate_tiles",
+                            "tp @s 0.5 200 0.9 0 0", "kill @e[type=minecraft:husk]",
+                            "summon minecraft:husk 0.5 200 3.5 {PersistenceRequired:1b,Rotation:[180f,0f],Health:1000f,attributes:["
+                                    + "{id:\"minecraft:max_health\",base:1000d},{id:\"minecraft:movement_speed\",base:0d},"
+                                    + "{id:\"minecraft:attack_damage\",base:0d}]}",
+                            "item replace entity @s weapon.mainhand with " + item, "effect give @s minecraft:resistance 100000 4 true"}) {
+                        server.getCommands().performPrefixedCommand(src, c);
+                    }
+                }
+                studioState = 2;
+            });
+        }
+        return null;
     }
 
     private static int traceUntil;

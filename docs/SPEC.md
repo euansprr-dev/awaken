@@ -6761,8 +6761,15 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   blade's base and tip where it is drawn: first person in the hands' view space, third person from the camera) and in
   `events.tsv` what happened between frames on both sides (press, buffer, begin, tap, the server's press heard, begin,
   wait over and hit, its MOVE, REFUSE and HIT reaching the client, the swish, the source change, the third-person clip).
-  `arms strike [hold]` holds the key that many ticks. Tours `tools/autopilot/arms-film-daggers.txt` and `-scythe.txt`
-  film slow, combo and spam takes at `/tick rate 2`. The feel's clock (`ArmsFeel.nanos`: the hands, the hit-stop, a struck
+  `arms strike [hold]` holds the key that many ticks. Every blade of ours is logged each frame, the one not laying a
+  ribbon too (the twin's own first-person draw is marked while it runs). Tours `tools/autopilot/arms-film-daggers.txt`
+  and `-scythe.txt` film slow, combo and spam takes with the world at 2 ticks a second; `tools/art/arms_film.py` reads a
+  take (each press by its number: begun, released, the blade on the target on screen, the server's hit, the impact
+  shown; tip speeds and spikes; marked strips; stamped videos). A server stalled at world start (its roads) ran a
+  tour's `cmd` set-up in one tick before the ground had loaded, so the set-up waits on the server: `arms studio <item>`
+  builds the studio on the server's own thread with its chunks loaded, `arms waitserver [n]` holds the script until the
+  server has ticked n times, and `arms rate <r>` sets the world's pace and holds until this client runs at it (the
+  core autopilot retries an `arms` line that answers null). The feel's clock (`ArmsFeel.nanos`: the hands, the hit-stop, a struck
   body's freeze and recoil, the ribbons) runs at the world's pace, so a slowed film shows a 35 ms freeze as 0.7 of a tick,
   as play does; at 20 ticks a second it is real time.
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
