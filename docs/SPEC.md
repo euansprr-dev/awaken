@@ -16946,7 +16946,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   to stand; otherwise you stay put. The eye is then your own: the view turns (`ComputeCameraAngles`, LOW) and narrows
   (`ComputeFovModifierEvent`) toward each beat, framing it in the middle of the band the screen leaves clear: the piece
   with the floating book behind it above the book's pages, close on the piece while you trace (above the line and
-  pips), a little back while it wakes (above the card). Eased per tick (0.22), in over 12 ticks, out over 10, a slight
+  pips), held close through the wake's turn (the payoff fills the view; measured live, framing for the card from the
+  first tick had the turn play out at a fifth of the screen), then a little back once the card comes (above it). Eased per tick (0.22), in over 12 ticks, out over 10, a slight
   breath. First person is forced for the scene and restored after: the world
   hands (`core.api.FirstPerson.world`, "enchant_table", priority 210) only draw from the player's own camera. The HUD
   steps aside (subtitles and chat stay), the block outline goes, the player model is hidden.
@@ -16979,7 +16980,10 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   with a dev hand (eased, wobbling strokes of 0.1-0.8 s): a careful hand (wobble up to 0.1) scores about 0.9 and is
   clean, a loose one (0.13) about 0.8, a shaky one (0.18) about 0.73, a sloppy one (0.24) under 0.6. While it cuts on
   the line the burin throws lapis sparks (every 0.08 drawn) and ticks faintly (every 0.3, climbing in pitch toward the
-  stroke's end). The burin's point, not the fist, is at the pen (the fist sits below and left of it on screen by the
+  stroke's end), and its cut runs under the hand (`EngraveLoop`, `enchant.cut_metal` or `cut_leather`): a loop that
+  swells with the pen's speed on the line (full at 0.15 a tick, volume 0.32, pitch 0.85-1.24) and falls quiet the
+  moment the hand stops or strays. Leather, wood and string pieces (leather armour, wooden tools, bows, crossbows, rods,
+  elytra, the turtle shell) take the burin's leather bite and drag; everything else metal. The burin's point, not the fist, is at the pen (the fist sits below and left of it on screen by the
   burin's reach). The piece on the slate is drawn without vanilla's violet shimmer (`ENCHANTMENT_GLINT_OVERRIDE` off on
   the table's copy), so the only light on it is the mark being written. A finished stroke
   burns lapis in its core and the family's colour round it, rings its family's note a step higher than the last (a
@@ -17007,7 +17011,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   with what it does, its family, what it goes on and how deep, where you learned it and whether its mark is in memory;
   the rest stay blank.
 - **Sounds** (`tools/art/specs/audio_enchant.py`, audiokit synthesis with Kenney CC0 transients): book open, page turn,
-  burin on metal and on leather, scratch, the five family notes (C5), wake, learn, flare, drift, scrape.
+  burin on metal and on leather (a bite each, and a seamless two-second loop each for the running cut: synthesis only,
+  mastered by gain alone so the seam keeps no dip), scratch, the five family notes (C5), wake, learn, flare, drift, scrape.
 - **Art** (`tools/art/specs/enchant.py`): the table's slate top with its lapis channel, framed dark-wood panels (the
   front with a lapis ring and spear), the trim, brass, the book, the page item and the burin; blockstate by facing.
 - **Commands**: `/awaken admin enchant learn <all|id> | remember all | forget` (server, for testing and tours); the

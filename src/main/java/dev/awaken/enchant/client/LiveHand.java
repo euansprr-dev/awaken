@@ -51,6 +51,7 @@ final class LiveHand {
     private static boolean approaching;
     private static float startU, startV, fromU, fromV, ph1, ph2;
     private static double lastX, lastY;
+    private static float voicePeak;
 
     static void tick() {
         if (!ON) return;
@@ -203,6 +204,7 @@ final class LiveHand {
         float settle = (float) Math.max(0, 1 - t * 4);
         moveTo(mc, at[0] - at[3] * wob + (startU - s[0]) * settle, at[1] + at[2] * wob + (startV - s[1]) * settle);
         frames++;
+        voicePeak = Math.max(voicePeak, EngraveLoop.voice());
         if (InscribeScene.stroke != strokeAt) finishStroke(mc, true, ms);
         else if (t >= 1 && ms > msPer + 120) finishStroke(mc, false, ms);
     }
@@ -210,8 +212,9 @@ final class LiveHand {
     private static void finishStroke(Minecraft mc, boolean counted, double ms) {
         button(mc, false);
         float[] s = Marks.of(InscribeScene.no)[strokeAt];
-        out(String.format(Locale.ROOT, "stroke %d %s after %.0f ms, %d frames: share %.2f%s", strokeAt, counted ? "counted" : "NOT counted",
-                ms, frames, InscribeScene.SHARE[strokeAt], counted ? "" : " (stalled at point " + InscribeScene.progress + " of " + s.length / 2 + ")"));
+        out(String.format(Locale.ROOT, "stroke %d %s after %.0f ms, %d frames: share %.2f, cut voice %.2f%s", strokeAt, counted ? "counted" : "NOT counted",
+                ms, frames, InscribeScene.SHARE[strokeAt], voicePeak, counted ? "" : " (stalled at point " + InscribeScene.progress + " of " + s.length / 2 + ")"));
+        voicePeak = 0;
         if (!counted || InscribeScene.stroke >= InscribeScene.strokes()) {
             tracing = false;
             out(state(mc));

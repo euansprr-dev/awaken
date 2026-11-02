@@ -301,7 +301,9 @@ public final class InscribeScene {
             lastV = penV;
             lastD = nearest(s, s.length / 2, penU, penV, Math.min(s.length / 2 - 1, progress + 6));
             lastOn = true;
-            if (progress == 0) play(EnchantContent.BURIN_METAL.get(), 0.35F, 1.2F);
+            if (progress == 0) play(burinSound(), 0.35F, 1.2F);
+            Minecraft mc = Minecraft.getInstance();
+            if (pos != null && mc.player != null) EngraveLoop.start(pos, mc.player.getMainHandItem());
         } else {
             // not there: the burin taps the slate dully and the place to start flares
             nudgeAt = ticks;
@@ -358,6 +360,7 @@ public final class InscribeScene {
         float credit = Mth.clamp(1F - (Math.min(best, cap) - LINE_R) / LINE_FADE, 0F, 1F);
         ranOn += len * credit;
         if (best <= FOLLOW_R && at > progress) progress = at;
+        EngraveLoop.run += len * credit;
         if (credit >= 0.5F) cut(u, v, len, n);
         return credit >= 0.5F;
     }
@@ -421,7 +424,7 @@ public final class InscribeScene {
         }
         if (tickRun >= 0.3F) {
             tickRun = 0;
-            play(EnchantContent.BURIN_METAL.get(), 0.08F, 1.05F + 0.45F * progress / (float) Math.max(1, n - 1));
+            play(burinSound(), 0.08F, 1.05F + 0.45F * progress / (float) Math.max(1, n - 1));
         }
     }
 
@@ -577,10 +580,12 @@ public final class InscribeScene {
                 clear = 1 - 44.0 / guiH;
             }
             case WAKE -> {
-                ty += 0.08;
-                size = 0.6;
-                frac = 0.6;
-                clear = InscribeScreen.cardTop(guiH);
+                // the turn (6-40 ticks) held close, the piece still filling the view; only then back a little for the card
+                boolean card = ticks - phaseAt >= InscribeScreen.CARD_AT - 6;
+                ty += card ? 0.06 : 0.03;
+                size = card ? 0.62 : 0.56;
+                frac = card ? 0.8 : 0.78;
+                clear = card ? InscribeScreen.cardTop(guiH) : 1 - 44.0 / guiH;
             }
             default -> {
                 // the piece on the slate (its mark faint as you rest on a row) with the floating book behind, over the pages
@@ -985,6 +990,12 @@ public final class InscribeScene {
         g += (int) ((255 - g) * k);
         b += (int) ((255 - b) * k);
         return (r << 16) | (g << 8) | b;
+    }
+
+    /** The burin's bite: on leather, wood and string a soft drag, on everything else metal. */
+    private static SoundEvent burinSound() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player != null && EngraveLoop.soft(mc.player.getMainHandItem()) ? EnchantContent.BURIN_LEATHER.get() : EnchantContent.BURIN_METAL.get();
     }
 
     static void play(SoundEvent sound, float volume, float pitch) {
