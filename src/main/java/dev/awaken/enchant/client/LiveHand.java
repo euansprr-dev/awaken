@@ -30,7 +30,8 @@ import java.util.Random;
  * <p>Lines: {@code cmd <command>}, {@code shot <name>}, {@code burst <name> <every ticks> <count>},
  * {@code trace <ms per stroke> <wobble> [gap ms] [miss]} (wobble and miss in mark units), {@code click <x> <y>} and
  * {@code move <x> <y>} (GUI), {@code pen <u> <v>} and {@code hold <u> <v>} (the mouse over, or pressed at, a point of the
- * mark's square), {@code lift}, {@code use}, {@code close}, {@code wait <ticks>}, {@code state}.
+ * mark's square), {@code lift}, {@code use}, {@code close}, {@code wait <ticks>}, {@code state}, {@code fps <limit>} (a
+ * slow machine's frame rate).
  */
 final class LiveHand {
     private LiveHand() {}
@@ -117,6 +118,7 @@ final class LiveHand {
                 if (mc.gui.screen() != null) mc.gui.screen().onClose();
             }
             case "state" -> out(state(mc));
+            case "fps" -> mc.options.framerateLimit().set(Integer.parseInt(a[1]));
             case "trace" -> {
                 if (InscribeScene.phase != InscribeScene.TRACE) {
                     out("not tracing (phase " + InscribeScene.phase + ")");
@@ -137,6 +139,12 @@ final class LiveHand {
         StringBuilder sb = new StringBuilder(String.format(Locale.ROOT, "phase %d no %d stroke %d/%d progress %d fps %d clean %.2f shares",
                 InscribeScene.phase, InscribeScene.no, InscribeScene.stroke, InscribeScene.strokes(), InscribeScene.progress, mc.getFps(), InscribeScene.clean()));
         for (int i = 0; i < InscribeScene.strokes(); i++) sb.append(String.format(Locale.ROOT, " %.2f", InscribeScene.SHARE[i]));
+        if (mc.player != null) {
+            int lapis = 0;
+            for (var st : mc.player.getInventory().getNonEquipmentItems())
+                if (st.is(net.minecraft.world.item.Items.LAPIS_LAZULI)) lapis += st.getCount();
+            sb.append(" | level ").append(mc.player.experienceLevel).append(" lapis ").append(lapis);
+        }
         return sb.toString();
     }
 

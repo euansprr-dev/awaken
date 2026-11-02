@@ -16763,14 +16763,16 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   hands (`core.api.FirstPerson.world`, "enchant_table", priority 210) only draw from the player's own camera. The HUD
   steps aside (subtitles and chat stay), the block outline goes, the player model is hidden.
 - **Hands**: the off hand brings your piece down onto the slate over 14 ticks (the table holds off drawing it for you
-  meanwhile) and then pins its near end; the main hand holds the table's **burin** (`awaken:burin`, never held as an
+  meanwhile) and then draws back out of the view for the rest of the session (over the slate it would hide the piece in
+  the book and the mark in the trace); the main hand holds the table's **burin** (`awaken:burin`, never held as an
   item: `Sources.neverHeld`) resting at the slate's near corner, and while you trace, follows the cursor where it meets
   the slate; from memory it runs the mark by itself.
 - **The book's pages** (`InscribeScreen`): the left page is your piece (its name drawn large, rank, room line, what's
   on it with **scrape**: a second click within two seconds takes it off, sent as its registry number, and how deep this
   table writes). The right page lists what you know that fits it: its mark, name and target level (the deepest this
   piece allows here by default; ‹ › step it between one above what's on it and that), "Up to II here (IV in your
-  Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory; the foot
+  Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory (at the
+  end of the second line, so the name keeps its line for the level and its arrows, and the price shortens round it); the foot
   of the page says what the one under the cursor does. Resting on a row for 4 ticks sends LOOK (watchers see the
   floating book turn) and lays that mark faintly on the piece.
 - **The trace**: the mark (`Marks`, the same strokes the server counts) lies on the piece, 0.4 blocks across, scored
@@ -16780,17 +16782,22 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   glowing end (within 0.3 mark units; a press anywhere else taps the slate dully and the end flares). The pen's run
   between frames is followed in steps of at most 0.03, each finding the nearest part of the stroke from two samples
   behind to six ahead of the cut: the cut follows the pen (to the nearest sample it has reached, within 0.34 of the
-  line) and never runs ahead of it. The share on the line is by distance drawn, so it reads the same at any speed or
+  line) and never runs ahead of it (on a slow frame it may look further on, as far as two and a half times the pen's run
+  along the stroke, never so far it could skip a loop to where the stroke crosses itself). The game sees the pen once a
+  frame, so a step between two frames is never judged further off the line than the two real points either side of it
+  (a slow frame's straight chord across a corner costs nothing; measured live, a frame drop to 19 fps had cost a careful
+  hand 0.54 on a chevron). The share on the line is by distance drawn, so it reads the same at any speed or
   frame rate: inside 0.06 of the line (the drawn line's own width) counts fully, fading to nothing at 0.16. Measured
   with a dev hand (eased, wobbling strokes of 0.1-0.8 s): a careful hand (wobble up to 0.1) scores about 0.9 and is
   clean, a loose one (0.13) about 0.8, a shaky one (0.18) about 0.73, a sloppy one (0.24) under 0.6. While it cuts on
   the line the burin throws lapis sparks (every 0.08 drawn) and ticks faintly (every 0.3, climbing in pitch toward the
   stroke's end). The burin's point, not the fist, is at the pen (the fist sits below and left of it on screen by the
-  burin's reach), and the off hand draws back once the piece is down, so nothing covers the mark. A finished stroke
+  burin's reach). The piece on the slate is drawn without vanilla's violet shimmer (`ENCHANTMENT_GLINT_OVERRIDE` off on
+  the table's copy), so the only light on it is the mark being written. A finished stroke
   burns lapis in its core and the family's colour round it, rings its family's note a step higher than the last (a
   dull scratch if under 60% on the line) and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH
   follows 6 ticks after the last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each
-  stroke (bright when clean), with a bar for how much of the current one is on the line; a first-trace hint says what
+  stroke (bright when clean, with a lapis centre once done, so a pale family's pips still read as done), with a bar for how much of the current one is on the line; a first-trace hint says what
   to do and that Esc gives the levels back. `LiveHand` (autopilot runs only) drives a live client's mouse for these
   checks from `<game>/enchant-live/in.txt`.
 - **The wake**: the mark flares white-hot and settles into its colour over 50 ticks while a band of light runs the

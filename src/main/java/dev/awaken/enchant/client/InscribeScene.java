@@ -75,6 +75,8 @@ public final class InscribeScene {
     static int ticks;
     private static int openedAt = -1000, closedAt = -1000;
     static int phaseAt = -1000;
+    /** When the book last went down (trace to wake is no new start for it: it stays down). */
+    static int leftBookAt = -1000;
     private static @Nullable CameraType before;
 
     // the trace
@@ -218,6 +220,7 @@ public final class InscribeScene {
     }
 
     private static void phase(int p) {
+        if (phase == BOOK && p != BOOK) leftBookAt = ticks;
         phase = p;
         phaseAt = ticks;
     }
@@ -296,6 +299,7 @@ public final class InscribeScene {
             drawing = true;
             lastU = penU;
             lastV = penV;
+            lastD = nearest(s, s.length / 2, penU, penV, Math.min(s.length / 2 - 1, progress + 6));
             lastOn = true;
             if (progress == 0) play(EnchantContent.BURIN_METAL.get(), 0.35F, 1.2F);
         } else {
@@ -311,7 +315,9 @@ public final class InscribeScene {
     /**
      * The pen moved while down (a frame's worth of the hand's run): followed in short steps from where it was, each
      * finding the nearest part of the stroke around where the cut has got to. The cut follows the pen, never runs ahead
-     * of it; the share on the line is by distance drawn, so it reads the same at any speed and frame rate.
+     * of it; the share on the line is by distance drawn, so it reads the same at any speed and frame rate. The game sees
+     * the pen once a frame, so between two frames the hand's path is a guess: a step is never judged further off the
+     * line than the two real points either side of it (a slow frame's straight chord across a corner costs nothing).
      */
     static void drag() {
         if (phase != TRACE || !drawing || stroke >= strokes()) return;
@@ -323,14 +329,16 @@ public final class InscribeScene {
         int n = s.length / 2;
         float fu = lastOn ? lastU : penU, fv = lastOn ? lastV : penV;
         float d = Mth.length(penU - fu, penV - fv);
-        int steps = Math.max(1, Mth.ceil(d / STEP));
+        int steps = Math.max(1, Mth.ceil(d / STEP)), limit = ahead(s, n, d);
+        float d1 = nearest(s, n, penU, penV, limit), d0 = lastOn ? lastD : d1;
         boolean off = false;
         for (int k = 1; k <= steps && progress < n - 2; k++) {
             float f = k / (float) steps;
-            if (!follow(s, n, Mth.lerp(f, fu, penU), Mth.lerp(f, fv, penV), d / steps)) off = true;
+            if (!follow(s, n, Mth.lerp(f, fu, penU), Mth.lerp(f, fv, penV), d / steps, Mth.lerp(f, d0, d1), limit)) off = true;
         }
         lastU = penU;
         lastV = penV;
+        lastD = d1;
         lastOn = true;
         if (off && ticks - scratchAt >= 4) {
             scratchAt = ticks;
@@ -339,25 +347,52 @@ public final class InscribeScene {
         if (progress >= n - 2) strokeDone();
     }
 
-    /** One step of the pen: whether it's on the line, and the cut on to the nearest point it has reached. */
-    private static boolean follow(float[] s, int n, float u, float v, float len) {
+    /**
+     * One step of the pen: whether it's on the line, and the cut on to the nearest point it has reached. {@code cap} is
+     * the furthest off the line the real points either side put it.
+     */
+    private static boolean follow(float[] s, int n, float u, float v, float len, float cap, int limit) {
+        float best = nearest(s, n, u, v, limit);
+        int at = nearAt;
+        ran += len;
+        float credit = Mth.clamp(1F - (Math.min(best, cap) - LINE_R) / LINE_FADE, 0F, 1F);
+        ranOn += len * credit;
+        if (best <= FOLLOW_R && at > progress) progress = at;
+        if (credit >= 0.5F) cut(u, v, len, n);
+        return credit >= 0.5F;
+    }
+
+    private static float lastD;
+    private static int nearAt;
+
+    /** The pen's distance from the stroke, from two samples behind the cut up to {@code limit}; the nearest sample in {@link #nearAt}. */
+    private static float nearest(float[] s, int n, float u, float v, int limit) {
         float best = Float.MAX_VALUE;
-        int at = progress;
-        for (int i = Math.max(0, progress - 2); i < Math.min(n - 1, progress + 6); i++) {
+        nearAt = progress;
+        for (int i = Math.max(0, progress - 2); i < Math.min(n - 1, limit); i++) {
             float ax = s[i * 2], ay = s[i * 2 + 1], bx = s[i * 2 + 2] - ax, by = s[i * 2 + 3] - ay, ll = bx * bx + by * by;
             float t = ll < 1e-8F ? 0F : Mth.clamp(((u - ax) * bx + (v - ay) * by) / ll, 0F, 1F);
             float dd = Mth.length(u - ax - bx * t, v - ay - by * t);
             if (dd < best) {
                 best = dd;
-                at = t >= 0.5F ? i + 1 : i;
+                nearAt = t >= 0.5F ? i + 1 : i;
             }
         }
-        ran += len;
-        float credit = Mth.clamp(1F - (best - LINE_R) / LINE_FADE, 0F, 1F);
-        ranOn += len * credit;
-        if (best <= FOLLOW_R && at > progress) progress = at;
-        if (credit >= 0.5F) cut(u, v, len, n);
-        return credit >= 0.5F;
+        return best;
+    }
+
+    /**
+     * How far along the stroke the cut may look this frame: six samples, or as far as the pen's run could have carried it
+     * round a corner (a slow frame moves the pen far; never so far it could skip a loop to where the stroke crosses itself).
+     */
+    private static int ahead(float[] s, int n, float run) {
+        int i = progress;
+        float along = 0;
+        while (i < n - 1 && along <= run * 2.5F) {
+            along += Mth.length(s[i * 2 + 2] - s[i * 2], s[i * 2 + 3] - s[i * 2 + 1]);
+            i++;
+        }
+        return Math.min(n - 1, Math.max(progress + 6, i + 1));
     }
 
     // ---- the cut's sparks: what a clean line gives back as it's drawn ------------------------------------------------
@@ -482,7 +517,8 @@ public final class InscribeScene {
         }
         if (live && mc.player != null) step(mc.player);
         drawBackO = drawBack;
-        boolean writing = live && (phase == TRACE || phase == MEMORY || phase == WAKE) && ticks - openedAt >= LAY_TICKS;
+        // once the piece is down the off hand has nothing to do, and over the slate it would hide the piece or its mark
+        boolean writing = live && ticks - openedAt >= LAY_TICKS;
         drawBack += ((writing ? 1F : 0F) - drawBack) * 0.3F;
         VIEW_O[0] = VIEW[0];
         VIEW_O[1] = VIEW[1];
