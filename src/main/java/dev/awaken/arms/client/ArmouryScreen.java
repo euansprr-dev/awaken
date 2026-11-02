@@ -103,6 +103,8 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             boolean known = e.state() == 0;
             g.text(font, name, px + 10, y + 1, known ? TITLE : LANTERN, false);
             String tag = known ? (ArmouryCache.view != null && v.tracked().startsWith(e.id() + ":") ? "tracked" : "") : e.price() + " essence";
+            // a long name (Precursor, Greatblade): its price drops the word rather than run into it
+            if (!known && font.width(name) + 6 + font.width(tag) > listW - 8) tag = String.valueOf(e.price());
             if (!tag.isEmpty()) g.text(font, tag, px + 6 + listW - 4 - font.width(tag), y + 1, known ? GOOD : (e.afford() ? LANTERN : DIM), false);
             y += row;
         }
