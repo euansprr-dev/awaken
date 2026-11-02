@@ -207,8 +207,10 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
                 List<FormattedCharSequence> lines = font.split(Component.literal(d.block()), dw);
                 for (int i = 0; i < Math.min(2, lines.size()); i++) g.text(font, lines.get(i), dx, py + ph - 66 + i * 10, LANTERN, false);
             }
-            button(g, dx + 88, "Forge it", (d.anvil() & WarAnvil.Status.FORGE) != 0, mouseX, mouseY);
-            if ((d.anvil() & WarAnvil.Status.MEMORY) != 0)
+            // an anvil not yet built for this tier (SPEC §46.6): Rebuild it where Forge it would be
+            if ((d.anvil() & WarAnvil.Status.REBUILD) != 0) button(g, dx + 88, "Rebuild it", (d.anvil() & WarAnvil.Status.REBUILD_OK) != 0, mouseX, mouseY);
+            else button(g, dx + 88, "Forge it", (d.anvil() & WarAnvil.Status.FORGE) != 0, mouseX, mouseY);
+            if ((d.anvil() & WarAnvil.Status.MEMORY) != 0 && (d.anvil() & WarAnvil.Status.REBUILD) == 0)
                 button(g, dx + 88 + bw("Forge it") + 4, "From memory", (d.anvil() & WarAnvil.Status.MEMORY_OK) != 0, mouseX, mouseY);
             int by = buttonY;
             buttonY = by - 20;
@@ -299,7 +301,12 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             }
         }
         if ((d.anvil() & WarAnvil.Status.SHOWN) != 0) {
-            if ((d.anvil() & WarAnvil.Status.FORGE) != 0 && buttonHit(dx + 88, "Forge it", mx, my)) {
+            if ((d.anvil() & WarAnvil.Status.REBUILD) != 0) {
+                if ((d.anvil() & WarAnvil.Status.REBUILD_OK) != 0 && buttonHit(dx + 88, "Rebuild it", mx, my)) {
+                    ArmouryCache.ask(ArmsArmoury.REBUILD, d.style(), d.tier());
+                    return true;
+                }
+            } else if ((d.anvil() & WarAnvil.Status.FORGE) != 0 && buttonHit(dx + 88, "Forge it", mx, my)) {
                 ArmouryCache.ask(ArmsArmoury.FORGE_IT, d.style(), d.tier());
                 return true;
             }

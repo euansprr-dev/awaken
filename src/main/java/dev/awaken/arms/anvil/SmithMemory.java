@@ -34,6 +34,9 @@ public final class SmithMemory {
     boolean forgeNear;
     @Nullable BlockPos forgePos;
     int forgeCap = 1;
+    /** Read with the Forge: the anvil's build (-1 unknown, its chunk not loaded) and whether a grindstone is in reach (§46.6). */
+    int build = -1;
+    boolean grindNear;
 
     SmithMemory(@Nullable GlobalPos anvil, Set<String> masterwork, Set<String> forged, int best) {
         this.anvil = anvil;

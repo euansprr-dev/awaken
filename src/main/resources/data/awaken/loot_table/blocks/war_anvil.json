@@ -8,14 +8,21 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "awaken:war_anvil"
+          "name": "awaken:war_anvil",
+          "modifier": [
+            {
+              "type": "minecraft:copy_state",
+              "block": "awaken:war_anvil",
+              "properties": [
+                "build"
+              ]
+            }
+          ]
         }
       ],
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ]
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      }
     }
   ]
 }

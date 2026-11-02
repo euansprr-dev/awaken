@@ -17454,18 +17454,34 @@ axe). Checked on 2026-11-02 against 26.3's numbers: 60 of the 192 style-tier che
 
 **46.6 The smithy grows (plan §4.11, decision 15; approved with 14).** The War Anvil is rebuilt as you climb, each
 rebuild the gate for its rank's weapons and act (not a second ladder), each a Weapons tab step, shown on the block
-(`WarAnvilBlock` property `build` 0-3, kept in the block entity's save):
+(`WarAnvilBlock` state property `build` 0-3; broken, the loot table's `minecraft:copy_state` puts it on the item's
+`minecraft:block_state` component, so a carried anvil looks as it was built and is placed back at its build):
 - E: the War Anvil as built (carved stone, a copper-banded horn).
 - D: bellows by the Forge with Forge Tier II (§27); a kin beast set to the smithy works them (§43), and then the heat
-  climbs evenly and the gold band holds 10 ticks longer.
-- C, **Ironbound**: the face re-laid in iron and a grindstone set beside it (4 iron blocks, 2 diamonds); it is the C gate
-  ("a grindstone within 6 blocks").
-- B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst): the balance act happens on it; a weapon rack (the Pattern
-  Stand's rack make) goes up for what you've forged.
-- A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots), in that Lord's colour: the twist is clamped in it, and
-  at S the starlight comes down onto it.
+  climbs evenly and the gold band holds 10 ticks longer. (Stage 4c.)
+- C, **Ironbound** (4 iron blocks, 2 diamonds): iron bands round the stone and the waist, corner brackets, the face
+  re-laid in iron. A C weapon forged in full (not from memory, not a Hunter blade alone) also needs a grindstone within
+  6 blocks of the anvil (2 up or down), for its grind act (§46.9).
+- B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst shards): the horn in glowing Deepglass (light 10); the
+  balance act happens on it. A weapon rack (the Pattern Stand's rack make) for what you've forged comes in stage 4c.
+- A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots): netherite face and bands, a waking rune band (light 9),
+  a Lord's Heart set in the front (light 12); the twist is clamped in it, and at S the starlight comes down onto it.
+  Its tint in the colour of the last Lord you killed comes in stage 4c.
+Rebuilding is at the door: when the chosen weapon's rank needs a bigger build than this anvil has and your level
+reaches it, the Armoury's "Forge it" becomes "Rebuild it" (`ArmsArmoury.REBUILD`, `WarAnvil.Status.REBUILD` and
+`REBUILD_OK`; From memory hidden), greyed until you carry the parts. It goes one build at a time, takes the parts
+(none in creative), plays the smithing table and a ring, and says plainly what the anvil now does. Until then the
+forge card's line is `WarAnvil.unbuilt`: "C-rank weapons are forged on an Ironbound anvil. Rebuild this one Ironbound,
+with 4 iron blocks and 2 diamonds." (B: "...balanced on a Deepglass horn.", A/S: "...forged on a Lord's anvil.", with
+"First rebuild this one" while it is more than one build short). Reforging (§46.8) into a rank checks the same gate.
+Missing a grindstone: "From C-rank up, a weapon's edge is ground on a grindstone. Set one within six blocks of this
+anvil." The Weapons tab (§46.4) lists the anvil's build and the grindstone among a rank's needs and adds the step
+`arms/rebuild` ("Rebuild your War Anvil Ironbound", "Give your War Anvil a Deepglass horn", "Rebuild your War Anvil on
+a Lord's Heart") with its parts and the same line, once the next rank is open to you.
 The Forge's own tiers (II at D, III at B) still set the temper limit. No quality ceiling: a perfect song is Flawless on
-any anvil. A rebuild keeps work in progress and what stands in the slot. Built in stage 4 with the ranks' acts.
+any anvil. A rebuild keeps work in progress and what stands in the slot (the block entity stays: only its state
+changes). Models and textures from `tools/art/specs/war_anvil.py` (`war_anvil`, `_ironbound`, `_deepglass`, `_lord`).
+Test `arms_anvil_rebuild`.
 
 **46.7 Every weapon at the anvil (stage 2).** Weapons are never made on the crafting grid (decision 1): the 96 forged
 weapons (16 styles, six tiers) and the six Hunter blades (the Fang to the Sovereign blade) lose their grid recipes and are

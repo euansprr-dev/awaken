@@ -38,8 +38,9 @@ public final class ArmsArmoury {
     private ArmsArmoury() {}
 
     public static final int BAND = 0, HALE = 1, FORGE = 2, ANVIL = 3;
-    /** What the screen asks (the last three at a War Anvil's door). */
-    public static final int DETAIL = 0, BUY = 1, DRAW = 2, TRACK = 3, UNTRACK = 4, RAISE = 5, FORGE_IT = 6, FROM_MEMORY = 7, FORGE_BLADE = 8;
+    /** What the screen asks (the last four at a War Anvil's door; REBUILD the anvil a build up, SPEC §46.6). */
+    public static final int DETAIL = 0, BUY = 1, DRAW = 2, TRACK = 3, UNTRACK = 4, RAISE = 5, FORGE_IT = 6, FROM_MEMORY = 7, FORGE_BLADE = 8,
+            REBUILD = 9;
 
     /** The six tiers, their weapons' name prefixes and the level each opens at (the level road, SPEC §28.3). */
     public static final String[] TIERS = {"E", "D", "C", "B", "A", "S"};
@@ -287,6 +288,11 @@ public final class ArmsArmoury {
                 String id = a.op() == FORGE_BLADE ? PREFIX[t] + "_blade" : recipeId(st.id(), t);
                 // begun, the anvil's scene opens over this screen; refused, the line under the buttons says why
                 if (!dev.awaken.arms.anvil.WarAnvil.begin(p, anvil, id, a.op() == FROM_MEMORY)) sendDetail(p, st.id(), a.tier());
+            }
+            case REBUILD -> {
+                var anvil = anvilOf(p);
+                if (anvil != null && dev.awaken.arms.anvil.WarAnvil.rebuild(p, anvil)) sendView(p);
+                sendDetail(p, st.id(), a.tier());
             }
             case UNTRACK -> {
                 ArmsProgress g = ArmsProgress.of(p);

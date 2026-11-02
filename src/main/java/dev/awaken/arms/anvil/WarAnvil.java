@@ -17,12 +17,14 @@ import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
@@ -31,6 +33,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -91,7 +96,8 @@ public final class WarAnvil {
 
     /** What the Armoury shows at an anvil for one style's tier: which of its buttons work, and one plain line for what's in the way. */
     public record Status(int flags, String line) {
-        public static final int SHOWN = 1, FORGE = 2, MEMORY = 4, MEMORY_OK = 8, BLADE = 16;
+        /** REBUILD: this tier needs the anvil rebuilt (§46.6), the door's button says so; REBUILD_OK: and you have what it takes. */
+        public static final int SHOWN = 1, FORGE = 2, MEMORY = 4, MEMORY_OK = 8, BLADE = 16, REBUILD = 32, REBUILD_OK = 64;
     }
 
     public static Status status(ServerPlayer p, BlockPos pos, String style, int tier) {
@@ -104,6 +110,9 @@ public final class WarAnvil {
         if (line == null) flags |= Status.FORGE;
         if (SmithMemory.of(p).remembers(style, tier)) flags |= Status.MEMORY | (line == null ? Status.MEMORY_OK : 0);
         if (missing(p, level, pos, ArmsArmoury.PREFIX[tier] + "_" + AnvilWork.BLADE, false) == null) flags |= Status.BLADE;
+        int build = build(be.getBlockState());
+        if (build < buildFor(tier) && Progression.profile(p).level() >= ArmsArmoury.LEVEL[tier])
+            flags |= Status.REBUILD | (p.isCreative() || afford(p, rebuildCost(p, build + 1)) ? Status.REBUILD_OK : 0);
         return new Status(flags, line == null ? "" : line);
     }
 
@@ -116,10 +125,99 @@ public final class WarAnvil {
         if (Progression.profile(p).level() < ArmsArmoury.LEVEL[tier])
             return tierName(tier) + " weapons open at level " + ArmsArmoury.LEVEL[tier] + ".";
         if (tier > 0 && forge(level, anvil) == null) return "Metal is heated in a Forge. Set your Hearth's Forge within six blocks of this anvil.";
+        String rebuild = unbuilt(tier, build(level.getBlockState(anvil)));
+        if (rebuild != null) return rebuild;
+        // from C a weapon forged in full has its edge ground (§46.9); from memory, or a blade alone, it hasn't
+        if (tier >= 2 && !memory && !style.equals(AnvilWork.BLADE) && grindstone(level, anvil) == null)
+            return "From C-rank up, a weapon's edge is ground on a grindstone. Set one within six blocks of this anvil.";
         if (!style.equals(AnvilWork.BLADE) && !ArmsApi.knows(p, style)) return "You don't know this pattern yet.";
         if (memory && !SmithMemory.of(p).remembers(style, tier)) return "You haven't forged this one well enough yet to make it from memory.";
         if (!p.isCreative() && !afford(p, AnvilCosts.needs(p, id))) return "You don't have everything it takes yet.";
         return null;
+    }
+
+    // ---- the smithy grows (SPEC §46.6) ---------------------------------------------------------------------------------
+
+    /** The build a tier's weapons are forged on: C on Ironbound, B on the Deepglass horn, A and S on a Lord's anvil. */
+    public static int buildFor(int tier) {
+        return tier >= 4 ? 3 : Math.max(0, tier - 1);
+    }
+
+    public static int build(BlockState st) {
+        return st.hasProperty(WarAnvilBlock.BUILD) ? st.getValue(WarAnvilBlock.BUILD) : 0;
+    }
+
+    /** What each rebuild takes (1 Ironbound, 2 the Deepglass horn, 3 the Lord's anvil). */
+    static final String[][] REBUILD = {{}, {"minecraft:iron_block", "4", "minecraft:diamond", "2"},
+            {"awaken:deepglass_shard", "4", "minecraft:amethyst_shard", "4"}, {"awaken:lord_heart", "1", "minecraft:netherite_ingot", "2"}};
+
+    static List<NeedRow> rebuildCost(ServerPlayer p, int build) {
+        List<NeedRow> out = new ArrayList<>();
+        String[] c = REBUILD[Mth.clamp(build, 0, 3)];
+        for (int i = 0; i < c.length; i += 2) out.add(new NeedRow("item", c[i], Integer.parseInt(c[i + 1]), ArmsArmoury.have(p, "item", c[i])));
+        return out;
+    }
+
+    /** The step's name for the next rebuild: "Rebuild your War Anvil Ironbound". */
+    static String rebuildName(int build) {
+        return switch (build) {
+            case 1 -> "Rebuild your War Anvil Ironbound";
+            case 2 -> "Give your War Anvil a Deepglass horn";
+            default -> "Rebuild your War Anvil on a Lord's Heart";
+        };
+    }
+
+    /** Why this anvil can't make a tier's weapons yet, in plain words, or null when it's built for them. */
+    static @Nullable String unbuilt(int tier, int build) {
+        int need = buildFor(tier);
+        if (build >= need) return null;
+        String why = switch (need) {
+            case 1 -> "C-rank weapons are forged on an Ironbound anvil.";
+            case 2 -> "B-rank weapons are balanced on a Deepglass horn.";
+            default -> "A- and S-rank weapons are forged on a Lord's anvil.";
+        };
+        String how = switch (build + 1) {
+            case 1 -> "Ironbound, with 4 iron blocks and 2 diamonds.";
+            case 2 -> "with a Deepglass horn, from 4 Deepglass shards and 4 amethyst shards.";
+            default -> "on a Lord's Heart and 2 netherite ingots.";
+        };
+        return why + (build + 1 < need ? " First rebuild this one " : " Rebuild this one ") + how;
+    }
+
+    /** The door's Rebuild button: the anvil a build up, its parts taken; the work and what stands in the slot stay. */
+    public static boolean rebuild(ServerPlayer p, BlockPos pos) {
+        if (!(p.level() instanceof ServerLevel level) || !(level.getBlockEntity(pos) instanceof WarAnvilBlockEntity)
+                || p.distanceToSqr(Vec3.atCenterOf(pos)) > 10 * 10) return false;
+        BlockState st = level.getBlockState(pos);
+        int b = build(st);
+        if (b >= 3) return false;
+        List<NeedRow> cost = rebuildCost(p, b + 1);
+        if (!p.isCreative()) {
+            if (!afford(p, cost)) return false;
+            take(p, cost);
+        }
+        level.setBlock(pos, st.setValue(WarAnvilBlock.BUILD, b + 1), Block.UPDATE_ALL);
+        level.playSound(null, pos, SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 1F, 0.8F);
+        level.playSound(null, pos, AnvilContent.RING.get(), SoundSource.BLOCKS, 0.9F, 0.7F + 0.15F * b);
+        level.sendParticles(ParticleTypes.CRIT, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, 24, 0.4, 0.2, 0.4, 0.2);
+        Signal.toast(p, Component.literal(switch (b + 1) {
+            case 1 -> "Your War Anvil is Ironbound. C-rank weapons are forged on it, their edges ground on a grindstone nearby.";
+            case 2 -> "Your War Anvil has a Deepglass horn. B-rank weapons are balanced on it.";
+            default -> "Your War Anvil stands on a Lord's Heart. A- and S-rank weapons are forged on it.";
+        }));
+        return true;
+    }
+
+    /** The nearest grindstone within six blocks of the anvil (two up or down), or null. */
+    static @Nullable BlockPos grindstone(Level level, BlockPos anvil) {
+        BlockPos best = null;
+        double d = Double.MAX_VALUE;
+        for (BlockPos b : BlockPos.betweenClosed(anvil.offset(-REACH, -2, -REACH), anvil.offset(REACH, 2, REACH))) {
+            if (!level.getBlockState(b).is(Blocks.GRINDSTONE) || b.distSqr(anvil) >= d) continue;
+            d = b.distSqr(anvil);
+            best = b.immutable();
+        }
+        return best;
     }
 
     static String tierName(int tier) {

@@ -36,6 +36,56 @@ final class AnvilTests {
         AwakenTests.register("arms_anvil_attune", 40, AnvilTests::attune);
         AwakenTests.register("arms_anvil_reforge", 40, AnvilTests::reforge);
         AwakenTests.register("arms_anvil_verbs", 40, AnvilTests::verbs);
+        AwakenTests.register("arms_anvil_rebuild", 40, AnvilTests::rebuild);
+    }
+
+    /**
+     * The smithy grows (SPEC §46.6): an anvil as built makes no C-rank weapon and says how it's rebuilt; the door offers
+     * Rebuild it, dim until the parts are carried; rebuilt Ironbound, the parts are taken and the work on it stays; then a
+     * C weapon in full asks for a grindstone (from memory it doesn't), and a grindstone answers it; B wants the Deepglass
+     * horn and A, from Ironbound, says to rebuild the horn first; broken, it drops with its build.
+     */
+    private static void rebuild(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        WarAnvilBlockEntity be = anvilByForge(h);
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, pos, "anvil-rebuild", 3);
+        while (Progression.rank(p).ordinal() < Rank.C.ordinal()) Progression.passReassessment(p);
+        for (int i = 0; i < 40 && Progression.profile(p).level() < dev.awaken.arms.ArmsArmoury.LEVEL[2]; i++) Progression.grantLevels(p, 6, Progression.XpSource.COMMAND);
+        h.assertTrue(Progression.profile(p).level() >= dev.awaken.arms.ArmsArmoury.LEVEL[2], "the smith reaches C weapons");
+        String c = "gatewrought_longsword";
+        String line = WarAnvil.missing(p, level, pos, c, false);
+        h.assertTrue(line != null && line.startsWith("C-rank weapons are forged on an Ironbound anvil. Rebuild this one Ironbound"), "as built, no C weapon: " + line);
+        int flags = WarAnvil.status(p, pos, "longsword", 2).flags();
+        h.assertTrue((flags & WarAnvil.Status.REBUILD) != 0 && (flags & WarAnvil.Status.REBUILD_OK) == 0, "the door offers the rebuild, dim without its parts");
+        h.assertTrue(!WarAnvil.rebuild(p, pos), "no parts, no rebuild");
+        p.getInventory().add(new ItemStack(Items.IRON_BLOCK, 4));
+        p.getInventory().add(new ItemStack(Items.DIAMOND, 3));
+        h.assertTrue((WarAnvil.status(p, pos, "longsword", 2).flags() & WarAnvil.Status.REBUILD_OK) != 0, "carried, the button lights");
+        be.setWork(AnvilWork.fresh("beastbound_longsword", level.getGameTime(), java.util.List.of(), p.getUUID(), h.absolutePos(new BlockPos(3, 1, 1)), AnvilWork.FORGE));
+        h.assertTrue(WarAnvil.rebuild(p, pos), "rebuilt");
+        h.assertTrue(WarAnvil.build(level.getBlockState(pos)) == 1 && count(p, Items.IRON_BLOCK) == 0 && count(p, Items.DIAMOND) == 1, "Ironbound, its parts taken");
+        h.assertTrue(level.getBlockEntity(pos) == be && be.work() != null, "the work on it stays through the rebuild");
+        be.setWork(null);
+        line = WarAnvil.missing(p, level, pos, c, false);
+        h.assertTrue(line != null && line.startsWith("From C-rank up, a weapon's edge is ground on a grindstone."), "then a grindstone: " + line);
+        String memory = WarAnvil.missing(p, level, pos, c, true);
+        h.assertTrue(memory == null || !memory.startsWith("From C-rank up"), "from memory there's no grinding: " + memory);
+        h.setBlock(new BlockPos(1, 1, 3), net.minecraft.world.level.block.Blocks.GRINDSTONE.defaultBlockState());
+        line = WarAnvil.missing(p, level, pos, c, false);
+        h.assertTrue(line == null || !line.startsWith("From C-rank up") && !line.startsWith("C-rank"), "a grindstone by it, C is open: " + line);
+        h.assertTrue(WarAnvil.unbuilt(3, 1).startsWith("B-rank weapons are balanced on a Deepglass horn. Rebuild this one with a Deepglass horn"), "B wants the horn");
+        h.assertTrue(WarAnvil.unbuilt(4, 1).startsWith("A- and S-rank weapons are forged on a Lord's anvil. First rebuild this one with a Deepglass horn"),
+                "A from Ironbound: the horn first");
+        h.assertTrue(WarAnvil.unbuilt(5, 3) == null && WarAnvil.unbuilt(1, 0) == null, "built for it, or D, nothing in the way");
+        // broken, its loot is the anvil with its build on it (setting it down puts the build back)
+        ItemStack drop = ItemStack.EMPTY;
+        var drops = net.minecraft.world.level.block.Block.getDrops(level.getBlockState(pos), level, pos, be);
+        for (ItemStack s : drops) if (s.is(AnvilContent.ANVIL_ITEM.get())) drop = s;
+        var props = drop.get(net.minecraft.core.component.DataComponents.BLOCK_STATE);
+        h.assertTrue(props != null && Integer.valueOf(1).equals(props.get(WarAnvilBlock.BUILD)),
+                "broken, it drops Ironbound, got " + props + " from " + drops + " (" + level.getBlockState(pos) + ")");
+        h.succeed();
     }
 
     /**

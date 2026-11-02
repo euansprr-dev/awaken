@@ -952,7 +952,9 @@ happens).
   a point of damage). The Forge no longer tempers or attunes weapons, and the Armoury no longer offers Raise. From C
   each rank adds its act to a forging (stage 4, SPEC §46.9), a tenth of the quality each: C grinds the edge at a
   grindstone, B balances it on the horn with a Deepglass weight, A twists the bar before it's drawn out, S quenches it
-  in a column of starlight instead of water.
+  in a column of starlight instead of water. It is rebuilt as you climb (SPEC §46.6), each rebuild the gate for its
+  rank: Ironbound for C (4 iron blocks, 2 diamonds; and a grindstone within six blocks), a Deepglass horn for B (4
+  Deepglass shards, 4 amethyst shards), a Lord's anvil for A and S (a Lord's Heart, 2 netherite ingots).
 - **Know**: the level road's level 3 step names it and its recipe; the recipe book; the Weapons tab ("Set up a War
   Anvil", "Forge your first weapon" with the styles you know as choices, "Make your C-rank weapon"); the Now line ("You
   can forge Beastbound Daggers at your War Anvil"); use it and the Armoury opens at its door with what each weapon takes,
@@ -960,10 +962,15 @@ happens).
   weapon in hand its own window: Temper, Reforge and Attune rows with what each costs and what's in the way; the
   Weapons tab's optional "Temper your ..." and "Reforge your ..."; a plain or sneak use of the Forge with a weapon says
   the War Anvil does it now. Each act's header and hint say what to do ("Grind the edge": hold to turn the wheel, keep
-  the edge on the gold line).
-- **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself), `arms.anvil.WarAnvil`,
+  the edge on the gold line). When a rank needs a rebuild, the door's "Forge it" becomes "Rebuild it", the line says
+  what it takes ("C-rank weapons are forged on an Ironbound anvil. Rebuild this one Ironbound, with 4 iron blocks and 2
+  diamonds."), and the Weapons tab adds "Rebuild your War Anvil Ironbound" (and the Deepglass horn, the Lord's Heart)
+  with its parts; a missing grindstone has its own line and need. Each build looks its part on the block and in hand.
+- **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself at its build, `copy_state` on
+  `build`), `arms.anvil.WarAnvil`,
   `WarAnvilBlockEntity` (schema 1), `AnvilWork` (schema 4), `SmithMemory` (schema 2), `WeaponForged` (schema 3),
-  `arms.anvil.AnvilHeld`; tests `arms_anvil_temper`, `arms_anvil_attune`, `arms_anvil_reforge`, `arms_anvil_verbs`.
+  `arms.anvil.AnvilHeld`; tests `arms_anvil_temper`, `arms_anvil_attune`, `arms_anvil_reforge`, `arms_anvil_verbs`, `arms_anvil_rebuild`; the rebuilds' parts are vanilla or
+  already sourced (`awaken:deepglass_shard`, `awaken:lord_heart`).
 - **Links**: the Hearth's Forge (heat from D, the temper limit); Oren's Mark (`awaken:temper_start`); the tier's Hunter
   blade (carried, it stands in for its parts; else they're added); Blueprints (used, they teach the pattern the anvil
   asks for); the Fitting Stand's smithy (one Forge serves both); the Hearth's Armoury room; ForgeHooks (enchanting).
@@ -974,8 +981,10 @@ happens).
   the slot waits for anyone to sneak-use and draw it. A weapon being worked again is in the work, not your hand:
   breaking the anvil drops it with its price; crafted (vanilla) gear is never tempered here; at its Forge's limit, at
   Temper VI, already of that Force or at S the row says so and its button stays dim. A rank's act left alone settles
-  itself (the balance and the starlight, poorly); letting go of the twist early keeps what was turned; with no
-  grindstone near, the edge is ground on the anvil's face until the rebuilds make it the C gate.
+  itself (the balance and the starlight, poorly); letting go of the twist early keeps what was turned. A rebuild keeps
+  the work in progress and what stands in the slot; it goes one build at a time, greyed until you carry the parts
+  (none taken in creative); broken and placed again, the anvil keeps its build; from memory or a Hunter blade alone,
+  no grindstone is needed; reforging into a rank checks the same rebuild.
 
 ### Forged weapons and Hunter blades (the 96 weapons, the six blades)
 - **Get**: forged at a War Anvil from `data/awaken/arms/anvil_costs.json` (each its old grid recipe minus the

@@ -1,6 +1,33 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "awaken:block/war_anvil"
+    "type": "minecraft:select",
+    "block_state_property": "build",
+    "cases": [
+      {
+        "when": "1",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:block/war_anvil_ironbound"
+        }
+      },
+      {
+        "when": "2",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:block/war_anvil_deepglass"
+        }
+      },
+      {
+        "when": "3",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:block/war_anvil_lord"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "awaken:block/war_anvil"
+    }
   }
 }

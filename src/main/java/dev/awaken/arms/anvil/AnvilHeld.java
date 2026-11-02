@@ -54,7 +54,7 @@ final class AnvilHeld {
 
     static List<AnvilPayloads.Option> options(ServerPlayer p, ServerLevel level, BlockPos anvil, ItemStack weapon) {
         BlockPos fire = WarAnvil.forge(level, anvil);
-        return List.of(temperRow(p, weapon, fire), reforgeRow(p, weapon, fire), attuneRow(p, weapon, fire));
+        return List.of(temperRow(p, weapon, fire), reforgeRow(p, weapon, fire, WarAnvil.build(level.getBlockState(anvil))), attuneRow(p, weapon, fire));
     }
 
     // ---- temper ------------------------------------------------------------------------------------------------------
@@ -117,19 +117,22 @@ final class AnvilHeld {
 
     // ---- reforge -----------------------------------------------------------------------------------------------------
 
-    private static AnvilPayloads.Option reforgeRow(ServerPlayer p, ItemStack weapon, @Nullable BlockPos fire) {
+    private static AnvilPayloads.Option reforgeRow(ServerPlayer p, ItemStack weapon, @Nullable BlockPos fire, int build) {
         ArmsRaise.Plan plan = ArmsRaise.plan(p, weapon);
         if (plan == null) return new AnvilPayloads.Option(AnvilWork.REFORGE, "Reforge it", false, "There's no tier above it.", List.of());
         List<AnvilPayloads.Cost> costs = new ArrayList<>();
         for (NeedRow n : plan.needs()) costs.add(new AnvilPayloads.Cost(ArmsTrack.label(n), n.have(), n.need()));
         boolean afford = p.isCreative() || WarAnvil.afford(p, plan.needs());
+        // reforged to a tier, it's that tier's work: the anvil must be built for it (§46.6)
+        String unbuilt = WarAnvil.unbuilt(plan.next(), build);
         String line = !plan.reached() ? WarAnvil.tierName(plan.next()) + " weapons open at level " + ArmsArmoury.LEVEL[plan.next()] + "."
                 : fire == null ? NO_FORGE
+                : unbuilt != null ? unbuilt
                 : !afford ? "You don't have everything it takes yet."
                 : plan.lordForged() ? "It keeps its own form and Art, and gains a point of damage."
                 : "It keeps its Marks, its name, its Temper and everything written on it.";
         return new AnvilPayloads.Option(AnvilWork.REFORGE, "Reforge it to " + ArmsArmoury.TIERS[plan.next()] + "-rank",
-                plan.reached() && fire != null && afford, line, costs);
+                plan.reached() && fire != null && unbuilt == null && afford, line, costs);
     }
 
     // ---- attune ------------------------------------------------------------------------------------------------------
@@ -178,7 +181,8 @@ final class AnvilHeld {
             }
             case AnvilWork.REFORGE -> {
                 ArmsRaise.Plan plan = ArmsRaise.plan(p, weapon);
-                if (plan == null || !plan.reached() || !free && !WarAnvil.afford(p, plan.needs())) return false;
+                if (plan == null || !plan.reached() || WarAnvil.unbuilt(plan.next(), WarAnvil.build(be.getBlockState())) != null
+                        || !free && !WarAnvil.afford(p, plan.needs())) return false;
                 target = plan.next();
                 // a forged weapon is drawn as the next tier's of its style; a Lord-forged keeps its own body
                 if (!plan.lordForged()) drawn = ArmsArmoury.PREFIX[plan.next()] + "_" + data.style();

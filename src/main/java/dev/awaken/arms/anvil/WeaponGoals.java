@@ -33,13 +33,15 @@ import java.util.List;
  * D-rank weapon" whenever you've reached a tier above the best you've forged. The first two are on the main path from
  * D-rank, after the Forge. A step that's done never comes back. Two optional steps at your anvil (§46.8): "Temper your
  * Beastbound Longsword" while the best weapon you carry is below your Forge's limit, and "Reforge your ..." while you carry
- * a found one (Marked or Lord-forged) below the best tier you've reached.
+ * a found one (Marked or Lord-forged) below the best tier you've reached. From C the anvil is rebuilt for the tier (§46.6):
+ * "Rebuild your War Anvil Ironbound" (then the Deepglass horn, then the Lord's Heart) comes before the tier's weapon, and
+ * that step asks for a grindstone by it.
  */
 final class WeaponGoals {
     private WeaponGoals() {}
 
     static final String ANVIL = "arms/war_anvil", FIRST = "arms/first_weapon", RANK = "arms/rank_weapon",
-            TEMPER = "arms/temper", REFORGE = "arms/reforge";
+            TEMPER = "arms/temper", REFORGE = "arms/reforge", REBUILD = "arms/rebuild";
     /** How many weapons this player has forged at a War Anvil (a progression counter). */
     static final String FORGED = "awaken:weapon_forged";
 
@@ -61,13 +63,18 @@ final class WeaponGoals {
         if (Progression.profile(p).counter(FORGED) > 0) {
             if (mem.best() < 0 || tier <= mem.best()) return List.of();
             BlockPos anvil = anvil(p, mem);
+            boolean near = anvil != null && forgeNear(p, mem, anvil);
             Goals.Builder b = Goals.Step.of(RANK, Goal.WEAPONS, "Make your " + ArmsArmoury.TIERS[tier] + "-rank weapon")
                     .why("You've reached " + WarAnvil.tierName(tier) + " weapons, stronger than anything you've forged. Make one at your War Anvil.")
-                    .need(Need.of("A War Anvil by the Forge", anvil != null && forgeNear(p, mem, anvil)))
+                    .need(Need.of("A War Anvil by the Forge", near))
                     .priority(40).covers("arms:forge/");
+            built(b, mem, tier, near);
             choices(p, b, tier);
             if (anvil != null) b.at(anvil);
-            return List.of(b.build());
+            List<Goals.Step> out = new ArrayList<>(2);
+            rebuild(p, mem, anvil, tier, out);
+            out.add(b.build());
+            return out;
         }
         BlockPos anvil = anvil(p, mem);
         List<Goals.Step> out = new ArrayList<>(2);
@@ -84,10 +91,35 @@ final class WeaponGoals {
                         : "At your War Anvil: heat it in the Forge, draw it out on the beat, quench it and fit its hilt. How well you do decides its quality and Temper.")
                 .need(Need.of(tier == 0 ? "A War Anvil" : "A War Anvil by the Forge", anvil != null && (tier == 0 || forgeNear(p, mem, anvil))))
                 .path(d ? Goals.PATH_FIRST_WEAPON : Goals.NO_PATH).priority(43).covers("arms:forge/");
+        boolean near = anvil != null && (tier == 0 || forgeNear(p, mem, anvil));
+        built(b, mem, tier, near);
         choices(p, b, tier);
         if (anvil != null) b.at(anvil);
+        rebuild(p, mem, anvil, tier, out);
         out.add(b.build());
         return out;
+    }
+
+    /** The tier's weapon needs the anvil built for it and, from C, a grindstone by it (§46.6, §46.9). */
+    private static void built(Goals.Builder b, SmithMemory mem, int tier, boolean near) {
+        if (tier < 2) return;
+        b.need(Need.of(switch (WarAnvil.buildFor(tier)) {
+            case 1 -> "Your War Anvil Ironbound";
+            case 2 -> "Your War Anvil's Deepglass horn";
+            default -> "Your War Anvil on a Lord's Heart";
+        }, near && mem.build >= WarAnvil.buildFor(tier)));
+        b.need(Need.of("A grindstone by the anvil", near && mem.grindNear));
+    }
+
+    /** The next rebuild, while your anvil isn't built for the best tier you've reached: what it takes, at your anvil. */
+    private static void rebuild(ServerPlayer p, SmithMemory mem, @org.jspecify.annotations.Nullable BlockPos anvil, int tier, List<Goals.Step> out) {
+        if (anvil == null || mem.build < 0 || mem.build >= WarAnvil.buildFor(tier)) return;
+        int next = mem.build + 1;
+        Goals.Builder b = Goals.Step.of(REBUILD, Goal.WEAPONS, WarAnvil.rebuildName(next))
+                .why(WarAnvil.unbuilt(tier, mem.build) + " Use the anvil and choose Rebuild it.")
+                .priority(41).at(anvil);
+        for (NeedRow r : WarAnvil.rebuildCost(p, next)) b.need(need(r));
+        out.add(b.build());
     }
 
     /** The optional steps for a weapon you carry, at your anvil with the Forge in reach (SPEC §46.8). */
@@ -170,9 +202,12 @@ final class WeaponGoals {
         if (now - mem.forgeAt < 40) return mem.forgeNear;
         mem.forgeAt = now;
         var level = p.level().getServer().getLevel(mem.anvil.dimension());
-        mem.forgePos = level != null && level.isLoaded(anvil) ? WarAnvil.forge(level, anvil) : null;
+        boolean loaded = level != null && level.isLoaded(anvil);
+        mem.forgePos = loaded ? WarAnvil.forge(level, anvil) : null;
         mem.forgeNear = mem.forgePos != null;
         mem.forgeCap = mem.forgePos == null ? 1 : HearthHooks.temperCap(p, mem.forgePos);
+        mem.build = loaded ? WarAnvil.build(level.getBlockState(anvil)) : -1;
+        mem.grindNear = loaded && WarAnvil.grindstone(level, anvil) != null;
         return mem.forgeNear;
     }
 
