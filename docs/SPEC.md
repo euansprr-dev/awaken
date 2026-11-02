@@ -17225,3 +17225,42 @@ it from D; an anvil set down drops the first and points the second at it; broken
 drops both). `arms_anvil_song` (a D forge judged by the server's clock: early, gold and late heat; strikes
 on and off the beat; the quench soft, true and brittle; quality and the capped Temper; materials taken, and given back
 when the anvil breaks; the weapon stands in the slot and is drawn).
+
+**46.5 Vanilla stays vanilla (plan §4.10, decision 14; Euan approved 2026-11-02: "yes to 14 and 15, go ahead").**
+Vanilla swords, axes, tools and armour stay as they are, crafted on the grid, never at the War Anvil ("keep the vanilla
+ones normal, since those are kind of the quick tools"). A forged weapon must clearly beat the vanilla one of its own
+metal (E stone, D iron, C and B diamond, A and S netherite) and not lose to the next metal a player can reach early
+(diamonds from deep mining at any rank, netherite from about C): at least 10% better per hit or per second, and never
+more than 15% worse on the other (a style of 1.25 swings a second or more against the sword, a slower one against the
+axe). Checked on 2026-11-02 against 26.3's numbers: 60 of the 192 style-tier checks failed.
+- **Damage** (`ArmsData`, through the weapon generator `tools/art/specs/arms_weapons.py`): every forged weapon +1 at
+  every tier; the eight slower or longer styles (axe, maul, greatblade, scythe, glaive, spear, warstaff, chainblade) +2.
+  The longsword then runs 6.5 to 11.5, the axe 9 to 14. The 15 boss weapons take the same bump by their style, so
+  each stays above its tier's forged one (the Ember Tyrant's axe 10 against the Wildhide Axe's 9). 189 of 192
+  checks pass; the three left are E trades (Wildhide Daggers lighter but faster than an iron sword, the Wildhide
+  Warstaff faster than an axe).
+- **Durability**: C 1,700 (from 1,400), B 2,200 (from 1,900), over diamond's 1,561 and netherite's 2,031.
+- **Temper**: vanilla gear no longer takes it (`Upgrades.isTemperable`: our weapons and armour only); a vanilla piece
+  already tempered keeps its levels and bonus. The Forge and Oren say it once: "That's crafted gear. It stays as it is;
+  Temper is for forged weapons and armour."
+- **Said once, never nagging**: Hale's issue adds "A crafting table makes quick tools. For a real weapon, set up a War
+  Anvil at home."; the Weapons tab's "Set up a War Anvil" says "The War Anvil makes weapons stronger than anything from a
+  crafting table."; the War Anvil's tooltip "Forges weapons stronger than any crafted sword or axe." They land with the
+  numbers. Nothing comments on vanilla gear a player carries.
+- Before the numbers land: `tools/sim/combat_sim.py` runs again on them (the fights were tuned with a diamond-sword
+  Parrier at D, which a D weapon becomes); its report goes beside `docs/combat/sim-2026-10-26.md`.
+
+**46.6 The smithy grows (plan §4.11, decision 15; approved with 14).** The War Anvil is rebuilt as you climb, each
+rebuild the gate for its rank's weapons and act (not a second ladder), each a Weapons tab step, shown on the block
+(`WarAnvilBlock` property `build` 0-3, kept in the block entity's save):
+- E: the War Anvil as built (carved stone, a copper-banded horn).
+- D: bellows by the Forge with Forge Tier II (§27); a kin beast set to the smithy works them (§43), and then the heat
+  climbs evenly and the gold band holds 10 ticks longer.
+- C, **Ironbound**: the face re-laid in iron and a grindstone set beside it (4 iron blocks, 2 diamonds); it is the C gate
+  ("a grindstone within 6 blocks").
+- B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst): the balance act happens on it; a weapon rack (the Pattern
+  Stand's rack make) goes up for what you've forged.
+- A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots), in that Lord's colour: the twist is clamped in it, and
+  at S the starlight comes down onto it.
+The Forge's own tiers (II at D, III at B) still set the temper limit. No quality ceiling: a perfect song is Flawless on
+any anvil. A rebuild keeps work in progress and what stands in the slot. Built in stage 4 with the ranks' acts.

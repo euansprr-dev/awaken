@@ -306,7 +306,7 @@ triggers (Marks). Tempering keeps its numbers (§4.6), so enchanting stays clear
 
 It lands in stage 2 with quality; until then `quality` is empty. Neither module reads or writes the other's component.
 
-### 4.10 Vanilla stays vanilla (added 2026-11-02; decision 14)
+### 4.10 Vanilla stays vanilla (added 2026-11-02; decision 14, APPROVED: Euan 2026-11-02, "yes to 14 and 15, go ahead")
 
 Euan, 2026-11-02: "maybe we keep the vanilla ones normal, since those are kind of the quick tools. And then it's like,
 at least it keeps the separation as well, where it's like, if you want the stronger and more interesting ones, you need
@@ -329,7 +329,8 @@ widens it the wrong way: `Upgrades.isTemperable` takes any item with attack dama
 
 **The fix (recommended).**
 - Every forged weapon +1 damage at every tier; the eight slower or longer styles (axe, maul, greatblade, scythe, glaive,
-  spear, warstaff, chainblade) +2. Durability C 1,700 (from 1,400), B 2,200 (from 1,900). The stats are the weapon
+  spear, warstaff, chainblade) +2; the 15 boss weapons take the same bump by style, so each stays above its tier.
+  Durability C 1,700 (from 1,400), B 2,200 (from 1,900). The stats are the weapon
   generator's (`tools/art/specs/arms_weapons.py`, regenerating `ArmsData`), changed with weapon-designs.
 - Vanilla gear no longer takes Temper (`Upgrades.isTemperable`: our weapons and armour only; the Hearth's, through its
   owner); a vanilla piece already tempered keeps its levels. The Forge and Oren say it once, plainly: "That's crafted
@@ -345,7 +346,7 @@ up a War Anvil at home." The Weapons tab's first step ("Set up a War Anvil"): "T
 anything from a crafting table." The War Anvil's tooltip: "Forges weapons stronger than any crafted sword or axe."
 Nothing comments on vanilla gear you carry. These land with the numbers, so they're true when they're said.
 
-### 4.11 The smithy grows (added 2026-11-02; decision 15)
+### 4.11 The smithy grows (added 2026-11-02; decision 15, APPROVED with 14)
 
 Euan earlier: "the forge upgrades over time". The War Anvil is rebuilt as you climb and the room around it fills in.
 Each rebuild is what lets you make that rank's weapons, so it takes the place of a gate the plan already has, not a
@@ -517,7 +518,8 @@ to be undone, the recipes come back from the art tool's writer in one command, a
 14. **Vanilla stays vanilla, and forged weapons clearly beat it** (added 2026-11-02, §4.10): every forged weapon +1
     damage a tier (+2 for the eight slower styles), C and B outlast diamond and netherite, vanilla gear no longer takes
     Temper (what's tempered keeps it), and Hale, the Weapons tab and the anvil's tooltip each say once that the War Anvil
-    makes the stronger weapons. *Recommended: yes.*
+    makes the stronger weapons. *Recommended: yes.* **Approved 2026-11-02** ("yes to 14 and 15, go ahead"; SPEC §46.5).
 15. **The smithy grows** (added 2026-11-02, §4.11): the War Anvil is rebuilt at C (ironbound, with the grindstone), B (a
     Deepglass horn) and A (on a Lord's Heart), each the gate for its rank's weapons and act; bellows a kin beast can
-    work, and a weapon rack; each rebuild a Weapons tab step; no quality ceiling. *Recommended: yes.*
+    work, and a weapon rack; each rebuild a Weapons tab step; no quality ceiling. *Recommended: yes.* **Approved
+    2026-11-02** (SPEC §46.6).
