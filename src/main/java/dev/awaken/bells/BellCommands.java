@@ -16,6 +16,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.levelgen.Heightmap;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -39,6 +43,7 @@ final class BellCommands {
                 .then(Commands.literal("song").executes(c -> BellTower.songNow(c.getSource().getPlayerOrException()) ? 1 : 0))
                 .then(Commands.literal("roost").executes(c -> roost(c.getSource().getPlayerOrException())))
                 .then(Commands.literal("plans").executes(c -> plans(c.getSource().getPlayerOrException())))
+                .then(Commands.literal("studio").executes(c -> studio(c.getSource().getPlayerOrException())))
                 .then(Commands.literal("wagon").executes(c -> wagon(c.getSource().getPlayerOrException())))
                 .then(Commands.literal("belfry").executes(c -> belfry(c.getSource().getPlayerOrException())))
                 .then(Commands.literal("ilse").executes(c -> Bells.ilseNow(c.getSource().getPlayerOrException()) ? 1 : 0))
@@ -199,6 +204,47 @@ final class BellCommands {
             Hanging.hang(level, at, p, stack, Hanging.hookPoint(level.getBlockState(at), hook).add(at.getX(), at.getY(), at.getZ()), true);
         }
         return built ? 1 : 0;
+    }
+
+    /**
+     * For tours (stage 6): every bell's look in one place, six blocks north of you: a row of Bell Beams at head height holding
+     * one bell of each metal at each size it's cast in (smallest first), a Great Bell on a Great Beam beside them, and on the
+     * ground three found bells: one clean, one dulled as a gate leaves it, one hanging as the Lampwing's does.
+     */
+    private static final List<String> FAMILIES = List.of("bronze", "iron", "silver", "pearl", "glass", "court", "great");
+
+    private static int studio(ServerPlayer p) {
+        ServerLevel level = (ServerLevel) p.level();
+        BlockPos o = p.blockPosition().relative(Direction.NORTH, 6);
+        Map<String, Integer> looks = new LinkedHashMap<>();
+        List<BellCatalog.Def> all = new ArrayList<>(BellCatalog.ALL);
+        all.sort(Comparator.comparing((BellCatalog.Def d) -> FAMILIES.indexOf(BellLook.family(d))).thenComparing(d -> d.rank().ordinal()));
+        int great = -1;
+        for (BellCatalog.Def d : all) {
+            if (Hanging.great(d)) great = great < 0 ? d.no() : great;
+            else looks.putIfAbsent(BellLook.family(d) + d.rank(), d.no());
+        }
+        int i = 0, beams = (looks.size() + 3) / 4;
+        for (int no : looks.values()) {
+            BlockPos at = o.offset(i / 4 - beams / 2, 4, 0);
+            if (i % 4 == 0) level.setBlock(at, BellContent.BELL_BEAM.get().defaultBlockState(), Block.UPDATE_ALL);
+            if (level.getBlockEntity(at) instanceof HooksEntity be) be.set(i % 4, no, p.getUUID());
+            i++;
+        }
+        BlockPos g = o.offset(beams - beams / 2 + 1, 5, 0);
+        level.setBlock(g, BellContent.GREAT_BEAM.get().defaultBlockState(), Block.UPDATE_ALL);
+        if (great >= 0 && level.getBlockEntity(g) instanceof HooksEntity be) be.set(0, great, p.getUUID());
+        int[] ground = {BellCatalog.of("throne").no(), BellCatalog.of("wren").no(), BellCatalog.of("nook").no()};
+        for (int k = 0; k < ground.length; k++) {
+            BlockPos at = FoundBells.clear(level, p.blockPosition().offset(2 * k - 2, 0, -3));
+            if (at == null || !FoundBells.place(level, at, ground[k], "set out for a tour", List.of(), 0L, k == 2, false)) continue;
+            if (k == 1 && level.getBlockEntity(at) instanceof FoundBellEntity be) {
+                be.gate = "awaken:studio";
+                level.sendBlockUpdated(at, be.getBlockState(), be.getBlockState(), Block.UPDATE_CLIENTS);
+            }
+        }
+        p.sendSystemMessage(Component.literal(looks.size() + " looks on " + beams + " beams, a Great Bell, three on the ground."));
+        return 1;
     }
 
     /** For tours: the Registry's wagon comes now, leaving every Great Bell it carries for the player in the yard. */
