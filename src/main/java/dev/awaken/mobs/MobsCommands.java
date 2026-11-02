@@ -60,7 +60,14 @@ final class MobsCommands {
                     .then(Commands.literal("studio").then(Commands.argument("id", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(kitBosses(), b)).executes(MobsCommands::studio)))
                     .then(Commands.literal("moves").then(Commands.argument("id", StringArgumentType.word())
-                            .suggests((c, b) -> SharedSuggestionProvider.suggest(kitBosses(), b)).executes(MobsCommands::moves))));
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(kitBosses(), b)).executes(MobsCommands::moves)))
+                    // the carriers on cue, for tours (SPEC §46.2)
+                    .then(Commands.literal("carriers").then(Commands.argument("kind", StringArgumentType.word())
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(dev.awaken.mobs.entity.CarrierDemo.KINDS, b)).executes(c -> {
+                                String why = dev.awaken.mobs.entity.CarrierDemo.run(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "kind"));
+                                if (why != null) c.getSource().sendFailure(Component.literal(why));
+                                return why == null ? 1 : 0;
+                            }))));
             root.then(Commands.literal("mobs").then(Commands.literal("duel").executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
                 boolean ok = Mobs.acceptDuel(sp);

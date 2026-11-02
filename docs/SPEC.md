@@ -16715,6 +16715,10 @@ at once; stage 2 adds phrases and the payoff on the pilots.
 - **The reach model** (`tools/sim/reach_sim.py`, `--model after`): every carrier of every creature can be escaped by a
   dash at its lock or a jump (`--all`: 395 of 395 attacks; the bosses' 148 of 148, where a dash at the first cue got
   out of 66-86% before, by distance).
+- **The carriers on cue** (`mobs.entity.CarrierDemo`, admin `/awaken bosses carriers <kind>`): `stage` lays a 33-block
+  floor where you stand, a still toll ghoul 9 blocks north and the camera west of the lane; each kind (wave, volley, lob,
+  ground, line, wedge, ring, field, pull, shot_light, shot_heavy, shot_red, fan) sends one across. Tour
+  `tools/autopilot/fights-carriers.txt` freezes the tick to shoot each mid-flight.
 - Tests: `fights_language` (I1 and I3 over every bestiary ability and all 41 move tables; I6-I8 per boss written to
   `fights-language.txt`), `fights_carriers_seen` (a nearby player is sent every carrier, each ends on its clock, a shot
   is tracked closely), `fights_dash_escapes` (a dash at the throw leaves a volley's ring, a jump clears a wave, a dash
