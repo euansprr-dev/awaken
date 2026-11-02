@@ -185,11 +185,11 @@ final class AnvilScene {
         return out;
     }
 
-    /** Standing hilt up in the slot, its face to the smith, the guard just over the stone; drawn {@code rise} blocks up. */
+    /** Standing hilt up in the slot, its face to the smith, the guard on the stone; drawn {@code rise} blocks up. */
     static Lay inSlot(Quaternionf frame, AnvilShape shape, float rise, Lay out) {
         out.scale.set(1F, 1F, 1F);
         out.shape = shape;
-        out.mid = shape.root - 2F; // the collar's foot sits on the stone
+        out.mid = shape.root - 0.5F; // the blade's root just in the slot, the guard resting on the stone
         model(frame, 0.5F, 0.51F + rise, 3F / 16F, out.at);
         turn(dir(frame, 0F, -1F, 0F, A), dir(frame, 0F, 0F, -1F, U), out.turn);
         return out;
@@ -270,9 +270,8 @@ final class AnvilScene {
             if (mine && drawK > 0F && !be.slot().isEmpty()) {
                 AnvilShape slot = AnvilShape.of(be.slot());
                 inSlot(FRAME, slot, 0.22F * drawK, L1);
-                // under the guard and down the grip
-                L1.point(0F, slot.taps[0], 0F, out.mainFist);
-                L1.point(0F, slot.taps[1], 0F, out.offFist);
+                L1.point(0F, slot.hands[0], 0F, out.mainFist);
+                L1.point(0F, slot.hands[1], 0F, out.offFist);
                 out.mainW = out.offW = Math.min(1F, drawK * 4F);
             }
             pegTongs(out.tongs);

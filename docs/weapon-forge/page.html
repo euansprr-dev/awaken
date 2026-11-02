@@ -243,6 +243,22 @@ td b { color: var(--fg); }
   </div>
 
   <div class="col">
+    <h2>The smithy grows with you <span class="muted" style="font-size:15px;font-weight:400">(new, decision 15)</span></h2>
+    <p>You said the forge should upgrade over time. So the War Anvil is rebuilt as you climb, and the room around it fills
+      in. Each rebuild is what lets you make that rank's weapons, so it takes the place of a gate we already have; it
+      isn't a second ladder. Each one is a step on the Weapons tab.</p>
+  </div>
+  <div class="ranks">
+    <div class="rank"><span class="r">E</span><span><b>The War Anvil</b>, as it is now: carved stone and a copper-banded horn. E weapons by hand.</span></div>
+    <div class="rank"><span class="r">D</span><span><b>Bellows</b> go up by your Forge when you fire it to Tier II, as now. A kin beast can work them for you: then the heat climbs evenly and the gold holds a moment longer.</span></div>
+    <div class="rank"><span class="r">C</span><span><b>Ironbound.</b> The anvil's face is re-laid in iron and a grindstone is set beside it, for the grind. Iron blocks and diamonds. This is the C gate we already have (a grindstone near), made part of the anvil.</span></div>
+    <div class="rank"><span class="r">B</span><span><b>The Deepglass horn.</b> The horn is re-forged in Deepglass, and it hums. The balance happens on it. A weapon rack goes up for what you've forged.</span></div>
+    <div class="rank"><span class="r">A</span><span><b>The Lord's anvil.</b> Rebuilt on a Lord's Heart and netherite, in that Lord's colour. The twist is clamped in it, and at S the starlight comes down onto it.</span></div>
+  </div>
+  <div class="col">
+    <p class="muted">Tiers still open at the same levels, and your Forge's tier still sets how far a weapon can be tempered.
+      There's no ceiling on quality: a perfect song is always Flawless, whatever the anvil looks like.</p>
+
     <h2>What skill gives you</h2>
     <ul class="plain">
       <li><b>Plain, Fine, Masterwork or Flawless</b>, the same as armour. It sets the weapon's starting temper, from none up
@@ -279,6 +295,41 @@ td b { color: var(--fg); }
         Weapons tab gets real steps, starting with "Set up a War Anvil in your Armoury".</li>
     </ul>
 
+    <h2>Vanilla stays vanilla <span class="muted" style="font-size:15px;font-weight:400">(new, decision 14)</span></h2>
+    <p class="quote">"Maybe we keep the vanilla ones normal, since those are kind of the quick tools... if you want the stronger and more interesting ones, you need to go through this path."</p>
+    <p>So vanilla swords, axes, tools and armour stay as they are, crafted on the grid. For that to read clearly, a forged
+      weapon has to beat the vanilla one at every point. I checked every style at every tier against the real numbers.
+      <b>Today it doesn't:</b></p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Tier</th><th>Vanilla you could have by then (sword · axe, damage a hit)</th><th>Our longsword · axe today</th><th>With the fix</th></tr></thead>
+      <tbody>
+        <tr><td><b>E</b> (level 3)</td><td>stone 5 · 9; iron if you smelt it, 6 · 9</td><td>5.5 · 7: the iron sword and every vanilla axe hit harder</td><td>6.5 · 9, the axe swinging faster</td></tr>
+        <tr><td><b>D</b> (13)</td><td>iron 6 · 9; diamond if you dig deep, 7 · 9</td><td>6.5 · 8: a diamond sword and an iron axe win</td><td>7.5 · 10</td></tr>
+        <tr><td><b>C</b> (22)</td><td>diamond 7 · 9; netherite once you've been to the Nether, 8 · 10</td><td>7.5 · 9: netherite wins, a diamond axe ties</td><td>8.5 · 11</td></tr>
+        <tr><td><b>B</b> (42)</td><td>netherite 8 · 10</td><td>8.5 · 10: the axe only ties</td><td>9.5 · 12</td></tr>
+        <tr><td><b>A</b> (67)</td><td>netherite 8 · 10</td><td>9.5 · 11</td><td>10.5 · 13</td></tr>
+        <tr><td><b>S</b> (97)</td><td>netherite 8 · 10</td><td>10.5 · 12</td><td>11.5 · 14</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="plain">
+      <li><b>Tempering makes it worse.</b> Today a vanilla sword tempers up to VI exactly like ours, so a tempered netherite
+        sword (14) out-hits an untempered A blade.</li>
+      <li><b>The fix.</b> Every forged weapon gets 1 more damage at every tier. The eight slower or longer ones (axe, maul,
+        greatblade, scythe, glaive, spear, warstaff, chainblade) get 2. C and B last longer than diamond and netherite (1,700
+        and 2,200 uses, up from 1,400 and 1,900). Vanilla gear no longer takes Temper, and what's already tempered keeps it.
+        With that, all 16 styles beat the vanilla sword or axe of their own metal, and match or beat the next metal you
+        could get early. The three close calls left are at E, and each is a trade: daggers hit lighter but far faster, and
+        the warstaff swings faster than an axe.</li>
+      <li><b>Enchanting already agrees.</b> Vanilla gear holds one enchantment; a forged weapon holds one to four, by how well
+        you forged it.</li>
+      <li><b>Fights stay tuned.</b> The fights were tuned against a player with a diamond sword at D, which is what a D
+        weapon becomes. The combat simulator checks every Lord again before it lands.</li>
+      <li><b>Said once, in plain words, and never nagged:</b> Hale: "A crafting table makes quick tools. For a real weapon,
+        set up a War Anvil at home." The Weapons tab's first step: "The War Anvil makes weapons stronger than anything from a
+        crafting table." The anvil's tooltip: "Forges weapons stronger than any crafted sword or axe." Nothing comments on
+        the vanilla gear you carry.</li>
+    </ul>
+
     <h2>Your saves</h2>
     <p>Every weapon you already have keeps working. Its tooltip gains a Plain story the first time you hold it. Blueprints
       you carry still teach their style, and nothing is charged twice. The weapon recipes leave the crafting grid.</p>
@@ -292,7 +343,7 @@ td b { color: var(--fg); }
         inscriptions".</li>
       <li><b>Armour.</b> One line, so the War Anvil counts as the Fitting Stand's anvil. The armour's forge camera may be
         moved into a shared class both forges use, with the armour's behaviour unchanged and tested.</li>
-      <li><b>Fights.</b> Nothing. No damage numbers, moves or combat rules change.</li>
+      <li><b>Fights.</b> No moves or combat rules change. Damage numbers change only if you say yes to decision 14.</li>
     </ul>
 
     <h2>How it gets built</h2>
@@ -385,7 +436,9 @@ const DECISIONS = [
   ["The War Anvil belongs in the Armoury room (a weapon made there lasts a quarter longer), and the Weapons tab gets real steps.", "Weapons get their place at home, and you're never left guessing what's next."],
   ["The War Anvil counts as the anvil for the Fitting Stand, so a home needs one anvil, not a 31-iron vanilla one as well. One line in the armour code.", "One smithy for both."],
   ["The line with enchanting: no enchanting step inside the forge scene. Enchanting reads how well a weapon or armour piece was forged, so forging well gives more room for enchantments, and it may add one line to the result card.", "Agreed with the enchanting session: the forge makes the metal, enchanting writes into it afterwards, and neither touches the other's work."],
-  ["Build in stages, starting with one Beastbound Longsword forged at the anvil and shown to you in CI tour shots before anything else is built.", "You judge the look before the rest is built on it."]
+  ["Build in stages, starting with one Beastbound Longsword forged at the anvil and shown to you in CI tour shots before anything else is built.", "You judge the look before the rest is built on it."],
+  ["Vanilla stays vanilla, and forged weapons clearly beat it. Today a diamond sword out-hits a D blade and vanilla axes tie ours. So every forged weapon gets +1 damage a tier (+2 for the eight slower ones), C and B outlast diamond and netherite, and vanilla gear no longer takes Temper (what's tempered keeps it). Hale, the Weapons tab and the anvil's tooltip each say once that the War Anvil makes the stronger weapons.", "Your rule, made true in the numbers: the quick tools stay quick, and the path is always worth it."],
+  ["The smithy grows: the War Anvil is rebuilt at C (ironbound, with the grindstone), B (a Deepglass horn) and A (on a Lord's Heart and netherite), each rebuild letting you make that rank's weapons. Bellows by the Forge that a kin beast can work, and a weapon rack. Each rebuild is a Weapons tab step. No quality ceiling.", "The forge upgrades over time, as you asked, folded into the gates we already have rather than a second ladder."]
 ];
 const list = document.getElementById("decisions"), tallyText = document.getElementById("tallytext"), allYes = document.getElementById("allyes");
 const answers = {};

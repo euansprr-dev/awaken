@@ -51,7 +51,8 @@ the sound are the weapon's own.
 
 ### 1.3 Non-goals
 
-- No new weapons, styles, damage numbers or combat moves. The first cut at the end of the scene deals no damage.
+- No new weapons, styles or combat moves. Damage and durability change only by decision 14 (vanilla stays vanilla,
+  added 2026-11-02). The first cut at the end of the scene deals no damage.
 - No change to drop rates: Lord-forged (35%, certain by the third Lord), Spoils, Marked and their pities stay.
 - Enchanting is not part of this plan. It reads how well an item was forged through `core.api.ForgeHooks` (§4.9).
 - Armour is not changed, except one line: the War Anvil counts as the Fitting Stand's anvil (decision 11).
@@ -305,6 +306,64 @@ triggers (Marks). Tempering keeps its numbers (§4.6), so enchanting stays clear
 
 It lands in stage 2 with quality; until then `quality` is empty. Neither module reads or writes the other's component.
 
+### 4.10 Vanilla stays vanilla (added 2026-11-02; decision 14)
+
+Euan, 2026-11-02: "maybe we keep the vanilla ones normal, since those are kind of the quick tools. And then it's like,
+at least it keeps the separation as well, where it's like, if you want the stronger and more interesting ones, you need
+to go through this path." Vanilla swords, axes, tools and armour stay as they are, crafted on the grid, never at the War
+Anvil. For the separation to hold, a forged weapon must clearly beat the vanilla one of its own metal and not lose to
+the next metal a player can reach early (diamonds from deep mining at any rank; netherite once you've been to the
+Nether, about C).
+
+**Checked (VERIFIED, 26.3 sources and `ArmsData`).** Vanilla damage a hit (1 + material + item): sword stone/copper 5,
+iron 6, diamond 7, netherite 8, all 1.6 a second; axe stone/copper 9 (0.8 a second), iron 9 (0.9), diamond 9 (1.0),
+netherite 10 (1.0); durability iron 250, diamond 1561, netherite 2031. Ours (1 + `damage`): the longsword E 5.5 to S
+10.5 at 1.6 a second, the axe E 7 to S 12 at 1.0, durability 220, 500, 1400, 1900, 2300, 2800. Comparing each of the
+16 styles with the vanilla sword (1.25 swings a second or more) or axe (slower), a style passes when it is at least 10%
+better per hit or per second than the same metal (and no worse than the next metal) while never more than 15% worse on
+the other. **Today 60 of the 192 checks fail**: the D longsword under a diamond sword (6.5 against 7), the C longsword
+under netherite (7.5 against 8), every axe-like style under the vanilla axe at E, D and C (the Beastbound Axe 8 against
+an iron axe's 9), the B axe only tying netherite, and C and B wearing out before diamond and netherite. Tempering
+widens it the wrong way: `Upgrades.isTemperable` takes any item with attack damage, so a netherite sword tempers to VI
+(14) like ours.
+
+**The fix (recommended).**
+- Every forged weapon +1 damage at every tier; the eight slower or longer styles (axe, maul, greatblade, scythe, glaive,
+  spear, warstaff, chainblade) +2. Durability C 1,700 (from 1,400), B 2,200 (from 1,900). The stats are the weapon
+  generator's (`tools/art/specs/arms_weapons.py`, regenerating `ArmsData`), changed with weapon-designs.
+- Vanilla gear no longer takes Temper (`Upgrades.isTemperable`: our weapons and armour only; the Hearth's, through its
+  owner); a vanilla piece already tempered keeps its levels. The Forge and Oren say it once, plainly: "That's crafted
+  gear. It stays as it is; Temper is for forged weapons and armour."
+- With it, 189 of the 192 checks pass. The three left are E trades: Wildhide Daggers 5 a hit against an iron sword's 6,
+  but 11 a second against 9.6; the Wildhide Warstaff 7.5 a hit against a stone or iron axe's 9, but faster.
+- Enchanting already agrees (SPEC §45.4): vanilla gear holds one enchantment, a forged weapon quality + 1.
+- The fights were tuned with a diamond-sword Parrier at D (`tools/sim/combat_sim.py`, SPEC §24); a D weapon becomes
+  about that (7.5). The sim runs again on the new numbers before they land.
+
+**Told once, in plain words, never nagging.** Hale's issue: "A crafting table makes quick tools. For a real weapon, set
+up a War Anvil at home." The Weapons tab's first step ("Set up a War Anvil"): "The War Anvil makes weapons stronger than
+anything from a crafting table." The War Anvil's tooltip: "Forges weapons stronger than any crafted sword or axe."
+Nothing comments on vanilla gear you carry. These land with the numbers, so they're true when they're said.
+
+### 4.11 The smithy grows (added 2026-11-02; decision 15)
+
+Euan earlier: "the forge upgrades over time". The War Anvil is rebuilt as you climb and the room around it fills in.
+Each rebuild is what lets you make that rank's weapons, so it takes the place of a gate the plan already has, not a
+second ladder; each is a step on the Weapons tab; the block's model shows it (`WarAnvilBlock` gains a `build` property,
+0-3, kept in the block entity's save).
+
+| Rank | The smithy | Gate it folds into | Cost |
+|---|---|---|---|
+| E | the War Anvil as built: carved stone, a copper-banded horn | (its recipe, level 3) | three stone, a copper ingot, a log |
+| D | bellows by the Forge (with Forge Tier II, SPEC §27); a kin beast set to the smithy works them (§43: beasts do the boring work), then the heat climbs evenly and the gold band holds 10 ticks longer | the Forge within 6 blocks (unchanged) | part of Forge Tier II |
+| C | **Ironbound**: the face re-laid in iron, a grindstone set beside it | "a grindstone within 6 blocks" for C | 4 iron blocks, 2 diamonds |
+| B | **The Deepglass horn**: the horn re-forged in Deepglass, humming; the balance act happens on it; a weapon rack (the Pattern Stand's rack make) goes up for what you've forged | B's act needs the horn | 4 Deepglass shards, 4 amethyst |
+| A | **The Lord's anvil**: rebuilt on a Lord's Heart and netherite, in that Lord's colour; the twist is clamped in it and at S the starlight comes down onto it | A's and S's acts | a Lord's Heart, 2 netherite ingots |
+
+The Forge's own tiers (II at D, III at B) still set how far a weapon can be tempered. **No quality ceiling**: a perfect
+song is Flawless on any anvil, so playing early is never punished. A rebuild keeps any work in progress and what stands
+in the slot. Built in stage 4 with the ranks' acts (the rebuild is where each act happens).
+
 ## 5. Architecture, data and lifecycle
 
 ### 5.1 Code (module `arms`, package `dev.awaken.arms.anvil`, client `arms.anvil.client`)
@@ -455,3 +514,10 @@ to be undone, the recipes come back from the art tool's writer in one command, a
     it may add one line to the forge's result card. *Recommended: yes, as agreed with that session.*
 13. **Stages in order**, starting with one Beastbound Longsword forged at the anvil and shown to you in CI tour shots
     before anything else is built. *Recommended: yes.*
+14. **Vanilla stays vanilla, and forged weapons clearly beat it** (added 2026-11-02, §4.10): every forged weapon +1
+    damage a tier (+2 for the eight slower styles), C and B outlast diamond and netherite, vanilla gear no longer takes
+    Temper (what's tempered keeps it), and Hale, the Weapons tab and the anvil's tooltip each say once that the War Anvil
+    makes the stronger weapons. *Recommended: yes.*
+15. **The smithy grows** (added 2026-11-02, §4.11): the War Anvil is rebuilt at C (ironbound, with the grindstone), B (a
+    Deepglass horn) and A (on a Lord's Heart), each the gate for its rank's weapons and act; bellows a kin beast can
+    work, and a weapon rack; each rebuild a Weapons tab step; no quality ceiling. *Recommended: yes.*

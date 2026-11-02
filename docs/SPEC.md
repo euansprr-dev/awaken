@@ -17142,7 +17142,8 @@ it; coming back restarts the stage, counted in again.
 - **Quality**: 0.2 heat + 0.55 strikes x early + 0.15 quench + 0.1 hilt; Plain below 0.55, Fine, Masterwork from 0.75,
   Flawless from 0.9; burnt or brittle is never Flawless. Starting Temper Plain 0, Fine I, Masterwork II, Flawless III, then
   Oren's Mark (`awaken:temper_start`) adds its levels, all **capped at the Forge's temper limit**
-  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in an Armoury),
+  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in a Forge room, `RoomType.ARMORY`: an anvil, the Forge and an armour stand in one room;
+  the card says so plainly: "Put an anvil and an armour stand in the Forge's room and it'll go further"),
   applied with `Upgrades.applyTemper`.
 - **The story**: `awaken:weapon_forged` (`WeaponForged`, schemaVersion 1): quality, flaw (0 none, 1 burnt, 2 brittle),
   the maker's name. The tooltip says it plainly: "Masterwork", "a burnt tip" or "a brittle hairline", "Forged by Euan".
@@ -17192,8 +17193,8 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
   height of its points): the point is the mesh's top, the blade's root is the height where the blade begins along it,
   the middles of the blade and the whole weapon follow, the strikes' marks are fractions of root to point, the tongs
   hold half a texel under the root (two thirds up the blade while the hilt goes on), the hilt's taps land at the middles
-  of the guard, the grip and the pommel, your hands on the hilt at the guard's and the grip's, and a weapon stands in the
-  slot with its root two texels under the stone. Where the blade, the guard, the grip and the pommel begin along it is
+  of the guard, the grip and the pommel, your hands on the hilt at the grip's upper and lower quarters, and a weapon
+  stands in the slot with its guard resting on the stone (the blade's root half a texel in). Where the blade, the guard, the grip and the pommel begin along it is
   `AnvilSong.HILT_CUT` (the Beastbound Longsword's: 0.40, 0.24, 0.17, 0) until the weapon generator writes each weapon's
   own; a mesh whose heights don't climb along it keeps today's hand-set layout.
 - The smith's own client plays their sounds the moment they act; the server plays them to everyone else. Observers see

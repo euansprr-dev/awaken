@@ -28,21 +28,24 @@ final class AnvilShape {
     final float root, tip, mid, wholeMid;
     /** Where the hilt's three taps land: the middles of the guard, the grip and the pommel. */
     final float[] taps;
+    /** Your hands on the hilt as you draw it: the grip's upper quarter and its lower. */
+    final float[] hands;
     /** Blocks a design texel of it. */
     final float texel;
 
-    private AnvilShape(float[] cut, float root, float tip, float lo, float[] taps) {
+    private AnvilShape(float[] cut, float root, float tip, float lo, float[] taps, float[] hands) {
         this.cut = cut;
         this.root = root;
         this.tip = tip;
         this.mid = (root + tip) / 2F;
         this.wholeMid = (lo + tip) / 2F;
         this.taps = taps;
+        this.hands = hands;
         this.texel = Math.min(AnvilScene.TEXEL, LONGEST / (tip - lo));
     }
 
     /** The Beastbound Longsword as first set by hand: what a weapon without a mesh is laid out by. */
-    static final AnvilShape FALLBACK = new AnvilShape(AnvilSong.HILT_CUT, 5F, 21F, -6F, new float[]{4F, 0.5F, -3.5F});
+    static final AnvilShape FALLBACK = new AnvilShape(AnvilSong.HILT_CUT, 5F, 21F, -6F, new float[]{4F, 0.5F, -3.5F}, new float[]{2F, -0.5F});
 
     private static final Map<WeaponMesh, AnvilShape> READ = new IdentityHashMap<>();
 
@@ -96,7 +99,8 @@ final class AnvilShape {
         // a mesh whose heights don't climb along it (or whose blade is a sliver) keeps the hand-set layout
         if (!(hi - lo > 4F) || !(hi - root > 2F) || !(root - lo > 1F)) return FALLBACK;
         float[] taps = {height(at, (cut[0] + cut[1]) / 2F), height(at, (cut[1] + cut[2]) / 2F), height(at, cut[2] / 2F)};
-        return new AnvilShape(cut, root, hi, lo, taps);
+        float top = height(at, cut[1]), low = height(at, cut[2]), q = (top - low) / 4F;
+        return new AnvilShape(cut, root, hi, lo, taps, new float[]{top - q, low + q});
     }
 
     /** The height at a fraction along it, between the bins' middles. */
