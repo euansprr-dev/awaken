@@ -2,6 +2,8 @@ package dev.awaken.bells.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import dev.awaken.bells.BellItem;
+import dev.awaken.bells.BellLook;
 import dev.awaken.bells.FoundBellBlock;
 import dev.awaken.bells.FoundBellEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -14,6 +16,7 @@ import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -25,10 +28,19 @@ public final class FoundBellRenderer implements BlockEntityRenderer<FoundBellEnt
     public static final class State extends BlockEntityRenderState {
         final ItemStackRenderState item = new ItemStackRenderState();
         boolean has, hanging, great;
-        float age;
+        float age, bottom;
     }
 
     private final ItemModelResolver items;
+
+    /** One dulled stack per bell, made once. */
+    private static final ItemStack[] DULLED = new ItemStack[100];
+
+    private static ItemStack dulled(int no) {
+        ItemStack s = DULLED[no];
+        if (s == null) DULLED[no] = s = BellItem.dulled(no);
+        return s;
+    }
 
     public FoundBellRenderer(BlockEntityRendererProvider.Context ctx) {
         this.items = ctx.itemModelResolver();
@@ -49,10 +61,12 @@ public final class FoundBellRenderer implements BlockEntityRenderer<FoundBellEnt
             return;
         }
         state.hanging = be.getBlockState().getValue(FoundBellBlock.HANGING);
-        var src = dev.awaken.bells.BellCatalog.of(no).source();
-        state.great = src == dev.awaken.bells.BellCatalog.Source.PROVING || src == dev.awaken.bells.BellCatalog.Source.SEED;
+        state.great = BellLook.great(no);
+        state.bottom = BellLook.bottom(no);
         state.age = be.getLevel().getGameTime() + partialTicks;
-        items.updateForTopItem(state.item, HooksRenderer.stack(no), ItemDisplayContext.NONE, be.getLevel(), null, (int) be.getBlockPos().asLong());
+        // a bell lying in a gate is dulled by the Deep (stage 6)
+        items.updateForTopItem(state.item, be.dulled() ? dulled(no) : HooksRenderer.stack(no), ItemDisplayContext.NONE, be.getLevel(), null,
+                (int) be.getBlockPos().asLong());
     }
 
     @Override
@@ -63,16 +77,16 @@ public final class FoundBellRenderer implements BlockEntityRenderer<FoundBellEnt
             pose.translate(0.5F, 1F, 0.5F);
             pose.rotateDegrees(Axis.XP, (float) Math.sin(state.age * 0.05F) * 3F);
             pose.rotateDegrees(Axis.ZP, (float) Math.sin(state.age * 0.037F) * 2F);
-            pose.scale(0.55F, 0.55F, 0.55F);
-            pose.translate(0F, -7F / 16F, 0F);
+            pose.scale(0.7F, 0.7F, 0.7F);
+            pose.translate(0F, (8F - BellLook.TOP) / 16F, 0F);
         } else {
-            // sat on the floor, mouth down: the model's lip (y 1.4) on the ground
+            // sat on the floor, mouth down: its lip on the ground
             pose.translate(0.5F, 0F, 0.5F);
             pose.rotateDegrees(Axis.YP, 23F);
             // a Great Bell sat in the yard is as big as it is
-            float k = state.great ? 1.5F : 0.7F;
+            float k = state.great ? 1.5F : 0.9F;
             pose.scale(k, k, k);
-            pose.translate(0F, 0.5F - 1.4F / 16F, 0F);
+            pose.translate(0F, (8F - state.bottom) / 16F, 0F);
         }
         state.item.submit(pose, out, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
         pose.popPose();

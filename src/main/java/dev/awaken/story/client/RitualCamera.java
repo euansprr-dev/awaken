@@ -49,6 +49,14 @@ final class RitualCamera {
         if (d < range) shake(deg * dev.awaken.story.RitualAudioRules.distance(d, range), ticks);
     }
 
+    /** A statue's footfall: half a degree within 16 blocks, fading out by 24, so one walking at you shakes the view. */
+    static void step(Vec3 at) {
+        var p = Minecraft.getInstance().player;
+        if (p == null) return;
+        float f = dev.awaken.story.RitualAudioRules.stepShake(p.position().distanceTo(at));
+        if (f > 0) shake(0.5F * f, 5);
+    }
+
     static void fovPunch(float amount, int ticks) {
         if (!shakeOn()) return;
         fovPunch = amount * RitualAudioConfig.motion();

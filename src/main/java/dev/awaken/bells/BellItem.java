@@ -1,6 +1,7 @@
 package dev.awaken.bells;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,11 +14,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomModelData;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -35,6 +38,21 @@ public final class BellItem extends Item {
         ItemStack s = new ItemStack(BellContent.BELL.get());
         s.set(BellContent.BELL_NO.get(), no);
         return s;
+    }
+
+    /** Flag 0 of {@code minecraft:custom_model_data}: the bell's dulled model (tools/art/specs/bells.py). */
+    private static final CustomModelData DULL = new CustomModelData(List.of(), List.of(true), List.of(), List.of());
+
+    /** Bell #{@code no} as it comes out of a gate: dulled by the Deep until the day it hangs (stage 6). */
+    public static ItemStack dulled(int no) {
+        ItemStack s = of(no);
+        s.set(DataComponents.CUSTOM_MODEL_DATA, DULL);
+        return s;
+    }
+
+    public static boolean isDulled(ItemStack s) {
+        CustomModelData d = s.get(DataComponents.CUSTOM_MODEL_DATA);
+        return d != null && Boolean.TRUE.equals(d.getBoolean(0));
     }
 
     /** The bell this stack is, or null when it isn't one (or carries no number). */
@@ -55,6 +73,7 @@ public final class BellItem extends Item {
         BellCatalog.Def d = def(stack);
         if (d == null) return;
         out.accept(Component.literal("Bell " + d.number() + " · " + d.rank().label + "-rank").withStyle(ChatFormatting.GOLD));
+        if (isDulled(stack)) out.accept(Component.literal("The gate dulled it. It'll come clean the day it hangs.").withStyle(ChatFormatting.GRAY));
         if (!d.voice().words.isEmpty()) out.accept(Component.literal("While it hangs: " + d.voice().words).withStyle(ChatFormatting.GRAY));
         out.accept(Component.literal(Hanging.great(d) ? "A Great Bell. Hang it on a Great Beam, 12 or more blocks above your fire."
                 : "Use it on a hook by your fire to hang it: your Bell Frame, or a Bell Beam 8 or more above the fire.").withStyle(ChatFormatting.DARK_GRAY));

@@ -159,6 +159,7 @@ public final class RitualStatue extends Mob {
     @Override
     protected void readAdditionalSaveData(ValueInput in) {
         super.readAdditionalSaveData(in);
-        entityData.set(STAGE, in.getIntOr("awaken_stage", KNEEL));
+        // through setStage, so a stage loaded mid-scene (or merged in by a studio tour) starts its clip from the top
+        setStage(in.getIntOr("awaken_stage", KNEEL));
     }
 }

@@ -393,9 +393,10 @@ final class VillageBells {
             BellWorld.Village v = BellWorld.get(p.level().getServer()).villages.get(e.getKey());
             if (v == null || v.spot == null || Bells.has(p, BellCatalog.of(e.getKey()).id())) continue;
             if (p.distanceToSqr(Vec3.atCenterOf(v.spot)) > HUM * HUM) continue;
-            var note = BuiltInRegistries.SOUND_EVENT.wrapAsHolder(BellContent.note(e.getKey()));
+            // its own note, muffled through the ground: lifted, the same note rings out clear
+            var note = BuiltInRegistries.SOUND_EVENT.wrapAsHolder(BellContent.muffled(e.getKey()));
             p.connection.send(new ClientboundSoundPacket(note, SoundSource.AMBIENT, v.spot.getX() + 0.5, v.spot.getY() + 0.5, v.spot.getZ() + 0.5,
-                    0.6F, 0.6F, p.level().getRandom().nextLong()));
+                    1.2F, 1F, p.level().getRandom().nextLong()));
         }
     }
 

@@ -1,6 +1,645 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "awaken:item/bell"
+    "type": "minecraft:condition",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "on_true": {
+      "type": "minecraft:select",
+      "property": "minecraft:component",
+      "component": "awaken:bell",
+      "cases": [
+        {
+          "when": [
+            10,
+            54,
+            86,
+            98
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_a_dull"
+          }
+        },
+        {
+          "when": [
+            8,
+            15,
+            20,
+            30,
+            31,
+            32,
+            37,
+            38,
+            41,
+            70,
+            75
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_b_dull"
+          }
+        },
+        {
+          "when": [
+            2,
+            6,
+            9,
+            11,
+            35,
+            48,
+            57,
+            74,
+            80,
+            81,
+            87,
+            91,
+            93,
+            95,
+            97
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_c_dull"
+          }
+        },
+        {
+          "when": [
+            44,
+            46,
+            50,
+            52,
+            55,
+            58,
+            61,
+            63,
+            66,
+            68,
+            71,
+            73,
+            76
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_d_dull"
+          }
+        },
+        {
+          "when": [
+            3,
+            7,
+            12,
+            17,
+            21,
+            26,
+            34
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_e_dull"
+          }
+        },
+        {
+          "when": [
+            25
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_s_dull"
+          }
+        },
+        {
+          "when": [
+            1,
+            72,
+            94
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/court_a_dull"
+          }
+        },
+        {
+          "when": [
+            23,
+            42,
+            59,
+            77,
+            92
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/court_s_dull"
+          }
+        },
+        {
+          "when": [
+            90
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/glass_a_dull"
+          }
+        },
+        {
+          "when": [
+            27,
+            96
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/glass_b_dull"
+          }
+        },
+        {
+          "when": [
+            5,
+            29
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/glass_c_dull"
+          }
+        },
+        {
+          "when": [
+            88
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/glass_d_dull"
+          }
+        },
+        {
+          "when": [
+            0,
+            4,
+            18,
+            40,
+            60,
+            78,
+            83
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/great_dull"
+          }
+        },
+        {
+          "when": [
+            19,
+            28,
+            51,
+            56
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_a_dull"
+          }
+        },
+        {
+          "when": [
+            47,
+            49,
+            84
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_b_dull"
+          }
+        },
+        {
+          "when": [
+            14,
+            45,
+            62,
+            67
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_c_dull"
+          }
+        },
+        {
+          "when": [
+            79,
+            82,
+            89
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_d_dull"
+          }
+        },
+        {
+          "when": [
+            36,
+            99
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_s_dull"
+          }
+        },
+        {
+          "when": [
+            64
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/pearl_a_dull"
+          }
+        },
+        {
+          "when": [
+            13,
+            39
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/pearl_b_dull"
+          }
+        },
+        {
+          "when": [
+            43,
+            69
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/pearl_c_dull"
+          }
+        },
+        {
+          "when": [
+            85
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/pearl_d_dull"
+          }
+        },
+        {
+          "when": [
+            65
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/silver_a_dull"
+          }
+        },
+        {
+          "when": [
+            16,
+            22,
+            53
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/silver_b_dull"
+          }
+        },
+        {
+          "when": [
+            24
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/silver_c_dull"
+          }
+        },
+        {
+          "when": [
+            33
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/silver_s_dull"
+          }
+        }
+      ],
+      "fallback": {
+        "type": "minecraft:model",
+        "model": "awaken:item/bell/bronze_c_dull"
+      }
+    },
+    "on_false": {
+      "type": "minecraft:select",
+      "property": "minecraft:component",
+      "component": "awaken:bell",
+      "cases": [
+        {
+          "when": [
+            10,
+            54,
+            86,
+            98
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_a"
+          }
+        },
+        {
+          "when": [
+            8,
+            15,
+            20,
+            30,
+            31,
+            32,
+            37,
+            38,
+            41,
+            70,
+            75
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_b"
+          }
+        },
+        {
+          "when": [
+            2,
+            6,
+            9,
+            11,
+            35,
+            48,
+            57,
+            74,
+            80,
+            81,
+            87,
+            91,
+            93,
+            95,
+            97
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_c"
+          }
+        },
+        {
+          "when": [
+            44,
+            46,
+            50,
+            52,
+            55,
+            58,
+            61,
+            63,
+            66,
+            68,
+            71,
+            73,
+            76
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_d"
+          }
+        },
+        {
+          "when": [
+            3,
+            7,
+            12,
+            17,
+            21,
+            26,
+            34
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_e"
+          }
+        },
+        {
+          "when": [
+            25
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/bronze_s"
+          }
+        },
+        {
+          "when": [
+            1,
+            72,
+            94
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/court_a"
+          }
+        },
+        {
+          "when": [
+            23,
+            42,
+            59,
+            77,
+            92
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/court_s"
+          }
+        },
+        {
+          "when": [
+            90
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/glass_a"
+          }
+        },
+        {
+          "when": [
+            27,
+            96
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/glass_b"
+          }
+        },
+        {
+          "when": [
+            5,
+            29
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/glass_c"
+          }
+        },
+        {
+          "when": [
+            88
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/glass_d"
+          }
+        },
+        {
+          "when": [
+            0,
+            4,
+            18,
+            40,
+            60,
+            78,
+            83
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/great"
+          }
+        },
+        {
+          "when": [
+            19,
+            28,
+            51,
+            56
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_a"
+          }
+        },
+        {
+          "when": [
+            47,
+            49,
+            84
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_b"
+          }
+        },
+        {
+          "when": [
+            14,
+            45,
+            62,
+            67
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_c"
+          }
+        },
+        {
+          "when": [
+            79,
+            82,
+            89
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_d"
+          }
+        },
+        {
+          "when": [
+            36,
+            99
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/iron_s"
+          }
+        },
+        {
+          "when": [
+            64
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/pearl_a"
+          }
+        },
+        {
+          "when": [
+            13,
+            39
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/pearl_b"
+          }
+        },
+        {
+          "when": [
+            43,
+            69
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/pearl_c"
+          }
+        },
+        {
+          "when": [
+            85
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/pearl_d"
+          }
+        },
+        {
+          "when": [
+            65
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/silver_a"
+          }
+        },
+        {
+          "when": [
+            16,
+            22,
+            53
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/silver_b"
+          }
+        },
+        {
+          "when": [
+            24
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/silver_c"
+          }
+        },
+        {
+          "when": [
+            33
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "awaken:item/bell/silver_s"
+          }
+        }
+      ],
+      "fallback": {
+        "type": "minecraft:model",
+        "model": "awaken:item/bell/bronze_c"
+      }
+    }
   }
 }
