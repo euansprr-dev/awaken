@@ -2,6 +2,7 @@ package dev.awaken.arms.anvil;
 
 import net.minecraft.util.Mth;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -108,11 +109,12 @@ public final class AnvilSong {
 
     /**
      * Each style's song at the anvil (SPEC §46.7): its rhythm (from its chain's tempo), how many strikes draw it out
-     * (flipped after half), and where each falls on the blade.
+     * (flipped after half), where each falls on the blade, and its true note (§46.10: semitones from the ring's A, a
+     * Maul low, Daggers high).
      */
-    public record Song(Rhythm rhythm, int strikes, float[][] marks) {
-        Song(int step, String bar, int strikes) {
-            this(new Rhythm(step, bar), strikes, layMarks(strikes));
+    public record Song(Rhythm rhythm, int strikes, float[][] marks, int note) {
+        Song(int step, String bar, int strikes, int note) {
+            this(new Rhythm(step, bar), strikes, layMarks(strikes), note);
         }
 
         public int flipAfter() {
@@ -138,27 +140,48 @@ public final class AnvilSong {
     }
 
     public static final Map<String, Song> SONGS = Map.ofEntries(
-            Map.entry("longsword", new Song(4, "x...x...x.x.....", 10)),
-            Map.entry("axe", new Song(5, "x.....x.....x...", 8)),
-            Map.entry("maul", new Song(4, "x.......x.......", 8)),
-            Map.entry("spear", new Song(4, "x..x...x........", 10)),
-            Map.entry("greatblade", new Song(5, "x.....x.......x.", 8)),
-            Map.entry("rapier", new Song(3, "x..x.x..x..x.x..", 12)),
-            Map.entry("daggers", new Song(3, "x.x.x.xx", 14)),
-            Map.entry("katana", new Song(4, "x.......xx.x....", 10)),
-            Map.entry("twinblades", new Song(3, "x.xx.x.xx.......", 12)),
-            Map.entry("glaive", new Song(5, "x....x....xx....", 10)),
-            Map.entry("scythe", new Song(5, "x......x.x......", 8)),
-            Map.entry("gauntlets", new Song(3, "x.x.x.x.xx......", 14)),
-            Map.entry("chainblade", new Song(4, "x..x....x..x.x..", 10)),
-            Map.entry("shieldblade", new Song(4, "x...x.x.....x...", 10)),
-            Map.entry("warstaff", new Song(4, "x.x...x.x...x...", 10)),
-            Map.entry("precursor", new Song(4, "x...x...x...x...", 10)));
+            Map.entry("longsword", new Song(4, "x...x...x.x.....", 10, 0)),
+            Map.entry("axe", new Song(5, "x.....x.....x...", 8, -5)),
+            Map.entry("maul", new Song(4, "x.......x.......", 8, -9)),
+            Map.entry("spear", new Song(4, "x..x...x........", 10, 3)),
+            Map.entry("greatblade", new Song(5, "x.....x.......x.", 8, -7)),
+            Map.entry("rapier", new Song(3, "x..x.x..x..x.x..", 12, 7)),
+            Map.entry("daggers", new Song(3, "x.x.x.xx", 14, 10)),
+            Map.entry("katana", new Song(4, "x.......xx.x....", 10, 3)),
+            Map.entry("twinblades", new Song(3, "x.xx.x.xx.......", 12, 5)),
+            Map.entry("glaive", new Song(5, "x....x....xx....", 10, -2)),
+            Map.entry("scythe", new Song(5, "x......x.x......", 8, -2)),
+            Map.entry("gauntlets", new Song(3, "x.x.x.x.xx......", 14, 5)),
+            Map.entry("chainblade", new Song(4, "x..x....x..x.x..", 10, 0)),
+            Map.entry("shieldblade", new Song(4, "x...x.x.....x...", 10, 0)),
+            Map.entry("warstaff", new Song(4, "x.x...x.x...x...", 10, -5)),
+            Map.entry("precursor", new Song(4, "x...x...x...x...", 10, 0)));
 
     /** A style's song; anything else (a Hunter blade forged alone) the Longsword's. */
     public static Song song(String style) {
         Song s = SONGS.get(style);
         return s != null ? s : SONGS.get("longsword");
+    }
+
+    /** How far flat (semitones) the blade rings at the first clean strike; each clean strike rings it a step nearer true. */
+    public static final float FLAT = 3F;
+
+    /** The blade's ring after {@code clean} clean strikes of {@code of}: from FLAT under its true note up to it (§46.10). */
+    public static float ringPitch(Song song, int clean, int of) {
+        float flat = FLAT * (1F - Math.min(1F, clean / (float) Math.max(1, of)));
+        return (float) Math.pow(2.0, (song.note() - flat) / 12.0);
+    }
+
+    /** The style's true note, as a pitch of the ring's A: the draw from the stone rings it whole. */
+    public static float truePitch(Song song) {
+        return (float) Math.pow(2.0, song.note() / 12.0);
+    }
+
+    /** How many of the first {@code upTo} scores are clean strikes. */
+    public static int cleanOf(List<Float> scores, int upTo) {
+        int n = 0;
+        for (int k = 0; k < Math.min(upTo, scores.size()); k++) if (clean(scores.get(k))) n++;
+        return n;
     }
 
     // ---- strikes -----------------------------------------------------------------------------------------------------

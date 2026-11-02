@@ -790,7 +790,11 @@ def write_json():
         sounds["arms." + event] = OrderedDict(subtitle="subtitles.awaken.arms." + event, sounds=entries)
         lang["subtitles.awaken.arms." + event] = subtitle
     os.makedirs(os.path.join(MERGE, "lang"), exist_ok=True)
-    with open(os.path.join(MERGE, "sounds.json"), "w") as f:
+    # the War Anvil's anvil.* entries share the file (audio_anvil.py): kept after the kit's own
+    spath = os.path.join(MERGE, "sounds.json")
+    kept = json.load(open(spath), object_pairs_hook=OrderedDict) if os.path.exists(spath) else {}
+    sounds.update((k, v) for k, v in kept.items() if not k.startswith("arms."))
+    with open(spath, "w") as f:
         json.dump(sounds, f, indent=2)
         f.write("\n")
     # merge: the file is shared with the weapons' names (arms_weapons.py); only the kit's own subtitles are replaced

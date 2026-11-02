@@ -17340,7 +17340,7 @@ it; coming back restarts the stage, counted in again.
   ticks to draw it out (DRAW); it goes to the main hand, what was there to the pack, else at your feet. A smith who left
   before the draw finds it waiting; anyone can sneak-use to draw it. Then the result card, and an optional first cut
   (a strike: the scene closes on the style's first blow).
-- **Sounds** (`awaken:anvil.*`, the forge kit's recordings until stage 5): bellows, pull, strike, ring (a clean strike),
+- **Sounds** (`awaken:anvil.*`; the anvil's own kit since stage 5, §46.10): bellows, pull, strike, ring (a clean strike),
   miss, flip, quench, lift, tap, scrape (the draw beginning) and drawn. The smith's client plays its own as it acts; the
   server plays them to everyone else.
 
@@ -17719,3 +17719,35 @@ Tests: `arms_anvil_verbs` (the tenth rule and the twist's, balance's and starlig
 its quench and then takes its hilt; an S Longsword twists, draws out, takes the starlight, grinds twenty touches (one
 too quick refused), takes its hilt and balances, and a perfect song is Flawless with no flaw, rippled and starlit,
 a copy of it in its Lord's anvil's rack).
+
+**46.10 Its own sound (stage 5; plan §4.3).** Steel that rings truer: the armour's sound is a bell melody, a note per
+strike; a weapon's is the blade's own ring. `tools/art/specs/audio_anvil.py` (CC0 Kenney transients under the audio
+kit's synthesis, as the forge's; mono, mastered to the arms loudness) writes `sounds/anvil/anvil_<event>_<k>.ogg` and
+the `anvil.*` entries of arms' merged sounds.json and subtitles (`audio_arms.py` keeps them when it rewrites the file).
+- **Each style's true note** (`AnvilSong.Song.note`, semitones from the ring's A5): Maul -9, Greatblade -7, Axe and
+  Warstaff -5, Scythe and Glaive -2, Longsword, Chainblade, Shieldblade and the Precursor 0, Spear and Katana +3,
+  Gauntlets and Twinblades +5, Rapier +7, Daggers +10. A clean strike rings the blade `FLAT` 3 semitones under it at
+  first and a step nearer with each clean strike (`AnvilSong.ringPitch(song, clean so far, strikes)`; a strike that
+  isn't clean doesn't step it, so a song with misses ends a little flat); the balance's end and a helper's strike ring
+  it true, and the draw from the stone rings it whole (`anvil.drawn` at `WarAnvil.truePitch(weapon)`). Every style's
+  first ring and true note sit inside the game's 0.5-2.0 pitch range.
+- **The strike on each tier's metal** (`AnvilContent.strike(tier)`), thinner and brighter than the armour's plate (cut
+  under 90 Hz but the lordscale): iron to D (`anvil.strike`), gatewrought (C, hard and glassy, its grit),
+  veilwoven (B, a glass voice beating in it), lordscale (A, dark and heavy, its scales settling after), sovereign (S,
+  a high halo).
+- **The blade**: `ring` (A5), `flip` (the grip shifting, the blade landing on its other face), `quench` (a roar of
+  steam, the water boiling, a low rumble), `lift` (a slosh, drops falling back, the last hiss), `tap` (the hilt's
+  peening: a small hammer, a knock in the grip), `scrape` (steel on stone rising as it's drawn up), `drawn` (a last
+  chirp and the whole blade ringing, A5).
+- **The acts**: `knap` (E, a glassy crack, chips skittering), `cord` (E, rawhide rubbing tight, each turn), `wheel` (C,
+  the grind swelling with the stone's turn, sparks; every second touch), `twist` (A, hot steel groaning as it gives,
+  each turn), `hum` (B, the Deepglass horn: a glass tone at A4 with a slow beat, every 50 ticks while it balances,
+  at the style's true note and up to 6% flat the further it lies from level) and `star` (S, an airy rise into a high
+  A chord with motes of light).
+- **The Forge's own**, kept from the armour forge's kit: `bellows`, `pull`, `count` (the count-in) and `miss`.
+- **Listening**: `tools/art/anvil_listen.py` builds the page Euan judges the kit on (a forging at each rank as the game
+  times it, the true notes side by side, every event alone; keep / remake / cut and a note on each).
+
+Test: `arms_anvil_ring` (every style flat at first and true at the last clean strike, rising each step, inside the
+pitch range; a Maul under the Longsword under Daggers; only clean strikes step it; each tier's own strike).
+

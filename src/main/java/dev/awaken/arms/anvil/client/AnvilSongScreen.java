@@ -63,7 +63,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private int windTurns;
     private final float[] turnAt = new float[AnvilSong.TURNS + 1];
     // the ranks' acts: the last grind sample (ticks from the stage's start), the act told to the server, and the balance's level since and frame
-    private float grindLast = Float.NaN, levelSince = Float.NaN, tiltAt = Float.NaN;
+    private float grindLast = Float.NaN, levelSince = Float.NaN, tiltAt = Float.NaN, humAt = Float.NaN;
     private boolean actSent;
 
     // what the screen shows for a moment
@@ -173,7 +173,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilScene.blowAt = -1000F;
         AnvilScene.nextDue = Float.NaN;
         AnvilScene.plungeAt = AnvilScene.liftAt = Float.NaN;
-        grindLast = levelSince = tiltAt = Float.NaN;
+        grindLast = levelSince = tiltAt = humAt = Float.NaN;
         actSent = false;
         AnvilScene.grindEdge = AnvilScene.tilt = 0F;
         AnvilScene.weight = 0F;
@@ -382,6 +382,19 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         }
     }
 
+    /** Ticks between the Deepglass horn's hums while it's balanced (a hum lasts about three seconds). */
+    private static final float HUM_EVERY = 50F;
+
+    /** How many of the first {@code upTo} strikes rang clean, the server's where it has judged them, else as predicted. */
+    private int cleanStrikes(AnvilWork w, int upTo) {
+        int n = 0;
+        for (int j = 0; j < upTo; j++) {
+            float score = j < w.beats().size() ? w.beats().get(j) : j < predicted.length ? predicted[j] : 0F;
+            if (AnvilSong.clean(score)) n++;
+        }
+        return n;
+    }
+
     private void strike(AnvilWork w, float t, float now, boolean tap) {
         AnvilSong.Rhythm r = w.rhythm();
         int need = w.beatsNeeded();
@@ -401,8 +414,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilClient.send(pos, tap ? AnvilPayloads.TAP : AnvilPayloads.STRIKE, next, t, radii);
         predicted[next] = score;
         AnvilScene.blow(now, next, tap);
-        if (score > 0F) AnvilClient.play(at, tap ? AnvilContent.TAP.get() : AnvilContent.STRIKE.get(), tap ? 0.8F : 1F, (tap ? 1.2F : 1F) + (now % 10) * 0.01F);
-        if (!tap && AnvilSong.clean(score)) AnvilClient.play(at, AnvilContent.RING.get(), 0.7F, WarAnvil.ringPitch(next + 1, need));
+        if (score > 0F) AnvilClient.play(at, tap ? AnvilContent.TAP.get() : AnvilContent.strike(w.tier), tap ? 0.8F : 1F, (tap ? 1F : 0.95F) + (now % 10) * 0.01F);
+        if (!tap && AnvilSong.clean(score)) AnvilClient.play(at, AnvilContent.RING.get(), 0.7F, AnvilSong.ringPitch(w.song, cleanStrikes(w, next + 1), need));
         if (!tap && next + 1 == placed.work.flipAt) AnvilClient.play(at, AnvilContent.FLIP.get(), 0.8F, 1F);
         if (seen) burst(p[0], p[1], score, now, tap ? 0.5F : 1F);
         next++;
@@ -459,7 +472,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilClient.send(pos, AnvilPayloads.KNAP, next, t, radii);
         predicted[next] = score;
         AnvilScene.blow(now, next, true);
-        AnvilClient.play(at, AnvilContent.TAP.get(), 0.7F, 1.55F + (now % 10) * 0.01F);
+        AnvilClient.play(at, AnvilContent.KNAP.get(), 0.8F, 0.95F + (now % 10) * 0.01F);
         if (seen) burst(p[0], p[1], score, now, 0.6F);
         next++;
         AnvilScene.struck = next;
@@ -536,7 +549,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             turnAt[windTurns] = t;
             AnvilScene.windTurns = windTurns;
             AnvilClient.send(pos, twist ? AnvilPayloads.TWIST : AnvilPayloads.WIND, windTurns, t, 0F);
-            AnvilClient.play(at(placed.work.at), AnvilContent.SCRAPE.get(), twist ? 0.6F : 0.4F, (twist ? 0.75F : 1.4F) + windTurns * 0.08F);
+            AnvilClient.play(at(placed.work.at), twist ? AnvilContent.TWIST.get() : AnvilContent.CORD.get(), twist ? 0.7F : 0.6F, (twist ? 0.9F : 1F) + windTurns * 0.06F);
             if (windTurns >= 2) {
                 float mean = (turnAt[windTurns - 1] - turnAt[0]) / (windTurns - 1), last = turnAt[windTurns] - turnAt[windTurns - 1];
                 if (Math.abs(last - mean) <= mean / 8F) say("Even", LANTERN, now);
@@ -600,7 +613,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         next++;
         AnvilShape sh = placed.work.shape;
         placed.work.point(AnvilScene.BLADE_X + AnvilScene.HALF_W, sh.mid, 0F, v);
-        if (next % 2 == 0) AnvilClient.play(at(v), AnvilContent.SCRAPE.get(), 0.3F, 1.7F + (now % 5) * 0.02F);
+        if (next % 2 == 0) AnvilClient.play(at(v), AnvilContent.WHEEL.get(), 0.45F, 0.95F + (now % 5) * 0.02F);
         if (project(v)) burst(p[0], p[1], score, now, 0.35F);
         if (next == AnvilSong.PASS) say("One pass done", LABEL, now);
         else if (next == AnvilSong.GRIND_SAMPLES) {
@@ -633,11 +646,17 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         boolean level = Math.abs(AnvilScene.weight - point) <= AnvilSong.LEVEL;
         if (!level) levelSince = Float.NaN;
         else if (Float.isNaN(levelSince)) levelSince = now;
+        // the horn hums under it, truer the nearer it lies level
+        if (!actSent && (Float.isNaN(humAt) || now - humAt >= HUM_EVERY)) {
+            humAt = now;
+            float flat = Math.min(1F, Math.abs(AnvilScene.weight - point) * 4F);
+            AnvilClient.play(at(placed.work.at), AnvilContent.HUM.get(), 0.55F, AnvilSong.truePitch(w.song) * (1F - 0.06F * flat));
+        }
         if (!actSent && (level && now - levelSince >= 20F || t >= AnvilSong.BALANCE_ALONE)) {
             actSent = true;
             float off = AnvilScene.weight - point, score = AnvilSong.balance(t, off);
             AnvilClient.send(pos, AnvilPayloads.BALANCE, 0, t, off);
-            AnvilClient.play(at(placed.work.at), AnvilContent.RING.get(), 0.8F, 1.5F);
+            AnvilClient.play(at(placed.work.at), AnvilContent.RING.get(), 0.8F, AnvilSong.truePitch(w.song));
             say(score >= 0.8F ? "It lies level: well balanced" : "Balanced, at last", score >= 0.8F ? LANTERN : LABEL, now);
         }
         // a level's bubble over the horn
@@ -669,7 +688,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         actSent = true;
         float off = t - AnvilSong.STAR_AT, score = AnvilSong.star(off);
         AnvilClient.send(pos, AnvilPayloads.STAR, 0, t, 0F);
-        AnvilClient.play(at(placed.work.at), AnvilContent.RING.get(), 1F, 1.8F);
+        AnvilClient.play(at(placed.work.at), AnvilContent.STAR.get(), 1F, 1F);
         if (project(placed.work.point(AnvilScene.BLADE_X, placed.work.shape.tip, 0F, v))) burst(p[0], p[1], score, now, 1.2F);
         say(score >= 1F ? "Right in the light" : off < 0F ? "Early: the light hadn't reached it" : "Late: the light had passed", score >= 1F ? LANTERN : BAD, now);
     }
@@ -786,7 +805,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
                 drawSent = true;
                 drawnAt = now;
                 AnvilClient.send(pos, AnvilPayloads.DRAW, 0, 0F, 0F);
-                AnvilClient.play(Vec3.atCenterOf(pos), AnvilContent.DRAWN.get(), 1F, 1F);
+                AnvilClient.play(Vec3.atCenterOf(pos), AnvilContent.DRAWN.get(), 1F, WarAnvil.truePitch(be.slot()));
                 say("It's yours", LANTERN, now);
             }
         }

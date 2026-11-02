@@ -38,6 +38,7 @@ final class AnvilTests {
         AwakenTests.register("arms_anvil_verbs", 40, AnvilTests::verbs);
         AwakenTests.register("arms_anvil_rebuild", 40, AnvilTests::rebuild);
         AwakenTests.register("arms_anvil_bellows", 40, AnvilTests::bellows);
+        AwakenTests.register("arms_anvil_ring", 20, AnvilTests::ring);
     }
 
     /**
@@ -45,6 +46,26 @@ final class AnvilTests {
      * through the gold 10 ticks slower (34 ticks of gold, not 24) and is the same as before and after it; a pull the
      * server judges late without them is in the gold with them.
      */
+    /** The blade rings a step truer at each clean strike, up to its style's true note, inside the game's pitch range (§46.10). */
+    private static void ring(GameTestHelper h) {
+        for (var e : AnvilSong.SONGS.entrySet()) {
+            AnvilSong.Song s = e.getValue();
+            int n = s.strikes();
+            float first = AnvilSong.ringPitch(s, 0, n), whole = AnvilSong.truePitch(s);
+            h.assertTrue(first >= 0.5F && whole <= 2.0F, e.getKey() + "'s ring stays in the game's pitch range, got " + first + " to " + whole);
+            h.assertTrue(Math.abs(AnvilSong.ringPitch(s, n, n) - whole) < 1e-4F && Math.abs(first / whole - (float) Math.pow(2, -AnvilSong.FLAT / 12)) < 1e-4F,
+                    e.getKey() + " rings a minor third flat at first and true at the last clean strike");
+            for (int k = 1; k <= n; k++)
+                h.assertTrue(AnvilSong.ringPitch(s, k, n) > AnvilSong.ringPitch(s, k - 1, n), e.getKey() + " rings truer with each clean strike");
+        }
+        h.assertTrue(AnvilSong.truePitch(AnvilSong.song("maul")) < AnvilSong.truePitch(AnvilSong.song("longsword"))
+                && AnvilSong.truePitch(AnvilSong.song("longsword")) < AnvilSong.truePitch(AnvilSong.song("daggers")), "a Maul rings low, Daggers high");
+        h.assertTrue(AnvilSong.cleanOf(java.util.List.of(1F, 0.5F, 0.85F, 1F), 3) == 2, "only clean strikes step it truer");
+        h.assertTrue(AnvilContent.strike(1) == AnvilContent.STRIKE.get() && AnvilContent.strike(5) == AnvilContent.STRIKE_STAR.get()
+                && AnvilContent.strike(4) != AnvilContent.strike(3), "each tier's metal has its own strike");
+        h.succeed();
+    }
+
     private static void bellows(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         WarAnvilBlockEntity be = anvilByForge(h);

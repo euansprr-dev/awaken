@@ -444,7 +444,7 @@ public final class WarAnvil {
             case AnvilPayloads.BALANCE -> {
                 if (w == null || w.stage != AnvilSong.BALANCE || !mine(p, w)) return;
                 w.balance = AnvilSong.balance(clamp(a.t(), now - w.stageStart), Mth.clamp(a.aim(), -1F, 1F));
-                level.playSound(p, be.getBlockPos(), AnvilContent.RING.get(), SoundSource.BLOCKS, 0.8F, 1.5F);
+                level.playSound(p, be.getBlockPos(), AnvilContent.RING.get(), SoundSource.BLOCKS, 0.8F, AnvilSong.truePitch(w.song));
                 finish(level, be, w);
             }
             case AnvilPayloads.STAR -> {
@@ -453,7 +453,7 @@ public final class WarAnvil {
                 w.star = AnvilSong.star(clamp(a.t(), now - w.stageStart) - AnvilSong.STAR_AT);
                 w.quench = w.star;
                 w.held = -1F;
-                level.playSound(p, be.getBlockPos(), AnvilContent.RING.get(), SoundSource.BLOCKS, 1F, 1.8F);
+                level.playSound(p, be.getBlockPos(), AnvilContent.STAR.get(), SoundSource.BLOCKS, 1F, 1F);
                 quenched(level, be, w);
             }
             case AnvilPayloads.DRAW -> {
@@ -495,14 +495,18 @@ public final class WarAnvil {
         boolean hilt = w.stage == AnvilSong.HILT;
         BlockPos at = be.getBlockPos();
         if (score > 0F) {
-            level.playSound(smith, at, hilt ? AnvilContent.TAP.get() : AnvilContent.STRIKE.get(), SoundSource.BLOCKS, hilt ? 0.8F : 1F,
-                    (hilt ? 1.2F : 1F) + level.getRandom().nextFloat() * 0.1F);
-            if (!hilt && AnvilSong.clean(score)) level.playSound(smith, at, AnvilContent.RING.get(), SoundSource.BLOCKS, 0.7F, ringPitch(l.size(), w.beatsNeeded()));
+            level.playSound(smith, at, hilt ? AnvilContent.TAP.get() : AnvilContent.strike(w.tier), SoundSource.BLOCKS, hilt ? 0.8F : 1F,
+                    (hilt ? 1F : 0.95F) + level.getRandom().nextFloat() * 0.1F);
+            if (!hilt && AnvilSong.clean(score))
+                level.playSound(smith, at, AnvilContent.RING.get(), SoundSource.BLOCKS, 0.7F, AnvilSong.ringPitch(w.song, AnvilSong.cleanOf(l, l.size()), w.beatsNeeded()));
         } else level.playSound(null, at, AnvilContent.MISS.get(), SoundSource.BLOCKS, 0.6F, 1F);
         if (!hilt && !w.memory() && l.size() == w.song.flipAfter()) level.playSound(smith, at, AnvilContent.FLIP.get(), SoundSource.BLOCKS, 0.8F, 1F);
         if (l.size() >= w.beatsNeeded()) {
             // from B the hilt's on, then the balance on the horn; at S the light is its water (§46.9)
-            if (hilt && w.acts() && w.tier >= 3) w.begin(AnvilSong.BALANCE, level.getGameTime());
+            if (hilt && w.acts() && w.tier >= 3) {
+                w.begin(AnvilSong.BALANCE, level.getGameTime());
+                level.playSound(smith, at, AnvilContent.HUM.get(), SoundSource.BLOCKS, 0.8F, 1F);
+            }
             else if (hilt) {
                 finish(level, be, w);
                 return;
@@ -514,8 +518,10 @@ public final class WarAnvil {
     }
 
     /** Each clean strike rings the blade a step nearer its true note, by the last of all it takes (both sides use it). */
-    public static float ringPitch(int strikes, int of) {
-        return 0.85F + 0.2F * Math.min(1F, strikes / (float) Math.max(1, of));
+    /** A finished weapon's true note (its style's, §46.10), the pitch it rings at as it's drawn from the stone. */
+    public static float truePitch(ItemStack weapon) {
+        var data = ArmsItems.of(weapon.getItem());
+        return AnvilSong.truePitch(AnvilSong.song(data == null ? "longsword" : data.style()));
     }
 
     static void lift(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float held, @Nullable ServerPlayer smith) {
@@ -544,7 +550,7 @@ public final class WarAnvil {
         for (int k = 1; k <= turns; k++) each[k - 1] = w.taps.get(k) - w.taps.get(k - 1);
         float held = turns > 0 ? w.taps.get(turns) - w.taps.getFirst() : 0F;
         w.twist = AnvilSong.twist(AnvilSong.evenness(each, turns), turns, held);
-        level.playSound(smith, be.getBlockPos(), AnvilContent.SCRAPE.get(), SoundSource.BLOCKS, 0.9F, 0.7F);
+        level.playSound(smith, be.getBlockPos(), AnvilContent.TWIST.get(), SoundSource.BLOCKS, 0.9F, 1.1F);
         w.taps.clear();
         w.begin(AnvilSong.SHAPE, level.getGameTime());
         be.changed();
@@ -553,7 +559,7 @@ public final class WarAnvil {
     /** A grind sample (C): the two passes' twenty, then the hilt. */
     static void ground(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float score, @Nullable ServerPlayer smith) {
         w.taps.add(score);
-        if (w.taps.size() % AnvilSong.PASS == 0) level.playSound(smith, be.getBlockPos(), AnvilContent.SCRAPE.get(), SoundSource.BLOCKS, 0.8F, 1.6F);
+        if (w.taps.size() % 2 == 0) level.playSound(smith, be.getBlockPos(), AnvilContent.WHEEL.get(), SoundSource.BLOCKS, 0.7F, 0.95F + level.getRandom().nextFloat() * 0.1F);
         if (w.taps.size() >= AnvilSong.GRIND_SAMPLES) {
             w.grind = AnvilWork.mean(w.taps);
             w.taps.clear();
@@ -565,7 +571,7 @@ public final class WarAnvil {
     /** A flake struck off the edge (E): the knap's eight, then the bind (from memory, or a blade alone, one knap and done). */
     static void knap(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float score, @Nullable ServerPlayer smith) {
         w.scores.add(score);
-        level.playSound(smith, be.getBlockPos(), AnvilContent.TAP.get(), SoundSource.BLOCKS, 0.7F, 1.5F + level.getRandom().nextFloat() * 0.2F);
+        level.playSound(smith, be.getBlockPos(), AnvilContent.KNAP.get(), SoundSource.BLOCKS, 0.8F, 0.95F + level.getRandom().nextFloat() * 0.1F);
         if (w.scores.size() >= w.beatsNeeded()) {
             if (w.memory() || w.style.equals(AnvilWork.BLADE)) finish(level, be, w);
             else {
@@ -584,7 +590,7 @@ public final class WarAnvil {
         for (int k = 1; k <= turns; k++) each[k - 1] = w.taps.get(k) - w.taps.get(k - 1);
         float held = turns > 0 ? w.taps.get(turns) - w.taps.getFirst() : 0F;
         w.bind = AnvilSong.bind(AnvilSong.evenness(each, turns), turns, held);
-        level.playSound(smith, be.getBlockPos(), AnvilContent.SCRAPE.get(), SoundSource.BLOCKS, 0.8F, 1.3F);
+        level.playSound(smith, be.getBlockPos(), AnvilContent.CORD.get(), SoundSource.BLOCKS, 0.8F, 1.1F);
         finish(level, be, w);
     }
 
@@ -609,8 +615,8 @@ public final class WarAnvil {
         }
         w.helpLast = now;
         w.help++;
-        level.playSound(null, at, AnvilContent.STRIKE.get(), SoundSource.BLOCKS, 0.8F, 1.25F);
-        level.playSound(null, at, AnvilContent.RING.get(), SoundSource.BLOCKS, 0.5F, 1.3F);
+        level.playSound(null, at, AnvilContent.strike(w.tier), SoundSource.BLOCKS, 0.8F, 1.15F);
+        level.playSound(null, at, AnvilContent.RING.get(), SoundSource.BLOCKS, 0.5F, AnvilSong.truePitch(w.song) * 1.06F);
         if (w.help == AnvilSong.TWIN_STRIKES) Signal.toast(helper, Component.literal("Your strikes are in the blade. It will come out twin-struck."));
         be.changed();
         return true;
@@ -735,7 +741,7 @@ public final class WarAnvil {
         ItemStack old = p.getMainHandItem();
         p.setItemInHand(InteractionHand.MAIN_HAND, s);
         if (!old.isEmpty() && !p.getInventory().add(old)) Containers.dropItemStack(p.level(), p.getX(), p.getY(), p.getZ(), old);
-        p.level().playSound(p, be.getBlockPos(), AnvilContent.DRAWN.get(), SoundSource.BLOCKS, 1F, 1F);
+        p.level().playSound(p, be.getBlockPos(), AnvilContent.DRAWN.get(), SoundSource.BLOCKS, 1F, truePitch(s));
         AT.remove(p.getUUID());
     }
 

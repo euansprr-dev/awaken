@@ -631,31 +631,6 @@
       }
     ]
   },
-  "anvil.strike": {
-    "subtitle": "subtitles.awaken.anvil.strike",
-    "sounds": [
-      {
-        "name": "awaken:forge/forge_strike_iron_0",
-        "attenuation_distance": 20,
-        "pitch": 1.12
-      },
-      {
-        "name": "awaken:forge/forge_strike_iron_1",
-        "attenuation_distance": 20,
-        "pitch": 1.12
-      }
-    ]
-  },
-  "anvil.ring": {
-    "subtitle": "subtitles.awaken.anvil.ring",
-    "sounds": [
-      {
-        "name": "awaken:forge/forge_note_0",
-        "attenuation_distance": 16,
-        "pitch": 1.5
-      }
-    ]
-  },
   "anvil.miss": {
     "subtitle": "subtitles.awaken.anvil.miss",
     "sounds": [
@@ -666,66 +641,6 @@
       {
         "name": "awaken:forge/forge_miss_1",
         "attenuation_distance": 10
-      }
-    ]
-  },
-  "anvil.flip": {
-    "subtitle": "subtitles.awaken.anvil.flip",
-    "sounds": [
-      {
-        "name": "awaken:forge/forge_fit_0",
-        "attenuation_distance": 12,
-        "pitch": 1.2
-      },
-      {
-        "name": "awaken:forge/forge_fit_1",
-        "attenuation_distance": 12,
-        "pitch": 1.2
-      }
-    ]
-  },
-  "anvil.quench": {
-    "subtitle": "subtitles.awaken.anvil.quench",
-    "sounds": [
-      {
-        "name": "awaken:forge/forge_quench_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:forge/forge_quench_1",
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "anvil.lift": {
-    "subtitle": "subtitles.awaken.anvil.lift",
-    "sounds": [
-      {
-        "name": "awaken:forge/forge_quench_0",
-        "attenuation_distance": 12,
-        "pitch": 1.35,
-        "volume": 0.6
-      },
-      {
-        "name": "awaken:forge/forge_quench_1",
-        "attenuation_distance": 12,
-        "pitch": 1.35,
-        "volume": 0.6
-      }
-    ]
-  },
-  "anvil.tap": {
-    "subtitle": "subtitles.awaken.anvil.tap",
-    "sounds": [
-      {
-        "name": "awaken:forge/forge_strike_copper_0",
-        "attenuation_distance": 12,
-        "pitch": 1.3
-      },
-      {
-        "name": "awaken:forge/forge_strike_copper_1",
-        "attenuation_distance": 12,
-        "pitch": 1.3
       }
     ]
   },
@@ -742,18 +657,170 @@
       }
     ]
   },
+  "anvil.strike": {
+    "subtitle": "subtitles.awaken.anvil.strike",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_strike_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "anvil.strike_gate": {
+    "subtitle": "subtitles.awaken.anvil.strike_gate",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_strike_gate_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_gate_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_gate_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "anvil.strike_veil": {
+    "subtitle": "subtitles.awaken.anvil.strike_veil",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_strike_veil_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_veil_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_veil_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "anvil.strike_lord": {
+    "subtitle": "subtitles.awaken.anvil.strike_lord",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_strike_lord_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_lord_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_lord_2",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "anvil.strike_star": {
+    "subtitle": "subtitles.awaken.anvil.strike_star",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_strike_star_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_star_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:anvil/anvil_strike_star_2",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "anvil.ring": {
+    "subtitle": "subtitles.awaken.anvil.ring",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_ring_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:anvil/anvil_ring_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "anvil.flip": {
+    "subtitle": "subtitles.awaken.anvil.flip",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_flip_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:anvil/anvil_flip_1",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "anvil.quench": {
+    "subtitle": "subtitles.awaken.anvil.quench",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_quench_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:anvil/anvil_quench_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "anvil.lift": {
+    "subtitle": "subtitles.awaken.anvil.lift",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_lift_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:anvil/anvil_lift_1",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "anvil.tap": {
+    "subtitle": "subtitles.awaken.anvil.tap",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_tap_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:anvil/anvil_tap_1",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:anvil/anvil_tap_2",
+        "attenuation_distance": 12
+      }
+    ]
+  },
   "anvil.scrape": {
     "subtitle": "subtitles.awaken.anvil.scrape",
     "sounds": [
       {
-        "name": "awaken:forge/forge_cut_0",
-        "attenuation_distance": 12,
-        "pitch": 0.7
+        "name": "awaken:anvil/anvil_scrape_0",
+        "attenuation_distance": 12
       },
       {
-        "name": "awaken:forge/forge_cut_1",
-        "attenuation_distance": 12,
-        "pitch": 0.7
+        "name": "awaken:anvil/anvil_scrape_1",
+        "attenuation_distance": 12
       }
     ]
   },
@@ -761,9 +828,82 @@
     "subtitle": "subtitles.awaken.anvil.drawn",
     "sounds": [
       {
-        "name": "awaken:forge/forge_wake_0",
-        "attenuation_distance": 24,
-        "pitch": 1.25
+        "name": "awaken:anvil/anvil_drawn_0",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "anvil.knap": {
+    "subtitle": "subtitles.awaken.anvil.knap",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_knap_0",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:anvil/anvil_knap_1",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:anvil/anvil_knap_2",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "anvil.cord": {
+    "subtitle": "subtitles.awaken.anvil.cord",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_cord_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:anvil/anvil_cord_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "anvil.wheel": {
+    "subtitle": "subtitles.awaken.anvil.wheel",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_wheel_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:anvil/anvil_wheel_1",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "anvil.twist": {
+    "subtitle": "subtitles.awaken.anvil.twist",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_twist_0",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "awaken:anvil/anvil_twist_1",
+        "attenuation_distance": 14
+      }
+    ]
+  },
+  "anvil.hum": {
+    "subtitle": "subtitles.awaken.anvil.hum",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_hum_0",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "anvil.star": {
+    "subtitle": "subtitles.awaken.anvil.star",
+    "sounds": [
+      {
+        "name": "awaken:anvil/anvil_star_0",
+        "attenuation_distance": 20
       }
     ]
   }
