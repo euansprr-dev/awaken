@@ -4,6 +4,7 @@
 // Arms' weapon shader (SPEC §24 "Weapons"), mirrored line for line by tools/art/mesh_render.py shade(): keep in step.
 // Sampler0 holds the weapon's albedo (left half, where the uvs point) beside its material map (right half):
 // r metal, g gloss, b emissive, a flow (0 still; else the phase a glow pulses at, so runes light in turn).
+// A forged flaw (script.z, SPEC §46.7) is drawn here only: mesh_render.py renders weapons as they come, unforged.
 
 #include <minecraft:globals.glsl>
 #include <minecraft:fog.glsl>
@@ -20,7 +21,7 @@ layout(location = 4) in vec2 texCoord0;
 layout(location = 5) in vec3 worldNormal;
 layout(location = 6) in vec3 viewNormal;
 layout(location = 7) flat in vec4 state;
-layout(location = 8) flat in vec2 script;
+layout(location = 8) flat in vec3 script;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -49,6 +50,21 @@ vec3 heatGlow(float h) {
     c = mix(c, vec3(0.95, 0.32, 0.05), smoothstep(0.25, 0.55, h));
     c = mix(c, vec3(1.0, 0.78, 0.28), smoothstep(0.55, 0.8, h));
     return mix(c, vec3(1.0, 0.96, 0.86), smoothstep(0.8, 1.0, h));
+}
+
+float hash2(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float vnoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+// a brittle blade's crazing: where this crosses zero between two texels, a hairline runs
+float craze(vec2 px) {
+    return vnoise(px / 5.0) + 0.5 * vnoise(px / 2.3 + 17.0) - 0.75;
 }
 
 void main() {
@@ -80,6 +96,22 @@ void main() {
     col += spec * mix(vec3(1.0), min(alb.rgb * 1.7, vec3(1.0)), metal) * 0.85;
     float rim = pow(1.0 - clamp(dot(nv, v), 0.0, 1.0), 3.0);
     col += accent * rim * (0.12 + 0.55 * energy * rim) * 0.6;
+
+    // a forged flaw on the metal (SPEC §46.7): a burnt tip darkens toward the point into dull blue-grey scale; a brittle
+    // blade is crazed mid-length with pale hairlines a texel wide, so they sit in the pixel art rather than over it
+    if (script.z > 0.5) {
+        float m = smoothstep(0.25, 0.6, metal);
+        if (script.z < 1.5) {
+            float t = smoothstep(0.62, 0.97, along) * m;
+            col = mix(col, col * vec3(0.38, 0.36, 0.46) + vec3(0.015, 0.012, 0.03), t);
+        } else {
+            vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+            float a = craze(px), b = craze(px + vec2(1.0, 0.0)), c = craze(px + vec2(0.0, 1.0));
+            float on = a * b < 0.0 || a * c < 0.0 ? 1.0 : 0.0;
+            float mid = smoothstep(0.3, 0.45, along) * (1.0 - smoothstep(0.72, 0.86, along));
+            col = mix(col, vec3(0.86, 0.9, 0.95) * (0.55 + 0.45 * diffuse), on * mid * m * 0.75);
+        }
+    }
 
     // the world's light (sky and blocks) on everything but what glows of itself
     col *= lightMapColor.rgb;

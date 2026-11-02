@@ -10,6 +10,8 @@ import dev.awaken.arms.Archetype;
 import dev.awaken.arms.ArmsRules;
 import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.WeaponMesh;
+import dev.awaken.arms.anvil.AnvilContent;
+import dev.awaken.arms.anvil.WeaponForged;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -38,7 +40,8 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
      * who lays its ribbon (an entity id, -1 for nobody: a stand, a frame); in third person, the arm it is in (0 not
      * a hand's, 1 right, 2 left) and whose, so a move's wrist turns it ({@link ArmsWrist}); and whether it is the off
      * hand's twin of a pair, which lays its own ribbon (round 14); and the enchantment light on it now (SPEC §45.11:
-     * {@code EnchantApi.glowBits}, 0 none).
+     * {@code EnchantApi.glowBits}, 0 none) in {@code glow}'s low 7 bits, with a forged flaw above them (SPEC §46.7: 1 a
+     * burnt tip, 2 a brittle blade).
      */
     record State(int energy, int flash, boolean hand, int wielder, int arm, int holder, boolean twin, int glow) {}
 
@@ -66,7 +69,7 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             else poseStack.rotateAround(WRIST, g.x, g.y, g.z);
         }
         boolean ours = WeaponPipelines.ok();
-        int packed = ours ? (state == null ? 0 : state.energy() | state.glow() << 8) | ((state == null ? 0 : state.flash()) | (foil ? 256 : 0)) << 16 : overlay;
+        int packed = ours ? pack(state, foil) : overlay;
         collector.submitCustomGeometry(poseStack, ours ? WeaponPipelines.weapon(texture) : WeaponPipelines.fallback(texture),
                 (pose, buffer) -> emit(mesh, pose, buffer, light, packed, ours));
         // its light lifting off it, from where it is drawn (the energy: a charging heavy sheds more)
@@ -191,18 +194,35 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
     /** The fighter's own main-hand blade carries the fight; anyone else's (and one in a frame) is at rest. */
     @Override
     public @Nullable State extractArgument(ItemStack stack) {
-        int glow = dev.awaken.core.api.EnchantApi.glowBits(stack);
+        int glow = dev.awaken.core.api.EnchantApi.glowBits(stack) | flaw(stack) << 7;
         State s = resting(stack, glow);
         if (s == null && glow != 0) s = glowOnly(glow); // in a frame, on a stand, in the inventory: still lit
         return ArmsWrist.marking == 0 ? s : inArm(s, ArmsWrist.marking, ArmsWrist.markedHolder);
     }
 
-    private static final State[] GLOW_ONLY = new State[128];
+    private static final State[] GLOW_ONLY = new State[512];
 
     private static State glowOnly(int glow) {
         State s = GLOW_ONLY[glow];
         if (s == null) GLOW_ONLY[glow] = s = new State(0, 0, false, -1, 0, -1, false, glow);
         return s;
+    }
+
+    /** A forged weapon's flaw (SPEC §46.7), 0 none: it shows wherever the weapon is drawn. */
+    private static int flaw(ItemStack stack) {
+        WeaponForged f = stack.get(AnvilContent.FORGED.get());
+        return f == null ? 0 : f.flaw() & 3;
+    }
+
+    /**
+     * UV1 as the shader reads it: x the energy with the enchantment light in bits 8-14; y the flash, 256 for foil, the
+     * flaw in bits 11-12.
+     */
+    static int pack(@Nullable State state, boolean foil) {
+        if (state == null) return foil ? 256 << 16 : 0;
+        int x = state.energy() | (state.glow() & 127) << 8;
+        int y = state.flash() | (foil ? 256 : 0) | (state.glow() >> 7 & 3) << 11;
+        return x | y << 16;
     }
 
     private static final State[] ARMS = new State[16];

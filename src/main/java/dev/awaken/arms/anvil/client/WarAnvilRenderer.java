@@ -3,9 +3,11 @@ package dev.awaken.arms.anvil.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.awaken.Awaken;
 import dev.awaken.arms.WeaponMesh;
+import dev.awaken.arms.anvil.AnvilContent;
 import dev.awaken.arms.anvil.AnvilWork;
 import dev.awaken.arms.anvil.WarAnvil;
 import dev.awaken.arms.anvil.WarAnvilBlockEntity;
+import dev.awaken.arms.anvil.WeaponForged;
 import dev.awaken.arms.client.WeaponDraw;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -38,7 +40,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         final AnvilScene.Placed placed = new AnvilScene.Placed();
         @Nullable String weapon, slot;
         final AnvilScene.Lay slotLay = new AnvilScene.Lay();
-        int forgeLight, slotFlash, slotEnergy;
+        int forgeLight, slotFlash, slotEnergy, slotFlaw;
     }
 
     private static final Identifier HAMMER = Awaken.id("textures/item/arms/anvil_hammer.png"), TONGS = Awaken.id("textures/item/arms/anvil_tongs.png"),
@@ -81,6 +83,8 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             // it wakes as it's set there, then keeps a low glow of its own until it's drawn
             s.slotFlash = Math.round(255 * Mth.clamp(1F - (now - be.stoodAt) / 50F, 0F, 1F));
             s.slotEnergy = Math.round(60 + 35 * Mth.sin(now * 0.09F));
+            WeaponForged f = st.get(AnvilContent.FORGED.get());
+            s.slotFlaw = f == null ? 0 : (f.flaw() & 3) << 11; // its flaw shows as it stands there (SPEC §46.7)
         }
     }
 
@@ -106,7 +110,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
                 ps.mulPose(s.slotLay.matrix(M));
                 // a blade forged alone stands as its Longsword's blade, no hilt
                 float from = AnvilShape.blade(s.slot) ? AnvilShape.of(s.slot).cut[0] : 0F;
-                WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.slot)), LightCoordsUtil.withBlock(s.lightCoords, Math.max(LightCoordsUtil.block(s.lightCoords), 12)), s.slotEnergy, s.slotFlash, from);
+                WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.slot)), LightCoordsUtil.withBlock(s.lightCoords, Math.max(LightCoordsUtil.block(s.lightCoords), 12)), s.slotEnergy, s.slotFlash | s.slotFlaw, from);
                 ps.popPose();
             }
         }

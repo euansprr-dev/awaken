@@ -17429,8 +17429,11 @@ forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-f
   tooltip says it plainly: "Masterwork, twin-struck", "Fine, from memory", then "Forged by Euan". A weapon of ours with no
   story (made on the grid before the War Anvil, or Hale's issue) gains a Plain one, no maker, the first time it is held; a
   found weapon (Marked, or Lord-forged) never does.
-- **Flaws show on the weapon** (the weapon shader, its state's spare bits): a burnt tip is darker toward the point, a
-  brittle blade shows a pale hairline down its middle. Cosmetic.
+- **Flaws show on the weapon** (the weapon shader: UV1.y bits 11-12, 1 a burnt tip, 2 brittle; the renderer carries it
+  above the enchantment light's 7 bits in its state, so a hand, a frame, a stand or the anvil's slot all show it): a
+  burnt tip darkens toward the point (the last third) into dull blue-grey scale; a brittle blade's metal is crazed
+  mid-length with pale hairlines a texel wide (where a smooth noise over its texels changes sign), so they sit in the
+  pixel art. Only on the metal; cosmetic. `mesh_render.py` doesn't draw them (it renders weapons unforged).
 - **`core.api.ForgeHooks`** (§45.5): arms reads its quality from the story (0-3) and its rank from its tier; the War Anvil
   fires `forged(smith, stack, quality, "war_anvil")` as the weapon goes into the slot, and the result card draws
   `cardLines(stack)` under its words (10 px a line, counted in the card's height, colour A898FF).
