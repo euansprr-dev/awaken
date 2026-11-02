@@ -100,13 +100,15 @@ void main() {
     float rim = pow(1.0 - clamp(dot(nv, v), 0.0, 1.0), 3.0);
     col += accent * rim * (0.12 + 0.55 * energy * rim) * 0.6;
 
-    // a forged flaw on the metal (SPEC §46.7): a burnt tip darkens toward the point into dull blue-grey scale; a brittle
-    // blade is crazed mid-length with pale hairlines a texel wide, so they sit in the pixel art rather than over it
+    // a forged flaw on the blade (SPEC §46.7): a burnt tip darkens toward the point, into dull blue-grey scale on metal and
+    // brown-black scorch on bone or tusk (D's blades); a brittle blade is crazed mid-length with pale hairlines a texel
+    // wide, so they sit in the pixel art rather than over it. Bone shows both a little less than steel, never not at all.
     if (script.z > 0.5) {
-        float m = smoothstep(0.25, 0.6, metal);
+        float mk = smoothstep(0.25, 0.6, metal), m = 0.7 + 0.3 * mk;
         if (script.z < 1.5) {
             float t = smoothstep(0.62, 0.97, along) * m;
-            col = mix(col, col * vec3(0.38, 0.36, 0.46) + vec3(0.015, 0.012, 0.03), t);
+            vec3 scorch = mix(vec3(0.3, 0.22, 0.17), vec3(0.38, 0.36, 0.46), mk);
+            col = mix(col, col * scorch + vec3(0.015, 0.012, 0.03), t);
         } else {
             vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
             float a = craze(px), b = craze(px + vec2(1.0, 0.0)), c = craze(px + vec2(0.0, 1.0));

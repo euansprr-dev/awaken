@@ -695,9 +695,12 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             g.text(font, line, cx + 10, ly, LABEL, false);
             ly += 10;
         }
+        // enchanting's lines (ForgeHooks), wrapped to the card like its own
         for (String line : dev.awaken.core.api.ForgeHooks.cardLines(it)) {
-            g.text(font, line, cx + 10, ly, 0xFFA898FF, false);
-            ly += 10;
+            for (var part : font.split(Component.literal(line), cw - 20)) {
+                g.text(font, part, cx + 10, ly, 0xFFA898FF, false);
+                ly += 10;
+            }
         }
         if (drawn) {
             button(g, cx + 10, cy + ch - 24, "First cut");
@@ -717,7 +720,13 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private int cardH(boolean drawn) {
         int w = cardW();
         return 62 + 10 * font.split(cardItem().getHoverName(), w - 42).size() + 10 * font.split(Component.literal(about(done, cardItem())), w - 20).size()
-                + 10 * dev.awaken.core.api.ForgeHooks.cardLines(cardItem()).size() + (drawn ? 26 : 0);
+                + 10 * enchantLines(w) + (drawn ? 26 : 0);
+    }
+
+    private int enchantLines(int w) {
+        int n = 0;
+        for (String line : dev.awaken.core.api.ForgeHooks.cardLines(cardItem())) n += font.split(Component.literal(line), w - 20).size();
+        return n;
     }
 
     private ItemStack cardItem() {
