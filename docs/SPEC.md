@@ -7477,6 +7477,25 @@ against it, so a vanilla item plays its designed tempo).
     bit 10 from a 5-wide eye, was 7 from a 7-wide one; Veilwoven's spirit edge 2 taller; Lordscale's bit a column
     broader and two steps lighter than its haft, which it melted into); nothing at the eye deeper than 6 (a stone 7;
     Sovereign's frame was 9). The Ember Tyrant's Cleft stays as it is (31, its bit 22 across).
+  - Spear: the head 7 or more wide (Wildhide's, Lordscale's and Sovereign's were 5 and Veilwoven's 6, so edge-on in
+    hand the head vanished into the shaft): Wildhide's leaf with antler lugs both sides (was a barb on one), Veilwoven's
+    wave 7, Lordscale's leaf 7 under smaller wings, Sovereign's spire 7 over a gold frame 6 with its stone. Beastbound's
+    and Gatewrought's were already 7 and 9.
+  - Gauntlets: the fist kept (7 across, 5 deep, a cuff and rim), and each tier's own outline standing 2 or more proud of
+    it (all six were one box with a stone): E antler spikes off the knuckles (to 4 out) and tines curving back off the
+    cuff, D boar tusks rising off the fist's sides and curving forward past the knuckles, C a gate on the back of the
+    hand (slate posts and a tie, a brass lintel 9 across, the crystal inside) and lit pylons off the cuff, B mirror
+    crescents sweeping back off the knuckles to spirit tips, A gold claws off the knuckles and a gold wing off each
+    side of the cuff over the ember seam, S a crown of gold points, the stone 3 across in a raised gold diamond and
+    ivory plates stacked down the cuff. The Gearwright's Grip: its gear a dark wheel with eight brass teeth past the
+    fist's sides and over the knuckles round a brass hub and the furnace core, and two exhaust stacks along the cuff's
+    back past its rim, their mouths lit.
+  - Chainblade: about 35 (32 to 34), the head 12 or 13 long and 7 or 8 across (was 8 or 9 long and 4 to 6, lost at
+    the chain's end), on a chain of ten links (was twelve) in the same S, face-on and edge-on in turn: E a broad flint
+    leaf, D a great tusk hook with a horn barb on its back, C a gate-steel dart with its circuit and brass flights, B a
+    Veil sickle tipped in spirit light, A a molten-edged arrowhead barbed in gold, S a straight ivory blade with its
+    runes over a gold crown. The Lantern Broker's Due: its hooked blade 4 across at the cage and about 12 long (was 2 and 7),
+    the three lanterns on turned links.
 - **Hilt cuts** (the generated `ArmsHilts.CUTS`, for the War Anvil, §46.3): for each sword-like weapon (Longsword,
   Greatblade, Rapier, Daggers, Katana), where its blade, guard and grip begin along its mesh, {blade, guard, grip, 0}
   in the mesh's own along (0 the pommel's end, 1 the point): the blade's lowest corner (its back, teeth and ricasso

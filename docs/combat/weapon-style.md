@@ -36,8 +36,8 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
      back, and metal langets down the haft. Held turned like the Longsword (roll 135), so the bit shows at rest.
    - **Maul** (the reference's own): a 26-long haft and a block head made of a core, flared caps with a painted
      trim field (`panel`) and a raised 45° frame with its stone.
-   - **Spear:** a slender 2×2 shaft about 31 long, so it reads as reach, and a head about 10 long (leaf, lugs,
-     fork, wave, wings or spire).
+   - **Spear:** a slender 2×2 shaft about 31 long, so it reads as reach, and a head about 10 long and 7 or more
+     wide (leaf, lugs, fork, wave, wings or spire): narrower, it vanishes edge-on in the hand.
    - **Greatblade:** about 43 long, six tenths of it blade (26, 9–11 wide), an 8-long two-hand grip, a guard and a
      short banded ricasso ending in parrying lugs (at most 6 tall together, at most 15 across), and each tier's own
      outline: a slab, a hook, a window, a flamberge, a fork or a crown.
@@ -56,10 +56,11 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
      broad and 3 deep at the heel stepping to a point (`SCYTHE_SWEEP`, each tier its own), edge along the inside
      (`flip`), glowing on B, A and S because it cuts spirits.
    - **Gauntlets:** design +y is the punch and +z the back of the hand: a fist with three knuckle plates, curled
-     fingers, the stone on the back and a cuff. Its hold turns it to be worn, knuckles into the view and the back
-     of the hand up.
-   - **Chainblade:** an S of links alternating face-on and edge-on, coiled at the grip, and a short head set at the
-     chain's last angle (`turned`).
+     fingers, the stone on the back and a cuff, and each tier's own outline standing 2 or more proud of it (spikes,
+     tusks, a gate, crescents, claws and wings, a crown). Its hold turns it to be worn, knuckles into the view and
+     the back of the hand up.
+   - **Chainblade:** about 35: an S of ten links alternating face-on and edge-on, coiled at the grip, and a head 12
+     or more long and 5 or more wide set at the chain's last angle (`turned`), since the head is what you aim with.
    - **Shieldblade:** the face fills the outline (round, or kite: a squared top over a 45° point), with a rim, a
      raised boss with the stone and a short blade on top.
    - **Warstaff:** about 37, two wrapped grips, weighted caps and a glowing focus at the head, the head as deep as
