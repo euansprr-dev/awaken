@@ -17442,17 +17442,18 @@ axe). Checked on 2026-11-02 against 26.3's numbers: 60 of the 192 style-tier che
   bump alone takes Lord fights about a tenth shorter (under the recommended curve the Dodger passes 3 of 15 Lords, from
   11, and the Parrier 5, from 12) and small E and D creatures to two hits. With each Lord's health x its rank's bump (E
   x1.18, D x1.15, C x1.13, B x1.12, A x1.11, S x1.10) and normal creatures at E and D x1.15, the fights are as tuned
-  (Dodger 11, Parrier 12). So the numbers land with that health, which is the mobs module's.
+  (Dodger 11, Parrier 12). So the numbers land with that health. The health is boss-fights' (SPEC §47, commit
+  4ee1dd112 on claude/boss-fights-plan-73c5f2): it sets the bumped values in the gate bestiary's own health,
+  folded into its retune, with the Ringer at 420, the Examiner at 437 and the Abbot of Frost at 86.5. The damage bump
+  is one commit on the weapon-forge branch, merged with or right after that one, never before it.
 - **Built** (2026-11-02, the weapon-forge session): the generator's tiers run the Longsword 5.5 to 10.5 over the player's
   1 and the eight styles' offsets carry their second point (`ArmsData` regenerated; Lord-forged follow). `Upgrades`
   splits `isGear` (any weapon or armour piece) from `isTemperable` (gear in the `awaken` namespace only) and holds the
   line (`Upgrades.CRAFTED`): the Forge shows it as a toast when crafted gear is used on it, Oren says it when you hold
   some out to him (and his footer asks for "a forged weapon or armour piece"). Oren's commissions still make crafted gear
   from what you carry but temper only forged pieces as he hands them over ("Here. Crafted work, so it stays as it is.").
-  `MobScaling.forgedBump(level, role)`: a mob's rank is the one whose content its level belongs to (Rank's
-  `levelRequired`); a Lord (BOSS or BREAK) takes its rank's bump, a NORMAL, ELITE, WARDEN or NIGHTMARE creature x1.15 at
-  E and D, everything else 1; it multiplies `totalHealth`, so every gate and overworld spawn takes it. The core fallback
-  (`MobHooks.scale`, the mobs module absent) is unchanged. The War Anvil's tooltip and the two lines above say it.
+  The War Anvil's tooltip and the two lines above say it. (A first build raised health in `MobScaling` too; it came out
+  when the health went to boss-fights, so creatures are raised once.)
 
 **46.6 The smithy grows (plan §4.11, decision 15; approved with 14).** The War Anvil is rebuilt as you climb, each
 rebuild the gate for its rank's weapons and act (not a second ladder), each a Weapons tab step, shown on the block

@@ -228,9 +228,7 @@ final class StoryTests {
                 double dmg = hard.getAttributeValue(Attributes.ATTACK_DAMAGE) / calm.getAttributeValue(Attributes.ATTACK_DAMAGE);
                 h.assertTrue(Math.abs(hp - 1.6) < 0.02, "Ascension 2 gives +60% health, got x" + hp);
                 h.assertTrue(Math.abs(dmg - 1.3) < 0.02, "and +30% damage, got x" + dmg);
-                // decision 14's bump raises the calm one, never an ally (SPEC §46.5): divided out, Ascension leaves the ally as it was
-                double unbumped = calm.getMaxHealth() / dev.awaken.mobs.MobScaling.forgedBump(10, MobRole.Role.NORMAL) * dev.awaken.mobs.MobScaling.forgedBump(10, MobRole.Role.ECHO);
-                h.assertTrue(Math.abs(ally.getMaxHealth() - unbumped) < 0.01, "an Echo ally is untouched, got " + ally.getMaxHealth() + " for " + unbumped);
+                h.assertTrue(Math.abs(ally.getMaxHealth() - calm.getMaxHealth()) < 0.01, "an Echo ally is untouched");
                 h.assertTrue(xa > 0 && Math.abs(xb / xa - 1.3) < 0.01, "and +30% XP, got x" + (xb / xa));
                 calm.discard();
                 hard.discard();
