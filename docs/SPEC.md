@@ -17167,6 +17167,9 @@ Unmade on the Broken Span over the void). `Trials.Kind.forTarget(B)` is `PROVING
   off past it. The arms are 9-block decks between parapets, a road down the middle, lamp posts every 8. Unseen light: 13
   over the bastion on a 6-block grid, 11 down the arms every 6. The band a fight changes is dy -12 to 6 (the north arm
   down to its arches, the ring, the lamps).
+  The trials dimension has a night mist (`visual/fog_start_distance` 28, `fog_end_distance` 100, in
+  `dimension_type/trials.json`): every hall in a cell stands alone (the Belfry is 105 blocks north of the bastion and
+  showed as a dark box in the sky), and the bridge's far ends fade into the dark.
 - **The flow.** The Reading Bell's window says only "The bell has taken you twice now. Go when you're ready." The bell
   rings and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] NOTHING UNDER YOU", then "The bell stopped.").
   You wake 16 blocks over the bastion a little south of its middle (a party spread 3 apart), looking north up the

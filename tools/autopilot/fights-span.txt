@@ -45,6 +45,7 @@ wait 12
 shotnow span_b10
 wait 12
 shotnow span_b11
+look 180 -16
 wait 12
 shotnow span_b12
 wait 12
