@@ -389,7 +389,7 @@ def content():
     _write(os.path.join(ASSETS, "blockstates/war_anvil.json"), {"variants": variants})
     # carried, it looks as it was built (its build rides on the item: the loot table copies it)
     _write(os.path.join(ASSETS, "items/war_anvil.json"), {"model": {
-        "type": "minecraft:select", "block_state_property": "build",
+        "type": "minecraft:select", "property": "minecraft:block_state", "block_state_property": "build",
         "cases": [{"when": str(b), "model": {"type": "minecraft:model", "model": "awaken:block/" + name}
                    | ({"tints": [{"type": "minecraft:custom_model_data", "index": 0, "default": LORD_GOLD}]} if b == 3 else {})}
                   for b, name in enumerate(BUILDS) if b],

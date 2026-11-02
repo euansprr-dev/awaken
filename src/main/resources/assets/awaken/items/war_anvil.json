@@ -1,6 +1,7 @@
 {
   "model": {
     "type": "minecraft:select",
+    "property": "minecraft:block_state",
     "block_state_property": "build",
     "cases": [
       {
