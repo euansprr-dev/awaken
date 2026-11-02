@@ -51,7 +51,8 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
 
    - **Glaive:** a 3×3 pole about 30 and a 5-wide curved blade of turned links, edge on the outside of the curve,
      with a fluke on its back.
-   - **Scythe:** a 2×2 snath with a hand peg and a blade at right angles off its top, edge along the inside
+   - **Scythe:** about 38: a 2×2 snath with a hand peg and a broad crescent blade at right angles off its top, 5
+     broad and 3 deep at the heel stepping to a point (`SCYTHE_SWEEP`, each tier its own), edge along the inside
      (`flip`), glowing on B, A and S because it cuts spirits.
    - **Gauntlets:** design +y is the punch and +z the back of the hand: a fist with three knuckle plates, curled
      fingers, the stone on the back and a cuff. Its hold turns it to be worn, knuckles into the view and the back
@@ -60,7 +61,8 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
      chain's last angle (`turned`).
    - **Shieldblade:** the face fills the outline (round, or kite: a squared top over a 45° point), with a rim, a
      raised boss with the stone and a short blade on top.
-   - **Warstaff:** about 30, two wrapped grips, weighted caps and a glowing focus at the head.
+   - **Warstaff:** about 37, two wrapped grips, weighted caps and a glowing focus at the head, the head as deep as
+     it is wide: four arms of turned links round the stone (`claws`), or a cage (`cube`).
    - **Precursor Arm:** about 35 long, a cased hilt (at most 6 deep), an emitter, and hard light 24 long (the
      blade is the emissive) in three narrowing stages that pulse in turn. Each tier is its own technology.
 

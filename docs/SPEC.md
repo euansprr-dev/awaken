@@ -7441,8 +7441,9 @@ against it, so a vanilla item plays its designed tempo).
   (`anim_lab.py bake`, the third-person wrists kept); in the lab every blow leads with the edge as well or better
   (0.85 to 0.98, was 0.71 to 0.98). In the game it reads better (CI tour `arms-longsword-turn`: the blade's face and
   the guard's spread at rest, every blow with the hand on the grip), so the Greatblade has the same turn (batch 1;
-  every blow 0.79 to 0.99, was 0.72 to 1.00) and the Axe, Katana and Glaive get it in their batches, each checked in
-  the lab first (the Daggers and Scythe are dagger-scythe's).
+  every blow 0.79 to 0.99, was 0.72 to 1.00), the Katana and Glaive too (batch 2; the Katana's blows unchanged at
+  0.96 to 1.00, its curve now showing at rest; the Glaive's 0.91 to 0.98, was 0.89 to 0.98), and the Axe in batch 3,
+  each checked in the lab first (the Daggers and Scythe are dagger-scythe's).
 - **Proportions per style** (the audit's rules; Euan 2026-11-02 approved the whole plan, "Go ahead with the whole
   plan"; each line lands with its batch, in texels): every style keeps the hilt off the blade's root, nothing near the
   hand deeper than the working part, one framed stone as the focus, and no two weapons with one outline.
@@ -7460,6 +7461,16 @@ against it, so a vanilla item plays its designed tempo).
   - Precursor Arm: about 35, the light 24 (y 7 to 31) in its three stages, over the cased hilt (y -4 to 7); nothing on
     the case deeper than 6 (a stone 7; Beastbound's gear and Veilwoven's lens were 8 and 9, the lens now 6 across).
     Unit Zero's Countdown: its light 25 (y 9 to 34), the countdown emitter a texel shorter.
+  - Scythe: about 38, the snath y -13 to 21 with the blade off its top; the blade a crescent of six or seven turned
+    links, 5 broad and 3 deep at the heel stepping to a point 1 wide (was 3 broad and 2 deep, so in hand it read as
+    a cane), each tier its own sweep and its own mark along the back (flakes, teeth, a brass spine, a mirror
+    crescent, gold ribs, a beard); the collar 3 across and 4 deep; the second hand's peg stays at y 5 to 9. The
+    Sporemother's Reaping is built the same, its gill blade 6 broad with gill ridges standing off both faces.
+  - War-staff: about 37, the staff y -12 to 17 and the head above it as deep as it is wide (9 to 15 across, was 5
+    and flat): four arms of turned links round a stone 4 across (E antler beams, D tusks curling over it, B mirror
+    crescents, A gold claws between its wings, S arms before and behind its gold diamond) or C's brass cube, so the
+    head reads from the edge as well as the face. The Root Saint's Reliquary: its shrine 7 across on a gold plinth
+    under a stepped roof 9 across, pillared and open at the front (was 5 and 7).
 - **Hilt cuts** (the generated `ArmsHilts.CUTS`, for the War Anvil, §46.3): for each sword-like weapon (Longsword,
   Greatblade, Rapier, Daggers, Katana), where its blade, guard and grip begin along its mesh, {blade, guard, grip, 0}
   in the mesh's own along (0 the pommel's end, 1 the point): the blade's lowest corner (its back, teeth and ricasso

@@ -264,13 +264,13 @@ HOLDS = {
     # en garde: the point forward at the target's height, the hand a little in
     "rapier": dict(yaw=20, pitch=18, roll=90, grip=(-0.04, 0.03, -0.02)),
     # two hands at the middle, the edge down toward the target, the point at it (chudan)
-    "katana": dict(yaw=10, pitch=36, roll=90, grip=(-0.14, 0.0, 0.04)),
+    "katana": dict(yaw=10, pitch=36, roll=135, grip=(-0.14, 0.0, 0.04)),
     # the shaft across the lower view, gripped part way, the head forward and up, the butt back past the hand; held
     # larger (nearer its size in F5) and turned so its head sits left of and under the aim point, not on it (the game
     # draws the resting hand about an eighth of the frame higher than mesh_render does: judged in the game, 2026-10-26)
     "spear": dict(yaw=46, pitch=13, grip=(0.02, -0.04, 0.06), size=1.3),
     # as the spear, the blade higher, its edge down toward the foe
-    "glaive": dict(yaw=54, pitch=22, roll=90, grip=(0.02, -0.02, 0.05), size=1.2, cut=DOWN),
+    "glaive": dict(yaw=54, pitch=22, roll=135, grip=(0.02, -0.02, 0.05), size=1.2, cut=DOWN),
     # the snath up, the blade at the top reaching in across the view
     "scythe": dict(yaw=8, pitch=64, grip=(0.02, -0.04, 0.03), cut=LEFT),
     # held at its middle across the body, one end low right, the other up to the left

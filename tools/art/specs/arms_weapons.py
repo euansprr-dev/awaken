@@ -2176,51 +2176,70 @@ register("glaive", glaive)
 HOLDS["glaive"] = ([0, -72, 30], [-0.5, -1.0, -0.6], 0.36)
 
 
-# ---- Scythe: a long snath with a hand-peg, a great curved blade at right angles off its top, the edge along its
-# inside; it cuts spirits, so on the high tiers that edge glows -------------------------------------------------------
+# ---- Scythe: about 38 texels: a snath 2 by 2 with a peg for the second hand, and a broad crescent blade at right
+# angles off its top, 5 broad at the heel stepping to a point, the edge along its inside; it cuts spirits, so on the
+# high tiers that edge glows (the weapon audit: the old blade was a thin hook, 3 broad and 2 deep, and in hand the
+# scythe read as a cane) -------------------------------------------------------------------------------------------
 
 SCYTHE_CURVE = {"E": "flint_kat", "D": "tusk_kat", "C": "slate_kat", "B": "scythe_b", "A": "lord_kat", "S": "scythe_s"}
+# each tier's sweep, heel to point: (degrees from straight up, length, breadth, depth); the heel broad, the point fine
+SCYTHE_SWEEP = {
+    "E": [(76, 5, 5, 3), (90, 5, 5, 3), (104, 5, 4, 2), (120, 4, 3, 2), (138, 3, 2, 2), (156, 2, 1, 1)],
+    "D": [(70, 5, 5, 3), (86, 5, 5, 3), (104, 4, 4, 2), (124, 4, 3, 2), (146, 3, 2, 2), (170, 2, 1, 1)],
+    "C": [(82, 5, 5, 3), (90, 5, 5, 3), (98, 5, 4, 2), (108, 4, 3, 2), (120, 3, 2, 2), (134, 2, 1, 1)],
+    "B": [(74, 5, 5, 3), (86, 4, 5, 3), (98, 5, 4, 2), (112, 4, 4, 2), (128, 4, 3, 2), (146, 3, 2, 1), (166, 2, 1, 1)],
+    "A": [(78, 5, 5, 3), (92, 5, 5, 3), (106, 5, 4, 2), (122, 4, 3, 2), (140, 3, 2, 2), (160, 2, 1, 1)],
+    "S": [(80, 5, 5, 3), (92, 5, 5, 3), (104, 5, 4, 2), (118, 4, 4, 2), (134, 3, 3, 2), (152, 3, 2, 1), (170, 2, 1, 1)],
+}
 
 
 def scythe(t):
-    """The Scythe: a slender snath with a peg for the second hand, its blade sweeping out at right angles off the top
-    and curving down, the cutting edge along its inside (glowing on the high tiers: spirit, molten gold, crimson); a
-    collar of the tier's metal where the blade is set (E sinew and an antler, D bronze with teeth, C brass and a
-    crystal, B a mirror crescent and the spirit stone, A a gold wing over the pearl, S a crown and its stone)."""
+    """The Scythe: a slender snath with a peg for the second hand (y 5..9, the snath's middle: a two-handed hold has
+    its place), its broad blade sweeping out at right angles off the top and curving down, the cutting edge along its
+    inside (glowing on the high tiers: spirit, molten gold, crimson); a collar of the tier's metal where the blade is
+    set, and each tier's mark on the blade's back (E knapped flakes and an antler tine, D teeth, C a brass spine, B a
+    mirror crescent, A gold ribs and a wing, S a beard and a crown)."""
     k = KIT[t]
-    B = [shaft(0, 21, k["pole"]), shaft(-5, 0, k["wrap"], "grip"), shaft(-9, -5, k["pole"], "snath_low")]
+    top = 21
+    B = [shaft(0, top, k["pole"]), shaft(-5, 0, k["wrap"], "grip"), shaft(-11, -5, k["pole"], "snath_low")]
     B += [VX.slab(1, 5, 8, 9, 2, k["pole"], "nib"), VX.slab(3, 5, 5, 8, 2, k["wrap"], "nib_grip")]
-    blade_ = chain(-1.0, 21.0, [(80, 4, 3, 2, SCYTHE_CURVE[t]), (92, 4, 3, 2, SCYTHE_CURVE[t]), (104, 4, 3, 2, SCYTHE_CURVE[t]),
-                                (118, 3, 3, 2, SCYTHE_CURVE[t]), (134, 3, 2, 2, SCYTHE_CURVE[t]), (152, 2, 1, 1, SCYTHE_CURVE[t])],
-                   "blade", back=0.3, stagger=0.05, flip=True, span=(10, 24))
+    blade_ = chain(-1.0, top - 0.5, [(a, l, w, d, SCYTHE_CURVE[t]) for a, l, w, d in SCYTHE_SWEEP[t]],
+                   "blade", back=0.3, stagger=0.05, flip=True, span=(10, 30))
     B += blade_
-    B.append(VX.slab(-1.5, 1.5, 19, 23, 3, "sinew" if t == "E" else k["metal"], "collar"))
-    B += [collar(-10, -9, k["metal"], part="butt"), VX.slab(-0.5, 0.5, -11, -10, 1, k["metal"], "spike")]
-    stone = (0, 21.0, 0)
-    if t == "E":
-        B += chain(1.5, 21.5, [(30, 3, 1, 2, "antler"), (5, 2, 1, 1, "antler")], "tine", side=1)
-        stone = (0, -10.5, 0)
-        B.append(stone_at(t, (0, -11.6, 0), 2, 2))
-        stone = (0, -11.6, 0)
-    elif t == "D":
-        for y in (19.5, 22.5):
-            B.append(VX.rbox((2.0, y, 0), (1, 2, 1), -60, "tooth", f"tooth{y}"))
+    back = edge_points(blade_, 1)  # the outside of the curve
+    B.append(VX.slab(-1.5, 1.5, top - 3, top + 1, 4, "sinew" if t == "E" else k["metal"], "collar"))
+    B += [collar(-12, -11, k["metal"], part="butt"), VX.slab(-0.5, 0.5, -13, -12, 1, k["metal"], "spike")]
+    stone = (0, top - 1.0, 0)
+    if t == "E":  # knapped flakes on the back, an antler tine up from the lashing; the amber at the foot
+        for p in back[1:4]:
+            B.append(VX.rbox((p[0], p[1], 0), (1, 1, 1), 45, "flint", "flake"))
+        B += chain(1.5, top - 0.5, [(30, 3, 1, 2, "antler"), (5, 2, 1, 1, "antler")], "tine", side=1)
+        stone = (0, -13.6, 0)
+        B.append(stone_at(t, stone, 2, 2))
+    elif t == "D":  # teeth set along the tusk's back, a bronze collar biting it
+        for i, p in enumerate(back[:4]):
+            B.append(VX.rbox((p[0], p[1] + 0.6, 0), (1, 2, 1), 30 + 20 * i, "tooth", f"tooth{i}"))
         B.append(stone_at(t, stone, 2, 5))
-    elif t == "C":
+    elif t == "C":  # a brass spine down the back, the circuit lit in its slot
+        for i, b in enumerate(blade_[:3]):
+            B.append(VX.Box(b.c + b.R[:, 0] * (b.h[0] + 0.5), np.array([0.5, b.h[1], 1.5]), "brass", f"spine{i}", b.R, f"spine{i}"))
         B.append(stone_at(t, stone, 2, 5))
-        B.append(VX.slab(1.5, 2.5, 19, 23, 1, "pylon", "slot", column=2, span=(19, 23)))
+        B.append(VX.slab(1.5, 2.5, top - 3, top + 1, 1, "pylon", "slot", column=2, span=(top - 3, top + 1)))
     elif t == "B":
-        B += chain(1.5, 21.5, [(40, 3, 1, 2, "mirror"), (5, 3, 1, 1, "mirror")], "crescent", side=1)
+        B += chain(1.5, top - 0.5, [(40, 3, 1, 2, "mirror"), (5, 3, 1, 1, "mirror")], "crescent", side=1)
         B.append(stone_at(t, stone, 2, 5))
-    elif t == "A":
-        B += fan(1.5, 21.5, [(35, 5, 2, 2, "gold"), (60, 4, 1, 1, "feather")], "wing", side=1)
+    elif t == "A":  # a gold rib along the back like a wing's finger, a wing off the collar
+        for i, b in enumerate(blade_[:4]):
+            B.append(VX.Box(b.c + b.R[:, 0] * (b.h[0] + 0.5), np.array([0.5, b.h[1] - 0.5, 1.0]), "gold", f"rib{i}", b.R, f"rib{i}"))
+        B += fan(1.5, top - 0.5, [(35, 4, 2, 2, "gold"), (60, 3, 1, 1, "feather")], "wing", side=1)
         B.append(stone_at(t, stone, 2, 5))
-    else:
+    else:  # a beard under the heel, a crown at the collar
+        B += chain(-2.5, top - 2.5, [(200, 3, 2, 2, "ivory"), (220, 2, 1, 1, "gold")], "beard", side=1)
         for x in (-1.0, 1.0):
-            B.append(VX.rbox((x, 23.4, 0), (1, 2, 2), -x * 10, "gold", f"crown{x}"))
+            B.append(VX.rbox((x, top + 1.4, 0), (1, 2, 2), -x * 10, "gold", f"crown{x}"))
         B.append(stone_at(t, stone, 2, 5))
     anchors = [(stone, 1.4, GLOW[t], 1)]
-    return B, anchors, look_of(t, (-5, 0), (-6, 19), edge_points(blade_, -1), stone)
+    return B, anchors, look_of(t, (-5, 0), (-6, top - 2), edge_points(blade_, -1), stone)
 
 
 register("scythe", scythe)
@@ -2401,43 +2420,98 @@ register("shieldblade", shieldblade)
 HOLDS["shieldblade"] = ([0, -72, 30], [-3.0, 1.5, -0.6], 0.52)
 
 
-# ---- Warstaff: a two-handed staff about 30, weighted caps at both ends, two grips, and a power focus at its head (its
-# blows feed power energy, so the focus glows) ----------------------------------------------------------------------
+# ---- Warstaff: a two-handed staff about 37, weighted caps at both ends, two grips, and a power focus at its head (its
+# blows feed power energy, so the focus glows). The head is as deep as it is wide (9 to 15 across): four arms round a
+# big stone, or a cage, so it reads from the edge as well as the face (the weapon audit: the old heads were flat and
+# 5 across, and in hand the head was small) -----------------------------------------------------------------------
+
+WARSTAFF_FOCUS = 21.5  # the head's stone
+
+
+def quarter(boxes):
+    """The same boxes turned a quarter round the staff (x to z): a head's front and back pair from its left and right."""
+    R = np.array([[0.0, 0, 1], [0, 1, 0], [-1, 0, 0]])
+    return [VX.Box(R @ b.c, b.h, b.mat, b.part + "q", R @ b.R, b.name + "q", **b.data) for b in boxes]
+
+
+def claws(links, part, x=-1.5, y=16.0, axes="xz"):
+    """Curved arms off a staff's head, left and right (x) and front and back (z), each a chain of turned links, so the
+    head is as deep as it is wide. No link stands straight up: at 0 degrees it would share planes with its quarter."""
+    pair = both(chain(x, y, links, part, stagger=0.05))  # links of one depth overlap at the joints
+    return (pair if "x" in axes else []) + (quarter(pair) if "z" in axes else [])
+
+
+def joint(x, y, links, k):
+    """Where link k of chain(x, y, links) begins (the left one), for a tine branching off it."""
+    p = np.array([x, y], dtype=float)
+    for i, (deg, length, width, _d, _m) in enumerate(links[:k + 1]):
+        d = np.array([-math.sin(math.radians(deg)), math.cos(math.radians(deg))])
+        if i:
+            p = p - d * min(width, length) / 2
+        if i == k:
+            return p
+        p = p + d * length
+    return p
+
+
+def cube(c, half, mat, part="cage"):
+    """The twelve edges of a cube round c, each a texel square (the uprights between the top and bottom bars)."""
+    x, y, z = c
+    h = half
+    out = []
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            out.append(VX.box(x + sx * h - 0.5, x + sx * h + 0.5, y - h + 0.5, y + h - 0.5, z + sz * h - 0.5, z + sz * h + 0.5, mat, part))
+    for sy in (-1, 1):
+        yy = y + sy * h
+        for sz in (-1, 1):
+            out.append(VX.box(x - h - 0.5, x + h + 0.5, yy - 0.5, yy + 0.5, z + sz * h - 0.5, z + sz * h + 0.5, mat, part))
+        for sx in (-1, 1):
+            out.append(VX.box(x + sx * h - 0.5, x + sx * h + 0.5, yy - 0.5, yy + 0.5, z - h + 0.5, z + h - 0.5, mat, part))
+    return out
+
 
 def warstaff(t):
     """The Warstaff: a staff of the tier's own (C's with the circuit lit up it), bound for two hands, weighted caps at
-    both ends, and at its head the power focus, a great stone held up (E in antler prongs, D in curled tusks, C floating
-    in a brass ring, B in mirror crescents, A cupped by gold wings, S in a raised gold diamond under a crown)."""
+    both ends, and at its head the power focus, a great stone held up (E in antler beams with tines, D in four tusks
+    curling over it, C floating in a brass gate-cube, B risen from a cup of mirror crescents, A between gold wings and
+    claws, S in a raised gold diamond with a crown point)."""
     k = KIT[t]
     pole = k["pole"] if t != "C" else "slate_rib"
     B = [haft(-9, -5, pole, "pole_low", span=(-9, 15), column=0), haft(-5, -1, k["wrap"], "grip_low"), haft(-1, 3, pole, "pole_mid", span=(-9, 15), column=0),
          haft(3, 7, k["wrap"], "grip_hi"), haft(7, 15, pole, "pole_hi", span=(-9, 15), column=0)]
     B += [VX.slab(-2.5, 2.5, -12, -9, 5, k["metal"], "foot"), VX.slab(-2.5, 2.5, 15, 17, 5, k["metal"], "head")]
-    stone = (0, 20.5, 0)
-    if t == "E":
-        B += both(chain(-1.5, 16.5, [(25, 4, 1, 2, "antler"), (-12, 3, 1, 1, "antler")], "prongs"))
-        B.append(stone_at(t, stone, 3, 3))
-    elif t == "D":
-        B += both(chain(-2.0, 16.5, [(30, 3, 2, 3, "horn"), (0, 3, 2, 2, "horn"), (-35, 2, 1, 1, "horn_tip")], "tusks"))
-        B.append(stone_at(t, stone, 3, 4))
-    elif t == "C":
-        B += frame((0, 21.0, 0), 7, 5, 3, 0, "brass", "ring")
-        B.append(stone_at(t, (0, 21.0, 0), 3, 2))
-        stone = (0, 21.0, 0)
-    elif t == "B":
-        B += both(chain(-2.0, 16.5, [(25, 4, 2, 3, "mirror"), (-10, 3, 1, 2, "mirror"), (-45, 2, 1, 1, "spirit_edge")], "crescents"))
-        B.append(stone_at(t, stone, 3, 5))
-    elif t == "A":
-        B += both(fan(-2.0, 17.0, [(30, 6, 2, 3, "gold"), (55, 5, 2, 2, "feather")], "wings"))
-        B.append(stone_at(t, stone, 3, 5))
-    else:
-        B += frame(stone, 5, 3, 7, 45, "gold", "frame")
-        B.append(stone_at(t, stone, 3, 5))
-        for x in (-2.0, 0.0, 2.0):
-            B.append(VX.rbox((x, 24.6, 0), (1, 2, 3), -x * 10, "gold", f"crown{x}"))
-    anchors = [(stone, 2.6, GLOW[t], 1)]
-    line = [(0.0, 18.0, 0.0), (0.0, 23.0, 0.0)]
-    return B, anchors, look_of(t, (-5, 7), (0, 18), line, stone)
+    stone = (0, WARSTAFF_FOCUS, 0)
+    if t == "E":  # antler beams curving out and up round the amber, a tine rising off each side beam
+        beam = [(55, 4, 2, 2, "antler"), (25, 4, 2, 2, "antler"), (8, 4, 2, 2, "antler")]
+        B += claws(beam, "antlers", axes="x")
+        B += claws([(55, 4, 2, 2, "antler"), (20, 4, 2, 1, "antler")], "antlers_z", axes="z")
+        jx, jy = joint(-1.5, 16.0, beam, 1)
+        B += both(chain(jx + 0.5, jy, [(-12, 4, 1, 1, "antler")], "tines"))
+        B.append(VX.rbox(stone, (4, 4, 4), 45, k["gem"], "stone"))
+    elif t == "D":  # four tusks curling up and over the moss stone
+        B += claws([(60, 3, 2, 2, "horn"), (30, 4, 2, 2, "horn"), (-15, 3, 2, 2, "horn"), (-55, 3, 2, 1, "horn_tip")], "tusks")
+        B.append(VX.rbox(stone, (4, 4, 4), 45, k["gem"], "stone"))
+    elif t == "C":  # the crystal floating in a brass gate-cube
+        B += cube(stone, 4, "brass", "cage")
+        B.append(VX.box(-1.5, 1.5, 17, 18, -1.5, 1.5, "pylon", "plinth", span=(17, 18)))
+        B.append(VX.rbox(stone, (3, 3, 3), 45, k["gem"], "stone"))
+    elif t == "B":  # an open cup of mirror crescents, their tips spirit light, the stone risen out of it
+        stone = (0, 23.0, 0)
+        B += claws([(50, 3, 2, 2, "mirror"), (20, 4, 2, 2, "mirror"), (-12, 4, 1, 1, "spirit_edge")], "crescents")
+        B.append(VX.rbox(stone, (4, 4, 4), 45, k["gem"], "stone"))
+    elif t == "A":  # two gold wings sweeping up off the head, a gold claw before and behind the pearl
+        B += both(fan(-1.5, 17.5, [(15, 8, 2, 3, "gold"), (32, 7, 2, 2, "feather"), (50, 5, 2, 1, "feather")], "wings"))
+        B += claws([(50, 3, 2, 2, "gold"), (15, 4, 2, 2, "gold"), (-20, 3, 2, 1, "gold")], "claws", axes="z")
+        B.append(VX.rbox(stone, (4, 4, 4), 45, k["gem"], "stone"))
+    else:  # the crimson stone in a raised gold diamond, gold arms before and behind it, a crown point over it
+        B += frame(stone, 9, 5, 3, 45, "gold", "frame")
+        B += claws([(50, 3, 2, 2, "gold"), (15, 4, 2, 2, "gold"), (-25, 3, 2, 1, "gold")], "arms", axes="z")
+        B.append(VX.box(-0.5, 0.5, 27, 30, -0.5, 0.5, "gold", "crown_top"))
+        B.append(VX.rbox(stone, (4, 4, 4), 45, k["gem"], "stone"))
+    anchors = [(stone, 3.0, GLOW[t], 1)]
+    line = [(0.0, 19.0, 0.0), (0.0, 24.0, 0.0)]
+    return B, anchors, look_of(t, (-5, 7), (0, 19), line, stone)
 
 
 register("warstaff", warstaff)
@@ -2750,21 +2824,27 @@ def bell_warden_maul():
 
 
 def mother_of_spores_scythe():
-    """The Sporemother's Reaping: a snath of pale fungal stalk with shelf fungi growing off it, a great gill-lined blade
-    curving off its top under a mushroom cap, spores glowing along its edge; a bulb of fungus at its foot."""
-    B = [shaft(0, 21, "l_mycel"), shaft(-5, 0, "l_mycel", "grip"), shaft(-9, -5, "l_mycel", "snath_low")]
+    """The Sporemother's Reaping: a snath of pale fungal stalk with shelf fungi growing off it, a great gill blade as
+    broad as the scythes' (6 at the heel), gill ridges standing off both its faces, curving off its top under a
+    mushroom cap, spores glowing along its edge; a bulb of fungus at its foot."""
+    top = 21
+    B = [shaft(0, top, "l_mycel"), shaft(-5, 0, "l_mycel", "grip"), shaft(-11, -5, "l_mycel", "snath_low")]
     B += [VX.slab(1, 5, 8, 9, 2, "l_mycel", "nib"), VX.slab(3, 5, 5, 8, 2, "l_mycel", "nib_grip")]
-    for y, x0, x1 in ((14, 1, 4), (10, -4, -1), (3, 1, 3)):  # shelf fungi
-        B.append(VX.slab(x0, x1, y, y + 1, 4, "l_cap", f"shelf{y}"))
-    blade_ = chain(-1.0, 21.5, [(78, 5, 4, 2, "l_gill"), (92, 5, 4, 2, "l_gill"), (106, 4, 3, 2, "l_gill"), (122, 4, 3, 2, "l_gill"),
-                                (140, 3, 2, 2, "l_gill"), (160, 2, 1, 1, "l_gill")], "blade", back=0.3, stagger=0.05, flip=True)
+    for y, x0, x1, d in ((14, 1, 4, 4), (11, -4, -1, 3), (2, 1, 3, 3)):  # shelf fungi
+        B.append(VX.slab(x0, x1, y, y + 1, d, "l_cap", f"shelf{y}"))
+    blade_ = chain(-1.0, top - 0.5, [(74, 5, 6, 3, "l_gill"), (88, 5, 6, 3, "l_gill"), (102, 5, 5, 2, "l_gill"), (118, 4, 4, 2, "l_gill"),
+                                     (136, 4, 3, 2, "l_gill"), (156, 3, 2, 1, "l_gill")], "blade", back=0.3, stagger=0.05, flip=True)
     B += blade_
-    B += [VX.slab(-3.5, 3.5, 22, 24, 7, "l_cap", "cap"), VX.slab(-2.5, 2.5, 24, 25, 5, "l_cap", "cap_top"),
-          VX.slab(-1.5, 1.5, 19, 22, 3, "l_mycel", "stalk")]
-    B += [VX.slab(-2.5, 2.5, -11, -9, 5, "l_mycel", "bulb"), VX.rbox((0, -12.0, 0), (2, 2, 3), 45, "l_spore_gem", "spore")]
+    for i, b in enumerate(blade_[:4]):  # gill ridges standing off the flat, front and back
+        for z in (-1, 1):
+            B.append(VX.Box(b.c + b.R[:, 2] * z * (b.h[2] + 0.5) - b.R[:, 0] * 0.5, np.array([0.5, b.h[1] - 1.0, 0.5]), "l_cap",
+                            f"gill{i}{z}", b.R, f"gill{i}{z}"))
+    B += [VX.slab(-3.5, 3.5, top + 1, top + 3, 7, "l_cap", "cap"), VX.slab(-2.5, 2.5, top + 3, top + 4, 5, "l_cap", "cap_top"),
+          VX.slab(-1.5, 1.5, top - 2, top + 1, 4, "l_mycel", "stalk")]
+    B += [VX.slab(-2.5, 2.5, -13, -11, 5, "l_mycel", "bulb"), VX.rbox((0, -14.0, 0), (2, 2, 3), 45, "l_spore_gem", "spore")]
     c = LORD_COLOUR["mother_of_spores_scythe"]
-    anchors = [((0, 23.0, 0), 3.0, c, 1), ((0, -12.0, 0), 1.6, c, 1)]
-    return B, anchors, lord_look("mother_of_spores_scythe", (-5, 0), (-6, 19))
+    anchors = [((0, top + 2.0, 0), 3.0, c, 1), ((0, -14.0, 0), 1.6, c, 1)]
+    return B, anchors, lord_look("mother_of_spores_scythe", (-5, 0), (-6, top - 2))
 
 
 def ember_tyrant_axe():
@@ -2802,8 +2882,9 @@ def hive_regent_daggers():
 
 def root_saint_warstaff():
     """The Root Saint's Reliquary: a staff of living root, twisting as it grew, moss in its grain, tendrils wound round
-    it; at its head the saint's temple relic, a little ivory shrine under a gold roof, the relic glowing green-gold in
-    its open front, roots climbing round it; root claws at its foot."""
+    it; at its head the saint's temple relic, an ivory shrine 7 across on a gold plinth under a stepped gold roof 9
+    across, pillared at its corners and open at the front, the relic glowing green-gold inside; roots climbing round
+    it; root claws at its foot."""
     trunk = chain(0.0, -9.0, [(4, 5, 3, 3, "l_bark"), (-5, 5, 3, 3, "l_bark"), (5, 5, 3, 3, "l_bark"), (-4, 5, 3, 3, "l_bark"),
                               (3, 4, 3, 3, "l_bark")], "trunk", back=0.4, stagger=0.05)
     B = list(trunk)
@@ -2811,14 +2892,18 @@ def root_saint_warstaff():
         B.append(VX.rbox((0, y, 0), (5, 1, 5), d_ * 18, "l_bark", f"tendril{y}"))
     top = np.asarray(trunk[-1].data["base"]) + np.array([math.sin(math.radians(-3)), math.cos(math.radians(-3))]) * 4
     hy = float(top[1]) + 0.5
-    B += [VX.box(-2.5, 2.5, hy, hy + 5, -2.5, 2.5, "l_shrine", "shrine"), VX.box(-3.5, 3.5, hy + 5, hy + 6, -3.5, 3.5, "gold", "roof"),
-          VX.box(-2.5, 2.5, hy + 6, hy + 7, -2.5, 2.5, "gold", "roof_top"), VX.box(-0.5, 0.5, hy + 7, hy + 8, -0.5, 0.5, "gold", "finial")]
-    B.append(VX.rbox((0, hy + 2.5, 2.0), (2, 2, 2), 45, "l_relic", "relic"))
-    B += both(chain(-2.0, hy - 0.5, [(30, 3, 1, 2, "l_bark"), (5, 4, 1, 1, "l_bark")], "climbing"))
+    B += [VX.box(-3.5, 3.5, hy - 1, hy, -3.5, 3.5, "gold", "plinth"), VX.box(-2.5, 2.5, hy, hy + 6, -2.5, 1.5, "l_shrine", "shrine")]
+    for x in (-1, 1):
+        for z in (-1, 1):
+            B.append(VX.box(*sorted((x * 2.5, x * 3.5)), hy, hy + 6, *sorted((z * 2.5, z * 3.5)), "l_shrine", f"pillar{x}{z}"))
+    B += [VX.box(-4.5, 4.5, hy + 6, hy + 7, -4.5, 4.5, "gold", "roof"), VX.box(-3.5, 3.5, hy + 7, hy + 8, -3.5, 3.5, "gold", "roof_mid"),
+          VX.box(-2.5, 2.5, hy + 8, hy + 9, -2.5, 2.5, "gold", "roof_top"), VX.box(-0.5, 0.5, hy + 9, hy + 11, -0.5, 0.5, "gold", "finial")]
+    B.append(VX.rbox((0, hy + 3.0, 1.5), (3, 3, 3), 45, "l_relic", "relic"))
+    B += both(chain(-3.5, hy - 1.5, [(35, 3, 1, 2, "l_bark"), (8, 4, 1, 1, "l_bark")], "climbing"))
     B += both(chain(-1.0, -9.5, [(150, 3, 1, 2, "l_bark"), (175, 2, 1, 1, "l_bark")], "claws"))
     c = LORD_COLOUR["root_saint_warstaff"]
-    anchors = [((0, hy + 2.5, 2.0), 2.4, c, 1)]
-    return B, anchors, lord_look("root_saint_warstaff", (-5, 7), (0, hy + 2))
+    anchors = [((0, hy + 3.0, 1.5), 2.6, c, 1)]
+    return B, anchors, lord_look("root_saint_warstaff", (-5, 7), (0, hy + 3))
 
 
 def drowned_archivist_spear():
