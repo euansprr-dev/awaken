@@ -164,7 +164,7 @@ final class GateBestiary {
         out.add(m("drone_bee", "Hive Drone", Theme.HIVE, Tier.NORMAL, Model.BEE, "Stinger Dive: hovers, buzzes, dives, poisons").hp(10).dmg(2.5).spd(0.5).scale(1.3F).traits(POISON_TOUCH)
                 .ab(a(CHARGE, "Stinger Dive").wind(14).cd(80).range(10)).build());
         out.add(m("hive_larva", "Hive Larva", Theme.HIVE, Tier.NORMAL, Model.SILVERFISH, "Wriggles out of the comb in numbers").hp(6).dmg(2).spd(0.3).scale(1.4F).tint(0xFFE090)
-                .ab(a(LEAP, "Wriggle").radius(1.2F).power(0.8F).range(5).wind(8).cd(60)).build());
+                .ab(a(LEAP, "Wriggle").radius(1.2F).power(0.8F).range(5).wind(10).cd(60)).build());
         out.add(m("honey_slime", "Honey Slime", Theme.HIVE, Tier.NORMAL, Model.SLIME, "Sticky: every touch slows you").hp(16).dmg(2.5).spd(0.27).scale(0.9F).traits(SLOW_TOUCH)
                 .ab(a(LEAP, "Sticky Landing").bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 1)).build());
         out.add(m("hive_guard", "Hive Guard", Theme.HIVE, Tier.ELITE, Model.SPIDER, "Mandible Crush, and a wax seal that roots you").hp(24).dmg(5).spd(0.3).scale(1.25F).tint(0x806020)

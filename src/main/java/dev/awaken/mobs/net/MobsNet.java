@@ -10,6 +10,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -36,6 +37,75 @@ public final class MobsNet {
         }
     }
 
+    /**
+     * A carrier (SPEC §46.2): a wave, a volley, a ground line, a locked line, a landing ring, a field or a pull, sent
+     * once as it begins; both sides run it on the server's clock from {@code start} for {@code life} ticks. Kind,
+     * class and the rest as {@code mobs.entity.Carriers} names them.
+     */
+    public record Carrier(int id, int kind, int cls, int theme, double x, double y, double z, float dx, float dz, float from, float to,
+                          float speed, float width, long start, int life, List<Vec3> points) implements CustomPacketPayload {
+        public static final Type<Carrier> TYPE = new Type<>(Awaken.id("mobs_carrier"));
+        public static final StreamCodec<ByteBuf, Carrier> STREAM_CODEC = StreamCodec.of((buf, c) -> {
+            ByteBufCodecs.VAR_INT.encode(buf, c.id);
+            buf.writeByte(c.kind);
+            buf.writeByte(c.cls);
+            buf.writeInt(c.theme);
+            buf.writeDouble(c.x);
+            buf.writeDouble(c.y);
+            buf.writeDouble(c.z);
+            buf.writeFloat(c.dx);
+            buf.writeFloat(c.dz);
+            buf.writeFloat(c.from);
+            buf.writeFloat(c.to);
+            buf.writeFloat(c.speed);
+            buf.writeFloat(c.width);
+            ByteBufCodecs.VAR_LONG.encode(buf, c.start);
+            ByteBufCodecs.VAR_INT.encode(buf, c.life);
+            int n = Math.min(8, c.points.size());
+            buf.writeByte(n);
+            for (int i = 0; i < n; i++) Vec3.STREAM_CODEC.encode(buf, c.points.get(i));
+        }, buf -> {
+            int id = ByteBufCodecs.VAR_INT.decode(buf);
+            int kind = buf.readByte(), cls = buf.readByte(), theme = buf.readInt();
+            double x = buf.readDouble(), y = buf.readDouble(), z = buf.readDouble();
+            float dx = buf.readFloat(), dz = buf.readFloat(), from = buf.readFloat(), to = buf.readFloat(), speed = buf.readFloat(), width = buf.readFloat();
+            long start = ByteBufCodecs.VAR_LONG.decode(buf);
+            int life = ByteBufCodecs.VAR_INT.decode(buf);
+            int n = Math.min(8, buf.readByte());
+            List<Vec3> pts = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) pts.add(Vec3.STREAM_CODEC.decode(buf));
+            return new Carrier(id, kind, cls, theme, x, y, z, dx, dz, from, to, speed, width, start, life, pts);
+        });
+
+        @Override
+        public Type<Carrier> type() {
+            return TYPE;
+        }
+    }
+
+    /** A shown carrier ended early (a leap landed, its maker died): the client drops it. */
+    public record CarrierEnd(int id) implements CustomPacketPayload {
+        public static final Type<CarrierEnd> TYPE = new Type<>(Awaken.id("mobs_carrier_end"));
+        public static final StreamCodec<ByteBuf, CarrierEnd> STREAM_CODEC = ByteBufCodecs.VAR_INT.map(CarrierEnd::new, CarrierEnd::id);
+
+        @Override
+        public Type<CarrierEnd> type() {
+            return TYPE;
+        }
+    }
+
+    /** A beast's told bite (SPEC §46.2): its class, and the ticks until it lands (0: it was called off). */
+    public record Tell(int id, int kind, int ticks) implements CustomPacketPayload {
+        public static final Type<Tell> TYPE = new Type<>(Awaken.id("mobs_tell"));
+        public static final StreamCodec<ByteBuf, Tell> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Tell::id, ByteBufCodecs.VAR_INT, Tell::kind, ByteBufCodecs.VAR_INT, Tell::ticks, Tell::new);
+
+        @Override
+        public Type<Tell> type() {
+            return TYPE;
+        }
+    }
+
     /** Players this far from a fighting boss get its pace. */
     public static final double PACE_RANGE = 96;
 
@@ -50,6 +120,9 @@ public final class MobsNet {
     private static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(Pace.TYPE, Pace.STREAM_CODEC);
+        r.playToClient(Carrier.TYPE, Carrier.STREAM_CODEC);
+        r.playToClient(CarrierEnd.TYPE, CarrierEnd.STREAM_CODEC);
+        r.playToClient(Tell.TYPE, Tell.STREAM_CODEC);
     }
 
     /** A boss fought this tick: players near it get the server's clock at the tick's end. */

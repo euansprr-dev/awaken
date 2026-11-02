@@ -50,10 +50,11 @@ public final class Hazards {
 
     private static final List<Hazard> ACTIVE = new ArrayList<>();
 
-    /** A cloud that pulses every 10 ticks for {@code life} ticks. */
-    public static void cloud(ServerLevel level, @Nullable AwakenMob owner, Vec3 pos, float radius, int life, float damage, BoltKind bolt, @Nullable MobEffectInstance effect) {
+    /** A cloud that pulses every 10 ticks for {@code life} ticks, after {@code delay} ticks of showing harmless. */
+    public static void cloud(ServerLevel level, @Nullable AwakenMob owner, Vec3 pos, float radius, int life, float damage, BoltKind bolt,
+                             @Nullable MobEffectInstance effect, int delay) {
         if (ACTIVE.size() >= MAX) return;
-        add(new Hazard(level, owner, pos, radius, 0, life, damage, bolt, effect, false));
+        add(new Hazard(level, owner, pos, radius, delay, life, damage, bolt, effect, false));
     }
 
     /** One strike after {@code delay} ticks (root lances, fuse lines). */

@@ -14,8 +14,15 @@ sideways (or away from a mark under them). The dash: DODGE_TICKS ticks, DODGE_DI
 ArmsRules.dodgeSpeed, evading every class on its first EVADE ticks. A second plan, "dash on the hit", dodges so the
 strike lands in the evade ticks (perfect reading of the timing, no visual help), which always works for one hit.
 
-Run:  python3 tools/sim/reach_sim.py                (summary + every boss move, Markdown)
+Two models. "before" is the game as it was (docs/fights/PLAN.md §2: what the plan measured). "after" (the default) is
+stage 1, "See it coming" (SPEC §46.2): everything that hurts at range travels or is drawn first (a shot, a volley, a
+wave, a locked line or wedge, a leap's ring, a field), an aimed one locks at least 10 ticks (a shot or ground line 8)
+before it lands, and pushes and effects come only with a landed hit. Its question is invariant I4: does a dash taken
+at the lock (REACT ticks after it shows) get you out of every carrier, and can every wave be jumped or dashed through?
+
+Run:  python3 tools/sim/reach_sim.py                (summary + every boss move, Markdown; the after model)
       python3 tools/sim/reach_sim.py --all          (also every creature ability)
+      python3 tools/sim/reach_sim.py --model before (the game as the plan found it)
 """
 import argparse
 import collections
@@ -191,11 +198,127 @@ def judge(kind, cls, windup, lock, radius, inner, count, dist, told):
     return 0, strike, False, False, ""
 
 
+# ---- the after model (stage 1, SPEC §46.2); constants as written in mobs/entity/Carriers.java and Abilities.java ---------
+
+LOCK = 10            # Carriers.LOCK: a line, wedge or leap stops following this long before it lands
+LOCK_SHOT = 8        # Carriers.LOCK_SHOT: a shot, a ground line or a lob
+SHOT_SPEED = {"LIGHT": 0.9, "HEAVY": 0.7, "PERILOUS": 0.6, "GRAB": 0.6}   # Abilities.shotSpeed
+VOLLEY_RING = 2.2    # Carriers.VOLLEY_RING
+VOLLEY_FALL = 16     # Carriers.VOLLEY_FALL
+WAVE_SPEED = 0.55    # Carriers.WAVE_SPEED
+GROUND_SPEED, GROUND_WIDTH = 0.7, 0.7   # Carriers.GROUND_SPEED, GROUND_WIDTH
+CONE_DOT = 0.8       # Abilities.CONE_DOT: the widest a cone gets (a long one is narrower: Abilities.coneDot)
+LOB_RING = 1.0       # Carriers.lob: a 1-block ring where the globe falls
+REACH_PAD = 0.3      # Carriers.volleyLands: enemiesNear(point, ring + 0.3)
+SLAM_CORE = 1.5      # AbilityRunner.SLAM_CORE: the blow itself (a melee answer), its reach beyond a wave
+WAVES = {"SLAM", "BURST", "PULL", "GUST", "DARKNESS", "AURA"}
+CARRIER = {  # how each kind reaches you in the after model
+    "BOLT": "shot", "ARROWS": "arrow", "NOVA": "ring of shots", "RAIN": "volley", "LIFT": "volley", "CLOUD": "lob and field",
+    "ROOT": "ground line", "FANGS": "fangs along a locked line", "LEAP": "leap on a shown ring", "CHARGE": "charge down a locked line",
+    "BEAM": "locked line", "CONE": "locked wedge", "BURST": "wave", "SLAM": "blow and wave", "PULL": "pull then wave",
+    "GUST": "wave", "AURA": "waves", "DARKNESS": "wave", "FANGS_RING": "fangs round it", "BLINK": "step and told cut",
+}
+
+
+def cone_dot(radius):
+    """Abilities.coneDot: as wide as CONE_DOT, narrower for a long cone, so a dash aside always leaves it where a dash
+    back doesn't (at its worst spot, a dash short of its end, its half width is 2.3 blocks)."""
+    return max(CONE_DOT, math.cos(math.atan(2.3 / max(0.1, radius - 2.6))))
+
+
+def lead(kind):
+    return LOCK if kind in ("BEAM", "CHARGE", "CONE", "LEAP") else LOCK_SHOT if kind in ("BOLT", "ARROWS", "FANGS", "ROOT", "CLOUD") else 0
+
+
+def judge_after(kind, cls, windup, lock, radius, inner, count, dist, told):
+    """One attack in the after model: (travel ticks, warning ticks, seen-travelling, a dash at the lock escapes?, why)."""
+    strike = windup + 1
+    lock_at = min(lock, windup - lead(kind)) if lead(kind) else lock
+    shown = max(0, lock_at)                   # the lock shows (a line's flash, a ring) on this tick
+    go = shown + REACT                        # the dash starts here
+    def evaded(at):
+        return go <= at < go + EVADE
+    if kind in ("BOLT", "ARROWS"):
+        speed = SHOT_SPEED.get(cls, 0.9) if kind == "BOLT" else 1.6
+        travel = dist / speed
+        arrive = strike + travel
+        off = dodge_offset(arrive - go)
+        lines = [dist * math.tan((i - (count - 1) / 2) * BOLT_SPREAD) for i in range(count)]
+        # dash to whichever side clears the fan; a fan wider than a dash is seen flying, and a dash timed on it evades it
+        clear = any(all(abs(sgn * off - l) > PLAYER_HALF + BOLT_HALF for l in lines) for sgn in (1, -1))
+        timed = travel >= REACT
+        return travel, arrive, True, clear or evaded(arrive) or timed, ("the aim locked; the dash clears the line" if clear
+                                                                         else f"seen flying {travel / 20:.2f} s: a dash timed on it")
+    if kind == "NOVA":
+        speed = SHOT_SPEED.get(cls, 0.9)
+        travel = dist / speed
+        arrive = strike + travel
+        gap = 2 * math.pi * (dist + 1) / max(4, count)
+        p_hit = min(1.0, (2 * (PLAYER_HALF + BOLT_HALF)) / gap)
+        # seen leaving the body: a dash timed to its arrival evades it, or stand in a gap; close in, it arrives inside the
+        # evade of a dash on its release (the told wind-up's end, with a flash)
+        timed = travel >= REACT or (told and travel < EVADE)
+        return travel, arrive, True, p_hit < 0.5 or timed, f"seen from its release, {travel / 20:.2f} s out; gaps {gap:.1f} wide"
+    if kind in ("RAIN", "LIFT"):  # a volley: thrown at the strike, ringed where you stand, landing VOLLEY_FALL later
+        ring = min(VOLLEY_RING, radius) + REACH_PAD
+        land = strike + VOLLEY_FALL
+        go = strike + REACT
+        out = dodge_offset(land - go) > ring
+        return VOLLEY_FALL, land, True, out or evaded(land), f"a {min(VOLLEY_RING, radius):.1f} ring shown {VOLLEY_FALL / 20:.1f} s before it lands; the dash ({DODGE_DIST}) clears it"
+    if kind == "CLOUD":  # a lob locked on you: a 1-block ring, then a field <= 2 harmless for half a second
+        ring = LOB_RING + REACH_PAD
+        land = strike + VOLLEY_FALL
+        out = dodge_offset(land - go) > ring
+        return VOLLEY_FALL, land, True, out or evaded(land), "a lob's ring; the field it leaves waits half a second, small enough to walk out of"
+    if kind == "LEAP":  # its landing ring shows at the lock; it lands at least LOCK later
+        ring = min(VOLLEY_RING + 0.3, radius)
+        out = dodge_offset(strike - go + 8) > ring  # the body flies a few ticks after it leaves (8 at least)
+        return 0, strike, True, out or evaded(strike), f"the landing ring ({ring:.1f}) shows {(strike - shown) / 20:.2f} s before it leaves"
+    if kind == "ROOT":  # a ground line racing from the body, locked
+        arrive = strike + dist / GROUND_SPEED
+        out = dodge_offset(arrive - go) > GROUND_WIDTH + PLAYER_HALF
+        return dist / GROUND_SPEED, arrive, True, out or evaded(arrive), "a root line runs at you along the ground; step off it"
+    if kind == "FANGS":
+        arrive = strike + dist / (FANG_STEP / 2) + FANG_BITE
+        out = dodge_offset(arrive - go) > 0.6 + PLAYER_HALF
+        return arrive - strike, arrive, True, out or evaded(arrive), "fangs rise along the locked line, a fang every two ticks"
+    if kind == "BEAM":
+        ok = dodge_offset(strike - go) > PLAYER_HALF + 0.05 or evaded(strike)
+        return 0, strike, True, ok, f"the line locks {(strike - shown) / 20:.2f} s before it fires, with a flash and a click"
+    if kind == "CHARGE":
+        arrive = strike + dist / 0.85
+        ok = dodge_offset(arrive - go) > 1.0 + PLAYER_HALF or evaded(arrive)
+        return dist / 0.85, arrive, True, ok, "the charge's line shows at its lock; a sideways dash clears it"
+    if kind == "CONE":
+        if dist > radius:
+            return 0, strike, True, True, "outside its reach"
+        back = dist + dodge_offset(strike - go) > radius
+        side = dodge_offset(strike - go) > dist * math.tan(math.acos(cone_dot(radius))) + PLAYER_HALF
+        return 0, strike, True, back or side or evaded(strike), "the wedge shows at its lock; dash out of it (back, or aside when close)"
+    if kind in WAVES:
+        start = SLAM_CORE if kind == "SLAM" else max(1.0, inner) if kind == "BURST" else 1.0
+        if kind == "SLAM" and dist <= SLAM_CORE:
+            return 0, strike, False, True, "the slam's blow itself: answered as a melee blow"
+        if dist > radius:
+            return 0, strike, True, True, "outside its reach"
+        delay = 20 if kind == "PULL" else 0
+        arrive = strike + delay + max(0.0, dist - start) / WAVE_SPEED
+        # a wave can't be outrun: it is jumped (its crest is lower than a jump for 7 ticks) or dashed through, timed on the
+        # crest you see rolling at you (and a step inside its safe ring when it starts out from a ring)
+        return arrive - strike, arrive, True, True, f"a wave rolls out ({WAVE_SPEED} blocks a tick): jump it or dash through"
+    if kind == "FANGS_RING":
+        return 0, strike, True, True, "fangs rise round it, each seen before it bites"
+    return 0, strike, False, False, ""
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--all", action="store_true", help="every creature ability too")
     ap.add_argument("--json")
+    ap.add_argument("--model", choices=("before", "after"), default="after")
     args = ap.parse_args()
+    after = args.model == "after"
+    judge_fn = judge_after if after else judge
     abil = parse_abilities()
     themes = theme_bolts()
     rows = []
@@ -211,12 +334,13 @@ def main():
             t = mv["time"]
             cls = mv.get("class", "NONE")
             lands = cls if cls != "NONE" else ("PERILOUS" if a["heavy"] else STRIKE.get(a["kind"], "PERILOUS"))
-            told = cls != "NONE"
+            told = cls != "NONE" or after  # FightRunner.told: a move that hurts is told by what it does
             w = t["windup"] + t.get("hold", 0)
             lock = t.get("lock", 0)
-            res = [judge(a["kind"], lands, w, lock, a["radius"], a["inner"], a["count"], dd, told) for dd in DIST]
+            res = [judge_fn(a["kind"], lands, w, lock, a["radius"], a["inner"], a["count"], dd, told) for dd in DIST]
+            fx = effect_of(a, themes) if not after or mv.get("signature") else None  # I6: a boss's effect on its signature only
             rows.append(dict(src="boss", who=d["id"], move=mv["id"], ability=ab, kind=a["kind"], told=told, lands=lands,
-                             windup=w, lock=lock, effect=effect_of(a, themes), results=res))
+                             windup=w, lock=lock, effect=fx, results=res))
     if args.all:
         for name, lst in abil.items():
             for a in lst:
@@ -224,7 +348,8 @@ def main():
                     continue
                 w = a["windup"] + (8 if a["heavy"] else 0)
                 lands = "PERILOUS" if a["heavy"] else STRIKE.get(a["kind"], "PERILOUS")
-                res = [judge(a["kind"], lands, w, w - RUNNER_LOCK, a["radius"], a["inner"], a["count"], dd, True) for dd in DIST]
+                runner_lock = w - max(RUNNER_LOCK, lead(a["kind"])) if after else w - RUNNER_LOCK
+                res = [judge_fn(a["kind"], lands, w, runner_lock, a["radius"], a["inner"], a["count"], dd, True) for dd in DIST]
                 rows.append(dict(src=a["tier"].lower(), who=a["mob"], move=name, ability=name, kind=a["kind"], told=True,
                                  lands=lands, windup=w, lock=w - RUNNER_LOCK, effect=effect_of(a, themes), results=res))
 
@@ -232,24 +357,30 @@ def main():
         n = len(sel)
         if not n:
             return
-        by = collections.Counter(DELIVERY[r["kind"]] for r in sel)
+        by = collections.Counter((CARRIER if after else DELIVERY)[r["kind"]] for r in sel)
         travelling = sum(1 for r in sel if r["results"][1][2])
         untold = sum(1 for r in sel if not r["told"])
         unparry = sum(1 for r in sel if r["lands"] in ("PERILOUS", "GRAB"))
         esc = [sum(1 for r in sel if r["results"][i][3]) for i in range(len(DIST))]
         eff = sum(1 for r in sel if r["effect"])
-        byp = sum(1 for r in sel if r["kind"] in BYPASS)
-        unparry_shots = sum(1 for r in sel if r["kind"] in ("BOLT", "NOVA") and r["lands"] not in ("LIGHT",))
+        byp = 0 if after else sum(1 for r in sel if r["kind"] in BYPASS)
+        # before: every shot looked alike (an item sprite); after, a shot's core is its class's colour
+        unparry_shots = 0 if after else sum(1 for r in sel if r["kind"] in ("BOLT", "NOVA") and r["lands"] not in ("LIGHT",))
         print(f"\n### {label}: {n} attacks that hurt at range or put an effect on you\n")
-        print(f"- A thing you can see travel from the attacker: {travelling} ({travelling / n:.0%}); the rest appear where you stand, or hit at once.")
+        print(f"- Seen before it lands (it travels, or its lock, ring or crest is drawn): {travelling} ({travelling / n:.0%}).")
         print(f"- No class tell at all (the move's class is NONE; only coloured dust shows): {untold} ({untold / n:.0%}).")
         print(f"- Can't be parried (they land PERILOUS): {unparry} ({unparry / n:.0%}); of them shots that look like parryable ones: {unparry_shots}.")
         print(f"- Carry an effect on a hit (poison, blindness, slowness and the like): {eff} ({eff / n:.0%}).")
         print(f"- Put their push or effect on you even when a dodge evades the damage: {byp}.")
-        print("- A dash taken at the first cue gets you out: " + ", ".join(f"{e} ({e / n:.0%}) at {d:.0f} blocks" for e, d in zip(esc, DIST)) + ".")
-        timed = sum(1 for r in sel if r["kind"] not in BYPASS and r["kind"] not in ("CLOUD", "AURA"))
+        print(("- A dash at the lock (a wave: jumped or dashed through) gets you out: " if after else "- A dash taken at the first cue gets you out: ")
+              + ", ".join(f"{e} ({e / n:.0%}) at {d:.0f} blocks" for e, d in zip(esc, DIST)) + ".")
+        if after:
+            bad = [r for r in sel if not all(x[3] for x in r["results"])]
+            for r in bad[:12]:
+                print(f"  - not escaped: {r['who']} {r['move']} ({r['kind']}): " + "; ".join(x[4] for x in r["results"] if not x[3]))
+        timed = len(sel) if after else sum(1 for r in sel if r["kind"] not in BYPASS and r["kind"] not in ("CLOUD", "AURA"))
         print(f"- A dodge pressed so the hit lands in its {EVADE} evade ticks (perfect timing, nothing on screen marks that tick): evades {timed} ({timed / n:.0%}); "
-              f"the rest are clouds and auras that pulse again, or pushes and effects that land anyway.")
+              + ("every one: nothing lands without its hit." if after else "the rest are clouds and auras that pulse again, or pushes and effects that land anyway."))
         print("- How they reach you: " + ", ".join(f"{k} {v}" for k, v in by.most_common()) + ".")
 
     summary([r for r in rows if r["src"] == "boss"], "Bosses (41 kit move tables)")
@@ -263,9 +394,12 @@ def main():
         if r["src"] != "boss":
             continue
         tr, arrive, seen, ok, why = r["results"][1]
-        print(f"| {r['who']} | {r['move']} ({r['ability']}) | {DELIVERY[r['kind']]} | {'yes' if r['told'] else 'no'} | {r['lands']} | "
+        print(f"| {r['who']} | {r['move']} ({r['ability']}) | {(CARRIER if after else DELIVERY)[r['kind']]} | {'yes' if r['told'] else 'no'} | {r['lands']} | "
               f"{arrive / 20:.2f} | {max(0, r['windup'] + 1 - r['lock']) / 20:.2f} | {r['effect'] or ''}{' · ' + BYPASS[r['kind']] if r['kind'] in BYPASS else ''} | "
               f"{'yes' if ok else 'no'} | {why} |")
+    if after:
+        escaped = sum(1 for r in rows if all(x[3] for x in r["results"]))
+        print(f"\nI4 (after model): {escaped} of {len(rows)} attacks escaped at every distance ({escaped / max(1, len(rows)):.0%}).")
     if args.json:
         json.dump(rows, open(args.json, "w"), indent=1)
 

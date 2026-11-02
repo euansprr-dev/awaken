@@ -36,6 +36,8 @@ final class FightRunner {
     private KitMoves.@Nullable Played played;
     private float yaw;
     private @Nullable Ability ability;
+    /** The move's told class (SPEC §46.2, I1): never NONE for a move that hurts. */
+    private Strikes.Kind cls = Strikes.Kind.NONE;
     private final ArrayDeque<String> string = new ArrayDeque<>(4);
     /** The studio's queue (/awaken bosses studio): every move once, in table order, a breath apart; then it fights. */
     private final ArrayDeque<String> studio = new ArrayDeque<>();
@@ -281,8 +283,9 @@ final class FightRunner {
         int i = moves.index(id);
         if (i < 0) return false;
         KitMoves.Move m = moves.get(i);
+        cls = told(m, m.ability().map(boss::ability).orElse(null));
         // the enrage is speed, never damage: the wind-up and recovery shrink, but never under its class's tell
-        int held = m.kind() == Strikes.Kind.HEAVY && m.time().hold() > 0 && boss.getRandom().nextInt(3) == 0 ? m.time().hold() : 0;
+        int held = cls == Strikes.Kind.HEAVY && m.time().hold() > 0 && boss.getRandom().nextInt(3) == 0 ? m.time().hold() : 0;
         KitMoves.Played p = KitMoves.played(m, boss.kitSpeed(), held);
         played = p;
         windup = p.windup();
@@ -295,14 +298,14 @@ final class FightRunner {
         yaw = boss.yBodyRot;
         // an ability needs someone to aim at (the studio plays its moves with nobody there: the body only)
         ability = target != null ? m.ability().map(boss::ability).orElse(null) : null;
-        if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold);
+        if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold, cls, m.signature());
         boss.getNavigation().stop();
         boss.syncKit(i, hold, 0);
-        if (m.kind() != Strikes.Kind.NONE) {
-            boss.setTell(windup + hold, m.kind(), m.kind() == Strikes.Kind.HEAVY);
+        if (cls != Strikes.Kind.NONE) {
+            boss.setTell(windup + hold, cls, cls == Strikes.Kind.HEAVY);
             // the body's own voice for the class when it has one (the glow still tells the class), else Arms' one
-            if (!sound(m, "tell", "tell_" + m.kind().name().toLowerCase(java.util.Locale.ROOT)))
-                boss.playTell(m.kind(), m.kind() == Strikes.Kind.HEAVY, 1.0F);
+            if (!sound(m, "tell", "tell_" + cls.name().toLowerCase(java.util.Locale.ROOT)))
+                boss.playTell(cls, cls == Strikes.Kind.HEAVY, 1.0F);
         }
         if (m.signature() && !m.title().isEmpty() && boss.bar() != null) BossPlates.line(boss.bar(), m.title(), BossPlates.Line.SIGNATURE, boss.def().glow);
         return true;
@@ -314,8 +317,10 @@ final class FightRunner {
         t++;
         int wind = windup + hold;
         if (t <= wind) {
-            // the wind-up: it turns toward you until it locks, then commits
-            boolean tracking = t <= m.time().lock() && target != null && target.isAlive();
+            // the wind-up: it turns toward you until it locks, then commits; an aimed ability locks at least its lead
+            // before it can land (SPEC §46.2, I3), whatever the move's own lock says
+            int lockAt = ability != null ? Math.min(m.time().lock(), wind - Carriers.lead(ability)) : m.time().lock();
+            boolean tracking = t <= lockAt && target != null && target.isAlive();
             if (tracking && m.time().track() > 0) {
                 float want = (float) (Mth.atan2(target.getZ() - boss.getZ(), target.getX() - boss.getX()) * Mth.RAD_TO_DEG) - 90;
                 yaw = Mth.approachDegrees(yaw, want, m.time().track());
@@ -323,7 +328,7 @@ final class FightRunner {
             face();
             boss.getNavigation().stop();
             if (ability != null) boss.abilityRunner().windup(level, ability, wind - t + 1, tracking);
-            if (m.kind() != Strikes.Kind.NONE && (t & 3) == 0) boss.setTell(wind - t, m.kind(), m.kind() == Strikes.Kind.HEAVY);
+            if (cls != Strikes.Kind.NONE && (t & 3) == 0) boss.setTell(wind - t, cls, cls == Strikes.Kind.HEAVY);
             return;
         }
         int k = t - wind - 1;
@@ -331,7 +336,7 @@ final class FightRunner {
             if (k == 0) {
                 boss.setTelegraph(0, false);
                 if (ability != null) {
-                    boss.abilityRunner().fire(level, ability, world(m.origin()), m.kind() != Strikes.Kind.NONE ? m.kind() : ability.strike());
+                    boss.abilityRunner().fire(level, ability, world(m.origin()), cls != Strikes.Kind.NONE ? cls : ability.strike());
                     // a step that didn't close the gap (a wall where it would land) doesn't cut the air far from you:
                     // it ends there, string and all
                     if (ability.kind() == Ability.Kind.BLINK && !m.hits().isEmpty()) {
@@ -346,7 +351,7 @@ final class FightRunner {
                     }
                 }
                 // a roar for an intro or transition, a cast for an ability alone (a blow's whoosh plays on its mark)
-                if (m.kind() == Strikes.Kind.NONE) {
+                if (cls == Strikes.Kind.NONE) {
                     if (!sound(m, "swing", "roar")) boss.roar();
                 } else if (m.hits().isEmpty()) sound(m, "swing", "cast");
                 if (m.is("area") && firstHit(m) < 0) sound(m, "impact", "impact");
@@ -377,11 +382,11 @@ final class FightRunner {
      * area move meeting the ground) and the steps its feet take where it doesn't travel (travel steps are the walk's).
      */
     private void marks(KitMoves.Move m) {
-        if (played == null || m.kind() == Strikes.Kind.NONE) return;
+        if (played == null || cls == Strikes.Kind.NONE) return;
         KitMoves.Time base = m.time();
         if (!m.hits().isEmpty()) {
             int whoosh = Math.max(1, Math.round(played.at(base, m.mark("whoosh", base.windup())))) + 1;
-            if (t == whoosh) sound(m, "swing", m.kind() == Strikes.Kind.LIGHT ? "swing_light" : "swing_heavy");
+            if (t == whoosh) sound(m, "swing", cls == Strikes.Kind.LIGHT ? "swing_light" : "swing_heavy");
             if (m.is("area") && firstHit(m) >= 0 && t == Math.round(played.at(base, m.mark("contact", base.windup() + firstHit(m)))) + 1)
                 sound(m, "impact", "impact"); // the blow meets the ground
         }
@@ -429,6 +434,16 @@ final class FightRunner {
         boss.yHeadRot = yaw;
     }
 
+    /**
+     * A move's told class (SPEC §46.2, I1): its own, else what it does says it (an ability's class, a blow's amber), so
+     * no move that hurts goes untold. NONE only for a move that hurts nobody (a roar, a summon, a guard).
+     */
+    static Strikes.Kind told(KitMoves.Move m, @Nullable Ability a) {
+        if (m.kind() != Strikes.Kind.NONE) return m.kind();
+        if (a != null && a.strike() != Strikes.Kind.NONE) return a.strike();
+        return m.hits().isEmpty() ? Strikes.Kind.NONE : Strikes.Kind.HEAVY;
+    }
+
     /** A point in the body's space (blocks: +x left, +y up, +z forward) in the world, at the locked facing. */
     private Vec3 world(List<Float> p) {
         if (p.size() < 3) return boss.position();
@@ -458,7 +473,7 @@ final class FightRunner {
             if (!touched) continue;
             if (hits < hit.length) hit[hits++] = e.getId();
             float dmg = (float) boss.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * m.damage();
-            Strikes.Kind kind = m.kind() == Strikes.Kind.NONE ? Strikes.Kind.HEAVY : m.kind();
+            Strikes.Kind kind = cls == Strikes.Kind.NONE ? Strikes.Kind.HEAVY : cls;
             boolean landed = Strikes.deliver(boss, kind, () -> e.hurtServer(level, level.damageSources().mobAttack(boss), dmg));
             if (landed && m.knock() > 0) {
                 Vec3 away = e.position().subtract(boss.position());

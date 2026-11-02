@@ -58,15 +58,21 @@ final class MobsEvents {
     private static void onLevelTick(LevelTickEvent.Post event) {
         long t0 = System.nanoTime();
         Hazards.tick(event.getLevel());
+        dev.awaken.mobs.entity.Carriers.tick(event.getLevel());
         if (!event.getLevel().isClientSide()) dev.awaken.mobs.entity.FightWatch.hazards(System.nanoTime() - t0);
     }
 
     private static void onLevelUnload(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof net.minecraft.world.level.Level l) Hazards.clear(l);
+        if (event.getLevel() instanceof net.minecraft.world.level.Level l) {
+            Hazards.clear(l);
+            dev.awaken.mobs.entity.Carriers.clear(l);
+        }
     }
 
     private static void onServerStopped(ServerStoppedEvent event) {
         Hazards.clear(null);
+        dev.awaken.mobs.entity.Carriers.clear(null);
+        dev.awaken.mobs.entity.ToldBite.reset(false);
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {

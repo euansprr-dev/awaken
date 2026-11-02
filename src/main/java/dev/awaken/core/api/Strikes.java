@@ -4,6 +4,9 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.BooleanSupplier;
@@ -39,6 +42,21 @@ public final class Strikes {
 
         public boolean dodgeable() {
             return this != NONE;
+        }
+
+        /**
+         * The class's colour (SPEC §46.2, one tell language): on a body's tell, a shot's core, a ring's edge, a wave's
+         * crest and a lock's flash. White-gold: parry, block or dash; amber: parry or dash; red: dash or jump; violet: a
+         * grab, dash only. NONE: white.
+         */
+        public int colour() {
+            return switch (this) {
+                case LIGHT -> 0xFFF2CC;
+                case HEAVY -> 0xFFA63A;
+                case PERILOUS -> 0xFF2E2E;
+                case GRAB -> 0xC452FF;
+                case NONE -> 0xFFFFFF;
+            };
         }
     }
 
@@ -145,5 +163,36 @@ public final class Strikes {
     /** A deflected dive, a broken stance: a flier that can be brought down comes down (others: nothing). */
     public static boolean ground(LivingEntity e, int ticks) {
         return grounder.ground(e, ticks);
+    }
+
+    // ---- beasts' bites (server, SPEC §46.2) -------------------------------------------------------------------------
+
+    public interface Biters {
+        /** A beast's melee goal: chases what it fights and bites it, told, while {@code when} holds. */
+        Goal bite(PathfinderMob mob, double speed, BooleanSupplier when);
+    }
+
+    private static Biters biters = (mob, speed, when) -> new MeleeAttackGoal(mob, speed, true) {
+        @Override
+        public boolean canUse() {
+            return when.getAsBoolean() && super.canUse();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return when.getAsBoolean() && super.canContinueToUse();
+        }
+    };
+
+    public static void installBiters(Biters b) {
+        biters = b;
+    }
+
+    /**
+     * The melee goal for a beast on a vanilla body (the Gnawed, an animal that fights back): it winds up a short told
+     * lunge, a light blow, before each bite, and only two of a pack wind up on one body at once (the mobs module's).
+     */
+    public static Goal bite(PathfinderMob mob, double speed, BooleanSupplier when) {
+        return biters.bite(mob, speed, when);
     }
 }

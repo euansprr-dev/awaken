@@ -36,8 +36,10 @@ public final class MobsModule {
         Strikes.installClassifier(src -> src.getDirectEntity() instanceof dev.awaken.mobs.entity.AwBolt b ? b.strike()
                 : src.getDirectEntity() instanceof net.minecraft.world.entity.projectile.EvokerFangs f && f.getOwner() instanceof AwakenMob
                 ? Strikes.Kind.HEAVY : null);
-        Strikes.installTells(e -> e instanceof AwakenMob m && m.telegraphTicks() > 0 && m.tellKind() != Strikes.Kind.NONE
-                ? new Strikes.Tell(m.telegraphTicks(), m.tellKind()) : null);
+        Strikes.installTells(e -> e instanceof AwakenMob m ? m.telegraphTicks() > 0 && m.tellKind() != Strikes.Kind.NONE
+                ? new Strikes.Tell(m.telegraphTicks(), m.tellKind()) : null : dev.awaken.mobs.entity.ToldBite.tellOf(e));
+        // beasts on vanilla bodies bite told (SPEC §46.2)
+        Strikes.installBiters(dev.awaken.mobs.entity.ToldBite::new);
         Strikes.installStaggers(MobsModule::stagger);
         Strikes.installGrounder((e, ticks) -> e instanceof AwakenMob m && m.ground(ticks));
         BodyMaterial.install(e -> e instanceof AwakenMob m ? m.def().material() : null);

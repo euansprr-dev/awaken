@@ -16661,3 +16661,62 @@ of their blows in a stall).
   and a ping later) under 2% are missed (measured 1.2%); at least 60% of the server's hits are played at once (79%);
   the ledger plays each blow once and counts the unconfirmed; a real strike on a zombie the client plays lands on the
   server.
+
+**46.2 See it coming (stage 1).** Euan 2026-11-02: "most projectiles seem like they just spawn on you and you can't do
+anything about it". Every ranged harm a boss or beast does now travels or is drawn first, says how it is answered, and
+locks with time to answer it (PLAN §4.1-4.3, invariants I1-I5). The same for all 41 bosses and every bestiary creature
+at once; stage 2 adds phrases and the payoff on the pilots.
+- **The tell language** (I1). `Strikes.Kind.colour()` is the one colour of each class, on tells (`ArmsTells`), carriers
+  and shots alike: LIGHT white-gold `0xFFF2CC` (deflect, block or dodge), HEAVY amber `0xFFA63A` (deflect or dodge),
+  PERILOUS red `0xFF2E2E` (dodge or jump only), GRAB violet `0xC452FF`. Every kit move that hurts is told:
+  `FightRunner.told` takes the move's class, else its ability's, else HEAVY (112 kit moves hurt with no class before).
+- **The carriers** (`mobs.entity.Carriers`, server; `mobs.client.CarrierView`, client). Each is sent once to players
+  within 72 blocks (`mobs_carrier`; `mobs_carrier_end` when one ends early) and run on the server's game clock on both
+  sides, so the client draws exactly where the server judges. At most 24 alive for one creature; allocation per
+  carrier, never per tick.
+  - *Wave*: a ring rolling out along the ground at 0.55 blocks a tick from its inner radius to its outer. It strikes
+    whoever's feet are under its crest as it passes, once; feet more than 0.75 over its ground (a jump), a wall between,
+    or standing inside its start ring escapes it. Slams (a 1.5-block core at once, the rest a wave), bursts, gusts
+    (knock 1 + 1.5 x power), auras' pulses, darkness, the seep heart's pulse and burst all roll as waves.
+  - *Volley*: pods thrown up from the body, falling 16 ticks later on rings placed where you stood at the throw, each
+    ring at most 2.2 blocks (a dash is 2.6). Rains and lifts; a lobbed cloud is a volley of one ring of 1 block that
+    leaves a field.
+  - *Ground line*: a front racing out along a locked line at 0.7 blocks a tick, 0.7 each side. Roots and fangs (fangs
+    2 ticks apart).
+  - *Locked line*, *wedge*, *landing ring* (shown only): a beam's or a charge's line, a cone's wedge, a leap's ring on
+    the ground, from the lock to the moment it fires or lands, with a flash and the lock sound.
+  - *Field*: at most 2 blocks across and harmless for its first 10 ticks, its edge dashed while it is safe. Death
+    clouds are fields of damage only (no poison).
+  - *Pull*: water or wind drawn in for 20 ticks at 0.12 blocks a tick (a walk is 0.22; the player's own client draws
+    them, the server draws creatures), hurting nothing, then a wave out from its centre.
+- **The lock** (I3). An aimed ability stops following you `Carriers.lead` ticks before it can land: lines, wedges and
+  leaps 10, shots and ground lines 8 (their flight adds the rest). A kit move's lock is clamped to that
+  (`min(lock, windup - lead)`); every ability's and kit move's wind-up is at least its lead (`fights_language`). A rain
+  places its rings where you stand at the throw, a lift where you stand as it fires. A leap lands on its ring (at most
+  2.5 across). A blink ends in a told HEAVY cut 8 ticks after it arrives.
+- **Shots** (`AwBolt`, drawn by `mobs.client.ShotRenderer`): a glowing core in the class's colour, a breathing halo and a
+  tail tapering back along the flight in the maker's colour, all light (on the carrier pipelines). Speed by class
+  (white-gold 0.9, amber 0.7, red 0.6 blocks a tick), placed every 2 ticks (was 10) and tracked from 48 blocks. Each hums
+  as it flies (at most 4 at once).
+- **The effect rule** (I5, I6). Effects, pushes, pulls, lifts and burns come only with a hit that landed: a blow a
+  deflect, an evade or a full block answered brings none of them. A boss carries an effect only on its signature move;
+  a lesser creature on any. A fire blow burns for 1 second (was the bolt's default). Cones narrow with reach
+  (`Abilities.coneDot`: the cosine of the half angle is at least 0.8, narrower so a 2.6 dash sideways clears it at any
+  length).
+- **The beasts' told bite** (`mobs.entity.ToldBite`, through `Strikes.bite` for the kin and living modules). The Gnawed
+  and the wild animals that fight back bit with vanilla melee and no tell. In reach, a beast now plants itself, rears
+  back with a growl and a white-gold glint for 10 ticks (a LIGHT blow), lunges a step 3 ticks before the bite, and bites
+  only if you are still in its reach plus 0.8 blocks. At most two beasts wind up on one body at once; the rest wait.
+  The tell reaches clients as `mobs_tell` (VAR_INT id, class, ticks; 0 calls it off) within 48 blocks and Arms through
+  `Strikes.tell`.
+- **Sounds** (synthesised, `tools/art/specs/audio_fights.py`, events `mobs.fights.*` in `src/main/merge/mobs_fights`):
+  shot release and hum, volley throw, fall and landing, wave roll, lock, ground run, beam fire, pull draw, field hiss,
+  growl. Each plays from where its carrier is, so one behind you is heard.
+- **The reach model** (`tools/sim/reach_sim.py`, `--model after`): every carrier of every creature can be escaped by a
+  dash at its lock or a jump (`--all`: 395 of 395 attacks; the bosses' 148 of 148, where a dash at the first cue got
+  out of 66-86% before, by distance).
+- Tests: `fights_language` (I1 and I3 over every bestiary ability and all 41 move tables; I6-I8 per boss written to
+  `fights-language.txt`), `fights_carriers_seen` (a nearby player is sent every carrier, each ends on its clock, a shot
+  is tracked closely), `fights_dash_escapes` (a dash at the throw leaves a volley's ring, a jump clears a wave, a dash
+  off a locked line, while who stays is struck), `fights_effect_needs_hit` (an evaded root, pull's wave and lob leave no
+  effect or push), `fights_beast_told` (every bite of a pack of three follows its whole tell, never three winding up).

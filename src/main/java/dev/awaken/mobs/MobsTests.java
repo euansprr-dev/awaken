@@ -47,6 +47,7 @@ final class MobsTests {
         dev.awaken.mobs.entity.KitTests.register(); // the Creature Kit: tables, sync, hit volumes, phases (SPEC §35)
         dev.awaken.mobs.entity.SeepTests.register(); // the seep heart (W5): placed, asleep, woken, felled
         dev.awaken.mobs.entity.FightCostTests.register(); // what a fight costs the server a tick (docs/fights/PLAN.md)
+        dev.awaken.mobs.entity.CarrierTests.register(); // see it coming: carriers, locks, the effect rule (SPEC §46.2)
         AwakenTests.register("mobs_scaling_maths", 40, h -> {
             h.assertTrue(Math.abs(MobScaling.healthMultiplier(5) - 1.375) < 1e-9, "health multiplier at lv5");
             h.assertTrue(Math.abs(MobScaling.damageMultiplier(150) - 7.0) < 1e-9, "damage multiplier at lv150");

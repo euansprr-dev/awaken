@@ -612,10 +612,8 @@ public class SeepHeart extends NamedBeast implements WildPose {
                 sound("roots", 1.5F, 0.85F);
             }
             case PULSE -> {
-                for (LivingEntity e : Abilities.enemiesNear(level, this, position(), a.radius())) {
-                    Abilities.push(e, e.position().subtract(position()), 1.0 + a.power() * 1.5, 0.45);
-                    Abilities.hurt(level, this, e, Abilities.damage(this, a), BoltKind.DEEP, Abilities.effect(a));
-                }
+                // the pulse rolls out as a wave (SPEC §46.2): it throws back only whoever it reaches
+                Carriers.wave(level, this, position(), 1.0F, a.radius(), Abilities.damage(this, a), BoltKind.DEEP, Abilities.effect(a), 1.0 + a.power() * 1.5);
                 send(level, MobParticles.SEEP_WAVE.get(), getX(), getY() + 0.05, getZ(), a.radius(), 12, 0);
                 level.sendParticles(MobParticles.SEEP_MOTE.get(), c.x, c.y, c.z, 30, 0.4, 0.4, 0.4, 0.45);
                 dimTicks = 70; // the light goes down with the pulse, and comes back
@@ -623,7 +621,7 @@ public class SeepHeart extends NamedBeast implements WildPose {
                 sound("pulse", 2.0F, 1.0F);
             }
             case BURST -> {
-                Abilities.area(level, this, a, position(), a.radius(), a.inner(), 0.6);
+                Carriers.wave(level, this, position(), Math.max(1.0F, a.inner()), a.radius(), Abilities.damage(this, a), BoltKind.DEEP, Abilities.effect(a), 0.6);
                 for (float r = a.inner(); r <= a.radius() + 0.01F; r += (a.radius() - a.inner()) / 2) {
                     send(level, MobParticles.SEEP_WAVE.get(), getX(), getY() + 0.05, getZ(), r, 9, 0);
                 }
@@ -658,8 +656,7 @@ public class SeepHeart extends NamedBeast implements WildPose {
     private void rootBurst(ServerLevel level, Ability a, Vec3 m) {
         SeepRoot.spawn(level, m, random.nextFloat() * 360.0F, 1.0F);
         for (LivingEntity e : Abilities.enemiesNear(level, this, m, a.radius())) {
-            Abilities.hurt(level, this, e, Abilities.damage(this, a), BoltKind.DEEP, Abilities.effect(a));
-            Abilities.push(e, e.position().subtract(m), 0.25, 0.55);
+            if (Abilities.hurt(level, this, e, Abilities.damage(this, a), BoltKind.DEEP, Abilities.effect(a))) Abilities.push(e, e.position().subtract(m), 0.25, 0.55);
         }
         grit(level, m, 16, a.radius() * 0.4F);
         level.sendParticles(MobParticles.SEEP_SHARD.get(), m.x, m.y + 0.3, m.z, 8, 0.3, 0.2, 0.3, 0.25);

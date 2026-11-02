@@ -23,11 +23,15 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Every creature projectile: a Force (damage type), a sprite (a vanilla item, drawn full-bright) and a trail. Flies
- * straight at constant speed for at most five seconds and never breaks blocks.
+ * Every creature projectile: a Force (damage type), its class (SPEC §46.2: the shot's core glows the colour of how you
+ * answer it, its speed by the same: white-gold 0.9, amber 0.7, red 0.6 blocks a tick) and a trail. Drawn by
+ * {@code mobs.client.ShotRenderer} as a glowing core with a tapering tail, humming as it flies. Flies straight at constant
+ * speed for at most five seconds and never breaks blocks.
  */
 public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> DATA_CLASS = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Integer> DATA_THEME = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.INT);
     private static final ItemStack[] STACKS = new ItemStack[BoltKind.values().length];
     /** A seep heart's shard is a real Deepglass shard (the delve module's item), else an amethyst one. */
     private static final net.minecraft.resources.Identifier DEEPGLASS_SHARD = dev.awaken.Awaken.id("deepglass_shard");
@@ -52,6 +56,8 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
         b.effect = effect;
         var fired = dev.awaken.core.api.Strikes.delivering();
         if (fired != null) b.strike = fired;
+        b.entityData.set(DATA_CLASS, (byte) b.strike.ordinal());
+        b.entityData.set(DATA_THEME, owner.def().glow);
         b.setDeltaMovement(dir.normalize().scale(speed));
         level.addFreshEntity(b);
         return b;
@@ -66,10 +72,29 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
         return BoltKind.byOrdinal(entityData.get(DATA_KIND));
     }
 
+    /** The class it lands as, as the client sees it (its core's colour). */
+    public dev.awaken.core.api.Strikes.Kind shownClass() {
+        dev.awaken.core.api.Strikes.Kind[] v = dev.awaken.core.api.Strikes.Kind.values();
+        int i = entityData.get(DATA_CLASS);
+        return v[Math.max(0, Math.min(v.length - 1, i))];
+    }
+
+    /** Its maker's theme colour (the trail's smoke and sparks). */
+    public int theme() {
+        return entityData.get(DATA_THEME);
+    }
+
+    /** Ticks since it was fired (the client's own count, for its look). */
+    public int age() {
+        return tickCount;
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
         b.define(DATA_KIND, (byte) 0);
+        b.define(DATA_CLASS, (byte) 0);
+        b.define(DATA_THEME, 0xFFFFFF);
     }
 
     @Override
@@ -146,6 +171,7 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
         super.addAdditionalSaveData(out);
         out.putFloat("damage", damage);
         out.putInt("kind", entityData.get(DATA_KIND));
+        out.putInt("class", strike.ordinal());
     }
 
     @Override
@@ -153,5 +179,8 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
         super.readAdditionalSaveData(in);
         damage = in.getFloatOr("damage", 4.0F);
         entityData.set(DATA_KIND, (byte) in.getIntOr("kind", 0));
+        dev.awaken.core.api.Strikes.Kind[] v = dev.awaken.core.api.Strikes.Kind.values();
+        strike = v[Math.max(0, Math.min(v.length - 1, in.getIntOr("class", 0)))];
+        entityData.set(DATA_CLASS, (byte) strike.ordinal());
     }
 }
