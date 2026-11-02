@@ -24,7 +24,7 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    the Rapier's 33 and the Greatblade's 40, as tall in hand as the Maul), and seven tenths of that is blade (about
    25).** (It was 28 with two thirds blade until the weapon audit, 2026-11-02: Euan, "not long enough... almost looks
    like a small dagger... you can barely see the blade".) Its grip is 5 long (a hand and a half), its guard at most
-   11 across (wings and crowns 14) and 2 tall; the guard's ornaments stand out to the sides and climb at most 4
+   11 across (wings and crowns 14) and 2 tall; the guard's ornaments stand out to the sides and climb about 4
    texels up the blade, never beside its root; nothing on its hilt is deeper than 5 (a stone and its frame 6), since
    first person sees the blade from its edge and a deep hilt reads as a block beside a sliver of blade. Blades are 3
    to 5 texels wide. The thin edge is 1 texel deep and the

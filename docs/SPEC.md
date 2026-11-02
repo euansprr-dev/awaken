@@ -7430,9 +7430,9 @@ against it, so a vanilla item plays its designed tempo).
   ornaments climbed 5 to 8 texels up an 18-texel blade, its hilt parts were 7 to 9 deep against the blade's 3, and
   the hold shows a blade by its edge (roll 90), so in first person the hilt read as blocks beside a sliver. Now all
   six are about 36 texels, the blade 25 of it (y 5 to 30), the grip 5 (y -2 to 3), the guard at most 11 across (wings
-  and crowns 14) with its ornaments out to the sides and at most 4 up the blade, and nothing on the hilt deeper than 5
-  (a stone and its frame 6); each tier keeps its materials, story and motifs. The hold is unchanged (re-solved, it is
-  the same transform: the grip's point is fixed), so the baked swings are untouched.
+  and crowns 14) with its ornaments out to the sides and about 4 up the blade (never beside its root), and nothing
+  on the hilt deeper than 5 (a stone and its frame 6); each tier keeps its materials, story and motifs. The hold is
+  unchanged (re-solved, it is the same transform: the grip's point is fixed), so the baked swings are untouched.
 - **Drawn by our shader** (`arms_weapon` pipeline; `WeaponRenderer`, the `awaken:weapon` special item model): vanilla's
   two item lights partly banded (painted light, not plastic), metals reflecting a soft studio (a cool sky, a warm
   floor, a strip light), a gloss highlight, a rim of the weapon's accent, the world's light on all but what glows; a
