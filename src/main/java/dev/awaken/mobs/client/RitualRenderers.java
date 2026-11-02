@@ -62,8 +62,10 @@ final class RitualRenderers {
         return TRACKS.computeIfAbsent(id, k -> new Track());
     }
 
-    /** Sets the clip for a stage, crossfading (0.35 s) from what was playing when the stage changed. */
-    private static void stageClip(RitualModel m, RitualModel.State s, Track t, int stage, int clip, double now, double stageAge) {
+    /** Sets the clip for a stage, crossfading ({@code fadeS} seconds; 0 where the clips meet by design) from what was
+     *  playing when the stage changed. */
+    private static void stageClip(RitualModel m, RitualModel.State s, Track t, int stage, int clip, double now, double stageAge,
+                                  float fadeS) {
         if (stage != t.stage) {
             if (t.stage >= 0) {
                 t.prevClip = s.clip;
@@ -76,7 +78,7 @@ final class RitualRenderers {
         s.clip = clip;
         s.time = since;
         s.weight = 1;
-        float fade = Mth.clamp(since / 0.35F, 0, 1);
+        float fade = fadeS <= 0 ? 1 : Mth.clamp(since / fadeS, 0, 1);
         if (fade < 1 && t.prevClip >= 0 && t.prevClip != clip) {
             s.prevClip = t.prevClip;
             s.prevTime = t.prevTime;
@@ -127,7 +129,7 @@ final class RitualRenderers {
                 default -> dormant;
             };
             if (clip < 0) clip = dormant;
-            stageClip(getModel(), s, track(e.getId()), e.stage(), clip, now, age);
+            stageClip(getModel(), s, track(e.getId()), e.stage(), clip, now, age, 0.35F);
             // the head turns only once it's awake (the look bones follow the entity's head yaw)
             s.look = e.stage() == SeatedOne.DORMANT || e.stage() == SeatedOne.SPENT ? 0 : 1;
             s.glow = RitualAnchors.eyeLight(e, pt);
@@ -182,7 +184,11 @@ final class RitualRenderers {
 
     static final class Statue extends LivingEntityRenderer<RitualStatue, RitualModel.State, RitualModel> {
         private final Identifier texture = Awaken.id("textures/entity/mobs/" + STATUE + ".png");
-        private final int kneel, rise, stand, walk, windup, strike, recover;
+        private final int kneel, rise, stand, walk, windup, strike, recover, kneelDown;
+        /** Pseudo-stages the renderer shows inside a server stage: the recovery after a strike, the kneel at the End. */
+        private static final int RECOVERING = 100, KNEELING_DOWN = 101;
+        /** The strike clip starts on the blade's contact (the windup ends there); the kneel-down is the rise backwards. */
+        private static final double STRIKE_S = 0.45, KNEEL_DOWN_S = 1.6;
 
         Statue(EntityRendererProvider.Context ctx) {
             super(ctx, new RitualModel(ctx.bakeLayer(HeroModel.layer(STATUE)), HeroRig.get(STATUE)), 0.7F);
@@ -194,6 +200,7 @@ final class RitualRenderers {
             windup = m.clip("windup");
             strike = m.clip("strike");
             recover = m.clip("recover");
+            kneelDown = m.clip("kneel_down");
             addLayer(new Glow<>(this, Awaken.id("textures/entity/mobs/" + STATUE + "_glow.png"), false));
             addLayer(new Probe<>(this, false));
         }
@@ -215,18 +222,47 @@ final class RitualRenderers {
                 case RitualStatue.STAND -> stand;
                 case RitualStatue.WALK -> walk;
                 case RitualStatue.WINDUP -> windup;
-                case RitualStatue.STRIKE -> age > 0.6 && recover >= 0 ? recover : strike;
+                case RitualStatue.STRIKE -> strike;
                 case RitualStatue.GLARE -> kneel;
                 default -> kneel;
             };
             if (clip < 0) clip = kneel;
             Track t = track(e.getId());
-            stageClip(getModel(), s, t, stage == RitualStatue.STRIKE && age > 0.6 ? 100 : stage, clip, now, stage == RitualStatue.STRIKE && age > 0.6 ? age - 0.6 : age);
+            int shown = stage;
+            double shownAge = age;
+            if (stage == RitualStatue.STRIKE && age > STRIKE_S && recover >= 0) {
+                shown = RECOVERING;
+                shownAge = age - STRIKE_S;
+                clip = recover;
+            }
+            // sent back to its knees from its feet (the End): it kneels down before the still kneel
+            boolean wasUp = t.stage == KNEELING_DOWN || t.stage > RitualStatue.KNEEL && t.stage != RitualStatue.GLARE;
+            if (stage == RitualStatue.KNEEL && kneelDown >= 0 && age < KNEEL_DOWN_S && wasUp) {
+                shown = KNEELING_DOWN;
+                clip = kneelDown;
+            }
+            stageClip(getModel(), s, t, shown, clip, now, shownAge, fade(t.stage, shown));
             if (stage == RitualStatue.WALK) s.time = dev.awaken.mobs.Ritual.walkSeconds(e, pt); // locked to distance, never sliding
             s.look = stage == RitualStatue.KNEEL || stage == RitualStatue.WINDUP || stage == RitualStatue.STRIKE ? 0.15F : 1;
             boolean angry = stage == RitualStatue.GLARE || stage == RitualStatue.WINDUP || stage == RitualStatue.STRIKE;
             s.glow = stage == RitualStatue.KNEEL ? 0.18F : angry ? 1.0F : 0.6F;
             s.glowRgb = angry ? 0xFF3A2A : 0xFFD58A;
+        }
+
+        /** Crossfade seconds between two shown stages: none where one clip ends on the other's first frame (the swing
+         *  lands on the tick the strike begins), a short one out of the walk (its phase is wherever the feet were). */
+        private static float fade(int from, int to) {
+            if (from < 0) return 0;
+            if (from == RitualStatue.WALK) return 0.25F;
+            return switch (to) {
+                case RitualStatue.STRIKE -> from == RitualStatue.WINDUP ? 0 : 0.1F;
+                case RECOVERING -> 0;
+                case RitualStatue.RISE -> from == RitualStatue.KNEEL ? 0 : 0.35F;
+                case RitualStatue.KNEEL -> from == KNEELING_DOWN ? 0 : 0.35F;
+                case KNEELING_DOWN, RitualStatue.WINDUP -> 0.12F;
+                case RitualStatue.STAND -> from == RECOVERING || from == RitualStatue.RISE ? 0.1F : 0.35F;
+                default -> 0.35F;
+            };
         }
 
         @Override

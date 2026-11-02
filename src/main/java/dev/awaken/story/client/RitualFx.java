@@ -6,12 +6,14 @@ import com.mojang.math.Axis;
 import dev.awaken.mobs.client.RitualAnchors;
 import dev.awaken.mobs.entity.RitualStatue;
 import dev.awaken.mobs.entity.SeatedOne;
+import dev.awaken.story.RitualAudioRules;
 import dev.awaken.story.net.StoryPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
@@ -26,12 +28,13 @@ import org.joml.Vector3f;
  * The ritual's light, drawn camera-relative as additive meshes (vanilla's lightning render type, so Lens blooms them):
  * the Seated One's eyes, the gaze's line and beam, the statues' swings and glares, the rune ring's pits, the plates, the
  * words carved in the air, dust falling when it wakes, the light streaming into its palm, and the motes of the void.
- * Everything lives in fixed pools: nothing is allocated per frame.
+ * The stone dust under the statues' feet and blades is the one pass that isn't light: grey puffs and chips, alpha
+ * blended and shaded by the light where they rise. Everything lives in fixed pools: nothing is allocated per frame.
  */
 final class RitualFx {
     private RitualFx() {}
 
-    private static @Nullable RenderType add;
+    private static @Nullable RenderType add, dust;
     private static double cx, cy, cz;
     private static float pt;
     private static final Quaternionf CAM = new Quaternionf();
@@ -39,17 +42,22 @@ final class RitualFx {
 
     // ---- motes: dust, the drain, the void --------------------------------------------------------------------------
 
-    private static final int MOTES = 480;
+    private static final int MOTES = 640;
     private static final float[] mx = new float[MOTES], my = new float[MOTES], mz = new float[MOTES];
     private static final float[] px = new float[MOTES], py = new float[MOTES], pz = new float[MOTES];
     private static final float[] vx = new float[MOTES], vy = new float[MOTES], vz = new float[MOTES];
     private static final int[] life = new int[MOTES], maxLife = new int[MOTES], kind = new int[MOTES];
-    private static final int DUST = 1, DRAIN = 2, VOID = 3, EMBER = 4;
+    // stone dust only: a puff's or chip's size, the light it rose in, and the floor a chip lands on
+    private static final float[] size = new float[MOTES], shade = new float[MOTES], floor = new float[MOTES];
+    private static final int DUST = 1, DRAIN = 2, VOID = 3, EMBER = 4, PUFF = 5, CHIP = 6;
+    private static boolean dustAlive;
     private static final java.util.Random R = new java.util.Random(77);
 
     static void reset() {
         for (int i = 0; i < MOTES; i++) life[i] = 0;
+        for (int i = 0; i < TRACKED; i++) { trackId[i] = -1; trackFoot[i].clear(); }
         candles = 0;
+        dustAlive = false;
     }
 
     // ---- the candle line: every flame lit since the lights died, with its place in the line (0 doors .. 1 throne) ----
@@ -72,7 +80,7 @@ final class RitualFx {
         candles = 0;
     }
 
-    private static void spawn(int k, double x, double y, double z, double vx0, double vy0, double vz0, int ticks) {
+    private static int spawn(int k, double x, double y, double z, double vx0, double vy0, double vz0, int ticks) {
         for (int i = 0; i < MOTES; i++) {
             if (life[i] > 0) continue;
             mx[i] = px[i] = (float) (x - cx0());
@@ -83,8 +91,100 @@ final class RitualFx {
             vz[i] = (float) vz0;
             life[i] = maxLife[i] = ticks;
             kind[i] = k;
-            return;
+            return i;
         }
+        return -1;
+    }
+
+    // ---- stone dust: under each statue's footfall and where its blade bites the floor ------------------------------
+
+    private static final int TRACKED = 12;
+    private static final int[] trackId = new int[TRACKED], trackStage = new int[TRACKED];
+    private static final long[] trackSeen = new long[TRACKED];
+    private static final RitualAudioRules.Footfall[] trackFoot = new RitualAudioRules.Footfall[TRACKED];
+
+    static {
+        for (int i = 0; i < TRACKED; i++) {
+            trackId[i] = -1;
+            trackFoot[i] = new RitualAudioRules.Footfall();
+        }
+    }
+
+    /** Each statue's foot clock (the one its footsteps' sound keeps) and stage: a planted foot or a strike raises dust. */
+    private static void statues(net.minecraft.client.multiplayer.ClientLevel level) {
+        long now = RitualClient.ticks;
+        for (Entity e : level.entitiesForRendering()) {
+            if (!(e instanceof RitualStatue s)) continue;
+            int slot = -1;
+            for (int i = 0; i < TRACKED; i++) if (trackId[i] == e.getId()) { slot = i; break; }
+            if (slot < 0) for (int i = 0; i < TRACKED; i++) if (trackSeen[i] < now - 1) {
+                slot = i;
+                trackId[i] = e.getId();
+                trackFoot[i].clear();
+                trackStage[i] = s.stage();
+                break;
+            }
+            if (slot < 0) continue;
+            trackSeen[slot] = now;
+            int plant = trackFoot[slot].sample(dev.awaken.mobs.Ritual.walkSeconds(e, 1), dev.awaken.mobs.Ritual.walking(e));
+            if (plant >= 0) footfall(dev.awaken.mobs.Ritual.plantedFoot(e, plant));
+            // the director's strike: the blade 2.5 blocks ahead meets the floor on the tick the stage turns
+            if (s.stage() == RitualStatue.STRIKE && trackStage[slot] == RitualStatue.WINDUP) {
+                impactDust(e.position().add(Vec3.directionFromRotation(0, e.getYRot()).scale(2.5)));
+            }
+            trackStage[slot] = s.stage();
+        }
+        for (int i = 0; i < TRACKED; i++) if (trackSeen[i] != now) { trackId[i] = -1; trackFoot[i].clear(); }
+    }
+
+    /** Grey dust rolling out from under a foot as the weight lands, and a few chips kicked out of the floor. */
+    private static void footfall(Vec3 at) {
+        float light = light(at);
+        for (int k = 0; k < 9; k++) {
+            double a = (k + R.nextFloat() * 0.6) * Mth.TWO_PI / 9, sp = 0.05 + R.nextFloat() * 0.05;
+            puff(at.x + Math.cos(a) * 0.4, at.y + 0.1, at.z + Math.sin(a) * 0.4, Math.cos(a) * sp, 0.006 + R.nextFloat() * 0.012,
+                    Math.sin(a) * sp, 26 + R.nextInt(14), 0.5F + R.nextFloat() * 0.35F, light);
+        }
+        for (int k = 0; k < 3; k++) chip(at, 0.05 + R.nextFloat() * 0.06, 0.12 + R.nextFloat() * 0.1, light);
+    }
+
+    /** A blade into the floor: a ring of dust thrown out low, a column rising, and chips of stone flung up and out. */
+    private static void impactDust(Vec3 at) {
+        float light = light(at);
+        for (int k = 0; k < 20; k++) {
+            double a = (k + R.nextFloat() * 0.6) * Mth.TWO_PI / 20, sp = 0.14 + R.nextFloat() * 0.1;
+            puff(at.x + Math.cos(a) * 0.5, at.y + 0.15, at.z + Math.sin(a) * 0.5, Math.cos(a) * sp, 0.01 + R.nextFloat() * 0.02,
+                    Math.sin(a) * sp, 40 + R.nextInt(20), 0.8F + R.nextFloat() * 0.5F, light);
+        }
+        for (int k = 0; k < 6; k++) {
+            puff(at.x + (R.nextFloat() - 0.5) * 0.6, at.y + 0.3 + k * 0.2, at.z + (R.nextFloat() - 0.5) * 0.6, (R.nextFloat() - 0.5) * 0.02,
+                    0.05 + R.nextFloat() * 0.04, (R.nextFloat() - 0.5) * 0.02, 35 + R.nextInt(15), 0.7F + R.nextFloat() * 0.4F, light);
+        }
+        for (int k = 0; k < 14; k++) chip(at, 0.08 + R.nextFloat() * 0.12, 0.25 + R.nextFloat() * 0.2, light);
+    }
+
+    private static void puff(double x, double y, double z, double vx0, double vy0, double vz0, int ticks, float r, float light) {
+        int i = spawn(PUFF, x, y, z, vx0, vy0, vz0, ticks);
+        if (i < 0) return;
+        size[i] = r;
+        shade[i] = light;
+        dustAlive = true;
+    }
+
+    private static void chip(Vec3 at, double out, double up, float light) {
+        double a = R.nextFloat() * Mth.TWO_PI;
+        int i = spawn(CHIP, at.x + Math.cos(a) * 0.3, at.y + 0.1, at.z + Math.sin(a) * 0.3, Math.cos(a) * out, up, Math.sin(a) * out, 30);
+        if (i < 0) return;
+        size[i] = 0.05F + R.nextFloat() * 0.06F;
+        shade[i] = light;
+        floor[i] = (float) at.y + 0.04F;
+        dustAlive = true;
+    }
+
+    /** How lit the air is where dust rises (the dust is drawn unlit: dark in the dark hall, pale in daylight). */
+    private static float light(Vec3 at) {
+        var level = Minecraft.getInstance().level;
+        return level == null ? 1 : 0.3F + 0.7F * level.getMaxLocalRawBrightness(BlockPos.containing(at.x, at.y + 0.5, at.z)) / 15F;
     }
 
     // mote positions are kept relative to a fixed origin near the hall so floats stay precise at gate-cell coordinates
@@ -105,7 +205,7 @@ final class RitualFx {
         if (!RitualClient.throne.equals(Vec3.ZERO)) {
             originX = Math.floor(RitualClient.throne.x);
             originZ = Math.floor(RitualClient.throne.z);
-        } else {
+        } else if (!anyMote()) { // away from the hall (a tour's statue): the origin waits until nothing alive hangs off it
             originX = Math.floor(mc.player.getX());
             originZ = Math.floor(mc.player.getZ());
         }
@@ -133,14 +233,30 @@ final class RitualFx {
                 vz[i] += (R.nextFloat() - 0.5F) * 0.004F;
             } else if (kind[i] == EMBER) {
                 vy[i] += 0.002F;
+            } else if (kind[i] == PUFF) {
+                // thrown out low, it slows and drifts up as it spreads
+                vx[i] *= 0.88F;
+                vz[i] *= 0.88F;
+                vy[i] = vy[i] * 0.92F + 0.0015F;
+            } else if (kind[i] == CHIP) {
+                vy[i] -= 0.045F;
+                if (my[i] + vy[i] < floor[i]) { // lands, lies a moment, gone
+                    my[i] = floor[i];
+                    vx[i] = vy[i] = vz[i] = 0;
+                    life[i] = Math.min(life[i], 8);
+                }
             }
             mx[i] += vx[i];
             my[i] += vy[i];
             mz[i] += vz[i];
             life[i]--;
         }
+        dustAlive = false;
+        for (int i = 0; i < MOTES; i++) if (life[i] > 0 && kind[i] >= PUFF) { dustAlive = true; break; }
         int beat = RitualClient.beat;
         float age = RitualClient.beatAge(0);
+        // the statues only walk and strike in the Judgement (and in tours that drive one alone)
+        if ((beat == RitualClient.JUDGEMENT || RitualClient.DEBUG) && mc.level != null) statues(mc.level);
         // dust shaken loose from the vault while it wakes
         if (beat == RitualClient.WAKING && age > 10 && age < 110) {
             for (int n = 0; n < 6; n++) {
@@ -261,6 +377,16 @@ final class RitualFx {
                 dev.awaken.Awaken.LOG.error("[story] ritual fx failed", ex);
             }
         });
+        if (dustAlive) {
+            if (dust == null) dust = RenderTypes.debugQuads();
+            out.submitCustomGeometry(ps, dust, (pose, vc) -> {
+                try {
+                    stoneDust(vc);
+                } catch (RuntimeException ex) {
+                    dev.awaken.Awaken.LOG.error("[story] ritual dust failed", ex);
+                }
+            });
+        }
         words(ps, out, mc);
     }
 
@@ -552,6 +678,21 @@ final class RitualFx {
         }
     }
 
+    /** The dust pass (alpha blended): soft grey puffs that swell as they fade, dark chips. */
+    private static void stoneDust(VertexConsumer vc) {
+        for (int i = 0; i < MOTES; i++) {
+            if (life[i] <= 0 || kind[i] < PUFF) continue;
+            double x = Mth.lerp(pt, px[i], mx[i]) + originX, y = Mth.lerp(pt, py[i], my[i]), z = Mth.lerp(pt, pz[i], mz[i]) + originZ;
+            float t = life[i] / (float) maxLife[i], g = 1 - t, s = shade[i];
+            if (kind[i] == PUFF) {
+                float r = size[i] * (0.35F + 0.65F * Mth.sqrt(g));
+                flare(vc, x, y, z, r, argb(0.62F * s, 0.6F * s, 0.56F * s, 0.4F * t * Math.min(1, g * 8)));
+            } else {
+                square(vc, x, y, z, size[i], argb(0.32F * s, 0.3F * s, 0.28F * s, Math.min(1, t * 4)));
+            }
+        }
+    }
+
     // ---- primitives (camera-relative; additive, so alpha is how much light a quad adds) ------------------------------
 
     private static int argb(float r, float g, float b, float a) {
@@ -596,6 +737,14 @@ final class RitualFx {
             v(vc, px + RIGHT.x * c1 + UP.x * s1, py + RIGHT.y * c1 + UP.y * s1, pz + RIGHT.z * c1 + UP.z * s1, rim);
             v(vc, px + RIGHT.x * c0 + UP.x * s0, py + RIGHT.y * c0 + UP.y * s0, pz + RIGHT.z * c0 + UP.z * s0, rim);
         }
+    }
+
+    /** A small hard square facing the camera (a chip of stone). */
+    private static void square(VertexConsumer vc, double px, double py, double pz, float r, int argb) {
+        v(vc, px - RIGHT.x * r - UP.x * r, py - RIGHT.y * r - UP.y * r, pz - RIGHT.z * r - UP.z * r, argb);
+        v(vc, px + RIGHT.x * r - UP.x * r, py + RIGHT.y * r - UP.y * r, pz + RIGHT.z * r - UP.z * r, argb);
+        v(vc, px + RIGHT.x * r + UP.x * r, py + RIGHT.y * r + UP.y * r, pz + RIGHT.z * r + UP.z * r, argb);
+        v(vc, px - RIGHT.x * r + UP.x * r, py - RIGHT.y * r + UP.y * r, pz - RIGHT.z * r + UP.z * r, argb);
     }
 
     /** A thin horizontal streak through a point, facing the camera (the eyes' anamorphic glint). */

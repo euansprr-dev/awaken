@@ -7,122 +7,282 @@
     "true_peak_dbtp": -9.11
   },
   "close": {
-    "channels": 1,
-    "gated_rms_dbfs": -26.37,
-    "seconds": 0.497,
-    "sha256": "00eb555aee78a20442edfd5b5404aeca4fd5ff4a9535c322a65e7d3775d85fae",
-    "true_peak_dbtp": -7.56
+    "built_by": "ritual_v2.py",
+    "channels": 2,
+    "gated_rms_dbfs": -10.97,
+    "lufs_m_max": -8.9,
+    "seconds": 3.2,
+    "sha256": "99f75f690ca83e669687d689ec144de516807a8c494c8c84171a95a43ec51682",
+    "true_peak_dbtp": -0.85
   },
   "doors": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -32.23,
-    "seconds": 4.8,
-    "sha256": "cd742a009698f52644cce5394c37ea7085e881901311a5fa1ea22e6a51ce09eb",
-    "true_peak_dbtp": -8.93
+    "gated_rms_dbfs": -15.4,
+    "lufs_m_max": -11.9,
+    "seconds": 4.896,
+    "sha256": "b251d653065ce9865f6b05143e39adc5d451da16ba376bcda2542a7876beb646",
+    "true_peak_dbtp": -1.0
+  },
+  "error": {
+    "built_by": "ritual_v2.py",
+    "channels": 2,
+    "gated_rms_dbfs": -19.48,
+    "lufs_m_max": -15.4,
+    "seconds": 1.2,
+    "sha256": "32767e212467c8423d0f89f03eb6612d068bf944466f54a8240ebe5ae83fba98",
+    "true_peak_dbtp": -3.16
   },
   "eyes": {
-    "channels": 1,
-    "gated_rms_dbfs": -31.36,
-    "seconds": 4.0,
-    "sha256": "ca5112e1d4ae6deff7a868583d6ae57240e914c14cc071ca65cf2b8e6046a6a3",
-    "true_peak_dbtp": -12.23
+    "built_by": "ritual_v2.py",
+    "channels": 2,
+    "gated_rms_dbfs": -15.99,
+    "lufs_m_max": -10.6,
+    "seconds": 7.241,
+    "sha256": "a2f901db8a849d99be54c2d0f09bb0301eeb8a973174a57b83604ee3244f5750",
+    "true_peak_dbtp": -0.93
   },
   "flames_out": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -31.4,
-    "seconds": 1.4,
-    "sha256": "140fe6f294fe6bd6b3dbb2be3a2496b82fee51bec244a622d2a36b5129db83be",
-    "true_peak_dbtp": -17.22
+    "gated_rms_dbfs": -22.08,
+    "lufs_m_max": -15.7,
+    "seconds": 3.388,
+    "sha256": "7b87854052ee1f7e764693b8d47fd1d8bb503009e7001b9c2f4a23da63b6089a",
+    "true_peak_dbtp": -3.03
   },
   "footstep1": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -35.8,
-    "seconds": 1.45,
-    "sha256": "3094a6e97d0b03feaa863c1b02fbfad625e42dc3dd83ce69f9c6d547390bc5f2",
-    "true_peak_dbtp": -11.83
+    "gated_rms_dbfs": -15.17,
+    "lufs_m_max": -14.1,
+    "seconds": 1.811,
+    "sha256": "c927e63101d6550d41dd87b45d937c0038ef93a42455447a561ddec12e2fd803",
+    "true_peak_dbtp": -1.0
   },
   "footstep2": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -35.14,
-    "seconds": 1.45,
-    "sha256": "8c43cf923aedfacbc8318f0c15fae1e2516d23d514faffb7f503ffa0d1cc15d3",
-    "true_peak_dbtp": -12.23
+    "gated_rms_dbfs": -15.2,
+    "lufs_m_max": -14.4,
+    "seconds": 1.637,
+    "sha256": "c62f21315450634f7e9f90dfcadba7dd36234b834977e5d0e51871ceb6c5f95d",
+    "true_peak_dbtp": -0.92
   },
   "footstep3": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -37.5,
-    "seconds": 1.45,
-    "sha256": "7c8cdeee80d4e83aac019063562e2460143e50692540c9f7a8be34b291585db5",
-    "true_peak_dbtp": -12.16
+    "gated_rms_dbfs": -13.79,
+    "lufs_m_max": -14.3,
+    "seconds": 1.757,
+    "sha256": "cae2db3f5d49979ecfd51c52419f4c2891484a5a367073fab7ff1840b9e7cf36",
+    "true_peak_dbtp": -0.87
+  },
+  "footstep4": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -15.29,
+    "lufs_m_max": -14.9,
+    "seconds": 1.709,
+    "sha256": "f277d23827b7cb04f71fff9202d53cd5180c0fdab330fbe6ccca52dd0f9e9e7e",
+    "true_peak_dbtp": -1.01
   },
   "gaze_charge": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -31.07,
+    "gated_rms_dbfs": -14.35,
+    "lufs_m_max": -10.3,
     "seconds": 2.25,
-    "sha256": "079e5f7915be0921fa9b8e61b5ba2a9fdda99f7408ba57c416da37e89fc5594b",
-    "true_peak_dbtp": -14.75
+    "sha256": "67ff950c88a71f9694e5b6416d4aa102260c95dedd723b3146db22de5c66578f",
+    "true_peak_dbtp": -2.15
   },
   "gaze_fire": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -27.28,
-    "seconds": 2.5,
-    "sha256": "ee4687c23632e1d72e1d9a985b5e11fa0aa199cc2509a63c6aa8c3f8cf343046",
-    "true_peak_dbtp": -8.42
+    "gated_rms_dbfs": -13.42,
+    "lufs_m_max": -11.7,
+    "seconds": 2.509,
+    "sha256": "85dd273ef3a5e5fd006215a7814eaa77ac12ae5581628bbd01b2337679d65bd7",
+    "true_peak_dbtp": -1.05
   },
   "gaze_impact": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -35.66,
-    "seconds": 3.6,
-    "sha256": "c7b1be7f02f9ca8c93e5527286acd6ea8975bf3cded4de65b53bb61ebfe0b527",
-    "true_peak_dbtp": -8.75
+    "gated_rms_dbfs": -12.41,
+    "lufs_m_max": -12.0,
+    "seconds": 3.021,
+    "sha256": "68a609a54039c3d6d3d2e4514ad0b8e1ee34b340784fd26c7e7d766ec70f157b",
+    "true_peak_dbtp": -1.06
   },
   "gaze_travel": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -29.91,
+    "gated_rms_dbfs": -18.81,
+    "lufs_m_max": -14.2,
     "seconds": 0.623,
-    "sha256": "5a214afe7099782666a49542b5d5384a1f01737e7fa3724787a6747b9548e5f9",
-    "true_peak_dbtp": -17.93
+    "sha256": "bd08f040dd6cda99699930383e0b9fee025e11bf830decb406d2b1b1b35094f8",
+    "true_peak_dbtp": -1.58
   },
   "hall": {
+    "built_by": "ritual_v2.py",
     "channels": 2,
-    "gated_rms_dbfs": -41.83,
-    "seconds": 23.0,
-    "sha256": "d35449ee4cf14de47f1a0eb130e4c48b3d78bbd2463c797cf5a5bcaf001e5719",
-    "true_peak_dbtp": -28.95
+    "gated_rms_dbfs": -24.56,
+    "lufs_m_max": -21.2,
+    "seconds": 24.0,
+    "sha256": "8f84266cc5736d490133e596c867f568c693d8b8d11fcdfc95c1082b3ae4dc51",
+    "true_peak_dbtp": -10.17
   },
   "impact": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -35.66,
-    "seconds": 3.6,
-    "sha256": "28a15e19643a06d5850d713ccd98aea8fe7ed94234c6fb81355487a72f50848e",
-    "true_peak_dbtp": -8.75
+    "gated_rms_dbfs": -17.7,
+    "lufs_m_max": -12.5,
+    "seconds": 2.682,
+    "sha256": "94e03e0e5fc540de5ef0d74b083ad5c2bfae4d2547bf458a37e0402019502f80",
+    "true_peak_dbtp": -1.3
+  },
+  "impact2": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -16.19,
+    "lufs_m_max": -11.4,
+    "seconds": 2.781,
+    "sha256": "b612760794de8d5a93d6017e3d1ca8ffe567ecb5bc333509eac6b7b6d6595686",
+    "true_peak_dbtp": -0.97
   },
   "pit": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -36.21,
-    "seconds": 4.2,
-    "sha256": "51f1402a192b228cb8a5bac3129b244e5df6a7d42bafb62dac9aae6aabacdcab",
-    "true_peak_dbtp": -8.75
+    "gated_rms_dbfs": -14.67,
+    "lufs_m_max": -11.3,
+    "seconds": 4.173,
+    "sha256": "3cffb3ad0e3716e91fb9bb8661a8162ce7dd5367647867df50199e8911124d8b",
+    "true_peak_dbtp": -0.86
+  },
+  "plate_lock": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -21.08,
+    "lufs_m_max": -15.1,
+    "seconds": 2.232,
+    "sha256": "24cf8bab8ce590ec17111a13238c9fffc5fecb1782cc60d379ac5fbe743359e7",
+    "true_peak_dbtp": -1.94
+  },
+  "plate_rise": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -11.23,
+    "lufs_m_max": -7.7,
+    "seconds": 4.0,
+    "sha256": "0d6633ebbcf5b78bf00b9c279b175e80c412eeb8702c3742a726c549288fbe7e",
+    "true_peak_dbtp": -2.82
+  },
+  "plate_tick": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -27.43,
+    "lufs_m_max": -21.9,
+    "seconds": 0.968,
+    "sha256": "a59da279de5cb28691051b2c45587fbae6b92f4bf639b657555d675f95fe01d1",
+    "true_peak_dbtp": -2.17
+  },
+  "plate_tock": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -27.72,
+    "lufs_m_max": -22.2,
+    "seconds": 0.97,
+    "sha256": "689f17c0fdcabe43a0812301b3ec6e0895a7d36611810d00970c9f65eeb9f10d",
+    "true_peak_dbtp": -2.19
+  },
+  "pulse_drone": {
+    "built_by": "ritual_v2.py",
+    "channels": 2,
+    "gated_rms_dbfs": -21.01,
+    "lufs_m_max": -17.0,
+    "seconds": 20.0,
+    "sha256": "67faa3d8edafb3fda26bcd2939f7b60f75545a46123a70fa4cf942ef518463d2",
+    "true_peak_dbtp": -8.92
+  },
+  "pulse_hard": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -18.94,
+    "lufs_m_max": -14.0,
+    "seconds": 3.19,
+    "sha256": "f46bdba647e384836953ac2c1adc171952f8d98197354c8b271926f3a8fa27df",
+    "true_peak_dbtp": -1.98
+  },
+  "pulse_soft": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -18.95,
+    "lufs_m_max": -14.8,
+    "seconds": 3.053,
+    "sha256": "86d3efd496a1952debe435a0f08c37b3aa485020d1ba1c8c7c37429398fb6e97",
+    "true_peak_dbtp": -1.98
+  },
+  "raise": {
+    "built_by": "ritual_v2.py",
+    "channels": 2,
+    "gated_rms_dbfs": -11.41,
+    "lufs_m_max": -12.6,
+    "seconds": 7.387,
+    "sha256": "5935d855e1a66bc5b469cd848e4f65260618cb334974c351905bd6a933c346ed",
+    "true_peak_dbtp": -1.77
   },
   "rumble": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -34.22,
-    "seconds": 3.4,
-    "sha256": "067d0a9ce601c241d9727fcd7eecf8c3e6ff0ed3f3fa5ceeb7101c0fe753ef64",
-    "true_peak_dbtp": -17.13
+    "gated_rms_dbfs": -14.16,
+    "lufs_m_max": -10.4,
+    "seconds": 5.374,
+    "sha256": "8f3077e7138dc0f125d3a833e10dbd97ba159b898d6e5c96d129578fdb1a042a",
+    "true_peak_dbtp": -2.06
   },
   "statue_rise": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -28.37,
-    "seconds": 3.5,
-    "sha256": "6abb6b70973c6f24a2b22a2f311dc6f75294d3741b4d885ca57aa614073f5a77",
-    "true_peak_dbtp": -11.92
+    "gated_rms_dbfs": -13.08,
+    "lufs_m_max": -9.4,
+    "seconds": 5.438,
+    "sha256": "c6079cbf597e1829044ce89587da02c59c469e61f5c8e6de49507914d673a95c",
+    "true_peak_dbtp": -0.74
+  },
+  "struck": {
+    "built_by": "ritual_v2.py",
+    "channels": 2,
+    "gated_rms_dbfs": -14.32,
+    "lufs_m_max": -13.0,
+    "seconds": 1.443,
+    "sha256": "cbb77611cd863c9f52ca036c0d10dbaa7083149ddc0abf2d4093d706651543d2",
+    "true_peak_dbtp": -0.82
   },
   "swing": {
+    "built_by": "ritual_v2.py",
     "channels": 1,
-    "gated_rms_dbfs": -29.99,
-    "seconds": 0.717,
-    "sha256": "0f802dd10025daf4e05c13ff1b0ae27e95cd0e2bbde5e1c0fa56a60f6da47ae7",
-    "true_peak_dbtp": -14.88
+    "gated_rms_dbfs": -15.15,
+    "lufs_m_max": -14.1,
+    "seconds": 1.254,
+    "sha256": "572d5f96ccf8bf50db4b51644587ef4d05b6eca60225bb746caaa825b7d666cf",
+    "true_peak_dbtp": -2.08
+  },
+  "swing2": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -15.14,
+    "lufs_m_max": -13.2,
+    "seconds": 1.333,
+    "sha256": "05a9777579f8cb215daaff3ac18612c42314085824c58dff0543e4a2707d2c66",
+    "true_peak_dbtp": -1.99
+  },
+  "windup": {
+    "built_by": "ritual_v2.py",
+    "channels": 1,
+    "gated_rms_dbfs": -16.94,
+    "lufs_m_max": -11.8,
+    "seconds": 2.416,
+    "sha256": "771fabaffce22709cb115d818088b068d47d30de702dd1bb910fa97bb171fccb",
+    "true_peak_dbtp": -3.11
   }
 }

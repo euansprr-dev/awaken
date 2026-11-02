@@ -298,7 +298,7 @@ final class RitualTests {
             h.assertTrue(seated != null && statue != null, "both rigs are built (tools/art/specs/ritual_art.py)");
             for (String c : List.of("dormant", "wake", "awake", "gaze", "raise", "close", "sleep")) h.assertTrue(seated.clip(c) != null, "the Seated One plays " + c);
             for (String b : List.of("head", "hand_r", "lid_l", "lid_r", "fingers_r")) h.assertTrue(seated.bone(b) >= 0, "the Seated One has a " + b);
-            for (String c : List.of("kneel", "rise", "stand", "walk", "windup", "strike", "recover")) h.assertTrue(statue.clip(c) != null, "a statue plays " + c);
+            for (String c : List.of("kneel", "rise", "stand", "walk", "windup", "strike", "recover", "kneel_down")) h.assertTrue(statue.clip(c) != null, "a statue plays " + c);
             h.assertTrue(statue.bone("head") >= 0 && statue.bone("glaive") >= 0, "a statue has a head and a glaive");
             h.succeed();
         });

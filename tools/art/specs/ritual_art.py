@@ -1648,7 +1648,7 @@ def statue_clips(r):
     PR = Poser(r, kneel)
     planted = KNEEL["grip"]
 
-    def rise(t):
+    def rise_state(t):
         crack_ = math.exp(-((t - 0.12) / 0.05) ** 2)
         push = 0.5 * ease5(span(t, 0.45, 0.85)) + 0.5 * ease5(span(t, 0.98, 1.4))
         st = _lerp_state(KNEEL, STAND, push)
@@ -1683,7 +1683,10 @@ def statue_clips(r):
             st["arm_l"] = tuple(np.array((-60.0, 0, -10)) * (1 - k) + np.array(STAND["arm_l"]) * k)
             st["forearm_l"] = tuple(np.array((-40.0, 0, 0)) * (1 - k) + np.array(STAND["forearm_l"]) * k)
         st["extra"] = {"chest": {"rot": (0, 0, 0.6 * math.sin(t * 70) * crack_)}}
-        return PR(round(t, 4), st)
+        return st
+
+    def rise(t):
+        return PR(round(t, 4), rise_state(t))
     bake(r.clip("rise", 1.8), rise, times(1.8, 0.05))
     # -- stand: guard, the glaive held on the diagonal; the faintest breath
     PS = Poser(r, PR.prev)
@@ -1694,80 +1697,99 @@ def statue_clips(r):
         return merge(stand, {"chest": {"rot": (-0.7 * b, 0, 0)}, "arm_l": {"pos": (0, 0.15 * b, 0)}, "arm_r": {"pos": (0, 0.15 * b, 0)},
                              "head": {"rot": (0.5 * b, 0, 0)}})
     bake(r.clip("stand", 4.0, loop=True), stand_c, times(4.0, 0.5))
-    # -- walk: one heavy stride cycle (16 model px = 1.2 blocks at x1.2); flat-footed, 60% stance, a drop on each footfall
+    # -- walk (motion v2, 2026-11-02): a colossus's stride. One cycle is two steps of 1.25 blocks (33.3 model px at
+    #    x1.2) in 1.6 s of clip, and Ritual.walkSeconds lays exactly 2.5 blocks of ground under it, so a planted foot
+    #    stays where it landed. Heel strike (toe up) at p 0 (left) and 0.5 (right); the sole slaps flat by q 0.07; the
+    #    heel peels from 0.42 and the toe pushes off at 0.58. The hip sinks after each landing (the weight arriving) and
+    #    rises over the planted leg; pelvis and shoulders counter-turn, the free arm swings against its leg, the head
+    #    nods a beat after each footfall. (v1 ran its stance backwards: the planted foot slid forward, 4 steps a second.)
     L = 1.6
-    stride = 1.2 * 16.0 / 1.2
-    duty = 0.6
+    CYC = 2.5 * 16.0 / 1.2
+    duty = 0.58
+    HEEL_E, TOE_E = (2.0, -3.0), (-5.0, -3.0)  # the sole's heel and toe edges from the ankle (z back, height)
+    PITCH_HS, PITCH_TO = -12.0, 28.0  # toe up at heel strike, toe down at push-off
+    Q_FLAT, Q_HEEL = 0.07, 0.42
+    Z_CONTACT = -9.0  # the ankle at heel strike, ahead of the hip
     PW = Poser(r, stand)
 
-    def foot_path(p, base):
-        p = p % 1.0
-        if p < duty:
-            u = p / duty
-            z = stride * duty * (0.5 - u)
-            lift = 0.0
-        else:
-            u = (p - duty) / (1 - duty)
-            z = stride * duty * (-0.5 + ease(u))
-            lift = 2.4 * math.sin(math.pi * u) ** 1.3
-        return (base[0], base[1] + lift, z + base[2] * 0.0)
+    def edge(e, th):
+        c, s_ = math.cos(th * DEG), math.sin(th * DEG)
+        return (e[0] * c - e[1] * s_, e[0] * s_ + e[1] * c)
+    heel_g = Z_CONTACT + edge(HEEL_E, PITCH_HS)[0]  # where the heel edge meets the ground (body frame at q 0)
+    flat_g = heel_g - HEEL_E[0]
+    toe_g = flat_g + TOE_E[0]
+
+    def stance(q):
+        """(ankle z, ankle height, pitch) of a planted foot, q in [0, duty): one of its edges never moves on the ground."""
+        if q < Q_FLAT:
+            th = PITCH_HS * (1 - ease_in(q / Q_FLAT, 2.0))
+            e = edge(HEEL_E, th)
+            return heel_g + CYC * q - e[0], -e[1], th
+        if q < Q_HEEL:
+            return flat_g + CYC * q, 3.0, 0.0
+        th = PITCH_TO * ease_in((q - Q_HEEL) / (duty - Q_HEEL), 1.6)
+        e = edge(TOE_E, th)
+        return toe_g + CYC * q - e[0], -e[1], th
+    z_off, h_off, _ = stance(duty - 1e-9)
+    h_on = -edge(HEEL_E, PITCH_HS)[1]
+
+    def foot_v2(q):
+        q %= 1.0
+        if q < duty:
+            return stance(q)
+        u = (q - duty) / (1 - duty)
+        # Hermite: leaves still drifting back with the ground, lands still pawing back a little (no skid)
+        m0, m1 = 0.5 * CYC * (1 - duty), 0.3 * CYC * (1 - duty)
+        h00, h10, h01, h11 = 2 * u ** 3 - 3 * u ** 2 + 1, u ** 3 - 2 * u ** 2 + u, -2 * u ** 3 + 3 * u ** 2, u ** 3 - u ** 2
+        z = h00 * z_off + h10 * m0 + h01 * Z_CONTACT + h11 * m1
+        h = h_off + (h_on - h_off) * u + 3.6 * math.sin(math.pi * u ** 0.8)
+        th = PITCH_TO * (1 - ease(span(u, 0.0, 0.45))) + PITCH_HS * ease(span(u, 0.55, 1.0))
+        return z, h, th
+
+    def land(q, at=0.06, w=0.045):
+        """The weight arriving: a bump just after a heel strike (q of that foot)."""
+        q %= 1.0
+        return math.exp(-((q - at) / w) ** 2) + math.exp(-((q - 1 - at) / w) ** 2)
 
     def walk(t):
         p = t / L
         st = dict(STAND)
-        st["foot_l"] = foot_path(p, (3, 3, 0))
-        st["foot_r"] = foot_path(p + 0.5, (-3, 3, 0))
-        st["yaw_l"], st["yaw_r"] = -3, 3
-        sw_l = 0.0 if (p % 1.0) < duty else math.sin(math.pi * ((p % 1.0) - duty) / (1 - duty))
-        sw_r = 0.0 if ((p + 0.5) % 1.0) < duty else math.sin(math.pi * (((p + 0.5) % 1.0) - duty) / (1 - duty))
-        st["pitch_l"], st["pitch_r"] = -11 * sw_l ** 2, -11 * sw_r ** 2
-        bob = 0.9 * math.cos(4 * math.pi * (p - 0.3))
-        drop = -0.5 * (math.exp(-(((p % 0.5) - 0.04) / 0.05) ** 2))
-        st["hip"] = (0.35 * math.sin(2 * math.pi * p), 21.3 + bob * 0.6 + drop, -0.8)
-        st["body"] = (3.0, 4.0 * math.sin(2 * math.pi * p), -2.6 * math.sin(2 * math.pi * p))
-        st["chest"] = (4.0 + 0.8 * math.cos(4 * math.pi * p), -6.0 * math.sin(2 * math.pi * p), 1.6 * math.sin(2 * math.pi * p))
-        st["head"] = (4.0, 2.0 * math.sin(2 * math.pi * p), 1.2 * math.sin(2 * math.pi * p))
-        sway = math.sin(2 * math.pi * (p - 0.12))
-        st["grip"] = (STAND["grip"][0] + 0.4 * sway, STAND["grip"][1] + 0.5 * math.cos(4 * math.pi * (p - 0.35)), STAND["grip"][2] - 0.8 * sway)
-        st["dir"] = _dir(-0.14 + 0.03 * sway, 0.88, -0.45 - 0.06 * sway)
-        st["arm_l"] = (-8 + 12 * math.sin(2 * math.pi * (p + 0.5)), 0, -4)
-        st["forearm_l"] = (-14 - 6 * max(0.0, math.sin(2 * math.pi * (p + 0.5))), 0, 0)
+        for nm, x, ph in (("l", 3.4, 0.0), ("r", -3.4, 0.5)):
+            z, h, th = foot_v2(p - ph)
+            st["foot_" + nm] = (x, h, z)
+            st["pitch_" + nm] = th
+        st["yaw_l"], st["yaw_r"] = -4, 4
+        both = land(p) + land(p - 0.5)
+        late = land(p, 0.14, 0.06) + land(p - 0.5, 0.14, 0.06)
+        c1 = math.cos(2 * math.pi * (p - 0.29))  # +1 over the left foot, -1 over the right
+        st["hip"] = (0.8 * c1, 20.2 + 1.0 * math.cos(4 * math.pi * (p - 0.29)) - 0.6 * both, -0.5)
+        st["body"] = (5.0 + 1.2 * both, 4.0 * math.cos(2 * math.pi * p), -2.2 * c1)
+        st["chest"] = (3.0 + 1.6 * late, -5.5 * math.cos(2 * math.pi * (p - 0.04)), 2.6 * c1)
+        st["head"] = (2.0 + 2.2 * land(p, 0.18, 0.07) + 2.2 * land(p - 0.5, 0.18, 0.07), 1.4 * math.cos(2 * math.pi * p), -0.8 * c1)
+        sway = math.cos(2 * math.pi * (p - 0.1))
+        st["grip"] = (STAND["grip"][0] + 0.5 * sway, STAND["grip"][1] - 0.7 * late, STAND["grip"][2] - 0.9 * sway)
+        st["dir"] = _dir(-0.14 + 0.03 * sway, 0.88, -0.45 - 0.05 * sway - 0.03 * late)
+        a = math.cos(2 * math.pi * (p - 0.06))  # +1: the left arm back as the left foot lands ahead
+        st["arm_l"] = (-6 + 13 * a, 0, -4)
+        st["forearm_l"] = (-14 - 9 * max(0.0, -a), 0, 0)
         return PW(round(t % L, 4), st)
     wk = r.clip("walk", L, loop=True)
-    bake(wk, walk, times(L, L / 16))
-    # -- windup: the left hand joins the shaft, the glaive goes up over the head, the body leans back on a wide stance
+    bake(wk, walk, times(L, L / 32))
+    # -- windup (v2): 1.25 s, the director's 25 ticks, and the downswing is its last quarter second, so the blade
+    #    meets the floor on the very tick the strike lands (the impact's sound, shake and damage). A glare and a grip,
+    #    the left foot steps forward and plants, the glaive goes up and back over the head, a held, trembling load at
+    #    the top (the warning), then down over the top, the hip dropping into the lunge.
     PU = Poser(r, stand)
+    FRONT = (3.4, 3, -7.5)  # the left foot's plant for the swing: forward on a wide stance; the right stays put
     WIND = dict(STAND)
-    WIND.update({"hip": (0, 20.6, 1.0), "body": (-6, 0, 0), "chest": (-12, -8, 0), "head": (2, 6, 0),
-                 "foot_l": (3, 3, -5.0), "foot_r": (-3.5, 3, 4.0), "yaw_l": -10, "yaw_r": 14,
-                 "grip": (-3.0, 50.0, 3.5), "dir": _dir(0.05, 0.5, 0.86), "edge": (0.0, 0.86, -0.5),
+    WIND.update({"hip": (0, 20.4, 1.2), "body": (-7, 0, 0), "chest": (-13, -9, 0), "head": (2, 7, 0),
+                 "foot_l": FRONT, "foot_r": STAND["foot_r"], "yaw_l": -10, "yaw_r": 12,
+                 "grip": (-3.0, 50.5, 4.0), "dir": _dir(0.05, 0.48, 0.88), "edge": (0.0, 0.86, -0.5),
                  "left": "glaive", "pole_r": (-1.0, 0.2, -0.3), "pole_l": (1.0, 0.2, -0.3)})
-
-    def windup(t):
-        a = ease5(span(t, 0.0, 0.3))
-        k = ease5(span(t, 0.12, 1.0))
-        st = _lerp_state(STAND, WIND, k)
-        # the glaive swings through upright on its way overhead (an arc, not a straight line)
-        g0, g1 = np.array(STAND["grip"]), np.array(WIND["grip"])
-        mid = (g0 + g1) / 2 + np.array((-3.0, 4.0, -7.0))
-        st["grip"] = tuple(bezier([g0, mid, g1], k))
-        st["dir"] = swing_dir(STAND["dir"], WIND["dir"], k)
-        st["edge"] = tuple(np.array(STAND["edge"]) * (1 - k) + np.array(WIND["edge"]) * k)
-        st["left"] = "glaive" if a > 0.5 else None
-        if a <= 0.5:
-            st["arm_l"] = tuple(np.array(STAND["arm_l"]) + np.array((-40.0, 0, 8)) * a * 2)
-            st["forearm_l"] = tuple(np.array(STAND["forearm_l"]) + np.array((-50.0, 0, 0)) * a * 2)
-        tense = 0.4 * math.sin(math.pi * span(t, 1.0, 1.25))
-        st["hip"] = (st["hip"][0], st["hip"][1] - tense, st["hip"][2])
-        return PU(round(t, 4), st)
-    bake(r.clip("windup", 1.25), windup, times(1.25, 0.05))
-    WOUND = PU.cache[round(1.25, 4)]
-    # -- strike: down hard in front, the blade's point into the floor 2.5 blocks ahead (z -33), a recoil, then held
-    PK = Poser(r, WOUND)
     HIT = dict(WIND)
-    HIT.update({"hip": (0, 17.5, -2.5), "body": (14, 0, 0), "chest": (16, 6, 0), "head": (-6, -4, 0),
-                "foot_l": (3, 3, -7.0), "foot_r": (-3.5, 3, 5.0),
+    HIT.update({"hip": (0, 17.3, -2.8), "body": (15, 0, 0), "chest": (17, 7, 0), "head": (-7, -4, 0),
                 "pole_r": (-1.0, 0.8, 0.4), "pole_l": (1.0, 0.8, 0.4)})
+
     def blade_low(off):
         W = fk(r, to_sample(off), only=["blade_tip"])
         best = None
@@ -1797,7 +1819,7 @@ def statue_clips(r):
         grip = target - dvec * 33.0
         for _ in range(4):
             st["grip"] = (float(grip[0]), float(24 - grip[1]), float(grip[2]))
-            low = blade_low(statue_pose(r, dict(st, prev=WOUND)))
+            low = blade_low(statue_pose(r, dict(st, prev=PU.prev or stand)))
             err = target - low
             grip = grip + err
             if np.linalg.norm(err) < 0.02:
@@ -1806,50 +1828,94 @@ def statue_clips(r):
         return st
     HIT_S = hit_state(0.0)
     BOUNCE = hit_state(2.6)
-    BOUNCE.update({"body": (11, 0, 0), "chest": (12, 6, 0), "hip": (0, 18.3, -2.2)})
+    BOUNCE.update({"body": (12, 0, 0), "chest": (13, 7, 0), "hip": (0, 18.2, -2.5)})
     REST_S = hit_state(0.6)
-    REST_S.update({"body": (12.5, 0, 0), "chest": (14, 5, 0), "hip": (0, 17.9, -2.4)})
+    REST_S.update({"body": (13, 0, 0), "chest": (15, 6, 0), "hip": (0, 17.8, -2.6)})
+    LOAD = dict(WIND)
+    LOAD.update({"hip": (0, 19.8, 1.5), "body": (-9, 0, 0), "chest": (-15, -11, 0), "grip": (-3.0, 51.8, 5.2),
+                 "dir": _dir(0.05, 0.42, 0.91)})
+
+    def windup(t):
+        a = ease5(span(t, 0.0, 0.3))
+        k = ease5(span(t, 0.05, 0.75))
+        st = _lerp_state(STAND, WIND, k)
+        g0, g1 = np.array(STAND["grip"]), np.array(WIND["grip"])
+        mid = (g0 + g1) / 2 + np.array((-3.0, 4.0, -7.0))
+        st["grip"] = tuple(bezier([g0, mid, g1], k))
+        st["dir"] = swing_dir(STAND["dir"], WIND["dir"], k)
+        st["edge"] = tuple(np.array(STAND["edge"]) * (1 - k) + np.array(WIND["edge"]) * k)
+        # the left foot: lifted and set down forward (never slid), planted by 0.5 s
+        f = ease5(span(t, 0.1, 0.5))
+        fl = np.array(STAND["foot_l"]) + (np.array(FRONT) - np.array(STAND["foot_l"])) * f
+        st["foot_l"] = (fl[0], fl[1] + 2.6 * math.sin(math.pi * f) ** 1.2, fl[2])
+        st["pitch_l"] = -10 * math.sin(math.pi * span(t, 0.25, 0.5))
+        # the load at the top: deeper still, trembling with the weight held over the head
+        hold = ease(span(t, 0.7, 1.0))
+        if hold > 0:
+            st = _lerp_state(st, LOAD, hold)
+        st["foot_l"], st["foot_r"] = (st["foot_l"] if t < 0.5 else FRONT), STAND["foot_r"]
+        if t > 1.0:
+            # the downswing: over the top, accelerating all the way into the floor
+            d = ease_in(span(t, 1.0, 1.25), 2.6)
+            top = _lerp_state(WIND, LOAD, 1.0)
+            st = _lerp_state(top, HIT_S, d)
+            g0, g1 = np.array(LOAD["grip"]), np.array(HIT_S["grip"])
+            mid = (g0 + g1) / 2 + np.array((-1.0, 10.0, -7.0))
+            st["grip"] = tuple(bezier([g0, mid, g1], d))
+            st["dir"] = swing_dir(LOAD["dir"], HIT_S["dir"], d, turns=-1)
+            st["edge"] = tuple(np.array(LOAD["edge"]) * (1 - d) + np.array(HIT_S["edge"]) * d)
+            st["foot_l"], st["foot_r"] = FRONT, STAND["foot_r"]
+        st["left"] = "glaive" if a > 0.5 else None
+        if a <= 0.5:
+            st["arm_l"] = tuple(np.array(STAND["arm_l"]) + np.array((-40.0, 0, 8)) * a * 2)
+            st["forearm_l"] = tuple(np.array(STAND["forearm_l"]) + np.array((-50.0, 0, 0)) * a * 2)
+        tremble = 0.35 * math.sin(t * 150.0) * span(t, 0.78, 0.86) * (1 - span(t, 0.96, 1.0))
+        st["extra"] = {"chest": {"rot": (tremble, 0, 0.6 * tremble)}}
+        return PU(round(t, 4), st)
+    bake(r.clip("windup", 1.25), windup, times(1.25, 0.025))
+    # -- strike (v2): starts at the contact the windup ended on: the jolt up the shaft, the blade's bounce, the shudder
+    #    through the body, settling into the floor
+    PK = Poser(r, PU.prev)
 
     def strike(t):
-        pull = math.sin(math.pi * span(t, 0.0, 0.07))
-        k = ease_in(span(t, 0.05, 0.2), 2.4)
-        if t <= 0.2:
-            st = _lerp_state(WIND, HIT_S, k)
-            g0, g1 = np.array(WIND["grip"]), np.array(HIT_S["grip"])
-            mid = (g0 + g1) / 2 + np.array((-1.0, 9.0, -6.0))
-            st["grip"] = tuple(bezier([g0, mid, g1], k) + np.array((0, 0.8 * pull, 0.6 * pull)))
-            st["dir"] = swing_dir(WIND["dir"], HIT_S["dir"], k, turns=-1)  # forward, over the top
-            st["edge"] = tuple(np.array(WIND["edge"]) * (1 - k) + np.array(HIT_S["edge"]) * k)
-        elif t <= 0.32:
-            st = _lerp_state(HIT_S, BOUNCE, math.sin(math.pi * span(t, 0.2, 0.32) * 0.5))
+        if t <= 0.12:
+            st = _lerp_state(HIT_S, BOUNCE, math.sin(math.pi * span(t, 0.0, 0.12) * 0.5))
         else:
-            st = _lerp_state(BOUNCE, REST_S, ease5(span(t, 0.32, 0.6)))
-        shake = 0.5 * math.sin(t * 95.0) * span(t, 0.19, 0.21) * (1 - span(t, 0.21, 0.42))
-        st["extra"] = {"chest": {"rot": (shake, 0, shake * 0.6)}, "head": {"rot": (shake * 1.5, 0, 0)}}
+            st = _lerp_state(BOUNCE, REST_S, ease5(span(t, 0.12, 0.45)))
+        shake = 0.6 * math.sin(t * 95.0) * (1 - span(t, 0.0, 0.25))
+        st["extra"] = {"chest": {"rot": (shake, 0, shake * 0.6)}, "head": {"rot": (shake * 1.6, 0, 0)}}
         return PK(round(t, 4), st)
-    bake(r.clip("strike", 0.6), strike, times(0.6, 0.02))
-    # -- recover: the blade comes up off the floor, the feet gather, back to the guard
+    bake(r.clip("strike", 0.45), strike, times(0.45, 0.015))
+    # -- recover (v2): the blade wrenched up off the floor, the left foot lifted back under the body, the guard
     PV = Poser(r, PK.prev)
 
     def recover(t):
-        k = ease5(span(t, 0.05, 0.85))
+        k = ease5(span(t, 0.05, 0.6))
         st = _lerp_state(REST_S, STAND, k)
         g0, g1 = np.array(REST_S["grip"]), np.array(STAND["grip"])
         mid = (g0 + g1) / 2 + np.array((0.0, 5.0, 2.0))
         st["grip"] = tuple(bezier([g0, mid, g1], k))
         st["dir"] = swing_dir(REST_S["dir"], STAND["dir"], k)
-        st["left"] = "glaive" if t < 0.35 else None
-        if t >= 0.35:
-            kk = ease(span(t, 0.35, 0.85))
+        st["left"] = "glaive" if t < 0.25 else None
+        if t >= 0.25:
+            kk = ease(span(t, 0.25, 0.6))
             st["arm_l"] = tuple(np.array((-55.0, 0, 6)) * (1 - kk) + np.array(STAND["arm_l"]) * kk)
             st["forearm_l"] = tuple(np.array((-35.0, 0, 0)) * (1 - kk) + np.array(STAND["forearm_l"]) * kk)
-        fl = ease5(span(t, 0.3, 0.75))
-        st["foot_l"] = tuple(np.array(REST_S["foot_l"]) + (np.array(STAND["foot_l"]) - np.array(REST_S["foot_l"])) * fl)
-        st["foot_l"] = (st["foot_l"][0], st["foot_l"][1] + 1.6 * math.sin(math.pi * fl), st["foot_l"][2])
-        fr = ease5(span(t, 0.1, 0.55))
-        st["foot_r"] = tuple(np.array(REST_S["foot_r"]) + (np.array(STAND["foot_r"]) - np.array(REST_S["foot_r"])) * fr)
+        f = ease5(span(t, 0.18, 0.55))
+        fl = np.array(FRONT) + (np.array(STAND["foot_l"]) - np.array(FRONT)) * f
+        st["foot_l"] = (fl[0], fl[1] + 2.0 * math.sin(math.pi * f) ** 1.2, fl[2])
+        st["foot_r"] = STAND["foot_r"]
         return PV(round(t, 4), st)
-    bake(r.clip("recover", 0.9), recover, times(0.9, 0.05))
+    bake(r.clip("recover", 0.65), recover, times(0.65, 0.025))
+    # -- kneel_down (v2): the End sends them back to their knees: the rise played backwards and a little quicker (the
+    #    glaive comes down to plant first, then the two lowering pushes, the knee meeting the stone last)
+    PN = Poser(r, stand)
+    rise_len = 1.8
+
+    def kneel_down(t):
+        tau = rise_len * (1 - t / 1.6)
+        return PN(round(t, 4), dict(rise_state(tau)))
+    bake(r.clip("kneel_down", 1.6), kneel_down, times(1.6, 0.05))
     # -- what HeroRig's checks ask of every rig: idle (rest), hurt (a stone flinch), death (it cracks and slumps)
     r.clip("idle", 4.0, loop=True).rot("root", [(0, 0, 0, 0), (4.0, 0, 0, 0)])
     hurt = r.clip("hurt", 0.45)
@@ -1879,12 +1945,14 @@ def statue_clips(r):
 
 
 STATUE_CHAIN = [("kneel", "rise"), ("rise", "stand"), ("stand", "windup"), ("windup", "strike"), ("strike", "recover"),
-                ("recover", "stand"), ("kneel", "kneel"), ("stand", "stand"), ("walk", "walk")]
+                ("recover", "stand"), ("kneel", "kneel"), ("stand", "stand"), ("walk", "walk"), ("stand", "kneel_down"),
+                ("kneel_down", "kneel")]
 
 
 def check_statue(rig):
     """Standing about 46 px (3.45 blocks at x1.2), kneeling about 30; feet on the floor while they stand on it; the
-    strike's blade point on the floor about 2.5 blocks ahead (z -33 model px); nothing sinks into the floor."""
+    strike's blade point on the floor about 2.5 blocks ahead (z -33 model px) on its first frame; nothing sinks into the
+    floor."""
     problems = check_chain(rig, STATUE_CHAIN)
     stats = {}
 
@@ -1915,7 +1983,7 @@ def check_statue(rig):
     stats["low"] = low
     if low < -0.3:
         problems.append(f"ritual_statue: something sinks {low:.2f} px into the floor")
-    W = fk(rig, rig.sample([("strike", 0.2, 1.0)]))
+    W = fk(rig, rig.sample([("strike", 0.0, 1.0)]))  # contact: the windup's last frame, the strike's first
     tip = None
     for bn in ("glaive", "blade_tip"):
         M, T = W[bn]
@@ -2125,8 +2193,9 @@ RENDER_SCALE = {"the_seated_one": 4.0, "ritual_statue": 1.2}
 KEY_POSES = {
     "the_seated_one": [("dormant", [0.0]), ("wake", [0.3, 1.0, 1.6, 2.2, 3.0]), ("awake", [2.5]), ("gaze", [0.6, 1.3, 1.56, 2.3]),
                        ("raise", [0.25, 0.9, 1.5, 2.0, 2.5, 3.0]), ("close", [0.1, 0.22, 0.32, 0.8]), ("sleep", [0.5, 1.0, 1.5, 2.0])],
-    "ritual_statue": [("kneel", [0.0]), ("rise", [0.4, 0.8, 1.1, 1.4, 1.8]), ("stand", [1.0]), ("walk", [0.0, 0.4, 0.8, 1.2]),
-                      ("windup", [0.3, 0.7, 1.25]), ("strike", [0.08, 0.16, 0.22, 0.35, 0.6]), ("recover", [0.3, 0.6, 0.9])],
+    "ritual_statue": [("kneel", [0.0]), ("rise", [0.4, 0.8, 1.1, 1.4, 1.8]), ("stand", [1.0]),
+                      ("walk", [0.0, 0.1, 0.2, 0.4, 0.6, 0.8]), ("windup", [0.3, 0.5, 0.75, 1.0, 1.1, 1.2, 1.25]),
+                      ("strike", [0.06, 0.12, 0.25, 0.45]), ("recover", [0.25, 0.45, 0.65]), ("kneel_down", [0.4, 0.8, 1.2, 1.6])],
 }
 HOLD = {"the_seated_one": ("dormant", 0.0, "awake", 0.0), "ritual_statue": ("kneel", 0.0, "stand", 0.0)}
 
