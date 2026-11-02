@@ -52,7 +52,7 @@ the sound are the weapon's own.
 
 - No new weapons, styles, damage numbers or combat moves. The first cut at the end of the scene deals no damage.
 - No change to drop rates: Lord-forged (35%, certain by the third Lord), Spoils, Marked and their pities stay.
-- Enchanting is not part of this plan. It gets a hook in the scene if the enchanting session wants one (§4.9).
+- Enchanting is not part of this plan. It reads how well an item was forged through `core.api.ForgeHooks` (§4.9).
 - Armour is not changed, except one line: the War Anvil counts as the Fitting Stand's anvil (decision 11).
 - The Hunter Focus and Mattock are not weapons. They stay on the grid.
 - No mixins and no Turbo feature.
@@ -279,16 +279,26 @@ tempers at the Forge. Oren still tempers anything for you when you ask him (he b
 - **Words**: the level road's E step says weapons are made at a War Anvil; Hale adds one line to his issue ("When you
   want to make your own, set up a War Anvil at home.").
 
-### 4.9 The enchanting hook (proposed to the enchanting session, local_888f6d4b; waiting for its answer)
+### 4.9 The line with enchanting (agreed with the enchanting session, local_888f6d4b, 2026-11-02)
 
-The line: this plan owns weapon crafting, forging, tiers, quality, tempering, attunement, Marks and Reforge. The
-enchanting session owns enchantments, the enchanting table, books and anything inscribed onto weapons and armour.
+**The line.** This plan owns the metal: weapon crafting, forging at the War Anvil, tiers, quality, tempering, Reforge
+(Raise), attunement to a Force, Blueprints and Marks. The enchanting plan (`dev.awaken.enchant`, its own station and
+scene) owns what is written into an item after it exists, on weapons and armour alike, found and Lord-forged included.
+Enchanting adds no flat damage or armour (tempering and tier), no element (attunement and inlay) and no fight-moment
+triggers (Marks). Tempering keeps its numbers (§4.6), so enchanting stays clear of raw damage and armour numbers.
 
-The hook: an optional **Inscribe** beat, after the hilt and before the draw, while the steel is still warm. It shows only
-when the enchanting module offers something for that weapon, and that module runs it. Through a small new
-`core.api.ForgeHooks`: `inscriber(Inscriber)` to register; `Inscriber.offer(player, weapon, station, quality)` returns
-an optional offer (a label, its costs, and a run step the enchanting module owns); and `forged(player, weapon, quality,
-station)` after every forge, temper and reforge. Both plans will name it the same.
+**No enchanting step inside the forge scene.** Both sessions agreed it keeps the scene focused.
+
+**The hook, `core.api.ForgeHooks`** (one small class, named the same in both plans):
+
+| Call | What it does | Who |
+|---|---|---|
+| `quality(ItemStack)` → `OptionalInt` 0-3 | how well an item was forged (Plain, Fine, Masterwork, Flawless); empty if it never was. Enchanting reads it for an item's room for enchantments | arms registers a reader for `awaken:weapon_forged`, armour one for `awaken:forged` (one line in armour, reported) |
+| `rank(ItemStack)` → `"E".."S"` or null | the item's tier | the same readers |
+| `forged(player, stack, quality, station)` | an event after every forge and reforge | arms (and armour, if it wants) fires it; enchanting may listen |
+| `cardLine(...)` (optional) | one line enchanting may add under the forge's result card, e.g. "Room for 3 inscriptions"; nothing shows if it registers none | enchanting decides whether to use it |
+
+It lands in stage 2 with quality; until then `quality` is empty. Neither module reads or writes the other's component.
 
 ## 5. Architecture, data and lifecycle
 
@@ -303,6 +313,7 @@ station)` after every forge, temper and reforge. Both plans will name it the sam
 | `AnvilCosts` | reads `data/awaken/arms/anvil_costs.json`, written by `tools/art/specs/arms_weapons.py costs` from the same source the recipe writer used, so the numbers can't drift |
 | `WeaponForged` | the item component `awaken:weapon_forged` (schemaVersion 1) |
 | `WeaponGoals`, `AnvilNow` | the Tasks steps and the Now line |
+| `core.api.ForgeHooks` | the read hook for enchanting (§4.9): `quality`, `rank`, `forged`, the optional `cardLine` |
 | client: `WarAnvilRenderer` | the anvil, the work on it (the weapon's own mesh, squashed and stretched as it's drawn out, glowing by its heat), the weapon in the slot |
 | client: `AnvilScene` | the first-person framing and glide (built on the armour's camera entity and projection; §5.4) |
 | client: `AnvilHands` | a SPEC §24 world source (interactions, 200): fists placed on the tools; the hammer's arc keyed to the beat; tongs follow the work |
@@ -336,7 +347,8 @@ time; others can help on the off-beats. Every memory and story is per player and
 The armour's forge camera (`armour/client/ForgeCamera.java`) is package-private and hides the hands. The builder lifts
 its camera entity and world-to-screen projection into a small shared class that both forges use, with the armour's
 behaviour unchanged and checked by its own test. If that's risky, the builder copies it instead. One line in
-`ArmourForge.anvil` accepts the War Anvil (decision 11). Both are reported at hand-off. Hearth changes are small seams:
+`ArmourForge.anvil` accepts the War Anvil (decision 11), and one registers armour's `awaken:forged` reader with
+`core.api.ForgeHooks` (§4.9). All are reported at hand-off. Hearth changes are small seams:
 `Furniture.WAR_ANVIL` appended, and the Forge's weapon paths pointing to the anvil.
 
 ### 5.5 Performance
@@ -373,10 +385,10 @@ home, in the Hive Regent's colour, its sigil glowing in the steel, and it keeps 
 | Stage | Scope | Effort | Gate |
 |---|---|---|---|
 | **1 · The first weapon at the War Anvil** | the block (model, renderer, recipe, ledger), the D scene for **one weapon (the Beastbound Longsword)** with your hands, hammer and tongs, the weapon shader's heat and draw-out, sparks and steam, sounds from the forge kit for now, `arms_anvil_song`, a CI tour shooting every beat | 4-6 h | **Euan looks at the shots** and says yes or what to change, before stage 2 |
-| **2 · Every weapon at the anvil** | the cost table and the grid recipes removed; the 16 rhythms; E knap and bind; quality, memory, flaws, helpers; the story; the list's door; patterns taught on use; the Hearth room, Tasks steps, Now line, Hale's and the level road's words; JEI's War Anvil page; ledger rows; old saves; the smith's third-person pose | 5-7 h | CI green; one tour (E and three styles) |
+| **2 · Every weapon at the anvil** | the cost table and the grid recipes removed; the 16 rhythms; E knap and bind; quality, memory, flaws, helpers; the story; `core.api.ForgeHooks` (§4.9); the list's door; patterns taught on use; the Hearth room, Tasks steps, Now line, Hale's and the level road's words; JEI's War Anvil page; ledger rows; old saves; the smith's third-person pose | 5-7 h | CI green; one tour (E and three styles) |
 | **3 · Temper, attune, reforge** | the three short scenes; the Forge's weapon paths point here; Lord-forged reforged in its colour | 3-4 h | CI green |
 | **4 · The ranks' acts** | grind, balance, twist (with the ripples), starlight | 4-5 h | CI green; one tour |
-| **5 · Sound and finish** | the anvil's own sound kit and a listening page for Euan; the Inscribe hook with enchanting; reduced motion (glides become cuts); pacing check | 3-4 h | Euan's ear; the full suite on CI |
+| **5 · Sound and finish** | the anvil's own sound kit and a listening page for Euan; enchanting's card line if it wants one; reduced motion (glides become cuts); pacing check | 3-4 h | Euan's ear; the full suite on CI |
 
 About 19-26 builder hours in all. One builder, stage by stage (rule: no sub-agents). It doesn't split well: every stage
 touches the same scene.
@@ -432,7 +444,8 @@ to be undone, the recipes come back from the art tool's writer in one command, a
     the Weapons tab gets real steps. *Recommended: yes.*
 11. **The War Anvil counts as the anvil for the Fitting Stand**, so a home needs one anvil, not a 31-iron vanilla one as
     well. One line in the armour code. *Recommended: yes.*
-12. **The Inscribe beat for enchanting**, owned and run by the enchanting session, shown only when it has something to
-    offer. *Recommended: yes, as agreed with that session.*
+12. **The line with enchanting**: no enchanting step inside the forge scene. Enchanting reads how well a weapon or armour
+    piece was forged (and its rank) through `core.api.ForgeHooks`, so forging well gives more room for enchantments, and
+    it may add one line to the forge's result card. *Recommended: yes, as agreed with that session.*
 13. **Stages in order**, starting with one Beastbound Longsword forged at the anvil and shown to you in CI tour shots
     before anything else is built. *Recommended: yes.*
