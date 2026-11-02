@@ -542,9 +542,10 @@ void main() {
         c = mix(c, vec3(0.84, 0.93, 1.0) * (0.55 + 0.45 * luma(c)) + streak * 0.12, e * 0.5);
     }
 #endif
-    // vignette, rounder on wide screens
+    // vignette, rounder on wide screens; it starts further out and darkens to three quarters of a look's value (Euan
+    // 2026-11-02: too dark; a 0.3 look's corners keep 82% where they kept 73%)
     vec2 v = (texCoord - 0.5) * vec2(OutSize.x / OutSize.y, 1.0) * 0.82;
-    c *= mix(1.0, smoothstep(0.98, 0.32, length(v)), highT.a);
+    c *= mix(1.0, smoothstep(1.02, 0.4, length(v)), highT.a * 0.75);
 
     // triangular dither: smooth haze and sky gradients without 8-bit bands
     vec2 q = gl_FragCoord.xy;
