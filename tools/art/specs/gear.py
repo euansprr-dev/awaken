@@ -2030,13 +2030,15 @@ def content():
                       "M": "#awaken:tier_metal_" + tl, "G": "minecraft:gold_ingot", "Y": "minecraft:amethyst_shard"}
             pattern = RECIPES[t][piece]
             used = sorted({ch for row in pattern for ch in row if ch != " "})
+            if piece == "blade":  # forged at a War Anvil (SPEC §46.7): its cost is arms_weapons.py's table, from this shape
+                continue
             write(os.path.join(d, "recipe", iid + ".json"), {
                 "type": "minecraft:crafting_shaped", "category": "equipment", "group": "awaken_hunter_" + piece,
                 "key": {ch: keymap[ch] for ch in used}, "pattern": pattern, "result": {"id": "awaken:" + iid}})
         lvl, title, text = ROAD[t]
         write(os.path.join(d, "awaken/level_road", "hunter_gear_" + t.lower() + ".json"), {
             "schema": 1, "level": lvl, "title": title, "text": text,
-            "grants": [{"type": "recipe", "ids": ["awaken:" + item_id(t, p) for p in PIECES]}], "quiet": False})
+            "grants": [{"type": "recipe", "ids": ["awaken:" + item_id(t, p) for p in PIECES if p != "blade"]}], "quiet": False})
     # the late sets' extra geometry (read by the client's armour model, checked by gear_silhouettes_valid)
     for t in LATE:
         write(os.path.join(a, "gear_silhouettes", SET[t] + ".json"), silhouette_json(t))

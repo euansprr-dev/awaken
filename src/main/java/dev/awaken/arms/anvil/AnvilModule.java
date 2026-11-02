@@ -24,6 +24,8 @@ public final class AnvilModule {
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> WarAnvil.forget(e.getEntity().getUUID()));
         registerCommands();
         WeaponGoals.register();
+        dev.awaken.core.api.Sources.declare("forged at a War Anvil (SPEC §46.7): by hand at E, in the Forge's heat from D",
+                AnvilCosts.table().keySet().toArray(String[]::new));
         AnvilTests.register();
     }
 

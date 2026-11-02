@@ -123,18 +123,9 @@ public final class WarAnvil {
 
     // ---- what it costs -----------------------------------------------------------------------------------------------
 
-    /** The Longsword's recipe; without the blade, the blade's own recipe stands in for it (what the grid would take). */
+    /** The Longsword's cost (SPEC §46.7); without the blade, the blade's own parts stand in for it. */
     static List<NeedRow> cost(ServerPlayer p) {
-        List<NeedRow> sword = ArmsArmoury.needsOf(p, WEAPON);
-        NeedRow blade = null;
-        for (NeedRow r : sword) if (r.kind().equals("item") && r.id().equals(Awaken.MODID + ":" + BLADE)) blade = r;
-        if (blade == null || blade.have() >= blade.need()) return sword;
-        Map<String, NeedRow> merged = new LinkedHashMap<>();
-        for (NeedRow r : sword) if (r != blade) merged.put(r.kind() + r.id(), r);
-        for (NeedRow r : ArmsArmoury.needsOf(p, BLADE)) {
-            merged.merge(r.kind() + r.id(), r, (a, b) -> new NeedRow(a.kind(), a.id(), a.need() + b.need(), a.have()));
-        }
-        return List.copyOf(merged.values());
+        return AnvilCosts.needs(p, WEAPON);
     }
 
     private static Predicate<ItemStack> matcher(NeedRow n) {

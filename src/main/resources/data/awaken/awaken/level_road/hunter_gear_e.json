@@ -2,14 +2,13 @@
   "schema": 1,
   "level": 3,
   "title": "Hunter gear · E",
-  "text": "Hide from creatures, a bone or flint, a string or feather, and one Essence Shard a piece; creatures drop all of it. Wildhide armour is made by hand at a Fitting Stand by a crafting table. From D-rank, weapons are forged at a War Anvil. The blade, focus and mattock recipes are in your recipe book.",
+  "text": "Hide from creatures, a bone or flint, a string or feather, and one Essence Shard a piece; creatures drop all of it. Wildhide armour is made by hand at a Fitting Stand, and weapons at a War Anvil: by hand at E, in the Forge's heat from D. The focus and mattock recipes are in your recipe book.",
   "grants": [
     {
       "type": "recipe",
       "ids": [
         "awaken:fitting_stand",
         "awaken:war_anvil",
-        "awaken:wildhide_blade",
         "awaken:wildhide_focus",
         "awaken:wildhide_mattock"
       ]

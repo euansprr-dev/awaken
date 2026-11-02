@@ -188,10 +188,14 @@ public final class ArmsArmoury {
         return needsOf(p, recipeId(style, tier));
     }
 
-    /** What a recipe of ours needs (by its id, "beastbound_blade") and how much of it the player holds. */
+    /**
+     * What a thing of ours needs (by its id, "beastbound_blade") and how much of it the player holds: a weapon or a Hunter
+     * blade from the War Anvil's cost table (SPEC §46.7), anything else from its crafting recipe.
+     */
     public static List<ArmsPayloads.NeedRow> needsOf(ServerPlayer p, String recipe) {
+        if (dev.awaken.arms.anvil.AnvilCosts.of(recipe) != null) return dev.awaken.arms.anvil.AnvilCosts.needs(p, recipe);
         List<ArmsPayloads.NeedRow> out = new ArrayList<>();
-        for (Raw r : raw(recipe)) out.add(new ArmsPayloads.NeedRow(r.kind(), r.id(), r.n(), have(p, r)));
+        for (Raw r : raw(recipe)) out.add(new ArmsPayloads.NeedRow(r.kind(), r.id(), r.n(), have(p, r.kind(), r.id())));
         return out;
     }
 
@@ -209,14 +213,15 @@ public final class ArmsArmoury {
         }
     }
 
-    private static int have(ServerPlayer p, Raw r) {
+    /** How many of a tag's items ("tag") or an item ("item") the player holds, the off hand counted. */
+    public static int have(ServerPlayer p, String kind, String id) {
         int n = 0;
-        if (r.kind().equals("tag")) {
-            TagKey<Item> tag = TagKey.create(Registries.ITEM, Identifier.parse(r.id()));
+        if (kind.equals("tag")) {
+            TagKey<Item> tag = TagKey.create(Registries.ITEM, Identifier.parse(id));
             for (ItemStack s : p.getInventory().getNonEquipmentItems()) if (s.is(tag)) n += s.getCount();
             if (p.getOffhandItem().is(tag)) n += p.getOffhandItem().getCount();
         } else {
-            Item item = BuiltInRegistries.ITEM.getValue(Identifier.parse(r.id()));
+            Item item = BuiltInRegistries.ITEM.getValue(Identifier.parse(id));
             n = ArmsForge.count(p, item);
         }
         return n;

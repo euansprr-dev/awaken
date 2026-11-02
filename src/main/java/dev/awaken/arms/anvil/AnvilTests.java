@@ -28,6 +28,56 @@ final class AnvilTests {
     static void register() {
         AwakenTests.register("arms_anvil_song", 40, AnvilTests::song);
         AwakenTests.registerIsolated("arms_anvil_goals", 100, AnvilTests::goals);
+        AwakenTests.register("arms_anvil_costs", 20, AnvilTests::costs);
+    }
+
+    /**
+     * Weapons are never made on the grid (SPEC §46.7): every forged weapon and Hunter blade has its War Anvil cost (its old
+     * recipe minus the Blueprint: the style's shape counted) and no crafting recipe makes any of them; a carried blade
+     * stands in for its parts, else they're added.
+     */
+    private static void costs(GameTestHelper h) {
+        int weapons = 0;
+        for (var w : dev.awaken.arms.ArmsData.WEAPONS) {
+            if (dev.awaken.arms.LordForged.byWeapon(w.id()) != null) continue;
+            var parts = AnvilCosts.of(w.id());
+            h.assertTrue(parts != null && parts.stream().anyMatch(AnvilCosts::blade), w.id() + " has its cost, its tier's blade in it: " + parts);
+            h.assertTrue(parts.stream().noneMatch(q -> q.id().endsWith("_blueprint")), w.id() + " takes no Blueprint");
+            weapons++;
+        }
+        h.assertTrue(weapons == 96, "all 96 forged weapons: " + weapons);
+        for (String set : new String[]{"wildhide", "beastbound", "gatewrought", "veilwoven", "lordscale", "sovereign"}) {
+            h.assertTrue(AnvilCosts.of(set + "_blade") != null, set + "'s Hunter blade has its cost");
+        }
+        // the shapes counted: two blades in a Greatblade, a Precursor Arm and Twinblades; the tier's metal from D
+        h.assertTrue(count(AnvilCosts.of("beastbound_greatblade"), "awaken:beastbound_blade") == 2
+                && count(AnvilCosts.of("beastbound_greatblade"), "awaken:tier_metal_d") == 1, "a Beastbound Greatblade: two blades, a core, the metal");
+        h.assertTrue(count(AnvilCosts.of("wildhide_daggers"), "awaken:hunter_bind_e") == 1, "E binds with a binding");
+        for (var r : h.getLevel().getServer().getRecipeManager().getRecipes()) {
+            for (var d : r.value().display()) {
+                Item out = d.result() instanceof net.minecraft.world.item.crafting.display.SlotDisplay.ItemStackSlotDisplay(var t) ? t.item().value()
+                        : d.result() instanceof net.minecraft.world.item.crafting.display.SlotDisplay.ItemSlotDisplay(Holder<Item> i) ? i.value() : null;
+                if (out == null) continue;
+                String path = BuiltInRegistries.ITEM.getKey(out).getPath();
+                h.assertTrue(dev.awaken.arms.ArmsItems.of(out) == null && AnvilCosts.of(path) == null, r.id().identifier() + " makes " + path + " on the grid");
+            }
+        }
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        p.getInventory().clearContent();
+        var bare = AnvilCosts.needs(p, "wildhide_daggers");
+        h.assertTrue(bare.stream().noneMatch(n -> n.id().endsWith("wildhide_blade")) && bare.stream().mapToInt(n -> n.need()).sum() == 6,
+                "without a Fang the Daggers ask for its parts too (3 parts, 2 bindings, an essence): " + bare);
+        p.getInventory().add(new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id("wildhide_blade"))));
+        var withFang = AnvilCosts.needs(p, "wildhide_daggers");
+        h.assertTrue(withFang.size() == 3 && withFang.stream().anyMatch(n -> n.id().endsWith("wildhide_blade") && n.have() == 1),
+                "a carried Fang stands in for its parts: " + withFang);
+        h.succeed();
+    }
+
+    private static int count(java.util.@org.jspecify.annotations.Nullable List<AnvilCosts.Part> parts, String id) {
+        if (parts == null) return -1;
+        for (var q : parts) if (q.id().equals(id)) return q.n();
+        return 0;
     }
 
     /**
