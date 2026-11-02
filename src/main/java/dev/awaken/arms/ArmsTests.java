@@ -578,7 +578,7 @@ final class ArmsTests {
         for (ArmsForge.Cost c : ArmsForge.blueprintPrice()) p.getInventory().add(new ItemStack(c.item(), c.n()));
         h.assertTrue(ArmsForge.drawBlueprint(p, "glaive") && ArmsForge.owns(p, "glaive"), "a Glaive Blueprint drawn");
         Item bp = ArmsItems.BLUEPRINTS.get("glaive").get();
-        h.assertTrue(bp.getCraftingRemainder(new ItemStack(bp)) != null, "the crafting grid gives a Blueprint back");
+        h.assertTrue(bp.getCraftingRemainder(new ItemStack(bp)) == null, "a Blueprint goes into nothing now (SPEC §46.7): it teaches when used");
         h.assertTrue(!ArmsItems.BLUEPRINTS.containsKey(Arms.LONGSWORD) && ArmsItems.BLUEPRINTS.size() == 15, "every style but the Longsword has one");
         h.succeed();
     }
