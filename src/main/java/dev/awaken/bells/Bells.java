@@ -359,7 +359,7 @@ public final class Bells {
             }
             remembered(p, BellCatalog.of(c.id()), at, c.remembered());
         }
-        // the homes people left: their bells wait for the villages' quests (§43.16), so nobody tells of them yet
+        // the homes people left: their people tell of them in their own words (VillageBells, §43.16 stage 5)
     }
 
     /** A Dreamt lead: a dream bell rang and got away. */
@@ -730,6 +730,12 @@ public final class Bells {
     public static void leave(ServerLevel level, BlockPos near, String id, List<ServerPlayer> ps, String where, String line) {
         BellCatalog.Def d = BellCatalog.of(id);
         if (d != null && !ps.isEmpty()) FoundBells.leave(level, near, d, ps, where, line);
+    }
+
+    /** Whether bell {@code id} is lying somewhere for this player to lift (a Lord's floor, by a Crucible, anywhere it was won). */
+    public static boolean lying(ServerPlayer p, String id) {
+        BellCatalog.Def d = BellCatalog.of(id);
+        return d != null && FoundBells.waiting(p.level().getServer(), p.getUUID(), d.no());
     }
 
     /** How near Bram a hunter must stand to be handed the Registry's bells. */

@@ -659,8 +659,9 @@ public final class KinWorks {
         if (h.isEmpty()) return;
         List<String> cast = KinWorld.get(p.level().getServer()).cast.get(h.get().anchor().asLong());
         if (cast == null) return;
-        for (String id : cast) if (!Bells.has(p, id)) Bells.ring(p, id, "cast in your Foundry");
-        if (!cast.isEmpty()) Bells.ring(p, "founders", "the bell-founders' own, for your Foundry's first cast");
+        // one standing by the Crucible for them is theirs to lift there (SPEC §43.16 stage 5)
+        for (String id : cast) if (!Bells.has(p, id) && !Bells.lying(p, id)) Bells.ring(p, id, "cast in your Foundry");
+        if (!cast.isEmpty() && !Bells.lying(p, "founders")) Bells.ring(p, "founders", "the bell-founders' own, for your Foundry's first cast");
     }
 
     /** What the crucible says when used: the next bell, what it needs, and who heats it. */
