@@ -17346,7 +17346,9 @@ it; coming back restarts the stage, counted in again.
 
 **46.3 The scene (stage 1, client).** `AnvilScene`: the view turns to the Forge's mouth for the heat, the anvil's face
 for the draw out and the hilt, the trough for the quench and the slot for the draw, gliding 14 ticks between
-(`ViewportEvent.ComputeCameraAngles`). The smith's view (`AnvilCamera`; Euan 2026-11-02 on the first tour's shots: "the
+(`ViewportEvent.ComputeCameraAngles`); with reduced motion (the body's comfort setting, `FirstPerson.reducedMotion`;
+stage 5) the view cuts to each look and its field of view instead (`AnvilScene.cut`), and the hands, which only follow
+the tools, keep the core's halved look-lag (§24). The smith's view (`AnvilCamera`; Euan 2026-11-02 on the first tour's shots: "the
 arms hide the view a bit too much"): from your eyes the tools' grips sat between you and the work, your arms climbing
 across the middle of the frame; so the view leaves your eyes, as a smith bends over the anvil, for a place over its front
 edge (anvil blocks: x 0.5, y 1.75, z 0.05, the smith's side -z) looking down on the work at about 54°, a little back for

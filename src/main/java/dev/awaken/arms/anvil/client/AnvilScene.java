@@ -7,6 +7,7 @@ import dev.awaken.arms.anvil.WarAnvilBlock;
 import dev.awaken.arms.anvil.WarAnvilBlockEntity;
 import dev.awaken.arms.client.WeaponDraw;
 import dev.awaken.core.Forces;
+import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -872,7 +873,7 @@ final class AnvilScene {
         double ax = pos.getX() + T.x - eye.x, ay = pos.getY() + T.y - eye.y, az = pos.getZ() + T.z - eye.z;
         float yaw = (float) (Mth.atan2(-ax, az) * Mth.RAD_TO_DEG);
         float pitch = (float) (-Mth.atan2(ay, Math.sqrt(ax * ax + az * az)) * Mth.RAD_TO_DEG);
-        float k = smooth(Mth.clamp((now - glideAt) / GLIDE, 0F, 1F));
+        float k = cut() ? 1F : smooth(Mth.clamp((now - glideAt) / GLIDE, 0F, 1F));
         yaw = fromYaw + Mth.wrapDegrees(yaw - fromYaw) * k;
         pitch = Mth.lerp(k, fromPitch, pitch);
         e.setYaw(yaw);
@@ -887,11 +888,16 @@ final class AnvilScene {
         AnvilCamera.place(NEXT, yaw, pitch);
     }
 
+    /** Reduced motion (the body's comfort setting): the view cuts to each look instead of gliding there. */
+    static boolean cut() {
+        return FirstPerson.reducedMotion.getAsBoolean();
+    }
+
     /** Your own field of view over the work; a little closer when the view stays at your eyes. */
     static void fov(ViewportEvent.ComputeFov e) {
         if (AnvilClient.sceneAnvil() == null) return;
         float now = AnvilClient.now((float) e.getPartialTick());
-        float k = started ? smooth(Mth.clamp((now - openAt) / GLIDE, 0F, 1F)) : 0F;
+        float k = !started ? 0F : cut() ? 1F : smooth(Mth.clamp((now - openAt) / GLIDE, 0F, 1F));
         e.setFOV(e.getFOV() * Mth.lerp(k, 1F, AnvilCamera.away() ? 1F : 0.85F));
         NOW[5] = e.getFOV();
     }
