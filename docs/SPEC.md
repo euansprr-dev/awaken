@@ -6745,7 +6745,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   their own third-person poses and two-handed grips, not a wrist. The scythe leads point first in third person; its haul back through
   the target is first person's.
 - **Third person from first person's blade** (the Katana, Greatblade, Maul, Spear, Glaive, Scythe, War-staff and
-  Twinblades; Euan 2026-10-26: "how are we gonna get that exactly the same as first person... so that it genuinely
+  Twinblades; the Scythe since 2026-11-03 from its own keys, "Hand-keyed moves" below; Euan 2026-10-26: "how are we gonna get that exactly the same as first person... so that it genuinely
   looks really, really good", then "roll the blade-first third-person rig out to the maul, spear, glaive, scythe,
   war-staff and twinblades"; tools/art/specs/arms_rig4.py). First person is designed from the blade (its path, the edge
   leading, through the target on the hit); third person was designed from the arm (a few poses per kind, the weapon
@@ -6822,10 +6822,11 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
   never home between strikes.
 - **Hand-keyed moves** (the dagger and scythe audit's rebuild, Euan 2026-11-02: "Go with all recommendations"; never
-  tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' moves (the Scythe's next) are
+  tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' and the Scythe's moves are
   written pose by pose in `tools/art/arms_keys.py`: the fist placed on the screen at a depth, the point drawn at a
-  screen place for the blade's length (0.627 for all four daggers, weapon-designs 7bbc8f78), the edge's way, for both
-  hands; each blow's key on the tick the server counts its hit (the first active tick; a loosed heavy's and a landed
+  screen place for the blade's length (0.627 for all four daggers, weapon-designs 7bbc8f78; the scythe's snath top,
+  0.656 from the fist, with the blade's way out from it), the edge's way, for both hands; each blow's key on the tick
+  the server counts its hit (the first active tick; a loosed heavy's and a landed
   Plunge's 0.3 in). Between keys a hand travels on a cubic, stopping only at a key that says so, its turn eased the
   same way. `bake` splices the keyed styles into fp_swings.json (schema 7) and leaves every other byte as it was;
   `check` proves that against git and holds the data to the GameTests' rules; `strip` and `chain` draw a move or a chain
@@ -6844,6 +6845,17 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     straight to the guard over two and a half (the film's gate wants the blow at least 3 times its return's speed;
     keyed, strikes 1, 2, 4 and the riposte run 5 to 7 times). The heavy charges coiled on the crosshair's line and its
     release is the drive; the Plunge is armed raised, points down.
+  - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
+    peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
+    ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up
+    over the right shoulder, the blade high in the view's right, and reaps across the crosshair on the hit tick, carried
+    down and round to the left and held low there; strike 2 turns the blade over on the way up (never in less than a
+    tick) and reaps back from the left; strike 3 lifts the snath overhead and behind, hooks down on the hit and hauls
+    back through, then settles (by tick 10) into a ready stance, the snath across the body and the blade low before
+    the feet, before it goes home: decision 9 keeps its full 20 ticks of recovery but shows them as a stance, not a
+    pause; strike 4 reaches far out to the right and sweeps round. The moves keep their old lengths. The ribbon lays
+    over the cut only (`trail`, from a fraction of a tick before the hit to about a tick after it), so the return
+    lays none. `arms_keys.py check` holds every strike's point inside the view at its set.
   - *Third person from the same keys* (decision 7; `arms_keys.py third`, written to `tools/art/specs/arms_keys3.json`,
     which `arms_moves.py` builds into each keyed move's clips, `arms_daggers_<move>` and `_bent`, with the heavy's charge
     clips; ArmsClips plays them for the Daggers as its own): each fist is placed from the first-person pose, the same
@@ -6854,7 +6866,20 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     the end). A move fades into third person over its wind-up
     from rest (a chained strike at once) and out over its last pair of keys, so a move ending a chain holds at rest
     before it fades. `arms_keys.py check` holds the wrist limit and the wrist square at both ends; `arms_moves.py build`
-    the clipping.
+    the clipping. *The Scythe* (`arms_keys.py third scythe`, `third_two`; `arms_scythe_<move>` and `_bent`, played as
+    the arms_rig4 ones were) is placed the same way with its fists held out before the body (first person's 0.40 to
+    0.60 blocks onto 4 px before the shoulders to an arm's length: at the chest a raised snath hangs its blade through
+    the face), the weapon turned in the fist the whole way first person turns it (its blade stands out to one side, so
+    the roll about the snath counts), the chest side-on (25 degrees) and turning with the snath, a third of its turn
+    and at most 30 degrees, half a tick ahead. The off hand closes on the snath up from the main fist, at the spot its
+    arm reaches nearest the shoulder (arms_rig4's off_spot): a figure's fist closes 6 px down the haft
+    (`arms_holds.HAFT3`), which puts the peg 11.5 px on, past a figure's span. Where the arm can't reach the snath
+    (more than 3.6 px off it) the hand lets go cleanly and takes hold again, and it lets go home first at the move's
+    end. Measured (bent, straight): both hands on through 90/85% of strike 1, 59/51% strike 2, 75/87% strike 3,
+    85/31% strike 4, 93/93% the heavy, 87/40% the riposte, 84/72% the Art, 98/99% the Plunge, 100/95% the Execution, 83/83% the Slipcut and 10/0% the
+    Undercut (the low sweep out of a slide); the blade at most 0.6 px into the body, the butt 0.3 to 2.0 px by the
+    belly; no wrist faster than 20 degrees a key outside the blow (arms_rig4's snapped up to 151). arms_rig4 no longer
+    drives the Scythe.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §46.1 "Hits land now"): each keyed blow's pose sits on
     the tick the server counts its hit, so the impact stage 0 plays the frame its sweep reaches the body meets the blade
     there and the freeze holds the contact pose. The Daggers' freezes are 50 ms on strikes 1 and 2, 60 on strike 3 and
@@ -7277,7 +7302,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     falls due, those near on the server's tick, `ArmsState.swishAt`); a blow landing before the row's sound could peak
     plays `arms.swish_quick` (its pass 38 ms in), the katana's cuts `arms.swish_katana` (thinner, a clean high whistle,
     56 ms). Two-handed weapons (katana, greatblade, maul, spear, glaive, scythe, war-staff, twin blades) close the off
-    hand on the handle below the main (0.11 to 0.40 blocks down it) when the off hand is empty, through every swing and the guard;
+    hand on the handle below the main (0.11 to 0.40 blocks down it; the Scythe up its snath on the peg, "Hand-keyed
+    moves") when the off hand is empty, through every swing and the guard;
     a stance's own off fist still takes the hand.
   - *Live tuning* (`SwingTuning`; `/awaken swing tune on [path] | off`, `ab`, `blind`, `note <words>`, `last`; the
     state kept in `awaken-arms-client.toml`): while on, the swings come from `<folder>/fp_swings.json` (the folder: the
