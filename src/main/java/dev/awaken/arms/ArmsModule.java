@@ -37,6 +37,7 @@ public final class ArmsModule {
         ArmsContent.register(modBus);
         ArmsSounds.register(modBus);
         ArmsItems.register(modBus);
+        dev.awaken.arms.anvil.AnvilModule.init(modBus);
         Archetypes.all(); // fail fast on a broken timing table
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
         ArmsForge.init();

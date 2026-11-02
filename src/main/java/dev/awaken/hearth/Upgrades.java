@@ -303,6 +303,13 @@ public final class Upgrades {
         return armory ? Math.min(MAX_TEMPER, h.forgeTier * 2) : 1;
     }
 
+    /** The temper limit at a Forge for this player, as {@link #offerTemper} reckons it there (the War Anvil reads it). */
+    public static int temperCapAt(ServerPlayer sp, BlockPos at) {
+        Optional<HearthRecord> ho = HearthService.homeOf(sp);
+        boolean armory = ho.isPresent() && (hasArmoryAround(ho.get(), at) || ho.get().roomAt(at, RoomType.ARMORY).isPresent());
+        return ho.map(h -> temperCap(h, armory)).orElse(1);
+    }
+
     /** Offers to temper the item in {@code hand}. source = "forge" (at a Forge block) or "oren" (the Blacksmith). */
     public static void offerTemper(ServerPlayer sp, ServerLevel level, BlockPos at, InteractionHand hand, String source) {
         ItemStack stack = sp.getItemInHand(hand);

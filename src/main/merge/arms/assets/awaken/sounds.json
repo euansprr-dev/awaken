@@ -604,5 +604,167 @@
         "attenuation_distance": 18
       }
     ]
+  },
+  "anvil.bellows": {
+    "subtitle": "subtitles.awaken.anvil.bellows",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_bellows_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:forge/forge_bellows_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "anvil.pull": {
+    "subtitle": "subtitles.awaken.anvil.pull",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_pull_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:forge/forge_pull_1",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "anvil.strike": {
+    "subtitle": "subtitles.awaken.anvil.strike",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_iron_0",
+        "attenuation_distance": 20,
+        "pitch": 1.12
+      },
+      {
+        "name": "awaken:forge/forge_strike_iron_1",
+        "attenuation_distance": 20,
+        "pitch": 1.12
+      }
+    ]
+  },
+  "anvil.ring": {
+    "subtitle": "subtitles.awaken.anvil.ring",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_note_0",
+        "attenuation_distance": 16,
+        "pitch": 1.5
+      }
+    ]
+  },
+  "anvil.miss": {
+    "subtitle": "subtitles.awaken.anvil.miss",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_miss_0",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:forge/forge_miss_1",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "anvil.flip": {
+    "subtitle": "subtitles.awaken.anvil.flip",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_fit_0",
+        "attenuation_distance": 12,
+        "pitch": 1.2
+      },
+      {
+        "name": "awaken:forge/forge_fit_1",
+        "attenuation_distance": 12,
+        "pitch": 1.2
+      }
+    ]
+  },
+  "anvil.quench": {
+    "subtitle": "subtitles.awaken.anvil.quench",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_quench_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:forge/forge_quench_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "anvil.lift": {
+    "subtitle": "subtitles.awaken.anvil.lift",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_quench_0",
+        "attenuation_distance": 12,
+        "pitch": 1.35,
+        "volume": 0.6
+      },
+      {
+        "name": "awaken:forge/forge_quench_1",
+        "attenuation_distance": 12,
+        "pitch": 1.35,
+        "volume": 0.6
+      }
+    ]
+  },
+  "anvil.tap": {
+    "subtitle": "subtitles.awaken.anvil.tap",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_strike_copper_0",
+        "attenuation_distance": 12,
+        "pitch": 1.3
+      },
+      {
+        "name": "awaken:forge/forge_strike_copper_1",
+        "attenuation_distance": 12,
+        "pitch": 1.3
+      }
+    ]
+  },
+  "anvil.count": {
+    "subtitle": "subtitles.awaken.anvil.count",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_count_0",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:forge/forge_count_1",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "anvil.scrape": {
+    "subtitle": "subtitles.awaken.anvil.scrape",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_cut_0",
+        "attenuation_distance": 12,
+        "pitch": 0.7
+      },
+      {
+        "name": "awaken:forge/forge_cut_1",
+        "attenuation_distance": 12,
+        "pitch": 0.7
+      }
+    ]
+  },
+  "anvil.drawn": {
+    "subtitle": "subtitles.awaken.anvil.drawn",
+    "sounds": [
+      {
+        "name": "awaken:forge/forge_wake_0",
+        "attenuation_distance": 24,
+        "pitch": 1.25
+      }
+    ]
   }
 }
