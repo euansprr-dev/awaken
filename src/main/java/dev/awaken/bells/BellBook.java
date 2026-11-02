@@ -13,10 +13,12 @@ import java.util.Map;
  * One player's Bell Book (SPEC §43.7): the bells they hold (when and where each rang), their leads (how they learned of
  * each bell they don't hold yet, in the System's words, and where it seems to be), the lead they track, the peal their
  * handbell is set to, and what's been said once. Saved on the player, kept through death. Schema 4 (SPEC §43.16): the
- * lines said once, and how many Lords have fallen since one last kept a bell for you.
+ * lines said once, and how many Lords have fallen since one last kept a bell for you. Schema 5 (stage 2): the bells owed
+ * back to you as things (carried through a death, or fallen out of the world), and where each of the far six you've
+ * heard rung hangs.
  */
 public final class BellBook {
-    public static final int SCHEMA = 4;
+    public static final int SCHEMA = 5;
 
     /** How a lead was learned (JOURNEY part 4). Sung comes with the Chimewren (stage 5), Found with the Stilled's letters. */
     public enum How { HEARD, SEEN, SUNG, FOUND, RUNG, REMEMBERED, DREAMT }
@@ -79,8 +81,14 @@ public final class BellBook {
             Codec.BOOL.optionalFieldOf("pealed", false).forGetter(b -> b.pealed),
             Codec.LONG.optionalFieldOf("kinsong_at", 0L).forGetter(b -> b.kinsongAt),
             Codec.STRING.listOf().optionalFieldOf("said", List.of()).forGetter(b -> new ArrayList<>(b.said)),
-            Codec.INT.optionalFieldOf("lords_since", 0).forGetter(b -> b.lordsSince)
-    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay, pealed, kinsongAt, said, lordsSince) -> {
+            Codec.INT.optionalFieldOf("lords_since", 0).forGetter(b -> b.lordsSince),
+            Codec.INT.listOf().optionalFieldOf("owed", List.of()).forGetter(b -> new ArrayList<>(b.owed)),
+            Codec.unboundedMap(Codec.STRING, Codec.LONG).optionalFieldOf("far", Map.of()).forGetter(b -> {
+                Map<String, Long> out = new HashMap<>();
+                b.far.forEach((k, v) -> out.put(Integer.toString(k), v));
+                return out;
+            })
+    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay, pealed, kinsongAt, said, lordsSince, owed, far) -> {
         BellBook b = new BellBook();
         b.schema = schema;
         held.forEach((k, v) -> b.held.put(Integer.parseInt(k), v));
@@ -94,6 +102,8 @@ public final class BellBook {
         b.kinsongAt = kinsongAt;
         b.said.addAll(said);
         b.lordsSince = lordsSince;
+        b.owed.addAll(owed);
+        far.forEach((k, v) -> b.far.put(Integer.parseInt(k), v));
         return b;
     }));
 
@@ -109,7 +119,7 @@ public final class BellBook {
     public final Map<Integer, Lead> leads = new HashMap<>();
     /** The lead on the top-right card, or -1. */
     public int tracked = -1;
-    /** The handbell and the bell frame were given with the first bell. */
+    /** The first bell has come (the handbell came with it; before stage 2, the bell frame too). */
     public boolean given;
     /** The peal the handbell rings ("" for a plain ring). */
     public String peal = "";
@@ -125,6 +135,10 @@ public final class BellBook {
     public final java.util.Set<String> said = new java.util.HashSet<>();
     /** Gate Lords fallen with this player there since one last kept a bell for them (schema 4). */
     public int lordsSince;
+    /** Bells owed back as things (schema 5): carried through a death, or fallen out of the world. */
+    public final List<Integer> owed = new ArrayList<>();
+    /** The far six this player has heard rung (schema 5): bell number → where it hangs (a packed BlockPos). */
+    public final Map<Integer, Long> far = new HashMap<>();
 
     public boolean has(String id) {
         BellCatalog.Def d = BellCatalog.of(id);

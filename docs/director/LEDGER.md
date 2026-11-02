@@ -734,3 +734,55 @@ happens).
 - **Links**: the Stilled (§43.3), the Last Fire (§21), the Wake.
 - **Edges**: a Stilled in an unloaded chunk stands the next time its chunk loads near a player; Ilse doesn't come by night
   or when nobody's at the fire, and comes the next fair day; she visits a home once (`ilse` in `bells`).
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Bells you carry and hang (§43.16 stage 2, plan docs/director/BELLS.md §4)
+
+### The bell (`awaken:bell`, one item for all hundred)
+- **Get**: winning a bell anywhere (`Bells.ring`): it's filed in the Book and put in your hands; Ilse puts the Ember Bell
+  in your hands at the coal; the Lampwing's old bell is lifted from its tree. The far six (Roost, Square, Market,
+  Harbour, Watch, Curfew) never become things: they stay where they hang.
+- **For**: hung at home it's a note in your song and its voice; three hung make a peal.
+- **Know**: its card ("It's yours. Take it home and hang it."; a Great Bell's names the Great Beam), its tooltip (number,
+  rank, what it does while it hangs, where it hangs), the first bell's line about the Bell Frame, the Bells tab's step
+  "Hang the bells in your bag".
+- **Source**: `bells.BellItem`, component `awaken:bell` (the number), `Sources.declare("bell", ...)`.
+- **Links**: the Bell Frame, Bell Beam and Great Beam; the Book; peals; the song.
+- **Edges**: one a stack; can't burn, be hurt or despawn; falling out of the world brings it back to its owner's hands
+  (or to the world's spawn); never dropped at death (owed back to your hands); a bell already in your home's song won't
+  hang twice ("This one's yours to keep"); used in the hand it rings its note; on any other block it says how hanging works.
+
+### The Bell Frame, the Bell Beam and the Great Beam
+- **Get**: made at a table: the frame from planks and logs (no vanilla bell any more), the Bell Beam from logs and iron
+  nuggets, the Great Beam from logs, iron chain and an iron ingot.
+- **For**: hooks: the frame 3 (by your fire, no height rule), a Bell Beam 4 (8 or more above your fire), a Great Beam 1
+  (a Great Bell, 12 or more above your fire).
+- **Know**: tooltips; the frame's placing line; the refusals in plain words ("A bell hung this low won't carry...");
+  the frame-full line names the Bell Beam; the Bells tab names each next step.
+- **Source**: `bells.HookBlock` (`BellFrameBlock`, `BellBeamBlock`), `bells.HooksEntity` (`bell_hooks`, schema 1),
+  `bells.Hanging`; recipes `bell_frame`, `bell_beam`, `great_beam`; loot drops itself.
+- **Links**: the Hearth (only inside one you belong to); the song (`BellTower.places`); the Great Belfry (stage 3+).
+- **Edges**: breaking one drops its bells as items and takes them out of the song; only whoever hung a bell (or the
+  owner) takes it down (sneak-use, empty hand); empty hand rings the nearest bell; hooks face you when placed.
+
+### Found bells and the Lampwing's old bell (`awaken:found_bell`, no item)
+- **Get**: a bell lying where it was won; the first is the Nook Bell, hung by the game under a branch of the nearest
+  tree to a new home's Lampwing perch (else from an old post) the first time its owner comes near.
+- **For**: the Nook Bell is the home's own first find; the same block carries stage 4's Lord bells.
+- **Know**: it glows while something sleeps in it ("[Something's asleep in it.]"); the day a beast comes to live there:
+  "[The Lampwing's left its old bell in the tree. It's yours.]"; the Bells tab: "Take the Lampwing's old bell down".
+  The first fire's Lampwing perches by it.
+- **Source**: `bells.FoundBells`, `FoundBellBlock`, `FoundBellEntity` (schema 1); `Sources.neverHeld("found_bell")`.
+- **Links**: kin (`KinWorld`), `BellHooks.roost`, KinHome's lesson.
+- **Edges**: unbreakable and immovable; someone from another fire can't lift a home's; a bell left for named hunters
+  (claimants) is theirs alone, and the block goes once every one of them has lifted theirs; a home whose owner already
+  holds the Nook never gets one.
+
+### Old saves (Book schema 5, World schema 3)
+- **Get**: automatic, once per Book.
+- **Know**: "[Your bells are waiting to be hung. Use each one on your Bell Frame by your fire.]"
+- **Source**: `Bells.upgrade`, `Bells.owed`.
+- **Edges**: every held bell but the far six comes back as a thing to hang; the far six get their places (the city's,
+  the holdfasts' heard from inside, else the square, else where you stand); old homes' `hung` lists are dropped, so
+  nothing rings until bells are hung again; the Signal's first-bell line isn't said again.

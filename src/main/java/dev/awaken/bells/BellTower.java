@@ -23,13 +23,13 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Your bell tower (SPEC §43.7). The bell frame, set inside your own Hearth, is where your bells hang. At twenty bells a
+ * Your bell tower (SPEC §43.7, §43.16). The bell frame, set inside your own Hearth, is where your first bells hang (each
+ * on a hook, by hand), and Bell Beams and Great Beams hold the rest high up. At twenty bells in the song a
  * timber belfry goes up round it, at fifty a stone tower under the belfry, and with the Heart-clapper and a Sovereign's
  * relic the Great Belfry on top (§43.14; each built only into clear space; if something's in the way the System says what
  * room it needs and tries again at the next song). At dawn and dusk it rings your song as {@link SongPlan} lays it out,
@@ -64,35 +64,37 @@ final class BellTower {
         home.stage = 0;
         w.setDirty();
         hang(level.getServer(), h.get());
-        int n = home.hung.size();
-        Bells.say(by, "[Your bells hang here now: " + n + (n == 1 ? " bell" : " bells") + ". They ring your song at dawn and dusk.]");
-        level.playSound(null, pos, BellContent.TOLL.get(), SoundSource.BLOCKS, 2F, 1.4F);
+        BellCatalog.Def held = null;
+        for (int i = 0; i < by.getInventory().getContainerSize() && held == null; i++) held = BellItem.def(by.getInventory().getItem(i));
+        Bells.say(by, held != null ? "[Now hang " + held.name().replaceFirst("^The ", "the ") + " on it. Use the bell on the frame.]"
+                : "[Your Bell Frame is set. It has three hooks: use a bell on it to hang it, and your bells ring from here at dawn and dusk.]");
+        level.playSound(null, pos, net.minecraft.sounds.SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.6F, 0.6F);
     }
 
     static void used(ServerLevel level, BlockPos pos, ServerPlayer p) {
         Optional<HearthRecord> h = HearthService.data(level.getServer()).containing(pos, level.dimension().identifier().toString());
         BellWorld.Home home = h.map(r -> BellWorld.get(level.getServer()).peek(r.pos)).orElse(null);
         int n = home == null ? 0 : home.hung.size();
-        String next = n < BELFRY ? (BELFRY - n) + " more and a belfry goes up round it." : n < TOWER ? (TOWER - n) + " more and it becomes a tower."
+        String next = n == 0 ? "Use a bell on it to hang it." : n < BELFRY ? (BELFRY - n) + " more and a belfry goes up round it." : n < TOWER ? (TOWER - n) + " more and it becomes a tower."
                 : home != null && home.pealed >= 0 ? "Your song is whole, and the Kinsong is yours."
                 : home != null && home.stage >= 3 ? (100 - n) + (100 - n == 1 ? " bell is" : " bells are") + " still missing. When the last one hangs, your bells ring the Hundred Peal."
                 : "Only a Great Belfry holds all hundred. It needs " + (home != null && home.clapper ? "" : "the Heart-clapper, from the Lord of an S-rank gate")
                         + (home != null && (home.clapper || home.relic) ? "" : ", and ") + (home != null && home.relic ? "" : "a Sovereign's relic")
                         + ", set into this frame.";
-        Bells.say(p, "[" + n + " of 100 bells hang here. " + next + "]");
-        if (home != null && !home.hung.isEmpty()) {
-            int pick = new ArrayList<>(home.hung).get(level.getRandom().nextInt(home.hung.size()));
-            level.playSound(null, pos, BellContent.note(pick), SoundSource.BLOCKS, 1.5F, 1F);
-        }
+        Bells.say(p, "[" + n + " of 100 bells in your song. " + next + "]");
     }
 
-    /** Hangs every bell the household holds (those online now; the rest were hung when they rang) and grows the tower. */
+    /**
+     * Brings a home's song up to date (SPEC §43.16): the far six that anyone living here (online now) has heard rung join
+     * it from where they hang; the bells hung on its hooks are already in it. Then the tower grows, as it did.
+     */
     static void hang(MinecraftServer server, HearthRecord h) {
         BellWorld w = BellWorld.get(server);
         BellWorld.Home home = w.home(h.pos);
         int before = home.hung.size();
         for (ServerPlayer p : server.getPlayerList().getPlayers())
-            if (h.belongs(p.getUUID())) home.hung.addAll(Bells.book(p).held.keySet());
+            if (h.belongs(p.getUUID())) Bells.book(p).far.forEach((no, at) -> home.far.putIfAbsent(no, BlockPos.of(at)));
+        home.rebuild();
         if (home.hung.size() != before) w.setDirty();
         grow(server.overworld(), h, home);
     }
@@ -282,22 +284,42 @@ final class BellTower {
         for (HearthRecord h : HearthService.data(server).snapshot()) {
             if (!HearthService.OVERWORLD.equals(h.dimension)) continue;
             BellWorld.Home home = w.peek(h.pos);
-            if (home == null || home.hung.isEmpty() || home.sung == day * 2 + which) continue;
+            if (home == null || home.placed.isEmpty() || home.sung == day * 2 + which) continue;
             home.sung = day * 2 + which;
             song(level, h, home);
         }
     }
 
-    /** Where a home's song rings from: its frame (or the belfry over it), or null with no frame or no bell (no song). */
+    /**
+     * Where a home's song rings from: its frame (or the belfry over it), else any bell hung there; null when no bell hangs at
+     * home (the bare fire never sings, and the far six alone don't either).
+     */
     static @Nullable BlockPos ringsFrom(ServerLevel level, BellWorld.Home home) {
+        if (home.placed.isEmpty()) return null;
         BlockPos f = frame(level, home);
-        if (f == null || home.hung.isEmpty()) return null;
+        if (f == null) return home.placed.values().iterator().next();
         return home.stage == 3 ? f.above(14) : home.stage == 2 ? f.above(10) : home.stage == 1 ? f.above(5) : f;
+    }
+
+    /** Where each bell in a home's song rings from: hung ones from their hooks, the far six from where they hang. */
+    static java.util.List<BellNet.Placed> places(ServerLevel level, BellWorld.Home home) {
+        java.util.List<BellNet.Placed> out = new java.util.ArrayList<>();
+        home.placed.forEach((no, at) -> {
+            BlockPos q = at;
+            if (level.isLoaded(at) && level.getBlockEntity(at) instanceof HooksEntity be) {
+                int hook = be.hookOf(no);
+                if (hook >= 0) q = BlockPos.containing(Hanging.hookPoint(be.getBlockState(), hook).add(at.getX(), at.getY(), at.getZ()));
+            }
+            out.add(new BellNet.Placed(no, q));
+        });
+        home.far.forEach((no, at) -> out.add(new BellNet.Placed(no, at)));
+        return out;
     }
 
     /** Rings one home's song now. False when nothing rang: no frame set down (the bare fire never sings). */
     static boolean song(ServerLevel level, HearthRecord h, BellWorld.Home home) {
         hang(level.getServer(), h);
+        Hanging.check(level, home);
         // both pieces in and nobody to raise it: it goes up now, by the song
         if (GreatBelfry.ready(home) && home.raising == 0) GreatBelfry.build(level, h, home);
         BlockPos at = ringsFrom(level, home);
@@ -311,7 +333,7 @@ final class BellTower {
             if (no < 64) lo |= 1L << no;
             else hi |= 1L << (no - 64);
         }
-        BellNet.Song s = new BellNet.Song(at, lo, hi);
+        BellNet.Song s = new BellNet.Song(at, lo, hi, places(level, home));
         SongPlan.Plan plan = SongPlan.of(s::has);
         long tod = Math.floorMod(level.getOverworldClockTime(), 24000L);
         boolean dusk = tod >= DUSK_SONG && tod < DAWN_SONG;

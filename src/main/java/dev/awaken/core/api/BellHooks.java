@@ -22,6 +22,7 @@ public final class BellHooks {
         default void told(ServerPlayer player) {}
         default boolean quiet(ServerLevel level, BlockPos at) { return false; }
         default boolean relay(ServerPlayer player, BlockPos relay) { return false; }
+        default @org.jspecify.annotations.Nullable BlockPos roost(ServerLevel level, BlockPos anchor) { return null; }
     }
 
     private static Access access = new Access() {};
@@ -66,5 +67,10 @@ public final class BellHooks {
      */
     public static boolean relay(ServerPlayer player, BlockPos relay) {
         return access.relay(player, relay);
+    }
+
+    /** Where the Lampwing's old bell hangs near the home at {@code anchor}, while it does (SPEC §43.16), or null. */
+    public static @org.jspecify.annotations.Nullable BlockPos roost(ServerLevel level, BlockPos anchor) {
+        return access.roost(level, anchor);
     }
 }

@@ -20,37 +20,49 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The bells' world state (schema 2, SPEC §43.7, §43.14): each home's tower (where its bell frame stands, how far it has
- * grown, the bells hung there from everyone who lives in it, the Great Belfry's two pieces, its Hundred Peal, Ilse's
- * visit), an old world's sleeping places out in the land, kept only until they're cleared (SPEC §43.16); and the land's: the play-day the Deep answered the Hundred Peal, and where the Kinsong last
+ * The bells' world state (schema 3, SPEC §43.7, §43.14, §43.16): each home's tower (where its bell frame stands, how far
+ * it has grown, where each of its bells hangs, the far six that answer its song, the Lampwing's old bell, the Great
+ * Belfry's two pieces, its Hundred Peal, Ilse's visit), an old world's sleeping places out in the land, kept only until they're cleared (SPEC §43.16); and the land's: the play-day the Deep answered the Hundred Peal, and where the Kinsong last
  * rang.
  */
 final class BellWorld extends SavedData {
-    static final int SCHEMA = 2;
+    static final int SCHEMA = 3;
 
     /** One home's tower. */
     static final class Home {
+        private static final Codec<Map<String, Long>> SPOTS = Codec.unboundedMap(Codec.STRING, Codec.LONG);
         static final Codec<Home> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.LONG.optionalFieldOf("frame", 0L).forGetter(h -> h.frame == null ? 0L : h.frame.asLong()),
                 Codec.INT.optionalFieldOf("stage", 0).forGetter(h -> h.stage),
-                Codec.INT.listOf().optionalFieldOf("hung", List.of()).forGetter(h -> new ArrayList<>(h.hung)),
-                Codec.STRING.optionalFieldOf("wren", "").forGetter(h -> h.wren),
+                SPOTS.optionalFieldOf("placed", Map.of()).forGetter(h -> spots(h.placed)),
+                SPOTS.optionalFieldOf("far", Map.of()).forGetter(h -> spots(h.far)),
+                Codec.LONG.optionalFieldOf("roost", 0L).forGetter(h -> h.roost == null ? 0L : h.roost.asLong()),
+                Codec.BOOL.optionalFieldOf("roosted", false).forGetter(h -> h.roosted),
                 Codec.BOOL.optionalFieldOf("clapper", false).forGetter(h -> h.clapper),
                 Codec.BOOL.optionalFieldOf("relic", false).forGetter(h -> h.relic),
                 Codec.LONG.optionalFieldOf("pealed", -1L).forGetter(h -> h.pealed),
                 Codec.BOOL.optionalFieldOf("ilse", false).forGetter(h -> h.ilse)
-        ).apply(i, (frame, stage, hung, wren, clapper, relic, pealed, ilse) -> {
+        ).apply(i, (frame, stage, placed, far, roost, roosted, clapper, relic, pealed, ilse) -> {
             Home h = new Home();
             h.frame = frame == 0L ? null : BlockPos.of(frame);
             h.stage = stage;
-            h.hung.addAll(hung);
-            h.wren = wren;
+            placed.forEach((k, v) -> h.placed.put(Integer.parseInt(k), BlockPos.of(v)));
+            far.forEach((k, v) -> h.far.put(Integer.parseInt(k), BlockPos.of(v)));
+            h.roost = roost == 0L ? null : BlockPos.of(roost);
+            h.roosted = roosted;
             h.clapper = clapper;
             h.relic = relic;
             h.pealed = pealed;
             h.ilse = ilse;
+            h.rebuild();
             return h;
         }));
+
+        private static Map<String, Long> spots(Map<Integer, BlockPos> m) {
+            Map<String, Long> out = new HashMap<>();
+            m.forEach((k, v) -> out.put(Integer.toString(k), v.asLong()));
+            return out;
+        }
 
         /** The bell frame, once placed. */
         @Nullable BlockPos frame;
@@ -64,10 +76,22 @@ final class BellWorld extends SavedData {
         boolean ilse;
         // not saved: when the beasts raising the Great Belfry finish it (game time), or 0
         long raising;
-        /** Every bell held by anyone who lives here. */
+        /** Where each bell hanging here hangs (schema 3): on a hook at home. */
+        final Map<Integer, BlockPos> placed = new HashMap<>();
+        /** The far six in this home's song (schema 3): bells people still ring, where they hang. */
+        final Map<Integer, BlockPos> far = new HashMap<>();
+        /** The Lampwing's old bell, while it hangs in its tree (schema 3); and whether it was ever hung. */
+        @Nullable BlockPos roost;
+        boolean roosted;
+        /** This home's song: every bell placed here, and the far six that answer it. Derived, never saved. */
         final Set<Integer> hung = new HashSet<>();
-        /** The key of this home's near sleeping bell (the Wren Bell's place), once chosen. */
-        String wren = "";
+
+        /** {@link #hung} again from {@link #placed} and {@link #far}. */
+        void rebuild() {
+            hung.clear();
+            hung.addAll(placed.keySet());
+            hung.addAll(far.keySet());
+        }
         // not saved: the last song rung here (play-day × 2, +1 at dusk), so a restart can't ring one twice in a tick
         long sung = -1;
     }

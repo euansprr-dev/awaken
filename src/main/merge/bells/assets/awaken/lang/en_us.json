@@ -26,5 +26,9 @@
   "item.awaken.heart_clapper.desc": "The clapper from the heart of an S-rank gate. It still swings on its own, as if it's ringing something you can't hear.",
   "item.awaken.sovereign_relic": "Sovereign's Relic",
   "item.awaken.sovereign_relic.desc": "All that was left when a Sovereign fell. It's cold, and bells go quiet near it.",
-  "item.awaken.belfry_piece.use": "Set it into your bell frame once your stone tower stands. The Great Belfry needs both pieces."
+  "item.awaken.belfry_piece.use": "Set it into your bell frame once your stone tower stands. The Great Belfry needs both pieces.",
+  "item.awaken.bell": "Bell",
+  "block.awaken.bell_beam": "Bell Beam",
+  "block.awaken.great_beam": "Great Beam",
+  "block.awaken.found_bell": "Bell"
 }

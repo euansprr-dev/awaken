@@ -264,6 +264,12 @@ final class HundredPeal {
         }
 
         @Override
+        public @org.jspecify.annotations.Nullable BlockPos roost(ServerLevel level, BlockPos anchor) {
+            BellWorld.Home h = BellWorld.get(level.getServer()).peek(anchor);
+            return h == null || h.roost == null || !level.isLoaded(h.roost) || !level.getBlockState(h.roost).is(BellContent.FOUND_BELL.get()) ? null : h.roost;
+        }
+
+        @Override
         public boolean kinsongNear(ServerLevel level, BlockPos at, int reach, int days) {
             if (level.dimension() != Level.OVERWORLD) return false;
             BellWorld w = BellWorld.get(level.getServer());

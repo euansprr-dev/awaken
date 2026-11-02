@@ -21,7 +21,7 @@ import java.util.Optional;
 
 /**
  * Admin tools for the bells: {@code /awaken admin bells give <id> | tower <n> | song | belfry | ilse | deep | page}.
- * {@code tower} rings the first n bells home and sets a frame by the player's Hearth (for tours).
+ * {@code tower} rings the first n bells home, sets a frame by the player's Hearth and hangs them all (for tours).
  */
 final class BellCommands {
     private BellCommands() {}
@@ -88,7 +88,46 @@ final class BellCommands {
             at = at.atY(level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ()));
             level.setBlock(at, BellContent.BELL_FRAME.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, face.getOpposite()), Block.UPDATE_ALL);
             BellTower.placed(level, at, p);
-        } else BellTower.hang(level.getServer(), h.get());
+        }
+        hangAll(level, h.get(), home, p);
+        BellTower.hang(level.getServer(), h.get());
         return rung;
+    }
+
+    /**
+     * Hangs every bell in the player's bag (for tours): the frame's hooks first, then Bell Beams laid in a row beside the
+     * frame, nine above the fire (away from where a belfry would rise), and a Great Beam thirteen up for each Great Bell.
+     */
+    private static void hangAll(ServerLevel level, HearthRecord h, BellWorld.Home home, ServerPlayer p) {
+        if (home.frame == null) return;
+        Direction face = level.getBlockState(home.frame).getOptionalValue(HorizontalDirectionalBlock.FACING).orElse(Direction.NORTH);
+        Direction side = face.getClockWise();
+        int beams = 0, greats = 0;
+        var inv = p.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            var stack = inv.getItem(i);
+            BellCatalog.Def d = BellItem.def(stack);
+            if (d == null || home.hung.contains(d.no())) continue;
+            BlockPos at;
+            if (Hanging.great(d)) {
+                at = home.frame.relative(side, 4 + greats++ * 2).relative(face, -4).atY(h.pos.getY() + Hanging.GREAT_ABOVE + 1);
+                place(level, at, BellContent.GREAT_BEAM.get().defaultBlockState(), face);
+            } else if (level.getBlockEntity(home.frame) instanceof HooksEntity f && Hanging.nearest(f, net.minecraft.world.phys.Vec3.atCenterOf(home.frame), true) >= 0) {
+                at = home.frame;
+            } else {
+                int k = beams++ / 4; // four to a beam, the beams on both sides of the frame
+                at = home.frame.relative(k % 2 == 0 ? side : side.getOpposite(), 4 + k / 2).atY(h.pos.getY() + Hanging.BEAM_ABOVE + 1);
+                place(level, at, BellContent.BELL_BEAM.get().defaultBlockState(), face);
+            }
+            if (!(level.getBlockEntity(at) instanceof HooksEntity be)) continue;
+            int hook = Hanging.nearest(be, net.minecraft.world.phys.Vec3.atCenterOf(at), true);
+            if (hook < 0) continue;
+            var hp = Hanging.hookPoint(level.getBlockState(at), hook).add(at.getX(), at.getY(), at.getZ());
+            Hanging.hang(level, at, p, stack, hp, true);
+        }
+    }
+
+    private static void place(ServerLevel level, BlockPos at, net.minecraft.world.level.block.state.BlockState s, Direction face) {
+        if (!level.getBlockState(at).is(s.getBlock())) level.setBlock(at, s.setValue(HorizontalDirectionalBlock.FACING, face), Block.UPDATE_ALL);
     }
 }
