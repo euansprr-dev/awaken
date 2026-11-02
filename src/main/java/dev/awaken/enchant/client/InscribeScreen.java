@@ -139,8 +139,8 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             float since = InscribeScene.now(a) - InscribeScene.leftBookAt;
             return up * (1F - ease(Mth.clamp(since / 7F, 0F, 1F)));
         }
-        if (InscribeScene.phaseAt > 0) {
-            float since = InscribeScene.now(a) - InscribeScene.phaseAt;
+        if (InscribeScene.enteredBookAt > 0) {
+            float since = InscribeScene.now(a) - InscribeScene.enteredBookAt;
             up = Math.min(up, ease(Mth.clamp(since / 8F, 0F, 1F)));
         }
         return up;
@@ -548,6 +548,11 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                     scrapeId = -1;
                     InscribeScene.act(EnchantPayloads.SCRAPE, on[0], 0, 0F);
                     InscribeScene.play(dev.awaken.enchant.EnchantContent.BURIN_METAL.get(), 0.5F, 0.7F);
+                    var mc = Minecraft.getInstance();
+                    var ref = mc.level == null ? java.util.Optional.<net.minecraft.core.Holder.Reference<net.minecraft.world.item.enchantment.Enchantment>>empty()
+                            : mc.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(on[0]);
+                    Inscriptions.Entry e = ref.map(Inscriptions::of).orElse(null);
+                    if (e != null) InscribeScene.scraped(e.no());
                 } else {
                     scrapeId = on[0];
                     scrapeAt = age;

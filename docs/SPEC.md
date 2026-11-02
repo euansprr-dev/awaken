@@ -16957,7 +16957,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   item: `Sources.neverHeld`) resting at the slate's near corner, and while you trace, follows the cursor where it meets
   the slate; from memory it runs the mark by itself.
 - **The book's pages** (`InscribeScreen`): the left page is your piece (its name drawn large, rank, room line, what's
-  on it with **scrape**: a second click within two seconds takes it off, sent as its registry number, and how deep this
+  on it with **scrape**: a second click within two seconds takes it off, sent as its registry number (its mark flares on
+  the piece above the pages and crumbles from its first end into dust over 18 ticks; the book stays up), and how deep this
   table writes). The right page lists what you know that fits it: its mark, name and target level (the deepest this
   piece allows here by default; ‹ › step it between one above what's on it and that), "Up to II here (IV in your
   Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory (at the

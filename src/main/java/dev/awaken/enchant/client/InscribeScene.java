@@ -75,8 +75,9 @@ public final class InscribeScene {
     static int ticks;
     private static int openedAt = -1000, closedAt = -1000;
     static int phaseAt = -1000;
-    /** When the book last went down (trace to wake is no new start for it: it stays down). */
-    static int leftBookAt = -1000;
+    /** When the book last went down (trace to wake is no new start for it: it stays down), and last came back up (a reply
+     *  that keeps it open, like a scrape's, is no new start either: it stays up). */
+    static int leftBookAt = -1000, enteredBookAt = -1000;
     private static @Nullable CameraType before;
 
     // the trace
@@ -221,6 +222,7 @@ public final class InscribeScene {
 
     private static void phase(int p) {
         if (phase == BOOK && p != BOOK) leftBookAt = ticks;
+        if (phase != BOOK && p == BOOK) enteredBookAt = ticks;
         phase = p;
         phaseAt = ticks;
     }
@@ -817,13 +819,14 @@ public final class InscribeScene {
         Minecraft mc = Minecraft.getInstance();
         float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         if (pos == null || weight(pt) <= 0.01F || mc.level == null) return;
-        int shown = phase == BOOK ? hoverNo : no;
-        if (shown <= 0 || (phase == BOOK && waiting)) return;
         Vec3 cam = e.getLevelRenderState().cameraRenderState.pos;
         cx = cam.x;
         cy = cam.y;
         cz = cam.z;
         float t = now(pt);
+        if (phase == BOOK && scrapedNo > 0 && t - scrapedAt < SCRAPE_TICKS) scrapeFx(e, t);
+        int shown = phase == BOOK ? hoverNo : no;
+        if (shown <= 0 || (phase == BOOK && waiting)) return;
         Inscriptions.Entry en = Inscriptions.ALL.get(shown - 1);
         int colour = en.colour();
         float[][] m = Marks.of(shown);
@@ -895,14 +898,7 @@ public final class InscribeScene {
                         disc(pose, vc, wx(penU, penV), y + 0.003, wz(penU, penV), 0.022, argb(0xFFFFFF, 0.8F));
                         disc(pose, vc, wx(penU, penV), y + 0.002, wz(penU, penV), 0.06, argb(LAPIS, 0.35F));
                     }
-                    for (int i = 0; i < SPARKS; i++) {
-                        float age = t - SPARK[i * 6 + 5];
-                        if (age < 0 || age > 9) continue;
-                        float su = SPARK[i * 6] + SPARK[i * 6 + 2] * age, sv = SPARK[i * 6 + 1] + SPARK[i * 6 + 3] * age;
-                        double sy = y + 0.004 + SPARK[i * 6 + 4] * age - 0.0009 * age * age;
-                        float life = 1F - age / 9F;
-                        disc(pose, vc, wx(su, sv), Math.max(y + 0.003, sy), wz(su, sv), 0.006 + 0.004 * life, argb(hot(LAPIS, 0.7F * life), life));
-                    }
+                    sparks(pose, vc, t, y, LAPIS, 9F);
                 }
                 case MEMORY -> {
                     float k = Mth.clamp((t - phaseAt) / MEMORY_TICKS, 0F, 1F) * m.length;
@@ -940,6 +936,52 @@ public final class InscribeScene {
     }
 
     /** A stroke's samples [from, to) as a flat ribbon of light lying on the slate, bright down its middle, soft at its edges. */
+    /** The sparks in flight: thrown from the slate, rising and falling, fading over {@code life} ticks. */
+    private static void sparks(PoseStack.Pose pose, VertexConsumer vc, float t, double y, int colour, float life) {
+        for (int i = 0; i < SPARKS; i++) {
+            float age = t - SPARK[i * 6 + 5];
+            if (age < 0 || age > life) continue;
+            float su = SPARK[i * 6] + SPARK[i * 6 + 2] * age, sv = SPARK[i * 6 + 1] + SPARK[i * 6 + 3] * age;
+            double sy = y + 0.004 + SPARK[i * 6 + 4] * age - 0.0009 * age * age;
+            float left = 1F - age / life;
+            disc(pose, vc, wx(su, sv), Math.max(y + 0.003, sy), wz(su, sv), 0.006 + 0.004 * left, argb(hot(colour, 0.7F * left), left));
+        }
+    }
+
+    /** An enchantment scraped off (its number in the catalogue) and when: its mark flares on the piece and crumbles away. */
+    private static int scrapedNo, scrapedAt = -1000;
+    static final int SCRAPE_TICKS = 18;
+
+    /** The second click on scrape: the mark comes up bright on the piece, then breaks from its first end to dust. */
+    static void scraped(int entryNo) {
+        if (entryNo < 1 || entryNo > Inscriptions.ALL.size()) return;
+        scrapedNo = entryNo;
+        scrapedAt = ticks;
+        float[][] m = Marks.of(entryNo);
+        for (int k = 0; k < 20; k++) {
+            float[] s = m[k % m.length];
+            int i = (int) (Math.random() * (s.length / 2));
+            spark(s[i * 2], s[i * 2 + 1], 0.008F + 0.014F * (float) Math.random(), 0.012F + 0.012F * (float) Math.random());
+        }
+    }
+
+    private static void scrapeFx(SubmitCustomGeometryEvent e, float t) {
+        float a = t - scrapedAt, flare = a < 3F ? a / 3F : 1F - (a - 3F) / (SCRAPE_TICKS - 3F);
+        int colour = Inscriptions.ALL.get(scrapedNo - 1).colour();
+        float[][] m = Marks.of(scrapedNo);
+        float crumble = Mth.clamp((a - 3F) / 12F, 0F, 1F);
+        e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.lightning(), (pose, vc) -> {
+            double y = slateY + 0.036;
+            for (float[] s : m) {
+                int n = s.length / 2, from = Math.round(crumble * (n - 1));
+                if (from >= n - 1) continue;
+                ribbon(pose, vc, s, from, n, y, 0.02 + 0.04 * flare, argb(colour, 0.4F * flare));
+                ribbon(pose, vc, s, from, n, y + 0.001, 0.012, argb(hot(colour, 0.6F), flare));
+            }
+            sparks(pose, vc, t, y, colour, SCRAPE_TICKS);
+        });
+    }
+
     private static void ribbon(PoseStack.Pose pose, VertexConsumer vc, float[] s, int from, int to, double y, double width, int argb) {
         int n = s.length / 2;
         to = Math.min(to, n);
