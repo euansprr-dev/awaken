@@ -81,6 +81,9 @@ final class AnvilScene {
         final Vector3f scale = new Vector3f(1F, 1F, 1F);
         AnvilShape shape = AnvilShape.FALLBACK;
         float mid = AnvilShape.FALLBACK.mid;
+        /** Whose song it is (its marks) and the strike after which it's turned over: the work's, not moved by set or mix. */
+        AnvilSong.Song song = AnvilSong.song("longsword");
+        int flipAt = AnvilSong.song("longsword").flipAfter();
 
         Lay set(Lay o) {
             at.set(o.at);
@@ -210,6 +213,9 @@ final class AnvilScene {
     static float plungeAt = Float.NaN, liftAt = Float.NaN;
     /** How far the draw is held (0..1). */
     static float drawK;
+    /** The bind: the cord's turn round the grip (radians, as this client winds it) and the turns done, or -1 not winding. */
+    static float windAngle;
+    static int windTurns = -1;
 
     static void reset() {
         struck = 0;
@@ -218,6 +224,8 @@ final class AnvilScene {
         nextDue = Float.NaN;
         plungeAt = liftAt = Float.NaN;
         drawK = 0F;
+        windAngle = 0F;
+        windTurns = -1;
     }
 
     // ---- this moment, placed ------------------------------------------------------------------------------------------
@@ -234,6 +242,8 @@ final class AnvilScene {
         boolean inForge;
         final Matrix4f hammer = new Matrix4f(), tongs = new Matrix4f();
         boolean hasTongs;
+        /** At E the hammer is the stone hammer (the knap), the iron one on its peg. */
+        boolean stone;
         /** Where the fists are (block-relative) and how much each shows: the hammer's (main), the tongs' (off). */
         final Vector3f mainFist = new Vector3f(), offFist = new Vector3f();
         float mainW, offW;
@@ -263,6 +273,7 @@ final class AnvilScene {
         out.inForge = false;
         out.mainW = out.offW = 0F;
         out.steam = false;
+        out.stone = false;
         eye(pos, mine);
         if (w == null) {
             // the tools back on the peg; your hands on the hilt while you draw it
@@ -279,6 +290,9 @@ final class AnvilScene {
             return;
         }
         out.hasWork = true;
+        out.work.song = w.song;
+        out.work.flipAt = w.memory() ? Integer.MAX_VALUE : w.song.flipAfter();
+        out.stone = w.hand();
         AnvilShape sh = AnvilShape.of(w.weapon);
         float blade = sh.cut[0];
         out.cut = blade; // the blade alone until the hilt
@@ -295,13 +309,14 @@ final class AnvilScene {
                 restHammer(out.hammer);
             }
             case AnvilSong.SHAPE -> {
-                float d = AnvilSong.drawn(n), flip = n >= AnvilSong.FLIP_AFTER ? 1F : 0F;
+                int of = w.beatsNeeded(), flipAt = out.work.flipAt;
+                float d = AnvilSong.drawn(n, of), flip = n >= flipAt ? 1F : 0F;
                 if (mine && n == blowBeat + 1 && now - blowAt < DOWN + 3F) {
-                    // the strike just landing moves the metal: drawn out a step, and the fifth turns it over
+                    // the strike just landing moves the metal: drawn out a step, and the one at half turns it over
                     float k = Mth.clamp((now - blowAt - DOWN) / 3F, 0F, 1F);
-                    d = AnvilSong.drawn(n - 1) + (d - AnvilSong.drawn(n - 1)) * k;
+                    d = AnvilSong.drawn(n - 1, of) + (d - AnvilSong.drawn(n - 1, of)) * k;
                 }
-                if (mine && n == AnvilSong.FLIP_AFTER && blowBeat == AnvilSong.FLIP_AFTER - 1)
+                if (mine && n == flipAt && blowBeat == flipAt - 1)
                     flip = Mth.clamp((now - blowAt - DOWN - 3F) / 6F, 0F, 1F);
                 onAnvil(FRAME, sh, d, flip, false, out.work);
                 if (w.scores.isEmpty() && t < GLIDE) {
@@ -310,10 +325,37 @@ final class AnvilScene {
                     L2.set(out.work);
                     out.work.mix(L1, L2, t / GLIDE, 0.35F);
                 }
-                heat(out, Math.max(0.3F, Math.max(0F, w.heat) * (1F - 0.45F * n / AnvilSong.STRIKES)), blade - 0.02F, false);
+                heat(out, Math.max(0.3F, Math.max(0F, w.heat) * (1F - 0.45F * n / (float) of)), blade - 0.02F, false);
                 tongsAt(out, out.work, sh.root - 0.5F, dir(FRAME, 1F, 0.35F, -0.8F, T), mine, false);
-                if (mine) swing(out, now, n, false);
+                if (mine) swing(out, now, n, STRIKE, of);
                 else restHammer(out.hammer);
+            }
+            case AnvilSong.KNAP -> {
+                // by hand: the bone or flint blade cold on the face, steadied by your off hand, struck flake by flake
+                onAnvil(FRAME, sh, 1F, 0F, false, out.work);
+                pegTongs(out.tongs);
+                out.hasTongs = true;
+                if (mine) {
+                    out.work.point(BLADE_X, sh.root - 0.5F, FACE_Z, out.offFist);
+                    out.offW = 1F;
+                    swing(out, now, n, FLAKE, w.beatsNeeded());
+                } else restHammer(out.hammer);
+            }
+            case AnvilSong.BIND -> {
+                // the whole weapon on the face, the cord wound round its grip: each turn brings its hilt on
+                onAnvil(FRAME, sh, 1F, 0F, true, out.work);
+                int turns = mine && windTurns >= 0 ? windTurns : Math.max(0, w.taps.size() - 1);
+                out.cut = sh.cut[Math.min(turns, sh.cut.length - 1)];
+                pegTongs(out.tongs);
+                out.hasTongs = true;
+                restHammer(out.hammer);
+                if (mine) {
+                    out.work.point(BLADE_X, sh.root + 0.4F * (sh.tip - sh.root), FACE_Z, out.offFist);
+                    out.offW = 1F;
+                    float r = HALF_W + 1F;
+                    out.work.point(BLADE_X + r * Mth.cos(windAngle), sh.hands[0], r * Mth.sin(windAngle), out.mainFist);
+                    out.mainW = windTurns >= 0 ? 1F : 0F;
+                }
             }
             case AnvilSong.QUENCH -> {
                 onAnvil(FRAME, sh, 1F, 1F, false, L1);
@@ -347,7 +389,7 @@ final class AnvilScene {
                 heat(out, 0.4F * Math.max(0F, 1F - t / 40F), front, true);
                 // up the blade, clear of the hilt being seated
                 tongsAt(out, out.work, sh.root + 0.69F * (sh.tip - sh.root), dir(FRAME, 0.3F, 0.35F, -1F, T), mine, false);
-                if (mine) swing(out, now, n, true);
+                if (mine) swing(out, now, n, TAP, AnvilSong.TAPS);
                 else restHammer(out.hammer);
             }
             default -> restHammer(out.hammer);
@@ -421,21 +463,25 @@ final class AnvilScene {
 
     // ---- the hammer ----------------------------------------------------------------------------------------------------
 
+    /** What a blow lands on: a strike's mark, the hilt's part a tap seats, a flake point on the edge (E). */
+    static final int STRIKE = 0, TAP = 1, FLAKE = 2;
+
     /**
      * The hammer in your hand: wound up before each beat, down in a tick and a half on your click, its face on the mark
-     * (a strike) or the hilt's part (a tap), bouncing back up toward the next.
+     * (a strike), the hilt's part (a tap) or the flake point (the stone hammer at E), bouncing back up toward the next.
      */
-    private static void swing(Placed out, float now, int n, boolean tap) {
+    private static void swing(Placed out, float now, int n, int mode, int need) {
+        boolean tap = mode != STRIKE;
         float angle = angle(now, tap), since = now - blowAt;
         float k = since >= 0F && since < DOWN ? 0F : since >= DOWN && since < DOWN + 5F ? smooth((since - DOWN) / 5F) : 1F;
         // the face meets the beat just struck, then moves on to the next
-        int next = Math.min(n, (tap ? AnvilSong.TAPS : AnvilSong.STRIKES) - 1);
-        target(out.work, tap, Math.max(0, blowBeat), T);
-        target(out.work, tap, next, T2);
+        int next = Math.min(n, need - 1);
+        target(out.work, mode, Math.max(0, blowBeat), T);
+        target(out.work, mode, next, T2);
         T.lerp(T2, blowBeat < 0 ? 1F : k);
         // the haft runs back to your hand, level with the metal at the strike; the hilt is near you, so a tap's comes in
         // from the side, your arm clear of the work
-        float side = tap ? 0.7F : 0.3F;
+        float side = mode == TAP ? 0.7F : 0.3F;
         Y.set(T).sub(EYE).sub(RIGHT.x * side, 0F, RIGHT.z * side);
         Y.y = 0F;
         if (Y.lengthSquared() < 1e-4F) Y.set(1F, 0F, 0F);
@@ -476,16 +522,23 @@ final class AnvilScene {
         blowBeat = beat;
     }
 
-    /** Where beat {@code k} lands: a strike's mark on the face up, or the hilt's part a tap seats (guard, grip, pommel). */
-    static Vector3f target(Lay work, boolean tap, int k, Vector3f out) {
+    /**
+     * Where blow {@code k} lands: a strike's mark on the face up (the work's song's), the hilt's part a tap seats (guard,
+     * grip, pommel), or a flake point down the edge.
+     */
+    static Vector3f target(Lay work, int mode, int k, Vector3f out) {
         AnvilShape sh = work.shape;
-        if (tap) {
+        if (mode == TAP) {
             int i = Mth.clamp(k, 0, sh.taps.length - 1);
             return work.point(0F, sh.taps[i], i == 1 ? 1.5F : 2.5F, out);
         }
-        float[] m = AnvilSong.MARKS[Mth.clamp(k, 0, AnvilSong.MARKS.length - 1)];
-        // turned over at the fifth: the other face is up
-        float z = k < AnvilSong.FLIP_AFTER ? FACE_Z : -FACE_Z;
+        if (mode == FLAKE) {
+            float[] f = AnvilSong.FLAKE_MARKS[Mth.clamp(k, 0, AnvilSong.FLAKE_MARKS.length - 1)];
+            return work.point(BLADE_X + HALF_W * f[1], sh.root + (sh.tip - sh.root) * f[0], FACE_Z, out);
+        }
+        float[] m = work.song.mark(k);
+        // turned over at half: the other face is up
+        float z = k < work.flipAt ? FACE_Z : -FACE_Z;
         return work.point(BLADE_X + HALF_W * m[1], sh.root + (sh.tip - sh.root) * m[0], z, out);
     }
 

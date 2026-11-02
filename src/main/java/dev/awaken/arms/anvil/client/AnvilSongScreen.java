@@ -27,11 +27,13 @@ import org.jspecify.annotations.Nullable;
 import java.util.Arrays;
 
 /**
- * The War Anvil's song (SPEC §46.2, §46.3): what you do at each stage, in plain words, over the scene. The heat's gauge
- * with its gold band; the mark on the metal with a ring closing on the beat, a thin beat lane and a pip a strike; the
- * quench's line climbing to its gold notch while you hold; the hilt's three taps; then the weapon standing in the stone,
- * held to draw it out, and its card. The server judges every act by its own clock; this screen shows them at once.
- * Doesn't pause. Click, or Space, is the act; for the quench and the draw, hold it.
+ * The War Anvil's song (SPEC §46.2, §46.3, §46.7): what you do at each stage, in plain words, over the scene. The heat's
+ * gauge with its gold band; the mark on the metal with a ring closing on the beat (each style's own rhythm and marks), a
+ * thin beat lane and a pip a strike; the quench's line climbing to its gold notch while you hold; the hilt's three taps.
+ * At E by hand: the flake points down the edge, struck at your own pace, and the cord wound round the grip in circles.
+ * Then the weapon standing in the stone, held to draw it out, and its card. The server judges every act by its own
+ * clock; this screen shows them at once. Doesn't pause. Click, or Space, is the act; for the quench, the bind and the
+ * draw, hold it.
  */
 final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.QuietScreen, dev.awaken.signal.client.ReadingScreen {
     private static final int LANTERN = 0xFFFFCF7A, TITLE = 0xFFF4F6FB, LABEL = 0xFFAFC2D8, DIM = 0xFF6F8299, GOOD = 0xFF9FE6D6, BAD = 0xFFFF8A7A;
@@ -50,6 +52,14 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private final float[] predicted = new float[16];
     private boolean pulled, holding, lifted, cooled;
     private float bellowsAt;
+    /** The work's weapon (the card shows it once it's drawn). */
+    private String weapon = WarAnvil.WEAPON;
+    // by hand: the last flake (ticks from the stage's start), and the cord as it's wound
+    private float knapLast = Float.NaN;
+    private boolean winding;
+    private float windAcc, windLast = Float.NaN;
+    private int windTurns;
+    private final float[] turnAt = new float[AnvilSong.TURNS + 1];
 
     // what the screen shows for a moment
     private String callout = "";
@@ -121,6 +131,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
                 case AnvilSong.SHAPE -> beats(g, w, t, now, false);
                 case AnvilSong.QUENCH -> quench(g, w, t, now);
                 case AnvilSong.HILT -> beats(g, w, t, now, true);
+                case AnvilSong.KNAP -> knap(g, w, t, now);
+                case AnvilSong.BIND -> bind(g, w, t, now);
                 default -> {}
             }
             if (AnvilClient.autoplay) autoplay(w, t, now);
@@ -138,6 +150,14 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         countStep = (int) Math.floor((now - w.stageStart) / w.rhythm().step()) - 1;
         pulled = holding = lifted = cooled = false;
         bellowsAt = now - 100F;
+        weapon = w.weapon;
+        knapLast = Float.NaN;
+        winding = false;
+        windAcc = 0F;
+        windLast = Float.NaN;
+        windTurns = 0;
+        AnvilScene.windTurns = -1;
+        AnvilScene.windAngle = 0F;
         AnvilScene.struck = next;
         AnvilScene.blowBeat = -1;
         AnvilScene.blowAt = -1000F;
@@ -151,9 +171,11 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             case AnvilSong.HEAT -> "Heat";
             case AnvilSong.SHAPE -> "Draw it out";
             case AnvilSong.QUENCH -> "Quench";
+            case AnvilSong.KNAP -> "Knap the edge";
+            case AnvilSong.BIND -> "Bind the grip";
             default -> "The hilt";
         };
-        g.centeredText(font, Component.literal(weaponName(w.weapon) + "  ·  " + stage), width / 2, top, TITLE);
+        g.centeredText(font, Component.literal(weaponName(w.weapon) + "  ·  " + stage + (w.memory() ? "  ·  from memory" : "")), width / 2, top, TITLE);
     }
 
     private static String weaponName(String id) {
@@ -276,9 +298,9 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilScene.struck = next;
         AnvilScene.nextDue = next < need ? w.stageStart + r.due(next - w.strikeBase) : Float.NaN;
         // the marks on the face that's up: struck ones in their colours, the next bright with its ring closing
-        int from = tap ? 0 : next < AnvilSong.FLIP_AFTER ? 0 : AnvilSong.FLIP_AFTER, to = tap ? need : from + AnvilSong.FLIP_AFTER;
+        int flip = placed.work.flipAt, from = tap ? 0 : next < flip ? 0 : flip, to = tap || next >= flip ? need : flip;
         for (int j = from; j < Math.min(to, need); j++) {
-            if (!project(AnvilScene.target(placed.work, tap, j, v))) continue;
+            if (!project(AnvilScene.target(placed.work, tap ? AnvilScene.TAP : AnvilScene.STRIKE, j, v))) continue;
             float px = p[0], py = p[1], rad = Math.max(6F, AnvilSong.MARK * p[2]);
             float score = j < w.beats().size() ? w.beats().get(j) : predicted[j];
             if (!Float.isNaN(score)) disc(g, px, py, rad * 0.5F, scoreColour(score) & 0x00FFFFFF | 0xC0000000);
@@ -304,6 +326,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         boolean countIn = t < r.length();
         if (tap) hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then three light taps on the beat: the guard, the grip, the pommel."
                 : "Seat the hilt: tap on the beat (click, or press Space). Esc steps away; the work waits.");
+        else if (w.memory()) hint(g, countIn ? "Listen: the anvil counts the rhythm in. You know this one: one strike on the beat draws it out."
+                : "Strike the bright mark on the beat: click it, or press Space where you point.");
         else hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then strike each glowing mark on the beat, and the blade draws out."
                 : "Strike the bright mark on the beat: click it, or press Space where you point. Esc steps away; the work waits.");
     }
@@ -328,7 +352,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         if (next >= need) return;
         float off = t - r.due(next - w.strikeBase);
         if (off < -AnvilSong.WINDOW) return; // nowhere near its beat yet
-        AnvilScene.target(placed.work, tap, next, v);
+        AnvilScene.target(placed.work, tap ? AnvilScene.TAP : AnvilScene.STRIKE, next, v);
         Vec3 at = at(v);
         float radii = 0F;
         boolean seen = project(v);
@@ -341,8 +365,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         predicted[next] = score;
         AnvilScene.blow(now, next, tap);
         if (score > 0F) AnvilClient.play(at, tap ? AnvilContent.TAP.get() : AnvilContent.STRIKE.get(), tap ? 0.8F : 1F, (tap ? 1.2F : 1F) + (now % 10) * 0.01F);
-        if (!tap && AnvilSong.clean(score)) AnvilClient.play(at, AnvilContent.RING.get(), 0.7F, WarAnvil.ringPitch(next + 1));
-        if (!tap && next + 1 == AnvilSong.FLIP_AFTER) AnvilClient.play(at, AnvilContent.FLIP.get(), 0.8F, 1F);
+        if (!tap && AnvilSong.clean(score)) AnvilClient.play(at, AnvilContent.RING.get(), 0.7F, WarAnvil.ringPitch(next + 1, need));
+        if (!tap && next + 1 == placed.work.flipAt) AnvilClient.play(at, AnvilContent.FLIP.get(), 0.8F, 1F);
         if (seen) burst(p[0], p[1], score, now, tap ? 0.5F : 1F);
         next++;
         AnvilScene.struck = next;
@@ -353,7 +377,132 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         } else if (AnvilSong.clean(score)) say(timing >= 1F && AnvilSong.aim(radii) >= 1F ? "Perfect" : "Clean", LANTERN, now);
         else if (timing < 0.6F) say(off < 0 ? "Early" : "Late", BAD, now);
         else say("Wide of the mark", BAD, now);
-        if (!tap && next == AnvilSong.FLIP_AFTER) calloutAt = now + 4; // the tongs turn it over: the callout holds a moment longer
+        if (!tap && next == placed.work.flipAt) calloutAt = now + 4; // the tongs turn it over: the callout holds a moment longer
+    }
+
+    // ---- by hand: the knap and the bind (E) ----------------------------------------------------------------------------
+
+    /** The flake points down the edge: struck ones in their colours, the next lit; your own pace, aim is all that counts. */
+    private void knap(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
+        int need = w.beatsNeeded();
+        next = Math.max(next, w.beats().size());
+        AnvilScene.struck = next;
+        AnvilScene.nextDue = now + 2F; // the stone held up, ready
+        boolean ready = Float.isNaN(knapLast) || t - knapLast >= AnvilSong.KNAP_GAP;
+        for (int j = 0; j < need; j++) {
+            if (!project(AnvilScene.target(placed.work, AnvilScene.FLAKE, j, v))) continue;
+            float px = p[0], py = p[1], rad = Math.max(6F, AnvilSong.MARK * p[2]);
+            float score = j < w.beats().size() ? w.beats().get(j) : predicted[j];
+            if (!Float.isNaN(score)) disc(g, px, py, rad * 0.5F, scoreColour(score) & 0x00FFFFFF | 0xC0000000);
+            else if (j == next) {
+                float k = 0.5F + 0.5F * (float) Math.sin(now * 0.3);
+                disc(g, px, py, rad, ready ? 0x50FFCF7A : 0x283A4A60);
+                ring(g, px, py, rad * (1.1F + 0.25F * k), 1.5F, ready ? LANTERN : 0xFF6F8299);
+                disc(g, px, py, 2F, 0xFFFFF2C2);
+            } else disc(g, px, py, rad * 0.35F, 0x70FFCF7A);
+        }
+        pips(g, w, need);
+        hint(g, w.memory() || AnvilWork.styleOf(w.weapon).equals(AnvilWork.BLADE) && need == 1
+                ? "Strike the lit point on the edge with the stone: click it." : AnvilWork.styleOf(w.weapon).equals(AnvilWork.BLADE)
+                ? "Strike the lit point on the edge with the stone, one flake at a time: click it. Take your time; only your aim counts."
+                : "Strike the lit point on the edge with the stone, one flake at a time: click it. Take your time; only your aim counts. Then you'll bind the grip.");
+    }
+
+    private void flake(AnvilWork w, float t, float now) {
+        int need = w.beatsNeeded();
+        next = Math.max(next, w.beats().size());
+        if (next >= need || !Float.isNaN(knapLast) && t - knapLast < AnvilSong.KNAP_GAP) return;
+        AnvilScene.target(placed.work, AnvilScene.FLAKE, next, v);
+        Vec3 at = at(v);
+        float radii = 9F;
+        boolean seen = project(v);
+        if (seen) radii = (float) Math.hypot(mx - p[0], my - p[1]) / Math.max(6F, AnvilSong.MARK * p[2]);
+        float score = AnvilSong.knap(radii);
+        knapLast = t;
+        AnvilClient.send(pos, AnvilPayloads.KNAP, next, t, radii);
+        predicted[next] = score;
+        AnvilScene.blow(now, next, true);
+        AnvilClient.play(at, AnvilContent.TAP.get(), 0.7F, 1.55F + (now % 10) * 0.01F);
+        if (seen) burst(p[0], p[1], score, now, 0.6F);
+        next++;
+        AnvilScene.struck = next;
+        if (score >= 0.8F) say("A clean flake", LANTERN, now);
+        else if (score > 0.3F) say("A rough flake", LABEL, now);
+        else say("Wide: it chipped the wrong way", BAD, now);
+    }
+
+    /** The cord: hold and draw circles round the grip, four turns as evenly as you can. */
+    private void bind(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
+        AnvilShape sh = placed.work.shape;
+        boolean seen = project(placed.work.point(AnvilScene.BLADE_X, sh.hands[0], 0F, v));
+        float cx = seen ? p[0] : width / 2F, cy = seen ? p[1] : height / 2F, r = 28F;
+        if (winding) wind(w, t, now, cx, cy);
+        ring(g, cx, cy, r, 1.5F, winding ? 0xC0FFCF7A : 0x806F8299);
+        if (winding) {
+            float turn = (float) (Math.abs(windAcc) % (Math.PI * 2) / (Math.PI * 2));
+            arc(g, cx, cy, r + 5F, turn, LANTERN);
+            float a = windLast;
+            if (!Float.isNaN(a)) disc(g, cx + Mth.cos(a) * r, cy + Mth.sin(a) * r, 3F, 0xFFFFF2C2);
+        } else {
+            float k = 0.5F + 0.5F * (float) Math.sin(now * 0.2);
+            disc(g, cx + r, cy, 3F, (int) (90 + 140 * k) << 24 | 0xFFCF7A);
+        }
+        int y = bottom() - 28, pw = 14, x0 = width / 2 - AnvilSong.TURNS * (pw + 3) / 2;
+        for (int j = 0; j < AnvilSong.TURNS; j++) {
+            int x = x0 + j * (pw + 3);
+            if (j < windTurns) g.fill(x, y, x + pw, y + 4, LANTERN);
+            else g.outline(x, y, pw, 4, 0x803A4A60);
+        }
+        hint(g, winding ? "Keep circling at the same speed..."
+                : "Hold the mouse button (or Space) and draw circles round the grip to wind the cord: four turns, as evenly as you can.");
+    }
+
+    private void holdCord(AnvilWork w, float t) {
+        if (winding || windTurns > 0) return;
+        winding = true;
+        windAcc = 0F;
+        windLast = Float.NaN;
+        windTurns = 0;
+        turnAt[0] = t;
+        AnvilScene.windTurns = 0;
+        AnvilClient.send(pos, AnvilPayloads.WIND, 0, t, 0F);
+    }
+
+    private void releaseCord(float t, float now) {
+        if (!winding) return;
+        winding = false;
+        AnvilScene.windTurns = windTurns;
+        if (windTurns >= AnvilSong.TURNS) return;
+        AnvilClient.send(pos, AnvilPayloads.RELEASE, windTurns, t, 0F);
+        say("Let go early: the cord is loose", BAD, now);
+    }
+
+    /** The mouse's angle round the grip, added up; each whole turn is told to the server with its time. */
+    private void wind(AnvilWork w, float t, float now, float cx, float cy) {
+        float dx = mx - cx, dy = my - cy;
+        if (dx * dx + dy * dy >= 64F) {
+            float a = (float) Math.atan2(dy, dx);
+            if (!Float.isNaN(windLast)) windAcc += Mth.wrapDegrees((a - windLast) * Mth.RAD_TO_DEG) * Mth.DEG_TO_RAD;
+            windLast = a;
+        }
+        AnvilScene.windAngle = windAcc;
+        int done = (int) (Math.abs(windAcc) / (Math.PI * 2));
+        while (windTurns < Math.min(done, AnvilSong.TURNS)) {
+            windTurns++;
+            turnAt[windTurns] = t;
+            AnvilScene.windTurns = windTurns;
+            AnvilClient.send(pos, AnvilPayloads.WIND, windTurns, t, 0F);
+            AnvilClient.play(at(placed.work.at), AnvilContent.SCRAPE.get(), 0.4F, 1.4F + windTurns * 0.08F);
+            if (windTurns >= 2) {
+                float mean = (turnAt[windTurns - 1] - turnAt[0]) / (windTurns - 1), last = turnAt[windTurns] - turnAt[windTurns - 1];
+                if (Math.abs(last - mean) <= mean / 8F) say("Even", LANTERN, now);
+                else say(last < mean ? "Too quick" : "Too slow", BAD, now);
+            }
+        }
+        if (windTurns >= AnvilSong.TURNS) {
+            winding = false;
+            say("Bound tight", LANTERN, now);
+        }
     }
 
     /** The beat lane: what's coming slides to the line; the count-in shows as the bar to listen to. */
@@ -525,6 +674,10 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             g.text(font, line, cx + 10, ly, LABEL, false);
             ly += 10;
         }
+        for (String line : dev.awaken.core.api.ForgeHooks.cardLines(it)) {
+            g.text(font, line, cx + 10, ly, 0xFFA898FF, false);
+            ly += 10;
+        }
         if (drawn) {
             button(g, cx + 10, cy + ch - 24, "First cut");
             button(g, cx + cw - 10 - bw("Done"), cy + ch - 24, "Done");
@@ -543,11 +696,11 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private int cardH(boolean drawn) {
         int w = cardW();
         return 62 + 10 * font.split(cardItem().getHoverName(), w - 42).size() + 10 * font.split(Component.literal(about(done)), w - 20).size()
-                + (drawn ? 26 : 0);
+                + 10 * dev.awaken.core.api.ForgeHooks.cardLines(cardItem()).size() + (drawn ? 26 : 0);
     }
 
     private ItemStack cardItem() {
-        return shown.isEmpty() ? new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id(WarAnvil.WEAPON))) : shown;
+        return shown.isEmpty() ? new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id(weapon))) : shown;
     }
 
     private int cardY(int ch) {
@@ -558,7 +711,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         return !Float.isNaN(drawnAt) || !Float.isNaN(emptyAt);
     }
 
-    /** The card's words: how well, the Temper it leaves with (and whose limit held it), its flaw. */
+    /** The card's words: how well, the Temper it leaves with (and whose limit held it), its flaw, and how it was made. */
     private static String about(AnvilPayloads.Done d) {
         AnvilSong.Quality q = AnvilSong.Quality.of(d.quality());
         String how = switch (q) {
@@ -575,7 +728,10 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             case AnvilSong.BRITTLE -> " It was held in the water too long: there's a brittle hairline in it.";
             default -> "";
         };
-        return how + temper + flaw;
+        String made = ((d.flags() & WarAnvil.FROM_MEMORY) != 0 ? " You made it from memory." : "")
+                + ((d.flags() & WarAnvil.TWIN) != 0 ? " A second hammer struck between your beats: it's twin-struck." : "")
+                + ((d.flags() & WarAnvil.ARMOURY) != 0 ? " Forged in your Armoury, it will last a quarter longer." : "");
+        return how + temper + flaw + made;
     }
 
     private static String numeral(int n) {
@@ -625,11 +781,29 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             case AnvilSong.HEAT -> {
                 if (!pulled && AnvilSong.heat(t) >= 0.65F) pull(w, t, now);
             }
+            case AnvilSong.KNAP -> {
+                next = Math.max(next, w.beats().size());
+                if (next >= w.beatsNeeded() || t < 12F || !Float.isNaN(knapLast) && t - knapLast < 10F) return;
+                if (project(AnvilScene.target(placed.work, AnvilScene.FLAKE, next, v))) {
+                    mx = Math.round(p[0]);
+                    my = Math.round(p[1]);
+                }
+                flake(w, t, now);
+            }
+            case AnvilSong.BIND -> {
+                // circles at an even pace: a turn each ten ticks, the cursor drawn round the grip
+                if (!winding && windTurns == 0 && t >= 12F) holdCord(w, t);
+                if (winding && project(placed.work.point(AnvilScene.BLADE_X, placed.work.shape.hands[0], 0F, v))) {
+                    double a = (t - turnAt[0]) / 10.0 * Math.PI * 2;
+                    mx = (int) Math.round(p[0] + Math.cos(a) * 28);
+                    my = (int) Math.round(p[1] + Math.sin(a) * 28);
+                }
+            }
             case AnvilSong.SHAPE, AnvilSong.HILT -> {
                 boolean tap = w.stage == AnvilSong.HILT;
                 next = Math.max(next, w.beats().size());
                 if (next >= w.beatsNeeded() || t < w.rhythm().due(next - w.strikeBase)) return;
-                if (!tap && project(AnvilScene.target(placed.work, false, next, v))) {
+                if (!tap && project(AnvilScene.target(placed.work, AnvilScene.STRIKE, next, v))) {
                     mx = Math.round(p[0]);
                     my = Math.round(p[1]);
                 }
@@ -678,6 +852,13 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             }
             case AnvilSong.HILT -> {
                 if (press) strike(w, t, now, true);
+            }
+            case AnvilSong.KNAP -> {
+                if (press) flake(w, t, now);
+            }
+            case AnvilSong.BIND -> {
+                if (press) holdCord(w, t);
+                else releaseCord(t, now);
             }
             default -> {
                 return false;

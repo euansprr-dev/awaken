@@ -3,6 +3,7 @@ package dev.awaken.arms.anvil.client;
 import dev.awaken.Awaken;
 import dev.awaken.arms.WeaponMesh;
 import dev.awaken.arms.anvil.AnvilSong;
+import dev.awaken.arms.anvil.AnvilWork;
 import dev.awaken.arms.client.WeaponDraw;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
@@ -49,8 +50,17 @@ final class AnvilShape {
 
     private static final Map<WeaponMesh, AnvilShape> READ = new IdentityHashMap<>();
 
+    /** The mesh a thing at the anvil is drawn with: its own, or for a Hunter blade forged alone its tier's Longsword's blade. */
+    static String meshId(String id) {
+        return id.endsWith("_" + AnvilWork.BLADE) && AnvilWork.tierOf(id) >= 0 ? id.substring(0, id.indexOf('_')) + "_longsword" : id;
+    }
+
+    static boolean blade(String id) {
+        return !meshId(id).equals(id);
+    }
+
     static AnvilShape of(@Nullable String weapon) {
-        WeaponMesh mesh = weapon == null ? null : WeaponDraw.mesh(weapon);
+        WeaponMesh mesh = weapon == null ? null : WeaponDraw.mesh(meshId(weapon));
         if (mesh == null) return FALLBACK;
         AnvilShape s = READ.get(mesh);
         if (s == null) {

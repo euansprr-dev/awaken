@@ -41,7 +41,8 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         int forgeLight, slotFlash, slotEnergy;
     }
 
-    private static final Identifier HAMMER = Awaken.id("textures/item/arms/anvil_hammer.png"), TONGS = Awaken.id("textures/item/arms/anvil_tongs.png");
+    private static final Identifier HAMMER = Awaken.id("textures/item/arms/anvil_hammer.png"), TONGS = Awaken.id("textures/item/arms/anvil_tongs.png"),
+            STONE = Awaken.id("textures/item/arms/anvil_stone_hammer.png");
     private static final Matrix4f M = new Matrix4f();
     private static final Quaternionf FRAME = new Quaternionf();
 
@@ -74,7 +75,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         }
         ItemStack st = be.slot();
         var key = st.isEmpty() ? null : BuiltInRegistries.ITEM.getKey(st.getItem());
-        s.slot = key != null && key.getNamespace().equals(Awaken.MODID) && WeaponDraw.mesh(key.getPath()) != null ? key.getPath() : null;
+        s.slot = key != null && key.getNamespace().equals(Awaken.MODID) && WeaponDraw.mesh(AnvilShape.meshId(key.getPath())) != null ? key.getPath() : null;
         if (s.slot != null) {
             AnvilScene.inSlot(AnvilScene.frame(be.getBlockState(), FRAME), AnvilShape.of(s.slot), mine ? 0.22F * AnvilScene.drawK : 0F, s.slotLay);
             // it wakes as it's set there, then keeps a low glow of its own until it's drawn
@@ -87,23 +88,25 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
     public void submit(State s, PoseStack ps, SubmitNodeCollector out, CameraRenderState camera) {
         AnvilScene.Placed p = s.placed;
         if (p.hasWork && s.weapon != null) {
-            WeaponMesh mesh = WeaponDraw.mesh(s.weapon);
+            WeaponMesh mesh = WeaponDraw.mesh(AnvilShape.meshId(s.weapon));
             if (mesh != null) {
                 ps.pushPose();
                 ps.mulPose(p.work.matrix(M));
                 int x = p.heat < 0 ? 0 : p.heat, y = p.heat < 0 ? 0 : p.front | p.flags;
-                WeaponDraw.draw(out, ps, mesh, texture(s.weapon), p.inForge ? s.forgeLight : s.lightCoords, x, y, p.cut);
+                WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.weapon)), p.inForge ? s.forgeLight : s.lightCoords, x, y, p.cut);
                 ps.popPose();
             }
         }
-        tool(ps, out, "anvil/hammer", HAMMER, p.hammer, s.lightCoords);
+        tool(ps, out, p.stone ? "anvil/stone_hammer" : "anvil/hammer", p.stone ? STONE : HAMMER, p.hammer, s.lightCoords);
         if (p.hasTongs) tool(ps, out, "anvil/tongs", TONGS, p.tongs, p.inForge ? s.forgeLight : s.lightCoords);
         if (s.slot != null) {
-            WeaponMesh mesh = WeaponDraw.mesh(s.slot);
+            WeaponMesh mesh = WeaponDraw.mesh(AnvilShape.meshId(s.slot));
             if (mesh != null) {
                 ps.pushPose();
                 ps.mulPose(s.slotLay.matrix(M));
-                WeaponDraw.draw(out, ps, mesh, texture(s.slot), LightCoordsUtil.withBlock(s.lightCoords, Math.max(LightCoordsUtil.block(s.lightCoords), 12)), s.slotEnergy, s.slotFlash, 0F);
+                // a blade forged alone stands as its Longsword's blade, no hilt
+                float from = AnvilShape.blade(s.slot) ? AnvilShape.of(s.slot).cut[0] : 0F;
+                WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.slot)), LightCoordsUtil.withBlock(s.lightCoords, Math.max(LightCoordsUtil.block(s.lightCoords), 12)), s.slotEnergy, s.slotFlash, from);
                 ps.popPose();
             }
         }

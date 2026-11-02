@@ -1,5 +1,6 @@
 package dev.awaken.arms.anvil;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.awaken.core.AwakenCommands;
 import dev.awaken.core.CoreModule;
 import net.minecraft.commands.Commands;
@@ -10,6 +11,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /** The War Anvil (SPEC §46): weapons forged by hand, a cinematic of your own (called from {@code ArmsModule.init}). */
@@ -21,9 +23,17 @@ public final class AnvilModule {
         modBus.addListener(AnvilModule::registerPayloads);
         modBus.addListener(AnvilModule::creativeTab);
         WarAnvil.init();
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> WarAnvil.forget(e.getEntity().getUUID()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            WarAnvil.forget(e.getEntity().getUUID());
+            AnvilNow.forget(e.getEntity().getUUID());
+        });
+        // a weapon of ours held without a story gains its Plain one (read twice a second: a component check, no allocation)
+        NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
+            if (e.getEntity() instanceof ServerPlayer sp && sp.tickCount % 10 == 0) WarAnvil.storyOnHold(sp);
+        });
         registerCommands();
         WeaponGoals.register();
+        AnvilNow.register();
         dev.awaken.core.api.Sources.declare("forged at a War Anvil (SPEC §46.7): by hand at E, in the Forge's heat from D",
                 AnvilCosts.table().keySet().toArray(String[]::new));
         AnvilTests.register();
@@ -43,19 +53,29 @@ public final class AnvilModule {
     }
 
     private static void registerCommands() {
-        // dev and tours: begin the Longsword at the nearest War Anvil, as its window's Forge it would
+        // dev and tours: /awaken arms anvil forge [weapon [memory]] (the Beastbound Longsword when none is named)
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("arms").then(Commands.literal("anvil").requires(AwakenCommands.admin())
-                .then(Commands.literal("forge").executes(c -> {
-                    ServerPlayer p = c.getSource().getPlayerOrException();
-                    if (!(p.level() instanceof ServerLevel level)) return 0;
-                    WarAnvilBlockEntity be = nearest(level, p);
-                    if (be == null) {
-                        c.getSource().sendFailure(Component.literal("No War Anvil within " + WarAnvil.REACH + " blocks."));
-                        return 0;
-                    }
-                    WarAnvil.start(p, level, be);
-                    return 1;
-                })))));
+                .then(Commands.literal("forge").executes(c -> forge(c.getSource(), WarAnvil.WEAPON, false))
+                        .then(Commands.argument("weapon", StringArgumentType.word())
+                                .executes(c -> forge(c.getSource(), StringArgumentType.getString(c, "weapon"), false))
+                                .then(Commands.literal("memory").executes(c -> forge(c.getSource(), StringArgumentType.getString(c, "weapon"), true))))))));
+    }
+
+    /** Dev and tours: begin a weapon (or a blade alone) at the nearest War Anvil, as the Armoury's Forge it would; says why not. */
+    private static int forge(net.minecraft.commands.CommandSourceStack src, String weapon, boolean memory) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        if (!(p.level() instanceof ServerLevel level)) return 0;
+        WarAnvilBlockEntity be = nearest(level, p);
+        if (be == null) {
+            src.sendFailure(Component.literal("No War Anvil within " + WarAnvil.REACH + " blocks."));
+            return 0;
+        }
+        String why = WarAnvil.missing(p, level, be.getBlockPos(), weapon, memory);
+        if (why != null) {
+            src.sendFailure(Component.literal(why));
+            return 0;
+        }
+        return WarAnvil.begin(p, level, be, weapon, memory) ? 1 : 0;
     }
 
     private static WarAnvilBlockEntity nearest(ServerLevel level, ServerPlayer p) {

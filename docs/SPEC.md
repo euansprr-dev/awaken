@@ -17392,7 +17392,14 @@ forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-f
   hold use and draw circles with the mouse to wind the cord round the grip: four turns, scored on how even they are
   (each turn's time against their mean: within an eighth 1, half off 0; a hold under 24 ticks for the four, or a release
   before them, scores what was wound). Quality by hand: 0.6 knap + 0.4 bind, the same bands; no flaws by hand. Then the
-  draw from the stone, as at D.
+  draw from the stone, as at D. The protocol: `KNAP` per flake (its aim), `WIND` a=0 when use is held and a=k as turn k
+  closes (in order, the times rising; the fifth closes the bind), `RELEASE` if use is let go first. At E the smith works
+  with a **stone hammer** (`arms/anvil/stone_hammer.mesh`: an antler haft, a sinew grip, a lashed flint head), not the
+  iron one.
+- **A blade forged alone** (Forge the blade): at E the knap alone (it scores both parts), at D and up the heat, the draw
+  and the quench, then the draw from the stone; no hilt, no bind. It's drawn on the anvil as its tier's Longsword cut at
+  the blade (blades have no mesh of their own). A blade is a part: it doesn't count toward `awaken:weapon_forged`, your
+  memory, the styles forged or the Weapons tab's steps.
 - **D and up: the base song** (heat, draw out, quench, hilt, draw; stage 1's acts and scoring) on **each style's own
   rhythm** (`AnvilSong.SONGS`, from each style's chain), its strikes 8 to 14 by weapon, flipped after half:
 
@@ -17413,7 +17420,11 @@ forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-f
   quench and the draw (at E one flake and the draw); about 8 s; the parts as ever; always **Fine**, no flaw.
 - **A helper**: anyone else who uses the anvil while it's being drawn out strikes an off-beat (at least 2 ticks from any
   beat the smith is due on, 6 ticks apart): each clean one adds 0.01 to the score, 0.05 at most, and three make it
-  **twin-struck**. They hear their strike; the smith hears it ring.
+  **twin-struck**. They hear their strike; the smith hears it ring. Only during the draw-out, after the count-in, and not
+  from memory; one on a beat is a miss (a dull clank). The third clean one tells the helper "Your strikes are in the
+  blade. It will come out twin-struck."
+- **The result** (`AnvilPayloads.Done`, its `flags`: 1 twin-struck, 2 from memory, 4 forged in an Armoury room) says each
+  in a sentence under the quality.
 - **The story** (`awaken:weapon_forged` schemaVersion 2: + `twin`, + `memory`; a v1 story reads with both false). The
   tooltip says it plainly: "Masterwork, twin-struck", "Fine, from memory", then "Forged by Euan". A weapon of ours with no
   story (made on the grid before the War Anvil, or Hale's issue) gains a Plain one, no maker, the first time it is held; a
@@ -17437,13 +17448,16 @@ forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-f
   C-rank weapon" (`arms/rank_weapon`) shows when you've reached a tier above the best you've forged, its choices the
   styles you know at that tier. **The Now line** (`AnvilNow`, priority 25): "You can forge Beastbound Daggers at your War
   Anvil" when you hold every part of a weapon you know, at a tier you've reached, better than any of its style you carry;
-  the gear module's line no longer suggests blades. **Words**: the level road's E step says weapons are made at a War
-  Anvil, from bone and flint by hand at E; Hale adds "When you want to make your own, set up a War Anvil at home."; the
+  the gear module's line no longer suggests blades. Its id is `arms:forge/<weapon>`, it points at your anvil when it's in
+  your dimension, and both Weapons steps cover it (`covers("arms:forge/")`) while they show. **Words**: the level road's E step says weapons are made at a War
+  Anvil, from bone and flint by hand at E; Hale adds "To make your own, set up a War Anvil at home."; the
   pattern notices say the War Anvil.
 - **JEI**: a War Anvil page (the compat module's build page) for every weapon and blade, from the cost table.
 - **The smith in third person**: others see the smith bent over the anvil, the hammer arm rising and falling on each
   strike and tap (a full-body clip, `assets/awaken/player_animations/arms_anvil.json`, through `core.api.PlayerClips`;
   without the animation library, vanilla's arm swing on each strike).
+- **The dev command** `/awaken arms anvil forge [weapon [memory]]` begins that weapon (the Beastbound Longsword with
+  none) at the nearest War Anvil within six blocks, or says what's missing in the anvil's own words; the tours use it.
 - **Old saves**: every weapon already made keeps working and gains its Plain story when held; Blueprints held were
   learned by the backfill; Fangs and the other blades still stand in. The grid recipes are gone, so their recipe-book
   entries vanish; nothing is charged twice.
@@ -17452,5 +17466,6 @@ Tests (one per mechanism): `arms_anvil_costs` (every weapon and blade has its co
 no crafting recipe makes any of them; a carried blade stands in, else its parts are added), `arms_anvil_hand` (E knap and
 bind judged by the server: aim, evenness, quality, no Forge needed), `arms_anvil_memory` (a Masterwork goes into memory;
 from memory is one strike and always Fine), `arms_anvil_song` (as before, on the Longsword, plus a helper's off-beats
-making it twin-struck). `arms_recipe_unlock` is retired (no weapon recipes); `arms_armoury` and `arms_raise` read needs
+making it twin-struck), `arms_anvil_goals` (grown: the rank step after the first weapon, and the Now line: its parts in
+the pack, nothing better of its style carried). `arms_recipe_unlock` is retired (no weapon recipes); `arms_armoury` and `arms_raise` read needs
 from the cost table.

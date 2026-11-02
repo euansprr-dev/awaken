@@ -29,6 +29,127 @@ final class AnvilTests {
         AwakenTests.register("arms_anvil_song", 40, AnvilTests::song);
         AwakenTests.registerIsolated("arms_anvil_goals", 100, AnvilTests::goals);
         AwakenTests.register("arms_anvil_costs", 20, AnvilTests::costs);
+        AwakenTests.register("arms_anvil_hand", 40, AnvilTests::hand);
+        AwakenTests.register("arms_anvil_memory", 40, AnvilTests::memory);
+    }
+
+    /**
+     * E by hand (SPEC §46.7): a pattern held isn't known until it's used (used up, and a second stays); the Wildhide
+     * Daggers need no Forge; eight flakes at the smith's own pace (one too soon after the last isn't taken, one wide scores
+     * less), then four even turns of the cord; it stands in the slot by its knap and bind, no flaw. The bind's rules:
+     * uneven turns, a hold too quick and a release before the four all score less.
+     */
+    private static void hand(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        h.setBlock(new BlockPos(1, 1, 1), AnvilContent.ANVIL.get().defaultBlockState());
+        WarAnvilBlockEntity be = (WarAnvilBlockEntity) level.getBlockEntity(h.absolutePos(new BlockPos(1, 1, 1)));
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, pos, "anvil-hand", 3);
+        String daggers = "wildhide_daggers";
+        h.assertTrue("You don't know this pattern yet.".equals(WarAnvil.missing(p, level, pos, daggers, false)), "an unknown style can't be forged");
+        Item print = dev.awaken.arms.ArmsItems.blueprintItem("daggers");
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(print, 2));
+        h.assertTrue(!dev.awaken.core.api.ArmsApi.knows(p, "daggers"), "holding its Blueprint isn't knowing it");
+        print.use(level, p, net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(dev.awaken.core.api.ArmsApi.knows(p, "daggers") && p.getMainHandItem().getCount() == 1, "used, it teaches the Daggers and is used up");
+        print.use(level, p, net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(p.getMainHandItem().getCount() == 1, "used again, known: it stays for someone else");
+        p.getInventory().clearContent();
+        give(p, AnvilCosts.needs(p, daggers));
+        h.assertTrue(WarAnvil.missing(p, level, pos, daggers, false) == null, "by hand at E: no Forge needed");
+        h.assertTrue(WarAnvil.begin(p, level, be, daggers, false), "begun");
+        AnvilWork w = be.work();
+        h.assertTrue(w != null && w.stage == AnvilSong.KNAP && w.hand() && w.forge.equals(pos) && !w.materials.isEmpty(), "the knap first, the parts in the work");
+
+        flake(h, p, be, 0F, 0F);
+        flake(h, p, be, 3F, 0F);
+        h.assertTrue(w.scores.size() == 1, "a flake struck too soon after the last isn't taken: " + w.scores);
+        flake(h, p, be, 9F, 1.25F);
+        h.assertTrue(w.scores.size() == 2 && Math.abs(w.scores.get(1) - 0.5F) < 0.01F, "wide of its point it scores half: " + w.scores);
+        for (int i = 2; i < AnvilSong.FLAKES; i++) flake(h, p, be, 9F * i + 1F, 0F);
+        h.assertTrue(w.stage == AnvilSong.BIND, "eight flakes, then the bind");
+
+        h.assertTrue(AnvilSong.evenness(new float[]{10, 10, 10, 20}, 4) < 0.8F && AnvilSong.evenness(new float[]{10, 11, 10, 10}, 4) == 1F,
+                "a slow turn among even ones scores less; a tick off is even");
+        h.assertTrue(AnvilSong.bind(1F, 4, 12F) == 0.5F && AnvilSong.bind(1F, 2, 30F) == 0.5F, "a hold too quick, or let go at half, scores half");
+        for (int k = 0; k <= AnvilSong.TURNS; k++) {
+            w.stageStart = level.getGameTime() - 10L * k;
+            act(p, pos, AnvilPayloads.WIND, k, 10F * k, 0F);
+        }
+        ItemStack made = be.slot();
+        WeaponForged f = made.get(AnvilContent.FORGED.get());
+        float expect = AnvilSong.handScore((7F + 0.5F) / 8F, 1F);
+        h.assertTrue(made.is(WarAnvil.item(daggers)) && f != null && f.quality() == AnvilSong.quality(expect, false).ordinal()
+                && f.flaw() == AnvilSong.NO_FLAW && !f.memory(), "the Daggers stand in the slot by the knap and the bind (" + expect + "), got " + f);
+        act(p, pos, AnvilPayloads.DRAW, 0, 0F, 0F);
+        h.assertTrue(p.getMainHandItem().is(WarAnvil.item(daggers)) && SmithMemory.of(p).hasForged("daggers") && SmithMemory.of(p).best() == 0,
+                "drawn, and remembered as forged");
+        h.succeed();
+    }
+
+    private static void flake(GameTestHelper h, ServerPlayer p, WarAnvilBlockEntity be, float t, float aim) {
+        AnvilWork w = be.work();
+        w.stageStart = h.getLevel().getGameTime() - (long) t;
+        act(p, be.getBlockPos(), AnvilPayloads.KNAP, w.scores.size(), t, aim);
+    }
+
+    /**
+     * From memory (SPEC §46.7): only a weapon forged Masterwork or better is in it; then one heat, one strike, the quench
+     * and the draw (no hilt), and however it's struck it comes out Fine. A v1 memory reads empty. A weapon of ours held
+     * with no story gains a Plain one; a Marked one never does.
+     */
+    private static void memory(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        h.setBlock(new BlockPos(1, 1, 1), AnvilContent.ANVIL.get().defaultBlockState());
+        h.setBlock(new BlockPos(3, 1, 1), BuiltInRegistries.BLOCK.getValue(Awaken.id("forge")).defaultBlockState());
+        WarAnvilBlockEntity be = (WarAnvilBlockEntity) level.getBlockEntity(h.absolutePos(new BlockPos(1, 1, 1)));
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, pos, "anvil-memory", 13);
+        give(p, AnvilCosts.needs(p, WarAnvil.WEAPON));
+        h.assertTrue(WarAnvil.missing(p, level, pos, WarAnvil.WEAPON, true) != null, "not in memory before it's forged well");
+        SmithMemory.of(p).forged("longsword", 1, AnvilSong.Quality.FINE);
+        h.assertTrue(!SmithMemory.of(p).remembers("longsword", 1), "a Fine one isn't remembered");
+        SmithMemory.of(p).forged("longsword", 1, AnvilSong.Quality.MASTERWORK);
+        h.assertTrue(SmithMemory.of(p).remembers("longsword", 1) && !SmithMemory.of(p).remembers("longsword", 0), "a Masterwork is, at its tier");
+        h.assertTrue(WarAnvil.begin(p, level, be, WarAnvil.WEAPON, true), "begun from memory");
+        AnvilWork w = be.work();
+        w.stageStart = level.getGameTime() - 20;
+        act(p, pos, AnvilPayloads.PULL, 0, 20F, 0F); // pulled cold
+        float due = w.nextDue();
+        w.stageStart = level.getGameTime() - (long) (due + 6);
+        act(p, pos, AnvilPayloads.STRIKE, 0, due + 6, 3F); // late and wide
+        h.assertTrue(w.stage == AnvilSong.QUENCH && w.scores.size() == 1, "one strike draws it out, got " + w.scores);
+        w.stageStart = level.getGameTime() - 10;
+        act(p, pos, AnvilPayloads.PLUNGE, 0, 10F, 0F);
+        w.stageStart = level.getGameTime() - 14;
+        act(p, pos, AnvilPayloads.LIFT, 0, 14F, 0F); // lifted early
+        WeaponForged f = be.slot().get(AnvilContent.FORGED.get());
+        h.assertTrue(be.work() == null && f != null && f.quality() == AnvilSong.Quality.FINE.ordinal() && f.flaw() == AnvilSong.NO_FLAW && f.memory(),
+                "no hilt, and Fine however it went: " + f);
+        h.assertTrue(f.line().equals("Fine, from memory"), "its words: " + f.line());
+
+        var v1 = com.google.gson.JsonParser.parseString("{\"schemaVersion\": 1}");
+        SmithMemory old = SmithMemory.CODEC.codec().parse(com.mojang.serialization.JsonOps.INSTANCE, v1).getOrThrow();
+        h.assertTrue(old.best() == -1 && !old.remembers("longsword", 1) && !old.hasForged("longsword"), "a v1 memory reads empty");
+
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(WarAnvil.item("wildhide_axe")));
+        WarAnvil.storyOnHold(p);
+        WeaponForged plain = p.getMainHandItem().get(AnvilContent.FORGED.get());
+        h.assertTrue(plain != null && plain.quality() == 0 && plain.maker().isEmpty(), "an old weapon held gains its Plain story: " + plain);
+        ItemStack marked = new ItemStack(WarAnvil.item("wildhide_axe"));
+        dev.awaken.arms.Marks.put(marked, dev.awaken.arms.Marks.Instance.EMPTY.withMark(dev.awaken.arms.Marks.all().getFirst().id()));
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, marked);
+        WarAnvil.storyOnHold(p);
+        h.assertTrue(!p.getMainHandItem().has(AnvilContent.FORGED.get()), "a Marked one, found, never does");
+        h.succeed();
+    }
+
+    private static void give(ServerPlayer p, java.util.List<dev.awaken.arms.net.ArmsPayloads.NeedRow> needs) {
+        for (var n : needs) {
+            if (n.have() >= n.need()) continue;
+            Item item = n.kind().equals("tag") ? first(net.minecraft.resources.Identifier.parse(n.id())) : BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse(n.id()));
+            p.getInventory().add(new ItemStack(item, n.need() - n.have()));
+        }
     }
 
     /**
@@ -109,6 +230,19 @@ final class AnvilTests {
         h.assertTrue(step(p, WeaponGoals.ANVIL) != null, "the anvil broken: setting one up is a step again");
         Progression.count(p, WeaponGoals.FORGED);
         h.assertTrue(step(p, WeaponGoals.ANVIL) == null && step(p, WeaponGoals.FIRST) == null, "a weapon forged: both are done: " + keys(p));
+
+        // an E weapon forged, then D reached: "Make your D-rank weapon", and the Now line once its parts are in the pack
+        SmithMemory.of(p).forged("longsword", 0, AnvilSong.Quality.PLAIN);
+        for (int i = 0; i < 40 && Progression.profile(p).level() < dev.awaken.arms.ArmsArmoury.LEVEL[1]; i++) Progression.grantLevels(p, 6, Progression.XpSource.COMMAND);
+        Goals.Step rank = step(p, WeaponGoals.RANK);
+        h.assertTrue(rank != null && rank.title().equals("Make your D-rank weapon") && rank.covers().contains("arms:forge/"),
+                "a tier above the best forged: a step to make one, over the Now line: " + keys(p));
+        dev.awaken.core.api.ArmsApi.learn(p, "longsword", "test");
+        h.assertTrue(AnvilNow.next(p) == null, "its parts not in the pack: no Now line");
+        give(p, AnvilCosts.needs(p, "beastbound_longsword"));
+        h.assertTrue("beastbound_longsword".equals(AnvilNow.next(p)), "every part in the pack: the Now line says it can be forged, got " + AnvilNow.next(p));
+        p.getInventory().add(new ItemStack(WarAnvil.item("beastbound_longsword")));
+        h.assertTrue(AnvilNow.next(p) == null, "one of its tier already carried: nothing to say");
         h.succeed();
     }
 
@@ -133,14 +267,14 @@ final class AnvilTests {
         h.setBlock(new BlockPos(1, 1, 1), AnvilContent.ANVIL.get().defaultBlockState());
         WarAnvilBlockEntity be = (WarAnvilBlockEntity) level.getBlockEntity(h.absolutePos(new BlockPos(1, 1, 1)));
         BlockPos pos = be.getBlockPos();
-        ServerPlayer p = smith(h, pos);
+        ServerPlayer p = smith(h, pos, "anvil-test", 13);
         Item core = first(Awaken.id("hunter_core_d"));
         p.getInventory().add(new ItemStack(core));
         p.getInventory().add(new ItemStack(WarAnvil.item(WarAnvil.BLADE)));
         p.getInventory().add(new ItemStack(Items.IRON_INGOT));
-        h.assertTrue(WarAnvil.missing(p, WarAnvil.forge(level, pos), WarAnvil.cost(p)) != null, "no Forge near: it says so");
+        h.assertTrue(WarAnvil.missing(p, level, pos, WarAnvil.WEAPON, false) != null, "no Forge near: it says so");
         h.setBlock(new BlockPos(3, 1, 1), BuiltInRegistries.BLOCK.getValue(Awaken.id("forge")).defaultBlockState());
-        h.assertTrue(WarAnvil.missing(p, WarAnvil.forge(level, pos), WarAnvil.cost(p)) == null, "a Forge near and the parts in the pack: nothing missing");
+        h.assertTrue(WarAnvil.missing(p, level, pos, WarAnvil.WEAPON, false) == null, "a Forge near and the parts in the pack: nothing missing");
         WarAnvil.start(p, level, be);
         AnvilWork w = be.work();
         h.assertTrue(w != null && w.stage == AnvilSong.HEAT && w.materials.size() == 3 && count(p, WarAnvil.item(WarAnvil.BLADE)) == 0
@@ -162,8 +296,22 @@ final class AnvilTests {
         w.stageStart = level.getGameTime() - (long) (due + 5);
         act(p, pos, AnvilPayloads.STRIKE, 0, due + 5, 0F);
         h.assertTrue(w.scores.size() == 1 && !AnvilSong.clean(w.scores.getFirst()), "five ticks late: taken, not clean, got " + w.scores);
+
+        // a helper's strikes between the beats go into the blade (three make it twin-struck); one on a beat doesn't
+        ServerPlayer helper = h.makeMockServerPlayerInLevel();
+        AnvilSong.Rhythm r = w.rhythm();
+        float between = (r.due(0) + r.due(1)) / 2F;
+        for (int i = 0; i < 3; i++) {
+            w.stageStart = level.getGameTime() - (long) between;
+            w.helpLast -= 100;
+            WarAnvil.open(helper, be);
+        }
+        w.stageStart = level.getGameTime() - (long) r.due(1);
+        w.helpLast -= 100;
+        WarAnvil.open(helper, be);
+        h.assertTrue(w.help == 3 && w.scores.size() == 1, "three off-beats taken, the one on the beat not, got " + w.help);
         while (w.stage == AnvilSong.SHAPE) beatOnTime(h, p, be, AnvilPayloads.STRIKE);
-        h.assertTrue(w.scores.size() == AnvilSong.STRIKES && w.stage == AnvilSong.QUENCH, "ten strikes, then the quench");
+        h.assertTrue(w.scores.size() == w.song.strikes() && w.song.strikes() == 10 && w.stage == AnvilSong.QUENCH, "ten strikes, then the quench");
 
         // the quench: soft early, brittle late, true at the notch
         h.assertTrue(AnvilSong.quench(20F) < 0.5F && !AnvilSong.brittle(20F) && AnvilSong.quench(32F) == 1F && AnvilSong.brittle(40F),
@@ -178,7 +326,8 @@ final class AnvilTests {
         ItemStack made = be.slot();
         WeaponForged f = made.get(AnvilContent.FORGED.get());
         h.assertTrue(made.is(WarAnvil.item(WarAnvil.WEAPON)) && f != null && f.quality() == AnvilSong.Quality.FLAWLESS.ordinal()
-                && f.flaw() == AnvilSong.NO_FLAW && f.maker().equals(p.getGameProfile().name()), "it stands in the slot, Flawless, its maker named, got " + f);
+                && f.flaw() == AnvilSong.NO_FLAW && f.maker().equals(p.getGameProfile().name()) && f.twin(), "it stands in the slot, Flawless and twin-struck, its maker named, got " + f);
+        h.assertTrue(SmithMemory.of(p).remembers("longsword", 1), "a Flawless one goes into memory");
         h.assertTrue(Upgrades.temperOf(made) == 1, "Flawless leaves at Temper III, held to the Forge's limit of I with no Forge room, got " + Upgrades.temperOf(made));
 
         act(p, pos, AnvilPayloads.DRAW, 0, 0F, 0F);
@@ -202,13 +351,14 @@ final class AnvilTests {
         h.succeed();
     }
 
-    /** A D-rank survival smith in front of the anvil (a mock player is always creative, which forges for nothing). */
-    private static ServerPlayer smith(GameTestHelper h, BlockPos at) {
-        AwakenTests.Live live = AwakenTests.survivalPlayer(h, "anvil-test", BlockPos.ZERO);
+    /** A survival smith of this level in front of the anvil (a mock player is always creative, which forges for nothing). */
+    private static ServerPlayer smith(GameTestHelper h, BlockPos at, String name, int level) {
+        AwakenTests.Live live = AwakenTests.survivalPlayer(h, name, BlockPos.ZERO);
         AwakenTests.onEnd(h, live::leave);
         ServerPlayer p = live.player();
         Progression.awaken(p);
-        while (Progression.rank(p).ordinal() < Rank.D.ordinal()) Progression.passReassessment(p);
+        if (level > 3) while (Progression.rank(p).ordinal() < Rank.D.ordinal()) Progression.passReassessment(p);
+        for (int i = 0; i < 40 && Progression.profile(p).level() < level; i++) Progression.grantLevels(p, 6, Progression.XpSource.COMMAND);
         p.getInventory().clearContent();
         p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() - 1.5, 180F, 30F);
         return p;

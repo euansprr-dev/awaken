@@ -8,7 +8,7 @@ The model faces north (the smith stands to the north); the smith's right is west
 
     python3 tools/art/build_all.py war_anvil          textures
     python3 tools/art/specs/war_anvil.py content      blockstate, model, item model, loot table, name, pickaxe tag
-    python3 tools/art/specs/war_anvil.py tools        the hammer's and tongs' meshes and textures
+    python3 tools/art/specs/war_anvil.py tools        the hammer's, tongs' and stone hammer's meshes and textures
 """
 import json
 import os
@@ -238,16 +238,25 @@ def tools():
         VX.box(0.5, 1.5, 0, 4, -0.5, 0.5, "anvil_iron", "jaw"),
         VX.box(-1.5, 1.5, 4, 5, -0.5, 0.5, "anvil_iron_face", "lips"),
     ]
+    # E's stone hammer for the knap (SPEC §46.7): a knapped flint head lashed with sinew across an antler haft, its
+    # striking end where the iron hammer's face is, so the same swing lands it on the flake
+    stone = [
+        VX.box(-1, 1, -6, 10, -1, 1, "antler", "haft"),
+        VX.box(-1.5, 1.5, -5, -1, -1.5, 1.5, "sinew", "grip"),
+        VX.box(-2.5, 4.5, 8.5, 12.5, -1.5, 1.5, "flint", "head"),
+        VX.box(3, 5, 9, 12, -1, 1, "flint_edge", "face"),
+        VX.box(-1.5, 1.5, 7.5, 12.5, -2, 2, "sinew", "lashing"),
+    ]
     same = lambda P, direction=False: np.asarray(P, dtype=float)  # noqa: E731  (kept in design texels; the game places them)
     out_dir = os.path.join(ASSETS, "arms/anvil")
     tex_dir = os.path.join(ASSETS, "textures/item/arms")
     os.makedirs(out_dir, exist_ok=True)
-    for name, boxes in (("hammer", hammer), ("tongs", tongs)):
+    for name, boxes in (("hammer", hammer), ("tongs", tongs), ("stone_hammer", stone)):
         built = VX.build(boxes, AW.painter(), same, width=32)
         built.streams = []
         MS.write(os.path.join(out_dir, name + ".mesh"), built, (150, 160, 175))
         Image.fromarray(built.texture(), "RGBA").save(os.path.join(tex_dir, "anvil_" + name + ".png"))
-    print("war_anvil: hammer and tongs written")
+    print("war_anvil: hammer, tongs and stone hammer written")
 
 
 if __name__ == "__main__":

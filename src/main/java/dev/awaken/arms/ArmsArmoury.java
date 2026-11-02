@@ -30,16 +30,16 @@ import java.util.UUID;
 
 /**
  * The Armoury (docs/arms-progression/PLAN.md §3.2): one list answering "what can I make, what do I need, where is it".
- * Three doors lead to it: Hale's rack (sneak and talk to him: patterns for essence, by rank), a Forge (a plain use with an
- * empty hand: copies of patterns you know), and the band (read only). The server judges every price, rank and door; the
- * client draws what it is sent.
+ * Four doors lead to it: Hale's rack (sneak and talk to him: patterns for essence, by rank), a Forge (a plain use with an
+ * empty hand: copies of patterns you know), a War Anvil (where weapons are made, SPEC §46.7) and the band (read only). The
+ * server judges every price, rank and door; the client draws what it is sent.
  */
 public final class ArmsArmoury {
     private ArmsArmoury() {}
 
-    public static final int BAND = 0, HALE = 1, FORGE = 2;
-    /** What the screen asks. */
-    public static final int DETAIL = 0, BUY = 1, DRAW = 2, TRACK = 3, UNTRACK = 4, RAISE = 5;
+    public static final int BAND = 0, HALE = 1, FORGE = 2, ANVIL = 3;
+    /** What the screen asks (the last three at a War Anvil's door). */
+    public static final int DETAIL = 0, BUY = 1, DRAW = 2, TRACK = 3, UNTRACK = 4, RAISE = 5, FORGE_IT = 6, FROM_MEMORY = 7, FORGE_BLADE = 8;
 
     /** The six tiers, their weapons' name prefixes and the level each opens at (the level road, SPEC §28.3). */
     public static final String[] TIERS = {"E", "D", "C", "B", "A", "S"};
@@ -47,8 +47,8 @@ public final class ArmsArmoury {
     public static final int[] LEVEL = {3, 13, 22, 42, 67, 97};
 
     private static final long DOOR_TICKS = 20L * 60 * 3;
-    /** Which door each fighter last opened and when (not saved: closing the screen is enough). */
-    private record Opened(int door, long at) {}
+    /** Which door each fighter last opened, when, and at a War Anvil where (not saved: closing the screen is enough). */
+    private record Opened(int door, long at, net.minecraft.core.@Nullable BlockPos pos) {}
     private static final Map<UUID, Opened> OPEN = new HashMap<>();
 
     static void forget(UUID player) {
@@ -58,8 +58,17 @@ public final class ArmsArmoury {
     // ---- what the screen is sent -------------------------------------------------------------------------------------
 
     public static void open(ServerPlayer p, int door) {
+        open(p, door, null);
+    }
+
+    /** The War Anvil's door: the weapons you can make there, and Forge it (SPEC §46.7). */
+    public static void openAnvil(ServerPlayer p, net.minecraft.core.BlockPos anvil) {
+        open(p, ANVIL, anvil.immutable());
+    }
+
+    private static void open(ServerPlayer p, int door, net.minecraft.core.@Nullable BlockPos pos) {
         dev.awaken.progression.Progression.count(p, "awaken:armoury_opened");
-        OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime()));
+        OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), pos));
         AwakenNet.send(p, view(p, door, true));
         sendDetail(p, defaultStyle(p), null);
     }
@@ -75,6 +84,12 @@ public final class ArmsArmoury {
     private static int doorOf(ServerPlayer p) {
         Opened o = OPEN.get(p.getUUID());
         return o != null && p.level().getGameTime() - o.at() < DOOR_TICKS ? o.door() : BAND;
+    }
+
+    /** The War Anvil this fighter opened the Armoury at, while that door is fresh. */
+    private static net.minecraft.core.@Nullable BlockPos anvilOf(ServerPlayer p) {
+        Opened o = OPEN.get(p.getUUID());
+        return o != null && o.door() == ANVIL && p.level().getGameTime() - o.at() < DOOR_TICKS ? o.pos() : null;
     }
 
     static ArmsPayloads.ArmouryView view(ServerPlayer p, int door, boolean open) {
@@ -131,7 +146,10 @@ public final class ArmsArmoury {
         int best = Math.max(0, ArmsTiers.best(p));
         for (int i = 0; i < TIERS.length; i++) tiers.add(new ArmsPayloads.TierRow(TIERS[i], LEVEL[i], level >= LEVEL[i], ArmsTiers.pull(p, i, ArmsTiers.best(p))));
         int at = tier == null ? best : Math.max(0, tierIndex(tier));
-        AwakenNet.send(p, new ArmsPayloads.ArmouryDetail(style, TIERS[at], tiers, needs(p, style, at)));
+        var anvil = anvilOf(p);
+        var status = anvil == null ? null : dev.awaken.arms.anvil.WarAnvil.status(p, anvil, style, at);
+        AwakenNet.send(p, new ArmsPayloads.ArmouryDetail(style, TIERS[at], tiers, needs(p, style, at),
+                status == null ? 0 : status.flags(), status == null ? "" : status.line()));
     }
 
     /** The highest tier whose level the fighter has reached. */
@@ -239,14 +257,14 @@ public final class ArmsArmoury {
             case DETAIL -> sendDetail(p, st.id(), a.tier().isEmpty() ? null : a.tier());
             case BUY -> {
                 if (door == HALE && buy(p, st.id())) {
-                    OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime()));
+                    OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), null));
                     sendView(p);
                     sendDetail(p, st.id(), null);
                 }
             }
             case DRAW -> {
                 if (door == FORGE && !st.id().equals(Arms.LONGSWORD) && ArmsIssue.INSTANCE.knows(p, st.id()) && ArmsForge.drawBlueprint(p, st.id())) {
-                    OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime()));
+                    OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), null));
                     sendView(p);
                     sendDetail(p, st.id(), null);
                 }
@@ -263,9 +281,17 @@ public final class ArmsArmoury {
             }
             case RAISE -> {
                 if (door == FORGE && ArmsRaise.raise(p)) {
-                    OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime()));
+                    OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), null));
                     sendView(p);
                 }
+            }
+            case FORGE_IT, FROM_MEMORY, FORGE_BLADE -> {
+                var anvil = anvilOf(p);
+                int t = tierIndex(a.tier());
+                if (anvil == null || t < 0) return;
+                String id = a.op() == FORGE_BLADE ? PREFIX[t] + "_blade" : recipeId(st.id(), t);
+                // begun, the anvil's scene opens over this screen; refused, the line under the buttons says why
+                if (!dev.awaken.arms.anvil.WarAnvil.begin(p, anvil, id, a.op() == FROM_MEMORY)) sendDetail(p, st.id(), a.tier());
             }
             case UNTRACK -> {
                 ArmsProgress g = ArmsProgress.of(p);

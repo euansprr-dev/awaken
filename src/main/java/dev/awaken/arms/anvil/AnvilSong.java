@@ -2,6 +2,8 @@ package dev.awaken.arms.anvil;
 
 import net.minecraft.util.Mth;
 
+import java.util.Map;
+
 /**
  * The War Anvil's song (SPEC §46.2), the same on both sides: its stages, the Longsword's rhythm and marks, and how each
  * act is scored. The armour's Forge Song's rules where they meet (§44.4), so both forges agree; kept here rather than
@@ -10,7 +12,7 @@ import net.minecraft.util.Mth;
 public final class AnvilSong {
     private AnvilSong() {}
 
-    public static final int HEAT = 0, SHAPE = 1, QUENCH = 2, HILT = 3;
+    public static final int HEAT = 0, SHAPE = 1, QUENCH = 2, HILT = 3, KNAP = 4, BIND = 5;
 
     // ---- heat --------------------------------------------------------------------------------------------------------
 
@@ -74,13 +76,9 @@ public final class AnvilSong {
         }
     }
 
-    /** The Longsword's: two, then the finisher's pair (its chain's tempo). */
-    public static final Rhythm LONGSWORD = new Rhythm(4, "x...x...x.x.....");
     /** The hilt's three taps: guard, grip, pommel. */
     public static final Rhythm HILT_RHYTHM = new Rhythm(3, "x..x..x.");
-    public static final int STRIKES = 10, TAPS = 3;
-    /** The strike after which the tongs flip the blade over. */
-    public static final int FLIP_AFTER = 5;
+    public static final int TAPS = 3;
 
     /**
      * Where each strike falls on the blade: along it (0 the guard, 1 the point) and across it (-1..1 of its half width),
@@ -92,6 +90,64 @@ public final class AnvilSong {
 
     /** A mark's radius, in blocks on the metal. */
     public static final float MARK = 0.045F;
+
+    /** Across the blade for the marks laid by rule (every style but the Longsword's ten). */
+    private static final float[] ACROSS = {0F, 0.35F, -0.3F, -0.4F, 0.25F, 0.3F, -0.35F};
+
+    /**
+     * Each style's song at the anvil (SPEC §46.7): its rhythm (from its chain's tempo), how many strikes draw it out
+     * (flipped after half), and where each falls on the blade.
+     */
+    public record Song(Rhythm rhythm, int strikes, float[][] marks) {
+        Song(int step, String bar, int strikes) {
+            this(new Rhythm(step, bar), strikes, layMarks(strikes));
+        }
+
+        public int flipAfter() {
+            return strikes / 2;
+        }
+
+        public float[] mark(int k) {
+            return marks[Mth.clamp(k, 0, marks.length - 1)];
+        }
+    }
+
+    /** The Longsword's ten, else the first half on one face and the second on the other, spread along 0.22-0.82. */
+    private static float[][] layMarks(int n) {
+        if (n == MARKS.length) return MARKS;
+        float[][] out = new float[n][];
+        int half = (n + 1) / 2;
+        for (int k = 0; k < n; k++) {
+            int j = k < half ? k : k - half, m = k < half ? half : n - half;
+            int step = m % 3 != 0 ? 3 : m % 5 != 0 ? 5 : 7;
+            out[k] = new float[]{0.22F + 0.6F * (m <= 1 ? 0.5F : (j * step % m) / (float) (m - 1)), ACROSS[k % ACROSS.length]};
+        }
+        return out;
+    }
+
+    public static final Map<String, Song> SONGS = Map.ofEntries(
+            Map.entry("longsword", new Song(4, "x...x...x.x.....", 10)),
+            Map.entry("axe", new Song(5, "x.....x.....x...", 8)),
+            Map.entry("maul", new Song(4, "x.......x.......", 8)),
+            Map.entry("spear", new Song(4, "x..x...x........", 10)),
+            Map.entry("greatblade", new Song(5, "x.....x.......x.", 8)),
+            Map.entry("rapier", new Song(3, "x..x.x..x..x.x..", 12)),
+            Map.entry("daggers", new Song(3, "x.x.x.xx", 14)),
+            Map.entry("katana", new Song(4, "x.......xx.x....", 10)),
+            Map.entry("twinblades", new Song(3, "x.xx.x.xx.......", 12)),
+            Map.entry("glaive", new Song(5, "x....x....xx....", 10)),
+            Map.entry("scythe", new Song(5, "x......x.x......", 8)),
+            Map.entry("gauntlets", new Song(3, "x.x.x.x.xx......", 14)),
+            Map.entry("chainblade", new Song(4, "x..x....x..x.x..", 10)),
+            Map.entry("shieldblade", new Song(4, "x...x.x.....x...", 10)),
+            Map.entry("warstaff", new Song(4, "x.x...x.x...x...", 10)),
+            Map.entry("precursor", new Song(4, "x...x...x...x...", 10)));
+
+    /** A style's song; anything else (a Hunter blade forged alone) the Longsword's. */
+    public static Song song(String style) {
+        Song s = SONGS.get(style);
+        return s != null ? s : SONGS.get("longsword");
+    }
 
     // ---- strikes -----------------------------------------------------------------------------------------------------
 
@@ -152,6 +208,57 @@ public final class AnvilSong {
     /** Cooled in the air, never plunged. */
     public static final float AIR = 0.35F;
 
+    // ---- by hand (E): knap and bind ------------------------------------------------------------------------------------
+
+    /** The flake points down the bone or flint edge, struck one by one at your own pace (no less than KNAP_GAP apart). */
+    public static final int FLAKES = 8;
+    public static final float KNAP_GAP = 6F;
+    /** Each flake point along the blade (0 its root, 1 its point) and across it (-1..1): down one edge, then the other. */
+    public static final float[][] FLAKE_MARKS = {
+            {0.2F, 0.75F}, {0.42F, 0.8F}, {0.64F, 0.75F}, {0.86F, 0.55F}, {0.8F, -0.6F}, {0.58F, -0.8F}, {0.36F, -0.8F}, {0.16F, -0.75F}};
+
+    /** A flake scores its aim alone (the strike's aim curve). */
+    public static float knap(float radii) {
+        return aim(radii);
+    }
+
+    /** The cord: four turns of the mouse round the grip, as evenly as you can. A hold this short for the four scores less. */
+    public static final int TURNS = 4;
+    public static final float BIND_MIN = 24F;
+
+    /** How even the turns were: each turn's time against their mean, within an eighth is 1, half off is 0. */
+    public static float evenness(float[] turns, int n) {
+        if (n <= 0) return 0F;
+        float mean = 0F;
+        for (int i = 0; i < n; i++) mean += turns[i];
+        mean /= n;
+        if (mean <= 0F) return 0F;
+        float score = 0F;
+        for (int i = 0; i < n; i++) score += Mth.clamp(1F - (Math.abs(turns[i] - mean) / mean - 0.125F) / 0.375F, 0F, 1F);
+        return score / n;
+    }
+
+    /** What the server takes of a bind: its evenness, times the turns wound of four, less for a hold too quick to be real. */
+    public static float bind(float evenness, int turns, float held) {
+        return Mth.clamp(evenness, 0F, 1F) * Mth.clamp(turns / (float) TURNS, 0F, 1F) * Mth.clamp(held / BIND_MIN, 0F, 1F);
+    }
+
+    /** By hand: 0.6 knap + 0.4 bind. */
+    public static float handScore(float knap, float bind) {
+        return 0.6F * knap + 0.4F * bind;
+    }
+
+    // ---- a helper ----------------------------------------------------------------------------------------------------
+
+    /** Anyone else's strike on an off-beat (this far from any beat, this far apart): each adds a little; three make it twin-struck. */
+    public static final float HELP_OFF = 2F, HELP_GAP = 6F;
+    public static final float TWIN_BONUS = 0.01F, TWIN_MAX = 0.05F;
+    public static final int TWIN_STRIKES = 3;
+
+    public static float helped(float score, int helps) {
+        return score + Math.min(TWIN_MAX, helps * TWIN_BONUS);
+    }
+
     // ---- quality -----------------------------------------------------------------------------------------------------
 
     public enum Quality {
@@ -197,9 +304,9 @@ public final class AnvilSong {
 
     // ---- how the work looks ------------------------------------------------------------------------------------------
 
-    /** How far the blade has been drawn out: 0 the squat bar, 1 the blade, after so many strikes. */
-    public static float drawn(int strikes) {
-        return Mth.clamp(strikes / (float) STRIKES, 0F, 1F);
+    /** How far the blade has been drawn out: 0 the squat bar, 1 the blade, after so many strikes of all it takes. */
+    public static float drawn(int strikes, int of) {
+        return Mth.clamp(strikes / (float) Math.max(1, of), 0F, 1F);
     }
 
     /**

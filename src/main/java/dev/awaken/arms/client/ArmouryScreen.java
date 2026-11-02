@@ -3,6 +3,7 @@ package dev.awaken.arms.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.ArmsArmoury;
+import dev.awaken.arms.anvil.WarAnvil;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.progression.Rank;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -21,7 +22,8 @@ import java.util.List;
 /**
  * The Armoury (docs/arms-progression/PLAN.md §3.2): every style on the left (the ones you know, then Hale's rack for
  * your rank), and on the right the chosen style's six tiers and what the chosen tier needs, with where each thing comes
- * from. Buy a pattern at Hale's rack, draw a copy at a Forge, and Track a weapon so its parts show on your screen. Draws
+ * from. Buy a pattern at Hale's rack, draw a copy at a Forge, forge it at a War Anvil, and Track a weapon so its parts
+ * show on your screen. Draws
  * what the server sends; the server judges every price and door. Doesn't pause the game.
  */
 final class ArmouryScreen extends Screen implements dev.awaken.signal.client.QuietScreen, dev.awaken.signal.client.ReadingScreen {
@@ -75,7 +77,8 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         g.fill(px, py, px + pw, py + ph, 0xE80F1724);
         g.outline(px, py, pw, ph, 0xB07FC3FF);
         if (v == null) return;
-        String door = Language.getInstance().getOrDefault("awaken.armoury.door." + (v.door() == ArmsArmoury.HALE ? "hale" : v.door() == ArmsArmoury.FORGE ? "forge" : "band"));
+        String door = Language.getInstance().getOrDefault("awaken.armoury.door." + (v.door() == ArmsArmoury.HALE ? "hale"
+                : v.door() == ArmsArmoury.FORGE ? "forge" : v.door() == ArmsArmoury.ANVIL ? "anvil" : "band"));
         g.text(font, Component.literal(title.getString() + " · " + door), px + 8, py + 7, TITLE, false);
         String ess = "Essence " + v.essence();
         g.text(font, ess, px + pw - 8 - font.width(ess), py + 7, LANTERN, false);
@@ -142,8 +145,9 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             for (int i = 0; i < Math.min(4, lines.size()); i++) g.text(font, lines.get(i), dx, y2 + i * 10, LANTERN, false);
             y2 += 44;
         }
+        boolean anvil = (d.anvil() & WarAnvil.Status.SHOWN) != 0;
         for (var n : locked && cur.pull().isEmpty() ? List.<ArmsPayloads.NeedRow>of() : d.needs()) {
-            if (y2 > py + ph - 56) break;
+            if (y2 > py + ph - (anvil ? 76 : 56)) break;
             Identifier id = Identifier.parse(n.id());
             Component label = n.kind().equals("tag")
                     ? Component.translatable("tag.item." + id.getNamespace() + "." + id.getPath())
@@ -164,7 +168,7 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
 
         // the plaque: where else the pattern comes from (a pattern on offer at the rack, or one you hold)
         var home = dev.awaken.arms.ArmsHomes.of(d.style());
-        if (home != null && v.door() != ArmouryCache.FORGE && (ArmouryCache.known(d.style()) || entry(d.style()) != null)) {
+        if (home != null && v.door() != ArmouryCache.FORGE && !anvil && (ArmouryCache.known(d.style()) || entry(d.style()) != null)) {
             String plaque = "Free: " + home.gate() + " teaches it, in " + home.rank().label + "-rank gates."
                     + (home.teacher() == null ? "" : " " + Character.toUpperCase(home.teacher().person().charAt(0)) + home.teacher().person().substring(1) + " teaches it early.")
                     + (home.leftChest() ? " Found early in a chest someone left behind." : "");
@@ -196,6 +200,20 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             int tx = dx + bw("Raise it to " + r[0]) + 8;
             List<FormattedCharSequence> lines = font.split(Component.literal(ready ? "The weapon in your hand is ready to raise." : "The weapon in your hand: " + (r.length > 1 ? r[1] : "")), dx + dw - tx);
             for (int i = 0; i < Math.min(2, lines.size()); i++) g.text(font, lines.get(i), tx, py + ph - 46 + i * 10, ready ? GOOD : LANTERN, false);
+        }
+        if (anvil) {
+            // the War Anvil's door: Forge it, From memory beside it when it's in your memory, the tier's blade alone above
+            if (!d.block().isEmpty()) {
+                List<FormattedCharSequence> lines = font.split(Component.literal(d.block()), dw);
+                for (int i = 0; i < Math.min(2, lines.size()); i++) g.text(font, lines.get(i), dx, py + ph - 66 + i * 10, LANTERN, false);
+            }
+            button(g, dx + 88, "Forge it", (d.anvil() & WarAnvil.Status.FORGE) != 0, mouseX, mouseY);
+            if ((d.anvil() & WarAnvil.Status.MEMORY) != 0)
+                button(g, dx + 88 + bw("Forge it") + 4, "From memory", (d.anvil() & WarAnvil.Status.MEMORY_OK) != 0, mouseX, mouseY);
+            int by = buttonY;
+            buttonY = by - 20;
+            button(g, dx + 88, "Forge the blade", (d.anvil() & WarAnvil.Status.BLADE) != 0, mouseX, mouseY);
+            buttonY = by;
         }
         for (int i = 0; i < v.finds().size(); i++) g.text(font, v.finds().get(i), px + 10, py + ph - 24 - (v.finds().size() - 1 - i) * 10, i == 0 ? LABEL : GOOD, false);
         g.text(font, "Esc: close", px + pw - 8 - font.width("Esc: close"), py + ph - 12, DIM, false);
@@ -277,6 +295,24 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             buttonY = by;
             if (hit) {
                 ArmouryCache.ask(ArmsArmoury.RAISE, d.style(), d.tier());
+                return true;
+            }
+        }
+        if ((d.anvil() & WarAnvil.Status.SHOWN) != 0) {
+            if ((d.anvil() & WarAnvil.Status.FORGE) != 0 && buttonHit(dx + 88, "Forge it", mx, my)) {
+                ArmouryCache.ask(ArmsArmoury.FORGE_IT, d.style(), d.tier());
+                return true;
+            }
+            if ((d.anvil() & WarAnvil.Status.MEMORY_OK) != 0 && buttonHit(dx + 88 + bw("Forge it") + 4, "From memory", mx, my)) {
+                ArmouryCache.ask(ArmsArmoury.FROM_MEMORY, d.style(), d.tier());
+                return true;
+            }
+            int by = buttonY;
+            buttonY = by - 20;
+            boolean blade = (d.anvil() & WarAnvil.Status.BLADE) != 0 && buttonHit(dx + 88, "Forge the blade", mx, my);
+            buttonY = by;
+            if (blade) {
+                ArmouryCache.ask(ArmsArmoury.FORGE_BLADE, d.style(), d.tier());
                 return true;
             }
         }
