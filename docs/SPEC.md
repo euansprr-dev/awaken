@@ -16611,3 +16611,83 @@ settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour 
 - **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
   set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
   III within the hour, IV in about two hours and V in about four.
+
+## 46. The War Anvil (weapon forging; plan docs/weapon-forge/PLAN.md, page https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ; Euan approved all of it 2026-11-02: "go ahead with the weapon forge plan")
+
+Module `arms` (`dev.awaken.arms.anvil`, client `arms.anvil.client`). Built in the plan's stages (§7 there); this section
+grows with each. §45 is the enchanting plan's. The line between the two (plan §4.9): the War Anvil owns the metal
+(crafting, forging, tiers, quality, tempering, Reforge, attunement); enchanting owns what is written into an item after
+it exists, reads forge quality and rank through `core.api.ForgeHooks` (stage 2), and adds no step to the forge scene.
+
+**46.1 The War Anvil (stage 1).** `awaken:war_anvil` (`WarAnvilBlock`, `WarAnvilBlockEntity`): a horned soot-black
+anvil on a block of carved dark stone, facing the smith. In the stone's top before the anvil is a narrow slot lit dull
+orange from inside, where a finished weapon stands hilt up until it is drawn. A water trough is cut into the stone's right
+side; a hammer and tongs hang from an iron peg on its left, and are gone from the peg while a smith holds them. Crafted
+from three stone, a copper ingot and a log (`war_anvil.json`), granted at level 3 with the Fitting Stand (the level
+road's E step); mined with a pickaxe, it drops itself. Breaking it drops what the work took in and what stands in the slot.
+- **Use** (any hand): your own work waiting on it opens the scene where you left it (counted in again); otherwise its
+  list, a notice window: the Beastbound Longsword (the only weapon at the anvil in stage 1; every weapon comes in stage
+  2) with have and need for each part and **Forge it**. **Sneak-use** draws what stands in the slot, whoever made it.
+- **Needs**: rank D, and the Hearth's Forge (`awaken:forge`) within 6 blocks (2 up or down). The window says plainly
+  what's missing; nothing starts without it.
+- **Cost**: the Longsword's own recipe (a Hunter core, the Beastbound Blade, an iron ingot). Without the blade, the
+  blade's own recipe stands in for it (a Hunter core, an Essence Shard, an iron ingot and a binding metal), so the anvil
+  costs exactly what the grid does. Starting takes it into the work (`AnvilWork.materials`). Creative skips it.
+
+**46.2 The song (stage 1, D).** `AnvilSong` (both sides); the server judges by its own clock as the armour does (§44.4):
+the client sends what it did and when (`AnvilPayloads.Act`), held to `LAG` 10 ticks behind and 2 ahead (`WarAnvil.clamp`).
+The work only moves while its smith is at it (`WarAnvil.AT`, not saved): Esc, logging out or walking 12 blocks away holds
+it; coming back restarts the stage, counted in again.
+- **Heat** (stage 0): the blank lies in the Forge's mouth; the heat climbs over `HEAT_FULL` 120 ticks and the glow runs
+  from the tip toward the tongs. Pull in the gold (0.55-0.75: 1); early, the strikes count x0.7-1; past 0.85 the tip is
+  **burnt** (a flaw); at 1.15 it comes out burnt by itself.
+- **Draw out** (stage 1): the Longsword's rhythm, 4 ticks a step, `x...x...x.x.....` (two, then the finisher's pair),
+  counted in for one bar (64 ticks); then 10 strikes, each due on the next x, each on its mark (`AnvilSong.MARKS`, along
+  and across the blade, the same every time). A strike scores 0.6 timing (1 within 1.5 ticks, 0 at 6) + 0.4 aim (1
+  inside half a mark, 0 at two marks; the client reports the aim); 8 ticks either side is its window and a beat left
+  unstruck is a miss (0); a clean strike is 0.8. The blade draws out strike by strike, from a squat bar (half its length,
+  half again its width) to its own shape; after the fifth strike the tongs flip it over.
+- **Quench** (stage 2): the blade is held over the trough. Hold to plunge it (PLUNGE), let go to lift it (LIFT): the dark
+  line climbs from the point at 1/40 of the blade a tick and the gold notch is at 0.8, so the ideal hold is 32 ticks.
+  Within 2 ticks either side is 1; early is **soft** (falling to 0.35 at 12 ticks early); late is **brittle** (a flaw,
+  falling to 0.2 at 10 late); held to the top (40 ticks) it lifts itself, brittle. Not plunged within 160 ticks, it cools
+  in the air (0.35, no flaw).
+- **Hilt** (stage 3): three taps on the beat, 3 ticks a step, `x..x..x.`, counted in for one bar (24 ticks): guard,
+  grip, pommel. Timing only (the strikes' timing curve and window).
+- **Quality**: 0.2 heat + 0.55 strikes x early + 0.15 quench + 0.1 hilt; Plain below 0.55, Fine, Masterwork from 0.75,
+  Flawless from 0.9; burnt or brittle is never Flawless. Starting Temper Plain 0, Fine I, Masterwork II, Flawless III, then
+  Oren's Mark (`awaken:temper_start`) adds its levels, all **capped at the Forge's temper limit**
+  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in an Armory),
+  applied with `Upgrades.applyTemper`.
+- **The story**: `awaken:weapon_forged` (`WeaponForged`, schemaVersion 1): quality, flaw (0 none, 1 burnt, 2 brittle),
+  the maker's name. The tooltip says it plainly: "Masterwork", "a burnt tip" or "a brittle hairline", "Forged by Euan".
+- **The draw**: the finished weapon stands in the slot (`WarAnvilBlockEntity.slot`, saved). The smith holds use for 30
+  ticks to draw it out (DRAW); it goes to the main hand, what was there to the pack, else at your feet. A smith who left
+  before the draw finds it waiting; anyone can sneak-use to draw it. Then the result card, and an optional first cut
+  (a strike: the scene closes on the style's first blow).
+- **Sounds** (`awaken:anvil.*`, the forge kit's recordings until stage 5): bellows, pull, strike, ring (a clean strike),
+  miss, flip, quench, lift, tap, scrape (the draw beginning) and drawn. The smith's client plays its own as it acts; the
+  server plays them to everyone else.
+
+**46.3 The scene (stage 1, client).** `AnvilScene`: the view stays at your eyes and turns, never moving the player: to
+the Forge's mouth for the heat, the anvil's face for the draw out and the hilt, the trough for the quench and the slot
+for the draw, gliding 14 ticks between (`ViewportEvent.ComputeCameraAngles`), the field of view 0.85 of yours. The HUD
+steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,
+`arms_anvil`, priority 200): the main hand on the hammer, the off hand on the tongs; the hammer winds up before each
+beat and comes down in a tick on the click; the tongs hold the work wherever it is (in the Forge only when the Forge's
+mouth is near enough to reach). The hammer and tongs are our own voxel meshes (`assets/awaken/arms/anvil/*.mesh`,
+`tools/art/specs/war_anvil.py`) drawn in the world through the weapon shader; the peg holds them when no one works.
+`AnvilSongScreen` (doesn't pause): the mark on the metal with a ring closing on the beat, a thin beat lane, the strikes
+counted, plain prompts for each act, the quench's notch, the draw's hold and the result card. Autoplay for tours:
+`/awaken arms anvil autoplay true` (client).
+- `WarAnvilRenderer` draws the work as the weapon's own mesh: only the blade until the hilt (the hilt's parts appear tap
+  by tap), drawn out by its progress, flipped at the halfway strike, carried on a short arc from the Forge to the anvil as
+  the view glides, over the trough and into it for the quench. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
+  x the heat, y's low byte the heat front along the blade, bit 10 the quench's side: the cooled part from the point) glows
+  dull red through orange and yellow to white, dark and soot-streaked where cool. Sparks fly at each strike; steam rises
+  from the trough while hot metal is in it.
+- With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.
+
+Test (one per mechanism): `arms_anvil_song` (a D forge judged by the server's clock: early, gold and late heat; strikes
+on and off the beat; the quench soft, true and brittle; quality and the capped Temper; materials taken, and given back
+when the anvil breaks; the weapon stands in the slot and is drawn).

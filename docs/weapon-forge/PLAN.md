@@ -1,7 +1,8 @@
 # The War Anvil (weapon forging progression)
 
 Plan for Euan's 2026-11-02 request, written by the weapon-forge session on branch `claude/weapon-forge-plan-2e37fb`.
-Status: **waiting for Euan's approval. Nothing is built.** Follows `.claude/PLANNING-PROCESS.md`. Labels used below:
+Status: **approved by Euan 2026-11-02 ("go ahead with the weapon forge plan"): all 13 decisions yes, as recommended,
+including decision 7's cap and decision 13's first stage.** Stage 1 is being built (SPEC §46). Follows `.claude/PLANNING-PROCESS.md`. Labels used below:
 **VERIFIED** (read in this repo at 08e5d57a), **RESEARCH** (an outside source, §2.5), **PROPOSAL** (not built, nothing
 measured). Approval page: https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ (source `docs/weapon-forge/page.html`;
 answers save to its `decisions` collection).
