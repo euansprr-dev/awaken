@@ -47,6 +47,10 @@ final class BellTests {
         AwakenTests.register("bells_old_towers", 20, BellTests::oldTowers);
         AwakenTests.register("bells_lord_room", 20, BellTests::lordRoom);
         AwakenTests.registerIsolated("bells_lord_bell_full_pockets", 100, BellTests::lordBellFullPockets);
+        AwakenTests.register("bells_found_place", 20, BellTests::foundPlace);
+        AwakenTests.registerIsolated("bells_village_quest", 40, BellTests::villageQuest);
+        AwakenTests.register("bells_dream_puzzles", 20, BellTests::dreamPuzzles);
+        AwakenTests.register("bells_spirit_keeper", 20, BellTests::spiritKeeper);
     }
 
     /**
@@ -377,7 +381,7 @@ final class BellTests {
         h.assertTrue(Bells.has(q, "crypt") && level.getBlockState(at).isAir(), "the second lifts theirs and the floor is clear");
         // a gate that closes with a bell unlifted: back to the pool
         BellWorld w = BellWorld.get(level.getServer());
-        w.kept.add(new BellWorld.Kept("-7", at, BellCatalog.of("barrow").no(), List.of(p.getUUID())));
+        w.kept.add(new BellWorld.Kept("-7", at, BellCatalog.of("barrow").no(), List.of(p.getUUID()), ""));
         BellBook b = Bells.book(p);
         b.lordsSince = 0;
         Bells.save(p, b);
@@ -726,6 +730,130 @@ final class BellTests {
             List<BlockPos> all = new ArrayList<>(shape.keySet());
             all.add(frame);
             leave(level, rec, all.toArray(BlockPos[]::new));
+        }
+        h.succeed();
+    }
+
+    // ---- stage 5: every bell at a real place ----------------------------------------------------------------------
+
+    /**
+     * A bell won at a real place (stage 5): set down a few steps from the hunter on free floor (never where they stand),
+     * not in their hands, on their Tasks, and never twice; lifted, it's theirs and forgotten. One knocked out of where it
+     * lay goes into their hands. The Registry's two come from Bram in person.
+     */
+    static void foundPlace(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        Vec3 by = h.absoluteVec(new Vec3(2.5, 1, 2.5));
+        p.snapTo(by.x, by.y, by.z, 0F, 0F);
+        BellCatalog.Def d = BellCatalog.of("stampede"), e = BellCatalog.of("flood");
+        BellWorld w = BellWorld.get(level.getServer());
+        h.assertTrue(FoundBells.leave(p, d, "in a test", "[test]"), "it's set down");
+        BellWorld.Kept k = w.kept.stream().filter(x -> x.no == d.no() && x.left.contains(p.getUUID())).findFirst().orElse(null);
+        h.assertTrue(k != null && k.gate.isEmpty() && level.getBlockState(k.pos).is(BellContent.FOUND_BELL.get()) && !k.pos.equals(p.blockPosition()),
+                "it lies on the floor near them, not where they stand");
+        h.assertTrue(!Bells.has(p, d.id()) && FoundBells.waiting(level.getServer(), p.getUUID(), d.no()) && BellGoals.lying(p) != null,
+                "it isn't in their hands yet, and it's on their Tasks");
+        h.assertFalse(FoundBells.leave(p, d, "in a test", "[test]"), "never set down twice");
+        FoundBells.lift(level, k.pos, p);
+        h.assertTrue(Bells.has(p, d.id()) && level.getBlockState(k.pos).isAir() && !FoundBells.waiting(level.getServer(), p.getUUID(), d.no()),
+                "lifted, it's theirs and the floor is clear");
+        h.assertTrue(FoundBells.leave(p, e, "in a test", "[test]"), "another set down");
+        BellWorld.Kept k2 = w.kept.stream().filter(x -> x.no == e.no() && x.left.contains(p.getUUID())).findFirst().orElse(null);
+        h.assertTrue(k2 != null, "and watched");
+        level.setBlock(k2.pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS);
+        FoundBells.watch(level.getServer());
+        h.assertTrue(Bells.has(p, e.id()) && !FoundBells.waiting(level.getServer(), p.getUUID(), e.no()), "knocked out of its place, it's in their hands");
+        ServerPlayer q = h.makeMockServerPlayerInLevel();
+        Bells.bram(q, 1);
+        h.assertTrue(!Bells.has(q, "registry") && Bells.book(q).said.contains("bram_registry"), "the System says Bram has something, and he isn't here to hand it over");
+        Bells.handed(q, "registry");
+        h.assertTrue(Bells.has(q, "registry"), "he hands it over in person");
+        h.succeed();
+    }
+
+    /**
+     * A village's bell (stage 5): hidden where its people left it (here buried under a mossy stone), a letter on a lectern
+     * by the well saying exactly where, the Tasks pointing at the letter, then at the bell, and nothing once it's lifted.
+     */
+    static void villageQuest(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        BlockPos well = h.absolutePos(new BlockPos(2, 1, 2)), ground = h.absolutePos(new BlockPos(9, 1, 2));
+        p.snapTo(ground.getX() + 0.5, ground.getY(), ground.getZ() + 1.5, 0F, 0F);
+        VillageBells.Quest q = VillageBells.quest("mill");
+        BellCatalog.Def d = BellCatalog.of("mill");
+        BellWorld w = BellWorld.get(level.getServer());
+        BellWorld.Village v = VillageBells.choose(w, d.no(), "test_village", "Testford", well);
+        VillageBells.stage(level.getServer(), p.getUUID(), d.no(), VillageBells.HEARD);
+        try {
+            VillageBells.hideAt(level, v, q, VillageBells.Hide.BURIED, ground);
+            h.assertTrue(v.letter != null && level.getBlockEntity(v.letter) instanceof net.minecraft.world.level.block.entity.LecternBlockEntity le && le.hasBook(),
+                    "a letter on a lectern by the well");
+            h.assertTrue(v.words.contains("steps") && v.words.contains("mossy stone") && v.words.contains("Testford"), "it says exactly where: " + v.words);
+            h.assertTrue(v.spot != null && level.getBlockState(v.spot).is(BellContent.FOUND_BELL.get()) && level.getBlockState(v.spot.above()).is(Blocks.MOSSY_COBBLESTONE),
+                    "the bell's buried under a mossy stone");
+            h.assertTrue(VillageBells.steps(p).size() == 1 && VillageBells.steps(p).getFirst().title().contains("letter"), "the Tasks say find the letter");
+            VillageBells.read(p, v.letter);
+            h.assertTrue(VillageBells.stage(level.getServer(), p.getUUID(), d.no()) == VillageBells.READ, "reading it counts");
+            h.assertTrue(VillageBells.steps(p).getFirst().title().contains("where the letter says") && VillageBells.steps(p).getFirst().where().isEmpty(),
+                    "then the Tasks say find it where the letter says, without a pin");
+            VillageBells.hum(p);
+            FoundBells.lift(level, v.spot, p);
+            h.assertTrue(Bells.has(p, "mill") && level.getBlockState(v.spot).isAir() && VillageBells.steps(p).isEmpty(), "dug up and lifted, and the Tasks are done with it");
+        } finally {
+            for (BlockPos b : new BlockPos[]{v.letter, v.spot, v.spot == null ? null : v.spot.above()})
+                if (b != null) level.setBlock(b, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS);
+            w.villages.remove(d.no());
+            w.quests.remove(p.getUUID());
+        }
+        h.succeed();
+    }
+
+    /** The dream bells' order and rules (stage 5): the Dreaming Bell first and asking nothing, the rest their rank's lucidity; in view or not. */
+    static void dreamPuzzles(GameTestHelper h) {
+        h.assertTrue(DreamBells.ORDER.size() == 6 && DreamBells.ORDER.getFirst().equals("dreaming"), "six dream bells, the Dreaming Bell first");
+        for (String id : DreamBells.ORDER)
+            h.assertTrue(BellCatalog.of(id).source() == BellCatalog.Source.LUCIDIUM, id + " is a dream's bell");
+        h.assertTrue(DreamBells.need(BellCatalog.of("dreaming")) == 0 && DreamBells.need(BellCatalog.of("daydream")) == 40
+                && DreamBells.need(BellCatalog.of("falling")) == 60 && DreamBells.need(BellCatalog.of("lucid")) == 80, "lucidity by rank, none for the first");
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        Vec3 by = h.absoluteVec(new Vec3(2.5, 1, 2.5));
+        p.snapTo(by.x, by.y, by.z, 0F, 0F); // facing south (+z)
+        BlockPos ahead = BlockPos.containing(by.x, by.y + 1, by.z + 10), behind = BlockPos.containing(by.x, by.y + 1, by.z - 10);
+        h.assertTrue(DreamBells.looksAt(p, ahead) && !DreamBells.looksAt(p, behind), "a bell ahead is in view, one behind isn't");
+        h.assertFalse(DreamBells.softLanding(p), "an ordinary fall still hurts");
+        h.succeed();
+    }
+
+    /**
+     * A spirit holding a bell (stage 5): the next spirit whose story you hear takes one of the Veil's five for your rank
+     * and keeps it till what it stayed for is done where it stands; then it's in your hands. One spirit, one bell.
+     */
+    static void spiritKeeper(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        BlockPos at = h.absolutePos(new BlockPos(2, 1, 2));
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 3.5, 0F, 0F);
+        BellWorld w = BellWorld.get(level.getServer());
+        try {
+            SpiritBells.told(p, "awaken:test_spirit", "Ama", at, dev.awaken.progression.Rank.E);
+            h.assertTrue(w.keepers.getOrDefault(p.getUUID(), Map.of()).isEmpty(), "below C rank, no spirit holds one for you");
+            SpiritBells.told(p, "awaken:test_spirit", "Ama", at, dev.awaken.progression.Rank.C);
+            Map<Integer, BellWorld.Keeper> mine = w.keepers.get(p.getUUID());
+            int ghost = BellCatalog.of("ghost").no();
+            h.assertTrue(mine != null && mine.size() == 1 && mine.containsKey(ghost), "at C rank it holds the Ghost Lantern Bell");
+            SpiritBells.told(p, "awaken:test_spirit", "Ama", at, dev.awaken.progression.Rank.C);
+            h.assertTrue(mine.size() == 1, "telling it again asks again; one spirit, one bell");
+            h.assertTrue(!SpiritBells.steps(p).isEmpty() && SpiritBells.steps(p).getFirst().title().contains("lantern"), "its errand is on the Tasks");
+            SpiritBells.check(p, mine);
+            h.assertFalse(Bells.has(p, "ghost"), "no lantern yet, no bell");
+            level.setBlock(at.east(), Blocks.LANTERN.defaultBlockState(), Block.UPDATE_ALL);
+            SpiritBells.check(p, mine);
+            h.assertTrue(Bells.has(p, "ghost") && mine.get(ghost).done && SpiritBells.steps(p).isEmpty(), "a lantern lit where it stands: it lets the bell go");
+        } finally {
+            level.setBlock(at.east(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            w.keepers.remove(p.getUUID());
         }
         h.succeed();
     }

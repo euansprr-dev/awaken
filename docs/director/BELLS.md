@@ -17,7 +17,8 @@ built, stage by stage.
 **Progress** (session bells, branch `claude/bells-progression-1b3ee4`): stage 1 merged; stage 2 (bells you carry and
 hang) built 2 Nov; stage 3 (Work Plans for the Belfry and Bell Tower, the Hearth's tower and tiers, the Great Bells by
 the Registry's wagon, old towers turned to beams, the Great Belfry at fifty) built 2 Nov; stage 4 (Lord bells on the
-boss room's floor, back to the pool if the gate closes) built 2 Nov; stages 5 and 6 next.
+boss room's floor, back to the pool if the gate closes) built 2 Nov; stage 5 (every bell at a real place, the five village
+quests, the six dream puzzles, the Veil's five kept by spirits) built 2 Nov; stage 6 next.
 
 ### Euan's answers, 30 Oct (these override the parts below where they differ)
 Euan approved the whole plan with one change to how gates hold their bells: "100 is great. Go ahead with the full plan.

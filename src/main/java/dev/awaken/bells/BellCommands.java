@@ -21,7 +21,7 @@ import java.util.Optional;
 
 /**
  * Admin tools for the bells: {@code /awaken admin bells give <id> | tower <n> | song | roost | plans | wagon | belfry |
- * ilse | deep | page}. {@code tower} rings the first n bells home, sets a frame by the player's Hearth and hangs them all;
+ * ilse | deep | page | found <id> | village <id> tell|well|spot | spirit | look}. {@code tower} rings the first n bells home, sets a frame by the player's Hearth and hangs them all;
  * {@code plans} raises both Thatchback bell plans by the home; {@code wagon} brings the Registry's wagon now (for tours).
  */
 final class BellCommands {
@@ -53,7 +53,75 @@ final class BellCommands {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     for (var r : BellPage.build(p).tower()) p.sendSystemMessage(Component.literal(String.join(" | ", r)));
                     return 1;
-                })))));
+                }))
+                .then(Commands.literal("found").then(Commands.argument("id", StringArgumentType.word())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(BellCatalog.ALL.stream().map(BellCatalog.Def::id), b)).executes(c -> {
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            BellCatalog.Def d = BellCatalog.of(StringArgumentType.getString(c, "id"));
+                            return d != null && FoundBells.leave(p, d, "set down by an admin", "[There's a bell lying here for you.]") ? 1 : 0;
+                        })))
+                .then(Commands.literal("village").then(Commands.argument("id", StringArgumentType.word())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(VillageBells.QUESTS.stream().map(VillageBells.Quest::bell), b))
+                        .then(Commands.argument("where", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(java.util.List.of("tell", "well", "spot"), b))
+                                .executes(c -> village(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "id"), StringArgumentType.getString(c, "where"))))))
+                .then(Commands.literal("spirit").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    SpiritBells.told(p, "awaken:ama_who_waited", "Ama who Waited", p.blockPosition().offset(2, 0, 2), dev.awaken.progression.Rank.A);
+                    return 1;
+                }))
+                .then(Commands.literal("look").executes(c -> look(c.getSource().getPlayerOrException()))))));
+    }
+
+    /**
+     * A village bell's quest for tours: {@code tell} has its teller remember it aloud now (choosing its village), {@code
+     * well} takes you beside its well (the letter and bell are laid once you're there), {@code spot} above its hiding place.
+     */
+    private static int village(ServerPlayer p, String id, String where) {
+        VillageBells.Quest q = VillageBells.quest(id);
+        if (q == null) return 0;
+        ServerLevel level = p.level().getServer().overworld();
+        BellWorld.Village v = VillageBells.village(level, q);
+        if (v == null) {
+            p.sendSystemMessage(Component.literal("No empty village is planned near the city yet: try again in a moment."));
+            return 0;
+        }
+        switch (where) {
+            case "tell" -> {
+                BellBook b = Bells.book(p);
+                b.rememberedDay = -1;
+                Bells.save(p, b);
+                VillageBells.stage(level.getServer(), p.getUUID(), BellCatalog.of(id).no(), 0);
+                return VillageBells.tell(p, q) ? 1 : 0;
+            }
+            case "well" -> {
+                p.teleportTo(level, v.well.getX() + 0.5, v.well.getY() + 1, v.well.getZ() - 4.5, java.util.Set.of(), 0F, 15F, true);
+                return 1;
+            }
+            default -> {
+                if (v.spot == null) {
+                    p.sendSystemMessage(Component.literal("Its hiding place isn't laid yet: go to the well first."));
+                    return 0;
+                }
+                p.teleportTo(level, v.spot.getX() + 0.5, v.spot.getY() + 4, v.spot.getZ() - 3.5, java.util.Set.of(), 0F, 45F, true);
+                return 1;
+            }
+        }
+    }
+
+    /** Turns you to face your dream's bell, or a bell lying for you in this dimension (tours). */
+    private static int look(ServerPlayer p) {
+        BlockPos at = null;
+        DreamBells.Dream d = DreamBells.of(p);
+        if (d != null && d.at != null) at = d.at;
+        String dim = p.level().dimension().identifier().toString();
+        if (at == null)
+            for (BellWorld.Kept k : BellWorld.get(p.level().getServer()).kept)
+                if (k.left.contains(p.getUUID()) && (k.dim.equals(dim) || k.dim.isEmpty())) at = k.pos;
+        if (at == null) return 0;
+        double dx = at.getX() + 0.5 - p.getX(), dy = at.getY() + 0.5 - p.getEyeY(), dz = at.getZ() + 0.5 - p.getZ();
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
+        p.teleportTo(p.level(), p.getX(), p.getY(), p.getZ(), java.util.Set.of(), yaw, pitch, true);
+        return 1;
     }
 
     /** Sets both of the Great Belfry's pieces into the home's frame and raises it now (the tower first, if it isn't up). */
