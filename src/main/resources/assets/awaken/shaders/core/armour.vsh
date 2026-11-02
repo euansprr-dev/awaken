@@ -6,7 +6,8 @@
 // UV1 is not an overlay but the set's live state: x its energy (0..255: a set ability's charge), y its
 // flash (0..255: a perfect guard, a release) with 256 added when the piece has foil, and 512 when it is metal in the
 // making on a Forge's anvil (then x is its heat, 0..255 for cold..white: SPEC §44.4); bits 10-12 of y its mastery step
-// (0 I .. 4 V) and bit 13 whether its wearer is low (mastery III's heartbeat: SPEC §44.5).
+// (0 I .. 4 V) and bit 13 whether its wearer is low (mastery III's heartbeat: SPEC §44.5); bits 8-14 of x the
+// enchantment light on it now (SPEC §45.11): a palette index in 8-11 (0 none), how brightly it shows (0..7) in 12-14.
 
 #include <minecraft:fog.glsl>
 #include <minecraft:dynamictransforms.glsl>
@@ -31,6 +32,7 @@ layout(location = 5) out vec3 worldNormal;
 layout(location = 6) out vec3 viewNormal;
 layout(location = 7) flat out vec4 state;
 layout(location = 8) flat out vec2 mastery;
+layout(location = 9) flat out vec2 script;
 
 void main() {
     vec4 view = ModelViewMat * vec4(Position, 1.0);
@@ -42,6 +44,7 @@ void main() {
     texCoord0 = UV0;
     worldNormal = Normal;
     viewNormal = mat3(ModelViewMat) * Normal;
-    state = vec4(float(UV1.x) / 255.0, float(UV1.y & 255) / 255.0, (UV1.y & 256) != 0 ? 1.0 : 0.0, (UV1.y & 512) != 0 ? 1.0 : 0.0);
+    state = vec4(float(UV1.x & 255) / 255.0, float(UV1.y & 255) / 255.0, (UV1.y & 256) != 0 ? 1.0 : 0.0, (UV1.y & 512) != 0 ? 1.0 : 0.0);
     mastery = vec2(float((UV1.y >> 10) & 7), (UV1.y & 8192) != 0 ? 1.0 : 0.0);
+    script = vec2(float((UV1.x >> 8) & 15), float((UV1.x >> 12) & 7) / 7.0);
 }

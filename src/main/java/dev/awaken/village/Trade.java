@@ -33,7 +33,7 @@ import java.util.Random;
 /**
  * Trade in emeralds (SPEC §28.6, PLAN 5.5, decision 5): each trade sells what its people make and buys what they need;
  * each land's villages make something of their own (a fishing village's shells, a caravanserai's glass, the frost's
- * furs); the village scribe sells enchanted books, the inn a bed for the night. Prices show standing on the trade
+ * furs); the village scribe sells enchantment pages, the inn a bed for the night. Prices show standing on the trade
  * screen itself (a stranger pays a little over, a friend and kin under, the old price struck through). Nothing ever
  * locks for good: what a village buys from you is capped a play-day, and the next day it buys again.
  */
@@ -238,8 +238,24 @@ final class Trade {
         };
     }
 
-    /** The scribe's books: three a day from the tradeable enchantments, priced by level. */
+    /**
+     * The scribe's pages (SPEC §45.3): the day's market pages, the same for everyone, each priced by its enchantment's top
+     * level; a buyer is shown the first three they don't know ({@link #forBuyer}). Without enchanting, the tradeable books.
+     */
     static void books(List<Deal> d, long seed, long day, ServerLevel level) {
+        List<ItemStack> pages = dev.awaken.core.api.EnchantApi.marketPages(level, seed, day);
+        if (!pages.isEmpty()) {
+            Random r = new Random(seed ^ day * 0x9E3779B97F4A7C15L);
+            for (int k = 0; k < pages.size(); k++) {
+                ItemStack page = pages.get(k);
+                var stored = page.getOrDefault(net.minecraft.core.component.DataComponents.STORED_ENCHANTMENTS, net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
+                int top = 1;
+                for (Holder<Enchantment> e : stored.keySet()) top = Math.max(top, e.value().getMaxLevel());
+                int price = Math.min(64, 6 + top * 4 + r.nextInt(5));
+                d.add(new Deal("page" + k, Items.EMERALD, price, page, false, 1));
+            }
+            return;
+        }
         var reg = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
         List<Holder<Enchantment>> pool = new ArrayList<>();
         reg.get(EnchantmentTags.TRADEABLE).ifPresent(set -> set.forEach(pool::add));
@@ -252,6 +268,20 @@ final class Trade {
             int price = Math.min(64, 4 + lv * 5 + r.nextInt(6));
             d.add(new Deal("book" + k, Items.EMERALD, price, EnchantmentHelper.createBook(new EnchantmentInstance(e, lv)), false, 1));
         }
+    }
+
+    /** The pages this buyer is shown: the first three of the day's they would learn from; everything else as it was. */
+    static List<Deal> forBuyer(List<Deal> deals, net.minecraft.server.level.ServerPlayer p) {
+        List<Deal> out = new ArrayList<>(deals.size());
+        int shown = 0;
+        for (Deal deal : deals) {
+            if (deal.id().startsWith("page")) {
+                if (shown >= dev.awaken.core.api.EnchantApi.MARKET_SHOWN || !dev.awaken.core.api.EnchantApi.wanted(p, deal.result())) continue;
+                shown++;
+            }
+            out.add(deal);
+        }
+        return out;
     }
 
     // ---- the screen ----------------------------------------------------------------------------------------------

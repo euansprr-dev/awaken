@@ -46,6 +46,7 @@ public final class Catalogue {
             case LORE -> "What you learn about the world is kept here: rumours, visions, machines and more.";
             case HAPPENINGS -> "Big events you witness out in the world are kept here.";
             case ORES -> "Each ore you mine is kept here, with what it's for.";
+            case ENCHANTMENTS -> "The thirty enchantments are kept here as you learn them.";
             case STORY -> "What happens to you is written here.";
         };
     }

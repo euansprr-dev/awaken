@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/war_anvil"
+    },
+    "facing=east": {
+      "model": "awaken:block/war_anvil",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/war_anvil",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/war_anvil",
+      "y": 270
+    }
+  }
+}

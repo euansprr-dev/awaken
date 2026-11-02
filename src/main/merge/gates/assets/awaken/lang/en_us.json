@@ -37,8 +37,6 @@
   "entity.awaken.hollow_follower": "Something",
   "hud.awaken.gate.floor": "Floor %s / %s",
   "key.awaken.satchel": "Open Satchel",
-  "screen.awaken.satchel": "Satchel",
-  "screen.awaken.satchel.hint": "Carried, not yours yet. Extract at a Rest Shrine or defeat the Lord to keep it.",
   "status.awaken.gate_map": "Gate Map",
   "status.awaken.gate_run": "This run",
   "subtitles.awaken.gate.alarm": "An alarm bell",

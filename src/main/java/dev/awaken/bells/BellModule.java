@@ -60,9 +60,11 @@ public final class BellModule {
             Bells.sovereignFell(level, dead);
         });
         bus.addListener((PlayerInteractEvent.RightClickBlock e) -> {
-            if (!(e.getEntity() instanceof ServerPlayer p) || !e.getLevel().getBlockState(e.getPos()).is(Blocks.BELL)) return;
+            if (!(e.getEntity() instanceof ServerPlayer p)) return;
+            if (e.getLevel().getBlockState(e.getPos()).is(Blocks.LECTERN)) VillageBells.read(p, e.getPos());
+            if (!e.getLevel().getBlockState(e.getPos()).is(Blocks.BELL)) return;
             String key = Holdfast.bellAt(p, e.getPos());
-            if (key != null) Bells.holdfastStruck(p, key);
+            if (key != null) Bells.holdfastStruck(p, key, e.getPos().immutable());
         });
         bus.addListener((CropGrowEvent.Pre e) -> {
             if (e.getResult() != CropGrowEvent.Pre.Result.DEFAULT || !(e.getLevel() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return;
@@ -80,7 +82,11 @@ public final class BellModule {
             if (n > 0 && level.getRandom().nextFloat() < Math.min(0.8F, n * WARD_PER)) e.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
         });
         bus.addListener((net.neoforged.neoforge.event.entity.living.LivingFallEvent e) -> {
-            if (e.getEntity() instanceof ServerPlayer p && Bells.voiceHere(p, BellCatalog.Voice.FEATHER) > 0) e.setDamageMultiplier(0F);
+            if (e.getEntity() instanceof ServerPlayer p && (Bells.voiceHere(p, BellCatalog.Voice.FEATHER) > 0 || DreamBells.softLanding(p))) e.setDamageMultiplier(0F);
+        });
+        // your bells stay with you when you die (SPEC §43.16): out of the drops, back into your hands
+        bus.addListener((net.neoforged.neoforge.event.entity.living.LivingDropsEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) Bells.died(p, e.getDrops());
         });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
@@ -88,7 +94,12 @@ public final class BellModule {
                 DreamBells.forget(p.getUUID());
             }
         });
-        Sources.declare("given with your first bell, and made again at a table (bells.Bells)", "handbell", "bell_frame");
+        Sources.declare("given with your first bell, and made again at a table (bells.Bells)", "handbell");
+        Sources.declare("made at a table from planks and logs (bells, SPEC §43.16)", "bell_frame");
+        Sources.declare("made at a table: three logs and two iron nuggets (bells, SPEC §43.16)", "bell_beam");
+        Sources.declare("made at a table: three logs, two chains and an iron ingot (bells, SPEC §43.16)", "great_beam");
+        Sources.declare("each of the hundred, won where a story puts it: Ilse's, the Lampwing's roost, a Lord's arena, a Proving and the rest (bells.Bells.ring)", "bell");
+        Sources.neverHeld("a bell lying where it was won (the Lampwing's roost, a Lord's arena): lifted by hand, never broken (bells.FoundBells)", "found_bell");
         Sources.neverHeld("an old world's sleeping bell (retired, SPEC §43.16) and a dream's bell; it can't be broken or moved and drops nothing", "sleeping_bell");
         Sources.declare("the Lord of any S-rank gate gives it to a hunter not carrying one (bells.Bells.lordFell)", "heart_clapper");
         Sources.declare("every Sovereign felled gives one to a hunter not carrying one (bells.Bells.sovereignFell)", "sovereign_relic");

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/word_stone"
+    },
+    "facing=east": {
+      "model": "awaken:block/word_stone",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/word_stone",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/word_stone",
+      "y": 270
+    }
+  }
+}

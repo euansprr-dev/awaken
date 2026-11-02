@@ -41,6 +41,8 @@ import java.util.function.Predicate;
  * middle where the plan lay. They build it in that order from the chests and barrels within eight blocks of the
  * plan: planks, logs, stone, glass, a door, and whatever furniture it needs. A block already right is counted, never
  * pulled down; anything else in the way is left and built round. Stone and timber, glass and doors are yours to bring.
+ * Two plans aren't rooms (SPEC §43.16 stage 3): the Belfry (an open timber belfry, four Bell Beams nine up) and the Bell
+ * Tower (stone, an arch and a ladder, six Bell Beams and two Great Beams at the top); when either is done its plan goes.
  */
 public final class WorkPlans {
     private WorkPlans() {}
@@ -61,7 +63,10 @@ public final class WorkPlans {
         CRUCIBLE("the Crucible", s -> s.is(WorksContent.CRUCIBLE_ITEM.get())),
         DROP("the Drop", s -> s.is(WorksContent.DROP_ITEM.get())),
         LEDGER("a Ledger desk", s -> s.is(WorksContent.LEDGER_ITEM.get())),
-        HEART("a lode heart", s -> Block.byItem(s.getItem()) instanceof dev.awaken.delve.LodeHeartBlock);
+        HEART("a lode heart", s -> Block.byItem(s.getItem()) instanceof dev.awaken.delve.LodeHeartBlock),
+        LADDER("ladders", s -> s.is(Items.LADDER)),
+        BELL_BEAM("Bell Beams", s -> s.is(dev.awaken.bells.BellContent.BELL_BEAM_ITEM.get())),
+        GREAT_BEAM("Great Beams", s -> s.is(dev.awaken.bells.BellContent.GREAT_BEAM_ITEM.get()));
 
         final String words;
         final Predicate<ItemStack> takes;
@@ -103,7 +108,16 @@ public final class WorkPlans {
                     new Fit(-2, 0, -1, Mat.BARREL), new Fit(2, 0, -1, Mat.BARREL), new Fit(-2, 0, 1, Mat.BARREL), new Fit(2, 0, 1, Mat.BARREL),
                     new Fit(-2, 3, -2, Mat.LANTERN), new Fit(2, 3, -2, Mat.LANTERN), new Fit(-2, 3, 2, Mat.LANTERN), new Fit(2, 3, 2, Mat.LANTERN),
                     new Fit(-2, 0, 3, Mat.LEDGER), new Fit(0, 0, 0, Mat.DROP)),
-                    "a long timber hall with the Drop in the middle under a skylight, eight barrels for bays and the Ledger by the door"));
+                    "a long timber hall with the Drop in the middle under a skylight, eight barrels for bays and the Ledger by the door"),
+            new Plan("belfry", "Belfry", RoomType.BELL_TOWER, false, 2, 2, List.of(),
+                    "an open timber belfry: four posts, a ladder, a roof, and four Bell Beams nine up, sixteen hooks for your bells"),
+            new Plan("bell_tower", "Bell Tower", RoomType.BELL_TOWER, true, 2, 2, List.of(),
+                    "a stone tower seventeen high with an arch and a ladder, six Bell Beams and two Great Beams at the top"));
+
+    /** The plans that are a tower round their block, not a room: built up from it, and the plan goes when they're done. */
+    static boolean tower(Plan p) {
+        return p.id().equals("belfry") || p.id().equals("bell_tower");
+    }
 
     static Plan plan(String id) {
         for (Plan p : PLANS) if (p.id().equals(id)) return p;
@@ -115,6 +129,8 @@ public final class WorkPlans {
 
     /** The plan laid out round its block: floor, walls (door and windows), roof, then furniture, the middle last. */
     static List<Entry> layout(BlockPos c, Direction fwd, Plan p) {
+        if (p.id().equals("belfry")) return belfry(c, fwd);
+        if (p.id().equals("bell_tower")) return bellTower(c, fwd);
         Direction right = fwd.getClockWise();
         List<Entry> out = new ArrayList<>();
         Mat wall = p.stone() ? Mat.STONE : Mat.PLANKS, floor = p.stone() ? Mat.STONE : Mat.PLANKS;
@@ -144,6 +160,73 @@ public final class WorkPlans {
             out.add(new Entry(at(c, right, fwd, fit.r(), fit.u(), fit.f()), fit.mat(), fit.f() > 0 ? fwd.getOpposite() : fwd, false, centre));
         }
         return out;
+    }
+
+    /**
+     * The Belfry, five by five round the plan: corner posts ten high with a ladder up the back left one, a beam ring and
+     * cross beams on top, a Bell Beam under each arm of the cross nine up (each beam's hooks along its arm), a stepped roof
+     * and its cap last.
+     */
+    static List<Entry> belfry(BlockPos c, Direction fwd) {
+        Direction right = fwd.getClockWise();
+        List<Entry> out = new ArrayList<>();
+        for (int u = 0; u <= 10; u++)
+            for (int r = -2; r <= 2; r += 4)
+                for (int f = -2; f <= 2; f += 4) out.add(new Entry(at(c, right, fwd, r, u, f), Mat.LOGS, fwd, false, false));
+        for (int u = 0; u <= 9; u++) out.add(new Entry(at(c, right, fwd, -1, u, -2), Mat.LADDER, right, false, false));
+        for (int f = -2; f <= 2; f++)
+            for (int r = -2; r <= 2; r++) {
+                boolean corner = Math.abs(r) == 2 && Math.abs(f) == 2, edge = Math.abs(r) == 2 || Math.abs(f) == 2;
+                if (!corner && (edge || r == 0 || f == 0)) out.add(new Entry(at(c, right, fwd, r, 10, f), Mat.PLANKS, fwd, false, false));
+            }
+        for (int k = -1; k <= 1; k += 2) {
+            out.add(new Entry(at(c, right, fwd, k, 9, 0), Mat.BELL_BEAM, fwd, false, false));
+            out.add(new Entry(at(c, right, fwd, 0, 9, k), Mat.BELL_BEAM, right, false, false));
+        }
+        roofs(out, c, right, fwd, 11, Mat.PLANKS, Mat.LOGS);
+        return out;
+    }
+
+    /**
+     * The Bell Tower, five by five round the plan: stone walls ten high with an arch three wide on the door side and a
+     * window up each face, a ladder up the inside of the back wall through the deck, the deck, corner piers, the beam
+     * course thirteen up (two Great Beams either side of the middle, six Bell Beams round them), a stepped stone roof.
+     */
+    static List<Entry> bellTower(BlockPos c, Direction fwd) {
+        Direction right = fwd.getClockWise();
+        List<Entry> out = new ArrayList<>();
+        for (int u = 0; u <= 10; u++)
+            for (int f = -2; f <= 2; f++)
+                for (int r = -2; r <= 2; r++) {
+                    if (Math.abs(r) != 2 && Math.abs(f) != 2) continue;
+                    if (f == 2 && Math.abs(r) <= 1 && u <= 2) continue; // the arch
+                    boolean window = (u == 5 || u == 6) && ((r == 0 && f != 2) || f == 0);
+                    out.add(new Entry(at(c, right, fwd, r, u, f), window ? Mat.GLASS : Mat.STONE, fwd, false, false));
+                }
+        for (int u = 0; u <= 10; u++) out.add(new Entry(at(c, right, fwd, 0, u, -1), Mat.LADDER, fwd, false, false));
+        for (int f = -1; f <= 1; f++)
+            for (int r = -1; r <= 1; r++) if (!(r == 0 && f == -1)) out.add(new Entry(at(c, right, fwd, r, 10, f), Mat.PLANKS, fwd, false, false));
+        for (int u = 11; u <= 12; u++)
+            for (int r = -2; r <= 2; r += 4)
+                for (int f = -2; f <= 2; f += 4) out.add(new Entry(at(c, right, fwd, r, u, f), Mat.STONE, fwd, false, false));
+        for (int f = -2; f <= 2; f++)
+            for (int r = -2; r <= 2; r++) {
+                BlockPos p = at(c, right, fwd, r, 13, f);
+                if (Math.abs(r) == 2 || Math.abs(f) == 2) out.add(new Entry(p, Mat.STONE, fwd, false, false));
+                else if (r != 0 && f == 0) out.add(new Entry(p, Mat.GREAT_BEAM, fwd, false, false));
+                else if (r != 0 || f != 0) out.add(new Entry(p, Mat.BELL_BEAM, r == 0 ? right : fwd, false, false));
+                else out.add(new Entry(p, Mat.STONE, fwd, false, false));
+            }
+        roofs(out, c, right, fwd, 14, Mat.STONE, Mat.STONE);
+        return out;
+    }
+
+    /** A stepped roof from {@code u}: five by five, three by three, then its cap in the middle (the plan's last block). */
+    private static void roofs(List<Entry> out, BlockPos c, Direction right, Direction fwd, int u, Mat roof, Mat cap) {
+        for (int h = 2; h >= 1; h--)
+            for (int f = -h; f <= h; f++)
+                for (int r = -h; r <= h; r++) out.add(new Entry(at(c, right, fwd, r, u + 2 - h, f), roof, fwd, false, false));
+        out.add(new Entry(at(c, right, fwd, 0, u + 2, 0), cap, fwd, false, true));
     }
 
     private static BlockPos at(BlockPos c, Direction right, Direction fwd, int r, int u, int f) {
@@ -214,7 +297,7 @@ public final class WorkPlans {
             if (!be.waiting.isEmpty()) b.append(" It's waiting on ").append(be.waiting).append(".");
         }
         if (KinApi.livingWith(level, p, dev.awaken.kin.KinKind.THATCHBACK) == 0)
-            b.append(" No Thatchback lives with you to build it; you can build the room yourself.");
+            b.append(" No Thatchback lives with you to build it; you can build ").append(tower(plan) ? "it" : "the room").append(" yourself.");
         say(p, b.append("]").toString());
     }
 
@@ -262,6 +345,9 @@ public final class WorkPlans {
             case DROP -> WorksContent.DROP_ITEM.get();
             case LEDGER -> WorksContent.LEDGER_ITEM.get();
             case HEART -> dev.awaken.delve.DelveContent.HEARTS.get(dev.awaken.delve.Ore.IRON).get().asItem();
+            case LADDER -> Items.LADDER;
+            case BELL_BEAM -> dev.awaken.bells.BellContent.BELL_BEAM_ITEM.get();
+            case GREAT_BEAM -> dev.awaken.bells.BellContent.GREAT_BEAM_ITEM.get();
         };
     }
 
@@ -301,6 +387,8 @@ public final class WorkPlans {
             if (e.centre()) finished(level, plan, c);
             return true;
         }
+        // a tower's last block was already there: it's done all the same
+        if (tower(plan) && level.getBlockState(c).is(WorksContent.WORK_PLAN.get())) finished(level, plan, c);
         return false;
     }
 
@@ -367,6 +455,7 @@ public final class WorkPlans {
             if (s.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) s = s.setValue(BlockStateProperties.HORIZONTAL_FACING, e.facing());
             if (block instanceof LanternBlock) s = s.setValue(LanternBlock.HANGING, true);
             level.setBlock(e.pos(), s, Block.UPDATE_ALL);
+            if (e.mat() == Mat.BELL_BEAM || e.mat() == Mat.GREAT_BEAM) dev.awaken.core.api.BellHooks.raised(level, e.pos());
         }
         var sound = s.getSoundType();
         level.playSound(null, e.pos(), sound.getPlaceSound(), SoundSource.BLOCKS, (sound.getVolume() + 1F) / 2F, sound.getPitch() * 0.9F);
@@ -374,10 +463,12 @@ public final class WorkPlans {
     }
 
     private static void finished(ServerLevel level, Plan plan, BlockPos c) {
+        // a belfry or tower stands round its plan: the plan goes, and the ground under it is clear again
+        if (tower(plan) && level.getBlockState(c).is(WorksContent.WORK_PLAN.get())) level.removeBlock(c, false);
         HearthService.data(level.getServer()).containing(c, HearthService.OVERWORLD).ifPresent(h -> {
             h.scheduleScan(level.getGameTime(), 20);
             for (ServerPlayer p : level.players())
-                if (h.belongs(p.getUUID())) say(p, "[The Thatchbacks finished the " + plan.title() + ".]");
+                if (h.belongs(p.getUUID())) say(p, "[The Thatchbacks finished the " + plan.title() + "." + (tower(plan) ? " Climb the ladder and hang your bells from its beams." : "") + "]");
         });
     }
 

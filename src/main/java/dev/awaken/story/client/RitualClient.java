@@ -35,7 +35,7 @@ public final class RitualClient {
     // cues, as the server's Ritual.Cue ordinals
     static final int TOLL = 0, WORD = 1, CUE_DOORS = 2, LIGHTS_OUT = 3, CANDLE = 4, LIGHTS_ON = 5, PLATE = 6, PLATE_MISS = 7,
             GLARE = 8, RULE_STRIKE = 9, HIT = 10, SHAKE = 11, EYES = 12, RISE = 13, GAZE_CHARGE = 14, GAZE_FIRE = 15, SWING = 16,
-            IMPACT = 17, PIT = 18, DRAIN = 19, ERROR = 20, DEATH = 21, HOLD = 22;
+            IMPACT = 17, PIT = 18, DRAIN = 19, ERROR = 20, DEATH = 21, HOLD = 22, PLATE_ON = 23;
 
     /** The scene: beat (or NONE / VOID / TEAR), when it began on the client clock, and the hall's places. */
     static int beat = StoryPayloads.RitualScene.NONE;
@@ -258,7 +258,7 @@ public final class RitualClient {
                 RitualCamera.kick(c.a, 6F);
                 RitualHud.hurt();
             }
-            case IMPACT -> RitualCamera.shakeNear(c.a, c.f * 2.0F, 10, 9);
+            case IMPACT -> RitualCamera.shakeNear(c.a, c.f * 2.0F, 10, 9); // its dust: RitualFx sees the blade land
             case RULE_STRIKE -> RitualCamera.shake(0.8F, 8);
             case HOLD -> holdInput(c.ticks);
             case DRAIN -> LensClient.ritual(0.15F, 0.6F);

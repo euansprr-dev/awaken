@@ -147,6 +147,14 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
                 BlockPos at = m.immutable();
                 dev.awaken.core.api.ArmsApi.placeStand(level, at, rot.rotate(facing), standKind, rank, at.asLong());
             }
+
+            @Override
+            public void stone(int x, int y, int z, Direction facing, String set) {
+                world(x, y, z, m);
+                if (!chunkBB.isInside(m)) return;
+                BlockPos at = m.immutable();
+                dev.awaken.core.api.EnchantApi.placeStone(level, at, rot.rotate(facing), set, at.asLong());
+            }
         });
     }
 

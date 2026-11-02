@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "awaken:pattern_stand"
+    "awaken:pattern_stand",
+    "awaken:war_anvil"
   ]
 }

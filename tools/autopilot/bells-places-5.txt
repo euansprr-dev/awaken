@@ -1,0 +1,137 @@
+# Bells stage 5 (SPEC §43.16): every bell at a real place. A home 320 east of the city square (/awaken admin kin yard);
+# first the stage 3 fixes no tour has shown yet (the bell in hand, the Tenor's card, Bell Beam bells at their new size),
+# then a bell set down where it was won, a spirit asking for a lantern and letting its bell go, a village's bell (Oren
+# remembers it, the letter on its lectern by the well, the mossy stone it's buried under), and the Dreaming Bell waiting.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/bells-places-5.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_bells_places_5 creative 2112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 3500
+cmd clear @s
+
+# ---- 1. a home near the city, three bells on its frame ----
+cmd awaken city view square
+wait 300
+cmd time set 6000
+cmd spreadplayers ~320 ~40 0 20 false @s
+wait 300
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin home burrowbun
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+cmd awaken admin bells tower 3
+
+# ---- 2. the fixes: the bell in hand, the Tenor's card, Bell Beam bells at their new size ----
+hud on
+cmd item replace entity @s weapon.mainhand with awaken:bell[awaken:bell=7]
+wait 40
+shotnow b5_01_bell_in_hand
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd awaken admin bells give tenor
+wait 30
+shotnow b5_02_tenor_card
+wait 200
+hud off
+cmd awaken admin bells give ghost
+cmd awaken admin bells give archive
+cmd awaken admin bells give hill
+cmd awaken admin bells give founders
+cmd awaken admin bells give boulder
+cmd awaken admin bells give stampede
+cmd awaken admin bells give falling
+cmd awaken admin bells give sung_iron
+wait 20
+cmd awaken admin bells plans
+wait 80
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8.5 ~7.6 ~6 0 -3
+wait 60
+shot b5_03_belfry_beams
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8.5 ~9.2 ~8.2 0 30
+wait 40
+shot b5_04_beam_bells_close
+
+# ---- 3. a bell set down where it was won ----
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-6.5 ~ ~-6.5 180 30
+wait 20
+hud on
+cmd awaken admin bells found eclipse
+wait 40
+shotnow b5_05_bell_lying
+hud off
+
+# ---- 4. a spirit holds a bell: it asks for a lantern, and lets the bell go ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-12.5 ~ ~-6.5 180 20
+wait 20
+hud on
+cmd awaken admin bells spirit
+wait 30
+shotnow b5_06_spirit_errand
+wait 200
+cmd setblock ~2 ~ ~2 minecraft:lantern
+wait 140
+shotnow b5_07_spirit_lets_go
+wait 200
+hud off
+
+# ---- 5. a village's bell: Oren remembers it, the letter by the well, the mossy stone ----
+cmd awaken admin bells village mill tell
+wait 200
+hud on
+cmd awaken admin bells village mill tell
+wait 30
+shotnow b5_08_oren_remembers
+wait 200
+hud off
+cmd awaken admin bells village mill well
+wait 400
+shot b5_09_village_well
+cmd awaken admin bells village mill spot
+wait 200
+shot b5_10_mossy_stone
+
+# ---- 6. the Dreaming Bell, just waiting ----
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+wait 100
+cmd awaken dream now
+wait 300
+cmd awaken admin bells look
+wait 20
+shot b5_11_dreaming_bell
+cmd awaken dream wake
+wait 100
+quit

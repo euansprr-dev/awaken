@@ -9,14 +9,13 @@ import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
 /**
  * Claim delivery (plan contract "Gate run and reward claim"): 1 the PENDING claim already holds the Satchel's contents;
- * 2 move items to the inventory (overflow drops at your feet, outside the gate); 3 grant the Satchel XP; 4 mark DONE;
+ * 2 move items to the inventory (what doesn't fit is held for you, {@link Spoils}); 3 grant the Satchel XP; 4 mark DONE;
  * 5 show the Notice. Delivery happens only outside the gate dimension, so nothing loops back into a Satchel. A DONE
  * claim is never paid twice; replaying after a crash is safe.
  */
@@ -49,14 +48,14 @@ public final class Claims {
     }
 
     private static void pay(ServerPlayer p, Claim c) {
-        int stacks = 0, items = 0, dropped = 0;
+        int stacks = 0, items = 0, held = 0;
         for (ItemStack s : c.items()) {
             ItemStack give = s.copy(); // the claim's own copy is dropped with the claim: loot moves once
             items += give.getCount();
             stacks++;
             if (!p.addItem(give) && !give.isEmpty()) {
-                p.drop(give, false, Prediction.SERVER_ONLY);
-                dropped++;
+                Spoils.hold(p, give); // never thrown at your feet (SPEC §13, "Gate spoils")
+                held++;
             }
         }
         int levels = 0;
@@ -72,10 +71,13 @@ public final class Claims {
                 default -> "Extracted";
             }));
             w.row("Items", items + " in " + stacks + " stack" + (stacks == 1 ? "" : "s"));
-            if (dropped > 0) w.row("Pockets full", dropped + " stack" + (dropped == 1 ? "" : "s") + " dropped at your feet");
+            if (held > 0) w.row("Held for you", held + " stack" + (held == 1 ? "" : "s"));
             if (c.xp() > 0) w.row("Satchel XP", "+" + Math.round(c.xp()) + (levels > 0 ? "  (+" + levels + " level" + (levels > 1 ? "s" : "") + ")" : ""));
-            if (!c.note().isEmpty()) w.body(Component.literal(c.note()));
-            Signal.send(p, w.ttl(20 * 7).build());
+            String heldLine = held == 0 ? "" : held + (held == 1 ? " stack didn't fit in your pockets. It's held for you: open your inventory (E) to take it."
+                    : " stacks didn't fit in your pockets. They're held for you: open your inventory (E) to take them.");
+            String body = (c.note() + " " + heldLine).trim();
+            if (!body.isEmpty()) w.body(Component.literal(body));
+            Signal.send(p, w.ttl(20 * (held > 0 ? 10 : 7)).build());
         }
     }
 

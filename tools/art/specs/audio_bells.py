@@ -8,6 +8,11 @@ direction and fades with distance (OpenAL only places mono sources).
   bell_toll        a bell waking: one great low strike that rolls out over the land
   bell_hum         a hidden bell's hum under the world's sound: low, beating, with no strike at all
   bell_wake        the place waking round it: a warm rising shimmer
+  bell_hang        a bell's loop dropped on its hook: iron on iron, a bounce, the beam taking the weight (stage 6)
+  bell_swell       the slow swell under a newly hung bell's first ring, on D (pitched to its note in the game)
+  bell_far_0..14   the fifteen notes far off: darker, softer-edged, mostly room: a far bell answering your song
+  bell_muffled_0..14  the fifteen notes muffled, as if brushed through stone: a damped strike, then a low hum that swells
+                   and fades over about four seconds. Lifted, the bell rings the same note out clear.
 """
 import numpy as np
 
@@ -93,6 +98,64 @@ def wake(seed):
     return K.declick(st + wet * 0.5)
 
 
+def far(k):
+    def render(seed):
+        L = 4.4
+        n = K.ns(L)
+        f = K.hz(K.midi(NOTES[k]))
+        x = _norm(K.bell(f, n, t60=3.0 - k * 0.08, bright=0.12, seed=seed))
+        # distance takes the top and the edge off the strike, and the land's air carries most of it
+        x = K.lowpass(x, 1300 + k * 45, 2) * K.line(n, [(0, 0), (0.01, 1), (1.0, 1)])
+        wet = K.convolve(x, K.reverb_ir(t60=3.6, predelay=0.09, bright=0.2, width=1.0, seed=seed + 60))[:n]
+        return K.declick(K.stereo(x) * 0.5 + wet * 0.95)
+    return render
+
+
+def muffled(k):
+    def render(seed):
+        L = 4.2
+        n = K.ns(L)
+        t = np.arange(n) / K.SR
+        f = K.hz(K.midi(NOTES[k]))
+        strike = K.lowpass(_norm(K.bell(f, n, t60=0.45, bright=0.1, seed=seed)), max(520.0, f * 1.3), 2) * 0.55
+        hum = np.sin(2 * np.pi * f * t) + 0.6 * np.sin(2 * np.pi * f * 1.003 * t) + 0.3 * np.sin(np.pi * f * t) \
+            + 0.18 * np.sin(2 * np.pi * f * 2.004 * t)
+        env = K.line(n, [(0, 0), (0.06, 0.15), (0.45, 1), (0.75, 0.55), (1.0, 0)])
+        hum = K.lowpass(hum, max(700.0, f * 1.4), 2) * env * 0.55
+        air = _norm(K.lowpass(K.noise(n, "pink", seed + 3), 260, 2)) * env * 0.1
+        x = strike + hum + air
+        wet = K.convolve(x, K.reverb_ir(t60=1.3, predelay=0.02, bright=0.15, width=0.8, seed=seed + 70))[:n]
+        return K.declick(K.stereo(_norm(x)) + wet * 0.3)
+    return render
+
+
+def hang(seed):
+    L = 0.8
+    n = K.ns(L)
+    x = np.zeros(n)
+    ratios = [1.0, 2.32, 3.87, 5.1, 6.8]
+    for k, (at, v) in enumerate(((0.0, 1.0), (0.075, 0.45), (0.14, 0.18))):
+        clink = K.modal(1380.0 + k * 60, ratios, [1.0, 0.6, 0.4, 0.25, 0.12], [0.26, 0.16, 0.1, 0.07, 0.05], K.ns(0.4), seed=seed + k)
+        _place(x, clink * v, at)
+    # the beam taking the weight
+    _place(x, K.sub_boom(K.ns(0.25), f0=130.0, f1=85.0, t60=0.12, seed=seed + 9) * 0.45, 0.0)
+    wet = K.convolve(x, K.reverb_ir(t60=0.7, predelay=0.01, bright=0.5, width=0.8, seed=seed + 10))[:n]
+    return K.declick(K.stereo(_norm(x)) + wet * 0.2)
+
+
+def swell(seed):
+    L = 4.6
+    n = K.ns(L)
+    t = np.arange(n) / K.SR
+    f = K.hz(K.midi("D3"))
+    x = np.sin(2 * np.pi * f * t) + 0.5 * np.sin(2 * np.pi * f * 1.0025 * t) + 0.45 * np.sin(np.pi * f * t) \
+        + 0.25 * np.sin(2 * np.pi * f * 2.003 * t) + 0.1 * np.sin(2 * np.pi * f * 3.01 * t)
+    env = K.line(n, [(0, 0), (0.25, 1), (0.45, 0.85), (1.0, 0)])
+    x = K.lowpass(x, 1100, 2) * env
+    wet = K.convolve(x, K.reverb_ir(t60=2.4, predelay=0.03, bright=0.3, width=1.0, seed=seed + 5))[:n]
+    return K.declick(K.stereo(_norm(x)) + wet * 0.4)
+
+
 def sounds(Snd):
     out = [Snd("bell_note_%d" % k, note(k), rms=-21.0, seed=200 + k, mono=True) for k in range(len(NOTES))]
     out += [
@@ -101,7 +164,11 @@ def sounds(Snd):
         Snd("bell_toll", toll, rms=-19.0, seed=222, mono=True),
         Snd("bell_hum", hum, rms=-24.0, seed=223, mono=True),
         Snd("bell_wake", wake, rms=-23.0, seed=224, mono=True),
+        Snd("bell_hang", hang, rms=-21.0, seed=225, mono=True),
+        Snd("bell_swell", swell, rms=-23.0, seed=226, mono=True),
     ]
+    out += [Snd("bell_far_%d" % k, far(k), rms=-22.0, seed=230 + k, mono=True) for k in range(len(NOTES))]
+    out += [Snd("bell_muffled_%d" % k, muffled(k), rms=-23.0, seed=250 + k, mono=True) for k in range(len(NOTES))]
     return out
 
 
@@ -113,7 +180,11 @@ def events(Evt):
         Evt("bells.toll", "A great bell tolls", files=["bell_toll"], folder="bells"),
         Evt("bells.hum", "A hidden bell hums", files=["bell_hum"], folder="bells"),
         Evt("bells.wake", "The place wakes", files=["bell_wake"], folder="bells"),
+        Evt("bells.hang", "A bell is hung", files=["bell_hang"], folder="bells"),
+        Evt("bells.swell", "A bell rings out", files=["bell_swell"], folder="bells"),
     ]
+    out += [Evt("bells.far_%d" % k, "A bell answers your song", files=["bell_far_%d" % k], folder="bells") for k in range(len(NOTES))]
+    out += [Evt("bells.muffled_%d" % k, "A lost bell hums", files=["bell_muffled_%d" % k], folder="bells") for k in range(len(NOTES))]
     return out
 
 

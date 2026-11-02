@@ -734,3 +734,223 @@ happens).
 - **Links**: the Stilled (§43.3), the Last Fire (§21), the Wake.
 - **Edges**: a Stilled in an unloaded chunk stands the next time its chunk loads near a player; Ilse doesn't come by night
   or when nobody's at the fire, and comes the next fair day; she visits a home once (`ilse` in `bells`).
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Bells you carry and hang (§43.16 stage 2, plan docs/director/BELLS.md §4)
+
+### The bell (`awaken:bell`, one item for all hundred)
+- **Get**: winning a bell anywhere (`Bells.ring`): it's filed in the Book and put in your hands; Ilse puts the Ember Bell
+  in your hands at the coal; the Lampwing's old bell is lifted from its tree. The far six (Roost, Square, Market,
+  Harbour, Watch, Curfew) never become things: they stay where they hang.
+- **For**: hung at home it's a note in your song and its voice; three hung make a peal.
+- **Know**: its card ("It's yours. Take it home and hang it."; a Great Bell's names the Great Beam), its tooltip (number,
+  rank, what it does while it hangs, where it hangs), the first bell's line about the Bell Frame, the Bells tab's step
+  "Hang the bells in your bag".
+- **Source**: `bells.BellItem`, component `awaken:bell` (the number), `Sources.declare("bell", ...)`.
+- **Links**: the Bell Frame, Bell Beam and Great Beam; the Book; peals; the song.
+- **Edges**: one a stack; can't burn, be hurt or despawn; falling out of the world brings it back to its owner's hands
+  (or to the world's spawn); never dropped at death (owed back to your hands); a bell already in your home's song won't
+  hang twice ("This one's yours to keep"); used in the hand it rings its note; on any other block it says how hanging works.
+
+### The Bell Frame, the Bell Beam and the Great Beam
+- **Get**: made at a table: the frame from planks and logs (no vanilla bell any more), the Bell Beam from logs and iron
+  nuggets, the Great Beam from logs, iron chain and an iron ingot.
+- **For**: hooks: the frame 3 (by your fire, no height rule), a Bell Beam 4 (8 or more above your fire), a Great Beam 1
+  (a Great Bell, 12 or more above your fire).
+- **Know**: tooltips; the frame's placing line; the refusals in plain words ("A bell hung this low won't carry...");
+  the frame-full line names the Bell Beam; the Bells tab names each next step.
+- **Source**: `bells.HookBlock` (`BellFrameBlock`, `BellBeamBlock`), `bells.HooksEntity` (`bell_hooks`, schema 1),
+  `bells.Hanging`; recipes `bell_frame`, `bell_beam`, `great_beam`; loot drops itself.
+- **Links**: the Hearth (only inside one you belong to); the song (`BellTower.places`); the Great Belfry (stage 3+).
+- **Edges**: breaking one drops its bells as items and takes them out of the song; only whoever hung a bell (or the
+  owner) takes it down (sneak-use, empty hand); empty hand rings the nearest bell; hooks face you when placed.
+
+### Found bells and the Lampwing's old bell (`awaken:found_bell`, no item)
+- **Get**: a bell lying where it was won; the first is the Nook Bell, hung by the game under a branch of the nearest
+  tree to a new home's Lampwing perch (else from an old post) the first time its owner comes near.
+- **For**: the Nook Bell is the home's own first find; the same block carries stage 4's Lord bells.
+- **Know**: it glows while something sleeps in it ("[Something's asleep in it.]"); the day a beast comes to live there:
+  "[The Lampwing's left its old bell in the tree. It's yours.]"; the Bells tab: "Take the Lampwing's old bell down".
+  The first fire's Lampwing perches by it.
+- **Source**: `bells.FoundBells`, `FoundBellBlock`, `FoundBellEntity` (schema 1); `Sources.neverHeld("found_bell")`.
+- **Links**: kin (`KinWorld`), `BellHooks.roost`, KinHome's lesson.
+- **Edges**: unbreakable and immovable; someone from another fire can't lift a home's; a bell left for named hunters
+  (claimants) is theirs alone, and the block goes once every one of them has lifted theirs; a home whose owner already
+  holds the Nook never gets one.
+
+### Old saves (Book schema 5, World schema 3)
+- **Get**: automatic, once per Book.
+- **Know**: "[Your bells are waiting to be hung. Use each one on your Bell Frame by your fire.]"
+- **Source**: `Bells.upgrade`, `Bells.owed`.
+- **Edges**: every held bell but the far six comes back as a thing to hang; the far six get their places (the city's,
+  the holdfasts' heard from inside, else the square, else where you stand); old homes' `hung` lists are dropped, so
+  nothing rings until bells are hung again; the Signal's first-bell line isn't said again.
+
+## Hang them high (§43.16 stage 3, plan docs/director/BELLS.md §4.4, §4.8)
+
+### The Belfry and the Bell Tower (Work Plans)
+- **Get**: a Work Plan (as before), used to turn its choice to "Belfry" or "Bell Tower"; a Thatchback living with you
+  builds it from the chests within eight, one block a turn; or you build it yourself from the plan's bill.
+- **For**: Bell Beams (and, in the tower, Great Beams) high up without a scaffold: the Belfry sixteen hooks nine up, the
+  Bell Tower 24 hooks and two Great hooks thirteen up; the Hearth's tier II bell tower.
+- **Know**: the plan's line when chosen and its status (the bill, then blocks done and what it's waiting on); the Bells
+  tab's "Your frame's full" step and the page's next line name the plans; "[The Thatchbacks finished the Belfry. Climb
+  the ladder and hang your bells from its beams.]"
+- **Source**: `kin.works.WorkPlans` (`belfry`, `bellTower`), `BellHooks.raised`.
+- **Links**: Bell Beam and Great Beam recipes; ladders; the Hearth's tier II; the Great Belfry (needs its 7 by 7 clear).
+- **Edges**: the plan block goes when the tower's done (even if its last block was already there); beams the Thatchbacks
+  set carry at any height, so a plan laid below the fire still works; anything of yours in the way is built round; no
+  glass walls a window up.
+
+### The Registry's wagon (the Provings' Great Bells)
+- **Get**: winning a rank's Proving puts its Great Bell on the wagon (Book `wagon`); on a later play-day, while you're at
+  home, it's left in your yard two to five blocks from the Anchor as a found bell.
+- **For**: the Great Bells come home without carrying a giant bell out of the Registry.
+- **Know**: the bell's card says the wagon leaves it in your yard by morning (once you have a home); "[The Registry's
+  wagon left the Tenor in your yard...]"; the Bells tab's "The Tenor is in your yard".
+- **Source**: `Bells.ring` (PROVING), `FoundBells.wagon`, `FoundBellEntity.delivered`, World `yard`.
+- **Links**: the Great Beam; the Great Belfry carries Great Bells up into it.
+- **Edges**: never the same play-day; waits while you have no home or the yard isn't loaded or has no room; only you can
+  lift it; lifted, it's in your hands like any bell; the admin `tower` command gives wagon bells at once.
+
+### The Hearth's bell tower and the old self-raised towers
+- **Get**: a bell hanging 8 or more above your fire, or on a beam the Thatchbacks set, or an old tower's beams.
+- **For**: tier II's need; a gate near home warned two play-days before it breaks (tolled from your highest bell); calm
+  Deep Tide nights. Tier IV asks for thirty bells in your song.
+- **Know**: the Hearth page's tier needs ("a bell tower: a bell hanging 8 or more above your fire", "thirty bells in
+  your song (n/30)").
+- **Source**: `BellHooks.tower`, `BellHooks.song`, `BellHooks.toll`, `RoomEffects.bellTower`, `TierRules`,
+  `BellTower.convert` (old towers, World `beams`).
+- **Edges**: the Bell tower room still counts but no longer rings vanilla bells; an old belfry's, tower's or Great
+  Belfry's vanilla bells become beams once, counting at any height; no tower raises itself any more.
+
+## Lord bells lie in the boss room (§43.16 stage 4)
+
+### A bell a gate's Lord kept (`awaken:found_bell` on the arena's floor)
+- **Get**: bring down a gate's Lord that kept a bell for you (a gate world's own bell at its rank; else a swallowed one:
+  your first Lord the Wren, then never two in a row, one in three, always by the fourth since); it lies on the floor of
+  its room near where it fell; lift it.
+- **For**: the bell, to carry home and hang.
+- **Know**: the line at the fall ("It's lying where the Lord fell..."); its glow in the dark room; the Bells tab's "Lift
+  the X from where the Lord fell" while you're in the gate.
+- **Source**: `Bells.lordFell`, `FoundBells.keep`, `FoundBellEntity.gate`, World `kept`.
+- **Links**: the Book (filed where it was won); the clapper (a Chime Perch); the Bell Frame and beams.
+- **Edges**: one per party, each claimant lifts their own; with no floor near it goes straight to their hands; a gate
+  that closes first takes it back to the pool (`FoundBells.closed`, `lost`): the next Lord keeps one for that hunter;
+  a party member who already has it isn't a claimant; it can't be broken or pushed.
+
+## Every bell at a real place (§43.16 stage 5)
+
+### A bell set down where it was won (`awaken:found_bell`, no gate)
+- **Get**: win it at its place: a Foundry cast (by the Crucible), the Founding Bell (by your fire), a stratum of the
+  Descent, a Spire or platform ruin, aboard the Halo, where a Sovereign fell, where a raid breached your wall, a
+  stampede's wake, the Deep Tide, the eclipse sky; lift it.
+- **For**: the bell, to carry home and hang.
+- **Know**: the line at the place ("There's a bell set into the rock here..."); its glow; the Bells tab's "Lift the X",
+  pointing at it.
+- **Source**: `FoundBells.leave`, `Bells.leave` (KinWorks, BigDays), `Bells.found`, World `kept` (`dim`).
+- **Links**: the Book; the Bell Frame and beams.
+- **Edges**: one per party, each lifts their own; never twice; never in a block someone stands in; no floor near: into
+  their hands; knocked out of its place: into their hands when they're about (`FoundBells.watch`).
+
+### The Registry's bells from Bram
+- **Get**: clear your first (and twenty-fifth) gate, then stand within 8 of Bram in Carillon.
+- **For**: the Registry Handbell and the Toll Bell.
+- **Know**: "[Bram at the Registry has something for you.]"; his words as he hands it over.
+- **Source**: `Bells.bram`, `Bells.handed`, `CitizenHooks.where`.
+- **Edges**: Bram has no body when nobody's near the Registry, so it waits; old Books that hold them already keep them.
+
+### The villages' five (a quest each)
+- **Get**: a named citizen remembers one aloud when you're near them in Carillon (Sun, Oren, Kestrel, Teodor, Mira; one a
+  play-day, the bell's rank); go to the empty village they name, read the letter on the lectern by the well, find the
+  bell where it says (sunk, under a mossy stone, on the highest ground, by a wolf in the fold); lift it.
+- **For**: Fenwick's, the Mill, the Shepherd's, the Hill and the Ford bells, and the teller's thanks.
+- **Know**: the rumour; "[X is out to the west. It's on your Tasks.]"; the letter's own words; the muffled hum within 32;
+  the Tasks' "Find the letter about X in Y", then "Find X where the letter says".
+- **Source**: `VillageBells`, `Villages.emptyNear`, World `villages`, `quests`; vanilla lectern, written book and wolf.
+- **Links**: the Bell Book; a bone for the wolf; a shovel for the mossy stone; water breathing for a deep bed.
+- **Edges**: one village per bell per world, chosen 250 to 2,400 from the square; laid once someone's within 96 of the
+  well; laid again for the next who comes without it; reading the carried book counts; a sunk bell with no deep water
+  near is buried instead; the teller says thanks once.
+
+### The dreams' six puzzles
+- **Get**: dream; the next dream bell you don't hold is behind its puzzle (the Dreaming Bell waiting, the Daydream that
+  moves when you look away, the Lullaby by a sleeper, the Falling Bell at the foot of a fall that ends when you look
+  up, the Nightmare's carried by what hunts you, the Lucid Bell once you've noticed a dream sign); strike it lucid
+  enough; wake.
+- **For**: the Lucidium's bells.
+- **Know**: each dream's line; the note every 5 s; the second lift's line; a Dreamt lead in the puzzle's words.
+- **Source**: `DreamBells`, `Lucidium.signsNoticed`, `MobHooks.spawnThemed` (the sleeper and the chaser).
+- **Edges**: one a dream; not saved; beasts discarded on waking; no hurt from a fall the dream took over.
+
+### The Veil's five kept by spirits
+- **Get**: hear a spirit's whole story while one of the five waits for your rank; do what it stayed for where it stands.
+- **For**: Ghost Lantern, Whisper, Wake, Mourner's and the Veil Bell.
+- **Know**: the spirit's errand in its own words; the Tasks' "Light a lantern where X stands" and the rest, pointing there.
+- **Source**: `SpiritBells`, `BellHooks.spirit` (from `veil.Spirits.talk`), World `keepers`.
+- **Links**: a lantern, flowers, a candle; first light; the other four for the Veil Bell.
+- **Edges**: one spirit, one bell; the errand can be done in body; checked within 16 of the spirit.
+
+## Enchanting: the Inscribing Table (SPEC §45)
+
+### The Inscribing Table (`awaken:inscribing_table`)
+- **Get**: crafted: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone. Any vanilla enchanting table
+  you use (old worlds, villages, structures) turns into one.
+- **For**: writing the enchantments you've learned onto your own gear, deepening them, scraping them off.
+- **Know**: the Tasks page's main path right after your first gate ("Make an Inscribing Table", with its items) once
+  you know an enchantment; the page's own hover line ("Write it onto your gear at an Inscribing Table"); the learn message.
+- **Source**: `data/awaken/recipe/inscribing_table.json`; `Fold.swap`; loot `blocks/inscribing_table`.
+- **Links**: pages (learning), the Forge Song and Armoury (room), the Study (depth past II), the market (pages).
+- **Edges**: one writer at a time; the piece never leaves the hand (no dupes, nothing drops if the table breaks); walking
+  away, Esc or logging out refunds a choice not yet written; the vanilla table can't be crafted.
+
+### The enchantment page (`awaken:enchantment_page`)
+- **Get**: a gate's Lord carries its kind's page (the first clear of each kind, then 1 in 5); the village scribe sells
+  three a day; old enchanted books teach theirs when used.
+- **For**: learning an enchantment for good (spent when learned; a known one can be given away).
+- **Know**: it lands in your pack with a line naming the Lord and the enchantment; the first ever toasts that every kind
+  of gate keeps its own; Tasks shows "Read the page you're carrying" and the Armour/Weapons "Find an enchantment" rows;
+  the scribe lists the ones you don't know first.
+- **Source**: `Sources.declare` in `EnchantModule` (`enchant.Pages.onDeath`, `village.Trade`, `Pages.onUseItem`).
+- **Links**: the Inscribing Table, the Journal's ENCHANTMENTS category, the gates.
+- **Edges**: a page whose enchantment can't be written any more fades to paper; a known page stays; pages stack to 16.
+
+### The Word Stone (`awaken:word_stone`)
+- **Get**: never held: one stands in every Precursor ruin (the vaults' sealed chamber across the terminal from the
+  drafting stand, the monolith's chamber, the ocean lab's storage dome, the sky platform's cabin, the spire's crown).
+- **For**: learning its enchantment for good by holding your hand to it, once for each player (the stone stays for the
+  next). Vaults and the monolith carry Insight, Efficiency, Infinity or Feather Falling; the sky ruins Feather Falling,
+  Infinity or Insight; the ocean lab one of the water's six.
+- **Know**: its letters lift off the carved face in the enchantment's colour while you haven't learned it, with a faint
+  hum; looking at it says "A Word Stone carved with Insight. Hold your hand to it to learn it."; the learn message.
+- **Source**: `Sources.declare` in `EnchantModule`; placed by `above.ruin.RuinBuilder` through `EnchantApi.placeStone`.
+- **Links**: the Inscribing Table, the Journal's ENCHANTMENTS category, the Precursor ruins.
+- **Edges**: unbreakable and drops nothing; a known stone says so and teaches nothing; the carving is the block state, so
+  a ruin always shows the same one.
+
+### The burin (`awaken:burin`)
+- **Get**: never held: it is the table's engraving tool, drawn in your main hand only while you write at an Inscribing
+  Table (SPEC §45.10). Creative and commands can give it; it does nothing on its own.
+- **Source**: `Sources.neverHeld` in `EnchantModule`.
+- **Links**: the Inscribing Table's writing scene.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## The War Anvil (SPEC §46; plan docs/weapon-forge/PLAN.md, not part of §43)
+
+### War Anvil
+- **Get**: crafted from three stone, a copper ingot and a log (granted at level 3 with the Fitting Stand).
+- **For**: weapons forged in a scene of your own: heat in the Forge, draw out on the beat, quench, hilt, the draw from
+  the stone. A well-forged weapon leaves with Temper, up to your Forge's limit, and its story ("Masterwork. Forged by
+  Euan."). Stage 1 forges the Beastbound Longsword; every weapon comes in stage 2.
+- **Know**: the level road's level 3 step names it and its recipe; the recipe book; use it and its window says what the
+  weapon takes and what's missing (rank D, a Forge within 6 blocks, the parts).
+- **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself), `arms.anvil.WarAnvil`,
+  `WarAnvilBlockEntity` (schema 1).
+- **Links**: the Hearth's Forge (heat, the temper limit); Oren's Mark (`awaken:temper_start`); the Beastbound Blade
+  (or its own recipe in its place); the Fitting Stand's smithy (one Forge serves both).
+- **Edges**: below D-rank, or with no Forge near, the window says so and nothing starts; someone else's work is theirs
+  (a line says who); walking 12 blocks off, logging out or Esc holds the work and coming back counts the stage in again;
+  breaking it mid-work drops what was taken in and what stands in the slot; a full pack at the draw puts what was in
+  the hand at your feet; a weapon left in the slot waits for anyone to sneak-use and draw it.

@@ -14,7 +14,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/doors",
-        "attenuation_distance": 64
+        "attenuation_distance": 80
       }
     ]
   },
@@ -23,7 +23,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/flames_out",
-        "attenuation_distance": 64
+        "attenuation_distance": 80
       }
     ]
   },
@@ -32,7 +32,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/candle",
-        "volume": 0.5,
+        "volume": 1.0,
         "attenuation_distance": 24
       }
     ]
@@ -49,8 +49,7 @@
     "subtitle": "subtitles.awaken.story.ritual.eyes",
     "sounds": [
       {
-        "name": "awaken:ritual/eyes",
-        "attenuation_distance": 96
+        "name": "awaken:ritual/eyes"
       }
     ]
   },
@@ -59,7 +58,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/gaze_charge",
-        "attenuation_distance": 48
+        "attenuation_distance": 96
       }
     ]
   },
@@ -68,7 +67,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/gaze_fire",
-        "attenuation_distance": 64
+        "attenuation_distance": 96
       }
     ]
   },
@@ -77,7 +76,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/statue_rise",
-        "attenuation_distance": 64
+        "attenuation_distance": 96
       }
     ]
   },
@@ -86,7 +85,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/swing",
-        "attenuation_distance": 24
+        "attenuation_distance": 32
       }
     ]
   },
@@ -95,7 +94,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/impact",
-        "attenuation_distance": 32
+        "attenuation_distance": 64
       }
     ]
   },
@@ -104,7 +103,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/pit",
-        "attenuation_distance": 48
+        "attenuation_distance": 64
       }
     ]
   },
@@ -166,7 +165,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/footstep1",
-        "attenuation_distance": 36
+        "attenuation_distance": 48
       }
     ]
   },
@@ -175,7 +174,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/footstep2",
-        "attenuation_distance": 36
+        "attenuation_distance": 48
       }
     ]
   },
@@ -184,7 +183,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/footstep3",
-        "attenuation_distance": 36
+        "attenuation_distance": 48
       }
     ]
   },
@@ -193,7 +192,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/gaze_travel",
-        "attenuation_distance": 40
+        "attenuation_distance": 48
       }
     ]
   },
@@ -202,7 +201,7 @@
     "sounds": [
       {
         "name": "awaken:ritual/gaze_impact",
-        "attenuation_distance": 48
+        "attenuation_distance": 64
       }
     ]
   },
@@ -211,6 +210,126 @@
     "sounds": [
       {
         "name": "awaken:ritual/hall",
+        "stream": true
+      }
+    ]
+  },
+  "story.ritual.footstep4": {
+    "subtitle": "subtitles.awaken.story.ritual.footstep4",
+    "sounds": [
+      {
+        "name": "awaken:ritual/footstep4",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "story.ritual.windup": {
+    "subtitle": "subtitles.awaken.story.ritual.windup",
+    "sounds": [
+      {
+        "name": "awaken:ritual/windup",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "story.ritual.swing2": {
+    "subtitle": "subtitles.awaken.story.ritual.swing2",
+    "sounds": [
+      {
+        "name": "awaken:ritual/swing2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "story.ritual.impact2": {
+    "subtitle": "subtitles.awaken.story.ritual.impact2",
+    "sounds": [
+      {
+        "name": "awaken:ritual/impact2",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "story.ritual.struck": {
+    "subtitle": "subtitles.awaken.story.ritual.struck",
+    "sounds": [
+      {
+        "name": "awaken:ritual/struck"
+      }
+    ]
+  },
+  "story.ritual.raise": {
+    "subtitle": "subtitles.awaken.story.ritual.raise",
+    "sounds": [
+      {
+        "name": "awaken:ritual/raise"
+      }
+    ]
+  },
+  "story.ritual.error": {
+    "subtitle": "subtitles.awaken.story.ritual.error",
+    "sounds": [
+      {
+        "name": "awaken:ritual/error"
+      }
+    ]
+  },
+  "story.ritual.plate_tick": {
+    "subtitle": "subtitles.awaken.story.ritual.plate_tick",
+    "sounds": [
+      {
+        "name": "awaken:ritual/plate_tick",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "story.ritual.plate_tock": {
+    "subtitle": "subtitles.awaken.story.ritual.plate_tock",
+    "sounds": [
+      {
+        "name": "awaken:ritual/plate_tock",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "story.ritual.plate_rise": {
+    "subtitle": "subtitles.awaken.story.ritual.plate_rise",
+    "sounds": [
+      {
+        "name": "awaken:ritual/plate_rise",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "story.ritual.plate_lock": {
+    "subtitle": "subtitles.awaken.story.ritual.plate_lock",
+    "sounds": [
+      {
+        "name": "awaken:ritual/plate_lock"
+      }
+    ]
+  },
+  "story.ritual.pulse_soft": {
+    "subtitle": "subtitles.awaken.story.ritual.pulse_soft",
+    "sounds": [
+      {
+        "name": "awaken:ritual/pulse_soft"
+      }
+    ]
+  },
+  "story.ritual.pulse_hard": {
+    "subtitle": "subtitles.awaken.story.ritual.pulse_hard",
+    "sounds": [
+      {
+        "name": "awaken:ritual/pulse_hard"
+      }
+    ]
+  },
+  "story.ritual.pulse_drone": {
+    "subtitle": "subtitles.awaken.story.ritual.pulse_drone",
+    "sounds": [
+      {
+        "name": "awaken:ritual/pulse_drone",
         "stream": true
       }
     ]
