@@ -1,0 +1,159 @@
+# Bells stage 6 (SPEC §43.16): how they look. A home 320 east of the city square (/awaken admin kin yard); bells in hand
+# and on the hotbar in each metal, a gate's bell dulled in hand, the Tenor's card (its queue drained first), the frame and
+# the belfry's beams with mixed metals, the Great Bell in the tower, then the studio (/awaken admin bells studio: every
+# metal at every size on Bell Beams, a Great Bell on its beam, three found bells: clean, dulled, hanging) by day and night.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/bells-look-6.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_bells_look_6 creative 2112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the readings need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 3500
+cmd clear @s
+
+# ---- 1. a home near the city, three bells on its frame ----
+cmd awaken city view square
+wait 300
+cmd time set 6000
+cmd spreadplayers ~320 ~40 0 20 false @s
+wait 300
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin home burrowbun
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+cmd awaken admin bells tower 3
+wait 60
+shot b6_01_frame
+
+# ---- 2. bells in hand and on the hotbar: each metal, each size, a gate's bell dulled ----
+cmd item replace entity @s hotbar.1 with awaken:bell[awaken:bell=62]
+cmd item replace entity @s hotbar.2 with awaken:bell[awaken:bell=33]
+cmd item replace entity @s hotbar.3 with awaken:bell[awaken:bell=64]
+cmd item replace entity @s hotbar.4 with awaken:bell[awaken:bell=90]
+cmd item replace entity @s hotbar.5 with awaken:bell[awaken:bell=92]
+cmd item replace entity @s hotbar.6 with awaken:bell[awaken:bell=40]
+cmd item replace entity @s hotbar.7 with awaken:bell[awaken:bell=17,minecraft:custom_model_data={flags:[true]}]
+cmd item replace entity @s hotbar.8 with awaken:bell[awaken:bell=28]
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~-3.5 0 -10
+hud on
+cmd item replace entity @s hotbar.0 with awaken:bell[awaken:bell=12]
+wait 40
+shotnow b6_02_hand_bronze_e
+cmd item replace entity @s hotbar.0 with awaken:bell[awaken:bell=33]
+wait 20
+shotnow b6_03_hand_silver_s
+cmd item replace entity @s hotbar.0 with awaken:bell[awaken:bell=90]
+wait 20
+shotnow b6_04_hand_glass_a
+cmd item replace entity @s hotbar.0 with awaken:bell[awaken:bell=28]
+wait 20
+shotnow b6_05_hand_iron_a
+cmd item replace entity @s hotbar.0 with awaken:bell[awaken:bell=17,minecraft:custom_model_data={flags:[true]}]
+wait 20
+shotnow b6_06_hand_dulled
+cmd item replace entity @s hotbar.0 with awaken:bell[awaken:bell=40]
+wait 20
+shotnow b6_07_hand_great
+hud off
+cmd clear @s
+
+# ---- 3. the Tenor's card, once the yard's cards have all gone by ----
+wait 1000
+hud on
+cmd awaken admin bells give tenor
+wait 30
+shotnow b6_08_tenor_card
+wait 260
+hud off
+
+# ---- 4. the belfry's beams with mixed metals, and the Great Bell in the tower ----
+cmd awaken admin bells give ghost
+cmd awaken admin bells give star
+cmd awaken admin bells give deepglass
+cmd awaken admin bells give throne
+cmd awaken admin bells give lucid
+cmd awaken admin bells give sung_iron
+cmd awaken admin bells give island
+cmd awaken admin bells give boulder
+cmd awaken admin bells give hill
+cmd awaken admin bells give veil
+cmd awaken admin bells give storm
+wait 20
+cmd awaken admin bells plans
+wait 80
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8.5 ~7.6 ~6 0 -3
+wait 60
+shot b6_09_belfry_beams
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8.5 ~9.2 ~8.2 0 30
+wait 40
+shot b6_10_beam_bells_close
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-8.5 ~10.5 ~7 0 -12
+wait 40
+shot b6_11_tower_great_bell
+
+# ---- 5. the studio: every metal at every size, a Great Bell, three on the ground ----
+cmd gamemode creative
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-10 ~ ~-44 ~10 ~10 ~-22 minecraft:air
+cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-10 ~-1 ~-44 ~10 ~-1 ~-22 minecraft:grass_block
+cmd execute at @e[type=marker,tag=yard,limit=1] run summon minecraft:marker ~0.5 ~ ~-29.5 {Tags:["studio"]}
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~ ~ ~ 180 0
+wait 40
+cmd awaken admin bells studio
+wait 60
+cmd gamemode spectator
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~1 ~2.2 ~-0.5 180 0
+wait 60
+shot b6_12_studio_all
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~-1.5 ~2.3 ~-3.3 180 0
+wait 40
+shot b6_13_studio_left
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~2 ~2.3 ~-3.3 180 0
+wait 40
+shot b6_14_studio_right
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~5.5 ~3.4 ~-2.8 180 12
+wait 40
+shot b6_15_studio_great
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~0 ~0.6 ~0.8 180 32
+wait 40
+shot b6_16_studio_ground
+cmd time set 18000
+wait 60
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~0.5 ~2.3 ~-2.5 180 0
+wait 40
+shot b6_17_studio_night
+cmd execute at @e[type=marker,tag=studio,limit=1] run tp @s ~0 ~0.6 ~0.8 180 32
+wait 40
+shot b6_18_studio_ground_night
+quit
