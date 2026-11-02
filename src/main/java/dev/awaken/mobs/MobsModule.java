@@ -29,6 +29,7 @@ public final class MobsModule {
         MobParticles.init(modBus);
         MobLoot.init(modBus);
         MobsEvents.init(modBus);
+        dev.awaken.mobs.net.MobsNet.init(modBus);
         MobHooks.install(new MobsSpawner());
         // what Arms reads (SPEC §24): the blow a creature is telling, how its stance breaks, what its body is made of
         // blows that land after their ability ran: a bolt as the class it was fired under, our fangs as the HEAVY they are

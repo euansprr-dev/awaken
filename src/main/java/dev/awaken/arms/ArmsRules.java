@@ -410,4 +410,46 @@ public final class ArmsRules {
     public static boolean inArc(float degreesOff, float arc) {
         return Math.abs(Mth.wrapDegrees(degreesOff)) <= arc / 2;
     }
+
+    // ---- the sweep (SPEC §46.1 "Hits land now") ----------------------------------------------------------------------
+
+    /**
+     * The client's sweep stays this far inside the server's (blocks of reach, degrees of arc): a creature the client
+     * strikes is one the server strikes too, though it moved for up to a tick and a ping since (the misses counted:
+     * under 1 in 50 in arms_hit_now). A creature on the edge waits for the server's word, as every hit did before.
+     */
+    public static final float PREDICT_REACH = 0.25F, PREDICT_ARC = 12F;
+
+    /**
+     * Whether one active tick of a move strikes a body with this box: the one rule of the server's sweep and the
+     * client's prediction. {@code eye}: the striker's eye; {@code feetY}: its feet; {@code yaw}: the arc's middle;
+     * {@code reach}: the move's reach now (the meant creature's own, step in and all, when {@code meant});
+     * {@code aimed}: the press meant it (the arc doesn't matter); {@code meant}: aimed and not a person (nor does the
+     * band of height).
+     */
+    public static boolean sweeps(net.minecraft.world.phys.Vec3 eye, double feetY, net.minecraft.world.phys.AABB box, float yaw, float arc,
+                                 double reach, boolean aimed, boolean meant) {
+        if (dev.awaken.core.api.Aim.gap(eye, box) > reach) return false;
+        double cx = (box.minX + box.maxX) * 0.5, cz = (box.minZ + box.maxZ) * 0.5;
+        float toward = (float) (Mth.atan2(cz - eye.z, cx - eye.x) * Mth.RAD_TO_DEG) - 90F;
+        if (!aimed && !inArc(toward - yaw, arc)) return false;
+        return meant || !(box.maxY < feetY - 1.0 || box.minY > eye.y + 1.5);
+    }
+
+    /**
+     * The furthest a press's creature may be and still be the one it meant (SPEC §40): the style's longest reach, the
+     * blade's growth over a full chain, and the step in. The server checks a press's creature with it; the client
+     * names the same creature with it before it predicts.
+     */
+    public static double pressReach(Archetypes.Loaded style) {
+        float most = 0;
+        for (Archetype.MoveDef d : style.moves().values()) most = Math.max(most, d.art().isPresent() ? Math.max(d.reach(), d.art().get().range()) : d.reach());
+        return most + 0.3 + style.def().traits().reachPerStep() * 5 + dev.awaken.core.api.Aim.stepIn(style.id());
+    }
+
+    /** The same rule as the client asks it: {@link #PREDICT_REACH} and {@link #PREDICT_ARC} inside the server's. */
+    public static boolean predicts(net.minecraft.world.phys.Vec3 eye, double feetY, net.minecraft.world.phys.AABB box, float yaw, float arc,
+                                   double reach, boolean aimed, boolean meant) {
+        return sweeps(eye, feetY, box, yaw, Math.max(0F, arc - PREDICT_ARC), reach - PREDICT_REACH, aimed, meant);
+    }
 }

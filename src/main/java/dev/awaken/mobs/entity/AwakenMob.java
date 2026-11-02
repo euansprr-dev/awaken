@@ -460,7 +460,10 @@ public class AwakenMob extends Monster {
             else if (++quietTicks > 60) { setTarget(null); quietTicks = 0; }
         }
         if (abilities == null) abilities = new AbilityRunner(this);
+        if (getTarget() instanceof Player) FightWatch.fighting(level);
+        long t0 = System.nanoTime();
         abilities.tick(level);
+        FightWatch.abilities(System.nanoTime() - t0);
     }
 
     private void updateMimic(ServerLevel level) {

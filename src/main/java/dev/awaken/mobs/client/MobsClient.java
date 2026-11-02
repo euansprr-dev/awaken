@@ -23,6 +23,10 @@ public final class MobsClient {
         modBus.addListener(RitualRenderers::renderers);
         modBus.addListener(SeepParticles::register);
         modBus.addListener(RegisterRenderStateModifiersEvent.class, MobsClient::looks);
+        modBus.addListener(net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent.class, e ->
+                e.register(dev.awaken.mobs.net.MobsNet.Pace.TYPE, (msg, ctx) -> dev.awaken.mobs.client.kit.ServerPace.onPace(msg.gameTime())));
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class,
+                e -> dev.awaken.mobs.client.kit.ServerPace.reset());
     }
 
     /**

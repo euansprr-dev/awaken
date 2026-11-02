@@ -272,7 +272,12 @@ public class AwakenBoss extends AwakenMob {
         abilityRunner().scripted(f != null);
         super.customServerAiStep(level);
         if (f != null) {
-            if (isAlive()) f.tick(level);
+            if (isAlive()) {
+                long t0 = System.nanoTime();
+                f.tick(level);
+                FightWatch.kit(System.nanoTime() - t0);
+                if (getTarget() instanceof Player || f.busy()) dev.awaken.mobs.net.MobsNet.fighting(this);
+            }
             if (!f.busy()) checkPhase(level);
         } else if (abilities != null && abilities.active() == null) checkPhase(level);
         if (tickCount % 20 == 0) arena(level);

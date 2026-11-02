@@ -43,6 +43,7 @@ final class ArmsTests {
         AwakenTests.register("arms_timeline", 20, ArmsTests::timeline);
         AwakenTests.register("arms_defence_rules", 20, ArmsTests::defenceRules);
         AwakenTests.register("arms_strike_arc", 60, ArmsTests::strikeArc);
+        HitNowTests.register(); // SPEC §46.1: the client's sweep and the server's
         AwakenTests.register("arms_damage_stack", 60, ArmsTests::damageStack);
         AwakenTests.register("arms_deflect", 60, ArmsTests::deflect);
         AwakenTests.register("arms_deflect_latency", 80, ArmsTests::deflectLatency);
