@@ -1,5 +1,6 @@
 package dev.awaken.hearth.trial;
 
+import dev.awaken.core.api.Notices;
 import dev.awaken.core.api.Strikes;
 import dev.awaken.progression.Rank;
 import dev.awaken.signal.Signal;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.GameMasterBlock;
+import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.Portal;
 import net.minecraft.world.level.block.RespawnAnchorBlock;
@@ -180,7 +182,10 @@ final class ExaminerWarden extends Warden {
             for (int dz = -ROOM_R; dz <= ROOM_R; dz++) {
                 for (int dx = -ROOM_R; dx <= ROOM_R; dx++) {
                     at.set(run.centre.getX() + dx, run.centre.getY() + 1 + dy, run.centre.getZ() + dz);
-                    run.level.setBlock(at, room.at(dx, dy, dz), QUIET);
+                    BlockState s = room.at(dx, dy, dz);
+                    // the room's air keeps the hall's unseen light, so it stays lit when its lamps turn to glass
+                    if (s.isAir() && Reflections.block(dx, 1 + dy, dz) instanceof BlockState h && h.is(Blocks.LIGHT)) s = h;
+                    run.level.setBlock(at, s, QUIET);
                 }
             }
         }
@@ -218,7 +223,10 @@ final class ExaminerWarden extends Warden {
         run.level.playSound(null, BlockPos.containing(at), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 0.8F, 0.6F);
     }
 
-    /** The room turning to glass, a ring at a time out from whoever touched the bell: every block the glass of its colour. */
+    /**
+     * The room turning to glass, a ring at a time out from whoever touched the bell: every block the glass of its colour;
+     * a lamp leaves its light behind (an unseen light block), so the glass room doesn't go dark.
+     */
     private static void glass(Provings.Run run, Room room, long now) {
         if (room.glassAt < 0 || now < room.glassAt || room.glassDone >= 0 || (now - room.glassAt) % GLASS_RING != 0) return;
         int ring = room.glassRing++;
@@ -233,8 +241,10 @@ final class ExaminerWarden extends Warden {
                     BlockState was = room.at(dx, dy, dz);
                     if (was.isAir()) continue;
                     at.set(run.centre.getX() + dx, run.centre.getY() + 1 + dy, run.centre.getZ() + dz);
-                    run.level.setBlock(at, was.isCollisionShapeFullBlock(run.level, at) ? glassOf(was.getMapColor(run.level, at))
-                            : Blocks.AIR.defaultBlockState(), QUIET);
+                    BlockState now2 = was.isCollisionShapeFullBlock(run.level, at) ? glassOf(was.getMapColor(run.level, at))
+                            : was.getLightEmission() > 0 ? Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, was.getLightEmission())
+                            : Blocks.AIR.defaultBlockState();
+                    run.level.setBlock(at, now2, QUIET);
                 }
             }
         }
@@ -371,7 +381,8 @@ final class ExaminerWarden extends Warden {
             Component said = Component.literal(read(Strikes.habit(warden)));
             for (UUID u : run.members) {
                 ServerPlayer m = run.level.getServer().getPlayerList().getPlayer(u);
-                if (m != null && m.level() == run.level) Signal.toast(m, said);
+                // CRITICAL: the director holds a paced line through a fight, and this one is for the fight
+                if (m != null && m.level() == run.level) Signal.toast(m, said, Notices.Tier.CRITICAL, "proving_read");
             }
         }
     }

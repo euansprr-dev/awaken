@@ -2,7 +2,7 @@
 # (/awaken admin trial C). A small study is built round you first (planks, bookshelves, a window, lanterns, a chest);
 # then a burst of quick shots every 12 ticks catches the wake (the same study, now laid in the hall), the room turning
 # to glass a ring at a time, and the Examiner stepping out of it as the room breaks (the burst covers the hall's
-# readying, whose length varies). Then, as a spectator (never its target): the Examiner facing you, the hall from above,
+# readying, whose length varies). Then the Examiner held still facing you, and as a spectator: the hall from above,
 # the door and the stair out, the west mirrors, the mirrors waking at two thirds (/awaken admin trial half) and what it
 # read, the ring of mirrors rising at a third (/awaken admin trial third), and the win.
 # Run on CI: tools/tour-ci.sh tools/autopilot/fights-reflections.txt
@@ -93,8 +93,11 @@ wait 12
 shotnow reflections_b24
 wait 40
 
-# --- it faces you, 9 blocks north of the middle (you stand at the middle, 0, 0, 0) ---
+# --- it faces you (held still for the shots: in creative it has no one to fight and wanders off) ---
 look 180 -8
+cmd data merge entity @e[type=awaken:proving_examiner,limit=1] {NoAI:1b}
+cmd tp @e[type=awaken:proving_examiner,limit=1] ^ ^ ^8 facing entity @p
+wait 20
 shot reflections_01_examiner
 
 # --- the hall from above the south (0, 20, 22) ---

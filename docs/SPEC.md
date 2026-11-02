@@ -17043,12 +17043,15 @@ comes, how its hall turns, its gift and the way out), the Ringer's (`RingerWarde
   walked through. While the bell rings the hall is readied; then the room is laid over the hall's middle (no block
   updates), and everyone wakes standing where they stood in it, looking the same way (whoever stood outside it, where
   whoever touched the bell did): nothing seems to have happened. 2.5 s on, the room turns to glass a ring every 2 ticks
-  out from them, every full block the stained glass nearest its own colour (the rest goes), and through it the hall shows.
+  out from them, every full block the stained glass nearest its own colour (the rest goes, a lamp leaving its light behind as an unseen
+  light block; the room's air was laid keeping the hall's unseen light, so the glass room never goes dark), and through
+  it the hall shows.
   1.5 s after the last ring the Examiner steps out of the glass 9 blocks in front of whoever touched the bell, facing them,
   and the room breaks into the hall (glass bursting, whoever the hall's blocks came back round lifted out, whoever stood
   high floating down); its arena is the whole hall, +50% health a member past the first. At two thirds of its health the
   mirrors wake a bay a tick round from the north (the glass goes white, lit from behind) and the Signal says what it read
-  3 s later. At a third the hall closes in: a ring of mirrors (radius 26, 9 high, a door south you fit through and it
+  3 s later (the read, the first fall's line and the fall hint go out CRITICAL, as in a gate: the director holds a
+  paced line through a fight, and these are for the fight). At a third the hall closes in: a ring of mirrors (radius 26, 9 high, a door south you fit through and it
   doesn't) rises a row every 3 ticks; whoever is outside it is brought in first, and it keeps inside (home 24). A fall
   never kills: you wake inside the door ("You wake inside the door. The stair behind you climbs out."); from the third, the
   Signal says what keeps catching you (§46.4). When everyone has fallen it goes, the mirrors sleep, the ring sinks, and 3 s

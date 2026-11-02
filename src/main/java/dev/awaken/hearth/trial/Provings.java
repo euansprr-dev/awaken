@@ -4,6 +4,7 @@ import dev.awaken.Awaken;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.PartyHooks;
+import dev.awaken.core.api.Notices;
 import dev.awaken.core.api.Strikes;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
@@ -329,7 +330,8 @@ public final class Provings {
         Strikes.Blow blow = source.getEntity() instanceof LivingEntity by && by.getUUID().equals(run.boss) ? Strikes.lastBlow(by) : null;
         run.warden.wake(sp, run, false);
         DirectorLog.log(sp, "trial", "proving fall " + n + (blow != null ? " to " + blow.title() + " (" + blow.kind() + ")" : ""));
-        if (n == 1) Signal.toast(sp, Component.literal(run.warden.firstFall()));
+        // CRITICAL, as the hint: the director holds paced lines through a fight, and these are for the fight
+        if (n == 1) Signal.toast(sp, Component.literal(run.warden.firstFall()), Notices.Tier.CRITICAL, "proving_fall");
         if (n >= HINT_FROM && run.stage == Stage.FIGHT) Signal.send(sp, hint(run.warden.name(), blow));
         run.down.add(sp.getUUID());
         if (run.stage == Stage.FIGHT && run.down.containsAll(run.members)) reset(run);
@@ -360,7 +362,7 @@ public final class Provings {
                     + " dodge, red you dash through.";
         };
         return SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("What keeps catching you"))
-                .body(Component.literal(body)).priority(6).ttl(20 * 12).build();
+                .body(Component.literal(body)).priority(6).ttl(20 * 12).tier(Notices.Tier.CRITICAL).build();
     }
 
     // ---- winning ----------------------------------------------------------------------------------------------------
