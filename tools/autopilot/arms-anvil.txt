@@ -93,9 +93,9 @@ wait 7
 shotnow anvil_hilt_grip
 wait 20
 shotnow anvil_card
-wait 37
+wait 43
 shotnow anvil_draw
-wait 27
+wait 21
 shot anvil_drawn
 screen close
 wait 20

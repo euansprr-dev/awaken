@@ -503,18 +503,24 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         g.fill(cx, cy, cx + cw, cy + ch, alpha << 24 | 0x0F1724);
         g.outline(cx, cy, cw, ch, (int) (k * 255) << 24 | q.colour & 0xFFFFFF);
         if (k < 0.3F) return;
-        ItemStack it = shown.isEmpty() ? new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id(WarAnvil.WEAPON))) : shown;
+        ItemStack it = cardItem();
         g.item(it, cx + 10, cy + 10);
-        g.text(font, it.getHoverName(), cx + 32, cy + 10, TITLE, false);
+        var name = font.split(it.getHoverName(), cw - 42);
+        int ny = cy + 10;
+        for (var line : name) {
+            g.text(font, line, cx + 32, ny, TITLE, false);
+            ny += 10;
+        }
+        int dy = 10 * (name.size() - 1); // a long name takes a second line, the rest moving down
         var pose = g.pose();
         pose.pushMatrix();
-        pose.translate(cx + 32, cy + 22);
+        pose.translate(cx + 32, cy + 22 + dy);
         pose.scale(1.5F, 1.5F);
         g.text(font, q.label, 0, 0, q.colour, true);
         pose.popMatrix();
         var player = Minecraft.getInstance().player;
-        g.text(font, "Forged by " + (player == null ? "you" : player.getGameProfile().name()), cx + 10, cy + 42, DIM, false);
-        int ly = cy + 56;
+        g.text(font, "Forged by " + (player == null ? "you" : player.getGameProfile().name()), cx + 10, cy + 42 + dy, DIM, false);
+        int ly = cy + 56 + dy;
         for (var line : about) {
             g.text(font, line, cx + 10, ly, LABEL, false);
             ly += 10;
@@ -535,7 +541,13 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     }
 
     private int cardH(boolean drawn) {
-        return 72 + 10 * font.split(Component.literal(about(done)), cardW() - 20).size() + (drawn ? 26 : 0);
+        int w = cardW();
+        return 62 + 10 * font.split(cardItem().getHoverName(), w - 42).size() + 10 * font.split(Component.literal(about(done)), w - 20).size()
+                + (drawn ? 26 : 0);
+    }
+
+    private ItemStack cardItem() {
+        return shown.isEmpty() ? new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id(WarAnvil.WEAPON))) : shown;
     }
 
     private int cardY(int ch) {

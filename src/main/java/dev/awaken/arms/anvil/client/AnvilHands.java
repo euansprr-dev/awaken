@@ -12,8 +12,9 @@ import org.joml.Vector3fc;
 
 /**
  * Your hands at the War Anvil (SPEC §46.3; a SPEC §24 world source, {@code arms_anvil}, priority 200): the main hand on
- * the hammer's grip wherever the swing has it, the off hand on the tongs' handles while they're within reach, both on
- * the hilt as you draw the weapon out of the stone. Where the scene puts them ({@link AnvilScene}).
+ * the hammer's grip wherever the swing has it, the off hand on the tongs' handles while they're within reach (the main
+ * hand with it while the hammer is down: in the fire and the quench), both on the hilt as you draw the weapon out of the
+ * stone. Where the scene puts them ({@link AnvilScene}).
  */
 final class AnvilHands {
     private AnvilHands() {}

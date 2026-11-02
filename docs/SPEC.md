@@ -16675,8 +16675,10 @@ the Forge's mouth for the heat, the anvil's face for the draw out and the hilt, 
 for the draw, gliding 14 ticks between (`ViewportEvent.ComputeCameraAngles`), the field of view 0.85 of yours. The HUD
 steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,
 `arms_anvil`, priority 200): the main hand on the hammer, the off hand on the tongs; the hammer winds up before each
-beat and comes down in a tick on the click; the tongs hold the work wherever it is (in the Forge only when the Forge's
-mouth is near enough to reach). The hammer and tongs are our own voxel meshes (`assets/awaken/arms/anvil/*.mesh`,
+beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, your arm clear of the hilt); the
+tongs hold the work wherever it is (in the Forge only when the Forge's mouth is near enough to reach). While the hammer
+is down (the fire, the carry and the quench) the main hand holds the tongs too: the hand pass puts a held item away
+only behind a world arm (SPEC §24), so a free hand would bring it back into view. The hammer and tongs are our own voxel meshes (`assets/awaken/arms/anvil/*.mesh`,
 `tools/art/specs/war_anvil.py`) drawn in the world through the weapon shader; the peg holds them when no one works.
 `AnvilSongScreen` (doesn't pause): the mark on the metal with a ring closing on the beat, a thin beat lane, the strikes
 counted, plain prompts for each act, the quench's notch, the draw's hold and the result card. Autoplay for tours:
@@ -16696,7 +16698,8 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
 - With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.
 - The glow follows the texture's light and dark (bright metal runs hotter, dark scale cooler: the heat times 0.7 + 0.6
   of the texel's luminance) and the faces turned from the light glow less, so the work reads as a shaped blade.
-- The result card stands to the left of the weapon in the stone, so the weapon stays in view while you draw it.
+- The result card stands to the left of the weapon in the stone, so the weapon stays in view while you draw it; a name
+  too long for its width takes a second line.
 
 **46.4 The Weapons tab (stage 1; Euan 2026-11-02: "Make sure this is also part of the quests/things to build so you
 actually know this is possilbe in the K menu").** `WeaponGoals` gives the Tasks page (§27.13) two steps under Weapons,

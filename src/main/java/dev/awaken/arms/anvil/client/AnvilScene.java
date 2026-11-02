@@ -270,7 +270,7 @@ final class AnvilScene {
                 out.inForge = true;
                 float h = AnvilSong.heat(t);
                 heat(out, h, 1F - (1F - BLADE) * Mth.clamp(h / 0.65F, 0F, 1F), false);
-                tongsAt(out, out.work, ROOT_Y - 0.5F, T.set(mouth.getStepX(), 0.25F, mouth.getStepZ()), mine);
+                tongsAt(out, out.work, ROOT_Y - 0.5F, T.set(mouth.getStepX(), 0.25F, mouth.getStepZ()), mine, true);
                 restHammer(out.hammer);
             }
             case AnvilSong.SHAPE -> {
@@ -290,7 +290,7 @@ final class AnvilScene {
                     out.work.mix(L1, L2, t / GLIDE, 0.35F);
                 }
                 heat(out, Math.max(0.3F, Math.max(0F, w.heat) * (1F - 0.45F * n / AnvilSong.STRIKES)), BLADE - 0.02F, false);
-                tongsAt(out, out.work, ROOT_Y - 0.5F, dir(FRAME, 1F, 0.35F, -0.8F, T), mine);
+                tongsAt(out, out.work, ROOT_Y - 0.5F, dir(FRAME, 1F, 0.35F, -0.8F, T), mine, false);
                 if (mine) swing(out, now, n, false);
                 else restHammer(out.hammer);
             }
@@ -311,7 +311,7 @@ final class AnvilScene {
                     model(FRAME, 14F / 16F, 6.6F / 16F, 9F / 16F, out.steamAt);
                 }
                 heat(out, Math.max(0.3F, Math.max(0F, w.heat) * 0.55F), front, true);
-                tongsAt(out, out.work, ROOT_Y - 0.5F, dir(FRAME, 0F, 0.3F, -1F, T), mine);
+                tongsAt(out, out.work, ROOT_Y - 0.5F, dir(FRAME, 0F, 0.3F, -1F, T), mine, true);
                 restHammer(out.hammer);
             }
             case AnvilSong.HILT -> {
@@ -324,7 +324,7 @@ final class AnvilScene {
                 // what heat it kept, fading
                 float front = w.held >= 0F ? 1F - (1F - BLADE) * AnvilSong.line(w.held) : 1F;
                 heat(out, 0.4F * Math.max(0F, 1F - t / 40F), front, true);
-                tongsAt(out, out.work, 16F, dir(FRAME, 0.3F, 0.35F, -1F, T), mine);
+                tongsAt(out, out.work, 16F, dir(FRAME, 0.3F, 0.35F, -1F, T), mine, false);
                 if (mine) swing(out, now, n, true);
                 else restHammer(out.hammer);
             }
@@ -363,9 +363,10 @@ final class AnvilScene {
 
     /**
      * The tongs' lips closed on the work at design height {@code y} (its middle across, through its thickness), the
-     * handles back along {@code back} (block-relative, roughly toward the smith), held in your off hand when within reach.
+     * handles back along {@code back} (block-relative, roughly toward the smith), held in your off hand when within reach;
+     * {@code both}: the hammer is down, and your main hand holds them too, ahead of the off on the reins.
      */
-    private static void tongsAt(Placed out, Lay work, float y, Vector3f back, boolean mine) {
+    private static void tongsAt(Placed out, Lay work, float y, Vector3f back, boolean mine, boolean both) {
         work.point(BLADE_X, y, 0F, P);
         Y.set(back).normalize().negate(); // handles to jaws
         // the jaws close across the work's thickness: their opening axis as near its through-axis as the line allows
@@ -380,6 +381,11 @@ final class AnvilScene {
         if (mine && G.distance(EYE) < 1.6F) {
             out.offFist.set(G);
             out.offW = 1F;
+            if (both) {
+                // a free main hand would bring back what you held (the hand pass puts it away only behind an arm)
+                out.mainFist.set(Y).mul(3F * TOOL).add(G).add(RIGHT.x * 0.08F, RIGHT.y * 0.08F, RIGHT.z * 0.08F);
+                out.mainW = 1F;
+            }
         }
     }
 
@@ -405,8 +411,10 @@ final class AnvilScene {
         target(out.work, tap, Math.max(0, blowBeat), T);
         target(out.work, tap, next, T2);
         T.lerp(T2, blowBeat < 0 ? 1F : k);
-        // the haft runs back to your hand, level with the metal at the strike
-        Y.set(T).sub(EYE).sub(RIGHT.x * 0.3F, 0F, RIGHT.z * 0.3F);
+        // the haft runs back to your hand, level with the metal at the strike; the hilt is near you, so a tap's comes in
+        // from the side, your arm clear of the work
+        float side = tap ? 0.7F : 0.3F;
+        Y.set(T).sub(EYE).sub(RIGHT.x * side, 0F, RIGHT.z * side);
         Y.y = 0F;
         if (Y.lengthSquared() < 1e-4F) Y.set(1F, 0F, 0F);
         Y.normalize(); // forward (the haft at the strike)
