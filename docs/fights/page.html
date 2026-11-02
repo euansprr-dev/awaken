@@ -1,0 +1,437 @@
+<title>Fights Worth Winning</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column (~68ch) with full-width bands for the carriers grid, the ladder table and the decisions. */
+:root {
+  --bg: #f3f1ec;
+  --panel: #fbfaf7;
+  --ink: #1d2229;
+  --muted: #5d6470;
+  --rule: #d9d4ca;
+  --bronze: #8a5a1c;
+  --bronze-soft: #efe2cc;
+  --light: #9a7a10;      /* white-gold: parry, block or dash */
+  --light-bg: #f6efcf;
+  --heavy: #b25e0c;      /* amber: parry or dash */
+  --heavy-bg: #f8e3cc;
+  --red: #b3261e;        /* red: dash or jump only */
+  --red-bg: #f7dcda;
+  --grab: #6b3fa0;       /* violet: grab, dash only */
+  --grab-bg: #e9def5;
+  --good: #2f6b3a;
+  --good-bg: #dcecdc;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171c; --panel: #1b1f26; --ink: #e8e5de; --muted: #9aa1ac; --rule: #2e343d;
+    --bronze: #d6a35a; --bronze-soft: #3a2d1b;
+    --light: #e8cf6a; --light-bg: #3a3418; --heavy: #f0a058; --heavy-bg: #40291a;
+    --red: #f07a70; --red-bg: #40201e; --grab: #c3a0f0; --grab-bg: #2f2440;
+    --good: #8fd09a; --good-bg: #1d3322;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171c; --panel: #1b1f26; --ink: #e8e5de; --muted: #9aa1ac; --rule: #2e343d;
+  --bronze: #d6a35a; --bronze-soft: #3a2d1b;
+  --light: #e8cf6a; --light-bg: #3a3418; --heavy: #f0a058; --heavy-bg: #40291a;
+  --red: #f07a70; --red-bg: #40201e; --grab: #c3a0f0; --grab-bg: #2f2440;
+  --good: #8fd09a; --good-bg: #1d3322;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.1; margin: 0; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.2rem); font-weight: 700; letter-spacing: 0.01em; text-transform: uppercase; }
+h2 { font-size: 1.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+h3 { font-size: 1.3rem; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bronze); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+section { padding-top: 56px; display: grid; gap: 18px; }
+header { padding-top: 40px; display: grid; gap: 16px; border-bottom: 2px solid var(--ink); padding-bottom: 28px; }
+.status { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--mono); font-size: 0.75rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--rule); background: var(--panel); white-space: nowrap; }
+.chip.rec { background: var(--good-bg); color: var(--good); border-color: transparent; font-weight: 600; }
+blockquote { margin: 0; padding: 14px 18px; border-left: 3px solid var(--bronze); background: var(--panel); font-style: italic; }
+blockquote footer { font-style: normal; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+/* findings */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.fact { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.fact .n { font-family: var(--display); font-size: 2.3rem; font-weight: 700; line-height: 1; color: var(--bronze); font-variant-numeric: tabular-nums; }
+.fact p { font-size: 0.95rem; }
+
+/* class swatches */
+.classes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.cls { border-radius: 6px; padding: 12px 14px; display: grid; gap: 2px; border: 1px solid transparent; }
+.cls b { font-family: var(--display); font-size: 1.25rem; letter-spacing: 0.02em; text-transform: uppercase; }
+.cls.l { background: var(--light-bg); } .cls.l b { color: var(--light); }
+.cls.h { background: var(--heavy-bg); } .cls.h b { color: var(--heavy); }
+.cls.r { background: var(--red-bg); } .cls.r b { color: var(--red); }
+.cls.g { background: var(--grab-bg); } .cls.g b { color: var(--grab); }
+
+/* carriers */
+.carriers { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.car { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.car svg { width: 100%; height: auto; display: block; }
+.car h3 { font-size: 1.35rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.car .was { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+.car p { font-size: 0.92rem; }
+.car .ans { font-size: 0.88rem; border-top: 1px dashed var(--rule); padding-top: 6px; }
+svg .ground { stroke: var(--rule); stroke-width: 2; fill: none; }
+svg .boss { fill: var(--ink); }
+svg .you { fill: var(--muted); }
+svg .lt { fill: var(--light); } svg .lt-s { stroke: var(--light); fill: none; }
+svg .rd { fill: var(--red); } svg .rd-s { stroke: var(--red); fill: none; }
+svg .hv-s { stroke: var(--heavy); fill: none; }
+svg .gb-s { stroke: var(--grab); fill: none; }
+svg .trail { stroke: var(--light); stroke-width: 3; stroke-linecap: round; opacity: 0.45; fill: none; }
+svg .txt { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+svg .txt-ink { fill: var(--ink); font-family: var(--mono); font-size: 11px; }
+svg .bar-today { fill: var(--rule); }
+svg .bar-dash { fill: var(--good-bg); stroke: var(--good); stroke-width: 1; }
+svg .bar-lock { fill: var(--red); }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td b { font-family: var(--display); font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; }
+
+/* loop */
+.loop { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-family: var(--mono); font-size: 0.82rem; }
+.loop span.step { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 5px 9px; }
+.loop span.step.pay { background: var(--good-bg); color: var(--good); border-color: transparent; font-weight: 600; }
+.loop span.arrow { color: var(--muted); }
+
+ul.tight { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+
+/* before / after */
+.ba { display: grid; gap: 14px; }
+.case { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; }
+.case .row { display: grid; grid-template-columns: 74px 1fr; gap: 10px; align-items: baseline; }
+.case .row > span { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.case .row > p { min-width: 0; }
+.case .row.after > span { color: var(--good); }
+
+/* stages */
+ol.stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: st; }
+ol.stages li { counter-increment: st; display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+ol.stages li::before { content: counter(st); font-family: var(--display); font-size: 2rem; font-weight: 700; color: var(--bronze); line-height: 1; }
+ol.stages li > div { display: grid; gap: 4px; min-width: 0; }
+ol.stages .gate { font-size: 0.9rem; color: var(--muted); }
+
+/* decisions */
+.decisions { display: grid; gap: 12px; counter-reset: d; }
+.dec { counter-increment: d; background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--bronze); border-radius: 6px; padding: 14px 16px 14px 14px; display: grid; grid-template-columns: 40px 1fr; gap: 10px; }
+.dec::before { content: counter(d); font-family: var(--display); font-size: 1.9rem; font-weight: 700; color: var(--bronze); line-height: 1; }
+.dec > div { display: grid; gap: 6px; min-width: 0; }
+.dec .alt { font-size: 0.9rem; color: var(--muted); }
+footer.page { padding-top: 48px; font-size: 0.9rem; color: var(--muted); display: grid; gap: 8px; }
+code { font-family: var(--mono); font-size: 0.85em; background: var(--bronze-soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+@media (max-width: 520px) {
+  body { font-size: 16px; }
+  .case .row { grid-template-columns: 1fr; gap: 2px; }
+  .dec { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .car svg .fly { animation: fly 2.4s ease-in-out infinite; }
+  @keyframes fly { 0% { transform: translateX(0); } 70% { transform: translateX(86px); } 100% { transform: translateX(86px); opacity: 0; } }
+}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">AWAKEN · plan for approval · 2 Nov 2026</div>
+  <h1>Fights Worth Winning</h1>
+  <p class="col">Bosses, beasts and the rank Reassessments. Every hit you take should be something you saw coming and could
+  answer; skill should pay out in a break and a finisher; each Reassessment should be one great fight, harder every rank.
+  This is the plan. Nothing is built until you say yes.</p>
+  <div class="status"><span class="chip">41 bosses audited</span><span class="chip">395 ranged and effect attacks measured</span><span class="chip">5 stages, each playable</span><span class="chip rec">8 decisions at the bottom</span></div>
+</header>
+
+<section>
+  <blockquote>"Most projectiles seem like they just spawn on you and you can't do anything about it. Both for beasts and bosses."<footer>You, 2 Nov. The full ask is in <code>docs/fights/PLAN.md</code>.</footer></blockquote>
+</section>
+
+<section>
+  <div class="eyebrow">What's wrong today</div>
+  <h2>It isn't the warning time. It's what you see.</h2>
+  <p class="col">I measured every boss move table and every creature ability against the real dodge (6 ticks, 2.6 blocks), with
+  a quarter-second reaction. Bosses give you a median 1.35 s from the first cue to the hit. The trouble is that for most
+  attacks nothing comes at you, and the aim keeps following you until the last moment.</p>
+  <div class="facts">
+    <div class="fact"><div class="n">34%</div><p>of the bosses' 148 ranged and effect attacks are something you can see travel. The rest go off under you or hit at once.</p></div>
+    <div class="fact"><div class="n">0.25 s</div><p>before the hit is when 22 of 36 aimed boss attacks stop following you. Nothing shows it. A dash when you first see it gets followed.</p></div>
+    <div class="fact"><div class="n">58</div><p>boss attacks have no class tell at all, so you can't tell a parry from a dash. 12 red, unparryable shots look exactly like the parryable ones.</p></div>
+    <div class="fact"><div class="n">95%</div><p>of boss area attacks poison, blind, slow or lift you. 28 of them push or pull you even when your dodge evaded the hit.</p></div>
+    <div class="fact"><div class="n">0–34%</div><p>is how often a good parrier beats an E-rank Lord (combat sim, 200 fights each). Their killers are the unparryable rings and novas.</p></div>
+    <div class="fact"><div class="n">7 of 15</div><p>Lords lose to a player who just stands and trades if we apply the approved lower-damage curve. Lowering damage isn't the fix.</p></div>
+  </div>
+  <p class="col muted">Also: no boss reacts when you parry it, a parried bolt just breaks, finishers are capped at 8–12% of a
+  Lord's health, and the fight scripts (phrases) were never built for any boss. Reassessments are a walled 48-block box.</p>
+</section>
+
+<section>
+  <div class="eyebrow">The fix · part 1</div>
+  <h2>Five carriers: everything that hurts you travels</h2>
+  <p class="col">Every ranged attack, boss or beast, reaches you through one of five carriers. You see it leave the attacker,
+  or you see where it will land before it does. An aimed attack stops following you at least half a second before it lands,
+  with a flash and a sound. After that flash, a dash gets you out of everything except a wave, which you jump or dash through.</p>
+  <div class="carriers">
+    <div class="car">
+      <svg viewBox="0 0 180 70" role="img" aria-label="A glowing shot leaving the boss toward you">
+        <line class="ground" x1="4" y1="62" x2="176" y2="62"/>
+        <rect class="boss" x="10" y="22" width="22" height="40" rx="4"/>
+        <rect class="you" x="150" y="34" width="12" height="28" rx="3"/>
+        <g class="fly"><path class="trail" d="M36 40 L52 40"/><circle class="lt" cx="56" cy="40" r="6"/></g>
+      </svg>
+      <h3>Shot</h3><div class="was">was: bolts, rings of shots</div>
+      <p>A glowing core with a trail, in its class colour, humming as it flies. Leaves the hand on the release frame. No homing.</p>
+      <p class="ans">White-gold: parry it back. Red: dash or take cover.</p>
+    </div>
+    <div class="car">
+      <svg viewBox="0 0 180 70" role="img" aria-label="Things thrown up from the boss, a ring where each will land">
+        <line class="ground" x1="4" y1="62" x2="176" y2="62"/>
+        <rect class="boss" x="10" y="22" width="22" height="40" rx="4"/>
+        <path class="rd-s" stroke-width="1.5" stroke-dasharray="3 3" d="M30 22 Q90 -12 140 50"/>
+        <circle class="rd" cx="88" cy="8" r="5"/>
+        <ellipse class="rd-s" stroke-width="2" cx="140" cy="62" rx="22" ry="5"/>
+        <rect class="you" x="160" y="34" width="12" height="28" rx="3"/>
+      </svg>
+      <h3>Volley</h3><div class="was">was: marks under you</div>
+      <p>Thrown up from the body where you can see it. A ring shows where each will land: where you stood at the throw. It never moves.</p>
+      <p class="ans">Dash out of the ring: rings ≤ 2.2 blocks, 0.7–1.0 s to impact.</p>
+    </div>
+    <div class="car">
+      <svg viewBox="0 0 180 70" role="img" aria-label="A ring rolling outward from the boss along the ground">
+        <line class="ground" x1="4" y1="62" x2="176" y2="62"/>
+        <rect class="boss" x="10" y="22" width="22" height="40" rx="4"/>
+        <path class="hv-s" stroke-width="3" d="M70 62 q6 -14 12 0"/>
+        <path class="hv-s" stroke-width="1.5" opacity="0.5" d="M48 62 q5 -9 10 0"/>
+        <rect class="you" x="150" y="34" width="12" height="28" rx="3"/>
+        <text class="txt" x="96" y="40">jump</text>
+      </svg>
+      <h3>Wave</h3><div class="was">was: instant rings, slams, auras, gusts</div>
+      <p>A ring that leaves the boss's feet and rolls outward along the ground, about a block tall.</p>
+      <p class="ans">Jump it, dash through it, or stand in its safe middle. 0.6–0.9 s to reach you at 8 blocks.</p>
+    </div>
+    <div class="car">
+      <svg viewBox="0 0 180 70" role="img" aria-label="A beam that locks with a flash before it fires">
+        <line class="ground" x1="4" y1="62" x2="176" y2="62"/>
+        <rect class="boss" x="10" y="22" width="22" height="40" rx="4"/>
+        <line class="rd-s" stroke-width="1" stroke-dasharray="2 4" x1="32" y1="34" x2="176" y2="46"/>
+        <circle class="rd" cx="32" cy="34" r="4"/>
+        <text class="txt-ink" x="60" y="26">LOCK · 0.5 s</text>
+        <rect class="you" x="150" y="34" width="12" height="28" rx="3"/>
+      </svg>
+      <h3>Line</h3><div class="was">was: beams, cones, fangs, roots</div>
+      <p>A beam aims, then locks with a flash and a sound before it fires. Roots and fangs race from the boss along the ground.</p>
+      <p class="ans">Step off the line after the lock.</p>
+    </div>
+    <div class="car">
+      <svg viewBox="0 0 180 70" role="img" aria-label="The boss leaps; its landing ring shows when it locks">
+        <line class="ground" x1="4" y1="62" x2="176" y2="62"/>
+        <path class="gb-s" stroke-width="1.5" stroke-dasharray="3 3" d="M20 40 Q70 -6 118 40"/>
+        <rect class="boss" x="104" y="10" width="20" height="30" rx="4" opacity="0.35"/>
+        <ellipse class="hv-s" stroke-width="2" cx="114" cy="62" rx="24" ry="5"/>
+        <rect class="you" x="150" y="34" width="12" height="28" rx="3"/>
+      </svg>
+      <h3>Body</h3><div class="was">was: charges, leaps, pulls</div>
+      <p>The boss itself. A leap shows its landing ring when it locks. A pull is a visible draw of wind or water, slower than your dash, and never hurts by itself.</p>
+      <p class="ans">Sidestep, leave the ring, dash against the pull.</p>
+    </div>
+  </div>
+  <p class="col muted">Clouds, fire and auras become fields that a volley or wave leaves behind: a visible edge, no harm for the
+  first half second, never put down on you, small enough to walk out of.</p>
+
+  <div class="scroll">
+    <svg viewBox="0 0 760 210" width="760" role="img" aria-label="One ranged attack, today and after, on a time axis">
+      <text class="txt-ink" x="0" y="16">One aimed attack at 8 blocks, today and after (seconds from the first cue)</text>
+      <line class="axis" x1="90" y1="190" x2="740" y2="190"/>
+      <g class="txt">
+        <text x="87" y="205">0</text><text x="198" y="205">0.25</text><text x="321" y="205">0.5</text>
+        <text x="438" y="205">0.75</text><text x="561" y="205">1.0</text><text x="678" y="205">1.25</text>
+      </g>
+      <text class="txt-ink" x="0" y="62">Today</text>
+      <rect class="bar-today" x="90" y="46" width="528" height="22" rx="3"/>
+      <text class="txt" x="98" y="61">coloured dust · the aim follows you</text>
+      <rect class="bar-lock" x="618" y="42" width="4" height="30"/>
+      <text class="txt" x="470" y="88">locks 0.25 s before, unseen</text>
+      <circle class="rd" cx="738" cy="57" r="7"/>
+      <text class="txt" x="560" y="34">hit: it appears on you</text>
+      <text class="txt-ink" x="0" y="140">After</text>
+      <rect class="bar-today" x="90" y="124" width="408" height="22" rx="3"/>
+      <text class="txt" x="98" y="139">class tell · the aim follows</text>
+      <rect class="bar-lock" x="498" y="120" width="5" height="30"/>
+      <text class="txt-ink" x="430" y="114">LOCK (flash + sound)</text>
+      <rect class="bar-dash" x="505" y="124" width="224" height="22" rx="3"/>
+      <text class="txt" x="512" y="139">it travels · dash any time</text>
+      <circle class="lt" cx="738" cy="135" r="7"/>
+      <text class="txt" x="600" y="170">lands where you were</text>
+    </svg>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">The fix · part 2</div>
+  <h2>Colour is the class, every time</h2>
+  <p class="col">The same four colours you already see on melee tells go on everything: the boss's flare, the shot's core, the
+  ring's edge, the wave's crest. The theme's colour stays on the body and the smoke. Every move that hurts gets a class, and
+  each carrier plays its own sound from where it is, so you can hear it coming.</p>
+  <div class="classes">
+    <div class="cls l"><b>White-gold</b><span>Parry, block or dash. A parried shot flies back.</span></div>
+    <div class="cls h"><b>Amber</b><span>Parry or dash. It breaks a block.</span></div>
+    <div class="cls r"><b>Red</b><span>Dash or jump only. Can't be parried.</span></div>
+    <div class="cls g"><b>Violet</b><span>A grab. Dash only.</span></div>
+  </div>
+  <ul class="tight col">
+    <li>Not everything parries: at least 40% of each boss's blows white-gold or amber, at least 20% red, the rest waves and fields you move out of.</li>
+    <li>Effects only from a hit that landed. A dodge or a parry stops all of it: poison, blindness, the pull, the lift.</li>
+    <li>One signature effect per boss at most (the Mother's poison, the Abbot's chill), on its signature moves only.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="eyebrow">The fix · part 3</div>
+  <h2>A duel with a rhythm and a payoff</h2>
+  <div class="loop" aria-label="The fight loop">
+    <span class="step">phrase of 2–5 blows</span><span class="arrow">→</span>
+    <span class="step">you parry, dodge, punish</span><span class="arrow">→</span>
+    <span class="step">opening 0.8–1.5 s</span><span class="arrow">→</span>
+    <span class="step">posture fills</span><span class="arrow">→</span>
+    <span class="step pay">it breaks and falls</span><span class="arrow">→</span>
+    <span class="step pay">your finisher</span>
+  </div>
+  <ul class="tight col">
+    <li><b>Phrases, not single blows.</b> Bosses fight in strings of two to five blows (single blows are 52–100% of what they do today), ranged when you're far, close when you're close. Two deflects in a row and it answers with a red blow; back off and it closes the gap.</li>
+    <li><b>An opening after every phrase</b>, where it starts nothing. That's your punish.</li>
+    <li><b>Parry pays.</b> The boss's limb recoils with sparks, a clang and a short freeze. Parry the last blow of a phrase and it staggers. A parried white-gold shot flies back into it.</li>
+    <li><b>The break.</b> Parries, perfect dodges and punishes fill its posture strip. Full, it drops to a knee and your finisher lands with its own animation, worth up to 15% of a Lord's health (8–12% today). Two to four breaks a Lord fight.</li>
+    <li><b>Weight.</b> Bosses shrug off light hits mid-swing and flinch from heavy ones, parries and hits in openings. Hits sound like what they hit: bronze, glass, bark.</li>
+    <li><b>No add spam.</b> One summon move at most, two adds alive, never in the first phase.</li>
+    <li><b>Difficulty.</b> Blows keep hurting enough that trading loses. Each Lord's health is tuned with the combat sim to the targets you approved: trading wins 10% at most, a good dodger 60%+, a good parrier 80%+, fights 80–120 s.</li>
+  </ul>
+  <h3>Beasts</h3>
+  <ul class="tight col">
+    <li>Named beasts, hunt quarries and gate monsters attack through the same machinery, so all 247 of their ranged and effect attacks get the carriers, colours and the effect rule in stage 1.</li>
+    <li>Big beasts topple when their posture breaks: down on their side for a few seconds, your opening.</li>
+    <li>Pack hunters and the Gnawed get a short told lunge (a crouch and a growl, parryable), and only two of a pack strike at once.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="eyebrow">Reassessments</div>
+  <h2>The Provings: harder every rank</h2>
+  <p class="col">The six Wardens you approved with the Journey, each in its own hall built for one fight (100–200 blocks across,
+  Lens light, changing with the phases), never announced. Each must test harder than every gate Lord of its rank and than the
+  Warden before. They get harder through longer phrases, more mix-ups, more phases, tougher posture and changing halls, never
+  through cheap hits: red blows stay told at least 0.6 s at every rank.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Rank</th><th>Warden</th><th>Hall</th><th>Phases</th><th>Blows a phrase</th><th>White-gold tell</th><th>Win rate target: dodger / parrier / expert / trading</th><th>Length</th></tr></thead>
+    <tbody>
+      <tr><td class="num">D · 10</td><td><b>The Ringer</b></td><td>The Drowned Belfry</td><td class="num">2</td><td class="num">2–3</td><td class="num">0.8 s</td><td class="num">75 / 80 / 99 / ≤10%</td><td class="num">4–5 min</td></tr>
+      <tr><td class="num">C · 25</td><td><b>The Examiner</b></td><td>The Hall of Reflections</td><td class="num">3</td><td class="num">3–4</td><td class="num">0.7 s</td><td class="num">60 / 65 / 97 / ≤5%</td><td class="num">5–6 min</td></tr>
+      <tr><td class="num">B · 45</td><td><b>The Unmade</b></td><td>The Broken Span</td><td class="num">3</td><td class="num">3–4</td><td class="num">0.65 s</td><td class="num">50 / 55 / 95 / 0</td><td class="num">6 min</td></tr>
+      <tr><td class="num">A · 70</td><td><b>The Sky Warden</b></td><td>A cathedral breaking above the clouds</td><td class="num">3</td><td class="num">4–5</td><td class="num">0.6 s</td><td class="num">40 / 45 / 92 / 0</td><td class="num">6–7 min</td></tr>
+      <tr><td class="num">S · 100</td><td><b>The Keeper's Shadow</b></td><td>The Court's threshold</td><td class="num">4</td><td class="num">4–5</td><td class="num">0.55 s</td><td class="num">30 / 35 / 88 / 0</td><td class="num">7 min</td></tr>
+      <tr><td class="num">Sov · 135</td><td><b>The Last Loop</b></td><td>The Cradle's antechamber</td><td class="num">4</td><td class="num">4–6</td><td class="num">0.5 s</td><td class="num">20 / 25 / 85 / 0</td><td class="num">8 min</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul class="tight col">
+    <li><b>Fair.</b> A way out in every hall. Fall and you wake at its door, free to go again now. After three falls the Signal says plainly what killed you. A party at the level takes it together.</li>
+    <li><b>The reward is a surprise:</b> the rank, the gift the Journey moved into the fight (the Tether, your Path, the Unmade as your first General, Skyborn, the Court's doors, the Seed's door) and the Warden's trophy for your Hall. The Great Bells still come with the rank, as they do now.</li>
+    <li>Each rank's box trial stays until its Warden has passed your look in game.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="eyebrow">Animation</div>
+  <h2>On Fresh Animations' level, measured</h2>
+  <p class="col">Today's meters check kinks and stillness, and all 41 bosses pass. They don't check what makes FA feel alive. Six
+  new meters, and your eye on the three pilot bosses in game as the real bar:</p>
+  <ul class="tight col">
+    <li><b>Feet</b> that plant: a planted foot slides at most 0.03 blocks a tick, in moves and turns.</li>
+    <li><b>Turning</b> with weight: head, then chest, then hips; the feet step on a big turn; no snap.</li>
+    <li><b>Seams</b>: every move starts from what the body was doing and flows back into walking.</li>
+    <li><b>Release</b>: a shot leaves the hand on the frame the hand lets go.</li>
+    <li><b>Reactions</b>: every boss gets parried, staggered, knocked down and getting up; big beasts a topple.</li>
+    <li><b>Follow-through</b>: cloth, chains, tails and hair lag the body and settle.</li>
+  </ul>
+  <p class="col muted">FA is the reference we film beside ours. None of its files come into the repo.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Before and after</div>
+  <h2>Three fights you know</h2>
+  <div class="ba">
+    <div class="case">
+      <h3>The Mother of Spores (E)</h3>
+      <div class="row"><span>Today</span><p>All four of her ranged moves poison. Spore Rain marks the ground under you and strikes with nothing falling. Spore Bloom is an instant ring you can't dash out of from 8 blocks. Her shots look parryable whatever their class.</p></div>
+      <div class="row after"><span>After</span><p>She shakes pods up from her cap, rings show where you stood, they fall 0.8 s later and you dash out. The Bloom rolls out as a wave you jump. Poison only if the Bloom catches you. Parry her white-gold shots back into her.</p></div>
+    </div>
+    <div class="case">
+      <h3>The Drowned Archivist (D)</h3>
+      <div class="row"><span>Today</span><p>Undertow and Ink Cloud have no class tell and land 0.75 s after the first dust. Undertow drags you in from 12 blocks whether you dodge or not. The cloud lands on you, wider than a dash, and pulses for 5 s.</p></div>
+      <div class="row after"><span>After</span><p>Undertow is red: the water runs toward her, slower than your dash, then her wave rolls out. She spits the ink as a globe you watch fly; it bursts into a small pool where it lands. Blindness only if the globe hits you.</p></div>
+    </div>
+    <div class="case">
+      <h3>Rank D</h3>
+      <div class="row"><span>Today</span><p>Survive three waves in a walled 48-block box.</p></div>
+      <div class="row after"><span>After</span><p>The Reading Bell doesn't stop ringing. You're knee-deep in the Drowned Belfry, and something up in the dark is swinging the bells.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Delivery</div>
+  <h2>Five stages, each one playable</h2>
+  <ol class="stages">
+    <li><div><h3>See it coming</h3><p>Carriers, the colour language, the lock, a class on every move, the effect rule and the beasts' told lunge, for every boss and beast at once.</p><p class="gate">Gate: tests green, every attack escapable at the lock in the reach model, a CI tour of each carrier mid-flight. About 1–2 days.</p></div></li>
+    <li><div><h3>The duel, on three pilots</h3><p>The Bell Warden (a figure), the Glass Serpent (a serpent) and the Gearwright Colossus (a giant): phrases, openings, parry recoil, shots flying back, breaks and finishers, hit sounds, the six animation meters.</p><p class="gate">Gate: you play these three in game, then go or no-go for the rest. About 1–2 days.</p></div></li>
+    <li><div><h3>The Ringer</h3><p>The first Proving and the Drowned Belfry, replacing the D box. Early, because every player meets it around hour four.</p><p class="gate">Gate: you play it. About 1–2 days.</p></div></li>
+    <li><div><h3>The other 38 bosses and the fighting beasts</h3><p>To the pilots' bar, in batches by body type, each Lord at its sim target.</p><p class="gate">Gate: a close CI tour per batch. About 3–4 days.</p></div></li>
+    <li><div><h3>The other five Wardens</h3><p>One at a time, each replacing its box trial.</p><p class="gate">Gate: you play each. About 1–2 days each.</p></div></li>
+  </ol>
+  <p class="col muted">I build all of it myself. Each stage merges on its own, so reverting one restores the old behaviour.
+  What I can't check: the feel in your hands, the sounds, and FA side by side in game.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Your call</div>
+  <h2>Eight decisions</h2>
+  <div class="decisions">
+    <div class="dec"><div><h3>Everything that hurts at range travels or is drawn first</h3><p>Five carriers; an aimed attack locks visibly at least half a second before it lands. Marks under you become thrown volleys; instant rings become waves you jump or dash through.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>What a parry beats</h3><p>White-gold: parry, block or dash. Amber: parry or dash. Red: dash or jump only. At least 40% of each boss's blows parryable, at least 20% red. A parried white-gold shot flies back into the boss's posture.</p><p class="alt">The other way: no shot can be parried, only dashed.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>Effects only from a landed hit</h3><p>One signature effect per boss, on its signature moves, never through a dodge or parry.</p><p class="alt">The other way: no effects from bosses at all.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>The payoff</h3><p>Parries, perfect dodges and punishes fill its posture; a break drops the boss; your finisher is worth up to 15% of a Lord's health; every parry makes it recoil.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>Difficulty by skill, not by less damage</h3><p>Keep blows that hurt and tune each Lord's health with the new sim to your approved targets, instead of the never-applied lower-damage curve that lets trading beat 7 of 15 Lords.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>The Provings ladder</h3><p>Six Wardens in their own halls, each harder than its rank's Lords and the one before, by the table above, never announced. Each box trial goes when its Warden passes your look.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>The reward</h3><p>The rank, the Journey's gift and the Warden's trophy, as approved.</p><p class="alt">Or also a fighting technique learnt from each Warden (the Ringer's: a perfect parry that rings a bell and staggers what's near). That's six new player moves to balance, better added once the six Wardens exist.</p><div><span class="chip rec">Recommended: the approved gifts and trophy</span></div></div></div>
+    <div class="dec"><div><h3>The order</h3><p>Stage 1 for every boss and beast at once; then the three pilots, which you play before the other 38; the Ringer right after the pilots.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+  </div>
+</section>
+
+<footer class="page">
+  <p>Evidence: <code>docs/fights/PLAN.md</code> (the full plan), <code>tools/sim/reach_sim.py</code> and its table <code>docs/fights/reach-2026-11-02.md</code>, <code>tools/sim/combat_sim.py --preset fixes</code> and <code>--preset recommended-hp</code> (200 fights a cell), on branch <code>claude/boss-fights-plan-73c5f2</code>.</p>
+  <p>Numbers come from models of the real data, not from play. Your playtest is the real check.</p>
+</footer>
+</div>

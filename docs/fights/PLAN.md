@@ -9,7 +9,7 @@ increasingly more difficult bosses. Also all animations on par with fresh animat
 
 This is a plan. Nothing is built. Evidence: `tools/sim/reach_sim.py` (new, a planning harness), its table in
 `docs/fights/reach-2026-11-02.md`, and `tools/sim/combat_sim.py` (200 seeds a cell). The approval page carries the same
-plan in short.
+plan in short: `docs/fights/page.html`, https://claude.ai/artifact/3YkJKH1GwpQdZx6notb19E
 
 ---------------------------------------------------------------------------------------------------------------------
 
