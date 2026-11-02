@@ -10,8 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * The Bell Book's words, built on the server (SPEC §43.7): the hundred (a bell's name shows once you hold it or have a
- * lead on it; every slot shows its rank), the leads in the System's words with Track, and your tower: how many hang,
+ * The Bell Book's words, built on the server (SPEC §43.7, §43.16): the hundred (a bell's name shows once it's yours or you
+ * have a lead on it; every slot shows its rank; each is in your song, yours to hang, a housemate's in your song, or a lead), the leads in the System's words with Track, and your tower: how many hang,
  * what's next, what your bells do while they hang, and which peals you can ring or are one bell away from.
  */
 final class BellPage {
@@ -26,9 +26,11 @@ final class BellPage {
         List<List<String>> hundred = new ArrayList<>();
         for (BellCatalog.Def d : BellCatalog.ALL) {
             BellBook.Lead l = b.leads.get(d.no());
-            String state = b.held.containsKey(d.no()) ? "held" : hung.contains(d.no()) ? "hung" : l != null ? "lead" : "";
+            // in your song (yours and hanging, or one of the far six you've heard), yours to hang, a housemate's in your song, a lead
+            boolean mine = b.held.containsKey(d.no());
+            String state = mine && hung.contains(d.no()) ? "song" : mine ? "held" : hung.contains(d.no()) ? "hung" : l != null ? "lead" : "";
             String name = state.isEmpty() || (state.equals("lead") && Bells.title(d, l).startsWith("A bell")) ? "" : d.name();
-            String where = b.held.containsKey(d.no()) ? b.held.get(d.no()).where() : "";
+            String where = mine ? b.held.get(d.no()).where() : "";
             hundred.add(List.of(d.number(), name, d.rank().name(), state, where));
         }
 
@@ -52,12 +54,10 @@ final class BellPage {
         }
         boolean frame = home != null && home.frame != null;
         String next = h.isEmpty() ? "Your bells hang in a tower at home. Light an Ember and make one."
-                : !frame ? "Set your bell frame down inside your Hearth and your bells hang there."
-                : n < BellTower.BELFRY ? (BellTower.BELFRY - n) + " more bells and a belfry goes up round the frame."
-                : home.stage < 1 ? "Your belfry is ready to go up, but it needs a clear space five wide and ten high round the frame. Clear it and it goes up at the next song."
-                : n < BellTower.TOWER ? (BellTower.TOWER - n) + " more bells and it becomes a stone tower."
-                : home.stage < 2 ? "Your stone tower is ready to go up, but it needs a clear space five wide and fifteen high round the frame. Clear it and it goes up at the next song."
-                : home != null && home.stage < 3 ? "Your tower can't hold the rest. It needs the Great Belfry: the Heart-clapper and a Sovereign's relic, set into the frame."
+                : !frame ? "Make a Bell Frame from planks and logs and set it down by your fire. Then use your bells on it to hang them."
+                : n == 0 ? "Use a bell on your Bell Frame to hang it. Your song rings from the bells that hang."
+                : n < BellTower.GREAT ? "Hang the rest high, on Bell Beams 8 or more above your fire. Your Thatchbacks can build a Belfry or a Bell Tower from a Work Plan."
+                : home != null && home.stage < 3 ? "Only a Great Belfry can lead the Hundred Peal: the Heart-clapper and a Sovereign's relic, set into the frame."
                 : n < 100 ? (100 - n) + " bells are still missing from your song."
                 : home.pealed < 0 ? "Your song is whole. Ring your bells and all hundred ring together: the Hundred Peal."
                 : "Your song is whole. Your bells have rung the Hundred Peal.";

@@ -127,7 +127,7 @@ public final class Interactions {
         }
         boolean last = w.area() == 0 && w.floorNo() >= g.plan.floors() - 1;
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal("Rest Shrine"))
-                .row("Satchel", Satchel.count(run.satchel) + " slots · " + Satchel.items(run.satchel) + " items")
+                .row("Satchel", Satchel.count(run.satchel) + " stacks · " + Satchel.items(run.satchel) + " items")
                 .row("Satchel XP", Long.toString(Math.round(run.satchelXp)))
                 .row("Floor", w.floorNo() + (w.area() == 0 ? " of " + g.plan.floors() : " (second gate)"))
                 .body(Component.literal(last ? "Below the Seal waits the Lord." : "Carry it out now, or break the Seal and go deeper for more."))
@@ -164,12 +164,13 @@ public final class Interactions {
         int items = 0;
         for (ItemStack s : loot) {
             items += s.getCount();
-            if (g != null) Satchel.add(Runs.run(p).satchel, s);
+            if (g != null) Spoils.toSatchel(p, Runs.run(p), s);
+            // no run (a cache found outside one): it lands beside the cache
             if (!s.isEmpty()) level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, s));
         }
         level.playSound(null, pos, GatesRegistry.SND_CACHE.get(), SoundSource.BLOCKS, 1F, 1F);
         level.sendParticles(ParticleTypes.WAX_ON, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, 16, 0.4, 0.3, 0.4, 0.05);
-        Signal.toast(p, Component.literal("Cache: " + items + " items into your Satchel" + (fortune ? " (Fortune)" : "")));
+        Signal.toast(p, Component.literal("Cache: " + items + " items" + (g != null ? " into your Satchel" : "") + (fortune ? " (Fortune)" : "")));
         Hud.send(p);
     }
 

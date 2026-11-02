@@ -222,7 +222,7 @@ public final class Twists {
             if (ghost != null) {
                 if (!ghost.arrived()) {
                     Signal.toast(p, Component.literal("You beat your echo here."));
-                    for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0)) Runs.satchelOrDrop(p, run, s);
+                    for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0)) Spoils.toSatchel(p, run, s);
                     level.playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 1.4F);
                 } else Signal.toast(p, Component.literal("Your echo got here first."));
             }
@@ -236,7 +236,7 @@ public final class Twists {
         }
         if (g.plan.layout() == dev.awaken.gates.content.Layout.STEALTH_HALLS && f.area == 0 && !g.floor(f.area, f.floor).alarm && !g.plan.friendly()) {
             Signal.toast(p, Component.literal("Unseen. The halls pay those who pass unheard."));
-            for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0)) Runs.satchelOrDrop(p, run, s);
+            for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0)) Spoils.toSatchel(p, run, s);
         }
         String fk = floorKey(g, f.area, f.floor);
         UUID follower = FOLLOWERS.get(fk);
@@ -668,7 +668,7 @@ public final class Twists {
         }
         fs.spiritDone = true;
         Rooms.unsealShrine(level, g, f);
-        for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0.5)) Runs.satchelOrDrop(p, run, s);
+        for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0.5)) Spoils.toSatchel(p, run, s);
         level.sendParticles(ParticleTypes.SOUL, spirit.getX(), spirit.getY() + 0.5, spirit.getZ(), 30, 0.4, 0.8, 0.4, 0.03);
         level.playSound(null, spirit.blockPosition(), SoundEvents.ALLAY_ITEM_GIVEN, SoundSource.NEUTRAL, 1F, 1F);
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The spirit can rest"))

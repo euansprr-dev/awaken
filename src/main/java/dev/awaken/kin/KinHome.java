@@ -245,7 +245,10 @@ public final class KinHome {
         KinBeast b = spawn(level, KinKind.LAMPWING, a.offset(3, 1, 2), EntitySpawnReason.EVENT);
         if (b == null) return;
         b.addTag("awaken_kin_lesson");
-        b.snapTo(a.getX() + 12.5, a.getY() + 4, a.getZ() + 9.5, 0, 0);
+        // it comes out of the old bell it's been sleeping in, if one hangs in a tree near (SPEC §43.16)
+        BlockPos roost = dev.awaken.core.api.BellHooks.roost(level, a);
+        if (roost != null) b.snapTo(roost.getX() + 0.5, roost.getY() - 0.4, roost.getZ() + 0.5, 0, 0);
+        else b.snapTo(a.getX() + 12.5, a.getY() + 4, a.getZ() + 9.5, 0, 0);
         ks.lesson = 1;
         Kinship.save(p, ks);
         KinWatch.say(p, "[Something's been watching your fire from the trees. It's on your Hearth page now.]", 12);

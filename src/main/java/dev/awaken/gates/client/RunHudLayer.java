@@ -55,7 +55,7 @@ public final class RunHudLayer {
         k = 31 * k + h.rank();
         k = 31 * k + h.area();
         k = 31 * k + h.floor();
-        k = 31 * k + h.satchelSlots();
+        k = 31 * k + h.satchelStacks();
         k = 31 * k + h.kills();
         k = 31 * k + h.pressure();
         k = 31 * k + h.flags();
@@ -161,7 +161,7 @@ public final class RunHudLayer {
         String name = themeName(h.theme()).toUpperCase(Locale.ROOT);
         String floor = (h.area() == 1 ? "Deeper · " : "") + "Floor " + h.floor() + "/" + h.floors();
         boolean cleared = (h.flags() & GatePayloads.RunHud.CLEARED_FLOOR) != 0;
-        String satchel = "Satchel " + h.satchelSlots() + "/27 · " + h.satchelXp() + " XP";
+        String satchel = "Satchel " + h.satchelStacks() + " · " + h.satchelXp() + " XP";
         int s = h.floorSeconds();
         String kills = "Kills " + h.kills() + " · " + String.format(Locale.ROOT, "%d:%02d", s / 60, s % 60);
         String pressure = switch (h.pressure()) {

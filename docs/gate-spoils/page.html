@@ -1,0 +1,345 @@
+<title>Gate Spoils Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; the in-game mockups sit in their own scrollable stage, drawn in the Holo look itself.
+   A deliberate single dark look: the page wears the band's glass so the mockups sit at home on it. */
+:root {
+  --bg: #0a0f19;
+  --panel: #111a2a;
+  --line: #22324b;
+  --fg: #d9e4f2;
+  --dim: #8fa3bf;
+  --edge: #7fc3ff;
+  --amber: #ffcf7a;
+  --warn: #ff8a7a;
+  --good: #8ff0c0;
+  --well: #040a16;
+  --display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); letter-spacing: .02em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.08; }
+h2 { font-size: 24px; color: #fff; }
+h3 { font-size: 17px; color: #fff; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--edge); }
+.lede { color: var(--dim); font-size: 17px; }
+section { display: grid; gap: 16px; }
+.quote { border-left: 2px solid var(--edge); padding: 4px 0 4px 14px; color: var(--fg); font-style: italic; max-width: 72ch; }
+.status { display: inline-flex; gap: 8px; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--amber); border: 1px solid #5a4a2a; padding: 4px 10px; border-radius: 3px; width: fit-content; }
+
+/* ---- the in-game stage ---- */
+.stage { overflow-x: auto; border: 1px solid var(--line); background:
+  radial-gradient(ellipse at 30% 0%, #1b3a2a 0%, transparent 55%),
+  linear-gradient(180deg, #2b4a63 0%, #17324a 40%, #10202e 100%); border-radius: 4px; padding: 22px 18px; }
+.scene { --u: 2.6px; display: flex; gap: calc(4 * var(--u)); align-items: flex-start; width: max-content; margin: 0 auto; font-family: var(--mono); }
+.glass { position: relative; background: rgba(15, 23, 36, .80); border: 1px solid rgba(127, 195, 255, .55); box-shadow: 0 0 0 1px rgba(127,195,255,.08) inset, 0 0 18px rgba(127,195,255,.12); }
+.glass::before, .glass::after { content: ""; position: absolute; width: calc(6 * var(--u)); height: calc(6 * var(--u)); border: 1px solid var(--edge); }
+.glass::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.glass::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+.inv { width: calc(176 * var(--u)); height: calc(166 * var(--u)); }
+.abs { position: absolute; }
+.w { position: absolute; width: calc(16 * var(--u)); height: calc(16 * var(--u)); background: rgba(4, 10, 22, .58); outline: 1px solid rgba(127, 195, 255, .22); outline-offset: 0; }
+.w.hot { outline-color: rgba(127, 195, 255, .34); }
+.w.sel { outline-color: rgba(127, 195, 255, .85); box-shadow: 0 0 10px rgba(127,195,255,.35); }
+.i { position: absolute; inset: calc(2.5 * var(--u)); border-radius: 2px; background: var(--c, #9aa); box-shadow: inset 0 calc(-2 * var(--u)) 0 rgba(0,0,0,.28), inset 0 calc(1.5 * var(--u)) 0 rgba(255,255,255,.28); }
+.i.gem { border-radius: 50% 50% 46% 46%; transform: rotate(45deg) scale(.82); }
+.i.bar { inset: calc(5 * var(--u)) calc(2 * var(--u)); }
+.i.stick { inset: calc(2 * var(--u)) calc(6.5 * var(--u)); transform: rotate(40deg); }
+.i.orb { border-radius: 50%; }
+.n { position: absolute; right: calc(.6 * var(--u)); bottom: calc(-.6 * var(--u)); font-size: calc(5 * var(--u)); color: #fff; text-shadow: 1px 1px 0 #3f3f3f; font-weight: 600; line-height: 1; }
+.figure { left: calc(26 * var(--u)); top: calc(8 * var(--u)); width: calc(49 * var(--u)); height: calc(70 * var(--u)); background: rgba(4,10,22,.5); outline: 1px solid rgba(127,195,255,.24); display: grid; place-items: end center; }
+.figure span { width: calc(14 * var(--u)); height: calc(52 * var(--u)); margin-bottom: calc(6 * var(--u)); border-radius: calc(3 * var(--u)) calc(3 * var(--u)) 2px 2px;
+  background: linear-gradient(180deg, #c99a6b 0 22%, #3d6fa8 22% 58%, #38445e 58% 100%); opacity: .9; }
+.lbl { position: absolute; font-size: calc(4.6 * var(--u)); color: var(--edge); letter-spacing: .02em; white-space: nowrap; }
+.hr { position: absolute; left: calc(7 * var(--u)); right: calc(8 * var(--u)); height: 1px; background: rgba(127,195,255,.14); }
+
+.sat { width: calc(124 * var(--u)); height: calc(156 * var(--u)); }
+.sat .t { position: absolute; left: calc(6 * var(--u)); top: calc(6 * var(--u)); font-size: calc(5.2 * var(--u)); color: #fff; font-family: var(--display); letter-spacing: .12em; font-weight: 600; }
+.sat .xp { position: absolute; right: calc(6 * var(--u)); top: calc(6 * var(--u)); font-size: calc(5 * var(--u)); color: var(--amber); }
+.sat .sub { position: absolute; left: calc(6 * var(--u)); top: calc(14 * var(--u)); font-size: calc(4.4 * var(--u)); color: var(--dim); }
+.sat .page { position: absolute; left: calc(6 * var(--u)); right: calc(6 * var(--u)); top: calc(118 * var(--u)); font-size: calc(4.2 * var(--u)); color: var(--dim); display: flex; justify-content: space-between; }
+.sat .death { position: absolute; left: calc(6 * var(--u)); right: calc(6 * var(--u)); top: calc(128 * var(--u)); font-size: calc(4.6 * var(--u)); line-height: 1.35; color: var(--warn); font-family: var(--body); font-weight: 600; }
+.sat .death.story { color: var(--amber); }
+.key { position: absolute; font-size: calc(4.6 * var(--u)); color: var(--edge); border: 1px solid rgba(127,195,255,.6); padding: calc(1.5 * var(--u)) calc(4 * var(--u)); background: rgba(127,195,255,.08); }
+.tip { position: absolute; z-index: 3; background: rgba(16, 0, 16, .94); border: 1px solid #5000a0; padding: calc(2 * var(--u)) calc(3 * var(--u)); font-size: calc(4.6 * var(--u)); color: #fff; white-space: nowrap; line-height: 1.4; }
+.tip b { color: #ffff55; font-weight: 600; }
+.tip em { color: #a8a8a8; font-style: normal; }
+.caption { color: var(--dim); font-size: 14px; max-width: 72ch; }
+.callouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.callout { border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
+.callout b { font-family: var(--display); color: #fff; font-weight: 600; }
+.callout span { color: var(--dim); font-size: 14.5px; }
+
+.hudrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.hudcard { background: var(--panel); border: 1px solid var(--line); padding: 14px; display: grid; gap: 8px; border-radius: 3px; min-width: 0; }
+.hudcard .k { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.mc { font-family: var(--mono); font-size: 13px; background: #0d1522; border: 1px solid #1c2a40; padding: 10px 12px; line-height: 1.6; overflow-x: auto; }
+.mc .am { color: var(--amber); } .mc .wn { color: var(--warn); } .mc .ed { color: var(--edge); } .mc .gd { color: var(--good); } .mc .dm { color: var(--dim); }
+
+/* ---- findings ---- */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 3px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); font-weight: 600; background: #0d1522; }
+td.num { font-family: var(--mono); color: var(--edge); width: 2.5em; }
+td .after { color: var(--good); }
+tr.likely td { background: rgba(255, 207, 122, .06); }
+.tag { display: inline-block; font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; padding: 1px 6px; border-radius: 2px; margin-left: 6px; vertical-align: 1px; }
+.tag.likely { color: #1a1200; background: var(--amber); }
+.tag.test { color: var(--edge); border: 1px solid #2c4d70; }
+
+/* ---- flow ---- */
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; counter-reset: step; }
+.node { background: var(--panel); border: 1px solid var(--line); padding: 12px; border-radius: 3px; display: grid; gap: 4px; position: relative; }
+.node b { font-family: var(--display); color: #fff; font-size: 15px; }
+.node span { color: var(--dim); font-size: 13.5px; }
+.node.safe { border-color: #2e5b4a; }
+.node.safe b { color: var(--good); }
+.node.stake { border-color: #5b2e2e; }
+.node.stake b { color: var(--warn); }
+
+/* ---- decisions ---- */
+.decisions { display: grid; gap: 12px; }
+.dec { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: 16px; }
+.dec .no { font-family: var(--display); font-size: 28px; color: var(--edge); line-height: 1; grid-row: span 3; }
+.dec h3 { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.rec { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #06231a; background: var(--good); padding: 2px 7px; border-radius: 2px; }
+.dec p { color: var(--fg); font-size: 15px; }
+.dec .alt { color: var(--dim); font-size: 14px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 72ch; }
+ul.plain li::marker { color: var(--edge); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.two > div { display: grid; gap: 10px; align-content: start; min-width: 0; }
+code { font-family: var(--mono); font-size: .88em; color: var(--edge); }
+footer { color: var(--dim); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; }
+@media (max-width: 560px) { .scene { --u: 1.9px; } }
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:14px">
+  <div class="eyebrow">Awaken · gates · plan for approval</div>
+  <h1>Nothing the gate gives you is lost, and the Satchel lives in E</h1>
+  <p class="lede">A focused fix: where your loot went, how the best games keep overflow, and a Satchel panel beside your pockets so you can see what you're fighting for.</p>
+  <p class="quote">"inventory got full from the gate so a ton of items just got lost, not sure what the solution to this is at all, but let's find a AAA solution. Also I want to make it so the satchel in a gate is visible when you open the E inventory so I know what I'm fighting for." Euan, 2 Nov</p>
+  <div class="status">Plan only · nothing built until you say yes</div>
+</header>
+
+<section>
+  <h2>Press E inside a gate</h2>
+  <div class="stage" aria-label="Mockup: the holo inventory with the Satchel panel to its right">
+    <div class="scene">
+      <div class="glass inv" id="inv"></div>
+      <div class="glass sat" id="sat">
+        <div class="t">SATCHEL</div>
+        <div class="xp">340 Satchel XP</div>
+        <div class="sub">D-rank Ember Mines · floor 3 of 5</div>
+        <div class="page"><span>32 stacks · page 1 of 2</span><span>scroll for more</span></div>
+        <div class="death">If you die in here, you lose all of this.</div>
+      </div>
+    </div>
+  </div>
+  <p class="caption">Mockup, drawn at the game's own proportions (the inventory is 176 by 166 GUI units; the panel is 124 wide, which fits beside it at the MacBook's automatic GUI scale with room to spare). Item squares stand in for the real item icons. The tooltip shows what hovering does.</p>
+  <div class="callouts">
+    <div class="callout"><b>Look, don't touch</b><span>You can read every stack and its tooltip, but not move it. Taking loot into your pockets would dodge the death stake, since pockets are kept when you die in a gate.</span></div>
+    <div class="callout"><b>What dying costs, said plainly</b><span>Hunter: "If you die in here, you lose all of this." Story: "If you die in here, half of it comes back with you." The first gate and a ready Clone Vat say they'll keep it.</span></div>
+    <div class="callout"><b>Never full</b><span>No 27-slot wall. A second page opens when the first is full. The HUD reads "Satchel 32 stacks · 340 XP".</span></div>
+    <div class="callout"><b>Fits the screen it's on</b><span>Fades in with the inventory. With the recipe book open there's no room beside it, so it folds to a slim tab with the count.</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Press E after you come out with full pockets</h2>
+  <div class="stage" aria-label="Mockup: the inventory with the Held for you panel">
+    <div class="scene">
+      <div class="glass inv" id="inv2"></div>
+      <div class="glass sat" id="held" style="height:calc(118 * var(--u))">
+        <div class="t">HELD FOR YOU</div>
+        <div class="xp" style="color:var(--edge)">6 stacks</div>
+        <div class="sub">These didn't fit in your pockets.</div>
+        <div class="key" style="left:calc(6 * var(--u));top:calc(66 * var(--u))">Take all</div>
+        <div class="death" style="top:calc(82 * var(--u));color:var(--dim);font-weight:500">Click a stack to take it. Nothing here runs out or disappears.</div>
+      </div>
+    </div>
+  </div>
+  <div class="hudrow">
+    <div class="hudcard">
+      <div class="k">The card when you come out, today</div>
+      <div class="mc"><span class="ed">Extracted</span><br>Items &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;63 in 31 stacks<br><span class="wn">Pockets full</span> 6 stacks dropped at your feet<br>Satchel XP &nbsp;<span class="am">+340</span></div>
+      <span class="caption">Then the six stacks despawn five minutes later.</span>
+    </div>
+    <div class="hudcard">
+      <div class="k">After</div>
+      <div class="mc"><span class="ed">Extracted</span><br>Items &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;63 in 31 stacks<br><span class="gd">Held for you</span> 6 stacks didn't fit. Open your inventory (E) to take them.<br>Satchel XP &nbsp;<span class="am">+340</span></div>
+      <span class="caption">And on your next login, if anything is still held, one line reminds you.</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Where the items went</h2>
+  <p>I read every path loot takes through a gate and reproduced the three big ones in GameTests (<code>gates_spoils_repro_*</code>). All three pass on today's build, which means the loss really happens. On the way I found that a test player in creative never sees it: creative pockets simply delete what doesn't fit.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>#</th><th>When</th><th>What happens today</th><th>After this plan</th></tr></thead>
+      <tbody>
+        <tr class="likely"><td class="num">1</td><td>Coming out with full pockets (Rest Shrine, the Lord's exit, a collapsed gate, a relog)<span class="tag likely">most likely yours</span><span class="tag test">reproduced</span></td>
+          <td>What doesn't fit is thrown at your feet at the gate mouth and despawns in 5 minutes. The only warning is one row in a 7-second card, shown while the gate's other cards are up. If the land at the mouth wasn't loaded, the payout lands up to 5 seconds after you arrive. A Lord's hoard goes past the 27-slot limit, so boss clears often bring out 30 or more stacks.</td>
+          <td class="after">Held for you, taken from E, with no limit and no expiry.</td></tr>
+        <tr><td class="num">2</td><td>Walking over loot with a full Satchel<span class="tag test">reproduced</span></td>
+          <td>Refused. It stays on the gate's floor and is erased with the gate. The only cue is a toast, "Your Satchel is full."</td>
+          <td class="after">The Satchel never refuses.</td></tr>
+        <tr><td class="num">3</td><td>A cache, an elite, or a twist's reward (beating your echo, Stealth Halls, the lost spirit, the Hoarder) with a full Satchel<span class="tag test">reproduced</span></td>
+          <td>Spills on the floor, then as row 2. The cache's toast still says "items into your Satchel".</td>
+          <td class="after">Goes in, always.</td></tr>
+        <tr><td class="num">4</td><td>Gifts handed straight to your pockets inside a gate: a world's keepsake and set piece, a Lord's weapon, a pattern's refund, the first bell's handbell and frame, the Heart-clapper</td>
+          <td>With full pockets they drop on the floor, the Satchel picks them up, and they're lost if you die later (or left behind if the Satchel is full). A keepsake comes once ever, so that loss is permanent. Bell items will travel this same path once the bells session lands them.</td>
+          <td class="after">Held for you (safe even if you die). Bells and the band never go into the Satchel.</td></tr>
+        <tr><td class="num">5</td><td>Monster drops that fall into the void, lava, or a corner you never reach (sky islands, chasms)</td>
+          <td>Never picked up; gone with the gate.</td>
+          <td class="after">Into the killer's Satchel the moment it dies; you still see them fly to you.</td></tr>
+        <tr><td class="num">6</td><td>Rare: a claim whose id clashes; gear handed back on respawn with full pockets</td>
+          <td>The first puts loot back into a run that's ending (gone); the second throws gear at your feet.</td>
+          <td class="after">Both go to Held for you.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Kept on purpose: dying (Hunter loses the Satchel, Story keeps half), and walking back out through floor 1's door, which asks you first.</p>
+</section>
+
+<section>
+  <h2>How the best games keep overflow</h2>
+  <div class="two">
+    <div>
+      <ul class="plain">
+        <li><b>Monster Hunter</b>: what your pouch can't hold goes to your item box.</li>
+        <li><b>Elden Ring</b>: anything past your carry limit goes to your storage chest.</li>
+        <li><b>Lost Ark, Genshin Impact</b>: rewards that don't fit arrive by mail.</li>
+        <li><b>Destiny 2</b>: the Postmaster holds overflow, but deletes the oldest once it fills. That deletion is what players hate.</li>
+        <li><b>Solo Leveling</b>, where Awaken comes from: the System's inventory holds everything, and the hunter takes things out when needed.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What that means here</h3>
+      <p>Overflow is kept, it's shown, and it has no hidden limit. "Full" is a moment you see, never a silent loss. The Signal holding what your pockets can't is the same idea as the System's inventory, which is why it sits right in your E screen and not in a chest at home.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>The path loot takes, after</h2>
+  <div class="flow">
+    <div class="node"><b>Monster drops</b><span>pop out, then fly into the killer</span></div>
+    <div class="node"><b>Caches, elites, twists, the hoard</b><span>go straight in</span></div>
+    <div class="node safe"><b>Satchel</b><span>never refuses · shown in E</span></div>
+    <div class="node"><b>Come out</b><span>Shrine, Lord's exit, collapse, relog</span></div>
+    <div class="node safe"><b>Your pockets</b><span>empty slots, then stacks topped up</span></div>
+    <div class="node safe"><b>Held for you</b><span>what didn't fit · E · no limit</span></div>
+  </div>
+  <div class="flow">
+    <div class="node"><b>Gifts in a gate</b><span>keepsakes, a Lord's weapon, bells</span></div>
+    <div class="node safe"><b>Pockets, else Held for you</b><span>never the floor, never the Satchel</span></div>
+    <div class="node stake"><b>Die in a gate</b><span>the Satchel is the stake, as now</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Decisions for you</h2>
+  <div class="decisions">
+    <div class="dec"><div class="no">1</div>
+      <h3>The Satchel never refuses <span class="rec">Recommended</span></h3>
+      <p>No more 27-slot cap. Everything the gate gives you goes in, and the panel shows it a page at a time.</p>
+      <p class="alt">The other way: keep 27 as "the bag is full, go home" pressure with a clear full moment. Then loot you leave behind is the one thing that can still be lost.</p></div>
+    <div class="dec"><div class="no">2</div>
+      <h3>What doesn't fit your pockets is held for you <span class="rec">Recommended</span></h3>
+      <p>Taken from the E screen anywhere outside a gate. No limit, no expiry, and you can't put things in, so it isn't a free chest.</p>
+      <p class="alt">The other way: send it to your Hearth's chests (the original plan's line). That needs a Hearth and a trip home, and mixes it into your chests.</p></div>
+    <div class="dec"><div class="no">3</div>
+      <h3>The Satchel panel is look-only <span class="rec">Recommended</span></h3>
+      <p>You see every stack and tooltip but can't move them, because taking loot into your pockets would dodge the death stake.</p>
+      <p class="alt">The other way: let you take from it, and the stake goes away.</p></div>
+    <div class="dec"><div class="no">4</div>
+      <h3>Monster drops fly into the killer's Satchel <span class="rec">Recommended</span></h3>
+      <p>Each drop pops out of the monster, hangs for about half a second, then streaks into you with Minecraft's own pickup flight. The void and lava can't take it, and you never hunt for drops.</p>
+      <p class="alt">The other way: drops stay on the ground for you to walk over, and what falls out of reach stays lost.</p></div>
+  </div>
+</section>
+
+<section class="two">
+  <div>
+    <h2>How I'll check it</h2>
+    <ul class="plain">
+      <li>One GameTest per rule: the Satchel never refuses; held for you (nothing on the ground, a take works, it survives a save and a death); gifts never fall; drops fly in; bells skip the Satchel.</li>
+      <li>The three repro tests turn round into those rules, and the old "a full Satchel refuses" check is updated.</li>
+      <li>The full suite on CI.</li>
+      <li>One CI tour at your MacBook's pixels and GUI scale: E in a gate (Hunter and Story lines), over 30 stacks, the recipe book open, and outside with stacks held. I look at every shot before handing back.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>What stays as it is</h2>
+    <ul class="plain">
+      <li>The death rule and the retreat rule.</li>
+      <li>Bells code (the bells session's) and boss fights (the boss-fights session's). One listener in the gates module catches gifts for every module, so neither needs a change.</li>
+      <li>The holo inventory itself: the panel draws beside it from the gates module.</li>
+      <li>No new items or blocks. One small item tag.</li>
+    </ul>
+    <p class="caption">About half a day of work at our pace, in one stage. Rollback is one revert: saves only gain the new held list.</p>
+  </div>
+</section>
+
+<footer>Plan file: <code>docs/gate-spoils/PLAN.md</code> on <code>claude/gate-spoils-ef58b5</code>. Repro tests: <code>src/main/java/dev/awaken/gates/run/SpoilsTests.java</code>.</footer>
+</div>
+
+<script>
+(function () {
+  // Panel units to pixels come from the --u custom property on .scene.
+  const C = { essence: '#7fd6ff', ember: '#ff9a4a', bone: '#e8e2cf', heart: '#e0435a', gold: '#f2c84a', emerald: '#3fd17a', pearl: '#2f8f84', apple: '#f7d24a', arrow: '#b9a27a', bread: '#c98f3f', torch: '#ffcf4a', coal: '#3b3f48', core: '#b48cff', iron: '#cfd6de', stone: '#8a8f96', beef: '#a8553a', bottle: '#6fe08a', wood: '#a07a4a', sword: '#9fe6ff', pick: '#c0c8d0', shield: '#7a5a3a' };
+  function well(parent, x, y, cls) {
+    const w = document.createElement('div'); w.className = 'w' + (cls ? ' ' + cls : '');
+    w.style.left = 'calc(' + x + ' * var(--u))'; w.style.top = 'calc(' + y + ' * var(--u))'; parent.appendChild(w); return w;
+  }
+  function item(w, colour, shape, n) {
+    const i = document.createElement('div'); i.className = 'i' + (shape ? ' ' + shape : ''); i.style.setProperty('--c', colour); w.appendChild(i);
+    if (n && n > 1) { const t = document.createElement('div'); t.className = 'n'; t.textContent = n; w.appendChild(t); }
+  }
+  function inventory(el, pack) {
+    const fig = document.createElement('div'); fig.className = 'abs figure'; fig.innerHTML = '<span></span>'; el.appendChild(fig);
+    for (let k = 0; k < 4; k++) { const w = well(el, 8, 8 + k * 18); item(w, C.iron, 'bar'); }
+    well(el, 77, 62);
+    const off = el.lastChild; item(off, C.shield, null);
+    const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = 'Crafting'; lbl.style.left = 'calc(97 * var(--u))'; lbl.style.top = 'calc(6 * var(--u))'; el.appendChild(lbl);
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) well(el, 98 + c * 18, 18 + r * 18);
+    well(el, 154, 28, 'sel');
+    [81, 139].forEach(function (y) { const h = document.createElement('div'); h.className = 'hr'; h.style.top = 'calc(' + y + ' * var(--u))'; el.appendChild(h); });
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 9; c++) {
+      const w = well(el, 8 + c * 18, 84 + r * 18); const s = pack[r * 9 + c]; if (s) item(w, s[0], s[1], s[2]);
+    }
+    const bar = [[C.sword, 'stick'], [C.pick, 'stick'], [C.torch, 'stick', 64], [C.bread, null, 12], [C.wood, null, 48], [C.stone, null, 64], [C.beef, null, 9], [C.bottle, 'orb', 6], [C.stone, null, 64]];
+    for (let c = 0; c < 9; c++) { const w = well(el, 8 + c * 18, 142, c === 0 ? 'sel' : 'hot'); const s = bar[c]; item(w, s[0], s[1], s[2]); }
+  }
+  const busy = []; const fills = [[C.stone, null, 64], [C.wood, null, 64], [C.coal, null, 37], [C.iron, 'bar', 20], [C.stone, null, 64], [C.bone, 'stick', 14], [C.arrow, 'stick', 40], [C.wood, null, 64], [C.stone, null, 64]];
+  for (let k = 0; k < 27; k++) busy.push(fills[k % fills.length]);
+  inventory(document.getElementById('inv'), busy.slice(0, 22));
+  inventory(document.getElementById('inv2'), busy);
+
+  const sat = document.getElementById('sat');
+  const loot = [[C.heart, 'orb', 1], [C.essence, 'gem', 64], [C.essence, 'gem', 38], [C.ember, 'gem', 9], [C.core, 'gem', 1], [C.gold, 'bar', 14],
+    [C.emerald, 'gem', 22], [C.pearl, 'orb', 3], [C.apple, 'orb', 2], [C.arrow, 'stick', 61], [C.bread, null, 17], [C.torch, 'stick', 40],
+    [C.coal, null, 64], [C.coal, null, 29], [C.bone, 'stick', 31], [C.bottle, 'orb', 11], [C.beef, null, 23], [C.iron, 'bar', 6],
+    [C.essence, 'gem', 64], [C.ember, 'gem', 5], [C.emerald, 'gem', 8], [C.gold, 'bar', 3], [C.arrow, 'stick', 16], [C.bone, 'stick', 64],
+    [C.pearl, 'orb', 1], [C.core, 'gem', 1], [C.bread, null, 6], [C.torch, 'stick', 12], [C.apple, 'orb', 1], [C.coal, null, 8]];
+  for (let k = 0; k < 30; k++) { const w = well(sat, 6 + (k % 6) * 18, 26 + Math.floor(k / 6) * 18, k === 4 ? 'sel' : null); const s = loot[k]; item(w, s[0], s[1], s[2]); }
+  const tip = document.createElement('div'); tip.className = 'tip'; tip.innerHTML = '<b>Power Core: Ember</b><br><em>From the Lord\'s hoard</em>';
+  tip.style.left = 'calc(84 * var(--u))'; tip.style.top = 'calc(36 * var(--u))'; sat.appendChild(tip);
+
+  const held = document.getElementById('held');
+  const h = [[C.gold, 'bar', 14], [C.emerald, 'gem', 22], [C.pearl, 'orb', 3], [C.apple, 'orb', 2], [C.core, 'gem', 1], [C.essence, 'gem', 38]];
+  for (let k = 0; k < 12; k++) { const w = well(held, 6 + (k % 6) * 18, 26 + Math.floor(k / 6) * 18, k === 1 ? 'sel' : null); if (k < h.length) item(w, h[k][0], h[k][1], h[k][2]); }
+})();
+</script>

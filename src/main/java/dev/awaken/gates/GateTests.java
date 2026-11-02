@@ -157,12 +157,12 @@ final class GateTests {
             h.assertTrue(Runs.satchelOnDeath(run, AwakenConfig.Difficulty.HUNTER).isEmpty() && run.satchel.isEmpty(), "Hunter loses the Satchel");
             Satchel.add(run.satchel, new ItemStack(Items.IRON_INGOT, 16));
             h.assertTrue(Runs.satchelOnDeath(run, AwakenConfig.Difficulty.HARDLINE).isEmpty(), "Hardline loses the Satchel");
-            // capacity and merging
+            // no cap (SPEC §13, "Gate spoils") and merging
             RunState full = new RunState();
             for (int i = 0; i < 30; i++) Satchel.add(full.satchel, new ItemStack(i % 2 == 0 ? Items.STONE : Items.DIRT, 64));
-            h.assertTrue(Satchel.count(full.satchel) == Satchel.SLOTS, "27 slots, was " + Satchel.count(full.satchel));
             ItemStack extra = new ItemStack(Items.OAK_LOG, 1);
-            h.assertTrue(Satchel.add(full.satchel, extra) == 0 && extra.getCount() == 1, "a full Satchel refuses new items");
+            h.assertTrue(Satchel.add(full.satchel, extra) == 1 && extra.isEmpty() && Satchel.count(full.satchel) == 31,
+                    "the Satchel never refuses, " + Satchel.count(full.satchel) + " stacks");
             RunState merge = new RunState();
             Satchel.add(merge.satchel, new ItemStack(Items.ARROW, 40));
             Satchel.add(merge.satchel, new ItemStack(Items.ARROW, 40));
@@ -516,7 +516,8 @@ final class GateTests {
                 ((net.minecraft.world.entity.LivingEntity) lord).hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
                 h.assertTrue(g.bossDead && g.state == GateState.CLEARED, "the gate is cleared, was " + g.state);
                 h.assertTrue(!reg.pendingFor(p.getUUID()).isEmpty(), "the hoard and Satchel wait in a claim");
-                h.assertTrue(Runs.run(p).satchel.isEmpty(), "the Satchel moved into the claim");
+                // the Lord's own drops fly into the Satchel after its claim is written; the exit portal pays them
+                h.assertTrue(Runs.run(p).satchel.stream().noneMatch(s -> s.is(Items.EMERALD)), "the Satchel moved into the claim");
                 Room.Feature exit = arena.feature(Room.FeatureKind.EXIT_ANCHOR);
                 BlockPos portal = GateService.world(g, bf, exit.x(), arena.dy + 1, exit.z());
                 h.assertTrue(level.getBlockState(portal).is(GatesRegistry.EXIT.get()), "an exit portal opened");
