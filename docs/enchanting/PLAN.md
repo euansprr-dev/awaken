@@ -1,9 +1,8 @@
 # Enchanting, revamped (the Inscribing Table plan)
 
 Plan for Euan's request of 2026-11-02, written by the enchanting-plan session on branch `claude/enchanting-plan-c9d533`.
-Status: **waiting for Euan's approval.** Nothing is built yet. It follows `.claude/PLANNING-PROCESS.md`. The rules go into
-SPEC as **§45** in the same commit as the first code, once approved (the weapon forge and boss fights claim no section
-number yet; if one lands first, this takes the next free one). Approval page: https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF
+Status: **approved in full by Euan on 2026-11-02** ("Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING").
+Stages 0-3 are built on this branch (see §9); the rules are SPEC **§45**. It followed `.claude/PLANNING-PROCESS.md`. Approval page: https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF
 (source `docs/enchanting/page.html`; answers in its `decisions` collection, d01 to d13).
 
 ## 1. Understanding and success contract
@@ -613,4 +612,20 @@ day each. The scene's camera and the shader line are the parts most likely to ta
 
 ## 9. Build log
 
-*Nothing built. Waiting for Euan.*
+- **S0** (d9233f5c9): the 23 sculpted sets take enchantments (tags; `enchant_forged_sets_take`). SPEC §45.1.
+- **S1** (13e232d76 to 876b2e465): the neighbours' hooks (`ForgeHooks`, `ArmsApi.found`, `HearthHooks.studyAt`,
+  `EnchantApi`); pages and knowledge, the thirty, room, depth and price, the table and its sessions, the vanilla fold,
+  Tasks; the table's art and sounds (audiokit); the writing scene, the book's pages and the Journal category; the admin
+  commands and the autopilot's pilot. SPEC §45.2-45.10.
+- **S2** (b1f75ab58 to b9c69abf6): the script line on our weapons and armour (each enchantment's own colour, in turn), the
+  wake's turn; enchantments at work (ward and bane marks, gold on Looting and Fortune drops, Silk Touch, Mending's
+  thread, Feather Falling's puff, Depth Strider's wake); the Study's drifting letters; the step to the desk and the band
+  framing; the card after the turn. SPEC §45.10-45.13.
+- **S3** (da9c808dd, f14e48c76): the hunts' and the Deep's doors (Bane of Beasts, Harvest, Bane of the Deep, Fortune,
+  Silk Touch), the Delver's Pick's room by verse (`delve.api.Pick`), the room line on the Forge Song's card, Precursor
+  Word Stones in every ruin; the book's lines fit a narrow page. SPEC §45.14.
+- **Not built:** the wake's chord (all of a piece's enchantments ringing together; the wake has one sound); the War
+  Anvil's quality as weapon room arrives by itself when arms' `ForgeHooks.Reader.quality` returns it (until then our
+  forged weapons hold two), and its result card shows the room line once it calls `ForgeHooks.cardLines`.
+- **Tours** (CI, `tools/autopilot/enchant-table.txt`): 41434309046 (S2 first look), 41436600832 (desk step, framing,
+  card timing), the S3 run with the Word Stone.
