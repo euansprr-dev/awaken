@@ -341,9 +341,12 @@ public final class BigDays {
             for (ServerPlayer p : here) {
                 Progression.count(p, "awaken:raids_held");
                 Progression.bestMoment(p, "Held my home through its first raid");
-                dev.awaken.bells.Bells.ring(p, "night", "the morning your home held");
-                if (Progression.rank(p).ordinal() >= Rank.B.ordinal()) dev.awaken.bells.Bells.ring(p, "siege", "the morning your home held a raid at B rank");
             }
+            // at first light the raid's bells lie where the wall was breached (SPEC §43.16 stage 5)
+            dev.awaken.bells.Bells.leave(level, r.breach, "night", here, "the morning your home held",
+                    "[It's first light. There's a bell lying where the wall was breached.]");
+            dev.awaken.bells.Bells.leave(level, r.breach, "siege", here.stream().filter(p -> Progression.rank(p).ordinal() >= Rank.B.ordinal()).toList(),
+                    "the morning your home held a raid at B rank", "[Where the wall was breached there's a second bell, a heavy one: the Siege Bell.]");
         } else KinHome.hide(level, h.pos, 0);
         for (ServerPlayer p : here)
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(r.lordDown ? "The raid is held" : "First light"))

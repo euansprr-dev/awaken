@@ -27,6 +27,7 @@ public final class BellHooks {
         default int song(BlockPos anchor) { return 0; }
         default boolean toll(ServerLevel level, BlockPos anchor) { return false; }
         default void raised(ServerLevel level, BlockPos pos) {}
+        default void spirit(ServerPlayer player, String spirit, String name, BlockPos at) {}
     }
 
     private static Access access = new Access() {};
@@ -98,6 +99,14 @@ public final class BellHooks {
      */
     public static void raised(ServerLevel level, BlockPos pos) {
         access.raised(level, pos);
+    }
+
+    /**
+     * A spirit standing at {@code at} finished telling this player its story (SPEC §43.16 stage 5): it may hold one of the
+     * Veil's bells for them, and says what it stayed for.
+     */
+    public static void spirit(ServerPlayer player, String spirit, String name, BlockPos at) {
+        access.spirit(player, spirit, name, at);
     }
 
     /** Where the Lampwing's old bell hangs near the home at {@code anchor}, while it does (SPEC §43.16), or null. */

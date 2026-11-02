@@ -840,6 +840,58 @@ happens).
   that closes first takes it back to the pool (`FoundBells.closed`, `lost`): the next Lord keeps one for that hunter;
   a party member who already has it isn't a claimant; it can't be broken or pushed.
 
+## Every bell at a real place (§43.16 stage 5)
+
+### A bell set down where it was won (`awaken:found_bell`, no gate)
+- **Get**: win it at its place: a Foundry cast (by the Crucible), the Founding Bell (by your fire), a stratum of the
+  Descent, a Spire or platform ruin, aboard the Halo, where a Sovereign fell, where a raid breached your wall, a
+  stampede's wake, the Deep Tide, the eclipse sky; lift it.
+- **For**: the bell, to carry home and hang.
+- **Know**: the line at the place ("There's a bell set into the rock here..."); its glow; the Bells tab's "Lift the X",
+  pointing at it.
+- **Source**: `FoundBells.leave`, `Bells.leave` (KinWorks, BigDays), `Bells.found`, World `kept` (`dim`).
+- **Links**: the Book; the Bell Frame and beams.
+- **Edges**: one per party, each lifts their own; never twice; never in a block someone stands in; no floor near: into
+  their hands; knocked out of its place: into their hands when they're about (`FoundBells.watch`).
+
+### The Registry's bells from Bram
+- **Get**: clear your first (and twenty-fifth) gate, then stand within 8 of Bram in Carillon.
+- **For**: the Registry Handbell and the Toll Bell.
+- **Know**: "[Bram at the Registry has something for you.]"; his words as he hands it over.
+- **Source**: `Bells.bram`, `Bells.handed`, `CitizenHooks.where`.
+- **Edges**: Bram has no body when nobody's near the Registry, so it waits; old Books that hold them already keep them.
+
+### The villages' five (a quest each)
+- **Get**: a named citizen remembers one aloud when you're near them in Carillon (Sun, Oren, Kestrel, Teodor, Mira; one a
+  play-day, the bell's rank); go to the empty village they name, read the letter on the lectern by the well, find the
+  bell where it says (sunk, under a mossy stone, on the highest ground, by a wolf in the fold); lift it.
+- **For**: Fenwick's, the Mill, the Shepherd's, the Hill and the Ford bells, and the teller's thanks.
+- **Know**: the rumour; "[X is out to the west. It's on your Tasks.]"; the letter's own words; the muffled hum within 32;
+  the Tasks' "Find the letter about X in Y", then "Find X where the letter says".
+- **Source**: `VillageBells`, `Villages.emptyNear`, World `villages`, `quests`; vanilla lectern, written book and wolf.
+- **Links**: the Bell Book; a bone for the wolf; a shovel for the mossy stone; water breathing for a deep bed.
+- **Edges**: one village per bell per world, chosen 250 to 2,400 from the square; laid once someone's within 96 of the
+  well; laid again for the next who comes without it; reading the carried book counts; a sunk bell with no deep water
+  near is buried instead; the teller says thanks once.
+
+### The dreams' six puzzles
+- **Get**: dream; the next dream bell you don't hold is behind its puzzle (the Dreaming Bell waiting, the Daydream that
+  moves when you look away, the Lullaby by a sleeper, the Falling Bell at the foot of a fall that ends when you look
+  up, the Nightmare's carried by what hunts you, the Lucid Bell once you've noticed a dream sign); strike it lucid
+  enough; wake.
+- **For**: the Lucidium's bells.
+- **Know**: each dream's line; the note every 5 s; the second lift's line; a Dreamt lead in the puzzle's words.
+- **Source**: `DreamBells`, `Lucidium.signsNoticed`, `MobHooks.spawnThemed` (the sleeper and the chaser).
+- **Edges**: one a dream; not saved; beasts discarded on waking; no hurt from a fall the dream took over.
+
+### The Veil's five kept by spirits
+- **Get**: hear a spirit's whole story while one of the five waits for your rank; do what it stayed for where it stands.
+- **For**: Ghost Lantern, Whisper, Wake, Mourner's and the Veil Bell.
+- **Know**: the spirit's errand in its own words; the Tasks' "Light a lantern where X stands" and the rest, pointing there.
+- **Source**: `SpiritBells`, `BellHooks.spirit` (from `veil.Spirits.talk`), World `keepers`.
+- **Links**: a lantern, flowers, a candle; first light; the other four for the Veil Bell.
+- **Edges**: one spirit, one bell; the errand can be done in body; checked within 16 of the spirit.
+
 ## Enchanting: the Inscribing Table (SPEC §45)
 
 ### The Inscribing Table (`awaken:inscribing_table`)

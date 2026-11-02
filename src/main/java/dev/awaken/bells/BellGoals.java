@@ -15,7 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * The Tasks page's Bells tab (SPEC §27.13): inside a gate, the bell its Lord kept for you while it lies there; a step per lead in the Bell Book that you don't hold yet, newest first, with
+ * The Tasks page's Bells tab (SPEC §27.13): inside a gate, the bell its Lord kept for you while it lies there; a bell set
+ * down where you won it; a village's bell you're on the trail of and a spirit's errand (stage 5); a step per lead in the Bell Book that you don't hold yet, newest first, with
  * its last line and, once it has a bearing, where to look (the same place Track pointed); and your tower's next step when
  * it's yours to do (make and set the frame, hang the bells in your bag, a Bell Beam when the frame's full, a Great Beam for
  * a Great Bell, the Lampwing's old bell, clear room, the Great Belfry, the Hundred Peal). Finding more bells is the leads'
@@ -36,6 +37,10 @@ final class BellGoals {
         List<Step> out = new ArrayList<>();
         Step lord = lordBell(p);
         if (lord != null) out.add(lord);
+        Step lying = lying(p);
+        if (lying != null) out.add(lying);
+        out.addAll(VillageBells.steps(p));
+        out.addAll(SpiritBells.steps(p));
         List<Map.Entry<Integer, BellBook.Lead>> leads = new ArrayList<>();
         for (Map.Entry<Integer, BellBook.Lead> e : b.leads.entrySet()) if (!b.held.containsKey(e.getKey())) leads.add(e);
         leads.sort(Comparator.comparingLong((Map.Entry<Integer, BellBook.Lead> e) -> -e.getValue().since).thenComparingInt(Map.Entry::getKey));
@@ -59,11 +64,22 @@ final class BellGoals {
     static @org.jspecify.annotations.Nullable Step lordBell(ServerPlayer p) {
         if (!dev.awaken.core.api.GateHooks.inGate(p)) return null;
         for (BellWorld.Kept k : BellWorld.get(p.level().getServer()).kept) {
-            if (!k.left.contains(p.getUUID())) continue;
+            if (k.gate.isEmpty() || !k.left.contains(p.getUUID())) continue;
             String name = BellCatalog.of(k.no).name().replaceFirst("^The ", "the ");
             return Step.of("bells/lord", Goal.BELLS, "Lift " + name + " from where the Lord fell")
                     .why("It's lying on the floor of the Lord's room. Lift it before you leave: once the gate closes, it goes back to the gates.")
                     .priority(60).at(k.pos).build();
+        }
+        return null;
+    }
+
+    /** A bell set down where you won it (stage 5), lying in this dimension for you to lift, or null. */
+    static @org.jspecify.annotations.Nullable Step lying(ServerPlayer p) {
+        String dim = p.level().dimension().identifier().toString();
+        for (BellWorld.Kept k : BellWorld.get(p.level().getServer()).kept) {
+            if (!k.gate.isEmpty() || !k.dim.equals(dim) || !k.left.contains(p.getUUID())) continue;
+            return Step.of("bells/lying", Goal.BELLS, "Lift " + BellCatalog.of(k.no).name().replaceFirst("^The ", "the "))
+                    .why("It's lying where you won it. Lift it and take it home to hang.").priority(55).at(k.pos).build();
         }
         return null;
     }
