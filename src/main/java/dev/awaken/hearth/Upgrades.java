@@ -227,7 +227,7 @@ public final class Upgrades {
         Rank rank = Progression.rank(sp);
         boolean armory = h.roomAt(forgePos.relative(net.minecraft.core.Direction.UP), RoomType.ARMORY).isPresent() || hasArmoryAround(h, forgePos);
         var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Forge · Tier " + roman(h.forgeTier)));
-        w.row(Component.literal("Armory"), Component.literal(armory ? "yes" : "no · needs an anvil and an armour stand in this room"));
+        w.row(Component.literal("Forge room"), Component.literal(armory ? "yes" : "no · needs an anvil and an armour stand in this room"));
         w.row(Component.literal("Temper limit"), Component.literal(roman(temperCap(h, armory))));
         w.body(Component.literal("Hold a weapon or armour piece and use the Forge to temper it."));
         if (h.forgeTier >= HearthRecord.MAX_FORGE_TIER) {
@@ -324,7 +324,7 @@ public final class Upgrades {
         w.row(Component.literal("Temper"), Component.literal(current == 0 ? "none" : roman(current)));
         if (current >= cap) {
             w.body(Component.literal(current >= MAX_TEMPER ? "It can't take any more."
-                    : armory ? "Upgrade the Forge to go further." : "Build an Armory (anvil, Forge and armour stand in one room) to go further."));
+                    : armory ? "Upgrade the Forge to go further." : "Put an anvil and an armour stand in the Forge's room and it'll go further."));
             Signal.send(sp, w.ttl(20 * 8).build());
             return;
         }

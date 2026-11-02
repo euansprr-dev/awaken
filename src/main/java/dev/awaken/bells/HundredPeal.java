@@ -282,6 +282,11 @@ final class HundredPeal {
         }
 
         @Override
+        public void spirit(ServerPlayer player, String spirit, String name, BlockPos at) {
+            SpiritBells.told(player, spirit, name, at);
+        }
+
+        @Override
         public int song(BlockPos anchor) {
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             BellWorld.Home h = server == null ? null : BellWorld.get(server).peek(anchor);
