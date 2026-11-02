@@ -17458,7 +17458,11 @@ forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-f
 - **JEI**: a War Anvil page (the compat module's build page) for every weapon and blade, from the cost table.
 - **The smith in third person**: others see the smith bent over the anvil, the hammer arm rising and falling on each
   strike and tap (a full-body clip, `assets/awaken/player_animations/arms_anvil.json`, through `core.api.PlayerClips`;
-  without the animation library, vanilla's arm swing on each strike).
+  without the animation library, vanilla's arm swing on each strike). The clips (`tools/art/specs/anvil_moves.py`, each
+  with its `_bent` twin): `arms_anvil` over the anvil (the draw-out, the hilt, the knap), `arms_anvil_strike` (6 ticks)
+  on each draw-out strike, `arms_anvil_tap` (4) on each hilt tap and flake, `arms_anvil_heat` at the Forge's mouth,
+  `arms_anvil_quench` in the trough, `arms_anvil_bind` winding the cord. `AnvilBodies` reads them from the anvil's synced
+  work as it is drawn (a new beat in the same stage is a blow) and lets the smith go the tick that work ends.
 - **The dev command** `/awaken arms anvil forge [weapon [memory]]` begins that weapon (the Beastbound Longsword with
   none) at the nearest War Anvil within six blocks, or says what's missing in the anvil's own words; the tours use it.
 - **Old saves**: every weapon already made keeps working and gains its Plain story when held; Blueprints held were

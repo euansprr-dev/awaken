@@ -68,6 +68,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         float now = level == null ? 0F : level.getGameTime() + partial;
         boolean mine = AnvilClient.sceneAnvil() == be;
         AnvilScene.place(be, now, mine, s.placed);
+        if (level != null && be.work() != null) AnvilBodies.seen(level, be.getBlockPos(), be.work());
         AnvilWork w = be.work();
         s.weapon = w == null ? null : w.weapon;
         if (w != null && level != null && s.placed.inForge) {

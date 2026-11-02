@@ -65,7 +65,10 @@ public final class AnvilClient {
         });
         bus.addListener(RenderGuiLayerEvent.Pre.class, AnvilClient::hideHud);
         bus.addListener(RenderPlayerEvent.Pre.class, AnvilCamera::player);
-        bus.addListener(ClientTickEvent.Post.class, e -> tick());
+        bus.addListener(ClientTickEvent.Post.class, e -> {
+            tick();
+            AnvilBodies.tick();
+        });
         bus.addListener(ItemTooltipEvent.class, AnvilClient::onTooltip);
         bus.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(Commands.literal("awaken")
                 .then(Commands.literal("arms").then(Commands.literal("anvil").then(Commands.literal("autoplay")
@@ -73,7 +76,10 @@ public final class AnvilClient {
                             autoplay = BoolArgumentType.getBool(c, "on");
                             return 1;
                         })))))));
-        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> AnvilScene.end());
+        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            AnvilScene.end();
+            AnvilBodies.clear();
+        });
     }
 
     // ---- messages ------------------------------------------------------------------------------------------------------
