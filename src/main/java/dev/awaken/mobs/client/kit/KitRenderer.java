@@ -51,7 +51,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
     private final int[] clip;
     /** Each body's motion state between frames (weak: it goes with the entity). */
     private final java.util.Map<AwakenMob, KitBlend> blends = new java.util.WeakHashMap<>();
-    private final int roar, kneel, rise, collapse, reassemble, hurtL, hurtR, hurtF, turnL, turnR, death;
+    private final int roar, kneel, rise, collapse, reassemble, hurtL, hurtR, hurtF, turnL, turnR, death, parried, reel;
     private final boolean introKneels;
     /** Where the feet stand at rest, in blocks of body space (x left, z forward), for the ground under them. */
     private final float footLX, footLZ, footRX, footRZ;
@@ -80,6 +80,9 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         turnL = m.clip("turn_l");
         turnR = m.clip("turn_r");
         death = m.clip("death");
+        // the duel's reactions (SPEC §46.3): a deflected limb thrown back, the reel after a phrase's last blow turned aside
+        parried = m.clip("parried");
+        reel = m.clip("reel");
         introKneels = kit.fight() != null && "kneel".equals(kit.fight().intro().pose());
         HeroRig rig = kit.rig();
         float[] l = foot(rig, "l"), r = foot(rig, "r");
@@ -191,6 +194,14 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         } else if (rise >= 0 && (boss.kitPoseFrom() == AwakenBoss.KIT_POSE_BROKEN || (boss.kitPoseFrom() == AwakenBoss.KIT_POSE_INTRO && introKneels))
                 && poseFor < m.length(rise) + 0.2F) {
             layer(s, 0, rise, Math.min(poseFor, m.length(rise)), poseFor <= m.length(rise) ? 1 : 1 - (poseFor - m.length(rise)) / 0.2F);
+        } else if (pose == AwakenBoss.KIT_POSE_RECOIL || pose == AwakenBoss.KIT_POSE_REEL) {
+            // a body without its own clip throws its front reaction instead
+            int c = pose == AwakenBoss.KIT_POSE_REEL ? (reel >= 0 ? reel : parried >= 0 ? parried : hurtF) : (parried >= 0 ? parried : hurtF);
+            if (c >= 0) layer(s, 0, c, Math.min(poseFor, m.length(c)), Math.min(1, poseFor / 0.06F + 0.4F));
+        } else if ((boss.kitPoseFrom() == AwakenBoss.KIT_POSE_RECOIL || boss.kitPoseFrom() == AwakenBoss.KIT_POSE_REEL) && poseFor < FADE) {
+            // and eases out of it into what comes next
+            int c = boss.kitPoseFrom() == AwakenBoss.KIT_POSE_REEL ? (reel >= 0 ? reel : parried) : parried;
+            if (c >= 0) layer(s, 0, c, m.length(c), 1 - poseFor / FADE);
         }
 
         // a blow's way picks the reaction: struck from its left it twists right, and the other way
@@ -207,8 +218,11 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
                 if (side > 0.35F && hurtR >= 0) clip = hurtR; // pushed toward its left: struck from its right
                 else if (side < -0.35F && hurtL >= 0) clip = hurtL;
             }
-            if (clip == hurtF) s.hurt = t;
-            else layer(s, 1, clip, t, Math.min(1, 0.6F + 0.4F * Math.max(1, k)));
+            // weight (SPEC §46.3): a light blade doesn't stop a blow coming, it only shudders through it; a heavy one, a
+            // deflect or a hit in an opening (no move playing) makes it flinch whole
+            boolean shrug = mv >= 0 && k > 0 && k < 1F;
+            if (clip == hurtF && !shrug) s.hurt = t;
+            else layer(s, 1, clip, t, shrug ? 0.3F : Math.min(1, 0.6F + 0.4F * Math.max(1, k)));
         }
 
         // a turn step: when the body has to come round more than 45° it steps with its feet

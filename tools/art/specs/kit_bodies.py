@@ -112,11 +112,12 @@ def motion(outdir, only=None, gifs=True):
     for d in designs(only):
         skin, glow, _ = paint(d)
         rows = M.run(outdir, d, skin, glow, gifs)
-        print(f"{d['rig'].id}: {len(rows)} sequences")
+        has, lacks = M.reactions(d["rig"])
+        print(f"{d['rig'].id}: {len(rows)} sequences; reactions {', '.join(has)}" + (f" (none for {', '.join(lacks)})" if lacks else ""))
         for r in rows:
             dip = "" if r["dip"] is None else f"  dip {100 * r['dip']:.0f}%"
             print(f"  {'-'.join(r['seq']):34} {r['seconds']:5.2f} s  still {r['still_s']:4.2f} s  kinks {r['kinks']:3d} (worst {r['worst_kink']:4.1f}, strike {r['strike_snap']:4.1f})"
-                  f"  held {100 * r['held']:3.0f}%  peak {r['peak_deg_s']:5d}/s{dip}")
+                  f"  held {100 * r['held']:3.0f}%  peak {r['peak_deg_s']:5d}/s  slide {r['slide']:.3f}{' !' if r['slide'] > M.SLIDE else ''}{dip}")
 
 
 if __name__ == "__main__":

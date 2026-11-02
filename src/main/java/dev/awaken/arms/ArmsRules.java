@@ -30,6 +30,14 @@ public final class ArmsRules {
     public static final int BROKEN_TICKS = 50, BROKEN_TICKS_LORD = 40, BREAK_COOLDOWN = 120;
     /** Posture a deflect does to the attacker, by the blow's class. */
     public static final int DEFLECT_POSTURE_LIGHT = 18, DEFLECT_POSTURE_HEAVY = 26;
+    /**
+     * The duel's payoff (SPEC §46.3): a perfect dodge through a blow fills the attacker's stance this much; a blow in an
+     * opening fills it this many times as fast (a shot sent back fills its maker's as the mobs module says).
+     */
+    public static final int PERFECT_DODGE_POSTURE = 10;
+    public static final float OPENING_POSTURE = 1.5F;
+    /** A finisher (an Execution) on a broken Lord: at least this share of its health, at most that one. */
+    public static final float LORD_FINISHER_MIN = 0.10F, LORD_FINISHER_MAX = 0.15F;
     /** The latency hold on a guardable hit is at most this many ticks. */
     public static final int GRACE_MAX = 3;
     /** Soft focus: how far a strike may turn toward its target; looking further than this away for so long drops it. */
@@ -261,9 +269,12 @@ public final class ArmsRules {
         return Math.abs(Mth.wrapDegrees(yawToTarget - lookYaw)) <= FOCUS_DROP_ANGLE;
     }
 
-    /** An Execution's damage on a Lord is capped at this share of its health (the move's bossCap). */
+    /**
+     * An Execution on a Lord (a move with a bossCap) is the finisher (SPEC §46.3): between {@link #LORD_FINISHER_MIN} and
+     * {@link #LORD_FINISHER_MAX} of its health, whatever the weapon, so each break is worth a tenth to a seventh of the fight.
+     */
     public static float capExecution(float damage, float maxHealth, float bossCap, boolean lord) {
-        return lord && bossCap > 0 ? Math.min(damage, maxHealth * bossCap) : damage;
+        return lord && bossCap > 0 ? Mth.clamp(damage, maxHealth * LORD_FINISHER_MIN, maxHealth * LORD_FINISHER_MAX) : damage;
     }
 
     /** Whether a strike may turn toward its focus: the turn needed, clamped, in degrees (0 when beyond the help). */

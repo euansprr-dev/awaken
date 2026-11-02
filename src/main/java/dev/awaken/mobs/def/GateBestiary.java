@@ -1,5 +1,6 @@
 package dev.awaken.mobs.def;
 
+import dev.awaken.core.api.BodyMaterial;
 import net.minecraft.world.BossEvent.BossBarColor;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -52,10 +53,10 @@ final class GateBestiary {
                 .ab(a(SLAM, "Bell Slam").power(1.6F).heavy(), a(CHARGE, "Coffin Rush")).build());
         out.add(m("the_sexton", "The Sexton", Theme.BELL, Tier.WARDEN, Model.WARDEN, "Hunts by the toll of your footsteps; its Knell tears at the spirit").hp(34).dmg(6).spd(0.28).traits(HUNTER)
                 .ab(a(BEAM, "Knell").bolt(BoltKind.SPIRIT).power(1.8F).wind(34).heavy(), a(SLAM, "Grave Stamp").radius(4), a(DARKNESS, "Last Light").radius(14)).build());
-        out.add(m("bell_warden", "The Bell Warden", Theme.BELL, Tier.LORD, Model.BELL, "Toll Waves you dodge by stepping in; halfway through, the statues move").hp(30).dmg(4.5).spd(0.24).size(2.8F, 4.64F).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("bell_warden", "The Bell Warden", Theme.BELL, Tier.LORD, Model.BELL, "Toll Waves you dodge by stepping in; halfway through, the statues move").body(BodyMaterial.ARMOR).hp(30).dmg(4.5).spd(0.24).size(2.8F, 4.64F).bar(BossBarColor.BLUE).arena(22)
                 .intro("The bell above you is not a bell.")
                 .phase(1.0F, "The Bell Warden rings once.", a(BURST, "Toll Wave").radius(10).inner(3.0F).power(1.6F), a(SLAM, "Clapper Strike").radius(4), a(BOLT, "Echo Bolts").n(3).bolt(BoltKind.SPIRIT))
-                .phase(0.66F, "The statues move.", a(SUMMON, "The Statues Move").summon("toll_ghoul").n(3), a(CHARGE, "Bell Rush").heavy(), a(BURST, "Toll Wave").radius(11).inner(3.0F))
+                .phase(0.66F, "The statues move.", a(SUMMON, "The Statues Move").summon("toll_ghoul").n(2), a(CHARGE, "Bell Rush").heavy(), a(BURST, "Toll Wave").radius(11).inner(3.0F))
                 .phase(0.33F, "The Grand Peal.", a(BURST, "Grand Peal").radius(16).inner(4).power(2.6F).wind(50).heavy(), a(NOVA, "Shattered Bronze").n(12).bolt(BoltKind.SPIRIT), a(SLAM, "Clapper Strike").radius(4))
                 .parts(P("bell_clapper", "Warden's Clapper", "brass"), P("crypt_bronze", "Crypt Bronze", "brass")).build());
     }
@@ -133,10 +134,10 @@ final class GateBestiary {
                 .ab(a(CHARGE, "Steam Charge").heavy(), a(SLAM, "Piston Slam")).build());
         out.add(m("the_regulator", "The Regulator", Theme.CLOCKWORK, Tier.WARDEN, Model.IRON_GOLEM, "Overclocks as it nears you; Governor Slam and a spark ring").hp(38).dmg(7).spd(0.27).tint(0xE6B860).traits(HUNTER)
                 .ab(a(SLAM, "Governor Slam").radius(4).heavy(), a(NOVA, "Spark Ring").n(12).bolt(BoltKind.CHARGE), a(FRENZY, "Overclock")).build());
-        out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").hp(34).dmg(5).spd(0.22).scale(1.8F).size(0.83F, 4.66F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
+        out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").body(BodyMaterial.ARMOR).hp(34).dmg(5).spd(0.22).scale(1.8F).size(0.83F, 4.66F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry built one thing. It is still building it.")
                 .phase(1.0F, "The Colossus engages.", a(SLAM, "Piston Slam").radius(4.5F).heavy(), a(NOVA, "Spark Halo").n(12).bolt(BoltKind.CHARGE))
-                .phase(0.66F, "Gears engage.", a(SUMMON, "Release Drones").summon("spark_drone").n(3), a(CHARGE, "Colossal Stride"), a(SLAM, "Piston Slam").radius(4.5F))
+                .phase(0.66F, "Gears engage.", a(SUMMON, "Release Drones").summon("spark_drone").n(2), a(CHARGE, "Colossal Stride"), a(SLAM, "Piston Slam").radius(4.5F))
                 .phase(0.33F, "Overload.", a(BEAM, "Overload Arc").bolt(BoltKind.CHARGE).power(2.2F).heavy(), a(RAIN, "Arc Strikes").n(6).bolt(BoltKind.CHARGE), a(SLAM, "Piston Slam").radius(5))
                 .parts(P("colossus_gear", "Colossus Gear", "brass"), P("mainspring", "Mainspring", "brass")).build());
     }
@@ -152,7 +153,7 @@ final class GateBestiary {
                 .ab(a(BLINK, "Refract"), a(BEAM, "Prism Lance").bolt(BoltKind.GLASS)).build());
         out.add(m("the_mirage", "The Mirage", Theme.GLASS, Tier.WARDEN, Model.ILLUSIONER, "Splits into mirages; only one of them casts a shadow").hp(32).dmg(5.5).spd(0.28).traits(HUNTER, RANGED)
                 .ab(a(DECOY, "Mirages").n(3), a(BOLT, "Sunshards").n(5).bolt(BoltKind.GLASS), a(BLINK, "Heat Mirage")).build());
-        out.add(m("glass_serpent", "The Glass Serpent", Theme.GLASS, Tier.LORD, Model.SERPENT, "Lunges, dives into the sand and erupts beneath you, then the Glass Storm").hp(32).dmg(5).spd(0.3).scale(2.2F).size(1.4F, 1.8F).grounded().bar(BossBarColor.WHITE).arena(26)
+        out.add(m("glass_serpent", "The Glass Serpent", Theme.GLASS, Tier.LORD, Model.SERPENT, "Lunges, dives into the sand and erupts beneath you, then the Glass Storm").body(BodyMaterial.STONE).hp(32).dmg(5).spd(0.3).scale(2.2F).size(1.4F, 1.8F).grounded().bar(BossBarColor.WHITE).arena(26)
                 .intro("Your reflection blinks first.")
                 .phase(1.0F, "The Glass Serpent uncoils.", a(CHARGE, "Glass Lunge").heavy(), a(NOVA, "Shard Spray").n(10).bolt(BoltKind.GLASS))
                 .phase(0.66F, "It dives into the sand.", a(BLINK, "Burrow Strike").power(1.6F).heavy(), a(RAIN, "Erupting Glass").n(5).bolt(BoltKind.GLASS), a(CHARGE, "Glass Lunge"))

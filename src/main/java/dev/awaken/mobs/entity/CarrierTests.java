@@ -5,6 +5,7 @@ import dev.awaken.core.api.Strikes;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.mobs.MobTypes;
 import dev.awaken.mobs.Mobs;
+import dev.awaken.mobs.boss.FightScripts;
 import dev.awaken.mobs.boss.KitMoves;
 import dev.awaken.mobs.boss.Kits;
 import dev.awaken.mobs.def.Ability;
@@ -79,13 +80,43 @@ public final class CarrierTests {
                 if (told.deflectable()) parry++;
                 if (told == Strikes.Kind.PERILOUS || told == Strikes.Kind.GRAB) red++;
             }
-            rows.add(String.format(java.util.Locale.ROOT, "%-22s blows %2d  parryable %3.0f%%  red %3.0f%%  summon moves %d", d.id, blows,
-                    100.0 * parry / Math.max(1, blows), 100.0 * red / Math.max(1, blows), summons));
+            rows.add(String.format(java.util.Locale.ROOT, "%-22s blows %2d  parryable %3.0f%%  red %3.0f%%  summon moves %d%s", d.id, blows,
+                    100.0 * parry / Math.max(1, blows), 100.0 * red / Math.max(1, blows), summons, kit.fight().duel() ? "  duel" : ""));
+            if (kit.fight().duel()) duel(d, kit, blows, parry, red, summons, bad);
         }
         FightCostTests.write(h.getLevel().getServer().getServerDirectory().resolve("fights-language.txt"), String.join("\n", rows) + "\n");
         h.assertTrue(moves >= 400 && abilities > 300, "read every table and bestiary (" + moves + " moves, " + abilities + " abilities)");
         h.assertTrue(bad.isEmpty(), bad.size() + " broken: " + String.join("; ", bad.subList(0, Math.min(8, bad.size()))));
         h.succeed();
+    }
+
+    /**
+     * A duel's script (SPEC §46.3): I6 at most one signature and one summon move, never in its first phase; I7 at least
+     * 40% of its blows parryable and 20% red; I8 in every phase at most 30% of its starts (by weight) a lone blow.
+     */
+    private static void duel(MobDef d, Kits.Kit kit, int blows, int parry, int red, int summons, List<String> bad) {
+        KitMoves.Table moves = kit.moves();
+        int signatures = 0;
+        for (KitMoves.Move m : moves.moves()) if (m.signature()) signatures++;
+        if (signatures > 1 || summons > 1) bad.add("I6 " + d.id + ": " + signatures + " signatures, " + summons + " summon moves");
+        if (parry * 10 < blows * 4) bad.add("I7 " + d.id + ": " + parry + " of " + blows + " blows parryable");
+        if (red * 5 < blows) bad.add("I7 " + d.id + ": " + red + " of " + blows + " blows red");
+        List<FightScripts.Phase> phases = kit.fight().phases();
+        for (int p = 0; p < phases.size(); p++) {
+            int all = 0, lone = 0;
+            for (FightScripts.Entry e : phases.get(p).pool()) {
+                int i = moves.index(e.move());
+                if (i < 0) continue;
+                KitMoves.Move m = moves.get(i);
+                Ability a = m.ability().map(n -> find(d, n)).orElse(null);
+                if (p == 0 && a != null && a.kind() == Ability.Kind.SUMMON) bad.add("I6 " + d.id + ": summons in its first phase");
+                if (a != null && a.kind() == Ability.Kind.SUMMON && a.count() > AwakenBoss.DUEL_ADDS) bad.add("I6 " + d.id + ": summons " + a.count() + " at once");
+                if (m.hits().isEmpty() && (a == null || !hurts(a))) continue;
+                all += e.weight();
+                if (e.then().isEmpty()) lone += e.weight();
+            }
+            if (lone * 10 > all * 3) bad.add("I8 " + d.id + " phase " + (p + 1) + ": " + lone + " of " + all + " starts a lone blow");
+        }
     }
 
     private static boolean hurts(Ability a) {

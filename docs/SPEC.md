@@ -16724,3 +16724,52 @@ at once; stage 2 adds phrases and the payoff on the pilots.
   is tracked closely), `fights_dash_escapes` (a dash at the throw leaves a volley's ring, a jump clears a wave, a dash
   off a locked line, while who stays is struck), `fights_effect_needs_hit` (an evaded root, pull's wave and lob leave no
   effect or push), `fights_beast_told` (every bite of a pack of three follows its whole tell, never three winding up).
+
+**46.3 The duel (stage 2, on three pilots: the Bell Warden, the Glass Serpent, the Gearwright Colossus).** A fight script
+with `"duel": true` (`FightScripts.Fight.duel`, default false, so the other 38 fight as before until stage 4) plays as
+a duel. Numbers in `FightRunner` and `ArmsRules`.
+- **Phrases.** A pool entry and one of its `then` strings is a phrase. In every phase at most 30% of what a duel starts
+  (by weight, among the moves that hurt) is a lone blow (I8). The pilots' scripts (in their `tools/art/specs/kit/bosses`
+  specs) give every near and ranged opener a follow-up; the lone ones are the behind-you blow and the signature.
+- **Openings.** Every phrase ends in an opening where it starts nothing and stands its ground, turning to keep you in
+  front: 16 ticks after a lone blow, 3 more for each further blow, at most 30 (0.8-1.5 s). A phrase cut short (you got
+  out of reach) still ends in its opening. `AwakenBoss.inOpening` (to Arms as `Strikes.opening`): a hit that lands in it
+  fills the stance 1.5 times.
+- **Deflects answer.** Arms tells the boss through `Strikes.deflected`. A deflected blow that isn't its phrase's last
+  ends the move: the limb recoils for 10 ticks (pose 3, the `parried` clip) and the phrase goes on. Its last blow
+  turned aside, it reels (a 26-tick stagger, pose 4, the `reel` clip) and stands open 8 ticks more after it.
+- **Habits.** After two deflects within 10 s its red phrases come up four times as often (until it picks one); when you
+  back off (over 6 blocks away and 1.5 further than half a second before) its gap closers come up three times as often.
+- **Shots come back.** A white-gold shot deflected (`AwBolt.sendBack`, through `Strikes.returnShot`) turns once and flies
+  at its maker's chest at 1.15 blocks a tick; it strikes only our creatures, as the sender's thrown blow at its own
+  damage, and puts 22 on the maker's stance. Amber and red shots still break on the blade.
+- **The stance.** A perfect dodge through a blow puts 10 on the attacker's stance. A break drops it to its knee as
+  before (`AwakenBoss.broken`, server side), and an Execution on a Lord is the finisher: 10-15% of its health whatever
+  the weapon (`ArmsRules.LORD_FINISHER_MIN/MAX`, was the weapon's boss cap, 8-12%).
+- **Weight.** A light blade (blow weight under 1) while a move plays only shudders the body (its hurt clip at 0.3); a
+  heavy blow, a deflect, or any hit while nothing plays (an opening) makes it flinch whole.
+- **Adds.** A duel keeps at most two of its adds alive (`AwakenBoss.DUEL_ADDS`, in `Mobs.minionRoom`), calls at most two
+  at once (the Bell Warden's statues and the Gearwright's drones were three) and none in its first phase (I6).
+- **Classes.** Shattered Bronze (the Bell Warden) and Erupting Glass (the Glass Serpent) are red now, so every pilot has
+  at least 20% red blows and 40% parryable (I7).
+- **What it's made of.** `MobDef.body` names a material over its model's: the Bell Warden and the Gearwright ring as
+  plate (`ARMOR`), the Glass Serpent as stone (were stone, stone and flesh), so Arms' impacts sound like bronze, iron
+  and glass rather than a body.
+- **Reactions.** The pilots have `parried` (0.5 s: thrown back off its footing, back onto it) and `reel` (1.3 s: thrown
+  hard, caught, lurching, hanging low and open, gathering) beside hurt three ways, kneel, rise and death; a duel without
+  both fails its kit load (`Kits.problems`). `KitRenderer` plays them on poses 3 and 4 and eases out of them over 0.15 s;
+  a body without them throws its front hurt.
+- **Feet** (meter 1 of PLAN §4.8 in `kit/motion.py`: how far a standing foot moves in a tick, its touch-down and lift-off
+  left out, outside the strike; FA's bar 0.03 model blocks). The Bell Warden's ground pass lifted its standing points
+  clear of the floor a hair each tick, which slid them; now its points are kept up only in the moves where every leg
+  travels, and a foot lock (`_lock`) holds every point that stands 3 ticks or more and drifts under 3 pixels: stab
+  0.70 → 0.018, echo 0.09 → 0.010, the wake 0.07 → 0.009, its reactions under 0.03 while they hold. Still over: the
+  clapper (0.14), the moves where every leg travels (0.05-0.13) and the hand-over inside a string, where the spring
+  between two moves carries the standing points (a runtime foot lock is stage 4's). The Gearwright's planted feet hold
+  under 0.02 but for its Colossal Stride, which advances by design; the serpent has no feet. `motion` also lists each
+  body's reactions (meter 5).
+- Tests: `fights_phrase_opening` (the Gearwright's sweep and chop, then nothing for at least 16 ticks, open throughout),
+  `fights_deflect_recoil` (the sweep deflected recoils 10 ticks and the chop goes on; the chop deflected, it reels open
+  and starts nothing for 34), `fights_shot_returns` (a white-gold shot sent back strikes its maker, never its sender; an
+  amber one won't turn; once only), `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions),
+  the Arms rules test (the finisher's 10-15%).

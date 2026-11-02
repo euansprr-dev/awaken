@@ -48,6 +48,7 @@ final class MobsTests {
         dev.awaken.mobs.entity.SeepTests.register(); // the seep heart (W5): placed, asleep, woken, felled
         dev.awaken.mobs.entity.FightCostTests.register(); // what a fight costs the server a tick (docs/fights/PLAN.md)
         dev.awaken.mobs.entity.CarrierTests.register(); // see it coming: carriers, locks, the effect rule (SPEC §46.2)
+        dev.awaken.mobs.entity.DuelTests.register(); // the duel: openings, recoils, reels, shots sent back (SPEC §46.3)
         AwakenTests.register("mobs_scaling_maths", 40, h -> {
             h.assertTrue(Math.abs(MobScaling.healthMultiplier(5) - 1.375) < 1e-9, "health multiplier at lv5");
             h.assertTrue(Math.abs(MobScaling.damageMultiplier(150) - 7.0) < 1e-9, "damage multiplier at lv150");
@@ -294,14 +295,14 @@ final class MobsTests {
         AwakenTests.register("mobs_decoys_and_summons_are_cheap", 40, h -> {
             ServerLevel level = h.getLevel();
             AwakenMob boss = (AwakenMob) MobHooks.spawnBoss(level, "awaken:bell_warden", h.absolutePos(new BlockPos(0, 1, 0)), 5, "");
-            h.assertTrue(Mobs.minionRoom(level, boss, 3), "room for the first summons");
+            h.assertTrue(Mobs.minionRoom(level, boss, AwakenBoss.DUEL_ADDS), "room for the first summons (a duel's two)");
             List<Entity> spawned = new ArrayList<>();
             for (int i = 0; i < 6; i++) {
                 AwakenMob m = Mobs.spawnMinion(level, Bestiary.get("toll_ghoul"), boss.position(), boss);
                 h.assertTrue(m != null && m.role().gateId().isEmpty(), "minions carry no gate id");
                 spawned.add(m);
             }
-            h.assertTrue(!Mobs.minionRoom(level, boss, 3), "summon budget stops a seventh wave");
+            h.assertTrue(!Mobs.minionRoom(level, boss, AwakenBoss.DUEL_ADDS), "summon budget stops a seventh wave");
             spawned.forEach(Entity::discard);
             boss.discard();
             h.succeed();

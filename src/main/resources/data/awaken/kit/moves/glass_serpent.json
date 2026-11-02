@@ -1223,7 +1223,7 @@
   },
   {
    "id": "erupt",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
     "windup": 18,
     "active": 8,

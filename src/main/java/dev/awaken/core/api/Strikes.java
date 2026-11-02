@@ -7,6 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.player.Player;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.BooleanSupplier;
@@ -194,5 +195,57 @@ public final class Strikes {
      */
     public static Goal bite(PathfinderMob mob, double speed, BooleanSupplier when) {
         return biters.bite(mob, speed, when);
+    }
+
+    // ---- the duel (server, SPEC §46.3) ------------------------------------------------------------------------------
+
+    /** What the mobs module answers when Arms turns a blow aside, and what Arms asks of a body. */
+    public interface Duel {
+        /** A melee blow of this body's was deflected. */
+        default void deflected(LivingEntity attacker, Kind kind) {}
+
+        /** Whether the body stands in an opening: it starts nothing, and blows on it break its stance faster. */
+        default boolean opening(LivingEntity e) {
+            return false;
+        }
+
+        /** A shot deflected by {@code by}: true when it flies back at its maker (it is then kept, not broken). */
+        default boolean returnShot(Entity shot, Player by) {
+            return false;
+        }
+    }
+
+    private static Duel duel = new Duel() {};
+
+    public static void installDuel(Duel d) {
+        duel = d;
+    }
+
+    public static void deflected(LivingEntity attacker, Kind kind) {
+        duel.deflected(attacker, kind);
+    }
+
+    public static boolean opening(LivingEntity e) {
+        return duel.opening(e);
+    }
+
+    public static boolean returnShot(Entity shot, Player by) {
+        return duel.returnShot(shot, by);
+    }
+
+    public interface Postures {
+        /** Fills a body's stance as a blow of {@code by}'s would (Arms: full, it breaks). */
+        void add(LivingEntity target, int amount, Player by);
+    }
+
+    private static Postures postures = (target, amount, by) -> {};
+
+    public static void installPostures(Postures p) {
+        postures = p;
+    }
+
+    /** A blow of {@code by}'s that isn't a swing (a shot sent back) fills the body's stance. */
+    public static void posture(LivingEntity target, int amount, Player by) {
+        postures.add(target, amount, by);
     }
 }

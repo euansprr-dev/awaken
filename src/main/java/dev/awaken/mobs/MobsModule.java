@@ -40,6 +40,23 @@ public final class MobsModule {
                 ? new Strikes.Tell(m.telegraphTicks(), m.tellKind()) : null : dev.awaken.mobs.entity.ToldBite.tellOf(e));
         // beasts on vanilla bodies bite told (SPEC §46.2)
         Strikes.installBiters(dev.awaken.mobs.entity.ToldBite::new);
+        // the duel (SPEC §46.3): a deflect answered by the boss's fight, its openings, a white-gold shot sent back
+        Strikes.installDuel(new Strikes.Duel() {
+            @Override
+            public void deflected(LivingEntity attacker, Strikes.Kind kind) {
+                if (attacker instanceof dev.awaken.mobs.entity.AwakenBoss b) b.deflected(kind);
+            }
+
+            @Override
+            public boolean opening(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b && b.inOpening();
+            }
+
+            @Override
+            public boolean returnShot(net.minecraft.world.entity.Entity shot, net.minecraft.world.entity.player.Player by) {
+                return shot instanceof dev.awaken.mobs.entity.AwBolt b && b.sendBack(by);
+            }
+        });
         Strikes.installStaggers(MobsModule::stagger);
         Strikes.installGrounder((e, ticks) -> e instanceof AwakenMob m && m.ground(ticks));
         BodyMaterial.install(e -> e instanceof AwakenMob m ? m.def().material() : null);

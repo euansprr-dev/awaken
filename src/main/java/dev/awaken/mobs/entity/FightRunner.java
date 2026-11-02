@@ -47,6 +47,20 @@ final class FightRunner {
     /** A phase waiting for its transition (the threshold was crossed mid-move), or -1. */
     private int pendingPhase = -1;
 
+    // the duel (SPEC §46.3), for a fight script that asks for it
+    /** Opening after a phrase: ticks for a phrase of one blow, each blow more, at most. */
+    static final int OPENING_MIN = 16, OPENING_PER_BLOW = 3, OPENING_MAX = 30;
+    /** A deflected blow's limb recoils this long before the phrase goes on; its last blow turned aside, it reels this long. */
+    static final int RECOIL_TICKS = 10, REEL_TICKS = 26;
+    /** Deflects in a row before it answers with a red blow (forgotten after ten seconds); weights for its answers. */
+    static final int HABIT_DEFLECTS = 2;
+    static final long HABIT_FORGET = 200;
+    static final int HABIT_RED = 4, HABIT_CLOSE = 3;
+    private int phraseBlows, deflects, recoil;
+    private long deflectAt;
+    /** The target's distance, sampled every 10 ticks (the last two), to see it backing off. */
+    private double distWas = -1, distWasWas = -1;
+
     FightRunner(AwakenBoss boss, Kits.Kit kit) {
         this.boss = boss;
         this.kit = kit;
@@ -60,6 +74,10 @@ final class FightRunner {
 
     boolean busy() {
         return move >= 0;
+    }
+
+    boolean duel() {
+        return fight.duel();
     }
 
     /** The intro pose (until the fight starts), or none. */
@@ -82,6 +100,8 @@ final class FightRunner {
         stop();
         string.clear();
         introduced = true;
+        phraseBlows = 1;
+        recoil = 0;
         return begin(level, id, boss.getTarget());
     }
 
@@ -109,6 +129,7 @@ final class FightRunner {
 
     /** Its stance broke or it was staggered: the move in progress ends there, and so does its string (SPEC §24). */
     void interrupt() {
+        recoil = 0;
         if (move < 0) return;
         stop();
         string.clear();
@@ -146,29 +167,51 @@ final class FightRunner {
             pendingPhase = -1;
             String tr = fight.phase(p).transition().orElse(null);
             string.clear();
+            phraseBlows = 1;
             if (tr != null && begin(level, tr, target)) {
                 boss.shield(windup + active + recover);
                 return;
             }
         }
-        // a broken stance or a stagger is the opening it earned: it starts nothing (and kneels while broken)
-        boolean broken = Stances.broken(boss);
-        boss.syncKit(-1, 0, broken ? AwakenBoss.KIT_POSE_BROKEN : 0);
+        // a broken stance or a stagger is the opening it earned: it starts nothing (and kneels while broken, reels from
+        // a phrase's last blow turned aside, its limb recoils from a deflect)
+        boolean broken = boss.broken() || Stances.broken(boss);
+        int pose = broken ? AwakenBoss.KIT_POSE_BROKEN : boss.reeling() ? AwakenBoss.KIT_POSE_REEL : recoil > 0 ? AwakenBoss.KIT_POSE_RECOIL : 0;
+        boss.syncKit(-1, 0, pose);
         if (broken || boss.staggered() || boss.flag(AwakenMob.F_FALLEN) || boss.flag(AwakenMob.F_DORMANT)) {
             string.clear();
+            recoil = 0;
             return;
         }
         if (target == null || !target.isAlive()) return;
         boss.getLookControl().setLookAt(target, 30, 30);
+        if ((boss.tickCount % 10) == 0) {
+            distWasWas = distWas;
+            distWas = edgeDistance(target);
+        }
+        if (recoil > 0) { // the limb comes back; the phrase goes on after
+            recoil--;
+            boss.getNavigation().stop();
+            return;
+        }
         if (!string.isEmpty()) {
             String next = string.poll();
             int i = moves.index(next);
-            if (i >= 0 && inRange(moves.get(i), target) && begin(level, next, target)) return;
+            if (i >= 0 && inRange(moves.get(i), target) && begin(level, next, target)) {
+                phraseBlows++;
+                return;
+            }
             string.clear();
+            if (fight.duel()) { // a phrase cut short (you got out of reach) still ends in its opening
+                openUp(level, opening(phraseBlows));
+                return;
+            }
         }
         if (gap > 0) {
             gap--;
-            approach(target);
+            // an opening: it starts nothing and stands its ground, turning to keep you in front (SPEC §46.3)
+            if (boss.inOpening()) boss.getNavigation().stop();
+            else approach(target);
             return;
         }
         FightScripts.Entry e = pick(target);
@@ -176,6 +219,7 @@ final class FightRunner {
             approach(target);
             return;
         }
+        phraseBlows = 1;
         if (!e.then().isEmpty()) {
             List<String> s = e.then().get(boss.getRandom().nextInt(e.then().size()));
             string.addAll(s);
@@ -208,15 +252,79 @@ final class FightRunner {
     private FightScripts.@Nullable Entry pick(LivingEntity target) {
         List<FightScripts.Entry> pool = fight.phase(boss.phase()).pool();
         int sum = 0;
-        for (FightScripts.Entry e : pool) if (usable(e, target)) sum += Math.max(1, e.weight());
+        for (FightScripts.Entry e : pool) if (usable(e, target)) sum += weight(e, target);
         if (sum <= 0) return null;
         int r = boss.getRandom().nextInt(sum);
         for (FightScripts.Entry e : pool) {
             if (!usable(e, target)) continue;
-            r -= Math.max(1, e.weight());
-            if (r < 0) return e;
+            r -= weight(e, target);
+            if (r < 0) {
+                if (red(e)) deflects = 0; // its answer to your deflects is given
+                return e;
+            }
         }
         return null;
+    }
+
+    /**
+     * An entry's weight; in a duel it answers your habits (SPEC §46.3): after {@link #HABIT_DEFLECTS} deflects in a row
+     * its red phrases come up {@link #HABIT_RED} times as often, and when you back off its gap closers
+     * {@link #HABIT_CLOSE} times.
+     */
+    private int weight(FightScripts.Entry e, LivingEntity target) {
+        int w = Math.max(1, e.weight());
+        if (!fight.duel()) return w;
+        if (deflects >= HABIT_DEFLECTS && boss.level().getGameTime() - deflectAt <= HABIT_FORGET && red(e)) w *= HABIT_RED;
+        int i = moves.index(e.move());
+        if (i >= 0 && moves.get(i).is("gap") && backingOff()) w *= HABIT_CLOSE;
+        return w;
+    }
+
+    private boolean red(FightScripts.Entry e) {
+        int i = moves.index(e.move());
+        if (i < 0) return false;
+        KitMoves.Move m = moves.get(i);
+        Strikes.Kind k = told(m, m.ability().map(boss::ability).orElse(null));
+        return k == Strikes.Kind.PERILOUS || k == Strikes.Kind.GRAB;
+    }
+
+    /** The target is putting distance between you: further than 6 blocks and 1.5 further than a second ago. */
+    private boolean backingOff() {
+        return distWas >= 6 && distWasWas >= 0 && distWas - distWasWas > 1.5;
+    }
+
+    /** The opening after a phrase of {@code blows}: 0.8 s after one, longer after longer ones, at most 1.5 s. */
+    static int opening(int blows) {
+        return Math.min(OPENING_MAX, OPENING_MIN + OPENING_PER_BLOW * Math.max(0, blows - 1));
+    }
+
+    /** It stands open for {@code ticks}: it starts nothing, and blows on it break its stance faster. */
+    private void openUp(ServerLevel level, int ticks) {
+        gap = ticks;
+        boss.openFor(ticks);
+    }
+
+    /**
+     * A blow of its was deflected (Arms, SPEC §46.3): the blow is spent and its limb recoils; the phrase goes on after
+     * {@link #RECOIL_TICKS}, unless that was its last blow: then it reels, the opening a parry earns.
+     */
+    void deflected(ServerLevel level, Strikes.Kind kind) {
+        if (!fight.duel() || move < 0 || cls == Strikes.Kind.NONE) return;
+        long now = level.getGameTime();
+        if (now - deflectAt > HABIT_FORGET) deflects = 0;
+        deflects++;
+        deflectAt = now;
+        boolean last = string.isEmpty();
+        stop();
+        if (last) {
+            // the reel is a stagger (nothing counts down through it), then half an opening more while it gathers itself
+            boss.reel(REEL_TICKS);
+            gap = OPENING_MIN / 2;
+            boss.openFor(REEL_TICKS + OPENING_MIN / 2);
+        } else {
+            recoil = RECOIL_TICKS;
+            boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_RECOIL);
+        }
     }
 
     private boolean usable(FightScripts.Entry e, LivingEntity target) {
@@ -374,7 +482,10 @@ final class FightRunner {
             return;
         }
         stop();
-        gap = !studio.isEmpty() ? 30 : string.isEmpty() ? 6 + boss.getRandom().nextInt(9) : 0;
+        if (!studio.isEmpty()) gap = 30;
+        else if (!string.isEmpty()) gap = 0;
+        else if (fight.duel()) openUp(level, opening(phraseBlows)); // every phrase ends in an opening (SPEC §46.3, I8)
+        else gap = 6 + boss.getRandom().nextInt(9);
     }
 
     /**
@@ -405,6 +516,7 @@ final class FightRunner {
         if (i < 0 || !inRange(moves.get(i), target)) return false;
         String next = string.poll();
         stop();
+        phraseBlows++;
         return begin(level, next, target);
     }
 

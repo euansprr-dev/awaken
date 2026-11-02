@@ -491,6 +491,28 @@ def _reactions(r):
                  head=(-28 * sgn, 12), jaw=20, roll=-12 * sgn)
         b = pose(r, neck=neck((sgn, 9, 2), (2 * sgn, 20, 4), (2 * sgn, 29, 1), (sgn, 34, -5), (0, 37, -14)), head=(8 * sgn, 24), jaw=4)
         keyed(r, nm, 0.65, [(0, pose(r)), (0.1, h), (0.36, b), (0.65, pose(r))])
+    # turned aside (SPEC §46.3): the skull is knocked up and off to its right, the neck whipping back in an S over a
+    # coil clenched tight; it hangs there a beat, then the neck comes forward again to strike on
+    thrown = pose(r, coil_pts=coil(r_in=9.4, pitch=13.4, spin=4), neck=neck((-1, 9, 5), (-3, 19, 11), (-5, 29, 13), (-6, 36, 9), (-7, 42, 2)),
+                  head=(-14, -18), jaw=30, roll=-8)
+    hang = pose(r, coil_pts=coil(r_in=9.7, pitch=13.7, spin=2), neck=neck((-1, 9, 4), (-2, 20, 9), (-3, 30, 9), (-3, 36, 4), (-3, 40, -4)),
+                head=(-6, -2), jaw=12, roll=-3)
+    ready = pose(r, neck=neck((0, 9, 2), (0, 20, 3), (0, 29, 0), (0, 34, -7), (0, 36, -16)), head=(2, 26), jaw=4)
+    keyed(r, "parried", 0.5, [(0, pose(r)), (0.07, thrown), (0.24, hang), (0.38, ready), (0.5, pose(r))])
+    # reeling (a phrase's last blow turned aside): the skull is struck up and back as far as it goes, the coil loosening
+    # under it; the neck lurches one way and the other, then sags low with the jaw hanging, open, before it lifts again
+    rock = pose(r, coil_pts=coil(r_in=9.0, pitch=13.0, rise=1.5, spin=6), neck=neck((-1, 10, 5), (-3, 21, 12), (-6, 32, 15), (-8, 40, 12), (-9, 46, 5)),
+                head=(-18, -28), jaw=32, roll=-10)
+    sway = pose(r, coil_pts=coil(r_in=10.2, pitch=14.5, spin=-3), neck=neck((2, 9, 3), (6, 18, 4), (10, 25, 0), (12, 28, -6), (13, 29, -13)),
+                head=(22, 18), jaw=18, roll=10)
+    back = pose(r, coil_pts=coil(r_in=10.5, pitch=15.0, spin=-1), neck=neck((-1, 8, 1), (-4, 15, -1), (-6, 19, -7), (-7, 20, -14), (-7, 19, -21)),
+                head=(-16, 30), jaw=22, roll=-6)
+    slump = pose(r, coil_pts=coil(r_in=10.6, pitch=15.2), neck=neck((1, 7, 0), (2, 13, -4), (3, 16, -11), (3, 16, -18), (2, 14, -25)),
+                 head=(6, 36), jaw=26, roll=4)
+    held = pose(r, coil_pts=coil(r_in=10.5, pitch=15.0), neck=neck((1, 7, 0), (2, 14, -3), (2, 17, -10), (2, 17, -17), (1, 16, -24)),
+                head=(4, 32), jaw=20, roll=3)
+    lift = pose(r, neck=neck((0, 9, 1), (1, 19, 2), (1, 27, -1), (0, 31, -7), (0, 33, -15)), head=(2, 28), jaw=8)
+    keyed(r, "reel", 1.3, [(0, pose(r)), (0.1, rock), (0.34, sway), (0.56, back), (0.78, slump), (1.02, held), (1.18, lift), (1.3, pose(r))])
     sl = _sleep(r)
     mid = pose(r, coil_pts=coil(r_in=9.5, pitch=13.5), neck=neck((3, 6, -3), (7, 13, -8), (8, 17, -16), (6, 18, -25), (3, 17, -34)), head=(-15, 14))
     keyed(r, "kneel", 1.0, [(0, pose(r)), (0.45, mid), (1.0, sl)])
@@ -628,7 +650,7 @@ def erupt(r):
     held = pose(r, coil_pts=coil(r_in=8.5, pitch=12.5, wave=(1.0, 4.0, 1.5)), neck=neck((0, 9, -5), (0, 15, -13), (0, 14, -22), (0, 9, -29), (0, 2, -33)),
                 head=(0, 72), jaw=30, roll=4)
     wrench = pose(r, neck=neck((0, 10, 1), (0, 21, 2), (0, 30, 0), (0, 36, -5), (0, 39, -13)), head=(0, 6), jaw=24)
-    return Move("erupt", "HEAVY", 18, 8, 18, title="Erupting Glass", track=4.0, ability="Erupting Glass", rng=(4, 18), kinds=("ranged", "area"),
+    return Move("erupt", "PERILOUS", 18, 8, 18, title="Erupting Glass", track=4.0, ability="Erupting Glass", rng=(4, 18), kinds=("ranged", "area"),
                 damage=1.0, knock=0.6, plant=(), stages={"windup": [(0.3, gather), (1.0, rear)], "active": [(0.3, drive), (1.0, held)],
                                                           "recover": [(0.5, wrench)]}, lag=_lag(), through=held)
 
@@ -735,29 +757,31 @@ SOUNDS = {
 MOVE_SOUNDS = {"wake": {"swing": "roar"}, "erupt": {"swing": "cast"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside bite throws its skull back
+    "duel": True,
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [
-            {"move": "bite", "weight": 3, "when": "near", "then": [["bite_b"]]},
-            {"move": "lunge", "weight": 3, "when": "far"},
-            {"move": "spray", "weight": 3},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "bite", "weight": 3, "when": "near", "then": [["bite_b"], ["bite_b", "spray"]]},
+            {"move": "lunge", "weight": 3, "when": "far", "then": [["bite"], ["bite", "bite_b"]]},
+            {"move": "spray", "weight": 2, "then": [["bite"]]},
+            {"move": "lash", "weight": 2, "when": "behind"},
         ]},
         {"transition": "burrow", "pool": [
-            {"move": "bite", "weight": 3, "when": "near", "then": [["bite_b"], ["bite_b", "spray"]]},
-            {"move": "burrow", "weight": 3, "when": "far", "then": [["bite"]]},
-            {"move": "erupt", "weight": 3, "when": "far"},
-            {"move": "lunge", "weight": 2, "when": "far"},
-            {"move": "spray", "weight": 2},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "bite", "weight": 3, "when": "near", "then": [["bite_b", "spray"], ["bite_b", "lash"]]},
+            {"move": "burrow", "weight": 3, "when": "far", "then": [["bite", "bite_b"]]},
+            {"move": "erupt", "weight": 2, "when": "far", "then": [["lunge"]]},
+            {"move": "lunge", "weight": 2, "when": "far", "then": [["bite", "bite_b"]]},
+            {"move": "spray", "weight": 2, "then": [["bite"]]},
+            {"move": "lash", "weight": 2, "when": "behind"},
         ]},
         {"transition": "storm", "pool": [
-            {"move": "bite", "weight": 3, "when": "near", "then": [["bite_b", "spray"]]},
+            {"move": "bite", "weight": 3, "when": "near", "then": [["bite_b", "spray"], ["bite_b", "bite", "lash"]]},
             {"move": "storm", "weight": 2},
-            {"move": "lunge", "weight": 3, "when": "far", "then": [["bite"]]},
-            {"move": "erupt", "weight": 3, "when": "far"},
-            {"move": "burrow", "weight": 2, "when": "far", "then": [["bite"]]},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "lunge", "weight": 3, "when": "far", "then": [["bite", "bite_b"]]},
+            {"move": "erupt", "weight": 2, "when": "far", "then": [["erupt"], ["lunge"]]},
+            {"move": "burrow", "weight": 2, "when": "far", "then": [["bite", "bite_b", "spray"]]},
+            {"move": "lash", "weight": 2, "when": "behind"},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

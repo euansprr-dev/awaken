@@ -2,41 +2,13 @@
  "schemaVersion": 1,
  "id": "glass_serpent",
  "moves": "glass_serpent",
+ "duel": true,
  "intro": {
   "pose": "kneel",
   "move": "wake"
  },
  "phases": [
   {
-   "pool": [
-    {
-     "move": "bite",
-     "weight": 3,
-     "when": "NEAR",
-     "then": [
-      [
-       "bite_b"
-      ]
-     ]
-    },
-    {
-     "move": "lunge",
-     "weight": 3,
-     "when": "FAR"
-    },
-    {
-     "move": "spray",
-     "weight": 3
-    },
-    {
-     "move": "lash",
-     "weight": 3,
-     "when": "BEHIND"
-    }
-   ]
-  },
-  {
-   "transition": "burrow",
    "pool": [
     {
      "move": "bite",
@@ -53,9 +25,22 @@
      ]
     },
     {
-     "move": "burrow",
+     "move": "lunge",
      "weight": 3,
      "when": "FAR",
+     "then": [
+      [
+       "bite"
+      ],
+      [
+       "bite",
+       "bite_b"
+      ]
+     ]
+    },
+    {
+     "move": "spray",
+     "weight": 2,
      "then": [
       [
        "bite"
@@ -63,22 +48,74 @@
      ]
     },
     {
-     "move": "erupt",
+     "move": "lash",
+     "weight": 2,
+     "when": "BEHIND"
+    }
+   ]
+  },
+  {
+   "transition": "burrow",
+   "pool": [
+    {
+     "move": "bite",
      "weight": 3,
-     "when": "FAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "bite_b",
+       "spray"
+      ],
+      [
+       "bite_b",
+       "lash"
+      ]
+     ]
+    },
+    {
+     "move": "burrow",
+     "weight": 3,
+     "when": "FAR",
+     "then": [
+      [
+       "bite",
+       "bite_b"
+      ]
+     ]
+    },
+    {
+     "move": "erupt",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lunge"
+      ]
+     ]
     },
     {
      "move": "lunge",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "bite",
+       "bite_b"
+      ]
+     ]
     },
     {
      "move": "spray",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "bite"
+      ]
+     ]
     },
     {
      "move": "lash",
-     "weight": 3,
+     "weight": 2,
      "when": "BEHIND"
     }
    ]
@@ -94,6 +131,11 @@
       [
        "bite_b",
        "spray"
+      ],
+      [
+       "bite_b",
+       "bite",
+       "lash"
       ]
      ]
     },
@@ -107,14 +149,23 @@
      "when": "FAR",
      "then": [
       [
-       "bite"
+       "bite",
+       "bite_b"
       ]
      ]
     },
     {
      "move": "erupt",
-     "weight": 3,
-     "when": "FAR"
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "erupt"
+      ],
+      [
+       "lunge"
+      ]
+     ]
     },
     {
      "move": "burrow",
@@ -122,13 +173,15 @@
      "when": "FAR",
      "then": [
       [
-       "bite"
+       "bite",
+       "bite_b",
+       "spray"
       ]
      ]
     },
     {
      "move": "lash",
-     "weight": 3,
+     "weight": 2,
      "when": "BEHIND"
     }
    ]

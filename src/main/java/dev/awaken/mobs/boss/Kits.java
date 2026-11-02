@@ -120,6 +120,9 @@ public final class Kits {
     public static final List<String> REQUIRED = List.of("gap", "combo", "delay", "area", "ranged", "behind", "signature");
 
     /** Everything wrong with a kit, empty if it may be used. */
+    /** The reactions every duel's body has besides its hurt, kneel and rise. */
+    static final List<String> DUEL_CLIPS = List.of("parried", "reel");
+
     public static List<String> problems(Kit k) {
         List<String> out = new ArrayList<>();
         for (KitMoves.Move m : k.moves.moves()) {
@@ -160,6 +163,8 @@ public final class Kits {
         f.intro().move().ifPresent(t -> need(k, t, out, null));
         f.death().ifPresent(t -> need(k, t, out, null));
         for (String r : REQUIRED) if (!covered.contains(r)) out.add(k.id + ": its fight has no " + r + " move");
+        // a duel's body shows what a deflect does to it (SPEC §46.3): its limb thrown back, and the reel
+        if (f.duel()) for (String c : DUEL_CLIPS) if (k.rig.clip(c) == null) out.add(k.id + ": a duel with no " + c + " clip");
         return out;
     }
 

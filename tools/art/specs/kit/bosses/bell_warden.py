@@ -311,6 +311,78 @@ def _foot(k, out=0.0, side=0.0, up=0.0, dz=0.0, dx=0.0):
     return (x + ox * out - oz * side + dx, h + up, z + oz * out + ox * side + dz)
 
 
+def _plant_spans(r, clip, spans):
+    """As _plant, each leg only through its own spans of the clip [(legs, t0, t1, where)]; outside them it moves as keyed
+    (a step, a throw)."""
+    def fn(t, s, fr):
+        out = {}
+        for k in range(4):
+            span = next((sp for sp in spans if k in sp[0] and sp[1] - 1e-6 <= t <= sp[2] + 1e-6), None)
+            if span is None:
+                for b in (f"thigh{k}", f"shin{k}", f"foot{k}"):
+                    out[b] = tuple(c * 180 / math.pi for c in s.get(b, {}).get("rot", (0, 0, 0)))
+            else:
+                out.update(ik.limb(r, fr, f"thigh{k}", f"shin{k}", f"foot{k}", ik.model((span[3] or {}).get(k, REST_FOOT[k])), POLE[k]))
+                out[f"foot{k}"] = tuple(c * 180 / math.pi for c in s.get(f"foot{k}", {}).get("rot", (0, 0, 0)))
+        return out
+    ik.retrack(r, clip, fn)
+
+
+DRIFT = 3.0  # pixels a standing point may wander in the keyed clip and still be a stand the lock holds
+
+
+def _lock(r, clip, hold=3):
+    """Every point that stands on the floor for hold ticks or more stays exactly where it set down (FA's foot lock, SPEC
+    §46.3): between key poses the legs' turns blend and a standing point drifts a pixel or two a tick. A stand that runs
+    to the clip's start or end keeps the point where the clip hands it over, so the seams don't move it either."""
+    c = r.clips[clip]
+    n = int(round(c.length / core.TICK))
+    pts = {k: [] for k in range(4)}
+    for i in range(n + 1):
+        fr = core.frames(r, core.sample(r, clip, min(c.length, i * core.TICK)))
+        for k in range(4):
+            pts[k].append(fr[f"foot{k}"][1])
+    floor = ik.model(REST_FOOT[0])[1]
+    spans = {k: [] for k in range(4)}
+    for k in range(4):
+        down = [abs(q[1] - floor) <= 1.0 for q in pts[k]]
+        i = 0
+        while i <= n:
+            if not down[i]:
+                i += 1
+                continue
+            j = i
+            while j <= n and down[j]:
+                j += 1
+            if j - i >= hold:
+                # where it hands over at the clip's ends; inside, the middle of its drift, so it takes hold and lets go
+                # by half as much
+                at = pts[k][0] if i == 0 else pts[k][n] if j - 1 == n else pts[k][(i + j - 1) // 2]
+                # a point dragged on purpose (a skid, a scrape) goes on as keyed: only a drift is held
+                if max(math.hypot(q[0] - at[0], q[2] - at[2]) for q in pts[k][i:j]) <= DRIFT:
+                    spans[k].append((i, j - 1, at))
+            i = j
+    if not any(spans.values()):
+        return
+
+    def fn(t, s, fr):
+        out, i = {}, int(round(t / core.TICK))
+        for k in range(4):
+            sp = next((x for x in spans[k] if x[0] <= i <= x[1]), None)
+            if sp is not None:
+                lock = ik.limb(r, fr, f"thigh{k}", f"shin{k}", f"foot{k}", sp[2], POLE[k])
+                # its first and last ticks go halfway, so taking hold and letting go never kinks the leg
+                edge = False
+                for b, v in lock.items():
+                    was = tuple(c * 180 / math.pi for c in s.get(b, {}).get("rot", (0, 0, 0)))
+                    out[b] = tuple(w + ((u - w + 180) % 360 - 180) * (0.5 if edge else 1.0) for u, w in zip(v, was))
+            for b in (f"thigh{k}", f"shin{k}", f"foot{k}"):
+                if b not in out:
+                    out[b] = tuple(v * 180 / math.pi for v in s.get(b, {}).get("rot", (0, 0, 0)))
+        return out
+    ik.retrack(r, clip, fn)
+
+
 def _plant(r, clip, legs, where=None):
     """The legs that stand through a move keep their points on the floor where they stand, every tick: the staged
     clip's follow-through and settle would otherwise slide them."""
@@ -435,6 +507,35 @@ def _reactions(r):
                   face=(0, 12 * sgn, 0))
         b = _pose(r, lift=-0.5, roll=4 * sgn, yaw=2 * sgn, tongue=(0, -9 * sgn), whip=(0, -5 * sgn), jaw=3, rope=(0, -5 * sgn))
         keyed(r, nm, 0.65, [(0, _pose(r)), (0.08, h), (0.34, b), (0.65, _pose(r))])
+    # turned aside (SPEC §46.3): the blow is thrown back, the bell rocks up onto its back legs with its front points off
+    # the floor and the clapper swinging, and comes down onto them again ready to go on
+    up = {0: _foot(0, out=-3, up=10), 1: _foot(1, out=-3, up=10)}
+    thrown = _pose(r, lift=2.5, pitch=-15, feet=up, tongue=(24, 0), whip=(18, 0), jaw=14, rope=(10, 0), face=(-14, 0, 0))
+    tip = _pose(r, lift=1.5, pitch=-10, feet={0: _foot(0, out=-1, up=6), 1: _foot(1, out=-1, up=6)}, tongue=(-10, 0), whip=(-12, 0), jaw=8,
+                rope=(-6, 0), face=(-6, 0, 0))
+    land = _pose(r, lift=-2, pitch=3, tongue=(-6, 0), whip=(4, 0), jaw=3, rope=(-3, 0), face=(3, 0, 0))
+    keyed(r, "parried", 0.5, [(0, _pose(r)), (0.07, thrown), (0.24, tip), (0.36, land), (0.5, _pose(r))])
+    # reeling (a phrase's last blow turned aside): thrown back hard and over to one side, it catches itself on its back
+    # legs stepped wide, lurches forward over its front ones and hangs low and wide with its clapper swinging, open,
+    # before it gathers itself up
+    # its points: thrown back, the back pair skid out under it; the front pair come down wide and both pairs hold there
+    # (planted) until it gathers itself and steps them back in
+    wide = {0: _foot(0, out=4), 1: _foot(1, out=3.5), 2: _foot(2, out=6), 3: _foot(3, out=5)}
+    rock = _pose(r, lift=3, pitch=-22, roll=8, feet={0: _foot(0, out=-4, up=14), 1: _foot(1, out=-2, up=9), 2: wide[2], 3: wide[3]},
+                 tongue=(30, -8), whip=(22, 0), jaw=18, rope=(14, -4), face=(-18, 6, 0))
+    over = dict(wide)  # the front points come down from straight above where they land
+    over.update({0: _foot(0, out=4, up=4), 1: _foot(1, out=3.5, up=4)})
+    drop = _pose(r, lift=1.5, pitch=-16, roll=6, feet=over, tongue=(4, 0), whip=(6, 2), jaw=14, rope=(2, 0), face=(-12, 4, 0))
+    catch = _pose(r, lift=0.5, pitch=-12, roll=5, feet=wide, tongue=(-14, 6), whip=(-16, 4), jaw=12, rope=(-8, 3), face=(-8, 3, 0))
+    sway = _pose(r, lift=-4, pitch=8, roll=-4, feet=wide, tongue=(-22, -6), whip=(10, -6), jaw=14, rope=(-10, -3), face=(10, -4, 0))
+    slump = _pose(r, lift=-8, pitch=4, roll=3, feet=wide, tongue=(9, 4), whip=(-6, 3), jaw=16, rope=(5, 2), face=(8, 2, 0))
+    hold = _pose(r, lift=-7, pitch=3, roll=2, feet=wide, tongue=(2, -2), whip=(3, 0), jaw=10, face=(6, 1, 0))
+    gather = _pose(r, lift=-2, pitch=-2, feet=wide, tongue=(-4, 0), jaw=4)
+    step = _pose(r, lift=-0.5, feet={k: _foot(k, out=0.4 * (6 if k > 1 else 4), up=7) for k in range(4)}, tongue=(3, 0), jaw=2)
+    keyed(r, "reel", 1.3, [(0, _pose(r)), (0.1, rock), (0.24, drop), (0.32, catch), (0.52, sway), (0.74, slump), (1.0, hold), (1.14, gather), (1.22, step),
+                           (1.3, _pose(r))])
+    _plant_spans(r, "reel", [((2, 3), 0.1, 1.14, wide), ((0, 1), 0.32, 1.14, wide), ((0, 1, 2, 3), 1.3, 1.3, None)])
+    _plant_spans(r, "parried", [((2, 3), 0.0, 0.5, None), ((0, 1), 0.36, 0.5, None)])
     # broken (and waiting for you): it sinks onto its rim, its legs sliding out, then folds them up its sides; it rises
     # by throwing them out, setting the points down far out round it and pushing itself up on them
     half = _pose(r, lift=-14, feet={k: _foot(k, out=5) for k in range(4)}, retract=6, tongue=(6, 0))
@@ -616,7 +717,7 @@ def rush(r):
 
 
 def shatter(r):
-    """Shattered Bronze (HEAVY): it crouches and shudders, faster and faster, the crack up its side flaring; then it
+    """Shattered Bronze (PERILOUS): it crouches and shudders, faster and faster, the crack up its side flaring; then it
     throws itself up onto the points of its legs and the bronze flies off it in shards all round."""
     crouch = {k: _foot(k, out=3) for k in range(4)}
     shud = lambda a, s: _pose(r, lift=-6 + 0.8 * s, pitch=3 * s * a, roll=3 * s * a, feet=crouch, tongue=(6 * s * a, -8 * s * a), jaw=6 + 10 * a)
@@ -629,7 +730,7 @@ def shatter(r):
     sink = _pose(r, lift=7, pitch=-BOW + 1, feet={k: _foot(k, out=-3) for k in range(4)}, tongue=(4, -2), whip=(-8, 0), jaw=12, rope=(-12, -6),
                  face=(-6, 0, 0))
     down = _pose(r, lift=-3, pitch=2, tongue=(8, 0), jaw=4)
-    return Move("shatter", "HEAVY", 18, 8, 18, through=sink, title="Shattered Bronze", track=0.0, ability="Shattered Bronze", rng=(0, 14), kinds=("area",),
+    return Move("shatter", "PERILOUS", 18, 8, 18, through=sink, title="Shattered Bronze", track=0.0, ability="Shattered Bronze", rng=(0, 14), kinds=("area",),
                 damage=1.0, knock=0.5, plant=(), stages={"windup": keys, "active": [(0.3, burst), (1.0, held)], "recover": [(0.5, down)]},
                 lag=_lag())
 
@@ -666,7 +767,10 @@ def wake(r):
 
 
 # the ground (SPEC §35.10): the points, the clapper's ball and the rope's end stay out of the floor
-LEG_GROUND = [([f"foot{k}", f"shin{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
+LEG_GROUND = [([f"shin{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
+# a standing point is set on the floor by its own IK: lifting its leg clear tick by tick is what slid it (SPEC §46.3), so
+# the points are kept up only in the moves where every leg travels
+FOOT_GROUND = [([f"foot{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
 CLAP_GROUND = [(["clapper_b"], [("clapper", 0, 80, -1), ("clapper_b", 0, 80, -1)])]
 HANG_GROUND = [(["rope2"], [("rope0", 0, 80, -1), ("rope1", 0, 80, -1)]), (["chain2"], [("chain0", 0, 80, -1), ("chain1", 0, 80, -1)])]
 STANDS = {"stab": (1, 2, 3), "stab_b": (0, 2, 3), "clapper": (2, 3), "toll": (), "echo": (2, 3), "rake": (0, 1, 3), "summon": (),
@@ -686,9 +790,16 @@ def clips(r):
     own = {core.clip_name(m) for m in mv if m.ground}
     everyday = [n for n in r.clips if n != "death"]
     core.ground_pass(r, LEG_GROUND, clips=everyday)
+    core.ground_pass(r, FOOT_GROUND, clips=[core.clip_name(m) for m in mv if not STANDS[m.id]])
     core.ground_pass(r, CLAP_GROUND, clips=[n for n in everyday if n not in own])
     core.ground_pass(r, HANG_GROUND, clips=everyday)
     core.ground_pass(r, CLAP_GROUND + HANG_GROUND, clips=["death"], skip=())
+    # the lock holds the standing points of the idle, the reactions and the moves some legs stand through; in the moves
+    # where every leg travels (a rush, a peal) the points move as keyed
+    travel = {core.clip_name(m) for m in mv if not STANDS[m.id]}
+    for n in everyday:
+        if n not in travel and n not in ("kneel", "rise", "sat") and not n.startswith(("walk", "run")):
+            _lock(r, n)
     del r.clips["sat"]
     return mv
 
@@ -708,31 +819,33 @@ SOUNDS = {
 MOVE_SOUNDS = {"wake": {"swing": "roar"}, "summon": {"swing": "roar"}, "echo": {"swing": "cast"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "stab", "weight": 3, "when": "near", "then": [["stab_b"], ["stab_b", "clapper"]]},
-            {"move": "clapper", "weight": 3},
-            {"move": "toll", "weight": 3},
-            {"move": "echo", "weight": 3, "when": "far"},
-            {"move": "rake", "weight": 3, "when": "behind"},
+            {"move": "clapper", "weight": 2, "then": [["stab"], ["toll"]]},
+            {"move": "toll", "weight": 2, "then": [["echo"]]},
+            {"move": "echo", "weight": 3, "when": "far", "then": [["echo"]]},
+            {"move": "rake", "weight": 2, "when": "behind"},
         ]},
         {"transition": "summon", "pool": [
-            {"move": "stab", "weight": 3, "when": "near", "then": [["stab_b"], ["stab_b", "clapper"]]},
-            {"move": "clapper", "weight": 2},
-            {"move": "toll", "weight": 3},
-            {"move": "echo", "weight": 2, "when": "far"},
-            {"move": "rush", "weight": 3, "when": "far", "then": [["stab"]]},
-            {"move": "rake", "weight": 3, "when": "behind"},
+            {"move": "stab", "weight": 3, "when": "near", "then": [["stab_b", "clapper"], ["stab_b"]]},
+            {"move": "clapper", "weight": 2, "then": [["toll"], ["stab", "stab_b"]]},
+            {"move": "toll", "weight": 2, "then": [["clapper"]]},
+            {"move": "echo", "weight": 2, "when": "far", "then": [["rush"]]},
+            {"move": "rush", "weight": 3, "when": "far", "then": [["stab", "stab_b"], ["clapper"]]},
+            {"move": "rake", "weight": 2, "when": "behind"},
             {"move": "summon", "weight": 1},
         ]},
         {"transition": "peal", "pool": [
-            {"move": "stab", "weight": 3, "when": "near", "then": [["stab_b", "clapper"]]},
-            {"move": "clapper", "weight": 2, "then": [["toll"]]},
-            {"move": "shatter", "weight": 3},
-            {"move": "toll", "weight": 2},
-            {"move": "rush", "weight": 2, "when": "far", "then": [["clapper"]]},
-            {"move": "rake", "weight": 3, "when": "behind"},
+            {"move": "stab", "weight": 3, "when": "near", "then": [["stab_b", "clapper"], ["stab_b", "clapper", "toll"]]},
+            {"move": "clapper", "weight": 2, "then": [["toll"], ["shatter"]]},
+            {"move": "shatter", "weight": 2, "then": [["rush"]]},
+            {"move": "toll", "weight": 2, "then": [["clapper"]]},
+            {"move": "rush", "weight": 2, "when": "far", "then": [["clapper"], ["stab", "stab_b"]]},
+            {"move": "rake", "weight": 2, "when": "behind"},
             {"move": "peal", "weight": 2},
         ]},
     ],

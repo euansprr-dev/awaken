@@ -52,7 +52,11 @@ public final class FightScripts {
         ).apply(i, Enrage::new));
     }
 
-    public record Fight(int schemaVersion, String id, String moves, Intro intro, List<Phase> phases, Enrage enrage, Optional<String> death) {
+    /**
+     * {@code duel}: the fight plays as a duel (SPEC §46.3): every phrase (a move and its string) ends in an opening, a
+     * deflected blow recoils and the phrase goes on, its last blow turned aside makes it reel, and it answers your habits.
+     */
+    public record Fight(int schemaVersion, String id, String moves, Intro intro, List<Phase> phases, Enrage enrage, Optional<String> death, boolean duel) {
         public static final Codec<Fight> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("schemaVersion").forGetter(Fight::schemaVersion),
                 Codec.STRING.fieldOf("id").forGetter(Fight::id),
@@ -60,7 +64,8 @@ public final class FightScripts {
                 Intro.CODEC.optionalFieldOf("intro", Intro.NONE).forGetter(Fight::intro),
                 Phase.CODEC.listOf().fieldOf("phases").forGetter(Fight::phases),
                 Enrage.CODEC.optionalFieldOf("enrage", Enrage.DEFAULT).forGetter(Fight::enrage),
-                Codec.STRING.optionalFieldOf("death").forGetter(Fight::death)
+                Codec.STRING.optionalFieldOf("death").forGetter(Fight::death),
+                Codec.BOOL.optionalFieldOf("duel", false).forGetter(Fight::duel)
         ).apply(i, Fight::new));
 
         public Phase phase(int p) {

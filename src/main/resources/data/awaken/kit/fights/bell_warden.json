@@ -2,6 +2,7 @@
  "schemaVersion": 1,
  "id": "bell_warden",
  "moves": "bell_warden",
+ "duel": true,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -25,20 +26,38 @@
     },
     {
      "move": "clapper",
-     "weight": 3
+     "weight": 2,
+     "then": [
+      [
+       "stab"
+      ],
+      [
+       "toll"
+      ]
+     ]
     },
     {
      "move": "toll",
-     "weight": 3
+     "weight": 2,
+     "then": [
+      [
+       "echo"
+      ]
+     ]
     },
     {
      "move": "echo",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "echo"
+      ]
+     ]
     },
     {
      "move": "rake",
-     "weight": 3,
+     "weight": 2,
      "when": "BEHIND"
     }
    ]
@@ -52,26 +71,45 @@
      "when": "NEAR",
      "then": [
       [
-       "stab_b"
-      ],
-      [
        "stab_b",
        "clapper"
+      ],
+      [
+       "stab_b"
       ]
      ]
     },
     {
      "move": "clapper",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "toll"
+      ],
+      [
+       "stab",
+       "stab_b"
+      ]
+     ]
     },
     {
      "move": "toll",
-     "weight": 3
+     "weight": 2,
+     "then": [
+      [
+       "clapper"
+      ]
+     ]
     },
     {
      "move": "echo",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "rush"
+      ]
+     ]
     },
     {
      "move": "rush",
@@ -79,13 +117,17 @@
      "when": "FAR",
      "then": [
       [
-       "stab"
+       "stab",
+       "stab_b"
+      ],
+      [
+       "clapper"
       ]
      ]
     },
     {
      "move": "rake",
-     "weight": 3,
+     "weight": 2,
      "when": "BEHIND"
     },
     {
@@ -105,6 +147,11 @@
       [
        "stab_b",
        "clapper"
+      ],
+      [
+       "stab_b",
+       "clapper",
+       "toll"
       ]
      ]
     },
@@ -114,16 +161,29 @@
      "then": [
       [
        "toll"
+      ],
+      [
+       "shatter"
       ]
      ]
     },
     {
      "move": "shatter",
-     "weight": 3
+     "weight": 2,
+     "then": [
+      [
+       "rush"
+      ]
+     ]
     },
     {
      "move": "toll",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "clapper"
+      ]
+     ]
     },
     {
      "move": "rush",
@@ -132,12 +192,16 @@
      "then": [
       [
        "clapper"
+      ],
+      [
+       "stab",
+       "stab_b"
       ]
      ]
     },
     {
      "move": "rake",
-     "weight": 3,
+     "weight": 2,
      "when": "BEHIND"
     },
     {

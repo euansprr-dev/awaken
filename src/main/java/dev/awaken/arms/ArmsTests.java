@@ -750,8 +750,8 @@ final class ArmsTests {
         h.assertTrue(ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.BOSS) == ArmsRules.POSTURE_LORD
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.ELITE) == ArmsRules.POSTURE_ELITE
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.NONE) == ArmsRules.POSTURE_NORMAL, "stances by role");
-        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 80 && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500,
-                "an Execution takes at most 8% of a Lord");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true) == 100
+                        && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §46.3)");
         h.assertTrue(ArmsRules.focusTurn(20, 0) == ArmsRules.FOCUS_TURN && ArmsRules.focusTurn(90, 0) == 0, "soft focus turns at most 15°, only near");
         h.succeed();
     }

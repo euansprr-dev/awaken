@@ -26,6 +26,12 @@ samples the whole pose 60 times a second and reports:
 - **dip** (strings only): how far the move layer falls back toward rest between two blows, 100% meaning all the way
   (angles taken the short way round, so a part that spins whole turns doesn't count them);
 - **peak**: the fastest bone, °/s.
+- **slide** (SPEC §46.3, PLAN §4.8 meter 1): the most a standing foot (its point within a pixel of the floor for at
+  least 0.15 s outside the strike, its touch-down and lift-off left out) moves sideways in a game tick, model blocks;
+  FA's bar is 0.03. A move that advances carries the body
+  forward in game, so its feet may slide in the clip: reported, not a fault.
+
+`reactions(rig)` names the reaction clips a body has (meter 5): hurt three ways, parried, reel, kneel, rise, death.
 """
 import json
 import math
@@ -42,6 +48,8 @@ GIF_FPS = 20
 STILL_SPEED = 15.0  # deg/s
 STILL_SPELL = 0.15  # s
 KINK = 3.0  # deg/frame change of speed at 60 fps
+SLIDE = 0.03  # blocks a tick a planted foot may move
+REACTIONS = ("hurt", "hurt_l", "hurt_r", "parried", "reel", "kneel", "rise", "death")
 
 
 def schedule(moves_by_id, seq, lead=0.5, tail=0.6):
@@ -178,15 +186,55 @@ def play(rig, segs, total, fps):
     return out
 
 
+def reactions(rig):
+    """The reaction clips this body has, and those it lacks."""
+    return [c for c in REACTIONS if c in rig.clips], [c for c in REACTIONS if c not in rig.clips]
+
+
+def _feet(rig):
+    from kit import core
+    rest = core.frames(rig, {})
+    return {b.name: rest[b.name][1] for b in rig.bones if b.name.startswith("foot") and b.name in rest}
+
+
+def _slide(track, hold=0.15, edge=2):
+    """The most a foot moves sideways in a game tick while it stands (down at least `hold` seconds outside a strike),
+    leaving out `edge` frames at each end of the stand (a point coming down or lifting off), in model blocks."""
+    worst = 0.0
+    for frames in track.values():
+        k = 0
+        while k < len(frames):
+            if not frames[k][1]:
+                k += 1
+                continue
+            j = k
+            while j < len(frames) and frames[j][1]:
+                j += 1
+            if (j - k) / FPS >= hold:
+                for i in range(k + edge + 1, j - edge):
+                    a, b = frames[i - 1][0], frames[i][0]
+                    worst = max(worst, math.hypot(b[0] - a[0], b[2] - a[2]) / 16 * FPS / 20)
+            k = j
+    return worst
+
+
 def measure(rig, moves_by_id, seq):
+    from kit import core
     segs, total = schedule(moves_by_id, seq)
+    feet = _feet(rig)
+    track = {}
     prev, prevv = {}, {}
     still, run, kinks, worst, peak, snap = 0.0, 0.0, 0, 0.0, 0.0, 0.0
     held, moving_frames = 0, 0
     mag = []
-    for t, _, pose, mid, since in play(rig, segs, total, FPS):
+    for t, final, pose, mid, since in play(rig, segs, total, FPS):
         seg = next((x for x in segs if x[0] == mid and x[1] <= t < x[5]), None) if mid else None
         strike = seg is not None and seg[2] - 0.1 <= since <= seg[2] + seg[3] + 0.15
+        if feet:
+            fr = core.frames(rig, final)
+            for f, rest in feet.items():
+                at = fr[f][1]
+                track.setdefault(f, []).append((at, abs(at[1] - rest[1]) <= 1.0 and not strike))
         mag.append(sum(abs((c + 180) % 360 - 180) for v in pose.values() for c in v))  # a whole turn (a spinning halo) is no turn
         fastest = 0.0
         slow = posed = 0
@@ -220,6 +268,7 @@ def measure(rig, moves_by_id, seq):
             run = 0.0
     if run >= STILL_SPELL:
         still += run
+    slide = _slide(track)
     dip = None
     if len(segs) > 1:
         # between each pair of contacts: how low the move layer falls, against the lower of the two contacts' size
@@ -232,7 +281,7 @@ def measure(rig, moves_by_id, seq):
         dip = max(dips)
     return {"seq": seq, "seconds": round(total, 2), "still_s": round(still, 2), "kinks": kinks, "worst_kink": round(worst, 1), "strike_snap": round(snap, 1),
             "held": round(held / max(1, moving_frames), 2),
-            "dip": None if dip is None else round(dip, 2), "peak_deg_s": round(peak)}
+            "dip": None if dip is None else round(dip, 2), "peak_deg_s": round(peak), "slide": round(slide, 3)}
 
 
 def gif(path, rig, lit, moves_by_id, seq, yaw=28, pitch=10, size=(300, 270)):

@@ -41,6 +41,10 @@ public final class ArmsModule {
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
         ArmsForge.init();
         dev.awaken.core.api.ArmsApi.install(ArmsIssue.INSTANCE);
+        // a shot sent back fills the stance it strikes (SPEC §46.3)
+        dev.awaken.core.api.Strikes.installPostures((target, amount, by) -> {
+            if (by instanceof ServerPlayer sp) ArmsServer.addPosture(target, amount, sp);
+        });
         ArmsTrack.init();
         ArmsTrails.init();
         modBus.addListener(ArmsModule::registerPayloads);

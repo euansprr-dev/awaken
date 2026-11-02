@@ -653,7 +653,9 @@ final class ArmsServer {
             amount = ArmsRules.capExecution(amount, victim.getMaxHealth(), pendingCap, ArmsRules.lordly(post.max));
             e.setAmount(amount);
             pendingLanded = true;
-            if (by instanceof ServerPlayer sp) addPosture(victim, pendingPosture, sp);
+            // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster (SPEC §46.3)
+            int posture = Strikes.opening(victim) ? Math.round(pendingPosture * ArmsRules.OPENING_POSTURE) : pendingPosture;
+            if (by instanceof ServerPlayer sp) addPosture(victim, posture, sp);
             return;
         }
         if (!(victim instanceof ServerPlayer p) || !Arms.fights(p) || reapplying) return;
@@ -760,11 +762,15 @@ final class ArmsServer {
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
                     // a flier's dive turned aside brings it down (SPEC §40): the opening a fight in the air needs
                     Strikes.ground(attacker, Aim.GROUNDED_TICKS);
+                    // its limb recoils, and a phrase's last blow turned aside staggers it (SPEC §46.3)
+                    Strikes.deflected(attacker, kind);
                 }
                 ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, by == null ? -1 : by.getId());
                 Marks.fire(p, Marks.Trigger.DEFLECT, by instanceof LivingEntity l ? l : null);
                 if (shot) {
-                    stop(p, s, src, from, true, 0F, by);
+                    // a white-gold shot flies back at its maker (SPEC §46.3); the rest leave the blade
+                    boolean back = src.getDirectEntity() != null && Strikes.returnShot(src.getDirectEntity(), p);
+                    stop(p, s, src, from, true, 0F, by, back);
                 } else {
                     soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
                     answer(p, s, ArmsPayloads.DEFLECT, by);
@@ -776,7 +782,7 @@ final class ArmsServer {
                     // the shot stops on the blade (it never reaches the body to stick, poison or burn); its share
                     // through the guard lands at the tick's end
                     e.setBlockedDamage(incoming);
-                    stop(p, s, src, from, false, incoming * (1F - g.reduction()), by);
+                    stop(p, s, src, from, false, incoming * (1F - g.reduction()), by, false);
                 } else {
                     e.setBlockedDamage(incoming * g.reduction());
                     soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
@@ -797,9 +803,11 @@ final class ArmsServer {
      * The guard stopped a shot: it leaves the blade at the tick's end; the fighter feels it there (the hands jolt, the
      * spark, the ring) and so does everyone near (the body's jolt, the spark).
      */
-    private static void stop(ServerPlayer p, ArmsState s, DamageSource src, @Nullable Vec3 from, boolean deflected, float through, @Nullable Entity by) {
+    private static void stop(ServerPlayer p, ArmsState s, DamageSource src, @Nullable Vec3 from, boolean deflected, float through, @Nullable Entity by,
+                             boolean sentBack) {
         Vec3 way = from != null ? from : flatFacing(p);
-        STOPPED.add(new Stopped(p, src.getDirectEntity() instanceof Projectile pr ? pr : null, way, deflected, through, src));
+        // a shot sent back keeps flying: only the feel of the blade stays
+        STOPPED.add(new Stopped(p, !sentBack && src.getDirectEntity() instanceof Projectile pr ? pr : null, way, deflected, through, src));
         if (deflected) soundForOthers(p, ArmsSounds.GLANCE.get(), 1.0F, 1.0F);
         else soundForOthers(p, ArmsSounds.BLOCK.get(), ArmsSounds.SHOT_BLOCK_VOLUME, ArmsSounds.SHOT_BLOCK_PITCH);
         int yaw = (int) (Mth.atan2(way.z, way.x) * Mth.RAD_TO_DEG) - 90; // HURT's convention: the world yaw it came from
@@ -1028,6 +1036,7 @@ final class ArmsServer {
         long now = now(p);
         SLOWED.put(attacker.getId(), now + d.slow());
         resonance(p, s, ArmsRules.RESONANCE_PERFECT_DODGE);
+        addPosture(attacker, ArmsRules.PERFECT_DODGE_POSTURE, p); // through a blow, not away from it: its stance gives a little
         ArmsWeaves.open(p, s, ArmsWeaves.DODGE, now, attacker.getId());
         Marks.fire(p, Marks.Trigger.PERFECT_DODGE, attacker);
         AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.PERFECT_DODGE, attacker.getId(), d.slow(), 0));
