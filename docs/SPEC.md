@@ -6119,7 +6119,8 @@ of the plan). No mixins.
   half the frame): drawn in the hand pass, each fist where the world puts it on screen but at 0.85 from the eye, the arm
   rising to it from under the frame's corner on its side (view (±0.5, -0.85, -0.1)); vanilla's hands step aside. No
   torso (from inside the head it is only a slab under the camera). Never in third person. Like vanilla's hands, none of
-  it shows with the HUD hidden (F1).
+  it shows with the HUD hidden (F1). It draws from your eyes, the furnace station's lowered view, or a scene's own camera
+  standing in for them (`FirstPerson.camera(owns)`, read only when the view isn't your eyes: the War Anvil's, §46.3).
 - **View layer** (`anims.client.Hands`, the one owner of `RenderHandEvent`, first for each hand and last for the off
   hand): every `ViewPose` stance adds moves (view space: x right, y up, z toward you, blocks; then pitch, yaw, roll in
   degrees) for both hands, the main or the off hand; the body's stances (sprint, slide, hang, mantle) and the rope's
@@ -16670,10 +16671,17 @@ it; coming back restarts the stage, counted in again.
   miss, flip, quench, lift, tap, scrape (the draw beginning) and drawn. The smith's client plays its own as it acts; the
   server plays them to everyone else.
 
-**46.3 The scene (stage 1, client).** `AnvilScene`: the view stays at your eyes and turns, never moving the player: to
-the Forge's mouth for the heat, the anvil's face for the draw out and the hilt, the trough for the quench and the slot
-for the draw, gliding 14 ticks between (`ViewportEvent.ComputeCameraAngles`), the field of view 0.85 of yours. The HUD
-steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,
+**46.3 The scene (stage 1, client).** `AnvilScene`: the view turns to the Forge's mouth for the heat, the anvil's face
+for the draw out and the hilt, the trough for the quench and the slot for the draw, gliding 14 ticks between
+(`ViewportEvent.ComputeCameraAngles`). The smith's view (`AnvilCamera`; Euan 2026-11-02 on the first tour's shots: "the
+arms hide the view a bit too much"): from your eyes the tools' grips sat between you and the work, your arms climbing
+across the middle of the frame; so the view leaves your eyes, as a smith bends over the anvil, for a place over its front
+edge (anvil blocks: x 0.5, y 1.75, z 0.05, the smith's side -z) looking down on the work at about 54°, a little back for
+the heat and the draw (z -0.35, -0.4), over the trough's side for the quench (x 0.62), gliding with the turn. Your hands
+come up from the bottom of the frame to the hammer and tongs. A client-only camera entity (as the armour forge's §44.4),
+first person while it runs, your own body hidden, the real player never moving; your own field of view. A place in a
+block, or one your eyes can't reach without the view crossing a block (eight rays, the near plane's corners), leaves
+that look at your eyes, turned, at 0.85 of your field of view as before. The HUD steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,
 `arms_anvil`, priority 200): the main hand on the hammer, the off hand on the tongs; the hammer winds up before each
 beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, your arm clear of the hilt); the
 tongs hold the work wherever it is (in the Forge only when the Forge's mouth is near enough to reach). While the hammer

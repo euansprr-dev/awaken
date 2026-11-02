@@ -539,9 +539,13 @@ final class AnvilScene {
         started = false;
         lookAt = -1;
         reset();
+        AnvilCamera.end();
     }
 
-    /** The view turns to the work (the eye never moves), gliding between its marks. */
+    /** Where the eye glides from (world), and where it goes next frame. */
+    private static final double[] FROM = new double[3], NEXT = new double[3];
+
+    /** The view turns to the work, gliding between its marks, the eye gliding with it to each look's place ({@link AnvilCamera}). */
     static void angles(ViewportEvent.ComputeCameraAngles e) {
         WarAnvilBlockEntity be = AnvilClient.sceneAnvil();
         if (be == null) return;
@@ -552,6 +556,9 @@ final class AnvilScene {
             fromYaw = e.getYaw();
             fromPitch = e.getPitch();
             glideAt = openAt = now;
+            FROM[0] = eye.x;
+            FROM[1] = eye.y;
+            FROM[2] = eye.z;
         }
         int kind = look(be);
         if (kind != lookAt) {
@@ -559,8 +566,12 @@ final class AnvilScene {
                 fromYaw = (float) NOW[3];
                 fromPitch = (float) NOW[4];
                 glideAt = now;
+                FROM[0] = eye.x;
+                FROM[1] = eye.y;
+                FROM[2] = eye.z;
             }
             lookAt = kind;
+            AnvilCamera.aim(be.getLevel(), be.getBlockPos(), frame(be.getBlockState(), FRAME), kind);
         }
         lookPoint(be, kind, T);
         BlockPos pos = be.getBlockPos();
@@ -578,14 +589,16 @@ final class AnvilScene {
         NOW[2] = eye.z;
         NOW[3] = yaw;
         NOW[4] = pitch;
+        AnvilCamera.eye(FROM, k, (float) e.getPartialTick(), NEXT);
+        AnvilCamera.place(NEXT, yaw, pitch);
     }
 
-    /** A little closer than your own field of view. */
+    /** Your own field of view over the work; a little closer when the view stays at your eyes. */
     static void fov(ViewportEvent.ComputeFov e) {
         if (AnvilClient.sceneAnvil() == null) return;
         float now = AnvilClient.now((float) e.getPartialTick());
         float k = started ? smooth(Mth.clamp((now - openAt) / GLIDE, 0F, 1F)) : 0F;
-        e.setFOV(e.getFOV() * Mth.lerp(k, 1F, 0.85F));
+        e.setFOV(e.getFOV() * Mth.lerp(k, 1F, AnvilCamera.away() ? 1F : 0.85F));
         NOW[5] = e.getFOV();
     }
 

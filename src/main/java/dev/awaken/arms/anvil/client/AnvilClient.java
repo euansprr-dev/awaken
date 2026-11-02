@@ -23,6 +23,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ExtractBlockOutlineRenderStateEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
@@ -49,6 +50,7 @@ public final class AnvilClient {
             e.register(AnvilPayloads.Done.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onDone(msg)));
         });
         FirstPerson.world("arms_anvil", 200, AnvilHands::pose);
+        FirstPerson.camera(AnvilCamera::active);
         // what you held steps aside: your hands are on the hammer and tongs
         FirstPerson.view((pt, view) -> {
             if (sceneAnvil() == null) return;
@@ -62,6 +64,7 @@ public final class AnvilClient {
             if (sceneAnvil() != null) e.setCanceled(true);
         });
         bus.addListener(RenderGuiLayerEvent.Pre.class, AnvilClient::hideHud);
+        bus.addListener(RenderPlayerEvent.Pre.class, AnvilCamera::player);
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(ItemTooltipEvent.class, AnvilClient::onTooltip);
         bus.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(Commands.literal("awaken")
@@ -113,6 +116,7 @@ public final class AnvilClient {
         }
         WarAnvilBlockEntity be = sceneAnvil();
         if (be == null || mc.level == null) return;
+        AnvilCamera.begin();
         AnvilScene.place(be, now(0F), true, STEAM);
         if (!STEAM.steam) return;
         // steam off the water while the hot blade is in it
