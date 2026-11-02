@@ -16678,7 +16678,8 @@ arms hide the view a bit too much"): from your eyes the tools' grips sat between
 across the middle of the frame; so the view leaves your eyes, as a smith bends over the anvil, for a place over its front
 edge (anvil blocks: x 0.5, y 1.75, z 0.05, the smith's side -z) looking down on the work at about 54°, a little back for
 the heat and the draw (z -0.35, -0.4), over the trough's side for the quench (x 0.62), gliding with the turn. Your hands
-come up from the bottom of the frame to the hammer and tongs. A client-only camera entity (as the armour forge's §44.4),
+come up from the bottom of the frame to the hammer and tongs, drawn at the tools' distance but never nearer than 0.9
+(the fists at 0.75 filled the frame's sides). A client-only camera entity (as the armour forge's §44.4),
 first person while it runs, your own body hidden, the real player never moving; your own field of view. A place in a
 block, or one your eyes can't reach without the view crossing a block (eight rays, the near plane's corners), leaves
 that look at your eyes, turned, at 0.85 of your field of view as before. The HUD steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,

@@ -51,8 +51,9 @@ final class AnvilHands {
             dist += Math.sqrt((hx - eye.x) * (hx - eye.x) + (hy - eye.y) * (hy - eye.y) + (hz - eye.z) * (hz - eye.z));
             shown++;
         }
-        // drawn about as far off as the tools are, so a fist reads the size of the haft it closes on
-        rig.handDistance = Mth.clamp(dist / shown, 0.75, 1.2);
+        // drawn about as far off as the tools are, so a fist reads the size of the haft it closes on; never nearer than
+        // a little past a hand's usual 0.85 (over the work the tools are close, and nearer fists filled the frame's sides)
+        rig.handDistance = Mth.clamp(dist / shown, 0.9, 1.2);
         return true;
     }
 }
