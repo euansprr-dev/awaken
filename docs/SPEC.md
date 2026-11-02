@@ -16825,8 +16825,8 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
 - **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept
   ringing, twice a man's height, a bronze bell swinging on a chain from each fist and a small one in its hood. Tier
   `PROVING` (a boss met only in its hall: never in a gate, never roams, drops no part, since its reward is the rank, the
-  gift and its trophy). Theme Bell, a duel (§46.3) with stance 260; health 340, damage 1.4 (1.55 until its turns were
-  made to reach, §46.6), speed 0.27, fought at level 10. Sim (`combat_sim.py --lord proving_ringer`, 200 seeds,
+  gift and its trophy). Theme Bell, a duel (§46.3) with stance 260; health 420 (340 before the forge's damage, §46.5), damage 1.4 (1.55
+  until its turns were made to reach, §46.6), speed 0.27, fought at level 10. Sim (`combat_sim.py --lord proving_ringer`, 200 seeds,
   `PROVING_RANKS` sets its rank and level): dodger 78% in 2.7 min, parrier 96% in 1.9 min, expert 100% in 1.6 min, tank
   0% (targets 75 / 80 / 99 / at most 10), harder than every E and D Lord for the dodger (§46.6; before its turns reached:
   dodger 78%, parrier 86%). The plan's 4-5 minutes isn't met: with a
@@ -16977,6 +16977,41 @@ Shadow fights in phrases, opens up after each, recoils and reels when it's turne
   (§46.6). All 15 gate Lords meet every target; the Ringer is harder than every E and D Lord for the dodger, and the C Warden's target
   (60 / 65) sits under every C Lord. From C up the parrier wins 94-100%; the dodger is
   the profile those fights test hardest.
+- **Health for the forge's damage** (the War Anvil's decision 14, docs/weapon-forge/PLAN.md §4.10, approved 2026-11-02):
+  every forged weapon hits 1 harder (2 for the eight slower styles), so the rank's longsword hits 18% harder at E, 15%
+  at D, 13% at C, 12% at B, 11% at A. The fights above keep their length and danger by health: each Lord rises by its
+  rank's share (E x1.18, D x1.15, C x1.13, B x1.12, A x1.11, S x1.10), every other gate creature whose theme is at home
+  at E or D (normals, elites and wardens) x1.15, the Ringer to 420 (x1.24: at x1.18 its dodger tied the Glass Serpent's)
+  and the Examiner to 437 (x1.15). The Abbot of Frost takes 86.5 (x1.18: at x1.13 the parrier won in 79 s). Simmed with
+  the bumped weapons (200 seeds, `tools/sim/forge_bump_sim.py`'s rule), health now (was):
+
+  | Lord (rank) | Health (was) | Tank wins (dies at) | Dodger | Parrier | Expert (health left) |
+  |---|---|---|---|---|---|
+  | Bell Warden (E) | 94.4 (80) | 0% (52 s) | 100%, 91 s | 89%, 81 s | 100%, 65 s (99%) |
+  | Ember Tyrant (E) | 181.7 (154) | 0% (52 s) | 100%, 109 s | 92%, 89 s | 100%, 75 s (97%) |
+  | Hive Regent (E) | 48.4 (41) | 9% (74 s) | 98%, 87 s | 96%, 81 s | 100%, 69 s (99%) |
+  | Mother of Spores (E) | 66.1 (56) | 0% (46 s) | 88%, 98 s | 95%, 86 s | 100%, 75 s (100%) |
+  | Root Saint (E) | 186.4 (158) | 0% (50 s) | 98%, 113 s | 92%, 88 s | 100%, 71 s (99%) |
+  | Drowned Archivist (D) | 125.3 (109) | 0% (47 s) | 90%, 101 s | 100%, 81 s | 100%, 70 s (96%) |
+  | Gearwright Colossus (D) | 156.4 (136) | 0% (36 s) | 86%, 108 s | 91%, 81 s | 100%, 68 s (96%) |
+  | Glass Serpent (D) | 57.5 (50) | 0% (34 s) | 79%, 87 s | 98%, 82 s | 100%, 70 s (100%) |
+  | Lantern Broker (D) | 138 (120) | 0% (30 s) | 82%, 103 s | 100%, 83 s | 100%, 71 s (100%) |
+  | Abbot of Frost (C) | 86.5 (73.5) | 0% (40 s) | 84%, 92 s | 97%, 82 s | 100%, 74 s (95%) |
+  | Mirror Knight (C) | 116.4 (103) | 0% (52 s) | 82%, 105 s | 100%, 80 s | 100%, 69 s (87%) |
+  | The Sleeper (C) | 45.2 (40) | 0% (31 s) | 94%, 88 s | 94%, 80 s | 100%, 67 s (90%) |
+  | Unit Zero (C) | 129.9 (115) | 0% (29 s) | 81%, 107 s | 100%, 81 s | 100%, 68 s (100%) |
+  | Sky Leviathan (B) | 46.5 (41.5) | 0% (28 s) | 82%, 82 s | 94%, 84 s | 100%, 70 s (98%) |
+  | Hollow Herald (A) | 56.6 (51) | 0% (29 s) | 78%, 87 s | 100%, 84 s | 100%, 72 s (100%) |
+  | The Ringer (D Warden) | 420 (340) | 0% (45 s) | 76%, 159 s | 96%, 112 s | 100%, 93 s (100%) |
+  | The Examiner (C Warden) | 437 (380) | 0% (43 s) | 60%, 145 s | 96%, 99 s | 100%, 84 s (98%) |
+
+  Every cell is within a few points and seconds of the tables above, and every target holds (the Ringer harder than
+  every E and D Lord for the dodger, the Examiner than every C Lord and the Ringer). An on-level gate creature still
+  takes 3-6 blows: median 4, 88% of them at E and 92% at D (the bump alone: median 3, 76% and 77%). The health is set
+  for the bump and lands with it: without it the fights run about a tenth longer and some dodgers fall under their
+  targets (Mother of Spores 66%; the Glass Serpent, the Abbot and the Herald 68%). Not raised: the Deep's bosses, cave,
+  water and wild creatures and Fauna (no tuned fights to keep; see below), and creatures at home from C up (the bump
+  leaves their 3-6 blows).
 - **Not tuned:** the Deep's bosses (the Guardians, Nightmares, Sovereigns and the Signal's Shadow) fight as duels at
   their own numbers. The sim reads only `GateBestiary`, so their numbers are unverified as duels.
 
@@ -16988,7 +17023,7 @@ comes, how its hall turns, its gift and the way out), the Ringer's (`RingerWarde
   long navy coat with gold rule marks, a high collar and a peaked cap, a fan of seven mirror shards behind its shoulders,
   a black glass measuring rod in its right hand, its left hand bare porcelain with lit fingertips, and a silvered mirror
   where its face should be (a pale horizon in it: the face it has is yours). Tier `PROVING`, theme Mirror, a duel with
-  stance 300; health 380, damage 1.8, speed 0.28, scale 2.1, fought at level 25. Its intro line: "That was never your room."
+  stance 300; health 437 (380 before the forge's damage, §46.5), damage 1.8, speed 0.28, scale 2.1, fought at level 25. Its intro line: "That was never your room."
 - **Tells.** White-gold blows are told 0.7 s (14 ticks: the strokes, the Step In, the Reading, the Turning Rule), the
   ladder's second rung; red stays over 0.6 s (the Verdict 1.2 s, Hold Still 0.9 s).
 - **Moves.** Phase 1: Rule Sweep, Rule Thrust and Backstroke (the rod in twos and threes), the Measure (HEAVY: the rod

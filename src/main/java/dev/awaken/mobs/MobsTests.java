@@ -73,7 +73,7 @@ final class MobsTests {
             AwakenMob ghoul = Mobs.spawn(level, Bestiary.get("toll_ghoul"), h.absoluteVec(new net.minecraft.world.phys.Vec3(0.5, 1, 0.5)), 35,
                     new MobRole(MobRole.Role.ELITE, 35, Theme.BELL.id, Optional.empty(), ""), Set.of());
             h.assertTrue(ghoul != null, "toll ghoul spawned");
-            double want = 22 * (1 + 0.075 * 35) * 2.5;
+            double want = Bestiary.get("toll_ghoul").health * (1 + 0.075 * 35) * 2.5;
             h.assertTrue(Math.abs(ghoul.getMaxHealth() - want) < 0.01, "elite toll ghoul at lv35 has " + want + " hp, has " + ghoul.getMaxHealth());
             h.assertTrue(ghoul.getHealth() == ghoul.getMaxHealth(), "spawned at full health");
             h.assertTrue(ghoul.getData(CoreApi.MOB_ROLE.get()).role() == MobRole.Role.ELITE, "role attachment set");

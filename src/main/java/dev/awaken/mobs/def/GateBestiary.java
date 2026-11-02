@@ -43,17 +43,17 @@ final class GateBestiary {
     }
 
     private static void bellCrypt(List<MobDef> out) {
-        out.add(m("toll_ghoul", "Toll Ghoul", Theme.BELL, Tier.NORMAL, Model.ZOMBIE, "Rings a hand-bell: a toll that slows everyone around it").hp(22).dmg(3).spd(0.23).hold(Items.BELL)
+        out.add(m("toll_ghoul", "Toll Ghoul", Theme.BELL, Tier.NORMAL, Model.ZOMBIE, "Rings a hand-bell: a toll that slows everyone around it").hp(25.3).dmg(3).spd(0.23).hold(Items.BELL)
                 .ab(a(SLAM, "Bell Toll").radius(3.5F).power(0.6F).fx(MobEffects.SLOWNESS, 40, 1).cd(140)).build());
-        out.add(m("crypt_archer", "Crypt Archer", Theme.BELL, Tier.NORMAL, Model.SKELETON, "Mourning Volley: draws a long breath, then three arrows").hp(18).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED)
+        out.add(m("crypt_archer", "Crypt Archer", Theme.BELL, Tier.NORMAL, Model.SKELETON, "Mourning Volley: draws a long breath, then three arrows").hp(20.7).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED)
                 .ab(a(ARROWS, "Mourning Volley").n(3).wind(22).cd(70)).build());
-        out.add(m("bell_wisp", "Bell Wisp", Theme.BELL, Tier.NORMAL, Model.VEX, "Grave Chime: chimes, then dives straight at you").hp(10).dmg(3).spd(0.5).traits(HAUNTED)
+        out.add(m("bell_wisp", "Bell Wisp", Theme.BELL, Tier.NORMAL, Model.VEX, "Grave Chime: chimes, then dives straight at you").hp(11.5).dmg(3).spd(0.5).traits(HAUNTED)
                 .ab(a(CHARGE, "Grave Chime").power(1.2F).wind(16).cd(90).range(12)).build());
-        out.add(m("crypt_keeper", "Crypt Keeper", Theme.BELL, Tier.ELITE, Model.WITHER_SKELETON, "Bell Slam: lifts its blade over its head and brings the floor down").hp(24).dmg(5).spd(0.26).hold(Items.IRON_SWORD)
+        out.add(m("crypt_keeper", "Crypt Keeper", Theme.BELL, Tier.ELITE, Model.WITHER_SKELETON, "Bell Slam: lifts its blade over its head and brings the floor down").hp(27.6).dmg(5).spd(0.26).hold(Items.IRON_SWORD)
                 .ab(a(SLAM, "Bell Slam").power(1.6F).heavy(), a(CHARGE, "Coffin Rush")).build());
-        out.add(m("the_sexton", "The Sexton", Theme.BELL, Tier.WARDEN, Model.WARDEN, "Hunts by the toll of your footsteps; its Knell tears at the spirit").hp(34).dmg(6).spd(0.28).traits(HUNTER)
+        out.add(m("the_sexton", "The Sexton", Theme.BELL, Tier.WARDEN, Model.WARDEN, "Hunts by the toll of your footsteps; its Knell tears at the spirit").hp(39.1).dmg(6).spd(0.28).traits(HUNTER)
                 .ab(a(BEAM, "Knell").bolt(BoltKind.SPIRIT).power(1.8F).wind(34).heavy(), a(SLAM, "Grave Stamp").radius(4), a(DARKNESS, "Last Light").radius(14)).build());
-        out.add(m("bell_warden", "The Bell Warden", Theme.BELL, Tier.LORD, Model.BELL, "Toll Waves you dodge by stepping in; halfway through, the statues move").body(BodyMaterial.ARMOR).hp(80).dmg(1.4).spd(0.24).size(2.8F, 4.64F).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("bell_warden", "The Bell Warden", Theme.BELL, Tier.LORD, Model.BELL, "Toll Waves you dodge by stepping in; halfway through, the statues move").body(BodyMaterial.ARMOR).hp(94.4).dmg(1.4).spd(0.24).size(2.8F, 4.64F).bar(BossBarColor.BLUE).arena(22)
                 .intro("The bell above you is not a bell.")
                 .phase(1.0F, "The Bell Warden rings once.", a(BURST, "Toll Wave").radius(10).inner(3.0F).power(1.6F), a(SLAM, "Clapper Strike").radius(4), a(BOLT, "Echo Bolts").n(3).bolt(BoltKind.SPIRIT))
                 .phase(0.66F, "The statues move.", a(SUMMON, "The Statues Move").summon("toll_ghoul").n(2), a(CHARGE, "Bell Rush").heavy(), a(BURST, "Toll Wave").radius(11).inner(3.0F))
@@ -62,18 +62,18 @@ final class GateBestiary {
     }
 
     private static void fungalHollow(List<MobDef> out) {
-        out.add(m("sporeling", "Sporeling", Theme.FUNGAL, Tier.NORMAL, Model.SLIME, "Hops at you and pops into a cloud of spores when it dies").hp(8).dmg(2).spd(0.3).scale(0.5F).traits(DEATH_CLOUD)
+        out.add(m("sporeling", "Sporeling", Theme.FUNGAL, Tier.NORMAL, Model.SLIME, "Hops at you and pops into a cloud of spores when it dies").hp(9.2).dmg(2).spd(0.3).scale(0.5F).traits(DEATH_CLOUD)
                 .ab(a(LEAP, "Pounce").power(0.8F).radius(1.5F).wind(10).cd(80).range(6)).build());
-        out.add(m("mycelid", "Mycelid Shambler", Theme.FUNGAL, Tier.NORMAL, Model.ZOMBIE, "Spore Cough: hunches, then a poison cone").hp(22).dmg(3).spd(0.22)
+        out.add(m("mycelid", "Mycelid Shambler", Theme.FUNGAL, Tier.NORMAL, Model.ZOMBIE, "Spore Cough: hunches, then a poison cone").hp(25.3).dmg(3).spd(0.22)
                 .ab(a(CONE, "Spore Cough").power(0.4F).bolt(BoltKind.SPORE).fx(MobEffects.POISON, 60, 0).cd(130)).build());
-        out.add(m("capweaver", "Capweaver", Theme.FUNGAL, Tier.NORMAL, Model.CAVE_SPIDER, "Web Spit: a marked circle that roots you if you stay in it").hp(14).dmg(2.5).spd(0.32)
+        out.add(m("capweaver", "Capweaver", Theme.FUNGAL, Tier.NORMAL, Model.CAVE_SPIDER, "Web Spit: a marked circle that roots you if you stay in it").hp(16.1).dmg(2.5).spd(0.32)
                 .ab(a(ROOT, "Web Spit").radius(1.6F).wind(20).cd(140).range(12)).build());
-        out.add(m("puffcap", "Puffcap", Theme.FUNGAL, Tier.NORMAL, Model.CREEPER, "Swells and bursts into choking spores").hp(16).dmg(2).spd(0.24).traits(FUSE, DEATH_CLOUD).blast(1.6F).build());
-        out.add(m("hollow_tender", "Hollow Tender", Theme.FUNGAL, Tier.ELITE, Model.WITCH, "Tends the colony: heals every fungus near it, lobs spores").hp(24).dmg(3).spd(0.24).traits(RANGED)
+        out.add(m("puffcap", "Puffcap", Theme.FUNGAL, Tier.NORMAL, Model.CREEPER, "Swells and bursts into choking spores").hp(18.4).dmg(2).spd(0.24).traits(FUSE, DEATH_CLOUD).blast(1.6F).build());
+        out.add(m("hollow_tender", "Hollow Tender", Theme.FUNGAL, Tier.ELITE, Model.WITCH, "Tends the colony: heals every fungus near it, lobs spores").hp(27.6).dmg(3).spd(0.24).traits(RANGED)
                 .ab(a(HEAL, "Tend the Colony"), a(BOLT, "Spore Lob").bolt(BoltKind.SPORE), a(CLOUD, "Rot Bloom").fx(MobEffects.POISON, 80, 0)).build());
-        out.add(m("the_rot", "The Rot", Theme.FUNGAL, Tier.WARDEN, Model.RAVAGER, "Rot Charge: lowers its head, then a charge that leaves spores behind").hp(36).dmg(6).spd(0.3).traits(HUNTER)
+        out.add(m("the_rot", "The Rot", Theme.FUNGAL, Tier.WARDEN, Model.RAVAGER, "Rot Charge: lowers its head, then a charge that leaves spores behind").hp(41.4).dmg(6).spd(0.3).traits(HUNTER)
                 .ab(a(CHARGE, "Rot Charge").power(1.6F).heavy(), a(NOVA, "Spore Burst").n(12).bolt(BoltKind.SPORE), a(CLOUD, "Choking Field").radius(4).fx(MobEffects.POISON, 100, 1)).build());
-        out.add(m("mother_of_spores", "Mother of Spores", Theme.FUNGAL, Tier.LORD, Model.GHAST, "Spore Rain from above, then she births the colony").hp(56).dmg(1.06).spd(0.2).scale(0.75F).size(2.4F, 7.78F).bar(BossBarColor.PURPLE).arena(24)
+        out.add(m("mother_of_spores", "Mother of Spores", Theme.FUNGAL, Tier.LORD, Model.GHAST, "Spore Rain from above, then she births the colony").hp(66.1).dmg(1.06).spd(0.2).scale(0.75F).size(2.4F, 7.78F).bar(BossBarColor.PURPLE).arena(24)
                 .intro("Something above you breathes in.")
                 .phase(1.0F, "Mother of Spores exhales.", a(RAIN, "Spore Rain").n(4).bolt(BoltKind.SPORE).fx(MobEffects.POISON, 60, 0), a(BOLT, "Spore Lob").n(3).bolt(BoltKind.SPORE))
                 .phase(0.66F, "She births.", a(SUMMON, "Birth").summon("sporeling").n(2), a(NOVA, "Spore Halo").n(14).bolt(BoltKind.SPORE))
@@ -82,19 +82,19 @@ final class GateBestiary {
     }
 
     private static void emberMines(List<MobDef> out) {
-        out.add(m("cinder_miner", "Cinder Miner", Theme.EMBER, Tier.NORMAL, Model.HUSK, "Ember Swing: an overhead pick strike that sets you alight").hp(22).dmg(3.5).spd(0.23).hold(Items.IRON_PICKAXE).traits(IGNITE)
+        out.add(m("cinder_miner", "Cinder Miner", Theme.EMBER, Tier.NORMAL, Model.HUSK, "Ember Swing: an overhead pick strike that sets you alight").hp(25.3).dmg(3.5).spd(0.23).hold(Items.IRON_PICKAXE).traits(IGNITE)
                 .ab(a(SLAM, "Ember Swing").radius(2.5F).power(1.4F).bolt(BoltKind.FIRE).wind(24).heavy()).build());
-        out.add(m("slag_cube", "Slag Cube", Theme.EMBER, Tier.NORMAL, Model.MAGMA, "Molten Splash: lands in a ring of fire").hp(18).dmg(3).spd(0.28).traits(FIRE_IMMUNE, IGNITE)
+        out.add(m("slag_cube", "Slag Cube", Theme.EMBER, Tier.NORMAL, Model.MAGMA, "Molten Splash: lands in a ring of fire").hp(20.7).dmg(3).spd(0.28).traits(FIRE_IMMUNE, IGNITE)
                 .ab(a(LEAP, "Molten Splash").radius(2.5F).power(1.2F).bolt(BoltKind.FIRE)).build());
-        out.add(m("ember_imp", "Ember Imp", Theme.EMBER, Tier.NORMAL, Model.BLAZE, "Cinder Burst: three fire bolts after a crackle").hp(12).dmg(3).spd(0.3).scale(0.65F).traits(FIRE_IMMUNE, RANGED)
+        out.add(m("ember_imp", "Ember Imp", Theme.EMBER, Tier.NORMAL, Model.BLAZE, "Cinder Burst: three fire bolts after a crackle").hp(13.8).dmg(3).spd(0.3).scale(0.65F).traits(FIRE_IMMUNE, RANGED)
                 .ab(a(BOLT, "Cinder Burst").n(3).bolt(BoltKind.FIRE)).build());
-        out.add(m("scorch_crawler", "Scorch Crawler", Theme.EMBER, Tier.NORMAL, Model.SILVERFISH, "Comes out of the coal seams biting, and the bites burn").hp(10).dmg(2.5).spd(0.33).scale(1.7F).traits(IGNITE, FIRE_IMMUNE)
+        out.add(m("scorch_crawler", "Scorch Crawler", Theme.EMBER, Tier.NORMAL, Model.SILVERFISH, "Comes out of the coal seams biting, and the bites burn").hp(11.5).dmg(2.5).spd(0.33).scale(1.7F).traits(IGNITE, FIRE_IMMUNE)
                 .ab(a(LEAP, "Scorch Bite").radius(1.5F).power(0.9F).range(6).wind(10)).build());
-        out.add(m("slag_boar", "Slag Boar", Theme.EMBER, Tier.ELITE, Model.HOGLIN, "Slag Charge: paws the ground, then charges through fire").hp(26).dmg(5).spd(0.3).traits(FIRE_IMMUNE)
+        out.add(m("slag_boar", "Slag Boar", Theme.EMBER, Tier.ELITE, Model.HOGLIN, "Slag Charge: paws the ground, then charges through fire").hp(29.9).dmg(5).spd(0.3).traits(FIRE_IMMUNE)
                 .ab(a(CHARGE, "Slag Charge").bolt(BoltKind.FIRE).heavy(), a(GUST, "Tusk Toss").radius(3.5F).power(0.8F)).build());
-        out.add(m("the_overseer", "The Overseer", Theme.EMBER, Tier.WARDEN, Model.WITHER_SKELETON, "Walks through fire to reach you, ringed in embers").hp(34).dmg(6.5).spd(0.27).scale(1.35F).hold(Items.NETHERITE_AXE).traits(FIRE_IMMUNE, IGNITE, HUNTER)
+        out.add(m("the_overseer", "The Overseer", Theme.EMBER, Tier.WARDEN, Model.WITHER_SKELETON, "Walks through fire to reach you, ringed in embers").hp(39.1).dmg(6.5).spd(0.27).scale(1.35F).hold(Items.NETHERITE_AXE).traits(FIRE_IMMUNE, IGNITE, HUNTER)
                 .ab(a(CHARGE, "Furnace Walk"), a(NOVA, "Ember Ring").n(10).bolt(BoltKind.FIRE), a(AURA, "Heat Haze").bolt(BoltKind.FIRE)).build());
-        out.add(m("ember_tyrant", "The Ember Tyrant", Theme.EMBER, Tier.LORD, Model.PIGLIN_BRUTE, "Magma Fist and Eruption, then a Meltdown you have to step out of").hp(154).dmg(1.11).spd(0.25).scale(3.0F).size(1.2F, 2.75F).hold(Items.NETHERITE_AXE).wear(EquipmentSlot.HEAD, Items.GOLDEN_HELMET).traits(FIRE_IMMUNE, IGNITE).bar(BossBarColor.RED).arena(22)
+        out.add(m("ember_tyrant", "The Ember Tyrant", Theme.EMBER, Tier.LORD, Model.PIGLIN_BRUTE, "Magma Fist and Eruption, then a Meltdown you have to step out of").hp(181.7).dmg(1.11).spd(0.25).scale(3.0F).size(1.2F, 2.75F).hold(Items.NETHERITE_AXE).wear(EquipmentSlot.HEAD, Items.GOLDEN_HELMET).traits(FIRE_IMMUNE, IGNITE).bar(BossBarColor.RED).arena(22)
                 .intro("The mine was dug to keep something in.")
                 .phase(1.0F, "The Ember Tyrant draws itself up.", a(SLAM, "Magma Fist").radius(4).bolt(BoltKind.FIRE).heavy(), a(CHARGE, "Tyrant's Advance"))
                 .phase(0.66F, "The mountain answers.", a(RAIN, "Eruption").n(5).bolt(BoltKind.FIRE), a(SUMMON, "Stoke the Imps").summon("ember_imp").n(1), a(SLAM, "Magma Fist").radius(4).bolt(BoltKind.FIRE))
@@ -103,19 +103,19 @@ final class GateBestiary {
     }
 
     private static void drownedArchive(List<MobDef> out) {
-        out.add(m("ink_drowned", "Ink Drowned", Theme.DROWNED, Tier.NORMAL, Model.DROWNED, "Ink Spit: a black bolt that blinds").hp(20).dmg(3).spd(0.23).hold(Items.TRIDENT)
+        out.add(m("ink_drowned", "Ink Drowned", Theme.DROWNED, Tier.NORMAL, Model.DROWNED, "Ink Spit: a black bolt that blinds").hp(23).dmg(3).spd(0.23).hold(Items.TRIDENT)
                 .ab(a(BOLT, "Ink Spit").bolt(BoltKind.WATER).cd(80)).build());
-        out.add(m("page_wraith", "Page Wraith", Theme.DROWNED, Tier.NORMAL, Model.VEX, "A swarm of wet pages that rustle, then cut").hp(9).dmg(2.5).spd(0.5).tint(0xE8E0C8)
+        out.add(m("page_wraith", "Page Wraith", Theme.DROWNED, Tier.NORMAL, Model.VEX, "A swarm of wet pages that rustle, then cut").hp(10.3).dmg(2.5).spd(0.5).tint(0xE8E0C8)
                 .ab(a(CHARGE, "Papercut").power(1.0F).wind(12).cd(70).range(10)).build());
-        out.add(m("archive_eye", "Archive Eye", Theme.DROWNED, Tier.NORMAL, Model.GUARDIAN, "Reading Beam: locks on, glows, then burns").hp(18).dmg(3).spd(0.25).traits(RANGED)
+        out.add(m("archive_eye", "Archive Eye", Theme.DROWNED, Tier.NORMAL, Model.GUARDIAN, "Reading Beam: locks on, glows, then burns").hp(20.7).dmg(3).spd(0.25).traits(RANGED)
                 .ab(a(BEAM, "Reading Beam").bolt(BoltKind.WATER).power(1.6F)).build());
-        out.add(m("salt_stray", "Salt Stray", Theme.DROWNED, Tier.NORMAL, Model.STRAY, "Brine Arrows that weigh you down").hp(18).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED, SLOW_TOUCH)
+        out.add(m("salt_stray", "Salt Stray", Theme.DROWNED, Tier.NORMAL, Model.STRAY, "Brine Arrows that weigh you down").hp(20.7).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED, SLOW_TOUCH)
                 .ab(a(ARROWS, "Brine Arrows").n(2).fx(MobEffects.SLOWNESS, 60, 1)).build());
-        out.add(m("drowned_scribe", "Drowned Scribe", Theme.DROWNED, Tier.ELITE, Model.EVOKER, "Writes wraiths from torn pages; ink fangs rise along the floor").hp(24).dmg(4).spd(0.25).traits(RANGED)
+        out.add(m("drowned_scribe", "Drowned Scribe", Theme.DROWNED, Tier.ELITE, Model.EVOKER, "Writes wraiths from torn pages; ink fangs rise along the floor").hp(27.6).dmg(4).spd(0.25).traits(RANGED)
                 .ab(a(SUMMON, "Torn Pages").summon("page_wraith").n(2), a(FANGS, "Ink Fangs"), a(BOLT, "Ink Spit").bolt(BoltKind.WATER)).build());
-        out.add(m("the_curator", "The Curator", Theme.DROWNED, Tier.WARDEN, Model.ELDER_GUARDIAN, "Shushes you with Mining Fatigue, then its beam reads you to death").hp(34).dmg(6).spd(0.22).scale(0.8F).traits(HUNTER, RANGED)
+        out.add(m("the_curator", "The Curator", Theme.DROWNED, Tier.WARDEN, Model.ELDER_GUARDIAN, "Shushes you with Mining Fatigue, then its beam reads you to death").hp(39.1).dmg(6).spd(0.22).scale(0.8F).traits(HUNTER, RANGED)
                 .ab(a(BEAM, "Silence in the Stacks").bolt(BoltKind.WATER).power(2.0F).heavy(), a(DARKNESS, "Shush").fx(MobEffects.MINING_FATIGUE, 200, 2), a(NOVA, "Ink Tide").n(10).bolt(BoltKind.WATER)).build());
-        out.add(m("drowned_archivist", "The Drowned Archivist", Theme.DROWNED, Tier.LORD, Model.DROWNED, "Tidal Page washes you back; the shelves empty; then the Flood").hp(109).dmg(2.02).spd(0.24).scale(1.9F).size(0.9F, 2.4F).hold(Items.TRIDENT).offhand(Items.BOOK).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("drowned_archivist", "The Drowned Archivist", Theme.DROWNED, Tier.LORD, Model.DROWNED, "Tidal Page washes you back; the shelves empty; then the Flood").hp(125.3).dmg(2.02).spd(0.24).scale(1.9F).size(0.9F, 2.4F).hold(Items.TRIDENT).offhand(Items.BOOK).bar(BossBarColor.BLUE).arena(22)
                 .intro("Every book here was written by someone who drowned.")
                 .phase(1.0F, "The Archivist opens a book.", a(CONE, "Tidal Page").radius(7).power(1.4F).bolt(BoltKind.WATER).heavy(), a(BOLT, "Ink Volley").n(3).bolt(BoltKind.WATER))
                 .phase(0.66F, "The shelves empty.", a(SUMMON, "Loose Pages").summon("page_wraith").n(2), a(CLOUD, "Ink Cloud").radius(3).fx(MobEffects.BLINDNESS, 60, 0), a(CONE, "Tidal Page").radius(7).bolt(BoltKind.WATER))
@@ -124,17 +124,17 @@ final class GateBestiary {
     }
 
     private static void clockworkFoundry(List<MobDef> out) {
-        out.add(m("cog_hound", "Cog Hound", Theme.CLOCKWORK, Tier.NORMAL, Model.WOLF, "Ratchet Pounce: winds itself up with a clatter, then leaps").hp(16).dmg(3).spd(0.34)
+        out.add(m("cog_hound", "Cog Hound", Theme.CLOCKWORK, Tier.NORMAL, Model.WOLF, "Ratchet Pounce: winds itself up with a clatter, then leaps").hp(18.4).dmg(3).spd(0.34)
                 .ab(a(LEAP, "Ratchet Pounce").radius(1.8F)).build());
-        out.add(m("rivet_gunner", "Rivet Gunner", Theme.CLOCKWORK, Tier.NORMAL, Model.PILLAGER, "Rivet Burst: three hot rivets from a crossbow").hp(18).dmg(3).spd(0.26).hold(Items.CROSSBOW).traits(RANGED)
+        out.add(m("rivet_gunner", "Rivet Gunner", Theme.CLOCKWORK, Tier.NORMAL, Model.PILLAGER, "Rivet Burst: three hot rivets from a crossbow").hp(20.7).dmg(3).spd(0.26).hold(Items.CROSSBOW).traits(RANGED)
                 .ab(a(BOLT, "Rivet Burst").n(3).bolt(BoltKind.PLAIN).power(0.8F)).build());
-        out.add(m("spark_drone", "Spark Drone", Theme.CLOCKWORK, Tier.NORMAL, Model.BEE, "Spark Sting: buzzes louder, then a sting that stuns").hp(9).dmg(2).spd(0.5).traits(SLOW_TOUCH)
+        out.add(m("spark_drone", "Spark Drone", Theme.CLOCKWORK, Tier.NORMAL, Model.BEE, "Spark Sting: buzzes louder, then a sting that stuns").hp(10.3).dmg(2).spd(0.5).traits(SLOW_TOUCH)
                 .ab(a(CHARGE, "Spark Sting").bolt(BoltKind.CHARGE).wind(14).cd(80).range(10)).build());
-        out.add(m("foundry_marshal", "Foundry Marshal", Theme.CLOCKWORK, Tier.ELITE, Model.VINDICATOR, "Steam Charge, then a Piston Slam where it stops").hp(26).dmg(5).spd(0.28).hold(Items.IRON_AXE)
+        out.add(m("foundry_marshal", "Foundry Marshal", Theme.CLOCKWORK, Tier.ELITE, Model.VINDICATOR, "Steam Charge, then a Piston Slam where it stops").hp(29.9).dmg(5).spd(0.28).hold(Items.IRON_AXE)
                 .ab(a(CHARGE, "Steam Charge").heavy(), a(SLAM, "Piston Slam")).build());
-        out.add(m("the_regulator", "The Regulator", Theme.CLOCKWORK, Tier.WARDEN, Model.IRON_GOLEM, "Overclocks as it nears you; Governor Slam and a spark ring").hp(38).dmg(7).spd(0.27).tint(0xE6B860).traits(HUNTER)
+        out.add(m("the_regulator", "The Regulator", Theme.CLOCKWORK, Tier.WARDEN, Model.IRON_GOLEM, "Overclocks as it nears you; Governor Slam and a spark ring").hp(43.7).dmg(7).spd(0.27).tint(0xE6B860).traits(HUNTER)
                 .ab(a(SLAM, "Governor Slam").radius(4).heavy(), a(NOVA, "Spark Ring").n(12).bolt(BoltKind.CHARGE), a(FRENZY, "Overclock")).build());
-        out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").body(BodyMaterial.ARMOR).hp(136).dmg(2.2).spd(0.22).scale(1.8F).size(0.83F, 4.66F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
+        out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").body(BodyMaterial.ARMOR).hp(156.4).dmg(2.2).spd(0.22).scale(1.8F).size(0.83F, 4.66F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry built one thing. It is still building it.")
                 .phase(1.0F, "The Colossus engages.", a(SLAM, "Piston Slam").radius(4.5F).heavy(), a(NOVA, "Spark Halo").n(12).bolt(BoltKind.CHARGE))
                 .phase(0.66F, "Gears engage.", a(SUMMON, "Release Drones").summon("spark_drone").n(2), a(CHARGE, "Colossal Stride"), a(SLAM, "Piston Slam").radius(4.5F))
@@ -143,17 +143,17 @@ final class GateBestiary {
     }
 
     private static void glassDesert(List<MobDef> out) {
-        out.add(m("glass_husk", "Glass Husk", Theme.GLASS, Tier.NORMAL, Model.HUSK, "Sandblast blinds; shatters into shards when slain").hp(20).dmg(3).spd(0.23).traits(DEATH_SHARDS)
+        out.add(m("glass_husk", "Glass Husk", Theme.GLASS, Tier.NORMAL, Model.HUSK, "Sandblast blinds; shatters into shards when slain").hp(23).dmg(3).spd(0.23).traits(DEATH_SHARDS)
                 .ab(a(CONE, "Sandblast").power(0.6F).bolt(BoltKind.GLASS).fx(MobEffects.BLINDNESS, 30, 0)).build());
-        out.add(m("sand_stalker", "Sand Stalker", Theme.GLASS, Tier.NORMAL, Model.SPIDER, "Burrows and bursts up beside you").hp(16).dmg(3).spd(0.32).tint(0xE8D098)
+        out.add(m("sand_stalker", "Sand Stalker", Theme.GLASS, Tier.NORMAL, Model.SPIDER, "Burrows and bursts up beside you").hp(18.4).dmg(3).spd(0.32).tint(0xE8D098)
                 .ab(a(BLINK, "Burrow Strike")).build());
-        out.add(m("heat_shimmer", "Heat Shimmer", Theme.GLASS, Tier.NORMAL, Model.BREEZE, "Mirage Gust: a wall of hot air, then glass on the wind").hp(16).dmg(3).spd(0.28).traits(RANGED)
+        out.add(m("heat_shimmer", "Heat Shimmer", Theme.GLASS, Tier.NORMAL, Model.BREEZE, "Mirage Gust: a wall of hot air, then glass on the wind").hp(18.4).dmg(3).spd(0.28).traits(RANGED)
                 .ab(a(GUST, "Mirage Gust").radius(5).power(0.4F), a(BOLT, "Glass Gust").bolt(BoltKind.GLASS)).build());
-        out.add(m("prism_sentinel", "Prism Sentinel", Theme.GLASS, Tier.ELITE, Model.ENDERMAN, "Refracts: teleports beside you, then lances light").hp(26).dmg(5).spd(0.3)
+        out.add(m("prism_sentinel", "Prism Sentinel", Theme.GLASS, Tier.ELITE, Model.ENDERMAN, "Refracts: teleports beside you, then lances light").hp(29.9).dmg(5).spd(0.3)
                 .ab(a(BLINK, "Refract"), a(BEAM, "Prism Lance").bolt(BoltKind.GLASS)).build());
-        out.add(m("the_mirage", "The Mirage", Theme.GLASS, Tier.WARDEN, Model.ILLUSIONER, "Splits into mirages; only one of them casts a shadow").hp(32).dmg(5.5).spd(0.28).traits(HUNTER, RANGED)
+        out.add(m("the_mirage", "The Mirage", Theme.GLASS, Tier.WARDEN, Model.ILLUSIONER, "Splits into mirages; only one of them casts a shadow").hp(36.8).dmg(5.5).spd(0.28).traits(HUNTER, RANGED)
                 .ab(a(DECOY, "Mirages").n(3), a(BOLT, "Sunshards").n(5).bolt(BoltKind.GLASS), a(BLINK, "Heat Mirage")).build());
-        out.add(m("glass_serpent", "The Glass Serpent", Theme.GLASS, Tier.LORD, Model.SERPENT, "Lunges, dives into the sand and erupts beneath you, then the Glass Storm").body(BodyMaterial.STONE).hp(50).dmg(3).spd(0.3).scale(2.2F).size(1.4F, 1.8F).grounded().bar(BossBarColor.WHITE).arena(26)
+        out.add(m("glass_serpent", "The Glass Serpent", Theme.GLASS, Tier.LORD, Model.SERPENT, "Lunges, dives into the sand and erupts beneath you, then the Glass Storm").body(BodyMaterial.STONE).hp(57.5).dmg(3).spd(0.3).scale(2.2F).size(1.4F, 1.8F).grounded().bar(BossBarColor.WHITE).arena(26)
                 .intro("Your reflection blinks first.")
                 .phase(1.0F, "The Glass Serpent uncoils.", a(CHARGE, "Glass Lunge").heavy(), a(NOVA, "Shard Spray").n(10).bolt(BoltKind.GLASS))
                 .phase(0.66F, "It dives into the sand.", a(BLINK, "Burrow Strike").power(1.6F).heavy(), a(RAIN, "Erupting Glass").n(5).bolt(BoltKind.GLASS), a(CHARGE, "Glass Lunge"))
@@ -162,17 +162,17 @@ final class GateBestiary {
     }
 
     private static void hive(List<MobDef> out) {
-        out.add(m("drone_bee", "Hive Drone", Theme.HIVE, Tier.NORMAL, Model.BEE, "Stinger Dive: hovers, buzzes, dives, poisons").hp(10).dmg(2.5).spd(0.5).scale(1.3F).traits(POISON_TOUCH)
+        out.add(m("drone_bee", "Hive Drone", Theme.HIVE, Tier.NORMAL, Model.BEE, "Stinger Dive: hovers, buzzes, dives, poisons").hp(11.5).dmg(2.5).spd(0.5).scale(1.3F).traits(POISON_TOUCH)
                 .ab(a(CHARGE, "Stinger Dive").wind(14).cd(80).range(10)).build());
-        out.add(m("hive_larva", "Hive Larva", Theme.HIVE, Tier.NORMAL, Model.SILVERFISH, "Wriggles out of the comb in numbers").hp(6).dmg(2).spd(0.3).scale(1.4F).tint(0xFFE090)
+        out.add(m("hive_larva", "Hive Larva", Theme.HIVE, Tier.NORMAL, Model.SILVERFISH, "Wriggles out of the comb in numbers").hp(6.9).dmg(2).spd(0.3).scale(1.4F).tint(0xFFE090)
                 .ab(a(LEAP, "Wriggle").radius(1.2F).power(0.8F).range(5).wind(10).cd(60)).build());
-        out.add(m("honey_slime", "Honey Slime", Theme.HIVE, Tier.NORMAL, Model.SLIME, "Sticky: every touch slows you").hp(16).dmg(2.5).spd(0.27).scale(0.9F).traits(SLOW_TOUCH)
+        out.add(m("honey_slime", "Honey Slime", Theme.HIVE, Tier.NORMAL, Model.SLIME, "Sticky: every touch slows you").hp(18.4).dmg(2.5).spd(0.27).scale(0.9F).traits(SLOW_TOUCH)
                 .ab(a(LEAP, "Sticky Landing").bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 1)).build());
-        out.add(m("hive_guard", "Hive Guard", Theme.HIVE, Tier.ELITE, Model.SPIDER, "Mandible Crush, and a wax seal that roots you").hp(24).dmg(5).spd(0.3).scale(1.25F).tint(0x806020)
+        out.add(m("hive_guard", "Hive Guard", Theme.HIVE, Tier.ELITE, Model.SPIDER, "Mandible Crush, and a wax seal that roots you").hp(27.6).dmg(5).spd(0.3).scale(1.25F).tint(0x806020)
                 .ab(a(LEAP, "Mandible Crush").heavy(), a(ROOT, "Wax Seal").fx(MobEffects.SLOWNESS, 60, 3)).build());
-        out.add(m("the_swarm_mind", "The Swarm Mind", Theme.HIVE, Tier.WARDEN, Model.PHANTOM, "Never alone: drones pour from it while honey falls").hp(30).dmg(5.5).spd(0.35).scale(2.2F).traits(HUNTER)
+        out.add(m("the_swarm_mind", "The Swarm Mind", Theme.HIVE, Tier.WARDEN, Model.PHANTOM, "Never alone: drones pour from it while honey falls").hp(34.5).dmg(5.5).spd(0.35).scale(2.2F).traits(HUNTER)
                 .ab(a(SUMMON, "Call the Swarm").summon("drone_bee").n(3), a(CHARGE, "Swarm Dive"), a(RAIN, "Honey Drop").bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 2)).build());
-        out.add(m("hive_regent", "The Hive Regent", Theme.HIVE, Tier.LORD, Model.BEE, "Royal Dives and Honey Rain; at the end she feeds on royal jelly and frenzies").hp(41).dmg(0.67).spd(0.45).scale(2.0F).size(0.6F, 2.4F).bar(BossBarColor.YELLOW).arena(22)
+        out.add(m("hive_regent", "The Hive Regent", Theme.HIVE, Tier.LORD, Model.BEE, "Royal Dives and Honey Rain; at the end she feeds on royal jelly and frenzies").hp(48.4).dmg(0.67).spd(0.45).scale(2.0F).size(0.6F, 2.4F).bar(BossBarColor.YELLOW).arena(22)
                 .intro("A hum you feel in your teeth.")
                 .phase(1.0F, "The Regent rises from the comb.", a(CHARGE, "Royal Dive").heavy())
                 .phase(0.66F, "The comb weeps.", a(RAIN, "Honey Rain").n(5).bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 2), a(BOLT, "Stinger Volley").n(4).bolt(BoltKind.THORN), a(CHARGE, "Royal Dive"), a(SUMMON, "Brood").summon("drone_bee").n(2))
@@ -181,17 +181,17 @@ final class GateBestiary {
     }
 
     private static void overgrownTemple(List<MobDef> out) {
-        out.add(m("vine_creaker", "Vine Creaker", Theme.TEMPLE, Tier.NORMAL, Model.CREAKING, "Only moves while you aren't looking at it").hp(22).dmg(4).spd(0.3).traits(WATCHED_FREEZE)
+        out.add(m("vine_creaker", "Vine Creaker", Theme.TEMPLE, Tier.NORMAL, Model.CREAKING, "Only moves while you aren't looking at it").hp(25.3).dmg(4).spd(0.3).traits(WATCHED_FREEZE)
                 .ab(a(ROOT, "Root Grasp").radius(1.8F)).build());
-        out.add(m("thorn_archer", "Thorn Archer", Theme.TEMPLE, Tier.NORMAL, Model.BOGGED, "Thorn Arrows that poison").hp(18).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED, POISON_TOUCH)
+        out.add(m("thorn_archer", "Thorn Archer", Theme.TEMPLE, Tier.NORMAL, Model.BOGGED, "Thorn Arrows that poison").hp(20.7).dmg(3).spd(0.24).hold(Items.BOW).traits(RANGED, POISON_TOUCH)
                 .ab(a(ARROWS, "Thorn Arrows").n(2).fx(MobEffects.POISON, 60, 0)).build());
-        out.add(m("thorn_hound", "Thorn Hound", Theme.TEMPLE, Tier.NORMAL, Model.WOLF, "Bramble Pounce out of the undergrowth").hp(16).dmg(3).spd(0.34).tint(0x80B060)
+        out.add(m("thorn_hound", "Thorn Hound", Theme.TEMPLE, Tier.NORMAL, Model.WOLF, "Bramble Pounce out of the undergrowth").hp(18.4).dmg(3).spd(0.34).tint(0x80B060)
                 .ab(a(LEAP, "Bramble Pounce").radius(1.8F)).build());
-        out.add(m("incense_priest", "Incense Priest", Theme.TEMPLE, Tier.ELITE, Model.EVOKER, "Root Fangs along the floor; incense that heals its flock").hp(24).dmg(4).spd(0.25).tint(0x9CCC88).traits(RANGED)
+        out.add(m("incense_priest", "Incense Priest", Theme.TEMPLE, Tier.ELITE, Model.EVOKER, "Root Fangs along the floor; incense that heals its flock").hp(27.6).dmg(4).spd(0.25).tint(0x9CCC88).traits(RANGED)
                 .ab(a(FANGS, "Root Fangs"), a(HEAL, "Incense"), a(CLOUD, "Incense Smoke").fx(MobEffects.WEAKNESS, 80, 0)).build());
-        out.add(m("the_overgrowth", "The Overgrowth", Theme.TEMPLE, Tier.WARDEN, Model.IRON_GOLEM, "A temple statue grown through with roots; rings of fangs").hp(38).dmg(7).spd(0.25).tint(0x8AB070).traits(HUNTER)
+        out.add(m("the_overgrowth", "The Overgrowth", Theme.TEMPLE, Tier.WARDEN, Model.IRON_GOLEM, "A temple statue grown through with roots; rings of fangs").hp(43.7).dmg(7).spd(0.25).tint(0x8AB070).traits(HUNTER)
                 .ab(a(SLAM, "Temple Fist").radius(4).heavy(), a(FANGS_RING, "Root Ring").n(10), a(ROOT, "Strangling Vines").radius(2.5F)).build());
-        out.add(m("root_saint", "The Root Saint", Theme.TEMPLE, Tier.LORD, Model.CREAKING, "Root Lances in lines, then the whole temple grabs for you").hp(158).dmg(0.86).spd(0.24).scale(1.8F).size(1.0F, 3.02F).bar(BossBarColor.GREEN).arena(22)
+        out.add(m("root_saint", "The Root Saint", Theme.TEMPLE, Tier.LORD, Model.CREAKING, "Root Lances in lines, then the whole temple grabs for you").hp(186.4).dmg(0.86).spd(0.24).scale(1.8F).size(1.0F, 3.02F).bar(BossBarColor.GREEN).arena(22)
                 .intro("Incense and wet roots.")
                 .phase(1.0F, "The Root Saint opens its eyes.", a(FANGS, "Root Lance").n(14), a(SLAM, "Saint's Palm").radius(4))
                 .phase(0.66F, "The temple grows.", a(SUMMON, "Grow Creakers").summon("vine_creaker").n(2), a(ROOT, "Root Grasp").radius(3), a(FANGS_RING, "Root Ring").n(10))
@@ -200,16 +200,16 @@ final class GateBestiary {
     }
 
     private static void lanternMarket(List<MobDef> out) {
-        out.add(m("lantern_moth", "Lantern Moth", Theme.LANTERN, Tier.NORMAL, Model.PHANTOM, "Drawn to light; harmless until something hits it").hp(8).dmg(2).spd(0.4).scale(0.55F).traits(NEUTRAL)
+        out.add(m("lantern_moth", "Lantern Moth", Theme.LANTERN, Tier.NORMAL, Model.PHANTOM, "Drawn to light; harmless until something hits it").hp(9.2).dmg(2).spd(0.4).scale(0.55F).traits(NEUTRAL)
                 .ab(a(CHARGE, "Drawn to Light").power(0.8F).wind(12).cd(80).range(10)).build());
-        out.add(m("pickpocket", "Market Pickpocket", Theme.LANTERN, Tier.NORMAL, Model.PILLAGER, "Snatches a shard and runs; catch it to get it back").hp(14).dmg(2).spd(0.33).traits(STEALER).build());
-        out.add(m("wick_slime", "Wick Slime", Theme.LANTERN, Tier.NORMAL, Model.SLIME, "A slime with a candle in it; burns if provoked").hp(12).dmg(2).spd(0.26).scale(0.7F).traits(NEUTRAL, IGNITE)
+        out.add(m("pickpocket", "Market Pickpocket", Theme.LANTERN, Tier.NORMAL, Model.PILLAGER, "Snatches a shard and runs; catch it to get it back").hp(16.1).dmg(2).spd(0.33).traits(STEALER).build());
+        out.add(m("wick_slime", "Wick Slime", Theme.LANTERN, Tier.NORMAL, Model.SLIME, "A slime with a candle in it; burns if provoked").hp(13.8).dmg(2).spd(0.26).scale(0.7F).traits(NEUTRAL, IGNITE)
                 .ab(a(LEAP, "Wick Hop").bolt(BoltKind.FIRE)).build());
-        out.add(m("masked_duelist", "Masked Duelist", Theme.LANTERN, Tier.ELITE, Model.PIGLIN, "Parries your swing, then a Fan Dance lunge").hp(24).dmg(5).spd(0.3).hold(Items.GOLDEN_SWORD).traits(NEUTRAL)
+        out.add(m("masked_duelist", "Masked Duelist", Theme.LANTERN, Tier.ELITE, Model.PIGLIN, "Parries your swing, then a Fan Dance lunge").hp(27.6).dmg(5).spd(0.3).hold(Items.GOLDEN_SWORD).traits(NEUTRAL)
                 .ab(a(GUARD, "Parry"), a(CHARGE, "Fan Dance")).build());
-        out.add(m("the_lamplighter", "The Lamplighter", Theme.LANTERN, Tier.WARDEN, Model.ENDERMAN, "Steps between lamps and snuffs them out").hp(32).dmg(6).spd(0.3).traits(HUNTER)
+        out.add(m("the_lamplighter", "The Lamplighter", Theme.LANTERN, Tier.WARDEN, Model.ENDERMAN, "Steps between lamps and snuffs them out").hp(36.8).dmg(6).spd(0.3).traits(HUNTER)
                 .ab(a(BLINK, "Between Lamps"), a(DARKNESS, "Snuff the Lamps"), a(BOLT, "Lamp Oil").n(3).bolt(BoltKind.FIRE)).build());
-        out.add(m("lantern_broker", "The Lantern Broker", Theme.LANTERN, Tier.LORD, Model.LANTERN, "Trades with you; duels you only if you ask (sneak and use)").hp(120).dmg(2.78).spd(0.28).scale(2.0F).size(0.6F, 2.2F).traits(FRIENDLY).bar(BossBarColor.YELLOW).arena(18)
+        out.add(m("lantern_broker", "The Lantern Broker", Theme.LANTERN, Tier.LORD, Model.LANTERN, "Trades with you; duels you only if you ask (sneak and use)").hp(138).dmg(2.78).spd(0.28).scale(2.0F).size(0.6F, 2.2F).traits(FRIENDLY).bar(BossBarColor.YELLOW).arena(18)
                 .intro("A duel, then. Lanterns down.")
                 .phase(1.0F, "The Broker bows.", a(BOLT, "Lantern Bolts").n(3).bolt(BoltKind.FIRE), a(BLINK, "Market Step"))
                 .phase(0.66F, "Prices are going up.", a(SUMMON, "Release the Moths").summon("lantern_moth").n(2), a(NOVA, "Paper Lanterns").n(10).bolt(BoltKind.FIRE))
@@ -230,7 +230,7 @@ final class GateBestiary {
                 .ab(a(SUMMON, "Chant").summon("frost_wisp").n(1), a(NOVA, "Frost Nova").n(10).bolt(BoltKind.FROST), a(RAIN, "Ice Spikes").n(3).bolt(BoltKind.FROST)).build());
         out.add(m("the_yeti", "The Yeti", Theme.FROST, Tier.WARDEN, Model.POLAR_BEAR, "Avalanche Slam and freezing breath").hp(38).dmg(7).spd(0.3).scale(1.4F).traits(HUNTER)
                 .ab(a(SLAM, "Avalanche Slam").radius(4).bolt(BoltKind.FROST).heavy(), a(CHARGE, "Snow Charge"), a(CONE, "Frost Breath").bolt(BoltKind.FROST).fx(MobEffects.SLOWNESS, 60, 2)).build());
-        out.add(m("abbot_of_frost", "The Abbot of Frost", Theme.FROST, Tier.LORD, Model.EVOKER, "Frost Hymns and Ice Spikes; the choir joins; then the Glacial Vow").hp(73.5).dmg(4.3).spd(0.25).scale(1.9F).size(0.9F, 2.0F).tint(0xD8F0FF).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("abbot_of_frost", "The Abbot of Frost", Theme.FROST, Tier.LORD, Model.EVOKER, "Frost Hymns and Ice Spikes; the choir joins; then the Glacial Vow").hp(86.5).dmg(4.3).spd(0.25).scale(1.9F).size(0.9F, 2.0F).tint(0xD8F0FF).bar(BossBarColor.WHITE).arena(22)
                 .intro("Chanting above a sea of clouds.")
                 .phase(1.0F, "The Abbot begins the hymn.", a(BOLT, "Frost Hymn").n(5).bolt(BoltKind.FROST), a(RAIN, "Ice Spikes").n(4).bolt(BoltKind.FROST))
                 .phase(0.66F, "The choir joins.", a(SUMMON, "The Choir").summon("frost_wisp").n(2), a(AURA, "Blizzard").radius(9).bolt(BoltKind.FROST).fx(MobEffects.SLOWNESS, 40, 1), a(RAIN, "Ice Spikes").n(5).bolt(BoltKind.FROST))
@@ -249,7 +249,7 @@ final class GateBestiary {
                 .ab(a(GUARD, "Riposte"), a(CHARGE, "Mirror Lunge")).build());
         out.add(m("the_unblinking", "The Unblinking", Theme.MIRROR, Tier.WARDEN, Model.ENDERMAN, "Never blinks: teleports when you look away, gaze like a blade").hp(34).dmg(6.5).spd(0.3).scale(1.2F).tint(0xE0E8F8).traits(HUNTER)
                 .ab(a(BLINK, "Never Blinks"), a(BEAM, "Silver Gaze").bolt(BoltKind.GLASS), a(DECOY, "Reflections").n(2)).build());
-        out.add(m("mirror_knight", "The Mirror Knight", Theme.MIRROR, Tier.LORD, Model.MIMIC, "Wears your face, parries perfectly, splits into reflections").hp(103).dmg(2.38).spd(0.28).scale(1.9F).size(0.6F, 1.8F).hold(Items.DIAMOND_SWORD).wear(EquipmentSlot.CHEST, Items.DIAMOND_CHESTPLATE).wear(EquipmentSlot.HEAD, Items.DIAMOND_HELMET).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(22)
+        out.add(m("mirror_knight", "The Mirror Knight", Theme.MIRROR, Tier.LORD, Model.MIMIC, "Wears your face, parries perfectly, splits into reflections").hp(116.4).dmg(2.38).spd(0.28).scale(1.9F).size(0.6F, 1.8F).hold(Items.DIAMOND_SWORD).wear(EquipmentSlot.CHEST, Items.DIAMOND_CHESTPLATE).wear(EquipmentSlot.HEAD, Items.DIAMOND_HELMET).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(22)
                 .intro("Footsteps that match yours.")
                 .phase(1.0F, "The Mirror Knight raises your blade.", a(GUARD, "Perfect Parry"), a(CHARGE, "Mirror Lunge"))
                 .phase(0.66F, "It splits.", a(DECOY, "Mirror Split").n(3), a(BLINK, "Through the Glass"), a(CHARGE, "Mirror Lunge"))
@@ -268,7 +268,7 @@ final class GateBestiary {
                 .ab(a(LEAP, "Containment Breach").radius(3).heavy()).build());
         out.add(m("the_sweeper", "The Sweeper", Theme.PRECURSOR, Tier.WARDEN, Model.RAVAGER, "Purge Protocol: a charge, a sweep, a decontamination blast").hp(38).dmg(7).spd(0.3).tint(0x9CC0F0).traits(HUNTER)
                 .ab(a(CHARGE, "Purge Protocol").heavy(), a(NOVA, "Sweep").n(12).bolt(BoltKind.CHARGE), a(GUST, "Decon Blast").radius(6)).build());
-        out.add(m("unit_zero", "Unit Zero", Theme.PRECURSOR, Tier.LORD, Model.HUMAN, "Counts down in no language: lances, orbital marks, Zero Point").hp(115).dmg(1.71).spd(0.3).scale(1.85F).size(0.56F, 2.32F).bar(BossBarColor.BLUE).arena(22)
+        out.add(m("unit_zero", "Unit Zero", Theme.PRECURSOR, Tier.LORD, Model.HUMAN, "Counts down in no language: lances, orbital marks, Zero Point").hp(129.9).dmg(1.71).spd(0.3).scale(1.85F).size(0.56F, 2.32F).bar(BossBarColor.BLUE).arena(22)
                 .intro("A voice counting down in no language.")
                 .phase(1.0F, "Unit Zero activates.", a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE), a(BLINK, "Phase Step"))
                 .phase(0.66F, "Countdown: three.", a(SUMMON, "Deploy Coils").summon("coil_unit").n(2), a(RAIN, "Orbital Mark").n(4).bolt(BoltKind.CHARGE), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE))
@@ -276,7 +276,7 @@ final class GateBestiary {
                 .parts(P("zero_core", "Zero Core", "signal"), P("zero_plating", "Zero Plating", "precursor")).build());
         // the Provings' Wardens (SPEC §46.4): one great fight each Reassessment, in a hall built for it, never announced
         out.add(m("proving_ringer", "The Ringer", Theme.BELL, Tier.PROVING, Model.HUMAN, "A bell-ringer that drowned at its ropes and kept ringing")
-                .hp(340).dmg(1.4).spd(0.27).scale(2.0F).size(0.6F, 2.0F).bar(BossBarColor.BLUE).arena(40)
+                .hp(420).dmg(1.4).spd(0.27).scale(2.0F).size(0.6F, 2.0F).bar(BossBarColor.BLUE).arena(40)
                 .intro("Something up in the bells is swinging them.")
                 .phase(1.0F, "The Ringer drops into the light.", a(SLAM, "Clang").radius(5), a(BURST, "Drowned Toll").radius(10).inner(2.5F).power(1.8F).wind(22).heavy(),
                         a(BOLT, "Peal").n(1).bolt(BoltKind.SPIRIT))
@@ -285,7 +285,7 @@ final class GateBestiary {
                 .build());
         // the second (SPEC §46.6): it fights the way you do; its shots wear your power's look (FightRunner.yours)
         out.add(m("proving_examiner", "The Examiner", Theme.MIRROR, Tier.PROVING, Model.HUMAN, "The Registry's examiner, with your face where its own should be")
-                .hp(380).dmg(1.8).spd(0.28).scale(2.1F).size(0.6F, 2.0F).bar(BossBarColor.WHITE).arena(40)
+                .hp(437).dmg(1.8).spd(0.28).scale(2.1F).size(0.6F, 2.0F).bar(BossBarColor.WHITE).arena(40)
                 .intro("That was never your room.")
                 .phase(1.0F, "The Examiner steps out of the glass.", a(SLAM, "The Measure").radius(5), a(BOLT, "Reading").n(1),
                         a(FANGS, "Verdict").n(14))
@@ -307,7 +307,7 @@ final class GateBestiary {
                 .ab(a(BLINK, "Doorway"), a(DARKNESS, "Lights Off")).build());
         out.add(m("the_waking", "The Waking", Theme.NIGHTMARE, Tier.WARDEN, Model.WARDEN, "A wake-up call that tears at the spirit").hp(36).dmg(6.5).spd(0.28).traits(HUNTER)
                 .ab(a(BEAM, "Wake-Up Call").bolt(BoltKind.DREAM).power(1.9F).wind(34).heavy(), a(SLAM, "Thrash").radius(4), a(SUMMON, "Bad Dreams").summon("night_terror").n(2)).build());
-        out.add(m("the_sleeper", "The Sleeper", Theme.NIGHTMARE, Tier.LORD, Model.ZOMBIE, "Sleepwalks between dream and waking; when it wakes, everything does").hp(40).dmg(3.78).spd(0.24).scale(2.2F).size(1.0F, 1.8F).traits(HAUNTED).bar(BossBarColor.PINK).arena(22)
+        out.add(m("the_sleeper", "The Sleeper", Theme.NIGHTMARE, Tier.LORD, Model.ZOMBIE, "Sleepwalks between dream and waking; when it wakes, everything does").hp(45.2).dmg(3.78).spd(0.24).scale(2.2F).size(1.0F, 1.8F).traits(HAUNTED).bar(BossBarColor.PINK).arena(22)
                 .intro("You've been here before. You haven't.")
                 .phase(1.0F, "The Sleeper stirs.", a(SLAM, "Restless Fist").radius(4.5F), a(DARKNESS, "Heavy Eyelids"))
                 .phase(0.66F, "It turns over in its sleep.", a(SUMMON, "Night Terrors").summon("night_terror").n(2), a(BLINK, "Dreamstep"), a(SLAM, "Restless Fist").radius(4.5F))
@@ -326,7 +326,7 @@ final class GateBestiary {
                 .ab(a(RAIN, "Lightning Call").n(2).bolt(BoltKind.CHARGE), a(BOLT, "Static").n(2).bolt(BoltKind.CHARGE)).build());
         out.add(m("the_gale", "The Gale", Theme.SKY, Tier.WARDEN, Model.BREEZE, "Gale Force and updraft traps over the void").hp(32).dmg(6).spd(0.3).scale(1.8F).traits(HUNTER)
                 .ab(a(GUST, "Gale Force").radius(8).power(0.8F).heavy(), a(LIFT, "Updraft Trap"), a(BOLT, "Wind Spears").n(4).bolt(BoltKind.GRAVITY)).build());
-        out.add(m("sky_leviathan", "The Sky Leviathan", Theme.SKY, Tier.LORD, Model.SERPENT, "Dives through the sky, tilts gravity, then the Storm Eye").hp(41.5).dmg(5.73).spd(0.32).scale(3.2F).size(1.4F, 0.6F).bar(BossBarColor.BLUE).arena(28)
+        out.add(m("sky_leviathan", "The Sky Leviathan", Theme.SKY, Tier.LORD, Model.SERPENT, "Dives through the sky, tilts gravity, then the Storm Eye").hp(46.5).dmg(5.73).spd(0.32).scale(3.2F).size(1.4F, 0.6F).bar(BossBarColor.BLUE).arena(28)
                 .intro("The ground is much too far below.")
                 .phase(1.0F, "The Sky Leviathan circles.", a(CHARGE, "Leviathan Dive").heavy(), a(GUST, "Wingbeat").radius(10).power(0.6F))
                 .phase(0.66F, "The sky tilts.", a(LIFT, "Gravity Tide").radius(4), a(BOLT, "Pearl Barrage").n(6).bolt(BoltKind.GRAVITY), a(CHARGE, "Leviathan Dive"))
@@ -345,7 +345,7 @@ final class GateBestiary {
                 .ab(a(BOLT, "Hollow Bolt").n(3).bolt(BoltKind.VOID), a(PULL, "Draw In")).build());
         out.add(m("the_nothing", "The Nothing", Theme.ABYSS, Tier.WARDEN, Model.WITHER, "Three heads of nothing; an event horizon that pulls").hp(38).dmg(6.5).spd(0.28).scale(0.6F).traits(HUNTER)
                 .ab(a(BOLT, "Nothing Skulls").n(3).bolt(BoltKind.VOID), a(PULL, "Event Horizon").power(0.7F).heavy(), a(DARKNESS, "Unlight")).build());
-        out.add(m("hollow_herald", "The Hollow Herald", Theme.ABYSS, Tier.LORD, Model.SHADE, "Void bolts, an unlit shrine, then the Event Horizon").hp(51).dmg(6.0).spd(0.28).scale(1.4F).size(0.85F, 3.65F).grounded().bar(BossBarColor.PURPLE).arena(24)
+        out.add(m("hollow_herald", "The Hollow Herald", Theme.ABYSS, Tier.LORD, Model.SHADE, "Void bolts, an unlit shrine, then the Event Horizon").hp(56.6).dmg(6.0).spd(0.28).scale(1.4F).size(0.85F, 3.65F).grounded().bar(BossBarColor.PURPLE).arena(24)
                 .intro("Nothing. No sound at all.")
                 .phase(1.0F, "The Herald speaks without sound.", a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID), a(PULL, "Draw Near"))
                 .phase(0.66F, "The shrine empties.", a(SUMMON, "Spawn of Nothing").summon("void_spawn").n(2), a(DARKNESS, "Unlit"), a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID))
