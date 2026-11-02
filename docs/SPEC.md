@@ -16679,7 +16679,8 @@ Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it 
 ### 45.4 Room, depth and price (`EnchantRules`)
 - **Room** (how many enchantments a piece holds): a forged armour piece its Forge Song quality + 1 (Fine 1 to Masterwork
   3, read through `core.api.ForgeHooks`); a found weapon (Marked, or Lord-forged: `ArmsApi.found`) 3; a bow, crossbow,
-  trident or fishing rod 2; our forged weapons 2 (until the War Anvil's quality lands, stage 3); anything else 1. An old
+  trident or fishing rod 2; our forged weapons 2 (until the War Anvil's quality lands, stage 3); the Delver's Pick by its
+  verse (§45.14: 1, and one more at II, IV and VI); anything else 1. An old
   piece over its room shows **Full** and takes nothing new until one is scraped off.
 - **Depth** (how deep each can go): the piece's rank (its set's, its weapon's tier, else its material: leather, wood,
   stone and gold E, iron and chain D, diamond C, netherite A, else its rarity): E I, D II, C III, B and up the
@@ -16857,3 +16858,26 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
 - The table knows it's in a Study from the server (`HearthHooks.studyAt`, looked at every five seconds per table and
   sent with the table's update); in a Study a quiet paper hum (`drift`, 0.18) goes with the letters every 4.5 seconds
   while they come.
+
+### 45.14 Stage 3: more doors and the pick's room (`Doors`, `delve.api.Pick`, `living.api.Hunts`)
+- **The hunts.** A named beast (`CreatureTag` kind `BEAST`, "Terror of Ashfen") brought down by a player pays a page of
+  Bane of Beasts, "From Terror of Ashfen, brought down"; a ledger population's alpha (a deep-wild herd's bull, a deep
+  pack's leader: `living.api.Hunts.alpha`, elite with the `awaken_ledger` tag) pays Harvest, "From a herd's leader,
+  brought down".
+- **The Deep.** An elite creature that means harm (`Enemy`, never a Lord, Warden or named beast) killed below the rock's
+  zero in the overworld (`delve.api.Bands` Deep band) or anywhere in a Descent pays Bane of the Deep. Breaking a lode's
+  heart that's still whole (`delve.api.Lodes.heart`, not `heartBroken`, and the block is one of the delve's
+  `awaken:*_lode_heart` blocks) pays Fortune; in the Deep band the first one pays Silk Touch, and after that a Deep heart
+  rolls Silk Touch or Fortune evenly. Read at NORMAL, ahead of the delve's LOW listener that marks the heart broken, so a
+  heart dug up and set down again pays nothing; creative breaks pay nothing.
+- **Every door pays like a gate's Lord:** the page the first time (doors `hunt:beast`, `hunt:leader`, `deep:bane`,
+  `deep:fortune`, `deep:silk`, kept with the gates in `Known`), then a spare one time in five. The page goes into the pack
+  (else at your feet) with one plain line in the enchantment's colour: "A page of Harvest was caught in the leader's
+  hide. Use it to learn it.", "A page of Fortune was pressed into the lode's heart. Use it to learn it."
+- **The Delver's Pick's room** reads `delve.api.Pick.verse` (a facade over `PickVerses.verse`): 1, and one more at II,
+  IV and VI. Still never Efficiency.
+- **The Forge Song's finished card** shows the lines other modules add through `ForgeHooks.cardLine` under its words
+  (`ForgeSongScreen.doneLines`, read once when the card comes, the piece made with its quality): enchanting's "Room for
+  three enchantments" in lapis-violet (`A898FF`). The War Anvil's card does the same when it lands.
+- Test `enchant_doors` (a named beast's page and its words, no page without a player, the heart blocks, the pick's room
+  at verse 0 and IV).

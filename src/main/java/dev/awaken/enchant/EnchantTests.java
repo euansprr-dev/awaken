@@ -71,6 +71,7 @@ final class EnchantTests {
         AwakenTests.register("enchant_ward_cap", 20, EnchantTests::wardCap);
         AwakenTests.register("enchant_bane_spares_lords", 20, EnchantTests::baneSparesLords);
         AwakenTests.register("enchant_fold", 20, EnchantTests::fold);
+        AwakenTests.register("enchant_doors", 20, EnchantTests::doors);
         AwakenTests.registerIsolated("enchant_inscribe", 100, EnchantTests::inscribe);
         AwakenTests.registerIsolated("enchant_tasks", 100, EnchantTests::tasks);
     }
@@ -255,6 +256,34 @@ final class EnchantTests {
         h.assertTrue(p[0] == 6 && p[1] == 2, "deepening pays the difference");
         int[] dear = EnchantRules.price(Inscriptions.of(reg(h).getOrThrow(Enchantments.MENDING)), 0, 1);
         h.assertTrue(dear[0] == 10 && dear[1] == 4, "Mending costs 10 levels and 4 lapis");
+        h.succeed();
+    }
+
+    /**
+     * Stage 3's doors: a named beast pays Bane of Beasts the first time (saying whose hide it came from), a creature with
+     * no player on it pays nothing, only the delve's heart blocks are lode hearts, and the Delver's Pick gains room by verse.
+     */
+    private static void doors(GameTestHelper h) {
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        p.setPos(h.absoluteVec(new Vec3(2.5, 1, 2.5)));
+        Known.save(p, Known.fresh());
+        p.getInventory().clearContent();
+        Cow beast = h.spawnWithNoFreeWill(EntityTypes.COW, new BlockPos(1, 1, 1));
+        beast.setData(CoreApi.CREATURE_TAG, new CreatureTag(30, CreatureTag.Kind.BEAST, true, "Terror of Testfen"));
+        Doors.onDeath(new LivingDeathEvent(beast, h.getLevel().damageSources().generic()));
+        h.assertTrue(pages(p) == 0, "a beast felled by no player gives no page");
+        Doors.onDeath(new LivingDeathEvent(beast, h.getLevel().damageSources().playerAttack(p)));
+        h.assertTrue(pages(p) == 1 && Pages.teaches(firstPage(p)).getFirst().id().getPath().equals("bane_of_beasts"),
+                "its hunter gets Bane of Beasts: " + pages(p));
+        h.assertTrue(Pages.where(firstPage(p)).equals("From Terror of Testfen, brought down"), "it says whose hide: " + Pages.where(firstPage(p)));
+        h.assertTrue(Known.of(p).gatePaid("hunt:beast"), "the door is paid");
+        for (var heart : dev.awaken.delve.DelveContent.HEARTS.values())
+            h.assertTrue(Doors.heartBlock(heart.get().defaultBlockState()), "a lode heart: " + heart.getId());
+        h.assertFalse(Doors.heartBlock(Blocks.IRON_ORE.defaultBlockState()), "plain ore is no heart");
+        ItemStack pick = new ItemStack(item("awaken:waking_pick"));
+        h.assertTrue(EnchantRules.room(pick) == 1, "an asleep pick holds one: " + EnchantRules.room(pick));
+        pick.set(dev.awaken.delve.DelveContent.PICK_VERSES.get(), new dev.awaken.delve.PickVerses.State(dev.awaken.delve.PickVerses.SCHEMA, 4));
+        h.assertTrue(EnchantRules.room(pick) == 3, "at IV it holds three: " + EnchantRules.room(pick));
         h.succeed();
     }
 

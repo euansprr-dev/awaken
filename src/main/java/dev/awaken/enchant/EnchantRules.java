@@ -33,10 +33,13 @@ public final class EnchantRules {
 
     /**
      * How many enchantments the piece holds: forged pieces by quality (Plain 1 to Flawless 4), found weapons 3, our forged
-     * weapons 2 until the War Anvil gives them a quality, bows, crossbows, tridents and rods 2, everything else 1.
+     * weapons 2 until the War Anvil gives them a quality, the Delver's Pick by its verse (1, and one more at II, IV and VI),
+     * bows, crossbows, tridents and rods 2, everything else 1.
      */
     public static int room(ItemStack s) {
         if (s.isEmpty()) return 0;
+        int verse = dev.awaken.delve.api.Pick.verse(s);
+        if (verse >= 0) return 1 + (verse >= 2 ? 1 : 0) + (verse >= 4 ? 1 : 0) + (verse >= 6 ? 1 : 0);
         OptionalInt q = ForgeHooks.quality(s);
         if (q.isPresent()) return q.getAsInt() + 1;
         if (ArmsApi.found(s)) return 3;

@@ -32,6 +32,8 @@ public final class EnchantModule {
         bus.addListener(EnchantFx::onPickupXp);
         bus.addListener(EnchantFx::onFall);
         bus.addListener(Pages::onDeath);
+        bus.addListener(Doors::onDeath);
+        bus.addListener(Doors::onBreak);
         bus.addListener(Pages::onUseItem);
         bus.addListener(Fold::onUseBlock);
         bus.addListener(Fold::onAnvil);
