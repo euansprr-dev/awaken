@@ -93,18 +93,20 @@ final class AnvilHeldScreen extends Screen implements dev.awaken.signal.client.Q
                 cy += 10 * (parts.size() - 1);
                 cx = right;
             }
-            y = Math.max(y + 22, cy + 12);
+            y = Math.max(y + 22, cy + 11);
             List<FormattedCharSequence> lines = font.split(Component.literal(o.line()), inner);
             for (FormattedCharSequence l : lines) {
                 g.text(font, l, px + 10, y, o.ready() ? LABEL : LANTERN, false);
                 y += 10;
             }
-            y += 8;
+            y += 5;
         }
-        String list = "Forge something new: the Armoury";
+        // at the foot, or up in the title's row, shorter, when the offers reach down to it (a part's long name, a short window)
+        boolean foot = y - 5 <= py + ph - 26;
+        String list = foot ? "Forge something new: the Armoury" : "The Armoury";
         listW = bw(list);
         listX = px + pw - 10 - listW;
-        listY = py + ph - 24;
+        listY = foot ? py + ph - 24 : py + 6;
         button(g, listX, listY, list, true, mouseX, mouseY);
     }
 
