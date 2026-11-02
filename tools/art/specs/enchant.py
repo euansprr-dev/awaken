@@ -247,6 +247,41 @@ def burin():
     return out
 
 
+# the Study's drifting letters (SPEC §45.13): our own script, white so the particle tints them (lapis, or the colour of
+# what's being written), each a 6x6 rune in an 8x8 leaf with a faint halo
+LETTERS = [
+    ".####.|#....#|#.##.#|#.##.#|#....#|.####.",
+    "..##..|.####.|..##..|..##..|..##..|.#..#.",
+    "#....#|#....#|#....#|.#..#.|..##..|..##..",
+    ".#..#.|#.##.#|.#..#.|.#..#.|#.##.#|.#..#.",
+    "####..|...#..|...#..|..###.|...#.#|...#..",
+    "..##..|..##..|.#..#.|.#..#.|#....#|######",
+    "##....|.##...|..##..|...##.|..##..|.##...",
+    "......|.####.|#.##.#|#.##.#|.####.|......",
+    "#.##.#|.####.|..##..|..##..|..##..|..##..",
+    "######|..##..|..##..|######|..##..|..##..",
+    "#####.|#...#.|#.#.#.|#.###.|#.....|######",
+    ".#....|#.#..#|...##.|.#....|#.#..#|...##.",
+]
+
+
+def letter(rows):
+    c = Canvas(8, 8)
+    on = set()
+    for y, row in enumerate(rows.split("|")):
+        for x, ch in enumerate(row):
+            if ch == "#":
+                on.add((x + 1, y + 1))
+    for (x, y) in on:
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if (x + dx, y + dy) not in on:
+                    c.set(x + dx, y + dy, (200, 220, 255, 70))
+    for (x, y) in on:
+        c.set(x, y, (255, 255, 255, 255))
+    return c
+
+
 def build(out):
     out.block("inscribing_table_top", top())
     out.block("inscribing_table_side", panel())
@@ -256,6 +291,8 @@ def build(out):
     out.block("inscribing_book", book())
     out.item("enchantment_page", page_item())
     out.item("burin", burin())
+    for i, rows in enumerate(LETTERS):
+        out.particle(f"enchant_letter_{i}", letter(rows))
 
 
 # ---- content ---------------------------------------------------------------------------------------------------------
@@ -333,6 +370,8 @@ def content():
         _write(os.path.join(ASSETS, f"models/item/{name}.json"), {"parent": parent, "textures": {"layer0": f"awaken:item/{name}"}})
         _write(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": f"awaken:item/{name}"}})
     _merge(os.path.join(MERGE, "assets/awaken/lang/en_us.json"), {"item.awaken.burin": "Burin"})
+    _write(os.path.join(ASSETS, "particles/enchant_letter.json"),
+           {"textures": [f"awaken:enchant_letter_{i}" for i in range(len(LETTERS))]})
     print("enchant: content written")
 
 

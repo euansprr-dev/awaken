@@ -52,6 +52,9 @@ cmd awaken admin enchant learn all
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
 wait 60
 screen close
+# the player fell while the study was built under them: back up onto its floor
+cmd tp @s 0.5 201 0.5 0 20
+wait 40
 shot enchant_01_the_table_at_dusk
 # ---- step up and use it: the book opens, the piece goes down onto the slate ----
 cmd tp @s 0.5 201 2.6 0 34
@@ -69,17 +72,17 @@ cmd awaken enchant pilot choose 10
 wait 24
 shot enchant_05_the_mark_on_the_piece
 cmd awaken enchant pilot trace
-wait 30
+wait 24
 shotnow enchant_06_the_first_stroke
-wait 30
+wait 26
 shotnow enchant_07_strokes_filling
-wait 34
+wait 16
 shotnow enchant_08_the_last_stroke
 wait 14
 shotnow enchant_09_it_wakes
-wait 12
-shotnow enchant_10_the_wake_settling
-wait 20
+wait 18
+shotnow enchant_10_the_piece_turning
+wait 40
 shot enchant_11_the_card
 # ---- the book again: Bane of the Dead on the left page, from memory on the right ----
 cmd awaken enchant pilot again
@@ -93,6 +96,8 @@ cmd tp @s 0.5 201 1.0 180 10
 wait 40
 shot enchant_14_the_script_line_held
 cmd item replace entity @s armor.chest with awaken:lordscale_chestplate[enchantments={"awaken:heat_ward":2,"awaken:frost_ward":1}]
+# lit for the look (the study's lanterns leave a worn piece in shadow at the front camera's distance)
+cmd effect give @s minecraft:night_vision 600 0 true
 camera front
 wait 30
 shotnow enchant_15_wards_in_turn_a

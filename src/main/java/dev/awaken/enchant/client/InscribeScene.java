@@ -18,7 +18,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
@@ -89,6 +91,10 @@ public final class InscribeScene {
     private static final float[] VIEW = new float[3], VIEW_O = new float[3];
     private static boolean viewSet;
 
+    /** Where the writer stands at the desk (null: stay where you are), and how long the step there takes. */
+    private static @Nullable Vec3 desk;
+    private static final int STEP_TICKS = 12;
+
     // ---- the session's messages ---------------------------------------------------------------------------------------
 
     static void open(EnchantPayloads.Open o) {
@@ -109,6 +115,7 @@ public final class InscribeScene {
         if (!again) {
             openedAt = ticks;
             viewSet = false;
+            desk = deskSpot(mc.player);
             if (before == null) {
                 before = mc.options.getCameraType();
                 mc.options.setCameraType(CameraType.FIRST_PERSON);
@@ -171,9 +178,31 @@ public final class InscribeScene {
         }
     }
 
+    /**
+     * The spot at the table's front where both hands reach the slate: 0.36 out from its face, on your own floor, if you're
+     * within three blocks of it and there's room to stand (else you stay where you are and the view leans further in).
+     */
+    private static @Nullable Vec3 deskSpot(LocalPlayer p) {
+        if (pos == null || Math.abs(p.getY() - pos.getY()) > 0.6) return null;
+        Vec3 to = new Vec3(pos.getX() + 0.5 + fx * 0.86, p.getY(), pos.getZ() + 0.5 + fz * 0.86);
+        if (to.distanceToSqr(p.position()) > 9) return null;
+        AABB box = p.getBoundingBox().move(to.x - p.getX(), 0, to.z - p.getZ());
+        return p.level().noCollision(p, box) ? to : null;
+    }
+
+    /** The step to the desk as the scene opens: a few short moves, collisions and all (the server sees an ordinary walk). */
+    private static void step(LocalPlayer p) {
+        if (desk == null || ticks - openedAt > STEP_TICKS + 4) return;
+        double dx = desk.x - p.getX(), dz = desk.z - p.getZ(), l = Math.sqrt(dx * dx + dz * dz);
+        if (l < 0.02) return;
+        double go = Math.min(l, Math.max(0.05, l * 0.3));
+        p.move(MoverType.SELF, new Vec3(dx / l * go, 0, dz / l * go));
+    }
+
     static void reset() {
         end();
         pilot = false;
+        desk = null;
         pos = null;
         openedAt = closedAt = -1000;
     }
@@ -362,6 +391,7 @@ public final class InscribeScene {
             act(EnchantPayloads.FINISH, 0, 0, 0F);
             finishAt = Integer.MAX_VALUE;
         }
+        if (live && mc.player != null) step(mc.player);
         VIEW_O[0] = VIEW[0];
         VIEW_O[1] = VIEW[1];
         VIEW_O[2] = VIEW[2];
@@ -401,38 +431,43 @@ public final class InscribeScene {
         spinS = Math.sin(a);
     }
 
-    /** The view each phase asks for, eased toward a tick at a time. */
+    /**
+     * The view each phase asks for, eased toward a tick at a time. Each frames what matters ({@code size} blocks across
+     * filling {@code frac} of it) in the middle of the band the screen leaves clear above its pages, line or card.
+     */
     private static void frame(LocalPlayer p) {
         Vec3 eye = p.getEyePosition(1F);
-        double base = Minecraft.getInstance().options.fov().get();
-        double tx = centre.x, ty = slateY + 0.03, tz = centre.z, size, frac, lift;
+        Minecraft mc = Minecraft.getInstance();
+        double base = mc.options.fov().get();
+        int guiH = Math.max(1, mc.getWindow().getGuiScaledHeight());
+        double tx = centre.x, ty = slateY + 0.03, tz = centre.z, size, frac, clear;
         switch (phase) {
             case TRACE, MEMORY -> {
                 size = 0.5;
-                frac = 0.5;
-                lift = 0;
+                frac = 0.55;
+                clear = 1 - 44.0 / guiH;
             }
             case WAKE -> {
                 ty += 0.08;
                 size = 0.6;
-                frac = 0.42;
-                lift = 0.16;
+                frac = 0.6;
+                clear = InscribeScreen.cardTop(guiH);
             }
             default -> {
-                // over the table: the piece and the floating book, above the book's two pages on the screen
-                tx = pos.getX() + 0.5 - fx * 0.05;
-                tz = pos.getZ() + 0.5 - fz * 0.05;
-                ty = slateY + 0.12;
-                size = 1.15;
-                frac = 0.4;
-                lift = 0.2;
+                // the piece on the slate (its mark faint as you rest on a row) with the floating book behind, over the pages
+                ty = slateY + 0.05;
+                size = 0.62;
+                frac = 0.9;
+                clear = InscribeScreen.pagesTop(guiH) - 0.02;
             }
         }
-        double dx = tx - eye.x, dy = ty - eye.y, dz = tz - eye.z, flat = Math.sqrt(dx * dx + dz * dz), dist = Math.sqrt(flat * flat + dy * dy);
+        clear = Mth.clamp(clear, 0.3, 1.0);
+        double dx = tx - eye.x, dy = ty - eye.y, dz = tz - eye.z, flat = Math.sqrt(dx * dx + dz * dz), dist = Math.max(0.6, Math.sqrt(flat * flat + dy * dy));
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-        float fov = (float) Mth.clamp(Math.toDegrees(2 * Math.atan(size / 2 / (Math.max(0.6, dist) * frac))), 14, Math.min(base, 78));
-        // the frame's centre sits a little below what's framed, so the thing itself shows high, clear of the pages and cards
-        float pitch = (float) (-Math.toDegrees(Math.atan2(dy, flat)) + fov * lift);
+        float fov = (float) Mth.clamp(Math.toDegrees(2 * Math.atan(size / (dist * 2 * frac * clear))), 14, Math.min(base, 78));
+        // looking a little below it puts it in the middle of the clear band
+        double half = Math.tan(Math.toRadians(fov / 2));
+        float pitch = (float) (-Math.toDegrees(Math.atan2(dy, flat)) + Math.toDegrees(Math.atan((1 - clear) * half)));
         if (!viewSet) {
             VIEW[0] = VIEW_O[0] = yaw;
             VIEW[1] = VIEW_O[1] = pitch;

@@ -1,7 +1,12 @@
 package dev.awaken.enchant;
 
+import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.BlockItem;
@@ -32,6 +37,21 @@ public final class EnchantContent {
     static final DeferredRegister<DataComponentType<?>> EFFECTS = DeferredRegister.create(Registries.ENCHANTMENT_EFFECT_COMPONENT_TYPE, Awaken.MODID);
     static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Awaken.MODID);
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
+    static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
+
+    /** A letter of our script drifting off a bookshelf into the table's book (SPEC §45.13), in its colour. */
+    public static final DeferredHolder<ParticleType<?>, ParticleType<ColorParticleOption>> LETTER = PARTICLES.register("enchant_letter",
+            () -> new ParticleType<ColorParticleOption>(false) {
+                @Override
+                public MapCodec<ColorParticleOption> codec() {
+                    return ColorParticleOption.codec(this);
+                }
+
+                @Override
+                public StreamCodec<? super RegistryFriendlyByteBuf, ColorParticleOption> streamCodec() {
+                    return ColorParticleOption.streamCodec(this);
+                }
+            });
 
     public static final DeferredBlock<InscribingTableBlock> TABLE = BLOCKS.registerBlock("inscribing_table", InscribingTableBlock::new,
             p -> p.mapColor(MapColor.COLOR_BLUE).strength(2.5F, 1200F).sound(SoundType.WOOD).noOcclusion().lightLevel(s -> 5));
@@ -92,6 +112,7 @@ public final class EnchantContent {
         EFFECTS.register(modBus);
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
+        PARTICLES.register(modBus);
         modBus.addListener(EnchantContent::creativeTab);
     }
 

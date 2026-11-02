@@ -158,7 +158,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
         if (shown > 0.01F) {
             build(p, piece);
             w = Mth.clamp(width - 28, 300, 470);
-            h = Mth.clamp((int) (height * 0.52F), 140, 214);
+            h = pagesHeight(height);
             x0 = (width - w) / 2;
             y0 = height - h - 8 + (int) ((1F - shown) * (h + 20));
             spread(g, mx, my, piece, shown);
@@ -390,13 +390,30 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
         g.centeredText(font, "From memory: your hand knows this one.", width / 2, height - 28, (alpha * 3 / 4) << 24 | 0xD8CCB8);
     }
 
-    /** It woke: what you made, and two ways on. */
+    /** Ticks into the wake before the card comes up: after the piece's turn (6-40) has settled. */
+    static final int CARD_AT = 42;
+
+    private static int pagesHeight(int guiH) {
+        return Mth.clamp((int) (guiH * 0.52F), 140, 214);
+    }
+
+    /** Where the book's pages start down the screen (0 top, 1 bottom): the scene frames the piece above them. */
+    static double pagesTop(int guiH) {
+        return 1 - (pagesHeight(guiH) + 8.0) / guiH;
+    }
+
+    /** Where the card starts down the screen, near enough (its lines vary): the wake is framed above it. */
+    static double cardTop(int guiH) {
+        return 1 - 110.0 / guiH;
+    }
+
+    /** It woke: what you made, and two ways on (once the piece has turned and settled). */
     private void card(GuiGraphicsExtractor g, int mx, int my, float a) {
         EnchantPayloads.Done d = InscribeScene.done;
         Inscriptions.Entry e = InscribeScene.entry();
         if (d == null || e == null) return;
         float t = InscribeScene.now(a) - InscribeScene.phaseAt;
-        float in = ease(Mth.clamp((t - 14) / 10F, 0F, 1F));
+        float in = ease(Mth.clamp((t - CARD_AT) / 10F, 0F, 1F));
         if (in <= 0) return;
         int alpha = (int) (255 * in);
         int cw = Math.min(width - 40, 300);
@@ -482,7 +499,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 return true;
             }
             case InscribeScene.WAKE -> {
-                int[] b = cardButtons();
+                int[] b = InscribeScene.ticks - InscribeScene.phaseAt < CARD_AT ? new int[0] : cardButtons();
                 if (b.length > 0 && my >= b[1] && my < b[1] + 12) {
                     if (mx >= b[0] && mx < b[2]) {
                         InscribeScene.again();

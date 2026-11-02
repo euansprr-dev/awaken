@@ -40,6 +40,7 @@ public final class EnchantClient {
     public static void init(IEventBus modBus) {
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerBlockEntityRenderer(EnchantContent.TABLE_BE.get(), InscribingTableRenderer::new));
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LetterParticle::register);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(EnchantPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> InscribeScene.open(msg)));
             e.register(EnchantPayloads.State.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> InscribeScene.state(msg)));

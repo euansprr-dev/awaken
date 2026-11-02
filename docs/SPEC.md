@@ -16751,11 +16751,14 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   `village.Trade`.
 
 ### 45.10 The writing scene, the table drawn, the Journal (`enchant.client`)
-- **The view leans in from where you stand** (a change from the plan's "cinematic by default"): the player's own eye
-  never moves, the view turns (`ComputeCameraAngles`, LOW) and narrows (`ComputeFovModifierEvent`) toward each beat:
-  over the table while the book is open (the table in the upper half, the book's two pages over the lower half), close
-  on the piece while you trace (the mark fills the middle), a little back while it wakes. Eased per tick (0.22),
-  in over 12 ticks, out over 10, a slight breath. First person is forced for the scene and restored after: the world
+- **You step to the desk and the view leans in** (a change from the plan's "cinematic by default"): as the scene opens
+  you take a short walk (a few moves over 12 ticks, collisions and all) to the spot 0.36 out from the table's front,
+  where both hands reach the slate, if you're within three blocks of it, on its floor (within 0.6) and there's room
+  to stand; otherwise you stay put. The eye is then your own: the view turns (`ComputeCameraAngles`, LOW) and narrows
+  (`ComputeFovModifierEvent`) toward each beat, framing it in the middle of the band the screen leaves clear: the piece
+  with the floating book behind it above the book's pages, close on the piece while you trace (above the line and
+  pips), a little back while it wakes (above the card). Eased per tick (0.22), in over 12 ticks, out over 10, a slight
+  breath. First person is forced for the scene and restored after: the world
   hands (`core.api.FirstPerson.world`, "enchant_table", priority 210) only draw from the player's own camera. The HUD
   steps aside (subtitles and chat stay), the block outline goes, the player model is hidden.
 - **Hands**: the off hand brings your piece down onto the slate over 14 ticks (the table holds off drawing it for you
@@ -16778,7 +16781,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   clean), with a bar for how much of the current one is on the line; a first-trace hint says what to do and that Esc
   gives the levels back.
 - **The wake**: the mark flares white-hot and settles into its colour over 50 ticks while a band of light runs the
-  piece and the piece rises a hair (0.04), turns once on the slate (from 6 to 40 ticks, eased) and settles; a card says what was written ("A clean hand" and the levels back,
+  piece and the piece rises a hair (0.04), turns once on the slate (from 6 to 40 ticks, eased) and settles; at 42 ticks
+  (it has turned) a card comes up and says what was written ("A clean hand" and the levels back,
   "Its mark is in your memory now"), with Write another and Done.
 - **The table as everyone sees it** (`InscribingTableRenderer`): the leather book (`awaken:block/inscribing_book`, the
   vanilla book's layout) floats over a brass bracket at the back, opening toward whoever's near and toward the front
@@ -16841,3 +16845,15 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
 - **Depth Strider** (24 ticks, the client's own, nothing sent): a player within 32 blocks moving through water on boots
   that carry it leaves a faint blue V opening behind them on the water (at their feet when under it), one every three
   ticks.
+
+### 45.13 The Study's drifting letters (`InscribingTableBlockEntity`, `LetterParticle`)
+- Letters of our own script (`awaken:enchant_letter`, a coloured particle; twelve 8x8 runes, white with a faint halo,
+  from `tools/art/specs/enchant.py`) drift off bookshelves standing where vanilla's table reads them (two out, with air
+  between, `EnchantingTableBlock.isValidBookShelf`) into the floating book: they lift off the shelf, sway, arc over and
+  speed into the book, brightening to white as they arrive, gone as they touch the page (36-55 ticks, full-bright).
+- Only while a player is within four blocks or someone writes: now and then anywhere (one try a tick, one in seven),
+  thicker in your Study (two tries, one in three), thickest while someone writes (three tries, one in three), and then
+  in the colour of what's being written; otherwise lapis light (`8FB0FF`).
+- The table knows it's in a Study from the server (`HearthHooks.studyAt`, looked at every five seconds per table and
+  sent with the table's update); in a Study a quiet paper hum (`drift`, 0.18) goes with the letters every 4.5 seconds
+  while they come.
