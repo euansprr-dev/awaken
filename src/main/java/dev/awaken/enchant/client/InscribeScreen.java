@@ -376,8 +376,8 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 g.outline(x - 2, y - 2, 12, 12, pulse << 24 | brighten(e.colour()));
             }
         }
-        if (InscribeScene.drawing && InscribeScene.samples > 0) {
-            float share = InscribeScene.onLine / (float) InscribeScene.samples;
+        if (InscribeScene.drawing && InscribeScene.ran > 0) {
+            float share = InscribeScene.share();
             int bw = 80, bx = cx - bw / 2, y = by + 18;
             g.fill(bx, y, bx + bw, y + 2, alpha / 2 << 24 | 0x302820);
             g.fill(bx, y, bx + (int) (bw * share), y + 2, alpha << 24 | (share >= 0.8F ? brighten(e.colour()) : 0xC08060));

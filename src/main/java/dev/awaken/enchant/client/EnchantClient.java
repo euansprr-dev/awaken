@@ -68,7 +68,10 @@ public final class EnchantClient {
             InscribeScene.tick();
             EnchantFxClient.tick();
             wordHint();
+            LiveHand.tick();
         });
+        // the dev hand's mouse, once per rendered frame like a real one (autopilot runs only)
+        bus.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> LiveHand.frame());
         bus.addListener(ItemTooltipEvent.class, EnchantClient::onTooltip);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             InscribeScene.reset();

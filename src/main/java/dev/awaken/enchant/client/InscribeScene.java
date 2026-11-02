@@ -43,8 +43,13 @@ public final class InscribeScene {
     static final int NONE = -1, BOOK = 0, TRACE = 1, MEMORY = 2, WAKE = 3;
     /** Half the mark's width on the slate, in blocks. */
     static final double MARK = 0.2;
-    /** Where a stroke must be picked up (its glowing end), how far the pen may run ahead, and what counts as on the line (mark units). */
-    static final float START_R = 0.3F, FOLLOW_R = 0.34F, LINE_R = 0.15F;
+    /**
+     * Where a stroke must be picked up (its glowing end) and how far off the line the pen still pulls it along; on the
+     * line is inside the drawn line's own width, and the credit fades to none over the next {@code LINE_FADE} (mark units).
+     */
+    static final float START_R = 0.3F, FOLLOW_R = 0.34F, LINE_R = 0.06F, LINE_FADE = 0.1F;
+    /** The pen's run between two frames is followed in steps no longer than this (mark units): a quick hand at a low frame rate stays on the line it drew. */
+    private static final float STEP = 0.03F;
     /** The server counts a stroke no sooner than 6 ticks after the last; the client waits 7. */
     static final int STROKE_GAP = 7;
     /** From memory: the whole mark writes itself in two seconds. */
@@ -73,8 +78,13 @@ public final class InscribeScene {
     private static @Nullable CameraType before;
 
     // the trace
-    static int stroke, progress, onLine, samples;
+    static int stroke, progress;
+    /** How far the pen has run along this stroke, and how much of that run was on the line (mark units). */
+    static float ran, ranOn;
     static boolean drawing;
+    private static float lastU, lastV;
+    private static boolean lastOn;
+    private static int scratchAt = -1000;
     static final float[] SHARE = new float[8];
     private static int queued, sent, lastSentAt = -1000, finishAt = -1;
 
@@ -218,8 +228,9 @@ public final class InscribeScene {
     }
 
     private static void beginTrace() {
-        stroke = progress = onLine = samples = 0;
-        drawing = false;
+        stroke = progress = 0;
+        ran = ranOn = 0;
+        drawing = lastOn = false;
         queued = sent = 0;
         lastSentAt = ticks;
         finishAt = -1;
@@ -283,37 +294,114 @@ public final class InscribeScene {
         int i = Math.min(progress, s.length / 2 - 1);
         if (Mth.length(penU - s[i * 2], penV - s[i * 2 + 1]) <= START_R) {
             drawing = true;
+            lastU = penU;
+            lastV = penV;
+            lastOn = true;
             if (progress == 0) play(EnchantContent.BURIN_METAL.get(), 0.35F, 1.2F);
+        } else {
+            // not there: the burin taps the slate dully and the place to start flares
+            nudgeAt = ticks;
+            play(EnchantContent.SCRATCH.get(), 0.22F, 0.6F);
         }
     }
 
-    /** The pen moved while down: run along the stroke, counting how much of it stays on the line. */
+    /** When a press missed the stroke's end (it flares for a moment). */
+    private static int nudgeAt = -1000;
+
+    /**
+     * The pen moved while down (a frame's worth of the hand's run): followed in short steps from where it was, each
+     * finding the nearest part of the stroke around where the cut has got to. The cut follows the pen, never runs ahead
+     * of it; the share on the line is by distance drawn, so it reads the same at any speed and frame rate.
+     */
     static void drag() {
         if (phase != TRACE || !drawing || stroke >= strokes()) return;
+        if (!penOn) {
+            lastOn = false;
+            return;
+        }
         float[] s = Marks.of(no)[stroke];
         int n = s.length / 2;
-        if (!penOn) return;
-        samples++;
-        float best = Float.MAX_VALUE;
-        for (int i = Math.max(0, progress - 2); i < Math.min(n, progress + 3); i++)
-            best = Math.min(best, Mth.length(penU - s[i * 2], penV - s[i * 2 + 1]));
-        if (best <= LINE_R) onLine++;
-        else if (ticks % 4 == 0) play(EnchantContent.SCRATCH.get(), 0.18F, 0.9F + 0.2F * (float) Math.random());
-        for (int j = Math.min(n - 1, progress + 5); j > progress; j--) {
-            if (Mth.length(penU - s[j * 2], penV - s[j * 2 + 1]) <= FOLLOW_R) {
-                progress = j;
-                break;
-            }
+        float fu = lastOn ? lastU : penU, fv = lastOn ? lastV : penV;
+        float d = Mth.length(penU - fu, penV - fv);
+        int steps = Math.max(1, Mth.ceil(d / STEP));
+        boolean off = false;
+        for (int k = 1; k <= steps && progress < n - 2; k++) {
+            float f = k / (float) steps;
+            if (!follow(s, n, Mth.lerp(f, fu, penU), Mth.lerp(f, fv, penV), d / steps)) off = true;
+        }
+        lastU = penU;
+        lastV = penV;
+        lastOn = true;
+        if (off && ticks - scratchAt >= 4) {
+            scratchAt = ticks;
+            play(EnchantContent.SCRATCH.get(), 0.18F, 0.9F + 0.2F * (float) Math.random());
         }
         if (progress >= n - 2) strokeDone();
     }
 
+    /** One step of the pen: whether it's on the line, and the cut on to the nearest point it has reached. */
+    private static boolean follow(float[] s, int n, float u, float v, float len) {
+        float best = Float.MAX_VALUE;
+        int at = progress;
+        for (int i = Math.max(0, progress - 2); i < Math.min(n - 1, progress + 6); i++) {
+            float ax = s[i * 2], ay = s[i * 2 + 1], bx = s[i * 2 + 2] - ax, by = s[i * 2 + 3] - ay, ll = bx * bx + by * by;
+            float t = ll < 1e-8F ? 0F : Mth.clamp(((u - ax) * bx + (v - ay) * by) / ll, 0F, 1F);
+            float dd = Mth.length(u - ax - bx * t, v - ay - by * t);
+            if (dd < best) {
+                best = dd;
+                at = t >= 0.5F ? i + 1 : i;
+            }
+        }
+        ran += len;
+        float credit = Mth.clamp(1F - (best - LINE_R) / LINE_FADE, 0F, 1F);
+        ranOn += len * credit;
+        if (best <= FOLLOW_R && at > progress) progress = at;
+        if (credit >= 0.5F) cut(u, v, len, n);
+        return credit >= 0.5F;
+    }
+
+    // ---- the cut's sparks: what a clean line gives back as it's drawn ------------------------------------------------
+
+    private static final int SPARKS = 32;
+    /** Each spark: u, v, its drift (u, v per tick), its rise per tick, the tick it was thrown. */
+    private static final float[] SPARK = new float[SPARKS * 6];
+    private static int sparkNext;
+    private static float sparkRun, tickRun;
+
+    /** The burin running on the line: a spark now and then, and a faint tick that climbs as the stroke nears its end. */
+    private static void cut(float u, float v, float len, int n) {
+        sparkRun += len;
+        tickRun += len;
+        if (sparkRun >= 0.08F) {
+            sparkRun = 0;
+            int i = sparkNext * 6;
+            sparkNext = (sparkNext + 1) % SPARKS;
+            float a = (float) (Math.random() * Mth.TWO_PI), sp = 0.02F + 0.025F * (float) Math.random();
+            SPARK[i] = u;
+            SPARK[i + 1] = v;
+            SPARK[i + 2] = Mth.cos(a) * sp;
+            SPARK[i + 3] = Mth.sin(a) * sp;
+            SPARK[i + 4] = 0.006F + 0.008F * (float) Math.random();
+            SPARK[i + 5] = ticks;
+        }
+        if (tickRun >= 0.3F) {
+            tickRun = 0;
+            play(EnchantContent.BURIN_METAL.get(), 0.08F, 1.05F + 0.45F * progress / (float) Math.max(1, n - 1));
+        }
+    }
+
+    /** This stroke's share on the line so far (all of it before the pen has moved). */
+    static float share() {
+        return ran <= 1e-5F ? 1F : ranOn / ran;
+    }
+
     static void release() {
         drawing = false;
+        lastOn = false;
     }
 
     private static void strokeDone() {
-        float share = samples == 0 ? 1F : onLine / (float) samples;
+        float share = share();
         SHARE[stroke] = share;
         queued++;
         // each stroke rings its family's note, a step higher each time; one that wandered scratches dully
@@ -323,8 +411,9 @@ public final class InscribeScene {
             else play(EnchantContent.SCRATCH.get(), 0.45F, 0.7F);
         }
         stroke++;
-        progress = onLine = samples = 0;
-        drawing = false;
+        progress = 0;
+        ran = ranOn = 0;
+        drawing = lastOn = false;
     }
 
     static Inscriptions.@Nullable Entry entry() {
@@ -392,6 +481,9 @@ public final class InscribeScene {
             finishAt = Integer.MAX_VALUE;
         }
         if (live && mc.player != null) step(mc.player);
+        drawBackO = drawBack;
+        boolean writing = live && (phase == TRACE || phase == MEMORY || phase == WAKE) && ticks - openedAt >= LAY_TICKS;
+        drawBack += ((writing ? 1F : 0F) - drawBack) * 0.3F;
         VIEW_O[0] = VIEW[0];
         VIEW_O[1] = VIEW[1];
         VIEW_O[2] = VIEW[2];
@@ -443,8 +535,9 @@ public final class InscribeScene {
         double tx = centre.x, ty = slateY + 0.03, tz = centre.z, size, frac, clear;
         switch (phase) {
             case TRACE, MEMORY -> {
+                // leaning in to write: the mark fills most of the view
                 size = 0.5;
-                frac = 0.55;
+                frac = 0.82;
                 clear = 1 - 44.0 / guiH;
             }
             case WAKE -> {
@@ -528,8 +621,20 @@ public final class InscribeScene {
     // ---- the hands --------------------------------------------------------------------------------------------------
 
     private static ItemStack burin = ItemStack.EMPTY;
+    /** How far the off hand has drawn back (0..1), this tick and last. */
+    private static float drawBack, drawBackO;
 
-    /** Both hands at the table: the off hand lays the piece down and pins it, the main hand holds the burin to the pen. */
+    /**
+     * Where the burin's point sits from the fist that holds it, on screen (half screen heights, right and up): it's drawn
+     * upright in the hand, its point at the sprite's top right. The fist goes that far down and left of the pen, so the
+     * point is on the line and the hand stays below what you're drawing.
+     */
+    private static final double BURIN_RIGHT = 0.05, BURIN_UP = 0.47;
+
+    /**
+     * Both hands at the table: the off hand lays the piece down (then draws back out of the way: the table holds it, and
+     * nothing covers the mark while you write), the main hand holds the burin, its point at the pen.
+     */
     static boolean pose(float pt, FirstPerson.Rig rig) {
         Minecraft mc = Minecraft.getInstance();
         float w = weight(pt);
@@ -547,9 +652,13 @@ public final class InscribeScene {
         int main = mc.player.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? 1 : 0, off = 1 - main;
         double mainSide = main == 0 ? 1 : -1;
         float wake = phase == WAKE ? ease(Mth.clamp((t - phaseAt) / 10F, 0F, 1F)) : 0F;
+        // the off hand draws back once the piece is down and the writing starts
+        float away = ease(Mth.lerp(pt, drawBackO, drawBack));
+        var cam = mc.gameRenderer.mainCamera();
         for (int h = 0; h < 2; h++) {
             double side = h == 0 ? 1 : -1;
             double x, y, z;
+            float hw = w;
             if (h == off) {
                 // laying it down: from low by your side, over the slate, down onto it; then pinning its near end
                 double ex = wx(-mainSide * 0.95, -0.35), ez = wz(-mainSide * 0.95, -0.35);
@@ -565,22 +674,27 @@ public final class InscribeScene {
                     y = Mth.lerp(k, sy0, slateY + 0.06) + 0.12 * Mth.sin(k * Mth.PI);
                     rig.held[h] = laying();
                 } else rig.held[h] = ItemStack.EMPTY;
+                y -= away * 0.3;
+                hw = w * (1 - away);
             } else {
                 rig.held[h] = burin;
                 double[] tip = tip(t);
-                x = tip[0];
-                y = tip[1] + 0.1;
-                z = tip[2];
-                // the hand rides a little behind the tip, toward you
-                x -= inX * 0.05;
-                z -= inZ * 0.05;
+                // the fist down and left of the point on screen, by the burin's reach at the point's depth
+                double ex = tip[0] - eye.x, ey = tip[1] - eye.y, ez = tip[2] - eye.z;
+                var fw = cam.forwardVector();
+                var up = cam.upVector();
+                var left = cam.leftVector();
+                double depth = Math.max(0.2, ex * fw.x() + ey * fw.y() + ez * fw.z()), k = depth * Math.tan(Math.toRadians(cam.getFov()) / 2);
+                x = tip[0] + (left.x() * BURIN_RIGHT - up.x() * BURIN_UP) * k;
+                y = tip[1] + (left.y() * BURIN_RIGHT - up.y() * BURIN_UP) * k;
+                z = tip[2] + (left.z() * BURIN_RIGHT - up.z() * BURIN_UP) * k;
             }
             y += wake * 0.08;
             x -= inX * wake * 0.08;
             z -= inZ * wake * 0.08;
             y -= (1 - w) * 0.6; // in and out of the scene: up from below the table's edge
             double sx = eye.x + bx * side * 0.33 - inX * 0.1, sy = eye.y - 0.4, sz = eye.z + bz * side * 0.33 - inZ * 0.1;
-            rig.reach(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, sx, sy, sz, x, y, z, FirstPerson.Rig.ARM_REACH, 0, 1, 0, w);
+            rig.reach(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, sx, sy, sz, x, y, z, FirstPerson.Rig.ARM_REACH, 0, 1, 0, hw);
         }
         return true;
     }
@@ -654,6 +768,13 @@ public final class InscribeScene {
         int colour = en.colour();
         float[][] m = Marks.of(shown);
         final int ph = phase;
+        if (ph == TRACE || ph == MEMORY) {
+            // the mark scored into the piece, dark either side of each line, before any of it is cut
+            float scored = 0.6F * Mth.clamp((t - phaseAt) / 15F, 0F, 1F);
+            e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.debugQuads(), (pose, vc) -> {
+                for (float[] s : m) groove(pose, vc, s, slateY + 0.0355, 0.007, 0.012, argb(0x0B0706, scored));
+            });
+        }
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.lightning(), (pose, vc) -> {
             double y = slateY + 0.036;
             switch (ph) {
@@ -671,25 +792,47 @@ public final class InscribeScene {
                             // a finished cut: lapis light in it, the family's colour round it
                             ribbon(pose, vc, s, 0, n, y, 0.05, argb(colour, 0.32F));
                             ribbon(pose, vc, s, 0, n, y + 0.001, 0.014, argb(hot(LAPIS, 0.55F), 0.95F));
-                        } else {
-                            ribbon(pose, vc, s, 0, n, y, 0.02, argb(colour, 0.2F * burn));
-                            if (i == stroke && progress > 0) {
-                                ribbon(pose, vc, s, 0, progress + 1, y, 0.04, argb(LAPIS, 0.4F));
-                                ribbon(pose, vc, s, 0, progress + 1, y + 0.001, 0.013, argb(hot(LAPIS, 0.6F), 0.95F));
+                        } else if (i == stroke) {
+                            // the stroke to draw now stands out from the ones still to come
+                            ribbon(pose, vc, s, 0, n, y, 0.032, argb(colour, 0.5F * burn));
+                            ribbon(pose, vc, s, 0, n, y + 0.0005, 0.01, argb(hot(colour, 0.45F), 0.55F * burn));
+                            if (progress > 0) {
+                                ribbon(pose, vc, s, 0, progress + 1, y + 0.001, 0.04, argb(LAPIS, 0.4F));
+                                ribbon(pose, vc, s, 0, progress + 1, y + 0.0015, 0.013, argb(hot(LAPIS, 0.6F), 0.95F));
                             }
+                            if (!drawing) {
+                                // a light runs from where to pick it up to its end: the way to draw it, without a word
+                                float run = ((t - phaseAt) % 32F) / 20F;
+                                if (run <= 1F) {
+                                    int head = progress + Math.round(run * (n - 1 - progress));
+                                    ribbon(pose, vc, s, Math.max(progress, head - 4), Math.min(n, head + 1), y + 0.002, 0.022,
+                                            argb(hot(colour, 0.6F), 0.8F * Mth.sin(run * Mth.PI)));
+                                }
+                            }
+                        } else {
+                            ribbon(pose, vc, s, 0, n, y, 0.022, argb(colour, 0.24F * burn));
                         }
                     }
                     if (stroke < m.length) {
                         // where to pick the stroke up: its end glows and breathes
                         float[] s = m[stroke];
                         int i = Math.min(progress, s.length / 2 - 1);
-                        float pulse = drawing ? 0.6F : 0.75F + 0.25F * Mth.sin(t * 0.35F);
+                        float nudge = Mth.clamp(1F - (t - nudgeAt) / 12F, 0F, 1F);
+                        float pulse = (drawing ? 0.6F : 0.75F + 0.25F * Mth.sin(t * 0.35F)) + 1.3F * nudge * nudge;
                         disc(pose, vc, wx(s[i * 2], s[i * 2 + 1]), y + 0.002, wz(s[i * 2], s[i * 2 + 1]), 0.035 * pulse + 0.012, argb(hot(colour, 0.5F), 0.85F));
                         disc(pose, vc, wx(s[i * 2], s[i * 2 + 1]), y + 0.001, wz(s[i * 2], s[i * 2 + 1]), 0.09 * pulse, argb(colour, 0.25F));
                     }
                     if (drawing && penOn) {
                         disc(pose, vc, wx(penU, penV), y + 0.003, wz(penU, penV), 0.022, argb(0xFFFFFF, 0.8F));
                         disc(pose, vc, wx(penU, penV), y + 0.002, wz(penU, penV), 0.06, argb(LAPIS, 0.35F));
+                    }
+                    for (int i = 0; i < SPARKS; i++) {
+                        float age = t - SPARK[i * 6 + 5];
+                        if (age < 0 || age > 9) continue;
+                        float su = SPARK[i * 6] + SPARK[i * 6 + 2] * age, sv = SPARK[i * 6 + 1] + SPARK[i * 6 + 3] * age;
+                        double sy = y + 0.004 + SPARK[i * 6 + 4] * age - 0.0009 * age * age;
+                        float life = 1F - age / 9F;
+                        disc(pose, vc, wx(su, sv), Math.max(y + 0.003, sy), wz(su, sv), 0.006 + 0.004 * life, argb(hot(LAPIS, 0.7F * life), life));
                     }
                 }
                 case MEMORY -> {
@@ -747,6 +890,26 @@ public final class InscribeScene {
             bz += ez;
             quad(pose, vc, ax, y, az, bx, y, bz, bx + nx, y, bz + nz, ax + nx, y, az + nz, argb, rim);
             quad(pose, vc, ax, y, az, bx, y, bz, bx - nx, y, bz - nz, ax - nx, y, az - nz, argb, rim);
+        }
+    }
+
+    /** The dark rim of a cut either side of its line (alpha-blended): the mark reads as an engraving on a bright piece too. */
+    private static void groove(PoseStack.Pose pose, VertexConsumer vc, float[] s, double y, double half, double edge, int argb) {
+        int n = s.length / 2, rim = argb & 0x00FFFFFF;
+        for (int i = 0; i + 1 < n; i++) {
+            double ax = wx(s[i * 2], s[i * 2 + 1]), az = wz(s[i * 2], s[i * 2 + 1]);
+            double bx = wx(s[i * 2 + 2], s[i * 2 + 3]), bz = wz(s[i * 2 + 2], s[i * 2 + 3]);
+            double dx = bx - ax, dz = bz - az, l = Math.sqrt(dx * dx + dz * dz);
+            if (l < 1e-6) continue;
+            double nx = -dz / l, nz = dx / l, ex = dx / l * edge * 0.5, ez = dz / l * edge * 0.5;
+            ax -= ex;
+            az -= ez;
+            bx += ex;
+            bz += ez;
+            for (int side = -1; side <= 1; side += 2) {
+                double ix = nx * half * side, iz = nz * half * side, ox = nx * (half + edge) * side, oz = nz * (half + edge) * side;
+                quad(pose, vc, ax + ix, y, az + iz, bx + ix, y, bz + iz, bx + ox, y, bz + oz, ax + ox, y, az + oz, argb, rim);
+            }
         }
     }
 

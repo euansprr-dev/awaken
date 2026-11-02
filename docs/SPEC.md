@@ -16773,14 +16773,26 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory; the foot
   of the page says what the one under the cursor does. Resting on a row for 4 ticks sends LOOK (watchers see the
   floating book turn) and lays that mark faintly on the piece.
-- **The trace**: the mark (`Marks`, the same strokes the server counts) lies on the piece, 0.4 blocks across, faint
-  at first. Each stroke is picked up at its glowing end (within 0.3 mark units), followed to its end (the pen may run
-  up to five samples ahead within 0.34), and counted on the line within 0.15. A finished stroke burns lapis in its core
-  and the family's colour round it, rings its family's note a step higher than the last (a dull scratch if under 60%
-  on the line) and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH follows 6 ticks after the
-  last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each stroke (bright when
-  clean), with a bar for how much of the current one is on the line; a first-trace hint says what to do and that Esc
-  gives the levels back.
+- **The trace**: the mark (`Marks`, the same strokes the server counts) lies on the piece, 0.4 blocks across, scored
+  into it (a dark rim either side of every line, so it reads on a bright piece) and faint at first; the view leans in
+  until the mark fills most of it. The stroke to draw now is brighter and wider than the ones to come, and while it
+  waits a light runs it from its glowing end to its far end (the way to draw it). Each stroke is picked up at its
+  glowing end (within 0.3 mark units; a press anywhere else taps the slate dully and the end flares). The pen's run
+  between frames is followed in steps of at most 0.03, each finding the nearest part of the stroke from two samples
+  behind to six ahead of the cut: the cut follows the pen (to the nearest sample it has reached, within 0.34 of the
+  line) and never runs ahead of it. The share on the line is by distance drawn, so it reads the same at any speed or
+  frame rate: inside 0.06 of the line (the drawn line's own width) counts fully, fading to nothing at 0.16. Measured
+  with a dev hand (eased, wobbling strokes of 0.1-0.8 s): a careful hand (wobble up to 0.1) scores about 0.9 and is
+  clean, a loose one (0.13) about 0.8, a shaky one (0.18) about 0.73, a sloppy one (0.24) under 0.6. While it cuts on
+  the line the burin throws lapis sparks (every 0.08 drawn) and ticks faintly (every 0.3, climbing in pitch toward the
+  stroke's end). The burin's point, not the fist, is at the pen (the fist sits below and left of it on screen by the
+  burin's reach), and the off hand draws back once the piece is down, so nothing covers the mark. A finished stroke
+  burns lapis in its core and the family's colour round it, rings its family's note a step higher than the last (a
+  dull scratch if under 60% on the line) and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH
+  follows 6 ticks after the last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each
+  stroke (bright when clean), with a bar for how much of the current one is on the line; a first-trace hint says what
+  to do and that Esc gives the levels back. `LiveHand` (autopilot runs only) drives a live client's mouse for these
+  checks from `<game>/enchant-live/in.txt`.
 - **The wake**: the mark flares white-hot and settles into its colour over 50 ticks while a band of light runs the
   piece and the piece rises a hair (0.04), turns once on the slate (from 6 to 40 ticks, eased) and settles; at 42 ticks
   (it has turned) a card comes up and says what was written ("A clean hand" and the levels back,
