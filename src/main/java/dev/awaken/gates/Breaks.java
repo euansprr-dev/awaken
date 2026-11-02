@@ -352,7 +352,7 @@ public final class Breaks {
             List<ItemStack> loot = Loot.breakLord(g.plan.rank(), g.plan.theme(), p.getRandom());
             for (ItemStack s : loot) {
                 if (p == killer) level.addFreshEntity(new ItemEntity(level, lord.getX(), lord.getY() + 0.5, lord.getZ(), s));
-                else if (!p.addItem(s) && !s.isEmpty()) p.drop(s, false, net.minecraft.util.Prediction.SERVER_ONLY);
+                else dev.awaken.gates.run.Spoils.give(p, s);
             }
             if (g.nearHearth || HearthHooks.nearest(level, g.pos, 256).isPresent()) Progression.count(p, Counters.BREAKS_HELD_AT_HEARTH);
             Progression.bestMoment(p, "Held a broken " + g.plan.rank().label + "-rank gate (" + g.plan.theme().displayName + ")");

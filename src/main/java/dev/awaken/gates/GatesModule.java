@@ -2,8 +2,8 @@ package dev.awaken.gates;
 
 import dev.awaken.core.PlayDays;
 import dev.awaken.gates.net.GatePayloads;
-import dev.awaken.gates.run.Hud;
 import dev.awaken.gates.run.Interactions;
+import dev.awaken.gates.run.Spoils;
 import dev.awaken.progression.DaysEnd;
 import dev.awaken.signal.Signal;
 import net.minecraft.server.level.ServerPlayer;
@@ -47,7 +47,8 @@ public final class GatesModule {
         var r = e.registrar("1");
         r.playToClient(GatePayloads.Beacons.TYPE, GatePayloads.Beacons.STREAM_CODEC);
         r.playToClient(GatePayloads.RunHud.TYPE, GatePayloads.RunHud.STREAM_CODEC);
-        r.playToClient(GatePayloads.SatchelView.TYPE, GatePayloads.SatchelView.STREAM_CODEC);
+        r.playToClient(GatePayloads.SpoilsView.TYPE, GatePayloads.SpoilsView.STREAM_CODEC);
+        r.playToClient(GatePayloads.SpoilsFlight.TYPE, GatePayloads.SpoilsFlight.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, dev.awaken.gates.net.WorldPayloads.Arrival.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.WorldPayloads.Journey.TYPE, dev.awaken.gates.net.WorldPayloads.Journey.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.WorldPayloads.AtlasView.TYPE, dev.awaken.gates.net.WorldPayloads.AtlasView.STREAM_CODEC);
@@ -56,8 +57,11 @@ public final class GatesModule {
         r.playToClient(dev.awaken.gates.net.RigPayloads.Cue.TYPE, dev.awaken.gates.net.RigPayloads.Cue.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Run.TYPE, dev.awaken.gates.net.RigPayloads.Run.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.RigPayloads.Ghost.TYPE, dev.awaken.gates.net.RigPayloads.Ghost.STREAM_CODEC);
-        r.playToServer(GatePayloads.OpenSatchel.TYPE, GatePayloads.OpenSatchel.STREAM_CODEC, (msg, ctx) -> {
-            if (ctx.player() instanceof ServerPlayer sp) Hud.sendSatchel(sp, true);
+        r.playToServer(GatePayloads.WatchSpoils.TYPE, GatePayloads.WatchSpoils.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Spoils.watch(sp, msg.watching());
+        });
+        r.playToServer(GatePayloads.TakeHeld.TYPE, GatePayloads.TakeHeld.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Spoils.take(sp, msg.index(), msg.item(), msg.all());
         });
     }
 }

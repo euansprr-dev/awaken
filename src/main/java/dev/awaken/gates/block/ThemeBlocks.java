@@ -477,7 +477,7 @@ public final class ThemeBlocks {
             if (recipe.isEmpty()) return InteractionResult.TRY_WITH_EMPTY_HAND;
             ItemStack cooked = recipe.get().value().assemble(in);
             stack.shrink(1);
-            if (!player.getInventory().add(cooked)) player.drop(cooked, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            dev.awaken.gates.run.Spoils.give(player, cooked);
             sl.playSound(null, pos, SoundEvents.FIRECHARGE_USE, SoundSource.BLOCKS, 0.6F, 1.4F);
             sl.sendParticles(ParticleTypes.FLAME, pos.getX() + 0.5, pos.getY() + 0.9, pos.getZ() + 0.5, 12, 0.25, 0.1, 0.25, 0.02);
             return InteractionResult.SUCCESS_SERVER;
@@ -524,7 +524,7 @@ public final class ThemeBlocks {
             stack.shrink(1);
             ItemStack honey = new ItemStack(Items.HONEY_BOTTLE);
             if (stack.isEmpty()) player.setItemInHand(hand, honey);
-            else if (!player.getInventory().add(honey)) player.drop(honey, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            else dev.awaken.gates.run.Spoils.give(player, honey);
             level.playSound(null, pos, SoundEvents.BOTTLE_FILL, SoundSource.BLOCKS, 1F, 1F);
             level.setBlock(pos, state.setValue(FULL, false), Block.UPDATE_ALL);
             return InteractionResult.SUCCESS_SERVER;
@@ -667,7 +667,7 @@ public final class ThemeBlocks {
             if (!state.getValue(FULL)) return InteractionResult.PASS;
             if (level.isClientSide()) return InteractionResult.SUCCESS;
             ItemStack gift = new ItemStack(Items.EMERALD);
-            if (!player.getInventory().add(gift)) player.drop(gift, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            dev.awaken.gates.run.Spoils.give(player, gift);
             level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 1F, 1.4F);
             level.setBlock(pos, state.setValue(FULL, false), Block.UPDATE_ALL);
             return InteractionResult.SUCCESS_SERVER;

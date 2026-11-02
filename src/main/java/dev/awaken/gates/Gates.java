@@ -96,8 +96,8 @@ public final class Gates {
     }
 
     /**
-     * Puts loot into the player's Satchel (loot from other modules found inside a gate). The stack is shrunk by what
-     * moved; returns the same stack holding what didn't fit (empty when it all fit, unchanged when not in a run).
+     * Puts loot into the player's Satchel (loot from other modules found inside a gate). The Satchel never refuses
+     * (SPEC §13, "Gate spoils"): returns the same stack, empty in a run, unchanged when not in one.
      */
     public static ItemStack satchelAdd(ServerPlayer p, ItemStack stack) {
         return Runs.satchelAdd(p, stack);

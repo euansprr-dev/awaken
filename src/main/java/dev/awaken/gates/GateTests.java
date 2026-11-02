@@ -157,12 +157,12 @@ final class GateTests {
             h.assertTrue(Runs.satchelOnDeath(run, AwakenConfig.Difficulty.HUNTER).isEmpty() && run.satchel.isEmpty(), "Hunter loses the Satchel");
             Satchel.add(run.satchel, new ItemStack(Items.IRON_INGOT, 16));
             h.assertTrue(Runs.satchelOnDeath(run, AwakenConfig.Difficulty.HARDLINE).isEmpty(), "Hardline loses the Satchel");
-            // capacity and merging
+            // no cap (SPEC §13, "Gate spoils") and merging
             RunState full = new RunState();
             for (int i = 0; i < 30; i++) Satchel.add(full.satchel, new ItemStack(i % 2 == 0 ? Items.STONE : Items.DIRT, 64));
-            h.assertTrue(Satchel.count(full.satchel) == Satchel.SLOTS, "27 slots, was " + Satchel.count(full.satchel));
             ItemStack extra = new ItemStack(Items.OAK_LOG, 1);
-            h.assertTrue(Satchel.add(full.satchel, extra) == 0 && extra.getCount() == 1, "a full Satchel refuses new items");
+            h.assertTrue(Satchel.add(full.satchel, extra) == 1 && extra.isEmpty() && Satchel.count(full.satchel) == 31,
+                    "the Satchel never refuses, " + Satchel.count(full.satchel) + " stacks");
             RunState merge = new RunState();
             Satchel.add(merge.satchel, new ItemStack(Items.ARROW, 40));
             Satchel.add(merge.satchel, new ItemStack(Items.ARROW, 40));
