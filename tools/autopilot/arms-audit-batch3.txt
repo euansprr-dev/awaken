@@ -1,0 +1,394 @@
+# Weapon audit, batch 3 (SPEC §25 "Weapons", proportions per style; weapon-designs session, 3 Nov 2026): every
+# Axe (turned like the Longsword, the haft longer, the bit broader) and the Ember Tyrant's Cleft, every Chainblade
+# (heads 12 long) and the Lantern Broker's Due, every Gauntlet (each tier its own outline) and the Gearwright's Grip,
+# and the Spears (heads 7 wide), held at rest in first person and at each blow's hit, then from the front in third
+# person, then on stands beside the Gatewrought Longsword and Maul.
+world armsdesigns creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 8
+wait 40
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-10 ~ ~-10 ~10 ~10 ~12 minecraft:air
+cmd fill ~-10 ~ ~9 ~10 ~8 ~9 minecraft:deepslate_tiles
+cmd fill ~-10 ~ ~-6 ~10 ~8 ~-6 minecraft:deepslate_tiles
+cmd kill @e[type=minecraft:item]
+wait 30
+look 0 8
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_axe
+wait 32
+shot ab3_fp_wildhide_axe
+arms pose strike_1 0.23
+shot ab3_fp_wildhide_axe_strike_1
+arms pose heavy 0.1
+shot ab3_fp_wildhide_axe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_axe
+wait 32
+shot ab3_fp_beastbound_axe
+arms pose strike_1 0.23
+shot ab3_fp_beastbound_axe_strike_1
+arms pose heavy 0.1
+shot ab3_fp_beastbound_axe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_axe
+wait 32
+shot ab3_fp_gatewrought_axe
+arms pose strike_1 0.23
+shot ab3_fp_gatewrought_axe_strike_1
+arms pose heavy 0.1
+shot ab3_fp_gatewrought_axe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_axe
+wait 32
+shot ab3_fp_veilwoven_axe
+arms pose strike_1 0.23
+shot ab3_fp_veilwoven_axe_strike_1
+arms pose heavy 0.1
+shot ab3_fp_veilwoven_axe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_axe
+wait 32
+shot ab3_fp_lordscale_axe
+arms pose strike_1 0.23
+shot ab3_fp_lordscale_axe_strike_1
+arms pose heavy 0.1
+shot ab3_fp_lordscale_axe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_axe
+wait 32
+shot ab3_fp_sovereign_axe
+arms pose strike_1 0.23
+shot ab3_fp_sovereign_axe_strike_1
+arms pose heavy 0.1
+shot ab3_fp_sovereign_axe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:ember_tyrant_axe
+wait 32
+shot ab3_fp_ember_tyrant_axe
+arms pose strike_1 0.23
+shot ab3_fp_ember_tyrant_axe_strike_1
+arms pose heavy 0.1
+shot ab3_fp_ember_tyrant_axe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_chainblade
+wait 32
+shot ab3_fp_wildhide_chainblade
+arms pose strike_1 0.18
+shot ab3_fp_wildhide_chainblade_strike_1
+arms pose heavy 0.11
+shot ab3_fp_wildhide_chainblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_chainblade
+wait 32
+shot ab3_fp_beastbound_chainblade
+arms pose strike_1 0.18
+shot ab3_fp_beastbound_chainblade_strike_1
+arms pose heavy 0.11
+shot ab3_fp_beastbound_chainblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_chainblade
+wait 32
+shot ab3_fp_gatewrought_chainblade
+arms pose strike_1 0.18
+shot ab3_fp_gatewrought_chainblade_strike_1
+arms pose heavy 0.11
+shot ab3_fp_gatewrought_chainblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_chainblade
+wait 32
+shot ab3_fp_veilwoven_chainblade
+arms pose strike_1 0.18
+shot ab3_fp_veilwoven_chainblade_strike_1
+arms pose heavy 0.11
+shot ab3_fp_veilwoven_chainblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_chainblade
+wait 32
+shot ab3_fp_lordscale_chainblade
+arms pose strike_1 0.18
+shot ab3_fp_lordscale_chainblade_strike_1
+arms pose heavy 0.11
+shot ab3_fp_lordscale_chainblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_chainblade
+wait 32
+shot ab3_fp_sovereign_chainblade
+arms pose strike_1 0.18
+shot ab3_fp_sovereign_chainblade_strike_1
+arms pose heavy 0.11
+shot ab3_fp_sovereign_chainblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lantern_broker_chainblade
+wait 32
+shot ab3_fp_lantern_broker_chainblade
+arms pose strike_1 0.18
+shot ab3_fp_lantern_broker_chainblade_strike_1
+arms pose heavy 0.11
+shot ab3_fp_lantern_broker_chainblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_gauntlets
+wait 32
+shot ab3_fp_wildhide_gauntlets
+arms pose strike_1 0.2
+shot ab3_fp_wildhide_gauntlets_strike_1
+arms pose heavy 0.09
+shot ab3_fp_wildhide_gauntlets_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_gauntlets
+wait 32
+shot ab3_fp_beastbound_gauntlets
+arms pose strike_1 0.2
+shot ab3_fp_beastbound_gauntlets_strike_1
+arms pose heavy 0.09
+shot ab3_fp_beastbound_gauntlets_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 32
+shot ab3_fp_gatewrought_gauntlets
+arms pose strike_1 0.2
+shot ab3_fp_gatewrought_gauntlets_strike_1
+arms pose heavy 0.09
+shot ab3_fp_gatewrought_gauntlets_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_gauntlets
+wait 32
+shot ab3_fp_veilwoven_gauntlets
+arms pose strike_1 0.2
+shot ab3_fp_veilwoven_gauntlets_strike_1
+arms pose heavy 0.09
+shot ab3_fp_veilwoven_gauntlets_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_gauntlets
+wait 32
+shot ab3_fp_lordscale_gauntlets
+arms pose strike_1 0.2
+shot ab3_fp_lordscale_gauntlets_strike_1
+arms pose heavy 0.09
+shot ab3_fp_lordscale_gauntlets_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_gauntlets
+wait 32
+shot ab3_fp_sovereign_gauntlets
+arms pose strike_1 0.2
+shot ab3_fp_sovereign_gauntlets_strike_1
+arms pose heavy 0.09
+shot ab3_fp_sovereign_gauntlets_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gearwright_colossus_gauntlets
+wait 32
+shot ab3_fp_gearwright_colossus_gauntlets
+arms pose strike_1 0.2
+shot ab3_fp_gearwright_colossus_gauntlets_strike_1
+arms pose heavy 0.09
+shot ab3_fp_gearwright_colossus_gauntlets_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_spear
+wait 32
+shot ab3_fp_wildhide_spear
+arms pose strike_1 0.2
+shot ab3_fp_wildhide_spear_strike_1
+arms pose heavy 0.12
+shot ab3_fp_wildhide_spear_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_spear
+wait 32
+shot ab3_fp_beastbound_spear
+arms pose strike_1 0.2
+shot ab3_fp_beastbound_spear_strike_1
+arms pose heavy 0.12
+shot ab3_fp_beastbound_spear_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 32
+shot ab3_fp_gatewrought_spear
+arms pose strike_1 0.2
+shot ab3_fp_gatewrought_spear_strike_1
+arms pose heavy 0.12
+shot ab3_fp_gatewrought_spear_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_spear
+wait 32
+shot ab3_fp_veilwoven_spear
+arms pose strike_1 0.2
+shot ab3_fp_veilwoven_spear_strike_1
+arms pose heavy 0.12
+shot ab3_fp_veilwoven_spear_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_spear
+wait 32
+shot ab3_fp_lordscale_spear
+arms pose strike_1 0.2
+shot ab3_fp_lordscale_spear_strike_1
+arms pose heavy 0.12
+shot ab3_fp_lordscale_spear_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_spear
+wait 32
+shot ab3_fp_sovereign_spear
+arms pose strike_1 0.2
+shot ab3_fp_sovereign_spear_strike_1
+arms pose heavy 0.12
+shot ab3_fp_sovereign_spear_heavy
+arms pose off
+camera front
+look 20 4
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_axe
+wait 32
+shot ab3_tp_wildhide_axe
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_axe
+wait 32
+shot ab3_tp_beastbound_axe
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_axe
+wait 32
+shot ab3_tp_gatewrought_axe
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_axe
+wait 32
+shot ab3_tp_veilwoven_axe
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_axe
+wait 32
+shot ab3_tp_lordscale_axe
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_axe
+wait 32
+shot ab3_tp_sovereign_axe
+cmd item replace entity @s weapon.mainhand with awaken:ember_tyrant_axe
+wait 32
+shot ab3_tp_ember_tyrant_axe
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_chainblade
+wait 32
+shot ab3_tp_wildhide_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_chainblade
+wait 32
+shot ab3_tp_beastbound_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_chainblade
+wait 32
+shot ab3_tp_gatewrought_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_chainblade
+wait 32
+shot ab3_tp_veilwoven_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_chainblade
+wait 32
+shot ab3_tp_lordscale_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_chainblade
+wait 32
+shot ab3_tp_sovereign_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:lantern_broker_chainblade
+wait 32
+shot ab3_tp_lantern_broker_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_gauntlets
+wait 32
+shot ab3_tp_wildhide_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_gauntlets
+wait 32
+shot ab3_tp_beastbound_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 32
+shot ab3_tp_gatewrought_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_gauntlets
+wait 32
+shot ab3_tp_veilwoven_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_gauntlets
+wait 32
+shot ab3_tp_lordscale_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_gauntlets
+wait 32
+shot ab3_tp_sovereign_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:gearwright_colossus_gauntlets
+wait 32
+shot ab3_tp_gearwright_colossus_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_spear
+wait 32
+shot ab3_tp_wildhide_spear
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_spear
+wait 32
+shot ab3_tp_beastbound_spear
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 32
+shot ab3_tp_gatewrought_spear
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_spear
+wait 32
+shot ab3_tp_veilwoven_spear
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_spear
+wait 32
+shot ab3_tp_lordscale_spear
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_spear
+wait 32
+shot ab3_tp_sovereign_spear
+camera first
+look 0 8
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:wildhide_axe",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:beastbound_axe",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_axe",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:veilwoven_axe",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:lordscale_axe",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:sovereign_axe",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab3_stands_axe
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab3]
+wait 5
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:wildhide_chainblade",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:beastbound_chainblade",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_chainblade",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:veilwoven_chainblade",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:lordscale_chainblade",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:sovereign_chainblade",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab3_stands_chainblade
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab3]
+wait 5
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:wildhide_gauntlets",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:beastbound_gauntlets",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_gauntlets",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:veilwoven_gauntlets",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:lordscale_gauntlets",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:sovereign_gauntlets",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab3_stands_gauntlets
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab3]
+wait 5
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:wildhide_spear",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:beastbound_spear",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_spear",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:veilwoven_spear",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:lordscale_spear",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:sovereign_spear",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab3"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab3_stands_spear
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab3]
+wait 5
+quit
