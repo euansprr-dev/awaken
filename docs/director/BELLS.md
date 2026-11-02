@@ -14,6 +14,28 @@ This version follows that: no bell lies in the open land without a story that le
 This is a plan, not built. Approval page: https://claude.ai/artifact/Fzj7qtDKBjVaonkgWCaeHa. SPEC changes (a new §43.16 and the edits listed in part 6)
 go in with the first stage's commit.
 
+### Euan's answers, 30 Oct (these override the parts below where they differ)
+Euan approved the whole plan with one change to how gates hold their bells: "100 is great. Go ahead with the full plan.
+Just inside of gates, let's not make hidden bells ... I don't like that you have to like ring something ... you're never
+gonna remember to ring it in every gate, and that's kind of boring ... I think like drops by bosses is probably the best
+thing, like the boss is hiding the bell or something. And then when you kill the boss, that's when maybe you find the
+bell in his room." So:
+- **No gate bell rooms, no hum inside a gate, no handbell answer.** §4.7's bell room, the hum and lines of §4.10 that are
+  about gates, §4.11's answering and Bram handing out a handbell to find bells are all dropped. Decision 6 is rejected.
+  The handbell stays what it was: it scares wild beasts and rings peals (a spare is still a stick over two copper ingots).
+- **The gate's Lord keeps the bell.** When the Lord dies, a bell lies on its arena's floor (the boss room), near where it
+  fell, one for each hunter in the party who doesn't have it; each lifts their own. Which Lords keep one: your first Lord
+  always keeps the Wren, then never two in a row, about one in three, and always by the fourth since the last (stage 1,
+  SPEC §43.16). A gate world's Lord keeps its world's own bell. If the gate closes before anyone lifts it, it goes back to
+  the pool.
+- Ilse's second line becomes: "The gates took a lot of the bells. Whatever lives at the bottom of a gate likes to sit on
+  what the gate swallowed. If you ever kill one and there's a bell lying there, bring it home."
+- Stage 4's row is now **"Lord bells lie in the boss room"**: no bell room, no hum, no handbell answer.
+- Tests: `bells_gate_holds`, `bells_hum_cadence` and `bells_handbell_answers` are replaced by `bells_lord_keeps` (built
+  in stage 1) and a test that the bell a Lord kept lies on its arena's floor (`bells_lord_room`).
+- A quest's last stretch (§4.7, the villages) keeps its muffled hum within 32 of the spot the letter names: it's not in a
+  gate and there's a story leading you there. Nothing hums inside gates.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 1. What rang, and why (read from the code at 748dfae3)
@@ -423,19 +445,17 @@ at the trees' edge.
 
 - **Tests** (CI, one per mechanism): `bells_nothing_from_nowhere` (no bell sound at a player when a bell becomes theirs;
   the bare fire never sings; a carried bell is an item, a still-ringing one stays), `bells_none_in_the_open` (no sleeping
-  place is planned or built in the land; an old world's built ones are cleared on the next visit), `bells_gate_holds`
-  (the first gate holds the Wren in a reachable room; a later gate of a rank with bells to find holds one at the set
-  odds; the hum plays only inside), `bells_village_quest` (the rumour, the letter, the hum within 32 of the spot, the
+  place is planned or built in the land; an old world's built ones are cleared on the next visit), `bells_lord_room` (replaces `bells_gate_holds`,
+  Euan 30 Oct: the bell a Lord kept lies on its arena's floor near where it fell, one for each of the party), `bells_village_quest` (the rumour, the letter, the hum within 32 of the spot, the
   bell), `bells_hang_rules` (three on the frame,
   not a Great Bell; a beam 8 up takes four, 7 up refuses; a Great Beam 12 up; taking down brings the hole back),
   `bells_song_from_bells` (each hung bell's place and each far bell's place in the song; voices count the song),
   `bells_roost_bell`, `bells_old_save`, `bells_catalog_ring` extended (each of the hundred yields an item or is one of
   the six still ringing), `journey_ledger` (every new item and block has a way in). For the sounds: `bells_sounds_placed`
   (every bell sound played in the world is mono, read from the files as `AudioLayerTests` already does),
-  `bells_hum_cadence` (in a gate with a bell: one hum on entry, then none for 45 s standing still; 8 closer: the next
-  after 10 s; none for a bell you hold; none in the open land), `bells_song_arrangement` (1 bell: three
-  strokes; 4: three rounds; 30: the tune with rests shortened; never `bells.gap`; never over 25 s),
-  `bells_handbell_answers` (a gate's bell answers with its thread; "nothing answered" in an empty gate).
+  `bells_hum_cadence` (only a village quest's last stretch hums now: one hum on reaching it, then none for 45 s standing
+  still; 8 closer: the next after 10 s; none for a bell you hold; none in a gate or the open land), `bells_song_arrangement` (1 bell: three
+  strokes; 4: three rounds; 30: the tune with rests shortened; never `bells.gap`; never over 25 s), (`bells_handbell_answers` is dropped: the handbell answers nothing, Euan 30 Oct).
 - **One look tour per stage** on CI (`tools/autopilot/bells-home-<n>.txt`): the frame with Ilse's bell at dusk, the
   roost bell in a tree at night with the Lampwing, a gate's bell room before and after its door opens, the grey thread
   through a gate's walls, a hand-built tower's beams with empty hooks, the Tenor in the yard, both Work Plans built.
@@ -445,7 +465,7 @@ at the trees' edge.
 | 1 | **Quiet land and sounds you can follow** (4.7's retirement, 4.10, 4.11): no sleeping place planned or built in the land and old ones cleared (the ding-ding stops), every bell sound mono, the song with silence (toll, rounds, tune), nothing at your feet, a true card ("It'll hang by your fire once you set a Bell Frame there"), plain lines and subtitles, the frame and handbell explained to old saves | 2 to 3 h |
 | 2 | The bell as a thing, the frame (recipe, outline, three hooks), hanging and the first ring, the song from the bells, Ilse's bell and lines, the roost bell, the still-ringing six answer, the Bells tab's data, old saves | 3 to 4 h |
 | 3 | Bell Beam and Great Beam, the 8 and 12 rules, the Belfry and Bell Tower plans, the Hearth's bell tower folded in, tier II and IV needs, the Tenor by wagon | 2 to 3 h |
-| 4 | **Bells in gates**: the bell room (with the gates module), the first gate's Wren, the swallowed fourteen's odds, the hum and the handbell inside, Bram's handbell and lines, the Lords' hoards | 4 to 5 h |
+| 4 | **Lord bells lie in the boss room** (Euan, 30 Oct): when a gate's Lord falls, the bell it kept lies on its arena's floor near where it fell, one per hunter in the party who lacks it; the first Lord's Wren, the swallowed fourteen's odds (stage 1), gate worlds' own bells the same way; back to the pool if the gate closes first. No bell room, no hum, no handbell answer | 2 to 3 h |
 | 5 | **Quests and puzzles**: the five villages' quests (rumour, letter, hiding place, the person's reaction), the six dream puzzles (with the Lucidium), the Veil's five spirits, and every other source as a place (4.8) | 5 to 7 h |
 | 6 | Looks and sounds: style sheet, bells by rank and metal, the frame and beams, the bell room, the pulse and the grey thread, the new sounds | 2 to 3 h, then Euan's eye |
 
