@@ -68,7 +68,10 @@ public final class EnchantClient {
             InscribeScene.tick();
             EnchantFxClient.tick();
             wordHint();
+            LiveHand.tick();
         });
+        // the dev hand's mouse, once per rendered frame like a real one (autopilot runs only)
+        bus.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> LiveHand.frame());
         bus.addListener(ItemTooltipEvent.class, EnchantClient::onTooltip);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             InscribeScene.reset();
@@ -95,8 +98,13 @@ public final class EnchantClient {
     }
 
     private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos hinted;
+    private static boolean hintedKnown, hintQuiet;
 
-    /** Looking at a Word Stone says what it's carved with and what to do, in its colour, every two seconds while you look. */
+    /**
+     * Looking at a Word Stone says what it's carved with and what to do, in its colour, every two seconds while you look.
+     * Learned while you look, the hint steps aside at once for the line that says what you learned (it sat on top of it)
+     * and stays away until you look elsewhere.
+     */
     private static void wordHint() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gui.screen() != null || InscribeScene.weight(0) > 0
@@ -109,9 +117,19 @@ public final class EnchantClient {
             hinted = null;
             return;
         }
-        if (hit.getBlockPos().equals(hinted) && mc.player.tickCount % 40 != 0) return;
+        boolean knows = Known.of(mc.player).knows(e.id());
+        if (hit.getBlockPos().equals(hinted)) {
+            if (knows && !hintedKnown) {
+                hintedKnown = hintQuiet = true;
+                mc.gui.hud.setOverlayMessage(Component.empty(), false);
+            }
+            if (hintQuiet || mc.player.tickCount % 40 != 0) return;
+        } else {
+            hintQuiet = false;
+        }
         hinted = hit.getBlockPos();
-        String said = Known.of(mc.player).knows(e.id()) ? "A Word Stone carved with " + e.name() + ". You know this one."
+        hintedKnown = knows;
+        String said = knows ? "A Word Stone carved with " + e.name() + ". You know this one."
                 : "A Word Stone carved with " + e.name() + ". Hold your hand to it to learn it.";
         mc.gui.hud.setOverlayMessage(Component.literal(said).withColor(e.colour()), false);
     }

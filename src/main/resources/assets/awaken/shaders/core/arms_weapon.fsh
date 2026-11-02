@@ -19,7 +19,7 @@ layout(location = 3) in vec4 lightMapColor;
 layout(location = 4) in vec2 texCoord0;
 layout(location = 5) in vec3 worldNormal;
 layout(location = 6) in vec3 viewNormal;
-layout(location = 7) flat in vec3 state;
+layout(location = 7) flat in vec4 state;
 layout(location = 8) flat in vec2 script;
 
 layout(location = 0) out vec4 fragColor;
@@ -43,12 +43,21 @@ vec3 studio(vec3 r) {
     return base * 0.8 + STRIP * strip * 0.8;
 }
 
+// metal's colour as it heats: dull red, orange, yellow, near white
+vec3 heatGlow(float h) {
+    vec3 c = vec3(0.30, 0.03, 0.01) * smoothstep(0.05, 0.25, h);
+    c = mix(c, vec3(0.95, 0.32, 0.05), smoothstep(0.25, 0.55, h));
+    c = mix(c, vec3(1.0, 0.78, 0.28), smoothstep(0.55, 0.8, h));
+    return mix(c, vec3(1.0, 0.96, 0.86), smoothstep(0.8, 1.0, h));
+}
+
 void main() {
     vec4 alb = texture(Sampler0, texCoord0);
     if (alb.a < 0.1) discard;
     vec4 mat = texture(Sampler0, texCoord0 + vec2(0.5, 0.0));
     float metal = mat.r, gloss = mat.g, emit = mat.b, flow = mat.a;
-    float energy = state.x, flash = state.y, foil = state.z;
+    float energy = state.x, flash = state.y, foil = state.z, heat = 0.0, front = 0.0;
+    if (state.w > 0.5) { heat = energy; front = flash; energy = 0.0; flash = 0.0; } // in the making: x heat, y its front
     vec3 accent = accentAlong.rgb;
     float along = accentAlong.a;
 
@@ -74,6 +83,18 @@ void main() {
 
     // the world's light (sky and blocks) on everything but what glows of itself
     col *= lightMapColor.rgb;
+
+    // hot from the Forge past its front (the point's side while it heats; the hilt's while the quench cools it from the
+    // point): the metal darkens under its own glow, which needs no light from the world. The texture's light and dark
+    // run hotter and cooler (bright metal, dark scale) and the faces turned from the light glow less, so it reads as a
+    // shaped blade, not a lump of colour.
+    if (state.w > 0.5) {
+        float side = state.w > 1.5 ? front - along : along - front;
+        float hot = smoothstep(-0.04, 0.04, side) * heat;
+        float lum = dot(alb.rgb, vec3(0.30, 0.59, 0.11));
+        float h = hot * (0.7 + 0.6 * lum);
+        col = mix(col, col * 0.25, smoothstep(0.0, 0.3, hot)) + heatGlow(h) * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse);
+    }
 
     // a sheen runs hilt to tip every five seconds (GameTime is a day per 1.0: 240 a day is one per 100 ticks)
     float cycle = fract(GameTime * 240.0);

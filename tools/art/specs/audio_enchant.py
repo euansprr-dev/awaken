@@ -111,6 +111,30 @@ def burin_leather(k):
     return room(mix((rub, 0.6), (drag, 0.4)), 0.08)
 
 
+def cut_metal(k):
+    """The point running on through metal for as long as it stays on the line: a seamless loop the client swells and
+    pitches with the pen's speed (a bright grainy cut, tiny chips coming away, the faintest singing edge)."""
+    n = K.ns(2.6)
+    t = np.arange(n) / SR
+    grain = K.smooth_noise(n, 90.0, 600 + k) * 0.5 + 0.5
+    cut = unit(K.bandpass(K.noise(n, "white", 601 + k), 4600, 2.0)) * grain
+    chips = unit(K.highpass(K.crackle(n, 120.0, 602 + k, 0.9, 0.5), 3000, 2))
+    wob = 1 + 0.004 * np.sin(2 * np.pi * 0.7 * t)
+    sing = unit(np.sin(2 * np.pi * 2650 * wob * t) + 0.5 * np.sin(2 * np.pi * 3975 * wob * t)) * (K.smooth_noise(n, 3.0, 603 + k) * 0.4 + 0.6)
+    y = room(mix((cut, 0.55), (chips, 0.25), (sing, 0.05)), 0.1)[:n]
+    return K.loop_seamless(K.highpass(y, 120.0, 2), 0.6)
+
+
+def cut_leather(k):
+    """The point drawn on through leather: a soft dry drag with fibres giving, a seamless loop like the metal's."""
+    n = K.ns(2.6)
+    grain = K.smooth_noise(n, 40.0, 700 + k) * 0.5 + 0.5
+    drag = unit(K.bandpass(K.noise(n, "pink", 701 + k), 1500, 1.2)) * grain
+    fibre = unit(K.bandpass(K.crackle(n, 60.0, 702 + k, 0.5, 0.6), 2400, 1.5))
+    y = room(mix((drag, 0.7), (fibre, 0.2)), 0.06)[:n]
+    return K.loop_seamless(K.highpass(y, 80.0, 2), 0.6)
+
+
 def scratch(k):
     """Off the line: a dull rough skid."""
     n = K.ns(0.22)
@@ -228,6 +252,8 @@ EVENTS = OrderedDict([
     ("page_turn", (page_turn, 3, 8, "A page turns")),
     ("burin_metal", (burin_metal, 3, 8, "A burin cuts metal")),
     ("burin_leather", (burin_leather, 2, 8, "A burin cuts leather")),
+    ("cut_metal", (cut_metal, 1, 8, "A burin engraves")),
+    ("cut_leather", (cut_leather, 1, 8, "A burin engraves")),
     ("scratch", (scratch, 3, 6, "A burin scratches")),
     ("note_ward", (note_ward, 1, 12, "A ward's note")),
     ("note_bane", (note_bane, 1, 12, "A bane's note")),
@@ -269,6 +295,7 @@ def main(argv):
     only = [a for a in argv if not a.startswith("--")]
     rms, _, ceil, q = TARGETS["sfx"]
     quiet = ("page_turn", "burin_leather", "scratch", "drift")
+    loops = ("cut_metal", "cut_leather")
     if "--json" not in argv:
         os.makedirs(SOUNDS, exist_ok=True)
         for event, (render, variants, *_) in EVENTS.items():
@@ -276,7 +303,11 @@ def main(argv):
                 continue
             for k in range(variants):
                 y = render(k)
-                y, took = R.master(y, rms - (5.0 if event in quiet else 0.0), ceil, 6.0)
+                if event in loops:
+                    # a loop keeps its ends as they are (mastering's declick would leave a dip at the seam): gain only
+                    y = y * K.dbamp(min(rms - 8.0 - K.gated_rms(y), ceil - 0.5 - K.true_peak(y)))
+                else:
+                    y, took = R.master(y, rms - (5.0 if event in quiet else 0.0), ceil, 6.0)
                 path = os.path.join(SOUNDS, f"enchant_{event}_{k}.ogg")
                 K.write_ogg(path, y, q, None)
                 print(f"  enchant_{event}_{k}  {len(y) / SR:5.2f} s  RMS {K.gated_rms(y):6.1f}  TP {K.true_peak(y):5.1f}  {os.path.getsize(path) // 1024} KB")

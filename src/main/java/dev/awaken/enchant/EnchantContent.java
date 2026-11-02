@@ -90,10 +90,11 @@ public final class EnchantContent {
             () -> AttachmentType.builder(Known::fresh).serialize(Known.CODEC).copyOnDeath()
                     .sync((holder, to) -> holder == to, Known.STREAM_CODEC).build());
 
-    /** The book's leather and pages, the burin on metal and on leather, each family's note, a dull scratch off the line,
-     *  the piece waking, a page learned, an old table's flare, the Study's letters drifting. */
+    /** The book's leather and pages, the burin on metal and on leather (its bite and its running cut), each family's note,
+     *  a dull scratch off the line, the piece waking, a page learned, an old table's flare, the Study's letters drifting. */
     public static final DeferredHolder<SoundEvent, SoundEvent> BOOK_OPEN = sound("book_open"), PAGE_TURN = sound("page_turn"),
             BURIN_METAL = sound("burin_metal"), BURIN_LEATHER = sound("burin_leather"), SCRATCH = sound("scratch"),
+            CUT_METAL = sound("cut_metal"), CUT_LEATHER = sound("cut_leather"),
             NOTE_WARD = sound("note_ward"), NOTE_BANE = sound("note_bane"), NOTE_SPOILS = sound("note_spoils"),
             NOTE_CARRY = sound("note_carry"), NOTE_KEEP = sound("note_keep"), WAKE = sound("wake"), LEARN = sound("learn"),
             FLARE = sound("flare"), DRIFT = sound("drift"), SCRAPE = sound("scrape");

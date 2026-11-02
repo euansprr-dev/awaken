@@ -63,6 +63,18 @@ public class InscribingTableBlockEntity extends BlockEntity {
         return piece;
     }
 
+    private ItemStack plainOf = ItemStack.EMPTY, plain = ItemStack.EMPTY;
+
+    /** The piece as the slate shows it: without the violet shimmer, so the mark being written is what shines on it. */
+    public ItemStack shownPiece() {
+        if (plainOf != piece) {
+            plainOf = piece;
+            plain = piece.isEmpty() ? ItemStack.EMPTY : piece.copy();
+            if (!plain.isEmpty()) plain.set(net.minecraft.core.component.DataComponents.ENCHANTMENT_GLINT_OVERRIDE, false);
+        }
+        return plain;
+    }
+
     public int phase() {
         return phase;
     }

@@ -136,11 +136,11 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
         float t = age + a;
         float up = ease(Mth.clamp((t - 2) / 9F, 0F, 1F));
         if (InscribeScene.phase != InscribeScene.BOOK) {
-            float since = InscribeScene.now(a) - InscribeScene.phaseAt;
+            float since = InscribeScene.now(a) - InscribeScene.leftBookAt;
             return up * (1F - ease(Mth.clamp(since / 7F, 0F, 1F)));
         }
-        if (InscribeScene.phaseAt > 0) {
-            float since = InscribeScene.now(a) - InscribeScene.phaseAt;
+        if (InscribeScene.enteredBookAt > 0) {
+            float since = InscribeScene.now(a) - InscribeScene.enteredBookAt;
             up = Math.min(up, ease(Mth.clamp(since / 8F, 0F, 1F)));
         }
         return up;
@@ -302,6 +302,8 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             }
             String sub;
             int subColour;
+            // "from memory" sits at the end of the second line (the name keeps its whole line for its level arrows)
+            int memW = ok && r.memory ? font.width("from memory") + 8 : 0;
             if (!ok) {
                 sub = r.why;
                 subColour = INK_FAINT;
@@ -310,17 +312,18 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 String deep = Inscriptions.top(r.h) > 1 ? Inscriptions.numeral(Math.min(Inscriptions.top(r.h), r.deepest)) : "";
                 String price = EnchantRules.priceLine(r.price);
                 String study = !InscribeScene.study && r.anywhere > r.deepest ? " (" + Inscriptions.numeral(r.anywhere) + " in your Study)" : "";
-                sub = deep.isEmpty() ? price : fit(pw - 20, "Up to " + deep + " here" + study + "  ·  " + price,
-                        "Up to " + deep + " here  ·  " + price, "Up to " + deep + "  ·  " + price, price.replace(" and ", ", "));
+                sub = deep.isEmpty() ? fit(pw - 20 - memW, price, price.replace(" and ", ", ")) : fit(pw - 20 - memW,
+                        "Up to " + deep + " here" + study + "  ·  " + price, "Up to " + deep + " here  ·  " + price,
+                        "Up to " + deep + "  ·  " + price, price.replace(" and ", ", "));
                 subColour = r.afford ? INK_SOFT : RED_INK;
             }
-            g.text(font, font.plainSubstrByWidth(sub, pw - 20), x + 20, ry + 10, subColour, false);
+            g.text(font, font.plainSubstrByWidth(sub, pw - 20 - memW), x + 20, ry + 10, subColour, false);
             if (ok && r.memory) {
                 String m = "from memory";
                 int mw = font.width(m), mxl = x + pw - mw;
-                boolean onM = over && mx >= mxl - 3 && my < ry + 9;
-                g.fill(mxl - 3, ry - 1, x + pw + 1, ry + 9, onM ? 0x40304A8A : 0x20304A8A);
-                g.text(font, m, mxl, ry, onM ? 0xFF2F4F9A : 0xFF4A64A8, false);
+                boolean onM = over && mx >= mxl - 3 && my >= ry + 9;
+                g.fill(mxl - 3, ry + 9, x + pw + 1, ry + 19, onM ? 0x40304A8A : 0x20304A8A);
+                g.text(font, m, mxl, ry + 10, onM ? 0xFF2F4F9A : 0xFF4A64A8, false);
             }
         }
         if (rows.size() > visible) {
@@ -371,13 +374,15 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             int c = done ? (InscribeScene.SHARE[i] >= 0.8F ? brighten(e.colour()) : 0xB0A090) : cur ? 0xE8E0D0 : 0x605850;
             g.fill(x, y, x + 8, y + 8, alpha << 24 | 0x100A08);
             g.fill(x + 1, y + 1, x + 7, y + 7, (done ? alpha : alpha / (cur ? 1 : 2)) << 24 | c);
+            // a cut stroke has lapis in it, as its line on the piece does
+            if (done) g.fill(x + 3, y + 3, x + 5, y + 5, alpha << 24 | InscribeScene.LAPIS);
             if (cur && !InscribeScene.drawing) {
                 int pulse = (int) (alpha * (0.5F + 0.5F * Mth.sin(InscribeScene.now(a) * 0.3F)));
                 g.outline(x - 2, y - 2, 12, 12, pulse << 24 | brighten(e.colour()));
             }
         }
-        if (InscribeScene.drawing && InscribeScene.samples > 0) {
-            float share = InscribeScene.onLine / (float) InscribeScene.samples;
+        if (InscribeScene.drawing && InscribeScene.ran > 0) {
+            float share = InscribeScene.share();
             int bw = 80, bx = cx - bw / 2, y = by + 18;
             g.fill(bx, y, bx + bw, y + 2, alpha / 2 << 24 | 0x302820);
             g.fill(bx, y, bx + (int) (bw * share), y + 2, alpha << 24 | (share >= 0.8F ? brighten(e.colour()) : 0xC08060));
@@ -543,6 +548,11 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                     scrapeId = -1;
                     InscribeScene.act(EnchantPayloads.SCRAPE, on[0], 0, 0F);
                     InscribeScene.play(dev.awaken.enchant.EnchantContent.BURIN_METAL.get(), 0.5F, 0.7F);
+                    var mc = Minecraft.getInstance();
+                    var ref = mc.level == null ? java.util.Optional.<net.minecraft.core.Holder.Reference<net.minecraft.world.item.enchantment.Enchantment>>empty()
+                            : mc.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(on[0]);
+                    Inscriptions.Entry e = ref.map(Inscriptions::of).orElse(null);
+                    if (e != null) InscribeScene.scraped(e.no());
                 } else {
                     scrapeId = on[0];
                     scrapeAt = age;
@@ -574,7 +584,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 return true;
             }
         }
-        boolean memory = r.memory && mx >= rx + rpw - font.width("from memory") - 3 && my < ry + 9;
+        boolean memory = r.memory && mx >= rx + rpw - font.width("from memory") - 3 && my >= ry + 9;
         if (!r.afford) {
             InscribeScene.say("You need " + EnchantRules.priceLine(r.price) + ".");
             return true;

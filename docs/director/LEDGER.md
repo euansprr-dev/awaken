@@ -934,3 +934,23 @@ happens).
   Table (SPEC §45.10). Creative and commands can give it; it does nothing on its own.
 - **Source**: `Sources.neverHeld` in `EnchantModule`.
 - **Links**: the Inscribing Table's writing scene.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## The War Anvil (SPEC §46; plan docs/weapon-forge/PLAN.md, not part of §43)
+
+### War Anvil
+- **Get**: crafted from three stone, a copper ingot and a log (granted at level 3 with the Fitting Stand).
+- **For**: weapons forged in a scene of your own: heat in the Forge, draw out on the beat, quench, hilt, the draw from
+  the stone. A well-forged weapon leaves with Temper, up to your Forge's limit, and its story ("Masterwork. Forged by
+  Euan."). Stage 1 forges the Beastbound Longsword; every weapon comes in stage 2.
+- **Know**: the level road's level 3 step names it and its recipe; the recipe book; use it and its window says what the
+  weapon takes and what's missing (rank D, a Forge within 6 blocks, the parts).
+- **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself), `arms.anvil.WarAnvil`,
+  `WarAnvilBlockEntity` (schema 1).
+- **Links**: the Hearth's Forge (heat, the temper limit); Oren's Mark (`awaken:temper_start`); the Beastbound Blade
+  (or its own recipe in its place); the Fitting Stand's smithy (one Forge serves both).
+- **Edges**: below D-rank, or with no Forge near, the window says so and nothing starts; someone else's work is theirs
+  (a line says who); walking 12 blocks off, logging out or Esc holds the work and coming back counts the stage in again;
+  breaking it mid-work drops what was taken in and what stands in the slot; a full pack at the draw puts what was in
+  the hand at your feet; a weapon left in the slot waits for anyone to sneak-use and draw it.
