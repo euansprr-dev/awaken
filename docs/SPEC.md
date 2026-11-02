@@ -16650,8 +16650,9 @@ of their blows in a stall).
   `ServerAboutToStartEvent` (it is synchronized). Measured: the first boss's worst tick fell from 91 to 32 ms (its spawn
   8 ms; the rest is code running for the first time, spread through its AI in `fights-first-boss-profile.txt`), under
   a tick, and every later boss under 8 ms.
-- **Boss swings at the server's pace.** While a boss fights (a player target, or a move playing), players within 96
-  blocks get `mobs_pace` (the level's game time, a VAR_LONG) at the end of each server tick (`mobs.net.MobsNet`). The
+- **Boss swings at the server's pace.** While a boss with a fight script lives (stage 4: not only while it fights; a
+  pace that stopped, in a reel against a beast or with its player fallen, held its body still for the 3 s until the
+  clock went stale, seen in the stage 4 tour), players within 96 blocks get `mobs_pace` (the level's game time, a VAR_LONG) at the end of each server tick (`mobs.net.MobsNet`). The
   kit renderer's body clock is `ServerPace.now`: the last pace plus the time since it came, at most one tick past it,
   never backwards; the game clock when no pace came for 3 s. In a stall the boss holds where the server is.
 - **The budget** (I10): `fights_tick_cost` fails when a boss and 12 monsters cost over 5 ms a tick on average

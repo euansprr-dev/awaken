@@ -346,7 +346,9 @@ public class AwakenBoss extends AwakenMob {
                 long t0 = System.nanoTime();
                 f.tick(level);
                 FightWatch.kit(System.nanoTime() - t0);
-                if (getTarget() instanceof Player || f.busy()) dev.awaken.mobs.net.MobsNet.fighting(this);
+                // its clock goes to whoever is near, fighting or not: a pace that stopped (a reel against a beast, the
+                // player it chased fallen) held its body still on their screen until the clock went stale
+                dev.awaken.mobs.net.MobsNet.fighting(this);
             }
             if (!f.busy()) checkPhase(level);
         } else if (abilities != null && abilities.active() == null) checkPhase(level);

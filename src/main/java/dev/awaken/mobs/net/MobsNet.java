@@ -125,9 +125,9 @@ public final class MobsNet {
         r.playToClient(Tell.TYPE, Tell.STREAM_CODEC);
     }
 
-    /** A boss fought this tick: players near it get the server's clock at the tick's end. */
+    /** A boss with a fight ticked: players near it get the server's clock at the tick's end. */
     public static void fighting(Entity boss) {
-        if (FIGHTING.size() < 16 && !FIGHTING.contains(boss)) FIGHTING.add(boss);
+        if (FIGHTING.size() < 16 && !FIGHTING.contains(boss) && boss.level().getNearestPlayer(boss, PACE_RANGE) != null) FIGHTING.add(boss);
     }
 
     private static void onPost(ServerTickEvent.Post e) {
