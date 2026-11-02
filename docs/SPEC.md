@@ -16502,6 +16502,43 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
     forgotten, knocked out into your hands; Bram in person), `bells_village_quest` (buried under a mossy stone, the letter
     on its lectern says where, the Tasks follow the trail), `bells_dream_puzzles` (order, lucidity, in view),
     `bells_spirit_keeper` (rank, one spirit one bell, a lantern frees it).
+- **Stage 6: how they look and sound** (2 Nov; BELLS.md §4.9, §4.10): one style sheet draws every bell, frame, beam and
+  hook (`tools/art/specs/bells.py`, writing `bells_style_sheet.png` beside the textures when run with a folder).
+  - **Size by rank**: a bell is seven parts (head, crown, shoulder, upper and lower waist, sound bow, lip), each two
+    crossed boxes cut at the corners so it reads round; its lip's half-width is 4 model units at E, then 4.5, 5, 5.5, 6,
+    6.5 at S, and it stands 1.71 times that tall. The Great Bells (the Provings' and the Seed) are their own taller shape
+    (7.5, 1.96 times), with a band of old words round the waist between two rings of gold. Every bell hangs from model
+    (8, 15, 8) by an iron loop and has an iron clapper; `BellLook` keeps the numbers for the renderers (`height`,
+    `bottom`, `family`).
+  - **Metal by where it's from** (`BellLook.family`): the land's bells (your own, the people's, the Wilds', the gate
+    worlds', the big days') bronze gone green in streaks; the Deep's and the Descent's dark iron with rust and an ember
+    glow in the lip (light 11 on the lip's faces); the Above's pale silver; the dreams' pearl with a sheen; the Veil's
+    cold glass (translucent, frosted at the rims); the Court's black banded with gold. Each family × rank is its own item
+    model (`models/item/bell/<family>_<rank>`, the Great Bells `great_s`), picked by `items/bell.json` from the bell's
+    number (`awaken:bell`).
+  - **Dulled**: a bell a gate swallowed is dulled by the Deep: ash-grey, grimed, no ember glow. It lies dulled in the boss
+    room (`FoundBellEntity.dulled`: it has a gate) and comes into your hands dulled (`BellItem.dulled`: custom model data
+    flag 0 true, picking `<family>_<rank>_dull`; tooltip "The gate dulled it. It'll come clean the day it hangs.").
+    Hung, it's clean: the hooks only ever draw the clean model, and its card starts "The gate's dust fell off it as it
+    hung, and it rang clean." A bell given by command or bought is clean.
+  - **One hand**: the frame, the beams and the hooks share the bells' timber (dark oak, a post grain for uprights) and
+    hammered iron (straps where the beam meets the post, the hooks themselves). On the hooks a bell is drawn at 0.39 of
+    its model on a frame, 0.38 on a Bell Beam and 2.0 on a Great Beam; a found bell at 0.9 sitting (1.5 for a Great Bell)
+    with its lip on the floor (`BellLook.bottom`), 0.7 hanging.
+  - **Sounds** (`tools/art/specs/audio_bells.py`, all mono so they're heard from where they are): **the hang** (iron on
+    iron as its loop drops on the hook, `bells.hang`), then 6 ticks later (`Hanging.HANG_RING`, only if it's still on that
+    hook) its first ring and under it **the swell** (`bells.swell`, volume 1.4 at the bell's pitch, rising for a quarter
+    of a second and dying away); **far answers** (`bells.far_k`, one per note of the 15): in the song, a bell more than 96
+    from you (`SongPlayer.ANSWER`) rings its far voice, the same note darker and further, softly struck in a wide room;
+    **the muffled hum** (`bells.muffled_k`): a village's hidden bell is heard within 32 as its own note through the ground,
+    damped, with a slow beating hum under it (volume 1.2, pitch 1; it replaces the note at 0.6/0.6 of stage 5).
+    Subtitles: "A bell is hung", "A bell rings out", "A bell answers your song", "A lost bell hums".
+  - Not touched: the Ritual of the Bell in the first gate keeps its own sounds (`gates`), and nothing in gates hums.
+  - Tour helper: `/awaken admin bells studio` (every metal at every size it's cast in on Bell Beams six north of you, a
+    Great Bell on its beam, and three found bells on the ground: clean, dulled, hanging).
+  - Tests (CI): `bells_look` (every number 0-99 picks one model, clean and dulled, in its family's metal, and that
+    model's lip is where `BellLook.bottom` says), `bells_dulled` (a bell kept in a gate lies dulled and comes into your
+    hands dulled; a given bell is clean), `bells_sounds_placed` (the new sounds are mono).
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 
