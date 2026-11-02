@@ -95,6 +95,11 @@ public final class KinPlate {
             if (block.getType() == HitResult.Type.MISS || block.getLocation().distanceToSqr(eye) >= hit.getLocation().distanceToSqr(eye))
                 LOOK.put(hit.getEntity().getId(), ticks);
         }
+        // the creature you mean (Aim's mark) keeps its plate, as a creature plate does (SPEC §40.6)
+        int meant = dev.awaken.core.api.Aim.target();
+        if (meant >= 0 && meant != (riding == null ? -1 : riding.getId()) && mc.level.getEntity(meant) instanceof LivingEntity m
+                && m.isAlive() && KinPlates.wears(m))
+            LOOK.put(meant, ticks);
         // one that's hurt near you (yours, or a Gnawed one you're fighting): every other tick is enough, a flinch lasts ten
         if (ticks % 2 == 0)
             for (LivingEntity e : mc.level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(KinPlates.HURT_RANGE),

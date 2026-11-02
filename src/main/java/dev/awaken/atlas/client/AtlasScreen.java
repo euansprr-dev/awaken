@@ -267,7 +267,8 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             legendLayout(mc, atlas, x0, y0, zoom >= CLOSE_IN);
             float marks = scene ? 0.30f : 0.45f;
             if (age > marks) markers(g, mc, atlas, x0, y0, x1, y1, zoom >= CLOSE_IN);
-            if (age > marks) destination.draw(g, font, atlas, this::screenAt, x0, y0, x1, y1, age, zoom, mouseX, mouseY);
+            if (age > marks) destination.draw(g, font, atlas, this::screenAt, x0, y0, x1, y1, age, zoom, mouseX, mouseY,
+                    legendX0, legendY0, legendX1, legendY1);
             if (age > marks) {
                 legend(g, mc, atlas, mouseX, mouseY);
                 card.draw(g, font, atlas, this::screenAt, x0, y0, x1, y1, age, mouseX, mouseY);
@@ -313,6 +314,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 : new String[]{"click a place to go there  ·  double-click a waypoint  ·  N one where you stand  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  V waypoints  ·  Tab gates  ·  C you  ·  L legend  ·  H danger for you",
                         "click a place to go there  ·  double-click a waypoint  ·  N one where you stand  ·  drag orbit  ·  scroll zoom  ·  V waypoints  ·  C you",
                         "click a place to go there  ·  double-click a waypoint  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you",
+                        "click to go there  ·  double-click a waypoint  ·  N one here  ·  C you",
                         "click to go there  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "click · drag · right-drag · scroll · C"};
         int left = scene ? Math.round(width * 0.025f) : x0 + 2;
         for (String hint : hints) {
@@ -475,11 +477,14 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 if (AtlasDestination.isDestination(wp.x(), wp.z())) continue;
                 if (!project(wp.x() + 0.5, atlas.store.groundY(wp.x(), wp.z(), wp.y()), wp.z() + 0.5, x0, y0)) continue;
                 int sx = Math.round(v.x), sy = Math.round(v.y);
+                int top = WaypointGlyphs.headY(sy) - WaypointGlyphs.HEAD, ly = top - 13;
+                if (underLegend(sx - 9, top, sx + 9, sy + 4)) continue; // seen through the legend's glass it muddies both
                 boolean editing = wp.mine() && wp.id() == card.editingId();
                 int rgb = editing ? card.colourRgb() : wp.colour();
                 WaypointGlyphs.marker(g, sx, sy, rgb, editing ? card.mark() : wp.mark(), wp.fell(), editing);
-                if (zoom > 0.45f && !editing) {
-                    label(g, wp.name(), sx, WaypointGlyphs.headY(sy) - WaypointGlyphs.HEAD - 13, 0xFF000000 | rgb);
+                int lw = font.width(wp.name()) / 2 + 4;
+                if (zoom > 0.45f && !editing && !underLegend(sx - lw, ly - 2, sx + lw, ly + 10)) {
+                    label(g, wp.name(), sx, ly, 0xFF000000 | rgb);
                     if (!wp.mine()) label(g, wp.owner(), sx, sy + 6, Glass.a(rgb, 0.9f));
                 }
             }
@@ -705,7 +710,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 plain(g, name, x + 17, ry, over ? 0xFFFFFFFF : INK);
                 plain(g, dist, x + w - 6 - dw, ry, Glass.a(Glass.LABEL, 0.95f));
             }
-            String left = !showWaypoints ? "Hidden" : wpCount > wpRows.size() ? "and " + (wpCount - wpRows.size()) + " more" : "";
+            String left = !showWaypoints ? "Hidden" : wpCount > wpRows.size() ? (wpCount - wpRows.size()) + " more" : "";
             String right = showWaypoints ? "V hides them" : "V shows them";
             boolean over = mouseX >= x && mouseX < x + w && mouseY >= wpLineY - 1 && mouseY < wpLineY + ROW - 1;
             plain(g, left, x + 17, wpLineY, Glass.a(Glass.LABEL, 0.8f));
@@ -1079,6 +1084,11 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             if (destination.pickedWaypoint() != null) destination.deselect();
         }
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), showWaypoints ? 1.2f : 0.9f, 0.6f));
+    }
+
+    /** Whether a box overlaps the legend (once it's laid out this frame). */
+    private boolean underLegend(int bx0, int by0, int bx1, int by1) {
+        return bx1 >= legendX0 && bx0 < legendX1 && by1 >= legendY0 && by0 < legendY1;
     }
 
     /** Tours: {@code here} is N; {@code pick <i>} picks the legend's i-th waypoint (as its row's click); {@code edit <i>} opens its card. */

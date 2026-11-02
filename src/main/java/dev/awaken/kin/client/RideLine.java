@@ -77,7 +77,7 @@ final class RideLine {
         g.pose().pushMatrix();
         g.pose().translate(lo - 5 - w, y - 2);
         g.pose().scale(s, s);
-        HudLook.text(g, mc.font, name, 0, 0, Glass.a(top, 0.95F * alpha), false);
+        HudLook.text(g, mc.font, name, 0, 0, Glass.a(top, 0.95F * alpha), true); // a shadow: a pale mount sits right behind it
         g.pose().popMatrix();
     }
 }

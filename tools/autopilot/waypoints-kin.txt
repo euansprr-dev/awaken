@@ -69,34 +69,32 @@ wait 10
 screen close
 wait 10
 
-# ---- 3. the kin plate ----
-cmd tp @s ~ ~ ~ -90 0
+# ---- 3. the kin plate, on a yard's open ground (in the city a floor can hide what's under it) ----
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+# a wild Lampwing hovering over the field, looked at from 4 blocks south
 cmd awaken admin kin summon lampwing
 wait 10
 cmd data merge entity @e[type=awaken:kin_lampwing,limit=1,sort=nearest] {NoAI:1b}
-cmd execute as @s at @s facing entity @e[type=awaken:kin_lampwing,limit=1,sort=nearest] eyes run tp @s ~ ~ ~ ~ ~
+cmd execute at @e[type=awaken:kin_lampwing,limit=1,sort=nearest] run tp @s ~ ~-2 ~4 180 -10
 wait 40
 shot wk_10_kin_plate_wild_lampwing
 cmd kill @e[type=awaken:kin_lampwing]
 cmd awaken admin kin gnaw mossback
 wait 10
 cmd data merge entity @e[type=awaken:kin_mossback,limit=1,sort=nearest] {NoAI:1b}
-cmd execute as @s at @s facing entity @e[type=awaken:kin_mossback,limit=1,sort=nearest] eyes run tp @s ~ ~ ~ ~ ~
+cmd execute at @e[type=awaken:kin_mossback,limit=1,sort=nearest] run tp @s ~ ~ ~5 180 10
 wait 40
 shot wk_11_kin_plate_gnawed_mossback
 cmd kill @e[type=awaken:kin_mossback]
-
-# a home here, a Burrowbun living in its field
-cmd awaken admin kin yard
-wait 140
-screen close
-wait 20
-screen close
+# a Burrowbun living in the yard's field, then named
 cmd awaken admin kin home burrowbun
 wait 40
 cmd data merge entity @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] {NoAI:1b}
-cmd execute at @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] run tp @s ~ ~0.5 ~4
-cmd execute as @s at @s facing entity @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] eyes run tp @s ~ ~ ~ ~ ~
+cmd execute at @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] run tp @s ~ ~ ~4 180 18
 wait 40
 shot wk_12_kin_plate_at_home
 cmd data merge entity @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] {CustomName:"Pip"}
@@ -104,7 +102,8 @@ wait 50
 shot wk_13_kin_plate_named
 screen holo hearth
 wait 80
-shotnow wk_14_hearth_page_name_button
+shot wk_14_hearth_page_name_button
+wait 10
 screen close
 wait 10
 
@@ -119,9 +118,8 @@ wait 100
 shot wk_21_ride_line_hurt
 cmd ride @s dismount
 wait 10
-cmd execute at @e[type=awaken:frost_stag,limit=1,sort=nearest] run tp @s ^ ^ ^5
 cmd data merge entity @e[type=awaken:frost_stag,limit=1,sort=nearest] {NoAI:1b}
-cmd execute as @s at @s facing entity @e[type=awaken:frost_stag,limit=1,sort=nearest] eyes run tp @s ~ ~ ~ ~ ~
+cmd execute at @e[type=awaken:frost_stag,limit=1,sort=nearest] run tp @s ~ ~ ~5 180 6
 wait 40
 shot wk_22_kin_plate_your_mount
 quit

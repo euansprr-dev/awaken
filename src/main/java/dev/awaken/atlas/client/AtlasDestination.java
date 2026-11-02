@@ -235,7 +235,7 @@ final class AtlasDestination {
      * ring round its foot, "DESTINATION" over its name), then the pick's card beside what was picked.
      */
     void draw(GuiGraphicsExtractor g, Font font, AtlasState atlas, Projector proj, int x0, int y0, int x1, int y1, float age, float zoom,
-              int mouseX, int mouseY) {
+              int mouseX, int mouseY, int lx0, int ly0, int lx1, int ly1) {
         g.enableScissor(x0, y0, x1, y1);
         Destinations.Target d = Destinations.mine().orElse(null);
         if (d != null && here(d)) {
@@ -273,8 +273,14 @@ final class AtlasDestination {
             if (sub != null) w = Math.max(w, Math.max(font.width(sub), font.width(second) + 10 + font.width("E")));
             w += 14;
             int h = sub == null ? 30 : 54;
-            int cx = sx + 14, cy = sy - h / 2;
-            if (cx + w > x1 - 4) cx = sx - 14 - w;
+            // beside the spot, right or left, never over the legend (lx..: its box); with no room either side, under or over it
+            int cy = Math.clamp(sy - h / 2, y0 + 4, Math.max(y0 + 4, y1 - 4 - h));
+            int cx = sx + 14;
+            if (cx + w > x1 - 4 || overlaps(cx, cy, w, h, lx0, ly0, lx1, ly1)) cx = sx - 14 - w;
+            if (cx < x0 + 4 || overlaps(cx, cy, w, h, lx0, ly0, lx1, ly1)) {
+                cx = Math.clamp(sx - w / 2, Math.max(x0 + 4, lx1 + 4), Math.max(x0 + 4, x1 - 4 - w));
+                cy = sy + 12 + h <= y1 - 4 ? sy + 12 : Math.max(y0 + 4, sy - 34 - h);
+            }
             cx = Math.clamp(cx, x0 + 4, Math.max(x0 + 4, x1 - 4 - w));
             cy = Math.clamp(cy, y0 + 4, Math.max(y0 + 4, y1 - 4 - h));
             int edge = clear ? Glass.a(Glass.LABEL, 1f) : wp != null ? 0xFF000000 | wp.colour() : GOLD;
@@ -305,6 +311,10 @@ final class AtlasDestination {
             cardY1 = cy + h;
         }
         g.disableScissor();
+    }
+
+    private static boolean overlaps(int cx, int cy, int w, int h, int lx0, int ly0, int lx1, int ly1) {
+        return cx + w >= lx0 && cx < lx1 && cy + h >= ly0 && cy < ly1;
     }
 
     private static double pickY(AtlasState atlas, Pick k) {

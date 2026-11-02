@@ -3151,12 +3151,14 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     card and changes nothing, a click off it keeps what you changed. A double-click on one of yours opens its card.
   - On the table: a thin stem on its place, a dark diamond head rimmed in its colour with its mark inside (7×7 pixel
     glyphs), a flat ring at its foot, its name over it from zoom 0.45 and a shared one's owner under it. Names keep
-    clear of them. A click picks one: its destination card has its colour on the edge, "Yours · 212 blocks · only you
+    clear of them; one under the legend isn't drawn through its glass. A click picks one (the card sits beside it, clear
+    of the legend, or under it when neither side has room): its destination card has its colour on the edge, "Yours · 212 blocks · only you
     see it" (or "your party sees it"; "Ana's · shared with your party · 340 blocks"), **› Set as destination**
     (Enter; kind `pin`) and **Change it** (E) on your own, or "Only Ana can change it." The destination's own look stands
     in for a waypoint that is the destination. **V** hides or shows them all (for the session). The legend's
-    **WAYPOINTS · n** block lists the nearest three with their marks and distance, "and n more", "V hides them"; a row
-    glides there and picks it. Nothing marks a waypoint out in the world: only the destination's compass (the Now line,
+    **WAYPOINTS · n** block lists the nearest three with their marks and distance, "n more", "V hides them"; a row
+    glides there and picks it. The key line's short form (a small window, a big GUI) keeps "double-click a waypoint ·
+    N one here". Nothing marks a waypoint out in the world: only the destination's compass (the Now line,
     the Tab glance's needle) points to one you chose.
   - **Where you fell**: a death that stands (not cancelled) outside gates leaves a grey waypoint with a headstone mark
     where you fell, in place of the last; it goes once you're within 8 blocks across (24 up or down), and doesn't count
@@ -16281,7 +16283,8 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
 - **Who wears it** (`kin.KinPlates.wears`): every kin (at home, wild, or Gnawed), a tamed pet, a mount that trusts its rider
   (`WildMount.trusted`). A wild wolf, a wild mount and any foe keep the creature plate (SPEC §21). While plates are on
   (`LivingClient.platesOn`) they get no creature plate and no Jade card (Jade's hearts were what showed before).
-- **When**: while you look at it (the look's reach is the creature plate's, `PlateRules.lookRange`, through no wall), then a
+- **When**: while you look at it (the look's reach is the creature plate's, `PlateRules.lookRange`, through no wall) or it's
+  the creature you mean (`Aim.target()`, as §40.6), then a
   0.6 s fade (`LOOK_FADE` 12 ticks); for 4 s after it's hurt within 16 blocks of you (`HURT_TICKS` 80, `HURT_RANGE`), then a
   1 s fade; at most two at once (`MAX`), the looked-at one first. Never the one you ride.
 - **The look** (`kin.client.KinPlate`, a `HoloWorld` plate over its head, 90 to 210 px wide by its words): warm glass with a
@@ -16301,8 +16304,8 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   (chat's characters, spaces folded) and sets its custom name; an empty name takes it away. The card's title and the plate
   show the name.
 - **The ride line** (`kin.client.RideLine`, layer `awaken:ride_line`, the clear screen only): vanilla's mount hearts are
-  hidden (§40.6); the mount's health is a warm line 92 px wide, 6 px over the vitals, with its name at 0.75 size to the
-  left. It shows for 3 s after you climb on (`RIDE_SHOW` 60 ticks), while the mount is below full health, and in a fight;
+  hidden (§40.6); the mount's health is a warm line 92 px wide, 6 px over the vitals, with its name (shadowed) at 0.75
+  size to the left. It shows for 3 s after you climb on (`RIDE_SHOW` 60 ticks), while the mount is below full health, and in a fight;
   at a third or less it breathes amber. Classic keeps vanilla's hearts.
 - Wire: `kin_read` (VAR_INT entity), `kin_bond` (entity, who, tone, step, note), `kin_name` (id, name); kin payloads are
   version 2. Nothing is saved but the custom name.
