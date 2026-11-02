@@ -189,14 +189,17 @@ def timeline(d, rows, events):
         if s_ is not None:
             j = k + 1
         out.append({'c': x, 's': s_})
+    # the impact shown for each strike: the first of its move once ours has begun (fights' stage 0 shows it on the
+    # predicted hit, so it can come before the server's hit on the film's clock), within a strike's reach of time
     used = set()
     for o in out:
         s_ = o['s']
         o['impact'] = None
         if s_ is None or s_['hit'] is None:
             continue
+        at = o['c']['at']
         for n, im in enumerate(shown):
-            if n not in used and im['move'] == o['c']['move'] and im['gt'] >= s_['hit'] - 1e-6:
+            if n not in used and im['move'] == o['c']['move'] and at - 1e-6 <= im['gt'] < at + 12.0:
                 used.add(n)
                 o['impact'] = im
                 break

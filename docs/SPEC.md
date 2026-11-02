@@ -6867,7 +6867,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   body's freeze and recoil, the ribbons) runs at the world's pace, so a slowed film shows a 35 ms freeze as 0.7 of a tick,
   as play does; at 20 ticks a second it is real time. Each row ends with `rib`, which of our blades lays its ribbon that
   frame (1 the main's, 2 the twin's), and `arms_film.py gates <clip dir>...` reads every take against the audit's gates,
-  pass or fail: the impact within 17 ms of the blade on the target, the freeze on the hit tick, the press to the blade
+  pass or fail: the impact within 17 ms of the blade on the target (the first impact of the move once ours has begun:
+  fights' stage 0 shows it on the predicted hit, which can come before the server's on the film's clock), the freeze on the hit tick, the press to the blade
   within the wind-up, a stab's point within 0.15 of the crosshair and its blow three times its return, the dagger's free
   hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
   never home between strikes.
