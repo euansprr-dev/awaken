@@ -1,0 +1,124 @@
+# Fights stage 5, the third Proving (SPEC §46.7): the Unmade and the Broken Span, in a practice Proving
+# (/awaken admin trial B). A burst of quick shots every 12 ticks catches the wake high over the bastion, the fall onto
+# it, the north arm lifting into stones, the stones gathering and the Unmade dropping out of them (the burst covers the
+# Span's readying and the fall, whose lengths vary). Then the Unmade held still facing you, and as a spectator: the
+# whole bridge from the east, the gatehouse and its arch (the way out), the ring cracking and falling at two thirds
+# (/awaken admin trial half), the lamps going out at a third (/awaken admin trial third), and the win and the mending.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-span.txt
+world autopilot_fights_span creative 20261102
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+hud off
+
+# --- the bell, then the burst: the wake, the fall, the north arm lifting, the Unmade landing ---
+cmd awaken admin trial B
+wait 30
+shotnow span_b01
+wait 12
+shotnow span_b02
+wait 12
+shotnow span_b03
+wait 12
+shotnow span_b04
+wait 12
+shotnow span_b05
+wait 12
+shotnow span_b06
+wait 12
+shotnow span_b07
+wait 12
+shotnow span_b08
+wait 12
+shotnow span_b09
+wait 12
+shotnow span_b10
+wait 12
+shotnow span_b11
+wait 12
+shotnow span_b12
+wait 12
+shotnow span_b13
+wait 12
+shotnow span_b14
+wait 12
+shotnow span_b15
+wait 12
+shotnow span_b16
+wait 12
+shotnow span_b17
+wait 12
+shotnow span_b18
+wait 12
+shotnow span_b19
+wait 12
+shotnow span_b20
+wait 12
+shotnow span_b21
+wait 12
+shotnow span_b22
+wait 12
+shotnow span_b23
+wait 12
+shotnow span_b24
+wait 40
+
+# --- it faces you (held still for the shots: in creative it has no one to fight and wanders off) ---
+look 180 0
+cmd data merge entity @e[type=awaken:proving_unmade,limit=1] {NoAI:1b}
+cmd tp @e[type=awaken:proving_unmade,limit=1] ^ ^ ^14 facing entity @p
+look 180 -8
+wait 20
+shot span_01_unmade
+
+# --- the whole bridge from the east, high (60, 29, 0) ---
+cmd gamemode spectator
+cmd tp @s ~60 ~28 ~-6 90 22
+wait 40
+shot span_02_bridge
+
+# --- the gatehouse and its arch from the south arm (0, 4, 30), looking south ---
+cmd tp @s ~-60 ~-25 ~30 0 -4
+wait 30
+shot span_03_gate
+
+# --- at two thirds the ring cracks and falls, north first (0, 24, 36), looking north ---
+cmd tp @s ~ ~20 ~6 180 38
+wait 30
+cmd awaken admin trial half
+wait 25
+shot span_04_crack
+wait 60
+shot span_05_fallen
+
+# --- at a third the lamps go out from the gatehouse in (0, 3, 40), looking north up the bridge ---
+cmd tp @s ~ ~-21 ~4 180 4
+wait 20
+shot span_06_lit
+cmd awaken admin trial third
+wait 70
+shot span_07_going
+wait 90
+shot span_08_dark
+
+# --- beaten, and the Span mends from its far end ---
+cmd kill @e[type=awaken:proving_unmade]
+wait 60
+hud on
+shot span_09_won
+hud off
+cmd tp @s ~60 ~26 ~-40 90 22
+wait 100
+shot span_10_mending
+hud on
+quit

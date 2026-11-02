@@ -294,6 +294,15 @@ final class GateBestiary {
                 .phase(0.33F, "The walls close in.", a(SLAM, "The Measure").radius(5.5F), a(BOLT, "Reading").n(1), a(FANGS, "Verdict").n(16),
                         a(DECOY, "Reflections").n(2))
                 .build());
+        // the third (SPEC §46.7): the Broken Span's north arm, stood up; the bastion's ring gives way under it, then the lamps go
+        out.add(m("proving_unmade", "The Unmade", Theme.FOUNDRY, Tier.PROVING, Model.HUMAN, "The Broken Span's north arm, stood up and walking")
+                .hp(480).dmg(2.6).spd(0.25).kb(1.0).scale(3.0F).size(0.8F, 2.0F).bar(BossBarColor.PURPLE).arena(40)
+                .intro("The bridge is standing up.")
+                .phase(1.0F, "The Unmade stands on the bastion.", a(SLAM, "Keystone").radius(5.5F), a(ROOT, "The Fall").range(16).radius(1.5F).bolt(BoltKind.PLAIN))
+                .phase(0.66F, "The floor is giving way.", a(SLAM, "Keystone").radius(6), a(ROOT, "The Fall").range(16).radius(1.5F).bolt(BoltKind.PLAIN))
+                .phase(0.33F, "The lamps are going out.", a(SLAM, "Keystone").radius(6), a(ROOT, "The Fall").range(18).radius(1.5F).bolt(BoltKind.PLAIN),
+                        a(RAIN, "Rubble").n(4).radius(2.5F).bolt(BoltKind.PLAIN))
+                .build());
     }
 
     private static void nightmare(List<MobDef> out) {

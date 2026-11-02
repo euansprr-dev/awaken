@@ -17130,3 +17130,80 @@ comes, how its hall turns, its gift and the way out), the Ringer's (`RingerWarde
   mirrors wake and it says what it read, the ring rises, a fall puts the mirrors and the ring back, it comes out of the
   north mirror, the win is rank C, the hall is put back), `fights_habit_read` (guards counted through its first phase are
   read at its second; the Gearwright reads nothing).
+
+**46.7 The Provings: the Unmade (stage 5).** The B Reassessment becomes the third Proving (PLAN §4.7, GOALS part 2: the
+Unmade on the Broken Span over the void). `Trials.Kind.forTarget(B)` is `PROVING`, run by `UnmadeWarden` in the Span
+(`hearth.trial.Span`).
+- **The Unmade** (`awaken:proving_unmade`, kit `proving_unmade`): the Span's north arm, stood up and walking. A masonry
+  colossus 6.8 blocks tall in coursed grey stone: pier legs on wide stone feet, a narrow waist, a chest of courses
+  widening to the shoulders with an arched niche in it and a warm lamp burning inside (its heart), a keystone for a head
+  with a lit slit, long drum arms hanging splayed to keystone fists bound in iron, chains swinging from the forearms, a
+  lantern hung off a post on its left shoulder, an arch and coping on its back, three stones floating over it. Tier
+  `PROVING`, theme Foundry (its amber glow; its Fall and Rubble in plain stone, `BoltKind.PLAIN`, no sparks), a duel with
+  stance 340 (the Ringer 260, the Examiner 300); health 480, damage 2.6, speed 0.25, scale 3.0, fought at level 45. Its
+  intro line: "The bridge is standing up."
+- **Tells.** White-gold blows are told 0.65 s (13 ticks: Swat and Backhand), the ladder's third rung; red stays over
+  0.6 s (the Fall 1.2 s, Unmake and Rubble 0.9 s). Amber: the Keystone 1.1 s (held 0.5 s more one time in three), the
+  Stamp and the Pier Run 0.8 s, the Span Sweep 0.9 s.
+- **Moves.** Phase 1: Swat and Backhand (the long arms swung in at your waist, in twos and threes), the Keystone (both
+  fists overhead and down, a ring of force 5.5 round), the Stamp (a foot, a disc of 3), the Pier Run (HEAVY: it drops onto
+  its fists and comes 7 blocks at you on all fours), the Fall (its signature: it rears back with its right fist high, the
+  lamp flaring, and drives it into the bridge; a line of breaking floor runs at you, `ROOT`: dash through it). Phase 2 at
+  two thirds ("The floor is giving way": both fists hammer the bastion): phrases of three and four, the Span Sweep
+  (HEAVY: one full turn with its arms out low, behind it too), the Fall twice as often. Phase 3 at a third ("The lamps
+  are going out", a roar with its arms open): Unmake (a red grab from 3-10 blocks, its left hand reaching down to you),
+  Rubble (red: four circles of falling stone round you, `RAIN`), phrases ending on the Sweep or Unmake. Below 12% it
+  speeds up a fifth. It comes out of a kneel (its intro: it pushes itself up off a fist, opens its arms, the lamp flares).
+- **The Broken Span** (`hearth.trial.Span`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every hall cell,
+  centred 256 east and 424 south of the cell's corner (clear of the Belfry and the Hall of Reflections), z -66 to 64, x
+  -18 to 18, dy -40 to 13. An old stone bridge over nothing, under the trials' night sky, broken off at both ends. Its
+  middle is a round bastion (radius 17.5) on a great round pier that goes down 32-38 into the dark (banded every seven
+  courses, slits round it, corbels stepping in under the floor). The bastion's floor: a carved stone in the middle, a
+  ring of road at 6 with eight roads out to a tuff seam at 12, past it older, more broken stone to a smooth tuff rim; a
+  parapet round it with eight lamp posts (one each eighth) and openings for the arms. The north arm runs 49 blocks to a
+  ragged end on two piers (7 square, capped in tuff, banded, their feet broken off in the dark) with round arches between
+  (rings of tuff); the south arm runs over a pier to the gatehouse (z 50-57): two crenellated towers with windows and
+  lanterns either side of a round arch 9 wide and 6 high, a lantern hung under its crown (the way out), the road broken
+  off past it. The arms are 9-block decks between parapets, a road down the middle, lamp posts every 8. Unseen light: 13
+  over the bastion on a 6-block grid, 11 down the arms every 6. The band a fight changes is dy -12 to 6 (the north arm
+  down to its arches, the ring, the lamps).
+- **The flow.** The Reading Bell's window says only "The bell has taken you twice now. Go when you're ready." The bell
+  rings and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] NOTHING UNDER YOU", then "The bell stopped.").
+  You wake 16 blocks over the bastion a little south of its middle (a party spread 3 apart), looking north up the
+  bridge, falling slowly (Slow Falling 6 s), a bell resonating. Wind, the north arm creaking and dust falling under it.
+  1.5 s after anyone is on the bastion (or after 30 s) the arm comes apart: two rows a tick from its broken end in, its
+  courses from dy -12 to 4 (the piers' feet stay), one or two of each row's stones lifting as tilted block displays (a
+  block to 1.6, never saved), rising, flying in an arc to a gathering 9 over the bastion's north half and turning there,
+  knocking together; 2.9 s after the last row a roar and they fall in on the north rim, and the Unmade stands there in a
+  burst of broken stone and dust. Its arena is the bastion and the near half of the south arm (home 26); +50% health a
+  member past the first.
+  At two thirds the ring past the tuff seam cracks (its floor all cracked stone), grinds and drops dust for 2 s, then
+  falls an eighth every 4 ticks, north first and round both ways to the south: floor, parapet, lamp posts and the corbels
+  under them drop into the dark, some as falling stones; the road south across it stays, and so does the middle. At a
+  third the Span's lamps go out a post every 4 ticks from the gatehouse in, lanterns smoking; last the bastion's light
+  falls to 7. The gatehouse's lamps and the arch's stay lit (the way out), and the Unmade's lamp and the stars still
+  show. 5 blocks under the deck you've gone over the edge: a fall, never a death; you wake at the south end of the bridge
+  facing the bastion ("You wake at the south end of the bridge. The arch behind you is the way out."); from the third,
+  the Signal says what keeps catching you (§46.4). If it goes over it climbs back onto the bastion. When everyone has
+  fallen it goes, the Span is whole again (the arm, the ring, the lamps) and it gathers again once someone's on the
+  bastion. Out through the arch (past z 58) is the way out, no fail day. Its death: what it left is in the killer's hands
+  at 1.5 s, a chime at 1 s, and from 2 s the Span mends from its north end in (two rows a tick, stones setting); at 15 s
+  home with rank B. The Span is put back after.
+- **What it gives:** rank B (its Great Bell follows the rank, `Bells`), its trophy (a Lord's, `Trophies`), essence
+  shards, cracked stone bricks and a lantern one time in three. No new Tasks step. **Not here:** the Great Bell Third
+  (the bells session places it), the Unmade's heart and its boss weapon (the arms plan's boss weapons, the weapon
+  sessions), climbing it (the colossus probe, §35 item 12, waits on Euan's OK); GOALS' "rises as your first General"
+  went with Generals (§43.4).
+- **The box stays** as practice: `/awaken admin trial bbox` (the duel with a B Gate Lord). `/awaken admin trial half`
+  and `third` bring it to 45% and 30% (tours: the ring and the lamps on cue). Tour: `tools/autopilot/fights-span.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_unmade`, 200 seeds, `PROVING_RANKS` fights it at C and level 45
+  with the C-rank forged blade): dodger 48% in 151 s, parrier 100% in 104 s (61% health left), expert 100% in 81 s
+  (100% left), tank 0% (dies at 41 s). Targets 50 / 55 / 95 / 0: met. Harder than the Examiner (dodger 56% with the
+  forge's damage) and the B Lord (the Sky Leviathan, 78%). Lengthening the white-gold tell from 0.6 s to the plan's
+  0.65 s lifted the dodger from 52% to 56% at damage 2.5, so its damage is 2.6. The plan's 6 minutes isn't met, as for
+  the Ringer and the Examiner.
+- Tests: `proving_unmade` (the layout's rules, then the whole flow over the GameTest superflat: you wake high and falling
+  slowly, on the bastion the north arm lifts into stones and it lands on the north rim out of them, at two thirds the
+  ring falls and the road south and the middle stand, at a third the south arm's lamps go out and the gatehouse's stay
+  and the bastion's light is low, over the edge is a fall and you wake on the south arm with the Span whole again, it
+  gathers again, the win is rank B, the Span is put back).

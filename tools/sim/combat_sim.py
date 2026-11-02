@@ -1989,7 +1989,7 @@ class Fight:
 
 # The Provings' Wardens (SPEC §46.4): each met at its Reassessment by a player of the rank below, in that rank's set
 # and with its forged blade, at the level the new rank asks for (Rank.java levelRequired); the Warden at that level too
-PROVING_RANKS = {"proving_ringer": ("E", 10), "proving_examiner": ("D", 25)}
+PROVING_RANKS = {"proving_ringer": ("E", 10), "proving_examiner": ("D", 25), "proving_unmade": ("C", 45)}
 
 
 def home(W, d):

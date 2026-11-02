@@ -381,6 +381,28 @@ happens).
   the north mirror; from the third fall the Signal says what keeps catching you; the stair's landing is the way out, no
   fail day; the hall is put back after; `/awaken admin trial cbox` keeps the old box of waves as practice.
 
+### The Unmade (the third Proving, §46.7)
+- **Get**: at level 45 with C rank, the Reading Bell's B-rank Reassessment ("The bell has taken you twice now. Go when
+  you're ready."). The bell rings, the screen breaks ("[ERROR] NOTHING UNDER YOU"), and you wake falling slowly out of a
+  night sky onto an old stone bridge over nothing. Once you're down on its round middle, its north arm comes apart, the
+  stones gather in the air, and the Unmade drops out of them. Nothing names it, its hall or its gift before you meet it.
+- **For**: B rank (its Great Bell follows the rank), its trophy for your Hall (the boss trophy every Lord leaves), essence
+  shards, cracked stone bricks and sometimes a lantern.
+- **Know**: a duel (§46.3): white-gold blows told 0.65 s, amber and red; its signature, the Fall, breaks a line of floor
+  toward you (dash through it); at two thirds the bastion's outer ring cracks and falls into the dark, north first (the
+  road south and the middle stay); at a third the bridge's lamps go out from the gatehouse in, but the gatehouse stays lit.
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.UnmadeWarden` (the gathering, the ring, the lamps, the
+  edge, the mending), `hearth.trial.Span` (the bridge, built by `TrialChunkGenerator` in every hall cell), the Unmade's
+  kit `proving_unmade` (`mobs`).
+- **Links**: the Examiner (the second Proving, C rank) and the Ringer before it; trophies; Great Bells (rank-driven);
+  parties (members within 24 blocks at level 45 come too, +50% of its health each).
+- **Edges**: going 5 blocks under the deck is a fall, never a death: you wake at the south end of the bridge and the arch
+  behind you is the way out; if it goes over it climbs back on; all of a party down and the Span is whole again (the arm,
+  the ring, the lamps) and it gathers once someone's back on the bastion; from the third fall the Signal says what keeps
+  catching you; out through the gatehouse's arch is the way out, no fail day; it gathers anyway after 30 s if nobody
+  stands on the bastion; the Span is put back after; `/awaken admin trial bbox` keeps the old B duel as practice. Not
+  built: the Great Bell Third (bells), the Unmade's heart and its boss weapon (arms), climbing it (waits on Euan's OK).
+
 ### Raids (the first Big Day)
 - **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):
   never in a world's first two hours of play, at most one Big Day every five play-days, due a play-day or two later and

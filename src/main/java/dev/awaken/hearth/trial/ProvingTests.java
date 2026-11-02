@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.Set;
 
-/** The Provings (SPEC §46.4, §46.6): each hall's layout, and each Warden's whole flow in a hall built for the test. */
+/** The Provings (SPEC §46.4, §46.6, §46.7): each hall's layout, and each Warden's whole flow in a hall built for the test. */
 public final class ProvingTests {
     private ProvingTests() {}
 
@@ -118,6 +118,7 @@ public final class ProvingTests {
             h.succeedWhen(() -> h.assertTrue(step[0] == 6, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
         });
         AwakenTests.registerIsolated("proving_examiner", 3000, ProvingTests::examiner);
+        AwakenTests.registerIsolated("proving_unmade", 3000, ProvingTests::unmade);
     }
 
     /**
@@ -251,6 +252,128 @@ public final class ProvingTests {
             }
         });
         h.succeedWhen(() -> h.assertTrue(step[0] == 8, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
+    }
+
+    /**
+     * The third Proving (SPEC §46.7): the Broken Span's layout; then the whole flow in a Span built for the test: you
+     * wake high over the bastion; once you're on it the north arm lifts and the Unmade lands out of its stones; at two
+     * thirds the ring falls (the road south stays), at a third the lamps go out (the gatehouse's stay); over the edge
+     * you wake at the south end and the Span is whole again; the win is rank B; the Span is put back after.
+     */
+    private static void unmade(net.minecraft.gametest.framework.GameTestHelper h) {
+        h.assertTrue(Span.block(0, 0, 0) != null && Span.block(0, 1, 0) == null, "you stand on the bastion's floor");
+        h.assertTrue(Span.block(0, 1, Span.ARCH_N) == null && Span.block(0, 6, Span.ARCH_N) == null && Span.block(0, 7, Span.ARCH_N) != null
+                && Span.block(7, 3, Span.ARCH_N) != null, "the arch is open under its crown, the towers either side");
+        h.assertTrue(Span.falls(14, 0) && Span.falls(0, -15) && !Span.falls(0, 15) && !Span.falls(0, 10), "the ring falls, the road south and the middle stay");
+        h.assertTrue(Span.block(0, 0, Span.WAKE_Z) != null && Span.block(0, 1, Span.WAKE_Z) == null && Span.block(0, 2, Span.WAKE_Z) == null,
+                "you wake on the south arm's road");
+        h.assertTrue(Span.block(0, 0, Span.OUT_Z) != null, "the road goes on past the gatehouse");
+        h.assertTrue(UnmadeWarden.sector(0, -10) == 0 && UnmadeWarden.sector(10, 0) == 2 && UnmadeWarden.sector(0, 10) == 4, "the eighths count from the north");
+
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        ServerLevel home = sp.level();
+        sp.setGameMode(GameType.CREATIVE); // never its target: the test strikes and falls by hand
+        Progression.awaken(sp);
+        Progression.passReassessment(sp);
+        Progression.passReassessment(sp);
+        double need = 1;
+        for (int l = 1; l < Rank.B.levelRequired; l++) need += Curve.xpToNext(l);
+        Progression.grantXp(sp, need / dev.awaken.core.AwakenConfig.xpMultiplier(), Progression.XpSource.COMMAND);
+        h.assertTrue(Progression.rank(sp) == Rank.C && Progression.profile(sp).reassessmentReady(), "ready for B");
+        h.assertTrue(Trials.Kind.forTarget(Rank.B) == Trials.Kind.PROVING, "B is a Proving");
+        BlockPos c = h.absolutePos(new BlockPos(0, 60, 0)); // the Span reaches 40 down: well clear of the test's ground
+        Provings.Run run = Provings.openAt(sp, home, c, Rank.B, false);
+        h.assertTrue(run.warden == UnmadeWarden.WARDEN && run.room instanceof UnmadeWarden.Gather, "the Unmade's Span");
+        ServerLevel trials = run.level;
+        int[] step = {0};
+        long[] mark = {0};
+        h.onEachTick(() -> {
+            long now = trials.getGameTime();
+            LivingEntity w = Provings.warden(run);
+            UnmadeWarden.Gather g = (UnmadeWarden.Gather) run.room;
+            switch (step[0]) {
+                case 0 -> {
+                    if (run.stage != Provings.Stage.WAITING) return;
+                    h.assertTrue(sp.getY() > c.getY() + 10 && sp.hasEffect(net.minecraft.world.effect.MobEffects.SLOW_FALLING), "you wake high, falling slowly");
+                    h.assertTrue(Span.HALL.is(trials, c, 0, 0, -40), "the north arm stands");
+                    onBastion(sp, c);
+                    step[0] = 1;
+                }
+                case 1 -> {
+                    if (g.liftedAt < 0) return;
+                    h.assertTrue(trials.getBlockState(c.offset(0, 0, -40)).isAir() && !g.stones.isEmpty(), "the north arm lifted into stones");
+                    h.assertTrue(Span.HALL.is(trials, c, 0, 0, 0), "the bastion stays");
+                    step[0] = 2;
+                }
+                case 2 -> {
+                    if (w == null) return;
+                    h.assertTrue(Math.abs(w.getZ() - (c.getZ() + Span.LAND_Z + 0.5)) < 2 && g.stones.isEmpty(), "it lands on the north rim out of its stones");
+                    w.setHealth(w.getMaxHealth() * 0.6F);
+                    mark[0] = now;
+                    step[0] = 3;
+                }
+                case 3 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 1, "at two thirds the ring cracks");
+                    if (run.turnAt >= 0) return;
+                    h.assertTrue(trials.getBlockState(c.offset(15, 0, 0)).isAir() && trials.getBlockState(c.offset(0, 0, -15)).isAir(), "the ring fell");
+                    h.assertTrue(Span.HALL.is(trials, c, 0, 0, 15) && Span.HALL.is(trials, c, 0, 0, 10), "the road south and the middle stand");
+                    if (w == null) return;
+                    w.setHealth(w.getMaxHealth() * 0.3F);
+                    mark[0] = now;
+                    step[0] = 4;
+                }
+                case 4 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 2, "at a third the lamps go out");
+                    if (run.turnAt >= 0) return;
+                    h.assertTrue(trials.getBlockState(c.offset(5, 4, 44)).isAir(), "the south arm's lamps are out");
+                    h.assertTrue(trials.getBlockState(c.offset(6, 5, Span.ARCH_N - 1)).is(Blocks.LANTERN), "the gatehouse's lamps stay");
+                    h.assertTrue(trials.getBlockState(c.offset(3, 3, 3)).equals(Span.lightOf(Span.DARK)), "the bastion's light is low");
+                    // over the edge: you wake at the south end, and alone it starts over, the Span whole again
+                    sp.teleportTo(trials, c.getX() + 0.5, c.getY() + UnmadeWarden.VOID - 1, c.getZ() + 15.5, Set.<Relative>of(), 0F, 0F, true);
+                    mark[0] = now;
+                    step[0] = 5;
+                }
+                case 5 -> {
+                    if (now - mark[0] < 2) return;
+                    h.assertTrue(sp.isAlive() && Trials.inTrial(sp) && run.falls.getOrDefault(sp.getUUID(), 0) == 1, "going over the edge is a fall");
+                    h.assertTrue(Math.abs(sp.getZ() - (c.getZ() + Span.WAKE_Z + 0.5)) < 1.5 && sp.getY() > c.getY(), "you wake on the south arm");
+                    h.assertTrue(run.stage == Provings.Stage.WAITING && run.turns == 0, "it starts over");
+                    h.assertTrue(Span.HALL.is(trials, c, 15, 0, 0) && Span.HALL.is(trials, c, 0, 0, -40) && Span.HALL.is(trials, c, 5, 4, 44)
+                            && Span.HALL.is(trials, c, 3, 3, 3), "the ring, the north arm and the lamps are back");
+                    onBastion(sp, c);
+                    step[0] = 6;
+                }
+                case 6 -> {
+                    if (w == null) return;
+                    w.kill(trials);
+                    h.assertTrue(run.stage == Provings.Stage.WON, "beaten");
+                    mark[0] = now;
+                    step[0] = 7;
+                }
+                case 7 -> {
+                    if (Trials.inTrial(sp)) return;
+                    h.assertTrue(now - mark[0] >= Provings.OUTRO, "the Span mends before home");
+                    h.assertTrue(Trials.lastResult(sp.getUUID()).orElse(null) == Trials.State.PASSED, "passed");
+                    h.assertTrue(Progression.rank(sp) == Rank.B, "rank B, was " + Progression.rank(sp));
+                    step[0] = 8;
+                }
+                case 8 -> {
+                    if (!Provings.settled()) return;
+                    h.assertTrue(Span.HALL.standing(trials, c) && Span.HALL.is(trials, c, 15, 0, 0) && Span.HALL.is(trials, c, 5, 4, 44),
+                            "the Span is put back");
+                    step[0] = 9;
+                }
+                default -> {}
+            }
+        });
+        h.succeedWhen(() -> h.assertTrue(step[0] == 9, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
+    }
+
+    /** Down on the bastion, south of its middle, as landing from the fall would. */
+    private static void onBastion(ServerPlayer sp, BlockPos c) {
+        sp.teleportTo((ServerLevel) sp.level(), c.getX() + 0.5, c.getY() + 1, c.getZ() + 4.5, Set.<Relative>of(), 0F, 0F, true);
     }
 
     /** Onto the chancel's south end, as climbing the half-step would. */

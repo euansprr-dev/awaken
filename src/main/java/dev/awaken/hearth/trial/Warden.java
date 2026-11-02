@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * A Proving's Warden (SPEC §46.4, §46.6): who waits at a rank's Reassessment, its hall, how you arrive, what changes in
+ * A Proving's Warden (SPEC §46.4, §46.6, §46.7): who waits at a rank's Reassessment, its hall, how you arrive, what changes in
  * the hall as the fight turns, and what it leaves you. {@link Provings} runs the rest the same for every one of them:
  * the bell, the party, the falls and the hints, the reset, the gathering of what it left, the way home.
  */
@@ -31,7 +31,7 @@ abstract class Warden {
     }
 
     private static final class All {
-        static final List<Warden> LIST = List.of(RingerWarden.WARDEN, ExaminerWarden.WARDEN);
+        static final List<Warden> LIST = List.of(RingerWarden.WARDEN, ExaminerWarden.WARDEN, UnmadeWarden.WARDEN);
     }
 
     /** The Warden of a Reassessment to {@code target}, or null where a box trial still stands. */
