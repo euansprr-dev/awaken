@@ -282,6 +282,75 @@ def letter(rows):
     return c
 
 
+# the Precursor Word Stone (SPEC §45.14): a stele of the ruins' dark plating on a low plinth, a panel let into its face
+# with the script carved down it; the glowing overlay is white (the block tint gives each enchantment its colour)
+WORD_SCRIPT = [
+    "#..#",
+    ".##.",
+    "",
+    "###.",
+    "#.#.",
+    "",
+    ".#.#",
+    ".###",
+]
+WORD_X, WORD_Y = 6, 3  # where the script starts on the 16x16 face
+
+
+def word_plating(seed, seams=True):
+    sl = ramp("slate")
+    rng = rng_for("word_stone", seed)
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            n = rng.random()
+            c.set(x, y, sl[2] if n < 0.6 else sl[3] if n < 0.88 else sl[1])
+    if seams:
+        for y in range(16):
+            c.set(7, y, sl[1])
+            c.set(8, y, sl[3])
+        for x in range(16):
+            c.set(x, 0, sl[4] if x % 5 else sl[3])
+    return c
+
+
+def word_cells():
+    for dy, row in enumerate(WORD_SCRIPT):
+        for dx, ch in enumerate(row):
+            if ch == "#":
+                yield WORD_X + dx, WORD_Y + dy
+
+
+def word_face():
+    """The stele's face: the panel's carved border (dark groove, a lit lip below and right) and the script carved in."""
+    sl = ramp("slate")
+    c = word_plating("face", seams=False)
+    for x in range(4, 12):
+        c.set(x, 2, sl[0])
+        c.set(x, 12, sl[4])
+    for y in range(2, 13):
+        c.set(4, y, sl[0])
+        c.set(11, y, sl[4])
+    for y in range(3, 12):
+        for x in range(5, 11):
+            c.set(x, y, sl[1] if (x + y) % 3 else sl[2])
+    for (x, y) in word_cells():
+        c.set(x, y, sl[0])
+    return c
+
+
+def word_script():
+    """The glowing script, white, with the panel's groove lit faintly round it (cutout: every pixel opaque or none)."""
+    c = Canvas()
+    for x in range(4, 12):
+        c.set(x, 2, (92, 92, 92, 255))
+    for y in range(3, 12):
+        c.set(4, y, (92, 92, 92, 255))
+    for (x, y) in word_cells():
+        c.set(x, y, (255, 255, 255, 255))
+    return c
+
+
 def build(out):
     out.block("inscribing_table_top", top())
     out.block("inscribing_table_side", panel())
@@ -293,6 +362,10 @@ def build(out):
     out.item("burin", burin())
     for i, rows in enumerate(LETTERS):
         out.particle(f"enchant_letter_{i}", letter(rows))
+    out.block("word_stone_side", word_plating("side"))
+    out.block("word_stone_top", word_plating("top", seams=False))
+    out.block("word_stone_face", word_face())
+    out.block("word_stone_script", word_script())
 
 
 # ---- content ---------------------------------------------------------------------------------------------------------
@@ -356,6 +429,31 @@ def table_model():
                 "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]}}}
 
 
+def word_stone_model():
+    """North-facing: the carved face looks north (z 0)."""
+    t = lambda tex, uv, cull=None: ({"texture": tex, "uv": uv} | ({"cullface": cull} if cull else {}))  # noqa: E731
+    els = [
+        box([1, 0, 1], [15, 3, 15], {
+            "down": t("#top", [1, 1, 15, 15], "down"), "up": t("#top", [1, 1, 15, 15]),
+            "north": t("#side", [1, 13, 15, 16]), "south": t("#side", [1, 13, 15, 16]),
+            "west": t("#side", [1, 13, 15, 16]), "east": t("#side", [1, 13, 15, 16])}),
+        box([3, 3, 5], [13, 15, 11], {
+            "north": t("#face", [3, 1, 13, 13]), "south": t("#side", [3, 1, 13, 13]),
+            "west": t("#side", [5, 1, 11, 13]), "east": t("#side", [5, 1, 11, 13])}),
+        box([2.5, 15, 4.5], [13.5, 16, 11.5], {
+            "up": t("#top", [2, 4, 14, 12]), "down": t("#top", [2, 4, 14, 12]),
+            "north": t("#side", [2, 0, 14, 1]), "south": t("#side", [2, 0, 14, 1]),
+            "west": t("#side", [4, 0, 12, 1]), "east": t("#side", [4, 0, 12, 1])}),
+        # the script, glowing a hair in front of the face, in the enchantment's colour
+        {"from": [3, 3, 4.95], "to": [13, 15, 4.95], "shade": False, "light_emission": 15,
+         "faces": {"north": {"texture": "#script", "uv": [3, 1, 13, 13], "tintindex": 0}}},
+    ]
+    b = "awaken:block/word_stone_"
+    return {"parent": "minecraft:block/block", "render_type": "minecraft:cutout", "ambientocclusion": False,
+            "textures": {"particle": b + "side", "side": b + "side", "top": b + "top", "face": b + "face", "script": b + "script"},
+            "elements": els}
+
+
 def content():
     _write(os.path.join(ASSETS, "models/block/inscribing_table.json"), table_model())
     variants = {}
@@ -369,7 +467,15 @@ def content():
     for name, parent in (("enchantment_page", "minecraft:item/generated"), ("burin", "minecraft:item/handheld")):
         _write(os.path.join(ASSETS, f"models/item/{name}.json"), {"parent": parent, "textures": {"layer0": f"awaken:item/{name}"}})
         _write(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": f"awaken:item/{name}"}})
-    _merge(os.path.join(MERGE, "assets/awaken/lang/en_us.json"), {"item.awaken.burin": "Burin"})
+    _merge(os.path.join(MERGE, "assets/awaken/lang/en_us.json"), {"item.awaken.burin": "Burin", "block.awaken.word_stone": "Word Stone"})
+    _write(os.path.join(ASSETS, "models/block/word_stone.json"), word_stone_model())
+    stone = {}
+    for i, face in enumerate(("north", "east", "south", "west")):
+        v = {"model": "awaken:block/word_stone"}
+        if i:
+            v["y"] = 90 * i
+        stone[f"facing={face}"] = v
+    _write(os.path.join(ASSETS, "blockstates/word_stone.json"), {"variants": stone})
     _write(os.path.join(ASSETS, "particles/enchant_letter.json"),
            {"textures": [f"awaken:enchant_letter_{i}" for i in range(len(LETTERS))]})
     print("enchant: content written")

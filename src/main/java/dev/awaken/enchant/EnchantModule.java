@@ -46,6 +46,9 @@ public final class EnchantModule {
         ForgeHooks.cardLine(s -> EnchantRules.room(s) > 0 ? EnchantRules.roomLine(s) : null);
         Sources.declare("a gate's Lord carries its kind's page; the village scribe sells a few; old books teach theirs (enchant.Pages, SPEC §45.2)",
                 "enchantment_page");
+        Sources.declare("built into the Precursor ruins (the vaults, the monolith's chamber, the ocean lab, the sky platform, the spire's crown) through EnchantApi.placeStone; never held (enchant.WordStones, SPEC §45.14)",
+                "word_stone");
+        dev.awaken.core.api.EnchantApi.stones(WordStones::place);
         Sources.neverHeld("the Inscribing Table's tool, only drawn in your hand while you write (enchant.client)", "burin");
         EnchantCommands.register();
         EnchantTests.register();

@@ -1,8 +1,9 @@
-# Enchanting S1-S2, the Inscribing Table (SPEC §45.10-45.11): the table in a small study (its floating book, the lapis
+# Enchanting S1-S3, the Inscribing Table (SPEC §45.10-45.14): the table in a small study (its floating book, the lapis
 # channel waking as you come near), the book's two pages over the lower half with your piece laid on the slate, a row
 # rested on (its mark faint on the piece), the trace (the mark burning, the glowing end, the burin in your hand), the
 # strokes filling with lapis, the wake (the piece turns once) and its card, the book again with the enchantment on the
-# piece, the script line on the sword in hand and on worn armour, and the Journal's ENCHANTMENTS category. The pilot
+# piece, the script line on the sword in hand and on worn armour, the Journal's ENCHANTMENTS category, and a Precursor
+# Word Stone (its letters lifting off the face, then streaming into you as you learn it). The pilot
 # traces (tours can't drag a mouse): /awaken enchant pilot ...
 # Run on GitHub: tools/tour-ci.sh tools/autopilot/enchant-table.txt 1200
 world autopilot_enchant_table creative 20261102
@@ -92,7 +93,7 @@ cmd awaken enchant pilot close
 wait 30
 shot enchant_13_the_table_after
 # ---- the script line: Bane of the Dead's red along the sword in your hand, two wards in turn on worn armour ----
-cmd tp @s 0.5 201 1.0 180 10
+cmd tp @s 0.5 201 1.0 0 8
 wait 40
 shot enchant_14_the_script_line_held
 cmd item replace entity @s armor.chest with awaken:lordscale_chestplate[enchantments={"awaken:heat_ward":2,"awaken:frost_ward":1}]
@@ -111,4 +112,16 @@ journal enchantments
 wait 20
 shot enchant_17_journal_enchantments
 screen close
+# ---- a Precursor Word Stone (SPEC §45.14): while you haven't learned it its letters lift off the carved face; a hand on
+# it teaches it and they stream into you; then it goes quiet ----
+cmd awaken admin enchant forget
+cmd setblock 3 201 2 awaken:word_stone[facing=west,word=19]
+cmd tp @s 0.6 201 2.5 -90 22
+wait 60
+shot enchant_18_a_word_stone
+use
+wait 6
+shotnow enchant_19_its_letters_stream_in
+wait 40
+shot enchant_20_the_stone_quiet
 quit

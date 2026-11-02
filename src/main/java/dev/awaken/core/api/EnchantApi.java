@@ -64,6 +64,27 @@ public final class EnchantApi {
         return stack.isEmpty() ? 0 : glow.bits(stack) & 127;
     }
 
+    /**
+     * A Precursor Word Stone for a ruin's builder (SPEC §45.14): its carved face toward {@code facing}, its enchantment
+     * drawn from the stone's set ("sea" for the ocean lab, "sky" for the sky platform and the spire's crown, "" for the
+     * vaults and the monolith) by the structure's seed. False when enchanting is absent or nothing could be placed.
+     */
+    public interface Stones {
+        boolean place(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction facing,
+                      String set, long seed);
+    }
+
+    private static Stones stones = (level, pos, facing, set, seed) -> false;
+
+    public static void stones(Stones s) {
+        stones = s;
+    }
+
+    public static boolean placeStone(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos pos,
+                                     net.minecraft.core.Direction facing, String set, long seed) {
+        return stones.place(level, pos, facing, set, seed);
+    }
+
     /** How many pages a market shows each buyer. */
     public static final int MARKET_SHOWN = 3;
 }

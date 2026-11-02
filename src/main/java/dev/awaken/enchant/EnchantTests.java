@@ -72,6 +72,7 @@ final class EnchantTests {
         AwakenTests.register("enchant_bane_spares_lords", 20, EnchantTests::baneSparesLords);
         AwakenTests.register("enchant_fold", 20, EnchantTests::fold);
         AwakenTests.register("enchant_doors", 20, EnchantTests::doors);
+        AwakenTests.register("enchant_word_stone", 20, EnchantTests::wordStone);
         AwakenTests.registerIsolated("enchant_inscribe", 100, EnchantTests::inscribe);
         AwakenTests.registerIsolated("enchant_tasks", 100, EnchantTests::tasks);
     }
@@ -284,6 +285,44 @@ final class EnchantTests {
         h.assertTrue(EnchantRules.room(pick) == 1, "an asleep pick holds one: " + EnchantRules.room(pick));
         pick.set(dev.awaken.delve.DelveContent.PICK_VERSES.get(), new dev.awaken.delve.PickVerses.State(dev.awaken.delve.PickVerses.SCHEMA, 4));
         h.assertTrue(EnchantRules.room(pick) == 3, "at IV it holds three: " + EnchantRules.room(pick));
+        h.succeed();
+    }
+
+    /**
+     * Every Precursor ruin carries one Word Stone standing on its own floor in open air; a stone's carving comes from its
+     * set by the seed; a hand on it teaches it once, and a second touch teaches nothing more.
+     */
+    private static void wordStone(GameTestHelper h) {
+        for (dev.awaken.above.ruin.RuinKind kind : dev.awaken.above.ruin.RuinKind.values()) {
+            java.util.Map<Long, net.minecraft.world.level.block.state.BlockState> set = new java.util.HashMap<>();
+            List<BlockPos> stones = new java.util.ArrayList<>();
+            dev.awaken.above.ruin.RuinBuilder.build(kind, 7L, 0, new dev.awaken.above.ruin.RuinBuilder.Sink() {
+                @Override public void set(int x, int y, int z, net.minecraft.world.level.block.state.BlockState st) { set.put(BlockPos.asLong(x, y, z), st); }
+                @Override public void fillDown(int x, int y, int z, net.minecraft.world.level.block.state.BlockState st, int depth) {}
+                @Override public void chest(int x, int y, int z, net.minecraft.core.Direction f,
+                                            ResourceKey<net.minecraft.world.level.storage.loot.LootTable> t) { set.put(BlockPos.asLong(x, y, z), Blocks.CHEST.defaultBlockState()); }
+                @Override public void stand(int x, int y, int z, net.minecraft.core.Direction f, String k, String r) { set.put(BlockPos.asLong(x, y, z), Blocks.LECTERN.defaultBlockState()); }
+                @Override public void stone(int x, int y, int z, net.minecraft.core.Direction f, String s) { stones.add(new BlockPos(x, y, z)); }
+            });
+            h.assertTrue(stones.size() == 1, kind + " carries one Word Stone: " + stones.size());
+            BlockPos at = stones.getFirst();
+            var here = set.get(at.asLong());
+            var below = set.get(at.below().asLong());
+            h.assertTrue(here == null || here.isAir() || here.canBeReplaced(), kind + ": the stone stands in open air, not on " + here);
+            h.assertTrue(below != null && !below.isAir() && !below.canBeReplaced(), kind + ": on a floor, not " + below);
+        }
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        h.assertTrue(dev.awaken.core.api.EnchantApi.placeStone(h.getLevel(), at, net.minecraft.core.Direction.NORTH, "sea", 5L), "a stone is placed");
+        var state = h.getLevel().getBlockState(at);
+        Inscriptions.Entry e = WordStones.entry(state);
+        h.assertTrue(e != null && java.util.Arrays.stream(WordStones.SEA).anyMatch(n -> n == e.no()), "the ocean lab's stone carries a water enchantment: " + e);
+        h.assertTrue(WordStones.word("", 5L) == WordStones.word("", 5L), "the same seed, the same carving");
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        Known.save(p, Known.fresh());
+        WordStones.touch(p, state);
+        h.assertTrue(Known.of(p).knows(e.id()) && Known.of(p).count() == 1, "a hand on it teaches " + e.name());
+        WordStones.touch(p, state);
+        h.assertTrue(Known.of(p).count() == 1, "and a second touch nothing more");
         h.succeed();
     }
 

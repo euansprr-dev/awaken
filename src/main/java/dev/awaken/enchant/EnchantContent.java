@@ -59,6 +59,13 @@ public final class EnchantContent {
     public static final Supplier<BlockEntityType<InscribingTableBlockEntity>> TABLE_BE = BLOCK_ENTITIES.register("inscribing_table",
             () -> new BlockEntityType<>(InscribingTableBlockEntity::new, TABLE.get()));
 
+    /** A Precursor Word Stone (SPEC §45.14): built into the ruins only, never held, never broken. */
+    public static final DeferredBlock<WordStoneBlock> WORD_STONE = BLOCKS.registerBlock("word_stone", WordStoneBlock::new,
+            p -> p.mapColor(MapColor.COLOR_BLACK).strength(-1.0F, 3600000.0F).noLootTable().sound(SoundType.NETHERITE_BLOCK)
+                    .noOcclusion().lightLevel(s -> 6));
+    public static final Supplier<BlockEntityType<WordStoneBlockEntity>> WORD_STONE_BE = BLOCK_ENTITIES.register("word_stone",
+            () -> new BlockEntityType<>(WordStoneBlockEntity::new, WORD_STONE.get()));
+
     /** One enchantment, held in vanilla's {@code stored_enchantments} so every tooltip and JEI read it; used, it teaches. */
     public static final DeferredItem<PageItem> PAGE = ITEMS.registerItem("enchantment_page", PageItem::new,
             p -> p.stacksTo(16).rarity(Rarity.RARE));

@@ -761,6 +761,19 @@ happens).
 - **Links**: the Inscribing Table, the Journal's ENCHANTMENTS category, the gates.
 - **Edges**: a page whose enchantment can't be written any more fades to paper; a known page stays; pages stack to 16.
 
+### The Word Stone (`awaken:word_stone`)
+- **Get**: never held: one stands in every Precursor ruin (the vaults' sealed chamber across the terminal from the
+  drafting stand, the monolith's chamber, the ocean lab's storage dome, the sky platform's cabin, the spire's crown).
+- **For**: learning its enchantment for good by holding your hand to it, once for each player (the stone stays for the
+  next). Vaults and the monolith carry Insight, Efficiency, Infinity or Feather Falling; the sky ruins Feather Falling,
+  Infinity or Insight; the ocean lab one of the water's six.
+- **Know**: its letters lift off the carved face in the enchantment's colour while you haven't learned it, with a faint
+  hum; looking at it says "A Word Stone carved with Insight. Hold your hand to it to learn it."; the learn message.
+- **Source**: `Sources.declare` in `EnchantModule`; placed by `above.ruin.RuinBuilder` through `EnchantApi.placeStone`.
+- **Links**: the Inscribing Table, the Journal's ENCHANTMENTS category, the Precursor ruins.
+- **Edges**: unbreakable and drops nothing; a known stone says so and teaches nothing; the carving is the block state, so
+  a ruin always shows the same one.
+
 ### The burin (`awaken:burin`)
 - **Get**: never held: it is the table's engraving tool, drawn in your main hand only while you write at an Inscribing
   Table (SPEC §45.10). Creative and commands can give it; it does nothing on its own.

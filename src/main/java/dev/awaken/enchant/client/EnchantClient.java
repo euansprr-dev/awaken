@@ -5,6 +5,7 @@ import dev.awaken.Awaken;
 import dev.awaken.core.api.FirstPerson;
 import dev.awaken.enchant.EnchantContent;
 import dev.awaken.enchant.EnchantRules;
+import dev.awaken.enchant.Inscriptions;
 import dev.awaken.enchant.Known;
 import dev.awaken.enchant.PageItem;
 import dev.awaken.enchant.Pages;
@@ -41,6 +42,9 @@ public final class EnchantClient {
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerBlockEntityRenderer(EnchantContent.TABLE_BE.get(), InscribingTableRenderer::new));
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LetterParticle::register);
+        // a Word Stone's carving glows in its enchantment's colour (SPEC §45.14)
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.BlockTintSources.class,
+                e -> e.register(java.util.List.of(new WordTint()), EnchantContent.WORD_STONE.get()));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(EnchantPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> InscribeScene.open(msg)));
             e.register(EnchantPayloads.State.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> InscribeScene.state(msg)));
@@ -63,6 +67,7 @@ public final class EnchantClient {
         bus.addListener(ClientTickEvent.Post.class, e -> {
             InscribeScene.tick();
             EnchantFxClient.tick();
+            wordHint();
         });
         bus.addListener(ItemTooltipEvent.class, EnchantClient::onTooltip);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
@@ -73,6 +78,42 @@ public final class EnchantClient {
         FirstPerson.world("enchant_table", 210, InscribeScene::pose);
         dev.awaken.core.api.EnchantApi.glow(EnchantGlow::bits);
         EnchantJournal.register();
+    }
+
+    /** The Word Stone's carving colour, by the enchantment its state names. */
+    static final class WordTint implements net.minecraft.client.color.block.BlockTintSource {
+        @Override
+        public int color(net.minecraft.world.level.block.state.BlockState state) {
+            Inscriptions.Entry e = dev.awaken.enchant.WordStones.entry(state);
+            return 0xFF000000 | (e == null ? 0x9F8CFF : e.colour());
+        }
+
+        @Override
+        public java.util.Set<net.minecraft.world.level.block.state.properties.Property<?>> relevantProperties() {
+            return java.util.Set.of(dev.awaken.enchant.WordStoneBlock.WORD);
+        }
+    }
+
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos hinted;
+
+    /** Looking at a Word Stone says what it's carved with and what to do, in its colour, every two seconds while you look. */
+    private static void wordHint() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null || mc.gui.screen() != null || InscribeScene.weight(0) > 0
+                || !(mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit) || hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            hinted = null;
+            return;
+        }
+        Inscriptions.Entry e = dev.awaken.enchant.WordStones.entry(mc.level.getBlockState(hit.getBlockPos()));
+        if (e == null) {
+            hinted = null;
+            return;
+        }
+        if (hit.getBlockPos().equals(hinted) && mc.player.tickCount % 40 != 0) return;
+        hinted = hit.getBlockPos();
+        String said = Known.of(mc.player).knows(e.id()) ? "A Word Stone carved with " + e.name() + ". You know this one."
+                : "A Word Stone carved with " + e.name() + ". Hold your hand to it to learn it.";
+        mc.gui.hud.setOverlayMessage(Component.literal(said).withColor(e.colour()), false);
     }
 
     /**

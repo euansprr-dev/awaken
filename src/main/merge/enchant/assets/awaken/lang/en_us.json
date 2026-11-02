@@ -30,5 +30,6 @@
   "subtitles.awaken.enchant.learn": "An enchantment learned",
   "subtitles.awaken.enchant.flare": "An old table flares",
   "subtitles.awaken.enchant.drift": "Letters drift",
-  "subtitles.awaken.enchant.scrape": "An enchantment scraped off"
+  "subtitles.awaken.enchant.scrape": "An enchantment scraped off",
+  "block.awaken.word_stone": "Word Stone"
 }

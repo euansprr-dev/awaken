@@ -306,9 +306,12 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 sub = r.why;
                 subColour = INK_FAINT;
             } else {
-                String depth = Inscriptions.top(r.h) > 1 ? "Up to " + Inscriptions.numeral(Math.min(Inscriptions.top(r.h), r.deepest)) + " here" : "";
-                if (!InscribeScene.study && r.anywhere > r.deepest) depth += " (" + Inscriptions.numeral(r.anywhere) + " in your Study)";
-                sub = (depth.isEmpty() ? "" : depth + "  ·  ") + EnchantRules.priceLine(r.price);
+                // the price always shows: on a narrow page the Study's depth goes first (the left page says it), then "here"
+                String deep = Inscriptions.top(r.h) > 1 ? Inscriptions.numeral(Math.min(Inscriptions.top(r.h), r.deepest)) : "";
+                String price = EnchantRules.priceLine(r.price);
+                String study = !InscribeScene.study && r.anywhere > r.deepest ? " (" + Inscriptions.numeral(r.anywhere) + " in your Study)" : "";
+                sub = deep.isEmpty() ? price : fit(pw - 20, "Up to " + deep + " here" + study + "  ·  " + price,
+                        "Up to " + deep + " here  ·  " + price, "Up to " + deep + "  ·  " + price, price.replace(" and ", ", "));
                 subColour = r.afford ? INK_SOFT : RED_INK;
             }
             g.text(font, font.plainSubstrByWidth(sub, pw - 20), x + 20, ry + 10, subColour, false);
@@ -337,9 +340,15 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             List<FormattedCharSequence> l = font.split(Component.literal(r.e.line()), pw);
             for (int i = 0; i < Math.min(3, l.size()); i++) g.text(font, l.get(i), x, fy + i * 9, INK_SOFT, false);
         } else if (!rows.isEmpty()) {
-            g.text(font, "Choose one to trace its mark on the piece.", x, fy, INK_FAINT, false);
-            g.text(font, "A clean hand gives some levels back.", x, fy + 10, INK_FAINT, false);
+            List<FormattedCharSequence> l = font.split(Component.literal("Choose one to trace its mark on the piece. A clean hand gives some levels back."), pw);
+            for (int i = 0; i < Math.min(3, l.size()); i++) g.text(font, l.get(i), x, fy + i * 9, INK_FAINT, false);
         }
+    }
+
+    /** The first of these that fits the width, else the last. */
+    private String fit(int width, String... tries) {
+        for (String t : tries) if (font.width(t) <= width) return t;
+        return tries[tries.length - 1];
     }
 
     /** While you trace: its name and level, a pip for each stroke, how much of this stroke stays on the line. */

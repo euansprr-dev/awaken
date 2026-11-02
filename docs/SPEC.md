@@ -16859,7 +16859,7 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
   sent with the table's update); in a Study a quiet paper hum (`drift`, 0.18) goes with the letters every 4.5 seconds
   while they come.
 
-### 45.14 Stage 3: more doors and the pick's room (`Doors`, `delve.api.Pick`, `living.api.Hunts`)
+### 45.14 Stage 3: more doors, Word Stones and the pick's room (`Doors`, `WordStones`, `delve.api.Pick`, `living.api.Hunts`)
 - **The hunts.** A named beast (`CreatureTag` kind `BEAST`, "Terror of Ashfen") brought down by a player pays a page of
   Bane of Beasts, "From Terror of Ashfen, brought down"; a ledger population's alpha (a deep-wild herd's bull, a deep
   pack's leader: `living.api.Hunts.alpha`, elite with the `awaken_ledger` tag) pays Harvest, "From a herd's leader,
@@ -16881,3 +16881,25 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
   three enchantments" in lapis-violet (`A898FF`). The War Anvil's card does the same when it lands.
 - Test `enchant_doors` (a named beast's page and its words, no page without a player, the heart blocks, the pick's room
   at verse 0 and IV).
+- **Precursor Word Stones** (`awaken:word_stone`, `WordStoneBlock`, `WordStones`): a stele of the ruins' dark plating on a
+  low plinth, a panel let into its face with three runes carved down it, glowing (emissive, cutout) in the enchantment's
+  colour through a block tint. The carving is the state's `word` (the enchantment's number, 1-30) with `facing`, so it
+  needs no saved data. Unbreakable, no loot, never held, light 6.
+  - **Where**: every Precursor ruin's builder calls `RuinBuilder.Sink.stone(x, y, z, facing, set)`, placed by
+    `EnchantApi.placeStone(level, pos, facing, set, seed)` with the block's position as the seed: the vaults' sealed
+    chamber (14, 1, 15) across the terminal from the drafting stand, the monolith's chamber (12, 1, 8) facing the stand,
+    the ocean lab's storage dome (17, 1, 6), the sky platform's cabin (C-3, deck+1, C), the spire's crown (C+1, top+1, C+1).
+  - **Sets**: "" (vaults, monolith) Insight, Efficiency, Infinity, Feather Falling; "sky" Feather Falling, Infinity,
+    Insight; "sea" Aqua Affinity, Depth Strider, Loyalty, Riptide, Luck of the Sea, Lure. None a gate keeps, none a hunt
+    or the Deep pays.
+  - **Touch**: hold your hand to it (use, any hand) and you learn it ("Copied from a Word Stone", the usual learn line,
+    sound and mark); known, it says "The stone is carved with Insight, and you already know it." in the action bar.
+  - **The look**: while the nearest player is you and you haven't learned it, its letters (`awaken:enchant_letter`, in
+    its colour) lift off the face every three ticks and gather above it, with the paper hum (0.14) every 4.2 seconds;
+    the moment you learn it 28 letters stream from the face into you; known, it goes quiet. Looking at it says, in its
+    colour, "A Word Stone carved with Insight. Hold your hand to it to learn it." (or "You know this one.").
+  - Test `enchant_word_stone` (every ruin kind places one, in open air on a floor; the sea set; the same seed the same
+    carving; a touch teaches once).
+- **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
+  so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
+  without "here", then the price alone; the foot's hint wraps.
