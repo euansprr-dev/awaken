@@ -1425,6 +1425,11 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
     at RING, 0.42 at BE JUDGED, 0.5 at WAKING, 0.62 on the bloom, 0.5 at the Judgement, 0.55 at the End rising to
     0.95 by the close and bending up a minor third (pitch 2^(3u^1.5/12)); cut with everything when the hand closes.
     The drum ducks to 55% and the tone to 60% under heavy hits. Rules in `RitualAudioRules.pulse/drone/dronePitch`.
+  - Stone dust (RitualFx, alpha blended, shaded by the light where it rises, never vanilla particles): nine grey puffs
+    rolling out from under each footfall with three chips, and where a blade lands a ring of twenty puffs, a rising
+    column of six and fourteen chips flung up and out. RitualFx keeps its own foot clock per statue (the footsteps'
+    rule) and sees a strike as a statue's stage turning from wind-up to strike, the blade 2.5 blocks ahead; it tracks
+    statues in the Judgement and, for the studio tour, under autopilot.
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
