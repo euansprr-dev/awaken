@@ -126,6 +126,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             if (w.stage != runStage || w.stageStart != runStart) newRun(w, now);
             float t = now - w.stageStart;
             header(g, w);
+            // before the stage draws: the bind reads the cursor autoplay moves (the frame set it to the real mouse)
+            if (AnvilClient.autoplay) autoplay(w, t, now);
             switch (w.stage) {
                 case AnvilSong.HEAT -> heat(g, w, t, now);
                 case AnvilSong.SHAPE -> beats(g, w, t, now, false);
@@ -135,7 +137,6 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
                 case AnvilSong.BIND -> bind(g, w, t, now);
                 default -> {}
             }
-            if (AnvilClient.autoplay) autoplay(w, t, now);
         }
         sparks(g, now);
         ring(g, now);

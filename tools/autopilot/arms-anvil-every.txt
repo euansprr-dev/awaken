@@ -2,7 +2,8 @@
 # creative (no materials), the songs played by autoplay. Blueprints used to learn the Daggers, the Maul and the
 # Greatblade; the Armoury at the anvil's door; Wildhide Daggers by hand (knap and bind, no Forge, the stone hammer);
 # Beastbound Daggers, Maul and Greatblade on their own rhythms; the Beastbound blade alone; three forged Longswords in
-# frames (no flaw, a burnt tip, a brittle blade); the Weapons tab after.
+# hand (no flaw, a burnt tip, a brittle blade: item frames draw the flat icon, so the flaw shows only in hand); the
+# Weapons tab after.
 # ci knobs: LENS=cinematic
 world waranvil2 creative 4344
 waitworld
@@ -37,10 +38,6 @@ cmd setblock 0 205 2 minecraft:lantern[hanging=true]
 cmd setblock 0 205 7 minecraft:lantern[hanging=true]
 cmd setblock 0 201 4 awaken:war_anvil[facing=north]
 cmd setblock -2 201 3 awaken:forge[facing=east]
-# three forged Longswords on the back wall: plain, a burnt tip, a brittle blade (SPEC §46.7's flaws)
-cmd summon item_frame -1.5 203.5 8.97 {Facing:2b,Fixed:1b,Item:{id:"awaken:beastbound_longsword",count:1,components:{"awaken:weapon_forged":{quality:2}}}}
-cmd summon item_frame 0.5 203.5 8.97 {Facing:2b,Fixed:1b,Item:{id:"awaken:beastbound_longsword",count:1,components:{"awaken:weapon_forged":{quality:1,flaw:1}}}}
-cmd summon item_frame 2.5 203.5 8.97 {Facing:2b,Fixed:1b,Item:{id:"awaken:beastbound_longsword",count:1,components:{"awaken:weapon_forged":{quality:1,flaw:2}}}}
 wait 20
 cmd awaken arms anvil autoplay true
 hud off
@@ -159,14 +156,18 @@ wait 120
 shot blade_after
 screen close
 wait 20
-hud off
-# the three flaws on the wall
-cmd tp @s 0.5 202 6.6 0 10
+# the three flaws in hand (SPEC §46.7): plain, a burnt tip, a brittle blade, against the lit back wall
+cmd tp @s 0.5 201 6 0 -8
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword[awaken:weapon_forged={quality:2}]
 wait 30
-shot flaws_wall
-cmd tp @s 0.5 202.3 7.6 0 12
+shot flaw_none
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword[awaken:weapon_forged={quality:1,flaw:1}]
 wait 20
-shot flaws_close
+shot flaw_burnt
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword[awaken:weapon_forged={quality:1,flaw:2}]
+wait 20
+shot flaw_brittle
+cmd item replace entity @s weapon.mainhand with air
 # the Weapons tab after the first weapon: the steps gone or the rank step
 screen holo tasks
 tasks weapons
