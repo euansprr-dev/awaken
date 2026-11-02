@@ -16306,7 +16306,8 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   - Goals (the Bells tab): make and set a frame; hang the bells in your bag; the frame full, make a Bell Beam; a Great
     Bell, a Great Beam; take the Lampwing's old bell down; then as before. The page marks each bell in your song, yours
     to hang, or hung by someone you live with. `/awaken admin bells tower <n>` hangs them too: the frame first, then Bell
-    Beams 9 above the fire either side of it, Great Beams 13 above.
+    Beams 9 above the fire either side of it, Great Beams 13 above; `/awaken admin bells roost` hangs the Lampwing's bell
+    now and stands you under it (for tours).
   - Tests (CI): `bells_hang_rules`, `bells_song_from_bells`, `bells_nothing_from_nowhere` (no song from a bare frame; a
     bell never lost at death), `bells_roost_bell` (under the branch; asleep; another fire; claimants), `bells_old_save`,
     `bells_catalog_ring` (each of the hundred is a thing in your hands or one of the six), `bells_peals` (hung, not held),

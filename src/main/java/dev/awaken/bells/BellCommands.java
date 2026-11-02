@@ -36,6 +36,7 @@ final class BellCommands {
                 .then(Commands.literal("tower").then(Commands.argument("n", IntegerArgumentType.integer(1, 100)).executes(c ->
                         tower(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "n")))))
                 .then(Commands.literal("song").executes(c -> BellTower.songNow(c.getSource().getPlayerOrException()) ? 1 : 0))
+                .then(Commands.literal("roost").executes(c -> roost(c.getSource().getPlayerOrException())))
                 .then(Commands.literal("belfry").executes(c -> belfry(c.getSource().getPlayerOrException())))
                 .then(Commands.literal("ilse").executes(c -> Bells.ilseNow(c.getSource().getPlayerOrException()) ? 1 : 0))
                 .then(Commands.literal("deep").executes(c -> {
@@ -71,6 +72,31 @@ final class BellCommands {
     }
 
     /** Rings the first {@code n} bells (the built ones first) for the player, sets a frame at home if there's none, grows it. */
+    /** For tours: the Lampwing's old bell hung by your home now if it isn't, and you stood looking up at it. */
+    private static int roost(ServerPlayer p) {
+        Optional<HearthRecord> h = HearthService.data(p.level().getServer()).home(p.getUUID());
+        if (h.isEmpty()) {
+            p.sendSystemMessage(Component.literal("No home: found one first (/awaken admin kin yard)."));
+            return 0;
+        }
+        ServerLevel level = p.level().getServer().overworld();
+        BellWorld w = BellWorld.get(level.getServer());
+        BellWorld.Home home = w.home(h.get().pos);
+        if (home.roost == null || !level.getBlockState(home.roost).is(BellContent.FOUND_BELL.get())) {
+            BlockPos at = FoundBells.hangRoost(level, h.get().pos.offset(FoundBells.ROOST_DX, 0, FoundBells.ROOST_DZ), FoundBells.ROOST_REACH, h.get().pos.asLong());
+            if (at == null) {
+                p.sendSystemMessage(Component.literal("Nowhere loaded to hang it."));
+                return 0;
+            }
+            home.roost = at;
+            home.roosted = true;
+            w.setDirty();
+        }
+        BlockPos r = home.roost;
+        p.teleportTo(level, r.getX() + 2.5, r.getY() - 1.2, r.getZ() + 2.5, java.util.Set.of(), 135F, -22F, true);
+        return 1;
+    }
+
     private static int tower(ServerPlayer p, int n) {
         Optional<HearthRecord> h = HearthService.data(p.level().getServer()).home(p.getUUID());
         if (h.isEmpty()) {
