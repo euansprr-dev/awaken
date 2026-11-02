@@ -16491,7 +16491,8 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
     finishes its story (`BellHooks.spirit`, from `veil.Spirits.talk`), if one of Ghost Lantern, Whisper (C), Wake,
     Mourner (B) or the Veil Bell (A, once the other four are let go) waits for your rank, that spirit holds it for you
     and says what it stayed for: a lantern lit within 3 of where it stands, flowers planted there, you within 8 of it at
-    first light (22,800 to 800), a lit candle on its grave, the other four let go. Done (checked every 5 s within 16 of
+    first light (22,800 to 800), a lit candle on its grave, the other four let go. A spirit never stays for what's already
+    done where it stands (a lantern lit there already: it holds the next bell instead). Done (checked every 5 s within 16 of
     it, in spirit or body), it lets the bell go into your hands ("[X let the bell go. It came to you pale as frost, and
     cold in your hands.]"). One spirit, one bell; telling again repeats the errand. World schema 6: `keepers` (player →
     bell → spirit, name, place, done). The Tasks show each errand ("Light a lantern where X stands"), pointing there.

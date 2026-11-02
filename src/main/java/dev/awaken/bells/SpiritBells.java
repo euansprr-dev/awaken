@@ -58,6 +58,8 @@ final class SpiritBells {
             if (Bells.has(p, id) || mine.containsKey(d.no()) || rank.ordinal() < d.rank().ordinal()) continue;
             if (id.equals("veil") && !othersFree(p, mine)) continue;
             BellWorld.Keeper k = new BellWorld.Keeper(spirit, name, at.immutable());
+            // a spirit doesn't stay for what's already there: a lantern lit beside it holds the next bell, not this one
+            if (!id.equals("veil") && p.level() instanceof ServerLevel level && done(level, id, k, p, 0, mine)) continue;
             mine.put(d.no(), k);
             w.setDirty();
             ask(p, d, k);

@@ -839,9 +839,14 @@ final class BellTests {
         try {
             SpiritBells.told(p, "awaken:test_spirit", "Ama", at, dev.awaken.progression.Rank.E);
             h.assertTrue(w.keepers.getOrDefault(p.getUUID(), Map.of()).isEmpty(), "below C rank, no spirit holds one for you");
-            SpiritBells.told(p, "awaken:test_spirit", "Ama", at, dev.awaken.progression.Rank.C);
+            int ghost = BellCatalog.of("ghost").no(), whisper = BellCatalog.of("whisper").no();
+            level.setBlock(at.east(), Blocks.LANTERN.defaultBlockState(), Block.UPDATE_ALL);
+            SpiritBells.told(p, "awaken:lit_spirit", "Bryn", at, dev.awaken.progression.Rank.C);
             Map<Integer, BellWorld.Keeper> mine = w.keepers.get(p.getUUID());
-            int ghost = BellCatalog.of("ghost").no();
+            h.assertTrue(mine != null && mine.containsKey(whisper) && !mine.containsKey(ghost), "a lantern already lit there: that spirit holds the next bell, not the lantern's");
+            mine.remove(whisper);
+            level.setBlock(at.east(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            SpiritBells.told(p, "awaken:test_spirit", "Ama", at, dev.awaken.progression.Rank.C);
             h.assertTrue(mine != null && mine.size() == 1 && mine.containsKey(ghost), "at C rank it holds the Ghost Lantern Bell");
             SpiritBells.told(p, "awaken:test_spirit", "Ama", at, dev.awaken.progression.Rank.C);
             h.assertTrue(mine.size() == 1, "telling it again asks again; one spirit, one bell");
