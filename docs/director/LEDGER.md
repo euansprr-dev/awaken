@@ -941,16 +941,34 @@ happens).
 
 ### War Anvil
 - **Get**: crafted from three stone, a copper ingot and a log (granted at level 3 with the Fitting Stand).
-- **For**: weapons forged in a scene of your own: heat in the Forge, draw out on the beat, quench, hilt, the draw from
-  the stone. A well-forged weapon leaves with Temper, up to your Forge's limit, and its story ("Masterwork. Forged by
-  Euan."). Stage 1 forges the Beastbound Longsword; every weapon comes in stage 2.
-- **Know**: the level road's level 3 step names it and its recipe; the recipe book; use it and its window says what the
-  weapon takes and what's missing (rank D, a Forge within 6 blocks, the parts).
+- **For**: every weapon and Hunter blade is forged on it (stage 2, SPEC §46.7): by hand at E (knap the edge, bind the
+  grip; no Forge), from D in a scene of your own (heat in the Forge, draw out on each style's own rhythm, quench, hilt,
+  the draw from the stone). It leaves Plain to Flawless with Temper up to your Forge's limit and its story
+  ("Masterwork, twin-struck. Forged by Euan."); Masterwork or better goes into your memory (one strike, always Fine); a
+  friend's off-beats make it twin-struck; set in an Armoury room it makes weapons last a quarter longer. It is the
+  Hearth's anvil too (`#minecraft:anvil`).
+- **Know**: the level road's level 3 step names it and its recipe; the recipe book; the Weapons tab ("Set up a War
+  Anvil", "Forge your first weapon" with the styles you know as choices, "Make your C-rank weapon"); the Now line ("You
+  can forge Beastbound Daggers at your War Anvil"); use it and the Armoury opens at its door with what each weapon takes,
+  Forge it, From memory, Forge the blade, and one plain line for what stands in the way; JEI's War Anvil page.
 - **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself), `arms.anvil.WarAnvil`,
-  `WarAnvilBlockEntity` (schema 1).
-- **Links**: the Hearth's Forge (heat, the temper limit); Oren's Mark (`awaken:temper_start`); the Beastbound Blade
-  (or its own recipe in its place); the Fitting Stand's smithy (one Forge serves both).
-- **Edges**: below D-rank, or with no Forge near, the window says so and nothing starts; someone else's work is theirs
-  (a line says who); walking 12 blocks off, logging out or Esc holds the work and coming back counts the stage in again;
-  breaking it mid-work drops what was taken in and what stands in the slot; a full pack at the draw puts what was in
-  the hand at your feet; a weapon left in the slot waits for anyone to sneak-use and draw it.
+  `WarAnvilBlockEntity` (schema 1), `AnvilWork` (schema 2), `SmithMemory` (schema 2).
+- **Links**: the Hearth's Forge (heat from D, the temper limit); Oren's Mark (`awaken:temper_start`); the tier's Hunter
+  blade (carried, it stands in for its parts; else they're added); Blueprints (used, they teach the pattern the anvil
+  asks for); the Fitting Stand's smithy (one Forge serves both); the Hearth's Armoury room; ForgeHooks (enchanting).
+- **Edges**: an unknown pattern, a tier above your level or no Forge near from D: the line says so and nothing starts;
+  someone else's work is theirs (a line says who, and using it then is a helper's strike); walking 12 blocks off,
+  logging out or Esc holds the work and coming back counts the stage in again; breaking it mid-work drops what was
+  taken in and what stands in the slot; a full pack at the draw puts what was in the hand at your feet; a weapon left in
+  the slot waits for anyone to sneak-use and draw it.
+
+### Forged weapons and Hunter blades (the 96 weapons, the six blades)
+- **Get**: forged at a War Anvil from `data/awaken/arms/anvil_costs.json` (each its old grid recipe minus the
+  Blueprint); never on the crafting grid. Hale's issue gives the first; Lords and Marked finds drop their own kinds.
+- **For**: the fighting styles at each tier; a blade is the part every forged weapon of its tier starts from.
+- **Know**: the Armoury at the anvil, the Weapons tab, the Now line, JEI; the tooltip tells its story.
+- **Source**: `Sources.declare` in `AnvilModule` (every key of the cost table); `arms_anvil_costs` proves each has its
+  cost and no crafting recipe.
+- **Links**: Blueprints (the pattern), beast cores, the tier's metal from D or binding at E, the Forge, Temper.
+- **Edges**: a weapon made before the War Anvil keeps working and gains a Plain story when first held; a found one never
+  does; old Blueprints held were learned by the backfill; recipe-book entries for the old grid recipes are gone.
