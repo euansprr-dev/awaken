@@ -5,7 +5,9 @@
 // Vanilla's ENTITY inputs, read our way: Color is the weapon's accent (rgb) and how far along it this corner lies (a);
 // UV1 is not an overlay but the blade's live state: x its energy (0..255: a heavy's charge, the Art ready), y its
 // flash (0..255: the glint, a perfect blow) with 256 added when the item has foil; bits 8-14 of x the enchantment light
-// on it now (SPEC §45.11): a palette index in 8-11 (0 none), how brightly it shows (0..7) in 12-14.
+// on it now (SPEC §45.11): a palette index in 8-11 (0 none), how brightly it shows (0..7) in 12-14. With 512 added to y
+// it is metal in the making at the War Anvil (SPEC §46.3): x's low byte its heat, y's low byte the heat's front along
+// the blade, 1024 added while the quench cools it from the point.
 
 #include <minecraft:fog.glsl>
 #include <minecraft:dynamictransforms.glsl>
@@ -28,7 +30,7 @@ layout(location = 3) out vec4 lightMapColor;
 layout(location = 4) out vec2 texCoord0;
 layout(location = 5) out vec3 worldNormal;
 layout(location = 6) out vec3 viewNormal;
-layout(location = 7) flat out vec3 state;
+layout(location = 7) flat out vec4 state;
 layout(location = 8) flat out vec2 script;
 
 void main() {
@@ -41,6 +43,8 @@ void main() {
     texCoord0 = UV0;
     worldNormal = Normal;
     viewNormal = mat3(ModelViewMat) * Normal;
-    state = vec3(float(UV1.x & 255) / 255.0, float(UV1.y & 255) / 255.0, (UV1.y & 256) != 0 ? 1.0 : 0.0);
+    int y = UV1.y;
+    state = vec4(float(UV1.x & 255) / 255.0, float(y & 255) / 255.0, (y & 256) != 0 ? 1.0 : 0.0,
+            (y & 512) == 0 ? 0.0 : (y & 1024) != 0 ? 2.0 : 1.0);
     script = vec2(float((UV1.x >> 8) & 15), float((UV1.x >> 12) & 7) / 7.0);
 }

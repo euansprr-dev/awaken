@@ -185,8 +185,13 @@ public final class ArmsArmoury {
 
     /** What the weapon needs and how much of it the fighter holds. */
     public static List<ArmsPayloads.NeedRow> needs(ServerPlayer p, String style, int tier) {
+        return needsOf(p, recipeId(style, tier));
+    }
+
+    /** What a recipe of ours needs (by its id, "beastbound_blade") and how much of it the player holds. */
+    public static List<ArmsPayloads.NeedRow> needsOf(ServerPlayer p, String recipe) {
         List<ArmsPayloads.NeedRow> out = new ArrayList<>();
-        for (Raw r : raw(recipeId(style, tier))) out.add(new ArmsPayloads.NeedRow(r.kind(), r.id(), r.n(), have(p, r)));
+        for (Raw r : raw(recipe)) out.add(new ArmsPayloads.NeedRow(r.kind(), r.id(), r.n(), have(p, r)));
         return out;
     }
 

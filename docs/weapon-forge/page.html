@@ -1,0 +1,508 @@
+<title>The War Anvil</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* One reading column, the armour page's forge palette so the two plans read as one game; steel and ember. */
+:root {
+  --bg: #13120f; --panel: #1d1b17; --line: #38332b; --fg: #ece4d4; --muted: #a99f8c;
+  --ember: #ff7a2e; --heat: #ffc35a; --brass: #d8b46a; --steel: #8f9aa6; --water: #5c8fb0;
+  --iron: #0b0a09; --stone: #3a3631; --stone2: #2b2824; --yes: #6fcf8e; --no: #ef6b5b;
+  --display: "Alegreya SC", "Iowan Old Style", Georgia, serif;
+  --body: "Alegreya Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f3efe6; --panel: #e9e2d4; --line: #cfc4ae; --fg: #1d1a15; --muted: #625a4b;
+  --ember: #c4501a; --heat: #b57400; --brass: #8a6a24; --steel: #4f5a66; --water: #2f6c94;
+  --iron: #24211d; --stone: #8f877b; --stone2: #a59d90; --yes: #2f8a50; --no: #b23a2c; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #f3efe6; --panel: #e9e2d4; --line: #cfc4ae; --fg: #1d1a15; --muted: #625a4b;
+  --ember: #c4501a; --heat: #b57400; --brass: #8a6a24; --steel: #4f5a66; --water: #2f6c94;
+  --iron: #24211d; --stone: #8f877b; --stone2: #a59d90; --yes: #2f8a50; --no: #b23a2c; color-scheme: light }
+body { background: var(--bg); color: var(--fg); font: 17px/1.55 var(--body); margin: 0; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 28px 60px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(36px, 7vw, 60px); letter-spacing: .01em; }
+h2 { font-size: 28px; margin-top: 52px; padding-top: 18px; border-top: 1px solid var(--line); }
+h3 { font-size: 20px; margin-top: 26px; }
+p { margin: 10px 0 0; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--brass); }
+.lede { font-size: 20px; margin-top: 14px; }
+.muted { color: var(--muted); }
+code { font: 14px var(--mono); color: var(--brass); }
+.quote { border-left: 3px solid var(--ember); padding: 4px 0 4px 16px; margin-top: 16px; font-style: italic; color: var(--muted); }
+ul.plain { margin: 10px 0 0; padding-left: 20px; }
+ul.plain li + li { margin-top: 6px; }
+.tablewrap { overflow-x: auto; margin-top: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td b { color: var(--fg); }
+
+/* The anvil sketch: numbered marks on the drawing, the words in a list beside it (labels in the SVG would be unreadable on a phone). */
+.anvil { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; align-items: center; margin-top: 22px; }
+.anvil svg { display: block; width: 100%; height: auto; }
+.anvil ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: m; }
+.anvil li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; font-size: 15px; counter-increment: m; }
+.anvil li::before { content: counter(m); font: 500 12px/22px var(--mono); text-align: center; width: 22px; height: 22px;
+  border-radius: 50%; background: var(--ember); color: var(--bg); }
+.sk-stone { fill: var(--stone); } .sk-stone2 { fill: var(--stone2); } .sk-iron { fill: var(--iron); stroke: var(--steel); stroke-width: 1.5; }
+.sk-glow { fill: var(--ember); } .sk-heat { fill: var(--heat); } .sk-steel { fill: var(--steel); } .sk-water { fill: var(--water); }
+.sk-line { stroke: var(--line); stroke-width: 2; fill: none; } .sk-steam { stroke: var(--muted); stroke-width: 2.5; fill: none; stroke-linecap: round; opacity: .7; }
+.sk-wood { fill: var(--brass); } .sk-mark circle { fill: var(--ember); } .sk-mark text { fill: var(--bg); font: 600 15px var(--mono); text-anchor: middle; dominant-baseline: central; }
+.sk-carve { stroke: var(--stone2); stroke-width: 3; fill: none; }
+.sketchnote { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+/* The scene, as a strip of acts. */
+.acts { display: grid; gap: 10px; margin-top: 16px; }
+.act { display: grid; grid-template-columns: 104px 1fr; gap: 12px; align-items: baseline; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.act .n { font: 500 13px var(--mono); color: var(--ember); letter-spacing: .08em; text-transform: uppercase; }
+.act .s { color: var(--muted); font-size: 15px; display: block; margin-top: 2px; }
+
+/* The rhythm lane. */
+.styles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.styles button, .play { font: 500 14px var(--mono); padding: 8px 14px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--fg); cursor: pointer; }
+.styles button[aria-pressed="true"] { border-color: var(--ember); color: var(--ember); }
+.play { border-color: var(--ember); color: var(--ember); }
+.styles button:focus-visible, .play:focus-visible, .ans button:focus-visible, textarea:focus-visible, .tally button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.lane { display: grid; gap: 4px; margin-top: 14px; }
+.cell { height: 34px; border-radius: 3px; background: var(--panel); border: 1px solid var(--line); position: relative; }
+.cell.hit { background: color-mix(in srgb, var(--ember) 30%, var(--panel)); border-color: var(--ember); }
+.cell.hit::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--ember); }
+.cell.now { outline: 2px solid var(--heat); outline-offset: 1px; }
+.cell.hit.now { background: var(--heat); }
+.laneinfo { margin-top: 10px; color: var(--muted); font-size: 15px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+
+.ranks { display: grid; gap: 8px; margin-top: 16px; }
+.rank { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: baseline; }
+.rank .r { font: 700 22px var(--display); color: var(--ember); text-align: center; }
+.rank b { font-family: var(--display); font-size: 18px; }
+
+.phases { display: grid; gap: 10px; margin-top: 14px; }
+.phase { display: grid; grid-template-columns: 54px 1fr; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; }
+.phase.first { border-color: var(--ember); }
+.phase .p { font: 500 15px var(--mono); color: var(--ember); }
+.phase h3 { margin: 0; font-size: 18px; }
+.phase p { font-size: 15px; }
+.phase .see { color: var(--brass); }
+
+.decisions { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 12px; counter-reset: d; }
+.dec { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; background: var(--panel); counter-increment: d; }
+.dec.yes { border-color: var(--yes); }
+.dec.no { border-color: var(--no); }
+.dec .q { font-weight: 700; }
+.dec .q::before { content: counter(d) ". "; color: var(--ember); font-family: var(--mono); font-weight: 500; }
+.dec .why { color: var(--muted); font-size: 15px; margin-top: 4px; }
+.dec .rec { font: 500 12px var(--mono); color: var(--brass); letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+.ans { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.ans button { font: 500 14px var(--body); padding: 7px 18px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); cursor: pointer; min-width: 64px; }
+.ans button.y[aria-pressed="true"] { background: var(--yes); border-color: var(--yes); color: #10140f; }
+.ans button.n[aria-pressed="true"] { background: var(--no); border-color: var(--no); color: #170d0b; }
+.ans button:disabled { opacity: .5; cursor: default; }
+.ans .state { font: 12px var(--mono); color: var(--muted); }
+.dec textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 8px; min-height: 40px; resize: vertical;
+  font: 15px var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+.tally { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; margin-top: 16px; padding: 10px 14px; border-radius: 6px;
+  background: var(--panel); border: 1px solid var(--line); font: 14px var(--mono); display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.tally button { font: 500 13px var(--body); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--yes); color: var(--yes); background: transparent; cursor: pointer; }
+.foot { margin-top: 48px; font-size: 14px; color: var(--muted); display: grid; gap: 6px; }
+@media (max-width: 680px) { .anvil { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .act { grid-template-columns: 1fr; gap: 2px; } .phase { grid-template-columns: 1fr; gap: 4px; } body { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="col">
+    <div class="eyebrow">Awaken · weapons plan · waiting for your yes</div>
+    <h1>The War Anvil</h1>
+    <p class="lede">Weapons stop coming off the crafting grid. You forge each one yourself at a new anvil at home, in first
+      person, with your own hands: the tongs in one hand, the hammer in the other. Then you draw the finished blade out of
+      the stone and raise it.</p>
+  </div>
+
+  <div class="anvil">
+    <figure style="margin:0">
+      <svg viewBox="0 0 640 400" role="img" aria-label="A sketch of the War Anvil: a horned black anvil on a carved stone block, a sword standing hilt up in a glowing slot, a steaming water trough in the stone's side, a hammer and tongs hanging from a peg">
+        <!-- floor -->
+        <path class="sk-line" d="M30 352 H610"/>
+        <!-- the carved stone -->
+        <rect class="sk-stone" x="150" y="206" width="330" height="146" rx="4"/>
+        <rect class="sk-stone2" x="150" y="206" width="330" height="18"/>
+        <path class="sk-carve" d="M178 248 l18 16 l-18 16 M452 248 l-18 16 l18 16 M206 330 H424"/>
+        <!-- the lit slot on the stone's front, and the weapon standing in it hilt up -->
+        <rect class="sk-glow" x="214" y="226" width="16" height="98" rx="2" opacity=".9"/>
+        <rect class="sk-heat" x="219" y="232" width="6" height="86" rx="2"/>
+        <rect class="sk-steel" x="218" y="126" width="8" height="100"/>
+        <rect class="sk-wood" x="198" y="118" width="48" height="10" rx="2"/>
+        <rect class="sk-iron" x="216" y="80" width="12" height="38" rx="2"/>
+        <circle class="sk-wood" cx="222" cy="74" r="9"/>
+        <!-- the anvil: a waist, a wide face, a long horn -->
+        <path class="sk-iron" d="M300 206 L316 168 L304 150 L270 150 Q236 148 206 134 Q244 128 288 124 L456 124 L456 150 L430 150 L418 168 L434 206 Z"/>
+        <rect class="sk-steel" x="292" y="120" width="160" height="5" opacity=".8"/>
+        <!-- the hot blank on its face -->
+        <rect class="sk-glow" x="336" y="112" width="74" height="9" rx="3"/>
+        <rect class="sk-heat" x="364" y="113" width="38" height="6" rx="2"/>
+        <!-- the quench trough cut into the stone's side, steaming -->
+        <rect class="sk-stone2" x="440" y="258" width="66" height="60" rx="3"/>
+        <rect class="sk-water" x="446" y="272" width="54" height="40" rx="2"/>
+        <path class="sk-steam" d="M458 252 q-8 -14 0 -26 q8 -12 0 -24 M478 252 q8 -14 0 -26 q-8 -12 0 -26 M494 254 q-6 -10 0 -20"/>
+        <!-- the peg with the hammer and tongs -->
+        <rect class="sk-iron" x="132" y="232" width="22" height="8"/>
+        <rect class="sk-wood" x="112" y="236" width="7" height="70" rx="2"/>
+        <rect class="sk-iron" x="100" y="226" width="32" height="18" rx="2"/>
+        <path class="sk-iron" d="M138 240 l-4 78 m10 -78 l6 78" style="fill:none;stroke-width:5"/>
+        <!-- numbered marks -->
+        <g class="sk-mark"><circle cx="374" cy="88" r="13"/><text x="374" y="88">1</text></g>
+        <g class="sk-mark"><circle cx="186" cy="90" r="13"/><text x="186" y="90">2</text></g>
+        <g class="sk-mark"><circle cx="530" cy="232" r="13"/><text x="530" y="232">3</text></g>
+        <g class="sk-mark"><circle cx="84" cy="270" r="13"/><text x="84" y="270">4</text></g>
+        <g class="sk-mark"><circle cx="316" cy="286" r="13"/><text x="316" y="286">5</text></g>
+      </svg>
+      <p class="sketchnote">A sketch of the idea, not the model. The real one is built in our voxel style, like the weapons.</p>
+    </figure>
+    <ol>
+      <li><span><b>The anvil.</b> Soot-black iron with a long horn. The hot blank lies on its face.</span></li>
+      <li><span><b>The slot.</b> Lit orange from inside. Your finished weapon stands in it, hilt up, glowing, until you draw it out.</span></li>
+      <li><span><b>The trough.</b> Cut into the stone's side for the quench. It steams while the work is hot.</span></li>
+      <li><span><b>The peg.</b> The hammer and tongs hang here, and they leave the peg while they're in your hands.</span></li>
+      <li><span><b>The stone.</b> A carved dark block. At night the slot and the steam light the room.</span></li>
+    </ol>
+  </div>
+
+  <div class="col">
+    <h2>What you asked for</h2>
+    <p class="quote">"The weapons system needs it's own cinematic crafting progression similar to what the armour has now."</p>
+    <p>So the bar is the armour's: a played scene, quality worth chasing, a place in the Hearth. But the station, the
+      camera, the acts and the sound are the weapon's own, not a copy of the Forge Song.</p>
+
+    <h2>Why weapons feel flat today</h2>
+    <ul class="plain">
+      <li><b>Making one takes half a second.</b> You lay the blade, a part, a binding and the Blueprint in a crafting grid.</li>
+      <li><b>Improving one is a click.</b> Tempering and attuning are notice windows at the Forge. Raise is a button in the Armoury.</li>
+      <li><b>Weapons have no place at home.</b> The Armoury room is built around the Fitting Stand.</li>
+      <li><b>The Weapons tab on the Tasks page is empty.</b> Nothing gives it steps.</li>
+    </ul>
+    <p class="muted">What already works stays: Hale's first weapon, patterns from gates, stands, villages and people, mastery,
+      Marks, weaves, and the Lord-forged drop with its pillar and ring.</p>
+
+    <h2>The War Anvil</h2>
+    <ul class="plain">
+      <li><b>Made from</b> three stone, a copper ingot and a log, at level 3. It needs no iron, so it's yours from the start.</li>
+      <li><b>What it needs near it.</b> E weapons are made by hand on the anvil alone. From D, your Hearth's Forge must be within
+        six blocks. From C, a grindstone too. The anvil says plainly what's missing, and nothing is taken until you start.</li>
+      <li><b>Use it</b> with an empty hand for the list of what you can make. Holding a weapon, to temper, attune or reforge it.
+        Sneak to draw out whatever stands in the slot.</li>
+      <li><b>It counts as an anvil for the Fitting Stand</b>, so one smithy serves both your armour and your weapons.</li>
+    </ul>
+
+    <h2>The scene, through your eyes</h2>
+    <p>The view stays at your eyes and turns to frame the work. When the work goes to the Forge, the view glides there and
+      back; you never move. Your hands stay on screen the whole time. Anyone watching sees you hammering at the anvil.</p>
+  </div>
+  <div class="acts">
+    <div class="act"><span class="n">Heat</span><span>The blank goes into the Forge in your tongs. The glow runs from the tip toward the tongs, dull red to yellow. Pull it out when the glow reaches the tongs.<span class="s">Too early and your strikes count a little less. Too late and the tip comes out burnt.</span></span></div>
+    <div class="act"><span class="n">Draw out</span><span>Strike on the beat, aiming at the glowing mark. Sparks fly, and the blade lengthens strike by strike, from a squat glowing bar to the weapon's shape. Halfway the tongs flip it over.<span class="s">8 to 14 strikes, on the weapon's own rhythm (below).</span></span></div>
+    <div class="act"><span class="n">Quench</span><span>Hold to plunge it in the trough. Steam roars, then hisses. A dark line climbs the blade toward a gold notch near the guard: let go when it gets there.<span class="s">Early, the steel is soft. Late, it's brittle.</span></span></div>
+    <div class="act"><span class="n">Hilt</span><span>Three taps on the beat. The guard slides on, the grip is wrapped, the pommel is peened.</span></div>
+    <div class="act"><span class="n">The draw</span><span>You stand it in the stone, then hold to pull it out. Steel scrapes on stone and rises into the blade's own note. You raise it before your eyes, its sheen runs from hilt to tip, and a card names it: "Beastbound Longsword · Masterwork · Forged by Euan".</span></div>
+    <div class="act"><span class="n">First cut</span><span>If you like, strike once. With a Target Dummy nearby the view turns to it and the dummy rocks. It deals no damage.</span></div>
+  </div>
+  <div class="col">
+    <p>Nothing can fail. Skill only sets how good the weapon is. A first forge takes 25 to 45 seconds, and a weapon you've
+      made at Masterwork can be forged again from memory in about 8.</p>
+
+    <h3>Every weapon forges to its own fighting rhythm</h3>
+    <p>The hammer keeps the beat of the style's attack chain, so the anvil teaches you a weapon's tempo before you fight with
+      it. And each clean strike rings the blade a step nearer its own note: a Maul low, Daggers high. Pick one and press
+      play.</p>
+  </div>
+  <div class="styles" role="group" aria-label="Pick a weapon style" id="styles"></div>
+  <div class="lane" id="lane" aria-hidden="true"></div>
+  <div class="laneinfo"><button type="button" class="play" id="play">Play the rhythm</button><span id="laneinfo"></span></div>
+  <p class="muted" style="font-size:14px">A rough preview with a plain tone. The game's sound is real struck steel.</p>
+
+  <div class="col">
+    <h2>Each rank adds one act</h2>
+    <p>So the forging grows with you instead of repeating.</p>
+  </div>
+  <div class="ranks">
+    <div class="rank"><span class="r">E</span><span><b>Knap and bind.</b> By hand, no Forge: strike flakes off a bone or flint edge, then wind the cord round the grip in even circles. About 20 seconds.</span></div>
+    <div class="rank"><span class="r">D</span><span><b>The whole scene above</b>, in iron.</span></div>
+    <div class="rank"><span class="r">C</span><span><b>Grind.</b> The view glides to the grindstone. Turn the wheel and keep the edge on the line as it drifts, while sparks shower toward you.</span></div>
+    <div class="rank"><span class="r">B</span><span><b>Balance.</b> The blade rests on the anvil's horn and tips. Slide the Deepglass pommel weight until it settles level; it hums pure when the blade is true.</span></div>
+    <div class="rank"><span class="r">A</span><span><b>Twist.</b> The netherite bar is clamped in the anvil. Turn it three even circles, and a well-twisted blade shows ripples in its steel.</span></div>
+    <div class="rank"><span class="r">S</span><span><b>Starlight.</b> No water: a column of white light comes down onto the anvil. Hold the blade up into it as its ring closes on the point, and the runes wake.</span></div>
+  </div>
+
+  <div class="col">
+    <h2>The smithy grows with you <span class="muted" style="font-size:15px;font-weight:400">(new, decision 15)</span></h2>
+    <p>You said the forge should upgrade over time. So the War Anvil is rebuilt as you climb, and the room around it fills
+      in. Each rebuild is what lets you make that rank's weapons, so it takes the place of a gate we already have; it
+      isn't a second ladder. Each one is a step on the Weapons tab.</p>
+  </div>
+  <div class="ranks">
+    <div class="rank"><span class="r">E</span><span><b>The War Anvil</b>, as it is now: carved stone and a copper-banded horn. E weapons by hand.</span></div>
+    <div class="rank"><span class="r">D</span><span><b>Bellows</b> go up by your Forge when you fire it to Tier II, as now. A kin beast can work them for you: then the heat climbs evenly and the gold holds a moment longer.</span></div>
+    <div class="rank"><span class="r">C</span><span><b>Ironbound.</b> The anvil's face is re-laid in iron and a grindstone is set beside it, for the grind. Iron blocks and diamonds. This is the C gate we already have (a grindstone near), made part of the anvil.</span></div>
+    <div class="rank"><span class="r">B</span><span><b>The Deepglass horn.</b> The horn is re-forged in Deepglass, and it hums. The balance happens on it. A weapon rack goes up for what you've forged.</span></div>
+    <div class="rank"><span class="r">A</span><span><b>The Lord's anvil.</b> Rebuilt on a Lord's Heart and netherite, in that Lord's colour. The twist is clamped in it, and at S the starlight comes down onto it.</span></div>
+  </div>
+  <div class="col">
+    <p class="muted">Tiers still open at the same levels, and your Forge's tier still sets how far a weapon can be tempered.
+      There's no ceiling on quality: a perfect song is always Flawless, whatever the anvil looks like.</p>
+
+    <h2>What skill gives you</h2>
+    <ul class="plain">
+      <li><b>Plain, Fine, Masterwork or Flawless</b>, the same as armour. It sets the weapon's starting temper, from none up
+        to III, but never above what your Forge could temper it to. Skill saves you materials; it never makes a weapon
+        stronger than you could buy.</li>
+      <li><b>Flaws show.</b> A burnt tip is darker, a brittle blade has a hairline. They only change the look, and a flawed
+        weapon can't be Flawless.</li>
+      <li><b>A friend helps.</b> Anyone else at your anvil can strike the off-beats. Three helpers make it twin-struck.</li>
+      <li><b>Every weapon has a story</b> in its tooltip: "Masterwork, twin-struck. Forged by Euan."</li>
+    </ul>
+
+    <h2>Improving a weapon, at the same anvil</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th></th><th>Today</th><th>At the War Anvil</th></tr></thead>
+      <tbody>
+        <tr><td><b>Temper</b></td><td>a notice window at the Forge</td><td>one heat: a strike on the beat for each level, then the quench. About 10 seconds, however many levels.</td></tr>
+        <tr><td><b>Attune</b></td><td>sneak at the Forge with a catalyst</td><td>set the stone: the catalyst goes into the hot guard, three strikes drive it home, and the blade takes your Force's colour.</td></tr>
+        <tr><td><b>Reforge</b></td><td>the Armoury's Raise button</td><td>heat the whole weapon, fold in the next tier's metal on its beat, quench, draw. Marks, name and attunement are kept.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Every price stays the same. Armour still tempers at the Forge, and Oren still tempers anything for you when you ask.</p>
+
+    <h2>Where it all comes from</h2>
+    <ul class="plain">
+      <li><b>Patterns</b> come from the same places as now: gates, stands, villages, people and Hale. A Blueprint teaches its
+        style when you use it; it no longer goes into the recipe.</li>
+      <li><b>Materials</b> are exactly what each recipe costs today, minus the Blueprint. A tier blade you're carrying
+        (a Fang, a Cleaver...) stands in for its parts, so Hale's spare Fang still counts.</li>
+      <li><b>Tiers</b> open at the same levels. What you hammer follows the tier: hide and bone, iron, diamond, Deepglass,
+        netherite, starmetal. The sound and the glow follow the metal.</li>
+      <li><b>Lord-forged weapons stay drops</b>, exactly as rare as now, with their reveal. At home the anvil reforges them
+        in their Lord's colour, with its sigil glowing in the steel.</li>
+      <li><b>At home</b>, the War Anvil belongs in the Armoury room, and a weapon made there lasts a quarter longer. The
+        Weapons tab gets real steps, starting with "Set up a War Anvil in your Armoury".</li>
+    </ul>
+
+    <h2>Vanilla stays vanilla <span class="muted" style="font-size:15px;font-weight:400">(new, decision 14)</span></h2>
+    <p class="quote">"Maybe we keep the vanilla ones normal, since those are kind of the quick tools... if you want the stronger and more interesting ones, you need to go through this path."</p>
+    <p>So vanilla swords, axes, tools and armour stay as they are, crafted on the grid. For that to read clearly, a forged
+      weapon has to beat the vanilla one at every point. I checked every style at every tier against the real numbers.
+      <b>Today it doesn't:</b></p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Tier</th><th>Vanilla you could have by then (sword · axe, damage a hit)</th><th>Our longsword · axe today</th><th>With the fix</th></tr></thead>
+      <tbody>
+        <tr><td><b>E</b> (level 3)</td><td>stone 5 · 9; iron if you smelt it, 6 · 9</td><td>5.5 · 7: the iron sword and every vanilla axe hit harder</td><td>6.5 · 9, the axe swinging faster</td></tr>
+        <tr><td><b>D</b> (13)</td><td>iron 6 · 9; diamond if you dig deep, 7 · 9</td><td>6.5 · 8: a diamond sword and an iron axe win</td><td>7.5 · 10</td></tr>
+        <tr><td><b>C</b> (22)</td><td>diamond 7 · 9; netherite once you've been to the Nether, 8 · 10</td><td>7.5 · 9: netherite wins, a diamond axe ties</td><td>8.5 · 11</td></tr>
+        <tr><td><b>B</b> (42)</td><td>netherite 8 · 10</td><td>8.5 · 10: the axe only ties</td><td>9.5 · 12</td></tr>
+        <tr><td><b>A</b> (67)</td><td>netherite 8 · 10</td><td>9.5 · 11</td><td>10.5 · 13</td></tr>
+        <tr><td><b>S</b> (97)</td><td>netherite 8 · 10</td><td>10.5 · 12</td><td>11.5 · 14</td></tr>
+      </tbody>
+    </table></div>
+    <ul class="plain">
+      <li><b>Tempering makes it worse.</b> Today a vanilla sword tempers up to VI exactly like ours, so a tempered netherite
+        sword (14) out-hits an untempered A blade.</li>
+      <li><b>The fix.</b> Every forged weapon gets 1 more damage at every tier. The eight slower or longer ones (axe, maul,
+        greatblade, scythe, glaive, spear, warstaff, chainblade) get 2. C and B last longer than diamond and netherite (1,700
+        and 2,200 uses, up from 1,400 and 1,900). Vanilla gear no longer takes Temper, and what's already tempered keeps it.
+        With that, all 16 styles beat the vanilla sword or axe of their own metal, and match or beat the next metal you
+        could get early. The three close calls left are at E, and each is a trade: daggers hit lighter but far faster, and
+        the warstaff swings faster than an axe.</li>
+      <li><b>Enchanting already agrees.</b> Vanilla gear holds one enchantment; a forged weapon holds one to four, by how well
+        you forged it.</li>
+      <li><b>Fights stay tuned.</b> The fights were tuned against a player with a diamond sword at D, which is what a D
+        weapon becomes. The combat simulator checks every Lord again before it lands.</li>
+      <li><b>Said once, in plain words, and never nagged:</b> Hale: "A crafting table makes quick tools. For a real weapon,
+        set up a War Anvil at home." The Weapons tab's first step: "The War Anvil makes weapons stronger than anything from a
+        crafting table." The anvil's tooltip: "Forges weapons stronger than any crafted sword or axe." Nothing comments on
+        the vanilla gear you carry.</li>
+    </ul>
+
+    <h2>Your saves</h2>
+    <p>Every weapon you already have keeps working. Its tooltip gains a Plain story the first time you hold it. Blueprints
+      you carry still teach their style, and nothing is charged twice. The weapon recipes leave the crafting grid.</p>
+
+    <h2>What else it touches</h2>
+    <ul class="plain">
+      <li><b>Enchanting.</b> That's the enchanting session's, and we've agreed the line. The forge makes the metal: tiers,
+        quality, tempering, attunement, Marks. Enchanting writes into a finished weapon or armour piece at its own station.
+        There's no enchanting step inside the forge scene. Enchanting reads how well something was forged, so a Masterwork
+        blade has more room for enchantments, and it may add one line to the forge's result card, like "Room for 3
+        inscriptions".</li>
+      <li><b>Armour.</b> One line, so the War Anvil counts as the Fitting Stand's anvil. The armour's forge camera may be
+        moved into a shared class both forges use, with the armour's behaviour unchanged and tested.</li>
+      <li><b>Fights.</b> No moves or combat rules change. Damage numbers change only if you say yes to decision 14.</li>
+    </ul>
+
+    <h2>How it gets built</h2>
+  </div>
+  <div class="phases">
+    <div class="phase first"><span class="p">1</span><div><h3>The first weapon at the War Anvil</h3><p>The block, and the full D scene for one weapon, the Beastbound Longsword, with your hands, hammer and tongs, the glowing blade, sparks and steam.</p><p class="see">You see: CI tour shots of every beat. Nothing else is built until you've looked at them and said yes or what to change. About 4-6 hours.</p></div></div>
+    <div class="phase"><span class="p">2</span><div><h3>Every weapon</h3><p>All 16 rhythms, E by hand, quality, memory, flaws and helpers, the Armoury room, the Tasks steps. The grid recipes go.</p><p class="see">You see: every weapon forged at home. About 5-7 hours.</p></div></div>
+    <div class="phase"><span class="p">3</span><div><h3>Temper, attune, reforge</h3><p>The three short scenes. The Forge points weapons to the anvil.</p><p class="see">You see: improving a weapon at the anvil. About 3-4 hours.</p></div></div>
+    <div class="phase"><span class="p">4</span><div><h3>The ranks' acts</h3><p>Grind, balance, twist and starlight.</p><p class="see">You see: the forge growing as you climb. About 4-5 hours.</p></div></div>
+    <div class="phase"><span class="p">5</span><div><h3>Sound and finish</h3><p>The anvil's own sounds, with a listening page for you to judge them; a calmer camera for reduced motion.</p><p class="see">You see: the finished forge. About 3-4 hours.</p></div></div>
+  </div>
+
+  <div class="col">
+    <h2>Decisions for you</h2>
+    <p>Tap Yes or No on each. Your answers save as you tap and I read them from here. Add a note to change anything.</p>
+  </div>
+  <div class="tally" id="tally"><span id="tallytext">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to all I haven't answered</button></div>
+  <ol class="decisions" id="decisions"></ol>
+
+  <div class="foot">
+    <span>The full plan: <code>docs/weapon-forge/PLAN.md</code> on the branch <code>claude/weapon-forge-plan-2e37fb</code>.</span>
+    <span>All art and sound will be ours, made by the kits in <code>tools/art</code>.</span>
+    <span>Nothing is built until you say yes.</span>
+  </div>
+</div>
+
+<script>
+// Each style's hammer beat: a step is a number of game ticks (50 ms), x a strike. The note is the blade's ring, in Hz.
+const STYLES = [
+  ["Daggers", 3, "x.x.x.xx", 880, "four quick cuts, like its chain"],
+  ["Longsword", 4, "x...x...x.x.....", 523, "two strikes, then the finisher's pair"],
+  ["Maul", 6, "x.......x.......", 196, "slow; every blow lands a quake"],
+  ["Rapier", 3, "x..x.x..x..x.x..", 698, "the thrust, and the counter"],
+  ["Katana", 4, "x.......xx.x....", 587, "the draw from the sheath, then the cuts"],
+  ["Gauntlets", 3, "x.x.x.x.xx......", 440, "strings of punches"]
+];
+const stylesEl = document.getElementById("styles"), lane = document.getElementById("lane"),
+  laneInfo = document.getElementById("laneinfo"), playBtn = document.getElementById("play");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+let current = 1, timer = null, audio = null, cells = [];
+function stop() { if (timer) { clearInterval(timer); timer = null; } cells.forEach(c => c.classList.remove("now")); playBtn.textContent = "Play the rhythm"; }
+function pick(i) {
+  stop(); current = i;
+  const [name, ticks, beat, , words] = STYLES[i];
+  stylesEl.querySelectorAll("button").forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+  lane.style.gridTemplateColumns = "repeat(" + beat.length + ", minmax(0, 1fr))";
+  cells = [...beat].map(ch => { const d = document.createElement("div"); d.className = "cell" + (ch === "x" ? " hit" : ""); return d; });
+  lane.replaceChildren(...cells);
+  laneInfo.textContent = name + " · a step every " + ticks + " ticks · " + words;
+}
+function ring(freq) {
+  if (!audio) return;
+  const t = audio.currentTime, o = audio.createOscillator(), o2 = audio.createOscillator(), g = audio.createGain();
+  o.type = "triangle"; o.frequency.value = freq; o2.type = "sine"; o2.frequency.value = freq * 2.76;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+  o.connect(g); o2.connect(g); g.connect(audio.destination); o.start(t); o2.start(t); o.stop(t + 0.62); o2.stop(t + 0.62);
+}
+playBtn.addEventListener("click", () => {
+  if (timer) { stop(); return; }
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); } catch (e) { audio = null; }
+  const [, ticks, beat, freq] = STYLES[current];
+  let step = 0, loops = 0;
+  playBtn.textContent = "Stop";
+  const tick = () => {
+    cells.forEach(c => c.classList.remove("now"));
+    if (!reduce.matches) cells[step].classList.add("now");
+    if (beat[step] === "x") ring(freq * (1 + 0.02 * loops));
+    step++;
+    if (step >= beat.length) { step = 0; loops++; if (loops >= 3) { setTimeout(stop, ticks * 50); clearInterval(timer); timer = -1; } }
+  };
+  tick(); timer = setInterval(tick, ticks * 50);
+});
+STYLES.forEach(([name], i) => {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = name;
+  b.addEventListener("click", () => pick(i)); stylesEl.append(b);
+});
+pick(1);
+
+const YES = "My recommendation: yes";
+const DECISIONS = [
+  ["Weapons are never made on the crafting grid. All 96 weapons and the six tier blades are forged at a War Anvil, at today's costs minus the Blueprint.", "Making a weapon becomes a moment at home, not half a second at a crafting table."],
+  ["The War Anvil: a horned black anvil on a carved stone, with a quench trough and a lit slot where your finished weapon stands until you draw it out. Three stone, a copper ingot and a log, at level 3.", "One hero block where weapons are made and improved, cheap enough to have from the start."],
+  ["First person with your hands: your own eyes, the tongs in your off hand and the hammer in your main hand, the view gliding to the Forge and back. The armour keeps its own cinematic camera.", "It's what makes the weapon forge its own and not a copy of the armour's."],
+  ["Each style forges to its own fighting rhythm and rings toward its own note: 16 rhythms.", "The anvil teaches you a weapon's tempo before you fight with it."],
+  ["The scene: heat, draw out (the blade lengthens strike by strike), quench, hilt, the draw from the stone, and an optional first cut at a Target Dummy.", "25 to 45 seconds the first time, and nothing can fail."],
+  ["Each rank adds an act: E knap and bind by hand, C grind, B balance with the Deepglass pommel, A twist (the ripples show in the steel), S quenched in starlight.", "So the forge grows with you instead of going stale."],
+  ["The armour's quality rules: Plain to Flawless sets the starting temper (none to III), but never above your Forge's limit. From memory once Masterwork. Flaws show. Helpers make it twin-struck.", "Both forges agree, and skill saves you materials without making weapons stronger than tempering could."],
+  ["Temper, attune and Raise move to the anvil as short scenes (Raise is called Reforge there). Prices unchanged. Armour still tempers at the Forge, and Oren still tempers for you.", "Improving a weapon becomes part of the same craft, not a notice window."],
+  ["Lord-forged and boss weapons stay drops, exactly as rare, with their reveal. The anvil reforges them in their Lord's colour.", "The best reward in the game keeps the moment you liked."],
+  ["The War Anvil belongs in the Armoury room (a weapon made there lasts a quarter longer), and the Weapons tab gets real steps.", "Weapons get their place at home, and you're never left guessing what's next."],
+  ["The War Anvil counts as the anvil for the Fitting Stand, so a home needs one anvil, not a 31-iron vanilla one as well. One line in the armour code.", "One smithy for both."],
+  ["The line with enchanting: no enchanting step inside the forge scene. Enchanting reads how well a weapon or armour piece was forged, so forging well gives more room for enchantments, and it may add one line to the result card.", "Agreed with the enchanting session: the forge makes the metal, enchanting writes into it afterwards, and neither touches the other's work."],
+  ["Build in stages, starting with one Beastbound Longsword forged at the anvil and shown to you in CI tour shots before anything else is built.", "You judge the look before the rest is built on it."],
+  ["Vanilla stays vanilla, and forged weapons clearly beat it. Today a diamond sword out-hits a D blade and vanilla axes tie ours. So every forged weapon gets +1 damage a tier (+2 for the eight slower ones), C and B outlast diamond and netherite, and vanilla gear no longer takes Temper (what's tempered keeps it). Hale, the Weapons tab and the anvil's tooltip each say once that the War Anvil makes the stronger weapons.", "Your rule, made true in the numbers: the quick tools stay quick, and the path is always worth it."],
+  ["The smithy grows: the War Anvil is rebuilt at C (ironbound, with the grindstone), B (a Deepglass horn) and A (on a Lord's Heart and netherite), each rebuild letting you make that rank's weapons. Bellows by the Forge that a kin beast can work, and a weapon rack. Each rebuild is a Weapons tab step. No quality ceiling.", "The forge upgrades over time, as you asked, folded into the gates we already have rather than a second ladder."]
+];
+const list = document.getElementById("decisions"), tallyText = document.getElementById("tallytext"), allYes = document.getElementById("allyes");
+const answers = {};
+let db = null, canWrite = true;
+const cards = DECISIONS.map(([q, why, rec], i) => {
+  const id = "d" + String(i + 1).padStart(2, "0");
+  const li = document.createElement("li"); li.className = "dec";
+  const pq = document.createElement("div"); pq.className = "q"; pq.textContent = q;
+  const pw = document.createElement("div"); pw.className = "why"; pw.textContent = why;
+  const pr = document.createElement("div"); pr.className = "rec"; pr.textContent = rec || YES;
+  const ans = document.createElement("div"); ans.className = "ans";
+  const y = document.createElement("button"); y.type = "button"; y.className = "y"; y.textContent = "Yes"; y.id = id + "-yes";
+  const n = document.createElement("button"); n.type = "button"; n.className = "n"; n.textContent = "No"; n.id = id + "-no";
+  const st = document.createElement("span"); st.className = "state";
+  ans.append(y, n, st);
+  const note = document.createElement("textarea"); note.id = id + "-note"; note.placeholder = "A note, if you want to change something (optional)";
+  note.setAttribute("aria-label", "Note on decision " + (i + 1));
+  li.append(pq, pw, pr, ans, note); list.append(li);
+  y.addEventListener("click", () => save(id, { answer: "yes" }));
+  n.addEventListener("click", () => save(id, { answer: "no" }));
+  note.addEventListener("change", () => save(id, { note: note.value.trim() }));
+  return { id, li, y, n, st, note };
+});
+function render() {
+  let yes = 0, no = 0;
+  for (const c of cards) {
+    const a = answers[c.id] || {};
+    c.y.setAttribute("aria-pressed", String(a.answer === "yes"));
+    c.n.setAttribute("aria-pressed", String(a.answer === "no"));
+    c.li.classList.toggle("yes", a.answer === "yes"); c.li.classList.toggle("no", a.answer === "no");
+    if (document.activeElement !== c.note && typeof a.note === "string") c.note.value = a.note;
+    if (a.answer === "yes") yes++; else if (a.answer === "no") no++;
+    c.y.disabled = c.n.disabled = c.note.disabled = !db || !canWrite;
+  }
+  const left = cards.length - yes - no;
+  tallyText.textContent = !db ? "Answers can't be saved in this view. Reply in chat with the numbers you'd change."
+    : yes + " yes · " + no + " no · " + left + " to answer";
+  allYes.hidden = !db || !canWrite || left === 0;
+}
+async function save(id, patch) {
+  if (!db) return;
+  const c = cards.find(x => x.id === id);
+  const next = Object.assign({ answer: null, note: "" }, answers[id], patch, { at: new Date().toISOString() });
+  answers[id] = next; render(); c.st.textContent = "saving…";
+  try { await db.doc("decisions/" + id).set(next); c.st.textContent = "saved"; }
+  catch (e) {
+    if (e && (e.code === "not_granted" || e.code === "permission_denied" || e.code === "invalid_argument")) { canWrite = false; c.st.textContent = "only the owner can answer"; render(); }
+    else c.st.textContent = "not saved, try again";
+  }
+}
+allYes.addEventListener("click", async () => {
+  for (const c of cards) if (!(answers[c.id] && answers[c.id].answer)) await save(c.id, { answer: "yes" });
+});
+render();
+(async () => {
+  try { db = await claude.use("db"); } catch (e) { db = null; }
+  if (!db) { render(); return; }
+  try { const user = await claude.use("user"); if (user && (await user.can("data.write")) === false) canWrite = false; } catch (e) {}
+  const wait = setTimeout(() => { tallyText.textContent = "Still loading your answers…"; }, 10000);
+  db.collection("decisions").onSnapshot(snap => {
+    clearTimeout(wait);
+    for (const d of snap.docs) if (d.exists) answers[d.id] = Object.assign({}, d.data());
+    render();
+  }, () => { clearTimeout(wait); render(); });
+  render();
+})();
+</script>

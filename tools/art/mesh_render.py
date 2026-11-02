@@ -40,15 +40,25 @@ def env(R):
     return base * 0.8 + STRIP[None] * strip * 0.8
 
 
+def heat_glow(h):
+    """Metal's colour as it heats: dull red, orange, yellow, near white. h (P,1)."""
+    c = np.array([0.30, 0.03, 0.01])[None] * smoothstep(0.05, 0.25, h)
+    c = c + (np.array([0.95, 0.32, 0.05])[None] - c) * smoothstep(0.25, 0.55, h)
+    c = c + (np.array([1.0, 0.78, 0.28])[None] - c) * smoothstep(0.55, 0.8, h)
+    return c + (np.array([1.0, 0.96, 0.86])[None] - c) * smoothstep(0.8, 1.0, h)
+
+
 # each enchantment's own light (SPEC §45.11), by palette index: arms_weapon.fsh's SCRIPT
 SCRIPT = [(0, 0, 0), (1.0, 0.54, 0.30), (0.56, 0.85, 1.0), (1.0, 0.85, 0.29), (0.73, 0.58, 1.0), (0.31, 0.88, 0.76),
           (0.73, 0.76, 0.82), (0.62, 0.88, 0.48), (1.0, 0.37, 0.39), (0.95, 0.77, 0.35), (0.31, 0.71, 0.92),
           (0.95, 0.92, 0.84), (0.55, 0.42, 1.0)]
 
 
-def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=0.0, flash=0.0, foil=False, script=(0, 0.0)):
-    """The weapon shader. alb, mat: (P,4) 0..1; normals (P,3); along (P,); accent (3,) 0..1; time in GameTime units;
-    script (palette index, brightness 0..1) the enchantment light on it now."""
+def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=0.0, flash=0.0, foil=False, heat=None,
+          front=0.0, quench=False, script=(0, 0.0)):
+    """The weapon shader. alb, mat: (P,4) 0..1; normals (P,3); along (P,); accent (3,) 0..1; time in GameTime units.
+    heat (0..1) draws it in the making at the War Anvil, hot past front (the hilt's side of it when quench); script
+    (palette index, brightness 0..1) the enchantment light on it now."""
     metal, gloss, emit, flow = mat[:, 0:1], mat[:, 1:2], mat[:, 2:3], mat[:, 3:4]
     d = np.maximum(n_world @ L0, 0) + np.maximum(n_world @ L1, 0)
     diffuse = np.minimum(1.0, d * 0.6 + 0.4)[:, None]
@@ -65,6 +75,12 @@ def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=
     rim = (1 - np.clip(n_view @ V, 0, 1))[:, None] ** 3
     col = col + accent[None] * rim * (0.12 + 0.55 * energy * rim) * 0.6
     col = col * light
+    if heat is not None:
+        side = (front - along) if quench else (along - front)
+        hot = smoothstep(-0.04, 0.04, side[:, None]) * heat
+        lum = (rgb @ np.array([0.30, 0.59, 0.11]))[:, None]
+        h = hot * (0.7 + 0.6 * lum)  # bright metal hotter, dark scale cooler
+        col = col + (col * 0.25 - col) * smoothstep(0.0, 0.3, hot) + heat_glow(h) * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse)
     cycle = (time * 240.0) % 1.0
     band = np.exp(-(((along - (cycle * 1.8 - 0.4)) * 7.0) ** 2))[:, None]
     col = col + band * (0.12 + 0.55 * metal) * gloss * (0.6 + flash)

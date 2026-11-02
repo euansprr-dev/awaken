@@ -57,6 +57,7 @@ public final class ArmsClient {
         java.util.concurrent.CompletableFuture.runAsync(dev.awaken.arms.FpSwings::warm, net.minecraft.util.Util.backgroundExecutor());
         ArmsComfort.register();
         ArmourySection.register();
+        dev.awaken.arms.anvil.client.AnvilClient.init(modBus);
         CombatFeedback.install(ArmsFeel.INSTANCE);
         dev.awaken.progression.client.CodexEntries.addSource(ArmsCodex::entries);
         CombatFeedback.engaged = ArmsPredict::engaged;
