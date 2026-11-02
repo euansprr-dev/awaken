@@ -122,11 +122,14 @@ final class WaypointCard {
         if (w == null) return;
         String n = name.toString().strip();
         if (n.isEmpty()) n = w.name();
-        if (!n.equals(w.name()) || colour != WaypointGlyphs.colourIndex(w) || mark != w.mark() || shared != w.shared())
+        boolean look = colour != WaypointGlyphs.colourIndex(w) || mark != w.mark() || shared != w.shared();
+        if (look || !n.equals(w.name()))
             ClientPacketDistributor.sendToServer(new AtlasNet.WaypointEdit(AtlasNet.WaypointEdit.EDIT, w.id(), 0, 0, 0, n, colour, mark, shared));
-        if (colour != AtlasData.OWN_COLOUR) lastColour = colour;
-        lastMark = mark;
-        lastShared = shared;
+        if (isNew || look) { // the next new one starts as the last you made or changed, not one you only opened
+            if (colour != AtlasData.OWN_COLOUR) lastColour = colour;
+            lastMark = mark;
+            lastShared = shared;
+        }
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.CONFIRM.get(), 1.0f, 0.6f));
         close();
     }

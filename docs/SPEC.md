@@ -3143,7 +3143,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     can head for it, never change it; one who leaves the party takes theirs along. A save's old pins carry over as
     shared waypoints named "Pin" in their owner's hue; pins are never written again.
   - Making one: a double-click on ground you know (as pins were) or **N** on the table (where you stand) adds it at once,
-    named for its land ("A spot in the Greenfold") in the last colour, mark and share you kept, and its card opens
+    named for its land ("A spot in the Greenfold") in the colour, mark and share of the last one you made or changed
+    the look of (opening one only to read it changes nothing), and its card opens
     beside it when the server has it: **NEW WAYPOINT**, the name already selected so you just type (Backspace, Ctrl+A,
     Ctrl+V; a blinking caret), the eight colours, the eight marks, "Share with my party", **› Keep it** (Enter) and
     **Remove** (Del, which clears the name instead while it's selected). The waypoint shows the card's colour and mark
