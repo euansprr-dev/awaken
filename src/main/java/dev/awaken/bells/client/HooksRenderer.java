@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.awaken.bells.BellContent;
 import dev.awaken.bells.BellItem;
+import dev.awaken.bells.BellLook;
 import dev.awaken.bells.HooksEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -69,7 +70,8 @@ public final class HooksRenderer implements BlockEntityRenderer<HooksEntity, Hoo
         var bs = be.getBlockState();
         state.facing = bs.hasProperty(HorizontalDirectionalBlock.FACING) ? bs.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
         state.n = Math.min(MAX, be.hooks());
-        state.scale = bs.is(BellContent.GREAT_BEAM.get()) ? 0.95F : bs.is(BellContent.BELL_BEAM.get()) ? 0.38F : 0.32F;
+        // an S bell's lip just clears its neighbours on the frame and on a beam (stage 6 sizes); a Great Bell about two blocks tall
+        state.scale = bs.is(BellContent.GREAT_BEAM.get()) ? 2.0F : bs.is(BellContent.BELL_BEAM.get()) ? 0.38F : 0.39F;
         float now = be.getLevel() == null ? 0 : be.getLevel().getGameTime() + partialTicks;
         for (int i = 0; i < state.n; i++) {
             int no = be.bell(i);
@@ -105,7 +107,7 @@ public final class HooksRenderer implements BlockEntityRenderer<HooksEntity, Hoo
             pose.rotateDegrees(Axis.XP, state.swing[i]);
             pose.scale(state.scale, state.scale, state.scale);
             // the bell model hangs from (8, 15, 8): put that point on the hook
-            pose.translate(0F, -7F / 16F, 0F);
+            pose.translate(0F, (8F - BellLook.TOP) / 16F, 0F);
             state.items[i].submit(pose, out, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
             pose.popPose();
         }
@@ -113,7 +115,7 @@ public final class HooksRenderer implements BlockEntityRenderer<HooksEntity, Hoo
 
     @Override
     public AABB getRenderBoundingBox(HooksEntity be) {
-        // a Great Bell hangs well below its beam
-        return new AABB(be.getBlockPos()).expandTowards(0, -2, 0);
+        // a Great Bell hangs well below its beam, and is wider than it
+        return new AABB(be.getBlockPos()).inflate(0.5, 0, 0.5).expandTowards(0, -2, 0);
     }
 }
