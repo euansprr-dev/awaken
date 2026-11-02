@@ -1,0 +1,177 @@
+{
+  "enchant.book_open": {
+    "subtitle": "subtitles.awaken.enchant.book_open",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_book_open_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:enchant/enchant_book_open_1",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "enchant.page_turn": {
+    "subtitle": "subtitles.awaken.enchant.page_turn",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_page_turn_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:enchant/enchant_page_turn_1",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:enchant/enchant_page_turn_2",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "enchant.burin_metal": {
+    "subtitle": "subtitles.awaken.enchant.burin_metal",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_burin_metal_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:enchant/enchant_burin_metal_1",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:enchant/enchant_burin_metal_2",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "enchant.burin_leather": {
+    "subtitle": "subtitles.awaken.enchant.burin_leather",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_burin_leather_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:enchant/enchant_burin_leather_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "enchant.scratch": {
+    "subtitle": "subtitles.awaken.enchant.scratch",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_scratch_0",
+        "attenuation_distance": 6
+      },
+      {
+        "name": "awaken:enchant/enchant_scratch_1",
+        "attenuation_distance": 6
+      },
+      {
+        "name": "awaken:enchant/enchant_scratch_2",
+        "attenuation_distance": 6
+      }
+    ]
+  },
+  "enchant.note_ward": {
+    "subtitle": "subtitles.awaken.enchant.note_ward",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_note_ward_0",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "enchant.note_bane": {
+    "subtitle": "subtitles.awaken.enchant.note_bane",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_note_bane_0",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "enchant.note_spoils": {
+    "subtitle": "subtitles.awaken.enchant.note_spoils",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_note_spoils_0",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "enchant.note_carry": {
+    "subtitle": "subtitles.awaken.enchant.note_carry",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_note_carry_0",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "enchant.note_keep": {
+    "subtitle": "subtitles.awaken.enchant.note_keep",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_note_keep_0",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "enchant.wake": {
+    "subtitle": "subtitles.awaken.enchant.wake",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_wake_0",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "enchant.learn": {
+    "subtitle": "subtitles.awaken.enchant.learn",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_learn_0",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "enchant.flare": {
+    "subtitle": "subtitles.awaken.enchant.flare",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_flare_0",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "enchant.drift": {
+    "subtitle": "subtitles.awaken.enchant.drift",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_drift_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:enchant/enchant_drift_1",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "enchant.scrape": {
+    "subtitle": "subtitles.awaken.enchant.scrape",
+    "sounds": [
+      {
+        "name": "awaken:enchant/enchant_scrape_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:enchant/enchant_scrape_1",
+        "attenuation_distance": 12
+      }
+    ]
+  }
+}
