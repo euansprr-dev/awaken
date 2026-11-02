@@ -6774,7 +6774,12 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   server has ticked n times, and `arms rate <r>` sets the world's pace and holds until this client runs at it (the
   core autopilot retries an `arms` line that answers null). The feel's clock (`ArmsFeel.nanos`: the hands, the hit-stop, a struck
   body's freeze and recoil, the ribbons) runs at the world's pace, so a slowed film shows a 35 ms freeze as 0.7 of a tick,
-  as play does; at 20 ticks a second it is real time.
+  as play does; at 20 ticks a second it is real time. Each row ends with `rib`, which of our blades lays its ribbon that
+  frame (1 the main's, 2 the twin's), and `arms_film.py gates <clip dir>...` reads every take against the audit's gates,
+  pass or fail: the impact within 17 ms of the blade on the target, the freeze on the hit tick, the press to the blade
+  within the wind-up, a stab's point within 0.15 of the crosshair and its blow three times its return, the dagger's free
+  hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
+  never home between strikes.
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels

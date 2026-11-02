@@ -2,6 +2,7 @@
 """Reads an arms film (the autopilot's `arms film`, SPEC §25 "The arms film") and says what the frames can't.
 
     python3 tools/art/arms_film.py report <clip dir> [...]       timing, speed and jumps per take, as text
+    python3 tools/art/arms_film.py gates <clip dir> [...]        the audit's gates, pass or fail per take
     python3 tools/art/arms_film.py svg <clip dir> <out.svg>      the blades' paths and speed over the take, events marked
     python3 tools/art/arms_film.py strip <clip dir> <out.png> <from gt> <to gt> [cols]   the pictures in that span
     python3 tools/art/arms_film.py video <clip dir> <out.mp4> [speed] [from] [to] [crop] [width]   the take stamped, at a pace
@@ -229,6 +230,8 @@ def timeline(d, rows, events):
                      f' | impact shown {f(im["gt"] if im else None)}{frz}  (ms of play from the press)'
                      + ('  [HITCH: the runner stalled here, not judged]' if o['hitch'] else ''))
         o['impact'] = None if im is None else im['gt']
+        o['begin'], o['windup'] = x['at'], wu
+        o['freeze'] = None if im is None or im['ms'] <= 0 else (im['at'] if im['on'] == x['move'] else 'skipped')
     began = {o['c']['seq'] for o in out}
     idle = [n for n in presses if n not in began]
     if idle:
@@ -277,6 +280,147 @@ def report(d):
         print(f'  impacts {len(lag)}: after the blade reached the target by ' + ', '.join(f'{v:+.0f}' for v in lag) + ' ms of play')
     srcs = [e for e in events if e['what'].startswith('source ')]
     print(f'  source changes: {len(srcs)}; ' + ', '.join(f'{e["what"].split()[1]}@{e["gt"]:.2f}' for e in srcs[:24]))
+
+
+def _row(style, move):
+    windup(style + '_', move)
+    return _ROWS.get(style, {}).get(move)
+
+
+def _tip(r, pre):
+    p = project(r, pre)
+    return None if p is None else p[0]
+
+
+def _dist(a, b):
+    return math.hypot(a[0] - b[0], a[1] - b[1])
+
+
+def gates(d, verbose=True):
+    """The audit's gates on one take (SPEC §25 "The arms film"; the dagger and scythe audit, decision 10): pass or fail
+    for each, on the strikes not seen through a runner's hitch. Returns {gate: (value, passed)}; a gate the take can't
+    show is left out. The same reader measures the before and the after films."""
+    rows, events = load(d)
+    name = os.path.basename(d.rstrip('/'))
+    style = name.split('_')[0]
+    third = rows[0]['third'] > 0
+    pre = ('m3', 'o3') if third else ('m', 'o')
+    mpt = ms_per_tick(rows)
+    tl = [o for o in timeline(d, rows, events) if o.get('press') is not None]
+    judged = [o for o in tl if not o['hitch'] and o['windup'] is not None]
+    out = {}
+
+    def say(gate, value, ok, note=''):
+        out[gate] = (value, ok)
+        if verbose:
+            print(f'  {"PASS" if ok else "FAIL"}  {gate}: {value}{"  " + note if note else ""}')
+
+    if verbose:
+        print(f'== {name}: {len(judged)} strikes judged of {len(tl)}')
+    # the frames of one strike: from its begin to the next strike's begin, on the hands' clock
+    begins = [o['begin'] for o in tl]
+
+    def span(o):
+        nxt = [b for b in begins if b > o['begin'] + 1e-6]
+        end = nxt[0] if nxt else rows[-1]['gt'] + 1
+        return [r for r in rows if o['begin'] - 1e-6 <= r['gt'] < end and r['move'] == o['move']], end
+
+    # which hand strikes: the tip that travels further on its way into the hit (both when they're close)
+    def strikers(o, fr):
+        w = o['windup']
+        into = [r for r in fr if w - 1.2 <= r['view'] <= w + 0.05]
+        travel = {}
+        for p in pre:
+            pts = [t for t in (_tip(r, p) for r in into) if t is not None]
+            travel[p] = sum(_dist(a, b) for a, b in zip(pts, pts[1:]))
+        top = max(travel.values()) if travel else 0
+        return [p for p in pre if top > 0 and travel[p] >= 0.6 * top], travel
+
+    lag, frz, click, stab_tip, ratio, free, ribbons, inview = [], [], [], [], [], [], [], []
+    for o in judged:
+        fr, end = span(o)
+        w = o['windup']
+        if o['impact'] is not None and o['contact'] is not None:
+            lag.append((o['impact'] - o['contact']) * 50)
+        if o['freeze'] is not None:
+            frz.append(99.0 if o['freeze'] == 'skipped' else o['freeze'] - w)
+        if o['contact'] is not None:
+            click.append(((o['contact'] - o['press']) * 50, w * 50))
+        hands, travel = strikers(o, fr)
+        row = _row(style, o['move']) or {}
+        form = row.get('swing', {}).get('form', '')
+        if form == 'stab' and not third:
+            for p in hands:
+                near = [t for t in (_tip(r, p) for r in fr if w - 0.25 <= r['view'] <= w + 0.5) if t is not None]
+                if near:
+                    stab_tip.append(min(math.hypot(*t) for t in near))
+                s = [(r['gt'], _tip(r, p), None, r['real_ms']) for r in fr if _tip(r, p) is not None]
+                sp = speeds(s, mpt)
+                view_at = {r['gt']: r['view'] for r in fr}
+                vt = lambda g: min(view_at, key=lambda k: abs(k - g))
+                blow = [v for g, v, _ in sp if w - 1.0 <= view_at[vt(g)] <= w + 0.1]
+                back = [v for g, v, _ in sp if w + (row.get('active', 1)) <= view_at[vt(g)]]
+                if blow and back and max(back) > 1e-4:
+                    ratio.append(max(blow) / max(back))
+        if len(hands) == 1 and not third:
+            other = [p for p in pre if p not in hands][0]
+            pts = [t for t in (_tip(r, other) for r in fr if r['view'] <= w + row.get('active', 1)) if t is not None]
+            free.append(sum(_dist(a, b) for a, b in zip(pts, pts[1:])))
+        if 'rib' in rows[0]:
+            bit = 0
+            for p in hands:
+                bit |= 1 if p in ('m', 'm3') else 2
+            runs, was = 0, False
+            for r in fr:
+                on = int(r.get('rib', 0)) & bit != 0
+                if on and not was:
+                    runs += 1
+                was = on
+            ribbons.append(runs)
+        if style == 'scythe' and not third:
+            wind = [r for r in fr if 0 <= r['view'] <= w]
+            seen = [all(abs(c) <= 1.0 for c in (_tip(r, 'm') or (9, 9))) for r in wind]
+            if seen:
+                inview.append(sum(seen) / len(seen))
+    if lag:
+        worst = max(lag, key=abs)
+        say('hit shown against the blade reaching the target', f'{min(lag):+.0f} to {max(lag):+.0f} ms', abs(worst) <= 17, '(within 17)')
+    if frz:
+        ok = all(abs(x) <= 0.1 for x in frz)
+        sk = sum(1 for x in frz if x == 99.0)
+        real = [x for x in frz if x != 99.0]
+        say('freeze holds on the contact pose', (f'{min(real):+.2f} to {max(real):+.2f} ticks' if real else '-')
+            + (f', {sk} skipped' if sk else ''), ok, '(within 0.1)')
+    if click:
+        ok = all(c <= wu + 17 for c, wu in click)
+        say('press to the blade on the target', f'{min(c for c, _ in click):.0f} to {max(c for c, _ in click):.0f} ms', ok,
+            '(the wind-up and a frame)')
+    if stab_tip:
+        say('stab: tip from the crosshair at its hit', f'{min(stab_tip):.2f} to {max(stab_tip):.2f}', max(stab_tip) < 0.15, '(under 0.15)')
+    if ratio:
+        say('stab: blow speed against its trip home', f'{min(ratio):.1f}x to {max(ratio):.1f}x', min(ratio) >= 3, '(3x or more)')
+    if free and style == 'daggers':
+        say('the free hand moves while the other strikes', f'{min(free):.2f} to {max(free):.2f}', min(free) >= 0.08, '(0.08 or more)')
+    if ribbons and style == 'scythe':
+        say('ribbons per swing', f'{min(ribbons)} to {max(ribbons)}', max(ribbons) <= 1 and min(ribbons) >= 1)
+    if inview:
+        say('blade in view through the wind-up', f'{min(inview) * 100:.0f}% of frames at worst', min(inview) >= 0.999)
+    # the hands back at rest between strikes of one chain (each tip within 0.04 of where it rested before the first press)
+    first = min((o['press'] for o in tl), default=None)
+    if first is not None and len(tl) >= 2 and style == 'daggers' and not third:
+        rest = {p: _tip(next(r for r in rows if r['gt'] < first), p) for p in pre}
+        homes = 0
+        pairs = 0
+        for a, b in zip(tl, tl[1:]):
+            if a['contact'] is None or b['contact'] is None or b['press'] - a['contact'] > 6:
+                continue
+            pairs += 1
+            mid = [r for r in rows if a['contact'] + 0.25 <= r['gt'] <= b['contact'] - 0.25]
+            if any(all(rest[p] is not None and _tip(r, p) is not None and _dist(_tip(r, p), rest[p]) < 0.04 for p in pre) for r in mid):
+                homes += 1
+        if pairs:
+            say('hands back at rest between strikes of a chain', f'{homes} of {pairs}', homes == 0)
+    return out
 
 
 def svg(d, out):
@@ -422,6 +566,10 @@ if __name__ == '__main__':
     if cmd == 'report':
         for d in sys.argv[2:]:
             report(d)
+    elif cmd == 'gates':
+        for d in sys.argv[2:]:
+            if os.path.exists(os.path.join(d, 'track.tsv')):
+                gates(d)
     elif cmd == 'svg':
         svg(sys.argv[2], sys.argv[3])
     elif cmd == 'strip':
