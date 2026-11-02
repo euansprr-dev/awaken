@@ -7433,6 +7433,11 @@ against it, so a vanilla item plays its designed tempo).
   and crowns 14) with its ornaments out to the sides and about 4 up the blade (never beside its root), and nothing
   on the hilt deeper than 5 (a stone and its frame 6); each tier keeps its materials, story and motifs. The hold is
   unchanged (re-solved, it is the same transform: the grip's point is fixed), so the baked swings are untouched.
+- **Hilt cuts** (the generated `ArmsHilts.CUTS`, for the War Anvil, §46.3): for each sword-like weapon (Longsword,
+  Greatblade, Rapier, Daggers, Katana), where its blade, guard and grip begin along its mesh, {blade, guard, grip, 0}
+  in the mesh's own along (0 the pommel's end, 1 the point): the blade's lowest corner (its back, teeth and ricasso
+  with it), the grip's top and the grip's foot. A design without a blade or a grip part has none; the anvil then
+  keeps its own fallback.
 - **Drawn by our shader** (`arms_weapon` pipeline; `WeaponRenderer`, the `awaken:weapon` special item model): vanilla's
   two item lights partly banded (painted light, not plastic), metals reflecting a soft studio (a cool sky, a warm
   floor, a strip light), a gloss highlight, a rim of the weapon's accent, the world's light on all but what glows; a
