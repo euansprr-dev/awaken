@@ -231,6 +231,7 @@ public final class InscribeScene {
     }
 
     private static void beginTrace() {
+        sealed = -1;
         stroke = progress = 0;
         ran = ranOn = 0;
         drawing = lastOn = false;
@@ -412,21 +413,28 @@ public final class InscribeScene {
         tickRun += len;
         if (sparkRun >= 0.08F) {
             sparkRun = 0;
-            int i = sparkNext * 6;
-            sparkNext = (sparkNext + 1) % SPARKS;
-            float a = (float) (Math.random() * Mth.TWO_PI), sp = 0.02F + 0.025F * (float) Math.random();
-            SPARK[i] = u;
-            SPARK[i + 1] = v;
-            SPARK[i + 2] = Mth.cos(a) * sp;
-            SPARK[i + 3] = Mth.sin(a) * sp;
-            SPARK[i + 4] = 0.006F + 0.008F * (float) Math.random();
-            SPARK[i + 5] = ticks;
+            spark(u, v, 0.02F + 0.025F * (float) Math.random(), 0.006F + 0.008F * (float) Math.random());
         }
         if (tickRun >= 0.3F) {
             tickRun = 0;
             play(burinSound(), 0.08F, 1.05F + 0.45F * progress / (float) Math.max(1, n - 1));
         }
     }
+
+    private static void spark(float u, float v, float speed, float rise) {
+        int i = sparkNext * 6;
+        sparkNext = (sparkNext + 1) % SPARKS;
+        float a = (float) (Math.random() * Mth.TWO_PI);
+        SPARK[i] = u;
+        SPARK[i + 1] = v;
+        SPARK[i + 2] = Mth.cos(a) * speed;
+        SPARK[i + 3] = Mth.sin(a) * speed;
+        SPARK[i + 4] = rise;
+        SPARK[i + 5] = ticks;
+    }
+
+    /** The last stroke sealed (clean enough to ring) and when: its sweep of light and the view's nod. */
+    private static int sealed = -1, sealedAt = -1000;
 
     /** This stroke's share on the line so far (all of it before the pen has moved). */
     static float share() {
@@ -447,6 +455,14 @@ public final class InscribeScene {
         if (e != null) {
             if (share >= 0.6F) play(EnchantContent.note(e.family()), 0.55F, 0.84F + 0.12F * stroke);
             else play(EnchantContent.SCRATCH.get(), 0.45F, 0.7F);
+        }
+        if (share >= 0.6F) {
+            // sealed: a light sweeps the cut from end to end, sparks leap off its far end, the view gives a small nod
+            sealed = stroke;
+            sealedAt = ticks;
+            float[] s = Marks.of(no)[stroke];
+            int last = s.length / 2 - 1;
+            for (int i = 0; i < 10; i++) spark(s[last * 2], s[last * 2 + 1], 0.03F + 0.035F * (float) Math.random(), 0.012F + 0.012F * (float) Math.random());
         }
         stroke++;
         progress = 0;
@@ -651,6 +667,9 @@ public final class InscribeScene {
         float w = weight(pt);
         if (w <= 0 || !viewSet) return;
         float fov = Mth.lerp(pt, VIEW_O[2], VIEW[2]);
+        // a sealed stroke's nod: the view leans in a breath and settles
+        float nod = Mth.clamp(1F - (now(pt) - sealedAt) / 6F, 0F, 1F);
+        if (phase == TRACE) fov -= 0.8F * nod * nod;
         e.setNewFovModifier(Mth.lerp(w, e.getNewFovModifier(), fov / mc.options.fov().get()));
     }
 
@@ -833,6 +852,15 @@ public final class InscribeScene {
                             // a finished cut: lapis light in it, the family's colour round it
                             ribbon(pose, vc, s, 0, n, y, 0.05, argb(colour, 0.32F));
                             ribbon(pose, vc, s, 0, n, y + 0.001, 0.014, argb(hot(LAPIS, 0.55F), 0.95F));
+                            float sa = t - sealedAt;
+                            if (i == sealed && sa >= 0 && sa < 12) {
+                                // just sealed: it blooms, and a white-hot light sweeps it from end to end in five ticks
+                                float fade = 1F - sa / 12F;
+                                ribbon(pose, vc, s, 0, n, y + 0.0005, 0.05 + 0.06 * fade, argb(colour, 0.45F * fade));
+                                int head = Math.round(Mth.clamp(sa / 5F, 0F, 1F) * (n - 1));
+                                ribbon(pose, vc, s, Math.max(0, head - 6), Math.min(n, head + 1), y + 0.002, 0.03,
+                                        argb(hot(LAPIS, 0.85F), Math.min(1F, 1.6F * fade)));
+                            }
                         } else if (i == stroke) {
                             // the stroke to draw now stands out from the ones still to come
                             ribbon(pose, vc, s, 0, n, y, 0.032, argb(colour, 0.5F * burn));

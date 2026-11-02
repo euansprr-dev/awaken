@@ -16987,7 +16987,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   burin's reach). The piece on the slate is drawn without vanilla's violet shimmer (`ENCHANTMENT_GLINT_OVERRIDE` off on
   the table's copy), so the only light on it is the mark being written. A finished stroke
   burns lapis in its core and the family's colour round it, rings its family's note a step higher than the last (a
-  dull scratch if under 60% on the line) and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH
+  dull scratch if under 60% on the line); one that rings is **sealed**: it blooms for 12 ticks while a white-hot light
+  sweeps it from end to end in 5, ten sparks leap off its far end, and the view nods in 0.8° and settles over 6 ticks and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH
   follows 6 ticks after the last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each
   stroke (bright when clean, with a lapis centre once done, so a pale family's pips still read as done), with a bar for how much of the current one is on the line; a first-trace hint says what
   to do and that Esc gives the levels back. `LiveHand` (autopilot runs only) drives a live client's mouse for these
