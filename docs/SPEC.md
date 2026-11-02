@@ -16900,6 +16900,9 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
     colour, "A Word Stone carved with Insight. Hold your hand to it to learn it." (or "You know this one.").
   - Test `enchant_word_stone` (every ruin kind places one, in open air on a floor; the sea set; the same seed the same
     carving; a touch teaches once).
+- **The wake's chord**: with the wake sound, the new enchantment's family note (0.8), and each other enchantment on the
+  piece adds its own family's note a major third, a fifth and an octave above (0.55; three at most), so a piece rings
+  with everything written on it.
 - **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
   so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
   without "here", then the price alone; the foot's hint wraps.

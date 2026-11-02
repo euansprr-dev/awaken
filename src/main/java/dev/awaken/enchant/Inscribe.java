@@ -223,6 +223,9 @@ public final class Inscribe {
         s.lastStroke = now;
     }
 
+    /** The pitches over the new enchantment's note for the others on the piece at its wake: a major third, a fifth, an octave. */
+    private static final float[] CHORD = {1.26F, 1.498F, 2F};
+
     /** The last stroke lifted: write it onto the same piece, refund a clean hand, remember its mark. */
     static void finish(ServerPlayer p, ServerLevel level, InscribingTableBlockEntity be, Session s) {
         Holder<Enchantment> h = s.ench;
@@ -246,7 +249,14 @@ public final class Inscribe {
         s.entry = null;
         be.set(p.getUUID(), s.snapshot, InscribingTableBlockEntity.WAKE, e.no(), e.colour());
         level.playSound(null, s.pos, EnchantContent.WAKE.get(), SoundSource.BLOCKS, 1F, 1F);
+        // the piece's chord: the new one's note, and each other enchantment on it a third, a fifth, an octave above
         level.playSound(null, s.pos, EnchantContent.note(e.family()), SoundSource.BLOCKS, 0.8F, 1F);
+        int voice = 0;
+        for (var on : hand.getEnchantments().entrySet()) {
+            Inscriptions.Entry o = Inscriptions.of(on.getKey());
+            if (o == null || o == e || voice >= CHORD.length) continue;
+            level.playSound(null, s.pos, EnchantContent.note(o.family()), SoundSource.BLOCKS, 0.55F, CHORD[voice++]);
+        }
         AwakenNet.send(p, new EnchantPayloads.Done(s.id, e.no(), to, refund, clean, remembered, card(e, h, to, hand, refund, clean, s.memory)));
     }
 

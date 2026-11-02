@@ -624,8 +624,8 @@ day each. The scene's camera and the shader line are the parts most likely to ta
 - **S3** (da9c808dd, f14e48c76): the hunts' and the Deep's doors (Bane of Beasts, Harvest, Bane of the Deep, Fortune,
   Silk Touch), the Delver's Pick's room by verse (`delve.api.Pick`), the room line on the Forge Song's card, Precursor
   Word Stones in every ruin; the book's lines fit a narrow page. SPEC §45.14.
-- **Not built:** the wake's chord (all of a piece's enchantments ringing together; the wake has one sound); the War
-  Anvil's quality as weapon room arrives by itself when arms' `ForgeHooks.Reader.quality` returns it (until then our
+- **S3, after:** the wake's chord (each other enchantment on the piece adds its family's note over the new one's).
+- **Not built:** the War Anvil's quality as weapon room arrives by itself when arms' `ForgeHooks.Reader.quality` returns it (until then our
   forged weapons hold two), and its result card shows the room line once it calls `ForgeHooks.cardLines`.
 - **Tours** (CI, `tools/autopilot/enchant-table.txt`): 41434309046 (S2 first look), 41436600832 (desk step, framing,
   card timing), the S3 run with the Word Stone.
