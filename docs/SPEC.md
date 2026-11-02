@@ -7438,14 +7438,27 @@ against it, so a vanilla item plays its designed tempo).
   on (the "blocky things"); at 135 the blade shows its face and the guard spreads across, the edge still down and
   forward toward the foe (37 degrees off the cut, was 20). The Longsword's swings are baked again from the new hold
   (`anim_lab.py bake`, the third-person wrists kept); in the lab every blow leads with the edge as well or better
-  (0.85 to 0.98, was 0.71 to 0.98). If it reads better in the game, the Greatblade, Axe, Katana and Glaive get the
-  same turn in their batches (the Daggers and Scythe are dagger-scythe's).
+  (0.85 to 0.98, was 0.71 to 0.98). In the game it reads better (CI tour `arms-longsword-turn`: the blade's face and
+  the guard's spread at rest, every blow with the hand on the grip), so the Greatblade has the same turn (batch 1;
+  every blow 0.79 to 0.99, was 0.72 to 1.00) and the Axe, Katana and Glaive get it in their batches, each checked in
+  the lab first (the Daggers and Scythe are dagger-scythe's).
 - **Proportions per style** (the audit's rules; Euan 2026-11-02 approved the whole plan, "Go ahead with the whole
   plan"; each line lands with its batch, in texels): every style keeps the hilt off the blade's root, nothing near the
   hand deeper than the working part, one framed stone as the focus, and no two weapons with one outline.
   - Longsword: about 36, the blade 25, the guard at most 11 (wings 14), at most 5 deep (a stone 6).
   - Daggers: about 18, a blade about 11 (y 3 to 14 over a 4 grip); the curved Beastbound and Veilwoven stay about 16,
     their curve carrying the length. The Hive Regent's Sting is already 21 with a 13 sting, so it stays.
+  - Greatblade: about 43, the blade 26 (y 8 to 34, six tenths), 9 to 11 wide; the grip 8 (y -5 to 3), the guard
+    (y 3 to 5) and the ricasso (y 5 to 8) at most 6 tall together, the guard at most 15 across (today 9 to 13), its
+    ornaments out to the sides and at most about 2 up the blade, nothing on the hilt deeper than 6 (a stone 7). The
+    tusk's hook, the fork's tines and the window's crystal are the blade's own outline, not ornament.
+  - Twinblades: about 40, two blades of 15 (y 5 to 20 each way) on one grip of 8 (y -4 to 4); at each blade's root
+    only a slim collar (at most 7 across, 1 or 2 tall), and one hub at the grip's middle round the stone; nothing
+    deeper than 6 (a stone 7). The Sky Leviathan's Fins: each fin 15, its rays two short ones off the root (were
+    three long ones along it).
+  - Precursor Arm: about 35, the light 24 (y 7 to 31) in its three stages, over the cased hilt (y -4 to 7); nothing on
+    the case deeper than 6 (a stone 7; Beastbound's gear and Veilwoven's lens were 8 and 9, the lens now 6 across).
+    Unit Zero's Countdown: its light 25 (y 9 to 34), the countdown emitter a texel shorter.
 - **Hilt cuts** (the generated `ArmsHilts.CUTS`, for the War Anvil, §46.3): for each sword-like weapon (Longsword,
   Greatblade, Rapier, Daggers, Katana), where its blade, guard and grip begin along its mesh, {blade, guard, grip, 0}
   in the mesh's own along (0 the pommel's end, 1 the point): the blade's lowest corner (its back, teeth and ricasso

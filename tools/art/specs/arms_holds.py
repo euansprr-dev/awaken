@@ -275,8 +275,9 @@ HOLDS = {
     "scythe": dict(yaw=8, pitch=64, grip=(0.02, -0.04, 0.03), cut=LEFT),
     # held at its middle across the body, one end low right, the other up to the left
     "warstaff": dict(yaw=58, pitch=28, grip=(-0.08, -0.06, 0.0)),
-    # two hands, raised, big and near the middle; an edge down toward the foe, its broad flat to the side
-    "greatblade": dict(yaw=20, pitch=60, roll=90, grip=(-0.10, -0.08, 0.04), cut=DOWN),
+    # two hands, raised, big and near the middle; an edge down toward the foe, turned an eighth further than the quarter
+    # as the Longsword is (roll 135, the weapon audit), so its broad face and its guard's spread show
+    "greatblade": dict(yaw=20, pitch=60, roll=135, grip=(-0.10, -0.08, 0.04), cut=DOWN),
     # two hands low on the haft, the head up at the right
     "maul": dict(yaw=6, pitch=58, roll=90, grip=(-0.04, -0.10, 0.04)),
     # one hand, the head up, its bit down toward the foe (never its flat to the eye)
