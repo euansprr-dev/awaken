@@ -17749,6 +17749,18 @@ the `anvil.*` entries of arms' merged sounds.json and subtitles (`audio_arms.py`
   forging at each rank as the game times it, the true notes side by side, every event alone; keep / remake / cut and a
   note on each, saved in the page's store, collection `verdicts`): https://claude.ai/artifact/JpbQKVjWDgDwiXajNmtkCP
 
+- **Reduced motion**: §46.3 (the view cuts instead of gliding). **Enchanting's card line**: the anvil's result card has
+  shown `ForgeHooks.cardLines` ("Room for three enchantments", in enchanting's `A898FF`) since stage 2; nothing more.
+- **Pacing** (checked 2026-11-03 at the game's own timings: the songs' bars, the heat pulled at 0.6, the quench's 32-tick
+  hold, the hilt's 42, the 30-tick draw, the acts' least times, and 8 ticks between stages for a practised smith or 40
+  for one reading each hint the first time): a first forging at D runs 24-34 s (Daggers quickest, the Maul slowest), C
+  31-41, B 35-45, A 39-49, S 40-50 s (plan: 25-45 s, about 45 at S); practised, D 16-26 and S 27-37 s. E by hand 11-16 s
+  (plan: about 20). From memory it ran 10-13 s practised against the plan's "about 8 s", most of it the heat and a whole
+  bar counted in, so **from memory the blank goes in warm** (`AnvilSong.KNOWN_HEAT` 36: the heat clock starts at 0.3,
+  `AnvilWork.heat`) **and the anvil counts in half a bar** (`Song.known`, the bar's first half, which always opens on a
+  strike; `AnvilWork.rhythm`): 7.5-8.9 s practised, 14-15 s the first time.
+
 Test: `arms_anvil_ring` (every style flat at first and true at the last clean strike, rising each step, inside the
-pitch range; a Maul under the Longsword under Daggers; only clean strikes step it; each tier's own strike).
+pitch range; a Maul under the Longsword under Daggers; only clean strikes step it; each tier's own strike);
+`arms_anvil_memory` checks a known weapon goes in warm and is counted in half a bar.
 

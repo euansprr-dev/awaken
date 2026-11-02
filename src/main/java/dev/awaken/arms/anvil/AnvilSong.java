@@ -21,6 +21,8 @@ public final class AnvilSong {
 
     /** The heat climbs from cold to white in this long; the gold band is where to pull; past BURNT it comes out alone. */
     public static final int HEAT_FULL = 120;
+    /** From memory the blank goes in where the smith knows its heat: the clock starts this far in (0.3), the gold 30 ticks off. */
+    public static final float KNOWN_HEAT = 36F;
     public static final float BAND_LO = 0.55F, BAND_HI = 0.75F, BURNT = 1.15F;
 
     public static float heat(float ticks) {
@@ -109,12 +111,12 @@ public final class AnvilSong {
 
     /**
      * Each style's song at the anvil (SPEC §46.7): its rhythm (from its chain's tempo), how many strikes draw it out
-     * (flipped after half), where each falls on the blade, and its true note (§46.10: semitones from the ring's A, a
-     * Maul low, Daggers high).
+     * (flipped after half), where each falls on the blade, its true note (§46.10: semitones from the ring's A, a Maul
+     * low, Daggers high), and its rhythm from memory (the bar's first half: the anvil counts in half a bar, §46.10).
      */
-    public record Song(Rhythm rhythm, int strikes, float[][] marks, int note) {
+    public record Song(Rhythm rhythm, int strikes, float[][] marks, int note, Rhythm known) {
         Song(int step, String bar, int strikes, int note) {
-            this(new Rhythm(step, bar), strikes, layMarks(strikes), note);
+            this(new Rhythm(step, bar), strikes, layMarks(strikes), note, new Rhythm(step, bar.substring(0, bar.length() / 2)));
         }
 
         public int flipAfter() {

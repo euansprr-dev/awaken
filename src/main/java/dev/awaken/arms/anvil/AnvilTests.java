@@ -232,6 +232,8 @@ final class AnvilTests {
         h.assertTrue(SmithMemory.of(p).remembers("longsword", 1) && !SmithMemory.of(p).remembers("longsword", 0), "a Masterwork is, at its tier");
         h.assertTrue(WarAnvil.begin(p, level, be, WarAnvil.WEAPON, true), "begun from memory");
         AnvilWork w = be.work();
+        h.assertTrue(w.rhythm().length() * 2 == w.song.rhythm().length() && Math.abs(w.heat(0F) - AnvilSong.KNOWN_HEAT / AnvilSong.HEAT_FULL) < 1e-5F,
+                "a known weapon goes in warm and the anvil counts in half a bar (about 8 s, §46.10)");
         w.stageStart = level.getGameTime() - 20;
         act(p, pos, AnvilPayloads.PULL, 0, 20F, 0F); // pulled cold
         float due = w.nextDue();

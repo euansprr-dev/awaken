@@ -163,7 +163,12 @@ public final class AnvilWork {
     }
 
     public AnvilSong.Rhythm rhythm() {
-        return stage == AnvilSong.HILT ? AnvilSong.HILT_RHYTHM : song.rhythm();
+        return stage == AnvilSong.HILT ? AnvilSong.HILT_RHYTHM : memory() ? song.known() : song.rhythm();
+    }
+
+    /** The heat {@code ticks} into the heat stage: the Emberkit's bellows hold the gold, and from memory it starts warm. */
+    public float heat(float ticks) {
+        return AnvilSong.heat(ticks + (memory() ? AnvilSong.KNOWN_HEAT : 0F), bellows);
     }
 
     /** Ticks from the stage's start that the next beat is due. */

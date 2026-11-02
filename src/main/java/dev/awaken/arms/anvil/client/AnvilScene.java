@@ -351,7 +351,7 @@ final class AnvilScene {
             case AnvilSong.HEAT -> {
                 inForge(pos, w.forge, mouth, sh, out.work);
                 out.inForge = true;
-                float h = AnvilSong.heat(t, w.bellows);
+                float h = w.heat(t);
                 heat(out, h, 1F - (1F - blade) * Mth.clamp(h / 0.65F, 0F, 1F), false);
                 tongsAt(out, out.work, sh.root - 0.5F, T.set(mouth.getStepX(), 0.25F, mouth.getStepZ()), mine, true);
                 restHammer(out.hammer);

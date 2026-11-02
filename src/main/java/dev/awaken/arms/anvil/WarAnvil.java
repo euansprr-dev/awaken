@@ -381,7 +381,7 @@ public final class WarAnvil {
             }
             case AnvilPayloads.PULL -> {
                 if (w == null || w.stage != AnvilSong.HEAT || !mine(p, w)) return;
-                pull(level, be, w, AnvilSong.heat(clamp(a.t(), now - w.stageStart), w.bellows), p);
+                pull(level, be, w, w.heat(clamp(a.t(), now - w.stageStart)), p);
             }
             case AnvilPayloads.STRIKE, AnvilPayloads.TAP -> {
                 int stage = a.act() == AnvilPayloads.STRIKE ? AnvilSong.SHAPE : AnvilSong.HILT;
@@ -631,7 +631,7 @@ public final class WarAnvil {
         float t = level.getGameTime() - w.stageStart;
         switch (w.stage) {
             case AnvilSong.HEAT -> {
-                if (AnvilSong.heat(t, w.bellows) > AnvilSong.BURNT) pull(level, be, w, AnvilSong.BURNT, null);
+                if (w.heat(t) > AnvilSong.BURNT) pull(level, be, w, AnvilSong.BURNT, null);
             }
             case AnvilSong.SHAPE, AnvilSong.HILT -> {
                 if (t > w.nextDue() + AnvilSong.WINDOW + AnvilSong.LAG) beat(level, be, w, 0F, null);

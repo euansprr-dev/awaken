@@ -233,7 +233,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     // ---- heat ----------------------------------------------------------------------------------------------------------
 
     private void heat(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
-        float h = AnvilSong.heat(t, w.bellows);
+        float h = w.heat(t);
         // the bellows breathe; worked by an Emberkit (§46.6) they breathe steadily and harder, the fire flaring at each
         if (now - bellowsAt > (w.bellows ? 30 : 46) && !pulled) {
             bellowsAt = now;
@@ -304,7 +304,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     }
 
     private void pull(AnvilWork w, float t, float now) {
-        float h = AnvilSong.heat(t, w.bellows);
+        float h = w.heat(t);
         if (pulled || h > AnvilSong.BURNT) return;
         pulled = true;
         AnvilClient.send(pos, AnvilPayloads.PULL, 0, t, 0F);
@@ -991,7 +991,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private void autoplay(AnvilWork w, float t, float now) {
         switch (w.stage) {
             case AnvilSong.HEAT -> {
-                if (!pulled && AnvilSong.heat(t, w.bellows) >= 0.65F) pull(w, t, now);
+                if (!pulled && w.heat(t) >= 0.65F) pull(w, t, now);
             }
             case AnvilSong.KNAP -> {
                 next = Math.max(next, w.beats().size());
