@@ -296,7 +296,7 @@ Dimension `awaken:gates`: cells of 512×512 aligned to region files, cell origin
 Floors stacked vertically: floor f at y = 200 − 32·(f−1) (f = 1..6), each floor a grid of room slots (16-block pitch).
 Generation is deterministic from `GatePlan{seed, theme, layout, modifiers, twist, floors, boss, contentVersion}`.
 Rooms: start, normal, elite, cache, puzzle (some layouts), shrine (floor end), boss arena (last floor).
-Everything picked up inside a gate goes to the **Satchel** (27 slots + Satchel XP). Shrine: Extract (bank + return to
+Everything picked up inside a gate goes to the **Satchel** (no slot limit, it never refuses; + Satchel XP; §13 Gates, "Gate spoils"). Shrine: Extract (bank + return to
 gate mouth) or continue via the Seal to the next floor. Boss kill: claim + exit portal.
 Gate encounters (2026-10-28 playtest; Codex, reviewed): the current room and its connected neighbours are populated before doorway
 entry, within the existing 40-monster gate / 60-monster arena caps. A neighbour is prepared only once its chunks are
@@ -779,8 +779,46 @@ Gates:
 - Director spawn chance per pass: 100% / 30% / 8% / 0% at 0 / 1 / 2–3 / 4 standing gates; spots ≥ 96 blocks apart.
   SOVEREIGN players can roll SOVEREIGN gates. Breaks are deferred while an online player is inside that gate.
 - Claim ids carry a run index after the first run, so a re-entered gate can pay again. Retreating through floor 1's
-  entrance forfeits the Satchel. A Clone Vat save banks the whole Satchel; pockets-full loot drops at your feet and the
-  claim window says so.
+  entrance forfeits the Satchel. A Clone Vat save banks the whole Satchel; what doesn't fit your pockets on the way out is
+  held for you ("Gate spoils", below).
+- **Gate spoils** (Euan 2026-11-02, "go ahead with the gate loot plan", all four decisions yes; docs/gate-spoils/PLAN.md):
+  nothing a gate gives you is lost except by the stake (dying, retreating through floor 1's door, the story's forced
+  extraction).
+  - The Satchel has no slot limit and never refuses: what you walk over, caches, elites, twist rewards and the hoard go in.
+  - **Held for you** (attachment `awaken:gate_held`, schema 1, kept through death, `gates.run.Held`): a claim pays into
+    your pockets (empty slots, then topping up stacks) and what doesn't fit is held, never thrown at your feet. The
+    claim card says "N stacks didn't fit in your pockets. They're held for you: open your inventory (E) to take them."
+    On login, if anything is held, one line says so. No limit, no expiry, and nothing can be put in. Taking is
+    `TakeHeld(index, item, all)`: the server checks the index still holds that item and moves as much as fits.
+  - In a gate, anything the game drops for you with no thrower because your pockets are full (`Player.drop` without
+    `thrownFromHand`, caught on `ItemTossEvent` and cancelled: keepsakes, a Lord's weapon, bells' gifts, a crafting
+    grid closed with full pockets) is held for you. What you throw yourself (Q, or clicking outside the inventory)
+    carries you as its thrower and still drops. The gates module's own gifts (keepsakes, set pieces, theme blocks, a
+    break Lord's share, gear handed back on respawn) go through `Spoils.give` (pockets, then held) everywhere. A claim
+    whose id was already used holds its loot for you instead of putting it back into a run that is ending.
+  - Items tagged `awaken:never_in_satchel` (the Holo band, bell items; optional entries) never go into the Satchel: to
+    your pockets, or held when they're full.
+  - A gate monster's drops (after Fortune) go straight into its killer's Satchel (the killer as for kill XP: the
+    damage's player, else the kill credit, in a run in that gate; no killer, they fall as before). A Lord's own drops
+    land after its claim is written, so they ride in the Satchel to the exit portal, which pays them. Nothing is spawned
+    on the server: players within 64 blocks get `SpoilsFlight` and draw client-only copies that pop out of the monster,
+    hang 10 ticks and fly into the killer with vanilla's pickup flight and sound (at most 8 stacks drawn per death).
+  - **The E panel** (`gates.client.SpoilsPanel`, on the survival inventory, plain or holo; not the creative one): a
+    glass panel left of the inventory (the right side is vanilla's effects), the height of the inventory, 4-7 columns
+    of wells as the space allows. In a run its tab is **SATCHEL**: rank and gate name, Satchel XP in amber, the stacks
+    with tooltips, look only (a click on it never reaches the inventory, so nothing on the cursor is thrown), and the
+    death line in plain words: Hunter, Hardline and Hardcore "If you die in here, you lose all of this."; Story "If you
+    die in here, half of it comes back with you."; the story's first gate "This first gate is forgiving. You keep all of
+    it even if you die."; a Clone Vat ready (before the difficulty's line) "Your Clone Vat will bring it back once
+    today." A **HELD FOR YOU** tab shows whenever anything is held (in a gate too: held stacks are safe either way):
+    click a stack to take it, or Take all. Pages by arrows or the wheel; the view carries at most 300 stacks plus the
+    true count. With too little room (the recipe book open) it folds to a slim tab above the inventory with the count.
+    It fades in over 0.25 s. The client sends `WatchSpoils(true)` when the inventory opens and `false` when it closes;
+    the server answers with `SpoilsView` and, while you watch, sends a fresh one when the lists change (checked every 5
+    ticks). The band's THIS GATE button opens the inventory; the old Satchel screen is gone. The run HUD reads
+    "Satchel N · XP" (N stacks).
+  - Tests: `gates_spoils_satchel_never_refuses`, `gates_spoils_held_for_you`, `gates_spoils_gifts_never_fall`,
+    `gates_spoils_drops_fly_in`, `gates_spoils_never_in_satchel`; `gates_satchel_death_rules` no longer expects a cap.
 - Twists count as "seen" when you come out of that gate alive. "Comfort" for `floors_pushed_past_comfort` is the median
   of your last five extraction floors (2 before any). Gate interiors can't be broken or blown up.
 - Echoing (`Forces.Tag.ECHO`) means "gets up once": Awaken creatures fall and stand up by themselves (mobs), anything
@@ -8034,7 +8072,7 @@ dimension it was sent from.
   steps down under the toasts and below boss bars it would reach (`UiHooks.topRightBelow`; the layer draws after the
   boss overlay, which counts the bars afresh each frame), moves down at once when the task card arrives and eases up
   into the room when it goes. It keeps everything: rank and gate name with the floor beside them ("Deeper · Floor 1/4",
-  a ✓ when cleared), Satchel slots and XP, kills and the floor clock with the pressure word (stirring, awake, Warden),
+  a ✓ when cleared), Satchel stacks and XP, kills and the floor clock with the pressure word (stirring, awake, Warden),
   the Noise bar under Silence, the collapse countdown and the twist's hint (shortened with "…"); widest line 215 px,
   narrowest card 96. Never dims; hidden with the HUD, under F3 and, like all of Awaken's HUD, while any screen but
   chat is open (§12 `UiHooks`). Its strings are built only when the server's run update changes. Test
