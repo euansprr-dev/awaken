@@ -6758,14 +6758,17 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
 - **The arms film** (`arms film <name> <ticks> [gap] [downscale]`, autopilot only; `ArmsFilm`, `FilmLog`; the dagger and
   scythe audit, 2026-11-02): a fight filmed as the game draws it, into clips/<name>/: a picture every `gap` ticks of game
   time, and for every frame drawn a row of `track.tsv` (the hands' clock, the move, the press, the hold, the hit-stop, each
-  blade's base and tip where it is drawn: first person in the hands' view space, third person from the camera) and in
+  blade's base and tip where it is drawn: both views in the camera's place with the world's axes) and in
   `events.tsv` what happened between frames on both sides (press, buffer, begin, tap, the server's press heard, begin,
   wait over and hit, its MOVE, REFUSE and HIT reaching the client, the swish, the source change, the third-person clip).
   `arms strike [hold]` holds the key that many ticks. Every blade of ours is logged each frame, the one not laying a
   ribbon too (the twin's own first-person draw is marked while it runs). Tours `tools/autopilot/arms-film-daggers.txt`
   and `-scythe.txt` film slow, combo and spam takes with the world at 2 ticks a second; `tools/art/arms_film.py` reads a
   take (each press by its number: begun, released, the blade on the target on screen, the server's hit, the impact
-  shown; tip speeds and spikes; marked strips; stamped videos). A server stalled at world start (its roads) ran a
+  shown; tip speeds and spikes; marked strips; stamped videos at a set pace, timed by the film's clock, cropped for
+  third person). Speeds are timed by real time, as the hands' clock runs: inside a runner's stutter the client's ticks
+  bunch and the frames' game time lags the hands, which read as false jumps; a press seen through a frame drawn over
+  250 ms after the last is marked and left out of the summary. A server stalled at world start (its roads) ran a
   tour's `cmd` set-up in one tick before the ground had loaded, so the set-up waits on the server: `arms studio <item>`
   builds the studio on the server's own thread with its chunks loaded, `arms waitserver [n]` holds the script until the
   server has ticked n times, and `arms rate <r>` sets the world's pace and holds until this client runs at it (the

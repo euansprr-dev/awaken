@@ -4,12 +4,13 @@
     python3 tools/art/arms_film.py report <clip dir> [...]       timing, speed and jumps per take, as text
     python3 tools/art/arms_film.py svg <clip dir> <out.svg>      the blades' paths and speed over the take, events marked
     python3 tools/art/arms_film.py strip <clip dir> <out.png> <from gt> <to gt> [cols]   the pictures in that span
-    python3 tools/art/arms_film.py video <clip dir> <out.mp4> [every] [fps]   the take stamped (time, move, press, impact)
+    python3 tools/art/arms_film.py video <clip dir> <out.mp4> [speed] [from] [to] [crop] [width]   the take stamped, at a pace
 
 A clip dir holds track.tsv (a row per frame drawn), events.tsv and the pictures with times.txt. Game time (gt) is the
 client's ticks; at play's 20 a second a tick is three 60 fps frames, so speeds are given as the share of the screen a
-blade's tip crosses in one 60 fps frame of play ("/f"), whatever /tick rate the film ran at. First person is projected
-as the hands are drawn (70 degree fov), third person through the camera's own fov and turn.
+blade's tip crosses in one 60 fps frame of play ("/f"), whatever /tick rate the film ran at. Both views are logged in the
+camera's place with the world's axes: projected through the camera's turn, first person with the hands' 70 degrees,
+third person with the camera's fov.
 """
 import math
 import os
@@ -45,10 +46,10 @@ def load(d):
                 if len(a) < 4:
                     continue
                 events.append({'ms': float(a[0]), 'gt': float(a[1]) if a[1] else None, 'side': a[2], 'what': a[3]})
-    # server rows carry only real time: placed on the film's clock by the frames around them
+    # every event placed on the film's clock by its real time and the frames around it (the server's rows carry only
+    # real time, and the client's own game time is stale inside its tick, up to a tick behind the frames)
     for e in events:
-        if e['gt'] is None:
-            e['gt'] = gt_at(rows, e['ms'])
+        e['gt'] = gt_at(rows, e['ms'])
     events.sort(key=lambda e: e['gt'])
     return rows, events
 
@@ -73,16 +74,14 @@ def project(r, pre):
     pts = []
     for k in ('t', 'b'):
         x, y, z = r[pre + '_' + k + 'x'], r[pre + '_' + k + 'y'], r[pre + '_' + k + 'z']
-        if pre in ('m', 'o'):
-            fov = HAND_FOV
-            vx, vy, vz = x, y, -z
-        else:
-            fov = r['fov']
-            yaw, pitch = math.radians(r['yaw']), math.radians(r['pitch'])
-            fx, fy, fz = -math.sin(yaw) * math.cos(pitch), -math.sin(pitch), math.cos(yaw) * math.cos(pitch)
-            rx, ry, rz = -math.cos(yaw), 0.0, -math.sin(yaw)  # the camera's right
-            ux, uy, uz = ry * fz - rz * fy, rz * fx - rx * fz, rx * fy - ry * fx
-            vx, vy, vz = x * rx + y * ry + z * rz, x * ux + y * uy + z * uz, x * fx + y * fy + z * fz
+        # both passes draw in the camera's place with the world's axes (checked on a frame: the marks sit on the tips);
+        # the hands through their own 70 degrees, the world through the camera's fov
+        fov = HAND_FOV if pre in ('m', 'o') else r['fov']
+        yaw, pitch = math.radians(r['yaw']), math.radians(r['pitch'])
+        fx, fy, fz = -math.sin(yaw) * math.cos(pitch), -math.sin(pitch), math.cos(yaw) * math.cos(pitch)
+        rx, ry, rz = -math.cos(yaw), 0.0, -math.sin(yaw)  # the camera's right
+        ux, uy, uz = ry * fz - rz * fy, rz * fx - rx * fz, rx * fy - ry * fx
+        vx, vy, vz = x * rx + y * ry + z * rz, x * ux + y * uy + z * uz, x * fx + y * fy + z * fz
         if vz <= 0.01:
             return None
         t = math.tan(math.radians(fov) / 2)
@@ -91,20 +90,28 @@ def project(r, pre):
 
 
 def series(rows, pre):
-    """(gt, tip, base) for every frame the blade is drawn."""
+    """(gt, tip, base, real_ms) for every frame the blade is drawn."""
     out = []
     for r in rows:
         p = project(r, pre)
         if p:
-            out.append((r['gt'], p[0], p[1]))
+            out.append((r['gt'], p[0], p[1], r['real_ms']))
     return out
 
 
-def speeds(s):
-    """The tip's speed per 60 fps frame of play (share of the screen: ndc / 2), at the middle of each step."""
+def ms_per_tick(rows):
+    """Real ms per game tick over the take (500 at the films' 2 ticks a second)."""
+    span = rows[-1]['gt'] - rows[0]['gt'] if rows else 0
+    return (rows[-1]['real_ms'] - rows[0]['real_ms']) / span if span > 0 else 50.0
+
+
+def speeds(s, mpt):
+    """The tip's speed per 60 fps frame of play (share of the screen: ndc / 2), at the middle of each step. Timed by
+    real ms, as the hands' clock runs (ArmsFeel), not by the frame's game time: inside a runner's hitch the client's
+    ticks bunch up and its game time lags the hands, which made false spikes."""
     out = []
-    for (t0, a, _), (t1, b, _) in zip(s, s[1:]):
-        dt = t1 - t0
+    for (t0, a, _, m0), (t1, b, _, m1) in zip(s, s[1:]):
+        dt = (m1 - m0) / mpt
         if dt <= 1e-4:
             continue
         d = math.hypot(b[0] - a[0], b[1] - a[1]) / 2
@@ -143,58 +150,91 @@ def windup(d, move):
 
 
 def timeline(d, rows, events):
-    """Each press by its number: the strike it began (here and on the server), the release, the blade reaching the
-    target on screen (the first frame the hands' clock passes the move's wind-up), the server's hit and the impact."""
-    seqs = []
-    by = {}
+    """Each strike in order: the press that began it here, the blade reaching the target on screen (the first frame the
+    hands' clock passes the move's wind-up), the server's begin and hit (the server may take a different press of a
+    mashed chain for the same strike: both are given) and the impact shown with its freeze. Presses that began nothing
+    are listed too."""
+    presses = {}
     for e in events:
         w = e['what'].split()
         if e['side'] == 'c' and w[0] == 'press':
-            n = int(w[2])
-            by[n] = {'seq': n, 'press': e['gt'], 'begin': None, 'move': None, 'waits': False, 'tap': None, 'sbegin': None,
-                     'shit': None, 'impact': None, 'contact': None, 'refused': False}
-            seqs.append(n)
-        elif w[0] == 'begin' and 'seq' in w:
-            n = int(w[w.index('seq') + 1])
-            if n in by:
-                x = by[n]
-                if e['side'] == 'c' and x['begin'] is None:
-                    x['begin'], x['move'], x['waits'] = e['gt'], w[1], 'waits' in w
-                elif e['side'] == 's' and x['sbegin'] is None:
-                    x['sbegin'] = e['gt']
-        elif e['side'] == 'c' and w[0] == 'refused':
-            n = int(w[2])
-            if n in by:
-                by[n]['refused'] = True
-    # a release belongs to the latest press before it; a server hit to the latest strike the server began before it with
-    # that move; an impact to the first hit not yet shown
-    order = [by[n] for n in seqs]
+            presses[int(w[2])] = e['gt']
+    taps = [e['gt'] for e in events if e['side'] == 'c' and e['what'].startswith('tap ')]
+    cl, sv = [], []
     for e in events:
         w = e['what'].split()
-        if e['side'] == 'c' and w[0] == 'tap':
-            last = [x for x in order if x['press'] <= e['gt'] + 1e-6]
-            if last and last[-1]['tap'] is None:
-                last[-1]['tap'] = e['gt']
-        elif e['side'] == 's' and w[0] == 'hit':
-            cands = [x for x in order if x['sbegin'] is not None and x['sbegin'] <= e['gt'] + 1e-6 and x['move'] == w[1]]
-            if cands and cands[-1]['shit'] is None:
-                cands[-1]['shit'] = e['gt']
-    shown = [e for e in events if e['side'] == 'c' and e['what'].startswith('impact ')]
-    hits = sorted((x for x in order if x['shit'] is not None), key=lambda x: x['shit'])
-    for x, e in zip(hits, shown):
-        x['impact'] = e['gt']
-    for x in order:
-        wu = windup(d, x['move']) if x['move'] else None
-        if x['begin'] is not None and wu is not None:
+        if w[0] != 'begin' or 'seq' not in w:
+            continue
+        seq = int(w[w.index('seq') + 1])
+        x = {'seq': seq, 'move': w[1], 'at': e['gt'], 'waits': 'waits' in w}
+        (cl if e['side'] == 'c' else sv).append(x)
+    for i, x in enumerate(sv):
+        end = sv[i + 1]['at'] if i + 1 < len(sv) else 1e18
+        x['hit'] = next((e['gt'] for e in events if e['side'] == 's' and e['what'].startswith('hit ' + x['move'] + ' ')
+                         and x['at'] - 1e-6 <= e['gt'] < end), None)
+    shown = []
+    for e in events:
+        w = e['what'].split()
+        if e['side'] == 'c' and w[0] == 'impact':
+            shown.append({'gt': e['gt'], 'move': w[1].lower(), 'ms': int(w[3]), 'on': w[5], 'at': float(w[7])})
+    # the server's strikes paired with ours in order, by move
+    j = 0
+    out = []
+    for x in cl:
+        k = j
+        while k < len(sv) and sv[k]['move'] != x['move']:
+            k += 1
+        s_ = sv[k] if k < len(sv) and k - j <= 2 else None
+        if s_ is not None:
+            j = k + 1
+        out.append({'c': x, 's': s_})
+    used = set()
+    for o in out:
+        s_ = o['s']
+        o['impact'] = None
+        if s_ is None or s_['hit'] is None:
+            continue
+        for n, im in enumerate(shown):
+            if n not in used and im['move'] == o['c']['move'] and im['gt'] >= s_['hit'] - 1e-6:
+                used.add(n)
+                o['impact'] = im
+                break
+    for o in out:
+        x = o['c']
+        p0 = presses.get(x['seq'], x['at'])
+        o['press'], o['move'] = p0, x['move']
+        o['tap'] = next((t for t in taps if t >= p0 - 1e-6), None)
+        wu = windup(d, x['move'])
+        o['contact'] = None
+        if wu is not None:
             for r in rows:
-                if r['gt'] >= x['begin'] and r['move'] == x['move'] and r['view'] >= wu:
-                    x['contact'] = r['gt']
+                if r['gt'] >= x['at'] and r['move'] == x['move'] and r['view'] >= wu:
+                    o['contact'] = r['gt']
                     break
-        f = lambda v: '-' if v is None else f'+{(v - x["press"]) * 50:.0f}'
-        x['text'] = (f'press {x["seq"]} @{x["press"]:.2f}: {x["move"] or "(none)":9s} begun {f(x["begin"])}'
-                     f'{" waits" if x["waits"] else ""} released {f(x["tap"])} blade there {f(x["contact"])} | server begun '
-                     f'{f(x["sbegin"])} hit {f(x["shit"])} | impact shown {f(x["impact"])} (ms of play)' + (' REFUSED' if x['refused'] else ''))
-    return order
+        o['waits'] = x['waits']
+        # the runner's own hitches (a frame drawn over 250 ms of real time after the last, half a tick at 2 a second): the
+        # hands' clock runs on real time, so a strike seen through one jumps as no 60 fps screen would show it
+        end = o['contact'] if o['contact'] is not None else x['at'] + 2
+        o['hitch'] = any(rows[i + 1]['real_ms'] - rows[i]['real_ms'] > 250 and rows[i + 1]['gt'] >= p0 - 0.05 and rows[i]['gt'] <= end
+                         for i in range(len(rows) - 1))
+        f = lambda v: '-' if v is None else f'{(v - p0) * 50:+.0f}'
+        s_, im = o['s'], o['impact']
+        frz = ''
+        if im is not None:
+            frz = f' freeze {im["ms"]} ms ' + (f'held at {im["at"]:.2f} of the move (blow at {wu})' if im['on'] == x['move']
+                                              else f'SKIPPED (the hands were on {im["on"]})')
+        same = '' if s_ is None or s_['seq'] == x['seq'] else f' (the server took press {s_["seq"]})'
+        o['text'] = (f'press {x["seq"]} @{p0:.2f}: {x["move"]:9s} begun {f(x["at"])}{" waits" if x["waits"] else ""} blade there '
+                     f'{f(o["contact"])} | server begun {f(s_["at"] if s_ else None)}{same} hit {f(s_["hit"] if s_ else None)}'
+                     f' | impact shown {f(im["gt"] if im else None)}{frz}  (ms of play from the press)'
+                     + ('  [HITCH: the runner stalled here, not judged]' if o['hitch'] else ''))
+        o['impact'] = None if im is None else im['gt']
+    began = {o['c']['seq'] for o in out}
+    idle = [n for n in presses if n not in began]
+    if idle:
+        out.append({'text': f'presses that began nothing: {len(idle)} of {len(presses)} ({", ".join(str(n) for n in sorted(idle))})',
+                    'press': None})
+    return out
 
 
 def report(d):
@@ -213,7 +253,7 @@ def report(d):
         s = series(rows, pre)
         if len(s) < 3:
             continue
-        sp = speeds(s)
+        sp = speeds(s, ms_per_tick(rows))
         top = sorted(sp, key=lambda x: -x[1])[:6]
         print(f'  {label}: drawn {len(s)} frames; fastest tip /f: ' + ', '.join(f'{v:.2f}@{t:.2f}' for t, v, _ in top))
         # a jump: a step at least 2.5x both neighbours and over 0.15 of the screen a frame
@@ -223,18 +263,18 @@ def report(d):
                 jumps.append(sp[i])
         if jumps:
             print(f'  {label} spikes (a frame much faster than both neighbours): ' + ', '.join(f'{v:.2f}@{t:.2f}' for t, v, _ in jumps))
-    for line in timeline(d, rows, events):
-        print('  ' + line['text'])
     tl = timeline(d, rows, events)
-    begun = [x for x in tl if x['contact'] is not None]
-    if begun:
-        pc = [x['contact'] - x['press'] for x in begun]
-        print(f'  presses {len(tl)}, strikes begun {sum(1 for x in tl if x["begin"] is not None)}, waited at the set {sum(1 for x in tl if x["waits"])}; '
-              f'press to contact on screen: mean {sum(pc) / len(pc) * 50:.0f} ms of play, worst {max(pc) * 50:.0f}')
-    lag = [x['impact'] - x['contact'] for x in tl if x['impact'] is not None and x['contact'] is not None]
+    for line in tl:
+        print('  ' + line['text'])
+    st = [x for x in tl if x.get('press') is not None and not x['hitch']]
+    print(f'  (judged: {len(st)} strikes; {sum(1 for x in tl if x.get("hitch"))} seen through the runner\'s hitches left out)')
+    pc = [x['contact'] - x['press'] for x in st if x['contact'] is not None]
+    if pc:
+        print(f'  strikes {len(st)}, waited at the set {sum(1 for x in st if x["waits"])}; press to the blade on the target: mean '
+              f'{sum(pc) / len(pc) * 50:.0f} ms of play, least {min(pc) * 50:.0f}, worst {max(pc) * 50:.0f}')
+    lag = [(x['impact'] - x['contact']) * 50 for x in st if x['impact'] is not None and x['contact'] is not None]
     if lag:
-        print(f'  impacts {len(lag)}: shown after the blade reached the target by mean {sum(lag) / len(lag) * 50:.0f} ms of play, '
-              f'worst {max(lag) * 50:.0f}, least {min(lag) * 50:.0f}')
+        print(f'  impacts {len(lag)}: after the blade reached the target by ' + ', '.join(f'{v:+.0f}' for v in lag) + ' ms of play')
     srcs = [e for e in events if e['what'].startswith('source ')]
     print(f'  source changes: {len(srcs)}; ' + ', '.join(f'{e["what"].split()[1]}@{e["gt"]:.2f}' for e in srcs[:24]))
 
@@ -254,7 +294,7 @@ def svg(d, out):
         parts.append(f'<line x1="{L}" x2="{W - 10}" y1="{y0 + h / 2}" y2="{y0 + h / 2}" stroke="#333"/>')
         for pre, col in pres:
             s = series(rows, pre)
-            pts = ' '.join(f'{X(t):.1f},{y0 + h / 2 - max(-1.4, min(1.4, f((t, tip, base)))) * h / 2.8:.1f}' for t, tip, base in s)
+            pts = ' '.join(f'{X(t):.1f},{y0 + h / 2 - max(-1.4, min(1.4, f((t, tip, base)))) * h / 2.8:.1f}' for t, tip, base, _ in s)
             parts.append(f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="1.5"/>')
     y0, h = 345, 150
     parts.append(f'<text x="4" y="{y0 + 12}" fill="#aaa">tip speed /f</text>')
@@ -262,7 +302,7 @@ def svg(d, out):
         yy = y0 + h - v / 0.4 * h
         parts.append(f'<line x1="{L}" x2="{W - 10}" y1="{yy:.1f}" y2="{yy:.1f}" stroke="#2a2a2a"/><text x="{L - 28}" y="{yy + 4:.1f}" fill="#666">{v}</text>')
     for pre, col in pres:
-        sp = speeds(series(rows, pre))
+        sp = speeds(series(rows, pre), ms_per_tick(rows))
         pts = ' '.join(f'{X(t):.1f},{y0 + h - min(0.4, v) / 0.4 * h:.1f}' for t, v, _ in sp)
         parts.append(f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="1.2"/>')
     colours = {'press': '#e5e7eb', 'begin': '#22c55e', 'impact': '#ef4444', 'hit': '#facc15', 'source': '#a855f7', 'tap': '#94a3b8'}
@@ -320,9 +360,10 @@ def strip(d, out, a, b, cols=8, width=0):
     print(out, len(ims))
 
 
-def video(d, out, every=1, fps=30, width=960):
-    """The take as a video: every `every`th picture at `fps`, each stamped with its time, the move and a mark on a press.
-    Pictures 0.2 ticks apart at 30 fps play at a third of play's speed; every 2nd at 50 fps plays at play's speed."""
+def video(d, out, speed=0.25, fps=30, width=960, a=None, b=None, crop=None):
+    """The take as a video at `speed` times play's pace (0.25: a quarter speed), timed by the film's own clock: each frame
+    of the video shows the latest picture taken by then, so a stretch the runner drew slowly holds instead of rushing.
+    Stamped with the time, the move, a press and an impact; `a`..`b` in game ticks, `crop` (x0, y0, x1, y1 fractions)."""
     import shutil
     import subprocess
     import tempfile
@@ -335,36 +376,43 @@ def video(d, out, every=1, fps=30, width=960):
             times.append((int(i), float(t)))
     presses = [e['gt'] for e in events if e['side'] == 'c' and e['what'].startswith('press ')]
     imps = [e['gt'] for e in events if e['side'] == 'c' and e['what'].startswith('impact ')]
-    t0 = times[0][1]
+    a = times[0][1] if a is None else a
+    b = times[-1][1] if b is None else b
+    step = speed * 20.0 / fps  # game ticks a video frame
     tmp = tempfile.mkdtemp()
-    n = 0
-    prev = None
-    for k, (i, t) in enumerate(times):
-        if k % every:
-            continue
-        p = os.path.join(d, f'f{i:05d}.png')
-        if not os.path.exists(p):
-            continue
-        im = Image.open(p).convert('RGB')
-        im = im.resize((width, round(im.height * width / im.width)))
+    n, k, t, prev = 0, 0, a, a
+    cache = {}
+    while t <= b:
+        while k + 1 < len(times) and times[k + 1][1] <= t:
+            k += 1
+        i = times[k][0]
+        if i not in cache:
+            p = os.path.join(d, f'f{i:05d}.png')
+            im = Image.open(p).convert('RGB')
+            if crop:
+                W, H = im.size
+                im = im.crop((int(crop[0] * W), int(crop[1] * H), int(crop[2] * W), int(crop[3] * H)))
+            cache.clear()
+            cache[i] = im.resize((width, round(im.height * width / im.width) // 2 * 2))
+        im = cache[i].copy()
         dr = ImageDraw.Draw(im)
         row = min(rows, key=lambda r: abs(r['gt'] - t))
-        lo = t if prev is None else prev
-        mark = [x for x in presses if lo < x <= t + 1e-6] if prev is not None else []
-        hit = [x for x in imps if lo < x <= t + 1e-6] if prev is not None else []
         dr.rectangle((0, 0, width, 22), fill=(0, 0, 0))
-        dr.text((8, 5), f'tick {t - t0:6.2f}   {row["move"]:<10s} {"WAITING AT SET" if row.get("wait") == 1 else ""}', fill=(255, 210, 90))
-        if mark:
-            dr.rectangle((width - 120, 0, width - 64, 22), fill=(200, 40, 40))
-            dr.text((width - 114, 5), 'PRESS', fill=(255, 255, 255))
-        if hit:
-            dr.rectangle((width - 60, 0, width, 22), fill=(240, 240, 240))
-            dr.text((width - 54, 5), 'IMPACT', fill=(0, 0, 0))
+        dr.text((8, 5), f'{(t - a) * 50:5.0f} ms of play  x{speed:g}   {row["move"]:<10s} {"WAITING AT SET" if row.get("wait") == 1 else ""}',
+                fill=(255, 210, 90))
+        # a mark stays up for 4 video frames so it can be seen
+        if any(prev - 3 * step < x <= t for x in presses):
+            dr.rectangle((width - 124, 0, width - 66, 22), fill=(200, 40, 40))
+            dr.text((width - 118, 5), 'PRESS', fill=(255, 255, 255))
+        if any(prev - 3 * step < x <= t for x in imps):
+            dr.rectangle((width - 62, 0, width, 22), fill=(240, 240, 240))
+            dr.text((width - 56, 5), 'IMPACT', fill=(0, 0, 0))
         im.save(os.path.join(tmp, f'v{n:05d}.png'))
         n += 1
         prev = t
+        t += step
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(fps), '-i', os.path.join(tmp, 'v%05d.png'),
-                    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '26', '-movflags', '+faststart', out], check=True)
+                    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '27', '-movflags', '+faststart', out], check=True)
     shutil.rmtree(tmp)
     print(out, n, 'frames')
 
@@ -380,4 +428,8 @@ if __name__ == '__main__':
         strip(sys.argv[2], sys.argv[3], float(sys.argv[4]), float(sys.argv[5]), int(sys.argv[6]) if len(sys.argv) > 6 else 8,
               int(sys.argv[7]) if len(sys.argv) > 7 else 0)
     elif cmd == 'video':
-        video(sys.argv[2], sys.argv[3], int(sys.argv[4]) if len(sys.argv) > 4 else 1, int(sys.argv[5]) if len(sys.argv) > 5 else 30)
+        # video <dir> <out.mp4> [speed] [from gt] [to gt] [crop x0,y0,x1,y1] [width]
+        g = sys.argv
+        video(g[2], g[3], float(g[4]) if len(g) > 4 else 0.25, 30, int(g[8]) if len(g) > 8 else 960,
+              float(g[5]) if len(g) > 5 and g[5] != '-' else None, float(g[6]) if len(g) > 6 and g[6] != '-' else None,
+              tuple(map(float, g[7].split(','))) if len(g) > 7 and g[7] != '-' else None)
