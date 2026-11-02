@@ -2,7 +2,7 @@
 # level 100 and S-rank, creative (no parts), the songs played by autoplay. The Weapons tab's rebuild step; the door on a
 # plain anvil, where Forge it is Rebuild it; the four builds side by side (by day and by night) and a Lord's anvil carried;
 # then a Sovereign Longsword forged in full on a Lord's anvil with a grindstone by it: the twist, the draw out, the
-# starlight, the grind, the hilt, the balance on the horn, the card.
+# starlight, the grind, the hilt, the balance on the horn, the card; the blade in hand and the rack behind the anvil.
 # ci knobs: LENS=cinematic
 world waranvil4 creative 4346
 waitworld
@@ -126,5 +126,11 @@ wait 70
 shotnow ranks_drawn
 screen close
 wait 20
+# the Sovereign Longsword in hand: the twist's ripples in its steel, its runes woken by the starlight
 shot ranks_after
+# the rack behind the Lord's anvil, the new one standing in it, the runes and Heart in gold (no Lord killed)
+hud off
+cmd tp @s 0.5 201 6.6 180 18
+wait 20
+shot ranks_rack
 quit
