@@ -6797,8 +6797,23 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     draws back and up into its guard, and strike 2 fires from there; the right meanwhile is cocked out to the right for
     strike 3's slash down across the crosshair; strike 4 drives both points in at once from the hips. Each strike's
     hands hold where the next starts until 7 ticks after the press (about a third of a second), then go home: the hands
-    are never home between strikes of a chain. The free hand always sits in its guard. The heavy charges coiled on the
-    crosshair's line and its release is the drive; the Plunge is armed raised, points down.
+    are never home between strikes of a chain, the finisher included (it pulls both back into the guard). The free
+    hand always sits in its guard, the point in toward the crosshair but a stab's length off it on screen, so a stab
+    out of it travels. A stab is fast in and slow out: the blow from the hip or the guard in half a tick, the pull back
+    straight to the guard over two and a half (the film's gate wants the blow at least 3 times its return's speed;
+    keyed, strikes 1, 2, 4 and the riposte run 5 to 7 times). The heavy charges coiled on the crosshair's line and its
+    release is the drive; the Plunge is armed raised, points down.
+  - *Third person from the same keys* (decision 7; `arms_keys.py third`, written to `tools/art/specs/arms_keys3.json`,
+    which `arms_moves.py` builds into each keyed move's clips, `arms_daggers_<move>` and `_bent`, with the heavy's charge
+    clips; ArmsClips plays them for the Daggers as its own): each fist is placed from the first-person pose, the same
+    bearing and fall from the eye with its depth mapped onto the arm's reach (a fist 0.45 blocks ahead in view is at the
+    chest, 0.80 at an arm's length); the arms reach it by the rig's IK, the chest turns 50 degrees a block one fist leads the other (25 at
+    most), and the wrist lays the blade on its first-person line by the shortest turn, never more than 20 degrees a
+    quarter tick outside the blow (the blow's own keys kept exact, and the first and last: square from rest, square at
+    the end). A move fades into third person over its wind-up
+    from rest (a chained strike at once) and out over its last pair of keys, so a move ending a chain holds at rest
+    before it fades. `arms_keys.py check` holds the wrist limit and the wrist square at both ends; `arms_moves.py build`
+    the clipping.
   - *Strike on the click* (`ArmsRules.waitsOnHold`): a dagger's strike lands as it comes even while the press is still
     down, and a press held on charges the heavy from where the stab ended (arms_dagger_click). Every other style's held
     press waits at its set (arms_tap_or_hold).

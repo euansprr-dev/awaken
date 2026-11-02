@@ -407,8 +407,9 @@ def gates(d, verbose=True):
         say('blade in view through the wind-up', f'{min(inview) * 100:.0f}% of frames at worst', min(inview) >= 0.999)
     # the hands back at rest between strikes of one chain (each tip within 0.04 of where it rested before the first press)
     first = min((o['press'] for o in tl), default=None)
-    if first is not None and len(tl) >= 2 and style == 'daggers' and not third:
-        rest = {p: _tip(next(r for r in rows if r['gt'] < first), p) for p in pre}
+    before = next((r for r in rows if first is not None and r['gt'] < first), None)  # a take filmed from its first press has none
+    if before is not None and len(tl) >= 2 and style == 'daggers' and not third:
+        rest = {p: _tip(before, p) for p in pre}
         homes = 0
         pairs = 0
         for a, b in zip(tl, tl[1:]):

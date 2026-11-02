@@ -428,9 +428,11 @@ final class ArmsTests {
                 // third person's wrist (ArmsWrist): home by the clip's end, and from the hand's rest unless loosed from a
                 // held draw (no wind-up: it starts as the charge held it)
                 float len = FpSwings.wristLength(st, e.getKey());
+                // a hand-keyed style's chain strike after the first starts where the one before left the wrist
+                boolean carried = st.stance() != null && i > 0;
                 for (boolean left : new boolean[]{false, true}) {
                     for (boolean straight : new boolean[]{false, true}) { // with Bendable Cuboids' elbows and without
-                        for (float t : def.windup() > 0 ? new float[]{0, len} : new float[]{len}) {
+                        for (float t : def.windup() > 0 && !carried ? new float[]{0, len} : new float[]{len}) {
                             if (FpSwings.wrist(st, e.getKey(), left, straight, t, q)) {
                                 h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square"
                                         + (straight ? " (straight arms)" : ""));

@@ -219,9 +219,10 @@ def dagger_poses():
     return dict(
         # forward grip, the points angled in toward the crosshair, the fists low and in from vanilla's corner
         rest=b((0.50, -1.00), 0.64, (0.14, -0.32)),
-        # the free hand's guard: drawn back and up, the point still on the crosshair's line
-        guard=b((0.46, -0.78), 0.52, (0.16, -0.08), (0.3, -1.0, 0.3)),
-        guard_back=b((0.50, -0.74), 0.47, (0.20, -0.02), (0.3, -1.0, 0.3)),
+        # the free hand's guard: drawn back and up, the point in toward the crosshair but a stab's length off it on
+        # screen, so the stab out of it travels (a guard by the line left the left's blow barely faster than its return)
+        guard=b((0.56, -0.74), 0.46, (0.30, -0.14), (0.3, -1.0, 0.3)),
+        guard_back=b((0.66, -0.76), 0.42, (0.44, -0.14), (0.3, -1.0, 0.3)),
         # strike 1's chamber at the hip, its stab home on the crosshair and a touch deeper as the freeze lets go
         hip=b((0.60, -1.22), 0.56, (0.30, -0.52), (0.3, -1.0, 0.2)),
         stab=b((0.24, -0.58), 0.80, (0.0, -0.02), (0.2, -1.0, 0.0)),
@@ -279,7 +280,7 @@ def dagger_moves():
         # cocked for strike 2; the right comes home to its own guard, cocked for the slash
         "strike_1": dict(hand="main", hit=1.0, set=0.5, swish=0.45, trail=(0.55, 1.45),
                          keys=T([(0.0, P["rest"], STOP), (0.5, P["hip"], STOP), (1.0, P["stab"], GO), (1.3, P["stab_deep"], STOP),
-                                 (2.4, P["out"], GO), (3.8, P["guard"], STOP), (7.0, P["guard"], STOP), (9.5, P["rest"], STOP)]),
+                                 (3.8, P["guard"], STOP), (7.0, P["guard"], STOP), (9.5, P["rest"], STOP)]),
                          other=T([(0.0, m["rest"], STOP), (1.0, m["guard_back"], GO), (2.6, m["guard"], STOP), (7.0, m["guard"], STOP),
                                   (9.5, m["rest"], STOP)]),
                          view=view((0, 0, 0, 0, STOP), (1.0, -1.0, 0.5, -0.8, GO), (1.3, -1.2, 0.7, -1.0, STOP), (3.6, 0, 0, 0, STOP))),
@@ -287,8 +288,7 @@ def dagger_moves():
         # to the right to be cocked for the slash
         "strike_2": dict(hand="off", hit=1.0, set=0.45, swish=0.45, trail=(0.5, 1.45),
                          keys=T([(0.0, m["guard"], STOP), (0.45, m["guard_back"], STOP), (1.0, m["stab_high"], GO),
-                                 (1.3, m["stab_high_deep"], STOP), (2.4, m["out"], GO), (3.8, m["guard"], STOP), (7.0, m["guard"], STOP),
-                                 (9.5, m["rest"], STOP)]),
+                                 (1.3, m["stab_high_deep"], STOP), (3.8, m["guard"], STOP), (7.0, m["guard"], STOP), (9.5, m["rest"], STOP)]),
                          other=T([(0.0, P["guard"], STOP), (1.0, P["guard_back"], GO), (3.0, P["slash_set"], STOP),
                                   (7.0, P["slash_set"], STOP), (9.5, P["rest"], STOP)]),
                          view=view((0, 0, 0, 0, STOP), (1.0, 1.0, 0.4, 0.8, GO), (1.3, 1.2, 0.5, 1.0, STOP), (3.6, 0, 0, 0, STOP))),
@@ -302,21 +302,22 @@ def dagger_moves():
                                   (7.5, m["rest"], STOP)]),
                          view=view((0, 0, 0, 0, STOP), (0.4, 0.8, -0.3, 1.0, STOP), (1.0, -1.0, 0.4, -1.2, GO), (1.6, -1.8, 0.6, -2.0, STOP),
                                    (4.0, 0, 0, 0, STOP))),
-        # strike 4, the finisher: both drawn back together, both points driven in at once, held deep, wrenched out
+        # strike 4, the finisher: both drawn back together, both points driven in at once, held deep, pulled back into
+        # the guard (a press keeps the chain going from there), home only when the presses stop
         "strike_4": dict(hand="both", hit=2.0, set=1.2, swish=1.3, trail=(1.25, 2.5),
                          keys=T([(0.0, P["pair"], STOP), (1.2, P["pair_back"], STOP), (2.0, P["pair_hit"], GO), (2.4, P["pair_deep"], STOP),
-                                 (3.7, P["pair_out"], GO), (5.4, P["rest"], STOP), (10.0, P["rest"], STOP)]),
+                                 (4.6, P["guard"], STOP), (7.0, P["guard"], STOP), (9.5, P["rest"], STOP), (11.0, P["rest"], STOP)]),
                          other=T([(0.0, m["pair"], STOP), (1.2, m["pair_back"], STOP), (2.0, m["pair_hit"], GO), (2.4, m["pair_deep"], STOP),
-                                  (3.7, m["pair_out"], GO), (5.4, m["rest"], STOP), (10.0, m["rest"], STOP)]),
+                                  (4.6, m["guard"], STOP), (7.0, m["guard"], STOP), (9.5, m["rest"], STOP), (11.0, m["rest"], STOP)]),
                          view=view((0, 0, 0, 0, STOP), (1.2, 0, -0.8, 0, STOP), (2.0, 0, 1.4, 0, GO), (2.4, 0, 1.8, 0, STOP),
                                    (5.0, 0, 0, 0, STOP))),
-        # strike 5 (mastery), the left's slash: strike 3 mirrored, wound bigger
+        # strike 5 (mastery), the left's slash out of the finisher's guard: strike 3 mirrored, wound bigger
         "strike_5": dict(hand="off", hit=2.0, set=1.5, swish=1.45, trail=(1.45, 2.5),
-                         keys=T([(0.0, m["rest"], STOP), (1.1, m["slash_set"], STOP), (1.5, m["slash_wound"], STOP),
-                                 (2.0, m["slash_hit"], GO), (2.7, m["slash_end"], STOP), (4.2, m["out"], GO), (5.6, m["rest"], STOP),
-                                 (11.0, m["rest"], STOP)]),
-                         other=T([(0.0, P["rest"], STOP), (2.2, P["guard_back"], GO), (3.6, P["guard"], STOP), (5.6, P["rest"], STOP),
-                                  (11.0, P["rest"], STOP)]),
+                         keys=T([(0.0, m["guard"], STOP), (1.1, m["slash_set"], STOP), (1.5, m["slash_wound"], STOP),
+                                 (2.0, m["slash_hit"], GO), (2.7, m["slash_end"], STOP), (4.4, m["guard"], STOP), (7.0, m["guard"], STOP),
+                                 (9.5, m["rest"], STOP), (11.0, m["rest"], STOP)]),
+                         other=T([(0.0, P["guard"], STOP), (2.2, P["guard_back"], GO), (3.6, P["guard"], STOP), (7.0, P["guard"], STOP),
+                                  (9.5, P["rest"], STOP), (11.0, P["rest"], STOP)]),
                          view=view((0, 0, 0, 0, STOP), (1.5, -0.9, -0.3, -1.2, STOP), (2.0, 1.2, 0.4, 1.4, GO), (2.7, 2.2, 0.6, 2.4, STOP),
                                    (5.0, 0, 0, 0, STOP))),
         # the heavy: charged coiled on the line, the release drives both points in at once
@@ -326,12 +327,13 @@ def dagger_moves():
                       other=T([(0.0, m["coil"], STOP), (0.3, m["pair_hit"], GO), (0.7, m["pair_deep"], STOP), (2.2, m["pair_out"], GO),
                                (4.5, m["rest"], STOP), (10.0, m["rest"], STOP)]),
                       view=view((0, 0, -0.6, 0, STOP), (0.3, 0, 1.6, 0, GO), (0.7, 0, 2.0, 0, STOP), (3.5, 0, 0, 0, STOP))),
-        # the riposte: the right's stab with a lunge, the left thrown back in its guard
+        # the riposte: the right's stab with a lunge, pulled back into its guard; the left thrown back in its own
         "riposte": dict(hand="main", hit=1.0, swish=0.45, trail=(0.5, 1.5),
                         keys=T([(0.0, P["rest"], STOP), (0.5, P["hip"], STOP), (1.0, P["stab_lunge"], GO), (1.5, P["stab_lunge"].moved(
-                            at=P["stab_lunge"].at + [-0.01, 0.01, -0.05]), STOP), (3.0, P["out"], GO), (4.6, P["rest"], STOP), (9.0, P["rest"], STOP)]),
-                        other=T([(0.0, m["rest"], STOP), (1.0, m["guard_back"], GO), (2.8, m["guard"], STOP), (4.6, m["rest"], STOP),
-                                 (9.0, m["rest"], STOP)]),
+                            at=P["stab_lunge"].at + [-0.01, 0.01, -0.05]), STOP), (4.0, P["guard"], STOP), (7.0, P["guard"], STOP),
+                                (9.0, P["rest"], STOP), (10.5, P["rest"], STOP)]),
+                        other=T([(0.0, m["rest"], STOP), (1.0, m["guard_back"], GO), (2.8, m["guard"], STOP), (7.0, m["guard"], STOP),
+                                 (9.0, m["rest"], STOP), (10.5, m["rest"], STOP)]),
                         view=view((0, 0, 0, 0, STOP), (1.0, -1.2, 1.0, -1.0, GO), (1.5, -1.5, 1.4, -1.2, STOP), (4.0, 0, 0, 0, STOP))),
         # the Art: both blades crossed before the chest, cut out through the middle, crossed again and out once more
         "art": dict(hand="both", hit=2.0, swish=1.6, trail=(1.6, 2.5),
@@ -528,6 +530,224 @@ def chain(out, style, names, gap=4.0, step=0.5):
 
 MOVES = {"daggers": dagger_moves}
 
+# ---- third person from the same keys (decision 7): each arm follows its own blade ---------------------------------
+#
+# The fist keeps its way from the eye (the same place on the screen: a stab's fist in toward the crosshair, a guard's
+# out to the side and low) and its depth is carried onto the arm's reach: a fist at the chest at 0.45 blocks, the arm
+# straight at a stab's 0.8 (first person sets its hands far out and high to show them; from outside, a guard that far
+# out reads as a stab and both read as hands by the face). The arm is solved onto it (arms_rig4's IK, elbows bent or
+# straight), and the blade's way in the view becomes the weapon's way in the model: the wrist (ArmsWrist) turns it the
+# rest of the way in the fist, by the shortest turn that lays the blade on its line (a dagger's two edges and two flats
+# read alike from outside, so its roll about its own length is left as the hold has it). The chest turns with the hand that drives (its shoulder comes forward) and the base
+# clip keeps the move's legs, lean and step. Outside the blow no wrist turns faster than WRIST_STEP a quarter tick.
+
+KEYS3 = os.path.join(HERE, "specs", "arms_keys3.json")
+NEAR, FAR = 0.45, 0.80  # a fist's depth in the view at the chest and at an arm's length
+CLOSE, OUT = 2.0, 8.2  # px before the shoulders there
+DROP = 0.3  # px below the shoulder a degree the fist is seen under the eye, past 15
+CHEST = 50.0  # degrees of chest turn a block of one fist ahead of the other
+CHEST_MAX = 25.0
+WRIST_STEP = 20.0  # degrees a quarter tick, at most, outside the blow (Euan's yes to decision 7)
+FLAT = np.diag([1.0, 1.0, -1.0])  # the item's flat turned over: the left's mirrored blade as a turn
+
+
+def _arc(a, b):
+    """The shortest turn taking unit a onto unit b."""
+    a, b = unit(a), unit(b)
+    c = float(a @ b)
+    v = np.cross(a, b)
+    if np.linalg.norm(v) < 1e-9:
+        return np.eye(3) if c > 0 else L.axis_rot(unit(np.cross(a, [0.0, 0.0, 1.0])), 180.0)
+    return L.axis_rot(unit(v), math.degrees(math.atan2(np.linalg.norm(v), c)))
+
+
+def _fist3(at):
+    """Where a fist seen at view place {@code at} is held from outside (the unposed figure, px: right at -x, y down,
+    -z ahead): the same bearing and fall from the eye, its depth onto the arm's reach."""
+    import arms_rig4 as R4
+    depth = -at[2]
+    fwd = CLOSE + (OUT - CLOSE) * float(np.clip((depth - NEAR) / (FAR - NEAR), 0.0, 1.15))
+    fall = math.degrees(math.atan2(-at[1], depth))
+    return np.array([-fwd * at[0] / depth, R4.SHOULDER[1] + DROP * (fall - 15.0), -fwd])
+
+
+def _weight(name, mv, t):
+    """How much of the move third person plays from the keys (0: the base clip's own arm, no wrist): in over the
+    wind-up from rest, at once for a strike that chains from the one before (its hands are already there) or a move
+    loosed from a draw, out over the last pair of keys (a move that holds its guard then holds at rest before that,
+    so the fade never mixes a guard with the base clip's recovery: strike 5's left arm went into the chest)."""
+    keys = mv["keys"].keys
+    chained = name in ("strike_2", "strike_3", "strike_4", "strike_5") or mv["hit"] < 0.5
+    rise = max(0.25, min(0.6, mv["hit"] * 0.6))
+    w_in = 1.0 if chained else (3 * min(1.0, t / rise) ** 2 - 2 * min(1.0, t / rise) ** 3)
+    t0, t1 = keys[-2][0], keys[-1][0]
+    u = min(1.0, max(0.0, (t - t0) / max(1e-6, t1 - t0)))
+    return w_in * (1.0 - (3 * u * u - 2 * u ** 3))
+
+
+def _limit(Ws, ts, hit, step=WRIST_STEP):
+    """The wrist's keys with no turn faster than step a key outside the blow (the blow's own keys kept exact): limited
+    forward and back, then the two met halfway, so a fast turn is spread both ways rather than lagged. The first and
+    last keys are kept too: a move starts where the one before left the wrist (square from rest) and ends square."""
+    n = len(Ws)
+
+    def run(order):
+        out = list(Ws)
+        for a, b in zip(order, order[1:]):
+            if abs(ts[b] - hit) <= 0.5 or b in (0, n - 1):
+                continue
+            ang = angle(out[a], out[b])
+            if ang > step:
+                q = L.slerp(L.mat_quat(out[a]), L.mat_quat(out[b]), step / ang)
+                out[b] = L.quat_mat(q)
+        return out
+    fw, bw = run(list(range(n))), run(list(range(n - 1, -1, -1)))
+    Ws = [L.quat_mat(L.slerp(L.mat_quat(f), L.mat_quat(b), 0.5)) for f, b in zip(fw, bw)]
+    return run(list(range(n)))  # the halfway meeting can still step past the limit: held to it once more
+
+
+def third(style="daggers"):
+    """Each move's third person: {move: {"bent": rec, "straight": rec}} in arms_rig4's record (the arms' terms, the chest's
+    twist, the right wrist) with the left wrist too ("wrist_left"), and the check numbers."""
+    import arms_rig4 as R4
+    import arms_moves as A
+    import arms_holds as AH
+    import power_casts as PC
+    held = held_of(style)
+    wid = REVIEW[style]
+    Rh = L.MR.euler(*L.MR.held(wid)[0])
+    g3 = AH.grip3(style)
+    holds = {arm: R4.hold_of(L.display_3p(wid, arm), arm, g3) for arm in ("right", "left")}
+    cloud, _ = R4.weapon_cloud(style)
+    sc3 = L.display_3p(wid, "right")[2]
+    rel = (cloud - g3) * sc3 * 16
+    out = {}
+    for name, mv in MOVES[style]().items():
+        own = f"arms_{style}_{name}"
+        base = own if own in A.BASE else f"arms_{name}"
+        ts = np.arange(0.0, length(mv) + 1e-6, DT)
+        rec_by = {}
+        for bent in (True, False):
+            clip = A.BASE[base + ("_bent" if bent else "")]
+            prev = {arm: R4.terms_of(clip.sample(0.0), arm, bent) for arm in ("right", "left")}
+            rec = {"right": [], "left": [], "twist": [], "wrist": [], "wrist_left": [], "miss": 0.0, "depth": 0.0}
+            Wr, Wl = [], []
+            for t in ts:
+                t = float(t)
+                b0 = clip.sample(t)
+                w = _weight(name, mv, t)
+                strike, other = mv["keys"].at(t), mv["other"].at(t)
+                pr, pl = (other, strike) if mv["hand"] == "off" else (strike, other)
+                (_, Rr), (_, Rl) = sample_move(held, mv, t)
+                tw = float(np.clip(-CHEST * (pl.at[2] - pr.at[2]), -CHEST_MAX, CHEST_MAX))
+                tw = (1 - w) * R4.twist_of(b0) + w * tw
+                b = R4.with_twist(b0, tw)
+                fr = PC.part_frames(b)
+                for arm, pose, Rv in (("right", pr, Rr @ Rh), ("left", pl, M @ Rl @ Rh @ FLAT)):
+                    turn, local = holds[arm]
+                    am = R4.B @ Rv @ AH.AXIS_ITEM  # the blade's line in the model
+                    target = R4.to_world(b, _fist3(pose.at))
+                    roll = lambda Mx, turn=turn, am=am: 0.02 * math.degrees(math.acos(float(np.clip((Mx @ turn @ AH.AXIS_ITEM) @ am, -1, 1))))  # noqa: E731
+                    v, miss = R4.ik_arm(b, arm, bent, target, local, prev[arm], roll)
+                    prev[arm] = v
+                    vb = (1 - w) * R4.terms_of(b0, arm, bent) + w * v
+                    b[arm + "_arm"] = R4.arm_bones(*vb, tw, arm, bent)
+                    Mx, Tx, _ = R4.limb_frame(b, arm, bent)
+                    W = _arc(AH.AXIS_ITEM, (Mx @ turn).T @ am)
+                    W = L.quat_mat(L.slerp(np.array([0.0, 0.0, 0.0, 1.0]), L.mat_quat(W), w))
+                    (Wr if arm == "right" else Wl).append(W)
+                    rec[arm].append([round(float(x), 2) for x in vb])
+                    if w > 0.999:
+                        rec["miss"] = max(rec["miss"], round(miss, 2))
+                rec["twist"].append(round(tw, 2))
+            Wr, Wl = _limit(Wr, ts, mv["hit"]), _limit(Wl, ts, mv["hit"])
+            for i, t in enumerate(ts):  # the check: each blade as the game will draw it, into the body
+                b = R4.rigged_bones(clip, rec, i, bent)
+                frs = [PC.part_frames(b, p) for p in (0.0, 30.0)]
+                for arm, W in (("right", Wr[i]), ("left", Wl[i])):
+                    turn, local = holds[arm]
+                    Mx, Tx, _ = R4.limb_frame(b, arm, bent)
+                    G = Tx + Mx @ local
+                    P = G + rel @ (Mx @ turn @ W).T
+                    rec["depth"] = max(rec["depth"], round(R4.body_depth(frs, P, G), 2))
+            rec["wrist"] = [[round(float(x), 4) for x in _quat(W, None)] for W in Wr]
+            rec["wrist_left"] = [[round(float(x), 4) for x in _quat(W, None)] for W in Wl]
+            rec_by["bent" if bent else "straight"] = rec
+        out[name] = rec_by
+    return out
+
+
+def wrist_steps(rec, mv):
+    """The wrist's fastest turn a key outside the blow and inside it (degrees), both arms."""
+    worst_out = worst_in = 0.0
+    for key in ("wrist", "wrist_left"):
+        ks = rec[key]
+        for i in range(1, len(ks)):
+            a = angle(L.quat_mat(np.array(ks[i - 1])), L.quat_mat(np.array(ks[i])))
+            if abs(i * DT - mv["hit"]) <= 0.5:
+                worst_in = max(worst_in, a)
+            else:
+                worst_out = max(worst_out, a)
+    return worst_out, worst_in
+
+
+def third_write(style="daggers"):
+    data = json.load(open(KEYS3)) if os.path.exists(KEYS3) else {"generatedBy": "tools/art/arms_keys.py third", "dt": DT, "styles": {}}
+    data["styles"][style] = third(style)
+    with open(KEYS3, "w") as f:
+        f.write(json.dumps(data, separators=(",", ":")))
+    moves = MOVES[style]()
+    for name, r in data["styles"][style].items():
+        o, i = wrist_steps(r["bent"], moves[name])
+        print(f"  {name:10s} wrist {o:5.1f} deg a key outside the blow, {i:5.1f} in it; blade into the body "
+              f"{r['bent']['depth']:.1f} px bent, {r['straight']['depth']:.1f} straight; hand off its spot {r['bent']['miss']:.1f} px")
+    return KEYS3
+
+
+def sheet3(out, style, name, cw=260):
+    """A move in third person from behind-right and the side (bent), both blades, every half tick, beside first person."""
+    import arms_rig4 as R4
+    import arms_moves as A
+    import power_casts as PC
+    data = json.load(open(KEYS3))["styles"][style][name]
+    mv = MOVES[style]()[name]
+    wid = REVIEW[style]
+    own = f"arms_{style}_{name}"
+    base = own if own in A.BASE else f"arms_{name}"
+    _, bent = R4.make_clips(own, A.BASE[base], A.BASE[base + "_bent"], data)
+    held = held_of(style)
+    ts = [round(x, 2) for x in np.arange(0, length(mv) + 1e-6, 0.5)]
+    rows = []
+    row = []
+    for t in ts:
+        r, l = sample_move(held, mv, t)
+        im = picture(held, r, l).resize((cw, int(cw * 9 / 16)), Image.LANCZOS)
+        ImageDraw.Draw(im).text((4, 3), f"t {t:.1f}" + (" HIT" if abs(t - mv["hit"]) < 0.26 else ""), fill=(255, 200, 200))
+        row.append(im)
+    rows.append(row)
+    wr, wl = data["bent"]["wrist"], data["bent"]["wrist_left"]
+    for label, yaw, pitch in R4.VIEWS:
+        b0 = PC.strip_bounds([bent], yaw, pitch)
+        bounds = (b0[0] - 14, b0[1] + 14, b0[2] - 16, b0[3] + 6)
+        row = []
+        for t in ts:
+            im = L.figure_3p(bent, t, [(wid, "right", L.wrist_now(wr, t)), (wid, "left", L.wrist_now(wl, t))], yaw, pitch, 4.0,
+                             bounds, lower=True)
+            im.thumbnail((cw, cw * 2))
+            row.append(im)
+        rows.append(row)
+    Hs = [max(i.height for i in r) for r in rows]
+    img = Image.new("RGB", (cw * len(ts), sum(Hs) + 20), (24, 24, 28))
+    ImageDraw.Draw(img).text((6, 4), f"{style} {name}: first person, third person behind-right and side (bent)", fill=(230, 230, 230))
+    y = 20
+    for r, h in zip(rows, Hs):
+        for i, im in enumerate(r):
+            img.paste(im, (i * cw, y))
+        y += h
+    img.save(out)
+    return out
+
+
 # ---- into the game's file ------------------------------------------------------------------------------------------
 
 
@@ -565,6 +785,7 @@ def baked(data, style):
     keys), the stance the hands rest in between moves, and "by" so the lab's bake keeps it."""
     old = data["styles"][style]
     held = held_of(style)
+    keyed3 = json.load(open(KEYS3))["styles"].get(style, {}) if os.path.exists(KEYS3) else {}
     moves = {}
     for name, mv in MOVES[style]().items():
         prev = old["moves"].get(name, {})
@@ -574,9 +795,15 @@ def baked(data, style):
         if "set" in mv:
             row["set"] = mv["set"]
         row["trail"] = list(mv["trail"])
-        for k in ("swishSound", "wrist3", "wrist3s"):
-            if k in prev:
-                row[k] = prev[k]
+        if "swishSound" in prev:
+            row["swishSound"] = prev["swishSound"]
+        rig = keyed3.get(name)
+        if rig:  # third person's wrists, each arm's, from the same keys (third())
+            for key, variant in (("wrist3", "bent"), ("wrist3s", "straight")):
+                arms = {arm: rig[variant][k] for arm, k in (("right", "wrist"), ("left", "wrist_left"))
+                        if any(abs(q[3]) < 0.99995 for q in rig[variant][k])}
+                if arms:
+                    row[key] = arms
         moves[name] = row
     new = dict(old)
     new["moves"] = moves
@@ -690,6 +917,19 @@ def check(styles=("daggers",)):
                 db, Rb = _at(b_["idle"], 0)
                 if np.linalg.norm(da - db) >= 0.02 or angle(Ra, Rb) >= 3:
                     bad.append(f"{nxt}'s off hand doesn't start where it waited after {prev}")
+        for name, mv in keyed.items():  # third person's wrists: never faster than WRIST_STEP a key outside the blow
+            clip = st["moves"][name]
+            for key in ("wrist3", "wrist3s"):
+                for arm, ks in clip.get(key, {}).items():
+                    for i in range(1, len(ks)):
+                        a_ = angle(L.quat_mat(np.array(ks[i - 1])), L.quat_mat(np.array(ks[i])))
+                        if abs(i * DT - mv["hit"]) > 0.5 and a_ > WRIST_STEP + 0.5:
+                            bad.append(f"{name} {key} {arm}: the wrist turns {a_:.0f} deg in a key at {i * DT}")
+                    if abs(ks[-1][3]) < 0.9999:
+                        bad.append(f"{name} {key} {arm}: the wrist isn't square at the end")
+                    # from the hand's rest unless loosed from a draw or carried on from the chain strike before (arms_fp_swings)
+                    if row["moves"][name]["windup"] > 0 and (chain.index(name) if name in chain else -1) <= 0 and abs(ks[0][3]) < 0.9999:
+                        bad.append(f"{name} {key} {arm}: the wrist isn't square at the start")
         d, R = _at(st["moves"]["strike_1"]["keys"], row["moves"]["strike_1"]["windup"])
         if angle(R, np.eye(3)) <= 15:
             bad.append("strike_1 isn't turned into its blow on its hit")
@@ -713,6 +953,12 @@ def main(argv):
         return 0
     if argv[0] == "check":
         return 0 if check() else 1
+    if argv[0] == "third":
+        print(third_write())
+        return 0
+    if argv[0] == "sheet3":  # sheet3 OUT MOVE
+        print(sheet3(argv[1], "daggers", argv[2]))
+        return 0
     if argv[0] == "poses":  # a still of each named pose: poses OUT
         held = held_of("daggers")
         P = dagger_poses()
