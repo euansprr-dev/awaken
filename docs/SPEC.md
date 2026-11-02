@@ -16814,3 +16814,7 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   amber one won't turn; once only), `fights_duel_stance` (the Gearwright holds its script's stance through Arms; braced
   half, opening 1.5, a riposte whole), `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions),
   the Arms rules test (the finisher's 10-15%).
+- **On cue** (admin, tours): `/awaken bosses duel stage <boss>` builds a stage where you stand with the boss at its
+  middle facing a still stand-in 4 blocks south, the camera west of them; `play <move> [then ...]`, `deflect` and
+  `break` act at once (`DuelDemo`). Tour `tools/autopilot/fights-duel.txt` (on CI): each pilot's tell, recoil, reel
+  early and low, and broken stance.

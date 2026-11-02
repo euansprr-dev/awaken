@@ -67,7 +67,13 @@ final class MobsCommands {
                                 String why = dev.awaken.mobs.entity.CarrierDemo.run(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "kind"));
                                 if (why != null) c.getSource().sendFailure(Component.literal(why));
                                 return why == null ? 1 : 0;
-                            }))));
+                            })))
+                    // the duel on cue, for tours (SPEC §46.3): stage <boss>, play <move> [then ...], deflect, break
+                    .then(Commands.literal("duel").then(Commands.argument("step", StringArgumentType.word())
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(dev.awaken.mobs.entity.DuelDemo.STEPS, b))
+                            .executes(c -> duelDemo(c, ""))
+                            .then(Commands.argument("args", StringArgumentType.greedyString())
+                                    .executes(c -> duelDemo(c, StringArgumentType.getString(c, "args")))))));
             root.then(Commands.literal("mobs").then(Commands.literal("duel").executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
                 boolean ok = Mobs.acceptDuel(sp);
@@ -75,6 +81,12 @@ final class MobsCommands {
                 return ok ? 1 : 0;
             })));
         });
+    }
+
+    private static int duelDemo(com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, String args) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        String why = dev.awaken.mobs.entity.DuelDemo.run(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "step"), args);
+        if (why != null) c.getSource().sendFailure(Component.literal(why));
+        return why == null ? 1 : 0;
     }
 
     private static List<String> roles() {
