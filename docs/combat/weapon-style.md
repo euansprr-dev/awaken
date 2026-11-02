@@ -20,8 +20,14 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    plane on different texel grids (rotated over axis-aligned, or offset by half a texel): `check()` fails on it,
    because they z-fight. Give stacked parts different depths, for example chained links 3, 2, 1 deep.
 
-3. **Proportions: a longsword is about 1.2 to 1.3 times vanilla's sword (22.6 units on the diagonal), about 28
-   texels, and two thirds of that is blade.** Blades are 3 to 5 texels wide. The thin edge is 1 texel deep and the
+3. **Proportions: a longsword is about 36 texels (1.6 times vanilla's sword, 22.6 units on the diagonal; between
+   the Rapier's 33 and the Greatblade's 40, as tall in hand as the Maul), and seven tenths of that is blade (about
+   25).** (It was 28 with two thirds blade until the weapon audit, 2026-11-02: Euan, "not long enough... almost looks
+   like a small dagger... you can barely see the blade".) Its grip is 5 long (a hand and a half), its guard at most
+   11 across (wings and crowns 14) and 2 tall; the guard's ornaments stand out to the sides and climb at most 4
+   texels up the blade, never beside its root; nothing on its hilt is deeper than 5 (a stone and its frame 6), since
+   first person sees the blade from its edge and a deep hilt reads as a block beside a sliver of blade. Blades are 3
+   to 5 texels wide. The thin edge is 1 texel deep and the
    core 3. Grips are 3 by 3 and 4 or 5 long. Guards and pommels get bolder with the tier: the low tiers use bone,
    antler and a plain collar, the high tiers wings, crowns and big framed stones. The silhouette must say what the
    weapon is from its outline alone, and no two weapons may share one. The other lines:

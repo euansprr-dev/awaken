@@ -7412,7 +7412,7 @@ against it, so a vanilla item plays its designed tempo).
   noisy against his reference"). Now (2026-10-26, `tools/art/voxel.py`): **designed box construction at the player's
   own density**, 1 texel = 1 item unit (a skin pixel), each face its own chart, buried texels dropped and visible ones
   merged; the style rules every archetype follows are in `docs/combat/weapon-style.md` (density, construction from
-  bold parts and whole-angle turned boxes never staircases, a longsword about 28 texels with two thirds blade,
+  bold parts and whole-angle turned boxes never staircases, a longsword about 36 texels with seven tenths blade,
   painted bevels as one-texel bands lit toward the painted light and dark away with contact shadows at joins, three
   or four hue-shifted ramps with one dark and one warm, a few deliberate marks per part and no per-texel noise,
   stones in 45° frames standing proud with concentric painted faces, emissive by flow hilt to tip). Each weapon still
@@ -7422,6 +7422,17 @@ against it, so a vanilla item plays its designed tempo).
   texel grids (they z-fight). Review: `python3 tools/art/specs/arms_weapons.py sheet OUT.png` puts the reference beside
   every weapon in three-quarter, back, hilt close-up, first person at rest and in vanilla's hold, night and the icon
   (`docs/combat/weapons-voxel-2026-10-26.png`).
+- **The weapon audit** (Euan 2026-11-02, of the Longsword in first person: "not long enough... it almost looks like a
+  small dagger... the two blocky things at the bottom look very, very chunky, and you can barely see the blade
+  itself"; the hammer "perfect right now"): every weapon measured and graded against the Maul (session weapon-designs,
+  concept page with the grades and rules per style). The Longsword was the proof: at 28 texels it was shorter than
+  every other bladed style but the Daggers (Rapier 33, Katana 37, Greatblade 40; the Maul 36 to 43), its guard
+  ornaments climbed 5 to 8 texels up an 18-texel blade, its hilt parts were 7 to 9 deep against the blade's 3, and
+  the hold shows a blade by its edge (roll 90), so in first person the hilt read as blocks beside a sliver. Now all
+  six are about 36 texels, the blade 25 of it (y 5 to 30), the grip 5 (y -2 to 3), the guard at most 11 across (wings
+  and crowns 14) with its ornaments out to the sides and at most 4 up the blade, and nothing on the hilt deeper than 5
+  (a stone and its frame 6); each tier keeps its materials, story and motifs. The hold is unchanged (re-solved, it is
+  the same transform: the grip's point is fixed), so the baked swings are untouched.
 - **Drawn by our shader** (`arms_weapon` pipeline; `WeaponRenderer`, the `awaken:weapon` special item model): vanilla's
   two item lights partly banded (painted light, not plastic), metals reflecting a soft studio (a cool sky, a warm
   floor, a strip light), a gloss highlight, a rim of the weapon's accent, the world's light on all but what glows; a
