@@ -17340,9 +17340,9 @@ doors"). `Trials.Kind.forTarget(S)` is `PROVING`, run by `KeeperWarden` at the C
   ending in more of its glass with its light behind. Six braziers (chiselled and gilded blackstone, soul fire on top)
   stand round the floor. North stands the Court's own door, 9 wide and 15 high, banded in gold with a gold star on it and
   a bar of gold down its middle; past it a vestibule lit warm with a gilded runner, then 24 steps going down north into
-  the dark with a lamp on a post every sixth. South a stair comes down from a landing 12 up (soul lanterns along it); an
-  arch in the landing's back wall leads out into the dark (the way out). Unseen light 11 on a 6-block grid over the
-  court, 15 in the vestibule. The band a fight changes is dy 0 to 15 (the floor, the braziers, the doors).
+  the dark with a lamp on a post every sixth. South a stair comes down from a landing 12 up (soul lanterns along it) through
+  a tall arch (18 high, so from the landing you look straight across into the court); an arch in the landing's back
+  wall leads out into the dark (the way out). Unseen light 13 on a 6-block grid over the court, 15 in the vestibule. The band a fight changes is dy 0 to 15 (the floor, the braziers, the doors).
 - **The flow.** The Reading Bell's window says only "The bell has taken you four times now. It rings lower for this one.
   Go when you're ready." The bell rings low and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] THE FLOOR
   REMEMBERS YOU", then "The bell stopped."). You wake on the landing at the top of the stair (a party side by side across

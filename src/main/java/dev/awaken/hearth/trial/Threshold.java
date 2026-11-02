@@ -150,7 +150,7 @@ public final class Threshold {
                 return dy == 1 ? CHISELED : dy == 2 ? GILDED : dy == 3 ? FIRE : null;
             }
             // light the eye can't see, on a 6-block grid: the court is dim, never dark
-            if (dy == 4 && Math.floorMod(x, 6) == 3 && Math.floorMod(z, 6) == 3 && r < R - 2) return lightOf(11);
+            if (dy == 4 && Math.floorMod(x, 6) == 3 && Math.floorMod(z, 6) == 3 && r < R - 2) return lightOf(13);
             return null;
         }
         if (dy == 0) return floor(x, z, r);
@@ -294,11 +294,12 @@ public final class Threshold {
             if (dy < -4) return null;
             if (dy < 0) return dy == -1 ? POLISHED : BASE;
             if (dy == 0) return BRICKS;
-            int top = ax <= 1 ? 9 : ax == 2 ? 8 : 7;
+            // a tall arch, so from the landing you look straight across into the court
+            int top = ax <= 1 ? 17 : ax == 2 ? 16 : 15;
             if (ax <= 3 && dy <= top) return null;
             if (z < R + 1) {
                 if (ax <= 3 && dy == top + 1) return ax == 0 ? GOLD : CAPITAL;
-                if (ax == 4 && dy <= 9) return PILLAR;
+                if (ax == 4 && dy <= 15) return PILLAR;
             }
             return wall(x, dy, z, r);
         }
