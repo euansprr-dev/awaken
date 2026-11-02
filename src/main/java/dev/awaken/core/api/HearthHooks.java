@@ -51,6 +51,8 @@ public final class HearthHooks {
         default boolean study(ServerPlayer player) { return false; }
         /** Whether {@code pos} lies in an Armoury room at a Hearth: armour made at a stand there lasts a quarter longer (SPEC §27.13). */
         default boolean armoury(ServerLevel level, BlockPos pos) { return false; }
+        /** Whether {@code pos} lies in a Study room at a Hearth: an Inscribing Table there writes deeper than II (SPEC §45.5). */
+        default boolean studyAt(ServerLevel level, BlockPos pos) { return false; }
         /**
          * Moves the player's respawn point for one of our own systems; {@code lent}: a bed for the next fall only (an inn
          * room), else the point given back. The Hearth never reads either as the player choosing another bed (SPEC §28.10).
@@ -151,6 +153,11 @@ public final class HearthHooks {
     /** Whether {@code pos} lies in an Armoury room at a Hearth: armour made at a stand there lasts a quarter longer. */
     public static boolean armoury(ServerLevel level, BlockPos pos) {
         return lookup.armoury(level, pos);
+    }
+
+    /** Whether {@code pos} lies in a Study room at a Hearth: enchantments written at a table there can go deeper than II. */
+    public static boolean studyAt(ServerLevel level, BlockPos pos) {
+        return lookup.studyAt(level, pos);
     }
 
     /** An inn room: the player wakes at {@code bed} if they fall before it's given back, and at their Hearth after. */
