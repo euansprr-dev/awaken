@@ -1459,7 +1459,8 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   mod's own rewrite) is kept; `install ... --reset-configs` overwrites. The .mrpack export carries them as overrides.
 - Lens (`dev.awaken.lens`), AWAKEN's light layer: the post chains `awaken:lens_swift` (haze, bloom, grade, vignette,
   dither; five passes, three of them at 960×600 or smaller, after two one-pixel passes for the far-depth trust) and
-  `awaken:lens_cinematic` (adds light shafts). It runs
+  `awaken:lens_cinematic` (adds light shafts). The vignette starts at 0.4 of the half-height out and darkens to three
+  quarters of a look's `vignette` (Euan 2026-11-02: too dark; a 0.3 look's corners keep 82% of their light). It runs
   first in the player's post-effect list, so gameplay effects (dreams, blight, the Veil) still draw on top, and
   re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 32×1
   texture (`awaken:lens_params`), written once a frame in `ViewportEvent.RenderFog` at LOWEST priority: the look, the
