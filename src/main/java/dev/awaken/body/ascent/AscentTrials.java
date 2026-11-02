@@ -42,6 +42,7 @@ final class AscentTrials {
             public void done(ServerPlayer p, String trial, int ticks, int medal) {
                 if (TrialHooks.LEAPER.equals(trial)) leaperDone(p, ticks, medal);
                 else if (TrialHooks.SKYBORN.equals(trial)) skybornDone(p);
+                else if (TrialHooks.RINGER.equals(trial)) Ascent.grant(p, Ascent.Tier.TETHER, "the Ringer's chain"); // SPEC §46.4
             }
         });
     }

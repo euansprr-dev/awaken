@@ -33,6 +33,8 @@ final class FightRunner {
 
     /** The move playing (an index into the table, -1 none), its tick, and its stretched timings. */
     private int move = -1, t, windup, hold, active, recover;
+    /** The last attack begun (a move index), kept after it ends: what a fallen player was hit by. */
+    private int last = -1;
     private KitMoves.@Nullable Played played;
     private float yaw;
     private @Nullable Ability ability;
@@ -120,6 +122,11 @@ final class FightRunner {
     /** The move playing now, or null. */
     @Nullable String playing() {
         return move >= 0 ? moves.get(move).id() : null;
+    }
+
+    /** The last attack begun, or null. */
+    KitMoves.@Nullable Move lastAttack() {
+        return last >= 0 ? moves.get(last) : null;
     }
 
     /** The studio: every move in turn (with no target needed), then the fight as usual. */
@@ -406,6 +413,7 @@ final class FightRunner {
         active = p.active();
         recover = p.recover();
         move = i;
+        if (cls != Strikes.Kind.NONE) last = i;
         t = 0;
         hits = 0;
         yaw = boss.yBodyRot;

@@ -223,7 +223,15 @@ public final class Strikes {
         default boolean returnShot(Entity shot, Player by) {
             return false;
         }
+
+        /** The last move this body began that was an attack (its title and class), or null: what just hit you. */
+        default @Nullable Blow lastBlow(LivingEntity e) {
+            return null;
+        }
     }
+
+    /** One of a body's moves as a player meets it: its name ("Drowned Toll") and its class. */
+    public record Blow(String title, Kind kind) {}
 
     private static Duel duel = new Duel() {};
 
@@ -245,6 +253,10 @@ public final class Strikes {
 
     public static int stance(LivingEntity e) {
         return duel.stance(e);
+    }
+
+    public static @Nullable Blow lastBlow(LivingEntity e) {
+        return duel.lastBlow(e);
     }
 
     public static boolean returnShot(Entity shot, Player by) {

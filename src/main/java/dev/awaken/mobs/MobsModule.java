@@ -66,6 +66,11 @@ public final class MobsModule {
             public boolean returnShot(net.minecraft.world.entity.Entity shot, net.minecraft.world.entity.player.Player by) {
                 return shot instanceof dev.awaken.mobs.entity.AwBolt b && b.sendBack(by);
             }
+
+            @Override
+            public Strikes.@org.jspecify.annotations.Nullable Blow lastBlow(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b ? b.lastBlow() : null;
+            }
         });
         Strikes.installStaggers(MobsModule::stagger);
         Strikes.installGrounder((e, ticks) -> e instanceof AwakenMob m && m.ground(ticks));

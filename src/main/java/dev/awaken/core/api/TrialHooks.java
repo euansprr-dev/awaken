@@ -14,6 +14,8 @@ public final class TrialHooks {
     public static final String LEAPER = "awaken:leapers_gauntlet";
     /** The Sky Leviathan's trial: the Lord of the sky, fought on the wing (its edge: the arena's door). */
     public static final String SKYBORN = "awaken:sky_leviathans_trial";
+    /** The first Proving (SPEC §46.4): the Ringer beaten, its chain is the rope; {@code done} gives it. */
+    public static final String RINGER = "awaken:the_ringer";
 
     public interface Trials {
         /**

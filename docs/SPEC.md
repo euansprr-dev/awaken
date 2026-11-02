@@ -16847,3 +16847,43 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
   the moves that travel (lash 0.32, rope 0.14).
 - **No new Tasks step.** The Proving is the rank's Reassessment: the existing `progression:reassessment` step on the
   Gates and rank page covers it, so nothing names it (§43, never pre-announce).
+- **The Drowned Belfry** (`hearth.trial.Belfry`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every
+  hall (even) cell, centred 256 blocks into the cell (the box arena keeps the corner). 63 wide (walls at |x| 31), 105
+  long (z -52 to 52), roof at dy 44 on ribs at dy 40 over 3x3 pillars (x ±17, every 12 blocks). Down the middle the
+  chancel (|x| 14, z -51 to 34) is dry at dy 0 (you stand at dy 1), a runner of dark brick down its centre; the aisles
+  and the narthex inside the door are a drowned floor at dy -1 under a block of still water (you stand knee-deep at
+  dy 0), with waterlogged half-steps all round the chancel, sea lanterns under the water, drowned pews in the narthex
+  and two bells lying in the aisles. Five fallen bells (waxed copper, bronze and verdigris, mouths open) lie on the
+  chancel as cover: 4 high, they stop the Peal. Nine bells hang from the roof on chains; the Great Bell Tenor (lip
+  radius 7, a band of words round it, a clapper) hangs over the pit at z -38, lip at dy 12, on four chains. The pit
+  (radius 7, terraced a block a ring to 6 deep, a pool at the bottom) is sealed under the chancel's floor (a rosette,
+  its outer ring cracked). Light: soul lanterns on brackets off each pillar, a rose of dark prismarine round a sea
+  lantern on the north wall, and unseen light (a pool of 15 where the Ringer drops, a fill of 10 down the chancel).
+  The door (south, 5 wide, 3 high: you fit, the Ringer doesn't) opens on a stair of half-steps to a landing at dy 4,
+  lit warm (the way out).
+- **The flow** (`hearth.trial.Provings`; `Trials.Kind.PROVING`, `forTarget(D)`): the Reading Bell's window says only
+  "The Registry will measure you again, the same as on your first day. Put your hand on the bell when you're ready."
+  ("Put your hand on it" / "Not now"; no trial name, no clock, no fail-day check). The bell rings low and the Great
+  Fault `ringer` plays (practice skips it); party members within 24 blocks at level 10, not in a gate or trial, come too.
+  While it plays the hall is readied (a free hall cell; the band a fight changes, dy -1 to 4, put back; a whole hall if
+  its land was made void before the Belfry existed); then everyone wakes knee-deep inside the door facing the chancel.
+  Bells toll above every 2-4 s. The Ringer drops into the light at the chancel's middle when anyone climbs onto it (or
+  after 30 s), its arena the whole hall, +50% health a member past the first. At half its health (its "The water
+  drains" phase) the water runs off north to south, two rows a tick, toward the pit; the lid cracks at once and gives
+  way a ring every 3 ticks from the middle after 24 ticks. A fall never kills: whole again (health, fire, effects,
+  air), you wake at the door; when every member has fallen since it dropped, it goes back up (the Ringer gone, the
+  water back, the lid shut) and drops again when you climb on. The first fall says "You wake in the water by the
+  door. The stair behind you climbs out."; from the third, a Signal says plainly what keeps catching you by the class
+  of the last attack it began (`Strikes.lastBlow`, kept by `FightRunner`): white-gold, turn it aside or step out and
+  punish; amber, dodge sideways; red, dash through; a grab, dash away. On the stair's landing you've climbed out: "The
+  Reading Bell will take you back whenever you're ready", no fail day, home. Its death: the water drains if it hadn't,
+  what it left (its trophy, its drops) goes into the killer's hands at 1.5 s, at 2.5 s its chain lies across each
+  member's feet ("The Ringer's chain is lying at your feet. It's yours now.") and the Tether is given
+  (`TrialHooks.done(RINGER)` in `AscentTrials`: `Ascent.grant(TETHER, "the Ringer's chain")`, with its tip), the Tenor
+  rings free at 4.5 s, and at 15 s everyone goes home with the rank (`Progression.passReassessment`, its rank-up as any
+  other). The last member out closes the run: the hall is put back 8 rows a tick and its
+  cell freed after. In a Proving the hall can't be broken or built on (survival).
+- **The box stays** as practice: `/awaken trial dbox` (three waves, as before) until Euan has seen the Ringer.
+- Tests: `proving_ringer` (the layout's rules, then the whole flow in a hall built over the GameTest superflat, whose
+  server has no trials dimension: wake in water, the drop, a fall and its reset, the drain and the pit at half, the
+  win, rank D and the Tether, the hall put back), `hearth_trials_dimension` (D is a Proving).

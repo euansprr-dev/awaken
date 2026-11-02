@@ -325,15 +325,36 @@ happens).
   minutes without a mend; a client without the mod's channel is skipped; Lens off still plays it (the crush is extra).
 
 ### The Ringer's Great Fault
-- **Get**: the D-rank Reassessment (the waves trial, until the Ringer's hall is built) opens on the Great Fault
-  `ringer`: "[ERROR] … THAT'S NOT OUR BELL / READING · RANK ▮ · RANK ▮ · RANK ▮", the leak "it rang for you last time too",
-  then "That isn't the Registry's bell. Something else is ringing it."
-- **For**: the first Proving's surprise; it ends on the mend when the trial ends, held or not.
+- **Get**: the D-rank Reassessment (the first Proving, §46.4) opens on the Great Fault `ringer` at the Reading Bell:
+  "[ERROR] … THAT'S NOT OUR BELL / READING · RANK ▮ · RANK ▮ · RANK ▮", the leak "it rang for you last time too", then
+  "That isn't the Registry's bell. Something else is ringing it."; the world comes back in the Drowned Belfry.
+- **For**: the first Proving's surprise; it ends on the mend when the Proving ends, held or not.
 - **Know**: it comes unannounced, the first break since the awakening.
-- **Source**: `hearth.trial.Trials.begin` / `end`.
-- **Links**: Faults; raids (D rank opens them).
-- **Edges**: practice runs and every later D attempt play it as a plain Fault; the first wave waits for the screen to
-  come back; the Ringer itself (the Drowned Belfry, the Tether, the Tenor) is GOALS part 2's Proving, not built here.
+- **Source**: `hearth.trial.Provings.ring` / `end`.
+- **Links**: Faults; the Ringer; raids (D rank opens them).
+- **Edges**: every later D attempt plays it as a plain Fault (each key plays great once); practice runs skip it; the
+  hall is readied while it plays, and you wake in it as the screen comes back.
+
+### The Ringer (the first Proving, §46.4)
+- **Get**: at level 10, the Reading Bell's D-rank Reassessment ("The Registry will measure you again, the same as on
+  your first day"; "Put your hand on it"). Nothing names the Ringer, its hall or its gift before you meet it. You wake
+  knee-deep inside the Drowned Belfry's door (a flooded nave of hanging bells in `awaken:trials`, one per hall cell);
+  bells toll above you; the Ringer drops into the light when you climb onto the chancel (or after 30 s).
+- **For**: D rank (and with it the Tenor, through the rank: the bells' part), the Tether (its chain, at your feet), and
+  its trophy for your Hall (the boss trophy every Lord leaves, put in your hands before you leave).
+- **Know**: a duel (§46.3): white-gold blows told 0.8 s, amber and red; the fallen bells on the chancel block its Peal;
+  at half its health the water drains toward the pit and the floor over the pit gives way under the Tenor.
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.Belfry` (the hall, built by `TrialChunkGenerator`), the
+  Ringer's kit `proving_ringer` (`mobs`), the Tether through `TrialHooks.done(RINGER)` (`body.ascent.AscentTrials`).
+- **Links**: the Great Fault; Ascent (the Tether moves here from the vaults' Vow, which a D-rank player now holds);
+  the bells (the Tenor rings with the rank); trophies; parties (members within 24 blocks at level 10 come too, +50% of
+  its health each).
+- **Edges**: a fall never kills: you wake at the door, whole; all of a party down and it starts over (water back, floor
+  shut); from the third fall the Signal says plainly what keeps catching you, by the colour of the blow; the stair out
+  of the door is the way out (the Ringer doesn't fit the door), with no fail day: "The Reading Bell will take you back
+  whenever you're ready"; the hall can't be broken or built on while you're in it, and is put back before its cell is
+  used again (a hall cell generated void before the Belfry existed is built while the bell rings); `/awaken trial
+  dbox` keeps the old box of three waves as practice until Euan has seen the Ringer.
 
 ### Raids (the first Big Day)
 - **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):

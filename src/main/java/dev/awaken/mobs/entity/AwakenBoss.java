@@ -205,6 +205,15 @@ public class AwakenBoss extends AwakenMob {
         return f != null ? f.playing() : null;
     }
 
+    /** The last attack its fight script began (title and class), or null (SPEC §46.4: the Signal names what felled you). */
+    public dev.awaken.core.api.Strikes.@Nullable Blow lastBlow() {
+        FightRunner f = fight;
+        var m = f != null ? f.lastAttack() : null;
+        if (m == null) return null;
+        String title = !m.title().isEmpty() ? m.title() : m.ability().orElse(m.id());
+        return new dev.awaken.core.api.Strikes.Blow(title, m.kind());
+    }
+
     /** It fights as a duel (SPEC §46.3): phrases, openings, recoils; at most {@link #DUEL_ADDS} of its adds alive. */
     public boolean duel() {
         FightRunner f = fight();
