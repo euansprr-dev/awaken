@@ -156,8 +156,9 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         KitBlend blend = blends.computeIfAbsent(mob, k -> new KitBlend());
         int start = boss.kitStart();
         int mv = boss.kitMove();
-        // the body's clock: game time, stopped while a hit pause holds (per move, so the next move starts true)
-        float real = mob.level().getGameTime() + partialTicks;
+        // the body's clock: the server's (ServerPace: in a stall it holds with the server, never showing a blow early),
+        // stopped while a hit pause holds (per move, so the next move starts true)
+        float real = ServerPace.now(mob.level(), partialTicks);
         if (blend.pausedFor != start) {
             blend.pausedFor = start;
             blend.paused = 0;

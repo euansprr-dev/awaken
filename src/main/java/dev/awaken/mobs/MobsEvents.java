@@ -28,6 +28,16 @@ final class MobsEvents {
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLevelUnload);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onServerStopped);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLogout);
+        dev.awaken.mobs.entity.FightWatch.init();
+        // every kit body (rigs, move tables, fight scripts) read once while the game loads, off the main thread: read
+        // when the first boss of a session appeared, it stalled that tick 91 ms (fights_tick_cost, SPEC §46.1)
+        modBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent e) -> {
+            Thread t = new Thread(dev.awaken.mobs.boss.Kits::all, "awaken-kits");
+            t.setDaemon(true);
+            t.start();
+        });
+        // and before a world ticks, waited for if it isn't done (all() is synchronized)
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerAboutToStartEvent e) -> dev.awaken.mobs.boss.Kits.all());
     }
 
     private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
@@ -46,7 +56,9 @@ final class MobsEvents {
     }
 
     private static void onLevelTick(LevelTickEvent.Post event) {
+        long t0 = System.nanoTime();
         Hazards.tick(event.getLevel());
+        if (!event.getLevel().isClientSide()) dev.awaken.mobs.entity.FightWatch.hazards(System.nanoTime() - t0);
     }
 
     private static void onLevelUnload(LevelEvent.Unload event) {

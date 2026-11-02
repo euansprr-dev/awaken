@@ -32,8 +32,9 @@ import java.util.Set;
 /**
  * What a fight costs the server (docs/fights/PLAN.md §2.6, the late-hits audit): a real survival player stands in a
  * walled-off floor while a boss, a pack, or both fight it, and every server tick is timed. The busiest case is also run
- * under the server's own section profiler. A measurement, not a pass/fail check: it writes
- * {@code fights-tick-cost.txt} and {@code fights-tick-profile.txt} in the server's folder and logs the table.
+ * under the server's own section profiler. It writes {@code fights-tick-cost.txt} and {@code fights-tick-profile.txt}
+ * in the server's folder, logs the table, and holds the budget (SPEC §46.1, invariant I10): a boss and 12 monsters
+ * under {@link #BUDGET_MS} a tick on average (three times that on CI's runners).
  */
 public final class FightCostTests {
     private FightCostTests() {}
@@ -42,6 +43,7 @@ public final class FightCostTests {
     static final int PHASE = 200, SETTLE = 40;
     static final String[] BOSSES = {"mother_of_spores", "signals_shadow", "drowned_archivist", "gearwright_colossus", "bell_warden"};
     static final int PACK = 12;
+    static final double BUDGET_MS = 5;
 
     record Phase(String name, List<String> bosses, int pack, boolean profile) {}
 
@@ -60,18 +62,21 @@ public final class FightCostTests {
 
         List<Phase> phases = new ArrayList<>();
         phases.add(new Phase("the player alone", List.of(), 0, false));
-        for (String b : BOSSES) phases.add(new Phase(b, List.of(b), 0, false));
+        // the first boss is profiled too: whatever is still read or built when a session's first boss appears shows there
+        for (String b : BOSSES) phases.add(new Phase(b, List.of(b), 0, b.equals(BOSSES[0])));
         phases.add(new Phase(PACK + " gate monsters", List.of(), PACK, false));
         phases.add(new Phase("mother_of_spores + " + PACK + " gate monsters", List.of("mother_of_spores"), PACK, true));
         List<MobDef> normals = Bestiary.all().stream().filter(d -> d.tier == Tier.NORMAL).sorted(Comparator.comparing(d -> d.id)).toList();
 
         List<Mob> fighters = new ArrayList<>();
         List<String> rows = new ArrayList<>();
+        double[] busiest = {0};
         long[] times = new long[PHASE];
         int[] packets = new int[PHASE];
         Map<String, Integer> kinds = new HashMap<>();
         int[] at = {-1, 0}; // phase, tick in it
-        ProfileResults[] profile = {null};
+        ProfileResults[] profile = {null, null};
+        long[] spawnNanos = new long[1];
         BlockPos lo = h.absolutePos(new BlockPos(-14, 0, -14)), hi = h.absolutePos(new BlockPos(14, 12, 14));
 
         h.onEachTick(() -> {
@@ -88,7 +93,9 @@ public final class FightCostTests {
             for (Mob m : fighters) if (m.isAlive()) m.setTarget(p);
             if (phase >= 0 && phase < phases.size() && t == PHASE) {
                 rows.add(row(phases.get(phase), times, packets, kinds, fighters.size()));
+                if (phases.get(phase).profile()) busiest[0] = Arrays.stream(times, SETTLE, PHASE).average().orElse(0) / 1e6;
                 if (phases.get(phase).profile()) server.finishRecordingMetrics();
+                if (phase == 1) rows.add(String.format(java.util.Locale.ROOT, "  (its spawn took %.2f ms)", spawnNanos[0] / 1e6));
                 fighters.forEach(Mob::discard);
                 fighters.clear();
                 AwakenTests.clearEntities(level, lo, hi.above(20));
@@ -100,12 +107,18 @@ public final class FightCostTests {
             if (phase < 0 || (phase < phases.size() && t == 0)) {
                 if (phase < 0) at[0] = phase = 0;
                 Phase ph = phases.get(phase);
+                if (ph.profile()) {
+                    int slot = phase == phases.size() - 1 ? 0 : 1;
+                    server.startRecordingMetrics(r -> profile[slot] = r, path -> {});
+                }
+                long s0 = System.nanoTime();
                 for (int i = 0; i < ph.bosses().size(); i++) {
                     MobDef def = Bestiary.get(ph.bosses().get(i));
                     Mob m = Mobs.spawn(level, def, h.absoluteVec(new Vec3(0.5, 1, 9.5)), 10,
                             new MobRole(MobRole.Role.BOSS, 10, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
                     if (m != null) fighters.add(m);
                 }
+                if (phase == 1) spawnNanos[0] = System.nanoTime() - s0;
                 for (int i = 0; i < ph.pack(); i++) {
                     MobDef def = normals.get((i * 7) % normals.size());
                     double a = Math.PI * 2 * i / ph.pack();
@@ -113,7 +126,6 @@ public final class FightCostTests {
                             new MobRole(MobRole.Role.NORMAL, 10, def.theme.id, Optional.empty(), ""), Set.of());
                     if (m != null) fighters.add(m);
                 }
-                if (ph.profile()) server.startRecordingMetrics(r -> profile[0] = r, path -> {});
             }
             if (phase < phases.size()) {
                 at[1]++;
@@ -125,7 +137,10 @@ public final class FightCostTests {
             System.out.println("[fights_tick_cost]\n" + table);
             write(server.getServerDirectory().resolve("fights-tick-cost.txt"), table);
             if (profile[0] != null) write(server.getServerDirectory().resolve("fights-tick-profile.txt"), profile[0].getProfilerResults());
+            if (profile[1] != null) write(server.getServerDirectory().resolve("fights-first-boss-profile.txt"), profile[1].getProfilerResults());
             live.leave();
+            h.assertTrue(busiest[0] < AwakenTests.cpuBudget(BUDGET_MS), String.format(java.util.Locale.ROOT,
+                    "a boss and %d monsters cost %.2f ms a tick (budget %.1f)", PACK, busiest[0], AwakenTests.cpuBudget(BUDGET_MS)));
             h.succeed();
         });
     }

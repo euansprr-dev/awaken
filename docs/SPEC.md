@@ -16611,3 +16611,53 @@ settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour 
 - **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
   set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
   III within the hour, IV in about two hours and V in about four.
+
+## 46. Fights worth winning (bosses, beasts and the Provings; plan docs/fights/PLAN.md, page https://claude.ai/artifact/3YkJKH1GwpQdZx6notb19E; Euan approved all recommendations 2026-11-02: "go ahead with all recommendations. Just do it ALL at the best of your ability AAA level, then I will test.")
+
+Modules `mobs` (boss and creature attacks, fight scripts, carriers, the Provings' Wardens), `arms` (the player's side:
+the hit at once, dodge, deflect, posture, the finisher) and `progression` (the Provings' halls replacing the box
+trials). The plan's invariants I1-I10 (PLAN §4.9) are enforced by the tests named in each part. Built in stages 0-5
+(PLAN §6); this section grows with each.
+
+**46.1 Hits land now (stage 0).** Euan 2026-11-02: "sometimes there is server lag when fighting and hits don't hit
+right away". Measured (`fights_tick_cost`, PLAN §2.6): fight code costs the server 1.7 ms a tick in a busy fight, but
+the player's impact waited for the server's HIT reply (0-67 ms behind the blade on a healthy server, any stall in
+full), one 91 ms stall came when the first boss of a session appeared, and boss clips ran on the client's clock (ahead
+of their blows in a stall).
+- **The hit at once** (I9). `ArmsRules.sweeps` is the server's sweep rule (reach to the box from the eye, the arc
+  around the look turned to the focus, the band of height; the meant creature by its step-in reach, any arc, any
+  height), called by `ArmsServer.sweep`. The client asks the same rule each frame of a move's active window
+  (`ArmsPredict.predictHits`) through `ArmsRules.predicts`: `PREDICT_REACH` 0.25 blocks and `PREDICT_ARC` 12° inside the
+  server's, over hostiles only (`Enemy`, never a person, an `Npc`, one's own or an invulnerable body; the press's meant
+  creature by the server's `Aim.meantId` check with `ArmsRules.pressReach`). A creature it strikes plays at once
+  exactly as the server's HIT would: the impact sound, sparks, the struck body's recoil and freeze, the hands' hold and
+  bite, the view's kick, the stance's flinch, with the server's freeze rule (one per `HITSTOP_GAP`, grown per extra
+  body) and the blow's push, lift and side worked out the server's way. The client keeps the sweep's focus as the server
+  does (the last body struck, else the press's; dropped after `FOCUS_DROP_TICKS` looking away).
+- **The server's word** stays final on damage. `HitLedger` (32 slots, no allocation) holds each (press seq, body) the
+  client played; the server's HIT for one adds only what the client couldn't know: a kill (the freeze held for what's
+  left of the kill's beat, the body's fall the way the blow went via `ArmsRecoil.killed`, the kill's sound and flare,
+  the fight-over moment) and a cleave's ring. A HIT the client didn't play is played as before and put in the ledger,
+  so that body isn't played again in that move. A blow played but never confirmed in `HitLedger.LIFE` (40 ticks) is
+  counted as shown without damage; the counts are logged when the player leaves the world
+  (`[arms] blows played at once N, confirmed by the server M, shown without damage K`).
+- **The lag watch** (`mobs.entity.FightWatch`). While a creature fought a player in the last 100 ticks, a server tick
+  over 50 ms logs one line (at most one a second): its length; ours timed (the bosses' fight scripts, the creatures'
+  abilities, the hazards); the garbage collector's pauses in it; chunks loaded; an autosave; entities; and the rest.
+  `[fights] slow tick 91.0 ms in a fight: ours 3.2 ms (...); garbage collection 0 ms; chunks loaded +12; ...`.
+- **The first-boss stall**: `Kits.all()` (every kit body's rig, move table and fight script) was read when the first
+  boss of a session appeared. It is read on a background thread at common setup and waited for at
+  `ServerAboutToStartEvent` (it is synchronized). Measured: the first boss's worst tick fell from 91 to 32 ms (its spawn
+  8 ms; the rest is code running for the first time, spread through its AI in `fights-first-boss-profile.txt`), under
+  a tick, and every later boss under 8 ms.
+- **Boss swings at the server's pace.** While a boss fights (a player target, or a move playing), players within 96
+  blocks get `mobs_pace` (the level's game time, a VAR_LONG) at the end of each server tick (`mobs.net.MobsNet`). The
+  kit renderer's body clock is `ServerPace.now`: the last pace plus the time since it came, at most one tick past it,
+  never backwards; the game clock when no pace came for 3 s. In a stall the boss holds where the server is.
+- **The budget** (I10): `fights_tick_cost` fails when a boss and 12 monsters cost over 5 ms a tick on average
+  (`AwakenTests.cpuBudget`: 15 on CI).
+- Test `arms_hit_now`: over every move of every style, 3,000 bodies placed around the reach and arc, every one the
+  client plays is one the server's sweep strikes, and moved up to 0.35 blocks with the look turned up to 5° (a tick
+  and a ping later) under 2% are missed (measured 1.2%); at least 60% of the server's hits are played at once (79%);
+  the ledger plays each blow once and counts the unconfirmed; a real strike on a zombie the client plays lands on the
+  server.

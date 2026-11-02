@@ -229,9 +229,7 @@ final class ArmsServer {
      * blade's growth over a full chain, and the step in.
      */
     static double pressReach(Archetypes.Loaded style) {
-        float most = 0;
-        for (Archetype.MoveDef d : style.moves().values()) most = Math.max(most, d.art().isPresent() ? Math.max(d.reach(), d.art().get().range()) : d.reach());
-        return most + 0.3 + style.def().traits().reachPerStep() * 5 + Aim.stepIn(style.id());
+        return ArmsRules.pressReach(style);
     }
 
     /** A chain's first strike or a heavy steps in toward the meant creature (SPEC §40); the rest strike where they stand. */
@@ -392,11 +390,8 @@ final class ArmsServer {
             boolean aimed = t.getId() == s.aimed;
             if (!aimed && !foe(p, t)) continue;
             boolean meant = aimed && !(t instanceof Player);
-            Vec3 c = t.getBoundingBox().getCenter();
-            if (Aim.gap(eye, t.getBoundingBox()) > (meant ? meantReach : reach)) continue;
-            float toward = (float) (Mth.atan2(c.z - p.getZ(), c.x - p.getX()) * Mth.RAD_TO_DEG) - 90F;
-            if (!aimed && !ArmsRules.inArc(toward - yaw, def.arc())) continue;
-            if (!meant && (t.getBoundingBox().maxY < p.getY() - 1.0 || t.getBoundingBox().minY > p.getEyeY() + 1.5)) continue;
+            // the one rule the client's prediction asks too (ArmsRules.sweeps; SPEC §46.1)
+            if (!ArmsRules.sweeps(eye, p.getY(), t.getBoundingBox(), yaw, def.arc(), meant ? meantReach : reach, aimed, meant)) continue;
             s.markHit(t.getId());
             hit(p, s, def, t, now);
         }
