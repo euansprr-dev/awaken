@@ -23,6 +23,7 @@ public final class AnvilModule {
         WarAnvil.init();
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> WarAnvil.forget(e.getEntity().getUUID()));
         registerCommands();
+        WeaponGoals.register();
         AnvilTests.register();
     }
 

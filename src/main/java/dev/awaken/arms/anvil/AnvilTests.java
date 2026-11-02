@@ -2,6 +2,7 @@ package dev.awaken.arms.anvil;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.api.CoreApi;
+import dev.awaken.core.api.Goals;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.hearth.Upgrades;
 import dev.awaken.progression.Progression;
@@ -26,6 +27,48 @@ final class AnvilTests {
 
     static void register() {
         AwakenTests.register("arms_anvil_song", 40, AnvilTests::song);
+        AwakenTests.registerIsolated("arms_anvil_goals", 100, AnvilTests::goals);
+    }
+
+    /**
+     * The Weapons tab from your awakening (SPEC §46.4): a new hunter sees "Set up a War Anvil" with its recipe and "Forge
+     * your first weapon", off the main path until D-rank and on it from there; an anvil set down drops the first step and
+     * points the second at it; broken, the first comes back; one weapon forged and both are gone.
+     */
+    private static void goals(GameTestHelper h) {
+        AwakenTests.Live live = AwakenTests.survivalPlayer(h, "anvil-goals", BlockPos.ZERO);
+        AwakenTests.onEnd(h, live::leave);
+        ServerPlayer p = live.player();
+        Progression.awaken(p);
+        p.getInventory().clearContent();
+        Goals.Step anvil = step(p, WeaponGoals.ANVIL), first = step(p, WeaponGoals.FIRST);
+        h.assertTrue(anvil != null && anvil.goal() == Goals.Goal.WEAPONS && anvil.needs().size() == 3 && !anvil.ready(),
+                "a new hunter's Weapons tab says to set up a War Anvil, with what it takes: " + keys(p));
+        h.assertTrue(first != null && first.goal() == Goals.Goal.WEAPONS && first.path() == Goals.NO_PATH && !first.ready(),
+                "and to forge a first weapon, off the main path before D-rank: " + keys(p));
+        while (Progression.rank(p).ordinal() < Rank.D.ordinal()) Progression.passReassessment(p);
+        h.assertTrue(step(p, WeaponGoals.ANVIL).path() == Goals.PATH_WAR_ANVIL && step(p, WeaponGoals.FIRST).path() == Goals.PATH_FIRST_WEAPON,
+                "from D-rank both are on the main path, the anvil first");
+        BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+        h.getLevel().setBlockAndUpdate(at, AnvilContent.ANVIL.get().defaultBlockState());
+        AnvilContent.ANVIL.get().setPlacedBy(h.getLevel(), at, h.getLevel().getBlockState(at), p, ItemStack.EMPTY);
+        first = step(p, WeaponGoals.FIRST);
+        h.assertTrue(step(p, WeaponGoals.ANVIL) == null && first != null && first.where().equals(java.util.Optional.of(at)),
+                "an anvil set down: its step is done and the first weapon's points at it: " + keys(p));
+        h.getLevel().removeBlock(at, false);
+        h.assertTrue(step(p, WeaponGoals.ANVIL) != null, "the anvil broken: setting one up is a step again");
+        Progression.count(p, WeaponGoals.FORGED);
+        h.assertTrue(step(p, WeaponGoals.ANVIL) == null && step(p, WeaponGoals.FIRST) == null, "a weapon forged: both are done: " + keys(p));
+        h.succeed();
+    }
+
+    private static Goals.@org.jspecify.annotations.Nullable Step step(ServerPlayer p, String key) {
+        for (Goals.Step s : Goals.all(p)) if (s.key().equals(key)) return s;
+        return null;
+    }
+
+    private static java.util.List<String> keys(ServerPlayer p) {
+        return Goals.all(p).stream().map(Goals.Step::key).toList();
     }
 
     /**

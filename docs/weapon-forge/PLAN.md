@@ -271,10 +271,14 @@ tempers at the Forge. Oren still tempers anything for you when you ask him (he b
 - **The Armoury room** (`RoomType.FITTING`) is where both forges live. A War Anvil there is the room's weapon half
   (`Furniture.WAR_ANVIL`, appended). Its gift matches the armour's: a weapon finished at a War Anvil in your Armoury
   lasts a quarter longer.
-- **The Weapons tab gets steps** (`arms.anvil.WeaponGoals`, through `core.api.Goals`): "Set up a War Anvil in your
-  Armoury" once you know a style beyond your issued one; "Forge your first weapon" (its choices: the styles you know,
-  each with what it still takes); "Make your D-rank weapon" when a tier opens; "Temper it" as an optional step when your
-  Forge allows more. A done step never shows (SPEC 27.12).
+- **The Weapons tab gets steps** (`arms.anvil.WeaponGoals`, through `core.api.Goals`; moved up to stage 1 on Euan's ask
+  of 2026-11-02, "Make sure this is also part of the quests/things to build so you actually know this is possilbe in the
+  K menu"). Stage 1: "Set up a War Anvil" (its recipe) and "Forge your first weapon" (D-rank, a Forge by your anvil, the
+  Longsword's materials), from your awakening, on the main path from D-rank after the Forge (`PATH_WAR_ANVIL`,
+  `PATH_FIRST_WEAPON`). Stage 2: the first weapon's choices become the styles you know, each with what it still takes;
+  "Make your D-rank weapon" when a tier opens. Stage 3: "Temper it" as an optional step when your Forge allows more, and
+  Reforge. A done step never shows (SPEC 27.12). New Blueprints and Marks go into the Journal's catalogue through its
+  existing hooks when stages 2 and 3 add them.
 - **The Now line** says "You can forge Beastbound Daggers at your War Anvil" (it replaces GearNow's "at a crafting
   table" for blades).
 - **Words**: the level road's E step says weapons are made at a War Anvil; Hale adds one line to his issue ("When you
@@ -385,8 +389,8 @@ home, in the Hive Regent's colour, its sigil glowing in the steel, and it keeps 
 
 | Stage | Scope | Effort | Gate |
 |---|---|---|---|
-| **1 · The first weapon at the War Anvil** | the block (model, renderer, recipe, ledger), the D scene for **one weapon (the Beastbound Longsword)** with your hands, hammer and tongs, the weapon shader's heat and draw-out, sparks and steam, sounds from the forge kit for now, `arms_anvil_song`, a CI tour shooting every beat | 4-6 h | **Euan looks at the shots** and says yes or what to change, before stage 2 |
-| **2 · Every weapon at the anvil** | the cost table and the grid recipes removed; the 16 rhythms; E knap and bind; quality, memory, flaws, helpers; the story; `core.api.ForgeHooks` (§4.9); the list's door; patterns taught on use; the Hearth room, Tasks steps, Now line, Hale's and the level road's words; JEI's War Anvil page; ledger rows; old saves; the smith's third-person pose | 5-7 h | CI green; one tour (E and three styles) |
+| **1 · The first weapon at the War Anvil** | the block (model, renderer, recipe, ledger), the D scene for **one weapon (the Beastbound Longsword)** with your hands, hammer and tongs, the weapon shader's heat and draw-out, sparks and steam, sounds from the forge kit for now, the Weapons tab's first two steps (set up a War Anvil, forge your first weapon; SPEC §46.4), `arms_anvil_song`, `arms_anvil_goals`, a CI tour shooting every beat | 4-6 h | **Euan looks at the shots** and says yes or what to change, before stage 2 |
+| **2 · Every weapon at the anvil** | the cost table and the grid recipes removed; the 16 rhythms; E knap and bind; quality, memory, flaws, helpers; the story; `core.api.ForgeHooks` (§4.9); the list's door; patterns taught on use; the Hearth room, the rest of the Tasks steps, Now line, Hale's and the level road's words; JEI's War Anvil page; ledger rows; old saves; the smith's third-person pose | 5-7 h | CI green; one tour (E and three styles) |
 | **3 · Temper, attune, reforge** | the three short scenes; the Forge's weapon paths point here; Lord-forged reforged in its colour | 3-4 h | CI green |
 | **4 · The ranks' acts** | grind, balance, twist (with the ripples), starlight | 4-5 h | CI green; one tour |
 | **5 · Sound and finish** | the anvil's own sound kit and a listening page for Euan; enchanting's card line if it wants one; reduced motion (glides become cuts); pacing check | 3-4 h | Euan's ear; the full suite on CI |
@@ -399,7 +403,8 @@ and late heat; strikes on and off the beat; the quench; quality and the capped T
 when the anvil breaks), `arms_anvil_costs` (every weapon costs its old recipe minus the Blueprint; a carried blade stands
 in; no weapon grid recipe left), `arms_anvil_hand` (E knap and bind), `arms_anvil_memory`, `arms_anvil_temper` (one heat
 to the cap; Oren's Mark), `arms_anvil_attune`, `arms_anvil_reforge` (Marks, Art, name and attunement kept; Lord-forged +1),
-`arms_anvil_verbs` (the four acts and the tenth rule), `arms_anvil_goals` (the Weapons steps; a done one never shows),
+`arms_anvil_verbs` (the four acts and the tenth rule), `arms_anvil_goals` (the Weapons steps from awakening; a done one
+never shows; built in stage 1, grown with each stage),
 `journey_ledger`. Retired or updated: `arms_recipe_unlock` (no weapon recipes), `arms_armoury` and `arms_raise` (needs
 from the cost table).
 

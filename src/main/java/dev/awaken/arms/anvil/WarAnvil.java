@@ -216,6 +216,7 @@ public final class WarAnvil {
         List<ItemStack> taken = p.isCreative() ? List.of() : take(p, cost);
         AnvilWork w = AnvilWork.fresh(WEAPON, level.getGameTime(), taken, p.getUUID(), fire);
         AT.put(p.getUUID(), be.getBlockPos());
+        SmithMemory.of(p).at(level.dimension(), be.getBlockPos());
         be.setWork(w);
         level.playSound(null, fire, AnvilContent.BELLOWS.get(), SoundSource.BLOCKS, 0.9F, 1F);
         AwakenNet.send(p, new AnvilPayloads.Open(be.getBlockPos()));

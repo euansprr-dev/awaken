@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -89,6 +90,13 @@ public class WarAnvilBlock extends BaseEntityBlock {
     @Override
     public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(type, AnvilContent.ANVIL_BE.get(), WarAnvilBlockEntity::serverTick);
+    }
+
+    /** Whoever sets it down is its smith on the Weapons tab (SPEC §46.4). */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity by, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, by, stack);
+        if (by instanceof ServerPlayer sp) SmithMemory.of(sp).at(level.dimension(), pos);
     }
 
     @Override

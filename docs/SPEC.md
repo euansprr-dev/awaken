@@ -8161,7 +8161,8 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   Armour, Weapons, Bells, Gates and rank, Out there), each with its needs (an item, a tag or a condition, have and
   need), a place, a place on the main path, optional or not, choices (the armour sets) and the Now suggestions it
   covers. The main path: start 0, the fire 10, a first room 20, the Armoury 30, the first armour 40, the first gate 50
-  (for its Lord's Heart), the Anchor 55, the Forge 60, the trial 70. An optional upgrade (the Sanctuary) is never on top.
+  (for its Lord's Heart), the Anchor 55, the Forge 60, a War Anvil 62 and the first weapon forged on it 64 (§46.4), the
+  trial 70. An optional upgrade (the Sanctuary) is never on top.
 - **The book** (`tasks.TaskBook`, cached 10 ticks): every module's steps and every Now suggestion (`tasks.NowMap` maps a
   suggestion to its goal and place on the path by its id: `kin:` and `request:` go to the Hearth) as one list, one row
   per key (two of one key: the one with more needs or choices, the place from either), nothing a goal step covers twice.
@@ -16697,6 +16698,23 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
   of the texel's luminance) and the faces turned from the light glow less, so the work reads as a shaped blade.
 - The result card stands to the left of the weapon in the stone, so the weapon stays in view while you draw it.
 
-Test (one per mechanism): `arms_anvil_song` (a D forge judged by the server's clock: early, gold and late heat; strikes
+**46.4 The Weapons tab (stage 1; Euan 2026-11-02: "Make sure this is also part of the quests/things to build so you
+actually know this is possilbe in the K menu").** `WeaponGoals` gives the Tasks page (§27.13) two steps under Weapons,
+from your awakening until you've forged a weapon (the progression counter `awaken:weapon_forged`):
+- **Set up a War Anvil** (`arms/war_anvil`): its recipe's three rows (or the anvil itself when you carry one); why: it
+  forges weapons by hand, Plain to Flawless, set within 6 blocks of the Hearth's Forge. Gone once you've set one down or
+  begun a forging at one; back if that anvil is broken (checked where its chunk is loaded).
+- **Forge your first weapon** (`arms/first_weapon`): needs D-rank, "A War Anvil by the Forge" (the Forge in reach of your
+  anvil, read at most every two seconds) and the Beastbound Longsword's materials (a carried blade stands in for its own);
+  it points at your anvil. Gone once you've forged one.
+- Both are on the main path from D-rank (`Goals.PATH_WAR_ANVIL` 62, `PATH_FIRST_WEAPON` 64, after the Forge 60), off it
+  before. Where your anvil is: player attachment `awaken:anvil_smith` (`SmithMemory`, schemaVersion 1, kept through
+  death: the last War Anvil you set down or began a forging at). Stage 2 adds the next steps (your rank's weapon, the
+  styles you know as choices), stage 3 tempering and reforging; Blueprints and Marks go into the Journal's catalogue
+  when those stages add them.
+
+Test (one per mechanism): `arms_anvil_goals` (a new hunter sees both steps on the Weapons tab, off the path until D and on
+it from D; an anvil set down drops the first and points the second at it; broken, the first comes back; a weapon forged
+drops both). `arms_anvil_song` (a D forge judged by the server's clock: early, gold and late heat; strikes
 on and off the beat; the quench soft, true and brittle; quality and the capped Temper; materials taken, and given back
 when the anvil breaks; the weapon stands in the slot and is drawn).
