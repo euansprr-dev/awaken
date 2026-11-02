@@ -815,7 +815,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
-    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §47.5)
     mv = [bite(r), lasso(r), drop(r), web(r), lash(r), hatch(r), walls_open(r), thousand(r), wake(r)]
     for m in mv:
         stage_clips(r, m)
@@ -846,7 +846,7 @@ MOVE_SOUNDS = {"web": {"swing": "cast"}, "hatch": {"swing": "roar", "impact": ""
                "wake": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 300,
     "intro": {"pose": "idle", "move": "wake"},  # it lies flat; a shiver runs up its legs and it rises

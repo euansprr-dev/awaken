@@ -274,7 +274,7 @@ final class GateBestiary {
                 .phase(0.66F, "Countdown: three.", a(SUMMON, "Deploy Coils").summon("coil_unit").n(2), a(RAIN, "Orbital Mark").n(4).bolt(BoltKind.CHARGE), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Countdown: zero.", a(BURST, "Zero Point").radius(14).inner(3.5F).bolt(BoltKind.CHARGE).heavy(), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE), a(BLINK, "Phase Step"))
                 .parts(P("zero_core", "Zero Core", "signal"), P("zero_plating", "Zero Plating", "precursor")).build());
-        // the Provings' Wardens (SPEC §46.4): one great fight each Reassessment, in a hall built for it, never announced
+        // the Provings' Wardens (SPEC §47.4): one great fight each Reassessment, in a hall built for it, never announced
         out.add(m("proving_ringer", "The Ringer", Theme.BELL, Tier.PROVING, Model.HUMAN, "A bell-ringer that drowned at its ropes and kept ringing")
                 .hp(420).dmg(1.4).spd(0.27).scale(2.0F).size(0.6F, 2.0F).bar(BossBarColor.BLUE).arena(40)
                 .intro("Something up in the bells is swinging them.")
@@ -283,7 +283,7 @@ final class GateBestiary {
                 .phase(0.5F, "The water drains.", a(SLAM, "Clang").radius(5), a(BURST, "Drowned Toll").radius(12).inner(2.5F).power(2.0F).wind(22).heavy(),
                         a(BOLT, "Peal").n(1).bolt(BoltKind.SPIRIT))
                 .build());
-        // the second (SPEC §46.6): it fights the way you do; its shots wear your power's look (FightRunner.yours)
+        // the second (SPEC §47.6): it fights the way you do; its shots wear your power's look (FightRunner.yours)
         out.add(m("proving_examiner", "The Examiner", Theme.MIRROR, Tier.PROVING, Model.HUMAN, "The Registry's examiner, with your face where its own should be")
                 .hp(437).dmg(1.8).spd(0.28).scale(2.1F).size(0.6F, 2.0F).bar(BossBarColor.WHITE).arena(40)
                 .intro("That was never your room.")
@@ -294,7 +294,7 @@ final class GateBestiary {
                 .phase(0.33F, "The walls close in.", a(SLAM, "The Measure").radius(5.5F), a(BOLT, "Reading").n(1), a(FANGS, "Verdict").n(16),
                         a(DECOY, "Reflections").n(2))
                 .build());
-        // the third (SPEC §46.7): the Broken Span's north arm, stood up; the bastion's ring gives way under it, then the lamps go
+        // the third (SPEC §47.7): the Broken Span's north arm, stood up; the bastion's ring gives way under it, then the lamps go
         out.add(m("proving_unmade", "The Unmade", Theme.FOUNDRY, Tier.PROVING, Model.HUMAN, "The Broken Span's north arm, stood up and walking")
                 .hp(480).dmg(2.6).spd(0.25).kb(1.0).scale(3.0F).size(0.8F, 2.0F).bar(BossBarColor.PURPLE).arena(40)
                 .intro("The bridge is standing up.")
@@ -303,7 +303,7 @@ final class GateBestiary {
                 .phase(0.33F, "The lamps are going out.", a(SLAM, "Keystone").radius(6), a(ROOT, "The Fall").range(18).radius(1.5F).bolt(BoltKind.PLAIN),
                         a(RAIN, "Rubble").n(4).radius(2.5F).bolt(BoltKind.PLAIN))
                 .build());
-        // the fourth (SPEC §46.8): it comes down out of the vault of a cathedral over the clouds; the aisles fall, then the
+        // the fourth (SPEC §47.8): it comes down out of the vault of a cathedral over the clouds; the aisles fall, then the
         // roof lifts away and the sky remembers you
         out.add(m("proving_sky_warden", "The Sky Warden", Theme.SKY, Tier.PROVING, Model.HUMAN, "The cathedral's knight, winged in its own glass")
                 .hp(520).dmg(3.0).spd(0.3).kb(0.8).scale(2.4F).size(0.6F, 2.0F).bar(BossBarColor.YELLOW).arena(40)
@@ -316,7 +316,7 @@ final class GateBestiary {
                         a(BOLT, "Lance of Light").n(1).bolt(BoltKind.GLASS), a(GUST, "Wingbeat").radius(8).power(1.0F),
                         a(RAIN, "Shattered Glass").n(5).radius(2.5F).bolt(BoltKind.GLASS))
                 .build());
-        // the fifth Proving's Warden (SPEC §46.9): the last Keeper, left at the Court's door; stands up out of your shadow
+        // the fifth Proving's Warden (SPEC §47.9): the last Keeper, left at the Court's door; stands up out of your shadow
         out.add(m("proving_keepers_shadow", "The Keeper's Shadow", Theme.COURT, Tier.PROVING, Model.HUMAN, "The last Keeper, left at the Court's door to test whoever comes")
                 .hp(570).dmg(2.85).spd(0.3).kb(0.9).scale(2.7F).size(0.6F, 2.0F).bar(BossBarColor.PURPLE).arena(40)
                 .intro("Your shadow is spreading across the floor.")

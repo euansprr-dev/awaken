@@ -1,4 +1,4 @@
-"""The Sky Warden (SPEC §46.8, docs/fights/PLAN.md §4.7): the fourth Proving's Warden, met in the cathedral above the
+"""The Sky Warden (SPEC §47.8, docs/fights/PLAN.md §4.7): the fourth Proving's Warden, met in the cathedral above the
 clouds. The cathedral's own knight: tall, in white plate edged with gold, a white tabard with a gold sun on it falling
 to its knees, a closed great helm with a cross cut in the visor and light in the cross, a ring of gold standing behind
 its head like a halo. Its wings are the cathedral's windows: two great fans of stained-glass panes, blue and violet and
@@ -29,7 +29,7 @@ P = plans.Biped(leg=30, thigh=15, foot=(4, 2, 7), pelvis=(9, 4, 5), spine=(7, 5,
 SPEAR_TIP = (0, 37, 0)
 SPEAR = dict(weapon=SPEAR_TIP, weapon_r=1.8)
 # how far the spear comes down in its strokes (degrees on its own axis), so every stroke meets someone standing at the
-# waist (SPEC §46.6: a damaging blow's hits come down under a standing player's shoulders)
+# waist (SPEC §47.6: a damaging blow's hits come down under a standing player's shoulders)
 SPEAR_DOWN = {"sweep": 95, "rising": 25, "halo": 100}
 # the reaching hand comes down to you too (degrees)
 ARM_DOWN = {"ascension": ("arm_l", 22), "sweep": ("arm_r", 24)}
@@ -356,9 +356,9 @@ SOUNDS = {
 MOVE_SOUNDS = {"descend": {"swing": "roar"}, "break": {"swing": "impact"}, "lift": {"swing": "roar"}, "glass": {"swing": "roar"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): phrases of four and five, the spear's reach and the wings covering the ground round it
+    # a duel (SPEC §47.3): phrases of four and five, the spear's reach and the wings covering the ground round it
     "duel": True,
-    "stance": 380,  # tuned with the sim (SPEC §46.8)
+    "stance": 380,  # tuned with the sim (SPEC §47.8)
     "intro": {"pose": "kneel", "move": "descend"},
     "phases": [
         # the whole cathedral: the spear in fours, Descent, the Wingbeat, the Halo Turn, the Lance, the Stoop

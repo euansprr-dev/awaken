@@ -24,11 +24,11 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Every creature projectile: a Force (damage type), its class (SPEC §46.2: the shot's core glows the colour of how you
+ * Every creature projectile: a Force (damage type), its class (SPEC §47.2: the shot's core glows the colour of how you
  * answer it, its speed by the same: white-gold 0.9, amber 0.7, red 0.6 blocks a tick) and a trail. Drawn by
  * {@code mobs.client.ShotRenderer} as a glowing core with a tapering tail, humming as it flies. Flies straight at constant
  * speed for at most five seconds and never breaks blocks. A white-gold one deflected flies back at its maker, faster,
- * and strikes its stance (SPEC §46.3); an amber or red one breaks on the blade.
+ * and strikes its stance (SPEC §47.3); an amber or red one breaks on the blade.
  */
 public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.BYTE);
@@ -156,7 +156,7 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     }
 
     /**
-     * Deflected by {@code by}'s blade (SPEC §46.3): a white-gold shot turns and flies back at its maker's chest; false for
+     * Deflected by {@code by}'s blade (SPEC §47.3): a white-gold shot turns and flies back at its maker's chest; false for
      * an amber or red one (it breaks on the blade), one already sent back, or a maker gone.
      */
     public boolean sendBack(Player by) {

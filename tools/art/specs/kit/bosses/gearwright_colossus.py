@@ -349,7 +349,7 @@ def _reactions(r):
         keyed(r, nm, 0.6, planted(r, [(0, {}), (0.08, _hang({"pelvis": {"rot": (-2, -7 * sgn, -4 * sgn), "pos": (-0.6 * sgn, 0, 0)}, "chest": (0, -3 * sgn, -1 * sgn),
                                                               "head": (-3, -10 * sgn, 0), "arm_" + ("l" if sgn > 0 else "r"): (0, 0, 8 * sgn), "bell": (14, 0, 10 * sgn)}, 0, 6 * sgn)),
                                            (0.32, _hang({"pelvis": {"rot": (1, 2 * sgn, 1.5 * sgn), "pos": (0, 0, 0)}, "head": (1, 3 * sgn, 0)}, 0, -3 * sgn)), (0.6, {})]))
-    # turned aside (SPEC §46.3): the hand is thrown back up past its shoulder, the tower rocks back on its heels with
+    # turned aside (SPEC §47.3): the hand is thrown back up past its shoulder, the tower rocks back on its heels with
     # the bell clanging and the pendulum kicking, and it settles forward again to strike on
     thrown = _pose(r, (-12, -1), yaw=-6, long=(0.72, -0.3, 0.62), short=(-0.7, 0.35, 0.55), swing=-22, head=(-10, 6, 0), bell=28)
     hang = _pose(r, (-7, 0), yaw=-3, long=(0.8, 0.25, 0.5), short=(-0.7, 0.6, 0.3), swing=12, head=(-4, 3, 0), bell=-14,
@@ -649,9 +649,9 @@ SOUNDS = {
 MOVE_SOUNDS = {"chime": {"swing": "roar"}, "strikes": {"swing": "roar"}, "drones": {"swing": "cast"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside hand throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside hand throws it back
     "duel": True,
-    "stance": 260,  # its stance size, tuned with the sim (SPEC §46.3)
+    "stance": 260,  # its stance size, tuned with the sim (SPEC §47.3)
     "intro": {"pose": "idle", "move": "chime"},
     "phases": [
         {"pool": [

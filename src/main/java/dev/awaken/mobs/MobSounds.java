@@ -26,11 +26,11 @@ public final class MobSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> LISTENER_HEAR = sound("mobs.listener_hear");
 
     /**
-     * The carriers (SPEC §46.2): each sounds from where it is as it comes. Synthesised by tools/art/specs/audio_fights.py;
+     * The carriers (SPEC §47.2): each sounds from where it is as it comes. Synthesised by tools/art/specs/audio_fights.py;
      * sounds.json in src/main/merge/mobs_fights. The loops play from mobs.client.CarrierView and the shot renderer.
      */
     public static final DeferredHolder<SoundEvent, SoundEvent> SHOT_RELEASE = sound("mobs.fights.shot_release");
-    /** A beast gathering for a told bite (SPEC §46.2). */
+    /** A beast gathering for a told bite (SPEC §47.2). */
     public static final DeferredHolder<SoundEvent, SoundEvent> GROWL = sound("mobs.fights.growl");
     public static final DeferredHolder<SoundEvent, SoundEvent> SHOT_HUM = sound("mobs.fights.shot_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOLLEY_THROW = sound("mobs.fights.volley_throw");

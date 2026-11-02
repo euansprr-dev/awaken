@@ -1,4 +1,4 @@
-"""The Ringer (SPEC §46.4, docs/fights/PLAN.md §4.7): the first Proving's Warden, met knee-deep in the Drowned Belfry
+"""The Ringer (SPEC §47.4, docs/fights/PLAN.md §4.7): the first Proving's Warden, met knee-deep in the Drowned Belfry
 when the Reading Bell won't stop. A bell-ringer that drowned at its ropes and kept ringing: tall, gaunt and stooped in
 a soaked cassock to the ankle, a deep cowl with no face in it, only a small bell hanging where the face should be, its
 clapper glowing the drowned teal of the whole body's light. Bell-ropes are knotted across its chest, their sallies
@@ -29,7 +29,7 @@ P = plans.Biped(leg=29, thigh=14, foot=(3, 2, 7), pelvis=(8, 4, 5), spine=(5, 5,
 BELL_AT = (0, 17, 0)
 FLAIL = dict(weapon=BELL_AT, weapon_r=2.6)
 # how far each bell comes down in its swings (degrees on its chain's own axis), and how low it bends into its turns, so
-# every swing meets someone standing at the waist (SPEC §46.6: every damaging blow's lowest point under 1.2 blocks)
+# every swing meets someone standing at the waist (SPEC §47.6: every damaging blow's lowest point under 1.2 blocks)
 BELL_DOWN = {"swing_a": ("r", 60), "swing_b": ("l", 60), "turn": ("l", 60), "whirl": ("r", 60)}
 LOW_SPIN, DROP_SPIN = 10, 0
 
@@ -252,7 +252,7 @@ def toll():
 
 def peal():
     """The Peal (its shot, LIGHT): it swings both bells up and out wide, leaning back, and claps them together in front
-    of its chest; the ring flies straight at you, white-gold, and a clean deflect sends it back into it (SPEC §46.3)."""
+    of its chest; the ring flies straight at you, white-gold, and a clean deflect sends it back into it (SPEC §47.3)."""
     wide = {"pelvis": {"rot": (-6, 0, 0), "pos": (0, 1, 1)}, "spine": (-6, 0, 0), "chest": (-12, 0, 0), "head": (-8, 0, 0),
             "arm_l": (-100, 0, -70), "arm_r": (-100, 0, 70), "forearm_l": (-20, 0, 0), "forearm_r": (-20, 0, 0)}
     clap = {"pelvis": {"rot": (8, 0, 0), "pos": (0, -2, -1)}, "spine": (8, 0, 0), "chest": (14, 0, 0), "head": (6, 0, 0),
@@ -305,9 +305,9 @@ SOUNDS = {
 MOVE_SOUNDS = {"drain": {"swing": "cast"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside bell throws its arm back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside bell throws its arm back
     "duel": True,
-    "stance": 260,  # tuned with the sim (SPEC §46.4)
+    "stance": 260,  # tuned with the sim (SPEC §47.4)
     "intro": {"pose": "idle", "move": "drop"},
     "phases": [
         # in the water: swings in twos and threes, the clang that rings through the water, the lash at range, the toll

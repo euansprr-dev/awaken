@@ -46,7 +46,7 @@ public class AwakenBoss extends AwakenMob {
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT_AT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     public static final int KIT_POSE_INTRO = 1, KIT_POSE_BROKEN = 2;
-    /** The duel's reactions (SPEC §46.3): a deflected blow's limb thrown back, and the reel after a phrase's last one. */
+    /** The duel's reactions (SPEC §47.3): a deflected blow's limb thrown back, and the reel after a phrase's last one. */
     public static final int KIT_POSE_RECOIL = 3, KIT_POSE_REEL = 4;
 
     private int phase, shieldTicks, lonelyTicks;
@@ -150,7 +150,7 @@ public class AwakenBoss extends AwakenMob {
         return breakTicks > 0;
     }
 
-    /** Reels from a phrase's last blow turned aside (SPEC §46.3): it stands open, not kneeling. */
+    /** Reels from a phrase's last blow turned aside (SPEC §47.3): it stands open, not kneeling. */
     void reel(int ticks) {
         if (super.stagger(ticks)) reelTicks = Math.max(reelTicks, ticks);
     }
@@ -205,7 +205,7 @@ public class AwakenBoss extends AwakenMob {
         return f != null ? f.playing() : null;
     }
 
-    /** The last attack its fight script began (title and class), or null (SPEC §46.4: the Signal names what felled you). */
+    /** The last attack its fight script began (title and class), or null (SPEC §47.4: the Signal names what felled you). */
     public dev.awaken.core.api.Strikes.@Nullable Blow lastBlow() {
         FightRunner f = fight;
         var m = f != null ? f.lastAttack() : null;
@@ -214,19 +214,19 @@ public class AwakenBoss extends AwakenMob {
         return new dev.awaken.core.api.Strikes.Blow(title, m.kind());
     }
 
-    /** It fights as a duel (SPEC §46.3): phrases, openings, recoils; at most {@link #DUEL_ADDS} of its adds alive. */
+    /** It fights as a duel (SPEC §47.3): phrases, openings, recoils; at most {@link #DUEL_ADDS} of its adds alive. */
     public boolean duel() {
         FightRunner f = fight();
         return f != null && f.duel();
     }
 
-    /** A duel is tuned on its whole scaled health, past vanilla's 1024 cap (SPEC §46.3); other Lords stop at the cap. */
+    /** A duel is tuned on its whole scaled health, past vanilla's 1024 cap (SPEC §47.3); other Lords stop at the cap. */
     @Override
     public float bulk() {
         return duel() ? dev.awaken.mobs.MobScaling.bulk(this) : 1F;
     }
 
-    /** For a fight that reads you (SPEC §46.6): the habit it has read of you. */
+    /** For a fight that reads you (SPEC §47.6): the habit it has read of you. */
     public dev.awaken.core.api.Strikes.Habit habit() {
         FightRunner f = fight();
         return f != null ? f.habit() : dev.awaken.core.api.Strikes.Habit.NONE;

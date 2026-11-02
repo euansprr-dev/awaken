@@ -121,7 +121,7 @@ public final class TrialChunkGenerator extends ChunkGenerator {
                         surface.update(x, y, z, s);
                     }
                 } else if (!desert) {
-                    // a hall cell's Proving halls, one for each Warden at its own spot (SPEC §46.4, §46.6 to §46.9)
+                    // a hall cell's Proving halls, one for each Warden at its own spot (SPEC §47.4, §47.6 to §47.9)
                     for (Warden w : Warden.all()) {
                         Hall h = w.hall;
                         if (!h.spans(lx - h.atX(), lz - h.atZ())) continue;

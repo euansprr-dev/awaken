@@ -1,4 +1,4 @@
-# Fights stage 1, see it coming (SPEC §46.2): each carrier mid-flight, on a sky stage, seen from the side of its lane.
+# Fights stage 1, see it coming (SPEC §47.2): each carrier mid-flight, on a sky stage, seen from the side of its lane.
 # /awaken bosses carriers stage builds a floor where you stand with a still toll ghoul 9 blocks north and puts the
 # camera west of the lane looking east; each kind then sends one carrier south across the view, and a frozen tick
 # holds it for the shot. By day (how it reads on stone in light), then the shots and the volley again at night (glow).

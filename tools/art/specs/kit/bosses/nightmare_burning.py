@@ -839,7 +839,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
-    plans.duel_reactions(r, lead="r", weight=1.4)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.4)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     for m in mv:
         _stage(r, m)
@@ -868,7 +868,7 @@ MOVE_SOUNDS = {"cinders": {"swing": "cast", "impact": ""}, "pyre": {"swing": "fl
                "flare": {"swing": "flare", "impact": ""}, "wildfire": {"swing": "roar"}, "arrive": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 300,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies burnt out until its fire catches, and gets up

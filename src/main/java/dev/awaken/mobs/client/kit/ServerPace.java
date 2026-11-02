@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 
 /**
- * The server's clock as a boss fight sees it (SPEC §46.1 "Hits land now"): the last tick the server finished (its
+ * The server's clock as a boss fight sees it (SPEC §47.1 "Hits land now"): the last tick the server finished (its
  * {@code mobs_pace}, sent each tick while a boss fights near you) and how long ago it came, run on at most one tick
  * past it. In step, that is the game clock; in a server stall the boss holds where the server is, so a blow you see
  * land is one that lands and a parry keeps its timing (the game clock ran on and showed blows before they came).

@@ -465,7 +465,7 @@ def clips(r):
         q["core"] = {"rot": (3 + tilt, 0, 2 + tilt * 0.6), "pos": (0, -d, 0)}
         return q
     keyed(r, "death", 3.2, [(0, rest), (0.3, gasp), (0.75, gasp), (1.3, over), (1.7, shut), (2.2, sunk(10, 2)), (2.8, sunk(30, 6)), (3.2, sunk(44, 8))])
-    plans.duel_reactions(r, lead="r", weight=1.0)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.0)  # a duel's parried and reel (SPEC §47.5)
     mv = [thrust(r), rake(r), shutting(r), tidal(r), volley(r), pages(r), cloud(r), undertow(r), flood(r), turn(r), wake(r)]
     for m in mv:
         stage_clips(r, m)
@@ -666,7 +666,7 @@ MOVE_SOUNDS = {"pages": {"swing": "cast"}, "cloud": {"swing": "cast", "impact": 
                "tidal": {"swing": "cast"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 260,
     "intro": {"pose": "idle", "move": "wake"},

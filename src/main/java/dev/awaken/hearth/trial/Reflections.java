@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Hall of Reflections (SPEC §46.6): the second Proving's hall, a round examination hall of white stone ruled like a
+ * The Hall of Reflections (SPEC §47.6): the second Proving's hall, a round examination hall of white stone ruled like a
  * measuring sheet, walled with dark mirrors. Built by the trials' generator in every hall cell at {@link #AT_X},
  * {@link #AT_Z} (clear of the Belfry and the box arena). Pure: {@link #block} says what stands at a spot. Local x runs
  * east, z south (the door is south), dy up from the trials floor (you stand at dy 1).

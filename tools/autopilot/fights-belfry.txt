@@ -1,4 +1,4 @@
-# Fights stage 3, the first Proving (SPEC §46.4): the Drowned Belfry and the Ringer, in a practice Proving
+# Fights stage 3, the first Proving (SPEC §47.4): the Drowned Belfry and the Ringer, in a practice Proving
 # (/awaken admin trial D). You wake knee-deep inside the door; then, as a spectator (never its target): the door and the
 # stair out, the nave from above, the Tenor over the sealed pit, a drowned aisle, the Ringer dropped into the light when
 # you stand on the chancel, the water draining at half its health (/awaken admin trial half), the floor over the pit

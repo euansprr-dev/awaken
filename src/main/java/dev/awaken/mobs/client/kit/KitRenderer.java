@@ -80,7 +80,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         turnL = m.clip("turn_l");
         turnR = m.clip("turn_r");
         death = m.clip("death");
-        // the duel's reactions (SPEC §46.3): a deflected limb thrown back, the reel after a phrase's last blow turned aside
+        // the duel's reactions (SPEC §47.3): a deflected limb thrown back, the reel after a phrase's last blow turned aside
         parried = m.clip("parried");
         reel = m.clip("reel");
         introKneels = kit.fight() != null && "kneel".equals(kit.fight().intro().pose());
@@ -218,7 +218,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
                 if (side > 0.35F && hurtR >= 0) clip = hurtR; // pushed toward its left: struck from its right
                 else if (side < -0.35F && hurtL >= 0) clip = hurtL;
             }
-            // weight (SPEC §46.3): a light blade doesn't stop a blow coming, it only shudders through it; a heavy one, a
+            // weight (SPEC §47.3): a light blade doesn't stop a blow coming, it only shudders through it; a heavy one, a
             // deflect or a hit in an opening (no move playing) makes it flinch whole
             boolean shrug = mv >= 0 && k > 0 && k < 1F;
             if (clip == hurtF && !shrug) s.hurt = t;

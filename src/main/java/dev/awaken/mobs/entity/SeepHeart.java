@@ -612,7 +612,7 @@ public class SeepHeart extends NamedBeast implements WildPose {
                 sound("roots", 1.5F, 0.85F);
             }
             case PULSE -> {
-                // the pulse rolls out as a wave (SPEC §46.2): it throws back only whoever it reaches
+                // the pulse rolls out as a wave (SPEC §47.2): it throws back only whoever it reaches
                 Carriers.wave(level, this, position(), 1.0F, a.radius(), Abilities.damage(this, a), BoltKind.DEEP, Abilities.effect(a), 1.0 + a.power() * 1.5);
                 send(level, MobParticles.SEEP_WAVE.get(), getX(), getY() + 0.05, getZ(), a.radius(), 12, 0);
                 level.sendParticles(MobParticles.SEEP_MOTE.get(), c.x, c.y, c.z, 30, 0.4, 0.4, 0.4, 0.45);

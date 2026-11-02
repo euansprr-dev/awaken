@@ -53,10 +53,10 @@ public final class FightScripts {
     }
 
     /**
-     * {@code duel}: the fight plays as a duel (SPEC §46.3): every phrase (a move and its string) ends in an opening, a
+     * {@code duel}: the fight plays as a duel (SPEC §47.3): every phrase (a move and its string) ends in an opening, a
      * deflected blow recoils and the phrase goes on, its last blow turned aside makes it reel, and it answers your habits.
      * {@code stance}: a duel's stance size (Arms' posture; 0 = a Lord's own), tuned with the sim per boss.
-     * {@code mirrors}: it fights the way you do (SPEC §46.6, the Examiner): through its first phase it reads the habit you
+     * {@code mirrors}: it fights the way you do (SPEC §47.6, the Examiner): through its first phase it reads the habit you
      * lean on, and from its second the moves that answer it come up more; its shots wear your most-used power's look.
      */
     public record Fight(int schemaVersion, String id, String moves, Intro intro, List<Phase> phases, Enrage enrage, Optional<String> death, boolean duel,

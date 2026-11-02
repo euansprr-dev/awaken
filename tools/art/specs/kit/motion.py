@@ -26,7 +26,7 @@ samples the whole pose 60 times a second and reports:
 - **dip** (strings only): how far the move layer falls back toward rest between two blows, 100% meaning all the way
   (angles taken the short way round, so a part that spins whole turns doesn't count them);
 - **peak**: the fastest bone, °/s.
-- **slide** (SPEC §46.3, PLAN §4.8 meter 1): the most a standing foot (its point within a pixel of the floor for at
+- **slide** (SPEC §47.3, PLAN §4.8 meter 1): the most a standing foot (its point within a pixel of the floor for at
   least 0.15 s outside the strike, its touch-down and lift-off left out) moves sideways in a game tick, model blocks;
   FA's bar is 0.03. A move that advances carries the body
   forward in game, so its feet may slide in the clip: reported, not a fault.

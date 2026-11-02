@@ -655,7 +655,7 @@ def feint(r):
 
 
 def lunge(r):
-    """The Mirror Lunge (a gap closer; red, SPEC §46.5: a thrust from that far is dashed past, never turned aside): he sinks back onto his back leg with the blade drawn level beside his face, then
+    """The Mirror Lunge (a gap closer; red, SPEC §47.5: a thrust from that far is dashed past, never turned aside): he sinks back onto his back leg with the blade drawn level beside his face, then
     runs at you, the hips squared and the arm straight out ahead so the point arrives first, the dagger arm flung back;
     he lands in a long lunge."""
     load = _pose(r, hips=(-4, -6, 0), at=(0, -3.5, 3), chest=(-4, -8, 0), head=(2, 8, 0), right=(-6, 38, -6), rblade=((0.08, 0.05, -1), UP),
@@ -800,7 +800,7 @@ def moves(r):
 def clips(r):
     plans.biped_locomotion(r, P, weight=1.0, temper="regal")
     plans.biped_reactions(r, weight=1.0)
-    plans.biped_duel_reactions(r, weight=1.0, lead="r")  # a duel's parried and reel (SPEC §46.5)
+    plans.biped_duel_reactions(r, weight=1.0, lead="r")  # a duel's parried and reel (SPEC §47.5)
     idle(r)
     walk(r)
     run(r)
@@ -816,7 +816,7 @@ def clips(r):
 
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 280,
     "intro": {"pose": "idle", "move": "wake"},

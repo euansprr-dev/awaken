@@ -112,7 +112,7 @@ public class AwakenMob extends Monster {
     private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks, groundedTicks;
     private float auraRadius, auraDamage;
     private BoltKind auraBolt = BoltKind.PLAIN;
-    /** Its shots in another's look (SPEC §46.6: the Examiner throws your own power back), never with that look's effect. */
+    /** Its shots in another's look (SPEC §47.6: the Examiner throws your own power back), never with that look's effect. */
     private @Nullable BoltKind mirrorBolt;
     private @Nullable MobEffectInstance auraEffect;
     private boolean watched, exploded;
@@ -574,7 +574,7 @@ public class AwakenMob extends Monster {
         if (tickCount % 4 == 0) Telegraph.ring(level, position().add(0, 0.2, 0), auraRadius, 14, def().glow, false);
         if (++auraPulse >= 20) {
             auraPulse = 0;
-            // each pulse is a wave rolling out to the aura's edge: jump it or dash through (SPEC §46.2)
+            // each pulse is a wave rolling out to the aura's edge: jump it or dash through (SPEC §47.2)
             Carriers.wave(level, this, position(), 0.5F, auraRadius, auraDamage, auraBolt, auraEffect, 0);
         }
     }
@@ -766,7 +766,7 @@ public class AwakenMob extends Monster {
     }
 
     /**
-     * The spores a body leaves where it fell (SPEC §46.2): a field you can see, harmless for its first half second and
+     * The spores a body leaves where it fell (SPEC §47.2): a field you can see, harmless for its first half second and
      * small enough to step out of; its pulses sting, with no poison (a field never carries an effect).
      */
     private void deathCloud(ServerLevel level, int life, float pulse) {

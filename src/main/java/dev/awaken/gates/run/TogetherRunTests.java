@@ -164,7 +164,7 @@ public final class TogetherRunTests {
                 h.assertTrue(Rooms.partyOnFloor(level, g, f) == 2, "two on the floor");
                 lordPair = Rooms.spawn(level, g, f, r.id, MobRole.Role.BOSS, a.blockPosition());
                 h.assertTrue(lordAlone != null && lordPair != null, "Lords take form");
-                // a duel Lord past vanilla's 1024 carries the rest as bulk (SPEC §46.3): compare the health each was given
+                // a duel Lord past vanilla's 1024 carries the rest as bulk (SPEC §47.3): compare the health each was given
                 double ratio = given(lordPair) / given(lordAlone);
                 h.assertTrue(Math.abs(ratio - 1.5) < 0.01, "the Lord has +50% health for the second player, x" + ratio);
             } finally {

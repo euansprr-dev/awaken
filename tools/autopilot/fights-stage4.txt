@@ -1,4 +1,4 @@
-# Fights stage 4 (SPEC §46.5): the other bosses as duels, one of each body, on the duel stage facing a still stand-in,
+# Fights stage 4 (SPEC §47.5): the other bosses as duels, one of each body, on the duel stage facing a still stand-in,
 # seen from the side: a phrase's tell, its first blow deflected (`parried`: the limb's recoil), then a lone blow, its
 # phrase's last, deflected (the `reel`, early and low). Then a named beast in the boss's place, its stance broken: it
 # goes over onto its side, lies there open, and heaves itself up as the break ends.

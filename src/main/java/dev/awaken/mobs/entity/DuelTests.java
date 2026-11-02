@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * The duel (SPEC §46.3): every phrase ends in an opening; a deflected blow throws the limb back and the phrase goes on,
+ * The duel (SPEC §47.3): every phrase ends in an opening; a deflected blow throws the limb back and the phrase goes on,
  * its last blow turned aside makes it reel; a white-gold shot deflected flies back at its maker.
  */
 public final class DuelTests {
@@ -42,7 +42,7 @@ public final class DuelTests {
 
     /**
      * The Examiner counts how you meet it through its first phase and reads the habit you lean on at its second (SPEC
-     * §46.6): strokes turned aside, read as your guard. A fight that doesn't read you never reads anything.
+     * §47.6): strokes turned aside, read as your guard. A fight that doesn't read you never reads anything.
      */
     static void habitRead(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -195,7 +195,7 @@ public final class DuelTests {
 
     /**
      * A duel boss holds its own stance (the fight script's, tuned with the sim), and braced it takes half of a blow's
-     * stance: an opening takes more, a riposte all of it (SPEC §46.3).
+     * stance: an opening takes more, a riposte all of it (SPEC §47.3).
      */
     static void duelStance(GameTestHelper h) {
         AwakenBoss boss = KitTests.spawn(h.getLevel(), h, "gearwright_colossus");
@@ -215,7 +215,7 @@ public final class DuelTests {
         h.succeed();
     }
 
-    /** A big beast's broken stance puts it on its side for the break (SPEC §46.5); a short stagger and a plain animal don't. */
+    /** A big beast's broken stance puts it on its side for the break (SPEC §47.5); a short stagger and a plain animal don't. */
     static void topple(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         MobDef d = Bestiary.get("briar_sow");

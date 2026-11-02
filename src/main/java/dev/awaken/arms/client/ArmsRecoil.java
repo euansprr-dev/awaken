@@ -138,7 +138,7 @@ final class ArmsRecoil {
     }
 
     /**
-     * The server's word that a blow played at once killed (SPEC §46.1): the recoil already under way becomes the kill's,
+     * The server's word that a blow played at once killed (SPEC §47.1): the recoil already under way becomes the kill's,
      * its fall the way the blow went, with no second shove.
      */
     static void killed(Entity e, Blow b) {

@@ -873,7 +873,7 @@ def clips(r):
     turns(r)
     flinches(r)
     reactions(r)
-    plans.duel_reactions(r, lead="r", weight=1.0)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.0)  # a duel's parried and reel (SPEC §47.5)
     mv = [_unwrap(m) for m in moves(r)]
     for m in mv:
         stage_clips(r, m)
@@ -887,7 +887,7 @@ def clips(r):
 
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 340,
     "intro": {"pose": "idle", "move": "wake"},

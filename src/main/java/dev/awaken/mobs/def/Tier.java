@@ -14,7 +14,7 @@ public enum Tier {
     GUARDIAN(MobRole.Role.BOSS, 1.15),
     /** One of the eight Sovereigns of the Hollow Court. */
     SOVEREIGN(MobRole.Role.BOSS, 1.5),
-    /** A Proving's Warden, met alone in its own hall at a Reassessment (SPEC §46.4): never in a gate, never roams. */
+    /** A Proving's Warden, met alone in its own hall at a Reassessment (SPEC §47.4): never in a gate, never roams. */
     PROVING(MobRole.Role.BOSS, 1.0),
     /** The Signal's Shadow. */
     FINAL(MobRole.Role.BOSS, 2.0),

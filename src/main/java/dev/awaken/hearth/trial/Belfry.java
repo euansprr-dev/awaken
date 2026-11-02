@@ -17,7 +17,7 @@ import net.minecraft.world.level.material.Fluids;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Drowned Belfry (SPEC §46.4): the first Proving's hall, a flooded nave of hanging bells. The trials dimension's
+ * The Drowned Belfry (SPEC §47.4): the first Proving's hall, a flooded nave of hanging bells. The trials dimension's
  * generator builds it in every hall (even) cell, centred {@link #AT} blocks into the cell from its north-west corner (the
  * box arena keeps the corner). Pure: {@link #block} says what stands at a spot, so worldgen, the hall's repair and tests
  * all read one layout. Local x runs east, z south (the door is south, the Tenor north), dy up from the trials floor.

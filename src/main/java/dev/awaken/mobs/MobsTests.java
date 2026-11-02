@@ -47,8 +47,8 @@ final class MobsTests {
         dev.awaken.mobs.entity.KitTests.register(); // the Creature Kit: tables, sync, hit volumes, phases (SPEC §35)
         dev.awaken.mobs.entity.SeepTests.register(); // the seep heart (W5): placed, asleep, woken, felled
         dev.awaken.mobs.entity.FightCostTests.register(); // what a fight costs the server a tick (docs/fights/PLAN.md)
-        dev.awaken.mobs.entity.CarrierTests.register(); // see it coming: carriers, locks, the effect rule (SPEC §46.2)
-        dev.awaken.mobs.entity.DuelTests.register(); // the duel: openings, recoils, reels, shots sent back (SPEC §46.3)
+        dev.awaken.mobs.entity.CarrierTests.register(); // see it coming: carriers, locks, the effect rule (SPEC §47.2)
+        dev.awaken.mobs.entity.DuelTests.register(); // the duel: openings, recoils, reels, shots sent back (SPEC §47.3)
         AwakenTests.register("mobs_scaling_maths", 40, h -> {
             h.assertTrue(Math.abs(MobScaling.healthMultiplier(5) - 1.375) < 1e-9, "health multiplier at lv5");
             h.assertTrue(Math.abs(MobScaling.damageMultiplier(150) - 7.0) < 1e-9, "damage multiplier at lv150");
@@ -230,7 +230,7 @@ final class MobsTests {
             h.assertTrue(lord.bar() == null, "no boss bar of its own (the gates show one)");
             double want = lord.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).getBaseValue()
                     * MobScaling.totalHealth(10, MobRole.Role.BREAK, Tier.LORD);
-            // past vanilla's 1024 the rest is the duel's bulk (SPEC §46.3)
+            // past vanilla's 1024 the rest is the duel's bulk (SPEC §47.3)
             double held = lord.getMaxHealth() * lord.bulk();
             h.assertTrue(Math.abs(held - want) < 0.5 && lord.getMaxHealth() <= 1024, "Lord-sized health " + held + ", want " + want);
             h.assertTrue(lord.isPersistenceRequired(), "it stays until the break is held");
@@ -261,7 +261,7 @@ final class MobsTests {
                 h.assertTrue(passive || !d.phases.get(0).abilities().isEmpty(), d.id + " has a telegraphed ability");
                 if (d.tier == Tier.LORD || d.tier == Tier.SOVEREIGN || d.tier == Tier.FINAL) h.assertTrue(d.phases.size() == 3, d.id + " has three phases");
                 if (d.tier == Tier.LORD) h.assertTrue(d.parts.size() == 2, d.id + " drops two parts");
-                // a Proving's Warden drops no part: its reward is the rank, the gift and its trophy (SPEC §46.4)
+                // a Proving's Warden drops no part: its reward is the rank, the gift and its trophy (SPEC §47.4)
                 if (d.tier.countsAsBoss() && d.tier != Tier.PROVING) h.assertTrue(!d.parts.isEmpty(), d.id + " drops a part");
                 for (MobDef.Part p : d.parts) h.assertTrue(MobTypes.part(p.id()) != null, "part item " + p.id());
                 for (MobDef.Phase ph : d.phases) {
@@ -305,7 +305,7 @@ final class MobsTests {
                 h.assertTrue(m != null && m.role().gateId().isEmpty(), "minions carry no gate id");
                 spawned.add(m);
             }
-            // a duel's add hits softer than its caller (SPEC §46.3)
+            // a duel's add hits softer than its caller (SPEC §47.3)
             double add = ((AwakenMob) spawned.get(0)).getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
             double caller = boss.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
             h.assertTrue(add <= AwakenBoss.ADD_DAMAGE * caller + 1e-3, "an add hits " + add + ", its caller " + caller);

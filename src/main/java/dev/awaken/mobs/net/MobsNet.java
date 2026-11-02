@@ -24,7 +24,7 @@ public final class MobsNet {
     private MobsNet() {}
 
     /**
-     * The server's clock while a boss fights near you (SPEC §46.1): sent at the end of each of its ticks, so the
+     * The server's clock while a boss fights near you (SPEC §47.1): sent at the end of each of its ticks, so the
      * client plays boss moves at the server's real pace. In a stall the boss holds instead of running ahead of its blows.
      */
     public record Pace(long gameTime) implements CustomPacketPayload {
@@ -38,7 +38,7 @@ public final class MobsNet {
     }
 
     /**
-     * A carrier (SPEC §46.2): a wave, a volley, a ground line, a locked line, a landing ring, a field or a pull, sent
+     * A carrier (SPEC §47.2): a wave, a volley, a ground line, a locked line, a landing ring, a field or a pull, sent
      * once as it begins; both sides run it on the server's clock from {@code start} for {@code life} ticks. Kind,
      * class and the rest as {@code mobs.entity.Carriers} names them.
      */
@@ -94,7 +94,7 @@ public final class MobsNet {
         }
     }
 
-    /** A beast's told bite (SPEC §46.2): its class, and the ticks until it lands (0: it was called off). */
+    /** A beast's told bite (SPEC §47.2): its class, and the ticks until it lands (0: it was called off). */
     public record Tell(int id, int kind, int ticks) implements CustomPacketPayload {
         public static final Type<Tell> TYPE = new Type<>(Awaken.id("mobs_tell"));
         public static final StreamCodec<ByteBuf, Tell> STREAM_CODEC = StreamCodec.composite(

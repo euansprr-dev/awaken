@@ -373,34 +373,34 @@ final class HearthCommands {
             // tours: your Proving's Warden to under half its health (the Belfry drains, the mirrors wake, the Span's ring gives
             // way, the cathedral's aisles fall) or under a third (the Hall of Reflections closes in, the Span's lamps go out, the
             // cathedral's roof lifts), or to a percent (the Threshold's doors at 70, its dark at 45, its door at 20 and 5)
-            // (SPEC §46.4, §46.6 to §46.10)
+            // (SPEC §47.4, §47.6 to §47.10)
             float to = arg.equals("HALF") ? 0.45F : arg.equals("THIRD") ? 0.3F : Integer.parseInt(arg) / 100F;
             boolean ok = dev.awaken.hearth.trial.Provings.hurtTo(sp, to);
             if (!ok) c.getSource().sendFailure(Component.literal("No Warden is down in your Proving."));
             return ok ? 1 : 0;
         }
         if (arg.equals("SBOX")) {
-            // the S box (a Sovereign's echo), kept as practice until the Keeper's Shadow passes Euan's look (SPEC §46.9)
+            // the S box (a Sovereign's echo), kept as practice until the Keeper's Shadow passes Euan's look (SPEC §47.9)
             boolean ok = Trials.start(sp, Trials.Kind.SOVEREIGN, Rank.S, true);
             return ok ? 1 : 0;
         }
         if (arg.equals("ABOX")) {
-            // the A box (the Descent), kept as practice until the Sky Warden passes Euan's look (SPEC §46.8)
+            // the A box (the Descent), kept as practice until the Sky Warden passes Euan's look (SPEC §47.8)
             boolean ok = Trials.start(sp, Trials.Kind.DESCENT, Rank.A, true);
             return ok ? 1 : 0;
         }
         if (arg.equals("BBOX")) {
-            // the B box (a duel with a Gate Lord), kept as practice until the Unmade passes Euan's look (SPEC §46.7)
+            // the B box (a duel with a Gate Lord), kept as practice until the Unmade passes Euan's look (SPEC §47.7)
             boolean ok = Trials.start(sp, Trials.Kind.DUEL, Rank.B, true);
             return ok ? 1 : 0;
         }
         if (arg.equals("CBOX")) {
-            // the C box (waves, then the Second Awakening), kept as practice until the Examiner passes Euan's look (SPEC §46.6)
+            // the C box (waves, then the Second Awakening), kept as practice until the Examiner passes Euan's look (SPEC §47.6)
             boolean ok = Trials.start(sp, Trials.Kind.AWAKENING, Rank.C, true);
             return ok ? 1 : 0;
         }
         if (arg.equals("DBOX")) {
-            // the D box of three waves, kept as practice until the Ringer passes Euan's look (SPEC §46.4)
+            // the D box of three waves, kept as practice until the Ringer passes Euan's look (SPEC §47.4)
             boolean ok = Trials.start(sp, Trials.Kind.WAVES, Rank.D, true);
             return ok ? 1 : 0;
         }

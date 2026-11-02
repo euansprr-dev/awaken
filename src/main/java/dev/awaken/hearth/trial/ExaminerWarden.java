@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The second Proving's Warden (SPEC §46.6): the Examiner, for C. It doesn't take you anywhere: the bell stops and you're
+ * The second Proving's Warden (SPEC §47.6): the Examiner, for C. It doesn't take you anywhere: the bell stops and you're
  * standing where you were, until the room turns to glass round you and breaks, and you're in the Hall of Reflections. It
  * reads how you fight through its first phase and answers it from its second (the mirrors wake, and the Signal says what
  * it read); at a third of its health a ring of mirrors rises and the hall closes in. It leaves you your Path.
@@ -387,7 +387,7 @@ final class ExaminerWarden extends Warden {
         }
     }
 
-    /** What it read of you, said plainly (SPEC §46.6). */
+    /** What it read of you, said plainly (SPEC §47.6). */
     static String read(Strikes.Habit h) {
         return switch (h) {
             case GUARD -> "It's noticed you block. Now it swings the blows you can't turn aside.";

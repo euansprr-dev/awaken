@@ -11,7 +11,7 @@ import dev.awaken.gates.content.Layout;
 import dev.awaken.gates.content.Modifier;
 import dev.awaken.gates.content.Theme;
 import dev.awaken.gates.content.Twist;
-import dev.awaken.gates.run.Hud;
+import dev.awaken.gates.run.Spoils;
 import dev.awaken.gates.run.Runs;
 import dev.awaken.gates.world.Cells;
 import dev.awaken.gates.worlds.GateWorld;
@@ -43,10 +43,14 @@ final class GateCommands {
         AwakenCommands.add((root, ctx) -> {
             var gate = Commands.literal("gate");
             gate.then(Commands.literal("list").executes(GateCommands::list));
-            gate.then(Commands.literal("satchel").executes(c -> {
-                Hud.sendSatchel(c.getSource().getPlayerOrException(), true);
-                return 1;
-            }));
+            gate.then(Commands.literal("satchel").executes(c -> satchel(c.getSource().getPlayerOrException(), 0, false))
+                    // test and tour helpers: n different full stacks into the Satchel (in a run) or held for you
+                    .then(Commands.literal("fill").requires(AwakenCommands.admin())
+                            .then(Commands.argument("stacks", IntegerArgumentType.integer(1, 400))
+                                    .executes(c -> satchel(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "stacks"), false))))
+                    .then(Commands.literal("hold").requires(AwakenCommands.admin())
+                            .then(Commands.argument("stacks", IntegerArgumentType.integer(1, 400))
+                                    .executes(c -> satchel(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "stacks"), true)))));
             gate.then(Commands.literal("trace").then(Commands.argument("id", IntegerArgumentType.integer(1)).executes(GateCommands::trace)));
             gate.then(Commands.literal("open").requires(AwakenCommands.admin())
                     .then(Commands.argument("rank", StringArgumentType.word())
@@ -276,6 +280,16 @@ final class GateCommands {
         if (g.waiting(s)) return "waits to be seen (nobody has come within " + Breaks.SEEN_RADIUS + " blocks)"
                 + (g.foldsOnPlayDay >= 0 ? " · folds unseen on play-day " + g.foldsOnPlayDay : "");
         return (g.seenDay >= 0 ? "seen on play-day " + g.seenDay + " · " : "") + "breaks on " + g.breaksOnPlayDay;
+    }
+
+    /** Says what the Satchel and the held list hold; with {@code stacks}, first adds that many different full stacks. */
+    private static int satchel(ServerPlayer p, int stacks, boolean held) {
+        if (stacks > 0) Spoils.devFill(p, stacks, held);
+        var v = Spoils.view(p);
+        p.sendSystemMessage(Component.literal((v.inRun() ? "Satchel: " + v.satchelStacks() + " stacks, " + v.xp() + " XP. " : "Not in a gate. ")
+                + "Held for you: " + v.heldStacks() + " stacks."));
+        Spoils.sendView(p);
+        return 1;
     }
 
     private static int list(CommandContext<CommandSourceStack> c) {

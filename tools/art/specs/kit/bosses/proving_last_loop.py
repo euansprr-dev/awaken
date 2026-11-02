@@ -1,4 +1,4 @@
-"""The Last Loop (SPEC §46.10, docs/fights/PLAN.md §4.7): the sixth and last Proving's Warden, met in the Cradle's
+"""The Last Loop (SPEC §47.10, docs/fights/PLAN.md §4.7): the sixth and last Proving's Warden, met in the Cradle's
 antechamber. You, as the Signal was: shaped like you (a player's build, twice your height), all white, with gold seams
 running down it like the lines of the Signal, and no face, only a soft light where a face would be. A thin gold ring
 turns round its head, and a great ring, the Loop, stands behind its back. It fights with a blade of light, a player's
@@ -34,7 +34,7 @@ P = plans.Biped(leg=26, thigh=13, foot=(4, 2, 5), pelvis=(8, 4, 4), spine=(8, 6,
 BLADE_TIP = (0, 36, 0)
 BLADE = dict(weapon=BLADE_TIP, weapon_r=1.6)
 # how far the blade comes down in its strokes (degrees on its own axis), so every stroke meets someone standing at the
-# waist (SPEC §46.6: a damaging blow's hits come down under a standing player's shoulders)
+# waist (SPEC §47.6: a damaging blow's hits come down under a standing player's shoulders)
 BLADE_DOWN = {"cut": 80, "recut": 30, "whirl": 80, "thrust": 14}
 ARM_DOWN = {"taken": ("arm_l", 24), "cut": ("arm_r", 30), "thrust": ("arm_r", 10)}
 LOW_RECUT, LOW_WHIRL = 26, 18
@@ -387,9 +387,9 @@ MOVE_SOUNDS = {"wake": {"swing": "roar"}, "night": {"swing": "roar"}, "close": {
                "ring": {"swing": "roar"}, "rush": {"swing": "swing_heavy"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): phrases of four to six, the blade's reach covering the ground round it
+    # a duel (SPEC §47.3): phrases of four to six, the blade's reach covering the ground round it
     "duel": True,
-    "stance": 470,  # tuned with the sim (SPEC §46.10)
+    "stance": 470,  # tuned with the sim (SPEC §47.10)
     "intro": {"pose": "stand", "move": "wake"},
     "phases": [
         # the antechamber: the blade in fours, the Fall, Signal, Full Circle, the Rush, the Line

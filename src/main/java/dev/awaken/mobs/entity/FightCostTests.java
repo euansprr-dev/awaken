@@ -33,7 +33,7 @@ import java.util.Set;
  * What a fight costs the server (docs/fights/PLAN.md §2.6, the late-hits audit): a real survival player stands in a
  * walled-off floor while a boss, a pack, or both fight it, and every server tick is timed. The busiest case is also run
  * under the server's own section profiler. It writes {@code fights-tick-cost.txt} and {@code fights-tick-profile.txt}
- * in the server's folder, logs the table, and holds the budget (SPEC §46.1, invariant I10): a boss and 12 monsters
+ * in the server's folder, logs the table, and holds the budget (SPEC §47.1, invariant I10): a boss and 12 monsters
  * under {@link #BUDGET_MS} a tick on average (three times that on CI's runners).
  */
 public final class FightCostTests {

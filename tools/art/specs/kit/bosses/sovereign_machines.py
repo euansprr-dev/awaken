@@ -739,7 +739,7 @@ def clips(r):
     idle(r)
     _stomp(r)
     reactions(r)
-    plans.biped_duel_reactions(r, weight=1.6)  # a duel's parried and reel (SPEC §46.5)
+    plans.biped_duel_reactions(r, weight=1.6)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     by = {m.id: m for m in mv}
     for m in mv:
@@ -799,7 +799,7 @@ MOVE_SOUNDS = {"lance": {"swing": "cast"}, "drones": {"swing": "cast", "impact":
                "shutdown": {"swing": "roar"}, "wake": {"swing": "cast", "impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 360,
     "intro": {"pose": "idle", "move": "wake"},  # it stands shut down, and starts up

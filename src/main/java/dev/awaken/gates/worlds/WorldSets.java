@@ -82,7 +82,7 @@ public final class WorldSets {
         Piece piece = PIECES.get(w.theme());
         if (piece == null || !complete(p.getData(GatesRegistry.ATLAS.get()), w.theme())) return;
         ItemStack s = new ItemStack(piece.item().get());
-        if (!p.addItem(s)) p.drop(s, false, net.minecraft.util.Prediction.SERVER_ONLY);
+        dev.awaken.gates.run.Spoils.give(p, s); // pockets, then held for you: never the ground (SPEC §13, "Gate spoils")
         p.sendSystemMessage(Component.literal("You have every keepsake from the " + w.theme().displayName + ". " + piece.line()));
     }
 }

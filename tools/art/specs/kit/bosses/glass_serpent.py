@@ -491,7 +491,7 @@ def _reactions(r):
                  head=(-28 * sgn, 12), jaw=20, roll=-12 * sgn)
         b = pose(r, neck=neck((sgn, 9, 2), (2 * sgn, 20, 4), (2 * sgn, 29, 1), (sgn, 34, -5), (0, 37, -14)), head=(8 * sgn, 24), jaw=4)
         keyed(r, nm, 0.65, [(0, pose(r)), (0.1, h), (0.36, b), (0.65, pose(r))])
-    # turned aside (SPEC §46.3): the skull is knocked up and off to its right, the neck whipping back in an S over a
+    # turned aside (SPEC §47.3): the skull is knocked up and off to its right, the neck whipping back in an S over a
     # coil clenched tight; it hangs there a beat, then the neck comes forward again to strike on
     thrown = pose(r, coil_pts=coil(r_in=9.4, pitch=13.4, spin=4), neck=neck((-1, 9, 5), (-3, 19, 11), (-5, 29, 13), (-6, 36, 9), (-7, 42, 2)),
                   head=(-14, -18), jaw=30, roll=-8)
@@ -757,9 +757,9 @@ SOUNDS = {
 MOVE_SOUNDS = {"wake": {"swing": "roar"}, "erupt": {"swing": "cast"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside bite throws its skull back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside bite throws its skull back
     "duel": True,
-    "stance": 200,  # its stance size, tuned with the sim (SPEC §46.3)
+    "stance": 200,  # its stance size, tuned with the sim (SPEC §47.3)
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [

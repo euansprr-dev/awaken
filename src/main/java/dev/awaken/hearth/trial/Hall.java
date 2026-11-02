@@ -9,7 +9,7 @@ import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A Warden's hall (SPEC §46.4, §46.6): a pure layout, built by {@link TrialChunkGenerator} in every hall cell at its own
+ * A Warden's hall (SPEC §47.4, §47.6): a pure layout, built by {@link TrialChunkGenerator} in every hall cell at its own
  * spot, and put back as built after each run. Local x runs across it, z from its far end (north) to its door (back), dy
  * up from the trials floor.
  */

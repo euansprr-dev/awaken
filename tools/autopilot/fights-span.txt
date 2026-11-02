@@ -1,4 +1,4 @@
-# Fights stage 5, the third Proving (SPEC §46.7): the Unmade and the Broken Span, in a practice Proving
+# Fights stage 5, the third Proving (SPEC §47.7): the Unmade and the Broken Span, in a practice Proving
 # (/awaken admin trial B). A burst of quick shots every 12 ticks catches the wake high over the bastion, the fall onto
 # it, the north arm lifting into stones, the stones gathering and the Unmade dropping out of them (the burst covers the
 # Span's readying and the fall, whose lengths vary). Then the Unmade held still facing you, and as a spectator: the

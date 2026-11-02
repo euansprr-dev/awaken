@@ -248,7 +248,7 @@ def clips(r):
     slump = _pose(core=(20, 0, 8), at=(0, -10, 0), body=(14, 0, 4), head=(20, 0, 10), crown=(0.3, 30), arms=(10, -20, -10), tail=(20, 0))
     fall = _pose(core=(40, 0, 18), at=(0, -26, 0), body=(20, 0, 6), head=(34, 0, 20), crown=(0.5, 50), arms=(-40, 40, -10), tail=(60, 6))
     keyed(r, "death", 2.6, [(0, {}), (0.3, jerk), (1.2, slump), (1.9, fall), (2.6, fall)])
-    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §47.5)
     mv = [lash("lash", "r"), lash("lash_b", "l", windup=9, recover=12), swoop(), lob(), drop(), rain(), birth(), halo(), bloom(), unfurl()]
     for m in mv:
         stage_clips(r, m)
@@ -418,7 +418,7 @@ SOUNDS = {
 MOVE_SOUNDS = {"birth": {"swing": "cast"}, "rain": {"impact": ""}, "halo": {"impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 240,
     "intro": {"pose": "idle", "move": "unfurl"},

@@ -24,11 +24,11 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * The duel on cue, for tours and a look in game (admin: {@code /awaken bosses duel ...}, SPEC §46.3): a stage where you
+ * The duel on cue, for tours and a look in game (admin: {@code /awaken bosses duel ...}, SPEC §47.3): a stage where you
  * stand with a duel boss at its middle facing a still stand-in 4 blocks south, the camera west of them looking east; then
  * a phrase played, a blow deflected (the limb's recoil, or the reel off a phrase's last blow) and the stance broken, each
  * now, so a tour's waits and a frozen tick catch them. {@code beast <id>} puts a named beast in the boss's place, and
- * {@code break} then breaks its stance through Arms (it topples, SPEC §46.5). A creative player is never its target.
+ * {@code break} then breaks its stance through Arms (it topples, SPEC §47.5). A creative player is never its target.
  */
 public final class DuelDemo {
     private DuelDemo() {}

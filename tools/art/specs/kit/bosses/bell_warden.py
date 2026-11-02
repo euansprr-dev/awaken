@@ -333,7 +333,7 @@ DRIFT = 3.0  # pixels a standing point may wander in the keyed clip and still be
 
 def _lock(r, clip, hold=3):
     """Every point that stands on the floor for hold ticks or more stays exactly where it set down (FA's foot lock, SPEC
-    §46.3): between key poses the legs' turns blend and a standing point drifts a pixel or two a tick. A stand that runs
+    §47.3): between key poses the legs' turns blend and a standing point drifts a pixel or two a tick. A stand that runs
     to the clip's start or end keeps the point where the clip hands it over, so the seams don't move it either."""
     c = r.clips[clip]
     n = int(round(c.length / core.TICK))
@@ -507,7 +507,7 @@ def _reactions(r):
                   face=(0, 12 * sgn, 0))
         b = _pose(r, lift=-0.5, roll=4 * sgn, yaw=2 * sgn, tongue=(0, -9 * sgn), whip=(0, -5 * sgn), jaw=3, rope=(0, -5 * sgn))
         keyed(r, nm, 0.65, [(0, _pose(r)), (0.08, h), (0.34, b), (0.65, _pose(r))])
-    # turned aside (SPEC §46.3): the blow is thrown back, the bell rocks up onto its back legs with its front points off
+    # turned aside (SPEC §47.3): the blow is thrown back, the bell rocks up onto its back legs with its front points off
     # the floor and the clapper swinging, and comes down onto them again ready to go on
     up = {0: _foot(0, out=-3, up=10), 1: _foot(1, out=-3, up=10)}
     thrown = _pose(r, lift=2.5, pitch=-15, feet=up, tongue=(24, 0), whip=(18, 0), jaw=14, rope=(10, 0), face=(-14, 0, 0))
@@ -768,7 +768,7 @@ def wake(r):
 
 # the ground (SPEC §35.10): the points, the clapper's ball and the rope's end stay out of the floor
 LEG_GROUND = [([f"shin{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
-# a standing point is set on the floor by its own IK: lifting its leg clear tick by tick is what slid it (SPEC §46.3), so
+# a standing point is set on the floor by its own IK: lifting its leg clear tick by tick is what slid it (SPEC §47.3), so
 # the points are kept up only in the moves where every leg travels
 FOOT_GROUND = [([f"foot{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 40)]) for k in range(4)]
 CLAP_GROUND = [(["clapper_b"], [("clapper", 0, 80, -1), ("clapper_b", 0, 80, -1)])]
@@ -819,9 +819,9 @@ SOUNDS = {
 MOVE_SOUNDS = {"wake": {"swing": "roar"}, "summon": {"swing": "roar"}, "echo": {"swing": "cast"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 280,  # its stance size, tuned with the sim (SPEC §46.3)
+    "stance": 280,  # its stance size, tuned with the sim (SPEC §47.3)
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [

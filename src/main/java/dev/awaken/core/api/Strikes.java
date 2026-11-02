@@ -46,7 +46,7 @@ public final class Strikes {
         }
 
         /**
-         * The class's colour (SPEC §46.2, one tell language): on a body's tell, a shot's core, a ring's edge, a wave's
+         * The class's colour (SPEC §47.2, one tell language): on a body's tell, a shot's core, a ring's edge, a wave's
          * crest and a lock's flash. White-gold: parry, block or dash; amber: parry or dash; red: dash or jump; violet: a
          * grab, dash only. NONE: white.
          */
@@ -166,7 +166,7 @@ public final class Strikes {
         return grounder.ground(e, ticks);
     }
 
-    // ---- beasts' bites (server, SPEC §46.2) -------------------------------------------------------------------------
+    // ---- beasts' bites (server, SPEC §47.2) -------------------------------------------------------------------------
 
     public interface Biters {
         /** A beast's melee goal: chases what it fights and bites it, told, while {@code when} holds. */
@@ -197,7 +197,7 @@ public final class Strikes {
         return biters.bite(mob, speed, when);
     }
 
-    // ---- the duel (server, SPEC §46.3) ------------------------------------------------------------------------------
+    // ---- the duel (server, SPEC §47.3) ------------------------------------------------------------------------------
 
     /** What the mobs module answers when Arms turns a blow aside, and what Arms asks of a body. */
     public interface Duel {
@@ -236,7 +236,7 @@ public final class Strikes {
     }
 
     /**
-     * How you meet a fight that reads you (SPEC §46.6, the Examiner): turning its blows aside, getting out of their way,
+     * How you meet a fight that reads you (SPEC §47.6, the Examiner): turning its blows aside, getting out of their way,
      * keeping your distance, or your powers; NONE when no one habit stood out.
      */
     public enum Habit { NONE, GUARD, SLIP, DISTANCE, POWERS }

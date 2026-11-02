@@ -104,7 +104,7 @@ final class WorldBody {
         nearLegsThisFrame = false;
         if (broken) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || !mc.options.getCameraType().isFirstPerson() || mc.getCameraEntity() != mc.player && !dev.awaken.anims.client.station.StationClient.ownsCamera()) return;
+        if (mc.player == null || mc.level == null || !mc.options.getCameraType().isFirstPerson() || mc.getCameraEntity() != mc.player && !dev.awaken.anims.client.station.StationClient.ownsCamera() && !FirstPerson.cameraOwned()) return;
         try {
             RIG.clear();
             List<FirstPerson.WorldSource> sources = FirstPerson.worldSources();

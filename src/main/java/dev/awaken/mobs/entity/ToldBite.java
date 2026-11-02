@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 
 /**
- * A beast's bite, told (SPEC §46.2): the Gnawed and the wild animals that fight back bit with vanilla melee, unseen. In
+ * A beast's bite, told (SPEC §47.2): the Gnawed and the wild animals that fight back bit with vanilla melee, unseen. In
  * reach, a beast now plants itself, rears back with a growl and a white-gold glint for {@link #TELL} ticks (a light
  * blow: deflect, block or dodge it), lunges a step {@link #LUNGE} ticks before the bite and bites only if you are still
  * in its reach. At most {@link #AT_ONCE} beasts wind up on one body at a time; the rest wait their turn. Installed as

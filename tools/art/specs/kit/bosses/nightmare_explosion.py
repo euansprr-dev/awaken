@@ -845,7 +845,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
-    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §47.5)
     mv = [pop(r), slap(r), pop_goes(r), bound(r), lines(r), lid_slam(r), shorter(r), ring(r), wake(r)]
     crank_turns = {"popgoes": (2, 0.25, 0.95), "lines": (1, 0.0, 0.8), "shorter": (4, 0.15, 0.95), "ring": (3, 0.3, 0.7), "wake": (2, 0.1, 0.6)}
     for m in mv:
@@ -879,7 +879,7 @@ MOVE_SOUNDS = {"lines": {"swing": "cast"}, "shorter": {"swing": "roar", "impact"
                "wake": {"swing": "roar", "impact": ""}, "lid": {"impact": "impact"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 280,
     "intro": {"pose": "idle", "move": "wake"},  # the box shut; the crank ticks; it pops

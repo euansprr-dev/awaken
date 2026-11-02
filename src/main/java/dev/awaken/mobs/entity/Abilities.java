@@ -75,7 +75,7 @@ final class Abilities {
 
     /**
      * A blow lands: true when it did. A blow that was deflected, evaded or blocked whole (Arms) brings none of its burn,
-     * push or effect with it (SPEC §46.2, I5). The effect is decided when the ability fires ({@link #effect(AwakenMob, Ability)}).
+     * push or effect with it (SPEC §47.2, I5). The effect is decided when the ability fires ({@link #effect(AwakenMob, Ability)}).
      */
     static boolean hurtBy(ServerLevel level, @Nullable AwakenMob mob, @Nullable Entity direct, LivingEntity e, float amount, BoltKind bolt, @Nullable MobEffectInstance effect) {
         if (amount > 0 && !e.hurtServer(level, source(level, mob, direct, bolt), amount)) return false;
@@ -84,11 +84,11 @@ final class Abilities {
         return true;
     }
 
-    /** A fire blow's burn: one second, a sting not a sentence (SPEC §46.2). */
+    /** A fire blow's burn: one second, a sting not a sentence (SPEC §47.2). */
     public static final float BURN_SECONDS = 1.0F;
 
     /**
-     * Whether the ability firing now may carry an effect (SPEC §46.2, I6): a lesser creature's always, a boss's only on
+     * Whether the ability firing now may carry an effect (SPEC §47.2, I6): a lesser creature's always, a boss's only on
      * its signature move. Set by the runner around a firing, on the server thread (as {@code Strikes} holds its blow).
      */
     static boolean carrying = true;
@@ -125,7 +125,7 @@ final class Abilities {
         return b.effect != null && b.effectTicks > 0 ? new MobEffectInstance(b.effect, b.effectTicks, 0) : null;
     }
 
-    /** A shot's speed by its class (SPEC §46.2): white-gold 0.9, amber 0.7, red 0.6 blocks a tick, so the harder to answer the longer it shows. */
+    /** A shot's speed by its class (SPEC §47.2): white-gold 0.9, amber 0.7, red 0.6 blocks a tick, so the harder to answer the longer it shows. */
     static double shotSpeed() {
         Strikes.Kind k = Strikes.delivering();
         return k == Strikes.Kind.PERILOUS || k == Strikes.Kind.GRAB ? 0.6 : k == Strikes.Kind.HEAVY ? 0.7 : 0.9;
@@ -286,7 +286,7 @@ final class Abilities {
         if (y < 0) y = minY + 2;
         EvokerFangs fang = new EvokerFangs(level, x, y, z, rot, delay, mob);
         if (mob instanceof AwakenBoss b && b.duel()) {
-            // a duel's fang bites for the boss's own blow, nothing riding on it (SPEC §46.5)
+            // a duel's fang bites for the boss's own blow, nothing riding on it (SPEC §47.5)
             DuelFangs.mark(fang, damage(mob, a));
             level.addFreshEntity(fang);
             return;
@@ -384,7 +384,7 @@ final class Abilities {
         return false;
     }
 
-    /** A pull: water or wind drawn in (no harm, a dash outruns it), then a wave out from the body (SPEC §46.2). */
+    /** A pull: water or wind drawn in (no harm, a dash outruns it), then a wave out from the body (SPEC §47.2). */
     static void pull(ServerLevel level, AwakenMob mob, Ability a) {
         Carriers.pull(level, mob, mob.position(), a.radius(), damage(mob, a) * 0.4F, bolt(mob, a), effect(mob, a), 0);
         mob.playLevelSound(MobSounds.PULL_DRAW.get(), 1.2F, 1.0F);
@@ -401,7 +401,7 @@ final class Abilities {
     static final double CONE_DOT = 0.8;
 
     /**
-     * A cone's edge for its reach (SPEC §46.2, I4): as wide as {@link #CONE_DOT}, narrower for a long one, so wherever
+     * A cone's edge for its reach (SPEC §47.2, I4): as wide as {@link #CONE_DOT}, narrower for a long one, so wherever
      * you stand in it a dash gets you out: back past its end, or aside (at its worst spot, a dash short of its end,
      * its half width is 2.3 blocks; a dash is 2.6). tools/sim/reach_sim.py cone_dot is the same rule.
      */

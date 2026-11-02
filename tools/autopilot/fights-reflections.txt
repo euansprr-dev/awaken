@@ -1,4 +1,4 @@
-# Fights stage 5, the second Proving (SPEC §46.6): the Examiner and the Hall of Reflections, in a practice Proving
+# Fights stage 5, the second Proving (SPEC §47.6): the Examiner and the Hall of Reflections, in a practice Proving
 # (/awaken admin trial C). A small study is built round you first (planks, bookshelves, a window, lanterns, a chest);
 # then a burst of quick shots every 12 ticks catches the wake (the same study, now laid in the hall), the room turning
 # to glass a ring at a time, and the Examiner stepping out of it as the room breaks (the burst covers the hall's

@@ -1,8 +1,13 @@
 package dev.awaken.mobs;
 
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import dev.awaken.Awaken;
+import dev.awaken.core.AwakenCommands;
 import dev.awaken.mobs.entity.RitualStatue;
 import dev.awaken.mobs.entity.SeatedOne;
+import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -34,15 +39,29 @@ public final class Ritual {
 
     static void init(IEventBus modBus) {
         ENTITIES.register(modBus);
+        // tours: a statue on its own, at a stage, tagged ritual_studio (the cast can't be summoned by command)
+        AwakenCommands.add((root, ctx) -> root.then(Commands.literal("admin").requires(AwakenCommands.admin())
+                .then(Commands.literal("ritualstatue")
+                        .then(Commands.argument("x", DoubleArgumentType.doubleArg()).then(Commands.argument("y", DoubleArgumentType.doubleArg())
+                                .then(Commands.argument("z", DoubleArgumentType.doubleArg()).then(Commands.argument("yaw", FloatArgumentType.floatArg(-180, 180))
+                                        .then(Commands.argument("stage", IntegerArgumentType.integer(RitualStatue.KNEEL, RitualStatue.GLARE)).executes(c -> {
+                                            RitualStatue e = spawnStatue(c.getSource().getLevel(), new Vec3(DoubleArgumentType.getDouble(c, "x"),
+                                                    DoubleArgumentType.getDouble(c, "y"), DoubleArgumentType.getDouble(c, "z")), FloatArgumentType.getFloat(c, "yaw"));
+                                            if (e == null) return 0;
+                                            e.setStage(IntegerArgumentType.getInteger(c, "stage"));
+                                            e.addTag("ritual_studio");
+                                            return 1;
+                                        })))))))));
         modBus.addListener((EntityAttributeCreationEvent e) -> {
             e.put(SEATED_ONE.get(), SeatedOne.attributes().build());
             e.put(STATUE.get(), RitualStatue.attributes().build());
         });
     }
 
-    /** The exact distance-driven time used by the statue renderer's 1.6 second walk clip. */
+    /** The exact distance-driven time used by the statue renderer's 1.6 second walk clip: one cycle (two steps of 1.25
+     *  blocks) per 2.5 blocks walked. walkAnimation.position grows 4 a block at the statues' pace (0.075 a tick). */
     public static float walkSeconds(net.minecraft.world.entity.Entity e, float partial) {
-        return e instanceof RitualStatue s ? s.walkAnimation.position(partial) * 0.55F : 0;
+        return e instanceof RitualStatue s ? s.walkAnimation.position(partial) * 0.16F : 0;
     }
 
     /** Client presentation: only actual moving WALK stages can make planted-foot sounds. */
@@ -60,9 +79,10 @@ public final class Ritual {
     public static Vec3 plantedFoot(net.minecraft.world.entity.Entity e, int foot) {
         // LivingEntityRenderer rotates by 180-bodyYaw, then flips model X/Y. Model +Z is behind the body.
         double yaw = Math.toRadians(e instanceof RitualStatue s ? s.yBodyRot : e.getYRot());
-        double side = (foot & 1) == 0 ? 0.225 : -0.225;
-        return e.position().add(Math.cos(yaw) * side + Math.sin(yaw) * 0.36, 0,
-                Math.sin(yaw) * side - Math.cos(yaw) * 0.36);
+        // the walk's heel strike: the sole lands 0.75 blocks ahead of the body, 0.25 to the side, and stays there
+        double side = (foot & 1) == 0 ? 0.25 : -0.25;
+        return e.position().add(Math.cos(yaw) * side - Math.sin(yaw) * 0.75, 0,
+                Math.sin(yaw) * side + Math.cos(yaw) * 0.75);
     }
 
     public static @Nullable SeatedOne spawnSeated(ServerLevel level, Vec3 at, float yaw) {

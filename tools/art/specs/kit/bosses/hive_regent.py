@@ -271,7 +271,7 @@ def clips(r):
     slump = _pose(core=(22, 0, 8), at=(0, -14, 0), chest=(14, 0, 4), head=(24, 0, 10), wings=(-20, 20), arms=(-4, -10, -40, -30), low=(-10, 0), train=(6, 0))
     fall = _pose(core=(70, 0, 16), at=(0, -34, -4), chest=(14, 0, 6), head=(26, 0, 20), wings=(-34, 36), arms=(-40, 30, -50, -20), low=(10, 0), train=(-30, 8))
     keyed(r, "death", 2.6, [(0, {}), (0.3, shriek), (1.1, slump), (1.8, fall), (2.6, fall)])
-    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §47.5)
     mv = [cut("cut", "r"), cut("cut_b", "l", windup=9, recover=12), sting(), dive(), brood(), rain(), volley(), jelly(), frenzy(), emerge(), lash()]
     for m in mv:
         stage_clips(r, m)
@@ -469,7 +469,7 @@ SOUNDS = {
 MOVE_SOUNDS = {"brood": {"swing": "cast"}, "rain": {"impact": ""}, "jelly": {"swing": "cast", "impact": ""}, "frenzy": {"swing": "roar"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 240,
     "intro": {"pose": "idle", "move": "emerge"},

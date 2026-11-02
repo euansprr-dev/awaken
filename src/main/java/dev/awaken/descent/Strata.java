@@ -217,7 +217,7 @@ public final class Strata {
 
     /**
      * Whether a player may enter a depth. Stratum 10, the Seed, opens at Sovereign: the last Proving is the way into it
-     * (SPEC §46.10). The Endless opens after the Seed.
+     * (SPEC §47.10). The Endless opens after the Seed.
      */
     public static Access access(Rank rank, int level, boolean seedCleared, int depth) {
         if (depth <= 1) return Access.OPEN;

@@ -13,7 +13,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import java.util.function.Supplier;
 
 /**
- * A duel boss's fangs bite for its own ability's damage (SPEC §46.5), not vanilla's flat 6: a Lord tuned to hit softly
+ * A duel boss's fangs bite for its own ability's damage (SPEC §47.5), not vanilla's flat 6: a Lord tuned to hit softly
  * isn't out-hit by the roots it raises. Told and dodged as before; a deflect still takes all of it.
  */
 public final class DuelFangs {

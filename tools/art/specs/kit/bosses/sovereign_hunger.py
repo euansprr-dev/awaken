@@ -879,7 +879,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
-    plans.duel_reactions(r, lead="r", weight=1.8)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.8)  # a duel's parried and reel (SPEC §47.5)
     mv = [slap(r, 1, "slap"), slap(r, 0, "slap_b"), sweep(r), devour(r), gorge(r), gnaw(r), hounds(r), frenzy(r), famine(r), wake(r)]
     for m in mv:
         _staged(r, m)
@@ -911,7 +911,7 @@ MOVE_SOUNDS = {"gnaw": {"swing": "cast"}, "hounds": {"swing": "roar", "impact": 
                "famine": {"swing": "roar"}, "wake": {"swing": "roar"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 340,
     "intro": {"pose": "kneel", "move": "wake"},  # he waits for you slumped on his belly, chewing, and gets up

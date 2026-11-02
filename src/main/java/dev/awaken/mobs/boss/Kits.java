@@ -163,7 +163,7 @@ public final class Kits {
         f.intro().move().ifPresent(t -> need(k, t, out, null));
         f.death().ifPresent(t -> need(k, t, out, null));
         for (String r : REQUIRED) if (!covered.contains(r)) out.add(k.id + ": its fight has no " + r + " move");
-        // a duel's body shows what a deflect does to it (SPEC §46.3): its limb thrown back, and the reel
+        // a duel's body shows what a deflect does to it (SPEC §47.3): its limb thrown back, and the reel
         if (f.duel()) for (String c : DUEL_CLIPS) if (k.rig.clip(c) == null) out.add(k.id + ": a duel with no " + c + " clip");
         return out;
     }

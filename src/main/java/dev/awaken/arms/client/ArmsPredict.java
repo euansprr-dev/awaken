@@ -83,7 +83,7 @@ public final class ArmsPredict {
     /** The last strike pressed, wherever it pointed. */
     static int swungAt = -1000;
 
-    // the hit at once (SPEC §46.1): the blows this client played before the server's word, the running move's press,
+    // the hit at once (SPEC §47.1): the blows this client played before the server's word, the running move's press,
     // the creature the press meant and the sweep's focus (as the server keeps them), and the client's own freeze rule
     static final dev.awaken.arms.HitLedger LEDGER = new dev.awaken.arms.HitLedger();
     static int moveSeq = -1, aimedId = -1, focusId = -1, focusSeenAt;
@@ -627,7 +627,7 @@ public final class ArmsPredict {
         p.setDeltaMovement(dodgeX * v, dm.y, dodgeZ * v);
     }
 
-    // ---- the hit at once (SPEC §46.1) --------------------------------------------------------------------------------
+    // ---- the hit at once (SPEC §47.1) --------------------------------------------------------------------------------
 
     /**
      * Each frame of a move's active window: the server's sweep asked here first ({@link ArmsRules#predicts}, a little

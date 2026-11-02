@@ -1,4 +1,4 @@
-"""The Unmade (SPEC §46.7, docs/fights/PLAN.md §4.7): the third Proving's Warden, met on the Broken Span. The bridge's
+"""The Unmade (SPEC §47.7, docs/fights/PLAN.md §4.7): the third Proving's Warden, met on the Broken Span. The bridge's
 north arm, stood up: a masonry colossus six blocks high, built of the bridge and held together by nothing. Its legs are
 two squat piers on wide footings; its hips are a span of the bridge with an arch between the legs; its body is courses of
 stone brick that widen as they climb to great corbelled shoulders, and in its chest is an arched niche with a lamp still
@@ -266,9 +266,9 @@ SOUNDS = {
 MOVE_SOUNDS = {"rise": {"swing": "roar"}, "give": {"swing": "impact"}, "dark": {"swing": "roar"}, "rubble": {"swing": "roar"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): phrases of three and four, its long arms covering the ground round it
+    # a duel (SPEC §47.3): phrases of three and four, its long arms covering the ground round it
     "duel": True,
-    "stance": 340,  # tuned with the sim (SPEC §46.7)
+    "stance": 340,  # tuned with the sim (SPEC §47.7)
     "intro": {"pose": "kneel", "move": "rise"},
     "phases": [
         # on the whole bastion: the swats in twos and threes, the Keystone, the Stamp, Pier Run, the Fall

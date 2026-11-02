@@ -678,7 +678,7 @@ def riposte(r):
 
 
 def behind(r):
-    """Over the Shoulder (for whoever is behind it; HEAVY, a hold: the fight's delayed blow, SPEC §46.5): the low right mirror swings out to show it you over its shoulder,
+    """Over the Shoulder (for whoever is behind it; HEAVY, a hold: the fight's delayed blow, SPEC §47.5): the low right mirror swings out to show it you over its shoulder,
     its face turning down into it; without turning round it draws the blade across its body and thrusts it back and
     down under its arm."""
     look = dict(neck=(4, -10, 0), head=(14, -34, -6))
@@ -784,7 +784,7 @@ def clips(r):
     idle(r)
     gaits(r)
     reactions(r)
-    plans.biped_duel_reactions(r, weight=1.0)  # a duel's parried and reel (SPEC §46.5)
+    plans.biped_duel_reactions(r, weight=1.0)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     by = {m.id: m for m in mv}
     for m in mv:
@@ -828,7 +828,7 @@ MOVE_SOUNDS = {"parry": {"swing": "cast", "impact": ""}, "hall": {"swing": "cast
                "shatter": {"swing": "roar"}, "preen": {"swing": "cast", "impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 320,
     "intro": {"pose": "idle", "move": "preen"},  # it raises its mirrors round its face, one after another

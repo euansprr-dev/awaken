@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * See it coming (SPEC §46.2): every move that hurts is told; an aimed carrier locks with time to answer it; a nearby
+ * See it coming (SPEC §47.2): every move that hurts is told; an aimed carrier locks with time to answer it; a nearby
  * player is sent every carrier; a dash at the lock gets out of a volley, a locked line and a leap's ring, and a wave is
  * jumped; nothing an evade answered leaves its effect or push behind.
  */
@@ -91,7 +91,7 @@ public final class CarrierTests {
     }
 
     /**
-     * A duel's script (SPEC §46.3): I6 at most one signature and one summon move, never in its first phase; I7 at least
+     * A duel's script (SPEC §47.3): I6 at most one signature and one summon move, never in its first phase; I7 at least
      * 40% of its blows parryable and 20% red; I8 in every phase at most 30% of its starts (by weight) a lone blow.
      */
     private static void duel(MobDef d, Kits.Kit kit, int blows, int parry, int red, int summons, List<String> bad) {

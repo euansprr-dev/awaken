@@ -1,7 +1,7 @@
 package dev.awaken.arms;
 
 /**
- * The client's record of the blows it played before the server's word (SPEC §46.1 "Hits land now"): each (move's
+ * The client's record of the blows it played before the server's word (SPEC §47.1 "Hits land now"): each (move's
  * press, body) once, so the server's HIT for a blow already played adds only what the client couldn't know (a kill, a
  * cleave) and never plays the impact twice. A blow the server never confirms is counted as shown without damage.
  * Fixed arrays, no allocation per blow.

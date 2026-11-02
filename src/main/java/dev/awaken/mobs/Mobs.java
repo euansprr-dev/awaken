@@ -159,7 +159,7 @@ public final class Mobs {
         return m;
     }
 
-    /** A duel's add hits at most {@link AwakenBoss#ADD_DAMAGE} of what its caller does: the weight is the boss's (SPEC §46.3). */
+    /** A duel's add hits at most {@link AwakenBoss#ADD_DAMAGE} of what its caller does: the weight is the boss's (SPEC §47.3). */
     private static void duelAdd(AwakenMob m, AwakenBoss caller) {
         var mine = m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
         var theirs = caller.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
@@ -178,7 +178,7 @@ public final class Mobs {
         if (near.size() + count > 40) return false;
         int mine = 0;
         for (AwakenMob m : near) if (m.getPersistentData().getIntOr("awaken_summoner", -1) == summoner.getId()) mine++;
-        // a duel keeps its adds few (SPEC §46.3, I6): the fight is with it
+        // a duel keeps its adds few (SPEC §47.3, I6): the fight is with it
         int cap = summoner instanceof AwakenBoss b && b.duel() ? AwakenBoss.DUEL_ADDS : Math.max(3, count * 2);
         return mine + count <= cap;
     }

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Cradle's antechamber (SPEC §46.10): the last Proving's hall. A round white hall whose floor is a clock face (twelve
+ * The Cradle's antechamber (SPEC §47.10): the last Proving's hall. A round white hall whose floor is a clock face (twelve
  * gold marks round its rim, a ring of gold in the middle, the Loop), under a black ceiling set with stars. Lit windows
  * stand between the marks. North is the Seed's door, a great round door of turning rings; past it a short tunnel runs to
  * a wall of light. South an arch leads back out into the dark. Built by the trials' generator in every hall cell at

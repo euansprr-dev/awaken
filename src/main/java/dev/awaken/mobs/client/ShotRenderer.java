@@ -25,7 +25,7 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import org.joml.Vector3f;
 
 /**
- * A creature's shot (SPEC §46.2): a glowing core in the colour of how you answer it (white-gold, amber, red), a halo
+ * A creature's shot (SPEC §47.2): a glowing core in the colour of how you answer it (white-gold, amber, red), a halo
  * breathing round it and a tail tapering back along its flight in its maker's colour, all light (Lens blooms it); a
  * seep heart's shard keeps its glass under the glow. It hums as it flies, from where it is, so one behind you is heard.
  */

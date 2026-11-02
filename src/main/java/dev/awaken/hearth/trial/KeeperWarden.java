@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The fifth Proving's Warden (SPEC §46.9): the Keeper's Shadow, for S. The bell won't stop, and you wake at the top of a
+ * The fifth Proving's Warden (SPEC §47.9): the Keeper's Shadow, for S. The bell won't stop, and you wake at the top of a
  * stair going down into a round court of black stone: eight shut doors round it, each with a coloured light in its
  * keyhole, and the Court's own door, banded in gold, at its far side. The braziers light themselves one by one. Walk
  * into the court and your shadow spreads into a pool in front of you, and the Keeper's Shadow stands up out of it: the

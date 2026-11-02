@@ -15,7 +15,7 @@ ArmsRules.dodgeSpeed, evading every class on its first EVADE ticks. A second pla
 strike lands in the evade ticks (perfect reading of the timing, no visual help), which always works for one hit.
 
 Two models. "before" is the game as it was (docs/fights/PLAN.md §2: what the plan measured). "after" (the default) is
-stage 1, "See it coming" (SPEC §46.2): everything that hurts at range travels or is drawn first (a shot, a volley, a
+stage 1, "See it coming" (SPEC §47.2): everything that hurts at range travels or is drawn first (a shot, a volley, a
 wave, a locked line or wedge, a leap's ring, a field), an aimed one locks at least 10 ticks (a shot or ground line 8)
 before it lands, and pushes and effects come only with a landed hit. Its question is invariant I4: does a dash taken
 at the lock (REACT ticks after it shows) get you out of every carrier, and can every wave be jumped or dashed through?
@@ -198,7 +198,7 @@ def judge(kind, cls, windup, lock, radius, inner, count, dist, told):
     return 0, strike, False, False, ""
 
 
-# ---- the after model (stage 1, SPEC §46.2); constants as written in mobs/entity/Carriers.java and Abilities.java ---------
+# ---- the after model (stage 1, SPEC §47.2); constants as written in mobs/entity/Carriers.java and Abilities.java ---------
 
 LOCK = 10            # Carriers.LOCK: a line, wedge or leap stops following this long before it lands
 LOCK_SHOT = 8        # Carriers.LOCK_SHOT: a shot, a ground line or a lob

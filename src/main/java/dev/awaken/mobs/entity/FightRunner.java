@@ -40,7 +40,7 @@ final class FightRunner {
     private KitMoves.@Nullable Played played;
     private float yaw;
     private @Nullable Ability ability;
-    /** The move's told class (SPEC §46.2, I1): never NONE for a move that hurts. */
+    /** The move's told class (SPEC §47.2, I1): never NONE for a move that hurts. */
     private Strikes.Kind cls = Strikes.Kind.NONE;
     private final ArrayDeque<String> string = new ArrayDeque<>(4);
     /** The studio's queue (/awaken bosses studio): every move once, in table order, a breath apart; then it fights. */
@@ -51,7 +51,7 @@ final class FightRunner {
     /** A phase waiting for its transition (the threshold was crossed mid-move), or -1. */
     private int pendingPhase = -1;
 
-    // the duel (SPEC §46.3), for a fight script that asks for it
+    // the duel (SPEC §47.3), for a fight script that asks for it
     /** Opening after a phrase: ticks for a phrase of one blow, each blow more, at most. */
     static final int OPENING_MIN = 16, OPENING_PER_BLOW = 3, OPENING_MAX = 30;
     /** A deflected blow's limb recoils this long before the phrase goes on; its last blow turned aside, it reels this long. */
@@ -65,7 +65,7 @@ final class FightRunner {
     /** The target's distance, sampled every 10 ticks (the last two), to see it backing off. */
     private double distWas = -1, distWasWas = -1;
 
-    // a fight that reads you (SPEC §46.6, the Examiner): through its first phase it counts how you meet it (deflects,
+    // a fight that reads you (SPEC §47.6, the Examiner): through its first phase it counts how you meet it (deflects,
     // blows you got out of, ten-tick spells kept 8 blocks off, power hits), and the habit you lean on most, at least
     // HABIT_LEAN times over the others, brings up what answers it HABIT_ANSWER times as often from its second phase
     static final int HABIT_LEAN = 4, HABIT_ANSWER = 5;
@@ -298,7 +298,7 @@ final class FightRunner {
         }
         if (gap > 0) {
             gap--;
-            // an opening: it starts nothing and stands its ground, turning to keep you in front (SPEC §46.3)
+            // an opening: it starts nothing and stands its ground, turning to keep you in front (SPEC §47.3)
             if (boss.inOpening()) boss.getNavigation().stop();
             else approach(target);
             return;
@@ -356,7 +356,7 @@ final class FightRunner {
     }
 
     /**
-     * An entry's weight; in a duel it answers your habits (SPEC §46.3): after {@link #HABIT_DEFLECTS} deflects in a row
+     * An entry's weight; in a duel it answers your habits (SPEC §47.3): after {@link #HABIT_DEFLECTS} deflects in a row
      * its red phrases come up {@link #HABIT_RED} times as often, and when you back off its gap closers
      * {@link #HABIT_CLOSE} times.
      */
@@ -371,7 +371,7 @@ final class FightRunner {
     }
 
     /**
-     * Whether a phrase answers the habit it read (SPEC §46.6): your guard, the blows that can't be turned aside (amber,
+     * Whether a phrase answers the habit it read (SPEC §47.6): your guard, the blows that can't be turned aside (amber,
      * red, a grab); your dodging, the held blows and the long strings (a dodge spent early, or on the first blow of
      * three); your distance, its gap closers; your powers, its shots (in your power's look).
      */
@@ -413,7 +413,7 @@ final class FightRunner {
     }
 
     /**
-     * A blow of its was deflected (Arms, SPEC §46.3): the blow is spent and its limb recoils; the phrase goes on after
+     * A blow of its was deflected (Arms, SPEC §47.3): the blow is spent and its limb recoils; the phrase goes on after
      * {@link #RECOIL_TICKS}, unless that was its last blow: then it reels, the opening a parry earns.
      */
     void deflected(ServerLevel level, Strikes.Kind kind) {
@@ -536,7 +536,7 @@ final class FightRunner {
         int wind = windup + hold;
         if (t <= wind) {
             // the wind-up: it turns toward you until it locks, then commits; an aimed ability locks at least its lead
-            // before it can land (SPEC §46.2, I3), whatever the move's own lock says
+            // before it can land (SPEC §47.2, I3), whatever the move's own lock says
             int lockAt = ability != null ? Math.min(m.time().lock(), wind - Carriers.lead(ability)) : m.time().lock();
             boolean tracking = t <= lockAt && target != null && target.isAlive();
             if (tracking && m.time().track() > 0) {
@@ -599,7 +599,7 @@ final class FightRunner {
         stop();
         if (!studio.isEmpty()) gap = 30;
         else if (!string.isEmpty()) gap = 0;
-        else if (fight.duel()) openUp(level, opening(phraseBlows)); // every phrase ends in an opening (SPEC §46.3, I8)
+        else if (fight.duel()) openUp(level, opening(phraseBlows)); // every phrase ends in an opening (SPEC §47.3, I8)
         else gap = 6 + boss.getRandom().nextInt(9);
     }
 
@@ -662,7 +662,7 @@ final class FightRunner {
     }
 
     /**
-     * A move's told class (SPEC §46.2, I1): its own, else what it does says it (an ability's class, a blow's amber), so
+     * A move's told class (SPEC §47.2, I1): its own, else what it does says it (an ability's class, a blow's amber), so
      * no move that hurts goes untold. NONE only for a move that hurts nobody (a roar, a summon, a guard).
      */
     static Strikes.Kind told(KitMoves.Move m, @Nullable Ability a) {

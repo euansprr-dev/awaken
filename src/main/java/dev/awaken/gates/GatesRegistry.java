@@ -11,6 +11,7 @@ import dev.awaken.gates.entity.GateShade;
 import dev.awaken.gates.entity.HollowFollower;
 import dev.awaken.gates.run.GateMemory;
 import dev.awaken.gates.run.GearStash;
+import dev.awaken.gates.run.Held;
 import dev.awaken.gates.run.RunState;
 import dev.awaken.gates.world.GateBiomeSource;
 import dev.awaken.gates.world.GateChunkGenerator;
@@ -532,6 +533,9 @@ public final class GatesRegistry {
                     .sync(dev.awaken.gates.worlds.WorldLook.STREAM_CODEC).build());
     public static final Supplier<AttachmentType<GearStash>> STASH = ATTACHMENTS.register("gate_stash",
             () -> AttachmentType.builder(() -> GearStash.EMPTY).serialize(GearStash.MAP_CODEC, s -> !s.isEmpty()).copyOnDeath().build());
+    /** Held for you: what a gate gave you that didn't fit your pockets (SPEC §13, "Gate spoils"). */
+    public static final Supplier<AttachmentType<Held>> HELD = ATTACHMENTS.register("gate_held",
+            () -> AttachmentType.builder(Held::new).serialize(Held.MAP_CODEC, h -> !h.isEmpty()).copyOnDeath().build());
 
     public static void init(IEventBus modBus) {
         BLOCKS.register(modBus);

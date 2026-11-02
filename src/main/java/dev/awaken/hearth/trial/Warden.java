@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * A Proving's Warden (SPEC §46.4, §46.6 to §46.9): who waits at a rank's Reassessment, its hall, how you arrive, what changes in
+ * A Proving's Warden (SPEC §47.4, §47.6 to §47.9): who waits at a rank's Reassessment, its hall, how you arrive, what changes in
  * the hall as the fight turns, and what it leaves you. {@link Provings} runs the rest the same for every one of them:
  * the bell, the party, the falls and the hints, the reset, the gathering of what it left, the way home.
  */

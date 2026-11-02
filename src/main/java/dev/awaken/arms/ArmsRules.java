@@ -31,7 +31,7 @@ public final class ArmsRules {
     /** Posture a deflect does to the attacker, by the blow's class. */
     public static final int DEFLECT_POSTURE_LIGHT = 18, DEFLECT_POSTURE_HEAVY = 26;
     /**
-     * The duel's payoff (SPEC §46.3): a perfect dodge through a blow fills the attacker's stance this much; a blow in an
+     * The duel's payoff (SPEC §47.3): a perfect dodge through a blow fills the attacker's stance this much; a blow in an
      * opening fills it this many times as fast (a shot sent back fills its maker's as the mobs module says); a blow on a
      * duel body standing braced (no opening, not a riposte) only this share: its stance falls to deflects and punishes.
      */
@@ -124,7 +124,7 @@ public final class ArmsRules {
     }
 
     /**
-     * What a landed blow does to a stance (SPEC §46.3): more in an opening; on a duel body standing braced only
+     * What a landed blow does to a stance (SPEC §47.3): more in an opening; on a duel body standing braced only
      * {@link #GUARDED_POSTURE} of it, unless it is a riposte (the punish for a deflect).
      */
     public static int hitPosture(int posture, boolean opening, boolean riposte, boolean duelist) {
@@ -281,7 +281,7 @@ public final class ArmsRules {
     }
 
     /**
-     * An Execution on a Lord (a move with a bossCap) is the finisher (SPEC §46.3): between {@link #LORD_FINISHER_MIN} and
+     * An Execution on a Lord (a move with a bossCap) is the finisher (SPEC §47.3): between {@link #LORD_FINISHER_MIN} and
      * {@link #LORD_FINISHER_MAX} of its health, whatever the weapon, so each break is worth a tenth to a seventh of the fight.
      */
     public static float capExecution(float damage, float maxHealth, float bossCap, boolean lord) {
@@ -422,7 +422,7 @@ public final class ArmsRules {
         return Math.abs(Mth.wrapDegrees(degreesOff)) <= arc / 2;
     }
 
-    // ---- the sweep (SPEC §46.1 "Hits land now") ----------------------------------------------------------------------
+    // ---- the sweep (SPEC §47.1 "Hits land now") ----------------------------------------------------------------------
 
     /**
      * The client's sweep stays this far inside the server's (blocks of reach, degrees of arc): a creature the client

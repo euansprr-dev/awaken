@@ -801,7 +801,7 @@ def crook(r):
 
 
 def pack(r):
-    """For whoever is behind him (HEAVY, a hold: the fight's delayed blow, SPEC §46.5): he looks over his right shoulder, winds the other way, then twists right
+    """For whoever is behind him (HEAVY, a hold: the fight's delayed blow, SPEC §47.5): he looks over his right shoulder, winds the other way, then twists right
     round so the whole frame of his shop clubs across behind him, every lantern flying out; he sinks into the twist, so
     its bottom bar takes you across the shoulders."""
     look = _pose(r, hips=(0, -8, 0), chest=(0, -12, 0), head=(0, 46, 0), staff="up")
@@ -864,7 +864,7 @@ def moths(r):
 def paper(r):
     """Paper Lanterns: he draws in, then rises with his arms flung wide, the staff out at his right and the chain
     flying from his left, and turns once right round on his heel; the ring of paper lanterns flies out off him. Red (SPEC
-    §46.5): a ring of fire all round him is no blow to turn aside; step out of it or dash through."""
+    §47.5): a ring of fire all round him is no blow to turn aside; step out of it or dash through."""
     draw = _pose(r, hips=(4, 0, 0), at=(0, -2, 0), chest=(6, 12, 0), head=(4, -6, 0), left=(5, 40, -8), right=(-10, 34, -6), staff="up", chain=0.2)
     wide = lambda k: _pose(r, at=(0, 1 + 0.8 * k, 0), chest=(-8 - 4 * k, 6 - 10 * k, 0), head=(-8 - 8 * k, -6 + 8 * k, 0), left=(25, 46 + 8 * k, 2 - 6 * k),
                            lhand=((1, 0.15 - 0.3 * k, 0), (0, 1, 0)), right=(-24, 44 + 8 * k, 4 - 8 * k), staff=((0.3 + 0.2 * k, 0.95, 0), 0), chain=0.8)
@@ -912,7 +912,7 @@ BOLTS_FROM = (-0.65, 4.85, 2.8)  # where the bolts leave the lantern at a pump (
 def clips(r):
     plans.biped_locomotion(r, P, weight=0.8, temper="regal")
     plans.biped_reactions(r, weight=0.8)
-    plans.biped_duel_reactions(r, weight=0.8, lead="r")  # a duel's parried and reel (SPEC §46.5)
+    plans.biped_duel_reactions(r, weight=0.8, lead="r")  # a duel's parried and reel (SPEC §47.5)
     idle(r)
     reactions(r)
     _walk_staff(r, P)
@@ -946,7 +946,7 @@ def clips(r):
 
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 240,
     "intro": {"pose": "idle", "move": "wake"},

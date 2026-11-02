@@ -166,7 +166,7 @@ def body():
 def clips(r):
     plans.biped_locomotion(r, P, weight=1.6, temper="feral")
     plans.biped_reactions(r, weight=1.6)
-    plans.biped_duel_reactions(r, weight=1.6, lead="l")  # a duel's parried and reel (SPEC §46.5)
+    plans.biped_duel_reactions(r, weight=1.6, lead="l")  # a duel's parried and reel (SPEC §47.5)
     mv = [
         M.fist_slam(P, "hammer", side="r", title="Magma Fist", weight=1.4, windup=22, hold=10, active=5, recover=20, ability="Magma Fist",
                     kinds=("area", "near"), rng=(0, 4.6), damage=0.7, knock=1.0, weapon_bone="axe", disc=2.8),
@@ -211,7 +211,7 @@ SOUNDS = {
 MOVE_SOUNDS = {}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 240,
     "intro": {"pose": "idle", "move": "roar"},

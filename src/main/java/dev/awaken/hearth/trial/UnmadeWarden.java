@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The third Proving's Warden (SPEC §46.7): the Unmade, for B. The bell won't stop, and you're falling out of a night sky
+ * The third Proving's Warden (SPEC §47.7): the Unmade, for B. The bell won't stop, and you're falling out of a night sky
  * onto the Broken Span, an old bridge over nothing. Once you're down its north arm comes apart: the stones lift, come
  * together over the bastion, and the Unmade drops out of them. At two thirds of its health the bastion's outer ring
  * cracks and gives way (inside the tuff ring stays); at a third the Span's lamps go out from the gatehouse in. Go over

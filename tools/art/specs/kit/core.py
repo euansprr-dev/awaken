@@ -664,7 +664,7 @@ LOCK_DRIFT = 3.0  # pixels a standing foot may wander in a keyed clip and still 
 
 def lock_feet(rig, clip, sides=("l", "r"), hold=3, drift=LOCK_DRIFT):
     """Every foot that stands on the floor for hold ticks or more stays exactly where it set down, flat and pointing the
-    way it set down (FA's foot lock, SPEC §46.3, for two legs; the Bell's own four use their own): between key poses the
+    way it set down (FA's foot lock, SPEC §47.3, for two legs; the Bell's own four use their own): between key poses the
     legs' turns blend and a standing foot drifts a pixel or two a tick. A stand that runs to the clip's start or end
     keeps the foot where the clip hands it over, so the seams don't move it. A foot dragged on purpose (a skid, a pivot
     on the spot) wanders more than drift and goes on as keyed. Its first and last ticks go halfway."""

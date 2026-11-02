@@ -16,7 +16,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import java.util.function.Supplier;
 
 /**
- * Big beasts topple (SPEC §46.5, PLAN §4.6): a named beast or a hunt quarry whose stance breaks goes down on its side
+ * Big beasts topple (SPEC §47.5, PLAN §4.6): a named beast or a hunt quarry whose stance breaks goes down on its side
  * for the break, the opening, and gets up as it ends. The server holds it still (its stagger); everyone who sees it is
  * sent when it went down and when it gets up, and draws the fall from that.
  */

@@ -1,4 +1,4 @@
-# Fights stage 5, the sixth Proving (SPEC §46.10): the Last Loop in the Cradle's antechamber, in a practice Proving
+# Fights stage 5, the sixth Proving (SPEC §47.10): the Last Loop in the Cradle's antechamber, in a practice Proving
 # (/awaken admin trial SOVEREIGN). A burst of quick shots catches the wake on the causeway looking north across the clock
 # to the Seed's door; then three steps north into the Loop, a turn round, and a burst every 10 ticks catches your path
 # lighting up behind you and the Last Loop kneeling where you stood, then standing. Then the Last Loop held still facing

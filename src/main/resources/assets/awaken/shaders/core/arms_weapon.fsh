@@ -19,7 +19,8 @@ layout(location = 3) in vec4 lightMapColor;
 layout(location = 4) in vec2 texCoord0;
 layout(location = 5) in vec3 worldNormal;
 layout(location = 6) in vec3 viewNormal;
-layout(location = 7) flat in vec3 state;
+layout(location = 7) flat in vec4 state;
+layout(location = 8) flat in vec2 script;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -28,6 +29,12 @@ const vec3 SKY = vec3(0.78, 0.86, 1.0);
 const vec3 GROUND = vec3(0.40, 0.36, 0.34);
 const vec3 STRIP = vec3(1.0, 0.97, 0.9);
 const float TAU = 6.2831853;
+// each enchantment's own light (SPEC §45.11), by the palette index the renderer packs: 1 Heat Ward ember, 2 Frost Ward
+// ice, 3 Charge Ward gold, 4 Gravity Ward violet, 5 Spirit Ward teal, 6 the other wards steel, 7 Clear Blood green,
+// 8 Bane red, 9 Spoils gold, 10 Carrying blue, 11 Keeping bone white, 12 anything else lapis-violet
+const vec3 SCRIPT[13] = vec3[](vec3(0.0), vec3(1.0, 0.54, 0.30), vec3(0.56, 0.85, 1.0), vec3(1.0, 0.85, 0.29),
+        vec3(0.73, 0.58, 1.0), vec3(0.31, 0.88, 0.76), vec3(0.73, 0.76, 0.82), vec3(0.62, 0.88, 0.48),
+        vec3(1.0, 0.37, 0.39), vec3(0.95, 0.77, 0.35), vec3(0.31, 0.71, 0.92), vec3(0.95, 0.92, 0.84), vec3(0.55, 0.42, 1.0));
 
 // the studio a metal reflects: a cool sky over a warm dark floor, a soft-box strip above
 vec3 studio(vec3 r) {
@@ -36,12 +43,21 @@ vec3 studio(vec3 r) {
     return base * 0.8 + STRIP * strip * 0.8;
 }
 
+// metal's colour as it heats: dull red, orange, yellow, near white
+vec3 heatGlow(float h) {
+    vec3 c = vec3(0.30, 0.03, 0.01) * smoothstep(0.05, 0.25, h);
+    c = mix(c, vec3(0.95, 0.32, 0.05), smoothstep(0.25, 0.55, h));
+    c = mix(c, vec3(1.0, 0.78, 0.28), smoothstep(0.55, 0.8, h));
+    return mix(c, vec3(1.0, 0.96, 0.86), smoothstep(0.8, 1.0, h));
+}
+
 void main() {
     vec4 alb = texture(Sampler0, texCoord0);
     if (alb.a < 0.1) discard;
     vec4 mat = texture(Sampler0, texCoord0 + vec2(0.5, 0.0));
     float metal = mat.r, gloss = mat.g, emit = mat.b, flow = mat.a;
-    float energy = state.x, flash = state.y, foil = state.z;
+    float energy = state.x, flash = state.y, foil = state.z, heat = 0.0, front = 0.0;
+    if (state.w > 0.5) { heat = energy; front = flash; energy = 0.0; flash = 0.0; } // in the making: x heat, y its front
     vec3 accent = accentAlong.rgb;
     float along = accentAlong.a;
 
@@ -68,6 +84,18 @@ void main() {
     // the world's light (sky and blocks) on everything but what glows of itself
     col *= lightMapColor.rgb;
 
+    // hot from the Forge past its front (the point's side while it heats; the hilt's while the quench cools it from the
+    // point): the metal darkens under its own glow, which needs no light from the world. The texture's light and dark
+    // run hotter and cooler (bright metal, dark scale) and the faces turned from the light glow less, so it reads as a
+    // shaped blade, not a lump of colour.
+    if (state.w > 0.5) {
+        float side = state.w > 1.5 ? front - along : along - front;
+        float hot = smoothstep(-0.04, 0.04, side) * heat;
+        float lum = dot(alb.rgb, vec3(0.30, 0.59, 0.11));
+        float h = hot * (0.7 + 0.6 * lum);
+        col = mix(col, col * 0.25, smoothstep(0.0, 0.3, hot)) + heatGlow(h) * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse);
+    }
+
     // a sheen runs hilt to tip every five seconds (GameTime is a day per 1.0: 240 a day is one per 100 ticks)
     float cycle = fract(GameTime * 240.0);
     float band = exp(-pow((along - (cycle * 1.8 - 0.4)) * 7.0, 2.0));
@@ -78,8 +106,21 @@ void main() {
     col += alb.rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6;
     col += accent * flash * (0.18 + 0.6 * emit + 0.35 * rim);
 
-    // an enchantment's shimmer, our own (vanilla's glint is drawn inside its own shaders): a violet light drifting down
-    if (foil > 0.5) {
+    // an enchantment's own light (SPEC §45.11): a thin line of script along the piece's edges in that enchantment's
+    // colour, its letters drifting hilt to tip, what glows of itself taking the colour, a few pixels catching it; with
+    // several on the piece the renderer lights each in turn. Foil with none of ours keeps the violet shimmer.
+    if (script.x > 0.5) {
+        vec3 ink = SCRIPT[int(script.x + 0.5)];
+        float lit = script.y, t = GameTime * 240.0;
+        float cell = along * 26.0 - t * 1.4;
+        float h = fract(sin(floor(cell) * 12.9898) * 43758.5453), f = fract(cell);
+        float letter = h > 0.2 && f > 0.12 && f < 0.3 + 0.6 * h ? 1.0 : 0.0;
+        float edge = smoothstep(0.4, 0.8, pow(1.0 - clamp(dot(nv, v), 0.0, 1.0), 2.0));
+        float wave = 0.45 + 0.55 * pow(0.5 + 0.5 * sin((along * 2.5 - t * 0.7) * TAU), 2.0);
+        vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+        float twinkle = fract(sin(dot(px + floor(t * 6.0), vec2(12.9898, 78.233))) * 43758.5453) > 0.988 ? 0.3 + metal : 0.0;
+        col += ink * (letter * edge * wave * 1.1 + emit * pulse * 0.9 + rim * 0.22 + twinkle * 0.8) * lit;
+    } else if (foil > 0.5) {
         float g = sin((along * 9.0 + nv.x * 2.0) - GameTime * 240.0 * TAU * 0.35) * 0.5 + 0.5;
         col += vec3(0.55, 0.32, 1.0) * pow(g, 6.0) * 0.45;
     }

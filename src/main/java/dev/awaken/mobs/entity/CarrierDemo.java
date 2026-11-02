@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * The carriers on cue, for tours and a look in game (admin: {@code /awaken bosses carriers <kind>}, SPEC §46.2): a flat
+ * The carriers on cue, for tours and a look in game (admin: {@code /awaken bosses carriers <kind>}, SPEC §47.2): a flat
  * stage where you stand, a still maker 9 blocks to its north, and one carrier at a time sent south across the view, so
  * a frozen tick ({@code /tick freeze}) catches it mid-flight. Nothing is hurt: the target is a point, and creatures
  * take no aim at a creative player.

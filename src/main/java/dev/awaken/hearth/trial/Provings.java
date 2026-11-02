@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The Provings (SPEC §46.4, §46.6): a Reassessment met as one great fight with a Warden in its own hall, never announced.
+ * The Provings (SPEC §47.4, §47.6): a Reassessment met as one great fight with a Warden in its own hall, never announced.
  * Each rank's Warden ({@link Warden}: the Ringer for D, the Examiner for C) says how you arrive, what its hall does as the
  * fight turns and what it leaves you; this runs the rest the same for all. You put your hand on the Reading Bell, the
  * bell doesn't stop, and the world comes back in its hall. Fall and you wake where you came in to go again now, or take
@@ -347,7 +347,7 @@ public final class Provings {
         run.down.clear();
     }
 
-    /** What keeps catching you, said plainly, by the colour of the blow (SPEC §46.4). */
+    /** What keeps catching you, said plainly, by the colour of the blow (SPEC §47.4). */
     static SignalWindow hint(String warden, Strikes.@Nullable Blow blow) {
         String name = blow != null ? "Its " + blow.title() : warden;
         String body = switch (blow != null ? blow.kind() : Strikes.Kind.NONE) {

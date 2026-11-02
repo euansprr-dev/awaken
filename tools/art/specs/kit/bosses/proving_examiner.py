@@ -1,4 +1,4 @@
-"""The Examiner (SPEC §46.6, docs/fights/PLAN.md §4.7): the second Proving's Warden, met when the room you're standing in
+"""The Examiner (SPEC §47.6, docs/fights/PLAN.md §4.7): the second Proving's Warden, met when the room you're standing in
 turns into the Hall of Reflections. The Registry's examiner as the Signal made it: tall and straight-backed in a long
 clerk's coat buttoned to the throat under a high collar, a flat examiner's cap; where its face should be, an oval mirror
 in a brass rim, so the only face it has is yours. It carries the Registry's measuring rod, a long staff of black glass
@@ -29,7 +29,7 @@ P = plans.Biped(leg=30, thigh=15, foot=(3, 2, 7), pelvis=(8, 4, 5), spine=(6, 5,
 ROD_TIP = (0, 26, 0)
 ROD = dict(weapon=ROD_TIP, weapon_r=1.6)
 # how far the rod comes down in its strokes (degrees on its own axis), and how low it bends into them, so every stroke
-# meets someone standing at the waist (SPEC §46.6: every damaging blow's lowest point under 1.2 blocks)
+# meets someone standing at the waist (SPEC §47.6: every damaging blow's lowest point under 1.2 blocks)
 ROD_DOWN = {"rule_a": 90, "rule_b": 20, "rule_c": 90, "turn": 100, "crosscut": 100}
 # the Step In and Hold Still reach down to you too: the arm lowered in the blow (degrees)
 ARM_DOWN = {"step": ("arm_r", 10), "hold": ("arm_l", 15)}
@@ -319,11 +319,11 @@ SOUNDS = {
 MOVE_SOUNDS = {"wake": {"swing": "roar"}, "close": {"swing": "roar"}, "copies": {"swing": "cast"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3) that reads you (§46.6): through its first phase it counts how you meet it, and from its second
+    # a duel (SPEC §47.3) that reads you (§47.6): through its first phase it counts how you meet it, and from its second
     # what answers your habit comes up more; its shots wear your most-used power's look
     "duel": True,
     "mirrors": True,
-    "stance": 300,  # tuned with the sim (SPEC §46.6)
+    "stance": 300,  # tuned with the sim (SPEC §47.6)
     "intro": {"pose": "idle", "move": "emerge"},
     "phases": [
         # it measures you: the rod in twos and threes, the Measure, the step-in, the Reading, the Verdict

@@ -667,7 +667,7 @@ def scuttle(r):
     sink = _pose(r, lift=-2, pitch=3, crab=dict(back=-3, pitch=6), big=dict(reach=0.95, lift=3, open_=-2), small=dict(lift=6), eyes=(0, -4, 0, -4), feel=(0, -8, -8), house=(3, 0),
                  upper=(2, 0, 0))
     back = _pose(r, lift=-1, pitch=1.5, crab=dict(back=-1, pitch=3), big=dict(reach=0.5, lift=4, open_=6), feel=(0, 6, 6), house=(1, 0))
-    # red (SPEC §46.5): the whole house coming at you sideways is dashed past, never turned aside
+    # red (SPEC §47.5): the whole house coming at you sideways is dashed past, never turned aside
     return Move("scuttle", "PERILOUS", 14, 12, 18, through=sink, title="Scuttle", track=6.0, lock=10, advance=8.0, rng=(6, 16), kinds=("gap",), damage=1.2, knock=1.2, plant=(),
                 hit=BIG_HIT, stages={"windup": [(0.3, crouch), (1.0, aim)], "active": act, "recover": [(0.5, back)]}, lag=_lag())
 
@@ -847,7 +847,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
-    plans.duel_reactions(r, lead="r", weight=2.0)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=2.0)  # a duel's parried and reel (SPEC §47.5)
     mv = [snip(r), crush(r), hammer(r), scuttle(r), heave(r), floor(r), doorstep(r), rooms(r), ceiling(r), wake(r)]
     for m in mv:
         stage_clips(r, m)
@@ -878,7 +878,7 @@ MOVE_SOUNDS = {"floor": {"swing": "cast", "impact": ""}, "doorstep": {"swing": "
                "ceiling": {"swing": "roar"}, "wake": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 320,
     "intro": {"pose": "kneel", "move": "wake"},

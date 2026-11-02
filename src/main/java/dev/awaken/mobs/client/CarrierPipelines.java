@@ -17,7 +17,7 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 
 /**
- * The carriers' and shots' light (SPEC §46.2): additive quads on the game's lightning shaders (with their
+ * The carriers' and shots' light (SPEC §47.2): additive quads on the game's lightning shaders (with their
  * improved-transparency set), depth-tested so walls hide them but writing no depth; and their shade, the same corners
  * alpha-blended under the light, so a crest or a ring still reads on snow or pale sand (light alone only brightens).
  * Optional: if either fails to build, vanilla's lightning type draws them instead (never nothing).

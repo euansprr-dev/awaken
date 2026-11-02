@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The cathedral above the clouds (SPEC §46.8): the fourth Proving's hall. A white stone cathedral hanging in the night
+ * The cathedral above the clouds (SPEC §47.8): the fourth Proving's hall. A white stone cathedral hanging in the night
  * over a sea of cloud, its broken foundation trailing under it: a nave between arcades of quartz columns, an aisle each
  * side behind them under a lean-to roof, flying buttresses out to piers, a vaulted roof broken open to the stars, an
  * apse at the north end, and the west front at the south with its rose window over the door and a porch outside, the

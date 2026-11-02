@@ -1,0 +1,15 @@
+{
+  "replace": true,
+  "values": [
+    "minecraft:feather_falling",
+    "awaken:bane_of_beasts",
+    "awaken:bane_of_the_deep",
+    "minecraft:efficiency",
+    "awaken:harvest",
+    "awaken:insight",
+    "minecraft:aqua_affinity",
+    "minecraft:depth_strider",
+    "minecraft:luck_of_the_sea",
+    "minecraft:lure"
+  ]
+}

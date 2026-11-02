@@ -20,7 +20,7 @@ import net.minecraft.world.entity.LivingEntity;
 final class ArmsTells {
     private ArmsTells() {}
 
-    // the class colours every carrier shows too (Strikes.Kind.colour, SPEC §46.2)
+    // the class colours every carrier shows too (Strikes.Kind.colour, SPEC §47.2)
     private static final int LIGHT = Strikes.Kind.LIGHT.colour(), HEAVY = Strikes.Kind.HEAVY.colour(), PERILOUS = Strikes.Kind.PERILOUS.colour(),
             GRAB = Strikes.Kind.GRAB.colour();
     /** Ticks before contact the LIGHT glint shows (the deflect window is 4: a tick to see it, then the press). */

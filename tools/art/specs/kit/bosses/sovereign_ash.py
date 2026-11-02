@@ -1105,7 +1105,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
-    plans.duel_reactions(r, lead="r", weight=2.0)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=2.0)  # a duel's parried and reel (SPEC §47.5)
     mv = [claw(r), bite(r), rush(r), tail_sweep(r), cinders(r), cloud(r), ashfall(r), embers(r), nova(r), burnout(r), arrive(r)]
     for m in mv:
         stage_clips(r, m)
@@ -1138,7 +1138,7 @@ MOVE_SOUNDS = {"cinders": {"swing": "spit", "impact": ""}, "cloud": {"swing": "f
                "embers": {"swing": "cast", "impact": ""}, "burnout": {"swing": "roar", "impact": ""}, "arrive": {"swing": "tell_light", "impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 360,
     "intro": {"pose": "idle", "move": "arrive"},  # it lies burnt out, wakes, shakes off the ash and spreads its wings

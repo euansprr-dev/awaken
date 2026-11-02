@@ -202,7 +202,7 @@ def spin_cut(P, mid="spin", side="r", title="", windup=12, active=6, recover=12,
     """For the one behind it: it turns on its front foot and cuts round, the arm out flat (the cut sweeps a half-circle).
     weapon, weapon_bone: a blade's point in its bone's space (the hand's tip without one); edge as chop's.
     low: degrees it bends into the cut and how far it sinks; drop: degrees the arm comes down from flat (a giant cuts
-    low enough to meet someone standing, SPEC §46.6)."""
+    low enough to meet someone standing, SPEC §47.6)."""
     sg = _sgn(side)
     a, f = "arm_" + side, "forearm_" + side
     sink = -3 - low * 0.12

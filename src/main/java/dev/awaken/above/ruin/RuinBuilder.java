@@ -53,6 +53,12 @@ public final class RuinBuilder {
          * take the rank of the land it ends up in. Sinks that don't place stands (the tests) ignore it.
          */
         default void stand(int x, int y, int z, Direction facing, String kind, String rank) {}
+
+        /**
+         * A Precursor Word Stone (enchanting, SPEC §45.14): its carved face toward {@code facing}, its enchantment from
+         * {@code set} ("sea", "sky" or "" for the vaults' set). Sinks that don't place stones (the tests) ignore it.
+         */
+        default void stone(int x, int y, int z, Direction facing, String set) {}
     }
 
     public record Size(int x, int y, int z) {}
@@ -328,6 +334,7 @@ public final class RuinBuilder {
         b.set(C, TOP + 1, C, dev.awaken.body.ascent.AscentContent.SPIRE_CROWN.get().defaultBlockState());
         b.out.chest(C + 1, TOP + 1, C - 1, Direction.WEST, loot("precursor_spire"));
         b.out.stand(C - 1, TOP + 1, C - 1, Direction.SOUTH, "lectern", "");
+        b.out.stone(C + 1, TOP + 1, C + 1, Direction.NORTH, "sky");
         if (terminal) b.set(C - 1, TOP + 1, C + 1, terminal(RuinKind.SPIRE.logs, Direction.EAST));
         // what an E-rank finder takes home: the plaza's cache by the column's foot; broken machines round it for the Scanner
         outerCache(b, C, P + 1, C + 4, Direction.NORTH);
@@ -476,6 +483,8 @@ public final class RuinBuilder {
         if (secondChest) b.out.chest(19, 1, 16, Direction.WEST, loot("precursor_vault"));
         // a drafting stand in the sealed chamber, with a pattern of the door's own rank
         b.out.stand(8, 1, 15, Direction.NORTH, "lectern", dev.awaken.progression.Rank.values()[Math.max(0, Math.min(5, doorRank))].label);
+        // and a Word Stone across the terminal from it
+        b.out.stone(14, 1, 15, Direction.NORTH, "");
         if (terminal) b.set(11, 1, 15, terminal(kind.logs, Direction.NORTH));
         if (kind == RuinKind.SPAWN_VAULT) {
             // the antechamber leaves a Scanner for whoever finds it first
@@ -588,6 +597,7 @@ public final class RuinBuilder {
         for (int i = 0; i < xs.length && i < machines.size(); i++) b.set(xs[i], 1, 12, broken(machines.get(i), Direction.NORTH));
         b.out.chest(12, 1, 5, Direction.WEST, loot("precursor_monolith"));
         b.out.stand(4, 1, 8, Direction.EAST, "plinth", "");
+        b.out.stone(12, 1, 8, Direction.WEST, "");
         if (terminal) b.set(8, 1, 4, terminal(RuinKind.MONOLITH.logs, Direction.SOUTH));
         // the plaza: a disc of sandstone with a Precursor ring inlaid, radial brass lines, drifting sand
         for (int x = 0; x <= 16; x++) {
@@ -732,6 +742,7 @@ public final class RuinBuilder {
         }
         b.out.chest(15, 1, 2, Direction.SOUTH, loot("precursor_ocean"));
         b.out.stand(15, 1, 4, Direction.SOUTH, "plinth", "");
+        b.out.stone(17, 1, 6, Direction.WEST, "sea");
         b.set(13, 1, 4, of(Blocks.BARREL));
         b.set(17, 1, 4, of(Blocks.BARREL));
         if (terminal) b.set(2, 1, 17, terminal(RuinKind.OCEAN.logs, Direction.EAST));
@@ -851,6 +862,7 @@ public final class RuinBuilder {
         for (int i = 0; i < xs.length && i < machines.size(); i++) b.set(xs[i], DECK + 1, C - 3, broken(machines.get(i), Direction.SOUTH));
         b.out.chest(C - 3, DECK + 1, C + 3, Direction.NORTH, loot("precursor_sky"));
         b.out.stand(C + 3, DECK + 1, C - 3, Direction.WEST, "plinth", "");
+        b.out.stone(C - 3, DECK + 1, C, Direction.EAST, "sky");
         if (terminal) b.set(C + 3, DECK + 1, C + 2, terminal(RuinKind.SKY.logs, Direction.WEST));
         outerCache(b, C, DECK + 1, C + 7, Direction.NORTH); // on the deck, before the cabin
         // chains dangling under the keel, lanterns at their ends

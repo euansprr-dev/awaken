@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.Set;
 
-/** The Provings (SPEC §46.4, §46.6 to §46.10): each hall's layout, and each Warden's whole flow in a hall built for the test. */
+/** The Provings (SPEC §47.4, §47.6 to §47.10): each hall's layout, and each Warden's whole flow in a hall built for the test. */
 public final class ProvingTests {
     private ProvingTests() {}
 
@@ -126,7 +126,7 @@ public final class ProvingTests {
     }
 
     /**
-     * The second Proving (SPEC §46.6): the Hall of Reflections' layout and what of a room is copied; then the whole flow
+     * The second Proving (SPEC §47.6): the Hall of Reflections' layout and what of a room is copied; then the whole flow
      * in a hall built for the test: you wake where you stood in your room, it turns to glass, the Examiner steps out of
      * it and it breaks; the mirrors wake and it says what it read; the ring rises; a fall puts the hall back; the win
      * is rank C; the hall is put back after.
@@ -259,7 +259,7 @@ public final class ProvingTests {
     }
 
     /**
-     * The third Proving (SPEC §46.7): the Broken Span's layout; then the whole flow in a Span built for the test: you
+     * The third Proving (SPEC §47.7): the Broken Span's layout; then the whole flow in a Span built for the test: you
      * wake high over the bastion; once you're on it the north arm lifts and the Unmade lands out of its stones; at two
      * thirds the ring falls (the road south stays), at a third the lamps go out (the gatehouse's stay); over the edge
      * you wake at the south end and the Span is whole again; the win is rank B; the Span is put back after.

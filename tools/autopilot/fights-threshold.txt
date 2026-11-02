@@ -1,4 +1,4 @@
-# Fights stage 5, the fifth Proving (SPEC §46.9): the Keeper's Shadow at the Court's threshold, in a practice Proving
+# Fights stage 5, the fifth Proving (SPEC §47.9): the Keeper's Shadow at the Court's threshold, in a practice Proving
 # (/awaken admin trial S). A burst of quick shots every 15 ticks catches the wake on the landing looking down into the
 # court and the braziers lighting themselves one by one; then down into the court, a step back, and a burst every 10
 # ticks catches your shadow pooling and the Keeper standing up out of it. Then the Keeper held still facing you, and as

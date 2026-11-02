@@ -1,4 +1,4 @@
-# Fights stage 2, the duel (SPEC §46.3): each pilot on a sky stage facing a still stand-in, seen from the side. Per boss:
+# Fights stage 2, the duel (SPEC §47.3): each pilot on a sky stage facing a still stand-in, seen from the side. Per boss:
 # a phrase's tell, a blow deflected (the limb's recoil, `parried`), the phrase going on, its last blow deflected (the
 # `reel`, early and low), then its stance broken (down on a knee: the finisher's opening). /awaken bosses duel stage
 # <boss> builds the stage; play/deflect/break act now and a frozen tick holds the frame.

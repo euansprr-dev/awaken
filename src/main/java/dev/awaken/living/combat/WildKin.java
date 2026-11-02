@@ -68,7 +68,7 @@ public final class WildKin {
     public static void arm(Mob mob, int landLevel) {
         if (!(mob instanceof PathfinderMob pm)) return;
         int rank = RegionMap.rankOf(landLevel);
-        pm.goalSelector.addGoal(0, Strikes.bite(pm, 1.25, () -> true)); // told (SPEC §46.2)
+        pm.goalSelector.addGoal(0, Strikes.bite(pm, 1.25, () -> true)); // told (SPEC §47.2)
         var retaliate = new Retaliate(pm);
         if (rallies(rank)) retaliate.setAlertOthers();
         pm.targetSelector.addGoal(0, retaliate);

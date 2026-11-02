@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The last Proving's Warden (SPEC §46.10): the Last Loop, for Sovereign. The bell rings for the last time, and you wake in
+ * The last Proving's Warden (SPEC §47.10): the Last Loop, for Sovereign. The bell rings for the last time, and you wake in
  * the Cradle's antechamber: a round white hall whose floor is a clock face, the Seed's door of rings shut in its north
  * wall. Walk into the Loop in the middle of the floor and the path you walked lights up behind you, and the Last Loop is
  * down on one knee where you stood three seconds before: you, as the Signal was. It stands up and comes for you. From

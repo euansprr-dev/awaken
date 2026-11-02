@@ -1,4 +1,4 @@
-"""The Keeper's Shadow (SPEC §46.9, docs/fights/PLAN.md §4.7): the fifth Proving's Warden, met at the Court's threshold.
+"""The Keeper's Shadow (SPEC §47.9, docs/fights/PLAN.md §4.7): the fifth Proving's Warden, met at the Court's threshold.
 The last of the Keepers who went down to hold the Seed: the one left at the Court's door, still testing whoever comes.
 Tall and gaunt in a deep black hood and a robe that falls to the floor in long strips, a mantle over its shoulders and a
 cape behind; in the hood no face at all, only the dark and two small gold eyes. On the hood a crown of eight gold points,
@@ -34,7 +34,7 @@ P = plans.Biped(leg=32, thigh=16, foot=(3, 2, 6), pelvis=(8, 4, 5), spine=(6, 6,
 KEY_TIP = (0, 38, 0)
 KEY = dict(weapon=KEY_TIP, weapon_r=1.8)
 # how far the key comes down in its strokes (degrees on its own axis), so every stroke meets someone standing at the
-# waist (SPEC §46.6: a damaging blow's hits come down under a standing player's shoulders)
+# waist (SPEC §47.6: a damaging blow's hits come down under a standing player's shoulders)
 KEY_DOWN = {"bar": 100, "unlock": 30, "turnabout": 105, "turn": 14}
 # the reaching hand comes down to you too (degrees)
 ARM_DOWN = {"kept": ("arm_l", 26), "bar": ("arm_r", 26), "turn": ("arm_r", 12)}
@@ -407,9 +407,9 @@ MOVE_SOUNDS = {"emerge": {"swing": "roar"}, "doors": {"swing": "roar"}, "darkfal
                "eight": {"swing": "roar"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): phrases of four and five, the key's reach covering the ground round it
+    # a duel (SPEC §47.3): phrases of four and five, the key's reach covering the ground round it
     "duel": True,
-    "stance": 420,  # tuned with the sim (SPEC §46.9)
+    "stance": 420,  # tuned with the sim (SPEC §47.9)
     "intro": {"pose": "stand", "move": "emerge"},
     "phases": [
         # the court: the key in fours, the Lock, Keyhole, the Turnabout, Shut the Door

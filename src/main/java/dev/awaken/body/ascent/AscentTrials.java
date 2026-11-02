@@ -35,7 +35,7 @@ final class AscentTrials {
             @Override
             public boolean atEdge(ServerPlayer p, String trial) {
                 if (TrialHooks.SKYBORN.equals(trial)) return skyEdge(p, "sky leviathan's trial");
-                if (TrialHooks.SKY_WARDEN.equals(trial)) return skyEdge(p, "the Sky Warden's roof"); // SPEC §46.8
+                if (TrialHooks.SKY_WARDEN.equals(trial)) return skyEdge(p, "the Sky Warden's roof"); // SPEC §47.8
                 return TrialHooks.LEAPER.equals(trial) && edge(p);
             }
 
@@ -43,8 +43,8 @@ final class AscentTrials {
             public void done(ServerPlayer p, String trial, int ticks, int medal) {
                 if (TrialHooks.LEAPER.equals(trial)) leaperDone(p, ticks, medal);
                 else if (TrialHooks.SKYBORN.equals(trial)) skybornDone(p);
-                else if (TrialHooks.SKY_WARDEN.equals(trial)) skybornDone(p); // SPEC §46.8
-                else if (TrialHooks.RINGER.equals(trial)) Ascent.grant(p, Ascent.Tier.TETHER, "the Ringer's chain"); // SPEC §46.4
+                else if (TrialHooks.SKY_WARDEN.equals(trial)) skybornDone(p); // SPEC §47.8
+                else if (TrialHooks.RINGER.equals(trial)) Ascent.grant(p, Ascent.Tier.TETHER, "the Ringer's chain"); // SPEC §47.4
             }
         });
     }

@@ -1,4 +1,4 @@
-# Fights stage 5, the fourth Proving (SPEC §46.8): the Sky Warden and the cathedral above the clouds, in a practice
+# Fights stage 5, the fourth Proving (SPEC §47.8): the Sky Warden and the cathedral above the clouds, in a practice
 # Proving (/awaken admin trial A). A burst of quick shots every 15 ticks catches the wake on the cloud looking up, the
 # font opening and the light lifting you up the shaft, the font shutting, the light coming down in the nave and the Sky
 # Warden kneeling in it (the burst covers the hall's readying and the lift, whose lengths vary). Then the Sky Warden held

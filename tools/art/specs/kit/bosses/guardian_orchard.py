@@ -1295,7 +1295,7 @@ def clips(r):
     for f in (idle, walk, run, turns, hurts, reactions, collapse, reassemble, death):
         _fresh()
         f(r)
-    plans.biped_duel_reactions(r, weight=1.4)  # a duel's parried and reel (SPEC §46.5)
+    plans.biped_duel_reactions(r, weight=1.4)  # a duel's parried and reel (SPEC §47.5)
     mv = [_unwrap(m) for m in moves(r)]
     for m in mv:
         stage_clips(r, m)
@@ -1307,7 +1307,7 @@ def clips(r):
 
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},  # he waits on one knee, his hands on his planted sword, and gets up

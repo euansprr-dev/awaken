@@ -660,7 +660,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
-    plans.biped_duel_reactions(r, weight=1.0)  # a duel's parried and reel (SPEC §46.5)
+    plans.biped_duel_reactions(r, weight=1.0)  # a duel's parried and reel (SPEC §47.5)
     _death(r)
     mv = [reach(r), grasp(r), fold(r), corner(r), lights(r), stare(r), everywhere(r), wrong_way(r), hold_still(r), closer(r), wake(r)]
     for m in mv:
@@ -698,7 +698,7 @@ MOVE_SOUNDS = {"corner": {"swing": "", "impact": ""}, "lights": {"swing": "snuff
                "hold": {"swing": "roar"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 300,
     "intro": {"pose": "idle", "move": "wake"},  # posed in the corner the way someone left it

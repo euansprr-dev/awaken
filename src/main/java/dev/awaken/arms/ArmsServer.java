@@ -391,7 +391,7 @@ final class ArmsServer {
             boolean aimed = t.getId() == s.aimed;
             if (!aimed && !foe(p, t)) continue;
             boolean meant = aimed && !(t instanceof Player);
-            // the one rule the client's prediction asks too (ArmsRules.sweeps; SPEC §46.1)
+            // the one rule the client's prediction asks too (ArmsRules.sweeps; SPEC §47.1)
             if (!ArmsRules.sweeps(eye, p.getY(), t.getBoundingBox(), yaw, def.arc(), meant ? meantReach : reach, aimed, meant)) continue;
             s.markHit(t.getId());
             hit(p, s, def, t, now);
@@ -656,7 +656,7 @@ final class ArmsServer {
             e.setAmount(amount);
             pendingLanded = true;
             // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster; one on a duel
-            // body standing braced barely moves it, a riposte excepted (SPEC §46.3)
+            // body standing braced barely moves it, a riposte excepted (SPEC §47.3)
             int posture = ArmsRules.hitPosture(pendingPosture, Strikes.opening(victim), pendingRiposte, Strikes.duelist(victim));
             if (by instanceof ServerPlayer sp) addPosture(victim, posture, sp);
             return;
@@ -765,13 +765,13 @@ final class ArmsServer {
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
                     // a flier's dive turned aside brings it down (SPEC §40): the opening a fight in the air needs
                     Strikes.ground(attacker, Aim.GROUNDED_TICKS);
-                    // its limb recoils, and a phrase's last blow turned aside staggers it (SPEC §46.3)
+                    // its limb recoils, and a phrase's last blow turned aside staggers it (SPEC §47.3)
                     Strikes.deflected(attacker, kind);
                 }
                 ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, by == null ? -1 : by.getId());
                 Marks.fire(p, Marks.Trigger.DEFLECT, by instanceof LivingEntity l ? l : null);
                 if (shot) {
-                    // a white-gold shot flies back at its maker (SPEC §46.3); the rest leave the blade
+                    // a white-gold shot flies back at its maker (SPEC §47.3); the rest leave the blade
                     boolean back = src.getDirectEntity() != null && Strikes.returnShot(src.getDirectEntity(), p);
                     stop(p, s, src, from, true, 0F, by, back);
                 } else {
@@ -1062,7 +1062,7 @@ final class ArmsServer {
 
     static Posture posture(LivingEntity e) {
         Posture p = e.getData(ArmsContent.POSTURE);
-        int stance = Strikes.stance(e); // a duel boss's own size (SPEC §46.3)
+        int stance = Strikes.stance(e); // a duel boss's own size (SPEC §47.3)
         if (stance > 0) p.max = stance;
         else if (p.max <= 0) {
             MobRole role = e.getExistingDataOrNull(CoreApi.MOB_ROLE.get());

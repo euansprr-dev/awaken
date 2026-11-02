@@ -377,7 +377,7 @@ def biped_fall(r, w=1.0):
 
 
 def biped_duel_reactions(r, weight=1.0, lead="r"):
-    """A duel's reactions for a biped of any proportions (SPEC §46.3): `parried` (0.5 s, its blow turned aside: the
+    """A duel's reactions for a biped of any proportions (SPEC §47.3): `parried` (0.5 s, its blow turned aside: the
     striking arm thrown up past its shoulder, the body rocked back a step and settling forward to strike on) and `reel`
     (1.3 s, a phrase's last blow turned aside: thrown hard onto its back foot with both arms flung wide, a step back to
     catch itself, a lurch forward over bent knees, hanging there bowed and open with its arms down, then gathering). The
@@ -478,7 +478,7 @@ def standing(r, skip=()):
 
 
 def duel_reactions(r, lead="r", weight=1.0, kneel_at=0.45, skip=(), stand=None):
-    """A duel's reactions for any body, from its own hurt and broken poses (SPEC §46.5): `parried` (0.5 s, its blow turned
+    """A duel's reactions for any body, from its own hurt and broken poses (SPEC §47.5): `parried` (0.5 s, its blow turned
     aside: thrown back the way its own hurt goes, a little toward its lead side, further than a hurt, settling forward to
     go on) and `reel` (1.3 s, a phrase's last blow turned aside: thrown hard, then sagging half-way to its kneel, open and
     hanging there, then gathering). What carries the body (`standing`, or stand) moves only as the authored poses do,

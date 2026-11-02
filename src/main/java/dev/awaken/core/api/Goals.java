@@ -41,10 +41,11 @@ public final class Goals {
     public static final int NO_PATH = Integer.MAX_VALUE;
     /**
      * The main path, in order (the top step on Now is the lowest present): your first power, your fire, a first room, the
-     * Armoury, your first armour, your first gate (its Lord's Heart), the Anchor, the Forge, your rank's trial.
+     * Armoury, your first armour, your first gate (its Lord's Heart), the Anchor, the Forge, a War Anvil by it, your first
+     * weapon forged on it, your rank's trial.
      */
     public static final int PATH_START = 0, PATH_FIRE = 10, PATH_SHELTER = 20, PATH_ARMOURY = 30, PATH_FIRST_ARMOUR = 40,
-            PATH_FIRST_GATE = 50, PATH_ANCHOR = 55, PATH_FORGE = 60, PATH_TRIAL = 70;
+            PATH_FIRST_GATE = 50, PATH_ANCHOR = 55, PATH_FORGE = 60, PATH_WAR_ANVIL = 62, PATH_FIRST_WEAPON = 64, PATH_TRIAL = 70;
 
     /**
      * One thing a step needs: an item ({@code item} an item id, or "#" and a tag id) counted in the pack, or a plain

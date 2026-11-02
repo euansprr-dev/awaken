@@ -95,6 +95,7 @@ final class GateEvents {
         GateExterior.forget();
         GateCard.resetAll();
         dev.awaken.gates.run.Hud.resetAll();
+        dev.awaken.gates.run.Spoils.resetAll();
         dev.awaken.gates.run.Interactions.resetAll();
         dev.awaken.gates.run.Modifiers.resetAll();
         dev.awaken.gates.run.Twists.resetAll();

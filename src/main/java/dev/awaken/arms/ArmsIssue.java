@@ -151,6 +151,14 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     }
 
     @Override
+    public boolean found(ItemStack stack) {
+        ArmsData.Weapon w = ArmsItems.of(stack.getItem());
+        if (w == null) return false;
+        Marks.Instance inst = stack.get(ArmsContent.INSTANCE.get());
+        return (inst != null && !inst.marks().isEmpty()) || LordForged.byWeapon(w.id()) != null;
+    }
+
+    @Override
     public String rankOfLevel(int level) {
         return ArmsHomes.rankOfLevel(level).label;
     }

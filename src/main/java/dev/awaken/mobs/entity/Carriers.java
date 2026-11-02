@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * The carriers (SPEC §46.2): everything a creature does to you at range travels or is drawn first, and lands only where
+ * The carriers (SPEC §47.2): everything a creature does to you at range travels or is drawn first, and lands only where
  * it reaches. A wave rolls out from a point along the ground (jump it, dash through it, or stand inside where it
  * starts); a volley falls on rings put where you stood when it was thrown; a ground line races out along a locked line
  * (step off it); a field lies where a lob burst, harmless for its first half second. Locked lines, landing rings and a
@@ -203,7 +203,7 @@ public final class Carriers {
     }
 
     /**
-     * How long before it lands an ability's aim stops following you (SPEC §46.2, I3): a line, a wedge or a leap
+     * How long before it lands an ability's aim stops following you (SPEC §47.2, I3): a line, a wedge or a leap
      * {@link #LOCK} ticks; a shot or a ground line {@link #LOCK_SHOT} (its flight adds the rest); the rest don't aim.
      */
     public static int lead(dev.awaken.mobs.def.Ability a) {

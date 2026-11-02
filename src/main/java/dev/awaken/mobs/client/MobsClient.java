@@ -23,10 +23,10 @@ public final class MobsClient {
         modBus.addListener(RitualRenderers::renderers);
         modBus.addListener(SeepParticles::register);
         modBus.addListener(RegisterRenderStateModifiersEvent.class, MobsClient::looks);
-        modBus.addListener(RegisterRenderStateModifiersEvent.class, ToppleView::register); // big beasts on their side (SPEC §46.5)
+        modBus.addListener(RegisterRenderStateModifiersEvent.class, ToppleView::register); // big beasts on their side (SPEC §47.5)
         modBus.addListener(net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(dev.awaken.mobs.net.MobsNet.Pace.TYPE, (msg, ctx) -> dev.awaken.mobs.client.kit.ServerPace.onPace(msg.gameTime()));
-            // the carriers (SPEC §46.2)
+            // the carriers (SPEC §47.2)
             e.register(dev.awaken.mobs.net.MobsNet.Carrier.TYPE, (msg, ctx) -> CarrierView.onCarrier(msg));
             e.register(dev.awaken.mobs.net.MobsNet.CarrierEnd.TYPE, (msg, ctx) -> CarrierView.onEnd(msg.id()));
             e.register(dev.awaken.mobs.net.MobsNet.Tell.TYPE, (msg, ctx) -> {

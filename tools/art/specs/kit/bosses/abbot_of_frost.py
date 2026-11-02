@@ -718,7 +718,7 @@ def moves(r):
 def clips(r):
     plans.biped_locomotion(r, P, weight=1.6, temper="regal")
     plans.biped_reactions(r, weight=1.6)
-    plans.biped_duel_reactions(r, weight=1.6, lead="r")  # a duel's parried and reel (SPEC §46.5)
+    plans.biped_duel_reactions(r, weight=1.6, lead="r")  # a duel's parried and reel (SPEC §47.5)
     idle(r)
     _trudge(r)
     reactions(r)
@@ -770,7 +770,7 @@ def _pool(r, clip):
 
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 300,
     "intro": {"pose": "idle", "move": "wake"},

@@ -807,7 +807,7 @@ def surge(r):
                   left=(12, 34, -42), right=(-12, 34, -42), curl=(0.8, 0.8), step={"l": (0, 0, -16), "r": (0, 0, 6)})
     stand = _pose(r, hips=(8, 0, 0), at=(0, -3, -1), chest=(4, 0, 0), head=(0, 0, 0), jaw=8, nod=0, reach=0.4, left=(18, 28, -24), right=(-18, 28, -24),
                   curl=(0.6, 0.6), step={"l": (0, 0, -6), "r": (0, 0, 2)})
-    # red, as the bestiary has it (SPEC §46.5): the whole crowd surging at you is dashed past, never turned aside
+    # red, as the bestiary has it (SPEC §47.5): the whole crowd surging at you is dashed past, never turned aside
     return Move("surge", "PERILOUS", 22, 8, 22, title="Surge", track=5.0, advance=5.0, ability="Surge", rng=(3.0, 10.0), kinds=("gap",),
                 damage=1.4, knock=1.4, plant=(), hit=_hits("l", "r"), lag=ON_TIME, through=_on(r, scoop, 0.03),
                 stages={"windup": [(0.3, sink), (1.0, low)], "active": [(0.55, drive), (1.0, scoop)], "recover": [(0.4, stand), (0.7, _mix(stand, _pose(r), 0.7))]})
@@ -977,7 +977,7 @@ def clips(r):
     idle(r)
     locomotion(r)
     reactions(r)
-    plans.duel_reactions(r, lead="r", weight=1.5)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.5)  # a duel's parried and reel (SPEC §47.5)
     lie = collapse(r)
     reassemble(r, lie)
     mv = moves(r)
@@ -1021,7 +1021,7 @@ MOVE_SOUNDS = {"more": {"swing": "cast", "impact": ""}, "closer": {"swing": "roa
                "wake": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 300,
     "intro": {"pose": "idle", "move": "wake"},  # it stands with every head bowed, and they lift one by one
@@ -1033,7 +1033,7 @@ FIGHT = {
             {"move": "elbow", "weight": 3, "when": "behind", "then": [["swipe", "grab"]]},
         ]},
         # closer, as in DeepBestiary: every face on you; from here, keep away from it and more of them come (a duel's one
-        # summon, never in its first phase, SPEC §46.3)
+        # summon, never in its first phase, SPEC §47.3)
         {"transition": "closer", "pool": [
             {"move": "swipe", "weight": 3, "when": "near", "then": [["grab"], ["grab", "crush"]]},
             {"move": "crush", "weight": 2, "when": "near", "then": [["swipe"], ["elbow"]]},

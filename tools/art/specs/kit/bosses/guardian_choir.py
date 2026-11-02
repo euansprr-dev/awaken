@@ -1007,7 +1007,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
-    plans.duel_reactions(r, lead="r", weight=1.6)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.6)  # a duel's parried and reel (SPEC §47.5)
     mv = []
     for f, a in ((lash, (0, "lash")), (lash, (1, "lash_b")), (breaker, ()), (sweep, ()), (jet, ()), (hymn, ()), (refrain, ()), (choir, ()),
                  (undertow, ()), (tide, ()), (wake, ())):
@@ -1051,7 +1051,7 @@ MOVE_SOUNDS = {"hymn": {"swing": "cast"}, "refrain": {"swing": "cast", "impact":
                "undertow": {"swing": "cast", "impact": ""}, "tide": {"swing": "roar"}, "wake": {"swing": "roar"}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},  # she waits sunk down on her curled arms, and rises

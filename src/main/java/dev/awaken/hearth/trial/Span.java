@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Broken Span (SPEC §46.7): the third Proving's hall, an old stone bridge over nothing, broken off at both ends; the
+ * The Broken Span (SPEC §47.7): the third Proving's hall, an old stone bridge over nothing, broken off at both ends; the
  * land it joined is gone. Its middle is a round bastion on a great pier, the fight's floor; an arm runs north to a
  * ragged end, and one south to a gatehouse, the way out. Built by the trials' generator in every hall cell at
  * {@link #AT_X}, {@link #AT_Z} (clear of the Belfry and the Hall of Reflections). Pure: {@link #block} says what stands

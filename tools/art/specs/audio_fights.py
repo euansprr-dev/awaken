@@ -1,4 +1,4 @@
-"""The carriers' sounds (SPEC §46.2, "See it coming"): every ranged harm a creature sends travels or is drawn first, and
+"""The carriers' sounds (SPEC §47.2, "See it coming"): every ranged harm a creature sends travels or is drawn first, and
 each carrier sounds as it comes, from where it is (mono, played at the carrier by mobs.client.CarrierView and the shot's
 own loop), so you hear a wave rolling at you behind your back, a volley whistling down, a beam lock on. Synthesised from
 scratch with tools/art/audiokit.py (no samples), mastered to the sfx loudness of audio_mix.py, written to

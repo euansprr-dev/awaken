@@ -53,7 +53,7 @@ public final class Breaks {
         for (ServerPlayer p : home) if (p.getUUID().equals(h.owner)) owner = p;
         ServerPlayer logTo = owner != null ? owner : home.get(0);
         List<GateHooks.GateView> near = GateHooks.near(level, h.pos, RADIUS);
-        if (h.hasRoom(dev.awaken.hearth.room.RoomType.BELL_TOWER)) bellWarns(home, level, h, near);
+        if (RoomEffects.bellTower(h)) bellWarns(home, level, h, near);
         for (GateHooks.GateView g : near) {
             if (!"BROKEN".equals(g.state())) continue;
             if (defend == null) defend = g.pos();
@@ -116,7 +116,9 @@ public final class Breaks {
                                 + (days <= 0 ? "today" : days == 1 ? "tomorrow" : "in " + days + " play-days") + ". Clear it before it does."))
                         .row(Component.literal("Gate"), Component.literal(rankLabel(g.rank()) + "-rank · " + g.themeName())).priority(5).build());
             }
-            level.playSound(null, h.pos, net.minecraft.sounds.SoundEvents.BELL_BLOCK, net.minecraft.sounds.SoundSource.BLOCKS, 1.5f, 0.8f);
+            // it rings from your own highest bell (SPEC §43.16 stage 3); an old Bell tower room's warning keeps its sound
+            if (!dev.awaken.core.api.BellHooks.toll(level, h.pos))
+                level.playSound(null, h.pos, net.minecraft.sounds.SoundEvents.BELL_BLOCK, net.minecraft.sounds.SoundSource.BLOCKS, 1.5f, 0.8f);
         }
     }
 

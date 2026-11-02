@@ -61,14 +61,14 @@ final class MobsCommands {
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(kitBosses(), b)).executes(MobsCommands::studio)))
                     .then(Commands.literal("moves").then(Commands.argument("id", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(kitBosses(), b)).executes(MobsCommands::moves)))
-                    // the carriers on cue, for tours (SPEC §46.2)
+                    // the carriers on cue, for tours (SPEC §47.2)
                     .then(Commands.literal("carriers").then(Commands.argument("kind", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(dev.awaken.mobs.entity.CarrierDemo.KINDS, b)).executes(c -> {
                                 String why = dev.awaken.mobs.entity.CarrierDemo.run(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "kind"));
                                 if (why != null) c.getSource().sendFailure(Component.literal(why));
                                 return why == null ? 1 : 0;
                             })))
-                    // the duel on cue, for tours (SPEC §46.3): stage <boss>, play <move> [then ...], deflect, break
+                    // the duel on cue, for tours (SPEC §47.3): stage <boss>, play <move> [then ...], deflect, break
                     .then(Commands.literal("duel").then(Commands.argument("step", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(dev.awaken.mobs.entity.DuelDemo.STEPS, b))
                             .executes(c -> duelDemo(c, ""))

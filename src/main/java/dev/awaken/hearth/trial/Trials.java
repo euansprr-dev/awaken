@@ -91,7 +91,7 @@ public final class Trials {
         DESCENT("Five rooms down. Four minutes.", 5, 20 * 60 * 4),
         SOVEREIGN("Face a Sovereign's echo.", 1, 20 * 60 * 6),
         PENALTY("Survive four minutes in the desert at night.", 99, 20 * 60 * 4),
-        /** A Warden in its own hall (SPEC §46.4, §46.6 to §46.9): never announced, no clock; run by {@link Provings}. */
+        /** A Warden in its own hall (SPEC §47.4, §47.6 to §47.9): never announced, no clock; run by {@link Provings}. */
         PROVING("", 1, Integer.MAX_VALUE);
 
         public final String text;
@@ -220,7 +220,7 @@ public final class Trials {
         }
         Kind kind = Kind.forTarget(next);
         if (kind == Kind.PROVING) {
-            // a Proving announces nothing (SPEC §46.4): the same measuring as your first day, and no fail day to wait out
+            // a Proving announces nothing (SPEC §47.4): the same measuring as your first day, and no fail day to wait out
             Signal.send(sp, Provings.window(sp, next));
             return;
         }

@@ -614,7 +614,7 @@ def clips(r):
     _idle(r)
     _flight(r)
     _reactions(r)
-    plans.duel_reactions(r, lead="r", weight=1.8)  # a duel's parried and reel (SPEC §46.5)
+    plans.duel_reactions(r, lead="r", weight=1.8)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     for m in mv:
         stage_clips(r, m, rest=_rest())
@@ -668,7 +668,7 @@ MOVE_SOUNDS = {"lullaby": {"swing": "cast", "impact": ""}, "lullabies": {"swing"
                "neverwake": {"swing": "roar"}, "wake": {"swing": "cast", "impact": ""}}
 
 FIGHT = {
-    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
     "stance": 340,
     "intro": {"pose": "idle", "move": "wake"},  # it hangs asleep in its wings, and wakes enough to fight you

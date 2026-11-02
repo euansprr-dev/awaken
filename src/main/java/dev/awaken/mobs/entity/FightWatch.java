@@ -13,7 +13,7 @@ import java.lang.management.ManagementFactory;
 import java.util.List;
 
 /**
- * The lag watch (SPEC §46.1 "Hits land now"): while a fight is on, any server tick over {@link #SLOW_MS} logs one line
+ * The lag watch (SPEC §47.1 "Hits land now"): while a fight is on, any server tick over {@link #SLOW_MS} logs one line
  * with its length and what took it, so a play session names its stalls instead of us guessing (Euan 2026-11-02:
  * "sometimes there is server lag when fighting"). Timed: the bosses' fight scripts, the creatures' abilities and the
  * hazards (ours); the garbage collector's pauses; chunks loaded; an autosave. What's left is the rest of the game.

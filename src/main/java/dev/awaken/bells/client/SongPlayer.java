@@ -25,6 +25,8 @@ public final class SongPlayer {
 
     /** Past this, a bell is heard from its bearing at {@link #FAR_AT} blocks off rather than from where it is. */
     static final double FAR = 200, FAR_AT = 24;
+    /** Past this, a bell's note is its far voice: the same note, darker and further (stage 6). */
+    static final double ANSWER = 96;
 
     private static BellNet.@Nullable Song song;
     private static SongPlan.@Nullable Plan plan;
@@ -51,9 +53,13 @@ public final class SongPlayer {
         plan = null;
     }
 
-    /** Game time the bell hanging at {@code pos} was last struck by a song, or a long time ago. */
-    public static long struck(BlockPos pos) {
-        return STRUCK.getOrDefault(pos.asLong(), Long.MIN_VALUE / 2);
+    /** Game time bell {@code no}, hanging at {@code pos}, was last struck by a song, or a long time ago. */
+    public static long struck(BlockPos pos, int no) {
+        return STRUCK.getOrDefault(key(pos, no), Long.MIN_VALUE / 2);
+    }
+
+    private static long key(BlockPos pos, int no) {
+        return pos.asLong() * 101 + no;
     }
 
     static void tick(ClientTickEvent.Post e) {
@@ -77,7 +83,7 @@ public final class SongPlayer {
             return;
         }
         BlockPos where = s.place(no);
-        if (mc.level != null) STRUCK.put(where.asLong(), mc.level.getGameTime());
+        if (mc.level != null) STRUCK.put(key(where, no), mc.level.getGameTime());
         Vec3 at = Vec3.atCenterOf(where), ear = mc.player.getEyePosition();
         double d = at.distanceTo(ear);
         float vol = 16F;
@@ -86,6 +92,7 @@ public final class SongPlayer {
             at = ear.add(at.subtract(ear).normalize().scale(FAR_AT));
             vol = (float) Math.max(1.6, 4.0 * FAR / d);
         }
-        mc.getSoundManager().play(new SimpleSoundInstance(BellContent.note(no), SoundSource.BLOCKS, vol, 1F, mc.player.getRandom(), at.x, at.y, at.z));
+        var sound = d > ANSWER ? BellContent.far(no) : BellContent.note(no);
+        mc.getSoundManager().play(new SimpleSoundInstance(sound, SoundSource.BLOCKS, vol, 1F, mc.player.getRandom(), at.x, at.y, at.z));
     }
 }

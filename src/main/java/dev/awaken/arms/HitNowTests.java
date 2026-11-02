@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * SPEC §46.1 "Hits land now": the client plays a blow on the frame its blade arrives, by the server's own sweep rule a
+ * SPEC §47.1 "Hits land now": the client plays a blow on the frame its blade arrives, by the server's own sweep rule a
  * little inside it ({@link ArmsRules#predicts}). Checked: a blow the client plays is one the server's sweep strikes,
  * even after the body moved for a tick and the look turned; the server's sweep (the same rule) strikes it in a real
  * move; and the ledger plays each blow once and counts the ones the server never confirms.

@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * The telegraph state machine. Idle: every 4 ticks pick a ready ability that fits the distance. Wind-up: hold still
- * (for rooted abilities), follow the target until the lock, then show where it will land (SPEC §46.2: a locked line,
+ * (for rooted abilities), follow the target until the lock, then show where it will land (SPEC §47.2: a locked line,
  * wedge or landing ring, at least {@link Carriers#LOCK} ticks before it can land). Execute once, through its carrier.
  * Charges and leaps finish over the next few ticks. Bosses swap the ability list when their phase changes.
  */
@@ -244,7 +244,7 @@ public final class AbilityRunner {
     }
 
     /**
-     * The aim stops following (SPEC §46.2, I3): what it locked on shows now, {@code left} ticks before it fires, in its
+     * The aim stops following (SPEC §47.2, I3): what it locked on shows now, {@code left} ticks before it fires, in its
      * class's colour with the lock's flash and sound (the clients draw it): a beam's or charge's line, a cone's wedge, a
      * fang or root line along the ground, a leap's landing ring.
      */
@@ -471,7 +471,7 @@ public final class AbilityRunner {
             }
             case BEAM -> Abilities.beam(level, mob, a, aim);
             // a kit body's step only moves it: the move's own cut is the blow (else it hit twice, the first untold);
-            // a lesser body's step ends in a told cut a beat after it lands, never at once (SPEC §46.2)
+            // a lesser body's step ends in a told cut a beat after it lands, never at once (SPEC §47.2)
             case BLINK -> {
                 if (!marks.isEmpty()) Abilities.blink(level, mob, a, t, marks.get(0), false);
                 if (!mob.scriptedFight() && t != null) {

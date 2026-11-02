@@ -18,7 +18,7 @@ import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEve
 import java.util.function.BiConsumer;
 
 /**
- * A toppled big beast drawn (SPEC §46.5): our rigs go over onto their side about the edge they fall toward, so nothing
+ * A toppled big beast drawn (SPEC §47.5): our rigs go over onto their side about the edge they fall toward, so nothing
  * sinks into the ground; a vanilla body (a quarry under Fresh Animations) by vanilla's own death flip, as a carcass
  * lies, without the red.
  */

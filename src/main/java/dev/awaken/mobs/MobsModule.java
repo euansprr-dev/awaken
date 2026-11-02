@@ -28,8 +28,8 @@ public final class MobsModule {
         MobSounds.init(modBus);
         MobParticles.init(modBus);
         MobLoot.init(modBus);
-        dev.awaken.mobs.entity.Topple.init(modBus); // big beasts go down on a broken stance (SPEC §46.5)
-        dev.awaken.mobs.entity.DuelFangs.init(modBus); // a duel's fangs bite for its own damage (SPEC §46.5)
+        dev.awaken.mobs.entity.Topple.init(modBus); // big beasts go down on a broken stance (SPEC §47.5)
+        dev.awaken.mobs.entity.DuelFangs.init(modBus); // a duel's fangs bite for its own damage (SPEC §47.5)
         MobsEvents.init(modBus);
         dev.awaken.mobs.net.MobsNet.init(modBus);
         MobHooks.install(new MobsSpawner());
@@ -40,9 +40,9 @@ public final class MobsModule {
                 ? Strikes.Kind.HEAVY : null);
         Strikes.installTells(e -> e instanceof AwakenMob m ? m.telegraphTicks() > 0 && m.tellKind() != Strikes.Kind.NONE
                 ? new Strikes.Tell(m.telegraphTicks(), m.tellKind()) : null : dev.awaken.mobs.entity.ToldBite.tellOf(e));
-        // beasts on vanilla bodies bite told (SPEC §46.2)
+        // beasts on vanilla bodies bite told (SPEC §47.2)
         Strikes.installBiters(dev.awaken.mobs.entity.ToldBite::new);
-        // the duel (SPEC §46.3): a deflect answered by the boss's fight, its openings, a white-gold shot sent back
+        // the duel (SPEC §47.3): a deflect answered by the boss's fight, its openings, a white-gold shot sent back
         Strikes.installDuel(new Strikes.Duel() {
             @Override
             public void deflected(LivingEntity attacker, Strikes.Kind kind) {

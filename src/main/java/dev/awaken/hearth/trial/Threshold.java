@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Court's threshold (SPEC §46.9): the fifth Proving's hall. A round court of black stone under a dark dome, its floor
+ * The Court's threshold (SPEC §47.9): the fifth Proving's hall. A round court of black stone under a dark dome, its floor
  * white marble inlaid with a black star and two rings of gold, ringed by eight shut doors, one for each Sovereign of
  * the Hollow Court, each with its own light showing through its keyhole. North stands the Court's own door, banded in
  * gold, and past it a stair goes down into the dark; south is the stair you come down. Built by the trials' generator in

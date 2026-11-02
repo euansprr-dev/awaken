@@ -22,7 +22,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 /**
- * The first Proving's Warden (SPEC §46.4): the Ringer in the Drowned Belfry, for D. You wake knee-deep inside the door;
+ * The first Proving's Warden (SPEC §47.4): the Ringer in the Drowned Belfry, for D. You wake knee-deep inside the door;
  * bells toll above; it drops into the light when you climb onto the chancel. At half its health the water runs off
  * toward the pit and the floor over it gives way. Its chain lies at your feet after: the Tether.
  */

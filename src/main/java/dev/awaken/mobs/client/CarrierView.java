@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The carriers as you see and hear them (SPEC §46.2): each one the server sent ({@code mobs_carrier}) drawn on the
+ * The carriers as you see and hear them (SPEC §47.2): each one the server sent ({@code mobs_carrier}) drawn on the
  * server's clock ({@link ServerPace}), so a wave's crest is where the server judges it and a volley falls on the tick
  * it lands. All in the colour of how you answer it (core.api.Strikes): a wave's crest about as high as the jump that
  * clears it, a volley's pods rising then falling on rings that close as they come, a locked line or wedge brightening

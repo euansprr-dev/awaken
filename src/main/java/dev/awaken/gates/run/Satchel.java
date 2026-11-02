@@ -6,15 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Satchel: 27 slots of loot that is carried, not owned, until it is claimed (Shrine extraction or the Lord's
- * death). Loot moves in and out; nothing is ever copied.
+ * The Satchel: loot that is carried, not owned, until it is claimed (Shrine extraction or the Lord's death). It has no
+ * slot limit and never refuses (SPEC §13, "Gate spoils"). Loot moves in and out; nothing is ever copied. The same
+ * merging list also holds what is held for you ({@link Held}).
  */
 public final class Satchel {
-    public static final int SLOTS = 27;
-
     private Satchel() {}
 
-    /** Moves as much of {@code stack} as fits into the satchel. The stack is shrunk by what moved; returns that count. */
+    /** Moves all of {@code stack} into the list, topping up matching stacks first. The stack ends empty; returns the count moved. */
     public static int add(List<ItemStack> satchel, ItemStack stack) {
         if (stack.isEmpty()) return 0;
         int before = stack.getCount();
@@ -26,7 +25,7 @@ public final class Satchel {
                 stack.shrink(move);
             }
         }
-        while (!stack.isEmpty() && count(satchel) < SLOTS) {
+        while (!stack.isEmpty()) {
             int move = Math.min(stack.getCount(), stack.getMaxStackSize());
             satchel.add(stack.split(move));
         }

@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The fourth Proving's Warden (SPEC §46.8): the Sky Warden, for A. The bell won't stop, and you wake on a sea of cloud
+ * The fourth Proving's Warden (SPEC §47.8): the Sky Warden, for A. The bell won't stop, and you wake on a sea of cloud
  * under a cathedral hanging in the night. The font in its floor opens and the light lifts you up the shaft into the
  * nave; then the Sky Warden comes down out of the vault in a column of light. At two thirds of its health the aisles
  * break away and fall into the cloud (the nave and its arcades stay); at a third the roof lifts away into the sky, and the

@@ -36,6 +36,7 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
     public static final class State extends BlockEntityRenderState {
         final @Nullable ArmourSet[] suit = new ArmourSet[4];
         final boolean[] foil = new boolean[4];
+        final int[] glow = new int[4];
         final int[] mastery = new int[4], accent = new int[4];
         float yaw, wake, age;
         boolean whole;
@@ -73,6 +74,7 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
             ArmourLooks.Look look = ArmourLooks.drawn(st);
             s.suit[i] = look != null && ForgeSong.slot(look.piece()) == i ? look.set() : null;
             s.foil[i] = st.hasFoil();
+            s.glow[i] = dev.awaken.core.api.EnchantApi.glowBits(st);
             dev.awaken.armour.Forged f = st.get(dev.awaken.armour.ArmourContent.FORGED.get());
             s.mastery[i] = f == null ? 0 : f.masteryStep();
             s.accent[i] = f == null ? 0 : f.accent();
@@ -150,8 +152,8 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
                 if (mesh == null && extra == null) continue;
                 ps.pushPose();
                 rest(ps, b);
-                if (mesh != null) ArmourLayer.draw(out, ps, mesh, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot]);
-                if (extra != null) ArmourLayer.draw(out, ps, extra, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot]);
+                if (mesh != null) ArmourLayer.draw(out, ps, mesh, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot]);
+                if (extra != null) ArmourLayer.draw(out, ps, extra, set, s.lightCoords, s.foil[slot], energy, flash, -1, s.mastery[slot], false, s.accent[slot], s.glow[slot]);
                 ps.popPose();
             }
             if (s.mastery[slot] >= ArmourLayer.AURA && set == s.suit[0]) mastered++;

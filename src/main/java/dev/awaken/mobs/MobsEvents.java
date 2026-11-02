@@ -30,7 +30,7 @@ final class MobsEvents {
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLogout);
         dev.awaken.mobs.entity.FightWatch.init();
         // every kit body (rigs, move tables, fight scripts) read once while the game loads, off the main thread: read
-        // when the first boss of a session appeared, it stalled that tick 91 ms (fights_tick_cost, SPEC §46.1)
+        // when the first boss of a session appeared, it stalled that tick 91 ms (fights_tick_cost, SPEC §47.1)
         modBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent e) -> {
             Thread t = new Thread(dev.awaken.mobs.boss.Kits::all, "awaken-kits");
             t.setDaemon(true);

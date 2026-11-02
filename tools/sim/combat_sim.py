@@ -324,7 +324,7 @@ def parse_told_melee():
 
 
 def parse_duel():
-    """The duel's numbers (SPEC §46.3): FightRunner's openings, recoil and reel, AwBolt's returned shot, the adds cap."""
+    """The duel's numbers (SPEC §47.3): FightRunner's openings, recoil and reel, AwBolt's returned shot, the adds cap."""
     out = {}
     for rel in (P_RUNNER, P_AWBOLT, P_BOSS):
         for m in re.finditer(r"static final (?:int|long|float|double)\s+([^;]+);", _read(rel)):
@@ -429,18 +429,18 @@ def default_config(W):
         "profiles": {
             "tank": {"deflect": 0.0, "dodge_any": 0.0, "dodge_perilous": 0.0, "perfect": 1 / 3, "cadence": 0.5, "detour": 0, "keep": 0.6, "art": 1},
             "dodger": {"deflect": 0.0, "dodge_any": 0.70, "dodge_perilous": 0.0, "perfect": 1 / 3, "cadence": 0.5, "detour": 1, "keep": 0.6, "art": 1},
-            # ASSUMED (SPEC §46.2): red is the one colour that says dodge, so a parrier dodges half of them
+            # ASSUMED (SPEC §47.2): red is the one colour that says dodge, so a parrier dodges half of them
             "parrier": {"deflect": 0.60, "dodge_any": 0.0, "dodge_perilous": 0.5, "perfect": 1 / 3, "cadence": 0.5, "detour": 1, "keep": 0.6, "art": 1},
             "expert": {"deflect": 0.85, "dodge_any": 0.0, "dodge_perilous": 0.90, "perfect": 1 / 3, "cadence": 0.95, "detour": 1, "keep": 0.8, "art": 1},
         },
         # what-ifs for the bugs (0 = as built)
         "fix": {
             "stagger": 0,       # 1: the AbilityRunner starts nothing while its Lord is broken (AbilityRunner.java:87-88)
-            "landed_class": 1,  # built (SPEC §46.2): every bolt, fang, aura and cloud lands as the class it was told as
-            "effects": 1,       # built (SPEC §46.2, I5): an evaded or deflected ability leaves no burn, poison or weakness
-            "health_cap": 1,    # the game: a Lord's max health stops at vanilla's 1024 (a duel's rest is bulk, SPEC §46.3)
+            "landed_class": 1,  # built (SPEC §47.2): every bolt, fang, aura and cloud lands as the class it was told as
+            "effects": 1,       # built (SPEC §47.2, I5): an evaded or deflected ability leaves no burn, poison or weakness
+            "health_cap": 1,    # the game: a Lord's max health stops at vanilla's 1024 (a duel's rest is bulk, SPEC §47.3)
         },
-        # the duel (SPEC §46.3; FightRunner, AwBolt, ArmsRules as parsed): on 0 fights a duel script the old way.
+        # the duel (SPEC §47.3; FightRunner, AwBolt, ArmsRules as parsed): on 0 fights a duel script the old way.
         # ASSUMED: you back off rarely enough that its gap-closer habit is left out (the sim has no positions over time)
         "duel": {"on": 1},
         "item_level": {"on": 0, "per_level": 0.075},  # PowerMath.java:42-44 levelScale, mirrored on the weapon
@@ -645,7 +645,7 @@ class Fight:
         self.k_ab = None
         self.k_ab_blows = []
         self.k_d, self.k_behind, self.k_d_state = 1.0, False, None
-        # the duel (SPEC §46.3): blows in this phrase, a limb's recoil, an opening's end, deflects in a row
+        # the duel (SPEC §47.3): blows in this phrase, a limb's recoil, an opening's end, deflects in a row
         self.duel = bool(self.kit and self.kit["fight"].get("duel") and cfg["duel"]["on"])
         if not self.duel and cfg["fix"].get("health_cap", 1):
             # vanilla holds max health at 1024 (Attributes.MAX_HEALTH); a duel carries the rest as bulk (MobScaling.bulk)
@@ -657,7 +657,7 @@ class Fight:
         self.open_until = -1
         self.k_reel_until = -1
         self.k_deflects, self.k_deflect_at = 0, -10 ** 6
-        # a fight that reads you (SPEC §46.6, the Examiner): what it counted through its first phase, and what it read
+        # a fight that reads you (SPEC §47.6, the Examiner): what it counted through its first phase, and what it read
         self.mirrors = bool(self.duel and self.kit["fight"].get("mirrors"))
         self.h_guards, self.h_slips, self.h_read = 0, 0, None
         # posture (ArmsRules.java:26-32)
@@ -941,7 +941,7 @@ class Fight:
             # the hazard top-up lands first (LIGHT: the caster's own blow), the vanilla fang's flat 6 after it as
             # indirect magic: NONE, through armour (Abilities.java:248-250, vanilla EvokerFangs: bite 8 ticks after warm-up)
             d0 = 0 if k == "FANGS" else self.rng.choice((0, 3))
-            if self.MC["fang_scaled"] or self.duel:  # a duel's fang bites for the ability's own damage (DuelFangs, SPEC §46.5)
+            if self.MC["fang_scaled"] or self.duel:  # a duel's fang bites for the ability's own damage (DuelFangs, SPEC §47.5)
                 out.append((d0 + 9, Blow(name, told, told, land0 + d0 + 9, factor=a["power"], expose=EXPOSE[k],
                                          pos=POSITIONAL[k], force=force, fx=fx)))
             else:
@@ -1266,11 +1266,11 @@ class Fight:
         if self.k_string:
             self.k_gap = 0
         elif self.duel:
-            self.open_up(self.opening(self.k_blows_n), t)  # every phrase ends in an opening (SPEC §46.3, I8)
+            self.open_up(self.opening(self.k_blows_n), t)  # every phrase ends in an opening (SPEC §47.3, I8)
         else:
             self.k_gap = 6 + self.rng.randrange(9)
 
-    # ---- the duel (FightRunner, SPEC §46.3) ------------------------------------------------------------------------------
+    # ---- the duel (FightRunner, SPEC §47.3) ------------------------------------------------------------------------------
 
     def opening(self, blows):
         D = self.D
@@ -1549,7 +1549,7 @@ class Fight:
                 self.gain(self.R["RESONANCE_PERFECT_DODGE"])
                 if b.lord:
                     self.slowed_until = t + int(self.dodge_d["slow"])
-                    self.add_posture(self.R.get("PERFECT_DODGE_POSTURE", 0), t)  # through a blow: its stance gives (SPEC §46.3)
+                    self.add_posture(self.R.get("PERFECT_DODGE_POSTURE", 0), t)  # through a blow: its stance gives (SPEC §47.3)
         elif outcome == "deflect":
             self.st["deflects"] += 1
             self.raise_deflected = True
@@ -1752,7 +1752,7 @@ class Fight:
             counter = True
         dmg *= mv.motion
         if mv.cap > 0:
-            # ArmsRules.capExecution: on a Lord the finisher takes 10-15% of its health, whatever the weapon (SPEC §46.3)
+            # ArmsRules.capExecution: on a Lord the finisher takes 10-15% of its health, whatever the weapon (SPEC §47.3)
             lo, hi = self.R.get("LORD_FINISHER_MIN"), self.R.get("LORD_FINISHER_MAX")
             dmg = min(max(dmg, self.l_max * lo), self.l_max * hi) if lo is not None else min(dmg, self.l_max * mv.cap)
         dmg = armor_after(dmg, self.l_armor, 0.0)
@@ -1760,7 +1760,7 @@ class Fight:
         dm = self.st["dmg_by_move"]
         dm[name] = dm.get(name, 0.0) + dmg
         # a blow in an opening breaks its stance faster (ArmsRules.OPENING_POSTURE); in a duel one it stands braced for
-        # barely moves it, a riposte excepted (ArmsRules.GUARDED_POSTURE, SPEC §46.3)
+        # barely moves it, a riposte excepted (ArmsRules.GUARDED_POSTURE, SPEC §47.3)
         if self.in_opening(t):
             pm = self.R.get("OPENING_POSTURE", 1.0)
         elif self.duel and name != "riposte":
@@ -1987,7 +1987,7 @@ class Fight:
 
 # ---- scenarios, runs and targets ---------------------------------------------------------------------------------------
 
-# The Provings' Wardens (SPEC §46.4): each met at its Reassessment by a player of the rank below, in that rank's set
+# The Provings' Wardens (SPEC §47.4): each met at its Reassessment by a player of the rank below, in that rank's set
 # and with its forged blade, at the level the new rank asks for (Rank.java levelRequired); the Warden at that level too
 PROVING_RANKS = {"proving_ringer": ("E", 10), "proving_examiner": ("D", 25), "proving_unmade": ("C", 45), "proving_sky_warden": ("B", 70), "proving_keepers_shadow": ("A", 100),
                  "proving_last_loop": ("S", 135)}
@@ -2109,7 +2109,7 @@ def summarise(res, P):
         if "habit" in r["st"]:
             habits[r["st"]["habit"]] = habits.get(r["st"]["habit"], 0) + 1
     if habits:
-        out["habits"] = habits  # what a fight that reads you read (SPEC §46.6), fights reaching its second phase
+        out["habits"] = habits  # what a fight that reads you read (SPEC §47.6), fights reaching its second phase
     return out
 
 
