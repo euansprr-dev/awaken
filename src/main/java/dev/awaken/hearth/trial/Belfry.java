@@ -3,7 +3,6 @@ package dev.awaken.hearth.trial;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.LightBlock;
@@ -350,57 +349,29 @@ public final class Belfry {
         return s;
     }
 
-    // ---- standing and repair ----------------------------------------------------------------------------------------
+    // ---- as a hall ----------------------------------------------------------------------------------------
 
     /**
-     * Whether the hall at {@code c} stands as built where a run would see it first: the chancel, the door's water and a
-     * side wall. A hall cell's chunks generated before the Belfry was added are void, and fail this.
+     * The Belfry as a {@link Hall}: what the Provings and the trials' generator read. It stands as built where a run would
+     * see it first: the chancel, the door's water and a side wall (a hall cell's chunks made before the Belfry are void).
      */
-    public static boolean standing(ServerLevel level, BlockPos c) {
-        return is(level, c, 0, 0, 0) && is(level, c, 0, 0, WAKE_Z) && is(level, c, WALL_X, 10, 0) && is(level, c, 0, 0, PIT_Z);
-    }
+    static final Hall HALL = new Hall() {
+        @Override public int atX() { return AT; }
+        @Override public int atZ() { return AT; }
+        @Override public int wall() { return WALL_X; }
+        @Override public int north() { return NORTH; }
+        @Override public int back() { return BACK; }
+        @Override public int low() { return LOW; }
+        @Override public int roof() { return ROOF; }
+        @Override public int bandLo() { return -1; }
+        @Override public int bandHi() { return 4; }
+        @Override public @Nullable BlockState block(int x, int dy, int z) { return Belfry.block(x, dy, z); }
 
-    private static boolean is(ServerLevel level, BlockPos c, int x, int dy, int z) {
-        BlockState want = block(x, dy, z);
-        return level.getBlockState(c.offset(x, dy, z)) == (want == null ? Blocks.AIR.defaultBlockState() : want);
-    }
-
-    /** Putting a hall back as built, a few rows of it a tick: the whole of it, or the band a fight changes (dy -1 to 4). */
-    public static final class Repair {
-        final ServerLevel level;
-        final BlockPos centre;
-        final int lo, hi;
-        final boolean whole;
-        private int z = NORTH;
-        private final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-
-        public Repair(ServerLevel level, BlockPos centre, boolean whole) {
-            this.level = level;
-            this.centre = centre;
-            this.whole = whole;
-            this.lo = whole ? LOW : -1;
-            this.hi = whole ? ROOF : 4;
+        @Override
+        public boolean standing(ServerLevel level, BlockPos c) {
+            return is(level, c, 0, 0, 0) && is(level, c, 0, 0, WAKE_Z) && is(level, c, WALL_X, 10, 0) && is(level, c, 0, 0, PIT_Z);
         }
-
-        /** Up to {@code rows} rows (north to south); true once the hall is done. */
-        public boolean step(int rows) {
-            for (int n = 0; n < rows && z <= BACK; n++, z++) {
-                for (int x = -WALL_X; x <= WALL_X; x++) {
-                    for (int dy = lo; dy <= hi; dy++) {
-                        BlockState want = block(x, dy, z);
-                        if (want == null) want = Blocks.AIR.defaultBlockState();
-                        at.set(centre.getX() + x, centre.getY() + dy, centre.getZ() + z);
-                        if (level.getBlockState(at) != want) level.setBlock(at, want, Block.UPDATE_CLIENTS);
-                    }
-                }
-            }
-            return z > BACK;
-        }
-
-        public boolean done() {
-            return z > BACK;
-        }
-    }
+    };
 
     /** Whether the fluid at a spot is the hall's still water (for tests). */
     public static boolean water(ServerLevel level, BlockPos p) {

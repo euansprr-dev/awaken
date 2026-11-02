@@ -33,8 +33,8 @@ import java.util.stream.Stream;
 /**
  * The trials dimension: void with one walled arena per cell. Even cells are Reassessment halls (dark tile, amber lamps);
  * odd cells are the Hardline Penalty Zone's desert at night (sand, sandstone, cold lamps, cacti). Each even cell also
- * holds the first Proving's hall, the Drowned Belfry ({@link Belfry}), in its middle. Stateless and deterministic, safe
- * on worldgen threads.
+ * holds every Proving's hall ({@link Warden#ALL}: the Drowned Belfry in its middle, the others each at its own spot).
+ * Stateless and deterministic, safe on worldgen threads.
  */
 public final class TrialChunkGenerator extends ChunkGenerator {
     public static final MapCodec<TrialChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -120,15 +120,20 @@ public final class TrialChunkGenerator extends ChunkGenerator {
                         ocean.update(x, y, z, s);
                         surface.update(x, y, z, s);
                     }
-                } else if (!desert && Belfry.spans(lx - Belfry.AT, lz - Belfry.AT)) {
-                    // a hall cell's Proving hall, the Drowned Belfry (SPEC §46.4)
-                    for (int dy = Belfry.LOW; dy <= Belfry.ROOF; dy++) {
-                        BlockState s = Belfry.block(lx - Belfry.AT, dy, lz - Belfry.AT);
-                        if (s == null) continue;
-                        m.set(wx, FLOOR + dy, wz);
-                        chunk.setBlockState(m, s, 0);
-                        ocean.update(x, FLOOR + dy, z, s);
-                        surface.update(x, FLOOR + dy, z, s);
+                } else if (!desert) {
+                    // a hall cell's Proving halls, one for each Warden at its own spot (SPEC §46.4, §46.6)
+                    for (Warden w : Warden.ALL) {
+                        Hall h = w.hall;
+                        if (!h.spans(lx - h.atX(), lz - h.atZ())) continue;
+                        for (int dy = h.low(); dy <= h.roof(); dy++) {
+                            BlockState s = h.block(lx - h.atX(), dy, lz - h.atZ());
+                            if (s == null) continue;
+                            m.set(wx, FLOOR + dy, wz);
+                            chunk.setBlockState(m, s, 0);
+                            ocean.update(x, FLOOR + dy, z, s);
+                            surface.update(x, FLOOR + dy, z, s);
+                        }
+                        break;
                     }
                 }
             }

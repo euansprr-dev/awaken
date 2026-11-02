@@ -64,7 +64,7 @@ public final class ProvingTests {
                         step[0] = 1;
                     }
                     case 1 -> {
-                        LivingEntity r = Provings.ringer(run);
+                        LivingEntity r = Provings.warden(run);
                         if (r == null) return;
                         h.assertTrue(Math.abs(r.getZ() - (c.getZ() + Belfry.DROP_Z + 0.5)) < 3, "it drops at the chancel's middle");
                         // a fall: you wake at the door, whole, and alone it starts over
@@ -77,7 +77,7 @@ public final class ProvingTests {
                         step[0] = 2;
                     }
                     case 2 -> {
-                        LivingEntity r = Provings.ringer(run);
+                        LivingEntity r = Provings.warden(run);
                         if (r == null) return;
                         r.setHealth(r.getMaxHealth() * 0.45F);
                         mark[0] = now;
@@ -85,12 +85,12 @@ public final class ProvingTests {
                     }
                     case 3 -> {
                         if (now - mark[0] < 1) return;
-                        h.assertTrue(run.drained, "at half its health the water drains");
+                        h.assertTrue(run.turns >= 1, "at half its health the water drains");
                         if (now - mark[0] < 70) return;
                         h.assertFalse(Belfry.water(trials, c.offset(24, 0, 0)) || Belfry.water(trials, c.offset(0, 0, Belfry.WAKE_Z)), "the water ran off");
                         h.assertTrue(trials.getBlockState(c.offset(0, 0, Belfry.PIT_Z)).isAir() && trials.getBlockState(c.offset(0, -1, Belfry.PIT_Z)).isAir(),
                                 "the floor over the pit gave way");
-                        LivingEntity r = Provings.ringer(run);
+                        LivingEntity r = Provings.warden(run);
                         h.assertTrue(r != null, "it fights on");
                         r.kill(trials);
                         h.assertTrue(run.stage == Provings.Stage.WON, "beaten");
