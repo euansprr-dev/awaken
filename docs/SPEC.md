@@ -8519,7 +8519,8 @@ Greenhouse (farmland or a planted pot under a ceiling at least half glass: recog
 Pell's Spurs' +80 now counts too), Hall (6 seats = bottom stairs on the floor with room above, a table = a fence or wall
 post with a carpet, pressure plate or bottom slab on it, floor 48+: a meal eaten in it feeds every other player in it
 nutrition and half its saturation), Bell tower (a bell, the floor 8+ over the lowest ground 4 blocks outside: rings at
-dawn and dusk; `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
+dawn and dusk (gone since §43.16 stage 3: the song is the bells; its gifts below come from the room or from a bell
+hanging 8 up, `RoomEffects.bellTower`, and the warning tolls from the home's highest bell); `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
 inside a Hearth with one, via `HearthHooks.tideCalm` in `living.api.Regions` (one line)), Lookout (12+ up, glass in three
 directions: `AtlasHooks.reveal` 256 round home when first recognised and on login; Mira tells a second rumour a play-day),
 Trophy Hall, Workshop (machines in it or in its walls pay ⌈×0.75⌉ essence: `HearthHooks.machineCost` in
@@ -15846,6 +15847,8 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   nuggets from a stack of rubble at most; never ore by itself).
 - Nooks: 2 at the Ember, 4 at the Anchor, then 8, 12, 18, 24 by its last tier, plus each work's own.
 - Tiers no longer ask for people (stage 1): IV asks for a bell tower and six rooms, V for ten rooms, two of them Grand.
+  (§43.16 stage 3: the bell tower moved to II, "a bell tower: a bell hanging 8 or more above your fire"; IV asks for six
+  rooms and thirty bells in your song.)
   The Spire's Board and Monolith come with the Anchor (they came with the first settler).
 - **The Storehouse** (Euan, 29 Oct; C, with the Totters; rare things: a Totter that's Kin and an empty town's granary
   keystone): a timber hall with **the Drop**, a sunken bin the player tips anything into (by hand, a stack, or "Empty
@@ -15901,12 +15904,14 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   spirit spoken to (Spirit), a raid held to dawn (Night), a holdfast's bell rung from inside its walls (Watch, then
   Curfew; standing inside files a Rung lead), and a gate world's Lord at the bell's rank or above (Crypt from the Bell
   Crypt, Spore, Ember Mine, Hive and Root from their worlds, Lantern from the Lantern Night Market) for everyone in the
-  run within 96. The first bell gives the handbell and the bell frame, and six seconds later the Signal's one line:
+  run within 96. The first bell gives the handbell (and, before §43.16 stage 2, the bell frame), and six seconds after
+  the first bell is hung (stage 2; before, after it rang) the Signal's one line:
   "There were a hundred. Find them. Ring them all and I can show you the bottom."
   Sleeping places out in the land (`BellSites`) were retired on 30 Oct (§43.16): nothing is planned, built or heard in
   open country, and an old world's built places are cleared.
   The tower (`BellTower`): the bell frame, set inside your own Hearth (anywhere else it pops off), one per home; every
-  bell held by anyone who lives there hangs in it, and a bell once hung stays. At 20 bells a timber belfry goes up round
+  bell held by anyone who lives there hangs in it, and a bell once hung stays (until §43.16 stage 2: now each bell is a
+  thing you carry home and hang on a hook yourself). At 20 bells a timber belfry goes up round
   it (5 by 5, 10 high, four bells under its beams, a deepslate-tile roof); at 50 a stone tower (5 by 5, an arch on the
   frame's side) with a nine-bell belfry on top, 15 high. Each goes up only into clear space; otherwise a note once a
   play-day, and it tries again at every song. The song at dawn (clock 23,600 to 400, so a night slept through wakes to
@@ -15924,7 +15929,8 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   minute. Stillness (Tenor, Night, Watch): a raid's creatures within 48 get Slowness IV and Weakness II for 10 s, once
   a raid night. The Bell Book page is in the Codex (The Hundred Bells, Bell Leads, Your Tower, with "Play the song");
   payloads `bells_song`, `bells_page`, `bells_ask`, `bells_track`; Track puts the lead's area (or the start of its one
-  bearing) on the top-right card. Recipes: handbell (a stick over two copper ingots), bell frame (planks, logs, a bell).
+  bearing) on the top-right card. Recipes: handbell (a stick over two copper ingots), bell frame (planks, logs, a bell; planks and logs only since
+  §43.16 stage 2).
   Sounds `bells.note_0..14`, `gap`, `handbell`, `toll`, `hum`, `wake` (`tools/art/specs/audio_bells.py`); art from
   `tools/art/specs/bells.py`. Commands `/awaken admin bells give <id> | tower <n> | song | belfry | ilse | deep | page`.
 
@@ -16150,7 +16156,8 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   you can't get, and the Peal comes before the Seed, not after it). The True Bell (36, S, voice Glow) is the Foundry's
   sixth mould: 8 Starmetal Ingots and 16 Bell Bronze, cast only while a member of S rank is online; the Foundry's status
   says so while it waits. All hundred bells now have a source (`bells_catalog_ring` checks it).
-- **The Great Belfry** (tower stage 3): it needs the stone tower (50 bells) and two pieces set into the bell frame by
+- **The Great Belfry** (tower stage 3; since §43.16 stage 3 it needs fifty bells in the home's song, not the stone tower, and
+  carries the Great Bells up into it): it needs the stone tower (50 bells) and two pieces set into the bell frame by
   hand (each says why if it can't go in: not your frame, no tower yet, already set, already built). The **Heart-clapper**
   drops from every S-rank (or higher) gate world's Lord to the killer and their party within 96; a **Sovereign's Relic**
   from every Sovereign felled, to the same people. Each is epic, unstackable, fireproof, and given only to someone who
@@ -16228,7 +16235,7 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   the walled towns; "If someone found all hundred and got them ringing again ..."; "Not you, though. You died in a gate
   and came back ... If anyone can find them, it's you."; the coal; the Association; "Go on, then". A held skip still
   goes to the coal. JOURNEY part 1 has the lines.
-- **The Bell Book from the coal**: when Ilse's step completes (`BellHooks.told` from `FirstScenes.complete`) a player who
+- **The Bell Book from the coal** (superseded by §43.16 stage 2: Ilse now gives the Ember Bell itself): when Ilse's step completes (`BellHooks.told` from `FirstScenes.complete`) a player who
   doesn't hold the Ember Bell gets its Remembered lead ("Ilse says there were a hundred bells across the land. The first
   will ring by your own fire, once you set her coal down. It's in your Bell Book."), so the Book's Hundred shows 0 / 100
   before the first bell rings. The Signal's line at the first bell is unchanged.
@@ -16279,6 +16286,149 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   to date once. **World** data unchanged (old `sites` read, then cleared).
 - Tests (CI): `bells_none_in_the_open`, `bells_song_arrangement`, `bells_sounds_placed`, `bells_lord_keeps`,
   `bells_story_start` (a frame keeps gates off, no frame rings nothing).
+
+- **Stage 2: bells you carry and hang** (2 Nov; BELLS.md §4, Euan's 30 Oct answers). Every bell won is a thing you
+  carry home and hang; the song is the bells that hang.
+  - **The bell** (`awaken:bell`, `BellItem`): one item for all hundred, the number in the data component `awaken:bell`
+    (synced). Named after its bell; tooltip: "Bell #NN · X-rank", what it does while it hangs, where it hangs. One a
+    stack, rare, fireproof, can't be hurt, never despawns; fallen below the world (40 under its floor) it comes back to
+    its owner's hands, else to the world spawn's surface. Used in the hand it rings its note (2 s cooldown); on any block
+    but a hook: "[Bells hang on hooks. Use it on your Bell Frame by your fire, or on a Bell Beam 8 or more above it.]"
+    (a Great Bell names the Great Beam). A player's bells never
+    drop at death: they're owed back to their hands (Book `owed`), given when they're alive again.
+  - **Winning one** (`Bells.ring`): filed in the Book and put in your hands ("It's yours. Take it home and hang it."; a
+    Great Bell: "It needs a Great Beam, 12 or more blocks above your fire."); nothing plays at your feet. The far six
+    (Roost, Square, Market, Harbour, Watch, Curfew; `Bells.FAR`) never become things: they're filed with where they hang
+    (Book `far`) and answer the song of the home you live in from there ("People still ring it. It stays where it hangs
+    and answers your song from there."). The first bell gives only the handbell, with "[A fire and a bell make a home.
+    Make a Bell Frame from planks and logs, set it down by your fire and hang the bell on it. The handbell's yours too:
+    it sends wild beasts running, and rings the peals your bells make.]"
+  - **Hooks** (`HookBlock`, block entity `bell_hooks`, `HooksEntity` schema 1: each hook's bell and who hung it), facing
+    the player who sets them: the Bell Frame (3 hooks; planks over logs), the Bell Beam (4; three logs over two iron
+    nuggets), the Great Beam (1; three logs over chain, iron ingot, chain). Use a bell on one to hang it on the nearest
+    free hook. Refused, in the System's words: outside a Hearth you belong to; a Great Bell (source Proving) on anything
+    but a Great Beam, or anything else on one; a Bell Beam less than 8 above the fire (`Hanging.BEAM_ABOVE`), a Great
+    Beam less than 12 (`GREAT_ABOVE`); a bell the home's song already has ("This one's yours to keep."); a full frame
+    names the Bell Beam. Hung: it rings from its hook and swings (a block event every client near sees), and a card "Bell
+    #NN · Name": "It's hanging by your fire / high over your home / high in your tower. Its note is the Nth in your song.
+    While it hangs, ...". A bell someone else won and gave you is filed in your Book when you hang it ("given to you, and
+    hung at your home"). The first bell a player hangs brings the Signal's line six seconds later. Empty hand: ring the
+    nearest bell; sneak, empty hand: take it down (whoever hung it, or the home's owner) back to your hands, out of the
+    song. A hook block broken drops its bells as things. Bell Beams and the Great Beam come in stage 2 so the frame's
+    three hooks are never a ceiling; stage 3 adds the Work Plans that build them into a belfry and a tower.
+  - **The song from the bells**: a home's song (`BellWorld.Home.hung`, derived, never saved) is its placed bells (World
+    `placed`: number to hook block) and the far six of its members (World `far`). It rings only while a bell hangs at
+    home (`BellTower.ringsFrom` null otherwise: the bare fire never sings), from the frame (or the first hook block
+    without one); each note is played from its own hook, each far bell from where it hangs (`BellTower.places`). At song
+    time a loaded hook that no longer holds its bell drops it from the song. Peals need their three bells in the home's
+    song, not only held. The belfry (20) and tower (50) still raise themselves round the frame, counting the song, until
+    stage 3.
+  - **Ilse's bell**: her coal line (index 12) gives her own bell, "the little bell from over my fire at home"; a new line
+    13: the gates took a lot of the bells, whatever lives at the bottom of a gate sits on what it swallowed, bring one
+    home if it's lying there. `Bells.told` puts the Ember Bell in your hands ("given you by Ilse at the Last Fire"), once;
+    a player who already had a fire gets a line saying so.
+  - **The Lampwing's old bell** (the Nook): the first time a home's owner (not holding the Nook) is within 32 of a new
+    overworld home, it's hung under a branch of the tree nearest the first Lampwing's watch spot (12 east, 9 south of
+    the Anchor; a leaves block with air under it, 3 or more above the ground, within 24), else from an old post of
+    stripped oak there (`FoundBells.roost`). It glows (light 6) while nothing lives at that home yet ("[Something's
+    asleep in it.]"); the day a beast comes to live there it's the home's ("[The Lampwing's left its old bell in the
+    tree. It's yours.]"). The first fire's Lampwing perches by it (`BellHooks.roost`, `KinHome`). This replaces the Nook
+    moment (a beast living with you).
+  - **Found bells** (`awaken:found_bell`, no item, block entity `found_bell` schema 1: number, the Book's where line,
+    claimants (none: anyone), who has lifted it, its home's Anchor, its gate for stage 4): unbreakable, can't be pushed,
+    drawn by its renderer hanging or sat on the floor. Use lifts it: it rings out clear (note and ash at the bell) and
+    it's yours to carry home. Someone from another fire: "[It's hanging by someone else's fire. It's theirs.]"; not a
+    claimant: "[This one wasn't left for you. It's for the hunter who found it.]"; it goes once every claimant has lifted
+    theirs.
+  - **Book** schema 5 (`owed`, `far`); a Book at 4 or below is brought up once: every held bell but the far six is owed
+    to their hands ("[Your bells are waiting to be hung. Use each one on your Bell Frame by your fire.]"), the far six get
+    their places (the Roost at Carillon's start, the square, the market, the quay; Watch and Curfew at the holdfast bells
+    heard from inside; else the square, else where they stand), and the Signal's line isn't said again. **World** schema
+    3: homes keep frame, stage and the Great Belfry's state; old `hung` lists are dropped (the bells come back as things).
+  - Goals (the Bells tab): make and set a frame; hang the bells in your bag; the frame full, make a Bell Beam; a Great
+    Bell, a Great Beam; take the Lampwing's old bell down; then as before. The page marks each bell in your song, yours
+    to hang, or hung by someone you live with. `/awaken admin bells tower <n>` hangs them too: the frame first, then Bell
+    Beams 9 above the fire either side of it, Great Beams 13 above; `/awaken admin bells roost` hangs the Lampwing's bell
+    now and stands you under it (for tours).
+  - Tests (CI): `bells_hang_rules`, `bells_song_from_bells`, `bells_nothing_from_nowhere` (no song from a bare frame; a
+    bell never lost at death), `bells_roost_bell` (under the branch; asleep; another fire; claimants), `bells_old_save`,
+    `bells_catalog_ring` (each of the hundred is a thing in your hands or one of the six), `bells_peals` (hung, not held),
+    `bells_story_start` (Ilse's bell, once).
+
+- **Stage 3: hang them high** (2 Nov; BELLS.md §4.4 and §4.8). The tower is yours to build, or your Thatchbacks'.
+  - **No tower raises itself.** The belfry at 20 and the tower at 50 are retired. An old home whose belfry, tower or Great
+    Belfry rose by itself has each vanilla bell in it turned, once, into the hook block its shape has there (`BellTower.
+    convert`, when the frame's ground is loaded; World `beams`): a Bell Beam under each cross beam of a belfry, nine on a
+    tower's top, the Great Belfry's 25 (nine Great Beams). These old beams (`HooksEntity.old`) count wherever they are.
+    The admin `belfry` command and the Great Belfry still put up the Great Belfry's shape.
+  - **Two Work Plans** (`kin.works.WorkPlans`, after the Storehouse in the plan's choices; the plan stands in the middle
+    and its tower rises round it, so set it beside your frame and the frame stands inside):
+    - **Belfry** (timber, 5 by 5): spruce corner posts ten high, a ladder up the back left one, a beam ring and cross
+      beams at 10, a Bell Beam under each arm of the cross at 9 (their hooks along the arm: sixteen), a stepped roof
+      and its log cap last. Bill: 45 logs, 51 planks, 10 ladders, 4 Bell Beams.
+    - **Bell Tower** (stone, 5 by 5, 17 high): walls ten high with an arch three wide and three high on the plan's
+      facing side and a window two high in the middle of each other face (walled up with no glass), a ladder up the
+      inside of the back wall through the deck at 10, corner piers, the beam course at 13 (two Great Beams either side
+      of the middle, six Bell Beams round them: 24 hooks and 2 Great hooks), a stepped stone roof and cap.
+    - Both are built like every other plan, one block a turn by a Thatchback from the chests within eight, the beams laid
+      before the roof that covers them. Beams the Thatchbacks set carry wherever they stand (`BellHooks.raised` marks
+      them old), so a plan laid lower than the fire still works. Done: the plan block goes and "[The Thatchbacks
+      finished the Belfry. Climb the ladder and hang your bells from its beams.]" The Great Belfry still needs its clear
+      7 by 7 round the frame, so a plan's tower in it must come down first (it says so).
+  - **The Hearth's bell tower is your tower** (`BellHooks.tower`): a bell hanging 8 or more above the fire, in a beam the
+    Thatchbacks set, or an old tower. The Bell tower room's vanilla dawn and dusk ring is gone; its gifts (a gate due to
+    break near home warned two play-days ahead, calm Deep Tide nights) come from the room or the tower
+    (`RoomEffects.bellTower`), and the warning tolls from the home's highest loaded bell (`BellHooks.toll`; the old
+    bell sound with none). Tier II asks for "a bell tower: a bell hanging 8 or more above your fire"; tier IV for "six
+    rooms" and "thirty bells in your song (n/30)" (`BellHooks.song`).
+  - **The Provings' Great Bells come by wagon**: won, a Great Bell isn't put in your hands; it goes on the Registry's
+    wagon (Book schema 6, `wagon`: number to the play-day won) with "The Registry has kept it in its cellar for eleven
+    years. Its wagon will leave it in your yard by morning. It needs a Great Beam, 12 or more blocks above your fire."
+    (", once you have a home"). On a later play-day, while you're at home, it's left on the ground two to five blocks
+    from the Anchor (a found bell, delivered, World `yard`) with "[The Registry's wagon left the Tenor in your yard. It
+    needs a Great Beam, 12 or more blocks above your fire.]"; lifting it puts it in your hands. The Seed Bell is never a
+    thing: it hangs in the middle of the Great Belfry when it rises.
+  - **The Great Belfry** needs fifty bells in the home's song (`BellTower.GREAT`; "[A Great Belfry needs fifty bells in
+    your song first. You have n.]") and its two pieces. When it rises, every bell on a hook where it goes up comes down
+    and is carried into it, and every loaded Great Bell at home is carried up to its Great Beams (`GreatBelfry.Carried`);
+    one with no free hook is set down by the fire; the Seed hangs on the Great Beam at 14 in its middle. Its line: "Only
+    a Great Belfry can lead the Hundred Peal."
+  - Goals: a Great Bell in your yard ("Lift it, then hang it from a Great Beam 12 or more blocks above your fire."), the
+    Great Belfry from fifty. The page's next line names Bell Beams and the Thatchbacks' plans under fifty.
+  - Looks (from stage 2's and 3's tours): the Bell Frame is drawn wider (posts just outside its block, the outline kept
+    inside) and its bells bigger (0.32); a Bell Beam is a broader timber (8 deep) whose four hooks are staggered front and
+    back (z 5.5, 10.5) so its bells are drawn at 0.38; a Great Bell sat in the yard is drawn at its size (1.5); the bell
+    in the hand, on the ground and in a frame is sized down.
+  - **World** schema 4 (`beams`, `yard`); **Book** schema 6 (`wagon`).
+  - Tests (CI): `bells_work_plans` (both raised: beams, ladder, the plan gone; a bell on a belfry beam only six above the
+    fire makes the tower), `bells_hearth_tower` (tier II and IV, the calm), `bells_wagon` (not the same day; in the
+    yard; lifted), `bells_old_towers`, `bells_tower_plans` and `bells_hundred_peal` (the old shapes' beams),
+    `bells_catalog_ring` (Great Bells by wagon, the Seed with the Great Belfry).
+
+- **Stage 4: Lord bells lie in the boss room** (2 Nov; BELLS.md, Euan 30 Oct: "when you kill the boss, that's when maybe
+  you find the bell in his room"). Which Lords keep a bell is stage 1's rule, unchanged (`Bells.swallowed`, a gate
+  world's own bell first). What changes is where it is:
+  - When the Lord falls, each bell it kept is set down once on its arena's floor near where it fell (`FoundBells.keep`:
+    the free floor nearest its feet, up to 4 across, two above to six below; air or grass, nothing liquid, a solid top
+    under it), a found bell glowing a little (light 6), left for the hunters it's for (claimants). Nothing is put in
+    their hands. Lines: a gate world's own "[There's a bell in the Lord's hoard, lying where it fell. Lift it and take
+    it home.]"; the first swallowed one ever "[The Lord was keeping a bell the gate took. Ilse said a lot of them fell
+    in. It's lying where the Lord fell: lift it and bring it home.]", later ones "[The Lord was keeping a bell. It's
+    lying where it fell.]". The woken clapper comes with a swallowed bell at the fall, as before. With no floor near,
+    the bell is put in their hands (the old way, never lost).
+  - Each claimant lifts their own (it rings out clear and is filed: "under a D gate's Lord, where the gate had taken
+    it", "in the hoard of a D gate's Lord"); it stays until everyone it's for has. Inside the gate the Bells tab leads
+    with "Lift the X from where the Lord fell" ("It's lying on the floor of the Lord's room. Lift it before you leave:
+    once the gate closes, it goes back to the gates."), pointing at it.
+  - **Back to the pool**: World schema 5 keeps each Lord's bell (`kept`: gate id from the Lord's `MobRole`, place, bell,
+    who hasn't lifted it). Every 5 s, one whose gate is gone or released (it's released once cleared and empty) is lost
+    to those who hadn't lifted it (`lost`, said when they're next about): a swallowed bell sets their Book's
+    `lords_since` to `LORDS_WITHOUT`, so the next Lord they bring down keeps a bell for them ("[The gate closed with the
+    Wren Bell still lying on its floor. It's gone back to the gates: the next Lord you bring down will be keeping a
+    bell for you.]"); a gate world's own: "That gate's Lord will have it again the next time you bring one down." No
+    bell room, no hum, no handbell answer (Euan 30 Oct).
+  - Tests (CI): `bells_lord_room` (on the floor near the Lord, one for the party, each lifts their own, a closed gate
+    sends it back), `bells_lord_keeps` (the odds, lifting what each Lord left).
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 

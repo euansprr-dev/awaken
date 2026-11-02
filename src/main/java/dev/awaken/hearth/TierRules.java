@@ -1,8 +1,8 @@
 package dev.awaken.hearth;
 
+import dev.awaken.core.api.BellHooks;
 import dev.awaken.hearth.room.Reading;
 import dev.awaken.hearth.room.Room;
-import dev.awaken.hearth.room.RoomType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +13,8 @@ import java.util.List;
  * Lord's Heart at V), the home must have grown. II Steading: four rooms, one of them Fine, and a field or a pen. III Hall:
  * a Grand room. IV Village: a bell tower and six rooms. V Town: ten rooms, two of them Grand (SPEC §43.6: nobody moves in
  * any more, so the tiers read what you built; the beasts' nooks grow with the tier). The Anchor's flame shows the tier.
+ * Since §43.16 stage 3 the bell tower is your bells': II asks for a bell hanging 8 or more above your fire, and IV for
+ * six rooms and thirty bells in your song ({@link BellHooks}).
  */
 public final class TierRules {
     private TierRules() {}
@@ -30,6 +32,7 @@ public final class TierRules {
                 out.add(new Need("four rooms (" + Math.min(h.rooms.size(), 4) + "/4)", h.rooms.size() >= 4));
                 out.add(new Need("one of them Fine", fine));
                 out.add(new Need("a field or a pen", (h.land & (Comfort.FIELD | Comfort.PEN)) != 0));
+                out.add(new Need("a bell tower: a bell hanging 8 or more above your fire", BellHooks.tower(h.pos)));
             }
             case 3 -> {
                 boolean grand = false;
@@ -37,8 +40,9 @@ public final class TierRules {
                 out.add(new Need("a Grand room", grand));
             }
             case 4 -> {
-                out.add(new Need("a bell tower", h.hasRoom(RoomType.BELL_TOWER)));
+                int song = BellHooks.song(h.pos);
                 out.add(new Need("six rooms (" + Math.min(h.rooms.size(), 6) + "/6)", h.rooms.size() >= 6));
+                out.add(new Need("thirty bells in your song (" + Math.min(song, 30) + "/30)", song >= 30));
             }
             case 5 -> {
                 int grand = 0;

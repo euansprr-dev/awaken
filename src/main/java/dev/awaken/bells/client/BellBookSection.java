@@ -43,7 +43,7 @@ final class BellBookSection extends UiSection {
         ask();
         BellNet.Page p = page;
         int n = 0;
-        if (p != null) for (List<String> r : p.hundred()) if (r.get(3).equals("held")) n++;
+        if (p != null) for (List<String> r : p.hundred()) if (r.get(3).equals("held") || r.get(3).equals("song")) n++;
         return new int[]{n, 100};
     }
 
@@ -65,7 +65,7 @@ final class BellBookSection extends UiSection {
             case HUNDRED -> {
                 BellNet.Page p = page;
                 int n = 0;
-                if (p != null) for (List<String> r : p.hundred()) if (r.get(3).equals("held")) n++;
+                if (p != null) for (List<String> r : p.hundred()) if (r.get(3).equals("held") || r.get(3).equals("song")) n++;
                 yield "THE HUNDRED BELLS · " + n + " / 100";
             }
             case LEADS -> "BELL LEADS";
@@ -121,7 +121,8 @@ final class BellBookSection extends UiSection {
             String st = r.get(3);
             int rank = rankColour(r.get(2));
             int bg = switch (st) {
-                case "held" -> 0xF0000000 | mix(rank, 0x0F1724, 0.55);
+                case "song" -> 0xF0000000 | mix(rank, 0x0F1724, 0.55);
+                case "held" -> 0xE0000000 | mix(rank, 0x0F1724, 0.4);
                 case "hung" -> 0xD0000000 | mix(rank, 0x0F1724, 0.25);
                 case "lead" -> 0xD0000000 | 0x2A2416;
                 default -> 0xA0000000 | 0x111826;
@@ -140,7 +141,7 @@ final class BellBookSection extends UiSection {
                 ui.fill(cx, cy, cx + cw, cy + ch, 0x30FFFFFF);
             }
             String num = r.get(0).substring(1);
-            int tc = st.equals("held") ? 0xFFFFFFFF : st.isEmpty() ? DIM : 0xFF000000 | Glass.LABEL;
+            int tc = st.equals("song") ? 0xFFFFFFFF : st.equals("held") ? 0xFFFFE6A8 : st.isEmpty() ? DIM : 0xFF000000 | Glass.LABEL;
             ui.textAt(num, cx + (cw - ui.font().width(num)) / 2, cy + 3, cw, tc, false);
         }
         ui.gap(10 * (ch + gap) + 2);
@@ -148,15 +149,16 @@ final class BellBookSection extends UiSection {
         String one, two;
         if (over == null) {
             // two short lines: the board is narrow on a small window, and a cut-off line hides the key
-            one = "Hover a bell to see it. Lit bells are yours.";
-            two = "Dim: a housemate has it. Ringed: you have a lead.";
+            one = "Hover a bell to see it. Lit: in your song. Gold: yours to hang.";
+            two = "Dim: a housemate's, in your song. Ringed: you have a lead.";
         } else {
             String rank = Rank.valueOf(over.get(2)).label + "-rank";
             // a bell you know nothing of is its number and nothing else (SPEC §27.13: a "?" never hints)
             one = over.get(3).isEmpty() ? over.get(0) : over.get(0) + " · " + (over.get(1).isEmpty() ? "unknown" : over.get(1)) + " · " + rank;
             two = switch (over.get(3)) {
-                case "held" -> "Rung home " + over.get(4) + ".";
-                case "hung" -> "Someone you live with rang it home. It hangs in your tower.";
+                case "song" -> "In your song. Found " + over.get(4) + ".";
+                case "held" -> "Yours, waiting to be hung. Found " + over.get(4) + ".";
+                case "hung" -> "Someone you live with hung it. It rings in your song.";
                 case "lead" -> "You have a lead on it. It's in your leads below.";
                 default -> "Not found yet.";
             };

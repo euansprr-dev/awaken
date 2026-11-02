@@ -10,7 +10,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.block.BellBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -18,29 +17,29 @@ import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BellAttachType;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Your bell tower (SPEC §43.7). The bell frame, set inside your own Hearth, is where your bells hang. At twenty bells a
- * timber belfry goes up round it, at fifty a stone tower under the belfry, and with the Heart-clapper and a Sovereign's
- * relic the Great Belfry on top (§43.14; each built only into clear space; if something's in the way the System says what
- * room it needs and tries again at the next song). At dawn and dusk it rings your song as {@link SongPlan} lays it out,
- * missing bells silent, heard 256 blocks off; with no frame set down nothing rings. Your beasts take it by how many bells
- * there are. With all hundred in the Great Belfry, the next song is the Hundred Peal.
+ * Your bell tower (SPEC §43.7, §43.16). The bell frame, set inside your own Hearth, is where your first bells hang (each
+ * on a hook, by hand), and Bell Beams and Great Beams hold the rest high up: you build the tower, or your Thatchbacks do
+ * from a Belfry or Bell Tower plan (stage 3; the belfry and tower that raised themselves at twenty and fifty bells are
+ * retired, and an old one's bells became beams). With fifty bells in the song, the Heart-clapper and a Sovereign's relic,
+ * the Great Belfry goes up round the frame (§43.14, into clear space only). At dawn and dusk it rings your song as
+ * {@link SongPlan} lays it out, missing bells silent, heard 256 blocks off; with no bell hung nothing rings. Your beasts
+ * take it by how many bells there are. With all hundred in the song and a Great Belfry, the next song is the Hundred Peal.
  */
 final class BellTower {
     private BellTower() {}
 
     static final int DAWN_SONG = 23_600, DUSK_SONG = 11_600, HEAR = 256;
-    static final int BELFRY = 20, TOWER = 50;
+    /** Bells in the song before the Great Belfry can go up. */
+    static final int GREAT = 50;
 
     // ---- the frame ----------------------------------------------------------------------------------------------------
 
@@ -64,80 +63,104 @@ final class BellTower {
         home.stage = 0;
         w.setDirty();
         hang(level.getServer(), h.get());
-        int n = home.hung.size();
-        Bells.say(by, "[Your bells hang here now: " + n + (n == 1 ? " bell" : " bells") + ". They ring your song at dawn and dusk.]");
-        level.playSound(null, pos, BellContent.TOLL.get(), SoundSource.BLOCKS, 2F, 1.4F);
+        BellCatalog.Def held = null;
+        for (int i = 0; i < by.getInventory().getContainerSize() && held == null; i++) held = BellItem.def(by.getInventory().getItem(i));
+        Bells.say(by, held != null ? "[Now hang " + held.name().replaceFirst("^The ", "the ") + " on it. Use the bell on the frame.]"
+                : "[Your Bell Frame is set. It has three hooks: use a bell on it to hang it, and your bells ring from here at dawn and dusk.]");
+        level.playSound(null, pos, net.minecraft.sounds.SoundEvents.WOOD_PLACE, SoundSource.BLOCKS, 1.6F, 0.6F);
     }
 
     static void used(ServerLevel level, BlockPos pos, ServerPlayer p) {
         Optional<HearthRecord> h = HearthService.data(level.getServer()).containing(pos, level.dimension().identifier().toString());
         BellWorld.Home home = h.map(r -> BellWorld.get(level.getServer()).peek(r.pos)).orElse(null);
         int n = home == null ? 0 : home.hung.size();
-        String next = n < BELFRY ? (BELFRY - n) + " more and a belfry goes up round it." : n < TOWER ? (TOWER - n) + " more and it becomes a tower."
+        String next = n == 0 ? "Use a bell on it to hang it."
+                : n < GREAT ? "Hang the rest high, on Bell Beams 8 or more above your fire. Thatchbacks can build you a Belfry or a Bell Tower from a Work Plan."
                 : home != null && home.pealed >= 0 ? "Your song is whole, and the Kinsong is yours."
                 : home != null && home.stage >= 3 ? (100 - n) + (100 - n == 1 ? " bell is" : " bells are") + " still missing. When the last one hangs, your bells ring the Hundred Peal."
-                : "Only a Great Belfry holds all hundred. It needs " + (home != null && home.clapper ? "" : "the Heart-clapper, from the Lord of an S-rank gate")
+                : "Only a Great Belfry can lead the Hundred Peal. It needs " + (home != null && home.clapper ? "" : "the Heart-clapper, from the Lord of an S-rank gate")
                         + (home != null && (home.clapper || home.relic) ? "" : ", and ") + (home != null && home.relic ? "" : "a Sovereign's relic")
                         + ", set into this frame.";
-        Bells.say(p, "[" + n + " of 100 bells hang here. " + next + "]");
-        if (home != null && !home.hung.isEmpty()) {
-            int pick = new ArrayList<>(home.hung).get(level.getRandom().nextInt(home.hung.size()));
-            level.playSound(null, pos, BellContent.note(pick), SoundSource.BLOCKS, 1.5F, 1F);
-        }
+        Bells.say(p, "[" + n + " of 100 bells in your song. " + next + "]");
     }
 
-    /** Hangs every bell the household holds (those online now; the rest were hung when they rang) and grows the tower. */
+    /**
+     * Brings a home's song up to date (SPEC §43.16): the far six that anyone living here (online now) has heard rung join
+     * it from where they hang; the bells hung on its hooks are already in it. An old belfry or tower's bells become beams.
+     */
     static void hang(MinecraftServer server, HearthRecord h) {
         BellWorld w = BellWorld.get(server);
         BellWorld.Home home = w.home(h.pos);
         int before = home.hung.size();
         for (ServerPlayer p : server.getPlayerList().getPlayers())
-            if (h.belongs(p.getUUID())) home.hung.addAll(Bells.book(p).held.keySet());
+            if (h.belongs(p.getUUID())) Bells.book(p).far.forEach((no, at) -> home.far.putIfAbsent(no, BlockPos.of(at)));
+        home.rebuild();
         if (home.hung.size() != before) w.setDirty();
-        grow(server.overworld(), h, home);
+        convert(server.overworld(), home);
     }
 
     private static @Nullable BlockPos frame(ServerLevel level, BellWorld.Home home) {
         return home.frame != null && level.isLoaded(home.frame) && level.getBlockState(home.frame).is(BellContent.BELL_FRAME.get()) ? home.frame : null;
     }
 
-    // ---- growing ---------------------------------------------------------------------------------------------------
+    // ---- old towers ----------------------------------------------------------------------------------------------
 
-    /** When each home was last told its belfry has no room (play-day), so it's said once a day. Not saved. */
-    private static final Map<Long, Long> TOLD = new HashMap<>();
-
-    static void grow(ServerLevel level, HearthRecord h, BellWorld.Home home) {
-        int want = home.hung.size() >= TOWER ? 2 : home.hung.size() >= BELFRY ? 1 : 0;
+    /**
+     * An old home's belfry, tower or Great Belfry that raised itself (before §43.16 stage 3): each vanilla bell in it
+     * becomes the hook block its shape has there now, a beam whose bells count wherever it is. Once a home, when the
+     * ground round its frame is loaded.
+     */
+    static void convert(ServerLevel level, BellWorld.Home home) {
+        if (home.stage < 1 || home.beams) return;
         BlockPos f = frame(level, home);
-        if (want <= home.stage || f == null) return;
+        if (f == null || !level.hasChunksAt(f.offset(-3, 0, -3), f.offset(3, 0, 3))) return;
         Direction face = level.getBlockState(f).getValue(HorizontalDirectionalBlock.FACING);
-        Map<BlockPos, BlockState> plan = want == 2 ? tower(f, face) : belfry(f, 0);
+        Map<BlockPos, BlockState> plan = home.stage >= 3 ? great(f, face) : home.stage == 2 ? tower(f, face) : belfry(f, 0);
+        int n = 0;
         for (Map.Entry<BlockPos, BlockState> e : plan.entrySet()) {
-            BlockState now = level.getBlockState(e.getKey());
-            if (!now.isAir() && !now.canBeReplaced() && !ours(now)) {
-                long day = dev.awaken.core.PlayDays.current(level.getServer());
-                if (TOLD.getOrDefault(h.pos.asLong(), -1L) != day) {
-                    TOLD.put(h.pos.asLong(), day);
-                    for (ServerPlayer p : level.players())
-                        if (h.belongs(p.getUUID()))
-                            Bells.say(p, "[Your " + (want == 2 ? "tower" : "belfry") + " is ready to go up, but it needs a clear space five wide and "
-                                    + (want == 2 ? "fifteen" : "ten") + " high round the bell frame. Clear it and it goes up at the next song.]");
-                }
-                return;
+            if (Hanging.hooks(e.getValue()) == 0 || !level.getBlockState(e.getKey()).is(Blocks.BELL)) continue;
+            level.setBlock(e.getKey(), e.getValue(), Block.UPDATE_ALL);
+            if (level.getBlockEntity(e.getKey()) instanceof HooksEntity be) {
+                be.old = true;
+                be.setChanged();
             }
+            n++;
         }
-        // a tower takes the belfry up with it: what's left of the old one below the new belfry comes down first
-        if (want == 2 && home.stage == 1)
-            for (BlockPos q : belfry(f, 0).keySet())
-                if (!plan.containsKey(q) && ours(level.getBlockState(q))) level.setBlock(q, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-        for (Map.Entry<BlockPos, BlockState> e : plan.entrySet()) level.setBlock(e.getKey(), e.getValue(), Block.UPDATE_ALL);
-        home.stage = want;
+        home.beams = true;
         BellWorld.get(level.getServer()).setDirty();
-        level.playSound(null, f, BellContent.TOLL.get(), SoundSource.BLOCKS, 8F, 1F);
-        for (ServerPlayer p : level.players())
-            if (h.belongs(p.getUUID()))
-                Bells.say(p, want == 2 ? "[Your bells have a tower now. It can be heard a long way off.]" : "[A belfry has gone up round your bells.]");
-        Awaken.LOG.info("[bells] {} built at {} ({} bells)", want == 2 ? "tower" : "belfry", f.toShortString(), home.hung.size());
+        Awaken.LOG.info("[bells] the old {} at {}: {} bells became beams", home.stage >= 3 ? "Great Belfry" : home.stage == 2 ? "tower" : "belfry", f.toShortString(), n);
+    }
+
+    /**
+     * The home has a bell tower (SPEC §43.16 stage 3): a bell hanging 8 or more above its fire or in a belfry the Thatchbacks
+     * built, or an old belfry, tower or the Great Belfry standing round its frame.
+     */
+    static boolean high(ServerLevel level, BellWorld.Home home, BlockPos anchor) {
+        if (home.stage >= 1) return true;
+        for (BlockPos at : home.placed.values())
+            if (at.getY() - anchor.getY() >= Hanging.BEAM_ABOVE || level.isLoaded(at) && level.getBlockEntity(at) instanceof HooksEntity be && be.old) return true;
+        return false;
+    }
+
+    /** A beam the Thatchbacks set in a Belfry or Bell Tower (SPEC §43.16 stage 3): it carries wherever it stands. */
+    static void raised(ServerLevel level, BlockPos pos) {
+        if (!(level.getBlockEntity(pos) instanceof HooksEntity be)) return;
+        be.old = true;
+        be.setChanged();
+    }
+
+    /** A break's warning: the home's highest loaded bell tolls from its hook. False if none could. */
+    static boolean toll(ServerLevel level, BellWorld.Home home) {
+        BlockPos best = null;
+        int no = -1;
+        for (Map.Entry<Integer, BlockPos> e : home.placed.entrySet())
+            if ((best == null || e.getValue().getY() > best.getY()) && level.isLoaded(e.getValue())) {
+                best = e.getValue();
+                no = e.getKey();
+            }
+        if (best == null || !(level.getBlockEntity(best) instanceof HooksEntity be) || be.hookOf(no) < 0) return false;
+        Hanging.strike(level, best, level.getBlockState(best), be.hookOf(no), no, 4F);
+        return true;
     }
 
     /** Blocks a belfry or a tower is made of: each stage may build over the last. */
@@ -145,10 +168,14 @@ final class BellTower {
         return s.is(Blocks.STRIPPED_DARK_OAK_LOG) || s.is(Blocks.DARK_OAK_PLANKS) || s.is(Blocks.DEEPSLATE_TILES) || s.is(Blocks.DEEPSLATE_TILE_SLAB)
                 || s.is(Blocks.DEEPSLATE_TILE_STAIRS) || s.is(Blocks.BELL) || s.is(Blocks.DEEPSLATE_TILE_WALL) || s.is(Blocks.STONE_BRICKS)
                 || s.is(Blocks.POLISHED_ANDESITE) || s.is(Blocks.SPRUCE_PLANKS) || s.is(Blocks.DEEPSLATE_BRICKS) || s.is(Blocks.POLISHED_DEEPSLATE)
-                || s.is(Blocks.CHISELED_DEEPSLATE) || s.is(Blocks.LIGHTNING_ROD.weathering().unaffected()) || s.is(Blocks.GOLD_BLOCK) || s.is(Blocks.LANTERN);
+                || s.is(Blocks.CHISELED_DEEPSLATE) || s.is(Blocks.LIGHTNING_ROD.weathering().unaffected()) || s.is(Blocks.GOLD_BLOCK) || s.is(Blocks.LANTERN)
+                || s.is(BellContent.BELL_BEAM.get()) || s.is(BellContent.GREAT_BEAM.get());
     }
 
-    /** The timber belfry, its floor {@code base} above the frame: posts, a beam ring, cross beams, bells under them, a tiled roof. */
+    /**
+     * The timber belfry, its floor {@code base} above the frame: posts, a beam ring, cross beams, Bell Beams under them (where
+     * its bells hung before stage 3), a tiled roof. Built by itself only before stage 3; now the shape old ones are read by.
+     */
     static Map<BlockPos, BlockState> belfry(BlockPos f, int base) {
         Map<BlockPos, BlockState> out = new java.util.LinkedHashMap<>();
         BlockState post = Blocks.STRIPPED_DARK_OAK_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
@@ -163,14 +190,18 @@ final class BellTower {
                 boolean edge = Math.abs(dx) == 2 || Math.abs(dz) == 2;
                 boolean beam = edge || dx == 0 || dz == 0 || full;
                 if (beam) out.put(f.offset(dx, base + 6, dz), plank);
+                // each beam's hooks run along the cross beam over it
                 if (!edge && (full || (dx == 0) != (dz == 0)))
-                    out.put(f.offset(dx, base + 5, dz), Blocks.BELL.defaultBlockState().setValue(BellBlock.ATTACHMENT, BellAttachType.CEILING)
-                            .setValue(BellBlock.FACING, dx != 0 ? Direction.EAST : Direction.NORTH));
+                    out.put(f.offset(dx, base + 5, dz), beam(dx == 0 && dz != 0 ? Direction.EAST : Direction.NORTH, false));
             }
         roof(out, f, base + 7, 2);
         roof(out, f, base + 8, 1);
         out.put(f.offset(0, base + 9, 0), Blocks.DEEPSLATE_TILE_WALL.defaultBlockState());
         return out;
+    }
+
+    private static BlockState beam(Direction facing, boolean great) {
+        return (great ? BellContent.GREAT_BEAM : BellContent.BELL_BEAM).get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, facing);
     }
 
     private static void roof(Map<BlockPos, BlockState> out, BlockPos f, int y, int r) {
@@ -188,7 +219,7 @@ final class BellTower {
             }
     }
 
-    /** The stone tower: five high, an arch on the frame's side, and the belfry (nine bells) on top. */
+    /** The stone tower: five high, an arch on the frame's side, and the belfry (nine Bell Beams) on top. Old ones only. */
     static Map<BlockPos, BlockState> tower(BlockPos f, Direction face) {
         Map<BlockPos, BlockState> out = new java.util.LinkedHashMap<>();
         for (int y = 0; y <= 4; y++)
@@ -216,9 +247,10 @@ final class BellTower {
     }
 
     /**
-     * The Great Belfry (SPEC §43.14) on the stone tower: the tower's five courses, a shaft of five more with a window each
-     * side, then the great belfry seven wide: deepslate piers, a ring of twenty-four bells under the beams round the Seed
-     * Bell in the middle, lanterns at the corners, a tiled roof three courses high and a gilded spire. Twenty-three high.
+     * The Great Belfry (SPEC §43.14): a stone tower's five courses, a shaft of five more with a window each side, then the
+     * great belfry seven wide: deepslate piers, under the beams a ring of eight Great Beams (for the Great Bells) inside a
+     * ring of sixteen Bell Beams, and the Seed Bell's Great Beam in the middle; lanterns at the corners, a tiled roof three
+     * courses high and a gilded spire. Twenty-three high.
      */
     static Map<BlockPos, BlockState> great(BlockPos f, Direction face) {
         Map<BlockPos, BlockState> out = new java.util.LinkedHashMap<>();
@@ -251,12 +283,10 @@ final class BellTower {
             for (int dz = -3; dz <= 3; dz++) {
                 out.put(f.offset(dx, 16, dz), Blocks.DARK_OAK_PLANKS.defaultBlockState());
                 int ring = Math.max(Math.abs(dx), Math.abs(dz));
-                if (ring == 1 || ring == 2)
-                    out.put(f.offset(dx, 15, dz), Blocks.BELL.defaultBlockState().setValue(BellBlock.ATTACHMENT, BellAttachType.CEILING)
-                            .setValue(BellBlock.FACING, Math.abs(dx) >= Math.abs(dz) ? Direction.EAST : Direction.NORTH));
+                if (ring == 1 || ring == 2) out.put(f.offset(dx, 15, dz), beam(Math.abs(dx) >= Math.abs(dz) ? Direction.EAST : Direction.NORTH, ring == 1));
             }
         out.put(f.offset(0, 15, 0), Blocks.DARK_OAK_PLANKS.defaultBlockState());
-        out.put(f.offset(0, 14, 0), Blocks.BELL.defaultBlockState().setValue(BellBlock.ATTACHMENT, BellAttachType.CEILING).setValue(BellBlock.FACING, face));
+        out.put(f.offset(0, 14, 0), beam(face, true));
         for (int dx = -2; dx <= 2; dx += 4)
             for (int dz = -2; dz <= 2; dz += 4) out.put(f.offset(dx, 11, dz), Blocks.LANTERN.defaultBlockState());
         roof(out, f, 17, 3);
@@ -282,22 +312,42 @@ final class BellTower {
         for (HearthRecord h : HearthService.data(server).snapshot()) {
             if (!HearthService.OVERWORLD.equals(h.dimension)) continue;
             BellWorld.Home home = w.peek(h.pos);
-            if (home == null || home.hung.isEmpty() || home.sung == day * 2 + which) continue;
+            if (home == null || home.placed.isEmpty() || home.sung == day * 2 + which) continue;
             home.sung = day * 2 + which;
             song(level, h, home);
         }
     }
 
-    /** Where a home's song rings from: its frame (or the belfry over it), or null with no frame or no bell (no song). */
+    /**
+     * Where a home's song rings from: its frame (or the belfry over it), else any bell hung there; null when no bell hangs at
+     * home (the bare fire never sings, and the far six alone don't either).
+     */
     static @Nullable BlockPos ringsFrom(ServerLevel level, BellWorld.Home home) {
+        if (home.placed.isEmpty()) return null;
         BlockPos f = frame(level, home);
-        if (f == null || home.hung.isEmpty()) return null;
+        if (f == null) return home.placed.values().iterator().next();
         return home.stage == 3 ? f.above(14) : home.stage == 2 ? f.above(10) : home.stage == 1 ? f.above(5) : f;
+    }
+
+    /** Where each bell in a home's song rings from: hung ones from their hooks, the far six from where they hang. */
+    static java.util.List<BellNet.Placed> places(ServerLevel level, BellWorld.Home home) {
+        java.util.List<BellNet.Placed> out = new java.util.ArrayList<>();
+        home.placed.forEach((no, at) -> {
+            BlockPos q = at;
+            if (level.isLoaded(at) && level.getBlockEntity(at) instanceof HooksEntity be) {
+                int hook = be.hookOf(no);
+                if (hook >= 0) q = BlockPos.containing(Hanging.hookPoint(be.getBlockState(), hook).add(at.getX(), at.getY(), at.getZ()));
+            }
+            out.add(new BellNet.Placed(no, q));
+        });
+        home.far.forEach((no, at) -> out.add(new BellNet.Placed(no, at)));
+        return out;
     }
 
     /** Rings one home's song now. False when nothing rang: no frame set down (the bare fire never sings). */
     static boolean song(ServerLevel level, HearthRecord h, BellWorld.Home home) {
         hang(level.getServer(), h);
+        Hanging.check(level, home);
         // both pieces in and nobody to raise it: it goes up now, by the song
         if (GreatBelfry.ready(home) && home.raising == 0) GreatBelfry.build(level, h, home);
         BlockPos at = ringsFrom(level, home);
@@ -311,7 +361,7 @@ final class BellTower {
             if (no < 64) lo |= 1L << no;
             else hi |= 1L << (no - 64);
         }
-        BellNet.Song s = new BellNet.Song(at, lo, hi);
+        BellNet.Song s = new BellNet.Song(at, lo, hi, places(level, home));
         SongPlan.Plan plan = SongPlan.of(s::has);
         long tod = Math.floorMod(level.getOverworldClockTime(), 24000L);
         boolean dusk = tod >= DUSK_SONG && tod < DAWN_SONG;

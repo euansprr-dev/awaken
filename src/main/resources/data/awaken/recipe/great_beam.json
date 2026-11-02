@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "L": "#minecraft:logs",
+    "C": "minecraft:iron_chain",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    "LLL",
+    "CIC"
+  ],
+  "result": {
+    "id": "awaken:great_beam"
+  }
+}
