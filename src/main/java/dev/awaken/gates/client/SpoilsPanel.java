@@ -214,7 +214,8 @@ public final class SpoilsPanel {
             HudLook.text(g, font, title, b.x + PAD, hy, Glass.a(Glass.EDGE, k), false);
             head = b.x + PAD + font.width(title);
         }
-        String theme = v.title().substring(v.title().indexOf("· ") + 2); // five columns and the XP beside it: the theme alone
+        int dot = v.title().indexOf("· "); // five columns and the XP beside it: the theme alone (no title outside a run)
+        String theme = dot < 0 ? v.title() : v.title().substring(dot + 2);
         String[] sub = t == SATCHEL ? new String[]{v.title(), v.title().replace("-rank", ""), theme}
                 : new String[]{"Click a stack to take it", "Click one to take it", "Click to take one"};
         int subRight = b.x + b.w - PAD;
