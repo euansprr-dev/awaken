@@ -78,11 +78,15 @@ void main() {
     col *= lightMapColor.rgb;
 
     // hot from the Forge past its front (the point's side while it heats; the hilt's while the quench cools it from the
-    // point): the metal darkens under its own glow, which needs no light from the world
+    // point): the metal darkens under its own glow, which needs no light from the world. The texture's light and dark
+    // run hotter and cooler (bright metal, dark scale) and the faces turned from the light glow less, so it reads as a
+    // shaped blade, not a lump of colour.
     if (state.w > 0.5) {
         float side = state.w > 1.5 ? front - along : along - front;
         float hot = smoothstep(-0.04, 0.04, side) * heat;
-        col = mix(col, col * 0.3, smoothstep(0.0, 0.3, hot)) + heatGlow(hot) * (0.55 + 0.35 * hot) * (0.75 + 0.25 * diffuse);
+        float lum = dot(alb.rgb, vec3(0.30, 0.59, 0.11));
+        float h = hot * (0.7 + 0.6 * lum);
+        col = mix(col, col * 0.25, smoothstep(0.0, 0.3, hot)) + heatGlow(h) * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse);
     }
 
     // a sheen runs hilt to tip every five seconds (GameTime is a day per 1.0: 240 a day is one per 100 ticks)

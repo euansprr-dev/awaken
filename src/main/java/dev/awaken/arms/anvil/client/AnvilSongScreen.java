@@ -41,6 +41,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     final BlockPos pos;
     private float opened = Float.NaN, seenAt = Float.NaN;
     private int mx, my;
+    private boolean spaceDown;
 
     // this run of a stage (begun, or begun again after stepping away)
     private int runStage = -1;
@@ -494,11 +495,10 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilPayloads.Done d = done;
         AnvilSong.Quality q = AnvilSong.Quality.of(d.quality());
         float k = Mth.clamp((now - doneAt) / 14F, 0F, 1F);
-        int cw = Math.min(300, width - 40), cx = width / 2 - cw / 2;
+        int cw = cardW(), cx = cardX() - (int) ((1F - k) * 12);
         var about = font.split(Component.literal(about(d)), cw - 20);
-        boolean drawn = !Float.isNaN(drawnAt) || !Float.isNaN(emptyAt);
-        int ch = 62 + 10 * about.size() + (drawn ? 26 : 0);
-        int cy = Math.max(10, height / 14) + 22 + (int) ((1F - k) * -12);
+        boolean drawn = drawn();
+        int ch = cardH(drawn), cy = cardY(ch);
         int alpha = (int) (k * 0xE8);
         g.fill(cx, cy, cx + cw, cy + ch, alpha << 24 | 0x0F1724);
         g.outline(cx, cy, cw, ch, (int) (k * 255) << 24 | q.colour & 0xFFFFFF);
@@ -513,9 +513,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         g.text(font, q.label, 0, 0, q.colour, true);
         pose.popMatrix();
         var player = Minecraft.getInstance().player;
-        String by = "Forged by " + (player == null ? "you" : player.getGameProfile().name());
-        g.text(font, by, cx + cw - 10 - font.width(by), cy + 10, DIM, false);
-        int ly = cy + 42;
+        g.text(font, "Forged by " + (player == null ? "you" : player.getGameProfile().name()), cx + 10, cy + 42, DIM, false);
+        int ly = cy + 56;
         for (var line : about) {
             g.text(font, line, cx + 10, ly, LABEL, false);
             ly += 10;
@@ -526,18 +525,39 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         }
     }
 
+    /** The card stands to the left of the weapon in the stone, so the weapon stays in view. */
+    private int cardW() {
+        return Math.min(240, width / 2 - 66);
+    }
+
+    private int cardX() {
+        return width / 2 - 50 - cardW();
+    }
+
+    private int cardH(boolean drawn) {
+        return 72 + 10 * font.split(Component.literal(about(done)), cardW() - 20).size() + (drawn ? 26 : 0);
+    }
+
+    private int cardY(int ch) {
+        return height / 2 - ch / 2 - 10;
+    }
+
+    private boolean drawn() {
+        return !Float.isNaN(drawnAt) || !Float.isNaN(emptyAt);
+    }
+
     /** The card's words: how well, the Temper it leaves with (and whose limit held it), its flaw. */
     private static String about(AnvilPayloads.Done d) {
         AnvilSong.Quality q = AnvilSong.Quality.of(d.quality());
         String how = switch (q) {
-            case PLAIN -> "Plain work. It'll serve.";
-            case FINE -> "Fine work.";
-            case MASTERWORK -> "Masterwork: a blade to be proud of.";
-            case FLAWLESS -> "Flawless. Every blow landed where it should.";
+            case PLAIN -> "It'll serve.";
+            case FINE -> "Good, even work.";
+            case MASTERWORK -> "A blade to be proud of.";
+            case FLAWLESS -> "Every blow landed where it should.";
         };
         String temper = d.temper() <= 0 ? " It leaves the anvil untempered."
                 : " It leaves the anvil at Temper " + numeral(d.temper()) + (d.temper() < q.temper
-                ? ", as far as your Forge can take it here (an Armory raises that)." : ".");
+                ? ": that's as far as your Forge can temper it. A Forge in an Armory takes it further." : ".");
         String flaw = switch (d.flaw()) {
             case AnvilSong.BURNT_TIP -> " The tip stayed in the fire too long and came out burnt.";
             case AnvilSong.BRITTLE -> " It was held in the water too long: there's a brittle hairline in it.";
@@ -558,10 +578,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     }
 
     private boolean cardClick(double x, double y) {
-        if (done == null || Float.isNaN(drawnAt) && Float.isNaN(emptyAt)) return false;
-        int cw = Math.min(300, width - 40), cx = width / 2 - cw / 2;
-        int ch = 62 + 10 * font.split(Component.literal(about(done)), cw - 20).size() + 26;
-        int by = Math.max(10, height / 14) + 22 + ch - 24;
+        if (done == null || !drawn()) return false;
+        int cw = cardW(), cx = cardX(), ch = cardH(true), by = cardY(ch) + ch - 24;
         if (y < by || y >= by + 18) return false;
         if (x >= cx + 10 && x < cx + 10 + bw("First cut")) {
             // the scene closes on the style's first blow
@@ -673,14 +691,17 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (event.key() == InputConstants.KEY_SPACE) return act(true);
-        return super.keyPressed(event);
+        if (event.key() != InputConstants.KEY_SPACE) return super.keyPressed(event);
+        if (spaceDown) return true; // held: the key's repeats aren't more blows
+        spaceDown = true;
+        return act(true);
     }
 
     @Override
     public boolean keyReleased(KeyEvent event) {
-        if (event.key() == InputConstants.KEY_SPACE) return act(false);
-        return super.keyReleased(event);
+        if (event.key() != InputConstants.KEY_SPACE) return super.keyReleased(event);
+        spaceDown = false;
+        return act(false);
     }
 
     @Override

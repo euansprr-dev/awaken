@@ -71,7 +71,9 @@ def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=
     if heat is not None:
         side = (front - along) if quench else (along - front)
         hot = smoothstep(-0.04, 0.04, side[:, None]) * heat
-        col = col + (col * 0.3 - col) * smoothstep(0.0, 0.3, hot) + heat_glow(hot) * (0.55 + 0.35 * hot) * (0.75 + 0.25 * diffuse)
+        lum = (rgb @ np.array([0.30, 0.59, 0.11]))[:, None]
+        h = hot * (0.7 + 0.6 * lum)  # bright metal hotter, dark scale cooler
+        col = col + (col * 0.25 - col) * smoothstep(0.0, 0.3, hot) + heat_glow(h) * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse)
     cycle = (time * 240.0) % 1.0
     band = np.exp(-(((along - (cycle * 1.8 - 0.4)) * 7.0) ** 2))[:, None]
     col = col + band * (0.12 + 0.55 * metal) * gloss * (0.6 + flash)

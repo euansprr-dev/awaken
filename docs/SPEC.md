@@ -16693,6 +16693,9 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
 - The smith's own client plays their sounds the moment they act; the server plays them to everyone else. Observers see
   the work, the tongs on it and the hammer at rest on the heel; the smith's swing in third person is stage 2.
 - With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.
+- The glow follows the texture's light and dark (bright metal runs hotter, dark scale cooler: the heat times 0.7 + 0.6
+  of the texel's luminance) and the faces turned from the light glow less, so the work reads as a shaped blade.
+- The result card stands to the left of the weapon in the stone, so the weapon stays in view while you draw it.
 
 Test (one per mechanism): `arms_anvil_song` (a D forge judged by the server's clock: early, gold and late heat; strikes
 on and off the beat; the quench soft, true and brittle; quality and the capped Temper; materials taken, and given back
