@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "abbot_of_frost",
  "moves": "abbot_of_frost",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -21,11 +23,28 @@
     },
     {
      "move": "hymn",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "hymn"
+      ],
+      [
+       "avalanche"
+      ]
+     ]
     },
     {
      "move": "spikes",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "hymn"
+      ],
+      [
+       "swat",
+       "hammer"
+      ]
+     ]
     },
     {
      "move": "avalanche",
@@ -40,7 +59,15 @@
     {
      "move": "crush",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swat"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     }
    ]
   },
@@ -59,15 +86,37 @@
     },
     {
      "move": "hymn",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "hymn"
+      ],
+      [
+       "avalanche"
+      ]
+     ]
     },
     {
      "move": "spikes",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "hymn"
+      ],
+      [
+       "swat",
+       "hammer"
+      ]
+     ]
     },
     {
      "move": "blizzard",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "spikes"
+      ]
+     ]
     },
     {
      "move": "choir",
@@ -86,7 +135,15 @@
     {
      "move": "crush",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swat"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     }
    ]
   },
@@ -99,15 +156,41 @@
     },
     {
      "move": "nova",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "hymn"
+      ],
+      [
+       "avalanche",
+       "swat"
+      ]
+     ]
     },
     {
      "move": "spikes",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "hymn"
+      ],
+      [
+       "swat",
+       "hammer"
+      ]
+     ]
     },
     {
      "move": "hymn",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "hymn"
+      ],
+      [
+       "avalanche"
+      ]
+     ]
     },
     {
      "move": "swat",
@@ -133,7 +216,15 @@
     {
      "move": "crush",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swat"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     }
    ]
   }

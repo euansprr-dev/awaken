@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "sovereign_mirrors",
  "moves": "sovereign_mirrors",
+ "duel": true,
+ "stance": 320,
  "intro": {
   "pose": "idle",
   "move": "preen"
@@ -45,7 +47,15 @@
     {
      "move": "behind",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "cut_b"
+      ]
+     ]
     }
    ]
   },
@@ -99,7 +109,15 @@
     {
      "move": "behind",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "cut_b"
+      ]
+     ]
     }
    ]
   },
@@ -149,7 +167,15 @@
     {
      "move": "behind",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "cut_b"
+      ]
+     ]
     }
    ]
   }

@@ -248,6 +248,7 @@ def clips(r):
     slump = _pose(core=(20, 0, 8), at=(0, -10, 0), body=(14, 0, 4), head=(20, 0, 10), crown=(0.3, 30), arms=(10, -20, -10), tail=(20, 0))
     fall = _pose(core=(40, 0, 18), at=(0, -26, 0), body=(20, 0, 6), head=(34, 0, 20), crown=(0.5, 50), arms=(-40, 40, -10), tail=(60, 6))
     keyed(r, "death", 2.6, [(0, {}), (0.3, jerk), (1.2, slump), (1.9, fall), (2.6, fall)])
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §46.5)
     mv = [lash("lash", "r"), lash("lash_b", "l", windup=9, recover=12), swoop(), lob(), drop(), rain(), birth(), halo(), bloom(), unfurl()]
     for m in mv:
         stage_clips(r, m)
@@ -417,14 +418,17 @@ SOUNDS = {
 MOVE_SOUNDS = {"birth": {"swing": "cast"}, "rain": {"impact": ""}, "halo": {"impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 240,
     "intro": {"pose": "idle", "move": "unfurl"},
     "phases": [
         {"pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["lash_b"]]},
-            {"move": "lob", "weight": 3},
+            {"move": "lob", "weight": 3, "then": [["lob"], ["lob", "swoop"]]},
             {"move": "swoop", "weight": 2, "then": [["lash_b"]]},
-            {"move": "drop", "weight": 1},
-            {"move": "drop", "weight": 3, "when": "behind"},
+            {"move": "drop", "weight": 1, "then": [["lash"], ["lash_b"]]},
+            {"move": "drop", "weight": 3, "when": "behind", "then": [["lash"], ["lash_b"]]},
             {"move": "rain", "weight": 1},
         ]},
         # the colony comes with the second phase, as in GateBestiary
@@ -432,7 +436,7 @@ FIGHT = {
             {"move": "lash", "weight": 3, "when": "near", "then": [["lash_b"], ["lash_b", "drop"]]},
             {"move": "lob", "weight": 3, "then": [["lob"]]},
             {"move": "swoop", "weight": 2, "then": [["lash_b"]]},
-            {"move": "drop", "weight": 3, "when": "behind"},
+            {"move": "drop", "weight": 3, "when": "behind", "then": [["lash"], ["lash_b"]]},
             {"move": "rain", "weight": 1},
             {"move": "birth", "weight": 1},
             {"move": "halo", "weight": 1},
@@ -441,8 +445,8 @@ FIGHT = {
             {"move": "lash", "weight": 3, "when": "near", "then": [["lash_b", "drop"]]},
             {"move": "lob", "weight": 2, "then": [["lob", "lob"]]},
             {"move": "swoop", "weight": 2, "then": [["lash_b"]]},
-            {"move": "drop", "weight": 2},
-            {"move": "drop", "weight": 3, "when": "behind"},
+            {"move": "drop", "weight": 2, "then": [["lash"], ["lash_b"]]},
+            {"move": "drop", "weight": 3, "when": "behind", "then": [["lash"], ["lash_b"]]},
             {"move": "rain", "weight": 1},
             {"move": "halo", "weight": 1},
         ]},

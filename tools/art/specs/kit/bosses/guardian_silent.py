@@ -23,7 +23,7 @@ you wrapped in its wings with its head bowed into them and only its ears standin
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -790,6 +790,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.4)  # a duel's parried and reel (SPEC §46.5)
     mv = [rake(r, "r", "rake"), rake(r, "l", "rake_b"), found(r), buffet(r), bound(r), scream(r), silence(r), ears(r), wake(r)]
     for m in mv:
         stage_clips(r, m)
@@ -823,24 +824,27 @@ MOVE_SOUNDS = {"scream": {"swing": "cast", "impact": ""}, "silence": {"swing": "
                "wake": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},  # it waits wrapped in its wings, and opens them
     "phases": [
         {"pool": [
             {"move": "rake", "weight": 3, "when": "near", "then": [["rake_b"], ["rake_b", "found"]]},
-            {"move": "found", "weight": 2, "when": "near"},
+            {"move": "found", "weight": 2, "when": "near", "then": [["rake"]]},
             {"move": "bound", "weight": 3, "when": "far", "then": [["rake"]]},
             {"move": "scream", "weight": 2},
-            {"move": "buffet", "weight": 3, "when": "behind"},
+            {"move": "buffet", "weight": 3, "when": "behind", "then": [["rake"], ["rake_b"]]},
         ]},
         # it stops breathing with the second phase, as in DeepBestiary: the silence, then the ears come
         {"transition": "silence", "pool": [
             {"move": "rake", "weight": 3, "when": "near", "then": [["rake_b"], ["rake_b", "found"]]},
-            {"move": "found", "weight": 3, "when": "near"},
+            {"move": "found", "weight": 3, "when": "near", "then": [["rake"]]},
             {"move": "bound", "weight": 3, "when": "far", "then": [["rake", "rake_b"]]},
             {"move": "scream", "weight": 2},
             {"move": "ears", "weight": 1},
             {"move": "silence", "weight": 1},
-            {"move": "buffet", "weight": 3, "when": "behind"},
+            {"move": "buffet", "weight": 3, "when": "behind", "then": [["rake"], ["rake_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

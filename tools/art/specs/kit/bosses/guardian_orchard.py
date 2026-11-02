@@ -1060,7 +1060,7 @@ def cleave_b(r):
 
 
 def crush(r):
-    """Bone Crush (HEAVY): both hands on the hilt, he swings the blade back over his right shoulder to hang down his back
+    """Bone Crush (PERILOUS, red in a duel: the whole blade into the floor is dashed away from): both hands on the hilt, he swings the blade back over his right shoulder to hang down his back
     and rises tall, leaning back; holds it there; then brings it over and down into the floor before him, dropping
     into a lunge with it, his crown of leaves thrown forward."""
     gather = _pose(r, hips=(0, -6, 0), at=(0, 0.5, 0.5), chest=(-4, -10, 0), head=(-4, 6, 0), right=(-7, 52, -9), rblade=((-0.1, -0.9, 0.4), (1, 0, 0)),
@@ -1077,7 +1077,7 @@ def crush(r):
                  rblade=((0.0, 0.78, -0.63), (1, 0, 0)), left="grip", step={"l": (0, 0, -8)})
     wrench = _pose(r, hips=(10, -4, 0), at=(0, -4, -2), chest=(4, -6, 0), head=(0, 4, 0), right=(-5, 42, -14), rblade=((-0.05, -0.2, -0.98), (1, 0, 0)),
                    left="grip", step={"l": (0, 0, -4)})
-    return Move("crush", "HEAVY", 16, 6, 20, title="Bone Crush", hold=6, track=4.0, ability="Bone Crush", rng=(0, 4.2), kinds=("area", "near"),
+    return Move("crush", "PERILOUS", 16, 6, 20, title="Bone Crush", track=4.0, ability="Bone Crush", rng=(0, 4.2), kinds=("area", "near"),
                 damage=1.4, knock=1.2, disc=2.6, disc_at="hit", plant=(), hit=SWORD_HITS[:2], lag=ON_TIME, through=held, ground=GROUND, bite=0.85,
                 stages={"windup": [(0.3, gather), (0.65, back), (1.0, peak)], "active": [(0.4, over), (0.85, hit), (1.0, held)],
                         "recover": [(0.4, wrench), (0.75, _mix(wrench, _pose(r), 0.7))]})
@@ -1144,7 +1144,7 @@ def march(r):
     act += [(0.85, under), (0.92, ahead), (1.0, heave)]
     end = _pose(r, hips=(-6, -5, 0), at=(0, -0.8, -4.4), spine=(-5, 0, 0), chest=(-12, -7, 0), head=(-12, 5, 0), right=(-5, 58, -12),
                 rblade=_arc(DOWN, AHEAD, 150), left="grip", step={"l": (0, 0, -7)})
-    return Move("march", "HEAVY", 16, 16, 20, title="Royal March", track=6.0, lock=12, advance=MARCH, ability="Royal March", rng=(5, 14), kinds=("gap",),
+    return Move("march", "HEAVY", 16, 16, 20, title="Royal March", hold=6, track=6.0, lock=12, advance=MARCH, ability="Royal March", rng=(5, 14), kinds=("gap",),
                 damage=1.3, knock=1.4, plant=(), hit=SWORD_HITS[:2] + [("chest", (0, -6, -4), 7.0)], lag=ON_TIME, through=end,
                 stages={"windup": [(0.3, _mix(_pose(r), down, 0.55)), (0.55, down), (1.0, load)], "active": act, "recover": _back(r, end)})
 
@@ -1295,6 +1295,7 @@ def clips(r):
     for f in (idle, walk, run, turns, hurts, reactions, collapse, reassemble, death):
         _fresh()
         f(r)
+    plans.biped_duel_reactions(r, weight=1.4)  # a duel's parried and reel (SPEC §46.5)
     mv = [_unwrap(m) for m in moves(r)]
     for m in mv:
         stage_clips(r, m)
@@ -1306,23 +1307,26 @@ def clips(r):
 
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},  # he waits on one knee, his hands on his planted sword, and gets up
     "phases": [
         {"pool": [
             {"move": "cleave", "weight": 3, "when": "near", "then": [["cleave_b"], ["cleave_b", "crush"]]},
-            {"move": "crush", "weight": 2, "when": "near"},
+            {"move": "crush", "weight": 2, "when": "near", "then": [["cleave"]]},
             {"move": "spikes", "weight": 2},
             {"move": "march", "weight": 1, "when": "far", "then": [["cleave"]]},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["cleave"], ["cleave_b"]]},
         ]},
         # the dead get up with the second phase, as in DeepBestiary: Rise, and the Royal March more often
         {"transition": "rise", "pool": [
             {"move": "cleave", "weight": 3, "when": "near", "then": [["cleave_b"], ["cleave_b", "crush"]]},
-            {"move": "crush", "weight": 2, "when": "near"},
+            {"move": "crush", "weight": 2, "when": "near", "then": [["cleave"]]},
             {"move": "march", "weight": 3, "when": "far", "then": [["cleave"], ["crush"]]},
             {"move": "spikes", "weight": 2},
             {"move": "rise", "weight": 1},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["cleave"], ["cleave_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

@@ -21,7 +21,7 @@ opens the door all the way, and the light comes out). It waits shut on the floor
 """
 import math
 
-from kit import core, parts
+from kit import core, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 from kit.paint import radial
 import fauna_rig as R
@@ -657,6 +657,7 @@ def clips(r):
     _idle(r)
     _flight(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.6)  # a duel's parried and reel (SPEC §46.5)
     mv = moves(r)
     for m in mv:
         _staged(r, m)
@@ -689,23 +690,26 @@ MOVE_SOUNDS = {"lance": {"swing": "cast"}, "marks": {"swing": "cast", "impact": 
                "door": {"swing": "roar", "impact": ""}, "wake": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "swipe", "weight": 3, "when": "near", "then": [["swipe_b"], ["swipe_b", "clasp"]]},
-            {"move": "lance", "weight": 3},
+            {"move": "lance", "weight": 3, "then": [["clasp"]]},
             {"move": "marks", "weight": 2},
             {"move": "clasp", "weight": 3, "when": "far", "then": [["swipe"]]},
-            {"move": "whip", "weight": 3, "when": "behind"},
+            {"move": "whip", "weight": 3, "when": "behind", "then": [["swipe"], ["swipe_b"]]},
         ]},
         {"transition": "motes", "pool": [
             {"move": "swipe", "weight": 3, "when": "near", "then": [["swipe_b"], ["swipe_b", "clasp"]]},
             {"move": "door", "weight": 2, "then": [["swipe"]]},
             {"move": "motes", "weight": 1},
-            {"move": "lance", "weight": 2, "when": "far"},
+            {"move": "lance", "weight": 2, "when": "far", "then": [["clasp"]]},
             {"move": "marks", "weight": 2},
             {"move": "clasp", "weight": 3, "when": "far", "then": [["swipe"]]},
-            {"move": "whip", "weight": 3, "when": "behind"},
+            {"move": "whip", "weight": 3, "when": "behind", "then": [["swipe"], ["swipe_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

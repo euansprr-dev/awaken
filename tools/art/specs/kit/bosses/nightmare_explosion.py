@@ -25,7 +25,7 @@ out over the front, and the lid falls shut on its neck.
 """
 import math
 
-from kit import core, ik
+from kit import core, ik, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, SIDES, hexc
@@ -845,6 +845,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §46.5)
     mv = [pop(r), slap(r), pop_goes(r), bound(r), lines(r), lid_slam(r), shorter(r), ring(r), wake(r)]
     crank_turns = {"popgoes": (2, 0.25, 0.95), "lines": (1, 0.0, 0.8), "shorter": (4, 0.15, 0.95), "ring": (3, 0.3, 0.7), "wake": (2, 0.1, 0.6)}
     for m in mv:
@@ -878,24 +879,27 @@ MOVE_SOUNDS = {"lines": {"swing": "cast"}, "shorter": {"swing": "roar", "impact"
                "wake": {"swing": "roar", "impact": ""}, "lid": {"impact": "impact"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 280,
     "intro": {"pose": "idle", "move": "wake"},  # the box shut; the crank ticks; it pops
     "phases": [
         {"pool": [
             {"move": "pop", "weight": 3, "when": "near", "then": [["slap"], ["slap", "pop"]]},
-            {"move": "slap", "weight": 2, "when": "near"},
-            {"move": "popgoes", "weight": 2, "when": "near"},
+            {"move": "slap", "weight": 2, "when": "near", "then": [["pop"]]},
+            {"move": "popgoes", "weight": 2, "when": "near", "then": [["slap"]]},
             {"move": "bound", "weight": 2, "when": "far", "then": [["pop"]]},
-            {"move": "lines", "weight": 3, "when": "far"},
-            {"move": "lid", "weight": 3, "when": "behind"},
+            {"move": "lines", "weight": 3, "when": "far", "then": [["bound"]]},
+            {"move": "lid", "weight": 3, "when": "behind", "then": [["pop"], ["slap"]]},
             {"move": "ring", "weight": 1},
         ]},
         # a shorter fuse, as in DeepBestiary: more lines, a wider ring
         {"transition": "shorter", "pool": [
             {"move": "pop", "weight": 3, "when": "near", "then": [["slap"], ["slap", "pop"]]},
-            {"move": "popgoes", "weight": 2, "when": "near"},
+            {"move": "popgoes", "weight": 2, "when": "near", "then": [["slap"]]},
             {"move": "bound", "weight": 2, "when": "far", "then": [["pop", "slap"]]},
-            {"move": "lines", "weight": 3, "when": "far"},
-            {"move": "lid", "weight": 3, "when": "behind"},
+            {"move": "lines", "weight": 3, "when": "far", "then": [["bound"]]},
+            {"move": "lid", "weight": 3, "when": "behind", "then": [["pop"], ["slap"]]},
             {"move": "ring", "weight": 2},
         ]},
     ],

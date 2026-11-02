@@ -807,7 +807,8 @@ def surge(r):
                   left=(12, 34, -42), right=(-12, 34, -42), curl=(0.8, 0.8), step={"l": (0, 0, -16), "r": (0, 0, 6)})
     stand = _pose(r, hips=(8, 0, 0), at=(0, -3, -1), chest=(4, 0, 0), head=(0, 0, 0), jaw=8, nod=0, reach=0.4, left=(18, 28, -24), right=(-18, 28, -24),
                   curl=(0.6, 0.6), step={"l": (0, 0, -6), "r": (0, 0, 2)})
-    return Move("surge", "HEAVY", 22, 8, 22, title="Surge", hold=10, track=5.0, advance=5.0, ability="Surge", rng=(3.0, 10.0), kinds=("gap",),
+    # red, as the bestiary has it (SPEC §46.5): the whole crowd surging at you is dashed past, never turned aside
+    return Move("surge", "PERILOUS", 22, 8, 22, title="Surge", track=5.0, advance=5.0, ability="Surge", rng=(3.0, 10.0), kinds=("gap",),
                 damage=1.4, knock=1.4, plant=(), hit=_hits("l", "r"), lag=ON_TIME, through=_on(r, scoop, 0.03),
                 stages={"windup": [(0.3, sink), (1.0, low)], "active": [(0.55, drive), (1.0, scoop)], "recover": [(0.4, stand), (0.7, _mix(stand, _pose(r), 0.7))]})
 
@@ -850,7 +851,7 @@ def closer(r):
     lean = _pose(r, hips=(12, 0, 0), at=(0, -4, -3), spine=(4, 0, 0), chest=(8, 0, 0), neck=(-8, 0, 0), head=(-10, 0, 0), jaw=26, nod=-12, reach=1.0,
                  left=(40, 34, -26), right=(-40, 34, -26), curl=(-0.4, -0.4), step={"l": (0, 0, -5), "r": (0, 0, 2)})
     act = [(0.12, gape(0)), (0.24, gape(1.6)), (0.36, gape(-1.6)), (0.48, gape(1.6)), (0.6, gape(-1.6)), (0.72, gape(0)), (1.0, lean)]
-    return Move("closer", "NONE", 16, 34, 20, title="Closer", track=0.0, ability="More of Them", rng=(0, 99), kinds=("summon",), damage=0, knock=0,
+    return Move("closer", "NONE", 16, 34, 20, title="Closer", track=0.0, rng=(0, 99), kinds=("transition",), damage=0, knock=0,
                 plant=(), lag=ON_TIME, through=_mix(lean, _pose(r), 0.2),
                 stages={"windup": [(0.4, _mix(_pose(r), still, 0.5)), (1.0, still)], "active": act, "recover": _back(r, _mix(lean, _pose(r), 0.2))})
 
@@ -976,6 +977,7 @@ def clips(r):
     idle(r)
     locomotion(r)
     reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.5)  # a duel's parried and reel (SPEC §46.5)
     lie = collapse(r)
     reassemble(r, lie)
     mv = moves(r)
@@ -1019,23 +1021,26 @@ MOVE_SOUNDS = {"more": {"swing": "cast", "impact": ""}, "closer": {"swing": "roa
                "wake": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "idle", "move": "wake"},  # it stands with every head bowed, and they lift one by one
     "phases": [
         {"pool": [
             {"move": "swipe", "weight": 3, "when": "near", "then": [["grab"], ["grab", "crush"]]},
-            {"move": "crush", "weight": 3, "when": "near"},
+            {"move": "crush", "weight": 3, "when": "near", "then": [["swipe"], ["elbow"]]},
             {"move": "surge", "weight": 2, "when": "far", "then": [["swipe"]]},
-            {"move": "more", "weight": 2, "when": "far"},  # it throws nothing: keep away from it and more of them come
-            {"move": "elbow", "weight": 3, "when": "behind"},
+            {"move": "elbow", "weight": 3, "when": "behind", "then": [["swipe", "grab"]]},
         ]},
-        # closer, as in DeepBestiary: every face on you, and more of them
+        # closer, as in DeepBestiary: every face on you; from here, keep away from it and more of them come (a duel's one
+        # summon, never in its first phase, SPEC §46.3)
         {"transition": "closer", "pool": [
             {"move": "swipe", "weight": 3, "when": "near", "then": [["grab"], ["grab", "crush"]]},
-            {"move": "crush", "weight": 2, "when": "near"},
+            {"move": "crush", "weight": 2, "when": "near", "then": [["swipe"], ["elbow"]]},
             {"move": "surge", "weight": 3, "when": "far", "then": [["swipe", "grab"]]},
-            {"move": "more", "weight": 3, "when": "far"},
-            {"move": "all", "weight": 2},
-            {"move": "elbow", "weight": 3, "when": "behind"},
+            {"move": "more", "weight": 3, "when": "far", "then": [["surge"]]},
+            {"move": "all", "weight": 2, "then": [["swipe"]]},
+            {"move": "elbow", "weight": 3, "when": "behind", "then": [["swipe", "grab"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

@@ -16891,3 +16891,38 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
 - Tests: `proving_ringer` (the layout's rules, then the whole flow in a hall built over the GameTest superflat, whose
   server has no trials dimension: wake in water, the drop, a fall and its reset, the drain and the pit at half, the
   win, rank D and the Tether, the hall put back), `hearth_trials_dimension` (D is a Proving).
+
+**46.5 Every Lord a duel (stage 4).** The duel (§46.3) reaches every fight script: all 42 (`"duel": true` in each
+body's spec under `tools/art/specs/kit/bosses`), so every gate Lord, Guardian, Nightmare, Sovereign and the Signal's
+Shadow fights in phrases, opens up after each, recoils and reels when it's turned aside, and has its own stance.
+- **Stances** by size and rank: the Glass Serpent 200; the Ember Tyrant, Hive Regent, Mother of Spores, Root Saint and
+  Lantern Broker 240; the Drowned Archivist, Gearwright and Ringer 260; the Bell Warden, Mirror Knight and the Fuse
+  280; the Abbot of Frost, the Sleeper, Unit Zero, the Choirmaster, Shadow Regent, Ossuary King, Seed Warden, Great
+  Listener and the other Nightmares 300; the Sky Leviathan, Thornback, Furnace Engine, Drowned Moon, Rootmother,
+  Architect of Rooms and Sovereign of Mirrors 320; the Hollow Herald and the Sovereigns of Hunger, Silence and Sleep
+  340; the Signal's Shadow and the Sovereigns of Ash, Machines, Roots and Storms 360.
+- **Phrases.** Every opener has follow-ups (`then`), chosen so each string flows from where the last blow leaves the
+  body (a lance into its slam, a sweep into its backhand); the lone blows are the behind-you blow, the signature and a
+  few summons, at most 30% of what each phase starts (I8). `fights_language` checks I6-I8 on all 42.
+- **Reds.** A blow you can only dash past is red, so every fight has at least 20% red (I7): the Hollow Crowd's Surge,
+  the Hive Regent's Sting, the Shadow Regent's Reach, the Ossuary King's Crush, the Mirror Knight's and the Sovereign
+  of Mirrors' Lunges, the Architect's Scuttle, the Lantern Broker's Paper Lanterns and the Sovereign of Roots' Ring
+  (rings of fire and whole crowds are no blow to turn aside; a thrust from that far is dashed past). A red blow isn't
+  held (only a HEAVY may hold).
+- **Every fight has a delay.** One HEAVY at least is held (`time.hold`, played one time in three, `Kits.REQUIRED`
+  "delay"): where a held blow turned red it moved to another heavy (the Shadow Regent's Charge, the Ossuary King's
+  March, the Sovereign of Mirrors' behind-you blow, now HEAVY, wind-up 12; the Lantern Broker's Pack, now HEAVY).
+- **Adds.** At most two at a call (I6; were three or four): every `SUMMON` in `GateBestiary` and `DeepBestiary` is
+  `.n(2)` or fewer. The Hive Regent calls its Brood from its second phase (none in the first, I6); the Sleeper no longer
+  calls Sleepwalkers in its third (one summon a fight, I6).
+- **Reactions** on every body (`parried` 0.5 s, `reel` 1.3 s; `KitRenderer` poses 3 and 4). Bipeds (the Ember Tyrant,
+  Abbot of Frost, Lantern Broker, Mirror Knight, Unit Zero, Shadow Regent, Ossuary King, the Faceless and the Sovereigns
+  of Machines, Mirrors and Silence) use `plans.biped_duel_reactions`, the pilots' and the Ringer's: the striking arm
+  thrown up, a step back, a lurch, hanging open, gathering. Every other body (beasts, swarms, serpents, machines,
+  growths) uses `plans.duel_reactions`, which reads the body's own hurt and kneel: `parried` throws it back the way its
+  hurt goes, further and a little toward its lead side, then it settles forward to go on; `reel` throws it hard, sags it
+  half-way to its kneel, holds it there open, and gathers. What carries the body (its legs, its coils, its base) moves
+  only as its authored poses do, so what stands stays standing; a part guarded against the ground may touch it only
+  as deep as its own hurts do (the build's 2 pixels), never deeper, the throw easing by steps (1.0 down to 0.4) until
+  it does; bipeds' feet are locked after (`kit.core.lock_feet`). Weight (1.0-2.4 by bulk) shades how far it's thrown;
+  the lengths are the duel's own whatever the body weighs.

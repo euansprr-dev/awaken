@@ -655,7 +655,7 @@ def feint(r):
 
 
 def lunge(r):
-    """The Mirror Lunge (a gap closer): he sinks back onto his back leg with the blade drawn level beside his face, then
+    """The Mirror Lunge (a gap closer; red, SPEC §46.5: a thrust from that far is dashed past, never turned aside): he sinks back onto his back leg with the blade drawn level beside his face, then
     runs at you, the hips squared and the arm straight out ahead so the point arrives first, the dagger arm flung back;
     he lands in a long lunge."""
     load = _pose(r, hips=(-4, -6, 0), at=(0, -3.5, 3), chest=(-4, -8, 0), head=(2, 8, 0), right=(-6, 38, -6), rblade=((0.08, 0.05, -1), UP),
@@ -671,7 +671,7 @@ def lunge(r):
                              step=_run_feet(r, (1.5 * u) % 1.0, D, lift=7.0))))
     land = _pose(r, hips=(6, 10, 0), at=(0, -5, -4), spine=(4, 0, 0), chest=(6, 10, 0), head=(-4, -10, 0), right=(-3, 29, -30), rblade=((0.05, 0.3, -1), UP),
                  left=(10, 33, 8), lblade=((0.3, 0.5, 0.8), (1, 0, 0)), step={"r": (0, 0, -8), "l": (0, 0, -2)})
-    return Move("lunge", "HEAVY", 16, 14, 20, title="Mirror Lunge", track=6.0, lock=12, advance=7.0, ability="Mirror Lunge", rng=(5, 14), kinds=("gap",),
+    return Move("lunge", "PERILOUS", 16, 14, 20, title="Mirror Lunge", track=6.0, lock=12, advance=7.0, ability="Mirror Lunge", rng=(5, 14), kinds=("gap",),
                 damage=1.3, knock=1.0, plant=(), hit=[("rapier", TIP, 2.0), ("hand_r", (0, 2, 0), 2.5)], lag=ON_TIME, through=land,
                 stages={"windup": [(0.3, _mix(_pose(r), load, 0.4)), (1.0, load)], "active": act, "recover": _back(r, land)})
 
@@ -800,6 +800,7 @@ def moves(r):
 def clips(r):
     plans.biped_locomotion(r, P, weight=1.0, temper="regal")
     plans.biped_reactions(r, weight=1.0)
+    plans.biped_duel_reactions(r, weight=1.0, lead="r")  # a duel's parried and reel (SPEC §46.5)
     idle(r)
     walk(r)
     run(r)
@@ -815,34 +816,37 @@ def clips(r):
 
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 280,
     "intro": {"pose": "idle", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "thrust", "weight": 3, "when": "near", "then": [["cut"]]},
-            {"move": "feint", "weight": 2, "when": "near"},
+            {"move": "feint", "weight": 2, "when": "near", "then": [["thrust", "cut"], ["riposte"]]},
             {"move": "parry", "weight": 2, "when": "near", "then": [["riposte"]]},
             {"move": "lunge", "weight": 2, "when": "far", "then": [["thrust"]]},
-            {"move": "back", "weight": 3, "when": "behind"},
+            {"move": "back", "weight": 3, "when": "behind", "then": [["riposte"], ["thrust", "cut"]]},
         ]},
         # it splits with the second phase, and slips through the glass, as in GateBestiary
         {"transition": "split", "pool": [
             {"move": "thrust", "weight": 3, "when": "near", "then": [["cut"], ["riposte"]]},
-            {"move": "feint", "weight": 2, "when": "near"},
+            {"move": "feint", "weight": 2, "when": "near", "then": [["thrust", "cut"], ["riposte"]]},
             {"move": "parry", "weight": 2, "when": "near", "then": [["riposte"]]},
             {"move": "glass", "weight": 2},
             {"move": "split", "weight": 1},
             {"move": "lunge", "weight": 2, "when": "far", "then": [["thrust"]]},
-            {"move": "back", "weight": 3, "when": "behind"},
+            {"move": "back", "weight": 3, "when": "behind", "then": [["riposte"], ["thrust", "cut"]]},
         ]},
         {"transition": "shatter", "pool": [
             {"move": "shatter", "weight": 1},
             {"move": "split", "weight": 1},
             {"move": "glass", "weight": 2},
             {"move": "thrust", "weight": 3, "when": "near", "then": [["cut", "riposte"]]},
-            {"move": "feint", "weight": 2, "when": "near"},
+            {"move": "feint", "weight": 2, "when": "near", "then": [["thrust", "cut"], ["riposte"]]},
             {"move": "parry", "weight": 2, "when": "near", "then": [["riposte"]]},
             {"move": "lunge", "weight": 2, "when": "far", "then": [["thrust", "cut"]]},
-            {"move": "back", "weight": 3, "when": "behind"},
+            {"move": "back", "weight": 3, "when": "behind", "then": [["riposte"], ["thrust", "cut"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

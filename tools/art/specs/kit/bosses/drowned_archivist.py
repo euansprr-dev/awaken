@@ -21,7 +21,7 @@ behind him, and his intro: reading, he turns a page, and lifts his face to you.
 """
 import math
 
-from kit import core, ik
+from kit import core, ik, plans
 from kit.core import Move, keyed, stage_clips
 from kit.paint import edge_glow, radial
 import fauna_rig as R
@@ -465,6 +465,7 @@ def clips(r):
         q["core"] = {"rot": (3 + tilt, 0, 2 + tilt * 0.6), "pos": (0, -d, 0)}
         return q
     keyed(r, "death", 3.2, [(0, rest), (0.3, gasp), (0.75, gasp), (1.3, over), (1.7, shut), (2.2, sunk(10, 2)), (2.8, sunk(30, 6)), (3.2, sunk(44, 8))])
+    plans.duel_reactions(r, lead="r", weight=1.0)  # a duel's parried and reel (SPEC §46.5)
     mv = [thrust(r), rake(r), shutting(r), tidal(r), volley(r), pages(r), cloud(r), undertow(r), flood(r), turn(r), wake(r)]
     for m in mv:
         stage_clips(r, m)
@@ -665,33 +666,36 @@ MOVE_SOUNDS = {"pages": {"swing": "cast"}, "cloud": {"swing": "cast", "impact": 
                "tidal": {"swing": "cast"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 260,
     "intro": {"pose": "idle", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "thrust", "weight": 3, "when": "near", "then": [["rake"]]},
-            {"move": "shutting", "weight": 2, "when": "near"},
-            {"move": "tidal", "weight": 2},
+            {"move": "shutting", "weight": 2, "when": "near", "then": [["thrust", "rake"]]},
+            {"move": "tidal", "weight": 2, "then": [["volley"], ["undertow", "shutting"]]},
             {"move": "volley", "weight": 3, "then": [["volley"]]},
-            {"move": "turn", "weight": 3, "when": "behind"},
+            {"move": "turn", "weight": 3, "when": "behind", "then": [["thrust", "rake"], ["shutting"]]},
         ]},
         # the shelves empty with the second phase: Loose Pages and the Ink Cloud, as in GateBestiary
         {"transition": "pages", "pool": [
             {"move": "thrust", "weight": 3, "when": "near", "then": [["rake"], ["rake", "shutting"]]},
-            {"move": "shutting", "weight": 2, "when": "near"},
-            {"move": "tidal", "weight": 2},
+            {"move": "shutting", "weight": 2, "when": "near", "then": [["thrust", "rake"]]},
+            {"move": "tidal", "weight": 2, "then": [["volley"], ["undertow", "shutting"]]},
             {"move": "volley", "weight": 2, "then": [["volley"]]},
-            {"move": "cloud", "weight": 2},
+            {"move": "cloud", "weight": 2, "then": [["volley"], ["tidal"]]},
             {"move": "pages", "weight": 1},
-            {"move": "turn", "weight": 3, "when": "behind"},
+            {"move": "turn", "weight": 3, "when": "behind", "then": [["thrust", "rake"], ["shutting"]]},
         ]},
         {"transition": "flood", "pool": [
             {"move": "undertow", "weight": 3, "then": [["shutting"], ["thrust", "rake"]]},
             {"move": "thrust", "weight": 3, "when": "near", "then": [["rake", "shutting"]]},
-            {"move": "tidal", "weight": 3},
+            {"move": "tidal", "weight": 3, "then": [["volley"], ["undertow", "shutting"]]},
             {"move": "volley", "weight": 2, "then": [["volley"]]},
-            {"move": "cloud", "weight": 1},
+            {"move": "cloud", "weight": 1, "then": [["volley"], ["tidal"]]},
             {"move": "flood", "weight": 1},
-            {"move": "turn", "weight": 3, "when": "behind"},
+            {"move": "turn", "weight": 3, "when": "behind", "then": [["thrust", "rake"], ["shutting"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

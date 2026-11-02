@@ -21,7 +21,7 @@ lit, and swims up behind it.
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 from kit.paint import edge_glow, radial
 import fauna_rig as R
@@ -598,6 +598,7 @@ def clips(r):
     _idle(r)
     _flight(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.8)  # a duel's parried and reel (SPEC §46.5)
     mv = moves(r)
     for m in mv:
         stage_clips(r, m)
@@ -626,23 +627,26 @@ MOVE_SOUNDS = {"beam": {"swing": "cast"}, "lift": {"swing": "cast", "impact": ""
                "halo": {"swing": "cast", "impact": ""}, "wake": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 320,
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "bite", "weight": 3, "when": "near", "then": [["bite_b"], ["bite_b", "lift"]]},
             {"move": "lift", "weight": 2, "when": "near", "then": [["bite"]]},
-            {"move": "beam", "weight": 3},
+            {"move": "beam", "weight": 3, "then": [["engulf"]]},
             {"move": "engulf", "weight": 3, "when": "far", "then": [["bite"]]},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["bite"], ["bite_b"]]},
         ]},
         {"transition": "halo", "pool": [
             {"move": "bite", "weight": 3, "when": "near", "then": [["bite_b"], ["bite_b", "engulf"]]},
             {"move": "undertow", "weight": 2, "then": [["bite", "bite_b"]]},
             {"move": "halo", "weight": 1},
-            {"move": "beam", "weight": 2, "when": "far"},
+            {"move": "beam", "weight": 2, "when": "far", "then": [["engulf"]]},
             {"move": "engulf", "weight": 3, "when": "far", "then": [["bite"]]},
             {"move": "lift", "weight": 2, "when": "near", "then": [["bite"]]},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["bite"], ["bite_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

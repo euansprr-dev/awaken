@@ -873,6 +873,7 @@ def clips(r):
     turns(r)
     flinches(r)
     reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.0)  # a duel's parried and reel (SPEC §46.5)
     mv = [_unwrap(m) for m in moves(r)]
     for m in mv:
         stage_clips(r, m)
@@ -886,32 +887,35 @@ def clips(r):
 
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 340,
     "intro": {"pose": "idle", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "swipe", "weight": 3, "when": "near", "then": [["swipe_b"]]},
-            {"move": "bolts", "weight": 3, "when": "far"},
+            {"move": "bolts", "weight": 3, "when": "far", "then": [["draw"], ["stride", "swipe"]]},
             {"move": "draw", "weight": 2, "when": "far", "then": [["swipe"]]},
             {"move": "stride", "weight": 2, "when": "far", "then": [["swipe"]]},
-            {"move": "back", "weight": 3, "when": "behind"},
+            {"move": "back", "weight": 3, "when": "behind", "then": [["swipe", "swipe_b"]]},
         ]},
         # the shrine empties with the second phase, as in GateBestiary
         {"transition": "summon", "pool": [
             {"move": "swipe", "weight": 3, "when": "near", "then": [["swipe_b"]]},
-            {"move": "unlit", "weight": 2},
+            {"move": "unlit", "weight": 2, "then": [["bolts"], ["swipe"]]},
             {"move": "summon", "weight": 1},
-            {"move": "bolts", "weight": 2, "when": "far"},
+            {"move": "bolts", "weight": 2, "when": "far", "then": [["draw"], ["stride", "swipe"]]},
             {"move": "stride", "weight": 2, "when": "far", "then": [["swipe", "swipe_b"]]},
-            {"move": "back", "weight": 3, "when": "behind"},
+            {"move": "back", "weight": 3, "when": "behind", "then": [["swipe", "swipe_b"]]},
         ]},
         {"transition": "horizon", "pool": [
             {"move": "horizon", "weight": 1},
-            {"move": "collapse", "weight": 2, "when": "near"},
-            {"move": "halo", "weight": 2},
+            {"move": "collapse", "weight": 2, "when": "near", "then": [["swipe", "swipe_b"]]},
+            {"move": "halo", "weight": 2, "then": [["bolts"], ["stride", "swipe"]]},
             {"move": "draw", "weight": 1, "when": "far", "then": [["collapse"]]},
             {"move": "swipe", "weight": 3, "when": "near", "then": [["swipe_b"]]},
             {"move": "stride", "weight": 2, "when": "far", "then": [["swipe", "swipe_b"]]},
-            {"move": "back", "weight": 3, "when": "behind"},
+            {"move": "back", "weight": 3, "when": "behind", "then": [["swipe", "swipe_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

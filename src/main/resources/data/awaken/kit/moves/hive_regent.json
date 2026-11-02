@@ -203,15 +203,14 @@
   },
   {
    "id": "sting",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
     "windup": 18,
     "active": 5,
     "recover": 22,
     "track": 5.0,
     "lock": 12,
-    "link": 6,
-    "hold": 8
+    "link": 6
    },
    "range": [
     0,

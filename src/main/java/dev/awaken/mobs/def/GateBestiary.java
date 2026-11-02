@@ -76,8 +76,8 @@ final class GateBestiary {
         out.add(m("mother_of_spores", "Mother of Spores", Theme.FUNGAL, Tier.LORD, Model.GHAST, "Spore Rain from above, then she births the colony").hp(28).dmg(4).spd(0.2).scale(0.75F).size(2.4F, 7.78F).bar(BossBarColor.PURPLE).arena(24)
                 .intro("Something above you breathes in.")
                 .phase(1.0F, "Mother of Spores exhales.", a(RAIN, "Spore Rain").n(4).bolt(BoltKind.SPORE).fx(MobEffects.POISON, 60, 0), a(BOLT, "Spore Lob").n(3).bolt(BoltKind.SPORE))
-                .phase(0.66F, "She births.", a(SUMMON, "Birth").summon("sporeling").n(4), a(NOVA, "Spore Halo").n(14).bolt(BoltKind.SPORE))
-                .phase(0.33F, "The Bloom.", a(BURST, "Bloom").radius(14).inner(4).bolt(BoltKind.SPORE).fx(MobEffects.POISON, 100, 1).heavy(), a(RAIN, "Spore Rain").n(6).bolt(BoltKind.SPORE), a(SUMMON, "Birth").summon("sporeling").n(3))
+                .phase(0.66F, "She births.", a(SUMMON, "Birth").summon("sporeling").n(2), a(NOVA, "Spore Halo").n(14).bolt(BoltKind.SPORE))
+                .phase(0.33F, "The Bloom.", a(BURST, "Bloom").radius(14).inner(4).bolt(BoltKind.SPORE).fx(MobEffects.POISON, 100, 1).heavy(), a(RAIN, "Spore Rain").n(6).bolt(BoltKind.SPORE), a(SUMMON, "Birth").summon("sporeling").n(2))
                 .parts(P("spore_sac", "Spore Sac", "fungal"), P("mother_cap", "Mother's Cap", "fungal")).build());
     }
 
@@ -118,7 +118,7 @@ final class GateBestiary {
         out.add(m("drowned_archivist", "The Drowned Archivist", Theme.DROWNED, Tier.LORD, Model.DROWNED, "Tidal Page washes you back; the shelves empty; then the Flood").hp(30).dmg(4.5).spd(0.24).scale(1.9F).size(0.9F, 2.4F).hold(Items.TRIDENT).offhand(Items.BOOK).bar(BossBarColor.BLUE).arena(22)
                 .intro("Every book here was written by someone who drowned.")
                 .phase(1.0F, "The Archivist opens a book.", a(CONE, "Tidal Page").radius(7).power(1.4F).bolt(BoltKind.WATER).heavy(), a(BOLT, "Ink Volley").n(3).bolt(BoltKind.WATER))
-                .phase(0.66F, "The shelves empty.", a(SUMMON, "Loose Pages").summon("page_wraith").n(4), a(CLOUD, "Ink Cloud").radius(3).fx(MobEffects.BLINDNESS, 60, 0), a(CONE, "Tidal Page").radius(7).bolt(BoltKind.WATER))
+                .phase(0.66F, "The shelves empty.", a(SUMMON, "Loose Pages").summon("page_wraith").n(2), a(CLOUD, "Ink Cloud").radius(3).fx(MobEffects.BLINDNESS, 60, 0), a(CONE, "Tidal Page").radius(7).bolt(BoltKind.WATER))
                 .phase(0.33F, "The Flood.", a(AURA, "Flood").radius(8).bolt(BoltKind.WATER).fx(MobEffects.SLOWNESS, 40, 1).heavy(), a(PULL, "Undertow").radius(12), a(CONE, "Tidal Page").radius(8).bolt(BoltKind.WATER))
                 .parts(P("archivist_quill", "Archivist's Quill", "water"), P("waterlogged_codex", "Waterlogged Codex", "water")).build());
     }
@@ -174,9 +174,9 @@ final class GateBestiary {
                 .ab(a(SUMMON, "Call the Swarm").summon("drone_bee").n(3), a(CHARGE, "Swarm Dive"), a(RAIN, "Honey Drop").bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 2)).build());
         out.add(m("hive_regent", "The Hive Regent", Theme.HIVE, Tier.LORD, Model.BEE, "Royal Dives and Honey Rain; at the end she feeds on royal jelly and frenzies").hp(28).dmg(4.5).spd(0.45).scale(2.0F).size(0.6F, 2.4F).bar(BossBarColor.YELLOW).arena(22)
                 .intro("A hum you feel in your teeth.")
-                .phase(1.0F, "The Regent rises from the comb.", a(CHARGE, "Royal Dive").heavy(), a(SUMMON, "Brood").summon("drone_bee").n(3))
-                .phase(0.66F, "The comb weeps.", a(RAIN, "Honey Rain").n(5).bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 2), a(BOLT, "Stinger Volley").n(4).bolt(BoltKind.THORN), a(CHARGE, "Royal Dive"))
-                .phase(0.33F, "Royal Jelly.", a(HEAL, "Royal Jelly").power(0.15F), a(FRENZY, "Frenzy"), a(SUMMON, "Brood").summon("drone_bee").n(3), a(CHARGE, "Royal Dive").heavy())
+                .phase(1.0F, "The Regent rises from the comb.", a(CHARGE, "Royal Dive").heavy())
+                .phase(0.66F, "The comb weeps.", a(RAIN, "Honey Rain").n(5).bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 2), a(BOLT, "Stinger Volley").n(4).bolt(BoltKind.THORN), a(CHARGE, "Royal Dive"), a(SUMMON, "Brood").summon("drone_bee").n(2))
+                .phase(0.33F, "Royal Jelly.", a(HEAL, "Royal Jelly").power(0.15F), a(FRENZY, "Frenzy"), a(SUMMON, "Brood").summon("drone_bee").n(2), a(CHARGE, "Royal Dive").heavy())
                 .parts(P("regent_stinger", "Regent's Stinger", "amber"), P("royal_jelly", "Royal Jelly", "amber")).build());
     }
 
@@ -212,7 +212,7 @@ final class GateBestiary {
         out.add(m("lantern_broker", "The Lantern Broker", Theme.LANTERN, Tier.LORD, Model.LANTERN, "Trades with you; duels you only if you ask (sneak and use)").hp(28).dmg(4.5).spd(0.28).scale(2.0F).size(0.6F, 2.2F).traits(FRIENDLY).bar(BossBarColor.YELLOW).arena(18)
                 .intro("A duel, then. Lanterns down.")
                 .phase(1.0F, "The Broker bows.", a(BOLT, "Lantern Bolts").n(3).bolt(BoltKind.FIRE), a(BLINK, "Market Step"))
-                .phase(0.66F, "Prices are going up.", a(SUMMON, "Release the Moths").summon("lantern_moth").n(3), a(NOVA, "Paper Lanterns").n(10).bolt(BoltKind.FIRE))
+                .phase(0.66F, "Prices are going up.", a(SUMMON, "Release the Moths").summon("lantern_moth").n(2), a(NOVA, "Paper Lanterns").n(10).bolt(BoltKind.FIRE))
                 .phase(0.33F, "Lights out.", a(DARKNESS, "Lights Out").heavy(), a(BLINK, "Market Step"), a(BOLT, "Lantern Bolts").n(5).bolt(BoltKind.FIRE))
                 .parts(P("broker_lantern", "Broker's Lantern", "amber"), P("gilded_ledger", "Gilded Ledger", "brass")).build());
     }
@@ -300,7 +300,7 @@ final class GateBestiary {
                 .intro("You've been here before. You haven't.")
                 .phase(1.0F, "The Sleeper stirs.", a(SLAM, "Restless Fist").radius(4.5F), a(DARKNESS, "Heavy Eyelids"))
                 .phase(0.66F, "It turns over in its sleep.", a(SUMMON, "Night Terrors").summon("night_terror").n(2), a(BLINK, "Dreamstep"), a(SLAM, "Restless Fist").radius(4.5F))
-                .phase(0.33F, "It wakes.", a(BURST, "Rude Awakening").radius(14).inner(3.5F).bolt(BoltKind.DREAM).heavy(), a(SUMMON, "Sleepwalkers").summon("sleepwalker").n(2), a(SLAM, "Restless Fist").radius(5))
+                .phase(0.33F, "It wakes.", a(BURST, "Rude Awakening").radius(14).inner(3.5F).bolt(BoltKind.DREAM).heavy(), a(SLAM, "Restless Fist").radius(5))
                 .parts(P("sleeper_eyelid", "Sleeper's Eyelid", "dream"), P("sleepers_lullaby", "Sleeper's Lullaby", "dream")).build());
     }
 
@@ -337,7 +337,7 @@ final class GateBestiary {
         out.add(m("hollow_herald", "The Hollow Herald", Theme.ABYSS, Tier.LORD, Model.SHADE, "Void bolts, an unlit shrine, then the Event Horizon").hp(32).dmg(5).spd(0.28).scale(1.4F).size(0.85F, 3.65F).grounded().bar(BossBarColor.PURPLE).arena(24)
                 .intro("Nothing. No sound at all.")
                 .phase(1.0F, "The Herald speaks without sound.", a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID), a(PULL, "Draw Near"))
-                .phase(0.66F, "The shrine empties.", a(SUMMON, "Spawn of Nothing").summon("void_spawn").n(3), a(DARKNESS, "Unlit"), a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID))
+                .phase(0.66F, "The shrine empties.", a(SUMMON, "Spawn of Nothing").summon("void_spawn").n(2), a(DARKNESS, "Unlit"), a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID))
                 .phase(0.33F, "Event horizon.", a(PULL, "Event Horizon").radius(16).power(0.8F).heavy(), a(BURST, "Collapse").radius(13).inner(3.5F).bolt(BoltKind.VOID), a(NOVA, "Void Halo").n(16).bolt(BoltKind.VOID))
                 .parts(P("herald_halo", "Herald's Halo", "abyss"), P("abyssal_glass", "Abyssal Glass", "abyss")).build());
     }

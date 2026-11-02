@@ -718,6 +718,7 @@ def moves(r):
 def clips(r):
     plans.biped_locomotion(r, P, weight=1.6, temper="regal")
     plans.biped_reactions(r, weight=1.6)
+    plans.biped_duel_reactions(r, weight=1.6, lead="r")  # a duel's parried and reel (SPEC §46.5)
     idle(r)
     _trudge(r)
     reactions(r)
@@ -769,33 +770,36 @@ def _pool(r, clip):
 
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "idle", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "swat", "weight": 3, "when": "near", "then": [["hammer"]]},
-            {"move": "hymn", "weight": 3},
-            {"move": "spikes", "weight": 2},
+            {"move": "hymn", "weight": 3, "then": [["hymn"], ["avalanche"]]},
+            {"move": "spikes", "weight": 2, "then": [["hymn"], ["swat", "hammer"]]},
             {"move": "avalanche", "weight": 2, "when": "far", "then": [["swat"]]},
-            {"move": "crush", "weight": 3, "when": "behind"},
+            {"move": "crush", "weight": 3, "when": "behind", "then": [["swat"], ["hammer"]]},
         ]},
         # the choir joins with the second phase, and the blizzard, as in GateBestiary
         {"transition": "choir", "pool": [
             {"move": "swat", "weight": 3, "when": "near", "then": [["hammer"]]},
-            {"move": "hymn", "weight": 2},
-            {"move": "spikes", "weight": 2},
-            {"move": "blizzard", "weight": 2},
+            {"move": "hymn", "weight": 2, "then": [["hymn"], ["avalanche"]]},
+            {"move": "spikes", "weight": 2, "then": [["hymn"], ["swat", "hammer"]]},
+            {"move": "blizzard", "weight": 2, "then": [["spikes"]]},
             {"move": "choir", "weight": 1},
             {"move": "avalanche", "weight": 2, "when": "far", "then": [["swat"]]},
-            {"move": "crush", "weight": 3, "when": "behind"},
+            {"move": "crush", "weight": 3, "when": "behind", "then": [["swat"], ["hammer"]]},
         ]},
         {"transition": "vow", "pool": [
             {"move": "vow", "weight": 1},
-            {"move": "nova", "weight": 2},
-            {"move": "spikes", "weight": 3},
-            {"move": "hymn", "weight": 2},
+            {"move": "nova", "weight": 2, "then": [["hymn"], ["avalanche", "swat"]]},
+            {"move": "spikes", "weight": 3, "then": [["hymn"], ["swat", "hammer"]]},
+            {"move": "hymn", "weight": 2, "then": [["hymn"], ["avalanche"]]},
             {"move": "swat", "weight": 3, "when": "near", "then": [["hammer"]]},
             {"move": "avalanche", "weight": 2, "when": "far", "then": [["swat", "hammer"]]},
-            {"move": "crush", "weight": 3, "when": "behind"},
+            {"move": "crush", "weight": 3, "when": "behind", "then": [["swat"], ["hammer"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

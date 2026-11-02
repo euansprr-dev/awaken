@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "guardian_court",
  "moves": "guardian_court",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -26,7 +28,15 @@
     {
      "move": "reach",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "backcut"
+      ]
+     ]
     },
     {
      "move": "rake",
@@ -61,7 +71,16 @@
     {
      "move": "turnabout",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "cut",
+       "backcut"
+      ]
+     ]
     }
    ]
   },
@@ -89,7 +108,15 @@
     {
      "move": "reach",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "backcut"
+      ]
+     ]
     },
     {
      "move": "parry",
@@ -132,7 +159,16 @@
     {
      "move": "turnabout",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "cut",
+       "backcut"
+      ]
+     ]
     }
    ]
   }

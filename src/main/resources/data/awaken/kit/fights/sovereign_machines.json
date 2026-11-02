@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "sovereign_machines",
  "moves": "sovereign_machines",
+ "duel": true,
+ "stance": 360,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -35,12 +37,25 @@
     {
      "move": "lance",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "slam"
+      ]
+     ]
     },
     {
      "move": "turntable",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "punch"
+      ],
+      [
+       "punch_b"
+      ]
+     ]
     }
    ]
   },
@@ -73,7 +88,12 @@
     {
      "move": "lance",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "slam"
+      ]
+     ]
     },
     {
      "move": "orbit",
@@ -82,7 +102,15 @@
     {
      "move": "turntable",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "punch"
+      ],
+      [
+       "punch_b"
+      ]
+     ]
     }
    ]
   },
@@ -96,7 +124,12 @@
     {
      "move": "lattice",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "punch"
+      ]
+     ]
     },
     {
      "move": "punch",
@@ -122,7 +155,15 @@
     {
      "move": "turntable",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "punch"
+      ],
+      [
+       "punch_b"
+      ]
+     ]
     }
    ]
   }

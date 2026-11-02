@@ -20,7 +20,7 @@ knuckles. He dies on his belly, his crown rolling forward off his head.
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -879,6 +879,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.8)  # a duel's parried and reel (SPEC §46.5)
     mv = [slap(r, 1, "slap"), slap(r, 0, "slap_b"), sweep(r), devour(r), gorge(r), gnaw(r), hounds(r), frenzy(r), famine(r), wake(r)]
     for m in mv:
         _staged(r, m)
@@ -910,31 +911,34 @@ MOVE_SOUNDS = {"gnaw": {"swing": "cast"}, "hounds": {"swing": "roar", "impact": 
                "famine": {"swing": "roar"}, "wake": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 340,
     "intro": {"pose": "kneel", "move": "wake"},  # he waits for you slumped on his belly, chewing, and gets up
     "phases": [
         {"pool": [
             {"move": "slap", "weight": 3, "when": "near", "then": [["slap_b"], ["slap_b", "slap"]]},
             {"move": "devour", "weight": 3, "when": "far", "then": [["slap"]]},
             {"move": "gnaw", "weight": 2, "when": "far", "then": [["slap", "slap_b"]]},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["slap"], ["slap_b"]]},
         ]},
         # still hungry, as in DeepBestiary: he calls his hounds and gorges
         {"transition": "hounds", "pool": [
             {"move": "slap", "weight": 3, "when": "near", "then": [["slap_b"], ["slap_b", "gorge"]]},
-            {"move": "gorge", "weight": 2, "when": "near"},
+            {"move": "gorge", "weight": 2, "when": "near", "then": [["slap"]]},
             {"move": "devour", "weight": 3, "when": "far", "then": [["slap"]]},
             {"move": "gnaw", "weight": 2, "when": "far", "then": [["gorge"]]},
             {"move": "hounds", "weight": 1},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["slap"], ["slap_b"]]},
         ]},
         # starving: the frenzy, the famine
         {"transition": "frenzy", "pool": [
             {"move": "famine", "weight": 2},
             {"move": "frenzy", "weight": 1},
             {"move": "slap", "weight": 3, "when": "near", "then": [["slap_b", "gorge"]]},
-            {"move": "gorge", "weight": 2, "when": "near"},
+            {"move": "gorge", "weight": 2, "when": "near", "then": [["slap"]]},
             {"move": "devour", "weight": 3, "when": "far", "then": [["slap", "slap_b"]]},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["slap"], ["slap_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

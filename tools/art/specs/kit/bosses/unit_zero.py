@@ -194,6 +194,7 @@ CLOTH = [(["coat_l2"], [("coat_l0", 0, 80), ("coat_l1", 0, 60)]), (["coat_r2"], 
 def clips(r):
     plans.biped_locomotion(r, P, weight=0.8, temper="regal")
     plans.biped_reactions(r, weight=0.8)
+    plans.biped_duel_reactions(r, weight=0.8, lead="r")  # a duel's parried and reel (SPEC §46.5)
     # standing, the halo stays on its point and rocks a little on its stalk; it spins only when it works
     idle = r.clips["idle"]
     L = idle.length
@@ -332,31 +333,34 @@ SOUNDS = {
 MOVE_SOUNDS = {"deploy": {"swing": "cast"}, "orbital": {"impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [
-            {"move": "lance", "weight": 2},
+            {"move": "lance", "weight": 2, "then": [["step", "sever_a"], ["lance"]]},
             {"move": "step", "weight": 2, "when": "far", "then": [["sever_b", "sever_c"]]},
             {"move": "sever_a", "weight": 3, "then": [["sever_b"], ["sever_b", "sever_c"]]},
-            {"move": "spin", "weight": 3, "when": "behind"},
+            {"move": "spin", "weight": 3, "when": "behind", "then": [["sever_a", "sever_b"], ["step"]]},
         ]},
         # the coils come with the second phase, as in GateBestiary (a summon in the first left it nothing but summons
         # at middle range)
         {"transition": "orbital", "pool": [
-            {"move": "lance", "weight": 3},
+            {"move": "lance", "weight": 3, "then": [["step", "sever_a"], ["lance"]]},
             {"move": "step", "weight": 2, "when": "far", "then": [["sever_b", "sever_c"]]},
             {"move": "sever_a", "weight": 3, "then": [["sever_b", "sever_c"]]},
-            {"move": "spin", "weight": 3, "when": "behind"},
-            {"move": "orbital", "weight": 2},
+            {"move": "spin", "weight": 3, "when": "behind", "then": [["sever_a", "sever_b"], ["step"]]},
+            {"move": "orbital", "weight": 2, "then": [["step", "sever_c"], ["lance"]]},
             {"move": "deploy", "weight": 1},
         ]},
         {"transition": "zero_point", "pool": [
             {"move": "lance", "weight": 3, "when": "far", "then": [["step"]]},
             {"move": "step", "weight": 3, "then": [["sever_b", "sever_c"]]},
             {"move": "sever_a", "weight": 2, "then": [["sever_b", "sever_c"]]},
-            {"move": "spin", "weight": 3, "when": "behind"},
-            {"move": "orbital", "weight": 2},
-            {"move": "zero_point", "weight": 2},
+            {"move": "spin", "weight": 3, "when": "behind", "then": [["sever_a", "sever_b"], ["step"]]},
+            {"move": "orbital", "weight": 2, "then": [["step", "sever_c"], ["lance"]]},
+            {"move": "zero_point", "weight": 2, "then": [["spin"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

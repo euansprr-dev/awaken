@@ -739,6 +739,7 @@ def clips(r):
     idle(r)
     _stomp(r)
     reactions(r)
+    plans.biped_duel_reactions(r, weight=1.6)  # a duel's parried and reel (SPEC §46.5)
     mv = moves(r)
     by = {m.id: m for m in mv}
     for m in mv:
@@ -798,29 +799,32 @@ MOVE_SOUNDS = {"lance": {"swing": "cast"}, "drones": {"swing": "cast", "impact":
                "shutdown": {"swing": "roar"}, "wake": {"swing": "cast", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 360,
     "intro": {"pose": "idle", "move": "wake"},  # it stands shut down, and starts up
     "phases": [
         {"pool": [
             {"move": "punch", "weight": 3, "when": "near", "then": [["punch_b"], ["punch_b", "slam"]]},
             {"move": "slam", "weight": 3, "then": [["punch"]]},
-            {"move": "lance", "weight": 2, "when": "far"},
-            {"move": "turntable", "weight": 3, "when": "behind"},
+            {"move": "lance", "weight": 2, "when": "far", "then": [["slam"]]},
+            {"move": "turntable", "weight": 3, "when": "behind", "then": [["punch"], ["punch_b"]]},
         ]},
         # subroutines, as in DeepBestiary: the drones, the strikes from orbit
         {"transition": "drones", "pool": [
             {"move": "punch", "weight": 3, "when": "near", "then": [["punch_b"], ["punch_b", "slam"]]},
             {"move": "slam", "weight": 3, "then": [["punch"]]},
-            {"move": "lance", "weight": 2, "when": "far"},
+            {"move": "lance", "weight": 2, "when": "far", "then": [["slam"]]},
             {"move": "orbit", "weight": 2},
-            {"move": "turntable", "weight": 3, "when": "behind"},
+            {"move": "turntable", "weight": 3, "when": "behind", "then": [["punch"], ["punch_b"]]},
         ]},
         # shutdown
         {"transition": "shutdown", "pool": [
             {"move": "shutdown", "weight": 2},
-            {"move": "lattice", "weight": 2, "when": "near"},
+            {"move": "lattice", "weight": 2, "when": "near", "then": [["punch"]]},
             {"move": "punch", "weight": 3, "when": "near", "then": [["punch_b", "slam"]]},
             {"move": "slam", "weight": 3, "then": [["punch", "punch_b"]]},
-            {"move": "turntable", "weight": 3, "when": "behind"},
+            {"move": "turntable", "weight": 3, "when": "behind", "then": [["punch"], ["punch_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

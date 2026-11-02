@@ -27,7 +27,7 @@ down on its knees as if its strings were cut, folding forward over them, and its
 """
 import math
 
-from kit import core, ik
+from kit import core, ik, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, SIDES, hexc
@@ -660,6 +660,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.biped_duel_reactions(r, weight=1.0)  # a duel's parried and reel (SPEC §46.5)
     _death(r)
     mv = [reach(r), grasp(r), fold(r), corner(r), lights(r), stare(r), everywhere(r), wrong_way(r), hold_still(r), closer(r), wake(r)]
     for m in mv:
@@ -697,25 +698,28 @@ MOVE_SOUNDS = {"corner": {"swing": "", "impact": ""}, "lights": {"swing": "snuff
                "hold": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "idle", "move": "wake"},  # posed in the corner the way someone left it
     "phases": [
         {"pool": [
             {"move": "reach", "weight": 3, "when": "near", "then": [["grasp"]]},
-            {"move": "grasp", "weight": 2, "when": "near"},
-            {"move": "fold", "weight": 2, "when": "near"},
+            {"move": "grasp", "weight": 2, "when": "near", "then": [["reach"]]},
+            {"move": "fold", "weight": 2, "when": "near", "then": [["reach"]]},
             {"move": "corner", "weight": 3, "when": "far", "then": [["reach"]]},
-            {"move": "lights", "weight": 2},
-            {"move": "wrong", "weight": 3, "when": "behind"},
+            {"move": "lights", "weight": 2, "then": [["corner"]]},
+            {"move": "wrong", "weight": 3, "when": "behind", "then": [["reach"], ["grasp"]]},
             {"move": "hold", "weight": 1},
         ]},
         # it is closer, as in DeepBestiary: its copies, its stare, the corner of your eye
         {"transition": "closer", "pool": [
             {"move": "reach", "weight": 3, "when": "near", "then": [["grasp"], ["grasp", "reach"]]},
-            {"move": "fold", "weight": 2, "when": "near"},
+            {"move": "fold", "weight": 2, "when": "near", "then": [["reach"]]},
             {"move": "corner", "weight": 3, "when": "far", "then": [["reach", "grasp"]]},
-            {"move": "stare", "weight": 3, "when": "far"},
+            {"move": "stare", "weight": 3, "when": "far", "then": [["corner"]]},
             {"move": "everywhere", "weight": 1},
-            {"move": "wrong", "weight": 3, "when": "behind"},
+            {"move": "wrong", "weight": 3, "when": "behind", "then": [["reach"], ["grasp"]]},
             {"move": "hold", "weight": 2},
         ]},
     ],

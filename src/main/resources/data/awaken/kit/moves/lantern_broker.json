@@ -330,14 +330,15 @@
   },
   {
    "id": "pack",
-   "class": "LIGHT",
+   "class": "HEAVY",
    "time": {
     "windup": 12,
     "active": 4,
     "recover": 16,
     "track": 0.0,
     "lock": 8,
-    "link": 4
+    "link": 4,
+    "hold": 6
    },
    "range": [
     0,
@@ -592,15 +593,14 @@
   },
   {
    "id": "paper",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
-    "windup": 16,
+    "windup": 20,
     "active": 12,
     "recover": 18,
     "track": 0.0,
-    "lock": 11,
-    "link": 4,
-    "hold": 6
+    "lock": 14,
+    "link": 4
    },
    "range": [
     0,
@@ -614,9 +614,9 @@
    ],
    "ability": "Paper Lanterns",
    "marks": {
-    "peak": 16,
-    "contact": 16,
-    "whoosh": 16
+    "peak": 20,
+    "contact": 20,
+    "whoosh": 20
    },
    "sounds": {
     "swing": "cast"

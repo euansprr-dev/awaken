@@ -25,7 +25,7 @@ feet curling, until one last kick.
 """
 import math
 
-from kit import core, parts
+from kit import core, parts, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -819,6 +819,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.6)  # a duel's parried and reel (SPEC §46.5)
     mv = moves(r)
     for m in mv:
         _stage(r, m)
@@ -846,26 +847,29 @@ MOVE_SOUNDS = {"undertow": {"swing": "pull", "impact": ""}, "rush": {"swing": "s
                "black_water": {"swing": "cast", "impact": ""}, "which_way": {"swing": "roar"}, "arrive": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies on the floor like a rock until its head comes out
     "phases": [
         {"pool": [
             {"move": "snap", "weight": 3, "when": "near", "then": [["rake"], ["rake", "lunge"]]},
-            {"move": "rake", "weight": 2, "when": "near"},
+            {"move": "rake", "weight": 2, "when": "near", "then": [["snap"], ["tail"]]},
             {"move": "lunge", "weight": 3, "when": "far", "then": [["snap"]]},
-            {"move": "undertow", "weight": 3, "when": "far"},
-            {"move": "rush", "weight": 2},
-            {"move": "tail", "weight": 3, "when": "behind"},
+            {"move": "undertow", "weight": 3, "when": "far", "then": [["snap", "rake"], ["lunge"]]},
+            {"move": "rush", "weight": 2, "then": [["snap"], ["rake"]]},
+            {"move": "tail", "weight": 3, "when": "behind", "then": [["snap", "rake"]]},
         ]},
         # no air: Lungful, Black Water, Which Way Is Up
         {"transition": "lungful", "pool": [
             {"move": "snap", "weight": 3, "when": "near", "then": [["rake"], ["rake", "undertow"]]},
             {"move": "lunge", "weight": 3, "when": "far", "then": [["snap", "rake"]]},
-            {"move": "black_water", "weight": 3, "when": "far"},
-            {"move": "undertow", "weight": 2},
-            {"move": "lungful", "weight": 2},
-            {"move": "rush", "weight": 1},
+            {"move": "black_water", "weight": 3, "when": "far", "then": [["undertow"], ["lunge"]]},
+            {"move": "undertow", "weight": 2, "then": [["snap", "rake"], ["lunge"]]},
+            {"move": "lungful", "weight": 2, "then": [["snap", "rake"]]},
+            {"move": "rush", "weight": 1, "then": [["snap"], ["rake"]]},
             {"move": "which_way", "weight": 2},
-            {"move": "tail", "weight": 3, "when": "behind"},
+            {"move": "tail", "weight": 3, "when": "behind", "then": [["snap", "rake"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

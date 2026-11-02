@@ -20,7 +20,7 @@ sinks onto its belly with its wings slumped and its heart dim; it dies the fire 
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -1105,6 +1105,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=2.0)  # a duel's parried and reel (SPEC §46.5)
     mv = [claw(r), bite(r), rush(r), tail_sweep(r), cinders(r), cloud(r), ashfall(r), embers(r), nova(r), burnout(r), arrive(r)]
     for m in mv:
         stage_clips(r, m)
@@ -1137,35 +1138,38 @@ MOVE_SOUNDS = {"cinders": {"swing": "spit", "impact": ""}, "cloud": {"swing": "f
                "embers": {"swing": "cast", "impact": ""}, "burnout": {"swing": "roar", "impact": ""}, "arrive": {"swing": "tell_light", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 360,
     "intro": {"pose": "idle", "move": "arrive"},  # it lies burnt out, wakes, shakes off the ash and spreads its wings
     "phases": [
         {"pool": [
             {"move": "claw", "weight": 3, "when": "near", "then": [["bite"], ["bite", "rush"]]},
-            {"move": "bite", "weight": 2, "when": "near"},
+            {"move": "bite", "weight": 2, "when": "near", "then": [["claw"], ["rush"]]},
             {"move": "rush", "weight": 3, "when": "far", "then": [["claw"]]},
-            {"move": "cinders", "weight": 3, "when": "far"},
-            {"move": "cloud", "weight": 2, "when": "near"},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "cinders", "weight": 3, "when": "far", "then": [["cinders"], ["rush", "claw"]]},
+            {"move": "cloud", "weight": 2, "when": "near", "then": [["claw", "bite"]]},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["claw", "bite"]]},
         ]},
         # the ash comes down, as in DeepBestiary: Ashfall, the embers it brings up, more cinders
         {"transition": "ashfall", "pool": [
             {"move": "claw", "weight": 3, "when": "near", "then": [["bite"], ["bite", "cloud"]]},
             {"move": "rush", "weight": 3, "when": "far", "then": [["claw", "bite"]]},
-            {"move": "cinders", "weight": 3, "when": "far"},
-            {"move": "ashfall", "weight": 1},
+            {"move": "cinders", "weight": 3, "when": "far", "then": [["cinders"], ["rush", "claw"]]},
+            {"move": "ashfall", "weight": 1, "then": [["cinders"], ["rush"]]},
             {"move": "embers", "weight": 2},
-            {"move": "cloud", "weight": 2, "when": "near"},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "cloud", "weight": 2, "when": "near", "then": [["claw", "bite"]]},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["claw", "bite"]]},
         ]},
         # burnout: it burns the last of itself, and the embers burst out of it
         {"transition": "burnout", "pool": [
-            {"move": "nova", "weight": 3, "when": "near"},
+            {"move": "nova", "weight": 3, "when": "near", "then": [["claw"], ["sweep"]]},
             {"move": "claw", "weight": 3, "when": "near", "then": [["bite", "nova"]]},
             {"move": "rush", "weight": 3, "when": "far", "then": [["claw", "bite"]]},
-            {"move": "ashfall", "weight": 2},
-            {"move": "cinders", "weight": 2, "when": "far"},
+            {"move": "ashfall", "weight": 2, "then": [["cinders"], ["rush"]]},
+            {"move": "cinders", "weight": 2, "when": "far", "then": [["cinders"], ["rush", "claw"]]},
             {"move": "burnout", "weight": 1},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["claw", "bite"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

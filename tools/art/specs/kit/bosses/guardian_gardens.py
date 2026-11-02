@@ -16,7 +16,7 @@ its ball; that is how it waits for you, too. It dies on its side, curling loosel
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -789,6 +789,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.6)  # a duel's parried and reel (SPEC §46.5)
     mv = [claw(r, 1, "claw"), claw(r, 0, "claw_b"), maul(r), tail_lash(r), charge(r), gale(r), spray(r), lurkers(r), wake(r)]
     for m in mv:
         stage_clips(r, m)
@@ -820,24 +821,27 @@ SOUNDS = {
 MOVE_SOUNDS = {"gale": {"swing": "cast"}, "spray": {"swing": "roar"}, "lurkers": {"swing": "cast", "impact": ""}, "wake": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 320,
     "intro": {"pose": "kneel", "move": "wake"},  # it waits for you rolled up in its ball, and unrolls
     "phases": [
         {"pool": [
             {"move": "claw", "weight": 3, "when": "near", "then": [["claw_b"], ["claw_b", "maul"]]},
-            {"move": "maul", "weight": 2, "when": "near"},
+            {"move": "maul", "weight": 2, "when": "near", "then": [["claw", "claw_b"], ["tail"]]},
             {"move": "charge", "weight": 3, "when": "far", "then": [["claw"]]},
-            {"move": "gale", "weight": 2, "when": "far"},
-            {"move": "tail", "weight": 3, "when": "behind"},
+            {"move": "gale", "weight": 2, "when": "far", "then": [["charge"], ["gale"]]},
+            {"move": "tail", "weight": 3, "when": "behind", "then": [["claw"], ["maul"]]},
         ]},
         # the vines tighten with the second phase, as in DeepBestiary: the lurkers, and the thorns
         {"transition": "lurkers", "pool": [
             {"move": "claw", "weight": 3, "when": "near", "then": [["claw_b"], ["claw_b", "maul"]]},
-            {"move": "maul", "weight": 2, "when": "near"},
+            {"move": "maul", "weight": 2, "when": "near", "then": [["claw", "claw_b"], ["tail"]]},
             {"move": "charge", "weight": 3, "when": "far", "then": [["claw", "claw_b"]]},
-            {"move": "gale", "weight": 1, "when": "far"},
-            {"move": "spray", "weight": 2},
+            {"move": "gale", "weight": 1, "when": "far", "then": [["charge"], ["gale"]]},
+            {"move": "spray", "weight": 2, "then": [["charge"]]},
             {"move": "lurkers", "weight": 1},
-            {"move": "tail", "weight": 3, "when": "behind"},
+            {"move": "tail", "weight": 3, "when": "behind", "then": [["claw"], ["maul"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

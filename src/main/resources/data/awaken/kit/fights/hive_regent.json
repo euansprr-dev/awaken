@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "hive_regent",
  "moves": "hive_regent",
+ "duel": true,
+ "stance": 240,
  "intro": {
   "pose": "idle",
   "move": "emerge"
@@ -22,7 +24,12 @@
     {
      "move": "sting",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b"
+      ]
+     ]
     },
     {
      "move": "dive",
@@ -34,13 +41,18 @@
      ]
     },
     {
-     "move": "brood",
-     "weight": 1
-    },
-    {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "cut_b",
+       "sting"
+      ]
+     ]
     }
    ]
   },
@@ -64,7 +76,12 @@
     {
      "move": "sting",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b"
+      ]
+     ]
     },
     {
      "move": "volley",
@@ -89,9 +106,22 @@
      "weight": 1
     },
     {
+     "move": "brood",
+     "weight": 1
+    },
+    {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "cut_b",
+       "sting"
+      ]
+     ]
     }
    ]
   },
@@ -142,12 +172,26 @@
     {
      "move": "sting",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "cut_b"
+      ]
+     ]
     },
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut"
+      ],
+      [
+       "cut_b",
+       "sting"
+      ]
+     ]
     }
    ]
   }

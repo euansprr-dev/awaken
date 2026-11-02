@@ -22,7 +22,7 @@ another.
 """
 import math
 
-from kit import core, ik
+from kit import core, ik, plans
 from kit.core import DEG, Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, SIDES
@@ -710,8 +710,8 @@ def walls_open(r):
                             tl=(30, 30, 20, 20), feet=_with(_legs((0, 1, 2, 3), lambda k: ("h", 8, 10, -2)), _legs((4, 5, 6, 7, 8, 9), lambda k: _foot(k, out=2))))
     act = [(0.12, crown(1)), (0.24, crown(-1)), (0.36, crown(0.8)), (0.48, crown(-0.6)), (0.62, _shudder(r, 0, out=6)), (0.75, _shudder(r, 1, out=6)),
            (0.88, _shudder(r, -1, out=6)), (1.0, _shudder(r, 0.3, out=6))]
-    return Move("walls", "NONE", 16, 34, 20, through=_shudder(r, -0.2, out=6), title="The Walls Open", track=0.0, ability="Hatchlings", rng=(0, 99),
-                kinds=("summon",), damage=0, knock=0, plant=(), stages={"windup": [(0.4, _mix(_pose(r), crown(0), 0.55)), (1.0, crown(0))], "active": act,
+    return Move("walls", "NONE", 16, 34, 20, through=_shudder(r, -0.2, out=6), title="The Walls Open", track=0.0, rng=(0, 99),
+                kinds=("transition",), damage=0, knock=0, plant=(), stages={"windup": [(0.4, _mix(_pose(r), crown(0), 0.55)), (1.0, crown(0))], "active": act,
                                                                          "recover": _back(r, _shudder(r, -0.2, out=6))}, lag=_lag())
 
 
@@ -815,6 +815,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §46.5)
     mv = [bite(r), lasso(r), drop(r), web(r), lash(r), hatch(r), walls_open(r), thousand(r), wake(r)]
     for m in mv:
         stage_clips(r, m)
@@ -845,24 +846,27 @@ MOVE_SOUNDS = {"web": {"swing": "cast"}, "hatch": {"swing": "roar", "impact": ""
                "wake": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "idle", "move": "wake"},  # it lies flat; a shiver runs up its legs and it rises
     "phases": [
         {"pool": [
             {"move": "bite", "weight": 3, "when": "near", "then": [["lasso"], ["lasso", "bite"]]},
-            {"move": "lasso", "weight": 2, "when": "near"},
+            {"move": "lasso", "weight": 2, "when": "near", "then": [["bite"], ["lash"]]},
             {"move": "drop", "weight": 2, "when": "far", "then": [["bite"]]},
-            {"move": "web", "weight": 3, "when": "far"},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "web", "weight": 3, "when": "far", "then": [["drop"], ["web"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["bite", "lasso"]]},
         ]},
         # the walls open, as in DeepBestiary: its young, and every leg at once
         {"transition": "walls", "pool": [
             {"move": "bite", "weight": 3, "when": "near", "then": [["lasso"], ["lasso", "bite"]]},
-            {"move": "lasso", "weight": 2, "when": "near"},
+            {"move": "lasso", "weight": 2, "when": "near", "then": [["bite"], ["lash"]]},
             {"move": "drop", "weight": 2, "when": "far", "then": [["bite", "lasso"]]},
-            {"move": "web", "weight": 2, "when": "far"},
+            {"move": "web", "weight": 2, "when": "far", "then": [["drop"], ["web"]]},
             {"move": "hatch", "weight": 1},
             {"move": "thousand", "weight": 2},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["bite", "lasso"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.3},

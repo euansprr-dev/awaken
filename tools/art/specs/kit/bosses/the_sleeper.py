@@ -12,14 +12,13 @@ Moves (SPEC §35.11): the bed rears a front post and stamps with it, then the ot
 heaves his arm up over the bed and brings the fist down beside it); whoever is behind gets kicked by both back posts;
 Runaway Bed (it lowers its foot end and charges); Heavy Eyelids (he yawns, the bed settles, the curtains draw shut);
 Night Terrors (he tosses and turns, the bed rocking with him, and things shake loose from under it); Dreamstep (he
-sinks into his pillows and the bed with him, and it is somewhere else); Sleepwalkers (he sits half up, head lolling,
-and reaches out ahead of him); and Rude Awakening (the signature: the bed rears up on its back posts, the Sleeper sits
+sinks into his pillows and the bed with him, and it is somewhere else); and Rude Awakening (the signature: the bed rears up on its back posts, the Sleeper sits
 bolt upright with his eyes open and screams, and the bed crashes down). It waits lying low on its folded legs like any
 bed, and gets up when you come in.
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -926,21 +925,6 @@ def dreamstep(r):
     return mv
 
 
-def sleepwalkers(r):
-    """Sleepwalkers: he sits half up out of his pillows with his head lolling on his chest, and his long arm rises off
-    the floor and reaches out straight ahead of the bed, the hand hanging limp, the way sleepwalkers reach; it sways
-    there, and falls back to the floor with a thump."""
-    limp = ((0.15, 0.85, -0.5), (1, 0, 0))
-    up_ = _pose(r, lift=0.5, torso=(26, 0, 0), head=(14, -8, 10), jaw=6, fist=(-24.0, 26.0, -6.0), hand=limp, elbow=(-0.8, 0.4, 0.3))
-    reach = lambda s: _pose(r, lift=0.5, roll=1.5 * s, torso=(34, 2 * s, 2 * s), head=(18, -6 + 8 * s, 12 * s), jaw=8,
-                            fist=(-15.0 + 2 * s, 44.0, -40.0), hand=limp, elbow=(-0.9, 0.3, 0.2), dream=(0, -4 * s))
-    drop = _pose(r, lift=-1, torso=(10, 0, 0), head=(6, 0, 0), jaw=4, fist=_fist(z=-4), dream=(6, 0))
-    return Move("sleepwalkers", "NONE", 14, 24, 16, through=reach(0.0), title="Sleepwalkers", track=6.0, ability="Sleepwalkers", rng=(0, 99),
-                kinds=("summon",), damage=0, knock=0, plant=(),
-                stages={"windup": [(0.45, up_), (1.0, reach(-1))], "active": [(0.33, reach(1)), (0.66, reach(-1)), (1.0, reach(0.5))],
-                        "recover": [(0.45, drop)]}, lag=_lag(), ground=FIST_GROUND)
-
-
 def awaken(r):
     """Rude Awakening (PERILOUS, the signature): the bed shudders, then rears up on its back legs, its front claws
     pawing high; the Sleeper sits bolt upright with his eyes open for the first time, flings his arm up and screams;
@@ -984,7 +968,7 @@ def wake(r):
 
 
 def moves(r):
-    return [stomp(r), stomp(r, 1, "stomp_b"), fist(r), kick(r), charge(r), eyelids(r), terrors(r), dreamstep(r), sleepwalkers(r), awaken(r), wake(r)]
+    return [stomp(r), stomp(r, 1, "stomp_b"), fist(r), kick(r), charge(r), eyelids(r), terrors(r), dreamstep(r), awaken(r), wake(r)]
 
 
 # the ground (SPEC §35.10): the claws and the fist stay out of the floor
@@ -992,7 +976,7 @@ LEG_GROUND = [([f"foot{k}", f"shin{k}"], [(f"thigh{k}", 0, 30), (f"shin{k}", 0, 
 # the feet that stand through each move, and whether the fist lies still on the floor through it
 STANDS = {"stomp": ((1, 2, 3), True), "stomp_b": ((0, 2, 3), True), "fist": ((0, 1, 2, 3), False), "kick": ((0, 1), True),
           "charge": ((), False), "eyelids": ((0, 1, 2, 3), False), "terrors": ((), False), "dreamstep": ((0, 1, 2, 3), True),
-          "sleepwalkers": ((0, 1, 2, 3), False), "awaken": ((2, 3), False), "wake": ((0, 1, 2, 3), False)}
+          "awaken": ((2, 3), False), "wake": ((0, 1, 2, 3), False)}
 WHERE = {"terrors": {k: _foot(k, dx=LEGS[k][0] * 3) for k in range(4)}}
 
 
@@ -1000,6 +984,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.8)  # a duel's parried and reel (SPEC §46.5)
     mv = moves(r)
     for m in mv:
         stage_clips(r, m)
@@ -1030,36 +1015,38 @@ SOUNDS = {
     "step": [("block.wood.step", 1.0, 0.6), ("block.ladder.step", 0.8, 0.7)],
 }
 MOVE_SOUNDS = {"wake": {"swing": "", "impact": "impact"}, "terrors": {"swing": "cast"}, "eyelids": {"swing": "cast", "impact": ""},
-               "dreamstep": {"swing": "cast", "impact": ""}, "sleepwalkers": {"swing": "cast", "impact": ""}, "awaken": {"swing": "roar"}}
+               "dreamstep": {"swing": "cast", "impact": ""}, "awaken": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "stomp", "weight": 3, "when": "near", "then": [["stomp_b"], ["stomp_b", "fist"]]},
-            {"move": "fist", "weight": 3, "when": "near"},
-            {"move": "eyelids", "weight": 2},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "fist", "weight": 3, "when": "near", "then": [["stomp"], ["kick"]]},
+            {"move": "eyelids", "weight": 2, "then": [["charge"], ["dreamstep", "fist"]]},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["stomp", "stomp_b"], ["fist"]]},
             {"move": "charge", "weight": 2, "when": "far", "then": [["stomp"]]},
         ]},
         {"transition": "terrors", "pool": [
             {"move": "stomp", "weight": 3, "when": "near", "then": [["stomp_b"], ["stomp_b", "fist"]]},
-            {"move": "fist", "weight": 3, "when": "near"},
-            {"move": "eyelids", "weight": 1},
+            {"move": "fist", "weight": 3, "when": "near", "then": [["stomp"], ["kick"]]},
+            {"move": "eyelids", "weight": 1, "then": [["charge"], ["dreamstep", "fist"]]},
             {"move": "terrors", "weight": 1},
             {"move": "dreamstep", "weight": 2, "when": "far", "then": [["fist"]]},
             {"move": "charge", "weight": 2, "when": "far", "then": [["stomp"]]},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["stomp", "stomp_b"], ["fist"]]},
         ]},
         {"transition": "awaken", "pool": [
             {"move": "awaken", "weight": 2},
-            {"move": "sleepwalkers", "weight": 1},
             {"move": "fist", "weight": 3, "when": "near", "then": [["stomp"]]},
             {"move": "stomp", "weight": 3, "when": "near", "then": [["stomp_b", "fist"]]},
             {"move": "dreamstep", "weight": 2, "when": "far", "then": [["fist"]]},
             {"move": "charge", "weight": 2, "when": "far", "then": [["stomp", "stomp_b"]]},
-            {"move": "eyelids", "weight": 1},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "eyelids", "weight": 1, "then": [["charge"], ["dreamstep", "fist"]]},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["stomp", "stomp_b"], ["fist"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},
