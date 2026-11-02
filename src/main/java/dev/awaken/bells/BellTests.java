@@ -51,6 +51,8 @@ final class BellTests {
         AwakenTests.registerIsolated("bells_village_quest", 40, BellTests::villageQuest);
         AwakenTests.register("bells_dream_puzzles", 20, BellTests::dreamPuzzles);
         AwakenTests.register("bells_spirit_keeper", 20, BellTests::spiritKeeper);
+        AwakenTests.register("bells_dulled", 20, BellTests::dulled);
+        AwakenTests.register("bells_look", 20, BellTests::look);
     }
 
     /**
@@ -249,8 +251,9 @@ final class BellTests {
 
     /** Every bell sound played in the world is mono, so it comes from where its bell is and fades with distance. */
     static void soundsPlaced(GameTestHelper h) {
-        java.util.List<String> files = new java.util.ArrayList<>(java.util.List.of("bell_handbell", "bell_toll", "bell_hum", "bell_wake", "bell_gap"));
-        for (int k = 0; k < 15; k++) files.add("bell_note_" + k);
+        java.util.List<String> files = new java.util.ArrayList<>(java.util.List.of("bell_handbell", "bell_toll", "bell_hum", "bell_wake", "bell_gap",
+                "bell_hang", "bell_swell"));
+        for (int k = 0; k < 15; k++) files.addAll(List.of("bell_note_" + k, "bell_far_" + k, "bell_muffled_" + k));
         for (String f : files) {
             int ch = channels("/assets/awaken/sounds/" + f + ".ogg");
             h.assertTrue(ch == 1, f + ".ogg is mono (" + ch + " channels)");
@@ -861,5 +864,69 @@ final class BellTests {
             w.keepers.remove(p.getUUID());
         }
         h.succeed();
+    }
+
+    /**
+     * A bell lying on a gate's floor is dulled by the Deep (SPEC §43.16 stage 6): drawn dulled where it lies, and still dulled
+     * in your bag once lifted (until it hangs, when its hook draws it clean).
+     */
+    static void dulled(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        Vec3 by = h.absoluteVec(new Vec3(3.5, 1, 3.5));
+        p.snapTo(by.x, by.y, by.z, 0F, 0F);
+        BellCatalog.Def wren = BellCatalog.of("wren");
+        BellWorld w = BellWorld.get(level.getServer());
+        BlockPos at = FoundBells.keep(level, h.absolutePos(new BlockPos(2, 1, 2)), "awaken:test_dull", wren.no(), "under a test Lord", List.of(p.getUUID()));
+        try {
+            h.assertTrue(at != null && level.getBlockEntity(at) instanceof FoundBellEntity be && be.dulled(), "a bell on a gate's floor lies dulled");
+            FoundBells.lift(level, at, p);
+            ItemStack carried = ItemStack.EMPTY;
+            for (int i = 0; i < p.getInventory().getContainerSize(); i++)
+                if (wren.equals(BellItem.def(p.getInventory().getItem(i)))) carried = p.getInventory().getItem(i);
+            h.assertTrue(Bells.has(p, "wren") && BellItem.isDulled(carried), "lifted, it's still dulled in your bag");
+            h.assertFalse(BellItem.isDulled(BellItem.of(wren.no())), "a bell from anywhere else is clean");
+        } finally {
+            w.kept.removeIf(k -> k.gate.equals("awaken:test_dull"));
+            if (at != null) level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        }
+        h.succeed();
+    }
+
+    /**
+     * Every bell has its look (stage 6): items/bell.json picks a model for each of the hundred, clean and dulled, and each
+     * model's lip is where BellLook says (the renderers set bells on the floor and under beams by it).
+     */
+    static void look(GameTestHelper h) {
+        com.google.gson.JsonObject def = json("/assets/awaken/items/bell.json").getAsJsonObject("model");
+        for (String branch : List.of("on_false", "on_true")) {
+            Map<Integer, String> picked = new java.util.HashMap<>();
+            for (var c : def.getAsJsonObject(branch).getAsJsonArray("cases")) {
+                String model = c.getAsJsonObject().getAsJsonObject("model").get("model").getAsString();
+                for (var n : c.getAsJsonObject().getAsJsonArray("when")) h.assertTrue(picked.put(n.getAsInt(), model) == null, "bell " + n + " is picked once");
+            }
+            for (int no = 0; no < 100; no++) {
+                String model = picked.get(no);
+                h.assertTrue(model != null, "bell " + no + " has a model (" + branch + ")");
+                h.assertTrue(model.startsWith("awaken:item/bell/" + BellLook.family(BellCatalog.of(no))), "bell " + no + " is cast in its family's metal (" + model + ")");
+                float lip = Float.MAX_VALUE;
+                for (var e : json("/assets/awaken/models/" + model.substring("awaken:".length()) + ".json").getAsJsonArray("elements")) {
+                    var o = e.getAsJsonObject();
+                    if (o.getAsJsonObject("faces").has("down") && o.getAsJsonObject("faces").getAsJsonObject("down").get("texture").getAsString().equals("#mouth"))
+                        lip = Math.min(lip, o.getAsJsonArray("from").get(1).getAsFloat());
+                }
+                h.assertTrue(Math.abs(lip - BellLook.bottom(no)) < 0.05F, "bell " + no + "'s lip is where BellLook puts it (" + lip + " vs " + BellLook.bottom(no) + ")");
+            }
+        }
+        h.succeed();
+    }
+
+    private static com.google.gson.JsonObject json(String resource) {
+        try (java.io.InputStream in = BellTests.class.getResourceAsStream(resource)) {
+            if (in == null) throw new IllegalStateException("missing " + resource);
+            return com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

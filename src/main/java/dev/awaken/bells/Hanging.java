@@ -34,6 +34,9 @@ final class Hanging {
     /** How far above the fire a Bell Beam's bells carry, and a Great Beam's. */
     static final int BEAM_ABOVE = 8, GREAT_ABOVE = 12;
 
+    /** Ticks from a bell's loop meeting its hook to its first ring. */
+    static final int HANG_RING = 6;
+
     /** The Great Bells (the Provings') and the Seed: only a Great Beam holds one. */
     static boolean great(BellCatalog.Def d) {
         return d.source() == BellCatalog.Source.PROVING || d.source() == BellCatalog.Source.SEED;
@@ -109,10 +112,19 @@ final class Hanging {
             return false;
         }
         HearthRecord h = home(level, pos).orElseThrow();
+        boolean wasDull = BellItem.isDulled(stack);
         be.set(hook, d.no(), p.getUUID());
         if (!p.isCreative()) stack.shrink(1);
         index(level, h, pos, d.no());
-        strike(level, pos, s, hook, d.no(), 2F);
+        // iron on iron as its loop drops on the hook, then the bell's first ring with a slow swell under it (stage 6)
+        Vec3 at = hookPoint(s, hook).add(pos.getX(), pos.getY(), pos.getZ());
+        level.playSound(null, at.x, at.y, at.z, BellContent.HANG.get(), SoundSource.BLOCKS, 1F, 1F);
+        int no = d.no();
+        dev.awaken.core.Later.run(level.getServer(), HANG_RING, () -> {
+            if (!(level.getBlockEntity(pos) instanceof HooksEntity now) || now.bell(hook) != no) return;
+            strike(level, pos, level.getBlockState(pos), hook, no, 2F);
+            level.playSound(null, at.x, at.y, at.z, BellContent.SWELL.get(), SoundSource.BLOCKS, 1.4F, BellContent.pitch(no));
+        });
         BellBook b = Bells.book(p);
         if (!b.held.containsKey(d.no())) {
             // a bell someone else won and gave you: it's yours now that it hangs at your home
@@ -122,7 +134,7 @@ final class Hanging {
         Bells.save(p, b);
         dev.awaken.progression.Progression.setCounter(p, Bells.COUNTER, b.count());
         String where = s.is(BellContent.BELL_FRAME.get()) ? "It's hanging by your fire." : s.is(BellContent.GREAT_BEAM.get()) ? "It's hanging high in your tower." : "It's hanging high over your home.";
-        String body = where + " Its note is the " + ordinal(d.no() + 1) + " in your song." + (d.voice().words.isEmpty() ? "" : " While it hangs, " + lower(d.voice().words));
+        String body = (wasDull ? "The gate's dust fell off it as it hung, and it rang clean. " : "") + where + " Its note is the " + ordinal(d.no() + 1) + " in your song." + (d.voice().words.isEmpty() ? "" : " While it hangs, " + lower(d.voice().words));
         if (!quiet) Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Bell " + d.number() + " · " + d.name()))
                 .body(Component.literal(body)).priority(7).ttl(20 * 10).build());
         if (first) Bells.signalSoon(p);
