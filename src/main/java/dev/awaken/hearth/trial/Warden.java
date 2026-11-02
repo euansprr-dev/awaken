@@ -98,4 +98,9 @@ abstract class Warden {
 
     /** Its name, in the hint about what keeps catching you. */
     abstract String name();
+
+    /** What caught this member, when it wasn't one of its blows (the hall's own doing), said plainly; or null. */
+    @Nullable String caught(Provings.Run run, ServerPlayer m) {
+        return null;
+    }
 }

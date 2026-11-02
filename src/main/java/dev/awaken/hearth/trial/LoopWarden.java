@@ -60,6 +60,8 @@ final class LoopWarden extends Warden {
      */
     static final int REPLAY_FIRST = 100, REPLAY_EVERY = 300, REPLAY_TELL = 24, REPLAY_RUN = 20;
     static final double REPLAY_REACH = 1.4;
+    /** A fall this soon after a replay caught you is put down to it. */
+    static final int REPLAY_CAUGHT = 40;
     static final float REPLAY_SHARE = 0.8F;
     /** The hall is put back this many rows a tick after a reset. */
     static final int RESET_ROWS = 16;
@@ -145,9 +147,10 @@ final class LoopWarden extends Warden {
         /** The Seed's door: steps open, its rings' turn, whether they're turning. */
         int door, turn;
         boolean turning;
-        /** The replays: when the next is due, those running. */
+        /** The replays: when the next is due, those running, when each of you was last caught by one. */
         long replayAt = -1;
         final List<Replay> replays = new ArrayList<>();
+        final Map<UUID, Long> caught = new HashMap<>();
         Hall.@Nullable Repair reset;
     }
 
@@ -327,8 +330,10 @@ final class LoopWarden extends Warden {
                 l.trails.computeIfAbsent(u, k -> new Trail()).add(m);
             }
         }
-        // night sweeping round like the clock's hand; after its death the day coming back the same way
-        if (l.sweepAt >= 0 && l.swept < 12) {
+        // night sweeping round like the clock's hand (only while it fights: a death mid-sweep stops it where it is);
+        // after its death the day coming back the same way over the hours night took
+        boolean fighting = run.stage == Provings.Stage.FIGHT;
+        if (fighting && l.sweepAt >= 0 && l.swept < 12) {
             long k = now - l.sweepAt;
             hand(run, (l.swept + (k % SWEEP_EVERY) / (double) SWEEP_EVERY) * 30);
             if (k % SWEEP_EVERY == 0) hour(run, l.swept++, false);
@@ -338,7 +343,7 @@ final class LoopWarden extends Warden {
             if (k % SWEEP_EVERY == 0) hour(run, l.dayed++, true);
         }
         // the ring cracking, then falling an hour at a time from twelve round
-        if (l.crackAt >= 0 && l.fallen < 12) {
+        if (fighting && l.crackAt >= 0 && l.fallen < 12) {
             long k = now - l.crackAt;
             if (k < CRACK) {
                 if (k % 5 == 0) crumble(run);
@@ -352,7 +357,7 @@ final class LoopWarden extends Warden {
             render(run, l.door, l.turn);
         }
         if (l.door > 0 && now % 4 == 0) lightThrough(run, l);
-        if (run.stage == Provings.Stage.FIGHT) replay(run, l, now);
+        if (fighting) replay(run, l, now);
         else l.replays.clear();
         if (run.stage != Provings.Stage.OPENING) overTheEdge(run);
     }
@@ -493,6 +498,7 @@ final class LoopWarden extends Warden {
                 double dx = m.getX() - p.x, dz = m.getZ() - p.z;
                 if (dx * dx + dz * dz > REPLAY_REACH * REPLAY_REACH || Math.abs(m.getY() - p.y) > 2) continue;
                 r.hit.add(u);
+                l.caught.put(u, now);
                 m.hurtServer(run.level, run.level.damageSources().indirectMagic(warden, warden), blow);
             }
         }
@@ -536,6 +542,7 @@ final class LoopWarden extends Warden {
         l.turning = false;
         l.replayAt = -1;
         l.replays.clear();
+        l.caught.clear();
         l.trails.clear();
         run.turns = 0;
         run.turnAt = -1;
@@ -598,6 +605,15 @@ final class LoopWarden extends Warden {
         double lx = m.getX() - run.centre.getX() - 0.5, lz = m.getZ() - run.centre.getZ();
         if (lz >= Antechamber.OUT_Z && Math.abs(lx) <= 2.5 && m.getY() >= run.centre.getY() + 0.5) return true;
         return loop(run).door >= DOOR_STEPS && lz <= Antechamber.OUT_N && Math.abs(lx) <= 4.5;
+    }
+
+    /** Fallen just after your own path's light ran you down: say so, not its last blow. */
+    @Override
+    @Nullable String caught(Provings.Run run, ServerPlayer m) {
+        Long at = loop(run).caught.get(m.getUUID());
+        if (at == null || run.level.getGameTime() - at > REPLAY_CAUGHT) return null;
+        return "Your own path keeps catching you. When the floor glows along where you've just walked, step off that line:"
+                + " a run of light follows it from one end to the other, and nothing turns it aside.";
     }
 
     @Override

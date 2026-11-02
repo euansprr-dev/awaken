@@ -18301,7 +18301,9 @@ is `PROVING`, run by `LoopWarden` in the Cradle's antechamber (`hearth.trial.Ant
   every 0.25 s, the middle ring the other way) and opens a part at a time as its health falls (the core, then each ring:
   three by the end), the light behind coming through. 10 under the floor is a fall, never a death; you wake on the
   causeway ("You wake by the arch you came in through. The way out is behind you."); if it goes over, it comes back up
-  inside the seam. When everyone has fallen it goes, the hall is put back (the day, the ring, the door shut, 16 rows a
+  inside the seam. From the third fall the hint says what keeps catching you; a fall within 2 s of a replay reaching you
+  is put down to your own path ("step off that line", `Warden.caught`, new: a Warden can name what of its hall caught
+  you). When everyone has fallen it goes, the hall is put back (the day, the ring, the door shut, 16 rows a
   tick), and it comes again out of the next path. Out through the arch is the way out, no fail day. Its death: the Seed's
   door opens the rest of the way at 0.5 s (a bell, the end portal's sound), a path of light is laid down the middle of the
   floor to it, its light pours through; from 1 s the day comes back round the clock the same way night came; at 2 s on a
