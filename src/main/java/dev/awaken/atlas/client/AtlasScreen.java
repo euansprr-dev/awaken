@@ -1081,6 +1081,21 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), showWaypoints ? 1.2f : 0.9f, 0.6f));
     }
 
+    /** Tours: {@code here} is N; {@code pick <i>} picks the legend's i-th waypoint (as its row's click); {@code edit <i>} opens its card. */
+    boolean tour(String what, int i) {
+        if (what.equals("here")) {
+            waypointHere();
+            return true;
+        }
+        if (i < 0 || i >= wpRows.size()) return false;
+        AtlasNet.WaypointView w = wpRows.get(i);
+        flyX = w.x() + 0.5;
+        flyZ = w.z() + 0.5;
+        if (what.equals("edit")) card.edit(w, false);
+        else destination.pick(w);
+        return true;
+    }
+
     /** N: a waypoint where you stand, its card open; the map glides back to you. */
     private void waypointHere() {
         var p = Minecraft.getInstance().player;

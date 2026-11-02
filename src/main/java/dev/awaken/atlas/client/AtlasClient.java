@@ -112,6 +112,12 @@ public final class AtlasClient {
                     return 1;
                 })))
                 .then(Commands.literal("reveal").executes(c -> reveal()))
+                .then(Commands.literal("waypoint")
+                        .then(Commands.literal("here").executes(c -> screen() != null && screen().tour("here", 0) ? 1 : 0))
+                        .then(Commands.argument("what", StringArgumentType.word())
+                                .then(Commands.argument("i", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 9))
+                                        .executes(c -> screen() != null && screen().tour(StringArgumentType.getString(c, "what"),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "i")) ? 1 : 0))))
                 .then(Commands.literal("prof").then(Commands.argument("bits", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 127)).executes(c -> {
                     AtlasScreen.prof = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "bits");
                     AtlasState.stats.reset();

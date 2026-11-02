@@ -1,0 +1,127 @@
+# Waypoints on the Atlas and the kin plate (SPEC §16.8, §43.17; Euan 2026-11-02). A look tour for CI:
+#   tools/tour-ci.sh tools/autopilot/waypoints-kin.txt 900
+# The Atlas with five waypoints round you (five marks and colours, one shared) and the WAYPOINTS block in the legend; one
+# picked (its card: whose, how far, "Change it"); the card to change it; N's new waypoint card. Then the kin plate on a
+# wild Lampwing, a Gnawed Mossback, a Burrowbun at home, then named; the ride line on a Frost Stag (climbing on,
+# then hurt) and the stag's plate once you're off.
+world waypointsKin creative 20261102
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+info
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken village trouble quiet on
+
+# ---- 1. waypoints round you ----
+cmd summon minecraft:marker ~ ~ ~ {Tags:["start"]}
+cmd awaken atlas reveal 160
+wait 20
+cmd spreadplayers ~40 ~12 0 1 false @s
+wait 30
+cmd awaken atlas waypoint 1 false Iron seam
+cmd execute at @e[type=marker,tag=start,limit=1] run spreadplayers ~-30 ~35 0 1 false @s
+wait 30
+cmd awaken atlas waypoint 3 false Old farm
+cmd execute at @e[type=marker,tag=start,limit=1] run spreadplayers ~-45 ~-20 0 1 false @s
+wait 30
+cmd awaken atlas waypoint 5 false Cave mouth
+cmd execute at @e[type=marker,tag=start,limit=1] run spreadplayers ~15 ~-45 0 1 false @s
+wait 30
+cmd awaken atlas waypoint 6 true Meet here
+cmd execute at @e[type=marker,tag=start,limit=1] run spreadplayers ~60 ~-15 0 1 false @s
+wait 30
+cmd awaken atlas waypoint 2 false Tall pines
+cmd execute at @e[type=marker,tag=start,limit=1] run spreadplayers ~ ~ 0 1 false @s
+wait 40
+
+# ---- 2. the Atlas ----
+cmd atlas open 20 58 2.6
+wait 140
+shot wk_00_atlas_waypoints
+cmd atlas view 20 58 5
+wait 60
+shot wk_01_atlas_close_labels
+cmd atlas waypoint pick 0
+wait 40
+shot wk_02_atlas_picked_card
+cmd atlas waypoint edit 1
+wait 30
+shot wk_03_atlas_change_card
+cmd atlas waypoint here
+wait 40
+shot wk_04_atlas_new_waypoint_card
+gui 2
+wait 10
+shot wk_05_atlas_new_waypoint_card_gui2
+gui 0
+screen close
+wait 10
+screen close
+wait 10
+
+# ---- 3. the kin plate ----
+cmd tp @s ~ ~ ~ -90 0
+cmd awaken admin kin summon lampwing
+wait 10
+cmd data merge entity @e[type=awaken:kin_lampwing,limit=1,sort=nearest] {NoAI:1b}
+cmd execute as @s at @s facing entity @e[type=awaken:kin_lampwing,limit=1,sort=nearest] eyes run tp @s ~ ~ ~ ~ ~
+wait 40
+shot wk_10_kin_plate_wild_lampwing
+cmd kill @e[type=awaken:kin_lampwing]
+cmd awaken admin kin gnaw mossback
+wait 10
+cmd data merge entity @e[type=awaken:kin_mossback,limit=1,sort=nearest] {NoAI:1b}
+cmd execute as @s at @s facing entity @e[type=awaken:kin_mossback,limit=1,sort=nearest] eyes run tp @s ~ ~ ~ ~ ~
+wait 40
+shot wk_11_kin_plate_gnawed_mossback
+cmd kill @e[type=awaken:kin_mossback]
+
+# a home here, a Burrowbun living in its field
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin home burrowbun
+wait 40
+cmd data merge entity @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] {NoAI:1b}
+cmd execute at @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] run tp @s ~ ~0.5 ~4
+cmd execute as @s at @s facing entity @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] eyes run tp @s ~ ~ ~ ~ ~
+wait 40
+shot wk_12_kin_plate_at_home
+cmd data merge entity @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] {CustomName:"Pip"}
+wait 50
+shot wk_13_kin_plate_named
+screen holo hearth
+wait 80
+shotnow wk_14_hearth_page_name_button
+screen close
+wait 10
+
+# ---- 4. the ride line ----
+cmd awaken fauna mount tame frost_stag bridled
+wait 20
+cmd awaken fauna mount ride
+wait 20
+shot wk_20_ride_line_climbed_on
+cmd damage @e[type=awaken:frost_stag,limit=1,sort=nearest] 8
+wait 100
+shot wk_21_ride_line_hurt
+cmd ride @s dismount
+wait 10
+cmd execute at @e[type=awaken:frost_stag,limit=1,sort=nearest] run tp @s ^ ^ ^5
+cmd data merge entity @e[type=awaken:frost_stag,limit=1,sort=nearest] {NoAI:1b}
+cmd execute as @s at @s facing entity @e[type=awaken:frost_stag,limit=1,sort=nearest] eyes run tp @s ~ ~ ~ ~ ~
+wait 40
+shot wk_22_kin_plate_your_mount
+quit
