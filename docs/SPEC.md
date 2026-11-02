@@ -1359,8 +1359,8 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   and Void beds and System words/drain/tear are stereo and listener-relative. The hall bed stays dry in SPR and
   reports one voice to the world Conductor. These are presentation changes; director timing, hit tests and damage
   remain exactly as above, with no persistent state or packet changes.
-- Every moving statue gets planted-foot audio from the renderer's unchanged `walkAnimation.position * 0.55`
-  phase: a 1.6 s clip, left contact at phase 0, right at 0.8. Three real stone-contact variants mix friction and low
+- Every moving statue gets planted-foot audio from the renderer's `walkAnimation.position * 0.16` phase (motion v2
+  below; it was 0.55): a 1.6 s clip, left contact at phase 0, right at 0.8. Three real stone-contact variants mix friction and low
   pressure. Contact positions follow vanilla model-axis flips and body yaw. Tick sampling includes statues behind the camera; initial/late tracking, stopping, phase resets and jumps
   never replay missed contacts. Contacts have 36 block sound range and a restrained 12 block camera impulse.
   Wind-up whooshes begin at tick 17 of the existing 25 tick wind-up and are dropped if the statue stopped winding
@@ -1368,6 +1368,19 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   charge ends at 45 ticks (2.25 s). Beam release, its moving 12 tick air/arc trail, target impact and room decay are
   different recordings/layers; the existing immediate impact and damage time remain unchanged. SHAKE cues no longer
   duplicate each beam/weapon impact's rumble, and HIT no longer duplicates the world impact through the UI.
+- Ritual motion v2 (2026-11-02, branch `claude/ritual-sound-motion-601bfc`, for Euan's approval with the sound pass):
+  the statues' walk is a colossus's stride, two steps of 1.25 blocks per 1.6 s cycle (1.2 steps a second at the
+  Judgement's 0.075 blocks a tick; v1 took 4.1 tiny steps a second and ran its stance backwards, so each planted foot
+  slid about 1.1 blocks). Clip time is `walkAnimation.position * 0.16`, which lays 2.5 blocks of ground under a cycle:
+  a planted sole stays where it landed (heel strike toe-up 12°, flat by 0.07 of the cycle, heel peels at 0.42, toe
+  off at 0.58; the hip sinks as the weight lands and rises over the planted leg). The wind-up is the director's 25
+  ticks with its downswing in the last 0.25 s, so the blade meets the floor on the tick the strike lands (its sound,
+  shake and damage; v1's blade was still 4.3 blocks up then and landed 0.22 s later); the strike clip (0.45 s) starts
+  on that contact and the recovery (0.65 s) ends in the guard as the director sends STAND. The left foot steps
+  forward into the swing and back out of it, lifted, never slid. The renderer crossfades by transition: none where
+  one clip ends on the next one's first frame (wind-up into strike, strike into recovery, the kneel-down into the
+  kneel), 0.25 s out of the walk, 0.1–0.35 s elsewhere. Sent to KNEEL from its feet (the End), a statue kneels down
+  over 1.6 s (the rise backwards) before the still kneel. Contacts sound from under the heel strike, 0.75 blocks ahead.
 - The ritual owns at most six voices including its room bed, at most two heavy transients, and one group footfall
   per four ticks. Guidance and heavy cues can replace a small detail at capacity. Identical great bell cues are
   spaced by at least 100 ticks, candles six ticks, heavy repeat impacts four ticks; missed sounds are discarded.

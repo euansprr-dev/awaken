@@ -40,9 +40,10 @@ public final class Ritual {
         });
     }
 
-    /** The exact distance-driven time used by the statue renderer's 1.6 second walk clip. */
+    /** The exact distance-driven time used by the statue renderer's 1.6 second walk clip: one cycle (two steps of 1.25
+     *  blocks) per 2.5 blocks walked. walkAnimation.position grows 4 a block at the statues' pace (0.075 a tick). */
     public static float walkSeconds(net.minecraft.world.entity.Entity e, float partial) {
-        return e instanceof RitualStatue s ? s.walkAnimation.position(partial) * 0.55F : 0;
+        return e instanceof RitualStatue s ? s.walkAnimation.position(partial) * 0.16F : 0;
     }
 
     /** Client presentation: only actual moving WALK stages can make planted-foot sounds. */
@@ -60,9 +61,10 @@ public final class Ritual {
     public static Vec3 plantedFoot(net.minecraft.world.entity.Entity e, int foot) {
         // LivingEntityRenderer rotates by 180-bodyYaw, then flips model X/Y. Model +Z is behind the body.
         double yaw = Math.toRadians(e instanceof RitualStatue s ? s.yBodyRot : e.getYRot());
-        double side = (foot & 1) == 0 ? 0.225 : -0.225;
-        return e.position().add(Math.cos(yaw) * side + Math.sin(yaw) * 0.36, 0,
-                Math.sin(yaw) * side - Math.cos(yaw) * 0.36);
+        // the walk's heel strike: the sole lands 0.75 blocks ahead of the body, 0.25 to the side, and stays there
+        double side = (foot & 1) == 0 ? 0.25 : -0.25;
+        return e.position().add(Math.cos(yaw) * side - Math.sin(yaw) * 0.75, 0,
+                Math.sin(yaw) * side + Math.cos(yaw) * 0.75);
     }
 
     public static @Nullable SeatedOne spawnSeated(ServerLevel level, Vec3 at, float yaw) {
