@@ -14940,6 +14940,7 @@ in reach 23% of a fight today, 49% with these rules).
     8 s), even in a fight; otherwise aside in a fight; shown while glancing. Its room in the top-right stack shrinks as it fades.
   - Gate panel (`RunHudLayer`): one line (rank, gate, floor) and the collapse clock under it, which never hides; the full panel
     for 6 s whenever anything but the clocks changes, while the noise is 12 or more, while glancing, and in Classic.
+  - Mount hearts (`vehicle_health`): hidden; the kin's ride line carries a mount's health (§43.17).
   - Creature plates (`PlateRules.thin`): the creature you mean (`Aim.target()`) keeps the full plate (the bright rim when
     locked), and so do one under your look and a notable beast; the others fighting you show a thin plate, the bar alone.
 - Autopilot: `holo screen clear|clear_crosshair|classic|auto`, `holo fight on|off`.
@@ -16275,6 +16276,37 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   to date once. **World** data unchanged (old `sites` read, then cleared).
 - Tests (CI): `bells_none_in_the_open`, `bells_song_arrangement`, `bells_sounds_placed`, `bells_lord_keeps`,
   `bells_story_start` (a frame keeps gates off, no frame rings nothing).
+
+### 43.17 The kin plate and the ride line (concept page https://claude.ai/artifact/JQWQnSSsjSkWwPuJzwSpGn; Euan 2026-11-02: "kins like lampwing don't have a card? They just have the vanilla hearts. So let's add their custom plate"; "Go ahead")
+- **Who wears it** (`kin.KinPlates.wears`): every kin (at home, wild, or Gnawed), a tamed pet, a mount that trusts its rider
+  (`WildMount.trusted`). A wild wolf, a wild mount and any foe keep the creature plate (SPEC §21). While plates are on
+  (`LivingClient.platesOn`) they get no creature plate and no Jade card (Jade's hearts were what showed before).
+- **When**: while you look at it (the look's reach is the creature plate's, `PlateRules.lookRange`, through no wall), then a
+  0.6 s fade (`LOOK_FADE` 12 ticks); for 4 s after it's hurt within 16 blocks of you (`HURT_TICKS` 80, `HURT_RANGE`), then a
+  1 s fade; at most two at once (`MAX`), the looked-at one first. Never the one you ride.
+- **The look** (`kin.client.KinPlate`, a `HoloWorld` plate over its head, 90 to 210 px wide by its words): warm glass with a
+  lantern edge (an ember edge and a darker fill when Gnawed); its name (the name you gave it, else its kind) with four bond
+  diamonds after it, gold up to how close you and its kind are (Kinship's Wary, Curious, Friendly, Kin; none for a pet or a
+  mount); the bond line; its health as a thin line in its kind's colour, amber and breathing at a third or less; a note
+  under it. It grows in over 4 ticks.
+- **The words** (server, `KinPlates.read`, sent as `kin_bond` when the client asks with `kin_read`: when a plate first
+  shows and every 2 s while it shows, within 64 blocks): wild kin "Could live with you" (green) and how far off its trust is
+  ("Help it three times and it will trust you.", "Two more helps ...", "One more help ...", "It trusts you. It will follow
+  you home to a nook it likes.", or "It won't come near you. Not after what happened."); at home "Lampwing · lives with
+  you" (or "lives with Ana") and what it's doing (the Hearth page's words); Gnawed "Gnawed" (ember) and "Beat it down and
+  the Deep lets go of it."; a pet "Wolf · yours" or "Ana's", "sitting where it was told to"; a mount "your mount" or
+  "Ana's mount", "resting". The client puts the kind's name before a line that starts in lower case.
+- **Naming** (the Hearth page's Your beasts card): "Give it a name" (or "Change its name") opens a small card, "NAME YOUR
+  LAMPWING", 24 letters at most; Enter keeps it. The server (`kin_name`) lets only its keeper name it, cleans the name
+  (chat's characters, spaces folded) and sets its custom name; an empty name takes it away. The card's title and the plate
+  show the name.
+- **The ride line** (`kin.client.RideLine`, layer `awaken:ride_line`, the clear screen only): vanilla's mount hearts are
+  hidden (§40.6); the mount's health is a warm line 92 px wide, 6 px over the vitals, with its name at 0.75 size to the
+  left. It shows for 3 s after you climb on (`RIDE_SHOW` 60 ticks), while the mount is below full health, and in a fight;
+  at a third or less it breathes amber. Classic keeps vanilla's hearts.
+- Wire: `kin_read` (VAR_INT entity), `kin_bond` (entity, who, tone, step, note), `kin_name` (id, name); kin payloads are
+  version 2. Nothing is saved but the custom name.
+- Tests (CI): `kin_plate` (who wears it, the words, when it shows), `kin_ride_line`, `kin_name`.
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 

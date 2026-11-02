@@ -43,6 +43,7 @@ final class HudDirector implements HudState.Director {
             VanillaGuiLayers.ARMOR_LEVEL, Piece.VANILLA_STATUS,
             VanillaGuiLayers.FOOD_LEVEL, Piece.VANILLA_STATUS,
             VanillaGuiLayers.EXPERIENCE_LEVEL, Piece.VANILLA_STATUS,
+            VanillaGuiLayers.VEHICLE_HEALTH, Piece.VANILLA_STATUS, // the kin's ride line carries a mount's health (SPEC §43.17)
             POWER_BAR, Piece.POWERS,
             LEVEL, Piece.LEVEL);
     /** The XP bar's strip also carries a mount's jump bar: kept while riding one. */
