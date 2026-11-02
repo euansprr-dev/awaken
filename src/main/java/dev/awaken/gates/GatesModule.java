@@ -34,6 +34,7 @@ public final class GatesModule {
         dev.awaken.gates.run.RunRegressionTests.register();
         dev.awaken.gates.run.EncounterTests.register();
         dev.awaken.gates.run.TogetherRunTests.register();
+        dev.awaken.gates.run.SpoilsTests.register();
         TogetherGateTests.register();
         RigTests.register();
         dev.awaken.gates.world.GateWorldTests.register();
