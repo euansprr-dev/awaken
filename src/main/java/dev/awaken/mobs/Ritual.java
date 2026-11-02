@@ -1,8 +1,13 @@
 package dev.awaken.mobs;
 
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import dev.awaken.Awaken;
+import dev.awaken.core.AwakenCommands;
 import dev.awaken.mobs.entity.RitualStatue;
 import dev.awaken.mobs.entity.SeatedOne;
+import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -34,6 +39,19 @@ public final class Ritual {
 
     static void init(IEventBus modBus) {
         ENTITIES.register(modBus);
+        // tours: a statue on its own, at a stage, tagged ritual_studio (the cast can't be summoned by command)
+        AwakenCommands.add((root, ctx) -> root.then(Commands.literal("admin").requires(AwakenCommands.admin())
+                .then(Commands.literal("ritualstatue")
+                        .then(Commands.argument("x", DoubleArgumentType.doubleArg()).then(Commands.argument("y", DoubleArgumentType.doubleArg())
+                                .then(Commands.argument("z", DoubleArgumentType.doubleArg()).then(Commands.argument("yaw", FloatArgumentType.floatArg(-180, 180))
+                                        .then(Commands.argument("stage", IntegerArgumentType.integer(RitualStatue.KNEEL, RitualStatue.GLARE)).executes(c -> {
+                                            RitualStatue e = spawnStatue(c.getSource().getLevel(), new Vec3(DoubleArgumentType.getDouble(c, "x"),
+                                                    DoubleArgumentType.getDouble(c, "y"), DoubleArgumentType.getDouble(c, "z")), FloatArgumentType.getFloat(c, "yaw"));
+                                            if (e == null) return 0;
+                                            e.setStage(IntegerArgumentType.getInteger(c, "stage"));
+                                            e.addTag("ritual_studio");
+                                            return 1;
+                                        })))))))));
         modBus.addListener((EntityAttributeCreationEvent e) -> {
             e.put(SEATED_ONE.get(), SeatedOne.attributes().build());
             e.put(STATUE.get(), RitualStatue.attributes().build());
