@@ -30,6 +30,7 @@ public final class KinClient {
             RideLine.tick();
         });
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, KinPlate::extract);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderNameTagEvent.CanRender.class, KinPlate::nameTag);
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.PLAYER_HEALTH, RideLine.LAYER, RideLine::render));
         KinPageSection.register();

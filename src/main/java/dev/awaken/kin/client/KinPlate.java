@@ -22,6 +22,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
+import net.neoforged.neoforge.client.event.RenderNameTagEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.HashMap;
@@ -50,6 +51,7 @@ public final class KinPlate {
     private static final Map<Integer, KinNet.Bond> BONDS = new HashMap<>();
     // the plates picked this tick (entity ids) and their visibility
     private static final int[] PICKED = new int[KinPlates.MAX];
+    private static final String[] NOTE = {"", ""};
     private static final float[] VIS = new float[KinPlates.MAX];
     private static int picked;
     // the plate being written (the content callback reads these)
@@ -171,14 +173,17 @@ public final class KinPlate {
             cur = ent;
             curBond = bond;
             curName = name(ent);
-            curWho = bond == null || bond.who().isEmpty() ? "" : Character.isLowerCase(bond.who().charAt(0))
-                    ? ent.getType().getDescription().getString() + " · " + bond.who() : bond.who();
-            String note = bond == null ? "" : bond.note();
+            // a named one says its kind before the bond ("Burrowbun · lives with you"); an unnamed one's name is its kind
+            String who = bond == null ? "" : bond.who();
+            curWho = who.isEmpty() || !Character.isLowerCase(who.charAt(0)) ? who
+                    : ent.hasCustomName() ? ent.getType().getDescription().getString() + " · " + who : capital(who);
+            String note = bond == null ? "" : capital(bond.note());
             int marks = bond != null && bond.step() >= 0 ? 4 * 7 + 4 : 0;
             int words = Math.max(font.width(curName) + marks, Math.round(font.width(curWho) * 0.85F));
             if (!note.isEmpty()) words = Math.max(words, Math.round(font.width(note) * 0.8F));
             SPEC.w = Mth.clamp(words + PAD * 2, 90, 210);
-            SPEC.h = note.isEmpty() ? 36 : 45;
+            int lines = wrap(font, note, Math.round((SPEC.w - PAD * 2) / 0.8F));
+            SPEC.h = lines == 0 ? 36 : 37 + lines * 8;
             SPEC.x = Mth.lerp(pt, ent.xo, ent.getX());
             SPEC.y = Mth.lerp(pt, ent.yo, ent.getY()) + ent.getBbHeight() + 0.3;
             SPEC.z = Mth.lerp(pt, ent.zo, ent.getZ());
@@ -235,13 +240,34 @@ public final class KinPlate {
             int c0 = low ? LOW : kind, c1 = low ? LOW_HI : lighten(kind);
             cv.fillF(bx0, by0, bx0 + (bx1 - bx0) * frac, by1, argb(pulse, c1), argb(pulse, c0));
         }
-        // how far off its trust is, or what it's doing
-        if (bond != null && !bond.note().isEmpty()) {
-            String note = bond.note();
-            float noteRoom = (w - PAD * 2) / 0.8F;
-            if (font.width(note) > noteRoom) note = font.plainSubstrByWidth(note, Math.max(10, (int) noteRoom - font.width("…"))) + "…";
-            cv.textF(note, PAD, 34, 0xFF000000 | Glass.LABEL, false, 0.8F);
+        // how far off its trust is, or what it's doing (two lines at most)
+        for (int k = 0; k < NOTE.length; k++)
+            if (!NOTE[k].isEmpty()) cv.textF(NOTE[k], PAD, 34 + k * 8, 0xFF000000 | Glass.LABEL, false, 0.8F);
+    }
+
+    /** Splits a note into {@link #NOTE}, two lines of {@code room} at most, the second cut short when it still runs over. */
+    private static int wrap(Font font, String note, int room) {
+        NOTE[0] = NOTE[1] = "";
+        if (note.isEmpty()) return 0;
+        if (font.width(note) <= room) {
+            NOTE[0] = note;
+            return 1;
         }
+        int cut = font.plainSubstrByWidth(note, room).length(), space = note.lastIndexOf(' ', cut);
+        if (space <= 0) space = cut;
+        NOTE[0] = note.substring(0, space);
+        String rest = note.substring(space).strip();
+        NOTE[1] = font.width(rest) <= room ? rest : font.plainSubstrByWidth(rest, Math.max(10, room - font.width("…"))) + "…";
+        return 2;
+    }
+
+    private static String capital(String s) {
+        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    /** Vanilla's name tag stays off a creature while its kin plate shows: the plate already carries the name. */
+    static void nameTag(RenderNameTagEvent.CanRender e) {
+        if (on() && isPicked(e.getEntity().getId())) e.setCanRender(net.minecraft.util.TriState.FALSE);
     }
 
     /** A small diamond, 5 units across. */

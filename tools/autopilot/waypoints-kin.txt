@@ -75,16 +75,17 @@ wait 140
 screen close
 wait 20
 screen close
-# a wild Lampwing hovering over the field, looked at from 4 blocks south
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+# a wild Lampwing hovering over the field, looked at from 4 blocks south (each kin comes from the yard's middle)
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~ ~ ~
 cmd awaken admin kin summon lampwing
-wait 10
 cmd data merge entity @e[type=awaken:kin_lampwing,limit=1,sort=nearest] {NoAI:1b}
 cmd execute at @e[type=awaken:kin_lampwing,limit=1,sort=nearest] run tp @s ~ ~-2 ~4 180 -10
 wait 40
 shot wk_10_kin_plate_wild_lampwing
 cmd kill @e[type=awaken:kin_lampwing]
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~ ~ ~
 cmd awaken admin kin gnaw mossback
-wait 10
 cmd data merge entity @e[type=awaken:kin_mossback,limit=1,sort=nearest] {NoAI:1b}
 cmd execute at @e[type=awaken:kin_mossback,limit=1,sort=nearest] run tp @s ~ ~ ~5 180 10
 wait 40

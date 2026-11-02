@@ -272,7 +272,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             if (age > marks) {
                 legend(g, mc, atlas, mouseX, mouseY);
                 card.draw(g, font, atlas, this::screenAt, x0, y0, x1, y1, age, mouseX, mouseY);
-                if (!card.isOpen()) hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1);
+                if (!card.isOpen() && !destination.hasPick()) hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1); // a card names its place
             }
         }
         chrome(g, mc, x0, y0, x1, y1, mouseX, mouseY);

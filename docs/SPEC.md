@@ -16292,14 +16292,15 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   lantern edge (an ember edge and a darker fill when Gnawed); its name (the name you gave it, else its kind) with four bond
   diamonds after it, gold up to how close you and its kind are (Kinship's Wary, Curious, Friendly, Kin; none for a pet or a
   mount); the bond line; its health as a thin line in its kind's colour, amber and breathing at a third or less; a note
-  under it. It grows in over 4 ticks.
+  under it (two lines at most). It grows in over 4 ticks. Vanilla's name tag stays off it while its plate shows.
 - **The words** (server, `KinPlates.read`, sent as `kin_bond` when the client asks with `kin_read`: when a plate first
   shows and every 2 s while it shows, within 64 blocks): wild kin "Could live with you" (green) and how far off its trust is
   ("Help it three times and it will trust you.", "Two more helps ...", "One more help ...", "It trusts you. It will follow
   you home to a nook it likes.", or "It won't come near you. Not after what happened."); at home "Lampwing · lives with
   you" (or "lives with Ana") and what it's doing (the Hearth page's words); Gnawed "Gnawed" (ember) and "Beat it down and
   the Deep lets go of it."; a pet "Wolf · yours" or "Ana's", "sitting where it was told to"; a mount "your mount" or
-  "Ana's mount", "resting". The client puts the kind's name before a line that starts in lower case.
+  "Ana's mount", "resting". On a named one the client puts its kind before a line that starts in lower case ("Burrowbun
+  · lives with you"); an unnamed one's name is its kind, so its line just starts with a capital ("Lives with you").
 - **Naming** (the Hearth page's Your beasts card): "Give it a name" (or "Change its name") opens a small card, "NAME YOUR
   LAMPWING", 24 letters at most; Enter keeps it. The server (`kin_name`) lets only its keeper name it, cleans the name
   (chat's characters, spaces folded) and sets its custom name; an empty name takes it away. The card's title and the plate
