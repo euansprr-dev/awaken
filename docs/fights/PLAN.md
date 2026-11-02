@@ -7,8 +7,12 @@ spawn on you and you can't do anything about it. Both for beasts and bosses. And
 a better system in terms of fighting them so its EXTREMELY SATISFYING. Also make it so rank assessments are now
 increasingly more difficult bosses. Also all animations on par with fresh animations."
 
+Later the same day: "sometimes there is server lag when fighting and hits don't hit right away" (relayed by the
+orchestrator, who asked for it to be measured and fixed early).
+
 This is a plan. Nothing is built. Evidence: `tools/sim/reach_sim.py` (new, a planning harness), its table in
-`docs/fights/reach-2026-11-02.md`, and `tools/sim/combat_sim.py` (200 seeds a cell). The approval page carries the same
+`docs/fights/reach-2026-11-02.md`, `tools/sim/combat_sim.py` (200 seeds a cell), and the GameTest `fights_tick_cost`
+(new, a measurement: `mobs/entity/FightCostTests.java`). The approval page carries the same
 plan in short: `docs/fights/page.html`, https://claude.ai/artifact/3YkJKH1GwpQdZx6notb19E
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -20,6 +24,8 @@ Reassessment. You want each one to feel like the best action games: you see ever
 answer you chose pays off, and you win because you read the fight, not because you had more health.
 
 **What fails today** (section 2 has the numbers):
+- Your hit's impact, sound and freeze wait for the server's reply, so they come a beat after your blade lands, and any
+  server stall during the swing is added in full.
 - Most ranged attacks don't travel. They appear under you, or hit at once, with only coloured dust before.
 - Many have no class tell, so you can't tell a parry from a dash. Red, unparryable shots look like the parryable ones.
 - Nearly every area hit poisons, blinds, slows or lifts you, and some of those land even when your dodge evaded the hit.
@@ -30,6 +36,8 @@ answer you chose pays off, and you win because you read the fight, not because y
   the first three bosses has been seen in game.
 
 **What success looks like (the contract).**
+- *Your hit lands when your blade does.* The impact, sound, sparks and freeze play on the frame your blade reaches the
+  foe, whatever the server is doing; the server still decides the damage.
 - *Every hit you take, you could have seen and answered.* Every ranged harm comes from something that leaves the
   attacker and travels, or is drawn on the ground first. An aimed attack stops following you at least half a second
   before it lands, and shows that it stopped. A dash at that moment gets you out of everything except waves, which you
@@ -102,6 +110,7 @@ something to see and a moment to act on.
 | Effects through a dodge | `root()`, `lift()`, `pull()`, `gust()` apply the effect or push before the hurt; `darkness()` never hurts at all | `Abilities.java` | Effect and push only with a landed hit |
 | Dodging doesn't save you | Aim follows until 5 ticks before the hit; clouds 3.0 wide outlast a 2.6 dash | lock table above | Lock at least 10 ticks before, shown; fields no wider than a dash |
 | Skill isn't paid | No boss recoil on a deflect; a deflected bolt just breaks; finishers capped at 8-12% of a Lord's health; posture only from deflects | `ArmsServer.releaseStopped`, `archetypes.json` bossCap, SPEC §25 | 4.4 |
+| "Hits don't hit right away" | Your hit's impact, sound and freeze play only on the server's reply; a press waits up to a tick in the server's queue; any stall in the wind-up is added in full | `ArmsPredict.onResult`; 26.3's `processPacketsAndTick`; 2.6 | Stage 0: the impact plays on your screen at once |
 | Fights feel like single blows | The fight (R3: phrases) was never built for any boss | `docs/bosses/ROLLOUT.md` Fight column "—"; single-blow phrases 52-100% (`baseline-2026-10-28.md`) | Phrases with openings |
 
 ### 2.3 Does skill win today?
@@ -139,7 +148,57 @@ exist). The bosses' look was judged "derpy/vanilla" at the showcase (28 Oct); th
 since and haven't been seen in game. Creatures: the remaining FA gaps are listed in `docs/creatures/HANDOVER.md`
 (vanilla-bodied fauna unverified under FA).
 
-### 2.6 What we keep
+### 2.6 Hits that land late
+
+**The server's tick in a fight.** `fights_tick_cost` (GameTest, headless server on the M4): a real survival player on
+a stone floor while a boss, a pack of gate monsters or both fight it, 200 ticks a case, the first 40 left out, every
+tick timed by the server's own measure (the one `/tick query` reads). The busiest case also ran under the server's
+section profiler (`run/fights-tick-profile.txt`).
+
+| Case | Mean ms a tick | p95 | Worst | Packets to the player a tick |
+|---|---|---|---|---|
+| The player alone | 0.64 | 1.18 | 7.3 | 0.1 |
+| The Mother of Spores | 1.62 | 2.66 | **91.5** (once) | 3.5 |
+| The Signal's Shadow | 0.46 | 1.36 | 2.8 | 0.7 |
+| The Drowned Archivist | 0.56 | 1.31 | 11.8 | 2.9 |
+| The Gearwright Colossus | 0.56 | 1.32 | 3.0 | 2.1 |
+| The Bell Warden | 0.25 | 0.69 | 3.6 | 6.2 |
+| 12 gate monsters | 0.96 | 2.58 | 4.5 | 22.3 |
+| The Mother of Spores and 12 gate monsters | 1.66 | 3.49 | 6.9 | 24.6 |
+
+A tick's budget is 50 ms. In the busiest case's profile the 13 fighters take 66% of the tick, each 4-7% (the Mother
+7%), and chunk polling 9%. Nothing stands out. The one stall, 91 ms, came when the first boss of the session appeared;
+the same boss appearing later stayed under 7 ms, so it's a first-use cost (loading), not the fight. **The fight's own
+work doesn't lag the server.** What can is everything this test doesn't have: the game's built-in server sharing the
+Mac with the client, new chunks being made, a save. I didn't read your play copy's log, which would show "Can't keep
+up!" lines if the server stalled during fights.
+
+**The path from your click to the hit** (read in the code and 26.3's sources):
+
+| Step | How long it waits | Where |
+|---|---|---|
+| The click is read | the next client tick, 0-50 ms (as in vanilla); your swing starts then | `InputEvent.InteractionKeyMappingTriggered` |
+| The press reaches the server | the start of the server's next tick, 0-50 ms (26.3 handles queued packets once, at the start of each tick) | `MinecraftServer.processPacketsAndTick` |
+| The strike | its wind-up in server ticks. A press still held waits at the hit until you let go (by design: a hold becomes a charge), at most the charge's 6 ticks and 4 more | `ArmsServer.moveTick` |
+| The hit's reply reaches your screen | the next frame, 0-17 ms | `Minecraft.runTick` |
+| The impact, sound, sparks and freeze | **only when that reply arrives** | `ArmsPredict.onResult` (HIT) |
+
+So on a healthy server your impact plays 0-67 ms after your blade reaches the foe (about 33 on average), and the freeze
+catches the blade already past it, which reads as a stutter after the hit. A server stall during the wind-up is added
+in full: one 100 ms tick in a 3-tick wind-up makes the hit 150-250 ms late.
+
+**The other way round.** The client plays a boss's swing on its own clock, which keeps running at 20 ticks a second
+while the server falls behind, then snaps back when the server's time arrives (every 20 server ticks). During a stall,
+a boss blow on screen lands before its damage does, and a parry timed to the picture comes early.
+
+**Not the cause:**
+- The bosses' delayed blows: 58 moves hold, all HEAVY, all at most 12 ticks (0.6 s), as SPEC §35 says.
+- The latency grace on blows aimed at you: zero on a near connection, so zero in single player (up to 3 ticks on a
+  remote server, by design, so a guard raised in time still meets the blow).
+- The packet cap (§28.9): it holds packets only when the server's queue takes more than 50 ms in one tick. It never
+  fired in the test, and it logs `[packetcap]` when it does.
+
+### 2.7 What we keep
 
 The four strike classes (`core.api.Strikes`: LIGHT, HEAVY, PERILOUS, GRAB) and their tells and sounds (`ArmsTells`);
 dodge, guard, deflect, block, Riposte, Slipcut, Resonance and the Art; posture with its strip on the plates; the kit
@@ -164,6 +223,22 @@ language in, the problem is deeper (the bodies or the AI), and we'd look at C fo
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 4. The design
+
+### 4.0 Hits land now (stage 0)
+
+- **Your hit plays on your screen at once.** On the frame your blade reaches a foe, the client checks the same reach and
+  arc the server uses (one rule in `ArmsRules`, shared by both sides) and plays the impact, sound, sparks, freeze and
+  the foe's flinch right then. The server still decides the damage. Its reply adds only what the client can't know (a
+  kill, a break, a cleave's other bodies) and never plays the impact twice. If the server finds the foe out of reach
+  after all (it moved in the last tick), that blow shows with no damage. That's rare, it's counted, and a small margin
+  on the client's reach keeps it under 1 in 50.
+- **The server keeps up, and says when it doesn't.** While a fight is on, any tick over 50 ms logs one line with its
+  length and what took it (the fight's own parts, timed; chunks; saving), so the next play session names the stall
+  instead of us guessing. The first-boss stall is found and loaded at start.
+- **Boss swings follow the server's real pace.** The client times the server from the time it sends every 20 ticks and
+  plays boss moves at that pace, so a blow you see land is a blow that lands, and a parry keeps its timing in a stall.
+- **The fight stays cheap.** `fights_tick_cost` becomes a budget: a boss and 12 monsters under 5 ms a tick on average
+  (three times that on CI's slower runners), so no later change makes fights the cause.
 
 ### 4.1 Five carriers: everything that hurts at range travels, or is drawn first
 
@@ -262,7 +337,7 @@ The six Wardens from GOALS.md part 2 (approved), built on this plan's rules and 
   says plainly what killed you (approved). A party at the level takes it together, and it scales.
 - **The reward**, a surprise each time: the rank, the gift the Journey moved into the fight (the Tether at D, your Path at
   C, the Unmade as your first General at B, Skyborn at A, the Court's doors at S, the Seed's door at Sovereign), and the
-  Warden's trophy for your Hall. (Decision 7 asks whether to add a fighting technique from each Warden.)
+  Warden's trophy for your Hall. (Decision 8 asks whether to add a fighting technique from each Warden.)
 - **The Great Bells** stay with the rank (`Bells.java` rings Tenor at D up to Bourdon at Sovereign). A Proving gives
   the rank, so its bell follows with no new drop call. The Ringer's "Tenor hangs free above the pit" is a scene in the
   hall; the bells session is told.
@@ -296,6 +371,8 @@ repo.
 - I6. Per boss: at most one signature effect, one summon move, two adds alive.
 - I7. Per boss: at least 40% of blows parryable (white-gold or amber), at least 20% red.
 - I8. Per boss: single-blow phrases at most 30% of what it starts; an opening after every phrase.
+- I9. Your own strike's impact never waits for the server; the server's word is final on damage.
+- I10. A boss and 12 monsters cost the server under 5 ms a tick on average (headless, M4).
 
 ### 4.10 What can go wrong
 
@@ -356,6 +433,9 @@ After:  phrase picked -> move, always classed -> tell (class colour + sound) -> 
 ## 6. Tests, gates and stages
 
 **Tests** (one per mechanism; local runs filtered, the full suite on CI):
+- `arms_hit_now`: the client's sweep and the server's agree on a grid of positions and aims (the shared rule), and a
+  predicted hit's impact isn't played again by the server's reply.
+- `fights_tick_cost`: the measurement above, with the I10 budget.
 - `fights_language`: walks all 41 move tables and every bestiary ability for I1, I3, I6, I7, I8.
 - `fights_carriers_seen`: each carrier is tracked by a nearby player from release to its end.
 - `fights_dash_escapes`: a test player dashes at the lock from a volley, a locked line and a leap, and is unhurt; a
@@ -370,6 +450,10 @@ After:  phrase picked -> move, always classed -> tell (class colour + sound) -> 
 
 **Stages** (each playable on its own; one CI tour each; nothing reaches build/awaken-v1 but through the orchestrator):
 
+0. **Hits land now.** Your hit plays on your screen at once, the lag watch, boss swings at the server's pace, the
+   fight budget. *Gate*: tests green; you feel it in game. About half a day to a day. It touches Arms' strike
+   prediction (`ArmsPredict`, `ArmsRules`, the sweep in `ArmsServer`), so the weapon-forge session hears which files
+   first.
 1. **See it coming** (every boss and beast at once). Carriers, the tell language, the lock, classes on every move, the
    effect rule, the new shot look, the beasts' told lunge. Same bosses, but nothing lands unseen. *Gate*: tests green,
    reach model 100%, CI tour of each carrier mid-flight. About 1-2 days.
@@ -382,7 +466,7 @@ After:  phrase picked -> move, always classed -> tell (class colour + sound) -> 
    fliers, giants), a close CI tour per batch, each Lord at its sim target. About 3-4 days.
 5. **The other five Wardens**, one at a time, each replacing its box trial when you've played it. About 1-2 days each.
 
-The order puts your biggest complaint first, proves "satisfying" on three bosses before touching 38, and brings the
+The order puts the late hits first (they spoil everything else), then your biggest complaint, proves "satisfying" on three bosses before touching 38, and brings the
 Ringer early because every player meets it at hour four. Times are rough builder time at the pace of the last weeks.
 
 **Rollback.** Each stage merges on its own; reverting a merge restores the old behaviour. Old box trials stay until
@@ -398,25 +482,29 @@ the vanilla-bodied fauna under FA.
 
 ## 7. Decisions for you
 
-1. **Everything that hurts you at range travels or is drawn first**, through the five carriers, and an aimed attack
+1. **Hits land now, first**: your hit's impact plays on your screen the moment your blade reaches the foe, with the
+   server still deciding the damage; a lag watch logs any fight tick over 50 ms and what took it; boss swings follow
+   the server's real pace. Built before anything else. *Recommended: yes.* (The other way: keep waiting for the
+   server's word, which is always right and always a beat late.)
+2. **Everything that hurts you at range travels or is drawn first**, through the five carriers, and an aimed attack
    locks visibly at least half a second before it lands. Marks-under-you become thrown volleys; instant rings become
    waves you jump or dash through. *Recommended: yes.*
-2. **What a parry beats**: white-gold = parry, block or dash; amber = parry or dash; red = dash or jump only. At least
+3. **What a parry beats**: white-gold = parry, block or dash; amber = parry or dash; red = dash or jump only. At least
    40% of each boss's blows parryable, at least 20% red. A deflected white-gold shot flies back into the boss's
    posture. *Recommended: yes.* (The other way: no shot can be parried, only dashed.)
-3. **Effects only from a landed hit**, one signature effect per boss on its signature moves, nothing through a dodge.
+4. **Effects only from a landed hit**, one signature effect per boss on its signature moves, nothing through a dodge.
    *Recommended: yes.* (The other way: no effects from bosses at all.)
-4. **The payoff**: deflects, perfect dodges and punishes fill the posture; a break drops the boss and your finisher is
+5. **The payoff**: deflects, perfect dodges and punishes fill the posture; a break drops the boss and your finisher is
    worth up to 15% of a Lord's health (8-12% today), with a recoil on every parry. *Recommended: yes.*
-5. **Difficulty**: keep blows that hurt and tune each Lord's health with the new sim to the approved targets, instead
+6. **Difficulty**: keep blows that hurt and tune each Lord's health with the new sim to the approved targets, instead
    of the never-applied lower-damage curve (which lets standing and trading beat 7 of 15 Lords). *Recommended: yes.*
-6. **The Provings ladder** as in 4.7: six Wardens in their own halls, each harder than its rank's Lords and the one
+7. **The Provings ladder** as in 4.7: six Wardens in their own halls, each harder than its rank's Lords and the one
    before, never announced; each box trial goes when its Warden passes your look. *Recommended: yes.*
-7. **The reward**: the rank, the Journey's gift and the Warden's trophy (as approved). Or also a **fighting technique**
+8. **The reward**: the rank, the Journey's gift and the Warden's trophy (as approved). Or also a **fighting technique**
    learnt from each Warden (the Ringer's: a perfect deflect that rings a bell and staggers what's near). *Recommended:
    the approved gifts and trophy; a technique each adds six new player moves to balance, better after the six exist.*
-8. **The order**: stage 1 for every boss and beast at once; then three pilots you play before the other 38; the Ringer
-   right after the pilots. *Recommended: yes.*
+9. **The order**: stage 0 first, then stage 1 for every boss and beast at once; then three pilots you play before
+   the other 38; the Ringer right after the pilots. *Recommended: yes.*
 
 Note for the gate-worlds session: a gate-world elite is also called the Ringer. The Warden keeps the name (the
 Journey's Great Fault is already named for it).

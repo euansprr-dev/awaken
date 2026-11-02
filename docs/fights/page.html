@@ -131,7 +131,7 @@ ul.tight { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 .case .row.after > span { color: var(--good); }
 
 /* stages */
-ol.stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: st; }
+ol.stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: st -1; }
 ol.stages li { counter-increment: st; display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
 ol.stages li::before { content: counter(st); font-family: var(--display); font-size: 2rem; font-weight: 700; color: var(--bronze); line-height: 1; }
 ol.stages li > div { display: grid; gap: 4px; min-width: 0; }
@@ -163,11 +163,30 @@ code { font-family: var(--mono); font-size: 0.85em; background: var(--bronze-sof
   <p class="col">Bosses, beasts and the rank Reassessments. Every hit you take should be something you saw coming and could
   answer; skill should pay out in a break and a finisher; each Reassessment should be one great fight, harder every rank.
   This is the plan. Nothing is built until you say yes.</p>
-  <div class="status"><span class="chip">41 bosses audited</span><span class="chip">395 ranged and effect attacks measured</span><span class="chip">5 stages, each playable</span><span class="chip rec">8 decisions at the bottom</span></div>
+  <div class="status"><span class="chip">41 bosses audited</span><span class="chip">395 ranged and effect attacks measured</span><span class="chip">6 stages, each playable</span><span class="chip rec">9 decisions at the bottom</span></div>
 </header>
 
 <section>
   <blockquote>"Most projectiles seem like they just spawn on you and you can't do anything about it. Both for beasts and bosses."<footer>You, 2 Nov. The full ask is in <code>docs/fights/PLAN.md</code>.</footer></blockquote>
+</section>
+
+<section>
+  <div class="eyebrow">First: hits that land late</div>
+  <h2>Your hit waits for the server's reply</h2>
+  <blockquote>"Sometimes there is server lag when fighting and hits don't hit right away."<footer>You, 2 Nov, through the orchestrator.</footer></blockquote>
+  <p class="col">I timed every server tick while a boss, a pack of 12 gate monsters, or both fought a real (headless) player,
+  and followed a strike from your click to its impact in the code.</p>
+  <div class="facts">
+    <div class="fact"><div class="n">1.7 ms</div><p>is what a boss and 12 monsters cost the server a tick (3.5 ms in the worst 5% of ticks). The budget is 50. The fight itself doesn't lag the server.</p></div>
+    <div class="fact"><div class="n">0–67 ms</div><p>after your blade reaches the foe, its impact, sound and freeze play: they wait for the server's reply. The freeze then catches the blade already past it.</p></div>
+    <div class="fact"><div class="n">In full</div><p>Any stall in the built-in server during your swing (new chunks, a save, the Mac's cores shared with the client) is added to the hit. Bosses' swings on screen run ahead of their damage during a stall.</p></div>
+  </div>
+  <ul class="tight col">
+    <li><b>The fix:</b> your hit plays on your screen the frame your blade reaches the foe, by the same reach and arc the server uses. The server still decides the damage; its reply never plays the impact twice.</li>
+    <li>A lag watch logs any fight tick over 50 ms and what took it, so your next session names the stall. One stall I did see, 91 ms when the first boss of the session appeared, is a loading cost to remove.</li>
+    <li>Boss swings play at the server's real pace, so a blow you see land is a blow that lands.</li>
+    <li>Not the cause: the bosses' delayed blows (all HEAVY, all under 0.6 s), the latency grace (zero in single player) and the packet cap (it never fired).</li>
+  </ul>
 </section>
 
 <section>
@@ -403,8 +422,9 @@ code { font-family: var(--mono); font-size: 0.85em; background: var(--bronze-sof
 
 <section>
   <div class="eyebrow">Delivery</div>
-  <h2>Five stages, each one playable</h2>
+  <h2>Six stages, each one playable</h2>
   <ol class="stages">
+    <li><div><h3>Hits land now</h3><p>Your hit plays on your screen at once, the lag watch, boss swings at the server's pace, and a budget test so fights stay cheap.</p><p class="gate">Gate: tests green, then you feel it in game. About half a day to a day.</p></div></li>
     <li><div><h3>See it coming</h3><p>Carriers, the colour language, the lock, a class on every move, the effect rule and the beasts' told lunge, for every boss and beast at once.</p><p class="gate">Gate: tests green, every attack escapable at the lock in the reach model, a CI tour of each carrier mid-flight. About 1–2 days.</p></div></li>
     <li><div><h3>The duel, on three pilots</h3><p>The Bell Warden (a figure), the Glass Serpent (a serpent) and the Gearwright Colossus (a giant): phrases, openings, parry recoil, shots flying back, breaks and finishers, hit sounds, the six animation meters.</p><p class="gate">Gate: you play these three in game, then go or no-go for the rest. About 1–2 days.</p></div></li>
     <li><div><h3>The Ringer</h3><p>The first Proving and the Drowned Belfry, replacing the D box. Early, because every player meets it around hour four.</p><p class="gate">Gate: you play it. About 1–2 days.</p></div></li>
@@ -417,8 +437,9 @@ code { font-family: var(--mono); font-size: 0.85em; background: var(--bronze-sof
 
 <section>
   <div class="eyebrow">Your call</div>
-  <h2>Eight decisions</h2>
+  <h2>Nine decisions</h2>
   <div class="decisions">
+    <div class="dec"><div><h3>Hits land now, first</h3><p>Your hit's impact plays on your screen the moment your blade reaches the foe, with the server still deciding the damage. A lag watch logs any fight tick over 50 ms and what took it. Boss swings follow the server's real pace. Built before anything else.</p><p class="alt">The other way: keep waiting for the server's word, which is always right and always a beat late.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
     <div class="dec"><div><h3>Everything that hurts at range travels or is drawn first</h3><p>Five carriers; an aimed attack locks visibly at least half a second before it lands. Marks under you become thrown volleys; instant rings become waves you jump or dash through.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
     <div class="dec"><div><h3>What a parry beats</h3><p>White-gold: parry, block or dash. Amber: parry or dash. Red: dash or jump only. At least 40% of each boss's blows parryable, at least 20% red. A parried white-gold shot flies back into the boss's posture.</p><p class="alt">The other way: no shot can be parried, only dashed.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
     <div class="dec"><div><h3>Effects only from a landed hit</h3><p>One signature effect per boss, on its signature moves, never through a dodge or parry.</p><p class="alt">The other way: no effects from bosses at all.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
@@ -426,12 +447,12 @@ code { font-family: var(--mono); font-size: 0.85em; background: var(--bronze-sof
     <div class="dec"><div><h3>Difficulty by skill, not by less damage</h3><p>Keep blows that hurt and tune each Lord's health with the new sim to your approved targets, instead of the never-applied lower-damage curve that lets trading beat 7 of 15 Lords.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
     <div class="dec"><div><h3>The Provings ladder</h3><p>Six Wardens in their own halls, each harder than its rank's Lords and the one before, by the table above, never announced. Each box trial goes when its Warden passes your look.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
     <div class="dec"><div><h3>The reward</h3><p>The rank, the Journey's gift and the Warden's trophy, as approved.</p><p class="alt">Or also a fighting technique learnt from each Warden (the Ringer's: a perfect parry that rings a bell and staggers what's near). That's six new player moves to balance, better added once the six Wardens exist.</p><div><span class="chip rec">Recommended: the approved gifts and trophy</span></div></div></div>
-    <div class="dec"><div><h3>The order</h3><p>Stage 1 for every boss and beast at once; then the three pilots, which you play before the other 38; the Ringer right after the pilots.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>The order</h3><p>Stage 0 first, then stage 1 for every boss and beast at once; then the three pilots, which you play before the other 38; the Ringer right after the pilots.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
   </div>
 </section>
 
 <footer class="page">
-  <p>Evidence: <code>docs/fights/PLAN.md</code> (the full plan), <code>tools/sim/reach_sim.py</code> and its table <code>docs/fights/reach-2026-11-02.md</code>, <code>tools/sim/combat_sim.py --preset fixes</code> and <code>--preset recommended-hp</code> (200 fights a cell), on branch <code>claude/boss-fights-plan-73c5f2</code>.</p>
+  <p>Evidence: <code>docs/fights/PLAN.md</code> (the full plan), <code>tools/sim/reach_sim.py</code> and its table <code>docs/fights/reach-2026-11-02.md</code>, <code>tools/sim/combat_sim.py --preset fixes</code> and <code>--preset recommended-hp</code> (200 fights a cell), the GameTest <code>fights_tick_cost</code>, on branch <code>claude/boss-fights-plan-73c5f2</code>.</p>
   <p>Numbers come from models of the real data, not from play. Your playtest is the real check.</p>
 </footer>
 </div>
