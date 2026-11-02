@@ -329,7 +329,9 @@ outline and body step aside; nothing pauses the game):
 - **Force wards** (C: effect type `awaken:ward` {force, per_level}; our `LivingIncomingDamageEvent` listener, not
   vanilla's shared protection pool):
   - each worn piece takes 2.5% a level off that Force's damage. Only hits typed as a Force count (`core.Forces`' damage
-    types, which creatures' abilities already use through `Abilities`); melee is never warded;
+    types, which creatures' abilities already use through `Abilities`); melee is never warded. Boss fights confirmed a
+    kit boss's melee lands as `mobAttack` (`FightRunner`), and a themed boss's charges, leaps and slams are abilities, so
+    they're Force-typed and warded;
   - a whole suit takes at most 30% off one Force from ordinary creatures, and at most **20%** from anything banes skip
     (Lords, Wardens, guardians, sovereigns, named beasts), agreed with the boss-fights session (§8): their fights are
     tuned so a player who stands and trades wins at most 10% of the time, and 30% against a themed Lord's own Force
