@@ -257,8 +257,10 @@ LEFT = (-1.0, 0.0, -0.3)  # a working side toward the middle of the view
 DOWN = (0.0, -0.8, -0.6)
 
 HOLDS = {
-    # one hand, the blade up and forward to the left, an edge down toward the foe (a cleaver's own), its flat to the side
-    "longsword": dict(yaw=18, pitch=52, roll=90, grip=(0.02, 0.0, 0.02), cut=DOWN),
+    # one hand, the blade up and forward to the left, an edge down toward the foe (a cleaver's own); turned an eighth
+    # further than the quarter (roll 135) so the blade's face and the guard's spread show, never the guard's end on (the
+    # weapon audit, Euan 2026-11-02: "the two blocky things at the bottom look very, very chunky")
+    "longsword": dict(yaw=18, pitch=52, roll=135, grip=(0.02, 0.0, 0.02), cut=DOWN),
     # en garde: the point forward at the target's height, the hand a little in
     "rapier": dict(yaw=20, pitch=18, roll=90, grip=(-0.04, 0.03, -0.02)),
     # two hands at the middle, the edge down toward the target, the point at it (chudan)

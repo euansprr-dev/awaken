@@ -6646,8 +6646,10 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
   Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
   and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
-  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. Longsword up and forward to the left (18 left, 52
-  up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the middle (10, 36);
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. The Longsword
+  is turned an eighth further (roll 135, the weapon audit below), so its blade's face and its guard's spread show.
+  Longsword up and forward to the left (18 left, 52 up); Rapier en garde, the point forward at the target's height
+  (20, 18); Katana two-handed at the middle (10, 36);
   Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
   blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
   across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
@@ -7432,7 +7434,12 @@ against it, so a vanilla item plays its designed tempo).
   six are about 36 texels, the blade 25 of it (y 5 to 30), the grip 5 (y -2 to 3), the guard at most 11 across (wings
   and crowns 14) with its ornaments out to the sides and about 4 up the blade (never beside its root), and nothing
   on the hilt deeper than 5 (a stone and its frame 6); each tier keeps its materials, story and motifs. The hold is
-  unchanged (re-solved, it is the same transform: the grip's point is fixed), so the baked swings are untouched.
+  turned an eighth further about the blade (roll 90 to 135, decision 2 of the audit): at 90 the guard showed its end
+  on (the "blocky things"); at 135 the blade shows its face and the guard spreads across, the edge still down and
+  forward toward the foe (37 degrees off the cut, was 20). The Longsword's swings are baked again from the new hold
+  (`anim_lab.py bake`, the third-person wrists kept); in the lab every blow leads with the edge as well or better
+  (0.85 to 0.98, was 0.71 to 0.98). If it reads better in the game, the Greatblade, Axe, Katana and Glaive get the
+  same turn in their batches (the Daggers and Scythe are dagger-scythe's).
 - **Proportions per style** (the audit's rules; Euan 2026-11-02 approved the whole plan, "Go ahead with the whole
   plan"; each line lands with its batch, in texels): every style keeps the hilt off the blade's root, nothing near the
   hand deeper than the working part, one framed stone as the focus, and no two weapons with one outline.
