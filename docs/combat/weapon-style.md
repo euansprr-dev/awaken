@@ -40,7 +40,8 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    - **Greatblade:** about 38 long, 9–11 wide, an 8-long two-hand grip, a narrow banded ricasso ending in parrying
      lugs, and each tier's own outline: a slab, a hook, a window, a flamberge, a fork or a crown.
    - **Rapier:** a 3-wide needle stepping to a 1-wide point, about 33 long, with a swept, cup or ring hilt.
-   - **Daggers:** about 16 long, a wide-backed or curved blade about 9 long, and a knuckle guard.
+   - **Daggers:** about 18 long, a wide-backed or curved blade about 11 long (the curved ones about 16, the curve
+     carrying the length), and a knuckle guard.
    - **Katana:** a curved blade of whole-angle turned links (`chain` with a stagger), a hamon line of the tier's
      accent, a disc tsuba, and a 9-long tsuka in diamond wrap.
    - **Twinblades:** two blades from a central grip with a hub. The far blade is `spin`-turned half round so its edge

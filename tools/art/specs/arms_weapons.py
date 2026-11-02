@@ -1757,17 +1757,17 @@ DESIGNS.update({("rapier", "E"): wildhide_rapier, ("rapier", "D"): beastbound_ra
 HOLDS["rapier"] = ([0, -72, 30], [-1.5, -1.0, -0.6], 0.48)
 
 
-# ---- Daggers: short and quick, about 15 texels: a wide-backed or curved blade about 9 long, a knuckle guard round
-# the hand ------------------------------------------------------------------------------------------------------------
+# ---- Daggers: short and quick, about 18 texels: a wide-backed or curved blade about 11 long (the weapon audit: 16 with
+# a 9 blade read small beside everything else), a knuckle guard round the hand ---------------------------------------
 
 def wildhide_daggers():
     """The Wildhide Daggers (E): a skinning knife of knapped flint, thick and straight along its back, its pale edge
     sweeping up to a point at the back; lashed with sinew; an antler tine bent round the knuckles for a guard; a bone
     grip wound in hide; an amber nub."""
-    B = [VX.slab(-2.5, 0.5, 3, 9, 3, "flint", "blade"), VX.slab(-2.5, 2.5, 3, 9, 1, "flint_edge", "blade"),
-         VX.slab(-2.5, -0.5, 9, 10, 3, "flint", "blade"), VX.slab(-2.5, 1.5, 9, 10, 1, "flint_edge", "blade"),
-         VX.slab(-2.5, -1.5, 10, 11, 3, "flint", "blade"), VX.slab(-2.5, 0.5, 10, 11, 1, "flint_edge", "blade"),
-         VX.slab(-2.5, -1.5, 11, 12, 1, "flint_edge", "blade")]
+    B = [VX.slab(-2.5, 0.5, 3, 11, 3, "flint", "blade"), VX.slab(-2.5, 2.5, 3, 11, 1, "flint_edge", "blade"),
+         VX.slab(-2.5, -0.5, 11, 12, 3, "flint", "blade"), VX.slab(-2.5, 1.5, 11, 12, 1, "flint_edge", "blade"),
+         VX.slab(-2.5, -1.5, 12, 13, 3, "flint", "blade"), VX.slab(-2.5, 0.5, 12, 13, 1, "flint_edge", "blade"),
+         VX.slab(-2.5, -1.5, 13, 14, 1, "flint_edge", "blade")]
     B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "sinew", "lashing"))
     B += bow("antler", 3.0, 2.5, -2.5, depth=2)
     B.append(grip(-2, 2, "bone_grip"))
@@ -1795,7 +1795,7 @@ def gatewrought_daggers():
     """The Gatewrought Daggers (C): a wide squared blade of gate-steel, its edges mirror-honed, the circuit lit up its
     rib; its guard a little gate: a squared brass bow from the cross-bar round the hand to the pommel; a slate grip; a
     signal crystal."""
-    B = blade([(3, 9, 5, 1), (9, 10, 3, 1), (10, 11, 1, 1)], "slate_rib", "slate_flat", span=(3, 10), column=0, branch=1)
+    B = blade([(3, 12, 5, 1), (12, 13, 3, 1), (13, 14, 1, 1)], "slate_rib", "slate_flat", span=(3, 13), column=0, branch=1)
     B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "brass", "bar"))
     B += [VX.slab(3.5, 4.5, -3, 3, 1, "brass", "bow"), VX.slab(1.5, 3.5, -3, -2, 1, "brass", "bow_foot")]
     B.append(grip(-2, 2, "slate_grip"))
@@ -1823,7 +1823,7 @@ def veilwoven_daggers():
 def lordscale_daggers():
     """The Lordscale Daggers (A): a broad leaf of black scale, a gold ridge up it, its edges molten gold; a gold claw
     for its guard, two talons curling down over the knuckles; a black-scale grip; the pearl for a pommel."""
-    B = blade([(3, 8, 5, 3), (8, 10, 3, 1), (10, 11, 1, 1)], "lord", "ember_edge", span=(3, 11))
+    B = blade([(3, 11, 5, 3), (11, 13, 3, 1), (13, 14, 1, 1)], "lord", "ember_edge", span=(3, 14))
     B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "gold", "guard"))
     for k, x in enumerate((2.5, 3.5)):
         B += chain(x, 2.5, [(150, 2, 1, 2 - k, "gold"), (185, 3, 1, 2 - k, "gold"), (215, 2, 1, 2 - k, "gold")], f"talon{k}",
@@ -1831,7 +1831,7 @@ def lordscale_daggers():
     B.append(grip(-2, 2, "lord_grip"))
     B.append(VX.slab(-1.5, 1.5, -5, -2, 3, "pearl_gem", "pearl"))
     anchors = [((0, -3.5, 0), 1.6, RAMPS["pearl"][4], 1)]
-    streams = [(EMBER, RAMPS["ember"][6], 3, 0.1, [(side * 2.5, y + 0.5, 0.0) for y in (3, 5, 7)]) for side in (-1, 1)]
+    streams = [(EMBER, RAMPS["ember"][6], 3, 0.1, [(side * 2.5, y + 0.5, 0.0) for y in (3, 6, 9)]) for side in (-1, 1)]
     return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7, streams=streams)
 
 
@@ -1839,7 +1839,7 @@ def sovereign_daggers():
     """The Sovereign Daggers (S): an ivory blade edged in gold, a short crimson channel up it where three runes burn; a
     crown for a guard, its points rising; a gold knuckle bow; the crimson stone in a gold diamond at the guard; a
     void-weave grip; a small gold star."""
-    B = blade([(3, 9, 5, 3), (9, 11, 3, 1), (11, 12, 1, 1)], "ivory", "gold_edge", span=(4, 10), column=0)
+    B = blade([(3, 11, 5, 3), (11, 13, 3, 1), (13, 14, 1, 1)], "ivory", "gold_edge", span=(4, 12), column=0)
     B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "gold", "crown"))
     for x in (-3.0, 3.0):
         B.append(VX.rbox((x, 3.4, 0), (1, 1, 2), 45, "gold", f"point{x}"))
@@ -1850,7 +1850,7 @@ def sovereign_daggers():
     B.append(VX.slab(-1.5, 1.5, -4, -2, 2, "gold", "star"))
     B.append(VX.rbox((0, -3.0, 0), (2, 2, 4), 45, "gold", "star_turned"))
     anchors = [((0, 2.5, 0), 1.2, RAMPS["crimson"][5], 1)]
-    streams = [(MOTE, RAMPS["crimson"][6], 2, 1.0, [(0, 2.5, 0)]), (MOTE, RAMPS["gold"][6], 1, 0.2, [(0, 4.5, 0.0), (0, 9.5, 0.0)])]
+    streams = [(MOTE, RAMPS["crimson"][6], 2, 1.0, [(0, 2.5, 0)]), (MOTE, RAMPS["gold"][6], 1, 0.2, [(0, 4.5, 0.0), (0, 11.5, 0.0)])]
     return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-2, 2), focus=(0, 4), zoom=1.7, streams=streams)
 
 

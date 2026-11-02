@@ -7433,6 +7433,12 @@ against it, so a vanilla item plays its designed tempo).
   and crowns 14) with its ornaments out to the sides and about 4 up the blade (never beside its root), and nothing
   on the hilt deeper than 5 (a stone and its frame 6); each tier keeps its materials, story and motifs. The hold is
   unchanged (re-solved, it is the same transform: the grip's point is fixed), so the baked swings are untouched.
+- **Proportions per style** (the audit's rules; Euan 2026-11-02 approved the whole plan, "Go ahead with the whole
+  plan"; each line lands with its batch, in texels): every style keeps the hilt off the blade's root, nothing near the
+  hand deeper than the working part, one framed stone as the focus, and no two weapons with one outline.
+  - Longsword: about 36, the blade 25, the guard at most 11 (wings 14), at most 5 deep (a stone 6).
+  - Daggers: about 18, a blade about 11 (y 3 to 14 over a 4 grip); the curved Beastbound and Veilwoven stay about 16,
+    their curve carrying the length. The Hive Regent's Sting is already 21 with a 13 sting, so it stays.
 - **Hilt cuts** (the generated `ArmsHilts.CUTS`, for the War Anvil, §46.3): for each sword-like weapon (Longsword,
   Greatblade, Rapier, Daggers, Katana), where its blade, guard and grip begin along its mesh, {blade, guard, grip, 0}
   in the mesh's own along (0 the pommel's end, 1 the point): the blade's lowest corner (its back, teeth and ricasso
