@@ -1,10 +1,12 @@
 package dev.awaken.arms.anvil.client;
 
+import dev.awaken.arms.LordForged;
 import dev.awaken.arms.anvil.AnvilSong;
 import dev.awaken.arms.anvil.AnvilWork;
 import dev.awaken.arms.anvil.WarAnvilBlock;
 import dev.awaken.arms.anvil.WarAnvilBlockEntity;
 import dev.awaken.arms.client.WeaponDraw;
+import dev.awaken.core.Forces;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -84,6 +86,8 @@ final class AnvilScene {
         /** Whose song it is (its marks) and the strike after which it's turned over: the work's, not moved by set or mix. */
         AnvilSong.Song song = AnvilSong.song("longsword");
         int flipAt = AnvilSong.song("longsword").flipAfter();
+        /** Attuning (§46.8): every tap lands on the guard, driving the stone home. */
+        boolean guard;
 
         Lay set(Lay o) {
             at.set(o.at);
@@ -250,6 +254,13 @@ final class AnvilScene {
         /** The blade is in the water, hot: steam rises from here. */
         boolean steam;
         final Vector3f steamAt = new Vector3f();
+        /** The glow's colour while it's worked (the shader's x bits 8-14: a Force's as its stone is set, a Lord's as it's reforged; 0 the Forge's). */
+        int glow;
+        /** Attuning: the catalyst set in the guard (block-relative), how big it's drawn, and its Force. */
+        boolean hasGem;
+        final Vector3f gemAt = new Vector3f();
+        float gemScale;
+        int gemForce;
     }
 
     private static final Quaternionf FRAME = new Quaternionf();
@@ -274,6 +285,8 @@ final class AnvilScene {
         out.mainW = out.offW = 0F;
         out.steam = false;
         out.stone = false;
+        out.glow = 0;
+        out.hasGem = false;
         eye(pos, mine);
         if (w == null) {
             // the tools back on the peg; your hands on the hilt while you draw it
@@ -292,10 +305,15 @@ final class AnvilScene {
         out.hasWork = true;
         out.work.song = w.song;
         out.work.flipAt = w.memory() ? Integer.MAX_VALUE : w.song.flipAfter();
+        out.work.guard = w.kind == AnvilWork.ATTUNE;
         out.stone = w.hand();
         AnvilShape sh = AnvilShape.of(w.weapon);
         float blade = sh.cut[0];
-        out.cut = blade; // the blade alone until the hilt
+        boolean whole = w.whole();
+        // the blade alone until the hilt; a weapon worked again is whole from the start
+        out.cut = whole ? sh.cut[sh.cut.length - 1] : blade;
+        // a Lord-forged weapon reforged glows in its Lord's colour (its accent), not the Forge's
+        if (w.kind == AnvilWork.REFORGE && LordForged.byWeapon(w.weapon) != null) out.glow = 15 << 8 | 7 << 12;
         float t = now - w.stageStart;
         int n = mine ? Math.max(struck, w.beats().size()) : w.beats().size();
         Direction mouth = forgeMouth(level, w.forge);
@@ -310,15 +328,15 @@ final class AnvilScene {
             }
             case AnvilSong.SHAPE -> {
                 int of = w.beatsNeeded(), flipAt = out.work.flipAt;
-                float d = AnvilSong.drawn(n, of), flip = n >= flipAt ? 1F : 0F;
-                if (mine && n == blowBeat + 1 && now - blowAt < DOWN + 3F) {
+                float d = whole ? 1F : AnvilSong.drawn(n, of), flip = n >= flipAt ? 1F : 0F;
+                if (mine && !whole && n == blowBeat + 1 && now - blowAt < DOWN + 3F) {
                     // the strike just landing moves the metal: drawn out a step, and the one at half turns it over
                     float k = Mth.clamp((now - blowAt - DOWN) / 3F, 0F, 1F);
                     d = AnvilSong.drawn(n - 1, of) + (d - AnvilSong.drawn(n - 1, of)) * k;
                 }
                 if (mine && n == flipAt && blowBeat == flipAt - 1)
                     flip = Mth.clamp((now - blowAt - DOWN - 3F) / 6F, 0F, 1F);
-                onAnvil(FRAME, sh, d, flip, false, out.work);
+                onAnvil(FRAME, sh, d, flip, whole, out.work);
                 if (w.scores.isEmpty() && t < GLIDE) {
                     // carried from the fire on a short arc
                     inForge(pos, w.forge, mouth, sh, L1);
@@ -358,7 +376,7 @@ final class AnvilScene {
                 }
             }
             case AnvilSong.QUENCH -> {
-                onAnvil(FRAME, sh, 1F, 1F, false, L1);
+                onAnvil(FRAME, sh, 1F, 1F, whole, L1);
                 overTrough(FRAME, sh, L2);
                 out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.15F);
                 float plunged = mine && !Float.isNaN(plungeAt) ? plungeAt - w.stageStart : w.plunge;
@@ -382,11 +400,25 @@ final class AnvilScene {
                 if (w.plunge >= 0F) inTrough(FRAME, sh, L1);
                 else overTrough(FRAME, sh, L1);
                 onAnvil(FRAME, sh, 1F, 0F, true, L2);
-                out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.15F);
-                out.cut = sh.cut[Math.min(n, AnvilSong.TAPS)];
-                // what heat it kept, fading
-                float front = w.held >= 0F ? 1F - (1F - blade) * AnvilSong.line(w.held) : 1F;
-                heat(out, 0.4F * Math.max(0F, 1F - t / 40F), front, true);
+                if (w.kind == AnvilWork.ATTUNE) {
+                    // straight from the fire: the stone set in the guard, sinking in with each tap, the steel taking its colour
+                    inForge(pos, w.forge, mouth, sh, L1);
+                    out.work.mix(L1, L2, Mth.clamp(t / GLIDE, 0F, 1F), 0.35F);
+                    float k = n / (float) AnvilSong.TAPS;
+                    heat(out, Math.max(0.25F, Math.max(0F, w.heat) * (1F - 0.5F * k)), blade - 0.02F, false);
+                    int force = Math.floorMod(w.target, Forces.Force.values().length);
+                    out.glow = (force + 1) << 8 | Math.round(2F + 5F * k) << 12;
+                    out.hasGem = true;
+                    out.gemForce = force;
+                    out.work.point(0F, sh.taps[0], 2.5F - 2F * k, out.gemAt);
+                    out.gemScale = 0.3F * (1F - 0.4F * k);
+                } else {
+                    out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.15F);
+                    out.cut = sh.cut[Math.min(n, AnvilSong.TAPS)];
+                    // what heat it kept, fading
+                    float front = w.held >= 0F ? 1F - (1F - blade) * AnvilSong.line(w.held) : 1F;
+                    heat(out, 0.4F * Math.max(0F, 1F - t / 40F), front, true);
+                }
                 // up the blade, clear of the hilt being seated
                 tongsAt(out, out.work, sh.root + 0.69F * (sh.tip - sh.root), dir(FRAME, 0.3F, 0.35F, -1F, T), mine, false);
                 if (mine) swing(out, now, n, TAP, AnvilSong.TAPS);
@@ -529,7 +561,7 @@ final class AnvilScene {
     static Vector3f target(Lay work, int mode, int k, Vector3f out) {
         AnvilShape sh = work.shape;
         if (mode == TAP) {
-            int i = Mth.clamp(k, 0, sh.taps.length - 1);
+            int i = work.guard ? 0 : Mth.clamp(k, 0, sh.taps.length - 1);
             return work.point(0F, sh.taps[i], i == 1 ? 1.5F : 2.5F, out);
         }
         if (mode == FLAKE) {

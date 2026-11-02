@@ -48,6 +48,7 @@ public final class AnvilClient {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AnvilPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onOpen(msg)));
             e.register(AnvilPayloads.Done.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onDone(msg)));
+            e.register(AnvilPayloads.Held.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.setScreen(new AnvilHeldScreen(msg))));
         });
         FirstPerson.world("arms_anvil", 200, AnvilHands::pose);
         FirstPerson.camera(AnvilCamera::active);
@@ -156,7 +157,7 @@ public final class AnvilClient {
         var lines = e.getToolTip();
         int at = Math.min(1, lines.size());
         lines.add(at++, Component.literal(f.line()).withColor(AnvilSong.Quality.of(f.quality()).colour & 0xFFFFFF));
-        if (!f.maker().isEmpty()) lines.add(at, Component.literal("Forged by " + f.maker()).withColor(0x6F8299));
+        if (!f.maker().isEmpty()) lines.add(at, Component.literal((f.reforged() ? "Reforged by " : "Forged by ") + f.maker()).withColor(0x6F8299));
     }
 
     // ---- shared ------------------------------------------------------------------------------------------------------

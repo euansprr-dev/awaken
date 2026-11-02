@@ -40,7 +40,6 @@ public final class ArmsModule {
         dev.awaken.arms.anvil.AnvilModule.init(modBus);
         Archetypes.all(); // fail fast on a broken timing table
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
-        ArmsForge.init();
         dev.awaken.core.api.ArmsApi.install(ArmsIssue.INSTANCE);
         // a weapon's tier as its rank, for enchanting's depth (SPEC §45.5); its forged quality comes with the War Anvil
         dev.awaken.core.api.ForgeHooks.reader(new dev.awaken.core.api.ForgeHooks.Reader() {
@@ -92,7 +91,7 @@ public final class ArmsModule {
         bus.addListener(ArmsPatterns::onServerTick);
         bus.addListener(ArmsIssue::onPlayerTick);
         bus.addListener(EventPriority.HIGH, ArmsForge::onUseBlock);
-        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> { ArmsForge.forget(e.getEntity().getUUID()); ArmsArmoury.forget(e.getEntity().getUUID()); ArmsStands.forget(e.getEntity().getUUID()); });
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> { ArmsArmoury.forget(e.getEntity().getUUID()); ArmsStands.forget(e.getEntity().getUUID()); });
         bus.addListener(EventPriority.HIGH, ArmsModule::onUseStartOff);
         bus.addListener(ArmsServer::onUseStart);
         bus.addListener(ArmsServer::onUseStop);

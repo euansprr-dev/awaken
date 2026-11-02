@@ -46,6 +46,7 @@ public final class AnvilModule {
         });
         r.playToClient(AnvilPayloads.Open.TYPE, AnvilPayloads.Open.STREAM_CODEC);
         r.playToClient(AnvilPayloads.Done.TYPE, AnvilPayloads.Done.STREAM_CODEC);
+        r.playToClient(AnvilPayloads.Held.TYPE, AnvilPayloads.Held.STREAM_CODEC);
     }
 
     private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
@@ -53,12 +54,34 @@ public final class AnvilModule {
     }
 
     private static void registerCommands() {
-        // dev and tours: /awaken arms anvil forge [weapon [memory]] (the Beastbound Longsword when none is named)
+        // dev and tours: /awaken arms anvil forge [weapon [memory]] (the Beastbound Longsword when none is named), and
+        // /awaken arms anvil held <temper|reforge|attune> with the weapon in your main hand (SPEC §46.8)
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("arms").then(Commands.literal("anvil").requires(AwakenCommands.admin())
                 .then(Commands.literal("forge").executes(c -> forge(c.getSource(), WarAnvil.WEAPON, false))
                         .then(Commands.argument("weapon", StringArgumentType.word())
                                 .executes(c -> forge(c.getSource(), StringArgumentType.getString(c, "weapon"), false))
-                                .then(Commands.literal("memory").executes(c -> forge(c.getSource(), StringArgumentType.getString(c, "weapon"), true))))))));
+                                .then(Commands.literal("memory").executes(c -> forge(c.getSource(), StringArgumentType.getString(c, "weapon"), true)))))
+                .then(Commands.literal("held")
+                        .then(Commands.literal("temper").executes(c -> held(c.getSource(), AnvilWork.TEMPER)))
+                        .then(Commands.literal("reforge").executes(c -> held(c.getSource(), AnvilWork.REFORGE)))
+                        .then(Commands.literal("attune").executes(c -> held(c.getSource(), AnvilWork.ATTUNE)))))));
+    }
+
+    /** Dev and tours: temper, reforge or attune the weapon in your main hand at the nearest War Anvil; says why not in the window's words. */
+    private static int held(net.minecraft.commands.CommandSourceStack src, int kind) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        if (!(p.level() instanceof ServerLevel level)) return 0;
+        WarAnvilBlockEntity be = nearest(level, p);
+        if (be == null) {
+            src.sendFailure(Component.literal("No War Anvil within " + WarAnvil.REACH + " blocks."));
+            return 0;
+        }
+        if (AnvilHeld.begin(p, level, be, kind)) return 1;
+        String why = "Hold one of your weapons, with the anvil free.";
+        if (dev.awaken.arms.ArmsItems.of(p.getMainHandItem().getItem()) != null && be.work() == null && be.slot().isEmpty())
+            for (AnvilPayloads.Option o : AnvilHeld.options(p, level, be.getBlockPos(), p.getMainHandItem())) if (o.kind() == kind) why = o.line();
+        src.sendFailure(Component.literal(why));
+        return 0;
     }
 
     /** Dev and tours: begin a weapon (or a blade alone) at the nearest War Anvil, as the Armoury's Forge it would; says why not. */

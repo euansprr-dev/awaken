@@ -29,9 +29,11 @@ public final class SmithMemory {
     @Nullable GlobalPos anvil;
     final Set<String> masterwork, forged;
     int best;
-    /** Whether the Hearth's Forge is in reach of that anvil, read at most every two seconds (not saved). */
+    /** Whether the Hearth's Forge is in reach of that anvil, where, and its Temper limit for them, read at most every two seconds (not saved). */
     long forgeAt = Long.MIN_VALUE;
     boolean forgeNear;
+    @Nullable BlockPos forgePos;
+    int forgeCap = 1;
 
     SmithMemory(@Nullable GlobalPos anvil, Set<String> masterwork, Set<String> forged, int best) {
         this.anvil = anvil;

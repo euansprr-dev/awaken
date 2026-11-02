@@ -7,8 +7,9 @@
 // flash (0..255: the glint, a perfect blow) with 256 added when the item has foil; bits 8-14 of x the enchantment light
 // on it now (SPEC §45.11): a palette index in 8-11 (0 none), how brightly it shows (0..7) in 12-14. With 512 added to y
 // it is metal in the making at the War Anvil (SPEC §46.3): x's low byte its heat, y's low byte the heat's front along
-// the blade, 1024 added while the quench cools it from the point. Bits 11-12 of y a forged flaw (SPEC §46.7: 1 a burnt
-// tip, 2 a brittle blade).
+// the blade, 1024 added while the quench cools it from the point; then x's bits 8-11 are the glow's colour instead (SPEC
+// §46.8: 1-5 a Force, 15 the accent) and 12-14 how much. Bits 11-12 of y a forged flaw (SPEC §46.7: 1 a burnt tip, 2 a
+// brittle blade).
 
 #include <minecraft:fog.glsl>
 #include <minecraft:dynamictransforms.glsl>

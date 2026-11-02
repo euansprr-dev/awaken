@@ -1,6 +1,7 @@
 package dev.awaken.arms.anvil;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.Forces;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.Goals;
 import dev.awaken.core.test.AwakenTests;
@@ -31,6 +32,9 @@ final class AnvilTests {
         AwakenTests.register("arms_anvil_costs", 20, AnvilTests::costs);
         AwakenTests.register("arms_anvil_hand", 40, AnvilTests::hand);
         AwakenTests.register("arms_anvil_memory", 40, AnvilTests::memory);
+        AwakenTests.register("arms_anvil_temper", 40, AnvilTests::temper);
+        AwakenTests.register("arms_anvil_attune", 40, AnvilTests::attune);
+        AwakenTests.register("arms_anvil_reforge", 40, AnvilTests::reforge);
     }
 
     /**
@@ -349,6 +353,171 @@ final class AnvilTests {
         }
         h.assertTrue(blades == 1 && iron == 1 && swords == 1, "broken: the blade and iron back, and the sword in the slot, got " + blades + ", " + iron + ", " + swords);
         h.succeed();
+    }
+
+    // ---- a weapon held to the anvil (SPEC §46.8) ------------------------------------------------------------------------
+
+    /**
+     * Temper: one heat as far as the pack reaches, each level's price summed (enough for III of a limit of IV goes to III;
+     * Oren's Mark starts a fresh one at II for II's price alone); the weapon leaves the hand into the work, a strike a
+     * level, the quench, and it stands in the slot tempered, its story as it was. Broken mid-work, the weapon and the price
+     * come back.
+     */
+    private static void temper(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        WarAnvilBlockEntity be = anvilByForge(h);
+        BlockPos pos = be.getBlockPos(), fire = WarAnvil.forge(level, pos);
+        ServerPlayer p = smith(h, pos, "anvil-temper", 13);
+        Rank rank = Progression.rank(p);
+        ItemStack weapon = new ItemStack(WarAnvil.item(WarAnvil.WEAPON));
+        WeaponForged story = new WeaponForged(WeaponForged.SCHEMA, AnvilSong.Quality.FINE.ordinal(), AnvilSong.NO_FLAW, "Oren", false, false, false);
+        weapon.set(AnvilContent.FORGED.get(), story);
+        h.assertTrue(!AnvilHeld.temperPlan(p, weapon, fire, 4).ready(), "nothing in the pack: it can't begin");
+        java.util.List<dev.awaken.hearth.Costs.Part> three = new java.util.ArrayList<>();
+        for (int l = 1; l <= 3; l++) three.addAll(AnvilHeld.price(l, rank));
+        for (var part : three) p.getInventory().add(new ItemStack(part.item(), part.count()));
+        AnvilHeld.TemperPlan t = AnvilHeld.temperPlan(p, weapon, fire, 4);
+        h.assertTrue(t.ready() && t.target() == 3 && t.line().contains("IV"), "enough for III of a limit of IV: to III, got " + t);
+        for (var part : three) h.assertTrue(total(t.price(), part.item()) == total(three, part.item()), "the three levels' prices summed: " + t.price());
+        p.getInventory().add(new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id("orens_mark"))));
+        AnvilHeld.TemperPlan marked = AnvilHeld.temperPlan(p, weapon, fire, 2);
+        var two = AnvilHeld.price(2, rank);
+        h.assertTrue(marked.target() == 2 && marked.price().size() == two.size() && two.stream().allMatch(x -> total(marked.price(), x.item()) == x.count()),
+                "Oren's Mark: a fresh one starts at II for II's price alone, got " + marked);
+
+        // the real Forge here has no Hearth behind it: a limit of I
+        p.getInventory().clearContent();
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, weapon.copy());
+        for (var part : AnvilHeld.price(1, rank)) p.getInventory().add(new ItemStack(part.item(), part.count()));
+        act(p, pos, AnvilPayloads.HELD, AnvilWork.TEMPER, 0F, 0F);
+        AnvilWork w = be.work();
+        h.assertTrue(w != null && w.kind == AnvilWork.TEMPER && w.stage == AnvilSong.HEAT && w.target == 1 && p.getMainHandItem().isEmpty()
+                && AnvilHeld.price(1, rank).stream().allMatch(x -> count(p, x.item()) == 0), "the weapon and the price go into the work");
+        pullInGold(h, p, be);
+        h.assertTrue(w.stage == AnvilSong.SHAPE && w.beatsNeeded() == 1, "a strike a level, got " + w.beatsNeeded());
+        beatOnTime(h, p, be, AnvilPayloads.STRIKE);
+        h.assertTrue(w.stage == AnvilSong.QUENCH, "then the quench");
+        quench(h, p, be);
+        ItemStack out = be.slot();
+        h.assertTrue(be.work() == null && out.is(WarAnvil.item(WarAnvil.WEAPON)) && Upgrades.temperOf(out) == 1 && story.equals(out.get(AnvilContent.FORGED.get())),
+                "it stands in the slot at Temper I, its story as it was: " + out.get(AnvilContent.FORGED.get()));
+        act(p, pos, AnvilPayloads.DRAW, 0, 0F, 0F);
+        h.assertTrue(p.getMainHandItem().is(WarAnvil.item(WarAnvil.WEAPON)) && Upgrades.temperOf(p.getMainHandItem()) == 1, "drawn into the hand");
+
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(WarAnvil.item(WarAnvil.WEAPON)));
+        for (var part : AnvilHeld.price(1, rank)) p.getInventory().add(new ItemStack(part.item(), part.count()));
+        act(p, pos, AnvilPayloads.HELD, AnvilWork.TEMPER, 0F, 0F);
+        h.assertTrue(be.work() != null, "a second begun");
+        level.removeBlock(pos, false);
+        Item paid = AnvilHeld.price(1, rank).getFirst().item();
+        int weapons = 0, back = 0;
+        for (ItemEntity e : level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(3))) {
+            if (e.getItem().is(WarAnvil.item(WarAnvil.WEAPON))) weapons += e.getItem().getCount();
+            if (e.getItem().is(paid)) back += e.getItem().getCount();
+        }
+        h.assertTrue(weapons == 1 && back == AnvilHeld.price(1, rank).getFirst().count(), "broken: the weapon and its price back, got " + weapons + ", " + back);
+        h.succeed();
+    }
+
+    /**
+     * Attune: a catalyst in the off hand names the Force; it and the price go into the work with the weapon, the heat, then
+     * three taps set the stone in the guard, and it stands in the slot attuned, its Mark kept. Held to the same Force again,
+     * it says so and won't begin.
+     */
+    private static void attune(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        WarAnvilBlockEntity be = anvilByForge(h);
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, pos, "anvil-attune", 13);
+        Forces.Force force = Forces.Force.FROST;
+        ItemStack weapon = new ItemStack(WarAnvil.item(WarAnvil.WEAPON));
+        String mark = dev.awaken.arms.Marks.all().getFirst().id();
+        dev.awaken.arms.Marks.put(weapon, dev.awaken.arms.Marks.Instance.EMPTY.withMark(mark));
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, weapon);
+        for (dev.awaken.arms.ArmsForge.Cost c : dev.awaken.arms.ArmsForge.attunePrice(force)) {
+            ItemStack s = new ItemStack(c.item(), c.n());
+            if (c.item() == dev.awaken.arms.ArmsForge.catalystItem(force)) p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, s);
+            else p.getInventory().add(s);
+        }
+        act(p, pos, AnvilPayloads.HELD, AnvilWork.ATTUNE, 0F, 0F);
+        AnvilWork w = be.work();
+        h.assertTrue(w != null && w.kind == AnvilWork.ATTUNE && w.stage == AnvilSong.HEAT && p.getMainHandItem().isEmpty() && p.getOffhandItem().isEmpty()
+                && count(p, CoreApi.ESSENCE_SHARD.get()) == 0, "the weapon, the catalyst and the price go into the work");
+        pullInGold(h, p, be);
+        h.assertTrue(w.stage == AnvilSong.HILT, "out of the heat straight to the guard");
+        for (int i = 0; i < 6 && be.work() == w; i++) beatOnTime(h, p, be, AnvilPayloads.TAP);
+        ItemStack out = be.slot();
+        var inst = dev.awaken.arms.Marks.of(out);
+        h.assertTrue(be.work() == null && inst.attunement().orElse(null) == force && inst.marks().equals(java.util.List.of(mark)), "attuned, its Mark kept: " + inst);
+        act(p, pos, AnvilPayloads.DRAW, 0, 0F, 0F);
+        p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, new ItemStack(dev.awaken.arms.ArmsForge.catalystItem(force)));
+        AnvilPayloads.Option row = AnvilHeld.options(p, level, pos, p.getMainHandItem()).get(2);
+        h.assertTrue(row.kind() == AnvilWork.ATTUNE && !row.ready() && row.line().startsWith("It's already attuned"), "the same Force again: " + row.line());
+        h.succeed();
+    }
+
+    /**
+     * Reforge: an E-rank weapon held and the D-rank parts in the pack, it's drawn out to the D-rank song and stands as the
+     * D-rank of its style, keeping its Mark, its Force, its name and its Temper, its story now reforged by its smith.
+     */
+    private static void reforge(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        WarAnvilBlockEntity be = anvilByForge(h);
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, pos, "anvil-reforge", 13);
+        ItemStack weapon = new ItemStack(WarAnvil.item("wildhide_daggers"));
+        String mark = dev.awaken.arms.Marks.all().getFirst().id();
+        dev.awaken.arms.Marks.put(weapon, dev.awaken.arms.Marks.Instance.EMPTY.withMark(mark).attuned(Forces.Force.HEAT));
+        weapon.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("Ashfang"));
+        Upgrades.applyTemper(weapon, 2);
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, weapon);
+        h.assertTrue(!AnvilHeld.options(p, level, pos, weapon).get(1).ready(), "without the D-rank parts it can't begin");
+        give(p, dev.awaken.arms.ArmsRaise.plan(p, weapon).needs());
+        act(p, pos, AnvilPayloads.HELD, AnvilWork.REFORGE, 0F, 0F);
+        AnvilWork w = be.work();
+        h.assertTrue(w != null && w.kind == AnvilWork.REFORGE && w.style.equals("daggers") && w.tier == 1 && !w.hand() && p.getMainHandItem().isEmpty(),
+                "begun as the D-rank, in the Forge's heat: " + (w == null ? null : w.style + " " + w.tier));
+        pullInGold(h, p, be);
+        for (int i = 0; i < 40 && w.stage == AnvilSong.SHAPE; i++) beatOnTime(h, p, be, AnvilPayloads.STRIKE);
+        h.assertTrue(w.stage == AnvilSong.QUENCH && w.scores.size() == w.song.strikes(), "the D-rank song's strikes, then the quench");
+        quench(h, p, be);
+        ItemStack out = be.slot();
+        WeaponForged f = out.get(AnvilContent.FORGED.get());
+        var inst = dev.awaken.arms.Marks.of(out);
+        h.assertTrue(be.work() == null && out.is(WarAnvil.item("beastbound_daggers")), "it stands as the Beastbound Daggers: " + out);
+        h.assertTrue(inst.marks().equals(java.util.List.of(mark)) && inst.attunement().orElse(null) == Forces.Force.HEAT
+                && "Ashfang".equals(out.getHoverName().getString()) && Upgrades.temperOf(out) == 2, "its Mark, Force, name and Temper kept: " + inst + ", " + Upgrades.temperOf(out));
+        h.assertTrue(f != null && f.reforged() && f.maker().equals(p.getGameProfile().name()) && f.flaw() == AnvilSong.NO_FLAW
+                && f.quality() == AnvilSong.Quality.FLAWLESS.ordinal(), "its story: reforged by its smith, struck true: " + f);
+        h.succeed();
+    }
+
+    /** An anvil with the Forge two blocks off. */
+    private static WarAnvilBlockEntity anvilByForge(GameTestHelper h) {
+        h.setBlock(new BlockPos(1, 1, 1), AnvilContent.ANVIL.get().defaultBlockState());
+        h.setBlock(new BlockPos(3, 1, 1), BuiltInRegistries.BLOCK.getValue(Awaken.id("forge")).defaultBlockState());
+        return (WarAnvilBlockEntity) h.getLevel().getBlockEntity(h.absolutePos(new BlockPos(1, 1, 1)));
+    }
+
+    private static void pullInGold(GameTestHelper h, ServerPlayer p, WarAnvilBlockEntity be) {
+        float gold = 0.65F * AnvilSong.HEAT_FULL;
+        be.work().stageStart = h.getLevel().getGameTime() - (long) gold;
+        act(p, be.getBlockPos(), AnvilPayloads.PULL, 0, gold, 0F);
+    }
+
+    /** Plunged, and lifted at the notch. */
+    private static void quench(GameTestHelper h, ServerPlayer p, WarAnvilBlockEntity be) {
+        AnvilWork w = be.work();
+        w.stageStart = h.getLevel().getGameTime() - 10;
+        act(p, be.getBlockPos(), AnvilPayloads.PLUNGE, 0, 10F, 0F);
+        w.stageStart = h.getLevel().getGameTime() - 42;
+        act(p, be.getBlockPos(), AnvilPayloads.LIFT, 0, 42F, 0F);
+    }
+
+    private static int total(java.util.List<dev.awaken.hearth.Costs.Part> parts, Item item) {
+        int n = 0;
+        for (var part : parts) if (part.item() == item) n += part.count();
+        return n;
     }
 
     /** A survival smith of this level in front of the anvil (a mock player is always creative, which forges for nothing). */

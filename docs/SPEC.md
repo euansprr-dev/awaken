@@ -17529,7 +17529,8 @@ forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-f
   story (made on the grid before the War Anvil, or Hale's issue) gains a Plain one, no maker, the first time it is held; a
   found weapon (Marked, or Lord-forged) never does.
 - **Flaws show on the weapon** (the weapon shader: UV1.y bits 11-12, 1 a burnt tip, 2 brittle; the renderer carries it
-  above the enchantment light's 7 bits in its state, so a hand, a frame, a stand or the anvil's slot all show it): a
+  above the enchantment light's 7 bits in its state, so a hand, a stand or the anvil's slot show it; an item frame, the
+  inventory and the ground draw the flat icon, which doesn't): a
   burnt tip darkens toward the point (the last third) into dull blue-grey scale; a brittle blade's metal is crazed
   mid-length with pale hairlines a texel wide (where a smooth noise over its texels changes sign), so they sit in the
   pixel art. Only on the metal; cosmetic. `mesh_render.py` doesn't draw them (it renders weapons unforged).
@@ -17579,3 +17580,60 @@ from memory is one strike and always Fine), `arms_anvil_song` (as before, on the
 making it twin-struck), `arms_anvil_goals` (grown: the rank step after the first weapon, and the Now line: its parts in
 the pack, nothing better of its style carried). `arms_recipe_unlock` is retired (no weapon recipes); `arms_armoury` and `arms_raise` read needs
 from the cost table.
+
+**46.8 Temper, attune and reforge at the anvil (stage 3; plan §4.6).** Use the War Anvil holding one of Arms' weapons
+(forged, Lord-forged, Marked, Hale's issue: whatever `ArmsItems.of` knows), with no work on it and nothing in its slot,
+and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three rows, each with
+what it costs (have and need), one button, and one plain line for what stands in the way. All three heat the metal, so
+each needs the Forge within reach at every tier ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks
+of this anvil."). The price is taken at the start, and the weapon goes from your hand into the work (`AnvilWork.piece`);
+both come back if the anvil is broken mid-work, and the weapon comes back through the slot, drawn as any.
+- **Temper it to IV**: one heat, as far as you can go. The target is the highest level up to the temper limit of the Forge
+  by the anvil (`HearthHooks.temperCap` at that Forge) whose prices you hold together: each level costs what it does at
+  the Forge (`Upgrades.temper(level, false)`, priced for your rank by `Costs.price`), summed. Oren's Mark lets a weapon
+  with no Temper start at its level for that level's price alone, as at the Forge. At the limit the line says why, in the
+  Forge's words ("Put an anvil and an armour stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
+  further.", "It can't take any more."). The scene (about 10 s whatever the levels): the whole weapon heats in the
+  Forge's mouth, one strike on the style's own beat for each level gained, the quench. Nothing is judged and nothing is
+  flawed: the Temper lands as paid, and the strikes ring as at the draw-out.
+- **Reforge it to C**: the next tier's parts (as Raise: the tier's cost, no Blueprint; `ArmsRaise.plan`), from the
+  tier's level. The scene (about 20 s): the whole weapon heats, the next tier's metal is folded in on the style's beat
+  (its strikes, turned over at half), the quench, the draw. Judged as a forging without the hilt
+  (`AnvilSong.reforgeScore`: 0.2 heat + 0.55 strikes + 0.15 quench, over 0.9; a burnt tip and a brittle blade as ever;
+  a helper's off-beats count). The weapon's story takes the new quality, flaw and smith, marked reforged ("Reforged by
+  Euan"); its Temper is the higher of what it had and the quality's starting Temper (held to the Forge's limit). Kept:
+  Marks, attunement, Art, name, Temper, enchantments and everything else written on it; its uses start fresh at the new
+  tier's (x1.25 in an Armoury room). A forged weapon becomes the next tier's of its style (`ArmsRaise.lift`:
+  `ItemStack.transmuteCopy`, then its damage and uses set back to the new weapon's own and its Temper put back on); a
+  Lord-forged weapon keeps its own body and Art and gains a point of damage a tier, as Raise always did, and its heat
+  glows in its Lord's colour (the weapon's accent) instead of the Forge's.
+- **Attune it to Heat** (a catalyst in the off hand): six essence, a Core Shard and the catalyst, as at the Forge
+  (`ArmsForge.attunePrice`). The scene (about 8 s): the whole weapon heats, the catalyst is set in the guard, and three
+  taps on the hilt's beat drive it home (all three at the guard), the blade glowing more in its Force's colour with each;
+  then it stands in the slot. Nothing is judged. Without a catalyst the row says which stone gives which Force; one
+  already attuned to that Force says so; attuning again replaces the old Force.
+- **The Forge points here**: a plain use of the Forge holding one of Arms' weapons says "Weapons are tempered at a War
+  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil."; the Armoury at the Forge no longer offers Raise.
+  Armour tempers at the Forge as before, and Oren still tempers anything you hand him.
+- **The Weapons tab**: two optional steps, each pointing at your anvil. "Temper your Beastbound Longsword"
+  (`arms/temper`) when the best of Arms' weapons you carry (the highest tier, then the lowest Temper) is below the limit
+  of the Forge by your War Anvil; its needs are the next level's price. "Reforge your Hive Regent's Daggers"
+  (`arms/reforge`) when you carry a found weapon (Marked or Lord-forged) below the best tier you've reached; its needs
+  are the next tier's parts.
+- **The card**: "Temper IV" ("Tempered from II to IV"), "Attuned" (what the Force now does, in a sentence), or the
+  reforged weapon's quality with "Reforged by Euan". Done flags add TEMPERED 8, ATTUNED 16, REFORGED 32.
+- **State**: `AnvilWork` schemaVersion 3 (+ `kind` TEMPER 2, ATTUNE 3, REFORGE 4; + `piece`, the weapon worked; +
+  `target`: the Temper level, the Force's ordinal, or the tier it reforges to); a v2 work reads with no piece.
+  `WeaponForged` schemaVersion 3 (+ `reforged`; a v2 story reads false). A Lord-forged weapon's tier is read from its
+  row of `ArmsData` (its name has no tier prefix).
+- **The weapon shader**: in the making (y bit 9), x bits 8-11 are the glow's colour (1 to 5 a Force, by
+  `Forces.Force` ordinal + 1; 15 the weapon's accent) and bits 12-14 how much of it; the enchantment light is off while
+  it's being worked. `mesh_render.py` doesn't draw it.
+- **The dev command** `/awaken arms anvil held <temper|reforge|attune>` begins one with the weapon in your main hand at
+  the nearest War Anvil within six blocks, or says what's missing in the window's words.
+
+Tests: `arms_anvil_temper` (one heat to the Forge's limit, the summed price taken, the levels struck, Temper applied; the
+weapon back through the slot; Oren's Mark's start; the Forge's plain use points to the anvil), `arms_anvil_attune` (the
+price and catalyst taken, attuned, Marks kept), `arms_anvil_reforge` (a Marked weapon: the next tier's, Marks, name,
+attunement and Temper kept, the story reforged with its quality; a Lord-forged: its body, Art and a point; the parts
+taken, and given back with the weapon when the anvil breaks mid-work).

@@ -14,12 +14,16 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -32,8 +36,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * The War Anvil drawn (SPEC §46.3): the work as the weapon's own mesh through the weapon shader's heat (in the Forge's
  * mouth, on the face drawn out strike by strike, in the trough, the hilt coming tap by tap), the hammer and tongs (in
- * the smith's hands, laid by, or on the peg), and a finished weapon standing hilt up in the slot, waking as it's set
- * there. Where each is: {@link AnvilScene}.
+ * the smith's hands, laid by, or on the peg), a catalyst being set in the guard while a weapon is attuned (§46.8), and
+ * a finished weapon standing hilt up in the slot, waking as it's set there. Where each is: {@link AnvilScene}.
  */
 public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlockEntity, WarAnvilRenderer.State> {
     public static final class State extends BlockEntityRenderState {
@@ -41,6 +45,10 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         @Nullable String weapon, slot;
         final AnvilScene.Lay slotLay = new AnvilScene.Lay();
         int forgeLight, slotFlash, slotEnergy, slotFlaw;
+        /** The catalyst being set in the guard (attuning), as vanilla draws the item. */
+        final ItemStackRenderState gem = new ItemStackRenderState();
+        final Quaternionf gemTurn = new Quaternionf();
+        boolean hasGem;
     }
 
     private static final Identifier HAMMER = Awaken.id("textures/item/arms/anvil_hammer.png"), TONGS = Awaken.id("textures/item/arms/anvil_tongs.png"),
@@ -48,7 +56,11 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
     private static final Matrix4f M = new Matrix4f();
     private static final Quaternionf FRAME = new Quaternionf();
 
-    public WarAnvilRenderer(BlockEntityRendererProvider.Context ctx) {}
+    private final ItemModelResolver items;
+
+    public WarAnvilRenderer(BlockEntityRendererProvider.Context ctx) {
+        this.items = ctx.itemModelResolver();
+    }
 
     @Override
     public State createRenderState() {
@@ -71,6 +83,12 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         if (level != null && be.work() != null) AnvilBodies.seen(level, be.getBlockPos(), be.work());
         AnvilWork w = be.work();
         s.weapon = w == null ? null : w.weapon;
+        s.hasGem = s.placed.hasGem;
+        if (s.hasGem) {
+            var catalyst = dev.awaken.arms.ArmsForge.catalystItem(dev.awaken.core.Forces.Force.values()[s.placed.gemForce]);
+            items.updateForTopItem(s.gem, new ItemStack(catalyst), ItemDisplayContext.FIXED, level, null, (int) be.getBlockPos().asLong());
+            AnvilScene.frame(be.getBlockState(), s.gemTurn);
+        }
         if (w != null && level != null && s.placed.inForge) {
             BlockState fs = level.getBlockState(w.forge);
             Direction face = fs.hasProperty(HorizontalDirectionalBlock.FACING) ? fs.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
@@ -97,10 +115,20 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             if (mesh != null) {
                 ps.pushPose();
                 ps.mulPose(p.work.matrix(M));
-                int x = p.heat < 0 ? 0 : p.heat, y = p.heat < 0 ? 0 : p.front | p.flags;
+                int x = p.heat < 0 ? 0 : p.heat | p.glow, y = p.heat < 0 ? 0 : p.front | p.flags;
                 WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.weapon)), p.inForge ? s.forgeLight : s.lightCoords, x, y, p.cut);
                 ps.popPose();
             }
+        }
+        if (s.hasGem) {
+            // lying in the guard, face up, sinking in with each tap; lit as if by the hot steel under it
+            ps.pushPose();
+            ps.translate(p.gemAt.x, p.gemAt.y, p.gemAt.z);
+            ps.rotate(s.gemTurn);
+            ps.rotate(com.mojang.math.Axis.XP.rotationDegrees(-90F));
+            ps.scale(p.gemScale, p.gemScale, p.gemScale);
+            s.gem.submit(ps, out, LightCoordsUtil.withBlock(s.lightCoords, 13), OverlayTexture.NO_OVERLAY, 0);
+            ps.popPose();
         }
         tool(ps, out, p.stone ? "anvil/stone_hammer" : "anvil/hammer", p.stone ? STONE : HAMMER, p.hammer, s.lightCoords);
         if (p.hasTongs) tool(ps, out, "anvil/tongs", TONGS, p.tongs, p.inForge ? s.forgeLight : s.lightCoords);

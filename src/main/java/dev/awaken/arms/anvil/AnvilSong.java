@@ -287,6 +287,11 @@ public final class AnvilSong {
         return 0.2F * heatScore(heat) + 0.55F * strikeMean * earlyFactor(heat) + 0.15F * quench + 0.1F * hilt;
     }
 
+    /** A reforging (§46.8) is judged as a forging without the hilt: the heat, the strikes and the quench, over their 0.9. */
+    public static float reforgeScore(float heat, float strikeMean, float quench) {
+        return (score(heat, strikeMean, quench, 0F)) / 0.9F;
+    }
+
     public static Quality quality(float score, boolean flaw) {
         Quality q = score >= 0.9F ? Quality.FLAWLESS : score >= 0.75F ? Quality.MASTERWORK : score >= 0.55F ? Quality.FINE : Quality.PLAIN;
         return flaw && q == Quality.FLAWLESS ? Quality.MASTERWORK : q;

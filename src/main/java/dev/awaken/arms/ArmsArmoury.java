@@ -114,8 +114,9 @@ public final class ArmsArmoury {
                 if (h != null && (lowest == null || h.rank().ordinal() < lowest.ordinal())) lowest = h.rank();
             }
         }
+        // Raise is a reforging at a War Anvil now (SPEC §46.8): the Forge's door no longer offers it
         return new ArmsPayloads.ArmouryView(door, essence, out, hidden, lowest == null ? "" : lowest.label, ArmsProgress.of(p).tracked, open,
-                door == FORGE ? ArmsRaise.status(p) : "", finds(p));
+                "", finds(p));
     }
 
     /** What the fighter has found: the Lord-forged weapons they hold of the fifteen, and when the next Lord is certain to carry one. */
@@ -159,7 +160,7 @@ public final class ArmsArmoury {
         return best;
     }
 
-    static int tierIndex(String tier) {
+    public static int tierIndex(String tier) {
         for (int i = 0; i < TIERS.length; i++) if (TIERS[i].equals(tier)) return i;
         return -1;
     }
@@ -276,12 +277,6 @@ public final class ArmsArmoury {
                     g.tracked = st.id() + ":" + TIERS[t];
                     p.setData(ArmsContent.PROGRESS, g);
                     dev.awaken.core.api.TrailsApi.unfollow(p); // the task card is one thing at a time
-                    sendView(p);
-                }
-            }
-            case RAISE -> {
-                if (door == FORGE && ArmsRaise.raise(p)) {
-                    OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), null));
                     sendView(p);
                 }
             }

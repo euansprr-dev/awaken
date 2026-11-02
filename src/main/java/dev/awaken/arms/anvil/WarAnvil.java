@@ -84,6 +84,8 @@ public final class WarAnvil {
             Signal.send(p, n.ttl(20 * 10).build());
             return;
         }
+        // one of Arms' weapons in hand: its window (temper, reforge, attune; §46.8), the Armoury a button away
+        if (AnvilHeld.open(p, level, be)) return;
         ArmsArmoury.openAnvil(p, be.getBlockPos());
     }
 
@@ -292,6 +294,13 @@ public final class WarAnvil {
             case AnvilPayloads.DRAW -> {
                 if (w == null) draw(p, be);
             }
+            case AnvilPayloads.HELD -> {
+                // refused, the window comes again with its lines as they are now
+                if (!AnvilHeld.begin(p, level, be, a.a()) && be.work() == null && be.slot().isEmpty()) AnvilHeld.open(p, level, be);
+            }
+            case AnvilPayloads.LIST -> {
+                if (w == null && be.slot().isEmpty()) ArmsArmoury.openAnvil(p, a.pos());
+            }
             default -> {}
         }
     }
@@ -308,7 +317,8 @@ public final class WarAnvil {
     /** The smith hears their own pull, strikes and quench as they make them (their client plays them); everyone else from here. */
     static void pull(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float heat, @Nullable ServerPlayer smith) {
         w.heat = heat;
-        w.begin(AnvilSong.SHAPE, level.getGameTime());
+        // attuning, the hot steel goes straight to the stone's three taps in the guard
+        w.begin(w.kind == AnvilWork.ATTUNE ? AnvilSong.HILT : AnvilSong.SHAPE, level.getGameTime());
         level.playSound(smith, w.forge, AnvilContent.PULL.get(), SoundSource.BLOCKS, 1F, 1F);
         be.changed();
     }
@@ -348,9 +358,9 @@ public final class WarAnvil {
         quenched(level, be, w);
     }
 
-    /** Out of the trough: the hilt next, or from memory (or a blade alone, which has none) straight to the stone. */
+    /** Out of the trough: the hilt next, or from memory (or a blade alone, which has none, or a whole weapon) straight to the stone. */
     static void quenched(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w) {
-        if (w.memory() || w.style.equals(AnvilWork.BLADE)) {
+        if (w.memory() || w.style.equals(AnvilWork.BLADE) || w.whole()) {
             finish(level, be, w);
             return;
         }
@@ -389,7 +399,7 @@ public final class WarAnvil {
      * HELP_GAP from the last) goes into the blade; on a beat it only clanks. True if it was taken as a helper's use.
      */
     static boolean help(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, ServerPlayer helper) {
-        if (w.stage != AnvilSong.SHAPE || w.memory()) return false;
+        if (w.stage != AnvilSong.SHAPE || w.kind != AnvilWork.FORGE && w.kind != AnvilWork.REFORGE) return false;
         long now = level.getGameTime();
         if (now - w.helpLast < AnvilSong.HELP_GAP) return true;
         AnvilSong.Rhythm r = w.rhythm();
@@ -440,11 +450,18 @@ public final class WarAnvil {
 
     // ---- the finished weapon -----------------------------------------------------------------------------------------
 
-    /** Done flags: a helper's strikes made it twin-struck, it was made from memory, it lasts longer for the Armoury room. */
-    public static final int TWIN = 1, FROM_MEMORY = 2, ARMOURY = 4;
+    /**
+     * Done flags: a helper's strikes made it twin-struck, it was made from memory, it lasts longer for the Armoury room; a
+     * weapon worked was tempered, attuned or reforged (§46.8).
+     */
+    public static final int TWIN = 1, FROM_MEMORY = 2, ARMOURY = 4, TEMPERED = 8, ATTUNED = 16, REFORGED = 32;
 
     static void finish(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w) {
         ServerPlayer smith = level.getServer().getPlayerList().getPlayer(w.forger);
+        if (w.whole()) {
+            AnvilHeld.finish(level, be, w, smith);
+            return;
+        }
         boolean twin = w.help >= AnvilSong.TWIN_STRIKES;
         int flaw = AnvilSong.NO_FLAW;
         AnvilSong.Quality q;
@@ -463,7 +480,7 @@ public final class WarAnvil {
         be.setWork(null);
         if (made.isEmpty()) return;
         String maker = smith != null ? smith.getGameProfile().name() : "";
-        made.set(AnvilContent.FORGED.get(), new WeaponForged(WeaponForged.SCHEMA, q.ordinal(), flaw, maker, twin, w.memory()));
+        made.set(AnvilContent.FORGED.get(), new WeaponForged(WeaponForged.SCHEMA, q.ordinal(), flaw, maker, twin, w.memory(), false));
         int cap = smith != null ? HearthHooks.temperCap(smith, w.forge) : 1;
         int mark = smith != null ? (int) Progression.perk(smith, "awaken:temper_start") : 0;
         int temper = AnvilSong.temper(q, mark, cap);

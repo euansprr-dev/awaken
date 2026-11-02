@@ -169,14 +169,23 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private void header(GuiGraphicsExtractor g, AnvilWork w) {
         int top = Math.max(10, height / 14) + 6;
         String stage = switch (w.stage) {
-            case AnvilSong.HEAT -> "Heat";
-            case AnvilSong.SHAPE -> "Draw it out";
+            case AnvilSong.HEAT -> w.whole() ? "Heat it whole" : "Heat";
+            case AnvilSong.SHAPE -> w.kind == AnvilWork.TEMPER ? "Temper it" : w.kind == AnvilWork.REFORGE ? "Fold in the new metal" : "Draw it out";
             case AnvilSong.QUENCH -> "Quench";
             case AnvilSong.KNAP -> "Knap the edge";
             case AnvilSong.BIND -> "Bind the grip";
-            default -> "The hilt";
+            default -> w.kind == AnvilWork.ATTUNE ? "Set the stone" : "The hilt";
         };
-        g.centeredText(font, Component.literal(weaponName(w.weapon) + "  ·  " + stage + (w.memory() ? "  ·  from memory" : "")), width / 2, top, TITLE);
+        // a weapon worked again goes by its own name, and says what it's being worked to
+        String name = w.whole() && !w.piece.isEmpty() ? w.piece.getHoverName().getString() : weaponName(w.weapon);
+        String to = switch (w.kind) {
+            case AnvilWork.MEMORY -> "  ·  from memory";
+            case AnvilWork.TEMPER -> "  ·  to Temper " + numeral(w.target);
+            case AnvilWork.REFORGE -> "  ·  to " + dev.awaken.arms.ArmsArmoury.TIERS[Mth.clamp(w.target, 0, 5)] + "-rank";
+            case AnvilWork.ATTUNE -> "  ·  " + dev.awaken.arms.ArmsForge.forceName(dev.awaken.core.Forces.Force.values()[Math.floorMod(w.target, 5)]);
+            default -> "";
+        };
+        g.centeredText(font, Component.literal(name + "  ·  " + stage + to), width / 2, top, TITLE);
     }
 
     private static String weaponName(String id) {
@@ -325,8 +334,14 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         lane(g, w, r, t, need);
         pips(g, w, need);
         boolean countIn = t < r.length();
-        if (tap) hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then three light taps on the beat: the guard, the grip, the pommel."
+        if (tap && w.kind == AnvilWork.ATTUNE) hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then three taps on the beat drive the stone into the guard."
+                : "Drive the stone home: tap on the beat (click, or press Space). Esc steps away; the work waits.");
+        else if (tap) hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then three light taps on the beat: the guard, the grip, the pommel."
                 : "Seat the hilt: tap on the beat (click, or press Space). Esc steps away; the work waits.");
+        else if (w.kind == AnvilWork.TEMPER) hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then one strike on the beat for each level of Temper."
+                : "Strike the bright mark on the beat: click it, or press Space where you point. Esc steps away; the work waits.");
+        else if (w.kind == AnvilWork.REFORGE) hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then strike each glowing mark on the beat to fold the new metal in."
+                : "Strike the bright mark on the beat: click it, or press Space where you point. Esc steps away; the work waits.");
         else if (w.memory()) hint(g, countIn ? "Listen: the anvil counts the rhythm in. You know this one: one strike on the beat draws it out."
                 : "Strike the bright mark on the beat: click it, or press Space where you point.");
         else hint(g, countIn ? "Listen: the anvil counts the rhythm in. Then strike each glowing mark on the beat, and the blade draws out."
@@ -646,7 +661,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilSong.Quality q = AnvilSong.Quality.of(d.quality());
         float k = Mth.clamp((now - doneAt) / 14F, 0F, 1F);
         int cw = cardW(), cx = cardX() - (int) ((1F - k) * 12);
-        var about = font.split(Component.literal(about(d)), cw - 20);
+        var about = font.split(Component.literal(about(d, cardItem())), cw - 20);
         boolean drawn = drawn();
         int ch = cardH(drawn), cy = cardY(ch);
         int alpha = (int) (k * 0xE8);
@@ -666,10 +681,15 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         pose.pushMatrix();
         pose.translate(cx + 32, cy + 22 + dy);
         pose.scale(1.5F, 1.5F);
-        g.text(font, q.label, 0, 0, q.colour, true);
+        // tempered or attuned, the card says that rather than how well it was once forged
+        boolean tempered = (d.flags() & WarAnvil.TEMPERED) != 0, attuned = (d.flags() & WarAnvil.ATTUNED) != 0;
+        String big = tempered ? "Temper " + numeral(d.temper()) : attuned ? "Attuned" : q.label;
+        g.text(font, big, 0, 0, tempered || attuned ? LANTERN : q.colour, true);
         pose.popMatrix();
         var player = Minecraft.getInstance().player;
-        g.text(font, "Forged by " + (player == null ? "you" : player.getGameProfile().name()), cx + 10, cy + 42 + dy, DIM, false);
+        String who = player == null ? "you" : player.getGameProfile().name();
+        if (!tempered && !attuned)
+            g.text(font, ((d.flags() & WarAnvil.REFORGED) != 0 ? "Reforged by " : "Forged by ") + who, cx + 10, cy + 42 + dy, DIM, false);
         int ly = cy + 56 + dy;
         for (var line : about) {
             g.text(font, line, cx + 10, ly, LABEL, false);
@@ -696,7 +716,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
 
     private int cardH(boolean drawn) {
         int w = cardW();
-        return 62 + 10 * font.split(cardItem().getHoverName(), w - 42).size() + 10 * font.split(Component.literal(about(done)), w - 20).size()
+        return 62 + 10 * font.split(cardItem().getHoverName(), w - 42).size() + 10 * font.split(Component.literal(about(done, cardItem())), w - 20).size()
                 + 10 * dev.awaken.core.api.ForgeHooks.cardLines(cardItem()).size() + (drawn ? 26 : 0);
     }
 
@@ -713,7 +733,13 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     }
 
     /** The card's words: how well, the Temper it leaves with (and whose limit held it), its flaw, and how it was made. */
-    private static String about(AnvilPayloads.Done d) {
+    private static String about(AnvilPayloads.Done d, ItemStack it) {
+        if ((d.flags() & WarAnvil.TEMPERED) != 0)
+            return "It leaves the anvil at Temper " + numeral(d.temper()) + ": each level adds a point to every blow.";
+        if ((d.flags() & WarAnvil.ATTUNED) != 0) {
+            String f = dev.awaken.arms.Marks.of(it).attunement().map(dev.awaken.arms.ArmsForge::forceName).orElse("its Force");
+            return "The stone is set. Its Marks carry " + f + " now, and it works together with your " + f + " powers.";
+        }
         AnvilSong.Quality q = AnvilSong.Quality.of(d.quality());
         String how = switch (q) {
             case PLAIN -> "It'll serve.";
@@ -731,7 +757,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         };
         String made = ((d.flags() & WarAnvil.FROM_MEMORY) != 0 ? " You made it from memory." : "")
                 + ((d.flags() & WarAnvil.TWIN) != 0 ? " A second hammer struck between your beats: it's twin-struck." : "")
-                + ((d.flags() & WarAnvil.ARMOURY) != 0 ? " Forged in your Armoury, it will last a quarter longer." : "");
+                + ((d.flags() & WarAnvil.ARMOURY) != 0 ? " Forged in your Armoury, it will last a quarter longer." : "")
+                + ((d.flags() & WarAnvil.REFORGED) != 0 ? " Reforged, it kept its Marks, its name and everything written on it." : "");
         return how + temper + flaw + made;
     }
 
@@ -742,6 +769,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             case 3 -> "III";
             case 4 -> "IV";
             case 5 -> "V";
+            case 6 -> "VI";
             default -> String.valueOf(n);
         };
     }

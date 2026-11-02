@@ -98,6 +98,7 @@ public class WarAnvilBlockEntity extends BlockEntity {
         if (!slot.isEmpty()) Containers.dropItemStack(level, x, y, z, slot);
         slot = ItemStack.EMPTY;
         if (work != null) for (ItemStack m : work.materials) if (!m.isEmpty()) Containers.dropItemStack(level, x, y, z, m.copy());
+        if (work != null && !work.piece.isEmpty()) Containers.dropItemStack(level, x, y, z, work.piece.copy()); // the weapon being worked
         work = null;
     }
 }

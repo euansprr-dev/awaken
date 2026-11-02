@@ -946,13 +946,20 @@ happens).
   the draw from the stone). It leaves Plain to Flawless with Temper up to your Forge's limit and its story
   ("Masterwork, twin-struck. Forged by Euan."); Masterwork or better goes into your memory (one strike, always Fine); a
   friend's off-beats make it twin-struck; set in an Armoury room it makes weapons last a quarter longer. It is the
-  Hearth's anvil too (`#minecraft:anvil`).
+  Hearth's anvil too (`#minecraft:anvil`). Held to it, one of Arms' weapons is worked again (stage 3, SPEC §46.8):
+  tempered (one heat, as far as your pack and your Forge's limit reach), attuned (a catalyst in the off hand, the stone
+  set in the guard) or reforged a tier up (keeps its Marks, name, Force and Temper; a Lord-forged one its own form, plus
+  a point of damage). The Forge no longer tempers or attunes weapons, and the Armoury no longer offers Raise.
 - **Know**: the level road's level 3 step names it and its recipe; the recipe book; the Weapons tab ("Set up a War
   Anvil", "Forge your first weapon" with the styles you know as choices, "Make your C-rank weapon"); the Now line ("You
   can forge Beastbound Daggers at your War Anvil"); use it and the Armoury opens at its door with what each weapon takes,
-  Forge it, From memory, Forge the blade, and one plain line for what stands in the way; JEI's War Anvil page.
+  Forge it, From memory, Forge the blade, and one plain line for what stands in the way; JEI's War Anvil page. With a
+  weapon in hand its own window: Temper, Reforge and Attune rows with what each costs and what's in the way; the
+  Weapons tab's optional "Temper your ..." and "Reforge your ..."; a plain or sneak use of the Forge with a weapon says
+  the War Anvil does it now.
 - **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself), `arms.anvil.WarAnvil`,
-  `WarAnvilBlockEntity` (schema 1), `AnvilWork` (schema 2), `SmithMemory` (schema 2).
+  `WarAnvilBlockEntity` (schema 1), `AnvilWork` (schema 3), `SmithMemory` (schema 2), `WeaponForged` (schema 3),
+  `arms.anvil.AnvilHeld`; tests `arms_anvil_temper`, `arms_anvil_attune`, `arms_anvil_reforge`.
 - **Links**: the Hearth's Forge (heat from D, the temper limit); Oren's Mark (`awaken:temper_start`); the tier's Hunter
   blade (carried, it stands in for its parts; else they're added); Blueprints (used, they teach the pattern the anvil
   asks for); the Fitting Stand's smithy (one Forge serves both); the Hearth's Armoury room; ForgeHooks (enchanting).
@@ -960,7 +967,9 @@ happens).
   someone else's work is theirs (a line says who, and using it then is a helper's strike); walking 12 blocks off,
   logging out or Esc holds the work and coming back counts the stage in again; breaking it mid-work drops what was
   taken in and what stands in the slot; a full pack at the draw puts what was in the hand at your feet; a weapon left in
-  the slot waits for anyone to sneak-use and draw it.
+  the slot waits for anyone to sneak-use and draw it. A weapon being worked again is in the work, not your hand:
+  breaking the anvil drops it with its price; crafted (vanilla) gear is never tempered here; at its Forge's limit, at
+  Temper VI, already of that Force or at S the row says so and its button stays dim.
 
 ### Forged weapons and Hunter blades (the 96 weapons, the six blades)
 - **Get**: forged at a War Anvil from `data/awaken/arms/anvil_costs.json` (each its old grid recipe minus the
@@ -969,6 +978,7 @@ happens).
 - **Know**: the Armoury at the anvil, the Weapons tab, the Now line, JEI; the tooltip tells its story.
 - **Source**: `Sources.declare` in `AnvilModule` (every key of the cost table); `arms_anvil_costs` proves each has its
   cost and no crafting recipe.
-- **Links**: Blueprints (the pattern), beast cores, the tier's metal from D or binding at E, the Forge, Temper.
+- **Links**: Blueprints (the pattern), beast cores, the tier's metal from D or binding at E, the Forge, Temper,
+  attunement and reforging at the War Anvil.
 - **Edges**: a weapon made before the War Anvil keeps working and gains a Plain story when first held; a found one never
   does; old Blueprints held were learned by the backfill; recipe-book entries for the old grid recipes are gone.
