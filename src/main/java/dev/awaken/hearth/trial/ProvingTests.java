@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.Set;
 
-/** The Provings (SPEC §46.4, §46.6 to §46.9): each hall's layout, and each Warden's whole flow in a hall built for the test. */
+/** The Provings (SPEC §46.4, §46.6 to §46.10): each hall's layout, and each Warden's whole flow in a hall built for the test. */
 public final class ProvingTests {
     private ProvingTests() {}
 
@@ -122,6 +122,7 @@ public final class ProvingTests {
         AwakenTests.registerIsolated("proving_unmade", 3000, ProvingTests::unmade);
         AwakenTests.registerIsolated("proving_sky_warden", 3000, ProvingTests::skyWarden);
         AwakenTests.registerIsolated("proving_keepers_shadow", 3000, ProvingTests::keeper);
+        AwakenTests.registerIsolated("proving_last_loop", 3000, ProvingTests::lastLoop);
     }
 
     /**
@@ -663,6 +664,156 @@ public final class ProvingTests {
             }
         });
         h.succeedWhen(() -> h.assertTrue(step[0] == 14, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
+    }
+
+    private static void lastLoop(net.minecraft.gametest.framework.GameTestHelper h) {
+        // the hall as laid out: you wake on the floor by the arch, the Loop is gold in the floor, the outer ring falls but
+        // not the causeway you wake on, the Seed's door is shut and opens all the way at its last step
+        h.assertTrue(Antechamber.block(0, 0, Antechamber.WAKE_Z) != null && Antechamber.block(0, 1, Antechamber.WAKE_Z) == null
+                && Antechamber.block(0, 2, Antechamber.WAKE_Z) == null, "you wake on the floor");
+        h.assertTrue(Antechamber.block(0, 0, (int) Antechamber.LOOP_R).is(Blocks.GOLD_BLOCK) && Antechamber.block(0, 1, 0) == null, "the Loop in the floor");
+        h.assertTrue(Antechamber.falls(0, -19) && Antechamber.falls(19, 0) && !Antechamber.falls(0, Antechamber.WAKE_Z)
+                && !Antechamber.falls(2, Antechamber.WAKE_Z + 2) && !Antechamber.falls(0, -12), "the ring falls, not the causeway or the middle");
+        for (int[][] hour : Antechamber.ring()) for (int[] p : hour) h.assertTrue(Antechamber.falls(p[0], p[2]), "only the ring falls");
+        h.assertTrue(Antechamber.block(0, Antechamber.DOOR_DY, Antechamber.DOOR_Z) != null && Antechamber.doorLeaf(0, 1, LoopWarden.DOOR_STEPS - 1, 0) != null
+                && Antechamber.doorLeaf(0, 1, LoopWarden.DOOR_STEPS, 0) == null && Antechamber.doorLeaf(2, 1, LoopWarden.DOOR_STEPS, 0) == null,
+                "the Seed's door is shut and opens all the way");
+        h.assertTrue(Antechamber.block(0, Antechamber.DOOR_DY, Antechamber.DOOR_Z + 1) == null && Antechamber.block(4, 2, Antechamber.DOOR_Z + 1) == null,
+                "nothing stands in front of the door");
+
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        ServerLevel home = sp.level();
+        sp.setGameMode(GameType.CREATIVE); // never its target: the test strikes and falls by hand
+        Progression.awaken(sp);
+        for (int k = 0; k < 5; k++) Progression.passReassessment(sp);
+        double need = 1;
+        for (int l = 1; l < Rank.SOVEREIGN.levelRequired; l++) need += Curve.xpToNext(l);
+        Progression.grantXp(sp, need / dev.awaken.core.AwakenConfig.xpMultiplier(), Progression.XpSource.COMMAND);
+        h.assertTrue(Progression.rank(sp) == Rank.S && Progression.profile(sp).reassessmentReady(), "ready for Sovereign");
+        h.assertTrue(Trials.Kind.forTarget(Rank.SOVEREIGN) == Trials.Kind.PROVING, "Sovereign is a Proving");
+        BlockPos c = h.absolutePos(new BlockPos(0, 24, 0)); // the floor's underside is 9 down: clear of the test's ground
+        Provings.Run run = Provings.openAt(sp, home, c, Rank.SOVEREIGN, false);
+        h.assertTrue(run.warden == LoopWarden.WARDEN && run.room instanceof LoopWarden.Loop, "the antechamber");
+        ServerLevel trials = run.level;
+        Hall hall = Antechamber.HALL;
+        BlockPos plate = c.offset(0, 0, -12), ring = c.offset(0, 0, -19), causeway = c.offset(0, 0, 19), core = c.offset(0, Antechamber.DOOR_DY, Antechamber.DOOR_Z);
+        int[] step = {0};
+        long[] mark = {0};
+        LoopWarden.Replay[] replay = {null};
+        h.onEachTick(() -> {
+            long now = trials.getGameTime();
+            LivingEntity w = Provings.warden(run);
+            LoopWarden.Loop l = LoopWarden.loop(run);
+            switch (step[0]) {
+                case 0 -> {
+                    if (run.stage != Provings.Stage.WAITING) return;
+                    h.assertTrue(sp.getZ() > c.getZ() + Antechamber.RING_IN, "you wake by the arch");
+                    h.assertTrue(!trials.getBlockState(core).isAir() && trials.getBlockState(plate).equals(Antechamber.face(0, -12, 12)), "the door shut, the day in");
+                    mark[0] = now;
+                    step[0] = 1;
+                }
+                case 1 -> {
+                    // walk north into the Loop: its path is the one you walked
+                    if (l.drawAt >= 0) {
+                        h.assertTrue(l.arrive.z > sp.getZ() + 4 && Math.abs(l.arrive.x - sp.getX()) < 1 && l.drawn.size() >= 2, "it'll stand where you were");
+                        step[0] = 2;
+                        return;
+                    }
+                    double z = c.getZ() + Antechamber.WAKE_Z + 0.5 - (now - mark[0]) * 0.25;
+                    sp.teleportTo(trials, c.getX() + 0.5, c.getY() + 1, z, Set.<Relative>of(), 180F, 0F, true);
+                    h.assertTrue(z > c.getZ() + 2, "walking into the Loop wakes it");
+                }
+                case 2 -> {
+                    if (w == null) return;
+                    h.assertTrue(w.position().distanceTo(l.arrive) < 2, "it stands where you were");
+                    w.setHealth(w.getMaxHealth() * 0.7F);
+                    mark[0] = now;
+                    step[0] = 3;
+                }
+                case 3 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 1 && l.replayAt > now, "at three quarters night falls, and the replays are coming");
+                    if (l.swept < 12) return;
+                    h.assertTrue(trials.getBlockState(plate).equals(Antechamber.night(0, -12, 12)), "night swept round the floor");
+                    l.replayAt = now; // the replay now, not in five seconds
+                    step[0] = 4;
+                }
+                case 4 -> {
+                    // standing still on your own trail: its run of light reaches you
+                    if (replay[0] == null) {
+                        if (l.replays.isEmpty()) return;
+                        replay[0] = l.replays.getFirst();
+                    }
+                    if (now - replay[0].at <= LoopWarden.REPLAY_TELL + LoopWarden.REPLAY_RUN + 1) return;
+                    h.assertTrue(replay[0].hit.contains(sp.getUUID()) && l.replays.isEmpty(), "your own trail runs you down");
+                    if (w == null) return;
+                    w.setHealth(w.getMaxHealth() * 0.45F);
+                    mark[0] = now;
+                    step[0] = 5;
+                }
+                case 5 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 2, "at half the ring cracks");
+                    if (l.fallen < 12) return;
+                    h.assertTrue(trials.getBlockState(ring).isAir() && trials.getBlockState(c.offset(19, 0, 0)).isAir(), "the outer ring fell");
+                    h.assertTrue(!trials.getBlockState(causeway).isAir() && !trials.getBlockState(plate).isAir(), "the causeway and the middle stay");
+                    if (w == null) return;
+                    w.setHealth(w.getMaxHealth() * 0.2F);
+                    mark[0] = now;
+                    step[0] = 6;
+                }
+                case 6 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 3 && l.door >= 1 && l.turning, "from a quarter the Seed's door turns and opens");
+                    h.assertTrue(trials.getBlockState(core).isAir(), "its core is gone");
+                    // over the edge where the ring fell: you wake by the arch, and alone it starts over, the hall whole again
+                    sp.teleportTo(trials, c.getX() + 0.5, c.getY() + LoopWarden.VOID - 1, c.getZ() - 19.5, Set.<Relative>of(), 0F, 0F, true);
+                    mark[0] = now;
+                    step[0] = 7;
+                }
+                case 7 -> {
+                    if (now - mark[0] < 2) return;
+                    h.assertTrue(sp.isAlive() && Trials.inTrial(sp) && run.falls.getOrDefault(sp.getUUID(), 0) == 1, "going over is a fall");
+                    h.assertTrue(sp.getZ() > c.getZ() + Antechamber.RING_IN && sp.getY() > c.getY(), "you wake by the arch");
+                    h.assertTrue(run.stage == Provings.Stage.WAITING && run.turns == 0, "it starts over");
+                    step[0] = 8;
+                }
+                case 8 -> {
+                    if (l.reset != null) return;
+                    h.assertTrue(!trials.getBlockState(ring).isAir() && !trials.getBlockState(core).isAir()
+                            && trials.getBlockState(plate).equals(Antechamber.face(0, -12, 12)), "the ring, the door and the day are back");
+                    sp.teleportTo(trials, c.getX() + 0.5, c.getY() + 1, c.getZ() + 4.5, Set.<Relative>of(), 180F, 0F, true);
+                    step[0] = 9;
+                }
+                case 9 -> {
+                    if (w == null) return;
+                    w.kill(trials);
+                    h.assertTrue(run.stage == Provings.Stage.WON, "beaten");
+                    mark[0] = now;
+                    step[0] = 10;
+                }
+                case 10 -> {
+                    if (l.door < LoopWarden.DOOR_STEPS) return;
+                    h.assertTrue(trials.getBlockState(c.offset(0, 1, Antechamber.DOOR_Z)).isAir() && trials.getBlockState(c.offset(0, 0, -10)).equals(Antechamber.PATH),
+                            "the Seed's door opens, a path of light to it");
+                    step[0] = 11;
+                }
+                case 11 -> {
+                    if (Trials.inTrial(sp)) return;
+                    h.assertTrue(now - mark[0] >= Provings.OUTRO, "the door stands open before home");
+                    h.assertTrue(Trials.lastResult(sp.getUUID()).orElse(null) == Trials.State.PASSED, "passed");
+                    h.assertTrue(Progression.rank(sp) == Rank.SOVEREIGN, "Sovereign, was " + Progression.rank(sp));
+                    step[0] = 12;
+                }
+                case 12 -> {
+                    if (!Provings.settled()) return;
+                    h.assertTrue(hall.standing(trials, c) && !trials.getBlockState(core).isAir() && !trials.getBlockState(ring).isAir(), "the hall is put back");
+                    step[0] = 13;
+                }
+                default -> {}
+            }
+        });
+        h.succeedWhen(() -> h.assertTrue(step[0] == 13, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
     }
 
     private static boolean lit(ServerLevel level, BlockPos at) {

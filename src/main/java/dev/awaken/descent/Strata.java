@@ -66,7 +66,7 @@ public final class Strata {
             new Def(10, "seed", "The Seed",
                     "The bottom. Something vast sleeps in a shell of light, wired into the walls of the world.",
                     "The Seed. The end of the Descent, and the way into the Endless.",
-                    "The Seed.", Rank.S, ""),
+                    "The Seed.", Rank.SOVEREIGN, ""),
     };
 
     public static Def def(int n) {
@@ -216,15 +216,14 @@ public final class Strata {
     public enum Access { OPEN, SEALED_RANK, SEALED_LEVEL, SEALED_SEED }
 
     /**
-     * Whether a player may enter a depth. Stratum 10 is the Sovereign trial (SPEC 4.4: "SOVEREIGN after the Seed"), so
-     * it opens at S-rank once the player has reached the Sovereign level. The Endless opens after the Seed.
+     * Whether a player may enter a depth. Stratum 10, the Seed, opens at Sovereign: the last Proving is the way into it
+     * (SPEC §46.10). The Endless opens after the Seed.
      */
     public static Access access(Rank rank, int level, boolean seedCleared, int depth) {
         if (depth <= 1) return Access.OPEN;
         if (depth > COUNT) return seedCleared ? Access.OPEN : Access.SEALED_SEED;
         Def d = def(depth);
         if (rank.ordinal() < d.opensAt().ordinal()) return Access.SEALED_RANK;
-        if (depth == COUNT && rank != Rank.SOVEREIGN && level < Rank.SOVEREIGN.levelRequired) return Access.SEALED_LEVEL;
         return Access.OPEN;
     }
 

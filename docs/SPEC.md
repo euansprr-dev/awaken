@@ -149,6 +149,7 @@ from home activity.
 At RANK_LEVEL the Spine says "Reassessment available". Trial is taken at the Spire (hearth town) or any Reassessment
 Monolith. Trials are handcrafted arenas (in the Stillpoint dimension's trial wing): D survive 3 waves; C Second Awakening
 (waves + Path reveal); B boss duel; A timed descent (5 rooms, 4 min); S fight a Sovereign's echo; SOVEREIGN after the Seed.
+(Since §46.4 to §46.10 every rank's trial is a Proving, D to Sovereign, and Sovereign comes before the Seed: it opens it.)
 Pass → rank++, Signal Reassessment window, town celebration, new tier of gates, aura tier.
 
 ### 4.5 Truths
@@ -723,8 +724,9 @@ of `AwakenConfig.Client`.
 ## 13. Decisions made while building (details in docs/modules/*.md)
 
 Descent:
-- Strata open by rank: 1 E · 2–3 D · 4–5 C · 6–7 B · 8 A · 9 S · 10 (the Seed) S-rank at level 135 **and** all eight
-  Sovereigns of the Hollow Court defeated (story gate via `StoryHooks.seedSealed`). The Endless opens after the Seed.
+- Strata open by rank: 1 E · 2–3 D · 4–5 C · 6–7 B · 8 A · 9 S · 10 (the Seed) Sovereign (the last Proving, §46.10; was
+  S-rank at level 135) **and** all eight Sovereigns of the Hollow Court defeated (story gate via `StoryHooks.seedSealed`).
+  The Endless opens after the Seed.
 - Stratum content level = content level of rank index min(6, (n+1)/2): stratum 1 already plays at D (17).
 - STORY-mode deaths in the Descent keep half the Deep Pack at once; the other half waits in a Grave Echo.
 - Waystone travel *upward* costs Strain; only the Deep Lift climbs for free.
@@ -17386,3 +17388,95 @@ doors"). `Trials.Kind.forTarget(S)` is `PROVING`, run by `KeeperWarden` at the C
   three quarters the doors sink, at half the dark comes in as far as the ring and holds you, from a quarter the Court's
   door opens and its light burns the dark back, over the edge is a fall and you wake on the landing with the court whole
   again, it comes again, the win opens the Court's door and is rank S, the court is put back).
+
+**46.10 The Provings: the Last Loop (stage 5).** The Sovereign Reassessment becomes the sixth and last Proving (PLAN
+§4.7, GOALS part 2: "the Sovereign Proving becomes the way into the Seed instead of coming after it"). `Trials.Kind.forTarget(SOVEREIGN)`
+is `PROVING`, run by `LoopWarden` in the Cradle's antechamber (`hearth.trial.Antechamber`). The Monolith now rings for it
+(it used to say "Your last Reassessment waits at the Seed"), and `/awaken admin trial SOVEREIGN` starts it.
+- **The Seed opens at Sovereign** (`Strata` def 10 `opensAt` is `SOVEREIGN`, was S at level 135): the Proving is the way
+  in. Below Sovereign the Seed's pit is sealed by rank like every other stratum ("It opens at Sovereign-rank"), and the
+  same lock is set as for any sealed way down, so passing answers it. The Court's own seal (`StoryHooks.seedSealed`: all
+  eight Sovereigns) still holds after that. `Court.finishStory`'s pass to Sovereign stays, for a save that was S at the
+  Seed before this. The level road's Seed entry now says so; its B, A and S trial entries no longer describe the old
+  boxes ("Your A-rank Reassessment: ring the Monolith or the Spire.").
+- **The Last Loop** (`awaken:proving_last_loop`, kit `proving_last_loop`): you, as the Signal was. A player's build twice
+  your height (about 4 blocks), all white with a cold blue in its shade, gold seams running down it like the lines of
+  the Signal, a gold belt and bands; no face, only a soft light where a face would be. A thin gold halo turns over its
+  head and a great ring, the Loop, stands behind its back. It fights with a blade of light, a player's sword made of the
+  Signal: a white-gold edge as long as its leg, a gold guard and pommel. Bold and simple (no sculpted face). Tier
+  `PROVING`, theme Seed (its bolts `BoltKind.SIGNAL`), a duel with stance 470 (the Keeper 420); health 620, damage 3.3,
+  speed 0.32, scale 2.5, fought at level 135, hitbox 1.5 by 4.25. Its intro line: "You can see where you were standing a
+  moment ago."
+- **Tells.** White-gold blows are told 0.5 s (10 ticks: the Cut, the Recut, the Thrust; Signal 0.6 s), the ladder's last
+  rung; red stays at 0.9 s or more (the Rush, the Ring and Taken 0.9 s, the Line and Every Power You've Had 1.0 s). Amber:
+  the Fall 0.9 s (held 0.4 s more one time in three), Push 0.8 s (held 0.3 s), Full Circle 0.7 s.
+- **Moves.** Phase 1: the blade in fours (the Cut, a sweep; the Recut, a low backhand; the Thrust, the point at your
+  chest), the Fall (the blade overhead in both hands, driven down: a ring of force 5), Signal (three bolts of light from
+  its open hand), Full Circle (HEAVY, for whoever is behind it), the Rush (red: it crouches with the blade drawn back and
+  hurls itself at you, `CHARGE`: dash through it) and the Line (its signature, red: the blade drawn back low in both hands
+  and cut up through, a line of light along the floor to you, `BEAM`: dash aside). Phase 2 at three quarters ("Night
+  falls in the antechamber": it lifts the blade to the dark): phrases of four and five, Loop (it turns away into its own
+  light and comes up behind you, `BLINK`) and Push (HEAVY: both palms out, a wave that throws you back, `GUST`). Phase 3
+  at half ("The loop is closing": it drives the blade into the floor and turns on it): phrases of five, Every Power
+  You've Had (red: the blade raised, six circles of light under you, `RAIN`) and Taken (red: a grab). Phase 4 at a quarter
+  ("The Seed's door is turning": it looks back at the door): phrases of five and six, Signal in fives, eight circles,
+  the Fall's ring 6, Echoes of You (it bows, flings its arms wide and two echoes step out of it, `DECOY`) and the Ring
+  (red: the blade over its head, one full turn, ten bolts of light outward, `NOVA`: dash through the gap); against a
+  flier (`"when": "air"`) Signal. Below 10% it speeds up a fifth. It dies on its knees, the way you woke, the blade laid
+  down before it.
+- **The antechamber** (`hearth.trial.Antechamber`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every hall
+  cell, its middle 110 east and 420 south of the cell's corner (south of the Threshold, clear of every other hall), x -26
+  to 26, z -35 to 33, dy -9 to 18. A round white hall (radius 22) whose floor is a clock face: a gold boss with a light in
+  it, the Loop (a ring of gold at 8), a dial of quartz and calcite in twelve sectors out to a seam of quartz bricks at 16
+  (where the outer ring breaks), and twelve gold marks out to the rim, those at 12, 3, 6 and 9 twice as wide. Its wall
+  (to 25, 16 high) has a quartz pilaster at each mark, gold bands at 1 and 12, and between the marks tall windows of white
+  glass with light behind them (none at the door or the arch). A black ceiling at 18 with frog-light stars and two gold
+  rings. North in the wall, through a round opening with a chiselled rim, the Seed's door: a round door 16 across, its
+  sea-lantern core and three rings of gold and quartz segments in a chiselled frame; behind it a round tunnel of white
+  glass and quartz pillars, 11 deep, lit, ending in a wall of light. South an arch through the wall onto a short corridor
+  out into the dark (the way out). Unseen light 13 on a 6-block grid at 4 over the floor (4 at night). The band a fight
+  changes is dy -1 to 16 (the floor and its plate, the lights, the door). The outer ring (16 to 22) falls; the causeway
+  across it from the arch to the middle (3 either side) never does: you wake on it.
+- **The flow.** The Reading Bell's window says only "The bell has taken you five times now. This is the last time it
+  will. Go when you're ready." The bell rings and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] YOU ARE
+  WHERE IT STARTED", then "The bell stopped."). You wake on the causeway by the arch (a party side by side across it),
+  looking north across the clock to the Seed's door, the bell resonating and a beacon's hum. Everyone's path is kept, a
+  sample every 2 ticks, the last 4 s. Once someone walks into the Loop (within 8.5 of the middle) or after 30 s, the path
+  they walked in the last 3 s lights up from its far end toward them over 2 s, a light gathering at its start with rising
+  chimes; then the Last Loop is there, down on one knee where they stood 3 s before, facing them (if they had hardly moved,
+  6 ahead of them instead), and stands up. Its arena is the floor, the door and the foot of the arch (home 30); +50% health
+  a member past the first.
+  At three quarters night falls: a hand of light sweeps round the clock from 12, an hour every 0.3 s with a bell's tick
+  falling in pitch, and each hour it passes goes black (the seam dark brick, the gold and the boss stay) and its light
+  goes down to 4. From 5 s after, every 15 s it replays the path each of you walked in the last 4 s: your trail glows for
+  1.2 s (a chime), then a run of light goes along it in 1 s from its far end to where you were when it set off, and
+  whoever it passes within 1.4 takes 0.8 of its blow (magic: no parry; step off your own trail). At half the loop closes:
+  the seam cracks and dusts for 1.5 s, then the outer ring falls into the dark a mark at a time from 12, every 0.25 s
+  (a few stones falling as it goes, calcite and glass breaking). From a quarter the Seed's door turns (its rings an eighth
+  every 0.25 s, the middle ring the other way) and opens a part at a time as its health falls (the core, then each ring:
+  three by the end), the light behind coming through. 10 under the floor is a fall, never a death; you wake on the
+  causeway ("You wake by the arch you came in through. The way out is behind you."); if it goes over, it comes back up
+  inside the seam. When everyone has fallen it goes, the hall is put back (the day, the ring, the door shut, 16 rows a
+  tick), and it comes again out of the next path. Out through the arch is the way out, no fail day. Its death: the Seed's
+  door opens the rest of the way at 0.5 s (a bell, the end portal's sound), a path of light is laid down the middle of the
+  floor to it, its light pours through; from 1 s the day comes back round the clock the same way night came; at 2 s on a
+  real run the Seed is set before you (`Promises.seen(p, "stratum:10", null, rank Sovereign, "The Seed, in the
+  Descent")`, only while the Court no longer holds it: with Sovereigns still standing, their seal says so instead). Through
+  the open door to the end of the tunnel is a way out too. At 15 s home with rank Sovereign (its Great Bell, the bourdon,
+  follows the rank, `Bells`). The hall is put back after.
+- **What it gives:** rank Sovereign, the Seed opened to you by rank, its trophy (a Lord's, `Trophies`), essence shards,
+  quartz and amethyst shards two times in five. No new Tasks step. **Not here:** its boss weapon (the weapon sessions).
+- **No box.** The Sovereign trial had no practice box of its own (`sbox` is the S echo). `/awaken admin trial
+  <percent>` brings it to that share of its health (tours: night at 70, the ring at 45, the door at 20 and 5). A practice
+  run sets no lock. Tour: `tools/autopilot/fights-antechamber.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_last_loop`, 300 seeds, `PROVING_RANKS` fights it at S and level
+  135 with the S-rank forged blade): dodger 23% in 195 s (12% health left), parrier 94% in 134 s (34% left), expert 100%
+  in 110 s (88% left), tank 0% (dies at 39 s). Targets 20 / 25 / 85 / 0: met. Harder than the Keeper's Shadow (dodger
+  31%). Damage 3.1 gave the dodger 36%, 3.25 gave 27%, 3.35 gave 20%, 3.4 gave 18%. The sim doesn't fight the replays or
+  the fallen ring; the plan's 8 minutes isn't met, as for the Provings before it.
+- Tests: `proving_last_loop` (the layout's rules, then the whole flow over the GameTest superflat: you wake by the arch
+  with the day in and the door shut, walking into the Loop lights your path and it stands where you were, at three
+  quarters night sweeps round, standing on your own trail its replay reaches you, at half the outer ring falls and the
+  causeway stays, from a quarter the Seed's door turns and opens, over the edge is a fall and you wake by the arch with
+  the hall whole again, it comes again, the win opens the door with a path of light and is rank Sovereign, the hall is
+  put back). `descent_rules` (the Seed waits for Sovereign), `hearth_pure_rules` (every rank's trial is a Proving).

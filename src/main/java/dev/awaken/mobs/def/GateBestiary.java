@@ -332,6 +332,22 @@ final class GateBestiary {
                         a(RAIN, "The Dark Rises").n(5).radius(2.5F).bolt(BoltKind.VOID), a(DECOY, "Echoes of the Court").n(2),
                         a(NOVA, "Eight Doors").n(8).bolt(BoltKind.VOID))
                 .build());
+        out.add(m("proving_last_loop", "The Last Loop", Theme.SEED, Tier.PROVING, Model.HUMAN, "You, as the Signal was: it stands where you stood a moment ago")
+                .hp(620).dmg(3.3).spd(0.32).kb(0.9).scale(2.5F).size(0.6F, 1.7F).bar(BossBarColor.WHITE).arena(40)
+                .intro("You can see where you were standing a moment ago.")
+                .phase(1.0F, "The Last Loop stands where you were.", a(SLAM, "The Fall").radius(5), a(BOLT, "Signal").n(3).bolt(BoltKind.SIGNAL),
+                        a(CHARGE, "The Rush").range(18), a(BEAM, "The Line").bolt(BoltKind.SIGNAL).power(1.8F).heavy())
+                .phase(0.75F, "Night falls in the antechamber.", a(SLAM, "The Fall").radius(5.5F), a(BOLT, "Signal").n(3).bolt(BoltKind.SIGNAL),
+                        a(CHARGE, "The Rush").range(18), a(BEAM, "The Line").bolt(BoltKind.SIGNAL).power(1.9F).heavy(), a(BLINK, "Loop"),
+                        a(GUST, "Push").radius(8).power(1.0F))
+                .phase(0.5F, "The loop is closing.", a(SLAM, "The Fall").radius(5.5F), a(BOLT, "Signal").n(3).bolt(BoltKind.SIGNAL),
+                        a(CHARGE, "The Rush").range(18), a(BEAM, "The Line").bolt(BoltKind.SIGNAL).power(1.9F).heavy(), a(BLINK, "Loop"),
+                        a(GUST, "Push").radius(8).power(1.0F), a(RAIN, "Every Power You've Had").n(6).radius(2.5F).bolt(BoltKind.SIGNAL))
+                .phase(0.25F, "The Seed's door is turning.", a(SLAM, "The Fall").radius(6), a(BOLT, "Signal").n(5).bolt(BoltKind.SIGNAL),
+                        a(CHARGE, "The Rush").range(20), a(BEAM, "The Line").bolt(BoltKind.SIGNAL).power(2.0F).heavy(), a(BLINK, "Loop"),
+                        a(GUST, "Push").radius(8).power(1.0F), a(RAIN, "Every Power You've Had").n(8).radius(2.5F).bolt(BoltKind.SIGNAL),
+                        a(DECOY, "Echoes of You").n(2), a(NOVA, "The Ring").n(10).bolt(BoltKind.SIGNAL))
+                .build());
     }
 
     private static void nightmare(List<MobDef> out) {

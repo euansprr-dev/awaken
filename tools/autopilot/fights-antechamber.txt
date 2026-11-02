@@ -1,0 +1,137 @@
+# Fights stage 5, the sixth Proving (SPEC §46.10): the Last Loop in the Cradle's antechamber, in a practice Proving
+# (/awaken admin trial SOVEREIGN). A burst of quick shots catches the wake on the causeway looking north across the clock
+# to the Seed's door; then three steps north into the Loop, a turn round, and a burst every 10 ticks catches your path
+# lighting up behind you and the Last Loop kneeling where you stood, then standing. Then the Last Loop held still facing
+# you, and as a spectator: the clock from the south, the Seed's door, the arch, night sweeping round at three quarters
+# (/awaken admin trial 70), the outer ring falling at half (trial 45), the door turning and opening (trial 20, then 5), and
+# the win: the door open, the path of light, the day coming back, the tunnel.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-antechamber.txt
+world autopilot_fights_antechamber creative 20261103
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+hud off
+
+# --- the bell, then the burst: on the causeway by the arch (0, 1, 17), looking north to the Seed's door ---
+cmd awaken admin trial SOVEREIGN
+wait 30
+shotnow loop_b01
+wait 15
+shotnow loop_b02
+wait 15
+shotnow loop_b03
+wait 15
+shotnow loop_b04
+wait 15
+
+# --- three steps north into the Loop (0, 1, 8), then turn round: your path lights up, it kneels where you were ---
+cmd tp @s ~ ~ ~-3 180 0
+wait 6
+cmd tp @s ~ ~ ~-3 180 0
+wait 6
+cmd tp @s ~ ~ ~-3 180 0
+wait 4
+cmd tp @s ~ ~ ~ 0 12
+wait 4
+shotnow loop_b05
+wait 10
+shotnow loop_b06
+wait 10
+shotnow loop_b07
+wait 10
+shotnow loop_b08
+wait 10
+shotnow loop_b09
+wait 10
+shotnow loop_b10
+wait 10
+shotnow loop_b11
+wait 10
+shotnow loop_b12
+wait 10
+shotnow loop_b13
+wait 10
+shotnow loop_b14
+wait 30
+
+# --- it faces you (held still for the shots: in creative it has no one to fight and wanders off), 9 ahead of you at
+# (0, 1, 8), so the views after are measured from there ---
+cmd tp @s ~ ~ ~ 0 0
+wait 2
+cmd data merge entity @e[type=awaken:proving_last_loop,limit=1] {NoAI:1b}
+cmd tp @e[type=awaken:proving_last_loop,limit=1] ^ ^ ^9 facing entity @p
+look 0 -14
+wait 20
+shot loop_01_loop
+
+# --- the clock from high in the south (0, 14, 20), looking north to the Seed's door ---
+cmd gamemode spectator
+cmd tp @s ~ ~13 ~12 180 28
+wait 30
+shot loop_02_clock
+
+# --- the Seed's door from the floor (0, 3, -12) ---
+cmd tp @s ~ ~-11 ~-33 180 -16
+wait 30
+shot loop_03_door
+
+# --- the arch and the causeway from (0, 3, 5), looking south ---
+cmd tp @s ~ ~ ~18 0 -4
+wait 30
+shot loop_04_arch
+
+# --- at three quarters night sweeps round the clock, from high (0, 15, 9) looking north ---
+cmd tp @s ~ ~12 ~4 180 45
+wait 20
+cmd awaken admin trial 70
+wait 30
+shot loop_05_night_sweep
+wait 50
+shot loop_06_night
+
+# --- at half the outer ring cracks and falls a mark at a time from twelve, from (0, 16, 11) ---
+cmd tp @s ~ ~1 ~2 180 40
+wait 20
+cmd awaken admin trial 45
+wait 35
+shot loop_07_falling
+wait 45
+shot loop_08_falling_more
+wait 30
+shot loop_09_fallen
+
+# --- from a quarter the Seed's door turns and opens, from the floor (0, 4, -10) ---
+cmd tp @s ~ ~-12 ~-21 180 -14
+wait 20
+cmd awaken admin trial 20
+wait 30
+shot loop_10_door_turning
+cmd awaken admin trial 5
+wait 30
+shot loop_11_door_wide
+
+# --- beaten: the door opens all the way, a path of light to it, then the day comes back; then the tunnel ---
+cmd kill @e[type=awaken:proving_last_loop]
+wait 40
+hud on
+shot loop_12_won
+hud off
+wait 80
+cmd tp @s ~ ~12 ~28 180 35
+wait 20
+shot loop_13_day
+cmd tp @s ~ ~-15 ~-38 180 0
+wait 20
+shot loop_14_tunnel
+hud on
+quit

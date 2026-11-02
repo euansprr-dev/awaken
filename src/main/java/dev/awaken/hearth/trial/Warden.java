@@ -32,7 +32,7 @@ abstract class Warden {
 
     private static final class All {
         static final List<Warden> LIST = List.of(RingerWarden.WARDEN, ExaminerWarden.WARDEN, UnmadeWarden.WARDEN, SkyWarden.WARDEN,
-                KeeperWarden.WARDEN);
+                KeeperWarden.WARDEN, LoopWarden.WARDEN);
     }
 
     /** The Warden of a Reassessment to {@code target}, or null where a box trial still stands. */

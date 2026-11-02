@@ -456,6 +456,37 @@ happens).
   court is put back after; `/awaken admin trial sbox` keeps the old S echo as practice. Not built: its boss weapon
   (weapons).
 
+### The Last Loop (the sixth and last Proving, §46.10)
+- **Get**: at level 135 with S rank, the Reading Bell's Sovereign Reassessment at the Monolith or the Spire ("The bell has
+  taken you five times now. This is the last time it will. Go when you're ready."). The screen breaks ("[ERROR] YOU ARE
+  WHERE IT STARTED") and you wake by the arch of a round white hall whose floor is a clock face, a round door of gold
+  rings shut in its far wall. Walk into the gold ring in the middle and the path you walked lights up behind you, and the
+  Last Loop is down on one knee where you stood three seconds before. Nothing names it, its hall or what it opens before
+  you meet it.
+- **For**: Sovereign rank (the bourdon, its Great Bell, follows the rank), the Seed (stratum 10, now opened by Sovereign
+  rank: the Proving is the way in, and the Signal says so as it's given while the Court no longer holds it), its trophy
+  for your Hall, essence shards, quartz and sometimes amethyst shards.
+- **Know**: a duel (§46.3): white-gold blows told 0.5 s, amber and red; its signature, the Line, cuts a line of light
+  along the floor to you (dash aside); the Rush hurls it at you (dash through); at three quarters night sweeps round the
+  clock, and from then on every so often your own path of the last four seconds glows and a run of light goes along it
+  (step off your trail: no parry stops it); it turns into its light and comes up behind you; at half the outer ring
+  falls into the dark a mark at a time (keep inside the seam, or on the causeway to the arch); from a quarter the
+  Seed's door turns and opens a ring at a time with each blow; the Ring sends bolts of light out on every side (dash
+  through the gap).
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.LoopWarden` (the paths, its coming, night, the replays,
+  the ring, the door, the edge, the lock on the Seed), `hearth.trial.Antechamber` (the hall, built by `TrialChunkGenerator`
+  in every hall cell), the Last Loop's kit `proving_last_loop` (`mobs`), the Seed through `core.api.Promises` (the
+  `stratum:10` lock the Descent's sealed way down makes) and `descent.Strata` (the Seed opens at Sovereign).
+- **Links**: the Keeper's Shadow (the fifth Proving, S rank) before it; the Seed after it (still sealed by the Court
+  until all eight Sovereigns fall, `StoryHooks.seedSealed`), and the ending there; trophies; Great Bells (rank-driven);
+  parties (members within 24 blocks at level 135 come too, +50% of its health each).
+- **Edges**: going 10 blocks under the floor (where the ring fell) is a fall, never a death; you wake on the causeway by
+  the arch, which never falls, and the arch is the way out; if it goes over it comes back up inside the seam; all of a
+  party down and the hall is whole again (day, ring, door shut) and it comes again out of the next path (or after 30 s);
+  from the third fall the Signal says what keeps catching you; out the arch is the way out, no fail day; once it's won,
+  through the open door or out the arch takes the win home; a practice run sets no lock; the hall is put back after;
+  the Monolith no longer sends you to the Seed for this Reassessment. Not built: its boss weapon (weapons).
+
 ### Raids (the first Big Day)
 - **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):
   never in a world's first two hours of play, at most one Big Day every five play-days, due a play-day or two later and

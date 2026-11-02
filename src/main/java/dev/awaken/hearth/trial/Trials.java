@@ -72,9 +72,11 @@ import java.util.UUID;
 
 /**
  * Reassessment trials (rank-ups) and the Hardline Penalty Zone, fought in walled arenas in {@code awaken:trials}.
- * D, C and B are Provings ({@link Provings}): the Ringer in the Drowned Belfry, the Examiner in the Hall of Reflections,
- * the Unmade on the Broken Span (the old boxes stay as practice, {@code /awaken admin trial dbox}, {@code cbox} and
- * {@code bbox}, the B box a duel with a Gate Lord). A: a timed descent through five rooms. S: a Sovereign's echo. Trials never kill: falling ends the attempt and sends you home. One attempt
+ * Every Reassessment is a Proving ({@link Provings}): the Ringer in the Drowned Belfry (D), the Examiner in the Hall of
+ * Reflections (C), the Unmade on the Broken Span (B), the Sky Warden in the cathedral (A), the Keeper's Shadow at the
+ * Court's threshold (S) and the Last Loop in the Cradle's antechamber (Sovereign). The old trials stay as practice
+ * ({@code /awaken admin trial dbox}, {@code cbox}, {@code bbox}, {@code abox}, {@code sbox}: waves, a duel with a Gate
+ * Lord, a timed descent, a Sovereign's echo). Trials never kill: falling ends the attempt and sends you home. One attempt
  * per play-day (a Proving has no fail day).
  */
 public final class Trials {
@@ -109,6 +111,7 @@ public final class Trials {
                 case B -> PROVING;
                 case A -> PROVING;
                 case S -> PROVING;
+                case SOVEREIGN -> PROVING;
                 default -> SOVEREIGN;
             };
         }
@@ -203,9 +206,9 @@ public final class Trials {
         }
         if (inTrial(sp)) return;
         Rank next = p.rank().next();
-        if (next == null || next == Rank.SOVEREIGN) {
-            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal(next == null ? "There is no rank above yours" : "Not here"))
-                    .body(Component.literal(next == null ? "The Monolith hums your name and nothing else." : "Your last Reassessment waits at the Seed."))
+        if (next == null) {
+            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal("There is no rank above yours"))
+                    .body(Component.literal("The Monolith hums your name and nothing else."))
                     .ttl(20 * 8).build());
             return;
         }

@@ -54,7 +54,7 @@ final class HearthCommands {
                             .executes(HearthCommands::remove))));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("trial").then(Commands.argument("rank", StringArgumentType.word())
-                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "cbox", "B", "bbox", "A", "abox", "S", "sbox", "half", "third", "penalty"), b))
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "cbox", "B", "bbox", "A", "abox", "S", "sbox", "SOVEREIGN", "half", "third", "penalty"), b))
                     .executes(HearthCommands::trial)));
             admin.then(Commands.literal("town").then(Commands.literal("arrive").then(Commands.argument("npc", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Townsfolk.all().keySet(), b))
@@ -373,7 +373,7 @@ final class HearthCommands {
             // tours: your Proving's Warden to under half its health (the Belfry drains, the mirrors wake, the Span's ring gives
             // way, the cathedral's aisles fall) or under a third (the Hall of Reflections closes in, the Span's lamps go out, the
             // cathedral's roof lifts), or to a percent (the Threshold's doors at 70, its dark at 45, its door at 20 and 5)
-            // (SPEC §46.4, §46.6 to §46.9)
+            // (SPEC §46.4, §46.6 to §46.10)
             float to = arg.equals("HALF") ? 0.45F : arg.equals("THIRD") ? 0.3F : Integer.parseInt(arg) / 100F;
             boolean ok = dev.awaken.hearth.trial.Provings.hurtTo(sp, to);
             if (!ok) c.getSource().sendFailure(Component.literal("No Warden is down in your Proving."));
@@ -408,10 +408,10 @@ final class HearthCommands {
         try {
             target = Rank.valueOf(arg);
         } catch (IllegalArgumentException ex) {
-            c.getSource().sendFailure(Component.literal("Unknown rank " + arg + ". Use D, C, B, A, S, dbox, cbox, bbox, abox, sbox, half, third, a percent or penalty."));
+            c.getSource().sendFailure(Component.literal("Unknown rank " + arg + ". Use D, C, B, A, S, SOVEREIGN, dbox, cbox, bbox, abox, sbox, half, third, a percent or penalty."));
             return 0;
         }
-        if (target == Rank.E || target == Rank.SOVEREIGN) {
+        if (target == Rank.E) {
             c.getSource().sendFailure(Component.literal("There is no trial for " + target.label + "-rank here."));
             return 0;
         }
