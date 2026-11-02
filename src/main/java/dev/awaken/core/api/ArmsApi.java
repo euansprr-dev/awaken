@@ -68,6 +68,9 @@ public final class ArmsApi {
         /** The smith's pattern was bought: it is known at once. */
         void villageBought(ServerPlayer player, String style);
 
+        /** Found rather than made (SPEC §45.5): a Marked weapon from a Lord's spoils, or a Lord-forged one. Enchanting gives it room for three. */
+        default boolean found(net.minecraft.world.item.ItemStack stack) { return false; }
+
         /** Hale's rack stands beside him (two racks that hang the Wildhide weapons and open his Armoury): placed if there is none near, true when one stands. */
         boolean placeHaleRack(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos hale);
     }
@@ -140,6 +143,11 @@ public final class ArmsApi {
 
     public static boolean placeStand(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction facing, String kind, String rankLabel, long seed) {
         return hooks != null && hooks.placeStand(level, pos, facing, kind, rankLabel, seed);
+    }
+
+    /** Whether this weapon was found rather than made (Marked, or Lord-forged). */
+    public static boolean found(net.minecraft.world.item.ItemStack stack) {
+        return hooks != null && !stack.isEmpty() && hooks.found(stack);
     }
 
     public static String rankOfLevel(int level) {

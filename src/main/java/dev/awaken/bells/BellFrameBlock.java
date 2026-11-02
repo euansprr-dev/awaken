@@ -9,14 +9,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -26,26 +23,17 @@ import org.jspecify.annotations.Nullable;
 import java.util.Map;
 
 /**
- * The bell frame (SPEC §43.7): two posts and a beam with a bell under it, set inside your own Hearth. Your bells hang
- * here, the belfry, the tower and the Great Belfry grow round it, and it rings your song at dawn and dusk. One per home.
+ * The Bell Frame (SPEC §43.7, §43.16): two posts and a beam with three hooks, made from planks and logs and set inside
+ * your own Hearth, one per home. Your first bells hang on it, your song starts from it, quiet ground centres on it, and the
+ * Great Belfry's two pieces are set into it.
  */
-public final class BellFrameBlock extends HorizontalDirectionalBlock {
-    private static final Map<Direction, VoxelShape> SHAPE = Shapes.rotateHorizontal(Shapes.or(Block.box(1, 0, 6, 3, 16, 10),
-            Block.box(13, 0, 6, 15, 16, 10), Block.box(0, 14, 5.5, 16, 16, 10.5), Block.box(4, 3, 4, 12, 12.5, 12)));
+public final class BellFrameBlock extends HookBlock {
+    // the drawn posts stand just outside the block; the outline keeps to it
+    private static final Map<Direction, VoxelShape> SHAPE = Shapes.rotateHorizontal(Shapes.or(Block.box(0, 0, 6, 2, 16, 10),
+            Block.box(14, 0, 6, 16, 16, 10), Block.box(0, 14, 5.5, 16, 16, 10.5)));
 
     public BellFrameBlock(BlockBehaviour.Properties p) {
         super(p);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
-        b.add(FACING);
-    }
-
-    @Override
-    public @Nullable BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
     }
 
     @Override
@@ -59,17 +47,19 @@ public final class BellFrameBlock extends HorizontalDirectionalBlock {
         if (level instanceof ServerLevel sl) BellTower.placed(sl, pos, by instanceof ServerPlayer sp ? sp : null);
     }
 
-    /** The Heart-clapper or a Sovereign's relic, set into the frame for the Great Belfry (SPEC §43.14). */
+    /** A bell hangs on it; the Heart-clapper or a Sovereign's relic is set into it for the Great Belfry (SPEC §43.14). */
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!stack.is(BellContent.HEART_CLAPPER.get()) && !stack.is(BellContent.SOVEREIGN_RELIC.get())) return InteractionResult.TRY_WITH_EMPTY_HAND;
-        if (player instanceof ServerPlayer sp && level instanceof ServerLevel sl) GreatBelfry.offer(sl, pos, sp, stack);
-        return InteractionResult.SUCCESS;
+        if (stack.is(BellContent.HEART_CLAPPER.get()) || stack.is(BellContent.SOVEREIGN_RELIC.get())) {
+            if (player instanceof ServerPlayer sp && level instanceof ServerLevel sl) GreatBelfry.offer(sl, pos, sp, stack);
+            return InteractionResult.SUCCESS;
+        }
+        return super.useItemOn(stack, state, level, pos, player, hand, hit);
     }
 
+    /** Nothing in reach to ring: how many bells are in your song and what's next. */
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player instanceof ServerPlayer sp && level instanceof ServerLevel sl) BellTower.used(sl, pos, sp);
-        return InteractionResult.SUCCESS;
+    protected void usedEmpty(ServerLevel level, BlockPos pos, ServerPlayer p) {
+        BellTower.used(level, pos, p);
     }
 }

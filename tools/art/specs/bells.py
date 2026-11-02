@@ -126,15 +126,73 @@ def bell_shape(cx, top, tex, scale=1.0):
     return out
 
 
+WOOD_TEX = {"particle": "minecraft:block/stripped_dark_oak_log", "wood": "minecraft:block/stripped_dark_oak_log",
+            "iron": "minecraft:block/iron_block"}
+
+
+def hooks(xs, under, zs=None):
+    """Small iron hooks hanging from a beam's underside at {@code under}: a shank and a curl a bell's loop sits on. Each
+    hook at its x, and at its z if {@code zs} gives one (else the middle)."""
+    out = []
+    for i, x in enumerate(xs):
+        z = zs[i] if zs else 8
+        out.append(box([x - 0.4, under - 1.2, z - 0.4], [x + 0.4, under, z + 0.4], "#iron"))
+        out.append(box([x - 0.9, under - 1.6, z - 0.4], [x + 0.9, under - 1.2, z + 0.4], "#iron"))
+    return out
+
+
 def frame_model():
-    wood, bronze = "#wood", "#bronze"
-    els = [box([1, 0, 6], [3, 16, 10], wood), box([13, 0, 6], [15, 16, 10], wood), box([0, 14, 5.5], [16, 16, 10.5], wood),
-           box([0, 0, 5], [4, 1, 11], wood), box([12, 0, 5], [16, 1, 11], wood), box([7.5, 12.5, 7.5], [8.5, 14, 8.5], "#iron")]
-    els += bell_shape(8, 12.5, bronze)
-    return {"parent": "minecraft:block/block", "ambientocclusion": False,
-            "textures": {"particle": "minecraft:block/stripped_dark_oak_log", "wood": "minecraft:block/stripped_dark_oak_log",
-                         "bronze": "awaken:block/gate_bell_bronze", "iron": "minecraft:block/iron_chain"},
-            "elements": els}
+    """Two posts and a beam with three hooks (SPEC 43.16): the bells themselves are drawn by the block's renderer. The posts
+    stand just outside the block so the three bells between them can be big enough to read."""
+    wood = "#wood"
+    els = [box([-2, 0, 6], [0, 16, 10], wood), box([16, 0, 6], [18, 16, 10], wood), box([-3, 14, 5.5], [19, 16, 10.5], wood),
+           box([-3, 0, 5], [1, 1, 11], wood), box([15, 0, 5], [19, 1, 11], wood)]
+    els += hooks([2.7, 8, 13.3], 14)
+    return {"parent": "minecraft:block/block", "ambientocclusion": False, "textures": dict(WOOD_TEX), "elements": els}
+
+
+def beam_model():
+    """A Bell Beam: a broad timber across the top of its block, iron straps at each end, four hooks staggered front and back
+    so four bells big enough to read hang from one block (Hanging.hookModel)."""
+    wood = "#wood"
+    els = [box([0, 13, 4], [16, 16, 12], wood), box([0.5, 12.8, 3.8], [1.5, 16.2, 12.2], "#iron"),
+           box([14.5, 12.8, 3.8], [15.5, 16.2, 12.2], "#iron")]
+    els += hooks([2.5, 6.17, 9.83, 13.5], 13, [5.5, 10.5, 5.5, 10.5])
+    return {"parent": "minecraft:block/block", "ambientocclusion": False, "textures": dict(WOOD_TEX), "elements": els}
+
+
+def great_beam_model():
+    """A Great Beam: a heavy timber, three iron bands and one big hook a Great Bell hangs from."""
+    wood = "#wood"
+    els = [box([0, 12, 5], [16, 16, 11], wood)]
+    for x in (1.0, 7.0, 13.0):
+        els.append(box([x, 11.8, 4.8], [x + 2, 16.2, 11.2], "#iron"))
+    els += [box([7.4, 10.4, 7.4], [8.6, 12, 8.6], "#iron"), box([6.6, 9.8, 7.4], [9.4, 10.4, 8.6], "#iron")]
+    return {"parent": "minecraft:block/block", "ambientocclusion": False, "textures": dict(WOOD_TEX), "elements": els}
+
+
+def bell_item_model():
+    """One of the hundred as a thing (SPEC 43.16): a bronze bell hanging from (8, 15, 8), its loop above."""
+    els = bell_shape(8, 15, "#bronze", 1.6) + [box([7.4, 15, 7.4], [8.6, 16, 8.6], "#iron")]
+    model = fix_bell_boxes({"parent": "minecraft:block/block", "ambientocclusion": False,
+                            "textures": {"particle": "awaken:block/gate_bell_bronze", "bronze": "awaken:block/gate_bell_bronze",
+                                         "iron": "minecraft:block/iron_block"}, "elements": els})
+    # held small, mouth down, a little turned; the hooks' renderer draws it with no transform of its own
+    model["display"] = {
+        "firstperson_righthand": {"rotation": [0, -25, 8], "translation": [1.5, 2.5, 0], "scale": [0.42, 0.42, 0.42]},
+        "firstperson_lefthand": {"rotation": [0, -25, -8], "translation": [1.5, 2.5, 0], "scale": [0.42, 0.42, 0.42]},
+        "thirdperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 1.5, 1], "scale": [0.35, 0.35, 0.35]},
+        "thirdperson_lefthand": {"rotation": [0, 45, 0], "translation": [0, 1.5, 1], "scale": [0.35, 0.35, 0.35]},
+        "gui": {"rotation": [20, 30, 0], "translation": [0, 0.5, 0], "scale": [0.72, 0.72, 0.72]},
+        "ground": {"translation": [0, 2, 0], "scale": [0.35, 0.35, 0.35]},
+        "fixed": {"scale": [0.6, 0.6, 0.6]}}
+    return model
+
+
+def facing_states(model):
+    return {"variants": {
+        "facing=north": {"model": model}, "facing=east": {"model": model, "y": 90},
+        "facing=south": {"model": model, "y": 180}, "facing=west": {"model": model, "y": 270}}}
 
 
 def sleeping_model(tex):
@@ -174,10 +232,19 @@ def main(argv):
     write_json("items/handbell.json", {"model": {"type": "minecraft:model", "model": "awaken:item/handbell"}})
     write_json("models/item/bell_frame.json", {"parent": "minecraft:item/generated", "textures": {"layer0": "awaken:item/bell_frame"}})
     write_json("items/bell_frame.json", {"model": {"type": "minecraft:model", "model": "awaken:item/bell_frame"}})
-    write_json("models/block/bell_frame.json", fix_bell_boxes(frame_model()))
-    write_json("blockstates/bell_frame.json", {"variants": {
-        "facing=north": {"model": "awaken:block/bell_frame"}, "facing=east": {"model": "awaken:block/bell_frame", "y": 90},
-        "facing=south": {"model": "awaken:block/bell_frame", "y": 180}, "facing=west": {"model": "awaken:block/bell_frame", "y": 270}}})
+    write_json("models/block/bell_frame.json", frame_model())
+    write_json("blockstates/bell_frame.json", facing_states("awaken:block/bell_frame"))
+    # stage 2 (SPEC 43.16): the beams, the bell as a thing, and a found bell (drawn by its renderer; the model is its particle)
+    write_json("models/block/bell_beam.json", beam_model())
+    write_json("blockstates/bell_beam.json", facing_states("awaken:block/bell_beam"))
+    write_json("items/bell_beam.json", {"model": {"type": "minecraft:model", "model": "awaken:block/bell_beam"}})
+    write_json("models/block/great_beam.json", great_beam_model())
+    write_json("blockstates/great_beam.json", facing_states("awaken:block/great_beam"))
+    write_json("items/great_beam.json", {"model": {"type": "minecraft:model", "model": "awaken:block/great_beam"}})
+    write_json("models/item/bell.json", bell_item_model())
+    write_json("items/bell.json", {"model": {"type": "minecraft:model", "model": "awaken:item/bell"}})
+    write_json("models/block/found_bell.json", {"textures": {"particle": "awaken:block/gate_bell_bronze"}})
+    write_json("blockstates/found_bell.json", {"variants": {"": {"model": "awaken:block/found_bell"}}})
     write_json("models/block/sleeping_bell.json", sleeping_model("minecraft:block/oxidized_copper"))
     write_json("models/block/sleeping_bell_awake.json", sleeping_model("awaken:block/gate_bell_bronze"))
     write_json("blockstates/sleeping_bell.json", {"variants": {

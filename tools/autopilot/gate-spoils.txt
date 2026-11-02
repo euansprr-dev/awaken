@@ -1,0 +1,102 @@
+# Gate spoils (SPEC §13 "Gate spoils", docs/gate-spoils/PLAN.md): the E panel at the MacBook's GUI scale. In a C-rank
+# gate with a lived-in inventory: the Satchel beside your pockets (12 stacks, the Hunter death line), then 42 stacks
+# (two pages), the recipe book open (the slim tab above the inventory), the Satchel and Held tabs together; then out
+# through the Shrine with every pocket full: the claim card saying what is held, and E outside showing "Held for you".
+# Survival (creative keeps its own screen). Run on CI: tools/tour-ci.sh tools/autopilot/gate-spoils.txt
+world gate_spoils survival 20261102
+waitworld
+# the MacBook's window (its display clamps a 1440x900 window to 1440x829) and GUI scale auto
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+# the band on the wrist: E opens the holo inventory, as in Euan's game
+cmd awaken band wear
+wait 20
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+# away from spawn: no gate forms in Carillon's basin
+cmd tp @s 3000 120 3000
+wait 200
+cmd awaken gate hop
+wait 120
+cmd awaken gate open C bell_crypt
+# the gate this tour opened, once it has formed (slower on CI's three cores); a second try is harmless once inside
+wait 900
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior enter
+wait 200
+# a lived-in inventory
+cmd clear @s
+cmd item replace entity @s armor.chest with minecraft:iron_chestplate
+cmd item replace entity @s weapon.offhand with minecraft:shield
+cmd item replace entity @s hotbar.0 with minecraft:diamond_sword
+cmd item replace entity @s hotbar.1 with minecraft:iron_pickaxe
+cmd item replace entity @s hotbar.2 with minecraft:bow
+cmd item replace entity @s hotbar.3 with minecraft:torch 64
+cmd item replace entity @s hotbar.4 with minecraft:bread 12
+cmd item replace entity @s inventory.0 with minecraft:arrow 48
+cmd item replace entity @s inventory.9 with minecraft:iron_ingot 23
+wait 20
+
+# --- the Satchel in E ---
+cmd awaken gate satchel fill 12
+wait 20
+holo inv open
+wait 40
+shot spoils_01_satchel
+holo inv close
+wait 10
+
+# --- two pages ---
+cmd awaken gate satchel fill 30
+wait 20
+holo inv open
+wait 40
+shot spoils_02_pages
+# the recipe book: no room beside the inventory, so a slim tab above it
+holo inv book
+wait 20
+shot spoils_03_book_tab
+holo inv book
+wait 10
+holo inv close
+wait 10
+
+# --- something held for you while in the gate: both tabs ---
+cmd awaken gate satchel hold 3
+wait 20
+holo inv open
+wait 40
+shot spoils_04_two_tabs
+holo inv close
+wait 10
+
+# --- out with every pocket full: what doesn't fit is held, never thrown at your feet ---
+cmd give @s minecraft:cobblestone 2304
+wait 10
+cmd awaken gate leave
+# the claim card lives 10 s ("shot" waits for the terrain longer than that), maybe after the region's card
+wait 40
+shotnow spoils_05_claim_card
+wait 120
+shotnow spoils_05b_claim_card
+wait 60
+holo inv open
+wait 40
+shot spoils_06_held_outside
+holo inv close
+wait 10
+quit

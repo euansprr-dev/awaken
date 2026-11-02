@@ -51,6 +51,7 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
             ArmourMesh[] bones = ArmourMeshes.piece(look.set(), slot);
             if (bones == null) continue;
             boolean foil = stack.hasFoil();
+            int script = dev.awaken.core.api.EnchantApi.glowBits(stack);
             Forged forged = stack.get(ArmourContent.FORGED.get());
             int mastery = forged == null ? 0 : forged.masteryStep();
             int accent = forged == null ? 0 : forged.accent();
@@ -61,8 +62,8 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
                 if (mesh == null && extra == null) continue;
                 ps.pushPose();
                 if (place(ps, getParentModel(), b, state)) {
-                    if (mesh != null) draw(out, ps, mesh, look.set(), light, foil, energy, flash, -1, mastery, low, accent);
-                    if (extra != null) draw(out, ps, extra, look.set(), light, foil, energy, flash, -1, mastery, low, accent);
+                    if (mesh != null) draw(out, ps, mesh, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script);
+                    if (extra != null) draw(out, ps, extra, look.set(), light, foil, energy, flash, -1, mastery, low, accent, script);
                 }
                 ps.popPose();
             }
@@ -197,10 +198,16 @@ final class ArmourLayer<S extends HumanoidRenderState, M extends HumanoidModel<S
      */
     static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat,
                      int mastery, boolean low, int accentColour) {
+        draw(out, ps, mesh, set, light, foil, energy, flash, heat, mastery, low, accentColour, 0);
+    }
+
+    /** And the enchantment light on it now (SPEC §45.11: {@code EnchantApi.glowBits}, 0 none), in bits 8-14 of the first half. */
+    static void draw(SubmitNodeCollector out, PoseStack ps, ArmourMesh mesh, ArmourSet set, int light, boolean foil, int energy, int flash, int heat,
+                     int mastery, boolean low, int accentColour, int glow) {
         boolean ours = ArmourPipelines.ok();
         var texture = ArmourMeshes.texture(set);
         int v = (foil ? 256 : 0) | (heat >= 0 ? 512 : 0) | (mastery & 7) << 10 | (low ? 8192 : 0) | Math.min(255, Math.max(0, flash));
-        int u = heat >= 0 ? Math.min(255, heat) : Math.min(255, Math.max(0, energy));
+        int u = (heat >= 0 ? Math.min(255, heat) : Math.min(255, Math.max(0, energy))) | (glow & 127) << 8;
         int packed = ours ? v << 16 | u : OverlayTexture.NO_OVERLAY;
         int accent = !ours ? 0xFFFFFF : accentColour != 0 ? accentColour & 0xFFFFFF : mesh.accent();
         out.submitCustomGeometry(ps, ours ? ArmourPipelines.armour(texture) : ArmourPipelines.fallback(texture),

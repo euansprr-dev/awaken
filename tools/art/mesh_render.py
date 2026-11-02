@@ -48,10 +48,17 @@ def heat_glow(h):
     return c + (np.array([1.0, 0.96, 0.86])[None] - c) * smoothstep(0.8, 1.0, h)
 
 
+# each enchantment's own light (SPEC §45.11), by palette index: arms_weapon.fsh's SCRIPT
+SCRIPT = [(0, 0, 0), (1.0, 0.54, 0.30), (0.56, 0.85, 1.0), (1.0, 0.85, 0.29), (0.73, 0.58, 1.0), (0.31, 0.88, 0.76),
+          (0.73, 0.76, 0.82), (0.62, 0.88, 0.48), (1.0, 0.37, 0.39), (0.95, 0.77, 0.35), (0.31, 0.71, 0.92),
+          (0.95, 0.92, 0.84), (0.55, 0.42, 1.0)]
+
+
 def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=0.0, flash=0.0, foil=False, heat=None,
-          front=0.0, quench=False):
+          front=0.0, quench=False, script=(0, 0.0)):
     """The weapon shader. alb, mat: (P,4) 0..1; normals (P,3); along (P,); accent (3,) 0..1; time in GameTime units.
-    heat (0..1) draws it in the making at the War Anvil, hot past front (the hilt's side of it when quench)."""
+    heat (0..1) draws it in the making at the War Anvil, hot past front (the hilt's side of it when quench); script
+    (palette index, brightness 0..1) the enchantment light on it now."""
     metal, gloss, emit, flow = mat[:, 0:1], mat[:, 1:2], mat[:, 2:3], mat[:, 3:4]
     d = np.maximum(n_world @ L0, 0) + np.maximum(n_world @ L1, 0)
     diffuse = np.minimum(1.0, d * 0.6 + 0.4)[:, None]
@@ -80,7 +87,17 @@ def shade(alb, mat, n_world, n_view, along, accent, light=1.0, time=0.0, energy=
     pulse = np.where(flow > 0, 0.55 + 0.45 * np.sin(time * 240.0 * 2 * math.pi * 0.6 - flow * 12.0), 1.0)
     col = col + rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6
     col = col + accent[None] * flash * (0.18 + 0.6 * emit + 0.35 * rim)
-    if foil:
+    if script[0] > 0:
+        # as the shader, but for its few pixels catching the light (they need texel coordinates a preview lacks)
+        ink, lit, t = np.array(SCRIPT[script[0]]), script[1], time * 240.0
+        cell = along * 26.0 - t * 1.4
+        h, f = (np.sin(np.floor(cell) * 12.9898) * 43758.5453) % 1.0, cell % 1.0
+        letter = ((h > 0.2) & (f > 0.12) & (f < 0.3 + 0.6 * h)).astype(float)[:, None]
+        x = np.clip(((1 - np.clip(n_view @ V, 0, 1)) ** 2 - 0.4) / 0.4, 0, 1)
+        edge = (x * x * (3 - 2 * x))[:, None]
+        wave = (0.45 + 0.55 * (0.5 + 0.5 * np.sin((along * 2.5 - t * 0.7) * 2 * math.pi)) ** 2)[:, None]
+        col = col + ink[None] * (letter * edge * wave * 1.1 + emit * pulse * 0.9 + rim * 0.22) * lit
+    elif foil:
         g = np.sin((along * 9.0 + n_view[:, 0] * 2.0) - time * 240.0 * 2 * math.pi * 0.35) * 0.5 + 0.5
         col = col + np.array([0.55, 0.32, 1.0])[None] * (g ** 6)[:, None] * 0.45
     return np.clip(col, 0, 1)

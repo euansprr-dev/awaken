@@ -40,12 +40,13 @@ final class Peals {
 
     private static final Map<UUID, Pending> HOMEWARD = new HashMap<>();
 
-    /** The peals this player can ring now, in order, after the plain ring (""). */
+    /** The peals this player can ring now, in order, after the plain ring (""): a peal's three bells in their home's song. */
     static List<String> ringable(ServerPlayer p) {
         BellBook b = Bells.book(p);
+        java.util.Set<Integer> song = Bells.song(p);
         List<String> out = new ArrayList<>();
         out.add("");
-        for (BellCatalog.Peal pl : BellCatalog.PEALS) if (pl.complete(b::has)) out.add(pl.id());
+        for (BellCatalog.Peal pl : BellCatalog.PEALS) if (pl.complete(id -> song.contains(BellCatalog.of(id).no()))) out.add(pl.id());
         if (b.pealed) out.add(HundredPeal.KINSONG);
         return out;
     }
@@ -85,7 +86,7 @@ final class Peals {
         BellBook b = Bells.book(p);
         BellCatalog.Peal pl = BellCatalog.peal(b.peal);
         if (pl == null) return;
-        if (!pl.complete(b::has)) {
+        if (!ringable(p).contains(pl.id())) {
             b.peal = "";
             Bells.save(p, b);
             return;

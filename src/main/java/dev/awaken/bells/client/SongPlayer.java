@@ -51,9 +51,13 @@ public final class SongPlayer {
         plan = null;
     }
 
-    /** Game time the bell hanging at {@code pos} was last struck by a song, or a long time ago. */
-    public static long struck(BlockPos pos) {
-        return STRUCK.getOrDefault(pos.asLong(), Long.MIN_VALUE / 2);
+    /** Game time bell {@code no}, hanging at {@code pos}, was last struck by a song, or a long time ago. */
+    public static long struck(BlockPos pos, int no) {
+        return STRUCK.getOrDefault(key(pos, no), Long.MIN_VALUE / 2);
+    }
+
+    private static long key(BlockPos pos, int no) {
+        return pos.asLong() * 101 + no;
     }
 
     static void tick(ClientTickEvent.Post e) {
@@ -77,7 +81,7 @@ public final class SongPlayer {
             return;
         }
         BlockPos where = s.place(no);
-        if (mc.level != null) STRUCK.put(where.asLong(), mc.level.getGameTime());
+        if (mc.level != null) STRUCK.put(key(where, no), mc.level.getGameTime());
         Vec3 at = Vec3.atCenterOf(where), ear = mc.player.getEyePosition();
         double d = at.distanceTo(ear);
         float vol = 16F;

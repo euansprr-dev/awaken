@@ -304,7 +304,7 @@ public final class Runs {
         boolean red = g.plan.is(Twist.RED_GATE) && !g.bossDead;
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Floor " + f.floor + " cleared"))
                 .row("Satchel XP", "+" + Math.round(bonus) + "  (carrying " + Math.round(run.satchelXp) + ")")
-                .row("Satchel", Satchel.count(run.satchel) + " / " + Satchel.SLOTS + " slots")
+                .row("Satchel", Satchel.count(run.satchel) + " stack" + (Satchel.count(run.satchel) == 1 ? "" : "s") + " (press E to see them)")
                 .body(Component.literal(red ? "The exit is sealed. Only the Seal remains."
                         : "Rest at the Shrine to carry it out, or break the Seal and go deeper."))
                 .ttl(20 * 7).build());
@@ -367,12 +367,17 @@ public final class Runs {
         run.satchelXp = 0;
         Claim c = new Claim(claimId(g, run, floorLabel, p), p.getUUID(), g.id, items, xp, kind, note);
         if (!Claims.write(p, c)) {
-            // already claimed under this id: put it back where it was rather than lose it
-            for (ItemStack s : items) Satchel.add(run.satchel, s);
-            run.satchelXp = xp;
+            // already claimed under this id: hold it for you rather than put it back into a run that may be ending
+            keepRefused(p, items, xp, kind);
             return false;
         }
         return true;
+    }
+
+    /** A claim whose id was already used: its loot is held for you and its XP granted now, never lost with the run. */
+    private static void keepRefused(ServerPlayer p, List<ItemStack> items, double xp, String kind) {
+        for (ItemStack s : items) Spoils.hold(p, s);
+        if (xp > 0) Progression.grantXp(p, xp, "boss".equals(kind) ? Progression.XpSource.GATE_BOSS : Progression.XpSource.GATE_FLOOR);
     }
 
     /** Things that happen once a run ends well (extracted or the Lord fell): Day's End, twists seen. */
@@ -442,7 +447,7 @@ public final class Runs {
             List<ItemStack> items = Satchel.drain(run.satchel);
             Claim c = new Claim(run.gateId + ":lost" + run.runIndex + "-" + run.startedAt + ":" + p.getUUID(), p.getUUID(), run.gateId,
                     items, run.satchelXp, "recover", why);
-            if (!Claims.write(p, c)) for (ItemStack s : items) Satchel.add(run.satchel, s);
+            if (!Claims.write(p, c)) keepRefused(p, items, run.satchelXp, "recover");
             run.satchelXp = 0;
         }
         DirectorLog.log(p, "gate", "run in gate " + run.gateId + " ended: " + why);
@@ -508,9 +513,7 @@ public final class Runs {
                 Progression.perk(p, Perks.LOOT_BONUS));
         boolean core = hoard.stream().anyMatch(Loot::isPowerCore);
         mem.bossesSinceCore = core ? 0 : mem.bossesSinceCore + 1;
-        for (ItemStack s : hoard) {
-            if (Satchel.add(run.satchel, s) == 0 || !s.isEmpty()) run.satchel.add(s); // the hoard never gets lost to a full Satchel
-        }
+        for (ItemStack s : hoard) Spoils.toSatchel(p, run, s);
         bankSatchel(p, g, run, label(f.area, f.floor), "boss", "");
         if (main) {
             dev.awaken.core.api.ArmsApi.lordSpoils(p, plan.rank().label, plan.theme().id); // Spoils: a weapon of the Lord's style, by rank (docs/arms-progression/PLAN.md §3.7)
@@ -585,8 +588,8 @@ public final class Runs {
         List<ItemStack> kept = satchelOnDeath(run, diff);
         if (g != null && (!kept.isEmpty() || (diff == AwakenConfig.Difficulty.STORY && run.satchelXp > 0))) {
             double xp = diff == AwakenConfig.Difficulty.STORY ? run.satchelXp * 0.5 : 0;
-            Claims.write(p, new Claim(claimId(g, run, "d" + label(run.area, run.floor), p), p.getUUID(), g.id, kept, xp, "death",
-                    "Story mode: half of what you carried is yours."));
+            if (!Claims.write(p, new Claim(claimId(g, run, "d" + label(run.area, run.floor), p), p.getUUID(), g.id, kept, xp, "death",
+                    "Story mode: half of what you carried is yours."))) keepRefused(p, kept, xp, "death");
         }
         run.satchelXp = 0;
         if (diff != AwakenConfig.Difficulty.STORY) Progression.fracture(p, FRACTURE_TICKS);
@@ -628,7 +631,7 @@ public final class Runs {
         for (GearStash.Slot slot : s.slots()) {
             ItemStack st = slot.stack().copy();
             if (slot.index() < inv.getContainerSize() && inv.getItem(slot.index()).isEmpty()) inv.setItem(slot.index(), st);
-            else if (!p.addItem(st)) p.drop(st, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            else Spoils.give(p, st);
         }
         p.experienceLevel = s.xpLevel();
         p.experienceProgress = s.xpProgress();
@@ -709,13 +712,8 @@ public final class Runs {
             for (ItemStack s : Loot.elite(g.plan.rank(), f.theme, p.getRandom(), g.plan.has(Modifier.FORTUNE), bias)) {
                 String name = s.getHoverName().getString();
                 boolean core = Loot.isPowerCore(s);
-                int moved = Satchel.add(run.satchel, s);
-                if (moved > 0 && core) Signal.toast(p, Component.literal("+ " + name + " (in your Satchel)"));
-                if (!s.isEmpty()) {
-                    // Satchel full: drop it where the elite fell; picking it up later still routes to the Satchel
-                    ItemEntity drop = new ItemEntity(p.level(), dead.getX(), dead.getY() + 0.5, dead.getZ(), s);
-                    p.level().addFreshEntity(drop);
-                }
+                Spoils.toSatchel(p, run, s);
+                if (core) Signal.toast(p, Component.literal("+ " + name + " (in your Satchel)"));
             }
         }
     }
@@ -740,30 +738,18 @@ public final class Runs {
         if (item.hasPickUpDelay() || (item.getTarget() != null && !item.getTarget().equals(p.getUUID()))) return;
         if (item.getOwner() == p) return;
         ItemStack stack = item.getItem();
-        int moved = Satchel.add(run.satchel, stack);
+        int count = stack.getCount();
         e.setCanPickup(TriState.FALSE);
-        if (moved > 0) {
-            p.take(item, moved);
-            if (stack.isEmpty()) item.discard();
-            Hud.sendSoon(p);
-        } else if (p.tickCount % 40 == 0) {
-            Signal.toast(p, Component.literal("Your Satchel is full."));
-        }
+        Spoils.toSatchel(p, run, stack); // the Satchel never refuses (SPEC §13, "Gate spoils")
+        p.take(item, count);
+        item.discard();
     }
 
-    /** Public API: put loot straight into the Satchel. Returns what didn't fit (empty if all of it did). */
-    /** Into the Satchel; whatever doesn't fit drops at the player's feet instead of vanishing. */
-    static void satchelOrDrop(ServerPlayer p, RunState run, ItemStack stack) {
-        Satchel.add(run.satchel, stack);
-        if (!stack.isEmpty()) p.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
-        Hud.sendSoon(p);
-    }
-
+    /** Public API: put loot straight into the Satchel (it never refuses). Returns what is left: empty in a run. */
     public static ItemStack satchelAdd(ServerPlayer p, ItemStack stack) {
         RunState run = run(p);
         if (!run.active()) return stack;
-        Satchel.add(run.satchel, stack);
-        Hud.sendSoon(p);
+        Spoils.toSatchel(p, run, stack);
         return stack;
     }
 

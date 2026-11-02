@@ -8,12 +8,14 @@ import dev.awaken.gates.GateRegistry;
 import dev.awaken.gates.GateState;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
@@ -53,7 +55,7 @@ public final class GatePayloads {
     }
 
     /** The run HUD: what floor, what you carry, how hard the gate is pushing. {@code gateId < 0} clears it. */
-    public record RunHud(int gateId, String theme, int rank, int area, int floor, int floors, int satchelSlots, int satchelXp,
+    public record RunHud(int gateId, String theme, int rank, int area, int floor, int floors, int satchelStacks, int satchelXp,
                          int kills, int floorSeconds, int pressure, int noise, int collapseSeconds, int flags, String hint)
             implements CustomPacketPayload {
         public static final int LIGHTLESS = 1, RED = 2, LOW_GRAVITY = 4, CLEARED_FLOOR = 8, DISGUISED = 16, SILENCE = 32;
@@ -65,7 +67,7 @@ public final class GatePayloads {
             ByteBufCodecs.VAR_INT.encode(buf, h.area);
             ByteBufCodecs.VAR_INT.encode(buf, h.floor);
             ByteBufCodecs.VAR_INT.encode(buf, h.floors);
-            ByteBufCodecs.VAR_INT.encode(buf, h.satchelSlots);
+            ByteBufCodecs.VAR_INT.encode(buf, h.satchelStacks);
             ByteBufCodecs.VAR_INT.encode(buf, h.satchelXp);
             ByteBufCodecs.VAR_INT.encode(buf, h.kills);
             ByteBufCodecs.VAR_INT.encode(buf, h.floorSeconds);
@@ -88,12 +90,24 @@ public final class GatePayloads {
         }
     }
 
-    /** The Satchel's contents (read-only on the client: loot is yours only once claimed). */
-    public record SatchelView(List<ItemStack> items, int xp, boolean open) implements CustomPacketPayload {
-        public static final Type<SatchelView> TYPE = new Type<>(Awaken.id("gate_satchel"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, SatchelView> STREAM_CODEC = StreamCodec.composite(
-                ItemStack.OPTIONAL_LIST_STREAM_CODEC, SatchelView::items, ByteBufCodecs.VAR_INT, SatchelView::xp, ByteBufCodecs.BOOL, SatchelView::open,
-                SatchelView::new);
+    /**
+     * The gate's spoils as the inventory screen shows them (SPEC §13, "Gate spoils"): the Satchel in a run (look only:
+     * loot is yours only once claimed) and what is held for you. Each list carries at most {@link #MAX} stacks; the
+     * counts are the true ones.
+     */
+    public record SpoilsView(boolean inRun, String title, List<ItemStack> satchel, int satchelStacks, int xp, int deathLine,
+                             List<ItemStack> held, int heldStacks) implements CustomPacketPayload {
+        public static final int MAX = 300;
+        /** What dying in this gate costs: none (no run), all of it, half of it, nothing (the first gate), nothing once (a Clone Vat). */
+        public static final int DEATH_NONE = 0, DEATH_ALL = 1, DEATH_HALF = 2, DEATH_FIRST = 3, DEATH_CLONE = 4;
+        public static final SpoilsView EMPTY = new SpoilsView(false, "", List.of(), 0, 0, DEATH_NONE, List.of(), 0);
+        public static final Type<SpoilsView> TYPE = new Type<>(Awaken.id("gate_spoils"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, SpoilsView> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.BOOL, SpoilsView::inRun, ByteBufCodecs.STRING_UTF8, SpoilsView::title,
+                ItemStack.OPTIONAL_LIST_STREAM_CODEC, SpoilsView::satchel, ByteBufCodecs.VAR_INT, SpoilsView::satchelStacks,
+                ByteBufCodecs.VAR_INT, SpoilsView::xp, ByteBufCodecs.VAR_INT, SpoilsView::deathLine,
+                ItemStack.OPTIONAL_LIST_STREAM_CODEC, SpoilsView::held, ByteBufCodecs.VAR_INT, SpoilsView::heldStacks,
+                SpoilsView::new);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -101,10 +115,38 @@ public final class GatePayloads {
         }
     }
 
-    /** Client asks to see the Satchel (Gate Map button). */
-    public record OpenSatchel() implements CustomPacketPayload {
-        public static final Type<OpenSatchel> TYPE = new Type<>(Awaken.id("gate_open_satchel"));
-        public static final StreamCodec<ByteBuf, OpenSatchel> STREAM_CODEC = StreamCodec.unit(new OpenSatchel());
+    /** The inventory screen opened (true) or closed (false): while it is open the server keeps the spoils view fresh. */
+    public record WatchSpoils(boolean watching) implements CustomPacketPayload {
+        public static final Type<WatchSpoils> TYPE = new Type<>(Awaken.id("gate_watch_spoils"));
+        public static final StreamCodec<ByteBuf, WatchSpoils> STREAM_CODEC = ByteBufCodecs.BOOL.map(WatchSpoils::new, WatchSpoils::watching);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** Take a held stack into your pockets ({@code all}: every held stack). The server checks the index still holds {@code item}. */
+    public record TakeHeld(int index, Item item, boolean all) implements CustomPacketPayload {
+        public static final Type<TakeHeld> TYPE = new Type<>(Awaken.id("gate_take_held"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, TakeHeld> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, TakeHeld::index, ByteBufCodecs.registry(Registries.ITEM), TakeHeld::item, ByteBufCodecs.BOOL, TakeHeld::all,
+                TakeHeld::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** A gate monster's drops, already in its killer's Satchel, drawn popping out of it and flying into the killer (client-only copies). */
+    public record SpoilsFlight(double x, double y, double z, int killer, List<ItemStack> items) implements CustomPacketPayload {
+        public static final int MAX = 8;
+        public static final Type<SpoilsFlight> TYPE = new Type<>(Awaken.id("gate_spoils_flight"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, SpoilsFlight> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.DOUBLE, SpoilsFlight::x, ByteBufCodecs.DOUBLE, SpoilsFlight::y, ByteBufCodecs.DOUBLE, SpoilsFlight::z,
+                ByteBufCodecs.VAR_INT, SpoilsFlight::killer, ItemStack.OPTIONAL_LIST_STREAM_CODEC, SpoilsFlight::items,
+                SpoilsFlight::new);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {

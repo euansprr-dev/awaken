@@ -76,10 +76,4 @@ public final class Hud {
                 run.floor, floors, Satchel.count(run.satchel), (int) Math.round(run.satchelXp), run.kills, (int) (onFloor / 20), pressure,
                 g.plan.has(Modifier.SILENCE) ? run.noise : -1, collapse, flags, hint == null ? "" : hint));
     }
-
-    public static void sendSatchel(ServerPlayer p, boolean open) {
-        RunState run = Runs.run(p);
-        AwakenNet.send(p, new GatePayloads.SatchelView(run.active() ? run.satchel.stream().map(s -> s.copy()).toList() : java.util.List.of(),
-                (int) Math.round(run.satchelXp), open));
-    }
 }

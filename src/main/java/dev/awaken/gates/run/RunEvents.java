@@ -32,6 +32,9 @@ public final class RunEvents {
         });
         bus.addListener((LivingHealEvent e) -> Modifiers.onHeal(e));
         bus.addListener((LivingDropsEvent e) -> Modifiers.onDrops(e));
+        // after Fortune (and anyone else adding drops): into the killer's Satchel (SPEC §13, "Gate spoils")
+        bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (LivingDropsEvent e) -> Spoils.onDrops(e));
+        bus.addListener((net.neoforged.neoforge.event.entity.item.ItemTossEvent e) -> Spoils.onToss(e));
         bus.addListener((LivingChangeTargetEvent e) -> {
             Twists.onTarget(e); // Inverted retains its explicit cancellation contract.
             LivingEntity target = e.getNewAboutToBeSetTarget();
@@ -48,6 +51,7 @@ public final class RunEvents {
         Twists.tickPuppets(server);
         Modifiers.tickPending(server);
         Hud.flush(server);
+        Spoils.tick(server);
         if (server.getTickCount() % 100 == 30) {
             GateRegistry reg = GateRegistry.get(server);
             if (reg.pendingCount() > 0) for (ServerPlayer p : server.getPlayerList().getPlayers()) Claims.deliver(p);
@@ -55,12 +59,14 @@ public final class RunEvents {
     }
 
     public static void onLogin(ServerPlayer p) {
+        Spoils.remind(p);
         Runs.onLogin(p);
     }
 
     public static void onLogout(ServerPlayer p) {
         Twists.discardGhost(p);
         Modifiers.forget(p.getUUID());
+        Spoils.forget(p.getUUID());
         RunState run = Runs.run(p);
         if (run.active()) run.leftAt = dev.awaken.gates.GateService.now(p.level().getServer()); // saved with the player
     }

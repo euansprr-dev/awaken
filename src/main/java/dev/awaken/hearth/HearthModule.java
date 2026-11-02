@@ -169,6 +169,13 @@ public final class HearthModule {
             public int temperCap(net.minecraft.server.level.ServerPlayer player, BlockPos at) {
                 return Upgrades.temperCapAt(player, at);
             }
+
+            @Override
+            public boolean studyAt(ServerLevel level, BlockPos pos) {
+                if (level.dimension() != net.minecraft.world.level.Level.OVERWORLD) return false;
+                return HearthData.get(level.getServer()).containing(pos, HearthService.OVERWORLD)
+                        .flatMap(h -> h.roomAt(pos, dev.awaken.hearth.room.RoomType.STUDY)).isPresent();
+            }
         });
         RankHooks.onRankUp((sp, rank) -> {
             if (!HearthService.enabled()) return;

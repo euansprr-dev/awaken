@@ -8,7 +8,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +50,7 @@ final class RunSection implements StatusSections.Section {
         String rank = ClientGates.rankLabel(h.rank());
         g.text(font, rank, x + 6, y + 6, ClientGates.rankColour(h.rank()), false);
         g.text(font, RunHudLayer.themeName(h.theme()) + " · floor " + h.floor() + " of " + h.floors(), x + 10 + font.width(rank), y + 6, 0xFFFFFFFF, false);
-        g.text(font, "Satchel " + h.satchelSlots() + " / 27 slots · " + h.satchelXp() + " Satchel XP", x + 6, y + 20, 0xFFFFCF7A, false);
+        g.text(font, "Satchel " + h.satchelStacks() + (h.satchelStacks() == 1 ? " stack" : " stacks") + " · " + h.satchelXp() + " Satchel XP", x + 6, y + 20, 0xFFFFCF7A, false);
         int s = h.floorSeconds();
         g.text(font, "Kills " + h.kills() + " · " + String.format("%d:%02d", s / 60, s % 60) + " on this floor", x + 6, y + 32, 0xFFB9C7D9, false);
         if (!h.hint().isEmpty()) g.text(font, h.hint(), x + 6, y + 44, 0xFFE2D2FF, false);
@@ -66,7 +65,8 @@ final class RunSection implements StatusSections.Section {
     @Override
     public boolean click(double mouseX, double mouseY, int x, int y, int width) {
         if (mouseX >= satchelX && mouseX < satchelX + satchelW && mouseY >= satchelY && mouseY < satchelY + 10) {
-            ClientPacketDistributor.sendToServer(new GatePayloads.OpenSatchel());
+            Minecraft mc = Minecraft.getInstance(); // the Satchel lives beside your inventory now (SPEC §13, "Gate spoils")
+            if (mc.player != null) mc.gui.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
             return true;
         }
         return false;

@@ -23,10 +23,11 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * The Great Belfry (SPEC §43.14): the S-rank work on top of your stone tower that holds all hundred bells. It needs the
- * Heart-clapper (from an S-rank gate's Lord) and a Sovereign's relic, each set into your bell frame with it in hand;
- * then every beast that lives with you comes to the tower and raises it in half a minute (with none, it goes up at the
- * next song). The Seed Bell, the song's first note, is cast round the Heart-clapper as it goes up.
+ * The Great Belfry (SPEC §43.14, §43.16): the S-rank work round your bell frame that leads the Hundred Peal. It needs
+ * fifty bells in your song, the Heart-clapper (from an S-rank gate's Lord) and a Sovereign's relic, each set into your
+ * bell frame with it in hand; then every beast that lives with you comes to the frame and raises it in half a minute
+ * (with none, it goes up at the next song). The Seed Bell, the song's first note, is cast round the Heart-clapper and
+ * hangs in its middle; your beasts carry your Great Bells up into it, and any bell on a hook where it stands moves into it.
  */
 final class GreatBelfry {
     private GreatBelfry() {}
@@ -48,8 +49,8 @@ final class GreatBelfry {
             Bells.say(p, "[Your Great Belfry already stands. It doesn't need another.]");
             return true;
         }
-        if (home.stage < 2) {
-            Bells.say(p, "[A Great Belfry goes up on top of a stone tower. Your bells need their tower first: fifty of them hung here.]");
+        if (home.hung.size() < BellTower.GREAT) {
+            Bells.say(p, "[A Great Belfry needs fifty bells in your song first. You have " + home.hung.size() + ".]");
             return true;
         }
         if (clapper ? home.clapper : home.relic) {
@@ -104,9 +105,9 @@ final class GreatBelfry {
         }
     }
 
-    /** Whether this home's frame holds both pieces on a tower with no Great Belfry yet. */
+    /** Whether this home's frame holds both pieces, with fifty bells in its song and no Great Belfry yet. */
     static boolean ready(BellWorld.Home home) {
-        return home.clapper && home.relic && home.stage == 2;
+        return home.clapper && home.relic && home.stage < 3 && home.hung.size() >= BellTower.GREAT;
     }
 
     /** Puts the Great Belfry up over the tower (clear space allowing) and casts the Seed Bell for everyone who lives here. */
@@ -122,10 +123,25 @@ final class GreatBelfry {
                 return false;
             }
         }
-        // the tower's own belfry comes down under the new one
+        // the bells on any hook where it goes up come down first, to be carried into it, never dropped
+        List<Carried> carried = new java.util.ArrayList<>();
+        java.util.Set<BlockPos> clear = new java.util.HashSet<>(plan.keySet());
+        for (BlockPos q : BellTower.tower(f, face).keySet()) if (!plan.containsKey(q) && BellTower.ours(level.getBlockState(q))) clear.add(q);
+        for (BlockPos q : clear) lift(level, q, carried);
+        // and the Great Bells hung anywhere else at home
+        for (Map.Entry<Integer, BlockPos> e : List.copyOf(home.placed.entrySet()))
+            if (Hanging.great(BellCatalog.of(e.getKey())) && level.isLoaded(e.getValue())) lift(level, e.getValue(), carried);
+        // an old tower's belfry comes down under the new one
         for (BlockPos q : BellTower.tower(f, face).keySet())
             if (!plan.containsKey(q) && BellTower.ours(level.getBlockState(q))) level.setBlock(q, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         for (Map.Entry<BlockPos, BlockState> e : plan.entrySet()) level.setBlock(e.getKey(), e.getValue(), Block.UPDATE_ALL);
+        // the Seed in the middle, the Great Bells round it, the rest on the beams round those
+        BlockPos middle = f.above(14);
+        if (level.getBlockEntity(middle) instanceof HooksEntity seed) {
+            seed.set(0, BellCatalog.of("seed").no(), h.owner);
+            Hanging.index(level, h, middle, BellCatalog.of("seed").no());
+        }
+        for (Carried c : carried) hangCarried(level, h, plan, c);
         home.stage = 3;
         BellWorld.get(level.getServer()).setDirty();
         level.playSound(null, f.above(14), BellContent.TOLL.get(), SoundSource.BLOCKS, 12F, 0.6F);
@@ -134,6 +150,38 @@ final class GreatBelfry {
             if (h.belongs(p.getUUID())) seed(p);
         Awaken.LOG.info("[bells] the Great Belfry built at {} ({} bells)", f.toShortString(), home.hung.size());
         return true;
+    }
+
+    /** A bell being carried into the Great Belfry, and who hung it. */
+    private record Carried(int no, java.util.@org.jspecify.annotations.Nullable UUID by) {}
+
+    /** Every bell on the hook block at {@code q} taken off it (out of the song for now), to be carried into the belfry. */
+    private static void lift(ServerLevel level, BlockPos q, List<Carried> carried) {
+        if (!(level.getBlockEntity(q) instanceof HooksEntity be)) return;
+        for (int i = 0; i < be.hooks(); i++) {
+            int no = be.bell(i);
+            if (no < 0) continue;
+            carried.add(new Carried(no, be.hungBy(i)));
+            be.set(i, -1, null);
+            Hanging.unindex(level, q, no);
+        }
+    }
+
+    /** A carried bell hung on the first free hook of the Great Belfry that takes it, else set down by the fire. */
+    private static void hangCarried(ServerLevel level, HearthRecord h, Map<BlockPos, BlockState> plan, Carried c) {
+        int no = c.no();
+        java.util.UUID by = c.by();
+        boolean great = Hanging.great(BellCatalog.of(no));
+        for (BlockPos q : plan.keySet()) {
+            if (!(level.getBlockEntity(q) instanceof HooksEntity be) || level.getBlockState(q).is(BellContent.GREAT_BEAM.get()) != great) continue;
+            for (int i = 0; i < be.hooks(); i++)
+                if (be.bell(i) < 0) {
+                    be.set(i, no, by);
+                    Hanging.index(level, h, q, no);
+                    return;
+                }
+        }
+        net.minecraft.world.Containers.dropItemStack(level, h.pos.getX() + 0.5, h.pos.getY() + 1, h.pos.getZ() + 0.5, BellItem.of(no));
     }
 
     /** The Seed Bell, for one who lives under a Great Belfry (now, or when they're next about). */
@@ -151,11 +199,11 @@ final class GreatBelfry {
                     : "Your Great Belfry stands. When all hundred bells hang in it, ring them.";
         if (dev.awaken.progression.Progression.rank(p).ordinal() < dev.awaken.progression.Rank.A.ordinal()) return "";
         List<String> needs = new java.util.ArrayList<>();
-        if (home == null || home.stage < 2) needs.add("your stone tower (fifty bells hung)");
+        if (home == null || home.hung.size() < BellTower.GREAT) needs.add("fifty bells in your song");
         if (home == null || !home.clapper) needs.add("the Heart-clapper, from the Lord of an S-rank gate");
         if (home == null || !home.relic) needs.add("a Sovereign's relic");
         if (needs.isEmpty()) return "The Great Belfry. Both pieces are in the frame; it goes up when your beasts raise it, or at the next song.";
-        return "The Great Belfry holds all hundred bells. It needs " + String.join(", ", needs.subList(0, needs.size() - 1))
+        return "Only a Great Belfry can lead the Hundred Peal. It needs " + String.join(", ", needs.subList(0, needs.size() - 1))
                 + (needs.size() > 1 ? " and " : "") + needs.getLast() + ", set into your bell frame.";
     }
 

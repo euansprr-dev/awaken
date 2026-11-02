@@ -296,7 +296,7 @@ Dimension `awaken:gates`: cells of 512×512 aligned to region files, cell origin
 Floors stacked vertically: floor f at y = 200 − 32·(f−1) (f = 1..6), each floor a grid of room slots (16-block pitch).
 Generation is deterministic from `GatePlan{seed, theme, layout, modifiers, twist, floors, boss, contentVersion}`.
 Rooms: start, normal, elite, cache, puzzle (some layouts), shrine (floor end), boss arena (last floor).
-Everything picked up inside a gate goes to the **Satchel** (27 slots + Satchel XP). Shrine: Extract (bank + return to
+Everything picked up inside a gate goes to the **Satchel** (no slot limit, it never refuses; + Satchel XP; §13 Gates, "Gate spoils"). Shrine: Extract (bank + return to
 gate mouth) or continue via the Seal to the next floor. Boss kill: claim + exit portal.
 Gate encounters (2026-10-28 playtest; Codex, reviewed): the current room and its connected neighbours are populated before doorway
 entry, within the existing 40-monster gate / 60-monster arena caps. A neighbour is prepared only once its chunks are
@@ -779,8 +779,46 @@ Gates:
 - Director spawn chance per pass: 100% / 30% / 8% / 0% at 0 / 1 / 2–3 / 4 standing gates; spots ≥ 96 blocks apart.
   SOVEREIGN players can roll SOVEREIGN gates. Breaks are deferred while an online player is inside that gate.
 - Claim ids carry a run index after the first run, so a re-entered gate can pay again. Retreating through floor 1's
-  entrance forfeits the Satchel. A Clone Vat save banks the whole Satchel; pockets-full loot drops at your feet and the
-  claim window says so.
+  entrance forfeits the Satchel. A Clone Vat save banks the whole Satchel; what doesn't fit your pockets on the way out is
+  held for you ("Gate spoils", below).
+- **Gate spoils** (Euan 2026-11-02, "go ahead with the gate loot plan", all four decisions yes; docs/gate-spoils/PLAN.md):
+  nothing a gate gives you is lost except by the stake (dying, retreating through floor 1's door, the story's forced
+  extraction).
+  - The Satchel has no slot limit and never refuses: what you walk over, caches, elites, twist rewards and the hoard go in.
+  - **Held for you** (attachment `awaken:gate_held`, schema 1, kept through death, `gates.run.Held`): a claim pays into
+    your pockets (empty slots, then topping up stacks) and what doesn't fit is held, never thrown at your feet. The
+    claim card says "N stacks didn't fit in your pockets. They're held for you: open your inventory (E) to take them."
+    On login, if anything is held, one line says so. No limit, no expiry, and nothing can be put in. Taking is
+    `TakeHeld(index, item, all)`: the server checks the index still holds that item and moves as much as fits.
+  - In a gate, anything the game drops for you with no thrower because your pockets are full (`Player.drop` without
+    `thrownFromHand`, caught on `ItemTossEvent` and cancelled: keepsakes, a Lord's weapon, bells' gifts, a crafting
+    grid closed with full pockets) is held for you. What you throw yourself (Q, or clicking outside the inventory)
+    carries you as its thrower and still drops. The gates module's own gifts (keepsakes, set pieces, theme blocks, a
+    break Lord's share, gear handed back on respawn) go through `Spoils.give` (pockets, then held) everywhere. A claim
+    whose id was already used holds its loot for you instead of putting it back into a run that is ending.
+  - Items tagged `awaken:never_in_satchel` (the Holo band, bell items; optional entries) never go into the Satchel: to
+    your pockets, or held when they're full.
+  - A gate monster's drops (after Fortune) go straight into its killer's Satchel (the killer as for kill XP: the
+    damage's player, else the kill credit, in a run in that gate; no killer, they fall as before). A Lord's own drops
+    land after its claim is written, so they ride in the Satchel to the exit portal, which pays them. Nothing is spawned
+    on the server: players within 64 blocks get `SpoilsFlight` and draw client-only copies that pop out of the monster,
+    hang 10 ticks and fly into the killer with vanilla's pickup flight and sound (at most 8 stacks drawn per death).
+  - **The E panel** (`gates.client.SpoilsPanel`, on the survival inventory, plain or holo; not the creative one): a
+    glass panel left of the inventory (the right side is vanilla's effects), the height of the inventory, 4-7 columns
+    of wells as the space allows. In a run its tab is **SATCHEL**: rank and gate name, Satchel XP in amber, the stacks
+    with tooltips, look only (a click on it never reaches the inventory, so nothing on the cursor is thrown), and the
+    death line in plain words: Hunter, Hardline and Hardcore "If you die in here, you lose all of this."; Story "If you
+    die in here, half of it comes back with you."; the story's first gate "This first gate is forgiving. You keep all of
+    it even if you die."; a Clone Vat ready (before the difficulty's line) "Your Clone Vat will bring it back once
+    today." A **HELD FOR YOU** tab shows whenever anything is held (in a gate too: held stacks are safe either way):
+    click a stack to take it, or Take all. Pages by arrows or the wheel; the view carries at most 300 stacks plus the
+    true count. With too little room (the recipe book open) it folds to a slim tab above the inventory with the count.
+    It fades in over 0.25 s. The client sends `WatchSpoils(true)` when the inventory opens and `false` when it closes;
+    the server answers with `SpoilsView` and, while you watch, sends a fresh one when the lists change (checked every 5
+    ticks). The band's THIS GATE button opens the inventory; the old Satchel screen is gone. The run HUD reads
+    "Satchel N · XP" (N stacks).
+  - Tests: `gates_spoils_satchel_never_refuses`, `gates_spoils_held_for_you`, `gates_spoils_gifts_never_fall`,
+    `gates_spoils_drops_fly_in`, `gates_spoils_never_in_satchel`; `gates_satchel_death_rules` no longer expects a cap.
 - Twists count as "seen" when you come out of that gate alive. "Comfort" for `floors_pushed_past_comfort` is the median
   of your last five extraction floors (2 before any). Gate interiors can't be broken or blown up.
 - Echoing (`Forces.Tag.ECHO`) means "gets up once": Awaken creatures fall and stand up by themselves (mobs), anything
@@ -4928,7 +4966,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     ender pearl 2%), Leviathan Line (catches pay the Hunter level twice).
   - Smithing: Patch (anvil jobs a level cheaper), Fine Edge (crafted gear +10% max durability), Field Forge (an iron
     ingot on a lit campfire mends the off-hand item by a quarter), Masterwork (Unbreaking I 10%), Keen (weapons
-    Sharpness I 20%), Signature ("Made by <name>" lore).
+    Unbreaking I 20%; it was Sharpness I until enchanting's rule, §45), Signature ("Made by <name>" lore).
   - Cooking: Hearty (+1 saturation from cooked food and meals), Campfire Feast (eating by a lit campfire feeds players
     within 6), Hunter's Stew (meals' strengths ×1.5 long), Long Meals (+2 saturation), Spirit Tea (`awaken:energy_regen`
     +0.25 for 2 min after a cooked meal), Banquet (+the food's saturation again).
@@ -8035,7 +8073,7 @@ dimension it was sent from.
   steps down under the toasts and below boss bars it would reach (`UiHooks.topRightBelow`; the layer draws after the
   boss overlay, which counts the bars afresh each frame), moves down at once when the task card arrives and eases up
   into the room when it goes. It keeps everything: rank and gate name with the floor beside them ("Deeper · Floor 1/4",
-  a ✓ when cleared), Satchel slots and XP, kills and the floor clock with the pressure word (stirring, awake, Warden),
+  a ✓ when cleared), Satchel stacks and XP, kills and the floor clock with the pressure word (stirring, awake, Warden),
   the Noise bar under Silence, the collapse countdown and the twist's hint (shortened with "…"); widest line 215 px,
   narrowest card 96. Never dims; hidden with the HUD, under F3 and, like all of Awaken's HUD, while any screen but
   chat is open (§12 `UiHooks`). Its strings are built only when the server's run update changes. Test
@@ -8483,7 +8521,8 @@ Greenhouse (farmland or a planted pot under a ceiling at least half glass: recog
 Pell's Spurs' +80 now counts too), Hall (6 seats = bottom stairs on the floor with room above, a table = a fence or wall
 post with a carpet, pressure plate or bottom slab on it, floor 48+: a meal eaten in it feeds every other player in it
 nutrition and half its saturation), Bell tower (a bell, the floor 8+ over the lowest ground 4 blocks outside: rings at
-dawn and dusk; `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
+dawn and dusk (gone since §43.16 stage 3: the song is the bells; its gifts below come from the room or from a bell
+hanging 8 up, `RoomEffects.bellTower`, and the warning tolls from the home's highest bell); `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
 inside a Hearth with one, via `HearthHooks.tideCalm` in `living.api.Regions` (one line)), Lookout (12+ up, glass in three
 directions: `AtlasHooks.reveal` 256 round home when first recognised and on login; Mira tells a second rumour a play-day),
 Trophy Hall, Workshop (machines in it or in its walls pay ⌈×0.75⌉ essence: `HearthHooks.machineCost` in
@@ -15810,6 +15849,8 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   nuggets from a stack of rubble at most; never ore by itself).
 - Nooks: 2 at the Ember, 4 at the Anchor, then 8, 12, 18, 24 by its last tier, plus each work's own.
 - Tiers no longer ask for people (stage 1): IV asks for a bell tower and six rooms, V for ten rooms, two of them Grand.
+  (§43.16 stage 3: the bell tower moved to II, "a bell tower: a bell hanging 8 or more above your fire"; IV asks for six
+  rooms and thirty bells in your song.)
   The Spire's Board and Monolith come with the Anchor (they came with the first settler).
 - **The Storehouse** (Euan, 29 Oct; C, with the Totters; rare things: a Totter that's Kin and an empty town's granary
   keystone): a timber hall with **the Drop**, a sunken bin the player tips anything into (by hand, a stack, or "Empty
@@ -15865,12 +15906,14 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   spirit spoken to (Spirit), a raid held to dawn (Night), a holdfast's bell rung from inside its walls (Watch, then
   Curfew; standing inside files a Rung lead), and a gate world's Lord at the bell's rank or above (Crypt from the Bell
   Crypt, Spore, Ember Mine, Hive and Root from their worlds, Lantern from the Lantern Night Market) for everyone in the
-  run within 96. The first bell gives the handbell and the bell frame, and six seconds later the Signal's one line:
+  run within 96. The first bell gives the handbell (and, before §43.16 stage 2, the bell frame), and six seconds after
+  the first bell is hung (stage 2; before, after it rang) the Signal's one line:
   "There were a hundred. Find them. Ring them all and I can show you the bottom."
   Sleeping places out in the land (`BellSites`) were retired on 30 Oct (§43.16): nothing is planned, built or heard in
   open country, and an old world's built places are cleared.
   The tower (`BellTower`): the bell frame, set inside your own Hearth (anywhere else it pops off), one per home; every
-  bell held by anyone who lives there hangs in it, and a bell once hung stays. At 20 bells a timber belfry goes up round
+  bell held by anyone who lives there hangs in it, and a bell once hung stays (until §43.16 stage 2: now each bell is a
+  thing you carry home and hang on a hook yourself). At 20 bells a timber belfry goes up round
   it (5 by 5, 10 high, four bells under its beams, a deepslate-tile roof); at 50 a stone tower (5 by 5, an arch on the
   frame's side) with a nine-bell belfry on top, 15 high. Each goes up only into clear space; otherwise a note once a
   play-day, and it tries again at every song. The song at dawn (clock 23,600 to 400, so a night slept through wakes to
@@ -15888,7 +15931,8 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   minute. Stillness (Tenor, Night, Watch): a raid's creatures within 48 get Slowness IV and Weakness II for 10 s, once
   a raid night. The Bell Book page is in the Codex (The Hundred Bells, Bell Leads, Your Tower, with "Play the song");
   payloads `bells_song`, `bells_page`, `bells_ask`, `bells_track`; Track puts the lead's area (or the start of its one
-  bearing) on the top-right card. Recipes: handbell (a stick over two copper ingots), bell frame (planks, logs, a bell).
+  bearing) on the top-right card. Recipes: handbell (a stick over two copper ingots), bell frame (planks, logs, a bell; planks and logs only since
+  §43.16 stage 2).
   Sounds `bells.note_0..14`, `gap`, `handbell`, `toll`, `hum`, `wake` (`tools/art/specs/audio_bells.py`); art from
   `tools/art/specs/bells.py`. Commands `/awaken admin bells give <id> | tower <n> | song | belfry | ilse | deep | page`.
 
@@ -16114,7 +16158,8 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   you can't get, and the Peal comes before the Seed, not after it). The True Bell (36, S, voice Glow) is the Foundry's
   sixth mould: 8 Starmetal Ingots and 16 Bell Bronze, cast only while a member of S rank is online; the Foundry's status
   says so while it waits. All hundred bells now have a source (`bells_catalog_ring` checks it).
-- **The Great Belfry** (tower stage 3): it needs the stone tower (50 bells) and two pieces set into the bell frame by
+- **The Great Belfry** (tower stage 3; since §43.16 stage 3 it needs fifty bells in the home's song, not the stone tower, and
+  carries the Great Bells up into it): it needs the stone tower (50 bells) and two pieces set into the bell frame by
   hand (each says why if it can't go in: not your frame, no tower yet, already set, already built). The **Heart-clapper**
   drops from every S-rank (or higher) gate world's Lord to the killer and their party within 96; a **Sovereign's Relic**
   from every Sovereign felled, to the same people. Each is epic, unstackable, fireproof, and given only to someone who
@@ -16192,7 +16237,7 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   the walled towns; "If someone found all hundred and got them ringing again ..."; "Not you, though. You died in a gate
   and came back ... If anyone can find them, it's you."; the coal; the Association; "Go on, then". A held skip still
   goes to the coal. JOURNEY part 1 has the lines.
-- **The Bell Book from the coal**: when Ilse's step completes (`BellHooks.told` from `FirstScenes.complete`) a player who
+- **The Bell Book from the coal** (superseded by §43.16 stage 2: Ilse now gives the Ember Bell itself): when Ilse's step completes (`BellHooks.told` from `FirstScenes.complete`) a player who
   doesn't hold the Ember Bell gets its Remembered lead ("Ilse says there were a hundred bells across the land. The first
   will ring by your own fire, once you set her coal down. It's in your Bell Book."), so the Book's Hundred shows 0 / 100
   before the first bell rings. The Signal's line at the first bell is unchanged.
@@ -16243,6 +16288,149 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   to date once. **World** data unchanged (old `sites` read, then cleared).
 - Tests (CI): `bells_none_in_the_open`, `bells_song_arrangement`, `bells_sounds_placed`, `bells_lord_keeps`,
   `bells_story_start` (a frame keeps gates off, no frame rings nothing).
+
+- **Stage 2: bells you carry and hang** (2 Nov; BELLS.md §4, Euan's 30 Oct answers). Every bell won is a thing you
+  carry home and hang; the song is the bells that hang.
+  - **The bell** (`awaken:bell`, `BellItem`): one item for all hundred, the number in the data component `awaken:bell`
+    (synced). Named after its bell; tooltip: "Bell #NN · X-rank", what it does while it hangs, where it hangs. One a
+    stack, rare, fireproof, can't be hurt, never despawns; fallen below the world (40 under its floor) it comes back to
+    its owner's hands, else to the world spawn's surface. Used in the hand it rings its note (2 s cooldown); on any block
+    but a hook: "[Bells hang on hooks. Use it on your Bell Frame by your fire, or on a Bell Beam 8 or more above it.]"
+    (a Great Bell names the Great Beam). A player's bells never
+    drop at death: they're owed back to their hands (Book `owed`), given when they're alive again.
+  - **Winning one** (`Bells.ring`): filed in the Book and put in your hands ("It's yours. Take it home and hang it."; a
+    Great Bell: "It needs a Great Beam, 12 or more blocks above your fire."); nothing plays at your feet. The far six
+    (Roost, Square, Market, Harbour, Watch, Curfew; `Bells.FAR`) never become things: they're filed with where they hang
+    (Book `far`) and answer the song of the home you live in from there ("People still ring it. It stays where it hangs
+    and answers your song from there."). The first bell gives only the handbell, with "[A fire and a bell make a home.
+    Make a Bell Frame from planks and logs, set it down by your fire and hang the bell on it. The handbell's yours too:
+    it sends wild beasts running, and rings the peals your bells make.]"
+  - **Hooks** (`HookBlock`, block entity `bell_hooks`, `HooksEntity` schema 1: each hook's bell and who hung it), facing
+    the player who sets them: the Bell Frame (3 hooks; planks over logs), the Bell Beam (4; three logs over two iron
+    nuggets), the Great Beam (1; three logs over chain, iron ingot, chain). Use a bell on one to hang it on the nearest
+    free hook. Refused, in the System's words: outside a Hearth you belong to; a Great Bell (source Proving) on anything
+    but a Great Beam, or anything else on one; a Bell Beam less than 8 above the fire (`Hanging.BEAM_ABOVE`), a Great
+    Beam less than 12 (`GREAT_ABOVE`); a bell the home's song already has ("This one's yours to keep."); a full frame
+    names the Bell Beam. Hung: it rings from its hook and swings (a block event every client near sees), and a card "Bell
+    #NN · Name": "It's hanging by your fire / high over your home / high in your tower. Its note is the Nth in your song.
+    While it hangs, ...". A bell someone else won and gave you is filed in your Book when you hang it ("given to you, and
+    hung at your home"). The first bell a player hangs brings the Signal's line six seconds later. Empty hand: ring the
+    nearest bell; sneak, empty hand: take it down (whoever hung it, or the home's owner) back to your hands, out of the
+    song. A hook block broken drops its bells as things. Bell Beams and the Great Beam come in stage 2 so the frame's
+    three hooks are never a ceiling; stage 3 adds the Work Plans that build them into a belfry and a tower.
+  - **The song from the bells**: a home's song (`BellWorld.Home.hung`, derived, never saved) is its placed bells (World
+    `placed`: number to hook block) and the far six of its members (World `far`). It rings only while a bell hangs at
+    home (`BellTower.ringsFrom` null otherwise: the bare fire never sings), from the frame (or the first hook block
+    without one); each note is played from its own hook, each far bell from where it hangs (`BellTower.places`). At song
+    time a loaded hook that no longer holds its bell drops it from the song. Peals need their three bells in the home's
+    song, not only held. The belfry (20) and tower (50) still raise themselves round the frame, counting the song, until
+    stage 3.
+  - **Ilse's bell**: her coal line (index 12) gives her own bell, "the little bell from over my fire at home"; a new line
+    13: the gates took a lot of the bells, whatever lives at the bottom of a gate sits on what it swallowed, bring one
+    home if it's lying there. `Bells.told` puts the Ember Bell in your hands ("given you by Ilse at the Last Fire"), once;
+    a player who already had a fire gets a line saying so.
+  - **The Lampwing's old bell** (the Nook): the first time a home's owner (not holding the Nook) is within 32 of a new
+    overworld home, it's hung under a branch of the tree nearest the first Lampwing's watch spot (12 east, 9 south of
+    the Anchor; a leaves block with air under it, 3 or more above the ground, within 24), else from an old post of
+    stripped oak there (`FoundBells.roost`). It glows (light 6) while nothing lives at that home yet ("[Something's
+    asleep in it.]"); the day a beast comes to live there it's the home's ("[The Lampwing's left its old bell in the
+    tree. It's yours.]"). The first fire's Lampwing perches by it (`BellHooks.roost`, `KinHome`). This replaces the Nook
+    moment (a beast living with you).
+  - **Found bells** (`awaken:found_bell`, no item, block entity `found_bell` schema 1: number, the Book's where line,
+    claimants (none: anyone), who has lifted it, its home's Anchor, its gate for stage 4): unbreakable, can't be pushed,
+    drawn by its renderer hanging or sat on the floor. Use lifts it: it rings out clear (note and ash at the bell) and
+    it's yours to carry home. Someone from another fire: "[It's hanging by someone else's fire. It's theirs.]"; not a
+    claimant: "[This one wasn't left for you. It's for the hunter who found it.]"; it goes once every claimant has lifted
+    theirs.
+  - **Book** schema 5 (`owed`, `far`); a Book at 4 or below is brought up once: every held bell but the far six is owed
+    to their hands ("[Your bells are waiting to be hung. Use each one on your Bell Frame by your fire.]"), the far six get
+    their places (the Roost at Carillon's start, the square, the market, the quay; Watch and Curfew at the holdfast bells
+    heard from inside; else the square, else where they stand), and the Signal's line isn't said again. **World** schema
+    3: homes keep frame, stage and the Great Belfry's state; old `hung` lists are dropped (the bells come back as things).
+  - Goals (the Bells tab): make and set a frame; hang the bells in your bag; the frame full, make a Bell Beam; a Great
+    Bell, a Great Beam; take the Lampwing's old bell down; then as before. The page marks each bell in your song, yours
+    to hang, or hung by someone you live with. `/awaken admin bells tower <n>` hangs them too: the frame first, then Bell
+    Beams 9 above the fire either side of it, Great Beams 13 above; `/awaken admin bells roost` hangs the Lampwing's bell
+    now and stands you under it (for tours).
+  - Tests (CI): `bells_hang_rules`, `bells_song_from_bells`, `bells_nothing_from_nowhere` (no song from a bare frame; a
+    bell never lost at death), `bells_roost_bell` (under the branch; asleep; another fire; claimants), `bells_old_save`,
+    `bells_catalog_ring` (each of the hundred is a thing in your hands or one of the six), `bells_peals` (hung, not held),
+    `bells_story_start` (Ilse's bell, once).
+
+- **Stage 3: hang them high** (2 Nov; BELLS.md §4.4 and §4.8). The tower is yours to build, or your Thatchbacks'.
+  - **No tower raises itself.** The belfry at 20 and the tower at 50 are retired. An old home whose belfry, tower or Great
+    Belfry rose by itself has each vanilla bell in it turned, once, into the hook block its shape has there (`BellTower.
+    convert`, when the frame's ground is loaded; World `beams`): a Bell Beam under each cross beam of a belfry, nine on a
+    tower's top, the Great Belfry's 25 (nine Great Beams). These old beams (`HooksEntity.old`) count wherever they are.
+    The admin `belfry` command and the Great Belfry still put up the Great Belfry's shape.
+  - **Two Work Plans** (`kin.works.WorkPlans`, after the Storehouse in the plan's choices; the plan stands in the middle
+    and its tower rises round it, so set it beside your frame and the frame stands inside):
+    - **Belfry** (timber, 5 by 5): spruce corner posts ten high, a ladder up the back left one, a beam ring and cross
+      beams at 10, a Bell Beam under each arm of the cross at 9 (their hooks along the arm: sixteen), a stepped roof
+      and its log cap last. Bill: 45 logs, 51 planks, 10 ladders, 4 Bell Beams.
+    - **Bell Tower** (stone, 5 by 5, 17 high): walls ten high with an arch three wide and three high on the plan's
+      facing side and a window two high in the middle of each other face (walled up with no glass), a ladder up the
+      inside of the back wall through the deck at 10, corner piers, the beam course at 13 (two Great Beams either side
+      of the middle, six Bell Beams round them: 24 hooks and 2 Great hooks), a stepped stone roof and cap.
+    - Both are built like every other plan, one block a turn by a Thatchback from the chests within eight, the beams laid
+      before the roof that covers them. Beams the Thatchbacks set carry wherever they stand (`BellHooks.raised` marks
+      them old), so a plan laid lower than the fire still works. Done: the plan block goes and "[The Thatchbacks
+      finished the Belfry. Climb the ladder and hang your bells from its beams.]" The Great Belfry still needs its clear
+      7 by 7 round the frame, so a plan's tower in it must come down first (it says so).
+  - **The Hearth's bell tower is your tower** (`BellHooks.tower`): a bell hanging 8 or more above the fire, in a beam the
+    Thatchbacks set, or an old tower. The Bell tower room's vanilla dawn and dusk ring is gone; its gifts (a gate due to
+    break near home warned two play-days ahead, calm Deep Tide nights) come from the room or the tower
+    (`RoomEffects.bellTower`), and the warning tolls from the home's highest loaded bell (`BellHooks.toll`; the old
+    bell sound with none). Tier II asks for "a bell tower: a bell hanging 8 or more above your fire"; tier IV for "six
+    rooms" and "thirty bells in your song (n/30)" (`BellHooks.song`).
+  - **The Provings' Great Bells come by wagon**: won, a Great Bell isn't put in your hands; it goes on the Registry's
+    wagon (Book schema 6, `wagon`: number to the play-day won) with "The Registry has kept it in its cellar for eleven
+    years. Its wagon will leave it in your yard by morning. It needs a Great Beam, 12 or more blocks above your fire."
+    (", once you have a home"). On a later play-day, while you're at home, it's left on the ground two to five blocks
+    from the Anchor (a found bell, delivered, World `yard`) with "[The Registry's wagon left the Tenor in your yard. It
+    needs a Great Beam, 12 or more blocks above your fire.]"; lifting it puts it in your hands. The Seed Bell is never a
+    thing: it hangs in the middle of the Great Belfry when it rises.
+  - **The Great Belfry** needs fifty bells in the home's song (`BellTower.GREAT`; "[A Great Belfry needs fifty bells in
+    your song first. You have n.]") and its two pieces. When it rises, every bell on a hook where it goes up comes down
+    and is carried into it, and every loaded Great Bell at home is carried up to its Great Beams (`GreatBelfry.Carried`);
+    one with no free hook is set down by the fire; the Seed hangs on the Great Beam at 14 in its middle. Its line: "Only
+    a Great Belfry can lead the Hundred Peal."
+  - Goals: a Great Bell in your yard ("Lift it, then hang it from a Great Beam 12 or more blocks above your fire."), the
+    Great Belfry from fifty. The page's next line names Bell Beams and the Thatchbacks' plans under fifty.
+  - Looks (from stage 2's and 3's tours): the Bell Frame is drawn wider (posts just outside its block, the outline kept
+    inside) and its bells bigger (0.32); a Bell Beam is a broader timber (8 deep) whose four hooks are staggered front and
+    back (z 5.5, 10.5) so its bells are drawn at 0.38; a Great Bell sat in the yard is drawn at its size (1.5); the bell
+    in the hand, on the ground and in a frame is sized down.
+  - **World** schema 4 (`beams`, `yard`); **Book** schema 6 (`wagon`).
+  - Tests (CI): `bells_work_plans` (both raised: beams, ladder, the plan gone; a bell on a belfry beam only six above the
+    fire makes the tower), `bells_hearth_tower` (tier II and IV, the calm), `bells_wagon` (not the same day; in the
+    yard; lifted), `bells_old_towers`, `bells_tower_plans` and `bells_hundred_peal` (the old shapes' beams),
+    `bells_catalog_ring` (Great Bells by wagon, the Seed with the Great Belfry).
+
+- **Stage 4: Lord bells lie in the boss room** (2 Nov; BELLS.md, Euan 30 Oct: "when you kill the boss, that's when maybe
+  you find the bell in his room"). Which Lords keep a bell is stage 1's rule, unchanged (`Bells.swallowed`, a gate
+  world's own bell first). What changes is where it is:
+  - When the Lord falls, each bell it kept is set down once on its arena's floor near where it fell (`FoundBells.keep`:
+    the free floor nearest its feet, up to 4 across, two above to six below; air or grass, nothing liquid, a solid top
+    under it), a found bell glowing a little (light 6), left for the hunters it's for (claimants). Nothing is put in
+    their hands. Lines: a gate world's own "[There's a bell in the Lord's hoard, lying where it fell. Lift it and take
+    it home.]"; the first swallowed one ever "[The Lord was keeping a bell the gate took. Ilse said a lot of them fell
+    in. It's lying where the Lord fell: lift it and bring it home.]", later ones "[The Lord was keeping a bell. It's
+    lying where it fell.]". The woken clapper comes with a swallowed bell at the fall, as before. With no floor near,
+    the bell is put in their hands (the old way, never lost).
+  - Each claimant lifts their own (it rings out clear and is filed: "under a D gate's Lord, where the gate had taken
+    it", "in the hoard of a D gate's Lord"); it stays until everyone it's for has. Inside the gate the Bells tab leads
+    with "Lift the X from where the Lord fell" ("It's lying on the floor of the Lord's room. Lift it before you leave:
+    once the gate closes, it goes back to the gates."), pointing at it.
+  - **Back to the pool**: World schema 5 keeps each Lord's bell (`kept`: gate id from the Lord's `MobRole`, place, bell,
+    who hasn't lifted it). Every 5 s, one whose gate is gone or released (it's released once cleared and empty) is lost
+    to those who hadn't lifted it (`lost`, said when they're next about): a swallowed bell sets their Book's
+    `lords_since` to `LORDS_WITHOUT`, so the next Lord they bring down keeps a bell for them ("[The gate closed with the
+    Wren Bell still lying on its floor. It's gone back to the gates: the next Lord you bring down will be keeping a
+    bell for you.]"); a gate world's own: "That gate's Lord will have it again the next time you bring one down." No
+    bell room, no hum, no handbell answer (Euan 30 Oct).
+  - Tests (CI): `bells_lord_room` (on the floor near the Lord, one for the party, each lifts their own, a closed gate
+    sends it back), `bells_lord_keeps` (the odds, lifting what each Lord left).
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 
@@ -16613,6 +16801,301 @@ settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour 
 - **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
   set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
   III within the hour, IV in about two hours and V in about four.
+
+## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
+
+Module `enchant` (`dev.awaken.enchant`). The rule: **your forge decides how strong a thing is; enchantments add what the
+forge can't** (wards, banes that spare Lords, work and spoils, carrying, keeping). Vanilla's enchantment engine stays
+(effects, tooltips, the `minecraft:enchantments` component); how enchantments are found, learned and written is ours.
+
+### 45.1 S0: the sculpted sets take enchantments
+- The 23 sets with items of their own (`ArmourItems`, every set but the six Hunter sets) are in vanilla's
+  `#minecraft:enchantable/head_armor`, `chest_armor`, `leg_armor`, `foot_armor` and `durability` tags, through
+  `src/main/merge/enchant` (no armour file touched), so every armour enchantment and Unbreaking fit them. Test
+  `enchant_forged_sets_take` (all 92 pieces; Respiration only on helmets, Feather Falling on boots).
+
+### 45.2 Pages and knowledge (`Pages`, `PageItem`, `Known`)
+- **`awaken:enchantment_page`** (rare, stacks to 16): one enchantment in `minecraft:stored_enchantments` (its own vanilla
+  lines hidden) and where it came from in `custom_data.awaken_where`. Named "Page of Heat Ward"; it says its family, what
+  it fits, its line, where it came from and "Use it to learn it for good". Never foil.
+- **Use it** to learn it for good. Knowledge lives in the `awaken:enchant_known` attachment (copied on death, synced to its
+  owner; `Known`, schemaVersion 1: learned `{id: where, day}`, in memory, gate kinds paid, the first-page toast told,
+  inscriptions written, a table ever set down, a table ever used in a Study). A learned page is spent. A page you already
+  know stays in your hand ("You already know this. You can give it away."). A page whose enchantment can't be written
+  any more fades to paper.
+- **Old enchanted books** (vanilla's, from old worlds and chests): using one teaches every enchantment on it that can
+  still be written, and it becomes a plain Book. One with nothing writable says so and stays.
+- **Where pages come from**:
+  - **A gate's Lord.** A `MobRole` BOSS with a gate theme, killed with a player's hand in it: every player within 48 blocks
+    gets that kind of gate's page in their pack ("The Ember Tyrant carried a page of Heat Ward. Use it to learn it.") the
+    first time they clear that kind (`Known.gates`), and 1 time in 5 after that. The kind's page is
+    `Inscriptions.ofGate(theme)`; the night market reads as the Lantern Market. The first page ever also toasts "Every
+    kind of gate keeps its own enchantment, and its Lord carries the page."
+  - **The village scribe** (`village.Trade` through `EnchantApi.marketPages`): six market pages are drawn per village per
+    day (seeded by the village and the day) and the scribe shows three of them, pages you don't know yet first
+    (`Trade.forBuyer`). Price `min(64, 6 + top × 4 + 0..4)` emeralds.
+  - **Old books** in chests and fishing: `#minecraft:on_random_loot` is replaced by the writable books list.
+- Fifteen gate kinds each keep one page (Inscriptions' `gate`); fourteen of those are found nowhere else (the five wards,
+  Blast and Projectile Protection, Clear Blood, Bane of the Dead and of Crawlers, Looting, Respiration, Swift Sneak and
+  Unbreaking), and Mending (the Abyssal Shrine's) also turns up in old books. The rest come from the market or old books.
+
+### 45.3 The thirty (`Inscriptions`, `data/awaken/enchantment`)
+The Journal numbers them 1-30 (`Inscriptions.ALL`): five wards, Blast and Projectile Protection, Feather Falling, Clear
+Blood; four banes; Looting, Fortune, Silk Touch, Efficiency, Harvest, Insight, Luck of the Sea, Lure; Respiration, Aqua
+Affinity, Depth Strider, Swift Sneak, Loyalty, Riptide; Unbreaking, Mending, Infinity. Nothing else can be written:
+anything adding damage, armour or an element (Sharpness, Smite, Bane of Arthropods, Power, Protection, Fire Protection,
+Fire Aspect, Flame, Knockback, Punch, Thorns, Impaling, Density, Breach, Wind Burst, Multishot, Piercing, Quick Charge,
+Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it already is.
+- **Wards** (`awaken:heat_ward`, `frost_ward`, `charge_ward`, `gravity_ward`, `spirit_ward`; armour, I-III, one per piece:
+  `#minecraft:exclusive_set/armor`): each level on each piece takes 2.5% off damage of its Force, capped at 30% for the
+  suit, 20% from a Lord's or boss's blow (agreed with boss-fights 2026-11-02). The Force is `Forces.forceOf`, else fire
+  is Heat, freezing Frost, lightning Charge, magic Spirit. Anything that bypasses invulnerability is never warded, and
+  plain melee has no Force. Heat Ward also shortens burning (`burning_time`, as Fire Protection).
+- **Clear Blood** (armour, I-II): poison, wither and spore effects lose 10 more ticks per level every 10 ticks.
+- **Banes** (`bane_of_the_dead`, `bane_of_crawlers`, `bane_of_beasts`, `bane_of_the_deep`; main hand weapons, I-III, one per
+  weapon: `#minecraft:exclusive_set/damage`): 8% more per level on a direct melee hit by a player, applied last
+  (LOWEST, after the Arms damage stack). Never on a player, a boss, a Warden, anything with a creature title, the Ender
+  Dragon, the Wither or an Elder Guardian. The Dead: undead, and a Bell Crypt's creatures. Crawlers: arthropods, and a
+  Hive's. Beasts: unowned animals and our fauna, never kin. The Deep: the Hollows, the Descent, and hostile creatures
+  below y 0 in the overworld.
+- **Harvest** (weapons, I-III): a wild beast you kill has one chance in two per level to drop one more of its hide, bone,
+  pelt, leather, fur, scale or rabbit's foot drops.
+- **Insight** (weapons and mining tools, `#awaken:enchantable/insight`, I-III): +15% experience per level from kills and
+  mined blocks.
+- Sources are tags: `#minecraft:in_enchanting_table` is empty, `#minecraft:tradeable` holds the market list, mobs spawn
+  and trade only with Unbreaking, Aqua Affinity and Depth Strider, and ours are `#minecraft:non_treasure`. Test
+  `enchant_rule`.
+
+### 45.4 Room, depth and price (`EnchantRules`)
+- **Room** (how many enchantments a piece holds): a forged armour piece its Forge Song quality + 1 (Fine 1 to Masterwork
+  3, read through `core.api.ForgeHooks`); a found weapon (Marked, or Lord-forged: `ArmsApi.found`) 3; a bow, crossbow,
+  trident or fishing rod 2; our forged weapons 2 (until the War Anvil's quality lands, stage 3); the Delver's Pick by its
+  verse (§45.14: 1, and one more at II, IV and VI); anything else 1. An old
+  piece over its room shows **Full** and takes nothing new until one is scraped off.
+- **Depth** (how deep each can go): the piece's rank (its set's, its weapon's tier, else its material: leather, wood,
+  stone and gold E, iron and chain D, diamond C, netherite A, else its rarity): E I, D II, C III, B and up the
+  enchantment's top. Outside a Study nothing goes past II (**the Study**: `HearthHooks.studyAt` the table). A set's
+  archetype goes one deeper for its kind: Bulwark wards, Strider carrying, Channeler keeping; a Lord-forged weapon its
+  own. Deepening keeps the slot.
+- **Price**: 3 levels and 1 lapis per level written (deepening pays the difference); Mending and Silk Touch 10 levels and
+  4 lapis per level. A clean trace gives back a third of the levels (rounded down). Creative pays nothing.
+- **Fit**: vanilla's `supportsEnchantment`, and never Efficiency on the Delver's Pick (`awaken:waking_pick`: its verses
+  are its speed). Exclusive sets as vanilla's.
+- The reasons, in these words: "It doesn't fit this.", "It can't go with X.", "No room left: scrape one off first." /
+  "Full: scrape one off first.", "It's as deep as it goes.", "Deeper than II needs your Study.", "It's as deep as this
+  piece allows.", "This piece takes it to N at most.", "You need 6 levels and 2 lapis.". Test `enchant_room_depth`.
+
+### 45.5 The Inscribing Table (`InscribingTableBlock`, `Inscribe`)
+- **`awaken:inscribing_table`**: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
+  `#stone_crafting_materials`); axe-mineable; drops itself. (The plan's "unlocks when you first hold a page" is not
+  built: the recipe is always known.)
+- **Use it holding a piece** to lay it on the slate and open the book. The server opens a session (table, hand slot, a
+  snapshot of the piece): the piece never leaves your hand, so nothing can be duplicated or dropped. One writer per table
+  ("Someone is writing here."). Using it with nothing you could write or scrape says why.
+- **Choosing** checks everything again, takes the price and starts the trace (or memory's one stroke). **Strokes** are
+  counted in order, no faster than 6 ticks each, each one's share on the line clamped 0-1. **Finishing** writes the
+  enchantment onto the same piece; every stroke done at 80% or more on the line is a **clean hand**: a third of the
+  levels back, and the mark goes **into memory** (from then on "From memory" writes it in one stroke, at full price).
+- **Scraping** takes one off, free, giving nothing back.
+- Esc, walking 6 blocks away, logging out, changing slot or the piece, or the table broken end the session and refund a
+  choice not yet written. Test `enchant_inscribe` (and two players at one table).
+- Others see it: the table shows a copy of the piece on the slate, turns its book to the page being looked at, and fills
+  its channel with the enchantment's colour while it's traced (synced, never saved).
+
+### 45.6 The vanilla fold (`Fold`)
+- Any vanilla enchanting table you use turns into an Inscribing Table in place (facing you, with a flare) and opens as
+  one. The vanilla table can't be crafted: `data/minecraft/recipe/enchanting_table.json` and its recipe advancement
+  carry `neoforge:never`. NeoForge ships its own `enchanting_table` recipe, so the mod loads **after NeoForge**
+  (`ordering="AFTER"` in `neoforge.mods.toml`): our data and assets sit above NeoForge's.
+- The anvil repairs and renames but never adds or merges enchantments: an enchanted book or page on the right gives
+  nothing; two of a kind repair, the left keeping only its own enchantments. The grindstone strips them and gives a third
+  of the experience it used to. Test `enchant_fold`.
+- The Hunter perk Keen (crafted weapons) is Unbreaking I a fifth of the time, no longer Sharpness I.
+
+### 45.7 Enchantments seen at work (`EnchantFx`, server side)
+A ward that takes some of a blow, a bane that bites, a Harvest drop, a page learned and an old table turning each send one
+small `enchant_fx` message (kind, entity, place, colour, strength) to players within 48 blocks, through `AwakenNet`
+(never to a player without our channel), with a sound: the family's note for wards, banes and spoils.
+
+### 45.8 Tasks (`EnchantGoals`, through `core.api.Goals`)
+Only once you're awakened. Steps, each leaving the moment it's done:
+
+| Key | Tab | Shows | Place |
+|---|---|---|---|
+| `enchant/page/armour` | Armour | wearing armour, knowing nothing that fits it | optional, 70 |
+| `enchant/page/weapons` | Weapons | carrying a weapon, knowing no weapon enchantment | optional, 70 |
+| `enchant/read` | the page's | carrying a page that would teach you something | `PATH_FIRST_GATE + 1` |
+| `enchant/table` | the first known's | knowing one, never having set down a table (needs the recipe's items) | `PATH_FIRST_GATE + 2` |
+| `enchant/first` | the piece's | a table set down, nothing written yet, a carried piece something you know fits (Levels, Lapis) | `PATH_FIRST_GATE + 3` |
+| `enchant/room/armour`, `enchant/room/weapons` | Armour, Weapons | after the first, while a carried piece has room for or can deepen something you know | optional, 40 |
+| `enchant/study` | the piece's | carrying a piece that could take something you know past II, never having used a table in a Study | optional, 30 |
+
+A piece's tab is Armour for armour, Weapons for anything else; an enchantment's is Armour when it fits armour. Test
+`enchant_tasks`.
+
+### 45.9 Hooks with the neighbours
+- `core.api.ForgeHooks` (agreed with the weapon forge 2026-11-02): `Reader` (quality 0-3, rank, archetype) installed by
+  armour (the Forge Song's `Forged`) and arms (the weapon's tier); `Listener.forged(player, stack, quality, station)`;
+  `CardLine` (enchant installs "Room for N enchantments" for result cards).
+- `core.api.ArmsApi.found(stack)`, `core.api.HearthHooks.studyAt(level, pos)` (the Study's gift now reads "enchantments
+  written here go deeper"), `core.api.EnchantApi` (the market's pages, what a buyer wants, a page by id) used by
+  `village.Trade`.
+
+### 45.10 The writing scene, the table drawn, the Journal (`enchant.client`)
+- **You step to the desk and the view leans in** (a change from the plan's "cinematic by default"): as the scene opens
+  you take a short walk (a few moves over 12 ticks, collisions and all) to the spot 0.36 out from the table's front,
+  where both hands reach the slate, if you're within three blocks of it, on its floor (within 0.6) and there's room
+  to stand; otherwise you stay put. The eye is then your own: the view turns (`ComputeCameraAngles`, LOW) and narrows
+  (`ComputeFovModifierEvent`) toward each beat, framing it in the middle of the band the screen leaves clear: the piece
+  with the floating book behind it above the book's pages, close on the piece while you trace (above the line and
+  pips), a little back while it wakes (above the card). Eased per tick (0.22), in over 12 ticks, out over 10, a slight
+  breath. First person is forced for the scene and restored after: the world
+  hands (`core.api.FirstPerson.world`, "enchant_table", priority 210) only draw from the player's own camera. The HUD
+  steps aside (subtitles and chat stay), the block outline goes, the player model is hidden.
+- **Hands**: the off hand brings your piece down onto the slate over 14 ticks (the table holds off drawing it for you
+  meanwhile) and then pins its near end; the main hand holds the table's **burin** (`awaken:burin`, never held as an
+  item: `Sources.neverHeld`) resting at the slate's near corner, and while you trace, follows the cursor where it meets
+  the slate; from memory it runs the mark by itself.
+- **The book's pages** (`InscribeScreen`): the left page is your piece (its name drawn large, rank, room line, what's
+  on it with **scrape**: a second click within two seconds takes it off, sent as its registry number, and how deep this
+  table writes). The right page lists what you know that fits it: its mark, name and target level (the deepest this
+  piece allows here by default; ‹ › step it between one above what's on it and that), "Up to II here (IV in your
+  Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory; the foot
+  of the page says what the one under the cursor does. Resting on a row for 4 ticks sends LOOK (watchers see the
+  floating book turn) and lays that mark faintly on the piece.
+- **The trace**: the mark (`Marks`, the same strokes the server counts) lies on the piece, 0.4 blocks across, faint
+  at first. Each stroke is picked up at its glowing end (within 0.3 mark units), followed to its end (the pen may run
+  up to five samples ahead within 0.34), and counted on the line within 0.15. A finished stroke burns lapis in its core
+  and the family's colour round it, rings its family's note a step higher than the last (a dull scratch if under 60%
+  on the line) and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH follows 6 ticks after the
+  last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each stroke (bright when
+  clean), with a bar for how much of the current one is on the line; a first-trace hint says what to do and that Esc
+  gives the levels back.
+- **The wake**: the mark flares white-hot and settles into its colour over 50 ticks while a band of light runs the
+  piece and the piece rises a hair (0.04), turns once on the slate (from 6 to 40 ticks, eased) and settles; at 42 ticks
+  (it has turned) a card comes up and says what was written ("A clean hand" and the levels back,
+  "Its mark is in your memory now"), with Write another and Done.
+- **The table as everyone sees it** (`InscribingTableRenderer`): the leather book (`awaken:block/inscribing_book`, the
+  vanilla book's layout) floats over a brass bracket at the back, opening toward whoever's near and toward the front
+  while someone writes, turning its pages to the one being looked at; the writer's piece lies flat on the slate; the
+  lapis channel one pixel in from the slate's edge glows faintly when someone's near, fills with the enchantment's
+  colour from the front round both sides while it's traced, and flares on the wake; watchers see the mark itself
+  pulsing faintly on the piece. The block faces its placer (the front, where you stand); its shape follows the facing.
+- **Enchantments at work** (`EnchantFxClient`, at most 32 at once): a ward's ring closing in at the chest, a bane's
+  three spears of light, a glint of gold rising over an extra drop, a column with rings climbing round you as a page is
+  learned, rays and a spreading ring out of an old table as it turns.
+- **Tooltips**: every enchantable piece says its room under its name ("Room for two enchantments", "No room left",
+  "Full"); a page you already know says "You know this one".
+- **The Journal's ENCHANTMENTS category** (`StatusSections.Shelf.ENCHANTMENTS`, a fixed set of 30): each one you know
+  with what it does, its family, what it goes on and how deep, where you learned it and whether its mark is in memory;
+  the rest stay blank.
+- **Sounds** (`tools/art/specs/audio_enchant.py`, audiokit synthesis with Kenney CC0 transients): book open, page turn,
+  burin on metal and on leather, scratch, the five family notes (C5), wake, learn, flare, drift, scrape.
+- **Art** (`tools/art/specs/enchant.py`): the table's slate top with its lapis channel, framed dark-wood panels (the
+  front with a lapis ring and spear), the trim, brass, the book, the page item and the burin; blockstate by facing.
+- **Commands**: `/awaken admin enchant learn <all|id> | remember all | forget` (server, for testing and tours); the
+  client's `/awaken enchant pilot hover <no> | choose <no> | memory <no> | trace | again | close` is the autopilot's
+  hand at a table (tours can't drag a mouse: the pilot traces each stroke from its end, on the line, a breath between).
+
+### 45.11 The script line: an enchanted piece's own light (`EnchantGlow`, `core.api.EnchantApi.Glow`)
+- Our sculpted weapons (`arms_weapon` shader) and armour (`armour` shader) drop the single violet shimmer for the piece's
+  own enchantment light: a thin line of script along its edges (where the surface turns from the eye), its letters
+  drifting hilt to tip on weapons and feet to crown on armour, a slow wave of brightness running the same way, what
+  glows of itself (the material map's emissive) taking the colour, a few pixels catching it, and a faint rim. Foil with
+  none of ours on it (a Marked weapon with nothing written) keeps the violet.
+- **Colour, in turn**: each enchantment on the piece holds the line for 30 ticks, swelling and fading but never quite
+  out (brightness 1-7 of 7), then hands it to the next. The palette, by index: 1 Heat Ward ember `FF8A4C`, 2 Frost Ward
+  ice `8FD8FF`, 3 Charge Ward gold `FFD84A`, 4 Gravity Ward violet `B993FF`, 5 Spirit Ward teal `4FE0C2`, 6 the other
+  wards steel `B9C3D2`, 7 Clear Blood green `9FE07A`, 8 banes red `FF5F63`, 9 spoils gold `F2C45A`, 10 carrying blue
+  `4FB5EA`, 11 keeping bone `F3EAD6`, 12 anything not in the thirty lapis-violet `8C6BFF`.
+- **The bits**: both shaders read UV1.x's low 8 bits as before (energy, or the Forge Song's heat) and bits 8-14 as the
+  script: the palette index in 8-11 (0 none) and the brightness in 12-14. Arms (`WeaponRenderer`: its cached `State`
+  carries `glow`) and armour (`ArmourLayer.draw`, `FittingStandRenderer`) pack `EnchantApi.glowBits(stack)`; enchant
+  installs the reader (`EnchantApi.glow`) on the client, and with none installed it is 0 and the shaders draw as before.
+  `tools/art/mesh_render.py` mirrors the line (without the pixels, which need texel coordinates).
+- Vanilla's own items keep vanilla's glint.
+
+### 45.12 Enchantments at work, stage 2 (`EnchantFx`, `EnchantFxClient`)
+The `enchant_fx` message gains the mark to show (`no`, the enchantment's number; for a mend, the slot mended) and the
+angle on the ground the blow came from (`dir`, NaN when there's no telling). The client keeps at most 48 at once.
+- **Ward** (18 ticks): the ward's own mark stands where the blow landed, between you and where it came from (0.3 out
+  from your side, at the chest), white-hot and settling into the Force's colour as it grows a little, a ripple
+  spreading out of it, a faint ring round you. A blow from nowhere in particular keeps the closing rings.
+- **Bane** (16 ticks): the bane's mark burns on the creature's side the blow came from, red going from near-white, with
+  the three spears of light fainter behind it.
+- **Gold on extra drops** (34 ticks): a glint rides the drop down with a short trail of sparks and two rising off it.
+  Harvest's extra drop; with Looting (the killer's weapon) or Fortune (the tool), the first one or two drops that came
+  as a stack of more than one, with the spoils note once.
+- **Silk Touch** (20 ticks): when the block itself came away, its outline lifts 0.35 out of where it sat and fades,
+  a soft gold ring spreading at its foot. No sound (mining is loud enough).
+- **Mending** (14 ticks): each orb that will mend something (vanilla picks the piece; the thread aims at that slot's
+  place on the body, hands at your side) draws a thread arching from it into the piece, a bead of warm light running
+  it and the thread fading behind.
+- **Feather Falling** (20 ticks): a fall of four blocks or more on boots that carry it puffs a soft ring over the
+  ground and six motes lifting off it, brighter for a longer fall (full at twelve).
+- **Depth Strider** (24 ticks, the client's own, nothing sent): a player within 32 blocks moving through water on boots
+  that carry it leaves a faint blue V opening behind them on the water (at their feet when under it), one every three
+  ticks.
+
+### 45.13 The Study's drifting letters (`InscribingTableBlockEntity`, `LetterParticle`)
+- Letters of our own script (`awaken:enchant_letter`, a coloured particle; twelve 8x8 runes, white with a faint halo,
+  from `tools/art/specs/enchant.py`) drift off bookshelves standing where vanilla's table reads them (two out, with air
+  between, `EnchantingTableBlock.isValidBookShelf`) into the floating book: they lift off the shelf, sway, arc over and
+  speed into the book, brightening to white as they arrive, gone as they touch the page (36-55 ticks, full-bright).
+- Only while a player is within four blocks or someone writes: now and then anywhere (one try a tick, one in seven),
+  thicker in your Study (two tries, one in three), thickest while someone writes (three tries, one in three), and then
+  in the colour of what's being written; otherwise lapis light (`8FB0FF`).
+- The table knows it's in a Study from the server (`HearthHooks.studyAt`, looked at every five seconds per table and
+  sent with the table's update); in a Study a quiet paper hum (`drift`, 0.18) goes with the letters every 4.5 seconds
+  while they come.
+
+### 45.14 Stage 3: more doors, Word Stones and the pick's room (`Doors`, `WordStones`, `delve.api.Pick`, `living.api.Hunts`)
+- **The hunts.** A named beast (`CreatureTag` kind `BEAST`, "Terror of Ashfen") brought down by a player pays a page of
+  Bane of Beasts, "From Terror of Ashfen, brought down"; a ledger population's alpha (a deep-wild herd's bull, a deep
+  pack's leader: `living.api.Hunts.alpha`, elite with the `awaken_ledger` tag) pays Harvest, "From a herd's leader,
+  brought down".
+- **The Deep.** An elite creature that means harm (`Enemy`, never a Lord, Warden or named beast) killed below the rock's
+  zero in the overworld (`delve.api.Bands` Deep band) or anywhere in a Descent pays Bane of the Deep. Breaking a lode's
+  heart that's still whole (`delve.api.Lodes.heart`, not `heartBroken`, and the block is one of the delve's
+  `awaken:*_lode_heart` blocks) pays Fortune; in the Deep band the first one pays Silk Touch, and after that a Deep heart
+  rolls Silk Touch or Fortune evenly. Read at NORMAL, ahead of the delve's LOW listener that marks the heart broken, so a
+  heart dug up and set down again pays nothing; creative breaks pay nothing.
+- **Every door pays like a gate's Lord:** the page the first time (doors `hunt:beast`, `hunt:leader`, `deep:bane`,
+  `deep:fortune`, `deep:silk`, kept with the gates in `Known`), then a spare one time in five. The page goes into the pack
+  (else at your feet) with one plain line in the enchantment's colour: "A page of Harvest was caught in the leader's
+  hide. Use it to learn it.", "A page of Fortune was pressed into the lode's heart. Use it to learn it."
+- **The Delver's Pick's room** reads `delve.api.Pick.verse` (a facade over `PickVerses.verse`): 1, and one more at II,
+  IV and VI. Still never Efficiency.
+- **The Forge Song's finished card** shows the lines other modules add through `ForgeHooks.cardLine` under its words
+  (`ForgeSongScreen.doneLines`, read once when the card comes, the piece made with its quality): enchanting's "Room for
+  three enchantments" in lapis-violet (`A898FF`). The War Anvil's card does the same when it lands.
+- Test `enchant_doors` (a named beast's page and its words, no page without a player, the heart blocks, the pick's room
+  at verse 0 and IV).
+- **Precursor Word Stones** (`awaken:word_stone`, `WordStoneBlock`, `WordStones`): a stele of the ruins' dark plating on a
+  low plinth, a panel let into its face with three runes carved down it, glowing (emissive, cutout) in the enchantment's
+  colour through a block tint. The carving is the state's `word` (the enchantment's number, 1-30) with `facing`, so it
+  needs no saved data. Unbreakable, no loot, never held, light 6.
+  - **Where**: every Precursor ruin's builder calls `RuinBuilder.Sink.stone(x, y, z, facing, set)`, placed by
+    `EnchantApi.placeStone(level, pos, facing, set, seed)` with the block's position as the seed: the vaults' sealed
+    chamber (14, 1, 15) across the terminal from the drafting stand, the monolith's chamber (12, 1, 8) facing the stand,
+    the ocean lab's storage dome (17, 1, 6), the sky platform's cabin (C-3, deck+1, C), the spire's crown (C+1, top+1, C+1).
+  - **Sets**: "" (vaults, monolith) Insight, Efficiency, Infinity, Feather Falling; "sky" Feather Falling, Infinity,
+    Insight; "sea" Aqua Affinity, Depth Strider, Loyalty, Riptide, Luck of the Sea, Lure. None a gate keeps, none a hunt
+    or the Deep pays.
+  - **Touch**: hold your hand to it (use, any hand) and you learn it ("Copied from a Word Stone", the usual learn line,
+    sound and mark); known, it says "The stone is carved with Insight, and you already know it." in the action bar.
+  - **The look**: while the nearest player is you and you haven't learned it, its letters (`awaken:enchant_letter`, in
+    its colour) lift off the face every three ticks and gather above it, with the paper hum (0.14) every 4.2 seconds;
+    the moment you learn it 28 letters stream from the face into you; known, it goes quiet. Looking at it says, in its
+    colour, "A Word Stone carved with Insight. Hold your hand to it to learn it." (or "You know this one.").
+  - Test `enchant_word_stone` (every ruin kind places one, in open air on a floor; the sea set; the same seed the same
+    carving; a touch teaches once).
+- **The wake's chord**: with the wake sound, the new enchantment's family note (0.8), and each other enchantment on the
+  piece adds its own family's note a major third, a fifth and an octave above (0.55; three at most), so a piece rings
+  with everything written on it.
+- **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
+  so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
+  without "here", then the price alone; the foot's hint wraps.
 
 ## 46. The War Anvil (weapon forging; plan docs/weapon-forge/PLAN.md, page https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ; Euan approved all of it 2026-11-02: "go ahead with the weapon forge plan")
 
