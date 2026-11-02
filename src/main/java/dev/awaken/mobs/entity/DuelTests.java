@@ -37,6 +37,36 @@ public final class DuelTests {
         AwakenTests.register("fights_duel_stance", 60, DuelTests::duelStance);
         AwakenTests.register("fights_topple", 100, DuelTests::topple);
         AwakenTests.register("fights_fang_bite", 60, DuelTests::fangBite);
+        AwakenTests.register("fights_habit_read", 100, DuelTests::habitRead);
+    }
+
+    /**
+     * The Examiner counts how you meet it through its first phase and reads the habit you lean on at its second (SPEC
+     * §46.6): strokes turned aside, read as your guard. A fight that doesn't read you never reads anything.
+     */
+    static void habitRead(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        AwakenBoss boss = KitTests.spawn(level, h, "proving_examiner");
+        AwakenBoss other = KitTests.spawn(level, h, "gearwright_colossus");
+        Pig pig = pig(h, 3.5);
+        boss.setTarget(pig);
+        for (int i = 0; i <= FightRunner.HABIT_LEAN; i++) {
+            h.assertTrue(boss.playKitString("rule_a", List.of()), "a stroke plays");
+            boss.deflected(Strikes.Kind.LIGHT);
+            other.playKitString("sweep", List.of());
+            other.deflected(Strikes.Kind.LIGHT);
+        }
+        h.assertTrue(Strikes.habit(boss) == Strikes.Habit.NONE, "nothing read through its first phase");
+        boss.setHealth(boss.getMaxHealth() * 0.6F);
+        other.setHealth(other.getMaxHealth() * 0.3F);
+        h.succeedWhen(() -> {
+            h.assertTrue(boss.phase() >= 1, "its second phase");
+            h.assertTrue(Strikes.habit(boss) == Strikes.Habit.GUARD, "it read your guard, not " + Strikes.habit(boss));
+            h.assertTrue(Strikes.habit(other) == Strikes.Habit.NONE, "the Gearwright doesn't read you");
+            boss.discard();
+            other.discard();
+            pig.discard();
+        });
     }
 
     /** The Gearwright's sweep and chop, then nothing for at least the shortest opening, and it stands open through it. */

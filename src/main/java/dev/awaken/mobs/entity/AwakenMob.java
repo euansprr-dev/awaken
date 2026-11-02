@@ -112,6 +112,8 @@ public class AwakenMob extends Monster {
     private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks, groundedTicks;
     private float auraRadius, auraDamage;
     private BoltKind auraBolt = BoltKind.PLAIN;
+    /** Its shots in another's look (SPEC §46.6: the Examiner throws your own power back), never with that look's effect. */
+    private @Nullable BoltKind mirrorBolt;
     private @Nullable MobEffectInstance auraEffect;
     private boolean watched, exploded;
     @Nullable Vec3 heardPos;
@@ -261,6 +263,14 @@ public class AwakenMob extends Monster {
     }
 
     // ---- flags ---------------------------------------------------------------------------------------------------
+
+    void mirrorBolt(@Nullable BoltKind kind) {
+        mirrorBolt = kind;
+    }
+
+    @Nullable BoltKind mirrorBolt() {
+        return mirrorBolt;
+    }
 
     public boolean flag(int f) {
         return (entityData.get(DATA_FLAGS) & f) != 0;

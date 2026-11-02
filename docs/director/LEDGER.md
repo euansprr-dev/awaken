@@ -356,6 +356,31 @@ happens).
   used again (a hall cell generated void before the Belfry existed is built while the bell rings); `/awaken trial
   dbox` keeps the old box of three waves as practice until Euan has seen the Ringer.
 
+### The Examiner (the second Proving, §46.6)
+- **Get**: at level 25 with D rank, the Reading Bell's C-rank Reassessment ("Last time the bell didn't stop. Go when
+  you're ready."). The bell rings, the screen breaks ("READING · READING · READING"), and you wake standing where you
+  were, in your own room, looking the same way. Then the room turns to glass a ring at a time out from you, the Hall of
+  Reflections shows through it, and the Examiner steps out of the glass in front of you. Nothing names it, its hall or
+  its gift before you meet it.
+- **For**: C rank and the Second Awakening (your Path: the Paths that answered how you've lived, `Trials.secondAwakening`),
+  and its trophy for your Hall (the boss trophy every Lord leaves).
+- **Know**: a duel (§46.3): white-gold blows told 0.7 s, amber and red; through its first third it watches how you fight
+  (guarding, dodging, keeping away, your powers), and when the mirrors wake at two thirds the Signal says plainly what it
+  noticed and how it now fights back; the six standing mirrors stop its Reading; at a third a ring of mirrors rises and
+  closes the fight in.
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.ExaminerWarden` (the room, the glass, the mirrors, the
+  ring), `hearth.trial.Reflections` (the hall, built by `TrialChunkGenerator` in every hall cell), the Examiner's kit
+  `proving_examiner` (`mobs`), the habit read through `Strikes.habit` (core.api).
+- **Links**: the Ringer (the first Proving, D rank); Paths (the Second Awakening moves here from the box's last wave);
+  trophies; parties (members within 24 blocks at level 25 come too, +50% of its health each); your powers (its shots
+  wear the look of the power you've used most).
+- **Edges**: the room copies only looks: no water, lava, fire, portals, TNT, beds or anchors, containers come empty, no
+  game master's blocks, spawners or vaults, another mod's block only if it keeps nothing and can't be walked through;
+  whoever stood outside the copied room wakes where whoever touched the bell stood; a fall never kills: you wake inside
+  the door and the stair climbs out; all of a party down and the mirrors sleep, the ring sinks, and it comes back out of
+  the north mirror; from the third fall the Signal says what keeps catching you; the stair's landing is the way out, no
+  fail day; the hall is put back after; `/awaken admin trial cbox` keeps the old box of waves as practice.
+
 ### Raids (the first Big Day)
 - **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):
   never in a world's first two hours of play, at most one Big Day every five play-days, due a play-day or two later and

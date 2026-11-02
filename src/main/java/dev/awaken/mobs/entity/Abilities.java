@@ -107,6 +107,7 @@ final class Abilities {
     }
 
     static BoltKind bolt(AwakenMob mob, Ability a) {
+        if (mob.mirrorBolt() != null) return mob.mirrorBolt();
         return a.bolt() != null ? a.bolt() : mob.def().theme.bolt;
     }
 
@@ -119,6 +120,7 @@ final class Abilities {
     static @Nullable MobEffectInstance effect(AwakenMob mob, Ability a) {
         if (!carrying) return null;
         if (a.effect() != null) return new MobEffectInstance(a.effect(), a.effectTicks(), a.effectAmp());
+        if (mob.mirrorBolt() != null) return null; // another's look, never its effect
         BoltKind b = bolt(mob, a);
         return b.effect != null && b.effectTicks > 0 ? new MobEffectInstance(b.effect, b.effectTicks, 0) : null;
     }

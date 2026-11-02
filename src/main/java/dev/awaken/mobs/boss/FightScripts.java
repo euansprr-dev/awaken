@@ -56,9 +56,11 @@ public final class FightScripts {
      * {@code duel}: the fight plays as a duel (SPEC §46.3): every phrase (a move and its string) ends in an opening, a
      * deflected blow recoils and the phrase goes on, its last blow turned aside makes it reel, and it answers your habits.
      * {@code stance}: a duel's stance size (Arms' posture; 0 = a Lord's own), tuned with the sim per boss.
+     * {@code mirrors}: it fights the way you do (SPEC §46.6, the Examiner): through its first phase it reads the habit you
+     * lean on, and from its second the moves that answer it come up more; its shots wear your most-used power's look.
      */
     public record Fight(int schemaVersion, String id, String moves, Intro intro, List<Phase> phases, Enrage enrage, Optional<String> death, boolean duel,
-                        int stance) {
+                        int stance, boolean mirrors) {
         public static final Codec<Fight> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("schemaVersion").forGetter(Fight::schemaVersion),
                 Codec.STRING.fieldOf("id").forGetter(Fight::id),
@@ -68,7 +70,8 @@ public final class FightScripts {
                 Enrage.CODEC.optionalFieldOf("enrage", Enrage.DEFAULT).forGetter(Fight::enrage),
                 Codec.STRING.optionalFieldOf("death").forGetter(Fight::death),
                 Codec.BOOL.optionalFieldOf("duel", false).forGetter(Fight::duel),
-                Codec.INT.optionalFieldOf("stance", 0).forGetter(Fight::stance)
+                Codec.INT.optionalFieldOf("stance", 0).forGetter(Fight::stance),
+                Codec.BOOL.optionalFieldOf("mirrors", false).forGetter(Fight::mirrors)
         ).apply(i, Fight::new));
 
         public Phase phase(int p) {

@@ -278,7 +278,7 @@ public final class Provings {
         Vec3 at = w.arrive(run);
         LivingEntity b = Trials.bossOrStandIn(run.level, w.mob, BlockPos.containing(at), run.target.levelRequired, "trial:" + run.leader);
         if (b == null) return;
-        b.snapTo(at.x, at.y, at.z, w.arriveYaw(), 0F);
+        b.snapTo(at.x, at.y, at.z, w.arriveYaw(run), 0F);
         int party = Math.max(1, here.size());
         if (party > 1) {
             var hp = b.getAttribute(Attributes.MAX_HEALTH);
@@ -471,12 +471,13 @@ public final class Provings {
         return s != null ? s.run : null;
     }
 
-    /** Tours: your Proving's Warden to under half its health, so its hall turns next tick. */
-    public static boolean half(ServerPlayer sp) {
+    /** Tours: your Proving's Warden to {@code fraction} of its health, so its hall turns next tick (half: the Belfry
+     * drains, the mirrors wake; a third: the walls close in). */
+    public static boolean hurtTo(ServerPlayer sp, float fraction) {
         Run run = runOf(sp);
         LivingEntity r = run != null ? warden(run) : null;
         if (r == null) return false;
-        r.setHealth(r.getMaxHealth() * 0.45F);
+        r.setHealth(r.getMaxHealth() * fraction);
         return true;
     }
 

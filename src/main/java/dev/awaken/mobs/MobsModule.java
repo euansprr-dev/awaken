@@ -73,6 +73,11 @@ public final class MobsModule {
             public Strikes.@org.jspecify.annotations.Nullable Blow lastBlow(LivingEntity e) {
                 return e instanceof dev.awaken.mobs.entity.AwakenBoss b ? b.lastBlow() : null;
             }
+
+            @Override
+            public Strikes.Habit habit(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b ? b.habit() : Strikes.Habit.NONE;
+            }
         });
         Strikes.installStaggers(MobsModule::stagger);
         Strikes.installGrounder((e, ticks) -> e instanceof AwakenMob m && m.ground(ticks));

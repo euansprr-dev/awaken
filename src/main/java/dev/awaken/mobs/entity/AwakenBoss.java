@@ -227,6 +227,12 @@ public class AwakenBoss extends AwakenMob {
     }
 
     /** A duel's stance size (Arms' posture), or 0 for a Lord's own. */
+    /** For a fight that reads you (SPEC §46.6): the habit it has read of you. */
+    public dev.awaken.core.api.Strikes.Habit habit() {
+        FightRunner f = fight();
+        return f != null ? f.habit() : dev.awaken.core.api.Strikes.Habit.NONE;
+    }
+
     public int duelStance() {
         FightRunner f = fight();
         return f != null ? f.stance() : 0;
@@ -471,7 +477,9 @@ public class AwakenBoss extends AwakenMob {
             level.sendParticles(ParticleTypes.ENCHANTED_HIT, getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.5, 0.5, 0.5, 0.1);
             return false;
         }
-        return super.hurtServer(level, source, damage);
+        boolean hurt = super.hurtServer(level, source, damage);
+        if (hurt && fight != null) fight.hurtBy(source);
+        return hurt;
     }
 
     @Override

@@ -52,9 +52,10 @@ def overhead_slam(P, mid="slam", title="", weight=1.0, cls="HEAVY", windup=22, h
 
 
 def backhand(P, mid="backhand", side="r", title="", weight=1.0, windup=10, active=4, recover=12, kinds=("near",), rng=(0, 2.6), damage=0.8,
-             low=0.0, arm=(-80, -20, -70)):
+             low=0.0, arm=(-80, -20, -70), weapon=None, weapon_bone=None, weapon_r=3.0):
     """A fast backhand: the arm folds across the chest, the body coils, then it whips out sideways (a LIGHT).
-    low: degrees it bends into the swing (a giant has to stoop to meet someone its knee's height); arm: the arm at the end."""
+    low: degrees it bends into the swing (a giant has to stoop to meet someone its knee's height); arm: the arm at the end;
+    weapon, weapon_bone: what it strikes with (the hand's tip without one)."""
     sg = _sgn(side)
     a, f = "arm_" + side, "forearm_" + side
     # +yRot turns the body to its right: a right backhand coils left (the arm across the chest), then whips right
@@ -63,7 +64,8 @@ def backhand(P, mid="backhand", side="r", title="", weight=1.0, windup=10, activ
     whip = {"chest": (2 + low, -36 * sg, 0), "spine": (low * 0.5, -14 * sg, 0), "pelvis": {"rot": (low * 0.4, -10 * sg, 0), "pos": (0, -1 - low * 0.15, 0)},
             a: (arm[0], arm[1] * sg, arm[2] * sg), f: (-10, 0, 0), "head": (0, 10 * sg, 0)}
     return Move(mid, "LIGHT", windup, active, recover, title=title, track=12.0, rng=rng, kinds=kinds, damage=damage, knock=0.6,
-                hit=[("hand_" + side, hand_tip(P), P.hand[0] / 2 + 1), (f, (0, P.forearm[1], 0), P.forearm[0] / 2)],
+                hit=[(weapon_bone, weapon, weapon_r) if weapon_bone else ("hand_" + side, hand_tip(P), P.hand[0] / 2 + 1),
+                     (f, (0, P.forearm[1], 0), P.forearm[0] / 2)],
                 stages={"windup": [(1.0, coil)], "active": [(0.5, whip), (1.0, whip)], "recover": [(0.5, {"chest": (0, -8 * sg, 0), a: (-30, 0, -10 * sg)})]},
                 lag={a: 0.02, f: 0.04})
 
@@ -196,14 +198,23 @@ def sky_call(P, mid="call", title="", windup=18, active=10, recover=16, cls="PER
 
 
 def spin_cut(P, mid="spin", side="r", title="", windup=12, active=6, recover=12, kinds=("behind",), rng=(0, 3.2), damage=0.9, cls="LIGHT",
-             weapon=None, weapon_bone=None, weapon_r=3.0, edge=None):
+             weapon=None, weapon_bone=None, weapon_r=3.0, edge=None, low=0.0, drop=0.0):
     """For the one behind it: it turns on its front foot and cuts round, the arm out flat (the cut sweeps a half-circle).
-    weapon, weapon_bone: a blade's point in its bone's space (the hand's tip without one); edge as chop's."""
+    weapon, weapon_bone: a blade's point in its bone's space (the hand's tip without one); edge as chop's.
+    low: degrees it bends into the cut and how far it sinks; drop: degrees the arm comes down from flat (a giant cuts
+    low enough to meet someone standing, SPEC §46.6)."""
     sg = _sgn(side)
     a, f = "arm_" + side, "forearm_" + side
-    coil = {"pelvis": {"rot": (4, 30 * sg, 0), "pos": (0, -3, 0)}, "chest": (6, 40 * sg, 0), a: (-80, 60 * sg, 0), f: (-40, 0, 0), "head": (0, -50 * sg, 0)}
-    sweep1 = {"pelvis": {"rot": (6, -40 * sg, 0), "pos": (0, -3, 0)}, "chest": (6, -50 * sg, 0), a: (-88, -10 * sg, -10 * sg), f: (-4, 0, 0), "head": (0, -20 * sg, 0)}
-    sweep2 = {"pelvis": {"rot": (6, -120 * sg, 0), "pos": (0, -3, 0)}, "chest": (6, -70 * sg, 0), a: (-88, -30 * sg, -10 * sg), f: (-4, 0, 0), "head": (0, 0, 0)}
+    sink = -3 - low * 0.12
+    coil = {"pelvis": {"rot": (4 + low * 0.3, 30 * sg, 0), "pos": (0, sink, 0)}, "chest": (6 + low * 0.5, 40 * sg, 0), a: (-80 + drop * 0.5, 60 * sg, 0),
+            f: (-40, 0, 0), "head": (0, -50 * sg, 0)}
+    sweep1 = {"pelvis": {"rot": (6 + low * 0.4, -40 * sg, 0), "pos": (0, sink, 0)}, "chest": (6 + low, -50 * sg, 0), "spine": (low * 0.5, 0, 0),
+              a: (-88 + drop, -10 * sg, -10 * sg), f: (-4, 0, 0), "head": (-low * 0.6, -20 * sg, 0)}
+    sweep2 = {"pelvis": {"rot": (6 + low * 0.4, -120 * sg, 0), "pos": (0, sink, 0)}, "chest": (6 + low, -70 * sg, 0), "spine": (low * 0.5, 0, 0),
+              a: (-88 + drop, -30 * sg, -10 * sg), f: (-4, 0, 0), "head": (-low * 0.6, 0, 0)}
+    if not low:
+        sweep1.pop("spine")
+        sweep2.pop("spine")
     return Move(mid, cls, windup, active, recover, title=title, track=0.0, rng=rng, kinds=kinds, damage=damage, knock=0.8, plant=(),
                 hit=[(weapon_bone, weapon, weapon_r) if weapon_bone else ("hand_" + side, hand_tip(P), P.hand[0] / 2 + 2),
                      (f, (0, P.forearm[1], 0), P.forearm[0] / 2 + 1)],

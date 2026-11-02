@@ -28,6 +28,10 @@ P = plans.Biped(leg=29, thigh=14, foot=(3, 2, 7), pelvis=(8, 4, 5), spine=(5, 5,
 # the bell at the end of each chain, in the flail bone's space (the chain hangs down the bone's +y)
 BELL_AT = (0, 17, 0)
 FLAIL = dict(weapon=BELL_AT, weapon_r=2.6)
+# how far each bell comes down in its swings (degrees on its chain's own axis), and how low it bends into its turns, so
+# every swing meets someone standing at the waist (SPEC §46.6: every damaging blow's lowest point under 1.2 blocks)
+BELL_DOWN = {"swing_a": ("r", 60), "swing_b": ("l", 60), "turn": ("l", 60), "whirl": ("r", 60)}
+LOW_SPIN, DROP_SPIN = 10, 0
 
 
 def body():
@@ -169,18 +173,23 @@ def clips(r):
         M.lunge_cut(P, "lash", side="r", title="Chain Lash", windup=16, active=5, recover=14, advance=3.0, kinds=("gap",), rng=(4.5, 10),
                     damage=0.9, weapon=(0, 20, 0)),
         M.spin_cut(P, "turn", side="l", title="Turning Swing", windup=16, active=6, recover=12, rng=(0, 4.2), damage=0.9,
-                   weapon_bone="flail_l", **FLAIL),
+                   weapon_bone="flail_l", low=LOW_SPIN, drop=DROP_SPIN, **FLAIL),
         toll(),
         peal(),
         # when the water has drained: the whirl (both bells once right round it), the Bell Rope (a red grab)
         M.spin_cut(P, "whirl", side="r", title="Whirl", cls="HEAVY", windup=16, active=12, recover=16, kinds=("area",), rng=(0, 4.4),
-                   damage=1.2, weapon_bone="flail_r", **FLAIL),
+                   damage=1.2, weapon_bone="flail_r", low=LOW_SPIN, drop=DROP_SPIN, **FLAIL),
         M.shoulder_charge(P, "rope", side="r", title="Bell Rope", windup=16, active=12, recover=18, advance=5.0, cls="GRAB",
                           kinds=("gap",), rng=(4, 12), damage=1.3),
         drop(),
         drain(),
     ]
     by = {m.id: m for m in mv}
+    # it's twice your height: in its swings the bells come down to meet you at the waist, never over your head
+    for mid, (side, add) in BELL_DOWN.items():
+        for f, pose in by[mid].stages["windup"][-1:] + by[mid].stages["active"]:
+            rx = pose.get("flail_" + side, (0, 0, 0))
+            pose["flail_" + side] = (rx[0] + add, rx[1], rx[2])
     # the whirl turns once right round: its active stage keys go all the way round
     for k, (f, pose) in enumerate(by["whirl"].stages["active"]):
         rot = pose.get("pelvis", {"rot": (0, 0, 0), "pos": (0, 0, 0)})

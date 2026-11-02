@@ -7,8 +7,10 @@ import dev.awaken.mobs.boss.FightScripts;
 import dev.awaken.mobs.boss.KitMoves;
 import dev.awaken.mobs.boss.Kits;
 import dev.awaken.mobs.def.Ability;
+import dev.awaken.mobs.def.BoltKind;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.AABB;
@@ -62,6 +64,18 @@ final class FightRunner {
     private long deflectAt;
     /** The target's distance, sampled every 10 ticks (the last two), to see it backing off. */
     private double distWas = -1, distWasWas = -1;
+
+    // a fight that reads you (SPEC §46.6, the Examiner): through its first phase it counts how you meet it (deflects,
+    // blows you got out of, ten-tick spells kept 8 blocks off, power hits), and the habit you lean on most, at least
+    // HABIT_LEAN times over the others, brings up what answers it HABIT_ANSWER times as often from its second phase
+    static final int HABIT_LEAN = 4, HABIT_ANSWER = 5;
+    /** Spells at range to one habit point (two seconds kept off is one point). */
+    static final int HABIT_FAR = 4;
+    private int guards, slips, far, casts;
+    private Strikes.Habit read = Strikes.Habit.NONE;
+    private boolean measured;
+    /** This blow: whether you stood in its reach as it struck, and whether it landed on you. */
+    private boolean inReach, struck;
 
     FightRunner(AwakenBoss boss, Kits.Kit kit) {
         this.boss = boss;
@@ -151,7 +165,65 @@ final class FightRunner {
     /** A phase threshold was crossed: its transition plays as soon as the current move ends. */
     void enterPhase(int phase) {
         pendingPhase = phase;
+        if (phase >= 1) habit(); // a fight that reads you has read you by its second phase
     }
+
+    /**
+     * The habit this fight has read of you: the one you leaned on most through its first phase, read once (at its second
+     * phase, or when first asked); NONE for a fight that doesn't read you, or when no habit stood out.
+     */
+    Strikes.Habit habit() {
+        if (!fight.mirrors() || read != Strikes.Habit.NONE || boss.phase() < 1) return read;
+        int[] n = {guards, slips, far / HABIT_FAR, casts};
+        int best = 0;
+        for (int i = 1; i < n.length; i++) if (n[i] > n[best]) best = i;
+        int next = 0;
+        for (int i = 0; i < n.length; i++) if (i != best) next = Math.max(next, n[i]);
+        if (n[best] >= HABIT_LEAN && n[best] > next) read = Strikes.Habit.values()[best + 1];
+        return read;
+    }
+
+    /** It was hurt by {@code source} (landed): a power's blow is a habit too. */
+    void hurtBy(DamageSource source) {
+        if (!fight.mirrors() || read != Strikes.Habit.NONE || !(source.getEntity() instanceof net.minecraft.world.entity.player.Player)) return;
+        for (var k : POWER_DAMAGE) {
+            if (source.is(k)) {
+                casts++;
+                return;
+            }
+        }
+    }
+
+    private static final List<net.minecraft.resources.ResourceKey<net.minecraft.world.damagesource.DamageType>> POWER_DAMAGE = List.of(
+            dev.awaken.core.Forces.HEAT, dev.awaken.core.Forces.CHARGE, dev.awaken.core.Forces.GRAVITY, dev.awaken.core.Forces.SPIRIT,
+            dev.awaken.core.Forces.FROST, dev.awaken.core.Forces.KINETIC);
+
+    /**
+     * The look of the power family you've used most, for its shots (their look only, never an effect): your own power,
+     * thrown back at you. Null when you've used none.
+     */
+    static @Nullable BoltKind yours(net.minecraft.server.level.ServerPlayer sp) {
+        String best = null;
+        long most = 0;
+        for (var en : dev.awaken.progression.Progression.profile(sp).counters().entrySet()) {
+            if (!en.getKey().startsWith(POWER_USES) || en.getValue() <= most) continue;
+            most = en.getValue();
+            best = en.getKey().substring(POWER_USES.length());
+        }
+        if (best == null) return null;
+        return switch (best) {
+            case "kinetic" -> BoltKind.GRAVITY;
+            case "velocity", "energy" -> BoltKind.CHARGE;
+            case "flight", "architect" -> BoltKind.GLASS;
+            case "shadow" -> BoltKind.VOID;
+            case "mind" -> BoltKind.DREAM;
+            case "tech" -> BoltKind.SIGNAL;
+            case "spirit" -> BoltKind.SPIRIT;
+            default -> null;
+        };
+    }
+
+    private static final String POWER_USES = "awaken:power_uses/";
 
     void tick(ServerLevel level) {
         if (move >= 0) {
@@ -171,6 +243,10 @@ final class FightRunner {
             boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_INTRO);
             if (target == null || !target.isAlive()) return;
             introduced = true;
+            if (fight.mirrors() && !measured && target instanceof net.minecraft.server.level.ServerPlayer sp) {
+                measured = true;
+                boss.mirrorBolt(yours(sp));
+            }
             boss.syncKit(-1, 0, 0);
             if (fight.intro().move().isPresent() && begin(level, fight.intro().move().get(), target)) return;
         }
@@ -200,6 +276,7 @@ final class FightRunner {
         if ((boss.tickCount % 10) == 0) {
             distWasWas = distWas;
             distWas = edgeDistance(target);
+            if (fight.mirrors() && read == Strikes.Habit.NONE && distWas >= 8) far++;
         }
         if (recoil > 0) { // the limb comes back; the phrase goes on after
             recoil--;
@@ -289,7 +366,26 @@ final class FightRunner {
         if (deflects >= HABIT_DEFLECTS && boss.level().getGameTime() - deflectAt <= HABIT_FORGET && red(e)) w *= HABIT_RED;
         int i = moves.index(e.move());
         if (i >= 0 && moves.get(i).is("gap") && backingOff()) w *= HABIT_CLOSE;
+        if (i >= 0 && read != Strikes.Habit.NONE && answers(e, moves.get(i))) w *= HABIT_ANSWER;
         return w;
+    }
+
+    /**
+     * Whether a phrase answers the habit it read (SPEC §46.6): your guard, the blows that can't be turned aside (amber,
+     * red, a grab); your dodging, the held blows and the long strings (a dodge spent early, or on the first blow of
+     * three); your distance, its gap closers; your powers, its shots (in your power's look).
+     */
+    private boolean answers(FightScripts.Entry e, KitMoves.Move m) {
+        return switch (read) {
+            case GUARD -> {
+                Strikes.Kind k = told(m, m.ability().map(boss::ability).orElse(null));
+                yield k == Strikes.Kind.HEAVY || k == Strikes.Kind.PERILOUS || k == Strikes.Kind.GRAB;
+            }
+            case SLIP -> m.time().hold() > 0 || e.then().stream().anyMatch(t -> t.size() >= 2);
+            case DISTANCE -> m.is("gap");
+            case POWERS -> m.is("ranged");
+            case NONE -> false;
+        };
     }
 
     private boolean red(FightScripts.Entry e) {
@@ -325,6 +421,7 @@ final class FightRunner {
         long now = level.getGameTime();
         if (now - deflectAt > HABIT_FORGET) deflects = 0;
         deflects++;
+        if (fight.mirrors() && read == Strikes.Habit.NONE) guards++;
         deflectAt = now;
         boolean last = string.isEmpty();
         stop();
@@ -455,6 +552,8 @@ final class FightRunner {
         int k = t - wind - 1;
         if (k < active) {
             if (k == 0) {
+                inReach = target != null && target.isAlive() && !m.hits().isEmpty() && edgeDistance(target) <= m.maxRange() + 0.5;
+                struck = false;
                 boss.setTelegraph(0, false);
                 if (ability != null) {
                     boss.abilityRunner().fire(level, ability, world(m.origin()), cls != Strikes.Kind.NONE ? cls : ability.strike());
@@ -488,6 +587,9 @@ final class FightRunner {
             return;
         }
         marks(m);
+        // a blow you stood in the reach of that never landed (and wasn't turned aside: that ends it before here) you got
+        // out of: a dash, a step, a roll
+        if (k == active && inReach && !struck && fight.mirrors() && read == Strikes.Habit.NONE) slips++;
         if (t < wind + active + recover) {
             // the recovery: no turning, the opening; in a string the next move links on at the end of the
             // follow-through instead of the body going back to rest first (SPEC §35.10)
@@ -600,6 +702,7 @@ final class FightRunner {
             float dmg = (float) boss.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * m.damage();
             Strikes.Kind kind = cls == Strikes.Kind.NONE ? Strikes.Kind.HEAVY : cls;
             boolean landed = Strikes.deliver(boss, kind, () -> e.hurtServer(level, level.damageSources().mobAttack(boss), dmg));
+            if (landed && e == boss.getTarget()) struck = true;
             if (landed && m.knock() > 0) {
                 Vec3 away = e.position().subtract(boss.position());
                 Abilities.push(e, away, m.knock(), Math.min(0.5, m.knock() * 0.4));

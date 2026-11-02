@@ -72,10 +72,10 @@ import java.util.UUID;
 
 /**
  * Reassessment trials (rank-ups) and the Hardline Penalty Zone, fought in walled arenas in {@code awaken:trials}.
- * D: the first Proving, the Ringer in the Drowned Belfry ({@link Provings}; the old box of three waves stays as practice,
- * {@code /awaken trial dbox}). C: waves, then the Second Awakening. B: duel a Gate Lord. A: a timed descent through five
- * rooms. S: a Sovereign's echo. Trials never kill: falling ends the attempt and sends you home. One attempt per
- * play-day.
+ * D and C are Provings ({@link Provings}): the Ringer in the Drowned Belfry, the Examiner in the Hall of Reflections (the
+ * old boxes stay as practice, {@code /awaken admin trial dbox} and {@code cbox}). B: duel a Gate Lord. A: a timed descent
+ * through five rooms. S: a Sovereign's echo. Trials never kill: falling ends the attempt and sends you home. One attempt
+ * per play-day (a Proving has no fail day).
  */
 public final class Trials {
     private Trials() {}
@@ -89,7 +89,7 @@ public final class Trials {
         DESCENT("Five rooms down. Four minutes.", 5, 20 * 60 * 4),
         SOVEREIGN("Face a Sovereign's echo.", 1, 20 * 60 * 6),
         PENALTY("Survive four minutes in the desert at night.", 99, 20 * 60 * 4),
-        /** A Warden in its own hall (SPEC §46.4): never announced, no clock; run by {@link Provings}. */
+        /** A Warden in its own hall (SPEC §46.4, §46.6): never announced, no clock; run by {@link Provings}. */
         PROVING("", 1, Integer.MAX_VALUE);
 
         public final String text;
@@ -105,7 +105,7 @@ public final class Trials {
         public static Kind forTarget(Rank target) {
             return switch (target) {
                 case D -> PROVING;
-                case C -> AWAKENING;
+                case C -> PROVING;
                 case B -> DUEL;
                 case A -> DESCENT;
                 default -> SOVEREIGN;

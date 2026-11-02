@@ -657,6 +657,9 @@ class Fight:
         self.open_until = -1
         self.k_reel_until = -1
         self.k_deflects, self.k_deflect_at = 0, -10 ** 6
+        # a fight that reads you (SPEC §46.6, the Examiner): what it counted through its first phase, and what it read
+        self.mirrors = bool(self.duel and self.kit["fight"].get("mirrors"))
+        self.h_guards, self.h_slips, self.h_read = 0, 0, None
         # posture (ArmsRules.java:26-32)
         self.pmax = self.R["POSTURE_LORD"]
         if self.duel and (lc.get("stance", 0) or self.kit["fight"].get("stance", 0)) > 0:
@@ -1289,7 +1292,36 @@ class Fight:
         w = max(1, e.get("weight", 1))
         if self.duel and self.k_deflects >= self.D["HABIT_DEFLECTS"] and t - self.k_deflect_at <= self.D["HABIT_FORGET"] and self.kit_red(e):
             w *= int(self.D["HABIT_RED"])
+        if self.mirrors and self.phase >= 1 and self.habit_answers(e):
+            w *= int(self.D["HABIT_ANSWER"])
         return w
+
+    def habit(self):
+        """The habit it read of you at its second phase (FightRunner.habit): your deflects or the blows you got out of,
+        whichever you leaned on at least HABIT_LEAN times and more than the other. ASSUMED: distance and powers are never
+        read (the sim has no positions over time and its profiles cast no powers)."""
+        if self.h_read is None and self.phase >= 1:
+            g, sl = self.h_guards, self.h_slips
+            lean = self.D["HABIT_LEAN"]
+            self.h_read = "GUARD" if g >= lean and g > sl else "SLIP" if sl >= lean and sl > g else "NONE"
+            self.st["habit"] = self.h_read
+        return self.h_read
+
+    def habit_answers(self, e):
+        """What answers the habit (FightRunner.answers): your guard, blows you can't turn aside; your dodging, held blows
+        and long strings (three blows or more)."""
+        m = self.kit["moves"].get(e["move"])
+        read = self.habit()
+        if m is None or read in (None, "NONE"):
+            return False
+        if read == "GUARD":
+            return m["class"] in (HEAVY, PERILOUS, GRAB)
+        return m["time"].get("hold", 0) > 0 or any(len(st) >= 2 for st in e.get("then", []))
+
+    def habit_slip(self, b):
+        """A blow you stood in the reach of that never landed: you got out of it (counted through the first phase)."""
+        if self.mirrors and self.h_read is None and self.phase == 0 and b in self.k_blows:
+            self.h_slips += 1
 
     def kit_deflected(self, t):
         """A blow of the move playing was deflected: its limb recoils and the phrase goes on, or, its last, it reels."""
@@ -1298,6 +1330,8 @@ class Fight:
         if t - self.k_deflect_at > self.D["HABIT_FORGET"]:
             self.k_deflects = 0
         self.k_deflects += 1
+        if self.mirrors and self.h_read is None and self.phase == 0:
+            self.h_guards += 1
         self.k_deflect_at = t
         self.cancel(self.k_blows + self.k_ab_blows, t)
         self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []
@@ -1465,6 +1499,7 @@ class Fight:
             if b.kit is not None:
                 d, behind = self.kit_where(t)
                 if d > (b.kit[1] if behind else b.kit[0]):
+                    self.habit_slip(b)
                     continue  # not where its capsules are (FightRunner.strike)
             if self.rng.random() >= b.expose:
                 continue
@@ -1501,6 +1536,8 @@ class Fight:
             else:
                 outcome = "guard_break"
                 blocked = self.heavy_red
+        if outcome in ("dodged", "evade"):
+            self.habit_slip(b)
         if outcome == "dodged":
             return
         # an ability's burn and touch land whether or not the hit did (Abilities.java:75-80); a melee's only on a hit
@@ -1952,7 +1989,7 @@ class Fight:
 
 # The Provings' Wardens (SPEC §46.4): each met at its Reassessment by a player of the rank below, in that rank's set
 # and with its forged blade, at the level the new rank asks for (Rank.java levelRequired); the Warden at that level too
-PROVING_RANKS = {"proving_ringer": ("E", 10)}
+PROVING_RANKS = {"proving_ringer": ("E", 10), "proving_examiner": ("D", 25)}
 
 
 def home(W, d):
@@ -2066,6 +2103,12 @@ def summarise(res, P):
         n = sum(ph.values()) or 1
         out["cadence"]["phrases"] = {k: v / n for k, v in sorted(ph.items())}
     out["deaths"] = dict(sorted(deaths.items(), key=lambda kv: -kv[1])[:4])
+    habits = {}
+    for r in res:
+        if "habit" in r["st"]:
+            habits[r["st"]["habit"]] = habits.get(r["st"]["habit"], 0) + 1
+    if habits:
+        out["habits"] = habits  # what a fight that reads you read (SPEC §46.6), fights reaching its second phase
     return out
 
 

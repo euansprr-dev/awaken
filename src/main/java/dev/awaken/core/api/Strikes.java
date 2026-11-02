@@ -228,7 +228,18 @@ public final class Strikes {
         default @Nullable Blow lastBlow(LivingEntity e) {
             return null;
         }
+
+        /** For a body that fights the way you do: the habit it has read of you (read now if it hasn't yet). */
+        default Habit habit(LivingEntity e) {
+            return Habit.NONE;
+        }
     }
+
+    /**
+     * How you meet a fight that reads you (SPEC §46.6, the Examiner): turning its blows aside, getting out of their way,
+     * keeping your distance, or your powers; NONE when no one habit stood out.
+     */
+    public enum Habit { NONE, GUARD, SLIP, DISTANCE, POWERS }
 
     /** One of a body's moves as a player meets it: its name ("Drowned Toll") and its class. */
     public record Blow(String title, Kind kind) {}
@@ -261,6 +272,10 @@ public final class Strikes {
 
     public static boolean returnShot(Entity shot, Player by) {
         return duel.returnShot(shot, by);
+    }
+
+    public static Habit habit(LivingEntity e) {
+        return duel.habit(e);
     }
 
     public interface Postures {

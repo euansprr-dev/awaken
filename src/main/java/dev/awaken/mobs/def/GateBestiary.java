@@ -276,12 +276,23 @@ final class GateBestiary {
                 .parts(P("zero_core", "Zero Core", "signal"), P("zero_plating", "Zero Plating", "precursor")).build());
         // the Provings' Wardens (SPEC §46.4): one great fight each Reassessment, in a hall built for it, never announced
         out.add(m("proving_ringer", "The Ringer", Theme.BELL, Tier.PROVING, Model.HUMAN, "A bell-ringer that drowned at its ropes and kept ringing")
-                .hp(340).dmg(1.55).spd(0.27).scale(2.0F).size(0.6F, 2.0F).bar(BossBarColor.BLUE).arena(40)
+                .hp(340).dmg(1.4).spd(0.27).scale(2.0F).size(0.6F, 2.0F).bar(BossBarColor.BLUE).arena(40)
                 .intro("Something up in the bells is swinging them.")
                 .phase(1.0F, "The Ringer drops into the light.", a(SLAM, "Clang").radius(5), a(BURST, "Drowned Toll").radius(10).inner(2.5F).power(1.8F).wind(22).heavy(),
                         a(BOLT, "Peal").n(1).bolt(BoltKind.SPIRIT))
                 .phase(0.5F, "The water drains.", a(SLAM, "Clang").radius(5), a(BURST, "Drowned Toll").radius(12).inner(2.5F).power(2.0F).wind(22).heavy(),
                         a(BOLT, "Peal").n(1).bolt(BoltKind.SPIRIT))
+                .build());
+        // the second (SPEC §46.6): it fights the way you do; its shots wear your power's look (FightRunner.yours)
+        out.add(m("proving_examiner", "The Examiner", Theme.MIRROR, Tier.PROVING, Model.HUMAN, "The Registry's examiner, with your face where its own should be")
+                .hp(380).dmg(1.8).spd(0.28).scale(2.1F).size(0.6F, 2.0F).bar(BossBarColor.WHITE).arena(40)
+                .intro("That was never your room.")
+                .phase(1.0F, "The Examiner steps out of the glass.", a(SLAM, "The Measure").radius(5), a(BOLT, "Reading").n(1),
+                        a(FANGS, "Verdict").n(14))
+                .phase(0.66F, "The mirrors wake.", a(SLAM, "The Measure").radius(5), a(BOLT, "Reading").n(1), a(FANGS, "Verdict").n(14),
+                        a(DECOY, "Reflections").n(2))
+                .phase(0.33F, "The walls close in.", a(SLAM, "The Measure").radius(5.5F), a(BOLT, "Reading").n(1), a(FANGS, "Verdict").n(16),
+                        a(DECOY, "Reflections").n(2))
                 .build());
     }
 

@@ -25,7 +25,7 @@ abstract class Warden {
         this.hall = hall;
     }
 
-    static final List<Warden> ALL = List.of(RingerWarden.WARDEN);
+    static final List<Warden> ALL = List.of(RingerWarden.WARDEN, ExaminerWarden.WARDEN);
 
     /** The Warden of a Reassessment to {@code target}, or null where a box trial still stands. */
     static @Nullable Warden of(Rank target) {
@@ -57,7 +57,7 @@ abstract class Warden {
     /** Where it comes in, and which way it faces. */
     abstract Vec3 arrive(Provings.Run run);
 
-    abstract float arriveYaw();
+    abstract float arriveYaw(Provings.Run run);
 
     /** How far from the hall's middle it goes after you (the whole hall: nowhere in it is a hiding place). */
     int home() {

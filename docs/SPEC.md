@@ -16825,10 +16825,11 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
 - **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept
   ringing, twice a man's height, a bronze bell swinging on a chain from each fist and a small one in its hood. Tier
   `PROVING` (a boss met only in its hall: never in a gate, never roams, drops no part, since its reward is the rank, the
-  gift and its trophy). Theme Bell, a duel (§46.3) with stance 260; health 340, damage 1.55, speed 0.27, fought at level
-  10. Sim (`combat_sim.py --lord proving_ringer`, 200 seeds, `PROVING_RANKS` sets its rank and level): dodger 78% in
-  2.6 min, parrier 86% in 1.9 min, expert 100% in 1.6 min, tank 0% (targets 75 / 80 / 99 / at most 10), harder than
-  the tuned pilots of E and D (Bell Warden 100 / 90, Gearwright 86 / 88). The plan's 4-5 minutes isn't met: with a
+  gift and its trophy). Theme Bell, a duel (§46.3) with stance 260; health 340, damage 1.4 (1.55 until its turns were
+  made to reach, §46.6), speed 0.27, fought at level 10. Sim (`combat_sim.py --lord proving_ringer`, 200 seeds,
+  `PROVING_RANKS` sets its rank and level): dodger 78% in 2.7 min, parrier 96% in 1.9 min, expert 100% in 1.6 min, tank
+  0% (targets 75 / 80 / 99 / at most 10), harder than every E and D Lord for the dodger (§46.6; before its turns reached:
+  dodger 78%, parrier 86%). The plan's 4-5 minutes isn't met: with a
   finisher worth 10-15% and stance setting the pace, a longer fight costs the dodger more than the plan's 75% (at 4
   minutes it fell under 65%), and the first Warden must be fair to a hunter who came as they were. Length is the lever
   for the later Wardens' extra phases.
@@ -16977,3 +16978,101 @@ Shadow fights in phrases, opens up after each, recoils and reels when it's turne
   the profile those fights test hardest.
 - **Not tuned:** the Deep's bosses (the Guardians, Nightmares, Sovereigns and the Signal's Shadow) fight as duels at
   their own numbers. The sim reads only `GateBestiary`, so their numbers are unverified as duels.
+
+**46.6 The Provings: the Examiner (stage 5).** The C Reassessment becomes the second Proving (PLAN §4.7, GOALS part 2:
+"the room you're standing in turns into the Hall of Reflections, and it fights the way you do"). `Trials.Kind.forTarget(C)`
+is `PROVING`; the Provings run any Warden (`hearth.trial.Warden`: its hall, the bell, where you wake, when and where it
+comes, how its hall turns, its gift and the way out), the Ringer's (`RingerWarden`) and the Examiner's (`ExaminerWarden`).
+- **The Examiner** (`awaken:proving_examiner`, kit `proving_examiner`): the Registry's examiner, twice a man's height, in a
+  long navy coat with gold rule marks, a high collar and a peaked cap, a fan of seven mirror shards behind its shoulders,
+  a black glass measuring rod in its right hand, its left hand bare porcelain with lit fingertips, and a silvered mirror
+  where its face should be (a pale horizon in it: the face it has is yours). Tier `PROVING`, theme Mirror, a duel with
+  stance 300; health 380, damage 1.8, speed 0.28, scale 2.1, fought at level 25. Its intro line: "That was never your room."
+- **Tells.** White-gold blows are told 0.7 s (14 ticks: the strokes, the Step In, the Reading, the Turning Rule), the
+  ladder's second rung; red stays over 0.6 s (the Verdict 1.2 s, Hold Still 0.9 s).
+- **Moves.** Phase 1: Rule Sweep, Rule Thrust and Backstroke (the rod in twos and threes), the Measure (HEAVY: the rod
+  overhead and down, held 10 ticks one time in three, a ring of force), Step In (a long step and a thrust from afar), the
+  Reading (a white-gold shot from its bare hand: deflect it and it flies back), the Turning Rule (behind it), the Verdict
+  (its signature: the rod raised and brought down to point at you, a red line of fangs: dash through it). Phase 2 at two
+  thirds ("The mirrors wake", a 30-tick held clip): phrases of three and four, the Verdict twice as often, Reflections
+  (two copies of it step out of the glass, `DECOY`). Phase 3 at a third ("The walls close in"): Hold Still (a red grab
+  with the bare hand from a run), the Crosscut (HEAVY: one full turn with the rod held out low), phrases ending on the
+  Crosscut or the Measure. It comes by stepping out of the glass (`emerge`).
+- **It reads you** (`FightScripts.Fight.mirrors`, `FightRunner`). Through its first phase it counts how you meet it: blows
+  you turned aside (guard), blows you stood in the reach of that never landed (you got out of them: a dash, a step, a
+  roll; counted once a blow, at its last active tick), ten-tick spells you kept 8 blocks or more off (four make a point:
+  distance), and your powers' hits on it (any of the six `Forces` damage types: powers). At its second phase it reads
+  once: the habit with the most, at least 4 (`HABIT_LEAN`) and more than any other, else none. From then on the phrases
+  that answer it come up 5 times as often (`HABIT_ANSWER`): your guard, the blows you can't turn aside (amber, red, a grab);
+  your dodging, the held blows and the long strings (a phrase of three or more: a dodge spent early); your distance, its
+  gap closers; your powers, its shots. `Strikes.Habit` (`NONE, GUARD, SLIP, DISTANCE, POWERS`) and `Strikes.habit(e)`
+  (core.api, `Duel.habit`, default `NONE`) let the hall say it: 3 s after the mirrors wake the Signal says plainly what
+  it read ("It's noticed you block. Now it swings the blows you can't turn aside." / "...you dodge. Now it holds its swings
+  and covers the ground you dodge to." / "...you keep your distance. Now it closes in fast." / "...you lean on your
+  powers. Now it throws them back at you." / "It watched you fight and found nothing you lean on. It's still guessing.").
+  Its shots wear the look of the power family you've used most (`awaken:power_uses/<family>`: kinetic as gravity, velocity
+  and energy as charge, flight and architect as glass, shadow as void, mind as dream, tech as signal, spirit as spirit;
+  `AwakenMob.mirrorBolt`, read when it first sees you): the look only, never your power's effect.
+- **Every blow reaches someone standing.** A damaging blow's hits must come down to a standing player (whose box is 1.8
+  high): the Examiner's sweep, Backstroke, Turning Rule and Crosscut, and the Ringer's Turning Swing and Whirl, passed
+  over a standing player's head (their lowest point 1.9-2.3 blocks up; the kit fit their reach to half a block and the
+  sim never landed them). The rod and the bells now come down to the waist in their strokes (`ROD_DOWN`, `BELL_DOWN`) and
+  the turns bend into the cut (`moves.spin_cut` `low` and `drop`, default 0; `moves.backhand` can strike with a weapon):
+  the Examiner's strokes reach 2.6-3.3 blocks at 0.3-1.2 high, the Ringer's swings 2.7 at 0.8 and its turns 2.4 at 0.5.
+  With its turns landing, the Ringer's dodger fell to 62%: its damage is 1.4 (was 1.55), dodger 78% in 159 s, parrier 96%
+  in 112 s, expert 100% in 93 s (100% health left), tank 0% (dies at 45 s).
+- **The Hall of Reflections** (`hearth.trial.Reflections`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every
+  hall cell, centred 256 east and 120 south of the cell's corner (clear of the Belfry and the box arena). Round, the mirror
+  wall's face at radius 40 (to 42.5), roof at dy 26. The floor is white stone ruled like a measuring sheet: smooth quartz
+  with calcite and quartz block, ink rings of polished blackstone every 8 blocks, sixteen rules of polished deepslate out
+  from the first ring, a gold seal in the middle (chiseled quartz inside a gold ring), a border of blackstone bricks at the
+  wall's foot. The wall: a dark skirting (dy 1-2), 24 bays between quartz pillars, one centred on the door, each bay a
+  dark mirror (tinted glass, black behind it) in a gold frame from dy 3 to 16, white quartz above with a chiseled band at
+  20 and a cornice at 23. The ceiling: dark beams on an 8-block grid and two rings, white quartz between, an oculus over
+  the middle with a sea lantern skylight; twelve lamps hang on chains at radius 30 (sea lanterns at dy 12). Six standing
+  mirrors (five wide, six high, tinted glass between quartz posts) at 18-19 from the middle are cover: they stop the
+  Reading. Unseen light: 13 at head height on a 6-block grid. The door (south, 3 wide, 3 high: you fit, the Examiner
+  doesn't) opens on a stair of half-steps to a landing at dy 4, lit warm (the way out). The band a fight changes is dy
+  -1 to 16 (the room laid over the middle, the mirrors, the ring).
+- **The flow.** The Reading Bell's window says only "Last time the bell didn't stop. Go when you're ready." The bell rings
+  and a Fault plays ("READING · READING · READING", "[ERROR] THE READING IS LOOKING BACK", then "The bell stopped."). Before
+  anyone goes, the Examiner reads the room round whoever touched the bell: 21 by 21, from 2 under their feet to 12 over
+  (`ExaminerWarden.Room`). What comes is a room's look and nothing that acts: no water, lava or fire (what stood in water
+  comes dry, water plants don't come), no portal, TNT, bed or respawn anchor; a vanilla block that keeps things comes
+  empty, but no game master's block, spawner or vault; another mod's block comes only if it keeps nothing and can't be
+  walked through. While the bell rings the hall is readied; then the room is laid over the hall's middle (no block
+  updates), and everyone wakes standing where they stood in it, looking the same way (whoever stood outside it, where
+  whoever touched the bell did): nothing seems to have happened. 2.5 s on, the room turns to glass a ring every 2 ticks
+  out from them, every full block the stained glass nearest its own colour (the rest goes), and through it the hall shows.
+  1.5 s after the last ring the Examiner steps out of the glass 9 blocks in front of whoever touched the bell, facing them,
+  and the room breaks into the hall (glass bursting, whoever the hall's blocks came back round lifted out, whoever stood
+  high floating down); its arena is the whole hall, +50% health a member past the first. At two thirds of its health the
+  mirrors wake a bay a tick round from the north (the glass goes white, lit from behind) and the Signal says what it read
+  3 s later. At a third the hall closes in: a ring of mirrors (radius 26, 9 high, a door south you fit through and it
+  doesn't) rises a row every 3 ticks; whoever is outside it is brought in first, and it keeps inside (home 24). A fall
+  never kills: you wake inside the door ("You wake inside the door. The stair behind you climbs out."); from the third, the
+  Signal says what keeps catching you (§46.4). When everyone has fallen it goes, the mirrors sleep, the ring sinks, and 3 s
+  after you wake it steps out of the north wall's mirror. The stair's landing is the way out, no fail day. Its death: the
+  mirrors all wake if they hadn't, what it left is in the killer's hands at 1.5 s, at 2.5 s the Second Awakening (your
+  Path, `Trials.secondAwakening`: the Paths that answered how you've lived) for each member who isn't practising, the hall
+  rings at 4.5 s, and at 15 s home with rank C. The hall is put back after (the band, 8 rows a tick).
+- **No new Tasks step** (the `progression:reassessment` step covers it, as for the Ringer).
+- **The box stays** as practice: `/awaken admin trial cbox` (waves, then the Second Awakening). `/awaken admin trial half`
+  and `third` bring your Proving's Warden to 45% and 30% (tours: the mirrors and the ring on cue). Tour:
+  `tools/autopilot/fights-reflections.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_examiner`, 200 seeds, `PROVING_RANKS` fights it at D and level 25
+  with the D-rank forged blade; the sim counts guards and blows got out of and reads the habit as the game does, but has
+  no positions over time or powers, so it never reads distance or powers): dodger 60% in 146 s (read as dodging every
+  time), parrier 96% in 99 s (read as guarding three fights in four), expert 100% in 85 s (98% health left), tank 0% (dies
+  at 44 s). Targets 60 / 65 / 97 / at most 5: met. Harder than the Ringer (78 / 96) and every C Lord for the dodger (80-96)
+  and the tank; the parrier wins it about as often as the Ringer and the Sleeper (94-96). In the sim the parrier beats every
+  duel far more often than the dodger, and a fight that stops it costs the dodger more: past damage 1.8 the dodger falls
+  under 60 while the parrier stays over 90 (at 2.2: 36 and 82). The answer weight barely moves it (×1 98%, ×5 96%, ×20
+  88%). The plan's 5-6 minutes isn't met for the same reason as the Ringer's.
+- **Not here:** the Great Bell Second (the bells plan places the gate and Warden bells); the Examiner's trophy is the
+  Provings' usual one (a Lord's trophy, `Trophies`), not a mirror.
+- Tests: `proving_examiner` (the layout's rules, what of a room is copied, then the whole flow over the GameTest
+  superflat: you wake where you stood in your room, the glass, it steps out in front of you and the room breaks, the
+  mirrors wake and it says what it read, the ring rises, a fall puts the mirrors and the ring back, it comes out of the
+  north mirror, the win is rank C, the hall is put back), `fights_habit_read` (guards counted through its first phase are
+  read at its second; the Gearwright reads nothing).

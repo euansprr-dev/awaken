@@ -101,7 +101,7 @@ final class RingerWarden extends Warden {
     }
 
     @Override
-    float arriveYaw() {
+    float arriveYaw(Provings.Run run) {
         return 0F;
     }
 
