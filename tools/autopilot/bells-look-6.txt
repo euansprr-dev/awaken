@@ -88,16 +88,22 @@ shotnow b6_07_hand_great
 hud off
 cmd clear @s
 
-# ---- 3. the Tenor's card, once the yard's cards have all gone by ----
+# ---- 3. the Tenor's card: a bell's card is paced (SPEC 26), so it's looked for over half a minute ----
 wait 1000
 hud on
 cmd awaken admin bells give tenor
 wait 30
-shotnow b6_08_tenor_card
-wait 260
+shotnow b6_08_tenor_card_a
+wait 170
+shotnow b6_08_tenor_card_b
+wait 300
+shotnow b6_08_tenor_card_c
+wait 200
 hud off
 
 # ---- 4. the belfry's beams with mixed metals, and the Great Bell in the tower ----
+# the admin's Tenor went on the wagon: one in hand for the tower
+cmd give @s awaken:bell[awaken:bell=40]
 cmd awaken admin bells give ghost
 cmd awaken admin bells give star
 cmd awaken admin bells give deepglass
@@ -116,12 +122,12 @@ cmd gamemode spectator
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8.5 ~7.6 ~6 0 -3
 wait 60
 shot b6_09_belfry_beams
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8.5 ~9.2 ~8.2 0 30
-wait 40
-shot b6_10_beam_bells_close
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-8.5 ~10.5 ~7 0 -12
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-7.5 ~10.4 ~6.5 0 0
 wait 40
 shot b6_11_tower_great_bell
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-7.5 ~10.9 ~4.5 0 8
+wait 40
+shot b6_11_tower_great_bell_far
 
 # ---- 5. the studio: every metal at every size, a Great Bell, three on the ground ----
 cmd gamemode creative
