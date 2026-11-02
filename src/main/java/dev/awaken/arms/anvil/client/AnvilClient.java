@@ -154,6 +154,27 @@ public final class AnvilClient {
         }
     }
 
+    /**
+     * A breath of the bellows an Emberkit works (§46.6): the fire flares out of the Forge's mouth and sparks lift. The
+     * mouth is the Forge's front face.
+     */
+    static void puff(BlockPos forge) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        BlockState fs = mc.level.getBlockState(forge);
+        var face = fs.hasProperty(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING)
+                ? fs.getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING) : net.minecraft.core.Direction.NORTH;
+        var r = mc.level.getRandom();
+        double x = forge.getX() + 0.5 + face.getStepX() * 0.52, y = forge.getY() + 0.35, z = forge.getZ() + 0.5 + face.getStepZ() * 0.52;
+        for (int i = 0; i < 6; i++) {
+            double out = 0.03 + r.nextFloat() * 0.04;
+            mc.level.addParticle(ParticleTypes.FLAME, x + (r.nextFloat() - 0.5F) * 0.4F, y + r.nextFloat() * 0.25F, z + (r.nextFloat() - 0.5F) * 0.4F,
+                    face.getStepX() * out, 0.01 + r.nextFloat() * 0.02, face.getStepZ() * out);
+        }
+        for (int i = 0; i < 3; i++)
+            mc.level.addParticle(ParticleTypes.LAVA, x, y + 0.2, z, 0, 0, 0);
+    }
+
     /** The HUD steps aside while the scene holds the view (subtitles and chat stay). */
     private static void hideHud(RenderGuiLayerEvent.Pre e) {
         if (sceneAnvil() == null) return;

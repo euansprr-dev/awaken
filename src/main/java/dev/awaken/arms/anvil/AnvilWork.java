@@ -15,17 +15,18 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A weapon in the making, kept on its War Anvil (SPEC §46.2, §46.7, §46.8; schemaVersion 3): the weapon, the stage and
+ * A weapon in the making, kept on its War Anvil (SPEC §46.2, §46.6-§46.9; schemaVersion 5): the weapon, the stage and
  * the game tick it began, the beats counted when this run of the stage began (a smith who walks away picks up there,
  * counted in again), what was taken in (given back if the anvil is broken), every judgement so far, when the blade went
  * into the trough, who is making it and the Forge it heats in (at E, by hand, the anvil itself). v2 adds whether it's
  * forged or made from memory, the bind's score and the helpers' strikes (a v1 save reads as forged, unbound, unhelped).
  * v3 adds a weapon worked rather than made (tempered, attuned or reforged: the weapon itself and its target; a v2 save
  * reads with none). v4 adds the ranks' acts' scores (§46.9: the twist, the grind, the balance, the starlight; a v3 save
- * reads with none done). Synced to everyone near with the anvil, so they see it glow and draw out.
+ * reads with none done). v5 adds whether the Forge's bellows are worked for its heat (§46.6; a v4 save reads not). Synced
+ * to everyone near with the anvil, so they see it glow and draw out.
  */
 public final class AnvilWork {
-    public static final int SCHEMA = 4;
+    public static final int SCHEMA = 5;
     /**
      * Forged in full, or made from memory (one heat, one strike, the quench; always Fine); or a weapon worked (§46.8):
      * tempered (a strike a level), attuned (a stone set in the guard) or reforged (the next tier's metal folded in).
@@ -55,6 +56,8 @@ public final class AnvilWork {
     public final int target;
     /** The ranks' acts' scores (§46.9), -1 until done (or where the rank has none). */
     public float twist = -1F, grind = -1F, balance = -1F, star = -1F;
+    /** The Forge's bellows worked by an Emberkit (§46.6): the heat climbs evenly through the gold, which holds longer. */
+    public boolean bellows;
     /** The last helper's strike (game tick) and the last flake (ticks from the stage's start); not saved. */
     public long helpLast = Long.MIN_VALUE / 2;
     public float knapLast = -1F;
@@ -186,8 +189,9 @@ public final class AnvilWork {
         if (stage == AnvilSong.QUENCH) plunge = -1F;
     }
 
-    /** v2's, v3's and v4's fields, kept beside the rest (one codec holds at most sixteen). */
-    private record More(int kind, float bind, int help, ItemStack piece, int target, float twist, float grind, float balance, float star) {
+    /** v2's to v5's fields, kept beside the rest (one codec holds at most sixteen). */
+    private record More(int kind, float bind, int help, ItemStack piece, int target, float twist, float grind, float balance, float star,
+                        boolean bellows) {
         static final MapCodec<More> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.INT.optionalFieldOf("kind", FORGE).forGetter(More::kind),
                 Codec.FLOAT.optionalFieldOf("bind", -1F).forGetter(More::bind),
@@ -197,7 +201,8 @@ public final class AnvilWork {
                 Codec.FLOAT.optionalFieldOf("twist", -1F).forGetter(More::twist),
                 Codec.FLOAT.optionalFieldOf("grind", -1F).forGetter(More::grind),
                 Codec.FLOAT.optionalFieldOf("balance", -1F).forGetter(More::balance),
-                Codec.FLOAT.optionalFieldOf("star", -1F).forGetter(More::star)
+                Codec.FLOAT.optionalFieldOf("star", -1F).forGetter(More::star),
+                Codec.BOOL.optionalFieldOf("bellows", false).forGetter(More::bellows)
         ).apply(i, More::new));
     }
 
@@ -216,7 +221,7 @@ public final class AnvilWork {
             Codec.FLOAT.listOf().optionalFieldOf("taps", List.of()).forGetter(w -> w.taps),
             UUIDUtil.CODEC.fieldOf("forger").forGetter(w -> w.forger),
             BlockPos.CODEC.fieldOf("forge").forGetter(w -> w.forge),
-            More.CODEC.forGetter(w -> new More(w.kind, w.bind, w.help, w.piece, w.target, w.twist, w.grind, w.balance, w.star))
+            More.CODEC.forGetter(w -> new More(w.kind, w.bind, w.help, w.piece, w.target, w.twist, w.grind, w.balance, w.star, w.bellows))
     ).apply(i, (v, weapon, stage, start, base, mats, heat, quench, plunge, held, scores, taps, forger, forge, more) -> {
         AnvilWork w = new AnvilWork(weapon, stage, start, base, mats, heat, quench, plunge, held, scores, taps, forger, forge, more.kind(), more.bind(),
                 more.help(), more.piece(), more.target());
@@ -224,6 +229,7 @@ public final class AnvilWork {
         w.grind = more.grind();
         w.balance = more.balance();
         w.star = more.star();
+        w.bellows = more.bellows();
         return w;
     }));
 }

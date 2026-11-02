@@ -26,6 +26,16 @@ public final class AnvilSong {
         return Math.max(0F, ticks / HEAT_FULL);
     }
 
+    /** With the bellows worked (§46.6) the gold band holds this many ticks longer: the heat climbs through it evenly, slower. */
+    public static final float BELLOWS_HOLD = 10F;
+
+    public static float heat(float ticks, boolean bellows) {
+        float lo = BAND_LO * HEAT_FULL, band = (BAND_HI - BAND_LO) * HEAT_FULL;
+        if (!bellows || ticks <= lo) return heat(ticks);
+        if (ticks <= lo + band + BELLOWS_HOLD) return BAND_LO + (BAND_HI - BAND_LO) * (ticks - lo) / (band + BELLOWS_HOLD);
+        return heat(ticks - BELLOWS_HOLD);
+    }
+
     /** In the gold band is 1, falling off either side. */
     public static float heatScore(float heat) {
         if (heat < BAND_LO) return Mth.clamp(1F - (BAND_LO - heat) / 0.3F, 0F, 1F);

@@ -17458,7 +17458,14 @@ rebuild the gate for its rank's weapons and act (not a second ladder), each a We
 `minecraft:block_state` component, so a carried anvil looks as it was built and is placed back at its build):
 - E: the War Anvil as built (carved stone, a copper-banded horn).
 - D: bellows by the Forge with Forge Tier II (§27); a kin beast set to the smithy works them (§43), and then the heat
-  climbs evenly and the gold band holds 10 ticks longer. (Stage 4c.)
+  climbs evenly and the gold band holds 10 ticks longer. Built as: a forging or a weapon worked (§46.8) begins with the
+  bellows worked (`AnvilWork.bellows`, schemaVersion 5; `WarAnvil.bellows`) when the smith's home's Forge is at Tier II
+  or better and an Emberkit living with them is loaded within 8 blocks of the Forge (`KinApi.loaded`). Then
+  `AnvilSong.heat(t, true)` climbs through the gold over 34 ticks instead of 24 (`BELLOWS_HOLD` 10) and is as before on
+  either side of it, on both sides of the wire; the bellows breathe every 30 ticks instead of 46, louder, and each
+  breath flares the fire out of the Forge's mouth (flame and sparks, `AnvilClient.puff`); the heat's hint says "Your
+  Emberkit is working the bellows: the heat climbs evenly and the gold lasts a little longer." An Emberkit nooks beside
+  a lit campfire (§43), so one by the Forge is a campfire beside it; a nook at the Forge itself is the kin module's.
 - C, **Ironbound** (4 iron blocks, 2 diamonds): iron bands round the stone and the waist, corner brackets, the face
   re-laid in iron. A C weapon forged in full (not from memory, not a Hunter blade alone) also needs a grindstone within
   6 blocks of the anvil (2 up or down), for its grind act (§46.9).
@@ -17490,7 +17497,8 @@ The Forge's own tiers (II at D, III at B) still set the temper limit. No quality
 any anvil. A rebuild keeps work in progress and what stands in the slot (the block entity stays: only its state
 changes). Models and textures from `tools/art/specs/war_anvil.py` (`war_anvil`, `_ironbound`, `_deepglass`, `_lord`).
 Test `arms_anvil_rebuild` (the gates, the door's flags, the parts, the work kept, the grindstone, the drop's build; on
-to a Lord's anvil in the remembered colour, which the drop keeps).
+to a Lord's anvil in the remembered colour, which the drop keeps). Test `arms_anvil_bellows` (none without a home; the
+gold 10 ticks longer and the curve unchanged either side; a pull late without them in the gold with them).
 
 **46.7 Every weapon at the anvil (stage 2).** Weapons are never made on the crafting grid (decision 1): the 96 forged
 weapons (16 styles, six tiers) and the six Hunter blades (the Fang to the Sovereign blade) lose their grid recipes and are
@@ -17704,7 +17712,6 @@ x each act's mark). None can fail, and one left alone settles itself.
   them. The tooltip reads "Flawless, twisted steel, quenched in starlight"; the card says "The twist shows in its steel."
   and "It drank the starlight, and its runes woke." (`Done` flags `RIPPLED` 64, `STARLIT` 128). Drawn by the weapon
   shader wherever the weapon is (UV1.y bits 13 and 14, beside the flaw), standing in the anvil's slot too.
-- **Still to come in stage 4**: the bellows (§46.6).
 
 Tests: `arms_anvil_verbs` (the tenth rule and the twist's, balance's and starlight's curves; a C Longsword grinds after
 its quench and then takes its hilt; an S Longsword twists, draws out, takes the starlight, grinds twenty touches (one

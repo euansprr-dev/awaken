@@ -12,7 +12,11 @@ import dev.awaken.core.api.ArmsApi;
 import dev.awaken.core.api.ForgeHooks;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.api.MobRole;
+import dev.awaken.hearth.HearthService;
 import dev.awaken.hearth.Upgrades;
+import dev.awaken.kin.KinApi;
+import dev.awaken.kin.KinBeast;
+import dev.awaken.kin.KinKind;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
 import dev.awaken.signal.Signal;
@@ -213,6 +217,21 @@ public final class WarAnvil {
         return true;
     }
 
+    /** How near the Forge an Emberkit works its bellows. */
+    static final int BELLOWS_REACH = 8;
+
+    /**
+     * Whether the Forge's bellows are worked for this smith's heat (§46.6): their home's Forge at Tier II or better, and an
+     * Emberkit living with them within eight blocks of it.
+     */
+    static boolean bellows(ServerLevel level, ServerPlayer p, BlockPos forge) {
+        var home = HearthService.homeOf(p);
+        if (home.isEmpty() || home.get().forgeTier < 2) return false;
+        for (KinBeast b : KinApi.loaded(level, home.get().pos, KinKind.EMBERKIT))
+            if (b.blockPosition().closerThan(forge, BELLOWS_REACH)) return true;
+        return false;
+    }
+
     /** A Gate Lord killed: its smith remembers its colour (its Lord-forged weapon's accent) for a Lord's anvil (§46.6). */
     static void lordFell(LivingDeathEvent e) {
         if (!(e.getSource().getEntity() instanceof ServerPlayer p)) return;
@@ -332,6 +351,7 @@ public final class WarAnvil {
         if (fire == null) return false;
         List<ItemStack> taken = p.isCreative() ? List.of() : take(p, AnvilCosts.needs(p, id));
         AnvilWork w = AnvilWork.fresh(id, level.getGameTime(), taken, p.getUUID(), fire, memory ? AnvilWork.MEMORY : AnvilWork.FORGE);
+        w.bellows = !hand && bellows(level, p, fire);
         AT.put(p.getUUID(), be.getBlockPos());
         SmithMemory.of(p).at(level.dimension(), be.getBlockPos());
         be.setWork(w);
@@ -361,7 +381,7 @@ public final class WarAnvil {
             }
             case AnvilPayloads.PULL -> {
                 if (w == null || w.stage != AnvilSong.HEAT || !mine(p, w)) return;
-                pull(level, be, w, AnvilSong.heat(clamp(a.t(), now - w.stageStart)), p);
+                pull(level, be, w, AnvilSong.heat(clamp(a.t(), now - w.stageStart), w.bellows), p);
             }
             case AnvilPayloads.STRIKE, AnvilPayloads.TAP -> {
                 int stage = a.act() == AnvilPayloads.STRIKE ? AnvilSong.SHAPE : AnvilSong.HILT;
@@ -605,7 +625,7 @@ public final class WarAnvil {
         float t = level.getGameTime() - w.stageStart;
         switch (w.stage) {
             case AnvilSong.HEAT -> {
-                if (AnvilSong.heat(t) > AnvilSong.BURNT) pull(level, be, w, AnvilSong.BURNT, null);
+                if (AnvilSong.heat(t, w.bellows) > AnvilSong.BURNT) pull(level, be, w, AnvilSong.BURNT, null);
             }
             case AnvilSong.SHAPE, AnvilSong.HILT -> {
                 if (t > w.nextDue() + AnvilSong.WINDOW + AnvilSong.LAG) beat(level, be, w, 0F, null);

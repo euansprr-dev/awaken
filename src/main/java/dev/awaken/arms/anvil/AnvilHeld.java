@@ -207,6 +207,7 @@ final class AnvilHeld {
         p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         if (!free) pay.run();
         AnvilWork w = AnvilWork.worked(drawn, level.getGameTime(), taken, piece, p.getUUID(), fire, kind, target);
+        w.bellows = WarAnvil.bellows(level, p, fire);
         WarAnvil.arrive(p.getUUID(), be.getBlockPos());
         SmithMemory.of(p).at(level.dimension(), be.getBlockPos());
         be.setWork(w);

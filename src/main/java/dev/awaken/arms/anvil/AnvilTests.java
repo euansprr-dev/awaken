@@ -37,6 +37,37 @@ final class AnvilTests {
         AwakenTests.register("arms_anvil_reforge", 40, AnvilTests::reforge);
         AwakenTests.register("arms_anvil_verbs", 40, AnvilTests::verbs);
         AwakenTests.register("arms_anvil_rebuild", 40, AnvilTests::rebuild);
+        AwakenTests.register("arms_anvil_bellows", 40, AnvilTests::bellows);
+    }
+
+    /**
+     * The bellows (SPEC §46.6): none without a home whose Forge is Tier II and an Emberkit by it; worked, the heat climbs
+     * through the gold 10 ticks slower (34 ticks of gold, not 24) and is the same as before and after it; a pull the
+     * server judges late without them is in the gold with them.
+     */
+    private static void bellows(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        WarAnvilBlockEntity be = anvilByForge(h);
+        BlockPos pos = be.getBlockPos(), fire = WarAnvil.forge(level, pos);
+        ServerPlayer p = smith(h, pos, "anvil-bellows", 13);
+        h.assertTrue(!WarAnvil.bellows(level, p, fire), "no home, no bellows");
+        float lo = AnvilSong.BAND_LO * AnvilSong.HEAT_FULL;
+        h.assertTrue(AnvilSong.heat(lo - 5F, true) == AnvilSong.heat(lo - 5F, false), "the same before the gold");
+        float plain = 0F, worked = 0F;
+        for (float t = 0F; t < 200F; t += 0.5F) {
+            if (AnvilSong.heatScore(AnvilSong.heat(t, false)) == 1F) plain += 0.5F;
+            if (AnvilSong.heatScore(AnvilSong.heat(t, true)) == 1F) worked += 0.5F;
+        }
+        h.assertTrue(Math.abs(worked - plain - AnvilSong.BELLOWS_HOLD) <= 1F, "the gold holds 10 ticks longer: " + plain + " and " + worked);
+        h.assertTrue(Math.abs(AnvilSong.heat(150F, true) - AnvilSong.heat(140F, false)) < 1e-5F, "and climbs on after it as it would have");
+        be.setWork(AnvilWork.fresh("beastbound_longsword", level.getGameTime(), java.util.List.of(), p.getUUID(), fire, AnvilWork.FORGE));
+        AnvilWork w = be.work();
+        w.bellows = true;
+        float late = AnvilSong.BAND_HI * AnvilSong.HEAT_FULL + 5F;
+        w.stageStart = level.getGameTime() - (long) late;
+        act(p, pos, AnvilPayloads.PULL, 0, late, 0F);
+        h.assertTrue(w.stage != AnvilSong.HEAT && AnvilSong.heatScore(w.heat) == 1F, "pulled 5 ticks past the gold, the bellows kept it there: " + w.heat);
+        h.succeed();
     }
 
     /**

@@ -233,10 +233,12 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     // ---- heat ----------------------------------------------------------------------------------------------------------
 
     private void heat(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
-        float h = AnvilSong.heat(t);
-        if (now - bellowsAt > 46 && !pulled) {
+        float h = AnvilSong.heat(t, w.bellows);
+        // the bellows breathe; worked by an Emberkit (§46.6) they breathe steadily and harder, the fire flaring at each
+        if (now - bellowsAt > (w.bellows ? 30 : 46) && !pulled) {
             bellowsAt = now;
-            AnvilClient.play(Vec3.atCenterOf(w.forge), AnvilContent.BELLOWS.get(), 0.45F, 0.95F + (now % 7) * 0.01F);
+            AnvilClient.play(Vec3.atCenterOf(w.forge), AnvilContent.BELLOWS.get(), w.bellows ? 0.7F : 0.45F, 0.95F + (now % 7) * 0.01F);
+            if (w.bellows) AnvilClient.puff(w.forge);
         }
         int gx = width / 2 + Math.min(140, width / 4), gh = Math.min(150, height / 2), gy = height / 2 - gh / 2, gw = 12;
         g.fill(gx - 2, gy - 2, gx + gw + 2, gy + gh + 2, 0xE0080B12);
@@ -270,7 +272,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             colour = BAD;
         }
         g.text(font, say, gx + gw + 12, needle - 4, colour, true);
-        hint(g, "The glow runs from the tip toward your tongs. Pull the blade out while it glows in the gold: click, or press Space. "
+        hint(g, (w.bellows ? "Your Emberkit is working the bellows: the heat climbs evenly and the gold lasts a little longer. " : "")
+                + "The glow runs from the tip toward your tongs. Pull the blade out while it glows in the gold: click, or press Space. "
                 + "Esc steps away; the work waits.");
     }
 
@@ -301,7 +304,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     }
 
     private void pull(AnvilWork w, float t, float now) {
-        float h = AnvilSong.heat(t);
+        float h = AnvilSong.heat(t, w.bellows);
         if (pulled || h > AnvilSong.BURNT) return;
         pulled = true;
         AnvilClient.send(pos, AnvilPayloads.PULL, 0, t, 0F);
@@ -969,7 +972,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private void autoplay(AnvilWork w, float t, float now) {
         switch (w.stage) {
             case AnvilSong.HEAT -> {
-                if (!pulled && AnvilSong.heat(t) >= 0.65F) pull(w, t, now);
+                if (!pulled && AnvilSong.heat(t, w.bellows) >= 0.65F) pull(w, t, now);
             }
             case AnvilSong.KNAP -> {
                 next = Math.max(next, w.beats().size());
