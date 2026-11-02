@@ -48,7 +48,7 @@ public final class Pages {
     // ---- pages ---------------------------------------------------------------------------------------------------------
 
     /** A page of one enchantment (its top level, which the page doesn't use: what you learn is the enchantment). */
-    static ItemStack page(Holder<Enchantment> h, String where) {
+    public static ItemStack page(Holder<Enchantment> h, String where) {
         ItemStack s = new ItemStack(EnchantContent.PAGE.get());
         ItemEnchantments.Mutable m = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
         m.set(h, 1);
@@ -69,13 +69,13 @@ public final class Pages {
         return h.map(ref -> page(ref, where)).orElse(null);
     }
 
-    static String where(ItemStack page) {
+    public static String where(ItemStack page) {
         CustomData d = page.get(DataComponents.CUSTOM_DATA);
         return d == null ? "" : d.copyTag().getStringOr(WHERE, "");
     }
 
     /** What a page or book would teach: its enchantments that can still be written. */
-    static List<Inscriptions.Entry> teaches(ItemStack s) {
+    public static List<Inscriptions.Entry> teaches(ItemStack s) {
         List<Inscriptions.Entry> out = new ArrayList<>(1);
         for (Holder<Enchantment> h : s.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY).keySet()) {
             Inscriptions.Entry e = Inscriptions.of(h);

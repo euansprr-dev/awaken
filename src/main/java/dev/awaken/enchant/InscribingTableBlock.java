@@ -37,7 +37,9 @@ import org.jspecify.annotations.Nullable;
  */
 public class InscribingTableBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
-    private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 0, 0, 16, 13, 16), Block.box(4, 13, 4, 12, 15, 12));
+    /** The desk, and the brass stand at the back (north-facing: the writer stands on the north side, the stand to the south). */
+    private static final java.util.Map<Direction, VoxelShape> SHAPES = Shapes.rotateHorizontal(
+            Shapes.or(Block.box(0, 0, 0, 16, 13, 16), Block.box(6, 13, 12, 10, 15, 15)));
 
     public InscribingTableBlock(BlockBehaviour.Properties p) {
         super(p);
@@ -56,7 +58,7 @@ public class InscribingTableBlock extends BaseEntityBlock {
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return SHAPE;
+        return SHAPES.get(state.getValue(FACING));
     }
 
     @Override

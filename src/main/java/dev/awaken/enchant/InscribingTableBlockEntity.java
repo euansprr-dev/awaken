@@ -108,7 +108,11 @@ public class InscribingTableBlockEntity extends BlockEntity {
         float target = be.no * 0.37F;
         be.turn += Mth.clamp(target - be.turn, -0.12F, 0.12F);
         float want = be.rot;
-        if (near != null) want = (float) Mth.atan2(near.getZ() - (pos.getZ() + 0.5), near.getX() - (pos.getX() + 0.5));
+        if (be.phase != IDLE && state.hasProperty(InscribingTableBlock.FACING)) {
+            // while someone writes, the book opens toward the table's front, where they stand
+            var f = state.getValue(InscribingTableBlock.FACING);
+            want = (float) Mth.atan2(f.getStepZ(), f.getStepX());
+        } else if (near != null) want = (float) Mth.atan2(near.getZ() - (pos.getZ() + 0.5), near.getX() - (pos.getX() + 0.5));
         float d = Mth.wrapDegrees((want - be.rot) * Mth.RAD_TO_DEG) * Mth.DEG_TO_RAD;
         be.rot += d * 0.2F;
         be.bob = Mth.sin(be.time * 0.1F) * 0.02F;

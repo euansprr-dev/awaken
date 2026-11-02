@@ -51,7 +51,7 @@ public final class EnchantRules {
         return s.getEnchantments().size();
     }
 
-    static boolean armour(ItemStack s) {
+    public static boolean armour(ItemStack s) {
         var eq = s.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
         return eq != null && eq.slot().isArmor();
     }
@@ -194,7 +194,7 @@ public final class EnchantRules {
         return used > room ? "Full" : "No room left";
     }
 
-    static String count(int n) {
+    public static String count(int n) {
         return switch (n) {
             case 1 -> "one";
             case 2 -> "two";

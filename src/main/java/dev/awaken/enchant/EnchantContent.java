@@ -42,6 +42,8 @@ public final class EnchantContent {
     /** One enchantment, held in vanilla's {@code stored_enchantments} so every tooltip and JEI read it; used, it teaches. */
     public static final DeferredItem<PageItem> PAGE = ITEMS.registerItem("enchantment_page", PageItem::new,
             p -> p.stacksTo(16).rarity(Rarity.RARE));
+    /** The table's burin: only ever drawn in your hand while you write (never held, never in a tab). */
+    public static final DeferredItem<net.minecraft.world.item.Item> BURIN = ITEMS.registerSimpleItem("burin", p -> p.stacksTo(1));
 
     /** A ward against one Force (SPEC §45.3): 2.5% a level a worn piece, capped for a whole suit. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Ward>> WARD = EFFECTS.register("ward",
@@ -73,7 +75,7 @@ public final class EnchantContent {
         return SOUNDS.register("enchant." + name, () -> SoundEvent.createVariableRangeEvent(Awaken.id("enchant." + name)));
     }
 
-    static SoundEvent note(Family f) {
+    public static SoundEvent note(Family f) {
         return (switch (f) {
             case WARD -> NOTE_WARD;
             case BANE -> NOTE_BANE;
@@ -90,5 +92,14 @@ public final class EnchantContent {
         EFFECTS.register(modBus);
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
+        modBus.addListener(EnchantContent::creativeTab);
+    }
+
+    /** The table, and one page of each of the thirty (the creative tab only: in play pages are found). */
+    private static void creativeTab(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent e) {
+        if (!e.getTabKey().equals(dev.awaken.core.CoreModule.TAB_KEY)) return;
+        e.accept(TABLE_ITEM.get());
+        var reg = e.getParameters().holders().lookupOrThrow(Registries.ENCHANTMENT);
+        for (Inscriptions.Entry en : Inscriptions.ALL) reg.get(en.key()).ifPresent(h -> e.accept(Pages.page(h, "")));
     }
 }

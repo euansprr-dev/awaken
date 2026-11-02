@@ -70,7 +70,7 @@ public final class StatusSections {
     /** The Journal as a catalogue: a category per kind of find, your story (what happened, what you were told) last. */
     public enum Shelf {
         CREATURES("CREATURES"), KIN("BEASTS"), LANDS("LANDS"), PLACES("PLACES"), GATES("GATE WORLDS"), CAVES("CAVE REGIONS"),
-        BELLS("BELLS"), LORE("LORE"), HAPPENINGS("HAPPENINGS"), ORES("ORES"), STORY("YOUR STORY");
+        BELLS("BELLS"), LORE("LORE"), HAPPENINGS("HAPPENINGS"), ORES("ORES"), ENCHANTMENTS("ENCHANTMENTS"), STORY("YOUR STORY");
 
         public final String label;
 

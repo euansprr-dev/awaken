@@ -760,3 +760,9 @@ happens).
 - **Source**: `Sources.declare` in `EnchantModule` (`enchant.Pages.onDeath`, `village.Trade`, `Pages.onUseItem`).
 - **Links**: the Inscribing Table, the Journal's ENCHANTMENTS category, the gates.
 - **Edges**: a page whose enchantment can't be written any more fades to paper; a known page stays; pages stack to 16.
+
+### The burin (`awaken:burin`)
+- **Get**: never held: it is the table's engraving tool, drawn in your main hand only while you write at an Inscribing
+  Table (SPEC §45.10). Creative and commands can give it; it does nothing on its own.
+- **Source**: `Sources.neverHeld` in `EnchantModule`.
+- **Links**: the Inscribing Table's writing scene.

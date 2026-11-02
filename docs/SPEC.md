@@ -16682,7 +16682,7 @@ Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it 
   trident or fishing rod 2; our forged weapons 2 (until the War Anvil's quality lands, stage 3); anything else 1. An old
   piece over its room shows **Full** and takes nothing new until one is scraped off.
 - **Depth** (how deep each can go): the piece's rank (its set's, its weapon's tier, else its material: leather, wood,
-  stone and gold E, iron and chain D, diamond C, netherite B, else its rarity): E I, D II, C III, B and up the
+  stone and gold E, iron and chain D, diamond C, netherite A, else its rarity): E I, D II, C III, B and up the
   enchantment's top. Outside a Study nothing goes past II (**the Study**: `HearthHooks.studyAt` the table). A set's
   archetype goes one deeper for its kind: Bulwark wards, Strider carrying, Channeler keeping; a Lord-forged weapon its
   own. Deepening keeps the slot.
@@ -16749,3 +16749,52 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
 - `core.api.ArmsApi.found(stack)`, `core.api.HearthHooks.studyAt(level, pos)` (the Study's gift now reads "enchantments
   written here go deeper"), `core.api.EnchantApi` (the market's pages, what a buyer wants, a page by id) used by
   `village.Trade`.
+
+### 45.10 The writing scene, the table drawn, the Journal (`enchant.client`)
+- **The view leans in from where you stand** (a change from the plan's "cinematic by default"): the player's own eye
+  never moves, the view turns (`ComputeCameraAngles`, LOW) and narrows (`ComputeFovModifierEvent`) toward each beat:
+  over the table while the book is open (the table in the upper half, the book's two pages over the lower half), close
+  on the piece while you trace (the mark fills the middle), a little back while it wakes. Eased per tick (0.22),
+  in over 12 ticks, out over 10, a slight breath. First person is forced for the scene and restored after: the world
+  hands (`core.api.FirstPerson.world`, "enchant_table", priority 210) only draw from the player's own camera. The HUD
+  steps aside (subtitles and chat stay), the block outline goes, the player model is hidden.
+- **Hands**: the off hand brings your piece down onto the slate over 14 ticks (the table holds off drawing it for you
+  meanwhile) and then pins its near end; the main hand holds the table's **burin** (`awaken:burin`, never held as an
+  item: `Sources.neverHeld`) resting at the slate's near corner, and while you trace, follows the cursor where it meets
+  the slate; from memory it runs the mark by itself.
+- **The book's pages** (`InscribeScreen`): the left page is your piece (its name drawn large, rank, room line, what's
+  on it with **scrape**: a second click within two seconds takes it off, sent as its registry number, and how deep this
+  table writes). The right page lists what you know that fits it: its mark, name and target level (the deepest this
+  piece allows here by default; ‹ › step it between one above what's on it and that), "Up to II here (IV in your
+  Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory; the foot
+  of the page says what the one under the cursor does. Resting on a row for 4 ticks sends LOOK (watchers see the
+  floating book turn) and lays that mark faintly on the piece.
+- **The trace**: the mark (`Marks`, the same strokes the server counts) lies on the piece, 0.4 blocks across, faint
+  at first. Each stroke is picked up at its glowing end (within 0.3 mark units), followed to its end (the pen may run
+  up to five samples ahead within 0.34), and counted on the line within 0.15. A finished stroke burns lapis in its core
+  and the family's colour round it, rings its family's note a step higher than the last (a dull scratch if under 60%
+  on the line) and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH follows 6 ticks after the
+  last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each stroke (bright when
+  clean), with a bar for how much of the current one is on the line; a first-trace hint says what to do and that Esc
+  gives the levels back.
+- **The wake**: the mark flares white-hot and settles into its colour over 50 ticks while a band of light runs the
+  piece and the piece rises a hair (0.04) and settles; a card says what was written ("A clean hand" and the levels back,
+  "Its mark is in your memory now"), with Write another and Done.
+- **The table as everyone sees it** (`InscribingTableRenderer`): the leather book (`awaken:block/inscribing_book`, the
+  vanilla book's layout) floats over a brass bracket at the back, opening toward whoever's near and toward the front
+  while someone writes, turning its pages to the one being looked at; the writer's piece lies flat on the slate; the
+  lapis channel one pixel in from the slate's edge glows faintly when someone's near, fills with the enchantment's
+  colour from the front round both sides while it's traced, and flares on the wake; watchers see the mark itself
+  pulsing faintly on the piece. The block faces its placer (the front, where you stand); its shape follows the facing.
+- **Enchantments at work** (`EnchantFxClient`, at most 32 at once): a ward's ring closing in at the chest, a bane's
+  three spears of light, a glint of gold rising over an extra drop, a column with rings climbing round you as a page is
+  learned, rays and a spreading ring out of an old table as it turns.
+- **Tooltips**: every enchantable piece says its room under its name ("Room for two enchantments", "No room left",
+  "Full"); a page you already know says "You know this one".
+- **The Journal's ENCHANTMENTS category** (`StatusSections.Shelf.ENCHANTMENTS`, a fixed set of 30): each one you know
+  with what it does, its family, what it goes on and how deep, where you learned it and whether its mark is in memory;
+  the rest stay blank.
+- **Sounds** (`tools/art/specs/audio_enchant.py`, audiokit synthesis with Kenney CC0 transients): book open, page turn,
+  burin on metal and on leather, scratch, the five family notes (C5), wake, learn, flare, drift, scrape.
+- **Art** (`tools/art/specs/enchant.py`): the table's slate top with its lapis channel, framed dark-wood panels (the
+  front with a lapis ring and spear), the trim, brass, the book, the page item and the burin; blockstate by facing.
