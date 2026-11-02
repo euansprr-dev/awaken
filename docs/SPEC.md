@@ -16883,7 +16883,9 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
   rings free at 4.5 s, and at 15 s everyone goes home with the rank (`Progression.passReassessment`, its rank-up as any
   other). The last member out closes the run: the hall is put back 8 rows a tick and its
   cell freed after. In a Proving the hall can't be broken or built on (survival).
-- **The box stays** as practice: `/awaken trial dbox` (three waves, as before) until Euan has seen the Ringer.
+- **The box stays** as practice: `/awaken admin trial dbox` (three waves, as before) until Euan has seen the Ringer.
+  `/awaken admin trial half` brings your Proving's Ringer under half its health (tours: the drain on cue). Tour:
+  `tools/autopilot/fights-belfry.txt` (CI).
 - Tests: `proving_ringer` (the layout's rules, then the whole flow in a hall built over the GameTest superflat, whose
   server has no trials dimension: wake in water, the drop, a fall and its reset, the drain and the pit at half, the
   win, rank D and the Tether, the hall put back), `hearth_trials_dimension` (D is a Proving).

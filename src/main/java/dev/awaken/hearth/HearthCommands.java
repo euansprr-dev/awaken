@@ -54,7 +54,7 @@ final class HearthCommands {
                             .executes(HearthCommands::remove))));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("trial").then(Commands.argument("rank", StringArgumentType.word())
-                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "B", "A", "S", "penalty"), b))
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "half", "C", "B", "A", "S", "penalty"), b))
                     .executes(HearthCommands::trial)));
             admin.then(Commands.literal("town").then(Commands.literal("arrive").then(Commands.argument("npc", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Townsfolk.all().keySet(), b))
@@ -369,6 +369,12 @@ final class HearthCommands {
             boolean ok = Trials.start(sp, Trials.Kind.PENALTY, Progression.rank(sp), true);
             return ok ? 1 : 0;
         }
+        if (arg.equals("HALF")) {
+            // tours: the Ringer of your Proving to under half its health, so its water drains (SPEC §46.4)
+            boolean ok = dev.awaken.hearth.trial.Provings.half(sp);
+            if (!ok) c.getSource().sendFailure(Component.literal("No Ringer is down in your Proving."));
+            return ok ? 1 : 0;
+        }
         if (arg.equals("DBOX")) {
             // the D box of three waves, kept as practice until the Ringer passes Euan's look (SPEC §46.4)
             boolean ok = Trials.start(sp, Trials.Kind.WAVES, Rank.D, true);
@@ -378,7 +384,7 @@ final class HearthCommands {
         try {
             target = Rank.valueOf(arg);
         } catch (IllegalArgumentException ex) {
-            c.getSource().sendFailure(Component.literal("Unknown rank " + arg + ". Use D, C, B, A, S, dbox or penalty."));
+            c.getSource().sendFailure(Component.literal("Unknown rank " + arg + ". Use D, C, B, A, S, dbox, half or penalty."));
             return 0;
         }
         if (target == Rank.E || target == Rank.SOVEREIGN) {

@@ -603,6 +603,15 @@ public final class Provings {
         return s != null ? s.run : null;
     }
 
+    /** Tours: your Proving's Ringer to under half its health, so the water drains next tick. */
+    public static boolean half(ServerPlayer sp) {
+        Run run = runOf(sp);
+        LivingEntity r = run != null ? ringer(run) : null;
+        if (r == null) return false;
+        r.setHealth(r.getMaxHealth() * 0.45F);
+        return true;
+    }
+
     /** Whether no hall is being put back (tests wait on it). */
     static boolean settled() {
         return RESTORING.isEmpty();
