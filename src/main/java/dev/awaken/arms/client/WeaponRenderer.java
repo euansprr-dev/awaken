@@ -41,7 +41,7 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
      * a hand's, 1 right, 2 left) and whose, so a move's wrist turns it ({@link ArmsWrist}); and whether it is the off
      * hand's twin of a pair, which lays its own ribbon (round 14); and the enchantment light on it now (SPEC §45.11:
      * {@code EnchantApi.glowBits}, 0 none) in {@code glow}'s low 7 bits, with a forged flaw above them (SPEC §46.7: 1 a
-     * burnt tip, 2 a brittle blade).
+     * burnt tip, 2 a brittle blade) and above that what the rank's acts left (§46.9: the twist's ripples, the runes woken).
      */
     record State(int energy, int flash, boolean hand, int wielder, int arm, int holder, boolean twin, int glow) {}
 
@@ -194,13 +194,13 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
     /** The fighter's own main-hand blade carries the fight; anyone else's (and one in a frame) is at rest. */
     @Override
     public @Nullable State extractArgument(ItemStack stack) {
-        int glow = dev.awaken.core.api.EnchantApi.glowBits(stack) | flaw(stack) << 7;
+        int glow = dev.awaken.core.api.EnchantApi.glowBits(stack) | forged(stack) << 7;
         State s = resting(stack, glow);
         if (s == null && glow != 0) s = glowOnly(glow); // in a frame, on a stand, in the inventory: still lit
         return ArmsWrist.marking == 0 ? s : inArm(s, ArmsWrist.marking, ArmsWrist.markedHolder);
     }
 
-    private static final State[] GLOW_ONLY = new State[512];
+    private static final State[] GLOW_ONLY = new State[2048];
 
     private static State glowOnly(int glow) {
         State s = GLOW_ONLY[glow];
@@ -208,20 +208,20 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         return s;
     }
 
-    /** A forged weapon's flaw (SPEC §46.7), 0 none: it shows wherever the weapon is drawn. */
-    private static int flaw(ItemStack stack) {
+    /** A forged weapon's flaw (SPEC §46.7, 0 none) and above it its acts' marks (§46.9): they show wherever it is drawn. */
+    private static int forged(ItemStack stack) {
         WeaponForged f = stack.get(AnvilContent.FORGED.get());
-        return f == null ? 0 : f.flaw() & 3;
+        return f == null ? 0 : f.flaw() & 3 | (f.acts() & 3) << 2;
     }
 
     /**
      * UV1 as the shader reads it: x the energy with the enchantment light in bits 8-14; y the flash, 256 for foil, the
-     * flaw in bits 11-12.
+     * flaw in bits 11-12, the twist's ripples in 13 and the runes woken in 14.
      */
     static int pack(@Nullable State state, boolean foil) {
         if (state == null) return foil ? 256 << 16 : 0;
         int x = state.energy() | (state.glow() & 127) << 8;
-        int y = state.flash() | (foil ? 256 : 0) | (state.glow() >> 7 & 3) << 11;
+        int y = state.flash() | (foil ? 256 : 0) | (state.glow() >> 7 & 15) << 11;
         return x | y << 16;
     }
 

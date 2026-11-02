@@ -256,6 +256,9 @@ public final class AnvilSong {
     public static final int TWISTS = 3;
     public static final float TWIST_MIN = 30F;
 
+    /** A twist this good shows its ripples in the finished steel (cosmetic only). */
+    public static final float RIPPLES = 0.5F;
+
     public static float twist(float evenness, int turns, float held) {
         return Mth.clamp(evenness, 0F, 1F) * Mth.clamp(turns / (float) TWISTS, 0F, 1F) * Mth.clamp(held / TWIST_MIN, 0F, 1F);
     }

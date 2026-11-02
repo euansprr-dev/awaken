@@ -421,7 +421,7 @@ final class AnvilTests {
         ServerPlayer p = smith(h, pos, "anvil-temper", 13);
         Rank rank = Progression.rank(p);
         ItemStack weapon = new ItemStack(WarAnvil.item(WarAnvil.WEAPON));
-        WeaponForged story = new WeaponForged(WeaponForged.SCHEMA, AnvilSong.Quality.FINE.ordinal(), AnvilSong.NO_FLAW, "Oren", false, false, false);
+        WeaponForged story = new WeaponForged(WeaponForged.SCHEMA, AnvilSong.Quality.FINE.ordinal(), AnvilSong.NO_FLAW, "Oren", false, false, false, 0);
         weapon.set(AnvilContent.FORGED.get(), story);
         h.assertTrue(!AnvilHeld.temperPlan(p, weapon, fire, 4).ready(), "nothing in the pack: it can't begin");
         java.util.List<dev.awaken.hearth.Costs.Part> three = new java.util.ArrayList<>();
@@ -547,7 +547,7 @@ final class AnvilTests {
      * The ranks' acts (SPEC §46.9): each done is a tenth of the score. At C the quench goes to the grind (no twist before,
      * no balance after). At S, from the heat: the bar twisted (three even turns), drawn out, quenched in starlight as its
      * ring closes, ground in two passes (a sample faster than the wheel isn't taken), the hilt, balanced on the horn; all
-     * true, it stands Flawless and unflawed.
+     * true, it stands Flawless and unflawed, the twist's ripples and the starlight kept in its steel.
      */
     private static void verbs(GameTestHelper h) {
         h.assertTrue(Math.abs(AnvilSong.withActs(0.5F, 1F, -1F, 1F, 1F) - (0.5F * 0.7F + 0.3F)) < 1e-6F, "each act done is a tenth");
@@ -600,7 +600,8 @@ final class AnvilTests {
         act(p, pos, AnvilPayloads.BALANCE, 0, 40F, 0F);
         WeaponForged f = be.slot().get(AnvilContent.FORGED.get());
         h.assertTrue(be.work() == null && be.slot().is(WarAnvil.item("sovereign_longsword")) && f != null
-                && f.quality() == AnvilSong.Quality.FLAWLESS.ordinal() && f.flaw() == AnvilSong.NO_FLAW, "all four true: Flawless, unflawed, got " + f);
+                && f.quality() == AnvilSong.Quality.FLAWLESS.ordinal() && f.flaw() == AnvilSong.NO_FLAW
+                && f.acts() == (WeaponForged.RIPPLES | WeaponForged.STARLIT), "all four true: Flawless, unflawed, rippled and starlit, got " + f);
         h.succeed();
     }
 

@@ -4,7 +4,8 @@
 // Arms' weapon shader (SPEC §24 "Weapons"), mirrored line for line by tools/art/mesh_render.py shade(): keep in step.
 // Sampler0 holds the weapon's albedo (left half, where the uvs point) beside its material map (right half):
 // r metal, g gloss, b emissive, a flow (0 still; else the phase a glow pulses at, so runes light in turn).
-// A forged flaw (script.z, SPEC §46.7) is drawn here only: mesh_render.py renders weapons as they come, unforged.
+// A forged flaw and what the rank's acts left (script.z: the flaw in its low two bits, 4 the twist's ripples, 8 the
+// runes woken; SPEC §46.7, §46.9) are drawn here only: mesh_render.py renders weapons as they come, unforged.
 
 #include <minecraft:globals.glsl>
 #include <minecraft:fog.glsl>
@@ -104,9 +105,10 @@ void main() {
     // a forged flaw on the blade (SPEC §46.7): a burnt tip darkens toward the point, into dull blue-grey scale on metal and
     // brown-black scorch on bone or tusk (D's blades); a brittle blade is crazed mid-length with pale hairlines a texel
     // wide, so they sit in the pixel art rather than over it. Bone shows both a little less than steel, never not at all.
-    if (script.z > 0.5) {
+    int forged = int(script.z + 0.5), flaw = forged & 3;
+    if (flaw > 0) {
         float mk = smoothstep(0.25, 0.6, metal), m = 0.7 + 0.3 * mk;
-        if (script.z < 1.5) {
+        if (flaw == 1) {
             float t = smoothstep(0.62, 0.97, along) * m;
             vec3 scorch = mix(vec3(0.3, 0.22, 0.17), vec3(0.38, 0.36, 0.46), mk);
             col = mix(col, col * scorch + vec3(0.015, 0.012, 0.03), t);
@@ -117,6 +119,16 @@ void main() {
             float mid = smoothstep(0.3, 0.45, along) * (1.0 - smoothstep(0.72, 0.86, along));
             col = mix(col, vec3(0.86, 0.9, 0.95) * (0.55 + 0.45 * diffuse), on * mid * m * 0.75);
         }
+    }
+
+    // a well-twisted A blade (SPEC §46.9): the twist's ripples in the steel, light and dark bands a texel wide that wave
+    // across it like folded steel, on the metal from the guard up, set in the pixel art rather than over it
+    if ((forged & 4) != 0) {
+        vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+        float w = (px.x + px.y) * 0.42 + 1.8 * sin(px.y * 0.31 + px.x * 0.17) + 1.4 * vnoise(px / 3.0);
+        float b = smoothstep(0.35, 0.65, abs(fract(w * 0.5) * 2.0 - 1.0));
+        float on = smoothstep(0.35, 0.6, metal) * smoothstep(0.24, 0.34, along);
+        col *= mix(1.0, mix(0.8, 1.14, b), on);
     }
 
     // the world's light (sky and blocks) on everything but what glows of itself
@@ -151,6 +163,18 @@ void main() {
     float pulse = flow > 0.0 ? 0.55 + 0.45 * sin(GameTime * 240.0 * TAU * 0.6 - flow * 12.0) : 1.0;
     col += alb.rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6;
     col += accent * flash * (0.18 + 0.6 * emit + 0.35 * rim);
+
+    // an S blade quenched in starlight (§46.9): its runes woke. What glows of itself burns brighter and cooler, waking in
+    // turn from the hilt even where it was still, and now and then a point of the steel catches the starlight
+    if ((forged & 8) != 0) {
+        vec3 star = FORCE_GLOW[6];
+        float t = GameTime * 240.0;
+        float wake = 0.6 + 0.4 * sin(t * TAU * 0.4 - along * 9.0);
+        col += mix(alb.rgb, star, 0.55) * emit * wake * 0.9;
+        vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+        float glint = fract(sin(dot(px + floor(t * 2.0), vec2(12.9898, 78.233))) * 43758.5453) > 0.994 ? 1.0 : 0.0;
+        col += star * glint * smoothstep(0.35, 0.6, metal) * 0.5;
+    }
 
     // an enchantment's own light (SPEC §45.11): a thin line of script along the piece's edges in that enchantment's
     // colour, its letters drifting hilt to tip, what glows of itself taking the colour, a few pixels catching it; with

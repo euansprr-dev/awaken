@@ -264,8 +264,9 @@ final class AnvilHeld {
                 AnvilSong.Quality q = AnvilSong.quality(AnvilSong.helped(AnvilSong.reforgeScore(heat, AnvilWork.mean(w.scores),
                         Math.max(0F, w.quench)), w.help), flaw != AnvilSong.NO_FLAW);
                 quality = q.ordinal();
+                // the steel keeps what its first forging's acts left in it (the reforging has no acts of its own)
                 out.set(AnvilContent.FORGED.get(), new WeaponForged(WeaponForged.SCHEMA, quality, flaw,
-                        smith != null ? smith.getGameProfile().name() : "", twin, false, true));
+                        smith != null ? smith.getGameProfile().name() : "", twin, false, true, story == null ? 0 : story.acts()));
                 // its Temper: what it had, or the reforging's own if that's higher (held to the Forge's limit, no Mark: it isn't new)
                 int temper = AnvilSong.temper(q, 0, smith != null ? HearthHooks.temperCap(smith, w.forge) : 1);
                 if (temper > Upgrades.temperOf(out)) Upgrades.applyTemper(out, temper);

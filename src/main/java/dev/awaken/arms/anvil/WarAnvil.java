@@ -627,7 +627,7 @@ public final class WarAnvil {
      * Done flags: a helper's strikes made it twin-struck, it was made from memory, it lasts longer for the Armoury room; a
      * weapon worked was tempered, attuned or reforged (§46.8).
      */
-    public static final int TWIN = 1, FROM_MEMORY = 2, ARMOURY = 4, TEMPERED = 8, ATTUNED = 16, REFORGED = 32;
+    public static final int TWIN = 1, FROM_MEMORY = 2, ARMOURY = 4, TEMPERED = 8, ATTUNED = 16, REFORGED = 32, RIPPLED = 64, STARLIT = 128;
 
     static void finish(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w) {
         ServerPlayer smith = level.getServer().getPlayerList().getPlayer(w.forger);
@@ -654,7 +654,9 @@ public final class WarAnvil {
         be.setWork(null);
         if (made.isEmpty()) return;
         String maker = smith != null ? smith.getGameProfile().name() : "";
-        made.set(AnvilContent.FORGED.get(), new WeaponForged(WeaponForged.SCHEMA, q.ordinal(), flaw, maker, twin, w.memory(), false));
+        // what the rank's acts leave in the steel (§46.9): a well-twisted A blade ripples, an S blade's runes wake in the starlight
+        int acts = (w.twist >= AnvilSong.RIPPLES ? WeaponForged.RIPPLES : 0) | (w.star >= 0F ? WeaponForged.STARLIT : 0);
+        made.set(AnvilContent.FORGED.get(), new WeaponForged(WeaponForged.SCHEMA, q.ordinal(), flaw, maker, twin, w.memory(), false, acts));
         int cap = smith != null ? HearthHooks.temperCap(smith, w.forge) : 1;
         int mark = smith != null ? (int) Progression.perk(smith, "awaken:temper_start") : 0;
         int temper = AnvilSong.temper(q, mark, cap);
@@ -672,7 +674,8 @@ public final class WarAnvil {
         be.setSlot(made);
         level.playSound(null, be.getBlockPos(), AnvilContent.FLIP.get(), SoundSource.BLOCKS, 1F, 0.7F);
         if (smith != null) AwakenNet.send(smith, new AnvilPayloads.Done(be.getBlockPos(), q.ordinal(), flaw, temper,
-                (twin ? TWIN : 0) | (w.memory() ? FROM_MEMORY : 0) | (armoury ? ARMOURY : 0)));
+                (twin ? TWIN : 0) | (w.memory() ? FROM_MEMORY : 0) | (armoury ? ARMOURY : 0)
+                        | ((acts & WeaponForged.RIPPLES) != 0 ? RIPPLED : 0) | ((acts & WeaponForged.STARLIT) != 0 ? STARLIT : 0)));
     }
 
     /**

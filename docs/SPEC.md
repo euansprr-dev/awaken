@@ -17687,9 +17687,16 @@ x each act's mark). None can fail, and one left alone settles itself.
   the blade into the light (`AnvilCamera` places 4 to 6).
 - **State**: `AnvilWork` schemaVersion 4 (+ `twist`, `grind`, `balance`, `star`, -1 until done; a v3 work reads with
   none done). `/awaken arms anvil autoplay true` plays the acts too.
-- **Still to come in stage 4**: the rebuilds as the gates (§46.6), the bellows, the rack, the twist's ripples in A steel
-  and S's runes waking.
+- **What the acts leave in the steel** (cosmetic only): a twist that marks 0.5 or more (`AnvilSong.RIPPLES`) leaves its
+  ripples in an A or S blade, light and dark bands a texel wide waving across the metal from the guard up like folded
+  steel; an S blade quenched in starlight (any mark) has its runes woken: what glows of itself burns brighter and cooler
+  and wakes in turn from the hilt, even where it was still, and now and then a point of the steel catches the
+  starlight. `WeaponForged` schemaVersion 4 (+ `acts`: `RIPPLES` 1, `STARLIT` 2; a v3 story reads none); a reforge keeps
+  them. The tooltip reads "Flawless, twisted steel, quenched in starlight"; the card says "The twist shows in its steel."
+  and "It drank the starlight, and its runes woke." (`Done` flags `RIPPLED` 64, `STARLIT` 128). Drawn by the weapon
+  shader wherever the weapon is (UV1.y bits 13 and 14, beside the flaw), standing in the anvil's slot too.
+- **Still to come in stage 4**: the bellows, the rack and the Lord's anvil in its Lord's colour (§46.6).
 
 Tests: `arms_anvil_verbs` (the tenth rule and the twist's, balance's and starlight's curves; a C Longsword grinds after
 its quench and then takes its hilt; an S Longsword twists, draws out, takes the starlight, grinds twenty touches (one
-too quick refused), takes its hilt and balances, and a perfect song is Flawless with no flaw).
+too quick refused), takes its hilt and balances, and a perfect song is Flawless with no flaw, rippled and starlit).

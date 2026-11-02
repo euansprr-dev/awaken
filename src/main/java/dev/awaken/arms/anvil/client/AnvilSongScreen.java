@@ -915,6 +915,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             default -> "";
         };
         String made = ((d.flags() & WarAnvil.FROM_MEMORY) != 0 ? " You made it from memory." : "")
+                + ((d.flags() & WarAnvil.RIPPLED) != 0 ? " The twist shows in its steel." : "")
+                + ((d.flags() & WarAnvil.STARLIT) != 0 ? " It drank the starlight, and its runes woke." : "")
                 + ((d.flags() & WarAnvil.TWIN) != 0 ? " A second hammer struck between your beats: it's twin-struck." : "")
                 + ((d.flags() & WarAnvil.ARMOURY) != 0 ? " Forged in your Armoury, it will last a quarter longer." : "")
                 + ((d.flags() & WarAnvil.REFORGED) != 0 ? " Reforged, it kept its Marks, its name and everything written on it." : "");

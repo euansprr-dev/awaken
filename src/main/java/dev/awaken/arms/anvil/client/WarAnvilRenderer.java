@@ -147,7 +147,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             s.slotFlash = Math.round(255 * Mth.clamp(1F - (now - be.stoodAt) / 50F, 0F, 1F));
             s.slotEnergy = Math.round(60 + 35 * Mth.sin(now * 0.09F));
             WeaponForged f = st.get(AnvilContent.FORGED.get());
-            s.slotFlaw = f == null ? 0 : (f.flaw() & 3) << 11; // its flaw shows as it stands there (SPEC §46.7)
+            s.slotFlaw = f == null ? 0 : (f.flaw() & 3 | (f.acts() & 3) << 2) << 11; // its flaw and acts show as it stands there (SPEC §46.7, §46.9)
         }
     }
 

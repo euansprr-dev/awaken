@@ -952,7 +952,8 @@ happens).
   a point of damage). The Forge no longer tempers or attunes weapons, and the Armoury no longer offers Raise. From C
   each rank adds its act to a forging (stage 4, SPEC §46.9), a tenth of the quality each: C grinds the edge at a
   grindstone, B balances it on the horn with a Deepglass weight, A twists the bar before it's drawn out, S quenches it
-  in a column of starlight instead of water. It is rebuilt as you climb (SPEC §46.6), each rebuild the gate for its
+  in a column of starlight instead of water; a well-twisted blade keeps the twist's ripples in its steel and a
+  starlit one its runes woken. It is rebuilt as you climb (SPEC §46.6), each rebuild the gate for its
   rank: Ironbound for C (4 iron blocks, 2 diamonds; and a grindstone within six blocks), a Deepglass horn for B (4
   Deepglass shards, 4 amethyst shards), a Lord's anvil for A and S (a Lord's Heart, 2 netherite ingots).
 - **Know**: the level road's level 3 step names it and its recipe; the recipe book; the Weapons tab ("Set up a War
@@ -968,7 +969,7 @@ happens).
   with its parts; a missing grindstone has its own line and need. Each build looks its part on the block and in hand.
 - **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself at its build, `copy_state` on
   `build`), `arms.anvil.WarAnvil`,
-  `WarAnvilBlockEntity` (schema 1), `AnvilWork` (schema 4), `SmithMemory` (schema 2), `WeaponForged` (schema 3),
+  `WarAnvilBlockEntity` (schema 1), `AnvilWork` (schema 4), `SmithMemory` (schema 2), `WeaponForged` (schema 4),
   `arms.anvil.AnvilHeld`; tests `arms_anvil_temper`, `arms_anvil_attune`, `arms_anvil_reforge`, `arms_anvil_verbs`, `arms_anvil_rebuild`; the rebuilds' parts are vanilla or
   already sourced (`awaken:deepglass_shard`, `awaken:lord_heart`).
 - **Links**: the Hearth's Forge (heat from D, the temper limit); Oren's Mark (`awaken:temper_start`); the tier's Hunter
