@@ -17247,8 +17247,11 @@ axe). Checked on 2026-11-02 against 26.3's numbers: 60 of the 192 style-tier che
   Anvil at home."; the Weapons tab's "Set up a War Anvil" says "The War Anvil makes weapons stronger than anything from a
   crafting table."; the War Anvil's tooltip "Forges weapons stronger than any crafted sword or axe." They land with the
   numbers. Nothing comments on vanilla gear a player carries.
-- Before the numbers land: `tools/sim/combat_sim.py` runs again on them (the fights were tuned with a diamond-sword
-  Parrier at D, which a D weapon becomes); its report goes beside `docs/combat/sim-2026-10-26.md`.
+- The combat sim on the new numbers (`tools/sim/forge_bump_sim.py`, report `docs/weapon-forge/sim-2026-11-02.md`): the
+  bump alone takes Lord fights about a tenth shorter (under the recommended curve the Dodger passes 3 of 15 Lords, from
+  11, and the Parrier 5, from 12) and small E and D creatures to two hits. With each Lord's health x its rank's bump (E
+  x1.18, D x1.15, C x1.13, B x1.12, A x1.11, S x1.10) and normal creatures at E and D x1.15, the fights are as tuned
+  (Dodger 11, Parrier 12). So the numbers land with that health, which is the mobs module's.
 
 **46.6 The smithy grows (plan §4.11, decision 15; approved with 14).** The War Anvil is rebuilt as you climb, each
 rebuild the gate for its rank's weapons and act (not a second ladder), each a Weapons tab step, shown on the block
