@@ -4928,7 +4928,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     ender pearl 2%), Leviathan Line (catches pay the Hunter level twice).
   - Smithing: Patch (anvil jobs a level cheaper), Fine Edge (crafted gear +10% max durability), Field Forge (an iron
     ingot on a lit campfire mends the off-hand item by a quarter), Masterwork (Unbreaking I 10%), Keen (weapons
-    Sharpness I 20%), Signature ("Made by <name>" lore).
+    Unbreaking I 20%; it was Sharpness I until enchanting's rule, §45), Signature ("Made by <name>" lore).
   - Cooking: Hearty (+1 saturation from cooked food and meals), Campfire Feast (eating by a lit campfire feeds players
     within 6), Hunter's Stew (meals' strengths ×1.5 long), Long Meals (+2 saturation), Spirit Tea (`awaken:energy_regen`
     +0.25 for 2 min after a cooked meal), Banquet (+the food's saturation again).
@@ -16623,3 +16623,129 @@ forge can't** (wards, banes that spare Lords, work and spoils, carrying, keeping
   `#minecraft:enchantable/head_armor`, `chest_armor`, `leg_armor`, `foot_armor` and `durability` tags, through
   `src/main/merge/enchant` (no armour file touched), so every armour enchantment and Unbreaking fit them. Test
   `enchant_forged_sets_take` (all 92 pieces; Respiration only on helmets, Feather Falling on boots).
+
+### 45.2 Pages and knowledge (`Pages`, `PageItem`, `Known`)
+- **`awaken:enchantment_page`** (rare, stacks to 16): one enchantment in `minecraft:stored_enchantments` (its own vanilla
+  lines hidden) and where it came from in `custom_data.awaken_where`. Named "Page of Heat Ward"; it says its family, what
+  it fits, its line, where it came from and "Use it to learn it for good". Never foil.
+- **Use it** to learn it for good. Knowledge lives in the `awaken:enchant_known` attachment (copied on death, synced to its
+  owner; `Known`, schemaVersion 1: learned `{id: where, day}`, in memory, gate kinds paid, the first-page toast told,
+  inscriptions written, a table ever set down, a table ever used in a Study). A learned page is spent. A page you already
+  know stays in your hand ("You already know this. You can give it away."). A page whose enchantment can't be written
+  any more fades to paper.
+- **Old enchanted books** (vanilla's, from old worlds and chests): using one teaches every enchantment on it that can
+  still be written, and it becomes a plain Book. One with nothing writable says so and stays.
+- **Where pages come from**:
+  - **A gate's Lord.** A `MobRole` BOSS with a gate theme, killed with a player's hand in it: every player within 48 blocks
+    gets that kind of gate's page in their pack ("The Ember Tyrant carried a page of Heat Ward. Use it to learn it.") the
+    first time they clear that kind (`Known.gates`), and 1 time in 5 after that. The kind's page is
+    `Inscriptions.ofGate(theme)`; the night market reads as the Lantern Market. The first page ever also toasts "Every
+    kind of gate keeps its own enchantment, and its Lord carries the page."
+  - **The village scribe** (`village.Trade` through `EnchantApi.marketPages`): six market pages are drawn per village per
+    day (seeded by the village and the day) and the scribe shows three of them, pages you don't know yet first
+    (`Trade.forBuyer`). Price `min(64, 6 + top × 4 + 0..4)` emeralds.
+  - **Old books** in chests and fishing: `#minecraft:on_random_loot` is replaced by the writable books list.
+- Fifteen gate kinds each keep one page (Inscriptions' `gate`); fourteen of those are found nowhere else (the five wards,
+  Blast and Projectile Protection, Clear Blood, Bane of the Dead and of Crawlers, Looting, Respiration, Swift Sneak and
+  Unbreaking), and Mending (the Abyssal Shrine's) also turns up in old books. The rest come from the market or old books.
+
+### 45.3 The thirty (`Inscriptions`, `data/awaken/enchantment`)
+The Journal numbers them 1-30 (`Inscriptions.ALL`): five wards, Blast and Projectile Protection, Feather Falling, Clear
+Blood; four banes; Looting, Fortune, Silk Touch, Efficiency, Harvest, Insight, Luck of the Sea, Lure; Respiration, Aqua
+Affinity, Depth Strider, Swift Sneak, Loyalty, Riptide; Unbreaking, Mending, Infinity. Nothing else can be written:
+anything adding damage, armour or an element (Sharpness, Smite, Bane of Arthropods, Power, Protection, Fire Protection,
+Fire Aspect, Flame, Knockback, Punch, Thorns, Impaling, Density, Breach, Wind Burst, Multishot, Piercing, Quick Charge,
+Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it already is.
+- **Wards** (`awaken:heat_ward`, `frost_ward`, `charge_ward`, `gravity_ward`, `spirit_ward`; armour, I-III, one per piece:
+  `#minecraft:exclusive_set/armor`): each level on each piece takes 2.5% off damage of its Force, capped at 30% for the
+  suit, 20% from a Lord's or boss's blow (agreed with boss-fights 2026-11-02). The Force is `Forces.forceOf`, else fire
+  is Heat, freezing Frost, lightning Charge, magic Spirit. Anything that bypasses invulnerability is never warded, and
+  plain melee has no Force. Heat Ward also shortens burning (`burning_time`, as Fire Protection).
+- **Clear Blood** (armour, I-II): poison, wither and spore effects lose 10 more ticks per level every 10 ticks.
+- **Banes** (`bane_of_the_dead`, `bane_of_crawlers`, `bane_of_beasts`, `bane_of_the_deep`; main hand weapons, I-III, one per
+  weapon: `#minecraft:exclusive_set/damage`): 8% more per level on a direct melee hit by a player, applied last
+  (LOWEST, after the Arms damage stack). Never on a player, a boss, a Warden, anything with a creature title, the Ender
+  Dragon, the Wither or an Elder Guardian. The Dead: undead, and a Bell Crypt's creatures. Crawlers: arthropods, and a
+  Hive's. Beasts: unowned animals and our fauna, never kin. The Deep: the Hollows, the Descent, and hostile creatures
+  below y 0 in the overworld.
+- **Harvest** (weapons, I-III): a wild beast you kill has one chance in two per level to drop one more of its hide, bone,
+  pelt, leather, fur, scale or rabbit's foot drops.
+- **Insight** (weapons and mining tools, `#awaken:enchantable/insight`, I-III): +15% experience per level from kills and
+  mined blocks.
+- Sources are tags: `#minecraft:in_enchanting_table` is empty, `#minecraft:tradeable` holds the market list, mobs spawn
+  and trade only with Unbreaking, Aqua Affinity and Depth Strider, and ours are `#minecraft:non_treasure`. Test
+  `enchant_rule`.
+
+### 45.4 Room, depth and price (`EnchantRules`)
+- **Room** (how many enchantments a piece holds): a forged armour piece its Forge Song quality + 1 (Fine 1 to Masterwork
+  3, read through `core.api.ForgeHooks`); a found weapon (Marked, or Lord-forged: `ArmsApi.found`) 3; a bow, crossbow,
+  trident or fishing rod 2; our forged weapons 2 (until the War Anvil's quality lands, stage 3); anything else 1. An old
+  piece over its room shows **Full** and takes nothing new until one is scraped off.
+- **Depth** (how deep each can go): the piece's rank (its set's, its weapon's tier, else its material: leather, wood,
+  stone and gold E, iron and chain D, diamond C, netherite B, else its rarity): E I, D II, C III, B and up the
+  enchantment's top. Outside a Study nothing goes past II (**the Study**: `HearthHooks.studyAt` the table). A set's
+  archetype goes one deeper for its kind: Bulwark wards, Strider carrying, Channeler keeping; a Lord-forged weapon its
+  own. Deepening keeps the slot.
+- **Price**: 3 levels and 1 lapis per level written (deepening pays the difference); Mending and Silk Touch 10 levels and
+  4 lapis per level. A clean trace gives back a third of the levels (rounded down). Creative pays nothing.
+- **Fit**: vanilla's `supportsEnchantment`, and never Efficiency on the Delver's Pick (`awaken:waking_pick`: its verses
+  are its speed). Exclusive sets as vanilla's.
+- The reasons, in these words: "It doesn't fit this.", "It can't go with X.", "No room left: scrape one off first." /
+  "Full: scrape one off first.", "It's as deep as it goes.", "Deeper than II needs your Study.", "It's as deep as this
+  piece allows.", "This piece takes it to N at most.", "You need 6 levels and 2 lapis.". Test `enchant_room_depth`.
+
+### 45.5 The Inscribing Table (`InscribingTableBlock`, `Inscribe`)
+- **`awaken:inscribing_table`**: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
+  `#stone_crafting_materials`); axe-mineable; drops itself. (The plan's "unlocks when you first hold a page" is not
+  built: the recipe is always known.)
+- **Use it holding a piece** to lay it on the slate and open the book. The server opens a session (table, hand slot, a
+  snapshot of the piece): the piece never leaves your hand, so nothing can be duplicated or dropped. One writer per table
+  ("Someone is writing here."). Using it with nothing you could write or scrape says why.
+- **Choosing** checks everything again, takes the price and starts the trace (or memory's one stroke). **Strokes** are
+  counted in order, no faster than 6 ticks each, each one's share on the line clamped 0-1. **Finishing** writes the
+  enchantment onto the same piece; every stroke done at 80% or more on the line is a **clean hand**: a third of the
+  levels back, and the mark goes **into memory** (from then on "From memory" writes it in one stroke, at full price).
+- **Scraping** takes one off, free, giving nothing back.
+- Esc, walking 6 blocks away, logging out, changing slot or the piece, or the table broken end the session and refund a
+  choice not yet written. Test `enchant_inscribe` (and two players at one table).
+- Others see it: the table shows a copy of the piece on the slate, turns its book to the page being looked at, and fills
+  its channel with the enchantment's colour while it's traced (synced, never saved).
+
+### 45.6 The vanilla fold (`Fold`)
+- Any vanilla enchanting table you use turns into an Inscribing Table in place (facing you, with a flare) and opens as
+  one. The vanilla table can't be crafted: `data/minecraft/recipe/enchanting_table.json` and its recipe advancement
+  carry `neoforge:never`. NeoForge ships its own `enchanting_table` recipe, so the mod loads **after NeoForge**
+  (`ordering="AFTER"` in `neoforge.mods.toml`): our data and assets sit above NeoForge's.
+- The anvil repairs and renames but never adds or merges enchantments: an enchanted book or page on the right gives
+  nothing; two of a kind repair, the left keeping only its own enchantments. The grindstone strips them and gives a third
+  of the experience it used to. Test `enchant_fold`.
+- The Hunter perk Keen (crafted weapons) is Unbreaking I a fifth of the time, no longer Sharpness I.
+
+### 45.7 Enchantments seen at work (`EnchantFx`, server side)
+A ward that takes some of a blow, a bane that bites, a Harvest drop, a page learned and an old table turning each send one
+small `enchant_fx` message (kind, entity, place, colour, strength) to players within 48 blocks, through `AwakenNet`
+(never to a player without our channel), with a sound: the family's note for wards, banes and spoils.
+
+### 45.8 Tasks (`EnchantGoals`, through `core.api.Goals`)
+Only once you're awakened. Steps, each leaving the moment it's done:
+
+| Key | Tab | Shows | Place |
+|---|---|---|---|
+| `enchant/page/armour` | Armour | wearing armour, knowing nothing that fits it | optional, 70 |
+| `enchant/page/weapons` | Weapons | carrying a weapon, knowing no weapon enchantment | optional, 70 |
+| `enchant/read` | the page's | carrying a page that would teach you something | `PATH_FIRST_GATE + 1` |
+| `enchant/table` | the first known's | knowing one, never having set down a table (needs the recipe's items) | `PATH_FIRST_GATE + 2` |
+| `enchant/first` | the piece's | a table set down, nothing written yet, a carried piece something you know fits (Levels, Lapis) | `PATH_FIRST_GATE + 3` |
+| `enchant/room/armour`, `enchant/room/weapons` | Armour, Weapons | after the first, while a carried piece has room for or can deepen something you know | optional, 40 |
+| `enchant/study` | the piece's | carrying a piece that could take something you know past II, never having used a table in a Study | optional, 30 |
+
+A piece's tab is Armour for armour, Weapons for anything else; an enchantment's is Armour when it fits armour. Test
+`enchant_tasks`.
+
+### 45.9 Hooks with the neighbours
+- `core.api.ForgeHooks` (agreed with the weapon forge 2026-11-02): `Reader` (quality 0-3, rank, archetype) installed by
+  armour (the Forge Song's `Forged`) and arms (the weapon's tier); `Listener.forged(player, stack, quality, station)`;
+  `CardLine` (enchant installs "Room for N enchantments" for result cards).
+- `core.api.ArmsApi.found(stack)`, `core.api.HearthHooks.studyAt(level, pos)` (the Study's gift now reads "enchantments
+  written here go deeper"), `core.api.EnchantApi` (the market's pages, what a buyer wants, a page by id) used by
+  `village.Trade`.

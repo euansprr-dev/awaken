@@ -734,3 +734,29 @@ happens).
 - **Links**: the Stilled (§43.3), the Last Fire (§21), the Wake.
 - **Edges**: a Stilled in an unloaded chunk stands the next time its chunk loads near a player; Ilse doesn't come by night
   or when nobody's at the fire, and comes the next fair day; she visits a home once (`ilse` in `bells`).
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Enchanting: the Inscribing Table (SPEC §45)
+
+### The Inscribing Table (`awaken:inscribing_table`)
+- **Get**: crafted: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone. Any vanilla enchanting table
+  you use (old worlds, villages, structures) turns into one.
+- **For**: writing the enchantments you've learned onto your own gear, deepening them, scraping them off.
+- **Know**: the Tasks page's main path right after your first gate ("Make an Inscribing Table", with its items) once
+  you know an enchantment; the page's own hover line ("Write it onto your gear at an Inscribing Table"); the learn message.
+- **Source**: `data/awaken/recipe/inscribing_table.json`; `Fold.swap`; loot `blocks/inscribing_table`.
+- **Links**: pages (learning), the Forge Song and Armoury (room), the Study (depth past II), the market (pages).
+- **Edges**: one writer at a time; the piece never leaves the hand (no dupes, nothing drops if the table breaks); walking
+  away, Esc or logging out refunds a choice not yet written; the vanilla table can't be crafted.
+
+### The enchantment page (`awaken:enchantment_page`)
+- **Get**: a gate's Lord carries its kind's page (the first clear of each kind, then 1 in 5); the village scribe sells
+  three a day; old enchanted books teach theirs when used.
+- **For**: learning an enchantment for good (spent when learned; a known one can be given away).
+- **Know**: it lands in your pack with a line naming the Lord and the enchantment; the first ever toasts that every kind
+  of gate keeps its own; Tasks shows "Read the page you're carrying" and the Armour/Weapons "Find an enchantment" rows;
+  the scribe lists the ones you don't know first.
+- **Source**: `Sources.declare` in `EnchantModule` (`enchant.Pages.onDeath`, `village.Trade`, `Pages.onUseItem`).
+- **Links**: the Inscribing Table, the Journal's ENCHANTMENTS category, the gates.
+- **Edges**: a page whose enchantment can't be written any more fades to paper; a known page stays; pages stack to 16.

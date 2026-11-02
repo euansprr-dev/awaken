@@ -41,7 +41,7 @@ public enum Craft {
             new Perk(10, "fine_edge", "Fine Edge", "Weapons and tools you craft come out with a little more durability."),
             new Perk(20, "field_forge", "Field Forge", "Use an iron ingot on a lit campfire to mend what you hold."),
             new Perk(30, "masterwork", "Masterwork", "A tenth of what you craft comes out with Unbreaking I."),
-            new Perk(40, "keen", "Keen", "Weapons you craft hit a little harder (Sharpness I a fifth of the time)."),
+            new Perk(40, "keen", "Keen", "Weapons you craft wear out a little slower (Unbreaking I a fifth of the time)."),
             new Perk(50, "signature", "Signature", "Your name goes on everything you make."))),
     COOKING("cooking", "Cooking", "cook", 0xFFE08A, List.of(
             new Perk(5, "hearty", "Hearty", "Cooked food fills you a little more."),
