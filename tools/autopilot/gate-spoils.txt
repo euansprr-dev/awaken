@@ -5,6 +5,8 @@
 # Survival (creative keeps its own screen). Run on CI: tools/tour-ci.sh tools/autopilot/gate-spoils.txt
 world gate_spoils survival 20261102
 waitworld
+# the MacBook's window (its display clamps a 1440x900 window to 1440x829) and GUI scale auto
+window 1440 900
 gui 0
 info
 cmd gamerule awaken:fauna_spawning false
@@ -17,6 +19,9 @@ wait 200
 cmd awaken powers starter 1
 wait 20
 screen close
+# the band on the wrist: E opens the holo inventory, as in Euan's game
+cmd awaken band wear
+wait 20
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd effect give @s minecraft:resistance 100000 4 true
 # away from spawn: no gate forms in Carillon's basin
@@ -25,8 +30,13 @@ wait 200
 cmd awaken gate hop
 wait 120
 cmd awaken gate open C bell_crypt
-wait 320
-cmd awaken gate enter 1
+# the gate this tour opened, once it has formed (slower on CI's three cores); a second try is harmless once inside
+wait 900
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior enter
 wait 200
 # a lived-in inventory
 cmd clear @s

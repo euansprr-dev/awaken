@@ -214,7 +214,7 @@ public final class SpoilsPanel {
             HudLook.text(g, font, title, b.x + PAD, hy, Glass.a(Glass.EDGE, k), false);
             head = b.x + PAD + font.width(title);
         }
-        String sub = t == SATCHEL ? v.title() : "Click a stack to take it";
+        String[] sub = t == SATCHEL ? new String[]{v.title(), v.title().replace("-rank", "")} : new String[]{"Click a stack to take it", "Click one to take it"};
         int subRight = b.x + b.w - PAD;
         if (t == SATCHEL) {
             String xp = v.xp() + " XP";
@@ -223,7 +223,7 @@ public final class SpoilsPanel {
             HudLook.text(g, font, xp, b.x + b.w - PAD - xw, up ? hy : b.y + 17, Glass.a(Glass.AMBER, k), false);
             if (!up) subRight -= xw + 4;
         }
-        HudLook.text(g, font, clip(font, sub, subRight - b.x - PAD), b.x + PAD, b.y + 17, Glass.a(Glass.LABEL, 0.85f * k), false);
+        HudLook.text(g, font, fit(font, subRight - b.x - PAD, sub), b.x + PAD, b.y + 17, Glass.a(Glass.LABEL, 0.85f * k), false);
 
         // the wells, one page of them
         List<ItemStack> items = items(v, t);
@@ -260,7 +260,9 @@ public final class SpoilsPanel {
         // the count and the pages
         int py = b.pagerY();
         int stacks = t == SATCHEL ? v.satchelStacks() : v.heldStacks();
-        HudLook.text(g, font, stacks + (stacks == 1 ? " stack" : " stacks"), b.x + PAD, py, Glass.a(Glass.LABEL, 0.85f * k), false);
+        int countRoom = pages > 1 ? pager(font, b, pages).prevX - 6 - b.x - PAD : b.w - 2 * PAD;
+        HudLook.text(g, font, fit(font, countRoom, stacks + (stacks == 1 ? " stack" : " stacks"), Integer.toString(stacks)), b.x + PAD, py,
+                Glass.a(Glass.LABEL, 0.85f * k), false);
         if (pages > 1) {
             Pager p = pager(font, b, pages);
             HudLook.text(g, font, "<", p.prevX, py, Glass.a(page > 0 && p.overPrev(mx, my, py) ? 0xFFFFFF : Glass.EDGE, (page > 0 ? 1f : 0.3f) * k), false);
@@ -280,7 +282,7 @@ public final class SpoilsPanel {
             for (int i = 0; i < n; i++) HudLook.text(g, font, lines.get(i), b.x + PAD, ly + i * 9, Glass.a(colour, k), false);
         } else {
             int by = b.y + b.h - PAD - 14, bw = b.w - 2 * PAD;
-            HudLook.text(g, font, clip(font, "Safe here. Nothing expires.", bw), b.x + PAD, by - 11, Glass.a(Glass.LABEL, 0.7f * k), false);
+            HudLook.text(g, font, fit(font, bw, "Safe here. Nothing expires.", "Kept safe for you."), b.x + PAD, by - 11, Glass.a(Glass.LABEL, 0.7f * k), false);
             boolean over = mx >= b.x + PAD && mx < b.x + PAD + bw && my >= by && my < by + 14;
             if (k > 0.5f) Glass.button(c, font, "Take all", b.x + PAD, by, bw, 14, over, true, Glass.EDGE);
         }
@@ -304,6 +306,12 @@ public final class SpoilsPanel {
             case SpoilsView.DEATH_CLONE -> "Your Clone Vat will bring it back once today.";
             default -> "";
         };
+    }
+
+    /** The first wording that fits (a narrow window gives the panel fewer columns), else the last one clipped. */
+    private static String fit(Font font, int w, String... options) {
+        for (String o : options) if (font.width(o) <= w) return o;
+        return clip(font, options[options.length - 1], w);
     }
 
     private static String clip(Font font, String s, int w) {
