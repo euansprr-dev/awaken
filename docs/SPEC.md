@@ -16357,8 +16357,10 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
     a Great Belfry can lead the Hundred Peal."
   - Goals: a Great Bell in your yard ("Lift it, then hang it from a Great Beam 12 or more blocks above your fire."), the
     Great Belfry from fifty. The page's next line names Bell Beams and the Thatchbacks' plans under fifty.
-  - Looks (from stage 2's tour): the Bell Frame is drawn wider (posts just outside its block, the outline kept inside),
-    its bells and a Bell Beam's drawn bigger; the bell in the hand, on the ground and in a frame is sized down.
+  - Looks (from stage 2's and 3's tours): the Bell Frame is drawn wider (posts just outside its block, the outline kept
+    inside) and its bells bigger (0.32); a Bell Beam is a broader timber (8 deep) whose four hooks are staggered front and
+    back (z 5.5, 10.5) so its bells are drawn at 0.38; a Great Bell sat in the yard is drawn at its size (1.5); the bell
+    in the hand, on the ground and in a frame is sized down.
   - **World** schema 4 (`beams`, `yard`); **Book** schema 6 (`wagon`).
   - Tests (CI): `bells_work_plans` (both raised: beams, ladder, the plan gone; a bell on a belfry beam only six above the
     fire makes the tower), `bells_hearth_tower` (tier II and IV, the calm), `bells_wagon` (not the same day; in the

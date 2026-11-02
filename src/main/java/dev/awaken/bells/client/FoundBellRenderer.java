@@ -24,7 +24,7 @@ import org.jspecify.annotations.Nullable;
 public final class FoundBellRenderer implements BlockEntityRenderer<FoundBellEntity, FoundBellRenderer.State> {
     public static final class State extends BlockEntityRenderState {
         final ItemStackRenderState item = new ItemStackRenderState();
-        boolean has, hanging;
+        boolean has, hanging, great;
         float age;
     }
 
@@ -49,6 +49,8 @@ public final class FoundBellRenderer implements BlockEntityRenderer<FoundBellEnt
             return;
         }
         state.hanging = be.getBlockState().getValue(FoundBellBlock.HANGING);
+        var src = dev.awaken.bells.BellCatalog.of(no).source();
+        state.great = src == dev.awaken.bells.BellCatalog.Source.PROVING || src == dev.awaken.bells.BellCatalog.Source.SEED;
         state.age = be.getLevel().getGameTime() + partialTicks;
         items.updateForTopItem(state.item, HooksRenderer.stack(no), ItemDisplayContext.NONE, be.getLevel(), null, (int) be.getBlockPos().asLong());
     }
@@ -67,10 +69,18 @@ public final class FoundBellRenderer implements BlockEntityRenderer<FoundBellEnt
             // sat on the floor, mouth down: the model's lip (y 1.4) on the ground
             pose.translate(0.5F, 0F, 0.5F);
             pose.rotateDegrees(Axis.YP, 23F);
-            pose.scale(0.7F, 0.7F, 0.7F);
+            // a Great Bell sat in the yard is as big as it is
+            float k = state.great ? 1.5F : 0.7F;
+            pose.scale(k, k, k);
             pose.translate(0F, 0.5F - 1.4F / 16F, 0F);
         }
         state.item.submit(pose, out, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
         pose.popPose();
+    }
+
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(FoundBellEntity be) {
+        // a Great Bell sat on the ground stands taller and wider than its block
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).inflate(0.5, 0, 0.5).expandTowards(0, 1, 0);
     }
 }

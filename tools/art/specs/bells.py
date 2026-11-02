@@ -130,12 +130,14 @@ WOOD_TEX = {"particle": "minecraft:block/stripped_dark_oak_log", "wood": "minecr
             "iron": "minecraft:block/iron_block"}
 
 
-def hooks(xs, under):
-    """Small iron hooks hanging from a beam's underside at {@code under}: a shank and a curl a bell's loop sits on."""
+def hooks(xs, under, zs=None):
+    """Small iron hooks hanging from a beam's underside at {@code under}: a shank and a curl a bell's loop sits on. Each
+    hook at its x, and at its z if {@code zs} gives one (else the middle)."""
     out = []
-    for x in xs:
-        out.append(box([x - 0.4, under - 1.2, 7.6], [x + 0.4, under, 8.4], "#iron"))
-        out.append(box([x - 0.9, under - 1.6, 7.6], [x + 0.9, under - 1.2, 8.4], "#iron"))
+    for i, x in enumerate(xs):
+        z = zs[i] if zs else 8
+        out.append(box([x - 0.4, under - 1.2, z - 0.4], [x + 0.4, under, z + 0.4], "#iron"))
+        out.append(box([x - 0.9, under - 1.6, z - 0.4], [x + 0.9, under - 1.2, z + 0.4], "#iron"))
     return out
 
 
@@ -150,11 +152,12 @@ def frame_model():
 
 
 def beam_model():
-    """A Bell Beam: a squared timber across the top of its block, iron straps at each end, four hooks."""
+    """A Bell Beam: a broad timber across the top of its block, iron straps at each end, four hooks staggered front and back
+    so four bells big enough to read hang from one block (Hanging.hookModel)."""
     wood = "#wood"
-    els = [box([0, 13, 6], [16, 16, 10], wood), box([0.5, 12.8, 5.8], [1.5, 16.2, 10.2], "#iron"),
-           box([14.5, 12.8, 5.8], [15.5, 16.2, 10.2], "#iron")]
-    els += hooks([2.5, 6.17, 9.83, 13.5], 13)
+    els = [box([0, 13, 4], [16, 16, 12], wood), box([0.5, 12.8, 3.8], [1.5, 16.2, 12.2], "#iron"),
+           box([14.5, 12.8, 3.8], [15.5, 16.2, 12.2], "#iron")]
+    els += hooks([2.5, 6.17, 9.83, 13.5], 13, [5.5, 10.5, 5.5, 10.5])
     return {"parent": "minecraft:block/block", "ambientocclusion": False, "textures": dict(WOOD_TEX), "elements": els}
 
 

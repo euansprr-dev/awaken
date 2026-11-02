@@ -50,7 +50,8 @@ final class Hanging {
     /** Hook {@code i}'s point in model units (x along the beam, y where the bell hangs from, z across), facing north. */
     static float[] hookModel(BlockState s, int i) {
         if (s.is(BellContent.BELL_FRAME.get())) return new float[]{2.7F + 5.3F * i, 14F, 8F};
-        if (s.is(BellContent.BELL_BEAM.get())) return new float[]{2.5F + 3.67F * i, 13F, 8F};
+        // staggered front and back, so four bells big enough to read hang from one beam
+        if (s.is(BellContent.BELL_BEAM.get())) return new float[]{2.5F + 3.67F * i, 13F, i % 2 == 0 ? 5.5F : 10.5F};
         return new float[]{8F, 12F, 8F};
     }
 

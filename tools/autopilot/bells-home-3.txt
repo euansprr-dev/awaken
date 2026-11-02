@@ -62,11 +62,11 @@ shot b3_01_frame_three
 # ---- 2. the bell in hand, the Tenor's card, the wagon ----
 cmd gamemode creative
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~2.5 180 10
+hud on
 cmd item replace entity @s weapon.mainhand with awaken:bell[awaken:bell=7]
 wait 30
 shotnow b3_02_bell_in_hand
 cmd item replace entity @s weapon.mainhand with minecraft:air
-hud on
 cmd awaken admin bells give tenor
 wait 30
 shotnow b3_03_tenor_card
@@ -90,7 +90,7 @@ cmd awaken admin bells give boulder
 cmd awaken admin bells give stampede
 cmd awaken admin bells give falling
 cmd awaken admin bells give sung_iron
-cmd item replace entity @s hotbar.8 with awaken:bell[awaken:bell=40]
+cmd give @s awaken:bell[awaken:bell=40]
 wait 20
 cmd awaken admin bells plans
 wait 80
@@ -101,7 +101,7 @@ shot b3_05_plans_wide
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~8.5 ~7.6 ~6 0 -3
 wait 50
 shot b3_06_belfry_beams
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-8.5 ~11 ~10.5 -90 -15
+cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-3.5 ~11 ~10.5 90 -6
 wait 50
 shot b3_07_tower_top
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-7.5 ~1.6 ~4 0 0

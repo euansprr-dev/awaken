@@ -18,7 +18,7 @@ import java.util.Map;
  * hook, for a Great Bell, 12 or more above). Build your tower any shape you like and lay these across it.
  */
 public final class BellBeamBlock extends HookBlock {
-    private static final Map<Direction, VoxelShape> BEAM = Shapes.rotateHorizontal(Block.box(0, 13, 6, 16, 16, 10));
+    private static final Map<Direction, VoxelShape> BEAM = Shapes.rotateHorizontal(Block.box(0, 13, 4, 16, 16, 12));
     private static final Map<Direction, VoxelShape> GREAT = Shapes.rotateHorizontal(Block.box(0, 12, 5, 16, 16, 11));
 
     private final boolean great;
