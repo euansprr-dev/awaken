@@ -314,7 +314,10 @@ public final class ArmsPredict {
             pressHeld = false;
             tapped(mc.player);
         }
-        if (mc.player != null) predictHits(mc, mc.player);
+        if (mc.player != null) {
+            landPending(mc.player);
+            predictHits(mc, mc.player);
+        }
         if (swishAt < 0) return;
         LocalPlayer p = mc.player;
         if (p == null || move == null || style == null) {
@@ -728,6 +731,53 @@ public final class ArmsPredict {
 
     private static final float[] PUSH = new float[2];
 
+    // a server HIT for the running move that comes before its blade reaches the hit (a dagger's one-tick strike, the
+    // word back inside the windup): its impact waits for the blade, never more than a tick (§47.1), a cleave's bodies
+    // together. Only the look waits; the server already struck.
+    private static final int[] PEND_TARGET = new int[8], PEND_BLOW = new int[8], PEND_MS = new int[8];
+    private static int pending, pendingSeq = -1;
+    private static long pendingBy;
+
+    /** Whether a HIT is held for the blade (the running move's own, its clock short of the hit). */
+    private static boolean early(int s, int target, Blow b, int blow, int ms) {
+        if (s != moveSeq || move == null || style == null || b.move() != move.ordinal()) return false;
+        Archetype.MoveDef def = style.move(move);
+        if (def == null || moveTime() >= def.windup() || pending == PEND_TARGET.length) return false;
+        if (pending == 0) {
+            pendingSeq = s;
+            pendingBy = System.nanoTime() + (long) nanosPerTick();
+        }
+        PEND_TARGET[pending] = target;
+        PEND_BLOW[pending] = blow;
+        PEND_MS[pending] = ms;
+        pending++;
+        return true;
+    }
+
+    /** Each frame: the held HITs land once the blade reaches the hit, a tick has gone, or another move began. */
+    private static void landPending(LocalPlayer p) {
+        if (pending == 0) return;
+        Archetype.MoveDef def = move == null || style == null ? null : style.move(move);
+        if (def != null && moveSeq == pendingSeq && moveTime() < def.windup() && System.nanoTime() < pendingBy) return;
+        int n = pending;
+        pending = 0;
+        for (int i = 0; i < n; i++) landed(p, PEND_TARGET[i], Blow.unpack(PEND_BLOW[i]), PEND_MS[i]);
+    }
+
+    /** A server HIT the client didn't play: played now, all of it. */
+    private static void landed(LocalPlayer p, int target, Blow b, int ms) {
+        boolean killMoment = b.kill() && ArmsComfort.killMoment();
+        impact(p, target, b, ms, killMoment);
+        Minecraft mc = Minecraft.getInstance();
+        Entity struck = mc.level == null ? null : mc.level.getEntity(target);
+        if (struck != null && b.cleave() >= 2) ArmsAudio.cleave(struck, b.cleave());
+        if (struck != null && killMoment) {
+            ArmsAudio.kill(struck);
+            BladeTrail.flare(p.getId());
+            if (b.last()) ArmsFeel.lastFoe();
+        }
+    }
+
     /**
      * The server's word on a blow already played: nothing again but what only it knew. A kill holds the freeze for the
      * kill's beat (what's left of it), drops the body, and plays the kill's sound and flare; a cleave's ring.
@@ -785,15 +835,8 @@ public final class ArmsPredict {
                     confirmed(p, r.seq(), r.entity(), b, r.aux());
                     return;
                 }
-                boolean killMoment = b.kill() && ArmsComfort.killMoment();
-                impact(p, r.entity(), b, r.aux(), killMoment);
-                Entity struck = mc.level == null ? null : mc.level.getEntity(r.entity());
-                if (struck != null && b.cleave() >= 2) ArmsAudio.cleave(struck, b.cleave());
-                if (struck != null && killMoment) {
-                    ArmsAudio.kill(struck);
-                    BladeTrail.flare(p.getId());
-                    if (b.last()) ArmsFeel.lastFoe();
-                }
+                if (early(r.seq(), r.entity(), b, r.aux2(), r.aux())) return;
+                landed(p, r.entity(), b, r.aux());
             }
             case ArmsPayloads.DEFLECT -> {
                 deflectAt = ticks;
@@ -963,7 +1006,8 @@ public final class ArmsPredict {
         }
         LEDGER.clear();
         LEDGER.predicted = LEDGER.confirmed = LEDGER.unconfirmed = 0;
-        moveSeq = aimedId = focusId = -1;
+        moveSeq = aimedId = focusId = pendingSeq = -1;
+        pending = 0;
         move = null;
         style = null;
         swishAt = -1;

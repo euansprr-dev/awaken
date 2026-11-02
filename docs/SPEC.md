@@ -17488,6 +17488,12 @@ of their blows in a stall).
   so that body isn't played again in that move. A blow played but never confirmed in `HitLedger.LIFE` (40 ticks) is
   counted as shown without damage; the counts are logged when the player leaves the world
   (`[arms] blows played at once N, confirmed by the server M, shown without damage K`).
+- **Never before the blade.** A server HIT for the running move that comes while the hands' clock is still short of
+  the windup (a dagger's one-tick strike: impact 4-15 ms early, the freeze 0.1-0.3 tick short of the blade, found by
+  the dagger-scythe session 2026-11-03) is held: its impact, freeze, cleave and kill play on the frame the blade
+  reaches the hit, a tick after it came at most, or at once if another move begins. A cleave's bodies wait together
+  (8 slots, no allocation). It is in the ledger the moment it comes, so the prediction never plays it twice. Only the
+  look waits; the server's damage has already landed.
 - **The lag watch** (`mobs.entity.FightWatch`). While a creature fought a player in the last 100 ticks, a server tick
   over 50 ms logs one line (at most one a second): its length; ours timed (the bosses' fight scripts, the creatures'
   abilities, the hazards); the garbage collector's pauses in it; chunks loaded; an autosave; entities; and the rest.
