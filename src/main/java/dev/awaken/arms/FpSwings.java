@@ -33,7 +33,7 @@ public final class FpSwings {
     /** Floats a key carries: the hand's move (3), its turn (4), the view's lean (yaw, pitch, roll degrees). */
     static final int STRIDE = 10;
     /** The newest file this build reads: a newer one (a later lab) is refused, never half-read. */
-    public static final int SCHEMA = 6;
+    public static final int SCHEMA = 7;
 
     /** Which hand a move strikes with (a weapon in each hand, the Daggers): the main, the off (the main's mirrored), both. */
     public enum Hand { MAIN, OFF, BOTH }
@@ -72,10 +72,12 @@ public final class FpSwings {
      * turn [dx, dy, dz, qx, qy, qz, qw] with the forged weapon up in guard, across the body in view. {@code trail}
      * (round 14; null: the ribbon as every style's) [root, light]: in first person the ribbon from that far along the
      * blade to its point, its light scaled (the Daggers' a thin streak at the point, not a band from mid-blade).
+     * {@code stance} (schema 7; null: vanilla's rest): the hand's move and turn [dx, dy, dz, qx, qy, qz, qw] between moves,
+     * a pair's off hand the same mirrored (SPEC §25 "Hand-keyed moves"); a hand-keyed style's moves start and end there.
      */
     public record Style(Map<Archetype.Move, Clip> moves, Quaternionf vanilla, Vector3f grip, Vector3f vanillaGrip, boolean twin,
                         Vector3f hand, @Nullable Vector3f offHand, @Nullable Vector3f vanillaOffHand, float @Nullable [] guard,
-                        float @Nullable [] trail, @Nullable Loop chop, @Nullable Loop hack) {}
+                        float @Nullable [] trail, @Nullable Loop chop, @Nullable Loop hack, float @Nullable [] stance) {}
 
     /**
      * The weapon's own cutting motion while vanilla mines with it (SPEC §40 "The chop"; tools/art/swing_chop.py): the chop
@@ -160,7 +162,8 @@ public final class FpSwings {
                     st.has("offHand") ? vec(st.getAsJsonArray("offHand")) : null,
                     st.has("vanillaOffHand") ? vec(st.getAsJsonArray("vanillaOffHand")) : null,
                     st.has("guard") ? floats(st.getAsJsonArray("guard"), 7) : null,
-                    st.has("trail") ? floats(st.getAsJsonArray("trail"), 2) : null, loop(st, "chop"), loop(st, "hack")));
+                    st.has("trail") ? floats(st.getAsJsonArray("trail"), 2) : null, loop(st, "chop"), loop(st, "hack"),
+                    st.has("stance") ? floats(st.getAsJsonArray("stance"), 7) : null));
         }
         return new Data(schema, root.has("round") ? root.get("round").getAsInt() : 0, dt, wristDt, Map.copyOf(styles),
                 java.util.Set.copyOf(flipped), Map.copyOf(grip3));
@@ -271,6 +274,19 @@ public final class FpSwings {
         if (g == null) return false;
         d.set(g[0], g[1], g[2]);
         q.set(g[3], g[4], g[5], g[6]);
+        if (!ours) toVanilla(st, d, q);
+        return true;
+    }
+
+    /**
+     * The stance (Style's stance): the hand's move into {@code d} and its turn into {@code q} between moves, a vanilla item
+     * turned to the same place as {@link #sample} turns it. False without one (the hand rests at vanilla's place).
+     */
+    public static boolean stance(@Nullable Style st, boolean ours, Vector3f d, Quaternionf q) {
+        float[] s = st == null ? null : st.stance();
+        if (s == null) return false;
+        d.set(s[0], s[1], s[2]);
+        q.set(s[3], s[4], s[5], s[6]);
         if (!ours) toVanilla(st, d, q);
         return true;
     }

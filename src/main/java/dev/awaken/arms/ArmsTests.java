@@ -419,6 +419,8 @@ final class ArmsTests {
                     FpSwings.sample(st, e.getKey(), def.cadence().get(0), true, w, qw);
                     h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F,
                             a.id() + " " + e.getKey() + " waits still from the earliest press to its end");
+                } else if (FpSwings.stance(st, true, w, qw)) { // a hand-keyed style rests in its stance (SPEC §25 "Hand-keyed moves")
+                    h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends in its stance");
                 } else {
                     h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
                 }

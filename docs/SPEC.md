@@ -6780,6 +6780,25 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   within the wind-up, a stab's point within 0.15 of the crosshair and its blow three times its return, the dagger's free
   hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
   never home between strikes.
+- **Hand-keyed moves** (the dagger and scythe audit's rebuild, Euan 2026-11-02: "Go with all recommendations"; never
+  tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' moves (the Scythe's next) are
+  written pose by pose in `tools/art/arms_keys.py`: the fist placed on the screen at a depth, the point drawn at a
+  screen place for the blade's length (0.627 for all four daggers, weapon-designs 7bbc8f78), the edge's way, for both
+  hands; each blow's key on the tick the server counts its hit (the first active tick; a loosed heavy's and a landed
+  Plunge's 0.3 in). Between keys a hand travels on a cubic, stopping only at a key that says so, its turn eased the
+  same way. `bake` splices the keyed styles into fp_swings.json (schema 7) and leaves every other byte as it was;
+  `check` proves that against git and holds the data to the GameTests' rules; `strip` and `chain` draw a move or a chain
+  as play strings it. A keyed style's entry carries `"by": "tools/art/arms_keys.py"`, and anim_lab.py's bake keeps it.
+  - *The stance* (schema 7, a style's `stance` [dx, dy, dz, qx, qy, qz, qw]): where the hands rest between moves,
+    a pair's off hand its mirror while the twin shows; let go as the guard comes up, never while the weapon cuts. A
+    keyed style's moves start and end there (arms_fp_swings: "ends in its stance").
+  - *The Daggers*: a forward grip in both hands, the fists low and in from vanilla's corner, the points angled in toward
+    the crosshair. Strike 1 drives the right point first from the hip to the crosshair and back; as it drives, the left
+    draws back and up into its guard, and strike 2 fires from there; the right meanwhile is cocked out to the right for
+    strike 3's slash down across the crosshair; strike 4 drives both points in at once from the hips. Each strike's
+    hands hold where the next starts until 7 ticks after the press (about a third of a second), then go home: the hands
+    are never home between strikes of a chain. The free hand always sits in its guard. The heavy charges coiled on the
+    crosshair's line and its release is the drive; the Plunge is armed raised, points down.
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
