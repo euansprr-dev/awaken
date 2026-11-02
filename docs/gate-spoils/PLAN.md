@@ -1,7 +1,8 @@
 # Gate spoils: nothing the gate gives you is lost, and the Satchel in E
 
 Session `gate-spoils`, branch `claude/gate-spoils-ef58b5`, 2 Nov 2026. Approval page: https://claude.ai/artifact/CbMF6oU8dgX5dJQAFbtA4p (`docs/gate-spoils/page.html`).
-Status: **plan, waiting for Euan's yes. Nothing is built.**
+Status: **approved by Euan, 2 Nov 2026: "go ahead with the gate loot plan"** (relayed by the orchestrator: all four
+decisions yes, as recommended). Building on this branch; SPEC §7 (the Satchel) and §13 (Gates, "Gate spoils") carry the rules.
 
 ## 1. What Euan asked
 
