@@ -668,6 +668,7 @@ MATS = {
     "gold_cap": Mat("gold", 5, 0.4, 0.85, details=(panel("lord", 3, margin=1, metal=0.5, gloss=0.85),)),
     "lord_grip": Mat("lord", 3, 0.5, 0.8, details=(scales(),)),
     "lord_plain": Mat("lord", 3, 0.5, 0.85, details=(scales(),)),
+    "lord_bit": Mat("lord", 5, 0.5, 0.85, details=(scales(),)),  # an axe's bit, steps over the haft so it doesn't melt in
     "pearl_gem": Mat("pearl", 3, 0.3, 1.0, emit=0.4, details=(gem(),), contact=2),
     # S: Sovereign
     "ivory": Mat("ivory", 6, 0.1, 0.75, details=(streak(period=9, run=5, phase=2), runes(5, 20))),
@@ -1001,13 +1002,53 @@ def langets(y0, y1, mat, depth=5, part="langets"):
     return [VX.box(-0.5, 0.5, y0, y1, depth / 2 - 1, depth / 2, mat, part), VX.box(-0.5, 0.5, y0, y1, -depth / 2, -depth / 2 + 1, mat, part)]
 
 
-# ---- Axes: a haft about 23 texels, a broad bit flaring to one side, a spike or a poll to the other ------------------
+def lengthened(design, dy, cut):
+    """A design with its haft dy longer: what lies wholly above y = cut (the head) rises dy, and an upright box across
+    cut (the haft) grows dy at its top, with its glow's span, its circuit's row, its anchors, streams and focus."""
+    def lift(v):
+        return v + dy if v > cut else v
+
+    def build():
+        B, anchors, look = design()
+        out = []
+        for b in B:
+            ext = np.abs(b.R) @ b.h
+            lo, hi = b.c[1] - ext[1], b.c[1] + ext[1]
+            data = dict(b.data)
+            c, h = b.c.copy(), b.h.copy()
+            if lo >= cut - 1e-6:
+                c[1] += dy
+                if "row" in data:
+                    data["row"] = data["row"] + dy
+                elif "span" in data:
+                    data["span"] = tuple(v + dy for v in data["span"])
+                if "base" in data:
+                    data["base"] = (data["base"][0], data["base"][1] + dy)
+            elif hi > cut and np.allclose(b.R, np.eye(3)):
+                c[1] += dy / 2
+                h[1] += dy / 2
+                if "span" in data and "row" not in data:
+                    data["span"] = tuple(lift(v) for v in data["span"])
+            out.append(VX.Box(c, h, b.mat, b.part, b.R, b.name, **data))
+        anchors = [((x, lift(y), z), r, rgb, kind) for (x, y, z), r, rgb, kind in anchors]
+        look = dict(look, focus=(look["focus"][0], lift(look["focus"][1])))
+        if "streams" in look:
+            look["streams"] = [(kind, rgb, rate, radius, [(x, lift(y), z) for x, y, z in pts])
+                               for kind, rgb, rate, radius, pts in look["streams"]]
+        return out, anchors, look
+    return build
+
+
+# ---- Axes: about 34 texels: a haft of about 28, the head a quarter of the height up its top, a broad bit flaring to
+# one side (12 or more across with the eye), a spike or a poll to the other. The designs below are drawn on a haft 5
+# shorter and lengthened as they're registered (the weapon audit: at 28 to 33 every axe was short beside the Maul's
+# 36 to 43, and in first person the head showed only its eye) ----------------------------------------------------
 
 def wildhide_axe():
     """The Wildhide Axe (E): a hand-axe of knapped flint, its pale edge struck fresh, lashed with sinew into the top of a
     bone haft; an antler tine curls up off its back; the grip wound in hide; an amber bead at its foot."""
     B = [haft(4, 18, "bone"), haft(-4, 4, "bone_grip", "grip")]
-    B += bit(-2.5, [(2, 14, 18), (2, 12, 19), (2, 11, 20)], "flint", "flint_edge", edge_w=2)
+    B += bit(-2.5, [(2, 15, 18), (2, 14, 19), (2, 13, 19), (2, 12, 20), (2, 11, 20)], "flint", "flint_edge", edge_w=2)
     B.append(VX.slab(-2.5, 2.5, 13, 16, 5, "sinew", "lashing"))
     B.append(VX.slab(-2.5, 2.5, 17, 18, 5, "sinew", "lashing_top"))
     B += chain(1.5, 15.0, [(62, 4, 2, 3, "antler"), (24, 3, 1, 2, "antler")], "tine", side=1)
@@ -1044,11 +1085,11 @@ def gatewrought_axe():
     across it from a brass eye where the crystal sits; a brass back-spike stepped like a pylon's point; a slate haft
     with the circuit climbing it to the head between brass langets, ribbed round the hand."""
     B = [haft(3, 19, "slate_rib", span=(4, 13)), haft(-4, 3, "slate_grip", "grip")]
-    B += bit(-3.5, [(2, 14, 18), (2, 13, 19), (2, 12, 20)], "slate_bit", "mirror_edge", row=16, span=(3, 10))
-    B.append(VX.slab(-3.5, 3.5, 13, 19, 5, "brass", "eye"))
+    B += bit(-2.5, [(2, 15, 18), (2, 14, 19), (2, 13, 20), (2, 12, 21)], "slate_bit", "mirror_edge", edge_w=2, row=16, span=(3, 12))
+    B.append(VX.slab(-2.5, 2.5, 13, 19, 5, "brass", "eye"))
     B.append(VX.rbox((0, 16, 0), (2, 2, 7), 45, "signal_gem", "crystal"))
-    B += [VX.slab(3.5, 6.5, 14, 18, 3, "brass", "spike"), VX.slab(6.5, 8.5, 15, 17, 3, "pylon", "spike_tip", column=7, span=(15, 17)),
-          VX.slab(8.5, 9.5, 15.5, 16.5, 1, "brass", "spike_point")]
+    B += [VX.slab(2.5, 5.5, 14, 18, 3, "brass", "spike"), VX.slab(5.5, 7.5, 15, 17, 3, "pylon", "spike_tip", column=6, span=(15, 17)),
+          VX.slab(7.5, 8.5, 15.5, 16.5, 1, "brass", "spike_point")]
     B += [VX.box(-2.5, -1.5, 9, 13, -1.5, 1.5, "brass", "langets"), VX.box(1.5, 2.5, 9, 13, -1.5, 1.5, "brass", "langets")]
     B.append(ring(2, 3, "brass", part="ferrule"))
     B.append(VX.slab(-2.5, 2.5, -6, -4, 5, "brass", "foot"))
@@ -1062,9 +1103,9 @@ def veilwoven_axe():
     back like the Veilwoven's quillons; a mirror spike curving up off its back; the spirit stone in a mirror eye; an
     obsidian haft ringed in mirror, mirror langets, a mirror drop at its foot."""
     B = [haft(-4, 19, "obsidian")]
-    B += bit(-2.5, [(2, 14, 18), (2, 13, 19), (2, 12, 20)], "veil", "spirit_edge", span=(11, 21))
-    B += chain(-8.0, 19.5, [(30, 3, 2, 2, "veil"), (8, 3, 1, 1, "spirit_edge")], "horn_up")
-    B += chain(-8.0, 12.5, [(150, 3, 2, 2, "veil"), (172, 3, 1, 1, "spirit_edge")], "horn_low")
+    B += bit(-2.5, [(2, 14, 18), (2, 13, 19), (2, 12, 20), (2, 11, 21)], "veil", "spirit_edge", span=(10, 22))
+    B += chain(-10.0, 20.5, [(30, 3, 2, 2, "veil"), (8, 3, 1, 1, "spirit_edge")], "horn_up")
+    B += chain(-10.0, 11.5, [(150, 3, 2, 2, "veil"), (172, 3, 1, 1, "spirit_edge")], "horn_low")
     B.append(VX.slab(-2.5, 2.5, 13, 18, 5, "mirror", "eye"))
     B.append(VX.rbox((0, 15.5, 0), (3, 3, 7), 45, "spirit_gem", "eye_gem"))
     B += chain(2.5, 15.5, [(65, 3, 2, 3, "mirror"), (30, 3, 1, 2, "mirror")], "spike", side=1)
@@ -1073,7 +1114,7 @@ def veilwoven_axe():
         B.append(ring(y0, y0 + 1, "mirror", part=f"band{y0}"))
     B.append(VX.rbox((0, -6.2, 0), (3, 3, 5), 45, "mirror", "drop"))
     anchors = [((0, 15.5, 0), 2.2, RAMPS["spirit"][6], 1)]
-    edge = [(-9.0, y + 0.5, 0.0) for y in range(11, 21, 2)]
+    edge = [(-11.0, y + 0.5, 0.0) for y in range(10, 22, 2)]
     streams = [(WISP, RAMPS["spirit"][6], 4, 0.18, edge), (MOTE, RAMPS["spirit"][7], 2, 1.4, [(0, 15.5, 0)])]
     return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-4, 3), focus=(-3, 15.5), streams=streams)
 
@@ -1083,8 +1124,8 @@ def lordscale_axe():
     running down into the beard; a gold wing for its poll, its feathers black and gold-tipped; the pearl in a
     gold-framed eye; a black-scale haft banded in gold with gold langets, a gold claw at its foot."""
     B = [haft(-4, 19, "lord_grip")]
-    cols = [(2, 14, 19), (2, 13, 20), (2, 11, 20), (2, 9, 21)]
-    B += bit(-2.5, cols, "lord_plain", "ember_edge", edge_w=2, span=(8, 22))
+    cols = [(2, 14, 19), (2, 13, 20), (2, 11, 20), (2, 9, 21), (2, 8, 21)]
+    B += bit(-2.5, cols, "lord_bit", "ember_edge", edge_w=2, span=(7, 22))
     x = -2.5
     for w, y0, y1 in cols:  # the gold cap along the bit's top
         B.append(VX.slab(x - w, x, y1, y1 + 1, 3, "gold", "cap"))
@@ -1099,7 +1140,7 @@ def lordscale_axe():
     B.append(VX.slab(-2.5, 2.5, -6, -4, 5, "gold", "foot"))
     B.append(VX.slab(-1, 1, -7, -6, 2, "gold", "foot_claw"))
     anchors = [((0, 15.5, 0), 2.0, RAMPS["pearl"][4], 1)]
-    streams = [(EMBER, RAMPS["ember"][6], 6, 0.12, [(-12.0, y + 0.5, 0.0) for y in range(9, 21, 2)])]
+    streams = [(EMBER, RAMPS["ember"][6], 6, 0.12, [(-14.0, y + 0.5, 0.0) for y in range(8, 21, 2)])]
     return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-4, 3), focus=(-3, 15), streams=streams)
 
 
@@ -1112,7 +1153,7 @@ def sovereign_axe():
     B.append(VX.slab(-9.5, -6.5, 10, 11, 1, "gold_edge", "rim_low"))
     B.append(VX.slab(-9.5, -6.5, 21, 22, 1, "gold_edge", "rim_top"))
     B.append(VX.slab(-2.5, 2.5, 13, 18, 5, "gold", "eye"))
-    B += frame((0, 15.5, 0), 5, 3, 9, 45, "gold", "frame")
+    B += frame((0, 15.5, 0), 5, 3, 6, 45, "gold", "frame")
     B.append(VX.rbox((0, 15.5, 0), (3, 3, 7), 45, "crimson_gem", "heart"))
     B += chain(3.0, 16.5, [(55, 3, 2, 3, "gold"), (20, 3, 1, 2, "gold")], "crown", side=1)
     B += chain(3.0, 14.5, [(110, 3, 2, 3, "gold"), (140, 2, 1, 2, "gold")], "crown_low", side=1)
@@ -1127,8 +1168,11 @@ def sovereign_axe():
     return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-4, 3), focus=(-3, 15.5), streams=streams)
 
 
-DESIGNS.update({("axe", "E"): wildhide_axe, ("axe", "D"): beastbound_axe, ("axe", "C"): gatewrought_axe,
-                ("axe", "B"): veilwoven_axe, ("axe", "A"): lordscale_axe, ("axe", "S"): sovereign_axe})
+# the weapon audit: each haft longer to about 34 (B's horns and A's beard already reach higher, so less; the item box)
+AXE_LONGER = {"E": 5, "D": 6, "C": 5, "B": 3, "A": 4, "S": 5}
+DESIGNS.update({("axe", t): lengthened(fn, AXE_LONGER[t], 6.0) for t, fn in
+                (("E", wildhide_axe), ("D", beastbound_axe), ("C", gatewrought_axe), ("B", veilwoven_axe),
+                 ("A", lordscale_axe), ("S", sovereign_axe))})
 HOLDS["axe"] = ([0, -72, 30], [-2.0, 1.5, -0.6], 0.4)
 
 

@@ -31,8 +31,9 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    core 3. Grips are 3 by 3 and 4 or 5 long. Guards and pommels get bolder with the tier: the low tiers use bone,
    antler and a plain collar, the high tiers wings, crowns and big framed stones. The silhouette must say what the
    weapon is from its outline alone, and no two weapons may share one. The other lines:
-   - **Axe:** a 3×3 haft about 23 long, the bit flaring from the eye to its edge in 2-column steps (`bit`), a spike,
-     poll or wing on the back, and metal langets down the haft.
+   - **Axe:** about 34: a 3×3 haft about 28 long with the head a quarter of the height up its top, the bit flaring
+     from the eye to its edge in 2-column steps (`bit`), 12 or more across with the eye, a spike, poll or wing on the
+     back, and metal langets down the haft. Held turned like the Longsword (roll 135), so the bit shows at rest.
    - **Maul** (the reference's own): a 26-long haft and a block head made of a core, flared caps with a painted
      trim field (`panel`) and a raised 45° frame with its stone.
    - **Spear:** a slender 2×2 shaft about 31 long, so it reads as reach, and a head about 10 long (leaf, lugs,

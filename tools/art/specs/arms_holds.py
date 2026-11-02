@@ -281,7 +281,7 @@ HOLDS = {
     # two hands low on the haft, the head up at the right
     "maul": dict(yaw=6, pitch=58, roll=90, grip=(-0.04, -0.10, 0.04)),
     # one hand, the head up, its bit down toward the foe (never its flat to the eye)
-    "axe": dict(yaw=10, pitch=58, roll=90, grip=(0.02, -0.04, 0.02), cut=DOWN),
+    "axe": dict(yaw=10, pitch=58, roll=135, grip=(0.02, -0.04, 0.02), cut=DOWN),
     # short, the point forward, a little larger than true so its blade reads; one in each hand (the off hand's twin,
     # ArmsOffHand), held up enough that both blades show whole
     "daggers": dict(yaw=14, pitch=42, roll=90, grip=(-0.02, 0.07, -0.02), size=1.15, cut=DOWN),

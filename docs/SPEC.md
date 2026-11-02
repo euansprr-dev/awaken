@@ -7442,8 +7442,9 @@ against it, so a vanilla item plays its designed tempo).
   (0.85 to 0.98, was 0.71 to 0.98). In the game it reads better (CI tour `arms-longsword-turn`: the blade's face and
   the guard's spread at rest, every blow with the hand on the grip), so the Greatblade has the same turn (batch 1;
   every blow 0.79 to 0.99, was 0.72 to 1.00), the Katana and Glaive too (batch 2; the Katana's blows unchanged at
-  0.96 to 1.00, its curve now showing at rest; the Glaive's 0.91 to 0.98, was 0.89 to 0.98), and the Axe in batch 3,
-  each checked in the lab first (the Daggers and Scythe are dagger-scythe's).
+  0.96 to 1.00, its curve now showing at rest; the Glaive's 0.91 to 0.98, was 0.89 to 0.98), and the Axe (batch 3;
+  every blow 0.73 to 0.96, was 0.63 to 0.90; at rest the bit shows, where at 90 only its eye did), each checked in
+  the lab first (the Daggers and Scythe are dagger-scythe's).
 - **Proportions per style** (the audit's rules; Euan 2026-11-02 approved the whole plan, "Go ahead with the whole
   plan"; each line lands with its batch, in texels): every style keeps the hilt off the blade's root, nothing near the
   hand deeper than the working part, one framed stone as the focus, and no two weapons with one outline.
@@ -7471,6 +7472,11 @@ against it, so a vanilla item plays its designed tempo).
     crescents, A gold claws between its wings, S arms before and behind its gold diamond) or C's brass cube, so the
     head reads from the edge as well as the face. The Root Saint's Reliquary: its shrine 7 across on a gold plinth
     under a stepped roof 9 across, pillared and open at the front (was 5 and 7).
+  - Axe: about 34 (was 28 to 33), the haft 3 to 6 longer above the grip so the head sits a quarter to a third of
+    the height up its top (`lengthened`); the bit and eye 12 or more across (Wildhide's flint 12, was 8; Gatewrought's
+    bit 10 from a 5-wide eye, was 7 from a 7-wide one; Veilwoven's spirit edge 2 taller; Lordscale's bit a column
+    broader and two steps lighter than its haft, which it melted into); nothing at the eye deeper than 6 (a stone 7;
+    Sovereign's frame was 9). The Ember Tyrant's Cleft stays as it is (31, its bit 22 across).
 - **Hilt cuts** (the generated `ArmsHilts.CUTS`, for the War Anvil, §46.3): for each sword-like weapon (Longsword,
   Greatblade, Rapier, Daggers, Katana), where its blade, guard and grip begin along its mesh, {blade, guard, grip, 0}
   in the mesh's own along (0 the pommel's end, 1 the point): the blade's lowest corner (its back, teeth and ricasso
