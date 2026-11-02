@@ -1,0 +1,144 @@
+# Fights stage 5, the second Proving (SPEC §46.6): the Examiner and the Hall of Reflections, in a practice Proving
+# (/awaken admin trial C). A small study is built round you first (planks, bookshelves, a window, lanterns, a chest);
+# then a burst of quick shots every 12 ticks catches the wake (the same study, now laid in the hall), the room turning
+# to glass a ring at a time, and the Examiner stepping out of it as the room breaks (the burst covers the hall's
+# readying, whose length varies). Then, as a spectator (never its target): the Examiner facing you, the hall from above,
+# the door and the stair out, the west mirrors, the mirrors waking at two thirds (/awaken admin trial half) and what it
+# read, the ring of mirrors rising at a third (/awaken admin trial third), and the win.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-reflections.txt
+world autopilot_fights_reflections creative 20261102
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+
+# --- a study round you: what the Examiner copies ---
+cmd fill ~-5 ~-1 ~-5 ~5 ~5 ~5 spruce_planks hollow
+cmd fill ~-4 ~-1 ~-4 ~4 ~-1 ~4 dark_oak_planks
+cmd fill ~-4 ~ ~-4 ~-2 ~2 ~-4 bookshelf
+cmd fill ~2 ~ ~-4 ~4 ~2 ~-4 bookshelf
+cmd fill ~-1 ~1 ~-5 ~1 ~2 ~-5 glass
+cmd fill ~-2 ~ ~-2 ~2 ~ ~2 red_carpet
+cmd setblock ~4 ~ ~2 crafting_table
+cmd setblock ~4 ~ ~3 chest[facing=west]
+cmd setblock ~-4 ~ ~3 potted_red_tulip
+cmd setblock ~-4 ~ ~2 barrel
+cmd setblock ~-3 ~4 ~-3 lantern[hanging=true]
+cmd setblock ~3 ~4 ~-3 lantern[hanging=true]
+cmd setblock ~-3 ~4 ~3 lantern[hanging=true]
+cmd setblock ~3 ~4 ~3 lantern[hanging=true]
+wait 20
+look 180 5
+hud off
+shot reflections_00_study
+
+# --- the bell, then the burst: the wake, the glass, the Examiner steps out ---
+cmd awaken admin trial C
+wait 30
+shotnow reflections_b01
+wait 12
+shotnow reflections_b02
+wait 12
+shotnow reflections_b03
+wait 12
+shotnow reflections_b04
+wait 12
+shotnow reflections_b05
+wait 12
+shotnow reflections_b06
+wait 12
+shotnow reflections_b07
+wait 12
+shotnow reflections_b08
+wait 12
+shotnow reflections_b09
+wait 12
+shotnow reflections_b10
+wait 12
+shotnow reflections_b11
+wait 12
+shotnow reflections_b12
+wait 12
+shotnow reflections_b13
+wait 12
+shotnow reflections_b14
+wait 12
+shotnow reflections_b15
+wait 12
+shotnow reflections_b16
+wait 12
+shotnow reflections_b17
+wait 12
+shotnow reflections_b18
+wait 12
+shotnow reflections_b19
+wait 12
+shotnow reflections_b20
+wait 12
+shotnow reflections_b21
+wait 12
+shotnow reflections_b22
+wait 12
+shotnow reflections_b23
+wait 12
+shotnow reflections_b24
+wait 40
+
+# --- it faces you, 9 blocks north of the middle (you stand at the middle, 0, 0, 0) ---
+look 180 -8
+shot reflections_01_examiner
+
+# --- the hall from above the south (0, 20, 22) ---
+cmd gamemode spectator
+cmd tp @s ~ ~20 ~22 180 32
+wait 30
+shot reflections_02_hall
+
+# --- the door and the stair out (0, 3, 30), looking south ---
+cmd tp @s ~ ~-17 ~8 0 5
+wait 30
+shot reflections_03_door
+
+# --- the west mirrors (-26, 4, 0), looking west ---
+cmd tp @s ~-26 ~1 ~-30 90 0
+wait 30
+shot reflections_04_mirrors
+
+# --- at two thirds the mirrors wake from the north (0, 18, 20); 3 s on it says what it read ---
+cmd tp @s ~26 ~14 ~20 180 30
+wait 30
+cmd awaken admin trial half
+wait 35
+shot reflections_05_woken
+hud on
+wait 40
+shot reflections_06_read
+hud off
+
+# --- at a third the ring of mirrors rises ---
+cmd awaken admin trial third
+wait 50
+shot reflections_07_ring
+cmd tp @s ~ ~-14 ~-4 180 10
+wait 20
+shot reflections_08_inside
+
+# --- beaten ---
+cmd kill @e[type=awaken:proving_examiner]
+wait 60
+hud on
+shot reflections_09_won
+hud off
+wait 60
+shot reflections_10_after
+hud on
+quit
