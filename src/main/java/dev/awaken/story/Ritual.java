@@ -74,7 +74,7 @@ final class Ritual {
     /** What a {@link StoryPayloads.RitualCue} asks the client to draw and sound. */
     enum Cue {
         TOLL, WORD, DOORS, LIGHTS_OUT, CANDLE, LIGHTS_ON, PLATE, PLATE_MISS, GLARE, RULE_STRIKE, HIT, SHAKE, EYES, RISE,
-        GAZE_CHARGE, GAZE_FIRE, SWING, IMPACT, PIT, DRAIN, ERROR, DEATH, HOLD
+        GAZE_CHARGE, GAZE_FIRE, SWING, IMPACT, PIT, DRAIN, ERROR, DEATH, HOLD, PLATE_ON
     }
 
     /** The wait for everyone: after the first player is in the hall, the doors close after this long regardless. */
@@ -681,7 +681,12 @@ final class Ritual {
                 plateLight(l, k, true);
             }
             if (to >= lit && from < deadline) {
-                for (ServerPlayer p : here) if (l.hall.plateUnder(p.position()) == k) l.onPlate.add(p.getUUID());
+                for (ServerPlayer p : here) {
+                    // the first tick you stand on it stops your timer (the latch is yours alone)
+                    if (l.hall.plateUnder(p.position()) == k && l.onPlate.add(p.getUUID())) {
+                        cue(l, List.of(p), Cue.PLATE_ON, k, plate, p.position(), 1.0F + k * 0.19F, 0);
+                    }
+                }
             }
             if (at(from, to, deadline)) {
                 plateLight(l, k, false);
@@ -1093,7 +1098,8 @@ final class Ritual {
         d = d.normalize();
         p.setDeltaMovement(d.x * knock, 0.42, d.z * knock);
         p.syncVelocity = true;
-        AwakenNet.send(p, new StoryPayloads.RitualCue(Cue.HIT.ordinal(), -1, from, p.position(), damage, 10));
+        // id: the statue whose blow it was (its blade's sound in your head), -1 for a pit or the gaze
+        AwakenNet.send(p, new StoryPayloads.RitualCue(Cue.HIT.ordinal(), by == null ? -1 : by.getId(), from, p.position(), damage, 10));
     }
 
     private static double distToSegment(Vec3 p, Vec3 a, Vec3 b) {

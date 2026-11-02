@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
@@ -81,6 +82,7 @@ final class FoundBells {
             if (Bells.has(p, d.id())) Bells.say(p, "[You've already got " + d.name().replaceFirst("^The ", "the ") + ". This one stays for whoever it's for.]");
             else {
                 Bells.ring(p, d, be.where);
+                if (be.dulled()) dullCarried(p, d.no());
                 level.playSound(null, pos, BellContent.note(d.no()), SoundSource.BLOCKS, 2F, 1F);
                 level.sendParticles(ParticleTypes.WHITE_ASH, pos.getX() + 0.5, pos.getY() + 0.6, pos.getZ() + 0.5, 24, 0.35, 0.35, 0.35, 0.02);
             }
@@ -125,6 +127,8 @@ final class FoundBells {
         if (level.getBlockEntity(at) instanceof FoundBellEntity be) {
             be.gate = gate;
             be.setChanged();
+            // its clients draw it dulled while it lies in the gate
+            level.sendBlockUpdated(at, be.getBlockState(), be.getBlockState(), Block.UPDATE_CLIENTS);
         }
         if (!gate.isEmpty()) {
             BellWorld w = BellWorld.get(level.getServer());
@@ -201,6 +205,19 @@ final class FoundBells {
             }
         }
         Bells.save(p, b);
+    }
+
+    /** The bell just lifted from a gate's floor, now in {@code p}'s bag: dulled by the Deep until it hangs (stage 6). */
+    static void dullCarried(ServerPlayer p, int no) {
+        var inv = p.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack s = inv.getItem(i);
+            BellCatalog.Def d = BellItem.def(s);
+            if (d != null && d.no() == no && !BellItem.isDulled(s)) {
+                inv.setItem(i, BellItem.dulled(no));
+                return;
+            }
+        }
     }
 
     // ---- bells set down where they were won (stage 5) -----------------------------------------------------------------

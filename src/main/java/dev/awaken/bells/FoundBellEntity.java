@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  * A bell where it was won (SPEC §43.16): which bell, what the Book says of where it was, who may lift it (nobody listed:
  * anyone), who has, and the home it belongs to if it's a home's (the Lampwing's old roost). Saved at schema 1; the number
- * is synced so it can be drawn.
+ * and the gate it lies in are synced so it can be drawn (dulled, in a gate).
  */
 public final class FoundBellEntity extends BlockEntity {
     static final int SCHEMA = 1;
@@ -45,6 +45,11 @@ public final class FoundBellEntity extends BlockEntity {
 
     public int no() {
         return no;
+    }
+
+    /** Lying in a gate: the Deep has dulled it (stage 6). */
+    public boolean dulled() {
+        return !gate.isEmpty();
     }
 
     void set(int no, String where, List<UUID> claimants, long anchor) {
@@ -94,6 +99,7 @@ public final class FoundBellEntity extends BlockEntity {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag t = new CompoundTag();
         t.putInt("no", no);
+        t.putString("gate", gate);
         return t;
     }
 

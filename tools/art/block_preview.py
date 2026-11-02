@@ -66,6 +66,9 @@ def resolve(tex, ref):
     seen = 0
     while ref.startswith("#") and seen < 8:
         ref = tex.get(ref[1:], "minecraft:block/stone")
+        # a texture may be an object ({"sprite": ..., "force_translucent": true})
+        if isinstance(ref, dict):
+            ref = ref["sprite"]
         seen += 1
     return ref
 

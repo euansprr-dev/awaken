@@ -24,5 +24,19 @@
   "subtitles.awaken.story.ritual.footstep3": "Stone foot lands",
   "subtitles.awaken.story.ritual.gaze_travel": "The gaze rushes past",
   "subtitles.awaken.story.ritual.gaze_impact": "The gaze strikes stone",
-  "subtitles.awaken.story.ritual.hall": "Air stirs in the hall"
+  "subtitles.awaken.story.ritual.hall": "Air stirs in the hall",
+  "subtitles.awaken.story.ritual.footstep4": "Stone foot lands",
+  "subtitles.awaken.story.ritual.windup": "A statue heaves its glaive up",
+  "subtitles.awaken.story.ritual.swing2": "Stone weapon swings",
+  "subtitles.awaken.story.ritual.impact2": "Stone weapon strikes",
+  "subtitles.awaken.story.ritual.struck": "The glaive hits you",
+  "subtitles.awaken.story.ritual.raise": "The Seated One raises its hand",
+  "subtitles.awaken.story.ritual.error": "The System glitches",
+  "subtitles.awaken.story.ritual.plate_tick": "The lit plate ticks",
+  "subtitles.awaken.story.ritual.plate_tock": "The lit plate ticks",
+  "subtitles.awaken.story.ritual.plate_rise": "The lit plate grinds louder",
+  "subtitles.awaken.story.ritual.plate_lock": "The plate locks under you",
+  "subtitles.awaken.story.ritual.pulse_soft": "A drum beats deep in the hall",
+  "subtitles.awaken.story.ritual.pulse_hard": "A great drum booms",
+  "subtitles.awaken.story.ritual.pulse_drone": "A low tone fills the hall"
 }
