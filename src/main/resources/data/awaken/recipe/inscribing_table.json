@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "L": "minecraft:lapis_lazuli",
+    "B": "minecraft:book",
+    "E": "awaken:essence_shard",
+    "P": "#minecraft:planks",
+    "S": "#minecraft:stone_crafting_materials"
+  },
+  "pattern": [
+    "LBL",
+    "PEP",
+    "SLS"
+  ],
+  "result": {
+    "id": "awaken:inscribing_table"
+  }
+}

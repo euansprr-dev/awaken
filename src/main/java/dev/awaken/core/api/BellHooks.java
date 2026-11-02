@@ -22,6 +22,12 @@ public final class BellHooks {
         default void told(ServerPlayer player) {}
         default boolean quiet(ServerLevel level, BlockPos at) { return false; }
         default boolean relay(ServerPlayer player, BlockPos relay) { return false; }
+        default @org.jspecify.annotations.Nullable BlockPos roost(ServerLevel level, BlockPos anchor) { return null; }
+        default boolean tower(BlockPos anchor) { return false; }
+        default int song(BlockPos anchor) { return 0; }
+        default boolean toll(ServerLevel level, BlockPos anchor) { return false; }
+        default void raised(ServerLevel level, BlockPos pos) {}
+        default void spirit(ServerPlayer player, String spirit, String name, BlockPos at) {}
     }
 
     private static Access access = new Access() {};
@@ -66,5 +72,45 @@ public final class BellHooks {
      */
     public static boolean relay(ServerPlayer player, BlockPos relay) {
         return access.relay(player, relay);
+    }
+
+    /**
+     * Whether the home at {@code anchor} has a bell tower (SPEC §43.16 stage 3): a bell hanging 8 or more above its fire, or
+     * a belfry, tower or Great Belfry standing round its frame. The Hearth's tier II asks for it, and it warns of breaks
+     * and keeps Deep Tide nights calm. False on a client or with no server.
+     */
+    public static boolean tower(BlockPos anchor) {
+        return access.tower(anchor);
+    }
+
+    /** How many bells are in the song of the home at {@code anchor} (hung there, and the far six that answer it). */
+    public static int song(BlockPos anchor) {
+        return access.song(anchor);
+    }
+
+    /** The home at {@code anchor}'s highest bell tolls from its hook (a break's warning). False if none hangs. */
+    public static boolean toll(ServerLevel level, BlockPos anchor) {
+        return access.toll(level, anchor);
+    }
+
+    /**
+     * The Thatchbacks set a Bell Beam or Great Beam at {@code pos} in a Belfry or Bell Tower Work Plan (SPEC §43.16 stage
+     * 3): its bells carry wherever it stands, even if the plan was laid lower than the fire.
+     */
+    public static void raised(ServerLevel level, BlockPos pos) {
+        access.raised(level, pos);
+    }
+
+    /**
+     * A spirit standing at {@code at} finished telling this player its story (SPEC §43.16 stage 5): it may hold one of the
+     * Veil's bells for them, and says what it stayed for.
+     */
+    public static void spirit(ServerPlayer player, String spirit, String name, BlockPos at) {
+        access.spirit(player, spirit, name, at);
+    }
+
+    /** Where the Lampwing's old bell hangs near the home at {@code anchor}, while it does (SPEC §43.16), or null. */
+    public static @org.jspecify.annotations.Nullable BlockPos roost(ServerLevel level, BlockPos anchor) {
+        return access.roost(level, anchor);
     }
 }

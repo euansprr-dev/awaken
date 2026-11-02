@@ -105,7 +105,8 @@ Gates, an endless Descent, lucid dreams, the Veil and the machines of the Above.
     # An ordering relationship for the dependency.
     # BEFORE - This mod is loaded BEFORE the dependency
     # AFTER - This mod is loaded AFTER the dependency
-    ordering="NONE"
+    # AFTER: our data and assets sit above NeoForge's, so a vanilla file NeoForge also overrides is ours (SPEC §45.8)
+    ordering="AFTER"
     # Side this dependency is applied on - BOTH, CLIENT, or SERVER
     side="BOTH"
 

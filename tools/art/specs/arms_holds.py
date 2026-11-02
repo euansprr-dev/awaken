@@ -257,24 +257,27 @@ LEFT = (-1.0, 0.0, -0.3)  # a working side toward the middle of the view
 DOWN = (0.0, -0.8, -0.6)
 
 HOLDS = {
-    # one hand, the blade up and forward to the left, an edge down toward the foe (a cleaver's own), its flat to the side
-    "longsword": dict(yaw=18, pitch=52, roll=90, grip=(0.02, 0.0, 0.02), cut=DOWN),
+    # one hand, the blade up and forward to the left, an edge down toward the foe (a cleaver's own); turned an eighth
+    # further than the quarter (roll 135) so the blade's face and the guard's spread show, never the guard's end on (the
+    # weapon audit, Euan 2026-11-02: "the two blocky things at the bottom look very, very chunky")
+    "longsword": dict(yaw=18, pitch=52, roll=135, grip=(0.02, 0.0, 0.02), cut=DOWN),
     # en garde: the point forward at the target's height, the hand a little in
     "rapier": dict(yaw=20, pitch=18, roll=90, grip=(-0.04, 0.03, -0.02)),
     # two hands at the middle, the edge down toward the target, the point at it (chudan)
-    "katana": dict(yaw=10, pitch=36, roll=90, grip=(-0.14, 0.0, 0.04)),
+    "katana": dict(yaw=10, pitch=36, roll=135, grip=(-0.14, 0.0, 0.04)),
     # the shaft across the lower view, gripped part way, the head forward and up, the butt back past the hand; held
     # larger (nearer its size in F5) and turned so its head sits left of and under the aim point, not on it (the game
     # draws the resting hand about an eighth of the frame higher than mesh_render does: judged in the game, 2026-10-26)
     "spear": dict(yaw=46, pitch=13, grip=(0.02, -0.04, 0.06), size=1.3),
     # as the spear, the blade higher, its edge down toward the foe
-    "glaive": dict(yaw=54, pitch=22, roll=90, grip=(0.02, -0.02, 0.05), size=1.2, cut=DOWN),
+    "glaive": dict(yaw=54, pitch=22, roll=135, grip=(0.02, -0.02, 0.05), size=1.2, cut=DOWN),
     # the snath up, the blade at the top reaching in across the view
     "scythe": dict(yaw=8, pitch=64, grip=(0.02, -0.04, 0.03), cut=LEFT),
     # held at its middle across the body, one end low right, the other up to the left
     "warstaff": dict(yaw=58, pitch=28, grip=(-0.08, -0.06, 0.0)),
-    # two hands, raised, big and near the middle; an edge down toward the foe, its broad flat to the side
-    "greatblade": dict(yaw=20, pitch=60, roll=90, grip=(-0.10, -0.08, 0.04), cut=DOWN),
+    # two hands, raised, big and near the middle; an edge down toward the foe, turned an eighth further than the quarter
+    # as the Longsword is (roll 135, the weapon audit), so its broad face and its guard's spread show
+    "greatblade": dict(yaw=20, pitch=60, roll=135, grip=(-0.10, -0.08, 0.04), cut=DOWN),
     # two hands low on the haft, the head up at the right
     "maul": dict(yaw=6, pitch=58, roll=90, grip=(-0.04, -0.10, 0.04)),
     # one hand, the head up, its bit down toward the foe (never its flat to the eye)

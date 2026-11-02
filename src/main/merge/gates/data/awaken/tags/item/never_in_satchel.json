@@ -1,0 +1,10 @@
+{
+  "values": [
+    { "id": "awaken:holo_band", "required": false },
+    { "id": "awaken:handbell", "required": false },
+    { "id": "awaken:bell_frame", "required": false },
+    { "id": "awaken:heart_clapper", "required": false },
+    { "id": "awaken:sovereign_relic", "required": false },
+    { "id": "awaken:bell", "required": false }
+  ]
+}

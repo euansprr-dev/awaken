@@ -1,0 +1,8 @@
+{
+  "replace": true,
+  "values": [
+    "minecraft:unbreaking",
+    "minecraft:aqua_affinity",
+    "minecraft:depth_strider"
+  ]
+}

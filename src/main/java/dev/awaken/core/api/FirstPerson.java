@@ -124,6 +124,22 @@ public final class FirstPerson {
         return WORLD;
     }
 
+    private static final List<java.util.function.BooleanSupplier> CAMERAS = new CopyOnWriteArrayList<>();
+
+    /**
+     * A scene's own camera standing in for your eyes (the War Anvil's view over the work): while {@code owns} says it's
+     * the view, the world layer draws your body from it as it would from your eyes. Register once at init.
+     */
+    public static void camera(java.util.function.BooleanSupplier owns) {
+        CAMERAS.add(owns);
+    }
+
+    /** Whether a registered scene camera is the view now (read only when the view isn't your own eyes). */
+    public static boolean cameraOwned() {
+        for (int i = 0; i < CAMERAS.size(); i++) if (CAMERAS.get(i).getAsBoolean()) return true;
+        return false;
+    }
+
     // ---- the view layer ---------------------------------------------------------------------------------------------
 
     /**

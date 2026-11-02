@@ -679,7 +679,7 @@ public final class WorldLive {
         p.setData(GatesRegistry.ATLAS.get(), atlas);
         String name = w.dressing().keepsakeName().isEmpty() ? WorldsLive.pretty(w.dressing().keepsake()) : w.dressing().keepsakeName();
         ItemStack s = HearthHooks.keepsake(w.dressing().keepsake(), name, PlayDays.current(p.level().getServer()));
-        if (!s.isEmpty() && !p.addItem(s)) p.drop(s, false, net.minecraft.util.Prediction.SERVER_ONLY);
+        dev.awaken.gates.run.Spoils.give(p, s); // given once ever: pockets, then held for you (SPEC §13, "Gate spoils")
         p.sendSystemMessage(Component.literal("A keepsake from " + w.name() + ": " + name + ". Hang it in your Trophy Hall at home."));
         WorldSets.after(p, w);
         WorldsLive.sync(p);

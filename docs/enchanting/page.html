@@ -1,0 +1,532 @@
+<title>The Inscribing Table</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of ink and lapis; wide bands only for the scene and the gate map. Dark first, cool paper in light. */
+:root {
+  --bg: #0e131e; --panel: #151c2b; --panel2: #1b2436; --line: #2b3652; --fg: #e5e9f3; --muted: #9ba5be;
+  --lapis: #6c97ff; --lapis-soft: rgba(108,151,255,.16); --brass: #d8b16a;
+  --heat: #ff8a4c; --frost: #8fd8ff; --charge: #ffd84a; --gravity: #b993ff; --spirit: #4fe0c2; --steel: #b9c3d2;
+  --bane: #ff5f63; --gold: #f2c45a; --sea: #4fb5ea; --keep: #f3ead6;
+  --yes: #6fd08f; --no: #ef6b5b;
+  --display: "IM Fell English SC", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --body: "Source Sans 3", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #edf0f6; --panel: #e2e7f0; --panel2: #d8dfeb; --line: #bcc6d8; --fg: #131a29; --muted: #4c5871;
+  --lapis: #2a59d1; --lapis-soft: rgba(42,89,209,.12); --brass: #85641f;
+  --heat: #c4521a; --frost: #1f7fb0; --charge: #937200; --gravity: #6b3fc4; --spirit: #0d8a72; --steel: #56627a;
+  --bane: #c22d33; --gold: #9a6d00; --sea: #136f9f; --keep: #6d5a2e;
+  --yes: #2b8a4d; --no: #b9392b; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #edf0f6; --panel: #e2e7f0; --panel2: #d8dfeb; --line: #bcc6d8; --fg: #131a29; --muted: #4c5871;
+  --lapis: #2a59d1; --lapis-soft: rgba(42,89,209,.12); --brass: #85641f;
+  --heat: #c4521a; --frost: #1f7fb0; --charge: #937200; --gravity: #6b3fc4; --spirit: #0d8a72; --steel: #56627a;
+  --bane: #c22d33; --gold: #9a6d00; --sea: #136f9f; --keep: #6d5a2e;
+  --yes: #2b8a4d; --no: #b9392b; color-scheme: light }
+
+body { background: var(--bg); color: var(--fg); font: 400 17px/1.6 var(--body); }
+.wrap { max-width: 800px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 44px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; line-height: 1.12; margin: 0; }
+h1 { font-size: clamp(2.3rem, 6vw, 3.4rem); letter-spacing: .01em; }
+h2 { font-size: 1.75rem; color: var(--fg); }
+h3 { font-size: 1.2rem; }
+p { margin: 0; max-width: 66ch; }
+.col { display: grid; gap: 14px; min-width: 0; }
+.eyebrow { font: 500 .78rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--lapis); }
+.muted { color: var(--muted); }
+code { font: .86em var(--mono); background: var(--lapis-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+a { color: var(--lapis); }
+
+/* hero */
+.hero { display: grid; gap: 18px; }
+.rule { border-left: 3px solid var(--lapis); padding: 6px 0 6px 18px; font: 400 1.35rem/1.4 var(--display); color: var(--fg); max-width: 34ch; }
+.blade { width: 100%; max-width: 100%; height: auto; display: block; }
+.status { font: 500 .8rem/1.4 var(--mono); color: var(--brass); letter-spacing: .04em; }
+
+/* problems */
+.finds { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.finds li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+.finds li::before { content: ""; width: 10px; height: 10px; margin-top: 9px; border: 1.5px solid var(--muted); transform: rotate(45deg); justify-self: center; }
+.finds li.big::before { border-color: var(--bane); background: var(--bane); }
+.finds b { color: var(--fg); }
+
+/* loop */
+.loop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; counter-reset: s; }
+.loop div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.loop div::before { counter-increment: s; content: counter(s); font: 500 .8rem/1 var(--mono); color: var(--lapis); }
+.loop h3 { font-size: 1.05rem; }
+.loop p { font-size: .93rem; color: var(--muted); }
+@media (max-width: 640px) { .loop { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* storyboard */
+.band { background: var(--panel); border-block: 1px solid var(--line); margin-inline: calc(50% - 50vw); }
+.band .inner { max-width: 1040px; margin: 0 auto; padding-block: 30px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; }
+.beats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; counter-reset: b; }
+.beat { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.beat svg { width: 100%; height: auto; display: block; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.beat h3 { font-size: 1.02rem; }
+.beat h3::before { counter-increment: b; content: counter(b) "  "; font: 500 .8rem var(--mono); color: var(--lapis); }
+.beat p { font-size: .9rem; color: var(--muted); }
+@media (max-width: 860px) { .beats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .beats { grid-template-columns: minmax(0, 1fr); } }
+.note { font: .8rem/1.4 var(--mono); color: var(--muted); }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 .74rem/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--panel); }
+tr:last-child td { border-bottom: 0; }
+td.n { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: .86rem; white-space: nowrap; }
+
+/* families */
+.fams { display: grid; gap: 14px; }
+.fam { display: grid; grid-template-columns: 54px 1fr; gap: 14px; align-items: start; }
+.fam svg { width: 54px; height: 54px; }
+.fam .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chip { font-size: .86rem; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); white-space: nowrap; }
+.chip i { font-style: normal; color: var(--muted); font-size: .8rem; }
+.fam h3 { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.fam h3 small { font: 400 .85rem var(--body); color: var(--muted); }
+
+/* gate map */
+.gates { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.gate { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; min-width: 0; }
+.gate .rk { font: 500 .8rem var(--mono); color: var(--brass); text-align: center; border: 1px solid var(--line); border-radius: 4px; padding: 2px 0; }
+.gate b { display: block; font-weight: 600; font-size: .92rem; }
+.gate span { font-size: .84rem; color: var(--muted); }
+
+/* journal mock */
+.mock { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 680px) { .mock { grid-template-columns: minmax(0, 1fr); } }
+.slots { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.slots .hd { grid-column: 1 / -1; font: 500 .75rem var(--mono); letter-spacing: .1em; color: var(--muted); display: flex; justify-content: space-between; }
+.slot { aspect-ratio: 1; max-width: 100%; border: 1px solid var(--line); border-radius: 6px; display: grid; place-items: center; font: 500 .74rem var(--mono); color: var(--muted); position: relative; background: var(--bg); }
+.slot.f { border-color: var(--lapis); }
+.slot svg { width: 70%; height: 70%; }
+.slot em { position: absolute; top: 2px; left: 4px; font-style: normal; font-size: .58rem; color: var(--muted); }
+.cap { font-size: .9rem; color: var(--muted); display: grid; gap: 8px; }
+
+/* phases */
+.phases { display: grid; gap: 10px; }
+.phase { display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.phase .p { font: 500 1rem var(--mono); color: var(--lapis); }
+.phase p { font-size: .95rem; }
+.phase .see { color: var(--brass); font-size: .9rem; margin-top: 4px; }
+
+/* decisions */
+.tally { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font: 500 .86rem var(--mono); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.decisions { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: d; }
+.dec { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 8px; counter-increment: d; }
+.dec.yes { border-color: var(--yes); }
+.dec.no { border-color: var(--no); }
+.dec .q { font-weight: 600; }
+.dec .q::before { content: counter(d) ". "; color: var(--lapis); font-family: var(--mono); font-weight: 500; }
+.dec .why { color: var(--muted); font-size: .95rem; }
+.dec .rec { font: 500 .78rem var(--mono); color: var(--brass); letter-spacing: .04em; }
+.ans { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+button { font: 600 .92rem var(--body); border-radius: 6px; padding: 6px 16px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--lapis); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--lapis); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: default; }
+button.y[aria-pressed="true"] { background: var(--yes); border-color: var(--yes); color: var(--bg); }
+button.n[aria-pressed="true"] { background: var(--no); border-color: var(--no); color: var(--bg); }
+.state { font: .78rem var(--mono); color: var(--muted); }
+textarea { width: 100%; min-height: 42px; resize: vertical; font: .92rem var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; box-sizing: border-box; }
+.foot { display: grid; gap: 6px; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 18px; }
+@media (prefers-reduced-motion: no-preference) {
+  .glow { animation: breathe 4.5s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">AWAKEN · enchanting plan · for your yes</span>
+    <h1>The Inscribing Table</h1>
+    <p>You asked for enchanting to be on par with the weapons and armour, and linked to them. Here's the plan. Enchantments
+      are found in the world and learned for good. You write them onto your gear at a table of your own, in a short scene
+      with your hands. How well you forged a piece, its rank and your Hearth decide what it can carry.</p>
+    <p class="rule">Your forge decides how strong a thing is. Enchantments add what the forge can't.</p>
+    <svg class="blade" viewBox="0 0 800 120" role="img" aria-label="Illustration: a blade lying flat, a line of script lit along it in three colours">
+      <defs>
+        <linearGradient id="steel" x1="0" x2="1"><stop offset="0" stop-color="var(--steel)" stop-opacity=".35"/><stop offset="1" stop-color="var(--steel)" stop-opacity=".9"/></linearGradient>
+      </defs>
+      <rect x="40" y="52" width="70" height="16" rx="3" fill="var(--panel2)" stroke="var(--line)"/>
+      <rect x="110" y="34" width="14" height="52" rx="2" fill="var(--brass)" opacity=".85"/>
+      <path d="M124 48 L700 50 L760 60 L700 70 L124 72 Z" fill="url(#steel)" stroke="var(--line)"/>
+      <g class="glow" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M150 60 h40 m10 -6 v12 m12 -12 l10 12 l10 -12" stroke="var(--bane)"/>
+        <path d="M262 60 c8 -10 18 -10 26 0 s18 10 26 0 m14 -6 v12" stroke="var(--bane)"/>
+        <path d="M360 54 a6 6 0 1 0 0.1 0 m20 0 l12 12 m0 -12 l-12 12 m26 -6 h24" stroke="var(--keep)"/>
+        <path d="M470 60 h18 m6 -6 c10 0 10 12 0 12 m14 -12 v12 h14" stroke="var(--keep)"/>
+        <path d="M545 66 c6 -12 16 -12 22 0 m10 -12 l8 12 l8 -12 m12 6 h30" stroke="var(--gold)"/>
+      </g>
+      <text x="40" y="108" fill="var(--muted)" font-family="var(--mono)" font-size="12">Illustration: a weapon with three enchantments, each lighting its line of script in its own colour.</text>
+    </svg>
+    <span class="status">Status: plan only. Nothing is built until you say yes.</span>
+  </header>
+
+  <section class="col">
+    <span class="eyebrow">What's wrong today</span>
+    <h2>Enchanting is an older game sitting next to ours</h2>
+    <ul class="finds">
+      <li class="big"><div><b>The 23 sculpted armour sets can't be enchanted at all.</b> They aren't in vanilla's armour tags,
+        so the table and anvil refuse them. Someone in Protection IV diamond gets less protection by switching to your
+        best-looking sets. Only the six Hunter sets take enchantments. (Read in the code; stage 0 fixes it on its own.)</div></li>
+      <li><div><b>It does the forge's job.</b> Sharpness and Protection add the same numbers that tempering and tiers add.
+        The fights were tuned on unenchanted gear, so they stack past what the combat sim planned for.</div></li>
+      <li><div><b>It's dice.</b> Lapis, levels and bookshelves give random rolls. Nothing about it knows gates, the forge,
+        ranks or your Hearth.</div></li>
+      <li><div><b>It has no look.</b> Every enchantment is the same violet shimmer, and a Marked weapon wears the same
+        glint with no enchantment on it.</div></li>
+      <li><div><b>It has no path.</b> Books come from the scribe, who now sells only in Carillon and the holdfasts, or from
+        luck in a chest. The Journal and Tasks know nothing about it.</div></li>
+    </ul>
+  </section>
+
+  <section class="col">
+    <span class="eyebrow">The loop</span>
+    <h2>Find it, learn it, write it, grow it</h2>
+    <div class="loop">
+      <div><h3>Find a page</h3><p>Every kind of gate keeps its own enchantment, and its Lord carries the page. Carillon's market sells a few, and old books still teach theirs.</p></div>
+      <div><h3>Learn it</h3><p>Read the page and you know that enchantment for good. Nothing is rolled, and nothing you've learned is ever lost.</p></div>
+      <div><h3>Inscribe it</h3><p>At your Inscribing Table, lay the piece down, pick from your book and trace the mark onto it with your own hand.</p></div>
+      <div><h3>It grows with your gear</h3><p>A better-forged piece holds more. A higher rank, and your Study, let enchantments go deeper.</p></div>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="scene-h">
+    <div class="inner">
+      <span class="eyebrow">The scene</span>
+      <h2 id="scene-h">Ten seconds at the table, with your hands</h2>
+      <p class="muted">In the Forge Song's family: its camera (cinematic by default, first person in settings), your hands,
+        the sounds, a short game of skill that never fails. Writing an enchantment you've traced cleanly before takes two
+        seconds, from memory.</p>
+      <div class="beats">
+        <div class="beat">
+          <svg viewBox="0 0 200 130" aria-hidden="true">
+            <rect x="14" y="30" width="172" height="86" rx="4" fill="var(--panel2)" stroke="var(--line)"/>
+            <rect x="20" y="36" width="160" height="74" rx="2" fill="none" stroke="var(--lapis)" stroke-dasharray="3 3" opacity=".7"/>
+            <path d="M40 74 L150 72 L170 76 L150 80 L40 80 Z" fill="var(--steel)" opacity=".8"/>
+            <rect x="28" y="70" width="12" height="14" fill="var(--brass)"/>
+            <rect x="150" y="10" width="26" height="22" rx="2" fill="var(--panel)" stroke="var(--brass)"/>
+            <path d="M154 18 h18 M154 24 h12" stroke="var(--lapis)" stroke-width="1.5"/>
+          </svg>
+          <h3>Lay it down</h3>
+          <p>The camera settles over the desk. Your off hand lays the piece flat on the slate.</p>
+        </div>
+        <div class="beat">
+          <svg viewBox="0 0 200 130" aria-hidden="true">
+            <path d="M100 22 L100 112" stroke="var(--line)"/>
+            <path d="M22 26 Q60 18 100 24 L100 112 Q60 106 22 112 Z" fill="var(--panel2)" stroke="var(--line)"/>
+            <path d="M178 26 Q140 18 100 24 L100 112 Q140 106 178 112 Z" fill="var(--panel2)" stroke="var(--line)"/>
+            <path d="M34 44 h50 M34 56 h40 M34 68 h46" stroke="var(--muted)" stroke-width="2"/>
+            <circle cx="122" cy="46" r="7" fill="none" stroke="var(--heat)" stroke-width="2"/><path d="M136 46 h30" stroke="var(--muted)" stroke-width="2"/>
+            <path d="M115 72 l7 -10 l7 10" fill="none" stroke="var(--bane)" stroke-width="2"/><path d="M136 68 h30" stroke="var(--muted)" stroke-width="2"/>
+            <path d="M115 92 c4 -8 10 -8 14 0" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M136 90 h24" stroke="var(--muted)" stroke-width="2"/>
+          </svg>
+          <h3>The book</h3>
+          <p>Left page: the piece and its room. Right page: what you know that fits, each with one plain line and its price.</p>
+        </div>
+        <div class="beat">
+          <svg viewBox="0 0 200 130" aria-hidden="true">
+            <path d="M24 64 L156 62 L180 68 L156 74 L24 74 Z" fill="var(--steel)" opacity=".75"/>
+            <path d="M70 68 l12 -14 l12 14 m10 -14 v14 m10 -14 c8 0 8 14 0 14" fill="none" stroke="var(--bane)" stroke-width="2" opacity=".45" stroke-dasharray="2 3"/>
+          </svg>
+          <h3>Choose</h3>
+          <p>The page lifts, and the enchantment's mark burns faintly onto the blade's flat, the breastplate or the tool's head.</p>
+        </div>
+        <div class="beat">
+          <svg viewBox="0 0 200 130" aria-hidden="true">
+            <path d="M24 64 L156 62 L180 68 L156 74 L24 74 Z" fill="var(--steel)" opacity=".75"/>
+            <path d="M70 68 l12 -14 l12 14" fill="none" stroke="var(--bane)" stroke-width="3" class="glow"/>
+            <path d="M104 54 v14 m10 -14 c8 0 8 14 0 14" fill="none" stroke="var(--bane)" stroke-width="2" opacity=".35" stroke-dasharray="2 3"/>
+            <path d="M94 68 L128 108" stroke="var(--brass)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="94" cy="68" r="4" fill="var(--lapis)"/>
+          </svg>
+          <h3>Trace</h3>
+          <p>Your main hand draws each stroke with the table's burin. On the line, the cut fills with lapis light and rings a note.</p>
+        </div>
+        <div class="beat">
+          <svg viewBox="0 0 200 130" aria-hidden="true">
+            <g opacity=".5" fill="none" stroke="var(--lapis)"><circle cx="100" cy="62" r="34"/><circle cx="100" cy="62" r="48" opacity=".6"/></g>
+            <path d="M24 58 L156 54 L180 60 L156 66 L24 68 Z" fill="var(--steel)" opacity=".9"/>
+            <path d="M40 62 H150" stroke="var(--bane)" stroke-width="2.5" class="glow"/>
+            <path d="M60 104 h80" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/>
+          </svg>
+          <h3>Wake</h3>
+          <p>The piece lifts and turns. Its new light runs along it, and all its enchantments ring together as a chord.</p>
+        </div>
+      </div>
+      <p class="note">Storyboard sketches, not game footage. A clean hand (every stroke finished, mostly on the line) gives back a third of the levels. Nothing ever fails, and leaving cancels with everything refunded.</p>
+    </div>
+  </section>
+
+  <section class="col">
+    <span class="eyebrow">The links</span>
+    <h2>What ties it to the forge and your Hearth</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Link</th><th>The rule</th></tr></thead>
+      <tbody>
+        <tr><td><b>Room</b> (how many it holds)</td><td>Forged armour by its Forge Song quality: Plain 1, Fine 2, Masterwork 3, Flawless 4. Forged weapons on the same scale, from the War Anvil's quality. Found weapons (Spoils, Marked, Lord-forged) 3. The Delver's Pick grows from 1 to 4 with its verses. Unforged gear 1, the same as Plain, so forging well always pays. Bows, tridents and rods 2.</td></tr>
+        <tr><td><b>Depth</b> (how strong each gets)</td><td>The piece's rank: E pieces I, D II, C III, B and up the enchantment's top. Vanilla gear counts by material (iron D, diamond C, netherite A).</td></tr>
+        <tr><td><b>Your Study</b></td><td>Anything deeper than II needs the table inside your Study, the Hearth room you already have (a lectern and bookshelves). Its gift becomes "Enchantments written here can go deeper". Its bookshelves send their letters drifting to the book.</td></tr>
+        <tr><td><b>Your armour's kind</b></td><td>Each archetype writes its own kind one level deeper: Bulwark wards, Strider carrying, Channeler keeping, Lord-forged any one.</td></tr>
+        <tr><td><b>The price</b></td><td>Three levels of experience and one lapis per level of depth (I costs 3 and 1, III costs 9 and 3). Mending and Silk Touch cost 10 levels. Your XP bar keeps its meaning. Scraping one off is free.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="col">
+    <span class="eyebrow">The thirty</span>
+    <h2>What an enchantment may do</h2>
+    <p class="muted">Five families, each with its own colour and kind of mark. Vanilla's enchantments keep their names. Ours use the same plain style.</p>
+    <div class="fams">
+      <div class="fam">
+        <svg viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="15" fill="none" stroke="var(--heat)" stroke-width="2.5"/><circle cx="27" cy="27" r="6" fill="none" stroke="var(--heat)" stroke-width="2"/></svg>
+        <div><h3>Wards <small>what your armour guards against</small></h3>
+          <div class="chips"><span class="chip" style="border-color:var(--heat)">Heat Ward</span><span class="chip" style="border-color:var(--frost)">Frost Ward</span><span class="chip" style="border-color:var(--charge)">Charge Ward</span><span class="chip" style="border-color:var(--gravity)">Gravity Ward</span><span class="chip" style="border-color:var(--spirit)">Spirit Ward</span><span class="chip">Blast Protection</span><span class="chip">Projectile Protection</span><span class="chip">Feather Falling</span><span class="chip">Clear Blood <i>poison and spores wear off faster</i></span></div>
+          <p class="muted" style="margin-top:6px;font-size:.93rem">A whole suit warded against one Force takes at most 30% less of it from ordinary creatures, and 20% from Lords, Wardens and named beasts. Only Force attacks count, never melee, so bosses stay as hard as the boss fights tuned them.</p></div>
+      </div>
+      <div class="fam">
+        <svg viewBox="0 0 54 54" aria-hidden="true"><path d="M27 8 L36 30 H18 Z M27 30 V46" fill="none" stroke="var(--bane)" stroke-width="2.5" stroke-linejoin="round"/></svg>
+        <div><h3>Banes <small>which kind of foe your weapon is deadly to</small></h3>
+          <div class="chips"><span class="chip">Bane of the Dead</span><span class="chip">Bane of Crawlers</span><span class="chip">Bane of Beasts</span><span class="chip">Bane of the Deep</span></div>
+          <p class="muted" style="margin-top:6px;font-size:.93rem">+8% a level, up to III. Never on a Lord, boss, guardian, sovereign or named beast, so bosses stay the boss fights' to tune.</p></div>
+      </div>
+      <div class="fam">
+        <svg viewBox="0 0 54 54" aria-hidden="true"><path d="M12 18 C12 42 42 42 42 18" fill="none" stroke="var(--gold)" stroke-width="2.5"/><path d="M20 14 h14" stroke="var(--gold)" stroke-width="2.5"/></svg>
+        <div><h3>Work and spoils <small>what you get from what you break or kill</small></h3>
+          <div class="chips"><span class="chip">Looting</span><span class="chip">Fortune</span><span class="chip">Silk Touch</span><span class="chip">Efficiency <i>not on the Delver's Pick</i></span><span class="chip">Harvest <i>more hide, bone and pelts</i></span><span class="chip">Insight <i>more experience</i></span></div></div>
+      </div>
+      <div class="fam">
+        <svg viewBox="0 0 54 54" aria-hidden="true"><path d="M8 22 c6 -8 12 -8 19 0 s13 8 19 0 M8 34 c6 -8 12 -8 19 0 s13 8 19 0" fill="none" stroke="var(--sea)" stroke-width="2.5"/></svg>
+        <div><h3>Carrying <small>where it carries you</small></h3>
+          <div class="chips"><span class="chip">Respiration</span><span class="chip">Aqua Affinity</span><span class="chip">Depth Strider</span><span class="chip">Swift Sneak</span></div></div>
+      </div>
+      <div class="fam">
+        <svg viewBox="0 0 54 54" aria-hidden="true"><path d="M14 27 c0 -10 12 -10 13 0 s13 10 13 0 s-12 -10 -13 0 s-13 10 -13 0" fill="none" stroke="var(--keep)" stroke-width="2.5"/></svg>
+        <div><h3>Keeping <small>how it keeps itself</small></h3>
+          <div class="chips"><span class="chip">Unbreaking</span><span class="chip">Mending</span></div>
+          <p class="muted" style="margin-top:6px;font-size:.93rem">Plus vanilla's bow, trident and rod enchantments (Infinity, Loyalty, Riptide, Luck of the Sea, Lure), found in old books and the market.</p></div>
+      </div>
+    </div>
+    <p class="muted"><b style="color:var(--fg)">Gone from every source in new worlds:</b> Protection, Sharpness and Power
+      (the forge's numbers); Fire Aspect, Flame and Channeling (elements belong to attunement); Knockback, Sweeping Edge,
+      Thorns and the mace's (fight moments belong to Marks and Arms); Fire Protection (folded into Heat Ward); Smite and Bane
+      of Arthropods (replaced by banes that spare Lords); Frost Walker (the Frostwalker set's twist); and the curses. Items
+      that already have them keep them.</p>
+  </section>
+
+  <section class="band" aria-labelledby="gates-h">
+    <div class="inner">
+      <span class="eyebrow">Found, not told</span>
+      <h2 id="gates-h">Every kind of gate keeps its own</h2>
+      <p class="muted">The first time you kill a kind of gate's Lord, its page goes straight into your pack, and into the
+        pack of every fighter who hit it. A later Lord of that kind gives a spare one time in five. The System says once
+        that every kind of gate keeps one. The gate card never names it.</p>
+      <div class="gates">
+        <div class="gate"><span class="rk">E</span><div><b>Hive</b><span>Bane of Crawlers</span></div></div>
+        <div class="gate"><span class="rk">E</span><div><b>Ember Mines</b><span>Heat Ward</span></div></div>
+        <div class="gate"><span class="rk">E</span><div><b>Bell Crypt</b><span>Bane of the Dead</span></div></div>
+        <div class="gate"><span class="rk">E</span><div><b>Fungal Hollow</b><span>Clear Blood</span></div></div>
+        <div class="gate"><span class="rk">E</span><div><b>Overgrown Temple</b><span>Unbreaking</span></div></div>
+        <div class="gate"><span class="rk">D</span><div><b>Drowned Archive</b><span>Respiration</span></div></div>
+        <div class="gate"><span class="rk">D</span><div><b>Glass Desert</b><span>Projectile Protection</span></div></div>
+        <div class="gate"><span class="rk">D</span><div><b>Lantern Night Market</b><span>Looting</span></div></div>
+        <div class="gate"><span class="rk">D</span><div><b>Clockwork Foundry</b><span>Charge Ward</span></div></div>
+        <div class="gate"><span class="rk">C</span><div><b>Frost Monastery</b><span>Frost Ward</span></div></div>
+        <div class="gate"><span class="rk">C</span><div><b>Mirror Palace</b><span>Spirit Ward</span></div></div>
+        <div class="gate"><span class="rk">C</span><div><b>Precursor Lab</b><span>Blast Protection</span></div></div>
+        <div class="gate"><span class="rk">C</span><div><b>Nightmare gates</b><span>Swift Sneak</span></div></div>
+        <div class="gate"><span class="rk">B</span><div><b>Sky Archipelago</b><span>Gravity Ward</span></div></div>
+        <div class="gate"><span class="rk">A</span><div><b>Abyssal Shrine</b><span>Mending</span></div></div>
+      </div>
+      <p class="muted">The rest come from Carillon's and the holdfasts' market (three pages a day, never one you know) and
+        from old books in chests, which teach what's on them. Later: carved Word Stones in Precursor ruins (Fortune, Silk
+        Touch), the Deep and the hunts.</p>
+    </div>
+  </section>
+
+  <section class="col">
+    <span class="eyebrow">How it shows</span>
+    <h2>Its own look, on your gear and at work</h2>
+    <ul class="finds">
+      <li><div><b>On your weapons and armour.</b> The single violet shimmer gives way to a thin line of script running along
+        the blade or the armour's seams, each enchantment in its own colour, lighting in turn. A Marked weapon keeps its
+        violet glint.</div></li>
+      <li><div><b>Seen doing its job.</b> A ward's mark flashes where the blow lands. A bane leaves a brief mark on the
+        creature. An extra drop glints gold as it falls. Mending's orbs bend into the piece on a thread of light. Depth
+        Strider leaves a faint wake.</div></li>
+      <li><div><b>The table.</b> Dark wood under a slate top, a lapis channel round its edge, your book floating open over a
+        brass stand. In your Study, the bookshelves' letters drift to it, vanilla's best effect redone in our own
+        script.</div></li>
+      <li><div><b>The sound.</b> Heavy leather and pages, the burin on metal or leather, a note per stroke in each family's
+        voice, and the piece's chord when it wakes. Every recording is listed to you first, as for mining.</div></li>
+    </ul>
+    <div class="mock">
+      <div class="slots" aria-label="Sketch of the Journal's Enchantments category">
+        <div class="hd"><span>JOURNAL · ENCHANTMENTS</span><span>4/30</span></div>
+        <div class="slot f"><em>1</em><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="14" fill="none" stroke="var(--heat)" stroke-width="3"/></svg></div>
+        <div class="slot"><em>2</em>?</div><div class="slot"><em>3</em>?</div><div class="slot"><em>4</em>?</div><div class="slot"><em>5</em>?</div><div class="slot"><em>6</em>?</div>
+        <div class="slot"><em>7</em>?</div><div class="slot"><em>8</em>?</div>
+        <div class="slot f"><em>9</em><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="13" fill="none" stroke="var(--spirit)" stroke-width="3"/><path d="M21 27 h12" stroke="var(--spirit)" stroke-width="3"/></svg></div>
+        <div class="slot f"><em>10</em><svg viewBox="0 0 54 54"><path d="M27 10 L36 30 H18 Z" fill="none" stroke="var(--bane)" stroke-width="3"/></svg></div>
+        <div class="slot"><em>11</em>?</div><div class="slot"><em>12</em>?</div>
+        <div class="slot"><em>13</em>?</div><div class="slot"><em>14</em>?</div><div class="slot"><em>15</em>?</div><div class="slot"><em>16</em>?</div><div class="slot"><em>17</em>?</div><div class="slot"><em>18</em>?</div>
+        <div class="slot"><em>19</em>?</div><div class="slot"><em>20</em>?</div><div class="slot"><em>21</em>?</div><div class="slot"><em>22</em>?</div><div class="slot"><em>23</em>?</div>
+        <div class="slot f"><em>24</em><svg viewBox="0 0 54 54"><path d="M14 27 c0 -9 12 -9 13 0 s13 9 13 0 s-12 -9 -13 0 s-13 9 -13 0" fill="none" stroke="var(--keep)" stroke-width="3"/></svg></div>
+      </div>
+      <div class="cap">
+        <p><b style="color:var(--fg)">Journal:</b> a new ENCHANTMENTS category in the catalogue you already have. A found
+          one shows its mark, what it does, what it fits and where you learned it. One not found is "?" and its number,
+          nothing else.</p>
+        <p><b style="color:var(--fg)">Tasks:</b> every step shows in the K menu, so you know enchanting is there. From your
+          first armour, the Armour and Weapons tabs say "Find an enchantment for your armour" (and weapon), with where
+          pages come from. After your first gate, "Read the page", "Make an Inscribing Table" and "Inscribe your first
+          enchantment" lead in turn. Later, "Inscribe your armour" shows while a piece has room and you know something that
+          fits, and "Set your table in your Study" shows once a piece could go deeper. Each one leaves the moment it's done.</p>
+        <p><b style="color:var(--fg)">Tooltips:</b> every piece says its room plainly: "Room for one more enchantment".</p>
+        <p class="note">Sketch of the layout, not the game's art.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="col">
+    <span class="eyebrow">Fair to old worlds, safe with friends</span>
+    <h2>Nothing taken away</h2>
+    <ul class="finds">
+      <li><div>Items keep every enchantment they already have, Sharpness and Protection included. A piece over its room
+        says "Full" until you scrape one off.</div></li>
+      <li><div>The vanilla table can't be crafted any more. Any old one you use turns into an Inscribing Table in place. The
+        anvil still repairs and renames, but it won't glue enchantments on. Old books teach what's on them.</div></li>
+      <li><div>Knowledge is yours alone and kept through death. Pages can be given to a friend. One person writes at a table
+        at a time. The server judges everything: writing always succeeds, the trace only decides the refund, and leaving
+        refunds everything.</div></li>
+    </ul>
+  </section>
+
+  <section class="col">
+    <span class="eyebrow">How it gets built</span>
+    <h2>Four stages, each one playable</h2>
+    <div class="phases">
+      <div class="phase"><span class="p">S0</span><div><h3>The sculpted sets take enchantments</h3><p>A tag fix on its own, so nothing you forge is worse than old diamond.</p><p class="see">You see: your Masterwork set at the table. About an hour.</p></div></div>
+      <div class="phase"><span class="p">S1</span><div><h3>The table and the rule</h3><p>The Inscribing Table, the whole scene, pages and learning, all thirty enchantments, the vanilla fold, room, depth and your Study, the gate, market and old-book pages, the Journal category, Tasks steps, tooltips.</p><p class="see">You see: your first gate's page, your table, your first inscription. About a day.</p></div></div>
+      <div class="phase"><span class="p">S2</span><div><h3>The look and the sound</h3><p>Script light in each enchantment's colour on our weapons and armour, enchantments seen at work, the table's final art and the Study's drifting letters, the sounds.</p><p class="see">You see: your gear lit by what's written on it. About half a day.</p></div></div>
+      <div class="phase"><span class="p">S3</span><div><h3>More doors and links</h3><p>Word Stones in Precursor ruins, the Deep, the hunts, the Delver's Pick's room by verse, the War Anvil's quality as room, a "Room for N" line on both forges' result cards.</p><p class="see">You see: enchantments in more of the world. About half a day.</p></div></div>
+    </div>
+    <p class="muted">Every stage merges only on green CI and CI tour shots I've reviewed.</p>
+    <p class="muted"><b style="color:var(--fg)">Agreed with the weapon forge</b> (<a href="https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ">its plan</a>,
+      decision 12): it owns the metal (forging, tiers, quality, tempering, attunement). This plan owns what's written onto
+      an item after it's made. There's no enchanting step inside the forge scene. The two meet in one small hook that tells
+      the table how well a piece was forged and its rank. Agreed with the boss fights: banes never touch a boss, wards
+      take at most 20% off a boss's Force attacks, and it adds a warded fighter to its fight sim to tune against.</p>
+  </section>
+
+  <section class="col" aria-labelledby="dec-h">
+    <span class="eyebrow">Decisions for you</span>
+    <h2 id="dec-h">Thirteen yeses or noes</h2>
+    <p>Tap Yes or No on each. Your answers save as you tap and I read them from here. Add a note to change anything.</p>
+  </section>
+  <div class="tally" id="tally"><span id="tallytext">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to all I haven't answered</button></div>
+  <ol class="decisions" id="decisions"></ol>
+
+  <div class="foot">
+    <span>Plan: <code>docs/enchanting/PLAN.md</code> on the branch <code>claude/enchanting-plan-c9d533</code>. The rules go into SPEC §45 with the first code.</span>
+    <span>All art and sounds will be ours, made by our own kit. Every CC0 recording is listed to you before it's used.</span>
+    <span>Nothing is built until you say yes.</span>
+  </div>
+</div>
+
+<script>
+const DECISIONS = [
+  ["Fold vanilla enchanting into our own way. Vanilla's enchantment effects stay; the table's random rolls, books glued on at the anvil and the scribe's random books go.", "Everything in the brief, while JEI, Jade, tooltips and old items keep working."],
+  ["The rule: enchantments never make a thing stronger. Sharpness, Protection and Power leave every source in new worlds. Old items keep them.", "The forge, tiers and tempering stay the one ladder of strength, and the fights stay as tuned."],
+  ["Learn once, write many. A page teaches you an enchantment for good, with no random rolls.", "Collecting them is a goal, and trying things at the table is cheap."],
+  ["Where pages come from: each kind of gate keeps its own (its Lord's page the first time you clear that kind), the market, old books; later, Precursor Word Stones, the Deep and the hunts.", "A reason to clear every kind of gate, and a path to every enchantment."],
+  ["The scene: trace the mark with your hand. A clean hand gives back a third of the levels, and after one clean trace you can write it from memory in two seconds.", "Skill is worth it but never fails you, and it stays quick the twentieth time."],
+  ["Room from the forge (Plain 1 to Flawless 4; found weapons 3; unforged gear 1, the same as Plain; bows, tridents and rods 2) and depth from the piece's rank.", "Forging well and climbing ranks pay off in enchanting too."],
+  ["Anything deeper than II only at a table in your Study.", "The Study gets a real job and your home matters to your gear."],
+  ["The price is experience levels and lapis.", "Your XP bar keeps its meaning and lapis stays worth mining."],
+  ["Wards against the five Forces and banes that never touch Lords. A whole suit takes at most 30% off one Force from ordinary creatures, 20% from Lords, Wardens and named beasts, and never off melee.", "You prepare for the gate you're going into without making bosses trivial (agreed with the boss-fights session)."],
+  ["Names: vanilla's enchantments keep their names, ours use the same plain style, and the station is the Inscribing Table.", "Players recognise what they know, and nothing reads like a riddle."],
+  ["Old worlds keep everything, and old vanilla tables turn into Inscribing Tables when used.", "Nobody loses gear, and there's never a second system."],
+  ["Build in stages 0 to 3, with stage 0 (the sculpted sets take enchantments) shipped first.", "The armour gap closes today, and you play each stage."],
+  ["Every enchanting step on the Tasks page, on the Armour and Weapons tabs from your first armour on. Reading your first page, making the table and writing your first enchantment come right after your first gate.", "You can see enchanting is possible before you find it, and you're never stuck on what comes next."]
+];
+const list = document.getElementById("decisions"), tallyText = document.getElementById("tallytext"), allYes = document.getElementById("allyes");
+const answers = {};
+let db = null, canWrite = true;
+const cards = DECISIONS.map(([q, why], i) => {
+  const id = "d" + String(i + 1).padStart(2, "0");
+  const li = document.createElement("li"); li.className = "dec";
+  const pq = document.createElement("div"); pq.className = "q"; pq.textContent = q;
+  const pw = document.createElement("div"); pw.className = "why"; pw.textContent = why;
+  const pr = document.createElement("div"); pr.className = "rec"; pr.textContent = "My recommendation: yes";
+  const ans = document.createElement("div"); ans.className = "ans";
+  const y = document.createElement("button"); y.type = "button"; y.className = "y"; y.textContent = "Yes"; y.id = id + "-yes";
+  const n = document.createElement("button"); n.type = "button"; n.className = "n"; n.textContent = "No"; n.id = id + "-no";
+  const st = document.createElement("span"); st.className = "state";
+  ans.append(y, n, st);
+  const note = document.createElement("textarea"); note.id = id + "-note"; note.placeholder = "A note, if you want to change something (optional)";
+  note.setAttribute("aria-label", "Note on decision " + (i + 1));
+  li.append(pq, pw, pr, ans, note); list.append(li);
+  y.addEventListener("click", () => save(id, { answer: "yes" }));
+  n.addEventListener("click", () => save(id, { answer: "no" }));
+  note.addEventListener("change", () => save(id, { note: note.value.trim() }));
+  return { id, li, y, n, st, note };
+});
+function render() {
+  let yes = 0, no = 0;
+  for (const c of cards) {
+    const a = answers[c.id] || {};
+    c.y.setAttribute("aria-pressed", String(a.answer === "yes"));
+    c.n.setAttribute("aria-pressed", String(a.answer === "no"));
+    c.li.classList.toggle("yes", a.answer === "yes"); c.li.classList.toggle("no", a.answer === "no");
+    if (document.activeElement !== c.note && typeof a.note === "string") c.note.value = a.note;
+    if (a.answer === "yes") yes++; else if (a.answer === "no") no++;
+    c.y.disabled = c.n.disabled = c.note.disabled = !db || !canWrite;
+  }
+  const left = cards.length - yes - no;
+  tallyText.textContent = !db ? "Answers can't be saved in this view. Reply in chat with the numbers you'd change."
+    : yes + " yes · " + no + " no · " + left + " to answer";
+  allYes.hidden = !db || !canWrite || left === 0;
+}
+async function save(id, patch) {
+  if (!db) return;
+  const c = cards.find(x => x.id === id);
+  const next = Object.assign({ answer: null, note: "" }, answers[id], patch, { at: new Date().toISOString() });
+  answers[id] = next; render(); c.st.textContent = "saving…";
+  try { await db.doc("decisions/" + id).set(next); c.st.textContent = "saved"; }
+  catch (e) {
+    if (e && (e.code === "invalid_argument" || e.code === "permission_denied" || e.code === "not_granted")) { canWrite = false; c.st.textContent = "only Euan can answer"; render(); }
+    else c.st.textContent = "not saved, try again";
+  }
+}
+allYes.addEventListener("click", async () => {
+  for (const c of cards) if (!(answers[c.id] && answers[c.id].answer)) await save(c.id, { answer: "yes" });
+});
+render();
+(async () => {
+  try { db = await claude.use("db"); } catch (e) { db = null; }
+  if (!db) { render(); return; }
+  try { const user = await claude.use("user"); if (user && (await user.can("data.write")) === false) canWrite = false; } catch (e) {}
+  const timer = setTimeout(() => { if (tallyText.textContent.startsWith("Loading")) render(); }, 10000);
+  db.collection("decisions").onSnapshot(snap => {
+    clearTimeout(timer);
+    for (const d of snap.docs) if (d.exists) answers[d.id] = Object.assign({}, d.data());
+    render();
+  }, () => { clearTimeout(timer); render(); });
+  render();
+})();
+</script>

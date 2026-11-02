@@ -41,8 +41,12 @@ public final class GatesClient {
         bus.addListener(Blight::onFog);
         bus.addListener(GateHum::onTick);
         bus.addListener(GatesClient::tick);
+        bus.addListener(SpoilsFlights::tick);
+        SpoilsPanel.init(); // the Satchel and what is held for you, beside the inventory (SPEC §13, "Gate spoils")
         bus.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
             ClientGates.clear();
+            SpoilsFlights.clear();
+            SpoilsPanel.forget();
             GateWorldClient.clear();
             WorldBed.stop();
         });
@@ -73,16 +77,11 @@ public final class GatesClient {
         e.register(dev.awaken.gates.net.WorldPayloads.Journey.TYPE, (msg, ctx) -> WorldJourney.start(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.AtlasView.TYPE, (msg, ctx) -> GateWorldClient.atlas(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.Hush.TYPE, (msg, ctx) -> WorldBed.hush(msg.ticks()));
-        e.register(GatePayloads.SatchelView.TYPE, (msg, ctx) -> {
-            ClientGates.satchel = List.copyOf(msg.items());
-            ClientGates.satchelXp = msg.xp();
-            if (msg.open()) {
-                Minecraft mc = Minecraft.getInstance();
-                if (mc.gui.screen() instanceof SatchelScreen) return;
-                if (mc.gui.screen() != null) mc.gui.pushScreenLayer(new SatchelScreen());
-                else mc.gui.setScreen(new SatchelScreen());
-            }
+        e.register(GatePayloads.SpoilsView.TYPE, (msg, ctx) -> {
+            ClientGates.spoils = msg;
+            ClientGates.spoilsNanos = System.nanoTime();
         });
+        e.register(GatePayloads.SpoilsFlight.TYPE, (msg, ctx) -> SpoilsFlights.start(msg));
     }
 
     private static void renderers(EntityRenderersEvent.RegisterRenderers e) {

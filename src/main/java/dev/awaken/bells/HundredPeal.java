@@ -264,6 +264,42 @@ final class HundredPeal {
         }
 
         @Override
+        public @org.jspecify.annotations.Nullable BlockPos roost(ServerLevel level, BlockPos anchor) {
+            BellWorld.Home h = BellWorld.get(level.getServer()).peek(anchor);
+            return h == null || h.roost == null || !level.isLoaded(h.roost) || !level.getBlockState(h.roost).is(BellContent.FOUND_BELL.get()) ? null : h.roost;
+        }
+
+        @Override
+        public boolean tower(BlockPos anchor) {
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            BellWorld.Home h = server == null ? null : BellWorld.get(server).peek(anchor);
+            return h != null && BellTower.high(server.overworld(), h, anchor);
+        }
+
+        @Override
+        public void raised(ServerLevel level, BlockPos pos) {
+            BellTower.raised(level, pos);
+        }
+
+        @Override
+        public void spirit(ServerPlayer player, String spirit, String name, BlockPos at) {
+            SpiritBells.told(player, spirit, name, at);
+        }
+
+        @Override
+        public int song(BlockPos anchor) {
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            BellWorld.Home h = server == null ? null : BellWorld.get(server).peek(anchor);
+            return h == null ? 0 : h.hung.size();
+        }
+
+        @Override
+        public boolean toll(ServerLevel level, BlockPos anchor) {
+            BellWorld.Home h = BellWorld.get(level.getServer()).peek(anchor);
+            return h != null && BellTower.toll(level, h);
+        }
+
+        @Override
         public boolean kinsongNear(ServerLevel level, BlockPos at, int reach, int days) {
             if (level.dimension() != Level.OVERWORLD) return false;
             BellWorld w = BellWorld.get(level.getServer());

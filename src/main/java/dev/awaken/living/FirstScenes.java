@@ -71,7 +71,9 @@ public final class FirstScenes {
             // the goal: all hundred ringing again
             "If someone found all hundred and got them ringing again, the whole land would be covered. The gates might stop. People could go home. Nobody from the city can stay out there long enough to look.",
             "Not you, though. You died in a gate and came back. Whatever the Lull does, it can't do it to you. That's what the licence really means. If anyone can find them, it's you.",
-            "Here. It's a coal from this fire. Put it down wherever you want to live, and that's your home. Nobody will come and bother you out there. Nobody can.",
+            // her bell with the coal (SPEC §43.16): the Ember Bell, given in Bells.told when the step completes
+            "Here. A coal from this fire, and this. It's the little bell from over my fire at home. I've carried it eleven years and never once rung it. Put the coal down wherever you want to live, and hang the bell beside it. A fire keeps you warm. A bell keeps the ground shut. That's all a home is, out there.",
+            "The gates took a lot of the bells. Whatever lives at the bottom of a gate likes to sit on what the gate swallowed. If you ever kill one and there's a bell lying there, bring it home.",
             "And don't believe everything the Association says. It isn't all monsters out there. Most of what lives out there just wants to be left alone. Watch before you draw.",
             "Go on, then. Good luck. Come back now and then and tell me what it looks like. I haven't seen past that ridge in eleven years."};
     /** The line that holds the coal out. */

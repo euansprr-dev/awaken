@@ -227,7 +227,7 @@ public final class Upgrades {
         Rank rank = Progression.rank(sp);
         boolean armory = h.roomAt(forgePos.relative(net.minecraft.core.Direction.UP), RoomType.ARMORY).isPresent() || hasArmoryAround(h, forgePos);
         var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Forge · Tier " + roman(h.forgeTier)));
-        w.row(Component.literal("Armory"), Component.literal(armory ? "yes" : "no · needs an anvil and an armour stand in this room"));
+        w.row(Component.literal("Forge room"), Component.literal(armory ? "yes" : "no · needs an anvil and an armour stand in this room"));
         w.row(Component.literal("Temper limit"), Component.literal(roman(temperCap(h, armory))));
         w.body(Component.literal("Hold a weapon or armour piece and use the Forge to temper it."));
         if (h.forgeTier >= HearthRecord.MAX_FORGE_TIER) {
@@ -303,6 +303,13 @@ public final class Upgrades {
         return armory ? Math.min(MAX_TEMPER, h.forgeTier * 2) : 1;
     }
 
+    /** The temper limit at a Forge for this player, as {@link #offerTemper} reckons it there (the War Anvil reads it). */
+    public static int temperCapAt(ServerPlayer sp, BlockPos at) {
+        Optional<HearthRecord> ho = HearthService.homeOf(sp);
+        boolean armory = ho.isPresent() && (hasArmoryAround(ho.get(), at) || ho.get().roomAt(at, RoomType.ARMORY).isPresent());
+        return ho.map(h -> temperCap(h, armory)).orElse(1);
+    }
+
     /** Offers to temper the item in {@code hand}. source = "forge" (at a Forge block) or "oren" (the Blacksmith). */
     public static void offerTemper(ServerPlayer sp, ServerLevel level, BlockPos at, InteractionHand hand, String source) {
         ItemStack stack = sp.getItemInHand(hand);
@@ -317,7 +324,7 @@ public final class Upgrades {
         w.row(Component.literal("Temper"), Component.literal(current == 0 ? "none" : roman(current)));
         if (current >= cap) {
             w.body(Component.literal(current >= MAX_TEMPER ? "It can't take any more."
-                    : armory ? "Upgrade the Forge to go further." : "Build an Armory (anvil, Forge and armour stand in one room) to go further."));
+                    : armory ? "Upgrade the Forge to go further." : "Put an anvil and an armour stand in the Forge's room and it'll go further."));
             Signal.send(sp, w.ttl(20 * 8).build());
             return;
         }

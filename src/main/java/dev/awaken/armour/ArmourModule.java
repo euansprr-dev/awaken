@@ -43,6 +43,21 @@ public final class ArmourModule {
         }
         ArmourNow.register();
         ArmourGoals.register();
+        // how well a piece was forged and its rank, for enchanting's room and depth (SPEC §45.5)
+        dev.awaken.core.api.ForgeHooks.reader(new dev.awaken.core.api.ForgeHooks.Reader() {
+            @Override public java.util.OptionalInt quality(net.minecraft.world.item.ItemStack s) {
+                Forged f = s.get(ArmourContent.FORGED.get());
+                return f == null ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(f.quality());
+            }
+            @Override public String rank(net.minecraft.world.item.ItemStack s) {
+                ArmourLooks.Look l = ArmourLooks.of(s);
+                return l == null ? null : l.set().rank.label;
+            }
+            @Override public String archetype(net.minecraft.world.item.ItemStack s) {
+                ArmourLooks.Look l = ArmourLooks.of(s);
+                return l == null ? null : l.set().archetype.label;
+            }
+        });
         Sources.declare("forged at a Fitting Stand, in the Forge Song (SPEC §44.4); E sets by hand at a works table", hunter);
         Sources.declare("forged at a Fitting Stand, in the Forge Song, once its set's pattern is known (SPEC §44.4)", ArmourItems.pieceIds());
         Sources.declare("carried by gate creatures of its rank: elites and wardens sometimes, the gate's Lord always (SPEC §44.4)",
