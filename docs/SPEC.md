@@ -17109,7 +17109,8 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
   - **The look**: while the nearest player is you and you haven't learned it, its letters (`awaken:enchant_letter`, in
     its colour) lift off the face every three ticks and gather above it, with the paper hum (0.14) every 4.2 seconds;
     the moment you learn it 28 letters stream from the face into you; known, it goes quiet. Looking at it says, in its
-    colour, "A Word Stone carved with Insight. Hold your hand to it to learn it." (or "You know this one.").
+    colour, "A Word Stone carved with Insight. Hold your hand to it to learn it." (or "You know this one."). Learned while
+    you look, the line clears at once for the chat line that says what you learned, and stays away until you look elsewhere.
   - Test `enchant_word_stone` (every ruin kind places one, in open air on a floor; the sea set; the same seed the same
     carving; a touch teaches once).
 - **The wake's chord**: with the wake sound, the new enchantment's family note (0.8), and each other enchantment on the
