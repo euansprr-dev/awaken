@@ -60,7 +60,9 @@ public final class BellModule {
             Bells.sovereignFell(level, dead);
         });
         bus.addListener((PlayerInteractEvent.RightClickBlock e) -> {
-            if (!(e.getEntity() instanceof ServerPlayer p) || !e.getLevel().getBlockState(e.getPos()).is(Blocks.BELL)) return;
+            if (!(e.getEntity() instanceof ServerPlayer p)) return;
+            if (e.getLevel().getBlockState(e.getPos()).is(Blocks.LECTERN)) VillageBells.read(p, e.getPos());
+            if (!e.getLevel().getBlockState(e.getPos()).is(Blocks.BELL)) return;
             String key = Holdfast.bellAt(p, e.getPos());
             if (key != null) Bells.holdfastStruck(p, key, e.getPos().immutable());
         });
@@ -80,7 +82,7 @@ public final class BellModule {
             if (n > 0 && level.getRandom().nextFloat() < Math.min(0.8F, n * WARD_PER)) e.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
         });
         bus.addListener((net.neoforged.neoforge.event.entity.living.LivingFallEvent e) -> {
-            if (e.getEntity() instanceof ServerPlayer p && Bells.voiceHere(p, BellCatalog.Voice.FEATHER) > 0) e.setDamageMultiplier(0F);
+            if (e.getEntity() instanceof ServerPlayer p && (Bells.voiceHere(p, BellCatalog.Voice.FEATHER) > 0 || DreamBells.softLanding(p))) e.setDamageMultiplier(0F);
         });
         // your bells stay with you when you die (SPEC §43.16): out of the drops, back into your hands
         bus.addListener((net.neoforged.neoforge.event.entity.living.LivingDropsEvent e) -> {

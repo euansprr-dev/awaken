@@ -283,6 +283,7 @@ public final class Spirits {
         mem.spiritLines.put(id, heard);
         if (line + 1 >= total) {
             CONV.remove(sp.getUUID());
+            dev.awaken.core.api.BellHooks.spirit(sp, id, def.displayName(), ghost.blockPosition()); // it may hold a bell for them (SPEC §43.16)
             if (mem.spiritsComplete.add(id)) {
                 changed = true;
                 DirectorLog.log(sp, "veil", "heard the whole story of " + id);
