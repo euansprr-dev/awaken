@@ -248,7 +248,7 @@ public final class CraftEvents {
             if (Crafts.has(p, Craft.SMITHING, "fine_edge")) made.set(DataComponents.MAX_DAMAGE, (int) (made.getMaxDamage() * 1.1));
             var enchants = p.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
             if (Crafts.has(p, Craft.SMITHING, "masterwork") && r.nextFloat() < 0.10F) made.enchant(enchants.getOrThrow(Enchantments.UNBREAKING), 1);
-            if (Crafts.has(p, Craft.SMITHING, "keen") && r.nextFloat() < 0.20F && made.has(DataComponents.WEAPON)) made.enchant(enchants.getOrThrow(Enchantments.SHARPNESS), 1);
+            if (Crafts.has(p, Craft.SMITHING, "keen") && r.nextFloat() < 0.20F && made.has(DataComponents.WEAPON)) made.enchant(enchants.getOrThrow(Enchantments.UNBREAKING), 1); // never Sharpness: enchantments never add strength (SPEC §45.1)
             if (Crafts.has(p, Craft.SMITHING, "signature")) {
                 made.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Made by " + p.getName().getString()).withStyle(net.minecraft.ChatFormatting.GOLD))));
             }

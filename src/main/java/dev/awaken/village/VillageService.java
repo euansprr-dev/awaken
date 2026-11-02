@@ -260,6 +260,7 @@ public final class VillageService {
         if (!TRADERS.contains(job)) return false;
         List<Trade.Deal> deals = Trade.deals(job, l.plan().family, l.plan().seed ^ rec, today(p.level().getServer()), (ServerLevel) p.level());
         if (deals == null || deals.isEmpty()) return false;
+        if (job.equals("scribe")) deals = Trade.forBuyer(deals, p);
         // (SPEC §28.9) the day a caravan came in, the stalls carry what it brought from where it set out
         int came = l.rec().count(today(p.level().getServer()), "caravan_land");
         if (job.equals("stallkeeper") && came > 0) {

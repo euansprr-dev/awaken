@@ -85,6 +85,8 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
 
     private ArmourPayloads.@Nullable Done done;
     private float doneAt;
+    // what other modules add under the finished card (enchanting's room, SPEC §45.14), read once when it comes
+    private java.util.List<String> doneLines = java.util.List.of();
     private final float[] p = new float[3];
 
     ForgeSongScreen(BlockPos pos, boolean helper) {
@@ -790,6 +792,10 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         float now = ForgeClient.now(0);
         done = d;
         doneAt = now;
+        ArmourSet set = ArmourSet.values()[Math.min(d.piece() / 4, ArmourSet.values().length - 1)];
+        ItemStack made = ForgeScreen.item(set, ForgeSong.PIECES[d.piece() % 4]).copy();
+        made.set(ArmourContent.FORGED.get(), new dev.awaken.armour.Forged(dev.awaken.armour.Forged.SCHEMA, set.id, d.quality(), 0, false, false, ""));
+        doneLines = dev.awaken.core.api.ForgeHooks.cardLines(made);
         last = null;
         ForgeCamera.cut(ForgeShots.fit(pos), now, 22);
         ForgeSong.Quality q = ForgeSong.Quality.of(d.quality());
@@ -830,6 +836,10 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
             g.text(font, line, cx + 10, ly + 2, 0xFF000000 | set.rank.colour, false);
             ly += 10;
         }
+        for (String line : doneLines) {
+            g.text(font, line, cx + 10, ly + 4, 0xFFA898FF, false);
+            ly += 10;
+        }
         button(g, cx + 10, cy + ch - 24, "Forge another");
         button(g, cx + cw - 10 - bw("Done"), cy + ch - 24, "Done");
     }
@@ -848,7 +858,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         ArmourSet set = ArmourSet.values()[Math.min(d.piece() / 4, ArmourSet.values().length - 1)];
         int lines = font.split(Component.literal(doneAbout(ForgeSong.Quality.of(d.quality()))), cw - 20).size();
         if (d.woke()) lines += font.split(Component.literal(set.setName + " stands whole on the stand. Wear all four and it wakes on you too."), cw - 20).size();
-        return 74 + 10 * lines;
+        return 74 + 10 * (lines + doneLines.size());
     }
 
     private int bw(String s) {

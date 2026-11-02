@@ -1,0 +1,127 @@
+# Enchanting S1-S3, the Inscribing Table (SPEC §45.10-45.14): the table in a small study (its floating book, the lapis
+# channel waking as you come near), the book's two pages over the lower half with your piece laid on the slate, a row
+# rested on (its mark faint on the piece), the trace (the mark burning, the glowing end, the burin in your hand), the
+# strokes filling with lapis, the wake (the piece turns once) and its card, the book again with the enchantment on the
+# piece, the script line on the sword in hand and on worn armour, the Journal's ENCHANTMENTS category, and a Precursor
+# Word Stone (its letters lifting off the face, then streaming into you as you learn it). The pilot
+# traces (tours can't drag a mouse): /awaken enchant pilot ...
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/enchant-table.txt 1200
+world autopilot_enchant_table creative 20261102
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd time set 12600
+cmd gamemode creative
+# the study's chunks first: a busy runner's server can fall seconds behind the script (fills there fail unloaded)
+cmd tp @s 0.5 201 0.5 0 20
+cmd forceload add -16 -16 16 16
+wait 300
+# ---- a small study high over spawn: a stone floor, shelves behind the table, timber walls, a dark roof, two lanterns ----
+cmd fill -6 200 -4 6 200 8 minecraft:polished_deepslate
+cmd fill -6 201 8 6 204 8 minecraft:bookshelf
+cmd fill -6 201 -4 -6 204 8 minecraft:spruce_planks
+cmd fill 6 201 -4 6 204 8 minecraft:spruce_planks
+cmd fill -6 205 -4 6 205 8 minecraft:dark_oak_planks
+cmd setblock 0 201 4 awaken:inscribing_table[facing=north]
+cmd setblock -2 201 5 minecraft:lantern
+cmd setblock 2 201 5 minecraft:lantern
+wait 40
+cmd gamemode survival
+cmd xp add @s 40 levels
+cmd give @s minecraft:lapis_lazuli 32
+cmd awaken admin enchant learn all
+# one of our swords, so the written enchantment shows as its own light (SPEC §45.11)
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 60
+screen close
+# the player fell while the study was built under them: back up onto its floor
+cmd tp @s 0.5 201 0.5 0 20
+wait 40
+shot enchant_01_the_table_at_dusk
+# ---- step up and use it: the book opens, the piece goes down onto the slate ----
+cmd tp @s 0.5 201 2.6 0 34
+wait 30
+use
+wait 8
+shot enchant_02_laying_the_piece
+wait 30
+shot enchant_03_the_book_open
+cmd awaken enchant pilot hover 10
+wait 20
+shot enchant_04_resting_on_bane_of_the_dead
+# ---- choose it: the book goes down, the mark burns faint on the sword ----
+cmd awaken enchant pilot choose 10
+wait 24
+shot enchant_05_the_mark_on_the_piece
+cmd awaken enchant pilot trace
+wait 24
+shotnow enchant_06_the_first_stroke
+wait 26
+shotnow enchant_07_strokes_filling
+wait 16
+shotnow enchant_08_the_last_stroke
+wait 14
+shotnow enchant_09_it_wakes
+wait 18
+shotnow enchant_10_the_piece_turning
+wait 40
+shot enchant_11_the_card
+# ---- the book again: Bane of the Dead on the left page, from memory on the right ----
+cmd awaken enchant pilot again
+wait 30
+shot enchant_12_the_book_after
+cmd awaken enchant pilot close
+wait 30
+shot enchant_13_the_table_after
+# ---- the script line: Bane of the Dead's red along the sword in your hand, two wards in turn on worn armour ----
+cmd tp @s 0.5 201 1.0 0 8
+wait 40
+shot enchant_14_the_script_line_held
+cmd item replace entity @s armor.chest with awaken:lordscale_chestplate[enchantments={"awaken:heat_ward":2,"awaken:frost_ward":1}]
+# lit for the look (the study's lanterns leave a worn piece in shadow at the front camera's distance)
+cmd effect give @s minecraft:night_vision 600 0 true
+camera front
+wait 30
+shotnow enchant_15_wards_in_turn_a
+wait 30
+shotnow enchant_16_wards_in_turn_b
+camera first
+# ---- the Journal's ENCHANTMENTS category ----
+screen journal
+wait 10
+journal enchantments
+wait 20
+shot enchant_17_journal_enchantments
+screen close
+# ---- a Precursor Word Stone (SPEC §45.14): while you haven't learned it its letters lift off the carved face; a hand on
+# it teaches it and they stream into you; then it goes quiet ----
+cmd awaken admin enchant forget
+cmd setblock 3 201 2 awaken:word_stone[facing=west,word=19]
+cmd tp @s 0.6 201 2.5 -90 22
+wait 60
+shot enchant_18_a_word_stone
+use
+wait 6
+shotnow enchant_19_its_letters_stream_in
+wait 40
+shot enchant_20_the_stone_quiet
+quit

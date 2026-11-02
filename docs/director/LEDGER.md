@@ -839,3 +839,46 @@ happens).
 - **Edges**: one per party, each claimant lifts their own; with no floor near it goes straight to their hands; a gate
   that closes first takes it back to the pool (`FoundBells.closed`, `lost`): the next Lord keeps one for that hunter;
   a party member who already has it isn't a claimant; it can't be broken or pushed.
+
+## Enchanting: the Inscribing Table (SPEC §45)
+
+### The Inscribing Table (`awaken:inscribing_table`)
+- **Get**: crafted: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone. Any vanilla enchanting table
+  you use (old worlds, villages, structures) turns into one.
+- **For**: writing the enchantments you've learned onto your own gear, deepening them, scraping them off.
+- **Know**: the Tasks page's main path right after your first gate ("Make an Inscribing Table", with its items) once
+  you know an enchantment; the page's own hover line ("Write it onto your gear at an Inscribing Table"); the learn message.
+- **Source**: `data/awaken/recipe/inscribing_table.json`; `Fold.swap`; loot `blocks/inscribing_table`.
+- **Links**: pages (learning), the Forge Song and Armoury (room), the Study (depth past II), the market (pages).
+- **Edges**: one writer at a time; the piece never leaves the hand (no dupes, nothing drops if the table breaks); walking
+  away, Esc or logging out refunds a choice not yet written; the vanilla table can't be crafted.
+
+### The enchantment page (`awaken:enchantment_page`)
+- **Get**: a gate's Lord carries its kind's page (the first clear of each kind, then 1 in 5); the village scribe sells
+  three a day; old enchanted books teach theirs when used.
+- **For**: learning an enchantment for good (spent when learned; a known one can be given away).
+- **Know**: it lands in your pack with a line naming the Lord and the enchantment; the first ever toasts that every kind
+  of gate keeps its own; Tasks shows "Read the page you're carrying" and the Armour/Weapons "Find an enchantment" rows;
+  the scribe lists the ones you don't know first.
+- **Source**: `Sources.declare` in `EnchantModule` (`enchant.Pages.onDeath`, `village.Trade`, `Pages.onUseItem`).
+- **Links**: the Inscribing Table, the Journal's ENCHANTMENTS category, the gates.
+- **Edges**: a page whose enchantment can't be written any more fades to paper; a known page stays; pages stack to 16.
+
+### The Word Stone (`awaken:word_stone`)
+- **Get**: never held: one stands in every Precursor ruin (the vaults' sealed chamber across the terminal from the
+  drafting stand, the monolith's chamber, the ocean lab's storage dome, the sky platform's cabin, the spire's crown).
+- **For**: learning its enchantment for good by holding your hand to it, once for each player (the stone stays for the
+  next). Vaults and the monolith carry Insight, Efficiency, Infinity or Feather Falling; the sky ruins Feather Falling,
+  Infinity or Insight; the ocean lab one of the water's six.
+- **Know**: its letters lift off the carved face in the enchantment's colour while you haven't learned it, with a faint
+  hum; looking at it says "A Word Stone carved with Insight. Hold your hand to it to learn it."; the learn message.
+- **Source**: `Sources.declare` in `EnchantModule`; placed by `above.ruin.RuinBuilder` through `EnchantApi.placeStone`.
+- **Links**: the Inscribing Table, the Journal's ENCHANTMENTS category, the Precursor ruins.
+- **Edges**: unbreakable and drops nothing; a known stone says so and teaches nothing; the carving is the block state, so
+  a ruin always shows the same one.
+
+### The burin (`awaken:burin`)
+- **Get**: never held: it is the table's engraving tool, drawn in your main hand only while you write at an Inscribing
+  Table (SPEC §45.10). Creative and commands can give it; it does nothing on its own.
+- **Source**: `Sources.neverHeld` in `EnchantModule`.
+- **Links**: the Inscribing Table's writing scene.

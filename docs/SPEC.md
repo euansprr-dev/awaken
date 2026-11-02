@@ -4966,7 +4966,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     ender pearl 2%), Leviathan Line (catches pay the Hunter level twice).
   - Smithing: Patch (anvil jobs a level cheaper), Fine Edge (crafted gear +10% max durability), Field Forge (an iron
     ingot on a lit campfire mends the off-hand item by a quarter), Masterwork (Unbreaking I 10%), Keen (weapons
-    Sharpness I 20%), Signature ("Made by <name>" lore).
+    Unbreaking I 20%; it was Sharpness I until enchanting's rule, §45), Signature ("Made by <name>" lore).
   - Cooking: Hearty (+1 saturation from cooked food and meals), Campfire Feast (eating by a lit campfire feeds players
     within 6), Hunter's Stew (meals' strengths ×1.5 long), Long Meals (+2 saturation), Spirit Tea (`awaken:energy_regen`
     +0.25 for 2 min after a cooked meal), Banquet (+the food's saturation again).
@@ -16799,3 +16799,298 @@ settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour 
 - **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
   set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
   III within the hour, IV in about two hours and V in about four.
+
+## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
+
+Module `enchant` (`dev.awaken.enchant`). The rule: **your forge decides how strong a thing is; enchantments add what the
+forge can't** (wards, banes that spare Lords, work and spoils, carrying, keeping). Vanilla's enchantment engine stays
+(effects, tooltips, the `minecraft:enchantments` component); how enchantments are found, learned and written is ours.
+
+### 45.1 S0: the sculpted sets take enchantments
+- The 23 sets with items of their own (`ArmourItems`, every set but the six Hunter sets) are in vanilla's
+  `#minecraft:enchantable/head_armor`, `chest_armor`, `leg_armor`, `foot_armor` and `durability` tags, through
+  `src/main/merge/enchant` (no armour file touched), so every armour enchantment and Unbreaking fit them. Test
+  `enchant_forged_sets_take` (all 92 pieces; Respiration only on helmets, Feather Falling on boots).
+
+### 45.2 Pages and knowledge (`Pages`, `PageItem`, `Known`)
+- **`awaken:enchantment_page`** (rare, stacks to 16): one enchantment in `minecraft:stored_enchantments` (its own vanilla
+  lines hidden) and where it came from in `custom_data.awaken_where`. Named "Page of Heat Ward"; it says its family, what
+  it fits, its line, where it came from and "Use it to learn it for good". Never foil.
+- **Use it** to learn it for good. Knowledge lives in the `awaken:enchant_known` attachment (copied on death, synced to its
+  owner; `Known`, schemaVersion 1: learned `{id: where, day}`, in memory, gate kinds paid, the first-page toast told,
+  inscriptions written, a table ever set down, a table ever used in a Study). A learned page is spent. A page you already
+  know stays in your hand ("You already know this. You can give it away."). A page whose enchantment can't be written
+  any more fades to paper.
+- **Old enchanted books** (vanilla's, from old worlds and chests): using one teaches every enchantment on it that can
+  still be written, and it becomes a plain Book. One with nothing writable says so and stays.
+- **Where pages come from**:
+  - **A gate's Lord.** A `MobRole` BOSS with a gate theme, killed with a player's hand in it: every player within 48 blocks
+    gets that kind of gate's page in their pack ("The Ember Tyrant carried a page of Heat Ward. Use it to learn it.") the
+    first time they clear that kind (`Known.gates`), and 1 time in 5 after that. The kind's page is
+    `Inscriptions.ofGate(theme)`; the night market reads as the Lantern Market. The first page ever also toasts "Every
+    kind of gate keeps its own enchantment, and its Lord carries the page."
+  - **The village scribe** (`village.Trade` through `EnchantApi.marketPages`): six market pages are drawn per village per
+    day (seeded by the village and the day) and the scribe shows three of them, pages you don't know yet first
+    (`Trade.forBuyer`). Price `min(64, 6 + top × 4 + 0..4)` emeralds.
+  - **Old books** in chests and fishing: `#minecraft:on_random_loot` is replaced by the writable books list.
+- Fifteen gate kinds each keep one page (Inscriptions' `gate`); fourteen of those are found nowhere else (the five wards,
+  Blast and Projectile Protection, Clear Blood, Bane of the Dead and of Crawlers, Looting, Respiration, Swift Sneak and
+  Unbreaking), and Mending (the Abyssal Shrine's) also turns up in old books. The rest come from the market or old books.
+
+### 45.3 The thirty (`Inscriptions`, `data/awaken/enchantment`)
+The Journal numbers them 1-30 (`Inscriptions.ALL`): five wards, Blast and Projectile Protection, Feather Falling, Clear
+Blood; four banes; Looting, Fortune, Silk Touch, Efficiency, Harvest, Insight, Luck of the Sea, Lure; Respiration, Aqua
+Affinity, Depth Strider, Swift Sneak, Loyalty, Riptide; Unbreaking, Mending, Infinity. Nothing else can be written:
+anything adding damage, armour or an element (Sharpness, Smite, Bane of Arthropods, Power, Protection, Fire Protection,
+Fire Aspect, Flame, Knockback, Punch, Thorns, Impaling, Density, Breach, Wind Burst, Multishot, Piercing, Quick Charge,
+Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it already is.
+- **Wards** (`awaken:heat_ward`, `frost_ward`, `charge_ward`, `gravity_ward`, `spirit_ward`; armour, I-III, one per piece:
+  `#minecraft:exclusive_set/armor`): each level on each piece takes 2.5% off damage of its Force, capped at 30% for the
+  suit, 20% from a Lord's or boss's blow (agreed with boss-fights 2026-11-02). The Force is `Forces.forceOf`, else fire
+  is Heat, freezing Frost, lightning Charge, magic Spirit. Anything that bypasses invulnerability is never warded, and
+  plain melee has no Force. Heat Ward also shortens burning (`burning_time`, as Fire Protection).
+- **Clear Blood** (armour, I-II): poison, wither and spore effects lose 10 more ticks per level every 10 ticks.
+- **Banes** (`bane_of_the_dead`, `bane_of_crawlers`, `bane_of_beasts`, `bane_of_the_deep`; main hand weapons, I-III, one per
+  weapon: `#minecraft:exclusive_set/damage`): 8% more per level on a direct melee hit by a player, applied last
+  (LOWEST, after the Arms damage stack). Never on a player, a boss, a Warden, anything with a creature title, the Ender
+  Dragon, the Wither or an Elder Guardian. The Dead: undead, and a Bell Crypt's creatures. Crawlers: arthropods, and a
+  Hive's. Beasts: unowned animals and our fauna, never kin. The Deep: the Hollows, the Descent, and hostile creatures
+  below y 0 in the overworld.
+- **Harvest** (weapons, I-III): a wild beast you kill has one chance in two per level to drop one more of its hide, bone,
+  pelt, leather, fur, scale or rabbit's foot drops.
+- **Insight** (weapons and mining tools, `#awaken:enchantable/insight`, I-III): +15% experience per level from kills and
+  mined blocks.
+- Sources are tags: `#minecraft:in_enchanting_table` is empty, `#minecraft:tradeable` holds the market list, mobs spawn
+  and trade only with Unbreaking, Aqua Affinity and Depth Strider, and ours are `#minecraft:non_treasure`. Test
+  `enchant_rule`.
+
+### 45.4 Room, depth and price (`EnchantRules`)
+- **Room** (how many enchantments a piece holds): a forged armour piece its Forge Song quality + 1 (Fine 1 to Masterwork
+  3, read through `core.api.ForgeHooks`); a found weapon (Marked, or Lord-forged: `ArmsApi.found`) 3; a bow, crossbow,
+  trident or fishing rod 2; our forged weapons 2 (until the War Anvil's quality lands, stage 3); the Delver's Pick by its
+  verse (§45.14: 1, and one more at II, IV and VI); anything else 1. An old
+  piece over its room shows **Full** and takes nothing new until one is scraped off.
+- **Depth** (how deep each can go): the piece's rank (its set's, its weapon's tier, else its material: leather, wood,
+  stone and gold E, iron and chain D, diamond C, netherite A, else its rarity): E I, D II, C III, B and up the
+  enchantment's top. Outside a Study nothing goes past II (**the Study**: `HearthHooks.studyAt` the table). A set's
+  archetype goes one deeper for its kind: Bulwark wards, Strider carrying, Channeler keeping; a Lord-forged weapon its
+  own. Deepening keeps the slot.
+- **Price**: 3 levels and 1 lapis per level written (deepening pays the difference); Mending and Silk Touch 10 levels and
+  4 lapis per level. A clean trace gives back a third of the levels (rounded down). Creative pays nothing.
+- **Fit**: vanilla's `supportsEnchantment`, and never Efficiency on the Delver's Pick (`awaken:waking_pick`: its verses
+  are its speed). Exclusive sets as vanilla's.
+- The reasons, in these words: "It doesn't fit this.", "It can't go with X.", "No room left: scrape one off first." /
+  "Full: scrape one off first.", "It's as deep as it goes.", "Deeper than II needs your Study.", "It's as deep as this
+  piece allows.", "This piece takes it to N at most.", "You need 6 levels and 2 lapis.". Test `enchant_room_depth`.
+
+### 45.5 The Inscribing Table (`InscribingTableBlock`, `Inscribe`)
+- **`awaken:inscribing_table`**: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
+  `#stone_crafting_materials`); axe-mineable; drops itself. (The plan's "unlocks when you first hold a page" is not
+  built: the recipe is always known.)
+- **Use it holding a piece** to lay it on the slate and open the book. The server opens a session (table, hand slot, a
+  snapshot of the piece): the piece never leaves your hand, so nothing can be duplicated or dropped. One writer per table
+  ("Someone is writing here."). Using it with nothing you could write or scrape says why.
+- **Choosing** checks everything again, takes the price and starts the trace (or memory's one stroke). **Strokes** are
+  counted in order, no faster than 6 ticks each, each one's share on the line clamped 0-1. **Finishing** writes the
+  enchantment onto the same piece; every stroke done at 80% or more on the line is a **clean hand**: a third of the
+  levels back, and the mark goes **into memory** (from then on "From memory" writes it in one stroke, at full price).
+- **Scraping** takes one off, free, giving nothing back.
+- Esc, walking 6 blocks away, logging out, changing slot or the piece, or the table broken end the session and refund a
+  choice not yet written. Test `enchant_inscribe` (and two players at one table).
+- Others see it: the table shows a copy of the piece on the slate, turns its book to the page being looked at, and fills
+  its channel with the enchantment's colour while it's traced (synced, never saved).
+
+### 45.6 The vanilla fold (`Fold`)
+- Any vanilla enchanting table you use turns into an Inscribing Table in place (facing you, with a flare) and opens as
+  one. The vanilla table can't be crafted: `data/minecraft/recipe/enchanting_table.json` and its recipe advancement
+  carry `neoforge:never`. NeoForge ships its own `enchanting_table` recipe, so the mod loads **after NeoForge**
+  (`ordering="AFTER"` in `neoforge.mods.toml`): our data and assets sit above NeoForge's.
+- The anvil repairs and renames but never adds or merges enchantments: an enchanted book or page on the right gives
+  nothing; two of a kind repair, the left keeping only its own enchantments. The grindstone strips them and gives a third
+  of the experience it used to. Test `enchant_fold`.
+- The Hunter perk Keen (crafted weapons) is Unbreaking I a fifth of the time, no longer Sharpness I.
+
+### 45.7 Enchantments seen at work (`EnchantFx`, server side)
+A ward that takes some of a blow, a bane that bites, a Harvest drop, a page learned and an old table turning each send one
+small `enchant_fx` message (kind, entity, place, colour, strength) to players within 48 blocks, through `AwakenNet`
+(never to a player without our channel), with a sound: the family's note for wards, banes and spoils.
+
+### 45.8 Tasks (`EnchantGoals`, through `core.api.Goals`)
+Only once you're awakened. Steps, each leaving the moment it's done:
+
+| Key | Tab | Shows | Place |
+|---|---|---|---|
+| `enchant/page/armour` | Armour | wearing armour, knowing nothing that fits it | optional, 70 |
+| `enchant/page/weapons` | Weapons | carrying a weapon, knowing no weapon enchantment | optional, 70 |
+| `enchant/read` | the page's | carrying a page that would teach you something | `PATH_FIRST_GATE + 1` |
+| `enchant/table` | the first known's | knowing one, never having set down a table (needs the recipe's items) | `PATH_FIRST_GATE + 2` |
+| `enchant/first` | the piece's | a table set down, nothing written yet, a carried piece something you know fits (Levels, Lapis) | `PATH_FIRST_GATE + 3` |
+| `enchant/room/armour`, `enchant/room/weapons` | Armour, Weapons | after the first, while a carried piece has room for or can deepen something you know | optional, 40 |
+| `enchant/study` | the piece's | carrying a piece that could take something you know past II, never having used a table in a Study | optional, 30 |
+
+A piece's tab is Armour for armour, Weapons for anything else; an enchantment's is Armour when it fits armour. Test
+`enchant_tasks`.
+
+### 45.9 Hooks with the neighbours
+- `core.api.ForgeHooks` (agreed with the weapon forge 2026-11-02): `Reader` (quality 0-3, rank, archetype) installed by
+  armour (the Forge Song's `Forged`) and arms (the weapon's tier); `Listener.forged(player, stack, quality, station)`;
+  `CardLine` (enchant installs "Room for N enchantments" for result cards).
+- `core.api.ArmsApi.found(stack)`, `core.api.HearthHooks.studyAt(level, pos)` (the Study's gift now reads "enchantments
+  written here go deeper"), `core.api.EnchantApi` (the market's pages, what a buyer wants, a page by id) used by
+  `village.Trade`.
+
+### 45.10 The writing scene, the table drawn, the Journal (`enchant.client`)
+- **You step to the desk and the view leans in** (a change from the plan's "cinematic by default"): as the scene opens
+  you take a short walk (a few moves over 12 ticks, collisions and all) to the spot 0.36 out from the table's front,
+  where both hands reach the slate, if you're within three blocks of it, on its floor (within 0.6) and there's room
+  to stand; otherwise you stay put. The eye is then your own: the view turns (`ComputeCameraAngles`, LOW) and narrows
+  (`ComputeFovModifierEvent`) toward each beat, framing it in the middle of the band the screen leaves clear: the piece
+  with the floating book behind it above the book's pages, close on the piece while you trace (above the line and
+  pips), a little back while it wakes (above the card). Eased per tick (0.22), in over 12 ticks, out over 10, a slight
+  breath. First person is forced for the scene and restored after: the world
+  hands (`core.api.FirstPerson.world`, "enchant_table", priority 210) only draw from the player's own camera. The HUD
+  steps aside (subtitles and chat stay), the block outline goes, the player model is hidden.
+- **Hands**: the off hand brings your piece down onto the slate over 14 ticks (the table holds off drawing it for you
+  meanwhile) and then pins its near end; the main hand holds the table's **burin** (`awaken:burin`, never held as an
+  item: `Sources.neverHeld`) resting at the slate's near corner, and while you trace, follows the cursor where it meets
+  the slate; from memory it runs the mark by itself.
+- **The book's pages** (`InscribeScreen`): the left page is your piece (its name drawn large, rank, room line, what's
+  on it with **scrape**: a second click within two seconds takes it off, sent as its registry number, and how deep this
+  table writes). The right page lists what you know that fits it: its mark, name and target level (the deepest this
+  piece allows here by default; ‹ › step it between one above what's on it and that), "Up to II here (IV in your
+  Study)", the price (red when you can't pay), or plainly why not; **from memory** when its mark is in memory; the foot
+  of the page says what the one under the cursor does. Resting on a row for 4 ticks sends LOOK (watchers see the
+  floating book turn) and lays that mark faintly on the piece.
+- **The trace**: the mark (`Marks`, the same strokes the server counts) lies on the piece, 0.4 blocks across, faint
+  at first. Each stroke is picked up at its glowing end (within 0.3 mark units), followed to its end (the pen may run
+  up to five samples ahead within 0.34), and counted on the line within 0.15. A finished stroke burns lapis in its core
+  and the family's colour round it, rings its family's note a step higher than the last (a dull scratch if under 60%
+  on the line) and is sent as STROKE no sooner than 7 ticks after the previous one; FINISH follows 6 ticks after the
+  last. From memory the whole mark writes itself in 40 ticks. Pips under the name show each stroke (bright when
+  clean), with a bar for how much of the current one is on the line; a first-trace hint says what to do and that Esc
+  gives the levels back.
+- **The wake**: the mark flares white-hot and settles into its colour over 50 ticks while a band of light runs the
+  piece and the piece rises a hair (0.04), turns once on the slate (from 6 to 40 ticks, eased) and settles; at 42 ticks
+  (it has turned) a card comes up and says what was written ("A clean hand" and the levels back,
+  "Its mark is in your memory now"), with Write another and Done.
+- **The table as everyone sees it** (`InscribingTableRenderer`): the leather book (`awaken:block/inscribing_book`, the
+  vanilla book's layout) floats over a brass bracket at the back, opening toward whoever's near and toward the front
+  while someone writes, turning its pages to the one being looked at; the writer's piece lies flat on the slate; the
+  lapis channel one pixel in from the slate's edge glows faintly when someone's near, fills with the enchantment's
+  colour from the front round both sides while it's traced, and flares on the wake; watchers see the mark itself
+  pulsing faintly on the piece. The block faces its placer (the front, where you stand); its shape follows the facing.
+- **Enchantments at work** (`EnchantFxClient`, at most 32 at once): a ward's ring closing in at the chest, a bane's
+  three spears of light, a glint of gold rising over an extra drop, a column with rings climbing round you as a page is
+  learned, rays and a spreading ring out of an old table as it turns.
+- **Tooltips**: every enchantable piece says its room under its name ("Room for two enchantments", "No room left",
+  "Full"); a page you already know says "You know this one".
+- **The Journal's ENCHANTMENTS category** (`StatusSections.Shelf.ENCHANTMENTS`, a fixed set of 30): each one you know
+  with what it does, its family, what it goes on and how deep, where you learned it and whether its mark is in memory;
+  the rest stay blank.
+- **Sounds** (`tools/art/specs/audio_enchant.py`, audiokit synthesis with Kenney CC0 transients): book open, page turn,
+  burin on metal and on leather, scratch, the five family notes (C5), wake, learn, flare, drift, scrape.
+- **Art** (`tools/art/specs/enchant.py`): the table's slate top with its lapis channel, framed dark-wood panels (the
+  front with a lapis ring and spear), the trim, brass, the book, the page item and the burin; blockstate by facing.
+- **Commands**: `/awaken admin enchant learn <all|id> | remember all | forget` (server, for testing and tours); the
+  client's `/awaken enchant pilot hover <no> | choose <no> | memory <no> | trace | again | close` is the autopilot's
+  hand at a table (tours can't drag a mouse: the pilot traces each stroke from its end, on the line, a breath between).
+
+### 45.11 The script line: an enchanted piece's own light (`EnchantGlow`, `core.api.EnchantApi.Glow`)
+- Our sculpted weapons (`arms_weapon` shader) and armour (`armour` shader) drop the single violet shimmer for the piece's
+  own enchantment light: a thin line of script along its edges (where the surface turns from the eye), its letters
+  drifting hilt to tip on weapons and feet to crown on armour, a slow wave of brightness running the same way, what
+  glows of itself (the material map's emissive) taking the colour, a few pixels catching it, and a faint rim. Foil with
+  none of ours on it (a Marked weapon with nothing written) keeps the violet.
+- **Colour, in turn**: each enchantment on the piece holds the line for 30 ticks, swelling and fading but never quite
+  out (brightness 1-7 of 7), then hands it to the next. The palette, by index: 1 Heat Ward ember `FF8A4C`, 2 Frost Ward
+  ice `8FD8FF`, 3 Charge Ward gold `FFD84A`, 4 Gravity Ward violet `B993FF`, 5 Spirit Ward teal `4FE0C2`, 6 the other
+  wards steel `B9C3D2`, 7 Clear Blood green `9FE07A`, 8 banes red `FF5F63`, 9 spoils gold `F2C45A`, 10 carrying blue
+  `4FB5EA`, 11 keeping bone `F3EAD6`, 12 anything not in the thirty lapis-violet `8C6BFF`.
+- **The bits**: both shaders read UV1.x's low 8 bits as before (energy, or the Forge Song's heat) and bits 8-14 as the
+  script: the palette index in 8-11 (0 none) and the brightness in 12-14. Arms (`WeaponRenderer`: its cached `State`
+  carries `glow`) and armour (`ArmourLayer.draw`, `FittingStandRenderer`) pack `EnchantApi.glowBits(stack)`; enchant
+  installs the reader (`EnchantApi.glow`) on the client, and with none installed it is 0 and the shaders draw as before.
+  `tools/art/mesh_render.py` mirrors the line (without the pixels, which need texel coordinates).
+- Vanilla's own items keep vanilla's glint.
+
+### 45.12 Enchantments at work, stage 2 (`EnchantFx`, `EnchantFxClient`)
+The `enchant_fx` message gains the mark to show (`no`, the enchantment's number; for a mend, the slot mended) and the
+angle on the ground the blow came from (`dir`, NaN when there's no telling). The client keeps at most 48 at once.
+- **Ward** (18 ticks): the ward's own mark stands where the blow landed, between you and where it came from (0.3 out
+  from your side, at the chest), white-hot and settling into the Force's colour as it grows a little, a ripple
+  spreading out of it, a faint ring round you. A blow from nowhere in particular keeps the closing rings.
+- **Bane** (16 ticks): the bane's mark burns on the creature's side the blow came from, red going from near-white, with
+  the three spears of light fainter behind it.
+- **Gold on extra drops** (34 ticks): a glint rides the drop down with a short trail of sparks and two rising off it.
+  Harvest's extra drop; with Looting (the killer's weapon) or Fortune (the tool), the first one or two drops that came
+  as a stack of more than one, with the spoils note once.
+- **Silk Touch** (20 ticks): when the block itself came away, its outline lifts 0.35 out of where it sat and fades,
+  a soft gold ring spreading at its foot. No sound (mining is loud enough).
+- **Mending** (14 ticks): each orb that will mend something (vanilla picks the piece; the thread aims at that slot's
+  place on the body, hands at your side) draws a thread arching from it into the piece, a bead of warm light running
+  it and the thread fading behind.
+- **Feather Falling** (20 ticks): a fall of four blocks or more on boots that carry it puffs a soft ring over the
+  ground and six motes lifting off it, brighter for a longer fall (full at twelve).
+- **Depth Strider** (24 ticks, the client's own, nothing sent): a player within 32 blocks moving through water on boots
+  that carry it leaves a faint blue V opening behind them on the water (at their feet when under it), one every three
+  ticks.
+
+### 45.13 The Study's drifting letters (`InscribingTableBlockEntity`, `LetterParticle`)
+- Letters of our own script (`awaken:enchant_letter`, a coloured particle; twelve 8x8 runes, white with a faint halo,
+  from `tools/art/specs/enchant.py`) drift off bookshelves standing where vanilla's table reads them (two out, with air
+  between, `EnchantingTableBlock.isValidBookShelf`) into the floating book: they lift off the shelf, sway, arc over and
+  speed into the book, brightening to white as they arrive, gone as they touch the page (36-55 ticks, full-bright).
+- Only while a player is within four blocks or someone writes: now and then anywhere (one try a tick, one in seven),
+  thicker in your Study (two tries, one in three), thickest while someone writes (three tries, one in three), and then
+  in the colour of what's being written; otherwise lapis light (`8FB0FF`).
+- The table knows it's in a Study from the server (`HearthHooks.studyAt`, looked at every five seconds per table and
+  sent with the table's update); in a Study a quiet paper hum (`drift`, 0.18) goes with the letters every 4.5 seconds
+  while they come.
+
+### 45.14 Stage 3: more doors, Word Stones and the pick's room (`Doors`, `WordStones`, `delve.api.Pick`, `living.api.Hunts`)
+- **The hunts.** A named beast (`CreatureTag` kind `BEAST`, "Terror of Ashfen") brought down by a player pays a page of
+  Bane of Beasts, "From Terror of Ashfen, brought down"; a ledger population's alpha (a deep-wild herd's bull, a deep
+  pack's leader: `living.api.Hunts.alpha`, elite with the `awaken_ledger` tag) pays Harvest, "From a herd's leader,
+  brought down".
+- **The Deep.** An elite creature that means harm (`Enemy`, never a Lord, Warden or named beast) killed below the rock's
+  zero in the overworld (`delve.api.Bands` Deep band) or anywhere in a Descent pays Bane of the Deep. Breaking a lode's
+  heart that's still whole (`delve.api.Lodes.heart`, not `heartBroken`, and the block is one of the delve's
+  `awaken:*_lode_heart` blocks) pays Fortune; in the Deep band the first one pays Silk Touch, and after that a Deep heart
+  rolls Silk Touch or Fortune evenly. Read at NORMAL, ahead of the delve's LOW listener that marks the heart broken, so a
+  heart dug up and set down again pays nothing; creative breaks pay nothing.
+- **Every door pays like a gate's Lord:** the page the first time (doors `hunt:beast`, `hunt:leader`, `deep:bane`,
+  `deep:fortune`, `deep:silk`, kept with the gates in `Known`), then a spare one time in five. The page goes into the pack
+  (else at your feet) with one plain line in the enchantment's colour: "A page of Harvest was caught in the leader's
+  hide. Use it to learn it.", "A page of Fortune was pressed into the lode's heart. Use it to learn it."
+- **The Delver's Pick's room** reads `delve.api.Pick.verse` (a facade over `PickVerses.verse`): 1, and one more at II,
+  IV and VI. Still never Efficiency.
+- **The Forge Song's finished card** shows the lines other modules add through `ForgeHooks.cardLine` under its words
+  (`ForgeSongScreen.doneLines`, read once when the card comes, the piece made with its quality): enchanting's "Room for
+  three enchantments" in lapis-violet (`A898FF`). The War Anvil's card does the same when it lands.
+- Test `enchant_doors` (a named beast's page and its words, no page without a player, the heart blocks, the pick's room
+  at verse 0 and IV).
+- **Precursor Word Stones** (`awaken:word_stone`, `WordStoneBlock`, `WordStones`): a stele of the ruins' dark plating on a
+  low plinth, a panel let into its face with three runes carved down it, glowing (emissive, cutout) in the enchantment's
+  colour through a block tint. The carving is the state's `word` (the enchantment's number, 1-30) with `facing`, so it
+  needs no saved data. Unbreakable, no loot, never held, light 6.
+  - **Where**: every Precursor ruin's builder calls `RuinBuilder.Sink.stone(x, y, z, facing, set)`, placed by
+    `EnchantApi.placeStone(level, pos, facing, set, seed)` with the block's position as the seed: the vaults' sealed
+    chamber (14, 1, 15) across the terminal from the drafting stand, the monolith's chamber (12, 1, 8) facing the stand,
+    the ocean lab's storage dome (17, 1, 6), the sky platform's cabin (C-3, deck+1, C), the spire's crown (C+1, top+1, C+1).
+  - **Sets**: "" (vaults, monolith) Insight, Efficiency, Infinity, Feather Falling; "sky" Feather Falling, Infinity,
+    Insight; "sea" Aqua Affinity, Depth Strider, Loyalty, Riptide, Luck of the Sea, Lure. None a gate keeps, none a hunt
+    or the Deep pays.
+  - **Touch**: hold your hand to it (use, any hand) and you learn it ("Copied from a Word Stone", the usual learn line,
+    sound and mark); known, it says "The stone is carved with Insight, and you already know it." in the action bar.
+  - **The look**: while the nearest player is you and you haven't learned it, its letters (`awaken:enchant_letter`, in
+    its colour) lift off the face every three ticks and gather above it, with the paper hum (0.14) every 4.2 seconds;
+    the moment you learn it 28 letters stream from the face into you; known, it goes quiet. Looking at it says, in its
+    colour, "A Word Stone carved with Insight. Hold your hand to it to learn it." (or "You know this one.").
+  - Test `enchant_word_stone` (every ruin kind places one, in open air on a floor; the sea set; the same seed the same
+    carving; a touch teaches once).
+- **The wake's chord**: with the wake sound, the new enchantment's family note (0.8), and each other enchantment on the
+  piece adds its own family's note a major third, a fifth and an octave above (0.55; three at most), so a piece rings
+  with everything written on it.
+- **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
+  so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
+  without "here", then the price alone; the foot's hint wraps.
