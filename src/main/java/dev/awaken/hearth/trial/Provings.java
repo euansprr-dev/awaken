@@ -258,11 +258,12 @@ public final class Provings {
             }
         }
         w.step(run, now);
-        // the way out
+        // the way out (once it's won, leaving takes the win home with you)
+        boolean won = run.stage == Stage.WON;
         for (ServerPlayer m : here) {
             if (m.level() != run.level || !w.out(run, m)) continue;
             Trials.Session s = Trials.SESSIONS.get(m.getUUID());
-            if (s != null) Trials.end(server, s, false, "climbed");
+            if (s != null) Trials.end(server, s, won, won ? "won, left early" : "climbed");
         }
     }
 

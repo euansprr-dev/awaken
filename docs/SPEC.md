@@ -17299,3 +17299,90 @@ is `PROVING`, run by `SkyWarden` in the Cathedral (`hearth.trial.Cathedral`).
   aisles fall and the nave and arcades stand, at a third the roof lifts, the columns and lights stay and the sky is
   given, over the edge is a fall and you wake inside the door with the cathedral whole again, it comes again, the win
   is rank A and the sky's gift, the cathedral is put back).
+
+**46.9 The Provings: the Keeper's Shadow (stage 5).** The S Reassessment becomes the fifth Proving (PLAN §4.7, GOALS part 2:
+the door to the Court, kept by the last of those who went down to hold it; the Journey's S entry: "Win: the Court's
+doors"). `Trials.Kind.forTarget(S)` is `PROVING`, run by `KeeperWarden` at the Court's threshold (`hearth.trial.Threshold`).
+- **The Keeper's Shadow** (`awaken:proving_keepers_shadow`, kit `proving_keepers_shadow`): the last of the Keepers who went
+  down to hold the Seed, the one left at the Court's door, still testing whoever comes. About 5.6 blocks to the top of its
+  crown, tall and gaunt in a deep black hood and a robe that bells out to the floor in long strips, a mantle and a cape;
+  in the hood no face, only the dark and two small gold eyes; on the hood a crown of eight gold points, one for each
+  Sovereign, and eight small gold keys at its belt, one for each door. It fights with a great key as long as a spear: a
+  gold bow, a black shaft banded in gold, a bit whose teeth glow violet. Tier `PROVING`, theme Court (its bolts
+  `BoltKind.VOID`), a duel with stance 420 (the Sky Warden 380); health 570, damage 2.85, speed 0.3, scale 2.7, fought at
+  level 100. Its intro line: "Your shadow is spreading across the floor."
+- **Tells.** White-gold blows are told 0.55 s (11 ticks: Turn the Key, Bar the Door, Unlock; Keyhole 0.6 s), the ladder's
+  fifth rung; red stays over 0.6 s (Kept and the Eight Doors 0.9 s, the Dark Rises 1.0 s, Shut the Door 1.1 s). Amber:
+  the Lock 1.0 s (held 0.4 s more one time in three), the Turnabout 0.75 s.
+- **Moves.** Phase 1: the key in fours (Turn the Key, the bit driven at your chest and turned as in a lock; Bar the Door,
+  a sweep; Unlock, a rising backhand), the Lock (the key lifted in both hands and driven down: a ring of force 5),
+  Keyhole (three dark bolts from its open left hand, from range), the Turnabout (HEAVY: one full turn, the key out flat,
+  for whoever is behind it) and Shut the Door (its signature, red: it lifts the key point down in both hands, drives it
+  into the floor and turns it with its whole body, and the line to you breaks open, `BEAM`: dash aside). Phase 2 at three
+  quarters ("The doors are opening": it lifts the key high and turns it in the air): phrases of four and five, Through
+  the Door (it sinks into its own shadow and comes up behind you, `BLINK`). Phase 3 at half ("The dark is coming in": it
+  drives the key into the floor): the Dark Rises (red: the key raised to the dome, four circles of dark under you, `RAIN`)
+  and Kept (red: a grab, its left hand reaching to keep you). Phase 4 at a quarter ("The Court's door is opening": it
+  staggers to one knee and rises): phrases of five, Keyhole in fives, five circles, the Lock's ring 6, Echoes of the
+  Court (it bows, then flings its arms wide and two echoes step out of it, `DECOY`) and the Eight Doors (red: the key over
+  its head, one full turn, a dark bolt toward each of the eight doors, `NOVA`: dash through the gap); against a flier
+  (`"when": "air"`) Keyhole and the Dark Rises. Below 10% it speeds up a fifth. It dies on its knees, the key laid down
+  before it, and sinks back into the floor.
+- **The Threshold** (`hearth.trial.Threshold`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every hall cell,
+  its middle 110 east and 256 south of the cell's corner (west of the Belfry, clear of every other hall), x -35 to 35, z
+  -59 to 49, dy -27 to 37. A round court (radius 24) of black stone under a dark dome. Its floor is white marble inlaid
+  with a black eight-pointed star whose rays point between the doors, a gold boss in the middle, a ring of gold at 10 (the
+  dark's edge), a black band at 17, a chequered ring and a black margin. Round it a wall of blackstone bricks 20 high with
+  white quartz pilasters between the doors running on up the dome's ribs to a ring of gold round a glass eye. In the wall
+  eight shut doors (at 22.5 + 45k degrees), one for each Sovereign in the Court's order (Hunger red, Silence white, Sleep
+  purple, Machines orange, Mirrors light blue, Storms yellow, Roots green, Ash brown): a pointed opening with a gold
+  keystone, its leaf polished deepslate with a keyhole of that Sovereign's stained glass, and behind it a passage six deep
+  ending in more of its glass with its light behind. Six braziers (chiselled and gilded blackstone, soul fire on top)
+  stand round the floor. North stands the Court's own door, 9 wide and 15 high, banded in gold with a gold star on it and
+  a bar of gold down its middle; past it a vestibule lit warm with a gilded runner, then 24 steps going down north into
+  the dark with a lamp on a post every sixth. South a stair comes down from a landing 12 up (soul lanterns along it); an
+  arch in the landing's back wall leads out into the dark (the way out). Unseen light 11 on a 6-block grid over the
+  court, 15 in the vestibule. The band a fight changes is dy 0 to 15 (the floor, the braziers, the doors).
+- **The flow.** The Reading Bell's window says only "The bell has taken you four times now. It rings lower for this one.
+  Go when you're ready." The bell rings low and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] THE FLOOR
+  REMEMBERS YOU", then "The bell stopped."). You wake on the landing at the top of the stair (a party side by side across
+  it), looking down into the court; the braziers are out. From 1.5 s they light themselves one by one, 0.4 s apart, from
+  the Court's door round to the stair, each with a breath of soul fire. Once someone walks into the court (within 15 of
+  its middle) or after 30 s, their shadow spreads into a pool 4.5 in front of them (a heartbeat, ink and souls rising off
+  it, the braziers flaring), and 2 s later the Keeper's Shadow stands up out of it (ink and smoke bursting off it, a bell
+  and a shriek). Its arena is the court, the doors and the foot of the stair (home 30); +50% health a member past the
+  first.
+  At three quarters the eight doors grind (dust sifting from their heads) for 1.5 s, then sink into the floor a row
+  every 0.2 s; as each comes down its Sovereign's note rings, from low to high round the court, and the eight coloured
+  lights stand open in the wall. At half (once the doors are down) the dark comes in through them: sculk spreads a band
+  every 0.15 s, out of the doors' passages and thresholds and across the marble as far as the inner ring of gold, and
+  holds the feet of whoever stands on it (Slowness I while you're on it). From a quarter the Court's door slides open a
+  step at a time as its health falls (three steps by the end), its leaves sliding into the wall, the gold bar first; its
+  light comes through and burns the dark back off a lane to the inner ring. 10 under the floor (over the stair's wall
+  into the dark) is a fall, never a death (not down the Court's steps behind its door); you wake at the top of the stair
+  ("You wake at the top of the stair. The arch behind you is the way out."). When everyone has fallen it goes, the court
+  is put back (the doors up, the dark gone, the Court's door shut, 16 rows a tick), and it comes again out of the next
+  shadow. Up the stair and through the arch is the way out, no fail day. Its death: the Court's door opens the rest of
+  the way at 0.5 s (a bell, a beacon), its light pouring in; at 2 s on a real run the Court is set before you
+  (`Promises.seen(p, "stratum:9", null, rank S, "The Hollow Court, in the Descent")`: the same lock the Descent's sealed
+  way down makes, so the rank given at the end answers it and the Signal says "The Hollow Court, in the Descent is open to
+  you now"); from 2.5 s the dark drains away, the last band first, chiming. Down the open door's steps is a way out too.
+  At 15 s home with rank S. The court is put back after. Taking any Proving's way out once it's won takes the win home
+  (`Provings`: it counted as leaving before, so walking out during the outro lost the rank).
+- **What it gives:** rank S (its Great Bell follows the rank, `Bells`), the Hollow Court opened to you (stratum 9, by
+  rank, as before), its trophy (a Lord's, `Trophies`), essence shards, gold nuggets and a block of sculk one time in three.
+  No new Tasks step. **Not here:** the Keeper's boss weapon (the weapon sessions).
+- **The box stays** as practice: `/awaken admin trial sbox` (a Sovereign's echo). `/awaken admin trial <percent>` (1-99,
+  new) brings your Proving's Warden to that share of its health (tours: the doors at 70, the dark at 45, the Court's door
+  at 20 and 5). A practice run sets no lock. Tour: `tools/autopilot/fights-threshold.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_keepers_shadow`, 300 seeds, `PROVING_RANKS` fights it at A and
+  level 100 with the A-rank forged blade): dodger 31% in 190 s (17% health left), parrier 99% in 124 s (45% left), expert
+  100% in 100 s (93% left), tank 0% (dies at 42 s). Targets 30 / 35 / 88 / 0: met. Harder than the Sky Warden (dodger
+  42%) and the A Lord (the Hollow Herald, 71%). Damage 2.8 gave the dodger 36%, 2.95 gave 25%, 3.1 gave 18%. The sim
+  doesn't fight on the dark (the Slowness) or the Eight Doors' ring; the plan's 7 minutes isn't met, as for the Provings
+  before it.
+- Tests: `proving_keepers_shadow` (the layout's rules, then the whole flow over the GameTest superflat: you wake on the
+  landing with the braziers out, they light themselves, your shadow pools in front of you and it stands up out of it, at
+  three quarters the doors sink, at half the dark comes in as far as the ring and holds you, from a quarter the Court's
+  door opens and its light burns the dark back, over the edge is a fall and you wake on the landing with the court whole
+  again, it comes again, the win opens the Court's door and is rank S, the court is put back).

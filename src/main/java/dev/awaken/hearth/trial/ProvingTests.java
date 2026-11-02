@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.Set;
 
-/** The Provings (SPEC §46.4, §46.6, §46.7, §46.8): each hall's layout, and each Warden's whole flow in a hall built for the test. */
+/** The Provings (SPEC §46.4, §46.6 to §46.9): each hall's layout, and each Warden's whole flow in a hall built for the test. */
 public final class ProvingTests {
     private ProvingTests() {}
 
@@ -121,6 +121,7 @@ public final class ProvingTests {
         AwakenTests.registerIsolated("proving_examiner", 3000, ProvingTests::examiner);
         AwakenTests.registerIsolated("proving_unmade", 3000, ProvingTests::unmade);
         AwakenTests.registerIsolated("proving_sky_warden", 3000, ProvingTests::skyWarden);
+        AwakenTests.registerIsolated("proving_keepers_shadow", 3000, ProvingTests::keeper);
     }
 
     /**
@@ -514,6 +515,164 @@ public final class ProvingTests {
             }
         });
         h.succeedWhen(() -> h.assertTrue(step[0] == 11, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
+    }
+
+    private static void keeper(net.minecraft.gametest.framework.GameTestHelper h) {
+        // the hall as laid out: you wake on the landing over the stair, the court's floor is open, the braziers stand on
+        // it, the Court's door is shut and opens all the way at its last step, the dark never reaches the inner ring
+        h.assertTrue(Threshold.block(0, Threshold.LANDING, Threshold.WAKE_Z) != null && Threshold.block(0, Threshold.WAKE_DY, Threshold.WAKE_Z) == null
+                && Threshold.block(0, Threshold.WAKE_DY + 1, Threshold.WAKE_Z) == null, "you wake on the landing");
+        h.assertTrue(Threshold.block(0, 0, 0) != null && Threshold.block(0, 1, 0) == null && Threshold.block(0, 3, 0) == null, "the court is open");
+        h.assertTrue(Threshold.block(19, 3, 0) == Threshold.FIRE && Threshold.block(-13, 3, -13) == Threshold.FIRE, "the braziers");
+        h.assertTrue(Threshold.block(0, 5, Threshold.LEAF_S) != null && Threshold.gdLeaf(0, 5, 0) != null
+                && Threshold.gdLeaf(0, 5, KeeperWarden.DOOR_STEPS) == null && Threshold.gdLeaf(3, 5, KeeperWarden.DOOR_STEPS) == null,
+                "the Court's door is shut and opens all the way");
+        h.assertTrue(Threshold.block(0, Threshold.LANDING, Threshold.OUT_Z) != null && Threshold.block(0, Threshold.WAKE_DY, Threshold.OUT_Z) == null,
+                "the arch behind the landing is open");
+        int[][][] bands = Threshold.darkBands();
+        boolean inside = false;
+        for (int[][] b : bands) for (int[] p : b) inside |= Threshold.r(p[0], p[2]) < Threshold.LIGHT_R;
+        h.assertTrue(bands.length > 4 && !inside, "the dark stops at the inner ring");
+        h.assertTrue(KeeperWarden.lane(0, -20, 1) && !KeeperWarden.lane(0, -12, 1) && KeeperWarden.lane(0, -12, 2) && !KeeperWarden.lane(4, -20, 3),
+                "the light's lane grows with the door");
+
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        ServerLevel home = sp.level();
+        sp.setGameMode(GameType.CREATIVE); // never its target: the test strikes and falls by hand
+        Progression.awaken(sp);
+        for (int k = 0; k < 4; k++) Progression.passReassessment(sp);
+        double need = 1;
+        for (int l = 1; l < Rank.S.levelRequired; l++) need += Curve.xpToNext(l);
+        Progression.grantXp(sp, need / dev.awaken.core.AwakenConfig.xpMultiplier(), Progression.XpSource.COMMAND);
+        h.assertTrue(Progression.rank(sp) == Rank.A && Progression.profile(sp).reassessmentReady(), "ready for S");
+        h.assertTrue(Trials.Kind.forTarget(Rank.S) == Trials.Kind.PROVING, "S is a Proving");
+        BlockPos c = h.absolutePos(new BlockPos(0, 40, 0)); // the stair's foot is 27 down: clear of the test's ground
+        Provings.Run run = Provings.openAt(sp, home, c, Rank.S, false);
+        h.assertTrue(run.warden == KeeperWarden.WARDEN && run.room instanceof KeeperWarden.Court, "the Keeper's court");
+        ServerLevel trials = run.level;
+        Hall hall = Threshold.HALL;
+        int[] spot = bands[3][0];
+        BlockPos dark = c.offset(spot[0], 0, spot[2]), lane = c.offset(0, 0, -22), shut = c.offset(0, 5, Threshold.LEAF_S);
+        int[] leaf = Threshold.leaves()[2][0];
+        BlockPos door = c.offset(leaf[0], leaf[1], leaf[2]);
+        int[] step = {0};
+        long[] mark = {0};
+        h.onEachTick(() -> {
+            long now = trials.getGameTime();
+            LivingEntity w = Provings.warden(run);
+            KeeperWarden.Court k = KeeperWarden.court(run);
+            switch (step[0]) {
+                case 0 -> {
+                    if (run.stage != Provings.Stage.WAITING) return;
+                    h.assertTrue(sp.getY() > c.getY() + Threshold.LANDING && sp.getZ() > c.getZ() + Threshold.R, "you wake on the landing");
+                    h.assertTrue(!lit(trials, c.offset(19, 3, 0)) && !trials.getBlockState(door).isAir(), "the braziers are out, the doors shut");
+                    step[0] = 1;
+                }
+                case 1 -> {
+                    if (k.lit < Threshold.BRAZIERS.length) return;
+                    for (int[] b : Threshold.BRAZIERS) h.assertTrue(lit(trials, c.offset(b[0], 3, b[1])), "the braziers light themselves");
+                    intoCourt(sp, c);
+                    step[0] = 2;
+                }
+                case 2 -> {
+                    if (k.poolAt < 0) return;
+                    h.assertTrue(k.pool.z < sp.getZ() - 2 && Math.abs(k.pool.x - sp.getX()) < 1, "your shadow pools in front of you");
+                    step[0] = 3;
+                }
+                case 3 -> {
+                    if (w == null) return;
+                    h.assertTrue(w.position().distanceTo(k.pool) < 2, "it stands up out of the pool");
+                    w.setHealth(w.getMaxHealth() * 0.7F);
+                    mark[0] = now;
+                    step[0] = 4;
+                }
+                case 4 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 1, "at three quarters the doors go");
+                    if (k.sunk < KeeperWarden.SINK_ROWS) return;
+                    for (int[][] d : Threshold.leaves()) for (int[] p : d) h.assertTrue(trials.getBlockState(c.offset(p[0], p[1], p[2])).isAir(), "the doors sank");
+                    if (w == null) return;
+                    w.setHealth(w.getMaxHealth() * 0.45F);
+                    mark[0] = now;
+                    step[0] = 5;
+                }
+                case 5 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 2, "at half the dark comes in");
+                    if (k.dark < bands.length) return;
+                    h.assertTrue(trials.getBlockState(dark).is(Blocks.SCULK) && !trials.getBlockState(c).is(Blocks.SCULK), "the dark stops at the ring");
+                    sp.teleportTo(trials, dark.getX() + 0.5, dark.getY() + 1, dark.getZ() + 0.5, Set.<Relative>of(), 0F, 0F, true);
+                    step[0] = 6;
+                }
+                case 6 -> {
+                    sp.setOnGround(true); // a mock player never lands by itself
+                    if (!sp.hasEffect(net.minecraft.world.effect.MobEffects.SLOWNESS)) return;
+                    if (w == null) return;
+                    w.setHealth(w.getMaxHealth() * 0.2F);
+                    mark[0] = now;
+                    step[0] = 7;
+                }
+                case 7 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 3 && k.door >= 1, "from a quarter the Court's door opens");
+                    h.assertTrue(trials.getBlockState(shut).isAir() && !trials.getBlockState(lane).is(Blocks.SCULK), "its light burns the dark back");
+                    // over the stair's wall: you wake on the landing, and alone it starts over, the court whole again
+                    sp.teleportTo(trials, c.getX() + 0.5, c.getY() + KeeperWarden.VOID - 1, c.getZ() + 0.5, Set.<Relative>of(), 0F, 0F, true);
+                    mark[0] = now;
+                    step[0] = 8;
+                }
+                case 8 -> {
+                    if (now - mark[0] < 2) return;
+                    h.assertTrue(sp.isAlive() && Trials.inTrial(sp) && run.falls.getOrDefault(sp.getUUID(), 0) == 1, "going over is a fall");
+                    h.assertTrue(sp.getY() > c.getY() + Threshold.LANDING, "you wake on the landing");
+                    h.assertTrue(run.stage == Provings.Stage.WAITING && run.turns == 0, "it starts over");
+                    step[0] = 9;
+                }
+                case 9 -> {
+                    if (k.reset != null) return;
+                    h.assertTrue(!trials.getBlockState(door).isAir() && !trials.getBlockState(shut).isAir() && !trials.getBlockState(dark).is(Blocks.SCULK)
+                            && lit(trials, c.offset(19, 3, 0)), "the doors are back, the dark gone, the braziers burning");
+                    intoCourt(sp, c);
+                    step[0] = 10;
+                }
+                case 10 -> {
+                    if (w == null) return;
+                    w.kill(trials);
+                    h.assertTrue(run.stage == Provings.Stage.WON, "beaten");
+                    mark[0] = now;
+                    step[0] = 11;
+                }
+                case 11 -> {
+                    if (k.door < KeeperWarden.DOOR_STEPS) return;
+                    h.assertTrue(trials.getBlockState(shut).isAir() && trials.getBlockState(c.offset(3, 5, Threshold.LEAF_S)).isAir(), "the Court's door opens");
+                    step[0] = 12;
+                }
+                case 12 -> {
+                    if (Trials.inTrial(sp)) return;
+                    h.assertTrue(now - mark[0] >= Provings.OUTRO, "the door stands open before home");
+                    h.assertTrue(Trials.lastResult(sp.getUUID()).orElse(null) == Trials.State.PASSED, "passed");
+                    h.assertTrue(Progression.rank(sp) == Rank.S, "rank S, was " + Progression.rank(sp));
+                    step[0] = 13;
+                }
+                case 13 -> {
+                    if (!Provings.settled()) return;
+                    h.assertTrue(hall.standing(trials, c) && !trials.getBlockState(shut).isAir() && !trials.getBlockState(door).isAir(), "the court is put back");
+                    step[0] = 14;
+                }
+                default -> {}
+            }
+        });
+        h.succeedWhen(() -> h.assertTrue(step[0] == 14, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
+    }
+
+    private static boolean lit(ServerLevel level, BlockPos at) {
+        var s = level.getBlockState(at);
+        return s.is(Blocks.SOUL_CAMPFIRE) && s.getValue(net.minecraft.world.level.block.CampfireBlock.LIT);
+    }
+
+    /** Down the stair into the court, looking north to the Court's door. */
+    private static void intoCourt(ServerPlayer sp, BlockPos c) {
+        sp.teleportTo((ServerLevel) sp.level(), c.getX() + 0.5, c.getY() + 1, c.getZ() + 8.5, Set.<Relative>of(), 180F, 0F, true);
     }
 
     /** Down on the bastion, south of its middle, as landing from the fall would. */

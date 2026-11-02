@@ -89,7 +89,7 @@ public final class Trials {
         DESCENT("Five rooms down. Four minutes.", 5, 20 * 60 * 4),
         SOVEREIGN("Face a Sovereign's echo.", 1, 20 * 60 * 6),
         PENALTY("Survive four minutes in the desert at night.", 99, 20 * 60 * 4),
-        /** A Warden in its own hall (SPEC §46.4, §46.6, §46.7): never announced, no clock; run by {@link Provings}. */
+        /** A Warden in its own hall (SPEC §46.4, §46.6 to §46.9): never announced, no clock; run by {@link Provings}. */
         PROVING("", 1, Integer.MAX_VALUE);
 
         public final String text;
@@ -108,6 +108,7 @@ public final class Trials {
                 case C -> PROVING;
                 case B -> PROVING;
                 case A -> PROVING;
+                case S -> PROVING;
                 default -> SOVEREIGN;
             };
         }

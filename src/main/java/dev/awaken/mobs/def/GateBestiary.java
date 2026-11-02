@@ -316,6 +316,22 @@ final class GateBestiary {
                         a(BOLT, "Lance of Light").n(1).bolt(BoltKind.GLASS), a(GUST, "Wingbeat").radius(8).power(1.0F),
                         a(RAIN, "Shattered Glass").n(5).radius(2.5F).bolt(BoltKind.GLASS))
                 .build());
+        // the fifth Proving's Warden (SPEC §46.9): the last Keeper, left at the Court's door; stands up out of your shadow
+        out.add(m("proving_keepers_shadow", "The Keeper's Shadow", Theme.COURT, Tier.PROVING, Model.HUMAN, "The last Keeper, left at the Court's door to test whoever comes")
+                .hp(570).dmg(2.85).spd(0.3).kb(0.9).scale(2.7F).size(0.6F, 2.0F).bar(BossBarColor.PURPLE).arena(40)
+                .intro("Your shadow is spreading across the floor.")
+                .phase(1.0F, "The Keeper's Shadow stands up out of your shadow.", a(SLAM, "The Lock").radius(5),
+                        a(BOLT, "Keyhole").n(3).bolt(BoltKind.VOID), a(BEAM, "Shut the Door").bolt(BoltKind.VOID).power(1.8F).heavy())
+                .phase(0.75F, "The doors are opening.", a(SLAM, "The Lock").radius(5.5F), a(BOLT, "Keyhole").n(3).bolt(BoltKind.VOID),
+                        a(BEAM, "Shut the Door").bolt(BoltKind.VOID).power(1.9F).heavy(), a(BLINK, "Through the Door"))
+                .phase(0.5F, "The dark is coming in.", a(SLAM, "The Lock").radius(5.5F), a(BOLT, "Keyhole").n(3).bolt(BoltKind.VOID),
+                        a(BEAM, "Shut the Door").bolt(BoltKind.VOID).power(1.9F).heavy(), a(BLINK, "Through the Door"),
+                        a(RAIN, "The Dark Rises").n(4).radius(2.5F).bolt(BoltKind.VOID))
+                .phase(0.25F, "The Court's door is opening.", a(SLAM, "The Lock").radius(6), a(BOLT, "Keyhole").n(5).bolt(BoltKind.VOID),
+                        a(BEAM, "Shut the Door").bolt(BoltKind.VOID).power(2.0F).heavy(), a(BLINK, "Through the Door"),
+                        a(RAIN, "The Dark Rises").n(5).radius(2.5F).bolt(BoltKind.VOID), a(DECOY, "Echoes of the Court").n(2),
+                        a(NOVA, "Eight Doors").n(8).bolt(BoltKind.VOID))
+                .build());
     }
 
     private static void nightmare(List<MobDef> out) {

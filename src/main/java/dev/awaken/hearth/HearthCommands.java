@@ -54,7 +54,7 @@ final class HearthCommands {
                             .executes(HearthCommands::remove))));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("trial").then(Commands.argument("rank", StringArgumentType.word())
-                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "cbox", "B", "bbox", "A", "abox", "half", "third", "S", "penalty"), b))
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "cbox", "B", "bbox", "A", "abox", "S", "sbox", "half", "third", "penalty"), b))
                     .executes(HearthCommands::trial)));
             admin.then(Commands.literal("town").then(Commands.literal("arrive").then(Commands.argument("npc", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Townsfolk.all().keySet(), b))
@@ -369,12 +369,19 @@ final class HearthCommands {
             boolean ok = Trials.start(sp, Trials.Kind.PENALTY, Progression.rank(sp), true);
             return ok ? 1 : 0;
         }
-        if (arg.equals("HALF") || arg.equals("THIRD")) {
+        if (arg.equals("HALF") || arg.equals("THIRD") || arg.matches("[1-9][0-9]?")) {
             // tours: your Proving's Warden to under half its health (the Belfry drains, the mirrors wake, the Span's ring gives
             // way, the cathedral's aisles fall) or under a third (the Hall of Reflections closes in, the Span's lamps go out, the
-            // cathedral's roof lifts) (SPEC §46.4, §46.6, §46.7, §46.8)
-            boolean ok = dev.awaken.hearth.trial.Provings.hurtTo(sp, arg.equals("HALF") ? 0.45F : 0.3F);
+            // cathedral's roof lifts), or to a percent (the Threshold's doors at 70, its dark at 45, its door at 20 and 5)
+            // (SPEC §46.4, §46.6 to §46.9)
+            float to = arg.equals("HALF") ? 0.45F : arg.equals("THIRD") ? 0.3F : Integer.parseInt(arg) / 100F;
+            boolean ok = dev.awaken.hearth.trial.Provings.hurtTo(sp, to);
             if (!ok) c.getSource().sendFailure(Component.literal("No Warden is down in your Proving."));
+            return ok ? 1 : 0;
+        }
+        if (arg.equals("SBOX")) {
+            // the S box (a Sovereign's echo), kept as practice until the Keeper's Shadow passes Euan's look (SPEC §46.9)
+            boolean ok = Trials.start(sp, Trials.Kind.SOVEREIGN, Rank.S, true);
             return ok ? 1 : 0;
         }
         if (arg.equals("ABOX")) {
@@ -401,7 +408,7 @@ final class HearthCommands {
         try {
             target = Rank.valueOf(arg);
         } catch (IllegalArgumentException ex) {
-            c.getSource().sendFailure(Component.literal("Unknown rank " + arg + ". Use D, C, B, A, S, dbox, cbox, bbox, abox, half, third or penalty."));
+            c.getSource().sendFailure(Component.literal("Unknown rank " + arg + ". Use D, C, B, A, S, dbox, cbox, bbox, abox, sbox, half, third, a percent or penalty."));
             return 0;
         }
         if (target == Rank.E || target == Rank.SOVEREIGN) {

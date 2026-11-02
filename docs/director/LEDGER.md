@@ -427,6 +427,35 @@ happens).
   porch is the way out, no fail day; a practice run gives no sky; without the Ascent it's won on foot; the cathedral is
   put back after; `/awaken admin trial abox` keeps the old A Descent as practice. Not built: its boss weapon (weapons).
 
+### The Keeper's Shadow (the fifth Proving, §46.9)
+- **Get**: at level 100 with A rank, the Reading Bell's S-rank Reassessment ("The bell has taken you four times now. It
+  rings lower for this one. Go when you're ready."). The bell rings low, the screen breaks ("[ERROR] THE FLOOR REMEMBERS
+  YOU"), and you wake at the top of a stair over a round court of black stone, eight shut doors round it, each with a
+  coloured light in its keyhole, and a great door banded in gold at its far side. The braziers light themselves; walk in
+  and your shadow pools in front of you, and the Keeper's Shadow stands up out of it. Nothing names it, its hall or what
+  it opens before you meet it.
+- **For**: S rank (its Great Bell follows the rank), the Hollow Court (stratum 9, opened by the rank; the Signal says so
+  as it's given), its trophy for your Hall, essence shards, gold nuggets and sometimes a block of sculk.
+- **Know**: a duel (§46.3): white-gold blows told 0.55 s, amber and red; its signature, Shut the Door, drives the key into
+  the floor and breaks open the line to you (dash aside); it sinks into its shadow and comes up behind you; at three
+  quarters the eight doors sink into the floor, at half the dark comes in through them over the marble and holds your
+  feet (keep to the middle, inside the ring of gold), and from a quarter the Court's door opens a little with each blow
+  and its light burns the dark back; the Eight Doors sends a bolt toward every door (dash through the gap).
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.KeeperWarden` (the braziers, the pool, the doors, the dark,
+  the Court's door, the edge, the lock on the Court), `hearth.trial.Threshold` (the court, built by `TrialChunkGenerator`
+  in every hall cell), the Keeper's kit `proving_keepers_shadow` (`mobs`), the Court through `core.api.Promises` (the
+  `stratum:9` lock the Descent's sealed way down makes).
+- **Links**: the Sky Warden (the fourth Proving, A rank) before it; the Hollow Court and its eight Sovereigns after it
+  (their colours on the doors, the Keeper's crown of eight points); trophies; Great Bells (rank-driven); parties (members
+  within 24 blocks at level 100 come too, +50% of its health each).
+- **Edges**: going 10 blocks under the floor (over the stair's wall) is a fall, never a death, but not down the Court's
+  steps behind its door; you wake at the top of the stair and the arch behind you is the way out; all of a party down and
+  the court is whole again (doors up, dark gone, door shut) and it comes again out of the next shadow (or after 30 s);
+  from the third fall the Signal says what keeps catching you; up the stair is the way out, no fail day; once it's won,
+  down the open door's steps or out the arch takes the win home (every Proving now); a practice run sets no lock; the
+  court is put back after; `/awaken admin trial sbox` keeps the old S echo as practice. Not built: its boss weapon
+  (weapons).
+
 ### Raids (the first Big Day)
 - **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):
   never in a world's first two hours of play, at most one Big Day every five play-days, due a play-day or two later and
