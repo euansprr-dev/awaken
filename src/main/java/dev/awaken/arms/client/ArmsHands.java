@@ -259,6 +259,7 @@ final class ArmsHands {
             shownCutting = cutting;
             Archetype.MoveDef def = m == null ? null : style.move(m);
             float ticks = cutOut ? ArmsChop.OUT : def == null ? REST_BLEND : Mth.clamp(def.windup() * 0.8F, 1F, 2.5F);
+            ArmsFilm.event("source " + (m == null ? "-" : m.key) + " at " + t + " blend " + ticks + (ArmsPredict.charging ? " charging" : ""));
             sourceMotion(st, m, t, ours, has && !tremble);
             MAIN_B.begin(now, mainMoves ? D : mainIdle ? IDLE_D : ZERO, mainMoves ? Q : mainIdle ? IDLE_Q : ID, mainMoves ? VD : ZERO,
                     mainMoves ? VW : ZERO, ticks);
@@ -280,7 +281,7 @@ final class ArmsHands {
 
     /** Ticks since a move of the hands' clock (hit-stop holds pause it, the tick rate scales it). */
     private static float handsNow() {
-        return (System.nanoTime() - ArmsFeel.paused()) / ArmsPredict.nanosPerTick();
+        return (ArmsFeel.nanos() - ArmsFeel.paused()) / ArmsFeel.TICK_NANOS;
     }
 
     // each hand carried across a change of its source; what was shown last; the new source's motion (VD blocks a tick,

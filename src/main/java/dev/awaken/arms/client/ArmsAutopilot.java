@@ -16,8 +16,9 @@ import java.util.Map;
  * what is shot is what a player gets. {@code pose} holds the hands still at a point of a move for a review frame.
  *
  * <pre>
- * arms strike                         a tap of the attack key (a real click, held 2 ticks as a finger does)
+ * arms strike [hold]                  a tap of the attack key (a real click, held 2 ticks as a finger does, or hold)
  * arms press                          Arms' press alone, without the key (the old line)
+ * arms film &lt;name&gt; &lt;ticks&gt; [gap] [scale]  every frame's numbers and a picture every gap ticks (ArmsFilm)
  * arms trace &lt;ticks&gt;                  logs the move, its clock and the hand's pose every tick for that long
  * arms trailfreeze on|off             blade ribbons stop ageing once laid (a still frame shows the whole ribbon)
  * arms heavy &lt;ticks&gt;                  the attack key held that long, then let go
@@ -43,7 +44,7 @@ public final class ArmsAutopilot {
             case "strike" -> {
                 if (!ArmsPredict.fights(p)) return "not fighting (no style in hand, or Arms off)";
                 KeyMapping.click(mc.options.keyAttack.getKey());
-                hold(mc.options.keyAttack, 2);
+                hold(mc.options.keyAttack, a.length > 1 ? Integer.parseInt(a[1]) : 2);
                 return "strike clicked";
             }
             case "chop" -> {
@@ -52,6 +53,11 @@ public final class ArmsAutopilot {
                 KeyMapping.click(mc.options.keyAttack.getKey());
                 hold(mc.options.keyAttack, ticks);
                 return "attack key held for " + ticks;
+            }
+            case "film" -> {
+                if (a.length < 3) return "arms film <name> <ticks> [gap] [downscale]";
+                return ArmsFilm.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Float.parseFloat(a[3]) : 0.15F,
+                        a.length > 4 ? Integer.parseInt(a[4]) : 2);
             }
             case "press" -> {
                 if (!ArmsPredict.fights(p)) return "not fighting (no style in hand, or Arms off)";

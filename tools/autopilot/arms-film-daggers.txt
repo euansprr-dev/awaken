@@ -1,0 +1,265 @@
+# The daggers filmed for the dagger and scythe audit (Euan 2026-11-02: "record its own things, hitting it, first
+# slowly, then the whole combo, then spamming two or three combos very quickly"). First person, then third person from
+# the side (/awaken fx sidecam 90), against a live husk backed by a wall 0.2 blocks behind it (it can't walk or hurt;
+# a blow still shoves it, and the wall keeps it in reach). Each take: /tick rate 2 (a tenth of play's speed: the
+# hands, hit-stop, freeze, recoil and ribbons run on the world's pace), `arms film` writes every frame's numbers
+# (track.tsv), what happened (events.tsv) and a picture every 0.2 ticks (0.25 in third person) into
+# run-autopilot/clips/<take>/. Clicks: slow = one press held 3 ticks; combo = a press every 5 ticks held 2 (in the chain's
+# window); spam = a press every 2 ticks held 1, as fast as a finger goes.
+# ci knobs: PACK=perf,feel,comfort,world
+world armsfilmdaggers creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s 0.5 201 0.5 0 0
+wait 300
+cmd fill -10 199 -8 10 199 12 minecraft:smooth_stone
+cmd fill -10 200 -8 10 210 12 minecraft:air
+cmd fill -10 200 4 10 203 4 minecraft:deepslate_tiles
+wait 40
+cmd fill -10 199 -8 10 199 12 minecraft:smooth_stone
+cmd fill -10 200 4 10 203 4 minecraft:deepslate_tiles
+cmd tp @s 0.5 200 0.9 0 0
+wait 40
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk 0.5 200 3.5 {PersistenceRequired:1b,Silent:0b,Rotation:[180f,0f],Health:1000f,attributes:[{id:"minecraft:max_health",base:1000d},{id:"minecraft:movement_speed",base:0d},{id:"minecraft:attack_damage",base:0d}]}
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_daggers
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+camera first
+look 0 6
+wait 10
+shot daggers_rest_1p
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+wait 20
+cmd tick rate 2
+wait 6
+arms film daggers_1p_slow 26 0.2 2
+wait 3
+arms strike 3
+wait 26
+cmd tick rate 20
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+wait 20
+cmd tick rate 2
+wait 6
+arms film daggers_1p_combo 46 0.2 2
+wait 3
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+wait 46
+cmd tick rate 20
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+wait 20
+cmd tick rate 2
+wait 6
+arms film daggers_1p_spam 94 0.2 2
+wait 3
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+wait 94
+cmd tick rate 20
+wait 30
+camera front
+cmd awaken fx sidecam 90
+look 0 6
+wait 20
+shot daggers_rest_3p
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+wait 20
+cmd tick rate 2
+wait 6
+arms film daggers_3p_slow 26 0.25 2
+wait 3
+arms strike 3
+wait 26
+cmd tick rate 20
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+wait 20
+cmd tick rate 2
+wait 6
+arms film daggers_3p_combo 46 0.25 2
+wait 3
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+wait 46
+cmd tick rate 20
+wait 30
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+wait 20
+cmd tick rate 2
+wait 6
+arms film daggers_3p_spam 94 0.25 2
+wait 3
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+wait 94
+cmd tick rate 20
+wait 30
+cmd awaken fx sidecam 0
+camera first
+wait 20
+quit

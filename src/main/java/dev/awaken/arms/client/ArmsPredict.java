@@ -151,6 +151,7 @@ public final class ArmsPredict {
         if (st == null) return;
         int target = pressTarget(mc);
         int s = nextSeq();
+        ArmsFilm.event("press seq " + s + " target " + target);
         presses++;
         pressHeld = true;
         heldTicks = 0;
@@ -192,6 +193,7 @@ public final class ArmsPredict {
         if (d.startAt() > ticks) {
             buffered = d;
             bufferedSeq = s;
+            ArmsFilm.event("buffer " + d.move().key + " at " + d.startAt());
             return;
         }
         begin(p, st, d.move(), d.step(), d.cadence(), s);
@@ -257,13 +259,14 @@ public final class ArmsPredict {
         if (def == null) return;
         perfectHeavy = perfect;
         waitHit = m.strike() && holdOpen && s == seq;
+        ArmsFilm.event("begin " + m.key + " step " + st2 + " seq " + s + (waitHit ? " waits" : ""));
         waitNanos = 0;
         style = st;
         move = m;
         step = st2;
         cadence = cad;
         moveStart = ticks;
-        moveNanos = System.nanoTime();
+        moveNanos = ArmsFeel.nanos();
         movePaused = ArmsFeel.paused();
         recovery = ArmsRules.recovery(def, st, p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED));
         buffered = null;
@@ -287,8 +290,10 @@ public final class ArmsPredict {
      */
     private static void swing(LocalPlayer p, Archetypes.Loaded st, Archetype.Move m, int cad) {
         float at = FpSwings.swish(FpSwings.style(st.id()), m);
-        if (at <= 0) ArmsAudio.swing(p, st, m, cad);
-        else swishAt = at;
+        if (at <= 0) {
+            ArmsAudio.swing(p, st, m, cad);
+            ArmsFilm.event("swish");
+        } else swishAt = at;
     }
 
     /** When the running move's swish is due (ticks of its clock), -1 when played or none. */
@@ -314,6 +319,7 @@ public final class ArmsPredict {
         if (viewTime() >= swishAt) {
             swishAt = -1;
             ArmsAudio.swing(p, style, move, cadence);
+            ArmsFilm.event("swish");
         }
     }
 
@@ -366,7 +372,7 @@ public final class ArmsPredict {
     }
 
     private static float rawTime() {
-        return (System.nanoTime() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos) / nanosPerTick();
+        return (ArmsFeel.nanos() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos) / ArmsFeel.TICK_NANOS;
     }
 
     /**
@@ -392,7 +398,7 @@ public final class ArmsPredict {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
         float over = rawTime() - waitAt(def);
-        if (over > 0) waitNanos += (long) (over * nanosPerTick());
+        if (over > 0) waitNanos += (long) (over * ArmsFeel.TICK_NANOS);
     }
 
     static void tick() {
@@ -453,6 +459,7 @@ public final class ArmsPredict {
         Archetype.MoveDef def = style == null || move == null ? null : style.move(move);
         if (def == null) return;
         ArmsAudio.swing(p, style, move, cadence);
+        ArmsFilm.event("swish");
         ArmsFx.move(p, style, move, cadence, perfectHeavy, ArmsHands.blowStart(def) - at);
         ArmsBodies.move(p, style, move);
     }
@@ -464,6 +471,7 @@ public final class ArmsPredict {
         settleWait();
         float at = moveTime();
         boolean waited = waitHit;
+        ArmsFilm.event("tap at " + at + (waited ? " waited" : ""));
         waitHit = false;
         Archetype.MoveDef def = waited && style != null && move != null ? style.move(move) : null;
         if (def != null && def.windup() > at + 0.1F) { // it waited at its set: the drive given back
@@ -491,10 +499,11 @@ public final class ArmsPredict {
                 waitShown = false;
                 if (buffered != null && bufferedSeq == seq) buffered = null; // nor will one queued mid-combo
                 charging = true;
+                ArmsFilm.event("charge");
                 chargeStart = ticks;
                 move = Archetype.Move.HEAVY;
                 moveStart = ticks;
-                moveNanos = System.nanoTime();
+                moveNanos = ArmsFeel.nanos();
                 movePaused = ArmsFeel.paused();
                 step = -1;
                 ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_CHARGE, p.getYRot(), p.getXRot(), -1));
@@ -510,6 +519,7 @@ public final class ArmsPredict {
             return;
         }
         charging = false;
+        ArmsFilm.event("release");
         int target = pressTarget(mc);
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         int held = c.min() + (ticks - chargeStart);
@@ -623,6 +633,8 @@ public final class ArmsPredict {
         switch (r.what()) {
             case ArmsPayloads.MOVE -> {
                 Archetype.Move m = Archetype.Move.byId(r.aux());
+                ArmsFilm.event("server move " + (m == null ? "-" : m.key) + " seq " + r.seq() + " ours " + (move == null ? "-" : move.key)
+                        + (r.seq() == seq && m != null && m != move && style != null && !charging ? " SWITCHED" : ""));
                 if (r.seq() == seq && m != null && m != move && style != null && !charging) {
                     move = m; // the server ran another move than we guessed: take its word, keep the clock
                     cadence = r.aux2();
@@ -633,6 +645,7 @@ public final class ArmsPredict {
                 if (r.entity() == -2) {
                     dodging = false;
                 } else if (r.seq() == seq) {
+                    ArmsFilm.event("refused seq " + r.seq());
                     fadeFrom = ticks;
                     move = null;
                     step = -1;
@@ -645,6 +658,8 @@ public final class ArmsPredict {
                 Blow b = Blow.unpack(r.aux2());
                 boolean killMoment = b.kill() && ArmsComfort.killMoment();
                 int ms = killMoment ? ArmsRules.killHitstop(r.aux()) : r.aux();
+                ArmsFilm.event("impact " + Archetype.Move.byId(b.move()) + " ms " + ms + " on " + (move == null ? "-" : move.key)
+                        + " at " + (move == null ? -1 : viewTime()));
                 ArmsAudio.impact(p, r.entity(), style, b.move());
                 hitFx(p, r.entity(), style, b, ms);
                 ArmsStances.struck(r.entity());

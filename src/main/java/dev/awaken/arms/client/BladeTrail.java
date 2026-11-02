@@ -194,20 +194,9 @@ final class BladeTrail {
         return frozen ? Math.min(now, lastSampleAt + 15_000_000L) : now;
     }
 
-    private static long paced, pacedAt;
-
-    /**
-     * The ribbons' time (ns): real time at the world's own pace, so under {@code /tick rate} (a slowed film) a ribbon
-     * lives as many ticks as it does in play; at the normal 20 a second it is real time.
-     */
+    /** The ribbons' time (ns): the feel's clock, so a slowed film shows a ribbon as many ticks as it lives in play. */
     private static long time() {
-        long real = System.nanoTime();
-        if (pacedAt == 0) paced = real;
-        var level = Minecraft.getInstance().level;
-        double pace = level == null ? 1.0 : level.tickRateManager().tickrate() / 20.0;
-        paced += pacedAt == 0 ? 0 : (long) ((real - pacedAt) * pace);
-        pacedAt = real;
-        return paced;
+        return ArmsFeel.nanos();
     }
 
     static void onSubmit(SubmitCustomGeometryEvent e) {

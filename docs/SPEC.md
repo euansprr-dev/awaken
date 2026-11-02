@@ -6755,6 +6755,16 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   views and the third-person edge lead (a thrust: the point lead). `audit` checks every move's working part ("Working
   parts" above; exit 1 when one fails). `film` overlays the game's own frames (the clip
   recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
+- **The arms film** (`arms film <name> <ticks> [gap] [downscale]`, autopilot only; `ArmsFilm`, `FilmLog`; the dagger and
+  scythe audit, 2026-11-02): a fight filmed as the game draws it, into clips/<name>/: a picture every `gap` ticks of game
+  time, and for every frame drawn a row of `track.tsv` (the hands' clock, the move, the press, the hold, the hit-stop, each
+  blade's base and tip where it is drawn: first person in the hands' view space, third person from the camera) and in
+  `events.tsv` what happened between frames on both sides (press, buffer, begin, tap, the server's press heard, begin,
+  wait over and hit, its MOVE, REFUSE and HIT reaching the client, the swish, the source change, the third-person clip).
+  `arms strike [hold]` holds the key that many ticks. Tours `tools/autopilot/arms-film-daggers.txt` and `-scythe.txt`
+  film slow, combo and spam takes at `/tick rate 2`. The feel's clock (`ArmsFeel.nanos`: the hands, the hit-stop, a struck
+  body's freeze and recoil, the ribbons) runs at the world's pace, so a slowed film shows a 35 ms freeze as 0.7 of a tick,
+  as play does; at 20 ticks a second it is real time.
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels

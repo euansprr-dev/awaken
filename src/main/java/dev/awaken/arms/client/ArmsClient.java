@@ -97,8 +97,10 @@ public final class ArmsClient {
         bus.addListener(ClientTickEvent.Post.class, e -> {
             ArmsPredict.tick();
             ArmsAutopilot.tick();
+            ArmsFilm.tick();
             SwingTuning.tick();
         });
+        bus.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Post.class, e -> ArmsFilm.frame());
         // a swish come due on the blade's clock plays on the frame it falls in, not the next tick
         bus.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> {
             ArmsRecoil.frame();
