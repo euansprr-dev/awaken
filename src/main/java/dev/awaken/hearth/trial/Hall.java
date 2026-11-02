@@ -35,6 +35,11 @@ interface Hall {
 
     int bandHi();
 
+    /** How far out from the middle the band reaches (a hall whose clouds spread wider than what it changes). */
+    default int bandWall() {
+        return wall();
+    }
+
     /** The block at a local spot, or null for air. */
     @Nullable BlockState block(int x, int dy, int z);
 
@@ -81,7 +86,7 @@ interface Hall {
 
         /** Up to {@code rows} rows (north to south); true once the hall is done. */
         boolean step(int rows) {
-            int w = hall.wall();
+            int w = whole ? hall.wall() : hall.bandWall();
             for (int n = 0; n < rows && z <= hall.back(); n++, z++) {
                 for (int x = -w; x <= w; x++) {
                     for (int dy = lo; dy <= hi; dy++) {

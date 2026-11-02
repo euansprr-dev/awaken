@@ -1,0 +1,374 @@
+{
+ "schemaVersion": 1,
+ "id": "proving_sky_warden",
+ "moves": "proving_sky_warden",
+ "duel": true,
+ "stance": 380,
+ "intro": {
+  "pose": "kneel",
+  "move": "descend"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "thrust",
+     "weight": 3,
+     "then": [
+      [
+       "sweep",
+       "rising",
+       "thrust"
+      ],
+      [
+       "sweep",
+       "thrust",
+       "descent"
+      ]
+     ]
+    },
+    {
+     "move": "sweep",
+     "weight": 2,
+     "then": [
+      [
+       "thrust",
+       "rising",
+       "sweep"
+      ],
+      [
+       "rising",
+       "descent"
+      ]
+     ]
+    },
+    {
+     "move": "descent",
+     "weight": 2,
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising"
+      ]
+     ]
+    },
+    {
+     "move": "wingbeat",
+     "weight": 1,
+     "then": [
+      [
+       "lance",
+       "stoop"
+      ],
+      [
+       "stoop"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lance",
+       "stoop"
+      ],
+      [
+       "stoop",
+       "thrust",
+       "sweep"
+      ]
+     ]
+    },
+    {
+     "move": "stoop",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising"
+      ]
+     ]
+    },
+    {
+     "move": "halo",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "break",
+   "pool": [
+    {
+     "move": "thrust",
+     "weight": 3,
+     "then": [
+      [
+       "sweep",
+       "rising",
+       "thrust",
+       "descent"
+      ],
+      [
+       "sweep",
+       "thrust",
+       "wingbeat"
+      ]
+     ]
+    },
+    {
+     "move": "sweep",
+     "weight": 2,
+     "then": [
+      [
+       "thrust",
+       "rising",
+       "sweep",
+       "halo"
+      ],
+      [
+       "rising",
+       "thrust",
+       "descent"
+      ]
+     ]
+    },
+    {
+     "move": "descent",
+     "weight": 2,
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising"
+      ],
+      [
+       "wingbeat",
+       "stoop"
+      ]
+     ]
+    },
+    {
+     "move": "wingbeat",
+     "weight": 2,
+     "then": [
+      [
+       "lance",
+       "stoop"
+      ],
+      [
+       "stoop",
+       "thrust"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lance",
+       "stoop"
+      ],
+      [
+       "stoop",
+       "thrust",
+       "sweep"
+      ]
+     ]
+    },
+    {
+     "move": "stoop",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising",
+       "descent"
+      ]
+     ]
+    },
+    {
+     "move": "halo",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "lift",
+   "pool": [
+    {
+     "move": "thrust",
+     "weight": 3,
+     "then": [
+      [
+       "sweep",
+       "rising",
+       "thrust",
+       "halo"
+      ],
+      [
+       "sweep",
+       "thrust",
+       "rising",
+       "descent"
+      ]
+     ]
+    },
+    {
+     "move": "sweep",
+     "weight": 2,
+     "then": [
+      [
+       "thrust",
+       "rising",
+       "sweep",
+       "ascension"
+      ]
+     ]
+    },
+    {
+     "move": "descent",
+     "weight": 1,
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising",
+       "wingbeat"
+      ]
+     ]
+    },
+    {
+     "move": "wingbeat",
+     "weight": 2,
+     "then": [
+      [
+       "lance",
+       "stoop"
+      ],
+      [
+       "glass"
+      ]
+     ]
+    },
+    {
+     "move": "wingbeat",
+     "weight": 2,
+     "when": "AIR",
+     "then": [
+      [
+       "lance",
+       "lance"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 3,
+     "when": "AIR",
+     "then": [
+      [
+       "lance",
+       "wingbeat"
+      ],
+      [
+       "ascension"
+      ]
+     ]
+    },
+    {
+     "move": "lance",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lance",
+       "stoop"
+      ],
+      [
+       "glass"
+      ]
+     ]
+    },
+    {
+     "move": "ascension",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising"
+      ]
+     ]
+    },
+    {
+     "move": "stoop",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising",
+       "halo"
+      ]
+     ]
+    },
+    {
+     "move": "glass",
+     "weight": 2,
+     "then": [
+      [
+       "stoop"
+      ],
+      [
+       "lance",
+       "ascension"
+      ]
+     ]
+    },
+    {
+     "move": "halo",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "thrust",
+       "sweep",
+       "rising"
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.12,
+  "speed": 1.2
+ }
+}

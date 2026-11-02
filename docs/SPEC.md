@@ -17210,3 +17210,92 @@ Unmade on the Broken Span over the void). `Trials.Kind.forTarget(B)` is `PROVING
   ring falls and the road south and the middle stand, at a third the south arm's lamps go out and the gatehouse's stay
   and the bastion's light is low, over the edge is a fall and you wake on the south arm with the Span whole again, it
   gathers again, the win is rank B, the Span is put back).
+
+**46.8 The Provings: the Sky Warden (stage 5).** The A Reassessment becomes the fourth Proving (PLAN §4.7, GOALS part 2:
+the cathedral breaking above the clouds, fought on the wing; the Journey's A entry: "Win: Skyborn"). `Trials.Kind.forTarget(A)`
+is `PROVING`, run by `SkyWarden` in the Cathedral (`hearth.trial.Cathedral`).
+- **The Sky Warden** (`awaken:proving_sky_warden`, kit `proving_sky_warden`): the cathedral's own knight. About 4.8
+  blocks tall in white plate edged with gold, a white tabard with a gold sun on it, a closed great helm with a cross cut
+  in the visor and light in the cross, a ring of gold standing behind its head, and for wings two fans of stained-glass
+  panes (blue, violet, sky and gold in lead, lit from behind) on arms of gold, held half open behind it. A long white
+  spear bound in gold with a leaf of light for a blade. Tier `PROVING`, theme Sky (its Lance and its Glass are
+  `BoltKind.GLASS`), a duel with stance 380 (the Unmade 340); health 520, damage 3.0, speed 0.3, scale 2.4, fought at
+  level 70. Its intro line: "Something is coming down out of the vault."
+- **Tells.** White-gold blows are told 0.6 s (12 ticks: Spear Thrust, Haft Sweep, Rising Cut, the Lance of Light), the
+  ladder's fourth rung; red stays over 0.6 s (the Stoop and Ascension 0.9 s, Shattered Glass 1.0 s). Amber: Descent 1.0 s
+  (held 0.4 s more one time in three), the Wingbeat 0.8 s (and 0.3 held), the Halo Turn 0.8 s.
+- **Moves.** Phase 1: the spear in fours (the Thrust at your chest, the Haft Sweep, the Rising Cut), Descent (the spear
+  overhead in both hands as the wings rise, driven down: a ring of force 5), the Wingbeat (the wings lifted high and
+  brought down in one stroke: a gust that throws you back, `GUST`), the Halo Turn (HEAVY: one full turn, the spear out
+  flat, behind it too), the Lance of Light (from its open left hand, a bolt you can turn aside), the Stoop (its
+  signature: it crouches, the spear drawn back and the wings flared high, and hurls itself 9 blocks at you along the
+  floor, `CHARGE`: dash through it). Phase 2 at two thirds ("The aisles are falling": it drives the spear into the nave):
+  phrases of four and five, the Wingbeat twice as often (with the aisles gone it throws you toward the nave's edges).
+  Phase 3 at a third ("The roof is lifting away": the spear raised to the sky, the wings as wide as they go): phrases of
+  five, Ascension (a red grab from 3-10 blocks, its left hand reaching down for you), Shattered Glass (red: five circles
+  of falling glass round you, `RAIN`), and against a flier (`"when": "air"`) the Lance and the Wingbeat. Below 12% it
+  speeds up a fifth. It comes out of a kneel (its intro: it rises, the wings opening wide and high).
+- **The Cathedral** (`hearth.trial.Cathedral`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every hall
+  cell, its font 420 east and 256 south of the cell's corner (clear of the Belfry, the Hall of Reflections and the Span),
+  x -56 to 56, z -92 to 88, dy -30 to 33. A white cathedral hanging in the night over a sea of cloud (white wool under
+  snow, its gaps and thickness from value noise, thinning toward the edge, thick and whole under the font, its top at dy
+  -27). The nave (floor of calcite and quartz in a checker, rosettes down the middle every bay, a polished deepslate
+  border) runs from the apse's chord (z -42) to the west front (z 36) between arcades of quartz columns two thick every
+  8 blocks (deepslate plinths, chiselled capitals at 9), pointed arches between them (open to 11-12), the clerestory over
+  them with a stained-glass window in each bay, and a pointed vault (its crown at 30, deepslate ribs over the columns)
+  broken open to the stars in places; lanterns hang on chains down the middle. Behind each arcade an aisle (tuff floor)
+  under a deepslate lean-to roof, its outer wall with a lancet in each bay and pinnacles over the columns, flying
+  buttresses over the aisle roofs out to piers (to dy 19). The apse is a half-dome (radius 9.5) ringed with tall lancets;
+  the west front has a door 5 wide and 6 high with a carved arch, a rose window over it (radius 6.5: twelve spokes,
+  rings of coloured glass, a gold heart) and a gable; outside it a short porch with low walls, broken off at its far end
+  (the way out). Under it all the foundation's root hangs into the dark, deepest under the middle (rubble at its foot),
+  and a shaft (radius 3, two unseen lights in it) runs up through it to the font in the crossing (radius 3, a carved
+  middle, a deepslate ring round it). Unseen light 12 down the nave and the apse on a 6-block grid, 11 in the aisles, 13
+  on the porch. The band a fight changes is dy -20 to 33 within 19 of the middle (`Hall.bandWall`, new: a put-back runs
+  the building, not the cloud).
+- **The flow.** The Reading Bell's window says only "The bell has taken you three times now. Go when you're ready." The
+  bell rings and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] YOU ARE ABOVE THE CLOUDS", then "The bell
+  stopped."). You wake on the cloud 26 under the font (a party a little apart round the shaft), looking up at the
+  cathedral overhead, wind and white ash blowing, the stone groaning. After 2.5 s the font opens, light runs down the
+  shaft (beacon sounds, a column of end-rod light) and lifts you (Levitation that rises 0.3 a tick, about 4.5 s up; the
+  light draws anyone drifting off the shaft back under it); each one up is set down beside the font with a ring of
+  amethyst (3 s of Slow Falling, nudged off it), anyone still in the shaft after 11 s is brought up, and 0.75 s after
+  everyone's up the font shuts. 2 s later a column of light comes down out of the vault in the nave's north half (z -14),
+  chiming as it gathers, and after 2 s the Sky Warden is kneeling there in a burst of light and cloud, a wingbeat and a
+  chord. Its arena is the nave, the apse and the porch (home 44); +50% health a member past the first.
+  At two thirds the aisles groan and drop dust from their roofs for 3 s, then break away a row a tick from the apse to
+  the west front (4 s): their floors, roofs, outer walls and lancets, the flying buttresses and their piers and the
+  foundation under them fall into the cloud, a few as falling pieces, glass breaking. The nave, its arcades, the apse
+  and the porch stay. At a third the roof lifts away two rows a tick from the apse's far end to the west front (2.3 s):
+  everything over the arches (dy 14 up within 11 of the middle: the vault, the clerestory and its windows, the hung
+  lanterns, the apse's dome, the west gable and the top of the rose), some of it rising slowly into the dark as pieces;
+  the unseen lights stay, the columns stand open to the stars. And the sky remembers you: on a real run each member is
+  given Skyborn there (`TrialHooks.atEdge(p, TrialHooks.SKY_WARDEN)`, the Ascent's sky edge, with its moment "The sky
+  remembers you. · Open your wings, then jump again: fly."), so its last third is fought on the wing; it stays in the
+  nave, so a player without flight (the Ascent off) still wins on foot. 18 under the floor you've gone over the edge
+  (lower than anywhere you can stand but the cloud, so a flier has room under it): a fall, never a death; you wake inside
+  the west door facing the altar ("You wake inside the west door. The porch outside it is the way out."); from the third,
+  the Signal says what keeps catching you (§46.4). If it goes over it comes back up into the nave. When everyone has
+  fallen it goes, the cathedral is put back whole (16 rows a tick, under a second; the font shut), and its light comes
+  down again once someone walks up the nave (5 in from the door) or after 30 s. Out along the porch (past z 41) is the
+  way out, no fail day. Its death: what it left is in the killer's hands at 1.5 s, a chime at 1 s, the sky's gift at 2.5
+  s on a real run (`TrialHooks.done`: Skyborn held, its scene "The sky is yours.", 10 Skyborn mastery, a fifth of a
+  level, `awaken:ascent_skyborn_trial`, once), and from 3.5 s the cathedral mends from the apse to the door (three rows a
+  tick, chiming); at 15 s home with rank A. The cathedral is put back after.
+- **What it gives:** rank A (its Great Bell, the Fourth, follows the rank, `Bells`), Skyborn (§17.18's tier; the Sky
+  Leviathan's trial stays for anyone at A holding Wings and not Skyborn), its trophy (a Lord's, `Trophies`), essence
+  shards, feathers and light blue stained glass one time in three. No new Tasks step. **Not here:** the Sky Warden's
+  boss weapon (the weapon sessions).
+- **The box stays** as practice: `/awaken admin trial abox` (the Descent). `/awaken admin trial half` and `third` bring
+  it to 45% and 30% (tours: the aisles and the roof on cue). A practice run gives no sky. Tour:
+  `tools/autopilot/fights-cathedral.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_sky_warden`, 300 seeds, `PROVING_RANKS` fights it at B and level
+  70 with the B-rank forged blade): dodger 39% in 164 s, parrier 97% in 114 s (43% health left), expert 100% in 89 s (95%
+  left), tank 0% (dies at 39 s). Targets 40 / 45 / 92 / 0: met. Harder than the Unmade (dodger 49%) and the A Lord (the
+  Hollow Herald, 68%). Damage 2.8 gave the dodger 46%, 3.1 gave 29%. The plan's 6-7 minutes isn't met, as for the
+  Provings before it. The sim fights on foot; the last third on the wing isn't simmed.
+- Tests: `proving_sky_warden` (the layout's rules, then the whole flow over the GameTest superflat: you wake on the
+  cloud, the font opens and the light lifts you, it shuts with you on it, it comes down in the nave, at two thirds the
+  aisles fall and the nave and arcades stand, at a third the roof lifts, the columns and lights stay and the sky is
+  given, over the edge is a fall and you wake inside the door with the cathedral whole again, it comes again, the win
+  is rank A and the sky's gift, the cathedral is put back).

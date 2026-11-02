@@ -54,7 +54,7 @@ final class HearthCommands {
                             .executes(HearthCommands::remove))));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("trial").then(Commands.argument("rank", StringArgumentType.word())
-                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "cbox", "B", "bbox", "half", "third", "A", "S", "penalty"), b))
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "dbox", "C", "cbox", "B", "bbox", "A", "abox", "half", "third", "S", "penalty"), b))
                     .executes(HearthCommands::trial)));
             admin.then(Commands.literal("town").then(Commands.literal("arrive").then(Commands.argument("npc", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Townsfolk.all().keySet(), b))
@@ -371,9 +371,15 @@ final class HearthCommands {
         }
         if (arg.equals("HALF") || arg.equals("THIRD")) {
             // tours: your Proving's Warden to under half its health (the Belfry drains, the mirrors wake, the Span's ring gives
-            // way) or under a third (the Hall of Reflections closes in, the Span's lamps go out) (SPEC §46.4, §46.6, §46.7)
+            // way, the cathedral's aisles fall) or under a third (the Hall of Reflections closes in, the Span's lamps go out, the
+            // cathedral's roof lifts) (SPEC §46.4, §46.6, §46.7, §46.8)
             boolean ok = dev.awaken.hearth.trial.Provings.hurtTo(sp, arg.equals("HALF") ? 0.45F : 0.3F);
             if (!ok) c.getSource().sendFailure(Component.literal("No Warden is down in your Proving."));
+            return ok ? 1 : 0;
+        }
+        if (arg.equals("ABOX")) {
+            // the A box (the Descent), kept as practice until the Sky Warden passes Euan's look (SPEC §46.8)
+            boolean ok = Trials.start(sp, Trials.Kind.DESCENT, Rank.A, true);
             return ok ? 1 : 0;
         }
         if (arg.equals("BBOX")) {
@@ -395,7 +401,7 @@ final class HearthCommands {
         try {
             target = Rank.valueOf(arg);
         } catch (IllegalArgumentException ex) {
-            c.getSource().sendFailure(Component.literal("Unknown rank " + arg + ". Use D, C, B, A, S, dbox, cbox, bbox, half, third or penalty."));
+            c.getSource().sendFailure(Component.literal("Unknown rank " + arg + ". Use D, C, B, A, S, dbox, cbox, bbox, abox, half, third or penalty."));
             return 0;
         }
         if (target == Rank.E || target == Rank.SOVEREIGN) {

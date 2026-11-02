@@ -249,7 +249,7 @@ final class UnmadeWarden extends Warden {
     }
 
     /** A stone in the air: a block display centred on {@code at}, tilted so the stones don't look grid-locked. */
-    private static Display.@Nullable BlockDisplay stone(ServerLevel level, BlockState state, Vec3 at, float size, float tilt) {
+    static Display.@Nullable BlockDisplay stone(ServerLevel level, BlockState state, Vec3 at, float size, float tilt) {
         CompoundTag tag = new CompoundTag();
         tag.put("block_state", BlockState.CODEC.encodeStart(NbtOps.INSTANCE, state).getOrThrow());
         Quaternionf rot = new Quaternionf().rotateXYZ(tilt, tilt * 1.7F, tilt * 0.6F);

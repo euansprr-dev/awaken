@@ -107,7 +107,7 @@ public final class Trials {
                 case D -> PROVING;
                 case C -> PROVING;
                 case B -> PROVING;
-                case A -> DESCENT;
+                case A -> PROVING;
                 default -> SOVEREIGN;
             };
         }

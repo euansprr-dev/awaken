@@ -33,7 +33,7 @@ BOSSES = ["ember_tyrant", "unit_zero", "mother_of_spores", "gearwright_colossus"
           "guardian_foundry", "guardian_inverted", "guardian_dreaming", "guardian_court", "guardian_seed",
           "sovereign_hunger", "sovereign_silence", "sovereign_sleep", "sovereign_machines", "sovereign_mirrors", "sovereign_storms", "sovereign_roots", "sovereign_ash",
           "signals_shadow", "nightmare_falling", "nightmare_burning", "nightmare_drowning", "nightmare_undead", "nightmare_arthropod", "nightmare_explosion", "nightmare_generic",
-          "proving_ringer", "proving_examiner", "proving_unmade"]
+          "proving_ringer", "proving_examiner", "proving_unmade", "proving_sky_warden"]
 
 
 def designs(only=None):

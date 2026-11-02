@@ -403,6 +403,30 @@ happens).
   stands on the bastion; the Span is put back after; `/awaken admin trial bbox` keeps the old B duel as practice. Not
   built: the Great Bell Third (bells), the Unmade's heart and its boss weapon (arms), climbing it (waits on Euan's OK).
 
+### The Sky Warden (the fourth Proving, §46.8)
+- **Get**: at level 70 with B rank, the Reading Bell's A-rank Reassessment ("The bell has taken you three times now. Go
+  when you're ready."). The bell rings, the screen breaks ("[ERROR] YOU ARE ABOVE THE CLOUDS"), and you wake on a sea of
+  cloud under a cathedral hanging in the night. The font in its floor opens and the light lifts you up into the nave,
+  and the Sky Warden comes down out of the vault in a column of light. Nothing names it, its hall or its gift before you
+  meet it.
+- **For**: A rank (its Great Bell follows the rank), Skyborn (given as the roof lifts, held for good when it falls, with
+  the sky's scene), its trophy for your Hall, essence shards, feathers and sometimes stained glass.
+- **Know**: a duel (§46.3): white-gold blows told 0.6 s, amber and red; its signature, the Stoop, hurls it at you along
+  the floor (dash through it); at two thirds the aisles break away into the cloud (the nave stays, and its Wingbeat
+  throws you toward the edges); at a third the roof lifts away and the sky remembers you: open your wings and fly.
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.SkyWarden` (the lift, its light, the aisles, the roof,
+  the edge, the mending), `hearth.trial.Cathedral` (the cathedral, built by `TrialChunkGenerator` in every hall cell),
+  the Sky Warden's kit `proving_sky_warden` (`mobs`), the sky through `TrialHooks.SKY_WARDEN` (`AscentTrials`).
+- **Links**: the Unmade (the third Proving, B rank) before it; Skyborn and the Sky Leviathan's trial (§17.18, still
+  there for anyone at A without Skyborn); trophies; Great Bells (rank-driven); parties (members within 24 blocks at
+  level 70 come too, +50% of its health each).
+- **Edges**: going 18 blocks under the floor is a fall, never a death: you wake inside the west door and the porch
+  outside it is the way out; anyone still in the shaft after 11 s is brought up; nobody is shut into the font; if it goes
+  over it comes back into the nave; all of a party down and the cathedral is whole again and its light comes down once
+  someone walks up the nave (or after 30 s); from the third fall the Signal says what keeps catching you; out along the
+  porch is the way out, no fail day; a practice run gives no sky; without the Ascent it's won on foot; the cathedral is
+  put back after; `/awaken admin trial abox` keeps the old A Descent as practice. Not built: its boss weapon (weapons).
+
 ### Raids (the first Big Day)
 - **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):
   never in a world's first two hours of play, at most one Big Day every five play-days, due a play-day or two later and

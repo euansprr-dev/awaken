@@ -1,6 +1,7 @@
 package dev.awaken.hearth.trial;
 
 import dev.awaken.core.api.Promises;
+import dev.awaken.core.api.TrialHooks;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.progression.Curve;
 import dev.awaken.progression.Progression;
@@ -15,7 +16,7 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.Set;
 
-/** The Provings (SPEC §46.4, §46.6, §46.7): each hall's layout, and each Warden's whole flow in a hall built for the test. */
+/** The Provings (SPEC §46.4, §46.6, §46.7, §46.8): each hall's layout, and each Warden's whole flow in a hall built for the test. */
 public final class ProvingTests {
     private ProvingTests() {}
 
@@ -119,6 +120,7 @@ public final class ProvingTests {
         });
         AwakenTests.registerIsolated("proving_examiner", 3000, ProvingTests::examiner);
         AwakenTests.registerIsolated("proving_unmade", 3000, ProvingTests::unmade);
+        AwakenTests.registerIsolated("proving_sky_warden", 3000, ProvingTests::skyWarden);
     }
 
     /**
@@ -369,6 +371,149 @@ public final class ProvingTests {
             }
         });
         h.succeedWhen(() -> h.assertTrue(step[0] == 9, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
+    }
+
+    private static void skyWarden(net.minecraft.gametest.framework.GameTestHelper h) {
+        h.assertTrue(Cathedral.block(0, 0, 0) != null && Cathedral.block(0, 1, 0) == null, "you stand on the font");
+        h.assertTrue(Cathedral.block(0, Cathedral.CLOUD_TOP, 0) != null && Cathedral.block(0, Cathedral.WAKE_DY, 0) == null
+                && Cathedral.block(0, Cathedral.WAKE_DY + 1, 0) == null, "you wake on the cloud under it");
+        h.assertTrue(Cathedral.block(0, -1, 0) != null && Cathedral.block(1, -5, 0) == null && Cathedral.block(1, -18, 0) == null,
+                "the shaft runs up under the font's cap");
+        h.assertTrue(Cathedral.block(0, 1, Cathedral.WEST) == null && Cathedral.block(0, 5, Cathedral.WEST) == null
+                && Cathedral.block(0, 7, Cathedral.WEST) != null && Cathedral.block(0, 0, Cathedral.OUT_Z) != null, "the west door opens onto the porch");
+        h.assertTrue(Cathedral.block(0, 0, Cathedral.DOOR_Z) != null && Cathedral.block(0, 1, Cathedral.DOOR_Z) == null
+                && Cathedral.block(0, 2, Cathedral.DOOR_Z) == null, "you wake inside the door");
+        h.assertTrue(Cathedral.falls(12, 0) && !Cathedral.falls(5, 0) && !Cathedral.falls(0, Cathedral.OUT_Z), "the aisles fall, the nave and porch stay");
+        h.assertTrue(Cathedral.lifts(0, 24, 0) && !Cathedral.lifts(8, 9, -16) && !Cathedral.lifts(12, 14, 0), "the roof lifts over the arches");
+        h.assertTrue(Cathedral.block(8, 20, -20) != null && Cathedral.block(8, 5, -16) != null, "a clerestory window over a column");
+
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        ServerLevel home = sp.level();
+        sp.setGameMode(GameType.CREATIVE); // never its target: the test strikes and falls by hand
+        Progression.awaken(sp);
+        for (int k = 0; k < 3; k++) Progression.passReassessment(sp);
+        double need = 1;
+        for (int l = 1; l < Rank.A.levelRequired; l++) need += Curve.xpToNext(l);
+        Progression.grantXp(sp, need / dev.awaken.core.AwakenConfig.xpMultiplier(), Progression.XpSource.COMMAND);
+        h.assertTrue(Progression.rank(sp) == Rank.B && Progression.profile(sp).reassessmentReady(), "ready for A");
+        h.assertTrue(Trials.Kind.forTarget(Rank.A) == Trials.Kind.PROVING, "A is a Proving");
+        // what the Ascent is asked for (the sky at the roof, the gift at the end), still passed on to it
+        TrialHooks.Trials was = TrialHooks.installed();
+        Set<String> asked = new java.util.HashSet<>();
+        TrialHooks.install(new TrialHooks.Trials() {
+            @Override
+            public boolean atEdge(ServerPlayer p, String trial) {
+                asked.add("edge " + trial);
+                return was.atEdge(p, trial);
+            }
+
+            @Override
+            public void done(ServerPlayer p, String trial, int ticks, int medal) {
+                asked.add("done " + trial);
+                was.done(p, trial, ticks, medal);
+            }
+        });
+        BlockPos c = h.absolutePos(new BlockPos(0, 60, 0)); // the cloud is 30 down: well clear of the test's ground
+        Provings.Run run = Provings.openAt(sp, home, c, Rank.A, false);
+        h.assertTrue(run.warden == SkyWarden.WARDEN && run.room instanceof SkyWarden.Sky, "the Sky Warden's cathedral");
+        ServerLevel trials = run.level;
+        Hall hall = Cathedral.HALL;
+        int[] step = {0};
+        long[] mark = {0};
+        h.onEachTick(() -> {
+            long now = trials.getGameTime();
+            LivingEntity w = Provings.warden(run);
+            SkyWarden.Sky s = SkyWarden.sky(run);
+            switch (step[0]) {
+                case 0 -> {
+                    if (run.stage != Provings.Stage.WAITING) return;
+                    h.assertTrue(sp.getY() < c.getY() - 20, "you wake on the cloud");
+                    h.assertTrue(hall.is(trials, c, 0, 0, 0) && hall.is(trials, c, 12, 0, 0), "the font is shut, the aisles stand");
+                    step[0] = 1;
+                }
+                case 1 -> {
+                    if (s.liftAt < 0) return;
+                    h.assertTrue(trials.getBlockState(c).isAir() && sp.hasEffect(net.minecraft.world.effect.MobEffects.LEVITATION),
+                            "the font opens and the light lifts you");
+                    // up the shaft (a mock player doesn't move by itself)
+                    sp.teleportTo(trials, c.getX() + 0.5, c.getY() + 1.5, c.getZ() + 0.5, Set.<Relative>of(), 180F, 0F, true);
+                    step[0] = 2;
+                }
+                case 2 -> {
+                    if (!s.lifted) return;
+                    h.assertTrue(hall.is(trials, c, 0, 0, 0) && hall.is(trials, c, 0, -1, 0), "the font shuts again");
+                    h.assertTrue(sp.getY() >= c.getY() + 0.9 && !sp.hasEffect(net.minecraft.world.effect.MobEffects.LEVITATION), "you're up, on it");
+                    step[0] = 3;
+                }
+                case 3 -> {
+                    if (w == null) return;
+                    h.assertTrue(Math.abs(w.getZ() - (c.getZ() + Cathedral.LAND_Z + 0.5)) < 2 && w.getY() < c.getY() + 3, "it comes down in the nave");
+                    w.setHealth(w.getMaxHealth() * 0.6F);
+                    mark[0] = now;
+                    step[0] = 4;
+                }
+                case 4 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 1, "at two thirds the aisles go");
+                    if (run.turnAt >= 0) return;
+                    h.assertTrue(trials.getBlockState(c.offset(12, 0, 0)).isAir() && trials.getBlockState(c.offset(-12, 0, 0)).isAir(), "the aisles fell");
+                    h.assertTrue(hall.is(trials, c, 5, 0, 0) && hall.is(trials, c, 8, 5, -16) && hall.is(trials, c, 8, 20, -20), "the nave and its arcades stand");
+                    if (w == null) return;
+                    w.setHealth(w.getMaxHealth() * 0.3F);
+                    mark[0] = now;
+                    step[0] = 5;
+                }
+                case 5 -> {
+                    if (now - mark[0] < 1) return;
+                    h.assertTrue(run.turns == 2 && asked.contains("edge " + TrialHooks.SKY_WARDEN), "at a third the roof lifts and the sky is given");
+                    if (run.turnAt >= 0) return;
+                    h.assertTrue(trials.getBlockState(c.offset(8, 20, -20)).isAir(), "the roof lifted");
+                    h.assertTrue(hall.is(trials, c, 8, 5, -16) && hall.is(trials, c, 3, 3, 3), "the columns and the nave's light stay");
+                    // over the edge: you wake inside the door, and alone it starts over, the cathedral whole again
+                    sp.teleportTo(trials, c.getX() + 15.5, c.getY() + SkyWarden.VOID - 1, c.getZ() + 0.5, Set.<Relative>of(), 0F, 0F, true);
+                    mark[0] = now;
+                    step[0] = 6;
+                }
+                case 6 -> {
+                    if (now - mark[0] < 2) return;
+                    h.assertTrue(sp.isAlive() && Trials.inTrial(sp) && run.falls.getOrDefault(sp.getUUID(), 0) == 1, "going over the edge is a fall");
+                    h.assertTrue(Math.abs(sp.getZ() - (c.getZ() + Cathedral.DOOR_Z + 0.5)) < 1.5 && sp.getY() > c.getY(), "you wake inside the door");
+                    h.assertTrue(run.stage == Provings.Stage.WAITING && run.turns == 0, "it starts over");
+                    step[0] = 7;
+                }
+                case 7 -> {
+                    if (s.mend != null) return;
+                    h.assertTrue(hall.is(trials, c, 12, 0, 0) && hall.is(trials, c, 8, 20, -20) && hall.is(trials, c, 0, 0, 0),
+                            "the aisles and the roof are back, the font shut");
+                    // up the nave: it comes again
+                    sp.teleportTo(trials, c.getX() + 0.5, c.getY() + 1, c.getZ() + 10.5, Set.<Relative>of(), 180F, 0F, true);
+                    step[0] = 8;
+                }
+                case 8 -> {
+                    if (w == null) return;
+                    w.kill(trials);
+                    h.assertTrue(run.stage == Provings.Stage.WON, "beaten");
+                    mark[0] = now;
+                    step[0] = 9;
+                }
+                case 9 -> {
+                    if (Trials.inTrial(sp)) return;
+                    h.assertTrue(now - mark[0] >= Provings.OUTRO, "the cathedral mends before home");
+                    h.assertTrue(Trials.lastResult(sp.getUUID()).orElse(null) == Trials.State.PASSED, "passed");
+                    h.assertTrue(Progression.rank(sp) == Rank.A, "rank A, was " + Progression.rank(sp));
+                    h.assertTrue(asked.contains("done " + TrialHooks.SKY_WARDEN), "the sky's gift");
+                    step[0] = 10;
+                }
+                case 10 -> {
+                    if (!Provings.settled()) return;
+                    h.assertTrue(hall.standing(trials, c) && hall.is(trials, c, 12, 0, 0) && hall.is(trials, c, 8, 20, -20), "the cathedral is put back");
+                    TrialHooks.install(was);
+                    step[0] = 11;
+                }
+                default -> {}
+            }
+        });
+        h.succeedWhen(() -> h.assertTrue(step[0] == 11, "the Proving ran through, at step " + step[0] + ", stage " + run.stage));
     }
 
     /** Down on the bastion, south of its middle, as landing from the fall would. */

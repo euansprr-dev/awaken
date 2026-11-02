@@ -303,6 +303,19 @@ final class GateBestiary {
                 .phase(0.33F, "The lamps are going out.", a(SLAM, "Keystone").radius(6), a(ROOT, "The Fall").range(18).radius(1.5F).bolt(BoltKind.PLAIN),
                         a(RAIN, "Rubble").n(4).radius(2.5F).bolt(BoltKind.PLAIN))
                 .build());
+        // the fourth (SPEC §46.8): it comes down out of the vault of a cathedral over the clouds; the aisles fall, then the
+        // roof lifts away and the sky remembers you
+        out.add(m("proving_sky_warden", "The Sky Warden", Theme.SKY, Tier.PROVING, Model.HUMAN, "The cathedral's knight, winged in its own glass")
+                .hp(520).dmg(3.0).spd(0.3).kb(0.8).scale(2.4F).size(0.6F, 2.0F).bar(BossBarColor.YELLOW).arena(40)
+                .intro("Something is coming down out of the vault.")
+                .phase(1.0F, "The Sky Warden comes down into the nave.", a(SLAM, "Descent").radius(5), a(CHARGE, "Stoop").range(18),
+                        a(BOLT, "Lance of Light").n(1).bolt(BoltKind.GLASS), a(GUST, "Wingbeat").radius(7).power(0.8F))
+                .phase(0.66F, "The aisles are falling.", a(SLAM, "Descent").radius(5.5F), a(CHARGE, "Stoop").range(18),
+                        a(BOLT, "Lance of Light").n(1).bolt(BoltKind.GLASS), a(GUST, "Wingbeat").radius(8).power(1.0F))
+                .phase(0.33F, "The roof is lifting away.", a(SLAM, "Descent").radius(6), a(CHARGE, "Stoop").range(20),
+                        a(BOLT, "Lance of Light").n(1).bolt(BoltKind.GLASS), a(GUST, "Wingbeat").radius(8).power(1.0F),
+                        a(RAIN, "Shattered Glass").n(5).radius(2.5F).bolt(BoltKind.GLASS))
+                .build());
     }
 
     private static void nightmare(List<MobDef> out) {
