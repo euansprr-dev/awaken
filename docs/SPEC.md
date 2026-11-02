@@ -17745,8 +17745,9 @@ the `anvil.*` entries of arms' merged sounds.json and subtitles (`audio_arms.py`
   at the style's true note and up to 6% flat the further it lies from level) and `star` (S, an airy rise into a high
   A chord with motes of light).
 - **The Forge's own**, kept from the armour forge's kit: `bellows`, `pull`, `count` (the count-in) and `miss`.
-- **Listening**: `tools/art/anvil_listen.py` builds the page Euan judges the kit on (a forging at each rank as the game
-  times it, the true notes side by side, every event alone; keep / remake / cut and a note on each).
+- **Listening**: `tools/art/anvil_listen.py` builds the page Euan judges the kit on (into build/anvil-listening: a
+  forging at each rank as the game times it, the true notes side by side, every event alone; keep / remake / cut and a
+  note on each, saved in the page's store, collection `verdicts`): https://claude.ai/artifact/JpbQKVjWDgDwiXajNmtkCP
 
 Test: `arms_anvil_ring` (every style flat at first and true at the last clean strike, rising each step, inside the
 pitch range; a Maul under the Longsword under Daggers; only clean strikes step it; each tier's own strike).
