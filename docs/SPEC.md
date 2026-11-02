@@ -16684,8 +16684,14 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
   by tap), drawn out by its progress, flipped at the halfway strike, carried on a short arc from the Forge to the anvil as
   the view glides, over the trough and into it for the quench. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
   x the heat, y's low byte the heat front along the blade, bit 10 the quench's side: the cooled part from the point) glows
-  dull red through orange and yellow to white, dark and soot-streaked where cool. Sparks fly at each strike; steam rises
-  from the trough while hot metal is in it.
+  dull red through orange and yellow to white, dark and soot-streaked where cool, over the whole blade whatever its
+  metal map (Beastbound's bone and bronze glow too). Sparks fly at each strike (on the screen, off the mark); steam
+  (vanilla's white smoke, two a tick) rises from the trough while the hot blade is in it.
+- Sizes: the work at 0.035 a block a texel (a little over its held size, so it reads on the anvil's face); the hammer and
+  tongs at 0.025, so they hang from the peg clear of the floor. The trough is narrower than the blade: it goes in edge
+  down, tip low. Your held items hide while the scene runs (SPEC §24 view), your hands being on the tools.
+- The smith's own client plays their sounds the moment they act; the server plays them to everyone else. Observers see
+  the work, the tongs on it and the hammer at rest on the heel; the smith's swing in third person is stage 2.
 - With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.
 
 Test (one per mechanism): `arms_anvil_song` (a D forge judged by the server's clock: early, gold and late heat; strikes
