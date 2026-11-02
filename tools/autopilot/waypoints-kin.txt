@@ -93,14 +93,15 @@ screen close
 wait 10
 # where the Burrowbun stood (open field the camera knows): a wild Lampwing, then a Gnawed Mossback
 cmd execute at @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] run summon minecraft:marker ~ ~ ~ {Tags:["field"]}
-cmd kill @e[type=awaken:kin_burrowbun]
+# a beast that lives with you never dies (it hides at one heart): send it off down the field instead
+cmd execute as @e[type=awaken:kin_burrowbun] at @s run tp @s ~ ~ ~-40
 cmd execute at @e[type=marker,tag=field,limit=1] run summon awaken:kin_lampwing ~ ~1.5 ~ {NoAI:1b}
 cmd execute at @e[type=marker,tag=field,limit=1] run tp @s ~ ~ ~4 180 -3
 wait 40
 shot wk_10_kin_plate_wild_lampwing
 cmd kill @e[type=awaken:kin_lampwing]
 cmd execute at @e[type=marker,tag=field,limit=1] run summon awaken:kin_mossback ~ ~ ~ {NoAI:1b,gnawed:1b}
-cmd execute at @e[type=marker,tag=field,limit=1] run tp @s ~ ~ ~5 180 10
+cmd execute at @e[type=marker,tag=field,limit=1] run tp @s ~ ~ ~5 180 15
 wait 40
 shot wk_11_kin_plate_gnawed_mossback
 cmd kill @e[type=awaken:kin_mossback]

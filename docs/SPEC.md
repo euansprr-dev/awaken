@@ -16287,7 +16287,8 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
 - **When**: while you look at it (the look's reach is the creature plate's, `PlateRules.lookRange`, through no wall) or it's
   the creature you mean (`Aim.target()`, as §40.6), then a
   0.6 s fade (`LOOK_FADE` 12 ticks); for 4 s after it's hurt within 16 blocks of you (`HURT_TICKS` 80, `HURT_RANGE`), then a
-  1 s fade; at most two at once (`MAX`), the looked-at one first. Never the one you ride.
+  1 s fade; at most two at once (`MAX`): looked at first (the crosshair's and the one you mean can both show), then
+  the nearest hurt. Never the one you ride.
 - **The look** (`kin.client.KinPlate`, a `HoloWorld` plate over its head, 90 to 210 px wide by its words): warm glass with a
   lantern edge (an ember edge and a darker fill when Gnawed); its name (the name you gave it, else its kind) with four bond
   diamonds after it, gold up to how close you and its kind are (Kinship's Wary, Curious, Friendly, Kin; none for a pet or a

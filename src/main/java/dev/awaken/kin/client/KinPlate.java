@@ -107,7 +107,7 @@ public final class KinPlate {
             for (LivingEntity e : mc.level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(KinPlates.HURT_RANGE),
                     e -> e.hurtTime > 0 && e != riding && e.isAlive() && KinPlates.wears(e)))
                 HURT.put(e.getId(), ticks);
-        // the two most visible: looked at first, then the nearest hurt
+        // the two most visible: looked at (under the crosshair, or the creature you mean) first, then the nearest hurt
         picked = 0;
         pick(mc, p, LOOK, range);
         pick(mc, p, HURT, range);
@@ -148,7 +148,7 @@ public final class KinPlate {
         if (best >= 0 && picked < KinPlates.MAX) {
             PICKED[picked] = best;
             VIS[picked++] = bestVis;
-            if (from == HURT) pick(mc, p, from, range); // a second hurt one may take the other place
+            pick(mc, p, from, range); // a second from the same list may take the other place (crosshair and mark, two hurt)
         }
     }
 
