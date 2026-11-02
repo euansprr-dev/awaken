@@ -20,6 +20,10 @@ Sync points match the unchanged director: doors meet at 28 ticks (1.4 s); eyes b
 gaze charge lasts 45 ticks (2.25 s); the swing starts 17 ticks into the 25-tick wind-up; walk contacts are every
 0.8 s of the distance-driven 1.6 s clip. The hand's impact remains at 0.06 s, cutting to black at 0.46 s.
 Deterministic: every random source is seeded. build(out) is a no-op so build_all.py (textures) does not render audio.
+
+Since 2026-11-02 the cinematic pass (ritual_v2.py) owns every sound it builds (steps, hits, the beam, the doors, the
+hall's air...): this script skips those names, keeps their events in sounds.json as they are and their rows in the
+manifest, and still builds the bell, candle, words, drain, heartbeat, tear and void.
 """
 import json
 import os
@@ -660,7 +664,7 @@ SOUNDS = OrderedDict([
     ("bell", (None, -16.5, True, 1.0, 96, "Great bell tolls", 1.0)),
     ("doors", (None, -17.0, True, 1.0, 64, "Stone doors grind shut")),
     ("flames_out", (None, -19.0, True, 1.0, 64, "Every flame dies")),
-    ("candle", (candle, -23.0, True, 0.5, 24, "Candle lights", 1.0)),
+    ("candle", (candle, -23.0, True, 1.0, 24, "Candle lights", 1.0)),  # 1.0 since the cinematic pass (played at 0.4)
     ("words", (words, -19.0, False, 1.0, None, "A rule is carved in light")),
     ("eyes", (None, -17.0, True, 1.0, 96, "The Seated One opens its eyes", 1.5)),
     ("gaze_charge", (None, -21.5, True, 1.0, 48, "The Seated One's gaze gathers", 2.0)),
@@ -730,23 +734,37 @@ def render(name):
     return master(x, rms, ceil - 0.7, give)  # 0.7 dB of room for the encoder
 
 
+def v2_names():
+    """The sounds ritual_v2.py builds (and this script leaves alone)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import ritual_v2
+    return set(ritual_v2.CUES)
+
+
 def write_json(durs):
     os.makedirs(os.path.join(MERGE, "lang"), exist_ok=True)
-    events = OrderedDict(("story.ritual." + n, event_json(n, durs[n])) for n in SOUNDS)
+    path = os.path.join(MERGE, "sounds.json")
+    events = json.load(open(path), object_pairs_hook=OrderedDict) if os.path.exists(path) else OrderedDict()
+    owned = v2_names()
+    for n in SOUNDS:
+        if n not in owned:
+            events["story.ritual." + n] = event_json(n, durs[n])
     with open(os.path.join(MERGE, "sounds.json"), "w") as f:
         json.dump(events, f, indent=2)
         f.write("\n")
     path = os.path.join(MERGE, "lang/en_us.json")
     lang = json.load(open(path), object_pairs_hook=OrderedDict) if os.path.exists(path) else OrderedDict()
     for n, row in SOUNDS.items():
-        lang["subtitles.awaken.story.ritual." + n] = row[5]
+        if n not in owned:
+            lang["subtitles.awaken.story.ritual." + n] = row[5]
     with open(path, "w") as f:
         json.dump(lang, f, indent=2, ensure_ascii=False)
         f.write("\n")
 
 
 def build_sounds(only=()):
-    todo = [n for n in SOUNDS if not only or n in only]
+    owned = v2_names()
+    todo = [n for n in SOUNDS if (not only or n in only) and n not in owned]
     unknown = [o for o in only if o not in SOUNDS]
     if unknown:
         raise SystemExit("no such sound: " + ", ".join(unknown))
@@ -764,13 +782,13 @@ def build_sounds(only=()):
         print(f"  ritual/{n:12s} {durs[n]:5.2f} s  {'mo' if y.ndim == 1 else 'st'}  RMS {K.gated_rms(y):6.1f}  "
               f"LUFS {K.loudness(y):6.1f}  TP {K.true_peak(y):5.1f}  limited {lim:4.1f} dB  {os.path.getsize(path) / 1024:5.0f} KB  "
               f"({time.time() - t0:.1f} s)")
-    missing = [n for n in SOUNDS if n not in durs]
+    missing = [n for n in SOUNDS if n not in durs and n not in owned]
     if missing:
         raise SystemExit("not rendered yet: " + ", ".join(missing))
     write_json(durs)
-    report = {}
+    report = json.load(open(REC.SOURCE / "measurements.json"))
     import hashlib
-    for n in REC.NAMES:
+    for n in REC.NAMES - owned:
         p = os.path.join(SND, n + ".ogg")
         decoded = K.read_audio(p)
         peak = K.true_peak(decoded)

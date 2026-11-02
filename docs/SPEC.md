@@ -1336,39 +1336,41 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
 - The ritual's sound (2026-10-28, Codex's opening-audio, reviewed): 18 of its clips are built offline from CC0
   BigSoundBank recordings (`tools/art/sources/ritual/`, `ritual_recordings.py`; stone, bell, arc, wind, pressure),
   keeping their transients (`audio_mix.py` checks only their -6 dBTP ceiling). One client mixer (`story.client.
-  RitualAudio`) plays every cue: at most 6 voices counting the room bed (a stereo hall bed from WAITING through
-  JUDGEMENT, the void's own bed in the black; the hall's fades under it), at most 2 heavy transients at once, a guidance
-  cue replaces a footstep or detail when the room is full, and spatial voices duck to 45% while a rule's words are read.
+  RitualAudio`) plays every cue: at most 10 voices counting the room bed (a stereo hall bed from WAITING through
+  JUDGEMENT, the void's own bed in the black; the hall's fades under it), at most 3 heavy transients at once (a fourth
+  fades the oldest's tail over 5 ticks rather than being dropped), a guidance cue replaces a footstep or detail when the
+  room is full, and spatial voices duck to 70% while a rule's words are read (the cinematic pass below).
   The gaze is three layers (release at the eyes, a rush that travels the beam in 12 ticks, the strike where it lands);
-  a statue's whoosh plays 17 ticks into its 25-tick wind-up and never if the wind-up ends first. A walking statue's
+  a statue's whoosh plays 19 ticks into its 25-tick wind-up and never if the wind-up ends first. A walking statue's
   footfalls come from the same distance clock its walk clip uses (a step each 0.8 s of clip, never a catch-up burst),
-  placed under the planted foot on the rendered body yaw, with a small nearby shake. Impacts shake the camera at most
+  placed under the planted foot on the rendered body yaw, with a footfall shake. Impacts shake the camera at most
   1.25 degrees for at most 12 ticks, a second impact can strengthen but never extend it, and 4 quiet ticks part two;
   kicks are capped at 3 / 2 degrees. `cameraShake` off or reduced motion turns all of it off. Chat, the inventory or
   the K menu never silence the scene; a pause freezes its clock (nothing replays after). Client settings
-  (`awaken-ritual-audio-client.toml`): `effects` 1.0, `ambience` 1.0, `impactMotion` 0.7. Follow-up: `3446.flac`
+  (`awaken-ritual-audio-client.toml`): `effects` 1.0, `ambience` 1.0, `pulse` 1.0, `impactMotion` 0.7. Follow-up: `3446.flac`
   (Bell 1 o'clock) is the same take the city's bells are built from; swap it for another bell recording so the ritual
   and the city don't share a voice.
 
 - Ritual audio revision (2026-10-28): physical stone, pressure, arc, wind and bell layers use archived CC0 recordings
   with hashes, source pages and repeatable processing in `tools/art/sources/ritual/` and `ritual_recordings.py`.
   The old physical oscillator recipes are removed. The System glass/candle/drain/heartbeat/tear/void retain their
-  established tonal identity at quieter gains. Recorded transients retain their natural attack and decay; decoded
-  true peak is below −6 dBTP, individual targets −7.5..−29 dBTP. `audio_mix.py --fix` must not RMS-normalize assets
+  established tonal identity at quieter gains. Recorded transients retain their natural attack and decay. (Since the
+  cinematic pass the physical, beam, door, hall and End sounds are ritual_v2.py's, mastered to −1 dBTP; decoded true
+  peak is below −0.5 dBTP, and each is listed in the recordings manifest so audio_mix.py leaves its level alone.) `audio_mix.py --fix` must not RMS-normalize assets
   listed in a city/ritual recording manifest. World events are mono with explicit 24..96 block attenuation; the hall
   and Void beds and System words/drain/tear are stereo and listener-relative. The hall bed stays dry in SPR and
   reports one voice to the world Conductor. These are presentation changes; director timing, hit tests and damage
   remain exactly as above, with no persistent state or packet changes.
 - Every moving statue gets planted-foot audio from the renderer's `walkAnimation.position * 0.16` phase (motion v2
-  below; it was 0.55): a 1.6 s clip, left contact at phase 0, right at 0.8. Three real stone-contact variants mix friction and low
-  pressure. Contact positions follow vanilla model-axis flips and body yaw. Tick sampling includes statues behind the camera; initial/late tracking, stopping, phase resets and jumps
-  never replay missed contacts. Contacts have 36 block sound range and a restrained 12 block camera impulse.
-  Wind-up whooshes begin at tick 17 of the existing 25 tick wind-up and are dropped if the statue stopped winding
+  below; it was 0.55): a 1.6 s clip, left contact at phase 0, right at 0.8. Four stone-contact takes (ritual_v2.py) mix a clack, a felt
+  drop, a settling grind, pebbles and dust. Contact positions follow vanilla model-axis flips and body yaw. Tick sampling includes statues behind the camera; initial/late tracking, stopping, phase resets and jumps
+  never replay missed contacts. Contacts have 48 block sound range and a 0.5 degree camera nudge within 16 blocks,
+  fading out by 24. Wind-up whooshes begin at tick 19 of the existing 25 tick wind-up and are dropped if the statue stopped winding
   up. The door recording meets at the director's 28 ticks (1.4 s), the eyes bloom at 58 ticks (2.9 s), and the beam
   charge ends at 45 ticks (2.25 s). Beam release, its moving 12 tick air/arc trail, target impact and room decay are
   different recordings/layers; the existing immediate impact and damage time remain unchanged. SHAKE cues no longer
   duplicate each beam/weapon impact's rumble, and HIT no longer duplicates the world impact through the UI.
-- Ritual motion v2 (2026-11-02, branch `claude/ritual-sound-motion-601bfc`, for Euan's approval with the sound pass):
+- Ritual motion v2 (2026-11-02, approved by Euan with the sound pass, "go with all"):
   the statues' walk is a colossus's stride, two steps of 1.25 blocks per 1.6 s cycle (1.2 steps a second at the
   Judgement's 0.075 blocks a tick; v1 took 4.1 tiny steps a second and ran its stance backwards, so each planted foot
   slid about 1.1 blocks). Clip time is `walkAnimation.position * 0.16`, which lays 2.5 blocks of ground under a cycle:
@@ -1381,18 +1383,48 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   one clip ends on the next one's first frame (wind-up into strike, strike into recovery, the kneel-down into the
   kneel), 0.25 s out of the walk, 0.1–0.35 s elsewhere. Sent to KNEEL from its feet (the End), a statue kneels down
   over 1.6 s (the rise backwards) before the still kneel. Contacts sound from under the heel strike, 0.75 blocks ahead.
-- The ritual owns at most six voices including its room bed, at most two heavy transients, and one group footfall
-  per four ticks. Guidance and heavy cues can replace a small detail at capacity. Identical great bell cues are
-  spaced by at least 100 ticks, candles six ticks, heavy repeat impacts four ticks; missed sounds are discarded.
-  Hall ambience fades in over ticks, ducks from gain 0.5 to 0.16 while guidance is visible (world one-shots duck to
-  45%), then fades out at END. The hand closing stops the drain and all room tails before its short impact; the
-  Void is quieter than the hall. Pause/menus, scene handoff, logout and client-level changes stop all voices and
-  delayed cues; resuming establishes fresh foot baselines and does not replay missed attacks or the Void toll.
-- `awaken-ritual-audio-client.toml` adds `effects` and `ambience` (0..1, default 1) and `impactMotion` (0..1,
-  default 0.7), alongside normal sound-category sliders. Impact shake is capped at 1.25 degrees and twelve ticks;
+- The ritual owns at most ten voices including its room bed, at most three heavy transients (a fourth fades the
+  oldest's tail over 5 ticks), and one group footfall per two ticks. Guidance and heavy cues can replace a small detail
+  at capacity. Identical great bell cues are spaced by at least 10 ticks (every toll rings), candles six ticks, heavy
+  repeat impacts four ticks, the waking's rumbles 20; missed sounds are discarded. Hall ambience fades in over ticks,
+  ducks from gain 0.5 to 0.3 while words are read (world one-shots to 70%; the ring's rule ducks only its first 90
+  ticks, as it stays up across the plates whose timers must be heard) and to 55% under every heavy hit (a statue's
+  blade 24 ticks, the beam 30, the eyes' bloom 40, the twelve rising 50), then fades out at END. The hand closing stops
+  the drain, the pulse and all room tails before its impact; the Void is quieter than the hall. Pause/menus, scene
+  handoff, logout and client-level changes stop all voices and delayed cues; resuming establishes fresh foot baselines
+  and does not replay missed attacks or the Void toll.
+- `awaken-ritual-audio-client.toml` adds `effects`, `ambience` and `pulse` (0..1, default 1) and `impactMotion` (0..1,
+  default 0.7), alongside normal sound-category sliders (the pulse rides the Music slider too). Impact shake is capped
+  at 1.25 degrees and twelve ticks;
   simultaneous impacts strengthen it without extending or summing it, with four quiet ticks before a new impulse.
   Kick yaw/pitch are bounded at ±3/±2 degrees; shake falls linearly to zero at its event radius. `cameraShake` off or
   the shared reduced-motion setting disables impact shake, kicks and FOV punches. Authored scene framing is unchanged.
+- Ritual sound, the cinematic pass (2026-11-02, Euan approved all ten recommendations on the listening page: "go with
+  all"; the game follows `tools/art/ritual_bounce.py v3`, the model he heard). 31 sounds from `tools/art/specs/
+  ritual_v2.py` (CC0 recordings already in the repo plus synthesis), mastered to -1 dBTP so the game's gain sets the
+  mix: a whole sequence about 12 LUFS louder than before (-17 against -29), near a Warden fight. Gains and reach
+  (blocks): footsteps 0.8 / 48 (four takes), the wind-up grind 0.7 / 32 on the wind-up's first tick, the whoosh 0.85 /
+  32 (two takes by statue), the blade's strike 1.0 / 64 (rebuilt as crack then boom, two takes; the rule strike uses
+  it too), the beam's charge 0.8 / 96, release 0.9 / 96, rush 0.7, strike 1.0 / 64, the pit 0.9 / 64, the twelve rising
+  0.95 / 96, the waking's rumbles 0.6 then 0.75 / 96, the doors 1.0 / 96, the flames dying 0.9 / 96 (heavy), candles
+  0.4 / 32, the tolls 0.85 (a plate's 0.6), the words 0.45 (0.4 when judged), the eyes 0.9 in both ears, the drain
+  0.6, the close 1.0. New: the hand's rise (0.8, on the live step into END), [ERROR] (0.6, its cue), and the blow when a
+  statue's blade catches you (0.9 in your head; the HIT cue now carries the statue's id, -1 for a pit or the gaze,
+  which play their own sound where they land).
+  - A lit plate's timer: from the plate itself (so it says where to go), a grind rising under 15 ticks and tocks at
+    6, 14, 22, 29, 36, 42, 48, 53, 58, 62, 66, 70, 73, 76 and 79 ticks after it lights, each louder and higher
+    (gain 0.55 + 0.45u, pitch 1 + 0.12u, u = age / 80), reach 96. The director sends `PLATE_ON` (a new cue, appended)
+    to a player the first tick they stand on the lit plate: their grind and ticks stop and a stone latch plays in their
+    head (pitch 1 + 0.19k). The window running out stops the timer; the missed-plate toll is unchanged.
+  - The hall's pulse, music (`SoundSource.MUSIC`, the gate's own music stays silent in the hall) outside the effects'
+    voice budget: a far muffled drum from the flames dying to the hand rising, every 30 ticks from DOORS 60 (0.32) and
+    through BOW (0.38), every 20 from RING 10 (0.42), every 25 from BE JUDGED 30 (0.48), then racing to the eyes in
+    gaps of 14 down to 3 ticks (from BE JUDGED 57, 0.4 rising to 0.7), hard (0.95) on the bloom (WAKING 58) and the
+    twelve rising (92), then every 16 ticks from WAKING 110 and through the Judgement, every fourth hard (0.725), 0.5
+    otherwise; none in the End. Under it a dark tone (a 20 s loop) from DOORS 34: 0 → 0.22 by 110, 0.26 at BOW, 0.32
+    at RING, 0.42 at BE JUDGED, 0.5 at WAKING, 0.62 on the bloom, 0.5 at the Judgement, 0.55 at the End rising to
+    0.95 by the close and bending up a minor third (pitch 2^(3u^1.5/12)); cut with everything when the hand closes.
+    The drum ducks to 55% and the tone to 60% under heavy hits. Rules in `RitualAudioRules.pulse/drone/dronePitch`.
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.

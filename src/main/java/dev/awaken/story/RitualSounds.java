@@ -8,8 +8,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The Ritual of the Bell's sounds (prepared by tools/art/specs/ritual_sounds.py into sounds/ritual/, events and
- * subtitles in src/main/merge/story/). The client plays them from the ritual's cues; nothing here plays on its own.
+ * The Ritual of the Bell's sounds (the cinematic pass from tools/art/specs/ritual_v2.py, the bell, candle, words and the
+ * System's sounds still from ritual_sounds.py, all in sounds/ritual/; events and subtitles in src/main/merge/story/). The client plays them from the ritual's cues; nothing here plays on its own.
  */
 public final class RitualSounds {
     private RitualSounds() {}
@@ -45,6 +45,22 @@ public final class RitualSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GAZE_TRAVEL = sound("gaze_travel");
     public static final DeferredHolder<SoundEvent, SoundEvent> GAZE_IMPACT = sound("gaze_impact");
     public static final DeferredHolder<SoundEvent, SoundEvent> HALL = sound("hall");
+
+    // the cinematic pass (2026-11-02)
+    public static final DeferredHolder<SoundEvent, SoundEvent> FOOTSTEP4 = sound("footstep4");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WINDUP = sound("windup");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SWING2 = sound("swing2");
+    public static final DeferredHolder<SoundEvent, SoundEvent> IMPACT2 = sound("impact2");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STRUCK = sound("struck");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAISE = sound("raise");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ERROR = sound("error");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PLATE_TICK = sound("plate_tick");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PLATE_TOCK = sound("plate_tock");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PLATE_RISE = sound("plate_rise");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PLATE_LOCK = sound("plate_lock");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PULSE_SOFT = sound("pulse_soft");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PULSE_HARD = sound("pulse_hard");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PULSE_DRONE = sound("pulse_drone");
 
     static void init(IEventBus modBus) {
         SOUNDS.register(modBus);

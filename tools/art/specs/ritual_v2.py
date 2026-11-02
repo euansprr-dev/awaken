@@ -15,7 +15,13 @@ What changed from v1 (ritual_recordings.py), and why:
   * Each layer has a job (contact, body, sub, debris, air, room), and variants change the take, not just the pitch.
 
     python3 tools/art/specs/ritual_v2.py preview DIR [name ...]   render to DIR as .ogg and .mp3 with a loudness table
+    python3 tools/art/specs/ritual_v2.py build [name ...]          render into the game (sounds/ritual/<name>.ogg) and
+                                                                   record each file in sources/ritual/measurements.json
     python3 tools/art/specs/ritual_v2.py list                      the cue names
+
+In the game since 2026-11-02 (Euan: "go with all"). These files are this script's; ritual_sounds.py still builds the
+bell, candle, words, drain, heartbeat, tear and void, and leaves every name here alone. The events and subtitles are
+edited by hand in src/main/merge/story/ (reach and gains from ritual_bounce.py v3, the model Euan approved).
 
 Mono for every sound placed in the world (OpenAL pans and attenuates it); stereo for the hall bed and the god's
 scene-wide moments. Deterministic: every random source is seeded.
@@ -801,9 +807,40 @@ def preview(out, only=()):
     return table
 
 
+SND = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds/ritual")
+MANIFEST = os.path.join(SRC_DIR, "ritual/measurements.json")
+
+
+def build(only=()):
+    """Renders the cues into the game and records each decoded file in the recordings manifest, so audio_mix.py treats
+    them as recordings (natural transients, not its RMS windows) and RitualAudioTests can hold them to it."""
+    import hashlib
+    unknown = [o for o in only if o not in CUES]
+    if unknown:
+        raise SystemExit("no such cue: " + ", ".join(unknown))
+    report = json.load(open(MANIFEST)) if os.path.exists(MANIFEST) else {}
+    for name in CUES:
+        if only and name not in only:
+            continue
+        path = os.path.join(SND, name + ".ogg")
+        K.write_ogg(path, CUES[name][0](), 5)
+        y = K.read_audio(path)
+        report[name] = {"seconds": round(len(y) / SR, 3), "channels": 1 if y.ndim == 1 else 2,
+                        "gated_rms_dbfs": round(K.gated_rms(y), 2), "true_peak_dbtp": round(K.true_peak(y), 2),
+                        "lufs_m_max": round(momentary_max(y), 1), "built_by": "ritual_v2.py",
+                        "sha256": hashlib.sha256(open(path, "rb").read()).hexdigest()}
+        r = report[name]
+        print(f"  ritual/{name:12s} {r['seconds']:5.2f} s  {'mo' if r['channels'] == 1 else 'st'}  TP {r['true_peak_dbtp']:5.1f}  "
+              f"M-max {r['lufs_m_max']:6.1f}  {os.path.getsize(path) // 1024:4d} KB")
+    with open(MANIFEST, "w") as f:
+        f.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 2 and sys.argv[1] == "preview":
         preview(sys.argv[2], sys.argv[3:])
+    elif len(sys.argv) > 1 and sys.argv[1] == "build":
+        build(sys.argv[2:])
     elif len(sys.argv) > 1 and sys.argv[1] == "list":
         print("\n".join(f"{k:12s} {v[1]}" for k, v in CUES.items()))
     else:
