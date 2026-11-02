@@ -20,14 +20,16 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * The bells' world state (schema 5, SPEC §43.7, §43.14, §43.16): each home's tower (where its bell frame stands, how far
+ * The bells' world state (schema 6, SPEC §43.7, §43.14, §43.16): each home's tower (where its bell frame stands, how far
  * it has grown, where each of its bells hangs, the far six that answer its song, the Lampwing's old bell, the Great
  * Belfry's two pieces, its Hundred Peal, Ilse's visit), an old world's sleeping places out in the land, kept only until
  * they're cleared (SPEC §43.16); the bells gates' Lords kept, lying on their arenas' floors, and those a closed gate took
- * back (stage 4); and the land's: the play-day the Deep answered the Hundred Peal, and where the Kinsong last rang.
+ * back (stage 4); bells lying where they were won elsewhere, the villages' hidden bells and who's on their trail, and the
+ * spirits holding bells for each hunter (stage 5); and the land's: the play-day the Deep answered the Hundred Peal, and
+ * where the Kinsong last rang.
  */
 final class BellWorld extends SavedData {
-    static final int SCHEMA = 5;
+    static final int SCHEMA = 6;
 
     /** One home's tower. */
     static final class Home {
@@ -158,8 +160,11 @@ final class BellWorld extends SavedData {
                 Map<String, List<Integer>> out = new HashMap<>();
                 w.lost.forEach((k, v) -> out.put(k.toString(), new ArrayList<>(v)));
                 return out;
-            })
-    ).apply(i, (schema, homes, sites, deep, kinsongs, woke, kept, lost) -> {
+            }),
+            Codec.unboundedMap(Codec.STRING, Village.CODEC).optionalFieldOf("villages", Map.of()).forGetter(w -> keyed(w.villages)),
+            Codec.unboundedMap(Codec.STRING, Codec.unboundedMap(Codec.STRING, Codec.INT)).optionalFieldOf("quests", Map.of()).forGetter(w -> byPlayer(w.quests, v -> v)),
+            Codec.unboundedMap(Codec.STRING, Codec.unboundedMap(Codec.STRING, Keeper.CODEC)).optionalFieldOf("keepers", Map.of()).forGetter(w -> byPlayer(w.keepers, v -> v))
+    ).apply(i, (schema, homes, sites, deep, kinsongs, woke, kept, lost, villages, quests, keepers) -> {
         BellWorld w = new BellWorld();
         homes.forEach((k, v) -> w.homes.put(Long.parseLong(k), v));
         w.sites.putAll(sites);
@@ -168,8 +173,33 @@ final class BellWorld extends SavedData {
         w.woke = woke;
         w.kept.addAll(kept);
         lost.forEach((k, v) -> w.lost.put(UUID.fromString(k), new ArrayList<>(v)));
+        villages.forEach((k, v) -> w.villages.put(Integer.parseInt(k), v));
+        quests.forEach((k, v) -> {
+            Map<Integer, Integer> m = w.quests.computeIfAbsent(UUID.fromString(k), x -> new HashMap<>());
+            v.forEach((n, st) -> m.put(Integer.parseInt(n), st));
+        });
+        keepers.forEach((k, v) -> {
+            Map<Integer, Keeper> m = w.keepers.computeIfAbsent(UUID.fromString(k), x -> new HashMap<>());
+            v.forEach((n, kp) -> m.put(Integer.parseInt(n), kp));
+        });
         return w;
     }));
+
+    private static <V> Map<String, V> keyed(Map<Integer, V> m) {
+        Map<String, V> out = new HashMap<>();
+        m.forEach((k, v) -> out.put(Integer.toString(k), v));
+        return out;
+    }
+
+    private static <V, W> Map<String, Map<String, W>> byPlayer(Map<UUID, Map<Integer, V>> m, java.util.function.Function<V, W> f) {
+        Map<String, Map<String, W>> out = new HashMap<>();
+        m.forEach((u, inner) -> {
+            Map<String, W> o = new HashMap<>();
+            inner.forEach((k, v) -> o.put(Integer.toString(k), f.apply(v)));
+            out.put(u.toString(), o);
+        });
+        return out;
+    }
 
     static final SavedDataType<BellWorld> TYPE = new SavedDataType<>(Awaken.id("bells"), BellWorld::new, CODEC);
 
@@ -189,25 +219,94 @@ final class BellWorld extends SavedData {
     /** Bells a closed gate took back before these hunters lifted them, said to each when next about (stage 4). */
     final Map<UUID, List<Integer>> lost = new HashMap<>();
 
-    /** A Lord's bell on its arena's floor: which gate, where, which bell, and who hasn't lifted theirs yet. */
+    /**
+     * A bell lying where it was won for some hunters: a Lord's on its arena's floor (in a gate: {@code gate} is its id), or
+     * one set down anywhere else (stage 5: {@code gate} is "" and {@code dim} its dimension), which bell, and who hasn't
+     * lifted theirs yet.
+     */
     static final class Kept {
         static final Codec<Kept> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("gate").forGetter(k -> k.gate),
                 Codec.LONG.fieldOf("pos").forGetter(k -> k.pos.asLong()),
                 Codec.INT.fieldOf("no").forGetter(k -> k.no),
-                UUIDUtil.STRING_CODEC.listOf().fieldOf("left").forGetter(k -> new ArrayList<>(k.left))
-        ).apply(i, (gate, pos, no, left) -> new Kept(gate, BlockPos.of(pos), no, left)));
+                UUIDUtil.STRING_CODEC.listOf().fieldOf("left").forGetter(k -> new ArrayList<>(k.left)),
+                Codec.STRING.optionalFieldOf("dim", "").forGetter(k -> k.dim)
+        ).apply(i, (gate, pos, no, left, dim) -> new Kept(gate, BlockPos.of(pos), no, left, dim)));
 
         final String gate;
         final BlockPos pos;
         final int no;
         final Set<UUID> left = new HashSet<>();
+        /** Where a bell set down outside a gate lies (a dimension id), or "" for a Lord's. */
+        final String dim;
 
-        Kept(String gate, BlockPos pos, int no, List<UUID> left) {
+        Kept(String gate, BlockPos pos, int no, List<UUID> left, String dim) {
             this.gate = gate;
             this.pos = pos;
             this.no = no;
             this.left.addAll(left);
+            this.dim = dim;
+        }
+    }
+
+    /** The villages' hidden bells by number (stage 5): the empty village chosen for each and, once laid, its letter and hiding place. */
+    final Map<Integer, Village> villages = new HashMap<>();
+    /** Who's on each village bell's trail (stage 5): player → bell number → {@link VillageBells} stage. */
+    final Map<UUID, Map<Integer, Integer>> quests = new HashMap<>();
+    /** The spirits holding bells for each hunter (stage 5): player → bell number → its keeper. */
+    final Map<UUID, Map<Integer, Keeper>> keepers = new HashMap<>();
+
+    /** One village's hidden bell: the settlement, its name and well, and once laid, where the letter and the bell are (0: not yet). */
+    static final class Village {
+        static final Codec<Village> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("key").forGetter(v -> v.key),
+                Codec.STRING.fieldOf("name").forGetter(v -> v.name),
+                Codec.LONG.fieldOf("well").forGetter(v -> v.well.asLong()),
+                Codec.LONG.optionalFieldOf("letter", 0L).forGetter(v -> v.letter == null ? 0L : v.letter.asLong()),
+                Codec.LONG.optionalFieldOf("spot", 0L).forGetter(v -> v.spot == null ? 0L : v.spot.asLong()),
+                Codec.STRING.optionalFieldOf("words", "").forGetter(v -> v.words)
+        ).apply(i, (key, name, well, letter, spot, words) -> {
+            Village v = new Village(key, name, BlockPos.of(well));
+            v.letter = letter == 0L ? null : BlockPos.of(letter);
+            v.spot = spot == 0L ? null : BlockPos.of(spot);
+            v.words = words;
+            return v;
+        }));
+
+        final String key, name;
+        final BlockPos well;
+        @Nullable BlockPos letter, spot;
+        /** Where the letter says it is, in its own words ("We sank it in the pond about thirty steps south of the well."). */
+        String words = "";
+
+        Village(String key, String name, BlockPos well) {
+            this.key = key;
+            this.name = name;
+            this.well = well;
+        }
+    }
+
+    /** A spirit holding a bell for one hunter: which spirit, its name, where it stands, and whether it has let the bell go. */
+    static final class Keeper {
+        static final Codec<Keeper> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("spirit").forGetter(k -> k.spirit),
+                Codec.STRING.fieldOf("name").forGetter(k -> k.name),
+                Codec.LONG.fieldOf("pos").forGetter(k -> k.pos.asLong()),
+                Codec.BOOL.optionalFieldOf("done", false).forGetter(k -> k.done)
+        ).apply(i, (spirit, name, pos, done) -> {
+            Keeper k = new Keeper(spirit, name, BlockPos.of(pos));
+            k.done = done;
+            return k;
+        }));
+
+        final String spirit, name;
+        final BlockPos pos;
+        boolean done;
+
+        Keeper(String spirit, String name, BlockPos pos) {
+            this.spirit = spirit;
+            this.name = name;
+            this.pos = pos;
         }
     }
 

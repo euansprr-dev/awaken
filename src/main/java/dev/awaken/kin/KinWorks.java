@@ -643,11 +643,14 @@ public final class KinWorks {
         w.setDirty();
         level.playSound(null, c.crucible(), WorksContent.CAST.get(), SoundSource.BLOCKS, 1.5F, 1F);
         level.sendParticles(ParticleTypes.LAVA, c.crucible().getX() + 0.5, c.crucible().getY() + 1, c.crucible().getZ() + 0.5, 20, 0.4, 0.3, 0.4, 0.1);
+        // set down by the Crucible for the home's people who are about (SPEC §43.16 stage 5); castFor hands the rest theirs
+        List<ServerPlayer> here = new ArrayList<>();
         for (UUID id : people(level, anchor))
-            if (level.getServer().getPlayerList().getPlayer(id) instanceof ServerPlayer p) {
-                Bells.ring(p, c.mould().bell(), "cast in your Foundry");
-                Bells.ring(p, "founders", "the bell-founders' own, for your Foundry's first cast");
-            }
+            if (level.getServer().getPlayerList().getPlayer(id) instanceof ServerPlayer p && p.level() == level) here.add(p);
+        String name = dev.awaken.bells.BellCatalog.of(c.mould().bell()) == null ? "the bell" : dev.awaken.bells.BellCatalog.of(c.mould().bell()).name();
+        Bells.leave(level, c.crucible(), c.mould().bell(), here, "cast in your Foundry", "[Your Foundry cast " + name.replaceFirst("^The ", "the ") + ". It's standing by the Crucible.]");
+        Bells.leave(level, c.crucible(), "founders", here, "the bell-founders' own, for your Foundry's first cast",
+                "[The bell-founders left their own bell by the Crucible for your Foundry's first cast: the Founders' Bell.]");
     }
 
     /** Bells the home's Foundry cast while this member was away: theirs as soon as they're about again. */
@@ -656,8 +659,9 @@ public final class KinWorks {
         if (h.isEmpty()) return;
         List<String> cast = KinWorld.get(p.level().getServer()).cast.get(h.get().anchor().asLong());
         if (cast == null) return;
-        for (String id : cast) if (!Bells.has(p, id)) Bells.ring(p, id, "cast in your Foundry");
-        if (!cast.isEmpty()) Bells.ring(p, "founders", "the bell-founders' own, for your Foundry's first cast");
+        // one standing by the Crucible for them is theirs to lift there (SPEC §43.16 stage 5)
+        for (String id : cast) if (!Bells.has(p, id) && !Bells.lying(p, id)) Bells.ring(p, id, "cast in your Foundry");
+        if (!cast.isEmpty() && !Bells.lying(p, "founders")) Bells.ring(p, "founders", "the bell-founders' own, for your Foundry's first cast");
     }
 
     /** What the crucible says when used: the next bell, what it needs, and who heats it. */

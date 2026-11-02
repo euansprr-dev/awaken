@@ -16440,6 +16440,79 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
     bell room, no hum, no handbell answer (Euan 30 Oct).
   - Tests (CI): `bells_lord_room` (on the floor near the Lord, one for the party, each lifts their own, a closed gate
     sends it back), `bells_lord_keeps` (the odds, lifting what each Lord left).
+- **Stage 5: every bell at a real place** (2 Nov; BELLS.md §4.7, §4.8): nothing comes from a state any more. Since stage 5
+  a bell won anywhere but a gate is set down where it was won (`FoundBells.leave`: the free floor nearest the place, up
+  to 4 across, two above to six below, never a block someone's standing in; a found bell glowing a little, one for
+  everyone it's for, each lifts their own) and kept in the world's `kept` list with no gate and its dimension (world
+  schema 6) until each has lifted theirs. The Bells tab leads with "Lift the X" ("It's lying where you won it. Lift it
+  and take it home to hang."), pointing at it. Every 5 s one gone from its place (dug out, blown up) goes into the hands
+  of each hunter it was for once they're about ("[X was knocked out of where it lay. It's in your hands.]"). With no
+  floor near, it goes into their hands. Where each comes from now:
+  - **The Registry's two** (Handbell 03 for the first gate, Toll 30 for the twenty-fifth): "[Bram at the Registry has
+    something for you.]" once, then Bram hands it over when you're within 8 of him (`CitizenHooks.where`), in his words
+    ("Your first gate. The Registry gives every hunter one of these for it: the old handbell off the front desk...";
+    "Twenty-five gates. The Registry used to toll this one for every hunter who got that far...").
+  - **The Foundry**: a cast bell and the Founders' Bell (with the first cast) stand by the Crucible for the home's people
+    who are about (`Bells.leave` from `kin.KinWorks.finish`); one away when it was cast still has theirs handed to them
+    when they're back (unchanged). **The Founding Bell** stands by your fire (2 to 5 from the Anchor) the day your Hearth
+    grows, once you're within 48 ("[Your Hearth's grown. There's a new bell standing by your fire for it...]"); a home
+    with no Foundry yet has no Crucible to stand it by.
+  - **The Descent's nine strata bells**: set into the rock near you the first time you're in that stratum ("[There's a
+    bell set into the rock here, half grown over...]"). **Crystal** stays in your hands with the first Deepglass ("[There's
+    a little bell grown into the Deepglass...]").
+  - **The Above**: Wind and Island lie in the ruin of the first Tether Spire or sky platform you've found, once you're
+    within 24 of its middle; Halo, and Star at S rank, aboard the Halo near you; the Storm Bell falls into your hands in
+    the sky in a storm; the Cloud Bell is still the pod's gift in your hands (`kin.KinHelp`, unchanged).
+  - **The Court's eight**: where the Sovereign fell, one bell for everyone within 96 ("[Where the X fell, it set down what
+    it carried: a bell.]"). The Sovereign's relic is still given into hands.
+  - **Night and Siege**: at first light they lie where the wall was breached (the raid's `breach`, from `bigday.BigDays`;
+    the Siege Bell for members at B rank or above).
+  - **Stampede** lies in the stampede's wake near you; **Flood** at your feet when the Deep Tide goes back down;
+    **Eclipse** falls out of the dark sky near you.
+  - **The villages' five** (`VillageBells`): each a quest. A named citizen of Carillon remembers one aloud when you're
+    within 10 of them in the city (one a play-day, the bell's rank or above, the first not started): Sun for Fenwick's
+    (sunk), Oren for the Mill Bell (buried), Kestrel for the Shepherd's (kept), Teodor for the Hill Bell (high), Mira for
+    the Ford Bell (sunk). The village is a real empty one (`Villages.emptyNear`), planned and named, 250 to 2,400 from the
+    square, not another bell's, chosen once per world; the teller names it and which way it lies ("My gran came from
+    Ashby, out to the west... they left a letter by the well saying where."), "[Ashby is out to the west. It's on your
+    Tasks.]". When anyone comes within 96 of its well with its ground loaded, the bell is hidden and the letter laid once:
+    sunk on the bed of water two or more deep 6 to 64 from the well (none: buried instead), buried one block under a mossy
+    cobblestone 8 to 18 out, carried up to the highest dry ground within 64 with mossy stones round it, or kept in the
+    fold 12 to 28 out with a wolf lying by it (nobody lifts it while an untamed wolf is within 4: "A bone might win her
+    over."). The letter is a written book on a lectern 3 to 6 from the well, in the village's words with the steps and
+    the way ("We buried the bell 15 steps south of the well, under the mossy stone. Dig there..."). Reading it (using the
+    lectern, or carrying the book) moves the quest on. Only within 32 of the spot do you hear it: its note, muffled
+    (volume 0.6, pitch 0.6), every 6 s, to you alone. Anyone may lift it; after one has, it's hidden there again for the
+    next who comes near the well without it. Bring it home and the next time you're within 10 of whoever told you, they
+    say so ("You found Fenwick's Bell? My gran was married under that bell."). The Tasks say "Find the letter about X in
+    Ashby" (pointing at the well), then "Find X where the letter says" (the letter's words, no pin). World schema 6:
+    `villages` (key, name, well, letter, spot, words) and `quests` (player → bell → 1 heard, 2 read, 3 thanked).
+  - **The dreams' six** (`DreamBells`), one a dream, the next not held: the **Dreaming Bell** first, just waiting 8 to 14
+    off and asking no lucidity ("[There's a bell in this dream, close by. It's just waiting.]"); the **Daydream** moves
+    16 to 28 away whenever you look away from it after it's been in view (within 60 degrees and 64 blocks); the
+    **Lullaby** lies by something asleep (a nightmare creature, no AI, puffs of breath): come within 12 without creeping,
+    or sprint within 18, and it wakes and comes for you, and the bell goes elsewhere with a new sleeper; the **Falling
+    Bell** rings from 16 below you: once you're falling, looking more than 40 degrees down lifts you 10 back up (the fall
+    goes on, "[The fall goes on for as long as you watch it.]" the second time), and once the dream has lifted you, looking
+    under 15 degrees down while you fall ends it: you land without hurt and the bell's beside you; the **Nightmare's
+    Bell** is carried, in plain sight, by a nightmare creature that hunts you, and lies where it falls; the **Lucid Bell**
+    appears near you once you've noticed a dream sign in that dream (`Lucidium.signsNoticed`). The others need their
+    rank's lucidity to hold (C 40, B 60, A 80); a dream left without it files a Dreamt lead in its own words.
+  - **The Veil's five** (`SpiritBells`): the Spirit Bell still comes from the first spirit you speak to. When a spirit
+    finishes its story (`BellHooks.spirit`, from `veil.Spirits.talk`), if one of Ghost Lantern, Whisper (C), Wake,
+    Mourner (B) or the Veil Bell (A, once the other four are let go) waits for your rank, that spirit holds it for you
+    and says what it stayed for: a lantern lit within 3 of where it stands, flowers planted there, you within 8 of it at
+    first light (22,800 to 800), a lit candle on its grave, the other four let go. A spirit never stays for what's already
+    done where it stands (a lantern lit there already: it holds the next bell instead). Done (checked every 5 s within 16 of
+    it, in spirit or body), it lets the bell go into your hands ("[X let the bell go. It came to you pale as frost, and
+    cold in your hands.]"). One spirit, one bell; telling again repeats the errand. World schema 6: `keepers` (player →
+    bell → spirit, name, place, done). The Tasks show each errand ("Light a lantern where X stands"), pointing there.
+  - The Cloud Bell, the Proving bells (the wagon), the six far bells, Ilse's, the Lampwing's, the Lords' and the Seed are
+    unchanged.
+  - Tests (CI): `bells_found_place` (set down near you, never where you stand, never twice, on the Tasks, lifted and
+    forgotten, knocked out into your hands; Bram in person), `bells_village_quest` (buried under a mossy stone, the letter
+    on its lectern says where, the Tasks follow the trail), `bells_dream_puzzles` (order, lucidity, in view),
+    `bells_spirit_keeper` (rank, one spirit one bell, a lantern frees it).
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 
