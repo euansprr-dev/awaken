@@ -123,7 +123,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
 <header>
   <div class="eyebrow">AWAKEN · concept for Euan · 2 Nov 2026</div>
   <h1>Waypoints and Kin Plates</h1>
-  <p class="lede">Two pieces of UI you asked for while playing. Your own waypoints on the Atlas, named and coloured, shown on the table, on the wrist and in the world. And a plate of their own for the beasts that live with you, in place of the hearts they show now.</p>
+  <p class="lede">Two pieces of UI you asked for while playing. Your own waypoints on the Atlas, named and coloured. They live on the map, and the compass points to one only when you make it your destination. And a plate of their own for the beasts that live with you, in place of the hearts they show now.</p>
   <p class="ask">"Ability to set waypoints on maps (AAA UI and same design language as now)" &nbsp;·&nbsp; "kins like lampwing don't have a card? They just have the vanilla hearts. So let's add their custom plate."</p>
 </header>
 
@@ -177,33 +177,22 @@ section { display: flex; flex-direction: column; gap: 20px; }
   </div>
   <p class="caption">Clicking a waypoint: your own (left) and one a party member shared (right). The destination card you have today, with your waypoint's own colour on its edge.</p>
 
-  <h3>In the world</h3>
+  <h3>Out in the world: only the compass</h3>
   <div class="frame" data-w="960" data-h="400"><div class="stage" id="worldStage" style="width:960px;height:400px">
     <canvas id="worldCanvas" width="960" height="400"></canvas>
-    <!-- the Now line, as today -->
+    <!-- the Now line, as today: the compass to your destination -->
     <div class="g glow" style="left:22px;top:20px">◆ Copper seam above the mere</div>
     <div class="g" style="left:22px;top:42px;color:#bccde3;font-size:14px">212 blocks · ahead and a little left</div>
-    <!-- the mark you look toward -->
-    <div class="wp" style="left:418px;top:208px;--c:#e0a86a">
-      <div class="head" style="bottom:-13px;width:20px;height:20px;left:-10px"></div>
-      <svg viewBox="0 0 16 16" style="bottom:-8px;left:-6px;width:12px;height:12px"><use href="#ico-pick"/></svg>
-      <div class="name" style="bottom:18px">Copper seam above the mere</div>
-      <div class="owner" style="bottom:-34px;color:#bccde3">212 blocks</div>
-    </div>
-    <!-- one off to the side: only its mark, dimmer -->
-    <div class="wp" style="left:742px;top:190px;--c:#ff8a9a;opacity:.6">
-      <div class="head" style="bottom:-9px;width:14px;height:14px;left:-7px;border-width:2px"></div>
-    </div>
     <!-- the vitals line, the clear screen as today -->
     <div style="position:absolute;left:356px;bottom:44px;width:248px;height:6px;display:flex;gap:2px">
       <span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff;opacity:.35"></span><span style="flex:1;background:#cdebff;opacity:.35"></span>
     </div>
   </div></div>
-  <p class="caption">Walking toward the copper seam. The waypoint you look toward shows its name and distance; the wolf den off to the right is only a small dim mark. Nothing else on screen changes. Holding Tab names every waypoint in view.</p>
+  <p class="caption">Walking toward the copper seam after setting it as your destination. Nothing marks a waypoint in the world itself: the Now line at the top left points the way, as it does for any destination today. Your other waypoints stay on the map.</p>
 
   <div class="why">
     <div><h3>What the Atlas has today</h3><p>Party pins: a double-click drops one, twelve each, no name or colour, always shared, and the oldest goes without a word when you drop a thirteenth. One destination at a time, which the Now line points to. Nothing marks a place in the world.</p></div>
-    <div><h3>The wrist</h3><p>The old wrist glance (a live mini map) isn't drawn anywhere since the band's pages came in. The wrist today is the Tab glance. A waypoint reaches it two ways: set as your destination it is the glance's "where you're heading" row with its needle, and while you hold Tab every waypoint in view is named in the world.</p></div>
+    <div><h3>The wrist</h3><p>The old wrist glance (a live mini map) isn't drawn anywhere since the band's pages came in. The wrist today is the Tab glance. A waypoint reaches it only as your destination: then it is the glance's "where you're heading" row with its needle, like the Now line.</p></div>
   </div>
 
   <div class="decisions">
@@ -222,9 +211,9 @@ section { display: flex; flex-direction: column; gap: 20px; }
     <div class="d"><div class="n">5</div><h3>Where they're kept</h3>
       <p>On the server, in your Atlas record (the one that already holds what you explored and your pins). So it's per world, each waypoint knows its dimension, it's kept through death, it works the same on a server and in single player, and a new computer has them all. The server checks every one: the name's length, a colour and mark from the set, ground you have explored, the limit.</p>
       <div class="rec">server, per world, per dimension</div></div>
-    <div class="d"><div class="n">6</div><h3>The mark in the world</h3>
-      <p>Only a waypoint you are looking toward shows: within 25° of the middle of your view it's a small mark in its colour, and within 6° it adds its name and distance. Never more than four at once, none in a fight, and each fades out once you're within 12 blocks (you've arrived). Your destination's mark always shows. Holding Tab shows and names every waypoint in view. Classic screen: the same rules.</p>
-      <div class="rec">quiet by default, Tab shows all</div></div>
+    <div class="d"><div class="n">6</div><h3>Nothing in the world</h3>
+      <p>Waypoints show only on the map while it's open. Out in the world nothing marks them. Choose one as your destination and the compass (the Now line at the top left, and the Tab glance's needle) points to it until you arrive, as for any destination today.</p>
+      <div class="rec">your call: map only, compass when it's your destination</div></div>
     <div class="d"><div class="n">7</div><h3>Where you fell</h3>
       <p>A grey waypoint at the spot of your last death (not inside gates), so you can walk back for your things. It goes away when you reach it or die again. It doesn't count toward the 64.</p>
       <div class="rec">yes</div></div>
@@ -294,7 +283,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
   <div class="foot-note">
     <h3>Neighbours and size</h3>
     <p>The Boss Plate and the plate rules stay as they are (the boss-fights session is working there). The kin plate is its own code in the kin module. Three one-line touches outside it: Jade's "this creature has a plate" check, the wild-plate picker skipping your trusted mounts so they don't wear two plates, and the clear screen's list of vanilla HUD pieces it hides (the mount's hearts). No new Atlas hooks, so the bells session's marks are unaffected.</p>
-    <p>Cost: a kin plate is one more of the plates you already have, at most two. The world marks are at most four small quads a frame, worked out once a tick from at most a few hundred waypoints. Each mechanism gets one test (the waypoint rules and their save, who wears the kin plate, when the ride line shows), then one CI tour at the MacBook's scale with the Atlas, a kin plate and the ride line in shot.</p>
+    <p>Cost: a kin plate is one more of the plates you already have, at most two. Waypoints cost nothing outside the open map. Each mechanism gets one test (the waypoint rules and their save, who wears the kin plate, when the ride line shows), then one CI tour at the MacBook's scale with the Atlas, a kin plate and the ride line in shot.</p>
   </div>
   <p class="reply">Reply "go ahead", or give the numbers you'd change.</p>
 </section>
