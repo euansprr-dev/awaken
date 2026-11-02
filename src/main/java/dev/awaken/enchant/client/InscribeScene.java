@@ -384,11 +384,21 @@ public final class InscribeScene {
 
     /** A point of the mark's square on the slate (u along the piece, v away from the writer), at a height over it. */
     static double wx(double u, double v) {
-        return centre.x + (rx * u - fx * v) * MARK;
+        double ox = (rx * u - fx * v) * MARK, oz = (rz * u - fz * v) * MARK;
+        return centre.x + ox * spinC + oz * spinS;
     }
 
     static double wz(double u, double v) {
-        return centre.z + (rz * u - fz * v) * MARK;
+        double ox = (rx * u - fx * v) * MARK, oz = (rz * u - fz * v) * MARK;
+        return centre.z - ox * spinS + oz * spinC;
+    }
+
+    /** The mark turning with the piece as it wakes (about the piece's centre, as the table turns the piece). */
+    private static double spinC = 1, spinS;
+
+    private static void spin(double a) {
+        spinC = Math.cos(a);
+        spinS = Math.sin(a);
     }
 
     /** The view each phase asks for, eased toward a tick at a time. */
@@ -664,15 +674,18 @@ public final class InscribeScene {
                 }
                 case WAKE -> {
                     // it wakes: the mark flares white-hot and settles into its colour, and a band of light runs the piece
+                    // it lifts a finger's width and turns once with the piece
                     float a = Mth.clamp((t - phaseAt) / 50F, 0F, 1F);
                     float glow = 1F - 0.75F * a;
-                    double lift = 0.04 * ease(Mth.clamp((t - phaseAt) / 8F, 0F, 1F)) * (1F - Mth.clamp((t - phaseAt - 40) / 20F, 0F, 1F));
+                    double lift = InscribingTableRenderer.wakeLift(InscribingTableBlockEntity.WAKE, t - phaseAt);
+                    spin(InscribingTableRenderer.wakeSpin(t - phaseAt));
                     for (float[] s : m) {
                         ribbon(pose, vc, s, 0, s.length / 2, y + lift, 0.07 * glow + 0.02, argb(colour, 0.35F * glow));
                         ribbon(pose, vc, s, 0, s.length / 2, y + lift + 0.001, 0.015, argb(hot(colour, 0.7F * glow), glow));
                     }
                     float sweep = Mth.clamp((t - phaseAt - 4) / 24F, 0F, 1F);
                     if (sweep > 0 && sweep < 1) band(pose, vc, -1.4 + 2.8 * sweep, y + lift + 0.002, argb(hot(colour, 0.5F), 0.6F * Mth.sin(sweep * Mth.PI)));
+                    spin(0);
                 }
                 default -> {}
             }

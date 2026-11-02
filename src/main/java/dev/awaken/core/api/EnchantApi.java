@@ -44,6 +44,26 @@ public final class EnchantApi {
         return hooks == null ? ItemStack.EMPTY : hooks.page(enchantment, where);
     }
 
+    /**
+     * The enchantment light on our own weapons and armour (SPEC §45.11), read by arms' and armour's renderers each frame:
+     * 7 bits for bits 8-14 of their packed overlay's first half (a palette index in the low 4, 0 none; how brightly it
+     * shows, 0-7, in the high 3), cycling through the piece's enchantments so each lights in turn. Installed by the
+     * enchant client; 0 (nothing) without it.
+     */
+    public interface Glow {
+        int bits(ItemStack stack);
+    }
+
+    private static Glow glow = s -> 0;
+
+    public static void glow(Glow g) {
+        glow = g;
+    }
+
+    public static int glowBits(ItemStack stack) {
+        return stack.isEmpty() ? 0 : glow.bits(stack) & 127;
+    }
+
     /** How many pages a market shows each buyer. */
     public static final int MARKET_SHOWN = 3;
 }

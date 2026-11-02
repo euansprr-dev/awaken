@@ -91,6 +91,8 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         s.age = be.getLevel() == null ? 999 : be.getLevel().getGameTime() - be.phaseAt + pt;
         Minecraft mc = Minecraft.getInstance();
         s.mine = mc.player != null && mc.player.getUUID().equals(be.writer());
+        // the writer's piece wakes on the scene's clock, so it turns with the mark their client draws over it
+        if (s.mine && s.phase == InscribingTableBlockEntity.WAKE && InscribeScene.phase == InscribeScene.WAKE) s.age = InscribeScene.now(pt) - InscribeScene.phaseAt;
         ItemStack piece = be.piece();
         s.armour = EnchantRules.armour(piece);
         if (piece.isEmpty() || (s.mine && InscribeScene.laying(pt))) s.piece.clear();
@@ -116,7 +118,7 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         if (!s.piece.isEmpty()) {
             ps.pushPose();
             ps.translate(0.5F + s.fx * 0.08F, SLATE + 0.017F + lift, 0.5F + s.fz * 0.08F);
-            ps.rotateDegrees(Axis.YP, s.yaw);
+            ps.rotateDegrees(Axis.YP, s.yaw + (float) Math.toDegrees(wakeSpin(s.phase == InscribingTableBlockEntity.WAKE ? s.age : 0)));
             ps.rotateDegrees(Axis.XP, 90F);
             // a weapon or tool lies across the slate, its length along the writer's left and right
             if (!s.armour) ps.rotateDegrees(Axis.ZP, 45F);
@@ -138,12 +140,12 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
                     float fill = Mth.clamp(age / 40F, 0F, 1F);
                     g.channel(y, 1F, InscribeScene.argb(InscribeScene.LAPIS, 0.12F));
                     g.channel(y + 0.0005F, fill, InscribeScene.argb(colour, 0.55F + 0.1F * Mth.sin(time * 0.2F)));
-                    if (!mine) g.mark(no, SLATE + 0.036F, InscribeScene.argb(colour, 0.22F + 0.1F * Mth.sin(time * 0.25F)), 0.03F);
+                    if (!mine) g.mark(no, SLATE + 0.036F, InscribeScene.argb(colour, 0.22F + 0.1F * Mth.sin(time * 0.25F)), 0.03F, 0);
                 }
                 case InscribingTableBlockEntity.WAKE -> {
                     float k = Mth.clamp(age / 50F, 0F, 1F);
                     g.channel(y, 1F, InscribeScene.argb(InscribeScene.hot(colour, 0.5F * (1 - k)), 0.9F - 0.5F * k));
-                    if (!mine) g.mark(no, SLATE + 0.036F + lift, InscribeScene.argb(InscribeScene.hot(colour, 0.6F * (1 - k)), 0.85F - 0.4F * k), 0.05F);
+                    if (!mine) g.mark(no, SLATE + 0.036F + lift, InscribeScene.argb(InscribeScene.hot(colour, 0.6F * (1 - k)), 0.85F - 0.4F * k), 0.05F, wakeSpin(age));
                 }
                 default -> g.channel(y, 1F, InscribeScene.argb(InscribeScene.LAPIS, (writing ? 0.24F : 0.14F) * open * (0.8F + 0.2F * Mth.sin(time * 0.07F))));
             }
@@ -156,6 +158,12 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
         float up = Mth.clamp(age / 8F, 0F, 1F);
         up = up * up * (3 - 2 * up);
         return 0.04F * up * (1F - Mth.clamp((age - 40F) / 20F, 0F, 1F));
+    }
+
+    /** And turns once, after the lift and before it settles (radians). */
+    static double wakeSpin(float age) {
+        float k = Mth.clamp((age - 6F) / 34F, 0F, 1F);
+        return Mth.TWO_PI * k * k * (3 - 2 * k);
     }
 
     @Override
@@ -190,25 +198,33 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
             }
         }
 
-        /** The mark of enchantment {@code no} on the piece. */
-        void mark(int no, float y, int argb, float width) {
+        /** The mark of enchantment {@code no} on the piece (which sits 0.08 toward the writer), turned by {@code spin}. */
+        void mark(int no, float y, int argb, float width, double spin) {
             if (no <= 0) return;
-            float cu = 0, cv = -0.08F; // the piece sits 0.08 toward the writer from the centre
+            float c = (float) Math.cos(spin), sn = (float) Math.sin(spin), px = 0.5F + fx * 0.08F, pz = 0.5F + fz * 0.08F;
             for (float[] s : Marks.of(no)) {
                 int n = s.length / 2;
-                for (int i = 0; i + 1 < n; i++)
-                    strip(cu + s[i * 2] * 0.2F, cv + s[i * 2 + 1] * 0.2F, cu + s[i * 2 + 2] * 0.2F, cv + s[i * 2 + 3] * 0.2F, y, width, argb);
+                for (int i = 0; i + 1 < n; i++) {
+                    float ox0 = (rx * s[i * 2] - fx * s[i * 2 + 1]) * 0.2F, oz0 = (rz * s[i * 2] - fz * s[i * 2 + 1]) * 0.2F;
+                    float ox1 = (rx * s[i * 2 + 2] - fx * s[i * 2 + 3]) * 0.2F, oz1 = (rz * s[i * 2 + 2] - fz * s[i * 2 + 3]) * 0.2F;
+                    line(px + ox0 * c + oz0 * sn, pz - ox0 * sn + oz0 * c, px + ox1 * c + oz1 * sn, pz - ox1 * sn + oz1 * c, y, width, argb);
+                }
             }
         }
 
-        /** A soft line between two points: bright down its middle, fading to nothing at its sides. */
+        /** A soft line between two points on the slate (u, v): bright down its middle, fading to nothing at its sides. */
         void strip(float u0, float v0, float u1, float v1, float y, float width, int argb) {
-            float du = u1 - u0, dv = v1 - v0, l = Mth.sqrt(du * du + dv * dv);
+            line(x(u0, v0), z(u0, v0), x(u1, v1), z(u1, v1), y, width, argb);
+        }
+
+        /** The same between two points in the block's own space. */
+        void line(float x0, float z0, float x1, float z1, float y, float width, int argb) {
+            float dx = x1 - x0, dz = z1 - z0, l = Mth.sqrt(dx * dx + dz * dz);
             if (l < 1e-5F) return;
-            float nu = -dv / l * width / 2, nv = du / l * width / 2;
+            float nx = -dz / l * width / 2, nz = dx / l * width / 2;
             int rim = argb & 0x00FFFFFF;
-            quad(x(u0, v0), z(u0, v0), x(u1, v1), z(u1, v1), x(u1 + nu, v1 + nv), z(u1 + nu, v1 + nv), x(u0 + nu, v0 + nv), z(u0 + nu, v0 + nv), y, argb, rim);
-            quad(x(u0, v0), z(u0, v0), x(u1, v1), z(u1, v1), x(u1 - nu, v1 - nv), z(u1 - nu, v1 - nv), x(u0 - nu, v0 - nv), z(u0 - nu, v0 - nv), y, argb, rim);
+            quad(x0, z0, x1, z1, x1 + nx, z1 + nz, x0 + nx, z0 + nz, y, argb, rim);
+            quad(x0, z0, x1, z1, x1 - nx, z1 - nz, x0 - nx, z0 - nz, y, argb, rim);
         }
 
         void quad(float x0, float z0, float x1, float z1, float x2, float z2, float x3, float z3, float y, int inner, int outer) {

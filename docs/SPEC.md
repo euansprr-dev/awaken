@@ -16778,7 +16778,7 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   clean), with a bar for how much of the current one is on the line; a first-trace hint says what to do and that Esc
   gives the levels back.
 - **The wake**: the mark flares white-hot and settles into its colour over 50 ticks while a band of light runs the
-  piece and the piece rises a hair (0.04) and settles; a card says what was written ("A clean hand" and the levels back,
+  piece and the piece rises a hair (0.04), turns once on the slate (from 6 to 40 ticks, eased) and settles; a card says what was written ("A clean hand" and the levels back,
   "Its mark is in your memory now"), with Write another and Done.
 - **The table as everyone sees it** (`InscribingTableRenderer`): the leather book (`awaken:block/inscribing_book`, the
   vanilla book's layout) floats over a brass bracket at the back, opening toward whoever's near and toward the front
@@ -16801,3 +16801,21 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
 - **Commands**: `/awaken admin enchant learn <all|id> | remember all | forget` (server, for testing and tours); the
   client's `/awaken enchant pilot hover <no> | choose <no> | memory <no> | trace | again | close` is the autopilot's
   hand at a table (tours can't drag a mouse: the pilot traces each stroke from its end, on the line, a breath between).
+
+### 45.11 The script line: an enchanted piece's own light (`EnchantGlow`, `core.api.EnchantApi.Glow`)
+- Our sculpted weapons (`arms_weapon` shader) and armour (`armour` shader) drop the single violet shimmer for the piece's
+  own enchantment light: a thin line of script along its edges (where the surface turns from the eye), its letters
+  drifting hilt to tip on weapons and feet to crown on armour, a slow wave of brightness running the same way, what
+  glows of itself (the material map's emissive) taking the colour, a few pixels catching it, and a faint rim. Foil with
+  none of ours on it (a Marked weapon with nothing written) keeps the violet.
+- **Colour, in turn**: each enchantment on the piece holds the line for 30 ticks, swelling and fading but never quite
+  out (brightness 1-7 of 7), then hands it to the next. The palette, by index: 1 Heat Ward ember `FF8A4C`, 2 Frost Ward
+  ice `8FD8FF`, 3 Charge Ward gold `FFD84A`, 4 Gravity Ward violet `B993FF`, 5 Spirit Ward teal `4FE0C2`, 6 the other
+  wards steel `B9C3D2`, 7 Clear Blood green `9FE07A`, 8 banes red `FF5F63`, 9 spoils gold `F2C45A`, 10 carrying blue
+  `4FB5EA`, 11 keeping bone `F3EAD6`, 12 anything not in the thirty lapis-violet `8C6BFF`.
+- **The bits**: both shaders read UV1.x's low 8 bits as before (energy, or the Forge Song's heat) and bits 8-14 as the
+  script: the palette index in 8-11 (0 none) and the brightness in 12-14. Arms (`WeaponRenderer`: its cached `State`
+  carries `glow`) and armour (`ArmourLayer.draw`, `FittingStandRenderer`) pack `EnchantApi.glowBits(stack)`; enchant
+  installs the reader (`EnchantApi.glow`) on the client, and with none installed it is 0 and the shaders draw as before.
+  `tools/art/mesh_render.py` mirrors the line (without the pixels, which need texel coordinates).
+- Vanilla's own items keep vanilla's glint.

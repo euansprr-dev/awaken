@@ -70,6 +70,7 @@ public final class EnchantClient {
         });
         bus.addListener(RegisterClientCommandsEvent.class, EnchantClient::commands);
         FirstPerson.world("enchant_table", 210, InscribeScene::pose);
+        dev.awaken.core.api.EnchantApi.glow(EnchantGlow::bits);
         EnchantJournal.register();
     }
 
