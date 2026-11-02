@@ -17,6 +17,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 import java.util.Set;
@@ -32,6 +34,20 @@ public final class TogetherRunTests {
     private static Room arenaOf(FloorLayout f) {
         for (Room r : f.rooms) if (r.type == Room.Type.ARENA && !r.spawnSpots.isEmpty() && !r.doors.isEmpty()) return r;
         return null;
+    }
+
+    /** Max health as its modifiers make it, before vanilla's clamp at 1024. */
+    private static double given(LivingEntity e) {
+        AttributeInstance a = e.getAttribute(Attributes.MAX_HEALTH);
+        double add = 0, mulBase = 0, mulTotal = 1;
+        for (AttributeModifier m : a.getModifiers()) {
+            switch (m.operation()) {
+                case ADD_VALUE -> add += m.amount();
+                case ADD_MULTIPLIED_BASE -> mulBase += m.amount();
+                case ADD_MULTIPLIED_TOTAL -> mulTotal *= 1.0 + m.amount();
+            }
+        }
+        return (a.getBaseValue() + add) * (1.0 + mulBase) * mulTotal;
     }
 
     private static void teardown(ServerLevel level, GateRecord g, ServerPlayer... ps) {
@@ -148,7 +164,8 @@ public final class TogetherRunTests {
                 h.assertTrue(Rooms.partyOnFloor(level, g, f) == 2, "two on the floor");
                 lordPair = Rooms.spawn(level, g, f, r.id, MobRole.Role.BOSS, a.blockPosition());
                 h.assertTrue(lordAlone != null && lordPair != null, "Lords take form");
-                double ratio = lordPair.getAttributeValue(Attributes.MAX_HEALTH) / lordAlone.getAttributeValue(Attributes.MAX_HEALTH);
+                // a duel Lord past vanilla's 1024 carries the rest as bulk (SPEC §46.3): compare the health each was given
+                double ratio = given(lordPair) / given(lordAlone);
                 h.assertTrue(Math.abs(ratio - 1.5) < 0.01, "the Lord has +50% health for the second player, x" + ratio);
             } finally {
                 if (lordAlone != null) lordAlone.discard();
