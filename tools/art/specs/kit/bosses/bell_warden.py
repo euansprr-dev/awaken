@@ -821,6 +821,7 @@ MOVE_SOUNDS = {"wake": {"swing": "roar"}, "summon": {"swing": "roar"}, "echo": {
 FIGHT = {
     # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
+    "stance": 280,  # its stance size, tuned with the sim (SPEC §46.3)
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [

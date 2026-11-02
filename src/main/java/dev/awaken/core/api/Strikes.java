@@ -209,6 +209,16 @@ public final class Strikes {
             return false;
         }
 
+        /** Whether the body fights as a duel: braced outside its openings, its stance falls to deflects and punishes. */
+        default boolean duelist(LivingEntity e) {
+            return false;
+        }
+
+        /** A duel body's own stance size, or 0 for its role's. */
+        default int stance(LivingEntity e) {
+            return 0;
+        }
+
         /** A shot deflected by {@code by}: true when it flies back at its maker (it is then kept, not broken). */
         default boolean returnShot(Entity shot, Player by) {
             return false;
@@ -227,6 +237,14 @@ public final class Strikes {
 
     public static boolean opening(LivingEntity e) {
         return duel.opening(e);
+    }
+
+    public static boolean duelist(LivingEntity e) {
+        return duel.duelist(e);
+    }
+
+    public static int stance(LivingEntity e) {
+        return duel.stance(e);
     }
 
     public static boolean returnShot(Entity shot, Player by) {

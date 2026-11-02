@@ -3,6 +3,7 @@
  "id": "gearwright_colossus",
  "moves": "gearwright_colossus",
  "duel": true,
+ "stance": 260,
  "intro": {
   "pose": "idle",
   "move": "chime"

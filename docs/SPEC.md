@@ -16746,6 +16746,46 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
 - **The stance.** A perfect dodge through a blow puts 10 on the attacker's stance. A break drops it to its knee as
   before (`AwakenBoss.broken`, server side), and an Execution on a Lord is the finisher: 10-15% of its health whatever
   the weapon (`ArmsRules.LORD_FINISHER_MIN/MAX`, was the weapon's boss cap, 8-12%).
+- **Braced.** Outside its openings a duel body stands braced: a blow that lands then fills its stance only half
+  (`ArmsRules.GUARDED_POSTURE` 0.5, `hitPosture`, through `Strikes.duelist`); a riposte, the punish for a deflect,
+  fills it whole and a blow in an opening 1.5 times. The stance falls to deflects, ripostes and openings, not to
+  trading: in the sim 82% of the Bell Warden's stance came from plain strikes, and it broke five times a minute.
+- **Its own stance.** A duel's script names its stance size (`"stance"`, `FightScripts.Fight.stance`, 0 = a Lord's 100;
+  Arms reads it through `Strikes.stance` whenever it reads a stance): the Bell Warden 280, the Glass Serpent 200, the
+  Gearwright 260. The Provings' posture column (PLAN §4.7, 120-250) was written against the old 100 and scales with it
+  when the Wardens are tuned.
+- **Tuned with the sim** (`combat_sim.py` learns the duel: phrases and openings, recoil and reel, habits, shots sent
+  back, perfect-dodge and opening stance, the finisher's share, braced hits, the script's stance; 400 seeds, the
+  rank's forged longsword; the parrier answers half of the red blows with a dodge, ASSUMED). Health alone could not
+  reach the approved targets: at today's blows a 60%-on-time parrier takes 43 health a minute and dies in 40 s however
+  long the fight, and finishers scale with health. So the pilots hit softer and stand longer, tuned until standing and
+  trading still loses (decision 6's own test). `GateBestiary`: the Bell Warden health 30 → 80, damage 4.5 → 1.4; the
+  Glass Serpent 32 → 50, 5 → 3; the Gearwright 34 → 136, 5 → 2.2.
+
+  | Lord (rank) | Tank wins (dies at) | Dodger | Parrier | Expert (health left) |
+  |---|---|---|---|---|
+  | Bell Warden (E), before | 0% (18 s) | 78%, 38 s | 58%, 38 s | 96%, 36 s (91%) |
+  | Bell Warden (E) | 0% (52 s) | 100%, 91 s | 89%, 83 s | 100%, 66 s (99%) |
+  | Glass Serpent (D), before | 0% (18 s) | 57%, 58 s | 80%, 52 s | 100%, 49 s (82%) |
+  | Glass Serpent (D) | 0% (34 s) | 80%, 88 s | 98%, 82 s | 100%, 70 s (98%) |
+  | Gearwright (D), before | 0% (15 s) | 75%, 42 s | 78%, 39 s | 100%, 35 s (96%) |
+  | Gearwright (D) | 0% (36 s) | 86%, 108 s | 91%, 81 s | 100%, 68 s (95%) |
+
+  The "before" rows are the sim as it stood, without the health cap below (the Gearwright held 1024, not 1083).
+
+  Every cell meets the approved target (tank ≤10%, dodger ≥60%, parrier ≥80%, both 80-120 s, expert ≥98% with half its
+  health). The stance breaks 2-3 times a minute (was 4-6). A told blow now takes 6-10% of an on-rank player's health
+  (a red Grand Peal a third), against 25% before.
+- **Past the health cap.** Vanilla holds max health at 1024 (`Attributes.MAX_HEALTH`), so a Lord scaled past it was
+  quietly held there: the Gearwright at 1083, every C-rank Lord and above at 1024 whatever its scaling. A duel carries
+  the rest as bulk (`MobScaling.bulk`, `AwakenMob.bulk`): every blow on it is divided by its scaled health over its bar,
+  so it stands as long as it was tuned to and its bar still reads the share left (a finisher is 10-15% of that bar).
+  The Bell Warden carries 1.5 times its bar, the Glass Serpent 1.6, the Gearwright 4.2. Other Lords stay at the cap as
+  Euan has played them until stage 4 tunes each as a duel; the sim now holds them there too (`fix.health_cap`), so its
+  table reads what the game does.
+- **Adds hit softer.** A duel's add hits for at most 0.6 of what its caller does (`AwakenBoss.ADD_DAMAGE`, an attack
+  modifier set in `Mobs.spawnMinion`): with the Bell Warden's blows lighter its Toll Ghouls had out-hit it (2.1 against
+  1.3-1.8 a blow, the top of what a dodger took). Euan, 2026-10-28: the weight of a fight is the boss, not its adds.
 - **Weight.** A light blade (blow weight under 1) while a move plays only shudders the body (its hurt clip at 0.3); a
   heavy blow, a deflect, or any hit while nothing plays (an opening) makes it flinch whole.
 - **Adds.** A duel keeps at most two of its adds alive (`AwakenBoss.DUEL_ADDS`, in `Mobs.minionRoom`), calls at most two
@@ -16771,5 +16811,6 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
 - Tests: `fights_phrase_opening` (the Gearwright's sweep and chop, then nothing for at least 16 ticks, open throughout),
   `fights_deflect_recoil` (the sweep deflected recoils 10 ticks and the chop goes on; the chop deflected, it reels open
   and starts nothing for 34), `fights_shot_returns` (a white-gold shot sent back strikes its maker, never its sender; an
-  amber one won't turn; once only), `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions),
+  amber one won't turn; once only), `fights_duel_stance` (the Gearwright holds its script's stance through Arms; braced
+  half, opening 1.5, a riposte whole), `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions),
   the Arms rules test (the finisher's 10-15%).

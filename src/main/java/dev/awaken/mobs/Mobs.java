@@ -153,10 +153,24 @@ public final class Mobs {
         AwakenMob m = spawn(level, def, pos, r.contentLevel(), new MobRole(MobRole.Role.NORMAL, r.contentLevel(), def.theme.id, Optional.empty(), ""), EnumSet.noneOf(Forces.Tag.class));
         if (m != null) {
             m.getPersistentData().putInt("awaken_summoner", summoner.getId());
+            if (summoner instanceof AwakenBoss b && b.duel()) duelAdd(m, b);
             if (summoner.getTarget() != null) m.setTarget(summoner.getTarget());
         }
         return m;
     }
+
+    /** A duel's add hits at most {@link AwakenBoss#ADD_DAMAGE} of what its caller does: the weight is the boss's (SPEC §46.3). */
+    private static void duelAdd(AwakenMob m, AwakenBoss caller) {
+        var mine = m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        var theirs = caller.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        if (mine == null || theirs == null || mine.getValue() <= 0) return;
+        double share = AwakenBoss.ADD_DAMAGE * theirs.getValue() / mine.getValue();
+        if (share >= 1) return;
+        mine.addOrReplacePermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(DUEL_ADD, share - 1,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    }
+
+    private static final net.minecraft.resources.Identifier DUEL_ADD = dev.awaken.Awaken.id("duel_add");
 
     /** Budget check for summons: at most twice the ability's count alive per summoner, and SPEC's 60-entity ceiling. */
     public static boolean minionRoom(ServerLevel level, AwakenMob summoner, int count) {

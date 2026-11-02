@@ -651,6 +651,7 @@ MOVE_SOUNDS = {"chime": {"swing": "roar"}, "strikes": {"swing": "roar"}, "drones
 FIGHT = {
     # a duel (SPEC §46.3): it fights in phrases and opens up after each one; a turned-aside hand throws it back
     "duel": True,
+    "stance": 260,  # its stance size, tuned with the sim (SPEC §46.3)
     "intro": {"pose": "idle", "move": "chime"},
     "phases": [
         {"pool": [

@@ -53,6 +53,16 @@ public final class MobsModule {
             }
 
             @Override
+            public boolean duelist(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b && b.duel();
+            }
+
+            @Override
+            public int stance(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b ? b.duelStance() : 0;
+            }
+
+            @Override
             public boolean returnShot(net.minecraft.world.entity.Entity shot, net.minecraft.world.entity.player.Player by) {
                 return shot instanceof dev.awaken.mobs.entity.AwBolt b && b.sendBack(by);
             }

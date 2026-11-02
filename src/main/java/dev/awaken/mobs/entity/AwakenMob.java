@@ -622,6 +622,11 @@ public class AwakenMob extends Monster {
 
     // ---- damage ------------------------------------------------------------------------------------------------
 
+    /** Health over vanilla's cap this body carries (MobScaling.bulk): blows on it are divided by it. 1 for most. */
+    public float bulk() {
+        return 1F;
+    }
+
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
         if (flag(F_DECOY)) {
@@ -635,7 +640,7 @@ public class AwakenMob extends Monster {
             level.sendParticles(ParticleTypes.SOUL, getX(), getY() + getBbHeight() * 0.5, getZ(), 4, 0.3, 0.4, 0.3, 0.01);
             return false;
         }
-        float amount = damage;
+        float amount = damage / bulk();
         if (flag(F_HAUNTED)) amount *= spirit ? 1.5F : 0.75F;
         Entity attacker = source.getEntity();
         if (flag(F_GUARDING) && attacker instanceof LivingEntity la && source.getDirectEntity() == attacker) {

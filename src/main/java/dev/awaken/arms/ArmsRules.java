@@ -32,10 +32,12 @@ public final class ArmsRules {
     public static final int DEFLECT_POSTURE_LIGHT = 18, DEFLECT_POSTURE_HEAVY = 26;
     /**
      * The duel's payoff (SPEC §46.3): a perfect dodge through a blow fills the attacker's stance this much; a blow in an
-     * opening fills it this many times as fast (a shot sent back fills its maker's as the mobs module says).
+     * opening fills it this many times as fast (a shot sent back fills its maker's as the mobs module says); a blow on a
+     * duel body standing braced (no opening, not a riposte) only this share: its stance falls to deflects and punishes.
      */
     public static final int PERFECT_DODGE_POSTURE = 10;
     public static final float OPENING_POSTURE = 1.5F;
+    public static final float GUARDED_POSTURE = 0.5F;
     /** A finisher (an Execution) on a broken Lord: at least this share of its health, at most that one. */
     public static final float LORD_FINISHER_MIN = 0.10F, LORD_FINISHER_MAX = 0.15F;
     /** The latency hold on a guardable hit is at most this many ticks. */
@@ -119,6 +121,15 @@ public final class ArmsRules {
     public static int posture(Archetype.MoveDef m, int cadence, boolean perfectHeavy) {
         int base = perfectHeavy && m.charge().isPresent() ? m.charge().get().glintPosture() : m.posture();
         return base + cadence;
+    }
+
+    /**
+     * What a landed blow does to a stance (SPEC §46.3): more in an opening; on a duel body standing braced only
+     * {@link #GUARDED_POSTURE} of it, unless it is a riposte (the punish for a deflect).
+     */
+    public static int hitPosture(int posture, boolean opening, boolean riposte, boolean duelist) {
+        float share = opening ? OPENING_POSTURE : riposte || !duelist ? 1F : GUARDED_POSTURE;
+        return Math.round(posture * share);
     }
 
     /** Recovery scaled by attack speed (AGI, Flow): faster arms recover sooner; wind-up and active stay as authored. */

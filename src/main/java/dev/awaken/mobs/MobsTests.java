@@ -230,7 +230,9 @@ final class MobsTests {
             h.assertTrue(lord.bar() == null, "no boss bar of its own (the gates show one)");
             double want = lord.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).getBaseValue()
                     * MobScaling.totalHealth(10, MobRole.Role.BREAK, Tier.LORD);
-            h.assertTrue(Math.abs(lord.getMaxHealth() - want) < 0.5, "Lord-sized health " + lord.getMaxHealth() + ", want " + want);
+            // past vanilla's 1024 the rest is the duel's bulk (SPEC §46.3)
+            double held = lord.getMaxHealth() * lord.bulk();
+            h.assertTrue(Math.abs(held - want) < 0.5 && lord.getMaxHealth() <= 1024, "Lord-sized health " + held + ", want " + want);
             h.assertTrue(lord.isPersistenceRequired(), "it stays until the break is held");
             lord.discard();
             h.succeed();
@@ -302,6 +304,10 @@ final class MobsTests {
                 h.assertTrue(m != null && m.role().gateId().isEmpty(), "minions carry no gate id");
                 spawned.add(m);
             }
+            // a duel's add hits softer than its caller (SPEC §46.3)
+            double add = ((AwakenMob) spawned.get(0)).getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            double caller = boss.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            h.assertTrue(add <= AwakenBoss.ADD_DAMAGE * caller + 1e-3, "an add hits " + add + ", its caller " + caller);
             h.assertTrue(!Mobs.minionRoom(level, boss, AwakenBoss.DUEL_ADDS), "summon budget stops a seventh wave");
             spawned.forEach(Entity::discard);
             boss.discard();

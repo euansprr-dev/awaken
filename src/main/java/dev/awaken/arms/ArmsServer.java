@@ -72,6 +72,7 @@ final class ArmsServer {
     private static int pendingBy = -1, pendingTarget = -1;
     private static float pendingMotion;
     private static int pendingPosture;
+    private static boolean pendingRiposte;
     private static float pendingCap;
     private static boolean pendingLanded;
     // its push (SPEC §25 "Fight Feel"): the flat way the blade went, and how hard against vanilla's strength
@@ -510,6 +511,7 @@ final class ArmsServer {
             if (ArmsRules.behind(t.yBodyRot, toStriker)) pendingMotion *= traits.backstab();
         }
         pendingCap = def.bossCap();
+        pendingRiposte = s.move == Archetype.Move.RIPOSTE;
         boolean primed = ArmsForge.bladePrimed(p, s, now);
         if (primed) pendingMotion *= ArmsForge.BLADE_PRIME;
         pendingLanded = false;
@@ -653,8 +655,9 @@ final class ArmsServer {
             amount = ArmsRules.capExecution(amount, victim.getMaxHealth(), pendingCap, ArmsRules.lordly(post.max));
             e.setAmount(amount);
             pendingLanded = true;
-            // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster (SPEC §46.3)
-            int posture = Strikes.opening(victim) ? Math.round(pendingPosture * ArmsRules.OPENING_POSTURE) : pendingPosture;
+            // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster; one on a duel
+            // body standing braced barely moves it, a riposte excepted (SPEC §46.3)
+            int posture = ArmsRules.hitPosture(pendingPosture, Strikes.opening(victim), pendingRiposte, Strikes.duelist(victim));
             if (by instanceof ServerPlayer sp) addPosture(victim, posture, sp);
             return;
         }
@@ -1059,7 +1062,9 @@ final class ArmsServer {
 
     static Posture posture(LivingEntity e) {
         Posture p = e.getData(ArmsContent.POSTURE);
-        if (p.max <= 0) {
+        int stance = Strikes.stance(e); // a duel boss's own size (SPEC §46.3)
+        if (stance > 0) p.max = stance;
+        else if (p.max <= 0) {
             MobRole role = e.getExistingDataOrNull(CoreApi.MOB_ROLE.get());
             p.max = ArmsRules.postureMax(CreatureTag.of(e), role == null ? MobRole.Role.NONE : role.role());
         }

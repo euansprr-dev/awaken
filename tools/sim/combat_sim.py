@@ -57,7 +57,10 @@ P_TIER = "src/main/java/dev/awaken/mobs/def/Tier.java"
 P_BEST = "src/main/java/dev/awaken/mobs/def/GateBestiary.java"
 P_SCALING = "src/main/java/dev/awaken/mobs/MobScaling.java"
 P_GOALS = "src/main/java/dev/awaken/mobs/entity/MobGoals.java"
-P_KIT = "src/main/resources/data/awaken/kit"  # the Creature Kit's move tables and fight scripts (SPEC §34.2-34.3)
+P_KIT = "src/main/resources/data/awaken/kit"
+P_RUNNER = "src/main/java/dev/awaken/mobs/entity/FightRunner.java"
+P_AWBOLT = "src/main/java/dev/awaken/mobs/entity/AwBolt.java"
+P_BOSS = "src/main/java/dev/awaken/mobs/entity/AwakenBoss.java"  # the Creature Kit's move tables and fight scripts (SPEC §34.2-34.3)
 
 LIGHT, HEAVY, PERILOUS, GRAB, NONE = "LIGHT", "HEAVY", "PERILOUS", "GRAB", "NONE"
 RANK_ORDER = ["E", "D", "C", "B", "A", "S"]
@@ -320,6 +323,18 @@ def parse_told_melee():
     return {"tell_boss": boss, "tell_normal": normal, "heavy_extra": heavy_extra, "heavy_every": every, "heavy_mult": 1 + mult}
 
 
+def parse_duel():
+    """The duel's numbers (SPEC §46.3): FightRunner's openings, recoil and reel, AwBolt's returned shot, the adds cap."""
+    out = {}
+    for rel in (P_RUNNER, P_AWBOLT, P_BOSS):
+        for m in re.finditer(r"static final (?:int|long|float|double)\s+([^;]+);", _read(rel)):
+            for part in _split_top(m.group(1)):
+                mm = re.match(r"(\w+)\s*=\s*(-?[\d.]+)[FfDdLl]?$", part.strip())
+                if mm:
+                    out[mm.group(1)] = float(mm.group(2))
+    return out
+
+
 def parse_kits():
     """Every kit boss's move table and fight script (FightRunner fights them instead of the AbilityRunner and ToldMelee)."""
     path = os.path.join(ROOT, P_KIT, "index.json")
@@ -350,7 +365,8 @@ def load_world():
     meta = parse_ability_meta()
     return {"arch": parse_archetype(), "rules": parse_rules(), "weapons": parse_weapons(), "tiers": parse_tiers(),
             "ranks": parse_ranks(), "themes": parse_themes(), "models": parse_models(), "bolts": parse_bolts(),
-            "mobs": parse_bestiary(meta), "scaling": parse_scaling(), "melee": parse_told_melee(), "kits": parse_kits()}
+            "mobs": parse_bestiary(meta), "scaling": parse_scaling(), "melee": parse_told_melee(), "kits": parse_kits(),
+            "duel": parse_duel()}
 
 
 # ---- CONFIG: the game's numbers (parsed) plus the ASSUMED play and geometry ------------------------------------------
@@ -407,15 +423,20 @@ def default_config(W):
         "profiles": {
             "tank": {"deflect": 0.0, "dodge_any": 0.0, "dodge_perilous": 0.0, "perfect": 1 / 3, "cadence": 0.5, "detour": 0, "keep": 0.6, "art": 1},
             "dodger": {"deflect": 0.0, "dodge_any": 0.70, "dodge_perilous": 0.0, "perfect": 1 / 3, "cadence": 0.5, "detour": 1, "keep": 0.6, "art": 1},
-            "parrier": {"deflect": 0.60, "dodge_any": 0.0, "dodge_perilous": 0.0, "perfect": 1 / 3, "cadence": 0.5, "detour": 1, "keep": 0.6, "art": 1},
+            # ASSUMED (SPEC §46.2): red is the one colour that says dodge, so a parrier dodges half of them
+            "parrier": {"deflect": 0.60, "dodge_any": 0.0, "dodge_perilous": 0.5, "perfect": 1 / 3, "cadence": 0.5, "detour": 1, "keep": 0.6, "art": 1},
             "expert": {"deflect": 0.85, "dodge_any": 0.0, "dodge_perilous": 0.90, "perfect": 1 / 3, "cadence": 0.95, "detour": 1, "keep": 0.8, "art": 1},
         },
         # what-ifs for the bugs (0 = as built)
         "fix": {
             "stagger": 0,       # 1: the AbilityRunner starts nothing while its Lord is broken (AbilityRunner.java:87-88)
-            "landed_class": 0,  # 1: Force bolts, fangs, auras and clouds land as the class they were told as
-            "effects": 0,       # 1: an evaded or deflected ability no longer burns, poisons or weakens (Abilities.java:76-79)
+            "landed_class": 1,  # built (SPEC §46.2): every bolt, fang, aura and cloud lands as the class it was told as
+            "effects": 1,       # built (SPEC §46.2, I5): an evaded or deflected ability leaves no burn, poison or weakness
+            "health_cap": 1,    # the game: a Lord's max health stops at vanilla's 1024 (a duel's rest is bulk, SPEC §46.3)
         },
+        # the duel (SPEC §46.3; FightRunner, AwBolt, ArmsRules as parsed): on 0 fights a duel script the old way.
+        # ASSUMED: you back off rarely enough that its gap-closer habit is left out (the sim has no positions over time)
+        "duel": {"on": 1},
         "item_level": {"on": 0, "per_level": 0.075},  # PowerMath.java:42-44 levelScale, mirrored on the weapon
         # the Creature Kit (SPEC §34.3): a kit Lord fights by its fight script and move table (on: 0 = the old way, to
         # compare). ASSUMED geometry, since the sim has no positions: in reach you stand 0.3-2.0 blocks from its edge
@@ -508,7 +529,7 @@ def armor_after(dmg, armor, toughness):
 class Blow:
     __slots__ = ("est", "land", "told", "landed", "factor", "flat", "expose", "pos", "posture_ok", "armor", "force",
                  "fx", "name", "src", "alive", "plan", "plan_t", "melee", "fire_s", "knock", "front", "lord", "minion",
-                 "heavy_melee", "is_ability", "kit")
+                 "heavy_melee", "is_ability", "kit", "shot")
 
     def __init__(self, name, told, landed, est, factor=1.0, expose=1.0, pos=0.0, posture_ok=False, armor=True, force=None,
                  fx=None, src="lord", melee=False, flat=0.0, fire_s=0, knock=0, front=1.0):
@@ -521,6 +542,7 @@ class Blow:
         self.heavy_melee = False
         self.is_ability = False
         self.kit = None  # a kit move's capsules: (front, back) reach from its edge, blocks
+        self.shot = False  # an AwBolt (a deflect can send a white-gold one back)
 
 
 class Move:
@@ -617,8 +639,22 @@ class Fight:
         self.k_ab = None
         self.k_ab_blows = []
         self.k_d, self.k_behind, self.k_d_state = 1.0, False, None
+        # the duel (SPEC §46.3): blows in this phrase, a limb's recoil, an opening's end, deflects in a row
+        self.duel = bool(self.kit and self.kit["fight"].get("duel") and cfg["duel"]["on"])
+        if not self.duel and cfg["fix"].get("health_cap", 1):
+            # vanilla holds max health at 1024 (Attributes.MAX_HEALTH); a duel carries the rest as bulk (MobScaling.bulk)
+            self.l_max = min(self.l_max, 1024.0)
+            self.l_hp = self.l_max
+        self.D = W["duel"]
+        self.k_blows_n = 0
+        self.k_recoil = 0
+        self.open_until = -1
+        self.k_reel_until = -1
+        self.k_deflects, self.k_deflect_at = 0, -10 ** 6
         # posture (ArmsRules.java:26-32)
         self.pmax = self.R["POSTURE_LORD"]
+        if self.duel and self.kit["fight"].get("stance", 0) > 0:
+            self.pmax = self.kit["fight"]["stance"]  # a duel's own stance size (Strikes.stance)
         self.pval = 0.0
         self.p_last = -10 ** 6
         self.broken_until = -1
@@ -891,6 +927,7 @@ class Fight:
             expose = min(1.0, a["count"] / 12.0) if k == "NOVA" else 1.0
             out.append((3, Blow(name, told, landed, land0 + 3, factor=a["power"] * (0.42 if k == "ARROWS" else 1.0),
                                 expose=expose, pos=POSITIONAL["BOLT"], force=force, fx=fx, fire_s=fire)))
+            out[-1][1].shot = k != "ARROWS"
         elif k in ("FANGS", "FANGS_RING"):
             # the hazard top-up lands first (LIGHT: the caster's own blow), the vanilla fang's flat 6 after it as
             # indirect magic: NONE, through armour (Abilities.java:248-250, vanilla EvokerFangs: bite 8 ticks after warm-up)
@@ -1070,11 +1107,16 @@ class Fight:
             p, self.k_pending = self.k_pending, -1
             tr = F["phases"][p].get("transition")
             self.k_string = []
+            self.k_blows_n = 1
             if tr and self.kit_begin(tr, t):
                 self.shield = self.k_w + self.k_act + self.k_rec  # invulnerable while its transition plays
                 return
         if self.stagger > 0 or t < self.broken_until:
             self.k_string = []
+            self.k_recoil = 0
+            return
+        if self.k_recoil > 0:  # the limb comes back from a deflect; the phrase goes on after (FightRunner.tick)
+            self.k_recoil -= 1
             return
         d, behind = self.kit_where(t)
         if self.k_string:
@@ -1082,8 +1124,12 @@ class Fight:
             m = self.kit["moves"].get(nxt)
             if m is not None and m["range"][0] <= d <= m["range"][1] and self.kit_begin(nxt, t):
                 self.st["cad"]["phrase"] += 1
+                self.k_blows_n += 1
                 return
             self.k_string = []
+            if self.duel:  # a phrase cut short still ends in its opening
+                self.open_up(self.opening(self.k_blows_n), t)
+                return
         if self.k_gap > 0:
             self.k_gap -= 1
             return
@@ -1094,11 +1140,14 @@ class Fight:
                 self.k_d = min(self.k_d, self.kit_stop())
             self.k_gap = 10
             return
-        r = self.rng.randrange(sum(max(1, e.get("weight", 1)) for e in pool))
+        r = self.rng.randrange(sum(self.kit_weight(e, t) for e in pool))
         for e in pool:
-            r -= max(1, e.get("weight", 1))
+            r -= self.kit_weight(e, t)
             if r < 0:
                 break
+        if self.kit_red(e):
+            self.k_deflects = 0  # its answer to your deflects is given
+        self.k_blows_n = 1
         self.kit_phrase_end()
         if self.kit_begin(e["move"], t) and self.kit["moves"][e["move"]]["class"] != NONE:
             self.st["cad"]["phrase"] = 1
@@ -1198,13 +1247,64 @@ class Fight:
                 self.k_gap = 0
                 self.k_string.pop(0)
                 if self.kit_begin(nm["id"], t):
+                    self.k_blows_n += 1
                     self.st["cad"]["phrase"] += 1
                     self.st["cad"]["links"] = self.st["cad"].get("links", 0) + 1
                 return
         if self.k_t < self.k_w + self.k_act + self.k_rec:
             return
         self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []
-        self.k_gap = 0 if self.k_string else 6 + self.rng.randrange(9)
+        if self.k_string:
+            self.k_gap = 0
+        elif self.duel:
+            self.open_up(self.opening(self.k_blows_n), t)  # every phrase ends in an opening (SPEC §46.3, I8)
+        else:
+            self.k_gap = 6 + self.rng.randrange(9)
+
+    # ---- the duel (FightRunner, SPEC §46.3) ------------------------------------------------------------------------------
+
+    def opening(self, blows):
+        D = self.D
+        return int(min(D["OPENING_MAX"], D["OPENING_MIN"] + D["OPENING_PER_BLOW"] * max(0, blows - 1)))
+
+    def open_up(self, ticks, t):
+        self.k_gap = ticks
+        self.open_until = max(self.open_until, t + ticks)
+        self.st["openings"] = self.st.get("openings", 0) + 1
+
+    def in_opening(self, t):
+        return self.duel and (t < self.open_until or self.k_reel_until > t)
+
+    def kit_red(self, e):
+        m = self.kit["moves"].get(e["move"])
+        return m is not None and m["class"] in (PERILOUS, GRAB)
+
+    def kit_weight(self, e, t):
+        w = max(1, e.get("weight", 1))
+        if self.duel and self.k_deflects >= self.D["HABIT_DEFLECTS"] and t - self.k_deflect_at <= self.D["HABIT_FORGET"] and self.kit_red(e):
+            w *= int(self.D["HABIT_RED"])
+        return w
+
+    def kit_deflected(self, t):
+        """A blow of the move playing was deflected: its limb recoils and the phrase goes on, or, its last, it reels."""
+        if not self.duel or self.k_move is None or self.k_move["class"] == NONE:
+            return
+        if t - self.k_deflect_at > self.D["HABIT_FORGET"]:
+            self.k_deflects = 0
+        self.k_deflects += 1
+        self.k_deflect_at = t
+        self.cancel(self.k_blows + self.k_ab_blows, t)
+        self.k_move, self.k_ab, self.k_blows, self.k_ab_blows = None, None, [], []
+        if self.k_string:
+            self.k_recoil = int(self.D["RECOIL_TICKS"])
+            self.st["recoils"] = self.st.get("recoils", 0) + 1
+        else:
+            reel = int(self.D["REEL_TICKS"])
+            self.stagger = max(self.stagger, reel)
+            self.k_reel_until = t + reel
+            self.k_gap = int(self.D["OPENING_MIN"]) // 2
+            self.open_until = max(self.open_until, t + reel + int(self.D["OPENING_MIN"]) // 2)
+            self.st["reels"] = self.st.get("reels", 0) + 1
 
     def stop_melee(self, t):
         if self.melee_running:
@@ -1289,6 +1389,8 @@ class Fight:
         LC = self.cfg["lord"]
         hp = d["hp"] * (1 + LC["health_per_level"] * self.lv)  # Mobs.java:150-152: normal role at the Lord's level
         dmg = d["dmg"] * (1 + LC["damage_per_level"] * self.lv)
+        if self.duel:
+            dmg = min(dmg, self.D["ADD_DAMAGE"] * self.l_atk)  # a duel's adds hit softer than it does (Mobs.spawnMinion)
         if "NEUTRAL" in traits:
             kind = "neutral"
         elif "RANGED" in traits:
@@ -1404,6 +1506,7 @@ class Fight:
                 self.gain(self.R["RESONANCE_PERFECT_DODGE"])
                 if b.lord:
                     self.slowed_until = t + int(self.dodge_d["slow"])
+                    self.add_posture(self.R.get("PERFECT_DODGE_POSTURE", 0), t)  # through a blow: its stance gives (SPEC §46.3)
         elif outcome == "deflect":
             self.st["deflects"] += 1
             self.raise_deflected = True
@@ -1411,6 +1514,16 @@ class Fight:
             self.gain(self.R["RESONANCE_DEFLECT"])
             if b.lord and b.posture_ok:
                 self.add_posture(self.R["DEFLECT_POSTURE_HEAVY"] if b.landed == HEAVY else self.R["DEFLECT_POSTURE_LIGHT"], t)
+            if b.lord and self.duel:
+                if b.shot and b.landed == LIGHT:
+                    # a white-gold shot flies back at its maker: its own blow and 22 on its stance (AwBolt.sendBack)
+                    back = armor_after(amount, self.l_armor, 0.0)
+                    self.l_hp -= back
+                    dm = self.st["dmg_by_move"]
+                    dm["shot sent back"] = dm.get("shot sent back", 0.0) + back
+                    self.add_posture(self.D["RETURNED_POSTURE"], t)
+                elif b in self.k_blows or b in self.k_ab_blows:
+                    self.kit_deflected(t)
         if apply_fx:
             self.apply_effects(b, t)
         if outcome in ("evade", "deflect"):
@@ -1596,12 +1709,22 @@ class Fight:
             counter = True
         dmg *= mv.motion
         if mv.cap > 0:
-            dmg = min(dmg, self.l_max * mv.cap)  # ArmsRules.capExecution
+            # ArmsRules.capExecution: on a Lord the finisher takes 10-15% of its health, whatever the weapon (SPEC §46.3)
+            lo, hi = self.R.get("LORD_FINISHER_MIN"), self.R.get("LORD_FINISHER_MAX")
+            dmg = min(max(dmg, self.l_max * lo), self.l_max * hi) if lo is not None else min(dmg, self.l_max * mv.cap)
         dmg = armor_after(dmg, self.l_armor, 0.0)
         self.l_hp -= dmg
         dm = self.st["dmg_by_move"]
         dm[name] = dm.get(name, 0.0) + dmg
-        self.add_posture(mv.posture, t)
+        # a blow in an opening breaks its stance faster (ArmsRules.OPENING_POSTURE); in a duel one it stands braced for
+        # barely moves it, a riposte excepted (ArmsRules.GUARDED_POSTURE, SPEC §46.3)
+        if self.in_opening(t):
+            pm = self.R.get("OPENING_POSTURE", 1.0)
+        elif self.duel and name != "riposte":
+            pm = self.R.get("GUARDED_POSTURE", 1.0)
+        else:
+            pm = 1.0
+        self.add_posture(int(round(mv.posture * pm)), t)
         if mv.finisher:
             self.gain(self.R["RESONANCE_FINISHER"])
         if counter:
@@ -2145,6 +2268,9 @@ def main(argv=None):
         LC = cfg["lord"]
         lc = cfg["lords"][d["id"]]
         lhp = lc["hp"] * (1 + LC["health_per_level"] * lv) * LC["role_health"] * LC["extra_health"]
+        kit = W["kits"].get(d["id"]) if cfg["kit"]["on"] else None
+        if not (kit and kit["fight"].get("duel") and cfg["duel"]["on"]) and cfg["fix"].get("health_cap", 1):
+            lhp = min(lhp, 1024.0)  # as the fight holds it (Fight.__init__)
         row = f"{d['name'][:24]:24} {rank:2} {lv:>3} {lhp:>6.0f} "
         up = cells.get((d["id"], profiles[0], "forged"), {}).get("uptime")
         row += f"{fmt(up, 'pct'):>4} |"

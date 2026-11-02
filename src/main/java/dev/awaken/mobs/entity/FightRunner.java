@@ -80,6 +80,11 @@ final class FightRunner {
         return fight.duel();
     }
 
+    /** A duel's stance size, or 0 for a Lord's own. */
+    int stance() {
+        return fight.duel() ? fight.stance() : 0;
+    }
+
     /** The intro pose (until the fight starts), or none. */
     boolean waiting() {
         return !introduced;

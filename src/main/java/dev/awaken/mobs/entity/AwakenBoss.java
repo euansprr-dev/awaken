@@ -211,8 +211,22 @@ public class AwakenBoss extends AwakenMob {
         return f != null && f.duel();
     }
 
+    /** A duel is tuned on its whole scaled health, past vanilla's 1024 cap (SPEC §46.3); other Lords stop at the cap. */
+    @Override
+    public float bulk() {
+        return duel() ? dev.awaken.mobs.MobScaling.bulk(this) : 1F;
+    }
+
+    /** A duel's stance size (Arms' posture), or 0 for a Lord's own. */
+    public int duelStance() {
+        FightRunner f = fight();
+        return f != null ? f.stance() : 0;
+    }
+
     /** A duel's adds alive at once (I6). */
     public static final int DUEL_ADDS = 2;
+    /** What a duel's add hits for at most, as a share of its caller's attack (Mobs.spawnMinion). */
+    public static final double ADD_DAMAGE = 0.6;
 
     /** The fight script's runner (server), or null when it fights the old way. */
     @Nullable FightRunner fight() {

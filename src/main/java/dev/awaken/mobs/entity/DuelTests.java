@@ -33,6 +33,7 @@ public final class DuelTests {
         AwakenTests.register("fights_phrase_opening", 200, DuelTests::phraseOpening);
         AwakenTests.register("fights_deflect_recoil", 240, DuelTests::deflectRecoil);
         AwakenTests.register("fights_shot_returns", 100, DuelTests::shotReturns);
+        AwakenTests.register("fights_duel_stance", 60, DuelTests::duelStance);
     }
 
     /** The Gearwright's sweep and chop, then nothing for at least the shortest opening, and it stands open through it. */
@@ -157,6 +158,28 @@ public final class DuelTests {
             maker.discard();
             live.leave();
         });
+    }
+
+    /**
+     * A duel boss holds its own stance (the fight script's, tuned with the sim), and braced it takes half of a blow's
+     * stance: an opening takes more, a riposte all of it (SPEC §46.3).
+     */
+    static void duelStance(GameTestHelper h) {
+        AwakenBoss boss = KitTests.spawn(h.getLevel(), h, "gearwright_colossus");
+        int stance = boss.duelStance();
+        h.assertTrue(stance > dev.awaken.arms.ArmsRules.POSTURE_LORD && Strikes.duelist(boss) && Strikes.stance(boss) == stance,
+                "a duel boss holds its own stance (" + stance + ")");
+        var live = AwakenTests.survivalPlayer(h, "stance_breaker", new BlockPos(1, 1, 1));
+        Strikes.posture(boss, 26, live.player());
+        float share = dev.awaken.arms.Arms.posture(boss);
+        h.assertTrue(Math.abs(share - 26F / stance) < 1e-4, "26 of " + stance + " filled, read " + share);
+        h.assertTrue(dev.awaken.arms.ArmsRules.hitPosture(8, false, false, true) == 4, "braced: half");
+        h.assertTrue(dev.awaken.arms.ArmsRules.hitPosture(8, true, false, true) == 12, "in an opening: half again");
+        h.assertTrue(dev.awaken.arms.ArmsRules.hitPosture(8, false, true, true) == 8, "a riposte: all of it");
+        h.assertTrue(dev.awaken.arms.ArmsRules.hitPosture(8, false, false, false) == 8, "not a duel: all of it");
+        boss.discard();
+        live.leave();
+        h.succeed();
     }
 
     private static Pig pig(GameTestHelper h, double z) {
