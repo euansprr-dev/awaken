@@ -76,7 +76,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         var key = st.isEmpty() ? null : BuiltInRegistries.ITEM.getKey(st.getItem());
         s.slot = key != null && key.getNamespace().equals(Awaken.MODID) && WeaponDraw.mesh(key.getPath()) != null ? key.getPath() : null;
         if (s.slot != null) {
-            AnvilScene.inSlot(AnvilScene.frame(be.getBlockState(), FRAME), mine ? 0.22F * AnvilScene.drawK : 0F, s.slotLay);
+            AnvilScene.inSlot(AnvilScene.frame(be.getBlockState(), FRAME), AnvilShape.of(s.slot), mine ? 0.22F * AnvilScene.drawK : 0F, s.slotLay);
             // it wakes as it's set there, then keeps a low glow of its own until it's drawn
             s.slotFlash = Math.round(255 * Mth.clamp(1F - (now - be.stoodAt) / 50F, 0F, 1F));
             s.slotEnergy = Math.round(60 + 35 * Mth.sin(now * 0.09F));

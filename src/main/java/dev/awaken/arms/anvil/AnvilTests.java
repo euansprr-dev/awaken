@@ -75,7 +75,7 @@ final class AnvilTests {
      * A D smith forges the Beastbound Longsword, judged by the server's clock: the window wants a Forge, then takes the
      * blade, a core and iron; the heat pulled in the gold; one strike late and one far ahead (not taken), the rest on the
      * beat; plunged and lifted at the notch; three taps. It stands in the slot Flawless, held to the Forge's Temper limit
-     * (one level with no Armory), and is drawn into the hand. Soft and brittle quenches and early and late heats score as
+     * (one level with no Armoury), and is drawn into the hand. Soft and brittle quenches and early and late heats score as
      * they should. Breaking the anvil mid-work gives back what was taken in, and what stands in the slot.
      */
     private static void song(GameTestHelper h) {
@@ -129,7 +129,7 @@ final class AnvilTests {
         WeaponForged f = made.get(AnvilContent.FORGED.get());
         h.assertTrue(made.is(WarAnvil.item(WarAnvil.WEAPON)) && f != null && f.quality() == AnvilSong.Quality.FLAWLESS.ordinal()
                 && f.flaw() == AnvilSong.NO_FLAW && f.maker().equals(p.getGameProfile().name()), "it stands in the slot, Flawless, its maker named, got " + f);
-        h.assertTrue(Upgrades.temperOf(made) == 1, "Flawless leaves at Temper III, held to the Forge's limit of I with no Armory, got " + Upgrades.temperOf(made));
+        h.assertTrue(Upgrades.temperOf(made) == 1, "Flawless leaves at Temper III, held to the Forge's limit of I with no Armoury, got " + Upgrades.temperOf(made));
 
         act(p, pos, AnvilPayloads.DRAW, 0, 0F, 0F);
         h.assertTrue(be.slot().isEmpty() && p.getMainHandItem().is(WarAnvil.item(WarAnvil.WEAPON)), "drawn out of the stone into the hand");

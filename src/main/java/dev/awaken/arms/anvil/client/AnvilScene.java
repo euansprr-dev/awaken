@@ -33,21 +33,22 @@ import org.jspecify.annotations.Nullable;
 final class AnvilScene {
     private AnvilScene() {}
 
-    /** Blocks a design texel of the work: the Longsword comes to about a block. */
+    /** Blocks a design texel of the work: the Longsword comes to about a block (a longer design a little less, AnvilShape). */
     static final float TEXEL = 0.035F;
     /** Blocks a texel of the hammer and tongs. */
     static final float TOOL = 0.025F;
-    /** The Longsword's blade in its design: from the guard (5) to the point (21), its back at x -3.5, its edge at 2.5. */
-    static final float ROOT_Y = 5F, TIP_Y = 21F, MID_Y = 13F, WHOLE_MID_Y = 7.5F, BLADE_X = -0.5F, HALF_W = 3F, FACE_Z = 1.5F, BACK_Z = 2.5F;
-    /** Where the blade starts along the whole weapon (0 the pommel, 1 the point). */
-    static final float BLADE = AnvilSong.HILT_CUT[0];
+    /**
+     * The blade across and through (texels): its middle across, half its width, its face up off the middle, its back. How
+     * long it is and where its parts lie are its own, read from its mesh ({@link AnvilShape}).
+     */
+    static final float BLADE_X = -0.5F, HALF_W = 3F, FACE_Z = 1.5F, BACK_Z = 2.5F;
     /** Ticks the view glides between its marks, and the work between its places. */
     static final float GLIDE = 14F, CARRY = 12F;
     /** The hammer's angle above the strike (degrees): at rest, raised for a strike, raised for a tap. */
     private static final float REST = 18F, RAISED = 70F, RAISED_TAP = 35F, DOWN = 1.5F;
 
     /** Item space to design texels (arms_weapons.to_item undone: its -45° turned back, its grip at 3, 3, 8 moved home). */
-    private static final Matrix4f ITEM = new Matrix4f().rotateZ(Mth.PI / 4).scale(16F).translate(-3F / 16, -3F / 16, -0.5F);
+    static final Matrix4f ITEM = new Matrix4f().rotateZ(Mth.PI / 4).scale(16F).translate(-3F / 16, -3F / 16, -0.5F);
 
     // ---- the anvil's frame ------------------------------------------------------------------------------------------
 
@@ -72,18 +73,20 @@ final class AnvilScene {
 
     /**
      * Where a weapon lies: the point its middle is at, its turn (the design's axes to the world's), how drawn out it is
-     * (across, along, through) and which design height is its middle.
+     * (across, along, through), which design height is its middle, and the weapon's own shape.
      */
     static final class Lay {
         final Vector3f at = new Vector3f();
         final Quaternionf turn = new Quaternionf();
         final Vector3f scale = new Vector3f(1F, 1F, 1F);
-        float mid = MID_Y;
+        AnvilShape shape = AnvilShape.FALLBACK;
+        float mid = AnvilShape.FALLBACK.mid;
 
         Lay set(Lay o) {
             at.set(o.at);
             turn.set(o.turn);
             scale.set(o.scale);
+            shape = o.shape;
             mid = o.mid;
             return this;
         }
@@ -95,17 +98,19 @@ final class AnvilScene {
             a.turn.slerp(b.turn, e, turn);
             scale.set(a.scale).lerp(b.scale, e);
             mid = Mth.lerp(e, a.mid, b.mid);
+            shape = b.shape;
             return this;
         }
 
         /** A design point (texels) where this lay puts it. */
         Vector3f point(float x, float y, float z, Vector3f out) {
-            return out.set(x * scale.x, (y - mid) * scale.y, z * scale.z).mul(TEXEL).rotate(turn).add(at);
+            return out.set(x * scale.x, (y - mid) * scale.y, z * scale.z).mul(shape.texel).rotate(turn).add(at);
         }
 
         /** Its pose for the weapon's mesh (item space). */
         Matrix4f matrix(Matrix4f out) {
-            return out.translation(at).rotate(turn).scale(scale.x * TEXEL, scale.y * TEXEL, scale.z * TEXEL).translate(0F, -mid, 0F).mul(ITEM);
+            float t = shape.texel;
+            return out.translation(at).rotate(turn).scale(scale.x * t, scale.y * t, scale.z * t).translate(0F, -mid, 0F).mul(ITEM);
         }
     }
 
@@ -124,11 +129,15 @@ final class AnvilScene {
 
     private static final Vector3f A = new Vector3f(), U = new Vector3f(), W = new Vector3f(), P = new Vector3f();
 
-    /** On the anvil's face: drawn out d (0 a squat bar, 1 its own shape), turned over by {@code flip} (0..1). */
-    static Lay onAnvil(Quaternionf frame, float d, float flip, float mid, Lay out) {
+    /**
+     * On the anvil's face: drawn out d (0 a squat bar, 1 its own shape), turned over by {@code flip} (0..1), the blade's
+     * middle over the face's (or the whole weapon's, {@code whole}).
+     */
+    static Lay onAnvil(Quaternionf frame, AnvilShape shape, float d, float flip, boolean whole, Lay out) {
         out.scale.set(1.5F - 0.5F * d, 0.5F + 0.5F * d, 1.5F - 0.5F * d);
-        out.mid = mid;
-        float lift = BACK_Z * TEXEL * out.scale.z + 0.07F * Mth.sin(flip * Mth.PI);
+        out.shape = shape;
+        out.mid = whole ? shape.wholeMid : shape.mid;
+        float lift = BACK_Z * shape.texel * out.scale.z + 0.07F * Mth.sin(flip * Mth.PI);
         model(frame, 0.5F, 1F + lift, 9.5F / 16F, out.at);
         // the point toward the horn, flat up, then turned over about its length
         dir(frame, -1F, 0F, 0F, A);
@@ -141,9 +150,10 @@ final class AnvilScene {
     }
 
     /** Half in the Forge's mouth, squat, its point in the fire. */
-    static Lay inForge(BlockPos anvil, BlockPos forge, Direction mouth, Lay out) {
+    static Lay inForge(BlockPos anvil, BlockPos forge, Direction mouth, AnvilShape shape, Lay out) {
         out.scale.set(1.5F, 0.5F, 1.5F);
-        out.mid = MID_Y;
+        out.shape = shape;
+        out.mid = shape.mid;
         out.at.set(forge.getX() - anvil.getX() + 0.5F + mouth.getStepX() * 0.46F, forge.getY() - anvil.getY() + 0.3F,
                 forge.getZ() - anvil.getZ() + 0.5F + mouth.getStepZ() * 0.46F);
         turn(A.set(-mouth.getStepX(), 0F, -mouth.getStepZ()), U.set(0F, 1F, 0F), out.turn);
@@ -151,27 +161,35 @@ final class AnvilScene {
     }
 
     /** Held level over the trough, its edge down (the trough is narrower than the blade is wide). */
-    static Lay overTrough(Quaternionf frame, Lay out) {
+    static Lay overTrough(Quaternionf frame, AnvilShape shape, Lay out) {
         out.scale.set(1F, 1F, 1F);
-        out.mid = MID_Y;
+        out.shape = shape;
+        out.mid = shape.mid;
         model(frame, 14F / 16F, 0.7F, 8F / 16F, out.at);
         turn(dir(frame, 0F, 0F, 1F, A), dir(frame, -1F, 0F, 0F, U), out.turn);
         return out;
     }
 
-    /** In the trough, point down a little: the point's half under the water, the root over the rim. */
-    static Lay inTrough(Quaternionf frame, Lay out) {
+    /**
+     * In the trough, point down a little: the point by the trough's far end under the water, the rest rising back over
+     * the near rim however long the blade is.
+     */
+    static Lay inTrough(Quaternionf frame, AnvilShape shape, Lay out) {
         out.scale.set(1F, 1F, 1F);
-        out.mid = MID_Y;
-        model(frame, 14F / 16F, 0.44F, 8F / 16F, out.at);
-        turn(dir(frame, 0F, -0.42F, 0.906F, A), dir(frame, -1F, 0F, 0F, U), out.turn);
+        out.shape = shape;
+        out.mid = shape.mid;
+        dir(frame, 0F, -0.42F, 0.906F, A).normalize();
+        float back = (shape.tip - shape.mid) * shape.texel;
+        model(frame, 14F / 16F, 0.322F, 0.754F, out.at).sub(A.x * back, A.y * back, A.z * back);
+        turn(A, dir(frame, -1F, 0F, 0F, U), out.turn);
         return out;
     }
 
     /** Standing hilt up in the slot, its face to the smith, the guard just over the stone; drawn {@code rise} blocks up. */
-    static Lay inSlot(Quaternionf frame, float rise, Lay out) {
+    static Lay inSlot(Quaternionf frame, AnvilShape shape, float rise, Lay out) {
         out.scale.set(1F, 1F, 1F);
-        out.mid = 3F; // the collar's foot sits on the stone
+        out.shape = shape;
+        out.mid = shape.root - 2F; // the collar's foot sits on the stone
         model(frame, 0.5F, 0.51F + rise, 3F / 16F, out.at);
         turn(dir(frame, 0F, -1F, 0F, A), dir(frame, 0F, 0F, -1F, U), out.turn);
         return out;
@@ -250,9 +268,11 @@ final class AnvilScene {
             // the tools back on the peg; your hands on the hilt while you draw it
             pegHammer(out.hammer);
             if (mine && drawK > 0F && !be.slot().isEmpty()) {
-                inSlot(FRAME, 0.22F * drawK, L1);
-                L1.point(0F, 2F, 0F, out.mainFist);
-                L1.point(0F, -0.5F, 0F, out.offFist);
+                AnvilShape slot = AnvilShape.of(be.slot());
+                inSlot(FRAME, slot, 0.22F * drawK, L1);
+                // under the guard and down the grip
+                L1.point(0F, slot.taps[0], 0F, out.mainFist);
+                L1.point(0F, slot.taps[1], 0F, out.offFist);
                 out.mainW = out.offW = Math.min(1F, drawK * 4F);
             }
             pegTongs(out.tongs);
@@ -260,17 +280,19 @@ final class AnvilScene {
             return;
         }
         out.hasWork = true;
-        out.cut = BLADE; // the blade alone until the hilt
+        AnvilShape sh = AnvilShape.of(w.weapon);
+        float blade = sh.cut[0];
+        out.cut = blade; // the blade alone until the hilt
         float t = now - w.stageStart;
         int n = mine ? Math.max(struck, w.beats().size()) : w.beats().size();
         Direction mouth = forgeMouth(level, w.forge);
         switch (w.stage) {
             case AnvilSong.HEAT -> {
-                inForge(pos, w.forge, mouth, out.work);
+                inForge(pos, w.forge, mouth, sh, out.work);
                 out.inForge = true;
                 float h = AnvilSong.heat(t);
-                heat(out, h, 1F - (1F - BLADE) * Mth.clamp(h / 0.65F, 0F, 1F), false);
-                tongsAt(out, out.work, ROOT_Y - 0.5F, T.set(mouth.getStepX(), 0.25F, mouth.getStepZ()), mine, true);
+                heat(out, h, 1F - (1F - blade) * Mth.clamp(h / 0.65F, 0F, 1F), false);
+                tongsAt(out, out.work, sh.root - 0.5F, T.set(mouth.getStepX(), 0.25F, mouth.getStepZ()), mine, true);
                 restHammer(out.hammer);
             }
             case AnvilSong.SHAPE -> {
@@ -282,49 +304,50 @@ final class AnvilScene {
                 }
                 if (mine && n == AnvilSong.FLIP_AFTER && blowBeat == AnvilSong.FLIP_AFTER - 1)
                     flip = Mth.clamp((now - blowAt - DOWN - 3F) / 6F, 0F, 1F);
-                onAnvil(FRAME, d, flip, MID_Y, out.work);
+                onAnvil(FRAME, sh, d, flip, false, out.work);
                 if (w.scores.isEmpty() && t < GLIDE) {
                     // carried from the fire on a short arc
-                    inForge(pos, w.forge, mouth, L1);
+                    inForge(pos, w.forge, mouth, sh, L1);
                     L2.set(out.work);
                     out.work.mix(L1, L2, t / GLIDE, 0.35F);
                 }
-                heat(out, Math.max(0.3F, Math.max(0F, w.heat) * (1F - 0.45F * n / AnvilSong.STRIKES)), BLADE - 0.02F, false);
-                tongsAt(out, out.work, ROOT_Y - 0.5F, dir(FRAME, 1F, 0.35F, -0.8F, T), mine, false);
+                heat(out, Math.max(0.3F, Math.max(0F, w.heat) * (1F - 0.45F * n / AnvilSong.STRIKES)), blade - 0.02F, false);
+                tongsAt(out, out.work, sh.root - 0.5F, dir(FRAME, 1F, 0.35F, -0.8F, T), mine, false);
                 if (mine) swing(out, now, n, false);
                 else restHammer(out.hammer);
             }
             case AnvilSong.QUENCH -> {
-                onAnvil(FRAME, 1F, 1F, MID_Y, L1);
-                overTrough(FRAME, L2);
+                onAnvil(FRAME, sh, 1F, 1F, false, L1);
+                overTrough(FRAME, sh, L2);
                 out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.15F);
                 float plunged = mine && !Float.isNaN(plungeAt) ? plungeAt - w.stageStart : w.plunge;
                 float front = 1F;
                 if (plunged >= 0F) {
-                    inTrough(FRAME, L3);
+                    inTrough(FRAME, sh, L3);
                     L1.set(out.work);
                     out.work.mix(L1, L3, Mth.clamp((t - plunged) / 4F, 0F, 1F), 0F);
                     float end = mine && !Float.isNaN(liftAt) ? liftAt - w.stageStart : t;
                     float held = Math.min(Math.max(0F, end - plunged), AnvilSong.HOLD_MAX);
-                    front = 1F - (1F - BLADE) * AnvilSong.line(held);
+                    front = 1F - (1F - blade) * AnvilSong.line(held);
                     out.steam = t - plunged < 40F;
                     model(FRAME, 14F / 16F, 6.6F / 16F, 9F / 16F, out.steamAt);
                 }
                 heat(out, Math.max(0.3F, Math.max(0F, w.heat) * 0.55F), front, true);
-                tongsAt(out, out.work, ROOT_Y - 0.5F, dir(FRAME, 0F, 0.3F, -1F, T), mine, true);
+                tongsAt(out, out.work, sh.root - 0.5F, dir(FRAME, 0F, 0.3F, -1F, T), mine, true);
                 restHammer(out.hammer);
             }
             case AnvilSong.HILT -> {
                 // back from the water onto the anvil, the whole weapon's length on the face
-                if (w.plunge >= 0F) inTrough(FRAME, L1);
-                else overTrough(FRAME, L1);
-                onAnvil(FRAME, 1F, 0F, WHOLE_MID_Y, L2);
+                if (w.plunge >= 0F) inTrough(FRAME, sh, L1);
+                else overTrough(FRAME, sh, L1);
+                onAnvil(FRAME, sh, 1F, 0F, true, L2);
                 out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.15F);
-                out.cut = AnvilSong.HILT_CUT[Math.min(n, AnvilSong.TAPS)];
+                out.cut = sh.cut[Math.min(n, AnvilSong.TAPS)];
                 // what heat it kept, fading
-                float front = w.held >= 0F ? 1F - (1F - BLADE) * AnvilSong.line(w.held) : 1F;
+                float front = w.held >= 0F ? 1F - (1F - blade) * AnvilSong.line(w.held) : 1F;
                 heat(out, 0.4F * Math.max(0F, 1F - t / 40F), front, true);
-                tongsAt(out, out.work, 16F, dir(FRAME, 0.3F, 0.35F, -1F, T), mine, false);
+                // up the blade, clear of the hilt being seated
+                tongsAt(out, out.work, sh.root + 0.69F * (sh.tip - sh.root), dir(FRAME, 0.3F, 0.35F, -1F, T), mine, false);
                 if (mine) swing(out, now, n, true);
                 else restHammer(out.hammer);
             }
@@ -456,14 +479,15 @@ final class AnvilScene {
 
     /** Where beat {@code k} lands: a strike's mark on the face up, or the hilt's part a tap seats (guard, grip, pommel). */
     static Vector3f target(Lay work, boolean tap, int k, Vector3f out) {
+        AnvilShape sh = work.shape;
         if (tap) {
-            float y = k == 0 ? 4F : k == 1 ? 0.5F : -3.5F;
-            return work.point(0F, y, k == 1 ? 1.5F : 2.5F, out);
+            int i = Mth.clamp(k, 0, sh.taps.length - 1);
+            return work.point(0F, sh.taps[i], i == 1 ? 1.5F : 2.5F, out);
         }
         float[] m = AnvilSong.MARKS[Mth.clamp(k, 0, AnvilSong.MARKS.length - 1)];
         // turned over at the fifth: the other face is up
         float z = k < AnvilSong.FLIP_AFTER ? FACE_Z : -FACE_Z;
-        return work.point(BLADE_X + HALF_W * m[1], ROOT_Y + (TIP_Y - ROOT_Y) * m[0], z, out);
+        return work.point(BLADE_X + HALF_W * m[1], sh.root + (sh.tip - sh.root) * m[0], z, out);
     }
 
     /** Laid on the anvil's heel, on its side, its handle off the near edge. */

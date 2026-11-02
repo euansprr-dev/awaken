@@ -16659,7 +16659,7 @@ it; coming back restarts the stage, counted in again.
 - **Quality**: 0.2 heat + 0.55 strikes x early + 0.15 quench + 0.1 hilt; Plain below 0.55, Fine, Masterwork from 0.75,
   Flawless from 0.9; burnt or brittle is never Flawless. Starting Temper Plain 0, Fine I, Masterwork II, Flawless III, then
   Oren's Mark (`awaken:temper_start`) adds its levels, all **capped at the Forge's temper limit**
-  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in an Armory),
+  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in an Armoury),
   applied with `Upgrades.applyTemper`.
 - **The story**: `awaken:weapon_forged` (`WeaponForged`, schemaVersion 1): quality, flaw (0 none, 1 burnt, 2 brittle),
   the maker's name. The tooltip says it plainly: "Masterwork", "a burnt tip" or "a brittle hairline", "Forged by Euan".
@@ -16699,9 +16699,20 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
   dull red through orange and yellow to white, dark and soot-streaked where cool, over the whole blade whatever its
   metal map (Beastbound's bone and bronze glow too). Sparks fly at each strike (on the screen, off the mark); steam
   (vanilla's white smoke, two a tick) rises from the trough while the hot blade is in it.
-- Sizes: the work at 0.035 a block a texel (a little over its held size, so it reads on the anvil's face); the hammer and
-  tongs at 0.025, so they hang from the peg clear of the floor. The trough is narrower than the blade: it goes in edge
-  down, tip low. Your held items hide while the scene runs (SPEC §24 view), your hands being on the tools.
+- Sizes: the work at 0.035 a block a texel (a little over its held size, so it reads on the anvil's face), a design
+  longer than 1.2 blocks at that laid a little smaller to fit; the hammer and tongs at 0.025, so they hang from the peg
+  clear of the floor. The trough is narrower than the blade: it goes in edge down, tip low, the point by the trough's far
+  end under the water and the rest rising back over the near rim, however long the blade. Your held items hide while the
+  scene runs (SPEC §24 view), your hands being on the tools.
+- Its own shape (`AnvilShape`, 2026-11-02, as weapon designs change length): nothing in the scene knows a blade's
+  length. Each weapon's heights are read from its own mesh once (64 bins of the mesh's "along", each at the mean design
+  height of its points): the point is the mesh's top, the blade's root is the height where the blade begins along it,
+  the middles of the blade and the whole weapon follow, the strikes' marks are fractions of root to point, the tongs
+  hold half a texel under the root (two thirds up the blade while the hilt goes on), the hilt's taps land at the middles
+  of the guard, the grip and the pommel, your hands on the hilt at the guard's and the grip's, and a weapon stands in the
+  slot with its root two texels under the stone. Where the blade, the guard, the grip and the pommel begin along it is
+  `AnvilSong.HILT_CUT` (the Beastbound Longsword's: 0.40, 0.24, 0.17, 0) until the weapon generator writes each weapon's
+  own; a mesh whose heights don't climb along it keeps today's hand-set layout.
 - The smith's own client plays their sounds the moment they act; the server plays them to everyone else. Observers see
   the work, the tongs on it and the hammer at rest on the heel; the smith's swing in third person is stage 2.
 - With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.

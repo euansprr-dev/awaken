@@ -569,7 +569,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         };
         String temper = d.temper() <= 0 ? " It leaves the anvil untempered."
                 : " It leaves the anvil at Temper " + numeral(d.temper()) + (d.temper() < q.temper
-                ? ": that's as far as your Forge can temper it. A Forge in an Armory takes it further." : ".");
+                ? ": that's as far as your Forge can temper it. A Forge in an Armoury takes it further." : ".");
         String flaw = switch (d.flaw()) {
             case AnvilSong.BURNT_TIP -> " The tip stayed in the fire too long and came out burnt.";
             case AnvilSong.BRITTLE -> " It was held in the water too long: there's a brittle hairline in it.";
