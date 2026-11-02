@@ -17455,7 +17455,11 @@ forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-f
   your dimension, and both Weapons steps cover it (`covers("arms:forge/")`) while they show. **Words**: the level road's E step says weapons are made at a War
   Anvil, from bone and flint by hand at E; Hale adds "To make your own, set up a War Anvil at home."; the
   pattern notices say the War Anvil.
-- **JEI**: a War Anvil page (the compat module's build page) for every weapon and blade, from the cost table.
+- **JEI**: a **War Anvil** category (`Categories.WarAnvil`, `Recipes.forgings()`, the War Anvil its station) for every
+  weapon and blade, from the cost table: the parts (a tag's items cycling in one slot), the result, a rank chip in the
+  rank's colour, how it's made ("by hand, no Forge needed" at E, "in the Forge's heat" from D), the level it opens at, and
+  one plain line on the work (a blade: every forged weapon of its tier starts from one). Under the spoiler guard by its
+  result, as every Awaken category.
 - **The smith in third person**: others see the smith bent over the anvil, the hammer arm rising and falling on each
   strike and tap (a full-body clip, `assets/awaken/player_animations/arms_anvil.json`, through `core.api.PlayerClips`;
   without the animation library, vanilla's arm swing on each strike). The clips (`tools/art/specs/anvil_moves.py`, each
