@@ -27,19 +27,27 @@ import java.util.Set;
  * The duel on cue, for tours and a look in game (admin: {@code /awaken bosses duel ...}, SPEC §46.3): a stage where you
  * stand with a duel boss at its middle facing a still stand-in 4 blocks south, the camera west of them looking east; then
  * a phrase played, a blow deflected (the limb's recoil, or the reel off a phrase's last blow) and the stance broken, each
- * now, so a tour's waits and a frozen tick catch them. A creative player is never its target.
+ * now, so a tour's waits and a frozen tick catch them. {@code beast <id>} puts a named beast in the boss's place, and
+ * {@code break} then breaks its stance through Arms (it topples, SPEC §46.5). A creative player is never its target.
  */
 public final class DuelDemo {
     private DuelDemo() {}
 
-    public static final List<String> STEPS = List.of("stage", "play", "deflect", "break");
+    public static final List<String> STEPS = List.of("stage", "play", "deflect", "break", "beast");
 
     private static @Nullable AwakenBoss boss;
+    private static @Nullable AwakenMob beast;
     private static @Nullable Pig standIn;
+    private static @Nullable Vec3 centre;
 
     /** {@code stage <boss>}, {@code play <move> [then ...]}, {@code deflect}, {@code break}; the reason when it can't. */
     public static @Nullable String run(ServerPlayer p, String step, String args) {
         if (step.equals("stage")) return stage(p, args.trim());
+        if (step.equals("beast")) return beast(p, args.trim());
+        if (step.equals("break") && beast != null && beast.isAlive() && beast.level() == p.level()) {
+            Strikes.posture(beast, 10_000, p); // more than any stance: it breaks, as a blow of yours would break it
+            return null;
+        }
         AwakenBoss b = boss;
         if (b == null || !b.isAlive() || b.level() != p.level()) return "Build the stage first: /awaken bosses duel stage <boss>";
         switch (step) {
@@ -61,6 +69,27 @@ public final class DuelDemo {
         return null;
     }
 
+    /** A named beast at the stage's middle in the boss's place, facing south (build the stage first). */
+    private static @Nullable String beast(ServerPlayer p, String id) {
+        MobDef def = Bestiary.get(id);
+        if (def == null) return "No creature called " + id;
+        Vec3 at = centre;
+        if (at == null) return "Build the stage first: /awaken bosses duel stage <boss>";
+        if (boss != null) boss.discard();
+        boss = null;
+        if (beast != null) beast.discard();
+        if (standIn != null) standIn.discard();
+        standIn = null;
+        AwakenMob m = Mobs.spawn(p.level(), def, at, 10, new MobRole(def.tier.role, 10, def.theme.id, Optional.empty(), ""), Set.of());
+        if (m == null) return "Couldn't place " + id;
+        m.setPersistenceRequired();
+        m.snapTo(at.x, at.y, at.z, 0F, 0F);
+        m.setYHeadRot(0F);
+        m.setYBodyRot(0F);
+        beast = m;
+        return null;
+    }
+
     /** A 41-block floor where you stand, the boss at its middle facing south at a still pig, you west looking across. */
     private static @Nullable String stage(ServerPlayer p, String id) {
         MobDef def = Bestiary.get(id);
@@ -74,7 +103,10 @@ public final class DuelDemo {
             }
         }
         Vec3 centre = Vec3.atBottomCenterOf(c);
+        DuelDemo.centre = centre;
         if (boss != null) boss.discard();
+        if (beast != null) beast.discard();
+        beast = null;
         if (standIn != null) standIn.discard();
         AwakenMob m = Mobs.spawn(level, def, centre, 10, new MobRole(MobRole.Role.BOSS, 10, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
         if (!(m instanceof AwakenBoss b)) {

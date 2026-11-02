@@ -28,6 +28,7 @@ public final class MobsModule {
         MobSounds.init(modBus);
         MobParticles.init(modBus);
         MobLoot.init(modBus);
+        dev.awaken.mobs.entity.Topple.init(modBus); // big beasts go down on a broken stance (SPEC §46.5)
         MobsEvents.init(modBus);
         dev.awaken.mobs.net.MobsNet.init(modBus);
         MobHooks.install(new MobsSpawner());
@@ -85,6 +86,7 @@ public final class MobsModule {
 
     /** Ours stagger through their own stance (the wind-up ends, they stand still); any other mob is slowed to a stop. */
     private static boolean stagger(LivingEntity e, int ticks) {
+        dev.awaken.mobs.entity.Topple.knock(e, ticks); // a big beast's broken stance puts it on its side
         if (e instanceof AwakenMob m) return m.ground(Math.max(ticks, dev.awaken.core.api.Aim.GROUNDED_TICKS)) || m.stagger(ticks); // a flier's broken stance brings it down
         if (!(e instanceof Mob mob) || !mob.isAlive()) return false;
         mob.getNavigation().stop();

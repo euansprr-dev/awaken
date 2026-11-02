@@ -23,6 +23,7 @@ public final class MobsClient {
         modBus.addListener(RitualRenderers::renderers);
         modBus.addListener(SeepParticles::register);
         modBus.addListener(RegisterRenderStateModifiersEvent.class, MobsClient::looks);
+        modBus.addListener(RegisterRenderStateModifiersEvent.class, ToppleView::register); // big beasts on their side (SPEC §46.5)
         modBus.addListener(net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(dev.awaken.mobs.net.MobsNet.Pace.TYPE, (msg, ctx) -> dev.awaken.mobs.client.kit.ServerPace.onPace(msg.gameTime()));
             // the carriers (SPEC §46.2)

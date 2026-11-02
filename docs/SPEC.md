@@ -16926,3 +16926,18 @@ Shadow fights in phrases, opens up after each, recoils and reels when it's turne
   as deep as its own hurts do (the build's 2 pixels), never deeper, the throw easing by steps (1.0 down to 0.4) until
   it does; bipeds' feet are locked after (`kit.core.lock_feet`). Weight (1.0-2.4 by bulk) shades how far it's thrown;
   the lengths are the duel's own whatever the body weighs.
+- **Big beasts topple** (PLAN §4.6). A named beast or a hunt quarry (`CreatureTag` kind BEAST, or an elite of a herd,
+  a neutral kind or a pack) whose stance breaks goes over onto its side for the break (`Topple.knock`, from the mobs'
+  stagger hook Arms calls): a stagger of 40 ticks or more is a broken stance (Arms' 50, a Lord's 40; armour's staggers
+  are 30 or less), and in the air or the water it doesn't roll over. It goes over in 9 ticks (slow, then all at once),
+  bounces once (4), lies there open, and heaves itself up over the break's last 12; a break held longer keeps it down
+  without falling again. The server sends when it went down and when it gets up (`mobs_down`, synced, not saved) and
+  each client draws the fall from that: our rigs (`HeroRenderer`, `WildRenderer`) roll about the bottom edge they fall
+  toward, the same side every time for one body, so nothing sinks into the ground (`ToppleView.roll`); a vanilla body
+  (a quarry, under Fresh Animations or not) goes over by vanilla's own death flip without the red (its render state's
+  `deathTime`). Test `fights_topple` (a short stagger doesn't topple; a break does and an extended one keeps its fall;
+  a plain pig doesn't, a tagged alpha does). On cue: `/awaken bosses duel beast <id>` puts a beast in the boss's place
+  on the stage, and `break` breaks its stance.
+- Tour `tools/autopilot/fights-stage4.txt` (CI): the tell, `parried`, `reel` and the reel low for one body of each
+  build (the Ember Tyrant, the Thornback, the Sovereign of Machines, Mother of Spores, the Sky Leviathan), then the Briar
+  Sow broken: going over, down, getting up.

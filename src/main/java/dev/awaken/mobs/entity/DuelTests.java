@@ -34,6 +34,7 @@ public final class DuelTests {
         AwakenTests.register("fights_deflect_recoil", 240, DuelTests::deflectRecoil);
         AwakenTests.register("fights_shot_returns", 100, DuelTests::shotReturns);
         AwakenTests.register("fights_duel_stance", 60, DuelTests::duelStance);
+        AwakenTests.register("fights_topple", 100, DuelTests::topple);
     }
 
     /** The Gearwright's sweep and chop, then nothing for at least the shortest opening, and it stands open through it. */
@@ -180,6 +181,45 @@ public final class DuelTests {
         boss.discard();
         live.leave();
         h.succeed();
+    }
+
+    /** A big beast's broken stance puts it on its side for the break (SPEC §46.5); a short stagger and a plain animal don't. */
+    static void topple(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        MobDef d = Bestiary.get("briar_sow");
+        AwakenMob beast = Mobs.spawn(level, d, h.absoluteVec(new Vec3(2.5, 1, 2.5)), 3, new MobRole(d.tier.role, 3, d.theme.id, Optional.empty(), ""), Set.of());
+        Pig pig = EntityTypes.PIG.create(level, EntitySpawnReason.MOB_SUMMONED);
+        pig.setPos(h.absoluteVec(new Vec3(7.5, 1, 7.5)));
+        pig.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000); // the sow is territorial: it outlives her
+        pig.setHealth(1000);
+        level.addFreshEntity(pig);
+        int broken = dev.awaken.arms.ArmsRules.BROKEN_TICKS;
+        boolean[] done = {false};
+        h.onEachTick(() -> {
+            // once both stand (each blow below acts once: a failed check names itself)
+            if (done[0] || !beast.onGround() || !pig.onGround()) return;
+            done[0] = true;
+            h.assertTrue(Topple.big(beast), "a named beast is big: " + dev.awaken.core.api.CreatureTag.of(beast));
+            Strikes.stagger(beast, 20);
+            h.assertFalse(Topple.down(beast), "a short stagger (armour's) doesn't put it down");
+            Strikes.stagger(beast, broken);
+            h.assertTrue(Topple.down(beast) && beast.staggered(), "a broken stance puts it on its side, held still");
+            Topple.Down down = beast.getData(Topple.DOWN);
+            long now = level.getGameTime();
+            h.assertTrue(Topple.over(down, now + Topple.FALL + Topple.BOUNCE) == 1.0F && Topple.over(down, now + broken - 1) < 0.3F
+                    && Topple.over(down, now + broken) == 0.0F, "over, then up as the break ends");
+            Strikes.stagger(beast, broken + 20);
+            h.assertTrue(beast.getData(Topple.DOWN).from() == down.from(), "a break held longer doesn't fall again");
+            Strikes.stagger(pig, broken);
+            h.assertFalse(Topple.down(pig), "a plain pig doesn't topple: " + dev.awaken.core.api.CreatureTag.of(pig));
+            pig.setData(dev.awaken.core.api.CoreApi.CREATURE_TAG, new dev.awaken.core.api.CreatureTag(3, dev.awaken.core.api.CreatureTag.Kind.PASSIVE, true, "Alpha"));
+            Strikes.stagger(pig, broken);
+            h.assertTrue(Topple.down(pig), "a herd's alpha (a quarry) does: " + dev.awaken.core.api.CreatureTag.of(pig) + ", big " + Topple.big(pig)
+                    + ", on the ground " + pig.onGround() + ", " + pig.getData(Topple.DOWN));
+            beast.discard();
+            pig.discard();
+            h.succeed();
+        });
     }
 
     private static Pig pig(GameTestHelper h, double z) {
