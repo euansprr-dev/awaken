@@ -75,22 +75,6 @@ wait 140
 screen close
 wait 20
 screen close
-cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
-# a wild Lampwing hovering over the field, looked at from 4 blocks south (each kin comes from the yard's middle)
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~ ~ ~
-cmd awaken admin kin summon lampwing
-cmd data merge entity @e[type=awaken:kin_lampwing,limit=1,sort=nearest] {NoAI:1b}
-cmd execute at @e[type=awaken:kin_lampwing,limit=1,sort=nearest] run tp @s ~ ~-2 ~4 180 -10
-wait 40
-shot wk_10_kin_plate_wild_lampwing
-cmd kill @e[type=awaken:kin_lampwing]
-cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~ ~ ~
-cmd awaken admin kin gnaw mossback
-cmd data merge entity @e[type=awaken:kin_mossback,limit=1,sort=nearest] {NoAI:1b}
-cmd execute at @e[type=awaken:kin_mossback,limit=1,sort=nearest] run tp @s ~ ~ ~5 180 10
-wait 40
-shot wk_11_kin_plate_gnawed_mossback
-cmd kill @e[type=awaken:kin_mossback]
 # a Burrowbun living in the yard's field, then named
 cmd awaken admin kin home burrowbun
 wait 40
@@ -107,6 +91,19 @@ shot wk_14_hearth_page_name_button
 wait 10
 screen close
 wait 10
+# where the Burrowbun stood (open field the camera knows): a wild Lampwing, then a Gnawed Mossback
+cmd execute at @e[type=awaken:kin_burrowbun,limit=1,sort=nearest] run summon minecraft:marker ~ ~ ~ {Tags:["field"]}
+cmd kill @e[type=awaken:kin_burrowbun]
+cmd execute at @e[type=marker,tag=field,limit=1] run summon awaken:kin_lampwing ~ ~1.5 ~ {NoAI:1b}
+cmd execute at @e[type=marker,tag=field,limit=1] run tp @s ~ ~ ~4 180 -3
+wait 40
+shot wk_10_kin_plate_wild_lampwing
+cmd kill @e[type=awaken:kin_lampwing]
+cmd execute at @e[type=marker,tag=field,limit=1] run summon awaken:kin_mossback ~ ~ ~ {NoAI:1b,gnawed:1b}
+cmd execute at @e[type=marker,tag=field,limit=1] run tp @s ~ ~ ~5 180 10
+wait 40
+shot wk_11_kin_plate_gnawed_mossback
+cmd kill @e[type=awaken:kin_mossback]
 
 # ---- 4. the ride line ----
 cmd awaken fauna mount tame frost_stag bridled
