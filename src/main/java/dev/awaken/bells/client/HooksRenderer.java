@@ -69,7 +69,7 @@ public final class HooksRenderer implements BlockEntityRenderer<HooksEntity, Hoo
         var bs = be.getBlockState();
         state.facing = bs.hasProperty(HorizontalDirectionalBlock.FACING) ? bs.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
         state.n = Math.min(MAX, be.hooks());
-        state.scale = bs.is(BellContent.GREAT_BEAM.get()) ? 0.95F : bs.is(BellContent.BELL_BEAM.get()) ? 0.24F : 0.21F;
+        state.scale = bs.is(BellContent.GREAT_BEAM.get()) ? 0.95F : bs.is(BellContent.BELL_BEAM.get()) ? 0.25F : 0.32F;
         float now = be.getLevel() == null ? 0 : be.getLevel().getGameTime() + partialTicks;
         for (int i = 0; i < state.n; i++) {
             int no = be.bell(i);
@@ -88,7 +88,7 @@ public final class HooksRenderer implements BlockEntityRenderer<HooksEntity, Hoo
 
     private static float[] hook(net.minecraft.world.level.block.state.BlockState s, int i) {
         // the same points the server picks hooks by (bells.Hanging.hookModel)
-        if (s.is(BellContent.BELL_FRAME.get())) return new float[]{4.5F + 3.5F * i, 14F, 8F};
+        if (s.is(BellContent.BELL_FRAME.get())) return new float[]{2.7F + 5.3F * i, 14F, 8F};
         if (s.is(BellContent.BELL_BEAM.get())) return new float[]{2.5F + 3.67F * i, 13F, 8F};
         return new float[]{8F, 12F, 8F};
     }

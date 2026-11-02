@@ -15,10 +15,10 @@ import java.util.Map;
  * handbell is set to, and what's been said once. Saved on the player, kept through death. Schema 4 (SPEC §43.16): the
  * lines said once, and how many Lords have fallen since one last kept a bell for you. Schema 5 (stage 2): the bells owed
  * back to you as things (carried through a death, or fallen out of the world), and where each of the far six you've
- * heard rung hangs.
+ * heard rung hangs. Schema 6 (stage 3): the Great Bells the Registry's wagon is bringing to your yard.
  */
 public final class BellBook {
-    public static final int SCHEMA = 5;
+    public static final int SCHEMA = 6;
 
     /** How a lead was learned (JOURNEY part 4). Sung comes with the Chimewren (stage 5), Found with the Stilled's letters. */
     public enum How { HEARD, SEEN, SUNG, FOUND, RUNG, REMEMBERED, DREAMT }
@@ -87,8 +87,9 @@ public final class BellBook {
                 Map<String, Long> out = new HashMap<>();
                 b.far.forEach((k, v) -> out.put(Integer.toString(k), v));
                 return out;
-            })
-    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay, pealed, kinsongAt, said, lordsSince, owed, far) -> {
+            }),
+            Codec.unboundedMap(Codec.STRING, Codec.LONG).optionalFieldOf("wagon", Map.of()).forGetter(b -> keys(b.wagon))
+    ).apply(i, (schema, held, leads, tracked, given, peal, homewardAt, rememberedDay, pealed, kinsongAt, said, lordsSince, owed, far, wagon) -> {
         BellBook b = new BellBook();
         b.schema = schema;
         held.forEach((k, v) -> b.held.put(Integer.parseInt(k), v));
@@ -104,6 +105,7 @@ public final class BellBook {
         b.lordsSince = lordsSince;
         b.owed.addAll(owed);
         far.forEach((k, v) -> b.far.put(Integer.parseInt(k), v));
+        wagon.forEach((k, v) -> b.wagon.put(Integer.parseInt(k), v));
         return b;
     }));
 
@@ -139,6 +141,8 @@ public final class BellBook {
     public final List<Integer> owed = new ArrayList<>();
     /** The far six this player has heard rung (schema 5): bell number → where it hangs (a packed BlockPos). */
     public final Map<Integer, Long> far = new HashMap<>();
+    /** Great Bells won and on the Registry's wagon (schema 6): bell number → the play-day it was won (it comes the day after). */
+    public final Map<Integer, Long> wagon = new HashMap<>();
 
     public boolean has(String id) {
         BellCatalog.Def d = BellCatalog.of(id);

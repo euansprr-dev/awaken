@@ -786,3 +786,41 @@ happens).
 - **Edges**: every held bell but the far six comes back as a thing to hang; the far six get their places (the city's,
   the holdfasts' heard from inside, else the square, else where you stand); old homes' `hung` lists are dropped, so
   nothing rings until bells are hung again; the Signal's first-bell line isn't said again.
+
+## Hang them high (§43.16 stage 3, plan docs/director/BELLS.md §4.4, §4.8)
+
+### The Belfry and the Bell Tower (Work Plans)
+- **Get**: a Work Plan (as before), used to turn its choice to "Belfry" or "Bell Tower"; a Thatchback living with you
+  builds it from the chests within eight, one block a turn; or you build it yourself from the plan's bill.
+- **For**: Bell Beams (and, in the tower, Great Beams) high up without a scaffold: the Belfry sixteen hooks nine up, the
+  Bell Tower 24 hooks and two Great hooks thirteen up; the Hearth's tier II bell tower.
+- **Know**: the plan's line when chosen and its status (the bill, then blocks done and what it's waiting on); the Bells
+  tab's "Your frame's full" step and the page's next line name the plans; "[The Thatchbacks finished the Belfry. Climb
+  the ladder and hang your bells from its beams.]"
+- **Source**: `kin.works.WorkPlans` (`belfry`, `bellTower`), `BellHooks.raised`.
+- **Links**: Bell Beam and Great Beam recipes; ladders; the Hearth's tier II; the Great Belfry (needs its 7 by 7 clear).
+- **Edges**: the plan block goes when the tower's done (even if its last block was already there); beams the Thatchbacks
+  set carry at any height, so a plan laid below the fire still works; anything of yours in the way is built round; no
+  glass walls a window up.
+
+### The Registry's wagon (the Provings' Great Bells)
+- **Get**: winning a rank's Proving puts its Great Bell on the wagon (Book `wagon`); on a later play-day, while you're at
+  home, it's left in your yard two to five blocks from the Anchor as a found bell.
+- **For**: the Great Bells come home without carrying a giant bell out of the Registry.
+- **Know**: the bell's card says the wagon leaves it in your yard by morning (once you have a home); "[The Registry's
+  wagon left the Tenor in your yard...]"; the Bells tab's "The Tenor is in your yard".
+- **Source**: `Bells.ring` (PROVING), `FoundBells.wagon`, `FoundBellEntity.delivered`, World `yard`.
+- **Links**: the Great Beam; the Great Belfry carries Great Bells up into it.
+- **Edges**: never the same play-day; waits while you have no home or the yard isn't loaded or has no room; only you can
+  lift it; lifted, it's in your hands like any bell; the admin `tower` command gives wagon bells at once.
+
+### The Hearth's bell tower and the old self-raised towers
+- **Get**: a bell hanging 8 or more above your fire, or on a beam the Thatchbacks set, or an old tower's beams.
+- **For**: tier II's need; a gate near home warned two play-days before it breaks (tolled from your highest bell); calm
+  Deep Tide nights. Tier IV asks for thirty bells in your song.
+- **Know**: the Hearth page's tier needs ("a bell tower: a bell hanging 8 or more above your fire", "thirty bells in
+  your song (n/30)").
+- **Source**: `BellHooks.tower`, `BellHooks.song`, `BellHooks.toll`, `RoomEffects.bellTower`, `TierRules`,
+  `BellTower.convert` (old towers, World `beams`).
+- **Edges**: the Bell tower room still counts but no longer rings vanilla bells; an old belfry's, tower's or Great
+  Belfry's vanilla bells become beams once, counting at any height; no tower raises itself any more.

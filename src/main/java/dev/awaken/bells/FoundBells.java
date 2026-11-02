@@ -61,7 +61,11 @@ final class FoundBells {
             Bells.say(p, "[This one wasn't left for you. It's for the hunter who found it.]");
             return;
         }
-        if (be.lifted.add(p.getUUID())) {
+        if (be.delivered && be.lifted.add(p.getUUID())) {
+            Bells.giveBack(p, BellItem.of(d.no()));
+            level.playSound(null, pos, BellContent.note(d.no()), SoundSource.BLOCKS, 1.5F, 1F);
+            be.setChanged();
+        } else if (be.lifted.add(p.getUUID())) {
             if (Bells.has(p, d.id())) Bells.say(p, "[You've already got " + d.name().replaceFirst("^The ", "the ") + ". This one stays for whoever it's for.]");
             else {
                 Bells.ring(p, d, be.where);
@@ -71,6 +75,9 @@ final class FoundBells {
             be.setChanged();
         }
         if (be.done()) {
+            BellWorld yards = BellWorld.get(level.getServer());
+            for (BellWorld.Home home : yards.homes.values())
+                if (home.yard.values().removeIf(pos::equals)) yards.setDirty();
             if (be.anchor != 0) {
                 BellWorld w = BellWorld.get(level.getServer());
                 BellWorld.Home home = w.peek(BlockPos.of(be.anchor));
@@ -86,6 +93,53 @@ final class FoundBells {
     /** Nothing lives at that home yet: the Lampwing is still asleep in its old bell. */
     static boolean asleep(ServerLevel level, long anchor) {
         return KinWorld.get(level.getServer()).at(BlockPos.of(anchor)).isEmpty();
+    }
+
+    // ---- the Registry's wagon (the Provings' Great Bells) -----------------------------------------------------------
+
+    /**
+     * Each 5 s for a member of a home: a Great Bell won before today that's on the Registry's wagon is left in the yard,
+     * a few steps from the Anchor, for them to lift (once the yard's loaded and there's room to set it down).
+     */
+    static void wagon(ServerPlayer p, HearthRecord h) {
+        BellBook b = Bells.book(p);
+        if (b.wagon.isEmpty() || !(p.level() instanceof ServerLevel level) || !HearthService.OVERWORLD.equals(h.dimension) || level != level.getServer().overworld()) return;
+        long today = dev.awaken.core.PlayDays.current(level.getServer());
+        for (var it = b.wagon.entrySet().iterator(); it.hasNext(); ) {
+            var e = it.next();
+            if (e.getValue() >= today) continue;
+            BlockPos at = yard(level, h.pos);
+            if (at == null) return;
+            BellCatalog.Def d = BellCatalog.of(e.getKey());
+            if (!place(level, at, d.no(), "left in your yard by the Registry's wagon", List.of(p.getUUID()), 0L, false, false)) return;
+            if (level.getBlockEntity(at) instanceof FoundBellEntity be) {
+                be.delivered = true;
+                be.setChanged();
+            }
+            it.remove();
+            Bells.save(p, b);
+            BellWorld w = BellWorld.get(level.getServer());
+            w.home(h.pos).yard.put(d.no(), at);
+            w.setDirty();
+            Bells.say(p, "[The Registry's wagon left " + d.name().replaceFirst("^The ", "the ") + " in your yard. It needs a Great Beam, 12 or more blocks above your fire.]");
+            Awaken.LOG.info("[bells] the wagon left {} {} for {} at {}", d.number(), d.id(), p.getName().getString(), at.toShortString());
+        }
+    }
+
+    /** A free spot on the ground two to five blocks from the Anchor, or null if the yard isn't loaded or has no room. */
+    static @Nullable BlockPos yard(ServerLevel level, BlockPos anchor) {
+        for (int r = 2; r <= 5; r++)
+            for (int dx = -r; dx <= r; dx++)
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    int x = anchor.getX() + dx, z = anchor.getZ() + dz;
+                    if (!level.hasChunk(x >> 4, z >> 4)) return null;
+                    BlockPos at = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z), z);
+                    if (Math.abs(at.getY() - anchor.getY()) > 3 || !level.getBlockState(at).isAir()) continue;
+                    if (!level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) continue;
+                    return at;
+                }
+        return null;
     }
 
     // ---- the Lampwing's old roost (the Nook Bell) --------------------------------------------------------------------

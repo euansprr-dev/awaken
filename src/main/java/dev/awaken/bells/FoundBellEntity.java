@@ -36,6 +36,8 @@ public final class FoundBellEntity extends BlockEntity {
     long anchor;
     /** The gate it lies in, or "": if the gate closes first, the bell goes back to the pool (stage 4). */
     String gate = "";
+    /** Already its claimants' (a Great Bell the Registry's wagon brought): lifting it puts it in their hands, nothing more. */
+    boolean delivered;
 
     public FoundBellEntity(BlockPos pos, BlockState state) {
         super(BellContent.FOUND_BELL_BE.get(), pos, state);
@@ -71,6 +73,7 @@ public final class FoundBellEntity extends BlockEntity {
         out.store("lifted", UUIDUtil.STRING_CODEC.listOf(), new ArrayList<>(lifted));
         out.putLong("anchor", anchor);
         out.putString("gate", gate);
+        out.putBoolean("delivered", delivered);
     }
 
     @Override
@@ -84,6 +87,7 @@ public final class FoundBellEntity extends BlockEntity {
         lifted.addAll(in.read("lifted", UUIDUtil.STRING_CODEC.listOf()).orElse(List.of()));
         anchor = in.getLongOr("anchor", 0L);
         gate = in.getStringOr("gate", "");
+        delivered = in.getBooleanOr("delivered", false);
     }
 
     @Override

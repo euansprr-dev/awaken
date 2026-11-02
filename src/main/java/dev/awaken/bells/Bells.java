@@ -100,16 +100,21 @@ public final class Bells {
         }
         boolean first = !b.given;
         b.given = true;
-        boolean isFar = far(d);
+        boolean isFar = far(d), seed = d.source() == BellCatalog.Source.SEED, wagon = d.source() == BellCatalog.Source.PROVING;
         if (isFar) b.far.put(d.no(), (hangs != null ? hangs : p.blockPosition()).asLong());
+        // a Proving's Great Bell: the Registry's kept it in its cellar, and its wagon brings it to your yard the next day
+        if (wagon) b.wagon.put(d.no(), PlayDays.current(server));
         save(p, b);
         Progression.setCounter(p, COUNTER, b.count());
         Optional<HearthRecord> home = HearthService.data(server).home(p.getUUID());
         if (isFar) home.ifPresent(h -> BellTower.hang(server, h));
-        else giveBack(p, BellItem.of(d.no()));
+        else if (!seed && !wagon) giveBack(p, BellItem.of(d.no()));
         StringBuilder body = new StringBuilder(d.rank().label + "-rank. ");
         body.append(isFar ? "People still ring it. It stays where it hangs and answers your song from there."
-                : Hanging.great(d) ? "It's yours. It needs a Great Beam, 12 or more blocks above your fire." : "It's yours. Take it home and hang it.");
+                : seed ? "It hangs in the middle of your Great Belfry."
+                : wagon ? "The Registry has kept it in its cellar for eleven years. Its wagon will leave it in your yard by morning"
+                        + (home.isPresent() ? "." : ", once you have a home.") + " It needs a Great Beam, 12 or more blocks above your fire."
+                : "It's yours. Take it home and hang it.");
         if (!d.voice().words.isEmpty()) body.append(" While it hangs: ").append(d.voice().words.substring(0, 1).toLowerCase(java.util.Locale.ROOT)).append(d.voice().words.substring(1));
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Bell " + d.number() + " · " + d.name()))
                 .body(Component.literal(body.toString())).priority(7).ttl(20 * 12).build());
@@ -536,6 +541,7 @@ public final class Bells {
             // Ilse gives the Ember with her coal; one who never met her finds it by their fire
             ring(p, "ember", "by your fire, the night you lit it");
             FoundBells.roost(p, h);
+            FoundBells.wagon(p, h);
             if (h.tier >= 2) ring(p, "founding", "the day your Hearth grew");
             // the Great Belfry and the Hundred Peal reach a member who was away when they happened (SPEC §43.14)
             BellWorld.Home tower = BellWorld.get(server).peek(h.pos);

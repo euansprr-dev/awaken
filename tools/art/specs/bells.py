@@ -140,11 +140,12 @@ def hooks(xs, under):
 
 
 def frame_model():
-    """Two posts and a beam with three hooks (SPEC 43.16): the bells themselves are drawn by the block's renderer."""
+    """Two posts and a beam with three hooks (SPEC 43.16): the bells themselves are drawn by the block's renderer. The posts
+    stand just outside the block so the three bells between them can be big enough to read."""
     wood = "#wood"
-    els = [box([1, 0, 6], [3, 16, 10], wood), box([13, 0, 6], [15, 16, 10], wood), box([0, 14, 5.5], [16, 16, 10.5], wood),
-           box([0, 0, 5], [4, 1, 11], wood), box([12, 0, 5], [16, 1, 11], wood)]
-    els += hooks([4.5, 8, 11.5], 14)
+    els = [box([-2, 0, 6], [0, 16, 10], wood), box([16, 0, 6], [18, 16, 10], wood), box([-3, 14, 5.5], [19, 16, 10.5], wood),
+           box([-3, 0, 5], [1, 1, 11], wood), box([15, 0, 5], [19, 1, 11], wood)]
+    els += hooks([2.7, 8, 13.3], 14)
     return {"parent": "minecraft:block/block", "ambientocclusion": False, "textures": dict(WOOD_TEX), "elements": els}
 
 
@@ -170,9 +171,19 @@ def great_beam_model():
 def bell_item_model():
     """One of the hundred as a thing (SPEC 43.16): a bronze bell hanging from (8, 15, 8), its loop above."""
     els = bell_shape(8, 15, "#bronze", 1.6) + [box([7.4, 15, 7.4], [8.6, 16, 8.6], "#iron")]
-    return fix_bell_boxes({"parent": "minecraft:block/block", "ambientocclusion": False,
-                           "textures": {"particle": "awaken:block/gate_bell_bronze", "bronze": "awaken:block/gate_bell_bronze",
-                                        "iron": "minecraft:block/iron_block"}, "elements": els})
+    model = fix_bell_boxes({"parent": "minecraft:block/block", "ambientocclusion": False,
+                            "textures": {"particle": "awaken:block/gate_bell_bronze", "bronze": "awaken:block/gate_bell_bronze",
+                                         "iron": "minecraft:block/iron_block"}, "elements": els})
+    # held small, mouth down, a little turned; the hooks' renderer draws it with no transform of its own
+    model["display"] = {
+        "firstperson_righthand": {"rotation": [0, -25, 8], "translation": [1.5, 2.5, 0], "scale": [0.42, 0.42, 0.42]},
+        "firstperson_lefthand": {"rotation": [0, -25, -8], "translation": [1.5, 2.5, 0], "scale": [0.42, 0.42, 0.42]},
+        "thirdperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 1.5, 1], "scale": [0.35, 0.35, 0.35]},
+        "thirdperson_lefthand": {"rotation": [0, 45, 0], "translation": [0, 1.5, 1], "scale": [0.35, 0.35, 0.35]},
+        "gui": {"rotation": [20, 30, 0], "translation": [0, 0.5, 0], "scale": [0.72, 0.72, 0.72]},
+        "ground": {"translation": [0, 2, 0], "scale": [0.35, 0.35, 0.35]},
+        "fixed": {"scale": [0.6, 0.6, 0.6]}}
+    return model
 
 
 def facing_states(model):

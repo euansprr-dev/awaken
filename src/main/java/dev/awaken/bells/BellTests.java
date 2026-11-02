@@ -41,6 +41,10 @@ final class BellTests {
         AwakenTests.register("bells_nothing_from_nowhere", 20, BellTests::nothingFromNowhere);
         AwakenTests.register("bells_roost_bell", 20, BellTests::roostBell);
         AwakenTests.register("bells_old_save", 20, BellTests::oldSave);
+        AwakenTests.register("bells_work_plans", 40, BellTests::workPlans);
+        AwakenTests.register("bells_hearth_tower", 20, BellTests::hearthTower);
+        AwakenTests.register("bells_wagon", 20, BellTests::wagon);
+        AwakenTests.register("bells_old_towers", 20, BellTests::oldTowers);
     }
 
     /**
@@ -95,13 +99,16 @@ final class BellTests {
         h.assertTrue(Bells.count(p) == 1 && Bells.book(p).given, "it's held and the handbell was given");
         h.assertTrue(p.getInventory().contains(s -> s.is(BellContent.HANDBELL.get())), "the handbell is in the player's bag");
         h.assertFalse(p.getInventory().contains(s -> s.is(BellContent.BELL_FRAME_ITEM.get())), "no frame with it: that's made at a table");
-        // each of the hundred comes home as a thing to hang, but the six people still ring, which stay where they hang
+        // each of the hundred comes home as a thing to hang, but the six people still ring, which stay where they hang, the
+        // Provings' Great Bells, which the Registry's wagon brings, and the Seed Bell, which comes with the Great Belfry
         ServerPlayer r = h.makeMockServerPlayerInLevel();
         for (int i = 0; i < 100; i++) {
             BellCatalog.Def d = BellCatalog.of(i);
             Bells.ring(r, d, "in a test");
             boolean item = r.getInventory().contains(s -> d.equals(BellItem.def(s)));
             if (Bells.far(d)) h.assertTrue(!item && Bells.book(r).far.containsKey(i), d.id() + " stays where it hangs");
+            else if (d.source() == BellCatalog.Source.PROVING) h.assertTrue(!item && Bells.book(r).wagon.containsKey(i), d.id() + " goes on the wagon");
+            else if (d.source() == BellCatalog.Source.SEED) h.assertTrue(!item, d.id() + " stays for the Great Belfry");
             else h.assertTrue(item, d.id() + " is put in their hands");
             r.getInventory().clearContent();
         }
@@ -132,7 +139,10 @@ final class BellTests {
         h.succeed();
     }
 
-    /** The belfry hangs four bells in a 5×5 under ten high; the tower nine in a 5×5 under fifteen; neither touches the frame. */
+    /**
+     * An old belfry's shape (read when it turns to beams) has four Bell Beams in a 5×5 under ten high; an old tower's nine in
+     * a 5×5 under fifteen; neither touches the frame.
+     */
     static void towerPlans(GameTestHelper h) {
         BlockPos f = new BlockPos(0, 64, 0);
         check(h, "belfry", BellTower.belfry(f, 0), f, 2, 4, 9);
@@ -146,13 +156,13 @@ final class BellTests {
             BlockPos d = e.getKey().subtract(f);
             h.assertTrue(Math.abs(d.getX()) <= half && Math.abs(d.getZ()) <= half && d.getY() >= 0 && d.getY() <= top, what + " stays in its room: " + d);
             h.assertTrue(!d.equals(BlockPos.ZERO), what + " leaves the frame be");
-            if (e.getValue().is(Blocks.BELL)) n++;
+            if (Hanging.hooks(e.getValue()) > 0) n++;
         }
-        h.assertTrue(n == bells, what + " hangs " + bells + " bells (" + n + ")");
+        h.assertTrue(n == bells, what + " has " + bells + " beams to hang bells from (" + n + ")");
     }
 
     /**
-     * The Hundred Peal's chain (SPEC §43.14): the Great Belfry hangs 25 bells in a 7×7 under twenty-three high and leaves
+     * The Hundred Peal's chain (SPEC §43.14): the Great Belfry has 25 beams (nine Great) in a 7×7 under twenty-three high and leaves
      * the frame be; the Kinsong can't be rung before a player's Peal and can after, and the Wake's hook sees the Peal.
      */
     static void hundredPeal(GameTestHelper h) {
@@ -491,6 +501,146 @@ final class BellTests {
         h.assertTrue(p.getInventory().contains(s -> ember.equals(BellItem.def(s))), "the Ember Bell is in their hands");
         Bells.upgrade(p);
         h.assertTrue(Bells.book(p).owed.isEmpty(), "and only once");
+        h.succeed();
+    }
+
+    /**
+     * The Thatchbacks' bell plans (SPEC §43.16 stage 3): a Belfry raised from its Work Plan has four Bell Beams nine up and
+     * a ladder, a Bell Tower six Bell Beams and two Great Beams thirteen up; each plan goes when it's done; and a bell hangs
+     * on a belfry's beam even when the fire is higher than the plan, and makes the home's bell tower.
+     */
+    static void workPlans(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        BlockPos c = h.absolutePos(new BlockPos(2, 1, 2)), t = c.east(9), fire = c.above(3).west(3);
+        HearthRecord rec = null;
+        try {
+            h.assertTrue(dev.awaken.kin.works.WorkPlans.raise(level, c, Direction.NORTH, "belfry"), "the Belfry is built to the end");
+            h.assertTrue(dev.awaken.kin.works.WorkPlans.raise(level, t, Direction.NORTH, "bell_tower"), "the Bell Tower is built to the end");
+            h.assertTrue(level.getBlockState(c).isAir() && level.getBlockState(t).isAir(), "each plan goes when it's done");
+            int beams = 0, ladders = 0, small = 0, great = 0;
+            for (BlockPos b : BlockPos.betweenClosed(c.offset(-2, 0, -2), c.offset(2, 13, 2))) {
+                if (level.getBlockState(b).is(BellContent.BELL_BEAM.get())) beams += b.getY() == c.getY() + 9 ? 1 : 100;
+                if (level.getBlockState(b).is(Blocks.LADDER)) ladders++;
+            }
+            for (BlockPos b : BlockPos.betweenClosed(t.offset(-2, 0, -2), t.offset(2, 16, 2))) {
+                if (level.getBlockState(b).is(BellContent.BELL_BEAM.get())) small += b.getY() == t.getY() + 13 ? 1 : 100;
+                if (level.getBlockState(b).is(BellContent.GREAT_BEAM.get())) great += b.getY() == t.getY() + 13 ? 1 : 100;
+            }
+            h.assertTrue(beams == 4 && ladders == 10, "the Belfry: four Bell Beams nine up and a ladder (" + beams + ", " + ladders + ")");
+            h.assertTrue(small == 6 && great == 2, "the Bell Tower: six Bell Beams and two Great Beams at the top (" + small + ", " + great + ")");
+            rec = home(level, p, fire);
+            BlockPos beam = c.offset(1, 9, 0);
+            h.assertTrue(hang(level, beam, p, small(1).getFirst()), "a bell hangs on the Belfry's beam, though it's only six above the fire");
+            h.assertTrue(dev.awaken.core.api.BellHooks.tower(fire), "and the home has its bell tower");
+        } finally {
+            for (BlockPos b : BlockPos.betweenClosed(c.offset(-2, 0, -2), t.offset(4, 16, 2)))
+                level.setBlock(b, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS);
+            if (rec != null) leave(level, rec);
+        }
+        h.succeed();
+    }
+
+    /**
+     * The Hearth reads the bells (SPEC §43.16 stage 3): tier II asks for a bell tower and it stands once a bell hangs 8 up;
+     * tier IV asks for thirty bells in the song; a bell tower (not only the room) keeps Deep Tide nights calm.
+     */
+    static void hearthTower(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        BlockPos fire = h.absolutePos(new BlockPos(2, 1, 2)), beam = fire.above(8);
+        HearthRecord rec = home(level, p, fire);
+        try {
+            h.assertFalse(need(rec, 2, "bell tower"), "tier II asks for a bell tower");
+            h.assertFalse(dev.awaken.hearth.RoomEffects.bellTower(rec), "and with none there's no bell tower's calm");
+            place(level, beam, BellContent.BELL_BEAM.get());
+            h.assertTrue(hang(level, beam, p, small(1).getFirst()), "a bell hangs 8 above the fire");
+            h.assertTrue(need(rec, 2, "bell tower") && dev.awaken.hearth.RoomEffects.bellTower(rec), "now the home has its bell tower, and its calm");
+            h.assertFalse(need(rec, 4, "thirty bells"), "tier IV wants thirty bells in the song");
+            BellWorld.Home home = BellWorld.get(level.getServer()).peek(fire);
+            for (int i = 0; i < 29; i++) home.far.put(60 + i, fire);
+            home.rebuild();
+            h.assertTrue(need(rec, 4, "thirty bells"), "and has them at thirty");
+        } finally {
+            leave(level, rec, beam);
+        }
+        h.succeed();
+    }
+
+    private static boolean need(HearthRecord rec, int tier, String what) {
+        for (dev.awaken.hearth.TierRules.Need n : dev.awaken.hearth.TierRules.needs(rec, tier)) if (n.text().contains(what)) return n.met();
+        throw new IllegalStateException("tier " + tier + " has no need for " + what);
+    }
+
+    /**
+     * A Proving's Great Bell comes by the Registry's wagon (SPEC §43.16 stage 3): not into your hands but onto the wagon,
+     * left in your yard on a later play-day (never the same one), and yours when you lift it.
+     */
+    static void wagon(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        BlockPos fire = h.absolutePos(new BlockPos(3, 1, 3));
+        p.snapTo(fire.getX() + 0.5, fire.getY(), fire.getZ() + 0.5, 0F, 0F);
+        HearthRecord rec = home(level, p, fire);
+        BellCatalog.Def tenor = BellCatalog.of("tenor");
+        BlockPos at = null;
+        try {
+            Bells.ring(p, tenor, "in a test");
+            BellBook b = Bells.book(p);
+            h.assertTrue(b.wagon.containsKey(tenor.no()) && !p.getInventory().contains(s -> tenor.equals(BellItem.def(s))), "a Great Bell goes on the wagon, not into your hands");
+            FoundBells.wagon(p, rec);
+            h.assertTrue(Bells.book(p).wagon.containsKey(tenor.no()), "and isn't left the same day");
+            b.wagon.put(tenor.no(), dev.awaken.core.PlayDays.current(level.getServer()) - 1);
+            Bells.save(p, b);
+            FoundBells.wagon(p, rec);
+            BellWorld.Home home = BellWorld.get(level.getServer()).peek(fire);
+            at = home == null ? null : home.yard.get(tenor.no());
+            h.assertTrue(at != null && level.getBlockState(at).is(BellContent.FOUND_BELL.get()) && Bells.book(p).wagon.isEmpty(), "the next day it's in the yard (" + at + ")");
+            h.assertTrue(at.distManhattan(fire) <= 10, "a few steps from the fire");
+            FoundBells.lift(level, at, p);
+            h.assertTrue(p.getInventory().contains(s -> tenor.equals(BellItem.def(s))) && level.getBlockState(at).isAir() && home.yard.isEmpty(), "lifted, it's yours to hang");
+        } finally {
+            if (at != null) level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS);
+            leave(level, rec);
+        }
+        h.succeed();
+    }
+
+    /**
+     * An old home's self-raised belfry (SPEC §43.16 stage 3): its vanilla bells become Bell Beams where they hung, once,
+     * and a bell hangs on them though they're only five above the fire.
+     */
+    static void oldTowers(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        BlockPos fire = h.absolutePos(new BlockPos(2, 1, 2)), frame = fire.east(4);
+        HearthRecord rec = home(level, p, fire);
+        Map<BlockPos, BlockState> shape = BellTower.belfry(frame, 0);
+        try {
+            level.setBlock(frame, BellContent.BELL_FRAME.get().defaultBlockState(), Block.UPDATE_ALL);
+            for (Map.Entry<BlockPos, BlockState> e : shape.entrySet())
+                level.setBlock(e.getKey(), Hanging.hooks(e.getValue()) > 0 ? Blocks.BELL.defaultBlockState() : e.getValue(), Block.UPDATE_ALL);
+            BellWorld w = BellWorld.get(level.getServer());
+            BellWorld.Home home = w.home(fire);
+            home.frame = frame;
+            home.stage = 1;
+            BellTower.convert(level, home);
+            int beams = 0, bells = 0;
+            BlockPos one = null;
+            for (BlockPos b : shape.keySet()) {
+                if (level.getBlockState(b).is(Blocks.BELL)) bells++;
+                if (level.getBlockEntity(b) instanceof HooksEntity be && be.old) {
+                    beams++;
+                    one = b.immutable();
+                }
+            }
+            h.assertTrue(beams == 4 && bells == 0 && home.beams, "the old belfry's four bells are Bell Beams now (" + beams + ", " + bells + ")");
+            h.assertTrue(one != null && hang(level, one, p, small(1).getFirst()), "and a bell hangs on one, though it's only five above the fire");
+        } finally {
+            List<BlockPos> all = new ArrayList<>(shape.keySet());
+            all.add(frame);
+            leave(level, rec, all.toArray(BlockPos[]::new));
+        }
         h.succeed();
     }
 }

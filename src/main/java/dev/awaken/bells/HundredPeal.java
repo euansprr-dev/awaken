@@ -270,6 +270,31 @@ final class HundredPeal {
         }
 
         @Override
+        public boolean tower(BlockPos anchor) {
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            BellWorld.Home h = server == null ? null : BellWorld.get(server).peek(anchor);
+            return h != null && BellTower.high(server.overworld(), h, anchor);
+        }
+
+        @Override
+        public void raised(ServerLevel level, BlockPos pos) {
+            BellTower.raised(level, pos);
+        }
+
+        @Override
+        public int song(BlockPos anchor) {
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            BellWorld.Home h = server == null ? null : BellWorld.get(server).peek(anchor);
+            return h == null ? 0 : h.hung.size();
+        }
+
+        @Override
+        public boolean toll(ServerLevel level, BlockPos anchor) {
+            BellWorld.Home h = BellWorld.get(level.getServer()).peek(anchor);
+            return h != null && BellTower.toll(level, h);
+        }
+
+        @Override
         public boolean kinsongNear(ServerLevel level, BlockPos at, int reach, int days) {
             if (level.dimension() != Level.OVERWORLD) return false;
             BellWorld w = BellWorld.get(level.getServer());

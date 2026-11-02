@@ -26,7 +26,7 @@ import java.util.UUID;
  * rang.
  */
 final class BellWorld extends SavedData {
-    static final int SCHEMA = 3;
+    static final int SCHEMA = 4;
 
     /** One home's tower. */
     static final class Home {
@@ -41,8 +41,10 @@ final class BellWorld extends SavedData {
                 Codec.BOOL.optionalFieldOf("clapper", false).forGetter(h -> h.clapper),
                 Codec.BOOL.optionalFieldOf("relic", false).forGetter(h -> h.relic),
                 Codec.LONG.optionalFieldOf("pealed", -1L).forGetter(h -> h.pealed),
-                Codec.BOOL.optionalFieldOf("ilse", false).forGetter(h -> h.ilse)
-        ).apply(i, (frame, stage, placed, far, roost, roosted, clapper, relic, pealed, ilse) -> {
+                Codec.BOOL.optionalFieldOf("ilse", false).forGetter(h -> h.ilse),
+                Codec.BOOL.optionalFieldOf("beams", false).forGetter(h -> h.beams),
+                SPOTS.optionalFieldOf("yard", Map.of()).forGetter(h -> spots(h.yard))
+        ).apply(i, (frame, stage, placed, far, roost, roosted, clapper, relic, pealed, ilse, beams, yard) -> {
             Home h = new Home();
             h.frame = frame == 0L ? null : BlockPos.of(frame);
             h.stage = stage;
@@ -54,6 +56,8 @@ final class BellWorld extends SavedData {
             h.relic = relic;
             h.pealed = pealed;
             h.ilse = ilse;
+            h.beams = beams;
+            yard.forEach((k, v) -> h.yard.put(Integer.parseInt(k), BlockPos.of(v)));
             h.rebuild();
             return h;
         }));
@@ -66,8 +70,15 @@ final class BellWorld extends SavedData {
 
         /** The bell frame, once placed. */
         @Nullable BlockPos frame;
-        /** What has been built round the frame: 0 the frame alone, 1 the belfry (20 bells), 2 the tower (50), 3 the Great Belfry. */
+        /**
+         * What stands round the frame: 0 the frame alone, 1 and 2 an old belfry and tower that raised themselves (before
+         * stage 3), 3 the Great Belfry.
+         */
         int stage;
+        /** An old belfry or tower's vanilla bells were made beams (schema 4). */
+        boolean beams;
+        /** Great Bells the Registry's wagon left in the yard, waiting to be lifted (schema 4): number → where. */
+        final Map<Integer, BlockPos> yard = new HashMap<>();
         /** The Great Belfry's two pieces, set into the frame (schema 2). */
         boolean clapper, relic;
         /** The play-day of this home's Hundred Peal, or -1 (schema 2). */

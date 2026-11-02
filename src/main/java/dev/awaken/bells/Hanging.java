@@ -34,9 +34,9 @@ final class Hanging {
     /** How far above the fire a Bell Beam's bells carry, and a Great Beam's. */
     static final int BEAM_ABOVE = 8, GREAT_ABOVE = 12;
 
-    /** The Great Bells (the Provings'): only a Great Beam holds one. */
+    /** The Great Bells (the Provings') and the Seed: only a Great Beam holds one. */
     static boolean great(BellCatalog.Def d) {
-        return d.source() == BellCatalog.Source.PROVING;
+        return d.source() == BellCatalog.Source.PROVING || d.source() == BellCatalog.Source.SEED;
     }
 
     /** How many hooks a hook block has. */
@@ -49,7 +49,7 @@ final class Hanging {
 
     /** Hook {@code i}'s point in model units (x along the beam, y where the bell hangs from, z across), facing north. */
     static float[] hookModel(BlockState s, int i) {
-        if (s.is(BellContent.BELL_FRAME.get())) return new float[]{4.5F + 3.5F * i, 14F, 8F};
+        if (s.is(BellContent.BELL_FRAME.get())) return new float[]{2.7F + 5.3F * i, 14F, 8F};
         if (s.is(BellContent.BELL_BEAM.get())) return new float[]{2.5F + 3.67F * i, 13F, 8F};
         return new float[]{8F, 12F, 8F};
     }
@@ -139,7 +139,7 @@ final class Hanging {
         int above = pos.getY() - h.get().pos.getY();
         if (!be.old && s.is(BellContent.BELL_BEAM.get()) && above < BEAM_ABOVE)
             return "[A bell hung this low won't carry. Hang it higher: 8 blocks or more above your fire.]";
-        if (greatBeam && above < GREAT_ABOVE) return "[A Great Bell has to hang high to carry: 12 blocks or more above your fire.]";
+        if (!be.old && greatBeam && above < GREAT_ABOVE) return "[A Great Bell has to hang high to carry: 12 blocks or more above your fire.]";
         BellWorld.Home home = BellWorld.get(level.getServer()).peek(h.get().pos);
         if (home != null && home.hung.contains(d.no())) return "[Your home's song already has this bell. This one's yours to keep.]";
         return null;

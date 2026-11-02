@@ -11,8 +11,12 @@ storyline well. Unless it's maybe deep underground or ... where you actually hav
 we should just randomly place a bell in the world ... that removes all of the mystery and the fun and the lore."
 This version follows that: no bell lies in the open land without a story that leads to it (parts 3, 4.7, 4.8).
 
-This is a plan, not built. Approval page: https://claude.ai/artifact/Fzj7qtDKBjVaonkgWCaeHa. SPEC changes (a new §43.16 and the edits listed in part 6)
-go in with the first stage's commit.
+Approved 30 Oct (answers below). Approval page: https://claude.ai/artifact/Fzj7qtDKBjVaonkgWCaeHa. SPEC §43.16 holds what's
+built, stage by stage.
+
+**Progress** (session bells, branch `claude/bells-progression-1b3ee4`): stage 1 merged; stage 2 (bells you carry and
+hang) built 2 Nov; stage 3 (Work Plans for the Belfry and Bell Tower, the Hearth's tower and tiers, the Great Bells by
+the Registry's wagon, old towers turned to beams, the Great Belfry at fifty) built 2 Nov; stages 4 to 6 next.
 
 ### Euan's answers, 30 Oct (these override the parts below where they differ)
 Euan approved the whole plan with one change to how gates hold their bells: "100 is great. Go ahead with the full plan.

@@ -28,8 +28,9 @@ import java.util.Map;
  * Great Belfry's two pieces are set into it.
  */
 public final class BellFrameBlock extends HookBlock {
-    private static final Map<Direction, VoxelShape> SHAPE = Shapes.rotateHorizontal(Shapes.or(Block.box(1, 0, 6, 3, 16, 10),
-            Block.box(13, 0, 6, 15, 16, 10), Block.box(0, 14, 5.5, 16, 16, 10.5)));
+    // the drawn posts stand just outside the block; the outline keeps to it
+    private static final Map<Direction, VoxelShape> SHAPE = Shapes.rotateHorizontal(Shapes.or(Block.box(0, 0, 6, 2, 16, 10),
+            Block.box(14, 0, 6, 16, 16, 10), Block.box(0, 14, 5.5, 16, 16, 10.5)));
 
     public BellFrameBlock(BlockBehaviour.Properties p) {
         super(p);

@@ -87,7 +87,7 @@ public final class SettleTests {
                         fake(Reading.Grade.BARE, RoomType.SHELTER), fake(Reading.Grade.FINE, RoomType.ARMORY));
                 h.assertFalse(TierRules.met(rec, 2), "and four with a Fine one want a field or a pen");
                 rec.land = Comfort.FIELD;
-                h.assertTrue(TierRules.met(rec, 2), "four rooms, one Fine, a field: a Steading");
+                h.assertTrue(metButBells(rec, 2), "four rooms, one Fine, a field (and a bell hung high, bells' own test): a Steading");
                 // III: a Grand room
                 h.assertFalse(TierRules.met(rec, 3), "no Grand room yet");
                 rec.rooms = List.of(fake(Reading.Grade.GRAND, RoomType.HALL), fake(Reading.Grade.SNUG, RoomType.BEDROOM));
@@ -99,7 +99,7 @@ public final class SettleTests {
                 h.assertFalse(TierRules.met(rec, 4), "five rooms aren't a village");
                 five.add(fake(Reading.Grade.SNUG, RoomType.KITCHEN));
                 rec.rooms = List.copyOf(five);
-                h.assertTrue(TierRules.met(rec, 4), "a bell tower and six rooms: a Village");
+                h.assertTrue(metButBells(rec, 4), "six rooms (and thirty bells in the song, bells' own test): a Village");
                 for (int i = 0; i < 4; i++) five.add(fake(Reading.Grade.SNUG, RoomType.BEDROOM));
                 rec.rooms = List.copyOf(five);
                 h.assertFalse(TierRules.met(rec, 5), "ten rooms with one Grand aren't a town");
@@ -183,6 +183,11 @@ public final class SettleTests {
             level.setBlock(c, Blocks.LADDER.defaultBlockState().setValue(LadderBlock.FACING, Direction.SOUTH), 3);
         }
         level.setBlock(hatch.below(depth + 1), Blocks.STONE.defaultBlockState(), 3);
+    }
+
+    /** Every need of the tier met but the bells' (a bell hung high, thirty in the song): the bells' tests read those. */
+    static boolean metButBells(HearthRecord rec, int target) {
+        return TierRules.needs(rec, target).stream().allMatch(n -> n.met() || n.text().contains("bell"));
     }
 
     static Room fake(Reading.Grade g, RoomType type) {

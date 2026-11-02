@@ -8481,7 +8481,8 @@ Greenhouse (farmland or a planted pot under a ceiling at least half glass: recog
 Pell's Spurs' +80 now counts too), Hall (6 seats = bottom stairs on the floor with room above, a table = a fence or wall
 post with a carpet, pressure plate or bottom slab on it, floor 48+: a meal eaten in it feeds every other player in it
 nutrition and half its saturation), Bell tower (a bell, the floor 8+ over the lowest ground 4 blocks outside: rings at
-dawn and dusk; `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
+dawn and dusk (gone since §43.16 stage 3: the song is the bells; its gifts below come from the room or from a bell
+hanging 8 up, `RoomEffects.bellTower`, and the warning tolls from the home's highest bell); `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
 inside a Hearth with one, via `HearthHooks.tideCalm` in `living.api.Regions` (one line)), Lookout (12+ up, glass in three
 directions: `AtlasHooks.reveal` 256 round home when first recognised and on login; Mira tells a second rumour a play-day),
 Trophy Hall, Workshop (machines in it or in its walls pay ⌈×0.75⌉ essence: `HearthHooks.machineCost` in
@@ -15808,6 +15809,8 @@ once, in plain words what it was and why the owner went back, and you keep it (`
   nuggets from a stack of rubble at most; never ore by itself).
 - Nooks: 2 at the Ember, 4 at the Anchor, then 8, 12, 18, 24 by its last tier, plus each work's own.
 - Tiers no longer ask for people (stage 1): IV asks for a bell tower and six rooms, V for ten rooms, two of them Grand.
+  (§43.16 stage 3: the bell tower moved to II, "a bell tower: a bell hanging 8 or more above your fire"; IV asks for six
+  rooms and thirty bells in your song.)
   The Spire's Board and Monolith come with the Anchor (they came with the first settler).
 - **The Storehouse** (Euan, 29 Oct; C, with the Totters; rare things: a Totter that's Kin and an empty town's granary
   keystone): a timber hall with **the Drop**, a sunken bin the player tips anything into (by hand, a stack, or "Empty
@@ -16115,7 +16118,8 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   you can't get, and the Peal comes before the Seed, not after it). The True Bell (36, S, voice Glow) is the Foundry's
   sixth mould: 8 Starmetal Ingots and 16 Bell Bronze, cast only while a member of S rank is online; the Foundry's status
   says so while it waits. All hundred bells now have a source (`bells_catalog_ring` checks it).
-- **The Great Belfry** (tower stage 3): it needs the stone tower (50 bells) and two pieces set into the bell frame by
+- **The Great Belfry** (tower stage 3; since §43.16 stage 3 it needs fifty bells in the home's song, not the stone tower, and
+  carries the Great Bells up into it): it needs the stone tower (50 bells) and two pieces set into the bell frame by
   hand (each says why if it can't go in: not your frame, no tower yet, already set, already built). The **Heart-clapper**
   drops from every S-rank (or higher) gate world's Lord to the killer and their party within 96; a **Sovereign's Relic**
   from every Sovereign felled, to the same people. Each is epic, unstackable, fireproof, and given only to someone who
@@ -16312,6 +16316,54 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
     bell never lost at death), `bells_roost_bell` (under the branch; asleep; another fire; claimants), `bells_old_save`,
     `bells_catalog_ring` (each of the hundred is a thing in your hands or one of the six), `bells_peals` (hung, not held),
     `bells_story_start` (Ilse's bell, once).
+
+- **Stage 3: hang them high** (2 Nov; BELLS.md §4.4 and §4.8). The tower is yours to build, or your Thatchbacks'.
+  - **No tower raises itself.** The belfry at 20 and the tower at 50 are retired. An old home whose belfry, tower or Great
+    Belfry rose by itself has each vanilla bell in it turned, once, into the hook block its shape has there (`BellTower.
+    convert`, when the frame's ground is loaded; World `beams`): a Bell Beam under each cross beam of a belfry, nine on a
+    tower's top, the Great Belfry's 25 (nine Great Beams). These old beams (`HooksEntity.old`) count wherever they are.
+    The admin `belfry` command and the Great Belfry still put up the Great Belfry's shape.
+  - **Two Work Plans** (`kin.works.WorkPlans`, after the Storehouse in the plan's choices; the plan stands in the middle
+    and its tower rises round it, so set it beside your frame and the frame stands inside):
+    - **Belfry** (timber, 5 by 5): spruce corner posts ten high, a ladder up the back left one, a beam ring and cross
+      beams at 10, a Bell Beam under each arm of the cross at 9 (their hooks along the arm: sixteen), a stepped roof
+      and its log cap last. Bill: 45 logs, 51 planks, 10 ladders, 4 Bell Beams.
+    - **Bell Tower** (stone, 5 by 5, 17 high): walls ten high with an arch three wide and three high on the plan's
+      facing side and a window two high in the middle of each other face (walled up with no glass), a ladder up the
+      inside of the back wall through the deck at 10, corner piers, the beam course at 13 (two Great Beams either side
+      of the middle, six Bell Beams round them: 24 hooks and 2 Great hooks), a stepped stone roof and cap.
+    - Both are built like every other plan, one block a turn by a Thatchback from the chests within eight, the beams laid
+      before the roof that covers them. Beams the Thatchbacks set carry wherever they stand (`BellHooks.raised` marks
+      them old), so a plan laid lower than the fire still works. Done: the plan block goes and "[The Thatchbacks
+      finished the Belfry. Climb the ladder and hang your bells from its beams.]" The Great Belfry still needs its clear
+      7 by 7 round the frame, so a plan's tower in it must come down first (it says so).
+  - **The Hearth's bell tower is your tower** (`BellHooks.tower`): a bell hanging 8 or more above the fire, in a beam the
+    Thatchbacks set, or an old tower. The Bell tower room's vanilla dawn and dusk ring is gone; its gifts (a gate due to
+    break near home warned two play-days ahead, calm Deep Tide nights) come from the room or the tower
+    (`RoomEffects.bellTower`), and the warning tolls from the home's highest loaded bell (`BellHooks.toll`; the old
+    bell sound with none). Tier II asks for "a bell tower: a bell hanging 8 or more above your fire"; tier IV for "six
+    rooms" and "thirty bells in your song (n/30)" (`BellHooks.song`).
+  - **The Provings' Great Bells come by wagon**: won, a Great Bell isn't put in your hands; it goes on the Registry's
+    wagon (Book schema 6, `wagon`: number to the play-day won) with "The Registry has kept it in its cellar for eleven
+    years. Its wagon will leave it in your yard by morning. It needs a Great Beam, 12 or more blocks above your fire."
+    (", once you have a home"). On a later play-day, while you're at home, it's left on the ground two to five blocks
+    from the Anchor (a found bell, delivered, World `yard`) with "[The Registry's wagon left the Tenor in your yard. It
+    needs a Great Beam, 12 or more blocks above your fire.]"; lifting it puts it in your hands. The Seed Bell is never a
+    thing: it hangs in the middle of the Great Belfry when it rises.
+  - **The Great Belfry** needs fifty bells in the home's song (`BellTower.GREAT`; "[A Great Belfry needs fifty bells in
+    your song first. You have n.]") and its two pieces. When it rises, every bell on a hook where it goes up comes down
+    and is carried into it, and every loaded Great Bell at home is carried up to its Great Beams (`GreatBelfry.Carried`);
+    one with no free hook is set down by the fire; the Seed hangs on the Great Beam at 14 in its middle. Its line: "Only
+    a Great Belfry can lead the Hundred Peal."
+  - Goals: a Great Bell in your yard ("Lift it, then hang it from a Great Beam 12 or more blocks above your fire."), the
+    Great Belfry from fifty. The page's next line names Bell Beams and the Thatchbacks' plans under fifty.
+  - Looks (from stage 2's tour): the Bell Frame is drawn wider (posts just outside its block, the outline kept inside),
+    its bells and a Bell Beam's drawn bigger; the bell in the hand, on the ground and in a frame is sized down.
+  - **World** schema 4 (`beams`, `yard`); **Book** schema 6 (`wagon`).
+  - Tests (CI): `bells_work_plans` (both raised: beams, ladder, the plan gone; a bell on a belfry beam only six above the
+    fire makes the tower), `bells_hearth_tower` (tier II and IV, the calm), `bells_wagon` (not the same day; in the
+    yard; lifted), `bells_old_towers`, `bells_tower_plans` and `bells_hundred_peal` (the old shapes' beams),
+    `bells_catalog_ring` (Great Bells by wagon, the Seed with the Great Belfry).
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 

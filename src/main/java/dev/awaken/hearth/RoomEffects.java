@@ -16,7 +16,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BellBlock;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -130,28 +129,19 @@ public final class RoomEffects {
 
     // ---- the bell tower ---------------------------------------------------------------------------------------------------
 
-    /** Whether Deep Tide nights stay calm here: inside a Hearth with a bell tower. */
+    /**
+     * Whether Deep Tide nights stay calm here: inside a Hearth with a bell tower (SPEC §43.16 stage 3: a bell of yours
+     * hanging 8 or more above your fire; a Bell tower room from before still counts). Its old dawn and dusk ring is gone:
+     * the song is your bells now.
+     */
     public static boolean tideCalm(ServerLevel level, BlockPos pos) {
         return HearthData.get(level.getServer()).containing(pos, level.dimension().identifier().toString())
-                .map(h -> h.hasRoom(RoomType.BELL_TOWER)).orElse(false);
+                .map(RoomEffects::bellTower).orElse(false);
     }
 
-    /** Once a second for a loaded Hearth: your bell rings as the day starts and as it ends. */
-    static void bells(ServerLevel level, HearthRecord h) {
-        long time = Math.floorMod(level.getOverworldClockTime(), 24000L);
-        boolean dawn = time >= 0 && time < 20, dusk = time >= 12000 && time < 12020;
-        if (!dawn && !dusk) return;
-        for (Room r : h.rooms) {
-            if (!r.types().contains(RoomType.BELL_TOWER) || r.cells().isEmpty()) continue;
-            var it = r.cells().iterator();
-            while (it.hasNext()) {
-                BlockPos p = BlockPos.of(it.nextLong());
-                if (level.getBlockState(p).getBlock() instanceof BellBlock bell) {
-                    bell.attemptToRing(level, p, null);
-                    return;
-                }
-            }
-        }
+    /** A bell tower, for its gifts (calm Deep Tide nights, breaks warned two play-days early). */
+    public static boolean bellTower(HearthRecord h) {
+        return h.hasRoom(RoomType.BELL_TOWER) || dev.awaken.core.api.BellHooks.tower(h.pos);
     }
 
     // ---- the Lookout ------------------------------------------------------------------------------------------------------

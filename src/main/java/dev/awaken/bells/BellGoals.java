@@ -83,19 +83,18 @@ final class BellGoals {
         } else if (great != null) {
             title = great.name() + " needs a Great Beam";
             why = "Three logs, two chains and an iron ingot. Set it 12 or more blocks above your fire, then hang the Great Bell from it.";
+        } else if (!home.yard.isEmpty()) {
+            Map.Entry<Integer, BlockPos> y = home.yard.entrySet().iterator().next();
+            title = BellCatalog.of(y.getKey()).name() + " is in your yard";
+            why = "The Registry's wagon left it there. Lift it, then hang it from a Great Beam 12 or more blocks above your fire.";
+            at = y.getValue();
         } else if (home.roost != null && !FoundBells.asleep(p.level(), h.get().pos.asLong()) && !b.held.containsKey(BellCatalog.of("nook").no())) {
             title = "Take the Lampwing's old bell down from its tree";
             why = "It slept in it before it came to live with you. It's yours now.";
             at = home.roost;
-        } else if (n >= BellTower.BELFRY && home.stage < 1) {
-            title = "Clear room for your belfry";
-            why = "It needs a clear space five wide and ten high round your bell frame. Clear it and it goes up at the next song.";
-        } else if (n >= BellTower.TOWER && home.stage < 2) {
-            title = "Clear room for your stone tower";
-            why = "It needs a clear space five wide and fifteen high round your bell frame. Clear it and it goes up at the next song.";
-        } else if (home.stage >= 2 && home.stage < 3 && n >= BellTower.TOWER) {
+        } else if (home.stage < 3 && n >= BellTower.GREAT) {
             title = "Raise the Great Belfry";
-            why = "Your tower can't hold the rest. Set the Heart-clapper and a Sovereign's relic into your bell frame.";
+            why = "Only a Great Belfry can lead the Hundred Peal. Set the Heart-clapper and a Sovereign's relic into your bell frame.";
         } else if (n >= 100 && home.pealed < 0) {
             title = "Ring the Hundred Peal";
             why = "Your song is whole. Ring your bells and all hundred ring together.";

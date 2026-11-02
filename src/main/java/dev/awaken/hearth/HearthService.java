@@ -750,7 +750,6 @@ public final class HearthService {
             if (!h.hearthfire()) showTier(level, h);
             if (!h.hearthfire()) Town.upkeep(level, h, owner, now);
             if (!h.hearthfire()) dev.awaken.hearth.settle.Work.tick(level, h, now);
-            RoomEffects.bells(level, h);
         }
         if (server.getTickCount() % 100 < 20) {
             List<ServerPlayer> home = h.members.isEmpty() ? (owner == null ? List.of() : List.of(owner)) : Household.online(server, h);

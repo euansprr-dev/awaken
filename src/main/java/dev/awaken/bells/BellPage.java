@@ -56,11 +56,8 @@ final class BellPage {
         String next = h.isEmpty() ? "Your bells hang in a tower at home. Light an Ember and make one."
                 : !frame ? "Make a Bell Frame from planks and logs and set it down by your fire. Then use your bells on it to hang them."
                 : n == 0 ? "Use a bell on your Bell Frame to hang it. Your song rings from the bells that hang."
-                : n < BellTower.BELFRY ? (BellTower.BELFRY - n) + " more bells and a belfry goes up round the frame."
-                : home.stage < 1 ? "Your belfry is ready to go up, but it needs a clear space five wide and ten high round the frame. Clear it and it goes up at the next song."
-                : n < BellTower.TOWER ? (BellTower.TOWER - n) + " more bells and it becomes a stone tower."
-                : home.stage < 2 ? "Your stone tower is ready to go up, but it needs a clear space five wide and fifteen high round the frame. Clear it and it goes up at the next song."
-                : home != null && home.stage < 3 ? "Your tower can't hold the rest. It needs the Great Belfry: the Heart-clapper and a Sovereign's relic, set into the frame."
+                : n < BellTower.GREAT ? "Hang the rest high, on Bell Beams 8 or more above your fire. Your Thatchbacks can build a Belfry or a Bell Tower from a Work Plan."
+                : home != null && home.stage < 3 ? "Only a Great Belfry can lead the Hundred Peal: the Heart-clapper and a Sovereign's relic, set into the frame."
                 : n < 100 ? (100 - n) + " bells are still missing from your song."
                 : home.pealed < 0 ? "Your song is whole. Ring your bells and all hundred ring together: the Hundred Peal."
                 : "Your song is whole. Your bells have rung the Hundred Peal.";

@@ -34,7 +34,10 @@ public final class HooksEntity extends BlockEntity {
 
     int[] bells;
     UUID[] by;
-    /** Bell spots of an old self-built belfry or tower (SPEC §43.16, stage 3): they count wherever they are. */
+    /**
+     * Bell spots of an old self-built belfry or tower, or beams the Thatchbacks set in a Belfry or Bell Tower (SPEC §43.16,
+     * stage 3): they count wherever they are, however high the fire.
+     */
     boolean old;
     /** Client only: the game time each hook's bell last swung (hung, or rung by hand). */
     public final long[] swung;
