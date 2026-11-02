@@ -74,8 +74,13 @@ public final class BellContent {
     /** The tower's fifteen tuned bells (D major pentatonic, D3 to B5). */
     static final List<DeferredHolder<SoundEvent, SoundEvent>> NOTES = new ArrayList<>();
 
+    /** The same fifteen heard far off (darker, further: a far bell answering your song) and muffled (a lost bell's hum). */
+    static final List<DeferredHolder<SoundEvent, SoundEvent>> FAR = new ArrayList<>(), MUFFLED = new ArrayList<>();
+
     static {
         for (int k = 0; k < 15; k++) NOTES.add(sound("bells.note_" + k));
+        for (int k = 0; k < 15; k++) FAR.add(sound("bells.far_" + k));
+        for (int k = 0; k < 15; k++) MUFFLED.add(sound("bells.muffled_" + k));
     }
 
     public static final DeferredHolder<SoundEvent, SoundEvent> GAP = sound("bells.gap");
@@ -83,6 +88,10 @@ public final class BellContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> TOLL = sound("bells.toll");
     public static final DeferredHolder<SoundEvent, SoundEvent> HUM = sound("bells.hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> WAKE = sound("bells.wake");
+    /** A bell's loop dropped on its hook: iron on iron. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> HANG = sound("bells.hang");
+    /** The slow swell under a newly hung bell's first ring (on D, pitched to its note). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> SWELL = sound("bells.swell");
 
     public static final Supplier<AttachmentType<BellBook>> BOOK = ATTACHMENTS.register("bell_book",
             () -> AttachmentType.builder(BellBook::new).serialize(BellBook.CODEC).copyOnDeath().build());
@@ -94,6 +103,16 @@ public final class BellContent {
     /** Bell #n's note in the song. */
     public static SoundEvent note(int no) {
         return NOTES.get(BellCatalog.MELODY[no]).get();
+    }
+
+    /** Bell #n's note from far off: a far bell answering your song. */
+    public static SoundEvent far(int no) {
+        return FAR.get(BellCatalog.MELODY[no]).get();
+    }
+
+    /** Bell #n's note muffled, as if brushed through stone: a lost bell you're on the trail of. */
+    public static SoundEvent muffled(int no) {
+        return MUFFLED.get(BellCatalog.MELODY[no]).get();
     }
 
     /** The semitones each tower bell sits above D. */
