@@ -274,6 +274,15 @@ final class GateBestiary {
                 .phase(0.66F, "Countdown: three.", a(SUMMON, "Deploy Coils").summon("coil_unit").n(2), a(RAIN, "Orbital Mark").n(4).bolt(BoltKind.CHARGE), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Countdown: zero.", a(BURST, "Zero Point").radius(14).inner(3.5F).bolt(BoltKind.CHARGE).heavy(), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE), a(BLINK, "Phase Step"))
                 .parts(P("zero_core", "Zero Core", "signal"), P("zero_plating", "Zero Plating", "precursor")).build());
+        // the Provings' Wardens (SPEC §46.4): one great fight each Reassessment, in a hall built for it, never announced
+        out.add(m("proving_ringer", "The Ringer", Theme.BELL, Tier.PROVING, Model.HUMAN, "A bell-ringer that drowned at its ropes and kept ringing")
+                .hp(340).dmg(1.55).spd(0.27).scale(2.0F).size(0.6F, 2.0F).bar(BossBarColor.BLUE).arena(40)
+                .intro("Something up in the bells is swinging them.")
+                .phase(1.0F, "The Ringer drops into the light.", a(SLAM, "Clang").radius(5), a(BURST, "Drowned Toll").radius(10).inner(2.5F).power(1.8F).wind(22).heavy(),
+                        a(BOLT, "Peal").n(1).bolt(BoltKind.SPIRIT))
+                .phase(0.5F, "The water drains.", a(SLAM, "Clang").radius(5), a(BURST, "Drowned Toll").radius(12).inner(2.5F).power(2.0F).wind(22).heavy(),
+                        a(BOLT, "Peal").n(1).bolt(BoltKind.SPIRIT))
+                .build());
     }
 
     private static void nightmare(List<MobDef> out) {

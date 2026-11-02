@@ -261,7 +261,8 @@ final class MobsTests {
                 h.assertTrue(passive || !d.phases.get(0).abilities().isEmpty(), d.id + " has a telegraphed ability");
                 if (d.tier == Tier.LORD || d.tier == Tier.SOVEREIGN || d.tier == Tier.FINAL) h.assertTrue(d.phases.size() == 3, d.id + " has three phases");
                 if (d.tier == Tier.LORD) h.assertTrue(d.parts.size() == 2, d.id + " drops two parts");
-                if (d.tier.countsAsBoss()) h.assertTrue(!d.parts.isEmpty(), d.id + " drops a part");
+                // a Proving's Warden drops no part: its reward is the rank, the gift and its trophy (SPEC §46.4)
+                if (d.tier.countsAsBoss() && d.tier != Tier.PROVING) h.assertTrue(!d.parts.isEmpty(), d.id + " drops a part");
                 for (MobDef.Part p : d.parts) h.assertTrue(MobTypes.part(p.id()) != null, "part item " + p.id());
                 for (MobDef.Phase ph : d.phases) {
                     for (Ability a : ph.abilities()) {

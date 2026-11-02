@@ -376,6 +376,53 @@ def biped_fall(r, w=1.0):
     core.ground_pass(r, [(_under(r, "hand_" + sd), _arm(r, sd)) for sd in ("l", "r") if "hand_" + sd in r.by_name], clips=["death"], skip=())
 
 
+def biped_duel_reactions(r, weight=1.0, lead="r"):
+    """A duel's reactions for a biped of any proportions (SPEC §46.3): `parried` (0.5 s, its blow turned aside: the
+    striking arm thrown up past its shoulder, the body rocked back a step and settling forward to strike on) and `reel`
+    (1.3 s, a phrase's last blow turned aside: thrown hard onto its back foot with both arms flung wide, a step back to
+    catch itself, a lurch forward over bent knees, hanging there bowed and open with its arms down, then gathering). The
+    feet stay where they stand but the back one, which steps; nothing goes through the floor. lead: the arm that strikes
+    most often."""
+    from kit import core
+    from kit.core import keyed
+    # the lengths are the duel's own (FightRunner: a 10-tick recoil, a 26-tick reel), whatever the body weighs; weight
+    # only shades how far it's thrown
+    w = min(1.0, weight ** 0.5)
+    size = getattr(r, "size", 1.0) * (0.6 + 0.4 * w)
+    lo = "l" if lead == "r" else "r"
+    sg = 1 if lead == "r" else -1  # the lead arm's side: it spins the body toward the arm thrown back
+
+    def pose(p, back=0.0):
+        p = core.plant(r, p, at={lo: (0, 0, back * size)} if back else None)
+        return _clear(r, p, legs=False)
+
+    thrown = pose({"pelvis": {"rot": (-6, -5 * sg, 0), "pos": (0, 0, 1.5 * size)}, "spine": (-6, -4 * sg, 0), "chest": (-16, -8 * sg, 0),
+                   "head": (-18, -6 * sg, 0), "arm_" + lead: (-150, 0, 22 * sg), "forearm_" + lead: (-24, 0, 0),
+                   "arm_" + lo: (-34, 0, -30 * sg), "forearm_" + lo: (-30, 0, 0)}, back=4)
+    hang = pose({"pelvis": {"rot": (-3, -3 * sg, 0), "pos": (0, 0, 1 * size)}, "chest": (-8, -4 * sg, 0), "head": (-8, -3 * sg, 0),
+                 "arm_" + lead: (-112, 0, 16 * sg), "forearm_" + lead: (-16, 0, 0), "arm_" + lo: (-22, 0, -20 * sg),
+                 "forearm_" + lo: (-20, 0, 0)}, back=4)
+    settle = pose({"pelvis": {"rot": (3, 0, 0), "pos": (0, -0.6 * size, 0)}, "chest": (5, 1 * sg, 0), "head": (2, 0, 0),
+                   "arm_" + lead: (-30, 0, 8 * sg), "forearm_" + lead: (-14, 0, 0)}, back=1.5)
+    keyed(r, "parried", 0.5, [(0, core.plant(r, {})), (0.07, thrown), (0.24, hang), (0.37, settle), (0.5, core.plant(r, {}))])
+    rock = pose({"pelvis": {"rot": (-10, -4 * sg, 2), "pos": (0, 0, 3 * size)}, "spine": (-8, -3 * sg, 0), "chest": (-24, -8 * sg, 4),
+                 "head": (-22, -6 * sg, 4), "arm_l": (-62, 0, -58), "arm_r": (-62, 0, 58), "forearm_l": (-22, 0, 0),
+                 "forearm_r": (-22, 0, 0)}, back=6)
+    catch = pose({"pelvis": {"rot": (4, -2 * sg, 1), "pos": (0, -4 * size, 4 * size)}, "chest": (-6, -3 * sg, 2), "head": (-6, -2 * sg, 2),
+                  "arm_l": (-30, 0, -40), "arm_r": (-30, 0, 40), "forearm_l": (-18, 0, 0), "forearm_r": (-18, 0, 0)}, back=10)
+    lurch = pose({"pelvis": {"rot": (18, 2 * sg, -2), "pos": (0, -6 * size, 2 * size)}, "spine": (10, 0, 0), "chest": (22, 3 * sg, -2),
+                  "head": (16, 4 * sg, 0), "arm_l": (8, 0, -14), "arm_r": (8, 0, 14), "forearm_l": (-10, 0, 0),
+                  "forearm_r": (-10, 0, 0)}, back=10)
+    bowed = pose({"pelvis": {"rot": (16, 1 * sg, -1), "pos": (0, -7 * size, 2 * size)}, "spine": (10, 0, 0), "chest": (20, 2 * sg, -1),
+                  "head": (14, 2 * sg, 0), "arm_l": (4, 0, -9), "arm_r": (4, 0, 9), "forearm_l": (-6, 0, 0), "forearm_r": (-6, 0, 0)}, back=10)
+    held = pose({"pelvis": {"rot": (15, 0, 0), "pos": (0, -6.5 * size, 2 * size)}, "spine": (9, 0, 0), "chest": (18, 1 * sg, 0),
+                 "head": (12, 1 * sg, 0), "arm_l": (5, 0, -8), "arm_r": (5, 0, 8), "forearm_l": (-8, 0, 0), "forearm_r": (-8, 0, 0)}, back=10)
+    up = pose({"pelvis": {"rot": (6, 0, 0), "pos": (0, -3 * size, 1 * size)}, "chest": (6, 0, 0), "head": (2, 0, 0)}, back=5)
+    keyed(r, "reel", 1.3, [(0, core.plant(r, {})), (0.1, rock), (0.32, catch), (0.54, lurch), (0.78, bowed), (1.0, held), (1.16, up),
+                           (1.3, core.plant(r, {}))])
+    core.ground_pass(r, [(_under(r, "hand_" + sd), _arm(r, sd)) for sd in ("l", "r") if "hand_" + sd in r.by_name], clips=["parried", "reel"])
+
+
 def biped_reactions(r, weight=1.0):
     """The flinches by side, the kneel when its stance breaks and the rise, the death fall."""
     from kit import core

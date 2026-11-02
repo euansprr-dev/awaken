@@ -14,6 +14,8 @@ public enum Tier {
     GUARDIAN(MobRole.Role.BOSS, 1.15),
     /** One of the eight Sovereigns of the Hollow Court. */
     SOVEREIGN(MobRole.Role.BOSS, 1.5),
+    /** A Proving's Warden, met alone in its own hall at a Reassessment (SPEC §46.4): never in a gate, never roams. */
+    PROVING(MobRole.Role.BOSS, 1.0),
     /** The Signal's Shadow. */
     FINAL(MobRole.Role.BOSS, 2.0),
     /** An authored nightmare template (Lucidium). */
@@ -30,12 +32,12 @@ public enum Tier {
 
     /** Has a boss bar, phases, an arena, never despawns. */
     public boolean isBoss() {
-        return this == LORD || this == GUARDIAN || this == SOVEREIGN || this == FINAL || this == NIGHTMARE;
+        return this == LORD || this == PROVING || this == GUARDIAN || this == SOVEREIGN || this == FINAL || this == NIGHTMARE;
     }
 
     /** Counts for {@code awaken:bosses_killed} and the Power Core pity timer. */
     public boolean countsAsBoss() {
-        return this == LORD || this == GUARDIAN || this == SOVEREIGN || this == FINAL;
+        return this == LORD || this == PROVING || this == GUARDIAN || this == SOVEREIGN || this == FINAL;
     }
 
     public boolean hasBar() {

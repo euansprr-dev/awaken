@@ -16818,3 +16818,32 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   middle facing a still stand-in 4 blocks south, the camera west of them; `play <move> [then ...]`, `deflect` and
   `break` act at once (`DuelDemo`). Tour `tools/autopilot/fights-duel.txt` (on CI): each pilot's tell, recoil, reel
   early and low, and broken stance.
+
+**46.4 The Provings: the Ringer (stage 3).** The D Reassessment becomes the first Proving (PLAN §4.7, GOALS part 2):
+one fight with a Warden in its own hall, never announced, the rank's gift inside the fight.
+- **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept
+  ringing, twice a man's height, a bronze bell swinging on a chain from each fist and a small one in its hood. Tier
+  `PROVING` (a boss met only in its hall: never in a gate, never roams, drops no part, since its reward is the rank, the
+  gift and its trophy). Theme Bell, a duel (§46.3) with stance 260; health 340, damage 1.55, speed 0.27, fought at level
+  10. Sim (`combat_sim.py --lord proving_ringer`, 200 seeds, `PROVING_RANKS` sets its rank and level): dodger 78% in
+  2.6 min, parrier 86% in 1.9 min, expert 100% in 1.6 min, tank 0% (targets 75 / 80 / 99 / at most 10), harder than
+  the tuned pilots of E and D (Bell Warden 100 / 90, Gearwright 86 / 88). The plan's 4-5 minutes isn't met: with a
+  finisher worth 10-15% and stance setting the pace, a longer fight costs the dodger more than the plan's 75% (at 4
+  minutes it fell under 65%), and the first Warden must be fair to a hunter who came as they were. Length is the lever
+  for the later Wardens' extra phases.
+- **Tells.** Every white-gold blow is told 0.8 s (16 ticks: the swings, the Chain Lash, the Turning Swing, the Peal),
+  the plan's first rung (the later Wardens shorten it to 0.5 s; red stays at least 0.6 s at every rank).
+- **Moves.** Phase 1: Swing (right bell, backhand) then Swing (left), in strings ending on the Clang (both bells
+  overhead, HEAVY, held 8 ticks); the Chain Lash (a long step and a chain thrown straight out, from afar); the Peal
+  (both bells swung wide and clapped, a white-gold ring that flies at you: deflect it on the beat and it flies back,
+  §46.3); the Turning Swing (behind it); the Drowned Toll (its signature: it throws its head back and rings the bell
+  in its hood, a red ring rolling out through the water: dash through it). Phase 2 at half health, opened by "The water
+  drains" (a 36-tick held clip): the Whirl (HEAVY, one full turn with both bells out), the Bell Rope (GRAB: a running
+  catch with the left bell swung up behind its head), the Peal in pairs, and the strings end on the Clang or the Whirl.
+  It enters by dropping from the bells into the light (`drop`).
+- **Feet.** `kit.core.lock_feet` holds every foot that stands 3 ticks or more and drifts under 3 pixels where it set
+  down (its span's start, end or middle), re-solving the leg each tick; every move that doesn't travel and the idle and
+  reactions are locked. Still over FA's 0.03: the swings (0.09: the foot that pushes off), the turn's pivot (0.16) and
+  the moves that travel (lash 0.32, rope 0.14).
+- **No new Tasks step.** The Proving is the rank's Reassessment: the existing `progression:reassessment` step on the
+  Gates and rank page covers it, so nothing names it (§43, never pre-announce).

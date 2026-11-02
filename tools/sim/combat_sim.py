@@ -374,7 +374,7 @@ def load_world():
 def default_config(W):
     lords = {}
     for d in W["mobs"].values():
-        if d["tier"] != "LORD":
+        if d["tier"] not in ("LORD", "PROVING"):
             continue
         model = W["models"][d["model"]]
         flies = model["move"] == "FLY"
@@ -383,7 +383,7 @@ def default_config(W):
         # 2-4 blocks up (MobGoals.java:240-241), out of a 3.0-3.4 + 0.3 block reach measured eye to box
         # (ArmsServer.java:250) and its 1.5-above-the-eye filter (ArmsServer.java:263): in reach only around dives, 0.30;
         # the Mother of Spores floats above that filter between dives (a ghast 3 wide), 0.15.
-        lords[d["id"]] = {"hp": d["hp"], "dmg": d["dmg"], "uptime": -1.0, "flies": flies}  # uptime < 0: the group's
+        lords[d["id"]] = {"hp": d["hp"], "dmg": d["dmg"], "uptime": -1.0, "flies": flies, "stance": 0}  # stance 0: the fight's  # uptime < 0: the group's
     return {
         "longsword": copy.deepcopy(W["arch"]),
         "rules": dict(W["rules"]),
@@ -491,10 +491,10 @@ def apply_override(cfg, path, value):
 
 # ---- the player at a rank ---------------------------------------------------------------------------------------------
 
-def player_at(W, cfg, rank, weapon_damage):
-    """An on-level player at a rank: its content level, the build's stats, the rank's full Hunter set."""
+def player_at(W, cfg, rank, weapon_damage, level=None):
+    """An on-level player at a rank: its content level (or level), the build's stats, the rank's full Hunter set."""
     P = cfg["player"]
-    level = W["ranks"][rank]["content"]
+    level = level or W["ranks"][rank]["content"]
     pts = P["points_per_level"] * (level - 1)
     st = {k: v * pts for k, v in P["build"].items()}  # points above the starting 5
     tier = W["tiers"][rank]
@@ -653,8 +653,8 @@ class Fight:
         self.k_deflects, self.k_deflect_at = 0, -10 ** 6
         # posture (ArmsRules.java:26-32)
         self.pmax = self.R["POSTURE_LORD"]
-        if self.duel and self.kit["fight"].get("stance", 0) > 0:
-            self.pmax = self.kit["fight"]["stance"]  # a duel's own stance size (Strikes.stance)
+        if self.duel and (lc.get("stance", 0) or self.kit["fight"].get("stance", 0)) > 0:
+            self.pmax = lc.get("stance", 0) or self.kit["fight"]["stance"]  # a duel's own stance size (Strikes.stance)
         self.pval = 0.0
         self.p_last = -10 ** 6
         self.broken_until = -1
@@ -1944,12 +1944,28 @@ class Fight:
 
 # ---- scenarios, runs and targets ---------------------------------------------------------------------------------------
 
+# The Provings' Wardens (SPEC §46.4): each met at its Reassessment by a player of the rank below, in that rank's set
+# and with its forged blade, at the level the new rank asks for (Rank.java levelRequired); the Warden at that level too
+PROVING_RANKS = {"proving_ringer": ("E", 10)}
+
+
+def home(W, d):
+    """The rank a Lord is fought at: a Proving's Warden at the rank it is taken from, a Gate Lord at its theme's home."""
+    return PROVING_RANKS[d["id"]][0] if d["id"] in PROVING_RANKS else W["themes"][d["theme"]]["home"]
+
+
+def fought_level(d):
+    """A Proving's Warden is fought at its Reassessment's level; a Gate Lord at its rank's content level (None)."""
+    return PROVING_RANKS[d["id"]][1] if d["id"] in PROVING_RANKS else None
+
+
 def lords_of(W, only=None):
     out = []
     for d in W["mobs"].values():
-        if d["tier"] == "LORD" and (only is None or d["id"] == only):
+        # a Proving's Warden only when it is asked for by name: the Gate Lord table stays the fifteen
+        if (d["tier"] == "LORD" or (d["tier"] == "PROVING" and only == d["id"])) and (only is None or d["id"] == only):
             out.append(d)
-    out.sort(key=lambda d: (RANK_ORDER.index(W["themes"][d["theme"]]["home"]), d["id"]))
+    out.sort(key=lambda d: (RANK_ORDER.index(home(W, d)), d["id"]))
     return out
 
 
@@ -1992,8 +2008,8 @@ def run_job(job):
     W = _W_CACHE[key]
     cfg = job["cfg"]
     lord = with_ability_overrides(W["mobs"][job["lord"]], cfg)
-    rank = W["themes"][lord["theme"]]["home"]
-    P = player_at(W, cfg, rank, job["weapon_damage"])
+    rank = home(W, lord)
+    P = player_at(W, cfg, rank, job["weapon_damage"], fought_level(lord))
     res = []
     for i in range(job["seeds"]):
         rng = random.Random(f"{job['seed']}:{job['lord']}:{job['profile']}:{job['weapon']}:{i}")
@@ -2137,7 +2153,7 @@ def build_jobs(W, cfg, args):
         raise SystemExit(f"combat_sim: no Gate Lord {args.lord!r}")
     profiles = [p.strip() for p in args.profiles.split(",")] if args.profiles else PROFILE_ORDER
     for d in lords:
-        rank = W["themes"][d["theme"]]["home"]
+        rank = home(W, d)
         w = forged_for(W, rank)
         for prof in profiles:
             jobs.append({"lord": d["id"], "profile": prof, "weapon": w["id"], "weapon_damage": w["damage"],
@@ -2263,8 +2279,8 @@ def main(argv=None):
     passes["diamond"] = 0
     n_diamond = 0
     for d in lords:
-        rank = W["themes"][d["theme"]]["home"]
-        lv = W["ranks"][rank]["content"]
+        rank = home(W, d)
+        lv = fought_level(d) or W["ranks"][rank]["content"]
         LC = cfg["lord"]
         lc = cfg["lords"][d["id"]]
         lhp = lc["hp"] * (1 + LC["health_per_level"] * lv) * LC["role_health"] * LC["extra_health"]
@@ -2339,7 +2355,7 @@ def main(argv=None):
         out = {"args": vars(args), "config": cfg, "elapsed_s": elapsed, "normals": normals, "cells": []}
         for job, s in results:
             out["cells"].append({"lord": job["lord"], "profile": job["profile"], "row": job["row"], "weapon": job["weapon"],
-                                 "rank": W["themes"][W["mobs"][job["lord"]]["theme"]]["home"], **s,
+                                 "rank": home(W, W["mobs"][job["lord"]]), **s,
                                  "pass": judge("diamond" if job["row"] == "diamond" else job["profile"], s)[0]})
         with open(args.json, "w") as f:
             json.dump(out, f, indent=1, default=str)
