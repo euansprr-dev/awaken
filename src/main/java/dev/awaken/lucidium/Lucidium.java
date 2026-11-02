@@ -31,6 +31,11 @@ public final class Lucidium {
         return isDreaming(player) && !player.level().isClientSide() ? Dreams.state(player).lucidity : 0f;
     }
 
+    /** How many dream signs the player has noticed in the dream they're in ("That's not right."), or 0 when awake. */
+    public static int signsNoticed(Player player) {
+        return isDreaming(player) && !player.level().isClientSide() ? Integer.bitCount(Dreams.state(player).spotted) : 0;
+    }
+
     /** Ends the player's dream now and returns them to their bed (no-op when awake). */
     public static void wakeUp(ServerPlayer player) {
         Dreams.wake(player, Dreams.Wake.API);
