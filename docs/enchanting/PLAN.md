@@ -4,7 +4,7 @@ Plan for Euan's request of 2026-11-02, written by the enchanting-plan session on
 Status: **waiting for Euan's approval.** Nothing is built yet. It follows `.claude/PLANNING-PROCESS.md`. The rules go into
 SPEC as **§45** in the same commit as the first code, once approved (the weapon forge and boss fights claim no section
 number yet; if one lands first, this takes the next free one). Approval page: https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF
-(source `docs/enchanting/page.html`; answers in its `decisions` collection, d01 to d12).
+(source `docs/enchanting/page.html`; answers in its `decisions` collection, d01 to d13).
 
 ## 1. Understanding and success contract
 
@@ -301,10 +301,11 @@ outline and body step aside; nothing pauses the game):
   | Piece | Room |
   |---|---|
   | Forged armour, by the Forge Song's quality | Plain 1, Fine 2, Masterwork 3, Flawless 4 |
-  | Forged weapons, by the War Anvil's quality | the same scale (agreed with the weapon-forge session, §8.1); until their quality lands, 2 |
+  | Forged weapons, by the War Anvil's quality | the same scale (agreed with the weapon-forge session, §8.1). Until their quality lands, 2; after it, weapons made before the anvil count as Plain (their rule) |
   | Found weapons (Spoils, Marked, Lord-forged) | 3 |
   | The Delver's Pick, by its verse | 1, then one more at II, IV and VI (up to 4) |
-  | Anything else (vanilla gear, bows, tridents, rods) | 2 |
+  | Unforged armour, weapons and tools (vanilla gear, the Hunter sets) | 1, the same as Plain, so a forged piece is never behind |
+  | Bows, crossbows, tridents and rods (nothing forges them) | 2 |
 
 - **Depth** follows the piece's rank: E pieces I, D II, C III, B and up the enchantment's top. Vanilla gear counts by its
   material: leather, gold and chain E, iron D, diamond C, netherite A; bows, tridents and rods C.
@@ -327,8 +328,12 @@ outline and body step aside; nothing pauses the game):
 
 - **Force wards** (C: effect type `awaken:ward` {force, per_level}; our `LivingIncomingDamageEvent` listener, not
   vanilla's shared protection pool):
-  - each worn piece takes 2.5% a level off that Force's damage;
-  - a whole suit takes at most 30% off one Force, Lords included (run through boss-fights' reach sim before stage 1 merges, §8);
+  - each worn piece takes 2.5% a level off that Force's damage. Only hits typed as a Force count (`core.Forces`' damage
+    types, which creatures' abilities already use through `Abilities`); melee is never warded;
+  - a whole suit takes at most 30% off one Force from ordinary creatures, and at most **20%** from anything banes skip
+    (Lords, Wardens, guardians, sovereigns, named beasts), agreed with the boss-fights session (§8): their fights are
+    tuned so a player who stands and trades wins at most 10% of the time, and 30% against a themed Lord's own Force
+    would let trading through;
   - Heat Ward also covers `#minecraft:is_fire` and shortens burning (vanilla's `burning_time` attribute, as Fire
     Protection does).
 - **Banes** (C: `awaken:bane` {kind}):
@@ -402,11 +407,26 @@ Journal and the effects.
   - Found: its mark, name, what it does in plain words, what it fits, its top, and where you learned it ("From the Ember
     Tyrant, the Ember Mines' Lord").
   - Not found: "?" and its number, nothing else.
-- **Tasks** (`Goals.register` from our package; steps leave once done):
-  - once you hold your first page, the Hearth tab gets "Make an Inscribing Table" (optional, where-from lines for its
-    parts);
-  - then "Inscribe your first enchantment" under the tab of the piece it fits.
-  - Nothing else ever lists enchantments as things to do.
+- **Tasks:** every step of enchanting shows on the K menu's Tasks page (Euan 2026-11-02: so you know it's possible).
+  One `Goals.Source` from our package (`enchant.EnchantGoals`, registered with `core.api.Goals.register`) gives these
+  steps, each keyed, with one plain why line and have/need rows. A step leaves the page the moment it's done. "Its tab"
+  is Armour for an enchantment that fits armour and Weapons for one that fits weapons or tools.
+
+  | Key | Tab | Shows from | Step and its why | Needs (have/need) | Place | Leaves when |
+  |---|---|---|---|---|---|---|
+  | `enchant/page/armour` | Armour | your first armour made | **Find an enchantment for your armour.** "Wards against the five Forces are written onto armour. Every kind of gate keeps its own enchantment, and its Lord carries the page." | An enchantment page 0/1 | optional | you know one that fits armour |
+  | `enchant/page/weapons` | Weapons | your first weapon held | **Find an enchantment for your weapon.** "Banes, Looting and Unbreaking are written onto weapons. Carillon's market sells a few pages, and gates keep the rest." | An enchantment page 0/1 | optional | you know one that fits weapons |
+  | `enchant/read` | its tab | you carry a page you haven't read | **Read the page you're carrying.** "Reading it teaches you Heat Ward for good." | Read it | main path, `PATH_FIRST_GATE + 1` | read |
+  | `enchant/table` | the tab of the first one you know | you know an enchantment and have never set down a table | **Make an Inscribing Table.** "It's where you write what you've learned onto your own gear." | Book 1, Lapis 3, Essence Shard 1, planks and stone | main path, `PATH_FIRST_GATE + 2` | you set one down |
+  | `enchant/first` | the piece's tab | you know one and have a table | **Inscribe your first enchantment.** "Heat Ward fits your Fine chestplate." | A piece it fits, Levels 3, Lapis 1 | main path, `PATH_FIRST_GATE + 3` | your first inscription |
+  | `enchant/room/armour`, `enchant/room/weapons` | Armour, Weapons | after your first inscription, while a piece you carry has room and you know something that fits it | **Inscribe your armour** (or weapon). "Your Masterwork chestplate has room for two more, and you know three that fit." | Levels and Lapis for the cheapest | optional | full, or nothing you know fits |
+  | `enchant/study` | the piece's tab | you carry a C-rank piece or better and know an enchantment it could take past II | **Set your Inscribing Table in your Study.** "Written there, enchantments can go deeper than II." | A Study, The table inside it | optional | a table stands in your Study |
+
+  - The three main-path steps sit between your first gate and the Anchor (`PATH_FIRST_GATE` 50 < 51-53 < `PATH_ANCHOR`
+    55), so right after the first Lord hands you a page, the top step on Now is to read it, make the table and write it.
+    Each takes a minute, and none shows until you hold a page, so nobody who skips enchanting is held up.
+  - The page steps never name which gate keeps which enchantment; the Journal fills that in once you've found it.
+  - No step is daily and none repeats; the room steps are one row per tab at most.
 - **Where-from lines:** `awaken.where.awaken.enchantment_page` ("A gate's Lord carries one the first time you clear that
   kind of gate. Carillon's market sells a few, and old books teach theirs.") and the table's.
 - **Tooltips:** every enchantable piece says its room plainly ("Room for one more enchantment", "No room left"). The
@@ -471,7 +491,8 @@ Journal and the effects.
   - `enchant_gate_page`;
   - `enchant_room_depth`, which also covers the Study and archetype affinity;
   - `enchant_inscribe`: price, write, clean refund, cancels, swap, two writers;
-  - `enchant_ward_cap`;
+  - `enchant_ward_cap`: 30% from a creature, 20% from a Lord, nothing off its melee;
+  - `enchant_tasks`: the steps appear and leave as in §5.9, on the right tabs;
   - `enchant_bane_spares_lords`;
   - `enchant_fold`: anvil, old table, grindstone refund;
   - `enchant_forged_sets_take`;
@@ -512,8 +533,8 @@ day each. The scene's camera and the shader line are the parts most likely to ta
   vanilla's, and wards and banes add real choices for the gate you're going into.
 - **The trace gets old.** From memory after one clean trace; a new one takes 10-15 s.
 - **A Lord's death drops a lot.** The page goes straight into the pack with one line, never onto the floor.
-- **Wards against bosses.** Capped at 30% of one Force; banes never touch Lords. The boss-fights plan leaves enchanting
-  to this plan; the cap still goes through their reach sim's tank profile before stage 1 merges (§8).
+- **Wards against bosses.** 20% at most against a Lord's, Warden's or named beast's Force abilities, never their melee;
+  banes never touch them. The boss-fights session adds a warded tank to its combat sim and tunes against it (§8).
 - **Old worlds' vanilla villagers.** `tradeable` stays non-empty, so librarians keep working.
 
 ## 7. Decisions for Euan
@@ -531,26 +552,29 @@ day each. The scene's camera and the shader line are the parts most likely to ta
    *Recommended: yes.*
 5. **The scene:** trace the mark; a clean hand gives a third of the levels back; from memory after one clean trace.
    *Recommended: yes.*
-6. **Room from the forge** (Plain 1 to Flawless 4; found weapons 3; anything else 2) and **depth from the piece's rank**.
+6. **Room from the forge** (Plain 1 to Flawless 4; found weapons 3; unforged gear 1, the same as Plain; bows, tridents and rods 2) and **depth from the piece's rank**.
    *Recommended: yes.*
 7. **Deeper than II only in your Study.** *Recommended: yes.*
 8. **The price is experience levels and lapis.** *Recommended: yes.*
-9. **Wards against the five Forces** (a whole suit at most 30% less of one Force) **and banes** that never touch Lords.
+9. **Wards against the five Forces and banes that never touch Lords.** A whole suit takes at most 30% off one Force from
+   ordinary creatures and 20% from Lords, Wardens and named beasts, and only from Force abilities, never melee.
    *Recommended: yes.*
 10. **Names:** vanilla's enchantments keep their names, ours use the same plain style, and the station is the Inscribing
     Table. *Recommended: yes.*
 11. **Old worlds keep everything,** and old tables turn into Inscribing Tables. *Recommended: yes.*
 12. **Stages 0 to 3 in order,** with stage 0 (the sculpted sets take enchantments) shipping first. *Recommended: yes.*
+13. **Every enchanting step on the Tasks page** (§5.9), on the Armour and Weapons tabs, from your first armour on. Reading
+    your first page, making the table and writing your first enchantment sit on the main path right after your first
+    gate. *Recommended: yes.*
 
 ## 8. Overlaps with other sessions
 
 - **weapon-forge (local_eb5d4b8b):** owns weapon crafting, the War Anvil, tiers, quality, tempering, Reforge and
   attunement. The line and the hook are agreed and named the same in both plans (8.1; their PLAN §4.9 and decision 12).
-- **boss-fights (local_c937b1f5):** their plan (`docs/fights/PLAN.md` on `claude/boss-fights-plan-73c5f2`) lists
-  enchanting as another session's and changes nothing here. Banes never touch a Lord, boss, guardian, sovereign or named
-  beast, so their tuning stays theirs. Asked about the 30% ward cap; *no answer yet.* Before stage 1 merges, the cap is
-  run through their `tools/sim/reach_sim.py` tank profile (their note: standing and trading already beats 7 of 15 Lords),
-  and lowered if it lets the tank win more.
+- **boss-fights (local_c937b1f5): agreed 2026-11-02.** No clash with the fight rules. Banes never touch a Lord, Warden,
+  guardian, sovereign or named beast. Wards keep working on them, capped at 20% for a whole suit and only on their
+  Force-typed hits, never melee (their `docs/fights/PLAN.md` §4.5 tunes each Lord so standing and trading wins at most
+  10%). Once this plan lands they add a warded tank to the combat sim and tune against it.
 - **armour:** one line registering a `ForgeHooks` quality reader for `awaken:forged` (stage 1, reported), the result
   card's room line (stage 3) and the overlay bits for the colour (stage 2). Stage 0 adds no armour file.
 - **arms:** a new one-line `ArmsApi.found(ItemStack)` (stage 1) and `WeaponRenderer` passing the enchantment colour

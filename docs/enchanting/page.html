@@ -278,7 +278,7 @@ textarea { width: 100%; min-height: 42px; resize: vertical; font: .92rem var(--b
     <div class="tbl"><table>
       <thead><tr><th>Link</th><th>The rule</th></tr></thead>
       <tbody>
-        <tr><td><b>Room</b> (how many it holds)</td><td>Forged armour by its Forge Song quality: Plain 1, Fine 2, Masterwork 3, Flawless 4. Forged weapons on the same scale, from the War Anvil's quality. Found weapons (Spoils, Marked, Lord-forged) 3. The Delver's Pick grows from 1 to 4 with its verses. Anything else 2.</td></tr>
+        <tr><td><b>Room</b> (how many it holds)</td><td>Forged armour by its Forge Song quality: Plain 1, Fine 2, Masterwork 3, Flawless 4. Forged weapons on the same scale, from the War Anvil's quality. Found weapons (Spoils, Marked, Lord-forged) 3. The Delver's Pick grows from 1 to 4 with its verses. Unforged gear 1, the same as Plain, so forging well always pays. Bows, tridents and rods 2.</td></tr>
         <tr><td><b>Depth</b> (how strong each gets)</td><td>The piece's rank: E pieces I, D II, C III, B and up the enchantment's top. Vanilla gear counts by material (iron D, diamond C, netherite A).</td></tr>
         <tr><td><b>Your Study</b></td><td>Anything deeper than II needs the table inside your Study, the Hearth room you already have (a lectern and bookshelves). Its gift becomes "Enchantments written here can go deeper". Its bookshelves send their letters drifting to the book.</td></tr>
         <tr><td><b>Your armour's kind</b></td><td>Each archetype writes its own kind one level deeper: Bulwark wards, Strider carrying, Channeler keeping, Lord-forged any one.</td></tr>
@@ -296,7 +296,7 @@ textarea { width: 100%; min-height: 42px; resize: vertical; font: .92rem var(--b
         <svg viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="15" fill="none" stroke="var(--heat)" stroke-width="2.5"/><circle cx="27" cy="27" r="6" fill="none" stroke="var(--heat)" stroke-width="2"/></svg>
         <div><h3>Wards <small>what your armour guards against</small></h3>
           <div class="chips"><span class="chip" style="border-color:var(--heat)">Heat Ward</span><span class="chip" style="border-color:var(--frost)">Frost Ward</span><span class="chip" style="border-color:var(--charge)">Charge Ward</span><span class="chip" style="border-color:var(--gravity)">Gravity Ward</span><span class="chip" style="border-color:var(--spirit)">Spirit Ward</span><span class="chip">Blast Protection</span><span class="chip">Projectile Protection</span><span class="chip">Feather Falling</span><span class="chip">Clear Blood <i>poison and spores wear off faster</i></span></div>
-          <p class="muted" style="margin-top:6px;font-size:.93rem">A whole suit warded against one Force takes at most 30% less of it, Lords included.</p></div>
+          <p class="muted" style="margin-top:6px;font-size:.93rem">A whole suit warded against one Force takes at most 30% less of it from ordinary creatures, and 20% from Lords, Wardens and named beasts. Only Force attacks count, never melee, so bosses stay as hard as the boss fights tuned them.</p></div>
       </div>
       <div class="fam">
         <svg viewBox="0 0 54 54" aria-hidden="true"><path d="M27 8 L36 30 H18 Z M27 30 V46" fill="none" stroke="var(--bane)" stroke-width="2.5" stroke-linejoin="round"/></svg>
@@ -391,9 +391,11 @@ textarea { width: 100%; min-height: 42px; resize: vertical; font: .92rem var(--b
         <p><b style="color:var(--fg)">Journal:</b> a new ENCHANTMENTS category in the catalogue you already have. A found
           one shows its mark, what it does, what it fits and where you learned it. One not found is "?" and its number,
           nothing else.</p>
-        <p><b style="color:var(--fg)">Tasks:</b> once you hold your first page, "Make an Inscribing Table" appears on the
-          Hearth tab, then "Inscribe your first enchantment" on the tab of the piece it fits. Nothing else ever lists
-          enchantments as things to do.</p>
+        <p><b style="color:var(--fg)">Tasks:</b> every step shows in the K menu, so you know enchanting is there. From your
+          first armour, the Armour and Weapons tabs say "Find an enchantment for your armour" (and weapon), with where
+          pages come from. After your first gate, "Read the page", "Make an Inscribing Table" and "Inscribe your first
+          enchantment" lead in turn. Later, "Inscribe your armour" shows while a piece has room and you know something that
+          fits, and "Set your table in your Study" shows once a piece could go deeper. Each one leaves the moment it's done.</p>
         <p><b style="color:var(--fg)">Tooltips:</b> every piece says its room plainly: "Room for one more enchantment".</p>
         <p class="note">Sketch of the layout, not the game's art.</p>
       </div>
@@ -427,13 +429,13 @@ textarea { width: 100%; min-height: 42px; resize: vertical; font: .92rem var(--b
     <p class="muted"><b style="color:var(--fg)">Agreed with the weapon forge</b> (<a href="https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ">its plan</a>,
       decision 12): it owns the metal (forging, tiers, quality, tempering, attunement). This plan owns what's written onto
       an item after it's made. There's no enchanting step inside the forge scene. The two meet in one small hook that tells
-      the table how well a piece was forged and its rank. The boss-fights plan leaves enchanting to this one, and the ward
-      cap goes through its fight sim before stage 1 merges.</p>
+      the table how well a piece was forged and its rank. Agreed with the boss fights: banes never touch a boss, wards
+      take at most 20% off a boss's Force attacks, and it adds a warded fighter to its fight sim to tune against.</p>
   </section>
 
   <section class="col" aria-labelledby="dec-h">
     <span class="eyebrow">Decisions for you</span>
-    <h2 id="dec-h">Twelve yeses or noes</h2>
+    <h2 id="dec-h">Thirteen yeses or noes</h2>
     <p>Tap Yes or No on each. Your answers save as you tap and I read them from here. Add a note to change anything.</p>
   </section>
   <div class="tally" id="tally"><span id="tallytext">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to all I haven't answered</button></div>
@@ -453,13 +455,14 @@ const DECISIONS = [
   ["Learn once, write many. A page teaches you an enchantment for good, with no random rolls.", "Collecting them is a goal, and trying things at the table is cheap."],
   ["Where pages come from: each kind of gate keeps its own (its Lord's page the first time you clear that kind), the market, old books; later, Precursor Word Stones, the Deep and the hunts.", "A reason to clear every kind of gate, and a path to every enchantment."],
   ["The scene: trace the mark with your hand. A clean hand gives back a third of the levels, and after one clean trace you can write it from memory in two seconds.", "Skill is worth it but never fails you, and it stays quick the twentieth time."],
-  ["Room from the forge (Plain 1 to Flawless 4; found weapons 3; anything else 2) and depth from the piece's rank.", "Forging well and climbing ranks pay off in enchanting too."],
+  ["Room from the forge (Plain 1 to Flawless 4; found weapons 3; unforged gear 1, the same as Plain; bows, tridents and rods 2) and depth from the piece's rank.", "Forging well and climbing ranks pay off in enchanting too."],
   ["Anything deeper than II only at a table in your Study.", "The Study gets a real job and your home matters to your gear."],
   ["The price is experience levels and lapis.", "Your XP bar keeps its meaning and lapis stays worth mining."],
-  ["Wards against the five Forces (a whole suit takes at most 30% less of one Force) and banes that never touch Lords.", "You prepare for the gate you're going into without making bosses trivial."],
+  ["Wards against the five Forces and banes that never touch Lords. A whole suit takes at most 30% off one Force from ordinary creatures, 20% from Lords, Wardens and named beasts, and never off melee.", "You prepare for the gate you're going into without making bosses trivial (agreed with the boss-fights session)."],
   ["Names: vanilla's enchantments keep their names, ours use the same plain style, and the station is the Inscribing Table.", "Players recognise what they know, and nothing reads like a riddle."],
   ["Old worlds keep everything, and old vanilla tables turn into Inscribing Tables when used.", "Nobody loses gear, and there's never a second system."],
-  ["Build in stages 0 to 3, with stage 0 (the sculpted sets take enchantments) shipped first.", "The armour gap closes today, and you play each stage."]
+  ["Build in stages 0 to 3, with stage 0 (the sculpted sets take enchantments) shipped first.", "The armour gap closes today, and you play each stage."],
+  ["Every enchanting step on the Tasks page, on the Armour and Weapons tabs from your first armour on. Reading your first page, making the table and writing your first enchantment come right after your first gate.", "You can see enchanting is possible before you find it, and you're never stuck on what comes next."]
 ];
 const list = document.getElementById("decisions"), tallyText = document.getElementById("tallytext"), allYes = document.getElementById("allyes");
 const answers = {};
