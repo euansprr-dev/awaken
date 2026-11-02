@@ -251,7 +251,7 @@ public final class ArmsIssue implements ArmsApi.Hooks {
                 java.util.List.of("To make another, forge it at a War Anvil. You know its pattern now.",
                         "Crouch and talk to Hale to see his other styles and patterns."));
         ArmsApi.say(p, "Hale: Good choice. That one's yours, and you know its pattern now. "
-                + "The spare blade is a Fang, and everything you forge starts from one. To make your own, set up a War Anvil at home. "
+                + "The spare blade is a Fang, and everything you forge starts from one. A crafting table makes quick tools. For a real weapon, set up a War Anvil at home. "
                 + "When you want a different style, crouch and talk to me, and I'll show you the rack. "
                 + "I sell the patterns for essence, and the more you've done, the more I'll show you.");
         Progression.markNewThing(p, "issue");
