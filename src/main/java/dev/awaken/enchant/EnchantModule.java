@@ -41,6 +41,7 @@ public final class EnchantModule {
         Sources.declare("a gate's Lord carries its kind's page; the village scribe sells a few; old books teach theirs (enchant.Pages, SPEC §45.2)",
                 "enchantment_page");
         Sources.neverHeld("the Inscribing Table's tool, only drawn in your hand while you write (enchant.client)", "burin");
+        EnchantCommands.register();
         EnchantTests.register();
     }
 

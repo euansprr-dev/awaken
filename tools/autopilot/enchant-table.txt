@@ -1,0 +1,89 @@
+# Enchanting S1, the Inscribing Table (SPEC §45.10): the table in a small study at dusk (its floating book, the lapis
+# channel waking as you come near), the book's two pages over the lower half with your piece laid on the slate, a row
+# rested on (its mark faint on the piece), the trace (the mark burning, the glowing end, the burin in your hand), the
+# strokes filling with lapis, the wake and its card, the book again with the enchantment on the piece, and the Journal's
+# ENCHANTMENTS category. The pilot traces (tours can't drag a mouse): /awaken enchant pilot ...
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/enchant-table.txt 1200
+world autopilot_enchant_table creative 20261102
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd time set 12600
+# ---- a small study high in the air: a stone floor, shelves behind the table, two lanterns ----
+cmd tp @s 3000.5 200 2999.5 0 20
+wait 120
+cmd fill 2994 199 2994 3006 199 3008 minecraft:polished_deepslate
+cmd fill 2996 200 3005 3004 202 3005 minecraft:bookshelf
+cmd setblock 3000 200 3002 awaken:inscribing_table[facing=north]
+cmd setblock 2998 200 3003 minecraft:lantern
+cmd setblock 3002 200 3003 minecraft:lantern
+cmd gamemode survival
+cmd xp add @s 40 levels
+cmd give @s minecraft:lapis_lazuli 32
+cmd awaken admin enchant learn all
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+wait 60
+screen close
+shot enchant_01_the_table_at_dusk
+# ---- step up and use it: the book opens, the piece goes down onto the slate ----
+cmd tp @s 3000.5 200 3000.6 0 34
+wait 30
+use
+wait 8
+shot enchant_02_laying_the_piece
+wait 30
+shot enchant_03_the_book_open
+cmd awaken enchant pilot hover 10
+wait 20
+shot enchant_04_resting_on_bane_of_the_dead
+# ---- choose it: the book goes down, the mark burns faint on the sword ----
+cmd awaken enchant pilot choose 10
+wait 24
+shot enchant_05_the_mark_on_the_piece
+cmd awaken enchant pilot trace
+wait 30
+shot enchant_06_the_first_stroke
+wait 30
+shot enchant_07_strokes_filling
+wait 34
+shotnow enchant_08_the_last_stroke
+wait 14
+shotnow enchant_09_it_wakes
+wait 12
+shotnow enchant_10_the_wake_settling
+wait 20
+shot enchant_11_the_card
+# ---- the book again: Bane of the Dead on the left page, from memory on the right ----
+cmd awaken enchant pilot again
+wait 30
+shot enchant_12_the_book_after
+cmd awaken enchant pilot close
+wait 30
+shot enchant_13_the_table_after
+# ---- the Journal's ENCHANTMENTS category ----
+screen journal
+wait 10
+journal enchantments
+wait 20
+shot enchant_14_journal_enchantments
+screen close
+quit

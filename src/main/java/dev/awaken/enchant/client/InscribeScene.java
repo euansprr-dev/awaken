@@ -173,6 +173,7 @@ public final class InscribeScene {
 
     static void reset() {
         end();
+        pilot = false;
         pos = null;
         openedAt = closedAt = -1000;
     }
@@ -312,8 +313,35 @@ public final class InscribeScene {
 
     // ---- the tick ---------------------------------------------------------------------------------------------------
 
+    // ---- the autopilot's hand (tours: /awaken enchant pilot trace) ---------------------------------------------------
+
+    /** Whether the pilot traces for you (tours can't drag a mouse): each stroke from its end, on the line, a breath between. */
+    static boolean pilot;
+    private static int pilotAt;
+
+    private static void pilotTick() {
+        if (!pilot || phase != TRACE || stroke >= strokes()) return;
+        float[] s = Marks.of(no)[stroke];
+        int n = s.length / 2;
+        penOn = true;
+        if (!drawing) {
+            if (ticks - pilotAt < 8) return;
+            penU = s[0];
+            penV = s[1];
+            press();
+            pilotAt = ticks;
+            return;
+        }
+        int j = Math.min(n - 1, progress + 2);
+        penU = s[j * 2];
+        penV = s[j * 2 + 1];
+        drag();
+        if (!drawing) pilotAt = ticks;
+    }
+
     static void tick() {
         ticks++;
+        pilotTick();
         Minecraft mc = Minecraft.getInstance();
         if (live && (mc.player == null || !mc.player.isAlive() || mc.level == null || pos == null
                 || !(mc.level.getBlockEntity(pos) instanceof InscribingTableBlockEntity))) {

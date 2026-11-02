@@ -16798,3 +16798,6 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   burin on metal and on leather, scratch, the five family notes (C5), wake, learn, flare, drift, scrape.
 - **Art** (`tools/art/specs/enchant.py`): the table's slate top with its lapis channel, framed dark-wood panels (the
   front with a lapis ring and spear), the trim, brass, the book, the page item and the burin; blockstate by facing.
+- **Commands**: `/awaken admin enchant learn <all|id> | remember all | forget` (server, for testing and tours); the
+  client's `/awaken enchant pilot hover <no> | choose <no> | memory <no> | trace | again | close` is the autopilot's
+  hand at a table (tours can't drag a mouse: the pilot traces each stroke from its end, on the line, a breath between).

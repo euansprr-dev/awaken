@@ -1,5 +1,7 @@
 package dev.awaken.enchant.client;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import dev.awaken.Awaken;
 import dev.awaken.core.api.FirstPerson;
 import dev.awaken.enchant.EnchantContent;
 import dev.awaken.enchant.EnchantRules;
@@ -8,6 +10,7 @@ import dev.awaken.enchant.PageItem;
 import dev.awaken.enchant.Pages;
 import dev.awaken.enchant.net.EnchantPayloads;
 import net.minecraft.client.Minecraft;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
@@ -18,6 +21,7 @@ import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ExtractBlockOutlineRenderStateEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
@@ -64,8 +68,43 @@ public final class EnchantClient {
             InscribeScene.reset();
             EnchantFxClient.clear();
         });
+        bus.addListener(RegisterClientCommandsEvent.class, EnchantClient::commands);
         FirstPerson.world("enchant_table", 210, InscribeScene::pose);
         EnchantJournal.register();
+    }
+
+    /**
+     * The autopilot's hand at a table (tours can't drag a mouse): {@code /awaken enchant pilot hover <no> | choose <no> |
+     * memory <no> | trace | again | close}, numbers as in the Journal.
+     */
+    private static void commands(RegisterClientCommandsEvent e) {
+        e.getDispatcher().register(Commands.literal(Awaken.MODID).then(Commands.literal("enchant").then(Commands.literal("pilot")
+                .then(Commands.literal("hover").then(Commands.argument("no", IntegerArgumentType.integer(0, 30)).executes(c -> {
+                    InscribeScreen.pilotHover = IntegerArgumentType.getInteger(c, "no");
+                    return 1;
+                })))
+                .then(Commands.literal("choose").then(Commands.argument("no", IntegerArgumentType.integer(1, 30)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), false))))
+                .then(Commands.literal("memory").then(Commands.argument("no", IntegerArgumentType.integer(1, 30)).executes(c -> pilotChoose(IntegerArgumentType.getInteger(c, "no"), true))))
+                .then(Commands.literal("trace").executes(c -> {
+                    InscribeScene.pilot = true;
+                    return 1;
+                }))
+                .then(Commands.literal("again").executes(c -> {
+                    InscribeScene.again();
+                    return 1;
+                }))
+                .then(Commands.literal("close").executes(c -> {
+                    if (Minecraft.getInstance().gui.screen() instanceof InscribeScreen s) s.onClose();
+                    InscribeScene.pilot = false;
+                    return 1;
+                })))));
+    }
+
+    private static int pilotChoose(int no, boolean memory) {
+        InscribeScreen.pilotHover = 0;
+        boolean ok = Minecraft.getInstance().gui.screen() instanceof InscribeScreen s && s.pilotChoose(no, memory);
+        Awaken.LOG.info("[enchant] pilot choose {}: {}", no, ok ? "chosen" : "not on the page");
+        return ok ? 1 : 0;
     }
 
     /** The HUD steps aside while you write (subtitles and chat stay). */

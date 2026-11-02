@@ -85,6 +85,7 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
 
     @Override
     public void removed() {
+        pilotHover = 0;
         InscribeScene.act(EnchantPayloads.CANCEL, 0, 0, 0F);
         InscribeScene.end();
         InscribeScene.hoverNo = 0;
@@ -151,7 +152,8 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
         LocalPlayer p = mc.player;
         if (p == null) return;
         ItemStack piece = p.getMainHandItem();
-        if (InscribeScene.phase == InscribeScene.TRACE || InscribeScene.phase == InscribeScene.MEMORY) InscribeScene.pen(mx, my, width, height);
+        if (!InscribeScene.pilot && (InscribeScene.phase == InscribeScene.TRACE || InscribeScene.phase == InscribeScene.MEMORY))
+            InscribeScene.pen(mx, my, width, height);
         float shown = bookShown(a);
         if (shown > 0.01F) {
             build(p, piece);
@@ -276,7 +278,8 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
             Row r = rows.get(i);
             int ry = listY + (i - scroll) * ROW;
             boolean ok = r.why.isEmpty();
-            boolean over = InscribeScene.phase == InscribeScene.BOOK && mx >= x - 4 && mx < x + pw + 2 && my >= ry - 2 && my < ry + ROW - 2;
+            boolean over = InscribeScene.phase == InscribeScene.BOOK && (pilotHover > 0 ? pilotHover == r.e.no()
+                    : mx >= x - 4 && mx < x + pw + 2 && my >= ry - 2 && my < ry + ROW - 2);
             if (over) {
                 hover = i;
                 g.fill(x - 4, ry - 2, x + pw + 2, ry + ROW - 3, ok ? 0x28304A8A : 0x18402A18);
@@ -449,6 +452,21 @@ public final class InscribeScreen extends Screen implements dev.awaken.signal.cl
                 }
             }
         }
+    }
+
+    // ---- the autopilot's hand (tours) -----------------------------------------------------------------------------------
+
+    /** The row the pilot rests on (its Journal number; 0: the mouse decides). */
+    static int pilotHover;
+
+    /** The pilot chooses enchantment {@code no} as a click on its row would (at its default level); false when it isn't there. */
+    boolean pilotChoose(int no, boolean memory) {
+        for (Row r : rows) {
+            if (r.e.no() != no || !r.why.isEmpty()) continue;
+            InscribeScene.choose(r.e, r.to, memory && r.memory);
+            return true;
+        }
+        return false;
     }
 
     // ---- input --------------------------------------------------------------------------------------------------------
