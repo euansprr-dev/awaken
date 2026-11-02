@@ -16858,7 +16858,9 @@ one fight with a Warden in its own hall, never announced, the rank's gift inside
   radius 7, a band of words round it, a clapper) hangs over the pit at z -38, lip at dy 12, on four chains. The pit
   (radius 7, terraced a block a ring to 6 deep, a pool at the bottom) is sealed under the chancel's floor (a rosette,
   its outer ring cracked). Light: soul lanterns on brackets off each pillar, a rose of dark prismarine round a sea
-  lantern on the north wall, and unseen light (a pool of 15 where the Ringer drops, a fill of 10 down the chancel).
+  lantern on the north wall, and unseen light: 14 at head height (dy 4) on a 5-block grid over the chancel, so its floor
+  reads at 6 or more (the first tour's light, from dy 8, left the chancel black), a pool of 15 where the Ringer drops,
+  11 in the narthex, and 12 down in the pit, seen once the floor over it gives way.
   The door (south, 5 wide, 3 high: you fit, the Ringer doesn't) opens on a stair of half-steps to a landing at dy 4,
   lit warm (the way out).
 - **The flow** (`hearth.trial.Provings`; `Trials.Kind.PROVING`, `forTarget(D)`): the Reading Bell's window says only

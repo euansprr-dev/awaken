@@ -103,7 +103,10 @@ public final class Belfry {
         if (dy == ROOF) return TILE;
         if (ax == WALL_X || z == NORTH || z == SOUTH) return wall(x, ax, dy, z);
         double pr = pitR(x, z);
-        if (dy < -2 || (dy == -2 && pr <= PIT_R)) return pr <= PIT_R + 1 ? pit(pr, dy) : null;
+        if (dy < -2 || (dy == -2 && pr <= PIT_R)) {
+            BlockState in = pr <= PIT_R + 1 ? pit(pr, dy) : null;
+            return in != null ? in : dy == -4 && x == 0 && z == PIT_Z ? lightOf(12) : null; // the pit's own light, seen once it opens
+        }
         if (dy == -2) return BRICK;
         BlockState pillar = pillar(ax, dy, z);
         if (pillar != null) return pillar;
@@ -318,10 +321,12 @@ public final class Belfry {
 
     /** Light the eye can't see: a pool over where the Ringer drops, a softer fill down the chancel. */
     private static @Nullable BlockState light(int x, int dy, int z) {
-        if (dy == 8 && x == 0 && z == DROP_Z) return lightOf(15);
-        if (dy == 8 && ((Math.abs(x) == 3 && z == DROP_Z) || (x == 0 && Math.abs(z - DROP_Z) == 3))) return lightOf(13);
-        if (dy == 9 && Math.abs(x) == 7 && isPillarZ(z)) return lightOf(10);
-        if (dy == 6 && x == 0 && z == WAKE_Z - 4) return lightOf(8);
+        // the chancel is lit to read a fight by: 14 at head height on a 5-block grid, its floor never darker than 6 (the
+        // first tour's hall, lit from 8 up, was black where you fight); a pool of 15 where it drops; the narthex at 11
+        if (dy == 5 && x == 0 && z == DROP_Z) return lightOf(15);
+        if (dy == 4 && Math.abs(x) <= 10 && Math.floorMod(x, 5) == 0 && z >= CHANCEL_N + 2 && z <= CHANCEL_S - 3
+                && Math.floorMod(z - CHANCEL_N - 2, 5) == 0) return lightOf(14);
+        if (dy == 4 && x == 0 && z == WAKE_Z - 4) return lightOf(11);
         return null;
     }
 
