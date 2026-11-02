@@ -802,16 +802,17 @@ def crook(r):
 
 def pack(r):
     """For whoever is behind him (HEAVY, a hold: the fight's delayed blow, SPEC §46.5): he looks over his right shoulder, winds the other way, then twists right
-    round so the whole frame of his shop clubs across behind him, every lantern flying out."""
+    round so the whole frame of his shop clubs across behind him, every lantern flying out; he sinks into the twist, so
+    its bottom bar takes you across the shoulders."""
     look = _pose(r, hips=(0, -8, 0), chest=(0, -12, 0), head=(0, 46, 0), staff="up")
     wind = _pose(r, hips=(2, -16, 0), at=(0, -2, 0), spine=(0, -14, 0), chest=(-4, -26, -4), head=(0, 58, 0), pack=(0, -6, 0), left=(14, 30, 6),
                  staff="up")
-    hit = _pose(r, hips=(2, 20, 0), at=(0, -2.5, 0), spine=(2, 30, 0), chest=(6, 54, 6), head=(0, -30, 0), pack=(0, 12, 4), left=(4, 34, -10),
+    hit = _pose(r, hips=(2, 20, 0), at=(0, -7, 0), spine=(2, 30, 0), chest=(6, 54, 6), head=(0, -30, 0), pack=(0, 12, 4), left=(4, 34, -10),
                 staff="up")
-    after = _pose(r, hips=(2, 22, 0), at=(0, -2.5, 0), spine=(2, 32, 0), chest=(6, 60, 6), head=(0, -34, 0), pack=(0, 14, 4), left=(4, 34, -10),
+    after = _pose(r, hips=(2, 22, 0), at=(0, -7, 0), spine=(2, 32, 0), chest=(6, 60, 6), head=(0, -34, 0), pack=(0, 14, 4), left=(4, 34, -10),
                   staff="up")
     return Move("pack", "HEAVY", 12, 4, 16, hold=6, track=0.0, rng=(0, 3.2), kinds=("behind",), damage=1.0, knock=1.2, plant=(),
-                hit=[("pack", (0, -40, 9), 6.0), ("pack", (13, -14, 9), 4.0)], lag=ON_TIME, through=_on(r, after, 0.06),
+                hit=[("pack", (0, -40, 9), 6.0), ("pack", (13, -14, 9), 4.0), ("pack", (0, 14, 9), 5.0), ("pack", (12, 14, 9), 4.0), ("pack", (-14, 14, 9), 4.0)], lag=ON_TIME, through=_on(r, after, 0.06),
                 stages={"windup": [(0.3, look), (1.0, wind)], "active": [(0.5, hit), (1.0, after)], "recover": _back(r, after)})
 
 

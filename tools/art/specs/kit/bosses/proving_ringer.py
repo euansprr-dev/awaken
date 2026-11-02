@@ -200,7 +200,12 @@ def clips(r):
         for f, pose in by[mid].stages["windup"] + by[mid].stages["active"]:
             pose.setdefault("arm_" + free, (-20, 0, -26 * sg))
             pose.setdefault("forearm_" + free, (-30, 0, 0))
-    # in the Bell Rope it runs in with the left bell swung up behind its head, ready to bring down on whoever it catches
+    # in the Bell Rope it runs in with the left bell swung up behind its head, ready to bring down on whoever it catches;
+    # it leans into the run, so its shoulder comes in at your chest, not your hair
+    for f, pose in by["rope"].stages["active"]:
+        for bone, add in (("spine", 10), ("chest", 6)):
+            x = pose.get(bone, (0, 0, 0))
+            pose[bone] = (x[0] + add, x[1], x[2])
     nw = len(by["rope"].stages["windup"])
     for k, (f, pose) in enumerate(by["rope"].stages["windup"] + by["rope"].stages["active"]):
         lift = f if k < nw else 1.0  # it comes up evenly through the wind-up and rides there, rocking with the run

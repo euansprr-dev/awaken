@@ -639,12 +639,12 @@ def swipe(r):
 
 def swipe_b(r):
     """The backhand: the arm drawn across its body to its left shoulder, high, the fingers curled; then flung back
-    across you to its right, the back of the hand leading, with a step of its other foot."""
+    across you to its right at your chest, the back of the hand leading, with a step of its other foot."""
     cock = _pose(r, hips=(0, -10, 0), at=(0, -1, 1), spine=(0, -10, 0), chest=(-6, -24, 6), neck=(0, 30, 0), right=(12, 54, -10),
                  rf=44, step={"l": (0, 0, -2)}, poles={"r": (0, 1, 0.2)})
-    hit = _pose(r, hips=(2, 12, 0), at=(0, -2.5, -3), spine=(4, 12, 0), chest=(6, 24, -6), neck=(0, -30, 0), right=(-20, 42, -32),
+    hit = _pose(r, hips=(2, 12, 0), at=(0, -2.5, -3), spine=(4, 12, 0), chest=(6, 24, -6), neck=(0, -30, 0), right=(-20, 30, -32),
                 rf=-20, step={"l": (0, 0, -7), "r": (0, 0, 1)}, poles={"r": (-0.2, 1, 0.3)})
-    held = _pose(r, hips=(2, 15, 0), at=(0, -2.8, -3.3), spine=(4, 14, 0), chest=(6, 30, -8), neck=(0, -34, 0), right=(-28, 40, -24),
+    held = _pose(r, hips=(2, 15, 0), at=(0, -2.8, -3.3), spine=(4, 14, 0), chest=(6, 30, -8), neck=(0, -34, 0), right=(-28, 28, -24),
                  rf=-22, step={"l": (0, 0, -7), "r": (0, 0, 1)}, poles={"r": (-0.2, 1, 0.3)})
     return Move("swipe_b", "LIGHT", 10, 4, 14, track=8.0, rng=(0, 5.4), kinds=("combo", "near"), damage=1.0, knock=0.9, plant=(),
                 hit=[("fingers_r", (0, 7, 0), 2.2), ("hand_r", (0, 2, 0), 2.2), ("forearm_r", (0, 10, 0), 1.6)], through=_on(r, held, 0.08),
@@ -670,11 +670,11 @@ def stride(r):
 
 def back(r):
     """For whoever is behind it: it does not turn round. Its upper body turns right round on its hips, the ring with it,
-    and the long arm sweeps across behind it; then it turns back."""
+    and the long arm sweeps low across behind it; then it turns back."""
     cock = _pose(r, hips=(0, 16, 0), spine=(0, 48, 0), chest=(0, 52, 0), neck=(0, 10, 0), right=(-24, 38, 4), rf=30, poles={"r": (0, 1, 0)})
-    hit = _pose(r, hips=(0, 20, 0), at=(0, -1, 0), spine=(4, 64, 0), chest=(4, 70, 0), neck=(0, 16, 0), right=(10, 36, 28), rf=-16,
+    hit = _pose(r, hips=(0, 20, 0), at=(0, -1, 0), spine=(4, 64, 0), chest=(4, 70, 0), neck=(0, 16, 0), right=(10, 26, 28), rf=-16,
                 poles={"r": (0, 1, 0)})
-    held = _pose(r, hips=(0, 22, 0), at=(0, -1.2, 0), spine=(4, 68, 0), chest=(4, 76, 0), neck=(0, 18, 0), right=(18, 38, 22), rf=-18,
+    held = _pose(r, hips=(0, 22, 0), at=(0, -1.2, 0), spine=(4, 68, 0), chest=(4, 76, 0), neck=(0, 18, 0), right=(18, 28, 22), rf=-18,
                  poles={"r": (0, 1, 0)})
     return Move("back", "LIGHT", 10, 4, 14, track=0.0, rng=(0, 5.0), kinds=("behind",), damage=1.0, knock=0.8, plant=("l", "r"),
                 hit=[("fingers_r", (0, 7, 0), 2.2), ("hand_r", (0, 2, 0), 2.2), ("forearm_r", (0, 10, 0), 1.6)], through=_on(r, held, 0.06),

@@ -25,6 +25,9 @@ TICK = 1.0 / 20.0
 MIN_WINDUP = {"LIGHT": 8, "HEAVY": 12, "GRAB": 12, "PERILOUS": 14, "NONE": 1}
 MAX_HOLD = 12
 FACE_BUDGET = 1200
+# a blow's hits come down at least this low (blocks): a standing player is 1.8 high, so it takes their shoulders, not
+# their hair (a blow over a man's head can't land; one whose ability does the hurting is free of it)
+LOW_REACH = 1.4
 OPTIONAL = {"jaw"}  # library poses may move these; a body without them just leaves them out
 
 
@@ -934,6 +937,10 @@ def check(rig, moves):
         p = f"{rig.id}/{mv.id}"
         if mv.cls != "NONE" and mv.windup < MIN_WINDUP[mv.cls]:
             problems.append(f"{p}: a {mv.cls} wind-up of {mv.windup} ticks (at least {MIN_WINDUP[mv.cls]})")
+        if mv.hit and mv.damage > 0 and mv.capsules and not mv.ability:
+            low = min(min(c[1], c[4]) - c[6] for caps in mv.capsules for c in caps)
+            if low > LOW_REACH:
+                problems.append(f"{p}: its hits come no lower than {low:.2f} blocks, over a standing player's shoulders (at most {LOW_REACH})")
         if mv.hold and (mv.cls != "HEAVY" or mv.hold > MAX_HOLD):
             problems.append(f"{p}: a hold only on HEAVY moves, at most {MAX_HOLD} ticks")
         if mv.cls not in ("NONE",) and mv.hit:

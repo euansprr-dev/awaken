@@ -440,15 +440,15 @@ def _death(r):
 
 def reach(r):
     """The Reach (LIGHT): it turns away a little and cocks its right hand back by its ear, fingers flat, its head
-    turning to keep you; then the arm spears straight out at you as it steps in, the fingers leading."""
+    turning to keep you; then the arm spears out and down at you as it steps in, the fingers leading."""
     cock = _pose(r, at=(0, -1.0, 1.5), hips=(0, 8, 0), waist=(-3, 8, 0), chest=(-6, 12, 0), head=(4, -16, 8),
                  arms={"r": (40, 30, 130, -10, -6), "l": (18, 14, 24, 0, 10)}, step={"r": (0, 0, 2)})
     peak = _pose(r, at=(0, -1.4, 2.2), hips=(0, 12, 0), waist=(-4, 10, 0), chest=(-8, 16, 0), head=(6, -22, 10),
                  arms={"r": (50, 36, 142, -14, -10), "l": (22, 18, 30, 0, 12)}, step={"r": (0, 0, 2.5)})
     strike = _pose(r, at=(0, -2.6, -5), hips=(4, -4, 0), waist=(4, -3, 0), chest=(6, -6, 0), head=(-2, 8, -4),
-                   arms={"r": (92, 10, 0, 0, -10), "l": (14, 30, 34, 0, 12)}, step={"r": (0, 0, -8), "l": (0, 0, -1)})
+                   arms={"r": (62, 10, 0, 0, -10), "l": (14, 30, 34, 0, 12)}, step={"r": (0, 0, -8), "l": (0, 0, -1)})
     after = _pose(r, at=(0, -2.9, -5.6), hips=(4, -5, 0), waist=(4, -4, 0), chest=(7, -8, 0), head=(-1, 10, -8),
-                  arms={"r": (94, 8, 0, 4, -6), "l": (14, 34, 36, 0, 14)}, step={"r": (0, 0, -8.5), "l": (0, 0, -1)})
+                  arms={"r": (64, 8, 0, 4, -6), "l": (14, 34, 36, 0, 14)}, step={"r": (0, 0, -8.5), "l": (0, 0, -1)})
     return Move("reach", "LIGHT", 9, 4, 14, through=after, title="The Reach", track=10.0, rng=(0, 4.4), kinds=("combo", "near"), damage=1.0, knock=0.5,
                 plant=(), hit=[("tip_r", (0, 2, 0), 3.0), ("fing_r", (0, 1.5, 0), 3.0), ("hand_r", (0, 2, 0), 3.0), ("forearm_r", (0, 6, 0), 3.0)],
                 stages={"windup": [(0.3, _mix(_pose(r), cock, 0.4)), (0.62, cock), (1.0, peak)], "active": [(0.55, strike), (1.0, after)],
@@ -457,15 +457,15 @@ def reach(r):
 
 def grasp(r):
     """The Grasp (LIGHT, after the Reach): its body turns the other way and its left hand goes out wide at its side,
-    the fingers spread; then the hand sweeps across in front of it and clutches shut."""
+    the fingers spread; then it leans in and the hand sweeps low across in front of it and clutches shut."""
     wide = _pose(r, at=(0, -1.0, 0.6), hips=(0, -12, 0), waist=(0, -10, 0), chest=(-4, -18, -4), head=(0, 22, 6),
                  arms={"l": (64, 70, 30, -20, -30), "r": (18, 10, 30, 0, 10)}, step={"l": (0, 0, 1.5)})
     peak = _pose(r, at=(0, -1.3, 1.0), hips=(0, -18, 0), waist=(0, -14, 0), chest=(-6, -24, -6), head=(2, 28, 8),
                  arms={"l": (72, 86, 34, -24, -36), "r": (20, 12, 34, 0, 12)}, step={"l": (0, 0, 2)})
-    strike = _pose(r, at=(0, -2.2, -3.5), hips=(2, 6, 0), waist=(2, 6, 0), chest=(6, 10, 4), head=(0, -8, -4),
-                   arms={"l": (84, -18, 40, 20, 70), "r": (18, 20, 30, 0, 10)}, step={"l": (0, 0, -6)})
-    after = _pose(r, at=(0, -2.5, -4), hips=(2, 8, 0), waist=(3, 8, 0), chest=(7, 14, 5), head=(1, -12, -6),
-                  arms={"l": (80, -32, 52, 24, 92), "r": (18, 24, 30, 0, 10)}, step={"l": (0, 0, -6.5)})
+    strike = _pose(r, at=(0, -2.2, -3.5), hips=(2, 6, 0), waist=(2, 6, 0), chest=(16, 10, 4), head=(0, -8, -4),
+                   arms={"l": (44, -18, 10, 20, 70), "r": (18, 20, 30, 0, 10)}, step={"l": (0, 0, -6)})
+    after = _pose(r, at=(0, -2.5, -4), hips=(2, 8, 0), waist=(3, 8, 0), chest=(17, 14, 5), head=(1, -12, -6),
+                  arms={"l": (40, -32, 22, 24, 92), "r": (18, 24, 30, 0, 10)}, step={"l": (0, 0, -6.5)})
     return Move("grasp", "LIGHT", 9, 4, 14, through=after, title="The Grasp", track=8.0, rng=(0, 4.2), kinds=("combo", "near"), damage=0.9, knock=0.7,
                 plant=(), hit=[("tip_l", (0, 2, 0), 3.2), ("fing_l", (0, 1.5, 0), 3.2), ("hand_l", (0, 2, 0), 3.0), ("forearm_l", (0, 6, 0), 3.0)],
                 stages={"windup": [(0.3, _mix(_pose(r), wide, 0.4)), (0.62, wide), (1.0, peak)], "active": [(0.55, strike), (1.0, after)],
@@ -553,11 +553,11 @@ def everywhere(r):
 def wrong_way(r):
     """Wrong Way Round (LIGHT, for whoever is behind it): its head turns round over its shoulder to look behind it;
     then its whole chest swivels round on its waist ball after it, its legs staying where they are, and its right arm
-    swings across behind it."""
+    swings low across behind it."""
     look = _pose(r, chest=(0, 20, 0), neck=(0, 30, 0), head=(0, 106, 0), arms={"r": (30, 40, 60, 10, 20), "l": (10, 10, 20, 0, 10)})
     cock = _pose(r, at=(0, -1.0, 0), waist=(0, 40, 0), chest=(0, 50, 0), neck=(0, 30, 0), head=(0, 60, 0), arms={"r": (60, 84, 30, 0, 0), "l": (20, 20, 30, 0, 10)})
-    strike = _pose(r, at=(0, -1.6, 0.8), waist=(0, 80, 0), chest=(0, 90, 0), neck=(0, 8, 0), head=(0, 2, 0), arms={"r": (88, -10, 4, 0, -10), "l": (30, 40, 30, 0, 10)})
-    after = _pose(r, at=(0, -1.8, 1.0), waist=(0, 86, 0), chest=(0, 96, 0), neck=(0, 6, 0), head=(0, 0, 0), arms={"r": (84, -26, 8, 0, -14), "l": (32, 42, 30, 0, 10)})
+    strike = _pose(r, at=(0, -1.6, 0.8), waist=(10, 80, 0), chest=(10, 90, 0), neck=(0, 8, 0), head=(0, 2, 0), arms={"r": (38, -10, 4, 0, -10), "l": (30, 40, 30, 0, 10)})
+    after = _pose(r, at=(0, -1.8, 1.0), waist=(10, 86, 0), chest=(10, 96, 0), neck=(0, 6, 0), head=(0, 0, 0), arms={"r": (34, -26, 8, 0, -14), "l": (32, 42, 30, 0, 10)})
     return Move("wrong", "LIGHT", 10, 4, 14, through=after, title="Wrong Way Round", track=0.0, rng=(0, 4.2), kinds=("behind",), damage=1.0, knock=0.8, plant=(),
                 hit=[("tip_r", (0, 2, 0), 3.2), ("hand_r", (0, 2, 0), 3.0), ("forearm_r", (0, 6, 0), 3.0)],
                 stages={"windup": [(0.3, look), (1.0, cock)], "active": [(0.55, strike), (1.0, after)], "recover": _back(r, after)})

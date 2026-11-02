@@ -867,10 +867,10 @@ def overdrive(r):
 
 def lash(r):
     """The Tail Lash (for whoever is behind it): it looks back over its shoulder and swings its hindquarters round,
-    whipping the plume of its tail across behind it from one side to the other with a crack of lightning at its tip."""
-    cock = _pose(r, lift=-1.2, yaw=-12, side=10, neck=(2, 26, 0), head=(4, 40, 8), jaw=12, ears=(-20, -20), tail=(10, -46), mane=10)
-    hit = _pose(r, lift=-1.6, yaw=18, side=4, neck=(2, 30, 0), head=(4, 44, 8), jaw=16, ears=(-24, -24), tail=(16, 50), mane=12)
-    held = _pose(r, lift=-1.7, yaw=20, side=3, neck=(2, 30, 0), head=(4, 44, 8), jaw=12, ears=(-24, -24), tail=(14, 56), mane=12)
+    whipping the plume of its tail low across behind it from one side to the other with a crack of lightning at its tip."""
+    cock = _pose(r, lift=-1.2, yaw=-12, side=10, neck=(2, 26, 0), head=(4, 40, 8), jaw=12, ears=(-20, -20), tail=(-25, -46), mane=10)
+    hit = _pose(r, lift=-1.6, yaw=18, side=4, neck=(2, 30, 0), head=(4, 44, 8), jaw=16, ears=(-24, -24), tail=(-40, 50), mane=12)
+    held = _pose(r, lift=-1.7, yaw=20, side=3, neck=(2, 30, 0), head=(4, 44, 8), jaw=12, ears=(-24, -24), tail=(-42, 56), mane=12)
     return Move("lash", "LIGHT", 10, 4, 14, through=held, title="Tail Lash", track=0.0, rng=(0, 5.0), kinds=("behind",), damage=0.9, knock=1.0,
                 hit=[("tail2", (0, 0, 6), 6.0), ("tail3", (0, 0, 8), 6.0), ("tail1", (0, 0, 5), 5.0)], plant=(),
                 stages={"windup": [(0.35, _mix(_pose(r), cock, 0.5)), (1.0, cock)], "active": [(0.55, hit), (1.0, held)], "recover": _back(r, held)},

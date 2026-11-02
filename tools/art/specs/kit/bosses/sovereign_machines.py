@@ -557,7 +557,7 @@ def reactions(r):
 
 def punch(r, side="r", mid="punch"):
     """The Piston Punch: it twists away and draws one clamp back beside its chest, the ram sucking the fist in; then it
-    twists through and punches straight out, the ram firing the fist out a hand's length past the cuff (LIGHT)."""
+    twists through and punches out and down at your chest, the ram firing the fist out a hand's length past the cuff (LIGHT)."""
     s = 1 if side == "l" else -1
     hand, off = ("left", "right") if side == "l" else ("right", "left")
     e = (lambda v: (v, 0.0)) if side == "l" else (lambda v: (0.0, v))
@@ -565,11 +565,11 @@ def punch(r, side="r", mid="punch"):
                  **{hand: (s * 16, 50, 6), off: (-s * 14, 40, -26)}, curl=(1, 1))
     gather = _mix(_pose(r), cock, 0.4)
     drive = _pose(r, hips=(3, -4 * s, 0), at=(0, -1, -1), spine=(2, -4 * s, 0), chest=(4, -8 * s, 1 * s), head=(0, 6 * s, 0),
-                  **{hand: (s * 6, 52, -24), off: (-s * 18, 37, -14)}, curl=(1, 1), ext=e(0.4))
+                  **{hand: (s * 6, 36, -24), off: (-s * 18, 37, -14)}, curl=(1, 1), ext=e(0.4))
     hit = _pose(r, hips=(5, -10 * s, 0), at=(0, -1.5, -1.5), spine=(3, -8 * s, 0), chest=(7, -18 * s, 3 * s), head=(0, 16 * s, 0),
-                **{hand: (s * 1, 52, -32), off: (-s * 22, 32, 0)}, curl=(1, 1), ext=e(1.0))
+                **{hand: (s * 1, 32, -32), off: (-s * 22, 32, 0)}, curl=(1, 1), ext=e(1.0))
     held = _pose(r, hips=(6, -11 * s, 0), at=(0, -1.8, -1.6), spine=(3, -9 * s, 0), chest=(8, -20 * s, 3 * s), head=(0, 18 * s, 0),
-                 **{hand: (s * 0, 50, -32), off: (-s * 22, 31, 1)}, curl=(1, 1), ext=e(0.8))
+                 **{hand: (s * 0, 30, -32), off: (-s * 22, 31, 1)}, curl=(1, 1), ext=e(0.8))
     return Move(mid, "LIGHT", 10, 4, 14, title="Piston Punch", track=8.0, rng=(0, 4.6), kinds=("combo", "near"), damage=1.0, knock=0.8, plant=(),
                 hit=[("hand_" + side, (0, 8, 0), 4.0), ("fingers_" + side, (0, 6, 0), 3.5)], lag=ON_TIME, through=_on(r, held, 0.04),
                 stages={"windup": [(0.3, gather), (1.0, cock)], "active": [(0.3, drive), (0.55, hit), (1.0, held)], "recover": _back(r, held)})
@@ -675,10 +675,10 @@ def lattice(r):
 
 
 def turntable(r):
-    """For whoever is behind it: it braces with its arms out wide and its fists clenched, and its waist turns right
+    """For whoever is behind it: it braces with its arms out wide and low, its fists clenched, and its waist turns right
     round on its turntable, a whole turn, the fists sweeping everything round it; its legs never move."""
     arms = lambda a: _pose(r, hips=(2, 0, 0), at=(0, -2.5, 0), spine=(0, 0, 0), chest=(-2 + 2 * a, 0, 0), neck=(0, 0, 0), head=(0, 0, 0),
-                           left=(48, 52, -4), right=(-48, 52, -4), curl=(1, 1))
+                           left=(48, 28, -4), right=(-48, 28, -4), curl=(1, 1))
     mv = Move("turntable", "LIGHT", 12, 8, 14, title="Turntable", track=0.0, rng=(0, 4.8), kinds=("behind",), damage=1.0, knock=1.3, plant=(),
               hit=[("hand_l", (0, 6, 0), 4.5), ("hand_r", (0, 6, 0), 4.5), ("forearm_l", (0, 12, 0), 4.0), ("forearm_r", (0, 12, 0), 4.0)],
               lag=ON_TIME, through=arms(1),

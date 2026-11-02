@@ -16951,29 +16951,30 @@ Shadow fights in phrases, opens up after each, recoils and reels when it's turne
   Test `fights_fang_bite` (a marked fang bites for its mark, an unmarked one for 6).
 - **The sim's burn** reads `Abilities.BURN_SECONDS` (1 s, §46.2); it had modelled 4 s on a fire bolt and 3 on Ignite.
 - **Tuned with the sim** (200 seeds a cell, the rank's forged longsword): every gate Lord to the approved targets
-  (§46.3) and as hard as its rank allows. Lords of E and D stay easier than the D Warden (the Ringer: dodger 76%,
-  parrier 85%), so their dodger wins at least 80% and their parrier 87%; C and above at least 70% and 85% (their
+  (§46.3) and as hard as its rank allows. Lords of E and D stay easier than the D Warden (the Ringer: dodger 78%,
+  parrier 96%), so their dodger wins at least 80% and their parrier 87%; C and above at least 70% and 85% (their
   Wardens sit far lower, PLAN §4.7). Health sets the length (a parrier's win near 84 s), damage the danger.
   `GateBestiary`, health and damage (were):
 
   | Lord (rank) | Health, damage (were) | Tank wins (dies at) | Dodger | Parrier | Expert (health left) |
   |---|---|---|---|---|---|
   | Ember Tyrant (E) | 154, 1.11 (30, 5) | 0% (52 s) | 100%, 110 s | 92%, 88 s | 100%, 75 s (96%) |
-  | Hive Regent (E) | 41, 0.67 (28, 4.5) | 6% (72 s) | 94%, 87 s | 90%, 82 s | 100%, 72 s (93%) |
+  | Hive Regent (E) | 41, 0.67 (28, 4.5) | 9% (74 s) | 98%, 87 s | 96%, 81 s | 100%, 70 s (99%) |
   | Mother of Spores (E) | 56, 1.06 (28, 4) | 0% (46 s) | 88%, 99 s | 94%, 85 s | 100%, 74 s (100%) |
   | Root Saint (E) | 158, 0.86 (30, 4.5) | 0% (50 s) | 98%, 113 s | 90%, 87 s | 100%, 72 s (99%) |
-  | Drowned Archivist (D) | 109, 2.02 (30, 4.5) | 0% (47 s) | 92%, 100 s | 100%, 81 s | 100%, 70 s (97%) |
-  | Lantern Broker (D) | 120, 2.78 (28, 4.5) | 0% (30 s) | 82%, 103 s | 100%, 83 s | 100%, 72 s (100%) |
+  | Drowned Archivist (D) | 109, 2.02 (30, 4.5) | 0% (47 s) | 90%, 101 s | 100%, 82 s | 100%, 70 s (96%) |
+  | Lantern Broker (D) | 120, 2.78 (28, 4.5) | 0% (30 s) | 80%, 103 s | 100%, 84 s | 100%, 71 s (100%) |
   | Abbot of Frost (C) | 73.5, 4.3 (28, 4.5) | 0% (40 s) | 80%, 93 s | 96%, 81 s | 100%, 75 s (92%) |
   | Mirror Knight (C) | 103, 2.38 (30, 5) | 0% (52 s) | 84%, 107 s | 100%, 80 s | 100%, 69 s (87%) |
   | The Sleeper (C) | 40, 3.78 (30, 4.5) | 0% (31 s) | 96%, 90 s | 94%, 81 s | 100%, 67 s (90%) |
   | Unit Zero (C) | 115, 1.71 (28, 4.5) | 0% (29 s) | 80%, 107 s | 100%, 81 s | 100%, 69 s (100%) |
   | Sky Leviathan (B) | 41.5, 5.73 (34, 5) | 0% (28 s) | 82%, 81 s | 95%, 83 s | 100%, 70 s (98%) |
-  | Hollow Herald (A) | 51, 6.5 (32, 5) | 0% (35 s) | 80%, 87 s | 100%, 84 s | 100%, 72 s (100%) |
+  | Hollow Herald (A) | 51, 6.0 (32, 5) | 0% (29 s) | 76%, 86 s | 100%, 85 s | 100%, 71 s (100%) |
 
   At their old numbers as duels eleven of the twelve missed: the E Lords killed the parrier in 40-60 s (it won 8-68%),
   and from D up they fell in under 70 s while the tank won up to 16%. The pilots and the Ringer are unchanged and still
-  pass. All 15 gate Lords meet every target; the Ringer is harder than every E and D Lord, and the C Warden's target
+  pass. Rows for the Hive Regent, the Archivist, the Broker and the Herald are after their blows were made to land
+  (§46.6). All 15 gate Lords meet every target; the Ringer is harder than every E and D Lord for the dodger, and the C Warden's target
   (60 / 65) sits under every C Lord. From C up the parrier wins 94-100%; the dodger is
   the profile those fights test hardest.
 - **Not tuned:** the Deep's bosses (the Guardians, Nightmares, Sovereigns and the Signal's Shadow) fight as duels at
@@ -17021,6 +17022,21 @@ comes, how its hall turns, its gift and the way out), the Ringer's (`RingerWarde
   the Examiner's strokes reach 2.6-3.3 blocks at 0.3-1.2 high, the Ringer's swings 2.7 at 0.8 and its turns 2.4 at 0.5.
   With its turns landing, the Ringer's dodger fell to 62%: its damage is 1.4 (was 1.55), dodger 78% in 159 s, parrier 96%
   in 112 s, expert 100% in 93 s (100% health left), tank 0% (dies at 45 s).
+  The same fault ran through the whole kit, so the kit build now checks it: `kit.core.check` fails a damaging move whose
+  hits come no lower than `LOW_REACH` (1.4 blocks, a standing player's shoulders); a move whose ability does the hurting
+  is free of it, as it is of `fit_range` (Unit Zero's Step, the Hive Regent's Dive, the Mirror Knight's and the Sovereign
+  of Mirrors' Lunge, the Herald's Collapse). 23 blows in 12 kits came down to it, each by its own pose (lowest point, was):
+  the Hive Regent's cuts swing out and down at your shoulder and her lash sweeps under her at your waist (1.17 and 1.18,
+  were 3.21 and 1.67: her cuts never landed); the Archivist's Shutting runs a hit out off the desk's front (1.08, 1.57);
+  the Broker sinks into Pack Up, its bottom bar across your shoulders (1.08, 2.27); the Herald's second swipe and
+  backhand sweep at your chest (1.14 and 0.85, were 2.02 and 1.73); the Sovereign of Machines punches down at your chest
+  and turns with its arms out low (1.16 and 1.17, were 1.82 and 2.74); the Sovereign of Mirrors' Reflection and
+  behind-thrust go down (1.13 and 0.98, were 3.61 and 2.73); the Sovereign of Storms' tail lash comes low across (1.08,
+  1.96); the Sovereign of Ash's bite reaches down (1.22, 1.62); the Explosion's pop and slap bend in (1.18 and 0.91, were
+  2.1 and 1.96); the Generic Nightmare's reach, grasp and wrong reach down (1.25, 0.98, 1.00, were 2.16-2.49); the
+  Ringer's Rope leans into the run (1.27, 1.54); the Examiner's second rule, step and hold drop the rod and arm (0.95,
+  0.35, 0.82, were 1.79, 1.43, 1.64). None reaches less far forward. The gate Lords whose blows now land were simmed
+  again (§46.5): the Herald's dodger fell to 62%, so its damage is 6.0 (was 6.5).
 - **The Hall of Reflections** (`hearth.trial.Reflections`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every
   hall cell, centred 256 east and 120 south of the cell's corner (clear of the Belfry and the box arena). Round, the mirror
   wall's face at radius 40 (to 42.5), roof at dy 26. The floor is white stone ruled like a measuring sheet: smooth quartz

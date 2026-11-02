@@ -292,11 +292,12 @@ def cut(mid, side, windup=11, active=4, recover=12):
     _arm(coil, side, 30, 96, 40, -20, 0)
     _arm(coil, other, -10, 6, 0, 0)
     _low(coil, 6, 0)
-    hit = _pose(core=(18, sg * 18, -sg * 6), at=(0, -3, -6), chest=(10, sg * 10, 0), head=(14, -sg * 8, 0), wings=(-4, 10), train=(8, -sg * 8))
-    _arm(hit, side, -70, -12, -20, 60, 0)
+    # she rides high: the cut comes down steeply, her body bowed into it, so the blade meets you at the chest
+    hit = _pose(core=(33, sg * 18, -sg * 6), at=(0, -3, -6), chest=(10, sg * 10, 0), head=(14, -sg * 8, 0), wings=(-4, 10), train=(8, -sg * 8))
+    _arm(hit, side, -40, -12, -20, 90, 0)
     _arm(hit, other, 18, 18, 10, 0)
-    after = _pose(core=(21, sg * 22, -sg * 8), at=(0, -4, -7), chest=(12, sg * 12, 0), head=(16, -sg * 10, 0), wings=(-6, 12), train=(10, -sg * 10))
-    _arm(after, side, -64, -36, -30, 70, 0)
+    after = _pose(core=(36, sg * 22, -sg * 8), at=(0, -4, -7), chest=(12, sg * 12, 0), head=(16, -sg * 10, 0), wings=(-6, 12), train=(10, -sg * 10))
+    _arm(after, side, -34, -36, -30, 100, 0)
     _arm(after, other, 22, 22, 10, 0)
     back = _pose(core=(8, sg * 6, 0), at=(0, -1, -2), chest=(4, 0, 0), wings=(-2, 4))
     _arm(back, side, -20, -6, -8, 20)
@@ -443,11 +444,11 @@ def emerge():
 
 def lash():
     """For whoever is behind her (LIGHT): she looks back over her shoulder and draws the train out to one side, lifting
-    it, then whips it across behind her at knee height."""
+    it, then whips it across behind her, swung down under her to sweep you at the waist."""
     pre = _pose(core=(2, -6, 0), head=(-2, 22, 0), wings=(-3, 3), arms=(3, 6, 3, -3), train=(-8, 10))
     wind = _pose(core=(6, -18, 4), at=(0, 1, 0), chest=(0, -12, 0), head=(-8, 56, 6), wings=(-12, 10), arms=(12, 20, 10, -10), low=(10, 10), train=(-26, 30))
-    hit = _pose(core=(2, 14, -3), at=(0, 1, 0), chest=(0, 8, 0), head=(-4, 40, 0), wings=(4, -2), arms=(-4, 14, 0, 0), train=(-14, -22))
-    after = _pose(core=(2, 18, -4), chest=(0, 10, 0), head=(-4, 34, 0), wings=(4, -2), arms=(-6, 16, 0, 0), train=(-12, -27))
+    hit = _pose(core=(2, 14, -3), at=(0, 1, 0), chest=(0, 8, 0), head=(-4, 40, 0), wings=(4, -2), arms=(-4, 14, 0, 0), train=(10, -22))
+    after = _pose(core=(2, 18, -4), chest=(0, 10, 0), head=(-4, 34, 0), wings=(4, -2), arms=(-6, 16, 0, 0), train=(12, -27))
     back = _pose(core=(0, 6, 0), head=(0, 14, 0), train=(-4, -9))
     return Move("lash", "LIGHT", 10, 4, 14, track=0.0, rng=(0, 3.0), kinds=("behind",), damage=0.9, knock=1.0, plant=(), lag=TRAIN_ON_TIME,
                 hit=[("stinger", (0, 7, 0), 2.5), ("abd4", (0, 3, 0), 3)],

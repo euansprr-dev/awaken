@@ -30,7 +30,9 @@ ROD_TIP = (0, 26, 0)
 ROD = dict(weapon=ROD_TIP, weapon_r=1.6)
 # how far the rod comes down in its strokes (degrees on its own axis), and how low it bends into them, so every stroke
 # meets someone standing at the waist (SPEC §46.6: every damaging blow's lowest point under 1.2 blocks)
-ROD_DOWN = {"rule_a": 90, "rule_c": 90, "turn": 100, "crosscut": 100}
+ROD_DOWN = {"rule_a": 90, "rule_b": 20, "rule_c": 90, "turn": 100, "crosscut": 100}
+# the Step In and Hold Still reach down to you too: the arm lowered in the blow (degrees)
+ARM_DOWN = {"step": ("arm_r", 10), "hold": ("arm_l", 15)}
 LOW_C, LOW_SPIN, DROP_SPIN = 20, 15, 0
 # the fan of shards behind its shoulders: (angle from straight up, length, width)
 SHARDS = [(-62, 9, 3), (-40, 12, 3), (-18, 14, 4), (0, 15, 4), (18, 14, 4), (40, 12, 3), (62, 9, 3)]
@@ -187,6 +189,10 @@ def clips(r):
         for f, pose in by[mid].stages["windup"][-1:] + by[mid].stages["active"]:
             rx = pose.get("rod", (0, 0, 0))
             pose["rod"] = (rx[0] + add, rx[1], rx[2])
+    for mid, (bone, add) in ARM_DOWN.items():
+        for f, pose in by[mid].stages["active"]:
+            x = pose.get(bone, (0, 0, 0))
+            pose[bone] = (x[0] + add, x[1], x[2])
     # the Crosscut goes once right round it, the rod held out flat
     for k, (f, pose) in enumerate(by["crosscut"].stages["active"]):
         rot = pose.get("pelvis", {"rot": (0, 0, 0), "pos": (0, 0, 0)})

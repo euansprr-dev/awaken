@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 /**
  * The trials dimension: void with one walled arena per cell. Even cells are Reassessment halls (dark tile, amber lamps);
  * odd cells are the Hardline Penalty Zone's desert at night (sand, sandstone, cold lamps, cacti). Each even cell also
- * holds every Proving's hall ({@link Warden#ALL}: the Drowned Belfry in its middle, the others each at its own spot).
+ * holds every Proving's hall ({@link Warden#all}: the Drowned Belfry in its middle, the others each at its own spot).
  * Stateless and deterministic, safe on worldgen threads.
  */
 public final class TrialChunkGenerator extends ChunkGenerator {
@@ -122,7 +122,7 @@ public final class TrialChunkGenerator extends ChunkGenerator {
                     }
                 } else if (!desert) {
                     // a hall cell's Proving halls, one for each Warden at its own spot (SPEC §46.4, §46.6)
-                    for (Warden w : Warden.ALL) {
+                    for (Warden w : Warden.all()) {
                         Hall h = w.hall;
                         if (!h.spans(lx - h.atX(), lz - h.atZ())) continue;
                         for (int dy = h.low(); dy <= h.roof(); dy++) {

@@ -663,14 +663,14 @@ def parry(r):
 
 def riposte(r):
     """The Reflection (after the parry): from behind the great mirror the blade drives straight out past its edge in a
-    thrust, a step behind it, the mirror swinging aside."""
+    thrust down at your chest, a step behind it, the mirror swinging aside."""
     ck = dict(hips=(-2, -14, 0), at=(0, -2, 1.5), chest=(-4, -12, 0), head=(-8, 6, 0), arms={"hand_l": (5.0, 70.0, -19.0), "hand_r": (-13.0, 64.0, -16.0)},
               blade=((0.05, 0.05, -1.0), (1, 0, 0)), glass={"glass_l": ("dir", (0.0, -0.05, -1.0))})
     cock = _pose(r, **ck)
     hit = _pose(r, hips=(4, -22, 0), at=(0, -4, -4), chest=(4, -16, 0), head=(-4, 10, 0), step={"r": (0, 0, -9)},
-                arms={"hand_l": (16.0, 70.0, -12.0), "hand_r": (-4.0, 68.0, -38.0)}, blade=((0.04, 0.06, -1.0), (1, 0, 0)))
+                arms={"hand_l": (16.0, 70.0, -12.0), "hand_r": (-4.0, 40.0, -38.0)}, blade=((0.04, 0.75, -1.0), (1, 0, 0)))
     after = _pose(r, hips=(5, -23, 0), at=(0, -4.4, -4.4), chest=(5, -17, 0), head=(-4, 10, 0), step={"r": (0, 0, -9)},
-                  arms={"hand_l": (17.0, 70.0, -11.0), "hand_r": (-4.0, 67.0, -39.0)}, blade=((0.04, 0.1, -1.0), (1, 0, 0)))
+                  arms={"hand_l": (17.0, 70.0, -11.0), "hand_r": (-4.0, 39.0, -39.0)}, blade=((0.04, 0.79, -1.0), (1, 0, 0)))
     return Move("riposte", "LIGHT", 8, 4, 14, title="The Reflection", track=10.0, rng=(0, 5.0), kinds=("near",), damage=1.1, knock=0.8, plant=(),
                 hit=[("blade", TIP, 2.2), ("blade", (0, 18, 0), 2.0)], lag=ON_TIME, through=_on(r, after, 0.04),
                 stages={"windup": _path(r, {}, ck),
@@ -679,15 +679,15 @@ def riposte(r):
 
 def behind(r):
     """Over the Shoulder (for whoever is behind it; HEAVY, a hold: the fight's delayed blow, SPEC §46.5): the low right mirror swings out to show it you over its shoulder,
-    its face turning down into it; without turning round it draws the blade across its body and thrusts it straight
-    back under its arm."""
+    its face turning down into it; without turning round it draws the blade across its body and thrusts it back and
+    down under its arm."""
     look = dict(neck=(4, -10, 0), head=(14, -34, -6))
     show = {"hand3_r": (-17.0, 66.0, 2.0)}
     see = {"glass3_r": ("dir", (-0.3, -0.35, 0.88))}
     cock = _pose(r, hips=(0, -6, 0), chest=(0, -6, 0), arms={**show, "hand_r": (4.0, 56.0, -10.0)}, blade=((0.15, 0.05, 1.0), (0, -1, 0)), glass=see, **look)
-    hit = _pose(r, hips=(0, -12, 0), at=(0, -1.5, 2), chest=(2, -14, 2), arms={**show, "hand_r": (6.0, 55.0, 12.0)}, blade=((0.1, 0.12, 1.0), (0, -1, 0)),
+    hit = _pose(r, hips=(0, -12, 0), at=(0, -1.5, 2), chest=(2, -14, 2), arms={**show, "hand_r": (6.0, 34.0, 12.0)}, blade=((0.1, 0.9, 1.0), (0, -1, 0)),
                 glass=see, step={"r": (0, 0, 1), "l": (0, 0, 2)}, **look)
-    after = _pose(r, hips=(0, -13, 0), at=(0, -1.8, 2.3), chest=(2, -15, 2), arms={**show, "hand_r": (6.0, 54.0, 14.0)}, blade=((0.1, 0.16, 1.0), (0, -1, 0)),
+    after = _pose(r, hips=(0, -13, 0), at=(0, -1.8, 2.3), chest=(2, -15, 2), arms={**show, "hand_r": (6.0, 33.0, 14.0)}, blade=((0.1, 0.94, 1.0), (0, -1, 0)),
                   glass=see, step={"r": (0, 0, 1), "l": (0, 0, 2)}, **look)
     return Move("behind", "HEAVY", 12, 4, 14, hold=6, title="Over the Shoulder", track=0.0, rng=(0, 4.4), kinds=("behind",), damage=1.0, knock=0.6, plant=(),
                 hit=[("blade", TIP, 2.0), ("blade", (0, 18, 0), 1.8)], lag=ON_TIME, through=_on(r, after, 0.04),

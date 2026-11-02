@@ -25,11 +25,18 @@ abstract class Warden {
         this.hall = hall;
     }
 
-    static final List<Warden> ALL = List.of(RingerWarden.WARDEN, ExaminerWarden.WARDEN);
+    /** Every Warden. In a holder: a Warden's first touch initialises this class before its own WARDEN is set. */
+    static List<Warden> all() {
+        return All.LIST;
+    }
+
+    private static final class All {
+        static final List<Warden> LIST = List.of(RingerWarden.WARDEN, ExaminerWarden.WARDEN);
+    }
 
     /** The Warden of a Reassessment to {@code target}, or null where a box trial still stands. */
     static @Nullable Warden of(Rank target) {
-        for (Warden w : ALL) if (w.rank == target) return w;
+        for (Warden w : all()) if (w.rank == target) return w;
         return null;
     }
 
