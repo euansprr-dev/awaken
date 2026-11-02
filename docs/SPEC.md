@@ -16611,3 +16611,15 @@ settings screen; also `/awaken armour sculpted on|near|off` and `/awaken armour 
 - **Mastery pacing** (`tools/sim/armour_mastery.py`, from the Java's numbers): about 23 XP a minute of fighting in a whole
   set (blows dealt and taken, the odd elite), 26 running gates (a Lord every 20 minutes): mastery II in a quarter hour,
   III within the hour, IV in about two hours and V in about four.
+
+## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
+
+Module `enchant` (`dev.awaken.enchant`). The rule: **your forge decides how strong a thing is; enchantments add what the
+forge can't** (wards, banes that spare Lords, work and spoils, carrying, keeping). Vanilla's enchantment engine stays
+(effects, tooltips, the `minecraft:enchantments` component); how enchantments are found, learned and written is ours.
+
+### 45.1 S0: the sculpted sets take enchantments
+- The 23 sets with items of their own (`ArmourItems`, every set but the six Hunter sets) are in vanilla's
+  `#minecraft:enchantable/head_armor`, `chest_armor`, `leg_armor`, `foot_armor` and `durability` tags, through
+  `src/main/merge/enchant` (no armour file touched), so every armour enchantment and Unbreaking fit them. Test
+  `enchant_forged_sets_take` (all 92 pieces; Respiration only on helmets, Feather Falling on boots).
