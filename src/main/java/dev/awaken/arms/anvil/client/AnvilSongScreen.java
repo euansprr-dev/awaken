@@ -31,7 +31,9 @@ import java.util.Arrays;
  * gauge with its gold band; the mark on the metal with a ring closing on the beat (each style's own rhythm and marks), a
  * thin beat lane and a pip a strike; the quench's line climbing to its gold notch while you hold; the hilt's three taps.
  * At E by hand: the flake points down the edge, struck at your own pace, and the cord wound round the grip in circles.
- * Then the weapon standing in the stone, held to draw it out, and its card. The server judges every act by its own
+ * The ranks' acts (§46.9): A's twist (circles at the bar's end), C's grind (the edge kept on a drifting line while the
+ * wheel turns), B's balance (the Deepglass weight slid along the grip till it lies level), S's starlight (a ring of light
+ * closing on the point). Then the weapon standing in the stone, held to draw it out, and its card. The server judges every act by its own
  * clock; this screen shows them at once. Doesn't pause. Click, or Space, is the act; for the quench, the bind and the
  * draw, hold it.
  */
@@ -49,7 +51,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private int runStage = -1;
     private long runStart = Long.MIN_VALUE;
     private int next, countStep;
-    private final float[] predicted = new float[16];
+    private final float[] predicted = new float[24];
     private boolean pulled, holding, lifted, cooled;
     private float bellowsAt;
     /** The work's weapon (the card shows it once it's drawn). */
@@ -60,6 +62,9 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private float windAcc, windLast = Float.NaN;
     private int windTurns;
     private final float[] turnAt = new float[AnvilSong.TURNS + 1];
+    // the ranks' acts: the last grind sample (ticks from the stage's start), the act told to the server, and the balance's level since and frame
+    private float grindLast = Float.NaN, levelSince = Float.NaN, tiltAt = Float.NaN;
+    private boolean actSent;
 
     // what the screen shows for a moment
     private String callout = "";
@@ -135,6 +140,10 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
                 case AnvilSong.HILT -> beats(g, w, t, now, true);
                 case AnvilSong.KNAP -> knap(g, w, t, now);
                 case AnvilSong.BIND -> bind(g, w, t, now);
+                case AnvilSong.TWIST -> twist(g, w, t, now);
+                case AnvilSong.GRIND -> grind(g, w, t, now);
+                case AnvilSong.BALANCE -> balance(g, w, t, now);
+                case AnvilSong.STAR -> star(g, w, t, now);
                 default -> {}
             }
         }
@@ -164,6 +173,11 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilScene.blowAt = -1000F;
         AnvilScene.nextDue = Float.NaN;
         AnvilScene.plungeAt = AnvilScene.liftAt = Float.NaN;
+        grindLast = levelSince = tiltAt = Float.NaN;
+        actSent = false;
+        AnvilScene.grindEdge = AnvilScene.tilt = 0F;
+        AnvilScene.weight = 0F;
+        AnvilScene.turning = false;
     }
 
     private void header(GuiGraphicsExtractor g, AnvilWork w) {
@@ -174,6 +188,10 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             case AnvilSong.QUENCH -> "Quench";
             case AnvilSong.KNAP -> "Knap the edge";
             case AnvilSong.BIND -> "Bind the grip";
+            case AnvilSong.TWIST -> "Twist the bar";
+            case AnvilSong.GRIND -> "Grind the edge";
+            case AnvilSong.BALANCE -> "Balance it";
+            case AnvilSong.STAR -> "Quench it in starlight";
             default -> w.kind == AnvilWork.ATTUNE ? "Set the stone" : "The hilt";
         };
         // a weapon worked again goes by its own name, and says what it's being worked to
@@ -451,8 +469,14 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private void bind(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
         AnvilShape sh = placed.work.shape;
         boolean seen = project(placed.work.point(AnvilScene.BLADE_X, sh.hands[0], 0F, v));
-        float cx = seen ? p[0] : width / 2F, cy = seen ? p[1] : height / 2F, r = 28F;
-        if (winding) wind(w, t, now, cx, cy);
+        circles(g, w, t, now, seen ? p[0] : width / 2F, seen ? p[1] : height / 2F, 28F, AnvilSong.TURNS);
+        hint(g, winding ? "Keep circling at the same speed..."
+                : "Hold the mouse button (or Space) and draw circles round the grip to wind the cord: four turns, as evenly as you can.");
+    }
+
+    /** Circles round a point, held: the bind's cord (four turns), the twist's bar (three); a pip a turn below. */
+    private void circles(GuiGraphicsExtractor g, AnvilWork w, float t, float now, float cx, float cy, float r, int need) {
+        if (winding) wind(w, t, now, cx, cy, need);
         ring(g, cx, cy, r, 1.5F, winding ? 0xC0FFCF7A : 0x806F8299);
         if (winding) {
             float turn = (float) (Math.abs(windAcc) % (Math.PI * 2) / (Math.PI * 2));
@@ -463,16 +487,15 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             float k = 0.5F + 0.5F * (float) Math.sin(now * 0.2);
             disc(g, cx + r, cy, 3F, (int) (90 + 140 * k) << 24 | 0xFFCF7A);
         }
-        int y = bottom() - 28, pw = 14, x0 = width / 2 - AnvilSong.TURNS * (pw + 3) / 2;
-        for (int j = 0; j < AnvilSong.TURNS; j++) {
+        int y = bottom() - 28, pw = 14, x0 = width / 2 - need * (pw + 3) / 2;
+        for (int j = 0; j < need; j++) {
             int x = x0 + j * (pw + 3);
             if (j < windTurns) g.fill(x, y, x + pw, y + 4, LANTERN);
             else g.outline(x, y, pw, 4, 0x803A4A60);
         }
-        hint(g, winding ? "Keep circling at the same speed..."
-                : "Hold the mouse button (or Space) and draw circles round the grip to wind the cord: four turns, as evenly as you can.");
     }
 
+    /** The hold begins (the cord, or the twist): told to the server as turn 0. */
     private void holdCord(AnvilWork w, float t) {
         if (winding || windTurns > 0) return;
         winding = true;
@@ -481,20 +504,22 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         windTurns = 0;
         turnAt[0] = t;
         AnvilScene.windTurns = 0;
-        AnvilClient.send(pos, AnvilPayloads.WIND, 0, t, 0F);
+        AnvilClient.send(pos, w.stage == AnvilSong.TWIST ? AnvilPayloads.TWIST : AnvilPayloads.WIND, 0, t, 0F);
     }
 
-    private void releaseCord(float t, float now) {
+    private void releaseCord(AnvilWork w, float t, float now) {
         if (!winding) return;
         winding = false;
         AnvilScene.windTurns = windTurns;
-        if (windTurns >= AnvilSong.TURNS) return;
+        boolean twist = w.stage == AnvilSong.TWIST;
+        if (windTurns >= (twist ? AnvilSong.TWISTS : AnvilSong.TURNS)) return;
         AnvilClient.send(pos, AnvilPayloads.RELEASE, windTurns, t, 0F);
-        say("Let go early: the cord is loose", BAD, now);
+        say(twist ? "Let go early: it's only part twisted" : "Let go early: the cord is loose", BAD, now);
     }
 
-    /** The mouse's angle round the grip, added up; each whole turn is told to the server with its time. */
-    private void wind(AnvilWork w, float t, float now, float cx, float cy) {
+    /** The mouse's angle round the point, added up; each whole turn is told to the server with its time. */
+    private void wind(AnvilWork w, float t, float now, float cx, float cy, int need) {
+        boolean twist = w.stage == AnvilSong.TWIST;
         float dx = mx - cx, dy = my - cy;
         if (dx * dx + dy * dy >= 64F) {
             float a = (float) Math.atan2(dy, dx);
@@ -503,22 +528,147 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         }
         AnvilScene.windAngle = windAcc;
         int done = (int) (Math.abs(windAcc) / (Math.PI * 2));
-        while (windTurns < Math.min(done, AnvilSong.TURNS)) {
+        while (windTurns < Math.min(done, need)) {
             windTurns++;
             turnAt[windTurns] = t;
             AnvilScene.windTurns = windTurns;
-            AnvilClient.send(pos, AnvilPayloads.WIND, windTurns, t, 0F);
-            AnvilClient.play(at(placed.work.at), AnvilContent.SCRAPE.get(), 0.4F, 1.4F + windTurns * 0.08F);
+            AnvilClient.send(pos, twist ? AnvilPayloads.TWIST : AnvilPayloads.WIND, windTurns, t, 0F);
+            AnvilClient.play(at(placed.work.at), AnvilContent.SCRAPE.get(), twist ? 0.6F : 0.4F, (twist ? 0.75F : 1.4F) + windTurns * 0.08F);
             if (windTurns >= 2) {
                 float mean = (turnAt[windTurns - 1] - turnAt[0]) / (windTurns - 1), last = turnAt[windTurns] - turnAt[windTurns - 1];
                 if (Math.abs(last - mean) <= mean / 8F) say("Even", LANTERN, now);
                 else say(last < mean ? "Too quick" : "Too slow", BAD, now);
             }
         }
-        if (windTurns >= AnvilSong.TURNS) {
+        if (windTurns >= need) {
             winding = false;
-            say("Bound tight", LANTERN, now);
+            if (!twist) say("Bound tight", LANTERN, now);
+            else if (turnAt[need] - turnAt[0] < AnvilSong.TWIST_MIN) say("Too fast: the bar hardly took the twist", BAD, now);
+            else say("Twisted true", LANTERN, now);
         }
+    }
+
+    // ---- the ranks' acts (§46.9) ---------------------------------------------------------------------------------------
+
+    /** A: the bar clamped hot on the face; hold and circle round its end, three slow, even turns. */
+    private void twist(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
+        AnvilShape sh = placed.work.shape;
+        boolean seen = project(placed.work.point(AnvilScene.BLADE_X, sh.tip - 1.5F, 0F, v));
+        circles(g, w, t, now, seen ? p[0] : width / 2F, seen ? p[1] : height / 2F, 34F, AnvilSong.TWISTS);
+        hint(g, winding ? "Keep circling, slow and even..."
+                : "Hold the mouse button (or Space) and circle round the end of the bar to twist it: three slow, even turns.");
+    }
+
+    /** The grind's channel: where it is on the screen (x, its middle's y, half its height). */
+    private int grindX() {
+        return width / 2 + Math.min(150, width / 4);
+    }
+
+    private int grindHalf() {
+        return Math.min(60, height / 6);
+    }
+
+    /** C: hold to turn the wheel and keep the edge on the gold line as it drifts; twenty touches make the two passes. */
+    private void grind(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
+        int need = w.beatsNeeded(), gx = grindX(), cy = height / 2, half = grindHalf(), gw = 10;
+        next = Math.max(next, w.beats().size());
+        float line = cy + AnvilSong.grindLine(t) * half, off = (my - line) / half;
+        AnvilScene.turning = holding && next < need;
+        AnvilScene.grindEdge = AnvilScene.turning ? Math.min(1F, Math.abs(off)) : 0.5F;
+        if (AnvilScene.turning && (Float.isNaN(grindLast) || t - grindLast >= AnvilSong.GRIND_GAP)) touch(w, t, now, off);
+        g.fill(gx - 2, cy - half - 2, gx + gw + 2, cy + half + 2, 0xE0080B12);
+        g.outline(gx - 2, cy - half - 2, gw + 4, 2 * half + 4, 0xFF2A3446);
+        int ly = Math.round(line), ey = Mth.clamp(my, cy - half - 2, cy + half + 2);
+        g.fill(gx - 6, ly - 1, gx + gw + 6, ly + 1, LANTERN);
+        g.fill(gx - 9, ey, gx + gw + 9, ey + 1, Math.abs(off) <= 0.2F ? TITLE : BAD);
+        g.text(font, "edge", gx + gw + 12, ey - 4, Math.abs(off) <= 0.2F ? LABEL : BAD, true);
+        pips(g, w, need);
+        hint(g, AnvilScene.turning ? "Keep the edge on the gold line as it drifts: move the mouse up and down."
+                : next == 0 ? "Hold the mouse button (or Space) to turn the wheel. Keep the edge on the gold line as it drifts by moving the mouse up and down: two passes."
+                : "Hold the mouse button (or Space) to turn the wheel again.");
+    }
+
+    /** One touch of the edge on the wheel: how far off the line, told to the server; sparks off it. */
+    private void touch(AnvilWork w, float t, float now, float off) {
+        grindLast = t;
+        float score = AnvilSong.grind(Mth.clamp(off, -2F, 2F));
+        AnvilClient.send(pos, AnvilPayloads.GRIND, next, t, off);
+        predicted[next] = score;
+        next++;
+        AnvilShape sh = placed.work.shape;
+        placed.work.point(AnvilScene.BLADE_X + AnvilScene.HALF_W, sh.mid, 0F, v);
+        if (next % 2 == 0) AnvilClient.play(at(v), AnvilContent.SCRAPE.get(), 0.3F, 1.7F + (now % 5) * 0.02F);
+        if (project(v)) burst(p[0], p[1], score, now, 0.35F);
+        if (next == AnvilSong.PASS) say("One pass done", LABEL, now);
+        else if (next == AnvilSong.GRIND_SAMPLES) {
+            float sum = 0F;
+            for (int j = 0; j < next; j++) sum += Float.isNaN(predicted[j]) ? 0F : predicted[j];
+            say(sum / next >= 0.8F ? "A keen edge" : "Ground, but the edge is uneven", sum / next >= 0.8F ? LANTERN : LABEL, now);
+        }
+    }
+
+    /** B: slide the Deepglass weight along the grip (the mouse) till the blade lies level on the horn, and hold it there. */
+    private void balance(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
+        AnvilShape sh = placed.work.shape;
+        float point = AnvilSong.balancePoint(w.stageStart);
+        if (!actSent) {
+            if (AnvilClient.autoplay) AnvilScene.weight = point * AnvilScene.smooth(Mth.clamp((t - 12F) / 40F, 0F, 1F));
+            else {
+                // the mouse along the grip as it's seen, the guard to the pommel's end
+                boolean a = project(placed.work.point(0F, sh.taps[0], 0F, v));
+                float ax = p[0], ay = p[1];
+                if (a && project(placed.work.point(0F, sh.taps[2], 0F, v))) {
+                    float dx = p[0] - ax, dy = p[1] - ay, len = Math.max(1F, dx * dx + dy * dy);
+                    AnvilScene.weight = Mth.clamp(((mx - ax) * dx + (my - ay) * dy) / len, 0F, 1F);
+                } else AnvilScene.weight = Mth.clamp(mx / (float) Math.max(1, width), 0F, 1F);
+            }
+        }
+        // it tips toward its heavy end, easing there
+        float target = Mth.clamp((point - AnvilScene.weight) * 5F, -1F, 1F), dt = Float.isNaN(tiltAt) ? 0F : Math.max(0F, now - tiltAt);
+        tiltAt = now;
+        AnvilScene.tilt += (target - AnvilScene.tilt) * Math.min(1F, dt * 0.12F);
+        boolean level = Math.abs(AnvilScene.weight - point) <= AnvilSong.LEVEL;
+        if (!level) levelSince = Float.NaN;
+        else if (Float.isNaN(levelSince)) levelSince = now;
+        if (!actSent && (level && now - levelSince >= 20F || t >= AnvilSong.BALANCE_ALONE)) {
+            actSent = true;
+            float off = AnvilScene.weight - point, score = AnvilSong.balance(t, off);
+            AnvilClient.send(pos, AnvilPayloads.BALANCE, 0, t, off);
+            AnvilClient.play(at(placed.work.at), AnvilContent.RING.get(), 0.8F, 1.5F);
+            say(score >= 0.8F ? "It lies level: well balanced" : "Balanced, at last", score >= 0.8F ? LANTERN : LABEL, now);
+        }
+        // a level's bubble over the horn
+        boolean seen = project(placed.work.at);
+        int bx = seen ? Math.round(p[0]) : width / 2, by = (seen ? Math.round(p[1]) : height / 2) - 46, half = 30;
+        g.fill(bx - half - 2, by - 4, bx + half + 2, by + 4, 0xE0080B12);
+        g.outline(bx - half - 2, by - 4, 2 * half + 4, 8, 0xFF2A3446);
+        g.fill(bx - 1, by - 6, bx + 1, by + 6, 0xC0FFCF7A);
+        disc(g, bx + AnvilScene.tilt * (half - 4), by, 3F, level ? LANTERN : 0xFFAFC2D8);
+        hint(g, actSent ? "" : "Slide the Deepglass weight along the grip with the mouse until the blade lies level on the horn, and hold it there.");
+    }
+
+    /** S: the column of starlight comes down; a ring of it closes on the point. Click as it meets it. */
+    private void star(GuiGraphicsExtractor g, AnvilWork w, float t, float now) {
+        if (!actSent && t >= AnvilSong.STAR_ALONE) starlight(w, t, now);
+        boolean seen = project(placed.work.point(AnvilScene.BLADE_X, placed.work.shape.tip, 0F, v));
+        float cx = seen ? p[0] : width / 2F, cy = seen ? p[1] : height * 0.35F;
+        if (!actSent) {
+            float d = AnvilSong.STAR_AT - t, r = 9F + (d > 0F ? 64F * d / AnvilSong.STAR_AT : 2F * -d);
+            int alpha = d > 0F ? 220 : Math.max(40, 220 + (int) (6F * d));
+            ring(g, cx, cy, 9F, 1F, 0x90F4F6FB);
+            ring(g, cx, cy, r, 2F, alpha << 24 | (Math.abs(d) <= 3F ? 0xFFFFFF : 0xDDE8FF));
+        }
+        hint(g, actSent ? "" : "The starlight closes on the point. Click, or press Space, the moment its ring meets the point.");
+    }
+
+    private void starlight(AnvilWork w, float t, float now) {
+        if (actSent) return;
+        actSent = true;
+        float off = t - AnvilSong.STAR_AT, score = AnvilSong.star(off);
+        AnvilClient.send(pos, AnvilPayloads.STAR, 0, t, 0F);
+        AnvilClient.play(at(placed.work.at), AnvilContent.RING.get(), 1F, 1.8F);
+        if (project(placed.work.point(AnvilScene.BLADE_X, placed.work.shape.tip, 0F, v))) burst(p[0], p[1], score, now, 1.2F);
+        say(score >= 1F ? "Right in the light" : off < 0F ? "Early: the light hadn't reached it" : "Late: the light had passed", score >= 1F ? LANTERN : BAD, now);
     }
 
     /** The beat lane: what's coming slides to the line; the count-in shows as the bar to listen to. */
@@ -851,6 +1001,23 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
                 if (Float.isNaN(AnvilScene.plungeAt) && t >= 20F) plunge(w, t, now);
                 else if (holding && now - AnvilScene.plungeAt >= AnvilSong.idealHold()) lift(w, t, now);
             }
+            case AnvilSong.TWIST -> {
+                // three turns, twelve ticks each: slow enough for the twist to take
+                if (!winding && windTurns == 0 && t >= 12F) holdCord(w, t);
+                if (winding && project(placed.work.point(AnvilScene.BLADE_X, placed.work.shape.tip - 1.5F, 0F, v))) {
+                    double a = (t - turnAt[0]) / 12.0 * Math.PI * 2;
+                    mx = (int) Math.round(p[0] + Math.cos(a) * 34);
+                    my = (int) Math.round(p[1] + Math.sin(a) * 34);
+                }
+            }
+            case AnvilSong.GRIND -> {
+                // the wheel held turning, the edge kept close on the line
+                if (!holding && t >= 12F) holding = true;
+                my = Math.round(height / 2F + (AnvilSong.grindLine(t) + 0.04F * Mth.sin(t * 0.7F)) * grindHalf());
+            }
+            case AnvilSong.STAR -> {
+                if (t >= AnvilSong.STAR_AT) starlight(w, t, now);
+            }
             default -> {}
         }
     }
@@ -894,9 +1061,13 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
             case AnvilSong.KNAP -> {
                 if (press) flake(w, t, now);
             }
-            case AnvilSong.BIND -> {
+            case AnvilSong.BIND, AnvilSong.TWIST -> {
                 if (press) holdCord(w, t);
-                else releaseCord(t, now);
+                else releaseCord(w, t, now);
+            }
+            case AnvilSong.GRIND -> holding = press; // the wheel turns while it's held
+            case AnvilSong.STAR -> {
+                if (press) starlight(w, t, now);
             }
             default -> {
                 return false;

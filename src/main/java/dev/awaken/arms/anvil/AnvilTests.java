@@ -35,6 +35,7 @@ final class AnvilTests {
         AwakenTests.register("arms_anvil_temper", 40, AnvilTests::temper);
         AwakenTests.register("arms_anvil_attune", 40, AnvilTests::attune);
         AwakenTests.register("arms_anvil_reforge", 40, AnvilTests::reforge);
+        AwakenTests.register("arms_anvil_verbs", 40, AnvilTests::verbs);
     }
 
     /**
@@ -491,6 +492,69 @@ final class AnvilTests {
                 && f.quality() == AnvilSong.Quality.FLAWLESS.ordinal(), "its story: reforged by its smith, struck true: " + f);
         h.succeed();
     }
+
+    /**
+     * The ranks' acts (SPEC §46.9): each done is a tenth of the score. At C the quench goes to the grind (no twist before,
+     * no balance after). At S, from the heat: the bar twisted (three even turns), drawn out, quenched in starlight as its
+     * ring closes, ground in two passes (a sample faster than the wheel isn't taken), the hilt, balanced on the horn; all
+     * true, it stands Flawless and unflawed.
+     */
+    private static void verbs(GameTestHelper h) {
+        h.assertTrue(Math.abs(AnvilSong.withActs(0.5F, 1F, -1F, 1F, 1F) - (0.5F * 0.7F + 0.3F)) < 1e-6F, "each act done is a tenth");
+        h.assertTrue(AnvilSong.twist(AnvilSong.evenness(new float[]{10, 10, 22}, 3), 3, 42F) < 0.8F && AnvilSong.twist(1F, 2, 40F) < 0.7F,
+                "an uneven twist, or one let go at two, scores less");
+        h.assertTrue(AnvilSong.balance(40F, 0F) == 1F && AnvilSong.balance(BALANCE_LATE, 0F) < 0.6F && AnvilSong.star(0F) == 1F && AnvilSong.star(30F) == 0.3F,
+                "settled quick is whole, slow is about half; the light pressed on its ring is whole, far off it a third");
+        ServerLevel level = h.getLevel();
+        WarAnvilBlockEntity be = anvilByForge(h);
+        BlockPos pos = be.getBlockPos(), fire = WarAnvil.forge(level, pos);
+        ServerPlayer p = smith(h, pos, "anvil-verbs", 13);
+
+        be.setWork(AnvilWork.fresh("gatewrought_longsword", level.getGameTime(), java.util.List.of(), p.getUUID(), fire, AnvilWork.FORGE));
+        AnvilWork c = be.work();
+        pullInGold(h, p, be);
+        h.assertTrue(c.stage == AnvilSong.SHAPE, "at C no twist: straight to the draw out");
+        for (int i = 0; i < 40 && c.stage == AnvilSong.SHAPE; i++) beatOnTime(h, p, be, AnvilPayloads.STRIKE);
+        h.assertTrue(c.stage == AnvilSong.QUENCH, "at C the water, not the light");
+        quench(h, p, be);
+        h.assertTrue(c.stage == AnvilSong.GRIND && c.taps.isEmpty(), "out of the water to the wheel");
+        be.setWork(null);
+
+        be.setWork(AnvilWork.fresh("sovereign_longsword", level.getGameTime(), java.util.List.of(), p.getUUID(), fire, AnvilWork.FORGE));
+        AnvilWork w = be.work();
+        pullInGold(h, p, be);
+        h.assertTrue(w.stage == AnvilSong.TWIST, "at A and up the bar is twisted first");
+        for (int k = 0; k <= AnvilSong.TWISTS; k++) {
+            w.stageStart = level.getGameTime() - 12L * k;
+            act(p, pos, AnvilPayloads.TWIST, k, 12F * k, 0F);
+        }
+        h.assertTrue(w.stage == AnvilSong.SHAPE && w.twist == 1F && w.taps.isEmpty(), "three even turns, then the draw out: " + w.twist);
+        for (int i = 0; i < 40 && w.stage == AnvilSong.SHAPE; i++) beatOnTime(h, p, be, AnvilPayloads.STRIKE);
+        h.assertTrue(w.stage == AnvilSong.STAR, "at S the light is its water");
+        w.stageStart = level.getGameTime() - (long) AnvilSong.STAR_AT;
+        act(p, pos, AnvilPayloads.STAR, 0, AnvilSong.STAR_AT, 0F);
+        h.assertTrue(w.stage == AnvilSong.GRIND && w.star == 1F && w.held < 0F, "pressed as the ring closed, then the wheel: " + w.star);
+        for (int i = 0; i < AnvilSong.GRIND_SAMPLES; i++) {
+            float t = 5F * i + 5F;
+            w.stageStart = level.getGameTime() - (long) t;
+            act(p, pos, AnvilPayloads.GRIND, i, t, 0F);
+            if (i == 0) {
+                act(p, pos, AnvilPayloads.GRIND, 1, t + 1F, 0F);
+                h.assertTrue(w.taps.size() == 1, "a sample faster than the wheel turns isn't taken");
+            }
+        }
+        h.assertTrue(w.stage == AnvilSong.HILT && w.grind == 1F, "two passes on the line, then the hilt: " + w.grind);
+        for (int i = 0; i < 6 && w.stage == AnvilSong.HILT; i++) beatOnTime(h, p, be, AnvilPayloads.TAP);
+        h.assertTrue(w.stage == AnvilSong.BALANCE, "at B and up it's balanced on the horn after");
+        w.stageStart = level.getGameTime() - 40;
+        act(p, pos, AnvilPayloads.BALANCE, 0, 40F, 0F);
+        WeaponForged f = be.slot().get(AnvilContent.FORGED.get());
+        h.assertTrue(be.work() == null && be.slot().is(WarAnvil.item("sovereign_longsword")) && f != null
+                && f.quality() == AnvilSong.Quality.FLAWLESS.ordinal() && f.flaw() == AnvilSong.NO_FLAW, "all four true: Flawless, unflawed, got " + f);
+        h.succeed();
+    }
+
+    private static final float BALANCE_LATE = 190F;
 
     /** An anvil with the Forge two blocks off. */
     private static WarAnvilBlockEntity anvilByForge(GameTestHelper h) {

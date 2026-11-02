@@ -1,6 +1,7 @@
 package dev.awaken.arms.anvil.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.Awaken;
 import dev.awaken.arms.WeaponMesh;
 import dev.awaken.arms.anvil.AnvilContent;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.Direction;
@@ -36,7 +38,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * The War Anvil drawn (SPEC §46.3): the work as the weapon's own mesh through the weapon shader's heat (in the Forge's
  * mouth, on the face drawn out strike by strike, in the trough, the hilt coming tap by tap), the hammer and tongs (in
- * the smith's hands, laid by, or on the peg), a catalyst being set in the guard while a weapon is attuned (§46.8), and
+ * the smith's hands, laid by, or on the peg), a catalyst being set in the guard while a weapon is attuned (§46.8), the
+ * Deepglass weight on the grip as it's balanced and the column of starlight an S-rank weapon is quenched in (§46.9), and
  * a finished weapon standing hilt up in the slot, waking as it's set there. Where each is: {@link AnvilScene}.
  */
 public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlockEntity, WarAnvilRenderer.State> {
@@ -49,6 +52,44 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         final ItemStackRenderState gem = new ItemStackRenderState();
         final Quaternionf gemTurn = new Quaternionf();
         boolean hasGem;
+        /** S's starlight (§46.9), drawn by its own geometry so a frame makes nothing new. */
+        final Column column = new Column();
+    }
+
+    /** A soft column of starlight from high over the anvil down onto the work: a bright core in a wide fading sheath. */
+    static final class Column implements SubmitNodeCollector.CustomGeometryRenderer {
+        float k, shimmer;
+        /** Its foot (block-relative): over the anvil's face, where the work is held up into it. */
+        final org.joml.Vector3f at = new org.joml.Vector3f();
+        static final float HIGH = 5F;
+
+        @Override
+        public void render(PoseStack.Pose pose, VertexConsumer vc) {
+            box(pose, vc, 0.05F, 0.75F * k * shimmer);
+            box(pose, vc, 0.13F, 0.32F * k);
+            box(pose, vc, 0.26F, 0.12F * k);
+        }
+
+        /** Four sides, each both ways round, bright at the foot and gone at the top. */
+        private static void box(PoseStack.Pose pose, VertexConsumer vc, float r, float a) {
+            int foot = argb(a), top = argb(0F);
+            for (int i = 0; i < 4; i++) {
+                // the corners in turn round the square: (-r,-r), (r,-r), (r,r), (-r,r)
+                float x0 = i == 0 || i == 3 ? -r : r, z0 = i < 2 ? -r : r, x1 = i < 2 ? r : -r, z1 = i == 0 ? -r : i == 3 ? -r : r;
+                vc.addVertex(pose, x0, 0F, z0).setColor(foot);
+                vc.addVertex(pose, x0, HIGH, z0).setColor(top);
+                vc.addVertex(pose, x1, HIGH, z1).setColor(top);
+                vc.addVertex(pose, x1, 0F, z1).setColor(foot);
+                vc.addVertex(pose, x1, 0F, z1).setColor(foot);
+                vc.addVertex(pose, x1, HIGH, z1).setColor(top);
+                vc.addVertex(pose, x0, HIGH, z0).setColor(top);
+                vc.addVertex(pose, x0, 0F, z0).setColor(foot);
+            }
+        }
+
+        private static int argb(float a) {
+            return Math.round(Mth.clamp(a, 0F, 1F) * 255F) << 24 | 0xE0EFFF;
+        }
     }
 
     private static final Identifier HAMMER = Awaken.id("textures/item/arms/anvil_hammer.png"), TONGS = Awaken.id("textures/item/arms/anvil_tongs.png"),
@@ -83,6 +124,9 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         if (level != null && be.work() != null) AnvilBodies.seen(level, be.getBlockPos(), be.work());
         AnvilWork w = be.work();
         s.weapon = w == null ? null : w.weapon;
+        s.column.k = s.placed.column;
+        s.column.shimmer = 0.85F + 0.15F * Mth.sin(now * 0.4F);
+        if (s.column.k > 0F) AnvilScene.model(AnvilScene.frame(be.getBlockState(), FRAME), 0.5F, 1.05F, 7.5F / 16F, s.column.at);
         s.hasGem = s.placed.hasGem;
         if (s.hasGem) {
             var catalyst = dev.awaken.arms.ArmsForge.catalystItem(dev.awaken.core.Forces.Force.values()[s.placed.gemForce]);
@@ -128,6 +172,12 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             ps.rotate(com.mojang.math.Axis.XP.rotationDegrees(-90F));
             ps.scale(p.gemScale, p.gemScale, p.gemScale);
             s.gem.submit(ps, out, LightCoordsUtil.withBlock(s.lightCoords, 13), OverlayTexture.NO_OVERLAY, 0);
+            ps.popPose();
+        }
+        if (s.column.k > 0F) {
+            ps.pushPose();
+            ps.translate(s.column.at.x, s.column.at.y, s.column.at.z);
+            out.submitCustomGeometry(ps, RenderTypes.lightning(), s.column);
             ps.popPose();
         }
         tool(ps, out, p.stone ? "anvil/stone_hammer" : "anvil/hammer", p.stone ? STONE : HAMMER, p.hammer, s.lightCoords);

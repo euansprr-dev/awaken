@@ -288,8 +288,40 @@ public final class WarAnvil {
                 else be.changed();
             }
             case AnvilPayloads.RELEASE -> {
-                if (w == null || w.stage != AnvilSong.BIND || !mine(p, w) || w.taps.isEmpty()) return;
-                bind(level, be, w, p); // let go before the four: what was wound
+                if (w == null || w.stage != AnvilSong.BIND && w.stage != AnvilSong.TWIST || !mine(p, w) || w.taps.isEmpty()) return;
+                // let go before the four (the three): what was wound, or twisted
+                if (w.stage == AnvilSong.BIND) bind(level, be, w, p);
+                else twisted(level, be, w, p);
+            }
+            case AnvilPayloads.TWIST -> {
+                // a = 0 as the hold begins, then each turn done (1 to 3)
+                if (w == null || w.stage != AnvilSong.TWIST || !mine(p, w) || a.a() != w.taps.size()) return;
+                float t = clamp(a.t(), now - w.stageStart);
+                w.taps.add(w.taps.isEmpty() ? t : Math.max(w.taps.getLast(), t));
+                if (w.taps.size() > AnvilSong.TWISTS) twisted(level, be, w, p);
+                else be.changed();
+            }
+            case AnvilPayloads.GRIND -> {
+                if (w == null || w.stage != AnvilSong.GRIND || !mine(p, w) || a.a() != w.taps.size()) return;
+                float t = clamp(a.t(), now - w.stageStart);
+                if (w.grindLast >= 0F && t - w.grindLast < AnvilSong.GRIND_GAP - 1F) return; // faster than the wheel turns: not taken
+                w.grindLast = t;
+                ground(level, be, w, AnvilSong.grind(Mth.clamp(a.aim(), -2F, 2F)), p);
+            }
+            case AnvilPayloads.BALANCE -> {
+                if (w == null || w.stage != AnvilSong.BALANCE || !mine(p, w)) return;
+                w.balance = AnvilSong.balance(clamp(a.t(), now - w.stageStart), Mth.clamp(a.aim(), -1F, 1F));
+                level.playSound(p, be.getBlockPos(), AnvilContent.RING.get(), SoundSource.BLOCKS, 0.8F, 1.5F);
+                finish(level, be, w);
+            }
+            case AnvilPayloads.STAR -> {
+                if (w == null || w.stage != AnvilSong.STAR || !mine(p, w)) return;
+                // the light is its water: no hairline from holding it too long
+                w.star = AnvilSong.star(clamp(a.t(), now - w.stageStart) - AnvilSong.STAR_AT);
+                w.quench = w.star;
+                w.held = -1F;
+                level.playSound(p, be.getBlockPos(), AnvilContent.RING.get(), SoundSource.BLOCKS, 1F, 1.8F);
+                quenched(level, be, w);
             }
             case AnvilPayloads.DRAW -> {
                 if (w == null) draw(p, be);
@@ -317,8 +349,8 @@ public final class WarAnvil {
     /** The smith hears their own pull, strikes and quench as they make them (their client plays them); everyone else from here. */
     static void pull(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float heat, @Nullable ServerPlayer smith) {
         w.heat = heat;
-        // attuning, the hot steel goes straight to the stone's three taps in the guard
-        w.begin(w.kind == AnvilWork.ATTUNE ? AnvilSong.HILT : AnvilSong.SHAPE, level.getGameTime());
+        // attuning, the hot steel goes straight to the stone's three taps in the guard; from A the bar is twisted first (§46.9)
+        w.begin(w.kind == AnvilWork.ATTUNE ? AnvilSong.HILT : w.acts() && w.tier >= 4 ? AnvilSong.TWIST : AnvilSong.SHAPE, level.getGameTime());
         level.playSound(smith, w.forge, AnvilContent.PULL.get(), SoundSource.BLOCKS, 1F, 1F);
         be.changed();
     }
@@ -336,11 +368,13 @@ public final class WarAnvil {
         } else level.playSound(null, at, AnvilContent.MISS.get(), SoundSource.BLOCKS, 0.6F, 1F);
         if (!hilt && !w.memory() && l.size() == w.song.flipAfter()) level.playSound(smith, at, AnvilContent.FLIP.get(), SoundSource.BLOCKS, 0.8F, 1F);
         if (l.size() >= w.beatsNeeded()) {
-            if (hilt) finish(level, be, w);
-            else {
-                w.begin(AnvilSong.QUENCH, level.getGameTime());
-                be.changed();
-            }
+            // from B the hilt's on, then the balance on the horn; at S the light is its water (§46.9)
+            if (hilt && w.acts() && w.tier >= 3) w.begin(AnvilSong.BALANCE, level.getGameTime());
+            else if (hilt) {
+                finish(level, be, w);
+                return;
+            } else w.begin(w.acts() && w.tier >= 5 ? AnvilSong.STAR : AnvilSong.QUENCH, level.getGameTime());
+            be.changed();
             return;
         }
         be.changed();
@@ -364,7 +398,34 @@ public final class WarAnvil {
             finish(level, be, w);
             return;
         }
-        w.begin(AnvilSong.HILT, level.getGameTime());
+        // from C the edge is ground on the wheel before the hilt goes on (§46.9)
+        w.taps.clear();
+        w.begin(w.acts() && w.tier >= 2 ? AnvilSong.GRIND : AnvilSong.HILT, level.getGameTime());
+        be.changed();
+    }
+
+    /** The bar's twist (A): how even the turns were of three, held long enough to be real; then it's drawn out. */
+    static void twisted(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, @Nullable ServerPlayer smith) {
+        int turns = Math.min(AnvilSong.TWISTS, w.taps.size() - 1);
+        float[] each = new float[AnvilSong.TWISTS];
+        for (int k = 1; k <= turns; k++) each[k - 1] = w.taps.get(k) - w.taps.get(k - 1);
+        float held = turns > 0 ? w.taps.get(turns) - w.taps.getFirst() : 0F;
+        w.twist = AnvilSong.twist(AnvilSong.evenness(each, turns), turns, held);
+        level.playSound(smith, be.getBlockPos(), AnvilContent.SCRAPE.get(), SoundSource.BLOCKS, 0.9F, 0.7F);
+        w.taps.clear();
+        w.begin(AnvilSong.SHAPE, level.getGameTime());
+        be.changed();
+    }
+
+    /** A grind sample (C): the two passes' twenty, then the hilt. */
+    static void ground(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float score, @Nullable ServerPlayer smith) {
+        w.taps.add(score);
+        if (w.taps.size() % AnvilSong.PASS == 0) level.playSound(smith, be.getBlockPos(), AnvilContent.SCRAPE.get(), SoundSource.BLOCKS, 0.8F, 1.6F);
+        if (w.taps.size() >= AnvilSong.GRIND_SAMPLES) {
+            w.grind = AnvilWork.mean(w.taps);
+            w.taps.clear();
+            w.begin(AnvilSong.HILT, level.getGameTime());
+        }
         be.changed();
     }
 
@@ -444,6 +505,20 @@ public final class WarAnvil {
                     quenched(level, be, w);
                 }
             }
+            // the ranks' acts (§46.9) left alone settle themselves, poorly
+            case AnvilSong.BALANCE -> {
+                if (t > AnvilSong.BALANCE_ALONE + AnvilSong.LAG) {
+                    w.balance = AnvilSong.balance(AnvilSong.BALANCE_ALONE, 1F);
+                    finish(level, be, w);
+                }
+            }
+            case AnvilSong.STAR -> {
+                if (t > AnvilSong.STAR_ALONE + AnvilSong.LAG) {
+                    w.star = w.quench = AnvilSong.star(AnvilSong.STAR_ALONE - AnvilSong.STAR_AT);
+                    w.held = -1F;
+                    quenched(level, be, w);
+                }
+            }
             default -> {}
         }
     }
@@ -473,7 +548,8 @@ public final class WarAnvil {
         else {
             float heat = Math.max(0F, w.heat);
             flaw = AnvilSong.burnt(heat) ? AnvilSong.BURNT_TIP : w.held >= 0F && AnvilSong.brittle(w.held) ? AnvilSong.BRITTLE : AnvilSong.NO_FLAW;
-            float score = AnvilSong.score(heat, AnvilWork.mean(w.scores), Math.max(0F, w.quench), AnvilWork.mean(w.taps));
+            float score = AnvilSong.withActs(AnvilSong.score(heat, AnvilWork.mean(w.scores), Math.max(0F, w.quench), AnvilWork.mean(w.taps)),
+                    w.twist, w.grind, w.balance, w.star);
             q = AnvilSong.quality(AnvilSong.helped(score, w.help), flaw != AnvilSong.NO_FLAW);
         }
         ItemStack made = new ItemStack(item(w.weapon));

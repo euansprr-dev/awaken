@@ -17,10 +17,12 @@ public final class AnvilPayloads {
      * What the smith did: one of the acts below, its beat's number (a), when (t, ticks from the stage's start) and its aim.
      * By hand at E: KNAP a flake (a its number), WIND the cord (a 0 as the hold begins, then each turn done), RELEASE it.
      * From the window for a weapon in hand (§46.8): HELD begins one (a: AnvilWork.TEMPER, REFORGE or ATTUNE), LIST opens
-     * the Armoury instead.
+     * the Armoury instead. The ranks' acts (§46.9): TWIST the clamped bar (a 0 as the hold begins, then each turn; RELEASE
+     * lets go early), GRIND a sample (a its number, aim how far the edge is off the line), BALANCE it settled (t when, aim
+     * how far the weight was from its point), STAR the press as the light's ring closes.
      */
     public static final int RESUME = 1, LEAVE = 2, PULL = 3, STRIKE = 4, PLUNGE = 5, LIFT = 6, TAP = 7, DRAW = 8, KNAP = 9, WIND = 10, RELEASE = 11,
-            HELD = 12, LIST = 13;
+            HELD = 12, LIST = 13, TWIST = 14, GRIND = 15, BALANCE = 16, STAR = 17;
 
     /** Client → server: an act at the anvil. */
     public record Act(BlockPos pos, int act, int a, float t, float aim) implements CustomPacketPayload {

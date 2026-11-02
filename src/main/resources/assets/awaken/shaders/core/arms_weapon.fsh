@@ -36,9 +36,10 @@ const float TAU = 6.2831853;
 const vec3 SCRIPT[13] = vec3[](vec3(0.0), vec3(1.0, 0.54, 0.30), vec3(0.56, 0.85, 1.0), vec3(1.0, 0.85, 0.29),
         vec3(0.73, 0.58, 1.0), vec3(0.31, 0.88, 0.76), vec3(0.73, 0.76, 0.82), vec3(0.62, 0.88, 0.48),
         vec3(1.0, 0.37, 0.39), vec3(0.95, 0.77, 0.35), vec3(0.31, 0.71, 0.92), vec3(0.95, 0.92, 0.84), vec3(0.55, 0.42, 1.0));
-// a Force's colour in the steel while its stone is set (SPEC §46.8), by Forces.Force ordinal + 1: Heat, Charge, Gravity, Spirit, Frost
-const vec3 FORCE_GLOW[6] = vec3[](vec3(0.0), vec3(1.0, 0.55, 0.18), vec3(0.55, 0.85, 1.0), vec3(0.62, 0.42, 1.0),
-        vec3(0.62, 0.69, 1.0), vec3(0.70, 0.90, 1.0));
+// a Force's colour in the steel while its stone is set (SPEC §46.8), by Forces.Force ordinal + 1: Heat, Charge, Gravity, Spirit, Frost;
+// 6 the starlight an S-rank weapon is quenched in (§46.9)
+const vec3 FORCE_GLOW[7] = vec3[](vec3(0.0), vec3(1.0, 0.55, 0.18), vec3(0.55, 0.85, 1.0), vec3(0.62, 0.42, 1.0),
+        vec3(0.62, 0.69, 1.0), vec3(0.70, 0.90, 1.0), vec3(0.88, 0.94, 1.0));
 
 // the studio a metal reflects: a cool sky over a warm dark floor, a soft-box strip above
 vec3 studio(vec3 r) {
@@ -134,7 +135,7 @@ void main() {
         // worked again (SPEC §46.8) the glow can take a colour: a Force's as its stone is set, sinking into the metal even as
         // it cools, or a Lord's (the weapon's accent) as its weapon is reforged
         if (script.x > 0.5) {
-            vec3 tint = script.x > 14.5 ? accent : FORCE_GLOW[min(int(script.x + 0.5), 5)];
+            vec3 tint = script.x > 14.5 ? accent : FORCE_GLOW[min(int(script.x + 0.5), 6)];
             glow = mix(glow, tint * (0.25 + 0.85 * h), script.y);
             col += tint * script.y * smoothstep(0.25, 0.6, metal) * (0.2 + 0.25 * diffuse);
         }

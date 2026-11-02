@@ -13,6 +13,8 @@ public final class AnvilSong {
     private AnvilSong() {}
 
     public static final int HEAT = 0, SHAPE = 1, QUENCH = 2, HILT = 3, KNAP = 4, BIND = 5;
+    /** The ranks' acts (§46.9): A's twist before the draw out, C's grind after the quench, B's balance after the hilt, S's starlight for the water. */
+    public static final int TWIST = 6, GRIND = 7, BALANCE = 8, STAR = 9;
 
     // ---- heat --------------------------------------------------------------------------------------------------------
 
@@ -246,6 +248,72 @@ public final class AnvilSong {
     /** By hand: 0.6 knap + 0.4 bind. */
     public static float handScore(float knap, float bind) {
         return 0.6F * knap + 0.4F * bind;
+    }
+
+    // ---- the ranks' acts (§46.9) -----------------------------------------------------------------------------------------
+
+    /** A, the twist: the bar clamped in the anvil, three even turns of the mouse; a hold this short for the three scores less. */
+    public static final int TWISTS = 3;
+    public static final float TWIST_MIN = 30F;
+
+    public static float twist(float evenness, int turns, float held) {
+        return Mth.clamp(evenness, 0F, 1F) * Mth.clamp(turns / (float) TWISTS, 0F, 1F) * Mth.clamp(held / TWIST_MIN, 0F, 1F);
+    }
+
+    /**
+     * C, the grind: two passes on the wheel, one an edge, the wheel turning while use is held. Every GRIND_GAP ticks of it
+     * the client says how far the edge is off the line, in the band's half-widths; PASS of them make a pass.
+     */
+    public static final int PASS = 10, GRIND_SAMPLES = 2 * PASS;
+    public static final float GRIND_GAP = 5F;
+
+    /** Where the line is across the band (-1..1) at t ticks into the act: it drifts, slowly, two waves at once (both sides the same). */
+    public static float grindLine(float t) {
+        return 0.55F * Mth.sin(t * 0.045F) + 0.25F * Mth.sin(t * 0.11F + 1.3F);
+    }
+
+    /** On the line is 1; a half-width off is 0.5; a full one, nothing. */
+    public static float grind(float off) {
+        return Mth.clamp(1F - Math.abs(off), 0F, 1F);
+    }
+
+    /**
+     * B, the balance: the blade across the horn tips toward its heavy end; the Deepglass weight slides along it (0 the
+     * guard, 1 the pommel's end) and it settles level at its point, the same on both sides for this work (read from the
+     * stage's start). Settled in BALANCE_QUICK is whole, by BALANCE_SLOW half; left BALANCE_ALONE it settles itself.
+     */
+    public static final float BALANCE_QUICK = 60F, BALANCE_SLOW = 200F, BALANCE_ALONE = 240F, LEVEL = 0.06F;
+
+    public static float balancePoint(long stageStart) {
+        long h = stageStart * 0x9E3779B97F4A7C15L;
+        h ^= h >>> 29;
+        return 0.25F + 0.5F * ((h >>> 40) & 0xFFFF) / 65535F;
+    }
+
+    /** How quickly it settled, and how near the point the weight was (a hair off still settles, slowly). */
+    public static float balance(float ticks, float off) {
+        float quick = ticks <= BALANCE_QUICK ? 1F : Mth.clamp(1F - 0.5F * (ticks - BALANCE_QUICK) / (BALANCE_SLOW - BALANCE_QUICK), 0.3F, 1F);
+        return quick * Mth.clamp(1F - Math.max(0F, Math.abs(off) - LEVEL) / 0.2F, 0.5F, 1F);
+    }
+
+    /** S, the starlight: the light's ring closes on the point STAR_AT ticks after the column comes down; press as it does. */
+    public static final float STAR_AT = 50F, STAR_ALONE = 110F;
+
+    public static float star(float off) {
+        float a = Math.abs(off);
+        return a <= 3F ? 1F : Mth.clamp(1F - (a - 3F) / 17F, 0.3F, 1F);
+    }
+
+    /** The ranks' acts (twist, grind, balance, starlight; -1 where not done) each take a tenth of the score (the armour's rule, §44.4). */
+    public static float withActs(float score, float... acts) {
+        int k = 0;
+        float sum = 0F;
+        for (float a : acts) {
+            if (a < 0F) continue;
+            k++;
+            sum += Mth.clamp(a, 0F, 1F);
+        }
+        return score * (1F - 0.1F * k) + 0.1F * sum;
     }
 
     // ---- a helper ----------------------------------------------------------------------------------------------------

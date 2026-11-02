@@ -21,10 +21,11 @@ import java.util.UUID;
  * into the trough, who is making it and the Forge it heats in (at E, by hand, the anvil itself). v2 adds whether it's
  * forged or made from memory, the bind's score and the helpers' strikes (a v1 save reads as forged, unbound, unhelped).
  * v3 adds a weapon worked rather than made (tempered, attuned or reforged: the weapon itself and its target; a v2 save
- * reads with none). Synced to everyone near with the anvil, so they see it glow and draw out.
+ * reads with none). v4 adds the ranks' acts' scores (§46.9: the twist, the grind, the balance, the starlight; a v3 save
+ * reads with none done). Synced to everyone near with the anvil, so they see it glow and draw out.
  */
 public final class AnvilWork {
-    public static final int SCHEMA = 3;
+    public static final int SCHEMA = 4;
     /**
      * Forged in full, or made from memory (one heat, one strike, the quench; always Fine); or a weapon worked (§46.8):
      * tempered (a strike a level), attuned (a stone set in the guard) or reforged (the next tier's metal folded in).
@@ -52,9 +53,13 @@ public final class AnvilWork {
     /** The weapon being worked (tempered, attuned, reforged; empty while one is made), and what it's worked to: the Temper level, the Force's ordinal, the tier. */
     public final ItemStack piece;
     public final int target;
+    /** The ranks' acts' scores (§46.9), -1 until done (or where the rank has none). */
+    public float twist = -1F, grind = -1F, balance = -1F, star = -1F;
     /** The last helper's strike (game tick) and the last flake (ticks from the stage's start); not saved. */
     public long helpLast = Long.MIN_VALUE / 2;
     public float knapLast = -1F;
+    /** The last grind sample (ticks from the stage's start); not saved. */
+    public float grindLast = -1F;
     /** Read once from the weapon's id: its style, tier (0 E to 5 S) and song. */
     public final String style;
     public final int tier;
@@ -118,6 +123,11 @@ public final class AnvilWork {
         return tier == 0 && kind <= MEMORY;
     }
 
+    /** A weapon forged in full at its tier gets its rank's acts (§46.9): not from memory, not a blade alone, not one worked again. */
+    public boolean acts() {
+        return kind == FORGE && !style.equals(BLADE);
+    }
+
     /** A finished weapon worked again (tempered, attuned, reforged): it's whole on the anvil, its hilt on, never drawn out from a bar. */
     public boolean whole() {
         return kind >= TEMPER;
@@ -134,7 +144,7 @@ public final class AnvilWork {
 
     /** The beats this stage strikes (the draw out's strikes or the knap's flakes, the hilt's taps). */
     public List<Float> beats() {
-        return stage == AnvilSong.HILT || stage == AnvilSong.BIND ? taps : scores;
+        return stage == AnvilSong.HILT || stage == AnvilSong.BIND || stage == AnvilSong.TWIST || stage == AnvilSong.GRIND ? taps : scores;
     }
 
     public int beatsNeeded() {
@@ -142,6 +152,9 @@ public final class AnvilWork {
             case AnvilSong.HILT -> AnvilSong.TAPS;
             case AnvilSong.KNAP -> memory() ? 1 : AnvilSong.FLAKES;
             case AnvilSong.BIND -> AnvilSong.TURNS + 1;
+            case AnvilSong.TWIST -> AnvilSong.TWISTS + 1;
+            case AnvilSong.GRIND -> AnvilSong.GRIND_SAMPLES;
+            case AnvilSong.BALANCE, AnvilSong.STAR -> 1;
             default -> memory() ? 1 : kind == TEMPER ? gain() : song.strikes();
         };
     }
@@ -165,20 +178,26 @@ public final class AnvilWork {
     public void begin(int stage, long now) {
         this.stage = stage;
         this.stageStart = now;
-        if (stage == AnvilSong.BIND) taps.clear(); // a hold let go of, or left, is wound again from the start
+        // a hold let go of, or left, is wound (or twisted) again from the start
+        if (stage == AnvilSong.BIND || stage == AnvilSong.TWIST) taps.clear();
         this.strikeBase = beats().size();
         this.knapLast = -1F;
+        this.grindLast = -1F;
         if (stage == AnvilSong.QUENCH) plunge = -1F;
     }
 
-    /** v2's and v3's fields, kept beside the rest (one codec holds at most sixteen). */
-    private record More(int kind, float bind, int help, ItemStack piece, int target) {
+    /** v2's, v3's and v4's fields, kept beside the rest (one codec holds at most sixteen). */
+    private record More(int kind, float bind, int help, ItemStack piece, int target, float twist, float grind, float balance, float star) {
         static final MapCodec<More> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.INT.optionalFieldOf("kind", FORGE).forGetter(More::kind),
                 Codec.FLOAT.optionalFieldOf("bind", -1F).forGetter(More::bind),
                 Codec.INT.optionalFieldOf("help", 0).forGetter(More::help),
                 ItemStack.OPTIONAL_CODEC.optionalFieldOf("piece", ItemStack.EMPTY).forGetter(More::piece),
-                Codec.INT.optionalFieldOf("target", 0).forGetter(More::target)
+                Codec.INT.optionalFieldOf("target", 0).forGetter(More::target),
+                Codec.FLOAT.optionalFieldOf("twist", -1F).forGetter(More::twist),
+                Codec.FLOAT.optionalFieldOf("grind", -1F).forGetter(More::grind),
+                Codec.FLOAT.optionalFieldOf("balance", -1F).forGetter(More::balance),
+                Codec.FLOAT.optionalFieldOf("star", -1F).forGetter(More::star)
         ).apply(i, More::new));
     }
 
@@ -197,8 +216,14 @@ public final class AnvilWork {
             Codec.FLOAT.listOf().optionalFieldOf("taps", List.of()).forGetter(w -> w.taps),
             UUIDUtil.CODEC.fieldOf("forger").forGetter(w -> w.forger),
             BlockPos.CODEC.fieldOf("forge").forGetter(w -> w.forge),
-            More.CODEC.forGetter(w -> new More(w.kind, w.bind, w.help, w.piece, w.target))
-    ).apply(i, (v, weapon, stage, start, base, mats, heat, quench, plunge, held, scores, taps, forger, forge, more) ->
-            new AnvilWork(weapon, stage, start, base, mats, heat, quench, plunge, held, scores, taps, forger, forge, more.kind(), more.bind(), more.help(),
-                    more.piece(), more.target())));
+            More.CODEC.forGetter(w -> new More(w.kind, w.bind, w.help, w.piece, w.target, w.twist, w.grind, w.balance, w.star))
+    ).apply(i, (v, weapon, stage, start, base, mats, heat, quench, plunge, held, scores, taps, forger, forge, more) -> {
+        AnvilWork w = new AnvilWork(weapon, stage, start, base, mats, heat, quench, plunge, held, scores, taps, forger, forge, more.kind(), more.bind(),
+                more.help(), more.piece(), more.target());
+        w.twist = more.twist();
+        w.grind = more.grind();
+        w.balance = more.balance();
+        w.star = more.star();
+        return w;
+    }));
 }

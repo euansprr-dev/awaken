@@ -17637,3 +17637,43 @@ weapon back through the slot; Oren's Mark's start; the Forge's plain use points 
 price and catalyst taken, attuned, Marks kept), `arms_anvil_reforge` (a Marked weapon: the next tier's, Marks, name,
 attunement and Temper kept, the story reforged with its quality; a Lord-forged: its body, Art and a point; the parts
 taken, and given back with the weapon when the anvil breaks mid-work).
+
+**46.9 Each rank's act (stage 4; plan §4.4).** A weapon forged in full at its tier (`AnvilWork.acts()`: not from memory,
+not a Hunter's blade forged alone, not one worked again) gets its rank's act and every act below it from C, each in its
+place in the song; at S: the heat, the twist, the draw out, the starlight, the grind, the hilt, the balance, the draw.
+Each act done is a tenth of the quality (the armour's rule, §44.4; `AnvilSong.withActs`: score x (1 - 0.1 an act) + 0.1
+x each act's mark). None can fail, and one left alone settles itself.
+- **A, the twist** (`AnvilSong.TWIST` 6, straight from the heat): the hot bar clamped on the face; hold use and circle
+  the mouse round the bar's end, three turns (`TWISTS`), the bar turning on its length as you go. Its mark is the bind's
+  evenness (`AnvilSong.evenness`) x the turns made of three x how long they took over 30 ticks (`TWIST_MIN`: hurried,
+  it takes less). Let go early and it's what was turned. Then the draw out. Payload `TWIST` 14 (a = 0 as the hold
+  begins, then each turn), and `RELEASE`.
+- **S, the starlight** (`STAR` 9, in place of the quench): the work is held point up over the face into a column of
+  white light that comes down onto the anvil; a ring of it closes on the point, meeting it 50 ticks in (`STAR_AT`), and
+  you press as it does: 1 within 3 ticks either way, falling to 0.3 at 20 (`AnvilSong.star`). It's the quench's mark
+  too, and light leaves no brittle hairline. Left alone (110 ticks, `STAR_ALONE`) it's 0.3. The steel glows the
+  starlight's white as it drinks it (the weapon shader's glow code 6). Payload `STAR` 17.
+- **C, the grind** (`GRIND` 7, after the quench or the starlight): the view glides to the nearest grindstone within six
+  blocks of the anvil (the anvil's face while there's none: the rebuilds' gate comes with them), the blade across the
+  wheel's rim, edge down. Hold use to turn the wheel: a gold line drifts up and down a channel beside it
+  (`AnvilSong.grindLine`, two slow waves) and the mouse's height is the edge. Every 5 ticks of turning (`GRIND_GAP`) the
+  client says how far the edge is off the line, in half the channel's height, marked 1 - |off| (`AnvilSong.grind`), and
+  sparks fly off the edge; 10 make a pass (`PASS`), two passes the act, its mark their mean. A touch quicker than the
+  wheel turns isn't taken. Then the hilt. Payload `GRIND` 15 (a = the touch's index, aim = how far off).
+- **B, the balance** (`BALANCE` 8, after the hilt): the whole weapon rests across the horn's tip and tips toward its
+  heavy end; slide the Deepglass weight along the grip with the mouse (the guard to the pommel's end) until it lies
+  level (within 0.06 of its point, `LEVEL`) and hold it there a second. The point is the same on both sides for that
+  work (0.25 to 0.75 along the grip, `AnvilSong.balancePoint` from the stage's start). Settled within 60 ticks
+  (`BALANCE_QUICK`) is whole, by 200 half (`BALANCE_SLOW`), times how near the point it was (a hair off still counts;
+  at most half lost); left alone 240 ticks (`BALANCE_ALONE`) it settles itself, poorly. Then the draw. Payload
+  `BALANCE` 16 (t, the weight's distance from the point).
+- **The view**: a place over the wheel on your side of it, one at the horn's side, and one back from the face looking up
+  the blade into the light (`AnvilCamera` places 4 to 6).
+- **State**: `AnvilWork` schemaVersion 4 (+ `twist`, `grind`, `balance`, `star`, -1 until done; a v3 work reads with
+  none done). `/awaken arms anvil autoplay true` plays the acts too.
+- **Still to come in stage 4**: the rebuilds as the gates (§46.6), the bellows, the rack, the twist's ripples in A steel
+  and S's runes waking.
+
+Tests: `arms_anvil_verbs` (the tenth rule and the twist's, balance's and starlight's curves; a C Longsword grinds after
+its quench and then takes its hilt; an S Longsword twists, draws out, takes the starlight, grinds twenty touches (one
+too quick refused), takes its hilt and balances, and a perfect song is Flawless with no flaw).
