@@ -1,0 +1,54 @@
+# The Ritual of the Bell's statues in motion (their rise, walk, wind-up and strike), filmed for before/after strips.
+# A fresh SURVIVAL world; the ritual commands only jump to the beats. Third person from behind the player, who stands in
+# the nave: the statues come in from the plinths at the sides, so the walk is seen side on.
+# Clips: rm_rise (the twelve rise), rm_walk_doors (from the doors' end, side on), rm_walk_plate (from the first plate,
+# looking west: one comes head on), rm_kneel (the End sends them back to their knees).
+# Clips: run-autopilot/clips/<name> (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
+world ritualmotion survival 4242
+waitworld
+gui 0
+wait 100
+cmd awaken admin story prologue
+wait 300
+cmd awaken admin story enter
+wait 60
+cmd awaken admin story ritual hall
+wait 12
+cmd awaken admin story ritual start
+wait 200
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+hud off
+# the waking: the statues rise 92-152 ticks in (the camera is let go from the face 96-126)
+cmd awaken admin story ritual beat 5
+cmd awaken admin story ritual hall
+look 0 8
+camera back
+wait 80
+cmd awaken ascent pilot rec rm_rise 110 2
+wait 112
+shot rm_rise_end
+# the Judgement from the doors' end of the nave: the first two statues come in from the sides
+cmd awaken admin story ritual hall
+look 0 10
+cmd awaken admin story ritual beat 6
+wait 30
+cmd awaken ascent pilot rec rm_walk_doors 240 2
+wait 242
+shot rm_walk_doors_end
+# again from the first plate, looking west
+cmd awaken admin story ritual plate 0
+look 90 8
+cmd awaken admin story ritual beat 6
+wait 30
+cmd awaken ascent pilot rec rm_walk_plate 240 2
+wait 242
+shot rm_walk_plate_end
+# the End: every statue goes back to its knees
+cmd awaken admin story ritual hall
+look 0 6
+cmd awaken admin story ritual beat 7
+cmd awaken ascent pilot rec rm_kneel 40 2
+wait 42
+shot rm_kneel_end
+quit
