@@ -7,6 +7,9 @@ import dev.awaken.kin.KinWorld;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -16,6 +19,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -24,7 +29,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Bells that lie where they were won (SPEC §43.16): set one down ({@link #place}), lift one ({@link #lift}), and the
+ * Bells that lie where they were won (SPEC §43.16): set one down ({@link #place}), lift one ({@link #lift}), a Lord's on
+ * its arena's floor ({@link #keep}), any other won at a real place ({@link #leave}), the Registry's wagon, and the
  * Lampwing's old roost, the Nook Bell hanging under a branch near a new home's fire (§4.6 of the plan).
  */
 final class FoundBells {
@@ -58,6 +64,10 @@ final class FoundBells {
                 return;
             }
         }
+        if (d.id().equals("shepherd") && VillageBells.kept(level, pos)) {
+            Bells.say(p, "[A wolf's lying beside it and won't let you near. A bone might win her over.]");
+            return;
+        }
         if (!be.claimants.isEmpty() && !be.claimants.contains(p.getUUID())) {
             Bells.say(p, "[This one wasn't left for you. It's for the hunter who found it.]");
             return;
@@ -67,7 +77,7 @@ final class FoundBells {
             level.playSound(null, pos, BellContent.note(d.no()), SoundSource.BLOCKS, 1.5F, 1F);
             be.setChanged();
         } else if (be.lifted.add(p.getUUID())) {
-            if (!be.gate.isEmpty()) lifted(level, pos, p.getUUID());
+            lifted(level, pos, p.getUUID());
             if (Bells.has(p, d.id())) Bells.say(p, "[You've already got " + d.name().replaceFirst("^The ", "the ") + ". This one stays for whoever it's for.]");
             else {
                 Bells.ring(p, d, be.where);
@@ -118,7 +128,7 @@ final class FoundBells {
         }
         if (!gate.isEmpty()) {
             BellWorld w = BellWorld.get(level.getServer());
-            w.kept.add(new BellWorld.Kept(gate, at, no, claimants));
+            w.kept.add(new BellWorld.Kept(gate, at, no, claimants, ""));
             w.setDirty();
         }
         return at;
@@ -159,6 +169,7 @@ final class FoundBells {
         ServerLevel ow = server.overworld();
         for (var it = w.kept.iterator(); it.hasNext(); ) {
             BellWorld.Kept k = it.next();
+            if (k.gate.isEmpty()) continue;
             Optional<dev.awaken.core.api.GateHooks.GateView> g = dev.awaken.core.api.GateHooks.get(ow, k.gate);
             if (g.isPresent() && !"RELEASED".equals(g.get().state())) continue;
             for (UUID u : k.left) w.lost.computeIfAbsent(u, x -> new ArrayList<>()).add(k.no);
@@ -190,6 +201,91 @@ final class FoundBells {
             }
         }
         Bells.save(p, b);
+    }
+
+    // ---- bells set down where they were won (stage 5) -----------------------------------------------------------------
+
+    /**
+     * Bell {@code d}, won by {@code ps} at a real place, set down on the free floor nearest {@code near} (never where
+     * someone's standing), glowing a little, for those of them who don't hold it and haven't one lying somewhere already,
+     * and watched until each has lifted theirs. With no floor near, it goes into their hands instead. Each is told
+     * {@code line}. True if it was set down.
+     */
+    static boolean leave(ServerLevel level, BlockPos near, BellCatalog.Def d, List<ServerPlayer> ps, String where, String line) {
+        List<ServerPlayer> due = new ArrayList<>();
+        for (ServerPlayer p : ps) if (!Bells.has(p, d.id()) && !waiting(level.getServer(), p.getUUID(), d.no()) && !due.contains(p)) due.add(p);
+        if (due.isEmpty()) return false;
+        BlockPos at = clear(level, near);
+        List<UUID> ids = due.stream().map(ServerPlayer::getUUID).toList();
+        if (at == null || !place(level, at, d.no(), where, ids, 0L, false, true)) {
+            for (ServerPlayer p : due) Bells.ring(p, d, where);
+            return false;
+        }
+        BellWorld w = BellWorld.get(level.getServer());
+        w.kept.add(new BellWorld.Kept("", at, d.no(), ids, level.dimension().identifier().toString()));
+        w.setDirty();
+        level.playSound(null, at, BellContent.note(d.no()), SoundSource.BLOCKS, 1.2F, 0.9F);
+        for (ServerPlayer p : due) Bells.say(p, line);
+        Awaken.LOG.info("[bells] {} {} set down at {} in {} ({}) for {}", d.number(), d.id(), at.toShortString(), level.dimension().identifier(), where, ids.size());
+        return true;
+    }
+
+    /** The same for one hunter, set down a few steps in front of them. */
+    static boolean leave(ServerPlayer p, BellCatalog.Def d, String where, String line) {
+        Vec3 ahead = p.getLookAngle().multiply(1, 0, 1);
+        ahead = ahead.lengthSqr() < 1.0E-4 ? new Vec3(0, 0, 1) : ahead.normalize();
+        BlockPos near = BlockPos.containing(p.getX() + ahead.x * 3, p.getY(), p.getZ() + ahead.z * 3);
+        return leave(p.level(), near, d, List.of(p), where, line);
+    }
+
+    /** {@link #floor}, but never a block someone's standing in. */
+    static @Nullable BlockPos clear(ServerLevel level, BlockPos c) {
+        for (int r = 0; r <= KEEP_REACH; r++)
+            for (int dx = -r; dx <= r; dx++)
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    for (int dy : KEEP_DY) {
+                        BlockPos at = c.offset(dx, dy, dz);
+                        if (!level.isLoaded(at)) continue;
+                        BlockState s = level.getBlockState(at);
+                        if (!(s.isAir() || s.canBeReplaced()) || !level.getFluidState(at).isEmpty()) continue;
+                        if (!level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) continue;
+                        if (!level.getEntitiesOfClass(net.minecraft.world.entity.player.Player.class, new AABB(at)).isEmpty()) continue;
+                        return at;
+                    }
+                }
+        return null;
+    }
+
+    /** Whether bell {@code no} is lying somewhere for this hunter to lift (a Lord's floor or anywhere else). */
+    static boolean waiting(net.minecraft.server.MinecraftServer server, UUID who, int no) {
+        for (BellWorld.Kept k : BellWorld.get(server).kept) if (k.no == no && k.left.contains(who)) return true;
+        return false;
+    }
+
+    /**
+     * Each 5 s: a bell set down outside a gate that's gone from its place (dug out, blown up, the ground gone) goes into
+     * the hands of each hunter it was left for, once they're about. A bell is never lost.
+     */
+    static void watch(net.minecraft.server.MinecraftServer server) {
+        BellWorld w = BellWorld.get(server);
+        for (var it = w.kept.iterator(); it.hasNext(); ) {
+            BellWorld.Kept k = it.next();
+            if (!k.gate.isEmpty() || k.dim.isEmpty()) continue;
+            Identifier dim = Identifier.tryParse(k.dim);
+            ServerLevel level = dim == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, dim));
+            if (level != null && !level.isLoaded(k.pos)) continue;
+            if (level != null && level.getBlockEntity(k.pos) instanceof FoundBellEntity be && be.no == k.no) continue;
+            BellCatalog.Def d = BellCatalog.of(k.no);
+            for (var who = k.left.iterator(); who.hasNext(); ) {
+                ServerPlayer p = server.getPlayerList().getPlayer(who.next());
+                if (p == null) continue;
+                who.remove();
+                if (Bells.ring(p, d, "picked up for you where it lay")) Bells.say(p, "[" + d.name() + " was knocked out of where it lay. It's in your hands.]");
+            }
+            if (k.left.isEmpty()) it.remove();
+            w.setDirty();
+        }
     }
 
     // ---- the Registry's wagon (the Provings' Great Bells) -----------------------------------------------------------

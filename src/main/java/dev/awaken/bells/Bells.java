@@ -2,6 +2,7 @@ package dev.awaken.bells;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.PlayDays;
+import dev.awaken.core.api.CitizenHooks;
 import dev.awaken.core.api.CityHooks;
 import dev.awaken.core.api.Destinations;
 import dev.awaken.delve.DelveContent;
@@ -287,18 +288,21 @@ public final class Bells {
     private static final Map<String, String> COURT_BELLS = Map.of("hunger", "hunger", "silence", "silence", "sleep", "sorrow",
             "machines", "throne", "mirrors", "oath", "storms", "crown", "roots", "grief", "ash", "ash");
 
-    /** A Sovereign set down what it carried: its domain's bell goes home with everyone within 96 who saw it, if a player won it. */
+    /**
+     * A Sovereign set down what it carried: its domain's bell lies where it fell for everyone within 96 who saw it, if a
+     * player won it (§43.16 stage 5).
+     */
     static void sovereignFell(ServerLevel level, LivingEntity s) {
         String boss = s.hasData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()) ? s.getData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()).bossId().orElse("") : "";
         int at = boss.indexOf("sovereign_");
         String id = at < 0 ? null : COURT_BELLS.get(boss.substring(at + 10));
         if (id == null || !(s.getKillCredit() instanceof ServerPlayer)) return;
         String where = "where the " + s.getName().getString() + " set down what it carried";
-        for (ServerPlayer p : level.players())
-            if (p.distanceToSqr(s) < 96 * 96) {
-                ring(p, id, where);
-                belfryPiece(p, BellContent.SOVEREIGN_RELIC.get(), "[The Sovereign left something behind: a shard of its crown, still holding a little light. A Great Belfry is hung with one of these.]");
-            }
+        List<ServerPlayer> saw = new ArrayList<>();
+        for (ServerPlayer p : level.players()) if (p.distanceToSqr(s) < 96 * 96) saw.add(p);
+        leave(level, s.blockPosition(), id, saw, where, "[Where the " + s.getName().getString() + " fell, it set down what it carried: a bell.]");
+        for (ServerPlayer p : saw)
+            belfryPiece(p, BellContent.SOVEREIGN_RELIC.get(), "[The Sovereign left something behind: a shard of its crown, still holding a little light. A Great Belfry is hung with one of these.]");
     }
 
     /**
@@ -560,7 +564,12 @@ public final class Bells {
             ring(p, "ember", "by your fire, the night you lit it");
             FoundBells.roost(p, h);
             FoundBells.wagon(p, h);
-            if (h.tier >= 2) ring(p, "founding", "the day your Hearth grew");
+            if (h.tier >= 2 && HearthService.OVERWORLD.equals(h.dimension) && p.level() == server.overworld()
+                    && p.distanceToSqr(Vec3.atCenterOf(h.pos)) < 48 * 48 && !has(p, "founding")) {
+                BlockPos by = FoundBells.yard(p.level(), h.pos);
+                if (by != null) FoundBells.leave(p.level(), by, BellCatalog.of("founding"), List.of(p), "the day your Hearth grew",
+                        "[Your Hearth's grown. There's a new bell standing by your fire for it: the Founding Bell.]");
+            }
             // the Great Belfry and the Hundred Peal reach a member who was away when they happened (SPEC §43.14)
             BellWorld.Home tower = BellWorld.get(server).peek(h.pos);
             if (tower != null && tower.stage >= 3) GreatBelfry.seed(p);
@@ -575,43 +584,49 @@ public final class Bells {
             }
         }
         var prof = Progression.profile(p);
-        if (prof.counter(Counters.GATES_CLEARED) >= 1) ring(p, "registry", "rung by the Registry for your first gate");
         Rank rank = Progression.rank(p);
+        // the Registry's two: Bram hands them over at the Registry (stage 5)
+        bram(p, prof.counter(Counters.GATES_CLEARED));
         if (rank.ordinal() >= Rank.D.ordinal()) ring(p, "tenor", "the Great Bell from your D-rank Proving");
         if (rank.ordinal() >= Rank.C.ordinal()) ring(p, "second", "the Great Bell from your C-rank Proving");
-        int deepest = dev.awaken.descent.DescentSync.data(p).deepest;
-        if (deepest >= 2) ring(p, "garden", "down in the Hanging Gardens");
-        if (deepest >= 3) ring(p, "drowned_choir", "down in the Drowned Choir");
-        if (prof.counter(Counters.LUCID_DREAMS) >= 1) ring(p, "dreaming", "carried out of your first lucid dream");
         if (prof.counter(Counters.SPIRITS_SPOKEN) >= 1) ring(p, "spirit", "given by the first spirit you spoke to");
-        // stage 6: the later Provings' Great Bells, the Registry's twenty-fifth gate, the Descent's strata, Deepglass in hand
         if (rank.ordinal() >= Rank.B.ordinal()) ring(p, "third", "the Great Bell from your B-rank Proving");
         if (rank.ordinal() >= Rank.A.ordinal()) ring(p, "fourth", "the Great Bell from your A-rank Proving");
         if (rank.ordinal() >= Rank.S.ordinal()) ring(p, "fifth", "the Great Bell from your S-rank Proving");
         if (rank == Rank.SOVEREIGN) ring(p, "bourdon", "the Great Bell from your last Proving");
-        if (prof.counter(Counters.GATES_CLEARED) >= 25) ring(p, "toll", "rung by the Registry for your twenty-fifth gate");
-        for (int s = 1; s < DESCENT_BELLS.length && s <= deepest; s++)
-            if (DESCENT_BELLS[s] != null) ring(p, DESCENT_BELLS[s][0], DESCENT_BELLS[s][1]);
+        // the Descent's: set into the rock of each stratum, found the first time you're down there
+        int stratum = dev.awaken.descent.Strata.stratumOf(p.level().dimension());
+        if (stratum > 0 && stratum < DESCENT_BELLS.length && DESCENT_BELLS[stratum] != null)
+            found(p, DESCENT_BELLS[stratum][0], DESCENT_BELLS[stratum][1], "[There's a bell set into the rock here, half grown over. It's been waiting down here a long time.]");
         if (!has(p, "crystal"))
             for (int i = 0; i < p.getInventory().getContainerSize(); i++)
                 if (p.getInventory().getItem(i).is(DelveContent.DEEPGLASS_SHARD.get())) {
-                    ring(p, "crystal", "the first time you held Deepglass");
+                    if (ring(p, "crystal", "grown into the first Deepglass you held")) say(p, "[There's a little bell grown into the Deepglass, as if it had been there all along.]");
                     break;
                 }
-        // the Above: a Tether Spire and a sky platform scanned, the Halo reached, the Halo at S rank, a storm on the wing
+        // the Above: in the ruin of a Tether Spire or a sky platform you've found, aboard the Halo, out of a storm
         for (var m : dev.awaken.above.Above.data(p).ruins()) {
-            if (m.kind().equals("tether_spire")) ring(p, "wind", "in the wind at a Tether Spire");
-            if (m.kind().equals("sky_platform")) ring(p, "island", "on a sky platform");
+            if (p.level().dimension() != Level.OVERWORLD || flat(m.center(), p.blockPosition()) > 24 * 24) continue;
+            if (m.kind().equals("tether_spire") && !has(p, "wind"))
+                FoundBells.leave(p.level(), m.center(), BellCatalog.of("wind"), List.of(p), "in the wind at a Tether Spire",
+                        "[There's a bell in the spire's ruin, wedged where the wind left it.]");
+            if (m.kind().equals("sky_platform") && !has(p, "island"))
+                FoundBells.leave(p.level(), m.center(), BellCatalog.of("island"), List.of(p), "on a sky platform",
+                        "[There's a bell lying in what's left of the platform.]");
         }
-        if (prof.counter(dev.awaken.above.Above.HALO_REACHED) >= 1) ring(p, "halo", "aboard the Halo");
-        if (rank.ordinal() >= Rank.S.ordinal() && dev.awaken.above.halo.Halo.in(p)) ring(p, "star", "under the stars at the Halo");
-        if (p.level().dimension() == Level.OVERWORLD && p.level().isThundering() && p.getY() > 160 && !p.onGround() && !p.isInWater())
-            ring(p, "storm", "in the sky, in a storm");
-        // the Eclipse Bell: out under the open sky in the middle of a new moon's night, at A rank
+        if (dev.awaken.above.halo.Halo.in(p)) {
+            if (prof.counter(dev.awaken.above.Above.HALO_REACHED) >= 1)
+                found(p, "halo", "aboard the Halo", "[There's a bell aboard the Halo, lying where nobody's stood in years.]");
+            if (rank.ordinal() >= Rank.S.ordinal())
+                found(p, "star", "under the stars at the Halo", "[Under the stars, there's another bell aboard the Halo, small and bright.]");
+        }
+        if (p.level().dimension() == Level.OVERWORLD && p.level().isThundering() && p.getY() > 160 && !p.onGround() && !p.isInWater()
+                && ring(p, "storm", "in the sky, in a storm")) say(p, "[Something fell out of the storm and into your hands: a bell.]");
+        // the Eclipse Bell: out under the open sky in the middle of a new moon's night, at A rank, the dark sky drops it
         if (rank.ordinal() >= Rank.A.ordinal() && p.level().dimension() == Level.OVERWORLD) {
             long clock = p.level().getOverworldClockTime(), tod = clock % 24000L;
             if ((clock / 24000L) % 8 == 4 && tod >= 16000 && tod <= 20000 && p.level().canSeeSky(p.blockPosition().above()))
-                ring(p, "eclipse", "under the dark of the moon");
+                found(p, "eclipse", "under the dark of the moon", "[Something fell out of the dark sky and rang as it hit the ground near you: a bell.]");
         }
         city(p);
     }
@@ -683,16 +698,67 @@ public final class Bells {
     }
 
     /**
-     * A World Pulse happening witnessed (SPEC §43.13), from C rank: the Stampede Bell in a stampede's thunder, the Flood
-     * Bell when the Deep Tide comes up under the new moon. {@code happening} is the happening's path ("stampede").
+     * A World Pulse happening witnessed (SPEC §43.13), from C rank: the Stampede Bell lying in a stampede's wake, the Flood
+     * Bell left at your feet when the Deep Tide comes up under the new moon (§43.16 stage 5). {@code happening} is the
+     * happening's path ("stampede").
      */
     public static void witnessed(ServerPlayer p, String happening) {
         if (Progression.rank(p).ordinal() < Rank.C.ordinal()) return;
         switch (happening) {
-            case "stampede" -> ring(p, "stampede", "in the thunder of a stampede");
-            case "deep_tide" -> ring(p, "flood", "when the Deep Tide came up under the new moon");
+            case "stampede" -> found(p, "stampede", "in the wake of a stampede",
+                    "[The herd's leader lost something as it thundered past: a bell, lying in its wake.]");
+            case "deep_tide" -> {
+                BellCatalog.Def d = BellCatalog.of("flood");
+                if (!has(p, d.id())) FoundBells.leave(p.level(), p.blockPosition(), d, List.of(p), "when the Deep Tide came up under the new moon",
+                        "[The Deep Tide left something at your feet as it went back down: a bell.]");
+            }
             default -> {}
         }
+    }
+
+    /** Bell {@code id} set down a few steps in front of this player for them alone (stage 5), if they don't hold it. */
+    static void found(ServerPlayer p, String id, String where, String line) {
+        BellCatalog.Def d = BellCatalog.of(id);
+        if (d != null && !has(p, id)) FoundBells.leave(p, d, where, line);
+    }
+
+    /**
+     * Bell {@code id} won by {@code ps} at a real place (SPEC §43.16 stage 5): set down on the floor nearest {@code near}
+     * for each of them who doesn't hold it (one bell, each lifts their own), else into their hands. Each is told
+     * {@code line}. The Foundry's casts by its Crucible, a held raid's bells where the wall was breached.
+     */
+    public static void leave(ServerLevel level, BlockPos near, String id, List<ServerPlayer> ps, String where, String line) {
+        BellCatalog.Def d = BellCatalog.of(id);
+        if (d != null && !ps.isEmpty()) FoundBells.leave(level, near, d, ps, where, line);
+    }
+
+    /** How near Bram a hunter must stand to be handed the Registry's bells. */
+    static final int BRAM_NEAR = 8;
+
+    /**
+     * The Registry's two (stage 5): for your first and twenty-fifth gates the System says Bram has something for you once,
+     * and he hands it over when you're by him at the Registry.
+     */
+    static void bram(ServerPlayer p, long gates) {
+        String id = gates >= 1 && !has(p, "registry") ? "registry" : gates >= 25 && !has(p, "toll") ? "toll" : null;
+        if (id == null) return;
+        BellBook b = book(p);
+        if (b.once("bram_" + id)) {
+            save(p, b);
+            say(p, "[Bram at the Registry has something for you.]");
+        }
+        Vec3 at = CitizenHooks.where(p.level(), "bram");
+        if (at != null && p.distanceToSqr(at) <= BRAM_NEAR * BRAM_NEAR) handed(p, id);
+    }
+
+    /** Bram hands over one of the Registry's bells, in his own words. */
+    static void handed(ServerPlayer p, String id) {
+        boolean first = id.equals("registry");
+        if (!ring(p, BellCatalog.of(id), first ? "handed you by Bram at the Registry, for your first gate" : "handed you by Bram at the Registry, for your twenty-fifth gate")) return;
+        String line = first ? "Your first gate. The Registry gives every hunter one of these for it: the old handbell off the front desk. We had a cupboard full of them once."
+                : "Twenty-five gates. The Registry used to toll this one for every hunter who got that far. Nobody has, in eleven years. Take it home and hang it.";
+        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Bram")).body(Component.literal(line))
+                .dialogue().ttl(20 * 12).priority(8).build());
     }
 
     // ---- voices -----------------------------------------------------------------------------------------------------
@@ -764,7 +830,12 @@ public final class Bells {
             if (p != null) Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(SIGNAL_ONCE)).priority(8).ttl(20 * 10).build());
             return true;
         });
-        if (server.getTickCount() % 100 == 60) FoundBells.closed(server);
+        if (server.getTickCount() % 100 == 60) {
+            FoundBells.closed(server);
+            FoundBells.watch(server);
+        }
+        VillageBells.tick(server);
+        SpiritBells.tick(server);
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if ((p.tickCount + p.getId()) % 100 != 0) continue;
             FoundBells.lost(p);
