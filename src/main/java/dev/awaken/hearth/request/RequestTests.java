@@ -33,15 +33,10 @@ final class RequestTests {
     private RequestTests() {}
 
     static void register() {
-        AwakenTests.register("hearth_request_pools_valid", 20, RequestTests::poolsValid);
-        AwakenTests.register("hearth_request_offers_only_doable", 20, RequestTests::onlyDoable);
-        AwakenTests.register("hearth_request_partial_delivery", 40, RequestTests::partialDelivery);
-        AwakenTests.register("hearth_request_rewards_once", 40, RequestTests::rewardsOnce);
-        AwakenTests.register("hearth_request_streak", 40, RequestTests::streak);
+        // (SPEC §27.13) requests are gone: what's left is an old save reading, the shard fusing, and the retirement's refund
         AwakenTests.register("hearth_request_state_saved_versioned", 20, RequestTests::saved);
-        AwakenTests.register("hearth_request_rewards_scale", 20, RequestTests::rewardsScale);
         AwakenTests.register("hearth_request_core_shard_fuses", 20, RequestTests::shardFuses);
-        AwakenTests.registerIsolated("hearth_request_offer_flow_and_now", 60, RequestTests::offerFlow);
+        AwakenTests.register("hearth_requests_retired", 40, RequestTests::retired);
     }
 
     /** A context with a fixed rank, level and set of met tokens. */
@@ -335,6 +330,22 @@ final class RequestTests {
     }
 
     // ---- offers, answers and the Now line, with a real Hearth record --------------------------------------------------
+
+    /** No new request, a waiting one gone, and what was handed in for an open one comes back. */
+    private static void retired(GameTestHelper h) {
+        ServerPlayer sp = player(h);
+        RequestState st = Requests.state(sp);
+        st.active.add(new ActiveRequest("awaken:logs", "minecraft:oak_log", "Oak Log", 70, 16, 1.0, 0));
+        st.credits = 2;
+        sp.getInventory().clearContent();
+        Requests.tick(sp);
+        int logs = count(sp, net.minecraft.world.item.Items.OAK_LOG);
+        h.assertTrue(st.active.isEmpty() && st.offers.isEmpty() && st.credits == 0, "nothing open, nothing owed");
+        h.assertTrue(logs == 16, "the 16 handed in came back: " + logs);
+        Requests.tick(sp);
+        h.assertTrue(st.active.isEmpty() && st.offers.isEmpty(), "and none is offered again");
+        h.succeed();
+    }
 
     private static void offerFlow(GameTestHelper h) {
         ServerPlayer sp = player(h);

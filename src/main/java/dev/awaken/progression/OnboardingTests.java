@@ -90,7 +90,7 @@ final class OnboardingTests {
             h.assertTrue(Requirements.powerCheck.test(sp, "power:awaken:dash"), "and Dash is learned");
             while (p.level() < 5) Progression.grantXp(sp, Curve.xpToNext(p.level()) + 1, Progression.XpSource.COMMAND);
             h.assertTrue(p.unlocks().containsAll(List.of("awaken:second_power", "awaken:truths")), "levels 4-5: " + p.unlocks());
-            h.assertTrue(p.truthsOffered().size() == 3, "three Truths offered at level 5, got " + p.truthsOffered().size());
+            h.assertTrue(p.truthsOffered().isEmpty(), "Truths are never offered: they come true by themselves (SPEC §27.13)");
             h.assertTrue(Progression.hasFlag(sp, "awaken:truths"), "the flag other modules can read");
             int before = p.unlocks().size();
             h.assertTrue(LevelRoad.catchUp(sp, false) == 0 && p.unlocks().size() == before, "nothing is granted twice");
@@ -105,7 +105,7 @@ final class OnboardingTests {
             Profile p = Progression.profile(sp);
             p.awakened = true; // a v1 save: awakened at some point, never saw the road
             p.level = 8;
-            p.truthsOffered.add("awaken:i_am_fast"); // a v1 player keeps their Truths, gets no second set
+            p.truthsOffered.add("awaken:i_am_fast"); // a v1 player's offered Truths drop: they come true by themselves now
             p.unlocks.add("awaken:retired_step");
             int granted = LevelRoad.catchUp(sp, true);
             int expected = 0;
@@ -115,13 +115,13 @@ final class OnboardingTests {
                 h.assertTrue(p.unlocks().contains(s.id().toString()) == (s.def().level() <= 8), "step " + s.id() + " at level " + s.def().level());
             }
             h.assertTrue(p.unlocks().contains("awaken:retired_step"), "an id the table no longer has is kept, not revoked");
-            h.assertTrue(p.truthsOffered().size() == 1, "no second set of Truths for a v1 player");
+            h.assertTrue(p.truthsOffered().isEmpty(), "a v1 player's offers drop at level 5's flag (SPEC §27.13)");
             h.assertTrue(Requirements.powerCheck.test(sp, "power:awaken:dash"), "the missed Dash arrives");
             h.assertTrue(LevelRoad.catchUp(sp, true) == 0, "a second login grants nothing");
             h.succeed();
         });
 
-        // A Directive or drill is never offered when its requirements aren't met; every token is well formed.
+        // Every Directive and drill token is well formed (their offers are gone, SPEC §27.13); requirements read the road.
         AwakenTests.register("progression_requires_filtering", 80, h -> {
             for (var e : Content.DIRECTIVES.map.entrySet()) {
                 for (String t : e.getValue().requires()) h.assertTrue(Requirements.known(t), "directive " + e.getKey() + ": bad token " + t);
@@ -131,27 +131,6 @@ final class OnboardingTests {
             }
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
             Progression.awaken(sp);
-            Profile p = Progression.profile(sp);
-            Set<String> offered = new HashSet<>();
-            for (int i = 0; i < 60; i++) {
-                p.directives.clear();
-                p.counters.keySet().removeIf(k -> k.startsWith("awaken:directive_offered/"));
-                Directives.tryOffer(sp, "test");
-                h.assertTrue(p.directives.size() == 1, "something is always on offer in the first hour");
-                String id = p.directives.get(0).id();
-                offered.add(id);
-                var def = Content.DIRECTIVES.get(id);
-                h.assertTrue(Requirements.met(sp, def.requires()), "offered " + id + " without " + def.requires());
-            }
-            h.assertFalse(offered.contains("awaken:dash_chain") || offered.contains("awaken:meditate_peak"), "nothing that needs Dash or meditation");
-            for (int i = 0; i < 20; i++) {
-                p.regimen = Profile.RegimenState.EMPTY;
-                Regimen.morning(sp);
-                h.assertTrue(p.regimen().drills().size() == 3, "three drills every morning");
-                for (String id : p.regimen().drills()) {
-                    h.assertTrue(Requirements.met(sp, Content.DRILLS.get(id).requires()), "drill " + id + " needs what you lack");
-                }
-            }
             // once the need is met, it can come up
             h.assertFalse(Requirements.met(sp, "unlock:awaken:meditation"), "meditation isn't taught yet");
             Progression.setCounter(sp, LevelRoad.flagCounter("awaken:meditation"), 1);

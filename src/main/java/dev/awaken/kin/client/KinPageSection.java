@@ -1,14 +1,20 @@
 package dev.awaken.kin.client;
 
+import dev.awaken.kin.KinKind;
 import dev.awaken.kin.KinNet;
+import dev.awaken.progression.client.Catalogue;
 import dev.awaken.progression.client.StatusSections;
 import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.Ui;
 import dev.awaken.signal.client.UiSection;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The band's Hearth page (SPEC §43.6): Home (what the Hearth can't do yet, each beast need with its rumour and Track; the
@@ -38,6 +44,28 @@ final class KinPageSection extends UiSection {
         if (now - asked < 2000) return;
         asked = now;
         ClientPacketDistributor.sendToServer(new KinNet.Ask());
+    }
+
+    /**
+     * The Journal's Beasts category (SPEC §27.13): every kind that lives in the world, a "?" until you've met one, then
+     * where you met it, the work it could do and what it wants once you've watched it.
+     */
+    static List<Catalogue.Slot> slots() {
+        ask();
+        KinNet.Page p = page;
+        Map<String, List<String>> met = new HashMap<>();
+        if (p != null) for (List<String> r : p.kin()) if (r.get(2).equals("1")) met.put(r.get(0), r);
+        List<Catalogue.Slot> out = new ArrayList<>();
+        for (KinKind k : KinKind.livingNow()) {
+            List<String> r = met.get(k.id());
+            if (r == null) {
+                out.add(Catalogue.Slot.unknown());
+                continue;
+            }
+            String wants = r.get(5).equals("?") ? "" : "\nWhat it wants: " + r.get(5).replace("\n", " ");
+            out.add(new Catalogue.Slot(k.title, true, r.get(3) + "\n" + r.get(4) + wants, ItemStack.EMPTY));
+        }
+        return out;
     }
 
     static void forget() {
@@ -154,7 +182,7 @@ final class KinPageSection extends UiSection {
                 if (!rumour.isEmpty()) {
                     body.text(rumour, met ? 0xFF000000 | Glass.LABEL : DIM);
                     Ui.Flow f = body.flow();
-                    if (f.button("Track", Glass.EDGE, true)) ClientPacketDistributor.sendToServer(new KinNet.Track(id));
+                    if (f.button("Pin", Glass.EDGE, true)) ClientPacketDistributor.sendToServer(new KinNet.Track(id));
                     f.end();
                 }
             });

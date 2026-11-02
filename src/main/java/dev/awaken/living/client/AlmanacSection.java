@@ -19,7 +19,8 @@ final class AlmanacSection implements StatusSections.Section {
     static final int ROW = 12;
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.CODEX, new AlmanacSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new AlmanacSection(), 610, StatusSections.Shelf.HAPPENINGS));
+        dev.awaken.progression.client.Catalogue.count(StatusSections.Shelf.HAPPENINGS, () -> new int[]{seen().size(), -1}); // open-ended: no total
     }
 
     private static List<String> seen() {

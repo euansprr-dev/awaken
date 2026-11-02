@@ -20,8 +20,8 @@ import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The band on the wrist (docs/proposals/holo-ui.md §5; its pages, SPEC §30): a rail of six pages down the panel's wrist
- * edge (Status, Powers, Journal, Truths, Codex, Map) and the open page's sections beside it, inside a {@link HoloPanel}
+ * The band on the wrist (docs/proposals/holo-ui.md §5; its pages, SPEC §30, §27.13): a rail of six pages down the panel's wrist
+ * edge (Status, Tasks, Hearth, Powers, Journal, Map) and the open page's sections beside it, inside a {@link HoloPanel}
  * that unfolds from the forearm band. Every section draws through {@link HoloGraphics}. The mouse is a ray into the
  * panel ({@link HoloPanel#pick}); clicks land from 250 ms on. K always opens on Status unless a link names a page. Esc
  * or K closes (K while it opens skips to open); 1–6 open a page, Tab and Shift+Tab step through them, and a page's own
@@ -39,11 +39,10 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
     /** The pages' icons, 12×12, one panel unit a pixel. */
     private static final String[][] ICONS = {
             {".....##.....", "....####....", "....####....", "....####....", ".....##.....", "............", "...######...", "..########..", ".##########.", ".##########.", ".##########.", "............"},
+            {"............", "............", ".##..######.", ".##.........", "............", ".##..######.", ".##.........", "............", ".##..######.", ".##.........", "............", "............"},
+            {".....#......", "....##......", "....###.#...", "...#####....", "..##.####...", "..#...###...", "..#....##...", "...#..##....", "....####....", "..########..", ".#........#.", "............"},
             {".......###..", "......###...", ".....###....", "....###.....", "...#######..", ".......##...", "......##....", ".....##.....", "....##......", "...##.......", "..##........", "............"},
             {"............", ".####..####.", "#....##....#", "#.##.##.##.#", "#....##....#", "#.##.##.##.#", "#....##....#", "#.##.##.##.#", "#....##....#", ".####..####.", ".....##.....", "............"},
-            {".....#......", "....##......", "....###.#...", "...#####....", "..##.####...", "..#...###...", "..#....##...", "...#..##....", "....####....", "..########..", ".#........#.", "............"},
-            {".....##.....", ".....##.....", "....####....", "....####....", "..########..", "############", "############", "..########..", "....####....", "....####....", ".....##.....", ".....##....."},
-            {"#####..#####", "#...#..#...#", "#.#.#..#.#.#", "#...#..#...#", "#####..#####", "............", "#####..#####", "#...#..#...#", "#.#.#..#...#", "#...#..#...#", "#####..#####", "............"},
             {"....####....", "...######...", "..###..###..", "..##....##..", "..###..###..", "...######...", "....####....", ".....##.....", ".....##.....", "............", ".##########.", "............"},
     };
 
@@ -159,15 +158,15 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
     /** What an empty page says. */
     static String empty(Tab t) {
         return switch (t) {
-            case CODEX -> "Nothing yet. What you hear, see and dream will gather here.";
-            case JOURNAL -> "Nothing yet. What you take on, and what the System tells you, will be kept here.";
+            case TASKS -> "Nothing to do this minute. Look around: what you find brings the next step.";
+            case JOURNAL -> "Nothing yet. What you find, and what the System tells you, will be kept here.";
             case POWERS -> "No powers yet. Your first one comes soon after you awaken.";
             case HEARTH -> "No home yet. Set a Hearthfire down out past the ridge, and this page will keep it.";
             default -> "";
         };
     }
 
-    /** The rail: the seven pages down the wrist edge, the open one lit like the band's emitter; the K key at its foot. */
+    /** The rail: the six pages down the wrist edge, the open one lit like the band's emitter; the K key at its foot. */
     private void rail(HoloGraphics gg, int mouseX, int mouseY) {
         int r = BandLayout.RAIL;
         gg.fillGradient(0, 0, r, H, Glass.a(0x05080F, 0.30f), Glass.a(0x05080F, 0.30f));
@@ -220,13 +219,16 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         gg.pose().popMatrix();
     }
 
-    /** A count on a page that waits on you: points to spend on Status (amber), new Journal lines (light). */
+    /** A count on a page that waits on you: points to spend on Status (amber), new steps on Tasks and new Journal lines (light). */
     private void badge(HoloGraphics gg, Tab t, Rect n, float micro) {
         var mc = minecraft;
         int count = 0, colour = 0;
         if (t == Tab.STATUS && mc != null && mc.player != null) {
             count = Progression.profile(mc.player).unspent();
             colour = Glass.AMBER;
+        } else if (t == Tab.TASKS) {
+            count = dev.awaken.core.api.UiHooks.tasksNew();
+            colour = HOT;
         } else if (t == Tab.JOURNAL) {
             count = Journal.unread();
             colour = HOT;
@@ -262,7 +264,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             for (StatusSections.Section s : StatusSections.of(tab)) {
                 if (!StatusSections.shows(tab, s)) continue;
                 if (s.notePage() != null && dev.awaken.progression.client.BandHeader.onNote(font, s, c.x(), y, c.w(), mx, my)) {
-                    selectTab(s.notePage());
+                    selectTab(dev.awaken.progression.client.StatusSections.follow(s));
                     return true;
                 }
                 y += dev.awaken.progression.client.BandHeader.height(s);

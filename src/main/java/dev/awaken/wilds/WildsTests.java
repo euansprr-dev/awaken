@@ -78,18 +78,12 @@ final class WildsTests {
             // the counters that fed nothing now feed Titles...
             Progression.setCounter(p, "awaken:rifts_closed", 10);
             h.assertTrue(prof.titles().contains("awaken:riftwarden"), "ten rifts closed: Riftwarden");
-            // ...Truths...
+            // ...and Truths, true by themselves once Truths open (SPEC §27.13)
             String truth = "awaken:i_go_where_the_map_ends";
-            prof.truthsOffered().add(truth);
-            h.assertTrue(Progression.declareTruth(p, truth) && !prof.truthsTrue().contains(truth), "declared, not true yet");
+            Progression.setCounter(p, dev.awaken.progression.LevelRoad.flagCounter("awaken:truths"), 1);
+            h.assertTrue(!prof.truthsTrue().contains(truth), "not lived yet");
             Progression.count(p, "awaken:landmarks_reached", 8);
             h.assertTrue(prof.truthsTrue().contains(truth), "eight landmarks: it's true now");
-            // ...and exploration directives, counted from the moment one is taken on
-            String directive = "awaken:explore_landmark";
-            prof.directives().add(new Profile.DirectiveState(directive, true, 0, 99, Map.of("awaken:landmarks_reached", prof.counter("awaken:landmarks_reached"))));
-            Progression.count(p, "awaken:landmarks_reached");
-            h.assertTrue(prof.counter("awaken:directive_done/" + directive) == 1 && prof.directives().stream().noneMatch(d -> d.id().equals(directive)),
-                    "a new landmark completes the directive");
             h.succeed();
         });
     }

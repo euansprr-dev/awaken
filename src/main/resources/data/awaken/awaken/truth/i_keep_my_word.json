@@ -1,16 +1,16 @@
 {
   "text": "I keep my word.",
-  "hint": "Finish every Directive you accept for seven in a row.",
+  "hint": "Help the beasts you meet with what they need, ten times.",
   "condition": {
     "type": "counter",
-    "counter": "awaken:directives_kept_streak",
-    "value": 7
+    "counter": "awaken:kin_helped",
+    "value": 10
   },
   "reward": {
     "perks": [
       {
-        "id": "awaken:extra_directive_slot",
-        "amount": 1.0
+        "id": "awaken:xp_bonus",
+        "amount": 0.03
       }
     ]
   },

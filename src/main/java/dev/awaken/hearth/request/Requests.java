@@ -36,6 +36,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.Level;
@@ -156,21 +157,48 @@ public final class Requests {
         if (level.dimension() == Level.OVERWORLD && sp.getBlockY() < st.lowestY) st.lowestY = sp.getBlockY();
         if (!HearthService.enabled() || !Progression.profile(sp).awakened()) return;
         Optional<HearthRecord> home = HearthService.homeOf(sp);
-        boolean dirty = forgeCredit(sp, st, home);
-        if (home.isEmpty() || home.get().hearthfire()) { // requests come with the Anchor, not the Hearthfire
-            if (dirty) sync(sp);
-            return;
-        }
-        long day = PlayDays.current(level.getServer()), now = level.getGameTime();
-        if (st.day != day) {
-            newDay(sp, st, day, now);
-            dirty = true;
-        }
-        // an offer whose decision ran out or was cleared counts as let go (it cost nothing)
-        dirty |= st.offers.removeIf(o -> !Signal.isPending(sp, o.action()));
-        if (st.credits > 0 && now >= st.nextOfferAt && free(sp, st) > 0 && calm(sp)) dirty |= offer(sp, st, day, now);
+        boolean dirty = forgeCredit(sp, st, home); // Forge credit already earned still pays
+        dirty |= retire(sp, st);
         if (dirty) sync(sp);
-        touches(sp, st, home.get(), now);
+        if (home.isEmpty() || home.get().hearthfire()) return;
+        touches(sp, st, home.get(), level.getGameTime());
+    }
+
+    /**
+     * (SPEC §27.13) Anchor requests are gone, as JOURNEY part 9 said: the Hearth tab's needs replace them. No new one is
+     * offered; an offer waiting is withdrawn; anything handed in for an open request comes back to you. Returns whether
+     * anything changed.
+     */
+    static boolean retire(ServerPlayer sp, RequestState st) {
+        if (st.active.isEmpty() && st.offers.isEmpty() && st.credits == 0) return false;
+        for (RequestState.Offer o : st.offers) Signal.withdraw(sp, o.action());
+        int back = 0;
+        for (ActiveRequest r : st.active) {
+            Item item = refundItem(r.target());
+            for (int left = r.delivered(); left > 0 && item != null; ) {
+                int n = Math.min(left, item.getDefaultMaxStackSize());
+                give(sp, new ItemStack(item, n));
+                left -= n;
+                back += n;
+            }
+        }
+        if (back > 0) Signal.toast(sp, Component.literal("The Anchor no longer asks for things. What you'd handed in is back in your pack."));
+        st.active.clear();
+        st.offers.clear();
+        st.credits = 0;
+        return true;
+    }
+
+    /** What to give back for a request's target: the item itself, or the first item of its tag. */
+    static @Nullable Item refundItem(String target) {
+        if (!target.startsWith("#")) {
+            Identifier id = Identifier.tryParse(target);
+            return id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
+        }
+        Identifier tag = Identifier.tryParse(target.substring(1));
+        if (tag == null) return null;
+        for (var h : BuiltInRegistries.ITEM.getTagOrEmpty(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, tag))) return h.value();
+        return null;
     }
 
     static int free(ServerPlayer sp, RequestState st) {

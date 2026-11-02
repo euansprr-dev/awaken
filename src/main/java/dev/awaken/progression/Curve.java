@@ -19,9 +19,10 @@ public final class Curve {
 
     /**
      * Gate floors pay this share of their v2 reward since the Living Wilds made the open world pay (SPEC §21.3); gate
-     * loot, cores and hearts are unchanged. Mirrors {@code WILDS_TRIM} in tools/sim/pacing_sim.py.
+     * loot, cores and hearts are unchanged. 0.94 since SPEC §27.13: floors make back what the Regimen and the daily
+     * Directives paid. Mirrors {@code WILDS_TRIM} in tools/sim/pacing_sim.py.
      */
-    public static final double WILDS_TRIM = 0.80;
+    public static final double WILDS_TRIM = 0.94;
 
     /** Total XP one cleared floor of a gate of this rank pays (before the story-length multiplier). */
     public static double floorReward(Rank gateRank, int floor) {

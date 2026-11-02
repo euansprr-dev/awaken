@@ -46,20 +46,57 @@ final class CoreSections {
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.Hero());
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.StatLine());
         StatusSections.add(StatusSections.Tab.JOURNAL, new JournalFilters());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new Catalogue.Empty());
         StatusSections.add(StatusSections.Tab.JOURNAL, new WaitingSection());
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
-        StatusSections.add(StatusSections.Tab.TRUTHS, new RoadSection());
-        StatusSections.add(StatusSections.Tab.JOURNAL, new DirectivesSection());
-        StatusSections.add(StatusSections.Tab.JOURNAL, new RegimenSection());
+        // (SPEC §27.13) the Truths page's sections stand on Status until they become Status's own
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new RoadSection(), 735, null));
         StatusSections.add(StatusSections.Tab.JOURNAL, new Records());
-        StatusSections.add(StatusSections.Tab.TRUTHS, new PathChoice());
-        StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.DECLARED));
-        StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.OFFERED));
-        StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.TRUE));
-        StatusSections.add(StatusSections.Tab.TRUTHS, new Titles());
-        StatusSections.add(StatusSections.Tab.TRUTHS, new Latents());
-        StatusSections.add(StatusSections.Tab.CODEX, new CodexBoard());
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new PathChoice(), 700, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.TRUE), 710, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new TruthList(TruthList.Kind.NEAR), 720, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new Titles(), 740, null));
+        StatusSections.add(StatusSections.Tab.STATUS, StatusSections.placed(new Latents(), 750, null));
+        // (SPEC §27.13) the Codex is the Journal's now: what you've found
+        StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new CodexBoard(), 600, StatusSections.Shelf.LORE));
+        Catalogue.count(StatusSections.Shelf.LORE, CodexBoard::found);
+        // open-ended finds count; the ores are a fixed set (SPEC §27.13)
+        Catalogue.count(StatusSections.Shelf.LANDS, () -> Catalogue.discovered("awaken:discovered/biome/"));
+        Catalogue.count(StatusSections.Shelf.PLACES, () -> Catalogue.discovered("awaken:discovered/landmark/", "awaken:discovered/lair/",
+                "awaken:discovered/wonder/", "awaken:discovered/secret/"));
+        Catalogue.fixed(StatusSections.Shelf.ORES, CoreSections::ores);
         CodexEntries.addSource(CoreSections::insightEntries);
+    }
+
+    /** The Journal's Ores (SPEC §27.13): every ore in order, a "?" until you've mined one, then what it's for. */
+    static List<Catalogue.Slot> ores() {
+        Profile p = profile();
+        List<Catalogue.Slot> out = new ArrayList<>();
+        for (var o : dev.awaken.progression.ProgressionModule.OreXp.values()) {
+            if (p.counter("awaken:discovered/ore/" + o.id()) <= 0) {
+                out.add(Catalogue.Slot.unknown());
+                continue;
+            }
+            out.add(new Catalogue.Slot(o.title, true, o.hint + ".", new net.minecraft.world.item.ItemStack(oreIcon(o))));
+        }
+        return out;
+    }
+
+    private static net.minecraft.world.item.Item oreIcon(dev.awaken.progression.ProgressionModule.OreXp o) {
+        return switch (o) {
+            case COAL -> net.minecraft.world.item.Items.COAL;
+            case COPPER -> net.minecraft.world.item.Items.RAW_COPPER;
+            case IRON -> net.minecraft.world.item.Items.RAW_IRON;
+            case GOLD -> net.minecraft.world.item.Items.RAW_GOLD;
+            case REDSTONE -> net.minecraft.world.item.Items.REDSTONE;
+            case LAPIS -> net.minecraft.world.item.Items.LAPIS_LAZULI;
+            case EMERALD -> net.minecraft.world.item.Items.EMERALD;
+            case DIAMOND -> net.minecraft.world.item.Items.DIAMOND;
+            case DEEPGLASS -> net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("deepglass_shard"));
+            case QUARTZ -> net.minecraft.world.item.Items.QUARTZ;
+            case DEBRIS -> net.minecraft.world.item.Items.ANCIENT_DEBRIS;
+            case AMETHYST -> net.minecraft.world.item.Items.AMETHYST_SHARD;
+        };
     }
 
     private static String plural(long n, String word) {
@@ -67,64 +104,6 @@ final class CoreSections {
     }
 
     // ---- Status tab -------------------------------------------------------------------------------------------------
-
-    static final class DirectivesSection extends UiSection {
-        public String title() { return "DIRECTIVES"; }
-        public int order() { return -15; } // the Journal page: right after what you track
-
-        @Override
-        protected void build(Ui ui) {
-            Profile p = profile();
-            if (p.directives().isEmpty()) {
-                ui.text("Nothing offered right now. New Directives come with the morning or after something notable.", Glass.LABEL);
-                return;
-            }
-            long today = clientPlayDay();
-            List<Profile.DirectiveState> list = List.copyOf(p.directives());
-            for (int i = 0; i < list.size(); i++) {
-                Profile.DirectiveState d = list.get(i);
-                var def = Content.DIRECTIVES.get(d.id());
-                ui.text(def == null ? d.id() : def.text(), Glass.TITLE);
-                long left = Math.max(0, d.expiresDay() - today + 1);
-                String meta = (def == null ? "" : "Reward: " + Rewards.describe(def.reward()) + " · ") + "fades in " + plural(left, "play-day");
-                ui.text(meta, Glass.LABEL, 4, false);
-                if (d.accepted()) {
-                    ui.gap(1);
-                    ui.bar(Directives.progress(p, d), Glass.GOOD);
-                } else {
-                    ui.gap(1);
-                    Ui.Flow row = ui.flow();
-                    String action = Directives.ACTION + ":" + d.id();
-                    if (row.button("Accept", Glass.GOOD, true)) ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(action, true));
-                    if (row.button("Dismiss", Glass.LABEL, true)) ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(action, false));
-                    row.end();
-                }
-                if (i < list.size() - 1) ui.rule();
-            }
-        }
-    }
-
-    static long clientPlayDay() {
-        // The client doesn't know play-days exactly; directives store absolute days, so approximate with the profile's
-        // day log which the server keeps current.
-        return Math.max(0, profile().day().day());
-    }
-
-    static final class RegimenSection extends UiSection {
-        public String title() { return "DAILY REGIMEN"; }
-        public int order() { return -12; }
-        public boolean visible() { return !profile().regimen().drills().isEmpty(); }
-
-        @Override
-        protected void build(Ui ui) {
-            var r = profile().regimen();
-            for (String id : r.drills()) {
-                var def = Content.DRILLS.get(id);
-                boolean done = r.done().contains(id);
-                ui.text((done ? "✓ " : "· ") + (def == null ? id : def.text()), done ? Glass.GOOD : Glass.TEXT);
-            }
-        }
-    }
 
     /** Lifetime records from the counters, two columns when there's room, only what you've actually done. */
     static final class Records extends UiSection {
@@ -169,7 +148,7 @@ final class CoreSections {
         public String title() { return "RECORDS"; }
 
         @Override
-        public StatusSections.Shelf shelf() { return StatusSections.Shelf.FINDS; }
+        public StatusSections.Shelf shelf() { return StatusSections.Shelf.STORY; }
         public int order() { return 900; }
         public boolean visible() { return !lines().isEmpty(); }
 
@@ -229,8 +208,15 @@ final class CoreSections {
         }
     }
 
+    /**
+     * The Truths on Status (SPEC §27.13): they come true by themselves, so there's nothing to declare. TRUE lists yours and
+     * what each gave; CLOSEST TO TRUE shows the three you're nearest, with what each takes and gives.
+     */
     static final class TruthList extends UiSection {
-        enum Kind { DECLARED, OFFERED, TRUE }
+        enum Kind { TRUE, NEAR }
+
+        /** Truths shown under CLOSEST TO TRUE. */
+        static final int NEAR_SHOWN = 3;
 
         private final Kind kind;
 
@@ -240,66 +226,49 @@ final class CoreSections {
 
         List<String> ids() {
             Profile p = profile();
-            return switch (kind) {
-                case DECLARED -> List.copyOf(p.truthsDeclared());
-                case OFFERED -> List.copyOf(p.truthsOffered());
-                case TRUE -> new ArrayList<>(p.truthsTrue());
-            };
+            if (kind == Kind.TRUE) return new ArrayList<>(p.truthsTrue());
+            if (!dev.awaken.progression.Progression.truthsOpen(p)) return List.of();
+            List<String> out = new ArrayList<>();
+            for (var e : Content.TRUTHS.map.entrySet()) {
+                String key = e.getKey().toString();
+                var d = e.getValue();
+                if (p.truthsTrue().contains(key) || p.rank().ordinal() < d.minRank().ordinal()) continue;
+                if (d.emergent().isPresent() && !d.emergent().get().test(p, null)) continue; // a hidden one stays hidden
+                out.add(key);
+            }
+            out.sort(java.util.Comparator.comparingDouble((String k) -> -Content.TRUTHS.get(k).condition().progress(p, null)).thenComparing(k -> k));
+            return out.size() > NEAR_SHOWN ? List.copyOf(out.subList(0, NEAR_SHOWN)) : out;
         }
 
         public String title() {
-            return switch (kind) {
-                case DECLARED -> "DECLARED TRUTHS · " + profile().truthsDeclared().size() + " / 3";
-                case OFFERED -> "TRUTHS WAITING TO BE DECLARED";
-                case TRUE -> "TRUE";
-            };
+            return kind == Kind.TRUE ? "TRUTHS · " + profile().truthsTrue().size() + " OF " + Content.TRUTHS.map.size() : "CLOSEST TO TRUE";
         }
 
         public int order() { return 10 + kind.ordinal() * 10; }
 
-        public boolean visible() { return kind != Kind.OFFERED || !ids().isEmpty(); }
+        public boolean visible() { return kind == Kind.TRUE || !ids().isEmpty(); }
 
         @Override
         protected void build(Ui ui) {
             Profile p = profile();
             List<String> ids = ids();
             if (ids.isEmpty()) {
-                ui.text(kind == Kind.DECLARED ? "Declare who you're becoming from the Truths waiting below. Each one shows what it gives."
-                        : "None yet. Live one of your declared Truths.", Glass.LABEL);
+                ui.text(dev.awaken.progression.Progression.truthsOpen(p)
+                        ? "None yet. A Truth comes true by itself when you live it; the closest are below."
+                        : "Truths open at level 5. Anything you've done by then counts.", Glass.LABEL);
                 return;
             }
-            // each Truth on its own card (SPEC §30.6): the words in white, how to make it true, what it gives, and its key;
-            // the card's bar says where it stands (amber waits on you, green is true)
+            // each Truth on its own card (SPEC §30.6): the words in white, what it takes, what it gives; green is true
             for (int i = 0; i < ids.size(); i++) {
                 String id = ids.get(i);
                 var d = Content.TRUTHS.get(id);
-                int accent = kind == Kind.TRUE ? Glass.GOOD : Glass.AMBER;
-                ui.card(accent, c -> {
-                    c.text(d == null ? id : "“" + d.text() + "”", kind == Kind.TRUE ? Glass.GOOD : Glass.TITLE, 0, true);
-                    if (d != null && kind != Kind.TRUE) d.hint().ifPresent(h -> c.text(h, Glass.LABEL));
-                    if (d != null)
-                        c.text((kind == Kind.TRUE ? "Granted: " : "Gives: ") + Rewards.describe(d.reward()), kind == Kind.TRUE ? Glass.LABEL : Glass.AMBER);
-                    switch (kind) {
-                        case DECLARED -> {
-                            if (d != null) c.bar(d.condition().progress(p, null), Glass.AMBER);
-                            Ui.Flow row = c.flow();
-                            row.chip("NOT TRUE YET", Glass.AMBER);
-                            if (row.button("Withdraw", Glass.LABEL, true)) send("undeclare", id);
-                            row.end();
-                        }
-                        case OFFERED -> {
-                            boolean can = p.truthsDeclared().size() < 3;
-                            Ui.Flow row = c.flow();
-                            if (row.button("Declare", Glass.AMBER, can)) send("declare", id);
-                            if (!can) row.text("3 of 3 declared: withdraw one first", Glass.LABEL);
-                            row.end();
-                        }
-                        case TRUE -> {
-                            Ui.Flow row = c.flow();
-                            row.chip("TRUE", Glass.GOOD);
-                            row.end();
-                        }
-                    }
+                boolean got = kind == Kind.TRUE;
+                ui.card(got ? Glass.GOOD : Glass.AMBER, c -> {
+                    c.text(d == null ? id : "“" + d.text() + "”", got ? Glass.GOOD : Glass.TITLE, 0, true);
+                    if (d == null) return;
+                    if (!got) d.hint().ifPresent(h -> c.text(h, Glass.LABEL));
+                    c.text((got ? "Granted: " : "Gives: ") + Rewards.describe(d.reward()), got ? Glass.LABEL : Glass.AMBER);
+                    if (!got) c.bar(d.condition().progress(p, null), Glass.AMBER);
                 });
                 if (i < ids.size() - 1) ui.gap(4);
             }
@@ -385,11 +354,18 @@ final class CoreSections {
 
         private static Map<String, List<CodexEntries.Entry>> grouped() {
             Map<String, List<CodexEntries.Entry>> m = new java.util.LinkedHashMap<>();
-            for (var e : CodexEntries.all()) m.computeIfAbsent(e.category(), k -> new ArrayList<>()).add(e);
+            for (var e : CodexEntries.all()) if (Catalogue.onBoard(e.category())) m.computeIfAbsent(e.category(), k -> new ArrayList<>()).add(e);
             return m;
         }
 
-        public boolean visible() { return !CodexEntries.all().isEmpty(); }
+        /** Lore and places found: the board's found entries (creatures and cave regions have their own categories). */
+        static int[] found() {
+            int n = 0;
+            for (var e : CodexEntries.all()) if (e.found() && Catalogue.onBoard(e.category())) n++;
+            return new int[]{n, -1};
+        }
+
+        public boolean visible() { return !grouped().isEmpty(); }
 
         @Override
         protected void build(Ui ui) {

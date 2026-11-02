@@ -176,7 +176,7 @@ final class OpeningRegistry {
             case DIRECTIVE -> {
                 if (age == 40) {
                     OpeningModule.offerDirective(p);
-                    say(p, at, w, "The Signal will give you Directives. They're small jobs the Association pays you for, and you'll never have more than three at once. Think of them as suggestions, not orders.");
+                    say(p, at, w, "Your first job for the Association is on your Tasks page: clear the first floor of a gate. Press K any time and it shows you what to do next.");
                 }
                 if (lead) toDesk(p, at, w, "", "");
                 if (age >= DIRECTIVE_TICKS) step(p, LETTERS);

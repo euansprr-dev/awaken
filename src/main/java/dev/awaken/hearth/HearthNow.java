@@ -133,6 +133,15 @@ public final class HearthNow {
      * Vanilla beds and anvils turn up in villages; a why-line for those would nag. A room counts as being built when it's
      * the current goal, when it needs only mod furniture (pads, mounts, machines), or when two of its pieces are here.
      */
+    /** The order rooms are suggested in: the Armoury right after a bed, then the enum's order. */
+    static final List<RoomType> ORDER = order();
+
+    private static List<RoomType> order() {
+        List<RoomType> out = new ArrayList<>(List.of(RoomType.SHELTER, RoomType.BEDROOM, RoomType.FITTING));
+        for (RoomType t : RoomType.values()) if (!out.contains(t)) out.add(t);
+        return List.copyOf(out);
+    }
+
     static boolean clearlyBuilding(RoomType t, HearthRecord h) {
         int present = 0;
         boolean vanilla = false;
@@ -143,12 +152,15 @@ public final class HearthNow {
         return !vanilla || present >= 2;
     }
 
-    /** The next room to suggest: a Sanctuary, then an Armory; the others once you have what they're made of. */
+    /**
+     * The next room to suggest: shelter, a bedroom, then the Armoury, your first workshop (SPEC §27.13); a Sanctuary and the
+     * Forge once there is an Anchor; the others once you have what they're made of.
+     */
     static @Nullable RoomType nextRoom(ServerPlayer p, HearthRecord h) {
-        for (RoomType t : RoomType.values()) {
+        for (RoomType t : ORDER) {
             if (h.hasRoom(t)) continue;
             boolean relevant = switch (t) {
-                case SHELTER, BEDROOM -> true;
+                case SHELTER, BEDROOM, FITTING -> true;
                 // the Anchor's rooms once there is an Anchor; the rest once you have what they're made of
                 case SANCTUARY, ARMORY -> !h.hearthfire();
                 case TROPHY_HALL -> h.furniture[Furniture.TROPHY.ordinal()] > 0 || holds(p, HearthContent.TROPHY_ITEM.get());

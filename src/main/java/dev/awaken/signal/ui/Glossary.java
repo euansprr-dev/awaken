@@ -24,8 +24,7 @@ public final class Glossary {
         add("Reassessment", "The trial that raises your rank. When your level is high enough, take it at the Spire in your town or at a Reassessment Monolith.");
         add("Flow", "A power that slows the world around you while you keep your speed. AGI makes it last longer.");
         add("Kinetic", "Raw physical force: punches, slams, shockwaves. Kinetic powers grow with STR.");
-        add("Truth", "A statement about who you're becoming. Declare up to three; when you've lived one it becomes TRUE for good and gives its reward.");
-        add("Directive", "A short, optional task the Signal suggests, with a reward. Accept it or let it fade; it never punishes you.");
+        add("Truth", "A statement about who you're becoming. When you've lived one it comes true by itself, for good, and gives its reward. Status lists them.");
         add("Latent", "A hidden ability asleep in you. It wakes by itself when you do something unusual enough. Nobody tells you how.");
     }
 

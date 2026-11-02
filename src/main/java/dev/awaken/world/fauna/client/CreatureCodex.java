@@ -4,10 +4,13 @@ import dev.awaken.mobs.def.Bestiary;
 import dev.awaken.mobs.def.FaunaRole;
 import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.def.Theme;
+import dev.awaken.mobs.MobTypes;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
+import dev.awaken.progression.client.Catalogue;
 import dev.awaken.progression.client.CodexEntries;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +19,7 @@ import java.util.List;
  * The Codex's Creatures column: every overworld creature this player has seen (the profile's discovery counters,
  * synced to the client), what it is for and where it lives. A named beast is threaded to the creatures of its family.
  */
-final class CreatureCodex {
+public final class CreatureCodex {
     private CreatureCodex() {}
 
     static final String CATEGORY = "Creatures";
@@ -28,24 +31,49 @@ final class CreatureCodex {
         List<CodexEntries.Entry> out = new ArrayList<>();
         for (MobDef d : Bestiary.fauna()) {
             if (!seen(p, d)) continue;
-            StringBuilder body = new StringBuilder(d.signature).append(".\n").append(role(d.fauna)).append("\nLives in ").append(where(d.theme)).append('.');
-            if (p.counter("awaken:discovered/beast_felled/" + d.id) > 0) body.append("\nYou have felled it.");
-            var mount = dev.awaken.mobs.entity.Fauna3Kinds.mount(d.id);
-            if (mount != null) {
-                String food = new net.minecraft.world.item.ItemStack(mount.favouriteItem()).getHoverName().getString().toLowerCase(java.util.Locale.ROOT);
-                body.append("\nA mount from level 11: sneak and feed it ").append(food).append(" until it trusts you, then put a Hunter's Bridle on it.");
-            }
-            if (d.fauna == FaunaRole.BEAST) {
-                if (p.counter("awaken:discovered/lair/" + d.id) > 0) body.append("\nYou have found its lair.");
-                else if (p.counter("awaken:lair_heard/" + d.id) > 0) body.append("\nYou have heard where its lair is (see the tracker).");
-            }
             List<String> links = new ArrayList<>();
             if (d.fauna == FaunaRole.BEAST) {
                 for (MobDef o : Bestiary.fauna()) if (o != d && o.theme == d.theme && seen(p, o)) links.add(id(o));
             }
-            out.add(new CodexEntries.Entry(id(d), CATEGORY, d.name, body.toString(), true, List.copyOf(links)));
+            out.add(new CodexEntries.Entry(id(d), CATEGORY, d.name, body(p, d), true, List.copyOf(links)));
         }
         return out;
+    }
+
+    /**
+     * The Journal's Creatures category (SPEC §27.13): every overworld creature in the bestiary's order, a "?" until you've
+     * seen it, then its name, its egg and what you've learned.
+     */
+    static List<Catalogue.Slot> slots() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return List.of();
+        Profile p = Progression.profile(mc.player);
+        var eggs = MobTypes.eggs();
+        List<Catalogue.Slot> out = new ArrayList<>();
+        for (MobDef d : Bestiary.fauna()) {
+            if (!seen(p, d)) {
+                out.add(Catalogue.Slot.unknown());
+                continue;
+            }
+            var egg = eggs.get(d.id);
+            out.add(new Catalogue.Slot(d.name, true, body(p, d), egg == null ? ItemStack.EMPTY : new ItemStack(egg.get())));
+        }
+        return out;
+    }
+
+    private static String body(Profile p, MobDef d) {
+        StringBuilder body = new StringBuilder(d.signature).append(".\n").append(role(d.fauna)).append("\nLives in ").append(where(d.theme)).append('.');
+        if (p.counter("awaken:discovered/beast_felled/" + d.id) > 0) body.append("\nYou have felled it.");
+        var mount = dev.awaken.mobs.entity.Fauna3Kinds.mount(d.id);
+        if (mount != null) {
+            String food = new ItemStack(mount.favouriteItem()).getHoverName().getString().toLowerCase(java.util.Locale.ROOT);
+            body.append("\nA mount from level 11: sneak and feed it ").append(food).append(" until it trusts you, then put a Hunter's Bridle on it.");
+        }
+        if (d.fauna == FaunaRole.BEAST) {
+            if (p.counter("awaken:discovered/lair/" + d.id) > 0) body.append("\nYou have found its lair.");
+            else if (p.counter("awaken:lair_heard/" + d.id) > 0) body.append("\nYou have heard where its lair is (see the tracker).");
+        }
+        return body.toString();
     }
 
     private static boolean seen(Profile p, MobDef d) {
@@ -65,7 +93,7 @@ final class CreatureCodex {
         };
     }
 
-    static String where(Theme t) {
+    public static String where(Theme t) {
         return switch (t) {
             case GREENWILD -> "the Greenwild: forests, plains, meadows";
             case SUNSCORCH -> "the Sunscorch: deserts, savannas, badlands";

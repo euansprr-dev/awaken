@@ -192,55 +192,45 @@ final class ProgressionTests {
             h.assertTrue(dev.awaken.progression.content.Content.DRILLS.map.size() >= 15, "drills loaded");
             h.succeed();
         });
-        AwakenTests.register("progression_directive_lifecycle", 40, h -> {
+        AwakenTests.register("progression_first_job", 40, h -> {
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
             Progression.awaken(sp);
             Profile p = Progression.profile(sp);
-            Directives.tryOffer(sp, "test");
-            h.assertTrue(p.directives().size() == 1, "one directive offered, got " + p.directives().size());
-            String id = p.directives().get(0).id();
-            Directives.answer(sp, Directives.ACTION + ":" + id, true);
-            h.assertTrue(p.directives().get(0).accepted(), "accepted");
-            var def = dev.awaken.progression.content.Content.DIRECTIVES.get(id);
+            // SPEC §27.13: no morning offers; the Registry's own, "clear the first floor", is the one Directive left
+            Directives.tryOffer(sp, "morning");
+            h.assertTrue(p.directives().isEmpty(), "nothing is offered in the morning any more");
+            Directives.tryOffer(sp, "opening");
+            h.assertTrue(p.directives().size() == 1 && p.directives().get(0).id().equals(Directives.OPENING) && p.directives().get(0).accepted(),
+                    "the Registry's, taken on for you: " + p.directives());
+            // an old save's other Directives and its Regimen drop quietly on login; the Registry's stays
+            p.directives.add(new Profile.DirectiveState("awaken:explore_landmark", true, 0, 99, java.util.Map.of()));
+            p.regimen = new Profile.RegimenState(3, java.util.List.of("awaken:x"), java.util.List.of(), java.util.Map.of());
+            Directives.retire(sp);
+            h.assertTrue(p.directives().size() == 1 && p.regimen().drills().isEmpty(), "the rest drop: " + p.directives());
+            var def = dev.awaken.progression.content.Content.DIRECTIVES.get(Directives.OPENING);
             java.util.Set<String> cs = new java.util.HashSet<>();
             def.condition().counters(cs);
             for (String c : cs) Progression.count(sp, c, 10_000_000L);
-            h.assertTrue(p.directives().isEmpty(), "completed and removed: " + id);
-            h.assertTrue(p.counter("awaken:directive_done/" + id) == 1, "done counter");
+            h.assertTrue(p.directives().isEmpty() && p.counter("awaken:directive_done/" + Directives.OPENING) == 1, "done, paid and gone");
             h.succeed();
         });
-        AwakenTests.register("progression_truth_declare_and_true", 40, h -> {
+        AwakenTests.register("progression_truths_by_themselves", 60, h -> {
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
             Progression.awaken(sp);
             Profile p = Progression.profile(sp);
-            // plan v2 §4.6: Truths come with the level road at level 5, not at awakening
-            h.assertTrue(p.truthsOffered().isEmpty(), "no truths at awakening, got " + p.truthsOffered().size());
+            // SPEC §27.13: no offers, no declaring; a Truth lived comes true by itself once Truths open at level 5
+            String map = "awaken:i_go_where_the_map_ends", fast = "awaken:i_am_fast";
+            Progression.setCounter(sp, "awaken:landmarks_reached", 8);
+            h.assertTrue(p.truthsTrue().isEmpty(), "not before level 5");
             while (p.level() < 5) Progression.grantXp(sp, Curve.xpToNext(p.level()) + 1, Progression.XpSource.COMMAND);
-            h.assertTrue(p.truthsOffered().size() == 3, "three truths offered at level 5, got " + p.truthsOffered().size());
-            String t = p.truthsOffered().get(0);
-            h.assertTrue(Progression.declareTruth(sp, t), "declare");
-            h.assertTrue(p.truthsDeclared().contains(t), "declared");
-            var def = dev.awaken.progression.content.Content.TRUTHS.get(t);
-            java.util.Set<String> cs = new java.util.HashSet<>();
-            def.condition().counters(cs);
-            for (String c : cs) Progression.setCounter(sp, c, 10_000_000L);
-            h.assertTrue(p.truthsTrue().contains(t), "became true: " + t);
-            h.succeed();
-        });
-        AwakenTests.register("progression_regimen_rolls_three", 40, h -> {
-            ServerPlayer sp = h.makeMockServerPlayerInLevel();
-            Progression.awaken(sp);
-            Regimen.morning(sp);
-            Profile p = Progression.profile(sp);
-            h.assertTrue(p.regimen().drills().size() == 3, "three drills, got " + p.regimen().drills().size());
-            int before = p.unspent();
-            for (String id : p.regimen().drills()) {
-                java.util.Set<String> cs = new java.util.HashSet<>();
-                dev.awaken.progression.content.Content.DRILLS.get(id).condition().counters(cs);
-                for (String c : cs) Progression.count(sp, c, 10_000_000L);
-            }
-            h.assertTrue(p.regimen().done().size() == 3, "all drills done");
-            h.assertTrue(p.unspent() >= before + 1, "regimen point granted");
+            h.assertTrue(p.truthsTrue().contains(map) && p.truthsOffered().isEmpty(), "lived before level 5: true at level 5, nothing offered: " + p.truthsTrue());
+            Progression.count(sp, "awaken:sprint_cm", 5_000_000L);
+            h.assertTrue(p.truthsTrue().contains(fast), "lived after: true the moment it's done");
+            // an old save's offers and declarations drop on the next catch-up (a login)
+            p.truthsOffered().add("awaken:i_endure");
+            p.truthsDeclared().add("awaken:i_am_still");
+            Progression.truthsCatchUp(sp);
+            h.assertTrue(p.truthsOffered().isEmpty() && p.truthsDeclared().isEmpty(), "old offers and declarations drop");
             h.succeed();
         });
         AwakenTests.register("progression_respec_refunds", 40, h -> {

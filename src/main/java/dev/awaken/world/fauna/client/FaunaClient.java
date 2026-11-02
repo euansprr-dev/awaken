@@ -3,7 +3,9 @@ package dev.awaken.world.fauna.client;
 import dev.awaken.Awaken;
 import dev.awaken.mobs.entity.FaunaHooks;
 import dev.awaken.progression.Progression;
+import dev.awaken.progression.client.Catalogue;
 import dev.awaken.progression.client.CodexEntries;
+import dev.awaken.progression.client.StatusSections;
 import dev.awaken.world.fauna.FaunaNet;
 import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.IEventBus;
@@ -24,6 +26,8 @@ public final class FaunaClient {
         modBus.addListener((net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent e) -> BridleLayer.modifiers(e));
         FaunaHooks.installViewer(FaunaClient::viewerAwakened);
         CodexEntries.addSource(CreatureCodex::entries);
+        Catalogue.fixed(StatusSections.Shelf.CREATURES, CreatureCodex::slots);
+        Catalogue.ownShelf(CreatureCodex.CATEGORY);
         dev.awaken.core.api.MapMarks.register(FaunaClient::lairMarks);
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> RevealPulse.stop());
     }

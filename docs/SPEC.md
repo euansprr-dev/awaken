@@ -26,7 +26,7 @@ Hard rules:
 |---|---|
 | `core` | mod entry, config, shared registries helpers, `AwakenNet`, commands root `/awaken`, `Forces` tags, the motion tags rule (`MotionTags`), `PlayDays`, `Rng`, debug |
 | `signal` | Signal windows (server API + client HUD), toast queue, Day's End card |
-| `progression` | Level/XP/ranks/stats (`Profile` attachment), counters, Reassessment, Truths, Titles, Latents, Paths, Directives, Daily Regimen, Director (pacing + "new thing" rhythm), Status screen (4 tabs) |
+| `progression` | Level/XP/ranks/stats (`Profile` attachment), counters, Reassessment, Truths (true by themselves, §27.13), Titles, Latents, Paths, the Registry's one Directive, Director (pacing + "new thing" rhythm), Status screen (4 tabs) |
 | `powers` | power framework, all powers, Power Cores, energy, cooldowns, keybind casting, Five Forces interactions, a power's shake (its hit-stop is every blow's, `core.api.CombatFeedback`) |
 | `mobs` | `AwakenMob` base, gate bestiary, Gate Lords / bosses, Hollow Court, mob scaling by level, renderers |
 | `gates` | gate registry/SavedData, overworld gate block + pillar render, gate card, gate dimension + chunk generator, layouts, themes, modifiers, twists, runs, Satchel, Shrines/Seals/Caches, gate pressure, breaks + blight, claims, cleanup |
@@ -44,6 +44,7 @@ Hard rules:
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
 | `arms` | Weapons and combat (§25): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
 | `trails` | Trails (§33): optional guidance for every part of the game, short lists of things to try that open at a moment, wait in the Journal and reach the task card only when followed |
+| `tasks` | Tasks (§27.13): the band's Tasks page, one list of what you can do now from every module's goals (`core.api.Goals`) and the Now suggestions, a tab per goal, where each need comes from, the pin, the armour sets worn |
 | `aim` | Lock-on (§40): the mark and the lock, their look, the arcs for tells out of view, the dot; `core.api.Aim` (the server's check of the creature a press meant) |
 
 Rules for builders:
@@ -87,7 +88,7 @@ floorReward(r,f) = SHARE[r] * xpToNext(RANK_MID[r]) * 1.4^(f-1)
    60% is the floor bonus, carried as "Satchel XP" and banked only on extraction or boss kill
 gate below your rank pays x0.3
 home activity XP ~ 1.2% of a level per active minute (capped per minute; see §4.3)
-Daily Regimen    = 0.25 * xpToNext(L) + 1 stat point
+Daily Regimen    = 0.25 * xpToNext(L) + 1 stat point   (gone since §27.13)
 death            = lose Satchel (items + Satchel XP), keep gear & kill XP, gain Insight, Fracture 8 min (Hunter mode)
 story length     = config multiplier on all XP: 2.0 (≈50 h), 1.0 (≈100 h, default), 0.67 (≈150 h)
 ```
@@ -153,6 +154,7 @@ Pass → rank++, Signal Reassessment window, town celebration, new tier of gates
 ### 4.5 Truths
 Data: `data/awaken/awaken/truth/*.json` `{id, text, hint?, condition, reward}`. Offered 3 at awakening and 3 at each rank
 (plus emergent ones when a hidden condition is met). Declare up to 3 → "NOT TRUE YET" → condition met → TRUE (permanent).
+**Since §27.13 (2026-10-30)** none are offered or declared: from level 5 each comes true by itself when lived.
 Conditions (`progression/Condition`): `counter_at_least`, `streak_at_least` (counter that resets on a reset-counter),
 `event` (one-shot flag), `all/any`.
 
@@ -168,11 +170,13 @@ power + passive + aura colour.
 ### 4.8 Directives
 Rule tables in data `directive/*.json` with `when` (context filters), `text`, `condition`, `reward`, `expires_days`.
 One new offer per morning or notable event, max 3 active, no repeats within 5 play-days, ≥1 in 4 must be "fresh".
-Accept with Y, ignore and it fades.
+Accept with Y, ignore and it fades. **Gone since §27.13 (2026-10-30)**: only the Registry's own, the first floor of a gate,
+stays (§27.6); the Tasks page says what's next.
 
 ### 4.9 Daily Regimen
 Each in-game morning: 3 drills tuned to Path (sprint distance, Flow seconds, kills, Training Grounds lap, meditate 30 s,
 mine N). Reward per §2. Skip = nothing, unless Hardline (Penalty Zone: survive 4 min in a desert night arena).
+**Gone since §27.13 (2026-10-30)**, the Penalty Zone with it.
 
 ### 4.10 Director
 Runs every 1000 ticks per online player: gates upkeep, directive offers, new-thing rhythm, break warnings.
@@ -204,7 +208,7 @@ Without presses everything still plays on its own timing. The Opening's speech g
 citizen's reply over their head goes when you look at them (within 6 blocks) and press. Timing, rewards and handovers
 stay server-owned. Test `signal_dialogue_use_once`, `veil_dialogue_continuation`.
 
-The band (key **K**, §30): six pages, Status · Powers · Journal · Truths · Codex · Map. Status shows level, rank, path,
+The band (key **K**, §30): six pages, Status · Tasks · Hearth · Powers · Journal · Map (§27.13). Status shows level, rank, path,
 title and XP, the stats with + buttons when points are unspent, then the Journal; Powers holds the loadout (provided by
 `powers` via `StatusSections`); the Map page is the Atlas.
 
@@ -557,7 +561,7 @@ of `AwakenConfig.Client`.
   filter closed and nature held back while renewed). `/awaken audio world [off|on]` (client).
   Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
-  `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
+  `hearthsOf`, `household`, `shareHearth`, `within`, `armoury`: is this spot in an Armoury, §27.13), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
@@ -577,6 +581,12 @@ of `AwakenConfig.Client`.
 - `dev.awaken.core.api.Shown` (§27.12; 2026-10-30) — every line a module puts in front of the player as something to do:
   `register(String source, Source)`, `all(ServerPlayer)` (`Line(source, text)`), `mentioning(player, words)`,
   `sources()`. Server side, for the sweep's checks; not for a hot path.
+- `dev.awaken.core.api.Goals` (§27.13; 2026-10-30) — what a player can do now, for the Tasks page: `Goal` (HEARTH,
+  ARMOUR, WEAPONS, BELLS, RANK, OUT), `Need(item, label, have, need)` (`of`, `item`, `tag`; item "" a condition, "#id" a
+  tag), `Choice(id, title, sub, show, needs)`, `Step` (`Step.of(key, goal, title)` → `Builder`: `why`, `need(s)`, `at`,
+  `path`, `priority` (50), `optional`, `choice`, `covers`), the path's places `PATH_START` .. `PATH_TRIAL` and `NO_PATH`;
+  `register(Source)`, `all(ServerPlayer)` (a source that throws is skipped and logged), `count(Inventory, Item | TagKey)`.
+  Server side. What a step says is done must leave it (§27.12).
 - `dev.awaken.core.api.Passage` (§28.9, "Arrivals"; 2026-10-29) — Awaken's own teleports wait for their land off the
   server thread: `go(player, level, x, z, move)` runs `move` at once when every chunk within `EdgeHold.BODY` of (x, z)
   is loaded at FULL, else puts the `awaken:arrival` ticket on the 3×3 round it and runs `move` once those are made (no
@@ -753,7 +763,7 @@ Lucidium:
 
 Above:
 - Five ruin kinds from one code-built structure type; the spawn vault (240–360 blocks from spawn) opens at D and holds
-  a Scanner. A powered Signal Relay near your Hearth links for 7 play-days and grants +1 Directive slot. The
+  a Scanner. A powered Signal Relay near your Hearth links for 7 play-days and grants +1 Directive slot (gone with the Directives, §27.13; its bell listening went with §43.16). The
   Recalibrator uses `Progression.respec`. The Clone Vat (`Above.consumeCloneSave`) keeps the Deep Pack / Satchel once
   per play-day. Revelations fired by modules go through `Story.revelation` so they show once and reach the Codex.
 
@@ -794,7 +804,8 @@ Story effects on the world:
 
 Plan v2 · onboarding and progression (details in docs/modules/onboarding.md):
 - Rank floor-reward shares E .28, D .16, C .065, B .22, A .60, S .55, Sovereign .50 (sim: level 50 ≈ 56 h, 135 ≈ 101 h for a
-  balanced player, 120 h careful); Daily Regimen = 0.1 × xpToNext + 1 point.
+  balanced player, 120 h careful); Daily Regimen = 0.1 × xpToNext + 1 point (the Regimen is gone since §27.13; floors pay
+  more through `Curve.WILDS_TRIM` 0.94).
 - §4.3 is replaced: home XP = kill 4% × min(2, hp/20), ore 1%, block 0.05% of a level, each through diminishing returns per
   source (10-minute tally; budgets kill .15, ore .06, build .03, other .25 of a level per 10 min), tapered by
   1/(1 + levels above the content / 10). Discoveries (`Progression.discover`) are uncapped.
@@ -935,7 +946,8 @@ Plan v2 · the Hearth guide (details in docs/modules/hearth.md):
   made (only terrain, plants and up to three natural trees give way); 9×9 outside, 7×7×4 inside, ten biome palettes,
   raised over ~7 s; its room is a Sanctuary on completion.
 
-Plan v2 · Anchor requests (details in docs/modules/requests.md):
+Plan v2 · Anchor requests (details in docs/modules/requests.md; **gone since §27.13**: none is offered, handed-in items
+come back, earned Forge credit still pays, Core Shards still drop):
 - Once a player has a Hearth Anchor, the System asks for materials they can really get (sightings, vanilla stats, depth,
   rank): one request at a time, two from C-rank, offered quietly with a one play-day ttl, renewed per free slot each
   play-day and after each delivery; nothing lost for ignoring, declining or dropping one.
@@ -4556,7 +4568,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
    the odds (21.2).
 2. A Hearth calms its land: within its radius + 96 blocks the level is min(region, the household's highest level).
 3. XP: every creature pays by its own level and role (a sheep too); crafts, quests, bounties and camps pay; gate floor
-   rewards ×0.80 (`Curve.WILDS_TRIM`); the balanced player's length holds (sim, 21.3).
+   rewards ×0.80 (`Curve.WILDS_TRIM`; 0.94 since §27.13); the balanced player's length holds (sim, 21.3).
 4. Plates, damage numbers and the XP stream are on by default (client settings to reduce or turn off).
 5. Level-up is a System moment, compact in a fight, seen by players nearby (never their pane).
 6. Elites in the wild: 5% of neutral and hunter spawns.
@@ -4632,7 +4644,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   below / 8). Paid via `Progression.worldXp(player, "hunt", raw, after)`; the old home kill XP is off while the
   living module pays (`LivingHooks`). Party sharing as before.
 - Budgets registered by modules: `XpBudget.register(source, perTenMinutes)`.
-- Gate floor rewards × `Curve.WILDS_TRIM` (0.80; everything priced from a floor reward follows: anomalies, camps).
+- Gate floor rewards × `Curve.WILDS_TRIM` (0.80; 0.94 since §27.13, which retired the Regimen and the daily Directives; everything priced from a floor reward follows: anomalies, camps).
   Hunting, crafts and camps pay × `LivingModule.wildsRank(rank)` after the budget: 1.0, except C 0.55 (C is the long
   climb in gates too). tools/sim/pacing_sim.py carries the same model; balanced player: level 5 0.99 h, 10 3.9 h,
   25 16.8 h, 50 51.3 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.9 h (elites by rank, §21.10);
@@ -7849,7 +7861,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   Lumen canopy: `LivingNet.CampSmoke`, `PulseFx.campfire`), lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
   so from the gate there was nothing there yet).
 - **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
-  the player (4 play-days), "Your first gate will open somewhere outside the city walls." Accepted Directives show on the Now
+  the player (4 play-days; since §27.13 "Your first job", never fading), "Your first gate will open somewhere outside the city walls." Accepted Directives show on the Now
   line with their progress ("· 50%", priority 58). Before, the Registry's was a random roll offered quietly, its waiting
   line gone in 30 s, and accepted ones never showed outside K.
 - **The first gate, on purpose** (`Director.firstGate`, SPEC §21.0.14 finally built): a player's first gate waits until
@@ -8133,6 +8145,148 @@ suggestion, a rumour, a lead, a decision waiting or a destination.
   unchanged). Tests: `hearth_guide_one_room` (real blocks: the bedroom's table and stove tick for the Kitchen, a loose
   barrel outside doesn't; a barrel inside makes the room a Kitchen and still a Bedroom), `hearth_guide_matches_roomtype`
   (loose furniture ticks nothing).
+
+### 27.13 One Tasks page, a tab per goal (Euan, 2026-10-30; page docs/tasks/page.html, https://claude.ai/artifact/RbQNkY1tvFB6QKcP2n3NWU)
+Euan: "one single tasks tab which contains all the things you can do right now", and his moment: back home with the
+Hearthfire set and a bed built, what next? Approved in full with two changes: "The kin should be part of the hearth tab"
+(no Beasts tab; kin steps and the kin list, rumours and wants live on the Hearth) and "The armour tab should show a real
+preview of each set too". This changes §43.5's "the help is never stated" for the main path: what to do next and where
+each piece comes from is said plainly; what the world holds beyond it is still found. Phase 1 as built:
+- **The band has six pages:** Status · Tasks · Hearth · Powers · Journal · Map (`StatusSections.Tab`). The Truths page's
+  sections stand on Status (the path choice 700, the Truths 710-730, the road 735, titles 740, latents 750:
+  `StatusSections.placed`); the Codex's board, the Atlas list, the Almanac and the Bell Book stand on the Journal (600-640;
+  phase 3 gives each its category). The holo rail has six nodes (`BandLayout.PAGES` 6); Tasks carries a badge for steps you haven't seen.
+- **Goals** (`core.api.Goals`, §12): a module says what a player can do now as `Step`s under one of six goals (Hearth,
+  Armour, Weapons, Bells, Gates and rank, Out there), each with its needs (an item, a tag or a condition, have and
+  need), a place, a place on the main path, optional or not, choices (the armour sets) and the Now suggestions it
+  covers. The main path: start 0, the fire 10, a first room 20, the Armoury 30, the first armour 40, the first gate 50
+  (for its Lord's Heart), the Anchor 55, the Forge 60, the trial 70. An optional upgrade (the Sanctuary) is never on top.
+- **The book** (`tasks.TaskBook`, cached 10 ticks): every module's steps and every Now suggestion (`tasks.NowMap` maps a
+  suggestion to its goal and place on the path by its id: `kin:` and `request:` go to the Hearth) as one list, one row
+  per key (two of one key: the one with more needs or choices, the place from either), nothing a goal step covers twice.
+  Order: the path, then priority, then key. On top: something urgent (priority 90 and up: the opening, a ritual's
+  doors), else the pinned step, else the path's next that isn't optional, else the most pressing of the rest.
+- **The page** (`tasks.client.TaskTabs`, `TaskPage`): tabs NOW, HEARTH, ARMOUR, WEAPONS, BELLS, GATES (Q / E; a dot on
+  a goal with a step you haven't had in front of you for 1.5 s). Now: "Do this next" in full; "Also open to you", the
+  first open step of each goal with how many of its needs are ready and Open ›; "Out there" (suggestions no goal
+  claims); "When you want" (optional upgrades). A goal's tab: every step in order, each need with its icon, count, a tick,
+  and under a missing one where it comes from (`WhereFrom`: the page's own line `awaken.where.<ns>.<path>` or
+  `awaken.where.tag.<path>`, else the Armoury's `awaken.source.*`, else the creatures that drop it with their land, and
+  "Some live round here." in their land); a place as "About 310 blocks north-east." **Pin** puts a step on the task card
+  (one pin for everything: pinning stops a followed trail). An armour step shows each set as a tile (its four pieces,
+  name, role and armour, materials ready, Choose); **See them worn ›** opens `SetPreviewScreen` over the band: a vanilla
+  `ClientMannequin` per set wearing its pieces, turning to the cursor; click one to choose it, Esc goes back. The set
+  chosen is saved and the card then lists what that set still takes.
+- **The task card:** the pinned step leads it (`Checklist.registerLeading`); with nothing else on, the step on top shows
+  last when it has needs. Swept with every other place a goal shows (`Shown` source `tasks`, §27.12).
+- **Sync:** `tasks_view` (server → client) when it changes, looked at every 20 ticks while the page is open and every 100
+  otherwise; `tasks_act` (client → server): PIN, UNPIN, OPEN, CLOSED, SEEN (a goal's ordinal or one step's key), CHOOSE
+  ("step|choice"). Saved: attachment `awaken:tasks` (`TaskState`, schema 1: pinned, seen (the last 256), chosen), kept
+  through death. `/awaken tasks` lists the page, `/awaken tasks pin <key>`, `/awaken tasks unpin`.
+- **The Armoury** (`RoomType.FITTING`, label "Armoury", id `armoury`): a Fitting Stand and a crafting table in one closed
+  room, your first workshop, right after a bed (`HearthNow.ORDER`: Shelter, Bedroom, Armoury, then the rest). An anvil,
+  the Forge and an armour stand in the same room make it the Forge too (one room, both kinds). `Furniture.FITTING_STAND`
+  is appended (saved counts go by ordinal). Its gift: armour finished at a Fitting Stand inside an Armoury lasts a quarter
+  longer (`MAX_DAMAGE` × 1.25, `ArmourForge.ARMOURY_WEAR`; the stand asks `HearthHooks.armoury(level, pos)`, §12; the
+  tooltip says "Made in your Armoury: it lasts a quarter longer"; `ArmourForge.fromArmoury` reads it off the stack).
+- **The Hearth's steps** (`hearth.HearthGoals`): Build your Armoury (its pieces ticked where they stand in one closed room,
+  as the guide ticks them); Clear your first gate (at the Hearthfire: the nearest enterable gate within 600 blocks, for
+  its Lord's Heart) or, with a Heart in the pack, Set the Lord's Heart on your fire; Grow your Armoury into a Forge;
+  Make your Bedroom a Sanctuary (optional); Grow your home to the next tier (its rules, the rank, the price).
+- **The Armour's steps** (`armour.ArmourGoals`): until every piece you wear is your rank's, "Choose your first armour"
+  (on the path) or "Make your X-rank armour", its choices your rank's known sets with what the pieces you don't own
+  still take, summed; once you wear your rank's, when the next comes.
+- **The Hearth page** (phase 2, `hearth.client.HomePage`, replacing the old Hearth section): your home at a glance (name,
+  tier, the Forge, Comfort as pips, style, town, trophies, "Rooms and upgrades ›" to the guide); NEXT FOR YOUR HOME, the
+  Hearth's first step in full with "Everything for your home (N more) ›" to the Tasks page's Hearth tab
+  (`tasks.client.HearthNext`); ROOMS, every room kind as a tile in `HearthNow.ORDER`: built (green), started (amber, its
+  pieces counted), open, the Sanctuary dashed (optional), and "?" for a kind whose rare piece (a trophy, a machine, a lode
+  heart, a vent stone, a perch, a crucible, a drop, a ledger) you've never had at home or in your pack; click a tile for
+  its pieces, where each comes from and the closed room it needs; MAKE IT LOOK GOOD, each room (weakest first, up to 8)
+  with its grade, kinds, its six readings as pips (the weakest amber) and the one thing that lifts it. Then the kin
+  sections as before (your beasts and nooks, the kin list, rumours and wants). Sent in `HearthView` as `tiles` and
+  `looks` (optional fields, so an old client's view still reads).
+- **The beasts' steps** (`kin.KinGoals`, Hearth goal): the home's first two needs (`KinPage.NEEDS` order) with no beast of
+  that kind living there yet, while a nook is free. A kind you've met or heard of is named ("Bring a Burrowbun home", the
+  need and where: "You've met one: ..." or the rumour you already have, with its place); one you haven't stays the need
+  itself ("Nothing lights your yard at night."). Looking never learns a rumour: it reads `Kinship`, never asks
+  `KinSpawner`.
+- **The Bells' steps** (`bells.BellGoals`): a step per lead in the Bell Book you don't hold yet, newest first, up to 4
+  ("Find the Barrow Bell" once seen or narrowed, else "Find where that bell's note came from"; its last line; its place as
+  Track had it), and the tower's next step when it's yours to do (set the frame down at home, clear room for the belfry
+  or the stone tower, raise the Great Belfry, ring the Hundred Peal). A tower that only wants more bells adds nothing:
+  the leads are that. Reads the Book, never changes it.
+- **The beasts' wants** (phase 3): a want you've read by watching a beast three times is a plain Hearth step ("Give the
+  Burrowbun what it wants", its third watch line, "Help one three times and it trusts you; then it follows you home"),
+  until one of its kind lives with you; the first fire's Lampwing, before you've watched it, is "Watch what's been
+  watching your fire". Both under `kin.KinGoals`.
+- **Truths come true by themselves** (phase 3, `Progression.truthDue`, `truthsCatchUp`): from level 5 (the road's
+  `awaken:truths`), a Truth whose rank has come, whose emergence (if any) has happened and whose deed is done is true,
+  its reward unchanged; no offers, no declaring, all 32 can be earned. Lived before level 5 or before its rank, it comes
+  true at the flag, the rank-up or the next login, told in one line. Status shows TRUTHS · n OF 32 (yours, green) and
+  CLOSEST TO TRUE (the three you're nearest, with what each takes and gives, a bar). The Truths offered toast, the
+  Declare and Withdraw buttons and the `declare` / `undeclare` actions are gone; an old save's offered and declared lists
+  drop at its next catch-up (the saved fields stay so old saves read). Two Truths counted removed systems and get new
+  deeds: "I keep my word." is ten helps to beasts you meet (`awaken:kin_helped` 10, +3% XP in place of the Directive
+  slot), "I choose my path." thirty floors past your comfort (`awaken:floors_pushed_past_comfort` 30). The Titles
+  Keeper of Promises (seven helps to beasts) and The Regimen, now The Drilled (ten Gauntlet runs), and the hidden
+  Wanderer path (25 landmarks reached) move the same way.
+- **Directives and the Daily Regimen are gone** (phase 3): no morning offers, no gap offers, no drills; `Regimen.java` is
+  deleted and Hardline's Penalty Zone retires with it (a pending one is cleared at login). Only the Registry's own stays,
+  "clear the first floor of a gate" (§27.6), taken on at the opening, never fading, paid as before, shown on Now and
+  folded into the Hearth's "Clear your first gate" step (`covers("progression:directive/")`). An old save's other
+  Directives and its Regimen drop quietly at login (`Directives.retire`). The Journal's DIRECTIVES and DAILY REGIMEN
+  sections and the Directive glossary entry go. The pacing sim drops their sixth of a level a day (phase 4).
+- **Anchor requests are gone** (phase 3, as JOURNEY part 9 said): none is offered; one waiting is withdrawn; anything
+  handed in for an open request comes back to your pack (a tag's first item); Forge credit already earned still pays;
+  the Journal's request section goes. Core Shards still drop from C-rank gate floors. Tests:
+  `hearth_requests_retired`, the saved state and the shard fusing; the offer tests go with the offers.
+- **The Signal Relay** (phase 3): near your Hearth, once a play-day, Listen (its Essence cost unchanged) put the
+  nearest sleeping bell within 1,500 blocks you don't hold and haven't heard in your Bell Book as a heard note, one
+  bearing from the relay (`BellHooks.relay`, `Bells.relayed`). The +1 Directive slot and `awaken:relay_linked_day` go.
+  **Retired the same day by §43.16** (no bell lies in the open, so there's nothing to hear): `Bells.relayed` is false
+  like the Chimewrens' and Snufflets' leads, the panel offers no Listen and spends nothing, and says plainly that every
+  bell is kept somewhere now. `AboveData.relay_day` stays in the save, unread. The relay has no job left; a new one is
+  Euan's call.
+- **Trails fold into Tasks** (phase 3, `trails.TrailGoals`): each open trail you haven't finished or hidden gives its next
+  step (key `trail/<id>`, optional, its trail and "n of m done" as why, its place) under its area's goal: home → Hearth,
+  weapons → Weapons, gates, powers and the body → Gates and rank, the rest Out there. Pin replaces Follow: the trail card
+  and its Now line go, and an old save's followed trail becomes the pin if nothing is pinned. The Journal's TRAILS
+  section and its All trails browser go; trails still open, tick, hide and finish (with their share of a level) as before.
+- **One pin** (`Goals.Pin`, installed by tasks: `pinned`, `pin`, `pinIfFree`): the Bell Book's Track is Pin now (its
+  lead's step `bell/<no>` leads the card; a lead found by a letter pins itself only when nothing else is pinned).
+- **The Journal is a catalogue** (phase 3, `progression.client.Catalogue`, `JournalFilters`): a tab per category along
+  its top with how many you've found (Q / E step through them; they wrap on a narrow band): CREATURES (every overworld
+  creature in the bestiary, `CreatureCodex.slots`, found once seen, with its egg), BEASTS (the kin kinds that live in the
+  world, found once met; read off the Hearth page's words, `KinPageSection.slots`), LANDS (biomes found, a count),
+  PLACES (landmarks, lairs, wonders and secrets found, a count), GATE WORLDS (the Atlas, found / total), CAVE REGIONS
+  (`RegionCodex.slots`), BELLS (the Hundred's own board is the slots; the tab counts held / 100), LORE (the Codex board
+  without its Creatures and Cave regions, which have their own; found entries counted), HAPPENINGS (the Almanac, a
+  count: the kinds are the server's data, so the client can't number them), ORES (the twelve of
+  `ProgressionModule.OreXp`, found once mined, with what each is for) and YOUR STORY last (the log, Records, the chains,
+  Saved for later, Recent; its tab says "n NEW" while the log has unread lines). A fixed category shows every slot numbered; one not
+  found is a "?" with its number and nothing else, never a name, a picture or a hint; click a found one for what you've
+  learned. A category with nothing to show yet says in one line what it keeps (`Catalogue.Empty`). The Hundred's board
+  shows from the start; a bell you know nothing of hovers as its number only (no name, no rank). A section says its
+  category (`Section.shelf()`, YOUR STORY by default); a note link to the Journal opens on
+  the linking section's category (`StatusSections.follow`: the Status page's "ALL n ›" opens Your story). The Now list
+  leaves the Journal (Tasks has it; Recent's links go to Tasks). Autopilot: `journal <category>`. Not moved: the chains
+  and Saved for later stay under Your story rather than on Tasks.
+- **Track is Pin on the kin list too** (phase 3): a kind with a step on the Tasks page (`kin/need/<id>` or
+  `kin/want/<id>`) pins it; one without falls back to the rough bearing as before. A kin step's place is that rough
+  bearing (`KinSpawner.rough`), never the spot. The Armoury's weapon Track stays its own (no weapon steps yet).
+- **Pacing** (phase 4, `tools/sim/pacing_sim.py`): without the Regimen and the daily Directives (about a sixth of a level
+  a play-day) the balanced player reached level 50 at 62 h and 135 at 115 h (targets 50-60 and 95-105). Gate floors make
+  it back: `Curve.WILDS_TRIM` 0.80 → 0.94 (0.90-0.94 keep every target; anomalies and camps priced from a floor follow).
+  Now level 10 at 3.8 h, 25 at 17 h, 50 at 57 h, 135 at 101-105 h (the sim varies a few hours run to run); the first
+  hour, power mastery and the gate death targets hold.
+- **Tests:** `tasks_book_rules` (order, the top rule, covers, merge, NowMap, the saved state), `tasks_choose_and_pin`
+  (the first armour's sets, one row per need, a refused pin, chosen and pinned: the card lists that set's needs),
+  `tasks_next_step_follows_path` (Euan's moment in a real home: the Armoury on top, then the armour, then the gate, the
+  Sanctuary optional; the Hearth page's tiles and looks, the beasts' first need as a step; built, the armour is on top and
+  the Forge waits), `hearth_armoury_room` (the room, and the gift: a helmet made at its stand lasts 1.25×, one made
+  outside doesn't), `progression_truths_by_themselves`, `progression_first_job`, `trail_steps_on_tasks`, and the kin
+  sweep (`kin_done_never_shows`) checks a met kind is named and a read want is the step.
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
@@ -10088,7 +10242,7 @@ band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); 
 
 ### 30.1 Pages (phase 1, built)
 - **Six pages, in the rail's order:** Status · Powers · Journal · Truths · Codex · Map (`StatusSections.Tab`;
-  `Tab.label()`). `Tab.GATE_MAP` is gone.
+  `Tab.label()`). `Tab.GATE_MAP` is gone. Since §27.13 (2026-10-30): Status · Tasks · Hearth · Powers · Journal · Map.
 - **The rail** (holo, `holo.ui.BandLayout`, `HoloStatusScreen`):
   - It runs down the panel's wrist edge, 30 units wide: six nodes 31 units tall, one every 34 from y 9.
   - Each node has a 12×12 pixel icon and its label in spaced capitals at two framebuffer pixels fewer per font pixel
@@ -10114,6 +10268,9 @@ band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); 
   | Truths | the Path choice (0), Truths (10–30), THE ROAD (35), TITLES (40), LATENTS (50) |
   | Codex | THE BOARD (0), HAPPENINGS WITNESSED (460) |
   | Map | the map in the world (§30.5), or the Atlas table |
+  Since §27.13 (2026-10-30) the Truths page's sections stand on Status (700-750), NOW, DIRECTIVES, DAILY REGIMEN and
+  ANCHOR REQUESTS are gone from the Journal (Now is the Tasks page's), the Hearth sections are the Hearth page's, and
+  the Codex is the Journal's LORE & PLACES category (§27.13 "The Journal is a catalogue").
 
 - **Gates on the Atlas** (`MapMarks.Gate`, `MapMarks.registerGates`, `MapMarks.gates`):
   - Every gate whose pillar you can see (the gates module, from the synced beacons) and each gate your scanner read (the
@@ -10241,16 +10398,16 @@ really sharp, with the clouds and everything".
   the sockets it fits light amber with corner ticks. Esc lets go of a pick before it closes the band. The card's height
   fits the longest description you own, so the page never jumps.
 - **Journal:**
-  - **Filters** across the top (`progression.client.JournalFilters`): EVERYTHING, TASKS, FINDS, MESSAGES; click one or
-    Q / E. Each section names its filter (`StatusSections.Section.shelf()`, TASKS by default; the filed lines and
-    RECORDS are FINDS, RECENT MESSAGES is MESSAGES; null shows under every filter). Screens ask
-    `StatusSections.shows(tab, section)`.
+  - **Categories** across the top (`progression.client.JournalFilters`; since §27.13 in place of EVERYTHING, TASKS,
+    FINDS, MESSAGES): CREATURES, BEASTS, BELLS, GATE WORLDS, CAVE REGIONS, HAPPENINGS, LORE & PLACES, YOUR STORY, each
+    with how many you've found; click one or Q / E. Each section names its category (`StatusSections.Section.shelf()`,
+    YOUR STORY by default; null shows under every one). Screens ask `StatusSections.shows(tab, section)`.
   - **TRACKING** leads (`living.client.JournalSection`, order −40): the tracked chain's name in white on a lit horizon
     bar and "▸" the step you're on; the other chains and bounties follow under ALSO ON, one line each with their step
     in small type. With nothing tracked the heading is CHAINS.
   - The page's filed lines are its **LOG** ("LOG · 2 NEW"); the Status page keeps "JOURNAL".
 - **Truths:** each Truth on its own card of glass, its bar amber while it waits on you and green once true; "Gives:"
-  instead of "Reward:".
+  instead of "Reward:". Since §27.13 on Status: TRUTHS (yours) and CLOSEST TO TRUE (the three nearest), no declaring.
 - **Narration** (`StatusSections.narrate`, spoken only when the vanilla narrator is on): a page change ("Journal
   page"), a stat's focus ("Agility 22. You move faster, and Flow builds sooner. 3 points to place."), a power picked
   (its name, what it does, what to press), a gate picked on the map (its name, distance, when it breaks, "Press T to be

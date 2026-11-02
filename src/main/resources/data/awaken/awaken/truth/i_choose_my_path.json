@@ -1,9 +1,9 @@
 {
   "text": "I choose my path.",
-  "hint": "Complete 30 Daily Regimens.",
+  "hint": "Go deeper in a gate than you usually do, thirty times.",
   "condition": {
     "type": "counter",
-    "counter": "awaken:regimens_done",
+    "counter": "awaken:floors_pushed_past_comfort",
     "value": 30
   },
   "reward": {

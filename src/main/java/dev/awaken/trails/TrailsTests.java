@@ -20,7 +20,7 @@ final class TrailsTests {
         AwakenTests.register("trail_defs_valid", 40, TrailsTests::defsValid);
         AwakenTests.register("trail_progress_derived", 60, TrailsTests::progressDerived);
         AwakenTests.register("trail_open_once", 60, TrailsTests::openOnce);
-        AwakenTests.register("trail_follow_card", 60, TrailsTests::followCard);
+        AwakenTests.register("trail_steps_on_tasks", 60, TrailsTests::followCard);
         AwakenTests.register("trail_silhouette", 60, TrailsTests::silhouette);
         AwakenTests.register("trail_done_never_shows", 60, TrailsTests::doneNeverShows);
     }
@@ -118,37 +118,31 @@ final class TrailsTests {
         h.succeed();
     }
 
-    /** Following puts the steps on the task card and the Now line; unfollowing takes them off; hiding drops it. */
+    /**
+     * (SPEC §27.13) An open trail's next step is a step on the Tasks page under its area's goal, for when you want; a step
+     * done moves it on; hiding the trail drops it. An old save's followed trail becomes the pin, and Follow is gone.
+     */
     static void followCard(GameTestHelper h) {
         ServerPlayer p = player(h);
         Map<String, TrailDef> defs = new LinkedHashMap<>();
         defs.put("awaken:t_card", trail("Card", 1, List.of(), "free", step("a", "First.", "counter:awaken:t_a"), step("b", "Second.", "counter:awaken:t_b"),
                 step("c", "Third.", "counter:awaken:t_c")));
-        defs.put("awaken:t_other", trail("Other", 2, List.of(), "linear", step("a", "Only this.", "counter:awaken:t_o1"), step("b", "Then this.", "counter:awaken:t_o2"),
-                step("c", "Never shown yet.", "counter:awaken:t_o3")));
         with(defs, () -> {
             TrailEngine.update(p);
-            h.assertTrue(TrailEngine.task(p) == null, "nothing on the card until you follow");
-            h.assertTrue(NowHooks.collect(p, 10).stream().noneMatch(s -> s.id().startsWith("trail:")), "or on the Now line");
-            TrailEngine.act(p, new TrailPayloads.Act(TrailPayloads.FOLLOW, "awaken:t_card", ""));
-            var shown = dev.awaken.progression.Checklist.now(p);
-            h.assertTrue(shown != null && shown.id().equals("trail:awaken:t_card"), "a followed trail is the card, ahead of the first-hour moves: " + (shown == null ? null : shown.id()));
-            var task = TrailEngine.task(p);
-            h.assertTrue(task != null && task.title().equals("Card") && task.rows().size() == 3 && task.rows().stream().noneMatch(r -> r.done()), "the card shows its three steps");
+            var step = TrailGoals.steps(p).stream().filter(s -> s.key().equals("trail/awaken:t_card")).findFirst().orElse(null);
+            h.assertTrue(step != null && step.title().equals("First.") && step.goal() == dev.awaken.core.api.Goals.Goal.HEARTH && step.optional(),
+                    "a home trail's next step is an optional Hearth step: " + step);
             counter(p, "awaken:t_a", 1);
             TrailEngine.update(p);
-            task = TrailEngine.task(p);
-            h.assertTrue(task.rows().size() == 3 && task.rows().getFirst().done() && task.rows().getFirst().text().equals("First.") && task.rows().stream().filter(r -> r.done()).count() == 1, "a done step stays on the card, and the card counts it: " + task.rows());
-            h.assertTrue(NowHooks.collect(p, 10).stream().anyMatch(s -> s.id().equals("trail:awaken:t_card:b") && s.priority() == TrailEngine.NOW_PRIORITY), "the Now line names the next step");
-            TrailEngine.act(p, new TrailPayloads.Act(TrailPayloads.FOLLOW, "awaken:t_other", ""));
-            task = TrailEngine.task(p);
-            h.assertTrue(task.title().equals("Other") && task.rows().size() == 2, "following another replaces it, and a linear trail shows two");
-            h.assertTrue(TrailEngine.suggest(p).startsWith("Other:"), "'Anything for me?' leads with what you follow: " + TrailEngine.suggest(p));
-            TrailEngine.act(p, new TrailPayloads.Act(TrailPayloads.HIDE, "awaken:t_other", ""));
-            h.assertTrue(TrailEngine.task(p) == null && TrailState.of(p).followed.isEmpty(), "hiding the followed trail clears the card");
-            var view = TrailEngine.view(p, TrailState.of(p));
-            h.assertTrue(view.trails().stream().anyMatch(r -> r.id().equals("awaken:t_other") && r.state() == TrailPayloads.HIDDEN), "it waits under Hidden");
-            h.assertTrue(view.now().stream().noneMatch(r -> r.trail().equals("awaken:t_other")), "and out of what you can do now");
+            step = TrailGoals.steps(p).stream().filter(s -> s.key().equals("trail/awaken:t_card")).findFirst().orElse(null);
+            h.assertTrue(step != null && step.title().equals("Second.") && step.why().startsWith("Card, 1 of 3 done."), "one done, the next shows: " + step);
+            h.assertTrue(TrailEngine.task(p) == null && NowHooks.collect(p, 10).stream().noneMatch(s -> s.id().startsWith("trail:")),
+                    "nothing on the card or the Now line from Follow any more");
+            TrailState.of(p).followed = "awaken:t_card";
+            TrailGoals.followedToPin(p);
+            h.assertTrue(TrailState.of(p).followed.isEmpty(), "an old save's followed trail is handed to the pin");
+            TrailEngine.act(p, new TrailPayloads.Act(TrailPayloads.HIDE, "awaken:t_card", ""));
+            h.assertTrue(TrailGoals.steps(p).stream().noneMatch(s -> s.key().equals("trail/awaken:t_card")), "a hidden trail gives no step");
         });
         h.succeed();
     }

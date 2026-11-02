@@ -47,7 +47,7 @@ final class ProgressionNow {
                 Suggestion near = capability(player, p);
                 if (near != null) out.add(near);
             }
-            // accepted Directives, with how far along (SPEC §27.6): before, they never showed outside K
+            // the Registry's Directive, with how far along (SPEC §27.6; the only one left since §27.13)
             for (Profile.DirectiveState d : p.directives()) {
                 var def = d.accepted() ? dev.awaken.progression.content.Content.DIRECTIVES.get(d.id()) : null;
                 if (def == null) continue;

@@ -1,9 +1,9 @@
 {
-  "name": "The Regimen",
-  "description": "Completed ten Daily Regimens.",
+  "name": "The Drilled",
+  "description": "Ran the Gauntlet ten times.",
   "condition": {
     "type": "counter",
-    "counter": "awaken:regimens_done",
+    "counter": "awaken:gauntlet_runs",
     "value": 10
   },
   "perks": [

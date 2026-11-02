@@ -5,117 +5,117 @@
     "3": {
      "median": 0.47,
      "p10": 0.37,
-     "p90": 0.61,
+     "p90": 0.62,
      "reached": 1.0
     },
     "5": {
-     "median": 0.97,
-     "p10": 0.86,
+     "median": 0.91,
+     "p10": 0.79,
      "p90": 1.68,
      "reached": 1.0
     },
     "10": {
-     "median": 4.05,
-     "p10": 3.57,
-     "p90": 4.71,
+     "median": 3.97,
+     "p10": 3.54,
+     "p90": 4.67,
      "reached": 1.0
     },
     "15": {
-     "median": 8.05,
-     "p10": 7.06,
-     "p90": 9.0,
+     "median": 8.14,
+     "p10": 7.15,
+     "p90": 9.3,
      "reached": 1.0
     },
     "20": {
-     "median": 12.38,
-     "p10": 11.22,
-     "p90": 13.42,
+     "median": 12.62,
+     "p10": 11.43,
+     "p90": 14.11,
      "reached": 1.0
     },
     "25": {
-     "median": 17.24,
-     "p10": 15.98,
-     "p90": 18.5,
+     "median": 17.92,
+     "p10": 16.77,
+     "p90": 19.53,
      "reached": 1.0
     },
     "30": {
-     "median": 24.15,
-     "p10": 22.46,
-     "p90": 25.59,
+     "median": 26.23,
+     "p10": 24.52,
+     "p90": 28.1,
      "reached": 1.0
     },
     "40": {
-     "median": 38.77,
-     "p10": 36.82,
-     "p90": 40.83,
+     "median": 44.38,
+     "p10": 41.89,
+     "p90": 46.92,
      "reached": 1.0
     },
     "45": {
-     "median": 46.73,
-     "p10": 44.5,
-     "p90": 48.95,
+     "median": 54.33,
+     "p10": 51.69,
+     "p90": 57.08,
      "reached": 1.0
     },
     "50": {
-     "median": 51.54,
-     "p10": 49.18,
-     "p90": 53.86,
+     "median": 59.43,
+     "p10": 56.52,
+     "p90": 62.37,
      "reached": 1.0
     },
     "70": {
-     "median": 69.45,
-     "p10": 66.88,
-     "p90": 72.07,
+     "median": 78.25,
+     "p10": 74.89,
+     "p90": 81.84,
      "reached": 1.0
     },
     "100": {
-     "median": 87.17,
-     "p10": 83.86,
-     "p90": 90.63,
+     "median": 94.84,
+     "p10": 90.9,
+     "p90": 99.37,
      "reached": 1.0
     },
     "135": {
-     "median": 108.5,
-     "p10": 104.38,
-     "p90": 112.48,
+     "median": 115.26,
+     "p10": 110.69,
+     "p90": 120.79,
      "reached": 1.0
     }
    },
    "rank_hours": {
     "D": {
-     "median": 5.18,
+     "median": 5.25,
      "p10": 4.25,
-     "p90": 7.04,
+     "p90": 6.85,
      "reached": 1.0
     },
     "C": {
-     "median": 18.48,
-     "p10": 16.78,
-     "p90": 20.33,
+     "median": 19.14,
+     "p10": 17.68,
+     "p90": 21.19,
      "reached": 1.0
     },
     "B": {
-     "median": 47.68,
-     "p10": 45.41,
-     "p90": 50.06,
+     "median": 55.46,
+     "p10": 52.49,
+     "p90": 58.25,
      "reached": 1.0
     },
     "A": {
-     "median": 70.68,
-     "p10": 67.76,
-     "p90": 73.9,
+     "median": 79.31,
+     "p10": 76.15,
+     "p90": 83.11,
      "reached": 1.0
     },
     "S": {
-     "median": 88.33,
-     "p10": 84.65,
-     "p90": 92.09,
+     "median": 95.91,
+     "p10": 91.8,
+     "p90": 100.72,
      "reached": 1.0
     },
     "Sovereign": {
-     "median": 109.65,
-     "p10": 105.58,
-     "p90": 113.95,
+     "median": 116.6,
+     "p10": 111.51,
+     "p90": 121.99,
      "reached": 0.99
     }
    },
@@ -136,224 +136,224 @@
      "p90": 5.0
     },
     "120": {
-     "median": 6.0,
+     "median": 7.0,
      "p10": 5.0,
      "p90": 7.0
     }
    },
-   "deaths_per_10_gates": 1.25,
+   "deaths_per_10_gates": 1.24,
    "by_gate_rank": {
     "E": {
-     "gates": 1872,
-     "deaths_per_10": 0.73,
-     "floors_per_gate": 2.44,
-     "lords_per_10": 3.48
+     "gates": 2070,
+     "deaths_per_10": 0.79,
+     "floors_per_gate": 2.43,
+     "lords_per_10": 3.61
     },
     "D": {
-     "gates": 4553,
-     "deaths_per_10": 0.77,
-     "floors_per_gate": 2.21,
-     "lords_per_10": 2.77
+     "gates": 5444,
+     "deaths_per_10": 0.72,
+     "floors_per_gate": 2.24,
+     "lords_per_10": 3.02
     },
     "C": {
-     "gates": 9060,
-     "deaths_per_10": 1.14,
-     "floors_per_gate": 1.92,
-     "lords_per_10": 0.24
+     "gates": 11810,
+     "deaths_per_10": 1.15,
+     "floors_per_gate": 1.91,
+     "lords_per_10": 0.22
     },
     "B": {
-     "gates": 6965,
-     "deaths_per_10": 1.25,
+     "gates": 7515,
+     "deaths_per_10": 1.3,
      "floors_per_gate": 1.89,
-     "lords_per_10": 0.23
+     "lords_per_10": 0.22
     },
     "A": {
-     "gates": 5446,
-     "deaths_per_10": 1.5,
+     "gates": 5452,
+     "deaths_per_10": 1.56,
      "floors_per_gate": 1.73,
-     "lords_per_10": 0.06
+     "lords_per_10": 0.1
     },
     "S": {
-     "gates": 5618,
-     "deaths_per_10": 1.64,
+     "gates": 5651,
+     "deaths_per_10": 1.66,
      "floors_per_gate": 1.68,
-     "lords_per_10": 0.06
+     "lords_per_10": 0.04
     },
     "Sovereign": {
-     "gates": 807,
-     "deaths_per_10": 1.85,
+     "gates": 810,
+     "deaths_per_10": 1.68,
      "floors_per_gate": 1.5,
      "lords_per_10": 0.04
     }
    },
    "first_power_minute": 8.0,
-   "discoveries_median": 25.0,
+   "discoveries_median": 26.0,
    "mastery_player_level": {
     "2": {
      "median": 10.0,
      "p10": 10.0,
      "p90": 11.0,
-     "hours_median": 4.9,
+     "hours_median": 4.7,
      "reached": 1.0
     },
     "3": {
-     "median": 21.0,
-     "p10": 19.0,
-     "p90": 23.0,
-     "hours_median": 13.9,
+     "median": 20.0,
+     "p10": 18.0,
+     "p90": 21.0,
+     "hours_median": 13.0,
      "reached": 1.0
     },
     "4": {
-     "median": 35.0,
-     "p10": 34.0,
-     "p90": 37.0,
-     "hours_median": 32.5,
+     "median": 32.0,
+     "p10": 31.0,
+     "p90": 33.0,
+     "hours_median": 31.1,
      "reached": 1.0
     },
     "5": {
-     "median": 58.0,
-     "p10": 55.0,
-     "p90": 61.0,
-     "hours_median": 58.7,
+     "median": 46.0,
+     "p10": 44.0,
+     "p90": 50.0,
+     "hours_median": 56.8,
      "reached": 1.0
     }
    },
-   "combat_share_median": 0.285,
+   "combat_share_median": 0.3,
    "metal": {
     "D": {
-     "level_hours": 6.6,
+     "level_hours": 6.63,
      "metal_hours": 1.12,
      "metal_reached": 1.0,
      "wait_after_level_median": 0.0,
      "wait_p90": 0.0,
-     "before_w2_metal_hours": 1.01
+     "before_w2_metal_hours": 1.03
     },
     "C": {
-     "level_hours": 14.26,
-     "metal_hours": 12.63,
+     "level_hours": 14.69,
+     "metal_hours": 12.9,
      "metal_reached": 1.0,
      "wait_after_level_median": 0.0,
-     "wait_p90": 1.97,
-     "before_w2_metal_hours": 12.63
+     "wait_p90": 0.83,
+     "before_w2_metal_hours": 12.9
     }
    }
   },
   "balanced": {
    "level_hours": {
     "3": {
-     "median": 0.45,
-     "p10": 0.37,
-     "p90": 0.58,
+     "median": 0.43,
+     "p10": 0.36,
+     "p90": 0.57,
      "reached": 1.0
     },
     "5": {
-     "median": 0.97,
-     "p10": 0.86,
-     "p90": 1.73,
+     "median": 0.89,
+     "p10": 0.77,
+     "p90": 1.65,
      "reached": 1.0
     },
     "10": {
-     "median": 3.94,
-     "p10": 3.46,
-     "p90": 4.66,
+     "median": 3.75,
+     "p10": 3.28,
+     "p90": 4.46,
      "reached": 1.0
     },
     "15": {
-     "median": 7.84,
-     "p10": 6.98,
-     "p90": 8.95,
+     "median": 7.57,
+     "p10": 6.65,
+     "p90": 9.0,
      "reached": 1.0
     },
     "20": {
-     "median": 11.93,
-     "p10": 10.89,
-     "p90": 13.37,
+     "median": 11.77,
+     "p10": 10.44,
+     "p90": 13.48,
      "reached": 1.0
     },
     "25": {
      "median": 16.82,
-     "p10": 15.63,
-     "p90": 18.46,
+     "p10": 15.44,
+     "p90": 18.89,
      "reached": 1.0
     },
     "30": {
-     "median": 23.58,
-     "p10": 21.99,
-     "p90": 25.8,
+     "median": 24.74,
+     "p10": 22.72,
+     "p90": 27.55,
      "reached": 1.0
     },
     "40": {
-     "median": 38.73,
-     "p10": 36.69,
-     "p90": 41.14,
+     "median": 42.44,
+     "p10": 39.77,
+     "p90": 45.7,
      "reached": 1.0
     },
     "45": {
-     "median": 46.92,
-     "p10": 44.34,
-     "p90": 49.45,
+     "median": 52.56,
+     "p10": 49.28,
+     "p90": 56.01,
      "reached": 1.0
     },
     "50": {
-     "median": 51.52,
-     "p10": 48.71,
-     "p90": 54.44,
+     "median": 57.11,
+     "p10": 53.62,
+     "p90": 60.75,
      "reached": 1.0
     },
     "70": {
-     "median": 68.47,
-     "p10": 64.88,
-     "p90": 71.57,
+     "median": 73.81,
+     "p10": 69.81,
+     "p90": 77.92,
      "reached": 1.0
     },
     "100": {
-     "median": 83.44,
-     "p10": 79.81,
-     "p90": 88.24,
+     "median": 87.57,
+     "p10": 83.03,
+     "p90": 92.35,
      "reached": 1.0
     },
     "135": {
-     "median": 102.14,
-     "p10": 97.22,
-     "p90": 107.3,
+     "median": 104.64,
+     "p10": 99.14,
+     "p90": 110.08,
      "reached": 1.0
     }
    },
    "rank_hours": {
     "D": {
-     "median": 5.1,
-     "p10": 4.29,
-     "p90": 6.6,
+     "median": 4.9,
+     "p10": 4.05,
+     "p90": 6.43,
      "reached": 1.0
     },
     "C": {
-     "median": 17.94,
-     "p10": 16.41,
-     "p90": 20.1,
+     "median": 18.01,
+     "p10": 16.28,
+     "p90": 20.32,
      "reached": 1.0
     },
     "B": {
-     "median": 47.86,
-     "p10": 45.25,
-     "p90": 50.86,
+     "median": 53.62,
+     "p10": 50.14,
+     "p90": 57.29,
      "reached": 1.0
     },
     "A": {
-     "median": 69.47,
-     "p10": 65.88,
-     "p90": 73.05,
+     "median": 74.67,
+     "p10": 70.57,
+     "p90": 79.18,
      "reached": 1.0
     },
     "S": {
-     "median": 84.62,
-     "p10": 80.78,
-     "p90": 89.49,
+     "median": 88.74,
+     "p10": 83.98,
+     "p90": 93.5,
      "reached": 1.0
     },
     "Sovereign": {
-     "median": 103.2,
-     "p10": 98.33,
-     "p90": 108.3,
+     "median": 105.57,
+     "p10": 100.17,
+     "p90": 111.28,
      "reached": 1.0
     }
    },
@@ -374,225 +374,225 @@
      "p90": 5.0
     },
     "120": {
-     "median": 6.0,
-     "p10": 5.0,
+     "median": 7.0,
+     "p10": 6.0,
      "p90": 7.0
     }
    },
-   "deaths_per_10_gates": 2.07,
+   "deaths_per_10_gates": 1.98,
    "by_gate_rank": {
     "E": {
-     "gates": 1742,
-     "deaths_per_10": 0.98,
-     "floors_per_gate": 3.24,
-     "lords_per_10": 7.38
+     "gates": 1818,
+     "deaths_per_10": 1.0,
+     "floors_per_gate": 3.22,
+     "lords_per_10": 7.43
     },
     "D": {
-     "gates": 4035,
-     "deaths_per_10": 1.35,
-     "floors_per_gate": 3.14,
-     "lords_per_10": 7.32
+     "gates": 4800,
+     "deaths_per_10": 1.16,
+     "floors_per_gate": 3.16,
+     "lords_per_10": 7.59
     },
     "C": {
-     "gates": 8077,
-     "deaths_per_10": 1.92,
-     "floors_per_gate": 2.96,
-     "lords_per_10": 2.42
+     "gates": 9974,
+     "deaths_per_10": 1.94,
+     "floors_per_gate": 2.95,
+     "lords_per_10": 2.32
     },
     "B": {
-     "gates": 5574,
-     "deaths_per_10": 2.21,
-     "floors_per_gate": 2.92,
-     "lords_per_10": 2.45
+     "gates": 5741,
+     "deaths_per_10": 2.24,
+     "floors_per_gate": 2.9,
+     "lords_per_10": 2.41
     },
     "A": {
-     "gates": 4360,
-     "deaths_per_10": 2.57,
-     "floors_per_gate": 2.5,
-     "lords_per_10": 0.08
+     "gates": 4056,
+     "deaths_per_10": 2.3,
+     "floors_per_gate": 2.54,
+     "lords_per_10": 0.1
     },
     "S": {
-     "gates": 4283,
-     "deaths_per_10": 2.63,
-     "floors_per_gate": 2.48,
-     "lords_per_10": 0.05
+     "gates": 4216,
+     "deaths_per_10": 2.71,
+     "floors_per_gate": 2.47,
+     "lords_per_10": 0.07
     },
     "Sovereign": {
-     "gates": 667,
-     "deaths_per_10": 3.16,
-     "floors_per_gate": 2.21,
+     "gates": 589,
+     "deaths_per_10": 2.6,
+     "floors_per_gate": 2.36,
      "lords_per_10": 0.03
     }
    },
    "first_power_minute": 8.0,
-   "discoveries_median": 20.0,
+   "discoveries_median": 21.0,
    "mastery_player_level": {
     "2": {
      "median": 10.0,
      "p10": 9.0,
      "p90": 11.0,
-     "hours_median": 4.4,
+     "hours_median": 4.2,
      "reached": 1.0
     },
     "3": {
      "median": 19.0,
-     "p10": 18.0,
-     "p90": 21.0,
-     "hours_median": 11.7,
+     "p10": 17.0,
+     "p90": 20.0,
+     "hours_median": 11.0,
      "reached": 1.0
     },
     "4": {
-     "median": 33.0,
-     "p10": 31.0,
-     "p90": 34.0,
-     "hours_median": 28.4,
+     "median": 31.0,
+     "p10": 30.0,
+     "p90": 32.0,
+     "hours_median": 26.9,
      "reached": 1.0
     },
     "5": {
-     "median": 49.0,
-     "p10": 45.0,
-     "p90": 52.0,
-     "hours_median": 51.1,
+     "median": 43.0,
+     "p10": 41.0,
+     "p90": 44.0,
+     "hours_median": 48.7,
      "reached": 1.0
     }
    },
-   "combat_share_median": 0.333,
+   "combat_share_median": 0.352,
    "metal": {
     "D": {
-     "level_hours": 6.33,
-     "metal_hours": 1.13,
+     "level_hours": 6.27,
+     "metal_hours": 1.07,
      "metal_reached": 1.0,
      "wait_after_level_median": 0.0,
      "wait_p90": 0.0,
-     "before_w2_metal_hours": 1.02
+     "before_w2_metal_hours": 0.98
     },
     "C": {
-     "level_hours": 13.83,
-     "metal_hours": 12.85,
+     "level_hours": 13.82,
+     "metal_hours": 12.57,
      "metal_reached": 1.0,
      "wait_after_level_median": 0.0,
-     "wait_p90": 2.12,
-     "before_w2_metal_hours": 12.85
+     "wait_p90": 2.03,
+     "before_w2_metal_hours": 12.57
     }
    }
   },
   "greedy": {
    "level_hours": {
     "3": {
-     "median": 0.45,
-     "p10": 0.37,
-     "p90": 0.59,
+     "median": 0.43,
+     "p10": 0.35,
+     "p90": 0.57,
      "reached": 1.0
     },
     "5": {
-     "median": 0.97,
-     "p10": 0.86,
-     "p90": 1.67,
+     "median": 0.9,
+     "p10": 0.78,
+     "p90": 1.58,
      "reached": 1.0
     },
     "10": {
-     "median": 4.11,
-     "p10": 3.55,
-     "p90": 4.95,
+     "median": 3.83,
+     "p10": 3.32,
+     "p90": 4.61,
      "reached": 1.0
     },
     "15": {
-     "median": 8.57,
-     "p10": 7.26,
-     "p90": 9.81,
+     "median": 8.12,
+     "p10": 6.8,
+     "p90": 9.61,
      "reached": 1.0
     },
     "20": {
-     "median": 13.15,
-     "p10": 11.77,
-     "p90": 14.98,
+     "median": 12.5,
+     "p10": 11.08,
+     "p90": 14.37,
      "reached": 1.0
     },
     "25": {
-     "median": 18.75,
-     "p10": 17.0,
-     "p90": 20.82,
+     "median": 18.06,
+     "p10": 16.38,
+     "p90": 19.91,
      "reached": 1.0
     },
     "30": {
-     "median": 27.26,
-     "p10": 25.14,
-     "p90": 30.4,
+     "median": 26.66,
+     "p10": 24.24,
+     "p90": 29.74,
      "reached": 1.0
     },
     "40": {
-     "median": 46.14,
-     "p10": 42.49,
-     "p90": 49.45,
+     "median": 45.39,
+     "p10": 41.77,
+     "p90": 49.0,
      "reached": 1.0
     },
     "45": {
-     "median": 56.17,
-     "p10": 52.22,
-     "p90": 59.97,
+     "median": 55.8,
+     "p10": 51.92,
+     "p90": 59.92,
      "reached": 1.0
     },
     "50": {
-     "median": 60.76,
-     "p10": 56.98,
-     "p90": 65.38,
+     "median": 60.48,
+     "p10": 56.39,
+     "p90": 64.89,
      "reached": 1.0
     },
     "70": {
-     "median": 77.59,
-     "p10": 72.3,
-     "p90": 83.07,
+     "median": 75.86,
+     "p10": 70.4,
+     "p90": 81.5,
      "reached": 1.0
     },
     "100": {
-     "median": 91.13,
-     "p10": 84.48,
-     "p90": 97.35,
+     "median": 87.56,
+     "p10": 80.43,
+     "p90": 93.69,
      "reached": 1.0
     },
     "135": {
-     "median": 106.72,
-     "p10": 98.54,
-     "p90": 114.86,
+     "median": 101.72,
+     "p10": 93.28,
+     "p90": 109.47,
      "reached": 1.0
     }
    },
    "rank_hours": {
     "D": {
-     "median": 5.13,
-     "p10": 4.25,
-     "p90": 6.48,
+     "median": 4.84,
+     "p10": 4.04,
+     "p90": 6.13,
      "reached": 1.0
     },
     "C": {
-     "median": 19.66,
-     "p10": 17.97,
-     "p90": 21.74,
+     "median": 18.97,
+     "p10": 17.17,
+     "p90": 21.02,
      "reached": 1.0
     },
     "B": {
-     "median": 57.07,
-     "p10": 52.92,
-     "p90": 60.77,
+     "median": 56.72,
+     "p10": 53.19,
+     "p90": 60.69,
      "reached": 1.0
     },
     "A": {
-     "median": 78.62,
-     "p10": 73.04,
-     "p90": 83.89,
+     "median": 76.73,
+     "p10": 71.33,
+     "p90": 82.34,
      "reached": 1.0
     },
     "S": {
-     "median": 92.13,
-     "p10": 85.76,
-     "p90": 98.26,
+     "median": 88.51,
+     "p10": 81.62,
+     "p90": 94.6,
      "reached": 1.0
     },
     "Sovereign": {
-     "median": 107.63,
-     "p10": 99.26,
-     "p90": 115.16,
-     "reached": 0.93
+     "median": 102.45,
+     "p10": 94.51,
+     "p90": 110.37,
+     "reached": 0.89
     }
    },
    "level_at_minutes": {
@@ -612,224 +612,224 @@
      "p90": 5.0
     },
     "120": {
-     "median": 6.0,
-     "p10": 5.0,
+     "median": 7.0,
+     "p10": 6.0,
      "p90": 7.0
     }
    },
-   "deaths_per_10_gates": 3.6,
+   "deaths_per_10_gates": 3.48,
    "by_gate_rank": {
     "E": {
-     "gates": 2309,
-     "deaths_per_10": 0.94,
-     "floors_per_gate": 3.26,
-     "lords_per_10": 7.86
+     "gates": 2215,
+     "deaths_per_10": 0.93,
+     "floors_per_gate": 3.28,
+     "lords_per_10": 7.84
     },
     "D": {
-     "gates": 5680,
-     "deaths_per_10": 1.76,
-     "floors_per_gate": 3.2,
-     "lords_per_10": 8.21
+     "gates": 5742,
+     "deaths_per_10": 1.67,
+     "floors_per_gate": 3.21,
+     "lords_per_10": 8.29
     },
     "C": {
-     "gates": 10408,
-     "deaths_per_10": 3.51,
-     "floors_per_gate": 3.72,
-     "lords_per_10": 6.46
+     "gates": 10828,
+     "deaths_per_10": 3.41,
+     "floors_per_gate": 3.74,
+     "lords_per_10": 6.55
     },
     "B": {
-     "gates": 5743,
-     "deaths_per_10": 3.67,
-     "floors_per_gate": 3.63,
-     "lords_per_10": 6.31
+     "gates": 5284,
+     "deaths_per_10": 3.69,
+     "floors_per_gate": 3.61,
+     "lords_per_10": 6.29
     },
     "A": {
-     "gates": 3297,
-     "deaths_per_10": 5.58,
-     "floors_per_gate": 3.74,
-     "lords_per_10": 4.25
+     "gates": 2960,
+     "deaths_per_10": 5.54,
+     "floors_per_gate": 3.79,
+     "lords_per_10": 4.3
     },
     "S": {
-     "gates": 3233,
-     "deaths_per_10": 6.18,
-     "floors_per_gate": 3.62,
-     "lords_per_10": 3.74
+     "gates": 2887,
+     "deaths_per_10": 6.13,
+     "floors_per_gate": 3.64,
+     "lords_per_10": 3.8
     },
     "Sovereign": {
-     "gates": 587,
-     "deaths_per_10": 7.7,
-     "floors_per_gate": 3.25,
-     "lords_per_10": 2.03
+     "gates": 464,
+     "deaths_per_10": 7.74,
+     "floors_per_gate": 3.37,
+     "lords_per_10": 1.9
     }
    },
    "first_power_minute": 8.0,
-   "discoveries_median": 15.0,
+   "discoveries_median": 16.0,
    "mastery_player_level": {
     "2": {
      "median": 9.0,
-     "p10": 8.0,
+     "p10": 9.0,
      "p90": 10.0,
-     "hours_median": 3.9,
+     "hours_median": 3.8,
      "reached": 1.0
     },
     "3": {
-     "median": 16.0,
+     "median": 17.0,
      "p10": 15.0,
      "p90": 18.0,
-     "hours_median": 10.2,
+     "hours_median": 9.9,
      "reached": 1.0
     },
     "4": {
      "median": 28.0,
      "p10": 27.0,
      "p90": 29.0,
-     "hours_median": 25.3,
+     "hours_median": 24.5,
      "reached": 1.0
     },
     "5": {
      "median": 39.0,
      "p10": 38.0,
-     "p90": 41.0,
-     "hours_median": 45.5,
+     "p90": 40.0,
+     "hours_median": 44.3,
      "reached": 1.0
     }
    },
-   "combat_share_median": 0.392,
+   "combat_share_median": 0.4,
    "metal": {
     "D": {
-     "level_hours": 7.04,
-     "metal_hours": 2.5,
+     "level_hours": 6.75,
+     "metal_hours": 2.6,
      "metal_reached": 1.0,
      "wait_after_level_median": 0.0,
      "wait_p90": 0.0,
-     "before_w2_metal_hours": 1.67
+     "before_w2_metal_hours": 1.72
     },
     "C": {
-     "level_hours": 15.34,
-     "metal_hours": 14.13,
+     "level_hours": 14.62,
+     "metal_hours": 13.46,
      "metal_reached": 1.0,
      "wait_after_level_median": 0.0,
-     "wait_p90": 1.64,
-     "before_w2_metal_hours": 14.13
+     "wait_p90": 1.94,
+     "before_w2_metal_hours": 13.46
     }
    }
   },
   "builder": {
    "level_hours": {
     "3": {
-     "median": 0.45,
+     "median": 0.47,
      "p10": 0.37,
      "p90": 0.62,
      "reached": 1.0
     },
     "5": {
-     "median": 0.96,
-     "p10": 0.85,
-     "p90": 1.66,
+     "median": 0.89,
+     "p10": 0.78,
+     "p90": 1.67,
      "reached": 1.0
     },
     "10": {
-     "median": 3.83,
-     "p10": 3.41,
-     "p90": 4.51,
+     "median": 3.78,
+     "p10": 3.29,
+     "p90": 4.64,
      "reached": 1.0
     },
     "15": {
-     "median": 7.62,
-     "p10": 6.89,
-     "p90": 8.63,
+     "median": 7.84,
+     "p10": 6.71,
+     "p90": 9.19,
      "reached": 1.0
     },
     "20": {
-     "median": 11.64,
-     "p10": 10.64,
-     "p90": 12.94,
+     "median": 12.19,
+     "p10": 10.91,
+     "p90": 13.76,
      "reached": 1.0
     },
     "25": {
-     "median": 16.26,
-     "p10": 14.94,
-     "p90": 17.81,
+     "median": 17.38,
+     "p10": 15.74,
+     "p90": 19.12,
      "reached": 1.0
     },
     "30": {
-     "median": 22.57,
-     "p10": 21.11,
-     "p90": 24.28,
+     "median": 25.24,
+     "p10": 23.12,
+     "p90": 27.32,
      "reached": 1.0
     },
     "40": {
-     "median": 36.25,
-     "p10": 34.34,
-     "p90": 38.44,
+     "median": 42.55,
+     "p10": 39.93,
+     "p90": 45.47,
      "reached": 1.0
     },
     "45": {
-     "median": 43.63,
-     "p10": 41.59,
-     "p90": 46.17,
+     "median": 52.34,
+     "p10": 49.62,
+     "p90": 55.34,
      "reached": 1.0
     },
     "50": {
-     "median": 48.37,
-     "p10": 46.06,
-     "p90": 51.32,
+     "median": 57.62,
+     "p10": 54.58,
+     "p90": 60.73,
      "reached": 1.0
     },
     "70": {
-     "median": 65.69,
-     "p10": 62.67,
-     "p90": 69.01,
+     "median": 75.25,
+     "p10": 71.9,
+     "p90": 79.28,
      "reached": 1.0
     },
     "100": {
-     "median": 82.89,
-     "p10": 78.96,
-     "p90": 86.73,
+     "median": 91.53,
+     "p10": 87.25,
+     "p90": 96.15,
      "reached": 1.0
     },
     "135": {
-     "median": 103.35,
-     "p10": 99.23,
-     "p90": 108.01,
+     "median": 110.99,
+     "p10": 106.35,
+     "p90": 115.88,
      "reached": 1.0
     }
    },
    "rank_hours": {
     "D": {
-     "median": 5.08,
-     "p10": 4.09,
-     "p90": 6.89,
+     "median": 5.17,
+     "p10": 3.98,
+     "p90": 7.1,
      "reached": 1.0
     },
     "C": {
-     "median": 17.66,
-     "p10": 16.01,
-     "p90": 19.91,
+     "median": 18.64,
+     "p10": 16.85,
+     "p90": 21.09,
      "reached": 1.0
     },
     "B": {
-     "median": 44.75,
-     "p10": 42.46,
-     "p90": 47.94,
+     "median": 53.65,
+     "p10": 50.61,
+     "p90": 56.62,
      "reached": 1.0
     },
     "A": {
-     "median": 66.84,
-     "p10": 63.74,
-     "p90": 70.79,
+     "median": 76.71,
+     "p10": 72.99,
+     "p90": 80.67,
      "reached": 1.0
     },
     "S": {
-     "median": 84.1,
-     "p10": 80.01,
-     "p90": 88.6,
+     "median": 92.88,
+     "p10": 88.39,
+     "p90": 97.64,
      "reached": 1.0
     },
     "Sovereign": {
-     "median": 104.51,
-     "p10": 100.25,
-     "p90": 109.33,
+     "median": 112.38,
+     "p10": 107.65,
+     "p90": 117.58,
      "reached": 1.0
     }
    },
@@ -850,105 +850,105 @@
      "p90": 5.0
     },
     "120": {
-     "median": 6.0,
-     "p10": 5.0,
+     "median": 7.0,
+     "p10": 6.0,
      "p90": 7.0
     }
    },
-   "deaths_per_10_gates": 2.02,
+   "deaths_per_10_gates": 1.96,
    "by_gate_rank": {
     "E": {
-     "gates": 1441,
+     "gates": 1595,
      "deaths_per_10": 1.12,
      "floors_per_gate": 3.14,
-     "lords_per_10": 6.63
+     "lords_per_10": 6.87
     },
     "D": {
-     "gates": 3227,
-     "deaths_per_10": 1.26,
-     "floors_per_gate": 3.05,
-     "lords_per_10": 6.61
+     "gates": 4120,
+     "deaths_per_10": 1.21,
+     "floors_per_gate": 3.07,
+     "lords_per_10": 6.8
     },
     "C": {
-     "gates": 6327,
-     "deaths_per_10": 1.8,
-     "floors_per_gate": 2.84,
-     "lords_per_10": 1.38
+     "gates": 8528,
+     "deaths_per_10": 1.83,
+     "floors_per_gate": 2.82,
+     "lords_per_10": 1.39
     },
     "B": {
-     "gates": 4904,
-     "deaths_per_10": 2.18,
-     "floors_per_gate": 2.75,
+     "gates": 5489,
+     "deaths_per_10": 2.09,
+     "floors_per_gate": 2.76,
      "lords_per_10": 1.26
     },
     "A": {
-     "gates": 3950,
-     "deaths_per_10": 2.36,
-     "floors_per_gate": 2.41,
-     "lords_per_10": 0.07
+     "gates": 4119,
+     "deaths_per_10": 2.44,
+     "floors_per_gate": 2.39,
+     "lords_per_10": 0.1
     },
     "S": {
-     "gates": 4098,
-     "deaths_per_10": 2.68,
+     "gates": 4116,
+     "deaths_per_10": 2.51,
      "floors_per_gate": 2.32,
-     "lords_per_10": 0.04
+     "lords_per_10": 0.06
     },
     "Sovereign": {
-     "gates": 573,
-     "deaths_per_10": 2.64,
-     "floors_per_gate": 2.06,
-     "lords_per_10": 0.0
+     "gates": 628,
+     "deaths_per_10": 2.9,
+     "floors_per_gate": 2.0,
+     "lords_per_10": 0.02
     }
    },
    "first_power_minute": 8.0,
-   "discoveries_median": 25.0,
+   "discoveries_median": 27.0,
    "mastery_player_level": {
     "2": {
      "median": 11.0,
      "p10": 10.0,
      "p90": 12.0,
-     "hours_median": 5.3,
+     "hours_median": 5.0,
      "reached": 1.0
     },
     "3": {
-     "median": 23.0,
-     "p10": 21.0,
-     "p90": 24.0,
-     "hours_median": 14.7,
+     "median": 21.0,
+     "p10": 19.0,
+     "p90": 22.0,
+     "hours_median": 13.7,
      "reached": 1.0
     },
     "4": {
-     "median": 38.0,
-     "p10": 37.0,
-     "p90": 40.0,
-     "hours_median": 34.2,
+     "median": 34.0,
+     "p10": 32.1,
+     "p90": 35.0,
+     "hours_median": 32.2,
      "reached": 1.0
     },
     "5": {
-     "median": 64.0,
-     "p10": 60.0,
-     "p90": 67.0,
-     "hours_median": 60.8,
+     "median": 50.0,
+     "p10": 47.0,
+     "p90": 54.0,
+     "hours_median": 58.3,
      "reached": 1.0
     }
    },
-   "combat_share_median": 0.269,
+   "combat_share_median": 0.289,
    "metal": {
     "D": {
-     "level_hours": 6.21,
-     "metal_hours": 0.85,
+     "level_hours": 6.31,
+     "metal_hours": 0.79,
      "metal_reached": 1.0,
      "wait_after_level_median": 0.0,
      "wait_p90": 0.0,
-     "before_w2_metal_hours": 0.79
+     "before_w2_metal_hours": 0.74
     },
     "C": {
-     "level_hours": 13.48,
-     "metal_hours": 12.04,
+     "level_hours": 14.21,
+     "metal_hours": 12.36,
      "metal_reached": 1.0,
      "wait_after_level_median": 0.0,
-     "wait_p90": 2.08,
-     "before_w2_metal_hours": 12.04
+     "wait_p90": 1.04,
+     "before_w2_metal_hours": 12.36
     }
    }
   }
@@ -960,7 +960,7 @@
     0.75,
     1.0
    ],
-   "balanced_median": 0.97,
+   "balanced_median": 0.89,
    "pass": true
   },
   {
@@ -969,7 +969,7 @@
     3.0,
     4.0
    ],
-   "balanced_median": 3.94,
+   "balanced_median": 3.75,
    "pass": true
   },
   {
@@ -987,7 +987,7 @@
     50.0,
     60.0
    ],
-   "balanced_median": 51.52,
+   "balanced_median": 57.11,
    "pass": true
   },
   {
@@ -996,7 +996,7 @@
     95.0,
     105.0
    ],
-   "balanced_median": 102.14,
+   "balanced_median": 104.64,
    "pass": true
   },
   {
@@ -1032,12 +1032,12 @@
     41,
     49
    ],
-   "balanced_median": 49.0,
+   "balanced_median": 43.0,
    "pass": true
   },
   {
    "gate_rank": "D",
-   "deaths_per_10_gates": 1.35,
+   "deaths_per_10_gates": 1.16,
    "target": [
     1.0,
     3.0
@@ -1055,7 +1055,7 @@
   },
   {
    "gate_rank": "C",
-   "deaths_per_10_gates": 1.92,
+   "deaths_per_10_gates": 1.94,
    "target": [
     1.0,
     3.0
@@ -1073,7 +1073,7 @@
   },
   {
    "gate_rank": "B",
-   "deaths_per_10_gates": 2.21,
+   "deaths_per_10_gates": 2.24,
    "target": [
     1.0,
     3.0
@@ -1093,7 +1093,7 @@
  "gate_checks": [
   {
    "gate_rank": "D",
-   "deaths_per_10_gates": 1.35,
+   "deaths_per_10_gates": 1.16,
    "target": [
     1.0,
     3.0
@@ -1111,7 +1111,7 @@
   },
   {
    "gate_rank": "C",
-   "deaths_per_10_gates": 1.92,
+   "deaths_per_10_gates": 1.94,
    "target": [
     1.0,
     3.0
@@ -1129,7 +1129,7 @@
   },
   {
    "gate_rank": "B",
-   "deaths_per_10_gates": 2.21,
+   "deaths_per_10_gates": 2.24,
    "target": [
     1.0,
     3.0
@@ -1161,43 +1161,43 @@
  "push_ev_C_on_level": [
   {
    "stop_at": 1,
-   "levels_per_hour": 0.29,
+   "levels_per_hour": 0.34,
    "death_rate": 0.035,
    "vs_best": 0.59
   },
   {
    "stop_at": 2,
-   "levels_per_hour": 0.38,
+   "levels_per_hour": 0.45,
    "death_rate": 0.092,
    "vs_best": 0.78
   },
   {
    "stop_at": 3,
-   "levels_per_hour": 0.45,
+   "levels_per_hour": 0.53,
    "death_rate": 0.182,
-   "vs_best": 0.92
+   "vs_best": 0.91
   },
   {
    "stop_at": 4,
-   "levels_per_hour": 0.49,
+   "levels_per_hour": 0.58,
    "death_rate": 0.324,
    "vs_best": 1.0
   },
   {
    "stop_at": 5,
-   "levels_per_hour": 0.48,
+   "levels_per_hour": 0.56,
    "death_rate": 0.523,
-   "vs_best": 0.98
+   "vs_best": 0.97
   },
   {
    "stop_at": 6,
-   "levels_per_hour": 0.39,
+   "levels_per_hour": 0.46,
    "death_rate": 0.765,
-   "vs_best": 0.8
+   "vs_best": 0.79
   },
   {
    "stop_at": 7,
-   "levels_per_hour": 0.26,
+   "levels_per_hour": 0.31,
    "death_rate": 0.961,
    "vs_best": 0.53
   }
@@ -1209,28 +1209,28 @@
    "by_stop": [
     {
      "stop_at": 1,
-     "levels_per_hour": 0.846,
+     "levels_per_hour": 0.994,
      "death_rate": 0.036,
      "lord_rate": 0.023,
      "vs_best": 0.66
     },
     {
      "stop_at": 2,
-     "levels_per_hour": 1.106,
+     "levels_per_hour": 1.299,
      "death_rate": 0.072,
      "lord_rate": 0.022,
      "vs_best": 0.86
     },
     {
      "stop_at": 3,
-     "levels_per_hour": 1.261,
+     "levels_per_hour": 1.482,
      "death_rate": 0.133,
      "lord_rate": 0.025,
      "vs_best": 0.98
     },
     {
      "stop_at": 4,
-     "levels_per_hour": 1.286,
+     "levels_per_hour": 1.511,
      "death_rate": 0.243,
      "lord_rate": 0.757,
      "vs_best": 1.0
@@ -1243,35 +1243,35 @@
    "by_stop": [
     {
      "stop_at": 1,
-     "levels_per_hour": 0.314,
+     "levels_per_hour": 0.369,
      "death_rate": 0.057,
      "lord_rate": 0.022,
      "vs_best": 0.62
     },
     {
      "stop_at": 2,
-     "levels_per_hour": 0.39,
+     "levels_per_hour": 0.459,
      "death_rate": 0.106,
      "lord_rate": 0.02,
      "vs_best": 0.77
     },
     {
      "stop_at": 3,
-     "levels_per_hour": 0.445,
+     "levels_per_hour": 0.523,
      "death_rate": 0.181,
      "lord_rate": 0.022,
      "vs_best": 0.88
     },
     {
      "stop_at": 4,
-     "levels_per_hour": 0.505,
+     "levels_per_hour": 0.594,
      "death_rate": 0.262,
      "lord_rate": 0.023,
      "vs_best": 0.99
     },
     {
      "stop_at": 5,
-     "levels_per_hour": 0.508,
+     "levels_per_hour": 0.597,
      "death_rate": 0.405,
      "lord_rate": 0.595,
      "vs_best": 1.0
@@ -1284,28 +1284,28 @@
    "by_stop": [
     {
      "stop_at": 1,
-     "levels_per_hour": 0.968,
+     "levels_per_hour": 1.137,
      "death_rate": 0.058,
      "lord_rate": 0.026,
-     "vs_best": 0.69
+     "vs_best": 0.68
     },
     {
      "stop_at": 2,
-     "levels_per_hour": 1.213,
+     "levels_per_hour": 1.425,
      "death_rate": 0.115,
      "lord_rate": 0.023,
      "vs_best": 0.86
     },
     {
      "stop_at": 3,
-     "levels_per_hour": 1.374,
+     "levels_per_hour": 1.615,
      "death_rate": 0.198,
      "lord_rate": 0.028,
      "vs_best": 0.97
     },
     {
      "stop_at": 4,
-     "levels_per_hour": 1.412,
+     "levels_per_hour": 1.66,
      "death_rate": 0.317,
      "lord_rate": 0.683,
      "vs_best": 1.0
@@ -1316,45 +1316,45 @@
  "push_ev_C_underlevelled": [
   {
    "stop_at": 1,
-   "levels_per_hour": 0.38,
+   "levels_per_hour": 0.45,
    "death_rate": 0.057,
    "vs_best": 0.7
   },
   {
    "stop_at": 2,
-   "levels_per_hour": 0.49,
+   "levels_per_hour": 0.57,
    "death_rate": 0.151,
-   "vs_best": 0.91
+   "vs_best": 0.89
   },
   {
    "stop_at": 3,
-   "levels_per_hour": 0.54,
+   "levels_per_hour": 0.64,
    "death_rate": 0.286,
    "vs_best": 1.0
   },
   {
    "stop_at": 4,
-   "levels_per_hour": 0.53,
+   "levels_per_hour": 0.62,
    "death_rate": 0.493,
-   "vs_best": 0.98
+   "vs_best": 0.97
   },
   {
    "stop_at": 5,
-   "levels_per_hour": 0.45,
+   "levels_per_hour": 0.53,
    "death_rate": 0.732,
    "vs_best": 0.83
   },
   {
    "stop_at": 6,
-   "levels_per_hour": 0.29,
+   "levels_per_hour": 0.34,
    "death_rate": 0.952,
-   "vs_best": 0.54
+   "vs_best": 0.53
   },
   {
    "stop_at": 7,
-   "levels_per_hour": 0.25,
+   "levels_per_hour": 0.29,
    "death_rate": 0.992,
-   "vs_best": 0.46
+   "vs_best": 0.45
   }
  ],
  "mob_farm_levels_per_hour": {
@@ -1369,7 +1369,7 @@
   "25": 0.28,
   "50": 0.28
  },
- "wilds_trim": 0.8,
+ "wilds_trim": 0.94,
  "xp_curve": {
   "1": 150,
   "5": 988,

@@ -161,6 +161,15 @@ final class KinTests {
         Kinship.save(p, ks);
         h.assertTrue(dev.awaken.core.api.Destinations.done(p, "kin/burrowbun"), "met anywhere: done");
         h.assertFalse(dev.awaken.core.api.Destinations.done(p, "kin/burrowbun/home"), "going back for one waits until one lives with you");
+        // on the Tasks page's Hearth tab (SPEC §27.13): met, it's named; its want read by watching, the want is the step
+        var bun = KinGoals.steps(p).stream().filter(st -> st.key().equals("kin/need/burrowbun")).findFirst().orElse(null);
+        h.assertTrue(bun != null && bun.title().equals("Bring a Burrowbun home"), "a kind met is named: " + bun);
+        ks = Kinship.of(p);
+        ks.kind(KinKind.BURROWBUN).watched = 3;
+        Kinship.save(p, ks);
+        bun = KinGoals.steps(p).stream().filter(st -> st.key().equals("kin/need/burrowbun")).findFirst().orElse(null);
+        h.assertTrue(bun != null && bun.title().equals("Give the Burrowbun what it wants") && bun.why().startsWith(KinKind.BURROWBUN.watch.get(2)),
+                "a want read is a plain step: " + bun);
         // the first fire's Lampwing, tamed at the fire
         ks = Kinship.of(p);
         ks.lesson = 1;

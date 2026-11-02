@@ -42,9 +42,9 @@ FLOOR_GROWTH, KILL_SHARE, BELOW_RANK = 1.4, 0.4, 0.3  # JAVA Curve
 
 
 # JAVA Curve.WILDS_TRIM: gate floor rewards (and everything priced from floor 1 of a rank: anomalies, camps) x this, because the
-# wilds now carry part of the climb. The only number retuned for v3. 0.80 is the middle of the window (0.78-0.82) that keeps
-# level 5, 10, 25 and 135 and the first hour on target; level 50 cannot be reached by the trim alone (the wilds carry the 25-50 climb).
-WILDS_TRIM = 0.80
+# wilds now carry part of the climb. 0.80 for v3; 0.94 since SPEC §27.13 (2026-10-30): the Regimen and the daily Directives
+# paid about a sixth of a level a play-day, and gate floors make that back (0.90-0.94 keep every target; 0.94 the surest).
+WILDS_TRIM = 0.94
 # JAVA LivingModule.WILDS_RANK: the open world pays by rank the way gates do (C is the long climb), applied after the
 # budget to hunting, crafts and camps (quests and discoveries are authored one-offs and pay in full).
 WILDS_RANK = {"E": 1.0, "D": 1.0, "C": 0.55, "B": 1.0, "A": 1.0, "S": 1.0, "Sovereign": 1.0}
@@ -149,9 +149,11 @@ BELL_CRYPT_PLANNED_MOBS = 8   # floor 1 of the scripted Bell Crypt
 AWAKEN_FLOOR_LEVEL = 2        # JAVA Prologue: Accept tops you up to level 2 if the bank fell short
 
 # ---- other sources -------------------------------------------------------------------------------------------------
-REGIMEN_LEVELS = 0.1          # JAVA Regimen: a tenth of a level and +1 point for all three drills
+# Gone since SPEC §27.13 (2026-10-30): the Daily Regimen and the daily Directives. Only the Registry's first job stays
+# (clear the first floor of a gate), paid once and too small to model; the old daily sixth of a level is 0 here.
+REGIMEN_LEVELS = 0.0          # was 0.1 (JAVA Regimen, deleted)
 DIRECTIVE_LEVELS = 0.18       # mean reward of an E..C directive (data/awaken/awaken/directive), in levels
-DIRECTIVE_PER_DAY = {"careful": 0.35, "balanced": 0.4, "greedy": 0.3, "builder": 0.45}
+DIRECTIVE_PER_DAY = {"careful": 0.0, "balanced": 0.0, "greedy": 0.0, "builder": 0.0}  # was 0.35 / 0.4 / 0.3 / 0.45
 # ASSUMED (world/anomaly builders): first sightings pay DISCOVERY_FRAC of a level through Progression.discover.
 DISCOVERY_FRAC = 0.12
 DISCOVERY_TOTAL = 140         # creatures, biomes, landmarks, anomaly kinds, strata... over the whole game
@@ -502,7 +504,7 @@ def simulate(kind, rng):
         # 2) Each in-game day (20 real minutes): the Regimen (optional) and maybe a Directive kept.
         while day_clock >= 20:
             day_clock -= 20
-            if st["level"] >= 2 and rng.random() < p["daily"]:
+            if REGIMEN_LEVELS and st["level"] >= 2 and rng.random() < p["daily"]:
                 st["t"] += 4
                 levels(REGIMEN_LEVELS)
             if rng.random() < DIRECTIVE_PER_DAY[kind]:

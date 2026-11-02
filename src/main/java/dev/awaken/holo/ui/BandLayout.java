@@ -3,7 +3,7 @@ package dev.awaken.holo.ui;
 import dev.awaken.signal.ui.Rect;
 
 /**
- * Geometry of the band's panel (the K menu, SPEC §30), in panel units: 288×228, a rail of the seven pages down the wrist
+ * Geometry of the band's panel (the K menu, SPEC §30), in panel units: 288×228, a rail of the six pages down the wrist
  * edge (the panel's left: the side the beams come from), the K key at its foot, and the page's content beside it with a
  * scroll bar. Pure maths, so a GameTest checks that nothing overlaps.
  */
@@ -12,7 +12,7 @@ public final class BandLayout {
 
     public static final int W = 288, H = 228;
     /** The rail's width and its page nodes: one every {@link #NODE_STEP} units from {@link #NODE_TOP}. */
-    public static final int RAIL = 30, NODE_TOP = 6, NODE_STEP = 29, NODE_H = 27, PAGES = 7;
+    public static final int RAIL = 30, NODE_TOP = 6, NODE_STEP = 29, NODE_H = 27, PAGES = 6;
     public static final int CONTENT_X = 40, CONTENT_Y = 10, PAD = 10, SCROLLBAR = 6;
 
     /** Page {@code i}'s node on the rail. */

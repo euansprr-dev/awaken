@@ -407,24 +407,14 @@ public final class Progression {
             for (Identifier id : List.copyOf(ids)) {
                 String key = id.toString();
                 Defs.TruthDef truth = Content.TRUTHS.get(id);
-                if (truth != null) {
-                    if (p.truthsDeclared.contains(key) && !p.truthsTrue.contains(key) && truth.condition().test(p, null)) {
-                        makeTruthTrue(player, key, truth);
-                    } else if (truth.emergent().isPresent() && !p.truthsTrue.contains(key) && !p.truthsOffered.contains(key)
-                            && !p.truthsDeclared.contains(key) && truth.emergent().get().test(p, null)) {
-                        p.truthsOffered.add(key);
-                        ProgressionNotices.tell(player, "truth/offered/" + key, "Truth available", truth.text(),
-                                "You can declare this Truth on the Truths page. Its reward comes once you make it true.", Kind.DISCOVERY,
-                                truth.hint().orElse("Its entry on the Truths page says what it takes."), "Reward if you do: " + RewardWords.describe(truth.reward()) + ".");
-                    }
-                }
+                if (truth != null && truthsOpen(p) && truthDue(p, key, truth)) makeTruthTrue(player, key, truth, true);
                 Defs.TitleDef title = Content.TITLES.get(id);
                 if (title != null && !p.titles.contains(key) && title.condition().test(p, null)) {
                     p.titles.add(key);
                     markNewThing(player, "title");
                     ProgressionNotices.tell(player, "title/" + key, "Title earned", title.name(), title.description(), Kind.PERMANENT,
-                            title.perks().isEmpty() ? new String[]{"It has no perks. Equip it on the Truths page if you'd like to wear it."}
-                                    : new String[]{"Equip it on the Truths page for its perks: " + RewardWords.perks(title.perks()) + ".",
+                            title.perks().isEmpty() ? new String[]{"It has no perks. Wear it from Status if you'd like."}
+                                    : new String[]{"Wear it from Status for its perks: " + RewardWords.perks(title.perks()) + ".",
                                             "Its perks only work while it's equipped."});
                 }
                 Defs.LatentDef latent = Content.LATENTS.get(id);
@@ -439,18 +429,20 @@ public final class Progression {
             }
         }
         Directives.evaluate(player, p);
-        Regimen.evaluate(player, p);
     }
 
-    private static void makeTruthTrue(ServerPlayer player, String key, Defs.TruthDef truth) {
+    private static void makeTruthTrue(ServerPlayer player, String key, Defs.TruthDef truth, boolean tell) {
         Profile p = profile(player);
         p.truthsTrue.add(key);
         p.truthsDeclared.remove(key);
+        p.truthsOffered.remove(key);
         markNewThing(player, "truth");
-        player.level().playSound(null, player.blockPosition(), CoreModule.RANK_UP.get(), SoundSource.PLAYERS, 0.6f, 1.4f);
-        ProgressionNotices.tell(player, "truth/true/" + key, "Truth fulfilled", truth.text(),
-                "You made it true. Its reward and perks are yours for good.", Kind.PERMANENT,
-                "Reward: " + RewardWords.describe(truth.reward()) + ".", "Its perks work on their own; they don't take a title slot.");
+        if (tell) {
+            player.level().playSound(null, player.blockPosition(), CoreModule.RANK_UP.get(), SoundSource.PLAYERS, 0.6f, 1.4f);
+            ProgressionNotices.tell(player, "truth/true/" + key, "Truth fulfilled", truth.text(),
+                    "You've lived it, so it's true. Its reward and perks are yours for good.", Kind.PERMANENT,
+                    "Reward: " + RewardWords.describe(truth.reward()) + ".", "Its perks work on their own; they don't take a title slot.");
+        }
         RewardHooks.apply(player, truth.reward(), XpSource.TRUTH);
         applyAttributes(player);
         markDirty(player);
@@ -458,57 +450,51 @@ public final class Progression {
 
     // ---- truths -----------------------------------------------------------------------------------------------------
 
-    /** Offers up to {@code count} new Truths fitting the player's rank (first at level 5 via the level road, then at each rank-up). */
-    public static void offerTruths(ServerPlayer player, int count) {
+    /** Truths open with the level road's flag at level 5 (plan v2 §4.6); a save that already holds one is open too. */
+    public static boolean truthsOpen(Profile p) {
+        return LevelRoad.hasFlag(p, "awaken:truths") || !p.truthsTrue.isEmpty();
+    }
+
+    /**
+     * (SPEC §27.13) A Truth comes true by itself: its rank has come, its emergence (if it has one) has happened, and its
+     * deed is done. No offers, no declaring; every one can be earned, whatever rank you are when you do it.
+     */
+    public static boolean truthDue(Profile p, String key, Defs.TruthDef t) {
+        return !p.truthsTrue.contains(key) && p.rank.ordinal() >= t.minRank().ordinal()
+                && (t.emergent().isEmpty() || t.emergent().get().test(p, null)) && t.condition().test(p, null);
+    }
+
+    /**
+     * Every Truth that's due comes true at once, told in one line (the road's flag, a rank, a login). An old save's
+     * offered and declared Truths drop here, and any it had already lived come true. Returns how many came true.
+     */
+    public static int truthsCatchUp(ServerPlayer player) {
         Profile p = profile(player);
-        var rnd = player.getRandom();
-        List<Map.Entry<Identifier, Defs.TruthDef>> pool = new ArrayList<>();
+        if (!p.awakened || !truthsOpen(p)) return 0;
+        boolean old = !p.truthsOffered.isEmpty() || !p.truthsDeclared.isEmpty();
+        p.truthsOffered.clear();
+        p.truthsDeclared.clear();
+        List<String> keys = new ArrayList<>();
         for (var e : Content.TRUTHS.map.entrySet()) {
             String key = e.getKey().toString();
-            var d = e.getValue();
-            if (d.emergent().isPresent()) continue;
-            if (p.truthsTrue.contains(key) || p.truthsDeclared.contains(key) || p.truthsOffered.contains(key)) continue;
-            if (p.rank.ordinal() < d.minRank().ordinal() || p.rank.ordinal() > d.maxRank().ordinal()) continue;
-            pool.add(e);
+            if (!truthDue(p, key, e.getValue())) continue;
+            makeTruthTrue(player, key, e.getValue(), false);
+            keys.add(key);
         }
-        for (int n = 0; n < count && !pool.isEmpty(); n++) {
-            int total = pool.stream().mapToInt(e -> e.getValue().weight()).sum();
-            int roll = rnd.nextInt(Math.max(1, total));
-            for (int k = 0; k < pool.size(); k++) {
-                roll -= pool.get(k).getValue().weight();
-                if (roll < 0) {
-                    p.truthsOffered.add(pool.remove(k).getKey().toString());
-                    break;
-                }
-            }
+        if (keys.size() == 1) {
+            Defs.TruthDef t = Content.TRUTHS.get(keys.getFirst());
+            ProgressionNotices.tell(player, "truth/true/" + keys.getFirst(), "Truth fulfilled", t.text(),
+                    "You've lived it, so it's true. Its reward and perks are yours for good.", Kind.PERMANENT,
+                    "Reward: " + RewardWords.describe(t.reward()) + ".");
+        } else if (keys.size() > 1) {
+            List<String> words = new ArrayList<>();
+            for (String k : keys) words.add("“" + Content.TRUTHS.get(k).text() + "”");
+            ProgressionNotices.tell(player, "truth/caught_up/" + p.truthsTrue.size(), "Truths fulfilled", keys.size() + " Truths came true",
+                    "You'd already lived them, so they're true now, with their rewards. Status lists them.", Kind.PERMANENT,
+                    String.join(" · ", words));
         }
-        if (!p.truthsOffered.isEmpty()) {
-            // a long-term goal, not a quest: a calm toast; each Truth's reward is on the Truths tab
-            Signal.send(player, SignalWindow.builder(SignalWindow.Kind.TRUTH, Component.literal("Truths: who are you becoming?"))
-                    .body(Component.literal("Declare any you like. No rush · K"))
-                    .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).build());
-        }
-        markDirty(player);
-    }
-
-    public static boolean declareTruth(ServerPlayer player, String key) {
-        Profile p = profile(player);
-        if (!p.truthsOffered.contains(key) || p.truthsDeclared.size() >= 3) return false;
-        Defs.TruthDef d = Content.TRUTHS.get(key);
-        if (d == null) return false;
-        p.truthsOffered.remove(key);
-        p.truthsDeclared.add(key);
-        if (d.condition().test(p, null)) makeTruthTrue(player, key, d);
-        markDirty(player);
-        return true;
-    }
-
-    public static boolean undeclareTruth(ServerPlayer player, String key) {
-        Profile p = profile(player);
-        if (!p.truthsDeclared.remove(key)) return false;
-        p.truthsOffered.add(key);
-        markDirty(player);
-        return true;
+        if (old && keys.isEmpty()) markDirty(player);
+        return keys.size();
     }
 
     // ---- titles -----------------------------------------------------------------------------------------------------
@@ -657,10 +643,9 @@ public final class Progression {
                 .row(Component.literal("New gates"), Component.literal(next.label + "-rank pillars will appear"))
                 .priority(9).ttl(20 * 10).build());
         ProgressionNotices.remember(player, "rank/" + next.name(), "Rank advanced", next.label + "-rank",
-                "You passed reassessment, so " + next.label + "-rank gates will start to appear for you.",
-                "Three new Truths are waiting on the Truths page.");
+                "You passed reassessment, so " + next.label + "-rank gates will start to appear for you.");
         markNewThing(player, "rank");
-        offerTruths(player, 3);
+        truthsCatchUp(player); // a Truth lived before its rank came is true now
         evaluate(player, Counters.RANK);
         RankHooks.fire(player, next);
         markDirty(player);
@@ -740,19 +725,6 @@ public final class Progression {
         evaluate(player, Counters.STATS);
         markDirty(player);
         return refund;
-    }
-
-    private static final List<java.util.function.Predicate<ServerPlayer>> EXTRA_DIRECTIVE_SLOTS = new ArrayList<>();
-
-    /** A module can grant +1 Directive slot while its condition holds (e.g. near a Signal Relay). */
-    public static void addDirectiveSlotSource(java.util.function.Predicate<ServerPlayer> source) {
-        EXTRA_DIRECTIVE_SLOTS.add(source);
-    }
-
-    static int extraDirectiveSlots(ServerPlayer player) {
-        int n = 0;
-        for (var s : EXTRA_DIRECTIVE_SLOTS) if (s.test(player)) n++;
-        return n;
     }
 
     // ---- misc -------------------------------------------------------------------------------------------------------

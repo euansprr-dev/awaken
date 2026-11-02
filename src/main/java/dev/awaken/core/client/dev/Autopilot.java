@@ -449,6 +449,14 @@ public final class Autopilot {
                 waitTicks = 2;
             }
             case "trails" -> dev.awaken.trails.client.TrailsClient.debug(arg); // trails <now|browse [area]|open>: the Journal's TRAILS section
+            case "tasks" -> dev.awaken.tasks.client.TasksClient.debug(arg); // tasks <now|hearth|armour|weapons|bells|gates|worn>: the Tasks page
+            case "journal" -> { // journal <creatures|kin|lands|places|gates|caves|bells|lore|happenings|ores|story>: the Journal's category
+                try {
+                    dev.awaken.progression.client.StatusSections.journalFilter(dev.awaken.progression.client.StatusSections.Shelf.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
+                } catch (IllegalArgumentException e) {
+                    Awaken.LOG.warn("[autopilot] journal: no category {}", arg.trim());
+                }
+            }
             case "screen" -> {
                 if (arg.trim().equals("close")) mc.gui.setScreen(null);
                 else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
@@ -459,7 +467,8 @@ public final class Autopilot {
                     mc.gui.setScreen(null);
                     dev.awaken.atlas.client.AtlasClient.openTable();
                 }
-                else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
+                else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.JOURNAL));
+                else if (arg.trim().equals("tasks")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.TASKS));
                 else if (arg.trim().equals("uiprobe")) mc.gui.setScreen(new UiProbeScreen());
                 else if (arg.trim().equals("look")) mc.gui.setScreen(new dev.awaken.compat.client.LookScreen(null));
                 else if (arg.trim().equals("settings")) {
@@ -480,8 +489,9 @@ public final class Autopilot {
                         case "journal" -> dev.awaken.progression.client.StatusSections.Tab.JOURNAL;
                         case "hearth" -> dev.awaken.progression.client.StatusSections.Tab.HEARTH;
                         case "map" -> dev.awaken.progression.client.StatusSections.Tab.MAP;
-                        case "codex" -> dev.awaken.progression.client.StatusSections.Tab.CODEX;
-                        case "truths" -> dev.awaken.progression.client.StatusSections.Tab.TRUTHS;
+                        case "tasks" -> dev.awaken.progression.client.StatusSections.Tab.TASKS;
+                        case "codex" -> dev.awaken.progression.client.StatusSections.Tab.JOURNAL; // the Codex is the Journal's (SPEC §27.13)
+                        case "truths" -> dev.awaken.progression.client.StatusSections.Tab.STATUS;
                         default -> dev.awaken.progression.client.StatusSections.Tab.STATUS;
                     };
                     if (tab == dev.awaken.progression.client.StatusSections.Tab.MAP) openMapPage(mc);

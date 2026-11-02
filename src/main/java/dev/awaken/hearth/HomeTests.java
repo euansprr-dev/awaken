@@ -8,6 +8,7 @@ import dev.awaken.core.api.TheLull;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.hearth.room.Reading;
 import dev.awaken.hearth.room.Room;
+import dev.awaken.hearth.player.HearthView;
 import dev.awaken.hearth.room.RoomType;
 import dev.awaken.progression.Progression;
 import net.minecraft.core.BlockPos;
@@ -259,6 +260,118 @@ final class HomeTests {
             }
         });
 
+        // SPEC §27.13: the Armoury is a Fitting Stand and a crafting table in one closed room; add an anvil, the Forge and an
+        // armour stand and it's the Forge too (one room, both kinds)
+        AwakenTests.registerIsolated("hearth_armoury_room", 600, h -> {
+            int[] c = new int[dev.awaken.hearth.room.Furniture.COUNT];
+            c[dev.awaken.hearth.room.Furniture.FITTING_STAND.ordinal()] = 1;
+            c[dev.awaken.hearth.room.Furniture.CRAFTING.ordinal()] = 1;
+            int[] facts = new int[dev.awaken.hearth.room.Tally.F_COUNT];
+            h.assertTrue(Room.classify(c, facts).contains(RoomType.FITTING), "a stand and a table: an Armoury");
+            c[dev.awaken.hearth.room.Furniture.CRAFTING.ordinal()] = 0;
+            h.assertFalse(Room.classify(c, facts).contains(RoomType.FITTING), "a stand alone isn't one");
+            c[dev.awaken.hearth.room.Furniture.CRAFTING.ordinal()] = 1;
+            c[dev.awaken.hearth.room.Furniture.ANVIL.ordinal()] = 1;
+            c[dev.awaken.hearth.room.Furniture.FORGE.ordinal()] = 1;
+            c[dev.awaken.hearth.room.Furniture.STAND.ordinal()] = 1;
+            h.assertTrue(Room.classify(c, facts).containsAll(java.util.EnumSet.of(RoomType.FITTING, RoomType.ARMORY)), "grown into the Forge, still the Armoury");
+            // the scanner knows the Fitting Stand block
+            ServerLevel level = h.getLevel();
+            BlockPos origin = h.absolutePos(BlockPos.ZERO);
+            BlockPos base = new BlockPos((origin.getX() & ~15) + 4, origin.getY() + 110, (origin.getZ() & ~15) + 4);
+            HearthData data = HearthData.get(level.getServer());
+            UUID owner = UUID.randomUUID();
+            HearthRecord rec = new HearthRecord(owner, "test", base.offset(4, 12, 4), HearthService.OVERWORLD);
+            level.setBlock(rec.pos, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
+            data.put(rec);
+            try {
+                fineRoom(level, base);
+                level.setBlock(base.offset(5, 1, 6), Blocks.CRAFTING_TABLE.defaultBlockState(), 3);
+                level.setBlock(base.offset(6, 1, 4), dev.awaken.armour.ArmourContent.STAND.get().defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                Room room = at(rec, base.offset(3, 1, 3));
+                h.assertTrue(room != null && room.types().contains(RoomType.FITTING) && room.types().contains(RoomType.BEDROOM),
+                        "the bedroom with a stand and a table is an Armoury too: " + (room == null ? "gone" : room.types()));
+                // its gift: a piece fitted at the stand in it lasts a quarter longer; one made out in the open doesn't
+                BlockPos stand = base.offset(6, 1, 4);
+                ItemStack helm = dev.awaken.armour.ArmourForge.make(dev.awaken.armour.ArmourSet.WILDHIDE, net.minecraft.world.item.equipment.ArmorType.HELMET);
+                int wear = helm.getMaxDamage();
+                dev.awaken.armour.ArmourForge.armoury(level, stand, helm);
+                h.assertTrue(helm.getMaxDamage() == Math.round(wear * 1.25F) && dev.awaken.armour.ArmourForge.fromArmoury(helm),
+                        "made in the Armoury it lasts a quarter longer: " + wear + " → " + helm.getMaxDamage());
+                ItemStack open = dev.awaken.armour.ArmourForge.make(dev.awaken.armour.ArmourSet.WILDHIDE, net.minecraft.world.item.equipment.ArmorType.HELMET);
+                dev.awaken.armour.ArmourForge.armoury(level, base.offset(-3, 1, 4), open);
+                h.assertTrue(open.getMaxDamage() == wear && !dev.awaken.armour.ArmourForge.fromArmoury(open), "made outside it, no gift");
+                h.succeed();
+            } finally {
+                data.remove(owner);
+                level.removeBlock(rec.pos, false);
+                clear(level, base, 9, 6, 9);
+            }
+        });
+
+        // Euan, 2026-10-30: back home with the Hearthfire and a bed built, "what next?". The Armoury, then your first armour,
+        // then your first gate for the Lord's Heart; the Sanctuary is there, marked optional, never on top (SPEC §27.13).
+        AwakenTests.registerIsolated("tasks_next_step_follows_path", 900, h -> {
+            ServerLevel level = h.getLevel();
+            AwakenTests.Live live = AwakenTests.survivalPlayer(h, "tasks-path", BlockPos.ZERO);
+            AwakenTests.onEnd(h, live::leave);
+            ServerPlayer sp = live.player();
+            Progression.awaken(sp);
+            if (dev.awaken.powers.Starter.pending(sp)) {
+                dev.awaken.powers.Starter.offer(sp);
+                dev.awaken.powers.Starter.choose(sp, dev.awaken.powers.Starter.state(sp).offer().getFirst()); // he has his power
+            }
+            sp.getInventory().clearContent();
+            BlockPos origin = h.absolutePos(BlockPos.ZERO);
+            BlockPos base = new BlockPos((origin.getX() & ~15) + 4, origin.getY() + 110, (origin.getZ() & ~15) + 4);
+            HearthData data = HearthData.get(level.getServer());
+            data.remove(sp.getUUID());
+            HearthRecord rec = new HearthRecord(sp.getUUID(), "test", base.offset(4, 12, 4), HearthService.OVERWORLD);
+            rec.tier = 0; // the Hearthfire
+            data.put(rec);
+            try {
+                fineRoom(level, base);
+                HearthService.scanNow(level, rec);
+                h.assertTrue(rec.hasRoom(RoomType.BEDROOM) && !rec.hasRoom(RoomType.FITTING), "a bedroom, no Armoury yet: " + rec.rooms.size());
+                var book = dev.awaken.tasks.TaskBook.fresh(sp);
+                String all = keys(book);
+                h.assertTrue(book.top().equals("hearth/armoury"), "the Armoury is next: " + book.top() + " of " + all);
+                int armoury = index(book, "hearth/armoury"), armour = index(book, "armour/e"), gate = index(book, "hearth/anchor");
+                h.assertTrue(armoury >= 0 && armour > armoury && gate > armour, "then the first armour, then the first gate: " + all);
+                var anchor = book.get("hearth/anchor");
+                h.assertTrue(anchor.goal() == dev.awaken.core.api.Goals.Goal.RANK && anchor.title().equals("Clear your first gate")
+                        && anchor.needs().getFirst().item().equals("awaken:lord_heart"), "the gate is for its Lord's Heart: " + anchor);
+                var sanctuary = book.get("hearth/sanctuary");
+                h.assertTrue(sanctuary != null && sanctuary.optional(), "the Sanctuary is there, optional: " + all);
+                var needs = book.get("hearth/armoury").needs();
+                h.assertTrue(needs.size() == 3 && !needs.get(0).met() && !needs.get(1).met() && needs.get(2).item().isEmpty(),
+                        "the Armoury's pieces, one row each, and one closed room: " + needs);
+                // the Hearth page: the bedroom built, the Armoury not, kinds whose piece he's never come across are "?"
+                var tiles = HearthViews.tiles(sp, rec);
+                h.assertTrue(tile(tiles, RoomType.BEDROOM) == HearthView.Tile.BUILT && tile(tiles, RoomType.FITTING) != HearthView.Tile.BUILT
+                        && tile(tiles, RoomType.MINE_HEAD) == HearthView.Tile.HIDDEN && tile(tiles, RoomType.ROOKERY) == HearthView.Tile.HIDDEN
+                        && tiles.size() == RoomType.values().length, "a tile per kind: " + tiles);
+                var looks = HearthViews.looks(rec);
+                h.assertTrue(!looks.isEmpty() && looks.getFirst().readings().size() == 6 && (looks.getFirst().grade() == 3 || !looks.getFirst().lift().isEmpty()),
+                        "each room's six readings and what lifts it: " + looks);
+                var light = book.get("kin/need/lampwing");
+                h.assertTrue(light != null && light.goal() == dev.awaken.core.api.Goals.Goal.HEARTH && light.title().equals("Nothing lights your yard at night."),
+                        "the beasts' first need is a Hearth step, the kind unnamed until met: " + all);
+                // build it in the bedroom: the Armoury is done and never shows again; the armour is next, the Forge waits
+                level.setBlock(base.offset(5, 1, 6), Blocks.CRAFTING_TABLE.defaultBlockState(), 3);
+                level.setBlock(base.offset(6, 1, 4), dev.awaken.armour.ArmourContent.STAND.get().defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                book = dev.awaken.tasks.TaskBook.fresh(sp);
+                h.assertTrue(book.get("hearth/armoury") == null && book.top().equals("armour/e"), "the Armoury built, the armour on top: " + keys(book));
+                h.assertTrue(book.get("hearth/forge") != null && !book.get("hearth/forge").optional(), "and the Forge waits for later: " + keys(book));
+                h.succeed();
+            } finally {
+                data.remove(sp.getUUID());
+                clear(level, base, 9, 6, 9);
+            }
+        });
+
         AwakenTests.registerIsolated("hearth_rested", 600, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
@@ -333,6 +446,22 @@ final class HomeTests {
             level.setBlock(base.offset(x, y, z), shell ? Blocks.DIRT.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
         }
         level.setBlock(base.offset(1, 1, 1), Blocks.CHEST.defaultBlockState(), 3);
+    }
+
+    private static int tile(java.util.List<HearthView.Tile> tiles, RoomType t) {
+        for (HearthView.Tile x : tiles) if (x.kind().equals(t.name())) return x.state();
+        return -1;
+    }
+
+    private static String keys(dev.awaken.tasks.TaskBook.Book book) {
+        StringBuilder b = new StringBuilder();
+        for (var s : book.steps()) b.append(b.isEmpty() ? "" : ", ").append(s.key());
+        return b.toString();
+    }
+
+    private static int index(dev.awaken.tasks.TaskBook.Book book, String key) {
+        for (int i = 0; i < book.steps().size(); i++) if (book.steps().get(i).key().equals(key)) return i;
+        return -1;
     }
 
     static Room at(HearthRecord h, BlockPos p) {

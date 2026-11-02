@@ -40,7 +40,7 @@ public enum MachineType implements StringRepresentable {
             "Place it by a bed. Replays a dream you recorded.",
             part(() -> AboveItems.SCRAP.get(), 4), part(() -> AboveItems.CIRCUIT.get(), 2), part(() -> Items.AMETHYST_SHARD, 4), part(() -> Items.PHANTOM_MEMBRANE, 2)),
     SIGNAL_RELAY("signal_relay", "Signal Relay", 8,
-            "Near your Hearth it boosts the Signal: once a play-day it asks for a fresh Directive.",
+            "Near your Hearth it listens for bells, but every bell is kept somewhere now and none lies out in the open to hear.",
             part(() -> AboveItems.SCRAP.get(), 4), part(() -> AboveItems.CIRCUIT.get(), 3), part(() -> Items.LIGHTNING_ROD.weathering().unaffected(), 1), part(() -> Items.COPPER_INGOT, 4)),
     RECALIBRATOR("recalibrator", "Recalibrator", 7,
             "Refunds every stat point you spent so you can place them again. Costs essence.",

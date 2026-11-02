@@ -1,9 +1,9 @@
 {
   "name": "Keeper of Promises",
-  "description": "Kept seven Directives in a row.",
+  "description": "Helped the beasts you met with what they needed, seven times.",
   "condition": {
     "type": "counter",
-    "counter": "awaken:directives_kept_streak",
+    "counter": "awaken:kin_helped",
     "value": 7
   },
   "perks": [

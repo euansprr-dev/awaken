@@ -426,7 +426,7 @@ public final class Town {
         HearthPlayer hp = HearthService.player(sp);
         var w = SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal("Teodor reads your Codex"));
         p.path().map(Content.PATHS::get).ifPresent(path -> w.row(Component.literal("Path"), Component.literal(path.name())));
-        w.row(Component.literal("Truths"), Component.literal(p.truthsTrue().size() + " true, " + p.truthsDeclared().size() + " declared"));
+        w.row(Component.literal("Truths"), Component.literal(p.truthsTrue().size() + " true"));
         w.row(Component.literal("Titles"), Component.literal(String.valueOf(p.titles().size())));
         w.row(Component.literal("Latents"), Component.literal(p.latents().size() + " / ??"));
         long bosses = p.counter("awaken:bosses_killed");

@@ -259,6 +259,11 @@ final class HundredPeal {
         }
 
         @Override
+        public boolean relay(ServerPlayer player, BlockPos relay) {
+            return Bells.relayed(player, relay);
+        }
+
+        @Override
         public boolean kinsongNear(ServerLevel level, BlockPos at, int reach, int days) {
             if (level.dimension() != Level.OVERWORLD) return false;
             BellWorld w = BellWorld.get(level.getServer());

@@ -153,6 +153,7 @@ final class ForgeClient {
         lines.add(at++, Component.literal(text).withColor(q.colour & 0xFFFFFF));
         if (!f.maker().isEmpty()) lines.add(at++, Component.literal("Forged by " + f.maker()).withColor(0x6F8299));
         if (f.trueRing()) lines.add(at++, Component.literal("Its Deepglass rings true").withColor(0x9FD8E8));
+        if (dev.awaken.armour.ArmourForge.fromArmoury(e.getItemStack())) lines.add(at++, Component.literal("Made in your Armoury: it lasts a quarter longer").withColor(0xE2B450));
         var force = f.inlayForce();
         if (force != null) lines.add(at++, Component.literal(dev.awaken.armour.ArmourInlay.line(force)).withColor(dev.awaken.armour.ArmourInlay.colour(force) & 0xFFFFFF));
         ArmourLooks.Look drawn = ArmourLooks.drawn(e.getItemStack());

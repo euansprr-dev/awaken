@@ -60,6 +60,7 @@ public final class Awaken {
         dev.awaken.anims.AnimsModule.init(modBus);
         dev.awaken.atlas.AtlasModule.init(modBus);
         dev.awaken.arms.ArmsModule.init(modBus);
+        dev.awaken.tasks.TasksModule.init(modBus); // before trails: a pin leads the card over a followed trail
         dev.awaken.trails.TrailsModule.init(modBus);
         dev.awaken.wildlife.WildlifeModule.init(modBus);
         dev.awaken.delve.DelveModule.init(modBus);
