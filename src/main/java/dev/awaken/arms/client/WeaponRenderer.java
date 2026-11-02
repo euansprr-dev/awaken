@@ -130,13 +130,19 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
 
     /** The mesh's corners; vanilla's pipeline draws quads, so there each triangle repeats its last corner. */
     private static void emit(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, int light, int overlay, boolean ours) {
+        emit(mesh, pose, buffer, light, overlay, ours, 0);
+    }
+
+    /** As above, only the triangles lying from {@code cut} along the weapon on (0..255 of its length, by their middle). */
+    static void emit(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, int light, int overlay, boolean ours, int cut) {
         int accent = ours ? mesh.accent() : 0xFFFFFF;
         int r = accent >> 16 & 255, g = accent >> 8 & 255, b = accent & 255;
         float[] p = mesh.pos(), uv = mesh.uv();
         byte[] n = mesh.normal(), along = mesh.along();
-        for (int i = 0, count = mesh.vertices(); i < count; i++) {
-            corner(buffer, pose, p, uv, n, i, r, g, b, ours ? along[i] & 255 : 255, light, overlay);
-            if (!ours && i % 3 == 2) corner(buffer, pose, p, uv, n, i, r, g, b, 255, light, overlay);
+        for (int i = 0, count = mesh.vertices(); i < count; i += 3) {
+            if (cut > 0 && (along[i] & 255) + (along[i + 1] & 255) + (along[i + 2] & 255) < cut * 3) continue;
+            for (int c = i; c < i + 3; c++) corner(buffer, pose, p, uv, n, c, r, g, b, ours ? along[c] & 255 : 255, light, overlay);
+            if (!ours) corner(buffer, pose, p, uv, n, i + 2, r, g, b, 255, light, overlay);
         }
     }
 
