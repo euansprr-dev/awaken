@@ -50,6 +50,15 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         dw = pw - listW - 22;
     }
 
+    /**
+     * The list's row: 12 px, closer on a short screen so the last style stays above the finds at the foot (all 16 at the
+     * anvil's door on a 960-px window at GUI scale 4); never under 10, a line of text.
+     */
+    private int row(ArmsPayloads.ArmouryView v) {
+        int foot = py + ph - 26 - Math.max(0, v.finds().size() - 1) * 10 - (v.hidden() > 0 ? 34 : 0);
+        return Math.max(10, Math.min(ROW, (foot - (py + 24)) / Math.max(1, v.styles().size())));
+    }
+
     private ArmsPayloads.@Nullable ArmouryView view() {
         return ArmouryCache.view;
     }
@@ -85,17 +94,17 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         g.fill(px + 6, py + 19, px + pw - 6, py + 20, 0x553A4A60);
 
         // the list
-        int y = py + 24;
+        int y = py + 24, row = row(v);
         for (var e : v.styles()) {
             boolean sel = e.id().equals(style());
-            if (sel) g.fill(px + 6, y - 1, px + 6 + listW, y + ROW - 1, 0xF01A2436);
+            if (sel) g.fill(px + 6, y - 1, px + 6 + listW, y + row - 1, 0xF01A2436);
             Archetypes.Loaded st = Archetypes.get(e.id());
             String name = st == null ? e.id() : st.def().name();
             boolean known = e.state() == 0;
             g.text(font, name, px + 10, y + 1, known ? TITLE : LANTERN, false);
             String tag = known ? (ArmouryCache.view != null && v.tracked().startsWith(e.id() + ":") ? "tracked" : "") : e.price() + " essence";
             if (!tag.isEmpty()) g.text(font, tag, px + 6 + listW - 4 - font.width(tag), y + 1, known ? GOOD : (e.afford() ? LANTERN : DIM), false);
-            y += ROW;
+            y += row;
         }
         if (v.hidden() > 0) {
             String more = v.door() == ArmsArmoury.HALE && !v.hiddenRank().isEmpty()
@@ -261,14 +270,14 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         if (event.button() != InputConstants.MOUSE_BUTTON_LEFT || v == null) return super.mouseClicked(event, doubleClick);
         double mx = event.x(), my = event.y();
         // the list
-        int y = py + 24;
+        int y = py + 24, row = row(v);
         for (var e : v.styles()) {
-            if (mx >= px + 6 && mx < px + 6 + listW && my >= y - 1 && my < y + ROW - 1) {
+            if (mx >= px + 6 && mx < px + 6 + listW && my >= y - 1 && my < y + row - 1) {
                 selected = e.id();
                 ArmouryCache.ask(ArmsArmoury.DETAIL, e.id(), "");
                 return true;
             }
-            y += ROW;
+            y += row;
         }
         if (d == null) return super.mouseClicked(event, doubleClick);
         // the tiers
