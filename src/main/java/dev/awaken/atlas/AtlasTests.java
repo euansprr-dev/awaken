@@ -3,9 +3,11 @@ package dev.awaken.atlas;
 import com.mojang.serialization.JsonOps;
 import dev.awaken.core.api.AtlasHooks;
 import dev.awaken.core.api.CityHooks;
+import dev.awaken.core.api.PartyHooks;
 import dev.awaken.core.test.AwakenTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
 
@@ -100,7 +102,8 @@ final class AtlasTests {
             d.trail.add(70);
             d.trail.add(-2);
             d.regions.add(new AtlasData.Region(7L, "The Ashen Reach", 900, -400, 8, 14));
-            d.pins.add(new AtlasData.Pin("minecraft:overworld", 5, 70, -9));
+            d.waypoints.add(new AtlasData.Waypoint(3, "minecraft:overworld", 5, 70, -9, "Ford by the willow", 2, 5, true));
+            d.fell = new AtlasData.Fell("minecraft:overworld", 1, 60, 3);
             var json = AtlasData.CODEC.encodeStart(JsonOps.INSTANCE, d).getOrThrow();
             h.assertTrue(json.getAsJsonObject().get("schemaVersion").getAsInt() == AtlasData.SCHEMA, "schemaVersion saved");
             AtlasData back = AtlasData.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
@@ -108,7 +111,25 @@ final class AtlasTests {
             h.assertTrue(ow != null && ow.count() == 3 && ow.explored(-40, 100) && ow.explored(64, 64), "cells round-trip");
             h.assertTrue(back.trail().length == 3 && back.trail()[1] == 70, "trail round-trips");
             h.assertTrue(back.regions().size() == 1 && back.regions().getFirst().name().equals("The Ashen Reach"), "regions round-trip");
-            h.assertTrue(back.pins().size() == 1 && back.pins().getFirst().z() == -9, "pins round-trip");
+            h.assertTrue(back.waypoints().equals(d.waypoints()) && back.fell() != null && back.fell().z() == 3, "waypoints and where you fell round-trip");
+            // a save from before waypoints: each pin comes back as a shared waypoint named "Pin", in its owner's colour
+            var old = json.getAsJsonObject().deepCopy();
+            old.addProperty("schemaVersion", 2);
+            old.remove("waypoints");
+            old.remove("nextId");
+            var pin = new com.google.gson.JsonObject();
+            pin.addProperty("dim", "minecraft:overworld");
+            pin.addProperty("x", 5);
+            pin.addProperty("y", 70);
+            pin.addProperty("z", -9);
+            var pins = new com.google.gson.JsonArray();
+            pins.add(pin);
+            old.add("pins", pins);
+            AtlasData moved = AtlasData.CODEC.parse(JsonOps.INSTANCE, old).getOrThrow();
+            AtlasData.Waypoint mp = moved.waypoints().isEmpty() ? null : moved.waypoints().getFirst();
+            h.assertTrue(mp != null && mp.name().equals("Pin") && mp.shared() && mp.colour() == AtlasData.OWN_COLOUR && mp.z() == -9,
+                    "an old pin carries over as a shared waypoint");
+            h.assertFalse(AtlasData.CODEC.encodeStart(JsonOps.INSTANCE, moved).getOrThrow().getAsJsonObject().has("pins"), "and pins are never written again");
             h.assertTrue(Discovery.mapped("minecraft:overworld") && !Discovery.mapped("awaken:gate_cells"), "instanced dimensions are never mapped");
             h.succeed();
         });
@@ -132,24 +153,55 @@ final class AtlasTests {
             }
         });
 
-        // pins: only on ground you know, twelve at most (the oldest goes), and a pin is taken back by its owner
-        AwakenTests.register("atlas_pins", 40, h -> {
-            ServerPlayer p = h.makeMockServerPlayerInLevel();
+        // (SPEC §16.8) waypoints: only on ground you know; 64 at most and none ever removed for you; names cleaned; only
+        // their owner changes or removes one; a shared one shows to the party as its owner's, an unshared one doesn't; where
+        // you fell shows outside the 64 and goes once you're back there
+        AwakenTests.register("atlas_waypoints", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel(), q = h.makeMockServerPlayerInLevel();
+            PartyHooks.Access was = PartyHooks.installed();
             try {
                 BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
                 AtlasData d = Discovery.data(p);
                 d.dim(Discovery.dim(p.level())).clear();
-                d.pins.clear();
-                h.assertFalse(Discovery.pin(p, at.getX(), at.getY(), at.getZ(), false), "no pin on ground you haven't seen");
+                d.waypoints.clear();
+                d.fell = null;
+                h.assertTrue(Waypoints.add(p, at.getX(), at.getY(), at.getZ(), "Ford", 0, 0, false) == Waypoints.Result.UNKNOWN_GROUND, "not on ground you haven't seen");
                 Discovery.reveal(p, at, 200);
-                for (int i = 0; i < AtlasData.PINS_MAX + 2; i++) Discovery.pin(p, at.getX() + i * 10, at.getY(), at.getZ(), false);
-                h.assertTrue(d.pins().size() == AtlasData.PINS_MAX && d.pins().getFirst().x() == at.getX() + 20, "twelve pins, the oldest gone");
-                h.assertTrue(Discovery.pin(p, at.getX() + 52, at.getY(), at.getZ(), true), "your own pin nearby comes back");
-                h.assertTrue(d.pins().size() == AtlasData.PINS_MAX - 1 && d.pins().stream().noneMatch(q -> q.x() == at.getX() + 50), "the nearest one");
+                h.assertTrue(Waypoints.add(p, at.getX(), at.getY(), at.getZ(), "Ford", 8, 0, false) == Waypoints.Result.BAD
+                        && Waypoints.add(p, at.getX(), at.getY(), at.getZ(), "Ford", 0, AtlasData.MARKS, false) == Waypoints.Result.BAD, "colours and marks from the set");
+                for (int i = 0; i < AtlasData.WAYPOINTS_MAX; i++) Waypoints.add(p, at.getX() + i, at.getY(), at.getZ(), "W" + i, i % 8, i % 8, false);
+                h.assertTrue(Waypoints.add(p, at.getX(), at.getY(), at.getZ(), "One more", 0, 0, false) == Waypoints.Result.FULL
+                        && d.waypoints().size() == AtlasData.WAYPOINTS_MAX && d.waypoints().getFirst().name().equals("W0"), "64 at most, and the first is still there");
+                d.waypoints.clear();
+                h.assertTrue(Waypoints.add(p, at.getX(), at.getY(), at.getZ(), "  Copper   seam above the mere, past the old mill  ", 4, 1, false) == Waypoints.Result.OK, "added");
+                AtlasData.Waypoint w = d.waypoints().getFirst();
+                h.assertTrue(w.name().startsWith("Copper seam above") && w.name().codePointCount(0, w.name().length()) <= AtlasData.NAME_MAX
+                        && !w.name().contains("  ") && Waypoints.clean("   ").equals("Waypoint"), "names folded and cut to 32, never empty: " + w.name());
+                h.assertTrue(Waypoints.edit(q, w.id(), "Mine now", 0, 0, true) == Waypoints.Result.NOT_YOURS && Waypoints.remove(q, w.id()) == Waypoints.Result.NOT_YOURS,
+                        "only its owner changes or removes it");
+                PartyHooks.install(new PartyHooks.Access() { // p and q in one party, for this test only
+                    @Override public java.util.List<java.util.UUID> members(Player a) {
+                        return java.util.List.of(p.getUUID(), q.getUUID());
+                    }
+                });
+                h.assertTrue(Waypoints.of(q).stream().noneMatch(v -> v.name().startsWith("Copper")), "not shared: only you see it");
+                h.assertTrue(Waypoints.edit(p, w.id(), "Copper seam", 4, 1, true) == Waypoints.Result.OK && d.waypoints().getFirst().x() == at.getX(), "changed in place");
+                AtlasNet.WaypointView seen = Waypoints.of(q).stream().filter(v -> v.name().equals("Copper seam")).findFirst().orElse(null);
+                h.assertTrue(seen != null && seen.shared() && !seen.mine() && seen.owner().equals(p.getName().getString()) && seen.colour() == AtlasData.COLOURS[4],
+                        "shared: the party sees it, as its owner's");
+                h.assertTrue(Waypoints.remove(p, w.id()) == Waypoints.Result.OK && d.waypoints().isEmpty(), "its owner removes it");
+                Waypoints.died(p);
+                h.assertTrue(d.fell() != null && d.waypoints().isEmpty() && Waypoints.of(p).stream().anyMatch(v -> v.fell() && v.mine() && v.id() == 0),
+                        "where you fell shows, outside the 64");
+                Waypoints.tick(p, Discovery.live(p), 1);
+                h.assertTrue(d.fell() == null, "and goes once you're back there");
                 h.succeed();
             } finally {
-                Discovery.forget(p);
-                h.getLevel().getServer().getPlayerList().remove(p);
+                PartyHooks.install(was);
+                for (ServerPlayer m : new ServerPlayer[]{p, q}) {
+                    Discovery.forget(m);
+                    h.getLevel().getServer().getPlayerList().remove(m);
+                }
             }
         });
 

@@ -1,5 +1,6 @@
 package dev.awaken.atlas.client;
 
+import dev.awaken.atlas.AtlasNet;
 import dev.awaken.atlas.Discovery;
 import dev.awaken.core.api.Destinations;
 import dev.awaken.core.api.MapMarks;
@@ -14,22 +15,28 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Choosing where you're going on the Atlas (SPEC §16.8; Euan 2026-10-27: "make sure I can actually choose destinations on
- * the map"). Click a place on the table (a gate, a mark, a rumour, a Hearth, a region's name, a pin, or ground you know)
+ * the map"). Click a place on the table (a gate, a mark, a rumour, a Hearth, a region's name, a waypoint, or ground you know)
  * and a small card offers <b>Set as destination</b> (Enter); on the current destination it offers <b>Clear
  * destination</b>. The destination is the server's ({@link Destinations}): the Now line leads you there with its compass
  * until you arrive. It stands on the table in its own look, a white-gold pin with a beam and a slow ring, wherever it is.
- * A drag still turns the map and a double-click still drops a party pin: only a click that didn't move picks.
+ * A drag still turns the map and a double-click still drops a waypoint: only a click that didn't move picks. A waypoint's
+ * card says whose it is and how far, and on one of yours offers <b>Change it</b> (E), which opens its {@link WaypointCard}.
  */
 final class AtlasDestination {
     /** How near the cursor (GUI px) a mark must be to be the one clicked. */
     static final int REACH = 12;
     static final int GOLD = 0xFFF2D58A, INK = 0xFFE9F1FF, NAVY = 0xFF0B1626;
 
-    /** What a click picked: its name as the Now line will say it, its kind, and where. */
-    record Pick(String name, String kind, BlockPos at) {}
+    /** What a click picked: its name as the Now line will say it, its kind, and where (and the waypoint, when it's one). */
+    record Pick(String name, String kind, BlockPos at, AtlasNet.@Nullable WaypointView waypoint) {
+        Pick(String name, String kind, BlockPos at) {
+            this(name, kind, at, null);
+        }
+    }
 
     /** Where a world point lands on the table this frame (false: off it). */
     interface Projector {
@@ -38,8 +45,14 @@ final class AtlasDestination {
 
     private @Nullable Pick picked;
     private final float[] p = new float[2];
-    // the card, as drawn this frame (for clicks)
-    private int cardX0 = -1, cardY0, cardX1, cardY1;
+    // the card, as drawn this frame (for clicks), and its second row's top (a waypoint's Change it)
+    private int cardX0 = -1, cardY0, cardX1, cardY1, secondY = -1;
+    /** Opens one of your waypoints' card (Change it). */
+    private final Consumer<AtlasNet.WaypointView> change;
+
+    AtlasDestination(Consumer<AtlasNet.WaypointView> change) {
+        this.change = change;
+    }
 
     boolean hasPick() {
         return picked != null;
@@ -63,7 +76,8 @@ final class AtlasDestination {
      */
     void click(Minecraft mc, AtlasState atlas, Projector proj, double mx, double my, int chipZone, double @Nullable [] ground) {
         if (overCard(mx, my)) {
-            act();
+            if (secondY >= 0 && my >= secondY - 2) changeIt();
+            else act();
             return;
         }
         Pick best = null;
@@ -107,11 +121,14 @@ final class AtlasDestination {
                 best = new Pick(home.name(), "home", new BlockPos(home.x(), home.y(), home.z()));
             }
         }
-        for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins) {
-            double d = near(proj, pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, mx, my + 16);
+        // waypoints: the head is the target, or the foot
+        if (AtlasScreen.showWaypoints) for (AtlasNet.WaypointView w : atlas.waypoints) {
+            double y = atlas.store.groundY(w.x(), w.z(), w.y());
+            double d = Math.min(near(proj, w.x() + 0.5, y, w.z() + 0.5, mx, my + WaypointGlyphs.STEM + WaypointGlyphs.HEAD),
+                    near(proj, w.x() + 0.5, y, w.z() + 0.5, mx, my));
             if (d < bestD) {
                 bestD = d;
-                best = new Pick(pin.mine() ? "Your pin" : pin.owner() + "'s pin", "pin", new BlockPos(pin.x(), pin.y(), pin.z()));
+                best = new Pick(w.name(), "pin", new BlockPos(w.x(), w.y(), w.z()), w);
             }
         }
         if (best == null && chipZone != 0) {
@@ -133,8 +150,19 @@ final class AtlasDestination {
         mc.getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), 1.15f, 0.7f));
     }
 
+    /** Picks a waypoint (a legend row): its card opens beside it. */
+    void pick(AtlasNet.WaypointView w) {
+        picked = new Pick(w.name(), "pin", new BlockPos(w.x(), w.y(), w.z()), w);
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), 1.15f, 0.7f));
+    }
+
+    /** The waypoint picked, if one is. */
+    AtlasNet.@Nullable WaypointView pickedWaypoint() {
+        return picked == null ? null : picked.waypoint();
+    }
+
     /** "A spot in the Commons": the land a spot lies in, by its zone. */
-    private static String spotName(AtlasState atlas, int x, int z) {
+    static String spotName(AtlasState atlas, int x, int z) {
         int zone = atlas.zoneView().zone(x, z);
         if (zone != 0) for (AtlasState.ZoneLabel l : atlas.zoneLabels()) {
             if (l.zone() != zone) continue;
@@ -148,6 +176,19 @@ final class AtlasDestination {
         if (!proj.at(x, y, z, p)) return Double.MAX_VALUE;
         double dx = p[0] - mx, dy = p[1] - my;
         return dx * dx + dy * dy;
+    }
+
+    /** A waypoint card's second row, or E: one of yours opens to be changed (where you fell is taken off the map). */
+    boolean changeIt() {
+        AtlasNet.WaypointView w = pickedWaypoint();
+        if (w == null || !w.mine()) return false;
+        deselect();
+        if (w.fell()) {
+            net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
+                    new AtlasNet.WaypointEdit(AtlasNet.WaypointEdit.REMOVE, 0, 0, 0, 0, "", 0, 0, false));
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), 0.8f, 0.7f));
+        } else change.accept(w);
+        return true;
     }
 
     /** The card's button, or Enter: the pick becomes the destination, or the destination is cleared. */
@@ -174,8 +215,12 @@ final class AtlasDestination {
 
     /** Whether the destination now set is this place (in the dimension the table shows). */
     static boolean isDestination(BlockPos at) {
+        return isDestination(at.getX(), at.getZ());
+    }
+
+    static boolean isDestination(int x, int z) {
         Destinations.Target d = Destinations.mine().orElse(null);
-        return d != null && d.at().getX() == at.getX() && d.at().getZ() == at.getZ() && here(d);
+        return d != null && d.at().getX() == x && d.at().getZ() == z && here(d);
     }
 
     private static boolean here(Destinations.Target d) {
@@ -214,25 +259,46 @@ final class AtlasDestination {
             }
         }
         cardX0 = -1;
+        secondY = -1;
         if (picked != null && proj.at(picked.at().getX() + 0.5, pickY(atlas, picked), picked.at().getZ() + 0.5, p)) {
             int sx = Math.round(p[0]), sy = Math.round(p[1]);
             ring(g, sx, sy, 6, 0xE0E9F1FF);
+            AtlasNet.WaypointView wp = picked.waypoint();
             boolean clear = isDestination(picked.at());
             String title = picked.name(), action = clear ? "✕ Clear destination" : "› Set as destination", key = "Enter";
-            int w = Math.max(font.width(title), font.width(action) + 10 + font.width(key)) + 14, h = 30;
+            // a waypoint's card: whose it is and how far, then Change it (yours) or who can
+            String sub = wp == null ? null : waypointLine(wp);
+            String second = wp == null ? null : wp.fell() ? "Remove it" : wp.mine() ? "Change it" : "Only " + wp.owner() + " can change it.";
+            int w = Math.max(font.width(title), font.width(action) + 10 + font.width(key));
+            if (sub != null) w = Math.max(w, Math.max(font.width(sub), font.width(second) + 10 + font.width("E")));
+            w += 14;
+            int h = sub == null ? 30 : 54;
             int cx = sx + 14, cy = sy - h / 2;
             if (cx + w > x1 - 4) cx = sx - 14 - w;
             cx = Math.clamp(cx, x0 + 4, Math.max(x0 + 4, x1 - 4 - w));
             cy = Math.clamp(cy, y0 + 4, Math.max(y0 + 4, y1 - 4 - h));
+            int edge = clear ? Glass.a(Glass.LABEL, 1f) : wp != null ? 0xFF000000 | wp.colour() : GOLD;
             g.fill(cx, cy, cx + w, cy + h, Glass.a(0x0B1626, 0.92f));
-            g.fill(cx, cy, cx + 2, cy + h, clear ? Glass.a(Glass.LABEL, 1f) : GOLD);
+            g.fill(cx, cy, cx + 2, cy + h, edge);
             g.fill(cx + 2, cy, cx + w, cy + 1, Glass.a(0x7FC3FF, 0.55f));
             g.text(font, title, cx + 7, cy + 4, INK, false);
             int by = cy + 16;
-            boolean over = mouseX >= cx && mouseX < cx + w && mouseY >= by - 2 && mouseY < cy + h;
-            g.fill(cx + 5, by - 2, cx + w - 4, cy + h - 3, Glass.a(clear ? 0x7FC3FF : GOLD & 0xFFFFFF, over ? 0.34f : 0.18f));
+            if (sub != null) {
+                g.text(font, sub, cx + 7, cy + 14, Glass.a(Glass.LABEL, 0.95f), false);
+                by = cy + 28;
+            }
+            boolean over = mouseX >= cx && mouseX < cx + w && mouseY >= by - 2 && mouseY < by + 12;
+            g.fill(cx + 5, by - 2, cx + w - 4, by + 11, Glass.a(clear ? 0x7FC3FF : GOLD & 0xFFFFFF, over ? 0.34f : 0.18f));
             g.text(font, action, cx + 8, by, clear ? Glass.a(Glass.LABEL, 1f) : 0xFFFFFFFF, false);
             g.text(font, key, cx + w - 7 - font.width(key), by, Glass.a(Glass.LABEL, 0.8f), false);
+            if (second != null) {
+                int ry = by + 13;
+                boolean mine = wp.mine(), overSecond = mine && mouseX >= cx && mouseX < cx + w && mouseY >= ry - 2 && mouseY < cy + h;
+                if (overSecond) g.fill(cx + 5, ry - 2, cx + w - 4, ry + 10, Glass.a(0x7FC3FF, 0.22f));
+                g.text(font, second, cx + 8, ry, mine ? overSecond ? 0xFFFFFFFF : INK : Glass.a(Glass.LABEL, 0.8f), false);
+                if (mine) g.text(font, "E", cx + w - 7 - font.width("E"), ry, Glass.a(Glass.LABEL, 0.8f), false);
+                secondY = ry;
+            }
             cardX0 = cx;
             cardY0 = cy;
             cardX1 = cx + w;
@@ -245,7 +311,17 @@ final class AtlasDestination {
         BlockPos at = k.at();
         if (k.kind().equals("rumour") || !Discovery.CLIENT.explored(at.getX() >> 4, at.getZ() >> 4))
             return atlas.store.groundY(at.getX(), at.getZ(), 64) + 34;
-        return k.kind().equals("pin") ? at.getY() + 1 : atlas.store.groundY(at.getX(), at.getZ(), at.getY());
+        return atlas.store.groundY(at.getX(), at.getZ(), at.getY());
+    }
+
+    /** "Yours · 212 blocks · only you see it", "Ana's · shared with your party · 340 blocks". */
+    private static String waypointLine(AtlasNet.WaypointView w) {
+        var pl = Minecraft.getInstance().player;
+        long far = pl == null ? 0 : Math.round(Math.hypot(w.x() + 0.5 - pl.getX(), w.z() + 0.5 - pl.getZ()));
+        String dist = far >= 1000 ? String.format(java.util.Locale.ROOT, "%.1fk blocks", far / 1000.0) : far + (far == 1 ? " block" : " blocks");
+        if (w.fell()) return dist + " · it goes when you get back there";
+        if (w.mine()) return "Yours · " + dist + (w.shared() ? " · your party sees it" : " · only you see it");
+        return w.owner() + "'s · shared with your party · " + dist;
     }
 
     private static void label(GuiGraphicsExtractor g, Font font, String text, int cx, int y, int colour) {

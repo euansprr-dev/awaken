@@ -101,26 +101,46 @@ public final class AtlasNet {
         }
     }
 
-    /** One pin as a party member sees it: whose, its colour, where, and whether it's the viewer's own. */
-    public record PinView(String owner, int colour, int x, int y, int z, boolean mine) {
-        static final StreamCodec<ByteBuf, PinView> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.stringUtf8(32), PinView::owner,
-                ByteBufCodecs.INT, PinView::colour,
-                ByteBufCodecs.VAR_INT, PinView::x,
-                ByteBufCodecs.VAR_INT, PinView::y,
-                ByteBufCodecs.VAR_INT, PinView::z,
-                ByteBufCodecs.BOOL, PinView::mine,
-                PinView::new);
+    /**
+     * (SPEC §16.8) One waypoint as the viewer sees it: its owner's id for it, whose it is (and their colour), its name,
+     * colour (RGB) and mark, where it is, and {@link #flags}: {@link #SHARED}, {@link #MINE}, {@link #FELL} (where you fell).
+     */
+    public record WaypointView(int id, String owner, int ownerColour, String name, int colour, int mark, int x, int y, int z, int flags) {
+        public static final int SHARED = 1, MINE = 2, FELL = 4;
+        static final StreamCodec<ByteBuf, WaypointView> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, WaypointView::id,
+                ByteBufCodecs.stringUtf8(32), WaypointView::owner,
+                ByteBufCodecs.INT, WaypointView::ownerColour,
+                ByteBufCodecs.stringUtf8(AtlasData.NAME_MAX * 4), WaypointView::name,
+                ByteBufCodecs.INT, WaypointView::colour,
+                ByteBufCodecs.VAR_INT, WaypointView::mark,
+                ByteBufCodecs.VAR_INT, WaypointView::x,
+                ByteBufCodecs.VAR_INT, WaypointView::y,
+                ByteBufCodecs.VAR_INT, WaypointView::z,
+                ByteBufCodecs.VAR_INT, WaypointView::flags,
+                WaypointView::new);
+
+        public boolean shared() {
+            return (flags & SHARED) != 0;
+        }
+
+        public boolean mine() {
+            return (flags & MINE) != 0;
+        }
+
+        public boolean fell() {
+            return (flags & FELL) != 0;
+        }
     }
 
-    /** The pins of your party (yours included) in your dimension, whole. */
-    public record Pins(List<PinView> pins) implements CustomPacketPayload {
-        public static final Type<Pins> TYPE = new Type<>(Awaken.id("atlas_pins"));
-        public static final StreamCodec<ByteBuf, Pins> STREAM_CODEC = StreamCodec.composite(
-                PinView.STREAM_CODEC.apply(ByteBufCodecs.list(256)), Pins::pins, Pins::new);
+    /** Your waypoints and your party's shared ones in your dimension (and where you fell, if it's here), whole. */
+    public record WaypointList(List<WaypointView> waypoints) implements CustomPacketPayload {
+        public static final Type<WaypointList> TYPE = new Type<>(Awaken.id("atlas_waypoints"));
+        public static final StreamCodec<ByteBuf, WaypointList> STREAM_CODEC = StreamCodec.composite(
+                WaypointView.STREAM_CODEC.apply(ByteBufCodecs.list(1024)), WaypointList::waypoints, WaypointList::new);
 
         @Override
-        public Type<Pins> type() {
+        public Type<WaypointList> type() {
             return TYPE;
         }
     }
@@ -153,18 +173,27 @@ public final class AtlasNet {
         }
     }
 
-    /** Drop a pin at (x, y, z), or with {@code remove}, take back your own pin nearest it. */
-    public record Pin(int x, int y, int z, boolean remove) implements CustomPacketPayload {
-        public static final Type<Pin> TYPE = new Type<>(Awaken.id("atlas_pin"));
-        public static final StreamCodec<ByteBuf, Pin> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, Pin::x,
-                ByteBufCodecs.VAR_INT, Pin::y,
-                ByteBufCodecs.VAR_INT, Pin::z,
-                ByteBufCodecs.BOOL, Pin::remove,
-                Pin::new);
+    /**
+     * (SPEC §16.8) A waypoint asked for from the table: {@link #ADD} one at (x, y, z), or {@link #EDIT} / {@link #REMOVE}
+     * your own {@code id}. The server checks all of it ({@link Waypoints}).
+     */
+    public record WaypointEdit(int op, int id, int x, int y, int z, String name, int colour, int mark, boolean shared) implements CustomPacketPayload {
+        public static final int ADD = 0, EDIT = 1, REMOVE = 2;
+        public static final Type<WaypointEdit> TYPE = new Type<>(Awaken.id("atlas_waypoint"));
+        public static final StreamCodec<ByteBuf, WaypointEdit> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, WaypointEdit::op,
+                ByteBufCodecs.VAR_INT, WaypointEdit::id,
+                ByteBufCodecs.VAR_INT, WaypointEdit::x,
+                ByteBufCodecs.VAR_INT, WaypointEdit::y,
+                ByteBufCodecs.VAR_INT, WaypointEdit::z,
+                ByteBufCodecs.stringUtf8(256), WaypointEdit::name,
+                ByteBufCodecs.VAR_INT, WaypointEdit::colour,
+                ByteBufCodecs.VAR_INT, WaypointEdit::mark,
+                ByteBufCodecs.BOOL, WaypointEdit::shared,
+                WaypointEdit::new);
 
         @Override
-        public Type<Pin> type() {
+        public Type<WaypointEdit> type() {
             return TYPE;
         }
     }
@@ -181,15 +210,15 @@ public final class AtlasNet {
     }
 
     static void register(RegisterPayloadHandlersEvent e) {
-        var r = e.registrar("2");
+        var r = e.registrar("3");
         r.playToClient(Sync.TYPE, Sync.STREAM_CODEC);
         r.playToClient(Trail.TYPE, Trail.STREAM_CODEC);
         r.playToClient(Regions.TYPE, Regions.STREAM_CODEC);
-        r.playToClient(Pins.TYPE, Pins.STREAM_CODEC);
+        r.playToClient(WaypointList.TYPE, WaypointList.STREAM_CODEC);
         r.playToClient(Homes.TYPE, Homes.STREAM_CODEC);
         r.playToClient(City.TYPE, City.STREAM_CODEC);
-        r.playToServer(Pin.TYPE, Pin.STREAM_CODEC, (m, ctx) -> {
-            if (ctx.player() instanceof ServerPlayer sp) Discovery.pin(sp, m.x(), m.y(), m.z(), m.remove());
+        r.playToServer(WaypointEdit.TYPE, WaypointEdit.STREAM_CODEC, (m, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Waypoints.request(sp, m);
         });
         r.playToServer(Share.TYPE, Share.STREAM_CODEC, (m, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Discovery.share(sp);

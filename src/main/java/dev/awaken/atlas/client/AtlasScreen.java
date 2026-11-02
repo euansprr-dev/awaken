@@ -13,6 +13,7 @@ import dev.awaken.signal.client.HudLook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -35,7 +36,8 @@ import java.util.Locale;
  * the camera stands over your shoulder, the legend on its own glass beside it, the world dimmed behind. Keys move the
  * map while your body stays still (WASD, Q/E turn, R/F tilt, +/- zoom); Tab steps through the gates you know and T
  * makes the one picked your destination. On either, a click on a place picks it and its card sets it as your
- * destination ({@link AtlasDestination}).
+ * destination ({@link AtlasDestination}). A double-click on ground you know (or N, where you stand) puts a waypoint there
+ * and opens its card ({@link WaypointCard}); V hides or shows them; the legend lists your nearest.
  */
 public final class AtlasScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
     private static final int MARGIN = 12;
@@ -65,6 +67,8 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     static final int LEGEND_W = 146, ROW = 12, LEGEND_ROWS = 6;
     /** L shows or hides the legend; kept for the session. */
     private static boolean showLegend = true;
+    /** V shows or hides the waypoints on the table; kept for the session. */
+    static boolean showWaypoints = true;
     /** Profiling (dev: {@code /atlas prof <bits>}): parts of the table switched off to measure what each costs. */
     static int prof;
     static final int PROF_NO_CARD = 1, PROF_PLAIN_TEXT = 2, PROF_NO_OVERLAY = 4, PROF_NO_FOCUS = 8, PROF_NO_CLOUDS = 16,
@@ -102,10 +106,12 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     static final int GATE_ROWS = 4;
     // keys held down (the map moves while they are)
     private int held;
+    /** A waypoint's card (SPEC §16.8): open while you name, colour, mark or share one of yours. */
+    private final WaypointCard card = new WaypointCard();
     /** Choosing a destination (SPEC §16.8): a click that didn't move picks a place, the card beside it sets it. */
-    private final AtlasDestination destination = new AtlasDestination();
+    private final AtlasDestination destination = new AtlasDestination(w -> card.edit(w, false));
     private double pressX, pressY;
-    private boolean pressDouble;
+    private boolean pressDouble, pressTaken;
     private static final int K_FWD = 1, K_BACK = 2, K_LEFT = 4, K_RIGHT = 8, K_TURN_L = 16, K_TURN_R = 32, K_TILT_UP = 64,
             K_TILT_DOWN = 128, K_ZOOM_IN = 256, K_ZOOM_OUT = 512;
 
@@ -257,13 +263,15 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             beams(x0, y0, x1, y1);
         }
         if ((prof & PROF_NO_OVERLAY) == 0) {
+            card.update(atlas);
             legendLayout(mc, atlas, x0, y0, zoom >= CLOSE_IN);
             float marks = scene ? 0.30f : 0.45f;
             if (age > marks) markers(g, mc, atlas, x0, y0, x1, y1, zoom >= CLOSE_IN);
             if (age > marks) destination.draw(g, font, atlas, this::screenAt, x0, y0, x1, y1, age, zoom, mouseX, mouseY);
             if (age > marks) {
                 legend(g, mc, atlas, mouseX, mouseY);
-                hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1);
+                card.draw(g, font, atlas, this::screenAt, x0, y0, x1, y1, age, mouseX, mouseY);
+                if (!card.isOpen()) hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1);
             }
         }
         chrome(g, mc, x0, y0, x1, y1, mouseX, mouseY);
@@ -302,8 +310,9 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 ? new String[]{"click a place to go there  ·  drag turn  ·  right-drag or WASD move  ·  scroll zoom  ·  Tab gates  ·  C you  ·  Shift+M table  ·  M close",
                         "click a place to go there  ·  drag turn  ·  WASD move  ·  scroll zoom  ·  Tab gates  ·  C you  ·  M close",
                         "click to go · drag · WASD · scroll · Tab · C · M close"}
-                : new String[]{"click a place to go there  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  Tab gates  ·  C you  ·  L legend  ·  H danger for you",
-                        "click a place to go there  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you",
+                : new String[]{"click a place to go there  ·  double-click a waypoint  ·  N one where you stand  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  V waypoints  ·  Tab gates  ·  C you  ·  L legend  ·  H danger for you",
+                        "click a place to go there  ·  double-click a waypoint  ·  N one where you stand  ·  drag orbit  ·  scroll zoom  ·  V waypoints  ·  C you",
+                        "click a place to go there  ·  double-click a waypoint  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you",
                         "click to go there  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "click · drag · right-drag · scroll · C"};
         int left = scene ? Math.round(width * 0.025f) : x0 + 2;
         for (String hint : hints) {
@@ -380,14 +389,14 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         g.enableScissor(x0, y0, x1, y1);
         // (SPEC §28.9) the roads you've walked, drawn on the land you know, under everything else
         if (mc.player != null) roads(g, atlas, MapMarks.lines(mc.player), x0, y0);
-        // first what stands on the table (you, pins, marks): names keep clear of them
+        // first what stands on the table (you, waypoints, marks): names keep clear of them
         int placed = 0;
         placedCount = 0;
         if (mc.player != null && project(mc.player.getX(), atlas.store.groundY(mc.player.getX(), mc.player.getZ(), mc.player.getY()), mc.player.getZ(), x0, y0))
             placed = box(placed, Math.round(v.x) - 12, Math.round(v.y) - 30, Math.round(v.x) + 12, Math.round(v.y) + 12);
-        for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins)
-            if (project(pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, x0, y0))
-                placed = box(placed, Math.round(v.x) - 7, Math.round(v.y) - 26, Math.round(v.x) + 7, Math.round(v.y) + 4);
+        if (showWaypoints) for (AtlasNet.WaypointView wp : atlas.waypoints)
+            if (project(wp.x() + 0.5, atlas.store.groundY(wp.x(), wp.z(), wp.y()), wp.z() + 0.5, x0, y0))
+                placed = box(placed, Math.round(v.x) - 9, Math.round(v.y) - WaypointGlyphs.STEM - WaypointGlyphs.HEAD * 2 - 2, Math.round(v.x) + 9, Math.round(v.y) + 4);
         for (dev.awaken.atlas.AtlasNet.HomeView home : atlas.homes)
             if (project(home.x() + 0.5, homeY(atlas, home), home.z() + 0.5, x0, y0)) {
                 int lw = font.width(home.name()) / 2 + 4;
@@ -460,16 +469,19 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             for (MapMarks.Gate gate : MapMarks.gates(mc.player))
                 if (project(gate.pos().getX() + 0.5, gateY(atlas, gate), gate.pos().getZ() + 0.5, x0, y0))
                     pillar(g, Math.round(v.x), Math.round(v.y), gate);
-            // your party's pins (and yours, ringed), standing on the table
-            for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins) {
-                if (!project(pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, x0, y0)) continue;
-                int sx = Math.round(v.x), sy = Math.round(v.y), c = pin.colour();
-                g.fill(sx, sy - 16, sx + 1, sy, 0xFF0B1626);
-                g.fill(sx - 1, sy - 16, sx, sy, c);
-                g.fill(sx - 3, sy - 21, sx + 3, sy - 15, 0xFF0B1626);
-                g.fill(sx - 2, sy - 20, sx + 2, sy - 16, c);
-                if (pin.mine()) ring(g, sx, sy - 18, 5, 0xE0E9F1FF);
-                if (zoom > 0.5f && !pin.mine()) label(g, pin.owner(), sx, sy - 32, c);
+            // waypoints, yours and the ones your party shares, standing on the table (the destination stands in its own look);
+            // the one whose card is open shows its new colour and mark as you pick them
+            if (showWaypoints) for (AtlasNet.WaypointView wp : atlas.waypoints) {
+                if (AtlasDestination.isDestination(wp.x(), wp.z())) continue;
+                if (!project(wp.x() + 0.5, atlas.store.groundY(wp.x(), wp.z(), wp.y()), wp.z() + 0.5, x0, y0)) continue;
+                int sx = Math.round(v.x), sy = Math.round(v.y);
+                boolean editing = wp.mine() && wp.id() == card.editingId();
+                int rgb = editing ? card.colourRgb() : wp.colour();
+                WaypointGlyphs.marker(g, sx, sy, rgb, editing ? card.mark() : wp.mark(), wp.fell(), editing);
+                if (zoom > 0.45f && !editing) {
+                    label(g, wp.name(), sx, WaypointGlyphs.headY(sy) - WaypointGlyphs.HEAD - 13, 0xFF000000 | rgb);
+                    if (!wp.mine()) label(g, wp.owner(), sx, sy + 6, Glass.a(rgb, 0.9f));
+                }
             }
             double px = mc.player.getX(), pz = mc.player.getZ();
             if (project(px, atlas.store.groundY(px, pz, mc.player.getY()), pz, x0, y0)) {
@@ -551,6 +563,15 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         for (int i = 0; i < Math.min(GATE_ROWS, gates.size()); i++) gateRows.add(gates.get(i));
         moreGates = gates.size() - gateRows.size();
         if (chosen != null && gateRows.stream().noneMatch(gt -> gt.pos().equals(chosen))) chosen = null;
+        // your waypoints and your party's, nearest first
+        wpRows.clear();
+        wpCount = atlas.waypoints.size();
+        if (showWaypoints && wpCount > 0) {
+            java.util.List<AtlasNet.WaypointView> wps = new java.util.ArrayList<>(atlas.waypoints);
+            wps.sort(java.util.Comparator.comparingDouble((AtlasNet.WaypointView w) -> (w.x() - px) * (w.x() - px) + (w.z() - pz) * (w.z() - pz)));
+            for (int i = 0; i < Math.min(WP_ROWS, wps.size()); i++) wpRows.add(wps.get(i));
+        }
+        int wpBlock = wpCount == 0 ? 0 : 6 + 12 + wpRows.size() * ROW + ROW;
         java.util.List<AtlasState.ZoneLabel> all = atlas.zoneLabels();
         int here = atlas.zoneView().zone(mc.player.getBlockX(), mc.player.getBlockZ());
         java.util.List<AtlasState.ZoneLabel> sorted = new java.util.ArrayList<>(all);
@@ -561,12 +582,12 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         noGates = scene && gateRows.isEmpty() ? font.split(Component.literal(NO_GATES), Math.max(40, (scene ? sideX1() - sideX0() : LEGEND_W) - 12)) : java.util.List.of();
         int gateBlock = !gateRows.isEmpty() ? 12 + gateRows.size() * ROW + (moreGates > 0 ? ROW : 0) + (chosen != null ? ROW + 2 : 0) + 6
                 : noGates.isEmpty() ? 0 : 12 + noGates.size() * 10 + 6;
-        int fixed = 4 + gateBlock + 12 + 22;
+        int fixed = 4 + gateBlock + wpBlock + 12 + 22;
         int lands = Math.max(0, (maxY - (scene ? py0() : y0 + 6) - fixed) / ROW);
         // close in, the city's districts and the land round you; zoomed out, the regions (their danger matters there)
         for (AtlasState.ZoneLabel z : sorted)
             if (legendRows.size() < Math.min(LEGEND_ROWS, lands) && (closeIn || z.zone() < ZoneMap.DISTRICT)) legendRows.add(z);
-        if (legendRows.isEmpty() && gateRows.isEmpty() && noGates.isEmpty()) return;
+        if (legendRows.isEmpty() && gateRows.isEmpty() && noGates.isEmpty() && wpCount == 0) return;
         legendX0 = scene ? sideX0() : x0 + 6;
         legendY0 = scene ? py0() : y0 + 6;
         legendX1 = scene ? sideX1() : legendX0 + LEGEND_W;
@@ -586,6 +607,12 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         }
         legendRowY0 = legendRows.isEmpty() ? -1000 : y + 12;
         if (!legendRows.isEmpty()) y = legendRowY0 + legendRows.size() * ROW;
+        wpRowY0 = -1000;
+        if (wpCount > 0) {
+            wpRowY0 = y + (legendRows.isEmpty() ? 0 : 6) + 12;
+            wpLineY = wpRowY0 + wpRows.size() * ROW;
+            y = wpLineY + ROW;
+        }
         dangerY = y + 6;
         // the danger key on one line when it fits, else its colours on a line of their own
         int keyW = font.width("DANGER") + 6;
@@ -595,6 +622,10 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     }
 
     private int dangerY, moreGates;
+    // the legend's waypoints: the nearest few, how many in all, and the line under them ("and 2 more", "V hides them")
+    private final java.util.List<AtlasNet.WaypointView> wpRows = new java.util.ArrayList<>();
+    private int wpRowY0 = -1000, wpLineY, wpCount;
+    static final int WP_ROWS = 3;
     private boolean dangerWrap;
     private static final String[] DANGER_LEVELS = {"1", "10", "25", "45", "70", "100"};
     private java.util.List<net.minecraft.util.FormattedCharSequence> noGates = java.util.List.of();
@@ -602,7 +633,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
 
     /** The legend: the gates you know (pick one, then "Set as destination"), the lands and what their colours mean. */
     private void legend(GuiGraphicsExtractor g, Minecraft mc, AtlasState atlas, int mouseX, int mouseY) {
-        if (legendRows.isEmpty() && gateRows.isEmpty() && noGates.isEmpty()) return;
+        if (legendRows.isEmpty() && gateRows.isEmpty() && noGates.isEmpty() && wpCount == 0) return;
         int x = legendX0, y = legendY0, w = legendX1 - legendX0;
         if (scene) HudLook.card(g, x, y, w, legendY1 - y, Glass.EDGE, 0.86f, Math.clamp((age() - 0.18f) / 0.25f, 0f, 1f), 0f, HudLook.FRAME);
         else {
@@ -660,6 +691,26 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 plain(g, sub, x + w - 6 - subW, ry, z.zone() == here ? 0xFFE9F1FF : Glass.a(z.colour() & 0xFFFFFF, 0.9f));
             }
         }
+        if (wpRowY0 > -1000) {
+            plain(g, "WAYPOINTS · " + wpCount, x + 6, wpRowY0 - 12, Glass.LABEL | 0xFF000000);
+            for (int i = 0; i < wpRows.size(); i++) {
+                AtlasNet.WaypointView wp = wpRows.get(i);
+                int ry = wpRowY0 + i * ROW;
+                boolean over = mouseX >= x && mouseX < x + w && mouseY >= ry - 1 && mouseY < ry + ROW - 1;
+                if (over) g.fill(x + 1, ry - 1, x + w - 1, ry + ROW - 1, 0x307FC3FF);
+                WaypointGlyphs.glyph(g, wp.mark(), wp.fell(), x + 6, ry + 1, 0xFF000000 | wp.colour());
+                String dist = distance(mc, wp.x() + 0.5, wp.z() + 0.5);
+                int dw = font.width(dist);
+                String name = font.plainSubstrByWidth(wp.mine() ? wp.name() : wp.name() + " · " + wp.owner(), w - 30 - dw);
+                plain(g, name, x + 17, ry, over ? 0xFFFFFFFF : INK);
+                plain(g, dist, x + w - 6 - dw, ry, Glass.a(Glass.LABEL, 0.95f));
+            }
+            String left = !showWaypoints ? "Hidden" : wpCount > wpRows.size() ? "and " + (wpCount - wpRows.size()) + " more" : "";
+            String right = showWaypoints ? "V hides them" : "V shows them";
+            boolean over = mouseX >= x && mouseX < x + w && mouseY >= wpLineY - 1 && mouseY < wpLineY + ROW - 1;
+            plain(g, left, x + 17, wpLineY, Glass.a(Glass.LABEL, 0.8f));
+            plain(g, right, x + w - 6 - font.width(right), wpLineY, over ? 0xFFFFFFFF : Glass.a(Glass.LABEL, 0.7f));
+        }
         // the danger key: what a region's colour means
         int ky = dangerY;
         plain(g, AtlasState.get().zones.forMe() ? "FOR YOU" : "DANGER", x + 6, ky + 1, Glass.LABEL | 0xFF000000);
@@ -680,8 +731,13 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
 
     /** "120 m" along the ground from you to a gate. */
     private static String gateDistance(Minecraft mc, MapMarks.Gate gt) {
+        return distance(mc, gt.pos().getX() + 0.5, gt.pos().getZ() + 0.5);
+    }
+
+    /** "120 m" along the ground from you to (x, z). */
+    private static String distance(Minecraft mc, double x, double z) {
         if (mc.player == null) return "";
-        double dx = gt.pos().getX() + 0.5 - mc.player.getX(), dz = gt.pos().getZ() + 0.5 - mc.player.getZ();
+        double dx = x - mc.player.getX(), dz = z - mc.player.getZ();
         long m = Math.round(Math.sqrt(dx * dx + dz * dz));
         return m >= 1000 ? String.format(Locale.ROOT, "%.1f km", m / 1000.0) : m + " m";
     }
@@ -906,7 +962,15 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         pressX = e.x();
         pressY = e.y();
         pressDouble = doubleClick;
-        if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && destination.overCard(e.x(), e.y())) return true; // released on it, it acts
+        pressTaken = false;
+        boolean left = e.button() == InputConstants.MOUSE_BUTTON_LEFT;
+        if (card.isOpen() && left) { // the waypoint's card: a click on it is its own; off it, it keeps what you changed and closes
+            if (card.over(e.x(), e.y())) card.click(e.x(), e.y());
+            else card.keep();
+            pressTaken = true;
+            return true;
+        }
+        if (left && destination.overCard(e.x(), e.y())) return true; // released on it, it acts
         boolean inLegend = e.x() >= legendX0 && e.x() < legendX1 && e.y() >= legendY0 && e.y() < legendY1;
         if (inLegend && e.button() == InputConstants.MOUSE_BUTTON_LEFT && !gateRows.isEmpty()) {
             if (e.y() >= pointY - 1 && e.y() < pointY + ROW - 1) {
@@ -918,6 +982,16 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 choose(gateRows.get(i));
                 return true;
             }
+        }
+        if (left && inLegend && wpRowY0 > -1000 && e.y() >= wpRowY0 - 1 && e.y() < wpLineY + ROW - 1) {
+            int i = (int) Math.floor((e.y() - wpRowY0 + 1) / ROW);
+            if (i >= 0 && i < wpRows.size()) { // glide to it, its card open
+                AtlasNet.WaypointView w = wpRows.get(i);
+                flyX = w.x() + 0.5;
+                flyZ = w.z() + 0.5;
+                destination.pick(w);
+            } else toggleWaypoints();
+            return true;
         }
         if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && inLegend && legendRowY0 > -1000 && e.y() >= legendRowY0 - 1) {
             int i = (int) ((e.y() - legendRowY0 + 1) / ROW);
@@ -931,22 +1005,24 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             }
         }
         if (e.x() >= legendX0 && e.x() < legendX1 && e.y() >= legendY0 && e.y() < legendY1) return true;
-        // double-click: drop a pin on the ground there (your party sees it), or take back your own pin under the cursor
+        // double-click: a new waypoint on the ground there, its card open to name it; on one of yours, its card
         double[] at = new double[3];
-        if (doubleClick && e.button() == InputConstants.MOUSE_BUTTON_LEFT && ground(e.x(), e.y(), at)) {
-            destination.deselect(); // the first click of the two picked the spot: the pin is what was meant
-            boolean remove = false;
-            AtlasRenderState.view(gui, px1() - px0(), py1() - py0(), zoom, yaw, tilt);
-            for (dev.awaken.atlas.AtlasNet.PinView pin : AtlasState.get().pins) {
-                if (!pin.mine() || !project(pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, px0(), py0())) continue;
-                if (Math.abs(v.x - e.x()) <= 6 && v.y - e.y() >= -4 && v.y - e.y() <= 24) {
-                    remove = true;
-                    at[0] = pin.x();
-                    at[2] = pin.z();
-                }
+        if (doubleClick && left && ground(e.x(), e.y(), at)) {
+            destination.deselect(); // the first click of the two picked the spot: the waypoint is what was meant
+            AtlasState atlas = AtlasState.get();
+            AtlasNet.WaypointView own = ownAt(atlas, e.x(), e.y());
+            if (own != null) {
+                if (!own.fell()) card.edit(own, false);
+                return true;
             }
-            ClientPacketDistributor.sendToServer(new AtlasNet.Pin((int) Math.floor(at[0]), (int) Math.floor(at[1]), (int) Math.floor(at[2]), remove));
-            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), remove ? 0.8f : 1.3f, 0.8f));
+            int x = (int) Math.floor(at[0]), z = (int) Math.floor(at[2]);
+            if (!Discovery.CLIENT.explored(x >> 4, z >> 4)) {
+                if (Minecraft.getInstance().player != null)
+                    Minecraft.getInstance().player.sendOverlayMessage(Component.translatable("atlas.awaken.waypoints.unknown"));
+                return true;
+            }
+            showWaypoints = true;
+            card.add(atlas, x, (int) Math.floor(at[1]), z, AtlasDestination.spotName(atlas, x, z));
             return true;
         }
         if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && e.y() >= buttonsY - 2 && e.y() < buttonsY + 10
@@ -960,6 +1036,10 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     /** A click that didn't move (not a drag, not a double-click's second): pick a place, or press the card's button. */
     @Override
     public boolean mouseReleased(MouseButtonEvent e) {
+        if (pressTaken && e.button() == InputConstants.MOUSE_BUTTON_LEFT) {
+            pressTaken = false;
+            return true;
+        }
         boolean still = Math.abs(e.x() - pressX) <= 3 && Math.abs(e.y() - pressY) <= 3;
         boolean inLegend = e.x() >= legendX0 && e.x() < legendX1 && e.y() >= legendY0 && e.y() < legendY1;
         if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && still && !pressDouble && (!inLegend || destination.overCard(e.x(), e.y()))
@@ -971,6 +1051,46 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             return true;
         }
         return super.mouseReleased(e);
+    }
+
+    /** One of your waypoints (not where you fell's) under (mx, my): its head or its foot. */
+    private AtlasNet.@org.jspecify.annotations.Nullable WaypointView ownAt(AtlasState atlas, double mx, double my) {
+        if (!showWaypoints) return null;
+        AtlasRenderState.view(gui, px1() - px0(), py1() - py0(), zoom, yaw, tilt);
+        AtlasNet.WaypointView best = null;
+        double bestD = Double.MAX_VALUE;
+        for (AtlasNet.WaypointView w : atlas.waypoints) {
+            if (!w.mine() || !project(w.x() + 0.5, atlas.store.groundY(w.x(), w.z(), w.y()), w.z() + 0.5, px0(), py0())) continue;
+            double dx = Math.abs(v.x - mx), up = v.y - my;
+            if (dx > WaypointGlyphs.HEAD + 1 || up < -5 || up > WaypointGlyphs.STEM + WaypointGlyphs.HEAD * 2 + 2) continue;
+            if (dx + Math.abs(up - WaypointGlyphs.STEM - WaypointGlyphs.HEAD) < bestD) {
+                bestD = dx + Math.abs(up - WaypointGlyphs.STEM - WaypointGlyphs.HEAD);
+                best = w;
+            }
+        }
+        return best;
+    }
+
+    /** V: the waypoints hide or show on the table (a card or pick of one goes with them). */
+    private void toggleWaypoints() {
+        showWaypoints = !showWaypoints;
+        if (!showWaypoints) {
+            card.keep();
+            if (destination.pickedWaypoint() != null) destination.deselect();
+        }
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), showWaypoints ? 1.2f : 0.9f, 0.6f));
+    }
+
+    /** N: a waypoint where you stand, its card open; the map glides back to you. */
+    private void waypointHere() {
+        var p = Minecraft.getInstance().player;
+        if (p == null) return;
+        AtlasState atlas = AtlasState.get();
+        destination.deselect();
+        showWaypoints = true;
+        flyX = p.getX();
+        flyZ = p.getZ();
+        card.add(atlas, p.getBlockX(), p.getBlockY() - 1, p.getBlockZ(), AtlasDestination.spotName(atlas, p.getBlockX(), p.getBlockZ()));
     }
 
     @Override
@@ -999,6 +1119,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     @Override
     public boolean keyPressed(KeyEvent e) {
         Minecraft mc = Minecraft.getInstance();
+        if (card.isOpen()) return card.key(e); // typing a name: every key is the card's (Esc closes it, not the map)
         if (AtlasClient.KEY.matches(e)) {
             // in the scene: Shift+M or a quick second M is the flat table (SPEC §30.5); else M closes
             if (scene && (e.hasShiftDown() || age() < 0.30f)) MapScene.toTable();
@@ -1026,6 +1147,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             return true;
         }
         if ((e.key() == InputConstants.KEY_RETURN || e.key() == InputConstants.KEY_NUMPADENTER) && destination.act()) return true;
+        if (e.key() == InputConstants.KEY_E && destination.changeIt()) return true; // a waypoint of yours picked: Change it
         int k = heldKey(mc, e);
         if (k != 0) {
             held |= k;
@@ -1034,6 +1156,14 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         }
         if (e.key() == InputConstants.KEY_L) {
             showLegend = !showLegend;
+            return true;
+        }
+        if (e.key() == InputConstants.KEY_V) {
+            toggleWaypoints();
+            return true;
+        }
+        if (e.key() == InputConstants.KEY_N) {
+            waypointHere();
             return true;
         }
         if (e.key() == InputConstants.KEY_H) {
@@ -1048,6 +1178,12 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             return true;
         }
         return super.keyPressed(e);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent e) {
+        if (card.isOpen()) return card.chr(e);
+        return super.charTyped(e);
     }
 
     @Override

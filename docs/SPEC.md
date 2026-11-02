@@ -3017,10 +3017,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     painter is kept for the map scene (§30, phase 4), which will drive it from its own camera.
   - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
     ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
-    spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
-    take back your own under the cursor); twelve per player, the oldest goes; each party member online sees the
-    party's pins in their dimension, in the owner's own colour (a hue from their id), with the owner's name. Dev:
-    `/awaken atlas pin`. Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
+    spaced capitals with its levels under it. (Its party pins became **Waypoints**, below, at schemaVersion 3.) Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
     the first air, then to the floor, so the table shows the highest floor of each column; those chunks are sampled
     from a queue about 1 ms a tick, the diorama's base drops to 24 and there is no night. Carillon's lit windows
     (`awaken:lit_window`, within 12 of a column's top) count as night lights.
@@ -3114,15 +3111,15 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   - **Destinations** (Euan, 2026-10-27: "We need to make sure I can actually choose destinations on the map too";
     `atlas.client.AtlasDestination`, `signal.Destination`, `core.api.Destinations`): a click that doesn't move (3 GUI px
     at most between press and release; not a drag, not a double-click's second) picks the place under the cursor: a
-    gate (anywhere along its pillar), a mark or a rumour, a Hearth, a party pin (within 12 px), else a region's or district's name
+    gate (anywhere along its pillar), a mark or a rumour, a Hearth, a waypoint (its head or foot, within 12 px), else a region's or district's name
     chip, else a spot on ground you know ("A spot in the Commons"); a click on nothing lets the pick go. A small card
     beside it names it, with **› Set as destination** (Enter); on the destination itself **✕ Clear destination**. The
     legend's picked gate offers the same ("Set as destination" / "Clear destination", T), where "Point me there" was
     (the client-only map pin is gone). Setting it says "That's your destination now. The top left of your screen will
     point the way." The destination stands on the table in its own look: a white-gold pin with a beam above it and a
     slow ring at its foot, "DESTINATION" over its name (on the clouds where the land isn't known). Drag to orbit,
-    right-drag, a click on a legend row to glide and the double-click party pin are unchanged (a double-click drops
-    the first click's pick). The key line starts "click a place to go there".
+    right-drag and a click on a legend row to glide are unchanged; a double-click drops the first click's pick (it makes
+    a waypoint). The key line starts "click a place to go there".
   - The server keeps one per player (attachment `awaken:destination`, schemaVersion 1, kept through death): name (48
     characters at most), dimension (the one the player stands in when the Atlas asks), block, kind (`gate`, `mark`,
     `rumour`, `region`, `pin`, `spot`, `home`, else `place`). Sent on change, login, respawn and dimension change. Every 20
@@ -3132,6 +3129,43 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   - Tests: `signal_destination_arrival` (not yet at 60 blocks or 80 above; there within 16; a rumour across only;
     never in another dimension), `signal_destination_saved` (the Atlas's request named and placed in your dimension, the
     codec, a whole save and load, Clear, a nameless request ignored).
+  - **Waypoints** (Euan, 2026-11-02: "Ability to set waypoints on maps (AAA UI and same design language as now)";
+    concept page `docs/waypoints-kin/page.html`, all twelve decisions yes; `atlas.Waypoints`, `atlas.client.WaypointCard`,
+    `WaypointGlyphs`). Places you mark on the Atlas, kept on the server in `AtlasData` (schemaVersion 3: per world, each
+    with its dimension, kept through death, the same in single player and on a server). Each has an id of its own (never
+    reused), a name (chat's characters, spaces folded, 32 at most, never empty: "Waypoint"), one of eight colours (signal
+    blue, horizon, green, gold, bronze, rose, violet, white) or, for an old pin, its owner's own hue, one of eight marks
+    (flag, pick, star, house, cross, cave, ring, diamond) and a share switch, off by default. **64** each across every
+    dimension; nothing is ever removed for you: the 65th says "You have 64 waypoints. Remove one to make room." Only
+    ground you've explored takes one ("You can only put a waypoint on land you've explored."). The server checks every
+    request (explored ground, the limit, a colour and mark from the set, the name); only the owner changes or removes
+    one. A shared one shows to the owner's party members online in that dimension, with the owner's name under it; they
+    can head for it, never change it; one who leaves the party takes theirs along. A save's old pins carry over as
+    shared waypoints named "Pin" in their owner's hue; pins are never written again.
+  - Making one: a double-click on ground you know (as pins were) or **N** on the table (where you stand) adds it at once,
+    named for its land ("A spot in the Greenfold") in the last colour, mark and share you kept, and its card opens
+    beside it when the server has it: **NEW WAYPOINT**, the name already selected so you just type (Backspace, Ctrl+A,
+    Ctrl+V; a blinking caret), the eight colours, the eight marks, "Share with my party", **› Keep it** (Enter) and
+    **Remove** (Del, which clears the name instead while it's selected). The waypoint shows the card's colour and mark
+    as you pick. While the card is open it takes every key (typing never moves the map or closes it); Esc closes the
+    card and changes nothing, a click off it keeps what you changed. A double-click on one of yours opens its card.
+  - On the table: a thin stem on its place, a dark diamond head rimmed in its colour with its mark inside (7×7 pixel
+    glyphs), a flat ring at its foot, its name over it from zoom 0.45 and a shared one's owner under it. Names keep
+    clear of them. A click picks one: its destination card has its colour on the edge, "Yours · 212 blocks · only you
+    see it" (or "your party sees it"; "Ana's · shared with your party · 340 blocks"), **› Set as destination**
+    (Enter; kind `pin`) and **Change it** (E) on your own, or "Only Ana can change it." The destination's own look stands
+    in for a waypoint that is the destination. **V** hides or shows them all (for the session). The legend's
+    **WAYPOINTS · n** block lists the nearest three with their marks and distance, "and n more", "V hides them"; a row
+    glides there and picks it. Nothing marks a waypoint out in the world: only the destination's compass (the Now line,
+    the Tab glance's needle) points to one you chose.
+  - **Where you fell**: a death that stands (not cancelled) outside gates leaves a grey waypoint with a headstone mark
+    where you fell, in place of the last; it goes once you're within 8 blocks across (24 up or down), and doesn't count
+    toward the 64. Its card offers **Remove it** (E). Waypoints reach the client as `atlas_waypoints` (the viewer's own
+    in their dimension, the party's shared ones there, where you fell) at login, a dimension change, every change by a
+    party member, and when the party's view changes (checked every 100 ticks, sent only when different); the table asks
+    with `atlas_waypoint` (add, edit, remove). Dev: `/awaken atlas waypoint [<colour 0-7> <shared> <name>]` (where you
+    stand). Test: `atlas_waypoints` (unknown ground, the set's colours and marks, 64 and the first still there, names
+    cleaned, only the owner, shared and not, where you fell); `atlas_bits_codec` round-trips them and carries an old pin over.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,

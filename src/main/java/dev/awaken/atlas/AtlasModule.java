@@ -52,6 +52,10 @@ public final class AtlasModule {
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer sp) Discovery.forget(sp);
         });
+        // where you fell (SPEC §16.8): only a death that stands (a cancelled one isn't one)
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, e -> {
+            if (!e.isCanceled() && e.getEntity() instanceof ServerPlayer sp) Waypoints.died(sp);
+        });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerRespawnEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer sp) Discovery.sendAll(sp);
         });
@@ -77,10 +81,13 @@ public final class AtlasModule {
             LiteralArgumentBuilder<CommandSourceStack> atlas = Commands.literal("atlas");
             atlas.then(Commands.literal("stats").executes(c -> stats(c.getSource().getPlayerOrException())));
             atlas.then(Commands.literal("share").executes(c -> Discovery.share(c.getSource().getPlayerOrException())));
-            atlas.then(Commands.literal("pin").executes(c -> {
-                ServerPlayer p = c.getSource().getPlayerOrException();
-                return Discovery.pin(p, p.getBlockX(), p.getBlockY() - 1, p.getBlockZ(), false) ? 1 : 0;
-            }));
+            // a waypoint where you stand (its name optional); tours and tests
+            atlas.then(Commands.literal("waypoint").executes(c -> waypointHere(c.getSource().getPlayerOrException(), "Waypoint", 0, false))
+                    .then(Commands.argument("colour", IntegerArgumentType.integer(0, AtlasData.COLOURS.length - 1))
+                            .then(Commands.argument("shared", com.mojang.brigadier.arguments.BoolArgumentType.bool())
+                                    .then(Commands.argument("name", StringArgumentType.greedyString()).executes(c -> waypointHere(
+                                            c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "name"),
+                                            IntegerArgumentType.getInteger(c, "colour"), com.mojang.brigadier.arguments.BoolArgumentType.getBool(c, "shared")))))));
             atlas.then(Commands.literal("reveal").requires(AwakenCommands.admin())
                     .then(Commands.argument("radius", IntegerArgumentType.integer(1, 4096)).executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
@@ -115,6 +122,14 @@ public final class AtlasModule {
             root.then(atlas);
         });
         AtlasTests.register();
+    }
+
+    private static int waypointHere(ServerPlayer p, String name, int colour, boolean shared) {
+        Discovery.reveal(p, p.blockPosition(), 16); // where you stand is known (a fresh tour world may not have ticked yet)
+        Waypoints.Result r = Waypoints.add(p, p.getBlockX(), p.getBlockY() - 1, p.getBlockZ(), name, colour, colour % AtlasData.MARKS, shared);
+        p.sendSystemMessage(r == Waypoints.Result.OK ? Component.translatable("atlas.awaken.waypoints.added", Waypoints.clean(name))
+                : Component.literal("Atlas: no waypoint (" + r + ")"));
+        return r == Waypoints.Result.OK ? 1 : 0;
     }
 
     private static int stats(ServerPlayer p) {
