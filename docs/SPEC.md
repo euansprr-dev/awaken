@@ -16523,8 +16523,10 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
     hung, and it rang clean." A bell given by command or bought is clean.
   - **One hand**: the frame, the beams and the hooks share the bells' timber (dark oak, a post grain for uprights) and
     hammered iron (straps where the beam meets the post, the hooks themselves). On the hooks a bell is drawn at 0.39 of
-    its model on a frame, 0.38 on a Bell Beam and 2.0 on a Great Beam; a found bell at 0.9 sitting (1.5 for a Great Bell)
-    with its lip on the floor (`BellLook.bottom`), 0.7 hanging.
+    its model on a frame, 0.38 on a Bell Beam and 1.3 on a Great Beam (a block and a quarter across, so the Bell Tower's
+    two hang clear of each other and of its floor); a found bell at 0.9 sitting (1.5 for a Great Bell)
+    with its lip on the floor (`BellLook.bottom`), 0.7 hanging. Held, a bigger bell is drawn smaller for its size (0.36 at E
+    down to 0.27 at S, 0.24 for a Great Bell) so it never fills the corner of the screen.
   - **Sounds** (`tools/art/specs/audio_bells.py`, all mono so they're heard from where they are): **the hang** (iron on
     iron as its loop drops on the hook, `bells.hang`), then 6 ticks later (`Hanging.HANG_RING`, only if it's still on that
     hook) its first ring and under it **the swell** (`bells.swell`, volume 1.4 at the bell's pitch, rising for a quarter

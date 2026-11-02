@@ -35,7 +35,8 @@ def rgb(h, a=255):
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a)
 
 
-BRONZE = [rgb("#3e2610"), rgb("#6e4519"), rgb("#9c6727"), rgb("#c98f3a"), rgb("#e9bf63"), rgb("#fff0b0")]
+# old bronze: brown under the green, never brass-bright (the Great Bells and the Court have the gold)
+BRONZE = [rgb("#33200f"), rgb("#5a3818"), rgb("#835628"), rgb("#a87636"), rgb("#c8964e"), rgb("#e2bd7a")]
 WOOD = [rgb("#2a1a10"), rgb("#4a3020"), rgb("#6b4a30"), rgb("#8a6440")]
 OUT = rgb("#1a1008")
 
@@ -396,11 +397,12 @@ def bell_display(L, great):
     H = height(GREAT_PROFILE if great else PROFILE, L)
     mid = TOP - H / 2 - 8  # how far above the model's centre the bell's own middle is
     gui = round(0.72 * (8.0 / L) ** 0.7 * (0.9 if great else 0.95), 3)
-    hand = 0.30 if great else 0.36
+    # held: a bigger bell still looks bigger, but an S bell or a Great Bell doesn't fill the corner of the screen
+    hand = round(0.36 * (4.0 / L) ** 0.6 * (0.95 if great else 1.0), 3)
     ground = 0.36 if great else 0.42
     return {
-        "firstperson_righthand": {"rotation": [0, -25, 8], "translation": [1.5, round(3.0 - mid * hand, 2), 0], "scale": [hand] * 3},
-        "firstperson_lefthand": {"rotation": [0, -25, -8], "translation": [1.5, round(3.0 - mid * hand, 2), 0], "scale": [hand] * 3},
+        "firstperson_righthand": {"rotation": [0, -25, 8], "translation": [0.5, round(3.5 - mid * hand, 2), 0], "scale": [hand] * 3},
+        "firstperson_lefthand": {"rotation": [0, -25, -8], "translation": [0.5, round(3.5 - mid * hand, 2), 0], "scale": [hand] * 3},
         "thirdperson_righthand": {"rotation": [0, 45, 0], "translation": [0, round(1.5 - mid * 0.35, 2), 1], "scale": [0.35] * 3},
         "thirdperson_lefthand": {"rotation": [0, 45, 0], "translation": [0, round(1.5 - mid * 0.35, 2), 1], "scale": [0.35] * 3},
         "gui": {"rotation": [20, 30, 0], "translation": [0, round(-mid * gui, 2), 0], "scale": [gui] * 3},

@@ -70,8 +70,9 @@ public final class HooksRenderer implements BlockEntityRenderer<HooksEntity, Hoo
         var bs = be.getBlockState();
         state.facing = bs.hasProperty(HorizontalDirectionalBlock.FACING) ? bs.getValue(HorizontalDirectionalBlock.FACING) : Direction.NORTH;
         state.n = Math.min(MAX, be.hooks());
-        // an S bell's lip just clears its neighbours on the frame and on a beam (stage 6 sizes); a Great Bell about two blocks tall
-        state.scale = bs.is(BellContent.GREAT_BEAM.get()) ? 2.0F : bs.is(BellContent.BELL_BEAM.get()) ? 0.38F : 0.39F;
+        // an S bell's lip just clears its neighbours on the frame and on a beam (stage 6 sizes); a Great Bell a block and a
+        // quarter across, so the tower's two hang clear of each other and of the floor
+        state.scale = bs.is(BellContent.GREAT_BEAM.get()) ? 1.3F : bs.is(BellContent.BELL_BEAM.get()) ? 0.38F : 0.39F;
         float now = be.getLevel() == null ? 0 : be.getLevel().getGameTime() + partialTicks;
         for (int i = 0; i < state.n; i++) {
             int no = be.bell(i);
