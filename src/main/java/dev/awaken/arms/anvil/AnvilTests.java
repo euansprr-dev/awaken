@@ -85,6 +85,18 @@ final class AnvilTests {
         var props = drop.get(net.minecraft.core.component.DataComponents.BLOCK_STATE);
         h.assertTrue(props != null && Integer.valueOf(1).equals(props.get(WarAnvilBlock.BUILD)),
                 "broken, it drops Ironbound, got " + props + " from " + drops + " (" + level.getBlockState(pos) + ")");
+        // on to a Lord's anvil, lit in the colour of the last Lord this smith killed; broken, it carries the colour
+        SmithMemory.of(p).lord = 0x5FD4C8;
+        p.getInventory().add(new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id("deepglass_shard")), 4));
+        p.getInventory().add(new ItemStack(Items.AMETHYST_SHARD, 4));
+        h.assertTrue(WarAnvil.rebuild(p, pos) && WarAnvil.build(level.getBlockState(pos)) == 2 && be.lord() < 0, "the Deepglass horn, no colour yet");
+        p.getInventory().add(new ItemStack(dev.awaken.core.api.CoreApi.LORD_HEART.get()));
+        p.getInventory().add(new ItemStack(Items.NETHERITE_INGOT, 2));
+        h.assertTrue(WarAnvil.rebuild(p, pos) && WarAnvil.build(level.getBlockState(pos)) == 3 && be.lord() == 0x5FD4C8, "the Lord's anvil, in its Lord's colour");
+        drop = ItemStack.EMPTY;
+        for (ItemStack s : net.minecraft.world.level.block.Block.getDrops(level.getBlockState(pos), level, pos, be)) if (s.is(AnvilContent.ANVIL_ITEM.get())) drop = s;
+        var cmd = drop.get(net.minecraft.core.component.DataComponents.CUSTOM_MODEL_DATA);
+        h.assertTrue(cmd != null && Integer.valueOf(0x5FD4C8).equals(cmd.getColor(0)), "broken, it keeps its Lord's colour, got " + cmd);
         h.succeed();
     }
 

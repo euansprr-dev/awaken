@@ -215,34 +215,35 @@ def netherite_band():
     return c
 
 
+#: white to mid-grey: the Lord's anvil's runes and Heart are tinted in its Lord's colour (gold for none), so they're cut pale
+PALE = [(255, 255, 255, 255), (236, 233, 228, 255), (210, 206, 200, 255), (180, 176, 170, 255), (148, 144, 140, 255), (108, 105, 102, 255)]
+
+
 def runes():
-    """A band of cut runes lit gold from within, three texels deep (rows 0-2, then again down the texture): a glyph of
-    strokes in each three-wide cell, a dark gap between."""
+    """A band of cut runes lit from within, three texels deep (rows 0-2, then again down the texture): a glyph of strokes
+    in each three-wide cell, a dark gap between. Pale: the tint lights them in the Lord's colour."""
     rng = rng_for("war_anvil_runes")
-    gd = ramp("brass")
-    lit = (255, 244, 214, 255)
     c = Canvas()
     glyphs = [[rng.random() < 0.55 or (dx == 1 and r == 1) for r in range(3) for dx in range(3)] for _ in range(4)]
     for y in range(16):
         for x in range(16):
             cell, dx, r = x // 4, x % 4, y % 3
             on = dx < 3 and glyphs[cell][r * 3 + dx]
-            c.set(x, y, (lit if (x + y) % 3 == 0 else gd[5]) if on else NETHERITE[0])
+            c.set(x, y, (PALE[0] if (x + y) % 3 == 0 else PALE[1]) if on else NETHERITE[0])
     return c
 
 
 def heart():
-    """The Lord's Heart set in the stone: a crimson stone in a gold setting, its middle bright."""
-    cr, gd = ramp("crimson"), ramp("brass")
+    """The Lord's Heart set in the stone: its middle bright, darker to a ring of setting. Pale: the tint gives it the
+    Lord's colour."""
     c = Canvas()
     for y in range(16):
         for x in range(16):
             d = ((x - 7.5) ** 2 + (y - 7.5) ** 2) ** 0.5
             if d > 6.5:
-                c.set(x, y, gd[3] if d < 7.5 else gd[1])
+                c.set(x, y, PALE[3] if d < 7.5 else PALE[5])
             else:
-                k = 5 - int(d / 1.4)
-                c.set(x, y, cr[max(1, min(5, k))])
+                c.set(x, y, PALE[max(0, min(4, int(d / 1.4)))])
     return c
 
 
@@ -278,11 +279,17 @@ def _uv(lo, hi, d, v=None):
     return [round(a, 3), round(b, 3), round(a + w, 3), round(b + h, 3)]
 
 
-def el(lo, hi, tex, up=None, faces=SIDES, v=None, **extra):
+def el(lo, hi, tex, up=None, faces=SIDES, v=None, tint=None, **extra):
     e = {"from": lo, "to": hi, "faces": {d: {"uv": _uv(lo, hi, d, v), "texture": (up if d == "up" and up else tex)} for d in faces}}
+    if tint is not None:
+        for f in e["faces"].values():
+            f["tintindex"] = tint
     e.update(extra)
     return e
 
+
+#: a Lord's anvil with no Lord's colour (WarAnvilBlockEntity.GOLD)
+LORD_GOLD = 0xF3C443
 
 #: the four builds' models (§46.6): as built, Ironbound, the Deepglass horn, the Lord's anvil
 BUILDS = ("war_anvil", "war_anvil_ironbound", "war_anvil_deepglass", "war_anvil_lord")
@@ -323,10 +330,10 @@ def model(build=0):
         for x0, z0 in ((-0.4, -0.4), (14.6, -0.4), (-0.4, 14.6), (14.6, 14.6)):
             els.append(el([x0, 0, z0], [x0 + 1.8, 8.3, z0 + 1.8], "#band", up="#iron", faces=("north", "south", "west", "east", "up")))
     if build >= 3:
-        # the rune band lit from within, the Lord's Heart set in it before the smith
+        # the rune band lit from within, the Lord's Heart set in it before the smith: both in the Lord's colour (tint 0)
         els += [
-            el([-0.3, 3, -0.3], [16.3, 6, 16.3], "#runes", faces=SIDES4, v=0, light_emission=9),
-            el([6, 2.2, -0.8], [10, 6.2, 0], "#heart", light_emission=12),
+            el([-0.3, 3, -0.3], [16.3, 6, 16.3], "#runes", faces=SIDES4, v=0, tint=0, light_emission=9),
+            el([6, 2.2, -0.8], [10, 6.2, 0], "#heart", tint=0, light_emission=12),
         ]
     body = ("iron", "ironbound", "ironbound", "netherite")[build]
     face = ("face", "ironbound_face", "ironbound_face", "netherite_face")[build]
@@ -372,12 +379,15 @@ def content():
     # carried, it looks as it was built (its build rides on the item: the loot table copies it)
     _write(os.path.join(ASSETS, "items/war_anvil.json"), {"model": {
         "type": "minecraft:select", "block_state_property": "build",
-        "cases": [{"when": str(b), "model": {"type": "minecraft:model", "model": "awaken:block/" + name}} for b, name in enumerate(BUILDS) if b],
+        "cases": [{"when": str(b), "model": {"type": "minecraft:model", "model": "awaken:block/" + name}
+                   | ({"tints": [{"type": "minecraft:custom_model_data", "index": 0, "default": LORD_GOLD}]} if b == 3 else {})}
+                  for b, name in enumerate(BUILDS) if b],
         "fallback": {"type": "minecraft:model", "model": "awaken:block/war_anvil"}}})
     _write(os.path.join(RES, "data/awaken/loot_table/blocks/war_anvil.json"), {
         "type": "minecraft:block", "random_sequence": "awaken:blocks/war_anvil",
         "pools": [{"rolls": 1, "bonus_rolls": 0, "entries": [{"type": "minecraft:item", "name": "awaken:war_anvil", "modifier": [
-            {"type": "minecraft:copy_state", "block": "awaken:war_anvil", "properties": ["build"]}]}],
+            {"type": "minecraft:copy_state", "block": "awaken:war_anvil", "properties": ["build"]},
+            {"type": "minecraft:copy_components", "source": "block_entity", "include": ["minecraft:custom_model_data"]}]}],
                    "condition": {"type": "minecraft:survives_explosion"}}]})
     _merge(os.path.join(MERGE, "data/minecraft/tags/block/mineable/pickaxe.json"), {"values": ["awaken:war_anvil"]})
     print("war_anvil: content written")

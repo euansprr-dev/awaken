@@ -18,17 +18,19 @@ import java.util.Set;
 
 /**
  * A smith's anvil and what they've made on it (player attachment {@code awaken:anvil_smith}, SPEC §46.4, §46.7;
- * schemaVersion 2, kept through death): the last War Anvil they set down or began a forging at, for the Weapons tab's
+ * schemaVersion 3, kept through death): the last War Anvil they set down or began a forging at, for the Weapons tab's
  * steps; the weapons they've forged Masterwork or better ("daggers:D"), which they can make from memory; the styles
- * they've forged; and the highest tier they've forged (-1 none). A v1 save reads with all three empty. How many weapons
- * they've forged is the progression counter {@code awaken:weapon_forged}.
+ * they've forged; the highest tier they've forged (-1 none); and the colour of the last Lord they killed, which a Lord's
+ * anvil they rebuild takes (§46.6; -1 none, a v2 save reads none). A v1 save reads with the three sets empty. How many
+ * weapons they've forged is the progression counter {@code awaken:weapon_forged}.
  */
 public final class SmithMemory {
-    public static final int SCHEMA = 2;
+    public static final int SCHEMA = 3;
 
     @Nullable GlobalPos anvil;
     final Set<String> masterwork, forged;
     int best;
+    int lord;
     /** Whether the Hearth's Forge is in reach of that anvil, where, and its Temper limit for them, read at most every two seconds (not saved). */
     long forgeAt = Long.MIN_VALUE;
     boolean forgeNear;
@@ -38,15 +40,16 @@ public final class SmithMemory {
     int build = -1;
     boolean grindNear;
 
-    SmithMemory(@Nullable GlobalPos anvil, Set<String> masterwork, Set<String> forged, int best) {
+    SmithMemory(@Nullable GlobalPos anvil, Set<String> masterwork, Set<String> forged, int best, int lord) {
         this.anvil = anvil;
         this.masterwork = new HashSet<>(masterwork);
         this.forged = new HashSet<>(forged);
         this.best = best;
+        this.lord = lord;
     }
 
     static SmithMemory fresh() {
-        return new SmithMemory(null, Set.of(), Set.of(), -1);
+        return new SmithMemory(null, Set.of(), Set.of(), -1, -1);
     }
 
     static final MapCodec<SmithMemory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -54,8 +57,9 @@ public final class SmithMemory {
             GlobalPos.CODEC.optionalFieldOf("anvil").forGetter(m -> Optional.ofNullable(m.anvil)),
             Codec.STRING.listOf().optionalFieldOf("masterwork", List.of()).forGetter(m -> List.copyOf(m.masterwork)),
             Codec.STRING.listOf().optionalFieldOf("forged", List.of()).forGetter(m -> List.copyOf(m.forged)),
-            Codec.INT.optionalFieldOf("best", -1).forGetter(m -> m.best)
-    ).apply(i, (v, a, mw, f, b) -> new SmithMemory(a.orElse(null), Set.copyOf(mw), Set.copyOf(f), b)));
+            Codec.INT.optionalFieldOf("best", -1).forGetter(m -> m.best),
+            Codec.INT.optionalFieldOf("lord", -1).forGetter(m -> m.lord)
+    ).apply(i, (v, a, mw, f, b, l) -> new SmithMemory(a.orElse(null), Set.copyOf(mw), Set.copyOf(f), b, l)));
 
     public static SmithMemory of(ServerPlayer p) {
         return p.getData(AnvilContent.SMITH);

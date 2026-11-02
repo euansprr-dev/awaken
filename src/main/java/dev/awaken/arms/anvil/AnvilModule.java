@@ -27,6 +27,7 @@ public final class AnvilModule {
             WarAnvil.forget(e.getEntity().getUUID());
             AnvilNow.forget(e.getEntity().getUUID());
         });
+        NeoForge.EVENT_BUS.addListener(WarAnvil::lordFell);
         // a weapon of ours held without a story gains its Plain one (read twice a second: a component check, no allocation)
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer sp && sp.tickCount % 10 == 0) WarAnvil.storyOnHold(sp);

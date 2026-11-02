@@ -8,18 +8,23 @@ import dev.awaken.arms.anvil.WarAnvilBlockEntity;
 import dev.awaken.arms.anvil.WeaponForged;
 import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.ExtractBlockOutlineRenderStateEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
@@ -39,12 +44,26 @@ import org.jspecify.annotations.Nullable;
 public final class AnvilClient {
     private AnvilClient() {}
 
+    /** A Lord's anvil's runes and Heart (tint 0) in its Lord's colour, read from the block entity (SPEC §46.6); gold for none. */
+    private static final BlockTintSource LORD = new BlockTintSource() {
+        @Override
+        public int color(BlockState state) {
+            return ARGB.opaque(WarAnvilBlockEntity.GOLD);
+        }
+
+        @Override
+        public int colorInWorld(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+            return level.getBlockEntity(pos) instanceof WarAnvilBlockEntity be && be.lord() >= 0 ? ARGB.opaque(be.lord()) : color(state);
+        }
+    };
+
     /** The song plays itself on the beat (tours and demos: {@code /awaken arms anvil autoplay true}); the server judges it as any. */
     static boolean autoplay;
 
     public static void init(IEventBus modBus) {
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerBlockEntityRenderer(AnvilContent.ANVIL_BE.get(), WarAnvilRenderer::new));
+        modBus.addListener(RegisterColorHandlersEvent.BlockTintSources.class, e -> e.register(java.util.List.of(LORD), AnvilContent.ANVIL.get()));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AnvilPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onOpen(msg)));
             e.register(AnvilPayloads.Done.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onDone(msg)));

@@ -1355,7 +1355,8 @@
             16,
             3
           ],
-          "texture": "#runes"
+          "texture": "#runes",
+          "tintindex": 0
         },
         "south": {
           "uv": [
@@ -1364,7 +1365,8 @@
             16,
             3
           ],
-          "texture": "#runes"
+          "texture": "#runes",
+          "tintindex": 0
         },
         "west": {
           "uv": [
@@ -1373,7 +1375,8 @@
             16,
             3
           ],
-          "texture": "#runes"
+          "texture": "#runes",
+          "tintindex": 0
         },
         "east": {
           "uv": [
@@ -1382,7 +1385,8 @@
             16,
             3
           ],
-          "texture": "#runes"
+          "texture": "#runes",
+          "tintindex": 0
         }
       },
       "light_emission": 9
@@ -1406,7 +1410,8 @@
             10,
             16.0
           ],
-          "texture": "#heart"
+          "texture": "#heart",
+          "tintindex": 0
         },
         "up": {
           "uv": [
@@ -1415,7 +1420,8 @@
             10,
             0.8
           ],
-          "texture": "#heart"
+          "texture": "#heart",
+          "tintindex": 0
         },
         "north": {
           "uv": [
@@ -1424,7 +1430,8 @@
             10,
             13.8
           ],
-          "texture": "#heart"
+          "texture": "#heart",
+          "tintindex": 0
         },
         "south": {
           "uv": [
@@ -1433,7 +1440,8 @@
             10,
             13.8
           ],
-          "texture": "#heart"
+          "texture": "#heart",
+          "tintindex": 0
         },
         "west": {
           "uv": [
@@ -1442,7 +1450,8 @@
             0.8,
             13.8
           ],
-          "texture": "#heart"
+          "texture": "#heart",
+          "tintindex": 0
         },
         "east": {
           "uv": [
@@ -1451,7 +1460,8 @@
             16.0,
             13.8
           ],
-          "texture": "#heart"
+          "texture": "#heart",
+          "tintindex": 0
         }
       },
       "light_emission": 12

@@ -17466,7 +17466,12 @@ rebuild the gate for its rank's weapons and act (not a second ladder), each a We
   balance act happens on it. A weapon rack (the Pattern Stand's rack make) for what you've forged comes in stage 4c.
 - A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots): netherite face and bands, a waking rune band (light 9),
   a Lord's Heart set in the front (light 12); the twist is clamped in it, and at S the starlight comes down onto it.
-  Its tint in the colour of the last Lord you killed comes in stage 4c.
+  The runes and the Heart are cut pale and lit in the colour of the last Gate Lord its smith killed (that Lord's
+  Lord-forged weapon's accent; `SmithMemory` schemaVersion 3 + `lord`, set on any Lord's death by your hand), gold
+  (`WarAnvilBlockEntity.GOLD`) if none: taken at the rebuild, kept in the block entity (schemaVersion 2 + `lord`) and
+  drawn by the block's tint 0 (`AnvilClient.LORD`, a BlockTintSource reading the block entity; a new colour rebuilds
+  its section). Broken, the loot's `copy_components` from the block entity carries it as the item's
+  `minecraft:custom_model_data` colour 0, which the item model's tint reads and setting it down puts back.
 Rebuilding is at the door: when the chosen weapon's rank needs a bigger build than this anvil has and your level
 reaches it, the Armoury's "Forge it" becomes "Rebuild it" (`ArmsArmoury.REBUILD`, `WarAnvil.Status.REBUILD` and
 `REBUILD_OK`; From memory hidden), greyed until you carry the parts. It goes one build at a time, takes the parts
@@ -17481,7 +17486,8 @@ a Lord's Heart") with its parts and the same line, once the next rank is open to
 The Forge's own tiers (II at D, III at B) still set the temper limit. No quality ceiling: a perfect song is Flawless on
 any anvil. A rebuild keeps work in progress and what stands in the slot (the block entity stays: only its state
 changes). Models and textures from `tools/art/specs/war_anvil.py` (`war_anvil`, `_ironbound`, `_deepglass`, `_lord`).
-Test `arms_anvil_rebuild`.
+Test `arms_anvil_rebuild` (the gates, the door's flags, the parts, the work kept, the grindstone, the drop's build; on
+to a Lord's anvil in the remembered colour, which the drop keeps).
 
 **46.7 Every weapon at the anvil (stage 2).** Weapons are never made on the crafting grid (decision 1): the 96 forged
 weapons (16 styles, six tiers) and the six Hunter blades (the Fang to the Sovereign blade) lose their grid recipes and are
@@ -17695,7 +17701,7 @@ x each act's mark). None can fail, and one left alone settles itself.
   them. The tooltip reads "Flawless, twisted steel, quenched in starlight"; the card says "The twist shows in its steel."
   and "It drank the starlight, and its runes woke." (`Done` flags `RIPPLED` 64, `STARLIT` 128). Drawn by the weapon
   shader wherever the weapon is (UV1.y bits 13 and 14, beside the flaw), standing in the anvil's slot too.
-- **Still to come in stage 4**: the bellows, the rack and the Lord's anvil in its Lord's colour (§46.6).
+- **Still to come in stage 4**: the bellows and the rack (§46.6).
 
 Tests: `arms_anvil_verbs` (the tenth rule and the twist's, balance's and starlight's curves; a C Longsword grinds after
 its quench and then takes its hilt; an S Longsword twists, draws out, takes the starlight, grinds twenty touches (one

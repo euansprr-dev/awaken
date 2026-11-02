@@ -2,6 +2,7 @@ package dev.awaken.arms.anvil;
 
 import dev.awaken.Awaken;
 import dev.awaken.arms.ArmsArmoury;
+import dev.awaken.arms.ArmsData;
 import dev.awaken.arms.ArmsItems;
 import dev.awaken.arms.LordForged;
 import dev.awaken.arms.Marks;
@@ -10,6 +11,7 @@ import dev.awaken.core.AwakenNet;
 import dev.awaken.core.api.ArmsApi;
 import dev.awaken.core.api.ForgeHooks;
 import dev.awaken.core.api.HearthHooks;
+import dev.awaken.core.api.MobRole;
 import dev.awaken.hearth.Upgrades;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
@@ -37,6 +39,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -197,6 +200,8 @@ public final class WarAnvil {
             take(p, cost);
         }
         level.setBlock(pos, st.setValue(WarAnvilBlock.BUILD, b + 1), Block.UPDATE_ALL);
+        // the Lord's anvil is lit in the colour of the last Lord this smith killed (gold if none)
+        if (b + 1 == 3 && level.getBlockEntity(pos) instanceof WarAnvilBlockEntity be) be.setLord(SmithMemory.of(p).lord);
         level.playSound(null, pos, SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 1F, 0.8F);
         level.playSound(null, pos, AnvilContent.RING.get(), SoundSource.BLOCKS, 0.9F, 0.7F + 0.15F * b);
         level.sendParticles(ParticleTypes.CRIT, pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, 24, 0.4, 0.2, 0.4, 0.2);
@@ -206,6 +211,16 @@ public final class WarAnvil {
             default -> "Your War Anvil stands on a Lord's Heart. A- and S-rank weapons are forged on it.";
         }));
         return true;
+    }
+
+    /** A Gate Lord killed: its smith remembers its colour (its Lord-forged weapon's accent) for a Lord's anvil (§46.6). */
+    static void lordFell(LivingDeathEvent e) {
+        if (!(e.getSource().getEntity() instanceof ServerPlayer p)) return;
+        MobRole role = MobRole.of(e.getEntity());
+        if (role.role() != MobRole.Role.BOSS || role.bossId().isEmpty()) return;
+        LordForged.Forged f = LordForged.byBoss(role.bossId().get());
+        ArmsData.Weapon w = f == null ? null : ArmsItems.data(f.weapon());
+        if (w != null) SmithMemory.of(p).lord = w.trail() & 0xFFFFFF;
     }
 
     /** The nearest grindstone within six blocks of the anvil (two up or down), or null. */

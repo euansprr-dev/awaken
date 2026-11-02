@@ -21,7 +21,14 @@
         "when": "3",
         "model": {
           "type": "minecraft:model",
-          "model": "awaken:block/war_anvil_lord"
+          "model": "awaken:block/war_anvil_lord",
+          "tints": [
+            {
+              "type": "minecraft:custom_model_data",
+              "index": 0,
+              "default": 15975491
+            }
+          ]
         }
       }
     ],

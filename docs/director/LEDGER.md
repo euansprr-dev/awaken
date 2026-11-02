@@ -955,7 +955,8 @@ happens).
   in a column of starlight instead of water; a well-twisted blade keeps the twist's ripples in its steel and a
   starlit one its runes woken. It is rebuilt as you climb (SPEC §46.6), each rebuild the gate for its
   rank: Ironbound for C (4 iron blocks, 2 diamonds; and a grindstone within six blocks), a Deepglass horn for B (4
-  Deepglass shards, 4 amethyst shards), a Lord's anvil for A and S (a Lord's Heart, 2 netherite ingots).
+  Deepglass shards, 4 amethyst shards), a Lord's anvil for A and S (a Lord's Heart, 2 netherite ingots), its runes
+  and Heart lit in the colour of the last Gate Lord you killed (gold if none).
 - **Know**: the level road's level 3 step names it and its recipe; the recipe book; the Weapons tab ("Set up a War
   Anvil", "Forge your first weapon" with the styles you know as choices, "Make your C-rank weapon"); the Now line ("You
   can forge Beastbound Daggers at your War Anvil"); use it and the Armoury opens at its door with what each weapon takes,
@@ -969,7 +970,7 @@ happens).
   with its parts; a missing grindstone has its own line and need. Each build looks its part on the block and in hand.
 - **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself at its build, `copy_state` on
   `build`), `arms.anvil.WarAnvil`,
-  `WarAnvilBlockEntity` (schema 1), `AnvilWork` (schema 4), `SmithMemory` (schema 2), `WeaponForged` (schema 4),
+  `WarAnvilBlockEntity` (schema 2), `AnvilWork` (schema 4), `SmithMemory` (schema 3), `WeaponForged` (schema 4),
   `arms.anvil.AnvilHeld`; tests `arms_anvil_temper`, `arms_anvil_attune`, `arms_anvil_reforge`, `arms_anvil_verbs`, `arms_anvil_rebuild`; the rebuilds' parts are vanilla or
   already sourced (`awaken:deepglass_shard`, `awaken:lord_heart`).
 - **Links**: the Hearth's Forge (heat from D, the temper limit); Oren's Mark (`awaken:temper_start`); the tier's Hunter
@@ -984,7 +985,7 @@ happens).
   Temper VI, already of that Force or at S the row says so and its button stays dim. A rank's act left alone settles
   itself (the balance and the starlight, poorly); letting go of the twist early keeps what was turned. A rebuild keeps
   the work in progress and what stands in the slot; it goes one build at a time, greyed until you carry the parts
-  (none taken in creative); broken and placed again, the anvil keeps its build; from memory or a Hunter blade alone,
+  (none taken in creative); broken and placed again, the anvil keeps its build and a Lord's anvil its colour; from memory or a Hunter blade alone,
   no grindstone is needed; reforging into a rank checks the same rebuild.
 
 ### Forged weapons and Hunter blades (the 96 weapons, the six blades)
