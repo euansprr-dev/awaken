@@ -45,6 +45,7 @@ final class BellTests {
         AwakenTests.register("bells_hearth_tower", 20, BellTests::hearthTower);
         AwakenTests.register("bells_wagon", 20, BellTests::wagon);
         AwakenTests.register("bells_old_towers", 20, BellTests::oldTowers);
+        AwakenTests.register("bells_lord_room", 20, BellTests::lordRoom);
     }
 
     /**
@@ -283,9 +284,11 @@ final class BellTests {
             return z;
         };
         Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
+        liftAll(h, p);
         h.assertTrue(Bells.has(p, "wren") && Bells.count(p) == 1, "the first Lord kept the Wren");
         h.assertTrue(Bells.count(away) == 0, "a party member 200 away wasn't there to find it");
         Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
+        liftAll(h, p);
         h.assertTrue(Bells.count(p) == 1, "the next Lord never keeps one");
         // one in three between, never two in a row, always by the fourth since: one or two more from the next three
         boolean last = false;
@@ -293,6 +296,7 @@ final class BellTests {
         for (int i = 0; i < 3; i++) {
             int had = Bells.count(p);
             Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.E, "NONE", party, p);
+            liftAll(h, p);
             boolean now = Bells.count(p) > had;
             h.assertFalse(now && last, "two Lords in a row never both keep one");
             if (now) kept++;
@@ -300,7 +304,59 @@ final class BellTests {
         }
         h.assertTrue(kept >= 1, "by the fourth since, a Lord has kept another (" + Bells.count(p) + ")");
         Bells.lordFell(level, lord.get(), dev.awaken.progression.Rank.D, "BELL_CRYPT", party, p);
+        liftAll(h, p);
         h.assertTrue(Bells.has(p, "crypt"), "a gate world's Lord at its bell's rank keeps that bell");
+        h.succeed();
+    }
+
+    /** {@code p} lifts every bell lying round this test's middle (what its Lords kept); the floor is clear after. */
+    private static void liftAll(GameTestHelper h, ServerPlayer p) {
+        BlockPos c = h.absolutePos(new BlockPos(2, 1, 2));
+        for (BlockPos b : BlockPos.betweenClosed(c.offset(-6, -3, -6), c.offset(6, 3, 6)))
+            if (h.getLevel().getBlockState(b).is(BellContent.FOUND_BELL.get())) FoundBells.lift(h.getLevel(), b.immutable(), p);
+        for (BlockPos b : BlockPos.betweenClosed(c.offset(-6, -3, -6), c.offset(6, 3, 6)))
+            if (h.getLevel().getBlockState(b).is(BellContent.FOUND_BELL.get())) h.getLevel().setBlock(b, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+    }
+
+    /**
+     * A Lord's bell lies in its room (SPEC §43.16 stage 4): on the floor near where it fell, one for the party, each lifting
+     * their own (the second still finds it there); nothing in their hands until they do. A gate that closes first takes it
+     * back to the pool: the next Lord that hunter brings down keeps one for them.
+     */
+    static void lordRoom(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        Vec3 by = h.absoluteVec(new Vec3(3.5, 1, 3.5));
+        ServerPlayer p = h.makeMockServerPlayerInLevel(), q = h.makeMockServerPlayerInLevel();
+        p.snapTo(by.x, by.y, by.z, 0F, 0F);
+        q.snapTo(by.x + 1, by.y, by.z, 0F, 0F);
+        BlockPos fell = h.absolutePos(new BlockPos(2, 1, 2));
+        net.minecraft.world.entity.LivingEntity lord = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(2, 1, 2));
+        Bells.lordFell(level, lord, dev.awaken.progression.Rank.D, "BELL_CRYPT", Set.of(p.getUUID(), q.getUUID()), p);
+        BellCatalog.Def crypt = BellCatalog.of("crypt");
+        BlockPos at = null;
+        for (BlockPos b : BlockPos.betweenClosed(fell.offset(-FoundBells.KEEP_REACH, -3, -FoundBells.KEEP_REACH), fell.offset(FoundBells.KEEP_REACH, 3, FoundBells.KEEP_REACH)))
+            if (level.getBlockState(b).is(BellContent.FOUND_BELL.get())) {
+                h.assertTrue(at == null, "one bell lies there for the party");
+                at = b.immutable();
+            }
+        h.assertTrue(at != null && level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP), "the bell lies on the floor near where the Lord fell (" + at + ")");
+        h.assertFalse(Bells.has(p, "crypt") || Bells.has(q, "crypt"), "nothing is in their hands yet");
+        FoundBells.lift(level, at, p);
+        h.assertTrue(Bells.has(p, "crypt") && level.getBlockState(at).is(BellContent.FOUND_BELL.get()), "the first lifts theirs, and it's still there for the other");
+        FoundBells.lift(level, at, q);
+        h.assertTrue(Bells.has(q, "crypt") && level.getBlockState(at).isAir(), "the second lifts theirs and the floor is clear");
+        // a gate that closes with a bell unlifted: back to the pool
+        BellWorld w = BellWorld.get(level.getServer());
+        w.kept.add(new BellWorld.Kept("-7", at, BellCatalog.of("barrow").no(), List.of(p.getUUID())));
+        BellBook b = Bells.book(p);
+        b.lordsSince = 0;
+        Bells.save(p, b);
+        FoundBells.closed(level.getServer());
+        h.assertTrue(w.kept.isEmpty() && w.lost.containsKey(p.getUUID()), "a closed gate takes it back");
+        FoundBells.lost(p);
+        h.assertTrue(Bells.book(p).lordsSince >= Bells.LORDS_WITHOUT && !w.lost.containsKey(p.getUUID()) && !Bells.has(p, "barrow"),
+                "and the next Lord they bring down will keep a bell for them");
+        h.assertTrue(crypt != null, "the crypt's bell is in the catalogue");
         h.succeed();
     }
 

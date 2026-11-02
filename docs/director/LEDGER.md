@@ -824,3 +824,18 @@ happens).
   `BellTower.convert` (old towers, World `beams`).
 - **Edges**: the Bell tower room still counts but no longer rings vanilla bells; an old belfry's, tower's or Great
   Belfry's vanilla bells become beams once, counting at any height; no tower raises itself any more.
+
+## Lord bells lie in the boss room (§43.16 stage 4)
+
+### A bell a gate's Lord kept (`awaken:found_bell` on the arena's floor)
+- **Get**: bring down a gate's Lord that kept a bell for you (a gate world's own bell at its rank; else a swallowed one:
+  your first Lord the Wren, then never two in a row, one in three, always by the fourth since); it lies on the floor of
+  its room near where it fell; lift it.
+- **For**: the bell, to carry home and hang.
+- **Know**: the line at the fall ("It's lying where the Lord fell..."); its glow in the dark room; the Bells tab's "Lift
+  the X from where the Lord fell" while you're in the gate.
+- **Source**: `Bells.lordFell`, `FoundBells.keep`, `FoundBellEntity.gate`, World `kept`.
+- **Links**: the Book (filed where it was won); the clapper (a Chime Perch); the Bell Frame and beams.
+- **Edges**: one per party, each claimant lifts their own; with no floor near it goes straight to their hands; a gate
+  that closes first takes it back to the pool (`FoundBells.closed`, `lost`): the next Lord keeps one for that hunter;
+  a party member who already has it isn't a claimant; it can't be broken or pushed.

@@ -26,6 +26,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -449,8 +450,10 @@ public final class Bells {
     }
 
     /**
-     * A gate's Lord fell: for each player in the run nearby, the bell it kept. Its world's own bell first (a gate world's
-     * Lord at its bell's rank), else one the gate swallowed, if this Lord kept one for them.
+     * A gate's Lord fell (SPEC §43.16 stage 4): for each player in the run nearby, the bell it kept, lying on its arena's
+     * floor near where it fell, one of each for whoever it's for: its world's own bell first (a gate world's Lord at its
+     * bell's rank), else one the gate swallowed, if this Lord kept one for them. Each hunter lifts their own; if the gate
+     * closes first it goes back to the pool ({@link FoundBells#closed}). With no floor near, it's put in their hands.
      */
     public static void lordFell(ServerLevel level, LivingEntity lord, Rank rank, String theme, Collection<UUID> party, @Nullable ServerPlayer killer) {
         // the deepest room of an S-rank gate holds the Heart-clapper (SPEC §43.14)
@@ -461,11 +464,13 @@ public final class Bells {
         String id = GATE_BELLS.get(theme);
         BellCatalog.Def own = id == null ? null : BellCatalog.of(id);
         String label = Rank.valueOf(rank.name()).label;
+        // each bell this Lord kept, and who it's lying there for (in the order they're set down)
+        Map<Integer, List<ServerPlayer>> kept = new java.util.LinkedHashMap<>();
         for (ServerPlayer p : level.players()) {
             if (!(p == killer || party.contains(p.getUUID())) || p.distanceToSqr(lord) >= 96 * 96) continue;
             BellBook b = book(p);
             if (own != null && rank.ordinal() >= own.rank().ordinal() && !b.held.containsKey(own.no())) {
-                ring(p, own, "in the hoard of a " + label + " gate's Lord");
+                kept.computeIfAbsent(own.no(), k -> new ArrayList<>()).add(p);
                 continue;
             }
             BellCatalog.Def d = swallowed(p, rank, lord.getUUID().getLeastSignificantBits() ^ p.getUUID().getMostSignificantBits());
@@ -477,12 +482,25 @@ public final class Bells {
             }
             b.lordsSince = 0;
             save(p, b);
-            ring(p, d, "under a " + label + " gate's Lord, where the gate had taken it");
+            kept.computeIfAbsent(d.no(), k -> new ArrayList<>()).add(p);
             // its clapper has come loose in the fall (a Chime Perch is built round one), and wild Chimewrens love the sound
             dev.awaken.kin.KinApi.clapper(p);
-            if (b.once("first_swallowed")) {
-                save(p, b);
-                say(p, "[The Lord was keeping a bell the gate took. Ilse said a lot of them fell in. Bring it home and it'll ring there.]");
+        }
+        String gate = dev.awaken.core.api.MobRole.of(lord).gateId();
+        for (Map.Entry<Integer, List<ServerPlayer>> e : kept.entrySet()) {
+            BellCatalog.Def d = BellCatalog.of(e.getKey());
+            boolean hoard = d == own;
+            String where = hoard ? "in the hoard of a " + label + " gate's Lord" : "under a " + label + " gate's Lord, where the gate had taken it";
+            BlockPos at = FoundBells.keep(level, lord.blockPosition(), gate, d.no(), where, e.getValue().stream().map(ServerPlayer::getUUID).toList());
+            for (ServerPlayer p : e.getValue()) {
+                if (at == null) ring(p, d, where);
+                BellBook b = book(p);
+                if (!hoard && b.once("first_swallowed")) {
+                    save(p, b);
+                    say(p, at == null ? "[The Lord was keeping a bell the gate took. Ilse said a lot of them fell in. Bring it home and it'll ring there.]"
+                            : "[The Lord was keeping a bell the gate took. Ilse said a lot of them fell in. It's lying where the Lord fell: lift it and bring it home.]");
+                } else if (at != null) say(p, hoard ? "[There's a bell in the Lord's hoard, lying where it fell. Lift it and take it home.]"
+                        : "[The Lord was keeping a bell. It's lying where it fell.]");
             }
         }
     }
@@ -746,8 +764,10 @@ public final class Bells {
             if (p != null) Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(SIGNAL_ONCE)).priority(8).ttl(20 * 10).build());
             return true;
         });
+        if (server.getTickCount() % 100 == 60) FoundBells.closed(server);
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if ((p.tickCount + p.getId()) % 100 != 0) continue;
+            FoundBells.lost(p);
             moments(p);
             BellSites.tick(p);
             body(p);

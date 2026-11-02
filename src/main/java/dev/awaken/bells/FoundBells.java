@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +67,7 @@ final class FoundBells {
             level.playSound(null, pos, BellContent.note(d.no()), SoundSource.BLOCKS, 1.5F, 1F);
             be.setChanged();
         } else if (be.lifted.add(p.getUUID())) {
+            if (!be.gate.isEmpty()) lifted(level, pos, p.getUUID());
             if (Bells.has(p, d.id())) Bells.say(p, "[You've already got " + d.name().replaceFirst("^The ", "the ") + ". This one stays for whoever it's for.]");
             else {
                 Bells.ring(p, d, be.where);
@@ -93,6 +95,101 @@ final class FoundBells {
     /** Nothing lives at that home yet: the Lampwing is still asleep in its old bell. */
     static boolean asleep(ServerLevel level, long anchor) {
         return KinWorld.get(level.getServer()).at(BlockPos.of(anchor)).isEmpty();
+    }
+
+    // ---- the bells gates' Lords kept (stage 4) ---------------------------------------------------------------------
+
+    /** How far round where a Lord fell its bell may be set down, across. */
+    static final int KEEP_REACH = 4;
+    /** Heights tried for the floor, nearest the Lord's feet first. */
+    private static final int[] KEEP_DY = {0, -1, 1, -2, 2, -3, -4, -5, -6};
+
+    /**
+     * Bell {@code no}, kept by a gate's Lord, set down on its arena's floor near where it fell for {@code claimants},
+     * glowing a little so it's seen in the dark, and watched until they lift it or the gate closes. Null if no floor is
+     * near enough (the caller puts it in their hands instead).
+     */
+    static @Nullable BlockPos keep(ServerLevel level, BlockPos fell, String gate, int no, String where, List<UUID> claimants) {
+        BlockPos at = floor(level, fell);
+        if (at == null || !place(level, at, no, where, claimants, 0L, false, true)) return null;
+        if (level.getBlockEntity(at) instanceof FoundBellEntity be) {
+            be.gate = gate;
+            be.setChanged();
+        }
+        if (!gate.isEmpty()) {
+            BellWorld w = BellWorld.get(level.getServer());
+            w.kept.add(new BellWorld.Kept(gate, at, no, claimants));
+            w.setDirty();
+        }
+        return at;
+    }
+
+    /** The free floor nearest {@code c}: air (or grass) with nothing liquid in it and a solid top under it. */
+    static @Nullable BlockPos floor(ServerLevel level, BlockPos c) {
+        for (int r = 0; r <= KEEP_REACH; r++)
+            for (int dx = -r; dx <= r; dx++)
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    for (int dy : KEEP_DY) {
+                        BlockPos at = c.offset(dx, dy, dz);
+                        if (!level.isLoaded(at)) continue;
+                        BlockState s = level.getBlockState(at);
+                        if (!(s.isAir() || s.canBeReplaced()) || !level.getFluidState(at).isEmpty()) continue;
+                        if (level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) return at;
+                    }
+                }
+        return null;
+    }
+
+    /** A hunter lifted their bell from a Lord's floor: they're off its list, and it's forgotten once nobody's left. */
+    private static void lifted(ServerLevel level, BlockPos pos, UUID who) {
+        BellWorld w = BellWorld.get(level.getServer());
+        for (var it = w.kept.iterator(); it.hasNext(); ) {
+            BellWorld.Kept k = it.next();
+            if (!k.pos.equals(pos) || !k.left.remove(who)) continue;
+            if (k.left.isEmpty()) it.remove();
+            w.setDirty();
+        }
+    }
+
+    /** Each 5 s: a Lord's bell whose gate has closed is lost to whoever hadn't lifted it, and goes back to the pool. */
+    static void closed(net.minecraft.server.MinecraftServer server) {
+        BellWorld w = BellWorld.get(server);
+        if (w.kept.isEmpty()) return;
+        ServerLevel ow = server.overworld();
+        for (var it = w.kept.iterator(); it.hasNext(); ) {
+            BellWorld.Kept k = it.next();
+            Optional<dev.awaken.core.api.GateHooks.GateView> g = dev.awaken.core.api.GateHooks.get(ow, k.gate);
+            if (g.isPresent() && !"RELEASED".equals(g.get().state())) continue;
+            for (UUID u : k.left) w.lost.computeIfAbsent(u, x -> new ArrayList<>()).add(k.no);
+            it.remove();
+            w.setDirty();
+            Awaken.LOG.info("[bells] gate {} closed with bell {} on its floor, unlifted by {}", k.gate, k.no, k.left.size());
+        }
+    }
+
+    /**
+     * Each 5 s for a player: a bell a closed gate took back before they lifted it goes back to the pool. A swallowed one:
+     * the next Lord they bring down keeps a bell for them; a gate world's own: its Lord keeps it again.
+     */
+    static void lost(ServerPlayer p) {
+        BellWorld w = BellWorld.get(p.level().getServer());
+        List<Integer> nos = w.lost.remove(p.getUUID());
+        if (nos == null) return;
+        w.setDirty();
+        BellBook b = Bells.book(p);
+        for (int no : nos) {
+            BellCatalog.Def d = BellCatalog.of(no);
+            if (d == null || b.held.containsKey(no)) continue;
+            String name = d.name().replaceFirst("^The ", "the ");
+            if (d.source() == BellCatalog.Source.GATE_WORLD)
+                Bells.say(p, "[The gate closed with " + name + " still lying on its floor. That gate's Lord will have it again the next time you bring one down.]");
+            else {
+                b.lordsSince = Bells.LORDS_WITHOUT;
+                Bells.say(p, "[The gate closed with " + name + " still lying on its floor. It's gone back to the gates: the next Lord you bring down will be keeping a bell for you.]");
+            }
+        }
+        Bells.save(p, b);
     }
 
     // ---- the Registry's wagon (the Provings' Great Bells) -----------------------------------------------------------

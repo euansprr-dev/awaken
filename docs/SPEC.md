@@ -16365,6 +16365,31 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
     yard; lifted), `bells_old_towers`, `bells_tower_plans` and `bells_hundred_peal` (the old shapes' beams),
     `bells_catalog_ring` (Great Bells by wagon, the Seed with the Great Belfry).
 
+- **Stage 4: Lord bells lie in the boss room** (2 Nov; BELLS.md, Euan 30 Oct: "when you kill the boss, that's when maybe
+  you find the bell in his room"). Which Lords keep a bell is stage 1's rule, unchanged (`Bells.swallowed`, a gate
+  world's own bell first). What changes is where it is:
+  - When the Lord falls, each bell it kept is set down once on its arena's floor near where it fell (`FoundBells.keep`:
+    the free floor nearest its feet, up to 4 across, two above to six below; air or grass, nothing liquid, a solid top
+    under it), a found bell glowing a little (light 6), left for the hunters it's for (claimants). Nothing is put in
+    their hands. Lines: a gate world's own "[There's a bell in the Lord's hoard, lying where it fell. Lift it and take
+    it home.]"; the first swallowed one ever "[The Lord was keeping a bell the gate took. Ilse said a lot of them fell
+    in. It's lying where the Lord fell: lift it and bring it home.]", later ones "[The Lord was keeping a bell. It's
+    lying where it fell.]". The woken clapper comes with a swallowed bell at the fall, as before. With no floor near,
+    the bell is put in their hands (the old way, never lost).
+  - Each claimant lifts their own (it rings out clear and is filed: "under a D gate's Lord, where the gate had taken
+    it", "in the hoard of a D gate's Lord"); it stays until everyone it's for has. Inside the gate the Bells tab leads
+    with "Lift the X from where the Lord fell" ("It's lying on the floor of the Lord's room. Lift it before you leave:
+    once the gate closes, it goes back to the gates."), pointing at it.
+  - **Back to the pool**: World schema 5 keeps each Lord's bell (`kept`: gate id from the Lord's `MobRole`, place, bell,
+    who hasn't lifted it). Every 5 s, one whose gate is gone or released (it's released once cleared and empty) is lost
+    to those who hadn't lifted it (`lost`, said when they're next about): a swallowed bell sets their Book's
+    `lords_since` to `LORDS_WITHOUT`, so the next Lord they bring down keeps a bell for them ("[The gate closed with the
+    Wren Bell still lying on its floor. It's gone back to the gates: the next Lord you bring down will be keeping a
+    bell for you.]"); a gate world's own: "That gate's Lord will have it again the next time you bring one down." No
+    bell room, no hum, no handbell answer (Euan 30 Oct).
+  - Tests (CI): `bells_lord_room` (on the floor near the Lord, one for the party, each lifts their own, a closed gate
+    sends it back), `bells_lord_keeps` (the odds, lifting what each Lord left).
+
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 
 Module `armour` (`dev.awaken.armour`, client `armour.client`). Built in phases P0-P5 (plan §6.2); this section grows

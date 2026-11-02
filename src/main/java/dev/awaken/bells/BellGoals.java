@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * The Tasks page's Bells tab (SPEC §27.13): a step per lead in the Bell Book that you don't hold yet, newest first, with
+ * The Tasks page's Bells tab (SPEC §27.13): inside a gate, the bell its Lord kept for you while it lies there; a step per lead in the Bell Book that you don't hold yet, newest first, with
  * its last line and, once it has a bearing, where to look (the same place Track pointed); and your tower's next step when
  * it's yours to do (make and set the frame, hang the bells in your bag, a Bell Beam when the frame's full, a Great Beam for
  * a Great Bell, the Lampwing's old bell, clear room, the Great Belfry, the Hundred Peal). Finding more bells is the leads'
@@ -34,6 +34,8 @@ final class BellGoals {
     static List<Step> steps(ServerPlayer p) {
         BellBook b = Bells.book(p);
         List<Step> out = new ArrayList<>();
+        Step lord = lordBell(p);
+        if (lord != null) out.add(lord);
         List<Map.Entry<Integer, BellBook.Lead>> leads = new ArrayList<>();
         for (Map.Entry<Integer, BellBook.Lead> e : b.leads.entrySet()) if (!b.held.containsKey(e.getKey())) leads.add(e);
         leads.sort(Comparator.comparingLong((Map.Entry<Integer, BellBook.Lead> e) -> -e.getValue().since).thenComparingInt(Map.Entry::getKey));
@@ -51,6 +53,19 @@ final class BellGoals {
         Step tower = tower(p, b);
         if (tower != null) out.add(tower);
         return out;
+    }
+
+    /** A bell a gate's Lord kept, lying on its floor for you, while you're in its gate (SPEC §43.16 stage 4), or null. */
+    static @org.jspecify.annotations.Nullable Step lordBell(ServerPlayer p) {
+        if (!dev.awaken.core.api.GateHooks.inGate(p)) return null;
+        for (BellWorld.Kept k : BellWorld.get(p.level().getServer()).kept) {
+            if (!k.left.contains(p.getUUID())) continue;
+            String name = BellCatalog.of(k.no).name().replaceFirst("^The ", "the ");
+            return Step.of("bells/lord", Goal.BELLS, "Lift " + name + " from where the Lord fell")
+                    .why("It's lying on the floor of the Lord's room. Lift it before you leave: once the gate closes, it goes back to the gates.")
+                    .priority(60).at(k.pos).build();
+        }
+        return null;
     }
 
     /** The tower's next step when it's in your hands, or null. */
