@@ -82,6 +82,9 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
     private boolean drawSent;
     /** The weapon as it stood in the stone, for the card once it's drawn. */
     private ItemStack shown = ItemStack.EMPTY;
+    // the card's width, fitted once for its words and the window (cardW)
+    private @Nullable Object fitFor, fitShown;
+    private int fitAt, fitW;
 
     private final float[] p = new float[3];
     private final Vector3f v = new Vector3f();
@@ -422,7 +425,9 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilScene.struck = next;
         float timing = AnvilSong.timing(off);
         if (tap) {
-            if (timing >= 0.8F) say(next == 1 ? "The guard is on" : next == 2 ? "The grip is bound" : "The pommel is set", LANTERN, now);
+            // attuning, the three taps drive the stone into the guard; at the hilt they fit the guard, grip and pommel
+            if (timing >= 0.8F) say(w.kind == AnvilWork.ATTUNE ? (next == 1 ? "The stone bites" : next == 2 ? "It sinks in" : "The stone is set")
+                    : next == 1 ? "The guard is on" : next == 2 ? "The grip is bound" : "The pommel is set", LANTERN, now);
             else say(off < 0 ? "Early" : "Late", BAD, now);
         } else if (AnvilSong.clean(score)) say(timing >= 1F && AnvilSong.aim(radii) >= 1F ? "Perfect" : "Clean", LANTERN, now);
         else if (timing < 0.6F) say(off < 0 ? "Early" : "Late", BAD, now);
@@ -818,9 +823,9 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         }
         if (done != null) card(g, now);
         if (Float.isNaN(drawnAt) && standing)
-            hint(g, "Hold the mouse button (or Space) to draw it from the stone.");
+            footHint(g, "Hold the mouse button (or Space) to draw it from the stone.");
         else if (!Float.isNaN(drawnAt) || !standing)
-            hint(g, "Try its first cut, or you're done. Esc closes this.");
+            footHint(g, "Try its first cut, or you're done. Esc closes this.");
         if (AnvilClient.autoplay && standing && !drawSent) {
             // tours: the card a moment, then the draw
             float since = Float.isNaN(doneAt) ? 0F : now - doneAt;
@@ -880,17 +885,29 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         }
     }
 
-    /** The card stands to the left of the weapon in the stone, so the weapon stays in view. */
+    /**
+     * The card stands to the left of the weapon in the stone, so the weapon stays in view. A long card (reforged and
+     * flawed, on a 960-px window at GUI scale 4) widens toward the weapon, up to 240, rather than run off the screen.
+     */
     private int cardW() {
-        return Math.min(240, width / 2 - 66);
+        if (fitFor == done && fitShown == shown && fitAt == width * 4096 + height) return fitW;
+        int w = Math.min(240, width / 2 - 66), most = Math.min(240, width - 32);
+        while (w < most && done != null && cardH(w, true) > bottom() - 6) w = Math.min(most, w + 16);
+        fitFor = done;
+        fitShown = shown;
+        fitAt = width * 4096 + height;
+        return fitW = w;
     }
 
     private int cardX() {
-        return width / 2 - 50 - cardW();
+        return Math.max(16, width / 2 - 50 - cardW());
     }
 
     private int cardH(boolean drawn) {
-        int w = cardW();
+        return cardH(cardW(), drawn);
+    }
+
+    private int cardH(int w, boolean drawn) {
         return 62 + 10 * font.split(cardItem().getHoverName(), w - 42).size() + 10 * font.split(Component.literal(about(done, cardItem())), w - 20).size()
                 + 10 * enchantLines(w) + (drawn ? 26 : 0);
     }
@@ -905,8 +922,22 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         return shown.isEmpty() ? new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id(weapon))) : shown;
     }
 
+    /** A little above the middle, but always on the screen. */
     private int cardY(int ch) {
-        return height / 2 - ch / 2 - 10;
+        return Math.max(6, Math.min(height / 2 - ch / 2 - 10, bottom() - ch));
+    }
+
+    /** The hint at the foot, or in the room right of the card when the card reaches down over it. */
+    private void footHint(GuiGraphicsExtractor g, String text) {
+        int ch = done == null ? 0 : cardH(drawn());
+        if (done == null || cardY(ch) + ch <= bottom() - 24) {
+            hint(g, text);
+            return;
+        }
+        int right = cardX() + cardW();
+        var lines = font.split(Component.literal(text), Math.max(60, width - right - 24));
+        int n = Math.min(3, lines.size()), y = bottom() - 10 * n;
+        for (int i = 0; i < n; i++) g.centeredText(font, lines.get(i), (right + width) / 2, y + i * 10, DIM);
     }
 
     private boolean drawn() {

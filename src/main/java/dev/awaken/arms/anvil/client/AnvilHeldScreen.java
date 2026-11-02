@@ -74,16 +74,24 @@ final class AnvilHeldScreen extends Screen implements dev.awaken.signal.client.Q
             buttons[i][1] = y + 2;
             buttons[i][2] = bw(o.button());
             // what it costs, right of the button: have / need, short ones in red
-            int cx = px + 10 + bw(o.button()) + 8, cy = y + 6;
+            int left = px + 10 + bw(o.button()) + 8, right = px + pw - 10, cx = left, cy = y + 6;
             for (AnvilPayloads.Cost c : o.costs()) {
                 String s = c.label() + " " + c.have() + "/" + c.need();
-                int w = font.width(s);
-                if (cx + w > px + pw - 10) {
-                    cx = px + 10 + bw(o.button()) + 8;
+                int w = font.width(s), colour = c.have() >= c.need() ? GOOD : BAD;
+                if (cx > left && cx + w > right) {
+                    cx = left;
                     cy += 10;
                 }
-                g.text(font, s, cx, cy, c.have() >= c.need() ? GOOD : BAD, false);
-                cx += w + 10;
+                if (w <= right - left) {
+                    g.text(font, s, cx, cy, colour, false);
+                    cx += w + 10;
+                    continue;
+                }
+                // too long for the row (a part named with where it's found): it wraps under itself, the next one below it
+                List<FormattedCharSequence> parts = font.split(Component.literal(s), right - left);
+                for (int k = 0; k < parts.size(); k++) g.text(font, parts.get(k), left, cy + 10 * k, colour, false);
+                cy += 10 * (parts.size() - 1);
+                cx = right;
             }
             y = Math.max(y + 22, cy + 12);
             List<FormattedCharSequence> lines = font.split(Component.literal(o.line()), inner);
