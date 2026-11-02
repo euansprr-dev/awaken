@@ -6855,6 +6855,14 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     from rest (a chained strike at once) and out over its last pair of keys, so a move ending a chain holds at rest
     before it fades. `arms_keys.py check` holds the wrist limit and the wrist square at both ends; `arms_moves.py build`
     the clipping.
+  - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §46.1 "Hits land now"): each keyed blow's pose sits on
+    the tick the server counts its hit, so the impact stage 0 plays the frame its sweep reaches the body meets the blade
+    there and the freeze holds the contact pose. The Daggers' freezes are 50 ms on strikes 1 and 2, 60 on strike 3 and
+    80 on the finisher (were 35, 35, 40 and 55; archetypes.json). A keyed move carries its own kick (`kick` [yaw, pitch],
+    a unit, scaled by the freeze as every kick is, `ArmsPredict.impact`), worked out by the bake from the blade the keys
+    draw (`arms_keys.kick_of`): a stab nods the view in a touch (0.6, no turn; the row kicked a right stab sideways), a
+    cut kicks along the way its points travel on screen into the hit, and a pair cutting out both ways nods like a stab.
+    Every other style kicks along its row's from/to as before.
   - *Strike on the click* (`ArmsRules.waitsOnHold`): a dagger's strike lands as it comes even while the press is still
     down, and a press held on charges the heavy from where the stab ended (arms_dagger_click). Every other style's held
     press waits at its set (arms_tap_or_hold).

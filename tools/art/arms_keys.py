@@ -780,6 +780,29 @@ def stance_of(style):
     return [round(float(v), 4) for v in d] + [round(float(v), 5) for v in _quat(R, None)]
 
 
+NOD = 0.6  # a stab's kick: the view nodded in a touch, no turn (the kick's scale is the freeze's, ArmsPredict.impact)
+
+
+def kick_of(held, mv, form):
+    """The view's kick on a hit [yaw, pitch] (decision 6): a stab punches the view in a touch (a nod, no turn: its point
+    drives into the screen, and the old row kicked a right stab sideways); a cut kicks along the way its points travel
+    on screen into the hit (+yaw to the right, +pitch down); a pair cutting out both ways at once nods like a stab."""
+    if form == "stab":
+        return [0.0, NOD]
+    hit = mv["hit"]
+    t0 = max(0.0, hit - 0.25)
+    hands = [("keys", mv["hand"] == "off")] + ([("other", True)] if mv["hand"] == "both" else [])
+    total, size = np.zeros(2), 0.0
+    for track, left in hands:
+        a, b = (tip_ndc(held, *right_handed(held, mv[track].at(t), left), left=left) for t in (t0, hit))
+        total += b - a
+        size += float(np.linalg.norm(b - a))
+    if size < 1e-6 or np.linalg.norm(total) < 0.25 * size:
+        return [0.0, NOD]
+    u = total / np.linalg.norm(total)
+    return [round(float(u[0]), 3), round(float(-u[1]), 3)]
+
+
 def baked(data, style):
     """The style's entry with its hand-keyed moves: every other field as it was (third person's wrists until its own
     keys), the stance the hands rest in between moves, and "by" so the lab's bake keeps it."""
@@ -795,6 +818,7 @@ def baked(data, style):
         if "set" in mv:
             row["set"] = mv["set"]
         row["trail"] = list(mv["trail"])
+        row["kick"] = kick_of(held, mv, row["form"])
         if "swishSound" in prev:
             row["swishSound"] = prev["swishSound"]
         rig = keyed3.get(name)

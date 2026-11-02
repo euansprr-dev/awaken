@@ -426,6 +426,12 @@ final class ArmsTests {
                 } else {
                     h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
                 }
+                if (st.stance() != null) { // a hand-keyed move kicks along its own blade (SPEC §25 "The hit on the blade")
+                    float[] kick = FpSwings.kick(st, e.getKey());
+                    boolean nod = kick != null && kick[0] == 0 && kick[1] > 0; // a stab's, in a touch
+                    boolean along = kick != null && Math.abs(Math.hypot(kick[0], kick[1]) - 1) < 0.01; // a cut's, a unit
+                    h.assertTrue(nod || along, a.id() + " " + e.getKey() + " kicks along its blade");
+                }
                 // third person's wrist (ArmsWrist): home by the clip's end, and from the hand's rest unless loosed from a
                 // held draw (no wind-up: it starts as the charge held it)
                 float len = FpSwings.wristLength(st, e.getKey());

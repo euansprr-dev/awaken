@@ -893,9 +893,16 @@ public final class ArmsPredict {
             // each extra body of a cleave a fifth more
             float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
             float n = Math.max(1e-3F, (float) Math.sqrt(dx * dx + dy * dy));
+            float yaw = dx / n, pitch = -dy / n;
+            // a hand-keyed move kicks along the blade its keys draw, not the row (a stab's row ran sideways)
+            float[] along = style == null ? null : FpSwings.kick(FpSwings.style(style.id()), m);
+            if (along != null) {
+                yaw = along[0];
+                pitch = along[1];
+            }
             float k = Math.min(2.4F, rawMs / 40F) * (killMoment ? KILL_KICK : 1F)
                     * (1 + CLEAVE_KICK * Mth.clamp(b.cleave() - 1, 0, ArmsRules.CLEAVE_EXTRA_MAX));
-            CombatFeedback.kick(dx / n * k, -dy / n * k, dx / n * k * 0.4F, 6);
+            CombatFeedback.kick(yaw * k, pitch * k, yaw * k * 0.4F, 6);
         }
     }
 

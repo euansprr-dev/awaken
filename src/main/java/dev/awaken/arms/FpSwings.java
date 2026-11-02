@@ -55,10 +55,12 @@ public final class FpSwings {
      * {@code set} (round 8; -1 for none): when the drive begins, the strike's set, where a press still down waits.
      * {@code trailFrom}..{@code trailTo} (round 14; -1 for the old rule round the blow): the clip ticks its blade lays
      * its ribbon, the stroke alone, never the way back (traced, the way home closed each stroke into a loop).
+     * {@code kick} (schema 7, a hand-keyed move; null: the row's from/to): the view's kick on a hit [yaw, pitch], a unit
+     * from the blade the keys draw (SPEC §25 "Hand-keyed moves": a stab nods the view in, a cut kicks along it).
      */
     public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft,
                        float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far, float set,
-                       float trailFrom, float trailTo) {
+                       float trailFrom, float trailTo, float @Nullable [] kick) {
         public int size() {
             return keys.length / STRIDE;
         }
@@ -154,7 +156,8 @@ public final class FpSwings {
                         bite == null ? 0F : bite.get(1).getAsFloat(), idle, row.has("far") && row.get("far").getAsBoolean(),
                         row.has("set") ? row.get("set").getAsFloat() : -1F,
                         row.has("trail") ? row.getAsJsonArray("trail").get(0).getAsFloat() : -1F,
-                        row.has("trail") ? row.getAsJsonArray("trail").get(1).getAsFloat() : -1F));
+                        row.has("trail") ? row.getAsJsonArray("trail").get(1).getAsFloat() : -1F,
+                        row.has("kick") ? floats(row.getAsJsonArray("kick"), 2) : null));
             }
             Vector3f grip = vec(st.getAsJsonArray("grip"));
             styles.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
@@ -241,6 +244,12 @@ public final class FpSwings {
     public static Hand hand(@Nullable Style st, Archetype.@Nullable Move m) {
         Clip c = st == null || m == null ? null : st.moves().get(m);
         return c == null ? Hand.MAIN : c.hand();
+    }
+
+    /** A hand-keyed move's kick on a hit [yaw, pitch] (Clip's kick), or null to kick along the row's from/to. */
+    public static float @Nullable [] kick(@Nullable Style st, Archetype.@Nullable Move m) {
+        Clip c = st == null || m == null ? null : st.moves().get(m);
+        return c == null ? null : c.kick();
     }
 
     /** Whether a move is led by its double weapon's other end (Clip's far). */
