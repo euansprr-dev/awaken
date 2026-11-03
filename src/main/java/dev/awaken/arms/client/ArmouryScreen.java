@@ -12,6 +12,8 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
@@ -170,11 +172,17 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             String key = n.kind().equals("tag") ? "awaken.source.tag." + id.getPath()
                     : id.getPath().endsWith("_blueprint") ? "awaken.source.blueprint" : "awaken.source." + id.getNamespace() + "." + id.getPath();
             if (!ok && Language.getInstance().has(key)) {
-                // two lines where there's room: an S part's sources run past one ("... and the Architect's Key")
-                List<FormattedCharSequence> src = font.split(Component.translatable(key), dw - 28);
-                int most = Math.min(src.size(), y2 + 9 <= py + ph - (anvil ? 76 : 56) ? 2 : 1);
-                for (int i = 0; i < most; i++) g.text(font, src.get(i), dx + 28, y2 + 9 + i * 9, DIM, false);
-                y2 += 9 * Math.max(1, most);
+                // up to two lines, as many as fit above what's drawn under the list (an S part's sources run past one,
+                // "... and the Architect's Key"); one cut short ends in an ellipsis rather than mid-sentence
+                List<FormattedText> src = font.getSplitter().splitLines(Language.getInstance().getOrDefault(key), dw - 28, Style.EMPTY);
+                int floor = py + ph - (anvil && !d.block().isEmpty() ? 67 : 47);
+                int most = Math.min(src.size(), Math.max(1, Math.min(2, (floor - y2 - 9) / 9)));
+                for (int i = 0; i < most; i++) {
+                    String line = src.get(i).getString();
+                    if (i == most - 1 && most < src.size()) line = font.plainSubstrByWidth(line, dw - 28 - font.width("...")).stripTrailing() + "...";
+                    g.text(font, line, dx + 28, y2 + 9 + i * 9, DIM, false);
+                }
+                y2 += 9 * most;
             }
             y2 += 11;
         }
