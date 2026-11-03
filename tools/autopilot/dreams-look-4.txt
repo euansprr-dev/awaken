@@ -93,8 +93,9 @@ look 0 4
 shot l4_replay_00_arrival
 cmd awaken dream control
 wait 30
-walk 12
-wait 30
+# just past the doorway (z +5 from the start, ~24 ticks' walk): the ghost starts there and walks on ahead
+walk 28
+wait 38
 shot l4_replay_01_ghost
 wait 20
 shot l4_replay_02_ghost_later

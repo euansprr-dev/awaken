@@ -1,0 +1,89 @@
+# Dreams remade, stage 4 check (SPEC 9.6, 3 Nov 2026): your own ghost ahead of you in a replay, and the goal line under
+# a Boss Plate (Hush's sleeper). The rope is run once, walked past the doorway so the ghost has steps, then dreamt again.
+#   tools/tour-ci.sh tools/autopilot/dreams-ghost-plate.txt 1500
+world autopilot_dreams_ghost creative 3112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the dream's cards need it free
+cmd tick sprint 6200
+# the sprint runs ~30 s on a runner: let it finish, or the first dream burns through its clock
+wait 800
+cmd tick sprint stop
+wait 20
+window 1440 900
+info
+camera first
+hud off
+
+cmd awaken ascent grant all
+wait 20
+cmd gamemode survival
+cmd time set 14000
+
+# ---- the rope, walked out past the doorway, then finished ----
+cmd awaken dream offer rope
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+cmd awaken dream control
+wait 30
+walk 40
+wait 60
+cmd awaken dream ring 99
+wait 220
+screen close
+
+# ---- dreamt again: the ghost goes on ahead ----
+cmd awaken dream replay 0
+wait 200
+cmd awaken dream control
+wait 30
+walk 28
+wait 38
+shot gp_ghost_01
+wait 10
+shot gp_ghost_02
+look 0 20
+shot gp_ghost_03_down
+look 0 4
+cmd awaken dream wake
+wait 200
+screen close
+
+# ---- hush: the goal line under the sleeper's plate ----
+cmd awaken dream offer hush
+wait 60
+cmd awaken dream now
+wait 200
+cmd awaken dream control
+wait 30
+cmd awaken dream ring 1
+wait 80
+look 0 4
+shot gp_hush_plate
+cmd awaken dream wake
+wait 200
+screen close
+quit

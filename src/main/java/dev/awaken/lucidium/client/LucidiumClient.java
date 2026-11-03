@@ -57,7 +57,9 @@ public final class LucidiumClient {
             ClientTrial.clear();
         });
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, TrialRings::submit);
-        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.BossEventProgress.class, TrialHud::onBossBar);
+        // last, and cancelled ones too: a Boss Plate draws itself and cancels the vanilla bar (its increment is its height)
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, true,
+                net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.BossEventProgress.class, TrialHud::onBossBar);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderGuiEvent.Pre.class, e -> TrialHud.frameStart());
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Init.Post.class, LucidiumClient::onScreen);
         CodexEntries.addSource(LucidiumClient::codex);
