@@ -5,7 +5,8 @@
 # Frost Stag at 48, a Wisp Hound and a Puffwool at 58; filmed, then traced frame by frame without the film (the film
 # slows the frames to a few a second; /awaken lifetrace logs where each is drawn and how its life moves it). 2. The
 # camera comes in from 36 to 16 blocks off the near row, across the far step. 3. The near row without AI (still bodies:
-# only the client moves them). 4. A Briar Sow killed by your hand at 36: its fall, then its carcass where it fell.
+# only the client moves them). 4. The Sow walking through berry bushes, as round her wallow. 5. A Briar Sow killed by
+# your hand at 36: its fall, then its carcass where it fell.
 # Clips: run-autopilot/clips/<name> (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
 # ci knobs: PACK=perf,feel
 world beastsfar creative 781
@@ -112,7 +113,31 @@ cmd kill @e[tag=far]
 wait 60
 cmd kill @e[type=minecraft:item]
 cmd kill @e[type=minecraft:experience_orb]
-# 4. a Briar Sow killed by your hand 36 off: its fall, then its carcass where it fell (it lies a minute)
+# 4. the Briar Sow walking through ripe berry bushes 31 to 44 off, as round her wallow (a belt of them across the field,
+# her home set beyond it so she walks it): before SPEC §47.13 pricked twice a second and caught at every step
+cmd fill -39 200 34 39 200 39 minecraft:grass_block
+cmd fill -39 201 34 39 201 39 minecraft:sweet_berry_bush[age=3]
+cmd tp @s 1.5 201 26.5 0 0
+cmd awaken fauna summon briar_sow
+cmd tag @e[type=awaken:briar_sow,limit=1,sort=nearest] add bramble
+cmd tp @s 1.5 201 0.5 0 3
+look 0 3
+wait 30
+cmd data merge entity @e[tag=bramble,limit=1] {home_pos:[I;1,201,46],home_radius:2}
+cmd awaken lifetrace briar_sow 900
+cmd awaken ascent pilot rec far_bramble 300 1
+wait 150
+shot far_bramble
+wait 155
+shot far_bramble_after
+cmd kill @e[tag=bramble]
+wait 60
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+cmd fill -39 201 34 39 201 39 minecraft:air
+cmd fill -39 200 34 39 200 39 minecraft:smooth_stone
+wait 20
+# 5. a Briar Sow killed by your hand 36 off: its fall, then its carcass where it fell (it lies a minute)
 cmd tp @s 1.5 201 31.5 0 0
 cmd awaken fauna summon briar_sow
 cmd tag @e[type=awaken:briar_sow,limit=1,sort=nearest] add prey

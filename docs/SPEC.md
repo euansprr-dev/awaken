@@ -18892,3 +18892,27 @@ both sides; `Life.lies`). A beast is the hunt's quarry only as the world brings 
   killed by a player with no knockback, Rises spent first: each is gone within its fall plus 2 ticks, each ran its drops,
   no carcass is laid beside its own falling body, and each hunted beast's carcass lies where it fell within 3 ticks of
   its body going).
+
+**47.13 Beasts at range (Euan's playtest 2026-11-03: the Briar Sow, "when I saw it at a distance, it was shaking a ton
+for some reason and glitching").** Each guess was checked against film and a frame-by-frame trace: the client's smoothing
+of a tracked body against our renderers, the life layer's far step at 32 blocks (springs and idles off), and a fight over
+position between server and client. On open ground none of them shook a beast: tour `fights-beasts-far` films eight
+beasts 36 to 58 blocks off at a narrow view (fov 30, so they fill the frame at their real distance), with their AI, while
+the camera glides in across the far step, and with no AI; and `/awaken lifetrace <type> <frames>` (dev, client) logs the
+nearest of a kind each frame it's drawn (where, its turn, every way the life layer moves its body, which feet are up, a
+blow's flinch and its red), since a clip on CI runs at about 6 frames a second and can't resolve a shake. The shake was
+the brambles. Vanilla's sweet berry bush holds anything living but a fox or a bee (0.8 of its speed, its momentum gone
+each tick) and pricks it while it moves (1 damage, as often as its hurt allows: twice a second). The Briar Sow's wallow is
+ringed with ripe bushes (`LairBuilder`), as are other lairs (their ring scatter) and the kin's nooks (`KinSpawner`). Each
+prick flashed her red and flinched her life layer, and a hit with no attacker scares a wild thing from a random spot
+beside it for 5 s (`FaunaMob.hurtServer`), so she scattered, a new way every half second, deeper into the bushes, caught at
+every step: from afar a shudder that never stopped. Now our wild things (`FaunaMob` and all its kinds: beasts, named
+beasts, cave, deep and water fauna, wild mounts) and the kin (`KinBeast`) live among brambles as a fox does: a berry bush
+neither holds them (`makeStuckInBlock`) nor pricks them (its damage turned aside). Our own Bramble (§41.2) pricks only a
+sprinter, which none of them is, and its hold stays: a thicket slows a beast as it slows you.
+- Dev: the autopilot's `opt fov <30-110>` (films far things at their real distance); `/awaken lifetrace` (client only).
+- Test: `mobs_brambles` (a Briar Sow driven straight across eight blocks of ripe berry bushes, walled in so there is no
+  way round: never pricked, and across in under 7 s; before the fix she was pricked within 2 s).
+- Tour: `fights-beasts-far` (CI): the living row, the glide, the still row, the Sow walking a belt of ripe bushes 34 to 39
+  blocks off to a home beyond it, and a Sow killed at 36 lying where she fell; each filmed and traced, run before and
+  after the fix.

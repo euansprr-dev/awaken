@@ -508,8 +508,15 @@ public class KinBeast extends PathfinderMob {
         }
     }
 
+    /** Kin live among brambles as our wild things do (SPEC §47.13): a berry bush neither holds nor pricks them. */
+    @Override
+    public void makeStuckInBlock(net.minecraft.world.level.block.state.BlockState state, net.minecraft.world.phys.Vec3 speedMultiplier) {
+        if (!state.is(net.minecraft.world.level.block.Blocks.SWEET_BERRY_BUSH)) super.makeStuckInBlock(state, speedMultiplier);
+    }
+
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        if (source.is(net.minecraft.world.damagesource.DamageTypes.SWEET_BERRY_BUSH)) return false;
         if (gnawed()) {
             // fighting a Gnawed one costs no Kinship; beaten down to a heart, the Deep lets go of it instead of it dying
             if (damage < getHealth() - 1F) return super.hurtServer(level, source, damage);

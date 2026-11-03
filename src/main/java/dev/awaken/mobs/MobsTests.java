@@ -50,6 +50,7 @@ final class MobsTests {
         dev.awaken.mobs.entity.CarrierTests.register(); // see it coming: carriers, locks, the effect rule (SPEC §47.2)
         dev.awaken.mobs.entity.SightTests.register(); // sight: no notice, no shot through a wall (SPEC §47.11)
         dev.awaken.mobs.entity.DeathTests.register(); // every death ends: the body gone, its drops given (SPEC §47.12)
+        dev.awaken.mobs.entity.BrambleTests.register(); // berry bushes neither prick nor hold our wild things (SPEC §47.13)
         dev.awaken.mobs.entity.DuelTests.register(); // the duel: openings, recoils, reels, shots sent back (SPEC §47.3)
         AwakenTests.register("mobs_scaling_maths", 40, h -> {
             h.assertTrue(Math.abs(MobScaling.healthMultiplier(5) - 1.375) < 1e-9, "health multiplier at lv5");
