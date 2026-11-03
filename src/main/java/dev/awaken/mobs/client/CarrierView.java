@@ -91,6 +91,7 @@ public final class CarrierView {
             case GROUND -> loop(mc, v, MobSounds.GROUND_RUN.get(), 0.9F);
             case FIELD -> loop(mc, v, MobSounds.FIELD_HISS.get(), 0.6F);
             case PULL -> loop(mc, v, MobSounds.PULL_DRAW.get(), 1.0F);
+            case BURST -> oneShot(mc, net.minecraft.sounds.SoundEvents.CREEPER_PRIMED, o, 1.0F, 1.15F);
         }
     }
 
@@ -259,6 +260,7 @@ public final class CarrierView {
                     case WEDGE -> wedge(vc, v, t, shade);
                     case FIELD -> field(vc, v, t, shade);
                     case PULL -> pullDraw(vc, v, t, shade);
+                    case BURST -> burst(vc, v, t, shade);
                 }
             }
         } catch (RuntimeException ex) {
@@ -448,6 +450,29 @@ public final class CarrierView {
             arc(vc, c.x(), y, c.z(), w - 0.1F, w + 0.03F, a0, a1, argb(v.cls, a), argb(v.cls, a));
         }
         if (!forming) band(vc, c.x(), y, c.z(), 0F, w - 0.1F, 0.01F, 0.25F, 32, argb(v.theme, 0.05F * a), argb(v.theme, 0.22F * a));
+    }
+
+    /**
+     * A burst's reach (SPEC §47.14): its edge beating faster as it nears, and its floor filling out from the body to the
+     * edge, so how far it reaches and how long you have are one shape; white-hot at its heart in the last quarter second.
+     */
+    private static void burst(VertexConsumer vc, View v, float t, boolean shade) {
+        MobsNet.Carrier c = v.c;
+        float k = fade(v, t);
+        if (k <= 0) return;
+        float w = c.width();
+        double y = c.y() + 0.04;
+        float life = Math.max(1, c.life()); // its fill keeps the burst's clock even if a fuse is put out early
+        float f = Mth.clamp(t / life, 0F, 1F);
+        if (shade) {
+            band(vc, c.x(), y, c.z(), w - 0.18F, w + 0.04F, 0.01F, 0.01F, 40, argb(dark(v.cls), 0.4F * k), argb(dark(v.cls), 0.4F * k));
+            return;
+        }
+        float beat = 0.7F + 0.3F * Mth.sin(t * (0.6F + 1.6F * f));
+        band(vc, c.x(), y, c.z(), w - 0.16F, w + 0.03F, 0.01F, 0.01F, 40, argb(v.cls, 0.9F * beat * k), argb(v.cls, 0.9F * beat * k));
+        float r = Math.max(0.05F, (w - 0.16F) * f);
+        band(vc, c.x(), y, c.z(), 0F, r, 0.01F, 0.01F, 40, argb(hot(v.cls, 0.35F), 0.32F * k), argb(v.cls, 0.18F * k));
+        if (life - t < 5 && t <= v.end()) flare(vc, new Vec3(c.x(), c.y() + c.to(), c.z()), 0.8F + 0.6F * (1F - (life - t) / 5F), argb(hot(v.cls, 0.7F), 0.8F * k));
     }
 
     /** A pull: streaks of water or wind sliding in to its heart from its edge. */

@@ -19369,3 +19369,24 @@ sprinter, which none of them is, and its hold stays: a thicket slows a beast as 
   stuck on the belt's far edge for 3 s, pricked five times (red, and the life layer's dip to 1.3), inching out between
   pricks. After: through the belt in 0.4 s at full speed, never pricked, and unpricked standing in it for 4 s after a
   second charge. On open ground, both runs: the drawn path smooth and still bodies still, near and far.
+
+**47.14 Fair damage (Euan's playtest 2026-11-04: in a hive gate "every single mob would explode and take out like 75% of
+my health", then "I entered the boss room, and I basically insta-died with no way to do anything").** Nobody who
+belongs in a fight loses most of their health to one thing in it; a rank gap may still be deadly. The reference player
+is the weakest who belongs: the rank's first level (E 1, D 10, C 25, B 45, A 70, S 100), a sixth of its points in VIT,
+the rank's Hunter set, Normal difficulty (`core.api.FairShare`; its health at a content level is 20 + 0.3 a level).
+- **Volatile bursts once.** A Volatile body (the modifier's tag, a dream room's, or a FUSE creature) bursts once, and
+  the creature owns it (`AwakenMob.burst`): its reach (blast power x 2; an elite's x 1.3 wider) is drawn on the ground in
+  the dodge colour the moment it falls, its floor filling to the edge over 1.25 s (`FairShare.BURST_FUSE`), with one
+  hiss, then one blast (carrier BURST, `Carriers.burst`, client `CarrierView.burst`). The blast is vanilla's for its push
+  and smoke, but its damage peaks at 40% of the fair health at its content level (an elite's 15% harder) and falls along
+  vanilla's curve to nothing at the reach (`Blasts`): 24% of the E reference player one block off, less at
+  every rank above. It is the body's blast, so a dodge answers it (`Strikes.of`: a blast with a cause is PERILOUS).
+  Bosses never burst. Before: the creature burst at 0.5 s with vanilla's power 2 and the gate's Modifiers burst again
+  0.5 s later, ownerless (no dodge) at 2.2, the same at E as at S; one block off they took 191% of the E reference
+  player's health, and two hisses and two blasts a death crowded the sound pool. A FUSE creature's fuse (1.5 s, held
+  still) draws the same reach and its blast is the same one; put out (you got 7 blocks away), its drawing ends. Your own
+  Gravity detonation of a Volatile pair is their burst: it untags them before the kill, so they don't burst again.
+  Test `fights_volatile_once`: the E reference player beside a Volatile creature as it dies: its reach drawn at once,
+  nothing for the fuse, one blast within 30% of their health (24%; the old two blasts replayed beside it: 191%), and one
+  standing just past the drawn edge untouched.

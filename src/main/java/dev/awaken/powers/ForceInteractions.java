@@ -293,8 +293,9 @@ public final class ForceInteractions {
             Combat.hurtRaw(level, o, damage, Forces.Force.GRAVITY, cause);
             Combat.knockFrom(o, at, 1.0, 0.5);
         }
-        Combat.hurtRaw(level, v, Math.max(damage * 3, v.getMaxHealth()), Forces.Force.GRAVITY, cause);
+        // untagged first: this is its burst, so its body doesn't burst again as it dies (SPEC §47.14)
         Forces.untag(v, Forces.Tag.VOLATILE);
+        Combat.hurtRaw(level, v, Math.max(damage * 3, v.getMaxHealth()), Forces.Force.GRAVITY, cause);
     }
 
     /** Spirit meets Mirror: the mirror-thing shatters (bonus damage) and the shock jumps to mirrors nearby. */
