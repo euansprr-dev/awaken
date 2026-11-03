@@ -410,7 +410,11 @@ public final class Autopilot {
             }
             case "holo" -> Awaken.LOG.info("[autopilot] holo {}: {}", arg.trim(), dev.awaken.holo.client.HoloClient.autopilot(arg));
             case "farsight" -> Awaken.LOG.info("[autopilot] farsight {}: {}", arg.trim(), dev.awaken.farsight.client.FarSightClient.autopilot(arg));
-            case "arms" -> Awaken.LOG.info("[autopilot] arms {}: {}", arg.trim(), dev.awaken.arms.client.ArmsAutopilot.run(arg));
+            case "arms" -> { // null: not ready (a line that waits on the server), the same line next tick
+                String said = dev.awaken.arms.client.ArmsAutopilot.run(arg);
+                if (said == null) return false;
+                Awaken.LOG.info("[autopilot] arms {}: {}", arg.trim(), said);
+            }
             case "compat" -> {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
                 waitTicks = 10;

@@ -66,6 +66,7 @@ final class ArmsTests {
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
+        AwakenTests.register("arms_dagger_click", 40, ArmsTests::daggerClick);
         AwakenTests.register("arms_attack_key", 20, ArmsTests::attackKey);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
         AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
@@ -433,15 +434,25 @@ final class ArmsTests {
                     FpSwings.sample(st, e.getKey(), def.cadence().get(0), true, w, qw);
                     h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F,
                             a.id() + " " + e.getKey() + " waits still from the earliest press to its end");
+                } else if (FpSwings.stance(st, true, w, qw)) { // a hand-keyed style rests in its stance (SPEC §25 "Hand-keyed moves")
+                    h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends in its stance");
                 } else {
                     h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
+                }
+                if (st.stance() != null) { // a hand-keyed move kicks along its own blade (SPEC §25 "The hit on the blade")
+                    float[] kick = FpSwings.kick(st, e.getKey());
+                    boolean nod = kick != null && kick[0] == 0 && kick[1] > 0; // a stab's, in a touch
+                    boolean along = kick != null && Math.abs(Math.hypot(kick[0], kick[1]) - 1) < 0.01; // a cut's, a unit
+                    h.assertTrue(nod || along, a.id() + " " + e.getKey() + " kicks along its blade");
                 }
                 // third person's wrist (ArmsWrist): home by the clip's end, and from the hand's rest unless loosed from a
                 // held draw (no wind-up: it starts as the charge held it)
                 float len = FpSwings.wristLength(st, e.getKey());
+                // a hand-keyed style's chain strike after the first starts where the one before left the wrist
+                boolean carried = st.stance() != null && i > 0;
                 for (boolean left : new boolean[]{false, true}) {
                     for (boolean straight : new boolean[]{false, true}) { // with Bendable Cuboids' elbows and without
-                        for (float t : def.windup() > 0 ? new float[]{0, len} : new float[]{len}) {
+                        for (float t : def.windup() > 0 && !carried ? new float[]{0, len} : new float[]{len}) {
                             if (FpSwings.wrist(st, e.getKey(), left, straight, t, q)) {
                                 h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square"
                                         + (straight ? " (straight arms)" : ""));
@@ -893,6 +904,37 @@ final class ArmsTests {
             if (pig.getHealth() < 200) landed = t;
         }
         h.assertTrue(landed == limit, "unanswered, the waiting strike lands " + limit + " ticks in (landed at " + landed + ")");
+        done(h, p);
+    }
+
+    /**
+     * A dagger strikes on the click (SPEC §25 "Hand-keyed moves"): a press still down lands its strike at its wind-up's
+     * end, as a tap's does, shown to everyone near at once; held on, the charge follows the stab and never takes it back.
+     * Every other style's held press still waits (arms_tap_or_hold).
+     */
+    static void daggerClick(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ArmsItems.item("gatewrought_daggers")));
+        LivingEntity pig = put(h, EntityTypes.PIG, 1.5, 2.3, 200);
+        ArmsState s = ArmsServer.state(p);
+        Archetypes.Loaded daggers = Archetypes.get("daggers");
+        Archetype.MoveDef s1 = daggers.move(Archetype.Move.STRIKE_1);
+        Archetype.Charge c = daggers.move(Archetype.Move.HEAVY).charge().orElseThrow();
+        long t0 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && !s.waitHit && !s.waitSeen, "a dagger's press starts strike 1, shown at once, never waiting on the press");
+        int landed = -1;
+        for (int t = 0; t < c.min(); t++) {
+            ArmsServer.moveTick(p, s, t0 + t);
+            if (landed < 0 && pig.getHealth() < 200) landed = t;
+        }
+        h.assertTrue(landed == s1.windup(), "held down, it lands at its wind-up's end all the same, " + s1.windup() + " ticks in (landed at " + landed + ")");
+        float struck = pig.getHealth();
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
+        h.assertTrue(s.chargeSeq == 1 && s.chargeStart != ArmsState.NO_CHARGE && pig.getHealth() == struck,
+                "held on, the charge follows the stab and the stab stands");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_RELEASE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.HEAVY, "let go: the heavy (" + s.move + ")");
         done(h, p);
     }
 

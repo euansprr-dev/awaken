@@ -57,7 +57,8 @@ public final class ArmsPredict {
     /**
      * The press is still down and may become a charge (holdOpen), and the strike it began waits at its hit until the
      * press ends as a tap or becomes the charge (waitHit; the hands hold there: waitNanos of their clock): a held press
-     * never strikes once before it charges (Euan 2026-10-26), and a tap's swing still starts on the press.
+     * never strikes once before it charges (Euan 2026-10-26), and a tap's swing still starts on the press. A dagger's
+     * strike never waits: it lands on the click and a hold charges after it (ArmsRules.waitsOnHold).
      */
     static boolean holdOpen, waitHit;
     static long waitNanos;
@@ -157,6 +158,7 @@ public final class ArmsPredict {
         if (st == null) return;
         int target = pressTarget(mc);
         int s = nextSeq();
+        ArmsFilm.event("press seq " + s + " target " + target);
         aimedId = dev.awaken.core.api.Aim.meantId(p, target, p.getYRot(), p.getXRot(), ArmsRules.pressReach(st));
         presses++;
         pressHeld = true;
@@ -199,6 +201,7 @@ public final class ArmsPredict {
         if (d.startAt() > ticks) {
             buffered = d;
             bufferedSeq = s;
+            ArmsFilm.event("buffer " + d.move().key + " at " + d.startAt());
             return;
         }
         begin(p, st, d.move(), d.step(), d.cadence(), s);
@@ -263,7 +266,8 @@ public final class ArmsPredict {
         Archetype.MoveDef def = st.move(m);
         if (def == null) return;
         perfectHeavy = perfect;
-        waitHit = m.strike() && holdOpen && s == seq;
+        waitHit = m.strike() && holdOpen && s == seq && ArmsRules.waitsOnHold(st.id());
+        ArmsFilm.event("begin " + m.key + " step " + st2 + " seq " + s + (waitHit ? " waits" : ""));
         waitNanos = 0;
         style = st;
         move = m;
@@ -272,7 +276,7 @@ public final class ArmsPredict {
         moveStart = ticks;
         moveSeq = s;
         bodies = 0;
-        moveNanos = System.nanoTime();
+        moveNanos = ArmsFeel.nanos();
         movePaused = ArmsFeel.paused();
         recovery = ArmsRules.recovery(def, st, p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED));
         buffered = null;
@@ -296,8 +300,10 @@ public final class ArmsPredict {
      */
     private static void swing(LocalPlayer p, Archetypes.Loaded st, Archetype.Move m, int cad) {
         float at = FpSwings.swish(FpSwings.style(st.id()), m);
-        if (at <= 0) ArmsAudio.swing(p, st, m, cad);
-        else swishAt = at;
+        if (at <= 0) {
+            ArmsAudio.swing(p, st, m, cad);
+            ArmsFilm.event("swish");
+        } else swishAt = at;
     }
 
     /** When the running move's swish is due (ticks of its clock), -1 when played or none. */
@@ -327,6 +333,7 @@ public final class ArmsPredict {
         if (viewTime() >= swishAt) {
             swishAt = -1;
             ArmsAudio.swing(p, style, move, cadence);
+            ArmsFilm.event("swish");
         }
     }
 
@@ -379,7 +386,7 @@ public final class ArmsPredict {
     }
 
     private static float rawTime() {
-        return (System.nanoTime() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos) / nanosPerTick();
+        return (ArmsFeel.nanos() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos) / ArmsFeel.TICK_NANOS;
     }
 
     /**
@@ -405,7 +412,7 @@ public final class ArmsPredict {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
         float over = rawTime() - waitAt(def);
-        if (over > 0) waitNanos += (long) (over * nanosPerTick());
+        if (over > 0) waitNanos += (long) (over * ArmsFeel.TICK_NANOS);
     }
 
     static void tick() {
@@ -468,6 +475,7 @@ public final class ArmsPredict {
         Archetype.MoveDef def = style == null || move == null ? null : style.move(move);
         if (def == null) return;
         ArmsAudio.swing(p, style, move, cadence);
+        ArmsFilm.event("swish");
         ArmsFx.move(p, style, move, cadence, perfectHeavy, ArmsHands.blowStart(def) - at);
         ArmsBodies.move(p, style, move);
     }
@@ -479,6 +487,7 @@ public final class ArmsPredict {
         settleWait();
         float at = moveTime();
         boolean waited = waitHit;
+        ArmsFilm.event("tap at " + at + (waited ? " waited" : ""));
         waitHit = false;
         Archetype.MoveDef def = waited && style != null && move != null ? style.move(move) : null;
         if (def != null && def.windup() > at + 0.1F) { // it waited at its set: the drive given back
@@ -506,10 +515,11 @@ public final class ArmsPredict {
                 waitShown = false;
                 if (buffered != null && bufferedSeq == seq) buffered = null; // nor will one queued mid-combo
                 charging = true;
+                ArmsFilm.event("charge");
                 chargeStart = ticks;
                 move = Archetype.Move.HEAVY;
                 moveStart = ticks;
-                moveNanos = System.nanoTime();
+                moveNanos = ArmsFeel.nanos();
                 movePaused = ArmsFeel.paused();
                 step = -1;
                 ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_CHARGE, p.getYRot(), p.getXRot(), -1));
@@ -525,6 +535,7 @@ public final class ArmsPredict {
             return;
         }
         charging = false;
+        ArmsFilm.event("release");
         int target = pressTarget(mc);
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         if (target >= 0) aimedId = dev.awaken.core.api.Aim.meantId(p, target, p.getYRot(), p.getXRot(), ArmsRules.pressReach(st));
@@ -809,6 +820,8 @@ public final class ArmsPredict {
         switch (r.what()) {
             case ArmsPayloads.MOVE -> {
                 Archetype.Move m = Archetype.Move.byId(r.aux());
+                ArmsFilm.event("server move " + (m == null ? "-" : m.key) + " seq " + r.seq() + " ours " + (move == null ? "-" : move.key)
+                        + (r.seq() == seq && m != null && m != move && style != null && !charging ? " SWITCHED" : ""));
                 if (r.seq() == seq && m != null && m != move && style != null && !charging) {
                     move = m; // the server ran another move than we guessed: take its word, keep the clock
                     cadence = r.aux2();
@@ -819,6 +832,7 @@ public final class ArmsPredict {
                 if (r.entity() == -2) {
                     dodging = false;
                 } else if (r.seq() == seq) {
+                    ArmsFilm.event("refused seq " + r.seq());
                     fadeFrom = ticks;
                     move = null;
                     step = -1;
@@ -900,6 +914,8 @@ public final class ArmsPredict {
      */
     private static void impact(LocalPlayer p, int target, Blow b, int rawMs, boolean killMoment) {
         int ms = killMoment ? ArmsRules.killHitstop(rawMs) : rawMs;
+        ArmsFilm.event("impact " + Archetype.Move.byId(b.move()) + " ms " + ms + " on " + (move == null ? "-" : move.key)
+                + " at " + (move == null ? -1 : viewTime()));
         ArmsAudio.impact(p, target, style, b.move());
         hitFx(p, target, style, b, ms);
         ArmsStances.struck(target);
@@ -920,9 +936,16 @@ public final class ArmsPredict {
             // each extra body of a cleave a fifth more
             float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
             float n = Math.max(1e-3F, (float) Math.sqrt(dx * dx + dy * dy));
+            float yaw = dx / n, pitch = -dy / n;
+            // a hand-keyed move kicks along the blade its keys draw, not the row (a stab's row ran sideways)
+            float[] along = style == null ? null : FpSwings.kick(FpSwings.style(style.id()), m);
+            if (along != null) {
+                yaw = along[0];
+                pitch = along[1];
+            }
             float k = Math.min(2.4F, rawMs / 40F) * (killMoment ? KILL_KICK : 1F)
                     * (1 + CLEAVE_KICK * Mth.clamp(b.cleave() - 1, 0, ArmsRules.CLEAVE_EXTRA_MAX));
-            CombatFeedback.kick(dx / n * k, -dy / n * k, dx / n * k * 0.4F, 6);
+            CombatFeedback.kick(yaw * k, pitch * k, yaw * k * 0.4F, 6);
         }
     }
 

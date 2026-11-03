@@ -986,7 +986,12 @@ def bake(out=SWINGS, solve=False, round_=None):
             main_at = hand_grip if hand_grip is not None else held.grip
             styles[sid]["offHand"] = [round(float(v), 4) for v in main_at - held.axis * gap]
             styles[sid]["vanillaOffHand"] = [round(float(v), 4) for v in grip_v - Fv[:, 0] * gap]
-    json.dump({"schemaVersion": 6, "generatedBy": "tools/art/anim_lab.py bake", "round": round_, "dt": KEY_DT,
+    # a style keyed by hand (its entry's "by": tools/art/arms_keys.py, SPEC §25 "Hand-keyed moves") is kept as the file
+    # has it: this bake never writes over the Daggers' or the Scythe's keys
+    for sid, st in before.get("styles", {}).items():
+        if st.get("by"):
+            styles[sid] = st
+    json.dump({"schemaVersion": 7, "generatedBy": "tools/art/anim_lab.py bake", "round": round_, "dt": KEY_DT,
                "wristDt": WRIST_DT, "flipped3": flipped3, "grip3": grips3(), "styles": styles},
               open(out, "w"), separators=(",", ":"))
     return out
