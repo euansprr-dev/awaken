@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Every death ends (SPEC §47.12): each of our creatures (gate creatures, bosses, wild beasts, kin) killed by a player
  * drops what it drops and is gone within its own fall, and a hunted beast's carcass is laid only once its falling body
- * has gone (never two bodies, never one left standing).
+ * has gone, where it fell (never two bodies, never one left standing, never none).
  */
 public final class DeathTests {
     private DeathTests() {}
@@ -58,6 +58,7 @@ public final class DeathTests {
         var live = AwakenTests.survivalPlayer(h, "Felled", new BlockPos(0, 1, 1));
         ServerPlayer killer = live.player();
         List<LivingEntity> bodies = new ArrayList<>();
+        Set<LivingEntity> quarries = new java.util.HashSet<>();
         Map<LivingEntity, Integer> fall = new HashMap<>();
         Map<EntityType<?>, Integer> dying = new HashMap<>();
         int i = 0;
@@ -79,6 +80,7 @@ public final class DeathTests {
             bodies.add(e);
             // its fall: a beast's own clip, a kit boss's up to 80 ticks, else vanilla's second
             fall.put(e, e instanceof NamedBeast nb ? nb.deathTicks() : e instanceof AwakenBoss ? 80 : 20);
+            if (dev.awaken.core.api.CreatureTag.of(e).kind() == dev.awaken.core.api.CreatureTag.Kind.BEAST) quarries.add(e); // a hunt's quarry (SPEC §41.6)
         }
         h.assertTrue(bodies.size() > 150, "every creature spawned (" + bodies.size() + ")");
         for (LivingEntity e : bodies) {
@@ -96,7 +98,7 @@ public final class DeathTests {
             dying.merge(e.getType(), 1, Integer::sum);
         }
         long start = level.getGameTime();
-        Map<LivingEntity, Long> gone = new HashMap<>();
+        Map<LivingEntity, Long> gone = new HashMap<>(), laid = new HashMap<>();
         h.onEachTick(() -> {
             long now = level.getGameTime();
             for (LivingEntity e : bodies) {
@@ -108,8 +110,13 @@ public final class DeathTests {
             for (Entity c : level.getEntities((Entity) null, h.getBounds().inflate(40), dev.awaken.core.api.LivingHooks::carcass)) {
                 h.assertTrue(dying.getOrDefault(c.getType(), 0) <= 0 || !sameSpot(c, bodies, gone),
                         "a carcass of " + BuiltInRegistries.ENTITY_TYPE.getKey(c.getType()) + " was laid while its body still fell");
+                // and once its body has gone, a quarry's carcass lies where it fell
+                for (LivingEntity q : quarries) {
+                    if (gone.containsKey(q) && !laid.containsKey(q) && q.getType() == c.getType() && q.distanceToSqr(c) < 1) laid.put(q, now - start);
+                }
             }
-            if (gone.size() < bodies.size() && now - start < 100) return;
+            if ((gone.size() < bodies.size() || laid.size() < quarries.size()) && now - start < 100) return;
+            h.assertTrue(!quarries.isEmpty(), "the hunt's quarries are among them");
             for (LivingEntity e : bodies) {
                 String name = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString();
                 Long took = gone.get(e);
@@ -117,6 +124,8 @@ public final class DeathTests {
                         + h.relativeVec(e.position()) + ", death time " + e.deathTime + (level.isPositionEntityTicking(e.blockPosition()) ? "" : ", not ticking") + ")");
                 h.assertTrue(took <= fall.get(e) + 2, name + "'s body is gone within its fall (" + fall.get(e) + " ticks; took " + took + ")");
                 h.assertTrue(DROPPED.contains(e.getUUID()), name + " dropped what it drops");
+                if (quarries.contains(e)) h.assertTrue(laid.containsKey(e) && laid.get(e) <= took + 3,
+                        name + "'s carcass lies where it fell once its body has gone (" + (laid.containsKey(e) ? "laid " + (laid.get(e) - took) + " ticks after" : "never laid") + ")");
             }
             live.leave();
             h.succeed();
