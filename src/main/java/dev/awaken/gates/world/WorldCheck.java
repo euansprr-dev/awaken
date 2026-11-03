@@ -28,6 +28,10 @@ final class WorldCheck {
     private final List<BlockState> palette = new ArrayList<>();
     private final Map<BlockState, Short> index = new IdentityHashMap<>();
     private byte[] light, reach;
+    /** World floors: the air the carve opened (or a built room's band), as against the dark outside the shell. */
+    java.util.BitSet carved;
+    /** Blocks the generator marked as floating on purpose (SPEC §38.16), when the census asked ({@link Sculpt#CENSUS}). */
+    final java.util.BitSet afloat = new java.util.BitSet();
     long carveNanosTotal, carveNanosWorst;
     int chunks;
 
@@ -43,6 +47,40 @@ final class WorldCheck {
         this.cells = new short[SIDE * SIDE * h];
         palette.add(Blocks.AIR.defaultBlockState());
         index.put(Blocks.AIR.defaultBlockState(), (short) 0);
+        if (f.model == null) {
+            // a rooms floor (no world): its grid painted as the generator paints it, with the slot of rock round it
+            for (int gx = -1; gx <= f.w; gx++) {
+                for (int gz = -1; gz <= f.h; gz++) {
+                    final int bx = gx * 16, bz = gz * 16;
+                    GatePainter.paintFloor(plan, f, f.originSlotX + gx, f.originSlotZ + gz, (lx, y, lz, s) -> {
+                        if (f.paints(y)) set(bx + lx, y, bz + lz, s);
+                    });
+                    chunks++;
+                }
+            }
+            return;
+        }
+        if (f.model instanceof WorldPlan.SculptModel sm) {
+            carved = new java.util.BitSet(cells.length);
+            for (int gx = 0; gx < SIDE / 16; gx++) {
+                for (int gz = 0; gz < SIDE / 16; gz++) {
+                    final int bx = gx * 16, bz = gz * 16;
+                    sm.sculpt().opened(gx, gz, (b, x, y, z) -> {
+                        int c = i(x, y, z);
+                        if (c >= 0) carved.set(c);
+                    });
+                    Room r = f.roomAtSlot(gx, gz);
+                    if (r != null && WorldPlan.built(r)) {
+                        int floorY = f.baseY + r.dy;
+                        for (int x = bx; x < bx + 16; x++) for (int z = bz; z < bz + 16; z++)
+                            for (int y = floorY - Cells.BAND_BELOW; y < floorY + Cells.BAND_ABOVE; y++) {
+                                int c = i(x, y, z);
+                                if (c >= 0) carved.set(c);
+                            }
+                    }
+                }
+            }
+        }
         for (int gx = 0; gx < SIDE / 16; gx++) {
             for (int gz = 0; gz < SIDE / 16; gz++) {
                 final int bx = gx * 16, bz = gz * 16;
@@ -78,11 +116,25 @@ final class WorldCheck {
             index.put(s, p);
         }
         cells[i] = p;
+        if (Sculpt.CENSUS) afloat.set(i, Sculpt.floating());
     }
 
     BlockState at(int x, int y, int z) {
         int i = i(x, y, z);
         return i < 0 ? palette.get(0) : palette.get(cells[i]);
+    }
+
+    /** The palette index at a cell index (0 air), and the palette: for scans over the whole floor. */
+    short code(int i) {
+        return cells[i];
+    }
+
+    int cellCount() {
+        return cells.length;
+    }
+
+    List<BlockState> palette() {
+        return palette;
     }
 
     // ---- what a block is to someone on foot -------------------------------------------------------------------------
@@ -259,7 +311,10 @@ final class WorldCheck {
                     for (; y >= yLo; y--) {
                         int c = i(x, y, z);
                         BlockState st = palette.get(cells[c]);
-                        if (cells[c] != 0 && (st.canOcclude() || st.getBlock() == Blocks.WATER)) break;
+                        // layers (snow, a drift) let the sky through as the game does: only a full layer stops it
+                        boolean layers = cells[c] != 0 && st.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS)
+                                && st.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS) < 8;
+                        if (cells[c] != 0 && (st.canOcclude() && !layers || st.getBlock() == Blocks.WATER)) break;
                         light[c] = 15;
                     }
                     low[x * SIDE + z] = y + 1;

@@ -593,7 +593,7 @@ public final class Rooms {
         mask = dev.awaken.gates.world.Puzzles.press(mask, rune.index(), n);
         fs.runes.put(r.id, mask);
         for (Room.Feature ft : runes) {
-            BlockPos bp = GateService.roomFloor(g, f, r, ft.x(), ft.z()).above(ft.y());
+            BlockPos bp = GateService.feature(g, f, r, ft);
             BlockState st = level.getBlockState(bp);
             if (st.is(GatesRegistry.RUNE.get())) level.setBlock(bp, st.setValue(GateBlocks.Rune.LIT, (mask & (1 << ft.index())) != 0), Block.UPDATE_ALL);
         }

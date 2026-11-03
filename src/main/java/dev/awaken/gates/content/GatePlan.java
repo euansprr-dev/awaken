@@ -30,8 +30,10 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
      * growth that thickens away from the way; a version 6 floor carves exactly as before.
      * 8: room for the Lords (SPEC §38.15): every arena's cover and props stand a block clear of its Lord's sweep, and the
      * inner gate's keeper gets the full arena when its body is too big for the small one; a version 7 arena is unchanged.
+     * 9: placement (SPEC §38.16): nothing placed hangs in the air (a thing whose spot doesn't hold it is left out, cave
+     * roofs keep their shell up their chimneys, hung things hang from something); a version 8 floor carves as before.
      */
-    public static final int CONTENT_VERSION = 8;
+    public static final int CONTENT_VERSION = 9;
 
     /**
      * The version a new gate is made at: {@link #CONTENT_VERSION}, or the one before the depth (6, its arenas as they

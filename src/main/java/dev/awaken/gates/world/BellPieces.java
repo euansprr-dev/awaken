@@ -62,10 +62,28 @@ final class BellPieces {
         for (int i = 0; i < (corner ? 2 : 1); i++) {
             for (int k = 0; k < (corner ? 2 : 1); k++) {
                 s.put(ax + i, top, az + k, bronze);
-                if (chainTo > top) s.box(ax + i, top + 1, az + k, ax + i, chainTo, az + k, chain);
+                if (chainTo == UP) chainUp(s, ax + i, top + 1, az + k, chain);
+                else if (chainTo > top) s.box(ax + i, top + 1, az + k, ax + i, chainTo, az + k, chain);
             }
         }
         s.put(ax, top - (corner ? 3 : 2), az, lamp);
+        // version 9: the lamp hangs from the canon on a chain where the body isn't round it (a swinging bell's) (38.16)
+        if (chainTo == UP) s.op(ax, top - (corner ? 2 : 1), az, ax, top - 1, az, (b, x, y, z) -> {
+            if (!b.hard(x, y, z)) b.set(x, y, z, chain);
+        });
+    }
+
+    /** A bell's {@code chainTo} on a version 9 floor (SPEC §38.16): its chain rises to whatever is over it. */
+    static final int UP = Integer.MAX_VALUE;
+
+    /**
+     * A chain from {@code y0} up to the first solid thing over it, the roof or the dark's shell, never ending short in
+     * the air (through a lamp or a leaf in its way); under an open sky it runs on up into the dark to the top of the floor.
+     */
+    static void chainUp(Sculpt s, int x, int y0, int z, BlockState chain) {
+        s.op(x, y0, z, x, s.yHi, z, (b, xx, y, zz) -> {
+            if (!b.hard(xx, y, zz) && (y == y0 || b.state(xx, y - 1, zz) == chain)) b.set(xx, y, zz, chain);
+        });
     }
 
     /** A stone singer of a drowned choir, standing in the water from {@code footY}, robed on the side it faces. */

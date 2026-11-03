@@ -145,7 +145,10 @@ final class SkyDress extends Dress {
             if (p.b.at(x >> 4, z >> 4) >= 0) continue;
             int y = W + (int) ((Hash.unit(seed, 403, i) - 0.4) * 24);
             double r = high ? 3 + Hash.unit(seed, 404, i) * 4 : 2 + Hash.unit(seed, 404, i) * 2;
+            // drifting on purpose (38.16)
+            c.s.afloat = true;
             farIsle(x, y, z, r);
+            c.s.afloat = false;
         }
     }
 
@@ -269,8 +272,9 @@ final class SkyDress extends Dress {
             double px = lx - Math.cos(a) * 2.0, pz = lz - Math.sin(a) * 2.0;
             int wx = (int) Math.floor(px), wz = (int) Math.floor(pz);
             if (c.d(id, px, pz) > -1.6) continue;
-            // the pool sits in the turf, rock all round it
+            // the pool sits in the turf, rock all round it (from version 9 never under a feature, which would stand on water)
             c.s.op(wx, W - 1, wz, wx, W - 1, wz, (b, x, y, z) -> {
+                if (v9 && featureAt(x, z)) return;
                 if (solid(b, x, y - 1, z) && solid(b, x + 1, y, z) && solid(b, x - 1, y, z) && solid(b, x, y, z + 1) && solid(b, x, y, z - 1))
                     b.set(x, y, z, GatePainter.state("minecraft:water"));
             });
@@ -406,6 +410,7 @@ final class SkyDress extends Dress {
         });
         // the Wind Stair: loose stones floating beside the bridge, well clear of it
         if (stair && hero("floating_steps")) {
+            c.s.afloat = true;
             c.s.op(b[0], W - 3, b[1], b[2], W + 5, b[3], (buf, x, y, z) -> {
                 if (buf.get(x, y, z) != Sculpt.UNSET) return;
                 double[] w = way.at(x + 0.5, z + 0.5);
@@ -413,6 +418,7 @@ final class SkyDress extends Dress {
                 long h = Hash.of(seed + 77, x >> 1, z >> 1, (y - W) >> 1);
                 if (Hash.unit(h) < 0.05) buf.set(x, y, z, Hash.unit(Hash.mix(h)) < 0.2 ? turf : rock);
             });
+            c.s.afloat = false;
         }
     }
 

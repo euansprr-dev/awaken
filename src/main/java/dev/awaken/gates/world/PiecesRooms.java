@@ -268,6 +268,12 @@ final class PiecesRooms {
 
     /** One giant mushroom in a column at (ldx, ldz) from its stem's axis. Returns true if it put anything here. */
     static boolean mushroom(GatePainter.Ctx c, int bx, int bz, double ldx, double ldz, int walk, int stemH, double capR, int ceil, boolean stemAllowed) {
+        if (c.plan.contentVersion() >= 9) {
+            // version 9: the whole cap at its stem's height, and no cap where its stem can't stand (38.16)
+            int sx = c.gx * 16 + bx - (int) Math.round(ldx), sz = c.gz * 16 + bz - (int) Math.round(ldz);
+            if (Pieces.clear(c.r, sx, sz)) return false;
+            ceil = Pieces.apex(c, bx, bz, ldx, ldz, ceil);
+        }
         stemH = Math.min(stemH, ceil - walk - 3);
         if (stemH < 3) return false;
         double ld = Math.hypot(ldx, ldz);
@@ -569,6 +575,8 @@ final class PiecesRooms {
             if (along == len / 2 && ceil - walk > 6) {
                 c.set(bx, walk + 3, bz, s("minecraft:piston[facing=down]"));
                 c.set(bx, walk + 4, bz, s("minecraft:iron_block"));
+                // version 9: the press hangs from the gantry on its ram, all the way up (38.16)
+                if (c.plan.contentVersion() >= 9) for (int y = walk + 5; y < gy; y++) c.set(bx, y, bz, s("minecraft:iron_block"));
             }
             claimed = true;
         }
@@ -851,6 +859,14 @@ final class PiecesRooms {
         if ((oz == 5 || oz == 10) && ceil - walk > 6) {
             double sag = 1 - (dx * dx) / (hw(r) * hw(r));
             int y = ceil - 1 - (int) Math.round(sag * 2);
+            if (c.plan.contentVersion() >= 9) {
+                // version 9: a sagging string steps from block to block at its corners only; each lantern hangs on its own
+                // chain from the roof instead, at the string's height (38.16)
+                if (c.lightless || Math.floorMod(x, 3) != 0) return claimed;
+                for (int yy = ceil - 1; yy >= y; yy--) c.set(bx, yy, bz, GatePainter.chain());
+                c.set(bx, y - 1, bz, GatesRegistry.PAPER_LANTERN.get().defaultBlockState());
+                return true;
+            }
             c.set(bx, y, bz, s("minecraft:iron_chain[axis=x]"));
             if (!c.lightless && Math.floorMod(x, 3) == 0) c.set(bx, y - 1, bz, GatesRegistry.PAPER_LANTERN.get().defaultBlockState());
             claimed = true;
@@ -1154,6 +1170,16 @@ final class PiecesRooms {
 
     /** The upside-down room: furniture on the ceiling, a door frame standing in the middle of nothing, books floating. */
     static boolean wrongRoom(GatePainter.Ctx c, int bx, int bz, int x, int z, double dx, double dz, int walk, int ceil) {
+        // the room is wrong on purpose: what floats here is meant to (38.16)
+        c.afloat(true);
+        try {
+            return wrongRoomAt(c, bx, bz, x, z, dx, dz, walk, ceil);
+        } finally {
+            c.afloat(false);
+        }
+    }
+
+    private static boolean wrongRoomAt(GatePainter.Ctx c, int bx, int bz, int x, int z, double dx, double dz, int walk, int ceil) {
         Room r = c.r;
         boolean claimed = false;
         // a bed and a table on the ceiling

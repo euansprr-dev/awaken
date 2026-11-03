@@ -1,0 +1,174 @@
+# Placement (SPEC 38.16, content version 9): six gate worlds where things hung in the air, before (version 8) and after
+# (version 9), on the depth test's plan. Each pair is shot from the same spot: hovering where the floor's biggest thing
+# not held up at version 8 is in view (goto float works it out from the version 8 floor whichever version you're in).
+# The Stacks' rock lumps and litter on half steps, the Cloisters' prayer flags, the Rooftops' strings of lights, the
+# Dark Steps' flights into the dark, the Open Chasm's rock and the Upside-Down house's furniture.
+#
+# Commands it relies on (game master):
+#   /awaken gate open <rank> <theme> world <version> <world id>   every floor in that world, on the depth test's plan
+#   /awaken gate interior enter                                    into the gate opened last (else the newest)
+#   /awaken gate interior goto float                               where version 8's biggest float on this floor shows
+#   /awaken gate leave, /awaken gate hop
+world autopilot_gate_placement creative 20261103
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+hud off
+# away from Carillon first; on CI the land out there takes a while to make
+cmd tp @s 6000 200 6000
+wait 600
+
+# ---- stacks (rock lumps, litter on half steps) -----------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E drowned_archive world 8 awaken:drowned_archive/stacks
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_stacks_v8
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E drowned_archive world 9 awaken:drowned_archive/stacks
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_stacks_v9
+cmd awaken gate leave
+wait 100
+
+# ---- cloisters (prayer flags) ----------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E frost_monastery world 8 awaken:frost_monastery/cloisters
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_cloisters_v8
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E frost_monastery world 9 awaken:frost_monastery/cloisters
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_cloisters_v9
+cmd awaken gate leave
+wait 100
+
+# ---- rooftops (strings of lights) ------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E lantern_night_market world 8 awaken:lantern_night_market/rooftops
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_rooftops_v8
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E lantern_night_market world 9 awaken:lantern_night_market/rooftops
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_rooftops_v9
+cmd awaken gate leave
+wait 100
+
+# ---- dark steps (flights into the dark) ------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E abyssal_shrine world 8 awaken:abyssal_shrine/dark_steps
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_dark_steps_v8
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E abyssal_shrine world 9 awaken:abyssal_shrine/dark_steps
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_dark_steps_v9
+cmd awaken gate leave
+wait 100
+
+# ---- open chasm (rock in the roof) -----------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E ember_mines world 8 awaken:ember_mines/open_chasm
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_open_chasm_v8
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E ember_mines world 9 awaken:ember_mines/open_chasm
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_open_chasm_v9
+cmd awaken gate leave
+wait 100
+
+# ---- upside down (the furniture) -------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E nightmare world 8 awaken:nightmare/upside_down
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_upside_down_v8
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 300
+cmd awaken gate open E nightmare world 9 awaken:nightmare/upside_down
+wait 500
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto float
+wait 200
+shot placement_upside_down_v9
+cmd awaken gate leave
+wait 100
+quit

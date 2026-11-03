@@ -156,6 +156,11 @@ public final class Pieces {
         return Math.abs(Math.hypot(dx, dz) - R) < w;
     }
 
+    /** A ring hung in the air: on a version 9 floor drawn thick enough that its blocks meet face to face (38.16). */
+    static boolean hungRing(GatePainter.Ctx c, double dx, double dz, double R, double w) {
+        return ring(dx, dz, R, c.plan.contentVersion() >= 9 ? Math.max(w, 0.75) : w);
+    }
+
     /**
      * A bell seen from below, as the radius of its shell at height t (0 = lip, 1 = crown) for a bell of lip radius R:
      * flared lip, waist, shoulder, flat crown.
@@ -190,6 +195,27 @@ public final class Pieces {
             c.set(bx, bottom + 1, bz, shell);
             for (int y = bottom + 2; y < bottom + tall - 3; y++) c.set(bx, y, bz, GatePainter.chain());
         }
+    }
+
+    /**
+     * The roof over a piece's middle ({@code dx, dz} from it) on a version 9 floor, so what hangs there hangs level under
+     * a vault and holds together (SPEC §38.16); before, the roof over this column.
+     */
+    static int apex(GatePainter.Ctx c, int bx, int bz, double dx, double dz, int ceil) {
+        if (c.plan.contentVersion() < 9) return ceil;
+        int x = c.gx * 16 + bx, z = c.gz * 16 + bz;
+        return c.floorY + RoomGeometry.ceiling(c.r, (int) Math.floor(x + 0.5 - dx), (int) Math.floor(z + 0.5 - dz));
+    }
+
+    /**
+     * Version 9 (38.16): a cross of {@code bar} at {@code y} from a ring chandelier's middle out to its rim of radius
+     * {@code R}, so its rings hang from the chain in the middle and not from nothing.
+     */
+    static boolean spokes(GatePainter.Ctx c, int bx, int bz, double dx, double dz, int y, double R, BlockState bar) {
+        double d = Math.hypot(dx, dz);
+        if (c.plan.contentVersion() < 9 || d < 0.9 || d > R || Math.abs(dx) >= 0.6 && Math.abs(dz) >= 0.6) return false;
+        c.set(bx, y, bz, bar);
+        return true;
     }
 
     static BlockState s(String spec) {

@@ -12230,8 +12230,10 @@ now, fought-on second storeys in a later plan.
   (`LANDS`, each measured at version 6 too on the same floors) to twice their partial surfaces, as the plan set, and
   more detail than before; and every world with no jump on its way (the test logs where a way needs one). Held to what
   they measure instead (`FLAT_MOST`, `DETAIL_LEAST`, `PARTIAL_TIMES`): the Swarm and the Forge Below 59% flat (many small
-  fought places, 58.6% and 58.5%), the Forge Below's and the Stacks' detail 34.5 (both 35.0, a hair under), Upward
-  Rain's partial 1.4 times (its mud counted as partial at version 6), the Gates' Heart's 1.95 (1.97). Not held: the
+  fought places, 58.6% and 58.5%), the Forge Below's and the Stacks' detail 33 (both 35.0 at version 8, counting
+  litter on half steps and, in the Forge, crystals stood upside down under the roof; version 9 measures 33.6 and 33.3,
+  38.16), Upward Rain's partial 1.4 times (its mud counted as partial at version 6), the Gates' Heart's 1.9 (1.97 at
+  version 8, 1.92 at 9: a half step under what grew there is made whole). Not held: the
   Bloom (61% flat, 69% plumb: its folds are its walls) and the worlds that keep their line.
 - **Measured** (`gateworlds_depth`, 2026-10-29 with every stage in). The 32 dry caves: flat 43 to 59% (mean 50), 11 to
   15 heights, partial 14 to 22% (18), plumb 20 to 47% (40), roof spread 6.1 to 9.8 (7.1), detail 35 to 51 (41); the Comb
@@ -12315,6 +12317,109 @@ death), the **tallest** the highest any part reaches. Version 8 builds every Lor
   its sweep (columns and lanterns), 83 as a keeper. The Glass Serpent as a keeper had 26, the Hive Regent as a keeper
   13, the Root Saint 9 (pillars), the Sky Leviathan 3 (an island post), and the Bell Warden, the Colossus and the
   Mother of Spores had some as keepers. At 8 every arena has none.
+
+### 38.16 Placement: nothing hangs in the air (content version 9; Euan 2026-11-03, playing a gate: "a lot of floating things in gates instead of placemement all being thought out")
+
+Props go where a set dresser would put them, on a surface, an edge, a corner or the roof, and a spot that can't hold
+a thing gets nothing. Nothing is put there to fill the gap.
+
+- **What holds what** (`Holds`, one rule per block state):
+  - A plant, a prop, crumbs, a candle, a carpet, a cache, a rune or the seal stands on a face that holds it. That is
+    the top of a full block, a top slab or an upside-down stair (`isFaceSturdy(UP, CENTER)`). A tall plant's top
+    stands on its bottom.
+  - A lantern, hanging roots, cave vines or a spore blossom hangs from such a face, from a chain, or from a string of
+    lights.
+  - Roots, kelp, a bell rope, a drip or a fall of light is held at one end.
+  - The entrance is a tile set in the floor, so it's part of the floor.
+  - A vestment, a torch, a banner, a ladder or a coral fan is held by the wall behind it.
+  - A string of lights or prayer flags is tied at both ends to something solid, and each block of it touches the next
+    face to face.
+  - Solid things joined face to face, with the chains and lamps hung among them, reach the ground, a wall, the roof,
+    water, or a held thing with a flat top (a vault's lid on its cache). A lump of under 2,048 blocks that doesn't is
+    floating.
+- **How each placer keeps to it (version 9):**
+  - Bells: a hung bell's chain runs up to the roof (`BellPieces.chainUp`) in the Void, the Halls and the Shaft. The
+    Void's stair has a column under each step. A lamp hung from a bell frame's canopy has its chain run up to it.
+  - Chandeliers, the Lords' crowns, mirrors, gears, spores and the jelly crown take their height from the roof over
+    their middle (`Pieces.apex`). Their arms join with spokes, and their rings are 0.75 wide so the blocks meet face
+    to face. A room chandelier hangs at its middle's height over its middle's floor, and an arm's tip goes only where
+    the arm reaches it. Roots hold nothing up, so the Fungal Hollow's caps hang on a mushroom stalk and spread on gills.
+    Nothing else hangs from the roof over a chandelier's pieces.
+  - Strings: lights and prayer flags run wall to wall (`Dress.strung`), placed after the ground is solved
+    (`Dress.later`) so they tie to the rock that's really there. A string that can't be tied isn't hung. A shrine
+    pole's flags run down to a peg on the ground, and the ground under them stays level. Market lanterns under a vault
+    each hang on their own chain, their lengths following the old sag.
+  - The Festival's great lantern stands on four timber legs. Under the open sky there is nothing to hang it from.
+  - Beams cross a vault only where both ends rest. They carry on over a room's set piece and are left out of the
+    Lords' arenas.
+  - Stairs: a flight off an edge gets a sloped soffit (the Abyss's dark steps, the Dream's stair going nowhere). The
+    Abyss's flight goes only where its top step meets the island, and its candles stand on pale posts at the ends of
+    every third step (a stair's top doesn't hold a candle). A rare world in another theme's dress runs that dress's
+    placements that wait for the ground too (`BorrowedDress.late`: the Gates' Heart's flights, borrowed strings).
+  - Upside-down furniture is carried up in its own stuff to meet a roof that isn't flat (`DreamDress.shim`). The
+    Nursery's mobile hangs on a chain.
+  - Features stand on a whole step: a half step under a cache or a rune is made whole (`Relief.level`). In a built
+    room a feature stands on the floor under it, up a terrace's dais or down in a pit (`RoomGeometry.featureLift`, read
+    by the painter and by `GateService.feature` for every use: the rune you press, the lantern you take, the shrine's
+    spot), and the net never leaves out a gate piece (a shrine, a seal, a cache, a rune, a lantern, an updraft:
+    `Holds.settles`). A dais's edge under a feature stays a full block, not a stair (`Ctx.standsOn`). In a room of sky
+    islands a feature over the gap moves to the nearest island column within 6, off the way through the doors
+    (`FloorBuilder.ashore`). An isle's waterfall pool is never dug under a feature (`Dress.featureAt`).
+  - Nothing grows or lies on a half step. Where something grew on the floor line the half step there is made whole.
+    What would have lain on a half step is kicked onto a whole step within two, the foot of the rise first, never onto
+    a pinned column (`Relief.kick`), and litter gathers on a whole step beside half steps, half again for each
+    (`Relief.gather`): it collects at the foot and on the lip of a rise. The Forge Below and the Stacks keep 91% of
+    what lay about at version 8.
+  - Mushrooms grow only where the room is clear. A hive pillar stands whole or not at all, and its canopy only round
+    a pillar that stands. Market awnings rest on posts and join their counters face to face. The conveyor's press
+    hangs from the gantry on its ram.
+  - Cave roofs: up a chimney the shell follows the roof's slope (`CaveEngine.Cave.roofD`), and the carve reaches over
+    the highest swell.
+- **The net** (`Sculpt.Buf.crumbs`, `GatePainter.Band`), run after a chunk's operations:
+  - A lump of rock or solid things under 2,048 blocks is left out unless something holds it: water, the band's ends,
+    a held thing with a flat top, or being marked as floating on purpose.
+  - A lump that runs over a chunk side is followed into the chunks next to it. Those chunks are carved by their own
+    operations, up to 8 of them, so every chunk the lump crosses reaches the same answer. Their carves are kept per
+    thread (the last 12), so neighbours carving one after another don't carve each other again (the Honey Lake's worst
+    chunk 8 ms, not 60).
+  - A lump that touches water, face to face or in the chunk beside, is held by it (a pool's rim stays).
+  - Then `Holds.settle` drops anything whose spot doesn't hold it, so a plant on a lump goes with the lump. If the
+    settle drops a chain, the net runs once more.
+  - A room's chunk does the same within its band.
+- **Floating on purpose** (`Sculpt.afloat`, `Ctx.afloat`). These stay, and the census counts them apart:
+  - the Sky's far isles and the Wind Stair's floating steps;
+  - the Endless Stair's and the Twist's landings;
+  - the Sleeper's furniture, the Wrong Room and the Nightmare's floating clutter;
+  - the Sky Leviathan's stones;
+  - the Rig's collapse-run tiles and the Gauntlet's course and walls over the drop;
+  - the Sky Archipelago's updraft pads.
+- **Test `gates_placement`.** It plans every world in every theme (412 floors: every floor of the 75 worlds, and
+  rooms plans of every theme, layout, twist and set piece). It builds each floor block by block and checks every
+  placed thing against the rules.
+  - It counts by placer: the code that set the block, found by re-planning with `Sculpt.TRACE`.
+  - Designed floats are counted on their own line.
+  - Knobs: `AWAKEN_PLACEMENT_VERSION` measures an older version, `AWAKEN_PLACEMENT_ONLY` takes one world, and
+    `AWAKEN_PLACEMENT_COLUMN` dumps columns.
+  - The world tests' light model (`WorldCheck`) lets the sky through layers short of a full block (snow, a drift), as
+    the game does. Before, the Aurora Steppe's way read as lit only from the side, past snow lying on slabs, which
+    version 9 drops.
+  - Before, at version 8: 239,318 of 350,358 placed things weren't held up, on 372 of the 412 floors. The biggest
+    groups:
+    - 120,450 blocks of cave rock in 9,203 lumps;
+    - 57,905 things lying on half steps;
+    - 35,407 blocks of bells and their frames hung on nothing;
+    - 4,609 of the Abyss's dark steps;
+    - 4,356 from the Lords' arena pieces;
+    - 3,048 from room chandeliers and beams;
+    - 2,807 from the Market's strings and the great lantern.
+  - After, at version 9: none of 331,172 (the litter kicked off half steps and the gate pieces the net no longer drops
+    are counted now). 7,601 blocks in 464 lumps float on purpose.
+- **Tour `gate-placement`** (`tools/autopilot/gate-placement.txt`): six worlds before and after (the Stacks, the
+  Cloisters, the Rooftops, the Dark Steps, the Open Chasm, the Upside-Down house), each pair from one spot:
+  `/awaken gate interior goto float` hovers where the floor's biggest thing not held up at version 8 is in view, worked
+  out from the version 8 floor at any version (`PlacementTests.floatView`; `float2` the next biggest, 24 blocks off).
+- **Versions:** version 9 is `GatePlan.CONTENT_VERSION`. Entered gates keep their version. A version 8 floor carves
+  as before (`gateworlds_depth_v6_golden` still holds version 6 block for block).
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
