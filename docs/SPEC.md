@@ -19390,7 +19390,9 @@ the blow's class, poison and burn left behind counted in full (poison stops at h
   player at or above the rank of what hurts them (`MobLoot.rankFor` of its level, or the gate's rank for what has no
   creature behind it in a gate: its traps, water, falling floors, `GateHooks.rankOf`), one blow takes at most half their
   health and one source at most half in any 4 s (80 ticks: nine in ten Lord strings land inside it). A Lord and what it
-  calls are one source. What it holds back is what would have come off; nothing else changes (the blow still lands,
+  calls are one source. The land's creatures carry the land's level (`CreatureTag`: vanilla monsters, herds, a hunt's
+  lead, a camp's) and are held by it: a vanilla creeper's blast, the same at every level, took 131% of the E reference
+  player a block and a half off and 90% of the D player; both land half now. What it holds back is what would have come off; nothing else changes (the blow still lands,
   knocks and flashes). It doesn't hold a rank gap, the void or /kill, or anything outside a gate with no creature behind
   it. A Glass gate's doubled blows meet it too: Glass makes small hits hurt, never one blow a death.
 - **A Lord's moment.** Walking into a boss room never kills: the moment a Lord first sees you (its intro, or its fight
@@ -19427,3 +19429,9 @@ the blow's class, poison and burn left behind counted in full (poison stops at h
   Lord's moment take a quarter together. `fights_fair_gates`: each of a gate's traps (the gauntlet's pit and press, the
   collapse's pit, a cave-in's stone, a world's catch) on every rank's reference player, 30% at most alone, under half
   under Glass; the gauntlet's press was 55% of the E player under Glass (4 + 12% of health), now 3 + 11% (42%, 18% alone).
+  `fights_fair_wilds`: a levelled creeper's blast and a formed creeper's seed (rung 3, `Combos`) beside each rank's
+  reference player, never more than half landing (the seed takes 40% at E on its own). Not tested, by reading: a
+  herd's trample (4) and a storm cell's lightning (3) are flat, at most a fifth of the E player; the Descent's zones and
+  the holdfasts deal nothing of their own (their creatures are audited, the Descent's water is vanilla drowning); a
+  dream's Chase and Duel can't kill (a killing blow wakes you, `DreamEvents`) and their creatures are audited at the
+  dream's level.

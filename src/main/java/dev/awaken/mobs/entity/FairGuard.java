@@ -21,7 +21,8 @@ import java.util.UUID;
  * The fair guard (SPEC §47.14), the backstop under the audit: for a player at or above the rank of what hurts them, no
  * one blow takes more than half their health, and no one source more than half in any four seconds (a Lord's string, a
  * beam's ticks, a Glass gate's doubled blows). A source is a creature, a Lord and what it calls being one; what has no
- * creature behind it in a gate (its traps, its water, its falling floors) is the gate's. It holds after armour, so what
+ * creature behind it in a gate (its traps, its water, its falling floors) is the gate's; the land's creatures (vanilla
+ * ones with the land's level, a herd, a hunt) are held by that level. It holds after armour, so what
  * it trims is what would have come off. A rank gap isn't guarded (an E player in an S gate dies as fast as the S gate
  * kills), nor is what passes every protection (the void, /kill), nor anything outside a gate with no creature behind it.
  */
@@ -116,7 +117,13 @@ public final class FairGuard {
                 int caller = mob.getPersistentData().getIntOr("awaken_summoner", -1);
                 return caller >= 0 ? caller : mob.getId();
             }
-            // a creature with no level of ours (a gate's own, like the Hollow Follower; a vanilla one) is the gate's
+            // the land's creatures (a creeper, a herd, a hunt's lead, a camp's) carry the land's level instead
+            dev.awaken.core.api.CreatureTag tag = mob.getExistingData(CoreApi.CREATURE_TAG.get()).orElse(null);
+            if (tag != null && tag.kind() != dev.awaken.core.api.CreatureTag.Kind.NONE && tag.level() > 0) {
+                if (Progression.rank(p).ordinal() < MobLoot.rankFor(tag.level()).ordinal()) return NONE;
+                return mob.getId();
+            }
+            // a creature with no level of ours (a gate's own, like the Hollow Follower) is the gate's
         }
         int gate = GateHooks.rankOf(p);
         return gate >= 0 && Progression.rank(p).ordinal() >= gate ? GATE : NONE;
