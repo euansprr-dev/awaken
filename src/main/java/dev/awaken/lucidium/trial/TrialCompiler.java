@@ -168,6 +168,21 @@ public final class TrialCompiler {
                 k.road(8).ring().road(2).climbUp(5, 3).road(3).ring().road(1).ribbon(rib - 2, 3).road(3).climbUp(high, 2).ring()
                         .road(2).hangUp(3, 2).road(2).ribbon(rib, 3).ring().road(3);
             }
+            case ROPE -> {
+                // gaps no jump crosses, each under a lantern of light: throw, swing, let go at the top
+                k.road(8).ring().road(2).swing(22, 14, 6).road(9).ring().road(2).swing(24 - 2 * Math.min(1, variant), 14, 8).road(9).ring()
+                        .road(2).swing(22, 16, 8).road(8);
+            }
+            case LEAP -> {
+                // one jump in the air is enough, then not: the dash, a step up, and the long one down
+                k.road(8).ring().road(2).leap(6, 0).road(5).leap(8, 0).road(4).ring().road(2).leap(6, 2).road(5)
+                        .leap(10 - variant, 0).road(4).ring().road(2).leap(12, -4).road(6);
+            }
+            case WINGS -> {
+                // off the cliff, wings open in the fall, through the rings to an island; then a longer one
+                k.road(8).ring().road(3).glide(30, 20).road(CourseKit.ISLAND - 3).ring().road(3).glide(40 - 4 * variant, 24)
+                        .road(6);
+            }
             default -> k.road(12).ring().road(12);
         }
         if (bell) k.dais();

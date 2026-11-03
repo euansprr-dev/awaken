@@ -5,7 +5,6 @@ import dev.awaken.lucidium.dream.Dreams;
 import dev.awaken.lucidium.dream.JournalActions;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -177,13 +176,6 @@ public final class LucidiumNet {
     }
 
     /** H held long enough while lucid: shape the dream (or, sneaking at 80+, call on a memory). */
-    public record Manifest(boolean summon) implements CustomPacketPayload {
-        public static final Type<Manifest> TYPE = new Type<>(Awaken.id("lucidium_manifest"));
-        public static final StreamCodec<ByteBuf, Manifest> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.BOOL, Manifest::summon, Manifest::new);
-
-        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
-    }
 
     /** Sneak held while lying in bed: a dreamless night. */
     public record Dreamless() implements CustomPacketPayload {
@@ -223,9 +215,6 @@ public final class LucidiumNet {
         });
         r.playToServer(RealityCheck.TYPE, RealityCheck.STREAM_CODEC, (p, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) realityCheck(sp);
-        });
-        r.playToServer(Manifest.TYPE, Manifest.STREAM_CODEC, (p, ctx) -> {
-            if (ctx.player() instanceof ServerPlayer sp) Dreams.manifest(sp, p.summon());
         });
         r.playToServer(Dreamless.TYPE, Dreamless.STREAM_CODEC, (p, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) dev.awaken.lucidium.dream.Sleep.chooseDreamless(sp);

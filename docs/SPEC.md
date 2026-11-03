@@ -395,14 +395,18 @@ Arrivals (§28.9, 2026-10-29): waking from a dream and the dream rescue wait for
 going into a dream doesn't (the cell is built first).
 
 **Dreams remade (2026-11-03, `docs/dreams/PLAN.md`, Euan approved all 12 decisions).** A dream is now a remembered
-trial with one goal and a clock; the 40% roll and the island wander above are kept only for a version-1 plan replayed
-from the history, the together-dream and the commands until stage 4 removes them. No `dreamsRemade` flag (PLAN §6):
-the old path is gone by the same delivery, so a flag would only guard a dream nobody plays.
+trial with one goal and a clock. The paragraph above is history: stage 4 removed the 40% roll, the islands of memory
+(`DreamPlanner.plan`, the island `BlueprintCompiler`, `Imagined`, the swaps while nobody looks), lucid flight, shaping
+and summoning (`Manifest` and its payload), and the nightmare and mentor at island nodes (the Chase and the Duel took
+their place, §9.5). `Dreams.enter` refuses a plan with no course; an old plan with no trial compiles as the first dream;
+`dream now`, `dream plan` and `Lucidium.startShared` dream the trial waiting (startShared: or the one finished last,
+§9.6). Lucidity stays as a trial's starting seconds. No `dreamsRemade` flag (PLAN §6): the old path went by the same
+delivery, so a flag would only have guarded a dream nobody plays.
 
 ### 9.1 Trials
 
-`trial.Trial`: FIRST (the Dreaming Bell's dream, 75 s), Runs WALL, LEDGE, VAULT (built), CLIMB, ROPE, LEAP, WINGS (stage 2
-and 4), Rooms WRONG, LOOK_AWAY, HUSH, FOLD, NO_DOOR (180 s), LONG_FALL (120 s) (§9.5), CHASE (120 s), DUEL (150 s). Each has one
+`trial.Trial`: FIRST (the Dreaming Bell's dream, 75 s), Runs WALL, LEDGE, VAULT (stage 1), CLIMB (stage 2), ROPE, LEAP,
+WINGS (stage 4, §9.6), Rooms WRONG, LOOK_AWAY, HUSH, FOLD, NO_DOOR (180 s), LONG_FALL (120 s) (§9.5), CHASE (120 s), DUEL (150 s). Each has one
 goal line and a small line under it. A Run's course is laid by `trial.CourseKit` from RunnerRules' own probes (read only,
 §12): every wall-run, wall jump, ledge hang and shimmy, vault and slide is proved by the same checks the movement makes,
 and `TrialCompiler` tries four seeded variants then a plain road, so a plan always compiles. The solver's time from the
@@ -558,8 +562,36 @@ may move: `ActiveDream.roomGoal`, the small Waking Door laid again where it goes
   heartbeats: the catch), `dream.tick` (the clock's last ten seconds, client side: every half second slowing to every
   second, a little lower and louder each time), `dream.ring` (a ring passed, pitched up ring by ring), `dream.won` (the
   end reached: a warm rising chord).
+- **The air's Runs** (each waits once its Ascent tier is yours: `Ascent.has` TETHER, LEAPER, WINGS; old worlds are
+  seeded with them like the rest, §9.2). Proved like the ground's, by the Ascent's own rules at mastery 0 holding forward
+  (`trial.AirProofs` over `trial.CourseSpace`, a `SwingSpace` answered from the course's blocks before any are placed),
+  each also proving a plain sprint jump falls short and that the landing is on the far road, not past it:
+  - **The rope** (`CourseKit.swing(len, up, ahead)`): a gap under a lantern of dream light (3 wide, 2 high, 3 deep: big
+    enough for the rope's fan from anywhere on the jump), thrown at 2 and at 9 ticks into the jump (`AscentSwing.find`,
+    `entry`, `travel`, `tick` to the top, `letGoClear`/`holdOn`, `letGo`, then `carryStep`): both must land. A swing
+    carries about 27 from the take-off whatever the gap, and needs open air under the arc, so the gaps are 22-24 with 9
+    of road after. Layout: road 8, swing 22 (lantern 14 up, 6 on), swing 24 (14, 8), swing 22 (16, 8); par 17 s.
+  - **The leap** (`CourseKit.leap(len, rise)`): the sprint jump, the double jump near its top; the air dash as it falls
+    only if the double jump alone comes down short. Reach at mastery 0: double jump about 6.8 flat; with the dash 12.4
+    flat, 8.9 two up, 16.5 four down; nothing three up. Layout: 6 flat (the double jump alone), 8 flat, 6 two up, 10
+    flat, 12 four down; par 13 s.
+  - **The wings** (`CourseKit.glide(len, drop)`): the road ends at a cliff; an island (7 wide, 14 long, clouds under its
+    ends) `drop` below and `len` on, three rings of light in the air between (a fall from any is caught back at the
+    cliff). Proved by falling 3 ticks, `glideCatch`, then `glideStep` looking at the island's middle until the feet
+    touch it (a glide this way lands at 1.6 to 2 times its drop). Layout: 30 on and 20 down, then 40 on and 24 down; par
+    12 s.
+  The twists the plan named for these (anchors lighting in reach, drifting islands, updraft columns) are not built: the
+  air Runs are the plain proved layouts. All three Runs' clocks are the 60 s floor.
+- **The goal line** sits under any boss plates (the sleeper's and the Chase's fears are NIGHTMARE plates;
+  `CustomizeGuiOverlayEvent.BossEventProgress` gives their bottom each frame) and wraps to fit between the corners'
+  panels (`TrialHud.goal`), so a plate never covers it and the right-hand panel never cuts it.
+- **Hush's solve** (`/awaken dream solve`): a step that lands you by the sleeper is a sneak's step; it sleeps on for 5 s
+  (`ActiveDream.roomQuietUntil`) while you take the next.
+- **Old saves**: a player asleep mid-dream at the update (an island dream) is woken at login where they lay, its
+  flight taken back, and the ledger is seeded on the next check (the new first dream and up to two Runs the body can
+  do); nothing of the old dream can be replayed.
 - **Tests**: `dreams_replay` (listed, no bell, nothing spent, the time counted, nothing taken off the list, no residue
-  twice a day).
+  twice a day); the air Runs in `dreams_runs_solvable`; `dreams_upgrade` (the old save's wake and seeding).
 
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and

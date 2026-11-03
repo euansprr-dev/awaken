@@ -14,7 +14,6 @@ import dev.awaken.lucidium.dream.Planner;
 import dev.awaken.lucidium.dream.Visions;
 import dev.awaken.lucidium.journal.DayJournal;
 import dev.awaken.lucidium.plan.DreamPlan;
-import dev.awaken.lucidium.plan.DreamPlanner;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -109,14 +108,8 @@ final class LucidiumCommands {
             if (trial.isPresent()) prepared = Optional.of(Planner.buildNow(src.getServer(), sp.getUUID(), trial.get()));
         }
         if (prepared.isEmpty()) {
-            Dreamer d = Dreams.dreamer(sp);
-            if (d.snapshots.isEmpty()) DayJournal.capture(sp, Snapshot.Kind.MANUAL, sp.blockPosition(), "where you stood when you fell asleep");
-            Optional<DreamPlan> plan = DreamPlanner.plan(Planner.input(sp));
-            if (plan.isEmpty()) {
-                src.sendFailure(Component.literal("Nothing to dream of yet (the journal is empty)."));
-                return 0;
-            }
-            prepared = Optional.of(Planner.buildNow(src.getServer(), sp.getUUID(), plan.get()));
+            src.sendFailure(Component.literal("No dream waits tonight (offer one: /awaken dream offer <trial>)."));
+            return 0;
         }
         boolean ok = Dreams.enter(sp, prepared.get(), Dreams.Entry.awake()) != null;
         if (!ok) {
@@ -131,9 +124,9 @@ final class LucidiumCommands {
         Optional<Planner.Prepared> ready = Planner.ready(sp);
         DreamPlan plan = ready.map(Planner.Prepared::plan).orElse(null);
         String status = ready.isPresent() ? "ready" : Planner.building(sp) ? "building" : "not built (preview)";
-        if (plan == null) plan = DreamPlanner.plan(Planner.input(sp)).orElse(null);
+        if (plan == null) plan = DreamOffers.plan(sp).orElse(null);
         if (plan == null) {
-            src.sendSuccess(() -> Component.literal("No dream tonight: nothing in the Day Journal yet. You'd sleep deeply."), false);
+            src.sendSuccess(() -> Component.literal("No dream tonight: nothing waits. You'd sleep deeply."), false);
             return 0;
         }
         DreamPlan p = plan;

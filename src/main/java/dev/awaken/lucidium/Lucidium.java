@@ -7,7 +7,7 @@ import dev.awaken.lucidium.dream.DreamOffers;
 import dev.awaken.lucidium.dream.Dreams;
 import dev.awaken.lucidium.dream.Planner;
 import dev.awaken.lucidium.dream.Sleep;
-import dev.awaken.lucidium.plan.DreamPlanner;
+import dev.awaken.lucidium.plan.DreamPlan;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -78,17 +78,22 @@ public final class Lucidium {
     }
 
     /**
-     * Starts a shared dream: everyone listed dreams the first player's dream (built now if tonight's isn't ready).
-     * Returns false if the host can't dream (nothing to dream of yet, or already dreaming). Sleepers in the same
-     * room share dreams automatically; this is for machines and scripted moments.
+     * Starts a shared dream: everyone listed dreams the first player's dream (SPEC §9.6): the trial waiting for them,
+     * built now, or else the one they finished last, dreamt again with everyone's best runs as ghosts. Returns false if
+     * the host can't dream (nothing waits and nothing's finished, or already dreaming). Sleepers in the same room share
+     * dreams automatically; this is for machines and scripted moments.
      */
     public static boolean startShared(List<ServerPlayer> players) {
         if (players.isEmpty()) return false;
         ServerPlayer host = players.getFirst();
         Optional<Planner.Prepared> prepared = Planner.take(host);
         if (prepared.isEmpty()) {
-            var plan = DreamPlanner.plan(Planner.input(host));
-            if (plan.isEmpty()) return false;
+            Optional<DreamPlan> plan = DreamOffers.plan(host);
+            if (plan.isEmpty()) {
+                List<DreamLedger.Finished> done = DreamOffers.replays(Dreams.dreamer(host));
+                if (done.isEmpty()) return false;
+                plan = Optional.of(DreamOffers.replayPlan(host, done.getFirst().trial()));
+            }
             prepared = Optional.of(Planner.buildNow(host.level().getServer(), host.getUUID(), plan.get()));
         }
         ActiveDream ad = Dreams.enter(host, prepared.get(), Dreams.Entry.awake());

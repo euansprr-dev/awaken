@@ -57,6 +57,8 @@ public final class LucidiumClient {
             ClientTrial.clear();
         });
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, TrialRings::submit);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.BossEventProgress.class, TrialHud::onBossBar);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderGuiEvent.Pre.class, e -> TrialHud.frameStart());
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Init.Post.class, LucidiumClient::onScreen);
         CodexEntries.addSource(LucidiumClient::codex);
         dev.awaken.core.api.MapMarks.register(ClientTrial::marks); // places dreams showed you (SPEC §9.5)
@@ -126,18 +128,6 @@ public final class LucidiumClient {
             if (ClientDream.dreaming()) ClientDream.realityCheck = 30;
         }
         LucidiumNet.DreamHud hud = ClientDream.hud;
-        boolean canShape = hud.has(LucidiumNet.DreamHud.SHAPE) || hud.has(LucidiumNet.DreamHud.SUMMON);
-        if (ClientDream.dreaming() && canShape && AwakenKeys.REALITY_CHECK.isDown() && mc.gui.screen() == null) {
-            ClientDream.hold++;
-            if (ClientDream.hold >= HOLD_TICKS && !ClientDream.manifestSent) {
-                ClientDream.manifestSent = true;
-                boolean summon = player.isShiftKeyDown() && hud.has(LucidiumNet.DreamHud.SUMMON);
-                ClientPacketDistributor.sendToServer(new LucidiumNet.Manifest(summon));
-            }
-        } else {
-            ClientDream.hold = 0;
-            ClientDream.manifestSent = false;
-        }
 
         // rain falling up
         if (ClientDream.dreaming() && hud.has(LucidiumNet.DreamHud.RAIN_UP) && mc.level != null) {

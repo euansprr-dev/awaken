@@ -1,5 +1,6 @@
 package dev.awaken.lucidium.dream;
 
+import dev.awaken.body.ascent.Ascent;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.PlayDays;
@@ -52,7 +53,7 @@ public final class DreamOffers {
     static final String FLAG = "awaken:dreams";
     /** The trials with a course built so far, in the order they come to wait. */
     static final Set<Trial> BUILT = Set.of(Trial.FIRST, Trial.WALL, Trial.LEDGE, Trial.VAULT, Trial.CLIMB,
-            Trial.WRONG, Trial.LOOK_AWAY, Trial.HUSH, Trial.LONG_FALL, Trial.FOLD, Trial.NO_DOOR, Trial.CHASE, Trial.DUEL);
+            Trial.ROPE, Trial.LEAP, Trial.WINGS, Trial.WRONG, Trial.LOOK_AWAY, Trial.HUSH, Trial.LONG_FALL, Trial.FOLD, Trial.NO_DOOR, Trial.CHASE, Trial.DUEL);
     /** The Rooms a hidden place comes in, in turn (SPEC §9.5). */
     static final List<Trial> PLACE_ROOMS = List.of(Trial.FOLD, Trial.NO_DOOR, Trial.LOOK_AWAY, Trial.HUSH, Trial.WRONG);
     /** The Chase waits once one kind of death came this often this week; the Duel this many play-days after the last. */
@@ -192,6 +193,10 @@ public final class DreamOffers {
         return switch (t) {
             case WALL, LEDGE, VAULT -> true; // the Runner's moves are yours from the start
             case CLIMB -> dev.awaken.powers.Powers.owns(sp, dev.awaken.body.RunnerRules.STRIDE_POWER); // running up a face needs Wall Stride
+            // the air's Runs wait once the Ascent's tier is yours (the rope, the leap, the wings)
+            case ROPE -> Ascent.has(sp, Ascent.Tier.TETHER);
+            case LEAP -> Ascent.has(sp, Ascent.Tier.LEAPER);
+            case WINGS -> Ascent.has(sp, Ascent.Tier.WINGS);
             default -> false;
         };
     }

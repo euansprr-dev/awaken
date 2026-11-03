@@ -283,7 +283,7 @@ final class RoomRules {
 
     static void hush(ServerPlayer sp, ActiveDream ad, long now) {
         BlockPos g = ad.roomGoal;
-        if (g == null) return;
+        if (g == null || now < ad.roomQuietUntil) return;
         double d2 = sp.distanceToSqr(Vec3.atCenterOf(g));
         boolean loud = d2 < HUSH * HUSH && !sp.isShiftKeyDown() || d2 < HUSH_RUN * HUSH_RUN && sp.isSprinting();
         if (!loud) return;
@@ -620,6 +620,8 @@ final class RoomRules {
                     return true;
                 }
             }
+            // a step that lands you by the sleeper is a sneak's step: it stays asleep while you take the next one
+            case HUSH -> ad.roomQuietUntil = now + 100;
             default -> {}
         }
         // the rule's done (or has nothing to do): into the door, or two steps from the bell looking at it (strike it)

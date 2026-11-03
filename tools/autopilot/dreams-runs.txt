@@ -28,7 +28,10 @@ cmd gamerule advance_time false
 cmd awaken village trouble quiet on
 # a fresh world holds the notice director for its first five minutes: the dream's cards need it free
 cmd tick sprint 6200
-wait 200
+# the sprint runs ~30 s on a runner: let it finish, or the first dream burns through its clock
+wait 800
+cmd tick sprint stop
+wait 20
 window 1440 900
 info
 camera first

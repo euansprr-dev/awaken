@@ -74,7 +74,7 @@ public final class CourseKit {
 
     // ---- what a runner does on each piece -------------------------------------------------------------------------
 
-    enum Kind { ROAD, GAP, UP, DOWN, WALLRUN, CHAIN, HANG, SHIMMY, RAIL, BEAM, CLIMB, GRIP }
+    enum Kind { ROAD, GAP, UP, DOWN, WALLRUN, CHAIN, HANG, SHIMMY, RAIL, BEAM, CLIMB, GRIP, LEAP, SWING, GLIDE }
 
     /** One piece as the solver sees it: its kind, its length and where it starts (feet). */
     record Step(Kind kind, int len, int x, int y, int z, int side) {}
@@ -264,6 +264,65 @@ public final class CourseKit {
         return this;
     }
 
+    // ---- the air (SPEC §9.6: proved by the Ascent's own rules in AirProofs) ----------------------------------------------
+
+    /**
+     * Open air {@code len} long to a road {@code rise} higher (lower when negative): past a plain jump, crossed with a
+     * double jump and an air dash (the Leaper's).
+     */
+    public CourseKit leap(int len, int rise) {
+        steps.add(new Step(Kind.LEAP, len, x, y, z, rise));
+        path.add(new Vec3(x + 0.5, y + 2.6, z + len * 0.35));
+        path.add(new Vec3(x + 0.5, y + rise + 1.5, z + len * 0.75));
+        z += len;
+        y += rise;
+        minFloor = Math.min(minFloor, y);
+        return this;
+    }
+
+    /**
+     * Open air {@code len} long under a lantern of light {@code up} over the road and {@code ahead} along it (three wide,
+     * two high, three deep: big enough for the rope's fan to find from anywhere on the jump): throw the rope at it,
+     * swing, and the top of the arc lets you go onto the far side (the Tether's).
+     */
+    public CourseKit swing(int len, int up, int ahead) {
+        for (int w = -1; w <= 1; w++)
+            for (int h = 0; h <= 1; h++)
+                for (int d = -1; d <= 1; d++) put(x + w, y + up + h, z + ahead + d, ledge, false);
+        steps.add(new Step(Kind.SWING, len, x, y, z, 0));
+        for (int k = 1; k < 4; k++) path.add(new Vec3(x + 0.5, y + 1.5 - 2 * Math.sin(Math.PI * k / 4), z + len * k / 4.0));
+        z += len;
+        return this;
+    }
+
+    /** The island a glide comes down on: this long, seven wide. */
+    public static final int ISLAND = 14;
+
+    /**
+     * The road ends at a cliff; an island {@code drop} below and {@code len} on, with three rings of light in the air
+     * along the way (a fall from any brings you back to the cliff). Open your wings in the fall and glide to it.
+     */
+    public CourseKit glide(int len, int drop) {
+        steps.add(new Step(Kind.GLIDE, len, x, y, z, drop));
+        Vec3 cliff = new Vec3(x + 0.5, y, z - 2 + 0.5);
+        for (int i = 1; i <= 3; i++) {
+            double f = i / 4.0, cy = y + 1.5 - drop * f, cz = z + len * f;
+            rings.add(new Course.Ring(rings.size(), cliff, 0f, new AABB(x + 0.5 - RING_R, cy - RING_R, cz - 0.5, x + 0.5 + RING_R, cy + RING_R, cz + 0.5)));
+            path.add(new Vec3(x + 0.5, cy, cz));
+        }
+        z += len;
+        y -= drop;
+        minFloor = Math.min(minFloor, y);
+        for (int k = 0; k < ISLAND; k++)
+            for (int w = -3; w <= 3; w++) floor(x + w, y - 1, z + k);
+        for (int k = -1; k <= ISLAND; k += ISLAND + 1)
+            for (int w = -4; w <= 4; w += 2) put(x + w, y - 2, z + k, cloud, false);
+        return this;
+    }
+
+    /** A ring in the air: how far its box reaches from the middle (the rings drawn are this big). */
+    static final double RING_R = 2.4;
+
     /** The Waking Door at the end of the road: a frame of pale light, its opening a sheet you walk into. */
     public CourseKit door() {
         road(3);
@@ -377,6 +436,7 @@ public final class CourseKit {
      */
     public int solve() {
         View v = new View();
+        AirProofs air = new AirProofs();
         CollisionContext ctx = CollisionContext.empty();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         double t = 0;
@@ -466,6 +526,27 @@ public final class CourseKit {
                     if (RunnerRules.climbOut(v, ctx, m, e) == null) return fail(s, "no climbing out on top");
                     t += (top - s.y) / GripRules.CLIMB + 24;
                 }
+                case LEAP -> {
+                    int road = roadAt(v, s.x, s.y + s.side - 1, s.z + s.len);
+                    if (road == 0) return fail(s, "no road to land on");
+                    int ticks = air.leap(s.x + 0.5, s.y, s.z, s.len, s.side, road);
+                    if (ticks < 0) return fail(s, air.why);
+                    t += ticks;
+                }
+                case SWING -> {
+                    int road = roadAt(v, s.x, s.y - 1, s.z + s.len);
+                    if (road == 0) return fail(s, "no road on the far side");
+                    // the rope thrown early in the jump and late in it: both land you
+                    int ticks = air.swing(v, s.x + 0.5, s.y, s.z, s.len, road, AirProofs.THROW_EARLY);
+                    if (ticks < 0 || air.swing(v, s.x + 0.5, s.y, s.z, s.len, road, AirProofs.THROW_LATE) < 0) return fail(s, air.why);
+                    t += ticks;
+                }
+                case GLIDE -> {
+                    if (!solid(v, s.x, s.y - s.side - 1, s.z + s.len)) return fail(s, "no island to land on");
+                    int ticks = air.glide(s.x + 0.5, s.y, s.z, s.len, s.side, ISLAND);
+                    if (ticks < 0) return fail(s, air.why);
+                    t += ticks;
+                }
                 case RAIL -> t += 8;
                 case BEAM -> {
                     if (!v.getBlockState(new BlockPos(s.x, s.y, s.z)).isAir() || v.getBlockState(new BlockPos(s.x, s.y + 1, s.z)).isAir())
@@ -484,6 +565,13 @@ public final class CourseKit {
     private int fail(Step s, String why) {
         failure = s.kind.name().toLowerCase() + " at z " + s.z + ": " + why;
         return -1;
+    }
+
+    /** How far solid floor runs on along +z from here (up to 40). */
+    private static int roadAt(BlockGetter v, int bx, int by, int bz) {
+        int n = 0;
+        while (n < 40 && solid(v, bx, by, bz + n)) n++;
+        return n;
     }
 
     private static boolean solid(BlockGetter v, int bx, int by, int bz) {

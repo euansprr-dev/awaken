@@ -37,6 +37,7 @@ public final class TrialTests {
         AwakenTests.register("dreams_win", 200, TrialTests::win);
         AwakenTests.register("dreams_move_remembered", 200, TrialTests::moveRemembered);
         AwakenTests.register("dreams_replay", 300, TrialTests::replay);
+        AwakenTests.register("dreams_upgrade", 60, TrialTests::upgrade);
         RoomTests.register();
     }
 
@@ -59,6 +60,46 @@ public final class TrialTests {
         }
         h.assertTrue(Trial.FIRST.seconds == 75, "the first dream's clock is 75 s");
         h.succeed();
+    }
+
+    /**
+     * An old save asleep mid-dream when the dreams changed (an island dream, no trial): woken where they lay, the ledger
+     * seeded with the new first dream and Runs the body can already do, and nothing of the old dream to replay (SPEC
+     * §9.6). (The island's flight given back is {@code restorePlayer}'s, unseen here: a mock player is always creative.)
+     */
+    private static void upgrade(GameTestHelper h) {
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        try {
+            ServerLevel level = h.getLevel();
+            BlockPos bed = h.absolutePos(BlockPos.ZERO).above(2);
+            Vec3 lay = Vec3.atBottomCenterOf(bed);
+            Dreamer d = Dreams.dreamer(sp);
+            d.dreams = 6; // dreamed before the change
+            d.ledger.seeded = false;
+            DreamState st = Dreams.state(sp);
+            st.reset();
+            st.active = true;
+            st.cell = 4000; // nothing runs there after the restart
+            st.returnDim = level.dimension().identifier().toString();
+            st.rx = lay.x;
+            st.ry = lay.y;
+            st.rz = lay.z;
+            st.lucidity = 80;
+            sp.teleportTo(level, lay.x, lay.y + 30, lay.z, java.util.Set.of(), 0, 0, true);
+
+            Dreams.wake(sp, Dreams.Wake.LOGIN);
+            h.assertFalse(Dreams.isDreaming(sp), "woken");
+            h.assertTrue(sp.position().distanceTo(lay) < 2, "back where they lay: " + sp.position() + " vs " + lay);
+
+            Progression.count(sp, LevelRoad.flagCounter(DreamOffers.FLAG), 1);
+            DreamOffers.check(sp);
+            h.assertTrue(d.ledger.seeded && d.ledger.isWaiting(Trial.FIRST.id), "seeded: the new first dream waits");
+            h.assertTrue(d.ledger.isWaiting(Trial.WALL.id), "and a Run the body can already do, without waiting a day");
+            h.assertTrue(DreamOffers.replays(d).isEmpty(), "nothing of the old dream to replay");
+            h.succeed();
+        } finally {
+            h.getLevel().getServer().getPlayerList().remove(sp);
+        }
     }
 
     /** A dream comes only when one waits: one a night, not two nights running unless asked, one new dream a play-day. */

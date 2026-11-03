@@ -1,0 +1,229 @@
+# Dreams remade, stage 4 (SPEC 9.6, 3 Nov 2026): the air's Runs (the rope, the leap, the wings) ring by ring and their
+# finish; the rope dreamt again from the recorder with your own ghost running ahead; Hush solved without waking it;
+# the long fall with the Falling Bell. A run is walked a little first so its ghost has steps to show.
+#   tools/tour-ci.sh tools/autopilot/dreams-look-4.txt 2700
+world autopilot_dreams_look4 creative 3112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the dream's cards need it free
+cmd tick sprint 6200
+# the sprint runs ~30 s on a runner: let it finish, or the first dream burns through its clock
+wait 800
+cmd tick sprint stop
+wait 20
+window 1440 900
+info
+camera first
+hud off
+
+
+cmd awaken ascent grant all
+wait 20
+cmd gamemode survival
+cmd time set 14000
+
+# ---- rope ----
+cmd awaken dream offer rope
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot l4_rope_00_arrival
+cmd awaken dream control
+wait 30
+walk 40
+wait 50
+shot l4_rope_00b_walked
+hud off
+cmd awaken dream ring 1
+wait 60
+look 0 4
+shot l4_rope_01_ring1
+look 0 -35
+shot l4_rope_01_ring1_down
+cmd awaken dream ring 2
+wait 60
+look 0 4
+shot l4_rope_02_ring2
+look 0 -35
+shot l4_rope_02_ring2_down
+cmd awaken dream ring 3
+wait 60
+look 0 4
+shot l4_rope_03_ring3
+look 0 -35
+shot l4_rope_03_ring3_down
+look 0 4
+hud on
+cmd awaken dream ring 99
+wait 20
+shotnow l4_rope_09_prize
+wait 200
+shotnow l4_rope_10_card
+wait 40
+screen close
+
+# ---- the rope again, from the recorder: your ghost runs it with you ----
+cmd awaken dream replay 0
+wait 200
+hud on
+look 0 4
+shot l4_replay_00_arrival
+cmd awaken dream control
+wait 30
+walk 12
+wait 30
+shot l4_replay_01_ghost
+wait 20
+shot l4_replay_02_ghost_later
+cmd awaken dream wake
+wait 200
+screen close
+
+# ---- leap ----
+cmd awaken dream offer leap
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot l4_leap_00_arrival
+cmd awaken dream control
+wait 30
+hud off
+cmd awaken dream ring 1
+wait 60
+look 0 4
+shot l4_leap_01_ring1
+look 0 30
+shot l4_leap_01_ring1_down
+cmd awaken dream ring 2
+wait 60
+look 0 4
+shot l4_leap_02_ring2
+look 0 30
+shot l4_leap_02_ring2_down
+cmd awaken dream ring 3
+wait 60
+look 0 4
+shot l4_leap_03_ring3
+look 0 30
+shot l4_leap_03_ring3_down
+look 0 4
+hud on
+cmd awaken dream ring 99
+wait 20
+shotnow l4_leap_09_prize
+wait 200
+shotnow l4_leap_10_card
+wait 40
+screen close
+
+# ---- wings ----
+cmd awaken dream offer wings
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot l4_wings_00_arrival
+cmd awaken dream control
+wait 30
+hud off
+cmd awaken dream ring 1
+wait 60
+look 0 4
+shot l4_wings_01_ring1
+look 0 35
+shot l4_wings_01_ring1_down
+cmd awaken dream ring 2
+wait 60
+look 0 4
+shot l4_wings_02_ring2
+look 0 35
+shot l4_wings_02_ring2_down
+cmd awaken dream ring 3
+wait 60
+look 0 4
+shot l4_wings_03_ring3
+look 0 35
+shot l4_wings_03_ring3_down
+look 0 4
+hud on
+cmd awaken dream ring 99
+wait 20
+shotnow l4_wings_09_prize
+wait 200
+shotnow l4_wings_10_card
+wait 40
+screen close
+
+# ---- hush, solved a sneak's step at a time ----
+cmd awaken dream offer hush
+wait 60
+cmd awaken dream now
+wait 200
+cmd awaken dream control
+wait 30
+cmd awaken dream ring 1
+wait 80
+look 0 4
+shot l4_hush_01_sleeper
+cmd awaken dream solve
+wait 30
+shot l4_hush_02_still_asleep
+cmd awaken dream solve
+wait 20
+shotnow l4_hush_09_prize
+wait 200
+shotnow l4_hush_10_card
+wait 40
+screen close
+
+# ---- the long fall, with the Falling Bell ----
+cmd awaken dream offer long_fall bell:falling
+wait 60
+cmd awaken dream now
+wait 200
+cmd awaken dream control
+wait 30
+cmd awaken dream ring 1
+wait 60
+look 0 30
+shot l4_fall_01_edge
+cmd awaken dream solve
+wait 40
+look 0 30
+shot l4_fall_02_landing
+cmd awaken dream solve
+wait 20
+use
+wait 20
+shotnow l4_fall_09_prize
+wait 200
+shotnow l4_fall_10_card
+wait 40
+screen close
+quit
