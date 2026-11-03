@@ -18333,3 +18333,24 @@ is `PROVING`, run by `LoopWarden` in the Cradle's antechamber (`hearth.trial.Ant
   causeway stays, from a quarter the Seed's door turns and opens, over the edge is a fall and you wake by the arch with
   the hall whole again, it comes again, the win opens the door with a path of light and is rank Sovereign, the hall is
   put back). `descent_rules` (the Seed waits for Sovereign), `hearth_pure_rules` (every rank's trial is a Proving).
+
+**47.11 Sight (Euan's playtest 2026-11-03: "mobs in gates should attack based on line of sight").** A creature notices,
+chases and fires at you only while it knows where you are: it sees you (eye to eye, blocks in the way), or it hears you
+close by (4 blocks, a Hunter's ear 12; heard is moving, swinging, struck or off the ground, a sneak is silent; creative
+and spectators make no sound). Its wake-up (`AwakenMob`'s player target) takes only someone it senses, never someone
+through a wall (Hunters used to notice through walls: now they hear further instead). One set on you without sensing
+you (a room its door woke) knows where you were from that. Fighting you, after 3 s (`LOSE_TICKS` 60) of neither seeing
+nor hearing you it lets you go and walks to the last place it knew you were and looks about there for 10 s
+(`SeekSound`, every creature now, was Listeners only); it notices you again the moment it sees or hears you. Listeners
+keep their own rule (they lose you 3 s after you go quiet).
+- **Shots need a clear line.** A ranged or poison ability (bolt, arrows, beam, cloud, rain, cone, roots, fangs, lift,
+  pull) starts only with you in sight, as a charge, a leap or a blink does, and checks again when it lets go: ducked out
+  of its line during the wind-up, it lets go with a puff of smoke and a hiss and nothing flies (`AbilityRunner.blind`;
+  the cooldown is spent). Kit bosses fire through the same runner, so the same holds in their arenas.
+- **Bosses** keep you while you hide (their room is the fight, `keepsTarget`), but their shots still need the line, so
+  a pillar is cover from a boss too. Melee was already line-checked (§47.3's capsules).
+- **The Wilds' forms** (`living.combat.MarkGoal`): a volley, snipe, spit or pull is held at release without a clear line
+  (`Moves.held`, the same puff), and a spit's ray stops at the first block (`Moves.rayTarget`).
+- Test: `mobs_sight` (an ink-spitter in a stone pen, you 8 off and walking: it doesn't notice you; set on you, it never
+  fires and nothing strikes you, it lets you go within 3 s and goes to where you were; the wall comes down and it
+  notices you).

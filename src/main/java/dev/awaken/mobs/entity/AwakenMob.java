@@ -119,6 +119,9 @@ public class AwakenMob extends Monster {
     @Nullable Vec3 heardPos;
     int heardTicks;
     private int quietTicks;
+    /** Where it last saw or heard the player it fights, and for how long it has done neither (SPEC §47.11). */
+    private @Nullable Vec3 seenAt;
+    private int unseen;
 
     // client-side visuals
     private @Nullable AwLook look;
@@ -180,7 +183,7 @@ public class AwakenMob extends Monster {
             if (scriptedFight()) goalSelector.addGoal(3, new FightRunner.Engaged(this)); // its fight script moves it (SPEC §35.3)
             else if (d.has(Trait.RANGED)) goalSelector.addGoal(3, new MobGoals.KeepRange(this, 9.0F));
             else goalSelector.addGoal(3, new MobGoals.ToldMelee(this));
-            if (d.has(Trait.LISTENER)) goalSelector.addGoal(4, new MobGoals.SeekSound(this));
+            goalSelector.addGoal(4, new MobGoals.SeekSound(this)); // to where it last heard or saw you (SPEC §47.11)
             if (d.tier.isBoss()) goalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0));
             goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.8));
         }
@@ -190,7 +193,8 @@ public class AwakenMob extends Monster {
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
         if (d.has(Trait.NEUTRAL)) return;
         if (d.has(Trait.LISTENER)) targetSelector.addGoal(2, new MobGoals.HearTarget(this));
-        else targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, !d.has(Trait.HUNTER), false, null));
+        // it notices only someone it sees or hears close by (SPEC §47.11): never through a wall
+        else targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, false, false, (t, l) -> senses(t)));
     }
 
     @Override
@@ -468,6 +472,8 @@ public class AwakenMob extends Monster {
             // Blind hunters lose you when you go quiet.
             if (MobGoals.HearTarget.noisy(p)) quietTicks = 0;
             else if (++quietTicks > 60) { setTarget(null); quietTicks = 0; }
+        } else {
+            keepSight();
         }
         if (abilities == null) abilities = new AbilityRunner(this);
         if (getTarget() instanceof Player) FightWatch.fighting(level);
@@ -618,6 +624,53 @@ public class AwakenMob extends Monster {
     /** An ability of any phase by name, or null. */
     @Nullable Ability ability(String name) {
         return abilityRunner().find(name);
+    }
+
+    // ---- senses (SPEC §47.11) -----------------------------------------------------------------------------------------
+
+    /**
+     * Blocks it hears a player it can't see (one moving, swinging, struck or off the ground; a sneak is silent), a
+     * hunter's ear further; ticks it keeps after someone it can neither see nor hear before it goes to look where they
+     * were; ticks it looks there.
+     */
+    static final double HEAR = 4.0, HEAR_HUNTER = 12.0;
+    static final int LOSE_TICKS = 60, SEARCH_TICKS = 200;
+
+    /** Whether it knows where this one is now: it sees them, or it hears them close by. */
+    public boolean senses(LivingEntity t) {
+        if (getSensing().hasLineOfSight(t)) return true;
+        double ear = def().has(Trait.HUNTER) ? HEAR_HUNTER : HEAR;
+        return t instanceof Player p && MobGoals.HearTarget.noisy(p) && distanceToSqr(p) < ear * ear;
+    }
+
+    /**
+     * A player it fights but neither sees nor hears for {@link #LOSE_TICKS}: it lets them go and walks to where it last
+     * knew them, and looks about there. One it was set on without seeing (a room woken by a door) it knew from that
+     * sound. A boss keeps you: its room is the fight (its shots still need a clear line, AbilityRunner).
+     */
+    private void keepSight() {
+        if (!(getTarget() instanceof Player p)) {
+            unseen = 0;
+            seenAt = null;
+            return;
+        }
+        if (senses(p)) {
+            seenAt = p.position();
+            unseen = 0;
+            return;
+        }
+        if (seenAt == null) seenAt = p.position(); // set on them unseen: it heard where they were
+        if (keepsTarget() || ++unseen < LOSE_TICKS) return;
+        heardPos = seenAt;
+        heardTicks = SEARCH_TICKS;
+        unseen = 0;
+        seenAt = null;
+        setTarget(null);
+    }
+
+    /** Whether it keeps its target out of sight (a boss in its room). */
+    protected boolean keepsTarget() {
+        return def().tier.isBoss() || scriptedFight();
     }
 
     /** Whether a fight script drives this mob instead of the told melee (a kit boss, SPEC §35.3). */

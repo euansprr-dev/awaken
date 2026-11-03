@@ -318,11 +318,26 @@ public final class Moves {
         for (double t = 0.5; t < len; t += 0.6) level.sendParticles(dust, from.x + v.x * t, from.y + v.y * t, from.z + v.z * t, 1, 0, 0, 0, 0);
     }
 
-    /** The first living thing (not its own kind) along a ray, within {@code range}. */
+    /** The first living thing (not its own kind) along a ray, within {@code range}, short of the first block in the way. */
     static LivingEntity rayTarget(ServerLevel level, Mob mob, Vec3 from, Vec3 dir, double range) {
-        AABB box = new AABB(from, from.add(dir.scale(range))).inflate(1);
-        var hit = ProjectileUtil.getEntityHitResult(mob, from, from.add(dir.scale(range)), box, e -> e instanceof LivingEntity && e != mob && e.getType() != mob.getType(), range * range);
+        Vec3 to = from.add(dir.scale(range));
+        var wall = level.clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, mob));
+        if (wall.getType() != net.minecraft.world.phys.HitResult.Type.MISS) to = wall.getLocation();
+        AABB box = new AABB(from, to).inflate(1);
+        var hit = ProjectileUtil.getEntityHitResult(mob, from, to, box, e -> e instanceof LivingEntity && e != mob && e.getType() != mob.getType(), from.distanceToSqr(to));
         return hit != null && hit.getEntity() instanceof LivingEntity le ? le : null;
+    }
+
+    /** A move that reaches you from where it stands (a shot, a spit, a pull): it needs a clear line when it lets go. */
+    static boolean shot(Def d) {
+        return d.kind() == Kind.VOLLEY || d.kind() == Kind.SNIPE || d.kind() == Kind.SPIT || d.kind() == Kind.PULL;
+    }
+
+    /** A shot held back (no clear line when it let go): a hiss, a puff, nothing flies. */
+    static void held(ServerLevel level, Mob mob) {
+        level.sendParticles(ParticleTypes.SMOKE, mob.getX(), mob.getEyeY(), mob.getZ(), 6, 0.25, 0.2, 0.25, 0.01);
+        level.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.HOSTILE, 0.5F, 1.6F);
     }
 
     static void shoot(ServerLevel level, Mob mob, LivingEntity target, Def d) {
