@@ -44,6 +44,11 @@ public final class LucidiumWorld extends SavedData {
         if (!pos.equals(old)) setDirty();
     }
 
+    /** The bed this player last lay in (or set as their spawn), if any. */
+    public java.util.Optional<GlobalPos> bed(UUID player) {
+        return java.util.Optional.ofNullable(beds.get(player.toString()));
+    }
+
     /** True if another player's bed is within {@code radius} blocks (same dimension). */
     public boolean otherBedNear(UUID self, ResourceKey<Level> dim, BlockPos pos, int radius) {
         long r2 = (long) radius * radius;

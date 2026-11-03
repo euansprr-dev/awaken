@@ -2,17 +2,18 @@ package dev.awaken.lucidium;
 
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.awaken.core.AwakenCommands;
 import dev.awaken.core.PlayDays;
 import dev.awaken.lucidium.data.Dreamer;
 import dev.awaken.lucidium.data.Snapshot;
 import dev.awaken.lucidium.data.Vision;
+import dev.awaken.lucidium.dream.DreamOffers;
 import dev.awaken.lucidium.dream.Dreams;
 import dev.awaken.lucidium.dream.Planner;
 import dev.awaken.lucidium.dream.Visions;
 import dev.awaken.lucidium.journal.DayJournal;
 import dev.awaken.lucidium.plan.DreamPlan;
-import dev.awaken.lucidium.plan.DreamPlanner;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -21,7 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Optional;
 
-/** /awaken dream now|plan|journal|wake (+ admin: capture, lucidity, replay, vision). */
+/** /awaken dream now|plan|journal|wake (+ admin: capture, lucidity, replay, vision, offer, control, ring). */
 final class LucidiumCommands {
     private LucidiumCommands() {}
 
@@ -57,6 +58,23 @@ final class LucidiumCommands {
             dream.then(Commands.literal("replay").requires(AwakenCommands.admin())
                     .then(Commands.argument("index", IntegerArgumentType.integer(0)).executes(c ->
                             Lucidium.replay(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "index")) ? 1 : 0)));
+            // tours: a trial to tonight's head, H as a command, a ring of the trial you're in
+            dream.then(Commands.literal("offer").requires(AwakenCommands.admin())
+                    .then(Commands.argument("trial", StringArgumentType.word()).executes(c -> offer(c.getSource(), StringArgumentType.getString(c, "trial"), ""))
+                            // what it carries: bell:<id>, vision (the place the finder has ready), fear:<family>
+                            .then(Commands.argument("ref", StringArgumentType.greedyString()).executes(c ->
+                                    offer(c.getSource(), StringArgumentType.getString(c, "trial"), StringArgumentType.getString(c, "ref"))))));
+            dream.then(Commands.literal("solve").requires(AwakenCommands.admin()).executes(c ->
+                    DreamOffers.solve(c.getSource().getPlayerOrException()) ? 1 : 0));
+            dream.then(Commands.literal("control").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer sp = c.getSource().getPlayerOrException();
+                if (!Dreams.isDreaming(sp)) return 0;
+                Dreams.realityCheck(sp);
+                return 1;
+            }));
+            dream.then(Commands.literal("ring").requires(AwakenCommands.admin())
+                    .then(Commands.argument("index", IntegerArgumentType.integer(0)).executes(c ->
+                            DreamOffers.toRing(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "index")) ? 1 : 0)));
             dream.then(Commands.literal("vision").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
                 Visions.prepare(sp, true);
@@ -66,6 +84,12 @@ final class LucidiumCommands {
             }));
             root.then(dream);
         });
+    }
+
+    private static int offer(CommandSourceStack src, String trial, String ref) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        boolean ok = DreamOffers.offerNow(src.getPlayerOrException(), trial, ref);
+        if (!ok) src.sendFailure(Component.literal(ref.equals("vision") ? "No place is ready yet: /awaken dream vision first." : "No such trial built yet."));
+        return ok ? 1 : 0;
     }
 
     private static int now(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -80,14 +104,12 @@ final class LucidiumCommands {
         }
         Optional<Planner.Prepared> prepared = Planner.take(sp);
         if (prepared.isEmpty()) {
-            Dreamer d = Dreams.dreamer(sp);
-            if (d.snapshots.isEmpty()) DayJournal.capture(sp, Snapshot.Kind.MANUAL, sp.blockPosition(), "where you stood when you fell asleep");
-            Optional<DreamPlan> plan = DreamPlanner.plan(Planner.input(sp));
-            if (plan.isEmpty()) {
-                src.sendFailure(Component.literal("Nothing to dream of yet (the journal is empty)."));
-                return 0;
-            }
-            prepared = Optional.of(Planner.buildNow(src.getServer(), sp.getUUID(), plan.get()));
+            Optional<DreamPlan> trial = DreamOffers.plan(sp); // a waiting trial first, as a bed would dream it
+            if (trial.isPresent()) prepared = Optional.of(Planner.buildNow(src.getServer(), sp.getUUID(), trial.get()));
+        }
+        if (prepared.isEmpty()) {
+            src.sendFailure(Component.literal("No dream waits tonight (offer one: /awaken dream offer <trial>)."));
+            return 0;
         }
         boolean ok = Dreams.enter(sp, prepared.get(), Dreams.Entry.awake()) != null;
         if (!ok) {
@@ -102,9 +124,9 @@ final class LucidiumCommands {
         Optional<Planner.Prepared> ready = Planner.ready(sp);
         DreamPlan plan = ready.map(Planner.Prepared::plan).orElse(null);
         String status = ready.isPresent() ? "ready" : Planner.building(sp) ? "building" : "not built (preview)";
-        if (plan == null) plan = DreamPlanner.plan(Planner.input(sp)).orElse(null);
+        if (plan == null) plan = DreamOffers.plan(sp).orElse(null);
         if (plan == null) {
-            src.sendSuccess(() -> Component.literal("No dream tonight: nothing in the Day Journal yet. You'd sleep deeply."), false);
+            src.sendSuccess(() -> Component.literal("No dream tonight: nothing waits. You'd sleep deeply."), false);
             return 0;
         }
         DreamPlan p = plan;

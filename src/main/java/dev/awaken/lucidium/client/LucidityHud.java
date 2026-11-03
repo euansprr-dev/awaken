@@ -26,7 +26,7 @@ public final class LucidityHud {
 
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.gui.hud.isHidden() || !ClientDream.dreaming()) return;
+        if (mc.player == null || mc.gui.hud.isHidden() || !ClientDream.dreaming() || ClientDream.hud.has(LucidiumNet.DreamHud.TRIAL)) return;
         LucidiumNet.DreamHud hud = ClientDream.hud;
         Font font = mc.font;
         float time = (mc.player.tickCount + dt.getGameTimeDeltaPartialTick(false)) / 20f;

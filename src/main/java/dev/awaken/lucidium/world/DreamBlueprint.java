@@ -35,6 +35,8 @@ public final class DreamBlueprint {
     public final Map<DreamSign, Sign> signs;
     public final List<BlockState> manifestPalette;
     public final List<Fragment> spares;
+    /** The trial's course (SPEC §9.3), or null for a version-1 island dream. */
+    public final dev.awaken.lucidium.trial.@org.jspecify.annotations.Nullable Course course;
     private final List<Piece> pieces;
     private final Map<Long, Piece[]> byChunk;
 
@@ -58,6 +60,13 @@ public final class DreamBlueprint {
     public DreamBlueprint(int cell, BlockPos center, DreamPlan plan, List<Piece> pieces, List<Node> nodes, List<Door> doors,
                           Vec3 spawn, float spawnYaw, Map<DreamSign, Sign> signs, List<BlockState> manifestPalette,
                           List<Fragment> spares) {
+        this(cell, center, plan, pieces, nodes, doors, spawn, spawnYaw, signs, manifestPalette, spares, null);
+    }
+
+    public DreamBlueprint(int cell, BlockPos center, DreamPlan plan, List<Piece> pieces, List<Node> nodes, List<Door> doors,
+                          Vec3 spawn, float spawnYaw, Map<DreamSign, Sign> signs, List<BlockState> manifestPalette,
+                          List<Fragment> spares, dev.awaken.lucidium.trial.@org.jspecify.annotations.Nullable Course course) {
+        this.course = course;
         this.cell = cell;
         this.center = center;
         this.plan = plan;

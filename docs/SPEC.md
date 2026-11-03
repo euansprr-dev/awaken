@@ -394,12 +394,211 @@ Dying in a dream: wake "Shaken" (no penalty). Not ready → normal sleep. Hold s
 Arrivals (§28.9, 2026-10-29): waking from a dream and the dream rescue wait for the bed's land through `Passage.go`;
 going into a dream doesn't (the cell is built first).
 
+**Dreams remade (2026-11-03, `docs/dreams/PLAN.md`, Euan approved all 12 decisions).** A dream is now a remembered
+trial with one goal and a clock. The paragraph above is history: stage 4 removed the 40% roll, the islands of memory
+(`DreamPlanner.plan`, the island `BlueprintCompiler`, `Imagined`, the swaps while nobody looks), lucid flight, shaping
+and summoning (`Manifest` and its payload), and the nightmare and mentor at island nodes (the Chase and the Duel took
+their place, §9.5). `Dreams.enter` refuses a plan with no course; an old plan with no trial compiles as the first dream;
+`dream now`, `dream plan` and `Lucidium.startShared` dream the trial waiting (startShared: or the one finished last,
+§9.6). Lucidity stays as a trial's starting seconds. No `dreamsRemade` flag (PLAN §6): the old path went by the same
+delivery, so a flag would only have guarded a dream nobody plays.
+
+### 9.1 Trials
+
+`trial.Trial`: FIRST (the Dreaming Bell's dream, 75 s), Runs WALL, LEDGE, VAULT (stage 1), CLIMB (stage 2), ROPE, LEAP,
+WINGS (stage 4, §9.6), Rooms WRONG, LOOK_AWAY, HUSH, FOLD, NO_DOOR (180 s), LONG_FALL (120 s) (§9.5), CHASE (120 s), DUEL (150 s). Each has one
+goal line and a small line under it. A Run's course is laid by `trial.CourseKit` from RunnerRules' own probes (read only,
+§12): every wall-run, wall jump, ledge hang and shimmy, vault and slide is proved by the same checks the movement makes,
+and `TrialCompiler` tries four seeded variants then a plain road, so a plan always compiles. The solver's time from the
+doorway to the goal is the par; a Run's clock is max(60, par × 1.8) s. `DreamPlan` v2 carries the trial id and a ref
+(`bell:dreaming`); `DreamBlueprint` v2 the course (start, doorway, rings, end, bell spot, floor, par, path, reveals).
+
+### 9.2 When a dream comes (the ledger)
+
+`Dreamer` schema 2 adds `data.DreamLedger`: waiting (trial, ref, since, why), finished (best ticks, medal, day, times),
+`lastDreamDay`, `lastNewDay`, the Journal's choice and its day. A dream comes **only when one waits**: at most one a
+night, never two nights running unless chosen that day; new dreams join at most one a play-day (the first and old-save
+seeding excepted); the Dream Bell's second sleep (WBTB) takes the next one regardless. `DreamOffers` fills it from the
+level road's flag `awaken:dreams` (level 12): FIRST (with the Dreaming Bell when `BellHooks.dreamBellNext` says
+`dreaming`), then after it the built Runs one a day; old dreamers are seeded with FIRST and up to two Runs. Sneak while
+lying down: dreamless, as before. Tasks (OUT, BELLS when a bell waits): "A dream is waiting. Sleep in your bed
+tonight." / "A bell is waiting in a dream. Sleep in your bed tonight."; never what it holds. While one waits, your own
+bed sheds a few pearl motes at night (client, `DreamWaiting` payload).
+
+### 9.3 The trial dream
+
+- **Arrive** in your room: the Day Journal's latest HOME snapshot (else a kit bedroom), a doorway of dream glass, the
+  course beyond, its end glowing far off. Dream signs as before (your personal sign and one other). No lucidity meter:
+  one line, "You're dreaming. Press H to take control." ("Press H." after three dreams). The dream waits up to 5 min,
+  and walking out past the doorway takes control too.
+- **H takes control** (first H: `first_lucid`, lucid-dream count): the doorway clears, the goal line and a crescent
+  clock show; the clock is the trial's seconds plus starting lucidity as seconds (cap 60), so every old source of
+  lucidity still counts. The road lays itself ahead of you (24 blocks a tick, 14 ahead of your furthest step).
+- **While lucid**: H glints the true path for 2 s at a cost of 2 s, once every 4 s; noticing a dream sign gives 8 s
+  ("That's not right. +8 seconds"); falling 6 below the course floor is caught: back to the last ring passed, 3 s gone
+  ("The dream caught you. 3 seconds gone."), never a wake, no fall damage in a trial. Rings: gold, the next one
+  breathing; passing one counts it.
+- **Ends**: the goal reached → the prize line for 3 s → wake WON ("You reached the end of the dream", time, medal, what
+  you kept, "Your Dream Journal has written it down."). Clock out → SLIPPED ("The dream slipped away"); Esc's "Wake up"
+  button (`WakeUp` payload, throttled, server checks dreaming) → CHOSE; both leave the dream waiting. Death, logout and
+  the rest wake as before.
+- **Keeps**: medals by the Gauntlet's rule (gold ≤ par × 1.1 + 1 s, silver ≤ par × 1.5 + 2 s, else bronze; Runs only);
+  world XP 6% of a level the first finish, 2% another day; 2 Dream Residue (held while still in the Lucidium); counter
+  `awaken:dreams_finished` (`first_dream` revelation fires on it). The Dreaming Bell's dream holds the bell at the end
+  ("Take the bell first. It's just behind you."): `DreamBells` lets the lucidium place it (`Lucidium.dreamBell`) and
+  `Lucidium.bellTaken` finishes the dream; no lucidity gate on that bell.
+- **The Dream Journal writes itself**: "Write down the dream" and its two-minute window are gone. It shows whether a
+  dream waits, each finished dream (best time, medal, times), the latest dreams and the places remembered. Recall in a
+  trial is two entries per finished dream (a second each on the clock, cap 10 s), or an old save's written Recall if
+  more.
+- **Payloads**: `TrialStart` (goal, sub, rings, end, bell, path, dreams so far), `TrialHud` (phase, ticks left, total,
+  ring, a line to flash, glint) once a second and on change, `DreamWaiting` (your bed or none), `WakeUp` (C→S); the
+  dream HUD's `TRIAL` flag hides the meter. Look: `TrialHud` (crescent clock, rose in the last 10 s), `TrialRings` (own
+  gold bands, not end rods), `PearlMoteParticle`, the Waking Veil and dream road blocks (`tools/art/specs/dreams.py`).
+- **Tests**: `dreams_runs_solvable` (every built trial's first variant passes its own solver, with a bell and without),
+  `dreams_waiting_ledger`, `dreams_arrival`, `dreams_clock`, `dreams_catch_never_wakes`, `dreams_wake_button`,
+  `dreams_win`. Tour `tools/autopilot/dreams-first.txt` (admin `/awaken dream offer <trial>`, `control` = H, `ring <n>`;
+  past the last ring, the goal).
+
+### 9.4 Runs: what the body keeps
+
+- **Moves remembered**: the first finish of a Run remembers its moves for the body (`Trial.moves()`: the wall: wall-run
+  and wall jump; the ledge: hang, shimmy, ledge jump; over and under: vault and slide; the climb: wall climb and grip;
+  the rope, leap and wings name their Ascent tiers). `MovementHooks.remember` sets `BodyMemory.remembered` (schema 2,
+  synced to its owner) and THE BODY says "Remembered in a dream." under each. The prize line: "Your body remembers the
+  wall-run."; the morning card adds the move to "You kept" and says how to do it awake (`Trial.how`). The tip that
+  teaches it awake counts done (`ascent/freerun`, `rope`, `leaper`, `wings`).
+- **Mastery**: 50 points on the Run's Ascent track the first finish, 50 the first gold (`MovementHooks.addMastery`,
+  `AscentServer.addMastery`: no chain link).
+- **Ghosts**: the best run of each Run is kept (`DreamLedger.ghosts`: a sample every 4 ticks from the doorway, ≤ 750,
+  packed in quarter blocks from the course's start); replays show it (§9.6).
+- **The climb** (Wall Stride held): faces 5 or 6 high run up into the lip's hang (`CourseKit.climbUp`, proved by the
+  body's own climb tick by tick: `climbTarget`, `wallOn`, `findEdge`; a plain jump must not reach the lip), and faces
+  with a Dream Ribbon up their middle (`DreamRibbonBlock`, a climb line in `awaken:runner_climbs`; proved by
+  `GripRules.find`, `climbTop`, `topLip`, then `climbOut`). The tower grows: the faces rise out of the road as you come.
+  The door is at the top.
+- **Tests**: `dreams_move_remembered` (the wall remembered once, the ghost kept, a sample packs and unpacks); the climb in
+  `dreams_runs_solvable`. Tour `tools/autopilot/dreams-runs.txt`.
+
+### 9.5 Rooms, bells, the Chase and the Duel (stage 3)
+
+A Room has one dream rule, shared by everyone in the dream (`dream.RoomRules`); its layout is laid by `trial.RoomLayouts`
+after the doorway (a `Course.Room`: the floor's middle and reach, where the goal first stands or null while the rule
+hides it, the rule's things, no door's walls, the fold's loop, the fall's edge, the hidden place's spot). A Room's goal
+may move: `ActiveDream.roomGoal`, the small Waking Door laid again where it goes, the end's light following
+(`TrialGoal` payload: shown or not, where). The clock: a Room 180 s (the long fall 120 s), the Chase 120 s, the Duel
+150 s. A Room won is won for everyone in it in control (phase 1).
+
+| Rule | Goal line (no bell / with its bell) | Rule | Fail |
+|---|---|---|---|
+| What's wrong here (`wrong`) | "Three things in this place are wrong. Look at each one and press H." / "... Find them all, and the bell will be there." | today's place (the latest Day Journal snapshot of today or yesterday, a home only if nothing else; else a pale courtyard) in a plaza, with three wrong things on spots round it: a door a block off the ground with no wall, a floating grass block, a lantern on a chain that ends in the air. Look at one (9°, 40 blocks) and press H. Looking at the sky, H glints them | a guess at nothing costs 5 s |
+| Look away (`look_away`) | "The door moves whenever you look away from it. Reach it." / "The bell moves whenever you look away from it. Catch it." | once in view (60°), out of view and over 3 away, it moves 16 to 28 from you on the plaza (8 to 16 if the plaza's too small) | none |
+| Hush (`hush`) | "Something is asleep by the door. Get to the door without waking it." / "... next to the bell. Take the bell without waking it." | a nightmare (generic family, no AI, silent, breathing clouds) beside the goal; within 12 not sneaking, or 18 sprinting, wakes it: it hunts you (at most 3 awake, the oldest fades) and the goal moves, a new sleeper beside it | it comes for you |
+| The long fall (`long_fall`) | "You're falling. Find a way to land." | the road ends at an edge over nothing; 8 below it, falling with your eyes down (over 40°) lifts you 10 ("The fall goes on for as long as you watch it."); eyes up (under 15°) lays a landing 6 below you and the goal on it. Caught only 60 deeper than the floor | none |
+| The fold (`fold`) | "This hallway keeps coming back. Find the way out of it." | a 30-long lamp-lit hallway; past 24 you're back 18 ("You've passed that door before.", then "Try walking backwards past the door you keep passing."); walking backwards (moving against where you look) past the pane of dream glass in its east wall opens it onto a short way to the Waking Door | none |
+| No door (`no_door`) | "There's no door. Make one." | a sealed room (the way in closes behind you); H looking at a wall (14 blocks) makes a door in it; the right wall's (a draft of pearl motes through it) leads to the Waking Door, the others into more wall | none |
+
+- **The Chase** (`chase`): a road with gaps and steps; once someone's past the doorway, 2 of your fear (3 from C rank)
+  spawn behind you in your room (`MobHooks.spawnThemed`, the family's theme and tags, level 80% of your content
+  level), hunting the nearest dreamer. The fear is the ref's (`fear:<family>`), else the week's worst, else something
+  hunting you in the dark. With the Nightmare's Bell the first carries it ("Your fear is coming after you, and it's
+  carrying a bell. Take the bell from it."); felled, the bell lies where it fell; the door says "Take the bell first.
+  Your fear is carrying it."
+- **The Duel** (`duel`): a ring of dream glass on a plaza; step within 8 of its middle and your Path's mentor comes
+  (`Mentors.start(ad, feet, player, trial)`: "Show me what you've learned."). Worn down (its blows stop at 3 health):
+  "Not yet. Catch your breath, and again." 10 s gone, the mentor back 3 s later. It yields at 35% health: won for
+  everyone in control.
+- **Bells** (the six keep their count; `DreamBells` keeps their words and the Book's Dreamt leads): the Dreaming Bell
+  is the first Run's; the Daydream Bell is Look away's, the Lullaby Bell Hush's, the Falling Bell the long fall's, the
+  Nightmare's Bell the Chase's, the Lucid Bell What's wrong here's (found all three: "Now there's a bell where there
+  wasn't one."). `Lucidium.DreamBell(id, at, carrier)`: `at` where it stands now (null while the rule hides it),
+  `carrier` the Chase's fear holding it. `DreamBells.follow` (every other tick) sets the Sleeping Bell where the dream
+  says, clears it while hidden, puts it in the carrier's hand (no drop), and sets it again for a shared dreamer when
+  someone else took theirs. A bell's dream is won by striking it (no lucidity gate); the old dream puzzles stay only for
+  a dream that isn't a trial.
+- **Hidden places**: a Room carrying `vision:<id>` (the visions finder's place: an unvisited surface structure 160 to
+  1,400 away, or an old remembered place) shows it beyond a window of dream glass at the far side, on its own island,
+  undistorted. Won: "Look through the glass. That place is real, and it's in your world." Waking:
+  `Visions.reveal` (the Journal's Visions, with which way it lies from your bed), `AtlasHooks.reveal` (40 round it) and
+  a pearl mark on the Atlas (`DreamPlaces` payload → `MapMarks`, faded once found); "You saw a real place: <label>.
+  It's on your map now. <hint>". Everyone in the dream gets it (a guest a copy of the host's). Walking up to it awake
+  is found, as before (`awaken:secrets_found`).
+- **Prizes on waking**: a Room "You found your way through the dream"; the Chase "You got away from your fear" / "You
+  took the bell from your fear", its fear let go (`nightmares_beaten`, that family's weekly counters and death marks
+  cleared, +10% of a level); the Duel "Your mentor yielded" (+20% of a level, `awaken:mentor_duels_won`). World XP and
+  residue as every finish.
+- **What waits** (`DreamOffers.check`, after the first dream; one new a play-day, in this order): the next dream bell your
+  rank has reached (`bell:<id>` on its dream; one bell waits at a time); the next Run; a place the finder has ready, in
+  the next Room in turn (`PLACE_ROOMS`: fold, no door, look away, hush, what's wrong here); the Chase once one family
+  killed you twice this week (`fear:<family>`); the Duel once you have a Path, 3 play-days after the last. Stale waits
+  drop: a bell you hold or one no longer next, a place shown or gone, a fear with no deaths left. A bell or a place is
+  given once (`DreamLedger.given`); a waiting dream carrying something else than tonight's shared one stays waiting.
+- **The Dream Journal's choice**: "Tonight I want to... learn a move / find something hidden / face my fear / find a
+  bell" (the last only while one waits): the oldest waiting of that kind (run, room, chase, bell) comes first, and asks
+  for a dream a night after the last. It lasts into the next play-day and is spent when a dream begins; it also counts
+  as an intention (+10 s).
+- **Commands** (admin, tours): `/awaken dream offer <trial> [bell:<id> | vision | fear:<family>]`, `/awaken dream solve`
+  (one step of the rule as a player would: the next wrong thing named, the right wall's door, the fold walked
+  backwards, the fall looked up from, the mentor coming or yielding, the carrier felled; then to the goal).
+- **Tests**: `dreams_room_rules` (each rule's mechanism, the bells' API, the Chase's door, the Duel to its morning),
+  `dreams_hidden_place`, `dreams_shared`. Tour `tools/autopilot/dreams-rooms.txt`.
+
+### 9.6 Replays, ghosts and the dream's sounds (stage 4)
+
+- **Replays**: every trial you've finished can be dreamt again, the one finished last first (`DreamOffers.replays`; the
+  Dream Recorder lists eight, "The wall: best 0:42, gold", through `DreamHooks.recorded`; the Stillpoint's In door
+  opens onto index 0 and glows while one is there). A replay's plan carries the ref `replay` (`DreamLedger.REPLAY`): no
+  bell, no place, no fear's name; it spends neither tonight's dream nor the Journal's choice and takes nothing off the
+  waiting list. Its time, medal (a first gold's mastery too) and ghost count; world XP 2% and the 2 residue only on a
+  later play-day than the last finish; no fear let go or mentor's lesson again. The sub line says your best ("Your best:
+  0:42, silver. Your ghost runs it with you."). Version-1 dreams in the history are no longer replayed.
+- **One a night**: a dream that isn't a replay sets `lastDreamDay` for everyone who arrives in it (the ledger's "one a
+  night, not two running" reads it).
+- **Ghosts**: the moment you pass a Run's doorway the server sends `TrialGhosts` (the course's start and up to four
+  ghosts: your best run, and in a shared dream the best runs of the others in it). The client plays each from there,
+  a sample every 4 ticks interpolated: a soft standing figure of light with a short trail, pearl for yours and rose for
+  a friend's, lingering half a second at its end (`TrialRings.ghost`).
+- **Sounds** (`tools/art/specs/audio_dreams.py`, all mono, the dream's own): `dream.catch` (an airy swoop and two slow
+  heartbeats: the catch), `dream.tick` (the clock's last ten seconds, client side: every half second slowing to every
+  second, a little lower and louder each time), `dream.ring` (a ring passed, pitched up ring by ring), `dream.won` (the
+  end reached: a warm rising chord).
+- **The air's Runs** (each waits once its Ascent tier is yours: `Ascent.has` TETHER, LEAPER, WINGS; old worlds are
+  seeded with them like the rest, §9.2). Proved like the ground's, by the Ascent's own rules at mastery 0 holding forward
+  (`trial.AirProofs` over `trial.CourseSpace`, a `SwingSpace` answered from the course's blocks before any are placed),
+  each also proving a plain sprint jump falls short and that the landing is on the far road, not past it:
+  - **The rope** (`CourseKit.swing(len, up, ahead)`): a gap under a lantern of dream light (3 wide, 2 high, 3 deep: big
+    enough for the rope's fan from anywhere on the jump), thrown at 2 and at 9 ticks into the jump (`AscentSwing.find`,
+    `entry`, `travel`, `tick` to the top, `letGoClear`/`holdOn`, `letGo`, then `carryStep`): both must land. A swing
+    carries about 27 from the take-off whatever the gap, and needs open air under the arc, so the gaps are 22-24 with 9
+    of road after. Layout: road 8, swing 22 (lantern 14 up, 6 on), swing 24 (14, 8), swing 22 (16, 8); par 17 s.
+  - **The leap** (`CourseKit.leap(len, rise)`): the sprint jump, the double jump near its top; the air dash as it falls
+    only if the double jump alone comes down short. Reach at mastery 0: double jump about 6.8 flat; with the dash 12.4
+    flat, 8.9 two up, 16.5 four down; nothing three up. Layout: 6 flat (the double jump alone), 8 flat, 6 two up, 10
+    flat, 12 four down; par 13 s.
+  - **The wings** (`CourseKit.glide(len, drop)`): the road ends at a cliff; an island (7 wide, 14 long, clouds under its
+    ends) `drop` below and `len` on, three rings of light in the air between (a fall from any is caught back at the
+    cliff). Proved by falling 3 ticks, `glideCatch`, then `glideStep` looking at the island's middle until the feet
+    touch it (a glide this way lands at 1.6 to 2 times its drop). Layout: 30 on and 20 down, then 40 on and 24 down; par
+    12 s.
+  The twists the plan named for these (anchors lighting in reach, drifting islands, updraft columns) are not built: the
+  air Runs are the plain proved layouts. All three Runs' clocks are the 60 s floor.
+- **The goal line** sits under any boss plates (the sleeper's and the Chase's fears are NIGHTMARE plates;
+  `CustomizeGuiOverlayEvent.BossEventProgress` gives their bottom each frame) and wraps to fit between the corners'
+  panels (`TrialHud.goal`), so a plate never covers it and the right-hand panel never cuts it.
+- **Hush's solve** (`/awaken dream solve`): a step that lands you by the sleeper is a sneak's step; it sleeps on for 5 s
+  (`ActiveDream.roomQuietUntil`) while you take the next.
+- **Old saves**: a player asleep mid-dream at the update (an island dream) is woken at login where they lay, its
+  flight taken back, and the ledger is seeded on the next check (the new first dream and up to two Runs the body can
+  do); nothing of the old dream can be replayed.
+- **Tests**: `dreams_replay` (listed, no bell, nothing spent, the time counted, nothing taken off the list, no residue
+  twice a day); the air Runs in `dreams_runs_solvable`; `dreams_upgrade` (the old save's wake and seeding).
+
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and
 secrets glow within Awareness (client-only highlight, server-sent positions). Only blue-tagged `veil_interactable` things
 can be used. Body hit → Warning + snap back offered; body killed → player killed. Logout → snap back first.
 Stillpoint dimension `awaken:stillpoint`: void + cloud sea + dawn temple platform; time ×10 slower feel (no hunger, no
-mobs). Hub for stats, Truths, Codex; doors Out (Veil) and In (Lucidium, only while asleep). Hosts trial arenas.
+mobs). Hub for stats, Truths, Codex; doors Out (Veil) and In (the dream you finished last, dreamt again; §9.6). Hosts trial arenas.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -718,6 +917,13 @@ of `AwakenConfig.Client`.
 - `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
   (`favours(ore, x, y, z)`, `place(x, y, z)`: pure, any thread) and `homes(seed, homes)`: where each ore is at home
   underground, installed on the overworld's load by the caves in a world made with the cave regions (null at server stop).
+- Dreams remade (§9.1–9.3): `dev.awaken.lucidium.Lucidium` — `inTrial(ServerPlayer)`, `dreamBell(ServerPlayer)` (`DreamBell(id,
+  at)`: where this trial's bell hangs, or null), `bellTaken(ServerPlayer)` (the bells module calls it when a managed dream
+  bell is struck). `core.api.BellHooks.dreamBellNext(ServerPlayer)` — the first dream bell not held whose rank you have
+  (`dreaming` at no rank), "" when none; installed by the bells module. The lucidium's `trial.CourseKit` reads the body's
+  `RunnerRules` probes (`findWall`, `findEdge`, `climbOut`, `wallAhead`, `wallOn`, `climbTarget`) and `GripRules`
+  (`find`, `climbTop`, `topLip`) read only, to prove its courses. `core.api.MovementHooks.remember(player, moves)`,
+  `remembered(player, move)` (both sides) and `addMastery(player, track, points)` (§9.4), installed by the body.
 
 ---------------------------------------------------------------------------------------------------------------------
 

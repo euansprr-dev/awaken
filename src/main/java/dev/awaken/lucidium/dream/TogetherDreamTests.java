@@ -22,13 +22,14 @@ public final class TogetherDreamTests {
     private TogetherDreamTests() {}
 
     /**
-     * A mock player with one remembered place, so the planner has something to dream of (told as the journal tells it:
-     * joining at night asked for a dream before there was anything to dream of).
+     * A mock player with one remembered place and a dream waiting, so the planner has something to dream of (told as the
+     * journal tells it: joining at night asked for a dream before there was anything to dream of).
      */
     private static ServerPlayer dreamer(GameTestHelper h) {
         ServerPlayer p = h.makeMockServerPlayerInLevel();
         Snapshot place = new Snapshot("missing_file", Snapshot.Kind.MANUAL, 1, "minecraft:overworld", BlockPos.ZERO, "nowhere", "", 0);
         Dreams.dreamer(p).snapshots.add(place);
+        Dreams.dreamer(p).ledger.offer("first", dev.awaken.core.PlayDays.current(h.getLevel().getServer()), "test", "", true);
         Planner.journalChanged(p, place);
         return p;
     }

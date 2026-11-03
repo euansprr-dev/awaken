@@ -8,7 +8,10 @@ import dev.awaken.signal.client.Ui;
 import dev.awaken.signal.client.UiSection;
 import net.minecraft.client.Minecraft;
 
-/** Status screen: the moves your body has and how to do them, so an unlock toast you missed can be found again. */
+/**
+ * Status screen: the moves your body has and how to do them, so an unlock toast you missed can be found again; a move a
+ * dream remembered for you is marked.
+ */
 final class BodySection extends UiSection {
     @Override public String title() { return "THE BODY"; }
     @Override public int order() { return 30; } // right after the Ascent: the moves you have
@@ -28,6 +31,8 @@ final class BodySection extends UiSection {
             if (!Body.unlocked(p, m)) continue;
             ui.text(m.title, Glass.a(Glass.TITLE, 1F));
             ui.text(m.how, Glass.a(Glass.LABEL, 0.85F));
+            // a move a dream taught you (SPEC §9.4) says so
+            if (Body.memory(p).remembered(m)) ui.text("Remembered in a dream.", Glass.a(Glass.VIOLET, 0.9F));
             ui.gap(2);
         }
     }

@@ -2,7 +2,7 @@
   "schema": 1,
   "level": 12,
   "title": "Lucid dreams",
-  "text": "H checks if you're dreaming. Keep a journal.",
+  "text": "A dream is waiting. Sleep in your bed tonight, and press H in the dream to take control.",
   "grants": [
     {
       "type": "recipe",

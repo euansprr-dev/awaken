@@ -8,6 +8,9 @@ import dev.awaken.lucidium.LucidiumContent;
 import dev.awaken.lucidium.net.LucidiumNet;
 import dev.awaken.progression.client.CodexEntries;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -19,6 +22,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
@@ -47,8 +52,18 @@ public final class LucidiumClient {
         modBus.addListener(LucidiumClient::onRenderState);
         NeoForge.EVENT_BUS.addListener(LucidiumClient::onClientTick);
         NeoForge.EVENT_BUS.addListener(LucidiumClient::onRenderHand);
-        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ClientDream.clear());
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            ClientDream.clear();
+            ClientTrial.clear();
+        });
+        NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, TrialRings::submit);
+        // last, and cancelled ones too: a Boss Plate draws itself and cancels the vanilla bar (its increment is its height)
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, true,
+                net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.BossEventProgress.class, TrialHud::onBossBar);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderGuiEvent.Pre.class, e -> TrialHud.frameStart());
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.Init.Post.class, LucidiumClient::onScreen);
         CodexEntries.addSource(LucidiumClient::codex);
+        dev.awaken.core.api.MapMarks.register(ClientTrial::marks); // places dreams showed you (SPEC §9.5)
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
@@ -59,14 +74,22 @@ public final class LucidiumClient {
             else mc.gui.setScreen(new DreamJournalScreen(msg));
         });
         event.register(LucidiumNet.CodexSync.TYPE, (msg, ctx) -> ClientDream.codex = List.copyOf(msg.lines()));
+        event.register(LucidiumNet.TrialStart.TYPE, (msg, ctx) -> ClientTrial.begin(msg));
+        event.register(LucidiumNet.TrialHud.TYPE, (msg, ctx) -> ClientTrial.update(msg));
+        event.register(LucidiumNet.TrialGoal.TYPE, (msg, ctx) -> ClientTrial.goal(msg));
+        event.register(LucidiumNet.TrialGhosts.TYPE, (msg, ctx) -> ClientTrial.ghosts(msg));
+        event.register(LucidiumNet.DreamPlaces.TYPE, (msg, ctx) -> ClientTrial.places = List.copyOf(msg.places()));
+        event.register(LucidiumNet.DreamWaiting.TYPE, (msg, ctx) -> ClientTrial.bed = msg.bed());
     }
 
     private static void onLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, Awaken.id("lucidity"), LucidityHud::render);
+        event.registerAbove(VanillaGuiLayers.CROSSHAIR, Awaken.id("dream_trial"), TrialHud::render);
     }
 
     private static void onParticles(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(LucidiumContent.DREAM_DROP.get(), DreamDropParticle.Provider::new);
+        event.registerSpriteSet(LucidiumContent.PEARL_MOTE.get(), PearlMoteParticle.Provider::new);
     }
 
     /** The dream sign "a creature with no shadow": its shadow is simply never drawn. */
@@ -90,6 +113,7 @@ public final class LucidiumClient {
         LocalPlayer player = mc.player;
         if (player == null) return;
         ClientDream.tick();
+        ClientTrial.tick();
 
         // sneak while lying in bed: a dreamless night (the bed screen hides the key from the game, so read it raw)
         if (player.isSleeping()) {
@@ -106,18 +130,6 @@ public final class LucidiumClient {
             if (ClientDream.dreaming()) ClientDream.realityCheck = 30;
         }
         LucidiumNet.DreamHud hud = ClientDream.hud;
-        boolean canShape = hud.has(LucidiumNet.DreamHud.SHAPE) || hud.has(LucidiumNet.DreamHud.SUMMON);
-        if (ClientDream.dreaming() && canShape && AwakenKeys.REALITY_CHECK.isDown() && mc.gui.screen() == null) {
-            ClientDream.hold++;
-            if (ClientDream.hold >= HOLD_TICKS && !ClientDream.manifestSent) {
-                ClientDream.manifestSent = true;
-                boolean summon = player.isShiftKeyDown() && hud.has(LucidiumNet.DreamHud.SUMMON);
-                ClientPacketDistributor.sendToServer(new LucidiumNet.Manifest(summon));
-            }
-        } else {
-            ClientDream.hold = 0;
-            ClientDream.manifestSent = false;
-        }
 
         // rain falling up
         if (ClientDream.dreaming() && hud.has(LucidiumNet.DreamHud.RAIN_UP) && mc.level != null) {
@@ -128,6 +140,16 @@ public final class LucidiumClient {
                 mc.level.addParticle(LucidiumContent.DREAM_DROP.get(), x, y, z, 0, 0.12 + RANDOM.nextDouble() * 0.1, 0);
             }
         }
+    }
+
+    /** The pause screen in a dream: a way out that isn't the void (SPEC §9.3). */
+    private static void onScreen(ScreenEvent.Init.Post e) {
+        if (!(e.getScreen() instanceof PauseScreen pause) || !pause.showsPauseMenu() || !ClientDream.dreaming()) return;
+        int w = e.getScreen().width, h = e.getScreen().height;
+        e.addListener(Button.builder(Component.literal("Wake up"), b -> {
+            ClientPacketDistributor.sendToServer(LucidiumNet.WakeUp.INSTANCE);
+            Minecraft.getInstance().gui.setScreen(null);
+        }).bounds(w / 2 - 102, h - 34, 204, 20).build());
     }
 
     private static boolean sneakHeld(Minecraft mc) {

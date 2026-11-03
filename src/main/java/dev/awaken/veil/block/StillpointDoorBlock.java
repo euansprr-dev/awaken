@@ -16,7 +16,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * The two doors of the Stillpoint temple. Out: your spirit steps out into the Waking world while your body stays here,
- * safe. In: open only while you are dreaming (the Lucidium decides); otherwise it stays dark.
+ * safe. In: open onto the dream you finished last, once you've finished one (the Lucidium decides); otherwise dark.
  */
 public class StillpointDoorBlock extends Block {
     public enum Kind { OUT, IN }

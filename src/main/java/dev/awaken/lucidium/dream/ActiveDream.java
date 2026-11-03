@@ -1,10 +1,7 @@
 package dev.awaken.lucidium.dream;
 
 import dev.awaken.lucidium.LucidiumContent;
-import dev.awaken.lucidium.plan.DreamPlan;
 import dev.awaken.lucidium.plan.DreamSign;
-import dev.awaken.lucidium.plan.Fragment;
-import dev.awaken.lucidium.plan.Nightmares;
 import dev.awaken.lucidium.world.DreamBlueprint;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -27,23 +24,19 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * One dream while it runs: who is in it, the runtime oddities (the spinning clock, scrambling signs, the creature with
- * no shadow), the nightmare and the mentor, and rooms that change while nobody is looking. Memory only: after a
- * restart the dreamers are simply woken in their beds.
+ * One trial dream while it runs (SPEC §9): who is in it, the runtime oddities (the spinning clock, scrambling signs, the
+ * creature with no shadow), the course's progress and a Room's rule. Memory only: after a restart the dreamers are
+ * simply woken in their beds.
  */
 public final class ActiveDream {
     public static final int UPDATE = Block.UPDATE_CLIENTS | Block.UPDATE_SKIP_ALL_SIDEEFFECTS;
-    private static final int SWAP_UNSEEN_TICKS = 120;
-    private static final int SWAP_CELLS_PER_TICK = 384;
 
     public final DreamBlueprint bp;
     public final ServerLevel level;
@@ -51,19 +44,10 @@ public final class ActiveDream {
     public final long start;
     public final long end;
     public final Set<UUID> participants = new LinkedHashSet<>();
-    final long[] lastSeen;
-    private final Fragment[] inWorld;
-    private final Deque<Fragment> spares = new ArrayDeque<>();
     private final RandomSource random;
 
-    // nightmare: -1 none, 0 waiting, 1 fighting, 2 beaten
-    int nightmareState = -1;
-    int nightmareNode = -1;
-    Nightmares.Family family;
-    final List<UUID> nightmareMobs = new ArrayList<>();
-    // mentor: -1 none, 0 waiting, 1 duelling, 2 done
+    // the Duel's mentor: -1 none, 1 duelling, 2 done
     int mentorState = -1;
-    int mentorNode = -1;
     UUID mentor;
     // signs
     UUID shadowless;
@@ -72,12 +56,28 @@ public final class ActiveDream {
     private boolean signsTried;
     private final List<BlockPos> clockHand = new ArrayList<>();
     private int clockStep;
-    final List<UUID> summons = new ArrayList<>();
-    // swaps
-    private int swapNode = -1;
-    private Fragment swapTarget;
-    private int swapCursor;
-    private long lastSwap;
+    // a trial (SPEC §9.3): how much of the course has laid itself, and whether the doorway has opened
+    int revealed;
+    boolean doorwayOpen;
+    // a Room's rule (SPEC §9.5), one for everyone in the dream
+    /** Where the goal stands now (null: the rule hasn't shown it yet). */
+    @org.jspecify.annotations.Nullable BlockPos roomGoal;
+    /** Look away: it's been in view since it last moved. */
+    boolean roomSeen;
+    /** What's wrong here: the things found (bits); no door: the walls tried (bits). */
+    int roomFound;
+    /** The fold's door, no door's right wall: open. No door: the way in has closed behind you. */
+    boolean roomOpen, roomSealed;
+    /** The fold: times round. The long fall: the landing's down. */
+    int roomLoops;
+    boolean roomLanded;
+    /** Hush's sleeper (and those it woke), the Chase's fears; the one carrying a bell. */
+    final List<UUID> roomBeasts = new ArrayList<>();
+    @org.jspecify.annotations.Nullable UUID roomSleeper, roomCarrier;
+    @org.jspecify.annotations.Nullable BlockPos roomCarrierAt;
+    boolean roomSpawned;
+    /** The Duel: when the mentor comes back after you lost a round. Hush: quiet until (a solve's step, §9.6). */
+    long roomNext, roomQuietUntil;
 
     ActiveDream(DreamBlueprint bp, ServerLevel level, UUID host, long now) {
         this.bp = bp;
@@ -85,24 +85,8 @@ public final class ActiveDream {
         this.host = host;
         this.start = now;
         this.end = now + bp.plan.durationTicks();
-        this.lastSeen = new long[bp.nodes.size()];
-        java.util.Arrays.fill(lastSeen, now);
-        this.inWorld = new Fragment[bp.nodes.size()];
         this.random = new XoroshiroRandomSource(bp.plan.seed() ^ 0xD8EA3L);
-        this.lastSwap = now;
-        for (DreamBlueprint.Node n : bp.nodes) {
-            inWorld[n.index()] = n.fragment();
-            if (DreamPlan.NIGHTMARE.equals(n.kind())) {
-                nightmareNode = n.index();
-                nightmareState = 0;
-                family = Nightmares.Family.byId(n.ref()).orElse(Nightmares.Family.GENERIC);
-            }
-            if (DreamPlan.MENTOR.equals(n.kind())) {
-                mentorNode = n.index();
-                mentorState = 0;
-            }
-        }
-        spares.addAll(bp.spares);
+        if (bp.course != null && bp.course.room() != null) roomGoal = bp.course.room().goal();
     }
 
     public boolean hasSign(DreamSign s) {
@@ -121,7 +105,6 @@ public final class ActiveDream {
         if (now % 2 == 0) tickClock(players);
         if (now % 20 == 5) tickSigns(players);
         if (now % 2 == 1) tickShadowless();
-        tickSwap(now, players);
     }
 
     private boolean anyoneNear(List<ServerPlayer> players, BlockPos pos, double dist) {
@@ -265,73 +248,10 @@ public final class ActiveDream {
         return null;
     }
 
-    // ---- rooms that change when nobody is looking ---------------------------------------------------------------------
-
-    void markSeen(int node, long now) {
-        lastSeen[node] = now;
-    }
-
-    private void tickSwap(long now, List<ServerPlayer> players) {
-        if (swapNode >= 0) {
-            writeSwap();
-            if (swapCursor >= swapTarget.sx * swapTarget.sy * swapTarget.sz) {
-                inWorld[swapNode] = swapTarget;
-                swapNode = -1;
-                swapTarget = null;
-                lastSwap = now;
-            }
-            return;
-        }
-        if (now % 40 != 0 || now - lastSwap < 500 || now - start < 600) return;
-        int n = bp.nodes.size();
-        int offset = (int) Math.floorMod(now / 40, n);
-        for (int k = 0; k < n; k++) {
-            int i = (k + offset) % n;
-            DreamBlueprint.Node node = bp.nodes.get(i);
-            if (i == 0 || !(DreamPlan.MEMORY.equals(node.kind()) || DreamPlan.IMAGINED.equals(node.kind()))) continue;
-            if (now - lastSeen[i] < SWAP_UNSEEN_TICKS) continue;
-            if (anyoneNear(players, node.feet(), 26)) continue;
-            if (!level.isLoaded(node.min()) || !level.isLoaded(node.min().offset(15, 0, 15))) continue;
-            Fragment current = inWorld[i];
-            Fragment next;
-            if (!spares.isEmpty() && random.nextInt(3) != 0) {
-                next = spares.pollFirst();
-                spares.addLast(current);
-            } else {
-                next = current.rotated(1 + random.nextInt(3));
-            }
-            swapNode = i;
-            swapTarget = next;
-            swapCursor = 0;
-            return;
-        }
-    }
-
-    private void writeSwap() {
-        DreamBlueprint.Node node = bp.nodes.get(swapNode);
-        Fragment f = swapTarget;
-        int total = f.sx * f.sy * f.sz;
-        int stop = Math.min(total, swapCursor + SWAP_CELLS_PER_TICK);
-        BlockState air = Blocks.AIR.defaultBlockState();
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int c = swapCursor; c < stop; c++) {
-            int x = c % f.sx, z = (c / f.sx) % f.sz, y = c / (f.sx * f.sz);
-            BlockState s = f.get(x, y, z);
-            if (s == null) {
-                if (y < 4) continue; // keep the ground
-                s = air;
-            }
-            pos.set(node.min().getX() + x, node.min().getY() + y, node.min().getZ() + z);
-            if (level.getBlockState(pos) != s) level.setBlock(pos, s, UPDATE);
-        }
-        swapCursor = stop;
-    }
-
     // ---- cleanup -----------------------------------------------------------------------------------------------------
 
     void cleanup() {
-        List<UUID> all = new ArrayList<>(nightmareMobs);
-        all.addAll(summons);
+        List<UUID> all = new ArrayList<>(roomBeasts);
         if (mentor != null) all.add(mentor);
         if (shadowless != null) all.add(shadowless);
         for (UUID id : all) {
@@ -342,7 +262,7 @@ public final class ActiveDream {
 
     public boolean isDreamEntity(Entity e) {
         UUID id = e.getUUID();
-        return nightmareMobs.contains(id) || summons.contains(id) || id.equals(mentor) || id.equals(shadowless);
+        return roomBeasts.contains(id) || id.equals(mentor) || id.equals(shadowless);
     }
 
     static boolean residue(Entity e) {

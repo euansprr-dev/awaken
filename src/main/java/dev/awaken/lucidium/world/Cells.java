@@ -32,6 +32,8 @@ public final class Cells {
     private static final java.util.concurrent.ConcurrentHashMap<Integer, java.util.Set<Long>> GENERATED = new java.util.concurrent.ConcurrentHashMap<>();
     /** Cells waiting for their chunks to be erased. */
     private static final java.util.Set<Integer> RECYCLING = new java.util.HashSet<>();
+    /** Cells erased while more of their chunks generated: released again next tick (never from the erase callback). */
+    private static final java.util.ArrayDeque<Integer> AGAIN = new java.util.ArrayDeque<>();
 
     /** A cell for a new dream: a recycled one if any, else a fresh number. Server thread. */
     public static int allocate(MinecraftServer server) {
@@ -58,10 +60,16 @@ public final class Cells {
         long[] packed = chunks.stream().mapToLong(Long::longValue).toArray();
         dev.awaken.core.RegionRecycler.eraseWhenUnloaded(level, packed, () -> {
             if (!RECYCLING.remove(cell)) return;
-            // chunks that were still generating when the dream ended were recorded meanwhile: erase them too
-            if (GENERATED.containsKey(cell)) release(server, cell);
+            // chunks that were still generating when the dream ended were recorded meanwhile: erase them too, from the
+            // next tick (the recycler is still walking its queue while this runs, so a new batch now would break it)
+            if (GENERATED.containsKey(cell)) AGAIN.add(cell);
             else FREE.add(cell);
         });
+    }
+
+    /** Server tick: cells whose late chunks still need erasing. */
+    public static void tick(MinecraftServer server) {
+        for (Integer cell; (cell = AGAIN.poll()) != null; ) release(server, cell);
     }
 
     /** Called by the generator for every chunk it fills inside a cell. */
@@ -110,6 +118,7 @@ public final class Cells {
         FREE.clear();
         GENERATED.clear();
         RECYCLING.clear();
+        AGAIN.clear();
         DreamChunkGenerator.clear();
         Path dim = DimensionType.getStorageFolder(LucidiumContent.LUCIDIUM, server.getWorldPath(LevelResource.ROOT));
         for (String sub : new String[]{"region", "entities", "poi"}) {

@@ -105,6 +105,17 @@ public final class AscentServer {
         }
     }
 
+    /** Mastery from outside a move (a dream's finish, SPEC §9.4): points on the track, no link in the chain. */
+    public static void addMastery(ServerPlayer p, AscentMemory.Track track, int points) {
+        AscentMemory before = p.getData(AscentContent.MEMORY);
+        AscentMemory after = before.withPoints(track, points);
+        p.setData(AscentContent.MEMORY, after);
+        if (after.level(track) != before.level(track)) {
+            syncTiers(p);
+            dev.awaken.core.DirectorLog.log(p, "ascent", track + " mastery " + after.level(track) + " (from outside a move)");
+        }
+    }
+
     /** A chain ended: style XP for its links (three or more), within the minute's cap; the record if it's the longest. */
     static void payChain(ServerPlayer p, AscentMotion m, long now) {
         int chain = m.chain;
