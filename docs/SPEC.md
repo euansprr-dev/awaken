@@ -3108,10 +3108,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     painter is kept for the map scene (§30, phase 4), which will drive it from its own camera.
   - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
     ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
-    spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
-    take back your own under the cursor); twelve per player, the oldest goes; each party member online sees the
-    party's pins in their dimension, in the owner's own colour (a hue from their id), with the owner's name. Dev:
-    `/awaken atlas pin`. Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
+    spaced capitals with its levels under it. (Its party pins became **Waypoints**, below, at schemaVersion 3.) Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
     the first air, then to the floor, so the table shows the highest floor of each column; those chunks are sampled
     from a queue about 1 ms a tick, the diorama's base drops to 24 and there is no night. Carillon's lit windows
     (`awaken:lit_window`, within 12 of a column's top) count as night lights.
@@ -3205,15 +3202,15 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   - **Destinations** (Euan, 2026-10-27: "We need to make sure I can actually choose destinations on the map too";
     `atlas.client.AtlasDestination`, `signal.Destination`, `core.api.Destinations`): a click that doesn't move (3 GUI px
     at most between press and release; not a drag, not a double-click's second) picks the place under the cursor: a
-    gate (anywhere along its pillar), a mark or a rumour, a Hearth, a party pin (within 12 px), else a region's or district's name
+    gate (anywhere along its pillar), a mark or a rumour, a Hearth, a waypoint (its head or foot, within 12 px), else a region's or district's name
     chip, else a spot on ground you know ("A spot in the Commons"); a click on nothing lets the pick go. A small card
     beside it names it, with **› Set as destination** (Enter); on the destination itself **✕ Clear destination**. The
     legend's picked gate offers the same ("Set as destination" / "Clear destination", T), where "Point me there" was
     (the client-only map pin is gone). Setting it says "That's your destination now. The top left of your screen will
     point the way." The destination stands on the table in its own look: a white-gold pin with a beam above it and a
     slow ring at its foot, "DESTINATION" over its name (on the clouds where the land isn't known). Drag to orbit,
-    right-drag, a click on a legend row to glide and the double-click party pin are unchanged (a double-click drops
-    the first click's pick). The key line starts "click a place to go there".
+    right-drag and a click on a legend row to glide are unchanged; a double-click drops the first click's pick (it makes
+    a waypoint). The key line starts "click a place to go there".
   - The server keeps one per player (attachment `awaken:destination`, schemaVersion 1, kept through death): name (48
     characters at most), dimension (the one the player stands in when the Atlas asks), block, kind (`gate`, `mark`,
     `rumour`, `region`, `pin`, `spot`, `home`, else `place`). Sent on change, login, respawn and dimension change. Every 20
@@ -3223,6 +3220,46 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   - Tests: `signal_destination_arrival` (not yet at 60 blocks or 80 above; there within 16; a rumour across only;
     never in another dimension), `signal_destination_saved` (the Atlas's request named and placed in your dimension, the
     codec, a whole save and load, Clear, a nameless request ignored).
+  - **Waypoints** (Euan, 2026-11-02: "Ability to set waypoints on maps (AAA UI and same design language as now)";
+    concept page `docs/waypoints-kin/page.html`, all twelve decisions yes; `atlas.Waypoints`, `atlas.client.WaypointCard`,
+    `WaypointGlyphs`). Places you mark on the Atlas, kept on the server in `AtlasData` (schemaVersion 3: per world, each
+    with its dimension, kept through death, the same in single player and on a server). Each has an id of its own (never
+    reused), a name (chat's characters, spaces folded, 32 at most, never empty: "Waypoint"), one of eight colours (signal
+    blue, horizon, green, gold, bronze, rose, violet, white) or, for an old pin, its owner's own hue, one of eight marks
+    (flag, pick, star, house, cross, cave, ring, diamond) and a share switch, off by default. **64** each across every
+    dimension; nothing is ever removed for you: the 65th says "You have 64 waypoints. Remove one to make room." Only
+    ground you've explored takes one ("You can only put a waypoint on land you've explored."). The server checks every
+    request (explored ground, the limit, a colour and mark from the set, the name); only the owner changes or removes
+    one. A shared one shows to the owner's party members online in that dimension, with the owner's name under it; they
+    can head for it, never change it; one who leaves the party takes theirs along. A save's old pins carry over as
+    shared waypoints named "Pin" in their owner's hue; pins are never written again.
+  - Making one: a double-click on ground you know (as pins were) or **N** on the table (where you stand) adds it at once,
+    named for its land ("A spot in the Greenfold") in the colour, mark and share of the last one you made or changed
+    the look of (opening one only to read it changes nothing), and its card opens
+    beside it when the server has it: **NEW WAYPOINT**, the name already selected so you just type (Backspace, Ctrl+A,
+    Ctrl+V; a blinking caret), the eight colours, the eight marks, "Share with my party", **› Keep it** (Enter) and
+    **Remove** (Del, which clears the name instead while it's selected). The waypoint shows the card's colour and mark
+    as you pick. While the card is open it takes every key (typing never moves the map or closes it); Esc closes the
+    card and changes nothing, a click off it keeps what you changed. A double-click on one of yours opens its card.
+  - On the table: a thin stem on its place, a dark diamond head rimmed in its colour with its mark inside (7×7 pixel
+    glyphs), a flat ring at its foot, its name over it from zoom 0.45 and a shared one's owner under it. Names keep
+    clear of them; one under the legend isn't drawn through its glass. A click picks one (the card sits beside it, clear
+    of the legend, or under it when neither side has room): its destination card has its colour on the edge, "Yours · 212 blocks · only you
+    see it" (or "your party sees it"; "Ana's · shared with your party · 340 blocks"), **› Set as destination**
+    (Enter; kind `pin`) and **Change it** (E) on your own, or "Only Ana can change it." The destination's own look stands
+    in for a waypoint that is the destination. **V** hides or shows them all (for the session). The legend's
+    **WAYPOINTS · n** block lists the nearest three with their marks and distance, "n more", "V hides them"; a row
+    glides there and picks it. The key line's short form (a small window, a big GUI) keeps "double-click a waypoint ·
+    N one here". Nothing marks a waypoint out in the world: only the destination's compass (the Now line,
+    the Tab glance's needle) points to one you chose.
+  - **Where you fell**: a death that stands (not cancelled) outside gates leaves a grey waypoint with a headstone mark
+    where you fell, in place of the last; it goes once you're within 8 blocks across (24 up or down), and doesn't count
+    toward the 64. Its card offers **Remove it** (E). Waypoints reach the client as `atlas_waypoints` (the viewer's own
+    in their dimension, the party's shared ones there, where you fell) at login, a dimension change, every change by a
+    party member, and when the party's view changes (checked every 100 ticks, sent only when different); the table asks
+    with `atlas_waypoint` (add, edit, remove). Dev: `/awaken atlas waypoint [<colour 0-7> <shared> <name>]` (where you
+    stand). Test: `atlas_waypoints` (unknown ground, the set's colours and marks, 64 and the first still there, names
+    cleaned, only the owner, shared and not, where you fell); `atlas_bits_codec` round-trips them and carries an old pin over.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
@@ -15176,6 +15213,7 @@ in reach 23% of a fight today, 49% with these rules).
     8 s), even in a fight; otherwise aside in a fight; shown while glancing. Its room in the top-right stack shrinks as it fades.
   - Gate panel (`RunHudLayer`): one line (rank, gate, floor) and the collapse clock under it, which never hides; the full panel
     for 6 s whenever anything but the clocks changes, while the noise is 12 or more, while glancing, and in Classic.
+  - Mount hearts (`vehicle_health`): hidden; the kin's ride line carries a mount's health (§43.17).
   - Creature plates (`PlateRules.thin`): the creature you mean (`Aim.target()`) keeps the full plate (the bright rim when
     locked), and so do one under your look and a notable beast; the others fighting you show a thin plate, the bar alone.
 - Autopilot: `holo screen clear|clear_crosshair|classic|auto`, `holo fight on|off`.
@@ -16772,6 +16810,40 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
   - Tests (CI): `bells_look` (every number 0-99 picks one model, clean and dulled, in its family's metal, and that
     model's lip is where `BellLook.bottom` says), `bells_dulled` (a bell kept in a gate lies dulled and comes into your
     hands dulled; a given bell is clean), `bells_sounds_placed` (the new sounds are mono).
+
+### 43.17 The kin plate and the ride line (concept page https://claude.ai/artifact/JQWQnSSsjSkWwPuJzwSpGn; Euan 2026-11-02: "kins like lampwing don't have a card? They just have the vanilla hearts. So let's add their custom plate"; "Go ahead")
+- **Who wears it** (`kin.KinPlates.wears`): every kin (at home, wild, or Gnawed), a tamed pet, a mount that trusts its rider
+  (`WildMount.trusted`). A wild wolf, a wild mount and any foe keep the creature plate (SPEC §21). While plates are on
+  (`LivingClient.platesOn`) they get no creature plate and no Jade card (Jade's hearts were what showed before).
+- **When**: while you look at it (the look's reach is the creature plate's, `PlateRules.lookRange`, through no wall) or it's
+  the creature you mean (`Aim.target()`, as §40.6), then a
+  0.6 s fade (`LOOK_FADE` 12 ticks); for 4 s after it's hurt within 16 blocks of you (`HURT_TICKS` 80, `HURT_RANGE`), then a
+  1 s fade; at most two at once (`MAX`): looked at first (the crosshair's and the one you mean can both show), then
+  the nearest hurt. Never the one you ride.
+- **The look** (`kin.client.KinPlate`, a `HoloWorld` plate over its head, 90 to 210 px wide by its words): warm glass with a
+  lantern edge (an ember edge and a darker fill when Gnawed); its name (the name you gave it, else its kind) with four bond
+  diamonds after it, gold up to how close you and its kind are (Kinship's Wary, Curious, Friendly, Kin; none for a pet or a
+  mount); the bond line; its health as a thin line in its kind's colour, amber and breathing at a third or less; a note
+  under it (two lines at most). It grows in over 4 ticks. Vanilla's name tag stays off it while its plate shows.
+- **The words** (server, `KinPlates.read`, sent as `kin_bond` when the client asks with `kin_read`: when a plate first
+  shows and every 2 s while it shows, within 64 blocks): wild kin "Could live with you" (green) and how far off its trust is
+  ("Help it three times and it will trust you.", "Two more helps ...", "One more help ...", "It trusts you. It will follow
+  you home to a nook it likes.", or "It won't come near you. Not after what happened."); at home "Lampwing · lives with
+  you" (or "lives with Ana") and what it's doing (the Hearth page's words); Gnawed "Gnawed" (ember) and "Beat it down and
+  the Deep lets go of it."; a pet "Wolf · yours" or "Ana's", "sitting where it was told to"; a mount "your mount" or
+  "Ana's mount", "resting". On a named one the client puts its kind before a line that starts in lower case ("Burrowbun
+  · lives with you"); an unnamed one's name is its kind, so its line just starts with a capital ("Lives with you").
+- **Naming** (the Hearth page's Your beasts card): "Give it a name" (or "Change its name") opens a small card, "NAME YOUR
+  LAMPWING", 24 letters at most; Enter keeps it. The server (`kin_name`) lets only its keeper name it, cleans the name
+  (chat's characters, spaces folded) and sets its custom name; an empty name takes it away. The card's title and the plate
+  show the name.
+- **The ride line** (`kin.client.RideLine`, layer `awaken:ride_line`, the clear screen only): vanilla's mount hearts are
+  hidden (§40.6); the mount's health is a warm line 92 px wide, 6 px over the vitals, with its name (shadowed) at 0.75
+  size to the left. It shows for 3 s after you climb on (`RIDE_SHOW` 60 ticks), while the mount is below full health, and in a fight;
+  at a third or less it breathes amber. Classic keeps vanilla's hearts.
+- Wire: `kin_read` (VAR_INT entity), `kin_bond` (entity, who, tone, step, note), `kin_name` (id, name); kin payloads are
+  version 2. Nothing is saved but the custom name.
+- Tests (CI): `kin_plate` (who wears it, the words, when it shows), `kin_ride_line`, `kin_name`.
 
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 

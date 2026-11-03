@@ -1,0 +1,493 @@
+<title>Waypoints and Kin Plates</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral+SC:wght@500;600&family=Spectral:ital,wght@0,400;0,500;1,400&family=Pixelify+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column on the Holo's glass. Each part opens with its mockup at the game's own GUI scale (x2),
+   then why it's needed today, then numbered decisions with a recommendation each. One dark look, like the band. */
+:root {
+  --ink: #0a1120;
+  --glass: #0f1724;
+  --glass-hi: #16233a;
+  --edge: #7fc3ff;
+  --title: #ffffff;
+  --text: #d9e4f2;
+  --label: #bccde3;
+  --muted: #8fa7c4;
+  --amber: #ffcf7a;
+  --lantern: #f2a541;
+  --bronze: #e0a86a;
+  --gold: #f2d58a;
+  --good: #8ff0c0;
+  --violet: #b48cff;
+  --rose: #ff8a9a;
+  --kin: #f2c46a;
+  --display: "Spectral SC", "Iowan Old Style", Georgia, serif;
+  --body: "Spectral", "Iowan Old Style", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --px: "Pixelify Sans", "Silkscreen", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: radial-gradient(120% 50% at 50% 0%, #13213a 0%, var(--ink) 62%) fixed, var(--ink);
+  color: var(--text);
+  font: 17px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+main { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 60px; }
+header { padding-top: 44px; display: grid; gap: 12px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--edge); }
+h1 { font: 600 clamp(36px, 6.4vw, 60px)/1.04 var(--display); letter-spacing: .05em; margin: 0; text-wrap: balance; color: var(--title); }
+h2 { font: 600 28px/1.15 var(--display); letter-spacing: .07em; margin: 0; text-wrap: balance; color: var(--title); }
+h3 { font: 600 17px/1.25 var(--display); letter-spacing: .1em; margin: 0; color: var(--bronze); }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 20px; max-width: 62ch; }
+.muted { color: var(--muted); }
+code { font: 14px/1.4 var(--mono); color: var(--label); }
+section { display: flex; flex-direction: column; gap: 20px; }
+.ask { border-left: 2px solid var(--bronze); padding: 4px 0 4px 16px; font-style: italic; color: var(--label); max-width: 70ch; }
+
+/* a mockup stage: drawn at 2x the GUI's pixels, scaled to the column */
+.frame { position: relative; border: 1px solid color-mix(in srgb, var(--edge) 38%, transparent); background: #050a12; overflow: hidden; }
+.frame::before, .frame::after { content: ""; position: absolute; width: 14px; height: 14px; border: 1px solid var(--edge); z-index: 5; pointer-events: none; }
+.frame::before { left: 4px; top: 4px; border-right: 0; border-bottom: 0; }
+.frame::after { right: 4px; bottom: 4px; border-left: 0; border-top: 0; }
+.stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; font-family: var(--px); }
+.stage canvas { position: absolute; left: 0; top: 0; }
+.caption { font: 13px/1.5 var(--mono); color: var(--muted); }
+
+/* in-game text: Minecraft-size pixel type, as light */
+.g { position: absolute; font: 400 16px/1 var(--px); color: #e9f1ff; white-space: nowrap; }
+.glow { text-shadow: 0 0 6px rgba(127,195,255,.55), 0 0 1px rgba(255,255,255,.6); }
+.plate-bg { background: rgba(11,22,38,.88); }
+.chip { position: absolute; padding: 5px 14px 4px 16px; background: rgba(11,22,38,.88); white-space: nowrap; }
+.chip::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--c); }
+.chip::after { content: ""; position: absolute; left: 6px; right: 0; top: 0; height: 2px; background: color-mix(in srgb, var(--c) 55%, transparent); }
+.chip b { display: block; font: 400 16px/1.1 var(--px); color: #e9f1ff; letter-spacing: .02em; }
+.chip i { display: block; font: 400 15px/1.2 var(--px); font-style: normal; color: var(--c); }
+
+/* waypoints on the table */
+.wp { position: absolute; width: 0; height: 0; }
+.wp .stem { position: absolute; left: -1px; bottom: 0; width: 3px; height: 30px; background: #0b1626; }
+.wp .stem::after { content: ""; position: absolute; left: 1px; top: 0; bottom: 0; width: 1px; background: var(--c); }
+.wp .head { position: absolute; left: -13px; bottom: 26px; width: 26px; height: 26px; transform: rotate(45deg); background: #0b1626; border: 2px solid var(--c); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent); }
+.wp svg { position: absolute; left: -8px; bottom: 31px; width: 16px; height: 16px; }
+.wp .name { position: absolute; bottom: 60px; transform: translateX(-50%); padding: 3px 7px 2px; background: rgba(11,22,38,.62); font: 400 15px/1 var(--px); color: var(--c); white-space: nowrap; }
+.wp .owner { position: absolute; bottom: -22px; transform: translateX(-50%); font: 400 13px/1 var(--px); color: var(--c); opacity: .9; white-space: nowrap; }
+.wp .foot { position: absolute; left: -9px; top: -5px; width: 18px; height: 10px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--c) 70%, transparent); }
+
+/* the Holo card on the table */
+.card { position: absolute; background: rgba(11,22,38,.94); padding: 10px 14px 12px 18px; display: grid; gap: 8px; }
+.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c, var(--edge)); }
+.card::after { content: ""; position: absolute; left: 4px; right: 0; top: 0; height: 2px; background: rgba(127,195,255,.55); }
+.card .t { font: 400 15px/1 var(--px); letter-spacing: .14em; color: var(--edge); }
+.field { border: 1px solid rgba(127,195,255,.55); background: rgba(5,10,18,.8); padding: 6px 8px 5px; font: 400 16px/1 var(--px); color: #fff; }
+.field .caret { display: inline-block; width: 2px; height: 15px; background: #fff; vertical-align: -2px; margin-left: 1px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .field .caret { animation: none; } }
+.swatches { display: flex; gap: 6px; align-items: center; }
+.sw { width: 16px; height: 16px; background: var(--c); box-shadow: inset 0 0 0 2px rgba(5,10,18,.6); }
+.sw.on { outline: 2px solid #fff; outline-offset: 2px; }
+.marks { display: flex; gap: 5px; }
+.mk { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid rgba(188,205,227,.25); }
+.mk.on { border-color: #fff; background: rgba(127,195,255,.18); }
+.mk svg { width: 14px; height: 14px; }
+.row { display: flex; justify-content: space-between; gap: 18px; font: 400 16px/1 var(--px); color: #e9f1ff; }
+.row .k { color: #bccde3; opacity: .8; }
+.btn { padding: 5px 7px 4px; background: color-mix(in srgb, var(--c, var(--gold)) 22%, transparent); }
+.box { display: inline-block; width: 13px; height: 13px; border: 2px solid #bccde3; vertical-align: -1px; margin-right: 7px; }
+.box.on { background: var(--good); border-color: var(--good); box-shadow: inset 0 0 0 2px #0b1626; }
+
+/* decisions */
+.decisions { display: grid; gap: 14px; counter-reset: none; }
+.d { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 16px; padding: 16px 18px; background: linear-gradient(var(--glass-hi), var(--glass)); border: 1px solid rgba(127,195,255,.16); }
+.d .n { grid-row: span 3; font: 600 30px/1 var(--display); color: var(--edge); }
+.d h3 { color: var(--title); letter-spacing: .04em; font-size: 19px; }
+.d p { font-size: 16px; }
+.rec { font: 500 13px/1.5 var(--mono); color: var(--good); letter-spacing: .02em; }
+.rec::before { content: "Recommended: "; color: var(--muted); }
+.why { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.why > div { padding: 14px 16px; border: 1px solid rgba(255,207,122,.22); background: rgba(255,207,122,.04); display: grid; gap: 6px; }
+.why h3 { color: var(--amber); }
+.why p { font-size: 15.5px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.foot-note { display: grid; gap: 10px; padding: 18px 20px; border: 1px solid rgba(127,195,255,.22); background: rgba(127,195,255,.04); }
+.foot-note p { font-size: 16px; }
+.reply { font: 600 20px/1.3 var(--display); letter-spacing: .05em; color: var(--title); }
+</style>
+
+<main>
+<header>
+  <div class="eyebrow">AWAKEN · concept for Euan · 2 Nov 2026</div>
+  <h1>Waypoints and Kin Plates</h1>
+  <p class="lede">Two pieces of UI you asked for while playing. Your own waypoints on the Atlas, named and coloured. They live on the map, and the compass points to one only when you make it your destination. And a plate of their own for the beasts that live with you, in place of the hearts they show now.</p>
+  <p class="ask">"Ability to set waypoints on maps (AAA UI and same design language as now)" &nbsp;·&nbsp; "kins like lampwing don't have a card? They just have the vanilla hearts. So let's add their custom plate."</p>
+</header>
+
+<!-- ============================================================== WAYPOINTS -->
+<section id="waypoints">
+  <div class="eyebrow">Part one</div>
+  <h2>Waypoints on the Atlas</h2>
+  <p>Double-click the table where you want one. It drops in with the same pop as a pin today and its card opens beside it: type a name, pick a colour and a mark, and say whether your party sees it. Click any waypoint later to make it your destination, change it or remove it. The legend lists your nearest ones.</p>
+
+  <div class="frame" data-w="960" data-h="580"><div class="stage" id="atlasStage" style="width:960px;height:580px">
+    <canvas id="atlasCanvas" width="960" height="580"></canvas>
+    <!-- title row -->
+    <div class="g glow" style="left:22px;top:18px">THE GREENFOLD</div>
+    <div class="g" style="right:28px;top:18px;color:#bccde3">ATLAS</div>
+    <div class="g" style="right:42px;top:46px;color:#7fc3ff">N</div>
+    <!-- legend -->
+    <div class="card" style="left:22px;top:52px;width:330px;gap:6px;--c:#7fc3ff">
+      <div class="t">KNOWN LANDS</div>
+      <div class="row"><span><span style="color:#8ff0c0">■</span> The Greenfold</span><span class="k">Lv 3–8</span></div>
+      <div class="row"><span><span style="color:#ffd36a">■</span> Ashen Rise</span><span class="k">Lv 9–14</span></div>
+      <div class="t" style="margin-top:6px">WAYPOINTS · 5</div>
+      <div class="row"><span><span style="color:#e0a86a">◆</span> Copper seam above the mere</span><span class="k">212</span></div>
+      <div class="row"><span><span style="color:#b48cff">◆</span> Cherry grove <span style="opacity:.75">· Ana</span></span><span class="k">340</span></div>
+      <div class="row"><span><span style="color:#ff8a9a">◆</span> Wolf den, keep clear</span><span class="k">415</span></div>
+      <div class="row k" style="opacity:.75"><span>and 2 more</span><span>V hides them</span></div>
+    </div>
+    <div id="atlasMarks"></div>
+    <!-- bottom key line -->
+    <div style="position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(rgba(11,22,38,0),rgba(11,22,38,.92) 45%)"></div>
+    <div class="g" style="left:22px;bottom:14px;color:#bccde3;font-size:14px">click a place to go there &nbsp;·&nbsp; double-click a waypoint &nbsp;·&nbsp; N one where you stand &nbsp;·&nbsp; drag orbit &nbsp;·&nbsp; scroll zoom &nbsp;·&nbsp; V waypoints &nbsp;·&nbsp; C you</div>
+  </div></div>
+  <p class="caption">Mockup at the MacBook's GUI scale. A new waypoint (cyan flag) with its card open; your copper seam; a wolf den you marked to avoid; Ana's shared cherry grove in her colour with her name under it; your Hearth; you.</p>
+
+  <div class="pair">
+    <div class="frame" data-w="480" data-h="200"><div class="stage" style="width:480px;height:200px;background:radial-gradient(80% 90% at 40% 60%, #4e8a43, #2c5a2e 70%, #1d3a24)">
+      <div class="card" style="left:24px;top:22px;width:330px;--c:#e0a86a">
+        <div class="row" style="font-size:17px"><span>Copper seam above the mere</span></div>
+        <div class="row k" style="font-size:14px"><span>Yours · 212 blocks · only you see it</span></div>
+        <div class="row btn" style="--c:#f2d58a"><span style="color:#fff">› Set as destination</span><span class="k">Enter</span></div>
+        <div class="row" style="padding:0 7px"><span>Change it</span><span class="k">E</span></div>
+      </div>
+    </div></div>
+    <div class="frame" data-w="480" data-h="200"><div class="stage" style="width:480px;height:200px;background:radial-gradient(80% 90% at 60% 40%, #5a8f48, #305d30 70%, #1d3a24)">
+      <div class="card" style="left:24px;top:22px;width:330px;--c:#b48cff">
+        <div class="row" style="font-size:17px"><span>Cherry grove</span></div>
+        <div class="row k" style="font-size:14px"><span style="color:#b48cff">Ana's · shared with your party · 340 blocks</span></div>
+        <div class="row btn" style="--c:#f2d58a"><span style="color:#fff">› Set as destination</span><span class="k">Enter</span></div>
+        <div class="row k" style="padding:0 7px;font-size:14px"><span>Only Ana can change it.</span></div>
+      </div>
+    </div></div>
+  </div>
+  <p class="caption">Clicking a waypoint: your own (left) and one a party member shared (right). The destination card you have today, with your waypoint's own colour on its edge.</p>
+
+  <h3>Out in the world: only the compass</h3>
+  <div class="frame" data-w="960" data-h="400"><div class="stage" id="worldStage" style="width:960px;height:400px">
+    <canvas id="worldCanvas" width="960" height="400"></canvas>
+    <!-- the Now line, as today: the compass to your destination -->
+    <div class="g glow" style="left:22px;top:20px">◆ Copper seam above the mere</div>
+    <div class="g" style="left:22px;top:42px;color:#bccde3;font-size:14px">212 blocks · ahead and a little left</div>
+    <!-- the vitals line, the clear screen as today -->
+    <div style="position:absolute;left:356px;bottom:44px;width:248px;height:6px;display:flex;gap:2px">
+      <span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff;opacity:.35"></span><span style="flex:1;background:#cdebff;opacity:.35"></span>
+    </div>
+  </div></div>
+  <p class="caption">Walking toward the copper seam after setting it as your destination. Nothing marks a waypoint in the world itself: the Now line at the top left points the way, as it does for any destination today. Your other waypoints stay on the map.</p>
+
+  <div class="why">
+    <div><h3>What the Atlas has today</h3><p>Party pins: a double-click drops one, twelve each, no name or colour, always shared, and the oldest goes without a word when you drop a thirteenth. One destination at a time, which the Now line points to. Nothing marks a place in the world.</p></div>
+    <div><h3>The wrist</h3><p>The old wrist glance (a live mini map) isn't drawn anywhere since the band's pages came in. The wrist today is the Tab glance. A waypoint reaches it only as your destination: then it is the glance's "where you're heading" row with its needle, like the Now line.</p></div>
+  </div>
+
+  <div class="decisions">
+    <div class="d"><div class="n">1</div><h3>Pins become waypoints</h3>
+      <p>One kind of marker instead of two. Today's pins carry over as shared waypoints named "Pin", in your colour, so nothing your party dropped is lost.</p>
+      <div class="rec">yes, one thing called a waypoint</div></div>
+    <div class="d"><div class="n">2</div><h3>Making and changing one</h3>
+      <p>Double-click ground you know (as pins today), or press N on the table for one where you stand. Its card: a name (32 letters at most; it starts as "A spot in the Greenfold", already selected so you can just type), eight colours, eight marks (flag, diamond, star, house, pick, cave, ring, cross), share with my party, remove. Click a waypoint later for Set as destination, Change it (E) and Remove. V hides or shows them all on the table.</p>
+      <div class="rec">as described</div></div>
+    <div class="d"><div class="n">3</div><h3>Sharing with the party</h3>
+      <p>Each waypoint has its own switch, off by default. A shared one shows to your party members online in the same dimension, in its own colour with your name under it. They can head for it but only you can change or remove it. If someone leaves the party, their waypoints leave with them.</p>
+      <div class="rec">per waypoint, off by default</div></div>
+    <div class="d"><div class="n">4</div><h3>How many</h3>
+      <p>64 each, across every dimension together. Nothing is ever removed for you: at 64 the card says "You have 64 waypoints. Remove one to make room."</p>
+      <div class="rec">64, and no silent removal</div></div>
+    <div class="d"><div class="n">5</div><h3>Where they're kept</h3>
+      <p>On the server, in your Atlas record (the one that already holds what you explored and your pins). So it's per world, each waypoint knows its dimension, it's kept through death, it works the same on a server and in single player, and a new computer has them all. The server checks every one: the name's length, a colour and mark from the set, ground you have explored, the limit.</p>
+      <div class="rec">server, per world, per dimension</div></div>
+    <div class="d"><div class="n">6</div><h3>Nothing in the world</h3>
+      <p>Waypoints show only on the map while it's open. Out in the world nothing marks them. Choose one as your destination and the compass (the Now line at the top left, and the Tab glance's needle) points to it until you arrive, as for any destination today.</p>
+      <div class="rec">your call: map only, compass when it's your destination</div></div>
+    <div class="d"><div class="n">7</div><h3>Where you fell</h3>
+      <p>A grey waypoint at the spot of your last death (not inside gates), so you can walk back for your things. It goes away when you reach it or die again. It doesn't count toward the 64.</p>
+      <div class="rec">yes</div></div>
+  </div>
+</section>
+
+<!-- ============================================================== KIN PLATE -->
+<section id="kin">
+  <div class="eyebrow">Part two</div>
+  <h2>A plate for your kin</h2>
+  <p>The creature plate you know, made warm: the lantern's rim instead of the band's blue, the name you gave it, what it is and who it lives with, its health as a soft line with no level and no red, how close you and its kind are, and what it's doing. It reads as yours at a glance, never as something to fight.</p>
+
+  <div class="frame" data-w="960" data-h="420"><div class="stage" id="kinStage" style="width:960px;height:420px">
+    <canvas id="kinCanvas" width="960" height="420"></canvas>
+    <div id="kinPlates"></div>
+  </div></div>
+  <p class="caption">Left to right: your Lampwing at home, a wild one you've helped twice, and for comparison a wild beast's plate as it is today. Your own kin's plate never carries a level or the fight bar's segments.</p>
+
+  <div class="pair">
+    <div class="frame" data-w="480" data-h="220"><div class="stage" style="width:480px;height:220px;background:linear-gradient(#26364e,#1b2a3c 60%,#2a3d2a)">
+      <div style="position:absolute;left:122px;top:40px;width:236px;padding:10px 12px 12px;background:rgba(17,22,34,.94);border:2px solid #7fc3ff;border-left-width:4px">
+        <div class="g" style="position:static;color:#fff">Lampwing</div>
+        <div style="margin-top:9px;display:flex;gap:2px">
+          <svg viewBox="0 0 9 9" width="18" height="18"><use href="#ico-heart"/></svg><svg viewBox="0 0 9 9" width="18" height="18"><use href="#ico-heart"/></svg><svg viewBox="0 0 9 9" width="18" height="18"><use href="#ico-heart"/></svg><svg viewBox="0 0 9 9" width="18" height="18"><use href="#ico-heart"/></svg><svg viewBox="0 0 9 9" width="18" height="18" style="opacity:.35"><use href="#ico-heart"/></svg>
+        </div>
+        <div class="g" style="position:static;margin-top:9px;color:#7fa0ff;font-size:14px;font-style:italic">Awaken</div>
+      </div>
+      <div class="g" style="left:16px;bottom:14px;color:#ffcf7a;font-size:14px">Today: Jade's card, with vanilla hearts</div>
+    </div></div>
+    <div class="frame" data-w="480" data-h="220"><div class="stage" style="width:480px;height:220px;background:linear-gradient(#26364e,#1b2a3c 60%,#2a3d2a)">
+      <!-- ride line over the vitals -->
+      <div class="g" style="left:116px;top:96px;color:#f2c46a;font-size:14px">Frost Stag</div>
+      <div style="position:absolute;left:116px;top:116px;width:248px;height:4px;background:rgba(5,8,14,.6)"><div style="width:72%;height:100%;background:linear-gradient(90deg,#f2a541,#ffe1a6);box-shadow:0 0 8px rgba(242,165,65,.6)"></div></div>
+      <div style="position:absolute;left:116px;top:128px;width:248px;height:6px;display:flex;gap:2px">
+        <span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span><span style="flex:1;background:#cdebff"></span>
+      </div>
+      <div class="g" style="left:16px;bottom:14px;color:#8ff0c0;font-size:14px">Riding: the mount's line sits over yours</div>
+    </div></div>
+  </div>
+  <p class="caption">Left, what you see when you look at a Lampwing today. Right, riding: vanilla's mount hearts give way to a warm line over your own health line, with the mount's name on it.</p>
+
+  <div class="why">
+    <div><h3>Why kin show hearts today</h3><p>A creature gets a plate only when it carries a level tag. The Living Wilds tags vanilla creatures, and our own creatures tag themselves, but the kin never do. So they have no plate, and Jade (the "what am I looking at" card in the pack) fills the gap with its hearts. Tamed wolves and cats are left out of plates on purpose, so they show Jade's hearts too.</p></div>
+    <div><h3>Why riding shows hearts</h3><p>The clear screen hides vanilla's hearts, armour, food and XP, but not the mount's own row of hearts. So riding a Frost Stag, a Dune Ray or a horse shows vanilla hearts above the hotbar.</p></div>
+  </div>
+
+  <div class="decisions">
+    <div class="d"><div class="n">8</div><h3>Who wears it</h3>
+      <p>Every kin, at home or wild, and every creature that is yours: a mount that trusts you, a tamed wolf, cat or parrot. A Gnawed kin (the Deep has got into it) wears it too, but dark with an ember rim and "Gnawed" on it, so you know it's one of them and that it can be freed.</p>
+      <div class="rec">kin, your mounts and your pets</div></div>
+    <div class="d"><div class="n">9</div><h3>What it shows</h3>
+      <p>Its name (the one you gave it, else its kind). Under it, its kind and who it lives with: "Lampwing · lives with you", "lives with Ana", or for a wild one "Could live with you". Its health as one soft line in its kind's colour, amber when low, never red, no level. How close you and its kind are as four marks (Wary, Curious, Friendly, Kin); a wild one you're helping says how far off its trust is ("One more help and it will trust you"). What it's doing, in the Hearth page's words ("lighting the yard", "hiding, hurt. It'll come back when it's well").</p>
+      <div class="rec">as in the mockup</div></div>
+    <div class="d"><div class="n">10</div><h3>Naming them</h3>
+      <p>A name tag already works on kin. Better: on the Hearth page, each of your beasts gets "Give it a name". A small field, checked by the server (24 letters at most), and the plate and the page use it from then on.</p>
+      <div class="rec">yes, from the Hearth page</div></div>
+    <div class="d"><div class="n">11</div><h3>When it shows</h3>
+      <p>When you look at it, with the same reach and fade as every other plate. One of yours that gets hurt near you shows its plate for 4 seconds. At most two at once. While plates are on, Jade's card goes quiet for these creatures, as it already does for every wild creature ("only the plate shows").</p>
+      <div class="rec">look, or hurt near you</div></div>
+    <div class="d"><div class="n">12</div><h3>Riding</h3>
+      <p>On the clear screen, the mount's hearts give way to a ride line just over your health line, with its name: shown for 3 seconds when you climb on, and again while it's hurt, at a third of its health or less, or in a fight. The jump bar stays as it is. Classic keeps vanilla's hearts.</p>
+      <div class="rec">the ride line</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="foot-note">
+    <h3>Neighbours and size</h3>
+    <p>The Boss Plate and the plate rules stay as they are (the boss-fights session is working there). The kin plate is its own code in the kin module. Three one-line touches outside it: Jade's "this creature has a plate" check, the wild-plate picker skipping your trusted mounts so they don't wear two plates, and the clear screen's list of vanilla HUD pieces it hides (the mount's hearts). No new Atlas hooks, so the bells session's marks are unaffected.</p>
+    <p>Cost: a kin plate is one more of the plates you already have, at most two. Waypoints cost nothing outside the open map. Each mechanism gets one test (the waypoint rules and their save, who wears the kin plate, when the ride line shows), then one CI tour at the MacBook's scale with the Atlas, a kin plate and the ride line in shot.</p>
+  </div>
+  <p class="reply">Reply "go ahead", or give the numbers you'd change.</p>
+</section>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="ico-flag" fill="currentColor"><rect x="3" y="2" width="2" height="12"/><path d="M5 2h8l-2 3 2 3H5z"/></g>
+    <g id="ico-pick" fill="currentColor"><path d="M2 5c3-3 9-3 12 0l-1 1C11 4 5 4 3 6z"/><rect x="7" y="5" width="2" height="9"/></g>
+    <g id="ico-star" fill="currentColor"><path d="M8 1l2 5h5l-4 3 2 6-5-4-5 4 2-6-4-3h5z"/></g>
+    <g id="ico-house" fill="currentColor"><path d="M8 2l6 6h-2v6H4V8H2z"/></g>
+    <g id="ico-cross" fill="currentColor"><path d="M3 2l5 5 5-5 1 1-5 5 5 5-1 1-5-5-5 5-1-1 5-5-5-5z"/></g>
+    <g id="ico-heart" fill="#ff3b3b"><path d="M1 2h2v-1h1v1h1v-1h1v1h2v3h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h-1z" fill="#2a0000"/><path d="M2 2h1v1h1v-1h1v1h1v-1h1v2h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1z"/><rect x="2" y="2" width="1" height="1" fill="#ffb3b3"/></g>
+  </defs>
+</svg>
+
+<script>
+(() => {
+  // ---- scale each stage to its frame ------------------------------------------------------------------------------
+  function fit() {
+    document.querySelectorAll('.frame').forEach(f => {
+      const w = +f.dataset.w, h = +f.dataset.h, k = f.clientWidth / w, s = f.querySelector('.stage');
+      s.style.transform = `scale(${k})`;
+      f.style.height = (h * k) + 'px';
+    });
+  }
+  addEventListener('resize', fit);
+  fit();
+
+  // ---- small value noise, so every drawing is the same on every load ---------------------------------------------
+  const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+  const smooth = t => t * t * (3 - 2 * t);
+  function noise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = smooth(x - xi), yf = smooth(y - yi);
+    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+    return a + (b - a) * xf + (c - a) * yf + (a - b - c + d) * xf * yf;
+  }
+  const mix = (c, d, t) => c.map((v, i) => v + (d[i] - v) * t);
+  const css = (c, k = 1) => `rgb(${Math.round(c[0] * k)},${Math.round(c[1] * k)},${Math.round(c[2] * k)})`;
+
+  // ---- the Atlas table: a voxel diorama under clouds ---------------------------------------------------------------
+  const A = document.getElementById('atlasCanvas'), ag = A.getContext('2d');
+  const COLS = 120, ROWS = 64, S = 8, STEP = 6.6, HZ = 2.1, OY = 92;
+  const riverZ = x => 37 + 9 * Math.sin(x / 15) + 3 * Math.sin(x / 5.3);
+  const height = (x, z) => {
+    let h = 9 + 9 * noise(x / 19, z / 13) + 4 * noise(x / 7, z / 6) + (x > 64 ? (x - 64) * 0.22 : 0);
+    const r = Math.abs(z - riverZ(x));
+    if (r < 1.6) return 5;
+    if (r < 4) h = Math.min(h, 5 + (r - 1.6) * 2.2);
+    return h;
+  };
+  const known = (x, z) => {
+    const dx = (x - 62) / 58, dz = (z - 34) / 30;
+    return Math.sqrt(dx * dx + dz * dz) < 0.98 + 0.26 * (noise(x / 9, z / 9) - 0.5);
+  };
+  const forest = (x, z) => noise(x / 6 + 40, z / 6) > 0.6 && Math.abs(z - riverZ(x)) > 4;
+  const sx = x => x * S + 4, sy = (z, h) => OY + z * STEP - h * HZ;
+  ag.fillStyle = '#c3cedb';
+  ag.fillRect(0, 0, A.width, A.height);
+  // the cloud floor's soft light
+  const fl = ag.createRadialGradient(480, 300, 60, 480, 300, 560);
+  fl.addColorStop(0, '#d6dee8'); fl.addColorStop(1, '#a9b7c7');
+  ag.fillStyle = fl; ag.fillRect(0, 0, A.width, A.height);
+  const H = [];
+  for (let z = 0; z < ROWS; z++) { H[z] = []; for (let x = 0; x < COLS; x++) H[z][x] = height(x, z) + (forest(x, z) ? 2 + 2 * hash(x, z) : 0); }
+  for (let z = 0; z < ROWS; z++) {
+    for (let x = 0; x < COLS; x++) {
+      if (!known(x, z)) continue;
+      const h = H[z][x], water = Math.abs(z - riverZ(x)) < 1.6;
+      let c;
+      if (water) c = [62, 118, 178];
+      else if (forest(x, z)) c = mix([46, 98, 52], [34, 78, 42], hash(x * 3, z));
+      else if (h > 22) c = [138, 140, 128];
+      else if (Math.abs(z - riverZ(x)) < 3.2) c = [204, 190, 138];
+      else c = mix([104, 168, 78], [86, 150, 66], noise(x / 3, z / 3));
+      // the road from the Hearth east to the hills
+      if (!water && Math.abs(z - (47 - (x - 30) * 0.18)) < 0.7 && x > 30 && x < 95) c = [176, 150, 106];
+      // zones: a light wash and the border line where they meet
+      const zone = x < 66 ? [143, 240, 192] : [255, 211, 106];
+      c = mix(c, zone, x === 65 || x === 66 ? 0.55 : 0.12);
+      const west = (x > 0 ? H[z][x - 1] : h) - (x < COLS - 1 ? H[z][x + 1] : h);
+      const lit = Math.max(0.7, Math.min(1.25, 1 + west * 0.05));
+      const top = sy(z, h), front = z < ROWS - 1 ? sy(z + 1, H[z + 1][x]) : top + 40;
+      ag.fillStyle = css(c, lit); ag.fillRect(sx(x) - 4, top, S, STEP + 0.6);
+      if (front > top + STEP) { ag.fillStyle = css(c, lit * 0.62); ag.fillRect(sx(x) - 4, top + STEP, S, front - top - STEP + 0.6); }
+    }
+  }
+  // clouds over every cell you don't know, spilling a little over the known edge
+  for (let z = -2; z < ROWS + 4; z += 2) {
+    for (let x = -2; x < COLS + 2; x += 3) {
+      if (known(x, z) && known(x + 3, z) && known(x - 3, z) && known(x, z + 3) && known(x, z - 3)) continue;
+      const edge = known(x, z) ? 0.45 : 1;
+      const px = sx(x) + (hash(x, z) - 0.5) * 10, py = OY + z * STEP - 40, r = (16 + 10 * hash(z, x)) * (edge < 1 ? 0.8 : 1);
+      const tone = 236 + 16 * hash(x + 7, z);
+      const g = ag.createRadialGradient(px + 3, py + 4, 2, px + 3, py + 4, r * 1.2);
+      g.addColorStop(0, `rgba(80,96,120,${0.18 * edge})`); g.addColorStop(1, 'rgba(80,96,120,0)');
+      ag.fillStyle = g; ag.beginPath(); ag.arc(px + 3, py + 4, r * 1.2, 0, 7); ag.fill();
+      const w = ag.createRadialGradient(px - r * 0.3, py - r * 0.3, 1, px, py, r);
+      w.addColorStop(0, `rgba(${tone},${tone},255,${0.98 * edge})`); w.addColorStop(0.7, `rgba(${tone - 18},${tone - 12},${tone},${0.85 * edge})`); w.addColorStop(1, `rgba(${tone - 30},${tone - 22},${tone - 6},0)`);
+      ag.fillStyle = w; ag.beginPath(); ag.arc(px, py, r, 0, 7); ag.fill();
+    }
+  }
+  // the card's edges fade into the glass
+  const fade = (x0, y0, x1, y1) => { const g = ag.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, 'rgba(11,22,38,.62)'); g.addColorStop(1, 'rgba(11,22,38,0)'); return g; };
+  ag.fillStyle = fade(0, 0, 0, 28); ag.fillRect(0, 0, 960, 28);
+  ag.fillStyle = fade(0, 580, 0, 552); ag.fillRect(0, 552, 960, 28);
+
+  // ---- markers on the table, placed on the land ---------------------------------------------------------------------
+  const at = (x, z) => ({ left: sx(x), top: sy(z, H[z][x]) });
+  const marks = document.getElementById('atlasMarks');
+  const icon = id => `<svg viewBox="0 0 16 16" style="color:var(--c)"><use href="#ico-${id}"/></svg>`;
+  function wp(x, z, c, ico, name, owner) {
+    const p = at(x, z);
+    marks.insertAdjacentHTML('beforeend', `<div class="wp" style="left:${p.left}px;top:${p.top}px;--c:${c}"><div class="foot"></div><div class="stem"></div><div class="head"></div>${icon(ico)}<div class="name">${name}</div>${owner ? `<div class="owner">${owner}</div>` : ''}</div>`);
+  }
+  wp(60, 22, '#e0a86a', 'pick', 'Copper seam above the mere');
+  wp(104, 26, '#ff8a9a', 'cross', 'Wolf den, keep clear');
+  wp(30, 52, '#b48cff', 'star', 'Cherry grove', 'Ana');
+  // the new one, with its card
+  const n = at(64, 46);
+  marks.insertAdjacentHTML('beforeend', `<div class="wp" style="left:${n.left}px;top:${n.top}px;--c:#7fc3ff"><div class="foot" style="width:26px;height:14px;left:-13px;top:-7px"></div><div class="stem"></div><div class="head"></div>${icon('flag')}</div>`);
+  marks.insertAdjacentHTML('beforeend', `
+    <div class="card" style="left:${n.left + 28}px;top:${n.top - 150}px;width:300px;--c:#7fc3ff">
+      <div class="t">NEW WAYPOINT</div>
+      <div class="field">Ford by the old willow<span class="caret"></span></div>
+      <div class="swatches">${['#7fc3ff', '#9fe6d6', '#8ff0c0', '#f2d58a', '#e0a86a', '#ff8a9a', '#b48cff', '#e9f1ff'].map((c, i) => `<span class="sw${i === 0 ? ' on' : ''}" style="--c:${c}"></span>`).join('')}</div>
+      <div class="marks">${['flag', 'pick', 'star', 'house', 'cross'].map((m, i) => `<span class="mk${i === 0 ? ' on' : ''}"><svg viewBox="0 0 16 16" style="color:#e9f1ff"><use href="#ico-${m}"/></svg></span>`).join('')}<span class="mk" style="color:#e9f1ff;font:400 13px/1 var(--px)">∩</span><span class="mk" style="color:#e9f1ff;font:400 13px/1 var(--px)">○</span><span class="mk" style="color:#e9f1ff;font:400 13px/1 var(--px)">◆</span></div>
+      <div class="row" style="font-size:15px"><span><span class="box on"></span>Share with my party</span></div>
+      <div class="row btn" style="--c:#7fc3ff"><span style="color:#fff">› Keep it</span><span class="k">Enter</span></div>
+      <div class="row" style="padding:0 7px;font-size:15px"><span class="k">Remove</span><span class="k">Del</span></div>
+    </div>`);
+  // your Hearth and you
+  const hh = at(44, 40);
+  marks.insertAdjacentHTML('beforeend', `<div style="position:absolute;left:${hh.left - 9}px;top:${hh.top - 22}px;width:18px;height:16px;background:#f2a541;clip-path:polygon(50% 0,100% 45%,86% 45%,86% 100%,14% 100%,14% 45%,0 45%);box-shadow:0 0 12px #f2a541"></div><div class="g" style="left:${hh.left}px;top:${hh.top - 44}px;transform:translateX(-50%);color:#f2d58a;font-size:14px;background:rgba(11,22,38,.6);padding:3px 6px 2px">Your Hearth</div>`);
+  const me = at(54, 32);
+  marks.insertAdjacentHTML('beforeend', `<div style="position:absolute;left:${me.left - 7}px;top:${me.top - 7}px;width:14px;height:14px;border-radius:50%;border:2px solid rgba(233,241,255,.8);box-shadow:0 0 10px rgba(233,241,255,.7)"></div><div style="position:absolute;left:${me.left - 1}px;top:${me.top - 44}px;width:2px;height:40px;background:linear-gradient(transparent,#e9f1ff)"></div>`);
+  // region chips
+  const c1 = at(8, 30), c2 = at(96, 58);
+  marks.insertAdjacentHTML('beforeend', `<div class="chip" style="left:${c1.left - 30}px;top:${c1.top - 6}px;--c:#8ff0c0"><b>THE GREENFOLD</b><i>Lv 3–8</i></div><div class="chip" style="left:${c2.left - 40}px;top:${c2.top - 10}px;--c:#ffd36a"><b>ASHEN RISE</b><i>Lv 9–14</i></div>`);
+
+  // ---- the world: walking toward the seam -------------------------------------------------------------------------
+  const W = document.getElementById('worldCanvas'), wg = W.getContext('2d');
+  const sky = wg.createLinearGradient(0, 0, 0, 260);
+  sky.addColorStop(0, '#6f9fd6'); sky.addColorStop(1, '#cfe0ee');
+  wg.fillStyle = sky; wg.fillRect(0, 0, 960, 400);
+  const ridge = (y0, amp, f, col, seed) => {
+    wg.fillStyle = col; wg.beginPath(); wg.moveTo(0, 400);
+    for (let x = 0; x <= 960; x += 8) wg.lineTo(x, y0 - amp * noise(x / f + seed, seed));
+    wg.lineTo(960, 400); wg.fill();
+  };
+  ridge(210, 70, 120, '#9db4c4', 3); ridge(238, 60, 90, '#7f9c86', 9); ridge(270, 40, 60, '#5d8a4f', 17);
+  // blocky trees and ground, near
+  for (let i = 0; i < 26; i++) {
+    const x = hash(i, 4) * 960, y = 262 + hash(i, 9) * 40, s = 14 + hash(i, 2) * 22;
+    wg.fillStyle = '#2f5f33'; wg.fillRect(x, y - s, s, s); wg.fillStyle = '#3e2d1e'; wg.fillRect(x + s / 2 - 3, y, 6, 10);
+  }
+  wg.fillStyle = '#5b9a45'; wg.fillRect(0, 300, 960, 100);
+  for (let i = 0; i < 160; i++) { wg.fillStyle = hash(i, 1) > 0.5 ? '#6aa952' : '#4f8b3d'; wg.fillRect(hash(i, 3) * 960, 300 + hash(i, 5) * 100, 16, 8); }
+
+  // ---- kin: a Lampwing at dusk, its plate over it ------------------------------------------------------------------
+  const K = document.getElementById('kinCanvas'), kg = K.getContext('2d');
+  const ks = kg.createLinearGradient(0, 0, 0, 420);
+  ks.addColorStop(0, '#1d2b4a'); ks.addColorStop(0.55, '#3b4a6a'); ks.addColorStop(1, '#2a3a2c');
+  kg.fillStyle = ks; kg.fillRect(0, 0, 960, 420);
+  kg.fillStyle = '#1e3324';
+  kg.beginPath(); kg.moveTo(0, 420); for (let x = 0; x <= 960; x += 8) kg.lineTo(x, 300 - 30 * noise(x / 90, 2)); kg.lineTo(960, 420); kg.fill();
+  for (let i = 0; i < 18; i++) { const x = hash(i, 11) * 960, s = 30 + hash(i, 12) * 40; kg.fillStyle = '#16281b'; kg.fillRect(x, 300 - s - 20 * hash(i, 3), s, s); }
+  function moth(x, y, k, glow) {
+    const g = kg.createRadialGradient(x, y + 6 * k, 2, x, y + 6 * k, 60 * k);
+    g.addColorStop(0, `rgba(242,196,106,${0.55 * glow})`); g.addColorStop(1, 'rgba(242,196,106,0)');
+    kg.fillStyle = g; kg.beginPath(); kg.arc(x, y + 6 * k, 60 * k, 0, 7); kg.fill();
+    kg.fillStyle = '#7d6a8e';
+    kg.beginPath(); kg.ellipse(x - 20 * k, y - 4 * k, 22 * k, 13 * k, -0.5, 0, 7); kg.fill();
+    kg.beginPath(); kg.ellipse(x + 20 * k, y - 4 * k, 22 * k, 13 * k, 0.5, 0, 7); kg.fill();
+    kg.fillStyle = '#5d4d6e'; kg.beginPath(); kg.ellipse(x, y, 9 * k, 15 * k, 0, 0, 7); kg.fill();
+    kg.fillStyle = `rgba(255,218,140,${glow})`; kg.beginPath(); kg.ellipse(x, y + 6 * k, 6 * k, 8 * k, 0, 0, 7); kg.fill();
+    kg.fillStyle = '#fff'; kg.fillRect(x - 5 * k, y - 10 * k, 3 * k, 3 * k); kg.fillRect(x + 2 * k, y - 10 * k, 3 * k, 3 * k);
+  }
+  moth(170, 300, 1.1, 1); moth(480, 296, 0.95, 0.75);
+  // a wild beast for comparison: a dark wolf-ish block
+  kg.fillStyle = '#2c2a33'; kg.fillRect(760, 268, 74, 34); kg.fillRect(824, 254, 30, 26); kg.fillRect(768, 300, 10, 22); kg.fillRect(816, 300, 10, 22);
+  kg.fillStyle = '#ff7a52'; kg.fillRect(842, 262, 4, 4);
+
+  const kp = document.getElementById('kinPlates');
+  // the Holo plate, as HoloWorld draws it: dark glass, rim and corner brackets in the accent
+  function plate(x, y, w, accent, inner) {
+    kp.insertAdjacentHTML('beforeend', `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;padding:10px 12px 12px;background:linear-gradient(rgba(22,35,58,.9),rgba(15,23,36,.9));box-shadow:0 0 0 1px ${accent}66, 0 0 18px ${accent}33">
+      <span style="position:absolute;left:-2px;top:-2px;width:10px;height:10px;border:2px solid ${accent};border-right:0;border-bottom:0"></span>
+      <span style="position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border:2px solid ${accent};border-left:0;border-top:0"></span>
+      ${inner}</div>`);
+  }
+  const bond = (n, c) => `<span style="display:inline-flex;gap:4px;vertical-align:1px">${[0, 1, 2, 3].map(i => `<span style="width:9px;height:9px;transform:rotate(45deg);${i < n ? `background:${c};box-shadow:0 0 6px ${c}` : `border:1px solid ${c}99`}"></span>`).join('')}</span>`;
+  const soft = (f, c1, c2) => `<div style="margin-top:9px;height:5px;background:rgba(5,8,14,.6);border-radius:3px"><div style="width:${f * 100}%;height:100%;border-radius:3px;background:linear-gradient(90deg,${c1},${c2});box-shadow:0 0 8px ${c1}aa"></div></div>`;
+  const line = (t, c, s = 14) => `<div style="font:400 ${s}px/1.25 var(--px);color:${c};margin-top:4px;white-space:nowrap">${t}</div>`;
+  plate(52, 92, 236, '#f2a541',
+    `<div style="display:flex;justify-content:space-between;align-items:center;font:400 17px/1 var(--px);color:#fff">Pip ${bond(4, '#f2c46a')}</div>` +
+    line('Lampwing · lives with you', '#f2c46a') + soft(0.92, '#f2c46a', '#fff1c8') + line('lighting the yard', '#bccde3', 13));
+  plate(352, 92, 256, '#f2a541',
+    `<div style="display:flex;justify-content:space-between;align-items:center;font:400 17px/1 var(--px);color:#fff">Lampwing ${bond(2, '#f2c46a')}</div>` +
+    line('Could live with you', '#8ff0c0') + soft(1, '#f2c46a', '#fff1c8') + line('One more help and it will trust you.', '#bccde3', 13));
+  // a wild beast's plate as it is today (the Living Wilds): the level chip and the segmented fight bar
+  plate(690, 136, 228, '#ffa27a',
+    `<div style="display:flex;justify-content:space-between;align-items:center;font:400 17px/1 var(--px);color:#d9e4f2">Gloomfang <span style="padding:3px 5px 2px;background:#ff9a3c40;border-bottom:2px solid #ff9a3c;color:#ff9a3c;font-size:15px">Lv 14</span></div>` +
+    `<div style="margin-top:9px;display:flex;gap:2px">${Array.from({ length: 10 }, (_, i) => `<span style="flex:1;height:8px;background:${i < 7 ? 'linear-gradient(#cdebff,#9fd4ff)' : i === 7 ? 'linear-gradient(#ffcf7a,#f2a541)' : 'rgba(5,8,14,.6)'}"></span>`).join('')}</div>`);
+  kp.insertAdjacentHTML('beforeend', `<div class="g" style="left:52px;top:384px;color:#f2c46a;font-size:14px">Yours</div><div class="g" style="left:352px;top:384px;color:#8ff0c0;font-size:14px">Wild kin</div><div class="g" style="left:690px;top:384px;color:#ffa27a;font-size:14px">A wild beast, as today</div>`);
+})();
+</script>
