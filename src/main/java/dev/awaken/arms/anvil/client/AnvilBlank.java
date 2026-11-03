@@ -23,8 +23,8 @@ final class AnvilBlank implements WeaponDraw.Corners {
     /** A corner's values: design position, design normal, uv, along (0..255). */
     static final int V = 9;
     private static final float C45 = Mth.SQRT_OF_TWO / 2F;
-    /** The core's side, of the bar's (inside the mesh's own faces, deep enough for a twisted face's bow), and the drawn-out span it shrinks away over. */
-    private static final float CORE = 0.94F, CORE_FROM = 0.08F, CORE_TO = 0.3F;
+    /** The core's half side, of the bar's (inside every face squared onto its sides), and the drawn-out span it shrinks away over. */
+    private static final float CORE = 0.88F, CORE_FROM = 0.08F, CORE_TO = 0.3F;
     /** The core's square: its edges round it as signs across and through, and each side's outward normal. */
     private static final float[] SX = {-1F, 1F, 1F, -1F}, SZ = {-1F, -1F, 1F, 1F}, NX = {0F, 1F, 0F, -1F}, NZ = {-1F, 0F, 1F, 0F};
 
@@ -106,7 +106,7 @@ final class AnvilBlank implements WeaponDraw.Corners {
                 piece(buffer, pose, pt);
             }
         }
-        if (blade) core(buffer, pose);
+        if (blank != null) core(buffer, pose);
     }
 
     /** A triangle of the work ({@code t}, three corners), cut into the twist's slabs where it spans more than one. */
@@ -183,46 +183,58 @@ final class AnvilBlank implements WeaponDraw.Corners {
     // ---- the core ----------------------------------------------------------------------------------------------------
 
     /**
-     * The bar's solid core, just inside its faces: a head's or a fork's insides squared onto the bar leave gaps between
-     * its faces, and this fills them. It shrinks away as the bar is drawn out, gone by a third of the way. One texel's
-     * colour, the blade's middle; its heat front runs up it as the blade's does.
+     * The bar's solid core: a head's or a fork's insides squared onto the bar leave gaps between its faces, and this fills
+     * them. It stays inside the faces squared onto the bar's sides (0.93 of its side and out): 0.88 of it straight, less
+     * where it's twisted, since a twisted face bows in or out by up to half the sine of its slab's turn as its two
+     * triangles take one diagonal or the other. It shrinks away as the bar is drawn out, gone by a third of the way. One
+     * texel's colour, the blade's middle; its heat front runs up it as the blade's does.
      */
     private void core(VertexConsumer buffer, PoseStack.Pose pose) {
-        float k = Mth.clamp((drawn - CORE_FROM) / (CORE_TO - CORE_FROM), 0F, 1F);
-        float s = shape.side * CORE * (1F - k * k * (3F - 2F * k));
-        if (s < 0.05F) return;
-        float y0 = shape.foot + 0.05F, y1 = shape.tip - 0.05F;
-        // twisted, on the mesh's own slabs, so each of its faces is the mesh's shrunk about the axis and stays inside it
+        float k = Mth.clamp((drawn - CORE_FROM) / (CORE_TO - CORE_FROM), 0F, 1F), shrink = shape.side * (1F - k * k * (3F - 2F * k));
+        if (shrink * CORE < 0.05F) return;
+        float y0 = shape.foot + 0.05F, y1 = shape.tip - 0.05F, span = (shape.tip - shape.foot) / SLABS;
         int slabs = twist == 0F ? 1 : SLABS;
+        float ya = y0, sa = shrink * coreSide(ya, span);
         for (int j = 0; j < slabs; j++) {
-            float ya = Math.max(y0, Mth.lerp(j / (float) slabs, shape.foot, shape.tip));
-            float yb = Math.min(y1, Mth.lerp((j + 1) / (float) slabs, shape.foot, shape.tip));
+            float yb = j + 1 == slabs ? y1 : Math.min(y1, Mth.lerp((j + 1) / (float) slabs, shape.foot, shape.tip));
+            if (yb <= ya) continue;
+            float sb = shrink * coreSide(yb, span);
             // round the four sides, each from one edge of the square to the next
             for (int f = 0; f < 4; f++) {
                 int e = (f + 1) & 3;
-                quad(buffer, pose, s, SX[e], SZ[e], ya, SX[f], SZ[f], ya, SX[f], SZ[f], yb, SX[e], SZ[e], yb, NX[f], 0F, NZ[f]);
+                quad(buffer, pose, SX[e], SZ[e], ya, sa, SX[f], SZ[f], ya, sa, SX[f], SZ[f], yb, sb, SX[e], SZ[e], yb, sb, NX[f], 0F, NZ[f]);
             }
+            if (j == 0) quad(buffer, pose, -1F, -1F, ya, sa, 1F, -1F, ya, sa, 1F, 1F, ya, sa, -1F, 1F, ya, sa, 0F, -1F, 0F);
+            ya = yb;
+            sa = sb;
         }
-        quad(buffer, pose, s, -1F, -1F, y0, 1F, -1F, y0, 1F, 1F, y0, -1F, 1F, y0, 0F, -1F, 0F);
-        quad(buffer, pose, s, -1F, 1F, y1, 1F, 1F, y1, 1F, -1F, y1, -1F, -1F, y1, 0F, 1F, 0F);
+        quad(buffer, pose, -1F, 1F, ya, sa, 1F, 1F, ya, sa, 1F, -1F, ya, sa, -1F, -1F, ya, sa, 0F, 1F, 0F);
     }
 
-    /** One face of the core: four corners as signs across and through at design heights, wound to face out. */
-    private void quad(VertexConsumer buffer, PoseStack.Pose pose, float s, float x0, float z0, float y0, float x1, float z1, float y1,
-                      float x2, float z2, float y2, float x3, float z3, float y3, float nx, float ny, float nz) {
-        coreCorner(buffer, pose, s, x0, z0, y0, nx, ny, nz);
-        coreCorner(buffer, pose, s, x1, z1, y1, nx, ny, nz);
-        coreCorner(buffer, pose, s, x2, z2, y2, nx, ny, nz);
+    /** The core's half side at design height y, of the bar's: kept inside the faces by the most the twist bows them there. */
+    private float coreSide(float y, float span) {
+        if (twist == 0F) return CORE;
+        float a = shape.turnAt(y, twist), turn = Math.max(Math.abs(a - shape.turnAt(y - span, twist)), Math.abs(shape.turnAt(y + span, twist) - a));
+        float bow = 0.5F * Mth.sin(Math.min(turn, Mth.HALF_PI));
+        return Math.max(0F, (CORE - bow) / (1F + bow));
+    }
+
+    /** One face of the core: four corners as signs across and through, each at a design height and half side, wound to face out. */
+    private void quad(VertexConsumer buffer, PoseStack.Pose pose, float x0, float z0, float y0, float s0, float x1, float z1, float y1, float s1,
+                      float x2, float z2, float y2, float s2, float x3, float z3, float y3, float s3, float nx, float ny, float nz) {
+        coreCorner(buffer, pose, x0 * s0, z0 * s0, y0, nx, ny, nz);
+        coreCorner(buffer, pose, x1 * s1, z1 * s1, y1, nx, ny, nz);
+        coreCorner(buffer, pose, x2 * s2, z2 * s2, y2, nx, ny, nz);
         if (ours) {
-            coreCorner(buffer, pose, s, x0, z0, y0, nx, ny, nz);
-            coreCorner(buffer, pose, s, x2, z2, y2, nx, ny, nz);
+            coreCorner(buffer, pose, x0 * s0, z0 * s0, y0, nx, ny, nz);
+            coreCorner(buffer, pose, x2 * s2, z2 * s2, y2, nx, ny, nz);
         }
-        coreCorner(buffer, pose, s, x3, z3, y3, nx, ny, nz);
+        coreCorner(buffer, pose, x3 * s3, z3 * s3, y3, nx, ny, nz);
     }
 
-    private void coreCorner(VertexConsumer buffer, PoseStack.Pose pose, float s, float sx, float sz, float y, float nx, float ny, float nz) {
+    private void coreCorner(VertexConsumer buffer, PoseStack.Pose pose, float x, float z, float y, float nx, float ny, float nz) {
         float ax = Mth.lerp(drawn, shape.barX, shape.midX), az = Mth.lerp(drawn, shape.barZ, shape.midZ);
-        p.set(ax + sx * s, mid + (y - mid) * Mth.lerp(drawn, AnvilShape.BAR_LONG, 1F), az + sz * s);
+        p.set(ax + x, mid + (y - mid) * Mth.lerp(drawn, AnvilShape.BAR_LONG, 1F), az + z);
         float along = Mth.lerp((y - shape.foot) / (shape.tip - shape.foot), shape.footAlong, 255F);
         vertex(buffer, pose, y, nx, ny, nz, shape.coreU, shape.coreV, along);
     }
