@@ -924,10 +924,40 @@ Plan v2 · overworld creatures (details in docs/modules/fauna.md):
   circles its home slowly, holds in its clearing or over the canopy (rising straight out of the clearing first), and
   one pick in seven or so settles on a solid top for 5–11 s. A flight that stops closing in for 40 ticks ends, so the
   flier chooses again (before, a flight into leaves never arrived and it never chose again). A big flier with no room and
-  no way out for three picks (one saved inside a canopy) is lifted over the treetops in a puff of dust; a roaming big
-  flier that spawned under a canopy rises over it before it takes its home there. A flying named beast that notices you
+  no way out for three picks (one saved inside a canopy) works its way out by moving (next rule); a roaming big flier
+  under a canopy makes its home in the open air over it and flies up there. A flying named beast that notices you
   stops circling and hangs in the air, turning to face you while you stay in sight; its warning, then a roar when it
   turns on you, then a told dive.
+- **Fliers find their way** (Euan, 2026-10-28: the Plumed Coil stuck in a tree; `mobs.entity.FlyerMoveControl`,
+  `Unwedge`, test `mobs_flier_canopy`). Every flier, gate fliers included (not one ridden or passing through walls):
+  - Its body for steering is its scaled hitbox plus a clearance of what its drawn wings or coils reach past it (reach
+    above minus half its width, 0.15 to 1 block; half that below, since fliers skim low). Every 4 ticks (staggered by id)
+    it sweeps that body along the way ahead, 3 to 10 blocks (12 ticks of its speed + 2); the last stretch to the spot
+    (half its width + clearance + 0.5) is its goal's business (a dive ends at you, a perch on a branch).
+  - Something in the way: it flies round it, the leg that turns least off the line to its goal (35, 70, 110, 150 degrees
+    either side, level, climbing 30 or dropping 25, or straight up), 3 to 6 blocks, keeping to the side it chose for 4 s
+    so it never dithers; with its clearance first, else squeezing past with its bare body. Going round it steers its
+    velocity and eases off near what is ahead; in open air the flight is as it always was. The straight way open again,
+    it leaves the detour. No way round three looks running, or a flight pressing 30 ticks without the body moving half a
+    block: it backs out, the way it came (the last of four places it flew through with room, every 10 ticks) if it can
+    fly straight there, else the nearest spot where its body is clear.
+  - A body inside a block (saved or put there) gets out by moving: the nearest way out it can fly straight (up first,
+    then up and out, then out, 8 blocks at most), else through leaves (leaves, vines, grass, flowers, bamboo: never wood
+    or stone), slowly (0.12 blocks a tick), the leaves shaking and rustling, a way through leaves counting double. Never
+    a teleport, never collision switched off, never a block broken. Sealed in, it waits and looks again every 2 s.
+    Walking creatures caught inside a block for a second walk out the same way (4 blocks, a climb of 2 at most);
+    burrowers going under and ridden mounts are left be.
+  - In a fight a flier circles you only where its body and clearance fit and it can fly straight there (four tries);
+    under the trees a big flier hangs over the canopy above you, watching, and anything else holds where it is. It dives
+    only down a clear line to within its reach of you: it waits for you to come out rather than dive into the leaves. A
+    blink (the Plumed Coil's Canopy Drop) comes out only where its body and half its clearance fit, lifted up to two
+    blocks, else not at all.
+  - Born to fit: the natural spawner checks the scaled body, not the type's box; every overworld creature's
+    finalize-spawn moves a body that doesn't fit (an elite grown a size, a beast placed by its type's box) to the nearest
+    place it does before anyone sees it (a big flier to open air with room over it, others up to 6 blocks up, walkers up
+    to 2 blocks up or 3 aside onto the same ground). World generation's own spawns are left as placed.
+  - Cost: one collision query per look (a slab test per shape, no stepping, nothing loaded); a detour at
+    most 16 sweeps; a way out at most 13 directions of 8 steps, only when caught.
 - Meeting a family's creature at level 3+ tells of its nearest lair (within 3,000 blocks); finding a lair pays 0.15 of
   a level once per beast kind. Block-changing talents (lichen, flowers, mushrooms) never act inside a Hearth radius.
 - Twelve family materials (`<family>_<thing>`) and the beasts' parts join the Hunter gear tags (E hides, cores and
