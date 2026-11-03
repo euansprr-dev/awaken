@@ -17635,19 +17635,29 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
 - The blank (Euan 2026-11-03, "do whatever is more AAA", after the twist showed a squashed sword with its quillons' tips
   spinning): what lies on the anvil until the hilt is the weapon's own mesh reshaped corner by corner every frame
   (`AnvilBlank`), read once a mesh (`AnvilShape`), so every design works with nothing made by hand.
-  - **Its guard waits for the hilt.** Cutting along the weapon leaves bits of a guard that rises (quillons' tips, wings,
-    tusks), so the guard is found by shape: a part wider than 1.25 the blade's middle width and a texel, starting in the
-    lowest 0.15 of the blade and ending below 0.45; its pieces up to 0.75 over its top that stand out more than 0.6 past
-    the blade just above it are left off while only the blade shows (the forge, the draw out, the quench, the twist, the
-    grind, the starlight; a Hunter blade standing alone in the slot) and come on with the hilt's first tap. A spear's wings
-    (halfway up) and an axe's head (its widest part) aren't a guard; gauntlets have none.
+  - **The blade alone is cut clean** (after the first tour: a maul's haft ended in a V and a greatblade showed a plate at
+    the tongs). While only the blade shows (the forge, the draw out, the quench, the twist, the grind, the starlight; a
+    Hunter blade standing alone in the slot) the mesh is cut across at the blank's foot, not a whole triangle at a time,
+    and the cut end is capped (where its faces cross the foot, fanned from their middle, each fan piece one texel's
+    colour). The foot is the blade's root, or the top of its guard where it has one, so the guard and the grip's top stay
+    with the hilt and come on with its first tap.
+  - **The guard is found by shape**, read through the cut on the whole mesh: a part wider than 1.25 the blade's middle
+    width and a texel, starting in the lowest 0.15 of the blade (or up to 0.2 under its root) and ending below 0.45, its
+    top found to a hair. Pieces reaching less than 0.75 over the foot that stand out more than 0.6 past the blade just
+    above that (a guard's tips, a collar) are the hilt's too. A spear's wings (halfway up) and an axe's head (its widest
+    part) aren't a guard; gauntlets have none.
   - **It starts as a square bar.** Its section is read at 48 heights from its foot to its point; drawn out d (0 the bar,
     1 its own shape) a corner at height y goes from the bar's place to its own over d: across and through, its offset from
     the section's middle pushed out to the bar's side (half side the mean of sqrt(half width x half thickness) along it,
     1 to 3 texels) from 0.3 of the way out, a corner further in kept just inside one further out (0.9 to 1.0 of the side,
     so no two faces meet); along, 0.62 of its length about the blade's middle. So a stepped blade, a curved one, an axe's
-    head all start as one clean square bar with flat ends, and each strike draws it out into the blade. Marks, the tongs'
-    lips and the hands follow it (the bar scaled from the blade's middle); the tongs close half a texel under the blank's foot,
+    head all start as one clean square bar with flat ends, and each strike draws it out into the blade. Squared onto the
+    bar, a head's or a fork's insides (a maul's horns, an axe's beard) would leave gaps between its faces, so a solid core
+    fills the bar just inside them (inside the faces squared onto its sides, 0.93 of the side and out: 0.88 of it straight;
+    twisted, a face's two triangles bow in by up to half the sine of its slab's turn, b, so there (0.88 - b) / (1 + b) on
+    the twist's own slabs; coloured from the blade's middle, its heat front running up it as the blade's does) and shrinks
+    away as it's drawn out, from 0.08 to gone at 0.3. Marks, the tongs'
+    lips and the hands follow it (the bar scaled from the blade's middle); the tongs close half a texel into the blank's foot,
     the work's back rests on the face (the bar's half side, the blade's thickest when drawn).
   - **The twist is real** (§46.9's A): the bar turns about its own length by a twist that's none where the tongs hold it,
     all of it at the far end, smooth between (0.12 to 0.88 of the way); the far end turns a third as fast as your hand
@@ -17672,8 +17682,9 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
   hold half a texel under the root (two thirds up the blade while the hilt goes on), the hilt's taps land at the middles
   of the guard, the grip and the pommel, your hands on the hilt at the grip's upper and lower quarters, and a weapon
   stands in the slot with its guard resting on the stone (the blade's root half a texel in). Where the blade, the guard, the grip and the pommel begin along it is
-  `AnvilSong.HILT_CUT` (the Beastbound Longsword's: 0.40, 0.24, 0.17, 0) until the weapon generator writes each weapon's
-  own; a mesh whose heights don't climb along it keeps today's hand-set layout.
+  the sword's own `ArmsHilts.CUTS` (§25 "Hilt cuts", from its design's parts; a Hunter blade forged alone takes its
+  tier's Longsword's); a weapon without (an axe, a maul, a spear, gauntlets) takes `AnvilSong.HILT_CUT` (0.40, 0.24,
+  0.17, 0, first set by hand for the Longsword). A mesh whose heights don't climb along it keeps today's hand-set layout.
 - The smith's own client plays their sounds the moment they act; the server plays them to everyone else. Observers see
   the work, the tongs on it and the hammer at rest on the heel; the smith's swing in third person is stage 2.
 - With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.
