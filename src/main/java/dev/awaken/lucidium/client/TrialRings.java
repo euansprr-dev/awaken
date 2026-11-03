@@ -57,6 +57,11 @@ final class TrialRings {
                 if (g != null) {
                     float t = (mc.level.getGameTime() - ClientTrial.ghostStart + state.worldPartialTicks) / DreamLedger.GHOST_EVERY;
                     for (LucidiumNet.Ghost ghost : g.ghosts()) ghost(vc, g.origin(), ghost, t, time);
+                    if (mc.level.getGameTime() % 10 == 0 && !g.ghosts().isEmpty()) { // TEMP: why no ghost on the tour
+                        LucidiumNet.Ghost g0 = g.ghosts().getFirst();
+                        Awaken.LOG.debug("[lucidium] ghost draw t={} n={} at {},{},{} cam {},{},{}", t, g0.samples().size(),
+                                at(g0, t, 0) + g.origin().x, at(g0, t, 1) + g.origin().y, at(g0, t, 2) + g.origin().z, cx, cy, cz);
+                    }
                 }
             } catch (RuntimeException ex) {
                 Awaken.LOG.error("[lucidium] trial rings failed", ex);
