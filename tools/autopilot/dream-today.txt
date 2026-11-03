@@ -1,0 +1,118 @@
+# Lucid dreams as they are today (planning evidence, 3 Nov 2026): three places remembered on day one, then a dream
+# (/awaken dream now, as a bed would start it), what you see first, the islands round you, the overview from above,
+# going lucid, the two falls into the void that end it, the wake card, the Dream Journal's choices and the Tasks page.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/dream-today.txt 2400 PACK=perf,world TECTONIC=awakened
+world autopilot_dream_today creative 3112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the dream's cards need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+cmd time set 6000
+
+# ---- 1. a day's places for the Day Journal: the city square, the wild east, the wild north-west ----
+cmd awaken city view square
+wait 300
+cmd awaken dream capture
+wait 20
+shot dt_00_day_square
+cmd spreadplayers ~320 ~40 0 20 false @s
+wait 300
+cmd awaken dream capture
+wait 20
+cmd spreadplayers ~-420 ~-260 0 20 false @s
+wait 300
+cmd awaken dream capture
+wait 20
+
+# ---- 2. into the dream, as a player meets it (survival, so the dream makes it adventure) ----
+cmd gamemode survival
+cmd time set 14000
+cmd awaken dream now
+wait 160
+hud on
+shot dt_01_arrival
+wait 60
+shotnow dt_02_arrival_later
+hud off
+look 0 4
+shot dt_03_north
+look 90 4
+shot dt_04_east
+look 180 4
+shot dt_05_south
+look 270 4
+shot dt_06_west
+look 0 55
+shot dt_07_down
+
+# ---- 3. the whole dream from above ----
+cmd effect give @s minecraft:slow_falling 60 0 true
+cmd tp @s ~ ~55 ~
+wait 60
+look 30 62
+shot dt_08_above_a
+look 210 62
+shot dt_09_above_b
+cmd tp @s ~ ~-52 ~
+wait 60
+
+# ---- 4. lucid: the card, then the HUD ----
+hud on
+cmd awaken dream lucidity 60
+wait 16
+shotnow dt_10_lucid_card
+wait 120
+shotnow dt_11_lucid_hud
+
+# ---- 5. how it ends: the first fall puts you back, the second wakes you ----
+cmd tp @s ~ 20 ~
+wait 14
+shotnow dt_12_fell_once
+wait 100
+cmd tp @s ~ 20 ~
+wait 120
+shotnow dt_13_woke_card
+wait 60
+shot dt_14_woke_room
+
+# ---- 6. what you keep: the journal you wake holding, and the Tasks page ----
+hud off
+cmd item replace entity @s hotbar.0 with awaken:dream_journal
+wait 10
+use
+wait 40
+shotnow dt_15_journal
+screen close
+wait 10
+screen tasks
+wait 40
+shotnow dt_16_tasks
+screen close
+quit
