@@ -18994,4 +18994,7 @@ sprinter, which none of them is, and its hold stays: a thicket slows a beast as 
   steered round them, so only a straight drive puts her among them: her Bramble Charge, or your blows' knockback.
 - Tour: `fights-beasts-far` (CI): the living row, the glide, the still row, the Sow charging through a belt of ripe
   bushes 34 to 39 blocks off at a still cow beyond it that struck her, and a Sow killed at 36 lying where she fell; each
-  filmed and traced, run before and after the fix.
+  filmed and traced, run before and after the fix (2026-11-03, runs 41597858314 and 41597858169). Before: her charge
+  stuck on the belt's far edge for 3 s, pricked five times (red, and the life layer's dip to 1.3), inching out between
+  pricks. After: through the belt in 0.4 s at full speed, never pricked, and unpricked standing in it for 4 s after a
+  second charge. On open ground, both runs: the drawn path smooth and still bodies still, near and far.
