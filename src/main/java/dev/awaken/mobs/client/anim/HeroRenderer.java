@@ -233,6 +233,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
     protected void setupRotations(HeroRenderState s, PoseStack pose, float bodyRot, float entityScale) {
         if (isShaking(s)) bodyRot += (float) (Math.cos(Mth.floor(s.ageInTicks) * 3.25F) * Math.PI * 0.4F);
         pose.rotateDegrees(Axis.YP, 180.0F - bodyRot);
+        dev.awaken.mobs.client.ToppleView.roll(s, pose, entityScale); // a broken stance puts a big beast on its side
     }
 
     private static AwLook look(HeroRenderState s) {

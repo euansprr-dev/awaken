@@ -73,7 +73,7 @@ public final class SystemHud {
     static final ChoiceDeck DECK = new ChoiceDeck();
     private static final ToastBurst<ToastItem> BURST = new ToastBurst<>();
     private static final Deque<ToastBurst.Out<ToastItem>> TOAST_WAIT = new ArrayDeque<>();
-    private static final List<long[]> LIVE_TOASTS = new ArrayList<>(); // {deadline tick}
+    private static final List<long[]> LIVE_TOASTS = new ArrayList<>(); // {deadline tick, vanilla slots}
     private static final Deque<SignalWindow> STORIES = new ArrayDeque<>();
     private static final Deque<SignalWindow> PANELS = new ArrayDeque<>();
     private static Story story;
@@ -307,8 +307,11 @@ public final class SystemHud {
     }
 
     /** How many of the System's toasts are on screen now (the task card steps down under them). */
-    static int liveToasts() {
-        return LIVE_TOASTS.size();
+    /** Vanilla's 32-tall slots our live toasts take: a toast with more lines takes more (the task card sits below). */
+    static int liveToastSlots() {
+        int n = 0;
+        for (long[] t : LIVE_TOASTS) n += (int) t[1];
+        return n;
     }
 
     private static void tickToasts(Minecraft mc) {
@@ -354,13 +357,15 @@ public final class SystemHud {
             colour = t.colour();
         }
         double mult = mc.options.notificationDisplayTime().get();
-        long[] live = {ticks + Math.round(SignalToast.BASE_MS * mult / 50.0) + 40};
-        LIVE_TOASTS.add(live);
+        long[] live = {ticks + Math.round(SignalToast.BASE_MS * mult / 50.0) + 40, 1};
         boolean saved = explanation != null;
         String more = saved && out.merged() ? "this and " + (out.items().size() - 1) + " more" : "more";
         String hint = !saved ? "" : AwakenKeys.STATUS.isUnbound() ? "Set a Status key in Controls to read " + more + " in your Journal"
                 : "Press " + key(AwakenKeys.STATUS) + " to read " + more + " in your Journal";
-        mc.gui.toastManager().addToast(new SignalToast(title, detail, colour, hint, () -> live[0] = 0));
+        SignalToast toast = new SignalToast(title, detail, colour, hint, () -> live[0] = 0);
+        live[1] = toast.slots();
+        LIVE_TOASTS.add(live);
+        mc.gui.toastManager().addToast(toast);
     }
 
     private static void tickPanel() {

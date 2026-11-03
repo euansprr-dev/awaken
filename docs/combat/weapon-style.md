@@ -20,40 +20,53 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    plane on different texel grids (rotated over axis-aligned, or offset by half a texel): `check()` fails on it,
    because they z-fight. Give stacked parts different depths, for example chained links 3, 2, 1 deep.
 
-3. **Proportions: a longsword is about 1.2 to 1.3 times vanilla's sword (22.6 units on the diagonal), about 28
-   texels, and two thirds of that is blade.** Blades are 3 to 5 texels wide. The thin edge is 1 texel deep and the
+3. **Proportions: a longsword is about 36 texels (1.6 times vanilla's sword, 22.6 units on the diagonal; between
+   the Rapier's 33 and the Greatblade's 43, as tall in hand as the Maul), and seven tenths of that is blade (about
+   25).** (It was 28 with two thirds blade until the weapon audit, 2026-11-02: Euan, "not long enough... almost looks
+   like a small dagger... you can barely see the blade".) Its grip is 5 long (a hand and a half), its guard at most
+   11 across (wings and crowns 14) and 2 tall; the guard's ornaments stand out to the sides and climb about 4
+   texels up the blade, never beside its root; nothing on its hilt is deeper than 5 (a stone and its frame 6), since
+   first person sees the blade from its edge and a deep hilt reads as a block beside a sliver of blade. Blades are 3
+   to 5 texels wide. The thin edge is 1 texel deep and the
    core 3. Grips are 3 by 3 and 4 or 5 long. Guards and pommels get bolder with the tier: the low tiers use bone,
    antler and a plain collar, the high tiers wings, crowns and big framed stones. The silhouette must say what the
    weapon is from its outline alone, and no two weapons may share one. The other lines:
-   - **Axe:** a 3×3 haft about 23 long, the bit flaring from the eye to its edge in 2-column steps (`bit`), a spike,
-     poll or wing on the back, and metal langets down the haft.
+   - **Axe:** about 34: a 3×3 haft about 28 long with the head a quarter of the height up its top, the bit flaring
+     from the eye to its edge in 2-column steps (`bit`), 12 or more across with the eye, a spike, poll or wing on the
+     back, and metal langets down the haft. Held turned like the Longsword (roll 135), so the bit shows at rest.
    - **Maul** (the reference's own): a 26-long haft and a block head made of a core, flared caps with a painted
      trim field (`panel`) and a raised 45° frame with its stone.
-   - **Spear:** a slender 2×2 shaft about 31 long, so it reads as reach, and a head about 10 long (leaf, lugs,
-     fork, wave, wings or spire).
-   - **Greatblade:** about 38 long, 9–11 wide, an 8-long two-hand grip, a narrow banded ricasso ending in parrying
-     lugs, and each tier's own outline: a slab, a hook, a window, a flamberge, a fork or a crown.
+   - **Spear:** a slender 2×2 shaft about 31 long, so it reads as reach, and a head about 10 long and 7 or more
+     wide (leaf, lugs, fork, wave, wings or spire): narrower, it vanishes edge-on in the hand.
+   - **Greatblade:** about 43 long, six tenths of it blade (26, 9–11 wide), an 8-long two-hand grip, a guard and a
+     short banded ricasso ending in parrying lugs (at most 6 tall together, at most 15 across), and each tier's own
+     outline: a slab, a hook, a window, a flamberge, a fork or a crown.
    - **Rapier:** a 3-wide needle stepping to a 1-wide point, about 33 long, with a swept, cup or ring hilt.
-   - **Daggers:** about 16 long, a wide-backed or curved blade about 9 long, and a knuckle guard.
+   - **Daggers:** about 18 long, a wide-backed or curved blade about 11 long (the curved ones about 16, the curve
+     carrying the length), and a knuckle guard.
    - **Katana:** a curved blade of whole-angle turned links (`chain` with a stagger), a hamon line of the tier's
      accent, a disc tsuba, and a 9-long tsuka in diamond wrap.
-   - **Twinblades:** two blades from a central grip with a hub. The far blade is `spin`-turned half round so its edge
-     faces the other way, and a guard at each end keeps it from reading as a staff.
+   - **Twinblades:** about 40 long, two blades of 15 from a central grip of 8 with one hub. The far blade is
+     `spin`-turned half round so its edge faces the other way. Each blade's root has only a slim collar (at most 7
+     across): long blades, not guards, keep it from reading as a staff.
 
    - **Glaive:** a 3×3 pole about 30 and a 5-wide curved blade of turned links, edge on the outside of the curve,
      with a fluke on its back.
-   - **Scythe:** a 2×2 snath with a hand peg and a blade at right angles off its top, edge along the inside
+   - **Scythe:** about 38: a 2×2 snath with a hand peg and a broad crescent blade at right angles off its top, 5
+     broad and 3 deep at the heel stepping to a point (`SCYTHE_SWEEP`, each tier its own), edge along the inside
      (`flip`), glowing on B, A and S because it cuts spirits.
    - **Gauntlets:** design +y is the punch and +z the back of the hand: a fist with three knuckle plates, curled
-     fingers, the stone on the back and a cuff. Its hold turns it to be worn, knuckles into the view and the back
-     of the hand up.
-   - **Chainblade:** an S of links alternating face-on and edge-on, coiled at the grip, and a short head set at the
-     chain's last angle (`turned`).
+     fingers, the stone on the back and a cuff, and each tier's own outline standing 2 or more proud of it (spikes,
+     tusks, a gate, crescents, claws and wings, a crown). Its hold turns it to be worn, knuckles into the view and
+     the back of the hand up.
+   - **Chainblade:** about 35: an S of ten links alternating face-on and edge-on, coiled at the grip, and a head 12
+     or more long and 5 or more wide set at the chain's last angle (`turned`), since the head is what you aim with.
    - **Shieldblade:** the face fills the outline (round, or kite: a squared top over a 45° point), with a rim, a
      raised boss with the stone and a short blade on top.
-   - **Warstaff:** about 30, two wrapped grips, weighted caps and a glowing focus at the head.
-   - **Precursor Arm:** a cased hilt, an emitter, and hard light (the blade is the emissive) in three narrowing
-     stages that pulse in turn. Each tier is its own technology.
+   - **Warstaff:** about 37, two wrapped grips, weighted caps and a glowing focus at the head, the head as deep as
+     it is wide: four arms of turned links round the stone (`claws`), or a cage (`cube`).
+   - **Precursor Arm:** about 35 long, a cased hilt (at most 6 deep), an emitter, and hard light 24 long (the
+     blade is the emissive) in three narrowing stages that pulse in turn. Each tier is its own technology.
 
    A swapped-in weapon rises over its attack delay (20 ÷ attack speed ticks: a maul 29, daggers 9). Tours wait
    that long before a first-person shot.

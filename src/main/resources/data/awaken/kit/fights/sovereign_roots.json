@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "sovereign_roots",
  "moves": "sovereign_roots",
+ "duel": true,
+ "stance": 360,
  "intro": {
   "pose": "idle",
   "move": "arrive"
@@ -22,21 +24,55 @@
     {
      "move": "leap",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "tongue",
+       "gulp"
+      ],
+      [
+       "ring"
+      ]
+     ]
     },
     {
      "move": "lance",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "lance"
+      ],
+      [
+       "leap"
+      ]
+     ]
     },
     {
      "move": "holdfast",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "tongue"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "tongue",
+       "gulp"
+      ],
+      [
+       "ring"
+      ]
+     ]
     }
    ]
   },
@@ -56,12 +92,28 @@
     {
      "move": "ring",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "kick"
+      ],
+      [
+       "tongue"
+      ]
+     ]
     },
     {
      "move": "lance",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "lance"
+      ],
+      [
+       "leap"
+      ]
+     ]
     },
     {
      "move": "leap",
@@ -79,12 +131,29 @@
     },
     {
      "move": "holdfast",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "tongue"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "tongue",
+       "gulp"
+      ],
+      [
+       "ring"
+      ]
+     ]
     }
    ]
   },
@@ -93,12 +162,28 @@
    "pool": [
     {
      "move": "holdfast",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "tongue"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "ring",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "kick"
+      ],
+      [
+       "tongue"
+      ]
+     ]
     },
     {
      "move": "tongue",
@@ -113,7 +198,15 @@
     {
      "move": "lance",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "lance"
+      ],
+      [
+       "leap"
+      ]
+     ]
     },
     {
      "move": "leap",
@@ -128,12 +221,26 @@
     },
     {
      "move": "halo",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "tongue",
+       "gulp"
+      ],
+      [
+       "ring"
+      ]
+     ]
     }
    ]
   }

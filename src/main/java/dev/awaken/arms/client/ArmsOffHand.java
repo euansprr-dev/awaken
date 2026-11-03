@@ -92,7 +92,9 @@ final class ArmsOffHand {
         ArmsHands.guardOn(ps, p, t, e.getPartialTick(), inv);
         mc.getItemModelResolver().updateForLiving(FIRST, t, arm == HumanoidArm.RIGHT ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, p);
+        ArmsFilm.twinPass = true;
         FIRST.submit(ps, e.getSubmitNodeCollector(), e.getPackedLight(), OverlayTexture.NO_OVERLAY, 0);
+        ArmsFilm.twinPass = false;
         ps.popPose();
     }
 

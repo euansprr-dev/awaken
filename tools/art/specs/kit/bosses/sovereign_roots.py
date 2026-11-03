@@ -20,7 +20,7 @@ it and shutting its eyes, still as the stone on its back.
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -823,7 +823,8 @@ def ring(r):
         return _pose(r, lift=6.0 + 0.4 * q, pitch=-3, bend=-2, head=(-6, 0, 0), jaw=4 + 4 * q, eyes=(0, 0))
     drop = _floor(r, _pose(r, lift=-4.0, pitch=2, bend=4, head=(8, 0, 0), jaw=14, eyes=(0.8, 0.8), feet=SPLAY, hands={k: 0.0 for k in range(4)}))
     held = _floor(r, _pose(r, lift=-3.8, pitch=2, bend=4, head=(8, 0, 0), jaw=8, eyes=(0.6, 0.6), feet=SPLAY, hands={k: 0.0 for k in range(4)}))
-    return Move("ring", "HEAVY", 18, 6, 22, through=held, title="Hearth Ring", hold=8, track=0.0, ability="Hearth Ring", rng=(0, 6.0), kinds=("area", "near"),
+    # red (SPEC §47.5): a ring of fire all round it is no blow to turn aside
+    return Move("ring", "PERILOUS", 20, 6, 22, through=held, title="Hearth Ring", track=0.0, ability="Hearth Ring", rng=(0, 6.0), kinds=("area", "near"),
                 damage=1.2, knock=1.3, disc=6.0, hit=[("chest", (0, 14, -10), 11.0), ("hips", (0, 14, 0), 11.0)], plant=(),
                 stages={"windup": [(0.3, _mix(_pose(r), high(0.0), 0.55)), (0.65, high(0.3)), (1.0, high(1.0))], "active": [(0.6, drop), (1.0, held)],
                         "recover": [(0.4, held), (0.75, _mix(held, _pose(r), 0.65))]}, lag=_lag())
@@ -929,6 +930,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.6)  # a duel's parried and reel (SPEC §47.5)
     mv = [tongue(r), gulp(r), leap(r), ring(r), lance(r), holdfast(r), croak(r), halo(r), kick(r), arrive(r)]
     for m in mv:
         stage_clips(r, m)
@@ -969,34 +971,37 @@ MOVE_SOUNDS = {"gulp": {"impact": "eat"}, "holdfast": {"swing": "swing_light", "
                "halo": {"swing": "thorns", "impact": ""}, "lance": {"swing": "cast", "impact": ""}, "arrive": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 360,
     "intro": {"pose": "idle", "move": "arrive"},  # still as a stone, then its eyes open and it croaks
     "phases": [
         {"pool": [
             {"move": "tongue", "weight": 3, "when": "near", "then": [["gulp"]]},
-            {"move": "leap", "weight": 2, "when": "far"},
-            {"move": "lance", "weight": 3, "when": "far"},
-            {"move": "holdfast", "weight": 2},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "leap", "weight": 2, "when": "far", "then": [["tongue", "gulp"], ["ring"]]},
+            {"move": "lance", "weight": 3, "when": "far", "then": [["lance"], ["leap"]]},
+            {"move": "holdfast", "weight": 2, "then": [["tongue"], ["lance"]]},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["tongue", "gulp"], ["ring"]]},
         ]},
         # "Stay.": its croak brings its rooted ones, and its Hearth Ring
         {"transition": "croak", "pool": [
             {"move": "tongue", "weight": 3, "when": "near", "then": [["gulp"]]},
-            {"move": "ring", "weight": 2, "when": "near"},
-            {"move": "lance", "weight": 3, "when": "far"},
+            {"move": "ring", "weight": 2, "when": "near", "then": [["kick"], ["tongue"]]},
+            {"move": "lance", "weight": 3, "when": "far", "then": [["lance"], ["leap"]]},
             {"move": "leap", "weight": 2, "when": "far", "then": [["tongue"]]},
             {"move": "croak", "weight": 1},
-            {"move": "holdfast", "weight": 2},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "holdfast", "weight": 2, "then": [["tongue"], ["lance"]]},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["tongue", "gulp"], ["ring"]]},
         ]},
         # "Never leave.": it blows itself up into the Thorn Halo and holds harder
         {"transition": "halo", "pool": [
-            {"move": "holdfast", "weight": 3},
-            {"move": "ring", "weight": 2, "when": "near"},
+            {"move": "holdfast", "weight": 3, "then": [["tongue"], ["lance"]]},
+            {"move": "ring", "weight": 2, "when": "near", "then": [["kick"], ["tongue"]]},
             {"move": "tongue", "weight": 2, "when": "near", "then": [["gulp"]]},
-            {"move": "lance", "weight": 2, "when": "far"},
+            {"move": "lance", "weight": 2, "when": "far", "then": [["lance"], ["leap"]]},
             {"move": "leap", "weight": 2, "when": "far", "then": [["tongue", "gulp"]]},
-            {"move": "halo", "weight": 1},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "halo", "weight": 1, "then": [["lance"]]},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["tongue", "gulp"], ["ring"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

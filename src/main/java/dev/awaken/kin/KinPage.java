@@ -152,35 +152,11 @@ public final class KinPage {
 
     private static List<String> beast(ServerLevel level, KinWorld.Homed m, int ofKind) {
         String doing = "at home, too far off to see";
-        String made = "";
+        String made = "", name = "";
         if (level.getEntity(m.id()) instanceof KinBeast b) {
             boolean today = b.madeDay == level.getOverworldClockTime() / 24000L;
-            doing = switch (b.act()) {
-                case KinBeast.SLEEP -> "asleep in its nook";
-                case KinBeast.HIDE -> "hiding, hurt. It will come back when it's well";
-                case KinBeast.WORK -> switch (m.kind()) {
-                    case LAMPWING -> "lighting the yard";
-                    case BURROWBUN -> b.carry.isEmpty() ? "tending the fields" : "carrying the harvest to the chest";
-                    case MOSSBACK -> "sitting in the wet, the crops round it growing";
-                    case PEBBLEPUP -> "sorting the Ore Shed's barrels";
-                    case TOTTER -> "putting things in their places";
-                    case THATCHBACK -> "building from a plan";
-                    case EMBERKIT -> "keeping the fires hot";
-                    case PUFFWOOL -> "grazing by the hay";
-                    case DUMPLIN -> "scratching about the yard";
-                    case PONDLING -> "fishing";
-                    case SNUFFLET -> "foraging";
-                    case CHIMEWREN -> "singing on its perch";
-                    case BUMBLEPUFF -> "drifting round the hive";
-                    case LOOMWORM -> "spinning";
-                    case CLOUDCALF -> "raining on the field";
-                    case BOULDERBACK -> "sitting in the dark";
-                    default -> "working";
-                };
-                case KinBeast.CARRY -> b.task == KinWorks.FETCH_TAKE || b.task == KinWorks.FETCH_PUT ? "fetching something to the Ledger" : "carrying things where they go";
-                case KinBeast.SNIFF -> "snuffling for something";
-                default -> "about the yard";
-            };
+            doing = doing(b);
+            if (b.hasCustomName() && b.getCustomName() != null) name = b.getCustomName().getString();
             if (today && b.made > 0) made = switch (m.kind()) {
                 case BURROWBUN -> b.made + " harvested today";
                 case MOSSBACK -> b.made + " crops grown on today";
@@ -201,7 +177,37 @@ public final class KinPage {
             };
         }
         String feeling = "settled in its nook" + (ofKind > 1 ? ", glad of its own kind's company" : "");
-        return List.of(m.kind().id(), m.kind().title, doing, feeling, made);
+        return List.of(m.kind().id(), m.kind().title, doing, feeling, made, m.id().toString(), name);
+    }
+
+    /** What a beast at home is doing, in the page's words (its plate says the same, SPEC §43.17). */
+    static String doing(KinBeast b) {
+        return switch (b.act()) {
+            case KinBeast.SLEEP -> "asleep in its nook";
+            case KinBeast.HIDE -> "hiding, hurt. It will come back when it's well";
+            case KinBeast.WORK -> switch (b.kind()) {
+                case LAMPWING -> "lighting the yard";
+                case BURROWBUN -> b.carry.isEmpty() ? "tending the fields" : "carrying the harvest to the chest";
+                case MOSSBACK -> "sitting in the wet, the crops round it growing";
+                case PEBBLEPUP -> "sorting the Ore Shed's barrels";
+                case TOTTER -> "putting things in their places";
+                case THATCHBACK -> "building from a plan";
+                case EMBERKIT -> "keeping the fires hot";
+                case PUFFWOOL -> "grazing by the hay";
+                case DUMPLIN -> "scratching about the yard";
+                case PONDLING -> "fishing";
+                case SNUFFLET -> "foraging";
+                case CHIMEWREN -> "singing on its perch";
+                case BUMBLEPUFF -> "drifting round the hive";
+                case LOOMWORM -> "spinning";
+                case CLOUDCALF -> "raining on the field";
+                case BOULDERBACK -> "sitting in the dark";
+                default -> "working";
+            };
+            case KinBeast.CARRY -> b.task == KinWorks.FETCH_TAKE || b.task == KinWorks.FETCH_PUT ? "fetching something to the Ledger" : "carrying things where they go";
+            case KinBeast.SNIFF -> "snuffling for something";
+            default -> "about the yard";
+        };
     }
 
     private static List<String> card(ServerPlayer p, KinKind k, Kinship.Kind s, BlockPos from, boolean home) {

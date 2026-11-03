@@ -42,8 +42,8 @@ public final class ArmsItems {
             .collect(Collectors.toUnmodifiableMap(ArmsData.Weapon::id, Function.identity()));
     static final List<DeferredItem<Item>> ALL = ArmsData.WEAPONS.stream().map(ArmsItems::register).toList();
     /**
-     * The Blueprints, one for each style but the Longsword: drawn at the Forge (ArmsForge), laid in the crafting grid
-     * with a forged weapon's parts, and kept (each comes back out of the grid).
+     * The Blueprints, one for each style but the Longsword: drawn at the Forge (ArmsForge), and used to learn their
+     * pattern (SPEC §46.7: used up when it teaches, kept when the style is known already).
      */
     static final Map<String, DeferredItem<Item>> BLUEPRINTS = Archetypes.all().stream().map(Archetypes.Loaded::id)
             .filter(id -> !id.equals(Arms.LONGSWORD))
@@ -121,6 +121,11 @@ public final class ArmsItems {
         return BLUEPRINTS.containsKey(style) ? style : null;
     }
 
+    /** A weapon's row by its id ("beastbound_daggers"), or null. */
+    public static ArmsData.@Nullable Weapon data(String id) {
+        return BY_ID.get(id);
+    }
+
     /** The row behind one of our weapons by its id, or null for any other item. */
     static ArmsData.@Nullable Weapon byId(Identifier id) {
         return id.getNamespace().equals(Awaken.MODID) ? BY_ID.get(id.getPath()) : null;
@@ -131,15 +136,19 @@ public final class ArmsItems {
         return byId(BuiltInRegistries.ITEM.getKey(item));
     }
 
-    /** A Blueprint: the crafting grid gives it back (it is a drawing, not a part). */
+    /** A Blueprint: used, it teaches its pattern (SPEC §46.7); it goes into nothing. */
     static final class BlueprintItem extends Item {
         BlueprintItem(Item.Properties p) {
             super(p);
         }
 
         @Override
-        public net.minecraft.world.item.@Nullable ItemStackTemplate getCraftingRemainder(net.minecraft.world.item.ItemInstance instance) {
-            return new net.minecraft.world.item.ItemStackTemplate(this);
+        public net.minecraft.world.InteractionResult use(net.minecraft.world.level.Level level, net.minecraft.world.entity.player.Player player,
+                                                         net.minecraft.world.InteractionHand hand) {
+            String style = blueprintStyle(this);
+            if (style == null) return net.minecraft.world.InteractionResult.PASS;
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) ArmsIssue.useBlueprint(sp, style, player.getItemInHand(hand));
+            return net.minecraft.world.InteractionResult.SUCCESS;
         }
     }
 

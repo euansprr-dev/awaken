@@ -1,0 +1,431 @@
+# Weapon audit, batch 2 (SPEC §25 "Weapons", proportions per style; weapon-designs session, 2 Nov 2026): every
+# Scythe and War-staff (and the Sporemother's Reaping, the Root Saint's Reliquary), and the Katanas and Glaives turned
+# like the Longsword, held at rest in first person and at each blow's hit, then from the front in third person, then on
+# stands beside the Gatewrought Longsword and Maul. Also batch 1's Precursor blows again at their hit (0.2), and the
+# Hollow Herald's Greatblade, whose hold now has the Greatblades' turn.
+world armsdesigns creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 8
+wait 40
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-10 ~ ~-10 ~10 ~10 ~12 minecraft:air
+cmd fill ~-10 ~ ~9 ~10 ~8 ~9 minecraft:deepslate_tiles
+cmd fill ~-10 ~ ~-6 ~10 ~8 ~-6 minecraft:deepslate_tiles
+cmd kill @e[type=minecraft:item]
+wait 30
+look 0 8
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_scythe
+wait 32
+shot ab2_fp_wildhide_scythe
+arms pose strike_1 0.21
+shot ab2_fp_wildhide_scythe_strike_1
+arms pose heavy 0.12
+shot ab2_fp_wildhide_scythe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_scythe
+wait 32
+shot ab2_fp_beastbound_scythe
+arms pose strike_1 0.21
+shot ab2_fp_beastbound_scythe_strike_1
+arms pose heavy 0.12
+shot ab2_fp_beastbound_scythe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 32
+shot ab2_fp_gatewrought_scythe
+arms pose strike_1 0.21
+shot ab2_fp_gatewrought_scythe_strike_1
+arms pose heavy 0.12
+shot ab2_fp_gatewrought_scythe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_scythe
+wait 32
+shot ab2_fp_veilwoven_scythe
+arms pose strike_1 0.21
+shot ab2_fp_veilwoven_scythe_strike_1
+arms pose heavy 0.12
+shot ab2_fp_veilwoven_scythe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_scythe
+wait 32
+shot ab2_fp_lordscale_scythe
+arms pose strike_1 0.21
+shot ab2_fp_lordscale_scythe_strike_1
+arms pose heavy 0.12
+shot ab2_fp_lordscale_scythe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_scythe
+wait 32
+shot ab2_fp_sovereign_scythe
+arms pose strike_1 0.21
+shot ab2_fp_sovereign_scythe_strike_1
+arms pose heavy 0.12
+shot ab2_fp_sovereign_scythe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:mother_of_spores_scythe
+wait 32
+shot ab2_fp_mother_of_spores_scythe
+arms pose strike_1 0.21
+shot ab2_fp_mother_of_spores_scythe_strike_1
+arms pose heavy 0.12
+shot ab2_fp_mother_of_spores_scythe_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_warstaff
+wait 32
+shot ab2_fp_wildhide_warstaff
+arms pose strike_1 0.18
+shot ab2_fp_wildhide_warstaff_strike_1
+arms pose heavy 0.11
+shot ab2_fp_wildhide_warstaff_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_warstaff
+wait 32
+shot ab2_fp_beastbound_warstaff
+arms pose strike_1 0.18
+shot ab2_fp_beastbound_warstaff_strike_1
+arms pose heavy 0.11
+shot ab2_fp_beastbound_warstaff_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_warstaff
+wait 32
+shot ab2_fp_gatewrought_warstaff
+arms pose strike_1 0.18
+shot ab2_fp_gatewrought_warstaff_strike_1
+arms pose heavy 0.11
+shot ab2_fp_gatewrought_warstaff_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_warstaff
+wait 32
+shot ab2_fp_veilwoven_warstaff
+arms pose strike_1 0.18
+shot ab2_fp_veilwoven_warstaff_strike_1
+arms pose heavy 0.11
+shot ab2_fp_veilwoven_warstaff_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_warstaff
+wait 32
+shot ab2_fp_lordscale_warstaff
+arms pose strike_1 0.18
+shot ab2_fp_lordscale_warstaff_strike_1
+arms pose heavy 0.11
+shot ab2_fp_lordscale_warstaff_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_warstaff
+wait 32
+shot ab2_fp_sovereign_warstaff
+arms pose strike_1 0.18
+shot ab2_fp_sovereign_warstaff_strike_1
+arms pose heavy 0.11
+shot ab2_fp_sovereign_warstaff_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:root_saint_warstaff
+wait 32
+shot ab2_fp_root_saint_warstaff
+arms pose strike_1 0.18
+shot ab2_fp_root_saint_warstaff_strike_1
+arms pose heavy 0.11
+shot ab2_fp_root_saint_warstaff_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_katana
+wait 32
+shot ab2_fp_wildhide_katana
+arms pose strike_1 0.3
+shot ab2_fp_wildhide_katana_strike_1
+arms pose heavy 0.08
+shot ab2_fp_wildhide_katana_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_katana
+wait 32
+shot ab2_fp_beastbound_katana
+arms pose strike_1 0.3
+shot ab2_fp_beastbound_katana_strike_1
+arms pose heavy 0.08
+shot ab2_fp_beastbound_katana_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 32
+shot ab2_fp_gatewrought_katana
+arms pose strike_1 0.3
+shot ab2_fp_gatewrought_katana_strike_1
+arms pose heavy 0.08
+shot ab2_fp_gatewrought_katana_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_katana
+wait 32
+shot ab2_fp_veilwoven_katana
+arms pose strike_1 0.3
+shot ab2_fp_veilwoven_katana_strike_1
+arms pose heavy 0.08
+shot ab2_fp_veilwoven_katana_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_katana
+wait 32
+shot ab2_fp_lordscale_katana
+arms pose strike_1 0.3
+shot ab2_fp_lordscale_katana_strike_1
+arms pose heavy 0.08
+shot ab2_fp_lordscale_katana_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_katana
+wait 32
+shot ab2_fp_sovereign_katana
+arms pose strike_1 0.3
+shot ab2_fp_sovereign_katana_strike_1
+arms pose heavy 0.08
+shot ab2_fp_sovereign_katana_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:the_sleeper_katana
+wait 32
+shot ab2_fp_the_sleeper_katana
+arms pose strike_1 0.3
+shot ab2_fp_the_sleeper_katana_strike_1
+arms pose heavy 0.08
+shot ab2_fp_the_sleeper_katana_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_glaive
+wait 32
+shot ab2_fp_wildhide_glaive
+arms pose strike_1 0.21
+shot ab2_fp_wildhide_glaive_strike_1
+arms pose heavy 0.12
+shot ab2_fp_wildhide_glaive_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_glaive
+wait 32
+shot ab2_fp_beastbound_glaive
+arms pose strike_1 0.21
+shot ab2_fp_beastbound_glaive_strike_1
+arms pose heavy 0.12
+shot ab2_fp_beastbound_glaive_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 32
+shot ab2_fp_gatewrought_glaive
+arms pose strike_1 0.21
+shot ab2_fp_gatewrought_glaive_strike_1
+arms pose heavy 0.12
+shot ab2_fp_gatewrought_glaive_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_glaive
+wait 32
+shot ab2_fp_veilwoven_glaive
+arms pose strike_1 0.21
+shot ab2_fp_veilwoven_glaive_strike_1
+arms pose heavy 0.12
+shot ab2_fp_veilwoven_glaive_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_glaive
+wait 32
+shot ab2_fp_lordscale_glaive
+arms pose strike_1 0.21
+shot ab2_fp_lordscale_glaive_strike_1
+arms pose heavy 0.12
+shot ab2_fp_lordscale_glaive_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_glaive
+wait 32
+shot ab2_fp_sovereign_glaive
+arms pose strike_1 0.21
+shot ab2_fp_sovereign_glaive_strike_1
+arms pose heavy 0.12
+shot ab2_fp_sovereign_glaive_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:abbot_of_frost_glaive
+wait 32
+shot ab2_fp_abbot_of_frost_glaive
+arms pose strike_1 0.21
+shot ab2_fp_abbot_of_frost_glaive_strike_1
+arms pose heavy 0.12
+shot ab2_fp_abbot_of_frost_glaive_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_precursor
+wait 32
+shot ab2_fp_gatewrought_precursor
+arms pose strike_1 0.2
+shot ab2_fp_gatewrought_precursor_strike_1
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_precursor
+wait 32
+shot ab2_fp_sovereign_precursor
+arms pose strike_1 0.2
+shot ab2_fp_sovereign_precursor_strike_1
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:unit_zero_precursor
+wait 32
+shot ab2_fp_unit_zero_precursor
+arms pose strike_1 0.2
+shot ab2_fp_unit_zero_precursor_strike_1
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:hollow_herald_greatblade
+wait 32
+shot ab2_fp_hollow_herald_greatblade
+arms pose strike_1 0.37
+shot ab2_fp_hollow_herald_greatblade_strike_1
+arms pose heavy 0.1
+shot ab2_fp_hollow_herald_greatblade_heavy
+arms pose off
+camera front
+look 20 4
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_scythe
+wait 32
+shot ab2_tp_wildhide_scythe
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_scythe
+wait 32
+shot ab2_tp_beastbound_scythe
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 32
+shot ab2_tp_gatewrought_scythe
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_scythe
+wait 32
+shot ab2_tp_veilwoven_scythe
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_scythe
+wait 32
+shot ab2_tp_lordscale_scythe
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_scythe
+wait 32
+shot ab2_tp_sovereign_scythe
+cmd item replace entity @s weapon.mainhand with awaken:mother_of_spores_scythe
+wait 32
+shot ab2_tp_mother_of_spores_scythe
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_warstaff
+wait 32
+shot ab2_tp_wildhide_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_warstaff
+wait 32
+shot ab2_tp_beastbound_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_warstaff
+wait 32
+shot ab2_tp_gatewrought_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_warstaff
+wait 32
+shot ab2_tp_veilwoven_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_warstaff
+wait 32
+shot ab2_tp_lordscale_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_warstaff
+wait 32
+shot ab2_tp_sovereign_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:root_saint_warstaff
+wait 32
+shot ab2_tp_root_saint_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_katana
+wait 32
+shot ab2_tp_wildhide_katana
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_katana
+wait 32
+shot ab2_tp_beastbound_katana
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 32
+shot ab2_tp_gatewrought_katana
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_katana
+wait 32
+shot ab2_tp_veilwoven_katana
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_katana
+wait 32
+shot ab2_tp_lordscale_katana
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_katana
+wait 32
+shot ab2_tp_sovereign_katana
+cmd item replace entity @s weapon.mainhand with awaken:the_sleeper_katana
+wait 32
+shot ab2_tp_the_sleeper_katana
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_glaive
+wait 32
+shot ab2_tp_wildhide_glaive
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_glaive
+wait 32
+shot ab2_tp_beastbound_glaive
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 32
+shot ab2_tp_gatewrought_glaive
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_glaive
+wait 32
+shot ab2_tp_veilwoven_glaive
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_glaive
+wait 32
+shot ab2_tp_lordscale_glaive
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_glaive
+wait 32
+shot ab2_tp_sovereign_glaive
+cmd item replace entity @s weapon.mainhand with awaken:abbot_of_frost_glaive
+wait 32
+shot ab2_tp_abbot_of_frost_glaive
+camera first
+look 0 8
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:wildhide_scythe",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:beastbound_scythe",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_scythe",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:veilwoven_scythe",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:lordscale_scythe",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:sovereign_scythe",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab2_stands_scythe
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab2]
+wait 5
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:wildhide_warstaff",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:beastbound_warstaff",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_warstaff",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:veilwoven_warstaff",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:lordscale_warstaff",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:sovereign_warstaff",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab2_stands_warstaff
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab2]
+wait 5
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:wildhide_katana",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:beastbound_katana",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_katana",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:veilwoven_katana",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:lordscale_katana",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:sovereign_katana",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab2_stands_katana
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab2]
+wait 5
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:wildhide_glaive",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:beastbound_glaive",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_glaive",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:veilwoven_glaive",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:lordscale_glaive",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:sovereign_glaive",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab2"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab2_stands_glaive
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab2]
+wait 5
+quit

@@ -1,0 +1,141 @@
+# Fights stage 5, the fifth Proving (SPEC §47.9): the Keeper's Shadow at the Court's threshold, in a practice Proving
+# (/awaken admin trial S). A burst of quick shots every 15 ticks catches the wake on the landing looking down into the
+# court and the braziers lighting themselves one by one; then down into the court, a step back, and a burst every 10
+# ticks catches your shadow pooling and the Keeper standing up out of it. Then the Keeper held still facing you, and as
+# a spectator: the court from the south, a Sovereign's door, the Court's door, the doors sinking at three quarters
+# (/awaken admin trial 70), the dark coming in at half (trial 45), the Court's door opening (trial 20, then 5), and the
+# win: the door open, the dark draining, the steps down.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-threshold.txt
+world autopilot_fights_threshold creative 20261103
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+hud off
+
+# --- the bell, then the burst: on the landing over the stair, the braziers out, then lighting one by one ---
+cmd awaken admin trial S
+wait 30
+shotnow keep_b01
+wait 15
+shotnow keep_b02
+wait 15
+shotnow keep_b03
+wait 15
+shotnow keep_b04
+wait 15
+shotnow keep_b05
+wait 15
+shotnow keep_b06
+wait 15
+shotnow keep_b07
+wait 15
+shotnow keep_b08
+wait 15
+shotnow keep_b09
+wait 15
+shotnow keep_b10
+wait 15
+
+# --- down into the court (0, 1, 8), then a step back (0, 1, 14): your shadow pools 4.5 ahead of where you stood ---
+cmd tp @s ~ ~-12 ~-34 180 0
+wait 5
+cmd tp @s ~ ~ ~6 180 10
+wait 5
+shotnow keep_b11
+wait 10
+shotnow keep_b12
+wait 10
+shotnow keep_b13
+wait 10
+shotnow keep_b14
+wait 10
+shotnow keep_b15
+wait 10
+shotnow keep_b16
+wait 10
+shotnow keep_b17
+wait 10
+shotnow keep_b18
+wait 30
+
+# --- it faces you (held still for the shots: in creative it has no one to fight and wanders off), 9 ahead of you at
+# (0, 1, 14), so the views after are measured from there ---
+cmd tp @s ~ ~ ~ 180 0
+wait 2
+cmd data merge entity @e[type=awaken:proving_keepers_shadow,limit=1] {NoAI:1b}
+cmd tp @e[type=awaken:proving_keepers_shadow,limit=1] ^ ^ ^9 facing entity @p
+look 180 -14
+wait 20
+shot keep_01_keeper
+
+# --- the court from its south side, high (0, 14, 20), looking north to the Court's door ---
+cmd gamemode spectator
+cmd tp @s ~ ~13 ~6 180 25
+wait 30
+shot keep_02_court
+
+# --- a Sovereign's door (Hunger's, east-south-east) from the floor (8, 3, 3) ---
+cmd tp @s ~8 ~-11 ~-17 -66 -6
+wait 30
+shot keep_03_door
+
+# --- the Court's door from the middle (0, 3, -6) ---
+cmd tp @s ~-8 ~ ~-9 180 -14
+wait 30
+shot keep_04_court_door
+
+# --- at three quarters the doors grind and sink, from (0, 10, 14) looking north over the north doors ---
+cmd tp @s ~ ~7 ~20 180 12
+wait 20
+cmd awaken admin trial 70
+wait 25
+shot keep_05_grind
+wait 20
+shot keep_06_sinking
+wait 55
+shot keep_07_open_doors
+
+# --- at half the dark comes in, from high (0, 17, 10) looking down at the floor ---
+cmd tp @s ~ ~7 ~-4 180 50
+wait 20
+cmd awaken admin trial 45
+wait 20
+shot keep_08_dark_coming
+wait 60
+shot keep_09_dark
+
+# --- from a quarter the Court's door opens, its light burning the dark back, from (0, 3, -4) ---
+cmd tp @s ~ ~-14 ~-14 180 -6
+wait 20
+cmd awaken admin trial 20
+wait 30
+shot keep_10_door_step
+cmd awaken admin trial 5
+wait 30
+shot keep_11_door_wide
+
+# --- beaten: the door opens all the way, the light pours in, the dark drains; then the steps down ---
+cmd kill @e[type=awaken:proving_keepers_shadow]
+wait 40
+hud on
+shot keep_12_won
+hud off
+wait 60
+cmd tp @s ~ ~10 ~16 180 40
+wait 20
+shot keep_13_drained
+cmd tp @s ~ ~-10 ~-42 180 30
+wait 20
+shot keep_14_steps
+hud on
+quit

@@ -51,9 +51,16 @@ final class AtlasState {
     private String dim = "";
     private boolean roofed;
     private final it.unimi.dsi.fastutil.longs.LongArrayList roofQueue = new it.unimi.dsi.fastutil.longs.LongArrayList();
-    /** The Living Wilds regions you've been in, and your party's pins here (from the server). */
+    /** The Living Wilds regions you've been in, and the waypoints you see here (yours, your party's shared; from the server). */
     java.util.List<dev.awaken.atlas.AtlasData.Region> regions = java.util.List.of();
-    java.util.List<AtlasNet.PinView> pins = java.util.List.of();
+    java.util.List<AtlasNet.WaypointView> waypoints = java.util.List.of();
+    /** Bumped each time the server sends the waypoints (the editor card binds to a new one when it arrives). */
+    int waypointsSeen;
+
+    void waypoints(java.util.List<AtlasNet.WaypointView> list) {
+        waypoints = java.util.List.copyOf(list);
+        waypointsSeen++;
+    }
     /** Your Hearths and your household's (SPEC §16.8), as the server last sent them. */
     java.util.List<AtlasNet.HomeView> homes = java.util.List.of();
     private int ticks;
@@ -352,7 +359,7 @@ final class AtlasState {
         trail = new int[0];
         trailStart = 0;
         regions = java.util.List.of();
-        pins = java.util.List.of();
+        waypoints = java.util.List.of();
         homes = java.util.List.of();
         zones.clear();
         revealPending = false;

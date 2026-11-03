@@ -248,17 +248,8 @@ public class KinBeast extends PathfinderMob {
     protected void registerGoals() {
         KinKind k = KinContent.kindOf(getType());
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.2, true) {
-            @Override
-            public boolean canUse() {
-                return gnawed() && super.canUse();
-            }
-
-            @Override
-            public boolean canContinueToUse() {
-                return gnawed() && super.canContinueToUse();
-            }
-        });
+        // a told bite: a growl and a short lunge you can answer (SPEC §47.2)
+        goalSelector.addGoal(0, dev.awaken.core.api.Strikes.bite(this, 1.2, this::gnawed));
         targetSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(this, Player.class, true,
                 (t, l) -> gnawed() && !(t instanceof Player pl && (pl.isCreative() || pl.isSpectator()))));
         goalSelector.addGoal(1, new HideGoal());

@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "guardian_foundry",
  "moves": "guardian_foundry",
+ "duel": true,
+ "stance": 320,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -26,7 +28,16 @@
     {
      "move": "slam",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "stamp",
+       "stamp_b"
+      ],
+      [
+       "buck"
+      ]
+     ]
     },
     {
      "move": "charge",
@@ -41,12 +52,28 @@
     {
      "move": "weld",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "charge"
+      ],
+      [
+       "rivets"
+      ]
+     ]
     },
     {
      "move": "buck",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "stamp"
+      ],
+      [
+       "slam"
+      ]
+     ]
     }
    ]
   },
@@ -70,7 +97,16 @@
     {
      "move": "slam",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "stamp",
+       "stamp_b"
+      ],
+      [
+       "buck"
+      ]
+     ]
     },
     {
      "move": "charge",
@@ -85,12 +121,26 @@
     },
     {
      "move": "rivets",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "charge",
+       "stamp"
+      ]
+     ]
     },
     {
      "move": "weld",
      "weight": 1,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "charge"
+      ],
+      [
+       "rivets"
+      ]
+     ]
     },
     {
      "move": "drones",
@@ -99,7 +149,15 @@
     {
      "move": "buck",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "stamp"
+      ],
+      [
+       "slam"
+      ]
+     ]
     }
    ]
   }

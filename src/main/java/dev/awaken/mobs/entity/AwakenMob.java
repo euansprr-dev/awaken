@@ -112,6 +112,8 @@ public class AwakenMob extends Monster {
     private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks, groundedTicks;
     private float auraRadius, auraDamage;
     private BoltKind auraBolt = BoltKind.PLAIN;
+    /** Its shots in another's look (SPEC §47.6: the Examiner throws your own power back), never with that look's effect. */
+    private @Nullable BoltKind mirrorBolt;
     private @Nullable MobEffectInstance auraEffect;
     private boolean watched, exploded;
     @Nullable Vec3 heardPos;
@@ -261,6 +263,14 @@ public class AwakenMob extends Monster {
     }
 
     // ---- flags ---------------------------------------------------------------------------------------------------
+
+    void mirrorBolt(@Nullable BoltKind kind) {
+        mirrorBolt = kind;
+    }
+
+    @Nullable BoltKind mirrorBolt() {
+        return mirrorBolt;
+    }
 
     public boolean flag(int f) {
         return (entityData.get(DATA_FLAGS) & f) != 0;
@@ -460,7 +470,10 @@ public class AwakenMob extends Monster {
             else if (++quietTicks > 60) { setTarget(null); quietTicks = 0; }
         }
         if (abilities == null) abilities = new AbilityRunner(this);
+        if (getTarget() instanceof Player) FightWatch.fighting(level);
+        long t0 = System.nanoTime();
         abilities.tick(level);
+        FightWatch.abilities(System.nanoTime() - t0);
     }
 
     private void updateMimic(ServerLevel level) {
@@ -494,7 +507,7 @@ public class AwakenMob extends Monster {
                 fuseTicks = 0;
                 setFlag(F_FUSING, false);
                 explode(level, def().blast);
-                if (def().has(Trait.DEATH_CLOUD)) Hazards.cloud(level, this, position(), 3.0F, 120, 0.3F, BoltKind.SPORE, new MobEffectInstance(MobEffects.POISON, 80, 0));
+                if (def().has(Trait.DEATH_CLOUD)) deathCloud(level, 120, 0.3F);
                 discard();
             } else if (t == null || distanceToSqr(t) > 7 * 7) {
                 fuseTicks = 0;
@@ -561,13 +574,8 @@ public class AwakenMob extends Monster {
         if (tickCount % 4 == 0) Telegraph.ring(level, position().add(0, 0.2, 0), auraRadius, 14, def().glow, false);
         if (++auraPulse >= 20) {
             auraPulse = 0;
-            for (LivingEntity e : Abilities.enemiesNear(level, this, position(), auraRadius)) {
-                // an aura's pulse is the perilous blow it was told as
-                dev.awaken.core.api.Strikes.deliver(this, dev.awaken.core.api.Strikes.Kind.PERILOUS, () -> {
-                    Abilities.hurt(level, this, e, auraDamage, auraBolt, auraEffect);
-                    return true;
-                });
-            }
+            // each pulse is a wave rolling out to the aura's edge: jump it or dash through (SPEC §47.2)
+            Carriers.wave(level, this, position(), 0.5F, auraRadius, auraDamage, auraBolt, auraEffect, 0);
         }
     }
 
@@ -624,6 +632,11 @@ public class AwakenMob extends Monster {
 
     // ---- damage ------------------------------------------------------------------------------------------------
 
+    /** Health over vanilla's cap this body carries (MobScaling.bulk): blows on it are divided by it. 1 for most. */
+    public float bulk() {
+        return 1F;
+    }
+
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
         if (flag(F_DECOY)) {
@@ -637,7 +650,7 @@ public class AwakenMob extends Monster {
             level.sendParticles(ParticleTypes.SOUL, getX(), getY() + getBbHeight() * 0.5, getZ(), 4, 0.3, 0.4, 0.3, 0.01);
             return false;
         }
-        float amount = damage;
+        float amount = damage / bulk();
         if (flag(F_HAUNTED)) amount *= spirit ? 1.5F : 0.75F;
         Entity attacker = source.getEntity();
         if (flag(F_GUARDING) && attacker instanceof LivingEntity la && source.getDirectEntity() == attacker) {
@@ -669,7 +682,7 @@ public class AwakenMob extends Monster {
         boolean hit = super.doHurtTarget(level, target);
         if (!hit || !(target instanceof LivingEntity lt)) return hit;
         MobDef d = def();
-        if (d.has(Trait.IGNITE)) lt.igniteForSeconds(4.0F);
+        if (d.has(Trait.IGNITE)) lt.igniteForSeconds(Abilities.BURN_SECONDS);
         if (d.has(Trait.POISON_TOUCH)) lt.addEffect(new MobEffectInstance(MobEffects.POISON, 60, 0), this);
         if (d.has(Trait.SLOW_TOUCH)) lt.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 50, 1), this);
         if (d.has(Trait.WITHER_TOUCH)) lt.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 0), this);
@@ -747,9 +760,19 @@ public class AwakenMob extends Monster {
     /** Server, once, after a real death. */
     protected void onDied(ServerLevel level, DamageSource source) {
         MobDef d = def();
-        if (d.has(Trait.DEATH_CLOUD)) Hazards.cloud(level, this, position(), 2.5F, 100, 0.25F, BoltKind.SPORE, new MobEffectInstance(MobEffects.POISON, 60, 0));
-        if (d.has(Trait.DEATH_SHARDS)) Abilities.nova(level, this, 8, d.theme.bolt, 0.6F);
+        if (d.has(Trait.DEATH_CLOUD)) deathCloud(level, 100, 0.25F);
+        if (d.has(Trait.DEATH_SHARDS)) Abilities.nova(level, this, 8, d.theme.bolt, 0.6F, null);
         if (d.has(Trait.SPLITS) && !flag(F_SPLIT_CHILD)) split(level);
+    }
+
+    /**
+     * The spores a body leaves where it fell (SPEC §47.2): a field you can see, harmless for its first half second and
+     * small enough to step out of; its pulses sting, with no poison (a field never carries an effect).
+     */
+    private void deathCloud(ServerLevel level, int life, float pulse) {
+        Hazards.cloud(level, this, position(), Carriers.FIELD_MAX, life, (float) getAttributeValue(Attributes.ATTACK_DAMAGE) * pulse, BoltKind.SPORE, null,
+                Carriers.FIELD_SAFE);
+        Carriers.field(level, this, position(), Carriers.FIELD_MAX, life + Carriers.FIELD_SAFE);
     }
 
     private void split(ServerLevel level) {

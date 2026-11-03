@@ -456,15 +456,14 @@
   },
   {
    "id": "crush",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
     "windup": 16,
     "active": 6,
     "recover": 20,
     "track": 4.0,
     "lock": 11,
-    "link": 5,
-    "hold": 6
+    "link": 5
    },
    "range": [
     0,
@@ -1254,7 +1253,8 @@
     "recover": 20,
     "track": 6.0,
     "lock": 12,
-    "link": 5
+    "link": 5,
+    "hold": 6
    },
    "range": [
     5,

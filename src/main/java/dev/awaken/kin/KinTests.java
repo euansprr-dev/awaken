@@ -25,6 +25,82 @@ final class KinTests {
         AwakenTests.register("kin_rumours_real", 100, KinTests::rumoursReal);
         AwakenTests.register("kin_done_never_shows", 200, KinTests::doneNeverShows);
         AwakenTests.register("kin_lines_once", 20, KinTests::linesOnce);
+        AwakenTests.register("kin_plate", 40, KinTests::plate);
+        AwakenTests.register("kin_ride_line", 20, KinTests::rideLine);
+        AwakenTests.register("kin_name", 40, KinTests::name);
+    }
+
+    /**
+     * (SPEC §43.17) Who wears the kin plate: every kin, a tamed pet, a mount that trusts someone; not a wild mount, a wild
+     * wolf or a zombie. What it says: a wild one could live with you and counts the helps to trust; one at home says who
+     * it lives with and what it's doing; a Gnawed one says so. It shows while looked at and for 4 s after a hurt near you.
+     */
+    static void plate(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        KinBeast b = KinHome.spawn(level, KinKind.LAMPWING, h.absolutePos(new BlockPos(1, 1, 1)), EntitySpawnReason.COMMAND);
+        h.assertTrue(b != null, "a Lampwing spawns");
+        var wolf = h.spawn(net.minecraft.world.entity.EntityTypes.WOLF, new BlockPos(2, 1, 1));
+        var tame = h.spawn(net.minecraft.world.entity.EntityTypes.WOLF, new BlockPos(3, 1, 1));
+        tame.tame(p);
+        var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 1, 3));
+        var mountType = dev.awaken.mobs.MobTypes.type("frost_stag");
+        h.assertTrue(mountType != null, "the Frost Stag is a mount");
+        var stag = (dev.awaken.mobs.entity.WildMount) h.spawn(mountType, new BlockPos(3, 1, 3));
+        h.assertTrue(KinPlates.wears(b) && KinPlates.wears(tame) && !KinPlates.wears(wolf) && !KinPlates.wears(zombie) && !KinPlates.wears(stag),
+                "kin and pets wear it; a wild wolf, a zombie and a wild mount don't");
+        stag.tameTo(p, false);
+        h.assertTrue(KinPlates.wears(stag), "a mount that trusts you wears it");
+        KinNet.Bond wild = KinPlates.read(p, b);
+        h.assertTrue(wild.who().equals("Could live with you") && wild.tone() == KinPlates.WILD && wild.step() == Kinship.Step.WARY.ordinal()
+                && wild.note().startsWith("Help it three times"), "a wild one: " + wild);
+        b.helps.put(p.getUUID(), 2);
+        h.assertTrue(KinPlates.read(p, b).note().equals("One more help and it will trust you."), "one help off its trust");
+        b.keeper = p.getUUID();
+        KinNet.Bond home = KinPlates.read(p, b);
+        h.assertTrue(home.who().equals("lives with you") && home.tone() == KinPlates.WARM && home.note().equals(KinPage.doing(b)), "at home: " + home);
+        b.gnawed(true);
+        h.assertTrue(KinPlates.read(p, b).who().equals("Gnawed") && KinPlates.read(p, b).tone() == KinPlates.GNAWED, "Gnawed says so");
+        h.assertTrue(KinPlates.read(p, tame).who().equals("yours") && KinPlates.read(p, stag).who().equals("your mount"), "yours, your mount");
+        // when it shows: a look (then a quick fade), a hurt near you (4 s, then a fade); never past the reach
+        long never = Long.MIN_VALUE;
+        h.assertTrue(KinPlates.visibility(100, 100, never, 5, 24) == 1 && KinPlates.visibility(100 + KinPlates.LOOK_FADE, 100, never, 5, 24) == 0
+                && KinPlates.visibility(100, 100, never, 30, 24) == 0, "the look's reach and fade");
+        h.assertTrue(KinPlates.visibility(100 + KinPlates.HURT_TICKS, never, 100, 8, 24) == 1
+                && KinPlates.visibility(100 + KinPlates.HURT_TICKS + KinPlates.HURT_FADE, never, 100, 8, 24) == 0
+                && KinPlates.visibility(110, never, 100, KinPlates.HURT_RANGE + 1, 24) == 0, "hurt near you: 4 s, then gone; not from far off");
+        b.discard();
+        stag.discard();
+        h.getLevel().getServer().getPlayerList().remove(p);
+        h.succeed();
+    }
+
+    /** (SPEC §43.17) The ride line: 3 s after you climb on, then while the mount is hurt or you're in a fight. */
+    static void rideLine(GameTestHelper h) {
+        h.assertTrue(KinPlates.rideShows(0, 1F, false) && KinPlates.rideShows(KinPlates.RIDE_SHOW, 1F, false), "for 3 s after you climb on");
+        h.assertFalse(KinPlates.rideShows(KinPlates.RIDE_SHOW + 1, 1F, false), "then not while it's well and calm");
+        h.assertTrue(KinPlates.rideShows(500, 0.9F, false) && KinPlates.rideShows(500, 0.2F, false), "while it's hurt");
+        h.assertTrue(KinPlates.rideShows(500, 1F, true), "in a fight");
+        h.succeed();
+    }
+
+    /** (SPEC §43.17) Naming from the Hearth page: only its keeper names it; cleaned, 24 at most; empty takes it away. */
+    static void name(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel(), q = h.makeMockServerPlayerInLevel();
+        KinBeast b = KinHome.spawn(level, KinKind.PEBBLEPUP, h.absolutePos(new BlockPos(1, 1, 1)), EntitySpawnReason.COMMAND);
+        h.assertTrue(b != null, "a Pebblepup spawns");
+        String id = b.getUUID().toString();
+        h.assertFalse(KinPlates.name(p, id, "Pip"), "a wild one isn't yours to name");
+        b.keeper = p.getUUID();
+        h.assertTrue(KinPlates.name(p, id, "  Pip   the  Bright ") && b.getCustomName() != null && b.getCustomName().getString().equals("Pip the Bright"), "named, spaces folded");
+        h.assertFalse(KinPlates.name(q, id, "Rocky"), "only its keeper names it");
+        h.assertTrue(KinPlates.name(p, id, "A name far longer than twenty-four letters") && b.getCustomName().getString().length() <= KinPlates.NAME_MAX, "24 at most");
+        h.assertTrue(KinPlates.name(p, id, "   ") && b.getCustomName() == null, "an empty name takes it away");
+        b.discard();
+        h.getLevel().getServer().getPlayerList().remove(p);
+        h.getLevel().getServer().getPlayerList().remove(q);
+        h.succeed();
     }
 
     /** Up close, a beast's line is given once until it changes, per beast and per player. */

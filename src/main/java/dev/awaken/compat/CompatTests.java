@@ -131,10 +131,10 @@ final class CompatTests {
             h.assertTrue(!found.has(CoreApi.LORD_HEART.get()), "an item never held stays hidden");
 
             // 2. a recipe in the book names its result, and only its own
-            sp.awardRecipesByKey(List.of(ResourceKey.create(Registries.RECIPE, Awaken.id("wildhide_blade"))));
+            sp.awardRecipesByKey(List.of(ResourceKey.create(Registries.RECIPE, Awaken.id("wildhide_focus"))));
             Discovered.check(sp);
-            h.assertTrue(found.has(GearItems.get(HunterTier.E, Piece.BLADE)), "a known recipe's result is discovered");
-            h.assertTrue(!found.has(GearItems.get(HunterTier.D, Piece.BLADE)) && !found.has(GearItems.get(HunterTier.E, Piece.CHESTPLATE)),
+            h.assertTrue(found.has(GearItems.get(HunterTier.E, Piece.FOCUS)), "a known recipe's result is discovered");
+            h.assertTrue(!found.has(GearItems.get(HunterTier.D, Piece.FOCUS)) && !found.has(GearItems.get(HunterTier.E, Piece.CHESTPLATE)),
                     "other recipes' results stay hidden");
 
             // 3. a scanned blueprint names its machine; the Frame Forge's names its Frames and modules

@@ -3,6 +3,7 @@ package dev.awaken.compat.client.jei;
 import dev.awaken.Awaken;
 import dev.awaken.above.AboveItems;
 import dev.awaken.above.MachineType;
+import dev.awaken.arms.anvil.AnvilContent;
 import dev.awaken.compat.Discovered;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.hearth.HearthContent;
@@ -51,6 +52,7 @@ public final class AwakenJeiPlugin implements IModPlugin {
                 new Categories.Temper(gui.createDrawableItemLike(HearthContent.FORGE_ITEM.get())),
                 new Categories.BossDrops(gui.createDrawableItemLike(CoreApi.LORD_HEART.get())),
                 new Categories.Blueprint(gui.createDrawableItemLike(dev.awaken.arms.ArmsItems.blueprintItem("daggers"))),
+                new Categories.WarAnvil(gui.createDrawableItemLike(AnvilContent.ANVIL_ITEM.get())),
                 new Categories.Upgrade(gui.createDrawableItemLike(HearthContent.HEARTH_ANCHOR_ITEM.get())),
                 new Categories.Essence(gui.createDrawableItemLike(AboveItems.CELL.get())),
                 new Categories.Fuse(gui.createDrawableItemLike(RequestContent.CORE_SHARD.get())),
@@ -72,6 +74,8 @@ public final class AwakenJeiPlugin implements IModPlugin {
         for (var bd : bosses) SpoilerGuard.own(Categories.BOSS, bd, CoreApi.LORD_HEART.get());
         var patterns = Recipes.patterns();
         for (var p : patterns) SpoilerGuard.own(Categories.BLUEPRINT, p, p.blueprint().getItem());
+        var forgings = Recipes.forgings();
+        for (var f : forgings) SpoilerGuard.own(Categories.WAR_ANVIL, f, f.output().getItem());
         var upgrades = Recipes.upgrades();
         for (var u : upgrades) SpoilerGuard.own(Categories.UPGRADE, u, u.station().getItem());
         var essence = Recipes.essence();
@@ -86,6 +90,7 @@ public final class AwakenJeiPlugin implements IModPlugin {
         r.addRecipes(Categories.TEMPER, tempers);
         r.addRecipes(Categories.BOSS, bosses);
         r.addRecipes(Categories.BLUEPRINT, patterns);
+        r.addRecipes(Categories.WAR_ANVIL, forgings);
         r.addRecipes(Categories.UPGRADE, upgrades);
         r.addRecipes(Categories.ESSENCE, essence);
         r.addRecipes(Categories.FUSE, fuses);
@@ -99,6 +104,7 @@ public final class AwakenJeiPlugin implements IModPlugin {
         r.addCraftingStation(Categories.FRAME_FORGE, AboveItems.machine(MachineType.FRAME_FORGE));
         r.addCraftingStation(Categories.TEMPER, HearthContent.FORGE_ITEM.get());
         r.addCraftingStation(Categories.BLUEPRINT, HearthContent.FORGE_ITEM.get());
+        r.addCraftingStation(Categories.WAR_ANVIL, AnvilContent.ANVIL_ITEM.get());
         r.addCraftingStation(Categories.UPGRADE, HearthContent.HEARTH_ANCHOR_ITEM.get(), HearthContent.FORGE_ITEM.get());
         r.addCraftingStation(Categories.ESSENCE, AboveItems.CELL.get(), AboveItems.machine(MachineType.REACTOR));
         r.addCraftingStation(Categories.FUSE, RequestContent.CORE_SHARD.get());

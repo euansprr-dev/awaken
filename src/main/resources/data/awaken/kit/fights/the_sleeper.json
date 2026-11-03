@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "the_sleeper",
  "moves": "the_sleeper",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -26,16 +28,42 @@
     {
      "move": "fist",
      "weight": 3,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "stomp"
+      ],
+      [
+       "kick"
+      ]
+     ]
     },
     {
      "move": "eyelids",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "charge"
+      ],
+      [
+       "dreamstep",
+       "fist"
+      ]
+     ]
     },
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "stomp",
+       "stomp_b"
+      ],
+      [
+       "fist"
+      ]
+     ]
     },
     {
      "move": "charge",
@@ -69,11 +97,28 @@
     {
      "move": "fist",
      "weight": 3,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "stomp"
+      ],
+      [
+       "kick"
+      ]
+     ]
     },
     {
      "move": "eyelids",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "charge"
+      ],
+      [
+       "dreamstep",
+       "fist"
+      ]
+     ]
     },
     {
      "move": "terrors",
@@ -102,7 +147,16 @@
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "stomp",
+       "stomp_b"
+      ],
+      [
+       "fist"
+      ]
+     ]
     }
    ]
   },
@@ -112,10 +166,6 @@
     {
      "move": "awaken",
      "weight": 2
-    },
-    {
-     "move": "sleepwalkers",
-     "weight": 1
     },
     {
      "move": "fist",
@@ -161,12 +211,30 @@
     },
     {
      "move": "eyelids",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "charge"
+      ],
+      [
+       "dreamstep",
+       "fist"
+      ]
+     ]
     },
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "stomp",
+       "stomp_b"
+      ],
+      [
+       "fist"
+      ]
+     ]
     }
    ]
   }

@@ -24,7 +24,7 @@ horse in a stall.
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 from kit.paint import edge_glow, radial
 import fauna_rig as R
@@ -946,6 +946,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=2.2)  # a duel's parried and reel (SPEC §47.5)
     mv = [stamp(r, 1, "stamp"), stamp(r, 0, "stamp_b"), slam(r), buck(r), charge(r), weld(r), rivets(r), drones(r), wake(r)]
     by = {m.id: m for m in mv}
     for m in mv:
@@ -989,24 +990,27 @@ SOUNDS = {
 MOVE_SOUNDS = {"weld": {"swing": "cast"}, "rivets": {"swing": "cast", "impact": ""}, "drones": {"swing": "roar", "impact": ""}, "wake": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 320,
     "intro": {"pose": "kneel", "move": "wake"},  # it waits for you lying cold in its stall, and gets up as its fire catches
     "phases": [
         {"pool": [
             {"move": "stamp", "weight": 3, "when": "near", "then": [["stamp_b"], ["stamp_b", "slam"]]},
-            {"move": "slam", "weight": 2, "when": "near"},
+            {"move": "slam", "weight": 2, "when": "near", "then": [["stamp", "stamp_b"], ["buck"]]},
             {"move": "charge", "weight": 3, "when": "far", "then": [["stamp"]]},
-            {"move": "weld", "weight": 2, "when": "far"},
-            {"move": "buck", "weight": 3, "when": "behind"},
+            {"move": "weld", "weight": 2, "when": "far", "then": [["charge"], ["rivets"]]},
+            {"move": "buck", "weight": 3, "when": "behind", "then": [["stamp"], ["slam"]]},
         ]},
         # the machines wake with the second phase, as in DeepBestiary: the drones, and the rivets
         {"transition": "drones", "pool": [
             {"move": "stamp", "weight": 3, "when": "near", "then": [["stamp_b"], ["stamp_b", "slam"]]},
-            {"move": "slam", "weight": 2, "when": "near"},
+            {"move": "slam", "weight": 2, "when": "near", "then": [["stamp", "stamp_b"], ["buck"]]},
             {"move": "charge", "weight": 2, "when": "far", "then": [["stamp", "stamp_b"]]},
-            {"move": "rivets", "weight": 2},
-            {"move": "weld", "weight": 1, "when": "far"},
+            {"move": "rivets", "weight": 2, "then": [["charge", "stamp"]]},
+            {"move": "weld", "weight": 1, "when": "far", "then": [["charge"], ["rivets"]]},
             {"move": "drones", "weight": 1},
-            {"move": "buck", "weight": 3, "when": "behind"},
+            {"move": "buck", "weight": 3, "when": "behind", "then": [["stamp"], ["slam"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

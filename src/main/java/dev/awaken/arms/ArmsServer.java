@@ -72,6 +72,7 @@ final class ArmsServer {
     private static int pendingBy = -1, pendingTarget = -1;
     private static float pendingMotion;
     private static int pendingPosture;
+    private static boolean pendingRiposte;
     private static float pendingCap;
     private static boolean pendingLanded;
     // its push (SPEC §25 "Fight Feel"): the flat way the blade went, and how hard against vanilla's strength
@@ -130,6 +131,7 @@ final class ArmsServer {
         long now = now(p);
         Archetypes.Loaded style = Arms.styleOf(p.getMainHandItem());
         if (style == null) return;
+        FilmLog.server("press " + msg.what() + " seq " + msg.seq() + " tick " + now);
         switch (msg.what()) {
             case ArmsPayloads.PRESS_STRIKE -> {
                 s.seq = msg.seq();
@@ -229,9 +231,7 @@ final class ArmsServer {
      * blade's growth over a full chain, and the step in.
      */
     static double pressReach(Archetypes.Loaded style) {
-        float most = 0;
-        for (Archetype.MoveDef d : style.moves().values()) most = Math.max(most, d.art().isPresent() ? Math.max(d.reach(), d.art().get().range()) : d.reach());
-        return most + 0.3 + style.def().traits().reachPerStep() * 5 + Aim.stepIn(style.id());
+        return ArmsRules.pressReach(style);
     }
 
     /** A chain's first strike or a heavy steps in toward the meant creature (SPEC §40); the rest strike where they stand. */
@@ -261,8 +261,10 @@ final class ArmsServer {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
         // a chain strike begun by a press still down waits at its hit for the press's end: a tap lands it, a hold
-        // becomes the charge instead (the swing starts at once either way: a tap is never late)
-        s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq;
+        // becomes the charge instead (the swing starts at once either way: a tap is never late); a dagger's lands as it
+        // comes, and the hold charges after it (ArmsRules.waitsOnHold)
+        s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq && ArmsRules.waitsOnHold(style.id());
+        FilmLog.server("begin " + move.key + " step " + step + " seq " + seq + " tick " + now + (s.waitHit ? " waits" : ""));
         s.swishAt = 0;
         s.drawn = ArmsRules.drawn(style.def().traits(), move, now - s.moveEnd);
         s.style = style;
@@ -360,6 +362,7 @@ final class ArmsServer {
                 return;
             }
             s.waitHit = false;
+            FilmLog.server("wait over " + s.move.key + " tick " + now);
             if (s.waitSeen) shown(p, s);
         }
         if (s.swishAt != 0 && now >= s.swishAt) {
@@ -392,12 +395,10 @@ final class ArmsServer {
             boolean aimed = t.getId() == s.aimed;
             if (!aimed && !foe(p, t)) continue;
             boolean meant = aimed && !(t instanceof Player);
-            Vec3 c = t.getBoundingBox().getCenter();
-            if (Aim.gap(eye, t.getBoundingBox()) > (meant ? meantReach : reach)) continue;
-            float toward = (float) (Mth.atan2(c.z - p.getZ(), c.x - p.getX()) * Mth.RAD_TO_DEG) - 90F;
-            if (!aimed && !ArmsRules.inArc(toward - yaw, def.arc())) continue;
-            if (!meant && (t.getBoundingBox().maxY < p.getY() - 1.0 || t.getBoundingBox().minY > p.getEyeY() + 1.5)) continue;
+            // the one rule the client's prediction asks too (ArmsRules.sweeps; SPEC §47.1)
+            if (!ArmsRules.sweeps(eye, p.getY(), t.getBoundingBox(), yaw, def.arc(), meant ? meantReach : reach, aimed, meant)) continue;
             s.markHit(t.getId());
+            FilmLog.server("hit " + s.move.key + " rel " + (now - s.moveStart) + " tick " + now);
             hit(p, s, def, t, now);
         }
         // what isn't alive but takes a blow, as vanilla's attack strikes it (Euan 2026-10-26: "rifts can only be broken
@@ -515,6 +516,7 @@ final class ArmsServer {
             if (ArmsRules.behind(t.yBodyRot, toStriker)) pendingMotion *= traits.backstab();
         }
         pendingCap = def.bossCap();
+        pendingRiposte = s.move == Archetype.Move.RIPOSTE;
         boolean primed = ArmsForge.bladePrimed(p, s, now);
         if (primed) pendingMotion *= ArmsForge.BLADE_PRIME;
         pendingLanded = false;
@@ -658,7 +660,10 @@ final class ArmsServer {
             amount = ArmsRules.capExecution(amount, victim.getMaxHealth(), pendingCap, ArmsRules.lordly(post.max));
             e.setAmount(amount);
             pendingLanded = true;
-            if (by instanceof ServerPlayer sp) addPosture(victim, pendingPosture, sp);
+            // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster; one on a duel
+            // body standing braced barely moves it, a riposte excepted (SPEC §47.3)
+            int posture = ArmsRules.hitPosture(pendingPosture, Strikes.opening(victim), pendingRiposte, Strikes.duelist(victim));
+            if (by instanceof ServerPlayer sp) addPosture(victim, posture, sp);
             return;
         }
         if (!(victim instanceof ServerPlayer p) || !Arms.fights(p) || reapplying) return;
@@ -765,11 +770,15 @@ final class ArmsServer {
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
                     // a flier's dive turned aside brings it down (SPEC §40): the opening a fight in the air needs
                     Strikes.ground(attacker, Aim.GROUNDED_TICKS);
+                    // its limb recoils, and a phrase's last blow turned aside staggers it (SPEC §47.3)
+                    Strikes.deflected(attacker, kind);
                 }
                 ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, by == null ? -1 : by.getId());
                 Marks.fire(p, Marks.Trigger.DEFLECT, by instanceof LivingEntity l ? l : null);
                 if (shot) {
-                    stop(p, s, src, from, true, 0F, by);
+                    // a white-gold shot flies back at its maker (SPEC §47.3); the rest leave the blade
+                    boolean back = src.getDirectEntity() != null && Strikes.returnShot(src.getDirectEntity(), p);
+                    stop(p, s, src, from, true, 0F, by, back);
                 } else {
                     soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
                     answer(p, s, ArmsPayloads.DEFLECT, by);
@@ -781,7 +790,7 @@ final class ArmsServer {
                     // the shot stops on the blade (it never reaches the body to stick, poison or burn); its share
                     // through the guard lands at the tick's end
                     e.setBlockedDamage(incoming);
-                    stop(p, s, src, from, false, incoming * (1F - g.reduction()), by);
+                    stop(p, s, src, from, false, incoming * (1F - g.reduction()), by, false);
                 } else {
                     e.setBlockedDamage(incoming * g.reduction());
                     soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
@@ -802,9 +811,11 @@ final class ArmsServer {
      * The guard stopped a shot: it leaves the blade at the tick's end; the fighter feels it there (the hands jolt, the
      * spark, the ring) and so does everyone near (the body's jolt, the spark).
      */
-    private static void stop(ServerPlayer p, ArmsState s, DamageSource src, @Nullable Vec3 from, boolean deflected, float through, @Nullable Entity by) {
+    private static void stop(ServerPlayer p, ArmsState s, DamageSource src, @Nullable Vec3 from, boolean deflected, float through, @Nullable Entity by,
+                             boolean sentBack) {
         Vec3 way = from != null ? from : flatFacing(p);
-        STOPPED.add(new Stopped(p, src.getDirectEntity() instanceof Projectile pr ? pr : null, way, deflected, through, src));
+        // a shot sent back keeps flying: only the feel of the blade stays
+        STOPPED.add(new Stopped(p, !sentBack && src.getDirectEntity() instanceof Projectile pr ? pr : null, way, deflected, through, src));
         if (deflected) soundForOthers(p, ArmsSounds.GLANCE.get(), 1.0F, 1.0F);
         else soundForOthers(p, ArmsSounds.BLOCK.get(), ArmsSounds.SHOT_BLOCK_VOLUME, ArmsSounds.SHOT_BLOCK_PITCH);
         int yaw = (int) (Mth.atan2(way.z, way.x) * Mth.RAD_TO_DEG) - 90; // HURT's convention: the world yaw it came from
@@ -1033,6 +1044,7 @@ final class ArmsServer {
         long now = now(p);
         SLOWED.put(attacker.getId(), now + d.slow());
         resonance(p, s, ArmsRules.RESONANCE_PERFECT_DODGE);
+        addPosture(attacker, ArmsRules.PERFECT_DODGE_POSTURE, p); // through a blow, not away from it: its stance gives a little
         ArmsWeaves.open(p, s, ArmsWeaves.DODGE, now, attacker.getId());
         Marks.fire(p, Marks.Trigger.PERFECT_DODGE, attacker);
         AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.PERFECT_DODGE, attacker.getId(), d.slow(), 0));
@@ -1055,7 +1067,9 @@ final class ArmsServer {
 
     static Posture posture(LivingEntity e) {
         Posture p = e.getData(ArmsContent.POSTURE);
-        if (p.max <= 0) {
+        int stance = Strikes.stance(e); // a duel boss's own size (SPEC §47.3)
+        if (stance > 0) p.max = stance;
+        else if (p.max <= 0) {
             MobRole role = e.getExistingDataOrNull(CoreApi.MOB_ROLE.get());
             p.max = ArmsRules.postureMax(CreatureTag.of(e), role == null ? MobRole.Role.NONE : role.role());
         }

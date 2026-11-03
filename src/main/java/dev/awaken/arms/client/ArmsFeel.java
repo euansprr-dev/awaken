@@ -56,8 +56,24 @@ final class ArmsFeel implements CombatFeedback.Sink {
     static final long RELEASE = 110_000_000L;
     private static final double RELEASE_MAX_SQ = 2.5 * 2.5;
 
+    /** A tick of the feel's clock at the normal 20 a second (ns). */
+    static final float TICK_NANOS = 50_000_000F;
+    private static long paced = System.nanoTime(), pacedAt = paced;
+
+    /**
+     * The feel's clock (ns): real time at the world's own pace, so under {@code /tick rate} (a slowed film) the hands, the
+     * hit-stop, a struck body's freeze and its recoil, and the ribbons last as many ticks as they do in play; at the
+     * normal 20 a second it is real time. Client thread.
+     */
+    static long nanos() {
+        long real = System.nanoTime();
+        paced += (long) ((real - pacedAt) * (TICK_NANOS / ArmsPredict.nanosPerTick()));
+        pacedAt = real;
+        return paced;
+    }
+
     private static final Map<Integer, Freeze> FROZEN = new HashMap<>();
-    /** The striker's hold: wall-clock nanos it ends, and how long all holds so far have paused the hands. */
+    /** The striker's hold: the nanos it ends (the feel's clock), and how long all holds so far have paused the hands. */
     private static long holdUntil, holdStart;
     private static long pausedTotal;
     // the view kick: a damped return from its start values
@@ -67,7 +83,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
     @Override
     public void hitstop(int entityId, int ms) {
         if (ms <= 0 || entityId < 0 || !ArmsComfort.hitStop()) return;
-        long now = System.nanoTime();
+        long now = nanos();
         Freeze f = new Freeze(now, now + ms * 1_000_000L);
         Freeze old = FROZEN.get(entityId);
         if (old != null && old.captured) {
@@ -96,7 +112,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
     @Override
     public void hold(int ms) {
         if (ms <= 0 || !ArmsComfort.hitStop()) return;
-        long now = System.nanoTime();
+        long now = nanos();
         if (now < holdUntil) {
             holdUntil = Math.max(holdUntil, now + ms * 1_000_000L);
             return;
@@ -224,11 +240,11 @@ final class ArmsFeel implements CombatFeedback.Sink {
     /** Nanos the hands have been held so far (moves' clocks subtract it so a swing resumes where it froze). */
     static long paused() {
         // an ended hold counts in full until tick() banks it, so the clocks never jump ahead and back between frames
-        return holdUntil == 0 ? pausedTotal : pausedTotal + Math.min(System.nanoTime(), holdUntil) - holdStart;
+        return holdUntil == 0 ? pausedTotal : pausedTotal + Math.min(nanos(), holdUntil) - holdStart;
     }
 
     static boolean holding() {
-        return System.nanoTime() < holdUntil;
+        return nanos() < holdUntil;
     }
 
     static void tick() {
@@ -236,7 +252,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
         if (fovTicks > 0) fovTicks--;
         if (breathTicks > 0 && --breathTicks == 0 && BREATH.equals(LensClient.overriding())) LensClient.clearOverride(14);
         if (mc.level != null) lowHealth(mc);
-        long now = System.nanoTime();
+        long now = nanos();
         if (holdUntil != 0 && now >= holdUntil) {
             pausedTotal += holdUntil - holdStart;
             holdUntil = 0;
@@ -275,7 +291,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
         boolean has = m != null && FpSwings.camera(FpSwings.style(style.id()), m, t, LEAN);
         if (!has) LEAN[0] = LEAN[1] = LEAN[2] = 0;
         // a change of move carries the lean across (a chained strike's starts level: the view never snaps; SwingBlend)
-        float now = (System.nanoTime() - paused()) / ArmsPredict.nanosPerTick();
+        float now = (nanos() - paused()) / TICK_NANOS;
         if (m != leanMove || ArmsPredict.moveNanos != leanNanos) {
             leanMove = m;
             leanNanos = ArmsPredict.moveNanos;
@@ -313,7 +329,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
         if (FROZEN.isEmpty()) return;
         Freeze f = FROZEN.get(entity.getId());
         if (f == null) return;
-        long now = System.nanoTime();
+        long now = nanos();
         LivingEntityRenderState living = state instanceof LivingEntityRenderState l ? l : null;
         if (!f.captured) {
             if (now > f.until) return; // never drawn while held: nothing to let go

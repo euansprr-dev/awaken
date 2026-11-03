@@ -1,0 +1,447 @@
+# Weapon designs audit (SPEC §25 "Weapons"; the weapon-designs session, 2 Nov 2026): every forged and Lord-forged weapon
+# held at rest in first person as Euan sees it (the HUD on, a 16:9 window, the default FOV), then a set in third person
+# from the front (every Longsword and Maul, every style's Gatewrought). Each weapon waits out its rise (a Maul's 29 ticks).
+world armsdesigns creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 8
+wait 40
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-10 ~ ~-10 ~10 ~10 ~12 minecraft:air
+cmd fill ~-10 ~ ~9 ~10 ~8 ~9 minecraft:deepslate_tiles
+cmd fill ~-10 ~ ~-6 ~10 ~8 ~-6 minecraft:deepslate_tiles
+cmd kill @e[type=minecraft:item]
+wait 30
+look 0 8
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 32
+shot fp_E_longsword_wildhide_longsword
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+wait 32
+shot fp_D_longsword_beastbound_longsword
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 32
+shot fp_C_longsword_gatewrought_longsword
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
+wait 32
+shot fp_B_longsword_veilwoven_longsword
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 32
+shot fp_A_longsword_lordscale_longsword
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
+wait 32
+shot fp_S_longsword_sovereign_longsword
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_axe
+wait 32
+shot fp_E_axe_wildhide_axe
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_axe
+wait 32
+shot fp_D_axe_beastbound_axe
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_axe
+wait 32
+shot fp_C_axe_gatewrought_axe
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_axe
+wait 32
+shot fp_B_axe_veilwoven_axe
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_axe
+wait 32
+shot fp_A_axe_lordscale_axe
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_axe
+wait 32
+shot fp_S_axe_sovereign_axe
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_maul
+wait 32
+shot fp_E_maul_wildhide_maul
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_maul
+wait 32
+shot fp_D_maul_beastbound_maul
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 32
+shot fp_C_maul_gatewrought_maul
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_maul
+wait 32
+shot fp_B_maul_veilwoven_maul
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_maul
+wait 32
+shot fp_A_maul_lordscale_maul
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_maul
+wait 32
+shot fp_S_maul_sovereign_maul
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_spear
+wait 32
+shot fp_E_spear_wildhide_spear
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_spear
+wait 32
+shot fp_D_spear_beastbound_spear
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 32
+shot fp_C_spear_gatewrought_spear
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_spear
+wait 32
+shot fp_B_spear_veilwoven_spear
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_spear
+wait 32
+shot fp_A_spear_lordscale_spear
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_spear
+wait 32
+shot fp_S_spear_sovereign_spear
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_greatblade
+wait 32
+shot fp_E_greatblade_wildhide_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_greatblade
+wait 32
+shot fp_D_greatblade_beastbound_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 32
+shot fp_C_greatblade_gatewrought_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_greatblade
+wait 32
+shot fp_B_greatblade_veilwoven_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_greatblade
+wait 32
+shot fp_A_greatblade_lordscale_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_greatblade
+wait 32
+shot fp_S_greatblade_sovereign_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_rapier
+wait 32
+shot fp_E_rapier_wildhide_rapier
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_rapier
+wait 32
+shot fp_D_rapier_beastbound_rapier
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_rapier
+wait 32
+shot fp_C_rapier_gatewrought_rapier
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_rapier
+wait 32
+shot fp_B_rapier_veilwoven_rapier
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_rapier
+wait 32
+shot fp_A_rapier_lordscale_rapier
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_rapier
+wait 32
+shot fp_S_rapier_sovereign_rapier
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_daggers
+wait 32
+shot fp_E_daggers_wildhide_daggers
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_daggers
+wait 32
+shot fp_D_daggers_beastbound_daggers
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_daggers
+wait 32
+shot fp_C_daggers_gatewrought_daggers
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_daggers
+wait 32
+shot fp_B_daggers_veilwoven_daggers
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_daggers
+wait 32
+shot fp_A_daggers_lordscale_daggers
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_daggers
+wait 32
+shot fp_S_daggers_sovereign_daggers
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_katana
+wait 32
+shot fp_E_katana_wildhide_katana
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_katana
+wait 32
+shot fp_D_katana_beastbound_katana
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 32
+shot fp_C_katana_gatewrought_katana
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_katana
+wait 32
+shot fp_B_katana_veilwoven_katana
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_katana
+wait 32
+shot fp_A_katana_lordscale_katana
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_katana
+wait 32
+shot fp_S_katana_sovereign_katana
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_twinblades
+wait 32
+shot fp_E_twinblades_wildhide_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_twinblades
+wait 32
+shot fp_D_twinblades_beastbound_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_twinblades
+wait 32
+shot fp_C_twinblades_gatewrought_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_twinblades
+wait 32
+shot fp_B_twinblades_veilwoven_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_twinblades
+wait 32
+shot fp_A_twinblades_lordscale_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_twinblades
+wait 32
+shot fp_S_twinblades_sovereign_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_glaive
+wait 32
+shot fp_E_glaive_wildhide_glaive
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_glaive
+wait 32
+shot fp_D_glaive_beastbound_glaive
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 32
+shot fp_C_glaive_gatewrought_glaive
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_glaive
+wait 32
+shot fp_B_glaive_veilwoven_glaive
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_glaive
+wait 32
+shot fp_A_glaive_lordscale_glaive
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_glaive
+wait 32
+shot fp_S_glaive_sovereign_glaive
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_scythe
+wait 32
+shot fp_E_scythe_wildhide_scythe
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_scythe
+wait 32
+shot fp_D_scythe_beastbound_scythe
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 32
+shot fp_C_scythe_gatewrought_scythe
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_scythe
+wait 32
+shot fp_B_scythe_veilwoven_scythe
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_scythe
+wait 32
+shot fp_A_scythe_lordscale_scythe
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_scythe
+wait 32
+shot fp_S_scythe_sovereign_scythe
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_gauntlets
+wait 32
+shot fp_E_gauntlets_wildhide_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_gauntlets
+wait 32
+shot fp_D_gauntlets_beastbound_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 32
+shot fp_C_gauntlets_gatewrought_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_gauntlets
+wait 32
+shot fp_B_gauntlets_veilwoven_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_gauntlets
+wait 32
+shot fp_A_gauntlets_lordscale_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_gauntlets
+wait 32
+shot fp_S_gauntlets_sovereign_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_chainblade
+wait 32
+shot fp_E_chainblade_wildhide_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_chainblade
+wait 32
+shot fp_D_chainblade_beastbound_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_chainblade
+wait 32
+shot fp_C_chainblade_gatewrought_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_chainblade
+wait 32
+shot fp_B_chainblade_veilwoven_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_chainblade
+wait 32
+shot fp_A_chainblade_lordscale_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_chainblade
+wait 32
+shot fp_S_chainblade_sovereign_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_shieldblade
+wait 32
+shot fp_E_shieldblade_wildhide_shieldblade
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_shieldblade
+wait 32
+shot fp_D_shieldblade_beastbound_shieldblade
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_shieldblade
+wait 32
+shot fp_C_shieldblade_gatewrought_shieldblade
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_shieldblade
+wait 32
+shot fp_B_shieldblade_veilwoven_shieldblade
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_shieldblade
+wait 32
+shot fp_A_shieldblade_lordscale_shieldblade
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_shieldblade
+wait 32
+shot fp_S_shieldblade_sovereign_shieldblade
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_warstaff
+wait 32
+shot fp_E_warstaff_wildhide_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_warstaff
+wait 32
+shot fp_D_warstaff_beastbound_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_warstaff
+wait 32
+shot fp_C_warstaff_gatewrought_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_warstaff
+wait 32
+shot fp_B_warstaff_veilwoven_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_warstaff
+wait 32
+shot fp_A_warstaff_lordscale_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_warstaff
+wait 32
+shot fp_S_warstaff_sovereign_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_precursor
+wait 32
+shot fp_E_precursor_wildhide_precursor
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_precursor
+wait 32
+shot fp_D_precursor_beastbound_precursor
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_precursor
+wait 32
+shot fp_C_precursor_gatewrought_precursor
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_precursor
+wait 32
+shot fp_B_precursor_veilwoven_precursor
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_precursor
+wait 32
+shot fp_A_precursor_lordscale_precursor
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_precursor
+wait 32
+shot fp_S_precursor_sovereign_precursor
+cmd item replace entity @s weapon.mainhand with awaken:bell_warden_maul
+wait 32
+shot fp_E_maul_bell_warden_maul
+cmd item replace entity @s weapon.mainhand with awaken:mother_of_spores_scythe
+wait 32
+shot fp_E_scythe_mother_of_spores_scythe
+cmd item replace entity @s weapon.mainhand with awaken:ember_tyrant_axe
+wait 32
+shot fp_E_axe_ember_tyrant_axe
+cmd item replace entity @s weapon.mainhand with awaken:hive_regent_daggers
+wait 32
+shot fp_E_daggers_hive_regent_daggers
+cmd item replace entity @s weapon.mainhand with awaken:root_saint_warstaff
+wait 32
+shot fp_E_warstaff_root_saint_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:drowned_archivist_spear
+wait 32
+shot fp_D_spear_drowned_archivist_spear
+cmd item replace entity @s weapon.mainhand with awaken:gearwright_colossus_gauntlets
+wait 32
+shot fp_D_gauntlets_gearwright_colossus_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:glass_serpent_rapier
+wait 32
+shot fp_D_rapier_glass_serpent_rapier
+cmd item replace entity @s weapon.mainhand with awaken:lantern_broker_chainblade
+wait 32
+shot fp_D_chainblade_lantern_broker_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:abbot_of_frost_glaive
+wait 32
+shot fp_C_glaive_abbot_of_frost_glaive
+cmd item replace entity @s weapon.mainhand with awaken:mirror_knight_shieldblade
+wait 32
+shot fp_C_shieldblade_mirror_knight_shieldblade
+cmd item replace entity @s weapon.mainhand with awaken:unit_zero_precursor
+wait 32
+shot fp_C_precursor_unit_zero_precursor
+cmd item replace entity @s weapon.mainhand with awaken:the_sleeper_katana
+wait 32
+shot fp_C_katana_the_sleeper_katana
+cmd item replace entity @s weapon.mainhand with awaken:sky_leviathan_twinblades
+wait 32
+shot fp_B_twinblades_sky_leviathan_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:hollow_herald_greatblade
+wait 32
+shot fp_A_greatblade_hollow_herald_greatblade
+camera front
+look 20 4
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 32
+shot tp_E_longsword_wildhide_longsword
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+wait 32
+shot tp_D_longsword_beastbound_longsword
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 32
+shot tp_C_longsword_gatewrought_longsword
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
+wait 32
+shot tp_B_longsword_veilwoven_longsword
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 32
+shot tp_A_longsword_lordscale_longsword
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
+wait 32
+shot tp_S_longsword_sovereign_longsword
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_axe
+wait 32
+shot tp_C_axe_gatewrought_axe
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_maul
+wait 32
+shot tp_E_maul_wildhide_maul
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_maul
+wait 32
+shot tp_D_maul_beastbound_maul
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 32
+shot tp_C_maul_gatewrought_maul
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_maul
+wait 32
+shot tp_B_maul_veilwoven_maul
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_maul
+wait 32
+shot tp_A_maul_lordscale_maul
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_maul
+wait 32
+shot tp_S_maul_sovereign_maul
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 32
+shot tp_C_spear_gatewrought_spear
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 32
+shot tp_C_greatblade_gatewrought_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_rapier
+wait 32
+shot tp_C_rapier_gatewrought_rapier
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_daggers
+wait 32
+shot tp_C_daggers_gatewrought_daggers
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 32
+shot tp_C_katana_gatewrought_katana
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_twinblades
+wait 32
+shot tp_C_twinblades_gatewrought_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 32
+shot tp_C_glaive_gatewrought_glaive
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 32
+shot tp_C_scythe_gatewrought_scythe
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 32
+shot tp_C_gauntlets_gatewrought_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_chainblade
+wait 32
+shot tp_C_chainblade_gatewrought_chainblade
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_shieldblade
+wait 32
+shot tp_C_shieldblade_gatewrought_shieldblade
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_warstaff
+wait 32
+shot tp_C_warstaff_gatewrought_warstaff
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_precursor
+wait 32
+shot tp_C_precursor_gatewrought_precursor
+quit

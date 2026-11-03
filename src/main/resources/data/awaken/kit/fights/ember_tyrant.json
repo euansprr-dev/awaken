@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "ember_tyrant",
  "moves": "ember_tyrant",
+ "duel": true,
+ "stance": 240,
  "intro": {
   "pose": "idle",
   "move": "roar"
@@ -11,12 +13,29 @@
    "pool": [
     {
      "move": "hammer",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "backhand"
+      ],
+      [
+       "stomp"
+      ]
+     ]
     },
     {
      "move": "backhand",
      "weight": 3,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "chop_a",
+       "chop_b"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     },
     {
      "move": "chop_a",
@@ -34,16 +53,42 @@
     {
      "move": "charge",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "hammer"
+      ],
+      [
+       "backhand",
+       "chop_a"
+      ]
+     ]
     },
     {
      "move": "stomp",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "backhand"
+      ],
+      [
+       "chop_a",
+       "chop_b"
+      ]
+     ]
     },
     {
      "move": "eruption",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "charge"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     }
    ]
   },
@@ -52,7 +97,15 @@
    "pool": [
     {
      "move": "hammer",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "backhand"
+      ],
+      [
+       "stomp"
+      ]
+     ]
     },
     {
      "move": "backhand",
@@ -81,16 +134,42 @@
     {
      "move": "charge",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "hammer"
+      ],
+      [
+       "backhand",
+       "chop_a"
+      ]
+     ]
     },
     {
      "move": "stomp",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "backhand"
+      ],
+      [
+       "chop_a",
+       "chop_b"
+      ]
+     ]
     },
     {
      "move": "eruption",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "charge"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     }
    ]
   },
@@ -140,11 +219,28 @@
     {
      "move": "stomp",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "backhand"
+      ],
+      [
+       "chop_a",
+       "chop_b"
+      ]
+     ]
     },
     {
      "move": "eruption",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "charge"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     },
     {
      "move": "meltdown",

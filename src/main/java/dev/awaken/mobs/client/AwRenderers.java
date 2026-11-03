@@ -60,7 +60,6 @@ import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.entity.layers.BreezeWindLayer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
@@ -123,7 +122,7 @@ final class AwRenderers {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     static void renderers(EntityRenderersEvent.RegisterRenderers e) {
-        e.registerEntityRenderer(MobTypes.BOLT.get(), ctx -> new ThrownItemRenderer<>(ctx, 0.9F, true));
+        e.registerEntityRenderer(MobTypes.BOLT.get(), ShotRenderer::new);
         e.registerEntityRenderer(MobTypes.SEEP_ROOT.get(), SeepRootRenderer::new);
         for (MobDef d : dev.awaken.mobs.def.Bestiary.all()) {
             EntityType<? extends AwakenMob> type = MobTypes.type(d);

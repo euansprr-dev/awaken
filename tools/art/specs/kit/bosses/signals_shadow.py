@@ -23,7 +23,7 @@ floor with its arms spread limp over it; it dies there, its fins slowing, its ar
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -932,6 +932,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.4)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     for m in mv:
         _stage(r, m)
@@ -962,16 +963,19 @@ MOVE_SOUNDS = {"recoil": {"swing": "jet"}, "lance": {"swing": "jet"}, "step": {"
                "collapse": {"swing": "roar"}, "last": {"swing": "roar", "impact": ""}, "arrive": {"swing": "tell_light", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 360,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies on the floor of the Seed, and rises to look you in the eye
     "phases": [
         {"pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["grasp"], ["grasp", "lance"]]},
-            {"move": "grasp", "weight": 2, "when": "near"},
+            {"move": "grasp", "weight": 2, "when": "near", "then": [["lash"]]},
             {"move": "lance", "weight": 3, "when": "far", "then": [["lash"]]},
-            {"move": "instruction", "weight": 3, "when": "far"},
-            {"move": "directive", "weight": 2, "when": "far"},
+            {"move": "instruction", "weight": 3, "when": "far", "then": [["lance"]]},
+            {"move": "directive", "weight": 2, "when": "far", "then": [["instruction"]]},
             {"move": "step", "weight": 1},
-            {"move": "recoil", "weight": 3, "when": "behind"},
+            {"move": "recoil", "weight": 3, "when": "behind", "then": [["lash"], ["grasp"]]},
         ]},
         # it remembers every gate, as in DeepBestiary: its echoes, the marks, your echoes
         {"transition": "echoes", "pool": [
@@ -979,9 +983,9 @@ FIGHT = {
             {"move": "lance", "weight": 3, "when": "far", "then": [["lash", "grasp"]]},
             {"move": "marks", "weight": 2},
             {"move": "decoy", "weight": 1},
-            {"move": "instruction", "weight": 2, "when": "far"},
+            {"move": "instruction", "weight": 2, "when": "far", "then": [["lance"]]},
             {"move": "step", "weight": 1},
-            {"move": "recoil", "weight": 3, "when": "behind"},
+            {"move": "recoil", "weight": 3, "when": "behind", "then": [["lash"], ["grasp"]]},
         ]},
         # it is you, from the bottom: the Seed collapses
         {"transition": "collapse", "pool": [
@@ -991,7 +995,7 @@ FIGHT = {
             {"move": "lance", "weight": 3, "when": "far", "then": [["grasp"]]},
             {"move": "last", "weight": 1},
             {"move": "collapse", "weight": 1},
-            {"move": "recoil", "weight": 3, "when": "behind"},
+            {"move": "recoil", "weight": 3, "when": "behind", "then": [["lash"], ["grasp"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

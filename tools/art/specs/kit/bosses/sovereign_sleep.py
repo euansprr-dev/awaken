@@ -20,7 +20,7 @@ its back, its wings spread.
 """
 import math
 
-from kit import core
+from kit import core, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -614,6 +614,7 @@ def clips(r):
     _idle(r)
     _flight(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.8)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     for m in mv:
         stage_clips(r, m, rest=_rest())
@@ -667,14 +668,17 @@ MOVE_SOUNDS = {"lullaby": {"swing": "cast", "impact": ""}, "lullabies": {"swing"
                "neverwake": {"swing": "roar"}, "wake": {"swing": "cast", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 340,
     "intro": {"pose": "idle", "move": "wake"},  # it hangs asleep in its wings, and wakes enough to fight you
     "phases": [
         {"pool": [
             {"move": "talon", "weight": 3, "when": "near", "then": [["talon_b"], ["talon_b", "buffet"]]},
-            {"move": "buffet", "weight": 2, "when": "near"},
+            {"move": "buffet", "weight": 2, "when": "near", "then": [["talon"]]},
             {"move": "dive", "weight": 3, "when": "far", "then": [["talon"]]},
-            {"move": "lullaby", "weight": 1},
-            {"move": "swivel", "weight": 3, "when": "behind"},
+            {"move": "lullaby", "weight": 1, "then": [["talon"]]},
+            {"move": "swivel", "weight": 3, "when": "behind", "then": [["talon"], ["talon_b"]]},
         ]},
         # you feel heavy, as in DeepBestiary: the small owls, the dreams falling
         {"transition": "lullabies", "pool": [
@@ -682,16 +686,16 @@ FIGHT = {
             {"move": "dive", "weight": 3, "when": "far", "then": [["talon", "talon_b"]]},
             {"move": "dreamfall", "weight": 2},
             {"move": "lullabies", "weight": 1},
-            {"move": "swivel", "weight": 3, "when": "behind"},
+            {"move": "swivel", "weight": 3, "when": "behind", "then": [["talon"], ["talon_b"]]},
         ]},
         # never wake
         {"transition": "neverwake", "pool": [
             {"move": "neverwake", "weight": 2},
             {"move": "dive", "weight": 3, "when": "far", "then": [["buffet"]]},
             {"move": "talon", "weight": 3, "when": "near", "then": [["talon_b", "buffet"]]},
-            {"move": "lullaby", "weight": 2},
+            {"move": "lullaby", "weight": 2, "then": [["talon"]]},
             {"move": "dreamfall", "weight": 1},
-            {"move": "swivel", "weight": 3, "when": "behind"},
+            {"move": "swivel", "weight": 3, "when": "behind", "then": [["talon"], ["talon_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

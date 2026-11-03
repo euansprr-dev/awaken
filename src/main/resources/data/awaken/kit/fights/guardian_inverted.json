@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "guardian_inverted",
  "moves": "guardian_inverted",
+ "duel": true,
+ "stance": 320,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -35,7 +37,12 @@
     },
     {
      "move": "beam",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "engulf"
+      ]
+     ]
     },
     {
      "move": "engulf",
@@ -50,7 +57,15 @@
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "bite"
+      ],
+      [
+       "bite_b"
+      ]
+     ]
     }
    ]
   },
@@ -88,7 +103,12 @@
     {
      "move": "beam",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "engulf"
+      ]
+     ]
     },
     {
      "move": "engulf",
@@ -113,7 +133,15 @@
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "bite"
+      ],
+      [
+       "bite_b"
+      ]
+     ]
     }
    ]
   }

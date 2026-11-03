@@ -166,6 +166,7 @@ def body():
 def clips(r):
     plans.biped_locomotion(r, P, weight=1.6, temper="feral")
     plans.biped_reactions(r, weight=1.6)
+    plans.biped_duel_reactions(r, weight=1.6, lead="l")  # a duel's parried and reel (SPEC §47.5)
     mv = [
         M.fist_slam(P, "hammer", side="r", title="Magma Fist", weight=1.4, windup=22, hold=10, active=5, recover=20, ability="Magma Fist",
                     kinds=("area", "near"), rng=(0, 4.6), damage=0.7, knock=1.0, weapon_bone="axe", disc=2.8),
@@ -210,31 +211,34 @@ SOUNDS = {
 MOVE_SOUNDS = {}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 240,
     "intro": {"pose": "idle", "move": "roar"},
     "phases": [
         {"pool": [
-            {"move": "hammer", "weight": 3},
-            {"move": "backhand", "weight": 3, "when": "near"},
+            {"move": "hammer", "weight": 3, "then": [["backhand"], ["stomp"]]},
+            {"move": "backhand", "weight": 3, "when": "near", "then": [["chop_a", "chop_b"], ["hammer"]]},
             {"move": "chop_a", "weight": 3, "then": [["chop_b"], ["chop_b", "hammer"]]},
-            {"move": "charge", "weight": 2, "when": "far"},
-            {"move": "stomp", "weight": 3, "when": "behind"},
-            {"move": "eruption", "weight": 1},
+            {"move": "charge", "weight": 2, "when": "far", "then": [["hammer"], ["backhand", "chop_a"]]},
+            {"move": "stomp", "weight": 3, "when": "behind", "then": [["backhand"], ["chop_a", "chop_b"]]},
+            {"move": "eruption", "weight": 1, "then": [["charge"], ["hammer"]]},
         ]},
         {"transition": "stoke", "pool": [
-            {"move": "hammer", "weight": 3},
+            {"move": "hammer", "weight": 3, "then": [["backhand"], ["stomp"]]},
             {"move": "backhand", "weight": 2, "when": "near", "then": [["chop_a", "chop_b"]]},
             {"move": "chop_a", "weight": 3, "then": [["chop_b"], ["chop_b", "hammer"]]},
-            {"move": "charge", "weight": 2, "when": "far"},
-            {"move": "stomp", "weight": 3, "when": "behind"},
-            {"move": "eruption", "weight": 2},
+            {"move": "charge", "weight": 2, "when": "far", "then": [["hammer"], ["backhand", "chop_a"]]},
+            {"move": "stomp", "weight": 3, "when": "behind", "then": [["backhand"], ["chop_a", "chop_b"]]},
+            {"move": "eruption", "weight": 2, "then": [["charge"], ["hammer"]]},
         ]},
         {"transition": "meltdown", "pool": [
             {"move": "hammer", "weight": 3, "then": [["stomp"]]},
             {"move": "backhand", "weight": 2, "when": "near", "then": [["chop_a", "chop_b"]]},
             {"move": "chop_a", "weight": 3, "then": [["chop_b", "hammer"]]},
             {"move": "charge", "weight": 2, "when": "far", "then": [["eruption"]]},
-            {"move": "stomp", "weight": 3, "when": "behind"},
-            {"move": "eruption", "weight": 2},
+            {"move": "stomp", "weight": 3, "when": "behind", "then": [["backhand"], ["chop_a", "chop_b"]]},
+            {"move": "eruption", "weight": 2, "then": [["charge"], ["hammer"]]},
             {"move": "meltdown", "weight": 1},
         ]},
     ],

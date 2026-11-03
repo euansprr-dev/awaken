@@ -731,15 +731,14 @@
   },
   {
    "id": "ring",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
-    "windup": 18,
+    "windup": 20,
     "active": 6,
     "recover": 22,
     "track": 0.0,
-    "lock": 12,
-    "link": 6,
-    "hold": 8
+    "lock": 14,
+    "link": 6
    },
    "range": [
     0,
@@ -1290,9 +1289,9 @@
    ],
    "ability": "Hearth Ring",
    "marks": {
-    "peak": 18,
-    "contact": 18,
-    "whoosh": 18
+    "peak": 20,
+    "contact": 20,
+    "whoosh": 20
    }
   },
   {

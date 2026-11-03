@@ -11,7 +11,10 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 import java.util.List;
 
-/** The Hearth page's wire (SPEC §43.6): the page as rows of words, and its two asks (show it, Track a rumour). */
+/**
+ * The Hearth page's wire (SPEC §43.6): the page as rows of words, and its asks (show it, Track a rumour, name a beast);
+ * and the kin plate's (SPEC §43.17): a read of one creature and the bond's words back.
+ */
 public final class KinNet {
     private KinNet() {}
 
@@ -19,7 +22,7 @@ public final class KinNet {
 
     /**
      * Server → player: the Hearth page. {@code home}: [text, rumour, kind to Track or "", state: head/need/met/dim/tier].
-     * {@code beasts}: [kind, title, doing, feeling, made today]. {@code kin}: [kind, title, met 1/0, where and when, its job,
+     * {@code beasts}: [kind, title, doing, feeling, made today, its id, the name you gave it or ""]. {@code kin}: [kind, title, met 1/0, where and when, its job,
      * its want so far ("\n"-joined, or "?"), standing, latest line, rumour, colour].
      */
     public record Page(List<List<String>> home, List<List<String>> beasts, List<List<String>> kin) implements CustomPacketPayload {
@@ -54,9 +57,52 @@ public final class KinNet {
         }
     }
 
+    /** Player → server: name one of your beasts (its id, the name; "" takes it away). */
+    public record Name(String id, String name) implements CustomPacketPayload {
+        public static final Type<Name> TYPE = new Type<>(Awaken.id("kin_name"));
+        public static final StreamCodec<ByteBuf, Name> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.stringUtf8(64), Name::id,
+                ByteBufCodecs.stringUtf8(128), Name::name, Name::new);
+
+        @Override
+        public Type<Name> type() {
+            return TYPE;
+        }
+    }
+
+    /** Player → server: the kin plate is showing this creature; say what it is to me. */
+    public record Read(int entity) implements CustomPacketPayload {
+        public static final Type<Read> TYPE = new Type<>(Awaken.id("kin_read"));
+        public static final StreamCodec<ByteBuf, Read> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Read::entity, Read::new);
+
+        @Override
+        public Type<Read> type() {
+            return TYPE;
+        }
+    }
+
+    /** Server → player: one creature's bond, for its plate ({@link KinPlates#read}). */
+    public record Bond(int entity, String who, int tone, int step, String note) implements CustomPacketPayload {
+        public static final Type<Bond> TYPE = new Type<>(Awaken.id("kin_bond"));
+        public static final StreamCodec<ByteBuf, Bond> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Bond::entity,
+                ByteBufCodecs.stringUtf8(128), Bond::who, ByteBufCodecs.VAR_INT, Bond::tone, ByteBufCodecs.VAR_INT, Bond::step,
+                ByteBufCodecs.stringUtf8(256), Bond::note, Bond::new);
+
+        @Override
+        public Type<Bond> type() {
+            return TYPE;
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
-        var r = e.registrar("1");
+        var r = e.registrar("2");
         r.playToClient(Page.TYPE, Page.STREAM_CODEC);
+        r.playToClient(Bond.TYPE, Bond.STREAM_CODEC);
+        r.playToServer(Read.TYPE, Read.STREAM_CODEC, (m, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer p) KinPlates.answer(p, m.entity());
+        });
+        r.playToServer(Name.TYPE, Name.STREAM_CODEC, (m, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer p && KinPlates.name(p, m.id(), m.name())) send(p);
+        });
         r.playToServer(Ask.TYPE, Ask.STREAM_CODEC, (m, ctx) -> {
             if (ctx.player() instanceof ServerPlayer p) send(p);
         });

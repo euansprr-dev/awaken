@@ -1,6 +1,7 @@
 package dev.awaken.arms.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.arms.WeaponMesh;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -37,5 +38,23 @@ public final class WeaponDraw {
         int cut = Math.round(Math.max(0F, from) * 255);
         out.submitCustomGeometry(ps, ours ? WeaponPipelines.weapon(texture) : WeaponPipelines.fallback(texture),
                 (pose, buffer) -> WeaponRenderer.emit(mesh, pose, buffer, light, packed, ours, cut));
+    }
+
+    /**
+     * A mesh whose corners its caller writes itself (the anvil reshapes its work as it's made, SPEC §46.3): {@code overlay}
+     * is UV1 as the shader takes it; {@code ours}, the weapon shader is drawing, else vanilla's quads (each triangle's last
+     * corner twice) and white.
+     */
+    @FunctionalInterface
+    public interface Corners {
+        void emit(PoseStack.Pose pose, VertexConsumer buffer, int overlay, boolean ours);
+    }
+
+    /** Draws corners written by {@code corners} with the shader's state as UV1, as {@link #draw} does a mesh. */
+    public static void draw(SubmitNodeCollector out, PoseStack ps, Identifier texture, int x, int y, Corners corners) {
+        boolean ours = WeaponPipelines.ok();
+        int packed = ours ? x | y << 16 : OverlayTexture.NO_OVERLAY;
+        out.submitCustomGeometry(ps, ours ? WeaponPipelines.weapon(texture) : WeaponPipelines.fallback(texture),
+                (pose, buffer) -> corners.emit(pose, buffer, packed, ours));
     }
 }

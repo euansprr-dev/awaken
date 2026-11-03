@@ -34,7 +34,8 @@ final class AscentTrials {
         TrialHooks.install(new TrialHooks.Trials() {
             @Override
             public boolean atEdge(ServerPlayer p, String trial) {
-                if (TrialHooks.SKYBORN.equals(trial)) return skyEdge(p);
+                if (TrialHooks.SKYBORN.equals(trial)) return skyEdge(p, "sky leviathan's trial");
+                if (TrialHooks.SKY_WARDEN.equals(trial)) return skyEdge(p, "the Sky Warden's roof"); // SPEC §47.8
                 return TrialHooks.LEAPER.equals(trial) && edge(p);
             }
 
@@ -42,6 +43,8 @@ final class AscentTrials {
             public void done(ServerPlayer p, String trial, int ticks, int medal) {
                 if (TrialHooks.LEAPER.equals(trial)) leaperDone(p, ticks, medal);
                 else if (TrialHooks.SKYBORN.equals(trial)) skybornDone(p);
+                else if (TrialHooks.SKY_WARDEN.equals(trial)) skybornDone(p); // SPEC §47.8
+                else if (TrialHooks.RINGER.equals(trial)) Ascent.grant(p, Ascent.Tier.TETHER, "the Ringer's chain"); // SPEC §47.4
             }
         });
     }
@@ -78,11 +81,11 @@ final class AscentTrials {
     }
 
     /** At the open sky's edge: flight, given the first time with its moment. */
-    private static boolean skyEdge(ServerPlayer p) {
+    private static boolean skyEdge(ServerPlayer p, String source) {
         if (Ascent.has(p, Ascent.Tier.SKYBORN)) return true;
-        Ascent.grant(p, Ascent.Tier.SKYBORN, "sky leviathan's trial");
+        Ascent.grant(p, Ascent.Tier.SKYBORN, source);
         AwakenNet.send(p, new AscentPayloads.Remember(AscentPayloads.Tier.SKYBORN.bit(), AscentPayloads.SKY_EDGE));
-        DirectorLog.log(p, "ascent", "the Sky Leviathan's trial: at the open sky, the sky remembers them");
+        DirectorLog.log(p, "ascent", source + ": at the open sky, the sky remembers them");
         return true;
     }
 

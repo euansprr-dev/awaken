@@ -41,6 +41,12 @@
   "nightmare_undead",
   "nightmare_arthropod",
   "nightmare_explosion",
-  "nightmare_generic"
+  "nightmare_generic",
+  "proving_ringer",
+  "proving_examiner",
+  "proving_unmade",
+  "proving_sky_warden",
+  "proving_keepers_shadow",
+  "proving_last_loop"
  ]
 }

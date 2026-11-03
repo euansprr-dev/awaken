@@ -46,6 +46,9 @@ final class MobsTests {
         dev.awaken.mobs.entity.TellTests.register(); // tells, classes and stances (SPEC §24)
         dev.awaken.mobs.entity.KitTests.register(); // the Creature Kit: tables, sync, hit volumes, phases (SPEC §35)
         dev.awaken.mobs.entity.SeepTests.register(); // the seep heart (W5): placed, asleep, woken, felled
+        dev.awaken.mobs.entity.FightCostTests.register(); // what a fight costs the server a tick (docs/fights/PLAN.md)
+        dev.awaken.mobs.entity.CarrierTests.register(); // see it coming: carriers, locks, the effect rule (SPEC §47.2)
+        dev.awaken.mobs.entity.DuelTests.register(); // the duel: openings, recoils, reels, shots sent back (SPEC §47.3)
         AwakenTests.register("mobs_scaling_maths", 40, h -> {
             h.assertTrue(Math.abs(MobScaling.healthMultiplier(5) - 1.375) < 1e-9, "health multiplier at lv5");
             h.assertTrue(Math.abs(MobScaling.damageMultiplier(150) - 7.0) < 1e-9, "damage multiplier at lv150");
@@ -70,7 +73,7 @@ final class MobsTests {
             AwakenMob ghoul = Mobs.spawn(level, Bestiary.get("toll_ghoul"), h.absoluteVec(new net.minecraft.world.phys.Vec3(0.5, 1, 0.5)), 35,
                     new MobRole(MobRole.Role.ELITE, 35, Theme.BELL.id, Optional.empty(), ""), Set.of());
             h.assertTrue(ghoul != null, "toll ghoul spawned");
-            double want = 22 * (1 + 0.075 * 35) * 2.5;
+            double want = Bestiary.get("toll_ghoul").health * (1 + 0.075 * 35) * 2.5;
             h.assertTrue(Math.abs(ghoul.getMaxHealth() - want) < 0.01, "elite toll ghoul at lv35 has " + want + " hp, has " + ghoul.getMaxHealth());
             h.assertTrue(ghoul.getHealth() == ghoul.getMaxHealth(), "spawned at full health");
             h.assertTrue(ghoul.getData(CoreApi.MOB_ROLE.get()).role() == MobRole.Role.ELITE, "role attachment set");
@@ -227,7 +230,9 @@ final class MobsTests {
             h.assertTrue(lord.bar() == null, "no boss bar of its own (the gates show one)");
             double want = lord.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).getBaseValue()
                     * MobScaling.totalHealth(10, MobRole.Role.BREAK, Tier.LORD);
-            h.assertTrue(Math.abs(lord.getMaxHealth() - want) < 0.5, "Lord-sized health " + lord.getMaxHealth() + ", want " + want);
+            // past vanilla's 1024 the rest is the duel's bulk (SPEC §47.3)
+            double held = lord.getMaxHealth() * lord.bulk();
+            h.assertTrue(Math.abs(held - want) < 0.5 && lord.getMaxHealth() <= 1024, "Lord-sized health " + held + ", want " + want);
             h.assertTrue(lord.isPersistenceRequired(), "it stays until the break is held");
             lord.discard();
             h.succeed();
@@ -256,7 +261,8 @@ final class MobsTests {
                 h.assertTrue(passive || !d.phases.get(0).abilities().isEmpty(), d.id + " has a telegraphed ability");
                 if (d.tier == Tier.LORD || d.tier == Tier.SOVEREIGN || d.tier == Tier.FINAL) h.assertTrue(d.phases.size() == 3, d.id + " has three phases");
                 if (d.tier == Tier.LORD) h.assertTrue(d.parts.size() == 2, d.id + " drops two parts");
-                if (d.tier.countsAsBoss()) h.assertTrue(!d.parts.isEmpty(), d.id + " drops a part");
+                // a Proving's Warden drops no part: its reward is the rank, the gift and its trophy (SPEC §47.4)
+                if (d.tier.countsAsBoss() && d.tier != Tier.PROVING) h.assertTrue(!d.parts.isEmpty(), d.id + " drops a part");
                 for (MobDef.Part p : d.parts) h.assertTrue(MobTypes.part(p.id()) != null, "part item " + p.id());
                 for (MobDef.Phase ph : d.phases) {
                     for (Ability a : ph.abilities()) {
@@ -292,14 +298,18 @@ final class MobsTests {
         AwakenTests.register("mobs_decoys_and_summons_are_cheap", 40, h -> {
             ServerLevel level = h.getLevel();
             AwakenMob boss = (AwakenMob) MobHooks.spawnBoss(level, "awaken:bell_warden", h.absolutePos(new BlockPos(0, 1, 0)), 5, "");
-            h.assertTrue(Mobs.minionRoom(level, boss, 3), "room for the first summons");
+            h.assertTrue(Mobs.minionRoom(level, boss, AwakenBoss.DUEL_ADDS), "room for the first summons (a duel's two)");
             List<Entity> spawned = new ArrayList<>();
             for (int i = 0; i < 6; i++) {
                 AwakenMob m = Mobs.spawnMinion(level, Bestiary.get("toll_ghoul"), boss.position(), boss);
                 h.assertTrue(m != null && m.role().gateId().isEmpty(), "minions carry no gate id");
                 spawned.add(m);
             }
-            h.assertTrue(!Mobs.minionRoom(level, boss, 3), "summon budget stops a seventh wave");
+            // a duel's add hits softer than its caller (SPEC §47.3)
+            double add = ((AwakenMob) spawned.get(0)).getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            double caller = boss.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            h.assertTrue(add <= AwakenBoss.ADD_DAMAGE * caller + 1e-3, "an add hits " + add + ", its caller " + caller);
+            h.assertTrue(!Mobs.minionRoom(level, boss, AwakenBoss.DUEL_ADDS), "summon budget stops a seventh wave");
             spawned.forEach(Entity::discard);
             boss.discard();
             h.succeed();

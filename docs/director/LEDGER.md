@@ -325,15 +325,167 @@ happens).
   minutes without a mend; a client without the mod's channel is skipped; Lens off still plays it (the crush is extra).
 
 ### The Ringer's Great Fault
-- **Get**: the D-rank Reassessment (the waves trial, until the Ringer's hall is built) opens on the Great Fault
-  `ringer`: "[ERROR] … THAT'S NOT OUR BELL / READING · RANK ▮ · RANK ▮ · RANK ▮", the leak "it rang for you last time too",
-  then "That isn't the Registry's bell. Something else is ringing it."
-- **For**: the first Proving's surprise; it ends on the mend when the trial ends, held or not.
+- **Get**: the D-rank Reassessment (the first Proving, §47.4) opens on the Great Fault `ringer` at the Reading Bell:
+  "[ERROR] … THAT'S NOT OUR BELL / READING · RANK ▮ · RANK ▮ · RANK ▮", the leak "it rang for you last time too", then
+  "That isn't the Registry's bell. Something else is ringing it."; the world comes back in the Drowned Belfry.
+- **For**: the first Proving's surprise; it ends on the mend when the Proving ends, held or not.
 - **Know**: it comes unannounced, the first break since the awakening.
-- **Source**: `hearth.trial.Trials.begin` / `end`.
-- **Links**: Faults; raids (D rank opens them).
-- **Edges**: practice runs and every later D attempt play it as a plain Fault; the first wave waits for the screen to
-  come back; the Ringer itself (the Drowned Belfry, the Tether, the Tenor) is GOALS part 2's Proving, not built here.
+- **Source**: `hearth.trial.Provings.ring` / `end`.
+- **Links**: Faults; the Ringer; raids (D rank opens them).
+- **Edges**: every later D attempt plays it as a plain Fault (each key plays great once); practice runs skip it; the
+  hall is readied while it plays, and you wake in it as the screen comes back.
+
+### The Ringer (the first Proving, §47.4)
+- **Get**: at level 10, the Reading Bell's D-rank Reassessment ("The Registry will measure you again, the same as on
+  your first day"; "Put your hand on it"). Nothing names the Ringer, its hall or its gift before you meet it. You wake
+  knee-deep inside the Drowned Belfry's door (a flooded nave of hanging bells in `awaken:trials`, one per hall cell);
+  bells toll above you; the Ringer drops into the light when you climb onto the chancel (or after 30 s).
+- **For**: D rank (and with it the Tenor, through the rank: the bells' part), the Tether (its chain, at your feet), and
+  its trophy for your Hall (the boss trophy every Lord leaves, put in your hands before you leave).
+- **Know**: a duel (§47.3): white-gold blows told 0.8 s, amber and red; the fallen bells on the chancel block its Peal;
+  at half its health the water drains toward the pit and the floor over the pit gives way under the Tenor.
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.Belfry` (the hall, built by `TrialChunkGenerator`), the
+  Ringer's kit `proving_ringer` (`mobs`), the Tether through `TrialHooks.done(RINGER)` (`body.ascent.AscentTrials`).
+- **Links**: the Great Fault; Ascent (the Tether moves here from the vaults' Vow, which a D-rank player now holds);
+  the bells (the Tenor rings with the rank); trophies; parties (members within 24 blocks at level 10 come too, +50% of
+  its health each).
+- **Edges**: a fall never kills: you wake at the door, whole; all of a party down and it starts over (water back, floor
+  shut); from the third fall the Signal says plainly what keeps catching you, by the colour of the blow; the stair out
+  of the door is the way out (the Ringer doesn't fit the door), with no fail day: "The Reading Bell will take you back
+  whenever you're ready"; the hall can't be broken or built on while you're in it, and is put back before its cell is
+  used again (a hall cell generated void before the Belfry existed is built while the bell rings); `/awaken trial
+  dbox` keeps the old box of three waves as practice until Euan has seen the Ringer.
+
+### The Examiner (the second Proving, §47.6)
+- **Get**: at level 25 with D rank, the Reading Bell's C-rank Reassessment ("Last time the bell didn't stop. Go when
+  you're ready."). The bell rings, the screen breaks ("READING · READING · READING"), and you wake standing where you
+  were, in your own room, looking the same way. Then the room turns to glass a ring at a time out from you, the Hall of
+  Reflections shows through it, and the Examiner steps out of the glass in front of you. Nothing names it, its hall or
+  its gift before you meet it.
+- **For**: C rank and the Second Awakening (your Path: the Paths that answered how you've lived, `Trials.secondAwakening`),
+  and its trophy for your Hall (the boss trophy every Lord leaves).
+- **Know**: a duel (§47.3): white-gold blows told 0.7 s, amber and red; through its first third it watches how you fight
+  (guarding, dodging, keeping away, your powers), and when the mirrors wake at two thirds the Signal says plainly what it
+  noticed and how it now fights back; the six standing mirrors stop its Reading; at a third a ring of mirrors rises and
+  closes the fight in.
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.ExaminerWarden` (the room, the glass, the mirrors, the
+  ring), `hearth.trial.Reflections` (the hall, built by `TrialChunkGenerator` in every hall cell), the Examiner's kit
+  `proving_examiner` (`mobs`), the habit read through `Strikes.habit` (core.api).
+- **Links**: the Ringer (the first Proving, D rank); Paths (the Second Awakening moves here from the box's last wave);
+  trophies; parties (members within 24 blocks at level 25 come too, +50% of its health each); your powers (its shots
+  wear the look of the power you've used most).
+- **Edges**: the room copies only looks: no water, lava, fire, portals, TNT, beds or anchors, containers come empty, no
+  game master's blocks, spawners or vaults, another mod's block only if it keeps nothing and can't be walked through;
+  whoever stood outside the copied room wakes where whoever touched the bell stood; a fall never kills: you wake inside
+  the door and the stair climbs out; all of a party down and the mirrors sleep, the ring sinks, and it comes back out of
+  the north mirror; from the third fall the Signal says what keeps catching you; the stair's landing is the way out, no
+  fail day; the hall is put back after; `/awaken admin trial cbox` keeps the old box of waves as practice.
+
+### The Unmade (the third Proving, §47.7)
+- **Get**: at level 45 with C rank, the Reading Bell's B-rank Reassessment ("The bell has taken you twice now. Go when
+  you're ready."). The bell rings, the screen breaks ("[ERROR] NOTHING UNDER YOU"), and you wake falling slowly out of a
+  night sky onto an old stone bridge over nothing. Once you're down on its round middle, its north arm comes apart, the
+  stones gather in the air, and the Unmade drops out of them. Nothing names it, its hall or its gift before you meet it.
+- **For**: B rank (its Great Bell follows the rank), its trophy for your Hall (the boss trophy every Lord leaves), essence
+  shards, cracked stone bricks and sometimes a lantern.
+- **Know**: a duel (§47.3): white-gold blows told 0.65 s, amber and red; its signature, the Fall, breaks a line of floor
+  toward you (dash through it); at two thirds the bastion's outer ring cracks and falls into the dark, north first (the
+  road south and the middle stay); at a third the bridge's lamps go out from the gatehouse in, but the gatehouse stays lit.
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.UnmadeWarden` (the gathering, the ring, the lamps, the
+  edge, the mending), `hearth.trial.Span` (the bridge, built by `TrialChunkGenerator` in every hall cell), the Unmade's
+  kit `proving_unmade` (`mobs`).
+- **Links**: the Examiner (the second Proving, C rank) and the Ringer before it; trophies; Great Bells (rank-driven);
+  parties (members within 24 blocks at level 45 come too, +50% of its health each).
+- **Edges**: going 5 blocks under the deck is a fall, never a death: you wake at the south end of the bridge and the arch
+  behind you is the way out; if it goes over it climbs back on; all of a party down and the Span is whole again (the arm,
+  the ring, the lamps) and it gathers once someone's back on the bastion; from the third fall the Signal says what keeps
+  catching you; out through the gatehouse's arch is the way out, no fail day; it gathers anyway after 30 s if nobody
+  stands on the bastion; the Span is put back after; `/awaken admin trial bbox` keeps the old B duel as practice. Not
+  built: the Great Bell Third (bells), the Unmade's heart and its boss weapon (arms), climbing it (waits on Euan's OK).
+
+### The Sky Warden (the fourth Proving, §47.8)
+- **Get**: at level 70 with B rank, the Reading Bell's A-rank Reassessment ("The bell has taken you three times now. Go
+  when you're ready."). The bell rings, the screen breaks ("[ERROR] YOU ARE ABOVE THE CLOUDS"), and you wake on a sea of
+  cloud under a cathedral hanging in the night. The font in its floor opens and the light lifts you up into the nave,
+  and the Sky Warden comes down out of the vault in a column of light. Nothing names it, its hall or its gift before you
+  meet it.
+- **For**: A rank (its Great Bell follows the rank), Skyborn (given as the roof lifts, held for good when it falls, with
+  the sky's scene), its trophy for your Hall, essence shards, feathers and sometimes stained glass.
+- **Know**: a duel (§47.3): white-gold blows told 0.6 s, amber and red; its signature, the Stoop, hurls it at you along
+  the floor (dash through it); at two thirds the aisles break away into the cloud (the nave stays, and its Wingbeat
+  throws you toward the edges); at a third the roof lifts away and the sky remembers you: open your wings and fly.
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.SkyWarden` (the lift, its light, the aisles, the roof,
+  the edge, the mending), `hearth.trial.Cathedral` (the cathedral, built by `TrialChunkGenerator` in every hall cell),
+  the Sky Warden's kit `proving_sky_warden` (`mobs`), the sky through `TrialHooks.SKY_WARDEN` (`AscentTrials`).
+- **Links**: the Unmade (the third Proving, B rank) before it; Skyborn and the Sky Leviathan's trial (§17.18, still
+  there for anyone at A without Skyborn); trophies; Great Bells (rank-driven); parties (members within 24 blocks at
+  level 70 come too, +50% of its health each).
+- **Edges**: going 18 blocks under the floor is a fall, never a death: you wake inside the west door and the porch
+  outside it is the way out; anyone still in the shaft after 11 s is brought up; nobody is shut into the font; if it goes
+  over it comes back into the nave; all of a party down and the cathedral is whole again and its light comes down once
+  someone walks up the nave (or after 30 s); from the third fall the Signal says what keeps catching you; out along the
+  porch is the way out, no fail day; a practice run gives no sky; without the Ascent it's won on foot; the cathedral is
+  put back after; `/awaken admin trial abox` keeps the old A Descent as practice. Not built: its boss weapon (weapons).
+
+### The Keeper's Shadow (the fifth Proving, §47.9)
+- **Get**: at level 100 with A rank, the Reading Bell's S-rank Reassessment ("The bell has taken you four times now. It
+  rings lower for this one. Go when you're ready."). The bell rings low, the screen breaks ("[ERROR] THE FLOOR REMEMBERS
+  YOU"), and you wake at the top of a stair over a round court of black stone, eight shut doors round it, each with a
+  coloured light in its keyhole, and a great door banded in gold at its far side. The braziers light themselves; walk in
+  and your shadow pools in front of you, and the Keeper's Shadow stands up out of it. Nothing names it, its hall or what
+  it opens before you meet it.
+- **For**: S rank (its Great Bell follows the rank), the Hollow Court (stratum 9, opened by the rank; the Signal says so
+  as it's given), its trophy for your Hall, essence shards, gold nuggets and sometimes a block of sculk.
+- **Know**: a duel (§47.3): white-gold blows told 0.55 s, amber and red; its signature, Shut the Door, drives the key into
+  the floor and breaks open the line to you (dash aside); it sinks into its shadow and comes up behind you; at three
+  quarters the eight doors sink into the floor, at half the dark comes in through them over the marble and holds your
+  feet (keep to the middle, inside the ring of gold), and from a quarter the Court's door opens a little with each blow
+  and its light burns the dark back; the Eight Doors sends a bolt toward every door (dash through the gap).
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.KeeperWarden` (the braziers, the pool, the doors, the dark,
+  the Court's door, the edge, the lock on the Court), `hearth.trial.Threshold` (the court, built by `TrialChunkGenerator`
+  in every hall cell), the Keeper's kit `proving_keepers_shadow` (`mobs`), the Court through `core.api.Promises` (the
+  `stratum:9` lock the Descent's sealed way down makes).
+- **Links**: the Sky Warden (the fourth Proving, A rank) before it; the Hollow Court and its eight Sovereigns after it
+  (their colours on the doors, the Keeper's crown of eight points); trophies; Great Bells (rank-driven); parties (members
+  within 24 blocks at level 100 come too, +50% of its health each).
+- **Edges**: going 10 blocks under the floor (over the stair's wall) is a fall, never a death, but not down the Court's
+  steps behind its door; you wake at the top of the stair and the arch behind you is the way out; all of a party down and
+  the court is whole again (doors up, dark gone, door shut) and it comes again out of the next shadow (or after 30 s);
+  from the third fall the Signal says what keeps catching you; up the stair is the way out, no fail day; once it's won,
+  down the open door's steps or out the arch takes the win home (every Proving now); a practice run sets no lock; the
+  court is put back after; `/awaken admin trial sbox` keeps the old S echo as practice. Not built: its boss weapon
+  (weapons).
+
+### The Last Loop (the sixth and last Proving, §47.10)
+- **Get**: at level 135 with S rank, the Reading Bell's Sovereign Reassessment at the Monolith or the Spire ("The bell has
+  taken you five times now. This is the last time it will. Go when you're ready."). The screen breaks ("[ERROR] YOU ARE
+  WHERE IT STARTED") and you wake by the arch of a round white hall whose floor is a clock face, a round door of gold
+  rings shut in its far wall. Walk into the gold ring in the middle and the path you walked lights up behind you, and the
+  Last Loop is down on one knee where you stood three seconds before. Nothing names it, its hall or what it opens before
+  you meet it.
+- **For**: Sovereign rank (the bourdon, its Great Bell, follows the rank), the Seed (stratum 10, now opened by Sovereign
+  rank: the Proving is the way in, and the Signal says so as it's given while the Court no longer holds it), its trophy
+  for your Hall, essence shards, quartz and sometimes amethyst shards.
+- **Know**: a duel (§47.3): white-gold blows told 0.5 s, amber and red; its signature, the Line, cuts a line of light
+  along the floor to you (dash aside); the Rush hurls it at you (dash through); at three quarters night sweeps round the
+  clock, and from then on every so often your own path of the last four seconds glows and a run of light goes along it
+  (step off your trail: no parry stops it); it turns into its light and comes up behind you; at half the outer ring
+  falls into the dark a mark at a time (keep inside the seam, or on the causeway to the arch); from a quarter the
+  Seed's door turns and opens a ring at a time with each blow; the Ring sends bolts of light out on every side (dash
+  through the gap).
+- **Source**: `hearth.trial.Provings` (the run), `hearth.trial.LoopWarden` (the paths, its coming, night, the replays,
+  the ring, the door, the edge, the lock on the Seed), `hearth.trial.Antechamber` (the hall, built by `TrialChunkGenerator`
+  in every hall cell), the Last Loop's kit `proving_last_loop` (`mobs`), the Seed through `core.api.Promises` (the
+  `stratum:10` lock the Descent's sealed way down makes) and `descent.Strata` (the Seed opens at Sovereign).
+- **Links**: the Keeper's Shadow (the fifth Proving, S rank) before it; the Seed after it (still sealed by the Court
+  until all eight Sovereigns fall, `StoryHooks.seedSealed`), and the ending there; trophies; Great Bells (rank-driven);
+  parties (members within 24 blocks at level 135 come too, +50% of its health each).
+- **Edges**: going 10 blocks under the floor (where the ring fell) is a fall, never a death; you wake on the causeway by
+  the arch, which never falls, and the arch is the way out; if it goes over it comes back up inside the seam; all of a
+  party down and the hall is whole again (day, ring, door shut) and it comes again out of the next path (or after 30 s);
+  from the third fall the Signal says what keeps catching you; out the arch is the way out, no fail day; once it's won,
+  through the open door or out the arch takes the win home; a practice run sets no lock; the hall is put back after;
+  the Monolith no longer sends you to the Seed for this Reassessment. Not built: its boss weapon (weapons).
 
 ### Raids (the first Big Day)
 - **Get**: per home, once its owner holds D rank (the first Great Bell's stand-in until the Ringer gives the Tenor):
@@ -941,16 +1093,63 @@ happens).
 
 ### War Anvil
 - **Get**: crafted from three stone, a copper ingot and a log (granted at level 3 with the Fitting Stand).
-- **For**: weapons forged in a scene of your own: heat in the Forge, draw out on the beat, quench, hilt, the draw from
-  the stone. A well-forged weapon leaves with Temper, up to your Forge's limit, and its story ("Masterwork. Forged by
-  Euan."). Stage 1 forges the Beastbound Longsword; every weapon comes in stage 2.
-- **Know**: the level road's level 3 step names it and its recipe; the recipe book; use it and its window says what the
-  weapon takes and what's missing (rank D, a Forge within 6 blocks, the parts).
-- **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself), `arms.anvil.WarAnvil`,
-  `WarAnvilBlockEntity` (schema 1).
-- **Links**: the Hearth's Forge (heat, the temper limit); Oren's Mark (`awaken:temper_start`); the Beastbound Blade
-  (or its own recipe in its place); the Fitting Stand's smithy (one Forge serves both).
-- **Edges**: below D-rank, or with no Forge near, the window says so and nothing starts; someone else's work is theirs
-  (a line says who); walking 12 blocks off, logging out or Esc holds the work and coming back counts the stage in again;
-  breaking it mid-work drops what was taken in and what stands in the slot; a full pack at the draw puts what was in
-  the hand at your feet; a weapon left in the slot waits for anyone to sneak-use and draw it.
+- **For**: every weapon and Hunter blade is forged on it (stage 2, SPEC §46.7): by hand at E (knap the edge, bind the
+  grip; no Forge), from D in a scene of your own (heat in the Forge, draw out on each style's own rhythm, quench, hilt,
+  the draw from the stone). It leaves Plain to Flawless with Temper up to your Forge's limit and its story
+  ("Masterwork, twin-struck. Forged by Euan."); Masterwork or better goes into your memory (one strike, always Fine); a
+  friend's off-beats make it twin-struck; set in an Armoury room it makes weapons last a quarter longer. It is the
+  Hearth's anvil too (`#minecraft:anvil`). Held to it, one of Arms' weapons is worked again (stage 3, SPEC §46.8):
+  tempered (one heat, as far as your pack and your Forge's limit reach), attuned (a catalyst in the off hand, the stone
+  set in the guard) or reforged a tier up (keeps its Marks, name, Force and Temper; a Lord-forged one its own form, plus
+  a point of damage). The Forge no longer tempers or attunes weapons, and the Armoury no longer offers Raise. From C
+  each rank adds its act to a forging (stage 4, SPEC §46.9), a tenth of the quality each: C grinds the edge at a
+  grindstone, B balances it on the horn with a Deepglass weight, A twists the bar before it's drawn out, S quenches it
+  in a column of starlight instead of water; a well-twisted blade keeps the twist's ripples in its steel and a
+  starlit one its runes woken. It is rebuilt as you climb (SPEC §46.6), each rebuild the gate for its
+  rank: Ironbound for C (4 iron blocks, 2 diamonds; and a grindstone within six blocks), a Deepglass horn for B (4
+  Deepglass shards, 4 amethyst shards), a Lord's anvil for A and S (a Lord's Heart, 2 netherite ingots), its runes
+  and Heart lit in the colour of the last Gate Lord you killed (gold if none). From the Deepglass horn a rack behind it
+  shows copies of the last three weapons forged on it. With the Forge at Tier II, an Emberkit living by the Forge works
+  its bellows: the heat climbs evenly and the gold lasts 10 ticks longer.
+- **Know**: the level road's level 3 step names it and its recipe; the recipe book; the Weapons tab ("Set up a War
+  Anvil", "Forge your first weapon" with the styles you know as choices, "Make your C-rank weapon"); the Now line ("You
+  can forge Beastbound Daggers at your War Anvil"); use it and the Armoury opens at its door with what each weapon takes,
+  Forge it, From memory, Forge the blade, and one plain line for what stands in the way; JEI's War Anvil page. With a
+  weapon in hand its own window: Temper, Reforge and Attune rows with what each costs and what's in the way; the
+  Weapons tab's optional "Temper your ..." and "Reforge your ..."; a plain or sneak use of the Forge with a weapon says
+  the War Anvil does it now. Each act's header and hint say what to do ("Grind the edge": hold to turn the wheel, keep
+  the edge on the gold line). When a rank needs a rebuild, the door's "Forge it" becomes "Rebuild it", the line says
+  what it takes ("C-rank weapons are forged on an Ironbound anvil. Rebuild this one Ironbound, with 4 iron blocks and 2
+  diamonds."), and the Weapons tab adds "Rebuild your War Anvil Ironbound" (and the Deepglass horn, the Lord's Heart)
+  with its parts; a missing grindstone has its own line and need. Each build looks its part on the block and in hand.
+- **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself at its build, `copy_state` on
+  `build`), `arms.anvil.WarAnvil`,
+  `WarAnvilBlockEntity` (schema 2), `AnvilWork` (schema 5), `SmithMemory` (schema 3), `WeaponForged` (schema 4),
+  `arms.anvil.AnvilHeld`; tests `arms_anvil_temper`, `arms_anvil_attune`, `arms_anvil_reforge`, `arms_anvil_verbs`, `arms_anvil_rebuild`, `arms_anvil_bellows`; the rebuilds' parts are vanilla or
+  already sourced (`awaken:deepglass_shard`, `awaken:lord_heart`).
+- **Links**: the Hearth's Forge (heat from D, the temper limit); Oren's Mark (`awaken:temper_start`); the tier's Hunter
+  blade (carried, it stands in for its parts; else they're added); Blueprints (used, they teach the pattern the anvil
+  asks for); the Fitting Stand's smithy (one Forge serves both); the Hearth's Armoury room; ForgeHooks (enchanting).
+- **Edges**: an unknown pattern, a tier above your level or no Forge near from D: the line says so and nothing starts;
+  someone else's work is theirs (a line says who, and using it then is a helper's strike); walking 12 blocks off,
+  logging out or Esc holds the work and coming back counts the stage in again; breaking it mid-work drops what was
+  taken in and what stands in the slot; a full pack at the draw puts what was in the hand at your feet; a weapon left in
+  the slot waits for anyone to sneak-use and draw it. A weapon being worked again is in the work, not your hand:
+  breaking the anvil drops it with its price; crafted (vanilla) gear is never tempered here; at its Forge's limit, at
+  Temper VI, already of that Force or at S the row says so and its button stays dim. A rank's act left alone settles
+  itself (the balance and the starlight, poorly); letting go of the twist early keeps what was turned. A rebuild keeps
+  the work in progress and what stands in the slot; it goes one build at a time, greyed until you carry the parts
+  (none taken in creative); broken and placed again, the anvil keeps its build and a Lord's anvil its colour; from memory or a Hunter blade alone,
+  no grindstone is needed; reforging into a rank checks the same rebuild.
+
+### Forged weapons and Hunter blades (the 96 weapons, the six blades)
+- **Get**: forged at a War Anvil from `data/awaken/arms/anvil_costs.json` (each its old grid recipe minus the
+  Blueprint); never on the crafting grid. Hale's issue gives the first; Lords and Marked finds drop their own kinds.
+- **For**: the fighting styles at each tier; a blade is the part every forged weapon of its tier starts from.
+- **Know**: the Armoury at the anvil, the Weapons tab, the Now line, JEI; the tooltip tells its story.
+- **Source**: `Sources.declare` in `AnvilModule` (every key of the cost table); `arms_anvil_costs` proves each has its
+  cost and no crafting recipe.
+- **Links**: Blueprints (the pattern), beast cores, the tier's metal from D or binding at E, the Forge, Temper,
+  attunement and reforging at the War Anvil.
+- **Edges**: a weapon made before the War Anvil keeps working and gains a Plain story when first held; a found one never
+  does; old Blueprints held were learned by the backfill; recipe-book entries for the old grid recipes are gone.

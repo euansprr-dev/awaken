@@ -1,0 +1,303 @@
+# Weapon audit, batch 1 (SPEC §25 "Weapons", proportions per style; weapon-designs session, 2 Nov 2026): every
+# Greatblade, Twinblades and Precursor Arm (and the Sky Leviathan's Fins, Unit Zero's Countdown) held at rest in
+# first person and mid-blow, then from the front in third person, then on stands beside the tier's Longsword and Maul.
+world armsdesigns creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 8
+wait 40
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-10 ~ ~-10 ~10 ~10 ~12 minecraft:air
+cmd fill ~-10 ~ ~9 ~10 ~8 ~9 minecraft:deepslate_tiles
+cmd fill ~-10 ~ ~-6 ~10 ~8 ~-6 minecraft:deepslate_tiles
+cmd kill @e[type=minecraft:item]
+wait 30
+look 0 8
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_greatblade
+wait 32
+shot ab1_fp_wildhide_greatblade
+arms pose strike_1 0.37
+shot ab1_fp_wildhide_greatblade_strike_1
+arms pose heavy 0.1
+shot ab1_fp_wildhide_greatblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_greatblade
+wait 32
+shot ab1_fp_beastbound_greatblade
+arms pose strike_1 0.37
+shot ab1_fp_beastbound_greatblade_strike_1
+arms pose heavy 0.1
+shot ab1_fp_beastbound_greatblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 32
+shot ab1_fp_gatewrought_greatblade
+arms pose strike_1 0.37
+shot ab1_fp_gatewrought_greatblade_strike_1
+arms pose heavy 0.1
+shot ab1_fp_gatewrought_greatblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_greatblade
+wait 32
+shot ab1_fp_veilwoven_greatblade
+arms pose strike_1 0.37
+shot ab1_fp_veilwoven_greatblade_strike_1
+arms pose heavy 0.1
+shot ab1_fp_veilwoven_greatblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_greatblade
+wait 32
+shot ab1_fp_lordscale_greatblade
+arms pose strike_1 0.37
+shot ab1_fp_lordscale_greatblade_strike_1
+arms pose heavy 0.1
+shot ab1_fp_lordscale_greatblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_greatblade
+wait 32
+shot ab1_fp_sovereign_greatblade
+arms pose strike_1 0.37
+shot ab1_fp_sovereign_greatblade_strike_1
+arms pose heavy 0.1
+shot ab1_fp_sovereign_greatblade_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_twinblades
+wait 32
+shot ab1_fp_wildhide_twinblades
+arms pose strike_1 0.43
+shot ab1_fp_wildhide_twinblades_strike_1
+arms pose heavy 0.12
+shot ab1_fp_wildhide_twinblades_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_twinblades
+wait 32
+shot ab1_fp_beastbound_twinblades
+arms pose strike_1 0.43
+shot ab1_fp_beastbound_twinblades_strike_1
+arms pose heavy 0.12
+shot ab1_fp_beastbound_twinblades_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_twinblades
+wait 32
+shot ab1_fp_gatewrought_twinblades
+arms pose strike_1 0.43
+shot ab1_fp_gatewrought_twinblades_strike_1
+arms pose heavy 0.12
+shot ab1_fp_gatewrought_twinblades_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_twinblades
+wait 32
+shot ab1_fp_veilwoven_twinblades
+arms pose strike_1 0.43
+shot ab1_fp_veilwoven_twinblades_strike_1
+arms pose heavy 0.12
+shot ab1_fp_veilwoven_twinblades_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_twinblades
+wait 32
+shot ab1_fp_lordscale_twinblades
+arms pose strike_1 0.43
+shot ab1_fp_lordscale_twinblades_strike_1
+arms pose heavy 0.12
+shot ab1_fp_lordscale_twinblades_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_twinblades
+wait 32
+shot ab1_fp_sovereign_twinblades
+arms pose strike_1 0.43
+shot ab1_fp_sovereign_twinblades_strike_1
+arms pose heavy 0.12
+shot ab1_fp_sovereign_twinblades_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_precursor
+wait 32
+shot ab1_fp_wildhide_precursor
+arms pose strike_1 0.3
+shot ab1_fp_wildhide_precursor_strike_1
+arms pose heavy 0.12
+shot ab1_fp_wildhide_precursor_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_precursor
+wait 32
+shot ab1_fp_beastbound_precursor
+arms pose strike_1 0.3
+shot ab1_fp_beastbound_precursor_strike_1
+arms pose heavy 0.12
+shot ab1_fp_beastbound_precursor_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_precursor
+wait 32
+shot ab1_fp_gatewrought_precursor
+arms pose strike_1 0.3
+shot ab1_fp_gatewrought_precursor_strike_1
+arms pose heavy 0.12
+shot ab1_fp_gatewrought_precursor_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_precursor
+wait 32
+shot ab1_fp_veilwoven_precursor
+arms pose strike_1 0.3
+shot ab1_fp_veilwoven_precursor_strike_1
+arms pose heavy 0.12
+shot ab1_fp_veilwoven_precursor_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_precursor
+wait 32
+shot ab1_fp_lordscale_precursor
+arms pose strike_1 0.3
+shot ab1_fp_lordscale_precursor_strike_1
+arms pose heavy 0.12
+shot ab1_fp_lordscale_precursor_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_precursor
+wait 32
+shot ab1_fp_sovereign_precursor
+arms pose strike_1 0.3
+shot ab1_fp_sovereign_precursor_strike_1
+arms pose heavy 0.12
+shot ab1_fp_sovereign_precursor_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:unit_zero_precursor
+wait 32
+shot ab1_fp_unit_zero_precursor
+arms pose strike_1 0.3
+shot ab1_fp_unit_zero_precursor_strike_1
+arms pose heavy 0.12
+shot ab1_fp_unit_zero_precursor_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sky_leviathan_twinblades
+wait 32
+shot ab1_fp_sky_leviathan_twinblades
+arms pose strike_1 0.43
+shot ab1_fp_sky_leviathan_twinblades_strike_1
+arms pose heavy 0.12
+shot ab1_fp_sky_leviathan_twinblades_heavy
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 32
+camera front
+look 20 4
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_greatblade
+wait 32
+shot ab1_tp_wildhide_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_greatblade
+wait 32
+shot ab1_tp_beastbound_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 32
+shot ab1_tp_gatewrought_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_greatblade
+wait 32
+shot ab1_tp_veilwoven_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_greatblade
+wait 32
+shot ab1_tp_lordscale_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_greatblade
+wait 32
+shot ab1_tp_sovereign_greatblade
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_twinblades
+wait 32
+shot ab1_tp_wildhide_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_twinblades
+wait 32
+shot ab1_tp_beastbound_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_twinblades
+wait 32
+shot ab1_tp_gatewrought_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_twinblades
+wait 32
+shot ab1_tp_veilwoven_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_twinblades
+wait 32
+shot ab1_tp_lordscale_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_twinblades
+wait 32
+shot ab1_tp_sovereign_twinblades
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_precursor
+wait 32
+shot ab1_tp_wildhide_precursor
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_precursor
+wait 32
+shot ab1_tp_beastbound_precursor
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_precursor
+wait 32
+shot ab1_tp_gatewrought_precursor
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_precursor
+wait 32
+shot ab1_tp_veilwoven_precursor
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_precursor
+wait 32
+shot ab1_tp_lordscale_precursor
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_precursor
+wait 32
+shot ab1_tp_sovereign_precursor
+cmd item replace entity @s weapon.mainhand with awaken:unit_zero_precursor
+wait 32
+shot ab1_tp_unit_zero_precursor
+cmd item replace entity @s weapon.mainhand with awaken:sky_leviathan_twinblades
+wait 32
+shot ab1_tp_sky_leviathan_twinblades
+camera first
+look 0 8
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:wildhide_greatblade",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:beastbound_greatblade",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_greatblade",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:veilwoven_greatblade",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:lordscale_greatblade",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:sovereign_greatblade",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab1_stands_greatblade
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab1]
+wait 5
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:wildhide_twinblades",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:beastbound_twinblades",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_twinblades",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:veilwoven_twinblades",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:lordscale_twinblades",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:sovereign_twinblades",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab1_stands_twinblades
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab1]
+wait 5
+cmd summon minecraft:armor_stand ~-4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:wildhide_precursor",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:beastbound_precursor",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_precursor",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:veilwoven_precursor",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:lordscale_precursor",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:sovereign_precursor",count:1}}}
+cmd summon minecraft:armor_stand ~4.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],Tags:["ab1"],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot ab1_stands_precursor
+cmd tp @s ~-0.6 ~ ~1.5 0 8
+cmd kill @e[tag=ab1]
+wait 5
+quit

@@ -95,7 +95,7 @@ final class TaskHud {
     static void tick() {
         ticks++;
         topO = top;
-        float want = SignalLayout.MARGIN + SystemHud.liveToasts() * SignalLayout.TOAST_H;
+        float want = SignalLayout.MARGIN + SystemHud.liveToastSlots() * SignalLayout.TOAST_H;
         top += (want - top) * 0.25F;
         Minecraft mc = Minecraft.getInstance();
         if (!task.title().isEmpty() && mc.player != null) layout = measure(task, mc.font, mc, layout);

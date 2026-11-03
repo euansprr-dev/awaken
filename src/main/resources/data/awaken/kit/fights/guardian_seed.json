@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "guardian_seed",
  "moves": "guardian_seed",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -25,7 +27,12 @@
     },
     {
      "move": "lance",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "clasp"
+      ]
+     ]
     },
     {
      "move": "marks",
@@ -44,7 +51,15 @@
     {
      "move": "whip",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swipe"
+      ],
+      [
+       "swipe_b"
+      ]
+     ]
     }
    ]
   },
@@ -81,7 +96,12 @@
     {
      "move": "lance",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "clasp"
+      ]
+     ]
     },
     {
      "move": "marks",
@@ -100,7 +120,15 @@
     {
      "move": "whip",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swipe"
+      ],
+      [
+       "swipe_b"
+      ]
+     ]
     }
    ]
   }

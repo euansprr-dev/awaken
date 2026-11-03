@@ -45,6 +45,8 @@ public final class Discovery {
         Bells.Bell lastBell;
         /** What the client last heard of this player's Hearths (a hash of the list; see {@link Homes}). */
         int homes;
+        /** What the client last heard of the waypoints it sees (a hash of the list; see {@link Waypoints}). */
+        int waypoints;
         /** Each explored cell's zone (its region, 1-based), per tile of this dimension, worked out once per cell. */
         final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<byte[]> zones = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
         /** Each explored cell's land level (0 = not worked out yet), likewise. */
@@ -93,10 +95,11 @@ public final class Discovery {
             l.levels.clear();
             sendCity(p);
             sendAll(p);
-            sendPins(p);
+            Waypoints.send(p, l, true);
             Homes.send(p, l, true);
         }
         trail(p, l, phase);
+        Waypoints.tick(p, l, phase);
         if (phase % Homes.PERIOD == 0) Homes.send(p, l, false);
         if (!mapped(dim)) return;
         int bx = p.getBlockX(), bz = p.getBlockZ();
@@ -196,7 +199,7 @@ public final class Discovery {
         return n;
     }
 
-    // ---- regions and pins ---------------------------------------------------------------------------------------------
+    // ---- regions and the party -------------------------------------------------------------------------------------
 
     /** The Living Wilds region you stand in joins your Atlas's lettering the first time you're in it. */
     static void region(ServerPlayer p) {
@@ -205,31 +208,6 @@ public final class Discovery {
         int before = d.regions.size();
         regionIndex(p, p.getBlockX(), p.getBlockZ());
         if (d.regions.size() != before) AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(d.regions)));
-    }
-
-    /** Drops a pin (on ground you know), or takes back your own pin nearest the spot; your party sees the change. */
-    public static boolean pin(ServerPlayer p, int x, int y, int z, boolean remove) {
-        String dim = dim(p.level());
-        AtlasData d = data(p);
-        boolean changed = false;
-        if (remove) {
-            AtlasData.Pin best = null;
-            long bestD = 24L * 24;
-            for (AtlasData.Pin pin : d.pins) {
-                long dx = pin.x() - x, dz = pin.z() - z;
-                if (pin.dim().equals(dim) && dx * dx + dz * dz <= bestD) {
-                    bestD = dx * dx + dz * dz;
-                    best = pin;
-                }
-            }
-            changed = best != null && d.pins.remove(best);
-        } else if (mapped(dim) && explored(p, new BlockPos(x, y, z))) {
-            if (d.pins.size() >= AtlasData.PINS_MAX) d.pins.removeFirst(); // the oldest goes
-            d.pins.add(new AtlasData.Pin(dim, x, y, z));
-            changed = true;
-        }
-        if (changed) for (ServerPlayer m : party(p)) sendPins(m);
-        return changed;
     }
 
     /** The party members online, this player first. */
@@ -256,17 +234,6 @@ public final class Discovery {
             default -> new float[]{1f, lo, dn};
         };
         return 0xFF000000 | ((int) (rgb[0] * 255) << 16) | ((int) (rgb[1] * 255) << 8) | (int) (rgb[2] * 255);
-    }
-
-    /** Every pin of this player's party in their dimension. */
-    static void sendPins(ServerPlayer viewer) {
-        String dim = dim(viewer.level());
-        List<AtlasNet.PinView> out = new ArrayList<>();
-        for (ServerPlayer m : party(viewer))
-            for (AtlasData.Pin pin : data(m).pins)
-                if (pin.dim().equals(dim))
-                    out.add(new AtlasNet.PinView(m.getName().getString(), colour(m.getUUID()), pin.x(), pin.y(), pin.z(), m == viewer));
-        AwakenNet.send(viewer, new AtlasNet.Pins(out));
     }
 
     // ---- the opening run ----------------------------------------------------------------------------------------------
@@ -381,7 +348,7 @@ public final class Discovery {
         AtlasData d = data(p);
         if (!d.trail.isEmpty()) AwakenNet.send(p, new AtlasNet.Trail(List.copyOf(d.trail), false));
         if (!d.regions.isEmpty()) AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(d.regions)));
-        for (ServerPlayer m : party(p)) sendPins(m);
+        for (ServerPlayer m : party(p)) Waypoints.send(m);
         Homes.send(p, l, true);
     }
 

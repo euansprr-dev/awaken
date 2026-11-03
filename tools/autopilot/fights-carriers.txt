@@ -1,0 +1,126 @@
+# Fights stage 1, see it coming (SPEC §47.2): each carrier mid-flight, on a sky stage, seen from the side of its lane.
+# /awaken bosses carriers stage builds a floor where you stand with a still toll ghoul 9 blocks north and puts the
+# camera west of the lane looking east; each kind then sends one carrier south across the view, and a frozen tick
+# holds it for the shot. By day (how it reads on stone in light), then the shots and the volley again at night (glow).
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-carriers.txt
+world autopilot_fights_carriers creative 20261102
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+cmd awaken bosses carriers stage
+hud off
+wait 60
+
+# --- shots: the three classes fired together (white-gold fastest, red slowest), then each alone ---
+cmd awaken bosses carriers fan
+wait 7
+cmd tick freeze
+shot carriers_01_shots_fan
+cmd tick unfreeze
+wait 40
+cmd awaken bosses carriers shot_red
+wait 9
+cmd tick freeze
+shot carriers_02_shot_red
+cmd tick unfreeze
+wait 40
+
+# --- a wave rolling out (jump it or dash through) ---
+cmd awaken bosses carriers wave
+wait 7
+cmd tick freeze
+shot carriers_03_wave
+cmd tick unfreeze
+wait 30
+
+# --- a volley: pods in the air over the rings they will fall on ---
+cmd awaken bosses carriers volley
+wait 8
+cmd tick freeze
+shot carriers_04_volley
+cmd tick unfreeze
+wait 30
+
+# --- a lobbed cloud, and the field it leaves (dashed edge while safe) ---
+cmd awaken bosses carriers lob
+wait 8
+cmd tick freeze
+shot carriers_05_lob
+cmd tick unfreeze
+wait 14
+cmd tick freeze
+shot carriers_06_field
+cmd tick unfreeze
+wait 30
+
+# --- a ground line racing out ---
+cmd awaken bosses carriers ground
+wait 9
+cmd tick freeze
+shot carriers_07_ground
+cmd tick unfreeze
+wait 30
+
+# --- shown locks: a beam's line, a cone's wedge, a leap's ring ---
+cmd awaken bosses carriers line
+wait 30
+cmd tick freeze
+shot carriers_08_line
+cmd tick unfreeze
+wait 60
+cmd awaken bosses carriers wedge
+wait 30
+cmd tick freeze
+shot carriers_09_wedge
+cmd tick unfreeze
+wait 60
+cmd awaken bosses carriers ring
+wait 20
+cmd tick freeze
+shot carriers_10_ring
+cmd tick unfreeze
+wait 80
+
+# --- a pull drawing in, then its wave ---
+cmd awaken bosses carriers pull
+wait 12
+cmd tick freeze
+shot carriers_11_pull
+cmd tick unfreeze
+wait 60
+
+# --- at night: the glow ---
+cmd time set 18000
+wait 20
+cmd awaken bosses carriers fan
+wait 7
+cmd tick freeze
+shot carriers_12_shots_night
+cmd tick unfreeze
+wait 40
+cmd awaken bosses carriers volley
+wait 8
+cmd tick freeze
+shot carriers_13_volley_night
+cmd tick unfreeze
+wait 30
+cmd awaken bosses carriers wave
+wait 7
+cmd tick freeze
+shot carriers_14_wave_night
+cmd tick unfreeze
+hud on
+quit
