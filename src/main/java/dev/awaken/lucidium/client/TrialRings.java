@@ -57,11 +57,6 @@ final class TrialRings {
                 if (g != null) {
                     float t = (mc.level.getGameTime() - ClientTrial.ghostStart + state.worldPartialTicks) / DreamLedger.GHOST_EVERY;
                     for (LucidiumNet.Ghost ghost : g.ghosts()) ghost(vc, g.origin(), ghost, t, time);
-                    if (mc.level.getGameTime() % 10 == 0 && !g.ghosts().isEmpty()) { // TEMP: why no ghost on the tour
-                        LucidiumNet.Ghost g0 = g.ghosts().getFirst();
-                        Awaken.LOG.debug("[lucidium] ghost draw t={} n={} at {},{},{} cam {},{},{}", t, g0.samples().size(),
-                                at(g0, t, 0) + g.origin().x, at(g0, t, 1) + g.origin().y, at(g0, t, 2) + g.origin().z, cx, cy, cz);
-                    }
                 }
             } catch (RuntimeException ex) {
                 Awaken.LOG.error("[lucidium] trial rings failed", ex);
@@ -131,9 +126,10 @@ final class TrialRings {
         for (int i = 0; i < 16; i++) {
             float a0 = i * Mth.TWO_PI / 16, a1 = (i + 1) * Mth.TWO_PI / 16;
             float c0 = Mth.cos(a0) * r, s0 = Mth.sin(a0) * r, c1 = Mth.cos(a1) * r, s1 = Mth.sin(a1) * r;
+            // counter-clockwise as the camera sees it: the lightning pipeline culls back faces
             quad(vc, p.x, p.y, p.z, p.x, p.y, p.z,
-                    p.x + RIGHT.x * c1 + UP.x * s1, p.y + RIGHT.y * c1 + UP.y * s1, p.z + RIGHT.z * c1 + UP.z * s1,
-                    p.x + RIGHT.x * c0 + UP.x * s0, p.y + RIGHT.y * c0 + UP.y * s0, p.z + RIGHT.z * c0 + UP.z * s0, argb, rim);
+                    p.x + RIGHT.x * c0 + UP.x * s0, p.y + RIGHT.y * c0 + UP.y * s0, p.z + RIGHT.z * c0 + UP.z * s0,
+                    p.x + RIGHT.x * c1 + UP.x * s1, p.y + RIGHT.y * c1 + UP.y * s1, p.z + RIGHT.z * c1 + UP.z * s1, argb, rim);
         }
     }
 
