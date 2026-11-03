@@ -635,7 +635,7 @@ public final class Autopilot {
                 dev.awaken.compat.client.CompatClient.shareFarDepthEverywhere("share".equals(arg.trim()));
                 waitTicks = 10;
             }
-            case "opt" -> { // opt renderDistance|simulationDistance|guiScale|gamma|volume <n> (guiScale 0: auto; gamma in %, 100:
+            case "opt" -> { // opt renderDistance|simulationDistance|guiScale|gamma|volume|fov <n> (guiScale 0: auto; gamma in %, 100:
                 // Bright; volume: master in %, so sounds play (and sound mods do their work) where 0 skips them)
                 String[] o = arg.trim().split("\\s+");
                 int v = Integer.parseInt(o[1]);
@@ -647,6 +647,8 @@ public final class Autopilot {
                         mc.resizeGui();
                     }
                     case "gamma" -> mc.options.gamma().set(v / 100.0);
+                    case "fov" -> mc.options.fov().set(v); // 30 to 110: a narrow one films something far off at its real distance
+
                     case "volume" -> mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(v / 100.0);
                     default -> Awaken.LOG.warn("[autopilot] unknown option {}", o[0]);
                 }
