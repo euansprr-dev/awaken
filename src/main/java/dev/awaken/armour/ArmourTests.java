@@ -295,6 +295,11 @@ final class ArmourTests {
                 "E offers the four E sets' pieces, got " + offers.offers().size());
         h.assertTrue(offers.offers().stream().noneMatch(o -> (o.flags() & ArmourPayloads.CAN) != 0) && !offers.hand().isEmpty(),
                 "nothing to make yet, and it says a works table is wanted");
+        int bootsAt = ArmourSet.WILDHIDE.ordinal() * 4 + ForgeSong.slot(ArmorType.BOOTS);
+        p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, ArmourForge.make(ArmourSet.WILDHIDE, ArmorType.BOOTS));
+        h.assertTrue(ArmourForge.offers(p, be).offers().stream().allMatch(o -> ((o.flags() & ArmourPayloads.OWNED) != 0) == (o.piece() == bootsAt)),
+                "boots you wear are yours on the stand, and nothing else is");
+        p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, ItemStack.EMPTY);
         h.setBlock(new BlockPos(3, 1, 1), Blocks.CRAFTING_TABLE.defaultBlockState());
         p.getInventory().add(new ItemStack(Items.LEATHER, 5));
         p.getInventory().add(new ItemStack(Items.STRING, 2));

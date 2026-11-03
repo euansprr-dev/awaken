@@ -81,8 +81,10 @@ public final class ArmourForge {
                     needs.add(new ArmourPayloads.Need(label(n, set), icon(n), have, n.count()));
                 }
                 boolean placed = ForgeSong.byHand(set) ? hand : metal;
+                ItemStack made = make(set, piece); // worn or carried: the row says so, not "Needs more" (Euan 2026-11-03)
                 int flags = (afford && placed && known ? ArmourPayloads.CAN : 0) | (mem.fromMemory(set, piece) ? ArmourPayloads.FROM_MEMORY : 0)
-                        | (mem.forgedWhole(set) ? ArmourPayloads.KNOWN_WHOLE : 0) | (known ? 0 : ArmourPayloads.NO_PATTERN);
+                        | (mem.forgedWhole(set) ? ArmourPayloads.KNOWN_WHOLE : 0) | (known ? 0 : ArmourPayloads.NO_PATTERN)
+                        | (!made.isEmpty() && ArmourGoals.owns(p, made.getItem()) ? ArmourPayloads.OWNED : 0);
                 out.add(new ArmourPayloads.Offer(set.ordinal() * 4 + ForgeSong.slot(piece), needs, flags));
             }
         }
