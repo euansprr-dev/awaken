@@ -19400,13 +19400,16 @@ the blow's class, poison and burn left behind counted in full (poison stops at h
   (`FairGuard.arrive`, from `AwakenBoss.moment`). One moment at a time; not for a rank gap.
 - **What the audit changed** (first measured 4 Nov: 69 creature blows and 428 Lord blows over at every rank, 20 and
   294 once each was measured only where it's met). Ability power, a creature's melee or a kit move's damage scaled to
-  fit with 5% to spare (bestiary and `kit/moves`): the Hollow Herald's Collapse 2.2 to 0.74 (141% of the A reference
-  player), the Signal's Shadow's Seed Collapse 2.6 to 0.96 (128% at S), the Seed Warden's Door Light 2.2 to 1.23, the
-  three Sovereign bursts (Shutdown, Deafening Silence, Never Wake) 2.2 to 1.31, the Abbot of Frost's Glacial Vow 2.2 to
-  1.41, Moonbeam, Instruction, Inverted Scream, the Curator's Silence in the Stacks, and the E and D wardens' charges and
-  slams (the Rot, the Overgrowth, the Overseer, the Sexton), 41 blows in all; the Rot's Choking Field and the Mother of
-  Spores' Bloom keep their power but poison I, not II (poison II took 42% of the E player alone). Strings are left to
-  the guard: 131 of them would take more than half (the Hollow Herald's stride, swipe, swipe 124% at A), and land 50%.
+  fit (bestiary and `kit/moves`), then raised again from the two measured points to land 90% of the budget at the
+  worst rank, never above where they were (armour takes a bigger share of a small blow, so the first cut overshot: the
+  Herald's Collapse fell to 19%): the Hollow Herald's Collapse 2.2 to 1.18 (141% of the A reference player to 42%), the
+  Signal's Shadow's Seed Collapse 2.6 to 1.51 (128% at S to 46%), the Seed Warden's Door Light 2.2 to 1.61, the three
+  Sovereign bursts (Shutdown, Deafening Silence, Never Wake) 2.2 to 1.62 (80% to 44%), the Abbot of Frost's Glacial Vow
+  2.2 to 1.67, Moonbeam, Instruction, Inverted Scream, the Curator's Silence in the Stacks, and the E and D wardens'
+  charges and slams (the Rot's Rot Charge 60% at E to 43%, the Overgrowth, the Overseer, the Sexton), 41 blows in all;
+  the Rot's Choking Field and the Mother of Spores' Bloom keep their power but poison I, not II (poison II took 42% of
+  the E player alone). Strings are left to the guard: 131 of them would take more than half (the Hollow Herald's
+  stride, swipe, swipe 98% at A), and land 50%.
 - **Volatile bursts once.** A Volatile body (the modifier's tag, a dream room's, or a FUSE creature) bursts once, and
   the creature owns it (`AwakenMob.burst`): its reach (blast power x 2; an elite's x 1.3 wider) is drawn on the ground in
   the dodge colour the moment it falls, its floor filling to the edge over 1.25 s (`FairShare.BURST_FUSE`), with one

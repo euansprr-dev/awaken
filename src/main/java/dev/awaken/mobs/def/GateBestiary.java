@@ -114,7 +114,7 @@ final class GateBestiary {
         out.add(m("drowned_scribe", "Drowned Scribe", Theme.DROWNED, Tier.ELITE, Model.EVOKER, "Writes wraiths from torn pages; ink fangs rise along the floor").hp(27.6).dmg(4).spd(0.25).traits(RANGED)
                 .ab(a(SUMMON, "Torn Pages").summon("page_wraith").n(2), a(FANGS, "Ink Fangs"), a(BOLT, "Ink Spit").bolt(BoltKind.WATER)).build());
         out.add(m("the_curator", "The Curator", Theme.DROWNED, Tier.WARDEN, Model.ELDER_GUARDIAN, "Shushes you with Mining Fatigue, then its beam reads you to death").hp(39.1).dmg(6).spd(0.22).scale(0.8F).traits(HUNTER, RANGED)
-                .ab(a(BEAM, "Silence in the Stacks").bolt(BoltKind.WATER).power(1.58F).heavy(), a(DARKNESS, "Shush").fx(MobEffects.MINING_FATIGUE, 200, 2), a(NOVA, "Ink Tide").n(10).bolt(BoltKind.WATER)).build());
+                .ab(a(BEAM, "Silence in the Stacks").bolt(BoltKind.WATER).power(1.65F).heavy(), a(DARKNESS, "Shush").fx(MobEffects.MINING_FATIGUE, 200, 2), a(NOVA, "Ink Tide").n(10).bolt(BoltKind.WATER)).build());
         out.add(m("drowned_archivist", "The Drowned Archivist", Theme.DROWNED, Tier.LORD, Model.DROWNED, "Tidal Page washes you back; the shelves empty; then the Flood").hp(125.3).dmg(2.02).spd(0.24).scale(1.9F).size(0.9F, 2.4F).hold(Items.TRIDENT).offhand(Items.BOOK).bar(BossBarColor.BLUE).arena(22)
                 .intro("Every book here was written by someone who drowned.")
                 .phase(1.0F, "The Archivist opens a book.", a(CONE, "Tidal Page").radius(7).power(1.4F).bolt(BoltKind.WATER).heavy(), a(BOLT, "Ink Volley").n(3).bolt(BoltKind.WATER))
@@ -234,7 +234,7 @@ final class GateBestiary {
                 .intro("Chanting above a sea of clouds.")
                 .phase(1.0F, "The Abbot begins the hymn.", a(BOLT, "Frost Hymn").n(5).bolt(BoltKind.FROST), a(RAIN, "Ice Spikes").n(4).bolt(BoltKind.FROST))
                 .phase(0.66F, "The choir joins.", a(SUMMON, "The Choir").summon("frost_wisp").n(2), a(AURA, "Blizzard").radius(9).bolt(BoltKind.FROST).fx(MobEffects.SLOWNESS, 40, 1), a(RAIN, "Ice Spikes").n(5).bolt(BoltKind.FROST))
-                .phase(0.33F, "Glacial Vow.", a(BURST, "Glacial Vow").power(1.41F).radius(14).inner(4).bolt(BoltKind.FROST).heavy(), a(RAIN, "Ice Spikes").n(6).bolt(BoltKind.FROST), a(NOVA, "Frost Nova").n(14).bolt(BoltKind.FROST))
+                .phase(0.33F, "Glacial Vow.", a(BURST, "Glacial Vow").power(1.67F).radius(14).inner(4).bolt(BoltKind.FROST).heavy(), a(RAIN, "Ice Spikes").n(6).bolt(BoltKind.FROST), a(NOVA, "Frost Nova").n(14).bolt(BoltKind.FROST))
                 .parts(P("abbot_prayer_beads", "Abbot's Prayer Beads", "frost"), P("glacier_heart", "Glacier Heart", "frost")).build());
     }
 
@@ -365,7 +365,7 @@ final class GateBestiary {
                 .intro("You've been here before. You haven't.")
                 .phase(1.0F, "The Sleeper stirs.", a(SLAM, "Restless Fist").radius(4.5F), a(DARKNESS, "Heavy Eyelids"))
                 .phase(0.66F, "It turns over in its sleep.", a(SUMMON, "Night Terrors").summon("night_terror").n(2), a(BLINK, "Dreamstep"), a(SLAM, "Restless Fist").radius(4.5F))
-                .phase(0.33F, "It wakes.", a(BURST, "Rude Awakening").power(1.87F).radius(14).inner(3.5F).bolt(BoltKind.DREAM).heavy(), a(SLAM, "Restless Fist").radius(5))
+                .phase(0.33F, "It wakes.", a(BURST, "Rude Awakening").power(1.94F).radius(14).inner(3.5F).bolt(BoltKind.DREAM).heavy(), a(SLAM, "Restless Fist").radius(5))
                 .parts(P("sleeper_eyelid", "Sleeper's Eyelid", "dream"), P("sleepers_lullaby", "Sleeper's Lullaby", "dream")).build());
     }
 
@@ -382,9 +382,9 @@ final class GateBestiary {
                 .ab(a(GUST, "Gale Force").radius(8).power(0.8F).heavy(), a(LIFT, "Updraft Trap"), a(BOLT, "Wind Spears").n(4).bolt(BoltKind.GRAVITY)).build());
         out.add(m("sky_leviathan", "The Sky Leviathan", Theme.SKY, Tier.LORD, Model.SERPENT, "Dives through the sky, tilts gravity, then the Storm Eye").hp(46.5).dmg(5.73).spd(0.32).scale(3.2F).size(1.4F, 0.6F).bar(BossBarColor.BLUE).arena(28)
                 .intro("The ground is much too far below.")
-                .phase(1.0F, "The Sky Leviathan circles.", a(CHARGE, "Leviathan Dive").power(1.06F).heavy(), a(GUST, "Wingbeat").radius(10).power(0.6F))
-                .phase(0.66F, "The sky tilts.", a(LIFT, "Gravity Tide").radius(4), a(BOLT, "Pearl Barrage").n(6).bolt(BoltKind.GRAVITY), a(CHARGE, "Leviathan Dive").power(1.06F))
-                .phase(0.33F, "Storm Eye.", a(RAIN, "Storm Eye").n(7).bolt(BoltKind.CHARGE).heavy(), a(CHARGE, "Leviathan Dive").power(1.06F), a(GUST, "Wingbeat").radius(10).power(0.7F))
+                .phase(1.0F, "The Sky Leviathan circles.", a(CHARGE, "Leviathan Dive").power(1.16F).heavy(), a(GUST, "Wingbeat").radius(10).power(0.6F))
+                .phase(0.66F, "The sky tilts.", a(LIFT, "Gravity Tide").radius(4), a(BOLT, "Pearl Barrage").n(6).bolt(BoltKind.GRAVITY), a(CHARGE, "Leviathan Dive").power(1.16F))
+                .phase(0.33F, "Storm Eye.", a(RAIN, "Storm Eye").n(7).bolt(BoltKind.CHARGE).heavy(), a(CHARGE, "Leviathan Dive").power(1.16F), a(GUST, "Wingbeat").radius(10).power(0.7F))
                 .parts(P("leviathan_fin", "Leviathan Fin", "cloud"), P("sky_pearl", "Sky Pearl", "signal")).build());
     }
 
@@ -403,7 +403,7 @@ final class GateBestiary {
                 .intro("Nothing. No sound at all.")
                 .phase(1.0F, "The Herald speaks without sound.", a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID), a(PULL, "Draw Near"))
                 .phase(0.66F, "The shrine empties.", a(SUMMON, "Spawn of Nothing").summon("void_spawn").n(2), a(DARKNESS, "Unlit"), a(BOLT, "Void Bolts").n(5).bolt(BoltKind.VOID))
-                .phase(0.33F, "Event horizon.", a(PULL, "Event Horizon").radius(16).power(0.8F).heavy(), a(BURST, "Collapse").power(0.74F).radius(13).inner(3.5F).bolt(BoltKind.VOID), a(NOVA, "Void Halo").n(16).bolt(BoltKind.VOID))
+                .phase(0.33F, "Event horizon.", a(PULL, "Event Horizon").radius(16).power(0.8F).heavy(), a(BURST, "Collapse").power(1.18F).radius(13).inner(3.5F).bolt(BoltKind.VOID), a(NOVA, "Void Halo").n(16).bolt(BoltKind.VOID))
                 .parts(P("herald_halo", "Herald's Halo", "abyss"), P("abyssal_glass", "Abyssal Glass", "abyss")).build());
     }
 }
