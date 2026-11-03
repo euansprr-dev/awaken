@@ -6700,8 +6700,10 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
   Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
   and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
-  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. Longsword up and forward to the left (18 left, 52
-  up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the middle (10, 36);
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. The Longsword
+  is turned an eighth further (roll 135, the weapon audit below), so its blade's face and its guard's spread show.
+  Longsword up and forward to the left (18 left, 52 up); Rapier en garde, the point forward at the target's height
+  (20, 18); Katana two-handed at the middle (10, 36);
   Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
   blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
   across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
@@ -7466,7 +7468,7 @@ against it, so a vanilla item plays its designed tempo).
   noisy against his reference"). Now (2026-10-26, `tools/art/voxel.py`): **designed box construction at the player's
   own density**, 1 texel = 1 item unit (a skin pixel), each face its own chart, buried texels dropped and visible ones
   merged; the style rules every archetype follows are in `docs/combat/weapon-style.md` (density, construction from
-  bold parts and whole-angle turned boxes never staircases, a longsword about 28 texels with two thirds blade,
+  bold parts and whole-angle turned boxes never staircases, a longsword about 36 texels with seven tenths blade,
   painted bevels as one-texel bands lit toward the painted light and dark away with contact shadows at joins, three
   or four hue-shifted ramps with one dark and one warm, a few deliberate marks per part and no per-texel noise,
   stones in 45° frames standing proud with concentric painted faces, emissive by flow hilt to tip). Each weapon still
@@ -7476,6 +7478,82 @@ against it, so a vanilla item plays its designed tempo).
   texel grids (they z-fight). Review: `python3 tools/art/specs/arms_weapons.py sheet OUT.png` puts the reference beside
   every weapon in three-quarter, back, hilt close-up, first person at rest and in vanilla's hold, night and the icon
   (`docs/combat/weapons-voxel-2026-10-26.png`).
+- **The weapon audit** (Euan 2026-11-02, of the Longsword in first person: "not long enough... it almost looks like a
+  small dagger... the two blocky things at the bottom look very, very chunky, and you can barely see the blade
+  itself"; the hammer "perfect right now"): every weapon measured and graded against the Maul (session weapon-designs,
+  concept page with the grades and rules per style). The Longsword was the proof: at 28 texels it was shorter than
+  every other bladed style but the Daggers (Rapier 33, Katana 37, Greatblade 40; the Maul 36 to 43), its guard
+  ornaments climbed 5 to 8 texels up an 18-texel blade, its hilt parts were 7 to 9 deep against the blade's 3, and
+  the hold shows a blade by its edge (roll 90), so in first person the hilt read as blocks beside a sliver. Now all
+  six are about 36 texels, the blade 25 of it (y 5 to 30), the grip 5 (y -2 to 3), the guard at most 11 across (wings
+  and crowns 14) with its ornaments out to the sides and about 4 up the blade (never beside its root), and nothing
+  on the hilt deeper than 5 (a stone and its frame 6); each tier keeps its materials, story and motifs. The hold is
+  turned an eighth further about the blade (roll 90 to 135, decision 2 of the audit): at 90 the guard showed its end
+  on (the "blocky things"); at 135 the blade shows its face and the guard spreads across, the edge still down and
+  forward toward the foe (37 degrees off the cut, was 20). The Longsword's swings are baked again from the new hold
+  (`anim_lab.py bake`, the third-person wrists kept); in the lab every blow leads with the edge as well or better
+  (0.85 to 0.98, was 0.71 to 0.98). In the game it reads better (CI tour `arms-longsword-turn`: the blade's face and
+  the guard's spread at rest, every blow with the hand on the grip), so the Greatblade has the same turn (batch 1;
+  every blow 0.79 to 0.99, was 0.72 to 1.00), the Katana and Glaive too (batch 2; the Katana's blows unchanged at
+  0.96 to 1.00, its curve now showing at rest; the Glaive's 0.91 to 0.98, was 0.89 to 0.98), and the Axe (batch 3;
+  every blow 0.73 to 0.96, was 0.63 to 0.90; at rest the bit shows, where at 90 only its eye did), each checked in
+  the lab first (the Daggers and Scythe are dagger-scythe's).
+- **Proportions per style** (the audit's rules; Euan 2026-11-02 approved the whole plan, "Go ahead with the whole
+  plan"; each line lands with its batch, in texels): every style keeps the hilt off the blade's root, nothing near the
+  hand deeper than the working part, one framed stone as the focus, and no two weapons with one outline.
+  - Longsword: about 36, the blade 25, the guard at most 11 (wings 14), at most 5 deep (a stone 6).
+  - Daggers: about 18, a blade about 11 (y 3 to 14 over a 4 grip); the curved Beastbound and Veilwoven stay about 16,
+    their curve carrying the length. The Hive Regent's Sting is already 21 with a 13 sting, so it stays.
+  - Greatblade: about 43, the blade 26 (y 8 to 34, six tenths), 9 to 11 wide; the grip 8 (y -5 to 3), the guard
+    (y 3 to 5) and the ricasso (y 5 to 8) at most 6 tall together, the guard at most 15 across (today 9 to 13), its
+    ornaments out to the sides and at most about 2 up the blade, nothing on the hilt deeper than 6 (a stone 7). The
+    tusk's hook, the fork's tines and the window's crystal are the blade's own outline, not ornament.
+  - Twinblades: about 40, two blades of 15 (y 5 to 20 each way) on one grip of 8 (y -4 to 4); at each blade's root
+    only a slim collar (at most 7 across, 1 or 2 tall), and one hub at the grip's middle round the stone; nothing
+    deeper than 6 (a stone 7). The Sky Leviathan's Fins: each fin 15, its rays two short ones off the root (were
+    three long ones along it).
+  - Precursor Arm: about 35, the light 24 (y 7 to 31) in its three stages, over the cased hilt (y -4 to 7); nothing on
+    the case deeper than 6 (a stone 7; Beastbound's gear and Veilwoven's lens were 8 and 9, the lens now 6 across).
+    Unit Zero's Countdown: its light 25 (y 9 to 34), the countdown emitter a texel shorter.
+  - Scythe: about 38, the snath y -13 to 21 with the blade off its top; the blade a crescent of six or seven turned
+    links, 5 broad and 3 deep at the heel stepping to a point 1 wide (was 3 broad and 2 deep, so in hand it read as
+    a cane), each tier its own sweep and its own mark along the back (flakes, teeth, a brass spine, a mirror
+    crescent, gold ribs, a beard); the collar 3 across and 4 deep; the second hand's peg stays at y 5 to 9. The
+    Sporemother's Reaping is built the same, its gill blade 6 broad with gill ridges standing off both faces.
+  - War-staff: about 37, the staff y -12 to 17 and the head above it as deep as it is wide (9 to 15 across, was 5
+    and flat): four arms of turned links round a stone 4 across (E antler beams, D tusks curling over it, B mirror
+    crescents, A gold claws between its wings, S arms before and behind its gold diamond) or C's brass cube, so the
+    head reads from the edge as well as the face. The Root Saint's Reliquary: its shrine 7 across on a gold plinth
+    under a stepped roof 9 across, pillared and open at the front (was 5 and 7).
+  - Axe: about 34 (was 28 to 33), the haft 3 to 6 longer above the grip so the head sits a quarter to a third of
+    the height up its top (`lengthened`); the bit and eye 12 or more across (Wildhide's flint 12, was 8; Gatewrought's
+    bit 10 from a 5-wide eye, was 7 from a 7-wide one; Veilwoven's spirit edge 2 taller; Lordscale's bit a column
+    broader and two steps lighter than its haft, which it melted into); nothing at the eye deeper than 6 (a stone 7;
+    Sovereign's frame was 9). The Ember Tyrant's Cleft stays as it is (31, its bit 22 across).
+  - Spear: the head 7 or more wide (Wildhide's, Lordscale's and Sovereign's were 5 and Veilwoven's 6, so edge-on in
+    hand the head vanished into the shaft): Wildhide's leaf with antler lugs both sides (was a barb on one), Veilwoven's
+    wave 7, Lordscale's leaf 7 under smaller wings, Sovereign's spire 7 over a gold frame 6 with its stone. Beastbound's
+    and Gatewrought's were already 7 and 9.
+  - Gauntlets: the fist kept (7 across, 5 deep, a cuff and rim), and each tier's own outline standing 2 or more proud of
+    it (all six were one box with a stone): E antler spikes off the knuckles (to 4 out) and tines curving back off the
+    cuff, D boar tusks rising off the fist's sides and curving forward past the knuckles, C a gate on the back of the
+    hand (slate posts and a tie, a brass lintel 9 across, the crystal inside) and lit pylons off the cuff, B mirror
+    crescents sweeping back off the knuckles to spirit tips, A gold claws off the knuckles and a gold wing off each
+    side of the cuff over the ember seam, S a crown of gold points, the stone 3 across in a raised gold diamond and
+    ivory plates stacked down the cuff. The Gearwright's Grip: its gear a dark wheel with eight brass teeth past the
+    fist's sides and over the knuckles round a brass hub and the furnace core, and two exhaust stacks along the cuff's
+    back past its rim, their mouths lit.
+  - Chainblade: about 35 (32 to 34), the head 12 or 13 long and 7 or 8 across (was 8 or 9 long and 4 to 6, lost at
+    the chain's end), on a chain of ten links (was twelve) in the same S, face-on and edge-on in turn: E a broad flint
+    leaf, D a great tusk hook with a horn barb on its back, C a gate-steel dart with its circuit and brass flights, B a
+    Veil sickle tipped in spirit light, A a molten-edged arrowhead barbed in gold, S a straight ivory blade with its
+    runes over a gold crown. The Lantern Broker's Due: its hooked blade 4 across at the cage and about 12 long (was 2 and 7),
+    the three lanterns on turned links.
+- **Hilt cuts** (the generated `ArmsHilts.CUTS`, for the War Anvil, §46.3): for each sword-like weapon (Longsword,
+  Greatblade, Rapier, Daggers, Katana), where its blade, guard and grip begin along its mesh, {blade, guard, grip, 0}
+  in the mesh's own along (0 the pommel's end, 1 the point): the blade's lowest corner (its back, teeth and ricasso
+  with it), the grip's top and the grip's foot. A design without a blade or a grip part has none; the anvil then
+  keeps its own fallback.
 - **Drawn by our shader** (`arms_weapon` pipeline; `WeaponRenderer`, the `awaken:weapon` special item model): vanilla's
   two item lights partly banded (painted light, not plastic), metals reflecting a soft studio (a cool sky, a warm
   floor, a strip light), a gloss highlight, a rim of the weapon's accent, the world's light on all but what glows; a
