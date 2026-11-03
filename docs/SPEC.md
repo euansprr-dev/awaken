@@ -18883,8 +18883,12 @@ creatures (gate creatures, bosses, beasts, forms, kin) is gone within its own fa
 `NamedBeast.deathTicks`, 1.8 s; a kit boss's topple up to 4 s) and its death runs its drops. The body that stayed was the
 hunt's carcass (§41.6), laid at a fixed second while a beast's longer fall still played beside it, and drawn standing:
 our renderers never read the carcass mark. Now the carcass is laid only once the falling body has gone (checked every
-tick, laid anyway after 5 s, `Carcass.FALL_MAX` 100), and every renderer of ours (hero, wild, kit, the creature renderer
-and the forms') draws a carcass as at the end of its fall, its light out, without the red and without landing it again
-(`LivingHooks.carcass`, both sides; `Life.lies`).
-- Test: `mobs_every_death` (every awaken creature, over 150, spawned and killed by a player, Rises spent first: each is
-  gone within its fall plus 2 ticks, each ran its drops, and no carcass is laid beside its own falling body).
+tick, laid anyway after 5 s, `Carcass.FALL_MAX` 100), where and as its fall ended (a body can slide or drift as it
+falls: the Lantern Maw's did), and every renderer of ours (hero, wild, kit, the creature renderer and the forms') draws a
+carcass as at the end of its fall, its light out, without the red and without landing it again (`LivingHooks.carcass`,
+both sides; `Life.lies`). A beast is the hunt's quarry only as the world brings it (`AwakenMob.configure`, through
+`Mobs.spawn` or `/awaken fauna summon`); vanilla's `/summon` skips that, so such a beast leaves no carcass.
+- Test: `mobs_every_death` (every awaken creature, over 150, on a stone floor inside the forced ground, spawned and
+  killed by a player with no knockback, Rises spent first: each is gone within its fall plus 2 ticks, each ran its drops,
+  no carcass is laid beside its own falling body, and each hunted beast's carcass lies where it fell within 3 ticks of
+  its body going).
