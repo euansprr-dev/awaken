@@ -14,10 +14,21 @@ import java.util.Map;
  * whole on every change.
  */
 public final class AtlasData {
-    /** 1: dimensions' cell bits, the run's trail, whether the reveal was sent. 2: regions you've been in, your pins. */
-    public static final int SCHEMA = 2;
-    /** Pins a player may keep (all dimensions together). */
-    public static final int PINS_MAX = 12;
+    /**
+     * 1: dimensions' cell bits, the run's trail, whether the reveal was sent. 2: regions you've been in, your pins. 3: pins
+     * became waypoints (named, coloured, shared or not), and where you fell.
+     */
+    public static final int SCHEMA = 3;
+    /** Waypoints a player may keep (all dimensions together); where you fell doesn't count. */
+    public static final int WAYPOINTS_MAX = 64;
+    /** A waypoint's name, at most. */
+    public static final int NAME_MAX = 32;
+    /** The waypoints' colours (SPEC §16.8): signal blue, horizon, green, gold, bronze, rose, violet, white. */
+    public static final int[] COLOURS = {0x7FC3FF, 0x9FE6D6, 0x8FF0C0, 0xF2D58A, 0xE0A86A, 0xFF8A9A, 0xB48CFF, 0xE9F1FF};
+    /** A waypoint's colour index for "its owner's own colour" (pins from before waypoints keep theirs). */
+    public static final int OWN_COLOUR = -1;
+    /** The waypoints' marks: flag, pick, star, house, cross, cave, ring, diamond. */
+    public static final int MARKS = 8;
 
     /** A named region of the Living Wilds you've stood in (SPEC §21.2): lettered across the land on the Atlas. */
     public record Region(long id, String name, int heartX, int heartZ, int low, int high) {
@@ -30,14 +41,45 @@ public final class AtlasData {
                 Codec.INT.fieldOf("high").forGetter(Region::high)).apply(i, Region::new));
     }
 
-    /** A pin you dropped on the table: your party sees it too. */
-    public record Pin(String dim, int x, int y, int z) {
+    /** A pin from before waypoints (schemaVersion 2): read once, carried over as a shared waypoint. */
+    record Pin(String dim, int x, int y, int z) {
         public static final Codec<Pin> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("dim").forGetter(Pin::dim),
                 Codec.INT.fieldOf("x").forGetter(Pin::x),
                 Codec.INT.fieldOf("y").forGetter(Pin::y),
                 Codec.INT.fieldOf("z").forGetter(Pin::z)).apply(i, Pin::new));
     }
+    /**
+     * (SPEC §16.8) A place you marked on the table: its own id (yours, never reused), dimension, block, name, colour (an
+     * index into {@link #COLOURS}, or {@link #OWN_COLOUR}), mark, and whether your party sees it.
+     */
+    public record Waypoint(int id, String dim, int x, int y, int z, String name, int colour, int mark, boolean shared) {
+        public static final Codec<Waypoint> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.fieldOf("id").forGetter(Waypoint::id),
+                Codec.STRING.fieldOf("dim").forGetter(Waypoint::dim),
+                Codec.INT.fieldOf("x").forGetter(Waypoint::x),
+                Codec.INT.fieldOf("y").forGetter(Waypoint::y),
+                Codec.INT.fieldOf("z").forGetter(Waypoint::z),
+                Codec.STRING.fieldOf("name").forGetter(Waypoint::name),
+                Codec.INT.optionalFieldOf("colour", 0).forGetter(Waypoint::colour),
+                Codec.INT.optionalFieldOf("mark", 0).forGetter(Waypoint::mark),
+                Codec.BOOL.optionalFieldOf("shared", false).forGetter(Waypoint::shared)).apply(i, Waypoint::new));
+
+        /** Its colour as RGB ({@code own}: the owner's hue). */
+        public int rgb(int own) {
+            return colour >= 0 && colour < COLOURS.length ? COLOURS[colour] : own & 0xFFFFFF;
+        }
+    }
+
+    /** Where you last died, outside gates (SPEC §16.8, "Where you fell"): until you reach it or die again. */
+    public record Fell(String dim, int x, int y, int z) {
+        public static final Codec<Fell> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("dim").forGetter(Fell::dim),
+                Codec.INT.fieldOf("x").forGetter(Fell::x),
+                Codec.INT.fieldOf("y").forGetter(Fell::y),
+                Codec.INT.fieldOf("z").forGetter(Fell::z)).apply(i, Fell::new));
+    }
+
     /** Points kept from the opening run (x, y, z each), about one every 10 ticks of running. */
     public static final int TRAIL_MAX = 400;
 
@@ -47,7 +89,10 @@ public final class AtlasData {
     boolean runShown;
     /** Overworld regions, in the order found. */
     final java.util.List<Region> regions = new java.util.ArrayList<>();
-    final java.util.List<Pin> pins = new java.util.ArrayList<>();
+    final java.util.List<Waypoint> waypoints = new java.util.ArrayList<>();
+    /** The next waypoint's id. */
+    int nextId = 1;
+    @org.jspecify.annotations.Nullable Fell fell;
 
     public static final Codec<AtlasData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.optionalFieldOf("schemaVersion", 0).forGetter(d -> d.schema),
@@ -55,14 +100,22 @@ public final class AtlasData {
             Codec.INT.listOf().optionalFieldOf("trail", List.of()).forGetter(d -> d.trail),
             Codec.BOOL.optionalFieldOf("runShown", false).forGetter(d -> d.runShown),
             Region.CODEC.listOf().optionalFieldOf("regions", List.of()).forGetter(d -> d.regions),
-            Pin.CODEC.listOf().optionalFieldOf("pins", List.of()).forGetter(d -> d.pins)
-    ).apply(i, (schema, dims, trail, shown, regions, pins) -> {
+            Pin.CODEC.listOf().optionalFieldOf("pins", List.of()).forGetter(d -> List.of()),
+            Waypoint.CODEC.listOf().optionalFieldOf("waypoints", List.of()).forGetter(d -> d.waypoints),
+            Codec.INT.optionalFieldOf("nextId", 1).forGetter(d -> d.nextId),
+            Fell.CODEC.optionalFieldOf("fell").forGetter(d -> java.util.Optional.ofNullable(d.fell))
+    ).apply(i, (schema, dims, trail, shown, regions, pins, waypoints, nextId, fell) -> {
         AtlasData d = new AtlasData();
         d.dims.putAll(dims);
         d.trail.addAll(trail);
         d.runShown = shown;
         d.regions.addAll(regions);
-        d.pins.addAll(pins);
+        d.waypoints.addAll(waypoints);
+        d.nextId = Math.max(nextId, 1);
+        for (Waypoint w : waypoints) d.nextId = Math.max(d.nextId, w.id() + 1);
+        // a pin from before waypoints: shared (pins always were), named "Pin", in its owner's own colour
+        for (Pin p : pins) d.waypoints.add(new Waypoint(d.nextId++, p.dim(), p.x(), p.y(), p.z(), "Pin", OWN_COLOUR, 0, true));
+        d.fell = fell.orElse(null);
         return d;
     }));
 
@@ -79,8 +132,12 @@ public final class AtlasData {
         return java.util.Collections.unmodifiableList(regions);
     }
 
-    public List<Pin> pins() {
-        return java.util.Collections.unmodifiableList(pins);
+    public List<Waypoint> waypoints() {
+        return java.util.Collections.unmodifiableList(waypoints);
+    }
+
+    public @org.jspecify.annotations.Nullable Fell fell() {
+        return fell;
     }
 
     public int[] trail() {

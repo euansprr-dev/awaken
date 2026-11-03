@@ -47,7 +47,7 @@ public final class AtlasClient {
             e.register(AtlasNet.Trail.TYPE, (m, ctx) -> AtlasState.get().onTrail(m));
             e.register(AtlasNet.Regions.TYPE, (m, ctx) -> AtlasState.get().onRegions(m.regions()));
             e.register(AtlasNet.City.TYPE, (m, ctx) -> AtlasState.get().onCity(m));
-            e.register(AtlasNet.Pins.TYPE, (m, ctx) -> AtlasState.get().pins = List.copyOf(m.pins()));
+            e.register(AtlasNet.WaypointList.TYPE, (m, ctx) -> AtlasState.get().waypoints(m.waypoints()));
             e.register(AtlasNet.Homes.TYPE, (m, ctx) -> AtlasState.get().homes = List.copyOf(m.homes()));
         });
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, AtlasClient::commands);
@@ -112,6 +112,12 @@ public final class AtlasClient {
                     return 1;
                 })))
                 .then(Commands.literal("reveal").executes(c -> reveal()))
+                .then(Commands.literal("waypoint")
+                        .then(Commands.literal("here").executes(c -> screen() != null && screen().tour("here", 0) ? 1 : 0))
+                        .then(Commands.argument("what", StringArgumentType.word())
+                                .then(Commands.argument("i", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 9))
+                                        .executes(c -> screen() != null && screen().tour(StringArgumentType.getString(c, "what"),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "i")) ? 1 : 0))))
                 .then(Commands.literal("prof").then(Commands.argument("bits", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 127)).executes(c -> {
                     AtlasScreen.prof = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "bits");
                     AtlasState.stats.reset();

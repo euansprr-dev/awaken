@@ -93,10 +93,12 @@ public final class JadeClient {
 
     /**
      * A creature wearing Awaken's plate gets no Jade card: the plate is its one readout (Euan 2026-10-29: "only the plate
-     * shows"). Players and tamed pets have no plate, so they keep Jade's card; so does everything while plates are off.
+     * shows"). The kin, pets and trusted mounts wear the kin plate (SPEC §43.17). Players have no plate, so they keep
+     * Jade's card; so does everything while plates are off.
      */
     static boolean plated(Accessor<?> a) {
         if (!(a instanceof EntityAccessor ea) || !(ea.getEntity() instanceof net.minecraft.world.entity.LivingEntity e)) return false;
+        if (dev.awaken.kin.KinPlates.wears(e)) return dev.awaken.kin.client.KinPlate.on();
         if (e instanceof net.minecraft.world.entity.player.Player || e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame()) return false;
         return dev.awaken.living.client.LivingClient.platesOn() && dev.awaken.core.api.CreatureTag.of(e).present();
     }

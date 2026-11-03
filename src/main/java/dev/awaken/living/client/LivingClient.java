@@ -329,7 +329,7 @@ public final class LivingClient {
         for (LivingEntity e : mc.level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(40), e -> e != p && e.isAlive())) {
             CreatureTag tag = CreatureTag.of(e);
             if (!tag.present()) continue;
-            boolean excluded = e instanceof Player || e instanceof TamableAnimal t && t.isTame();
+            boolean excluded = e instanceof Player || e instanceof TamableAnimal t && t.isTame() || dev.awaken.kin.KinPlates.wears(e); // the kin plate's (SPEC §43.17)
             double d = e.distanceTo(p);
             boolean notable = tag.elite() || tag.kind() == CreatureTag.Kind.BEAST;
             if (notable && !SEEN.contains(e.getId()) && d <= PlateRules.NOTABLE_RANGE && los < 4) {
@@ -342,7 +342,7 @@ public final class LivingClient {
         // a creature read through the binoculars, farther than the box above reaches
         if (hit != null && hit.getEntity() instanceof LivingEntity far && far.distanceTo(p) > 40) {
             CANDIDATES.add(new PlateRules.Candidate(far.getId(), far.distanceTo(p), FIGHT.getOrDefault(far.getId(), Long.MIN_VALUE),
-                    LOOK.getOrDefault(far.getId(), Long.MIN_VALUE), false, far instanceof Player || far instanceof TamableAnimal t && t.isTame()));
+                    LOOK.getOrDefault(far.getId(), Long.MIN_VALUE), false, far instanceof Player || far instanceof TamableAnimal t && t.isTame() || dev.awaken.kin.KinPlates.wears(far)));
         }
         PlateRules.pick(CANDIDATES, PICKED, ticks, lookRange);
         for (PlateRules.Candidate c : PICKED) {
