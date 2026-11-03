@@ -123,7 +123,8 @@ cmd tag @e[type=awaken:briar_sow,limit=1,sort=nearest] add bramble
 cmd tp @s 1.5 201 0.5 0 3
 look 0 3
 wait 30
-cmd data merge entity @e[tag=bramble,limit=1] {home_pos:[I;1,201,46],home_radius:2}
+# her home beyond the belt, wide enough that her walk home finds a spot in it (with a radius of 2 it never did)
+cmd data merge entity @e[tag=bramble,limit=1] {home_pos:[I;1,201,52],home_radius:8}
 cmd awaken lifetrace briar_sow 900
 cmd awaken ascent pilot rec far_bramble 300 1
 wait 150
