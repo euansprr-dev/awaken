@@ -190,6 +190,8 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
         b.look.hurt = mob.hurtTime > 0 ? Mth.clamp((mob.hurtTime - partialTicks) / 10.0F, 0.0F, 1.0F) : 0.0F;
         s.hurt = mob.hurtTime > 0 ? (10 - mob.hurtTime + partialTicks) / 20.0F : -1;
         s.dying = mob.deathTime > 0 || mob.isDeadOrDying() ? (mob.deathTime + partialTicks) / 20.0F : -1;
+        // a quarry's carcass lies as its fall ended, its light out (SPEC §41.6, §47.12)
+        if (dev.awaken.living.hunt.Carcass.is(mob)) s.dying = Math.max(deathLength, 1.0F) + 1.0F;
         fallAlongBlow(mob, b, s);
         resolveCue(mob, b, s, partialTicks);
         live(mob, b, s);
@@ -302,6 +304,7 @@ final class FormRenderer extends MobRenderer<Mob, HeroRenderState, HeroModel> {
         life.busy = s.cueWeight > 0.05F || s.melee >= 0 || s.hurt >= 0;
         life.dying = s.dying;
         life.deathLength = deathLength;
+        life.lies = dev.awaken.living.hunt.Carcass.is(mob);
         life.aggressive = s.angry > 0.5F || b.stance > 0.5F;
         life.stride = rig.walkStride + (rig.runStride - rig.walkStride) * s.run;
         life.walk = s.airborne ? 0.0F : s.walk;

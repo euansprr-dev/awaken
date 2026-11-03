@@ -237,6 +237,10 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         s.melee = -1;
         s.dying = mob.isDeadOrDying() ? (mob.deathTime + partialTicks) / 20.0F : -1;
         if (s.dying >= 0) s.hasRedOverlay = mob.deathTime < 8 || mob.hurtTime > 0;
+        if (dev.awaken.core.api.LivingHooks.carcass(mob)) { // a carcass lies as its fall ended (SPEC §47.12)
+            s.dying = 4.0F + 1.0F; // a kit body's fall is at most 80 ticks
+            s.hasRedOverlay = false;
+        }
         if (hasFeet && !s.airborne && s.dying < 0 && !apart) ground(mob, s, partialTicks);
         live(mob, s, l, winding);
         // what it plays, as one number: a new move (or the same one again), the kneel or rise, a reaction, the fall
@@ -402,6 +406,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         life.roarClip = roar >= 0;
         life.busy = s.cueWeight > 0.05F || s.hurt >= 0 || s.layerWeight[0] > 0.05F;
         life.dying = s.dying;
+        life.lies = dev.awaken.core.api.LivingHooks.carcass(mob);
         life.deathLength = m.length(death);
         life.boss = true;
         HeroRig rig = m.rig();

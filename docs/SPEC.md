@@ -15334,9 +15334,9 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   fights. A pack's alpha retreats to its den with its pack (§41.4). Every quarry under a third of its health **bleeds**: a
   blood sign every 3 blocks it moves (dark red drops, seen three in-game hours), read like any sign and part of its herd's trail
   ("Blood: the wounded aurochs went north-east, only minutes ago."). It stops bleeding back over half its health.
-- **The body** (`living.hunt.Carcass`): when a quarry someone hurt dies, its fall plays out, then a still copy (same kind, size,
+- **The body** (`living.hunt.Carcass`): when a quarry someone hurt dies, its fall plays out and the falling body goes (§47.12), then a still copy (same kind, size,
   age and colour; no AI, invulnerable, silent; attachment `awaken:carcass` = the game time it goes, synced so the client lays it
-  on its side as at the end of a fall, without the red) lies there for a minute. Every hunter who hurt it carves it three times
+  on its side as at the end of a fall, without the red; our own renderers too, `LivingHooks.carcass`) lies there for a minute. Every hunter who hurt it carves it three times
   (use it): an alpha's first carve is always the land's hide, then hide 40%, its first part 25%, meat 25% (beef, pork, mutton;
   leather for goats and horses; bone for the rest), two string 10%. Someone who didn't fight it can't. Each hunter studies the
   kind for ten research. When every hunter has carved, or the minute is up, it goes in a puff and its bones stay as a sign
@@ -18354,3 +18354,14 @@ keep their own rule (they lose you 3 s after you go quiet).
 - Test: `mobs_sight` (an ink-spitter in a stone pen, you 8 off and walking: it doesn't notice you; set on you, it never
   fires and nothing strikes you, it lets you go within 3 s and goes to where you were; the wall comes down and it
   notices you).
+
+**47.12 Every death ends (Euan's playtest 2026-11-03: "killed a beast but the body is still there").** Each of our
+creatures (gate creatures, bosses, beasts, forms, kin) is gone within its own fall (vanilla's second; a beast's fall,
+`NamedBeast.deathTicks`, 1.8 s; a kit boss's topple up to 4 s) and its death runs its drops. The body that stayed was the
+hunt's carcass (§41.6), laid at a fixed second while a beast's longer fall still played beside it, and drawn standing:
+our renderers never read the carcass mark. Now the carcass is laid only once the falling body has gone (checked every
+tick, laid anyway after 5 s, `Carcass.FALL_MAX` 100), and every renderer of ours (hero, wild, kit, the creature renderer
+and the forms') draws a carcass as at the end of its fall, its light out, without the red and without landing it again
+(`LivingHooks.carcass`, both sides; `Life.lies`).
+- Test: `mobs_every_death` (every awaken creature, over 150, spawned and killed by a player, Rises spent first: each is
+  gone within its fall plus 2 ticks, each ran its drops, and no carcass is laid beside its own falling body).

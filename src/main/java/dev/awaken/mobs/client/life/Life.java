@@ -37,6 +37,8 @@ public final class Life {
     /** Seconds since it began to die, -1 alive; with {@link #deathLength} 0 the fall is the root's (a boss's topple). */
     public float dying = -1;
     public float deathLength;
+    /** A carcass (SPEC §47.12): already lying where its fall ended, so the first frame it's drawn never lands it again. */
+    public boolean lies;
     /** 0..1 how much it walks (the gait clip's weight). */
     public float walk;
     /** Blocks a stride covers (the gait clip's), so the step's dip lands with its feet; 0: from the vanilla walk. */
@@ -270,6 +272,7 @@ public final class Life {
         float stepWave = 0.5F - 0.5F * Mth.cos(Mth.TWO_PI * 2.0F * phase);
         // the fall lands with a thud: one bounce on its weight, and everything loose flops (see integrate)
         float impact = deathLength > 0 ? rig.impact : 0.7F;
+        if (lies) landed = true;
         if (dead && impact > 0 && lastDying < impact && dying >= impact && !landed) {
             landed = true;
             thudV = -(14.0F + 4.0F * Math.min(3.0F, p.mass()));

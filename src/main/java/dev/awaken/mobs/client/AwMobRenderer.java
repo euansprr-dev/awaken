@@ -94,6 +94,8 @@ class AwMobRenderer<S extends LivingEntityRenderState, M extends EntityModel<? s
         lf.boss = boss(def);
         lf.dying = state.deathTime > 0 ? (state.deathTime - 1.0F) / 20.0F : -1;
         lf.deathLength = 0;
+        lf.lies = dev.awaken.core.api.LivingHooks.carcass(mob); // a carcass lies as its fall ended (SPEC §47.12)
+        if (lf.lies) lf.dying = 2.0F;
         lf.walk = ours ? Math.min(1.0F, state.walkAnimationSpeed * 1.6F) : 0.0F;
         lf.airborne = (l.fauna & FaunaMob.P_AIR) != 0;
         lf.swimming = state.isInWater;
