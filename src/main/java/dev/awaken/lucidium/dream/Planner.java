@@ -119,8 +119,8 @@ public final class Planner {
         if (ready(player).isPresent() || BUILDING.containsKey(id)) return;
         Long nothing = NOTHING.get(id);
         if (nothing != null && nothing == day) return;
-        DreamPlanner.Input in = input(player);
-        Optional<DreamPlan> plan = DreamPlanner.plan(in);
+        // a dream comes only when one waits (SPEC §9.2): tonight's plan is the first dream on the list
+        Optional<DreamPlan> plan = DreamOffers.plan(player);
         if (plan.isEmpty()) {
             NOTHING.put(id, day);
             return;
@@ -153,7 +153,7 @@ public final class Planner {
 
     /** Tests: tonight's plan for this player, compiled now on this thread and ready as if built at dusk. */
     static Prepared prepareNow(ServerPlayer player) {
-        DreamPlan plan = DreamPlanner.plan(input(player)).orElseThrow();
+        DreamPlan plan = DreamOffers.plan(player).orElseThrow();
         Prepared p = buildNow(player.level().getServer(), player.getUUID(), plan);
         READY.put(player.getUUID(), p);
         return p;

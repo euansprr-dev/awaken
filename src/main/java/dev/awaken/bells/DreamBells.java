@@ -62,6 +62,9 @@ final class DreamBells {
         int lifted;
         /** Lullaby's sleeper, the Nightmare's chaser. */
         @Nullable UUID beast;
+        /** A trial dream's bell (SPEC §9.3): it waits at the end of the dream's road, its puzzle the dream's own. */
+        boolean managed;
+        @Nullable BlockPos spot;
 
         Dream(String bell, @Nullable BlockPos at) {
             this.bell = bell;
@@ -111,6 +114,15 @@ final class DreamBells {
 
     /** A dream begins: the next bell not held, set in its puzzle. */
     static @Nullable Dream start(ServerPlayer p) {
+        // a trial dream carries its bell at the end of its road, or none (SPEC §9.3)
+        if (Lucidium.inTrial(p)) {
+            Lucidium.DreamBell b = Lucidium.dreamBell(p);
+            if (b == null || Bells.has(p, b.id()) || BellCatalog.of(b.id()) == null) return null;
+            Dream d = new Dream(b.id(), null);
+            d.managed = true;
+            d.spot = b.at();
+            return d;
+        }
         String bell = null;
         for (String id : ORDER) if (!Bells.has(p, id)) {
             bell = id;
@@ -145,6 +157,11 @@ final class DreamBells {
 
     /** Once a second while the bell's still to be had: what its puzzle does. */
     private static void puzzle(ServerPlayer p, ServerLevel level, Dream d) {
+        if (d.managed) {
+            // set down when you come within sight of the end of the road (its chunk is made by then)
+            if (d.at == null && d.spot != null && p.blockPosition().closerThan(d.spot, 96) && level.isLoaded(d.spot)) set(level, d, d.spot);
+            return;
+        }
         switch (d.bell) {
             case "daydream" -> {
                 if (d.at == null) return;
@@ -284,7 +301,7 @@ final class DreamBells {
         if (d == null || d.held || !pos.equals(d.at)) return false;
         BellCatalog.Def def = BellCatalog.of(d.bell);
         if (def == null) return true;
-        if (Lucidium.lucidity(p) < need(def)) {
+        if (!d.managed && Lucidium.lucidity(p) < need(def)) {
             Bells.say(p, "[Your hands go through it. You aren't lucid enough to hold it.]");
             return true;
         }
@@ -292,6 +309,7 @@ final class DreamBells {
         p.level().setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         p.level().playSound(null, pos, BellContent.note(def.no()), SoundSource.BLOCKS, 3F, 1F);
         Bells.say(p, "[You're holding it. Wake, and it's yours.]");
+        if (d.managed) Lucidium.bellTaken(p);
         return true;
     }
 
@@ -309,6 +327,7 @@ final class DreamBells {
             Bells.ring(p, def, "carried out of a dream");
             return;
         }
+        if (d.managed) return; // the dream still waits for you, and the Tasks page says so
         Bells.dreamt(p, def, switch (d.bell) {
             case "daydream" -> "A bell rang in a dream of yours, and every time you looked away it was somewhere else. Keep your eyes on it next time.";
             case "lullaby" -> "A bell rang softly in a dream of yours, by something asleep. Go quietly next time.";
@@ -317,6 +336,17 @@ final class DreamBells {
             case "lucid" -> "A dream of yours had a bell hidden in it. Notice what's wrong with the dream and it'll be there.";
             default -> "A bell rang in a dream of yours. You weren't lucid enough to reach it and hold it. Be clearer in the next one.";
         });
+    }
+
+    /** The next dream bell this player may dream of: the first not held, its rank reached (the first asks none); "" none. */
+    static String next(ServerPlayer p) {
+        for (String id : ORDER) {
+            if (Bells.has(p, id)) continue;
+            BellCatalog.Def d = BellCatalog.of(id);
+            if (d == null) return "";
+            return id.equals("dreaming") || Progression.rank(p).ordinal() >= d.rank().ordinal() ? id : "";
+        }
+        return "";
     }
 
     static void forget(UUID id) {

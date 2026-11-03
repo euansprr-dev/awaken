@@ -28,12 +28,22 @@ public final class BellHooks {
         default boolean toll(ServerLevel level, BlockPos anchor) { return false; }
         default void raised(ServerLevel level, BlockPos pos) {}
         default void spirit(ServerPlayer player, String spirit, String name, BlockPos at) {}
+        default String dreamBellNext(ServerPlayer player) { return ""; }
     }
 
     private static Access access = new Access() {};
 
     public static void install(Access a) {
         access = a;
+    }
+
+    /**
+     * The next of the six dream bells this player may dream of (SPEC §9.2): the first in the bells' order they don't
+     * hold, once their rank has reached it (the Dreaming Bell asks for none); "" for none. The lucidium puts a dream on
+     * its waiting list for it.
+     */
+    public static String dreamBellNext(ServerPlayer player) {
+        return access.dreamBellNext(player);
     }
 
     /** Whether the Deep has answered a Hundred Peal anywhere in this world. */

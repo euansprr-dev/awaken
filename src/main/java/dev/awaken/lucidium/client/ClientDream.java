@@ -39,6 +39,7 @@ public final class ClientDream {
         if (!next.dreaming()) {
             realityCheck = 0;
             hold = 0;
+            ClientTrial.start = null;
         }
     }
 

@@ -18,13 +18,13 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * The first lucid dream, taught in play (plan v2 §4.4). Starts when the level road grants {@code awaken:dreams}
- * (level 12) and reads this module's counters; the dream mechanics are untouched.
+ * The first dream, taught in play (SPEC §9.2). Starts when the level road grants {@code awaken:dreams} (level 12), the
+ * day the first dream comes to wait, and reads this module's counters.
  * <ol>
  *   <li>Press H awake once: a reality check.</li>
- *   <li>At nightfall a choice card: set tonight's intention to fly (lucid sooner, flight at 35 lucidity) or just sleep.</li>
+ *   <li>At nightfall a choice card: set tonight's intention to find the door (ten more seconds in the dream) or just sleep.</li>
  *   <li>Sleep and dream.</li>
- *   <li>Become lucid in a dream.</li>
+ *   <li>Take control of the dream with H.</li>
  * </ol>
  */
 public final class DreamLessons {
@@ -34,23 +34,23 @@ public final class DreamLessons {
         Lessons.define(new Lesson("dreams", "awaken:dreams", p -> enabled(), List.of(
                 Step.of("reality_check", "Press H: a reality check", 58,
                                 p -> count(p, Counters.REALITY_CHECKS) > 0,
-                                "Reality check", "In dreams it makes you lucid. Awake, nothing changes.")
+                                "Reality check", "In a dream, H takes control of it. Awake, nothing changes.")
                         .when(p -> !Dreams.isDreaming(p)),
-                Step.of("intention", "Sleep in a bed tonight: you will dream", 52,
+                Step.of("intention", "Sleep in a bed tonight: a dream is waiting", 52,
                                 p -> Lessons.answer(p, "dreams", "intention") >= 2 || hasIntention(p) || count(p, Counters.DREAMS) > 0,
                                 "", "")
                         .when(p -> !Dreams.isDreaming(p))
                         .ask(new Choice(DreamLessons::dusk, "Tonight's dream",
-                                "An intention before sleep makes you lucid sooner, and lets you fly at 35 lucidity.",
-                                "Tonight I will fly", "Just sleep",
-                                p -> setIntention(p, DreamPlanner.FLY), p -> {})),
-                Step.of("first_dream", "Sleep in a bed tonight: you will dream", 52,
+                                "Deciding before you sleep that you'll find the door at the end gives you ten more seconds in the dream.",
+                                "I'll find the door", "Just sleep",
+                                p -> setIntention(p, DreamPlanner.FIND_THE_DOOR), p -> {})),
+                Step.of("first_dream", "Sleep in a bed tonight: a dream is waiting", 52,
                                 p -> count(p, Counters.DREAMS) > 0,
-                                "You dreamed", "Press H inside next time. It was built from your day.")
+                                "You dreamed", "Every dream holds something worth keeping. Get to the end before it fades.")
                         .when(p -> !Dreams.isDreaming(p)),
-                Step.of("lucid", "Next dream: press H until it clears", 55,
+                Step.of("lucid", "In the dream, press H to take control", 55,
                         p -> count(p, Counters.LUCID_DREAMS) > 0,
-                        "Lucid", "Fly, or hold H on a wall. You know you're dreaming."))));
+                        "You took control", "Press H again to see the way. Get to the end before the dream fades."))));
     }
 
     /** Evening in the overworld, awake, not fighting: the moment to ask about tonight. */

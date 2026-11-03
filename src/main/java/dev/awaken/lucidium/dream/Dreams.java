@@ -78,7 +78,8 @@ public final class Dreams {
     public static final String MANIFEST_WOKE = "awaken:latent/manifest_woke";
     public static final String DREAM_MANIFESTS = "awaken:dream_manifests";
 
-    public enum Wake { TIME, DIED, FELL, BELL, COMMAND, LOGIN, LEFT, API }
+    /** WON: a trial's goal reached; SLIPPED: its clock ran out; CHOSE: the pause screen's Wake up (SPEC §9.3). */
+    public enum Wake { TIME, DIED, FELL, BELL, COMMAND, LOGIN, LEFT, API, WON, SLIPPED, CHOSE }
 
     static final Map<Integer, ActiveDream> ACTIVE = new HashMap<>();
     private static final Map<UUID, LucidiumNet.DreamHud> LAST_HUD = new HashMap<>();
@@ -167,7 +168,10 @@ public final class Dreams {
         st.bed = entry.bed();
         st.fromSleep = entry.fromSleep();
         boolean intention = !d.intention(day).isEmpty();
-        st.lucidity = Lucidity.start(intention, entry.wbtb(), d.recall, Progression.perk(sp, Perks.LUCIDITY_START));
+        boolean trial = Trials.is(ad);
+        // in a trial the recall bonus is a second for each dream finished, up to 10 (old saves keep what they wrote)
+        int recall = trial ? Math.max(d.recall, 2 * d.ledger.finished.size()) : d.recall;
+        st.lucidity = Lucidity.start(intention, entry.wbtb(), recall, Progression.perk(sp, Perks.LUCIDITY_START));
         st.peak = st.lucidity;
         if (entry.wbtb()) d.wbtbUntil = 0;
         st.powerBaseline = powerUses(sp);
@@ -200,8 +204,11 @@ public final class Dreams {
         playTo(sp, LucidiumContent.ENTER.get(), 0.8f, 0.8f);
         DirectorLog.log(sp, "dream", (host ? "entered" : "joined") + " cell " + bp.cell + ": " + bp.plan.summary()
                 + String.format(" (lucidity %.0f)", st.lucidity));
-        if (st.lucidity >= Lucidity.LUCID) onLucid(sp, st);
         sendHud(sp, st, ad, true);
+        if (trial) {
+            if (entry.fromSleep()) d.ledger.lastDreamDay = day;
+            Trials.arrive(sp, st, ad, now);
+        } else if (st.lucidity >= Lucidity.LUCID) onLucid(sp, st);
         return true;
     }
 
@@ -233,7 +240,9 @@ public final class Dreams {
 
         DreamPlan plan = ad != null ? ad.bp.plan : null;
         List<SignalWindow.Row> rows = new ArrayList<>();
-        if (plan != null) {
+        Trials.Waking trialWake = ad != null && Trials.is(ad) ? Trials.woke(sp, st, ad, why, d, PlayDays.current(server)) : null;
+        if (trialWake != null) rows.addAll(trialWake.rows());
+        else if (plan != null) {
             boolean lucid = st.lucidCounted;
             String summary = summarize(plan, st);
             d.addHistory(new DreamRecord(st.dreamId, PlayDays.current(server), summary, Math.round(st.peak), lucid, false, false, plan));
@@ -249,7 +258,7 @@ public final class Dreams {
         d.lastWoke = now;
         d.lastWokeDream = st.dreamId;
 
-        String title = switch (why) {
+        String title = trialWake != null ? trialWake.title() : switch (why) {
             case DIED -> "You died in the dream";
             case FELL -> "You fell, and jolted awake";
             case BELL -> "The Dream Bell woke you";
@@ -258,9 +267,14 @@ public final class Dreams {
         if (why != Wake.LOGIN) {
             SignalWindow.Builder w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(title));
             rows.forEach(r -> w.row(r.label(), r.value()));
-            if (why == Wake.DIED) w.body(Component.literal("Nothing lost. Just a little shaken."));
-            if (why == Wake.BELL) w.body(Component.literal("Midnight. Sleep again within the hour and you'll dream clearer."));
-            w.footer(Component.literal("Write it down in your Dream Journal while you remember").withStyle(ChatFormatting.GRAY));
+            if (trialWake != null) {
+                if (!trialWake.body().isEmpty()) w.body(Component.literal(trialWake.body()));
+                w.footer(Component.literal(trialWake.footer()).withStyle(ChatFormatting.GRAY));
+            } else {
+                if (why == Wake.DIED) w.body(Component.literal("Nothing lost. Just a little shaken."));
+                if (why == Wake.BELL) w.body(Component.literal("Midnight. Sleep again within the hour and you'll dream clearer."));
+                w.footer(Component.literal("Write it down in your Dream Journal while you remember").withStyle(ChatFormatting.GRAY));
+            }
             Signal.send(sp, w.ttl(20 * 9).build());
         }
         playTo(sp, LucidiumContent.WAKE.get(), 0.7f, 1.0f);
@@ -428,6 +442,7 @@ public final class Dreams {
                 continue;
             }
             ad.tickWorld(now, players);
+            Trials.tickWorld(ad, players);
             for (ServerPlayer p : players) {
                 if (!state(p).active) continue;
                 tickPlayer(p, state(p), ad, now);
@@ -442,6 +457,12 @@ public final class Dreams {
     private static void tickPlayer(ServerPlayer sp, DreamState st, ActiveDream ad, long now) {
         if (sp.level() != ad.level) {
             wake(sp, Wake.LEFT);
+            return;
+        }
+        if (Trials.is(ad)) {
+            if (!Trials.tick(sp, st, ad, now)) return;
+            if (now % 10 == 0) viewChecks(sp, st, ad, now);
+            if (now % 10 == 0) sendHud(sp, st, ad, now % 40 == 0);
             return;
         }
         if (now >= st.endTick) {
@@ -481,7 +502,7 @@ public final class Dreams {
         if (now % 10 == 0) sendHud(sp, st, ad, now % 40 == 0);
     }
 
-    private static void moveWithin(ServerPlayer sp, Vec3 to, float yaw) {
+    static void moveWithin(ServerPlayer sp, Vec3 to, float yaw) {
         teleporting = true;
         try {
             sp.teleport(new TeleportTransition(sp.level(), to, Vec3.ZERO, yaw, sp.getXRot(), TeleportTransition.DO_NOTHING));
@@ -543,11 +564,15 @@ public final class Dreams {
 
     private static void spotSign(ServerPlayer sp, DreamState st, DreamSign sign) {
         st.spotted |= sign.bit();
-        gain(sp, st, Lucidity.DREAM_SIGN);
         Dreamer d = dreamer(sp);
         boolean first = d.signsSeen.add(sign.name());
         playTo(sp, LucidiumContent.SIGN.get(), 0.9f, 1.2f);
-        Signal.toast(sp, Component.literal("That's not right. ").append(Component.literal(sign.title).withStyle(ChatFormatting.LIGHT_PURPLE)));
+        ActiveDream ad = active(sp);
+        if (ad != null && Trials.is(ad)) Trials.signNoticed(sp, st, ad, now(sp.level().getServer()));
+        else {
+            gain(sp, st, Lucidity.DREAM_SIGN);
+            Signal.toast(sp, Component.literal("That's not right. ").append(Component.literal(sign.title).withStyle(ChatFormatting.LIGHT_PURPLE)));
+        }
         if (first) Visions.sync(sp);
     }
 
@@ -557,6 +582,7 @@ public final class Dreams {
         float before = st.lucidity;
         st.lucidity = Lucidity.gain(before, amount, Progression.stat(sp, Stat.SPI));
         st.peak = Math.max(st.peak, st.lucidity);
+        if (!st.trial.isEmpty()) return; // a trial has no flight or shaping (SPEC §9.3): lucidity was its starting seconds
         if (before < Lucidity.LUCID && st.lucidity >= Lucidity.LUCID) onLucid(sp, st);
         boolean flyIntent = DreamPlanner.FLY.equals(dreamer(sp).intention(PlayDays.current(sp.level().getServer())));
         if (!st.grantedFly && Lucidity.canFly(st.lucidity, flyIntent) && !sp.getAbilities().mayfly) {
@@ -613,6 +639,12 @@ public final class Dreams {
         DreamState st = state(sp);
         if (!st.active) return; // awake: nothing visible happens
         long now = now(sp.level().getServer());
+        ActiveDream trialDream = active(sp);
+        if (trialDream != null && Trials.is(trialDream)) {
+            st.realityChecks++;
+            Trials.press(sp, st, trialDream, now);
+            return;
+        }
         if (now - st.lastRealityCheck < 60) return;
         st.lastRealityCheck = now;
         float amount = Lucidity.realityCheckAmount(st.realityChecks++);
@@ -621,10 +653,15 @@ public final class Dreams {
         if (st.realityChecks == 1) Signal.toast(sp, Component.literal("Your hand flickers. Something is wrong with this place."));
     }
 
+    /** Lucidium.bellTaken: a trial's bell taken wins the dream. */
+    public static void trialBellTaken(ServerPlayer sp) {
+        Trials.bellTaken(sp);
+    }
+
     public static void manifest(ServerPlayer sp, boolean summon) {
         DreamState st = state(sp);
         ActiveDream ad = active(sp);
-        if (ad == null) return;
+        if (ad == null || Trials.is(ad)) return;
         long now = now(sp.level().getServer());
         if (now - st.lastManifest < 60) return;
         if (summon) {
@@ -769,6 +806,15 @@ public final class Dreams {
     static void sendHud(ServerPlayer sp, DreamState st, ActiveDream ad, boolean force) {
         long now = now(sp.level().getServer());
         int flags = 0;
+        if (Trials.is(ad)) {
+            LucidiumNet.DreamHud hud = new LucidiumNet.DreamHud(true, 0, 0, 1, ad.signMask(), st.spotted,
+                    LucidiumNet.DreamHud.TRIAL | (ad.hasSign(DreamSign.RAIN_UP) ? LucidiumNet.DreamHud.RAIN_UP : 0), ad.shadowlessId());
+            LucidiumNet.DreamHud last = LAST_HUD.get(sp.getUUID());
+            if (!force && hud.equals(last)) return;
+            LAST_HUD.put(sp.getUUID(), hud);
+            AwakenNet.send(sp, hud);
+            return;
+        }
         boolean flyIntent = DreamPlanner.FLY.equals(dreamer(sp).intention(PlayDays.current(sp.level().getServer())));
         if (Lucidity.canFly(st.lucidity, flyIntent)) flags |= LucidiumNet.DreamHud.FLY;
         if (st.lucidity >= Lucidity.LUCID) flags |= LucidiumNet.DreamHud.SHAPE | LucidiumNet.DreamHud.LUCID;

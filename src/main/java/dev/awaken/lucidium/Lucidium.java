@@ -7,8 +7,10 @@ import dev.awaken.lucidium.dream.Dreams;
 import dev.awaken.lucidium.dream.Planner;
 import dev.awaken.lucidium.dream.Sleep;
 import dev.awaken.lucidium.plan.DreamPlanner;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,6 +96,27 @@ public final class Lucidium {
         }
         for (int i = 1; i < players.size(); i++) Dreams.join(players.get(i), ad, Dreams.Entry.awake());
         return true;
+    }
+
+    /** A trial dream's bell (SPEC §9.3): which one, and the spot at the end of the road where it waits. */
+    public record DreamBell(String id, BlockPos at) {}
+
+    /** The bell waiting at the end of this dreamer's trial, or null (awake, or a dream without one). */
+    public static @Nullable DreamBell dreamBell(ServerPlayer player) {
+        ActiveDream ad = Dreams.active(player);
+        if (ad == null || ad.bp.course == null || ad.bp.course.bell() == null) return null;
+        String ref = ad.bp.plan.trialRef();
+        return ref.startsWith("bell:") ? new DreamBell(ref.substring(5), ad.bp.course.bell()) : null;
+    }
+
+    /** Whether the player is dreaming a trial (SPEC §9.3): the bells keep their old dream puzzles out of it. */
+    public static boolean inTrial(ServerPlayer player) {
+        return Dreams.isDreaming(player) && !Dreams.state(player).trial.isEmpty();
+    }
+
+    /** The bell at the end of a trial dream is in this dreamer's hands: the dream is won (the bells call this). */
+    public static void bellTaken(ServerPlayer player) {
+        Dreams.trialBellTaken(player);
     }
 
     /** Whether the player chose a dreamless night (sneaking as they lay down). */

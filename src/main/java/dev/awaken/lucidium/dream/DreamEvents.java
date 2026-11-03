@@ -24,6 +24,7 @@ import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -75,6 +76,7 @@ public final class DreamEvents {
         bus.addListener(DreamEvents::onServerStopped);
         bus.addListener(DreamEvents::onServerAboutToStart);
         bus.addListener(DreamEvents::onEntityJoin);
+        bus.addListener(DreamEvents::onFall);
         PlayDays.onMorning((server, day) -> {
             Planner.morning(server);
             // the night is over: tonight's intentions are spent
@@ -107,6 +109,7 @@ public final class DreamEvents {
     private static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer sp)) return;
         Sleep.onPlayerTick(sp);
+        DreamOffers.tick(sp);
         DayJournal.onPlayerTick(sp);
         Visions.checkFound(sp);
     }
@@ -152,6 +155,11 @@ public final class DreamEvents {
             ActiveDream ad = Dreams.dreamOf(src);
             if (ad != null) sp.level().getServer().execute(() -> Mentors.end(ad, sp, false));
         }
+    }
+
+    /** Nothing hurts in a trial's fall (SPEC §9.3): a drop on the course is just quicker. */
+    private static void onFall(LivingFallEvent event) {
+        if (event.getEntity() instanceof ServerPlayer sp && !Dreams.state(sp).trial.isEmpty() && Dreams.isDreaming(sp)) event.setDamageMultiplier(0f);
     }
 
     /** Last line of defence: nothing dies "for real" in a dream (/kill, the void...). */
@@ -233,6 +241,8 @@ public final class DreamEvents {
         var cfg = sp.getRespawnConfig();
         if (cfg != null) LucidiumWorld.get(sp.level().getServer()).setBed(sp.getUUID(), GlobalPos.of(cfg.respawnData().dimension(), cfg.respawnData().pos()));
         Visions.sync(sp);
+        DreamOffers.check(sp);
+        DreamOffers.sync(sp, true);
         if (sp.level().isDarkOutside()) Planner.request(sp, "login at night");
     }
 
@@ -240,6 +250,7 @@ public final class DreamEvents {
         if (!(event.getEntity() instanceof ServerPlayer sp)) return;
         Dreams.forget(sp);
         Sleep.forget(sp);
+        DreamOffers.forget(sp.getUUID());
         DayJournal.forget(sp);
     }
 

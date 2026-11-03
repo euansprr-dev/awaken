@@ -394,6 +394,63 @@ Dying in a dream: wake "Shaken" (no penalty). Not ready → normal sleep. Hold s
 Arrivals (§28.9, 2026-10-29): waking from a dream and the dream rescue wait for the bed's land through `Passage.go`;
 going into a dream doesn't (the cell is built first).
 
+**Dreams remade (2026-11-03, `docs/dreams/PLAN.md`, Euan approved all 12 decisions).** A dream is now a remembered
+trial with one goal and a clock; the 40% roll and the island wander above are kept only for a version-1 plan replayed
+from the history, the together-dream and the commands until stage 4 removes them. No `dreamsRemade` flag (PLAN §6):
+the old path is gone by the same delivery, so a flag would only guard a dream nobody plays.
+
+### 9.1 Trials
+
+`trial.Trial`: FIRST (the Dreaming Bell's dream, 60 s), Runs WALL, LEDGE, VAULT (built), CLIMB, ROPE, LEAP, WINGS (stage 2
+and 4), Rooms WRONG, LOOK_AWAY, HUSH, LONG_FALL, FOLD, NO_DOOR (180 s, stage 3), CHASE (120 s), DUEL (150 s). Each has one
+goal line and a small line under it. A Run's course is laid by `trial.CourseKit` from RunnerRules' own probes (read only,
+§12): every wall-run, wall jump, ledge hang and shimmy, vault and slide is proved by the same checks the movement makes,
+and `TrialCompiler` tries four seeded variants then a plain road, so a plan always compiles. The solver's time from the
+doorway to the goal is the par; a Run's clock is max(60, par × 1.8) s. `DreamPlan` v2 carries the trial id and a ref
+(`bell:dreaming`); `DreamBlueprint` v2 the course (start, doorway, rings, end, bell spot, floor, par, path, reveals).
+
+### 9.2 When a dream comes (the ledger)
+
+`Dreamer` schema 2 adds `data.DreamLedger`: waiting (trial, ref, since, why), finished (best ticks, medal, day, times),
+`lastDreamDay`, `lastNewDay`, the Journal's choice and its day. A dream comes **only when one waits**: at most one a
+night, never two nights running unless chosen that day; new dreams join at most one a play-day (the first and old-save
+seeding excepted); the Dream Bell's second sleep (WBTB) takes the next one regardless. `DreamOffers` fills it from the
+level road's flag `awaken:dreams` (level 12): FIRST (with the Dreaming Bell when `BellHooks.dreamBellNext` says
+`dreaming`), then after it the built Runs one a day; old dreamers are seeded with FIRST and up to two Runs. Sneak while
+lying down: dreamless, as before. Tasks (OUT, BELLS when a bell waits): "A dream is waiting. Sleep in your bed
+tonight." / "A bell is waiting in a dream. Sleep in your bed tonight."; never what it holds. While one waits, your own
+bed sheds a few pearl motes at night (client, `DreamWaiting` payload).
+
+### 9.3 The trial dream
+
+- **Arrive** in your room: the Day Journal's latest HOME snapshot (else a kit bedroom), a doorway of dream glass, the
+  course beyond, its end glowing far off. Dream signs as before (your personal sign and one other). No lucidity meter:
+  one line, "You're dreaming. Press H to take control." ("Press H." after three dreams). The dream waits up to 5 min,
+  and walking out past the doorway takes control too.
+- **H takes control** (first H: `first_lucid`, lucid-dream count): the doorway clears, the goal line and a crescent
+  clock show; the clock is the trial's seconds plus starting lucidity as seconds (cap 60), so every old source of
+  lucidity still counts. The road lays itself ahead of you (24 blocks a tick, 14 ahead of your furthest step).
+- **While lucid**: H glints the true path for 2 s at a cost of 2 s, once every 4 s; noticing a dream sign gives 8 s
+  ("That's not right. +8 seconds"); falling 6 below the course floor is caught: back to the last ring passed, 3 s gone
+  ("The dream caught you. 3 seconds gone."), never a wake, no fall damage in a trial. Rings: gold, the next one
+  breathing; passing one counts it.
+- **Ends**: the goal reached → the prize line for 3 s → wake WON ("You reached the end of the dream", time, medal, what
+  you kept, "Your Dream Journal has written it down."). Clock out → SLIPPED ("The dream slipped away"); Esc's "Wake up"
+  button (`WakeUp` payload, throttled, server checks dreaming) → CHOSE; both leave the dream waiting. Death, logout and
+  the rest wake as before.
+- **Keeps**: medals by the Gauntlet's rule (gold ≤ par × 1.1 + 1 s, silver ≤ par × 1.5 + 2 s, else bronze; Runs only);
+  world XP 6% of a level the first finish, 2% another day; 2 Dream Residue (held while still in the Lucidium); counter
+  `awaken:dreams_finished` (`first_dream` revelation fires on it). The Dreaming Bell's dream holds the bell at the end
+  ("Take the bell first. It's just behind you."): `DreamBells` lets the lucidium place it (`Lucidium.dreamBell`) and
+  `Lucidium.bellTaken` finishes the dream; no lucidity gate on that bell.
+- **Payloads**: `TrialStart` (goal, sub, rings, end, bell, path, dreams so far), `TrialHud` (phase, ticks left, total,
+  ring, a line to flash, glint) once a second and on change, `DreamWaiting` (your bed or none), `WakeUp` (C→S); the
+  dream HUD's `TRIAL` flag hides the meter. Look: `TrialHud` (crescent clock, rose in the last 10 s), `TrialRings` (own
+  gold bands, not end rods), `PearlMoteParticle`, the Waking Veil and dream road blocks (`tools/art/specs/dreams.py`).
+- **Tests**: `dreams_runs_solvable` (every variant of every built Run passes its own solver), `dreams_waiting_ledger`,
+  `dreams_arrival`, `dreams_clock`, `dreams_catch_never_wakes`, `dreams_wake_button`, `dreams_win`. Tour
+  `tools/autopilot/dreams-first.txt`.
+
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and
 secrets glow within Awareness (client-only highlight, server-sent positions). Only blue-tagged `veil_interactable` things
@@ -718,6 +775,11 @@ of `AwakenConfig.Client`.
 - `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
   (`favours(ore, x, y, z)`, `place(x, y, z)`: pure, any thread) and `homes(seed, homes)`: where each ore is at home
   underground, installed on the overworld's load by the caves in a world made with the cave regions (null at server stop).
+- Dreams remade (§9.1–9.3): `dev.awaken.lucidium.Lucidium` — `inTrial(ServerPlayer)`, `dreamBell(ServerPlayer)` (`DreamBell(id,
+  at)`: where this trial's bell hangs, or null), `bellTaken(ServerPlayer)` (the bells module calls it when a managed dream
+  bell is struck). `core.api.BellHooks.dreamBellNext(ServerPlayer)` — the first dream bell not held whose rank you have
+  (`dreaming` at no rank), "" when none; installed by the bells module. The lucidium's `trial.CourseKit` reads the body's
+  `RunnerRules` probes (`findWall`, `findEdge`, `climbOut`, `HANG_HEADROOM`) read only, to prove its courses.
 
 ---------------------------------------------------------------------------------------------------------------------
 

@@ -37,7 +37,9 @@ public final class BlueprintCompiler {
 
     private static final int SPRINKLE = 45;
 
+    /** Compiles a plan into its cell: a trial's course (SPEC §9.3), or the old islands of memory. */
     public static DreamBlueprint compile(DreamPlan plan, int cell, Function<String, Optional<Fragment>> memories) {
+        if (plan.isTrial()) return dev.awaken.lucidium.trial.TrialCompiler.compile(plan, cell, memories);
         BlockPos center = Cells.center(cell, 0);
         DreamPalette palette = DreamPalette.of(plan.mood(), plan.hueShift());
         BlockState sprinkle = LucidiumContent.SHIFTING_STONE.get().defaultBlockState();
@@ -301,7 +303,7 @@ public final class BlueprintCompiler {
     }
 
     /** A door frame: posts either side, a lintel, and an open door in the middle (opening at {@code o}). */
-    static void frame(Map<Long, BlockState> out, BlockPos o, Direction facing, BlockState frame, Block door) {
+    public static void frame(Map<Long, BlockState> out, BlockPos o, Direction facing, BlockState frame, Block door) {
         Direction side = facing.getClockWise();
         for (int y = 0; y <= 3; y++) {
             out.put(o.relative(side).above(y).asLong(), frame);
@@ -326,7 +328,7 @@ public final class BlueprintCompiler {
     // ---- helpers ---------------------------------------------------------------------------------------------------
 
     /** A spot near {@code feet} with solid ground and two free blocks above it. */
-    static Vec3 findStanding(DreamBlueprint bp, BlockPos feet) {
+    public static Vec3 findStanding(DreamBlueprint bp, BlockPos feet) {
         for (int r = 0; r <= 7; r++) {
             for (int dx = -r; dx <= r; dx++) {
                 for (int dz = -r; dz <= r; dz++) {
@@ -349,7 +351,7 @@ public final class BlueprintCompiler {
         return s == null || (s.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty() && s.getFluidState().isEmpty());
     }
 
-    static float yawTowards(Vec3 from, BlockPos to) {
+    public static float yawTowards(Vec3 from, BlockPos to) {
         double dx = to.getX() + 0.5 - from.x, dz = to.getZ() + 0.5 - from.z;
         if (dx * dx + dz * dz < 0.01) return 0;
         return (float) Math.toDegrees(Math.atan2(-dx, dz));

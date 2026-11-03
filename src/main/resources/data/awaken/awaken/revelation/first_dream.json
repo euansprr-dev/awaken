@@ -1,5 +1,5 @@
 {
-  "trigger": "counter:awaken:dreams>=1",
+  "trigger": "counter:awaken:dreams_finished>=1",
   "title": "In",
-  "body": "That was your day, rearranged. The mind makes worlds out of whatever it touched. Look at your hands next time."
+  "body": "You went to sleep, knew you were dreaming, and made it to the end. A dream can give you things to keep. Another will come."
 }

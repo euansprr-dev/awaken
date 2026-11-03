@@ -78,6 +78,9 @@ public final class ActiveDream {
     private Fragment swapTarget;
     private int swapCursor;
     private long lastSwap;
+    // a trial (SPEC §9.3): how much of the course has laid itself, and whether the doorway has opened
+    int revealed;
+    boolean doorwayOpen;
 
     ActiveDream(DreamBlueprint bp, ServerLevel level, UUID host, long now) {
         this.bp = bp;

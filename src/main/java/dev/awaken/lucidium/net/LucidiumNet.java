@@ -4,6 +4,7 @@ import dev.awaken.Awaken;
 import dev.awaken.lucidium.dream.Dreams;
 import dev.awaken.lucidium.dream.JournalActions;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -11,9 +12,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 import java.util.List;
+import java.util.Optional;
 
 /** Lucidium payloads. Server to client: the HUD, the journal, Codex visions. Client to server: the H key and journal. */
 public final class LucidiumNet {
@@ -22,7 +25,8 @@ public final class LucidiumNet {
     /** The lucidity HUD while dreaming (sent when it changes, at most twice a second). */
     public record DreamHud(boolean dreaming, float lucidity, int ticksLeft, int total, int signs, int spotted, int flags,
                            int shadowless) implements CustomPacketPayload {
-        public static final int FLY = 1, SHAPE = 2, SUMMON = 4, NIGHTMARE = 8, RAIN_UP = 16, LUCID = 32;
+        /** TRIAL: a trial dream (SPEC §9.3), drawn by the trial's own HUD instead of the lucidity meter. */
+        public static final int FLY = 1, SHAPE = 2, SUMMON = 4, NIGHTMARE = 8, RAIN_UP = 16, LUCID = 32, TRIAL = 64;
         public static final DreamHud AWAKE = new DreamHud(false, 0, 0, 1, 0, 0, 0, -1);
         public static final Type<DreamHud> TYPE = new Type<>(Awaken.id("lucidium_hud"));
         public static final StreamCodec<ByteBuf, DreamHud> STREAM_CODEC = StreamCodec.composite(
@@ -34,6 +38,57 @@ public final class LucidiumNet {
         public boolean has(int flag) {
             return (flags & flag) != 0;
         }
+
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /**
+     * A trial dream begins (SPEC §9.3): its goal line and the small line under it, the rings and the true path in
+     * course order (the client draws them), where the goal stands, whether a bell waits there, and how many dreams came
+     * before (after three the arrival line is just "Press H.").
+     */
+    public record TrialStart(String goal, String sub, List<Vec3> rings, Vec3 end, boolean bell, List<Vec3> path, int dreams)
+            implements CustomPacketPayload {
+        public static final Type<TrialStart> TYPE = new Type<>(Awaken.id("lucidium_trial_start"));
+        public static final StreamCodec<ByteBuf, TrialStart> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(256), TrialStart::goal, ByteBufCodecs.stringUtf8(256), TrialStart::sub,
+                Vec3.STREAM_CODEC.apply(ByteBufCodecs.list(64)), TrialStart::rings, Vec3.STREAM_CODEC, TrialStart::end,
+                ByteBufCodecs.BOOL, TrialStart::bell, Vec3.STREAM_CODEC.apply(ByteBufCodecs.list(512)), TrialStart::path,
+                ByteBufCodecs.VAR_INT, TrialStart::dreams, TrialStart::new);
+
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /**
+     * The trial as it stands: phase (0 waiting for H, 1 in control, 2 won), ticks left on the clock and its length,
+     * the last ring passed, a line to flash ("" none: a dream sign's seconds, a catch, the prize), and whether the path
+     * just glinted. Sent when something changes and once a second.
+     */
+    public record TrialHud(int phase, int left, int total, int ring, String flash, boolean glint) implements CustomPacketPayload {
+        public static final Type<TrialHud> TYPE = new Type<>(Awaken.id("lucidium_trial_hud"));
+        public static final StreamCodec<ByteBuf, TrialHud> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, TrialHud::phase, ByteBufCodecs.VAR_INT, TrialHud::left, ByteBufCodecs.VAR_INT, TrialHud::total,
+                ByteBufCodecs.VAR_INT, TrialHud::ring, ByteBufCodecs.stringUtf8(256), TrialHud::flash, ByteBufCodecs.BOOL, TrialHud::glint,
+                TrialHud::new);
+
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /** Your bed while a dream waits for you (the client sheds a few pearl motes over it at night); empty: none waits. */
+    public record DreamWaiting(Optional<BlockPos> bed) implements CustomPacketPayload {
+        public static final DreamWaiting NONE = new DreamWaiting(Optional.empty());
+        public static final Type<DreamWaiting> TYPE = new Type<>(Awaken.id("lucidium_dream_waiting"));
+        public static final StreamCodec<ByteBuf, DreamWaiting> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.optional(BlockPos.STREAM_CODEC), DreamWaiting::bed, DreamWaiting::new);
+
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /** The pause screen's "Wake up" button in a dream. */
+    public record WakeUp() implements CustomPacketPayload {
+        public static final WakeUp INSTANCE = new WakeUp();
+        public static final Type<WakeUp> TYPE = new Type<>(Awaken.id("lucidium_wake_up"));
+        public static final StreamCodec<ByteBuf, WakeUp> STREAM_CODEC = StreamCodec.unit(INSTANCE);
 
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
@@ -112,6 +167,12 @@ public final class LucidiumNet {
         r.playToClient(DreamHud.TYPE, DreamHud.STREAM_CODEC);
         r.playToClient(OpenJournal.TYPE, OpenJournal.STREAM_CODEC);
         r.playToClient(CodexSync.TYPE, CodexSync.STREAM_CODEC);
+        r.playToClient(TrialStart.TYPE, TrialStart.STREAM_CODEC);
+        r.playToClient(TrialHud.TYPE, TrialHud.STREAM_CODEC);
+        r.playToClient(DreamWaiting.TYPE, DreamWaiting.STREAM_CODEC);
+        r.playToServer(WakeUp.TYPE, WakeUp.STREAM_CODEC, (p, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) wakeUp(sp);
+        });
         r.playToServer(RealityCheck.TYPE, RealityCheck.STREAM_CODEC, (p, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) realityCheck(sp);
         });
@@ -133,6 +194,14 @@ public final class LucidiumNet {
     public static boolean realityCheck(ServerPlayer sp) {
         if (!dev.awaken.core.Throttle.allow(sp, "reality_check", 10)) return false;
         Dreams.realityCheck(sp);
+        return true;
+    }
+
+    /** The Wake up button: at most once a second; only while dreaming. Returns whether it was handled. */
+    public static boolean wakeUp(ServerPlayer sp) {
+        if (!dev.awaken.core.Throttle.allow(sp, "dream_wake_up", 20)) return false;
+        if (!Dreams.isDreaming(sp)) return false;
+        Dreams.wake(sp, Dreams.Wake.CHOSE);
         return true;
     }
 

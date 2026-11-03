@@ -287,6 +287,11 @@ final class HundredPeal {
         }
 
         @Override
+        public String dreamBellNext(ServerPlayer player) {
+            return DreamBells.next(player);
+        }
+
+        @Override
         public int song(BlockPos anchor) {
             MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             BellWorld.Home h = server == null ? null : BellWorld.get(server).peek(anchor);

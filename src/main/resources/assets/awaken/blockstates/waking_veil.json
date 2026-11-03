@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "awaken:block/waking_veil",
+      "y": 90
+    },
+    "axis=z": {
+      "model": "awaken:block/waking_veil"
+    }
+  }
+}

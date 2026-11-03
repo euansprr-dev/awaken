@@ -45,5 +45,10 @@
   "subtitles.awaken.dream.manifest": "The dream reshapes",
   "subtitles.awaken.dream.nightmare": "A heartbeat in the dark",
   "subtitles.awaken.dream.door": "A door leads elsewhere",
-  "subtitles.awaken.dream.bell": "Dream Bell rings"
+  "subtitles.awaken.dream.bell": "Dream Bell rings",
+  "block.awaken.dream_road": "Dream Road",
+  "block.awaken.dream_wall": "Dream Wall",
+  "block.awaken.dream_ledge": "Dream Ledge",
+  "block.awaken.waking_door": "Waking Door",
+  "block.awaken.waking_veil": "Waking Light"
 }

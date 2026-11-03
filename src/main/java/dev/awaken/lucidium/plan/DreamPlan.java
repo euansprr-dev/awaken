@@ -14,9 +14,21 @@ import java.util.Optional;
  */
 public record DreamPlan(long seed, long day, String mood, int hueShift, List<Node> nodes, List<Edge> edges,
                         List<String> signs, Optional<String> nightmare, Optional<String> vision, String intention,
-                        int durationTicks, List<String> spares) {
+                        int durationTicks, List<String> spares, String trial, String trialRef) {
 
-    public static final int VERSION = 1;
+    /** 2: a dream is one trial ({@link #trial}, SPEC §9.1); a version-1 plan (no trial) still builds the old islands. */
+    public static final int VERSION = 2;
+
+    /** A version-1 plan: the island dream. */
+    public DreamPlan(long seed, long day, String mood, int hueShift, List<Node> nodes, List<Edge> edges, List<String> signs,
+                     Optional<String> nightmare, Optional<String> vision, String intention, int durationTicks, List<String> spares) {
+        this(seed, day, mood, hueShift, nodes, edges, signs, nightmare, vision, intention, durationTicks, spares, "", "");
+    }
+
+    /** Whether this is a trial (a version-2 dream). */
+    public boolean isTrial() {
+        return !trial.isEmpty();
+    }
 
     /** Node kinds. */
     public static final String MEMORY = "memory", IMAGINED = "imagined", NIGHTMARE = "nightmare", MENTOR = "mentor",
@@ -62,7 +74,9 @@ public record DreamPlan(long seed, long day, String mood, int hueShift, List<Nod
             Codec.STRING.optionalFieldOf("vision").forGetter(DreamPlan::vision),
             Codec.STRING.optionalFieldOf("intention", "").forGetter(DreamPlan::intention),
             Codec.INT.fieldOf("duration").forGetter(DreamPlan::durationTicks),
-            Codec.STRING.listOf().optionalFieldOf("spares", List.of()).forGetter(DreamPlan::spares)
+            Codec.STRING.listOf().optionalFieldOf("spares", List.of()).forGetter(DreamPlan::spares),
+            Codec.STRING.optionalFieldOf("trial", "").forGetter(DreamPlan::trial),
+            Codec.STRING.optionalFieldOf("trial_ref", "").forGetter(DreamPlan::trialRef)
     ).apply(i, DreamPlan::new));
 
     /** Snapshot ids this plan reads (memories, the vision and spares). */
@@ -75,6 +89,7 @@ public record DreamPlan(long seed, long day, String mood, int hueShift, List<Nod
 
     /** One line per node for /awaken dream plan and the journal. */
     public String summary() {
+        if (isTrial()) return "trial " + trial + (trialRef.isEmpty() ? "" : " (" + trialRef + ")") + ", mood " + mood;
         StringBuilder sb = new StringBuilder();
         int memories = 0;
         for (Node n : nodes) if (MEMORY.equals(n.kind)) memories++;

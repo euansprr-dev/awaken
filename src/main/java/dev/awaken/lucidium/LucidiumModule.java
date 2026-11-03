@@ -23,6 +23,13 @@ public final class LucidiumModule {
         DreamEvents.init(modBus);
         LucidiumCommands.register();
         dev.awaken.lucidium.dream.DreamLessons.register(); // the first lucid dream taught in play (level road flag)
+        dev.awaken.lucidium.dream.DreamOffers.registerGoals(); // "A dream is waiting" on the Tasks page
+        // the level road's "Lucid dreams" step: the first dream waits from that moment
+        dev.awaken.progression.LevelRoad.onFlag("awaken:dreams", p -> dev.awaken.lucidium.dream.DreamOffers.check(p));
+        dev.awaken.lucidium.dream.TrialTests.register();
+        dev.awaken.core.api.Sources.neverHeld("a trial dream's course (the road, its walls and ledges, the Waking Door and its light): "
+                + "only ever in a dream, unbreakable, drops nothing (lucidium.trial.CourseKit)",
+                "dream_road", "dream_wall", "dream_ledge", "waking_door", "waking_veil");
         LucidiumTests.register();
         dev.awaken.lucidium.dream.TogetherDreamTests.register();
     }

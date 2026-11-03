@@ -22,7 +22,8 @@ import java.util.Set;
  * Saved on the player (attachment {@code awaken:dreamer}), kept on death. Server side only.
  */
 public final class Dreamer implements ValueIOSerializable {
-    public static final int SCHEMA = 1;
+    /** 2: the dream ledger (SPEC §9.2). */
+    public static final int SCHEMA = 2;
     public static final int KEEP = 64;
     public static final int PER_DAY = 10;
     public static final int RECALL_CAP = 20;
@@ -63,6 +64,9 @@ public final class Dreamer implements ValueIOSerializable {
     public int dreams;
     public boolean lucidEver;
     public final Set<String> signsSeen = new LinkedHashSet<>();
+
+    // Dreams worth having: which wait, which you finished, what they gave
+    public final DreamLedger ledger = new DreamLedger();
 
     public Dreamer() {}
 
@@ -242,6 +246,15 @@ public final class Dreamer implements ValueIOSerializable {
         out.putInt("dreams", dreams);
         out.putBoolean("lucid_ever", lucidEver);
         out.store("signs_seen", Codec.STRING.listOf(), List.copyOf(signsSeen));
+        out.store("waiting", DreamLedger.WAITING, List.copyOf(ledger.waiting));
+        out.store("finished", DreamLedger.FINISHED, List.copyOf(ledger.finished.values()));
+        out.store("remembered", Codec.STRING.listOf(), List.copyOf(ledger.remembered));
+        out.store("given", Codec.STRING.listOf(), List.copyOf(ledger.given));
+        out.putLong("last_dream_day", ledger.lastDreamDay);
+        out.putLong("last_new_day", ledger.lastNewDay);
+        out.putString("choice", ledger.choice);
+        out.putLong("choice_day", ledger.choiceDay);
+        out.putBoolean("seeded", ledger.seeded);
     }
 
     @Override
@@ -286,5 +299,13 @@ public final class Dreamer implements ValueIOSerializable {
         lucidEver = in.getBooleanOr("lucid_ever", false);
         signsSeen.clear();
         in.read("signs_seen", Codec.STRING.listOf()).ifPresent(signsSeen::addAll);
+        // schema 1 saves have no ledger: an old world is seeded at its first login since (DreamOffers.seed)
+        ledger.read(in.read("waiting", DreamLedger.WAITING).orElse(List.of()), in.read("finished", DreamLedger.FINISHED).orElse(List.of()),
+                in.read("remembered", Codec.STRING.listOf()).orElse(List.of()), in.read("given", Codec.STRING.listOf()).orElse(List.of()));
+        ledger.lastDreamDay = in.getLongOr("last_dream_day", Long.MIN_VALUE / 2);
+        ledger.lastNewDay = in.getLongOr("last_new_day", Long.MIN_VALUE / 2);
+        ledger.choice = in.getStringOr("choice", "");
+        ledger.choiceDay = in.getLongOr("choice_day", -1);
+        ledger.seeded = in.getBooleanOr("seeded", false);
     }
 }

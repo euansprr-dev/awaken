@@ -46,6 +46,25 @@ public final class DreamState implements ValueIOSerializable {
     public boolean doorFound;
     public long lastDoor = -100000;
 
+    // a trial (SPEC §9.3); not saved, as a login mid-dream always wakes you
+    public String trial = "";
+    /** 0 arrived (the dream waits for H), 1 in control, 2 won (the prize playing). */
+    public int phase;
+    public long lucidAt;
+    public long clockEnd;
+    public int clockTotal;
+    /** Seconds the lucidity you brought adds to the clock. */
+    public int bonus;
+    /** The last ring passed (0: the start). */
+    public int ring;
+    public int catches;
+    public long wonAt;
+    /** Your time from taking control to the goal, in ticks. */
+    public int wonTicks;
+    public long lastGlint = -100000;
+    /** When you first went out through the doorway (a Run's time counts from here), 0 before. */
+    public long runStart;
+
     public void reset() {
         DreamState fresh = new DreamState();
         copyFrom(fresh);
@@ -59,6 +78,8 @@ public final class DreamState implements ValueIOSerializable {
         masteryShown = o.masteryShown; lastManifest = o.lastManifest; lastRealityCheck = o.lastRealityCheck;
         realityChecks = o.realityChecks; powerBaseline = o.powerBaseline; xpGranted = o.xpGranted; summoned = o.summoned;
         doorFound = o.doorFound; lastDoor = o.lastDoor;
+        trial = o.trial; phase = o.phase; lucidAt = o.lucidAt; clockEnd = o.clockEnd; clockTotal = o.clockTotal; bonus = o.bonus;
+        ring = o.ring; catches = o.catches; wonAt = o.wonAt; wonTicks = o.wonTicks; lastGlint = o.lastGlint; runStart = o.runStart;
     }
 
     @Override
