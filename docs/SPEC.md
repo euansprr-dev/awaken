@@ -11517,6 +11517,25 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   registered, every `life` entry (a recipe's and its moods') is a known kind; `gateworlds_live` also checks that a bell
   hums over you and that a hung bell near you shows as a prop and swings when rung; `gateworlds_sets` that the hours toll
   right and that the fifth Bell Crypt keepsake brings the Bell Tower.
+- **No static** (Euan's playtest 2026-11-03: "really loud static noise in gate that is horrible"; rule set the same day).
+  Every gate floor and mood is measured the way the game mixes it: its biome loop, the world's bed again under it
+  (`WorldBed`, 0.55) and its additions rolled at their tick chance. The yardstick is vanilla rain (`weather.rain` at
+  0.2), the steady hiss every player already accepts. Static is a moment's 2-8 kHz level plus how noise-like that moment
+  is. The loudest tenth of a place's moments must stay within 9 dB of that rain (-45, so -36 on
+  `tools/art/gate_world_mix.py`, which exits 1 on a breach and writes the mixes with `--out`). A crack or a pop now and
+  then passes. A bed of hiss fails, and so do noisy one-shots that sound a tenth of the time. The fix was made at the
+  source, not by turning things down:
+  rain is single drops (a tiny rising bubble and the tap of the hit, about 45 ms) over a low wash, nothing above 2.6-3
+  kHz (`rains`, the Upward Rain's bed); steam is a short puff whose pitch falls as the pressure goes, under 3 kHz
+  (`valve`, `overdrive`); the blizzard's and sandstorm's wind stop under 1.6 kHz and the sand is fine grains, not hiss;
+  the page storm has fewer pages with their top taken off; the mirror's whisper is a low breath; the temple courts' and
+  falls' beds are heard from inside (rustle under 2 kHz, the falls' roar under 2.4 kHz). Rates came down where a mood
+  piled one-shots up: the Bell Crypt's tolling `toll` 0.02 to 0.006, the temple's monsoon `rains` 0.01 to 0.004, the
+  foundry's steam `valve` 0.01 to 0.003 (the Pipe Maze's own 0.004 to 0.002), the market's rain `rains` 0.006 to 0.004,
+  the paper storm's `pages` 0.01 to 0.005. Before: 38 of the 299 gate places over the limit, the same in the 30 Oct build
+  and the 3 Nov one; after: none. Worst were the foundry's four steam moods (12 to 14 dB over), the temple's four
+  monsoon moods (9 to 11), the market's four rain moods (7 to 10), then the mirror's doubled steps, overdrive,
+  blizzards, paper storms, sandstorms and the Upward Rain (3 to 8), and the temple's own beds right at it.
 
 ### 38.10 The cave themes: Fungal Hollow, Ember Mines, Hive, Overgrown Temple (Stage 2)
 

@@ -126,11 +126,12 @@ def page(v):
 def pages(v):
     """The page storm: a gust through the stacks, and every loose page in it flapping past."""
     n = K.ns(5.0)
-    g = wind(n, 21 + v, 3200, 0.6) * K.swell(n, 0.4, 1.5)
+    g = wind(n, 21 + v, 1800, 0.6) * K.swell(n, 0.4, 1.5)
     x = g * 0.7
-    l, r = scatter(n, 23 + v, flutter, 14, 0.4)
-    pl, pr = scatter(n, 25 + v, pages_pick, 18, 0.35)
-    return wet(x + (l + r) * 0.5 + (pl + pr) * 0.5, "shaft", 0.3)
+    l, r = scatter(n, 23 + v, flutter, 8, 0.4)
+    pl, pr = scatter(n, 25 + v, pages_pick, 10, 0.35)
+    # the pages flap rather than hiss (SPEC 38.9, "No static"): fewer of them, their top taken off
+    return wet(x + K.lowpass((l + r) * 0.5 + (pl + pr) * 0.5, 3000, 2), "shaft", 0.3)
 
 
 def tide(v):
@@ -156,13 +157,27 @@ def bookworm(v):
     return wet(x, "shaft", 0.4)
 
 
+def steam(seed, seconds=1.4):
+    """A puff of steam out of a joint (SPEC 38.9, "No static"): a short jet whose pitch falls as the pressure goes
+    (2.4 kHz down to 900 Hz), a faint pipe whistle in it and a low breath after; nothing above 3 kHz, never a hiss."""
+    r = K.rng(seed)
+    n = K.ns(seconds)
+    t = np.arange(n) / K.SR
+    jet = K.stft_filter(K.noise(n, "pink", seed), lambda tc, f: K.bp_resp(2400 * (900 / 2400) ** min(1, tc / seconds), 0.8)(f))
+    env = (1 - np.exp(-t / 0.02)) * np.exp(-t / 0.35)
+    whistle = K.sine(K.glide(n, r.uniform(1050, 1250), r.uniform(800, 900)), n) * env * 0.08
+    breath = K.lowpass(K.noise(n, "pink", seed + 1), 600, 2) * K.swell(n, 0.35, 1.5)
+    x = norm(jet) * env + whistle + norm(breath) * 0.25
+    return K.lowpass(x, 3000, 2)
+
+
 def valve(v):
-    """The old valve turned: a stiff wheel squeaking round, then steam hissing out of the joint."""
-    n = K.ns(3.0)
+    """The old valve turned: a stiff wheel squeaking round, then a puff of steam out of the joint."""
+    n = K.ns(2.4)
     x = at(n, 0, trim(rate(clip("impact-sounds", ("impactMetal_light_001", "impactMetal_light_004")[v]), 0.75), 0, None, 0.2), 0.6)
     sq = K.sine(K.glide(K.ns(0.5), 1300, 1700), K.ns(0.5)) * K.swell(K.ns(0.5), 0.3, 1.3)
     x += at(n, 0.05, K.bandpass(sq, 1500, 2) * 0.25, 1.0)
-    x += at(n, 0.45, trim(ours(HISSES[v]), 0, 2.4, 0.8), 0.8)
+    x += at(n, 0.45, steam(171 + v), 0.45)
     return wet(x, "crypt", 0.25)
 
 
@@ -178,7 +193,7 @@ def overdrive(v):
         t += p
         p = max(0.12, p * 0.82)
     x += ticks(n, 0.25, 41 + v, 2200, 0.0, 0.25, 0.93)
-    x += at(n, 3.8, trim(ours(HISSES[2]), 0, 2.0, 0.6), 0.6)
+    x += at(n, 3.6, steam(187 + v, 1.8), 0.5)  # a burst of steam, not hiss (SPEC 38.9, "No static")
     return wet(x, "shaft", 0.3)
 
 
@@ -214,12 +229,13 @@ def chime(v):
 
 
 def sandstorm(v):
-    """A sandstorm blowing in: the wind rising to a howl, sand hissing along the ground and against stone."""
+    """A sandstorm blowing in: the wind rising to a howl, sand pattering along the ground and against stone. The sand is
+    grains, not hiss (SPEC 38.9, "No static"): fine ticks thickening in the gusts, under 3.5 kHz."""
     n = K.ns(7.0)
-    w = wind(n, 81 + v, 3000, 0.5) * K.swell(n, 0.55, 1.2)
+    w = wind(n, 81 + v, 1600, 0.5) * K.swell(n, 0.55, 1.2)
     howl = K.bandpass(K.noise(n, "pink", 83 + v), 520, 3.0) * K.swell(n, 0.6, 1.6)
-    x = w * 0.7 + norm(howl) * 0.3 + sand(n, 85 + v, 0.35) * K.swell(n, 0.6, 1.0)
-    return x
+    grains = norm(K.lowpass(K.crackle(n, 600, 85 + v, 0.3, 0.4), 3500, 2)) * 0.18
+    return w * 0.7 + norm(howl) * 0.3 + grains * K.swell(n, 0.6, 1.0)
 
 
 def shimmer(v):
@@ -472,7 +488,7 @@ SPEC = [
     ("pages", pages, 1, -21.0, "gate.world.pages", "Pages fly in a gust", 48),
     ("tide", tide, 1, -21.0, "gate.world.tide", "The tide comes in", 48),
     ("bookworm", bookworm, 1, -19.0, "gate.world.bookworm", "Something huge rises out of the ink", 64),
-    ("valve", valve, 2, -21.0, "gate.world.valve", "A valve turns and steam hisses", 16),
+    ("valve", valve, 2, -23.0, "gate.world.valve", "A valve turns and steam hisses", 16),
     ("overdrive", overdrive, 1, -20.0, "gate.world.overdrive", "The machines speed up", 48),
     ("powercut", powercut, 1, -21.0, "gate.world.powercut", "The power goes out", 48),
     ("clockwork", clockwork, 1, -20.0, "gate.world.clockwork", "Every clock starts at once", 64),

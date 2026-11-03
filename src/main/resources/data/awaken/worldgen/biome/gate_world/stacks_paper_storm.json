@@ -54,7 +54,7 @@
       },
       "additions": {
         "sound": "awaken:gate.world.pages",
-        "tick_chance": 0.01
+        "tick_chance": 0.005
       }
     },
     "minecraft:audio/background_music": {
