@@ -93,13 +93,17 @@ public final class LucidiumNet {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
-    /** Opens the Dream Journal screen. */
-    public record OpenJournal(String intention, boolean canRecall, int recall, List<String> dreams, List<String> snapshots)
-            implements CustomPacketPayload {
+    /**
+     * Opens the Dream Journal screen: tonight's intention, whether a dream waits, the seconds your finished dreams give
+     * every dream, each finished dream ("title|best · medal · times"), the latest dreams and remembered places.
+     */
+    public record OpenJournal(String intention, boolean waiting, int seconds, List<String> finished, List<String> dreams,
+                              List<String> snapshots) implements CustomPacketPayload {
         public static final Type<OpenJournal> TYPE = new Type<>(Awaken.id("lucidium_journal"));
         public static final StreamCodec<ByteBuf, OpenJournal> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.STRING_UTF8, OpenJournal::intention, ByteBufCodecs.BOOL, OpenJournal::canRecall,
-                ByteBufCodecs.VAR_INT, OpenJournal::recall,
+                ByteBufCodecs.STRING_UTF8, OpenJournal::intention, ByteBufCodecs.BOOL, OpenJournal::waiting,
+                ByteBufCodecs.VAR_INT, OpenJournal::seconds,
+                ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(32)), OpenJournal::finished,
                 ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(32)), OpenJournal::dreams,
                 ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(80)), OpenJournal::snapshots, OpenJournal::new);
 
@@ -149,7 +153,7 @@ public final class LucidiumNet {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
-    /** A Dream Journal button: kind "intent" (arg = intention id or "") or "recall". */
+    /** A Dream Journal button: kind "intent" (arg = intention id or ""). */
     public record JournalAction(String kind, String arg) implements CustomPacketPayload {
         public static final Type<JournalAction> TYPE = new Type<>(Awaken.id("lucidium_journal_action"));
         public static final StreamCodec<ByteBuf, JournalAction> STREAM_CODEC = StreamCodec.composite(

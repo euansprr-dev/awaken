@@ -401,7 +401,7 @@ the old path is gone by the same delivery, so a flag would only guard a dream no
 
 ### 9.1 Trials
 
-`trial.Trial`: FIRST (the Dreaming Bell's dream, 60 s), Runs WALL, LEDGE, VAULT (built), CLIMB, ROPE, LEAP, WINGS (stage 2
+`trial.Trial`: FIRST (the Dreaming Bell's dream, 75 s), Runs WALL, LEDGE, VAULT (built), CLIMB, ROPE, LEAP, WINGS (stage 2
 and 4), Rooms WRONG, LOOK_AWAY, HUSH, LONG_FALL, FOLD, NO_DOOR (180 s, stage 3), CHASE (120 s), DUEL (150 s). Each has one
 goal line and a small line under it. A Run's course is laid by `trial.CourseKit` from RunnerRules' own probes (read only,
 §12): every wall-run, wall jump, ledge hang and shimmy, vault and slide is proved by the same checks the movement makes,
@@ -443,6 +443,10 @@ bed sheds a few pearl motes at night (client, `DreamWaiting` payload).
   `awaken:dreams_finished` (`first_dream` revelation fires on it). The Dreaming Bell's dream holds the bell at the end
   ("Take the bell first. It's just behind you."): `DreamBells` lets the lucidium place it (`Lucidium.dreamBell`) and
   `Lucidium.bellTaken` finishes the dream; no lucidity gate on that bell.
+- **The Dream Journal writes itself**: "Write down the dream" and its two-minute window are gone. It shows whether a
+  dream waits, each finished dream (best time, medal, times), the latest dreams and the places remembered. Recall in a
+  trial is two entries per finished dream (a second each on the clock, cap 10 s), or an old save's written Recall if
+  more.
 - **Payloads**: `TrialStart` (goal, sub, rings, end, bell, path, dreams so far), `TrialHud` (phase, ticks left, total,
   ring, a line to flash, glint) once a second and on change, `DreamWaiting` (your bed or none), `WakeUp` (C→S); the
   dream HUD's `TRIAL` flag hides the meter. Look: `TrialHud` (crescent clock, rose in the last 10 s), `TrialRings` (own

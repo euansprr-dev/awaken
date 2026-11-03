@@ -170,7 +170,7 @@ public final class Dreams {
         boolean intention = !d.intention(day).isEmpty();
         boolean trial = Trials.is(ad);
         // in a trial the recall bonus is a second for each dream finished, up to 10 (old saves keep what they wrote)
-        int recall = trial ? Math.max(d.recall, 2 * d.ledger.finished.size()) : d.recall;
+        int recall = trial ? Trials.recall(d) : d.recall;
         st.lucidity = Lucidity.start(intention, entry.wbtb(), recall, Progression.perk(sp, Perks.LUCIDITY_START));
         st.peak = st.lucidity;
         if (entry.wbtb()) d.wbtbUntil = 0;

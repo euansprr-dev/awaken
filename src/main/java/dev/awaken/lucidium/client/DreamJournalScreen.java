@@ -12,8 +12,8 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import java.util.List;
 
 /**
- * The Dream Journal: choose tonight's intention, write down the dream you just woke from, and read back your dreams
- * and the places the Day Journal remembered.
+ * The Dream Journal: choose tonight's intention, see whether a dream waits, and read back what the journal wrote by
+ * itself: the dreams you finished (best time, medal), the latest dreams, the places the Day Journal remembered.
  */
 public final class DreamJournalScreen extends Screen {
     private static final int PAPER = 0xF2E8D8, INK = 0x3A2A4A, FADED = 0x8A7898, ROSE = 0xB0558F, SIGNAL = 0x3C86CC, COVER = 0x4A2357;
@@ -71,23 +71,34 @@ public final class DreamJournalScreen extends Screen {
         }
         int ry = py + ph - 62;
         g.fill(lx, ry - 6, lx + colW, ry - 5, LucidityHud.a(0xD8C8B4, 1f));
-        if (data.canRecall()) {
-            boolean hover = inside(mouseX, mouseY, lx, ry, colW, 18);
-            button(g, Component.translatable("screen.awaken.dream_journal.recall").getString(), lx, ry, colW, 18, false, hover, SIGNAL);
-        } else {
-            List<FormattedCharSequence> lines = font.split(Component.translatable("screen.awaken.dream_journal.recall_none"), colW);
-            int yy = ry;
-            for (FormattedCharSequence l : lines) {
-                g.text(font, l, lx, yy, LucidityHud.a(FADED, 1f), false);
-                yy += 9;
-            }
+        g.text(font, Component.translatable(data.waiting() ? "screen.awaken.dream_journal.waiting" : "screen.awaken.dream_journal.waiting_none"),
+                lx, ry, LucidityHud.a(data.waiting() ? ROSE : FADED, 1f), false);
+        int yy = ry + 13;
+        Component seconds = data.seconds() > 1 ? Component.translatable("screen.awaken.dream_journal.seconds", data.seconds())
+                : Component.translatable(data.seconds() == 1 ? "screen.awaken.dream_journal.seconds_one" : "screen.awaken.dream_journal.seconds_none");
+        for (FormattedCharSequence l : font.split(seconds, colW)) {
+            g.text(font, l, lx, yy, LucidityHud.a(data.seconds() > 0 ? SIGNAL : FADED, 1f), false);
+            yy += 9;
         }
-        g.text(font, Component.translatable("screen.awaken.dream_journal.recall_count", data.recall()), lx, py + ph - 18,
-                LucidityHud.a(SIGNAL, 1f), false);
 
-        // right page: dreams, then remembered places
+        // right page: the dreams you finished, the latest dreams, then remembered places
         g.enableScissor(rx - 2, py + 6, rx + colW + 4, py + ph - 6);
         int y = py + 10 - scroll;
+        if (!data.finished().isEmpty()) {
+            g.text(font, Component.translatable("screen.awaken.dream_journal.finished"), rx, y, LucidityHud.a(ROSE, 1f), false);
+            y += 13;
+            for (String entry : data.finished()) {
+                String[] parts = entry.split("\\|", 2);
+                g.text(font, parts[0], rx, y, LucidityHud.a(INK, 1f), false);
+                y += 10;
+                if (parts.length > 1) {
+                    g.text(font, parts[1], rx + 4, y, LucidityHud.a(medalColour(parts[1]), 1f), false);
+                    y += 10;
+                }
+                y += 3;
+            }
+            y += 6;
+        }
         g.text(font, Component.translatable("screen.awaken.dream_journal.dreams"), rx, y, LucidityHud.a(ROSE, 1f), false);
         y += 13;
         if (data.dreams().isEmpty()) {
@@ -123,6 +134,14 @@ public final class DreamJournalScreen extends Screen {
 
     private int maxScroll;
 
+    /** The medal's own ink: gold, silver, bronze (else faded). */
+    private static int medalColour(String line) {
+        if (line.contains("Gold")) return 0xB8862A;
+        if (line.contains("Silver")) return 0x7C8590;
+        if (line.contains("Bronze")) return 0x9A5E36;
+        return FADED;
+    }
+
     private void button(GuiGraphicsExtractor g, String label, int x, int y, int w, int h, boolean on, boolean hover, int accent) {
         g.fill(x, y, x + w, y + h, LucidityHud.a(accent, on ? 0.30f : hover ? 0.16f : 0.06f));
         g.outline(x, y, w, h, LucidityHud.a(accent, on || hover ? 0.95f : 0.45f));
@@ -149,10 +168,6 @@ public final class DreamJournalScreen extends Screen {
         }
         if (!data.intention().isEmpty() && inside(mx, my, lx, by, colW, 14)) {
             ClientPacketDistributor.sendToServer(new LucidiumNet.JournalAction("intent", ""));
-            return true;
-        }
-        if (data.canRecall() && inside(mx, my, lx, py + ph - 62, colW, 18)) {
-            ClientPacketDistributor.sendToServer(new LucidiumNet.JournalAction("recall", ""));
             return true;
         }
         return super.mouseClicked(event, doubleClick);

@@ -323,6 +323,11 @@ final class Trials {
     // ---- medals ------------------------------------------------------------------------------------------------------
 
     /** A Run's medal by the Gauntlet's rule: gold within par x 1.1 + 1 s, silver within par x 1.5 + 2 s, else bronze. */
+    /** Recall entries in a trial: two for each dream finished (a second each), or what an old save wrote, if more. */
+    static int recall(Dreamer d) {
+        return Math.max(d.recall, 2 * d.ledger.finished.size());
+    }
+
     static int medal(Course c, int ticks) {
         if (!c.trial().run() || c.par() <= 0) return 0;
         if (ticks <= c.par() * 1.1 + 20) return DreamLedger.GOLD;

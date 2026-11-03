@@ -221,6 +221,7 @@ public final class TrialTests {
                     h.assertTrue(Progression.profile(sp).counter(Trials.FINISHED) == finished + 1, "a dream finished counted");
                     h.assertTrue(sp.getInventory().countItem(LucidiumContent.DREAM_RESIDUE.get()) >= Trials.RESIDUE, "the residue came with you");
                     h.assertTrue(d.history.getLast().summary().contains("reached the end"), "the journal wrote your time");
+                    h.assertTrue(Trials.recall(d) >= 2, "a finished dream is a second more in every dream after it");
                     done(h, sp);
                 })
                 .thenSucceed();
