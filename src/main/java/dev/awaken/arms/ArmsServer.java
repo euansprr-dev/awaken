@@ -131,6 +131,7 @@ final class ArmsServer {
         long now = now(p);
         Archetypes.Loaded style = Arms.styleOf(p.getMainHandItem());
         if (style == null) return;
+        FilmLog.server("press " + msg.what() + " seq " + msg.seq() + " tick " + now);
         switch (msg.what()) {
             case ArmsPayloads.PRESS_STRIKE -> {
                 s.seq = msg.seq();
@@ -260,8 +261,10 @@ final class ArmsServer {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
         // a chain strike begun by a press still down waits at its hit for the press's end: a tap lands it, a hold
-        // becomes the charge instead (the swing starts at once either way: a tap is never late)
-        s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq;
+        // becomes the charge instead (the swing starts at once either way: a tap is never late); a dagger's lands as it
+        // comes, and the hold charges after it (ArmsRules.waitsOnHold)
+        s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq && ArmsRules.waitsOnHold(style.id());
+        FilmLog.server("begin " + move.key + " step " + step + " seq " + seq + " tick " + now + (s.waitHit ? " waits" : ""));
         s.swishAt = 0;
         s.drawn = ArmsRules.drawn(style.def().traits(), move, now - s.moveEnd);
         s.style = style;
@@ -359,6 +362,7 @@ final class ArmsServer {
                 return;
             }
             s.waitHit = false;
+            FilmLog.server("wait over " + s.move.key + " tick " + now);
             if (s.waitSeen) shown(p, s);
         }
         if (s.swishAt != 0 && now >= s.swishAt) {
@@ -394,6 +398,7 @@ final class ArmsServer {
             // the one rule the client's prediction asks too (ArmsRules.sweeps; SPEC §47.1)
             if (!ArmsRules.sweeps(eye, p.getY(), t.getBoundingBox(), yaw, def.arc(), meant ? meantReach : reach, aimed, meant)) continue;
             s.markHit(t.getId());
+            FilmLog.server("hit " + s.move.key + " rel " + (now - s.moveStart) + " tick " + now);
             hit(p, s, def, t, now);
         }
         // what isn't alive but takes a blow, as vanilla's attack strikes it (Euan 2026-10-26: "rifts can only be broken

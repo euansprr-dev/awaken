@@ -1,0 +1,127 @@
+# The War Anvil, stage 3 (SPEC §46.8): a weapon held to the anvil. The stage 1 smithy at y 200, level 13 and D-rank,
+# creative (no materials), the songs played by autoplay. The window for a Marked Beastbound Longsword with Frostspar in
+# the off hand; Temper (one heat, a strike, the quench: the card says Temper I, the Forge has no Hearth behind it);
+# Attune to Frost (the heat, then the stone set in the guard while the steel glows ice blue); Reforge a Marked Wildhide
+# Daggers to D (the D-rank song, the card "Reforged by"); a Lord-forged Hive Regent's Daggers reforged in its accent glow;
+# the Weapons tab's optional Temper and Reforge steps.
+# ci knobs: LENS=cinematic
+world waranvil3 creative 4345
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+cmd awaken admin levels 12
+cmd awaken admin rankup
+# the smithy's chunks first: a busy runner's server can fall seconds behind the script (fills there fail unloaded)
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd fill -6 201 9 6 205 9 minecraft:spruce_planks
+cmd fill -6 201 -3 -6 205 9 minecraft:spruce_planks
+cmd fill 6 201 -3 6 205 9 minecraft:spruce_planks
+cmd fill -6 206 -3 6 206 9 minecraft:dark_oak_planks
+cmd setblock -3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 0 205 2 minecraft:lantern[hanging=true]
+cmd setblock 0 205 7 minecraft:lantern[hanging=true]
+cmd setblock 0 201 4 awaken:war_anvil[facing=north]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+wait 20
+cmd awaken arms anvil autoplay true
+camera first
+hud on
+# the window: a Marked longsword in hand, Frostspar in the off hand
+cmd tp @s 0.5 201 3.25 0 35
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword[awaken:arms={marks:["bite"]}]
+cmd item replace entity @s weapon.offhand with awaken:frostspar
+wait 30
+use
+wait 30
+shot held_window
+screen close
+wait 10
+# Temper: the heat (pulled in the gold at 78 ticks), one strike, the quench, the card
+cmd awaken arms anvil held temper
+wait 60
+shotnow temper_heat
+wait 60
+shotnow temper_strike
+wait 50
+shotnow temper_quench
+wait 60
+shotnow temper_card
+wait 60
+shot temper_after
+screen close
+wait 20
+# Attune to Frost: the heat, then three taps set the stone in the guard while it glows
+cmd tp @s 0.5 201 3.25 0 35
+cmd item replace entity @s weapon.offhand with awaken:frostspar
+cmd awaken arms anvil held attune
+wait 70
+shotnow attune_heat
+wait 25
+shotnow attune_glow
+wait 15
+shotnow attune_stone
+wait 15
+shotnow attune_set
+wait 40
+shotnow attune_card
+wait 60
+shot attune_after
+screen close
+cmd item replace entity @s weapon.offhand with air
+wait 20
+# Reforge a Marked Wildhide Daggers to D: the D-rank song, then the card
+cmd tp @s 0.5 201 3.25 0 35
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_daggers[awaken:arms={marks:["bite"]}]
+wait 10
+cmd awaken arms anvil held reforge
+wait 150
+shotnow reforge_strikes
+wait 80
+shotnow reforge_flip
+wait 200
+shotnow reforge_card
+wait 80
+shot reforge_after
+screen close
+wait 20
+# a Lord-forged weapon keeps its own form and glows its accent while it's worked
+cmd tp @s 0.5 201 3.25 0 35
+cmd item replace entity @s weapon.mainhand with awaken:hive_regent_daggers
+wait 10
+cmd awaken arms anvil held reforge
+wait 70
+shotnow lord_heat
+wait 80
+shotnow lord_strikes
+wait 260
+shotnow lord_card
+wait 80
+shot lord_after
+screen close
+wait 20
+# the Weapons tab: Temper the best you carry, Reforge a found one below your tier
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+cmd item replace entity @s hotbar.1 with awaken:wildhide_axe[awaken:arms={marks:["weight"]}]
+wait 60
+screen holo tasks
+tasks weapons
+wait 30
+shot held_tasks
+screen close
+quit

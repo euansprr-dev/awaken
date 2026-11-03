@@ -30,7 +30,7 @@ final class WeaponMeshes {
         WeaponPipelines.recheck();
     }
 
-    private static final String[] TOOLS = {"hammer", "tongs"};
+    private static final String[] TOOLS = {"hammer", "tongs", "stone_hammer"};
 
     private static void load(ResourceManager manager, String id, Identifier file) {
         var res = manager.getResource(file);

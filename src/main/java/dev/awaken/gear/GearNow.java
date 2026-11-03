@@ -78,7 +78,8 @@ final class GearNow {
         Item best = null;
         int bestTier = -1;
         for (Piece piece : ORDER) {
-            if (piece.isArmour()) continue; // forged at a Fitting Stand: the armour module's line says so (SPEC §44.4)
+            // forged at a Fitting Stand or a War Anvil: the armour's and the arms' own lines say so (SPEC §44.4, §46.7)
+            if (piece.isArmour() || piece == Piece.BLADE) continue;
             int t = owned[piece.ordinal()] + 1;
             if (t >= HunterTier.values().length || t <= bestTier) continue;
             HunterTier tier = HunterTier.values()[t];

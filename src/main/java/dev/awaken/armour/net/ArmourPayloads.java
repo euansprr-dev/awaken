@@ -44,7 +44,7 @@ public final class ArmourPayloads {
 
     /** {@link Offer#flags}: you can make it now; you can forge it from memory; you have made this set whole before; you
      * haven't found the set's pattern yet (the list shows it, and where patterns come from). */
-    public static final int CAN = 1, FROM_MEMORY = 2, KNOWN_WHOLE = 4, NO_PATTERN = 8;
+    public static final int CAN = 1, FROM_MEMORY = 2, KNOWN_WHOLE = 4, NO_PATTERN = 8, OWNED = 16;
 
     /** A piece the stand offers: set ordinal × 4 + slot, what it takes, and flags. */
     public record Offer(int piece, List<Need> needs, int flags) {

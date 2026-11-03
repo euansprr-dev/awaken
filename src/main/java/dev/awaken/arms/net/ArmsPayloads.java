@@ -113,7 +113,7 @@ public final class ArmsPayloads {
                 ByteBufCodecs.VAR_INT, StyleEntry::price, ByteBufCodecs.BOOL, StyleEntry::afford, StyleEntry::new);
     }
 
-    /** Server → the fighter: the Armoury's list (door 0 the band, 1 Hale's rack, 2 the Forge), their essence, how many styles aren't shown yet and at which rank Hale shows more, and the tracked weapon ("daggers:E" or ""). */
+    /** Server → the fighter: the Armoury's list (door 0 the band, 1 Hale's rack, 2 the Forge, 3 a War Anvil), their essence, how many styles aren't shown yet and at which rank Hale shows more, and the tracked weapon ("daggers:E" or ""). */
     public record ArmouryView(int door, int essence, java.util.List<StyleEntry> styles, int hidden, String hiddenRank, String tracked, boolean open,
                               String raise, java.util.List<String> finds)
             implements CustomPacketPayload {
@@ -141,13 +141,18 @@ public final class ArmsPayloads {
                 ByteBufCodecs.VAR_INT, NeedRow::need, ByteBufCodecs.VAR_INT, NeedRow::have, NeedRow::new);
     }
 
-    /** Server → the fighter: one style's tiers and what the chosen tier needs (have against need). */
-    public record ArmouryDetail(String style, String tier, java.util.List<TierRow> tiers, java.util.List<NeedRow> needs) implements CustomPacketPayload {
+    /**
+     * Server → the fighter: one style's tiers and what the chosen tier needs (have against need); at a War Anvil's door its
+     * buttons (WarAnvil.Status flags, 0 elsewhere) and one plain line for what stands in the way.
+     */
+    public record ArmouryDetail(String style, String tier, java.util.List<TierRow> tiers, java.util.List<NeedRow> needs, int anvil, String block)
+            implements CustomPacketPayload {
         public static final Type<ArmouryDetail> TYPE = new Type<>(Awaken.id("arms_armoury_detail"));
         public static final StreamCodec<ByteBuf, ArmouryDetail> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.STRING_UTF8, ArmouryDetail::style, ByteBufCodecs.STRING_UTF8, ArmouryDetail::tier,
                 TierRow.STREAM_CODEC.apply(ByteBufCodecs.list(8)), ArmouryDetail::tiers,
-                NeedRow.STREAM_CODEC.apply(ByteBufCodecs.list(16)), ArmouryDetail::needs, ArmouryDetail::new);
+                NeedRow.STREAM_CODEC.apply(ByteBufCodecs.list(16)), ArmouryDetail::needs,
+                ByteBufCodecs.VAR_INT, ArmouryDetail::anvil, ByteBufCodecs.STRING_UTF8, ArmouryDetail::block, ArmouryDetail::new);
         @Override public Type<ArmouryDetail> type() { return TYPE; }
     }
 

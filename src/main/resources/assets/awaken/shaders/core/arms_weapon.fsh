@@ -4,6 +4,8 @@
 // Arms' weapon shader (SPEC §24 "Weapons"), mirrored line for line by tools/art/mesh_render.py shade(): keep in step.
 // Sampler0 holds the weapon's albedo (left half, where the uvs point) beside its material map (right half):
 // r metal, g gloss, b emissive, a flow (0 still; else the phase a glow pulses at, so runes light in turn).
+// A forged flaw and what the rank's acts left (script.z: the flaw in its low two bits, 4 the twist's ripples, 8 the
+// runes woken; SPEC §46.7, §46.9) are drawn here only: mesh_render.py renders weapons as they come, unforged.
 
 #include <minecraft:globals.glsl>
 #include <minecraft:fog.glsl>
@@ -20,7 +22,7 @@ layout(location = 4) in vec2 texCoord0;
 layout(location = 5) in vec3 worldNormal;
 layout(location = 6) in vec3 viewNormal;
 layout(location = 7) flat in vec4 state;
-layout(location = 8) flat in vec2 script;
+layout(location = 8) flat in vec3 script;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -35,6 +37,10 @@ const float TAU = 6.2831853;
 const vec3 SCRIPT[13] = vec3[](vec3(0.0), vec3(1.0, 0.54, 0.30), vec3(0.56, 0.85, 1.0), vec3(1.0, 0.85, 0.29),
         vec3(0.73, 0.58, 1.0), vec3(0.31, 0.88, 0.76), vec3(0.73, 0.76, 0.82), vec3(0.62, 0.88, 0.48),
         vec3(1.0, 0.37, 0.39), vec3(0.95, 0.77, 0.35), vec3(0.31, 0.71, 0.92), vec3(0.95, 0.92, 0.84), vec3(0.55, 0.42, 1.0));
+// a Force's colour in the steel while its stone is set (SPEC §46.8), by Forces.Force ordinal + 1: Heat, Charge, Gravity, Spirit, Frost;
+// 6 the starlight an S-rank weapon is quenched in (§46.9)
+const vec3 FORCE_GLOW[7] = vec3[](vec3(0.0), vec3(1.0, 0.55, 0.18), vec3(0.55, 0.85, 1.0), vec3(0.62, 0.42, 1.0),
+        vec3(0.62, 0.69, 1.0), vec3(0.70, 0.90, 1.0), vec3(0.88, 0.94, 1.0));
 
 // the studio a metal reflects: a cool sky over a warm dark floor, a soft-box strip above
 vec3 studio(vec3 r) {
@@ -49,6 +55,21 @@ vec3 heatGlow(float h) {
     c = mix(c, vec3(0.95, 0.32, 0.05), smoothstep(0.25, 0.55, h));
     c = mix(c, vec3(1.0, 0.78, 0.28), smoothstep(0.55, 0.8, h));
     return mix(c, vec3(1.0, 0.96, 0.86), smoothstep(0.8, 1.0, h));
+}
+
+float hash2(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float vnoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+// a brittle blade's crazing: where this crosses zero between two texels, a hairline runs
+float craze(vec2 px) {
+    return vnoise(px / 5.0) + 0.5 * vnoise(px / 2.3 + 17.0) - 0.75;
 }
 
 void main() {
@@ -81,6 +102,35 @@ void main() {
     float rim = pow(1.0 - clamp(dot(nv, v), 0.0, 1.0), 3.0);
     col += accent * rim * (0.12 + 0.55 * energy * rim) * 0.6;
 
+    // a forged flaw on the blade (SPEC §46.7): a burnt tip darkens toward the point, into dull blue-grey scale on metal and
+    // brown-black scorch on bone or tusk (D's blades); a brittle blade is crazed mid-length with pale hairlines a texel
+    // wide, so they sit in the pixel art rather than over it. Bone shows both a little less than steel, never not at all.
+    int forged = int(script.z + 0.5), flaw = forged & 3;
+    if (flaw > 0) {
+        float mk = smoothstep(0.25, 0.6, metal), m = 0.7 + 0.3 * mk;
+        if (flaw == 1) {
+            float t = smoothstep(0.62, 0.97, along) * m;
+            vec3 scorch = mix(vec3(0.3, 0.22, 0.17), vec3(0.38, 0.36, 0.46), mk);
+            col = mix(col, col * scorch + vec3(0.015, 0.012, 0.03), t);
+        } else {
+            vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+            float a = craze(px), b = craze(px + vec2(1.0, 0.0)), c = craze(px + vec2(0.0, 1.0));
+            float on = a * b < 0.0 || a * c < 0.0 ? 1.0 : 0.0;
+            float mid = smoothstep(0.3, 0.45, along) * (1.0 - smoothstep(0.72, 0.86, along));
+            col = mix(col, vec3(0.86, 0.9, 0.95) * (0.55 + 0.45 * diffuse), on * mid * m * 0.75);
+        }
+    }
+
+    // a well-twisted A blade (SPEC §46.9): the twist's ripples in the steel, light and dark bands a texel wide that wave
+    // across it like folded steel, on the metal from the guard up, set in the pixel art rather than over it
+    if ((forged & 4) != 0) {
+        vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+        float w = (px.x + px.y) * 0.42 + 1.8 * sin(px.y * 0.31 + px.x * 0.17) + 1.4 * vnoise(px / 3.0);
+        float b = smoothstep(0.35, 0.65, abs(fract(w * 0.5) * 2.0 - 1.0));
+        float on = smoothstep(0.35, 0.6, metal) * smoothstep(0.24, 0.34, along);
+        col *= mix(1.0, mix(0.8, 1.14, b), on);
+    }
+
     // the world's light (sky and blocks) on everything but what glows of itself
     col *= lightMapColor.rgb;
 
@@ -93,7 +143,15 @@ void main() {
         float hot = smoothstep(-0.04, 0.04, side) * heat;
         float lum = dot(alb.rgb, vec3(0.30, 0.59, 0.11));
         float h = hot * (0.7 + 0.6 * lum);
-        col = mix(col, col * 0.25, smoothstep(0.0, 0.3, hot)) + heatGlow(h) * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse);
+        vec3 glow = heatGlow(h);
+        // worked again (SPEC §46.8) the glow can take a colour: a Force's as its stone is set, sinking into the metal even as
+        // it cools, or a Lord's (the weapon's accent) as its weapon is reforged
+        if (script.x > 0.5) {
+            vec3 tint = script.x > 14.5 ? accent : FORCE_GLOW[min(int(script.x + 0.5), 6)];
+            glow = mix(glow, tint * (0.25 + 0.85 * h), script.y);
+            col += tint * script.y * smoothstep(0.25, 0.6, metal) * (0.2 + 0.25 * diffuse);
+        }
+        col = mix(col, col * 0.25, smoothstep(0.0, 0.3, hot)) + glow * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse);
     }
 
     // a sheen runs hilt to tip every five seconds (GameTime is a day per 1.0: 240 a day is one per 100 ticks)
@@ -106,10 +164,22 @@ void main() {
     col += alb.rgb * emit * pulse * (1.0 + 1.5 * energy) * 1.6;
     col += accent * flash * (0.18 + 0.6 * emit + 0.35 * rim);
 
+    // an S blade quenched in starlight (§46.9): its runes woke. What glows of itself burns brighter and cooler, waking in
+    // turn from the hilt even where it was still, and now and then a point of the steel catches the starlight
+    if ((forged & 8) != 0) {
+        vec3 star = FORCE_GLOW[6];
+        float t = GameTime * 240.0;
+        float wake = 0.6 + 0.4 * sin(t * TAU * 0.4 - along * 9.0);
+        col += mix(alb.rgb, star, 0.55) * emit * wake * 0.9;
+        vec2 px = floor(texCoord0 * vec2(textureSize(Sampler0, 0)));
+        float glint = fract(sin(dot(px + floor(t * 2.0), vec2(12.9898, 78.233))) * 43758.5453) > 0.994 ? 1.0 : 0.0;
+        col += star * glint * smoothstep(0.35, 0.6, metal) * 0.5;
+    }
+
     // an enchantment's own light (SPEC §45.11): a thin line of script along the piece's edges in that enchantment's
     // colour, its letters drifting hilt to tip, what glows of itself taking the colour, a few pixels catching it; with
     // several on the piece the renderer lights each in turn. Foil with none of ours keeps the violet shimmer.
-    if (script.x > 0.5) {
+    if (script.x > 0.5 && state.w < 0.5) {
         vec3 ink = SCRIPT[int(script.x + 0.5)];
         float lit = script.y, t = GameTime * 240.0;
         float cell = along * 26.0 - t * 1.4;

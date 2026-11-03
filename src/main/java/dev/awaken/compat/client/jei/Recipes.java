@@ -22,9 +22,14 @@ import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.ArmsForge;
 import dev.awaken.arms.ArmsHomes;
 import dev.awaken.arms.ArmsItems;
+import dev.awaken.arms.anvil.AnvilCosts;
+import dev.awaken.arms.anvil.AnvilWork;
 import dev.awaken.progression.Rank;
 import dev.awaken.signal.client.Glass;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -44,6 +49,31 @@ import java.util.Map;
  */
 final class Recipes {
     private Recipes() {}
+
+    // ---- the War Anvil: every forged weapon and Hunter blade (SPEC §46.7) -------------------------------------------
+
+    /** A weapon or Hunter blade forged at a War Anvil: its parts (a tag's every item in one slot) and its tier (0 E to 5 S). */
+    record Forging(Identifier id, ItemStack output, List<List<ItemStack>> parts, int tier) {}
+
+    static List<Forging> forgings() {
+        List<Forging> out = new ArrayList<>();
+        for (var e : AnvilCosts.table().entrySet()) {
+            Item item = BuiltInRegistries.ITEM.getValue(Awaken.id(e.getKey()));
+            int tier = AnvilWork.tierOf(e.getKey());
+            if (item == Items.AIR || tier < 0) continue;
+            List<List<ItemStack>> parts = new ArrayList<>();
+            for (AnvilCosts.Part p : e.getValue()) parts.add(choices(p));
+            out.add(new Forging(Awaken.id("war_anvil/" + e.getKey()), new ItemStack(item), List.copyOf(parts), tier));
+        }
+        return out;
+    }
+
+    private static List<ItemStack> choices(AnvilCosts.Part p) {
+        if (p.kind().equals("item")) return List.of(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse(p.id())), p.n()));
+        List<ItemStack> out = new ArrayList<>();
+        for (var h : BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, Identifier.parse(p.id())))) out.add(new ItemStack(h, p.n()));
+        return out;
+    }
 
     // ---- the Fabricator and the Frame Forge: parts in, one thing out ----------------------------------------------
 

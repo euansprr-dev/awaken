@@ -1,15 +1,20 @@
 package dev.awaken.arms.anvil.client;
 
+import dev.awaken.arms.LordForged;
 import dev.awaken.arms.anvil.AnvilSong;
 import dev.awaken.arms.anvil.AnvilWork;
 import dev.awaken.arms.anvil.WarAnvilBlock;
 import dev.awaken.arms.anvil.WarAnvilBlockEntity;
 import dev.awaken.arms.client.WeaponDraw;
+import dev.awaken.core.Forces;
+import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.GrindstoneBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -72,20 +77,27 @@ final class AnvilScene {
     // ---- how a weapon lies --------------------------------------------------------------------------------------------
 
     /**
-     * Where a weapon lies: the point its middle is at, its turn (the design's axes to the world's), how drawn out it is
-     * (across, along, through), which design height is its middle, and the weapon's own shape.
+     * Where a weapon lies: the point its middle is at, its turn (the design's axes to the world's), how drawn out it is (0
+     * the square bar, 1 its own shape) and twisted (radians, its far end on its tongs' end: §46.9's A), which design
+     * height is its middle, and the weapon's own shape.
      */
     static final class Lay {
         final Vector3f at = new Vector3f();
         final Quaternionf turn = new Quaternionf();
-        final Vector3f scale = new Vector3f(1F, 1F, 1F);
+        float drawn = 1F, twist;
         AnvilShape shape = AnvilShape.FALLBACK;
         float mid = AnvilShape.FALLBACK.mid;
+        /** Whose song it is (its marks) and the strike after which it's turned over: the work's, not moved by set or mix. */
+        AnvilSong.Song song = AnvilSong.song("longsword");
+        int flipAt = AnvilSong.song("longsword").flipAfter();
+        /** Attuning (§46.8): every tap lands on the guard, driving the stone home. */
+        boolean guard;
 
         Lay set(Lay o) {
             at.set(o.at);
             turn.set(o.turn);
-            scale.set(o.scale);
+            drawn = o.drawn;
+            twist = o.twist;
             shape = o.shape;
             mid = o.mid;
             return this;
@@ -96,21 +108,35 @@ final class AnvilScene {
             float e = k * k * (3F - 2F * k);
             at.set(a.at).lerp(b.at, e).add(0F, arc * Mth.sin(e * Mth.PI), 0F);
             a.turn.slerp(b.turn, e, turn);
-            scale.set(a.scale).lerp(b.scale, e);
+            drawn = Mth.lerp(e, a.drawn, b.drawn);
+            twist = Mth.lerp(e, a.twist, b.twist);
             mid = Mth.lerp(e, a.mid, b.mid);
             shape = b.shape;
             return this;
         }
 
-        /** A design point (texels) where this lay puts it. */
+        /** A design point (texels) where this lay puts it, drawn out and twisted with the work. */
         Vector3f point(float x, float y, float z, Vector3f out) {
-            return out.set(x * scale.x, (y - mid) * scale.y, z * scale.z).mul(shape.texel).rotate(turn).add(at);
+            shape.point(x, y, z, mid, drawn, out);
+            shape.turn(out, shape.turnAt(y, twist), drawn);
+            return out.sub(0F, mid, 0F).mul(shape.texel).rotate(turn).add(at);
         }
 
-        /** Its pose for the weapon's mesh (item space). */
+        /** Its pose for design texels ({@link AnvilBlank} draws the work's corners in it). */
+        Matrix4f frame(Matrix4f out) {
+            return out.translation(at).rotate(turn).scale(shape.texel).translate(0F, -mid, 0F);
+        }
+
+        /** Its pose for the weapon's mesh (item space), as made. */
         Matrix4f matrix(Matrix4f out) {
-            float t = shape.texel;
-            return out.translation(at).rotate(turn).scale(scale.x * t, scale.y * t, scale.z * t).translate(0F, -mid, 0F).mul(ITEM);
+            return frame(out).mul(ITEM);
+        }
+
+        /** Laid as made: its own shape, untwisted. */
+        private Lay made() {
+            drawn = 1F;
+            twist = 0F;
+            return this;
         }
     }
 
@@ -130,14 +156,15 @@ final class AnvilScene {
     private static final Vector3f A = new Vector3f(), U = new Vector3f(), W = new Vector3f(), P = new Vector3f();
 
     /**
-     * On the anvil's face: drawn out d (0 a squat bar, 1 its own shape), turned over by {@code flip} (0..1), the blade's
-     * middle over the face's (or the whole weapon's, {@code whole}).
+     * On the anvil's face: drawn out d (0 the square bar, 1 its own shape), turned over by {@code flip} (0..1), the blade's
+     * middle over the face's (or the whole weapon's, {@code whole}), its back on the face.
      */
     static Lay onAnvil(Quaternionf frame, AnvilShape shape, float d, float flip, boolean whole, Lay out) {
-        out.scale.set(1.5F - 0.5F * d, 0.5F + 0.5F * d, 1.5F - 0.5F * d);
+        out.drawn = whole ? 1F : d;
+        out.twist = 0F;
         out.shape = shape;
         out.mid = whole ? shape.wholeMid : shape.mid;
-        float lift = BACK_Z * shape.texel * out.scale.z + 0.07F * Mth.sin(flip * Mth.PI);
+        float lift = (whole ? BACK_Z : Mth.lerp(d, shape.side, shape.back)) * shape.texel + 0.07F * Mth.sin(flip * Mth.PI);
         model(frame, 0.5F, 1F + lift, 9.5F / 16F, out.at);
         // the point toward the horn, flat up, then turned over about its length
         dir(frame, -1F, 0F, 0F, A);
@@ -149,9 +176,29 @@ final class AnvilScene {
         return out;
     }
 
-    /** Half in the Forge's mouth, squat, its point in the fire. */
-    static Lay inForge(BlockPos anvil, BlockPos forge, Direction mouth, AnvilShape shape, Lay out) {
-        out.scale.set(1.5F, 0.5F, 1.5F);
+    /** How far a twisted bar's far end has turned after the three turns (§46.9's A): one whole turn. */
+    static final float TWISTED = Mth.TWO_PI;
+
+    /** The work on the face twisted {@code a} at its far end, a little higher so its corners (√2 its side as they turn) clear the face. */
+    private static void twisted(Lay out, float a) {
+        out.twist = a;
+        out.at.y += (Mth.SQRT_OF_TWO - 1F) * out.shape.side * out.shape.texel * (1F - out.drawn) * Math.min(1F, Math.abs(a) * 4F / Mth.PI);
+    }
+
+    /**
+     * The whole weapon on the face turned end for end, its hilt to your right: for the work at the hilt (the bind, the
+     * hilt's taps), so the hammer's hand and the tongs' each stay on their own side rather than crossing over it.
+     */
+    static Lay hiltRight(Quaternionf frame, AnvilShape shape, Lay out) {
+        onAnvil(frame, shape, 1F, 0F, true, out);
+        out.turn.rotateLocalY(Mth.PI);
+        return out;
+    }
+
+    /** Half in the Forge's mouth, its point in the fire: the bar ({@code drawn} 0), or a whole weapon worked again (1). */
+    static Lay inForge(BlockPos anvil, BlockPos forge, Direction mouth, AnvilShape shape, float drawn, Lay out) {
+        out.drawn = drawn;
+        out.twist = 0F;
         out.shape = shape;
         out.mid = shape.mid;
         out.at.set(forge.getX() - anvil.getX() + 0.5F + mouth.getStepX() * 0.46F, forge.getY() - anvil.getY() + 0.3F,
@@ -162,7 +209,7 @@ final class AnvilScene {
 
     /** Held level over the trough, its edge down (the trough is narrower than the blade is wide). */
     static Lay overTrough(Quaternionf frame, AnvilShape shape, Lay out) {
-        out.scale.set(1F, 1F, 1F);
+        out.made();
         out.shape = shape;
         out.mid = shape.mid;
         model(frame, 14F / 16F, 0.7F, 8F / 16F, out.at);
@@ -175,7 +222,7 @@ final class AnvilScene {
      * the near rim however long the blade is.
      */
     static Lay inTrough(Quaternionf frame, AnvilShape shape, Lay out) {
-        out.scale.set(1F, 1F, 1F);
+        out.made();
         out.shape = shape;
         out.mid = shape.mid;
         dir(frame, 0F, -0.42F, 0.906F, A).normalize();
@@ -187,11 +234,24 @@ final class AnvilScene {
 
     /** Standing hilt up in the slot, its face to the smith, the guard on the stone; drawn {@code rise} blocks up. */
     static Lay inSlot(Quaternionf frame, AnvilShape shape, float rise, Lay out) {
-        out.scale.set(1F, 1F, 1F);
+        out.made();
         out.shape = shape;
         out.mid = shape.root - 0.5F; // the blade's root just in the slot, the guard resting on the stone
         model(frame, 0.5F, 0.51F + rise, 3F / 16F, out.at);
         turn(dir(frame, 0F, -1F, 0F, A), dir(frame, 0F, 0F, -1F, U), out.turn);
+        return out;
+    }
+
+    /**
+     * In the rack behind the anvil (§46.6, from the Deepglass horn): the k-th of three standing point down on the stone
+     * between the rack's posts, turned to the smith's left and leaning back onto its bar.
+     */
+    static Lay inRack(Quaternionf frame, AnvilShape shape, int k, Lay out) {
+        out.made();
+        out.shape = shape;
+        out.mid = shape.tip;
+        model(frame, (3.8F + 2.7F * k) / 16F, 0.505F, 14.2F / 16F, out.at);
+        turn(dir(frame, 0F, -1F, -0.12F, A), dir(frame, -0.82F, 0F, -0.57F, U), out.turn);
         return out;
     }
 
@@ -210,6 +270,18 @@ final class AnvilScene {
     static float plungeAt = Float.NaN, liftAt = Float.NaN;
     /** How far the draw is held (0..1). */
     static float drawK;
+    /** The bind: the cord's turn round the grip (radians, as this client winds it) and the turns done, or -1 not winding. */
+    static float windAngle;
+    static int windTurns = -1;
+    /** Which way this client twisted the bar (A), so the twist it's hammered out of turns the same way. */
+    private static float twistSign = 1F;
+    /**
+     * The ranks' acts (§46.9), as this client has them: the edge off the wheel's line (0..1) and whether the wheel turns
+     * (the grind); the blade tipped on the horn (-1..1, the point down at 1) and the weight along the grip (0 the guard, 1
+     * the pommel's end; the balance).
+     */
+    static float grindEdge, tilt, weight;
+    static boolean turning;
 
     static void reset() {
         struck = 0;
@@ -218,6 +290,13 @@ final class AnvilScene {
         nextDue = Float.NaN;
         plungeAt = liftAt = Float.NaN;
         drawK = 0F;
+        windAngle = 0F;
+        windTurns = -1;
+        grindEdge = tilt = weight = 0F;
+        turning = false;
+        twistSign = 1F;
+        wheelFor = Long.MIN_VALUE;
+        wheel = null;
     }
 
     // ---- this moment, placed ------------------------------------------------------------------------------------------
@@ -234,12 +313,23 @@ final class AnvilScene {
         boolean inForge;
         final Matrix4f hammer = new Matrix4f(), tongs = new Matrix4f();
         boolean hasTongs;
+        /** At E the hammer is the stone hammer (the knap), the iron one on its peg. */
+        boolean stone;
         /** Where the fists are (block-relative) and how much each shows: the hammer's (main), the tongs' (off). */
         final Vector3f mainFist = new Vector3f(), offFist = new Vector3f();
         float mainW, offW;
         /** The blade is in the water, hot: steam rises from here. */
         boolean steam;
         final Vector3f steamAt = new Vector3f();
+        /** The glow's colour while it's worked (the shader's x bits 8-14: a Force's as its stone is set, a Lord's as it's reforged; 0 the Forge's). */
+        int glow;
+        /** Attuning: the catalyst set in the guard (block-relative), how big it's drawn, and its Force. */
+        boolean hasGem;
+        final Vector3f gemAt = new Vector3f();
+        float gemScale;
+        int gemForce;
+        /** S (§46.9): the column of starlight over the anvil, 0..1 come down. */
+        float column;
     }
 
     private static final Quaternionf FRAME = new Quaternionf();
@@ -263,6 +353,10 @@ final class AnvilScene {
         out.inForge = false;
         out.mainW = out.offW = 0F;
         out.steam = false;
+        out.stone = false;
+        out.glow = 0;
+        out.hasGem = false;
+        out.column = 0F;
         eye(pos, mine);
         if (w == null) {
             // the tools back on the peg; your hands on the hilt while you draw it
@@ -279,44 +373,88 @@ final class AnvilScene {
             return;
         }
         out.hasWork = true;
+        out.work.song = w.song;
+        out.work.flipAt = w.memory() ? Integer.MAX_VALUE : w.song.flipAfter();
+        out.work.guard = w.kind == AnvilWork.ATTUNE;
+        out.stone = w.hand();
         AnvilShape sh = AnvilShape.of(w.weapon);
         float blade = sh.cut[0];
-        out.cut = blade; // the blade alone until the hilt
+        boolean whole = w.whole();
+        // the blade alone until the hilt; a weapon worked again is whole from the start
+        out.cut = whole ? sh.cut[sh.cut.length - 1] : blade;
+        // a Lord-forged weapon reforged glows in its Lord's colour (its accent), not the Forge's
+        if (w.kind == AnvilWork.REFORGE && LordForged.byWeapon(w.weapon) != null) out.glow = 15 << 8 | 7 << 12;
         float t = now - w.stageStart;
         int n = mine ? Math.max(struck, w.beats().size()) : w.beats().size();
         Direction mouth = forgeMouth(level, w.forge);
         switch (w.stage) {
             case AnvilSong.HEAT -> {
-                inForge(pos, w.forge, mouth, sh, out.work);
+                inForge(pos, w.forge, mouth, sh, whole ? 1F : 0F, out.work);
                 out.inForge = true;
-                float h = AnvilSong.heat(t);
+                float h = w.heat(t);
                 heat(out, h, 1F - (1F - blade) * Mth.clamp(h / 0.65F, 0F, 1F), false);
-                tongsAt(out, out.work, sh.root - 0.5F, T.set(mouth.getStepX(), 0.25F, mouth.getStepZ()), mine, true);
+                tongsAt(out, out.work, sh.hold, T.set(mouth.getStepX(), 0.25F, mouth.getStepZ()), mine, true);
                 restHammer(out.hammer);
             }
             case AnvilSong.SHAPE -> {
-                float d = AnvilSong.drawn(n), flip = n >= AnvilSong.FLIP_AFTER ? 1F : 0F;
-                if (mine && n == blowBeat + 1 && now - blowAt < DOWN + 3F) {
-                    // the strike just landing moves the metal: drawn out a step, and the fifth turns it over
+                int of = w.beatsNeeded(), flipAt = out.work.flipAt;
+                float d = whole ? 1F : AnvilSong.drawn(n, of), flip = n >= flipAt ? 1F : 0F;
+                if (mine && !whole && n == blowBeat + 1 && now - blowAt < DOWN + 3F) {
+                    // the strike just landing moves the metal: drawn out a step, and the one at half turns it over
                     float k = Mth.clamp((now - blowAt - DOWN) / 3F, 0F, 1F);
-                    d = AnvilSong.drawn(n - 1) + (d - AnvilSong.drawn(n - 1)) * k;
+                    d = AnvilSong.drawn(n - 1, of) + (d - AnvilSong.drawn(n - 1, of)) * k;
                 }
-                if (mine && n == AnvilSong.FLIP_AFTER && blowBeat == AnvilSong.FLIP_AFTER - 1)
+                if (mine && n == flipAt && blowBeat == flipAt - 1)
                     flip = Mth.clamp((now - blowAt - DOWN - 3F) / 6F, 0F, 1F);
-                onAnvil(FRAME, sh, d, flip, false, out.work);
-                if (w.scores.isEmpty() && t < GLIDE) {
-                    // carried from the fire on a short arc
-                    inForge(pos, w.forge, mouth, sh, L1);
+                onAnvil(FRAME, sh, d, flip, whole, out.work);
+                // a twisted bar (A) is hammered out of its twist as it's drawn out
+                if (w.twist >= 0F && !whole) twisted(out.work, twistSign * TWISTED * (1F - d));
+                if (w.scores.isEmpty() && t < GLIDE && w.twist < 0F) {
+                    // carried from the fire on a short arc (a twisted bar is on the face already)
+                    inForge(pos, w.forge, mouth, sh, whole ? 1F : 0F, L1);
                     L2.set(out.work);
                     out.work.mix(L1, L2, t / GLIDE, 0.35F);
                 }
-                heat(out, Math.max(0.3F, Math.max(0F, w.heat) * (1F - 0.45F * n / AnvilSong.STRIKES)), blade - 0.02F, false);
-                tongsAt(out, out.work, sh.root - 0.5F, dir(FRAME, 1F, 0.35F, -0.8F, T), mine, false);
-                if (mine) swing(out, now, n, false);
+                heat(out, Math.max(0.3F, Math.max(0F, w.heat) * (1F - 0.45F * n / (float) of)), blade - 0.02F, false);
+                tongsAt(out, out.work, sh.hold, dir(FRAME, 1F, 0.35F, -0.8F, T), mine, false);
+                if (mine) swing(out, now, n, STRIKE, of);
                 else restHammer(out.hammer);
             }
+            case AnvilSong.KNAP -> {
+                // by hand: the bone or flint blade cold on the face, steadied by your off hand, struck flake by flake
+                onAnvil(FRAME, sh, 1F, 0F, false, out.work);
+                pegTongs(out.tongs);
+                out.hasTongs = true;
+                if (mine) {
+                    out.work.point(sh.midX, sh.hold, sh.midZ + sh.face, out.offFist);
+                    out.offW = 1F;
+                    swing(out, now, n, FLAKE, w.beatsNeeded());
+                } else restHammer(out.hammer);
+            }
+            case AnvilSong.BIND -> {
+                // the whole weapon on the face, its hilt to your right, the cord wound round its grip: each turn brings its hilt on
+                hiltRight(FRAME, sh, out.work);
+                if (t < CARRY) {
+                    // turned round from the knap
+                    onAnvil(FRAME, sh, 1F, 0F, false, L1);
+                    L2.set(out.work);
+                    out.work.mix(L1, L2, t / CARRY, 0.15F);
+                }
+                int turns = mine && windTurns >= 0 ? windTurns : Math.max(0, w.taps.size() - 1);
+                out.cut = sh.cut[Math.min(turns, sh.cut.length - 1)];
+                pegTongs(out.tongs);
+                out.hasTongs = true;
+                restHammer(out.hammer);
+                if (mine) {
+                    out.work.point(sh.midX, sh.root + 0.7F * (sh.tip - sh.root), sh.midZ + sh.face, out.offFist);
+                    out.offW = 1F;
+                    float r = sh.halfW + 1F;
+                    out.work.point(sh.midX + r * Mth.cos(windAngle), sh.hands[0], sh.midZ + r * Mth.sin(windAngle), out.mainFist);
+                    out.mainW = windTurns >= 0 ? 1F : 0F;
+                }
+            }
             case AnvilSong.QUENCH -> {
-                onAnvil(FRAME, sh, 1F, 1F, false, L1);
+                onAnvil(FRAME, sh, 1F, 1F, whole, L1);
                 overTrough(FRAME, sh, L2);
                 out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.15F);
                 float plunged = mine && !Float.isNaN(plungeAt) ? plungeAt - w.stageStart : w.plunge;
@@ -332,26 +470,202 @@ final class AnvilScene {
                     model(FRAME, 14F / 16F, 6.6F / 16F, 9F / 16F, out.steamAt);
                 }
                 heat(out, Math.max(0.3F, Math.max(0F, w.heat) * 0.55F), front, true);
-                tongsAt(out, out.work, sh.root - 0.5F, dir(FRAME, 0F, 0.3F, -1F, T), mine, true);
+                tongsAt(out, out.work, sh.hold, dir(FRAME, 0F, 0.3F, -1F, T), mine, true);
                 restHammer(out.hammer);
             }
             case AnvilSong.HILT -> {
-                // back from the water onto the anvil, the whole weapon's length on the face
+                // back from the water onto the anvil, the whole weapon's length on the face, its hilt to your right
                 if (w.plunge >= 0F) inTrough(FRAME, sh, L1);
                 else overTrough(FRAME, sh, L1);
-                onAnvil(FRAME, sh, 1F, 0F, true, L2);
-                out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.15F);
-                out.cut = sh.cut[Math.min(n, AnvilSong.TAPS)];
-                // what heat it kept, fading
-                float front = w.held >= 0F ? 1F - (1F - blade) * AnvilSong.line(w.held) : 1F;
-                heat(out, 0.4F * Math.max(0F, 1F - t / 40F), front, true);
+                hiltRight(FRAME, sh, L2);
+                if (w.kind == AnvilWork.ATTUNE) {
+                    // straight from the fire: the stone set in the guard, sinking in with each tap, the steel taking its colour
+                    inForge(pos, w.forge, mouth, sh, 1F, L1);
+                    out.work.mix(L1, L2, Mth.clamp(t / GLIDE, 0F, 1F), 0.35F);
+                    float k = n / (float) AnvilSong.TAPS;
+                    heat(out, Math.max(0.25F, Math.max(0F, w.heat) * (1F - 0.5F * k)), blade - 0.02F, false);
+                    int force = Math.floorMod(w.target, Forces.Force.values().length);
+                    out.glow = (force + 1) << 8 | Math.round(2F + 5F * k) << 12;
+                    out.hasGem = true;
+                    out.gemForce = force;
+                    out.work.point(0F, sh.taps[0], 2.5F - 2F * k, out.gemAt);
+                    out.gemScale = 0.3F * (1F - 0.4F * k);
+                } else {
+                    out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.15F);
+                    out.cut = sh.cut[Math.min(n, AnvilSong.TAPS)];
+                    // what heat it kept, fading
+                    float front = w.held >= 0F ? 1F - (1F - blade) * AnvilSong.line(w.held) : 1F;
+                    heat(out, 0.4F * Math.max(0F, 1F - t / 40F), front, true);
+                }
                 // up the blade, clear of the hilt being seated
                 tongsAt(out, out.work, sh.root + 0.69F * (sh.tip - sh.root), dir(FRAME, 0.3F, 0.35F, -1F, T), mine, false);
-                if (mine) swing(out, now, n, true);
+                if (mine) swing(out, now, n, TAP, AnvilSong.TAPS);
                 else restHammer(out.hammer);
+            }
+            case AnvilSong.TWIST -> {
+                // A (§46.9): the square bar clamped on the face, hot; as you circle its far end turns and its middle twists
+                onAnvil(FRAME, sh, 0F, 0F, false, out.work);
+                if (t < GLIDE) {
+                    inForge(pos, w.forge, mouth, sh, 0F, L1);
+                    L2.set(out.work);
+                    out.work.mix(L1, L2, t / GLIDE, 0.35F);
+                }
+                int turns = Math.max(0, w.taps.size() - 1);
+                float turned = mine && windTurns >= 0 ? windAngle : turns * Mth.TWO_PI;
+                if (mine && windAngle != 0F) twistSign = Math.signum(windAngle);
+                // three turns of the hand give the bar one: a tighter twist reads as a screw on a bar this thick
+                twisted(out.work, turned / AnvilSong.TWISTS);
+                heat(out, Math.max(0.3F, Math.max(0F, w.heat)), blade - 0.02F, false);
+                // the tongs' handles low to your left, the turning hand just past the bar's end: neither arm over the bar
+                tongsAt(out, out.work, sh.hold, dir(FRAME, 1F, 0.2F, -1.2F, T), mine, false);
+                restHammer(out.hammer);
+                if (mine) {
+                    // circling at your own pace (the bar's turn taken back out, as its far end's turn carries the point)
+                    float r = 1.5F, a = windAngle - out.work.twist;
+                    out.work.point(sh.midX + r * Mth.cos(a), sh.tip + 7F, sh.midZ + r * Mth.sin(a), out.mainFist);
+                    out.mainW = windTurns >= 0 ? 1F : 0.6F;
+                }
+            }
+            case AnvilSong.GRIND -> {
+                // C (§46.9): at the wheel, the blade laid across its rim edge down, sliding along it; at S warm from the light
+                BlockPos at = wheel(level, pos, w.stageStart);
+                float slide = !mine || turning ? Mth.sin(t * 0.09F) * 0.12F : 0F;
+                if (at != null) atWheel(level, pos, at, sh, (mine ? grindEdge : 0F) * 0.035F, slide, out.work);
+                else onAnvil(FRAME, sh, 1F, 0F, false, out.work);
+                if (t < GLIDE * 1.5F) {
+                    if (w.star >= 0F) inLight(FRAME, sh, 1F, L1);
+                    else if (w.plunge >= 0F) inTrough(FRAME, sh, L1);
+                    else overTrough(FRAME, sh, L1);
+                    L2.set(out.work);
+                    out.work.mix(L1, L2, t / (GLIDE * 1.5F), 0.3F);
+                }
+                pegTongs(out.tongs);
+                out.hasTongs = true;
+                pegHammer(out.hammer);
+                if (mine) {
+                    out.work.point(0F, sh.root - 1F, 0F, out.mainFist);
+                    out.work.point(sh.midX, sh.root + 0.9F * (sh.tip - sh.root), sh.midZ + sh.halfW * 0.5F, out.offFist);
+                    out.mainW = out.offW = 1F;
+                }
+            }
+            case AnvilSong.BALANCE -> {
+                // B (§46.9): the whole weapon across the Deepglass horn, tipping to its heavy end, the weight sliding along it
+                hiltRight(FRAME, sh, L1);
+                onHorn(FRAME, sh, mine ? tilt : 0F, L2);
+                out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.12F);
+                out.cut = sh.cut[sh.cut.length - 1];
+                out.hasGem = true;
+                out.gemForce = Forces.Force.SPIRIT.ordinal(); // its catalyst is the Deepglass shard
+                out.gemScale = 0.2F;
+                out.work.point(0F, Mth.lerp(mine ? weight : 0.5F, sh.taps[0], sh.taps[2]), 1.2F, out.gemAt);
+                pegTongs(out.tongs);
+                out.hasTongs = true;
+                pegHammer(out.hammer);
+                if (mine) {
+                    out.gemAt.y += 0.02F;
+                    out.mainFist.set(out.gemAt).add(0F, 0.06F, 0F);
+                    out.mainW = 1F;
+                }
+            }
+            case AnvilSong.STAR -> {
+                // S (§46.9): held point up into the column of starlight over the anvil, the glow turning white as it drinks it
+                onAnvil(FRAME, sh, 1F, 1F, false, L1);
+                inLight(FRAME, sh, Mth.clamp(t / 30F, 0F, 1F), L2);
+                out.work.mix(L1, L2, Mth.clamp(t / GLIDE, 0F, 1F), 0.2F);
+                out.column = Mth.clamp(t / 30F, 0F, 1F);
+                float k = Mth.clamp(t / AnvilSong.STAR_AT, 0F, 1F);
+                heat(out, Math.max(0.3F, Math.max(0F, w.heat) * 0.6F), blade - 0.02F, false);
+                out.glow = 6 << 8 | Math.round(1F + 6F * k) << 12;
+                pegTongs(out.tongs);
+                out.hasTongs = true;
+                pegHammer(out.hammer);
+                if (mine) {
+                    out.work.point(0F, sh.root - 1F, 0F, out.mainFist);
+                    out.mainW = 1F;
+                }
             }
             default -> restHammer(out.hammer);
         }
+    }
+
+    /** The grindstone the work is ground at (§46.9): the nearest within six blocks of the anvil, read once a stage. */
+    private static long wheelFor = Long.MIN_VALUE;
+    private static @Nullable BlockPos wheel;
+    /**
+     * The wheel's front or back, whichever you stood on when the act began (the view's side: the blade lies across it), and
+     * whether the blade lies turned so its grip is to your right from there, under the hammer hand.
+     */
+    private static int wheelSideX, wheelSideZ;
+    private static boolean wheelTurned;
+
+    static @Nullable BlockPos wheel(@Nullable Level level, BlockPos anvil, long stageStart) {
+        if (stageStart == wheelFor || level == null) return wheel;
+        wheelFor = stageStart;
+        wheel = null;
+        double best = Double.MAX_VALUE;
+        for (BlockPos b : BlockPos.betweenClosed(anvil.offset(-6, -2, -6), anvil.offset(6, 2, 6))) {
+            if (!level.getBlockState(b).is(Blocks.GRINDSTONE)) continue;
+            double d = b.distSqr(anvil);
+            if (d < best) {
+                best = d;
+                wheel = b.immutable();
+            }
+        }
+        var me = Minecraft.getInstance().player;
+        if (wheel != null) {
+            Direction f = level.getBlockState(wheel).getValueOrElse(GrindstoneBlock.FACING, Direction.NORTH);
+            double tx = me == null ? 0 : me.getX() - (wheel.getX() + 0.5), tz = me == null ? 0 : me.getZ() - (wheel.getZ() + 0.5);
+            int s = f.getStepX() * tx + f.getStepZ() * tz >= 0 ? 1 : -1;
+            wheelSideX = f.getStepX() * s;
+            wheelSideZ = f.getStepZ() * s;
+            // seen from the front the axle (its clockwise) runs to your left, so the point goes along it; from the back, turned
+            wheelTurned = s < 0;
+        }
+        return wheel;
+    }
+
+    /** Across the grindstone's rim, edge down, along its axle; {@code up} blocks off the line, slid {@code along} it. */
+    static Lay atWheel(@Nullable Level level, BlockPos anvil, BlockPos at, AnvilShape shape, float up, float along, Lay out) {
+        out.made();
+        out.shape = shape;
+        out.mid = shape.mid;
+        Direction f = level == null ? Direction.NORTH : level.getBlockState(at).getValueOrElse(GrindstoneBlock.FACING, Direction.NORTH);
+        Direction axle = f.getClockWise();
+        // the wheel's top is the block's (its middle 10/16 up, 6/16 round); the edge (design x out from the middle) on it
+        float lift = 1F + (shape.midX + shape.halfW) * shape.texel + 0.005F + up;
+        out.at.set(at.getX() - anvil.getX() + 0.5F + axle.getStepX() * along, at.getY() - anvil.getY() + lift, at.getZ() - anvil.getZ() + 0.5F + axle.getStepZ() * along);
+        // turned end for end, its flat turned with it so the edge stays down
+        float s = wheelTurned ? -1F : 1F;
+        turn(A.set(axle.getStepX() * s, 0F, axle.getStepZ() * s), U.set(-f.getStepX() * s, 0F, -f.getStepZ() * s), out.turn);
+        return out;
+    }
+
+    /** Across the horn's tip, flat up, the point away from you, tipped {@code tilt} (-1..1, 14 degrees at the end) about the horn. */
+    static Lay onHorn(Quaternionf frame, AnvilShape shape, float tilt, Lay out) {
+        out.made();
+        out.shape = shape;
+        out.mid = shape.root + 1.5F; // it balances just above the guard
+        model(frame, -0.02F, 15.4F / 16F + BACK_Z * shape.texel, 9.5F / 16F, out.at);
+        dir(frame, 0F, 0F, 1F, A);
+        dir(frame, 0F, 1F, 0F, U);
+        float a = tilt * 14F * Mth.DEG_TO_RAD, c = Mth.cos(a), s = Mth.sin(a);
+        // about the horn (the frame's x): the point dips as it tips forward
+        A.mul(c).add(U.x * -s, U.y * -s, U.z * -s);
+        dir(frame, 0F, 1F, 0F, U).mul(c);
+        dir(frame, 0F, 0F, 1F, W);
+        U.add(W.x * s, W.y * s, W.z * s);
+        turn(A, U, out.turn);
+        return out;
+    }
+
+    /** Point up over the anvil's face, its flat to you, raised {@code k} (0..1) into the light. */
+    static Lay inLight(Quaternionf frame, AnvilShape shape, float k, Lay out) {
+        out.made();
+        out.shape = shape;
+        out.mid = shape.mid;
+        model(frame, 0.5F, 1.25F + 0.2F * smooth(k) + (shape.mid - shape.root) * shape.texel, 7.5F / 16F, out.at);
+        turn(dir(frame, 0F, 1F, 0F, A), dir(frame, 0F, 0F, -1F, U), out.turn);
+        return out;
     }
 
     /** The heat as the shader takes it: dull red to white over 0..0.9 of the Forge's heat, hot past its front. */
@@ -389,7 +703,7 @@ final class AnvilScene {
      * {@code both}: the hammer is down, and your main hand holds them too, ahead of the off on the reins.
      */
     private static void tongsAt(Placed out, Lay work, float y, Vector3f back, boolean mine, boolean both) {
-        work.point(BLADE_X, y, 0F, P);
+        work.point(work.shape.midX, y, work.shape.midZ, P);
         Y.set(back).normalize().negate(); // handles to jaws
         // the jaws close across the work's thickness: their opening axis as near its through-axis as the line allows
         Z.set(0F, 0F, 1F).rotate(work.turn);
@@ -421,21 +735,25 @@ final class AnvilScene {
 
     // ---- the hammer ----------------------------------------------------------------------------------------------------
 
+    /** What a blow lands on: a strike's mark, the hilt's part a tap seats, a flake point on the edge (E). */
+    static final int STRIKE = 0, TAP = 1, FLAKE = 2;
+
     /**
      * The hammer in your hand: wound up before each beat, down in a tick and a half on your click, its face on the mark
-     * (a strike) or the hilt's part (a tap), bouncing back up toward the next.
+     * (a strike), the hilt's part (a tap) or the flake point (the stone hammer at E), bouncing back up toward the next.
      */
-    private static void swing(Placed out, float now, int n, boolean tap) {
+    private static void swing(Placed out, float now, int n, int mode, int need) {
+        boolean tap = mode != STRIKE;
         float angle = angle(now, tap), since = now - blowAt;
         float k = since >= 0F && since < DOWN ? 0F : since >= DOWN && since < DOWN + 5F ? smooth((since - DOWN) / 5F) : 1F;
         // the face meets the beat just struck, then moves on to the next
-        int next = Math.min(n, (tap ? AnvilSong.TAPS : AnvilSong.STRIKES) - 1);
-        target(out.work, tap, Math.max(0, blowBeat), T);
-        target(out.work, tap, next, T2);
+        int next = Math.min(n, need - 1);
+        target(out.work, mode, Math.max(0, blowBeat), T);
+        target(out.work, mode, next, T2);
         T.lerp(T2, blowBeat < 0 ? 1F : k);
         // the haft runs back to your hand, level with the metal at the strike; the hilt is near you, so a tap's comes in
         // from the side, your arm clear of the work
-        float side = tap ? 0.7F : 0.3F;
+        float side = mode == TAP ? 0.7F : 0.3F;
         Y.set(T).sub(EYE).sub(RIGHT.x * side, 0F, RIGHT.z * side);
         Y.y = 0F;
         if (Y.lengthSquared() < 1e-4F) Y.set(1F, 0F, 0F);
@@ -476,17 +794,24 @@ final class AnvilScene {
         blowBeat = beat;
     }
 
-    /** Where beat {@code k} lands: a strike's mark on the face up, or the hilt's part a tap seats (guard, grip, pommel). */
-    static Vector3f target(Lay work, boolean tap, int k, Vector3f out) {
+    /**
+     * Where blow {@code k} lands: a strike's mark on the face up (the work's song's), the hilt's part a tap seats (guard,
+     * grip, pommel), or a flake point down the edge.
+     */
+    static Vector3f target(Lay work, int mode, int k, Vector3f out) {
         AnvilShape sh = work.shape;
-        if (tap) {
-            int i = Mth.clamp(k, 0, sh.taps.length - 1);
+        if (mode == TAP) {
+            int i = work.guard ? 0 : Mth.clamp(k, 0, sh.taps.length - 1);
             return work.point(0F, sh.taps[i], i == 1 ? 1.5F : 2.5F, out);
         }
-        float[] m = AnvilSong.MARKS[Mth.clamp(k, 0, AnvilSong.MARKS.length - 1)];
-        // turned over at the fifth: the other face is up
-        float z = k < AnvilSong.FLIP_AFTER ? FACE_Z : -FACE_Z;
-        return work.point(BLADE_X + HALF_W * m[1], sh.root + (sh.tip - sh.root) * m[0], z, out);
+        if (mode == FLAKE) {
+            float[] f = AnvilSong.FLAKE_MARKS[Mth.clamp(k, 0, AnvilSong.FLAKE_MARKS.length - 1)];
+            return work.point(sh.midX + sh.halfW * f[1], sh.root + (sh.tip - sh.root) * f[0], sh.midZ + sh.face, out);
+        }
+        float[] m = work.song.mark(k);
+        // turned over at half: the other face is up
+        float z = k < work.flipAt ? sh.face : -sh.face;
+        return work.point(sh.midX + sh.halfW * m[1], sh.root + (sh.tip - sh.root) * m[0], sh.midZ + z, out);
     }
 
     /** Laid on the anvil's heel, on its side, its handle off the near edge. */
@@ -525,13 +850,24 @@ final class AnvilScene {
     private static float glideAt, openAt, fromYaw, fromPitch;
     private static boolean started;
 
-    /** What the view looks at: 0 the Forge's mouth, 1 the anvil's face, 2 the trough, 3 the slot. */
+    /**
+     * What the view looks at: 0 the Forge's mouth, 1 the anvil's face, 2 the trough, 3 the slot; the acts': 4 the wheel, 5 the
+     * horn, 6 the light; 7 the grip (the hilt's taps and the bind, the hilt to your right).
+     */
+    static final int WHEEL = 4, HORN = 5, LIGHT = 6, GRIP = 7;
+    /** The grip's place (the anvil's own blocks, from the grip): over the face's middle, looking down and right on it. */
+    private static final float GRIP_X = 0.4F, GRIP_Y = 0.66F, GRIP_Z = -0.49F;
+
     private static int look(WarAnvilBlockEntity be) {
         AnvilWork w = be.work();
         if (w == null) return 3;
         return switch (w.stage) {
             case AnvilSong.HEAT -> 0;
             case AnvilSong.QUENCH -> 2;
+            case AnvilSong.HILT, AnvilSong.BIND -> GRIP;
+            case AnvilSong.GRIND -> wheel(be.getLevel(), be.getBlockPos(), w.stageStart) != null ? WHEEL : 1;
+            case AnvilSong.BALANCE -> HORN;
+            case AnvilSong.STAR -> LIGHT;
             default -> 1;
         };
     }
@@ -548,6 +884,16 @@ final class AnvilScene {
             }
             case 2 -> model(FRAME, 14F / 16F, 0.5F, 8F / 16F, out);
             case 3 -> model(FRAME, 0.5F, 0.62F, 3F / 16F, out);
+            case WHEEL -> {
+                BlockPos at = wheel;
+                yield at == null ? model(FRAME, 0.55F, 1F, 9.5F / 16F, out) : out.set(at.getX() - pos.getX() + 0.5F, at.getY() - pos.getY() + 0.95F, at.getZ() - pos.getZ() + 0.5F);
+            }
+            case HORN -> model(FRAME, 0.1F, 1F, 9.5F / 16F, out);
+            case LIGHT -> model(FRAME, 0.5F, 1.75F, 8F / 16F, out); // up the blade, into the light
+            case GRIP -> {
+                AnvilShape sh = AnvilShape.of(w == null ? null : w.weapon);
+                yield hiltRight(FRAME, sh, L3).point(0F, sh.taps[1], 0F, out);
+            }
             default -> model(FRAME, 0.55F, 1F, 9.5F / 16F, out);
         };
     }
@@ -594,14 +940,30 @@ final class AnvilScene {
                 FROM[2] = eye.z;
             }
             lookAt = kind;
-            AnvilCamera.aim(be.getLevel(), be.getBlockPos(), frame(be.getBlockState(), FRAME), kind);
+            if (kind == WHEEL && wheel != null) {
+                // the wheel's own place: over its front or back (your side), the blade across the frame, a hand at each
+                // end; if that's walled in, a little back from it toward where you stand
+                BlockPos at = wheel;
+                AnvilCamera.aimAt(be.getLevel(), at.getX() + 0.5 + wheelSideX * 0.95, at.getY() + 1.7, at.getZ() + 0.5 + wheelSideZ * 0.95);
+                if (!AnvilCamera.aimed()) {
+                    var me = Minecraft.getInstance().player;
+                    double dx = me == null ? 0 : me.getX() - (at.getX() + 0.5), dz = me == null ? -1 : me.getZ() - (at.getZ() + 0.5), n = Math.max(1e-3, Math.sqrt(dx * dx + dz * dz));
+                    AnvilCamera.aimAt(be.getLevel(), at.getX() + 0.5 + dx / n * 0.95, at.getY() + 1.7, at.getZ() + 0.5 + dz / n * 0.95);
+                }
+            } else if (kind == GRIP) {
+                // the grip's own place: the hammer's hand comes in from the right of the frame, the tongs' from below it
+                lookPoint(be, kind, T);
+                dir(FRAME, GRIP_X, GRIP_Y, GRIP_Z, T2).add(T);
+                BlockPos p = be.getBlockPos();
+                AnvilCamera.aimAt(be.getLevel(), p.getX() + T2.x, p.getY() + T2.y, p.getZ() + T2.z);
+            } else AnvilCamera.aim(be.getLevel(), be.getBlockPos(), frame(be.getBlockState(), FRAME), kind);
         }
         lookPoint(be, kind, T);
         BlockPos pos = be.getBlockPos();
         double ax = pos.getX() + T.x - eye.x, ay = pos.getY() + T.y - eye.y, az = pos.getZ() + T.z - eye.z;
         float yaw = (float) (Mth.atan2(-ax, az) * Mth.RAD_TO_DEG);
         float pitch = (float) (-Mth.atan2(ay, Math.sqrt(ax * ax + az * az)) * Mth.RAD_TO_DEG);
-        float k = smooth(Mth.clamp((now - glideAt) / GLIDE, 0F, 1F));
+        float k = cut() ? 1F : smooth(Mth.clamp((now - glideAt) / GLIDE, 0F, 1F));
         yaw = fromYaw + Mth.wrapDegrees(yaw - fromYaw) * k;
         pitch = Mth.lerp(k, fromPitch, pitch);
         e.setYaw(yaw);
@@ -616,11 +978,16 @@ final class AnvilScene {
         AnvilCamera.place(NEXT, yaw, pitch);
     }
 
+    /** Reduced motion (the body's comfort setting): the view cuts to each look instead of gliding there. */
+    static boolean cut() {
+        return FirstPerson.reducedMotion.getAsBoolean();
+    }
+
     /** Your own field of view over the work; a little closer when the view stays at your eyes. */
     static void fov(ViewportEvent.ComputeFov e) {
         if (AnvilClient.sceneAnvil() == null) return;
         float now = AnvilClient.now((float) e.getPartialTick());
-        float k = started ? smooth(Mth.clamp((now - openAt) / GLIDE, 0F, 1F)) : 0F;
+        float k = !started ? 0F : cut() ? 1F : smooth(Mth.clamp((now - openAt) / GLIDE, 0F, 1F));
         e.setFOV(e.getFOV() * Mth.lerp(k, 1F, AnvilCamera.away() ? 1F : 0.85F));
         NOW[5] = e.getFOV();
     }

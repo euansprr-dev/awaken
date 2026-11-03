@@ -96,7 +96,7 @@ public final class HomeTalk {
     static boolean forgeBusiness(ServerPlayer p) {
         ItemStack hand = p.getMainHandItem();
         if (hand.isEmpty()) return false;
-        if (Upgrades.isTemperable(hand)) return true;
+        if (Upgrades.isGear(hand)) return true;
         RecipeHolder<CraftingRecipe> r = Work.commissionFor(p);
         if (r == null) return false;
         for (var ing : r.value().placementInfo().ingredients()) if (ing.test(hand)) return true;
@@ -104,13 +104,18 @@ public final class HomeTalk {
     }
 
     static void oren(ServerPlayer p, ServerLevel level, HearthRecord h, Settlement s, int rec, Folk.Person who, BlockPos at) {
+        boolean tempers = Work.orenTempers(p, h);
         int got = Work.handOver(p, h, "oren");
         if (got > 0) {
-            s.say(p, rec, "Here. Tempered once, on the house. Don't make me regret it.", 90);
+            s.say(p, rec, tempers ? "Here. Tempered once, on the house. Don't make me regret it." : "Here. Crafted work, so it stays as it is. Don't make me regret it.", 90);
             return;
         }
         if (Upgrades.isTemperable(p.getMainHandItem())) {
             Upgrades.offerTemper(p, level, at, InteractionHand.MAIN_HAND, "oren");
+            return;
+        }
+        if (Upgrades.isGear(p.getMainHandItem())) {
+            s.say(p, rec, Upgrades.CRAFTED, 90); // crafted gear stays as it is (SPEC §46.5)
             return;
         }
         Folk.Commission waiting = Work.commissionOf(h, p.getUUID());

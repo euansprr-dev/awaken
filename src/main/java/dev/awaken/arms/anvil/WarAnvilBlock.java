@@ -23,6 +23,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -34,10 +35,14 @@ import java.util.Map;
 
 /**
  * The War Anvil (SPEC §46.1): a horned black anvil on a carved stone, its front toward the smith. Use it to forge a
- * weapon (the scene), or to come back to your own work on it; sneak and use it to draw what stands in its slot.
+ * weapon (the scene), or to come back to your own work on it; sneak and use it to draw what stands in its slot. It's
+ * rebuilt as you climb (§46.6, {@link #BUILD}): Ironbound, then a Deepglass horn, then a Lord's anvil; broken, it keeps
+ * its build (the loot table copies it onto the item, and setting it down puts it back).
  */
 public class WarAnvilBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
+    /** 0 as built, 1 Ironbound (C), 2 the Deepglass horn (B), 3 the Lord's anvil (A and S). */
+    public static final IntegerProperty BUILD = IntegerProperty.create("build", 0, 3);
     /** The stone, and the anvil on its back two thirds with its horn out to the smith's right (the model faces north). */
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
 
@@ -59,12 +64,12 @@ public class WarAnvilBlock extends BaseEntityBlock {
 
     public WarAnvilBlock(BlockBehaviour.Properties p) {
         super(p);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(BUILD, 0));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
-        b.add(FACING);
+        b.add(FACING, BUILD);
     }
 
     @Override

@@ -49,6 +49,7 @@ final class Categories {
     static final IRecipeType<Recipes.Page> CODEX = IRecipeType.create(Awaken.MODID, "codex", Recipes.Page.class);
     static final IRecipeType<Recipes.Boss> BOSS = IRecipeType.create(Awaken.MODID, "boss_drops", Recipes.Boss.class);
     static final IRecipeType<Recipes.Pattern> BLUEPRINT = IRecipeType.create(Awaken.MODID, "blueprint", Recipes.Pattern.class);
+    static final IRecipeType<Recipes.Forging> WAR_ANVIL = IRecipeType.create(Awaken.MODID, "war_anvil", Recipes.Forging.class);
 
     static final int W = 176;
 
@@ -191,6 +192,43 @@ final class Categories {
             if (r.essence() > 0) JeiLook.row(g, "Power", r.essence() + " essence", 9, 46, Glass.VIOLET);
             else JeiLook.row(g, "Power", "none needed", 9, 46, Glass.TEXT);
             JeiLook.wrap(g, r.text(), 9, 58, W - 18, Glass.LABEL, 4);
+        }
+    }
+
+    /** The War Anvil (SPEC §46.7): a weapon or Hunter blade from its parts, by hand at E, in the Forge's heat from D. */
+    static final class WarAnvil extends SystemCategory<Recipes.Forging> {
+        WarAnvil(IDrawable icon) {
+            super(WAR_ANVIL, title("war_anvil"), icon, W, 96);
+        }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder b, Recipes.Forging r, IFocusGroup focuses) {
+            for (int i = 0; i < r.parts().size(); i++) b.addInputSlot(9 + 19 * i, 23).addItemStacks(r.parts().get(i));
+            b.addOutputSlot(141, 23).add(r.output());
+        }
+
+        @Override
+        int accent(Recipes.Forging r) {
+            return Rank.of(r.tier()).colour;
+        }
+
+        @Override
+        void drawRecipe(Recipes.Forging r, GuiGraphicsExtractor g, double mx, double my) {
+            int colour = Rank.of(r.tier()).colour;
+            JeiLook.fit(g, r.output().getHoverName().getString(), 9, 8, W - 60, Glass.TITLE);
+            String chip = Rank.of(r.tier()).label + "-RANK";
+            int cw = JeiLook.font().width(chip) + 8;
+            JeiLook.chip(g, chip, W - 8 - cw, 6, colour);
+            for (int i = 0; i < r.parts().size(); i++) JeiLook.slot(g, 9 + 19 * i, 23);
+            JeiLook.arrow(g, 110, 31, colour);
+            JeiLook.resultSlot(g, 137, 19, colour);
+            JeiLook.row(g, "Made", r.tier() == 0 ? "by hand, no Forge needed" : "in the Forge's heat", 9, 46, Glass.TEXT);
+            JeiLook.row(g, "Opens", "at level " + dev.awaken.arms.ArmsArmoury.LEVEL[r.tier()], 9, 58, Glass.TEXT);
+            boolean blade = r.id().getPath().endsWith("_blade");
+            String how = blade ? "A Hunter blade: every forged weapon of its tier starts from one. Without it, the anvil asks for its parts too."
+                    : r.tier() == 0 ? "Knap its edge and bind its grip at a War Anvil. You need to know its pattern."
+                    : "Heat it, draw it out on the beat, quench it and fit its hilt at a War Anvil by the Forge. You need to know its pattern.";
+            JeiLook.wrap(g, how, 9, 72, W - 18, Glass.LABEL, 2);
         }
     }
 

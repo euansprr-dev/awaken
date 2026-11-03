@@ -1093,16 +1093,63 @@ happens).
 
 ### War Anvil
 - **Get**: crafted from three stone, a copper ingot and a log (granted at level 3 with the Fitting Stand).
-- **For**: weapons forged in a scene of your own: heat in the Forge, draw out on the beat, quench, hilt, the draw from
-  the stone. A well-forged weapon leaves with Temper, up to your Forge's limit, and its story ("Masterwork. Forged by
-  Euan."). Stage 1 forges the Beastbound Longsword; every weapon comes in stage 2.
-- **Know**: the level road's level 3 step names it and its recipe; the recipe book; use it and its window says what the
-  weapon takes and what's missing (rank D, a Forge within 6 blocks, the parts).
-- **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself), `arms.anvil.WarAnvil`,
-  `WarAnvilBlockEntity` (schema 1).
-- **Links**: the Hearth's Forge (heat, the temper limit); Oren's Mark (`awaken:temper_start`); the Beastbound Blade
-  (or its own recipe in its place); the Fitting Stand's smithy (one Forge serves both).
-- **Edges**: below D-rank, or with no Forge near, the window says so and nothing starts; someone else's work is theirs
-  (a line says who); walking 12 blocks off, logging out or Esc holds the work and coming back counts the stage in again;
-  breaking it mid-work drops what was taken in and what stands in the slot; a full pack at the draw puts what was in
-  the hand at your feet; a weapon left in the slot waits for anyone to sneak-use and draw it.
+- **For**: every weapon and Hunter blade is forged on it (stage 2, SPEC §46.7): by hand at E (knap the edge, bind the
+  grip; no Forge), from D in a scene of your own (heat in the Forge, draw out on each style's own rhythm, quench, hilt,
+  the draw from the stone). It leaves Plain to Flawless with Temper up to your Forge's limit and its story
+  ("Masterwork, twin-struck. Forged by Euan."); Masterwork or better goes into your memory (one strike, always Fine); a
+  friend's off-beats make it twin-struck; set in an Armoury room it makes weapons last a quarter longer. It is the
+  Hearth's anvil too (`#minecraft:anvil`). Held to it, one of Arms' weapons is worked again (stage 3, SPEC §46.8):
+  tempered (one heat, as far as your pack and your Forge's limit reach), attuned (a catalyst in the off hand, the stone
+  set in the guard) or reforged a tier up (keeps its Marks, name, Force and Temper; a Lord-forged one its own form, plus
+  a point of damage). The Forge no longer tempers or attunes weapons, and the Armoury no longer offers Raise. From C
+  each rank adds its act to a forging (stage 4, SPEC §46.9), a tenth of the quality each: C grinds the edge at a
+  grindstone, B balances it on the horn with a Deepglass weight, A twists the bar before it's drawn out, S quenches it
+  in a column of starlight instead of water; a well-twisted blade keeps the twist's ripples in its steel and a
+  starlit one its runes woken. It is rebuilt as you climb (SPEC §46.6), each rebuild the gate for its
+  rank: Ironbound for C (4 iron blocks, 2 diamonds; and a grindstone within six blocks), a Deepglass horn for B (4
+  Deepglass shards, 4 amethyst shards), a Lord's anvil for A and S (a Lord's Heart, 2 netherite ingots), its runes
+  and Heart lit in the colour of the last Gate Lord you killed (gold if none). From the Deepglass horn a rack behind it
+  shows copies of the last three weapons forged on it. With the Forge at Tier II, an Emberkit living by the Forge works
+  its bellows: the heat climbs evenly and the gold lasts 10 ticks longer.
+- **Know**: the level road's level 3 step names it and its recipe; the recipe book; the Weapons tab ("Set up a War
+  Anvil", "Forge your first weapon" with the styles you know as choices, "Make your C-rank weapon"); the Now line ("You
+  can forge Beastbound Daggers at your War Anvil"); use it and the Armoury opens at its door with what each weapon takes,
+  Forge it, From memory, Forge the blade, and one plain line for what stands in the way; JEI's War Anvil page. With a
+  weapon in hand its own window: Temper, Reforge and Attune rows with what each costs and what's in the way; the
+  Weapons tab's optional "Temper your ..." and "Reforge your ..."; a plain or sneak use of the Forge with a weapon says
+  the War Anvil does it now. Each act's header and hint say what to do ("Grind the edge": hold to turn the wheel, keep
+  the edge on the gold line). When a rank needs a rebuild, the door's "Forge it" becomes "Rebuild it", the line says
+  what it takes ("C-rank weapons are forged on an Ironbound anvil. Rebuild this one Ironbound, with 4 iron blocks and 2
+  diamonds."), and the Weapons tab adds "Rebuild your War Anvil Ironbound" (and the Deepglass horn, the Lord's Heart)
+  with its parts; a missing grindstone has its own line and need. Each build looks its part on the block and in hand.
+- **Source**: recipe `war_anvil.json`; block `awaken:war_anvil` (drops itself at its build, `copy_state` on
+  `build`), `arms.anvil.WarAnvil`,
+  `WarAnvilBlockEntity` (schema 2), `AnvilWork` (schema 5), `SmithMemory` (schema 3), `WeaponForged` (schema 4),
+  `arms.anvil.AnvilHeld`; tests `arms_anvil_temper`, `arms_anvil_attune`, `arms_anvil_reforge`, `arms_anvil_verbs`, `arms_anvil_rebuild`, `arms_anvil_bellows`; the rebuilds' parts are vanilla or
+  already sourced (`awaken:deepglass_shard`, `awaken:lord_heart`).
+- **Links**: the Hearth's Forge (heat from D, the temper limit); Oren's Mark (`awaken:temper_start`); the tier's Hunter
+  blade (carried, it stands in for its parts; else they're added); Blueprints (used, they teach the pattern the anvil
+  asks for); the Fitting Stand's smithy (one Forge serves both); the Hearth's Armoury room; ForgeHooks (enchanting).
+- **Edges**: an unknown pattern, a tier above your level or no Forge near from D: the line says so and nothing starts;
+  someone else's work is theirs (a line says who, and using it then is a helper's strike); walking 12 blocks off,
+  logging out or Esc holds the work and coming back counts the stage in again; breaking it mid-work drops what was
+  taken in and what stands in the slot; a full pack at the draw puts what was in the hand at your feet; a weapon left in
+  the slot waits for anyone to sneak-use and draw it. A weapon being worked again is in the work, not your hand:
+  breaking the anvil drops it with its price; crafted (vanilla) gear is never tempered here; at its Forge's limit, at
+  Temper VI, already of that Force or at S the row says so and its button stays dim. A rank's act left alone settles
+  itself (the balance and the starlight, poorly); letting go of the twist early keeps what was turned. A rebuild keeps
+  the work in progress and what stands in the slot; it goes one build at a time, greyed until you carry the parts
+  (none taken in creative); broken and placed again, the anvil keeps its build and a Lord's anvil its colour; from memory or a Hunter blade alone,
+  no grindstone is needed; reforging into a rank checks the same rebuild.
+
+### Forged weapons and Hunter blades (the 96 weapons, the six blades)
+- **Get**: forged at a War Anvil from `data/awaken/arms/anvil_costs.json` (each its old grid recipe minus the
+  Blueprint); never on the crafting grid. Hale's issue gives the first; Lords and Marked finds drop their own kinds.
+- **For**: the fighting styles at each tier; a blade is the part every forged weapon of its tier starts from.
+- **Know**: the Armoury at the anvil, the Weapons tab, the Now line, JEI; the tooltip tells its story.
+- **Source**: `Sources.declare` in `AnvilModule` (every key of the cost table); `arms_anvil_costs` proves each has its
+  cost and no crafting recipe.
+- **Links**: Blueprints (the pattern), beast cores, the tier's metal from D or binding at E, the Forge, Temper,
+  attunement and reforging at the War Anvil.
+- **Edges**: a weapon made before the War Anvil keeps working and gains a Plain story when first held; a found one never
+  does; old Blueprints held were learned by the backfill; recipe-book entries for the old grid recipes are gone.

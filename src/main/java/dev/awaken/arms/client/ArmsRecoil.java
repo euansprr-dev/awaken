@@ -97,7 +97,7 @@ final class ArmsRecoil {
         Minecraft mc = Minecraft.getInstance();
         if (e == mc.getCameraEntity()) return;
         Slot s = slot(e.getId());
-        long now = System.nanoTime();
+        long now = ArmsFeel.nanos();
         long freeze = ArmsComfort.hitStop() ? Math.max(0, freezeMs) * 1_000_000L : 0L;
         // the spring still settling carries on under the new one, its clock held through the new freeze
         if (s.entity == e.getId() && s.now.live && now < s.until) {
@@ -164,7 +164,7 @@ final class ArmsRecoil {
 
     private static Slot slot(int entity) {
         for (Slot s : SLOTS) if (s.entity == entity) return s;
-        long now = System.nanoTime();
+        long now = ArmsFeel.nanos();
         for (Slot s : SLOTS) if (s.entity == Integer.MIN_VALUE || now > s.until) return fresh(s);
         Slot s = SLOTS[next];
         next = (next + 1) % POOL;
@@ -180,7 +180,7 @@ final class ArmsRecoil {
 
     /** Render-state modifier: the shove and the turn, this frame's tip and fall marked for {@link #onPre}. */
     static void modify(Entity entity, EntityRenderState state) {
-        if (!(state instanceof LivingEntityRenderState living) || System.nanoTime() > anyUntil) return;
+        if (!(state instanceof LivingEntityRenderState living) || ArmsFeel.nanos() > anyUntil) return;
         Slot s = null;
         for (Slot c : SLOTS) {
             if (c.entity == entity.getId()) {
@@ -189,7 +189,7 @@ final class ArmsRecoil {
             }
         }
         if (s == null) return;
-        long now = System.nanoTime();
+        long now = ArmsFeel.nanos();
         if (now > s.until || entity.isRemoved()) {
             fresh(s);
             return;
