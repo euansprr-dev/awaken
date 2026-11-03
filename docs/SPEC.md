@@ -18160,7 +18160,11 @@ at once; stage 2 adds phrases and the payoff on the pilots.
   `Strikes.tell`.
 - **Sounds** (synthesised, `tools/art/specs/audio_fights.py`, events `mobs.fights.*` in `src/main/merge/mobs_fights`):
   shot release and hum, volley throw, fall and landing, wave roll, lock, ground run, beam fire, pull draw, field hiss,
-  growl. Each plays from where its carrier is, so one behind you is heard.
+  growl. Each plays from where its carrier is, so one behind you is heard. None is a bed of hiss (Euan's playtest
+  2026-11-03, "really loud static noise in gate"): the field's loop (`fights_field_hiss`, under a cloud while it lasts) is
+  a cloud seething low, a slow breath, wet bubbling and a soft puff now and then, nothing above about 2.5 kHz. It was
+  white noise from 2.2 to 7 kHz, static by the gates' measure (2-8 kHz level and noise-likeness at the 90th percentile
+  moment, `tools/art/gate_world_mix.py`): -27 at its 0.6, against a rule of -36; now -55.
 - **The reach model** (`tools/sim/reach_sim.py`, `--model after`): every carrier of every creature can be escaped by a
   dash at its lock or a jump (`--all`: 395 of 395 attacks; the bosses' 148 of 148, where a dash at the first cue got
   out of 66-86% before, by distance).
