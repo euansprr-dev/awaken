@@ -60,7 +60,7 @@
       },
       "additions": {
         "sound": "awaken:gate.world.rains",
-        "tick_chance": 0.01
+        "tick_chance": 0.004
       }
     },
     "minecraft:audio/background_music": {

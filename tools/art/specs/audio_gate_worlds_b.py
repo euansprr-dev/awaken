@@ -64,23 +64,23 @@ def _knock(seed, gain=1.0):
                      2400, 2) * gain
 
 
-def drop_up(seed):
-    """A raindrop falling upward: its patter swelled in backwards."""
-    r = K.rng(seed)
-    m = K.ns(r.uniform(0.04, 0.08))
-    d = norm(K.bandpass(K.noise(m, "white", seed), r.uniform(2500, 5000), 1.6)) * K.perc(m, 0.001, 0.03)
-    return d[::-1]
-
-
 def rain_up(n, seed, density=60):
-    """Rain falling the wrong way: a soft hiss, and drops pulled in backwards all round you."""
-    hiss = norm(K.bandpass(K.noise(n, "pink", seed), 3800, 0.6)) * 0.08
-    drops = np.zeros(n)
+    """Rain falling the wrong way: drops pulled in backwards all round you (each drop's ring swelled in reversed) over a
+    low wash; no hiss (SPEC 38.9, "No static")."""
+    fade = np.linspace(1, 0, K.ns(0.003)) ** 2
+    voices = []
+    for p in C.plinks(seed + 5):
+        q = p[::-1].copy()
+        q[-len(fade):] *= fade  # the reversed drop ends on its hit: closed softly, never a click
+        voices.append(q)
+    drops = np.zeros(n + K.ns(0.05))
     r = K.rng(seed + 1)
-    for _ in range(int(density * n / K.SR)):
-        t = r.uniform(0, n / K.SR - 0.2)
-        drops += at(n, t, drop_up(int(r.integers(1 << 20))), r.uniform(0.05, 0.2))
-    return hiss + drops
+    for i in r.integers(0, n, int(density * n / K.SR)):
+        v = voices[r.integers(len(voices))]
+        drops[i:i + len(v)] += v * 10 ** r.normal(-1.0, 0.4)
+    drops = K.lowpass(drops[:n], 3000, 2)
+    wash = K.lowpass(K.noise(n, "pink", seed), 600, 2)
+    return drops + wash * np.std(drops) * 0.3 / (np.std(wash) + 1e-12)
 
 
 def murmur(n, seed, gain=1.0):

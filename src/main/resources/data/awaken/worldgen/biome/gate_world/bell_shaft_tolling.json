@@ -54,7 +54,7 @@
       },
       "additions": {
         "sound": "awaken:gate.world.toll",
-        "tick_chance": 0.02
+        "tick_chance": 0.006
       }
     },
     "minecraft:audio/background_music": {

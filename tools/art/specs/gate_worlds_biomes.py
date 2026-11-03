@@ -29,7 +29,7 @@ WORLDS = {
 
 # mood: fog tint (mixed in), fog end scale, extra particles, additions override
 MOODS = {
-    "tolling": ("#3a3446", 0.9, [("minecraft:white_ash", 0.006)], ("awaken:gate.world.toll", 0.02)),
+    "tolling": ("#3a3446", 0.9, [("minecraft:white_ash", 0.006)], ("awaken:gate.world.toll", 0.006)),
     "requiem": ("#4a3528", 1.0, [("minecraft:smoke", 0.0015), ("minecraft:soul", 0.0008)], None),
     "storm": ("#10141c", 0.75, [("minecraft:falling_water", 0.012)], ("awaken:gate.world.storm", 0.012)),
 }
@@ -99,7 +99,7 @@ TEMPLE = {
                       [("minecraft:glow", 0.0016), ("minecraft:mycelium", 0.003)], ("awaken:gate.world.saint", 0.001)),
 }
 TEMPLE_MOODS = {
-    "monsoon": ("#1a2a2e", 0.7, [("minecraft:falling_water", 0.016)], ("awaken:gate.world.rains", 0.01)),
+    "monsoon": ("#1a2a2e", 0.7, [("minecraft:falling_water", 0.016)], ("awaken:gate.world.rains", 0.004)),
     "fireflies": ("#14241a", 1.1, [("minecraft:firefly", 0.004)], None),
     "overgrowth": ("#2a4a1e", 0.85, [("minecraft:spore_blossom_air", 0.008), ("minecraft:falling_spore_blossom", 0.003)], None),
 }
@@ -120,13 +120,13 @@ ARCHIVE = {
 ARCHIVE_MOODS = {
     "high_tide": ("#1a3a44", 0.85, [("minecraft:falling_water", 0.006)], ("awaken:gate.world.tide", 0.006)),
     "lamplit": ("#4a3a20", 1.15, [("minecraft:glow", 0.001)], None),
-    "paper_storm": ("#3a3830", 0.7, [("minecraft:white_ash", 0.01)], ("awaken:gate.world.pages", 0.01)),
+    "paper_storm": ("#3a3830", 0.7, [("minecraft:white_ash", 0.01)], ("awaken:gate.world.pages", 0.005)),
 }
 FOUNDRY = {
     "works_floor": ("#2a2218", "#140e08", "#3a3a30", "#14120a", 8.0, 120.0, "awaken:gate.world.foundry_works",
                     [("minecraft:ash", 0.003), ("minecraft:electric_spark", 0.0006)], ("awaken:gate.world.valve", 0.002)),
     "pipe_maze": ("#24201a", "#100c08", "#3a3a30", "#14120a", 4.0, 64.0, "awaken:gate.world.foundry_pipes",
-                  [("minecraft:white_smoke", 0.003)], ("awaken:gate.world.valve", 0.004)),
+                  [("minecraft:white_smoke", 0.003)], ("awaken:gate.world.valve", 0.002)),
     "great_engine": ("#2e2414", "#160e06", "#3a3a30", "#14120a", 12.0, 150.0, "awaken:gate.world.foundry_engine",
                      [("minecraft:ash", 0.002), ("minecraft:small_flame", 0.0006)], ("awaken:gate.world.clockwork", 0.002)),
     "stopped_hour": ("#262a30", "#10141a", "#3a3a30", "#14120a", 12.0, 150.0, "awaken:gate.world.foundry_engine",
@@ -137,7 +137,7 @@ FOUNDRY = {
 FOUNDRY_MOODS = {
     "overdrive": ("#5a3010", 0.9, [("minecraft:small_flame", 0.002), ("minecraft:electric_spark", 0.001)],
                   ("awaken:gate.world.overdrive", 0.006)),
-    "steam": ("#5a5a58", 0.55, [("minecraft:white_smoke", 0.01)], ("awaken:gate.world.valve", 0.01)),
+    "steam": ("#5a5a58", 0.55, [("minecraft:white_smoke", 0.01)], ("awaken:gate.world.valve", 0.003)),
     "power_cut": ("#050505", 0.6, [], ("awaken:gate.world.powercut", 0.004)),
 }
 DESERT = {
@@ -171,7 +171,7 @@ MARKET = {
 }
 MARKET_MOODS = {
     "fireworks": ("#3a1a3a", 1.0, [], ("awaken:gate.world.fireworks", 0.012)),
-    "rain": ("#1a2030", 0.65, [("minecraft:falling_water", 0.01)], ("awaken:gate.world.rains", 0.006)),
+    "rain": ("#1a2030", 0.65, [("minecraft:falling_water", 0.01)], ("awaken:gate.world.rains", 0.004)),
     "ghost_market": ("#1a3a3a", 0.8, [("minecraft:soul", 0.0008)], ("awaken:gate.world.spirits", 0.003)),
 }
 

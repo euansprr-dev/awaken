@@ -8,8 +8,8 @@ Recorded where there's a recording: the mines' bellows, anvils, carts and timber
 caves' water, breath, drips, bubbles, vents and settling stone are the caves' loops (audio_caves.py), roots and wood
 creak with the Elder Wood's creaks and Kenney's CC0 creaks and impacts, the jungle has the wild's crickets, frogs and
 leaves (sounds/wild), and the glowing places chime with the Lumen's glass. What nothing records is made here: the hive's
-buzz (softened saw voices beating against each other), its choir, a waterfall's roar and rain (shaped noise). Vanilla's
-sounds are only referenced, never mixed in.
+buzz (softened saw voices beating against each other), its choir, a waterfall's roar and rain (single drops and a low
+wash, never hiss: SPEC 38.9 "No static"). Vanilla's sounds are only referenced, never mixed in.
 
 Written to src/main/resources/assets/awaken/sounds/gate_world/ and registered as gate.world.* in
 src/main/merge/gates/assets/awaken/ (sounds.json and the lang file; other keys are kept). Loudness by
@@ -83,6 +83,42 @@ def roar(n, seed, lo=500, hi=2600):
     return (0.8 * body + 0.2 * spray) * g
 
 
+def plinks(seed, count=48):
+    """Raindrop voices, about 45 ms each: a drop on water rings as a tiny bubble whose pitch rises as it dies (900 Hz to
+    3 kHz), with the faint tap of the hit under it."""
+    r = K.rng(seed)
+    out = []
+    for i in range(count):
+        m = K.ns(0.045)
+        t = np.arange(m) / K.SR
+        f0 = np.exp(r.uniform(np.log(900), np.log(3000)))
+        f = f0 * (1 + r.uniform(0.15, 0.35) * t / t[-1])
+        ring = np.sin(2 * np.pi * np.cumsum(f) / K.SR) * np.exp(-t / r.uniform(0.004, 0.012))
+        tap = K.lowpass(K.noise(m, "white", seed * 101 + i), 2500, 2) * np.exp(-t / 0.0015) * r.uniform(0.2, 0.5)
+        out.append(ring + tap)
+    return out
+
+
+def rain(n, seed, per_s=90, lp=2800, env=None, wash=0.35):
+    """Rain heard from under a roof or the leaves (SPEC 38.9, "No static"): single drops, most of them soft and now and
+    then one near and loud, with a low wash under them; nothing above lp, so it reads as water and never as hiss. env
+    (0..1 a sample) thins the drops and the wash together: rain sweeping in and out."""
+    r = K.rng(seed)
+    voices = plinks(seed + 1)
+    x = np.zeros(n + K.ns(0.05))
+    count = int(per_s * n / K.SR)
+    times = r.integers(0, n, count)
+    if env is not None:
+        times = times[r.random(count) < env[times]]
+    for i in times:
+        v = voices[r.integers(len(voices))]
+        x[i:i + len(v)] += v * 10 ** r.normal(-1.1, 0.4)
+    x = K.lowpass(x[:n], lp, 2)
+    body = K.lowpass(K.noise(n, "pink", seed + 2), 700, 2)
+    body *= np.std(x) * wash / (np.std(body) + 1e-12) * (0.8 + 0.2 * K.smooth_noise(n, 0.3, seed + 3))
+    return x + (body if env is None else body * env)
+
+
 # ---- touchstones and events -----------------------------------------------------------------------------------------
 
 def puff(v):
@@ -143,10 +179,10 @@ def swarm(v):
 
 
 def rains(v):
-    """The rains come: a roll of thunder far off and rain sweeping in over the leaves."""
+    """The rains come: a roll of thunder far off and rain sweeping in over the leaves, drop by drop (no hiss)."""
     n = K.ns(6.0)
-    rain = norm(K.bandpass(K.noise(n, "pink", 91 + v), 3200, 0.5)) * K.adsr(n, 1.5, 0.5, 0.8, 2.0)
-    x = rain * 0.6 + at(n, 0, K.lowpass(trim(ours("amb_storm_roll_" + str(1 + v)), 0, 5.5, 1.5), 1800, 2), 0.7)
+    sweep = rain(n, 91 + v, 120, 2600, K.adsr(n, 1.5, 0.5, 0.8, 2.0))
+    x = norm(sweep) * 0.6 + at(n, 0, K.lowpass(trim(ours("amb_storm_roll_" + str(1 + v)), 0, 5.5, 1.5), 1800, 2), 0.7)
     x += scatter(n, 93 + v, pick(["amb_cave_drip_1", "amb_cave_drip_2", "amb_cave_drip_3"], 1.1, 1.4), 18, 0.25)[0][:n]
     return x
 
@@ -340,7 +376,7 @@ def bed_hive_lake(v):
 def bed_temple_courts(v):
     """The Courts and the Great Tree: leaves in a warm wind, crickets, a frog plopping into a pool, birds high up."""
     n = K.ns(BED)
-    rl, rr = loop_of("amb_lands_rustle", 1.0, 5000, 291), loop_of("amb_lands_rustle", 1.0, 5000, 292)
+    rl, rr = loop_of("amb_lands_rustle", 1.0, 2000, 291), loop_of("amb_lands_rustle", 1.0, 2000, 292)
     crickets = scatter(n, 293, pick(["wild/cricket1", "wild/cricket2", "wild/cricket3", "wild/cricket4"]), 10, 0.12)
     birds = scatter(n, 294, pick(["wild/wren1", "wild/wren2", "wild/chip1", "wild/chip3", "wild/finch2"], 0.95, 1.05, 4200), 6, 0.1)
     frogs = scatter(n, 295, pick(["wild/frog_plop1", "wild/frog_plop2", "wild/frog_plop3"]), 3, 0.18)
@@ -358,7 +394,7 @@ def bed_temple_halls(v):
 def bed_temple_falls(v):
     """The Waterfall Temple: the fall's roar, spray hissing, the pool churning under it, birds over the noise."""
     n = K.ns(BED)
-    a, b = roar(n, 311), roar(n, 312)
+    a, b = K.lowpass(roar(n, 311), 2400, 2), K.lowpass(roar(n, 312), 2400, 2)  # heard from inside: no spray hiss
     wl, wr = water(313, 1100)
     birds = scatter(n, 314, pick(["wild/wren2", "wild/chip2", "wild/finch1"], 1.0, 1.05, 4500), 4, 0.07)
     return wide(a * 0.6 + wl * 0.4, b * 0.6 + wr * 0.4, birds)
@@ -372,7 +408,7 @@ SPEC = [
     ("brazier", brazier, 2, -21.0, "gate.world.brazier", "A brazier catches fire", 16),
     ("tremor", tremor, 2, -19.0, "gate.world.tremor", "The ground shakes", 48),
     ("swarm", swarm, 1, -21.0, "gate.world.swarm", "A swarm rises", 48),
-    ("rains", rains, 2, -22.0, "gate.world.rains", "Rain sweeps in", 48),
+    ("rains", rains, 2, -23.0, "gate.world.rains", "Rain sweeps in", 48),
     ("wakening", wakening, 1, -20.0, "gate.world.wakening", "Something old wakes up", 48),
     ("bloom", bloom, 1, -20.0, "gate.world.bloom", "The bloom opens", 64),
     ("surface", surface, 1, -19.0, "gate.world.surface", "Something huge surfaces from the magma", 64),
@@ -404,9 +440,13 @@ def build(out):  # build_all.py makes textures; audio is rendered on demand (mai
 def main(argv, spec=None, label="the cave themes"):
     """Renders a table of sounds (this file's, or another theme stage's) and writes their JSON."""
     spec = SPEC if spec is None else spec
+    # --only=a,b renders just those files (the rest keep their bytes); the JSON is written for the whole table
+    only = next((a.split("=", 1)[1].split(",") for a in argv if a.startswith("--only=")), None)
     total = 0
     if "--json" not in argv:
         for name, fn, variants, rms, event, _, att in spec:
+            if only is not None and name not in only:
+                continue
             cat = "amb" if name.startswith("amb_") else "sfx"
             tgt, tol, ceil, q = TARGETS[cat]
             assert abs(rms - tgt) <= tol, name

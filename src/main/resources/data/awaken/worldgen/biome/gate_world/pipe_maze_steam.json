@@ -54,7 +54,7 @@
       },
       "additions": {
         "sound": "awaken:gate.world.valve",
-        "tick_chance": 0.01
+        "tick_chance": 0.003
       }
     },
     "minecraft:audio/background_music": {
