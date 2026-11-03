@@ -15,6 +15,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Public lucidium API for other modules (stable). Server side unless noted.
@@ -98,15 +99,18 @@ public final class Lucidium {
         return true;
     }
 
-    /** A trial dream's bell (SPEC §9.3): which one, and the spot at the end of the road where it waits. */
-    public record DreamBell(String id, BlockPos at) {}
+    /**
+     * A trial dream's bell (SPEC §9.3, §9.5): which one; where it stands now (null while the dream's rule hides it); and
+     * the fear carrying it in the Chase (null when nothing does). A Room's bell moves: ask again.
+     */
+    public record DreamBell(String id, @Nullable BlockPos at, @Nullable UUID carrier) {}
 
-    /** The bell waiting at the end of this dreamer's trial, or null (awake, or a dream without one). */
+    /** The bell this dreamer's trial holds, or null (awake, or a dream without one). */
     public static @Nullable DreamBell dreamBell(ServerPlayer player) {
         ActiveDream ad = Dreams.active(player);
-        if (ad == null || ad.bp.course == null || ad.bp.course.bell() == null) return null;
+        if (ad == null || ad.bp.course == null) return null;
         String ref = ad.bp.plan.trialRef();
-        return ref.startsWith("bell:") ? new DreamBell(ref.substring(5), ad.bp.course.bell()) : null;
+        return ref.startsWith("bell:") ? new DreamBell(ref.substring(5), Dreams.trialBellAt(ad), Dreams.trialBellCarrier(ad)) : null;
     }
 
     /** Whether the player is dreaming a trial (SPEC §9.3): the bells keep their old dream puzzles out of it. */

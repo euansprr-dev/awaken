@@ -64,6 +64,30 @@ public final class LucidiumNet {
      * the last ring passed, a line to flash ("" none: a dream sign's seconds, a catch, the prize), and whether the path
      * just glinted. Sent when something changes and once a second.
      */
+    /** A Room's goal moved, appeared or hid (SPEC §9.5): where the end's light stands now ({@code shown} false: nowhere yet). */
+    public record TrialGoal(boolean shown, Vec3 end) implements CustomPacketPayload {
+        public static final Type<TrialGoal> TYPE = new Type<>(Awaken.id("lucidium_trial_goal"));
+        public static final StreamCodec<ByteBuf, TrialGoal> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.BOOL, TrialGoal::shown, Vec3.STREAM_CODEC, TrialGoal::end, TrialGoal::new);
+
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /** A real place a dream showed you (SPEC §9.5), for the Atlas's pearl mark. */
+    public record DreamPlace(BlockPos pos, String label, boolean found) {
+        public static final StreamCodec<ByteBuf, DreamPlace> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, DreamPlace::pos, ByteBufCodecs.stringUtf8(256), DreamPlace::label, ByteBufCodecs.BOOL, DreamPlace::found,
+                DreamPlace::new);
+    }
+
+    public record DreamPlaces(List<DreamPlace> places) implements CustomPacketPayload {
+        public static final Type<DreamPlaces> TYPE = new Type<>(Awaken.id("lucidium_dream_places"));
+        public static final StreamCodec<ByteBuf, DreamPlaces> STREAM_CODEC = StreamCodec.composite(
+                DreamPlace.STREAM_CODEC.apply(ByteBufCodecs.list(64)), DreamPlaces::places, DreamPlaces::new);
+
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     public record TrialHud(int phase, int left, int total, int ring, String flash, boolean glint) implements CustomPacketPayload {
         public static final Type<TrialHud> TYPE = new Type<>(Awaken.id("lucidium_trial_hud"));
         public static final StreamCodec<ByteBuf, TrialHud> STREAM_CODEC = StreamCodec.composite(
@@ -97,11 +121,12 @@ public final class LucidiumNet {
      * Opens the Dream Journal screen: tonight's intention, whether a dream waits, the seconds your finished dreams give
      * every dream, each finished dream ("title|best · medal · times"), the latest dreams and remembered places.
      */
-    public record OpenJournal(String intention, boolean waiting, int seconds, List<String> finished, List<String> dreams,
+    /** {@code bell}: a bell waits in one of the dreams (the Journal offers "find a bell"). */
+    public record OpenJournal(String intention, boolean waiting, boolean bell, int seconds, List<String> finished, List<String> dreams,
                               List<String> snapshots) implements CustomPacketPayload {
         public static final Type<OpenJournal> TYPE = new Type<>(Awaken.id("lucidium_journal"));
         public static final StreamCodec<ByteBuf, OpenJournal> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.STRING_UTF8, OpenJournal::intention, ByteBufCodecs.BOOL, OpenJournal::waiting,
+                ByteBufCodecs.STRING_UTF8, OpenJournal::intention, ByteBufCodecs.BOOL, OpenJournal::waiting, ByteBufCodecs.BOOL, OpenJournal::bell,
                 ByteBufCodecs.VAR_INT, OpenJournal::seconds,
                 ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(32)), OpenJournal::finished,
                 ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(32)), OpenJournal::dreams,
@@ -173,6 +198,8 @@ public final class LucidiumNet {
         r.playToClient(CodexSync.TYPE, CodexSync.STREAM_CODEC);
         r.playToClient(TrialStart.TYPE, TrialStart.STREAM_CODEC);
         r.playToClient(TrialHud.TYPE, TrialHud.STREAM_CODEC);
+        r.playToClient(TrialGoal.TYPE, TrialGoal.STREAM_CODEC);
+        r.playToClient(DreamPlaces.TYPE, DreamPlaces.STREAM_CODEC);
         r.playToClient(DreamWaiting.TYPE, DreamWaiting.STREAM_CODEC);
         r.playToServer(WakeUp.TYPE, WakeUp.STREAM_CODEC, (p, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) wakeUp(sp);

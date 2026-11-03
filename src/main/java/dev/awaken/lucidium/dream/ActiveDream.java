@@ -81,6 +81,25 @@ public final class ActiveDream {
     // a trial (SPEC §9.3): how much of the course has laid itself, and whether the doorway has opened
     int revealed;
     boolean doorwayOpen;
+    // a Room's rule (SPEC §9.5), one for everyone in the dream
+    /** Where the goal stands now (null: the rule hasn't shown it yet). */
+    @org.jspecify.annotations.Nullable BlockPos roomGoal;
+    /** Look away: it's been in view since it last moved. */
+    boolean roomSeen;
+    /** What's wrong here: the things found (bits); no door: the walls tried (bits). */
+    int roomFound;
+    /** The fold's door, no door's right wall: open. No door: the way in has closed behind you. */
+    boolean roomOpen, roomSealed;
+    /** The fold: times round. The long fall: the landing's down. */
+    int roomLoops;
+    boolean roomLanded;
+    /** Hush's sleeper (and those it woke), the Chase's fears; the one carrying a bell. */
+    final List<UUID> roomBeasts = new ArrayList<>();
+    @org.jspecify.annotations.Nullable UUID roomSleeper, roomCarrier;
+    @org.jspecify.annotations.Nullable BlockPos roomCarrierAt;
+    boolean roomSpawned;
+    /** The Duel: when the mentor comes back after you lost a round. */
+    long roomNext;
 
     ActiveDream(DreamBlueprint bp, ServerLevel level, UUID host, long now) {
         this.bp = bp;
@@ -106,6 +125,7 @@ public final class ActiveDream {
             }
         }
         spares.addAll(bp.spares);
+        if (bp.course != null && bp.course.room() != null) roomGoal = bp.course.room().goal();
     }
 
     public boolean hasSign(DreamSign s) {
@@ -335,6 +355,7 @@ public final class ActiveDream {
     void cleanup() {
         List<UUID> all = new ArrayList<>(nightmareMobs);
         all.addAll(summons);
+        all.addAll(roomBeasts);
         if (mentor != null) all.add(mentor);
         if (shadowless != null) all.add(shadowless);
         for (UUID id : all) {
@@ -345,7 +366,7 @@ public final class ActiveDream {
 
     public boolean isDreamEntity(Entity e) {
         UUID id = e.getUUID();
-        return nightmareMobs.contains(id) || summons.contains(id) || id.equals(mentor) || id.equals(shadowless);
+        return nightmareMobs.contains(id) || summons.contains(id) || roomBeasts.contains(id) || id.equals(mentor) || id.equals(shadowless);
     }
 
     static boolean residue(Entity e) {

@@ -226,6 +226,12 @@ public final class Dreams {
         long now = now(server);
         ActiveDream ad = ACTIVE.get(st.cell);
         Dreamer d = dreamer(sp);
+        // one line a wake, so a tour's log says why a dream ended (the caller too when it came from outside the dream)
+        Awaken.LOG.info("[lucidium] {} woke: {}{} after {} ticks{}", sp.getGameProfile().name(), why,
+                st.trial.isEmpty() ? "" : " (trial " + st.trial + ", phase " + st.phase + ")", now - st.startTick,
+                why == Wake.API || why == Wake.LEFT || why == Wake.DIED ? " from " + StackWalker.getInstance().walk(s -> s.skip(1).limit(4)
+                        .map(f -> f.getClassName().substring(f.getClassName().lastIndexOf('.') + 1) + "." + f.getMethodName() + ":" + f.getLineNumber())
+                        .collect(java.util.stream.Collectors.joining(" < "))) : "");
 
         if (now - st.lastManifest <= 200) Progression.count(sp, MANIFEST_WOKE, 1);
         if (ad != null) returnItems(sp, ad);
@@ -442,7 +448,7 @@ public final class Dreams {
                 continue;
             }
             ad.tickWorld(now, players);
-            Trials.tickWorld(ad, players);
+            Trials.tickWorld(ad, players, now);
             for (ServerPlayer p : players) {
                 if (!state(p).active) continue;
                 tickPlayer(p, state(p), ad, now);
@@ -503,9 +509,13 @@ public final class Dreams {
     }
 
     static void moveWithin(ServerPlayer sp, Vec3 to, float yaw) {
+        moveWithin(sp, to, yaw, sp.getXRot());
+    }
+
+    static void moveWithin(ServerPlayer sp, Vec3 to, float yaw, float pitch) {
         teleporting = true;
         try {
-            sp.teleport(new TeleportTransition(sp.level(), to, Vec3.ZERO, yaw, sp.getXRot(), TeleportTransition.DO_NOTHING));
+            sp.teleport(new TeleportTransition(sp.level(), to, Vec3.ZERO, yaw, pitch, TeleportTransition.DO_NOTHING));
         } finally {
             teleporting = false;
         }
@@ -658,6 +668,21 @@ public final class Dreams {
         Trials.bellTaken(sp);
     }
 
+    /**
+     * Where a trial's bell stands now (SPEC §9.5): the end of a Run's road, a Room's goal wherever its rule has it, or
+     * null while the rule hides it or the Chase's fear carries it.
+     */
+    public static @Nullable BlockPos trialBellAt(ActiveDream ad) {
+        if (ad.bp.course == null) return null;
+        if (ad.bp.course.trial().run()) return ad.bp.course.bell();
+        return ad.roomCarrier != null ? null : ad.roomGoal;
+    }
+
+    /** The Chase's fear carrying the bell, or null. */
+    public static @Nullable UUID trialBellCarrier(ActiveDream ad) {
+        return ad.roomCarrier;
+    }
+
     public static void manifest(ServerPlayer sp, boolean summon) {
         DreamState st = state(sp);
         ActiveDream ad = active(sp);
@@ -706,7 +731,7 @@ public final class Dreams {
             DreamBlueprint.Node n = ad.bp.nodes.get(ad.mentorNode);
             for (ServerPlayer p : players) {
                 if (horizontal(p, n.feet()) < 9 && Math.abs(p.getY() - n.feet().getY()) < 6 && Progression.profile(p).path().isPresent()) {
-                    Mentors.start(ad, n, p);
+                    Mentors.start(ad, n.feet(), p, false);
                     break;
                 }
             }

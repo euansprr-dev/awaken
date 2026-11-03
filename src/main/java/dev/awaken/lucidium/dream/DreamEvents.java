@@ -120,6 +120,8 @@ public final class DreamEvents {
     private static void onDamagePre(LivingDamageEvent.Pre event) {
         if (!(event.getEntity() instanceof ServerPlayer sp) || !Dreams.isDreaming(sp)) return;
         if (event.getNewDamage() >= sp.getHealth()) {
+            dev.awaken.Awaken.LOG.info("[lucidium] {} took a waking blow: {} ({} of {})", sp.getGameProfile().name(),
+                    event.getSource().getMsgId(), event.getNewDamage(), sp.getHealth());
             event.setNewDamage(Math.max(0, sp.getHealth() - 1));
             WAKE_DIED.add(sp.getUUID());
         }
@@ -230,7 +232,10 @@ public final class DreamEvents {
 
     private static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer sp) || Dreams.teleporting()) return;
-        if (event.getFrom() == LucidiumContent.LUCIDIUM && Dreams.isDreaming(sp)) Dreams.wake(sp, Dreams.Wake.LEFT);
+        if (event.getFrom() == LucidiumContent.LUCIDIUM && Dreams.isDreaming(sp)) {
+            dev.awaken.Awaken.LOG.info("[lucidium] {} left the dream for {}", sp.getGameProfile().name(), event.getTo().identifier());
+            Dreams.wake(sp, Dreams.Wake.LEFT);
+        }
     }
 
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {

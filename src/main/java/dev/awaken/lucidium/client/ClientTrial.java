@@ -10,6 +10,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -21,6 +22,10 @@ public final class ClientTrial {
     private ClientTrial() {}
 
     static LucidiumNet.@Nullable TrialStart start;
+    /** Where the end's light stands (a Room's goal moves, or hides until its rule shows it), null for nowhere. */
+    static @Nullable Vec3 end;
+    /** The places dreams showed you (SPEC §9.5), for the Atlas. */
+    static List<LucidiumNet.DreamPlace> places = List.of();
     static LucidiumNet.TrialHud hud = new LucidiumNet.TrialHud(0, 0, 1, 0, "", false);
     static int left;
     static String flash = "";
@@ -40,6 +45,7 @@ public final class ClientTrial {
 
     static void begin(LucidiumNet.TrialStart s) {
         start = s;
+        end = s.end();
         hud = new LucidiumNet.TrialHud(0, 0, 1, 0, "", false);
         left = 0;
         flash = "";
@@ -47,6 +53,18 @@ public final class ClientTrial {
         arrived = 0;
         phaseTicks = 0;
         glint = 0;
+    }
+
+    static void goal(LucidiumNet.TrialGoal g) {
+        end = g.shown() ? g.end() : null;
+    }
+
+    /** The Atlas's pearl marks: each place a dream showed you, faded once you've been there. */
+    static List<dev.awaken.core.api.MapMarks.Mark> marks(net.minecraft.world.entity.player.Player p) {
+        if (places.isEmpty()) return List.of();
+        List<dev.awaken.core.api.MapMarks.Mark> out = new java.util.ArrayList<>(places.size());
+        for (LucidiumNet.DreamPlace d : places) out.add(new dev.awaken.core.api.MapMarks.Mark(d.pos(), d.found() ? 0xB8A8C8 : 0xE6D2FF, d.label(), d.found()));
+        return out;
     }
 
     static void update(LucidiumNet.TrialHud h) {
@@ -105,6 +123,8 @@ public final class ClientTrial {
 
     static void clear() {
         start = null;
+        end = null;
+        places = List.of();
         bed = Optional.empty();
         flash = "";
         flashTicks = 0;

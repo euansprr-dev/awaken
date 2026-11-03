@@ -62,9 +62,10 @@ final class DreamBells {
         int lifted;
         /** Lullaby's sleeper, the Nightmare's chaser. */
         @Nullable UUID beast;
-        /** A trial dream's bell (SPEC §9.3): it waits at the end of the dream's road, its puzzle the dream's own. */
+        /** A trial dream's bell (SPEC §9.3, §9.5): it stands where the dream says, its puzzle the dream's own. */
         boolean managed;
-        @Nullable BlockPos spot;
+        /** The Chase's fear carrying it (the dream's own, so never discarded here: others may be chasing it too). */
+        @Nullable UUID carried;
 
         Dream(String bell, @Nullable BlockPos at) {
             this.bell = bell;
@@ -87,8 +88,12 @@ final class DreamBells {
     static void tick(MinecraftServer server) {
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             Dream d = DREAMS.get(p.getUUID());
-            // the fall needs every tick; the rest once a second
-            if (d != null && !d.held && d.bell.equals("falling") && Lucidium.isDreaming(p)) fall(p, d);
+            // the fall needs every tick, a trial's bell every other (it follows a goal that moves); the rest once a second
+            if (d != null && !d.held && Lucidium.isDreaming(p)) {
+                if (d.managed) {
+                    if (p.tickCount % 2 == 0) follow(p, d);
+                } else if (d.bell.equals("falling")) fall(p, d);
+            }
             if ((p.tickCount + p.getId()) % 20 != 7) continue;
             if (!Lucidium.isDreaming(p)) {
                 if (d != null) woke(p, d);
@@ -104,7 +109,8 @@ final class DreamBells {
             BellCatalog.Def def = BellCatalog.of(d.bell);
             long now = level.getGameTime();
             // its note every five seconds, loud enough to follow from the far side of the dream (the Falling Bell's from below)
-            BlockPos from = d.at != null ? d.at : d.bell.equals("falling") ? p.blockPosition().below(16) : null;
+            BlockPos from = d.at != null ? d.at : d.bell.equals("falling") && !d.managed ? p.blockPosition().below(16) : null;
+            if (from == null && d.carried != null && level.getEntity(d.carried) instanceof Entity carrier) from = carrier.blockPosition();
             if (from != null && def != null && (now + p.getId()) % NOTE_EVERY < 20)
                 level.playSound(null, from, BellContent.note(def.no()), SoundSource.AMBIENT, d.bell.equals("lullaby") ? 2.5F : 6F, 1F);
             if (d.at != null)
@@ -120,7 +126,6 @@ final class DreamBells {
             if (b == null || Bells.has(p, b.id()) || BellCatalog.of(b.id()) == null) return null;
             Dream d = new Dream(b.id(), null);
             d.managed = true;
-            d.spot = b.at();
             return d;
         }
         String bell = null;
@@ -157,11 +162,7 @@ final class DreamBells {
 
     /** Once a second while the bell's still to be had: what its puzzle does. */
     private static void puzzle(ServerPlayer p, ServerLevel level, Dream d) {
-        if (d.managed) {
-            // set down when you come within sight of the end of the road (its chunk is made by then)
-            if (d.at == null && d.spot != null && p.blockPosition().closerThan(d.spot, 96) && level.isLoaded(d.spot)) set(level, d, d.spot);
-            return;
-        }
+        if (d.managed) return; // follow() keeps it where the dream says
         switch (d.bell) {
             case "daydream" -> {
                 if (d.at == null) return;
@@ -210,6 +211,33 @@ final class DreamBells {
             }
             default -> {}
         }
+    }
+
+    /**
+     * A trial's bell (SPEC §9.5) goes where the dream says: after a Room's goal as it moves, gone while the rule hides it,
+     * in the hands of the fear that carries it in the Chase. Set down once its chunk is made (within sight of it), and set
+     * again where someone else in a shared dream took theirs (a bell for each who takes it).
+     */
+    private static void follow(ServerPlayer p, Dream d) {
+        if (!(p.level() instanceof ServerLevel level)) return;
+        Lucidium.DreamBell b = Lucidium.dreamBell(p);
+        if (b == null) return;
+        if (b.carrier() != null && !b.carrier().equals(d.carried) && level.getEntity(b.carrier()) instanceof Mob m) {
+            BellCatalog.Def def = BellCatalog.of(d.bell);
+            if (def != null) {
+                m.setItemSlot(EquipmentSlot.MAINHAND, BellItem.of(def.no()));
+                m.setDropChance(EquipmentSlot.MAINHAND, 0F);
+            }
+            d.carried = b.carrier();
+        }
+        BlockPos to = b.at();
+        if (to == null) {
+            if (d.at != null && level.getBlockState(d.at).is(BellContent.SLEEPING_BELL.get())) level.setBlock(d.at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+            d.at = null;
+            return;
+        }
+        if (!level.isLoaded(to) || !p.blockPosition().closerThan(to, 96)) return;
+        if (!to.equals(d.at) || !level.getBlockState(to).is(BellContent.SLEEPING_BELL.get())) set(level, d, to);
     }
 
     /**

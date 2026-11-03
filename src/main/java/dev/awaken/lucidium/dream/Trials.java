@@ -2,6 +2,7 @@ package dev.awaken.lucidium.dream;
 
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.DirectorLog;
+import dev.awaken.core.api.AtlasHooks;
 import dev.awaken.core.api.MovementHooks;
 import dev.awaken.core.api.TipHooks;
 import dev.awaken.lucidium.LucidiumContent;
@@ -9,7 +10,9 @@ import dev.awaken.lucidium.data.DreamLedger;
 import dev.awaken.lucidium.data.DreamRecord;
 import dev.awaken.lucidium.data.DreamState;
 import dev.awaken.lucidium.data.Dreamer;
+import dev.awaken.lucidium.data.Vision;
 import dev.awaken.lucidium.net.LucidiumNet;
+import dev.awaken.lucidium.plan.Nightmares;
 import dev.awaken.lucidium.trial.Course;
 import dev.awaken.lucidium.trial.Trial;
 import dev.awaken.progression.Counters;
@@ -24,9 +27,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A trial dream while it runs (SPEC §9.3). You arrive in your room and the dream waits for you. H takes control: the
@@ -59,20 +64,31 @@ final class Trials {
         st.bonus = Math.min(BONUS_MAX, Math.round(st.lucidity));
         st.endTick = now + WAIT_MAX;
         st.ring = 0;
+        st.lastX = sp.getX();
+        st.lastZ = sp.getZ();
         Dreamer d = Dreams.dreamer(sp);
-        AwakenNet.send(sp, new LucidiumNet.TrialStart(goal(c), sub(c), ringCentres(c), end(c), c.bell() != null,
+        if (sp.getUUID().equals(ad.host)) d.ledger.choice = ""; // the Journal's choice is spent on tonight's dream
+        Vec3 end = end(c, ad);
+        AwakenNet.send(sp, new LucidiumNet.TrialStart(goal(c, ad), sub(c), ringCentres(c), end != null ? end : c.start(), bell(c, ad),
                 c.path().size() > 512 ? c.path().subList(0, 512) : c.path(), Math.max(0, d.dreams - 1)));
+        if (end == null) AwakenNet.send(sp, new LucidiumNet.TrialGoal(false, Vec3.ZERO)); // the rule shows it later
         hud(sp, st, c, now, "", false);
     }
 
     /** The goal line at the top of the screen. */
-    static String goal(Course c) {
+    static String goal(Course c, ActiveDream ad) {
+        if (!c.trial().run()) return RoomRules.goal(c, RoomRules.bell(ad));
         if (c.bell() != null) return "Follow the road and take the bell before the dream fades.";
         return c.trial().goal;
     }
 
     static String sub(Course c) {
-        return c.trial().sub;
+        return c.trial().run() ? c.trial().sub : RoomRules.sub(c);
+    }
+
+    /** Whether this dream's goal is a bell (taken by striking it). */
+    static boolean bell(Course c, ActiveDream ad) {
+        return c.bell() != null || RoomRules.bell(ad);
     }
 
     static List<Vec3> ringCentres(Course c) {
@@ -85,12 +101,19 @@ final class Trials {
         return c.bell() != null ? Vec3.atBottomCenterOf(c.bell()) : c.goal().getCenter();
     }
 
+    /** Where the end stands now: a Run's is fixed; a Room's goal moves, or hides until its rule shows it (null). */
+    static @Nullable Vec3 end(Course c, ActiveDream ad) {
+        return c.trial().run() ? end(c) : RoomRules.end(ad);
+    }
+
     // ---- the world ---------------------------------------------------------------------------------------------------
 
-    /** Once a tick for the dream: the course lays itself ahead of whoever is furthest along it. */
-    static void tickWorld(ActiveDream ad, List<ServerPlayer> players) {
+    /** Once a tick for the dream: the course lays itself ahead of whoever is furthest along it; a Room's rule runs. */
+    static void tickWorld(ActiveDream ad, List<ServerPlayer> players, long now) {
         Course c = ad.bp.course;
-        if (c == null || ad.revealed >= c.reveals().size() || players.isEmpty()) return;
+        if (c == null || players.isEmpty()) return;
+        if (RoomRules.is(ad)) RoomRules.tickDream(ad, players, now);
+        if (ad.revealed >= c.reveals().size()) return;
         double front = Double.NEGATIVE_INFINITY;
         for (ServerPlayer p : players) front = Math.max(front, p.getZ());
         int reach = (int) Math.floor(front) + Course.AHEAD;
@@ -127,8 +150,12 @@ final class Trials {
     /** One tick for one dreamer. Returns false when it woke them. */
     static boolean tick(ServerPlayer sp, DreamState st, ActiveDream ad, long now) {
         Course c = ad.bp.course;
-        // a fall is caught, never the end
-        if (sp.getY() < c.floorY() - CATCH_BELOW) caught(sp, st, c, now);
+        // a fall is caught, never the end (after the win, quietly back to the end while the prize plays)
+        if (sp.getY() < c.floorY() - CATCH_BELOW - RoomRules.extraDepth(c)) {
+            Vec3 end = end(c, ad);
+            if (st.phase == 2 && end != null) Dreams.moveWithin(sp, end, sp.getYRot());
+            else caught(sp, st, c, now);
+        }
 
         switch (st.phase) {
             case 0 -> {
@@ -147,6 +174,10 @@ final class Trials {
                 // the run as a ghost, from the doorway on
                 if (st.runStart > 0 && (now - st.runStart) % DreamLedger.GHOST_EVERY == 0 && st.traceLen < DreamLedger.GHOST_MAX)
                     st.trace[st.traceLen++] = DreamLedger.pack(sp.getX() - c.start().x, sp.getY() - c.start().y, sp.getZ() - c.start().z);
+                if (RoomRules.is(ad)) {
+                    RoomRules.tick(sp, st, ad, now);
+                    if (st.phase != 1) return true; // the rule won it (for everyone in a Room)
+                }
                 AABB box = sp.getBoundingBox();
                 for (int i = st.ring + 1; i < c.rings().size(); i++) {
                     if (!box.intersects(c.rings().get(i).box())) continue;
@@ -155,14 +186,16 @@ final class Trials {
                     hud(sp, st, c, now, "", false);
                     break;
                 }
-                if (box.intersects(c.goal())) {
-                    if (c.bell() == null) {
-                        won(sp, st, ad, now);
+                if (box.intersects(c.goal()) || RoomRules.touched(ad, box)) {
+                    if (!bell(c, ad)) {
+                        if (RoomRules.room(ad)) RoomRules.won(ad, now);
+                        else won(sp, st, ad, now);
                         return true;
                     }
                     if (now - st.lastDoor > 60) {
                         st.lastDoor = now;
-                        hud(sp, st, c, now, "Take the bell first. It's just behind you.", false);
+                        hud(sp, st, c, now, c.trial() == Trial.CHASE ? "Take the bell first. Your fear is carrying it."
+                                : "Take the bell first. It's just behind you.", false);
                     }
                 }
             }
@@ -187,10 +220,13 @@ final class Trials {
             takeControl(sp, st, ad, now);
             return;
         }
-        if (st.phase != 1 || now - st.lastGlint < GLINT_EVERY) return;
+        if (st.phase != 1) return;
+        if (RoomRules.is(ad) && RoomRules.press(sp, st, ad, now)) return; // the rule's own use of H
+        if (now - st.lastGlint < GLINT_EVERY) return;
         st.lastGlint = now;
         st.clockEnd -= GLINT_COST;
         Dreams.playTo(sp, LucidiumContent.REALITY_CHECK.get(), 0.6f, 1.3f);
+        if (RoomRules.is(ad)) RoomRules.glint(ad);
         hud(sp, st, c, now, "", true);
     }
 
@@ -260,12 +296,37 @@ final class Trials {
         st.wonTicks = (int) Math.max(1, now - (st.runStart > 0 ? st.runStart : st.lucidAt));
         Dreams.playTo(sp, LucidiumContent.LUCID.get(), 1f, 1.25f);
         ad.level.sendParticles(LucidiumContent.PEARL_MOTE.get(), sp.getX(), sp.getY() + 1, sp.getZ(), 40, 1.2, 1.2, 1.2, 0.05);
-        hud(sp, st, c, now, prizeLine(c, Dreams.dreamer(sp)), false);
+        hud(sp, st, c, now, prizeLine(c, ad, Dreams.dreamer(sp)), false);
     }
 
-    static String prizeLine(Course c, Dreamer d) {
-        if (c.bell() != null) return "You're holding the bell. Wake, and it's yours.";
+    /** The Duel ended: the mentor yields and it's won for everyone in the ring; or you're worn down, 10 s gone, and again. */
+    static void duelEnded(ActiveDream ad, ServerPlayer sp, boolean won) {
+        long now = Dreams.now(sp.level().getServer());
+        if (won) {
+            RoomRules.won(ad, now);
+            return;
+        }
+        ad.mentorState = -1;
+        ad.roomNext = now + DUEL_AGAIN;
+        for (java.util.UUID id : ad.participants) {
+            ServerPlayer p = sp.level().getServer().getPlayerList().getPlayer(id);
+            if (p == null || !Dreams.isDreaming(p)) continue;
+            DreamState s = Dreams.state(p);
+            if (s.phase != 1) continue;
+            s.clockEnd -= DUEL_COST;
+            hud(p, s, ad.bp.course, now, "\"Not yet. Catch your breath, and again.\" 10 seconds gone.", false);
+        }
+    }
+
+    /** A duel lost: this much of the clock, and the mentor's back this long after. */
+    static final int DUEL_COST = 200, DUEL_AGAIN = 60;
+
+    static String prizeLine(Course c, ActiveDream ad, Dreamer d) {
+        if (bell(c, ad)) return "You're holding the bell. Wake, and it's yours.";
+        if (c.room() != null && c.room().place() != null) return "Look through the glass. That place is real, and it's in your world.";
         Trial t = c.trial();
+        if (t == Trial.CHASE) return "It's gone. Your fear let go of you.";
+        if (t == Trial.DUEL) return "Your mentor yields. \"Good. Again, another night.\"";
         if (t.run() && !t.move.isEmpty() && !d.ledger.remembered.contains(t.id)) return "Your body remembers " + t.moveName() + ".";
         return "You made it to the end of the dream.";
     }
@@ -292,7 +353,7 @@ final class Trials {
         Waking w;
         if (why == Dreams.Wake.WON) {
             int medal = medal(c, st.wonTicks);
-            DreamLedger.Finished before = d.ledger.finish(t.id, st.wonTicks, medal, day);
+            DreamLedger.Finished before = d.ledger.finish(t.id, st.wonTicks, medal, day, ad.bp.plan.trialRef());
             Progression.count(sp, FINISHED);
             double xp = before == null ? XP_FIRST : before.day() != day ? XP_AGAIN : 0;
             if (xp > 0) Progression.worldXp(sp, "awaken:dream_trial", xp);
@@ -305,13 +366,20 @@ final class Trials {
             if (medal > 0) rows.add(new SignalWindow.Row(Component.literal("Medal"), Component.literal(medalName(medal))));
             List<String> kept = new ArrayList<>();
             if (learnt) kept.add(t.moveName());
-            if (c.bell() != null) kept.add("a bell");
+            if (bell(c, ad)) kept.add("a bell");
+            // the move goes in the body: the card says how to do it awake; a Room's place, the Chase's fear, the Duel's lesson
+            String body = learnt ? "Your body remembers " + t.moveName() + ". " + t.how : t.run() ? "" : prize(sp, ad, d, day, kept);
             kept.add(RESIDUE + " Dream Residue");
             rows.add(new SignalWindow.Row(Component.literal("You kept"), Component.literal(String.join(", ", kept))));
-            summary = t.title + ": reached the end in " + time(st.wonTicks) + (medal > 0 ? " (" + medalName(medal).toLowerCase() + ")" : "");
-            // the move goes in the body: the card says how to do it awake
-            String body = learnt ? "Your body remembers " + t.moveName() + ". " + t.how : "";
-            w = new Waking("You reached the end of the dream", body, rows, "Your Dream Journal has written it down.");
+            summary = t.title + ": " + (t.run() ? "reached the end" : "won") + " in " + time(st.wonTicks)
+                    + (medal > 0 ? " (" + medalName(medal).toLowerCase() + ")" : "");
+            String title = switch (t.kind) {
+                case RUN -> "You reached the end of the dream";
+                case ROOM -> "You found your way through the dream";
+                case CHASE -> bell(c, ad) ? "You took the bell from your fear" : "You got away from your fear";
+                case DUEL -> "Your mentor yielded";
+            };
+            w = new Waking(title, body, rows, "Your Dream Journal has written it down.");
             DirectorLog.log(sp, "dream", "trial " + t.id + " won in " + st.wonTicks + " ticks (par " + c.par() + ", medal " + medal
                     + ", catches " + st.catches + ")");
         } else {
@@ -329,6 +397,68 @@ final class Trials {
         d.addHistory(new DreamRecord(st.dreamId, day, summary, Math.round(st.peak), st.lucidCounted, true, false, ad.bp.plan));
         DreamOffers.changed(sp);
         return w;
+    }
+
+    /** XP for letting a fear go (the Chase) and for the mentor's lesson (the Duel), as the island dreams gave. */
+    static final double FEAR_XP = 0.10, LESSON_XP = 0.20;
+
+    /**
+     * What a Room, the Chase and the Duel give on waking (SPEC §9.5), into {@code kept}; returns the card's line. A Room's
+     * place goes on your Atlas and into the Journal's Visions (everyone in the dream gets it); the Chase lets your
+     * week's fear go; the Duel is your mentor's lesson.
+     */
+    static String prize(ServerPlayer sp, ActiveDream ad, Dreamer d, long day, List<String> kept) {
+        Course c = ad.bp.course;
+        switch (c.trial()) {
+            case CHASE -> {
+                Nightmares.Family f = RoomRules.fear(ad, sp);
+                Progression.count(sp, Counters.NIGHTMARES_BEATEN);
+                for (String counter : Nightmares.weeklyCountersOf(f, java.util.Map.copyOf(Progression.profile(sp).counters())))
+                    Progression.setCounter(sp, counter, 0);
+                d.clearFamily(f);
+                Progression.grantLevels(sp, FEAR_XP, Progression.XpSource.DREAM);
+                kept.add("a fear let go");
+                return "You stopped running from " + f.fear + ". It won't come for you in your dreams this week.";
+            }
+            case DUEL -> {
+                Progression.grantLevels(sp, LESSON_XP, Progression.XpSource.DREAM);
+                Progression.count(sp, Mentors.MENTOR_DUELS_WON);
+                kept.add("your mentor's lesson");
+                return "\"Good. Again, another night.\"";
+            }
+            default -> {}
+        }
+        Vision v = placeOf(sp, ad, d, day);
+        if (v == null) return "";
+        Visions.reveal(sp, v, day);
+        AtlasHooks.reveal(sp, v.pos(), PLACE_REVEAL);
+        Vision shown = d.vision(v.id()).orElse(v);
+        kept.add("a real place");
+        Progression.markNewThing(sp, "vision " + v.id());
+        DirectorLog.log(sp, "vision", "shown by the " + c.trial().id + " room: " + v.label());
+        return "You saw a real place: " + v.label() + ". It's on your map now. " + shown.hint();
+    }
+
+    /** How much of the Atlas a dreamt place draws in round it. */
+    static final int PLACE_REVEAL = 40;
+
+    /**
+     * This dream's hidden place for one dreamer: theirs if it was planned for them; for anyone else in a shared dream, a
+     * copy of the host's (the place is everyone's who saw it). Null without one.
+     */
+    static @Nullable Vision placeOf(ServerPlayer sp, ActiveDream ad, Dreamer d, long day) {
+        if (ad.bp.plan.vision().isEmpty()) return null; // shown even if its snapshot couldn't be drawn: the place is real
+        String id = ad.bp.plan.vision().get();
+        Optional<Vision> own = d.vision(id);
+        if (own.isPresent()) return own.get();
+        ServerPlayer host = sp.level().getServer().getPlayerList().getPlayer(ad.host);
+        if (host == null) return null;
+        Optional<Vision> theirs = Dreams.dreamer(host).vision(id);
+        if (theirs.isEmpty()) return null;
+        Vision h = theirs.get();
+        Vision copy = new Vision(h.id(), h.snapshotId(), h.label(), h.dim(), h.pos(), "", day, -1, false);
+        d.putVision(copy);
+        return copy;
     }
 
     // ---- medals ------------------------------------------------------------------------------------------------------

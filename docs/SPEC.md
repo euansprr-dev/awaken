@@ -402,7 +402,7 @@ the old path is gone by the same delivery, so a flag would only guard a dream no
 ### 9.1 Trials
 
 `trial.Trial`: FIRST (the Dreaming Bell's dream, 75 s), Runs WALL, LEDGE, VAULT (built), CLIMB, ROPE, LEAP, WINGS (stage 2
-and 4), Rooms WRONG, LOOK_AWAY, HUSH, LONG_FALL, FOLD, NO_DOOR (180 s, stage 3), CHASE (120 s), DUEL (150 s). Each has one
+and 4), Rooms WRONG, LOOK_AWAY, HUSH, FOLD, NO_DOOR (180 s), LONG_FALL (120 s) (§9.5), CHASE (120 s), DUEL (150 s). Each has one
 goal line and a small line under it. A Run's course is laid by `trial.CourseKit` from RunnerRules' own probes (read only,
 §12): every wall-run, wall jump, ledge hang and shimmy, vault and slide is proved by the same checks the movement makes,
 and `TrialCompiler` tries four seeded variants then a plain road, so a plan always compiles. The solver's time from the
@@ -475,6 +475,69 @@ bed sheds a few pearl motes at night (client, `DreamWaiting` payload).
   The door is at the top.
 - **Tests**: `dreams_move_remembered` (the wall remembered once, the ghost kept, a sample packs and unpacks); the climb in
   `dreams_runs_solvable`. Tour `tools/autopilot/dreams-runs.txt`.
+
+### 9.5 Rooms, bells, the Chase and the Duel (stage 3)
+
+A Room has one dream rule, shared by everyone in the dream (`dream.RoomRules`); its layout is laid by `trial.RoomLayouts`
+after the doorway (a `Course.Room`: the floor's middle and reach, where the goal first stands or null while the rule
+hides it, the rule's things, no door's walls, the fold's loop, the fall's edge, the hidden place's spot). A Room's goal
+may move: `ActiveDream.roomGoal`, the small Waking Door laid again where it goes, the end's light following
+(`TrialGoal` payload: shown or not, where). The clock: a Room 180 s (the long fall 120 s), the Chase 120 s, the Duel
+150 s. A Room won is won for everyone in it in control (phase 1).
+
+| Rule | Goal line (no bell / with its bell) | Rule | Fail |
+|---|---|---|---|
+| What's wrong here (`wrong`) | "Three things in this place are wrong. Look at each one and press H." / "... Find them all, and the bell will be there." | today's place (the latest Day Journal snapshot of today or yesterday, a home only if nothing else; else a pale courtyard) in a plaza, with three wrong things on spots round it: a door a block off the ground with no wall, a floating grass block, a lantern on a chain that ends in the air. Look at one (9°, 40 blocks) and press H. Looking at the sky, H glints them | a guess at nothing costs 5 s |
+| Look away (`look_away`) | "The door moves whenever you look away from it. Reach it." / "The bell moves whenever you look away from it. Catch it." | once in view (60°), out of view and over 3 away, it moves 16 to 28 from you on the plaza (8 to 16 if the plaza's too small) | none |
+| Hush (`hush`) | "Something is asleep by the door. Get to the door without waking it." / "... next to the bell. Take the bell without waking it." | a nightmare (generic family, no AI, silent, breathing clouds) beside the goal; within 12 not sneaking, or 18 sprinting, wakes it: it hunts you (at most 3 awake, the oldest fades) and the goal moves, a new sleeper beside it | it comes for you |
+| The long fall (`long_fall`) | "You're falling. Find a way to land." | the road ends at an edge over nothing; 8 below it, falling with your eyes down (over 40°) lifts you 10 ("The fall goes on for as long as you watch it."); eyes up (under 15°) lays a landing 6 below you and the goal on it. Caught only 60 deeper than the floor | none |
+| The fold (`fold`) | "This hallway keeps coming back. Find the way out of it." | a 30-long lamp-lit hallway; past 24 you're back 18 ("You've passed that door before.", then "Try walking backwards past the door you keep passing."); walking backwards (moving against where you look) past the pane of dream glass in its east wall opens it onto a short way to the Waking Door | none |
+| No door (`no_door`) | "There's no door. Make one." | a sealed room (the way in closes behind you); H looking at a wall (14 blocks) makes a door in it; the right wall's (a draft of pearl motes through it) leads to the Waking Door, the others into more wall | none |
+
+- **The Chase** (`chase`): a road with gaps and steps; once someone's past the doorway, 2 of your fear (3 from C rank)
+  spawn behind you in your room (`MobHooks.spawnThemed`, the family's theme and tags, level 80% of your content
+  level), hunting the nearest dreamer. The fear is the ref's (`fear:<family>`), else the week's worst, else something
+  hunting you in the dark. With the Nightmare's Bell the first carries it ("Your fear is coming after you, and it's
+  carrying a bell. Take the bell from it."); felled, the bell lies where it fell; the door says "Take the bell first.
+  Your fear is carrying it."
+- **The Duel** (`duel`): a ring of dream glass on a plaza; step within 8 of its middle and your Path's mentor comes
+  (`Mentors.start(ad, feet, player, trial)`: "Show me what you've learned."). Worn down (its blows stop at 3 health):
+  "Not yet. Catch your breath, and again." 10 s gone, the mentor back 3 s later. It yields at 35% health: won for
+  everyone in control.
+- **Bells** (the six keep their count; `DreamBells` keeps their words and the Book's Dreamt leads): the Dreaming Bell
+  is the first Run's; the Daydream Bell is Look away's, the Lullaby Bell Hush's, the Falling Bell the long fall's, the
+  Nightmare's Bell the Chase's, the Lucid Bell What's wrong here's (found all three: "Now there's a bell where there
+  wasn't one."). `Lucidium.DreamBell(id, at, carrier)`: `at` where it stands now (null while the rule hides it),
+  `carrier` the Chase's fear holding it. `DreamBells.follow` (every other tick) sets the Sleeping Bell where the dream
+  says, clears it while hidden, puts it in the carrier's hand (no drop), and sets it again for a shared dreamer when
+  someone else took theirs. A bell's dream is won by striking it (no lucidity gate); the old dream puzzles stay only for
+  a dream that isn't a trial.
+- **Hidden places**: a Room carrying `vision:<id>` (the visions finder's place: an unvisited surface structure 160 to
+  1,400 away, or an old remembered place) shows it beyond a window of dream glass at the far side, on its own island,
+  undistorted. Won: "Look through the glass. That place is real, and it's in your world." Waking:
+  `Visions.reveal` (the Journal's Visions, with which way it lies from your bed), `AtlasHooks.reveal` (40 round it) and
+  a pearl mark on the Atlas (`DreamPlaces` payload → `MapMarks`, faded once found); "You saw a real place: <label>.
+  It's on your map now. <hint>". Everyone in the dream gets it (a guest a copy of the host's). Walking up to it awake
+  is found, as before (`awaken:secrets_found`).
+- **Prizes on waking**: a Room "You found your way through the dream"; the Chase "You got away from your fear" / "You
+  took the bell from your fear", its fear let go (`nightmares_beaten`, that family's weekly counters and death marks
+  cleared, +10% of a level); the Duel "Your mentor yielded" (+20% of a level, `awaken:mentor_duels_won`). World XP and
+  residue as every finish.
+- **What waits** (`DreamOffers.check`, after the first dream; one new a play-day, in this order): the next dream bell your
+  rank has reached (`bell:<id>` on its dream; one bell waits at a time); the next Run; a place the finder has ready, in
+  the next Room in turn (`PLACE_ROOMS`: fold, no door, look away, hush, what's wrong here); the Chase once one family
+  killed you twice this week (`fear:<family>`); the Duel once you have a Path, 3 play-days after the last. Stale waits
+  drop: a bell you hold or one no longer next, a place shown or gone, a fear with no deaths left. A bell or a place is
+  given once (`DreamLedger.given`); a waiting dream carrying something else than tonight's shared one stays waiting.
+- **The Dream Journal's choice**: "Tonight I want to... learn a move / find something hidden / face my fear / find a
+  bell" (the last only while one waits): the oldest waiting of that kind (run, room, chase, bell) comes first, and asks
+  for a dream a night after the last. It lasts into the next play-day and is spent when a dream begins; it also counts
+  as an intention (+10 s).
+- **Commands** (admin, tours): `/awaken dream offer <trial> [bell:<id> | vision | fear:<family>]`, `/awaken dream solve`
+  (one step of the rule as a player would: the next wrong thing named, the right wall's door, the fold walked
+  backwards, the fall looked up from, the mentor coming or yielding, the carrier felled; then to the goal).
+- **Tests**: `dreams_room_rules` (each rule's mechanism, the bells' API, the Chase's door, the Duel to its morning),
+  `dreams_hidden_place`, `dreams_shared`. Tour `tools/autopilot/dreams-rooms.txt`.
 
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and

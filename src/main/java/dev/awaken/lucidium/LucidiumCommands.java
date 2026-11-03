@@ -61,11 +61,12 @@ final class LucidiumCommands {
                             Lucidium.replay(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "index")) ? 1 : 0)));
             // tours: a trial to tonight's head, H as a command, a ring of the trial you're in
             dream.then(Commands.literal("offer").requires(AwakenCommands.admin())
-                    .then(Commands.argument("trial", StringArgumentType.word()).executes(c -> {
-                        boolean ok = DreamOffers.offerNow(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "trial"));
-                        if (!ok) c.getSource().sendFailure(Component.literal("No such trial built yet."));
-                        return ok ? 1 : 0;
-                    })));
+                    .then(Commands.argument("trial", StringArgumentType.word()).executes(c -> offer(c.getSource(), StringArgumentType.getString(c, "trial"), ""))
+                            // what it carries: bell:<id>, vision (the place the finder has ready), fear:<family>
+                            .then(Commands.argument("ref", StringArgumentType.greedyString()).executes(c ->
+                                    offer(c.getSource(), StringArgumentType.getString(c, "trial"), StringArgumentType.getString(c, "ref"))))));
+            dream.then(Commands.literal("solve").requires(AwakenCommands.admin()).executes(c ->
+                    DreamOffers.solve(c.getSource().getPlayerOrException()) ? 1 : 0));
             dream.then(Commands.literal("control").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
                 if (!Dreams.isDreaming(sp)) return 0;
@@ -84,6 +85,12 @@ final class LucidiumCommands {
             }));
             root.then(dream);
         });
+    }
+
+    private static int offer(CommandSourceStack src, String trial, String ref) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        boolean ok = DreamOffers.offerNow(src.getPlayerOrException(), trial, ref);
+        if (!ok) src.sendFailure(Component.literal(ref.equals("vision") ? "No place is ready yet: /awaken dream vision first." : "No such trial built yet."));
+        return ok ? 1 : 0;
     }
 
     private static int now(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

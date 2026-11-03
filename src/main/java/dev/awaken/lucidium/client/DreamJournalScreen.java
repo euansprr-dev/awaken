@@ -58,7 +58,7 @@ public final class DreamJournalScreen extends Screen {
         g.text(font, title, lx, py + 10, LucidityHud.a(INK, 1f), false);
         g.text(font, Component.translatable("screen.awaken.dream_journal.intention"), lx, py + 30, LucidityHud.a(FADED, 1f), false);
         int by = py + 44;
-        for (String id : DreamPlanner.INTENTIONS) {
+        for (String id : choices()) {
             boolean on = id.equals(data.intention());
             boolean hover = inside(mouseX, mouseY, lx, by, colW, 16);
             button(g, Component.translatable("screen.awaken.dream_journal." + id).getString(), lx, by, colW, 16, on, hover, ROSE);
@@ -150,6 +150,11 @@ public final class DreamJournalScreen extends Screen {
         if (on) g.text(font, "✦", x + 4, y + (h - 8) / 2, LucidityHud.a(accent, 1f), false);
     }
 
+    /** Tonight's choices: a bell's only while one waits. */
+    private java.util.List<String> choices() {
+        return data.bell() ? DreamPlanner.CHOICES : DreamPlanner.CHOICES.subList(0, DreamPlanner.CHOICES.size() - 1);
+    }
+
     private static boolean inside(double mx, double my, int x, int y, int w, int h) {
         return mx >= x && my >= y && mx < x + w && my < y + h;
     }
@@ -159,7 +164,7 @@ public final class DreamJournalScreen extends Screen {
         double mx = event.x(), my = event.y();
         int lx = px + 12, colW = pw / 2 - 22;
         int by = py + 44;
-        for (String id : DreamPlanner.INTENTIONS) {
+        for (String id : choices()) {
             if (inside(mx, my, lx, by, colW, 16)) {
                 ClientPacketDistributor.sendToServer(new LucidiumNet.JournalAction("intent", id));
                 return true;

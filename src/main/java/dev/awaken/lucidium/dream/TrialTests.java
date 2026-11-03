@@ -36,6 +36,7 @@ public final class TrialTests {
         AwakenTests.register("dreams_wake_button", 60, TrialTests::wakeButton);
         AwakenTests.register("dreams_win", 200, TrialTests::win);
         AwakenTests.register("dreams_move_remembered", 200, TrialTests::moveRemembered);
+        RoomTests.register();
     }
 
     /** Every built trial passes its solver at its first variant, with a bell and without, and compiles into a course. */
@@ -43,7 +44,8 @@ public final class TrialTests {
         for (Trial t : DreamOffers.BUILT) {
             for (boolean bell : new boolean[]{false, true}) {
                 CourseKit k = new CourseKit(0, TrialCompiler.BASE_Y, 9);
-                TrialCompiler.lay(k, t, 0, bell);
+                if (t.run()) TrialCompiler.lay(k, t, 0, bell);
+                else dev.awaken.lucidium.trial.RoomLayouts.lay(k, t, bell, bell, 7, false);
                 int par = k.solve();
                 h.assertTrue(par > 0, t.id + (bell ? " with a bell" : "") + " fails its solver: " + k.failure());
             }
@@ -87,7 +89,7 @@ public final class TrialTests {
             l.lastDreamDay = day - 2;
             h.assertTrue(l.tonight(day) != null, "a night off, and it comes");
 
-            l.finish(Trial.FIRST.id, 600, 0, day);
+            l.finish(Trial.FIRST.id, 600, 0, day, "bell:dreaming");
             h.assertFalse(l.isWaiting(Trial.FIRST.id) || !l.given.contains("bell:dreaming"), "finished: off the list, its bell given");
             DreamOffers.check(sp);
             h.assertTrue(l.isWaiting(Trial.WALL.id), "then the first Run comes to wait");
@@ -113,11 +115,16 @@ public final class TrialTests {
         return enter(h, sp, Trial.FIRST);
     }
 
-    private static ActiveDream enter(GameTestHelper h, ServerPlayer sp, Trial trial) {
+    static ActiveDream enter(GameTestHelper h, ServerPlayer sp, Trial trial) {
+        return enter(h, sp, trial, "");
+    }
+
+    /** Into a trial carrying {@code ref} (a bell, a place, a fear). */
+    static ActiveDream enter(GameTestHelper h, ServerPlayer sp, Trial trial, String ref) {
         ServerLevel level = h.getLevel();
         sp.setNoGravity(true);
         long day = PlayDays.current(level.getServer());
-        Dreams.dreamer(sp).ledger.offer(trial.id, day, "test", "", true);
+        Dreams.dreamer(sp).ledger.waiting.addFirst(new DreamLedger.Waiting(trial.id, day, "test", ref));
         DreamPlan plan = DreamOffers.plan(sp).orElseThrow();
         Planner.Prepared p = Planner.buildNow(level.getServer(), sp.getUUID(), plan);
         ActiveDream ad = Dreams.enter(sp, p, new Dreams.Entry(false, null, level, false));
@@ -127,7 +134,7 @@ public final class TrialTests {
         return ad;
     }
 
-    private static void done(GameTestHelper h, ServerPlayer sp) {
+    static void done(GameTestHelper h, ServerPlayer sp) {
         if (Dreams.isDreaming(sp)) Dreams.wake(sp, Dreams.Wake.API);
         h.getLevel().getServer().getPlayerList().remove(sp);
     }
@@ -239,7 +246,7 @@ public final class TrialTests {
         ActiveDream ad = enter(h, sp, Trial.WALL);
         Course c = ad.bp.course;
         h.assertTrue(c.trial() == Trial.WALL, "the wall's dream");
-        h.assertTrue(Trials.prizeLine(c, Dreams.dreamer(sp)).equals("Your body remembers the wall-run."), "the prize says what the body keeps");
+        h.assertTrue(Trials.prizeLine(c, ad, Dreams.dreamer(sp)).equals("Your body remembers the wall-run."), "the prize says what the body keeps");
         Dreams.realityCheck(sp);
         Vec3 door = c.goal().getCenter();
         sp.teleportTo(h.getLevel(), door.x, c.goal().minY, door.z, java.util.Set.of(), 0, 0, true);
@@ -255,7 +262,7 @@ public final class TrialTests {
                             "THE BODY marks the wall-run and the wall jump");
                     h.assertFalse(dev.awaken.core.api.MovementHooks.remembered(sp, "hang"), "and nothing else");
                     h.assertFalse(Trials.remember(sp, Trial.WALL, d, false, false), "a move is remembered once");
-                    h.assertTrue(Trials.prizeLine(c, d).equals("You made it to the end of the dream."), "the second time, just the end");
+                    h.assertTrue(Trials.prizeLine(c, ad, d).equals("You made it to the end of the dream."), "the second time, just the end");
                     done(h, sp);
                 })
                 .thenSucceed();

@@ -96,7 +96,9 @@ public final class TrialCompiler {
 
         // ---- the course -------------------------------------------------------------------------------------------
         boolean bell = plan.trialRef().startsWith("bell:");
-        lay(kit, trial, variant, bell);
+        Fragment place = node(plan, DreamPlan.VISION, memories), today = trial == Trial.WRONG ? todayOf(plan, memories) : null;
+        if (trial.run()) lay(kit, trial, variant, bell);
+        else RoomLayouts.lay(kit, trial, bell, place != null, plan.seed(), today != null);
         int par = kit.solve();
         if (par < 0) {
             dev.awaken.Awaken.LOG.warn("Lucidium: trial {} variant {} failed its solver: {}", trial.id, variant, kit.failure());
@@ -107,13 +109,26 @@ public final class TrialCompiler {
         // ---- dream signs beside the course -----------------------------------------------------------------------
         Map<Long, BlockState> props = new LinkedHashMap<>();
         Map<DreamSign, DreamBlueprint.Sign> signs = new EnumMap<>(DreamSign.class);
-        int mid = (o.getZ() + 9 + kit.z) / 2;
+        // a Run's signs half way along; a Room's by the road in, where the room's walls don't hide them
+        int mid = trial.run() ? (o.getZ() + 9 + kit.z) / 2 : o.getZ() + 12;
         for (String name : plan.signs()) DreamSign.byName(name).ifPresent(s -> sign(s, props, signs, kit.x, BASE_Y, mid, plan.seed()));
         Map<Long, BlockState> all = new LinkedHashMap<>(props);
         all.putAll(kit.blocks());
         pieces.add(new DreamBlueprint.BlockListPiece(all));
 
         Course course = kit.build(trial, start, 0f, doorway, par, seconds);
+        Course.Room room = course.room();
+        // today's place in the middle of what's wrong here, as it was (not in the dream's colours)
+        if (room != null && today != null)
+            pieces.add(new DreamBlueprint.FragmentPiece(today, new BlockPos(room.centre().getX() - today.sx / 2, room.centre().getY() - Snapshot.FLOOR,
+                    room.centre().getZ() - today.sz / 2)));
+        // the hidden place beyond the dream glass, on its own ground, undistorted
+        if (room != null && room.place() != null && place != null) {
+            BlockPos p = room.place();
+            pieces.add(new DreamBlueprint.IslandPiece(p.getX(), p.getZ(), p.getY() - 1, 11.5, 6, plan.seed() ^ 0x51ACEL,
+                    Blocks.GRASS_BLOCK.defaultBlockState(), Blocks.DIRT.defaultBlockState(), LucidiumContent.DREAM_CLOUD.get().defaultBlockState()));
+            pieces.add(new DreamBlueprint.FragmentPiece(place, new BlockPos(p.getX() - place.sx / 2, p.getY() - Snapshot.FLOOR, p.getZ() - place.sz / 2)));
+        }
         return new DreamBlueprint(cell, o, plan, pieces, List.of(), List.of(), start, 0f, signs,
                 List.of(LucidiumContent.DREAM_GLASS.get().defaultBlockState()), List.of(), course);
     }
@@ -164,7 +179,30 @@ public final class TrialCompiler {
     /** Your latest home from the Day Journal (the plan names it as its first node), or null. */
     static @Nullable Fragment homeOf(DreamPlan plan, Function<String, Optional<Fragment>> memories) {
         for (DreamPlan.Node n : plan.nodes()) {
-            if (!DreamPlan.MEMORY.equals(n.kind())) continue;
+            if (!DreamPlan.MEMORY.equals(n.kind()) || n.x() != HOME) continue;
+            Optional<Fragment> f = memories.apply(n.ref());
+            if (f.isPresent() && f.get().sx == Snapshot.SX && f.get().sz == Snapshot.SZ) return f.get();
+        }
+        return null;
+    }
+
+    /** A plan's memory nodes say what they're for in x: your home (where you arrive), or today's place (what's wrong here). */
+    public static final int HOME = 0, TODAY = 1;
+
+    /** What's wrong here's place from today (a memory node marked {@link #TODAY}), a snapshot's size, or null. */
+    static @Nullable Fragment todayOf(DreamPlan plan, Function<String, Optional<Fragment>> memories) {
+        for (DreamPlan.Node n : plan.nodes()) {
+            if (!DreamPlan.MEMORY.equals(n.kind()) || n.x() != TODAY) continue;
+            Optional<Fragment> f = memories.apply(n.ref());
+            if (f.isPresent() && f.get().sx == Snapshot.SX && f.get().sz == Snapshot.SZ) return f.get();
+        }
+        return null;
+    }
+
+    /** The first node of {@code kind} whose snapshot loads at a snapshot's size (the hidden place), or null. */
+    static @Nullable Fragment node(DreamPlan plan, String kind, Function<String, Optional<Fragment>> memories) {
+        for (DreamPlan.Node n : plan.nodes()) {
+            if (!kind.equals(n.kind())) continue;
             Optional<Fragment> f = memories.apply(n.ref());
             if (f.isPresent() && f.get().sx == Snapshot.SX && f.get().sz == Snapshot.SZ) return f.get();
         }

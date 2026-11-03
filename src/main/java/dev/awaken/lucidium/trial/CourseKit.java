@@ -54,6 +54,8 @@ public final class CourseKit {
     boolean growFaces;
     private @Nullable AABB goal;
     private @Nullable BlockPos bell;
+    /** A Room's layout (RoomLayouts), or null for a Run. */
+    Course.@Nullable Room room;
     private String failure = "";
 
     final BlockState road = LucidiumContent.DREAM_ROAD.get().defaultBlockState();
@@ -317,6 +319,28 @@ public final class CourseKit {
         blocks.put(BlockPos.asLong(bx, by, bz), s);
     }
 
+    /** A floor block the room laid (counted for the catch's depth, as the road's are). */
+    void ground(int bx, int by, int bz, BlockState s) {
+        blocks.put(BlockPos.asLong(bx, by, bz), s);
+        minFloor = Math.min(minFloor, by + 1);
+    }
+
+    /** Where a Room's goal is touched (a fixed door), set by the room's layout. */
+    void goal(AABB box) {
+        goal = box;
+    }
+
+    /** A point on the true path (what H makes glint). */
+    void pathTo(Vec3 p) {
+        path.add(p);
+    }
+
+    /** Moves the cursor (a Room lays its own ground; the cursor then marks where its far side ends). */
+    void at(int ny, int nz) {
+        y = ny;
+        z = nz;
+    }
+
     public Map<Long, BlockState> blocks() {
         return blocks;
     }
@@ -450,7 +474,7 @@ public final class CourseKit {
                 }
             }
         }
-        if (goal == null) {
+        if (goal == null && room == null) { // a Room's goal may move, or come only when its rule shows it
             failure = "no goal";
             return -1;
         }
@@ -496,6 +520,6 @@ public final class CourseKit {
         List<Course.Reveal> sorted = new ArrayList<>(reveals);
         sorted.sort((a, b) -> Integer.compare(a.along(), b.along()));
         return new Course(trial, start, startYaw, List.copyOf(doorway), List.copyOf(all), goal == null ? new AABB(0, -64, 0, 0, -64, 0) : goal,
-                bell, minFloor, par, List.copyOf(path), List.copyOf(sorted), seconds);
+                bell, minFloor, par, List.copyOf(path), List.copyOf(sorted), seconds, room);
     }
 }

@@ -50,7 +50,8 @@ final class TrialRings {
                     ring(vc, s.rings().get(i), a, time + i);
                 }
                 float pulse = 0.55f + 0.2f * Mth.sin(time * 1.4f);
-                flare(vc, s.end().add(0, s.bell() ? 1.2 : 2.0, 0), s.bell() ? 2.2f : 3.6f, argb(0xF6F0FF, pulse * 0.5f));
+                Vec3 end = ClientTrial.end;
+                if (end != null) flare(vc, end.add(0, s.bell() ? 1.2 : 2.0, 0), s.bell() ? 2.2f : 3.6f, argb(0xF6F0FF, pulse * 0.5f));
             } catch (RuntimeException ex) {
                 Awaken.LOG.error("[lucidium] trial rings failed", ex);
             }

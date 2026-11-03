@@ -25,6 +25,9 @@ public final class DreamPlanner {
     private DreamPlanner() {}
 
     public static final String FIND_THE_DOOR = "find_the_door", FACE_MY_FEAR = "face_my_fear", FLY = "fly";
+    /** The Dream Journal's choices of tonight's dream (SPEC §9.2): a Run, a Room's hidden place, the Chase, a bell's dream. */
+    public static final String LEARN_A_MOVE = "learn_a_move", FIND_HIDDEN = "find_hidden", FIND_A_BELL = "find_a_bell";
+    public static final List<String> CHOICES = List.of(LEARN_A_MOVE, FIND_HIDDEN, FACE_MY_FEAR, FIND_A_BELL);
     public static final List<String> INTENTIONS = List.of(FIND_THE_DOOR, FACE_MY_FEAR, FLY);
 
     public static final int BASE_Y = 100;

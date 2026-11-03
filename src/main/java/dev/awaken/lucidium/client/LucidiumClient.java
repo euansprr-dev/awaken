@@ -59,6 +59,7 @@ public final class LucidiumClient {
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, TrialRings::submit);
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Init.Post.class, LucidiumClient::onScreen);
         CodexEntries.addSource(LucidiumClient::codex);
+        dev.awaken.core.api.MapMarks.register(ClientTrial::marks); // places dreams showed you (SPEC §9.5)
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
@@ -71,6 +72,8 @@ public final class LucidiumClient {
         event.register(LucidiumNet.CodexSync.TYPE, (msg, ctx) -> ClientDream.codex = List.copyOf(msg.lines()));
         event.register(LucidiumNet.TrialStart.TYPE, (msg, ctx) -> ClientTrial.begin(msg));
         event.register(LucidiumNet.TrialHud.TYPE, (msg, ctx) -> ClientTrial.update(msg));
+        event.register(LucidiumNet.TrialGoal.TYPE, (msg, ctx) -> ClientTrial.goal(msg));
+        event.register(LucidiumNet.DreamPlaces.TYPE, (msg, ctx) -> ClientTrial.places = List.copyOf(msg.places()));
         event.register(LucidiumNet.DreamWaiting.TYPE, (msg, ctx) -> ClientTrial.bed = msg.bed());
     }
 

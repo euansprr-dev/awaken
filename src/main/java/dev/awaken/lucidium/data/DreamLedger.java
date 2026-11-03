@@ -102,9 +102,9 @@ public final class DreamLedger {
         return waiting.getFirst();
     }
 
-    /** Whether the Dream Journal asked for a dream tonight. */
+    /** Whether the Dream Journal asked for a dream tonight (a choice lasts into the next play-day, as an intention does). */
     public boolean asked(long day) {
-        return !choice.isEmpty() && choiceDay == day;
+        return !choice.isEmpty() && day >= choiceDay && day - choiceDay <= 1;
     }
 
     /** What the Dream Journal's choice calls a waiting dream: "bell" for one carrying a bell, else its trial's kind. */
@@ -114,12 +114,17 @@ public final class DreamLedger {
         return t == null ? "" : t.kind.name().toLowerCase();
     }
 
-    /** Finished: off the list (its prize given), best time and medal kept. Returns the record before (null the first time). */
-    public @Nullable Finished finish(String trial, int ticks, int medal, long day) {
+    /**
+     * Finished: off the list (its prize given), best time and medal kept. Returns the record before (null the first time).
+     * {@code ref}: what the dream carried; a waiting dream carrying something else (a guest's own bell, in a host's shared
+     * dream that hid a place) stays on the list.
+     */
+    public @Nullable Finished finish(String trial, int ticks, int medal, long day, String ref) {
         Waiting w = waitingFor(trial);
-        if (w != null) {
+        if (w != null && (w.ref.isEmpty() || w.ref.equals(ref))) {
             waiting.remove(w);
-            if (!w.ref.isEmpty()) given.add(w.ref);
+            // a bell or a place is given once; a fear or a mentor may come again
+            if (w.ref.startsWith("bell:") || w.ref.startsWith("vision:")) given.add(w.ref);
         }
         Finished before = finished.get(trial);
         if (before == null) finished.put(trial, new Finished(trial, ticks, medal, day, 1));
