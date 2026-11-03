@@ -23,8 +23,8 @@ final class AnvilBlank implements WeaponDraw.Corners {
     /** A corner's values: design position, design normal, uv, along (0..255). */
     static final int V = 9;
     private static final float C45 = Mth.SQRT_OF_TWO / 2F;
-    /** The core's side, of the bar's (just inside the mesh's own faces), and the drawn-out span it shrinks away over. */
-    private static final float CORE = 0.97F, CORE_FROM = 0.08F, CORE_TO = 0.3F;
+    /** The core's side, of the bar's (inside the mesh's own faces, deep enough for a twisted face's bow), and the drawn-out span it shrinks away over. */
+    private static final float CORE = 0.94F, CORE_FROM = 0.08F, CORE_TO = 0.3F;
     /** The core's square: its edges round it as signs across and through, and each side's outward normal. */
     private static final float[] SX = {-1F, 1F, 1F, -1F}, SZ = {-1F, -1F, 1F, 1F}, NX = {0F, 1F, 0F, -1F}, NZ = {-1F, 0F, 1F, 0F};
 
@@ -192,9 +192,11 @@ final class AnvilBlank implements WeaponDraw.Corners {
         float s = shape.side * CORE * (1F - k * k * (3F - 2F * k));
         if (s < 0.05F) return;
         float y0 = shape.foot + 0.05F, y1 = shape.tip - 0.05F;
+        // twisted, on the mesh's own slabs, so each of its faces is the mesh's shrunk about the axis and stays inside it
         int slabs = twist == 0F ? 1 : SLABS;
         for (int j = 0; j < slabs; j++) {
-            float ya = Mth.lerp(j / (float) slabs, y0, y1), yb = Mth.lerp((j + 1) / (float) slabs, y0, y1);
+            float ya = Math.max(y0, Mth.lerp(j / (float) slabs, shape.foot, shape.tip));
+            float yb = Math.min(y1, Mth.lerp((j + 1) / (float) slabs, shape.foot, shape.tip));
             // round the four sides, each from one edge of the square to the next
             for (int f = 0; f < 4; f++) {
                 int e = (f + 1) & 3;

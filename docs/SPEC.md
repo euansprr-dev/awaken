@@ -17402,8 +17402,8 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
     so no two faces meet); along, 0.62 of its length about the blade's middle. So a stepped blade, a curved one, an axe's
     head all start as one clean square bar with flat ends, and each strike draws it out into the blade. Squared onto the
     bar, a head's or a fork's insides (a maul's horns, an axe's beard) would leave gaps between its faces, so a solid core
-    fills the bar just inside them (0.97 its side, coloured from the blade's middle, its heat front running up it as the
-    blade's does) and shrinks away as it's drawn out, from 0.08 to gone at 0.3. Marks, the tongs'
+    fills the bar just inside them (0.94 its side, on the twist's own slabs when twisted, coloured from the blade's middle,
+    its heat front running up it as the blade's does) and shrinks away as it's drawn out, from 0.08 to gone at 0.3. Marks, the tongs'
     lips and the hands follow it (the bar scaled from the blade's middle); the tongs close half a texel into the blank's foot,
     the work's back rests on the face (the bar's half side, the blade's thickest when drawn).
   - **The twist is real** (§46.9's A): the bar turns about its own length by a twist that's none where the tongs hold it,
