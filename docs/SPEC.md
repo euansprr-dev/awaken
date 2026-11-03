@@ -880,8 +880,9 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
 - Optional offers (Directives) never card over the world: `Signal.offerQuietly` sends a toast and the decision waits
   folded. Cards are for decisions that matter now (gates, extraction, Echo binding, travel, the Stillpoint).
 - A lesson step just reached outranks standing reminders on the one-line tracker for five minutes.
-- Toasts are 160 wide and vanilla height (32), or 43 when the detail needs a second line (a level-road step); at most 3
-  of ours; a burst merges into "N new things". Cards sit right of the
+- Toasts are 160 wide and vanilla height (32), growing 11 a line so nothing is cut: the title wraps to two lines and the
+  detail to four, and only text past that ends in "…" (Euan 2026-11-03: they were almost always cut). The task card
+  sits below the vanilla slots they take. At most 3 of ours; a burst merges into "N new things". Cards sit right of the
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
   (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed, and steps below the boss
   bars when they would overlap it.
