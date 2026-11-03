@@ -18990,6 +18990,8 @@ sprinter, which none of them is, and its hold stays: a thicket slows a beast as 
 - Dev: the autopilot's `opt fov <30-110>` (films far things at their real distance); `/awaken lifetrace` (client only).
 - Test: `mobs_brambles` (a Briar Sow driven straight across eight blocks of ripe berry bushes, walled in so there is no
   way round: never pricked, and across in under 7 s; before the fix she was pricked within 2 s).
-- Tour: `fights-beasts-far` (CI): the living row, the glide, the still row, the Sow walking a belt of ripe bushes 34 to 39
-  blocks off to a home beyond it, and a Sow killed at 36 lying where she fell; each filmed and traced, run before and
-  after the fix.
+- Nothing paths through a berry bush (26.3 marks it DAMAGING, blocked), and a beast as wide as the Sow (2.1 blocks) is
+  steered round them, so only a straight drive puts her among them: her Bramble Charge, or your blows' knockback.
+- Tour: `fights-beasts-far` (CI): the living row, the glide, the still row, the Sow charging through a belt of ripe
+  bushes 34 to 39 blocks off at a still cow beyond it that struck her, and a Sow killed at 36 lying where she fell; each
+  filmed and traced, run before and after the fix.
