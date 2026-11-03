@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "nightmare_falling",
  "moves": "nightmare_falling",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "kneel",
   "move": "arrive"
@@ -26,7 +28,12 @@
     {
      "move": "clutch",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "swat"
+      ]
+     ]
     },
     {
      "move": "fall",
@@ -40,12 +47,25 @@
     },
     {
      "move": "lift",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "fall"
+      ]
+     ]
     },
     {
      "move": "flick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swat"
+      ],
+      [
+       "clutch"
+      ]
+     ]
     }
    ]
   },
@@ -79,7 +99,12 @@
     },
     {
      "move": "lift",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "fall"
+      ]
+     ]
     },
     {
      "move": "no_bottom",
@@ -92,7 +117,15 @@
     {
      "move": "flick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swat"
+      ],
+      [
+       "clutch"
+      ]
+     ]
     }
    ]
   }

@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "guardian_choir",
  "moves": "guardian_choir",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -26,12 +28,22 @@
     {
      "move": "breaker",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "lash"
+      ]
+     ]
     },
     {
      "move": "hymn",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "jet"
+      ]
+     ]
     },
     {
      "move": "jet",
@@ -50,7 +62,12 @@
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "lash_b"
+      ]
+     ]
     }
    ]
   },
@@ -74,12 +91,22 @@
     {
      "move": "breaker",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "lash"
+      ]
+     ]
     },
     {
      "move": "hymn",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "jet"
+      ]
+     ]
     },
     {
      "move": "undertow",
@@ -94,7 +121,12 @@
     {
      "move": "jet",
      "weight": 1,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "lash"
+      ]
+     ]
     },
     {
      "move": "tide",
@@ -111,7 +143,12 @@
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "lash_b"
+      ]
+     ]
     }
    ]
   }

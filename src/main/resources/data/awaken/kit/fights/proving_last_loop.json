@@ -1,0 +1,611 @@
+{
+ "schemaVersion": 1,
+ "id": "proving_last_loop",
+ "moves": "proving_last_loop",
+ "duel": true,
+ "stance": 470,
+ "intro": {
+  "pose": "stand",
+  "move": "wake"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "then": [
+      [
+       "recut",
+       "thrust",
+       "cut"
+      ],
+      [
+       "recut",
+       "cut",
+       "fall"
+      ]
+     ]
+    },
+    {
+     "move": "recut",
+     "weight": 2,
+     "then": [
+      [
+       "cut",
+       "thrust",
+       "recut"
+      ],
+      [
+       "thrust",
+       "fall"
+      ]
+     ]
+    },
+    {
+     "move": "fall",
+     "weight": 2,
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust"
+      ]
+     ]
+    },
+    {
+     "move": "signal",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "signal",
+       "line"
+      ],
+      [
+       "rush",
+       "cut",
+       "recut"
+      ]
+     ]
+    },
+    {
+     "move": "line",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust"
+      ]
+     ]
+    },
+    {
+     "move": "rush",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "recut",
+       "cut",
+       "thrust"
+      ]
+     ]
+    },
+    {
+     "move": "whirl",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "night",
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "then": [
+      [
+       "recut",
+       "thrust",
+       "cut",
+       "fall"
+      ],
+      [
+       "recut",
+       "cut",
+       "push"
+      ]
+     ]
+    },
+    {
+     "move": "recut",
+     "weight": 2,
+     "then": [
+      [
+       "cut",
+       "thrust",
+       "recut",
+       "whirl"
+      ],
+      [
+       "thrust",
+       "cut",
+       "fall"
+      ]
+     ]
+    },
+    {
+     "move": "fall",
+     "weight": 2,
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust"
+      ],
+      [
+       "loop"
+      ]
+     ]
+    },
+    {
+     "move": "push",
+     "weight": 1,
+     "then": [
+      [
+       "rush"
+      ],
+      [
+       "signal",
+       "line"
+      ]
+     ]
+    },
+    {
+     "move": "signal",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "signal",
+       "loop"
+      ],
+      [
+       "line",
+       "cut",
+       "recut"
+      ]
+     ]
+    },
+    {
+     "move": "loop",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "line",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "fall"
+      ]
+     ]
+    },
+    {
+     "move": "rush",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "recut",
+       "cut",
+       "thrust",
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "whirl",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "close",
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "then": [
+      [
+       "recut",
+       "thrust",
+       "cut",
+       "fall"
+      ],
+      [
+       "recut",
+       "cut",
+       "thrust",
+       "push"
+      ]
+     ]
+    },
+    {
+     "move": "recut",
+     "weight": 2,
+     "then": [
+      [
+       "cut",
+       "thrust",
+       "recut",
+       "whirl"
+      ],
+      [
+       "thrust",
+       "cut",
+       "recut",
+       "taken"
+      ]
+     ]
+    },
+    {
+     "move": "fall",
+     "weight": 1,
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "every"
+      ]
+     ]
+    },
+    {
+     "move": "push",
+     "weight": 2,
+     "then": [
+      [
+       "every"
+      ],
+      [
+       "rush"
+      ],
+      [
+       "signal",
+       "line"
+      ]
+     ]
+    },
+    {
+     "move": "every",
+     "weight": 2,
+     "then": [
+      [
+       "loop",
+       "cut",
+       "recut"
+      ],
+      [
+       "signal",
+       "line"
+      ]
+     ]
+    },
+    {
+     "move": "signal",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "signal",
+       "taken"
+      ],
+      [
+       "every",
+       "loop"
+      ]
+     ]
+    },
+    {
+     "move": "signal",
+     "weight": 2,
+     "when": "AIR",
+     "then": [
+      [
+       "signal",
+       "signal"
+      ]
+     ]
+    },
+    {
+     "move": "taken",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust"
+      ]
+     ]
+    },
+    {
+     "move": "loop",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "line",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "fall"
+      ]
+     ]
+    },
+    {
+     "move": "rush",
+     "weight": 1,
+     "when": "FAR",
+     "then": [
+      [
+       "recut",
+       "cut",
+       "thrust",
+       "push"
+      ]
+     ]
+    },
+    {
+     "move": "whirl",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "cut"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "door",
+   "pool": [
+    {
+     "move": "cut",
+     "weight": 3,
+     "then": [
+      [
+       "recut",
+       "thrust",
+       "cut",
+       "fall"
+      ],
+      [
+       "recut",
+       "cut",
+       "thrust",
+       "cut",
+       "whirl"
+      ]
+     ]
+    },
+    {
+     "move": "recut",
+     "weight": 2,
+     "then": [
+      [
+       "cut",
+       "thrust",
+       "recut",
+       "taken"
+      ],
+      [
+       "thrust",
+       "cut",
+       "recut",
+       "push",
+       "rush"
+      ]
+     ]
+    },
+    {
+     "move": "fall",
+     "weight": 1,
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "ring"
+      ]
+     ]
+    },
+    {
+     "move": "echoes",
+     "weight": 1,
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "cut"
+      ],
+      [
+       "ring"
+      ]
+     ]
+    },
+    {
+     "move": "ring",
+     "weight": 2,
+     "then": [
+      [
+       "loop",
+       "cut",
+       "recut"
+      ],
+      [
+       "every",
+       "signal"
+      ]
+     ]
+    },
+    {
+     "move": "every",
+     "weight": 2,
+     "then": [
+      [
+       "loop",
+       "cut",
+       "recut",
+       "thrust"
+      ],
+      [
+       "line"
+      ]
+     ]
+    },
+    {
+     "move": "push",
+     "weight": 2,
+     "then": [
+      [
+       "every"
+      ],
+      [
+       "rush"
+      ]
+     ]
+    },
+    {
+     "move": "signal",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "signal",
+       "line"
+      ],
+      [
+       "ring"
+      ]
+     ]
+    },
+    {
+     "move": "signal",
+     "weight": 3,
+     "when": "AIR",
+     "then": [
+      [
+       "signal",
+       "ring"
+      ]
+     ]
+    },
+    {
+     "move": "taken",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "loop",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "cut"
+      ]
+     ]
+    },
+    {
+     "move": "line",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "fall"
+      ]
+     ]
+    },
+    {
+     "move": "whirl",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "cut",
+       "recut",
+       "thrust",
+       "cut"
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.1,
+  "speed": 1.2
+ }
+}

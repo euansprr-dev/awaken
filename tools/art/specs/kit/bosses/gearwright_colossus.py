@@ -349,6 +349,28 @@ def _reactions(r):
         keyed(r, nm, 0.6, planted(r, [(0, {}), (0.08, _hang({"pelvis": {"rot": (-2, -7 * sgn, -4 * sgn), "pos": (-0.6 * sgn, 0, 0)}, "chest": (0, -3 * sgn, -1 * sgn),
                                                               "head": (-3, -10 * sgn, 0), "arm_" + ("l" if sgn > 0 else "r"): (0, 0, 8 * sgn), "bell": (14, 0, 10 * sgn)}, 0, 6 * sgn)),
                                            (0.32, _hang({"pelvis": {"rot": (1, 2 * sgn, 1.5 * sgn), "pos": (0, 0, 0)}, "head": (1, 3 * sgn, 0)}, 0, -3 * sgn)), (0.6, {})]))
+    # turned aside (SPEC §47.3): the hand is thrown back up past its shoulder, the tower rocks back on its heels with
+    # the bell clanging and the pendulum kicking, and it settles forward again to strike on
+    thrown = _pose(r, (-12, -1), yaw=-6, long=(0.72, -0.3, 0.62), short=(-0.7, 0.35, 0.55), swing=-22, head=(-10, 6, 0), bell=28)
+    hang = _pose(r, (-7, 0), yaw=-3, long=(0.8, 0.25, 0.5), short=(-0.7, 0.6, 0.3), swing=12, head=(-4, 3, 0), bell=-14,
+                 near={"l": thrown["arm_l"], "r": thrown["arm_r"]})
+    settle = _pose(r, (3, 1), swing=-4, head=(2, 0, 0), bell=6)
+    keyed(r, "parried", 0.5, [(0, _pose(r)), (0.07, thrown), (0.24, hang), (0.37, settle), (0.5, _pose(r))])
+    # reeling (a phrase's last blow turned aside): thrown back on its heels with both hands flung wide, it steps back to
+    # catch itself, lurches forward over its knees and hangs there bowed with its hands down and its dial open to you,
+    # the pendulum swinging out under it, before it straightens
+    rock = _pose(r, (-16, -1), yaw=-8, roll=6, long=(0.85, -0.45, 0.3), short=(-0.8, -0.2, 0.55), swing=-30, head=(-14, 8, 4), bell=36,
+                 at={"r": (0, -6, 6)})
+    catch = _pose(r, (-8, 1), yaw=-4, roll=3, long=(0.9, 0.3, 0.3), short=(-0.85, 0.45, 0.25), swing=24, head=(-6, 4, 2), bell=-22,
+                  near={"l": rock["arm_l"], "r": rock["arm_r"]}, at={"r": (0, 0, 12)})
+    lurch = _pose(r, (24, 10), yaw=3, roll=-3, long=(0.5, 0.85, -0.15), short=(-0.45, 0.88, -0.1), swing=-18, head=(14, -4, -2), bell=18,
+                  near={"l": catch["arm_l"], "r": catch["arm_r"]}, at={"r": (0, 0, 12)})
+    bowed = _pose(r, (20, 9), yaw=2, roll=-2, long=(0.4, 0.9, -0.1), short=(-0.38, 0.92, -0.05), swing=10, head=(12, -2, -2), bell=-8,
+                  near={"l": lurch["arm_l"], "r": lurch["arm_r"]}, at={"r": (0, 0, 12)})
+    held = _pose(r, (18, 8), yaw=1, long=(0.42, 0.9, -0.08), short=(-0.4, 0.91, -0.04), swing=-5, head=(10, -1, -1), bell=4,
+                 near={"l": bowed["arm_l"], "r": bowed["arm_r"]}, at={"r": (0, -5, 6)})
+    up = _pose(r, (6, 2), swing=3, head=(3, 0, 0), at={"r": (0, 0, 0)})
+    keyed(r, "reel", 1.3, [(0, _pose(r)), (0.1, rock), (0.32, catch), (0.54, lurch), (0.78, bowed), (1.0, held), (1.16, up), (1.3, _pose(r))])
     # the kneel: the gears slip, the knees fold, the tower bows and the hands droop toward six (held while it's broken)
     kneel = _hang({"pelvis": {"rot": (16, 0, 3), "pos": (0, -15, 3)}, "spine": (4, 0, 0), "chest": (2, 0, 0), "head": (14, 0, 6),
                    "arm_l": (6, 0, 34), "arm_r": (6, 0, -22), "bell": (16, 0, 0)}, 30)
@@ -627,32 +649,35 @@ SOUNDS = {
 MOVE_SOUNDS = {"chime": {"swing": "roar"}, "strikes": {"swing": "roar"}, "drones": {"swing": "cast"}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside hand throws it back
+    "duel": True,
+    "stance": 260,  # its stance size, tuned with the sim (SPEC §47.3)
     "intro": {"pose": "idle", "move": "chime"},
     "phases": [
         {"pool": [
             {"move": "sweep", "weight": 3, "then": [["chop"], ["chop", "slam"]]},
-            {"move": "chop", "weight": 2, "when": "near"},
-            {"move": "slam", "weight": 3},
-            {"move": "stride", "weight": 2, "when": "far"},
-            {"move": "kick", "weight": 3, "when": "behind"},
-            {"move": "halo", "weight": 2},
+            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep"]]},
+            {"move": "slam", "weight": 3, "then": [["sweep"]]},
+            {"move": "stride", "weight": 2, "when": "far", "then": [["slam"]]},
+            {"move": "kick", "weight": 2, "when": "behind"},
+            {"move": "halo", "weight": 2, "then": [["chop"]]},
         ]},
         {"transition": "drones", "pool": [
             {"move": "sweep", "weight": 3, "then": [["chop"], ["chop", "slam"]]},
-            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep"]]},
-            {"move": "slam", "weight": 3},
-            {"move": "stride", "weight": 3, "when": "far", "then": [["slam"]]},
-            {"move": "kick", "weight": 3, "when": "behind"},
-            {"move": "halo", "weight": 2},
+            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep"], ["sweep", "slam"]]},
+            {"move": "slam", "weight": 3, "then": [["sweep"]]},
+            {"move": "stride", "weight": 3, "when": "far", "then": [["slam"], ["sweep", "chop"]]},
+            {"move": "kick", "weight": 2, "when": "behind"},
+            {"move": "halo", "weight": 2, "then": [["sweep"]]},
             {"move": "drones", "weight": 1},
         ]},
         {"transition": "strikes", "pool": [
             {"move": "sweep", "weight": 3, "then": [["chop", "slam"]]},
-            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep"]]},
-            {"move": "slam", "weight": 3, "then": [["kick"]]},
+            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep", "chop"]]},
+            {"move": "slam", "weight": 3, "then": [["kick"], ["sweep"]]},
             {"move": "stride", "weight": 2, "when": "far", "then": [["overload"]]},
-            {"move": "kick", "weight": 3, "when": "behind"},
-            {"move": "halo", "weight": 2},
+            {"move": "kick", "weight": 2, "when": "behind"},
+            {"move": "halo", "weight": 2, "then": [["sweep"]]},
             {"move": "overload", "weight": 2},
             {"move": "strikes", "weight": 1},
         ]},

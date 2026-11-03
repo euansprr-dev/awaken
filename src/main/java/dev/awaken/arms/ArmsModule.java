@@ -40,11 +40,17 @@ public final class ArmsModule {
         dev.awaken.arms.anvil.AnvilModule.init(modBus);
         Archetypes.all(); // fail fast on a broken timing table
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
-        ArmsForge.init();
         dev.awaken.core.api.ArmsApi.install(ArmsIssue.INSTANCE);
+        // a shot sent back fills the stance it strikes (SPEC §47.3)
+        dev.awaken.core.api.Strikes.installPostures((target, amount, by) -> {
+            if (by instanceof ServerPlayer sp) ArmsServer.addPosture(target, amount, sp);
+        });
         // a weapon's tier as its rank, for enchanting's depth (SPEC §45.5); its forged quality comes with the War Anvil
         dev.awaken.core.api.ForgeHooks.reader(new dev.awaken.core.api.ForgeHooks.Reader() {
-            @Override public java.util.OptionalInt quality(net.minecraft.world.item.ItemStack s) { return java.util.OptionalInt.empty(); }
+            @Override public java.util.OptionalInt quality(net.minecraft.world.item.ItemStack s) {
+                var f = s.get(dev.awaken.arms.anvil.AnvilContent.FORGED.get()); // the War Anvil's story (SPEC §46.7)
+                return f == null ? java.util.OptionalInt.empty() : java.util.OptionalInt.of(f.quality());
+            }
             @Override public String rank(net.minecraft.world.item.ItemStack s) {
                 ArmsData.Weapon w = ArmsItems.of(s.getItem());
                 return w == null ? null : w.tier();
@@ -89,7 +95,7 @@ public final class ArmsModule {
         bus.addListener(ArmsPatterns::onServerTick);
         bus.addListener(ArmsIssue::onPlayerTick);
         bus.addListener(EventPriority.HIGH, ArmsForge::onUseBlock);
-        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> { ArmsForge.forget(e.getEntity().getUUID()); ArmsArmoury.forget(e.getEntity().getUUID()); ArmsStands.forget(e.getEntity().getUUID()); });
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> { ArmsArmoury.forget(e.getEntity().getUUID()); ArmsStands.forget(e.getEntity().getUUID()); });
         bus.addListener(EventPriority.HIGH, ArmsModule::onUseStartOff);
         bus.addListener(ArmsServer::onUseStart);
         bus.addListener(ArmsServer::onUseStop);

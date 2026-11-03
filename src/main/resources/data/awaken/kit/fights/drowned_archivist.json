@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "drowned_archivist",
  "moves": "drowned_archivist",
+ "duel": true,
+ "stance": 260,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -22,11 +24,26 @@
     {
      "move": "shutting",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "thrust",
+       "rake"
+      ]
+     ]
     },
     {
      "move": "tidal",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "volley"
+      ],
+      [
+       "undertow",
+       "shutting"
+      ]
+     ]
     },
     {
      "move": "volley",
@@ -40,7 +57,16 @@
     {
      "move": "turn",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "thrust",
+       "rake"
+      ],
+      [
+       "shutting"
+      ]
+     ]
     }
    ]
   },
@@ -64,11 +90,26 @@
     {
      "move": "shutting",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "thrust",
+       "rake"
+      ]
+     ]
     },
     {
      "move": "tidal",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "volley"
+      ],
+      [
+       "undertow",
+       "shutting"
+      ]
+     ]
     },
     {
      "move": "volley",
@@ -81,7 +122,15 @@
     },
     {
      "move": "cloud",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "volley"
+      ],
+      [
+       "tidal"
+      ]
+     ]
     },
     {
      "move": "pages",
@@ -90,7 +139,16 @@
     {
      "move": "turn",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "thrust",
+       "rake"
+      ],
+      [
+       "shutting"
+      ]
+     ]
     }
    ]
   },
@@ -123,7 +181,16 @@
     },
     {
      "move": "tidal",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "volley"
+      ],
+      [
+       "undertow",
+       "shutting"
+      ]
+     ]
     },
     {
      "move": "volley",
@@ -136,7 +203,15 @@
     },
     {
      "move": "cloud",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "volley"
+      ],
+      [
+       "tidal"
+      ]
+     ]
     },
     {
      "move": "flood",
@@ -145,7 +220,16 @@
     {
      "move": "turn",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "thrust",
+       "rake"
+      ],
+      [
+       "shutting"
+      ]
+     ]
     }
    ]
   }

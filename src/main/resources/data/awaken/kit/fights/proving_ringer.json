@@ -1,0 +1,159 @@
+{
+ "schemaVersion": 1,
+ "id": "proving_ringer",
+ "moves": "proving_ringer",
+ "duel": true,
+ "stance": 260,
+ "intro": {
+  "pose": "idle",
+  "move": "drop"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "swing_a",
+     "weight": 3,
+     "then": [
+      [
+       "swing_b"
+      ],
+      [
+       "swing_b",
+       "clang"
+      ]
+     ]
+    },
+    {
+     "move": "clang",
+     "weight": 2,
+     "then": [
+      [
+       "swing_a"
+      ]
+     ]
+    },
+    {
+     "move": "lash",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swing_a",
+       "swing_b"
+      ]
+     ]
+    },
+    {
+     "move": "peal",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "peal"
+      ]
+     ]
+    },
+    {
+     "move": "turn",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "swing_a"
+      ]
+     ]
+    },
+    {
+     "move": "toll",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "drain",
+   "pool": [
+    {
+     "move": "swing_a",
+     "weight": 3,
+     "then": [
+      [
+       "swing_b",
+       "clang"
+      ],
+      [
+       "swing_b",
+       "whirl"
+      ]
+     ]
+    },
+    {
+     "move": "whirl",
+     "weight": 2,
+     "then": [
+      [
+       "swing_a"
+      ]
+     ]
+    },
+    {
+     "move": "rope",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swing_a",
+       "swing_b"
+      ]
+     ]
+    },
+    {
+     "move": "lash",
+     "weight": 1,
+     "when": "FAR",
+     "then": [
+      [
+       "clang"
+      ]
+     ]
+    },
+    {
+     "move": "peal",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "peal"
+      ],
+      [
+       "peal",
+       "rope"
+      ]
+     ]
+    },
+    {
+     "move": "turn",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "swing_a",
+       "swing_b"
+      ]
+     ]
+    },
+    {
+     "move": "toll",
+     "weight": 2
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.15,
+  "speed": 1.2
+ }
+}

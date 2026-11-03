@@ -59,7 +59,7 @@ public final class MobTypes {
     }
 
     public static final DeferredHolder<EntityType<?>, EntityType<AwBolt>> BOLT = ENTITIES.registerEntityType("mob_bolt", AwBolt::new, MobCategory.MISC,
-            b -> b.sized(0.4F, 0.4F).clientTrackingRange(4).updateInterval(10).noLootTable());
+            b -> b.sized(0.4F, 0.4F).clientTrackingRange(4).updateInterval(2).noLootTable()); // every 2 ticks: the drawn shot is where it hits
 
     /** The seep heart's burst of roots out of the floor (a look, no creature): mobs.client.SeepRootRenderer draws it. */
     public static final DeferredHolder<EntityType<?>, EntityType<dev.awaken.mobs.entity.SeepRoot>> SEEP_ROOT = ENTITIES.registerEntityType("seep_root",

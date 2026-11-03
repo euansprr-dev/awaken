@@ -2296,9 +2296,8 @@
    "knock": 0,
    "title": "The Walls Open",
    "kinds": [
-    "summon"
+    "transition"
    ],
-   "ability": "Hatchlings",
    "marks": {
     "peak": 16,
     "contact": 16,

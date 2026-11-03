@@ -149,6 +149,7 @@ from home activity.
 At RANK_LEVEL the Spine says "Reassessment available". Trial is taken at the Spire (hearth town) or any Reassessment
 Monolith. Trials are handcrafted arenas (in the Stillpoint dimension's trial wing): D survive 3 waves; C Second Awakening
 (waves + Path reveal); B boss duel; A timed descent (5 rooms, 4 min); S fight a Sovereign's echo; SOVEREIGN after the Seed.
+(Since §47.4 to §47.10 every rank's trial is a Proving, D to Sovereign, and Sovereign comes before the Seed: it opens it.)
 Pass → rank++, Signal Reassessment window, town celebration, new tier of gates, aura tier.
 
 ### 4.5 Truths
@@ -723,8 +724,9 @@ of `AwakenConfig.Client`.
 ## 13. Decisions made while building (details in docs/modules/*.md)
 
 Descent:
-- Strata open by rank: 1 E · 2–3 D · 4–5 C · 6–7 B · 8 A · 9 S · 10 (the Seed) S-rank at level 135 **and** all eight
-  Sovereigns of the Hollow Court defeated (story gate via `StoryHooks.seedSealed`). The Endless opens after the Seed.
+- Strata open by rank: 1 E · 2–3 D · 4–5 C · 6–7 B · 8 A · 9 S · 10 (the Seed) Sovereign (the last Proving, §47.10; was
+  S-rank at level 135) **and** all eight Sovereigns of the Hollow Court defeated (story gate via `StoryHooks.seedSealed`).
+  The Endless opens after the Seed.
 - Stratum content level = content level of rank index min(6, (n+1)/2): stratum 1 already plays at D (17).
 - STORY-mode deaths in the Descent keep half the Deep Pack at once; the other half waits in a Grave Echo.
 - Waystone travel *upward* costs Strain; only the Deep Lift climbs for free.
@@ -880,8 +882,9 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
 - Optional offers (Directives) never card over the world: `Signal.offerQuietly` sends a toast and the decision waits
   folded. Cards are for decisions that matter now (gates, extraction, Echo binding, travel, the Stillpoint).
 - A lesson step just reached outranks standing reminders on the one-line tracker for five minutes.
-- Toasts are 160 wide and vanilla height (32), or 43 when the detail needs a second line (a level-road step); at most 3
-  of ours; a burst merges into "N new things". Cards sit right of the
+- Toasts are 160 wide and vanilla height (32), growing 11 a line so nothing is cut: the title wraps to two lines and the
+  detail to four, and only text past that ends in "…" (Euan 2026-11-03: they were almost always cut). The task card
+  sits below the vanilla slots they take. At most 3 of ours; a burst merges into "N new things". Cards sit right of the
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
   (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed, and steps below the boss
   bars when they would overlap it.
@@ -3105,10 +3108,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     painter is kept for the map scene (§30, phase 4), which will drive it from its own camera.
   - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
     ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
-    spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
-    take back your own under the cursor); twelve per player, the oldest goes; each party member online sees the
-    party's pins in their dimension, in the owner's own colour (a hue from their id), with the owner's name. Dev:
-    `/awaken atlas pin`. Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
+    spaced capitals with its levels under it. (Its party pins became **Waypoints**, below, at schemaVersion 3.) Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
     the first air, then to the floor, so the table shows the highest floor of each column; those chunks are sampled
     from a queue about 1 ms a tick, the diorama's base drops to 24 and there is no night. Carillon's lit windows
     (`awaken:lit_window`, within 12 of a column's top) count as night lights.
@@ -3202,15 +3202,15 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   - **Destinations** (Euan, 2026-10-27: "We need to make sure I can actually choose destinations on the map too";
     `atlas.client.AtlasDestination`, `signal.Destination`, `core.api.Destinations`): a click that doesn't move (3 GUI px
     at most between press and release; not a drag, not a double-click's second) picks the place under the cursor: a
-    gate (anywhere along its pillar), a mark or a rumour, a Hearth, a party pin (within 12 px), else a region's or district's name
+    gate (anywhere along its pillar), a mark or a rumour, a Hearth, a waypoint (its head or foot, within 12 px), else a region's or district's name
     chip, else a spot on ground you know ("A spot in the Commons"); a click on nothing lets the pick go. A small card
     beside it names it, with **› Set as destination** (Enter); on the destination itself **✕ Clear destination**. The
     legend's picked gate offers the same ("Set as destination" / "Clear destination", T), where "Point me there" was
     (the client-only map pin is gone). Setting it says "That's your destination now. The top left of your screen will
     point the way." The destination stands on the table in its own look: a white-gold pin with a beam above it and a
     slow ring at its foot, "DESTINATION" over its name (on the clouds where the land isn't known). Drag to orbit,
-    right-drag, a click on a legend row to glide and the double-click party pin are unchanged (a double-click drops
-    the first click's pick). The key line starts "click a place to go there".
+    right-drag and a click on a legend row to glide are unchanged; a double-click drops the first click's pick (it makes
+    a waypoint). The key line starts "click a place to go there".
   - The server keeps one per player (attachment `awaken:destination`, schemaVersion 1, kept through death): name (48
     characters at most), dimension (the one the player stands in when the Atlas asks), block, kind (`gate`, `mark`,
     `rumour`, `region`, `pin`, `spot`, `home`, else `place`). Sent on change, login, respawn and dimension change. Every 20
@@ -3220,6 +3220,46 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   - Tests: `signal_destination_arrival` (not yet at 60 blocks or 80 above; there within 16; a rumour across only;
     never in another dimension), `signal_destination_saved` (the Atlas's request named and placed in your dimension, the
     codec, a whole save and load, Clear, a nameless request ignored).
+  - **Waypoints** (Euan, 2026-11-02: "Ability to set waypoints on maps (AAA UI and same design language as now)";
+    concept page `docs/waypoints-kin/page.html`, all twelve decisions yes; `atlas.Waypoints`, `atlas.client.WaypointCard`,
+    `WaypointGlyphs`). Places you mark on the Atlas, kept on the server in `AtlasData` (schemaVersion 3: per world, each
+    with its dimension, kept through death, the same in single player and on a server). Each has an id of its own (never
+    reused), a name (chat's characters, spaces folded, 32 at most, never empty: "Waypoint"), one of eight colours (signal
+    blue, horizon, green, gold, bronze, rose, violet, white) or, for an old pin, its owner's own hue, one of eight marks
+    (flag, pick, star, house, cross, cave, ring, diamond) and a share switch, off by default. **64** each across every
+    dimension; nothing is ever removed for you: the 65th says "You have 64 waypoints. Remove one to make room." Only
+    ground you've explored takes one ("You can only put a waypoint on land you've explored."). The server checks every
+    request (explored ground, the limit, a colour and mark from the set, the name); only the owner changes or removes
+    one. A shared one shows to the owner's party members online in that dimension, with the owner's name under it; they
+    can head for it, never change it; one who leaves the party takes theirs along. A save's old pins carry over as
+    shared waypoints named "Pin" in their owner's hue; pins are never written again.
+  - Making one: a double-click on ground you know (as pins were) or **N** on the table (where you stand) adds it at once,
+    named for its land ("A spot in the Greenfold") in the colour, mark and share of the last one you made or changed
+    the look of (opening one only to read it changes nothing), and its card opens
+    beside it when the server has it: **NEW WAYPOINT**, the name already selected so you just type (Backspace, Ctrl+A,
+    Ctrl+V; a blinking caret), the eight colours, the eight marks, "Share with my party", **› Keep it** (Enter) and
+    **Remove** (Del, which clears the name instead while it's selected). The waypoint shows the card's colour and mark
+    as you pick. While the card is open it takes every key (typing never moves the map or closes it); Esc closes the
+    card and changes nothing, a click off it keeps what you changed. A double-click on one of yours opens its card.
+  - On the table: a thin stem on its place, a dark diamond head rimmed in its colour with its mark inside (7×7 pixel
+    glyphs), a flat ring at its foot, its name over it from zoom 0.45 and a shared one's owner under it. Names keep
+    clear of them; one under the legend isn't drawn through its glass. A click picks one (the card sits beside it, clear
+    of the legend, or under it when neither side has room): its destination card has its colour on the edge, "Yours · 212 blocks · only you
+    see it" (or "your party sees it"; "Ana's · shared with your party · 340 blocks"), **› Set as destination**
+    (Enter; kind `pin`) and **Change it** (E) on your own, or "Only Ana can change it." The destination's own look stands
+    in for a waypoint that is the destination. **V** hides or shows them all (for the session). The legend's
+    **WAYPOINTS · n** block lists the nearest three with their marks and distance, "n more", "V hides them"; a row
+    glides there and picks it. The key line's short form (a small window, a big GUI) keeps "double-click a waypoint ·
+    N one here". Nothing marks a waypoint out in the world: only the destination's compass (the Now line,
+    the Tab glance's needle) points to one you chose.
+  - **Where you fell**: a death that stands (not cancelled) outside gates leaves a grey waypoint with a headstone mark
+    where you fell, in place of the last; it goes once you're within 8 blocks across (24 up or down), and doesn't count
+    toward the 64. Its card offers **Remove it** (E). Waypoints reach the client as `atlas_waypoints` (the viewer's own
+    in their dimension, the party's shared ones there, where you fell) at login, a dimension change, every change by a
+    party member, and when the party's view changes (checked every 100 ticks, sent only when different); the table asks
+    with `atlas_waypoint` (add, edit, remove). Dev: `/awaken atlas waypoint [<colour 0-7> <shared> <name>]` (where you
+    stand). Test: `atlas_waypoints` (unknown ground, the set's colours and marks, 64 and the first still there, names
+    cleaned, only the owner, shared and not, where you fell); `atlas_bits_codec` round-trips them and carries an old pin over.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
@@ -6697,8 +6737,10 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
   Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
   and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
-  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. Longsword up and forward to the left (18 left, 52
-  up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the middle (10, 36);
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. The Longsword
+  is turned an eighth further (roll 135, the weapon audit below), so its blade's face and its guard's spread show.
+  Longsword up and forward to the left (18 left, 52 up); Rapier en garde, the point forward at the target's height
+  (20, 18); Katana two-handed at the middle (10, 36);
   Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
   blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
   across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
@@ -6793,7 +6835,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   their own third-person poses and two-handed grips, not a wrist. The scythe leads point first in third person; its haul back through
   the target is first person's.
 - **Third person from first person's blade** (the Katana, Greatblade, Maul, Spear, Glaive, Scythe, War-staff and
-  Twinblades; Euan 2026-10-26: "how are we gonna get that exactly the same as first person... so that it genuinely
+  Twinblades; the Scythe since 2026-11-03 from its own keys, "Hand-keyed moves" below; Euan 2026-10-26: "how are we gonna get that exactly the same as first person... so that it genuinely
   looks really, really good", then "roll the blade-first third-person rig out to the maul, spear, glaive, scythe,
   war-staff and twinblades"; tools/art/specs/arms_rig4.py). First person is designed from the blade (its path, the edge
   leading, through the target on the hit); third person was designed from the arm (a few poses per kind, the weapon
@@ -6844,6 +6886,103 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   views and the third-person edge lead (a thrust: the point lead). `audit` checks every move's working part ("Working
   parts" above; exit 1 when one fails). `film` overlays the game's own frames (the clip
   recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
+- **The arms film** (`arms film <name> <ticks> [gap] [downscale]`, autopilot only; `ArmsFilm`, `FilmLog`; the dagger and
+  scythe audit, 2026-11-02): a fight filmed as the game draws it, into clips/<name>/: a picture every `gap` ticks of game
+  time, and for every frame drawn a row of `track.tsv` (the hands' clock, the move, the press, the hold, the hit-stop, each
+  blade's base and tip where it is drawn: both views in the camera's place with the world's axes) and in
+  `events.tsv` what happened between frames on both sides (press, buffer, begin, tap, the server's press heard, begin,
+  wait over and hit, its MOVE, REFUSE and HIT reaching the client, the swish, the source change, the third-person clip).
+  `arms strike [hold]` holds the key that many ticks. Every blade of ours is logged each frame, the one not laying a
+  ribbon too (the twin's own first-person draw is marked while it runs). Tours `tools/autopilot/arms-film-daggers.txt`
+  and `-scythe.txt` film slow, combo and spam takes with the world at 2 ticks a second; `tools/art/arms_film.py` reads a
+  take (each press by its number: begun, released, the blade on the target on screen, the server's hit, the impact
+  shown; tip speeds and spikes; marked strips; stamped videos at a set pace, timed by the film's clock, cropped for
+  third person). Speeds are timed by real time, as the hands' clock runs: inside a runner's stutter the client's ticks
+  bunch and the frames' game time lags the hands, which read as false jumps; a press seen through a frame drawn over
+  250 ms after the last is marked and left out of the summary. A server stalled at world start (its roads) ran a
+  tour's `cmd` set-up in one tick before the ground had loaded, so the set-up waits on the server: `arms studio <item>`
+  builds the studio on the server's own thread with its chunks loaded, `arms waitserver [n]` holds the script until the
+  server has ticked n times, and `arms rate <r>` sets the world's pace and holds until this client runs at it (the
+  core autopilot retries an `arms` line that answers null). The feel's clock (`ArmsFeel.nanos`: the hands, the hit-stop, a struck
+  body's freeze and recoil, the ribbons) runs at the world's pace, so a slowed film shows a 35 ms freeze as 0.7 of a tick,
+  as play does; at 20 ticks a second it is real time. Each row ends with `rib`, which of our blades lays its ribbon that
+  frame (1 the main's, 2 the twin's), and `arms_film.py gates <clip dir>...` reads every take against the audit's gates,
+  pass or fail: the impact within 17 ms of the blade on the target (the first impact of the move once ours has begun:
+  fights' stage 0 shows it on the predicted hit, which can come before the server's on the film's clock), the freeze on the hit tick, the press to the blade
+  within the wind-up, a stab's point within 0.15 of the crosshair and its blow three times its return, the dagger's free
+  hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
+  never home between strikes.
+- **Hand-keyed moves** (the dagger and scythe audit's rebuild, Euan 2026-11-02: "Go with all recommendations"; never
+  tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' and the Scythe's moves are
+  written pose by pose in `tools/art/arms_keys.py`: the fist placed on the screen at a depth, the point drawn at a
+  screen place for the blade's length (0.627 for all four daggers, weapon-designs 7bbc8f78; the scythe's snath top,
+  0.656 from the fist, with the blade's way out from it), the edge's way, for both hands; each blow's key on the tick
+  the server counts its hit (the first active tick; a loosed heavy's and a landed
+  Plunge's 0.3 in). Between keys a hand travels on a cubic, stopping only at a key that says so, its turn eased the
+  same way. `bake` splices the keyed styles into fp_swings.json (schema 7) and leaves every other byte as it was;
+  `check` proves that against git and holds the data to the GameTests' rules; `strip` and `chain` draw a move or a chain
+  as play strings it. A keyed style's entry carries `"by": "tools/art/arms_keys.py"`, and anim_lab.py's bake keeps it.
+  - *The stance* (schema 7, a style's `stance` [dx, dy, dz, qx, qy, qz, qw]): where the hands rest between moves,
+    a pair's off hand its mirror while the twin shows; let go as the guard comes up, never while the weapon cuts. A
+    keyed style's moves start and end there (arms_fp_swings: "ends in its stance").
+  - *The Daggers*: a forward grip in both hands, the fists low and in from vanilla's corner, the points angled in toward
+    the crosshair. Strike 1 drives the right point first from the hip to the crosshair and back; as it drives, the left
+    draws back and up into its guard, and strike 2 fires from there; the right meanwhile is cocked out to the right for
+    strike 3's slash down across the crosshair; strike 4 drives both points in at once from the hips. Each strike's
+    hands hold where the next starts until 7 ticks after the press (about a third of a second), then go home: the hands
+    are never home between strikes of a chain, the finisher included (it pulls both back into the guard). The free
+    hand always sits in its guard, the point in toward the crosshair but a stab's length off it on screen, so a stab
+    out of it travels. A stab is fast in and slow out: the blow from the hip or the guard in half a tick, the pull back
+    straight to the guard over two and a half (the film's gate wants the blow at least 3 times its return's speed;
+    keyed, strikes 1, 2, 4 and the riposte run 5 to 7 times). The heavy charges coiled on the crosshair's line and its
+    release is the drive; the Plunge is armed raised, points down.
+  - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
+    peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
+    ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up
+    over the right shoulder, the blade high in the view's right, and reaps across the crosshair on the hit tick, carried
+    down and round to the left and held low there; strike 2 turns the blade over on the way up (never in less than a
+    tick) and reaps back from the left; strike 3 lifts the snath overhead and behind, hooks down on the hit and hauls
+    back through, then settles (by tick 10) into a ready stance, the snath across the body and the blade low before
+    the feet, before it goes home: decision 9 keeps its full 20 ticks of recovery but shows them as a stance, not a
+    pause; strike 4 reaches far out to the right and sweeps round. The moves keep their old lengths. The ribbon lays
+    over the cut only (`trail`, from a fraction of a tick before the hit to about a tick after it), so the return
+    lays none. `arms_keys.py check` holds every strike's point inside the view at its set.
+  - *Third person from the same keys* (decision 7; `arms_keys.py third`, written to `tools/art/specs/arms_keys3.json`,
+    which `arms_moves.py` builds into each keyed move's clips, `arms_daggers_<move>` and `_bent`, with the heavy's charge
+    clips; ArmsClips plays them for the Daggers as its own): each fist is placed from the first-person pose, the same
+    bearing and fall from the eye with its depth mapped onto the arm's reach (a fist 0.45 blocks ahead in view is at the
+    chest, 0.80 at an arm's length); the arms reach it by the rig's IK, the chest turns 50 degrees a block one fist leads the other (25 at
+    most), and the wrist lays the blade on its first-person line by the shortest turn, never more than 20 degrees a
+    quarter tick outside the blow (the blow's own keys kept exact, and the first and last: square from rest, square at
+    the end). A move fades into third person over its wind-up
+    from rest (a chained strike at once) and out over its last pair of keys, so a move ending a chain holds at rest
+    before it fades. `arms_keys.py check` holds the wrist limit and the wrist square at both ends; `arms_moves.py build`
+    the clipping. *The Scythe* (`arms_keys.py third scythe`, `third_two`; `arms_scythe_<move>` and `_bent`, played as
+    the arms_rig4 ones were) is placed the same way with its fists held out before the body (first person's 0.40 to
+    0.60 blocks onto 4 px before the shoulders to an arm's length: at the chest a raised snath hangs its blade through
+    the face), the weapon turned in the fist the whole way first person turns it (its blade stands out to one side, so
+    the roll about the snath counts), the chest side-on (25 degrees) and turning with the snath, a third of its turn
+    and at most 30 degrees, half a tick ahead. The off hand closes on the snath up from the main fist, at the spot its
+    arm reaches nearest the shoulder (arms_rig4's off_spot): a figure's fist closes 6 px down the haft
+    (`arms_holds.HAFT3`), which puts the peg 11.5 px on, past a figure's span. Where the arm can't reach the snath
+    (more than 3.6 px off it) the hand lets go cleanly and takes hold again, and it lets go home first at the move's
+    end. Measured (bent, straight): both hands on through 90/85% of strike 1, 59/51% strike 2, 75/87% strike 3,
+    85/31% strike 4, 93/93% the heavy, 87/40% the riposte, 84/72% the Art, 98/99% the Plunge, 100/95% the Execution, 83/83% the Slipcut and 10/0% the
+    Undercut (the low sweep out of a slide); the blade at most 0.6 px into the body, the butt 0.3 to 2.0 px by the
+    belly; no wrist faster than 20 degrees a key outside the blow (arms_rig4's snapped up to 151). arms_rig4 no longer
+    drives the Scythe.
+  - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
+    boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
+    frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. The Daggers' freezes
+    are 50 ms on strikes 1 and 2, 60 on strike 3 and
+    80 on the finisher (were 35, 35, 40 and 55; archetypes.json). A keyed move carries its own kick (`kick` [yaw, pitch],
+    a unit, scaled by the freeze as every kick is, `ArmsPredict.impact`), worked out by the bake from the blade the keys
+    draw (`arms_keys.kick_of`): a stab nods the view in a touch (0.6, no turn; the row kicked a right stab sideways), a
+    cut kicks along the way its points travel on screen into the hit, and a pair cutting out both ways nods like a stab.
+    Every other style kicks along its row's from/to as before.
+  - *Strike on the click* (`ArmsRules.waitsOnHold`): a dagger's strike lands as it comes even while the press is still
+    down, and a press held on charges the heavy from where the stab ended (arms_dagger_click). Every other style's held
+    press waits at its set (arms_tap_or_hold).
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
@@ -7255,7 +7394,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     falls due, those near on the server's tick, `ArmsState.swishAt`); a blow landing before the row's sound could peak
     plays `arms.swish_quick` (its pass 38 ms in), the katana's cuts `arms.swish_katana` (thinner, a clean high whistle,
     56 ms). Two-handed weapons (katana, greatblade, maul, spear, glaive, scythe, war-staff, twin blades) close the off
-    hand on the handle below the main (0.11 to 0.40 blocks down it) when the off hand is empty, through every swing and the guard;
+    hand on the handle below the main (0.11 to 0.40 blocks down it; the Scythe up its snath on the peg, "Hand-keyed
+    moves") when the off hand is empty, through every swing and the guard;
     a stance's own off fist still takes the hand.
   - *Live tuning* (`SwingTuning`; `/awaken swing tune on [path] | off`, `ab`, `blind`, `note <words>`, `last`; the
     state kept in `awaken-arms-client.toml`): while on, the swings come from `<folder>/fp_swings.json` (the folder: the
@@ -7463,7 +7603,7 @@ against it, so a vanilla item plays its designed tempo).
   noisy against his reference"). Now (2026-10-26, `tools/art/voxel.py`): **designed box construction at the player's
   own density**, 1 texel = 1 item unit (a skin pixel), each face its own chart, buried texels dropped and visible ones
   merged; the style rules every archetype follows are in `docs/combat/weapon-style.md` (density, construction from
-  bold parts and whole-angle turned boxes never staircases, a longsword about 28 texels with two thirds blade,
+  bold parts and whole-angle turned boxes never staircases, a longsword about 36 texels with seven tenths blade,
   painted bevels as one-texel bands lit toward the painted light and dark away with contact shadows at joins, three
   or four hue-shifted ramps with one dark and one warm, a few deliberate marks per part and no per-texel noise,
   stones in 45° frames standing proud with concentric painted faces, emissive by flow hilt to tip). Each weapon still
@@ -7473,6 +7613,82 @@ against it, so a vanilla item plays its designed tempo).
   texel grids (they z-fight). Review: `python3 tools/art/specs/arms_weapons.py sheet OUT.png` puts the reference beside
   every weapon in three-quarter, back, hilt close-up, first person at rest and in vanilla's hold, night and the icon
   (`docs/combat/weapons-voxel-2026-10-26.png`).
+- **The weapon audit** (Euan 2026-11-02, of the Longsword in first person: "not long enough... it almost looks like a
+  small dagger... the two blocky things at the bottom look very, very chunky, and you can barely see the blade
+  itself"; the hammer "perfect right now"): every weapon measured and graded against the Maul (session weapon-designs,
+  concept page with the grades and rules per style). The Longsword was the proof: at 28 texels it was shorter than
+  every other bladed style but the Daggers (Rapier 33, Katana 37, Greatblade 40; the Maul 36 to 43), its guard
+  ornaments climbed 5 to 8 texels up an 18-texel blade, its hilt parts were 7 to 9 deep against the blade's 3, and
+  the hold shows a blade by its edge (roll 90), so in first person the hilt read as blocks beside a sliver. Now all
+  six are about 36 texels, the blade 25 of it (y 5 to 30), the grip 5 (y -2 to 3), the guard at most 11 across (wings
+  and crowns 14) with its ornaments out to the sides and about 4 up the blade (never beside its root), and nothing
+  on the hilt deeper than 5 (a stone and its frame 6); each tier keeps its materials, story and motifs. The hold is
+  turned an eighth further about the blade (roll 90 to 135, decision 2 of the audit): at 90 the guard showed its end
+  on (the "blocky things"); at 135 the blade shows its face and the guard spreads across, the edge still down and
+  forward toward the foe (37 degrees off the cut, was 20). The Longsword's swings are baked again from the new hold
+  (`anim_lab.py bake`, the third-person wrists kept); in the lab every blow leads with the edge as well or better
+  (0.85 to 0.98, was 0.71 to 0.98). In the game it reads better (CI tour `arms-longsword-turn`: the blade's face and
+  the guard's spread at rest, every blow with the hand on the grip), so the Greatblade has the same turn (batch 1;
+  every blow 0.79 to 0.99, was 0.72 to 1.00), the Katana and Glaive too (batch 2; the Katana's blows unchanged at
+  0.96 to 1.00, its curve now showing at rest; the Glaive's 0.91 to 0.98, was 0.89 to 0.98), and the Axe (batch 3;
+  every blow 0.73 to 0.96, was 0.63 to 0.90; at rest the bit shows, where at 90 only its eye did), each checked in
+  the lab first (the Daggers and Scythe are dagger-scythe's).
+- **Proportions per style** (the audit's rules; Euan 2026-11-02 approved the whole plan, "Go ahead with the whole
+  plan"; each line lands with its batch, in texels): every style keeps the hilt off the blade's root, nothing near the
+  hand deeper than the working part, one framed stone as the focus, and no two weapons with one outline.
+  - Longsword: about 36, the blade 25, the guard at most 11 (wings 14), at most 5 deep (a stone 6).
+  - Daggers: about 18, a blade about 11 (y 3 to 14 over a 4 grip); the curved Beastbound and Veilwoven stay about 16,
+    their curve carrying the length. The Hive Regent's Sting is already 21 with a 13 sting, so it stays.
+  - Greatblade: about 43, the blade 26 (y 8 to 34, six tenths), 9 to 11 wide; the grip 8 (y -5 to 3), the guard
+    (y 3 to 5) and the ricasso (y 5 to 8) at most 6 tall together, the guard at most 15 across (today 9 to 13), its
+    ornaments out to the sides and at most about 2 up the blade, nothing on the hilt deeper than 6 (a stone 7). The
+    tusk's hook, the fork's tines and the window's crystal are the blade's own outline, not ornament.
+  - Twinblades: about 40, two blades of 15 (y 5 to 20 each way) on one grip of 8 (y -4 to 4); at each blade's root
+    only a slim collar (at most 7 across, 1 or 2 tall), and one hub at the grip's middle round the stone; nothing
+    deeper than 6 (a stone 7). The Sky Leviathan's Fins: each fin 15, its rays two short ones off the root (were
+    three long ones along it).
+  - Precursor Arm: about 35, the light 24 (y 7 to 31) in its three stages, over the cased hilt (y -4 to 7); nothing on
+    the case deeper than 6 (a stone 7; Beastbound's gear and Veilwoven's lens were 8 and 9, the lens now 6 across).
+    Unit Zero's Countdown: its light 25 (y 9 to 34), the countdown emitter a texel shorter.
+  - Scythe: about 38, the snath y -13 to 21 with the blade off its top; the blade a crescent of six or seven turned
+    links, 5 broad and 3 deep at the heel stepping to a point 1 wide (was 3 broad and 2 deep, so in hand it read as
+    a cane), each tier its own sweep and its own mark along the back (flakes, teeth, a brass spine, a mirror
+    crescent, gold ribs, a beard); the collar 3 across and 4 deep; the second hand's peg stays at y 5 to 9. The
+    Sporemother's Reaping is built the same, its gill blade 6 broad with gill ridges standing off both faces.
+  - War-staff: about 37, the staff y -12 to 17 and the head above it as deep as it is wide (9 to 15 across, was 5
+    and flat): four arms of turned links round a stone 4 across (E antler beams, D tusks curling over it, B mirror
+    crescents, A gold claws between its wings, S arms before and behind its gold diamond) or C's brass cube, so the
+    head reads from the edge as well as the face. The Root Saint's Reliquary: its shrine 7 across on a gold plinth
+    under a stepped roof 9 across, pillared and open at the front (was 5 and 7).
+  - Axe: about 34 (was 28 to 33), the haft 3 to 6 longer above the grip so the head sits a quarter to a third of
+    the height up its top (`lengthened`); the bit and eye 12 or more across (Wildhide's flint 12, was 8; Gatewrought's
+    bit 10 from a 5-wide eye, was 7 from a 7-wide one; Veilwoven's spirit edge 2 taller; Lordscale's bit a column
+    broader and two steps lighter than its haft, which it melted into); nothing at the eye deeper than 6 (a stone 7;
+    Sovereign's frame was 9). The Ember Tyrant's Cleft stays as it is (31, its bit 22 across).
+  - Spear: the head 7 or more wide (Wildhide's, Lordscale's and Sovereign's were 5 and Veilwoven's 6, so edge-on in
+    hand the head vanished into the shaft): Wildhide's leaf with antler lugs both sides (was a barb on one), Veilwoven's
+    wave 7, Lordscale's leaf 7 under smaller wings, Sovereign's spire 7 over a gold frame 6 with its stone. Beastbound's
+    and Gatewrought's were already 7 and 9.
+  - Gauntlets: the fist kept (7 across, 5 deep, a cuff and rim), and each tier's own outline standing 2 or more proud of
+    it (all six were one box with a stone): E antler spikes off the knuckles (to 4 out) and tines curving back off the
+    cuff, D boar tusks rising off the fist's sides and curving forward past the knuckles, C a gate on the back of the
+    hand (slate posts and a tie, a brass lintel 9 across, the crystal inside) and lit pylons off the cuff, B mirror
+    crescents sweeping back off the knuckles to spirit tips, A gold claws off the knuckles and a gold wing off each
+    side of the cuff over the ember seam, S a crown of gold points, the stone 3 across in a raised gold diamond and
+    ivory plates stacked down the cuff. The Gearwright's Grip: its gear a dark wheel with eight brass teeth past the
+    fist's sides and over the knuckles round a brass hub and the furnace core, and two exhaust stacks along the cuff's
+    back past its rim, their mouths lit.
+  - Chainblade: about 35 (32 to 34), the head 12 or 13 long and 7 or 8 across (was 8 or 9 long and 4 to 6, lost at
+    the chain's end), on a chain of ten links (was twelve) in the same S, face-on and edge-on in turn: E a broad flint
+    leaf, D a great tusk hook with a horn barb on its back, C a gate-steel dart with its circuit and brass flights, B a
+    Veil sickle tipped in spirit light, A a molten-edged arrowhead barbed in gold, S a straight ivory blade with its
+    runes over a gold crown. The Lantern Broker's Due: its hooked blade 4 across at the cage and about 12 long (was 2 and 7),
+    the three lanterns on turned links.
+- **Hilt cuts** (the generated `ArmsHilts.CUTS`, for the War Anvil, §46.3): for each sword-like weapon (Longsword,
+  Greatblade, Rapier, Daggers, Katana), where its blade, guard and grip begin along its mesh, {blade, guard, grip, 0}
+  in the mesh's own along (0 the pommel's end, 1 the point): the blade's lowest corner (its back, teeth and ricasso
+  with it), the grip's top and the grip's foot. A design without a blade or a grip part has none; the anvil then
+  keeps its own fallback.
 - **Drawn by our shader** (`arms_weapon` pipeline; `WeaponRenderer`, the `awaken:weapon` special item model): vanilla's
   two item lights partly banded (painted light, not plastic), metals reflecting a soft studio (a cool sky, a warm
   floor, a strip light), a gloss highlight, a rim of the weapon's accent, the world's light on all but what glows; a
@@ -14997,6 +15213,7 @@ in reach 23% of a fight today, 49% with these rules).
     8 s), even in a fight; otherwise aside in a fight; shown while glancing. Its room in the top-right stack shrinks as it fades.
   - Gate panel (`RunHudLayer`): one line (rank, gate, floor) and the collapse clock under it, which never hides; the full panel
     for 6 s whenever anything but the clocks changes, while the noise is 12 or more, while glancing, and in Classic.
+  - Mount hearts (`vehicle_health`): hidden; the kin's ride line carries a mount's health (§43.17).
   - Creature plates (`PlateRules.thin`): the creature you mean (`Aim.target()`) keeps the full plate (the bright rim when
     locked), and so do one under your look and a notable beast; the others fighting you show a thin plate, the bar alone.
 - Autopilot: `holo screen clear|clear_crosshair|classic|auto`, `holo fight on|off`.
@@ -16594,6 +16811,40 @@ Built in `dev.awaken.bells` (`GreatBelfry`, `HundredPeal`, `BelfryPiece`), with 
     model's lip is where `BellLook.bottom` says), `bells_dulled` (a bell kept in a gate lies dulled and comes into your
     hands dulled; a given bell is clean), `bells_sounds_placed` (the new sounds are mono).
 
+### 43.17 The kin plate and the ride line (concept page https://claude.ai/artifact/JQWQnSSsjSkWwPuJzwSpGn; Euan 2026-11-02: "kins like lampwing don't have a card? They just have the vanilla hearts. So let's add their custom plate"; "Go ahead")
+- **Who wears it** (`kin.KinPlates.wears`): every kin (at home, wild, or Gnawed), a tamed pet, a mount that trusts its rider
+  (`WildMount.trusted`). A wild wolf, a wild mount and any foe keep the creature plate (SPEC §21). While plates are on
+  (`LivingClient.platesOn`) they get no creature plate and no Jade card (Jade's hearts were what showed before).
+- **When**: while you look at it (the look's reach is the creature plate's, `PlateRules.lookRange`, through no wall) or it's
+  the creature you mean (`Aim.target()`, as §40.6), then a
+  0.6 s fade (`LOOK_FADE` 12 ticks); for 4 s after it's hurt within 16 blocks of you (`HURT_TICKS` 80, `HURT_RANGE`), then a
+  1 s fade; at most two at once (`MAX`): looked at first (the crosshair's and the one you mean can both show), then
+  the nearest hurt. Never the one you ride.
+- **The look** (`kin.client.KinPlate`, a `HoloWorld` plate over its head, 90 to 210 px wide by its words): warm glass with a
+  lantern edge (an ember edge and a darker fill when Gnawed); its name (the name you gave it, else its kind) with four bond
+  diamonds after it, gold up to how close you and its kind are (Kinship's Wary, Curious, Friendly, Kin; none for a pet or a
+  mount); the bond line; its health as a thin line in its kind's colour, amber and breathing at a third or less; a note
+  under it (two lines at most). It grows in over 4 ticks. Vanilla's name tag stays off it while its plate shows.
+- **The words** (server, `KinPlates.read`, sent as `kin_bond` when the client asks with `kin_read`: when a plate first
+  shows and every 2 s while it shows, within 64 blocks): wild kin "Could live with you" (green) and how far off its trust is
+  ("Help it three times and it will trust you.", "Two more helps ...", "One more help ...", "It trusts you. It will follow
+  you home to a nook it likes.", or "It won't come near you. Not after what happened."); at home "Lampwing · lives with
+  you" (or "lives with Ana") and what it's doing (the Hearth page's words); Gnawed "Gnawed" (ember) and "Beat it down and
+  the Deep lets go of it."; a pet "Wolf · yours" or "Ana's", "sitting where it was told to"; a mount "your mount" or
+  "Ana's mount", "resting". On a named one the client puts its kind before a line that starts in lower case ("Burrowbun
+  · lives with you"); an unnamed one's name is its kind, so its line just starts with a capital ("Lives with you").
+- **Naming** (the Hearth page's Your beasts card): "Give it a name" (or "Change its name") opens a small card, "NAME YOUR
+  LAMPWING", 24 letters at most; Enter keeps it. The server (`kin_name`) lets only its keeper name it, cleans the name
+  (chat's characters, spaces folded) and sets its custom name; an empty name takes it away. The card's title and the plate
+  show the name.
+- **The ride line** (`kin.client.RideLine`, layer `awaken:ride_line`, the clear screen only): vanilla's mount hearts are
+  hidden (§40.6); the mount's health is a warm line 92 px wide, 6 px over the vitals, with its name (shadowed) at 0.75
+  size to the left. It shows for 3 s after you climb on (`RIDE_SHOW` 60 ticks), while the mount is below full health, and in a fight;
+  at a third or less it breathes amber. Classic keeps vanilla's hearts.
+- Wire: `kin_read` (VAR_INT entity), `kin_bond` (entity, who, tone, step, note), `kin_name` (id, name); kin payloads are
+  version 2. Nothing is saved but the custom name.
+- Tests (CI): `kin_plate` (who wears it, the words, when it shows), `kin_ride_line`, `kin_name`.
+
 ## 44. The Forged Armour (armour progression; plan docs/armour/PLAN.md, page https://claude.ai/artifact/HPaoUGzWp9KEd9RCAPD5qX; Euan approved all of it 2026-10-29: "go ahead with the entire plan at the quality bar of this first set you did ... get creative too so each stands out from the other")
 
 Module `armour` (`dev.awaken.armour`, client `armour.client`). Built in phases P0-P5 (plan §6.2); this section grows
@@ -17319,8 +17570,8 @@ it; coming back restarts the stage, counted in again.
   counted in for one bar (64 ticks); then 10 strikes, each due on the next x, each on its mark (`AnvilSong.MARKS`, along
   and across the blade, the same every time). A strike scores 0.6 timing (1 within 1.5 ticks, 0 at 6) + 0.4 aim (1
   inside half a mark, 0 at two marks; the client reports the aim); 8 ticks either side is its window and a beat left
-  unstruck is a miss (0); a clean strike is 0.8. The blade draws out strike by strike, from a squat bar (half its length,
-  half again its width) to its own shape; after the fifth strike the tongs flip it over.
+  unstruck is a miss (0); a clean strike is 0.8. The blade draws out strike by strike, from a square bar (0.62 its length)
+  to its own shape (the blank, below); after the fifth strike the tongs flip it over.
 - **Quench** (stage 2): the blade is held over the trough. Hold to plunge it (PLUNGE), let go to lift it (LIFT): the dark
   line climbs from the point at 1/40 of the blade a tick and the gold notch is at 0.8, so the ideal hold is 32 ticks.
   Within 2 ticks either side is 1; early is **soft** (falling to 0.35 at 12 ticks early); late is **brittle** (a flaw,
@@ -17340,24 +17591,37 @@ it; coming back restarts the stage, counted in again.
   ticks to draw it out (DRAW); it goes to the main hand, what was there to the pack, else at your feet. A smith who left
   before the draw finds it waiting; anyone can sneak-use to draw it. Then the result card, and an optional first cut
   (a strike: the scene closes on the style's first blow).
-- **Sounds** (`awaken:anvil.*`, the forge kit's recordings until stage 5): bellows, pull, strike, ring (a clean strike),
+- **Sounds** (`awaken:anvil.*`; the anvil's own kit since stage 5, §46.10): bellows, pull, strike, ring (a clean strike),
   miss, flip, quench, lift, tap, scrape (the draw beginning) and drawn. The smith's client plays its own as it acts; the
   server plays them to everyone else.
 
 **46.3 The scene (stage 1, client).** `AnvilScene`: the view turns to the Forge's mouth for the heat, the anvil's face
 for the draw out and the hilt, the trough for the quench and the slot for the draw, gliding 14 ticks between
-(`ViewportEvent.ComputeCameraAngles`). The smith's view (`AnvilCamera`; Euan 2026-11-02 on the first tour's shots: "the
+(`ViewportEvent.ComputeCameraAngles`); with reduced motion (the body's comfort setting, `FirstPerson.reducedMotion`;
+stage 5) the view cuts to each look and its field of view instead (`AnvilScene.cut`), and the hands, which only follow
+the tools, keep the core's halved look-lag (§24). The smith's view (`AnvilCamera`; Euan 2026-11-02 on the first tour's shots: "the
 arms hide the view a bit too much"): from your eyes the tools' grips sat between you and the work, your arms climbing
 across the middle of the frame; so the view leaves your eyes, as a smith bends over the anvil, for a place over its front
 edge (anvil blocks: x 0.5, y 1.75, z 0.05, the smith's side -z) looking down on the work at about 54°, a little back for
 the heat and the draw (z -0.35, -0.4), over the trough's side for the quench (x 0.62), gliding with the turn. Your hands
 come up from the bottom of the frame to the hammer and tongs, drawn at the tools' distance but never nearer than 0.9
-(the fists at 0.75 filled the frame's sides). A client-only camera entity (as the armour forge's §44.4),
+(the fists at 0.75 filled the frame's sides). The work at the hand (Euan 2026-11-03, "go with all recommendations" after
+the second tour's shots showed the hands still over the hilt, the bind, the twist and the grind): the fists are drawn the
+size of the tools wherever the view is, so moving the view back alone shows no more of the work; what covered it was the
+arms crossing, the hammer's hand reaching left to the hilt while the tongs' hand held the blade on the right. So for the
+bind, the hilt's taps (attuning's too) and the balance's start the whole weapon lies turned end for end, its hilt to your
+right (`AnvilScene.hiltRight`; the bind turns it round from the knap over 12 ticks): the hammer's hand comes in from the
+right, the tongs (the hilt) or the steadying hand (the bind, at 0.7 of the blade) from the left. Those two have their own
+place, the grip's (from the hilt's middle: x +0.4, y +0.66, z -0.49, over the face's middle looking down and right onto
+it). At the wheel the view stands over its front or back and the blade lies with its grip to your right, its flat turned
+with it so the edge stays down, the steadying hand at 0.9 of the blade (§46.9). In the twist the turning hand holds just past the bar's end
+(7 texels on, circling 1.5) and the tongs' handles run low to your left, so neither arm crosses the bar.
+A client-only camera entity (as the armour forge's §44.4),
 first person while it runs, your own body hidden, the real player never moving; your own field of view. A place in a
 block, or one your eyes can't reach without the view crossing a block (eight rays, the near plane's corners), leaves
 that look at your eyes, turned, at 0.85 of your field of view as before. The HUD steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,
 `arms_anvil`, priority 200): the main hand on the hammer, the off hand on the tongs; the hammer winds up before each
-beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, your arm clear of the hilt); the
+beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, onto the hilt at your right); the
 tongs hold the work wherever it is (in the Forge only when the Forge's mouth is near enough to reach). While the hammer
 is down (the fire, the carry and the quench) the main hand holds the tongs too: the hand pass puts a held item away
 only behind a world arm (SPEC §24), so a free hand would bring it back into view. The hammer and tongs are our own voxel meshes (`assets/awaken/arms/anvil/*.mesh`,
@@ -17367,7 +17631,31 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
 `/awaken arms anvil autoplay true` (client).
 - `WarAnvilRenderer` draws the work as the weapon's own mesh: only the blade until the hilt (the hilt's parts appear tap
   by tap), drawn out by its progress, flipped at the halfway strike, carried on a short arc from the Forge to the anvil as
-  the view glides, over the trough and into it for the quench. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
+  the view glides, over the trough and into it for the quench.
+- The blank (Euan 2026-11-03, "do whatever is more AAA", after the twist showed a squashed sword with its quillons' tips
+  spinning): what lies on the anvil until the hilt is the weapon's own mesh reshaped corner by corner every frame
+  (`AnvilBlank`), read once a mesh (`AnvilShape`), so every design works with nothing made by hand.
+  - **Its guard waits for the hilt.** Cutting along the weapon leaves bits of a guard that rises (quillons' tips, wings,
+    tusks), so the guard is found by shape: a part wider than 1.25 the blade's middle width and a texel, starting in the
+    lowest 0.15 of the blade and ending below 0.45; its pieces up to 0.75 over its top that stand out more than 0.6 past
+    the blade just above it are left off while only the blade shows (the forge, the draw out, the quench, the twist, the
+    grind, the starlight; a Hunter blade standing alone in the slot) and come on with the hilt's first tap. A spear's wings
+    (halfway up) and an axe's head (its widest part) aren't a guard; gauntlets have none.
+  - **It starts as a square bar.** Its section is read at 48 heights from its foot to its point; drawn out d (0 the bar,
+    1 its own shape) a corner at height y goes from the bar's place to its own over d: across and through, its offset from
+    the section's middle pushed out to the bar's side (half side the mean of sqrt(half width x half thickness) along it,
+    1 to 3 texels) from 0.3 of the way out, a corner further in kept just inside one further out (0.9 to 1.0 of the side,
+    so no two faces meet); along, 0.62 of its length about the blade's middle. So a stepped blade, a curved one, an axe's
+    head all start as one clean square bar with flat ends, and each strike draws it out into the blade. Marks, the tongs'
+    lips and the hands follow it (the bar scaled from the blade's middle); the tongs close half a texel under the blank's foot,
+    the work's back rests on the face (the bar's half side, the blade's thickest when drawn).
+  - **The twist is real** (§46.9's A): the bar turns about its own length by a twist that's none where the tongs hold it,
+    all of it at the far end, smooth between (0.12 to 0.88 of the way); the far end turns a third as fast as your hand
+    (three turns of the hand, one of the bar: tighter reads as a screw on a bar this thick), so it spirals rather than
+    spins. While twisted it's cut into 24 slabs along its length (a cut on an edge two triangles share lands on the same
+    point in both, so no seam opens) and its normals turn with it; it rides a little higher ((sqrt2 - 1) its side) so its
+    corners clear the face. Struck out after, the twist unwinds as it's drawn out (twist x (1 - d)), the same way round as
+    you turned it; it isn't carried from the fire again. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
   x the heat, y's low byte the heat front along the blade, bit 10 the quench's side: the cooled part from the point) glows
   dull red through orange and yellow to white, dark and soot-streaked where cool, over the whole blade whatever its
   metal map (Beastbound's bone and bronze glow too). Sparks fly at each strike (on the screen, off the mark); steam
@@ -17440,19 +17728,1203 @@ axe). Checked on 2026-11-02 against 26.3's numbers: 60 of the 192 style-tier che
   bump alone takes Lord fights about a tenth shorter (under the recommended curve the Dodger passes 3 of 15 Lords, from
   11, and the Parrier 5, from 12) and small E and D creatures to two hits. With each Lord's health x its rank's bump (E
   x1.18, D x1.15, C x1.13, B x1.12, A x1.11, S x1.10) and normal creatures at E and D x1.15, the fights are as tuned
-  (Dodger 11, Parrier 12). So the numbers land with that health, which is the mobs module's.
+  (Dodger 11, Parrier 12). So the numbers land with that health. The health is boss-fights' (SPEC §47, commit
+  4ee1dd112 on claude/boss-fights-plan-73c5f2): it sets the bumped values in the gate bestiary's own health,
+  folded into its retune, with the Ringer at 420, the Examiner at 437 and the Abbot of Frost at 86.5. The damage bump
+  is one commit on the weapon-forge branch, merged with or right after that one, never before it.
+- **Built** (2026-11-02, the weapon-forge session): the generator's tiers run the Longsword 5.5 to 10.5 over the player's
+  1 and the eight styles' offsets carry their second point (`ArmsData` regenerated; Lord-forged follow). `Upgrades`
+  splits `isGear` (any weapon or armour piece) from `isTemperable` (gear in the `awaken` namespace only) and holds the
+  line (`Upgrades.CRAFTED`): the Forge shows it as a toast when crafted gear is used on it, Oren says it when you hold
+  some out to him (and his footer asks for "a forged weapon or armour piece"). Oren's commissions still make crafted gear
+  from what you carry but temper only forged pieces as he hands them over ("Here. Crafted work, so it stays as it is.").
+  The War Anvil's tooltip and the two lines above say it. (A first build raised health in `MobScaling` too; it came out
+  when the health went to boss-fights, so creatures are raised once.)
 
 **46.6 The smithy grows (plan §4.11, decision 15; approved with 14).** The War Anvil is rebuilt as you climb, each
 rebuild the gate for its rank's weapons and act (not a second ladder), each a Weapons tab step, shown on the block
-(`WarAnvilBlock` property `build` 0-3, kept in the block entity's save):
+(`WarAnvilBlock` state property `build` 0-3; broken, the loot table's `minecraft:copy_state` puts it on the item's
+`minecraft:block_state` component, so a carried anvil looks as it was built and is placed back at its build):
 - E: the War Anvil as built (carved stone, a copper-banded horn).
 - D: bellows by the Forge with Forge Tier II (§27); a kin beast set to the smithy works them (§43), and then the heat
-  climbs evenly and the gold band holds 10 ticks longer.
-- C, **Ironbound**: the face re-laid in iron and a grindstone set beside it (4 iron blocks, 2 diamonds); it is the C gate
-  ("a grindstone within 6 blocks").
-- B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst): the balance act happens on it; a weapon rack (the Pattern
-  Stand's rack make) goes up for what you've forged.
-- A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots), in that Lord's colour: the twist is clamped in it, and
-  at S the starlight comes down onto it.
+  climbs evenly and the gold band holds 10 ticks longer. Built as: a forging or a weapon worked (§46.8) begins with the
+  bellows worked (`AnvilWork.bellows`, schemaVersion 5; `WarAnvil.bellows`) when the smith's home's Forge is at Tier II
+  or better and an Emberkit living with them is loaded within 8 blocks of the Forge (`KinApi.loaded`). Then
+  `AnvilSong.heat(t, true)` climbs through the gold over 34 ticks instead of 24 (`BELLOWS_HOLD` 10) and is as before on
+  either side of it, on both sides of the wire; the bellows breathe every 30 ticks instead of 46, louder, and each
+  breath flares the fire out of the Forge's mouth (flame and sparks, `AnvilClient.puff`); the heat's hint says "Your
+  Emberkit is working the bellows: the heat climbs evenly and the gold lasts a little longer." An Emberkit nooks beside
+  a lit campfire (§43), so one by the Forge is a campfire beside it; a nook at the Forge itself is the kin module's.
+- C, **Ironbound** (4 iron blocks, 2 diamonds): iron bands round the stone and the waist, corner brackets, the face
+  re-laid in iron. A C weapon forged in full (not from memory, not a Hunter blade alone) also needs a grindstone within
+  6 blocks of the anvil (2 up or down), for its grind act (§46.9).
+- B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst shards): the horn in glowing Deepglass (light 10); the
+  balance act happens on it. A weapon rack goes up behind the anvil (the Pattern Stand's rack make: two posts on the
+  stone's back, two bars, in its texture), where copies of the last three weapons forged on it (in full or from memory,
+  not a blade alone) stand point down, turned to the smith's left and leaning on the bar, newest at the left
+  (`WarAnvilBlockEntity.rack`, saved and synced; copies to look at, never dropped, their flaws and acts showing).
+- A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots): netherite face and bands, a waking rune band (light 9),
+  a Lord's Heart set in the front (light 12); the twist is clamped in it, and at S the starlight comes down onto it.
+  The runes and the Heart are cut pale and lit in the colour of the last Gate Lord its smith killed (that Lord's
+  Lord-forged weapon's accent; `SmithMemory` schemaVersion 3 + `lord`, set on any Lord's death by your hand), gold
+  (`WarAnvilBlockEntity.GOLD`) if none: taken at the rebuild, kept in the block entity (schemaVersion 2 + `lord`) and
+  drawn by the block's tint 0 (`AnvilClient.LORD`, a BlockTintSource reading the block entity; a new colour rebuilds
+  its section). Broken, the loot's `copy_components` from the block entity carries it as the item's
+  `minecraft:custom_model_data` colour 0, which the item model's tint reads and setting it down puts back.
+Rebuilding is at the door: when the chosen weapon's rank needs a bigger build than this anvil has and your level
+reaches it, the Armoury's "Forge it" becomes "Rebuild it" (`ArmsArmoury.REBUILD`, `WarAnvil.Status.REBUILD` and
+`REBUILD_OK`; From memory hidden), greyed until you carry the parts. It goes one build at a time, takes the parts
+(none in creative), plays the smithing table and a ring, and says plainly what the anvil now does. Until then the
+forge card's line is `WarAnvil.unbuilt`: "C-rank weapons are forged on an Ironbound anvil. Rebuild this one Ironbound,
+with 4 iron blocks and 2 diamonds." (B: "...balanced on a Deepglass horn.", A/S: "...forged on a Lord's anvil.", with
+"First rebuild this one" while it is more than one build short). Reforging (§46.8) into a rank checks the same gate.
+Missing a grindstone: "From C-rank up, a weapon's edge is ground on a grindstone. Set one within six blocks of this
+anvil." The Weapons tab (§46.4) lists the anvil's build and the grindstone among a rank's needs and adds the step
+`arms/rebuild` ("Rebuild your War Anvil Ironbound", "Give your War Anvil a Deepglass horn", "Rebuild your War Anvil on
+a Lord's Heart") with its parts and the same line, once the next rank is open to you.
 The Forge's own tiers (II at D, III at B) still set the temper limit. No quality ceiling: a perfect song is Flawless on
-any anvil. A rebuild keeps work in progress and what stands in the slot. Built in stage 4 with the ranks' acts.
+any anvil. A rebuild keeps work in progress and what stands in the slot (the block entity stays: only its state
+changes). Models and textures from `tools/art/specs/war_anvil.py` (`war_anvil`, `_ironbound`, `_deepglass`, `_lord`).
+Test `arms_anvil_rebuild` (the gates, the door's flags, the parts, the work kept, the grindstone, the drop's build; on
+to a Lord's anvil in the remembered colour, which the drop keeps). Test `arms_anvil_bellows` (none without a home; the
+gold 10 ticks longer and the curve unchanged either side; a pull late without them in the gold with them).
+
+**46.7 Every weapon at the anvil (stage 2).** Weapons are never made on the crafting grid (decision 1): the 96 forged
+weapons (16 styles, six tiers) and the six Hunter blades (the Fang to the Sovereign blade) lose their grid recipes and are
+forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-forged (drops only) are unchanged.
+- **The cost table** `data/awaken/arms/anvil_costs.json` (schemaVersion 1; `AnvilCosts`), written by
+  `python3 tools/art/specs/arms_weapons.py costs` from the generator's own style shapes and the Hunter blades' (`gear.py`
+  `RECIPES`): each weapon costs exactly its old recipe minus the Blueprint (the tier's blade, its beast cores, its binding
+  at E or the tier's metal from D), each blade its old recipe. The generator no longer writes weapon recipes (it removes
+  them) and `gear.py` no longer writes the blades'. The Armoury, Track, Raise, the Weapons tab, the Now line, JEI and the
+  anvil all read this one table, and `tools/arms/sources.py` reads it for where each part comes from. A carried blade stands
+  in for its own parts; without it the blade's own cost is added (stage 1's rule, for every weapon); a blade forged alone
+  is a part to carry. Creative skips the cost.
+- **The list** (use the anvil with nothing to resume): the Armoury screen at the War Anvil's door
+  (`ArmsArmoury.ANVIL`, its position kept for three minutes): the styles you know, their six tiers, have and need for the
+  chosen tier and where each part comes from, Track, and **Forge it** on a tier you can make, with **From memory** beside
+  it when that weapon is in your memory, and **Forge the blade** for the tier's Hunter blade alone. What stands in the way
+  is one plain line under the buttons: the tier's level ("Gatewrought weapons open at level 22."), the Forge for D and up
+  ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks of this anvil."), a style you don't know yet
+  ("You don't know this pattern yet."), and the parts. A weapon standing in the slot is drawn before anything new starts.
+- **E by hand: knap and bind** (no Forge; about 20 s). Knap (stage 4): eight flake points down the bone or flint edge,
+  struck one by one at your own pace with the hammerstone (attack, aiming at the lit point; at least 6 ticks between
+  strikes; each scores its aim, the strike curve's 0.4 part alone, inside half a mark 1, two marks out 0). Bind (stage 5):
+  hold use and draw circles with the mouse to wind the cord round the grip: four turns, scored on how even they are
+  (each turn's time against their mean: within an eighth 1, half off 0; a hold under 24 ticks for the four, or a release
+  before them, scores what was wound). Quality by hand: 0.6 knap + 0.4 bind, the same bands; no flaws by hand. Then the
+  draw from the stone, as at D. The protocol: `KNAP` per flake (its aim), `WIND` a=0 when use is held and a=k as turn k
+  closes (in order, the times rising; the fifth closes the bind), `RELEASE` if use is let go first. At E the smith works
+  with a **stone hammer** (`arms/anvil/stone_hammer.mesh`: an antler haft, a sinew grip, a lashed flint head), not the
+  iron one.
+- **A blade forged alone** (Forge the blade): at E the knap alone (it scores both parts), at D and up the heat, the draw
+  and the quench, then the draw from the stone; no hilt, no bind. It's drawn on the anvil as its tier's Longsword cut at
+  the blade (blades have no mesh of their own). A blade is a part: it doesn't count toward `awaken:weapon_forged`, your
+  memory, the styles forged or the Weapons tab's steps.
+- **D and up: the base song** (heat, draw out, quench, hilt, draw; stage 1's acts and scoring) on **each style's own
+  rhythm** (`AnvilSong.SONGS`, from each style's chain), its strikes 8 to 14 by weapon, flipped after half:
+
+  ```
+  longsword   4  x...x...x.x.....  10    rapier      3  x..x.x..x..x.x..  12    glaive      5  x....x....xx....  10
+  axe         5  x.....x.....x...   8    daggers     3  x.x.x.xx          14    scythe      5  x......x.x......   8
+  maul        4  x.......x.......   8    katana      4  x.......xx.x....  10    gauntlets   3  x.x.x.x.xx......  14
+  spear       4  x..x...x........  10    twinblades  3  x.xx.x.xx.......  12    chainblade  4  x..x....x..x.x..  10
+  greatblade  5  x.....x.......x.   8    shieldblade 4  x...x.x.....x...  10    warstaff    4  x.x...x.x...x...  10
+  precursor   4  x...x...x...x...  10
+  ```
+  (step ticks, bar, strikes). The Longsword keeps its ten marks (`MARKS`); the others are laid by one rule (the first half
+  on one face from the root out, the second on the other, along 0.22-0.82, across from a fixed set). A pair (Daggers,
+  Gauntlets, Twinblades' two ends) is worked as one piece. C and up are forged on the base song until stage 4 adds
+  their rank's act. A tier opens at its level (3, 13, 22, 42, 67, 97), as today.
+- **From memory** (`SmithMemory` schemaVersion 2: `masterwork`, "style:tier" forged Masterwork or better; `forged`, the
+  styles forged; `best`, the highest tier forged, -1 none; a v1 save reads with all empty): one heat, one strike, the
+  quench and the draw (at E one flake and the draw); about 8 s; the parts as ever; always **Fine**, no flaw.
+- **A helper**: anyone else who uses the anvil while it's being drawn out strikes an off-beat (at least 2 ticks from any
+  beat the smith is due on, 6 ticks apart): each clean one adds 0.01 to the score, 0.05 at most, and three make it
+  **twin-struck**. They hear their strike; the smith hears it ring. Only during the draw-out, after the count-in, and not
+  from memory; one on a beat is a miss (a dull clank). The third clean one tells the helper "Your strikes are in the
+  blade. It will come out twin-struck."
+- **The result** (`AnvilPayloads.Done`, its `flags`: 1 twin-struck, 2 from memory, 4 forged in an Armoury room) says each
+  in a sentence under the quality.
+- **The story** (`awaken:weapon_forged` schemaVersion 2: + `twin`, + `memory`; a v1 story reads with both false). The
+  tooltip says it plainly: "Masterwork, twin-struck", "Fine, from memory", then "Forged by Euan". A weapon of ours with no
+  story (made on the grid before the War Anvil, or Hale's issue) gains a Plain one, no maker, the first time it is held; a
+  found weapon (Marked, or Lord-forged) never does.
+- **Flaws show on the weapon** (the weapon shader: UV1.y bits 11-12, 1 a burnt tip, 2 brittle; the renderer carries it
+  above the enchantment light's 7 bits in its state, so a hand, a stand or the anvil's slot show it; an item frame, the
+  inventory and the ground draw the flat icon, which doesn't): a
+  burnt tip darkens toward the point (the last third) into dull blue-grey scale (on bone or tusk, D's blades, a
+  brown-black scorch); a brittle blade is crazed mid-length with pale hairlines a texel wide (where a smooth noise over
+  its texels changes sign), so they sit in the pixel art. On the blade, metal or bone (bone a little fainter); cosmetic. `mesh_render.py` doesn't draw them (it renders weapons unforged).
+- **`core.api.ForgeHooks`** (§45.5): arms reads its quality from the story (0-3) and its rank from its tier; the War Anvil
+  fires `forged(smith, stack, quality, "war_anvil")` as the weapon goes into the slot, and the result card draws
+  `cardLines(stack)` under its words (10 px a line, counted in the card's height, colour A898FF).
+- **Patterns taught on use**: a Blueprint teaches its style when used (consumed: "You learned the Daggers pattern. Forge it
+  at a War Anvil."); used when known it stays ("You know the Daggers pattern already. Someone else could use this one.").
+  It no longer goes into anything. The five doors still teach at once and still put a copy in your pack; the Forge still
+  draws copies. Holding a Blueprint no longer counts as knowing it (old saves already learned what they held, §3.3's
+  backfill).
+- **The Hearth** (decision 11): the War Anvil is in `#minecraft:anvil` (vanilla reads that tag only for its anvil screen
+  and falling anvils), so it is the Hearth's anvil (the Forge room's) and the Fitting Stand's. A weapon forged at a War
+  Anvil standing in an Armoury room (`RoomType.FITTING`, `HearthHooks.armoury`) lasts a quarter longer (its uses x1.25,
+  as the armour's), and the card says so.
+- **The Weapons tab** (§46.4 grown): "Forge your first weapon" now offers the styles you know as choices at your best
+  reached tier, each with what it still takes (E by hand at the anvil, D and up by the Forge); after the first, "Make your
+  C-rank weapon" (`arms/rank_weapon`) shows when you've reached a tier above the best you've forged, its choices the
+  styles you know at that tier. **The Now line** (`AnvilNow`, priority 25): "You can forge Beastbound Daggers at your War
+  Anvil" when you hold every part of a weapon you know, at a tier you've reached, better than any of its style you carry;
+  the gear module's line no longer suggests blades. Its id is `arms:forge/<weapon>`, it points at your anvil when it's in
+  your dimension, and both Weapons steps cover it (`covers("arms:forge/")`) while they show. **Words**: the level road's E step says weapons are made at a War
+  Anvil, from bone and flint by hand at E; Hale adds "A crafting table makes quick tools. For a real weapon, set up a War Anvil at home." (§46.5); the
+  pattern notices say the War Anvil.
+- **JEI**: a **War Anvil** category (`Categories.WarAnvil`, `Recipes.forgings()`, the War Anvil its station) for every
+  weapon and blade, from the cost table: the parts (a tag's items cycling in one slot), the result, a rank chip in the
+  rank's colour, how it's made ("by hand, no Forge needed" at E, "in the Forge's heat" from D), the level it opens at, and
+  one plain line on the work (a blade: every forged weapon of its tier starts from one). Under the spoiler guard by its
+  result, as every Awaken category.
+- **The smith in third person**: others see the smith bent over the anvil, the hammer arm rising and falling on each
+  strike and tap (a full-body clip, `assets/awaken/player_animations/arms_anvil.json`, through `core.api.PlayerClips`;
+  without the animation library, vanilla's arm swing on each strike). The clips (`tools/art/specs/anvil_moves.py`, each
+  with its `_bent` twin): `arms_anvil` over the anvil (the draw-out, the hilt, the knap), `arms_anvil_strike` (6 ticks)
+  on each draw-out strike, `arms_anvil_tap` (4) on each hilt tap and flake, `arms_anvil_heat` at the Forge's mouth,
+  `arms_anvil_quench` in the trough, `arms_anvil_bind` winding the cord. `AnvilBodies` reads them from the anvil's synced
+  work as it is drawn (a new beat in the same stage is a blow) and lets the smith go the tick that work ends.
+- **The dev command** `/awaken arms anvil forge [weapon [memory]]` begins that weapon (the Beastbound Longsword with
+  none) at the nearest War Anvil within six blocks, or says what's missing in the anvil's own words; the tours use it.
+- **Old saves**: every weapon already made keeps working and gains its Plain story when held; Blueprints held were
+  learned by the backfill; Fangs and the other blades still stand in. The grid recipes are gone, so their recipe-book
+  entries vanish; nothing is charged twice.
+
+Tests (one per mechanism): `arms_anvil_costs` (every weapon and blade has its cost, the old recipe minus the Blueprint;
+no crafting recipe makes any of them; a carried blade stands in, else its parts are added), `arms_anvil_hand` (E knap and
+bind judged by the server: aim, evenness, quality, no Forge needed), `arms_anvil_memory` (a Masterwork goes into memory;
+from memory is one strike and always Fine), `arms_anvil_song` (as before, on the Longsword, plus a helper's off-beats
+making it twin-struck), `arms_anvil_goals` (grown: the rank step after the first weapon, and the Now line: its parts in
+the pack, nothing better of its style carried). `arms_recipe_unlock` is retired (no weapon recipes); `arms_armoury` and `arms_raise` read needs
+from the cost table.
+
+**46.8 Temper, attune and reforge at the anvil (stage 3; plan §4.6).** Use the War Anvil holding one of Arms' weapons
+(forged, Lord-forged, Marked, Hale's issue: whatever `ArmsItems.of` knows), with no work on it and nothing in its slot,
+and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three rows, each with
+what it costs (have and need), one button, and one plain line for what stands in the way. All three heat the metal, so
+each needs the Forge within reach at every tier ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks
+of this anvil."). The price is taken at the start, and the weapon goes from your hand into the work (`AnvilWork.piece`);
+both come back if the anvil is broken mid-work, and the weapon comes back through the slot, drawn as any.
+- **Temper it to IV**: one heat, as far as you can go. The target is the highest level up to the temper limit of the Forge
+  by the anvil (`HearthHooks.temperCap` at that Forge) whose prices you hold together: each level costs what it does at
+  the Forge (`Upgrades.temper(level, false)`, priced for your rank by `Costs.price`), summed. Oren's Mark lets a weapon
+  with no Temper start at its level for that level's price alone, as at the Forge. At the limit the line says why, in the
+  Forge's words ("Put an anvil and an armour stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
+  further.", "It can't take any more."). The scene (about 10 s whatever the levels): the whole weapon heats in the
+  Forge's mouth, one strike on the style's own beat for each level gained, the quench. Nothing is judged and nothing is
+  flawed: the Temper lands as paid, and the strikes ring as at the draw-out.
+- **Reforge it to C**: the next tier's parts (as Raise: the tier's cost, no Blueprint; `ArmsRaise.plan`), from the
+  tier's level. The scene (about 20 s): the whole weapon heats, the next tier's metal is folded in on the style's beat
+  (its strikes, turned over at half), the quench, the draw. Judged as a forging without the hilt
+  (`AnvilSong.reforgeScore`: 0.2 heat + 0.55 strikes + 0.15 quench, over 0.9; a burnt tip and a brittle blade as ever;
+  a helper's off-beats count). The weapon's story takes the new quality, flaw and smith, marked reforged ("Reforged by
+  Euan"); its Temper is the higher of what it had and the quality's starting Temper (held to the Forge's limit). Kept:
+  Marks, attunement, Art, name, Temper, enchantments and everything else written on it; its uses start fresh at the new
+  tier's (x1.25 in an Armoury room). A forged weapon becomes the next tier's of its style (`ArmsRaise.lift`:
+  `ItemStack.transmuteCopy`, then its damage and uses set back to the new weapon's own and its Temper put back on); a
+  Lord-forged weapon keeps its own body and Art and gains a point of damage a tier, as Raise always did, and its heat
+  glows in its Lord's colour (the weapon's accent) instead of the Forge's.
+- **Attune it to Heat** (a catalyst in the off hand): six essence, a Core Shard and the catalyst, as at the Forge
+  (`ArmsForge.attunePrice`). The scene (about 8 s): the whole weapon heats, the catalyst is set in the guard, and three
+  taps on the hilt's beat drive it home (all three at the guard), the blade glowing more in its Force's colour with each;
+  then it stands in the slot. Nothing is judged. Without a catalyst the row says which stone gives which Force; one
+  already attuned to that Force says so; attuning again replaces the old Force.
+- **The Forge points here**: a plain use of the Forge holding one of Arms' weapons says "Weapons are tempered at a War
+  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil."; the Armoury at the Forge no longer offers Raise.
+  Armour tempers at the Forge as before, and Oren still tempers anything you hand him.
+- **The Weapons tab**: two optional steps, each pointing at your anvil. "Temper your Beastbound Longsword"
+  (`arms/temper`) when the best of Arms' weapons you carry (the highest tier, then the lowest Temper) is below the limit
+  of the Forge by your War Anvil; its needs are the next level's price. "Reforge your Hive Regent's Daggers"
+  (`arms/reforge`) when you carry a found weapon (Marked or Lord-forged) below the best tier you've reached; its needs
+  are the next tier's parts.
+- **The card**: "Temper IV" ("Tempered from II to IV"), "Attuned" (what the Force now does, in a sentence), or the
+  reforged weapon's quality with "Reforged by Euan". Done flags add TEMPERED 8, ATTUNED 16, REFORGED 32.
+- **State**: `AnvilWork` schemaVersion 3 (+ `kind` TEMPER 2, ATTUNE 3, REFORGE 4; + `piece`, the weapon worked; +
+  `target`: the Temper level, the Force's ordinal, or the tier it reforges to); a v2 work reads with no piece.
+  `WeaponForged` schemaVersion 3 (+ `reforged`; a v2 story reads false). A Lord-forged weapon's tier is read from its
+  row of `ArmsData` (its name has no tier prefix).
+- **The weapon shader**: in the making (y bit 9), x bits 8-11 are the glow's colour (1 to 5 a Force, by
+  `Forces.Force` ordinal + 1; 15 the weapon's accent) and bits 12-14 how much of it; the enchantment light is off while
+  it's being worked. `mesh_render.py` doesn't draw it.
+- **The dev command** `/awaken arms anvil held <temper|reforge|attune>` begins one with the weapon in your main hand at
+  the nearest War Anvil within six blocks, or says what's missing in the window's words.
+
+Tests: `arms_anvil_temper` (one heat to the Forge's limit, the summed price taken, the levels struck, Temper applied; the
+weapon back through the slot; Oren's Mark's start; the Forge's plain use points to the anvil), `arms_anvil_attune` (the
+price and catalyst taken, attuned, Marks kept), `arms_anvil_reforge` (a Marked weapon: the next tier's, Marks, name,
+attunement and Temper kept, the story reforged with its quality; a Lord-forged: its body, Art and a point; the parts
+taken, and given back with the weapon when the anvil breaks mid-work).
+
+**46.9 Each rank's act (stage 4; plan §4.4).** A weapon forged in full at its tier (`AnvilWork.acts()`: not from memory,
+not a Hunter's blade forged alone, not one worked again) gets its rank's act and every act below it from C, each in its
+place in the song; at S: the heat, the twist, the draw out, the starlight, the grind, the hilt, the balance, the draw.
+Each act done is a tenth of the quality (the armour's rule, §44.4; `AnvilSong.withActs`: score x (1 - 0.1 an act) + 0.1
+x each act's mark). None can fail, and one left alone settles itself.
+- **A, the twist** (`AnvilSong.TWIST` 6, straight from the heat): the hot square bar clamped on the face; hold use and
+  circle the mouse round the bar's end, three turns (`TWISTS`), its far end turning a third as fast as you go and its
+  middle twisting into a spiral (§46.3, "The blank"), hammered flat again as it's drawn out. Its mark is the bind's
+  evenness (`AnvilSong.evenness`) x the turns made of three x how long they took over 30 ticks (`TWIST_MIN`: hurried,
+  it takes less). Let go early and it's what was turned. Then the draw out. Payload `TWIST` 14 (a = 0 as the hold
+  begins, then each turn), and `RELEASE`.
+- **S, the starlight** (`STAR` 9, in place of the quench): the work is held point up over the face into a column of
+  white light that comes down onto the anvil; a ring of it closes on the point, meeting it 50 ticks in (`STAR_AT`), and
+  you press as it does: 1 within 3 ticks either way, falling to 0.3 at 20 (`AnvilSong.star`). It's the quench's mark
+  too, and light leaves no brittle hairline. Left alone (110 ticks, `STAR_ALONE`) it's 0.3. The steel glows the
+  starlight's white as it drinks it (the weapon shader's glow code 6). Payload `STAR` 17.
+- **C, the grind** (`GRIND` 7, after the quench or the starlight): the view glides to the nearest grindstone within six
+  blocks of the anvil (the anvil's face while there's none: the rebuilds' gate comes with them), the blade across the
+  wheel's rim, edge down. The view stands over the wheel's front or back, whichever side you're on (0.95 out, 1.7 up;
+  toward you if that's walled in), so the blade lies across the frame, its grip to your right under the hammer hand
+  and your other hand at 0.9 of the blade (§46.3, 2026-11-03). Hold use to turn the wheel: a gold line drifts up and down a channel beside it
+  (`AnvilSong.grindLine`, two slow waves) and the mouse's height is the edge. Every 5 ticks of turning (`GRIND_GAP`) the
+  client says how far the edge is off the line, in half the channel's height, marked 1 - |off| (`AnvilSong.grind`), and
+  sparks fly off the edge; 10 make a pass (`PASS`), two passes the act, its mark their mean. A touch quicker than the
+  wheel turns isn't taken. Then the hilt. Payload `GRIND` 15 (a = the touch's index, aim = how far off).
+- **B, the balance** (`BALANCE` 8, after the hilt): the whole weapon rests across the horn's tip and tips toward its
+  heavy end; slide the Deepglass weight along the grip with the mouse (the guard to the pommel's end) until it lies
+  level (within 0.06 of its point, `LEVEL`) and hold it there a second. The point is the same on both sides for that
+  work (0.25 to 0.75 along the grip, `AnvilSong.balancePoint` from the stage's start). Settled within 60 ticks
+  (`BALANCE_QUICK`) is whole, by 200 half (`BALANCE_SLOW`), times how near the point it was (a hair off still counts;
+  at most half lost); left alone 240 ticks (`BALANCE_ALONE`) it settles itself, poorly. Then the draw. Payload
+  `BALANCE` 16 (t, the weight's distance from the point).
+- **The view**: a place over the wheel on your side of it, one at the horn's side, and one back from the face looking up
+  the blade into the light (`AnvilCamera` places 4 to 6).
+- **State**: `AnvilWork` schemaVersion 4 (+ `twist`, `grind`, `balance`, `star`, -1 until done; a v3 work reads with
+  none done). `/awaken arms anvil autoplay true` plays the acts too.
+- **What the acts leave in the steel** (cosmetic only): a twist that marks 0.5 or more (`AnvilSong.RIPPLES`) leaves its
+  ripples in an A or S blade, light and dark bands a texel wide waving across the metal from the guard up like folded
+  steel; an S blade quenched in starlight (any mark) has its runes woken: what glows of itself burns brighter and cooler
+  and wakes in turn from the hilt, even where it was still, and now and then a point of the steel catches the
+  starlight. `WeaponForged` schemaVersion 4 (+ `acts`: `RIPPLES` 1, `STARLIT` 2; a v3 story reads none); a reforge keeps
+  them. The tooltip reads "Flawless, twisted steel, quenched in starlight"; the card says "The twist shows in its steel."
+  and "It drank the starlight, and its runes woke." (`Done` flags `RIPPLED` 64, `STARLIT` 128). Drawn by the weapon
+  shader wherever the weapon is (UV1.y bits 13 and 14, beside the flaw), standing in the anvil's slot too.
+
+Tests: `arms_anvil_verbs` (the tenth rule and the twist's, balance's and starlight's curves; a C Longsword grinds after
+its quench and then takes its hilt; an S Longsword twists, draws out, takes the starlight, grinds twenty touches (one
+too quick refused), takes its hilt and balances, and a perfect song is Flawless with no flaw, rippled and starlit,
+a copy of it in its Lord's anvil's rack).
+
+**46.10 Its own sound (stage 5; plan §4.3).** Steel that rings truer: the armour's sound is a bell melody, a note per
+strike; a weapon's is the blade's own ring. `tools/art/specs/audio_anvil.py` (CC0 Kenney transients under the audio
+kit's synthesis, as the forge's; mono, mastered to the arms loudness) writes `sounds/anvil/anvil_<event>_<k>.ogg` and
+the `anvil.*` entries of arms' merged sounds.json and subtitles (`audio_arms.py` keeps them when it rewrites the file).
+- **Each style's true note** (`AnvilSong.Song.note`, semitones from the ring's A5): Maul -9, Greatblade -7, Axe and
+  Warstaff -5, Scythe and Glaive -2, Longsword, Chainblade, Shieldblade and the Precursor 0, Spear and Katana +3,
+  Gauntlets and Twinblades +5, Rapier +7, Daggers +10. A clean strike rings the blade `FLAT` 3 semitones under it at
+  first and a step nearer with each clean strike (`AnvilSong.ringPitch(song, clean so far, strikes)`; a strike that
+  isn't clean doesn't step it, so a song with misses ends a little flat); the balance's end and a helper's strike ring
+  it true, and the draw from the stone rings it whole (`anvil.drawn` at `WarAnvil.truePitch(weapon)`). Every style's
+  first ring and true note sit inside the game's 0.5-2.0 pitch range.
+- **The strike on each tier's metal** (`AnvilContent.strike(tier)`), thinner and brighter than the armour's plate (cut
+  under 90 Hz but the lordscale): iron to D (`anvil.strike`), gatewrought (C, hard and glassy, its grit),
+  veilwoven (B, a glass voice beating in it), lordscale (A, dark and heavy, its scales settling after), sovereign (S,
+  a high halo).
+- **The blade**: `ring` (A5), `flip` (the grip shifting, the blade landing on its other face), `quench` (a roar of
+  steam, the water boiling, a low rumble), `lift` (a slosh, drops falling back, the last hiss), `tap` (the hilt's
+  peening: a small hammer, a knock in the grip), `scrape` (steel on stone rising as it's drawn up), `drawn` (a last
+  chirp and the whole blade ringing, A5).
+- **The acts**: `knap` (E, a glassy crack, chips skittering), `cord` (E, rawhide rubbing tight, each turn), `wheel` (C,
+  the grind swelling with the stone's turn, sparks; every second touch), `twist` (A, hot steel groaning as it gives,
+  each turn), `hum` (B, the Deepglass horn: a glass tone at A4 with a slow beat, every 50 ticks while it balances,
+  at the style's true note and up to 6% flat the further it lies from level) and `star` (S, an airy rise into a high
+  A chord with motes of light).
+- **The Forge's own**, kept from the armour forge's kit: `bellows`, `pull`, `count` (the count-in) and `miss`.
+- **Listening**: `tools/art/anvil_listen.py` builds the page Euan judges the kit on (into build/anvil-listening: a
+  forging at each rank as the game times it, the true notes side by side, every event alone; keep / remake / cut and a
+  note on each, saved in the page's store, collection `verdicts`): https://claude.ai/artifact/JpbQKVjWDgDwiXajNmtkCP
+
+- **Reduced motion**: §46.3 (the view cuts instead of gliding). **Enchanting's card line**: the anvil's result card has
+  shown `ForgeHooks.cardLines` ("Room for three enchantments", in enchanting's `A898FF`) since stage 2; nothing more.
+- **Pacing** (checked 2026-11-03 at the game's own timings: the songs' bars, the heat pulled at 0.6, the quench's 32-tick
+  hold, the hilt's 42, the 30-tick draw, the acts' least times, and 8 ticks between stages for a practised smith or 40
+  for one reading each hint the first time): a first forging at D runs 24-34 s (Daggers quickest, the Maul slowest), C
+  31-41, B 35-45, A 39-49, S 40-50 s (plan: 25-45 s, about 45 at S); practised, D 16-26 and S 27-37 s. E by hand 11-16 s
+  (plan: about 20). From memory it ran 10-13 s practised against the plan's "about 8 s", most of it the heat and a whole
+  bar counted in, so **from memory the blank goes in warm** (`AnvilSong.KNOWN_HEAT` 36: the heat clock starts at 0.3,
+  `AnvilWork.heat`) **and the anvil counts in half a bar** (`Song.known`, the bar's first half, which always opens on a
+  strike; `AnvilWork.rhythm`): 7.5-8.9 s practised, 14-15 s the first time.
+
+Test: `arms_anvil_ring` (every style flat at first and true at the last clean strike, rising each step, inside the
+pitch range; a Maul under the Longsword under Daggers; only clean strikes step it; each tier's own strike);
+`arms_anvil_memory` checks a known weapon goes in warm and is counted in half a bar.
+
+## 47. Fights worth winning (bosses, beasts and the Provings; plan docs/fights/PLAN.md, page https://claude.ai/artifact/3YkJKH1GwpQdZx6notb19E; Euan approved all recommendations 2026-11-02: "go ahead with all recommendations. Just do it ALL at the best of your ability AAA level, then I will test.")
+
+Modules `mobs` (boss and creature attacks, fight scripts, carriers, the Provings' Wardens), `arms` (the player's side:
+the hit at once, dodge, deflect, posture, the finisher) and `progression` (the Provings' halls replacing the box
+trials). The plan's invariants I1-I10 (PLAN §4.9) are enforced by the tests named in each part. Built in stages 0-5
+(PLAN §6); this section grows with each.
+
+**47.1 Hits land now (stage 0).** Euan 2026-11-02: "sometimes there is server lag when fighting and hits don't hit
+right away". Measured (`fights_tick_cost`, PLAN §2.6): fight code costs the server 1.7 ms a tick in a busy fight, but
+the player's impact waited for the server's HIT reply (0-67 ms behind the blade on a healthy server, any stall in
+full), one 91 ms stall came when the first boss of a session appeared, and boss clips ran on the client's clock (ahead
+of their blows in a stall).
+- **The hit at once** (I9). `ArmsRules.sweeps` is the server's sweep rule (reach to the box from the eye, the arc
+  around the look turned to the focus, the band of height; the meant creature by its step-in reach, any arc, any
+  height), called by `ArmsServer.sweep`. The client asks the same rule each frame of a move's active window
+  (`ArmsPredict.predictHits`) through `ArmsRules.predicts`: `PREDICT_REACH` 0.25 blocks and `PREDICT_ARC` 12° inside the
+  server's, over hostiles only (`Enemy`, never a person, an `Npc`, one's own or an invulnerable body; the press's meant
+  creature by the server's `Aim.meantId` check with `ArmsRules.pressReach`). A creature it strikes plays at once
+  exactly as the server's HIT would: the impact sound, sparks, the struck body's recoil and freeze, the hands' hold and
+  bite, the view's kick, the stance's flinch, with the server's freeze rule (one per `HITSTOP_GAP`, grown per extra
+  body) and the blow's push, lift and side worked out the server's way. The client keeps the sweep's focus as the server
+  does (the last body struck, else the press's; dropped after `FOCUS_DROP_TICKS` looking away).
+- **The server's word** stays final on damage. `HitLedger` (32 slots, no allocation) holds each (press seq, body) the
+  client played; the server's HIT for one adds only what the client couldn't know: a kill (the freeze held for what's
+  left of the kill's beat, the body's fall the way the blow went via `ArmsRecoil.killed`, the kill's sound and flare,
+  the fight-over moment) and a cleave's ring. A HIT the client didn't play is played as before and put in the ledger,
+  so that body isn't played again in that move. A blow played but never confirmed in `HitLedger.LIFE` (40 ticks) is
+  counted as shown without damage; the counts are logged when the player leaves the world
+  (`[arms] blows played at once N, confirmed by the server M, shown without damage K`).
+- **Never before the blade.** A server HIT for the running move that comes while the hands' clock is still short of
+  the windup (a dagger's one-tick strike: impact 4-15 ms early, the freeze 0.1-0.3 tick short of the blade, found by
+  the dagger-scythe session 2026-11-03) is held: its impact, freeze, cleave and kill play on the frame the blade
+  reaches the hit, a tick after it came at most, or at once if another move begins. A cleave's bodies wait together
+  (8 slots, no allocation). It is in the ledger the moment it comes, so the prediction never plays it twice. Only the
+  look waits; the server's damage has already landed.
+- **The lag watch** (`mobs.entity.FightWatch`). While a creature fought a player in the last 100 ticks, a server tick
+  over 50 ms logs one line (at most one a second): its length; ours timed (the bosses' fight scripts, the creatures'
+  abilities, the hazards); the garbage collector's pauses in it; chunks loaded; an autosave; entities; and the rest.
+  `[fights] slow tick 91.0 ms in a fight: ours 3.2 ms (...); garbage collection 0 ms; chunks loaded +12; ...`.
+- **The first-boss stall**: `Kits.all()` (every kit body's rig, move table and fight script) was read when the first
+  boss of a session appeared. It is read on a background thread at common setup and waited for at
+  `ServerAboutToStartEvent` (it is synchronized). Measured: the first boss's worst tick fell from 91 to 32 ms (its spawn
+  8 ms; the rest is code running for the first time, spread through its AI in `fights-first-boss-profile.txt`), under
+  a tick, and every later boss under 8 ms.
+- **Boss swings at the server's pace.** While a boss with a fight script lives (stage 4: not only while it fights; a
+  pace that stopped, in a reel against a beast or with its player fallen, held its body still for the 3 s until the
+  clock went stale, seen in the stage 4 tour), players within 96 blocks get `mobs_pace` (the level's game time, a VAR_LONG) at the end of each server tick (`mobs.net.MobsNet`). The
+  kit renderer's body clock is `ServerPace.now`: the last pace plus the time since it came, at most one tick past it,
+  never backwards; the game clock when no pace came for 3 s. In a stall the boss holds where the server is.
+- **The budget** (I10): `fights_tick_cost` fails when a boss and 12 monsters cost over 5 ms a tick on average
+  (`AwakenTests.cpuBudget`: 15 on CI).
+- Test `arms_hit_now`: over every move of every style, 3,000 bodies placed around the reach and arc, every one the
+  client plays is one the server's sweep strikes, and moved up to 0.35 blocks with the look turned up to 5° (a tick
+  and a ping later) under 2% are missed (measured 1.2%); at least 60% of the server's hits are played at once (79%);
+  the ledger plays each blow once and counts the unconfirmed; a real strike on a zombie the client plays lands on the
+  server.
+
+**47.2 See it coming (stage 1).** Euan 2026-11-02: "most projectiles seem like they just spawn on you and you can't do
+anything about it". Every ranged harm a boss or beast does now travels or is drawn first, says how it is answered, and
+locks with time to answer it (PLAN §4.1-4.3, invariants I1-I5). The same for all 41 bosses and every bestiary creature
+at once; stage 2 adds phrases and the payoff on the pilots.
+- **The tell language** (I1). `Strikes.Kind.colour()` is the one colour of each class, on tells (`ArmsTells`), carriers
+  and shots alike: LIGHT white-gold `0xFFF2CC` (deflect, block or dodge), HEAVY amber `0xFFA63A` (deflect or dodge),
+  PERILOUS red `0xFF2E2E` (dodge or jump only), GRAB violet `0xC452FF`. Every kit move that hurts is told:
+  `FightRunner.told` takes the move's class, else its ability's, else HEAVY (112 kit moves hurt with no class before).
+- **The carriers** (`mobs.entity.Carriers`, server; `mobs.client.CarrierView`, client). Each is sent once to players
+  within 72 blocks (`mobs_carrier`; `mobs_carrier_end` when one ends early) and run on the server's game clock on both
+  sides, so the client draws exactly where the server judges. At most 24 alive for one creature; allocation per
+  carrier, never per tick.
+  - *Wave*: a ring rolling out along the ground at 0.55 blocks a tick from its inner radius to its outer. It strikes
+    whoever's feet are under its crest as it passes, once; feet more than 0.75 over its ground (a jump), a wall between,
+    or standing inside its start ring escapes it. Slams (a 1.5-block core at once, the rest a wave), bursts, gusts
+    (knock 1 + 1.5 x power), auras' pulses, darkness, the seep heart's pulse and burst all roll as waves.
+  - *Volley*: pods thrown up from the body, falling 16 ticks later on rings placed where you stood at the throw, each
+    ring at most 2.2 blocks (a dash is 2.6). Rains and lifts; a lobbed cloud is a volley of one ring of 1 block that
+    leaves a field.
+  - *Ground line*: a front racing out along a locked line at 0.7 blocks a tick, 0.7 each side. Roots and fangs (fangs
+    2 ticks apart).
+  - *Locked line*, *wedge*, *landing ring* (shown only): a beam's or a charge's line, a cone's wedge, a leap's ring on
+    the ground, from the lock to the moment it fires or lands, with a flash and the lock sound.
+  - *Field*: at most 2 blocks across and harmless for its first 10 ticks, its edge dashed while it is safe. Death
+    clouds are fields of damage only (no poison).
+  - *Pull*: water or wind drawn in for 20 ticks at 0.12 blocks a tick (a walk is 0.22; the player's own client draws
+    them, the server draws creatures), hurting nothing, then a wave out from its centre.
+- **The lock** (I3). An aimed ability stops following you `Carriers.lead` ticks before it can land: lines, wedges and
+  leaps 10, shots and ground lines 8 (their flight adds the rest). A kit move's lock is clamped to that
+  (`min(lock, windup - lead)`); every ability's and kit move's wind-up is at least its lead (`fights_language`). A rain
+  places its rings where you stand at the throw, a lift where you stand as it fires. A leap lands on its ring (at most
+  2.5 across). A blink ends in a told HEAVY cut 8 ticks after it arrives.
+- **Shots** (`AwBolt`, drawn by `mobs.client.ShotRenderer`): a glowing core in the class's colour, a breathing halo and a
+  tail tapering back along the flight in the maker's colour, all light (on the carrier pipelines). Speed by class
+  (white-gold 0.9, amber 0.7, red 0.6 blocks a tick), placed every 2 ticks (was 10) and tracked from 48 blocks. Each hums
+  as it flies (at most 4 at once).
+- **The effect rule** (I5, I6). Effects, pushes, pulls, lifts and burns come only with a hit that landed: a blow a
+  deflect, an evade or a full block answered brings none of them. A boss carries an effect only on its signature move;
+  a lesser creature on any. A fire blow burns for 1 second (was the bolt's default). Cones narrow with reach
+  (`Abilities.coneDot`: the cosine of the half angle is at least 0.8, narrower so a 2.6 dash sideways clears it at any
+  length).
+- **The beasts' told bite** (`mobs.entity.ToldBite`, through `Strikes.bite` for the kin and living modules). The Gnawed
+  and the wild animals that fight back bit with vanilla melee and no tell. In reach, a beast now plants itself, rears
+  back with a growl and a white-gold glint for 10 ticks (a LIGHT blow), lunges a step 3 ticks before the bite, and bites
+  only if you are still in its reach plus 0.8 blocks. At most two beasts wind up on one body at once; the rest wait.
+  The tell reaches clients as `mobs_tell` (VAR_INT id, class, ticks; 0 calls it off) within 48 blocks and Arms through
+  `Strikes.tell`.
+- **Sounds** (synthesised, `tools/art/specs/audio_fights.py`, events `mobs.fights.*` in `src/main/merge/mobs_fights`):
+  shot release and hum, volley throw, fall and landing, wave roll, lock, ground run, beam fire, pull draw, field hiss,
+  growl. Each plays from where its carrier is, so one behind you is heard.
+- **The reach model** (`tools/sim/reach_sim.py`, `--model after`): every carrier of every creature can be escaped by a
+  dash at its lock or a jump (`--all`: 395 of 395 attacks; the bosses' 148 of 148, where a dash at the first cue got
+  out of 66-86% before, by distance).
+- **The carriers on cue** (`mobs.entity.CarrierDemo`, admin `/awaken bosses carriers <kind>`): `stage` lays a 33-block
+  floor where you stand, a still toll ghoul 9 blocks north and the camera west of the lane; each kind (wave, volley, lob,
+  ground, line, wedge, ring, field, pull, shot_light, shot_heavy, shot_red, fan) sends one across. Tour
+  `tools/autopilot/fights-carriers.txt` freezes the tick to shoot each mid-flight.
+- Tests: `fights_language` (I1 and I3 over every bestiary ability and all 41 move tables; I6-I8 per boss written to
+  `fights-language.txt`), `fights_carriers_seen` (a nearby player is sent every carrier, each ends on its clock, a shot
+  is tracked closely), `fights_dash_escapes` (a dash at the throw leaves a volley's ring, a jump clears a wave, a dash
+  off a locked line, while who stays is struck), `fights_effect_needs_hit` (an evaded root, pull's wave and lob leave no
+  effect or push), `fights_beast_told` (every bite of a pack of three follows its whole tell, never three winding up).
+
+**47.3 The duel (stage 2, on three pilots: the Bell Warden, the Glass Serpent, the Gearwright Colossus).** A fight script
+with `"duel": true` (`FightScripts.Fight.duel`, default false, so the other 38 fight as before until stage 4) plays as
+a duel. Numbers in `FightRunner` and `ArmsRules`.
+- **Phrases.** A pool entry and one of its `then` strings is a phrase. In every phase at most 30% of what a duel starts
+  (by weight, among the moves that hurt) is a lone blow (I8). The pilots' scripts (in their `tools/art/specs/kit/bosses`
+  specs) give every near and ranged opener a follow-up; the lone ones are the behind-you blow and the signature.
+- **Openings.** Every phrase ends in an opening where it starts nothing and stands its ground, turning to keep you in
+  front: 16 ticks after a lone blow, 3 more for each further blow, at most 30 (0.8-1.5 s). A phrase cut short (you got
+  out of reach) still ends in its opening. `AwakenBoss.inOpening` (to Arms as `Strikes.opening`): a hit that lands in it
+  fills the stance 1.5 times.
+- **Deflects answer.** Arms tells the boss through `Strikes.deflected`. A deflected blow that isn't its phrase's last
+  ends the move: the limb recoils for 10 ticks (pose 3, the `parried` clip) and the phrase goes on. Its last blow
+  turned aside, it reels (a 26-tick stagger, pose 4, the `reel` clip) and stands open 8 ticks more after it.
+- **Habits.** After two deflects within 10 s its red phrases come up four times as often (until it picks one); when you
+  back off (over 6 blocks away and 1.5 further than half a second before) its gap closers come up three times as often.
+- **Shots come back.** A white-gold shot deflected (`AwBolt.sendBack`, through `Strikes.returnShot`) turns once and flies
+  at its maker's chest at 1.15 blocks a tick; it strikes only our creatures, as the sender's thrown blow at its own
+  damage, and puts 22 on the maker's stance. Amber and red shots still break on the blade.
+- **The stance.** A perfect dodge through a blow puts 10 on the attacker's stance. A break drops it to its knee as
+  before (`AwakenBoss.broken`, server side), and an Execution on a Lord is the finisher: 10-15% of its health whatever
+  the weapon (`ArmsRules.LORD_FINISHER_MIN/MAX`, was the weapon's boss cap, 8-12%).
+- **Braced.** Outside its openings a duel body stands braced: a blow that lands then fills its stance only half
+  (`ArmsRules.GUARDED_POSTURE` 0.5, `hitPosture`, through `Strikes.duelist`); a riposte, the punish for a deflect,
+  fills it whole and a blow in an opening 1.5 times. The stance falls to deflects, ripostes and openings, not to
+  trading: in the sim 82% of the Bell Warden's stance came from plain strikes, and it broke five times a minute.
+- **Its own stance.** A duel's script names its stance size (`"stance"`, `FightScripts.Fight.stance`, 0 = a Lord's 100;
+  Arms reads it through `Strikes.stance` whenever it reads a stance): the Bell Warden 280, the Glass Serpent 200, the
+  Gearwright 260. The Provings' posture column (PLAN §4.7, 120-250) was written against the old 100 and scales with it
+  when the Wardens are tuned.
+- **Tuned with the sim** (`combat_sim.py` learns the duel: phrases and openings, recoil and reel, habits, shots sent
+  back, perfect-dodge and opening stance, the finisher's share, braced hits, the script's stance; 400 seeds, the
+  rank's forged longsword; the parrier answers half of the red blows with a dodge, ASSUMED). Health alone could not
+  reach the approved targets: at today's blows a 60%-on-time parrier takes 43 health a minute and dies in 40 s however
+  long the fight, and finishers scale with health. So the pilots hit softer and stand longer, tuned until standing and
+  trading still loses (decision 6's own test). `GateBestiary`: the Bell Warden health 30 → 80, damage 4.5 → 1.4; the
+  Glass Serpent 32 → 50, 5 → 3; the Gearwright 34 → 136, 5 → 2.2.
+
+  | Lord (rank) | Tank wins (dies at) | Dodger | Parrier | Expert (health left) |
+  |---|---|---|---|---|
+  | Bell Warden (E), before | 0% (18 s) | 78%, 38 s | 58%, 38 s | 96%, 36 s (91%) |
+  | Bell Warden (E) | 0% (52 s) | 100%, 91 s | 89%, 83 s | 100%, 66 s (99%) |
+  | Glass Serpent (D), before | 0% (18 s) | 57%, 58 s | 80%, 52 s | 100%, 49 s (82%) |
+  | Glass Serpent (D) | 0% (34 s) | 80%, 88 s | 98%, 82 s | 100%, 70 s (98%) |
+  | Gearwright (D), before | 0% (15 s) | 75%, 42 s | 78%, 39 s | 100%, 35 s (96%) |
+  | Gearwright (D) | 0% (36 s) | 86%, 108 s | 91%, 81 s | 100%, 68 s (95%) |
+
+  The "before" rows are the sim as it stood, without the health cap below (the Gearwright held 1024, not 1083).
+
+  Every cell meets the approved target (tank ≤10%, dodger ≥60%, parrier ≥80%, both 80-120 s, expert ≥98% with half its
+  health). The stance breaks 2-3 times a minute (was 4-6). A told blow now takes 6-10% of an on-rank player's health
+  (a red Grand Peal a third), against 25% before.
+- **Past the health cap.** Vanilla holds max health at 1024 (`Attributes.MAX_HEALTH`), so a Lord scaled past it was
+  quietly held there: the Gearwright at 1083, every C-rank Lord and above at 1024 whatever its scaling. A duel carries
+  the rest as bulk (`MobScaling.bulk`, `AwakenMob.bulk`): every blow on it is divided by its scaled health over its bar,
+  so it stands as long as it was tuned to and its bar still reads the share left (a finisher is 10-15% of that bar).
+  The Bell Warden carries 1.5 times its bar, the Glass Serpent 1.6, the Gearwright 4.2. Other Lords stay at the cap as
+  Euan has played them until stage 4 tunes each as a duel; the sim now holds them there too (`fix.health_cap`), so its
+  table reads what the game does.
+- **Adds hit softer.** A duel's add hits for at most 0.6 of what its caller does (`AwakenBoss.ADD_DAMAGE`, an attack
+  modifier set in `Mobs.spawnMinion`): with the Bell Warden's blows lighter its Toll Ghouls had out-hit it (2.1 against
+  1.3-1.8 a blow, the top of what a dodger took). Euan, 2026-10-28: the weight of a fight is the boss, not its adds.
+- **Weight.** A light blade (blow weight under 1) while a move plays only shudders the body (its hurt clip at 0.3); a
+  heavy blow, a deflect, or any hit while nothing plays (an opening) makes it flinch whole.
+- **Adds.** A duel keeps at most two of its adds alive (`AwakenBoss.DUEL_ADDS`, in `Mobs.minionRoom`), calls at most two
+  at once (the Bell Warden's statues and the Gearwright's drones were three) and none in its first phase (I6).
+- **Classes.** Shattered Bronze (the Bell Warden) and Erupting Glass (the Glass Serpent) are red now, so every pilot has
+  at least 20% red blows and 40% parryable (I7).
+- **What it's made of.** `MobDef.body` names a material over its model's: the Bell Warden and the Gearwright ring as
+  plate (`ARMOR`), the Glass Serpent as stone (were stone, stone and flesh), so Arms' impacts sound like bronze, iron
+  and glass rather than a body.
+- **Reactions.** The pilots have `parried` (0.5 s: thrown back off its footing, back onto it) and `reel` (1.3 s: thrown
+  hard, caught, lurching, hanging low and open, gathering) beside hurt three ways, kneel, rise and death; a duel without
+  both fails its kit load (`Kits.problems`). `KitRenderer` plays them on poses 3 and 4 and eases out of them over 0.15 s;
+  a body without them throws its front hurt.
+- **Feet** (meter 1 of PLAN §4.8 in `kit/motion.py`: how far a standing foot moves in a tick, its touch-down and lift-off
+  left out, outside the strike; FA's bar 0.03 model blocks). The Bell Warden's ground pass lifted its standing points
+  clear of the floor a hair each tick, which slid them; now its points are kept up only in the moves where every leg
+  travels, and a foot lock (`_lock`) holds every point that stands 3 ticks or more and drifts under 3 pixels: stab
+  0.70 → 0.018, echo 0.09 → 0.010, the wake 0.07 → 0.009, its reactions under 0.03 while they hold. Still over: the
+  clapper (0.14), the moves where every leg travels (0.05-0.13) and the hand-over inside a string, where the spring
+  between two moves carries the standing points (a runtime foot lock is stage 4's). The Gearwright's planted feet hold
+  under 0.02 but for its Colossal Stride, which advances by design; the serpent has no feet. `motion` also lists each
+  body's reactions (meter 5).
+- Tests: `fights_phrase_opening` (the Gearwright's sweep and chop, then nothing for at least 16 ticks, open throughout),
+  `fights_deflect_recoil` (the sweep deflected recoils 10 ticks and the chop goes on; the chop deflected, it reels open
+  and starts nothing for 34), `fights_shot_returns` (a white-gold shot sent back strikes its maker, never its sender; an
+  amber one won't turn; once only), `fights_duel_stance` (the Gearwright holds its script's stance through Arms; braced
+  half, opening 1.5, a riposte whole), `fights_language` (I6-I8 on every duel), `kit_tables_load` (a duel's reactions),
+  the Arms rules test (the finisher's 10-15%).
+- **On cue** (admin, tours): `/awaken bosses duel stage <boss>` builds a stage where you stand with the boss at its
+  middle facing a still stand-in 4 blocks south, the camera west of them; `play <move> [then ...]`, `deflect` and
+  `break` act at once (`DuelDemo`). Tour `tools/autopilot/fights-duel.txt` (on CI): each pilot's tell, recoil, reel
+  early and low, and broken stance.
+
+**47.4 The Provings: the Ringer (stage 3).** The D Reassessment becomes the first Proving (PLAN §4.7, GOALS part 2):
+one fight with a Warden in its own hall, never announced, the rank's gift inside the fight.
+- **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept
+  ringing, twice a man's height, a bronze bell swinging on a chain from each fist and a small one in its hood. Tier
+  `PROVING` (a boss met only in its hall: never in a gate, never roams, drops no part, since its reward is the rank, the
+  gift and its trophy). Theme Bell, a duel (§47.3) with stance 260; health 420 (340 before the forge's damage, §46.5), damage 1.4 (1.55
+  until its turns were made to reach, §47.6), speed 0.27, fought at level 10. Sim (`combat_sim.py --lord proving_ringer`, 200 seeds,
+  `PROVING_RANKS` sets its rank and level): dodger 78% in 2.7 min, parrier 96% in 1.9 min, expert 100% in 1.6 min, tank
+  0% (targets 75 / 80 / 99 / at most 10), harder than every E and D Lord for the dodger (§47.6; before its turns reached:
+  dodger 78%, parrier 86%). The plan's 4-5 minutes isn't met: with a
+  finisher worth 10-15% and stance setting the pace, a longer fight costs the dodger more than the plan's 75% (at 4
+  minutes it fell under 65%), and the first Warden must be fair to a hunter who came as they were. Length is the lever
+  for the later Wardens' extra phases.
+- **Tells.** Every white-gold blow is told 0.8 s (16 ticks: the swings, the Chain Lash, the Turning Swing, the Peal),
+  the plan's first rung (the later Wardens shorten it to 0.5 s; red stays at least 0.6 s at every rank).
+- **Moves.** Phase 1: Swing (right bell, backhand) then Swing (left), in strings ending on the Clang (both bells
+  overhead, HEAVY, held 8 ticks); the Chain Lash (a long step and a chain thrown straight out, from afar); the Peal
+  (both bells swung wide and clapped, a white-gold ring that flies at you: deflect it on the beat and it flies back,
+  §47.3); the Turning Swing (behind it); the Drowned Toll (its signature: it throws its head back and rings the bell
+  in its hood, a red ring rolling out through the water: dash through it). Phase 2 at half health, opened by "The water
+  drains" (a 36-tick held clip): the Whirl (HEAVY, one full turn with both bells out), the Bell Rope (GRAB: a running
+  catch with the left bell swung up behind its head), the Peal in pairs, and the strings end on the Clang or the Whirl.
+  It enters by dropping from the bells into the light (`drop`).
+- **Feet.** `kit.core.lock_feet` holds every foot that stands 3 ticks or more and drifts under 3 pixels where it set
+  down (its span's start, end or middle), re-solving the leg each tick; every move that doesn't travel and the idle and
+  reactions are locked. Still over FA's 0.03: the swings (0.09: the foot that pushes off), the turn's pivot (0.16) and
+  the moves that travel (lash 0.32, rope 0.14).
+- **No new Tasks step.** The Proving is the rank's Reassessment: the existing `progression:reassessment` step on the
+  Gates and rank page covers it, so nothing names it (§43, never pre-announce).
+- **The Drowned Belfry** (`hearth.trial.Belfry`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every
+  hall (even) cell, centred 256 blocks into the cell (the box arena keeps the corner). 63 wide (walls at |x| 31), 105
+  long (z -52 to 52), roof at dy 44 on ribs at dy 40 over 3x3 pillars (x ±17, every 12 blocks). Down the middle the
+  chancel (|x| 14, z -51 to 34) is dry at dy 0 (you stand at dy 1), a runner of dark brick down its centre; the aisles
+  and the narthex inside the door are a drowned floor at dy -1 under a block of still water (you stand knee-deep at
+  dy 0), with waterlogged half-steps all round the chancel, sea lanterns under the water, drowned pews in the narthex
+  and two bells lying in the aisles. Five fallen bells (waxed copper, bronze and verdigris, mouths open) lie on the
+  chancel as cover: 4 high, they stop the Peal. Nine bells hang from the roof on chains; the Great Bell Tenor (lip
+  radius 7, a band of words round it, a clapper) hangs over the pit at z -38, lip at dy 12, on four chains. The pit
+  (radius 7, terraced a block a ring to 6 deep, a pool at the bottom) is sealed under the chancel's floor (a rosette,
+  its outer ring cracked). Light: soul lanterns on brackets off each pillar, a rose of dark prismarine round a sea
+  lantern on the north wall, and unseen light: 14 at head height (dy 4) on a 5-block grid over the chancel, so its floor
+  reads at 6 or more (the first tour's light, from dy 8, left the chancel black), a pool of 15 where the Ringer drops,
+  11 in the narthex, and 12 down in the pit, seen once the floor over it gives way.
+  The door (south, 5 wide, 3 high: you fit, the Ringer doesn't) opens on a stair of half-steps to a landing at dy 4,
+  lit warm (the way out).
+- **The flow** (`hearth.trial.Provings`; `Trials.Kind.PROVING`, `forTarget(D)`): the Reading Bell's window says only
+  "The Registry will measure you again, the same as on your first day. Put your hand on the bell when you're ready."
+  ("Put your hand on it" / "Not now"; no trial name, no clock, no fail-day check). The bell rings low and the Great
+  Fault `ringer` plays (practice skips it); party members within 24 blocks at level 10, not in a gate or trial, come too.
+  While it plays the hall is readied (a free hall cell; the band a fight changes, dy -1 to 4, put back; a whole hall if
+  its land was made void before the Belfry existed); then everyone wakes knee-deep inside the door facing the chancel.
+  Bells toll above every 2-4 s. The Ringer drops into the light at the chancel's middle when anyone climbs onto it (or
+  after 30 s), its arena the whole hall, +50% health a member past the first. At half its health (its "The water
+  drains" phase) the water runs off north to south, two rows a tick, toward the pit; the lid cracks at once and gives
+  way a ring every 3 ticks from the middle after 24 ticks. A fall never kills: whole again (health, fire, effects,
+  air), you wake at the door; when every member has fallen since it dropped, it goes back up (the Ringer gone, the
+  water back, the lid shut) and drops again when you climb on. The first fall says "You wake in the water by the
+  door. The stair behind you climbs out."; from the third, a Signal says plainly what keeps catching you by the class
+  of the last attack it began (`Strikes.lastBlow`, kept by `FightRunner`): white-gold, turn it aside or step out and
+  punish; amber, dodge sideways; red, dash through; a grab, dash away. On the stair's landing you've climbed out: "The
+  Reading Bell will take you back whenever you're ready", no fail day, home. Its death: the water drains if it hadn't,
+  what it left (its trophy, its drops) goes into the killer's hands at 1.5 s, at 2.5 s its chain lies across each
+  member's feet ("The Ringer's chain is lying at your feet. It's yours now.") and the Tether is given
+  (`TrialHooks.done(RINGER)` in `AscentTrials`: `Ascent.grant(TETHER, "the Ringer's chain")`, with its tip), the Tenor
+  rings free at 4.5 s, and at 15 s everyone goes home with the rank (`Progression.passReassessment`, its rank-up as any
+  other). The last member out closes the run: the hall is put back 8 rows a tick and its
+  cell freed after. In a Proving the hall can't be broken or built on (survival).
+- **The box stays** as practice: `/awaken admin trial dbox` (three waves, as before) until Euan has seen the Ringer.
+  `/awaken admin trial half` brings your Proving's Ringer under half its health (tours: the drain on cue). Tour:
+  `tools/autopilot/fights-belfry.txt` (CI).
+- Tests: `proving_ringer` (the layout's rules, then the whole flow in a hall built over the GameTest superflat, whose
+  server has no trials dimension: wake in water, the drop, a fall and its reset, the drain and the pit at half, the
+  win, rank D and the Tether, the hall put back), `hearth_trials_dimension` (D is a Proving).
+
+**47.5 Every Lord a duel (stage 4).** The duel (§47.3) reaches every fight script: all 42 (`"duel": true` in each
+body's spec under `tools/art/specs/kit/bosses`), so every gate Lord, Guardian, Nightmare, Sovereign and the Signal's
+Shadow fights in phrases, opens up after each, recoils and reels when it's turned aside, and has its own stance.
+- **Stances** by size and rank: the Glass Serpent 200; the Ember Tyrant, Hive Regent, Mother of Spores, Root Saint and
+  Lantern Broker 240; the Drowned Archivist, Gearwright and Ringer 260; the Bell Warden, Mirror Knight and the Fuse
+  280; the Abbot of Frost, the Sleeper, Unit Zero, the Choirmaster, Shadow Regent, Ossuary King, Seed Warden, Great
+  Listener and the other Nightmares 300; the Sky Leviathan, Thornback, Furnace Engine, Drowned Moon, Rootmother,
+  Architect of Rooms and Sovereign of Mirrors 320; the Hollow Herald and the Sovereigns of Hunger, Silence and Sleep
+  340; the Signal's Shadow and the Sovereigns of Ash, Machines, Roots and Storms 360.
+- **Phrases.** Every opener has follow-ups (`then`), chosen so each string flows from where the last blow leaves the
+  body (a lance into its slam, a sweep into its backhand); the lone blows are the behind-you blow, the signature and a
+  few summons, at most 30% of what each phase starts (I8). `fights_language` checks I6-I8 on all 42.
+- **Reds.** A blow you can only dash past is red, so every fight has at least 20% red (I7): the Hollow Crowd's Surge,
+  the Hive Regent's Sting, the Shadow Regent's Reach, the Ossuary King's Crush, the Mirror Knight's and the Sovereign
+  of Mirrors' Lunges, the Architect's Scuttle, the Lantern Broker's Paper Lanterns and the Sovereign of Roots' Ring
+  (rings of fire and whole crowds are no blow to turn aside; a thrust from that far is dashed past). A red blow isn't
+  held (only a HEAVY may hold).
+- **Every fight has a delay.** One HEAVY at least is held (`time.hold`, played one time in three, `Kits.REQUIRED`
+  "delay"): where a held blow turned red it moved to another heavy (the Shadow Regent's Charge, the Ossuary King's
+  March, the Sovereign of Mirrors' behind-you blow, now HEAVY, wind-up 12; the Lantern Broker's Pack, now HEAVY).
+- **Adds.** At most two at a call (I6; were three or four): every `SUMMON` in `GateBestiary` and `DeepBestiary` is
+  `.n(2)` or fewer. The Hive Regent calls its Brood from its second phase (none in the first, I6); the Sleeper no longer
+  calls Sleepwalkers in its third (one summon a fight, I6).
+- **Reactions** on every body (`parried` 0.5 s, `reel` 1.3 s; `KitRenderer` poses 3 and 4). Bipeds (the Ember Tyrant,
+  Abbot of Frost, Lantern Broker, Mirror Knight, Unit Zero, Shadow Regent, Ossuary King, the Faceless and the Sovereigns
+  of Machines, Mirrors and Silence) use `plans.biped_duel_reactions`, the pilots' and the Ringer's: the striking arm
+  thrown up, a step back, a lurch, hanging open, gathering. Every other body (beasts, swarms, serpents, machines,
+  growths) uses `plans.duel_reactions`, which reads the body's own hurt and kneel: `parried` throws it back the way its
+  hurt goes, further and a little toward its lead side, then it settles forward to go on; `reel` throws it hard, sags it
+  half-way to its kneel, holds it there open, and gathers. What carries the body (its legs, its coils, its base) moves
+  only as its authored poses do, so what stands stays standing; a part guarded against the ground may touch it only
+  as deep as its own hurts do (the build's 2 pixels), never deeper, the throw easing by steps (1.0 down to 0.4) until
+  it does; bipeds' feet are locked after (`kit.core.lock_feet`). Weight (1.0-2.4 by bulk) shades how far it's thrown;
+  the lengths are the duel's own whatever the body weighs.
+- **Big beasts topple** (PLAN §4.6). A named beast or a hunt quarry (`CreatureTag` kind BEAST, or an elite of a herd,
+  a neutral kind or a pack) whose stance breaks goes over onto its side for the break (`Topple.knock`, from the mobs'
+  stagger hook Arms calls): a stagger of 40 ticks or more is a broken stance (Arms' 50, a Lord's 40; armour's staggers
+  are 30 or less), and in the air or the water it doesn't roll over. It goes over in 9 ticks (slow, then all at once),
+  bounces once (4), lies there open, and heaves itself up over the break's last 12; a break held longer keeps it down
+  without falling again. The server sends when it went down and when it gets up (`mobs_down`, synced, not saved) and
+  each client draws the fall from that: our rigs (`HeroRenderer`, `WildRenderer`) roll about the bottom edge they fall
+  toward, the same side every time for one body, so nothing sinks into the ground (`ToppleView.roll`); a vanilla body
+  (a quarry, under Fresh Animations or not) goes over by vanilla's own death flip without the red (its render state's
+  `deathTime`). Test `fights_topple` (a short stagger doesn't topple; a break does and an extended one keeps its fall;
+  a plain pig doesn't, a tagged alpha does). On cue: `/awaken bosses duel beast <id>` puts a beast in the boss's place
+  on the stage, and `break` breaks its stance.
+- Tour `tools/autopilot/fights-stage4.txt` (CI): the tell, `parried`, `reel` and the reel low for one body of each
+  build (the Ember Tyrant, the Thornback, the Sovereign of Machines, Mother of Spores, the Sky Leviathan), then the Briar
+  Sow broken: going over, down, getting up.
+- **A duel's fangs bite for its own blow.** Vanilla's evoker fang bites for a flat 6 whatever raised it, so a Lord
+  tuned to hit softly was out-hit by its own roots: the Root Saint's parrier lost nine fights in ten at any damage, a
+  third of it to the Root Ring. A duel boss's fang now carries its ability's own damage (`DuelFangs`: marked when it's
+  raised, its bite set to that before armour, blocks or anything else reads it), with nothing riding on it (no burn, no
+  effect). Every other caster's fangs keep vanilla's 6 and the top-up past it, as before. The sim does the same.
+  Test `fights_fang_bite` (a marked fang bites for its mark, an unmarked one for 6).
+- **The sim's burn** reads `Abilities.BURN_SECONDS` (1 s, §47.2); it had modelled 4 s on a fire bolt and 3 on Ignite.
+- **Tuned with the sim** (200 seeds a cell, the rank's forged longsword): every gate Lord to the approved targets
+  (§47.3) and as hard as its rank allows. Lords of E and D stay easier than the D Warden (the Ringer: dodger 78%,
+  parrier 96%), so their dodger wins at least 80% and their parrier 87%; C and above at least 70% and 85% (their
+  Wardens sit far lower, PLAN §4.7). Health sets the length (a parrier's win near 84 s), damage the danger.
+  `GateBestiary`, health and damage (were):
+
+  | Lord (rank) | Health, damage (were) | Tank wins (dies at) | Dodger | Parrier | Expert (health left) |
+  |---|---|---|---|---|---|
+  | Ember Tyrant (E) | 154, 1.11 (30, 5) | 0% (52 s) | 100%, 110 s | 92%, 88 s | 100%, 75 s (96%) |
+  | Hive Regent (E) | 41, 0.67 (28, 4.5) | 9% (74 s) | 98%, 87 s | 96%, 81 s | 100%, 70 s (99%) |
+  | Mother of Spores (E) | 56, 1.06 (28, 4) | 0% (46 s) | 88%, 99 s | 94%, 85 s | 100%, 74 s (100%) |
+  | Root Saint (E) | 158, 0.86 (30, 4.5) | 0% (50 s) | 98%, 113 s | 90%, 87 s | 100%, 72 s (99%) |
+  | Drowned Archivist (D) | 109, 2.02 (30, 4.5) | 0% (47 s) | 90%, 101 s | 100%, 82 s | 100%, 70 s (96%) |
+  | Lantern Broker (D) | 120, 2.78 (28, 4.5) | 0% (30 s) | 80%, 103 s | 100%, 84 s | 100%, 71 s (100%) |
+  | Abbot of Frost (C) | 73.5, 4.3 (28, 4.5) | 0% (40 s) | 80%, 93 s | 96%, 81 s | 100%, 75 s (92%) |
+  | Mirror Knight (C) | 103, 2.38 (30, 5) | 0% (52 s) | 84%, 107 s | 100%, 80 s | 100%, 69 s (87%) |
+  | The Sleeper (C) | 40, 3.78 (30, 4.5) | 0% (31 s) | 96%, 90 s | 94%, 81 s | 100%, 67 s (90%) |
+  | Unit Zero (C) | 115, 1.71 (28, 4.5) | 0% (29 s) | 80%, 107 s | 100%, 81 s | 100%, 69 s (100%) |
+  | Sky Leviathan (B) | 41.5, 5.73 (34, 5) | 0% (28 s) | 82%, 81 s | 95%, 83 s | 100%, 70 s (98%) |
+  | Hollow Herald (A) | 51, 6.0 (32, 5) | 0% (29 s) | 76%, 86 s | 100%, 85 s | 100%, 71 s (100%) |
+
+  At their old numbers as duels eleven of the twelve missed: the E Lords killed the parrier in 40-60 s (it won 8-68%),
+  and from D up they fell in under 70 s while the tank won up to 16%. The pilots and the Ringer are unchanged and still
+  pass. Rows for the Hive Regent, the Archivist, the Broker and the Herald are after their blows were made to land
+  (§47.6). All 15 gate Lords meet every target; the Ringer is harder than every E and D Lord for the dodger, and the C Warden's target
+  (60 / 65) sits under every C Lord. From C up the parrier wins 94-100%; the dodger is
+  the profile those fights test hardest.
+- **Health for the forge's damage** (the War Anvil's decision 14, docs/weapon-forge/PLAN.md §4.10, approved 2026-11-02):
+  every forged weapon hits 1 harder (2 for the eight slower styles), so the rank's longsword hits 18% harder at E, 15%
+  at D, 13% at C, 12% at B, 11% at A. The fights above keep their length and danger by health: each Lord rises by its
+  rank's share (E x1.18, D x1.15, C x1.13, B x1.12, A x1.11, S x1.10), every other gate creature whose theme is at home
+  at E or D (normals, elites and wardens) x1.15, the Ringer to 420 (x1.24: at x1.18 its dodger tied the Glass Serpent's)
+  and the Examiner to 437 (x1.15). The Abbot of Frost takes 86.5 (x1.18: at x1.13 the parrier won in 79 s). Simmed with
+  the bumped weapons (200 seeds, `tools/sim/forge_bump_sim.py`'s rule), health now (was):
+
+  | Lord (rank) | Health (was) | Tank wins (dies at) | Dodger | Parrier | Expert (health left) |
+  |---|---|---|---|---|---|
+  | Bell Warden (E) | 94.4 (80) | 0% (52 s) | 100%, 91 s | 89%, 81 s | 100%, 65 s (99%) |
+  | Ember Tyrant (E) | 181.7 (154) | 0% (52 s) | 100%, 109 s | 92%, 89 s | 100%, 75 s (97%) |
+  | Hive Regent (E) | 48.4 (41) | 9% (74 s) | 98%, 87 s | 96%, 81 s | 100%, 69 s (99%) |
+  | Mother of Spores (E) | 66.1 (56) | 0% (46 s) | 88%, 98 s | 95%, 86 s | 100%, 75 s (100%) |
+  | Root Saint (E) | 186.4 (158) | 0% (50 s) | 98%, 113 s | 92%, 88 s | 100%, 71 s (99%) |
+  | Drowned Archivist (D) | 125.3 (109) | 0% (47 s) | 90%, 101 s | 100%, 81 s | 100%, 70 s (96%) |
+  | Gearwright Colossus (D) | 156.4 (136) | 0% (36 s) | 86%, 108 s | 91%, 81 s | 100%, 68 s (96%) |
+  | Glass Serpent (D) | 57.5 (50) | 0% (34 s) | 79%, 87 s | 98%, 82 s | 100%, 70 s (100%) |
+  | Lantern Broker (D) | 138 (120) | 0% (30 s) | 82%, 103 s | 100%, 83 s | 100%, 71 s (100%) |
+  | Abbot of Frost (C) | 86.5 (73.5) | 0% (40 s) | 84%, 92 s | 97%, 82 s | 100%, 74 s (95%) |
+  | Mirror Knight (C) | 116.4 (103) | 0% (52 s) | 82%, 105 s | 100%, 80 s | 100%, 69 s (87%) |
+  | The Sleeper (C) | 45.2 (40) | 0% (31 s) | 94%, 88 s | 94%, 80 s | 100%, 67 s (90%) |
+  | Unit Zero (C) | 129.9 (115) | 0% (29 s) | 81%, 107 s | 100%, 81 s | 100%, 68 s (100%) |
+  | Sky Leviathan (B) | 46.5 (41.5) | 0% (28 s) | 82%, 82 s | 94%, 84 s | 100%, 70 s (98%) |
+  | Hollow Herald (A) | 56.6 (51) | 0% (29 s) | 78%, 87 s | 100%, 84 s | 100%, 72 s (100%) |
+  | The Ringer (D Warden) | 420 (340) | 0% (45 s) | 76%, 159 s | 96%, 112 s | 100%, 93 s (100%) |
+  | The Examiner (C Warden) | 437 (380) | 0% (43 s) | 60%, 145 s | 96%, 99 s | 100%, 84 s (98%) |
+
+  Every cell is within a few points and seconds of the tables above, and every target holds (the Ringer harder than
+  every E and D Lord for the dodger, the Examiner than every C Lord and the Ringer). An on-level gate creature still
+  takes 3-6 blows: median 4, 88% of them at E and 92% at D (the bump alone: median 3, 76% and 77%). The health is set
+  for the bump and lands with it: without it the fights run about a tenth longer and some dodgers fall under their
+  targets (Mother of Spores 66%; the Glass Serpent, the Abbot and the Herald 68%). Not raised: the Deep's bosses, cave,
+  water and wild creatures and Fauna (no tuned fights to keep; see below), and creatures at home from C up (the bump
+  leaves their 3-6 blows).
+- **Not tuned:** the Deep's bosses (the Guardians, Nightmares, Sovereigns and the Signal's Shadow) fight as duels at
+  their own numbers. The sim reads only `GateBestiary`, so their numbers are unverified as duels.
+
+**47.6 The Provings: the Examiner (stage 5).** The C Reassessment becomes the second Proving (PLAN §4.7, GOALS part 2:
+"the room you're standing in turns into the Hall of Reflections, and it fights the way you do"). `Trials.Kind.forTarget(C)`
+is `PROVING`; the Provings run any Warden (`hearth.trial.Warden`: its hall, the bell, where you wake, when and where it
+comes, how its hall turns, its gift and the way out), the Ringer's (`RingerWarden`) and the Examiner's (`ExaminerWarden`).
+- **The Examiner** (`awaken:proving_examiner`, kit `proving_examiner`): the Registry's examiner, twice a man's height, in a
+  long navy coat with gold rule marks, a high collar and a peaked cap, a fan of seven mirror shards behind its shoulders,
+  a black glass measuring rod in its right hand, its left hand bare porcelain with lit fingertips, and a silvered mirror
+  where its face should be (a pale horizon in it: the face it has is yours). Tier `PROVING`, theme Mirror, a duel with
+  stance 300; health 437 (380 before the forge's damage, §46.5), damage 1.8, speed 0.28, scale 2.1, fought at level 25. Its intro line: "That was never your room."
+- **Tells.** White-gold blows are told 0.7 s (14 ticks: the strokes, the Step In, the Reading, the Turning Rule), the
+  ladder's second rung; red stays over 0.6 s (the Verdict 1.2 s, Hold Still 0.9 s).
+- **Moves.** Phase 1: Rule Sweep, Rule Thrust and Backstroke (the rod in twos and threes), the Measure (HEAVY: the rod
+  overhead and down, held 10 ticks one time in three, a ring of force), Step In (a long step and a thrust from afar), the
+  Reading (a white-gold shot from its bare hand: deflect it and it flies back), the Turning Rule (behind it), the Verdict
+  (its signature: the rod raised and brought down to point at you, a red line of fangs: dash through it). Phase 2 at two
+  thirds ("The mirrors wake", a 30-tick held clip): phrases of three and four, the Verdict twice as often, Reflections
+  (two copies of it step out of the glass, `DECOY`). Phase 3 at a third ("The walls close in"): Hold Still (a red grab
+  with the bare hand from a run), the Crosscut (HEAVY: one full turn with the rod held out low), phrases ending on the
+  Crosscut or the Measure. It comes by stepping out of the glass (`emerge`).
+- **It reads you** (`FightScripts.Fight.mirrors`, `FightRunner`). Through its first phase it counts how you meet it: blows
+  you turned aside (guard), blows you stood in the reach of that never landed (you got out of them: a dash, a step, a
+  roll; counted once a blow, at its last active tick), ten-tick spells you kept 8 blocks or more off (four make a point:
+  distance), and your powers' hits on it (any of the six `Forces` damage types: powers). At its second phase it reads
+  once: the habit with the most, at least 4 (`HABIT_LEAN`) and more than any other, else none. From then on the phrases
+  that answer it come up 5 times as often (`HABIT_ANSWER`): your guard, the blows you can't turn aside (amber, red, a grab);
+  your dodging, the held blows and the long strings (a phrase of three or more: a dodge spent early); your distance, its
+  gap closers; your powers, its shots. `Strikes.Habit` (`NONE, GUARD, SLIP, DISTANCE, POWERS`) and `Strikes.habit(e)`
+  (core.api, `Duel.habit`, default `NONE`) let the hall say it: 3 s after the mirrors wake the Signal says plainly what
+  it read ("It's noticed you block. Now it swings the blows you can't turn aside." / "...you dodge. Now it holds its swings
+  and covers the ground you dodge to." / "...you keep your distance. Now it closes in fast." / "...you lean on your
+  powers. Now it throws them back at you." / "It watched you fight and found nothing you lean on. It's still guessing.").
+  Its shots wear the look of the power family you've used most (`awaken:power_uses/<family>`: kinetic as gravity, velocity
+  and energy as charge, flight and architect as glass, shadow as void, mind as dream, tech as signal, spirit as spirit;
+  `AwakenMob.mirrorBolt`, read when it first sees you): the look only, never your power's effect.
+- **Every blow reaches someone standing.** A damaging blow's hits must come down to a standing player (whose box is 1.8
+  high): the Examiner's sweep, Backstroke, Turning Rule and Crosscut, and the Ringer's Turning Swing and Whirl, passed
+  over a standing player's head (their lowest point 1.9-2.3 blocks up; the kit fit their reach to half a block and the
+  sim never landed them). The rod and the bells now come down to the waist in their strokes (`ROD_DOWN`, `BELL_DOWN`) and
+  the turns bend into the cut (`moves.spin_cut` `low` and `drop`, default 0; `moves.backhand` can strike with a weapon):
+  the Examiner's strokes reach 2.6-3.3 blocks at 0.3-1.2 high, the Ringer's swings 2.7 at 0.8 and its turns 2.4 at 0.5.
+  With its turns landing, the Ringer's dodger fell to 62%: its damage is 1.4 (was 1.55), dodger 78% in 159 s, parrier 96%
+  in 112 s, expert 100% in 93 s (100% health left), tank 0% (dies at 45 s).
+  The same fault ran through the whole kit, so the kit build now checks it: `kit.core.check` fails a damaging move whose
+  hits come no lower than `LOW_REACH` (1.4 blocks, a standing player's shoulders); a move whose ability does the hurting
+  is free of it, as it is of `fit_range` (Unit Zero's Step, the Hive Regent's Dive, the Mirror Knight's and the Sovereign
+  of Mirrors' Lunge, the Herald's Collapse). 23 blows in 12 kits came down to it, each by its own pose (lowest point, was):
+  the Hive Regent's cuts swing out and down at your shoulder and her lash sweeps under her at your waist (1.17 and 1.18,
+  were 3.21 and 1.67: her cuts never landed); the Archivist's Shutting runs a hit out off the desk's front (1.08, 1.57);
+  the Broker sinks into Pack Up, its bottom bar across your shoulders (1.08, 2.27); the Herald's second swipe and
+  backhand sweep at your chest (1.14 and 0.85, were 2.02 and 1.73); the Sovereign of Machines punches down at your chest
+  and turns with its arms out low (1.16 and 1.17, were 1.82 and 2.74); the Sovereign of Mirrors' Reflection and
+  behind-thrust go down (1.13 and 0.98, were 3.61 and 2.73); the Sovereign of Storms' tail lash comes low across (1.08,
+  1.96); the Sovereign of Ash's bite reaches down (1.22, 1.62); the Explosion's pop and slap bend in (1.18 and 0.91, were
+  2.1 and 1.96); the Generic Nightmare's reach, grasp and wrong reach down (1.25, 0.98, 1.00, were 2.16-2.49); the
+  Ringer's Rope leans into the run (1.27, 1.54); the Examiner's second rule, step and hold drop the rod and arm (0.95,
+  0.35, 0.82, were 1.79, 1.43, 1.64). None reaches less far forward. The gate Lords whose blows now land were simmed
+  again (§47.5): the Herald's dodger fell to 62%, so its damage is 6.0 (was 6.5).
+- **The Hall of Reflections** (`hearth.trial.Reflections`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every
+  hall cell, centred 256 east and 120 south of the cell's corner (clear of the Belfry and the box arena). Round, the mirror
+  wall's face at radius 40 (to 42.5), roof at dy 26. The floor is white stone ruled like a measuring sheet: smooth quartz
+  with calcite and quartz block, ink rings of polished blackstone every 8 blocks, sixteen rules of polished deepslate out
+  from the first ring, a gold seal in the middle (chiseled quartz inside a gold ring), a border of blackstone bricks at the
+  wall's foot. The wall: a dark skirting (dy 1-2), 24 bays between quartz pillars, one centred on the door, each bay a
+  dark mirror (tinted glass, black behind it) in a gold frame from dy 3 to 16, white quartz above with a chiseled band at
+  20 and a cornice at 23. The ceiling: dark beams on an 8-block grid and two rings, white quartz between, an oculus over
+  the middle with a sea lantern skylight; twelve lamps hang on chains at radius 30 (sea lanterns at dy 12). Six standing
+  mirrors (five wide, six high, tinted glass between quartz posts) at 18-19 from the middle are cover: they stop the
+  Reading. Unseen light: 13 at head height on a 6-block grid. The door (south, 3 wide, 3 high: you fit, the Examiner
+  doesn't) opens on a stair of half-steps to a landing at dy 4, lit warm (the way out). The band a fight changes is dy
+  -1 to 16 (the room laid over the middle, the mirrors, the ring).
+- **The flow.** The Reading Bell's window says only "Last time the bell didn't stop. Go when you're ready." The bell rings
+  and a Fault plays ("READING · READING · READING", "[ERROR] THE READING IS LOOKING BACK", then "The bell stopped."). Before
+  anyone goes, the Examiner reads the room round whoever touched the bell: 21 by 21, from 2 under their feet to 12 over
+  (`ExaminerWarden.Room`). What comes is a room's look and nothing that acts: no water, lava or fire (what stood in water
+  comes dry, water plants don't come), no portal, TNT, bed or respawn anchor; a vanilla block that keeps things comes
+  empty, but no game master's block, spawner or vault; another mod's block comes only if it keeps nothing and can't be
+  walked through. While the bell rings the hall is readied; then the room is laid over the hall's middle (no block
+  updates), and everyone wakes standing where they stood in it, looking the same way (whoever stood outside it, where
+  whoever touched the bell did): nothing seems to have happened. 2.5 s on, the room turns to glass a ring every 2 ticks
+  out from them, every full block the stained glass nearest its own colour (the rest goes, a lamp leaving its light behind as an unseen
+  light block; the room's air was laid keeping the hall's unseen light, so the glass room never goes dark), and through
+  it the hall shows.
+  1.5 s after the last ring the Examiner steps out of the glass 9 blocks in front of whoever touched the bell, facing them,
+  and the room breaks into the hall (glass bursting, whoever the hall's blocks came back round lifted out, whoever stood
+  high floating down); its arena is the whole hall, +50% health a member past the first. At two thirds of its health the
+  mirrors wake a bay a tick round from the north (the glass goes white, lit from behind) and the Signal says what it read
+  3 s later (the read, the first fall's line and the fall hint go out CRITICAL, as in a gate: the director holds a
+  paced line through a fight, and these are for the fight). At a third the hall closes in: a ring of mirrors (radius 26, 9 high, a door south you fit through and it
+  doesn't) rises a row every 3 ticks; whoever is outside it is brought in first, and it keeps inside (home 24). A fall
+  never kills: you wake inside the door ("You wake inside the door. The stair behind you climbs out."); from the third, the
+  Signal says what keeps catching you (§47.4). When everyone has fallen it goes, the mirrors sleep, the ring sinks, and 3 s
+  after you wake it steps out of the north wall's mirror. The stair's landing is the way out, no fail day. Its death: the
+  mirrors all wake if they hadn't, what it left is in the killer's hands at 1.5 s, at 2.5 s the Second Awakening (your
+  Path, `Trials.secondAwakening`: the Paths that answered how you've lived) for each member who isn't practising, the hall
+  rings at 4.5 s, and at 15 s home with rank C. The hall is put back after (the band, 8 rows a tick).
+- **No new Tasks step** (the `progression:reassessment` step covers it, as for the Ringer).
+- **The box stays** as practice: `/awaken admin trial cbox` (waves, then the Second Awakening). `/awaken admin trial half`
+  and `third` bring your Proving's Warden to 45% and 30% (tours: the mirrors and the ring on cue). Tour:
+  `tools/autopilot/fights-reflections.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_examiner`, 200 seeds, `PROVING_RANKS` fights it at D and level 25
+  with the D-rank forged blade; the sim counts guards and blows got out of and reads the habit as the game does, but has
+  no positions over time or powers, so it never reads distance or powers): dodger 60% in 146 s (read as dodging every
+  time), parrier 96% in 99 s (read as guarding three fights in four), expert 100% in 85 s (98% health left), tank 0% (dies
+  at 44 s). Targets 60 / 65 / 97 / at most 5: met. Harder than the Ringer (78 / 96) and every C Lord for the dodger (80-96)
+  and the tank; the parrier wins it about as often as the Ringer and the Sleeper (94-96). In the sim the parrier beats every
+  duel far more often than the dodger, and a fight that stops it costs the dodger more: past damage 1.8 the dodger falls
+  under 60 while the parrier stays over 90 (at 2.2: 36 and 82). The answer weight barely moves it (×1 98%, ×5 96%, ×20
+  88%). The plan's 5-6 minutes isn't met for the same reason as the Ringer's.
+- **Not here:** the Great Bell Second (the bells plan places the gate and Warden bells); the Examiner's trophy is the
+  Provings' usual one (a Lord's trophy, `Trophies`), not a mirror.
+- Tests: `proving_examiner` (the layout's rules, what of a room is copied, then the whole flow over the GameTest
+  superflat: you wake where you stood in your room, the glass, it steps out in front of you and the room breaks, the
+  mirrors wake and it says what it read, the ring rises, a fall puts the mirrors and the ring back, it comes out of the
+  north mirror, the win is rank C, the hall is put back), `fights_habit_read` (guards counted through its first phase are
+  read at its second; the Gearwright reads nothing).
+
+**47.7 The Provings: the Unmade (stage 5).** The B Reassessment becomes the third Proving (PLAN §4.7, GOALS part 2: the
+Unmade on the Broken Span over the void). `Trials.Kind.forTarget(B)` is `PROVING`, run by `UnmadeWarden` in the Span
+(`hearth.trial.Span`).
+- **The Unmade** (`awaken:proving_unmade`, kit `proving_unmade`): the Span's north arm, stood up and walking. A masonry
+  colossus 6.8 blocks tall in coursed grey stone: pier legs on wide stone feet, a narrow waist, a chest of courses
+  widening to the shoulders with an arched niche in it and a warm lamp burning inside (its heart), a keystone for a head
+  with a lit slit, long drum arms hanging splayed to keystone fists bound in iron, chains swinging from the forearms, a
+  lantern hung off a post on its left shoulder, an arch and coping on its back, three stones floating over it. Tier
+  `PROVING`, theme Foundry (its amber glow; its Fall and Rubble in plain stone, `BoltKind.PLAIN`, no sparks), a duel with
+  stance 340 (the Ringer 260, the Examiner 300); health 480, damage 2.6, speed 0.25, scale 3.0, fought at level 45. Its
+  intro line: "The bridge is standing up."
+- **Tells.** White-gold blows are told 0.65 s (13 ticks: Swat and Backhand), the ladder's third rung; red stays over
+  0.6 s (the Fall 1.2 s, Unmake and Rubble 0.9 s). Amber: the Keystone 1.1 s (held 0.5 s more one time in three), the
+  Stamp and the Pier Run 0.8 s, the Span Sweep 0.9 s.
+- **Moves.** Phase 1: Swat and Backhand (the long arms swung in at your waist, in twos and threes), the Keystone (both
+  fists overhead and down, a ring of force 5.5 round), the Stamp (a foot, a disc of 3), the Pier Run (HEAVY: it drops onto
+  its fists and comes 7 blocks at you on all fours), the Fall (its signature: it rears back with its right fist high, the
+  lamp flaring, and drives it into the bridge; a line of breaking floor runs at you, `ROOT`: dash through it). Phase 2 at
+  two thirds ("The floor is giving way": both fists hammer the bastion): phrases of three and four, the Span Sweep
+  (HEAVY: one full turn with its arms out low, behind it too), the Fall twice as often. Phase 3 at a third ("The lamps
+  are going out", a roar with its arms open): Unmake (a red grab from 3-10 blocks, its left hand reaching down to you),
+  Rubble (red: four circles of falling stone round you, `RAIN`), phrases ending on the Sweep or Unmake. Below 12% it
+  speeds up a fifth. It comes out of a kneel (its intro: it pushes itself up off a fist, opens its arms, the lamp flares).
+- **The Broken Span** (`hearth.trial.Span`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every hall cell,
+  centred 256 east and 424 south of the cell's corner (clear of the Belfry and the Hall of Reflections), z -66 to 64, x
+  -18 to 18, dy -40 to 13. An old stone bridge over nothing, under the trials' night sky, broken off at both ends. Its
+  middle is a round bastion (radius 17.5) on a great round pier that goes down 32-38 into the dark (banded every seven
+  courses, slits round it, corbels stepping in under the floor). The bastion's floor: a carved stone in the middle, a
+  ring of road at 6 with eight roads out to a tuff seam at 12, past it older, more broken stone to a smooth tuff rim; a
+  parapet round it with eight lamp posts (one each eighth) and openings for the arms. The north arm runs 49 blocks to a
+  ragged end on two piers (7 square, capped in tuff, banded, their feet broken off in the dark) with round arches between
+  (rings of tuff); the south arm runs over a pier to the gatehouse (z 50-57): two crenellated towers with windows and
+  lanterns either side of a round arch 9 wide and 6 high, a lantern hung under its crown (the way out), the road broken
+  off past it. The arms are 9-block decks between parapets, a road down the middle, lamp posts every 8. Unseen light: 13
+  over the bastion on a 6-block grid, 11 down the arms every 6. The band a fight changes is dy -12 to 6 (the north arm
+  down to its arches, the ring, the lamps).
+  The trials dimension has a night mist (`visual/fog_start_distance` 28, `fog_end_distance` 100, in
+  `dimension_type/trials.json`): every hall in a cell stands alone (the Belfry is 105 blocks north of the bastion and
+  showed as a dark box in the sky), and the bridge's far ends fade into the dark.
+- **The flow.** The Reading Bell's window says only "The bell has taken you twice now. Go when you're ready." The bell
+  rings and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] NOTHING UNDER YOU", then "The bell stopped.").
+  You wake 16 blocks over the bastion a little south of its middle (a party spread 3 apart), looking north up the
+  bridge, falling slowly (Slow Falling 6 s), a bell resonating. Wind, the north arm creaking and dust falling under it.
+  1.5 s after anyone is on the bastion (or after 30 s) the arm comes apart: two rows a tick from its broken end in, its
+  courses from dy -12 to 4 (the piers' feet stay), one or two of each row's stones lifting as tilted block displays (a
+  block to 1.6, never saved), rising, flying in an arc to a gathering 9 over the bastion's north half and turning there,
+  knocking together; 2.9 s after the last row a roar and they fall in on the north rim, and the Unmade stands there in a
+  burst of broken stone and dust. Its arena is the bastion and the near half of the south arm (home 26); +50% health a
+  member past the first.
+  At two thirds the ring past the tuff seam cracks (its floor all cracked stone), grinds and drops dust for 2 s, then
+  falls an eighth every 4 ticks, north first and round both ways to the south: floor, parapet, lamp posts and the corbels
+  under them drop into the dark, some as falling stones; the road south across it stays, and so does the middle. At a
+  third the Span's lamps go out a post every 4 ticks from the gatehouse in, lanterns smoking; last the bastion's light
+  falls to 7. The gatehouse's lamps and the arch's stay lit (the way out), and the Unmade's lamp and the stars still
+  show. 5 blocks under the deck you've gone over the edge: a fall, never a death; you wake at the south end of the bridge
+  facing the bastion ("You wake at the south end of the bridge. The arch behind you is the way out."); from the third,
+  the Signal says what keeps catching you (§47.4). If it goes over it climbs back onto the bastion. When everyone has
+  fallen it goes, the Span is whole again (the arm, the ring, the lamps) and it gathers again once someone's on the
+  bastion. Out through the arch (past z 58) is the way out, no fail day. Its death: what it left is in the killer's hands
+  at 1.5 s, a chime at 1 s, and from 2 s the Span mends from its north end in (two rows a tick, stones setting); at 15 s
+  home with rank B. The Span is put back after.
+- **What it gives:** rank B (its Great Bell follows the rank, `Bells`), its trophy (a Lord's, `Trophies`), essence
+  shards, cracked stone bricks and a lantern one time in three. No new Tasks step. **Not here:** the Great Bell Third
+  (the bells session places it), the Unmade's heart and its boss weapon (the arms plan's boss weapons, the weapon
+  sessions), climbing it (the colossus probe, §35 item 12, waits on Euan's OK); GOALS' "rises as your first General"
+  went with Generals (§43.4).
+- **The box stays** as practice: `/awaken admin trial bbox` (the duel with a B Gate Lord). `/awaken admin trial half`
+  and `third` bring it to 45% and 30% (tours: the ring and the lamps on cue). Tour: `tools/autopilot/fights-span.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_unmade`, 200 seeds, `PROVING_RANKS` fights it at C and level 45
+  with the C-rank forged blade): dodger 48% in 151 s, parrier 100% in 104 s (61% health left), expert 100% in 81 s
+  (100% left), tank 0% (dies at 41 s). Targets 50 / 55 / 95 / 0: met. Harder than the Examiner (dodger 56% with the
+  forge's damage) and the B Lord (the Sky Leviathan, 78%). Lengthening the white-gold tell from 0.6 s to the plan's
+  0.65 s lifted the dodger from 52% to 56% at damage 2.5, so its damage is 2.6. The plan's 6 minutes isn't met, as for
+  the Ringer and the Examiner.
+- Tests: `proving_unmade` (the layout's rules, then the whole flow over the GameTest superflat: you wake high and falling
+  slowly, on the bastion the north arm lifts into stones and it lands on the north rim out of them, at two thirds the
+  ring falls and the road south and the middle stand, at a third the south arm's lamps go out and the gatehouse's stay
+  and the bastion's light is low, over the edge is a fall and you wake on the south arm with the Span whole again, it
+  gathers again, the win is rank B, the Span is put back).
+
+**47.8 The Provings: the Sky Warden (stage 5).** The A Reassessment becomes the fourth Proving (PLAN §4.7, GOALS part 2:
+the cathedral breaking above the clouds, fought on the wing; the Journey's A entry: "Win: Skyborn"). `Trials.Kind.forTarget(A)`
+is `PROVING`, run by `SkyWarden` in the Cathedral (`hearth.trial.Cathedral`).
+- **The Sky Warden** (`awaken:proving_sky_warden`, kit `proving_sky_warden`): the cathedral's own knight. About 4.8
+  blocks tall in white plate edged with gold, a white tabard with a gold sun on it, a closed great helm with a cross cut
+  in the visor and light in the cross, a ring of gold standing behind its head, and for wings two fans of stained-glass
+  panes (blue, violet, sky and gold in lead, lit from behind) on arms of gold, held half open behind it. A long white
+  spear bound in gold with a leaf of light for a blade. Tier `PROVING`, theme Sky (its Lance and its Glass are
+  `BoltKind.GLASS`), a duel with stance 380 (the Unmade 340); health 520, damage 3.0, speed 0.3, scale 2.4, fought at
+  level 70. Its intro line: "Something is coming down out of the vault."
+- **Tells.** White-gold blows are told 0.6 s (12 ticks: Spear Thrust, Haft Sweep, Rising Cut, the Lance of Light), the
+  ladder's fourth rung; red stays over 0.6 s (the Stoop and Ascension 0.9 s, Shattered Glass 1.0 s). Amber: Descent 1.0 s
+  (held 0.4 s more one time in three), the Wingbeat 0.8 s (and 0.3 held), the Halo Turn 0.8 s.
+- **Moves.** Phase 1: the spear in fours (the Thrust at your chest, the Haft Sweep, the Rising Cut), Descent (the spear
+  overhead in both hands as the wings rise, driven down: a ring of force 5), the Wingbeat (the wings lifted high and
+  brought down in one stroke: a gust that throws you back, `GUST`), the Halo Turn (HEAVY: one full turn, the spear out
+  flat, behind it too), the Lance of Light (from its open left hand, a bolt you can turn aside), the Stoop (its
+  signature: it crouches, the spear drawn back and the wings flared high, and hurls itself 9 blocks at you along the
+  floor, `CHARGE`: dash through it). Phase 2 at two thirds ("The aisles are falling": it drives the spear into the nave):
+  phrases of four and five, the Wingbeat twice as often (with the aisles gone it throws you toward the nave's edges).
+  Phase 3 at a third ("The roof is lifting away": the spear raised to the sky, the wings as wide as they go): phrases of
+  five, Ascension (a red grab from 3-10 blocks, its left hand reaching down for you), Shattered Glass (red: five circles
+  of falling glass round you, `RAIN`), and against a flier (`"when": "air"`) the Lance and the Wingbeat. Below 12% it
+  speeds up a fifth. It comes out of a kneel (its intro: it rises, the wings opening wide and high).
+- **The Cathedral** (`hearth.trial.Cathedral`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every hall
+  cell, its font 420 east and 256 south of the cell's corner (clear of the Belfry, the Hall of Reflections and the Span),
+  x -56 to 56, z -92 to 88, dy -30 to 33. A white cathedral hanging in the night over a sea of cloud (white wool under
+  snow, its gaps and thickness from value noise, thinning toward the edge, thick and whole under the font, its top at dy
+  -27). The nave (floor of calcite and quartz in a checker, rosettes down the middle every bay, a polished deepslate
+  border) runs from the apse's chord (z -42) to the west front (z 36) between arcades of quartz columns two thick every
+  8 blocks (deepslate plinths, chiselled capitals at 9), pointed arches between them (open to 11-12), the clerestory over
+  them with a stained-glass window in each bay, and a pointed vault (its crown at 30, deepslate ribs over the columns)
+  broken open to the stars in places; lanterns hang on chains down the middle. Behind each arcade an aisle (tuff floor)
+  under a deepslate lean-to roof, its outer wall with a lancet in each bay and pinnacles over the columns, flying
+  buttresses over the aisle roofs out to piers (to dy 19). The apse is a half-dome (radius 9.5) ringed with tall lancets;
+  the west front has a door 5 wide and 6 high with a carved arch, a rose window over it (radius 6.5: twelve spokes,
+  rings of coloured glass, a gold heart) and a gable; outside it a short porch with low walls, broken off at its far end
+  (the way out). Under it all the foundation's root hangs into the dark, deepest under the middle (rubble at its foot),
+  and a shaft (radius 3, two unseen lights in it) runs up through it to the font in the crossing (radius 3, a carved
+  middle, a deepslate ring round it). Unseen light 12 down the nave and the apse on a 6-block grid, 11 in the aisles, 13
+  on the porch. The band a fight changes is dy -20 to 33 within 19 of the middle (`Hall.bandWall`, new: a put-back runs
+  the building, not the cloud).
+- **The flow.** The Reading Bell's window says only "The bell has taken you three times now. Go when you're ready." The
+  bell rings and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] YOU ARE ABOVE THE CLOUDS", then "The bell
+  stopped."). You wake on the cloud 26 under the font (a party a little apart round the shaft), looking up at the
+  cathedral overhead, wind and white ash blowing, the stone groaning. After 2.5 s the font opens, light runs down the
+  shaft (beacon sounds, a column of end-rod light) and lifts you (Levitation that rises 0.3 a tick, about 4.5 s up; the
+  light draws anyone drifting off the shaft back under it); each one up is set down beside the font with a ring of
+  amethyst (3 s of Slow Falling, nudged off it), anyone still in the shaft after 11 s is brought up, and 0.75 s after
+  everyone's up the font shuts. 2 s later a column of light comes down out of the vault in the nave's north half (z -14),
+  chiming as it gathers, and after 2 s the Sky Warden is kneeling there in a burst of light and cloud, a wingbeat and a
+  chord. Its arena is the nave, the apse and the porch (home 44); +50% health a member past the first.
+  At two thirds the aisles groan and drop dust from their roofs for 3 s, then break away a row a tick from the apse to
+  the west front (4 s): their floors, roofs, outer walls and lancets, the flying buttresses and their piers and the
+  foundation under them fall into the cloud, a few as falling pieces, glass breaking. The nave, its arcades, the apse
+  and the porch stay. At a third the roof lifts away two rows a tick from the apse's far end to the west front (2.3 s):
+  everything over the arches (dy 14 up within 11 of the middle: the vault, the clerestory and its windows, the hung
+  lanterns, the apse's dome, the west gable and the top of the rose), some of it rising slowly into the dark as pieces;
+  the unseen lights stay, the columns stand open to the stars. And the sky remembers you: on a real run each member is
+  given Skyborn there (`TrialHooks.atEdge(p, TrialHooks.SKY_WARDEN)`, the Ascent's sky edge, with its moment "The sky
+  remembers you. · Open your wings, then jump again: fly."), so its last third is fought on the wing; it stays in the
+  nave, so a player without flight (the Ascent off) still wins on foot. 18 under the floor you've gone over the edge
+  (lower than anywhere you can stand but the cloud, so a flier has room under it): a fall, never a death; you wake inside
+  the west door facing the altar ("You wake inside the west door. The porch outside it is the way out."); from the third,
+  the Signal says what keeps catching you (§47.4). If it goes over it comes back up into the nave. When everyone has
+  fallen it goes, the cathedral is put back whole (16 rows a tick, under a second; the font shut), and its light comes
+  down again once someone walks up the nave (5 in from the door) or after 30 s. Out along the porch (past z 41) is the
+  way out, no fail day. Its death: what it left is in the killer's hands at 1.5 s, a chime at 1 s, the sky's gift at 2.5
+  s on a real run (`TrialHooks.done`: Skyborn held, its scene "The sky is yours.", 10 Skyborn mastery, a fifth of a
+  level, `awaken:ascent_skyborn_trial`, once), and from 3.5 s the cathedral mends from the apse to the door (three rows a
+  tick, chiming); at 15 s home with rank A. The cathedral is put back after.
+- **What it gives:** rank A (its Great Bell, the Fourth, follows the rank, `Bells`), Skyborn (§17.18's tier; the Sky
+  Leviathan's trial stays for anyone at A holding Wings and not Skyborn), its trophy (a Lord's, `Trophies`), essence
+  shards, feathers and light blue stained glass one time in three. No new Tasks step. **Not here:** the Sky Warden's
+  boss weapon (the weapon sessions).
+- **The box stays** as practice: `/awaken admin trial abox` (the Descent). `/awaken admin trial half` and `third` bring
+  it to 45% and 30% (tours: the aisles and the roof on cue). A practice run gives no sky. Tour:
+  `tools/autopilot/fights-cathedral.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_sky_warden`, 300 seeds, `PROVING_RANKS` fights it at B and level
+  70 with the B-rank forged blade): dodger 39% in 164 s, parrier 97% in 114 s (43% health left), expert 100% in 89 s (95%
+  left), tank 0% (dies at 39 s). Targets 40 / 45 / 92 / 0: met. Harder than the Unmade (dodger 49%) and the A Lord (the
+  Hollow Herald, 68%). Damage 2.8 gave the dodger 46%, 3.1 gave 29%. The plan's 6-7 minutes isn't met, as for the
+  Provings before it. The sim fights on foot; the last third on the wing isn't simmed.
+- Tests: `proving_sky_warden` (the layout's rules, then the whole flow over the GameTest superflat: you wake on the
+  cloud, the font opens and the light lifts you, it shuts with you on it, it comes down in the nave, at two thirds the
+  aisles fall and the nave and arcades stand, at a third the roof lifts, the columns and lights stay and the sky is
+  given, over the edge is a fall and you wake inside the door with the cathedral whole again, it comes again, the win
+  is rank A and the sky's gift, the cathedral is put back).
+
+**47.9 The Provings: the Keeper's Shadow (stage 5).** The S Reassessment becomes the fifth Proving (PLAN §4.7, GOALS part 2:
+the door to the Court, kept by the last of those who went down to hold it; the Journey's S entry: "Win: the Court's
+doors"). `Trials.Kind.forTarget(S)` is `PROVING`, run by `KeeperWarden` at the Court's threshold (`hearth.trial.Threshold`).
+- **The Keeper's Shadow** (`awaken:proving_keepers_shadow`, kit `proving_keepers_shadow`): the last of the Keepers who went
+  down to hold the Seed, the one left at the Court's door, still testing whoever comes. About 5.6 blocks to the top of its
+  crown, tall and gaunt in a deep black hood and a robe that bells out to the floor in long strips, a mantle and a cape;
+  in the hood no face, only the dark and two small gold eyes; on the hood a crown of eight gold points, one for each
+  Sovereign, and eight small gold keys at its belt, one for each door. It fights with a great key as long as a spear: a
+  gold bow, a black shaft banded in gold, a bit whose teeth glow violet. Tier `PROVING`, theme Court (its bolts
+  `BoltKind.VOID`), a duel with stance 420 (the Sky Warden 380); health 570, damage 2.85, speed 0.3, scale 2.7, fought at
+  level 100. Its intro line: "Your shadow is spreading across the floor."
+- **Tells.** White-gold blows are told 0.55 s (11 ticks: Turn the Key, Bar the Door, Unlock; Keyhole 0.6 s), the ladder's
+  fifth rung; red stays over 0.6 s (Kept and the Eight Doors 0.9 s, the Dark Rises 1.0 s, Shut the Door 1.1 s). Amber:
+  the Lock 1.0 s (held 0.4 s more one time in three), the Turnabout 0.75 s.
+- **Moves.** Phase 1: the key in fours (Turn the Key, the bit driven at your chest and turned as in a lock; Bar the Door,
+  a sweep; Unlock, a rising backhand), the Lock (the key lifted in both hands and driven down: a ring of force 5),
+  Keyhole (three dark bolts from its open left hand, from range), the Turnabout (HEAVY: one full turn, the key out flat,
+  for whoever is behind it) and Shut the Door (its signature, red: it lifts the key point down in both hands, drives it
+  into the floor and turns it with its whole body, and the line to you breaks open, `BEAM`: dash aside). Phase 2 at three
+  quarters ("The doors are opening": it lifts the key high and turns it in the air): phrases of four and five, Through
+  the Door (it sinks into its own shadow and comes up behind you, `BLINK`). Phase 3 at half ("The dark is coming in": it
+  drives the key into the floor): the Dark Rises (red: the key raised to the dome, four circles of dark under you, `RAIN`)
+  and Kept (red: a grab, its left hand reaching to keep you). Phase 4 at a quarter ("The Court's door is opening": it
+  staggers to one knee and rises): phrases of five, Keyhole in fives, five circles, the Lock's ring 6, Echoes of the
+  Court (it bows, then flings its arms wide and two echoes step out of it, `DECOY`) and the Eight Doors (red: the key over
+  its head, one full turn, a dark bolt toward each of the eight doors, `NOVA`: dash through the gap); against a flier
+  (`"when": "air"`) Keyhole and the Dark Rises. Below 10% it speeds up a fifth. It dies on its knees, the key laid down
+  before it, and sinks back into the floor.
+- **The Threshold** (`hearth.trial.Threshold`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every hall cell,
+  its middle 110 east and 256 south of the cell's corner (west of the Belfry, clear of every other hall), x -35 to 35, z
+  -59 to 49, dy -27 to 37. A round court (radius 24) of black stone under a dark dome. Its floor is white marble inlaid
+  with a black eight-pointed star whose rays point between the doors, a gold boss in the middle, a ring of gold at 10 (the
+  dark's edge), a black band at 17, a chequered ring and a black margin. Round it a wall of blackstone bricks 20 high with
+  white quartz pilasters between the doors running on up the dome's ribs to a ring of gold round a glass eye. In the wall
+  eight shut doors (at 22.5 + 45k degrees), one for each Sovereign in the Court's order (Hunger red, Silence white, Sleep
+  purple, Machines orange, Mirrors light blue, Storms yellow, Roots green, Ash brown): a pointed opening with a gold
+  keystone, its leaf polished deepslate with a keyhole of that Sovereign's stained glass, and behind it a passage six deep
+  ending in more of its glass with its light behind. Six braziers (chiselled and gilded blackstone, soul fire on top)
+  stand round the floor. North stands the Court's own door, 9 wide and 15 high, banded in gold with a gold star on it and
+  a bar of gold down its middle; past it a vestibule lit warm with a gilded runner, then 24 steps going down north into
+  the dark with a lamp on a post every sixth. South a stair comes down from a landing 12 up (soul lanterns along it) through
+  a tall arch (18 high, so from the landing you look straight across into the court); an arch in the landing's back
+  wall leads out into the dark (the way out). Unseen light 13 on a 6-block grid over the court, 15 in the vestibule. The band a fight changes is dy 0 to 15 (the floor, the braziers, the doors).
+- **The flow.** The Reading Bell's window says only "The bell has taken you four times now. It rings lower for this one.
+  Go when you're ready." The bell rings low and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] THE FLOOR
+  REMEMBERS YOU", then "The bell stopped."). You wake on the landing at the top of the stair (a party side by side across
+  it), looking down into the court; the braziers are out. From 1.5 s they light themselves one by one, 0.4 s apart, from
+  the Court's door round to the stair, each with a breath of soul fire. Once someone walks into the court (within 15 of
+  its middle) or after 30 s, their shadow spreads into a pool 4.5 in front of them (a heartbeat, ink and souls rising off
+  it, the braziers flaring), and 2 s later the Keeper's Shadow stands up out of it (ink and smoke bursting off it, a bell
+  and a shriek). Its arena is the court, the doors and the foot of the stair (home 30); +50% health a member past the
+  first.
+  At three quarters the eight doors grind (dust sifting from their heads) for 1.5 s, then sink into the floor a row
+  every 0.2 s; as each comes down its Sovereign's note rings, from low to high round the court, and the eight coloured
+  lights stand open in the wall. At half (once the doors are down) the dark comes in through them: sculk spreads a band
+  every 0.15 s, out of the doors' passages and thresholds and across the marble as far as the inner ring of gold, and
+  holds the feet of whoever stands on it (Slowness I while you're on it). From a quarter the Court's door slides open a
+  step at a time as its health falls (three steps by the end), its leaves sliding into the wall, the gold bar first; its
+  light comes through and burns the dark back off a lane to the inner ring. 10 under the floor (over the stair's wall
+  into the dark) is a fall, never a death (not down the Court's steps behind its door); you wake at the top of the stair
+  ("You wake at the top of the stair. The arch behind you is the way out."). When everyone has fallen it goes, the court
+  is put back (the doors up, the dark gone, the Court's door shut, 16 rows a tick), and it comes again out of the next
+  shadow. Up the stair and through the arch is the way out, no fail day. Its death: the Court's door opens the rest of
+  the way at 0.5 s (a bell, a beacon), its light pouring in; at 2 s on a real run the Court is set before you
+  (`Promises.seen(p, "stratum:9", null, rank S, "The Hollow Court, in the Descent")`: the same lock the Descent's sealed
+  way down makes, so the rank given at the end answers it and the Signal says "The Hollow Court, in the Descent is open to
+  you now"); from 2.5 s the dark drains away, the last band first, chiming. Down the open door's steps is a way out too.
+  At 15 s home with rank S. The court is put back after. Taking any Proving's way out once it's won takes the win home
+  (`Provings`: it counted as leaving before, so walking out during the outro lost the rank).
+- **What it gives:** rank S (its Great Bell follows the rank, `Bells`), the Hollow Court opened to you (stratum 9, by
+  rank, as before), its trophy (a Lord's, `Trophies`), essence shards, gold nuggets and a block of sculk one time in three.
+  No new Tasks step. **Not here:** the Keeper's boss weapon (the weapon sessions).
+- **The box stays** as practice: `/awaken admin trial sbox` (a Sovereign's echo). `/awaken admin trial <percent>` (1-99,
+  new) brings your Proving's Warden to that share of its health (tours: the doors at 70, the dark at 45, the Court's door
+  at 20 and 5). A practice run sets no lock. Tour: `tools/autopilot/fights-threshold.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_keepers_shadow`, 300 seeds, `PROVING_RANKS` fights it at A and
+  level 100 with the A-rank forged blade): dodger 31% in 190 s (17% health left), parrier 99% in 124 s (45% left), expert
+  100% in 100 s (93% left), tank 0% (dies at 42 s). Targets 30 / 35 / 88 / 0: met. Harder than the Sky Warden (dodger
+  42%) and the A Lord (the Hollow Herald, 71%). Damage 2.8 gave the dodger 36%, 2.95 gave 25%, 3.1 gave 18%. The sim
+  doesn't fight on the dark (the Slowness) or the Eight Doors' ring; the plan's 7 minutes isn't met, as for the Provings
+  before it.
+- Tests: `proving_keepers_shadow` (the layout's rules, then the whole flow over the GameTest superflat: you wake on the
+  landing with the braziers out, they light themselves, your shadow pools in front of you and it stands up out of it, at
+  three quarters the doors sink, at half the dark comes in as far as the ring and holds you, from a quarter the Court's
+  door opens and its light burns the dark back, over the edge is a fall and you wake on the landing with the court whole
+  again, it comes again, the win opens the Court's door and is rank S, the court is put back).
+
+**47.10 The Provings: the Last Loop (stage 5).** The Sovereign Reassessment becomes the sixth and last Proving (PLAN
+§4.7, GOALS part 2: "the Sovereign Proving becomes the way into the Seed instead of coming after it"). `Trials.Kind.forTarget(SOVEREIGN)`
+is `PROVING`, run by `LoopWarden` in the Cradle's antechamber (`hearth.trial.Antechamber`). The Monolith now rings for it
+(it used to say "Your last Reassessment waits at the Seed"), and `/awaken admin trial SOVEREIGN` starts it.
+- **The Seed opens at Sovereign** (`Strata` def 10 `opensAt` is `SOVEREIGN`, was S at level 135): the Proving is the way
+  in. Below Sovereign the Seed's pit is sealed by rank like every other stratum ("It opens at Sovereign-rank"), and the
+  same lock is set as for any sealed way down, so passing answers it. The Court's own seal (`StoryHooks.seedSealed`: all
+  eight Sovereigns) still holds after that. `Court.finishStory`'s pass to Sovereign stays, for a save that was S at the
+  Seed before this. The level road's Seed entry now says so; its B, A and S trial entries no longer describe the old
+  boxes ("Your A-rank Reassessment: ring the Monolith or the Spire.").
+- **The Last Loop** (`awaken:proving_last_loop`, kit `proving_last_loop`): you, as the Signal was. A player's build twice
+  your height (about 4 blocks), all white with a cold blue in its shade, gold seams running down it like the lines of
+  the Signal, a gold belt and bands; no face, only a soft light where a face would be. A thin gold halo turns over its
+  head and a great ring, the Loop, stands behind its back. It fights with a blade of light, a player's sword made of the
+  Signal: a white-gold edge as long as its leg, a gold guard and pommel. Bold and simple (no sculpted face). Tier
+  `PROVING`, theme Seed (its bolts `BoltKind.SIGNAL`), a duel with stance 470 (the Keeper 420); health 620, damage 3.3,
+  speed 0.32, scale 2.5, fought at level 135, hitbox 1.5 by 4.25. Its intro line: "You can see where you were standing a
+  moment ago."
+- **Tells.** White-gold blows are told 0.5 s (10 ticks: the Cut, the Recut, the Thrust; Signal 0.6 s), the ladder's last
+  rung; red stays at 0.9 s or more (the Rush, the Ring and Taken 0.9 s, the Line and Every Power You've Had 1.0 s). Amber:
+  the Fall 0.9 s (held 0.4 s more one time in three), Push 0.8 s (held 0.3 s), Full Circle 0.7 s.
+- **Moves.** Phase 1: the blade in fours (the Cut, a sweep; the Recut, a low backhand; the Thrust, the point at your
+  chest), the Fall (the blade overhead in both hands, driven down: a ring of force 5), Signal (three bolts of light from
+  its open hand), Full Circle (HEAVY, for whoever is behind it), the Rush (red: it crouches with the blade drawn back and
+  hurls itself at you, `CHARGE`: dash through it) and the Line (its signature, red: the blade drawn back low in both hands
+  and cut up through, a line of light along the floor to you, `BEAM`: dash aside). Phase 2 at three quarters ("Night
+  falls in the antechamber": it lifts the blade to the dark): phrases of four and five, Loop (it turns away into its own
+  light and comes up behind you, `BLINK`) and Push (HEAVY: both palms out, a wave that throws you back, `GUST`). Phase 3
+  at half ("The loop is closing": it drives the blade into the floor and turns on it): phrases of five, Every Power
+  You've Had (red: the blade raised, six circles of light under you, `RAIN`) and Taken (red: a grab). Phase 4 at a quarter
+  ("The Seed's door is turning": it looks back at the door): phrases of five and six, Signal in fives, eight circles,
+  the Fall's ring 6, Echoes of You (it bows, flings its arms wide and two echoes step out of it, `DECOY`) and the Ring
+  (red: the blade over its head, one full turn, ten bolts of light outward, `NOVA`: dash through the gap); against a
+  flier (`"when": "air"`) Signal. Below 10% it speeds up a fifth. It dies on its knees, the way you woke, the blade laid
+  down before it.
+- **The antechamber** (`hearth.trial.Antechamber`, pure `block(x, dy, z)`): built by `TrialChunkGenerator` in every hall
+  cell, its middle 110 east and 420 south of the cell's corner (south of the Threshold, clear of every other hall), x -26
+  to 26, z -35 to 33, dy -9 to 18. A round white hall (radius 22) whose floor is a clock face: a gold boss with a light in
+  it, the Loop (a ring of gold at 8), a dial of quartz and calcite in twelve sectors out to a seam of quartz bricks at 16
+  (where the outer ring breaks), and twelve gold marks out to the rim, those at 12, 3, 6 and 9 twice as wide. Its wall
+  (to 25, 16 high) has a quartz pilaster at each mark, gold bands at 1 and 12, and between the marks tall windows of white
+  glass with light behind them (none at the door or the arch). A black ceiling at 18 with frog-light stars and two gold
+  rings. North in the wall, through a round opening with a chiselled rim, the Seed's door: a round door 16 across, its
+  sea-lantern core and three rings of gold and quartz segments in a chiselled frame; behind it a round tunnel of white
+  glass and quartz pillars, 11 deep, lit, ending in a wall of light. South an arch through the wall onto a short corridor
+  out into the dark (the way out). Unseen light 13 on a 6-block grid at 4 over the floor (4 at night). The band a fight
+  changes is dy -1 to 16 (the floor and its plate, the lights, the door). The outer ring (16 to 22) falls; the causeway
+  across it from the arch to the middle (3 either side) never does: you wake on it.
+- **The flow.** The Reading Bell's window says only "The bell has taken you five times now. This is the last time it
+  will. Go when you're ready." The bell rings and a Fault plays ("MEASURING · MEASURING · MEASURING", "[ERROR] YOU ARE
+  WHERE IT STARTED", then "The bell stopped."). You wake on the causeway by the arch (a party side by side across it),
+  looking north across the clock to the Seed's door, the bell resonating and a beacon's hum. Everyone's path is kept, a
+  sample every 2 ticks, the last 4 s. Once someone walks into the Loop (within 8.5 of the middle) or after 30 s, the path
+  they walked in the last 3 s lights up from its far end toward them over 2 s, a light gathering at its start with rising
+  chimes; then the Last Loop is there, down on one knee where they stood 3 s before, facing them (if they had hardly moved,
+  6 ahead of them instead), and stands up. Its arena is the floor, the door and the foot of the arch (home 30); +50% health
+  a member past the first.
+  At three quarters night falls: a hand of light sweeps round the clock from 12, an hour every 0.3 s with a bell's tick
+  falling in pitch, and each hour it passes goes black (the seam dark brick, the gold and the boss stay) and its light
+  goes down to 4. From 5 s after, every 15 s it replays the path each of you walked in the last 4 s: your trail glows for
+  1.2 s (a chime), then a run of light goes along it in 1 s from its far end to where you were when it set off, and
+  whoever it passes within 1.4 takes 0.8 of its blow (magic: no parry; step off your own trail). At half the loop closes:
+  the seam cracks and dusts for 1.5 s, then the outer ring falls into the dark a mark at a time from 12, every 0.25 s
+  (a few stones falling as it goes, calcite and glass breaking). From a quarter the Seed's door turns (its rings an eighth
+  every 0.25 s, the middle ring the other way) and opens a part at a time as its health falls (the core, then each ring:
+  three by the end), the light behind coming through. 10 under the floor is a fall, never a death; you wake on the
+  causeway ("You wake by the arch you came in through. The way out is behind you."); if it goes over, it comes back up
+  inside the seam. From the third fall the hint says what keeps catching you; a fall within 2 s of a replay reaching you
+  is put down to your own path ("step off that line", `Warden.caught`, new: a Warden can name what of its hall caught
+  you). When everyone has fallen it goes, the hall is put back (the day, the ring, the door shut, 16 rows a
+  tick), and it comes again out of the next path. Out through the arch is the way out, no fail day. Its death: the Seed's
+  door opens the rest of the way at 0.5 s (a bell, the end portal's sound), a path of light is laid down the middle of the
+  floor to it, its light pours through; from 1 s the day comes back round the clock the same way night came; at 2 s on a
+  real run the Seed is set before you (`Promises.seen(p, "stratum:10", null, rank Sovereign, "The Seed, in the
+  Descent")`, only while the Court no longer holds it: with Sovereigns still standing, their seal says so instead). Through
+  the open door to the end of the tunnel is a way out too. At 15 s home with rank Sovereign (its Great Bell, the bourdon,
+  follows the rank, `Bells`). The hall is put back after.
+- **What it gives:** rank Sovereign, the Seed opened to you by rank, its trophy (a Lord's, `Trophies`), essence shards,
+  quartz and amethyst shards two times in five. No new Tasks step. **Not here:** its boss weapon (the weapon sessions).
+- **No box.** The Sovereign trial had no practice box of its own (`sbox` is the S echo). `/awaken admin trial
+  <percent>` brings it to that share of its health (tours: night at 70, the ring at 45, the door at 20 and 5). A practice
+  run sets no lock. Tour: `tools/autopilot/fights-antechamber.txt` (CI).
+- **Tuned with the sim** (`combat_sim.py --lord proving_last_loop`, 300 seeds, `PROVING_RANKS` fights it at S and level
+  135 with the S-rank forged blade): dodger 23% in 195 s (12% health left), parrier 94% in 134 s (34% left), expert 100%
+  in 110 s (88% left), tank 0% (dies at 39 s). Targets 20 / 25 / 85 / 0: met. Harder than the Keeper's Shadow (dodger
+  31%). Damage 3.1 gave the dodger 36%, 3.25 gave 27%, 3.35 gave 20%, 3.4 gave 18%. The sim doesn't fight the replays or
+  the fallen ring; the plan's 8 minutes isn't met, as for the Provings before it.
+- Tests: `proving_last_loop` (the layout's rules, then the whole flow over the GameTest superflat: you wake by the arch
+  with the day in and the door shut, walking into the Loop lights your path and it stands where you were, at three
+  quarters night sweeps round, standing on your own trail its replay reaches you, at half the outer ring falls and the
+  causeway stays, from a quarter the Seed's door turns and opens, over the edge is a fall and you wake by the arch with
+  the hall whole again, it comes again, the win opens the door with a path of light and is rank Sovereign, the hall is
+  put back). `descent_rules` (the Seed waits for Sovereign), `hearth_pure_rules` (every rank's trial is a Proving).

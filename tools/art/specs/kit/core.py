@@ -25,6 +25,9 @@ TICK = 1.0 / 20.0
 MIN_WINDUP = {"LIGHT": 8, "HEAVY": 12, "GRAB": 12, "PERILOUS": 14, "NONE": 1}
 MAX_HOLD = 12
 FACE_BUDGET = 1200
+# a blow's hits come down at least this low (blocks): a standing player is 1.8 high, so it takes their shoulders, not
+# their hair (a blow over a man's head can't land; one whose ability does the hurting is free of it)
+LOW_REACH = 1.4
 OPTIONAL = {"jaw"}  # library poses may move these; a body without them just leaves them out
 
 
@@ -656,6 +659,71 @@ def ground_feet(rig, pose, sides=("l", "r")):
     return plant(rig, pose, sink, at=at, turn=turn)
 
 
+LOCK_DRIFT = 3.0  # pixels a standing foot may wander in a keyed clip and still be a stand the lock holds
+
+
+def lock_feet(rig, clip, sides=("l", "r"), hold=3, drift=LOCK_DRIFT):
+    """Every foot that stands on the floor for hold ticks or more stays exactly where it set down, flat and pointing the
+    way it set down (FA's foot lock, SPEC §47.3, for two legs; the Bell's own four use their own): between key poses the
+    legs' turns blend and a standing foot drifts a pixel or two a tick. A stand that runs to the clip's start or end
+    keeps the foot where the clip hands it over, so the seams don't move it. A foot dragged on purpose (a skid, a pivot
+    on the spot) wanders more than drift and goes on as keyed. Its first and last ticks go halfway."""
+    c = rig.clips[clip]
+    n = int(round(c.length / TICK))
+    sides = [sd for sd in sides if ("foot_" + sd) in rig.by_name]
+    if not sides or n < hold:
+        return
+    rest_fr = frames(rig, {})
+    samples = [sample(rig, clip, min(c.length, i * TICK)) for i in range(n + 1)]
+    frs = [frames(rig, sp) for sp in samples]
+    spans = {}
+    for sd in sides:
+        f = "foot_" + sd
+        down = [lowest(rig, fr, [f]) >= GROUND - 1.0 for fr in frs]
+        out, i = [], 0
+        while i <= n:
+            if not down[i]:
+                i += 1
+                continue
+            j = i
+            while j <= n and down[j]:
+                j += 1
+            if j - i >= hold:
+                k = 0 if i == 0 else n if j - 1 == n else (i + j - 1) // 2
+                M, T = frs[k][f]
+                if max(math.hypot(fr[f][1][0] - T[0], fr[f][1][2] - T[2]) for fr in frs[i:j]) <= drift:
+                    Mw, was = rest_fr[f]
+                    turn = math.atan2(-M[0][2], -M[2][2]) - math.atan2(-Mw[0][2], -Mw[2][2])
+                    out.append((i, j - 1, (T[0] - was[0], 0.0, T[2] - was[2]), turn))
+            i = j
+        spans[sd] = out
+    if not any(spans.values()):
+        return
+    legs = {sd: ("thigh_" + sd, "shin_" + sd, "foot_" + sd) for sd in sides}
+
+    def key_pose(sp):  # a sampled pose back as a key pose (degrees, pos +y up)
+        return {b: {"rot": tuple(v / DEG for v in q.get("rot", (0, 0, 0))), "pos": (q.get("pos", (0, 0, 0))[0], -q.get("pos", (0, 0, 0))[1],
+                                                                                    q.get("pos", (0, 0, 0))[2])} for b, q in sp.items()}
+
+    out = {}
+    for i, sp in enumerate(samples):
+        t = min(c.length, i * TICK)
+        pose = None
+        for sd in sides:
+            was = {b: tuple(v / DEG for v in sp.get(b, {}).get("rot", (0, 0, 0))) for b in legs[sd]}
+            got = was
+            lock = next((x for x in spans[sd] if x[0] <= i <= x[1]), None)
+            if lock is not None:
+                pose = pose or key_pose(sp)
+                solved = plant(rig, pose, (sd,), at={sd: lock[2]}, turn={sd: lock[3]})
+                edge = 0.5 if (i == lock[0] and i > 0) or (i == lock[1] and i < n) else 1.0
+                got = {b: tuple(w + ((u - w + 180) % 360 - 180) * edge for u, w in zip(solved[b], was[b])) for b in legs[sd]}
+            for b in legs[sd]:
+                out.setdefault((b, "rot"), []).append((t, tuple(got[b]), "cat"))
+    for key, keys in out.items():
+        c.tracks[key] = keys
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Forward kinematics (ModelPart.translateAndRotate: translate(pivot), rotate Z·Y·X, scale)
 
@@ -869,6 +937,10 @@ def check(rig, moves):
         p = f"{rig.id}/{mv.id}"
         if mv.cls != "NONE" and mv.windup < MIN_WINDUP[mv.cls]:
             problems.append(f"{p}: a {mv.cls} wind-up of {mv.windup} ticks (at least {MIN_WINDUP[mv.cls]})")
+        if mv.hit and mv.damage > 0 and mv.capsules and not mv.ability:
+            low = min(min(c[1], c[4]) - c[6] for caps in mv.capsules for c in caps)
+            if low > LOW_REACH:
+                problems.append(f"{p}: its hits come no lower than {low:.2f} blocks, over a standing player's shoulders (at most {LOW_REACH})")
         if mv.hold and (mv.cls != "HEAVY" or mv.hold > MAX_HOLD):
             problems.append(f"{p}: a hold only on HEAVY moves, at most {MAX_HOLD} ticks")
         if mv.cls not in ("NONE",) and mv.hit:

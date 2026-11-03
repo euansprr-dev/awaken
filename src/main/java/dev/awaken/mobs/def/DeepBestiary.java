@@ -118,7 +118,7 @@ final class DeepBestiary {
         out.add(m("guardian_rim", "The Rootmother", Theme.RIM, Tier.GUARDIAN, Model.SPIDER, "Moss webs and root lances; the Rim wakes with her").hp(30).dmg(4.5).spd(0.3).scale(2.4F).size(0.85F, 1.45F).tint(0x98C878).bar(BossBarColor.GREEN).arena(22)
                 .intro("The roots under the Rim are hers.")
                 .phase(1.0F, "The Rootmother descends.", a(ROOT, "Moss Web").radius(3), a(LEAP, "Rootfall").radius(3.5F).heavy())
-                .phase(0.5F, "The Rim wakes.", a(SUMMON, "Brood").summon("rim_crawler").n(3), a(FANGS, "Root Lances").n(14), a(LEAP, "Rootfall").radius(3.5F))
+                .phase(0.5F, "The Rim wakes.", a(SUMMON, "Brood").summon("rim_crawler").n(2), a(FANGS, "Root Lances").n(14), a(LEAP, "Rootfall").radius(3.5F))
                 .parts(P("rootmother_silk", "Rootmother Silk", "moss")).build());
         out.add(m("guardian_gardens", "The Thornback", Theme.GARDENS, Tier.GUARDIAN, Model.RAVAGER, "Charges along the ledges and blows petals hard enough to knock you off").hp(32).dmg(5).spd(0.3).size(2.2F, 2.3F).tint(0xA0D090).bar(BossBarColor.GREEN).arena(24)
                 .intro("Something heavy moves in the hanging gardens.")
@@ -133,7 +133,7 @@ final class DeepBestiary {
         out.add(m("guardian_orchard", "The Ossuary King", Theme.ORCHARD, Tier.GUARDIAN, Model.WITHER_SKELETON, "Rib Spikes and a court of the dead; he gets up once").hp(28).dmg(5).spd(0.26).scale(2.0F).size(0.8F, 2.3F).tint(0xF0E8D8).hold(Items.STONE_SWORD).traits(RISES).bar(BossBarColor.WHITE).arena(22)
                 .intro("The orchard grew from his ribs.")
                 .phase(1.0F, "The Ossuary King stands.", a(SLAM, "Bone Crush").radius(4).heavy(), a(NOVA, "Rib Spikes").n(12).bolt(BoltKind.SPIRIT))
-                .phase(0.5F, "The dead get up.", a(SUMMON, "Rise").summon("orchard_dead").n(3), a(CHARGE, "Royal March"), a(SLAM, "Bone Crush").radius(4))
+                .phase(0.5F, "The dead get up.", a(SUMMON, "Rise").summon("orchard_dead").n(2), a(CHARGE, "Royal March"), a(SLAM, "Bone Crush").radius(4))
                 .parts(P("ossuary_crown", "Ossuary Crown", "bone")).build());
         out.add(m("guardian_silent", "The Great Listener", Theme.SILENT, Tier.GUARDIAN, Model.LISTENER, "It hears your heartbeat; scream, and it screams back").hp(30).dmg(5.5).spd(0.3).scale(1.8F).size(1.6F, 2.2F).traits(LISTENER).bar(BossBarColor.WHITE).arena(24)
                 .intro("Every Listener in the halls is one of its ears.")
@@ -143,7 +143,7 @@ final class DeepBestiary {
         out.add(m("guardian_foundry", "The Furnace Engine", Theme.FOUNDRY, Tier.GUARDIAN, Model.IRON_GOLEM, "Arc welds and rivet rain; the machines wake around it").hp(32).dmg(5).spd(0.24).scale(1.8F).size(1.6F, 2.3F).tint(0x98B0D0).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry's heart is still warm.")
                 .phase(1.0F, "The Furnace Engine powers up.", a(SLAM, "Engine Slam").radius(4.5F).heavy(), a(BEAM, "Arc Weld").bolt(BoltKind.CHARGE))
-                .phase(0.5F, "Machines wake.", a(SUMMON, "Wake the Drones").summon("arc_drone").n(3), a(RAIN, "Rivet Rain").n(5).bolt(BoltKind.CHARGE), a(SLAM, "Engine Slam").radius(4.5F))
+                .phase(0.5F, "Machines wake.", a(SUMMON, "Wake the Drones").summon("arc_drone").n(2), a(RAIN, "Rivet Rain").n(5).bolt(BoltKind.CHARGE), a(SLAM, "Engine Slam").radius(4.5F))
                 .parts(P("furnace_engine_core", "Furnace Engine Core", "precursor")).build());
         out.add(m("guardian_inverted", "The Drowned Moon", Theme.INVERTED, Tier.GUARDIAN, Model.ELDER_GUARDIAN, "Moonbeams and the tide-turn that lifts you off the floor").hp(30).dmg(5).spd(0.22).scale(1.6F).size(2.0F, 2.8F).tint(0x9CB8F0).bar(BossBarColor.BLUE).arena(26)
                 .intro("The sea above you has a moon in it.")
@@ -163,7 +163,7 @@ final class DeepBestiary {
         out.add(m("guardian_seed", "The Seed Warden", Theme.SEED, Tier.GUARDIAN, Model.SHADE, "Lances of signal light around the Seed's last door").hp(34).dmg(5.5).spd(0.28).scale(1.6F).size(1.8F, 3.1F).bar(BossBarColor.WHITE).arena(24)
                 .intro("The last door. It has been waiting.")
                 .phase(1.0F, "The Seed Warden unfolds.", a(BEAM, "Signal Lance").bolt(BoltKind.SIGNAL), a(RAIN, "Signal Marks").n(4).bolt(BoltKind.SIGNAL))
-                .phase(0.5F, "The door opens a crack.", a(SUMMON, "Motes").summon("seed_mote").n(3), a(BURST, "Door Light").radius(13).inner(3.5F).bolt(BoltKind.SIGNAL).heavy())
+                .phase(0.5F, "The door opens a crack.", a(SUMMON, "Motes").summon("seed_mote").n(2), a(BURST, "Door Light").radius(13).inner(3.5F).bolt(BoltKind.SIGNAL).heavy())
                 .parts(P("seed_shard", "Seed Shard", "signal")).build());
     }
 
@@ -183,13 +183,13 @@ final class DeepBestiary {
         out.add(m("sovereign_sleep", "Sovereign of Sleep", Theme.COURT, Tier.SOVEREIGN, Model.PHANTOM, "The Lucidium gone wrong: lullabies that make you heavy, dives from the dark").hp(32).dmg(5.5).spd(0.38).scale(3.2F).size(0.88F, 1.72F).tint(0xC898D0).glow(0xF6C6E6).bar(BossBarColor.PINK).arena(28)
                 .intro("It never let anyone wake up.")
                 .phase(1.0F, "The Sovereign of Sleep spreads its wings.", a(CHARGE, "Night Dive").heavy(), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 1))
-                .phase(0.66F, "You feel heavy.", a(SUMMON, "Lullabies").summon("lullaby_phantom").n(3), a(RAIN, "Dream Fall").n(5).bolt(BoltKind.DREAM), a(CHARGE, "Night Dive"))
+                .phase(0.66F, "You feel heavy.", a(SUMMON, "Lullabies").summon("lullaby_phantom").n(2), a(RAIN, "Dream Fall").n(5).bolt(BoltKind.DREAM), a(CHARGE, "Night Dive"))
                 .phase(0.33F, "Never wake.", a(BURST, "Never Wake").radius(15).inner(4).bolt(BoltKind.DREAM).heavy(), a(CHARGE, "Night Dive"), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 2))
                 .parts(P("sleep_feather", "Feather of Sleep", "dream")).build());
         out.add(m("sovereign_machines", "Sovereign of Machines", Theme.COURT, Tier.SOVEREIGN, Model.IRON_GOLEM, "The Above gone wrong: every move calculated, every strike from orbit").hp(36).dmg(5.5).spd(0.24).scale(1.9F).size(1.2F, 3.05F).tint(0xB8C8E0).glow(0xFFD060).bar(BossBarColor.YELLOW).arena(26)
                 .intro("It built until nothing was left to build with.")
                 .phase(1.0F, "The Sovereign of Machines computes you.", a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE).power(1.8F), a(SLAM, "Hydraulic Slam").radius(4.5F).heavy())
-                .phase(0.66F, "Subroutines.", a(SUMMON, "Drones").summon("arc_drone").n(3), a(RAIN, "Orbital Strike").n(6).bolt(BoltKind.CHARGE), a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE))
+                .phase(0.66F, "Subroutines.", a(SUMMON, "Drones").summon("arc_drone").n(2), a(RAIN, "Orbital Strike").n(6).bolt(BoltKind.CHARGE), a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Shutdown.", a(BURST, "Shutdown").radius(15).inner(4).bolt(BoltKind.CHARGE).heavy(), a(NOVA, "Spark Lattice").n(16).bolt(BoltKind.CHARGE), a(SLAM, "Hydraulic Slam").radius(5))
                 .parts(P("machine_crown", "Crown of Machines", "precursor")).build());
         out.add(m("sovereign_mirrors", "Sovereign of Mirrors", Theme.COURT, Tier.SOVEREIGN, Model.MIMIC, "The self gone wrong: your face, perfect parries, a hall of reflections").hp(32).dmg(5.5).spd(0.3).scale(1.8F).size(0.9F, 3.25F).hold(Items.DIAMOND_SWORD).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(24)
@@ -240,11 +240,11 @@ final class DeepBestiary {
         out.add(m("nightmare_undead", "The Hollow Crowd", Theme.FEAR, Tier.NIGHTMARE, Model.ZOMBIE, "More of them every time you look; it gets up once").hp(22).dmg(4).spd(0.26).scale(1.7F).size(1.43F, 3.54F).traits(RISES).bar(BossBarColor.GREEN).arena(22)
                 .intro("They all have the same face.")
                 .phase(1.0F, "The crowd shuffles closer.", a(SLAM, "Crush").radius(3.5F), a(SUMMON, "More of Them").summon("sleepwalker").n(2))
-                .phase(0.5F, "Closer.", a(SUMMON, "More of Them").summon("sleepwalker").n(3), a(CHARGE, "Surge").heavy()).build());
+                .phase(0.5F, "Closer.", a(SUMMON, "More of Them").summon("sleepwalker").n(2), a(CHARGE, "Surge").heavy()).build());
         out.add(m("nightmare_arthropod", "The Thousand Legs", Theme.FEAR, Tier.NIGHTMARE, Model.SPIDER, "Webs, and the sound of a thousand legs").hp(22).dmg(4).spd(0.32).scale(2.6F).size(1.50F, 0.85F).bar(BossBarColor.PURPLE).arena(22)
                 .intro("You can hear them in the walls.")
                 .phase(1.0F, "Legs everywhere.", a(ROOT, "Web").radius(2.5F), a(LEAP, "Drop").radius(3).heavy())
-                .phase(0.5F, "The walls open.", a(SUMMON, "Hatchlings").summon("capweaver").n(3), a(ROOT, "Web").radius(3)).build());
+                .phase(0.5F, "The walls open.", a(SUMMON, "Hatchlings").summon("capweaver").n(2), a(ROOT, "Web").radius(3)).build());
         out.add(m("nightmare_explosion", "The Fuse", Theme.FEAR, Tier.NIGHTMARE, Model.CREEPER, "A hiss you can't find, and lines of fire to dodge").hp(22).dmg(4).spd(0.26).scale(2.0F).size(1.10F, 2.78F).glow(0xFFFFFF).bar(BossBarColor.WHITE).arena(22)
                 .intro("Hsssss.")
                 .phase(1.0F, "Somewhere, a fuse.", a(RAIN, "Fuse Lines").n(4).bolt(BoltKind.FIRE), a(BURST, "Blast Ring").radius(10).inner(3).heavy())

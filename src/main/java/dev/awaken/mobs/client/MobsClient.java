@@ -23,6 +23,28 @@ public final class MobsClient {
         modBus.addListener(RitualRenderers::renderers);
         modBus.addListener(SeepParticles::register);
         modBus.addListener(RegisterRenderStateModifiersEvent.class, MobsClient::looks);
+        modBus.addListener(RegisterRenderStateModifiersEvent.class, ToppleView::register); // big beasts on their side (SPEC §47.5)
+        modBus.addListener(net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent.class, e -> {
+            e.register(dev.awaken.mobs.net.MobsNet.Pace.TYPE, (msg, ctx) -> dev.awaken.mobs.client.kit.ServerPace.onPace(msg.gameTime()));
+            // the carriers (SPEC §47.2)
+            e.register(dev.awaken.mobs.net.MobsNet.Carrier.TYPE, (msg, ctx) -> CarrierView.onCarrier(msg));
+            e.register(dev.awaken.mobs.net.MobsNet.CarrierEnd.TYPE, (msg, ctx) -> CarrierView.onEnd(msg.id()));
+            e.register(dev.awaken.mobs.net.MobsNet.Tell.TYPE, (msg, ctx) -> {
+                var level = net.minecraft.client.Minecraft.getInstance().level;
+                if (level != null) dev.awaken.mobs.entity.ToldBite.heard(msg.id(), msg.ticks(), level.getGameTime());
+            });
+        });
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, CarrierPipelines::onRegister);
+        var bus = net.neoforged.neoforge.common.NeoForge.EVENT_BUS;
+        bus.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            dev.awaken.mobs.client.kit.ServerPace.reset();
+            CarrierView.reset();
+            ShotRenderer.reset();
+            dev.awaken.mobs.entity.ToldBite.reset(true);
+        });
+        bus.addListener(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent.class, CarrierView::submit);
+        bus.addListener(net.neoforged.neoforge.client.event.ClientTickEvent.Post.class, e -> CarrierView.tick());
+        bus.addListener(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent.class, ShotRenderer::onJoin);
     }
 
     /**

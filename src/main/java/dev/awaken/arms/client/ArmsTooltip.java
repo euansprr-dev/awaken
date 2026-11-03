@@ -86,7 +86,7 @@ final class ArmsTooltip {
         if (blueprint == null && ArmsSources.isIngredient(id)) source(id, lines);
     }
 
-    /** Where a found weapon comes from, in words: a Lord-forged one names its Lord, a Marked one says what drops them; and what Raise did to it. */
+    /** Where a found weapon comes from, in words: a Lord-forged one names its Lord, a Marked one says what drops them; and how far it's been reforged. */
     private static int found(ItemStack stack, Identifier item, List<Component> lines, int at) {
         var forged = dev.awaken.arms.LordForged.byWeapon(item.getPath());
         if (forged != null) {

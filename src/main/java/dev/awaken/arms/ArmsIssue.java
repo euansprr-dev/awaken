@@ -52,7 +52,7 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     @Override
     public boolean knows(ServerPlayer p, String style) {
         migrate(p);
-        return ArmsProgress.of(p).knows(style) || ArmsForge.owns(p, style);
+        return ArmsProgress.of(p).knows(style); // holding a Blueprint isn't knowing it: it's learned when used (SPEC §46.7)
     }
 
     /** Knows it from now on, without giving the Blueprint (drawn at a Forge, handed over by hand). */
@@ -71,12 +71,35 @@ public final class ArmsIssue implements ArmsApi.Hooks {
         dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("pattern/" + style,
                 "Pattern learned", (st == null ? style : st.def().name()) + " Blueprint", "You can make weapons in this style now.",
                 java.util.List.of("You learned it from " + source.replaceFirst("^from ", "") + ".",
-                        "The Blueprint is in your inventory. Use it at a crafting table with the weapon's materials, and you get the Blueprint back.",
-                        "You won't forget it. The Forge Armoury lists the styles you know and what each one costs."),
+                        "Forge it at a War Anvil. The Blueprint in your pack is a spare copy that someone else could learn from.",
+                        "You won't forget it. The Armoury lists the styles you know and what each one costs."),
                 dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0x6FB3FF));
         Progression.markNewThing(p, "pattern:" + style);
         ArmsArmoury.sendView(p);
         return true;
+    }
+
+    /**
+     * A Blueprint used (SPEC §46.7): it teaches its style and is used up; used when the style is known already, it stays
+     * (someone else could learn from it).
+     */
+    static void useBlueprint(ServerPlayer p, String style, ItemStack stack) {
+        migrate(p);
+        Archetypes.Loaded st = Archetypes.get(style);
+        String name = st == null ? style : st.def().name();
+        if (ArmsProgress.of(p).knows(style)) {
+            dev.awaken.signal.Signal.toast(p, net.minecraft.network.chat.Component.literal(
+                    "You know the " + name + " pattern already. Someone else could use this one."));
+            return;
+        }
+        remember(p, style);
+        stack.shrink(1);
+        dev.awaken.core.api.NoticeEvents.tell(p, new dev.awaken.core.api.NoticeEvents.Event("pattern/" + style,
+                "Pattern learned", name + " Blueprint", "You learned the " + name + " pattern. Forge it at a War Anvil.",
+                java.util.List.of("You won't forget it. The Armoury lists the styles you know and what each one costs."),
+                dev.awaken.core.api.NoticeEvents.Kind.PERMANENT, 0x6FB3FF));
+        Progression.markNewThing(p, "pattern:" + style);
+        ArmsArmoury.sendView(p);
     }
 
     static void giveItem(ServerPlayer p, ItemStack stack) {
@@ -224,11 +247,12 @@ public final class ArmsIssue implements ArmsApi.Hooks {
         }
         Archetypes.Loaded st = Archetypes.get(style);
         ArmsNotices.reward(p, "weapon/hale/issue", "Weapon issued", new ItemStack(weapon),
-                "Hale gave you this weapon, its crafting pattern, and a spare Fang blade.",
-                java.util.List.of("To make another, use the pattern at a crafting table with its materials. You keep the pattern.",
+                "Hale gave you this weapon, its pattern, and a spare Fang blade.",
+                java.util.List.of("To make another, forge it at a War Anvil. You know its pattern now.",
                         "Crouch and talk to Hale to see his other styles and patterns."));
-        ArmsApi.say(p, "Hale: Good choice. That one's yours. I've put its pattern in your pack too, so you can make more of them later. "
-                + "The spare blade is a Fang, and everything you forge starts from one. When you want a different style, crouch and talk to me, and I'll show you the rack. "
+        ArmsApi.say(p, "Hale: Good choice. That one's yours, and you know its pattern now. "
+                + "The spare blade is a Fang, and everything you forge starts from one. A crafting table makes quick tools. For a real weapon, set up a War Anvil at home. "
+                + "When you want a different style, crouch and talk to me, and I'll show you the rack. "
                 + "I sell the patterns for essence, and the more you've done, the more I'll show you.");
         Progression.markNewThing(p, "issue");
     }

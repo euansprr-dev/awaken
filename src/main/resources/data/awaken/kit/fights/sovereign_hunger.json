@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "sovereign_hunger",
  "moves": "sovereign_hunger",
+ "duel": true,
+ "stance": 340,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -47,7 +49,15 @@
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "slap"
+      ],
+      [
+       "slap_b"
+      ]
+     ]
     }
    ]
   },
@@ -71,7 +81,12 @@
     {
      "move": "gorge",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
     },
     {
      "move": "devour",
@@ -100,7 +115,15 @@
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "slap"
+      ],
+      [
+       "slap_b"
+      ]
+     ]
     }
    ]
   },
@@ -129,7 +152,12 @@
     {
      "move": "gorge",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
     },
     {
      "move": "devour",
@@ -145,7 +173,15 @@
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "slap"
+      ],
+      [
+       "slap_b"
+      ]
+     ]
     }
    ]
   }

@@ -1,0 +1,265 @@
+# The daggers filmed for the dagger and scythe audit (Euan 2026-11-02: "record its own things, hitting it, first
+# slowly, then the whole combo, then spamming two or three combos very quickly"). First person, then third person from
+# the side (/awaken fx sidecam 90), against a husk 2.6 blocks ahead backed by a wall (it can't walk or hurt; a blow
+# still shoves it, the wall keeps it in reach). `arms studio` builds the studio on the server's own thread and each take
+# starts once the server has caught up (`arms waitserver`): a server stalled on its roads at world start used to run
+# the set-up's commands all in one tick, before their ground had loaded. Each take: the world at 2 ticks a second (a
+# tenth of play's speed; the hands, hit-stop, freeze, recoil and ribbons run at the world's pace), `arms film` writes
+# every frame's numbers (track.tsv), what happened on both sides (events.tsv) and a picture every 0.2 ticks into
+# clips/<take>/. Clicks: slow = 3 clicks 24 ticks apart (each held 2 ticks, a finger's click); combo =
+# a click every 5 ticks (in the chain's window); spam = a click every 2 ticks held 1, as fast as a finger goes.
+# ci knobs: PACK=perf,feel,comfort,world
+world armsfilmdaggers creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+arms studio awaken:gatewrought_daggers
+arms waitserver 100
+camera first
+look 0 6
+wait 20
+shot daggers_rest_1p
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film daggers_1p_slow 76 0.2 2
+wait 3
+arms strike 2
+wait 23
+arms strike 2
+wait 23
+arms strike 2
+wait 23
+wait 4
+arms rate 20
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film daggers_1p_combo 34 0.2 2
+wait 3
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+wait 14
+arms rate 20
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film daggers_1p_spam 80 0.2 2
+wait 3
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+wait 12
+arms rate 20
+wait 20
+camera front
+cmd awaken fx sidecam 90
+look 0 6
+wait 20
+shot daggers_rest_3p
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film daggers_3p_slow 76 0.2 2
+wait 3
+arms strike 2
+wait 23
+arms strike 2
+wait 23
+arms strike 2
+wait 23
+wait 4
+arms rate 20
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film daggers_3p_combo 34 0.2 2
+wait 3
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+arms strike 2
+wait 4
+wait 14
+arms rate 20
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film daggers_3p_spam 80 0.2 2
+wait 3
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+arms strike 1
+wait 1
+wait 12
+arms rate 20
+wait 20
+cmd awaken fx sidecam 0
+camera first
+wait 20
+quit

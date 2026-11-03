@@ -17,7 +17,7 @@ out before it and pants; it dies on its side, the storm going out of it.
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -867,10 +867,10 @@ def overdrive(r):
 
 def lash(r):
     """The Tail Lash (for whoever is behind it): it looks back over its shoulder and swings its hindquarters round,
-    whipping the plume of its tail across behind it from one side to the other with a crack of lightning at its tip."""
-    cock = _pose(r, lift=-1.2, yaw=-12, side=10, neck=(2, 26, 0), head=(4, 40, 8), jaw=12, ears=(-20, -20), tail=(10, -46), mane=10)
-    hit = _pose(r, lift=-1.6, yaw=18, side=4, neck=(2, 30, 0), head=(4, 44, 8), jaw=16, ears=(-24, -24), tail=(16, 50), mane=12)
-    held = _pose(r, lift=-1.7, yaw=20, side=3, neck=(2, 30, 0), head=(4, 44, 8), jaw=12, ears=(-24, -24), tail=(14, 56), mane=12)
+    whipping the plume of its tail low across behind it from one side to the other with a crack of lightning at its tip."""
+    cock = _pose(r, lift=-1.2, yaw=-12, side=10, neck=(2, 26, 0), head=(4, 40, 8), jaw=12, ears=(-20, -20), tail=(-25, -46), mane=10)
+    hit = _pose(r, lift=-1.6, yaw=18, side=4, neck=(2, 30, 0), head=(4, 44, 8), jaw=16, ears=(-24, -24), tail=(-40, 50), mane=12)
+    held = _pose(r, lift=-1.7, yaw=20, side=3, neck=(2, 30, 0), head=(4, 44, 8), jaw=12, ears=(-24, -24), tail=(-42, 56), mane=12)
     return Move("lash", "LIGHT", 10, 4, 14, through=held, title="Tail Lash", track=0.0, rng=(0, 5.0), kinds=("behind",), damage=0.9, knock=1.0,
                 hit=[("tail2", (0, 0, 6), 6.0), ("tail3", (0, 0, 8), 6.0), ("tail1", (0, 0, 5), 5.0)], plant=(),
                 stages={"windup": [(0.35, _mix(_pose(r), cock, 0.5)), (1.0, cock)], "active": [(0.55, hit), (1.0, held)], "recover": _back(r, held)},
@@ -909,6 +909,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=2.0)  # a duel's parried and reel (SPEC §47.5)
     mv = [snap(r), rake(r, 0, "rake"), bolt(r), clap(r), howl(r), spears(r), updraft(r), overdrive(r), lash(r), arrive(r)]
     by = {m.id: m for m in mv}
     for m in mv:
@@ -951,34 +952,37 @@ MOVE_SOUNDS = {"howl": {"swing": "roar", "impact": ""}, "spears": {"swing": "bar
                "overdrive": {"swing": "shake", "impact": ""}, "arrive": {"swing": "tell_light", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 360,
     "intro": {"pose": "idle", "move": "arrive"},  # it stands listening, and the wind it outran catches up with it
     "phases": [
         {"pool": [
             {"move": "snap", "weight": 3, "when": "near", "then": [["rake"], ["rake", "bolt"]]},
-            {"move": "clap", "weight": 2, "when": "near"},
+            {"move": "clap", "weight": 2, "when": "near", "then": [["snap", "rake"], ["lash"]]},
             {"move": "bolt", "weight": 3, "when": "far", "then": [["snap"]]},
-            {"move": "howl", "weight": 2},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "howl", "weight": 2, "then": [["bolt"], ["spears"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["snap"], ["clap"]]},
         ]},
         # the storm thickens, as in DeepBestiary: its spears, and the updraft
         {"transition": "spears", "pool": [
             {"move": "snap", "weight": 3, "when": "near", "then": [["rake"], ["rake", "clap"]]},
-            {"move": "updraft", "weight": 2, "when": "near"},
+            {"move": "updraft", "weight": 2, "when": "near", "then": [["clap"], ["snap", "rake"]]},
             {"move": "bolt", "weight": 3, "when": "far", "then": [["snap", "rake"]]},
-            {"move": "spears", "weight": 2, "when": "far"},
-            {"move": "howl", "weight": 2},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "spears", "weight": 2, "when": "far", "then": [["bolt", "snap"]]},
+            {"move": "howl", "weight": 2, "then": [["bolt"], ["spears"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["snap"], ["clap"]]},
         ]},
         # the eye of the storm: it shakes the storm off itself and goes faster
         {"transition": "overdrive", "pool": [
-            {"move": "howl", "weight": 2},
-            {"move": "clap", "weight": 2, "when": "near"},
+            {"move": "howl", "weight": 2, "then": [["bolt"], ["spears"]]},
+            {"move": "clap", "weight": 2, "when": "near", "then": [["snap", "rake"], ["lash"]]},
             {"move": "bolt", "weight": 3, "when": "far", "then": [["snap", "rake"]]},
             {"move": "snap", "weight": 3, "when": "near", "then": [["rake", "bolt"]]},
-            {"move": "spears", "weight": 1, "when": "far"},
-            {"move": "updraft", "weight": 1, "when": "near"},
+            {"move": "spears", "weight": 1, "when": "far", "then": [["bolt", "snap"]]},
+            {"move": "updraft", "weight": 1, "when": "near", "then": [["clap"], ["snap", "rake"]]},
             {"move": "overdrive", "weight": 1},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["snap"], ["clap"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

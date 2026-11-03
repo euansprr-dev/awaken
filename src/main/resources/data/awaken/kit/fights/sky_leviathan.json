@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "sky_leviathan",
  "moves": "sky_leviathan",
+ "duel": true,
+ "stance": 320,
  "intro": {
   "pose": "kneel",
   "move": "unfurl"
@@ -26,11 +28,24 @@
     {
      "move": "ram",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
     },
     {
      "move": "wingbeat",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "slap"
+      ],
+      [
+       "dive"
+      ]
+     ]
     },
     {
      "move": "dive",
@@ -45,7 +60,12 @@
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "slap_b"
+      ]
+     ]
     }
    ]
   },
@@ -83,7 +103,12 @@
     {
      "move": "barrage",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "barrage"
+      ]
+     ]
     },
     {
      "move": "dive",
@@ -98,7 +123,12 @@
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "slap_b"
+      ]
+     ]
     }
    ]
   },
@@ -143,12 +173,22 @@
     {
      "move": "ram",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
     },
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "slap_b"
+      ]
+     ]
     }
    ]
   }

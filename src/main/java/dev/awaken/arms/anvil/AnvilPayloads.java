@@ -7,12 +7,22 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-/** The War Anvil's messages (SPEC §46.2). */
+import java.util.List;
+
+/** The War Anvil's messages (SPEC §46.2, §46.8). */
 public final class AnvilPayloads {
     private AnvilPayloads() {}
 
-    /** What the smith did: one of the acts below, its beat's number (a), when (t, ticks from the stage's start) and its aim. */
-    public static final int RESUME = 1, LEAVE = 2, PULL = 3, STRIKE = 4, PLUNGE = 5, LIFT = 6, TAP = 7, DRAW = 8;
+    /**
+     * What the smith did: one of the acts below, its beat's number (a), when (t, ticks from the stage's start) and its aim.
+     * By hand at E: KNAP a flake (a its number), WIND the cord (a 0 as the hold begins, then each turn done), RELEASE it.
+     * From the window for a weapon in hand (§46.8): HELD begins one (a: AnvilWork.TEMPER, REFORGE or ATTUNE), LIST opens
+     * the Armoury instead. The ranks' acts (§46.9): TWIST the clamped bar (a 0 as the hold begins, then each turn; RELEASE
+     * lets go early), GRIND a sample (a its number, aim how far the edge is off the line), BALANCE it settled (t when, aim
+     * how far the weight was from its point), STAR the press as the light's ring closes.
+     */
+    public static final int RESUME = 1, LEAVE = 2, PULL = 3, STRIKE = 4, PLUNGE = 5, LIFT = 6, TAP = 7, DRAW = 8, KNAP = 9, WIND = 10, RELEASE = 11,
+            HELD = 12, LIST = 13, TWIST = 14, GRIND = 15, BALANCE = 16, STAR = 17;
 
     /** Client → server: an act at the anvil. */
     public record Act(BlockPos pos, int act, int a, float t, float aim) implements CustomPacketPayload {
@@ -30,12 +40,36 @@ public final class AnvilPayloads {
         @Override public Type<Open> type() { return TYPE; }
     }
 
-    /** Server → the smith: the weapon is made and stands in the slot; how well, its flaw and the Temper it left with. */
-    public record Done(BlockPos pos, int quality, int flaw, int temper) implements CustomPacketPayload {
+    /** One thing it costs: what, how many you have, how many it takes. */
+    public record Cost(String label, int have, int need) {
+        public static final StreamCodec<ByteBuf, Cost> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, Cost::label, ByteBufCodecs.VAR_INT, Cost::have, ByteBufCodecs.VAR_INT, Cost::need, Cost::new);
+    }
+
+    /** One row of the window: its kind (AnvilWork.TEMPER, REFORGE, ATTUNE), its button, whether it can begin, one plain line, and what it costs. */
+    public record Option(int kind, String button, boolean ready, String line, List<Cost> costs) {
+        public static final StreamCodec<ByteBuf, Option> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Option::kind, ByteBufCodecs.STRING_UTF8, Option::button, ByteBufCodecs.BOOL, Option::ready,
+                ByteBufCodecs.STRING_UTF8, Option::line, Cost.STREAM_CODEC.apply(ByteBufCodecs.list()), Option::costs, Option::new);
+    }
+
+    /** Server → the smith: the anvil's window for the weapon in your hand (temper, reforge, attune; §46.8). */
+    public record Held(BlockPos pos, List<Option> options) implements CustomPacketPayload {
+        public static final Type<Held> TYPE = new Type<>(Awaken.id("anvil_held"));
+        public static final StreamCodec<ByteBuf, Held> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, Held::pos, Option.STREAM_CODEC.apply(ByteBufCodecs.list()), Held::options, Held::new);
+        @Override public Type<Held> type() { return TYPE; }
+    }
+
+    /**
+     * Server → the smith: the weapon is made (or worked) and stands in the slot; how well, its flaw, the Temper it left
+     * with, and flags (WarAnvil.TWIN, FROM_MEMORY, ARMOURY, TEMPERED, ATTUNED, REFORGED).
+     */
+    public record Done(BlockPos pos, int quality, int flaw, int temper, int flags) implements CustomPacketPayload {
         public static final Type<Done> TYPE = new Type<>(Awaken.id("anvil_done"));
         public static final StreamCodec<ByteBuf, Done> STREAM_CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, Done::pos, ByteBufCodecs.VAR_INT, Done::quality, ByteBufCodecs.VAR_INT, Done::flaw,
-                ByteBufCodecs.VAR_INT, Done::temper, Done::new);
+                ByteBufCodecs.VAR_INT, Done::temper, ByteBufCodecs.VAR_INT, Done::flags, Done::new);
         @Override public Type<Done> type() { return TYPE; }
     }
 }

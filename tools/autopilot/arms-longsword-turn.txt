@@ -1,0 +1,135 @@
+# Weapon audit, decision 2 (SPEC §25 "Weapons", the weapon audit; weapon-designs session, 2 Nov 2026): the six
+# Longswords turned an eighth further at rest (roll 135) in first person, two of them through every blow at its
+# hit, then third person from the front and on stands beside the Maul and the Katana.
+world armsdesigns creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 8
+wait 40
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-10 ~ ~-10 ~10 ~10 ~12 minecraft:air
+cmd fill ~-10 ~ ~9 ~10 ~8 ~9 minecraft:deepslate_tiles
+cmd fill ~-10 ~ ~-6 ~10 ~8 ~-6 minecraft:deepslate_tiles
+cmd kill @e[type=minecraft:item]
+wait 30
+look 0 8
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 32
+shot turn_fp_wildhide
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+wait 32
+shot turn_fp_beastbound
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 32
+shot turn_fp_gatewrought
+arms pose strike_1 0.1
+wait 2
+shot turn_fp_gatewrought_s1_windup
+arms pose strike_1 0.3
+wait 2
+shot turn_fp_gatewrought_s1
+arms pose strike_2 0.3
+wait 2
+shot turn_fp_gatewrought_s2
+arms pose strike_3 0.31
+wait 2
+shot turn_fp_gatewrought_s3
+arms pose strike_4 0.27
+wait 2
+shot turn_fp_gatewrought_s4
+arms pose heavy 0.12
+wait 2
+shot turn_fp_gatewrought_heavy
+arms pose art 0.3
+wait 2
+shot turn_fp_gatewrought_art
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
+wait 32
+shot turn_fp_veilwoven
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 32
+shot turn_fp_lordscale
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
+wait 32
+shot turn_fp_sovereign
+arms pose strike_1 0.1
+wait 2
+shot turn_fp_sovereign_s1_windup
+arms pose strike_1 0.3
+wait 2
+shot turn_fp_sovereign_s1
+arms pose strike_2 0.3
+wait 2
+shot turn_fp_sovereign_s2
+arms pose strike_3 0.31
+wait 2
+shot turn_fp_sovereign_s3
+arms pose strike_4 0.27
+wait 2
+shot turn_fp_sovereign_s4
+arms pose heavy 0.12
+wait 2
+shot turn_fp_sovereign_heavy
+arms pose art 0.3
+wait 2
+shot turn_fp_sovereign_art
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 32
+camera front
+look 20 4
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 32
+shot turn_tp_wildhide
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+wait 32
+shot turn_tp_beastbound
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 32
+shot turn_tp_gatewrought
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
+wait 32
+shot turn_tp_veilwoven
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 32
+shot turn_tp_lordscale
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
+wait 32
+shot turn_tp_sovereign
+camera first
+look 0 8
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd summon minecraft:armor_stand ~-3.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:gatewrought_maul",count:1}}}
+cmd summon minecraft:armor_stand ~-2.4 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:wildhide_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-1.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:beastbound_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~0.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~1.2 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:veilwoven_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~2.4 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:lordscale_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~3.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:sovereign_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~4.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:gatewrought_katana",count:1}}}
+cmd tp @s ~0.6 ~ ~-1.5 0 12
+wait 20
+shot turn_stands
+cmd tp @s ~ ~ ~3.0 0 20
+wait 10
+shot turn_stands_close
+quit

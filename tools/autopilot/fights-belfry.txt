@@ -1,0 +1,79 @@
+# Fights stage 3, the first Proving (SPEC §47.4): the Drowned Belfry and the Ringer, in a practice Proving
+# (/awaken admin trial D). You wake knee-deep inside the door; then, as a spectator (never its target): the door and the
+# stair out, the nave from above, the Tenor over the sealed pit, a drowned aisle, the Ringer dropped into the light when
+# you stand on the chancel, the water draining at half its health (/awaken admin trial half), the floor over the pit
+# given way, and its chain at your feet. Every spot until the drop is off the chancel, so it drops on cue.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-belfry.txt
+world autopilot_fights_belfry creative 20261102
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin trial D
+wait 200
+hud off
+
+# --- you wake inside the door, facing the chancel (0, 0, 48 from the hall's centre) ---
+look 180 0
+wait 20
+shot belfry_01_wake
+
+# --- the door and the stair out, from the narthex (0, 2, 36) ---
+cmd gamemode spectator
+cmd tp @s ~ ~2 ~-12 0 5
+wait 30
+shot belfry_02_door
+
+# --- the nave from above the narthex (0, 22, 42) ---
+cmd tp @s ~ ~20 ~6 180 30
+wait 30
+shot belfry_03_nave
+
+# --- the Tenor over the sealed pit (0, 8, -14) ---
+cmd tp @s ~ ~-14 ~-56 180 -12
+wait 30
+shot belfry_04_tenor
+
+# --- a drowned aisle (24, 2, -2) ---
+cmd tp @s ~24 ~-6 ~12 180 8
+wait 30
+shot belfry_05_aisle
+
+# --- onto the chancel (0, 2, 6): it drops into the light ---
+cmd tp @s ~-24 ~ ~8 180 0
+wait 60
+shot belfry_06_ringer
+
+# --- at half its health the water runs off north toward the pit ---
+cmd awaken admin trial half
+wait 10
+shot belfry_07_drain
+wait 60
+
+# --- the floor over the pit has given way (0, 10, -22) ---
+cmd tp @s ~ ~8 ~-28 180 40
+wait 20
+shot belfry_08_pit
+
+# --- beaten: its chain at your feet (0, 1, -18) ---
+cmd tp @s ~ ~-9 ~4 180 55
+wait 10
+cmd kill @e[type=awaken:proving_ringer]
+wait 60
+hud on
+shot belfry_09_chain
+hud off
+wait 40
+look 180 -20
+shot belfry_10_after
+hud on
+quit

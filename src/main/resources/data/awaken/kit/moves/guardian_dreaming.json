@@ -669,7 +669,7 @@
   },
   {
    "id": "scuttle",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
     "windup": 14,
     "active": 12,

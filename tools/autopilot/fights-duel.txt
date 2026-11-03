@@ -1,0 +1,120 @@
+# Fights stage 2, the duel (SPEC §47.3): each pilot on a sky stage facing a still stand-in, seen from the side. Per boss:
+# a phrase's tell, a blow deflected (the limb's recoil, `parried`), the phrase going on, its last blow deflected (the
+# `reel`, early and low), then its stance broken (down on a knee: the finisher's opening). /awaken bosses duel stage
+# <boss> builds the stage; play/deflect/break act now and a frozen tick holds the frame.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-duel.txt
+world autopilot_fights_duel creative 20261102
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+hud off
+
+# --- the Gearwright: sweep and chop ---
+cmd awaken bosses duel stage gearwright_colossus
+wait 80
+cmd awaken bosses duel play sweep chop
+wait 11
+cmd tick freeze
+shot duel_01_gearwright_tell
+cmd tick unfreeze
+wait 5
+cmd awaken bosses duel deflect
+wait 4
+cmd tick freeze
+shot duel_02_gearwright_recoil
+cmd tick unfreeze
+wait 16
+cmd awaken bosses duel deflect
+wait 5
+cmd tick freeze
+shot duel_03_gearwright_reel
+cmd tick unfreeze
+wait 11
+cmd tick freeze
+shot duel_04_gearwright_reel_low
+cmd tick unfreeze
+wait 40
+cmd awaken bosses duel break
+wait 14
+cmd tick freeze
+shot duel_05_gearwright_broken
+cmd tick unfreeze
+wait 60
+
+# --- the Bell Warden: stab, stab ---
+cmd awaken bosses duel stage bell_warden
+wait 80
+cmd awaken bosses duel play stab stab_b
+wait 9
+cmd tick freeze
+shot duel_06_bell_tell
+cmd tick unfreeze
+wait 4
+cmd awaken bosses duel deflect
+wait 4
+cmd tick freeze
+shot duel_07_bell_recoil
+cmd tick unfreeze
+wait 15
+cmd awaken bosses duel deflect
+wait 5
+cmd tick freeze
+shot duel_08_bell_reel
+cmd tick unfreeze
+wait 11
+cmd tick freeze
+shot duel_09_bell_reel_low
+cmd tick unfreeze
+wait 40
+cmd awaken bosses duel break
+wait 14
+cmd tick freeze
+shot duel_10_bell_broken
+cmd tick unfreeze
+wait 60
+
+# --- the Glass Serpent: bite, bite ---
+cmd awaken bosses duel stage glass_serpent
+wait 80
+cmd awaken bosses duel play bite bite_b
+wait 8
+cmd tick freeze
+shot duel_11_serpent_tell
+cmd tick unfreeze
+wait 4
+cmd awaken bosses duel deflect
+wait 4
+cmd tick freeze
+shot duel_12_serpent_recoil
+cmd tick unfreeze
+wait 14
+cmd awaken bosses duel deflect
+wait 5
+cmd tick freeze
+shot duel_13_serpent_reel
+cmd tick unfreeze
+wait 11
+cmd tick freeze
+shot duel_14_serpent_reel_low
+cmd tick unfreeze
+wait 40
+cmd awaken bosses duel break
+wait 14
+cmd tick freeze
+shot duel_15_serpent_broken
+cmd tick unfreeze
+hud on
+quit

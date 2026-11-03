@@ -361,9 +361,10 @@ public final class Town {
             Upgrades.offerTemper(sp, level, where, InteractionHand.MAIN_HAND, "oren");
             return;
         }
+        if (Upgrades.isGear(sp.getMainHandItem())) line = Upgrades.CRAFTED; // crafted gear stays as it is (SPEC §46.5)
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName("oren_blacksmith"))).dialogue()
                 .body(Component.literal("“" + line + "”"))
-                .footer(Component.literal("Hold a weapon or armour piece and talk to him to temper it")).ttl(20 * 8).build());
+                .footer(Component.literal("Hold a forged weapon or armour piece and talk to him to temper it")).ttl(20 * 8).build());
     }
 
     private static void mira(ServerPlayer sp, ServerLevel level, Townsfolk.Def d, String line) {

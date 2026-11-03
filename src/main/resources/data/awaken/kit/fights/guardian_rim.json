@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "guardian_rim",
  "moves": "guardian_rim",
+ "duel": true,
+ "stance": 320,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -26,12 +28,29 @@
     {
      "move": "scythe",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "stab",
+       "stab_b"
+      ],
+      [
+       "kick"
+      ]
+     ]
     },
     {
      "move": "web",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "rootfall"
+      ],
+      [
+       "web"
+      ]
+     ]
     },
     {
      "move": "rootfall",
@@ -46,7 +65,15 @@
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "stab"
+      ],
+      [
+       "scythe"
+      ]
+     ]
     }
    ]
   },
@@ -70,12 +97,29 @@
     {
      "move": "scythe",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "stab",
+       "stab_b"
+      ],
+      [
+       "kick"
+      ]
+     ]
     },
     {
      "move": "web",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "rootfall"
+      ],
+      [
+       "web"
+      ]
+     ]
     },
     {
      "move": "rootfall",
@@ -90,7 +134,12 @@
     },
     {
      "move": "lances",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "web"
+      ]
+     ]
     },
     {
      "move": "brood",
@@ -99,7 +148,15 @@
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "stab"
+      ],
+      [
+       "scythe"
+      ]
+     ]
     }
    ]
   }

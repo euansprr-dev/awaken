@@ -2,6 +2,9 @@ package dev.awaken.arms.anvil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentGetter;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -9,6 +12,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomModelData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -17,16 +21,27 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+
 /**
- * What a War Anvil holds (schemaVersion 1): the weapon being made, if any, and the finished one standing in its slot
- * until it's drawn. Synced to clients near so the work and the slot are drawn. Broken, it drops what stands in the slot
- * and gives back what the work took in.
+ * What a War Anvil holds (schemaVersion 2): the weapon being made, if any, and the finished one standing in its slot
+ * until it's drawn; a Lord's anvil's colour (§46.6, -1 the gold of none; a v1 save reads none), carried on the
+ * dropped anvil as its custom model data's colour; and from the Deepglass horn, the last three weapons forged on it
+ * standing in its rack (copies to look at, newest first; a v1 save reads none). Synced to clients near so the work, the
+ * slot, the colour and the rack are drawn. Broken, it drops what stands in the slot and gives back what the work took
+ * in; the rack's copies go with it.
  */
 public class WarAnvilBlockEntity extends BlockEntity {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
+    /** A Lord's anvil with no Lord's colour: the gold its runes were cut in. */
+    public static final int GOLD = 0xF3C443;
 
     private @Nullable AnvilWork work;
     private ItemStack slot = ItemStack.EMPTY;
+    private int lord = -1;
+    /** The rack's copies (§46.6): the last weapons forged here from the Deepglass horn up, newest first. */
+    private final java.util.ArrayList<ItemStack> rack = new java.util.ArrayList<>(RACK);
+    public static final int RACK = 3;
     /** The game tick the slot was last filled, for its glow waking (a client sees it change; not saved). */
     public long stoodAt = -1000;
     private boolean synced;
@@ -53,6 +68,27 @@ public class WarAnvilBlockEntity extends BlockEntity {
         changed();
     }
 
+    /** The Lord's colour its runes and Heart are lit in (RGB), or -1 for gold. */
+    public int lord() {
+        return lord;
+    }
+
+    void setLord(int rgb) {
+        lord = rgb < 0 ? -1 : rgb & 0xFFFFFF;
+        changed();
+    }
+
+    public List<ItemStack> rack() {
+        return rack;
+    }
+
+    /** A weapon just forged goes up in the rack (a copy), the oldest of three coming down. */
+    void racked(ItemStack made) {
+        rack.addFirst(made.copyWithCount(1));
+        while (rack.size() > RACK) rack.removeLast();
+        changed();
+    }
+
     void changed() {
         setChanged();
         if (level != null) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
@@ -68,6 +104,8 @@ public class WarAnvilBlockEntity extends BlockEntity {
         out.putInt("schemaVersion", SCHEMA);
         if (!slot.isEmpty()) out.store("slot", ItemStack.CODEC, slot);
         if (work != null) out.store("work", AnvilWork.CODEC, work);
+        if (lord >= 0) out.putInt("lord", lord);
+        if (!rack.isEmpty()) out.store("rack", ItemStack.CODEC.listOf(), List.copyOf(rack));
     }
 
     @Override
@@ -76,9 +114,30 @@ public class WarAnvilBlockEntity extends BlockEntity {
         boolean was = !slot.isEmpty();
         slot = in.read("slot", ItemStack.CODEC).orElse(ItemStack.EMPTY);
         work = in.read("work", AnvilWork.CODEC).orElse(null);
+        int wasLord = lord;
+        lord = in.getIntOr("lord", -1);
+        rack.clear();
+        rack.addAll(in.read("rack", ItemStack.CODEC.listOf()).orElse(List.of()));
         // on a client, a weapon stood in the slot by this update wakes (not one already there when the anvil came into view)
         if (level != null && level.isClientSide() && synced && !was && !slot.isEmpty()) stoodAt = level.getGameTime();
+        // and a new colour is drawn: the block's tint reads it, so its section is built again
+        if (level != null && level.isClientSide() && synced && wasLord != lord)
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         synced = true;
+    }
+
+    @Override
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        if (lord >= 0) components.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(List.of(), List.of(), List.of(), List.of(lord)));
+    }
+
+    @Override
+    protected void applyImplicitComponents(DataComponentGetter components) {
+        super.applyImplicitComponents(components);
+        CustomModelData d = components.get(DataComponents.CUSTOM_MODEL_DATA);
+        Integer c = d == null ? null : d.getColor(0);
+        lord = c == null ? -1 : c & 0xFFFFFF;
     }
 
     @Override
@@ -98,6 +157,7 @@ public class WarAnvilBlockEntity extends BlockEntity {
         if (!slot.isEmpty()) Containers.dropItemStack(level, x, y, z, slot);
         slot = ItemStack.EMPTY;
         if (work != null) for (ItemStack m : work.materials) if (!m.isEmpty()) Containers.dropItemStack(level, x, y, z, m.copy());
+        if (work != null && !work.piece.isEmpty()) Containers.dropItemStack(level, x, y, z, work.piece.copy()); // the weapon being worked
         work = null;
     }
 }

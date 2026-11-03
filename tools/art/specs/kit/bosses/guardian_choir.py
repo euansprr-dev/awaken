@@ -18,7 +18,7 @@ octopus does, sinking and spreading, her colour going out.
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -1007,6 +1007,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.6)  # a duel's parried and reel (SPEC §47.5)
     mv = []
     for f, a in ((lash, (0, "lash")), (lash, (1, "lash_b")), (breaker, ()), (sweep, ()), (jet, ()), (hymn, ()), (refrain, ()), (choir, ()),
                  (undertow, ()), (tide, ()), (wake, ())):
@@ -1050,27 +1051,30 @@ MOVE_SOUNDS = {"hymn": {"swing": "cast"}, "refrain": {"swing": "cast", "impact":
                "undertow": {"swing": "cast", "impact": ""}, "tide": {"swing": "roar"}, "wake": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},  # she waits sunk down on her curled arms, and rises
     "phases": [
         {"pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["lash_b"], ["lash_b", "breaker"]]},
-            {"move": "breaker", "weight": 2, "when": "near"},
-            {"move": "hymn", "weight": 3, "when": "far"},
+            {"move": "breaker", "weight": 2, "when": "near", "then": [["lash"]]},
+            {"move": "hymn", "weight": 3, "when": "far", "then": [["jet"]]},
             {"move": "jet", "weight": 2, "when": "far", "then": [["lash"]]},
             {"move": "refrain", "weight": 1},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["lash_b"]]},
         ]},
         # the water rises with the second phase, as in DeepBestiary: the choir, the tide and the undertow
         {"transition": "choir", "pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["lash_b"], ["lash_b", "breaker"]]},
-            {"move": "breaker", "weight": 2, "when": "near"},
-            {"move": "hymn", "weight": 2, "when": "far"},
+            {"move": "breaker", "weight": 2, "when": "near", "then": [["lash"]]},
+            {"move": "hymn", "weight": 2, "when": "far", "then": [["jet"]]},
             {"move": "undertow", "weight": 2, "when": "far", "then": [["lash"]]},
-            {"move": "jet", "weight": 1, "when": "far"},
+            {"move": "jet", "weight": 1, "when": "far", "then": [["lash"]]},
             {"move": "tide", "weight": 2},
             {"move": "choir", "weight": 1},
             {"move": "refrain", "weight": 1},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["lash_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

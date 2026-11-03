@@ -25,7 +25,7 @@ out over the front, and the lid falls shut on its neck.
 """
 import math
 
-from kit import core, ik
+from kit import core, ik, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, SIDES, hexc
@@ -651,13 +651,13 @@ def _turn(r, mv, bone, axis, turns, t0, t1):
 
 def pop(r):
     """The Pop (LIGHT): it sinks down on its spring with its head drawn in and its hands drawn up beside it; then it
-    springs out at you head first, the spring flung out long and bent over toward you, its hands grabbing."""
+    springs out at you head first, the spring flung out long and bent right over and down onto you, its hands grabbing."""
     gather = _pose(r, comp=0.36, bend=(-10, 0), head=(16, 0, 0), arms={"l": (52, 34, 100, 36, 50), "r": (52, 34, 100, 36, 50)}, wicks=(-14, 22), flare=-6)
     peak = _pose(r, comp=0.55, bend=(-14, 0), head=(20, 0, 0), arms={"l": (60, 30, 110, 40, 50), "r": (60, 30, 110, 40, 50)}, wicks=(-16, 26), flare=-8,
                  pitch=-1.5, lid=LID_OPEN - 4)
-    strike = _pose(r, comp=-0.4, bend=(58, 0), head=(-10, 0, 0), arms={"l": (95, 20, 10, -10, -20), "r": (95, 20, 10, -10, -20)}, wicks=(20, -30), flare=18,
+    strike = _pose(r, comp=-0.4, bend=(80, 0), head=(-10, 0, 0), arms={"l": (95, 20, 10, -10, -20), "r": (95, 20, 10, -10, -20)}, wicks=(20, -30), flare=18,
                    pitch=2.5, lid=LID_OPEN + 6)
-    held = _pose(r, comp=-0.44, bend=(64, 0), head=(-6, 4, 6), arms={"l": (90, 10, 30, 10, 40), "r": (92, 12, 34, 10, 46)}, wicks=(24, -24), flare=20, pitch=3,
+    held = _pose(r, comp=-0.44, bend=(86, 0), head=(-6, 4, 6), arms={"l": (90, 10, 30, 10, 40), "r": (92, 12, 34, 10, 46)}, wicks=(24, -24), flare=20, pitch=3,
                  lid=LID_OPEN + 8)
     return Move("pop", "LIGHT", 10, 4, 14, through=held, title="Pop", track=8.0, rng=(0, 4.0), kinds=("combo", "near"), damage=1.0, knock=0.8,
                 hit=[("head", (0, -7, 0), 9.0), ("fing_l", (0, 8, 0), 4.0), ("fing_r", (0, 8, 0), 4.0)], plant=(),
@@ -667,13 +667,13 @@ def pop(r):
 
 def slap(r):
     """The Slap (LIGHT, after the Pop): it twists away with its right arm drawn back across behind it, then swings it
-    round in a long backhand across in front of it, the spring twisting with it and its head turning after."""
+    round in a long backhand low across in front of it, the spring bowing and twisting with it and its head turning after."""
     gather = _pose(r, comp=0.12, twist=60, bend=(-8, 18), head=(-6, 30, 12), arms={"r": (36, 80, 50, 20, 14, 24), "l": (16, 30, 40, 10, 16)}, wicks=(14, 14), flare=8)
     peak = _pose(r, comp=0.24, twist=115, bend=(-16, 36), head=(-14, 50, 22), arms={"r": (60, 120, 70, 36, 30, 50), "l": (40, 50, 70, 20, 30)}, wicks=(26, 30),
                  flare=16, roll=2.5)
-    strike = _pose(r, comp=-0.15, twist=-50, bend=(24, -28), head=(6, -32, -12), arms={"r": (80, 10, 6, -20, -10, -30), "l": (0, 30, 40)}, wicks=(16, -20), flare=14,
+    strike = _pose(r, comp=-0.15, twist=-50, bend=(40, -28), head=(6, -32, -12), arms={"r": (60, 10, 6, -20, -10, -30), "l": (0, 30, 40)}, wicks=(16, -20), flare=14,
                    roll=-2)
-    out = _pose(r, comp=-0.12, twist=-64, bend=(20, -34), head=(4, -40, -14), arms={"r": (70, -20, 10, -10, 0, -40), "l": (-4, 34, 46)}, wicks=(10, -26), flare=12,
+    out = _pose(r, comp=-0.12, twist=-64, bend=(36, -34), head=(4, -40, -14), arms={"r": (50, -20, 10, -10, 0, -40), "l": (-4, 34, 46)}, wicks=(10, -26), flare=12,
                 roll=-2.5)
     return Move("slap", "LIGHT", 10, 4, 14, through=out, title="Slap", track=6.0, rng=(0, 4.2), kinds=("combo", "near"), damage=0.9, knock=1.0,
                 hit=[("fing_r", (0, 8, 0), 4.5), ("hand_r", (0, 3, 0), 4.0), ("forearm_r", (0, 8, 0), 3.5)], plant=(),
@@ -845,6 +845,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §47.5)
     mv = [pop(r), slap(r), pop_goes(r), bound(r), lines(r), lid_slam(r), shorter(r), ring(r), wake(r)]
     crank_turns = {"popgoes": (2, 0.25, 0.95), "lines": (1, 0.0, 0.8), "shorter": (4, 0.15, 0.95), "ring": (3, 0.3, 0.7), "wake": (2, 0.1, 0.6)}
     for m in mv:
@@ -878,24 +879,27 @@ MOVE_SOUNDS = {"lines": {"swing": "cast"}, "shorter": {"swing": "roar", "impact"
                "wake": {"swing": "roar", "impact": ""}, "lid": {"impact": "impact"}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 280,
     "intro": {"pose": "idle", "move": "wake"},  # the box shut; the crank ticks; it pops
     "phases": [
         {"pool": [
             {"move": "pop", "weight": 3, "when": "near", "then": [["slap"], ["slap", "pop"]]},
-            {"move": "slap", "weight": 2, "when": "near"},
-            {"move": "popgoes", "weight": 2, "when": "near"},
+            {"move": "slap", "weight": 2, "when": "near", "then": [["pop"]]},
+            {"move": "popgoes", "weight": 2, "when": "near", "then": [["slap"]]},
             {"move": "bound", "weight": 2, "when": "far", "then": [["pop"]]},
-            {"move": "lines", "weight": 3, "when": "far"},
-            {"move": "lid", "weight": 3, "when": "behind"},
+            {"move": "lines", "weight": 3, "when": "far", "then": [["bound"]]},
+            {"move": "lid", "weight": 3, "when": "behind", "then": [["pop"], ["slap"]]},
             {"move": "ring", "weight": 1},
         ]},
         # a shorter fuse, as in DeepBestiary: more lines, a wider ring
         {"transition": "shorter", "pool": [
             {"move": "pop", "weight": 3, "when": "near", "then": [["slap"], ["slap", "pop"]]},
-            {"move": "popgoes", "weight": 2, "when": "near"},
+            {"move": "popgoes", "weight": 2, "when": "near", "then": [["slap"]]},
             {"move": "bound", "weight": 2, "when": "far", "then": [["pop", "slap"]]},
-            {"move": "lines", "weight": 3, "when": "far"},
-            {"move": "lid", "weight": 3, "when": "behind"},
+            {"move": "lines", "weight": 3, "when": "far", "then": [["bound"]]},
+            {"move": "lid", "weight": 3, "when": "behind", "then": [["pop"], ["slap"]]},
             {"move": "ring", "weight": 2},
         ]},
     ],

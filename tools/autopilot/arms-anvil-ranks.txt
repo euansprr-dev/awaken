@@ -1,0 +1,136 @@
+# The War Anvil, stage 4 (SPEC §46.6, §46.9): the smithy grows and each rank's act. The stage 1 smithy at y 200,
+# level 100 and S-rank, creative (no parts), the songs played by autoplay. The Weapons tab's rebuild step; the door on a
+# plain anvil, where Forge it is Rebuild it; the four builds side by side (by day and by night) and a Lord's anvil carried;
+# then a Sovereign Longsword forged in full on a Lord's anvil with a grindstone by it: the twist, the draw out, the
+# starlight, the grind, the hilt, the balance on the horn, the card; the blade in hand and the rack behind the anvil.
+# ci knobs: LENS=cinematic
+world waranvil4 creative 4346
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+cmd awaken admin levels 100
+cmd awaken admin rankup
+cmd awaken admin rankup
+cmd awaken admin rankup
+cmd awaken admin rankup
+cmd awaken admin rankup
+wait 40
+screen close
+# the smithy's chunks first: a busy runner's server can fall seconds behind the script (fills there fail unloaded)
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd fill -6 201 9 6 205 9 minecraft:spruce_planks
+cmd fill -6 201 -3 -6 205 9 minecraft:spruce_planks
+cmd fill 6 201 -3 6 205 9 minecraft:spruce_planks
+cmd fill -6 206 -3 6 206 9 minecraft:dark_oak_planks
+cmd setblock -3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 0 205 2 minecraft:lantern[hanging=true]
+cmd setblock 0 205 7 minecraft:lantern[hanging=true]
+cmd setblock 0 201 4 awaken:war_anvil[facing=north]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+wait 20
+cmd awaken arms anvil autoplay true
+camera first
+hud on
+# the Weapons tab: the next rank's rebuild, its parts and the line for it
+wait 40
+screen holo tasks
+tasks weapons
+wait 30
+shot ranks_tasks
+screen close
+wait 10
+# the door on a plain anvil at S: Rebuild it where Forge it would be, and the line for what it takes
+cmd tp @s 0.5 201 3.25 0 35
+wait 10
+use
+wait 30
+shot ranks_door
+screen close
+wait 10
+# the four builds in a row: as built, Ironbound, the Deepglass horn, the Lord's anvil
+hud off
+cmd setblock 0 201 4 minecraft:air
+cmd setblock -3 201 7 awaken:war_anvil[facing=north,build=0]
+cmd setblock -1 201 7 awaken:war_anvil[facing=north,build=1]
+cmd setblock 1 201 7 awaken:war_anvil[facing=north,build=2]
+cmd setblock 3 201 7 awaken:war_anvil[facing=north,build=3]
+cmd tp @s 0.5 201 3 0 15
+wait 30
+shot ranks_builds
+cmd tp @s 2.4 201 5.4 -34 27
+wait 20
+shot ranks_lord_close
+cmd time set 18000
+cmd tp @s 0.5 201 3 0 15
+wait 30
+shot ranks_builds_night
+cmd time set 6000
+# a Lord's anvil carried looks as it was built
+hud on
+cmd tp @s 0.5 201 2.5 180 0
+cmd item replace entity @s weapon.mainhand with awaken:war_anvil[minecraft:block_state={build:"3"}]
+wait 20
+shot ranks_carried
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd fill -3 201 7 3 201 7 minecraft:air
+# the Lord's anvil for the forging, a grindstone beside it
+cmd setblock 0 201 4 awaken:war_anvil[facing=north,build=3]
+cmd setblock 2 201 4 minecraft:grindstone[face=floor,facing=north]
+wait 20
+cmd tp @s 0.5 201 3.25 0 35
+wait 10
+cmd awaken arms anvil forge sovereign_longsword
+# timed from the forge (a shot costs about 3 ticks): pulled at ~80, the twist's three turns ~92-128, strikes ~194-338,
+# the starlight's press at ~390, the grind's twenty ~402-500, the hilt's taps ~525-545, the balance ~545-615, drawn ~690
+wait 108
+shotnow ranks_twist
+wait 11
+shotnow ranks_twist_late
+wait 125
+shotnow ranks_strikes_twisted
+wait 99
+shotnow ranks_star_column
+wait 27
+shotnow ranks_star_ring
+wait 13
+shotnow ranks_star_glow
+wait 39
+shotnow ranks_grind
+wait 42
+shotnow ranks_grind_late
+wait 42
+shotnow ranks_hilt
+wait 42
+shotnow ranks_balance
+wait 27
+shotnow ranks_balance_level
+wait 42
+shotnow ranks_card
+wait 70
+shotnow ranks_drawn
+screen close
+wait 20
+# the Sovereign Longsword in hand: the twist's ripples in its steel, its runes woken by the starlight
+shot ranks_after
+# the rack behind the Lord's anvil, the new one standing in it, the runes and Heart in gold (no Lord killed)
+hud off
+cmd tp @s 0.5 201 6.6 180 18
+wait 20
+shot ranks_rack
+quit

@@ -97,7 +97,7 @@ final class ArmsRecoil {
         Minecraft mc = Minecraft.getInstance();
         if (e == mc.getCameraEntity()) return;
         Slot s = slot(e.getId());
-        long now = System.nanoTime();
+        long now = ArmsFeel.nanos();
         long freeze = ArmsComfort.hitStop() ? Math.max(0, freezeMs) * 1_000_000L : 0L;
         // the spring still settling carries on under the new one, its clock held through the new freeze
         if (s.entity == e.getId() && s.now.live && now < s.until) {
@@ -137,6 +137,24 @@ final class ArmsRecoil {
         anyUntil = Math.max(anyUntil, s.until);
     }
 
+    /**
+     * The server's word that a blow played at once killed (SPEC §47.1): the recoil already under way becomes the kill's,
+     * its fall the way the blow went, with no second shove.
+     */
+    static void killed(Entity e, Blow b) {
+        if (!(e instanceof LivingEntity) || !ArmsComfort.recoil()) return;
+        Slot s = null;
+        for (Slot x : SLOTS) if (x.entity == e.getId()) s = x;
+        if (s == null || s.kill || !s.now.live) return;
+        s.kill = true;
+        s.killAt = s.now.start;
+        s.killFreeze = 0;
+        s.fallX = b.dirX();
+        s.fallZ = b.dirZ();
+        s.until = s.now.start + KILL_LIFE;
+        anyUntil = Math.max(anyUntil, s.until);
+    }
+
     /** A body's death clock, less the kill's freeze: it holds upright through the beat, then falls on vanilla's timing. */
     static float fall(float deathTime, long since, long freeze) {
         float held = Math.min(since, freeze) / 50_000_000F;
@@ -146,7 +164,7 @@ final class ArmsRecoil {
 
     private static Slot slot(int entity) {
         for (Slot s : SLOTS) if (s.entity == entity) return s;
-        long now = System.nanoTime();
+        long now = ArmsFeel.nanos();
         for (Slot s : SLOTS) if (s.entity == Integer.MIN_VALUE || now > s.until) return fresh(s);
         Slot s = SLOTS[next];
         next = (next + 1) % POOL;
@@ -162,7 +180,7 @@ final class ArmsRecoil {
 
     /** Render-state modifier: the shove and the turn, this frame's tip and fall marked for {@link #onPre}. */
     static void modify(Entity entity, EntityRenderState state) {
-        if (!(state instanceof LivingEntityRenderState living) || System.nanoTime() > anyUntil) return;
+        if (!(state instanceof LivingEntityRenderState living) || ArmsFeel.nanos() > anyUntil) return;
         Slot s = null;
         for (Slot c : SLOTS) {
             if (c.entity == entity.getId()) {
@@ -171,7 +189,7 @@ final class ArmsRecoil {
             }
         }
         if (s == null) return;
-        long now = System.nanoTime();
+        long now = ArmsFeel.nanos();
         if (now > s.until || entity.isRemoved()) {
             fresh(s);
             return;

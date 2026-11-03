@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "root_saint",
  "moves": "root_saint",
+ "duel": true,
+ "stance": 240,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -25,16 +27,43 @@
     },
     {
      "move": "palm",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "ring"
+      ],
+      [
+       "sweep",
+       "sweep_b"
+      ]
+     ]
     },
     {
      "move": "lance",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "lance"
+      ],
+      [
+       "haul",
+       "sweep"
+      ]
+     ]
     },
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "sweep",
+       "sweep_b"
+      ],
+      [
+       "palm"
+      ]
+     ]
     },
     {
      "move": "haul",
@@ -67,11 +96,29 @@
     },
     {
      "move": "palm",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "ring"
+      ],
+      [
+       "sweep",
+       "sweep_b"
+      ]
+     ]
     },
     {
      "move": "lance",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "lance"
+      ],
+      [
+       "haul",
+       "sweep"
+      ]
+     ]
     },
     {
      "move": "grasp",
@@ -84,12 +131,29 @@
     },
     {
      "move": "ring",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "sweep"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "sweep",
+       "sweep_b"
+      ],
+      [
+       "palm"
+      ]
+     ]
     },
     {
      "move": "haul",
@@ -150,12 +214,29 @@
     },
     {
      "move": "ring",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "sweep"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "sweep",
+       "sweep_b"
+      ],
+      [
+       "palm"
+      ]
+     ]
     },
     {
      "move": "haul",
@@ -169,7 +250,12 @@
     },
     {
      "move": "halo",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "lance"
+      ]
+     ]
     }
    ]
   }

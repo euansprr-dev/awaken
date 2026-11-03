@@ -72,9 +72,12 @@ import java.util.UUID;
 
 /**
  * Reassessment trials (rank-ups) and the Hardline Penalty Zone, fought in walled arenas in {@code awaken:trials}.
- * D: survive three waves. C: waves, then the Second Awakening. B: duel a Gate Lord. A: a timed descent through five
- * rooms. S: a Sovereign's echo. Trials never kill: falling ends the attempt and sends you home. One attempt per
- * play-day.
+ * Every Reassessment is a Proving ({@link Provings}): the Ringer in the Drowned Belfry (D), the Examiner in the Hall of
+ * Reflections (C), the Unmade on the Broken Span (B), the Sky Warden in the cathedral (A), the Keeper's Shadow at the
+ * Court's threshold (S) and the Last Loop in the Cradle's antechamber (Sovereign). The old trials stay as practice
+ * ({@code /awaken admin trial dbox}, {@code cbox}, {@code bbox}, {@code abox}, {@code sbox}: waves, a duel with a Gate
+ * Lord, a timed descent, a Sovereign's echo). Trials never kill: falling ends the attempt and sends you home. One attempt
+ * per play-day (a Proving has no fail day).
  */
 public final class Trials {
     private Trials() {}
@@ -87,7 +90,9 @@ public final class Trials {
         DUEL("Face a Gate Lord alone.", 1, 20 * 60 * 5),
         DESCENT("Five rooms down. Four minutes.", 5, 20 * 60 * 4),
         SOVEREIGN("Face a Sovereign's echo.", 1, 20 * 60 * 6),
-        PENALTY("Survive four minutes in the desert at night.", 99, 20 * 60 * 4);
+        PENALTY("Survive four minutes in the desert at night.", 99, 20 * 60 * 4),
+        /** A Warden in its own hall (SPEC §47.4, §47.6 to §47.9): never announced, no clock; run by {@link Provings}. */
+        PROVING("", 1, Integer.MAX_VALUE);
 
         public final String text;
         public final int stages;
@@ -101,10 +106,12 @@ public final class Trials {
 
         public static Kind forTarget(Rank target) {
             return switch (target) {
-                case D -> WAVES;
-                case C -> AWAKENING;
-                case B -> DUEL;
-                case A -> DESCENT;
+                case D -> PROVING;
+                case C -> PROVING;
+                case B -> PROVING;
+                case A -> PROVING;
+                case S -> PROVING;
+                case SOVEREIGN -> PROVING;
                 default -> SOVEREIGN;
             };
         }
@@ -133,6 +140,8 @@ public final class Trials {
         State state = State.ACTIVE;
         final ServerBossEvent bar;
         int spread;
+        /** A Proving's run, shared by its party (null for the box trials). */
+        Provings.@Nullable Run run;
 
         Session(UUID player, Kind kind, Rank target, ServerLevel level, BlockPos centre, boolean teleported, boolean practice, int cell) {
             this.player = player;
@@ -157,9 +166,9 @@ public final class Trials {
         public Rank target() { return target; }
     }
 
-    private static final Map<UUID, Session> SESSIONS = new HashMap<>();
+    static final Map<UUID, Session> SESSIONS = new HashMap<>();
     /** Ended sessions kept briefly so tests and commands can read the result. */
-    private static final Map<UUID, State> LAST = new HashMap<>();
+    static final Map<UUID, State> LAST = new HashMap<>();
 
     public static void init() {
         var bus = NeoForge.EVENT_BUS;
@@ -167,6 +176,7 @@ public final class Trials {
         bus.addListener(EventPriority.HIGHEST, Trials::onDeath);
         bus.addListener(Trials::onLogout);
         bus.addListener(Trials::onLogin);
+        Provings.init();
         bus.addListener((ServerStoppedEvent e) -> {
             SESSIONS.clear();
             LAST.clear();
@@ -196,9 +206,9 @@ public final class Trials {
         }
         if (inTrial(sp)) return;
         Rank next = p.rank().next();
-        if (next == null || next == Rank.SOVEREIGN) {
-            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal(next == null ? "There is no rank above yours" : "Not here"))
-                    .body(Component.literal(next == null ? "The Monolith hums your name and nothing else." : "Your last Reassessment waits at the Seed."))
+        if (next == null) {
+            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal("There is no rank above yours"))
+                    .body(Component.literal("The Monolith hums your name and nothing else."))
                     .ttl(20 * 8).build());
             return;
         }
@@ -208,6 +218,12 @@ public final class Trials {
                     .ttl(20 * 8).build());
             return;
         }
+        Kind kind = Kind.forTarget(next);
+        if (kind == Kind.PROVING) {
+            // a Proving announces nothing (SPEC §47.4): the same measuring as your first day, and no fail day to wait out
+            Signal.send(sp, Provings.window(sp, next));
+            return;
+        }
         HearthPlayer hp = HearthService.player(sp);
         long today = PlayDays.current(level.getServer());
         if (hp.trialFailDay == today) {
@@ -215,7 +231,6 @@ public final class Trials {
                     .body(Component.literal("You've been tested today. Rest. It will listen again next play-day.")).ttl(20 * 8).build());
             return;
         }
-        Kind kind = Kind.forTarget(next);
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal(next.label + "-rank Reassessment"))
                 .body(Component.literal(kind.text + " If you fall, you wake at home and can try again next play-day."))
                 .row(Component.literal("Trial"), Component.literal(kind.name().charAt(0) + kind.name().substring(1).toLowerCase(java.util.Locale.ROOT)))
@@ -229,6 +244,7 @@ public final class Trials {
     /** Sends the player to a fresh arena cell for this trial. */
     public static boolean start(ServerPlayer sp, Kind kind, Rank target, boolean practice) {
         if (inTrial(sp)) return false;
+        if (kind == Kind.PROVING) return Provings.open(sp, target, practice);
         MinecraftServer server = sp.level().getServer();
         ServerLevel trials = server.getLevel(DIMENSION);
         if (trials == null) {
@@ -270,14 +286,6 @@ public final class Trials {
 
     private static void begin(ServerPlayer sp, Session s) {
         s.nextStageAt = s.level.getGameTime() + (s.teleported ? 60 : 5);
-        if (s.kind == Kind.WAVES && s.target == Rank.D && !s.practice) {
-            // the first Proving (SPEC §43.8): the Reading Bell won't stop, and the System breaks for the first time since
-            // the awakening; the first wave waits for the screen to come back
-            dev.awaken.fault.Fault ringer = new dev.awaken.fault.Fault(dev.awaken.fault.Fault.Size.GREAT, "ringer",
-                    java.util.List.of("[ERROR] … THAT'S NOT OUR BELL", "READING · RANK ▮ · RANK ▮ · RANK ▮"), "[ERROR] it rang for you last time too",
-                    "That isn't the Registry's bell. Something else is ringing it.", null, null, 0, true);
-            if (dev.awaken.fault.Faults.play(sp, ringer) == dev.awaken.fault.Fault.Size.GREAT) s.nextStageAt += ringer.length();
-        }
         s.bar.addPlayer(sp);
         // on the Boss Plate's glass (SPEC §35.1): no creature, so it draws from the bar alone
         dev.awaken.core.api.BossPlates.bind(sp, s.bar.getId(), -1, dev.awaken.core.api.BossPlates.Kind.LORD, new float[0],
@@ -293,14 +301,16 @@ public final class Trials {
     // ---- ticking ----------------------------------------------------------------------------------------------------
 
     private static void onTick(ServerTickEvent.Post e) {
-        if (SESSIONS.isEmpty()) return;
         MinecraftServer server = e.getServer();
+        Provings.tick(server);
+        if (SESSIONS.isEmpty()) return;
         for (Session s : List.copyOf(SESSIONS.values())) {
             ServerPlayer sp = server.getPlayerList().getPlayer(s.player);
             if (sp == null) {
                 end(server, s, false, "left");
                 continue;
             }
+            if (s.kind == Kind.PROVING) continue; // its run ticks it
             if (s.teleported && sp.level() != s.level) {
                 end(server, s, false, "left");
                 continue;
@@ -419,20 +429,25 @@ public final class Trials {
     }
 
     private static @Nullable LivingEntity spawnBoss(Session s, String bossId, BlockPos at, int lv) {
-        LivingEntity b = MobHooks.spawnBoss(s.level, bossId, at, lv, "trial:" + s.player);
-        if (b == null) b = MobHooks.spawnThemed(s.level, "", MobRole.Role.BOSS, at, lv, Set.of(), "trial:" + s.player);
+        LivingEntity b = bossOrStandIn(s.level, bossId, at, lv, "trial:" + s.player);
+        ServerPlayer sp = s.level.getServer().getPlayerList().getPlayer(s.player);
+        track(s, b, sp);
+        return b;
+    }
+
+    /** The boss asked for, else any boss, else a vanilla stand-in: a trial can never soft-lock. */
+    static @Nullable LivingEntity bossOrStandIn(ServerLevel level, String bossId, BlockPos at, int lv, String tag) {
+        LivingEntity b = MobHooks.spawnBoss(level, bossId, at, lv, tag);
+        if (b == null) b = MobHooks.spawnThemed(level, "", MobRole.Role.BOSS, at, lv, Set.of(), tag);
         if (b == null) {
-            // Last resort: a vanilla stand-in so a trial can never soft-lock.
-            Mob m = EntityTypes.ZOMBIE.create(s.level, EntitySpawnReason.MOB_SUMMONED);
+            Mob m = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.MOB_SUMMONED);
             if (m != null) {
                 m.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
-                MobHooks.scale(m, lv, new MobRole(MobRole.Role.BOSS, lv, "", Optional.of(bossId), "trial:" + s.player));
-                s.level.addFreshEntity(m);
+                MobHooks.scale(m, lv, new MobRole(MobRole.Role.BOSS, lv, "", Optional.of(bossId), tag));
+                level.addFreshEntity(m);
                 b = m;
             }
         }
-        ServerPlayer sp = s.level.getServer().getPlayerList().getPlayer(s.player);
-        track(s, b, sp);
         return b;
     }
 
@@ -507,10 +522,12 @@ public final class Trials {
     // ---- ending -----------------------------------------------------------------------------------------------------
 
     static void end(MinecraftServer server, Session s, boolean passed, String why) {
+        if (s.kind == Kind.PROVING) {
+            Provings.end(server, s, passed, why);
+            return;
+        }
         SESSIONS.remove(s.player);
         s.state = passed ? State.PASSED : State.FAILED;
-        if (s.kind == Kind.WAVES && s.target == Rank.D && !s.practice && server.getPlayerList().getPlayer(s.player) instanceof ServerPlayer rung)
-            dev.awaken.fault.Faults.mend(rung); // the bell stops: the System steadies, held or not
         LAST.put(s.player, s.state);
         s.bar.removeAllPlayers();
         for (UUID u : s.mobs) {
@@ -625,6 +642,10 @@ public final class Trials {
         Session s = SESSIONS.get(sp.getUUID());
         if (s == null) return;
         e.setCanceled(true);
+        if (s.kind == Kind.PROVING) {
+            Provings.fell(sp, s, e.getSource()); // you wake at the hall's door, free to go again now
+            return;
+        }
         sp.setHealth(Math.max(1f, sp.getMaxHealth() * 0.5f));
         sp.clearFire();
         sp.removeAllEffects();

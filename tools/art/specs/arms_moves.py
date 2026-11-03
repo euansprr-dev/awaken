@@ -407,6 +407,28 @@ def _rig():
 _rig()
 
 
+def _keyed():
+    """The hand-keyed styles' third person (tools/art/arms_keys.py third, SPEC §25 "Hand-keyed moves"): each arm
+    follows its own blade from first person's keys; the slide's, the fall's and the dodge's too, and the heavy's draw."""
+    import arms_rig4 as R4
+    path = os.path.join(HERE, "arms_keys3.json")
+    if not os.path.exists(path):
+        return
+    for style, moves in json.load(open(path))["styles"].items():
+        for move, d in moves.items():
+            own = f"arms_{style}_{move}"
+            base = own if own in BASE else f"arms_{move}"
+            CLIPS[own], CLIPS[own + "_bent"] = R4.make_clips(own, BASE[base], BASE[base + "_bent"], d,
+                                                             f"{style}: {move} (from first person's keys)")
+        if "heavy" in moves:
+            base = f"arms_{style}_heavy" if f"arms_{style}_heavy" in BASE else "arms_heavy"
+            for c_ in R4.charge_clips(style, BASE[base], BASE[base + "_bent"], moves["heavy"]):
+                CLIPS[c_.name] = c_
+
+
+_keyed()
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Output, checks, previews
 

@@ -2196,7 +2196,7 @@
           "posture": 2,
           "arc": 30,
           "reach": 2.5,
-          "hitstop": 35,
+          "hitstop": 50,
           "swing": {
             "from": [
               0.1,
@@ -2226,7 +2226,7 @@
           "posture": 2,
           "arc": 30,
           "reach": 2.5,
-          "hitstop": 35,
+          "hitstop": 50,
           "swing": {
             "from": [
               -0.8,
@@ -2257,7 +2257,7 @@
           "posture": 3,
           "arc": 90,
           "reach": 2.7,
-          "hitstop": 40,
+          "hitstop": 60,
           "swing": {
             "from": [
               -0.2,
@@ -2288,7 +2288,7 @@
           "posture": 6,
           "arc": 30,
           "reach": 2.6,
-          "hitstop": 55,
+          "hitstop": 80,
           "finisher": true,
           "swing": {
             "from": [

@@ -161,6 +161,7 @@ object per entity (no per-frame allocation of our own).
 | `awaken:crypt_keeper` | Crypt Keeper | elite | wither_skeleton | Bell Slam: lifts its blade over its head and brings the floor down | Bell Slam, Coffin Rush |
 | `awaken:the_sexton` | The Sexton | Warden | warden | Hunts by the toll of your footsteps; its Knell tears at the spirit | Knell, Grave Stamp, Last Light |
 | `awaken:bell_warden` | The Bell Warden | Gate Lord; parts: `awaken:bell_clapper`, `awaken:crypt_bronze` | bell | Toll Waves you dodge by stepping in; halfway through, the statues move | Toll Wave, Clapper Strike, Echo Bolts, The Statues Move, Bell Rush, Grand Peal, Shattered Bronze |
+| `awaken:proving_ringer` | The Ringer | Proving Warden | human | A bell-ringer that drowned at its ropes and kept ringing | Clang, Drowned Toll, Peal |
 
 ### Fungal Hollow (`awaken:fungal_hollow`)
 
@@ -285,7 +286,7 @@ object per entity (no per-frame allocation of our own).
 | `awaken:coil_unit` | Coil Unit | normal | blaze | Coil Bolts, and a discharge if you crowd it | Coil Bolt, Discharge |
 | `awaken:gel_sample` | Gel Sample | elite | slime | Containment Breach: splits in two when killed | Containment Breach |
 | `awaken:the_sweeper` | The Sweeper | Warden | ravager | Purge Protocol: a charge, a sweep, a decontamination blast | Purge Protocol, Sweep, Decon Blast |
-| `awaken:unit_zero` | Unit Zero | Gate Lord; parts: `awaken:zero_core`, `awaken:precursor_plating` | human | Counts down in no language: lances, orbital marks, Zero Point | Zero Lance, Phase Step, Deploy Coils, Orbital Mark, Zero Point |
+| `awaken:unit_zero` | Unit Zero | Gate Lord; parts: `awaken:zero_core`, `awaken:zero_plating` | human | Counts down in no language: lances, orbital marks, Zero Point | Zero Lance, Phase Step, Deploy Coils, Orbital Mark, Zero Point |
 
 ### Nightmare (`awaken:nightmare`)
 

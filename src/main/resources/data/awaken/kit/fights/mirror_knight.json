@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "mirror_knight",
  "moves": "mirror_knight",
+ "duel": true,
+ "stance": 280,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -22,7 +24,16 @@
     {
      "move": "feint",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "thrust",
+       "cut"
+      ],
+      [
+       "riposte"
+      ]
+     ]
     },
     {
      "move": "parry",
@@ -47,7 +58,16 @@
     {
      "move": "back",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "riposte"
+      ],
+      [
+       "thrust",
+       "cut"
+      ]
+     ]
     }
    ]
   },
@@ -70,7 +90,16 @@
     {
      "move": "feint",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "thrust",
+       "cut"
+      ],
+      [
+       "riposte"
+      ]
+     ]
     },
     {
      "move": "parry",
@@ -103,7 +132,16 @@
     {
      "move": "back",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "riposte"
+      ],
+      [
+       "thrust",
+       "cut"
+      ]
+     ]
     }
    ]
   },
@@ -136,7 +174,16 @@
     {
      "move": "feint",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "thrust",
+       "cut"
+      ],
+      [
+       "riposte"
+      ]
+     ]
     },
     {
      "move": "parry",
@@ -162,7 +209,16 @@
     {
      "move": "back",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "riposte"
+      ],
+      [
+       "thrust",
+       "cut"
+      ]
+     ]
     }
    ]
   }

@@ -3,8 +3,9 @@
 
 docs/arms-progression/PLAN.md §3.5 ("Source lines are data, and a test enforces them"). Read from the sources the game
 reads, so it can't drift:
-  - the recipes (data/awaken/recipe, groups awaken_hunter_* and awaken_arms_*) for the ingredients, tags resolved
-    through every tag file (src/main/resources and src/main/merge/*/);
+  - the recipes (data/awaken/recipe, groups awaken_hunter_* and awaken_arms_*) and the War Anvil's cost table
+    (data/awaken/arms/anvil_costs.json) for the ingredients, tags resolved through every tag file (src/main/resources
+    and src/main/merge/*/);
   - the creature loot tables (data/awaken/loot_table/entities) for which creatures drop each item.
 Hand-written lines for the rest live in the lang files under awaken.source.<namespace>.<path>; the GameTest
 `arms_sources` fails when an ingredient has neither a creature or a line.
@@ -20,6 +21,7 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 RES = os.path.join(ROOT, "src", "main", "resources", "data", "awaken")
 OUT = os.path.join(RES, "arms", "sources.json")
+COSTS = os.path.join(RES, "arms", "anvil_costs.json")
 GROUPS = ("awaken_hunter_", "awaken_arms_")
 MAX_CREATURES = 5
 
@@ -93,6 +95,23 @@ def main():
             else:
                 ingredients.add(token)
         if r["group"] == "awaken_hunter_blade":
+            blades["awaken:" + rid] = {k: counts[k] for k in sorted(counts)}
+    # Hunter armour is forged at a Fitting Stand (SPEC §44.4, its costs in ForgeSong): its hides and bindings are still ingredients
+    for t in "edcbas":
+        for kind in ("hide", "bind"):
+            ingredients.update(i for i in resolve_tag("awaken:hunter_" + kind + "_" + t) if not i.startswith("#"))
+    # weapons and Hunter blades are forged at a War Anvil (SPEC §46.7): their parts are its cost table's
+    for rid, parts in sorted(json.load(open(COSTS))["costs"].items()):
+        counts = {}
+        for token, n in parts:
+            k = kind_of(token)
+            if k:
+                counts[k] = counts.get(k, 0) + n
+            if token.startswith("#"):
+                ingredients.update(i for i in resolve_tag(token[1:]) if not i.startswith("#"))
+            else:
+                ingredients.add(token)
+        if rid.endswith("_blade"):
             blades["awaken:" + rid] = {k: counts[k] for k in sorted(counts)}
 
     drops = {}

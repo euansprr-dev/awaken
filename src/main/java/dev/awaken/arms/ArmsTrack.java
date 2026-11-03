@@ -20,7 +20,7 @@ import java.util.List;
  * Track (docs/arms-progression/PLAN.md §3.5): one weapon at a time on the task card (top right) with what it still needs,
  * and the first thing missing on the Now line (priority 52, under places and rifts). Ends by itself when the weapon is made.
  */
-final class ArmsTrack {
+public final class ArmsTrack {
     private ArmsTrack() {}
 
     static final int PRIORITY = 52;
@@ -43,7 +43,7 @@ final class ArmsTrack {
     }
 
     /** What the card says for a need: "E-rank Part (bone, flint, quartz)", or an item's name. */
-    static String label(ArmsPayloads.NeedRow n) {
+    public static String label(ArmsPayloads.NeedRow n) {
         Identifier id = Identifier.parse(n.id());
         if (n.kind().equals("tag")) {
             String name = ArmsLang.get("tag.item." + id.getNamespace() + "." + id.getPath());
@@ -89,6 +89,6 @@ final class ArmsTrack {
             String text = weaponName(t) + ": still need " + (n.need() - n.have()) + " more " + label(n);
             return List.of(NowHooks.Suggestion.of("arms:track", PRIORITY, text));
         }
-        return List.of(NowHooks.Suggestion.of("arms:track", PRIORITY, "You have everything for " + weaponName(t) + ": make it at a Forge"));
+        return List.of(NowHooks.Suggestion.of("arms:track", PRIORITY, "You have everything for " + weaponName(t) + ": forge it at your War Anvil"));
     }
 }

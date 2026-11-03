@@ -1,0 +1,133 @@
+# Fights stage 5, the fourth Proving (SPEC §47.8): the Sky Warden and the cathedral above the clouds, in a practice
+# Proving (/awaken admin trial A). A burst of quick shots every 15 ticks catches the wake on the cloud looking up, the
+# font opening and the light lifting you up the shaft, the font shutting, the light coming down in the nave and the Sky
+# Warden kneeling in it (the burst covers the hall's readying and the lift, whose lengths vary). Then the Sky Warden held
+# still facing you, and as a spectator: the whole cathedral from the south-east, from the cloud under its west front,
+# the nave from the door, the aisles groaning and falling at two thirds (/awaken admin trial half), the roof lifting away
+# at a third (/awaken admin trial third) and the open sky over it, and the win and the mending.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-cathedral.txt
+world autopilot_fights_cathedral creative 20261103
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+hud off
+
+# --- the bell, then the burst: on the cloud, the font opening, the lift, the light coming down, it kneeling there ---
+cmd awaken admin trial A
+wait 30
+shotnow cath_b01
+wait 15
+shotnow cath_b02
+wait 15
+shotnow cath_b03
+wait 15
+shotnow cath_b04
+wait 15
+shotnow cath_b05
+wait 15
+shotnow cath_b06
+wait 15
+shotnow cath_b07
+wait 15
+shotnow cath_b08
+wait 15
+shotnow cath_b09
+wait 15
+shotnow cath_b10
+wait 15
+shotnow cath_b11
+wait 15
+shotnow cath_b12
+wait 15
+shotnow cath_b13
+look 180 -8
+wait 15
+shotnow cath_b14
+wait 15
+shotnow cath_b15
+wait 15
+shotnow cath_b16
+wait 15
+shotnow cath_b17
+wait 15
+shotnow cath_b18
+wait 15
+shotnow cath_b19
+wait 15
+shotnow cath_b20
+wait 15
+shotnow cath_b21
+wait 15
+shotnow cath_b22
+wait 40
+
+# --- it faces you (held still for the shots: in creative it has no one to fight and wanders off). First you stand in
+# the nave's middle 20 south of where it came down (0, 1, 6), so the views after are measured from there ---
+cmd execute at @e[type=awaken:proving_sky_warden,limit=1] run tp @s ~ ~ ~20 180 0
+cmd data merge entity @e[type=awaken:proving_sky_warden,limit=1] {NoAI:1b}
+cmd tp @e[type=awaken:proving_sky_warden,limit=1] ^ ^ ^12 facing entity @p
+look 180 -10
+wait 20
+shot cath_01_warden
+
+# --- the whole cathedral from the south-east, high (40, 22, 45) ---
+cmd gamemode spectator
+cmd tp @s ~40 ~21 ~39 138 11
+wait 40
+shot cath_02_whole
+
+# --- from the cloud under the west front, looking up (6, -24, 50) ---
+cmd tp @s ~-34 ~-46 ~5 173 -26
+wait 30
+shot cath_03_under
+
+# --- the nave from inside the door (0, 4, 30), looking north to the apse ---
+cmd tp @s ~-6 ~28 ~-20 180 -6
+wait 30
+shot cath_04_nave
+
+# --- at two thirds the aisles groan and fall, from outside the east aisle (30, 12, 10), looking west ---
+cmd tp @s ~30 ~8 ~-20 90 14
+wait 20
+cmd awaken admin trial half
+wait 30
+shot cath_05_creak
+wait 80
+shot cath_06_falling
+wait 70
+shot cath_07_fallen
+
+# --- at a third the roof lifts away, from the nave's floor (0, 2, 26) looking up the nave ---
+cmd tp @s ~-30 ~-10 ~16 180 -34
+wait 20
+cmd awaken admin trial third
+wait 30
+shot cath_08_lifting
+wait 40
+shot cath_09_open
+
+# --- the open sky over it from the south-east, high (30, 40, 50) ---
+cmd tp @s ~30 ~38 ~24 149 34
+wait 30
+shot cath_10_open_sky
+
+# --- beaten, and the cathedral mends from the apse to the door ---
+cmd kill @e[type=awaken:proving_sky_warden]
+wait 60
+hud on
+shot cath_11_won
+hud off
+wait 40
+shot cath_12_mending
+hud on
+quit

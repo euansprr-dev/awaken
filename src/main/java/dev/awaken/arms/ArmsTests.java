@@ -43,6 +43,7 @@ final class ArmsTests {
         AwakenTests.register("arms_timeline", 20, ArmsTests::timeline);
         AwakenTests.register("arms_defence_rules", 20, ArmsTests::defenceRules);
         AwakenTests.register("arms_strike_arc", 60, ArmsTests::strikeArc);
+        HitNowTests.register(); // SPEC §47.1: the client's sweep and the server's
         AwakenTests.register("arms_damage_stack", 60, ArmsTests::damageStack);
         AwakenTests.register("arms_deflect", 60, ArmsTests::deflect);
         AwakenTests.register("arms_deflect_latency", 80, ArmsTests::deflectLatency);
@@ -65,6 +66,7 @@ final class ArmsTests {
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
+        AwakenTests.register("arms_dagger_click", 40, ArmsTests::daggerClick);
         AwakenTests.register("arms_attack_key", 20, ArmsTests::attackKey);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
         AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
@@ -92,8 +94,20 @@ final class ArmsTests {
             }
             checked++;
         }
-        // Hunter armour is forged at a Fitting Stand (SPEC §44.4): 18 gear pieces keep recipes
-        h.assertTrue(checked >= 114, "the gear and arms recipes were read (18 gear pieces and 96 weapons): " + checked);
+        // weapons and Hunter blades are forged at a War Anvil (SPEC §46.7): their parts are its cost table's
+        for (var e : dev.awaken.arms.anvil.AnvilCosts.table().entrySet()) {
+            for (var part : e.getValue()) {
+                java.util.List<Identifier> items = new java.util.ArrayList<>();
+                if (part.kind().equals("tag")) {
+                    BuiltInRegistries.ITEM.getTagOrEmpty(net.minecraft.tags.TagKey.create(Registries.ITEM, Identifier.parse(part.id())))
+                            .forEach(hold -> items.add(BuiltInRegistries.ITEM.getKey(hold.value())));
+                } else items.add(Identifier.parse(part.id()));
+                for (Identifier id : items) h.assertTrue(ArmsSources.isIngredient(id), id + " is a part of " + e.getKey() + " at the War Anvil but not in sources.json: run python3 tools/arms/sources.py");
+            }
+            checked++;
+        }
+        // Hunter armour is forged at a Fitting Stand (SPEC §44.4), weapons and blades at a War Anvil: 12 gear pieces keep recipes
+        h.assertTrue(checked >= 114, "the gear recipes and the War Anvil's costs were read (12 gear pieces, 96 weapons and 6 blades): " + checked);
         java.util.Set<String> lang = new java.util.HashSet<>();
         try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/lang/en_us.json")) {
             h.assertTrue(in != null, "the merged lang file is on the classpath");
@@ -147,9 +161,10 @@ final class ArmsTests {
             };
             h.assertTrue(stack.is(tag), w.id() + " is in " + tag.location() + " to vanilla (its enchantments)");
             var recipe = ResourceKey.create(Registries.RECIPE, Awaken.id(w.id()));
-            boolean crafted = h.getLevel().getServer().getRecipeManager().byKey(recipe).isPresent();
-            if (LordForged.byWeapon(w.id()) != null) h.assertTrue(!crafted, w.id() + " only drops (a Lord-forged weapon has no recipe)");
-            else h.assertTrue(crafted, w.id() + " has its recipe");
+            h.assertTrue(h.getLevel().getServer().getRecipeManager().byKey(recipe).isEmpty(), w.id() + " has no grid recipe (SPEC §46.7)");
+            boolean costed = dev.awaken.arms.anvil.AnvilCosts.of(w.id()) != null;
+            if (LordForged.byWeapon(w.id()) != null) h.assertTrue(!costed, w.id() + " only drops (a Lord-forged weapon isn't forged at the anvil)");
+            else h.assertTrue(costed, w.id() + " has its War Anvil cost");
             for (String file : new String[]{"items/" + w.id() + ".json", "models/item/" + w.id() + ".json", "models/item/" + w.id() + "_in_hand.json",
                     "textures/item/arms/" + w.id() + ".png", "textures/item/arms/" + w.id() + "_icon.png", "arms/weapons/" + w.id() + ".mesh"}) {
                 h.assertTrue(ArmsTests.class.getResource("/assets/awaken/" + file) != null, w.id() + ": " + file + " is on the classpath");
@@ -419,15 +434,25 @@ final class ArmsTests {
                     FpSwings.sample(st, e.getKey(), def.cadence().get(0), true, w, qw);
                     h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F,
                             a.id() + " " + e.getKey() + " waits still from the earliest press to its end");
+                } else if (FpSwings.stance(st, true, w, qw)) { // a hand-keyed style rests in its stance (SPEC §25 "Hand-keyed moves")
+                    h.assertTrue(w.distance(d) < 1e-3F && Math.abs(Math.abs(qw.dot(q)) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends in its stance");
                 } else {
                     h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
+                }
+                if (st.stance() != null) { // a hand-keyed move kicks along its own blade (SPEC §25 "The hit on the blade")
+                    float[] kick = FpSwings.kick(st, e.getKey());
+                    boolean nod = kick != null && kick[0] == 0 && kick[1] > 0; // a stab's, in a touch
+                    boolean along = kick != null && Math.abs(Math.hypot(kick[0], kick[1]) - 1) < 0.01; // a cut's, a unit
+                    h.assertTrue(nod || along, a.id() + " " + e.getKey() + " kicks along its blade");
                 }
                 // third person's wrist (ArmsWrist): home by the clip's end, and from the hand's rest unless loosed from a
                 // held draw (no wind-up: it starts as the charge held it)
                 float len = FpSwings.wristLength(st, e.getKey());
+                // a hand-keyed style's chain strike after the first starts where the one before left the wrist
+                boolean carried = st.stance() != null && i > 0;
                 for (boolean left : new boolean[]{false, true}) {
                     for (boolean straight : new boolean[]{false, true}) { // with Bendable Cuboids' elbows and without
-                        for (float t : def.windup() > 0 ? new float[]{0, len} : new float[]{len}) {
+                        for (float t : def.windup() > 0 && !carried ? new float[]{0, len} : new float[]{len}) {
                             if (FpSwings.wrist(st, e.getKey(), left, straight, t, q)) {
                                 h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square"
                                         + (straight ? " (straight arms)" : ""));
@@ -565,7 +590,7 @@ final class ArmsTests {
         for (ArmsForge.Cost c : ArmsForge.blueprintPrice()) p.getInventory().add(new ItemStack(c.item(), c.n()));
         h.assertTrue(ArmsForge.drawBlueprint(p, "glaive") && ArmsForge.owns(p, "glaive"), "a Glaive Blueprint drawn");
         Item bp = ArmsItems.BLUEPRINTS.get("glaive").get();
-        h.assertTrue(bp.getCraftingRemainder(new ItemStack(bp)) != null, "the crafting grid gives a Blueprint back");
+        h.assertTrue(bp.getCraftingRemainder(new ItemStack(bp)) == null, "a Blueprint goes into nothing now (SPEC §46.7): it teaches when used");
         h.assertTrue(!ArmsItems.BLUEPRINTS.containsKey(Arms.LONGSWORD) && ArmsItems.BLUEPRINTS.size() == 15, "every style but the Longsword has one");
         h.succeed();
     }
@@ -749,8 +774,8 @@ final class ArmsTests {
         h.assertTrue(ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.BOSS) == ArmsRules.POSTURE_LORD
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.ELITE) == ArmsRules.POSTURE_ELITE
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.NONE) == ArmsRules.POSTURE_NORMAL, "stances by role");
-        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 80 && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500,
-                "an Execution takes at most 8% of a Lord");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true) == 100
+                        && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §47.3)");
         h.assertTrue(ArmsRules.focusTurn(20, 0) == ArmsRules.FOCUS_TURN && ArmsRules.focusTurn(90, 0) == 0, "soft focus turns at most 15°, only near");
         h.succeed();
     }
@@ -879,6 +904,37 @@ final class ArmsTests {
             if (pig.getHealth() < 200) landed = t;
         }
         h.assertTrue(landed == limit, "unanswered, the waiting strike lands " + limit + " ticks in (landed at " + landed + ")");
+        done(h, p);
+    }
+
+    /**
+     * A dagger strikes on the click (SPEC §25 "Hand-keyed moves"): a press still down lands its strike at its wind-up's
+     * end, as a tap's does, shown to everyone near at once; held on, the charge follows the stab and never takes it back.
+     * Every other style's held press still waits (arms_tap_or_hold).
+     */
+    static void daggerClick(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ArmsItems.item("gatewrought_daggers")));
+        LivingEntity pig = put(h, EntityTypes.PIG, 1.5, 2.3, 200);
+        ArmsState s = ArmsServer.state(p);
+        Archetypes.Loaded daggers = Archetypes.get("daggers");
+        Archetype.MoveDef s1 = daggers.move(Archetype.Move.STRIKE_1);
+        Archetype.Charge c = daggers.move(Archetype.Move.HEAVY).charge().orElseThrow();
+        long t0 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && !s.waitHit && !s.waitSeen, "a dagger's press starts strike 1, shown at once, never waiting on the press");
+        int landed = -1;
+        for (int t = 0; t < c.min(); t++) {
+            ArmsServer.moveTick(p, s, t0 + t);
+            if (landed < 0 && pig.getHealth() < 200) landed = t;
+        }
+        h.assertTrue(landed == s1.windup(), "held down, it lands at its wind-up's end all the same, " + s1.windup() + " ticks in (landed at " + landed + ")");
+        float struck = pig.getHealth();
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
+        h.assertTrue(s.chargeSeq == 1 && s.chargeStart != ArmsState.NO_CHARGE && pig.getHealth() == struck,
+                "held on, the charge follows the stab and the stab stands");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_RELEASE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.HEAVY, "let go: the heavy (" + s.move + ")");
         done(h, p);
     }
 

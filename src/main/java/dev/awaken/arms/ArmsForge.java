@@ -6,7 +6,6 @@ import dev.awaken.core.api.HearthHooks;
 import dev.awaken.powers.Fx;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.signal.Signal;
-import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -28,18 +27,16 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.function.Consumer;
 
 /**
- * Arms at the Forge (SPEC §25 "The Forge"): sneak and use Hearth's Forge. Holding one of our weapons: attune it to a
- * Force, named by the catalyst in the off hand: the Lands' crystals and the deep's (SPEC §28.3: Sunshard Heat, Frostspar
- * Frost, a Fault Seam Gravity, a Copper Ingot Charge, a Deepglass Shard Spirit), for essence and a Core Shard. With an
- * empty hand: draw a style's Blueprint in lapis ink, one style each use in turn. An attuned weapon's riders take its Force, and it primes both ways: a landed hit makes the
- * next power cost less, and a power of its Force makes the next blow land harder with that Force's touch.
+ * Arms at the Forge (SPEC §25 "The Forge"): use Hearth's Forge with an empty hand for the Armoury and a Blueprint drawn
+ * in lapis ink. Attunement: a weapon takes a Force named by a catalyst (the Lands' crystals and the deep's, SPEC §28.3:
+ * Sunshard Heat, Frostspar Frost, a Fault Seam Gravity, a Copper Ingot Charge, a Deepglass Shard Spirit), for essence
+ * and a Core Shard, set at a War Anvil since SPEC §46.8 (the Forge says so, and that weapons are tempered there). An
+ * attuned weapon's riders take its Force, and it primes both ways: a landed hit makes the next power cost less, and a
+ * power of its Force makes the next blow land harder with that Force's touch.
  */
 public final class ArmsForge {
     private ArmsForge() {}
@@ -119,35 +116,6 @@ public final class ArmsForge {
 
     // ---- at the Forge -------------------------------------------------------------------------------------------------
 
-    private record Pending(long expires, Consumer<ServerPlayer> onAccept) {}
-
-    private static final Map<UUID, Pending> PENDING = new HashMap<>();
-
-    static void init() {
-        Signal.onAction(PREFIX, (player, action, accepted) -> {
-            Pending p = PENDING.remove(player.getUUID());
-            if (p == null || !accepted || player.level().getGameTime() > p.expires()) return;
-            p.onAccept().accept(player);
-        });
-    }
-
-    static void forget(UUID player) {
-        PENDING.remove(player);
-    }
-
-    private static String offer(ServerPlayer p, Consumer<ServerPlayer> onAccept) {
-        PENDING.put(p.getUUID(), new Pending(p.level().getGameTime() + 20 * 30, onAccept));
-        return PREFIX + ":forge";
-    }
-
-    /** For tests: accept the pending Forge offer as if Y was pressed. */
-    static boolean accept(ServerPlayer p) {
-        Pending pending = PENDING.remove(p.getUUID());
-        if (pending == null) return false;
-        pending.onAccept().accept(p);
-        return true;
-    }
-
     static boolean isForge(ServerLevel level, BlockPos pos) {
         return BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).equals(FORGE);
     }
@@ -157,7 +125,14 @@ public final class ArmsForge {
         if (!(e.getEntity() instanceof ServerPlayer p) || e.getHand() != InteractionHand.MAIN_HAND) return;
         if (!(p.level() instanceof ServerLevel level) || !isForge(level, e.getPos())) return;
         if (!p.isShiftKeyDown()) {
-            // a plain use with an empty hand opens the Armoury; with anything in it, the Hearth's tempering stays as it was
+            // a plain use with an empty hand opens the Armoury; one of our weapons is tempered at a War Anvil now (SPEC
+            // §46.8); with anything else in it, the Hearth's tempering stays as it was
+            if (ArmsItems.of(p.getMainHandItem().getItem()) != null) {
+                Signal.toast(p, Component.literal("Weapons are tempered at a War Anvil."));
+                e.setCanceled(true);
+                e.setCancellationResult(InteractionResult.SUCCESS);
+                return;
+            }
             if (!p.getMainHandItem().isEmpty()) return;
             dev.awaken.progression.Progression.count(p, "awaken:armoury_forge"); // a trail step (docs/trails/PLAN.md §4.1)
             ArmsArmoury.open(p, ArmsArmoury.FORGE);
@@ -167,37 +142,11 @@ public final class ArmsForge {
         }
         ItemStack held = p.getMainHandItem();
         if (held.isEmpty()) return; // sneak with an empty hand is the Hearth's window; the Armoury is a plain use (below)
-        if (ArmsItems.of(held.getItem()) != null) offerAttunement(p);
-        else return;
+        if (ArmsItems.of(held.getItem()) == null) return;
+        // weapons are attuned at a War Anvil now (SPEC §46.8)
+        Signal.toast(p, Component.literal("Weapons are attuned at a War Anvil."));
         e.setCanceled(true);
         e.setCancellationResult(InteractionResult.SUCCESS);
-    }
-
-    static void offerAttunement(ServerPlayer p) {
-        ItemStack weapon = p.getMainHandItem();
-        Forces.Force f = catalyst(p.getOffhandItem());
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Forge · Attunement"));
-        Marks.Instance inst = Marks.of(weapon);
-        w.row(Component.literal("Weapon"), weapon.getHoverName());
-        w.row(Component.literal("Attuned"), Component.literal(inst.attunement().map(ArmsForge::forceName).orElse("no")));
-        if (f == null) {
-            w.body(Component.literal("Hold a catalyst in your off hand: Sunshard from the Glass Steppe (Heat), Frostspar from the Frost "
-                    + "Spires (Frost), a Fault Seam from the Shattered Highlands (Gravity), a Copper Ingot (Charge) or a Deepglass Shard "
-                    + "from the deep (Spirit). An attuned weapon's Marks take its Force, its hits make your next power cheaper, and a "
-                    + "power of its Force makes your next blow land harder."));
-            Signal.send(p, w.ttl(20 * 12).build());
-            return;
-        }
-        List<Cost> price = attunePrice(f);
-        for (Cost c : price) w.row(c.label(), Component.literal(count(p, c.item()) + " / " + c.n()));
-        if (inst.attunement().orElse(null) == f) {
-            w.body(Component.literal("It is already attuned to " + forceName(f) + "."));
-            Signal.send(p, w.ttl(20 * 8).build());
-            return;
-        }
-        if (affords(p, price)) w.choice(offer(p, pl -> attune(pl, f)), "Attune it to " + forceName(f), "Not now");
-        else w.body(Component.literal("Not enough to attune it to " + forceName(f) + " yet."));
-        Signal.send(p, w.ttl(20 * 15).build());
     }
 
     /** Attunes the weapon in hand (re-checked: an old window can't pay twice or attune the wrong thing). */
@@ -207,7 +156,18 @@ public final class ArmsForge {
         List<Cost> price = attunePrice(f);
         if (!affords(p, price)) return false;
         pay(p, price);
+        attune(weapon, f);
+        attuned(p, weapon, f);
+        return true;
+    }
+
+    /** The weapon takes the Force (re-attuning replaces it; nothing paid here). */
+    public static void attune(ItemStack weapon, Forces.Force f) {
         weapon.set(ArmsContent.INSTANCE.get(), Marks.of(weapon).attuned(f));
+    }
+
+    /** Said and counted wherever a weapon is attuned (here, or at a War Anvil): the sound, the ring and what it now does. */
+    public static void attuned(ServerPlayer p, ItemStack weapon, Forces.Force f) {
         dev.awaken.progression.Progression.count(p, "awaken:weapons_attuned");
         ServerLevel level = p.level();
         level.playSound(null, p.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.7F, 1.3F);
@@ -219,7 +179,6 @@ public final class ArmsForge {
                                 + Math.round((1 - POWER_PRIME) * 100) + "% less energy.",
                         "Cast a " + forceName(f) + " power, and your next blow within " + ArmsNotices.seconds(PRIME_TICKS / 20.0) + " hits "
                                 + BLADE_PRIME + " times as hard, with " + forceName(f) + " on it."));
-        return true;
     }
 
     static boolean drawBlueprint(ServerPlayer p, String style) {
@@ -241,21 +200,21 @@ public final class ArmsForge {
         return item != null && count(p, item.get()) > 0;
     }
 
-    static Forces.@Nullable Force catalyst(ItemStack stack) {
+    public static Forces.@Nullable Force catalyst(ItemStack stack) {
         if (stack.isEmpty()) return null;
         for (Forces.Force f : CATALYST_ID.keySet()) if (stack.is(catalystItem(f))) return f;
         return null;
     }
 
-    static String forceName(Forces.Force f) {
+    public static String forceName(Forces.Force f) {
         return f.name().charAt(0) + f.name().substring(1).toLowerCase(java.util.Locale.ROOT);
     }
 
     // ---- prices -------------------------------------------------------------------------------------------------------
 
-    record Cost(Item item, int n, Component label) {}
+    public record Cost(Item item, int n, Component label) {}
 
-    static List<Cost> attunePrice(Forces.Force f) {
+    public static List<Cost> attunePrice(Forces.Force f) {
         List<Cost> out = new ArrayList<>();
         out.add(cost(dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get(), ATTUNE_ESSENCE));
         Item shard = BuiltInRegistries.ITEM.getValue(Awaken.id("core_shard"));
@@ -283,14 +242,14 @@ public final class ArmsForge {
     }
 
     /** Counted in the main inventory and the off hand (the catalyst is held there). */
-    static int count(ServerPlayer p, Item item) {
+    public static int count(ServerPlayer p, Item item) {
         int n = 0;
         for (ItemStack s : p.getInventory().getNonEquipmentItems()) if (s.is(item)) n += s.getCount();
         if (p.getOffhandItem().is(item)) n += p.getOffhandItem().getCount();
         return n;
     }
 
-    static boolean affords(ServerPlayer p, List<Cost> price) {
+    public static boolean affords(ServerPlayer p, List<Cost> price) {
         if (p.hasInfiniteMaterials()) return true;
         for (Cost c : price) if (count(p, c.item()) < c.n()) return false;
         return true;

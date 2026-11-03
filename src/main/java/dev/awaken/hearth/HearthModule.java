@@ -189,6 +189,7 @@ public final class HearthModule {
                 .orElse(null));
         HearthCommands.register();
         HearthTests.register();
+        dev.awaken.hearth.trial.ProvingTests.register();
         HomeTests.register();
         RespawnTests.register();
         HearthTrailTests.register();

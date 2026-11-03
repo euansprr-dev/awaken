@@ -21,7 +21,7 @@ screams, comes down and staggers, goes down on its knees and rolls onto its side
 """
 import math
 
-from kit import core, parts
+from kit import core, parts, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -839,6 +839,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.4)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     for m in mv:
         _stage(r, m)
@@ -867,25 +868,28 @@ MOVE_SOUNDS = {"cinders": {"swing": "cast", "impact": ""}, "pyre": {"swing": "fl
                "flare": {"swing": "flare", "impact": ""}, "wildfire": {"swing": "roar"}, "arrive": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies burnt out until its fire catches, and gets up
     "phases": [
         {"pool": [
             {"move": "strike", "weight": 3, "when": "near", "then": [["trample"], ["trample", "charge"]]},
-            {"move": "trample", "weight": 2, "when": "near"},
+            {"move": "trample", "weight": 2, "when": "near", "then": [["strike"], ["buck"]]},
             {"move": "charge", "weight": 3, "when": "far", "then": [["strike"]]},
-            {"move": "cinders", "weight": 3, "when": "far"},
-            {"move": "pyre", "weight": 2},
-            {"move": "buck", "weight": 3, "when": "behind"},
+            {"move": "cinders", "weight": 3, "when": "far", "then": [["cinders"], ["charge"]]},
+            {"move": "pyre", "weight": 2, "then": [["strike", "trample"]]},
+            {"move": "buck", "weight": 3, "when": "behind", "then": [["strike", "trample"], ["pyre"]]},
         ]},
         # it spreads: Firefall, Flare, Wildfire
         {"transition": "firefall", "pool": [
             {"move": "strike", "weight": 3, "when": "near", "then": [["trample"], ["trample", "flare"]]},
             {"move": "charge", "weight": 3, "when": "far", "then": [["strike", "trample"]]},
-            {"move": "firefall", "weight": 2},
-            {"move": "flare", "weight": 2},
-            {"move": "cinders", "weight": 1, "when": "far"},
+            {"move": "firefall", "weight": 2, "then": [["charge"], ["cinders"]]},
+            {"move": "flare", "weight": 2, "then": [["strike"], ["charge"]]},
+            {"move": "cinders", "weight": 1, "when": "far", "then": [["cinders"], ["charge"]]},
             {"move": "wildfire", "weight": 2},
-            {"move": "buck", "weight": 3, "when": "behind"},
+            {"move": "buck", "weight": 3, "when": "behind", "then": [["strike", "trample"], ["pyre"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

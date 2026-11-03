@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "sovereign_silence",
  "moves": "sovereign_silence",
+ "duel": true,
+ "stance": 340,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -39,7 +41,15 @@
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "rake"
+      ],
+      [
+       "rake_b"
+      ]
+     ]
     }
    ]
   },
@@ -72,7 +82,12 @@
     {
      "move": "scream",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "found"
+      ]
+     ]
     },
     {
      "move": "ears",
@@ -85,7 +100,15 @@
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "rake"
+      ],
+      [
+       "rake_b"
+      ]
+     ]
     }
    ]
   },
@@ -119,17 +142,35 @@
     },
     {
      "move": "found",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "rake"
+      ]
+     ]
     },
     {
      "move": "scream",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "found"
+      ]
+     ]
     },
     {
      "move": "kick",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "rake"
+      ],
+      [
+       "rake_b"
+      ]
+     ]
     }
    ]
   }
