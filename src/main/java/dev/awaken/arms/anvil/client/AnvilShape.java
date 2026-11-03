@@ -42,10 +42,14 @@ final class AnvilShape {
     final float[] hands;
     /** Blocks a design texel of it. */
     final float texel;
-    /** The blank's lowest point, and where the tongs close on it (design heights). */
+    /** The blank's foot, where it's cut clean from the hilt, and where the tongs close on it (design heights). */
     final float foot, hold;
-    /** Which of the mesh's triangles are the guard's, left off the blank until the hilt's first tap (null: none). */
-    final boolean @Nullable [] guard;
+    /** Which of the mesh's triangles the blank is cut from (null: the hand-set layout, cut along the mesh as the hilt is). */
+    final boolean @Nullable [] blank;
+    /** The blank's cut end: triangles of {@link AnvilBlank}'s corners (position, normal, uv, along), one texel's colour each. */
+    final float[] cap;
+    /** The texel the bar's core is coloured from, and how far along the blade its foot is (0..255). */
+    final float coreU, coreV, footAlong;
     /** The blank's section at each of the {@link #PROFILE} heights: its middle across and half its width, its middle through and half its thickness. */
     private final float[] px, hx, pz, hz;
     /** The bar it starts as: its middle (across, through) and half its side. */
@@ -63,8 +67,12 @@ final class AnvilShape {
         this.hands = hands;
         this.texel = Math.min(AnvilScene.TEXEL, LONGEST / (tip - lo));
         this.foot = b.foot;
-        this.hold = Math.max(root, b.foot) - 0.5F;
-        this.guard = b.guard;
+        this.hold = b.foot + 0.5F;
+        this.blank = b.blank;
+        this.cap = b.cap;
+        this.coreU = b.coreU;
+        this.coreV = b.coreV;
+        this.footAlong = b.footAlong;
         this.px = b.px;
         this.hx = b.hx;
         this.pz = b.pz;
@@ -79,22 +87,22 @@ final class AnvilShape {
         this.back = b.back;
     }
 
-    private record Blank(float foot, boolean @Nullable [] guard, float[] px, float[] hx, float[] pz, float[] hz, float barX, float barZ, float side,
-                         float midX, float halfW, float midZ, float face, float back) {
+    private record Blank(float foot, boolean @Nullable [] blank, float[] cap, float coreU, float coreV, float footAlong, float[] px, float[] hx,
+                         float[] pz, float[] hz, float barX, float barZ, float side, float midX, float halfW, float midZ, float face, float back) {
         /** A blank with the hand-set blade's section all along it. */
-        static Blank plain(float foot) {
+        static Blank plain(float foot, float cut) {
             float[] px = new float[PROFILE], hx = new float[PROFILE], pz = new float[PROFILE], hz = new float[PROFILE];
             Arrays.fill(px, AnvilScene.BLADE_X);
             Arrays.fill(hx, AnvilScene.HALF_W);
             Arrays.fill(hz, AnvilScene.BACK_Z);
-            return new Blank(foot, null, px, hx, pz, hz, AnvilScene.BLADE_X, 0F, 2F, AnvilScene.BLADE_X, AnvilScene.HALF_W, 0F, AnvilScene.FACE_Z,
-                    AnvilScene.BACK_Z);
+            return new Blank(foot, null, new float[0], 0.5F, 0.5F, cut * 255F, px, hx, pz, hz, AnvilScene.BLADE_X, 0F, 2F, AnvilScene.BLADE_X,
+                    AnvilScene.HALF_W, 0F, AnvilScene.FACE_Z, AnvilScene.BACK_Z);
         }
     }
 
     /** The Beastbound Longsword as first set by hand: what a weapon without a mesh is laid out by. */
     static final AnvilShape FALLBACK = new AnvilShape(AnvilSong.HILT_CUT, 5F, 21F, -6F, new float[]{4F, 0.5F, -3.5F}, new float[]{2F, -0.5F},
-            Blank.plain(5F));
+            Blank.plain(5F, AnvilSong.HILT_CUT[0]));
 
     private static final Map<WeaponMesh, AnvilShape> READ = new IdentityHashMap<>();
 
@@ -163,7 +171,7 @@ final class AnvilShape {
         if (!(hi - lo > 4F) || !(hi - root > 2F) || !(root - lo > 1F)) return FALLBACK;
         float[] taps = {height(at, (cut[0] + cut[1]) / 2F), height(at, (cut[1] + cut[2]) / 2F), height(at, cut[2] / 2F)};
         float top = height(at, cut[1]), low = height(at, cut[2]), q = (top - low) / 4F;
-        return new AnvilShape(cut, root, hi, lo, taps, new float[]{top - q, low + q}, blank(d, along, cut[0], root, hi, guarded));
+        return new AnvilShape(cut, root, hi, lo, taps, new float[]{top - q, low + q}, blank(d, mesh.uv(), along, cut[0], root, hi, guarded));
     }
 
     /** The height at a fraction along it, between the bins' middles. */
@@ -178,54 +186,66 @@ final class AnvilShape {
     // ---- the blank ---------------------------------------------------------------------------------------------------
 
     /**
-     * The blank from the mesh (design positions {@code d}): the triangles from {@code cut} along it on, less the guard's,
-     * which is what's wide at the blade's root under a narrower blade (wider than 1.25 the blade's middle and a texel,
-     * starting in the lowest 0.15 of it and ending below 0.45): the pieces up to a little over its top that stand out past
-     * the blade just above it by more than 0.6. A spear's wings are halfway up it and an axe's head is its widest, so
-     * neither has one.
+     * The blank from the mesh (design positions {@code d}): the blade cut clean across at its root, or at its guard's top,
+     * so the guard and the grip's top stay with the hilt. The guard is what's wide about the root, read through the cut on
+     * the whole mesh (wider than 1.25 the blade's middle and a texel, starting in its lowest 0.15 and ending below 0.45); a
+     * spear's wings are halfway up it and an axe's head is its widest, so neither has one. Pieces reaching less than 0.75
+     * over the cut that stand out past the blade above them by more than 0.6 (a guard's tips, a collar) are the hilt's too.
      */
-    private static Blank blank(float[] d, byte[] along, float cut, float root, float tip, boolean guarded) {
-        int tris = along.length / 3, need = Math.round(cut * 255) * 3;
-        boolean[] use = new boolean[tris];
-        for (int t = 0; t < tris; t++) use[t] = (along[t * 3] & 255) + (along[t * 3 + 1] & 255) + (along[t * 3 + 2] & 255) >= need;
-        float len = tip - root;
-        float[][] sec = new float[PROFILE][];
-        for (int k = 0; k < PROFILE; k++) sec[k] = section(d, use, root + len * (k + 0.5F) / PROFILE);
-        float wb = median(sec, 0, 0.35F, 0.8F);
-        boolean[] guard = null;
-        int first = -1, last = -1;
-        for (int k = 0; k < PROFILE && (k + 0.5F) / PROFILE <= 0.45F; k++) {
-            if (sec[k] == null || sec[k][1] - sec[k][0] <= 1.25F * wb + 1F) continue;
-            if (first < 0) first = k;
-            last = k;
+    private static Blank blank(float[] d, float[] uv, byte[] along, float cut, float root, float tip, boolean guarded) {
+        int tris = along.length / 3;
+        boolean[] all = new boolean[tris], use = new boolean[tris];
+        float[] high = new float[tris];
+        for (int t = 0; t < tris; t++) {
+            all[t] = true;
+            high[t] = Math.max(d[t * 9 + 1], Math.max(d[t * 9 + 4], d[t * 9 + 7]));
+            use[t] = high[t] > root + 1e-3F;
         }
-        if (guarded && first >= 0 && (first + 0.5F) / PROFILE <= 0.15F) {
-            float top = root + len * (last + 0.5F) / PROFILE;
-            float x0 = Float.MAX_VALUE, x1 = -Float.MAX_VALUE, z0 = Float.MAX_VALUE, z1 = -Float.MAX_VALUE;
-            for (int k = last + 1; k < PROFILE && root + len * (k + 0.5F) / PROFILE <= top + 0.25F * len; k++) {
-                if (sec[k] == null) continue;
-                x0 = Math.min(x0, sec[k][0]);
-                x1 = Math.max(x1, sec[k][1]);
-                z0 = Math.min(z0, sec[k][2]);
-                z1 = Math.max(z1, sec[k][3]);
+        float len = tip - root, step = len / PROFILE;
+        float[][] sec = new float[PROFILE][];
+        for (int k = 0; k < PROFILE; k++) sec[k] = section(d, use, root + step * (k + 0.5F));
+        float wide = 1.25F * median(sec, 0, 0.35F, 0.8F) + 1F, from = root;
+        if (guarded) {
+            float first = Float.NaN, last = Float.NaN;
+            for (int k = -PROFILE / 5; (k + 0.5F) / PROFILE <= 0.45F; k++) {
+                float y = root + step * (k + 0.5F);
+                if (!wider(d, all, y, wide)) continue;
+                if (Float.isNaN(first)) first = y;
+                last = y;
             }
-            if (x0 <= x1) {
-                guard = new boolean[tris];
-                for (int t = 0; t < tris; t++) {
-                    if (!use[t]) continue;
-                    float ny = -Float.MAX_VALUE, nx0 = Float.MAX_VALUE, nx1 = -Float.MAX_VALUE, nz0 = Float.MAX_VALUE, nz1 = -Float.MAX_VALUE;
-                    for (int c = t * 9; c < t * 9 + 9; c += 3) {
-                        nx0 = Math.min(nx0, d[c]);
-                        nx1 = Math.max(nx1, d[c]);
-                        ny = Math.max(ny, d[c + 1]);
-                        nz0 = Math.min(nz0, d[c + 2]);
-                        nz1 = Math.max(nz1, d[c + 2]);
-                    }
-                    if (ny <= top + 0.75F && (nx0 < x0 - 0.6F || nx1 > x1 + 0.6F || nz0 < z0 - 0.6F || nz1 > z1 + 0.6F)) {
-                        guard[t] = true;
-                        use[t] = false;
-                    }
+            if (first <= root + 0.15F * len) {
+                // where it ends, to a hair
+                float a = last, b = last + step;
+                for (int i = 0; i < 10; i++) {
+                    float m = (a + b) / 2F;
+                    if (wider(d, all, m, wide)) a = m;
+                    else b = m;
                 }
+                from = Math.max(root, a);
+            }
+        }
+        for (int t = 0; t < tris; t++) use[t] = high[t] > from + 1e-3F;
+        if (guarded) {
+            // the blade's footprint just above, and what stands out past it just over the cut
+            float x0 = Float.MAX_VALUE, x1 = -Float.MAX_VALUE, z0 = Float.MAX_VALUE, z1 = -Float.MAX_VALUE;
+            for (int k = 0; k < PROFILE / 4; k++) {
+                float[] s = section(d, use, from + 0.75F + step * (k + 0.5F));
+                if (s == null) continue;
+                x0 = Math.min(x0, s[0]);
+                x1 = Math.max(x1, s[1]);
+                z0 = Math.min(z0, s[2]);
+                z1 = Math.max(z1, s[3]);
+            }
+            for (int t = 0; t < tris && x0 <= x1; t++) {
+                if (!use[t] || high[t] > from + 0.75F) continue;
+                float nx0 = Float.MAX_VALUE, nx1 = -Float.MAX_VALUE, nz0 = Float.MAX_VALUE, nz1 = -Float.MAX_VALUE;
+                for (int c = t * 9; c < t * 9 + 9; c += 3) {
+                    nx0 = Math.min(nx0, d[c]);
+                    nx1 = Math.max(nx1, d[c]);
+                    nz0 = Math.min(nz0, d[c + 2]);
+                    nz1 = Math.max(nz1, d[c + 2]);
+                }
+                if (nx0 < x0 - 0.6F || nx1 > x1 + 0.6F || nz0 < z0 - 0.6F || nz1 > z1 + 0.6F) use[t] = false;
             }
         }
         // its foot and section, from what's left
@@ -233,7 +253,8 @@ final class AnvilShape {
         for (int t = 0; t < tris; t++) {
             if (use[t]) for (int c = t * 9; c < t * 9 + 9; c += 3) foot = Math.min(foot, d[c + 1]);
         }
-        if (foot >= tip - 1F) return Blank.plain(root);
+        foot = Math.max(from, foot);
+        if (foot >= tip - 1F) return Blank.plain(root, cut);
         float blen = tip - foot;
         float[][] at = new float[PROFILE][];
         int good = -1;
@@ -241,7 +262,7 @@ final class AnvilShape {
             at[k] = section(d, use, foot + blen * (k + 0.5F) / PROFILE);
             if (at[k] != null) good = k;
         }
-        if (good < 0) return Blank.plain(root);
+        if (good < 0) return Blank.plain(root, cut);
         float[] px = new float[PROFILE], hx = new float[PROFILE], pz = new float[PROFILE], hz = new float[PROFILE];
         int prev = -1;
         for (int k = 0; k < PROFILE; k++) {
@@ -264,13 +285,100 @@ final class AnvilShape {
         float side = 0F;
         for (int k = 0; k < PROFILE; k++) side += (float) Math.sqrt(hx[k] * hz[k]);
         side = Mth.clamp(side / PROFILE, 1F, 3F);
-        float midX = median(px, 0.35F, 0.8F), midZ = median(pz, 0.35F, 0.8F);
-        float back = 0F;
+        float midX = median(px, 0.35F, 0.8F), midZ = median(pz, 0.35F, 0.8F), midY = (foot + tip) / 2F;
+        float back = 0F, near = Float.MAX_VALUE, coreU = 0.5F, coreV = 0.5F;
         for (int t = 0; t < tris; t++) {
-            if (use[t]) for (int c = t * 9; c < t * 9 + 9; c += 3) back = Math.max(back, Math.abs(d[c + 2] - midZ));
+            if (!use[t]) continue;
+            for (int i = t * 3; i < t * 3 + 3; i++) {
+                back = Math.max(back, Math.abs(d[i * 3 + 2] - midZ));
+                // the core takes the colour of the blade's middle
+                float dx = d[i * 3] - midX, dy = d[i * 3 + 1] - midY, n = dx * dx + dy * dy;
+                if (n < near) {
+                    near = n;
+                    coreU = uv[i * 2];
+                    coreV = uv[i * 2 + 1];
+                }
+            }
         }
-        return new Blank(foot, guard, px, hx, pz, hz, median(px, 0F, 1F), median(pz, 0F, 1F), side, midX, median(hx, 0.35F, 0.8F), midZ,
-                median(hz, 0.35F, 0.8F), back);
+        float[] cap = cap(d, uv, along, use, foot);
+        float footAlong = cut * 255F;
+        if (cap.length > 0) {
+            footAlong = 0F;
+            for (int o = 8; o < cap.length; o += AnvilBlank.V) footAlong += cap[o];
+            footAlong /= cap.length / AnvilBlank.V;
+        }
+        return new Blank(foot, use, cap, coreU, coreV, footAlong, px, hx, pz, hz, median(px, 0F, 1F), median(pz, 0F, 1F), side, midX,
+                median(hx, 0.35F, 0.8F), midZ, median(hz, 0.35F, 0.8F), back);
+    }
+
+    private static boolean wider(float[] d, boolean[] use, float y, float than) {
+        float[] s = section(d, use, y);
+        return s != null && s[1] - s[0] > than;
+    }
+
+    /**
+     * The blank's cut end: where each of its triangles crosses the foot a segment (cut from the edge's lower end, as
+     * {@link AnvilBlank} cuts it, so the two meet), fanned from all their middle and facing down the blade; each fan
+     * triangle one texel's colour, its segment's first end's.
+     */
+    private static float[] cap(float[] d, float[] uv, byte[] along, boolean[] use, float foot) {
+        float[] seg = new float[64 * 10];
+        float[] e = new float[10];
+        int n = 0;
+        float cx = 0F, cz = 0F, ca = 0F;
+        for (int t = 0; t < use.length; t++) {
+            if (!use[t]) continue;
+            int found = 0;
+            for (int j = 0; j < 3 && found < 2; j++) {
+                int a = t * 3 + j, b = t * 3 + (j + 1) % 3;
+                float ya = d[a * 3 + 1], yb = d[b * 3 + 1];
+                if (!(ya < foot && yb > foot || ya > foot && yb < foot)) continue;
+                int lo = ya < yb ? a : b, hi = lo == a ? b : a;
+                float k = (foot - d[lo * 3 + 1]) / (d[hi * 3 + 1] - d[lo * 3 + 1]);
+                int o = found * 5;
+                e[o] = Mth.lerp(k, d[lo * 3], d[hi * 3]);
+                e[o + 1] = Mth.lerp(k, d[lo * 3 + 2], d[hi * 3 + 2]);
+                e[o + 2] = Mth.lerp(k, uv[lo * 2], uv[hi * 2]);
+                e[o + 3] = Mth.lerp(k, uv[lo * 2 + 1], uv[hi * 2 + 1]);
+                e[o + 4] = Mth.lerp(k, along[lo] & 255, along[hi] & 255);
+                found++;
+            }
+            if (found < 2) continue;
+            if (n * 10 == seg.length) seg = Arrays.copyOf(seg, seg.length * 2);
+            System.arraycopy(e, 0, seg, n * 10, 10);
+            cx += e[0] + e[5];
+            cz += e[1] + e[6];
+            ca += e[4] + e[9];
+            n++;
+        }
+        if (n == 0) return new float[0];
+        cx /= 2 * n;
+        cz /= 2 * n;
+        ca /= 2 * n;
+        int V = AnvilBlank.V;
+        float[] out = new float[n * 3 * V];
+        for (int s = 0; s < n; s++) {
+            int o = s * 10, p = s * 3 * V;
+            // facing down the blade: (a - c) x (b - c) points down
+            boolean flip = (seg[o + 1] - cz) * (seg[o + 5] - cx) - (seg[o] - cx) * (seg[o + 6] - cz) > 0F;
+            int a = flip ? o + 5 : o, b = flip ? o : o + 5;
+            corner(out, p, cx, foot, cz, seg[o + 2], seg[o + 3], ca);
+            corner(out, p + V, seg[a], foot, seg[a + 1], seg[o + 2], seg[o + 3], seg[a + 4]);
+            corner(out, p + 2 * V, seg[b], foot, seg[b + 1], seg[o + 2], seg[o + 3], seg[b + 4]);
+        }
+        return out;
+    }
+
+    private static void corner(float[] out, int o, float x, float y, float z, float u, float v, float along) {
+        out[o] = x;
+        out[o + 1] = y;
+        out[o + 2] = z;
+        out[o + 3] = 0F;
+        out[o + 4] = -1F;
+        out[o + 5] = 0F;
+        out[o + 6] = u;
+        out[o + 7] = v;
+        out[o + 8] = along;
     }
 
     private static void fill(float[] s, int k, float[] px, float[] hx, float[] pz, float[] hz) {
