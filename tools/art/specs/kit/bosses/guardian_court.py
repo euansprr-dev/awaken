@@ -23,7 +23,7 @@ breaks).
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 from kit.paint import edge_glow
 import fauna_rig as R
@@ -924,7 +924,7 @@ def backcut(r):
 
 
 def reach(r):
-    """The Long Reach (HEAVY, a hold): it draws its sword back beside its head with the point at you and sinks back,
+    """The Long Reach (PERILOUS, red in a duel: a thrust from twice as far is dashed past, never turned aside): it draws its sword back beside its head with the point at you and sinks back,
     its arm drawn in short; then it thrusts, and its arm stretches out long as a shadow does at dusk, the point reaching
     you from twice as far as it should; the arm snaps back short."""
     coil = dict(hips=(-4, -16, 0), at=(0, -3, 3), spine=(-4, 0, 0), chest=(-6, -20, 0), head=(4, 18, 0), right=(-7, 31, 3), rblade=((0.05, 0.12, -1), None),
@@ -935,7 +935,7 @@ def reach(r):
                left=(9, 22, 6), curl=-0.2, spread=1.0, cape=(10, 6, 0), step={"r": (0, 0, -9), "l": (0, 0, -2)})
     after = dict(hit, hips=(7, 11, 0), at=(0, -4.5, -5.6), chest=(9, 15, 0), head=(-6, -11, 0), right=(-3, 26.5, -23), rblade=((0.02, 0.12, -1), None),
                  left=(9, 21, 7), cape=(12, 7, 0), step={"r": (0, 0, -9.5), "l": (0, 0, -2)})
-    mv = Move("reach", "HEAVY", 16, 5, 20, title="Long Reach", hold=8, track=6.0, rng=(0, 7.5), kinds=("near", "mid"), damage=1.4, knock=1.0, plant=(),
+    mv = Move("reach", "PERILOUS", 16, 5, 20, title="Long Reach", track=6.0, rng=(0, 7.5), kinds=("near", "mid"), damage=1.4, knock=1.0, plant=(),
               hit=SWORD_HIT + [("hand_r", (0, 2, 0), 2.0)], lag=ON_TIME, through=P(r, after),
               stages={"windup": [(0.3, _from(r, coil)), (0.75, P(r, coil)), (1.0, P(r, deep))], "active": [(0.6, P(r, hit)), (1.0, P(r, after))],
                       "recover": [(0.4, _glide(r, after, {}, 0.5)), (0.72, _glide(r, after, {}, 0.85))]})
@@ -1011,7 +1011,7 @@ def charge(r):
                   cape=(-12, -6, 0))
     act += [(0.635, _floor_up(r, _mix(lie(-1.0), hinge, 0.5))), (0.69, _floor_up(r, hinge)), (0.8, risen), (1.0, chop)]
     after = _mix(chop, _pose(r), -0.06)
-    mv = Move("charge", "HEAVY", 16, 16, 20, title="Your Charge", track=6.0, lock=12, advance=8.0, ability="Your Charge", rng=(5, 16), kinds=("gap",), damage=1.3,
+    mv = Move("charge", "HEAVY", 16, 16, 20, title="Your Charge", hold=6, track=6.0, lock=12, advance=8.0, ability="Your Charge", rng=(5, 16), kinds=("gap",), damage=1.3,
               knock=1.2, plant=(), hit=SWORD_HIT + [("head", (0, -3, 0), 3.0)], lag=ON_TIME, through=after,
               stages={"windup": [(0.3, _mix(_pose(r), lean, 0.4)), (1.0, lean)], "active": act, "recover": _back(r, after)})
     mv._scale = {"base": [(0.0, ONE), ("windup", 1.0, ONE), ("active", 0.18, (1.0, 1.25, 1.0)), ("active", 0.58, (1.0, 1.3, 1.0)), ("active", 0.8, (1.0, 1.05, 1.0)),
@@ -1160,6 +1160,7 @@ def clips(r):
     run(r)
     turns(r)
     reactions(r)
+    plans.biped_duel_reactions(r, weight=1.0)  # a duel's parried and reel (SPEC §47.5)
     mv = [_unwrap(m) for m in moves(r)]
     for m in mv:
         stage_clips(r, m)
@@ -1175,25 +1176,28 @@ def clips(r):
 
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "cut", "weight": 3, "when": "near", "then": [["backcut"], ["backcut", "reach"]]},
-            {"move": "reach", "weight": 2, "when": "near"},
+            {"move": "reach", "weight": 2, "when": "near", "then": [["cut"], ["backcut"]]},
             {"move": "rake", "weight": 2, "when": "near", "then": [["cut"]]},
             {"move": "parry", "weight": 2, "when": "near", "then": [["riposte"]]},
             {"move": "charge", "weight": 3, "when": "far", "then": [["cut"]]},
-            {"move": "turnabout", "weight": 3, "when": "behind"},
+            {"move": "turnabout", "weight": 3, "when": "behind", "then": [["cut"], ["cut", "backcut"]]},
         ]},
         {"transition": "reflections", "pool": [
             {"move": "cut", "weight": 3, "when": "near", "then": [["backcut"], ["backcut", "reach"], ["rake", "cut"]]},
-            {"move": "reach", "weight": 2, "when": "near"},
+            {"move": "reach", "weight": 2, "when": "near", "then": [["cut"], ["backcut"]]},
             {"move": "parry", "weight": 2, "when": "near", "then": [["riposte"]]},
             {"move": "halo", "weight": 2},
             {"move": "shadowstep", "weight": 2, "then": [["cut", "backcut"]]},
             {"move": "reflections", "weight": 1},
             {"move": "charge", "weight": 2, "when": "far", "then": [["cut"]]},
-            {"move": "turnabout", "weight": 3, "when": "behind"},
+            {"move": "turnabout", "weight": 3, "when": "behind", "then": [["cut"], ["cut", "backcut"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

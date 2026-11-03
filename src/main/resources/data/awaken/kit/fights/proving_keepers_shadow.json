@@ -1,0 +1,531 @@
+{
+ "schemaVersion": 1,
+ "id": "proving_keepers_shadow",
+ "moves": "proving_keepers_shadow",
+ "duel": true,
+ "stance": 420,
+ "intro": {
+  "pose": "stand",
+  "move": "emerge"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "turn",
+     "weight": 3,
+     "then": [
+      [
+       "bar",
+       "unlock",
+       "turn"
+      ],
+      [
+       "bar",
+       "turn",
+       "lock"
+      ]
+     ]
+    },
+    {
+     "move": "bar",
+     "weight": 2,
+     "then": [
+      [
+       "turn",
+       "unlock",
+       "bar"
+      ],
+      [
+       "unlock",
+       "lock"
+      ]
+     ]
+    },
+    {
+     "move": "lock",
+     "weight": 2,
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock"
+      ]
+     ]
+    },
+    {
+     "move": "keyhole",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "keyhole",
+       "shut"
+      ],
+      [
+       "shut",
+       "turn",
+       "bar"
+      ]
+     ]
+    },
+    {
+     "move": "shut",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock"
+      ]
+     ]
+    },
+    {
+     "move": "turnabout",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "doors",
+   "pool": [
+    {
+     "move": "turn",
+     "weight": 3,
+     "then": [
+      [
+       "bar",
+       "unlock",
+       "turn",
+       "lock"
+      ],
+      [
+       "bar",
+       "turn",
+       "unlock"
+      ]
+     ]
+    },
+    {
+     "move": "bar",
+     "weight": 2,
+     "then": [
+      [
+       "turn",
+       "unlock",
+       "bar",
+       "turnabout"
+      ],
+      [
+       "unlock",
+       "turn",
+       "lock"
+      ]
+     ]
+    },
+    {
+     "move": "lock",
+     "weight": 2,
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock"
+      ],
+      [
+       "doorway"
+      ]
+     ]
+    },
+    {
+     "move": "keyhole",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "keyhole",
+       "doorway"
+      ],
+      [
+       "shut",
+       "turn",
+       "bar"
+      ]
+     ]
+    },
+    {
+     "move": "doorway",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "turn"
+      ]
+     ]
+    },
+    {
+     "move": "shut",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "lock"
+      ]
+     ]
+    },
+    {
+     "move": "turnabout",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "darkfall",
+   "pool": [
+    {
+     "move": "turn",
+     "weight": 3,
+     "then": [
+      [
+       "bar",
+       "unlock",
+       "turn",
+       "lock"
+      ],
+      [
+       "bar",
+       "turn",
+       "unlock",
+       "kept"
+      ]
+     ]
+    },
+    {
+     "move": "bar",
+     "weight": 2,
+     "then": [
+      [
+       "turn",
+       "unlock",
+       "bar",
+       "turnabout"
+      ],
+      [
+       "unlock",
+       "turn",
+       "bar",
+       "lock"
+      ]
+     ]
+    },
+    {
+     "move": "lock",
+     "weight": 1,
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "dark"
+      ]
+     ]
+    },
+    {
+     "move": "dark",
+     "weight": 2,
+     "then": [
+      [
+       "doorway",
+       "turn",
+       "bar"
+      ],
+      [
+       "keyhole",
+       "shut"
+      ]
+     ]
+    },
+    {
+     "move": "keyhole",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "keyhole",
+       "kept"
+      ],
+      [
+       "dark",
+       "doorway"
+      ]
+     ]
+    },
+    {
+     "move": "keyhole",
+     "weight": 2,
+     "when": "AIR",
+     "then": [
+      [
+       "keyhole",
+       "keyhole"
+      ]
+     ]
+    },
+    {
+     "move": "kept",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock"
+      ]
+     ]
+    },
+    {
+     "move": "doorway",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "turn"
+      ]
+     ]
+    },
+    {
+     "move": "shut",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "lock"
+      ]
+     ]
+    },
+    {
+     "move": "turnabout",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "turn"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "last",
+   "pool": [
+    {
+     "move": "turn",
+     "weight": 3,
+     "then": [
+      [
+       "bar",
+       "unlock",
+       "turn",
+       "lock"
+      ],
+      [
+       "bar",
+       "turn",
+       "unlock",
+       "turn",
+       "turnabout"
+      ]
+     ]
+    },
+    {
+     "move": "bar",
+     "weight": 2,
+     "then": [
+      [
+       "turn",
+       "unlock",
+       "bar",
+       "kept"
+      ],
+      [
+       "unlock",
+       "turn",
+       "bar",
+       "lock"
+      ]
+     ]
+    },
+    {
+     "move": "lock",
+     "weight": 1,
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "eight"
+      ]
+     ]
+    },
+    {
+     "move": "echoes",
+     "weight": 1,
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "turn"
+      ],
+      [
+       "eight"
+      ]
+     ]
+    },
+    {
+     "move": "eight",
+     "weight": 2,
+     "then": [
+      [
+       "doorway",
+       "turn",
+       "bar"
+      ],
+      [
+       "dark",
+       "keyhole"
+      ]
+     ]
+    },
+    {
+     "move": "dark",
+     "weight": 2,
+     "then": [
+      [
+       "doorway",
+       "turn",
+       "bar",
+       "unlock"
+      ],
+      [
+       "shut"
+      ]
+     ]
+    },
+    {
+     "move": "keyhole",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "keyhole",
+       "shut"
+      ],
+      [
+       "eight"
+      ]
+     ]
+    },
+    {
+     "move": "keyhole",
+     "weight": 3,
+     "when": "AIR",
+     "then": [
+      [
+       "keyhole",
+       "eight"
+      ]
+     ]
+    },
+    {
+     "move": "kept",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "turn"
+      ]
+     ]
+    },
+    {
+     "move": "doorway",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "turn"
+      ]
+     ]
+    },
+    {
+     "move": "shut",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "lock"
+      ]
+     ]
+    },
+    {
+     "move": "turnabout",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "turn",
+       "bar",
+       "unlock",
+       "turn"
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.1,
+  "speed": 1.2
+ }
+}

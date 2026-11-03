@@ -83,6 +83,27 @@ public final class MobScaling {
         e.setData(CoreApi.MOB_ROLE.get(), role);
     }
 
+    /**
+     * How many times over its bar a body's scaled health is: vanilla holds max health at 1024, so a Lord scaled past it
+     * carries the rest as bulk, every blow on it divided by this (1 at or under the cap). Its bar stays the share left.
+     */
+    public static float bulk(LivingEntity e) {
+        AttributeInstance a = e.getAttribute(Attributes.MAX_HEALTH);
+        if (a == null) return 1F;
+        // AttributeInstance.calculateValue without the sanitize that clamps it
+        double base = a.getBaseValue();
+        double add = 0, mulBase = 0, mulTotal = 1;
+        for (AttributeModifier m : a.getModifiers()) {
+            switch (m.operation()) {
+                case ADD_VALUE -> add += m.amount();
+                case ADD_MULTIPLIED_BASE -> mulBase += m.amount();
+                case ADD_MULTIPLIED_TOTAL -> mulTotal *= 1.0 + m.amount();
+            }
+        }
+        double want = (base + add) * (1.0 + mulBase) * mulTotal;
+        return (float) Math.max(1.0, want / Math.max(1.0, a.getValue()));
+    }
+
     private static void set(LivingEntity e, Holder<Attribute> attr, Identifier id, double amount, AttributeModifier.Operation op) {
         AttributeInstance inst = e.getAttribute(attr);
         if (inst == null) return;

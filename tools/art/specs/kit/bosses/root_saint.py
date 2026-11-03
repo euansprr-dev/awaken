@@ -878,6 +878,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.0)  # a duel's parried and reel (SPEC §47.5)
     mv = [sweep(r), sweep(r, "l", "sweep_b"), palm(r), lance(r), grasp(r), lash(r), ring(r), grow(r), halo(r), haul(r), wake(r)]
     by = {m.id: m for m in mv}
     for m in mv:
@@ -924,22 +925,25 @@ SOUNDS = {
 MOVE_SOUNDS = {"wake": {"swing": "roar"}, "grow": {"swing": "cast"}, "halo": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 240,
     "intro": {"pose": "idle", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "sweep", "weight": 3, "when": "near", "then": [["sweep_b"], ["sweep_b", "palm"]]},
-            {"move": "palm", "weight": 3},
-            {"move": "lance", "weight": 3},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "palm", "weight": 3, "then": [["ring"], ["sweep", "sweep_b"]]},
+            {"move": "lance", "weight": 3, "then": [["lance"], ["haul", "sweep"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["sweep", "sweep_b"], ["palm"]]},
             {"move": "haul", "weight": 2, "when": "far", "then": [["sweep"]]},
         ]},
         {"transition": "grow", "pool": [
             {"move": "sweep", "weight": 3, "when": "near", "then": [["sweep_b"], ["sweep_b", "palm"]]},
-            {"move": "palm", "weight": 2},
-            {"move": "lance", "weight": 3},
+            {"move": "palm", "weight": 2, "then": [["ring"], ["sweep", "sweep_b"]]},
+            {"move": "lance", "weight": 3, "then": [["lance"], ["haul", "sweep"]]},
             {"move": "grasp", "weight": 2, "then": [["palm"]]},
-            {"move": "ring", "weight": 2},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "ring", "weight": 2, "then": [["sweep"], ["lance"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["sweep", "sweep_b"], ["palm"]]},
             {"move": "haul", "weight": 2, "when": "far", "then": [["sweep"]]},
             {"move": "grow", "weight": 1},
         ]},
@@ -948,10 +952,10 @@ FIGHT = {
             {"move": "palm", "weight": 2, "then": [["ring"]]},
             {"move": "lance", "weight": 3, "then": [["lance"]]},
             {"move": "grasp", "weight": 2, "then": [["palm"]]},
-            {"move": "ring", "weight": 2},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "ring", "weight": 2, "then": [["sweep"], ["lance"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["sweep", "sweep_b"], ["palm"]]},
             {"move": "haul", "weight": 2, "when": "far", "then": [["grasp"]]},
-            {"move": "halo", "weight": 2},
+            {"move": "halo", "weight": 2, "then": [["lance"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

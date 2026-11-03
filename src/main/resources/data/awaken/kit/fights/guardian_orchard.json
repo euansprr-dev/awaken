@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "guardian_orchard",
  "moves": "guardian_orchard",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -26,7 +28,12 @@
     {
      "move": "crush",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "cleave"
+      ]
+     ]
     },
     {
      "move": "spikes",
@@ -45,7 +52,15 @@
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cleave"
+      ],
+      [
+       "cleave_b"
+      ]
+     ]
     }
    ]
   },
@@ -69,7 +84,12 @@
     {
      "move": "crush",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "cleave"
+      ]
+     ]
     },
     {
      "move": "march",
@@ -95,7 +115,15 @@
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "cleave"
+      ],
+      [
+       "cleave_b"
+      ]
+     ]
     }
    ]
   }

@@ -216,12 +216,15 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
             if (o == null) {
                 state = "";
                 colour = DIM;
-            } else if ((o.flags() & ArmourPayloads.NO_PATTERN) != 0) {
-                state = "Pattern not found";
-                colour = DIM;
             } else if ((o.flags() & ArmourPayloads.CAN) != 0) {
                 state = (o.flags() & ArmourPayloads.FROM_MEMORY) != 0 ? "Ready, known by heart" : "Ready";
                 colour = GOOD;
+            } else if ((o.flags() & ArmourPayloads.OWNED) != 0) { // worn or carried: a second one isn't owed
+                state = "You have it";
+                colour = GOOD;
+            } else if ((o.flags() & ArmourPayloads.NO_PATTERN) != 0) {
+                state = "Pattern not found";
+                colour = DIM;
             } else if (!place(s).isEmpty()) {
                 state = "Not here";
                 colour = DIM;

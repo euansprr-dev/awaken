@@ -137,6 +137,24 @@ final class ArmsRecoil {
         anyUntil = Math.max(anyUntil, s.until);
     }
 
+    /**
+     * The server's word that a blow played at once killed (SPEC §47.1): the recoil already under way becomes the kill's,
+     * its fall the way the blow went, with no second shove.
+     */
+    static void killed(Entity e, Blow b) {
+        if (!(e instanceof LivingEntity) || !ArmsComfort.recoil()) return;
+        Slot s = null;
+        for (Slot x : SLOTS) if (x.entity == e.getId()) s = x;
+        if (s == null || s.kill || !s.now.live) return;
+        s.kill = true;
+        s.killAt = s.now.start;
+        s.killFreeze = 0;
+        s.fallX = b.dirX();
+        s.fallZ = b.dirZ();
+        s.until = s.now.start + KILL_LIFE;
+        anyUntil = Math.max(anyUntil, s.until);
+    }
+
     /** A body's death clock, less the kill's freeze: it holds upright through the beat, then falls on vanilla's timing. */
     static float fall(float deathTime, long since, long freeze) {
         float held = Math.min(since, freeze) / 50_000_000F;

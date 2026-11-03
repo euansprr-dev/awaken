@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "signals_shadow",
  "moves": "signals_shadow",
+ "duel": true,
+ "stance": 360,
  "intro": {
   "pose": "kneel",
   "move": "arrive"
@@ -26,7 +28,12 @@
     {
      "move": "grasp",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "lash"
+      ]
+     ]
     },
     {
      "move": "lance",
@@ -41,12 +48,22 @@
     {
      "move": "instruction",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "directive",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "instruction"
+      ]
+     ]
     },
     {
      "move": "step",
@@ -55,7 +72,15 @@
     {
      "move": "recoil",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "grasp"
+      ]
+     ]
     }
    ]
   },
@@ -98,7 +123,12 @@
     {
      "move": "instruction",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "step",
@@ -107,7 +137,15 @@
     {
      "move": "recoil",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "grasp"
+      ]
+     ]
     }
    ]
   },
@@ -160,7 +198,15 @@
     {
      "move": "recoil",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "grasp"
+      ]
+     ]
     }
    ]
   }

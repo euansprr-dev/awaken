@@ -255,6 +255,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     protected void setupRotations(WildRenderState s, PoseStack pose, float bodyRot, float entityScale) {
         if (isShaking(s)) bodyRot += (float) (Math.cos(Mth.floor(s.ageInTicks) * 3.25F) * Math.PI * 0.4F);
         pose.rotateDegrees(Axis.YP, 180.0F - bodyRot);
+        dev.awaken.mobs.client.ToppleView.roll(s, pose, entityScale); // a broken stance puts a big beast on its side
         // (the pose is already scaled by the entity's scale here, so heights are divided by it)
         if ((s.wild & WildPose.S_HANG) != 0) {
             pose.translate(0.0F, s.boundingBoxHeight / entityScale, 0.0F);

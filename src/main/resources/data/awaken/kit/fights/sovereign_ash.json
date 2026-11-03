@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "sovereign_ash",
  "moves": "sovereign_ash",
+ "duel": true,
+ "stance": 360,
  "intro": {
   "pose": "idle",
   "move": "arrive"
@@ -26,7 +28,15 @@
     {
      "move": "bite",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "claw"
+      ],
+      [
+       "rush"
+      ]
+     ]
     },
     {
      "move": "rush",
@@ -41,17 +51,38 @@
     {
      "move": "cinders",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "cinders"
+      ],
+      [
+       "rush",
+       "claw"
+      ]
+     ]
     },
     {
      "move": "cloud",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "claw",
+       "bite"
+      ]
+     ]
     },
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "claw",
+       "bite"
+      ]
+     ]
     }
    ]
   },
@@ -86,11 +117,28 @@
     {
      "move": "cinders",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "cinders"
+      ],
+      [
+       "rush",
+       "claw"
+      ]
+     ]
     },
     {
      "move": "ashfall",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "cinders"
+      ],
+      [
+       "rush"
+      ]
+     ]
     },
     {
      "move": "embers",
@@ -99,12 +147,24 @@
     {
      "move": "cloud",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "claw",
+       "bite"
+      ]
+     ]
     },
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "claw",
+       "bite"
+      ]
+     ]
     }
    ]
   },
@@ -114,7 +174,15 @@
     {
      "move": "nova",
      "weight": 3,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "claw"
+      ],
+      [
+       "sweep"
+      ]
+     ]
     },
     {
      "move": "claw",
@@ -140,12 +208,29 @@
     },
     {
      "move": "ashfall",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "cinders"
+      ],
+      [
+       "rush"
+      ]
+     ]
     },
     {
      "move": "cinders",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "cinders"
+      ],
+      [
+       "rush",
+       "claw"
+      ]
+     ]
     },
     {
      "move": "burnout",
@@ -154,7 +239,13 @@
     {
      "move": "sweep",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "claw",
+       "bite"
+      ]
+     ]
     }
    ]
   }

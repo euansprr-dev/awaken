@@ -32,8 +32,9 @@ import java.util.stream.Stream;
 
 /**
  * The trials dimension: void with one walled arena per cell. Even cells are Reassessment halls (dark tile, amber lamps);
- * odd cells are the Hardline Penalty Zone's desert at night (sand, sandstone, cold lamps, cacti). Stateless and
- * deterministic, safe on worldgen threads.
+ * odd cells are the Hardline Penalty Zone's desert at night (sand, sandstone, cold lamps, cacti). Each even cell also
+ * holds every Proving's hall ({@link Warden#all}: the Drowned Belfry in its middle, the others each at its own spot).
+ * Stateless and deterministic, safe on worldgen threads.
  */
 public final class TrialChunkGenerator extends ChunkGenerator {
     public static final MapCodec<TrialChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -109,15 +110,31 @@ public final class TrialChunkGenerator extends ChunkGenerator {
                 int cx = wx / CELL, cz = wz / CELL;
                 if (cx >= GRID) continue;
                 int lx = wx - cx * CELL, lz = wz - cz * CELL;
-                if (lx >= SIZE || lz >= SIZE) continue;
                 boolean desert = isDesert(cx + cz * GRID);
-                for (int y = FLOOR - 1; y <= FLOOR + WALL + 8; y++) {
-                    BlockState s = arenaBlock(desert, lx, y, lz);
-                    if (s == null) continue;
-                    m.set(wx, y, wz);
-                    chunk.setBlockState(m, s, 0);
-                    ocean.update(x, y, z, s);
-                    surface.update(x, y, z, s);
+                if (lx < SIZE && lz < SIZE) {
+                    for (int y = FLOOR - 1; y <= FLOOR + WALL + 8; y++) {
+                        BlockState s = arenaBlock(desert, lx, y, lz);
+                        if (s == null) continue;
+                        m.set(wx, y, wz);
+                        chunk.setBlockState(m, s, 0);
+                        ocean.update(x, y, z, s);
+                        surface.update(x, y, z, s);
+                    }
+                } else if (!desert) {
+                    // a hall cell's Proving halls, one for each Warden at its own spot (SPEC §47.4, §47.6 to §47.9)
+                    for (Warden w : Warden.all()) {
+                        Hall h = w.hall;
+                        if (!h.spans(lx - h.atX(), lz - h.atZ())) continue;
+                        for (int dy = h.low(); dy <= h.roof(); dy++) {
+                            BlockState s = h.block(lx - h.atX(), dy, lz - h.atZ());
+                            if (s == null) continue;
+                            m.set(wx, FLOOR + dy, wz);
+                            chunk.setBlockState(m, s, 0);
+                            ocean.update(x, FLOOR + dy, z, s);
+                            surface.update(x, FLOOR + dy, z, s);
+                        }
+                        break;
+                    }
                 }
             }
         }

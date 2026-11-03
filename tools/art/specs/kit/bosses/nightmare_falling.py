@@ -22,7 +22,7 @@ at the air, it clenches into a fist and slowly opens, goes limp, and is drawn ba
 """
 import math
 
-from kit import core, parts
+from kit import core, parts, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -701,6 +701,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.4)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     for m in mv:
         _stage(r, m)
@@ -729,23 +730,26 @@ MOVE_SOUNDS = {"fall": {"impact": "slam"}, "drop": {"swing": "roar", "impact": "
                "lift": {"swing": "cast", "impact": ""}, "no_bottom": {"swing": "roar", "impact": ""}, "arrive": {"swing": "crack", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 300,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies on the floor as if dropped there, and gets up on its fingers
     "phases": [
         {"pool": [
             {"move": "swat", "weight": 3, "when": "near", "then": [["clutch"], ["clutch", "fall"]]},
-            {"move": "clutch", "weight": 2, "when": "near"},
+            {"move": "clutch", "weight": 2, "when": "near", "then": [["swat"]]},
             {"move": "fall", "weight": 3, "when": "far", "then": [["swat"]]},
-            {"move": "lift", "weight": 3},
-            {"move": "flick", "weight": 3, "when": "behind"},
+            {"move": "lift", "weight": 3, "then": [["fall"]]},
+            {"move": "flick", "weight": 3, "when": "behind", "then": [["swat"], ["clutch"]]},
         ]},
         # further down: No Bottom, a wider Lift, and the Long Drop
         {"transition": "no_bottom", "pool": [
             {"move": "swat", "weight": 3, "when": "near", "then": [["clutch"], ["clutch", "lift"]]},
             {"move": "fall", "weight": 3, "when": "far", "then": [["swat", "clutch"]]},
-            {"move": "lift", "weight": 3},
+            {"move": "lift", "weight": 3, "then": [["fall"]]},
             {"move": "no_bottom", "weight": 1},
             {"move": "drop", "weight": 2},
-            {"move": "flick", "weight": 3, "when": "behind"},
+            {"move": "flick", "weight": 3, "when": "behind", "then": [["swat"], ["clutch"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

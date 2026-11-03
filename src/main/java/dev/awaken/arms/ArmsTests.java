@@ -43,6 +43,7 @@ final class ArmsTests {
         AwakenTests.register("arms_timeline", 20, ArmsTests::timeline);
         AwakenTests.register("arms_defence_rules", 20, ArmsTests::defenceRules);
         AwakenTests.register("arms_strike_arc", 60, ArmsTests::strikeArc);
+        HitNowTests.register(); // SPEC §47.1: the client's sweep and the server's
         AwakenTests.register("arms_damage_stack", 60, ArmsTests::damageStack);
         AwakenTests.register("arms_deflect", 60, ArmsTests::deflect);
         AwakenTests.register("arms_deflect_latency", 80, ArmsTests::deflectLatency);
@@ -762,8 +763,8 @@ final class ArmsTests {
         h.assertTrue(ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.BOSS) == ArmsRules.POSTURE_LORD
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.ELITE) == ArmsRules.POSTURE_ELITE
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.NONE) == ArmsRules.POSTURE_NORMAL, "stances by role");
-        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 80 && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500,
-                "an Execution takes at most 8% of a Lord");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true) == 100
+                        && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §47.3)");
         h.assertTrue(ArmsRules.focusTurn(20, 0) == ArmsRules.FOCUS_TURN && ArmsRules.focusTurn(90, 0) == 0, "soft focus turns at most 15°, only near");
         h.succeed();
     }

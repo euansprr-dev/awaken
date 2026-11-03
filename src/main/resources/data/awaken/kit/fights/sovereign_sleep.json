@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "sovereign_sleep",
  "moves": "sovereign_sleep",
+ "duel": true,
+ "stance": 340,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -26,7 +28,12 @@
     {
      "move": "buffet",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "talon"
+      ]
+     ]
     },
     {
      "move": "dive",
@@ -40,12 +47,25 @@
     },
     {
      "move": "lullaby",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "talon"
+      ]
+     ]
     },
     {
      "move": "swivel",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "talon"
+      ],
+      [
+       "talon_b"
+      ]
+     ]
     }
    ]
   },
@@ -88,7 +108,15 @@
     {
      "move": "swivel",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "talon"
+      ],
+      [
+       "talon_b"
+      ]
+     ]
     }
    ]
   },
@@ -122,7 +150,12 @@
     },
     {
      "move": "lullaby",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "talon"
+      ]
+     ]
     },
     {
      "move": "dreamfall",
@@ -131,7 +164,15 @@
     {
      "move": "swivel",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "talon"
+      ],
+      [
+       "talon_b"
+      ]
+     ]
     }
    ]
   }

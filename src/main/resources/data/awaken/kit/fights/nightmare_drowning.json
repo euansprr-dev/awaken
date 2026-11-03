@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "nightmare_drowning",
  "moves": "nightmare_drowning",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "kneel",
   "move": "arrive"
@@ -26,7 +28,15 @@
     {
      "move": "rake",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "snap"
+      ],
+      [
+       "tail"
+      ]
+     ]
     },
     {
      "move": "lunge",
@@ -41,16 +51,39 @@
     {
      "move": "undertow",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "snap",
+       "rake"
+      ],
+      [
+       "lunge"
+      ]
+     ]
     },
     {
      "move": "rush",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "snap"
+      ],
+      [
+       "rake"
+      ]
+     ]
     },
     {
      "move": "tail",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "snap",
+       "rake"
+      ]
+     ]
     }
    ]
   },
@@ -85,19 +118,50 @@
     {
      "move": "black_water",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "undertow"
+      ],
+      [
+       "lunge"
+      ]
+     ]
     },
     {
      "move": "undertow",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "snap",
+       "rake"
+      ],
+      [
+       "lunge"
+      ]
+     ]
     },
     {
      "move": "lungful",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "snap",
+       "rake"
+      ]
+     ]
     },
     {
      "move": "rush",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "snap"
+      ],
+      [
+       "rake"
+      ]
+     ]
     },
     {
      "move": "which_way",
@@ -106,7 +170,13 @@
     {
      "move": "tail",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "snap",
+       "rake"
+      ]
+     ]
     }
    ]
   }

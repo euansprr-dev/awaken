@@ -611,6 +611,7 @@ def clips(r):
     idle(r)
     _stalk(r)
     reactions(r)
+    plans.biped_duel_reactions(r, weight=1.2)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     by = {m.id: m for m in mv}
     for m in mv:
@@ -648,31 +649,34 @@ MOVE_SOUNDS = {"nosound": {"swing": "cast", "impact": ""}, "scream": {"swing": "
                "hush": {"swing": "cast", "impact": ""}, "deafening": {"swing": "roar"}, "wake": {"swing": "cast", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 340,
     "intro": {"pose": "idle", "move": "wake"},  # it stands listening to something far off, and hears you
     "phases": [
         {"pool": [
             {"move": "rake", "weight": 3, "when": "near", "then": [["rake_b"], ["rake_b", "found"]]},
             {"move": "found", "weight": 3, "then": [["rake"]]},
             {"move": "nosound", "weight": 1},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["rake"], ["rake_b"]]},
         ]},
         # it hears your heartbeat, as in DeepBestiary: it screams and calls its ears
         {"transition": "ears", "pool": [
             {"move": "rake", "weight": 3, "when": "near", "then": [["rake_b"], ["rake_b", "found"]]},
             {"move": "found", "weight": 3, "then": [["rake"]]},
-            {"move": "scream", "weight": 3, "when": "far"},
+            {"move": "scream", "weight": 3, "when": "far", "then": [["found"]]},
             {"move": "ears", "weight": 1},
             {"move": "nosound", "weight": 1},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["rake"], ["rake_b"]]},
         ]},
         # silence: the hush, the deafening silence
         {"transition": "hush", "pool": [
             {"move": "deafening", "weight": 2},
             {"move": "hush", "weight": 2, "when": "far", "then": [["found"]]},
             {"move": "rake", "weight": 3, "when": "near", "then": [["rake_b", "found"]]},
-            {"move": "found", "weight": 3},
-            {"move": "scream", "weight": 2, "when": "far"},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "found", "weight": 3, "then": [["rake"]]},
+            {"move": "scream", "weight": 2, "when": "far", "then": [["found"]]},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["rake"], ["rake_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

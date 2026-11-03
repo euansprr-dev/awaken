@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "nightmare_generic",
  "moves": "nightmare_generic",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -22,12 +24,22 @@
     {
      "move": "grasp",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "reach"
+      ]
+     ]
     },
     {
      "move": "fold",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "reach"
+      ]
+     ]
     },
     {
      "move": "corner",
@@ -41,12 +53,25 @@
     },
     {
      "move": "lights",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "corner"
+      ]
+     ]
     },
     {
      "move": "wrong",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "reach"
+      ],
+      [
+       "grasp"
+      ]
+     ]
     },
     {
      "move": "hold",
@@ -74,7 +99,12 @@
     {
      "move": "fold",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "reach"
+      ]
+     ]
     },
     {
      "move": "corner",
@@ -90,7 +120,12 @@
     {
      "move": "stare",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "corner"
+      ]
+     ]
     },
     {
      "move": "everywhere",
@@ -99,7 +134,15 @@
     {
      "move": "wrong",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "reach"
+      ],
+      [
+       "grasp"
+      ]
+     ]
     },
     {
      "move": "hold",

@@ -20,7 +20,7 @@ sinks onto its belly with its wings slumped and its heart dim; it dies the fire 
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -895,9 +895,9 @@ def bite(r):
     it strikes down and forward with its whole neck and snaps its jaws shut on you."""
     coil = _pose(r, lift=-1.8, pitch=-5, shift=(0, 3.0), arch=-3, bend=-8, neck=(-52, 0, 0), head=(42, 0, 6), jaw=28, tail=(10, 0), curl=10,
                  wings={"spread": 0.4, "lift": 32, "curl": 6}, feet={0: _foot(0, dz=1.0), 1: _foot(1, dz=1.0)})
-    strike = _pose(r, lift=-2.4, pitch=3, shift=(0, -3.0), bend=5, neck=(34, 0, 0), head=(-14, 0, 0), jaw=40, tail=(6, 0), wings={"spread": 0.42, "lift": 22, "curl": 8})
-    snap = _pose(r, lift=-2.8, pitch=4, shift=(0, -3.6), bend=6, neck=(40, 0, 0), head=(-10, 0, 3), jaw=0, tail=(8, 0), wings={"spread": 0.38, "lift": 16, "curl": 10})
-    held = _pose(r, lift=-2.9, pitch=4.2, shift=(0, -3.6), bend=6.2, neck=(41, 0, 0), head=(-8, 5, 6), jaw=3, tail=(8, 2), wings={"spread": 0.34, "lift": 13, "curl": 10})
+    strike = _pose(r, lift=-2.4, pitch=3, shift=(0, -3.0), bend=5, neck=(42, 0, 0), head=(-8, 0, 0), jaw=40, tail=(6, 0), wings={"spread": 0.42, "lift": 22, "curl": 8})
+    snap = _pose(r, lift=-2.8, pitch=4, shift=(0, -3.6), bend=6, neck=(48, 0, 0), head=(-4, 0, 3), jaw=0, tail=(8, 0), wings={"spread": 0.38, "lift": 16, "curl": 10})
+    held = _pose(r, lift=-2.9, pitch=4.2, shift=(0, -3.6), bend=6.2, neck=(49, 0, 0), head=(-2, 5, 6), jaw=3, tail=(8, 2), wings={"spread": 0.34, "lift": 13, "curl": 10})
     return Move("bite", "LIGHT", 10, 4, 14, through=held, title="Bite", track=8.0, rng=(0, 5.0), kinds=("combo", "near"), damage=1.1, knock=0.6,
                 hit=[("head", (0, 0, -18), 6.0), ("jaw", (0, -2, -12), 5.0)], plant=(),
                 stages={"windup": [(0.15, _mix(_pose(r), coil, 0.3)), (0.45, _mix(_pose(r), coil, 0.75)), (1.0, coil)], "active": [(0.45, strike), (0.75, snap), (1.0, held)],
@@ -1105,6 +1105,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=2.0)  # a duel's parried and reel (SPEC §47.5)
     mv = [claw(r), bite(r), rush(r), tail_sweep(r), cinders(r), cloud(r), ashfall(r), embers(r), nova(r), burnout(r), arrive(r)]
     for m in mv:
         stage_clips(r, m)
@@ -1137,35 +1138,38 @@ MOVE_SOUNDS = {"cinders": {"swing": "spit", "impact": ""}, "cloud": {"swing": "f
                "embers": {"swing": "cast", "impact": ""}, "burnout": {"swing": "roar", "impact": ""}, "arrive": {"swing": "tell_light", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 360,
     "intro": {"pose": "idle", "move": "arrive"},  # it lies burnt out, wakes, shakes off the ash and spreads its wings
     "phases": [
         {"pool": [
             {"move": "claw", "weight": 3, "when": "near", "then": [["bite"], ["bite", "rush"]]},
-            {"move": "bite", "weight": 2, "when": "near"},
+            {"move": "bite", "weight": 2, "when": "near", "then": [["claw"], ["rush"]]},
             {"move": "rush", "weight": 3, "when": "far", "then": [["claw"]]},
-            {"move": "cinders", "weight": 3, "when": "far"},
-            {"move": "cloud", "weight": 2, "when": "near"},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "cinders", "weight": 3, "when": "far", "then": [["cinders"], ["rush", "claw"]]},
+            {"move": "cloud", "weight": 2, "when": "near", "then": [["claw", "bite"]]},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["claw", "bite"]]},
         ]},
         # the ash comes down, as in DeepBestiary: Ashfall, the embers it brings up, more cinders
         {"transition": "ashfall", "pool": [
             {"move": "claw", "weight": 3, "when": "near", "then": [["bite"], ["bite", "cloud"]]},
             {"move": "rush", "weight": 3, "when": "far", "then": [["claw", "bite"]]},
-            {"move": "cinders", "weight": 3, "when": "far"},
-            {"move": "ashfall", "weight": 1},
+            {"move": "cinders", "weight": 3, "when": "far", "then": [["cinders"], ["rush", "claw"]]},
+            {"move": "ashfall", "weight": 1, "then": [["cinders"], ["rush"]]},
             {"move": "embers", "weight": 2},
-            {"move": "cloud", "weight": 2, "when": "near"},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "cloud", "weight": 2, "when": "near", "then": [["claw", "bite"]]},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["claw", "bite"]]},
         ]},
         # burnout: it burns the last of itself, and the embers burst out of it
         {"transition": "burnout", "pool": [
-            {"move": "nova", "weight": 3, "when": "near"},
+            {"move": "nova", "weight": 3, "when": "near", "then": [["claw"], ["sweep"]]},
             {"move": "claw", "weight": 3, "when": "near", "then": [["bite", "nova"]]},
             {"move": "rush", "weight": 3, "when": "far", "then": [["claw", "bite"]]},
-            {"move": "ashfall", "weight": 2},
-            {"move": "cinders", "weight": 2, "when": "far"},
+            {"move": "ashfall", "weight": 2, "then": [["cinders"], ["rush"]]},
+            {"move": "cinders", "weight": 2, "when": "far", "then": [["cinders"], ["rush", "claw"]]},
             {"move": "burnout", "weight": 1},
-            {"move": "sweep", "weight": 3, "when": "behind"},
+            {"move": "sweep", "weight": 3, "when": "behind", "then": [["claw", "bite"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

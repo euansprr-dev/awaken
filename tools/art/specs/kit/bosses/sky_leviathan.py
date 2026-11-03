@@ -18,7 +18,7 @@ lightning comes down). Its stance broken, it sags in the air with its wings droo
 import math
 import random
 
-from kit import core
+from kit import core, plans
 from kit.core import DEG, Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -727,6 +727,7 @@ def clips(r):
     _idle(r)
     _flight(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=2.4)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     for m in mv:
         stage_clips(r, m)
@@ -751,30 +752,33 @@ SOUNDS = {
 MOVE_SOUNDS = {"tide": {"swing": "cast", "impact": ""}, "barrage": {"swing": "cast"}, "storm": {"swing": "roar"}, "unfurl": {"swing": "roar", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 320,
     "intro": {"pose": "kneel", "move": "unfurl"},
     "phases": [
         {"pool": [
             {"move": "slap", "weight": 3, "when": "near", "then": [["slap_b"], ["slap_b", "ram"]]},
-            {"move": "ram", "weight": 2, "when": "near"},
-            {"move": "wingbeat", "weight": 2},
+            {"move": "ram", "weight": 2, "when": "near", "then": [["slap"]]},
+            {"move": "wingbeat", "weight": 2, "then": [["slap"], ["dive"]]},
             {"move": "dive", "weight": 3, "when": "far", "then": [["slap"]]},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["slap_b"]]},
         ]},
         {"transition": "tide", "pool": [
             {"move": "slap", "weight": 3, "when": "near", "then": [["slap_b"], ["slap_b", "ram"]]},
             {"move": "ram", "weight": 2, "when": "near", "then": [["slap"]]},
             {"move": "tide", "weight": 1},
-            {"move": "barrage", "weight": 2, "when": "far"},
+            {"move": "barrage", "weight": 2, "when": "far", "then": [["barrage"]]},
             {"move": "dive", "weight": 3, "when": "far", "then": [["ram"]]},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["slap_b"]]},
         ]},
         {"transition": "storm", "pool": [
             {"move": "storm", "weight": 2},
             {"move": "wingbeat", "weight": 2, "then": [["slap"]]},
             {"move": "dive", "weight": 3, "when": "far", "then": [["slap", "slap_b"]]},
             {"move": "slap", "weight": 3, "when": "near", "then": [["slap_b", "ram"]]},
-            {"move": "ram", "weight": 2, "when": "near"},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "ram", "weight": 2, "when": "near", "then": [["slap"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["slap_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

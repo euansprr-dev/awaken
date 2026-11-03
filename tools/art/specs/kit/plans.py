@@ -376,6 +376,195 @@ def biped_fall(r, w=1.0):
     core.ground_pass(r, [(_under(r, "hand_" + sd), _arm(r, sd)) for sd in ("l", "r") if "hand_" + sd in r.by_name], clips=["death"], skip=())
 
 
+def biped_duel_reactions(r, weight=1.0, lead="r"):
+    """A duel's reactions for a biped of any proportions (SPEC §47.3): `parried` (0.5 s, its blow turned aside: the
+    striking arm thrown up past its shoulder, the body rocked back a step and settling forward to strike on) and `reel`
+    (1.3 s, a phrase's last blow turned aside: thrown hard onto its back foot with both arms flung wide, a step back to
+    catch itself, a lurch forward over bent knees, hanging there bowed and open with its arms down, then gathering). The
+    feet stay where they stand but the back one, which steps; nothing goes through the floor. lead: the arm that strikes
+    most often."""
+    from kit import core
+    from kit.core import keyed
+    # the lengths are the duel's own (FightRunner: a 10-tick recoil, a 26-tick reel), whatever the body weighs; weight
+    # only shades how far it's thrown
+    w = min(1.0, weight ** 0.5)
+    size = getattr(r, "size", 1.0) * (0.6 + 0.4 * w)
+    lo = "l" if lead == "r" else "r"
+    sg = 1 if lead == "r" else -1  # the lead arm's side: it spins the body toward the arm thrown back
+
+    def pose(p, back=0.0, lift=0.0):
+        # the back foot steps: lifted while it travels, set down where it holds (a skid would slide it)
+        p = core.plant(r, p, at={lo: (0, -lift * size, back * size)} if back or lift else None)
+        return _clear(r, p, legs=False)
+
+    thrown = pose({"pelvis": {"rot": (-6, -5 * sg, 0), "pos": (0, 0, 1.5 * size)}, "spine": (-6, -4 * sg, 0), "chest": (-16, -8 * sg, 0),
+                   "head": (-18, -6 * sg, 0), "arm_" + lead: (-150, 0, 22 * sg), "forearm_" + lead: (-24, 0, 0),
+                   "arm_" + lo: (-34, 0, -30 * sg), "forearm_" + lo: (-30, 0, 0)}, back=4, lift=3)
+    hang = pose({"pelvis": {"rot": (-3, -3 * sg, 0), "pos": (0, 0, 1 * size)}, "chest": (-8, -4 * sg, 0), "head": (-8, -3 * sg, 0),
+                 "arm_" + lead: (-112, 0, 16 * sg), "forearm_" + lead: (-16, 0, 0), "arm_" + lo: (-22, 0, -20 * sg),
+                 "forearm_" + lo: (-20, 0, 0)}, back=4)
+    settle = pose({"pelvis": {"rot": (3, 0, 0), "pos": (0, -0.6 * size, 0)}, "chest": (5, 1 * sg, 0), "head": (2, 0, 0),
+                   "arm_" + lead: (-30, 0, 8 * sg), "forearm_" + lead: (-14, 0, 0)}, back=1.5, lift=2.5)
+    keyed(r, "parried", 0.5, [(0, core.plant(r, {})), (0.07, thrown), (0.24, hang), (0.37, settle), (0.5, core.plant(r, {}))])
+    rock = pose({"pelvis": {"rot": (-10, -4 * sg, 2), "pos": (0, 0, 3 * size)}, "spine": (-8, -3 * sg, 0), "chest": (-24, -8 * sg, 4),
+                 "head": (-22, -6 * sg, 4), "arm_l": (-62, 0, -58), "arm_r": (-62, 0, 58), "forearm_l": (-22, 0, 0),
+                 "forearm_r": (-22, 0, 0)}, back=10, lift=6)  # flung out to where it catches itself
+    catch = pose({"pelvis": {"rot": (4, -2 * sg, 1), "pos": (0, -4 * size, 4 * size)}, "chest": (-6, -3 * sg, 2), "head": (-6, -2 * sg, 2),
+                  "arm_l": (-30, 0, -40), "arm_r": (-30, 0, 40), "forearm_l": (-18, 0, 0), "forearm_r": (-18, 0, 0)}, back=10)
+    lurch = pose({"pelvis": {"rot": (18, 2 * sg, -2), "pos": (0, -6 * size, 2 * size)}, "spine": (10, 0, 0), "chest": (22, 3 * sg, -2),
+                  "head": (16, 4 * sg, 0), "arm_l": (8, 0, -14), "arm_r": (8, 0, 14), "forearm_l": (-10, 0, 0),
+                  "forearm_r": (-10, 0, 0)}, back=10)
+    bowed = pose({"pelvis": {"rot": (16, 1 * sg, -1), "pos": (0, -7 * size, 2 * size)}, "spine": (10, 0, 0), "chest": (20, 2 * sg, -1),
+                  "head": (14, 2 * sg, 0), "arm_l": (4, 0, -9), "arm_r": (4, 0, 9), "forearm_l": (-6, 0, 0), "forearm_r": (-6, 0, 0)}, back=10)
+    hp = {"pelvis": {"rot": (15, 0, 0), "pos": (0, -6.5 * size, 2 * size)}, "spine": (9, 0, 0), "chest": (18, 1 * sg, 0),
+          "head": (12, 1 * sg, 0), "arm_l": (5, 0, -8), "arm_r": (5, 0, 8), "forearm_l": (-8, 0, 0), "forearm_r": (-8, 0, 0)}
+    held, gather = pose(hp, back=10), pose(dict(hp, pelvis={"rot": (12, 0, 0), "pos": (0, -5.5 * size, 1.8 * size)}), back=10, lift=3)
+    up = pose({"pelvis": {"rot": (6, 0, 0), "pos": (0, -3 * size, 1 * size)}, "chest": (6, 0, 0), "head": (2, 0, 0)}, lift=3)  # stepped in, set straight down
+    keyed(r, "reel", 1.3, [(0, core.plant(r, {})), (0.1, rock), (0.32, catch), (0.54, lurch), (0.78, bowed), (1.0, held), (1.06, gather),
+                           (1.16, up), (1.3, core.plant(r, {}))])
+    core.ground_pass(r, [(_under(r, "hand_" + sd), _arm(r, sd)) for sd in ("l", "r") if "hand_" + sd in r.by_name], clips=["parried", "reel"])
+    for n in ("parried", "reel"):
+        core.lock_feet(r, n)
+
+
+def _key_pose(sp):
+    """A sampled pose (radians, pos +y down) back as a key pose (degrees, pos +y up)."""
+    from kit import core
+    return {b: {"rot": tuple(v / core.DEG for v in q["rot"]), "pos": (q["pos"][0], -q["pos"][1], q["pos"][2])} for b, q in sp.items()}
+
+
+def _peak(r, clip):
+    """The time a clip strays furthest from its first pose."""
+    from kit import core
+    c = r.clips[clip]
+    n = max(1, int(round(c.length / core.TICK)))
+    s0 = r.sample([(clip, 0.0, 1.0)])
+    best, at = -1.0, 0.0
+    for i in range(n + 1):
+        t = min(c.length, i * core.TICK)
+        s = r.sample([(clip, t, 1.0)])
+        d = sum(abs(a - b) for bn in s for a, b in zip(s[bn]["rot"], s0.get(bn, {"rot": (0, 0, 0)})["rot"]))
+        if d > best:
+            best, at = d, t
+    return at
+
+
+def standing(r, skip=()):
+    """The bones that carry a body: each that touches the ground as it stands (its hurt's first pose; but what hangs from a
+    hand, the springs and the skipped), the chain up from it, and the trunk all of them hang from. A flier has none."""
+    from kit import core
+    fr = core.frames(r, r.sample([("hurt", 0.0, 1.0)]) if "hurt" in r.clips else {})
+    loose = {"hand_l", "hand_r", "forearm_l", "forearm_r"} | {b for b, *_ in r.springs} | set(skip)
+
+    def under_loose(b):
+        x = r.by_name[b]
+        while x is not None:
+            if x.name in loose:
+                return True
+            x = x.parent
+        return False
+    touch = [b.name for b in r.bones if b.cubes and not under_loose(b.name) and core.lowest(r, fr, [b.name]) >= core.GROUND - 1.0]
+    chains = []
+    for t in touch:
+        ch, x = [], r.by_name[t]
+        while x is not None:
+            ch.append(x.name)
+            x = x.parent
+        chains.append(ch)
+    out = set()
+    for ch in chains:
+        out.update(ch)
+    return out
+
+
+def duel_reactions(r, lead="r", weight=1.0, kneel_at=0.45, skip=(), stand=None):
+    """A duel's reactions for any body, from its own hurt and broken poses (SPEC §47.5): `parried` (0.5 s, its blow turned
+    aside: thrown back the way its own hurt goes, a little toward its lead side, further than a hurt, settling forward to
+    go on) and `reel` (1.3 s, a phrase's last blow turned aside: thrown hard, then sagging half-way to its kneel, open and
+    hanging there, then gathering). What carries the body (`standing`, or stand) moves only as the authored poses do,
+    so what stands stays where it stands; the rest is thrown further. Bipeds' feet are locked after."""
+    from kit import core
+    from kit.core import keyed
+    w = min(1.15, max(0.7, weight ** -0.5))  # a heavy body is thrown less far
+    carry = set(stand) if stand is not None else standing(r, skip)
+    p0 = _key_pose(r.sample([("hurt", 0.0, 1.0)]))
+
+    def delta(clip, t):
+        q = _key_pose(r.sample([(clip, t, 1.0)]))
+        out = {}
+        for b in set(q) | set(p0):
+            a, c = q.get(b, {"rot": (0, 0, 0), "pos": (0, 0, 0)}), p0.get(b, {"rot": (0, 0, 0), "pos": (0, 0, 0)})
+            out[b] = ([u - v for u, v in zip(a["rot"], c["rot"])], [u - v for u, v in zip(a["pos"], c["pos"])])
+        return out
+    side = "hurt_" + lead if ("hurt_" + lead) in r.clips else "hurt"
+    df, ds = delta("hurt", _peak(r, "hurt")), delta(side, _peak(r, side))
+    mix = {b: ([0.55 * a + 0.45 * c for a, c in zip(df.get(b, ([0] * 3, [0] * 3))[0], ds.get(b, ([0] * 3, [0] * 3))[0])],
+               [0.55 * a + 0.45 * c for a, c in zip(df.get(b, ([0] * 3, [0] * 3))[1], ds.get(b, ([0] * 3, [0] * 3))[1])]) for b in set(df) | set(ds)}
+    low = delta("kneel", kneel_at * r.clips["kneel"].length)
+    # a body whose own hurt barely moves (a nod) is thrown to a readable recoil: its free bones' mean turn is brought up
+    # to 16 degrees at most 2.5 times over (one that hurts big already is left as it is)
+    turns = [max(abs(c) for c in d[0]) for b, d in mix.items() if b in r.by_name and b not in carry and max(abs(c) for c in d[0]) > 1.0]
+    big = min(2.5, max(1.0, 16.0 / (sum(turns) / len(turns)))) if turns else 1.0
+    mix = {b: ([c * (1.0 if b in carry else big) for c in d[0]], d[1]) for b, d in mix.items()}
+
+    guard = list(getattr(r, "guard", ()))
+    # a guarded part may touch down a little, as deep as its own hurts do (the build allows 2 px), never deeper
+    peaks = [p0, _key_pose(r.sample([("hurt", _peak(r, "hurt"), 1.0)])), _key_pose(r.sample([(side, _peak(r, side), 1.0)]))]
+    floor = max(core.GROUND + 1.2, max(core.lowest(r, core.as_sample(q), guard) for q in peaks) + 0.3) if guard else None
+    deep = min(core.SINK - 0.1, max(core.SINK - 0.4, core.sinks(r, "hurt", guard) + 0.3)) if guard else None
+
+    def pose(gain, *parts):
+        """p0 plus each (delta, free share, carrying share) times gain, each bone's added turn kept within 40 degrees (a
+        chain of bones each thrown further adds up down a neck). A key that would put a guarded part into the ground (a
+        head that hangs to the floor, a deep hurt on top of a deep kneel) first throws its loose parts less far, then, if
+        that isn't enough, all of it: each by the least that keeps it out."""
+        def build(s, f):
+            out = {}
+            for b in set(p0) | set().union(*(set(d) for d, _, _ in parts)):
+                if b not in r.by_name:
+                    continue
+                base = p0.get(b, {"rot": (0, 0, 0), "pos": (0, 0, 0)})
+                rot, pos = list(base["rot"]), list(base["pos"])
+                for d, kf, kc in parts:
+                    k = gain * s * (kc if b in carry else f * kf * w)
+                    dr, dp = d.get(b, ([0] * 3, [0] * 3))
+                    for i in range(3):
+                        rot[i] += max(-40.0, min(40.0, dr[i] * k))
+                        pos[i] += dp[i] * k
+                out[b] = {"rot": tuple(rot), "pos": tuple(pos)}
+            return out
+
+        def clear(q):
+            return core.lowest(r, core.as_sample(q), guard) <= floor
+
+        def most(make):
+            lo, hi = 0.0, 1.0
+            for _ in range(10):
+                mid = (lo + hi) / 2
+                lo, hi = (mid, hi) if clear(make(mid)) else (lo, mid)
+            return lo
+        out = build(1.0, 1.0)
+        if floor is None or clear(out):
+            return out
+        if clear(build(1.0, 0.0)):
+            return build(1.0, most(lambda f: build(1.0, f)))
+        return build(most(lambda s: build(s, 0.0)), 0.0)
+
+    # between the keys a long chain can still swing through the floor: the whole reaction is thrown less far until no
+    # tick of it does
+    for gain in (1.0, 0.85, 0.7, 0.55, 0.4):
+        keyed(r, "parried", 0.5, [(0, pose(gain)), (0.07, pose(gain, (mix, 1.3, 1.0))), (0.24, pose(gain, (mix, 0.85, 0.7))),
+                                  (0.37, pose(gain, (mix, -0.18, -0.1))), (0.5, pose(gain))])
+        keyed(r, "reel", 1.3, [(0, pose(gain)), (0.1, pose(gain, (mix, 1.6, 1.0))), (0.32, pose(gain, (mix, 1.0, 0.6), (low, 0.3, 0.3))),
+                               (0.54, pose(gain, (mix, -0.35, -0.1), (low, 0.62, 0.62))), (0.78, pose(gain, (mix, 0.12, 0.0), (low, 0.6, 0.6))),
+                               (1.0, pose(gain, (low, 0.55, 0.55))), (1.16, pose(gain, (low, 0.22, 0.22))), (1.3, pose(gain))])
+        if not guard or max(core.sinks(r, "parried", guard), core.sinks(r, "reel", guard)) <= deep:
+            break
+    if "foot_l" in r.by_name and "foot_r" in r.by_name:
+        for n in ("parried", "reel"):
+            core.lock_feet(r, n)
+
+
 def biped_reactions(r, weight=1.0):
     """The flinches by side, the kneel when its stance breaks and the rise, the death fall."""
     from kit import core

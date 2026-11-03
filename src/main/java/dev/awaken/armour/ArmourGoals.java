@@ -100,7 +100,7 @@ final class ArmourGoals {
         return new Goals.Choice(set.id, set.setName, set.archetype.label + " · " + (int) Math.round(armour) + " armour", show, needs);
     }
 
-    private static boolean owns(ServerPlayer p, Item item) {
+    static boolean owns(ServerPlayer p, Item item) {
         for (EquipmentSlot slot : SLOTS) if (p.getItemBySlot(slot).is(item)) return true;
         return Goals.count(p.getInventory(), item) > 0;
     }

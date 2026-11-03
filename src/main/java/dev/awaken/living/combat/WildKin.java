@@ -1,5 +1,6 @@
 package dev.awaken.living.combat;
 
+import dev.awaken.core.api.Strikes;
 import dev.awaken.living.region.RegionMap;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -8,7 +9,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 
@@ -68,7 +68,7 @@ public final class WildKin {
     public static void arm(Mob mob, int landLevel) {
         if (!(mob instanceof PathfinderMob pm)) return;
         int rank = RegionMap.rankOf(landLevel);
-        pm.goalSelector.addGoal(0, new MeleeAttackGoal(pm, 1.25, true));
+        pm.goalSelector.addGoal(0, Strikes.bite(pm, 1.25, () -> true)); // told (SPEC §47.2)
         var retaliate = new Retaliate(pm);
         if (rallies(rank)) retaliate.setAlertOthers();
         pm.targetSelector.addGoal(0, retaliate);

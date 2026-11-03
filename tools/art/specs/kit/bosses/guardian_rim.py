@@ -19,7 +19,7 @@ floor and her legs fold in over it.
 """
 import math
 
-from kit import core, ik, parts
+from kit import core, ik, parts, plans
 from kit.core import DEG, Move, keyed, stage_clips
 import fauna_rig as R
 from fauna_rig import Ramp, hexc, SIDES
@@ -618,6 +618,7 @@ def clips(r):
     _idle(r)
     _locomotion(r)
     _reactions(r)
+    plans.duel_reactions(r, lead="r", weight=1.6)  # a duel's parried and reel (SPEC §47.5)
     mv = [stab(r), stab(r, 4, "stab_b"), scythe(r), kick(r), web(r), rootfall(r), lances(r), brood(r), wake(r)]
     for m in mv:
         stage_clips(r, m)
@@ -645,24 +646,27 @@ SOUNDS = {
 MOVE_SOUNDS = {"web": {"swing": "cast"}, "brood": {"swing": "roar", "impact": ""}, "lances": {"swing": "roar"}, "wake": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 320,
     "intro": {"pose": "idle", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "stab", "weight": 3, "when": "near", "then": [["stab_b"], ["stab_b", "scythe"]]},
-            {"move": "scythe", "weight": 2, "when": "near"},
-            {"move": "web", "weight": 3, "when": "far"},
+            {"move": "scythe", "weight": 2, "when": "near", "then": [["stab", "stab_b"], ["kick"]]},
+            {"move": "web", "weight": 3, "when": "far", "then": [["rootfall"], ["web"]]},
             {"move": "rootfall", "weight": 2, "when": "far", "then": [["stab"]]},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["stab"], ["scythe"]]},
         ]},
         # the Rim wakes with the second phase, as in DeepBestiary: her brood, and the lances
         {"transition": "brood", "pool": [
             {"move": "stab", "weight": 3, "when": "near", "then": [["stab_b"], ["stab_b", "scythe"]]},
-            {"move": "scythe", "weight": 2, "when": "near"},
-            {"move": "web", "weight": 2, "when": "far"},
+            {"move": "scythe", "weight": 2, "when": "near", "then": [["stab", "stab_b"], ["kick"]]},
+            {"move": "web", "weight": 2, "when": "far", "then": [["rootfall"], ["web"]]},
             {"move": "rootfall", "weight": 2, "when": "far", "then": [["stab", "stab_b"]]},
-            {"move": "lances", "weight": 2},
+            {"move": "lances", "weight": 2, "then": [["web"]]},
             {"move": "brood", "weight": 1},
-            {"move": "kick", "weight": 3, "when": "behind"},
+            {"move": "kick", "weight": 3, "when": "behind", "then": [["stab"], ["scythe"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

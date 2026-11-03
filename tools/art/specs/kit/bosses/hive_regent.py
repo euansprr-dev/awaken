@@ -17,7 +17,7 @@ and wing flung out, the train thrashing) and her rising from the comb.
 """
 import math
 
-from kit import core
+from kit import core, plans
 from kit.core import Move, keyed, stage_clips
 from kit.paint import edge_glow, radial
 import fauna_rig as R
@@ -271,6 +271,7 @@ def clips(r):
     slump = _pose(core=(22, 0, 8), at=(0, -14, 0), chest=(14, 0, 4), head=(24, 0, 10), wings=(-20, 20), arms=(-4, -10, -40, -30), low=(-10, 0), train=(6, 0))
     fall = _pose(core=(70, 0, 16), at=(0, -34, -4), chest=(14, 0, 6), head=(26, 0, 20), wings=(-34, 36), arms=(-40, 30, -50, -20), low=(10, 0), train=(-30, 8))
     keyed(r, "death", 2.6, [(0, {}), (0.3, shriek), (1.1, slump), (1.8, fall), (2.6, fall)])
+    plans.duel_reactions(r, lead="r", weight=1.2)  # a duel's parried and reel (SPEC §47.5)
     mv = [cut("cut", "r"), cut("cut_b", "l", windup=9, recover=12), sting(), dive(), brood(), rain(), volley(), jelly(), frenzy(), emerge(), lash()]
     for m in mv:
         stage_clips(r, m)
@@ -291,11 +292,12 @@ def cut(mid, side, windup=11, active=4, recover=12):
     _arm(coil, side, 30, 96, 40, -20, 0)
     _arm(coil, other, -10, 6, 0, 0)
     _low(coil, 6, 0)
-    hit = _pose(core=(18, sg * 18, -sg * 6), at=(0, -3, -6), chest=(10, sg * 10, 0), head=(14, -sg * 8, 0), wings=(-4, 10), train=(8, -sg * 8))
-    _arm(hit, side, -70, -12, -20, 60, 0)
+    # she rides high: the cut comes down steeply, her body bowed into it, so the blade meets you at the chest
+    hit = _pose(core=(33, sg * 18, -sg * 6), at=(0, -3, -6), chest=(10, sg * 10, 0), head=(14, -sg * 8, 0), wings=(-4, 10), train=(8, -sg * 8))
+    _arm(hit, side, -40, -12, -20, 90, 0)
     _arm(hit, other, 18, 18, 10, 0)
-    after = _pose(core=(21, sg * 22, -sg * 8), at=(0, -4, -7), chest=(12, sg * 12, 0), head=(16, -sg * 10, 0), wings=(-6, 12), train=(10, -sg * 10))
-    _arm(after, side, -64, -36, -30, 70, 0)
+    after = _pose(core=(36, sg * 22, -sg * 8), at=(0, -4, -7), chest=(12, sg * 12, 0), head=(16, -sg * 10, 0), wings=(-6, 12), train=(10, -sg * 10))
+    _arm(after, side, -34, -36, -30, 100, 0)
     _arm(after, other, 22, 22, 10, 0)
     back = _pose(core=(8, sg * 6, 0), at=(0, -1, -2), chest=(4, 0, 0), wings=(-2, 4))
     _arm(back, side, -20, -6, -8, 20)
@@ -306,7 +308,7 @@ def cut(mid, side, windup=11, active=4, recover=12):
 
 
 def sting():
-    """The Sting: the train draws back and up behind her as she rears, wings flaring and the daggers lifted out of the
+    """The Sting (PERILOUS, red in a duel: a stinger is dashed past, never turned aside): the train draws back and up behind her as she rears, wings flaring and the daggers lifted out of the
     way; she holds, then it whips forward under her like a scorpion's tail and the stinger drives out at your chest."""
     draw = _pose(core=(-6, 0, 0), at=(0, 3, 2), chest=(-4, 0, 0), head=(-8, 0, 4), wings=(12, -6), arms=(14, 26, 20, -20), low=(14, 0), train=(-26, 0))
     rear = _pose(core=(-20, 0, 0), at=(0, 6, 4), chest=(-10, 0, 0), head=(-16, 0, 8), wings=(20, -10), arms=(20, 44, 30, -30), low=(24, 0), train=(-44, 0))
@@ -321,7 +323,7 @@ def sting():
     back = _pose(core=(-10, 0, 0), at=(0, 1, -3), wings=(-2, 6), arms=(0, 10, 4, 0), train=(50, 0, -22))
     through = _pose(core=(-22, 0, 0), at=(0, 1, -8), chest=(-3, 0, 0), head=(10, 0, 0), wings=(-6, 14), arms=(-8, 24, 8, -8), low=(4, 0), train=(84, 0, 4))
     _gown(through, 26)
-    return Move("sting", "HEAVY", 18, 5, 22, title="The Sting", hold=8, track=5.0, rng=(0, 3.4), kinds=("near",), damage=1.3, knock=1.0,
+    return Move("sting", "PERILOUS", 18, 5, 22, title="The Sting", track=5.0, rng=(0, 3.4), kinds=("near",), damage=1.3, knock=1.0,
                 plant=(), through=through, hit=[("stinger", (0, 7, 0), 2.5), ("abd5", (0, 3, 0), 3)], lag=TRAIN_ON_TIME,
                 stages={"windup": [(0.2, core._scaled(draw, 0.35)), (0.5, draw), (1.0, rear)], "active": [(0.3, swing), (0.65, drive), (1.0, after)],
                         "recover": [(0.45, back), (0.68, _pose(core=(-4, 0, 0), train=(22, 0, -12)))]})
@@ -442,11 +444,11 @@ def emerge():
 
 def lash():
     """For whoever is behind her (LIGHT): she looks back over her shoulder and draws the train out to one side, lifting
-    it, then whips it across behind her at knee height."""
+    it, then whips it across behind her, swung down under her to sweep you at the waist."""
     pre = _pose(core=(2, -6, 0), head=(-2, 22, 0), wings=(-3, 3), arms=(3, 6, 3, -3), train=(-8, 10))
     wind = _pose(core=(6, -18, 4), at=(0, 1, 0), chest=(0, -12, 0), head=(-8, 56, 6), wings=(-12, 10), arms=(12, 20, 10, -10), low=(10, 10), train=(-26, 30))
-    hit = _pose(core=(2, 14, -3), at=(0, 1, 0), chest=(0, 8, 0), head=(-4, 40, 0), wings=(4, -2), arms=(-4, 14, 0, 0), train=(-14, -22))
-    after = _pose(core=(2, 18, -4), chest=(0, 10, 0), head=(-4, 34, 0), wings=(4, -2), arms=(-6, 16, 0, 0), train=(-12, -27))
+    hit = _pose(core=(2, 14, -3), at=(0, 1, 0), chest=(0, 8, 0), head=(-4, 40, 0), wings=(4, -2), arms=(-4, 14, 0, 0), train=(10, -22))
+    after = _pose(core=(2, 18, -4), chest=(0, 10, 0), head=(-4, 34, 0), wings=(4, -2), arms=(-6, 16, 0, 0), train=(12, -27))
     back = _pose(core=(0, 6, 0), head=(0, 14, 0), train=(-4, -9))
     return Move("lash", "LIGHT", 10, 4, 14, track=0.0, rng=(0, 3.0), kinds=("behind",), damage=0.9, knock=1.0, plant=(), lag=TRAIN_ON_TIME,
                 hit=[("stinger", (0, 7, 0), 2.5), ("abd4", (0, 3, 0), 3)],
@@ -467,23 +469,26 @@ SOUNDS = {
 MOVE_SOUNDS = {"brood": {"swing": "cast"}, "rain": {"impact": ""}, "jelly": {"swing": "cast", "impact": ""}, "frenzy": {"swing": "roar"}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 240,
     "intro": {"pose": "idle", "move": "emerge"},
     "phases": [
         {"pool": [
             {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"]]},
-            {"move": "sting", "weight": 2, "when": "near"},
+            {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
             {"move": "dive", "weight": 3, "then": [["cut_b"]]},
-            {"move": "brood", "weight": 1},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
         ]},
         # the comb weeps with the second phase: Honey Rain and the stinger volleys, as in GateBestiary
         {"transition": "rain", "pool": [
             {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"], ["cut_b", "sting"]]},
-            {"move": "sting", "weight": 2, "when": "near"},
+            {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
             {"move": "volley", "weight": 3, "then": [["volley"]]},
             {"move": "dive", "weight": 2, "then": [["cut_b"]]},
             {"move": "rain", "weight": 1},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "brood", "weight": 1},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
         ]},
         {"transition": "jelly", "pool": [
             {"move": "frenzy", "weight": 1},
@@ -491,8 +496,8 @@ FIGHT = {
             {"move": "dive", "weight": 3, "then": [["cut_b"], ["cut_b", "cut"]]},
             {"move": "volley", "weight": 2, "then": [["volley"]]},
             {"move": "brood", "weight": 1},
-            {"move": "sting", "weight": 2, "when": "near"},
-            {"move": "lash", "weight": 3, "when": "behind"},
+            {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},
