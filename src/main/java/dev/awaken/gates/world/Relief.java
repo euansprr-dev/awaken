@@ -51,6 +51,8 @@ final class Relief {
     final java.util.BitSet pinned = new java.util.BitSet(Plots.SIDE * Plots.SIDE);
     /** Places are islands (in the air, the dark or a sea): their edge is a drop, not a wall; the bridges stay flat. */
     final boolean island;
+    /** Content version 9 (38.16): nothing laid on a half step. */
+    final boolean v9;
     /** The highest ground or piece standing within 3 of each column, whole blocks (what a wall rises from: {@link CaveEngine.Cave#wall}). */
     final byte[] near = new byte[Plots.SIDE * Plots.SIDE];
     /** A high ledge's height over each of its columns and its stair's, whole blocks (0 elsewhere): nothing is placed there. */
@@ -61,6 +63,7 @@ final class Relief {
     Relief(CaveEngine.Cave c) {
         this.c = c;
         this.island = c.isles || c.sea;
+        this.v9 = c.c.plan().contentVersion() >= 9;
         // an island's ground is half as bold: hummocks, not terraces
         this.groundK = c.param("depth_ground", 1) * (island ? 0.5 : 1);
         this.thingsK = c.param("depth_things", 1);
@@ -75,6 +78,16 @@ final class Relief {
     int half(int x, int z) {
         if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
         return g[x + z * Plots.SIDE];
+    }
+
+    /**
+     * Version 9 (38.16): a half step at (x, z) made whole, where a feature (a cache, a rune) stands: on a slab or a drift
+     * it would stand half a block up in the air. Where you stand there doesn't change ({@link #stand}).
+     */
+    void level(int x, int z) {
+        if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return;
+        int i = x + z * Plots.SIDE;
+        if ((g[i] & 1) != 0) g[i]++;
     }
 
     /** Where you stand at (x, z), whole blocks above the floor line: the block your feet are in (over a slab, the next). */
@@ -191,6 +204,7 @@ final class Relief {
             if (e.getValue() != CaveEngine.Kind.LINK) c.s.op(b[0], W - 5, b[1], b[2], W - 5, b[3], (buf, x, y, z) -> soften(buf, x, z));
         }
         c.p.ground = stand;
+        c.p.relief = this;
         java.util.BitSet hs = new java.util.BitSet(high.length);
         for (int k = 0; k < high.length; k++) if (high[k] > 0) hs.set(k);
         c.p.high = hs.isEmpty() ? null : hs;
@@ -629,12 +643,16 @@ final class Relief {
                 else b.set(x, y, z, bank);
             }
             int top = W + whole;
+            boolean half = false;
             if ((v & 1) == 1 && clear(b, x, top, z)) {
                 BlockState step = step(x, z, v, top);
                 if (step != null) b.set(x, top, z, step);
+                half = step != null;
                 top++;
             }
             creep(b, x, top, z);
+            // on a half step (a slab, a stair, a drift) what grew there is lost and nothing lies on it: it would float (38.16)
+            if (half && v9) return;
             if (!regrow(b, x, top, z, grown, grown2)) over(b, x, top, z, v);
             return;
         }
@@ -642,12 +660,15 @@ final class Relief {
         for (int y = W - open; y < W; y++) b.mark(x, y, z, Sculpt.OPEN);
         for (int y = W - open - 3; y < W - open; y++) if (b.get(x, y, z) == Sculpt.UNSET) b.mark(x, y, z, Sculpt.SOLID);
         int top = W - open;
+        boolean half = false;
         if ((deep & 1) == 1) {
             BlockState slab = d.ground(SLAB, x, top, z);
             if (slab != null) b.set(x, top, z, slab);
+            half = slab != null;
             top++;
         }
         creep(b, x, top, z);
+        if (half && v9) return;
         if (!regrow(b, x, top, z, grown, grown2)) over(b, x, top, z, v);
     }
 

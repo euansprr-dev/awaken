@@ -371,6 +371,7 @@ final class HallEngine implements WorldEngine {
 
         void sculpt() {
             s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
+            s.settle = c.plan().contentVersion() >= 9;
             pickHeroes();
             for (int i = 0; i < runs.size(); i++) hall(i);
             for (int w : kinds.keySet()) {
@@ -641,6 +642,11 @@ final class HallEngine implements WorldEngine {
             return flood ? W + LOW + 1 : W;
         }
 
+        /** A bell's chain top: where it was planned before version 9, up to the vault itself after (SPEC §38.16). */
+        int up(int planned) {
+            return c.plan().contentVersion() >= 9 ? BellPieces.UP : planned;
+        }
+
         /** A bell with a lamp inside over the water of every bay (three when they toll), the Great Bell in its place. */
         void bells() {
             boolean tolling = mood.equals("tolling");
@@ -649,7 +655,7 @@ final class HallEngine implements WorldEngine {
                 if (kinds.get(w) != Kind.BAY) continue;
                 if (w == greatBell) {
                     int zc = r.gh == 1 ? r.gz * 16 + 8 : (r.gz + r.gh / 2) * 16 + (r.gh % 2 == 1 ? 8 : 0);
-                    BellPieces.bell(s, AXIS, W + 3, zc, 7.5, 15, W + (int) vault(0.5) - 1, bronze, lamp, chain, true);
+                    BellPieces.bell(s, AXIS, W + 3, zc, 7.5, 15, up(W + (int) vault(0.5) - 1), bronze, lamp, chain, true);
                     p.bell("great", AXIS, 3, zc, 7.5, 15);
                     s.putOpen(119, W + 1, zc - 1, light);
                     lights.add(0, new FloorAir.Light(120, 14, zc, 0x7fc8ff, 22f, 1f));
@@ -664,7 +670,7 @@ final class HallEngine implements WorldEngine {
                         double R = i == 2 ? 3.1 : 2.4 + Hash.unit(seed, gz, 50 + i) * 0.6;
                         int lip = W + 19 + Hash.range(seed, gz, 60 + i, 6);
                         double vt = vault(Math.abs(bx - AXIS));
-                        p.hungBell(s, "", bx, lip, W, zc + (i == 2 ? 0 : 0.5), R, R > 2.7 ? 6 : 5, W + (int) Math.ceil(vt) - 1, bronze, lamp, chain);
+                        p.hungBell(s, "", bx, lip, W, zc + (i == 2 ? 0 : 0.5), R, R > 2.7 ? 6 : 5, up(W + (int) Math.ceil(vt) - 1), bronze, lamp, chain);
                         lights.add(new FloorAir.Light((int) Math.floor(bx), lip - W + 2, zc, 0x7fc8ff, 9f, 0.7f));
                     }
                 }
@@ -810,7 +816,7 @@ final class HallEngine implements WorldEngine {
             // three small bells high in the tower, lamps in them
             for (int k = 0; k < 3; k++) {
                 double bx = x0 + 3.5 + 2.5 * k, bz = z0 + 3.5 + (k == 1 ? 5 : 0);
-                p.hungBell(s, "", bx, W + 40 + 3 * k, W, bz, 1.8, 4, W + ROPES_H - 1, bronze, lamp, chain);
+                p.hungBell(s, "", bx, W + 40 + 3 * k, W, bz, 1.8, 4, up(W + ROPES_H - 1), bronze, lamp, chain);
                 lights.add(new FloorAir.Light((int) bx, 42 + 3 * k, (int) bz, 0x7fc8ff, 7f, 0.6f));
             }
             s.putOpen(x0 + 6, W + 1, z0 + 6, WorldMats.light(7));

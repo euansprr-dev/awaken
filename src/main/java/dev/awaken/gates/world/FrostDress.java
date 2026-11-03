@@ -2,6 +2,7 @@ package dev.awaken.gates.world;
 
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -276,6 +277,14 @@ final class FrostDress extends Dress {
         for (int i = 0; i < 2; i++) {
             double a = unit(id, 120 + i) * Math.PI;
             double dx = Math.cos(a), dz = Math.sin(a), len = Math.hypot(sh.a() * dx, sh.b() * dz);
+            if (v9) {
+                // version 9: wall to wall, rising toward its ends, or not at all (38.16)
+                later(() -> {
+                    List<int[]> run = strung(sh.cx(), sh.cz(), dx, dz, len + 8, t -> W + h + 2 - Math.round((1 - Math.min(2, (t / len) * (t / len))) * 3));
+                    if (run != null) for (int[] q : run) c.s.putOpen(q[0], q[1], q[2], flags);
+                });
+                continue;
+            }
             for (double t = -len; t <= len; t += 0.5) {
                 double x = sh.cx() + dx * t, z = sh.cz() + dz * t;
                 if (c.d(id, x, z) > -0.5) continue;
@@ -318,6 +327,24 @@ final class FrostDress extends Dress {
         });
     }
 
+    /**
+     * Version 9 (38.16): the shrine pole's flags run from its top down to the ground beside it, block to block, pegged
+     * at the foot; hung only when the pole stands whole and the line has room all the way down.
+     */
+    void guyLine(int px, int pz, int pole) {
+        for (int y = 0; y < pole; y++) if (!hardAt(px, W + y, pz)) return;
+        List<int[]> run = new ArrayList<>();
+        int z = pz + 1, y = W + pole - 1;
+        run.add(new int[]{px, y, z});
+        while (y > W) {
+            run.add(new int[]{px, y, ++z});
+            run.add(new int[]{px, --y, z});
+        }
+        for (int[] q : run) if (!openAt(q[0], q[1], q[2])) return;
+        if (!hardAt(px, W - 1, z)) return;
+        for (int[] q : run) c.s.putOpen(q[0], q[1], q[2], flags);
+    }
+
     /** A little shrine on a pillar: a carved plinth with a butter lamp on it, a pole of red timber hung with flags. */
     void shrine(Room r, boolean highest) {
         double[] at = spot(r, 80, 0.15, 0.45, 2.5);
@@ -329,7 +356,11 @@ final class FrostDress extends Dress {
         int px = x + 2, pz = z;
         int pole = highest ? 6 : 4;
         for (int y = 0; y < pole; y++) c.s.putOpen(px, W + y, pz, timber);
-        for (int t = 1; t <= 3; t++) c.s.putOpen(px, W + pole - 1 - t / 2, pz + t, flags);
+        if (v9) {
+            // the ground under the line stays level, so its peg isn't lost in a dip
+            block(px + 0.5, pz + 0.5 + pole / 2.0, pole / 2.0);
+            later(() -> guyLine(px, pz, pole));
+        } else for (int t = 1; t <= 3; t++) c.s.putOpen(px, W + pole - 1 - t / 2, pz + t, flags);
         block(at[0] + 1, at[1], 2);
         light(at[0], 2, at[1], 0xffd890, 6f, 0.6f);
         // the highest shrine keeps its secret in front of it

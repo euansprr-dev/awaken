@@ -176,6 +176,14 @@ final class MarketDress extends Dress {
             boolean alongX = unit(id, 9) < 0.5;
             int y = W + 6 + Math.abs(i) % 2;
             int[] b = box(r);
+            if (v9) {
+                // version 9: wall to wall across the square, or not at all (38.16)
+                later(() -> {
+                    List<int[]> run = alongX ? strung(sh.cx(), sh.cz() + off, 1, 0, r.gw * 8 + 4, t -> y) : strung(sh.cx() + off, sh.cz(), 0, 1, r.gh * 8 + 4, t -> y);
+                    if (run != null) for (int[] q : run) c.s.putOpen(q[0], q[1], q[2], lights);
+                });
+                continue;
+            }
             c.s.op(b[0], y, b[1], b[2], y, b[3], (buf, x, yy, z) -> {
                 if (!buf.open(x, yy, z)) return;
                 double rel = alongX ? z + 0.5 - sh.cz() : x + 0.5 - sh.cx();
@@ -223,8 +231,16 @@ final class MarketDress extends Dress {
             boolean cap = Math.abs(dx) < 2 && Math.abs(dz) < 2 && (y == (int) (cy + 4.6) || y == (int) (cy - 4.6));
             if (cap) b.set(x, y, z, roof);
             else if (d < 4 && d > 3) b.set(x, y, z, Math.floorMod(x + z, 3) == 0 ? timber : paper);
-            else if (Math.abs(dx) < 0.6 && Math.abs(dz) < 0.6 && y > cy + 4.6) b.set(x, y, z, lights);
+            else if (Math.abs(dx) < 0.6 && Math.abs(dz) < 0.6 && y > cy + 4.6 && !v9) b.set(x, y, z, lights);
         });
+        // version 9: under the open sky there's nothing to hang it from, so it stands on four timber legs up from the
+        // cobbles to its shell, clear of the nook under its middle (38.16)
+        if (v9) for (int k = 0; k < 4; k++) {
+            int px = (int) Math.floor(cx + (k % 2 == 0 ? -2.5 : 2.5)), pz = (int) Math.floor(cz + (k < 2 ? -2.5 : 2.5));
+            c.s.op(px, W, pz, px, W + 12, pz, (b, x, y, z) -> {
+                if (b.open(x, y, z) && (y == W || b.state(x, y - 1, z) == timber)) b.set(x, y, z, timber);
+            });
+        }
         light(cx, 11, cz, 0xffb060, 26f, 1f);
         c.shafts.add(new FloorAir.Shaft((int) cx, 16, (int) cz, (int) cx, 0, (int) cz, 5f, 0xffc080, 0.5f));
     }
@@ -287,9 +303,26 @@ final class MarketDress extends Dress {
                 return;
             }
             if (!buf.open(x, y, z)) return;
-            if (y == W + 6 && Math.floorMod(along, 6) == 3) buf.set(x, y, z, lights);
+            if (y == W + 6 && Math.floorMod(along, 6) == 3 && !v9) buf.set(x, y, z, lights);
             else if (y == W + 5 && lat < 0.5 && Math.floorMod(along, 6) == 3) buf.set(x, y, z, lantern);
         });
+        if (!v9) return;
+        // version 9: each string across the way runs wall to wall over its lantern, or isn't hung (38.16)
+        java.util.Set<Integer> done = new java.util.HashSet<>();
+        for (int x = ox; x < ox + 16; x++) {
+            for (int z = oz; z < oz + 16; z++) {
+                double[] w = way.at(x + 0.5, z + 0.5);
+                if (w == null || Math.abs(w[0]) >= 0.5) continue;
+                int along = (int) Math.round(w[1]);
+                if (Math.floorMod(along, 6) != 3 || !done.add(along)) continue;
+                double ax = way.straight() ? (way.alongZ() ? 1 : 0) : x + 0.5 - way.ccx(), az = way.straight() ? (way.alongZ() ? 0 : 1) : z + 0.5 - way.ccz();
+                double n = Math.hypot(ax, az), sx = x + 0.5, sz = z + 0.5;
+                later(() -> {
+                    List<int[]> run = strung(sx, sz, ax / n, az / n, 10, t -> W + 6);
+                    if (run != null) for (int[] q : run) c.s.putOpen(q[0], q[1], q[2], lights);
+                });
+            }
+        }
     }
 
     @Override

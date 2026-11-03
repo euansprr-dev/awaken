@@ -215,6 +215,7 @@ final class PassageEngine implements WorldEngine {
 
         void sculpt() {
             s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
+            s.settle = c.plan().contentVersion() >= 9;
             List<Integer> crypts = new ArrayList<>();
             for (var e : kinds.entrySet()) if (e.getValue() == Kind.CRYPT) crypts.add(e.getKey());
             crypts.sort(null);

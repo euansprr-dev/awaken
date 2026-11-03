@@ -78,7 +78,12 @@ final class TwistDress extends BorrowedDress {
                 if (keep) hand(r);
             }
             case "the_endless_stair" -> {
-                if (k != CaveEngine.Kind.ARRIVAL) landing(r, keep);
+                if (k != CaveEngine.Kind.ARRIVAL) {
+                    // its flights stop in the air on purpose (38.16)
+                    c.s.afloat = true;
+                    landing(r, keep);
+                    c.s.afloat = false;
+                }
             }
             case "the_gates_heart" -> {
                 if (keep) heart(r);

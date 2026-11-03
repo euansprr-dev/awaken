@@ -122,6 +122,7 @@ final class VoidEngine implements WorldEngine {
 
         void sculpt() {
             s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
+            s.settle = c.plan().contentVersion() >= 9;
             // the field itself: open from the deep water's bed to far overhead, the whole plot but its margin
             int x0 = 8, x1 = 247;
             s.carve(x0, W - DEEP + 1, x0, x1, W + SKY, x1,
@@ -219,7 +220,7 @@ final class VoidEngine implements WorldEngine {
                 // a bell hung low over the island, its lamp lit: the dead gather under it
                 double bx = sh.cx() + (Hash.unit(seed, r.id, 3) - 0.5) * 4, bz = sh.cz() + (Hash.unit(seed, r.id, 5) - 0.5) * 4;
                 double R = 1.8 + r.gw * 0.9;
-                p.hungBell(s, "", Math.floor(bx) + 0.5, W + 6 + r.gw * 2, W, Math.floor(bz) + 0.5, R, (int) (R * 2.2), 0, bronze, lamp, chain0);
+                p.hungBell(s, "", Math.floor(bx) + 0.5, W + 6 + r.gw * 2, W, Math.floor(bz) + 0.5, R, (int) (R * 2.2), up(), bronze, lamp, chain0);
                 lights.add(new FloorAir.Light((int) bx, 6 + r.gw * 2, (int) bz, 0x8fd0ff, 8f, 0.7f));
             }
         }
@@ -255,7 +256,7 @@ final class VoidEngine implements WorldEngine {
             return Hash.unit(seed, x * 7 + 3, z) < chance;
         }
 
-        /** The arrival: a stair of floating slabs coming down out of the dark to the first island. */
+        /** The arrival: a stair coming down out of the dark to the first island (floating slabs before version 9). */
         void stair(Room r) {
             int back = r.doors.isEmpty() ? 0 : (r.doors.get(0).side + 2) % 4;
             int dx = GatePainter.DX[back], dz = GatePainter.DZ[back];
@@ -266,6 +267,8 @@ final class VoidEngine implements WorldEngine {
                 for (int w = -1; w <= 1; w++) {
                     int x = (int) Math.floor(px + (dz != 0 ? w : 0)), z = (int) Math.floor(pz + (dx != 0 ? w : 0));
                     s.put(x, y, z, i % 4 == 3 ? trim : worn);
+                    // version 9: the stair stands on the water's bottom, a broken flight rising into the dark (38.16)
+                    if (c.plan().contentVersion() >= 9) s.box(x, W - DEEP + 1, z, x, y - 1, z, wall);
                 }
             }
             lights.add(new FloorAir.Light((int) (cx + dx * 10), 6, (int) (cz + dz * 10), 0x8090b0, 8f, 0.4f));
@@ -293,6 +296,11 @@ final class VoidEngine implements WorldEngine {
             });
         }
 
+        /** What a bell hangs by: nothing before version 9, a chain up into the dark after (SPEC §38.16). */
+        int up() {
+            return c.plan().contentVersion() >= 9 ? BellPieces.UP : 0;
+        }
+
         /** The field's bells: hung from nothing over the open water, a lamp lit in each, some sunk to their shoulders. */
         void bells() {
             if (!hero("hung_bells")) return;
@@ -306,7 +314,7 @@ final class VoidEngine implements WorldEngine {
                     double bx = gx * 16 + (sunk ? 8 : 4 + Math.floor(Hash.unit(seed, gx, gz) * 8) + 0.5);
                     double bz = gz * 16 + (sunk ? 8 : 4 + Math.floor(Hash.unit(seed, gz, gx) * 8) + 0.5);
                     int lip = W - 1 + (sunk ? -H / 2 : 3 + Hash.range(seed, gx, gz * 7, 26));
-                    BellPieces.bell(s, bx, lip, bz, R, H, 0, bronze, lamp, chain0, false);
+                    BellPieces.bell(s, bx, lip, bz, R, H, up(), bronze, lamp, chain0, false);
                     p.bell(bx, lip - W, bz, R, H);
                     if (lights.size() < 90 && lip > W) lights.add(new FloorAir.Light((int) bx, lip - W + H - 2, (int) bz, 0x8fd0ff, 6f + (float) R, 0.6f));
                 }
@@ -318,7 +326,7 @@ final class VoidEngine implements WorldEngine {
             int w = p.host[p.logic.end];
             PassageEngine.Shape sh = shapes.get(w);
             if (sh == null) return;
-            BellPieces.bell(s, sh.cx(), W + 7, sh.cz(), 8.5, 18, 0, bronze, lamp, chain0, true);
+            BellPieces.bell(s, sh.cx(), W + 7, sh.cz(), 8.5, 18, up(), bronze, lamp, chain0, true);
             p.bell("still", sh.cx(), 7, sh.cz(), 8.5, 18);
             lights.add(new FloorAir.Light((int) sh.cx(), 20, (int) sh.cz(), 0xffd890, 18f, 0.9f));
         }

@@ -12100,6 +12100,86 @@ death), the **tallest** the highest any part reaches. Version 8 builds every Lor
   13, the Root Saint 9 (pillars), the Sky Leviathan 3 (an island post), and the Bell Warden, the Colossus and the
   Mother of Spores had some as keepers. At 8 every arena has none.
 
+### 38.16 Placement: nothing hangs in the air (content version 9; Euan 2026-11-03, playing a gate: "a lot of floating things in gates instead of placemement all being thought out")
+
+Props go where a set dresser would put them, on a surface, an edge, a corner or the roof, and a spot that can't hold
+a thing gets nothing. Nothing is put there to fill the gap.
+
+- **What holds what** (`Holds`, one rule per block state):
+  - A plant, a prop, crumbs, a candle, a carpet, a cache, a rune or the seal stands on a face that holds it. That is
+    the top of a full block, a top slab or an upside-down stair (`isFaceSturdy(UP, CENTER)`). A tall plant's top
+    stands on its bottom.
+  - A lantern, hanging roots, cave vines or a spore blossom hangs from such a face, from a chain, or from a string of
+    lights.
+  - Roots, kelp, a bell rope, a drip or a fall of light is held at one end.
+  - The entrance is a tile set in the floor, so it's part of the floor.
+  - A vestment, a torch, a banner, a ladder or a coral fan is held by the wall behind it.
+  - A string of lights or prayer flags is tied at both ends to something solid, and each block of it touches the next
+    face to face.
+  - Solid things joined face to face, with the chains and lamps hung among them, reach the ground, a wall, the roof,
+    water, or a held thing with a flat top (a vault's lid on its cache). A lump of under 2,048 blocks that doesn't is
+    floating.
+- **How each placer keeps to it (version 9):**
+  - Bells: a hung bell's chain runs up to the roof (`BellPieces.chainUp`) in the Void, the Halls and the Shaft. The
+    Void's stair has a column under each step.
+  - Chandeliers, the Lords' crowns, mirrors, gears, spores and the jelly crown take their height from the roof over
+    their middle (`Pieces.apex`). Their arms join with spokes, and their rings are 0.75 wide so the blocks meet face
+    to face. A room chandelier hangs at its middle's height over its middle's floor, and an arm's tip goes only where
+    the arm reaches it. Roots hold nothing up, so the Fungal Hollow's caps hang on a mushroom stalk and spread on gills.
+    Nothing else hangs from the roof over a chandelier's pieces.
+  - Strings: lights and prayer flags run wall to wall (`Dress.strung`), placed after the ground is solved
+    (`Dress.later`) so they tie to the rock that's really there. A string that can't be tied isn't hung. A shrine
+    pole's flags run down to a peg on the ground, and the ground under them stays level. Market lanterns under a vault
+    each hang on their own chain, their lengths following the old sag.
+  - The Festival's great lantern stands on four timber legs. Under the open sky there is nothing to hang it from.
+  - Beams cross a vault only where both ends rest. They carry on over a room's set piece and are left out of the
+    Lords' arenas.
+  - Stairs: a flight off an edge gets a sloped soffit (the Abyss's dark steps, the Dream's stair going nowhere). The
+    Abyss's flight goes only where its top step meets the island.
+  - Upside-down furniture is carried up in its own stuff to meet a roof that isn't flat (`DreamDress.shim`). The
+    Nursery's mobile hangs on a chain.
+  - Features stand on a whole step: a half step under a cache or a rune is made whole (`Relief.level`). Nothing grows
+    or lies on a half step.
+  - Mushrooms grow only where the room is clear. A hive pillar stands whole or not at all, and its canopy only round
+    a pillar that stands. Market awnings rest on posts and join their counters face to face. The conveyor's press
+    hangs from the gantry on its ram.
+  - Cave roofs: up a chimney the shell follows the roof's slope (`CaveEngine.Cave.roofD`), and the carve reaches over
+    the highest swell.
+- **The net** (`Sculpt.Buf.crumbs`, `GatePainter.Band`), run after a chunk's operations:
+  - A lump of rock or solid things under 2,048 blocks is left out unless something holds it: water, the band's ends,
+    a held thing with a flat top, or being marked as floating on purpose.
+  - A lump that runs over a chunk side is followed into the chunks next to it. Those chunks are carved by their own
+    operations, up to 8 of them, so every chunk the lump crosses reaches the same answer.
+  - Then `Holds.settle` drops anything whose spot doesn't hold it, so a plant on a lump goes with the lump. If the
+    settle drops a chain, the net runs once more.
+  - A room's chunk does the same within its band.
+- **Floating on purpose** (`Sculpt.afloat`, `Ctx.afloat`). These stay, and the census counts them apart:
+  - the Sky's far isles and the Wind Stair's floating steps;
+  - the Endless Stair's and the Twist's landings;
+  - the Sleeper's furniture, the Wrong Room and the Nightmare's floating clutter;
+  - the Sky Leviathan's stones;
+  - the Rig's collapse-run tiles and the Gauntlet's course and walls over the drop;
+  - the Sky Archipelago's updraft pads.
+- **Test `gates_placement`.** It plans every world in every theme (412 floors: every floor of the 75 worlds, and
+  rooms plans of every theme, layout, twist and set piece). It builds each floor block by block and checks every
+  placed thing against the rules.
+  - It counts by placer: the code that set the block, found by re-planning with `Sculpt.TRACE`.
+  - Designed floats are counted on their own line.
+  - Knobs: `AWAKEN_PLACEMENT_VERSION` measures an older version, `AWAKEN_PLACEMENT_ONLY` takes one world, and
+    `AWAKEN_PLACEMENT_COLUMN` dumps columns.
+  - Before, at version 8: 239,318 of 350,358 placed things weren't held up, on 372 of the 412 floors. The biggest
+    groups:
+    - 120,450 blocks of cave rock in 9,203 lumps;
+    - 57,905 things lying on half steps;
+    - 35,407 blocks of bells and their frames hung on nothing;
+    - 4,609 of the Abyss's dark steps;
+    - 4,356 from the Lords' arena pieces;
+    - 3,048 from room chandeliers and beams;
+    - 2,807 from the Market's strings and the great lantern.
+  - After, at version 9: none of 284,110. 7,857 blocks in 467 lumps float on purpose.
+- **Versions:** version 9 is `GatePlan.CONTENT_VERSION`. Entered gates keep their version. A version 8 floor carves
+  as before (`gateworlds_depth_v6_golden` still holds version 6 block for block).
+
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
 Builds on §28.3 (W2) and §28.5 (W5); the plan's audit (`docs/mining/proof/`) is what it was designed against: Tectonic

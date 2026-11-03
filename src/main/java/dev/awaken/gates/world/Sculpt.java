@@ -34,7 +34,33 @@ final class Sculpt {
         void at(Buf b, int x, int y, int z);
     }
 
-    record Op(int x0, int y0, int z0, int x1, int y1, int z1, Voxel v) {}
+    /** {@code src}: who added it, kept only while {@link #TRACE} is on (the placement census, SPEC §38.16). */
+    record Op(int x0, int y0, int z0, int x1, int y1, int z1, Voxel v, String src, boolean afloat) {}
+
+    /** Tests only: ops remember who added them and a carve says whose block it's writing ({@link #source()}). */
+    static volatile boolean TRACE;
+    private static final ThreadLocal<String> SOURCE = new ThreadLocal<>();
+
+    /** Tests only: the census asks of each block written whether it floats on purpose ({@link #floating()}). */
+    static boolean CENSUS;
+    private static final ThreadLocal<boolean[]> FLOATING = ThreadLocal.withInitial(() -> new boolean[1]);
+
+    static void floating(boolean on) {
+        FLOATING.get()[0] = on;
+    }
+
+    static boolean floating() {
+        return FLOATING.get()[0];
+    }
+
+    static void source(String who) {
+        SOURCE.set(who);
+    }
+
+    /** While tracing, who placed the block a carve is writing right now (read it in the sink). */
+    static String source() {
+        return SOURCE.get();
+    }
 
     private final List<Op> ops = new ArrayList<>();
     private final Skin skin;
@@ -44,6 +70,16 @@ final class Sculpt {
      * floor or ceiling as if the air were open there, not as wall.
      */
     boolean thinOpen;
+    /**
+     * A version 9 floor (SPEC §38.16): before a chunk is written, anything placed whose spot doesn't hold it up (a plant
+     * over air, roots under nothing, a vestment off its wall) is left out ({@link Holds#settle}).
+     */
+    boolean settle;
+    /**
+     * While set, what's added floats on purpose (SPEC §38.16: the Sleeper's furniture, the Endless Stair's landings, the far
+     * isles): the settle keeps a lump with any of it in.
+     */
+    boolean afloat;
     private Map<Long, int[]> buckets;
 
     Sculpt(Skin skin, int yLo, int yHi) {
@@ -59,7 +95,7 @@ final class Sculpt {
         y0 = Math.max(y0, yLo);
         y1 = Math.min(y1, yHi);
         if (x1 < x0 || y1 < y0 || z1 < z0) return;
-        ops.add(new Op(x0, y0, z0, x1, y1, z1, v));
+        ops.add(new Op(x0, y0, z0, x1, y1, z1, v, TRACE ? PlacementTests.caller() : null, afloat));
     }
 
     /** Opens a shape's inside and keeps a shell of solid round it where nothing else has been decided. */
@@ -178,26 +214,69 @@ final class Sculpt {
      * a built room painted there (the Lord's arena, a Rig room); pass skipLo &gt; skipHi to skip nothing.
      */
     void carve(int sx, int sz, GatePainter.Sink out, int skipLo, int skipHi) {
+        if (buckets.get(key(sx, sz)) == null) return;
+        Buf b = BUF.get();
+        run(sx, sz, b, TRACE);
+        if (settle) {
+            b.crumbs(this);
+            b.settle();
+            if (b.chainDropped) {
+                b.crumbs(this);
+                b.settle();
+            }
+        }
+        b.flush(skin, out, skipLo, skipHi, thinOpen);
+    }
+
+    /**
+     * Tests: reports every block of chunk slot (sx, sz) the ops decided is open or set (not left unset, not shell), so the
+     * placement census can tell the carved air of the places from the dark outside their shell.
+     */
+    void opened(int sx, int sz, Voxel to) {
+        if (buckets.get(key(sx, sz)) == null) return;
+        Buf b = BUF.get();
+        run(sx, sz, b, false);
+        for (int ly = 0; ly < b.h; ly++)
+            for (int lz = 0; lz < 16; lz++)
+                for (int lx = 0; lx < 16; lx++) {
+                    short c = b.cells[(ly * 16 + lz) * 16 + lx];
+                    if (c != UNSET && c != SOLID) to.at(b, b.x0 + lx, yLo + ly, b.z0 + lz);
+                }
+    }
+
+    /** Runs every operation bucketed at chunk slot (sx, sz) into {@code b}, fresh (tracing who set what if asked). */
+    private void run(int sx, int sz, Buf b, boolean trace) {
+        b.reset(sx * 16, sz * 16, yLo, yHi);
+        b.srcs = trace ? new String[256 * b.h] : null;
         int[] idx = buckets.get(key(sx, sz));
         if (idx == null) return;
-        Buf b = BUF.get();
-        b.reset(sx * 16, sz * 16, yLo, yHi);
         for (int i : idx) {
             Op o = ops.get(i);
+            b.src = o.src;
+            b.afloat = o.afloat;
             int ax = Math.max(o.x0, b.x0), bx = Math.min(o.x1, b.x0 + 15);
             int az = Math.max(o.z0, b.z0), bz = Math.min(o.z1, b.z0 + 15);
             for (int x = ax; x <= bx; x++) for (int z = az; z <= bz; z++) for (int y = o.y0; y <= o.y1; y++) o.v.at(b, x, y, z);
         }
-        b.flush(skin, out, skipLo, skipHi, thinOpen);
     }
 
     /** One chunk column of the floor's height: markers (unset, open, solid to skin) or a palette index. */
     static final class Buf {
         int x0, z0, yLo, h;
         short[] cells = new short[16 * 16 * 256];
+        /** While tracing: who set each cell, and the op running now. */
+        String[] srcs;
+        String src;
+        /** Cells set by an op that floats on purpose ({@link Sculpt#afloat}), and whether the running op does. */
+        final java.util.BitSet floats = new java.util.BitSet();
+        boolean afloat;
         private final List<BlockState> palette = new ArrayList<>();
         /** Per palette entry: thin (not a full block, not a fluid), for {@link Sculpt#thinOpen}. */
         private boolean[] thin = new boolean[64];
+        /** Per palette entry: something a settle looks at ({@link Holds#settles}). */
+        private boolean[] loose = new boolean[64];
+        /** Per palette entry: solid or a chain, what holds rock up when it touches it ({@link #crumbs}). */
+        private boolean[] hard = new boolean[64];
         private final Map<BlockState, Short> index = new IdentityHashMap<>();
 
         void reset(int x0, int z0, int yLo, int yHi) {
@@ -208,6 +287,8 @@ final class Sculpt {
             int n = 256 * h;
             if (cells.length < n) cells = new short[n];
             java.util.Arrays.fill(cells, 0, n, UNSET);
+            floats.clear();
+            afloat = false;
             palette.clear();
             index.clear();
             palette.add(null);
@@ -230,14 +311,25 @@ final class Sculpt {
             return get(x, y, z) == OPEN;
         }
 
+        /** Rock, or something solid placed (what a chain hangs from, what holds a lump up). */
+        boolean hard(int x, int y, int z) {
+            short c = get(x, y, z);
+            return c == SOLID || c > SOLID && hard[c];
+        }
+
         void mark(int x, int y, int z, short m) {
             int i = i(x, y, z);
-            if (i >= 0) cells[i] = m;
+            if (i < 0) return;
+            cells[i] = m;
+            if (srcs != null) srcs[i] = src;
+            floats.set(i, afloat);
         }
 
         void set(int x, int y, int z, BlockState s) {
             int i = i(x, y, z);
             if (i < 0) return;
+            if (srcs != null) srcs[i] = src;
+            floats.set(i, afloat);
             if (s.isAir()) {
                 cells[i] = OPEN;
                 return;
@@ -247,8 +339,14 @@ final class Sculpt {
                 p = (short) palette.size();
                 palette.add(s);
                 index.put(s, p);
-                if (p >= thin.length) thin = java.util.Arrays.copyOf(thin, p * 2);
+                if (p >= thin.length) {
+                    thin = java.util.Arrays.copyOf(thin, p * 2);
+                    loose = java.util.Arrays.copyOf(loose, p * 2);
+                    hard = java.util.Arrays.copyOf(hard, p * 2);
+                }
                 thin[p] = !s.isSolidRender() && s.getFluidState().isEmpty();
+                loose[p] = Holds.settles(Holds.rule(s));
+                hard[p] = Holds.rule(s) == Holds.SOLID || Holds.rule(s) == Holds.CHAIN;
             }
             cells[i] = p;
         }
@@ -262,6 +360,219 @@ final class Sculpt {
             int i = i(x, y, z);
             return i < 0 || cells[i] <= SOLID ? null : palette.get(cells[i]);
         }
+
+        private static final BlockState ROCK = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),
+                AIR = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+
+        /** Whether the last {@link #settle} left out a chain (what hung on it may be a lump in the air now). */
+        boolean chainDropped;
+
+        /** Leaves out what nothing in this chunk holds up (what's past its sides it can't see, so that never counts against). */
+        void settle() {
+            chainDropped = false;
+            int n = 0;
+            int[] xs = SX.get(), ys = SY.get(), zs = SZ.get();
+            for (int ly = 0; ly < h; ly++)
+                for (int lz = 0; lz < 16; lz++)
+                    for (int lx = 0; lx < 16; lx++) {
+                        short c = cells[(ly * 16 + lz) * 16 + lx];
+                        if (c <= SOLID || !loose[c]) continue;
+                        if (n == xs.length) {
+                            xs = java.util.Arrays.copyOf(xs, n * 2);
+                            ys = java.util.Arrays.copyOf(ys, n * 2);
+                            zs = java.util.Arrays.copyOf(zs, n * 2);
+                            SX.set(xs);
+                            SY.set(ys);
+                            SZ.set(zs);
+                        }
+                        xs[n] = x0 + lx;
+                        ys[n] = yLo + ly;
+                        zs[n++] = z0 + lz;
+                    }
+            if (n == 0) return;
+            Holds.settle((x, y, z) -> {
+                int i = i(x, y, z);
+                if (i < 0) return null;
+                short c = cells[i];
+                return c == SOLID ? ROCK : c <= OPEN ? AIR : palette.get(c);
+            }, xs, ys, zs, n, (x, y, z) -> {
+                int i = i(x, y, z);
+                if (hard[cells[i]]) chainDropped = true;
+                cells[i] = OPEN;
+            });
+        }
+
+        /** A lump smaller than this touching nothing that holds it is left out (the census's ground is as big). */
+        static final int CRUMB = 2048;
+        private static final ThreadLocal<int[]> QUEUE = ThreadLocal.withInitial(() -> new int[4096]);
+        private static final ThreadLocal<java.util.BitSet> SEEN = ThreadLocal.withInitial(java.util.BitSet::new);
+
+        /** How many chunks round this one a crumb test carves to follow a lump over a side before it calls it held. */
+        static final int NEARS = 8;
+        private static final ThreadLocal<Buf[]> NEAR = ThreadLocal.withInitial(() -> new Buf[NEARS]);
+        private static final ThreadLocal<long[]> OUTER = ThreadLocal.withInitial(() -> new long[256]);
+        private static final ThreadLocal<java.util.Set<Long>> OUTER_SEEN = ThreadLocal.withInitial(java.util.HashSet::new);
+        private final long[] nearKey = new long[NEARS];
+        private int nearN;
+
+        private boolean hardCell(int i) {
+            short c = cells[i];
+            return c == SOLID || c > SOLID && hard[c];
+        }
+
+        /**
+         * What holds a lump up at a block of it, besides rock: the band's ends, floating on purpose, water under it or
+         * something placed under it that's flat on top.
+         */
+        private boolean holds(int i) {
+            int ly = i >> 8;
+            if (ly == 0 || ly == h - 1 || floats.get(i)) return true;
+            return under(cells[i - 256]);
+        }
+
+        private boolean under(short b) {
+            if (b <= SOLID) return false;
+            BlockState s = palette.get(b);
+            return s.getBlock() == net.minecraft.world.level.block.Blocks.WATER || !hard[b] && Holds.sturdy(s, net.minecraft.core.Direction.UP);
+        }
+
+        /**
+         * The chunk holding (x, z), carved by its operations alone (as its own carve has it before its crumbs), once per
+         * crumb test; null when too many are carved already.
+         */
+        private Buf near(Sculpt s, int x, int z) {
+            long k = key(x >> 4, z >> 4);
+            Buf[] nb = NEAR.get();
+            for (int i = 0; i < nearN; i++) if (nearKey[i] == k) return nb[i];
+            if (nearN == NEARS) return null;
+            if (nb[nearN] == null) nb[nearN] = new Buf();
+            s.run(x >> 4, z >> 4, nb[nearN], false);
+            nearKey[nearN] = k;
+            return nb[nearN++];
+        }
+
+        /**
+         * Leaves out the lumps (SPEC §38.16): rock or anything solid in this chunk's air (a sliver of shell where two
+         * shapes meet, a piece put where its support isn't) that touches no water and nothing solid that does, unless it
+         * floats on purpose. A lump that runs over a side is followed into the chunks next to it, carved by their own
+         * operations, so every chunk it crosses reaches the same answer. What hangs on one goes with it in the settle after.
+         */
+        void crumbs(Sculpt s) {
+            int n = 256 * h;
+            java.util.BitSet seen = SEEN.get();
+            seen.clear();
+            int[] q = QUEUE.get();
+            long[] oq = OUTER.get();
+            java.util.Set<Long> oseen = OUTER_SEEN.get();
+            nearN = 0;
+            for (int s0 = 0; s0 < n; s0++) {
+                if (!hardCell(s0) || seen.get(s0)) continue;
+                int head = 0, tail = 0, ohead = 0, otail = 0, scanned = 0;
+                q[tail++] = s0;
+                seen.set(s0);
+                oseen.clear();
+                boolean held = false;
+                while (true) {
+                    // in the chunk first, the whole of it: most lumps are held here and never look past a side
+                    while (head < tail) {
+                        int i = q[head++];
+                        if (holds(i)) held = true;
+                        int lx = i & 15, lz = (i >> 4) & 15, ly = i >> 8;
+                        for (int d = 0; d < 6; d++) {
+                            int j = switch (d) {
+                                case 0 -> lx < 15 ? i + 1 : -1;
+                                case 1 -> lx > 0 ? i - 1 : -1;
+                                case 2 -> lz < 15 ? i + 16 : -1;
+                                case 3 -> lz > 0 ? i - 16 : -1;
+                                case 4 -> ly < h - 1 ? i + 256 : -1;
+                                default -> ly > 0 ? i - 256 : -1;
+                            };
+                            if (j < 0 || seen.get(j) || !hardCell(j)) continue;
+                            seen.set(j);
+                            if (tail == q.length) QUEUE.set(q = java.util.Arrays.copyOf(q, q.length * 2));
+                            q[tail++] = j;
+                        }
+                    }
+                    if (held || tail + otail >= CRUMB) {
+                        held = true;
+                        break;
+                    }
+                    // past a side: the blocks next to it in the chunk beyond
+                    for (; scanned < tail && !held; scanned++) {
+                        int i = q[scanned];
+                        int lx = i & 15, lz = (i >> 4) & 15;
+                        if (lx > 0 && lx < 15 && lz > 0 && lz < 15) continue;
+                        int wx = x0 + lx, wy = yLo + (i >> 8), wz = z0 + lz;
+                        for (int d = 0; d < 4 && !held; d++) {
+                            int nx = wx + (d == 0 ? 1 : d == 1 ? -1 : 0), nz = wz + (d == 2 ? 1 : d == 3 ? -1 : 0);
+                            if (i(nx, wy, nz) >= 0) continue;
+                            Buf o = near(s, nx, nz);
+                            if (o == null) held = true;
+                            else if (o.hard(nx, wy, nz) && oseen.add(pack(nx, wy, nz))) {
+                                if (otail == oq.length) OUTER.set(oq = java.util.Arrays.copyOf(oq, oq.length * 2));
+                                oq[otail++] = pack(nx, wy, nz);
+                            }
+                        }
+                    }
+                    if (held || ohead == otail) break;
+                    // and on from those, back into this chunk where it comes back
+                    while (ohead < otail && !held) {
+                        long k = oq[ohead++];
+                        int wx = (int) (k >> 40), wy = (int) (k << 24 >> 44), wz = (int) (k << 44 >> 44);
+                        Buf o = near(s, wx, wz);
+                        if (o == null || wy == yLo || wy == yLo + h - 1 || o.floats.get(o.i(wx, wy, wz)) || o.under(o.get(wx, wy - 1, wz))) held = true;
+                        for (int d = 0; d < 6 && !held; d++) {
+                            int nx = wx + (d == 0 ? 1 : d == 1 ? -1 : 0), ny = wy + (d == 4 ? 1 : d == 5 ? -1 : 0), nz = wz + (d == 2 ? 1 : d == 3 ? -1 : 0);
+                            if (ny < yLo || ny >= yLo + h) continue;
+                            int j = i(nx, ny, nz);
+                            if (j >= 0) {
+                                if (seen.get(j) || !hardCell(j)) continue;
+                                seen.set(j);
+                                if (tail == q.length) QUEUE.set(q = java.util.Arrays.copyOf(q, q.length * 2));
+                                q[tail++] = j;
+                                continue;
+                            }
+                            Buf o2 = near(s, nx, nz);
+                            if (o2 == null) held = true;
+                            else if (o2.hard(nx, ny, nz) && oseen.add(pack(nx, ny, nz))) {
+                                if (otail == oq.length) OUTER.set(oq = java.util.Arrays.copyOf(oq, oq.length * 2));
+                                oq[otail++] = pack(nx, ny, nz);
+                            }
+                        }
+                        if (tail + otail >= CRUMB) held = true;
+                    }
+                    if (held) break;
+                }
+                // a held lump still marks the rest of its blocks here, so no other start floods it again
+                while (head < tail) {
+                    int i = q[head++];
+                    int lx = i & 15, lz = (i >> 4) & 15, ly = i >> 8;
+                    for (int d = 0; d < 6; d++) {
+                        int j = switch (d) {
+                            case 0 -> lx < 15 ? i + 1 : -1;
+                            case 1 -> lx > 0 ? i - 1 : -1;
+                            case 2 -> lz < 15 ? i + 16 : -1;
+                            case 3 -> lz > 0 ? i - 16 : -1;
+                            case 4 -> ly < h - 1 ? i + 256 : -1;
+                            default -> ly > 0 ? i - 256 : -1;
+                        };
+                        if (j < 0 || seen.get(j) || !hardCell(j)) continue;
+                        seen.set(j);
+                        if (tail == q.length) QUEUE.set(q = java.util.Arrays.copyOf(q, q.length * 2));
+                        q[tail++] = j;
+                    }
+                }
+                if (held) continue;
+                for (int k = 0; k < tail; k++) cells[q[k]] = OPEN;
+            }
+        }
+
+        private static long pack(int x, int y, int z) {
+            return ((long) x << 40) | ((long) (y & 0xFFFFF) << 20) | (z & 0xFFFFF);
+        }
+
+        private static final ThreadLocal<int[]> SX = ThreadLocal.withInitial(() -> new int[256]), SY = ThreadLocal.withInitial(() -> new int[256]),
+                SZ = ThreadLocal.withInitial(() -> new int[256]);
 
         /** Open air, or (thin open) something thin, for skinning the shell next to it. */
         private boolean airy(short c, boolean thinOpen) {
@@ -282,10 +593,14 @@ final class Sculpt {
                             boolean ceiling = ly > 0 && airy(cells[((ly - 1) * 16 + lz) * 16 + lx], thinOpen);
                             s = skin.at(x0 + lx, y, z0 + lz, floor, ceiling);
                         } else s = palette.get(c);
-                        if (s != null && !s.isAir()) out.set(lx, y, lz, s);
+                        if (s == null || s.isAir()) continue;
+                        if (srcs != null) SOURCE.set(c == SOLID ? "shell<" + srcs[(ly * 16 + lz) * 16 + lx] : srcs[(ly * 16 + lz) * 16 + lx]);
+                        if (CENSUS) floating(floats.get((ly * 16 + lz) * 16 + lx));
+                        out.set(lx, y, lz, s);
                     }
                 }
             }
+            if (CENSUS) floating(false);
         }
     }
 

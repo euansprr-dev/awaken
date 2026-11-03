@@ -170,14 +170,14 @@ final class PiecesArenas {
     /** A crown of lights hanging from the apex over the Lord. */
     static boolean crown(GatePainter.Ctx c, int bx, int bz, double dx, double dz, int ceil, double radius, int drop, BlockState frame, BlockState light) {
         double d = Math.hypot(dx, dz);
-        int y = ceil - drop;
+        int y = Pieces.apex(c, bx, bz, dx, dz, ceil) - drop;
         boolean claimed = false;
         if (Math.abs(dx) < 0.6 && Math.abs(dz) < 0.6) {
             for (int yy = ceil - 1; yy > y; yy--) c.set(bx, yy, bz, GatePainter.chain());
             c.set(bx, y, bz, frame);
             claimed = true;
         }
-        if (ring(dx, dz, radius, 0.5)) {
+        if (Pieces.hungRing(c, dx, dz, radius, 0.5)) {
             c.set(bx, y, bz, frame);
             if (!c.lightless && ringPoint(dx, dz, radius, 8, 0, 0.5)) c.set(bx, y - 1, bz, light);
             claimed = true;
@@ -214,7 +214,7 @@ final class PiecesArenas {
         double lip = Math.min(5.2, R * 0.24);
         int tall = 9;
         if (d <= lip + 0.6) {
-            Pieces.bell(c, bx, bz, dx, dz, ceil - tall - 3, tall, lip, ceil, bronze(), s("minecraft:polished_deepslate"),
+            Pieces.bell(c, bx, bz, dx, dz, Pieces.apex(c, bx, bz, dx, dz, ceil) - tall - 3, tall, lip, ceil, bronze(), s("minecraft:polished_deepslate"),
                     c.lightless ? null : s("minecraft:pearlescent_froglight"));
             claimed = true;
         }
@@ -260,7 +260,7 @@ final class PiecesArenas {
         if (Math.hypot(dx - mx, dz - mz) <= capR + 0.5)
             claimed = PiecesRooms.mushroom(c, bx, bz, dx - mx, dz - mz, walk, 7 + k % 2, capR, ceil, free(r, x, z)) || claimed;
         // the hanging cap over the Lord
-        int hy = ceil - 2;
+        int hy = Pieces.apex(c, bx, bz, dx, dz, ceil) - 2;
         if (d < 4.6) {
             BlockState cap = GatesRegistry.GLOWCAP.get().defaultBlockState();
             c.set(bx, hy, bz, d < 3.6 ? GatesRegistry.GLOWCAP_GILLS.get().defaultBlockState() : cap);
@@ -310,7 +310,7 @@ final class PiecesArenas {
         }
         // timber beams across the vault, lanterns under them (from version 8 a block higher, over the Tyrant's chop)
         int by = walk + (r.space > 0 ? 14 : 13);
-        if (by < ceil - 1 && (Math.abs(dx) < 0.6 || Math.abs(dz) < 0.6)) {
+        if (by < ceil - (c.plan.contentVersion() >= 9 ? 0 : 1) && (Math.abs(dx) < 0.6 || Math.abs(dz) < 0.6)) {
             c.set(bx, by, bz, GatePainter.axis(s("minecraft:stripped_dark_oak_log"), Math.abs(dx) < 0.6 ? "z" : "x"));
             if (!c.lightless && d > 4 && Math.floorMod((int) Math.round(d), 5) == 0) c.set(bx, by - 1, bz, s("minecraft:lantern[hanging=true]"));
             return true;
@@ -355,7 +355,7 @@ final class PiecesArenas {
             return true;
         }
         // the great gear under the vault
-        int gy = ceil - 3;
+        int gy = Pieces.apex(c, bx, bz, dx, dz, ceil) - 3;
         double gr = Math.min(8.0, R * 0.36);
         if (d < gr + 1.0 && gy > walk + 10) {
             double a = Math.atan2(dz, dx);
@@ -414,18 +414,20 @@ final class PiecesArenas {
         double rp = cover(r, 0.55, 4.2);
         double px = Math.floor(Math.cos(a) * rp) + 0.5, pz = Math.floor(Math.sin(a) * rp) + 0.5;
         double pd = Math.hypot(dx - px, dz - pz);
-        if (Math.abs(dx - px) < 1.5 && Math.abs(dz - pz) < 1.5 && free(r, x, z)) {
+        // version 9: a pillar stands whole or not at all, and a canopy only round one that stands (38.16)
+        boolean v9 = c.plan.contentVersion() >= 9, stands = !v9 || pillarFree(r, x - (int) Math.floor(dx - px + 0.5), z - (int) Math.floor(dz - pz + 0.5));
+        if (Math.abs(dx - px) < 1.5 && Math.abs(dz - pz) < 1.5 && (v9 ? stands : free(r, x, z))) {
             for (int y = walk; y < ceil; y++) c.set(bx, y, bz, (y + x + z) % 3 == 0 ? GatesRegistry.BROOD_CELL.get().defaultBlockState() : s("minecraft:honeycomb_block"));
             return true;
         }
-        if (pd < 4.2 && ceil - walk > 9) {
+        if (pd < 4.2 && ceil - walk > 9 && stands) {
             c.set(bx, walk + 6, bz, s("minecraft:honeycomb_block"));
             if (pd > 3.4) c.set(bx, walk + 5, bz, s("minecraft:honey_block"));
             claimed = true;
         }
         if (d > R * 0.3 && d < R * 0.4 && Hash.noise(r.seed, x, z, 3) < 0.5) c.set(bx, walk - 1, bz, s("minecraft:honey_block"));
         if (d < 3.5) {
-            int y = ceil - 4;
+            int y = Pieces.apex(c, bx, bz, dx, dz, ceil) - 4;
             if (d < 1.0) for (int yy = ceil - 1; yy > y; yy--) c.set(bx, yy, bz, s("minecraft:honeycomb_block"));
             c.set(bx, y, bz, d < 2.5 && !c.lightless ? GatesRegistry.ROYAL_JELLY.get().defaultBlockState() : s("minecraft:honeycomb_block"));
             if (d < 1.6) c.set(bx, y - 1, bz, GatesRegistry.ROYAL_JELLY.get().defaultBlockState());
@@ -436,6 +438,12 @@ final class PiecesArenas {
             claimed = true;
         }
         return claimed;
+    }
+
+    /** A 3 by 3 pillar round (x, z) has every column free. */
+    static boolean pillarFree(Room r, int x, int z) {
+        for (int i = -1; i <= 1; i++) for (int k = -1; k <= 1; k++) if (!free(r, x + i, z + k)) return false;
+        return true;
     }
 
     static boolean rootPillar(Room r, double dx, double dz) {
@@ -496,11 +504,18 @@ final class PiecesArenas {
         if (marketCounter(r, dx, dz) && free(r, x, z)) {
             c.set(bx, walk, bz, s("minecraft:spruce_planks"));
             double g = Hash.unit(r.seed, x, z);
+            // version 9: every third counter block is a post holding up the awning (38.16)
+            if (c.plan.contentVersion() >= 9 && Math.floorMod(x + z, 3) == 1) {
+                c.set(bx, walk + 1, bz, s("minecraft:spruce_fence"));
+                c.set(bx, walk + 2, bz, s("minecraft:spruce_fence"));
+            } else
             c.set(bx, walk + 1, bz, s(g < 0.3 ? "minecraft:potted_red_tulip" : g < 0.5 ? "minecraft:cake" : g < 0.7 ? "minecraft:melon" : "minecraft:flower_pot"));
             c.set(bx, walk + 3, bz, s(Math.floorMod(x + z, 2) == 0 ? "minecraft:red_wool" : "minecraft:yellow_wool"));
             return true;
         }
         if (Math.abs(d - R * 0.78 + 1) < 0.6 && marketCounter(r, dx * (d + 1) / d, dz * (d + 1) / d)) {
+            // version 9: the awning's edge only where it meets its counter's awning face to face, not at a corner (38.16)
+            if (c.plan.contentVersion() >= 9 && !awningJoins(r, x, z, dx, dz)) return false;
             c.set(bx, walk + 3, bz, s(Math.floorMod(x + z, 2) == 0 ? "minecraft:red_wool" : "minecraft:yellow_wool"));
             if (!c.lightless && Math.floorMod(x + z, 3) == 0) c.set(bx, walk + 2, bz, s("minecraft:lantern[hanging=true]"));
             return true;
@@ -508,9 +523,25 @@ final class PiecesArenas {
         // lantern strings radiating from the apex, sagging
         if (spokeLine(dx, dz, 8) && d > 2 && d < R * 0.9) {
             int y = ceil - 1 - (int) Math.round(Math.sin(d / (R * 0.9) * Math.PI) * 3);
+            if (c.plan.contentVersion() >= 9) {
+                // version 9: a link here and there of a sagging string reads as bits in the air; each lantern hangs on its
+                // own chain from the vault instead, their lengths following the sag (38.16)
+                if (c.lightless || Math.floorMod((int) Math.round(d), 3) != 0) return false;
+                for (int yy = ceil - 1; yy >= y; yy--) c.set(bx, yy, bz, GatePainter.chain());
+                c.set(bx, y - 1, bz, GatesRegistry.PAPER_LANTERN.get().defaultBlockState());
+                return true;
+            }
             c.set(bx, y, bz, GatePainter.chain());
             if (!c.lightless && Math.floorMod((int) Math.round(d), 3) == 0) c.set(bx, y - 1, bz, GatesRegistry.PAPER_LANTERN.get().defaultBlockState());
             return true;
+        }
+        return false;
+    }
+
+    private static boolean awningJoins(Room r, int x, int z, double dx, double dz) {
+        for (int k = 0; k < 4; k++) {
+            int ox = k == 0 ? 1 : k == 1 ? -1 : 0, oz = k == 2 ? 1 : k == 3 ? -1 : 0;
+            if (marketCounter(r, dx + ox, dz + oz) && free(r, x + ox, z + oz)) return true;
         }
         return false;
     }
@@ -584,10 +615,11 @@ final class PiecesArenas {
             return true;
         }
         // the chandelier: glass rings and end rods
-        int y = ceil - 5;
+        int y = Pieces.apex(c, bx, bz, dx, dz, ceil) - 5;
         if (d < 4.6 && y > walk + 8) {
-            if (ring(dx, dz, 4.0, 0.55)) c.set(bx, y, bz, s("minecraft:glass"));
-            if (ring(dx, dz, 2.5, 0.55)) c.set(bx, y + 1, bz, s("minecraft:glass"));
+            Pieces.spokes(c, bx, bz, dx, dz, y, 4.0, s("minecraft:glass"));
+            if (Pieces.hungRing(c, dx, dz, 4.0, 0.55)) c.set(bx, y, bz, s("minecraft:glass"));
+            if (Pieces.hungRing(c, dx, dz, 2.5, 0.55)) c.set(bx, y + 1, bz, s("minecraft:glass"));
             if (!c.lightless && ringPoint(dx, dz, 4.0, 8, 0, 0.5)) c.set(bx, y - 1, bz, s("minecraft:end_rod[facing=down]"));
             if (d < 1.0) {
                 for (int yy = ceil - 1; yy > y; yy--) c.set(bx, yy, bz, GatePainter.chain());
@@ -664,8 +696,10 @@ final class PiecesArenas {
             if (y < ceil - 2) {
                 String[] things = {"minecraft:bookshelf", "minecraft:crafting_table", "minecraft:oak_planks", "minecraft:white_wool", "minecraft:jack_o_lantern",
                         "minecraft:bookshelf", "minecraft:red_wool", "minecraft:oak_stairs[half=top]", "minecraft:note_block", "minecraft:jack_o_lantern"};
+                c.afloat(true);
                 c.set(bx, y, bz, s(c.lightless && things[k].endsWith("lantern") ? "minecraft:carved_pumpkin" : things[k]));
                 if (k % 3 == 0) c.set(bx, y + 1, bz, c.lightless ? s("minecraft:oak_slab[type=bottom]") : s("minecraft:lantern[hanging=false]"));
+                c.afloat(false);
                 return true;
             }
         }
@@ -693,7 +727,9 @@ final class PiecesArenas {
         }
         // floating stones high in the sky
         if (Hash.unit(r.seed, x * 11, z * 7) < 0.012 && ceil - walk > 12 && !inSweep(r, dx, dz)) {
+            c.afloat(true);
             c.set(bx, walk + 9 + (int) (Hash.unit(r.seed, z, x) * 5), bz, s("minecraft:mossy_cobblestone"));
+            c.afloat(false);
             return true;
         }
         return false;
