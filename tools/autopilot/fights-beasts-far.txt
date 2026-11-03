@@ -120,7 +120,8 @@ cmd kill @e[type=minecraft:experience_orb]
 # her at every step.
 cmd fill -39 200 34 39 200 39 minecraft:grass_block
 cmd fill -39 201 34 39 201 39 minecraft:sweet_berry_bush[age=3]
-cmd summon minecraft:cow 1.5 201 42.5 {NoAI:1b,Invulnerable:1b,Tags:["bait"],Rotation:[180f,0f]}
+# mortal (an invulnerable thing is never anyone's enemy) but hard to kill
+cmd summon minecraft:cow 1.5 201 42.5 {NoAI:1b,Tags:["bait"],Rotation:[180f,0f],attributes:[{id:"minecraft:max_health",base:1000.0d}],Health:1000f}
 cmd tp @s 1.5 201 24.5 0 0
 cmd awaken fauna summon briar_sow
 cmd tag @e[type=awaken:briar_sow,limit=1,sort=nearest] add bramble
