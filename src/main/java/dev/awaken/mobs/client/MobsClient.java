@@ -45,6 +45,7 @@ public final class MobsClient {
         bus.addListener(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent.class, CarrierView::submit);
         bus.addListener(net.neoforged.neoforge.client.event.ClientTickEvent.Post.class, e -> CarrierView.tick());
         bus.addListener(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent.class, ShotRenderer::onJoin);
+        bus.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, dev.awaken.mobs.client.life.LifeTrace::commands); // dev: /awaken lifetrace
     }
 
     /**
