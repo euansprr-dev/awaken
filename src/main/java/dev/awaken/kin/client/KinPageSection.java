@@ -155,11 +155,21 @@ final class KinPageSection extends UiSection {
         }
         for (List<String> r : rows) {
             String title = r.get(1), doing = r.get(2), feeling = r.get(3), made = r.get(4);
+            String id = r.size() > 5 ? r.get(5) : "", name = r.size() > 6 ? r.get(6) : "";
             ui.card(Glass.GOOD, body -> {
-                body.text(title, 0xFF000000 | Glass.TITLE);
+                body.text(name.isEmpty() ? title : name + " · " + title, 0xFF000000 | Glass.TITLE);
                 body.text("Now: " + doing + ".", 0xFF000000 | Glass.TEXT);
                 body.text(cap(feeling) + ".", 0xFF000000 | Glass.LABEL);
                 if (!made.isEmpty()) body.text(cap(made) + ".", 0xFF000000 | Glass.AMBER);
+                // a name of its own (SPEC §43.17): the page and its plate use it from then on
+                if (!id.isEmpty()) {
+                    Ui.Flow f = body.flow();
+                    if (f.button(name.isEmpty() ? "Give it a name" : "Change its name", Glass.LANTERN, true)) {
+                        var mc = net.minecraft.client.Minecraft.getInstance();
+                        mc.gui.setScreen(new KinNameScreen(mc.gui.screen(), id, title, name));
+                    }
+                    f.end();
+                }
             });
         }
     }
