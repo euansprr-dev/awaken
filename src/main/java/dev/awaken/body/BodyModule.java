@@ -88,6 +88,26 @@ public final class BodyModule {
         @Override public boolean hanging(Player p) { return Body.isHanging(p); }
         @Override public boolean stairSliding(Player p) { return Body.isStairSliding(p); }
 
+        /** A dream remembered these moves (SPEC §9.4): THE BODY marks them; unknown keys (the Ascent's tiers) are skipped. */
+        @Override public void remember(ServerPlayer p, java.util.List<String> moves) {
+            BodyMemory mem = p.getData(BodyContent.MEMORY), next = mem;
+            for (String key : moves) {
+                Move mv = Move.byKey(key);
+                if (mv != null) next = next.remember(mv);
+            }
+            if (next != mem) p.setData(BodyContent.MEMORY, next);
+        }
+
+        @Override public boolean remembered(Player p, String move) {
+            Move mv = Move.byKey(move);
+            return mv != null && Body.memory(p).remembered(mv);
+        }
+
+        @Override public void addMastery(ServerPlayer p, String track, int points) {
+            for (dev.awaken.body.ascent.AscentMemory.Track t : dev.awaken.body.ascent.AscentMemory.Track.values())
+                if (t.name().equals(track)) dev.awaken.body.ascent.AscentServer.addMastery(p, t, points);
+        }
+
         /** A cast ends a tactical sprint at once (the cast is never held back); a slide keeps going. */
         @Override public void castStarting(ServerPlayer p) {
             BodyMotion m = p.getExistingDataOrNull(BodyContent.MOTION);

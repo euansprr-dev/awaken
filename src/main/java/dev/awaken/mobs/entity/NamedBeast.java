@@ -156,16 +156,13 @@ public class NamedBeast extends FaunaMob {
     }
 
     /**
-     * Where a beast with no home makes one: where it is, but a big flier that came in under a canopy first rises into
-     * open air over it (it spawned out of sight), so its home and its idle hold have room for its wings.
+     * Where a beast with no home makes one: where it is, but a big flier under a canopy makes it in the open air over
+     * it, so its home and its idle hold have room for its wings; it flies (or works its way) up there itself.
      */
     private BlockPos firstHome() {
         if (def().flies() && FlightRoom.big(this) && !FlightRoom.free(this)) {
             Vec3 up = FlightRoom.roomAbove(this, getX(), getY(), getZ());
-            if (up != null) {
-                snapTo(up.x, up.y, up.z);
-                return BlockPos.containing(up);
-            }
+            if (up != null) return BlockPos.containing(up);
         }
         return blockPosition();
     }

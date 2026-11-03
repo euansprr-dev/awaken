@@ -1,0 +1,176 @@
+# Fliers find their way (SPEC 13 fauna, "Fliers find their way"; Euan 2026-10-28, the Plumed Coil stuck in a tree): the
+# Plumed Coil in a jungle grove on a studio at y 200. 1. one saved inside a great tree's crown works its way out, the
+# leaves shaking (never a teleport, every leaf left); 2. it roams the grove at its own pace, round the trunks and over
+# the canopy; 3. you under a low thicket in survival: it hangs over the leaves above you, then dives once you step out
+# into the clearing.
+# ci knobs: PACK=perf,feel
+world coilforest creative 4242
+waitworld
+wait 40
+# the opening's sky flight holds the camera: skip it first
+cmd awaken opening skip
+wait 30
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -48 -48 48 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule max_block_modifications 1000000
+cmd weather clear 1000000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+# the studio: grass with the air cleared over it, twice (a fill into chunks still arriving can miss)
+cmd fill -40 200 -40 40 200 40 minecraft:grass_block
+cmd fill -40 201 -40 40 240 40 minecraft:air
+wait 40
+cmd fill -40 200 -40 40 200 40 minecraft:grass_block
+cmd fill -40 201 -40 40 240 40 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..120]
+wait 5
+# the great tree: a 2x2 trunk and a broad crown, its leaves kept (persistent), corners rounded off
+cmd fill 0 201 0 1 219 1 minecraft:jungle_log
+cmd fill -5 214 -5 6 218 6 minecraft:jungle_leaves[persistent=true] replace minecraft:air
+cmd fill -5 214 -5 -4 218 -4 minecraft:air
+cmd fill 5 214 -5 6 218 -4 minecraft:air
+cmd fill -5 214 5 -4 218 6 minecraft:air
+cmd fill 5 214 5 6 218 6 minecraft:air
+cmd fill -3 219 -3 4 220 4 minecraft:jungle_leaves[persistent=true] replace minecraft:air
+cmd fill -5 213 -2 -5 213 3 minecraft:jungle_leaves[persistent=true]
+cmd fill 6 213 -2 6 213 3 minecraft:jungle_leaves[persistent=true]
+# the thicket to the west: low leaves four blocks up on a few trunks
+cmd fill -24 205 -6 -10 208 6 minecraft:jungle_leaves[persistent=true]
+cmd fill -20 201 -4 -20 208 -4 minecraft:jungle_log
+cmd fill -14 201 4 -14 208 4 minecraft:jungle_log
+cmd fill -12 201 -3 -12 208 -3 minecraft:jungle_log
+cmd fill -22 201 3 -22 208 3 minecraft:jungle_log
+# the grove round them: big jungle trees, small ones and bushes, the clearing east of the great tree left open
+cmd place feature minecraft:mega_jungle_tree -18 201 -16
+cmd place feature minecraft:mega_jungle_tree 16 201 -18
+cmd place feature minecraft:mega_jungle_tree -16 201 18
+cmd place feature minecraft:mega_jungle_tree 22 201 16
+cmd place feature minecraft:mega_jungle_tree -32 201 14
+cmd place feature minecraft:mega_jungle_tree 0 201 -30
+cmd place feature minecraft:mega_jungle_tree 32 201 -2
+cmd place feature minecraft:mega_jungle_tree 2 201 30
+cmd place feature minecraft:jungle_tree -6 201 -22
+cmd place feature minecraft:jungle_tree 28 201 -24
+cmd place feature minecraft:jungle_tree -28 201 -28
+cmd place feature minecraft:jungle_tree 8 201 20
+cmd place feature minecraft:jungle_tree -30 201 -6
+cmd place feature minecraft:jungle_tree 30 201 30
+cmd place feature minecraft:jungle_bush 10 201 -8
+cmd place feature minecraft:jungle_bush -6 201 10
+cmd place feature minecraft:jungle_bush 24 201 6
+cmd place feature minecraft:jungle_bush -2 201 -12
+wait 40
+cmd gamemode spectator
+wait 5
+# 1. saved inside the great tree's crown (no spawn check runs for a summon with data): it works its way out
+# (the settled shot first: on CI it can wait a minute for the terrain, and the Coil is out in two seconds)
+cmd tp @s 16.5 216.5 1.0 90 6
+look 90 6
+wait 20
+shot coil_crown_00
+cmd summon awaken:plumed_coil 3.5 215.2 1.0 {PersistenceRequired:1b,Tags:["coil"],Rotation:[90f,0f]}
+shotnow coil_crown_01
+wait 6
+shotnow coil_crown_02
+wait 6
+shotnow coil_crown_03
+wait 6
+shotnow coil_crown_04
+wait 6
+shotnow coil_crown_05
+wait 6
+shotnow coil_crown_06
+wait 6
+shotnow coil_crown_07
+wait 10
+shotnow coil_crown_08
+wait 10
+shotnow coil_crown_09
+wait 20
+shotnow coil_crown_10
+wait 40
+shotnow coil_crown_11
+# 2. it roams the grove: a wide view over the clearing and the crowns
+cmd tp @s 6.5 226 -24.5 0 22
+look 0 22
+wait 40
+shot coil_roam_01
+wait 40
+shotnow coil_roam_02
+wait 40
+shotnow coil_roam_03
+wait 40
+shotnow coil_roam_04
+wait 40
+shotnow coil_roam_05
+wait 40
+shotnow coil_roam_06
+wait 40
+shotnow coil_roam_07
+wait 40
+shotnow coil_roam_08
+# low among the trunks, looking up at the crowns
+cmd tp @s 12.5 203 0.5 120 -28
+look 120 -28
+wait 40
+shot coil_roam_low_01
+wait 40
+shotnow coil_roam_low_02
+wait 40
+shotnow coil_roam_low_03
+wait 40
+shotnow coil_roam_low_04
+# 3. you under the thicket: it hangs over the leaves, waiting; then you step out into the clearing and it dives
+cmd kill @e[tag=coil]
+wait 5
+cmd gamemode survival
+cmd tp @s -16.5 201 0.5 90 -55
+look 90 -55
+cmd summon awaken:plumed_coil -16 214 0.5 {PersistenceRequired:1b,Tags:["coil"]}
+wait 20
+cmd damage @e[tag=coil,limit=1] 1 minecraft:player_attack by @p
+wait 40
+shot coil_hunt_under_01
+wait 40
+shotnow coil_hunt_under_02
+wait 40
+shotnow coil_hunt_under_03
+wait 40
+shotnow coil_hunt_under_04
+cmd tp @s 14.5 201 0.5 90 -25
+look 90 -25
+wait 20
+shotnow coil_hunt_open_01
+wait 20
+shotnow coil_hunt_open_02
+wait 20
+shotnow coil_hunt_open_03
+wait 20
+shotnow coil_hunt_open_04
+wait 20
+shotnow coil_hunt_open_05
+wait 30
+shotnow coil_hunt_open_06
+cmd gamemode creative
+cmd kill @e[tag=coil]
+wait 20
+info
+quit

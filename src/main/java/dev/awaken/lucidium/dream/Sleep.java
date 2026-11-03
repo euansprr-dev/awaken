@@ -1,21 +1,17 @@
 package dev.awaken.lucidium.dream;
 
-import dev.awaken.Awaken;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.PlayDays;
-import dev.awaken.core.api.HearthHooks;
 import dev.awaken.lucidium.LucidiumContent;
 import dev.awaken.lucidium.block.DreamBellBlock;
+import dev.awaken.lucidium.data.DreamLedger;
 import dev.awaken.lucidium.data.Dreamer;
 import dev.awaken.lucidium.data.LucidiumWorld;
 import dev.awaken.lucidium.journal.DayJournal;
-import dev.awaken.progression.Progression;
-import dev.awaken.progression.Stat;
 import dev.awaken.signal.Signal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -39,8 +35,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Falling asleep into a dream. A successful sleep rolls the dream chance once; if it hits and tonight's plan is
- * ready, the arrival island is loaded while the screen fades, and just before the night would be skipped the sleeper
+ * Falling asleep into a dream. A dream comes when one waits for you (SPEC §9.2); if one does and tonight's plan is
+ * ready, its arrival is loaded while the screen fades, and just before the night would be skipped the sleeper
  * (and anyone sleeping in the same room) slips into the Lucidium. Not ready means a normal night: "You slept deeply."
  * Sleep is never blocked.
  */
@@ -60,6 +56,8 @@ public final class Sleep {
         public boolean wbtb;
         public boolean entered;
         public Outcome outcome = Outcome.NONE;
+        /** Tonight's waiting dream (its trial id), "" for none. */
+        public String trial = "";
         Planner.Prepared prepared;
         /** The planner let {@link #prepared} go while this sleeper held it: the night gives its cell back unless dreamed. */
         boolean ownsPlan;
@@ -89,6 +87,11 @@ public final class Sleep {
         if (s.entered || s.dreamless || !s.roll) return;
         if (s.prepared == null) {
             s.prepared = Planner.ready(sp).orElse(null);
+            // planned at dusk for another dream than tonight's (the journal's choice changed, or it was finished since)
+            if (s.prepared != null && !s.trial.isEmpty() && !s.trial.equals(s.prepared.plan().trial())) {
+                s.prepared = null;
+                Planner.invalidate(sp);
+            }
             if (s.prepared != null) preload(sp, s);
             else if (!Planner.building(sp)) Planner.request(sp, "sleep");
         }
@@ -131,16 +134,15 @@ public final class Sleep {
         long now = Dreams.now(server);
         long day = PlayDays.current(server);
         s.wbtb = d.wbtbUntil > 0 && now <= d.wbtbUntil;
-        boolean intention = !d.intention(day).isEmpty();
-        boolean sanctuary = dev.awaken.hearth.Hearth.isSanctuary(sp.level(), s.bed) || blockNear((ServerLevel) sp.level(), s.bed, 6, 3, MEDITATION_MAT);
-        boolean homeBed = HearthHooks.hearthsOf(sp).stream().anyMatch(h -> h.distSqr(s.bed) <= 48 * 48);
-        double chance = Lucidity.dreamChance(Progression.stat(sp, Stat.SPI), sanctuary, homeBed, intention, s.wbtb);
-        if (d.dreams == 0) chance = 1.0; // the first night always dreams
-        s.roll = sp.getRandom().nextDouble() < chance;
+        // a dream comes only when one waits (SPEC §9.2): one a night, not two nights running unless asked for; the Dream
+        // Bell's second sleep brings back the dream it woke you from
+        DreamOffers.check(sp);
+        DreamLedger.Waiting w = s.wbtb ? d.ledger.next(day) : d.ledger.tonight(day);
+        s.roll = w != null;
+        s.trial = w == null ? "" : w.trial();
         if (!s.roll) s.outcome = Outcome.NO_DREAM;
-        DirectorLog.log(sp, "dream", String.format("sleep: chance %.0f%% (SPI %d%s%s%s%s) -> %s", chance * 100,
-                Progression.stat(sp, Stat.SPI), sanctuary ? ", sanctuary" : "", homeBed ? ", home bed" : "",
-                intention ? ", intention" : "", s.wbtb ? ", WBTB" : "", s.roll ? "dream" : "no dream"));
+        DirectorLog.log(sp, "dream", "sleep: " + (w == null ? "no dream waits tonight (" + d.ledger.waiting.size() + " waiting)"
+                : "the " + w.trial() + " dream" + (s.wbtb ? " (WBTB)" : "")));
         return s;
     }
 
@@ -214,10 +216,6 @@ public final class Sleep {
 
     private static final java.util.function.Predicate<BlockState> ARMED_BELL =
             st -> st.is(LucidiumContent.DREAM_BELL.get()) && st.getValue(DreamBellBlock.ARMED);
-    private static final java.util.function.Predicate<BlockState> MEDITATION_MAT = st -> {
-        var id = BuiltInRegistries.BLOCK.getKey(st.getBlock());
-        return Awaken.MODID.equals(id.getNamespace()) && id.getPath().contains("meditation");
-    };
 
     /** The night is about to be skipped: an armed Dream Bell by a sleeper's bed stops it at midnight instead. */
     static void onSleepFinished(SleepFinishedTimeEvent event) {

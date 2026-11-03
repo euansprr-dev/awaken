@@ -394,12 +394,211 @@ Dying in a dream: wake "Shaken" (no penalty). Not ready → normal sleep. Hold s
 Arrivals (§28.9, 2026-10-29): waking from a dream and the dream rescue wait for the bed's land through `Passage.go`;
 going into a dream doesn't (the cell is built first).
 
+**Dreams remade (2026-11-03, `docs/dreams/PLAN.md`, Euan approved all 12 decisions).** A dream is now a remembered
+trial with one goal and a clock. The paragraph above is history: stage 4 removed the 40% roll, the islands of memory
+(`DreamPlanner.plan`, the island `BlueprintCompiler`, `Imagined`, the swaps while nobody looks), lucid flight, shaping
+and summoning (`Manifest` and its payload), and the nightmare and mentor at island nodes (the Chase and the Duel took
+their place, §9.5). `Dreams.enter` refuses a plan with no course; an old plan with no trial compiles as the first dream;
+`dream now`, `dream plan` and `Lucidium.startShared` dream the trial waiting (startShared: or the one finished last,
+§9.6). Lucidity stays as a trial's starting seconds. No `dreamsRemade` flag (PLAN §6): the old path went by the same
+delivery, so a flag would only have guarded a dream nobody plays.
+
+### 9.1 Trials
+
+`trial.Trial`: FIRST (the Dreaming Bell's dream, 75 s), Runs WALL, LEDGE, VAULT (stage 1), CLIMB (stage 2), ROPE, LEAP,
+WINGS (stage 4, §9.6), Rooms WRONG, LOOK_AWAY, HUSH, FOLD, NO_DOOR (180 s), LONG_FALL (120 s) (§9.5), CHASE (120 s), DUEL (150 s). Each has one
+goal line and a small line under it. A Run's course is laid by `trial.CourseKit` from RunnerRules' own probes (read only,
+§12): every wall-run, wall jump, ledge hang and shimmy, vault and slide is proved by the same checks the movement makes,
+and `TrialCompiler` tries four seeded variants then a plain road, so a plan always compiles. The solver's time from the
+doorway to the goal is the par; a Run's clock is max(60, par × 1.8) s. `DreamPlan` v2 carries the trial id and a ref
+(`bell:dreaming`); `DreamBlueprint` v2 the course (start, doorway, rings, end, bell spot, floor, par, path, reveals).
+
+### 9.2 When a dream comes (the ledger)
+
+`Dreamer` schema 2 adds `data.DreamLedger`: waiting (trial, ref, since, why), finished (best ticks, medal, day, times),
+`lastDreamDay`, `lastNewDay`, the Journal's choice and its day. A dream comes **only when one waits**: at most one a
+night, never two nights running unless chosen that day; new dreams join at most one a play-day (the first and old-save
+seeding excepted); the Dream Bell's second sleep (WBTB) takes the next one regardless. `DreamOffers` fills it from the
+level road's flag `awaken:dreams` (level 12): FIRST (with the Dreaming Bell when `BellHooks.dreamBellNext` says
+`dreaming`), then after it the built Runs one a day; old dreamers are seeded with FIRST and up to two Runs. Sneak while
+lying down: dreamless, as before. Tasks (OUT, BELLS when a bell waits): "A dream is waiting. Sleep in your bed
+tonight." / "A bell is waiting in a dream. Sleep in your bed tonight."; never what it holds. While one waits, your own
+bed sheds a few pearl motes at night (client, `DreamWaiting` payload).
+
+### 9.3 The trial dream
+
+- **Arrive** in your room: the Day Journal's latest HOME snapshot (else a kit bedroom), a doorway of dream glass, the
+  course beyond, its end glowing far off. Dream signs as before (your personal sign and one other). No lucidity meter:
+  one line, "You're dreaming. Press H to take control." ("Press H." after three dreams). The dream waits up to 5 min,
+  and walking out past the doorway takes control too.
+- **H takes control** (first H: `first_lucid`, lucid-dream count): the doorway clears, the goal line and a crescent
+  clock show; the clock is the trial's seconds plus starting lucidity as seconds (cap 60), so every old source of
+  lucidity still counts. The road lays itself ahead of you (24 blocks a tick, 14 ahead of your furthest step).
+- **While lucid**: H glints the true path for 2 s at a cost of 2 s, once every 4 s; noticing a dream sign gives 8 s
+  ("That's not right. +8 seconds"); falling 6 below the course floor is caught: back to the last ring passed, 3 s gone
+  ("The dream caught you. 3 seconds gone."), never a wake, no fall damage in a trial. Rings: gold, the next one
+  breathing; passing one counts it.
+- **Ends**: the goal reached → the prize line for 3 s → wake WON ("You reached the end of the dream", time, medal, what
+  you kept, "Your Dream Journal has written it down."). Clock out → SLIPPED ("The dream slipped away"); Esc's "Wake up"
+  button (`WakeUp` payload, throttled, server checks dreaming) → CHOSE; both leave the dream waiting. Death, logout and
+  the rest wake as before.
+- **Keeps**: medals by the Gauntlet's rule (gold ≤ par × 1.1 + 1 s, silver ≤ par × 1.5 + 2 s, else bronze; Runs only);
+  world XP 6% of a level the first finish, 2% another day; 2 Dream Residue (held while still in the Lucidium); counter
+  `awaken:dreams_finished` (`first_dream` revelation fires on it). The Dreaming Bell's dream holds the bell at the end
+  ("Take the bell first. It's just behind you."): `DreamBells` lets the lucidium place it (`Lucidium.dreamBell`) and
+  `Lucidium.bellTaken` finishes the dream; no lucidity gate on that bell.
+- **The Dream Journal writes itself**: "Write down the dream" and its two-minute window are gone. It shows whether a
+  dream waits, each finished dream (best time, medal, times), the latest dreams and the places remembered. Recall in a
+  trial is two entries per finished dream (a second each on the clock, cap 10 s), or an old save's written Recall if
+  more.
+- **Payloads**: `TrialStart` (goal, sub, rings, end, bell, path, dreams so far), `TrialHud` (phase, ticks left, total,
+  ring, a line to flash, glint) once a second and on change, `DreamWaiting` (your bed or none), `WakeUp` (C→S); the
+  dream HUD's `TRIAL` flag hides the meter. Look: `TrialHud` (crescent clock, rose in the last 10 s), `TrialRings` (own
+  gold bands, not end rods), `PearlMoteParticle`, the Waking Veil and dream road blocks (`tools/art/specs/dreams.py`).
+- **Tests**: `dreams_runs_solvable` (every built trial's first variant passes its own solver, with a bell and without),
+  `dreams_waiting_ledger`, `dreams_arrival`, `dreams_clock`, `dreams_catch_never_wakes`, `dreams_wake_button`,
+  `dreams_win`. Tour `tools/autopilot/dreams-first.txt` (admin `/awaken dream offer <trial>`, `control` = H, `ring <n>`;
+  past the last ring, the goal).
+
+### 9.4 Runs: what the body keeps
+
+- **Moves remembered**: the first finish of a Run remembers its moves for the body (`Trial.moves()`: the wall: wall-run
+  and wall jump; the ledge: hang, shimmy, ledge jump; over and under: vault and slide; the climb: wall climb and grip;
+  the rope, leap and wings name their Ascent tiers). `MovementHooks.remember` sets `BodyMemory.remembered` (schema 2,
+  synced to its owner) and THE BODY says "Remembered in a dream." under each. The prize line: "Your body remembers the
+  wall-run."; the morning card adds the move to "You kept" and says how to do it awake (`Trial.how`). The tip that
+  teaches it awake counts done (`ascent/freerun`, `rope`, `leaper`, `wings`).
+- **Mastery**: 50 points on the Run's Ascent track the first finish, 50 the first gold (`MovementHooks.addMastery`,
+  `AscentServer.addMastery`: no chain link).
+- **Ghosts**: the best run of each Run is kept (`DreamLedger.ghosts`: a sample every 4 ticks from the doorway, ≤ 750,
+  packed in quarter blocks from the course's start); replays show it (§9.6).
+- **The climb** (Wall Stride held): faces 5 or 6 high run up into the lip's hang (`CourseKit.climbUp`, proved by the
+  body's own climb tick by tick: `climbTarget`, `wallOn`, `findEdge`; a plain jump must not reach the lip), and faces
+  with a Dream Ribbon up their middle (`DreamRibbonBlock`, a climb line in `awaken:runner_climbs`; proved by
+  `GripRules.find`, `climbTop`, `topLip`, then `climbOut`). The tower grows: the faces rise out of the road as you come.
+  The door is at the top.
+- **Tests**: `dreams_move_remembered` (the wall remembered once, the ghost kept, a sample packs and unpacks); the climb in
+  `dreams_runs_solvable`. Tour `tools/autopilot/dreams-runs.txt`.
+
+### 9.5 Rooms, bells, the Chase and the Duel (stage 3)
+
+A Room has one dream rule, shared by everyone in the dream (`dream.RoomRules`); its layout is laid by `trial.RoomLayouts`
+after the doorway (a `Course.Room`: the floor's middle and reach, where the goal first stands or null while the rule
+hides it, the rule's things, no door's walls, the fold's loop, the fall's edge, the hidden place's spot). A Room's goal
+may move: `ActiveDream.roomGoal`, the small Waking Door laid again where it goes, the end's light following
+(`TrialGoal` payload: shown or not, where). The clock: a Room 180 s (the long fall 120 s), the Chase 120 s, the Duel
+150 s. A Room won is won for everyone in it in control (phase 1).
+
+| Rule | Goal line (no bell / with its bell) | Rule | Fail |
+|---|---|---|---|
+| What's wrong here (`wrong`) | "Three things in this place are wrong. Look at each one and press H." / "... Find them all, and the bell will be there." | today's place (the latest Day Journal snapshot of today or yesterday, a home only if nothing else; else a pale courtyard) in a plaza, with three wrong things on spots round it: a door a block off the ground with no wall, a floating grass block, a lantern on a chain that ends in the air. Look at one (9°, 40 blocks) and press H. Looking at the sky, H glints them | a guess at nothing costs 5 s |
+| Look away (`look_away`) | "The door moves whenever you look away from it. Reach it." / "The bell moves whenever you look away from it. Catch it." | once in view (60°), out of view and over 3 away, it moves 16 to 28 from you on the plaza (8 to 16 if the plaza's too small) | none |
+| Hush (`hush`) | "Something is asleep by the door. Get to the door without waking it." / "... next to the bell. Take the bell without waking it." | a nightmare (generic family, no AI, silent, breathing clouds) beside the goal; within 12 not sneaking, or 18 sprinting, wakes it: it hunts you (at most 3 awake, the oldest fades) and the goal moves, a new sleeper beside it | it comes for you |
+| The long fall (`long_fall`) | "You're falling. Find a way to land." | the road ends at an edge over nothing; 8 below it, falling with your eyes down (over 40°) lifts you 10 ("The fall goes on for as long as you watch it."); eyes up (under 15°) lays a landing 6 below you and the goal on it. Caught only 60 deeper than the floor | none |
+| The fold (`fold`) | "This hallway keeps coming back. Find the way out of it." | a 30-long lamp-lit hallway; past 24 you're back 18 ("You've passed that door before.", then "Try walking backwards past the door you keep passing."); walking backwards (moving against where you look) past the pane of dream glass in its east wall opens it onto a short way to the Waking Door | none |
+| No door (`no_door`) | "There's no door. Make one." | a sealed room (the way in closes behind you); H looking at a wall (14 blocks) makes a door in it; the right wall's (a draft of pearl motes through it) leads to the Waking Door, the others into more wall | none |
+
+- **The Chase** (`chase`): a road with gaps and steps; once someone's past the doorway, 2 of your fear (3 from C rank)
+  spawn behind you in your room (`MobHooks.spawnThemed`, the family's theme and tags, level 80% of your content
+  level), hunting the nearest dreamer. The fear is the ref's (`fear:<family>`), else the week's worst, else something
+  hunting you in the dark. With the Nightmare's Bell the first carries it ("Your fear is coming after you, and it's
+  carrying a bell. Take the bell from it."); felled, the bell lies where it fell; the door says "Take the bell first.
+  Your fear is carrying it."
+- **The Duel** (`duel`): a ring of dream glass on a plaza; step within 8 of its middle and your Path's mentor comes
+  (`Mentors.start(ad, feet, player, trial)`: "Show me what you've learned."). Worn down (its blows stop at 3 health):
+  "Not yet. Catch your breath, and again." 10 s gone, the mentor back 3 s later. It yields at 35% health: won for
+  everyone in control.
+- **Bells** (the six keep their count; `DreamBells` keeps their words and the Book's Dreamt leads): the Dreaming Bell
+  is the first Run's; the Daydream Bell is Look away's, the Lullaby Bell Hush's, the Falling Bell the long fall's, the
+  Nightmare's Bell the Chase's, the Lucid Bell What's wrong here's (found all three: "Now there's a bell where there
+  wasn't one."). `Lucidium.DreamBell(id, at, carrier)`: `at` where it stands now (null while the rule hides it),
+  `carrier` the Chase's fear holding it. `DreamBells.follow` (every other tick) sets the Sleeping Bell where the dream
+  says, clears it while hidden, puts it in the carrier's hand (no drop), and sets it again for a shared dreamer when
+  someone else took theirs. A bell's dream is won by striking it (no lucidity gate); the old dream puzzles stay only for
+  a dream that isn't a trial.
+- **Hidden places**: a Room carrying `vision:<id>` (the visions finder's place: an unvisited surface structure 160 to
+  1,400 away, or an old remembered place) shows it beyond a window of dream glass at the far side, on its own island,
+  undistorted. Won: "Look through the glass. That place is real, and it's in your world." Waking:
+  `Visions.reveal` (the Journal's Visions, with which way it lies from your bed), `AtlasHooks.reveal` (40 round it) and
+  a pearl mark on the Atlas (`DreamPlaces` payload → `MapMarks`, faded once found); "You saw a real place: <label>.
+  It's on your map now. <hint>". Everyone in the dream gets it (a guest a copy of the host's). Walking up to it awake
+  is found, as before (`awaken:secrets_found`).
+- **Prizes on waking**: a Room "You found your way through the dream"; the Chase "You got away from your fear" / "You
+  took the bell from your fear", its fear let go (`nightmares_beaten`, that family's weekly counters and death marks
+  cleared, +10% of a level); the Duel "Your mentor yielded" (+20% of a level, `awaken:mentor_duels_won`). World XP and
+  residue as every finish.
+- **What waits** (`DreamOffers.check`, after the first dream; one new a play-day, in this order): the next dream bell your
+  rank has reached (`bell:<id>` on its dream; one bell waits at a time); the next Run; a place the finder has ready, in
+  the next Room in turn (`PLACE_ROOMS`: fold, no door, look away, hush, what's wrong here); the Chase once one family
+  killed you twice this week (`fear:<family>`); the Duel once you have a Path, 3 play-days after the last. Stale waits
+  drop: a bell you hold or one no longer next, a place shown or gone, a fear with no deaths left. A bell or a place is
+  given once (`DreamLedger.given`); a waiting dream carrying something else than tonight's shared one stays waiting.
+- **The Dream Journal's choice**: "Tonight I want to... learn a move / find something hidden / face my fear / find a
+  bell" (the last only while one waits): the oldest waiting of that kind (run, room, chase, bell) comes first, and asks
+  for a dream a night after the last. It lasts into the next play-day and is spent when a dream begins; it also counts
+  as an intention (+10 s).
+- **Commands** (admin, tours): `/awaken dream offer <trial> [bell:<id> | vision | fear:<family>]`, `/awaken dream solve`
+  (one step of the rule as a player would: the next wrong thing named, the right wall's door, the fold walked
+  backwards, the fall looked up from, the mentor coming or yielding, the carrier felled; then to the goal).
+- **Tests**: `dreams_room_rules` (each rule's mechanism, the bells' API, the Chase's door, the Duel to its morning),
+  `dreams_hidden_place`, `dreams_shared`. Tour `tools/autopilot/dreams-rooms.txt`.
+
+### 9.6 Replays, ghosts and the dream's sounds (stage 4)
+
+- **Replays**: every trial you've finished can be dreamt again, the one finished last first (`DreamOffers.replays`; the
+  Dream Recorder lists eight, "The wall: best 0:42, gold", through `DreamHooks.recorded`; the Stillpoint's In door
+  opens onto index 0 and glows while one is there). A replay's plan carries the ref `replay` (`DreamLedger.REPLAY`): no
+  bell, no place, no fear's name; it spends neither tonight's dream nor the Journal's choice and takes nothing off the
+  waiting list. Its time, medal (a first gold's mastery too) and ghost count; world XP 2% and the 2 residue only on a
+  later play-day than the last finish; no fear let go or mentor's lesson again. The sub line says your best ("Your best:
+  0:42, silver. Your ghost runs it with you."). Version-1 dreams in the history are no longer replayed.
+- **One a night**: a dream that isn't a replay sets `lastDreamDay` for everyone who arrives in it (the ledger's "one a
+  night, not two running" reads it).
+- **Ghosts**: the moment you pass a Run's doorway the server sends `TrialGhosts` (the course's start and up to four
+  ghosts: your best run, and in a shared dream the best runs of the others in it). The client plays each from there,
+  a sample every 4 ticks interpolated: a soft standing figure of light with a short trail, pearl for yours and rose for
+  a friend's, lingering half a second at its end (`TrialRings.ghost`).
+- **Sounds** (`tools/art/specs/audio_dreams.py`, all mono, the dream's own): `dream.catch` (an airy swoop and two slow
+  heartbeats: the catch), `dream.tick` (the clock's last ten seconds, client side: every half second slowing to every
+  second, a little lower and louder each time), `dream.ring` (a ring passed, pitched up ring by ring), `dream.won` (the
+  end reached: a warm rising chord).
+- **The air's Runs** (each waits once its Ascent tier is yours: `Ascent.has` TETHER, LEAPER, WINGS; old worlds are
+  seeded with them like the rest, §9.2). Proved like the ground's, by the Ascent's own rules at mastery 0 holding forward
+  (`trial.AirProofs` over `trial.CourseSpace`, a `SwingSpace` answered from the course's blocks before any are placed),
+  each also proving a plain sprint jump falls short and that the landing is on the far road, not past it:
+  - **The rope** (`CourseKit.swing(len, up, ahead)`): a gap under a lantern of dream light (3 wide, 2 high, 3 deep: big
+    enough for the rope's fan from anywhere on the jump), thrown at 2 and at 9 ticks into the jump (`AscentSwing.find`,
+    `entry`, `travel`, `tick` to the top, `letGoClear`/`holdOn`, `letGo`, then `carryStep`): both must land. A swing
+    carries about 27 from the take-off whatever the gap, and needs open air under the arc, so the gaps are 22-24 with 9
+    of road after. Layout: road 8, swing 22 (lantern 14 up, 6 on), swing 24 (14, 8), swing 22 (16, 8); par 17 s.
+  - **The leap** (`CourseKit.leap(len, rise)`): the sprint jump, the double jump near its top; the air dash as it falls
+    only if the double jump alone comes down short. Reach at mastery 0: double jump about 6.8 flat; with the dash 12.4
+    flat, 8.9 two up, 16.5 four down; nothing three up. Layout: 6 flat (the double jump alone), 8 flat, 6 two up, 10
+    flat, 12 four down; par 13 s.
+  - **The wings** (`CourseKit.glide(len, drop)`): the road ends at a cliff; an island (7 wide, 14 long, clouds under its
+    ends) `drop` below and `len` on, three rings of light in the air between (a fall from any is caught back at the
+    cliff). Proved by falling 3 ticks, `glideCatch`, then `glideStep` looking at the island's middle until the feet
+    touch it (a glide this way lands at 1.6 to 2 times its drop). Layout: 30 on and 20 down, then 40 on and 24 down; par
+    12 s.
+  The twists the plan named for these (anchors lighting in reach, drifting islands, updraft columns) are not built: the
+  air Runs are the plain proved layouts. All three Runs' clocks are the 60 s floor.
+- **The goal line** sits under any boss plates (the sleeper's and the Chase's fears are NIGHTMARE plates;
+  `CustomizeGuiOverlayEvent.BossEventProgress` gives their bottom each frame) and wraps to fit between the corners'
+  panels (`TrialHud.goal`), so a plate never covers it and the right-hand panel never cuts it.
+- **Hush's solve** (`/awaken dream solve`): a step that lands you by the sleeper is a sneak's step; it sleeps on for 5 s
+  (`ActiveDream.roomQuietUntil`) while you take the next.
+- **Old saves**: a player asleep mid-dream at the update (an island dream) is woken at login where they lay, its
+  flight taken back, and the ledger is seeded on the next check (the new first dream and up to two Runs the body can
+  do); nothing of the old dream can be replayed.
+- **Tests**: `dreams_replay` (listed, no bell, nothing spent, the time counted, nothing taken off the list, no residue
+  twice a day); the air Runs in `dreams_runs_solvable`; `dreams_upgrade` (the old save's wake and seeding).
+
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and
 secrets glow within Awareness (client-only highlight, server-sent positions). Only blue-tagged `veil_interactable` things
 can be used. Body hit → Warning + snap back offered; body killed → player killed. Logout → snap back first.
 Stillpoint dimension `awaken:stillpoint`: void + cloud sea + dawn temple platform; time ×10 slower feel (no hunger, no
-mobs). Hub for stats, Truths, Codex; doors Out (Veil) and In (Lucidium, only while asleep). Hosts trial arenas.
+mobs). Hub for stats, Truths, Codex; doors Out (Veil) and In (the dream you finished last, dreamt again; §9.6). Hosts trial arenas.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -718,6 +917,13 @@ of `AwakenConfig.Client`.
 - `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
   (`favours(ore, x, y, z)`, `place(x, y, z)`: pure, any thread) and `homes(seed, homes)`: where each ore is at home
   underground, installed on the overworld's load by the caves in a world made with the cave regions (null at server stop).
+- Dreams remade (§9.1–9.3): `dev.awaken.lucidium.Lucidium` — `inTrial(ServerPlayer)`, `dreamBell(ServerPlayer)` (`DreamBell(id,
+  at)`: where this trial's bell hangs, or null), `bellTaken(ServerPlayer)` (the bells module calls it when a managed dream
+  bell is struck). `core.api.BellHooks.dreamBellNext(ServerPlayer)` — the first dream bell not held whose rank you have
+  (`dreaming` at no rank), "" when none; installed by the bells module. The lucidium's `trial.CourseKit` reads the body's
+  `RunnerRules` probes (`findWall`, `findEdge`, `climbOut`, `wallAhead`, `wallOn`, `climbTarget`) and `GripRules`
+  (`find`, `climbTop`, `topLip`) read only, to prove its courses. `core.api.MovementHooks.remember(player, moves)`,
+  `remembered(player, move)` (both sides) and `addMastery(player, track, points)` (§9.4), installed by the body.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -924,10 +1130,40 @@ Plan v2 · overworld creatures (details in docs/modules/fauna.md):
   circles its home slowly, holds in its clearing or over the canopy (rising straight out of the clearing first), and
   one pick in seven or so settles on a solid top for 5–11 s. A flight that stops closing in for 40 ticks ends, so the
   flier chooses again (before, a flight into leaves never arrived and it never chose again). A big flier with no room and
-  no way out for three picks (one saved inside a canopy) is lifted over the treetops in a puff of dust; a roaming big
-  flier that spawned under a canopy rises over it before it takes its home there. A flying named beast that notices you
+  no way out for three picks (one saved inside a canopy) works its way out by moving (next rule); a roaming big flier
+  under a canopy makes its home in the open air over it and flies up there. A flying named beast that notices you
   stops circling and hangs in the air, turning to face you while you stay in sight; its warning, then a roar when it
   turns on you, then a told dive.
+- **Fliers find their way** (Euan, 2026-10-28: the Plumed Coil stuck in a tree; `mobs.entity.FlyerMoveControl`,
+  `Unwedge`, test `mobs_flier_canopy`). Every flier, gate fliers included (not one ridden or passing through walls):
+  - Its body for steering is its scaled hitbox plus a clearance of what its drawn wings or coils reach past it (reach
+    above minus half its width, 0.15 to 1 block; half that below, since fliers skim low). Every 4 ticks (staggered by id)
+    it sweeps that body along the way ahead, 3 to 10 blocks (12 ticks of its speed + 2); the last stretch to the spot
+    (half its width + clearance + 0.5) is its goal's business (a dive ends at you, a perch on a branch).
+  - Something in the way: it flies round it, the leg that turns least off the line to its goal (35, 70, 110, 150 degrees
+    either side, level, climbing 30 or dropping 25, or straight up), 3 to 6 blocks, keeping to the side it chose for 4 s
+    so it never dithers; with its clearance first, else squeezing past with its bare body. Going round it steers its
+    velocity and eases off near what is ahead; in open air the flight is as it always was. The straight way open again,
+    it leaves the detour. No way round three looks running, or a flight pressing 30 ticks without the body moving half a
+    block: it backs out, the way it came (the last of four places it flew through with room, every 10 ticks) if it can
+    fly straight there, else the nearest spot where its body is clear.
+  - A body inside a block (saved or put there) gets out by moving: the nearest way out it can fly straight (up first,
+    then up and out, then out, 8 blocks at most), else through leaves (leaves, vines, grass, flowers, bamboo: never wood
+    or stone), slowly (0.12 blocks a tick), the leaves shaking and rustling, a way through leaves counting double. Never
+    a teleport, never collision switched off, never a block broken. Sealed in, it waits and looks again every 2 s.
+    Walking creatures caught inside a block for a second walk out the same way (4 blocks, a climb of 2 at most);
+    burrowers going under and ridden mounts are left be.
+  - In a fight a flier circles you only where its body and clearance fit and it can fly straight there (four tries);
+    under the trees a big flier hangs over the canopy above you, watching, and anything else holds where it is. It dives
+    only down a clear line to within its reach of you: it waits for you to come out rather than dive into the leaves. A
+    blink (the Plumed Coil's Canopy Drop) comes out only where its body and half its clearance fit, lifted up to two
+    blocks, else not at all.
+  - Born to fit: the natural spawner checks the scaled body, not the type's box; every overworld creature's
+    finalize-spawn moves a body that doesn't fit (an elite grown a size, a beast placed by its type's box) to the nearest
+    place it does before anyone sees it (a big flier to open air with room over it, others up to 6 blocks up, walkers up
+    to 2 blocks up or 3 aside onto the same ground). World generation's own spawns are left as placed.
+  - Cost: one collision query per look (a slab test per shape, no stepping, nothing loaded); a detour at
+    most 16 sweeps; a way out at most 13 directions of 8 steps, only when caught.
 - Meeting a family's creature at level 3+ tells of its nearest lair (within 3,000 blocks); finding a lair pays 0.15 of
   a level once per beast kind. Block-changing talents (lichen, flowers, mushrooms) never act inside a Hearth radius.
 - Twelve family materials (`<family>_<thing>`) and the beasts' parts join the Hunter gear tags (E hides, cores and
@@ -11517,6 +11753,25 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
   registered, every `life` entry (a recipe's and its moods') is a known kind; `gateworlds_live` also checks that a bell
   hums over you and that a hung bell near you shows as a prop and swings when rung; `gateworlds_sets` that the hours toll
   right and that the fifth Bell Crypt keepsake brings the Bell Tower.
+- **No static** (Euan's playtest 2026-11-03: "really loud static noise in gate that is horrible"; rule set the same day).
+  Every gate floor and mood is measured the way the game mixes it: its biome loop, the world's bed again under it
+  (`WorldBed`, 0.55) and its additions rolled at their tick chance. The yardstick is vanilla rain (`weather.rain` at
+  0.2), the steady hiss every player already accepts. Static is a moment's 2-8 kHz level plus how noise-like that moment
+  is. The loudest tenth of a place's moments must stay within 9 dB of that rain (-45, so -36 on
+  `tools/art/gate_world_mix.py`, which exits 1 on a breach and writes the mixes with `--out`). A crack or a pop now and
+  then passes. A bed of hiss fails, and so do noisy one-shots that sound a tenth of the time. The fix was made at the
+  source, not by turning things down:
+  rain is single drops (a tiny rising bubble and the tap of the hit, about 45 ms) over a low wash, nothing above 2.6-3
+  kHz (`rains`, the Upward Rain's bed); steam is a short puff whose pitch falls as the pressure goes, under 3 kHz
+  (`valve`, `overdrive`); the blizzard's and sandstorm's wind stop under 1.6 kHz and the sand is fine grains, not hiss;
+  the page storm has fewer pages with their top taken off; the mirror's whisper is a low breath; the temple courts' and
+  falls' beds are heard from inside (rustle under 2 kHz, the falls' roar under 2.4 kHz). Rates came down where a mood
+  piled one-shots up: the Bell Crypt's tolling `toll` 0.02 to 0.006, the temple's monsoon `rains` 0.01 to 0.004, the
+  foundry's steam `valve` 0.01 to 0.003 (the Pipe Maze's own 0.004 to 0.002), the market's rain `rains` 0.006 to 0.004,
+  the paper storm's `pages` 0.01 to 0.005. Before: 38 of the 299 gate places over the limit, the same in the 30 Oct build
+  and the 3 Nov one; after: none. Worst were the foundry's four steam moods (12 to 14 dB over), the temple's four
+  monsoon moods (9 to 11), the market's four rain moods (7 to 10), then the mirror's doubled steps, overdrive,
+  blizzards, paper storms, sandstorms and the Upward Rain (3 to 8), and the temple's own beds right at it.
 
 ### 38.10 The cave themes: Fungal Hollow, Ember Mines, Hive, Overgrown Temple (Stage 2)
 
@@ -12230,8 +12485,10 @@ now, fought-on second storeys in a later plan.
   (`LANDS`, each measured at version 6 too on the same floors) to twice their partial surfaces, as the plan set, and
   more detail than before; and every world with no jump on its way (the test logs where a way needs one). Held to what
   they measure instead (`FLAT_MOST`, `DETAIL_LEAST`, `PARTIAL_TIMES`): the Swarm and the Forge Below 59% flat (many small
-  fought places, 58.6% and 58.5%), the Forge Below's and the Stacks' detail 34.5 (both 35.0, a hair under), Upward
-  Rain's partial 1.4 times (its mud counted as partial at version 6), the Gates' Heart's 1.95 (1.97). Not held: the
+  fought places, 58.6% and 58.5%), the Forge Below's and the Stacks' detail 33 (both 35.0 at version 8, counting
+  litter on half steps and, in the Forge, crystals stood upside down under the roof; version 9 measures 33.6 and 33.3,
+  38.16), Upward Rain's partial 1.4 times (its mud counted as partial at version 6), the Gates' Heart's 1.9 (1.97 at
+  version 8, 1.92 at 9: a half step under what grew there is made whole). Not held: the
   Bloom (61% flat, 69% plumb: its folds are its walls) and the worlds that keep their line.
 - **Measured** (`gateworlds_depth`, 2026-10-29 with every stage in). The 32 dry caves: flat 43 to 59% (mean 50), 11 to
   15 heights, partial 14 to 22% (18), plumb 20 to 47% (40), roof spread 6.1 to 9.8 (7.1), detail 35 to 51 (41); the Comb
@@ -12315,6 +12572,109 @@ death), the **tallest** the highest any part reaches. Version 8 builds every Lor
   its sweep (columns and lanterns), 83 as a keeper. The Glass Serpent as a keeper had 26, the Hive Regent as a keeper
   13, the Root Saint 9 (pillars), the Sky Leviathan 3 (an island post), and the Bell Warden, the Colossus and the
   Mother of Spores had some as keepers. At 8 every arena has none.
+
+### 38.16 Placement: nothing hangs in the air (content version 9; Euan 2026-11-03, playing a gate: "a lot of floating things in gates instead of placemement all being thought out")
+
+Props go where a set dresser would put them, on a surface, an edge, a corner or the roof, and a spot that can't hold
+a thing gets nothing. Nothing is put there to fill the gap.
+
+- **What holds what** (`Holds`, one rule per block state):
+  - A plant, a prop, crumbs, a candle, a carpet, a cache, a rune or the seal stands on a face that holds it. That is
+    the top of a full block, a top slab or an upside-down stair (`isFaceSturdy(UP, CENTER)`). A tall plant's top
+    stands on its bottom.
+  - A lantern, hanging roots, cave vines or a spore blossom hangs from such a face, from a chain, or from a string of
+    lights.
+  - Roots, kelp, a bell rope, a drip or a fall of light is held at one end.
+  - The entrance is a tile set in the floor, so it's part of the floor.
+  - A vestment, a torch, a banner, a ladder or a coral fan is held by the wall behind it.
+  - A string of lights or prayer flags is tied at both ends to something solid, and each block of it touches the next
+    face to face.
+  - Solid things joined face to face, with the chains and lamps hung among them, reach the ground, a wall, the roof,
+    water, or a held thing with a flat top (a vault's lid on its cache). A lump of under 2,048 blocks that doesn't is
+    floating.
+- **How each placer keeps to it (version 9):**
+  - Bells: a hung bell's chain runs up to the roof (`BellPieces.chainUp`) in the Void, the Halls and the Shaft. The
+    Void's stair has a column under each step. A lamp hung from a bell frame's canopy has its chain run up to it.
+  - Chandeliers, the Lords' crowns, mirrors, gears, spores and the jelly crown take their height from the roof over
+    their middle (`Pieces.apex`). Their arms join with spokes, and their rings are 0.75 wide so the blocks meet face
+    to face. A room chandelier hangs at its middle's height over its middle's floor, and an arm's tip goes only where
+    the arm reaches it. Roots hold nothing up, so the Fungal Hollow's caps hang on a mushroom stalk and spread on gills.
+    Nothing else hangs from the roof over a chandelier's pieces.
+  - Strings: lights and prayer flags run wall to wall (`Dress.strung`), placed after the ground is solved
+    (`Dress.later`) so they tie to the rock that's really there. A string that can't be tied isn't hung. A shrine
+    pole's flags run down to a peg on the ground, and the ground under them stays level. Market lanterns under a vault
+    each hang on their own chain, their lengths following the old sag.
+  - The Festival's great lantern stands on four timber legs. Under the open sky there is nothing to hang it from.
+  - Beams cross a vault only where both ends rest. They carry on over a room's set piece and are left out of the
+    Lords' arenas.
+  - Stairs: a flight off an edge gets a sloped soffit (the Abyss's dark steps, the Dream's stair going nowhere). The
+    Abyss's flight goes only where its top step meets the island, and its candles stand on pale posts at the ends of
+    every third step (a stair's top doesn't hold a candle). A rare world in another theme's dress runs that dress's
+    placements that wait for the ground too (`BorrowedDress.late`: the Gates' Heart's flights, borrowed strings).
+  - Upside-down furniture is carried up in its own stuff to meet a roof that isn't flat (`DreamDress.shim`). The
+    Nursery's mobile hangs on a chain.
+  - Features stand on a whole step: a half step under a cache or a rune is made whole (`Relief.level`). In a built
+    room a feature stands on the floor under it, up a terrace's dais or down in a pit (`RoomGeometry.featureLift`, read
+    by the painter and by `GateService.feature` for every use: the rune you press, the lantern you take, the shrine's
+    spot), and the net never leaves out a gate piece (a shrine, a seal, a cache, a rune, a lantern, an updraft:
+    `Holds.settles`). A dais's edge under a feature stays a full block, not a stair (`Ctx.standsOn`). In a room of sky
+    islands a feature over the gap moves to the nearest island column within 6, off the way through the doors
+    (`FloorBuilder.ashore`). An isle's waterfall pool is never dug under a feature (`Dress.featureAt`).
+  - Nothing grows or lies on a half step. Where something grew on the floor line the half step there is made whole.
+    What would have lain on a half step is kicked onto a whole step within two, the foot of the rise first, never onto
+    a pinned column (`Relief.kick`), and litter gathers on a whole step beside half steps, half again for each
+    (`Relief.gather`): it collects at the foot and on the lip of a rise. The Forge Below and the Stacks keep 91% of
+    what lay about at version 8.
+  - Mushrooms grow only where the room is clear. A hive pillar stands whole or not at all, and its canopy only round
+    a pillar that stands. Market awnings rest on posts and join their counters face to face. The conveyor's press
+    hangs from the gantry on its ram.
+  - Cave roofs: up a chimney the shell follows the roof's slope (`CaveEngine.Cave.roofD`), and the carve reaches over
+    the highest swell.
+- **The net** (`Sculpt.Buf.crumbs`, `GatePainter.Band`), run after a chunk's operations:
+  - A lump of rock or solid things under 2,048 blocks is left out unless something holds it: water, the band's ends,
+    a held thing with a flat top, or being marked as floating on purpose.
+  - A lump that runs over a chunk side is followed into the chunks next to it. Those chunks are carved by their own
+    operations, up to 8 of them, so every chunk the lump crosses reaches the same answer. Their carves are kept per
+    thread (the last 12), so neighbours carving one after another don't carve each other again (the Honey Lake's worst
+    chunk 8 ms, not 60).
+  - A lump that touches water, face to face or in the chunk beside, is held by it (a pool's rim stays).
+  - Then `Holds.settle` drops anything whose spot doesn't hold it, so a plant on a lump goes with the lump. If the
+    settle drops a chain, the net runs once more.
+  - A room's chunk does the same within its band.
+- **Floating on purpose** (`Sculpt.afloat`, `Ctx.afloat`). These stay, and the census counts them apart:
+  - the Sky's far isles and the Wind Stair's floating steps;
+  - the Endless Stair's and the Twist's landings;
+  - the Sleeper's furniture, the Wrong Room and the Nightmare's floating clutter;
+  - the Sky Leviathan's stones;
+  - the Rig's collapse-run tiles and the Gauntlet's course and walls over the drop;
+  - the Sky Archipelago's updraft pads.
+- **Test `gates_placement`.** It plans every world in every theme (412 floors: every floor of the 75 worlds, and
+  rooms plans of every theme, layout, twist and set piece). It builds each floor block by block and checks every
+  placed thing against the rules.
+  - It counts by placer: the code that set the block, found by re-planning with `Sculpt.TRACE`.
+  - Designed floats are counted on their own line.
+  - Knobs: `AWAKEN_PLACEMENT_VERSION` measures an older version, `AWAKEN_PLACEMENT_ONLY` takes one world, and
+    `AWAKEN_PLACEMENT_COLUMN` dumps columns.
+  - The world tests' light model (`WorldCheck`) lets the sky through layers short of a full block (snow, a drift), as
+    the game does. Before, the Aurora Steppe's way read as lit only from the side, past snow lying on slabs, which
+    version 9 drops.
+  - Before, at version 8: 239,318 of 350,358 placed things weren't held up, on 372 of the 412 floors. The biggest
+    groups:
+    - 120,450 blocks of cave rock in 9,203 lumps;
+    - 57,905 things lying on half steps;
+    - 35,407 blocks of bells and their frames hung on nothing;
+    - 4,609 of the Abyss's dark steps;
+    - 4,356 from the Lords' arena pieces;
+    - 3,048 from room chandeliers and beams;
+    - 2,807 from the Market's strings and the great lantern.
+  - After, at version 9: none of 331,172 (the litter kicked off half steps and the gate pieces the net no longer drops
+    are counted now). 7,601 blocks in 464 lumps float on purpose.
+- **Tour `gate-placement`** (`tools/autopilot/gate-placement.txt`): six worlds before and after (the Stacks, the
+  Cloisters, the Rooftops, the Dark Steps, the Open Chasm, the Upside-Down house), each pair from one spot:
+  `/awaken gate interior goto float` hovers where the floor's biggest thing not held up at version 8 is in view, worked
+  out from the version 8 floor at any version (`PlacementTests.floatView`; `float2` the next biggest, 24 blocks off).
+- **Versions:** version 9 is `GatePlan.CONTENT_VERSION`. Entered gates keep their version. A version 8 floor carves
+  as before (`gateworlds_depth_v6_golden` still holds version 6 block for block).
 
 ## 34. The Singing Deep (mining, caves and the pick; plan docs/mining/PLAN.md, page https://claude.ai/artifact/Jp3EjBR1Cb4XqBjSN6zU9x; Euan approved all of it 2026-10-28: "Go with the full plan")
 
@@ -17635,19 +17995,29 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
 - The blank (Euan 2026-11-03, "do whatever is more AAA", after the twist showed a squashed sword with its quillons' tips
   spinning): what lies on the anvil until the hilt is the weapon's own mesh reshaped corner by corner every frame
   (`AnvilBlank`), read once a mesh (`AnvilShape`), so every design works with nothing made by hand.
-  - **Its guard waits for the hilt.** Cutting along the weapon leaves bits of a guard that rises (quillons' tips, wings,
-    tusks), so the guard is found by shape: a part wider than 1.25 the blade's middle width and a texel, starting in the
-    lowest 0.15 of the blade and ending below 0.45; its pieces up to 0.75 over its top that stand out more than 0.6 past
-    the blade just above it are left off while only the blade shows (the forge, the draw out, the quench, the twist, the
-    grind, the starlight; a Hunter blade standing alone in the slot) and come on with the hilt's first tap. A spear's wings
-    (halfway up) and an axe's head (its widest part) aren't a guard; gauntlets have none.
+  - **The blade alone is cut clean** (after the first tour: a maul's haft ended in a V and a greatblade showed a plate at
+    the tongs). While only the blade shows (the forge, the draw out, the quench, the twist, the grind, the starlight; a
+    Hunter blade standing alone in the slot) the mesh is cut across at the blank's foot, not a whole triangle at a time,
+    and the cut end is capped (where its faces cross the foot, fanned from their middle, each fan piece one texel's
+    colour). The foot is the blade's root, or the top of its guard where it has one, so the guard and the grip's top stay
+    with the hilt and come on with its first tap.
+  - **The guard is found by shape**, read through the cut on the whole mesh: a part wider than 1.25 the blade's middle
+    width and a texel, starting in the lowest 0.15 of the blade (or up to 0.2 under its root) and ending below 0.45, its
+    top found to a hair. Pieces reaching less than 0.75 over the foot that stand out more than 0.6 past the blade just
+    above that (a guard's tips, a collar) are the hilt's too. A spear's wings (halfway up) and an axe's head (its widest
+    part) aren't a guard; gauntlets have none.
   - **It starts as a square bar.** Its section is read at 48 heights from its foot to its point; drawn out d (0 the bar,
     1 its own shape) a corner at height y goes from the bar's place to its own over d: across and through, its offset from
     the section's middle pushed out to the bar's side (half side the mean of sqrt(half width x half thickness) along it,
     1 to 3 texels) from 0.3 of the way out, a corner further in kept just inside one further out (0.9 to 1.0 of the side,
     so no two faces meet); along, 0.62 of its length about the blade's middle. So a stepped blade, a curved one, an axe's
-    head all start as one clean square bar with flat ends, and each strike draws it out into the blade. Marks, the tongs'
-    lips and the hands follow it (the bar scaled from the blade's middle); the tongs close half a texel under the blank's foot,
+    head all start as one clean square bar with flat ends, and each strike draws it out into the blade. Squared onto the
+    bar, a head's or a fork's insides (a maul's horns, an axe's beard) would leave gaps between its faces, so a solid core
+    fills the bar just inside them (inside the faces squared onto its sides, 0.93 of the side and out: 0.88 of it straight;
+    twisted, a face's two triangles bow in by up to half the sine of its slab's turn, b, so there (0.88 - b) / (1 + b) on
+    the twist's own slabs; coloured from the blade's middle, its heat front running up it as the blade's does) and shrinks
+    away as it's drawn out, from 0.08 to gone at 0.3. Marks, the tongs'
+    lips and the hands follow it (the bar scaled from the blade's middle); the tongs close half a texel into the blank's foot,
     the work's back rests on the face (the bar's half side, the blade's thickest when drawn).
   - **The twist is real** (§46.9's A): the bar turns about its own length by a twist that's none where the tongs hold it,
     all of it at the far end, smooth between (0.12 to 0.88 of the way); the far end turns a third as fast as your hand
@@ -17672,8 +18042,9 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
   hold half a texel under the root (two thirds up the blade while the hilt goes on), the hilt's taps land at the middles
   of the guard, the grip and the pommel, your hands on the hilt at the grip's upper and lower quarters, and a weapon
   stands in the slot with its guard resting on the stone (the blade's root half a texel in). Where the blade, the guard, the grip and the pommel begin along it is
-  `AnvilSong.HILT_CUT` (the Beastbound Longsword's: 0.40, 0.24, 0.17, 0) until the weapon generator writes each weapon's
-  own; a mesh whose heights don't climb along it keeps today's hand-set layout.
+  the sword's own `ArmsHilts.CUTS` (§25 "Hilt cuts", from its design's parts; a Hunter blade forged alone takes its
+  tier's Longsword's); a weapon without (an axe, a maul, a spear, gauntlets) takes `AnvilSong.HILT_CUT` (0.40, 0.24,
+  0.17, 0, first set by hand for the Longsword). A mesh whose heights don't climb along it keeps today's hand-set layout.
 - The smith's own client plays their sounds the moment they act; the server plays them to everyone else. Observers see
   the work, the tongs on it and the hammer at rest on the heel; the smith's swing in third person is stage 2.
 - With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.

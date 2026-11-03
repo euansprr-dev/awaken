@@ -214,6 +214,17 @@ public final class RoomGeometry {
         }
     }
 
+    /**
+     * What to add to a feature's own height (a shrine, a cache, a rune, a lost lantern): from version 9 in a built room it
+     * stands on the floor under it, up a terrace's dais or down in a pit, wherever its own height put it (the Shrine room's
+     * shrine and seal are set a block up for a dais); before, at its own height over the floor line, so in a pit it hung in
+     * the air (SPEC §38.16). One set under the floor (an updraft) keeps its height, and a world floor's ground is
+     * {@link FloorLayout#ground}'s.
+     */
+    public static int featureLift(int contentVersion, FloorLayout f, Room r, Room.Feature ft) {
+        return contentVersion >= 9 && !f.isWorld() && ft.y() >= 0 ? floorOffset(r, ft.x(), ft.z()) - ft.y() : 0;
+    }
+
     /** Ceiling height above the room's dy at this column. */
     public static int ceiling(Room r, int x, int z) {
         int h = r.height;

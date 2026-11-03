@@ -9,6 +9,7 @@ import dev.awaken.gates.world.FloorLayout;
 import dev.awaken.gates.world.GateCells;
 import dev.awaken.gates.world.GateLayout;
 import dev.awaken.gates.world.Room;
+import dev.awaken.gates.world.RoomGeometry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -303,6 +304,11 @@ public final class GateService {
         return world(g, f, x, r.dy + f.ground(x, z), z);
     }
 
+    /** Where a room's feature stands: over its column's floor, or on a world floor its ground (SPEC §38.14, §38.16). */
+    public static BlockPos feature(GateRecord g, FloorLayout f, Room r, Room.Feature ft) {
+        return roomFloor(g, f, r, ft.x(), ft.z()).above(ft.y() + RoomGeometry.featureLift(g.plan.contentVersion(), f, r, ft));
+    }
+
     /** Where you arrive on a floor: standing on the entrance sigil of its start room. */
     public static BlockPos entrance(GateRecord g, int area, int floor) {
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
@@ -310,7 +316,7 @@ public final class GateService {
         Room s = f.room(f.start);
         // a world floor puts its sigil where its view is best; today's rooms have it at the room's centre
         Room.Feature e = s.feature(Room.FeatureKind.ENTRANCE);
-        return e == null ? roomFloor(g, f, s, s.centerX(), s.centerZ()) : roomFloor(g, f, s, e.x(), e.z()).above(e.y());
+        return e == null ? roomFloor(g, f, s, s.centerX(), s.centerZ()) : feature(g, f, s, e);
     }
 
     /** Facing (degrees) toward the start room's first doorway. */

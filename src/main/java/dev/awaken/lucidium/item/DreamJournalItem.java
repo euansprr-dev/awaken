@@ -15,8 +15,8 @@ import net.minecraft.world.level.Level;
 import java.util.function.Consumer;
 
 /**
- * The Dream Journal. Use it (or right-click a bed with it) to set tonight's intention; use it within two minutes of
- * waking to write the dream down.
+ * The Dream Journal. Use it (or right-click a bed with it) to set tonight's intention and read back the dreams it
+ * wrote down by itself.
  */
 public class DreamJournalItem extends Item {
     public DreamJournalItem(Properties properties) {

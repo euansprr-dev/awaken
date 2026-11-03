@@ -18,12 +18,8 @@ import dev.awaken.lucidium.dream.Sleep;
 import dev.awaken.lucidium.journal.SnapshotFiles;
 import dev.awaken.lucidium.plan.DreamPalette;
 import dev.awaken.lucidium.plan.DreamPlan;
-import dev.awaken.lucidium.plan.DreamPlanner;
 import dev.awaken.lucidium.plan.Fragment;
 import dev.awaken.lucidium.plan.Nightmares;
-import dev.awaken.lucidium.world.BlueprintCompiler;
-import dev.awaken.lucidium.world.Cells;
-import dev.awaken.lucidium.world.DreamBlueprint;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -44,7 +40,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /** GameTests for the journal, plans, palettes, lucidity, nightmares, the not-ready fallback and waking safely. */
 final class LucidiumTests {
@@ -53,14 +48,12 @@ final class LucidiumTests {
     static void register() {
         AwakenTests.register("lucidium_snapshot_cap_rotation", 40, LucidiumTests::capAndRotation);
         AwakenTests.register("lucidium_snapshot_capture_file", 40, LucidiumTests::captureFile);
-        AwakenTests.register("lucidium_plan_determinism", 40, LucidiumTests::planDeterminism);
         AwakenTests.register("lucidium_palette_remap", 20, LucidiumTests::paletteRemap);
         AwakenTests.register("lucidium_lucidity_maths", 20, LucidiumTests::lucidityMaths);
         AwakenTests.register("lucidium_nightmare_families", 20, LucidiumTests::nightmareFamilies);
         AwakenTests.register("lucidium_plan_not_ready_fallback", 40, LucidiumTests::notReady);
         AwakenTests.register("lucidium_safe_wake", 160, LucidiumTests::safeWake);
         AwakenTests.register("lucidium_dimension_data", 20, LucidiumTests::dimensionData);
-        if (System.getenv("AWAKEN_LUCIDIUM_MAP") != null) AwakenTests.register("lucidium_debug_map", 400, LucidiumTests::debugMap);
     }
 
     private static final Snapshot.Kind[] ROTA = {Snapshot.Kind.BIOME, Snapshot.Kind.STRUCTURE, Snapshot.Kind.BOSS,
@@ -127,52 +120,6 @@ final class LucidiumTests {
 
     // ---- plans --------------------------------------------------------------------------------------------------------
 
-    private static List<Snapshot> journal() {
-        Dreamer d = new Dreamer();
-        List<Snapshot> out = new ArrayList<>();
-        Snapshot.Kind[] kinds = {Snapshot.Kind.HOME, Snapshot.Kind.BIOME, Snapshot.Kind.BOSS, Snapshot.Kind.VISTA,
-                Snapshot.Kind.NEAR_DEATH, Snapshot.Kind.KILLS, Snapshot.Kind.STRUCTURE, Snapshot.Kind.GATE, Snapshot.Kind.BIOME};
-        for (int i = 0; i < kinds.length; i++) out.add(snap(d, kinds[i], 1 + i / 4, i));
-        return out;
-    }
-
-    private static DreamPlanner.Input input(long day, Map<Nightmares.Family, Integer> fears, String intention) {
-        return new DreamPlanner.Input(1234L, new UUID(1, 2), day, 0, journal(), fears, intention, Optional.empty(), Optional.of("awaken:prism"));
-    }
-
-    private static void planDeterminism(GameTestHelper h) {
-        Map<Nightmares.Family, Integer> fears = Map.of(Nightmares.Family.FALLING, 2);
-        DreamPlan a = DreamPlanner.plan(input(3, fears, "")).orElseThrow();
-        DreamPlan b = DreamPlanner.plan(input(3, fears, "")).orElseThrow();
-        h.assertTrue(a.equals(b), "same inputs, same plan");
-        DreamPlan c = DreamPlanner.plan(input(4, fears, "")).orElseThrow();
-        h.assertTrue(a.seed() != c.seed(), "another night, another seed");
-        long memories = a.nodes().stream().filter(n -> n.kind().equals(DreamPlan.MEMORY) || n.kind().equals(DreamPlan.IMAGINED)).count();
-        h.assertTrue(memories >= DreamPlanner.MIN_NODES && memories <= DreamPlanner.MAX_NODES, "4-8 places, got " + memories);
-        h.assertTrue(a.nodes().getFirst().kind().equals(DreamPlan.MEMORY) && a.nodes().getFirst().label().contains("HOME"), "dreams start at home");
-        h.assertTrue(a.edges().size() >= a.nodes().size() - 1, "every place is linked");
-        h.assertTrue(a.signs().size() == 2 && !a.signs().get(0).equals(a.signs().get(1)), "two different dream signs");
-        h.assertTrue(a.durationTicks() >= 3600 && a.durationTicks() <= 9600, "3-8 minutes");
-        DreamPlan fear = DreamPlanner.plan(input(3, fears, DreamPlanner.FACE_MY_FEAR)).orElseThrow();
-        h.assertTrue(fear.nightmare().equals(Optional.of("falling")), "face my fear brings the falling nightmare");
-        DreamPlan door = DreamPlanner.plan(input(3, Map.of(), DreamPlanner.FIND_THE_DOOR)).orElseThrow();
-        h.assertTrue(door.nodes().stream().anyMatch(n -> n.kind().equals(DreamPlan.DOOR)), "find the door adds the door");
-        // the plan survives saving
-        var json = DreamPlan.CODEC.encodeStart(JsonOps.INSTANCE, a).getOrThrow();
-        h.assertTrue(DreamPlan.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow().equals(a), "plan codec round trip");
-        // and builds the same dream twice (missing snapshot files dream as imagined places)
-        DreamBlueprint x = BlueprintCompiler.compile(a, 4000, id -> Optional.empty());
-        DreamBlueprint y = BlueprintCompiler.compile(a, 4000, id -> Optional.empty());
-        h.assertTrue(x.spawn.equals(y.spawn) && x.chunkCount() == y.chunkCount(), "blueprint deterministic");
-        BlockPos probe = x.nodes.get(1).feet().below();
-        h.assertTrue(java.util.Objects.equals(x.blockAt(probe.getX(), probe.getY(), probe.getZ()), y.blockAt(probe.getX(), probe.getY(), probe.getZ())),
-                "same block at the same place");
-        h.assertTrue(Cells.cellAt((int) x.spawn.x, (int) x.spawn.z) == 4000, "the dream stays inside its cell");
-        h.assertTrue(DreamPlanner.plan(new DreamPlanner.Input(1, new UUID(3, 4), 1, 0, List.of(), Map.of(), "", Optional.empty(), Optional.empty())).isEmpty(),
-                "an empty journal has nothing to dream");
-        h.succeed();
-    }
-
     private static void paletteRemap(GameTestHelper h) {
         DreamPalette p = DreamPalette.of("pearl", 3);
         h.assertTrue(p.apply(Blocks.STONE.defaultBlockState()).is(Blocks.SMOOTH_QUARTZ), "stone becomes quartz");
@@ -204,10 +151,6 @@ final class LucidiumTests {
         h.assertTrue(Math.abs(Lucidity.gain(40f, Lucidity.REALITY_CHECK, 10) - 53.2f) < 1e-3, "SPI 10 adds 10% to gains");
         h.assertTrue(Lucidity.gain(95f, Lucidity.DREAM_SIGN, 0) == 100f, "never above 100");
         h.assertTrue(Lucidity.realityCheckAmount(5) == Lucidity.REALITY_CHECK / 2, "spammed checks count half");
-        h.assertFalse(Lucidity.canFly(49.9f, false), "no flight below 50");
-        h.assertTrue(Lucidity.canFly(50f, false) && Lucidity.canFly(36f, true), "fly at 50, or 35 with the intention");
-        h.assertTrue(Math.abs(Lucidity.dreamChance(5, false, false, false, false) - 0.45) < 1e-9, "40% + SPI%");
-        h.assertTrue(Lucidity.dreamChance(30, true, true, true, true) == 0.95, "capped at 95%");
         h.succeed();
     }
 
@@ -251,44 +194,6 @@ final class LucidiumTests {
         h.succeed();
     }
 
-    /** Debug only (env AWAKEN_LUCIDIUM_MAP=<file.png>): a top-down picture of a compiled dream. */
-    private static void debugMap(GameTestHelper h) {
-        DreamPlan plan = DreamPlanner.plan(input(3, Map.of(Nightmares.Family.UNDEAD, 3), DreamPlanner.FIND_THE_DOOR)).orElseThrow();
-        DreamBlueprint bp = BlueprintCompiler.compile(plan, 7, id -> Optional.empty());
-        int size = 400, half = size / 2;
-        java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_RGB);
-        for (int px = 0; px < size; px++) {
-            for (int pz = 0; pz < size; pz++) {
-                int x = bp.center.getX() - half + px, z = bp.center.getZ() - half + pz;
-                int rgb = 0x1A1424;
-                for (int y = 140; y >= 60; y--) {
-                    BlockState s = bp.blockAt(x, y, z);
-                    if (s == null || s.isAir()) continue;
-                    int col = s.getMapColor(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO).col;
-                    float shade = 0.55f + (y - 60) / 160f;
-                    int r = Math.min(255, (int) (((col >> 16) & 255) * shade)), g = Math.min(255, (int) (((col >> 8) & 255) * shade)),
-                            b = Math.min(255, (int) ((col & 255) * shade));
-                    rgb = (r << 16) | (g << 8) | b;
-                    break;
-                }
-                img.setRGB(px, pz, rgb);
-            }
-        }
-        int sx = (int) bp.spawn.x - bp.center.getX() + half, sz = (int) bp.spawn.z - bp.center.getZ() + half;
-        for (int d = -2; d <= 2; d++) {
-            img.setRGB(Math.max(0, Math.min(size - 1, sx + d)), Math.max(0, Math.min(size - 1, sz)), 0xFF2020);
-            img.setRGB(Math.max(0, Math.min(size - 1, sx)), Math.max(0, Math.min(size - 1, sz + d)), 0xFF2020);
-        }
-        try {
-            javax.imageio.ImageIO.write(img, "png", new java.io.File(System.getenv("AWAKEN_LUCIDIUM_MAP")));
-        } catch (java.io.IOException e) {
-            h.fail(e.getMessage());
-            return;
-        }
-        h.succeed();
-    }
-
-    /** The GameTest server builds no mod dimensions, so check the Lucidium's data parses against the live registries. */
     private static void dimensionData(GameTestHelper h) {
         var server = h.getLevel().getServer();
         var access = server.registryAccess();
@@ -314,7 +219,7 @@ final class LucidiumTests {
     private static void notReady(GameTestHelper h) {
         ServerPlayer sp = h.makeMockServerPlayerInLevel();
         Dreams.dreamer(sp).snapshots.clear();
-        h.assertTrue(DreamPlanner.plan(Planner.input(sp)).isEmpty(), "nothing in the journal: no plan");
+        h.assertTrue(dev.awaken.lucidium.dream.DreamOffers.plan(sp).isEmpty(), "nothing waits: no plan");
         Planner.invalidate(sp);
         Sleep.Session s = new Sleep.Session();
         s.roll = true;
@@ -334,9 +239,8 @@ final class LucidiumTests {
         sp.teleportTo(level, start.getX() + 0.5, start.getY(), start.getZ() + 0.5, java.util.Set.of(), 0, 0, true);
         Vec3 before = sp.position();
         boolean mayflyBefore = sp.getAbilities().mayfly;
-        DreamPlan plan = DreamPlanner.plan(new DreamPlanner.Input(99, sp.getUUID(), 1, 0,
-                List.of(new Snapshot("missing_file", Snapshot.Kind.MANUAL, 1, "minecraft:overworld", BlockPos.ZERO, "nowhere", "", 0)),
-                Map.of(), "", Optional.empty(), Optional.empty())).orElseThrow();
+        DreamPlan plan = dev.awaken.lucidium.dream.DreamOffers.plan(99, sp.getUUID(), 1, 0, dev.awaken.lucidium.trial.Trial.WALL.id,
+                "", List.of(), "");
         // GameTests have no Lucidium dimension: dream "in" the test level instead
         Planner.Prepared p = Planner.buildNow(level.getServer(), sp.getUUID(), plan);
         ActiveDream ad = Dreams.enter(sp, p, new Dreams.Entry(false, null, level, false));

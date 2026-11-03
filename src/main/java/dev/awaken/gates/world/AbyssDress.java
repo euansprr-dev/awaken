@@ -2,6 +2,7 @@ package dev.awaken.gates.world;
 
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -194,6 +195,7 @@ final class AbyssDress extends Dress {
     void stairDown(Room r) {
         PassageEngine.Shape sh = c.shapes.get(r.id);
         if (sh == null) return;
+        List<Flight> tries = new ArrayList<>();
         for (int t = 0; t < 8; t++) {
             int side = (int) (unit(r.id, 97 + t) * 4);
             double reach = (side % 2 == 1 ? sh.a() : sh.b());
@@ -212,21 +214,53 @@ final class AbyssDress extends Dress {
                 default -> "east";
             };
             BlockState step = WorldMats.with(stairs, "facing", face);
+            // version 9: a sloped soffit under the flight, so it's one piece hung from the lip, not steps touching at an edge
+            BlockState under = WorldMats.with(WorldMats.with(stairs, "facing", switch (side) {
+                case 0 -> "north";
+                case 1 -> "east";
+                case 2 -> "south";
+                default -> "west";
+            }), "half", "top");
             int x0 = (int) Math.floor(lx) + GatePainter.DX[side], z0 = (int) Math.floor(lz) + GatePainter.DZ[side];
-            for (int i = 0; i < 10; i++) {
-                int x = x0 + GatePainter.DX[side] * i, z = z0 + GatePainter.DZ[side] * i;
-                for (int w = -1; w <= 1; w++) {
-                    int sx = x + (side % 2 == 0 ? w : 0), sz = z + (side % 2 == 0 ? 0 : w);
-                    int y = W - 1 - i;
-                    c.s.op(sx, y, sz, sx, y, sz, (b, xx, yy, zz) -> {
-                        if (b.get(xx, yy, zz) == Sculpt.UNSET) b.set(xx, yy, zz, step);
-                    });
-                    if (i % 3 == 1 && w != 0) c.s.op(sx, y + 1, sz, sx, y + 1, sz, (b, xx, yy, zz) -> {
-                        if (b.get(xx, yy, zz) == Sculpt.UNSET) b.set(xx, yy, zz, candles);
-                    });
-                }
+            if (!v9) {
+                flight(x0, z0, side, step, under);
+                return;
             }
-            return;
+            tries.add(new Flight(x0, z0, side, step, under));
+        }
+        // version 9: the first flight whose top step meets the island's edge, or it would hang in the dark (38.16)
+        if (!tries.isEmpty()) later(() -> {
+            for (Flight t : tries) {
+                if (!hardAt(t.x0() - GatePainter.DX[t.side()], W - 1, t.z0() - GatePainter.DZ[t.side()])) continue;
+                flight(t.x0(), t.z0(), t.side(), t.step(), t.under());
+                return;
+            }
+        });
+    }
+
+    private record Flight(int x0, int z0, int side, BlockState step, BlockState under) {}
+
+    /**
+     * Ten steps down off an island's edge into the dark, candles on every third: from version 9 on a pale post at the
+     * step's ends, since a stair's top doesn't hold a candle (38.16).
+     */
+    private void flight(int x0, int z0, int side, BlockState step, BlockState under) {
+        for (int i = 0; i < 10; i++) {
+            int x = x0 + GatePainter.DX[side] * i, z = z0 + GatePainter.DZ[side] * i;
+            for (int w = -1; w <= 1; w++) {
+                int sx = x + (side % 2 == 0 ? w : 0), sz = z + (side % 2 == 0 ? 0 : w);
+                int y = W - 1 - i;
+                BlockState tread = v9 && i % 3 == 1 && w != 0 ? pale : step;
+                c.s.op(sx, y, sz, sx, y, sz, (b, xx, yy, zz) -> {
+                    if (b.get(xx, yy, zz) == Sculpt.UNSET) b.set(xx, yy, zz, tread);
+                });
+                if (v9) c.s.op(sx, y - 1, sz, sx, y - 1, sz, (b, xx, yy, zz) -> {
+                    if (b.get(xx, yy, zz) == Sculpt.UNSET) b.set(xx, yy, zz, under);
+                });
+                if (i % 3 == 1 && w != 0) c.s.op(sx, y + 1, sz, sx, y + 1, sz, (b, xx, yy, zz) -> {
+                    if (b.get(xx, yy, zz) == Sculpt.UNSET) b.set(xx, yy, zz, candles);
+                });
+            }
         }
     }
 

@@ -289,6 +289,12 @@ public final class Visions {
                     "Dream signs", sign.title, sign.description + " If you see it, you are dreaming.", true)));
         }
         AwakenNet.send(sp, new LucidiumNet.CodexSync(lines));
+        // the Atlas's pearl marks: each overworld place a dream showed you (SPEC §9.5)
+        List<LucidiumNet.DreamPlace> places = new ArrayList<>();
+        for (Vision v : d.visions)
+            if (v.shown() && v.dim().equals(Level.OVERWORLD.identifier().toString()) && places.size() < 64)
+                places.add(new LucidiumNet.DreamPlace(v.pos(), v.label(), v.found()));
+        AwakenNet.send(sp, new LucidiumNet.DreamPlaces(places));
     }
 
     static void reset() {

@@ -1,6 +1,5 @@
 package dev.awaken.lucidium.dream;
 
-import dev.awaken.lucidium.world.DreamBlueprint;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.content.Content;
 import dev.awaken.signal.Signal;
@@ -25,7 +24,10 @@ import net.minecraft.world.entity.Entity;
 final class Mentors {
     private Mentors() {}
 
-    static void start(ActiveDream ad, DreamBlueprint.Node node, ServerPlayer player) {
+    static final String MENTOR_DUELS_WON = "awaken:mentor_duels_won";
+
+    /** The duel begins by {@code feet}. {@code trial}: the Duel dream (SPEC §9.5), whose lines are the dream's own, not cards. */
+    static void start(ActiveDream ad, BlockPos feet, ServerPlayer player, boolean trial) {
         ad.mentorState = 1;
         String path = Progression.profile(player).path().orElse("");
         var def = Content.PATHS.get(path);
@@ -35,8 +37,8 @@ final class Mentors {
             ad.mentorState = 2;
             return;
         }
-        BlockPos at = ad.standingSpot(node.feet().offset(0, 1, 4));
-        if (at == null) at = node.feet();
+        BlockPos at = ad.standingSpot(feet.offset(0, 1, 4));
+        if (at == null) at = feet;
         mentor.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180, 0);
         mentor.finalizeSpawn(ad.level, ad.level.getCurrentDifficultyAt(at), EntitySpawnReason.TRIGGERED, null);
         int rank = Progression.rank(player).ordinal();
@@ -52,6 +54,10 @@ final class Mentors {
         mentor.setTarget(player);
         ad.level.addFreshEntity(mentor);
         ad.mentor = mentor.getUUID();
+        if (trial) {
+            RoomRules.tell(ad, Dreams.now(player.level().getServer()), "\"Show me what you've learned.\"");
+            return;
+        }
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Your mentor is waiting"))
                 .body(Component.literal("A friendly duel. Neither of you can be hurt for real here."))
                 .footer(Component.literal(name)).ttl(20 * 6).build());
@@ -60,6 +66,7 @@ final class Mentors {
     /** Ends the duel. {@code playerWon}: the mentor yields and you learn from it. */
     static void end(ActiveDream ad, ServerPlayer player, boolean playerWon) {
         if (ad.mentorState != 1) return;
+        boolean trial = Trials.is(ad);
         ad.mentorState = 2;
         Entity mentor = ad.mentor == null ? null : ad.level.getEntity(ad.mentor);
         if (mentor != null) {
@@ -67,13 +74,21 @@ final class Mentors {
             mentor.discard();
         }
         if (playerWon) {
+            if (trial) { // the lesson comes with the morning, for everyone in the ring
+                Trials.duelEnded(ad, player, true);
+                return;
+            }
             Progression.grantLevels(player, 0.20, Progression.XpSource.DREAM);
-            Progression.count(player, "awaken:mentor_duels_won");
+            Progression.count(player, MENTOR_DUELS_WON);
             Dreams.dropResidue(ad.level, player.position(), 3);
             Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Your mentor yields"))
                     .body(Component.literal("\"Good. Again, another night.\"")).ttl(20 * 6).build());
         } else {
             player.setHealth(Math.max(player.getHealth(), player.getMaxHealth() * 0.6f));
+            if (trial) {
+                Trials.duelEnded(ad, player, false);
+                return;
+            }
             Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Your mentor lowers their weapon"))
                     .body(Component.literal("\"Not yet. Rest, and come back.\"")).ttl(20 * 6).build());
         }

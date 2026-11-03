@@ -421,8 +421,9 @@ public final class AnvilSong {
     }
 
     /**
-     * Where the Longsword's mesh is cut while it's made (along it, 0 the pommel, 1 the point): the blade alone until the
-     * hilt, then each tap adds its part (the guard and tusks, the grip, the claw and stone).
+     * Where a weapon's mesh is cut while it's made (along it, 0 the pommel, 1 the point): the blade alone until the hilt,
+     * then each tap adds its part (the guard, the grip, the pommel). The swords' own are ArmsHilts.CUTS; this is for the
+     * rest, first set by hand for the Longsword.
      */
     public static final float[] HILT_CUT = {0.40F, 0.24F, 0.17F, 0F};
 }

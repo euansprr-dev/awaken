@@ -181,7 +181,10 @@ public final class RigRooms {
                 c.solidColumn(bx, bz, c.yLo, floorY + RigCollapse.PIT_DY - 1);
                 c.set(bx, floorY + RigCollapse.PIT_DY, bz, run.pit());
                 BlockState tile = run.tileAt(x, z);
+                // the run's tiles stand over the drop with nothing under them: that's the trial (38.16)
+                c.afloat(true);
                 if (tile != null) c.set(bx, floorY - 1, bz, tile);
+                c.afloat(false);
                 c.set(bx, ceil, bz, c.ceilingBlock(x, z, ceil));
             }
             case GRAVITY_WELLS -> {
@@ -205,12 +208,15 @@ public final class RigRooms {
                 // the drop glows up from under the course (slag in the Foundry, cold cloud in the Monastery), lighting it from below
                 if (co.open(x, z) && Math.floorMod(x + 3 * z, 5) == 0)
                     c.set(bx, floorY + RigGauntlet.PIT_DY + 1, bz, GatePainter.state("minecraft:light[level=" + (c.theme == Theme.FROST_MONASTERY ? 11 : 9) + "]"));
+                // the course and its running walls rise out of the drop's slag or cloud: they stand in it on purpose (38.16)
+                c.afloat(true);
                 if (co.wall(x, z)) {
                     // the running wall: up out of the drop to WALL_TOP over the floor
                     for (int y = floorY + RigGauntlet.PIT_DY + 1; y < floorY + RigGauntlet.WALL_TOP; y++) c.set(bx, y, bz, co.wall());
                 }
                 BlockState tile = co.tileAt(x, z);
                 if (tile != null) c.set(bx, floorY - 1, bz, tile);
+                c.afloat(false);
                 // over a press, the press itself waits in the ceiling
                 c.set(bx, ceil, bz, co.press(x, z) ? co.ram() : c.ceilingBlock(x, z, ceil));
                 c.solidColumn(bx, bz, ceil + 1, c.yHi);

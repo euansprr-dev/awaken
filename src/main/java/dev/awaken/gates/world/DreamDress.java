@@ -174,6 +174,7 @@ final class DreamDress extends Dress {
         c.s.op(x, y0, z, x, y1, z, (b, xx, y, zz) -> {
             if (b.open(xx, y, zz)) b.set(xx, y, zz, wood);
         });
+        if (upside) shim(x, z, x, z, top, wood);
     }
 
     /** A flat slab of {@code st} at a rise, over a box. */
@@ -181,6 +182,21 @@ final class DreamDress extends Dress {
         int y = at(rise, top);
         c.s.op(x0, y, z0, x1, y, z1, (b, xx, yy, zz) -> {
             if (b.open(xx, yy, zz)) b.set(xx, yy, zz, st);
+        });
+        if (upside && rise == 0) shim(x0, z0, x1, z1, top, st);
+    }
+
+    /** How far a piece's top reaches up to meet a roof higher than the lowest over it (version 9, upside down). */
+    static final int SHIM = 8;
+
+    /**
+     * Version 9, upside down: the roof isn't flat, so a piece hung from its lowest point is carried up in its own stuff
+     * to meet the roof over every column, and never hangs a hand under it (38.16).
+     */
+    void shim(int x0, int z0, int x1, int z1, int top, BlockState st) {
+        if (!v9) return;
+        c.s.op(x0, top + 1, z0, x1, top + SHIM, z1, (b, x, y, z) -> {
+            if (b.open(x, y, z) && b.state(x, y - 1, z) == st) b.set(x, y, z, st);
         });
     }
 
@@ -209,6 +225,7 @@ final class DreamDress extends Dress {
         for (int t = 0; t < (alongX ? d : w); t++) {
             int hx = alongX ? x - 1 : x + t, hz = alongX ? z + t : z - 1;
             for (int rise = 0; rise <= 6; rise++) c.s.putOpen(hx, at(rise, top), hz, wood);
+            if (upside) shim(hx, hz, hx, hz, top, wood);
         }
     }
 
@@ -227,7 +244,9 @@ final class DreamDress extends Dress {
         if (at == null) return;
         int x = (int) Math.floor(at[0]), z = (int) Math.floor(at[1]);
         int top = top(r.id, x, z);
-        for (int dx = -3; dx <= 3; dx += 3) for (int dz = -3; dz <= 3; dz += 3) top = Math.min(top, top(r.id, x + dx, z + dz));
+        // version 9: the roof over every column it covers, so upside down it hangs from the roof and not under it (38.16)
+        int step = v9 ? 1 : 3;
+        for (int dx = -3; dx <= 3; dx += step) for (int dz = -3; dz <= 3; dz += step) top = Math.min(top, top(r.id, x + dx, z + dz));
         int which = (int) (unit(r.id, salt + 1) * 4);
         switch (which) {
             case 0 -> table(x - 2, z - 2, top);
@@ -329,11 +348,14 @@ final class DreamDress extends Dress {
             default -> "west";
         };
         BlockState step = WorldMats.with(stairs, "facing", face);
+        // version 9: a sloped soffit under it, so the flight is one piece standing on the cushion (38.16)
+        BlockState under = WorldMats.with(GatePainter.facing(stairs, (side + 2) % 4), "half", "top");
         for (int i = 0; i < 8; i++) {
             int x = x0 + GatePainter.DX[side] * i, z = z0 + GatePainter.DZ[side] * i;
             for (int w = -1; w <= 1; w++) {
                 int sx = x + (side % 2 == 0 ? w : 0), sz = z + (side % 2 == 0 ? 0 : w);
                 c.s.put(sx, W + i, sz, step);
+                if (v9 && i > 0) c.s.put(sx, W + i - 1, sz, under);
             }
         }
         block(x0 + 0.5, z0 + 0.5, 2);
@@ -415,7 +437,11 @@ final class DreamDress extends Dress {
             }
         }
         int top = top(id, x + 1, z + 2);
-        c.s.op(x + 1, W + 4, z + 2, x + 1, top, z + 2, (b, xx, y, zz) -> {
+        if (v9) {
+            // version 9: the mobile's toy hangs on a chain from the roof (38.16)
+            c.s.putOpen(x + 1, W + 4, z + 2, toy);
+            BellPieces.chainUp(c.s, x + 1, W + 5, z + 2, mat("chain", "minecraft:iron_chain"));
+        } else c.s.op(x + 1, W + 4, z + 2, x + 1, top, z + 2, (b, xx, y, zz) -> {
             if (b.open(xx, y, zz)) b.set(xx, y, zz, y == W + 4 ? toy : motes);
         });
         c.s.putOpen(x - 3, W, z, wood);

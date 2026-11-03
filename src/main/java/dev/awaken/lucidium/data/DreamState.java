@@ -46,6 +46,32 @@ public final class DreamState implements ValueIOSerializable {
     public boolean doorFound;
     public long lastDoor = -100000;
 
+    // a trial (SPEC §9.3); not saved, as a login mid-dream always wakes you
+    public String trial = "";
+    /** 0 arrived (the dream waits for H), 1 in control, 2 won (the prize playing). */
+    public int phase;
+    public long lucidAt;
+    public long clockEnd;
+    public int clockTotal;
+    /** Seconds the lucidity you brought adds to the clock. */
+    public int bonus;
+    /** The last ring passed (0: the start). */
+    public int ring;
+    public int catches;
+    public long wonAt;
+    /** Your time from taking control to the goal, in ticks. */
+    public int wonTicks;
+    public long lastGlint = -100000;
+    /** When you first went out through the doorway (a Run's time counts from here), 0 before. */
+    public long runStart;
+    /** This run as a ghost so far ({@link DreamLedger#pack}), kept if it's your best. */
+    public final int[] trace = new int[DreamLedger.GHOST_MAX];
+    public int traceLen;
+    /** The long fall (SPEC §9.5): times the dream lifted you while you watched the fall. */
+    public int lifts;
+    /** The fold: where you were a tick ago (to tell walking backwards). */
+    public double lastX, lastZ;
+
     public void reset() {
         DreamState fresh = new DreamState();
         copyFrom(fresh);
@@ -59,6 +85,9 @@ public final class DreamState implements ValueIOSerializable {
         masteryShown = o.masteryShown; lastManifest = o.lastManifest; lastRealityCheck = o.lastRealityCheck;
         realityChecks = o.realityChecks; powerBaseline = o.powerBaseline; xpGranted = o.xpGranted; summoned = o.summoned;
         doorFound = o.doorFound; lastDoor = o.lastDoor;
+        trial = o.trial; phase = o.phase; lucidAt = o.lucidAt; clockEnd = o.clockEnd; clockTotal = o.clockTotal; bonus = o.bonus;
+        ring = o.ring; catches = o.catches; wonAt = o.wonAt; wonTicks = o.wonTicks; lastGlint = o.lastGlint; runStart = o.runStart;
+        traceLen = o.traceLen; System.arraycopy(o.trace, 0, trace, 0, o.traceLen); lifts = o.lifts; lastX = o.lastX; lastZ = o.lastZ;
     }
 
     @Override

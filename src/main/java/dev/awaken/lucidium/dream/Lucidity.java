@@ -14,7 +14,6 @@ public final class Lucidity {
     public static final float LUCID = 50f;
     public static final float MASTERY = 80f;
     /** Flying comes earlier when you went to sleep intending to fly. */
-    public static final float FLY_INTENT = 35f;
 
     public static final float INTENTION = 10f;
     public static final float WBTB = 25f;
@@ -50,24 +49,7 @@ public final class Lucidity {
         return checksSoFar >= 5 ? REALITY_CHECK * 0.5f : REALITY_CHECK;
     }
 
-    public static boolean canFly(float lucidity, boolean intendedToFly) {
-        return lucidity >= (intendedToFly ? FLY_INTENT : LUCID);
-    }
-
     public static float clamp(float v) {
         return Mth.clamp(v, 0f, MAX);
-    }
-
-    /**
-     * Chance to dream on a successful sleep: 40% + 1% per SPI point, plus bonuses for a Sanctuary (meditation mat
-     * by the bed), a home bed (near your Hearth), an intention, and WBTB. Never above 95%.
-     */
-    public static double dreamChance(int spi, boolean sanctuary, boolean homeBed, boolean intention, boolean wbtb) {
-        double c = 0.40 + 0.01 * Math.max(0, spi);
-        if (sanctuary) c += 0.10;
-        if (homeBed) c += 0.05;
-        if (intention) c += 0.10;
-        if (wbtb) c += 0.30;
-        return Math.min(0.95, c);
     }
 }

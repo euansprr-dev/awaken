@@ -1,0 +1,137 @@
+# Dreams remade, stages 0-1 (SPEC 9.1-9.3, 3 Nov 2026): the Dream Journal when a dream waits, the first dream as you arrive
+# (the line, the doorway, the road's end far off), H taking control (goal, crescent clock), H again (the path glints),
+# rings along the road, a fall caught, the end; then the wall run won by teleport (prize, morning card with time and medal).
+#   tools/tour-ci.sh tools/autopilot/dreams-first.txt 1800
+world autopilot_dreams_first creative 3112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the dream's cards need it free
+cmd tick sprint 6200
+# the sprint runs ~30 s on a runner: let it finish, or the first dream burns through its clock
+wait 800
+cmd tick sprint stop
+wait 20
+window 1440 900
+info
+camera first
+hud off
+
+# ---- 1. awake: a dream is waiting (the Dream Journal says so, never what it holds) ----
+cmd gamemode survival
+cmd time set 14000
+cmd awaken dream offer first
+wait 120
+cmd item replace entity @s hotbar.0 with awaken:dream_journal
+wait 10
+use
+wait 40
+shotnow df_00_journal_waiting
+screen close
+wait 10
+
+# ---- 2. the first dream: your room, the doorway, the end far off; one line ----
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot df_01_arrival
+hud off
+shot df_02_doorway_clean
+look 180 8
+shot df_03_room_behind
+look 0 4
+wait 10
+
+# ---- 3. H: control (the goal and the clock), H again (the path glints) ----
+hud on
+cmd awaken dream control
+wait 30
+shotnow df_04_control
+wait 100
+shot df_05_road_ahead
+cmd awaken dream control
+wait 8
+shotnow df_06_glint
+
+# ---- 4. along the road; a fall is caught ----
+cmd awaken dream ring 1
+wait 60
+shot df_07_ring1
+cmd awaken dream ring 2
+wait 60
+shot df_08_ring2
+cmd tp @s ~ ~-14 ~
+wait 30
+shotnow df_09_caught
+wait 40
+
+# ---- 5. the end of the road (the bell's line if the Dreaming Bell waits there) ----
+cmd awaken dream ring 99
+wait 40
+shotnow df_10_end
+look 180 10
+wait 10
+shotnow df_11_end_back
+look 0 4
+cmd awaken dream wake
+wait 160
+shotnow df_12_woke_chose
+wait 40
+screen close
+
+# ---- 6. the wall run: arrive, control, rings, the door: won ----
+cmd awaken dream offer wall
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot df_13_wall_arrival
+cmd awaken dream control
+wait 30
+cmd awaken dream ring 1
+wait 60
+shot df_14_wall_ring1
+cmd awaken dream ring 2
+wait 60
+shot df_15_wall_ring2
+look 20 0
+shot df_16_wall_side
+look 0 4
+cmd awaken dream ring 3
+wait 60
+shot df_17_wall_ring3
+cmd awaken dream ring 99
+wait 20
+shotnow df_18_won_prize
+wait 200
+shotnow df_19_woke_card
+wait 60
+shot df_20_woke_room
+screen close
+use
+wait 40
+shotnow df_21_journal_after
+screen close
+quit

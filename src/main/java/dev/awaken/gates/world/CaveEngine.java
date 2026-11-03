@@ -334,6 +334,27 @@ final class CaveEngine implements WorldEngine {
             return Math.max(under ? -1 : -2.5, push);
         }
 
+        private final ThreadLocal<double[]> roofAt = ThreadLocal.withInitial(() -> new double[]{-1, Double.NaN, Double.NaN, 0, 1});
+
+        /**
+         * How far over a place's roof a block is, as a distance (content version 9, SPEC §38.16): the height over the roof
+         * shrunk by how steep the roof is there, so up a chimney's side or a swell's the shell is still three blocks of
+         * rock (a roof read straight up left the side of a chimney a block thick, holed through, with bits of it hanging
+         * in the dark). The roof and its slope are kept per column (each carve thread its own).
+         */
+        double roofD(int id, double x, double h, double z) {
+            double[] k = roofAt.get();
+            if (k[0] != id || k[1] != x || k[2] != z) {
+                double e = 0.5, gx = (ceil(id, x + e, z) - ceil(id, x - e, z)) / (2 * e), gz = (ceil(id, x, z + e) - ceil(id, x, z - e)) / (2 * e);
+                k[0] = id;
+                k[1] = x;
+                k[2] = z;
+                k[3] = ceil(id, x, z);
+                k[4] = Math.sqrt(1 + gx * gx + gz * gz);
+            }
+            return (h - k[3]) / k[4];
+        }
+
         /** How high a shaped place's chimneys rise over its roof. */
         static final int CHIMNEY = 12;
 
@@ -363,6 +384,7 @@ final class CaveEngine implements WorldEngine {
 
         void sculpt() {
             s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
+            s.settle = c.plan().contentVersion() >= 9;
             boolean v7 = c.plan().contentVersion() >= 7;
             s.thinOpen = v7;
             // a plain, a hall's fold and a world mirrored under glass keep their own ground
@@ -424,6 +446,7 @@ final class CaveEngine implements WorldEngine {
                 relief.apply();
                 new Formations(this).place();
             }
+            dress.late();
             glow();
             p.doorLights(s, W, light);
             if (chain.fold != null) {
@@ -596,8 +619,15 @@ final class CaveEngine implements WorldEngine {
                 return;
             }
             int top = W + roofs.get(id) + 3 + (relief == null ? 0 : CHIMNEY + 4);
+            boolean steep = c.plan().contentVersion() >= 9;
+            // version 9: the carve reaches over the highest swell, so a tall chimney keeps its shell to the top (38.16)
+            if (steep && relief != null) {
+                double hi = 0;
+                for (int x = x0; x <= x1; x++) for (int z = z0; z <= z1; z++) hi = Math.max(hi, ceil(id, x + 0.5, z + 0.5));
+                top = Math.max(top, W + (int) Math.ceil(hi) + 1);
+            }
             s.carve(x0, W, z0, x1, top, z1, (x, y, z) -> {
-                double h = y - W, dd = d(id, x, z), roof = h - ceil(id, x, z);
+                double h = y - W, dd = d(id, x, z), roof = steep ? roofD(id, x, h, z) : h - ceil(id, x, z);
                 double groove = foot(x, z, h, dd);
                 // no groove at the wall's foot in a doorway: it would open the wall's bottom block only
                 if (groove > 0 && Relief.doorway(r, (int) Math.floor(x), (int) Math.floor(z))) groove = 0;

@@ -5,6 +5,8 @@ import dev.awaken.Awaken;
 import dev.awaken.core.CoreModule;
 import dev.awaken.lucidium.block.DreamBellBlock;
 import dev.awaken.lucidium.block.DreamCloudBlock;
+import dev.awaken.lucidium.block.DreamRibbonBlock;
+import dev.awaken.lucidium.block.WakingVeilBlock;
 import dev.awaken.lucidium.data.DreamState;
 import dev.awaken.lucidium.data.Dreamer;
 import dev.awaken.lucidium.effect.ShakenEffect;
@@ -62,6 +64,21 @@ public final class LucidiumContent {
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false));
     public static final DeferredBlock<Block> SHIFTING_STONE = BLOCKS.registerSimpleBlock("shifting_stone",
             p -> p.mapColor(MapColor.COLOR_PURPLE).strength(1.5f, 6f).sound(SoundType.AMETHYST).lightLevel(s -> 4));
+    // the trials' courses (SPEC §9.3): laid only by dreams, never held (Sources.declare in LucidiumModule)
+    public static final DeferredBlock<Block> DREAM_ROAD = BLOCKS.registerSimpleBlock("dream_road",
+            p -> p.mapColor(MapColor.QUARTZ).strength(-1f, 3600000f).noLootTable().sound(SoundType.CALCITE).lightLevel(s -> 3));
+    public static final DeferredBlock<Block> DREAM_WALL = BLOCKS.registerSimpleBlock("dream_wall",
+            p -> p.mapColor(MapColor.QUARTZ).strength(-1f, 3600000f).noLootTable().sound(SoundType.CALCITE).lightLevel(s -> 3));
+    public static final DeferredBlock<Block> DREAM_LEDGE = BLOCKS.registerSimpleBlock("dream_ledge",
+            p -> p.mapColor(MapColor.QUARTZ).strength(-1f, 3600000f).noLootTable().sound(SoundType.CALCITE).lightLevel(s -> 5));
+    public static final DeferredBlock<DreamRibbonBlock> DREAM_RIBBON = BLOCKS.registerBlock("dream_ribbon", DreamRibbonBlock::new,
+            p -> p.mapColor(MapColor.QUARTZ).strength(-1f, 3600000f).noLootTable().noOcclusion().sound(SoundType.AMETHYST)
+                    .lightLevel(s -> 9).isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false));
+    public static final DeferredBlock<Block> WAKING_DOOR = BLOCKS.registerSimpleBlock("waking_door",
+            p -> p.mapColor(MapColor.GOLD).strength(-1f, 3600000f).noLootTable().sound(SoundType.AMETHYST).lightLevel(s -> 15));
+    public static final DeferredBlock<WakingVeilBlock> WAKING_VEIL = BLOCKS.registerBlock("waking_veil", WakingVeilBlock::new,
+            p -> p.mapColor(MapColor.GOLD).strength(-1f, 3600000f).noLootTable().noCollision().noOcclusion().sound(SoundType.AMETHYST)
+                    .lightLevel(s -> 12).isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false));
     public static final DeferredBlock<DreamBellBlock> DREAM_BELL = BLOCKS.registerBlock("dream_bell", DreamBellBlock::new,
             p -> p.mapColor(MapColor.GOLD).strength(2f).sound(SoundType.METAL).noOcclusion()
                     .lightLevel(s -> s.getValue(DreamBellBlock.ARMED) ? 7 : 0));
@@ -87,6 +104,8 @@ public final class LucidiumContent {
     public static final DeferredHolder<TicketType, TicketType> PRELOAD = TICKETS.register("dream_preload",
             () -> new TicketType(400L, TicketType.FLAG_LOADING | TicketType.FLAG_SIMULATION | TicketType.FLAG_KEEP_DIMENSION_ACTIVE));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DREAM_DROP = PARTICLES.register("dream_drop", () -> new SimpleParticleType(false));
+    /** A pearl mote: the bed's sign a dream is waiting, and the dust the course lays itself in. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> PEARL_MOTE = PARTICLES.register("pearl_mote", () -> new SimpleParticleType(false));
 
     // ---- attachments ---------------------------------------------------------------------------------------------------
     public static final Supplier<AttachmentType<Dreamer>> DREAMER = ATTACHMENTS.register("dreamer",
@@ -104,6 +123,11 @@ public final class LucidiumContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> NIGHTMARE = CoreModule.sound("dream.nightmare");
     public static final DeferredHolder<SoundEvent, SoundEvent> DOOR = CoreModule.sound("dream.door");
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL = CoreModule.sound("dream.bell");
+    /** A trial dream's own sounds (tools/art/specs/audio_dreams.py): the catch, the clock's last ticks, a ring, the end. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CATCH = CoreModule.sound("dream.catch");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TICK = CoreModule.sound("dream.tick");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RING = CoreModule.sound("dream.ring");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WON = CoreModule.sound("dream.won");
 
     static void init(IEventBus modBus) {
         BLOCKS.register(modBus);

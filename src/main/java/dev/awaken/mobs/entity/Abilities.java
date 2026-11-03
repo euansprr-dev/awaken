@@ -299,6 +299,12 @@ final class Abilities {
 
     static void blink(ServerLevel level, AwakenMob mob, Ability a, @Nullable LivingEntity target, Vec3 dest, boolean strike) {
         Vec3 old = mob.position();
+        if (mob.def().flies()) {
+            // a flier comes out where its body and its wings fit (the Plumed Coil's Canopy Drop never lands in a tree)
+            Vec3 at = FlightRoom.landing(mob, dest);
+            if (at == null) return;
+            dest = at;
+        }
         AABB moved = mob.getBoundingBox().move(dest.subtract(old));
         if (!level.noCollision(mob, moved)) {
             dest = target != null ? target.position() : old;

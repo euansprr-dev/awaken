@@ -71,10 +71,12 @@ public final class GatePainter {
             for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = yLo; y <= yHi; y++) out.set(x, y, z, p.fill());
             return;
         }
-        Ctx c = new Ctx(plan, f, r, p, out, gx, gz, yLo, yHi);
+        Band band = plan.contentVersion() >= 9 ? BAND.get().reset(yLo, yHi, out) : null;
+        Ctx c = new Ctx(plan, f, r, p, band != null ? band : out, gx, gz, yLo, yHi);
         for (int bx = 0; bx < 16; bx++) for (int bz = 0; bz < 16; bz++) c.column(bx, bz);
         c.features();
         if (r.rig != null) RigRooms.stamp(c);
+        if (band != null) band.flush();
     }
 
     /**
@@ -83,10 +85,156 @@ public final class GatePainter {
      */
     static void paintBuilt(GatePlan plan, FloorLayout f, Room r, int gx, int gz, Sink out) {
         int floorY = f.baseY + r.dy;
-        Ctx c = new Ctx(plan, f, r, f.theme.palette(), out, gx, gz, floorY - Cells.BAND_BELOW, floorY + Cells.BAND_ABOVE - 1);
+        int yLo = floorY - Cells.BAND_BELOW, yHi = floorY + Cells.BAND_ABOVE - 1;
+        Band band = plan.contentVersion() >= 9 ? BAND.get().reset(yLo, yHi, out) : null;
+        Ctx c = new Ctx(plan, f, r, f.theme.palette(), band != null ? band : out, gx, gz, yLo, yHi);
         for (int bx = 0; bx < 16; bx++) for (int bz = 0; bz < 16; bz++) c.column(bx, bz);
         c.features();
         if (r.rig != null) RigRooms.stamp(c);
+        if (band != null) band.flush();
+    }
+
+    private static final ThreadLocal<Band> BAND = ThreadLocal.withInitial(Band::new);
+
+    /**
+     * A version 9 room's chunk, held until it's painted (SPEC §38.16): then what nothing holds up (a chandelier past the
+     * ceiling, a plant over a gap, a banner off its wall) is left out, and the rest goes on. Beyond the chunk's sides
+     * and its band it can't see, so that never counts against a thing.
+     */
+    private static final class Band implements Sink, Holds.Grid {
+        private BlockState[] cells = new BlockState[0];
+        private int[] xs = new int[256], ys = new int[256], zs = new int[256];
+        private int yLo, h;
+        private Sink out;
+        /** Tests only: who painted each cell ({@link Sculpt#TRACE}). */
+        private String[] srcs;
+        /** Cells painted to float on purpose (SPEC §38.16), and whether what's painted now does ({@link Ctx#afloat}). */
+        private final java.util.BitSet floats = new java.util.BitSet();
+        boolean afloat;
+
+        Band reset(int yLo, int yHi, Sink out) {
+            this.yLo = yLo;
+            this.h = yHi - yLo + 1;
+            this.out = out;
+            if (cells.length < 256 * h) cells = new BlockState[256 * h];
+            else java.util.Arrays.fill(cells, 0, 256 * h, null);
+            srcs = Sculpt.TRACE ? new String[cells.length] : null;
+            floats.clear();
+            afloat = false;
+            return this;
+        }
+
+        private int i(int x, int y, int z) {
+            int ly = y - yLo;
+            return x < 0 || x > 15 || z < 0 || z > 15 || ly < 0 || ly >= h ? -1 : (ly * 16 + z) * 16 + x;
+        }
+
+        @Override
+        public void set(int x, int y, int z, BlockState s) {
+            int i = i(x, y, z);
+            if (i < 0) out.set(x, y, z, s);
+            else {
+                cells[i] = s;
+                floats.set(i, afloat);
+                if (srcs != null) srcs[i] = PlacementTests.caller();
+            }
+        }
+
+        @Override
+        public BlockState at(int x, int y, int z) {
+            int i = i(x, y, z);
+            if (i < 0) return null;
+            BlockState s = cells[i];
+            return s == null ? AIR : s;
+        }
+
+        /** A lump this big is the ground (the census's own measure). */
+        private static final int LUMP = 2048;
+        private int[] queue = new int[4096];
+        private final java.util.BitSet seen = new java.util.BitSet();
+
+        private static boolean hard(BlockState s) {
+            byte k = Holds.rule(s);
+            return k == Holds.SOLID || k == Holds.CHAIN;
+        }
+
+        /**
+         * Leaves out each lump of solid things in this chunk that touches nothing holding it (no side of the chunk, no
+         * end of its band, no water, no rock), unless it floats on purpose: a piece's arm past its vault, a beam's end
+         * left over a gap (SPEC §38.16).
+         */
+        private void lumps() {
+            int cap = 256 * h;
+            seen.clear();
+            for (int s0 = 0; s0 < cap; s0++) {
+                if (cells[s0] == null || seen.get(s0) || !hard(cells[s0])) continue;
+                int head = 0, tail = 0;
+                queue[tail++] = s0;
+                seen.set(s0);
+                boolean held = false;
+                while (head < tail) {
+                    int i = queue[head++];
+                    int lx = i & 15, lz = (i >> 4) & 15, ly = i >> 8;
+                    if (lx == 0 || lx == 15 || lz == 0 || lz == 15 || ly == 0 || ly == h - 1 || floats.get(i)) held = true;
+                    else {
+                        // water under it, or something placed that's flat on top (a vault's lid on its cache)
+                        BlockState under = cells[i - 256];
+                        if (under != null && (under.getBlock() == Blocks.WATER || !hard(under) && Holds.sturdy(under, Direction.UP))) held = true;
+                    }
+                    for (int d = 0; d < 6; d++) {
+                        int j = switch (d) {
+                            case 0 -> lx < 15 ? i + 1 : -1;
+                            case 1 -> lx > 0 ? i - 1 : -1;
+                            case 2 -> lz < 15 ? i + 16 : -1;
+                            case 3 -> lz > 0 ? i - 16 : -1;
+                            case 4 -> ly < h - 1 ? i + 256 : -1;
+                            default -> ly > 0 ? i - 256 : -1;
+                        };
+                        if (j < 0 || cells[j] == null) continue;
+                        // water beside it: it holds the water in
+                        if (!cells[j].getFluidState().isEmpty()) held = true;
+                        if (seen.get(j) || !hard(cells[j])) continue;
+                        seen.set(j);
+                        if (tail == queue.length) queue = java.util.Arrays.copyOf(queue, tail * 2);
+                        queue[tail++] = j;
+                    }
+                }
+                if (held || tail >= LUMP) continue;
+                for (int k = 0; k < tail; k++) cells[queue[k]] = null;
+            }
+        }
+
+        void flush() {
+            int cap = 256 * h;
+            // a chain the settle leaves out can leave what hung on it a lump in the air: then once more
+            for (int round = 0; round < 2; round++) {
+                lumps();
+                int n = 0;
+                for (int i = 0; i < cap; i++) {
+                    BlockState s = cells[i];
+                    if (s == null || !Holds.settles(s)) continue;
+                    if (n == xs.length) {
+                        xs = java.util.Arrays.copyOf(xs, n * 2);
+                        ys = java.util.Arrays.copyOf(ys, n * 2);
+                        zs = java.util.Arrays.copyOf(zs, n * 2);
+                    }
+                    xs[n] = i & 15;
+                    zs[n] = (i >> 4) & 15;
+                    ys[n] = (i >> 8) + yLo;
+                    n++;
+                }
+                if (n == 0 || Holds.settle(this, xs, ys, zs, n, (x, y, z) -> cells[i(x, y, z)] = null) == 0) break;
+            }
+            for (int i = 0; i < cap; i++) {
+                BlockState s = cells[i];
+                if (s == null) continue;
+                if (srcs != null) Sculpt.source(srcs[i]);
+                if (Sculpt.CENSUS) Sculpt.floating(floats.get(i));
+                out.set(i & 15, (i >> 8) + yLo, (i >> 4) & 15, s);
+            }
+            if (Sculpt.CENSUS) Sculpt.floating(false);
+            out = null;
+        }
     }
 
     /** A world place's features (shrine, seal, caches, runes, the entrance sigil) in one of its chunks. */
@@ -107,7 +255,7 @@ public final class GatePainter {
         /** The room's fill light (an invisible light block on an 8-block grid just above head height), or null. */
         final BlockState fillLight;
         final Theme theme;
-        final Room.Door[] stairDoor = new Room.Door[1];
+        final Room.Door[] stairDoor = new Room.Door[1], beamDoor = new Room.Door[1];
         /** open() for the chunk and a 3-block margin, computed once: walls look at their neighbours a lot. */
         private final byte[] openGrid = new byte[22 * 22];
 
@@ -133,6 +281,13 @@ public final class GatePainter {
         void set(int bx, int y, int bz, BlockState s) {
             if (y < yLo || y > yHi || s.isAir()) return;
             out.set(bx, y, bz, s);
+        }
+
+        /** What's painted while on floats on purpose (SPEC §38.16: the Sleeper's furniture, the Sky Leviathan's stones). */
+        void afloat(boolean on) {
+            if (out instanceof Band b) b.afloat = on;
+            // (a world floor's features go straight out: the census asks the carve's flag)
+            else if (Sculpt.CENSUS) Sculpt.floating(on);
         }
 
         void solidColumn(int bx, int bz, int from, int to) {
@@ -629,7 +784,7 @@ public final class GatePainter {
             if (r.shape == Room.Shape.PIT && fo == -2 && !p.liquid().isAir() && r.piece == null) {
                 set(bx, walk - 1, bz, p.floorAlt());
                 set(bx, walk, bz, p.liquid());
-            } else if (r.shape == Room.Shape.TERRACE && fo == 1 && edgeOfDais(x, z) && r.piece == null) {
+            } else if (r.shape == Room.Shape.TERRACE && fo == 1 && edgeOfDais(x, z) && r.piece == null && !standsOn(x, z)) {
                 set(bx, walk - 2, bz, p.fill());
                 set(bx, walk - 1, bz, GatePainter.facing(p.stair(), daisFacing(x, z)));
             } else {
@@ -643,11 +798,23 @@ public final class GatePainter {
             if (r.piece != null && Pieces.paint(this, bx, bz, x, z, walk, ceil, fo)) {
                 // an arena's own furniture doesn't get to darken its floor
                 if (r.piece.arena && !RoomGeometry.blocked(r, x, z)) fill(bx, bz, x, z, walk, ceil - walk);
+                // version 9: a beam runs on over the room's piece where there's room for it, so it isn't cut in two (38.16)
+                if (out instanceof Band band && fo == 0 && beamAt(x, z, walk, ceil)) {
+                    int by = floorY + r.height - 1;
+                    if (band.at(bx, by, bz) == AIR) beam(bx, bz, x, z, by);
+                }
                 return;
             }
             fill(bx, bz, x, z, walk, ceil - walk);
             if (fo == 0) decorate(bx, bz, x, z, walk, ceil, edge);
             else if (fo == -2 && r.shape == Room.Shape.PIT && theme == Theme.CLOCKWORK_FOUNDRY) set(bx, walk, bz, AIR);
+        }
+
+        /** Version 9 (38.16): a feature stands at (x, z), so the dais's edge there stays a full block, not a stair. */
+        boolean standsOn(int x, int z) {
+            if (plan.contentVersion() < 9) return false;
+            for (Room.Feature ft : r.features) if (ft.x() == x && ft.z() == z && ft.kind() != Room.FeatureKind.UPDRAFT) return true;
+            return false;
         }
 
         boolean edgeOfDais(int x, int z) {
@@ -683,19 +850,28 @@ public final class GatePainter {
             return (dx + 2) * 8 + (dz + 2);
         }
 
-        void chandelier(int bx, int bz, int part, int walk, int ceil) {
+        /** A chandelier's piece in this column: {@code ceil} is the roof over its middle, {@code own} over this column. */
+        void chandelier(int bx, int bz, int part, int walk, int ceil, int own) {
             int dx = part / 8 - 2, dz = part % 8 - 2;
             int head = ceil - walk;
             BlockState light = k.chandelier(), chain = k.chain();
             if (chain.isAir()) return;
+            // version 9: roots hold nothing up, so the Hollow's caps hang on a stalk and spread on gills (38.16)
+            boolean stalk = plan.contentVersion() >= 9 && !(chain.getBlock() instanceof net.minecraft.world.level.block.ChainBlock);
+            if (stalk) chain = k.pilaster();
             if (head >= 9) {
                 int arm = ceil - 3;
+                // an arm under a roof come down to it would be in the rock: the arm stops short
+                if (own <= arm && (dx != 0 || dz != 0)) return;
+                // version 9: and its tip only where the arm reaches it, never on its own in the air (38.16)
+                if (plan.contentVersion() >= 9 && Math.abs(dx) + Math.abs(dz) == 2
+                        && floorY + RoomGeometry.ceiling(r, gx * 16 + bx - Integer.signum(dx), gz * 16 + bz - Integer.signum(dz)) <= arm) return;
                 if (dx == 0 && dz == 0) {
                     for (int y = ceil - 1; y > arm; y--) set(bx, y, bz, chain);
                     set(bx, arm, bz, k.capital());
                     set(bx, arm - 1, bz, light);
                 } else if (Math.abs(dx) + Math.abs(dz) == 1) {
-                    set(bx, arm, bz, GatePainter.axis(chain, dx != 0 ? "x" : "z"));
+                    set(bx, arm, bz, stalk ? k.capital() : GatePainter.axis(chain, dx != 0 ? "x" : "z"));
                 } else {
                     set(bx, arm, bz, k.trim());
                     set(bx, arm - 1, bz, light);
@@ -723,15 +899,20 @@ public final class GatePainter {
             }
             // ceiling beams resting on the cornice
             boolean beam = beamAt(x, z, walk, ceil);
-            if (beam) {
-                int by = floorY + r.height - 1;
-                int ox = Math.floorMod(x, 16), oz = Math.floorMod(z, 16);
-                boolean bxLine = ox == 5 || ox == 10, bzLine = oz == 5 || oz == 10;
-                set(bx, by, bz, bxLine && bzLine ? k.capital() : GatePainter.axis(k.beam(), bxLine ? "z" : "x"));
-            }
+            if (beam) beam(bx, bz, x, z, floorY + r.height - 1);
+            boolean hung = false;
             if (!lightless && headroom >= 4) {
                 int part = chandelierOffset(x, z);
-                if (part >= 0 && !k.has(Kit.SKY)) chandelier(bx, bz, part, walk, ceil);
+                if (part >= 0 && !k.has(Kit.SKY)) {
+                    // version 9: the whole chandelier hangs at its middle's height over its middle's floor, so under a vault
+                    // its arms meet (38.16)
+                    int mx = x - (part / 8 - 2), mz = z - (part % 8 - 2);
+                    boolean v9 = plan.contentVersion() >= 9;
+                    int at = v9 ? floorY + RoomGeometry.ceiling(r, mx, mz) : ceil;
+                    chandelier(bx, bz, part, v9 ? floorY + RoomGeometry.floorOffset(r, mx, mz) : walk, at, ceil);
+                    // version 9: and nothing else hangs from the roof over its pieces
+                    hung = v9;
+                }
             }
             if (nearFeature || inLordSpace(x, z)) return;
             if (brazier(bx, bz, x, z, walk)) return;
@@ -758,17 +939,17 @@ public final class GatePainter {
                     set(bx, walk, bz, pick(p.floorDecor(), x, z, 5));
                     return;
                 }
-                if (theme == Theme.BELL_CRYPT && u(x, z, 6) < 0.3 && headroom >= 4) set(bx, ceil - 1, bz, GatePainter.state("minecraft:cobweb"));
+                if (theme == Theme.BELL_CRYPT && u(x, z, 6) < 0.3 && headroom >= 4 && !hung) set(bx, ceil - 1, bz, GatePainter.state("minecraft:cobweb"));
             }
-            if (headroom >= 6 && u(x, z, 7) < 0.025 && !beam) {
+            if (headroom >= 6 && u(x, z, 7) < 0.025 && !beam && !hung) {
                 set(bx, ceil - 1, bz, pick(p.hangDecor(), x, z, 8));
                 return;
             }
-            if (k.has(Kit.DRIPS) && headroom >= 6 && u(x, z, 17) < 0.03 && !beam) {
+            if (k.has(Kit.DRIPS) && headroom >= 6 && u(x, z, 17) < 0.03 && !beam && !hung) {
                 int len = 1 + (int) Math.floorMod(h(x, z, 18), 2L);
                 for (int i = 1; i <= len; i++) set(bx, ceil - i, bz, GatePainter.state("minecraft:honey_block"));
             }
-            if (k.has(Kit.OVERGROWN) && headroom >= 5 && u(x, z, 19) < 0.05 && !beam) {
+            if (k.has(Kit.OVERGROWN) && headroom >= 5 && u(x, z, 19) < 0.05 && !beam && !hung) {
                 set(bx, ceil - 1, bz, GatePainter.state("minecraft:hanging_roots"));
             }
             switch (theme) {
@@ -777,7 +958,12 @@ public final class GatePainter {
                 case OVERGROWN_TEMPLE -> { if (roll > 0.85) set(bx, walk, bz, p.carpet()); }
                 case ABYSSAL_SHRINE -> { if (roll > 0.985) set(bx, walk, bz, p.floorDecor().get(0)); }
                 case NIGHTMARE -> {
-                    if (roll > 0.992 && headroom >= 6) set(bx, walk + 2 + (int) Math.floorMod(h(x, z, 10), 3L), bz, pick(p.clutter(), x, z, 11));
+                    if (roll > 0.992 && headroom >= 6) {
+                        // the Nightmare's things float in the air on purpose (38.16)
+                        afloat(true);
+                        set(bx, walk + 2 + (int) Math.floorMod(h(x, z, 10), 3L), bz, pick(p.clutter(), x, z, 11));
+                        afloat(false);
+                    }
                 }
                 default -> {}
             }
@@ -821,7 +1007,44 @@ public final class GatePainter {
             int by = floorY + r.height - 1;
             if (by >= ceil || by - walk < 5) return false;
             int ox = Math.floorMod(x, 16), oz = Math.floorMod(z, 16);
-            return ox == 5 || ox == 10 || oz == 5 || oz == 10;
+            boolean alongZ = ox == 5 || ox == 10, alongX = oz == 5 || oz == 10;
+            if (!alongZ && !alongX) return false;
+            // version 9: only a beam whose run rests on something at both ends, unbroken between (38.16)
+            return plan.contentVersion() < 9 || alongZ && beamRests(x, z, true, by) || alongX && beamRests(x, z, false, by);
+        }
+
+        void beam(int bx, int bz, int x, int z, int by) {
+            int ox = Math.floorMod(x, 16), oz = Math.floorMod(z, 16);
+            boolean bxLine = ox == 5 || ox == 10, bzLine = oz == 5 || oz == 10;
+            set(bx, by, bz, bxLine && bzLine ? k.capital() : GatePainter.axis(k.beam(), bxLine ? "z" : "x"));
+        }
+
+        /** Whether a beam at {@code by} through (x, z) runs both ways to a wall, a pillar or the roof without a gap. */
+        private boolean beamRests(int x, int z, boolean alongZ, int by) {
+            for (int sign = -1; sign <= 1; sign += 2) {
+                int meets = 0;
+                for (int k = 1; k <= 80 && meets == 0; k++) meets = beamOver(alongZ ? x : x + sign * k, alongZ ? z + sign * k : z, by);
+                if (meets <= 0) return false;
+            }
+            return true;
+        }
+
+        /** What a beam at {@code by} finds over (x, z): 1 something to rest on, 0 the room it crosses, -1 a gap in it. */
+        private int beamOver(int x, int z, int by) {
+            // a Lord's arena keeps its height to its own pieces (38.15)
+            if (r.piece == SetPiece.RITUAL_HALL || r.piece != null && r.piece.arena) return -1;
+            Room.Door door = RoomGeometry.tunnel(r, x, z);
+            boolean in = RoomGeometry.inside(r, x, z);
+            if (door != null && !(in && door.y == r.dy && RoomGeometry.depth(door, x, z) >= RoomGeometry.INSET
+                    && r.shape != Room.Shape.SHAFT && r.shape != Room.Shape.ISLANDS && !RoomGeometry.solid(r, x, z)))
+                return by >= f.baseY + door.y + RoomGeometry.DOOR_HEIGHT ? 1 : -1;
+            if (!in || RoomGeometry.solid(r, x, z)) return 1;
+            int ceil = floorY + RoomGeometry.ceiling(r, x, z);
+            if (by >= ceil) return 1;
+            if (r.rig != null || r.shape == Room.Shape.SHAFT || r.shape == Room.Shape.ISLANDS
+                    || RoomGeometry.stairStep(r, x, z, beamDoor) > 0) return -1;
+            int fo = RoomGeometry.floorOffset(r, x, z);
+            return fo != 0 || by - (floorY + fo) < 5 ? -1 : 0;
         }
 
         BlockState rail(int x, int z) {
@@ -918,8 +1141,9 @@ public final class GatePainter {
             for (Room.Feature ft : r.features) {
                 if (ft.kind() == Room.FeatureKind.INNER_GATE) innerGate(ft, x0, z0);
                 if (ft.kind() == Room.FeatureKind.RIFT_WALL) riftWall(ft, x0, z0);
-                // on a world floor's ground (38.14) a feature stands where you'd stand over its column
-                int up = f.ground(ft.x(), ft.z());
+                // on a world floor's ground (38.14) a feature stands where you'd stand over its column, and from version 9 in
+                // a built room on its floor there (38.16)
+                int up = f.ground(ft.x(), ft.z()) + RoomGeometry.featureLift(plan.contentVersion(), f, r, ft);
                 if (ft.kind() == Room.FeatureKind.VAULT_CACHE) {
                     for (int[] b : FeatureBlocks.vaultBars(ft)) put(b[0], floorY + up + b[1], b[2], x0, z0, GatesRegistry.BARS.get().defaultBlockState());
                 }
@@ -936,7 +1160,12 @@ public final class GatePainter {
                     }
                     case ENTRANCE -> set(bx, y - 1, bz, GatesRegistry.ENTRANCE.get().defaultBlockState());
                     case LANTERN -> set(bx, y, bz, GatesRegistry.LANTERN.get().defaultBlockState());
-                    case UPDRAFT -> set(bx, y, bz, GatesRegistry.UPDRAFT.get().defaultBlockState());
+                    case UPDRAFT -> {
+                        // wind over the drop that lifts you back up: it hangs in the air on purpose (38.16)
+                        afloat(true);
+                        set(bx, y, bz, GatesRegistry.UPDRAFT.get().defaultBlockState());
+                        afloat(false);
+                    }
                     default -> {}
                 }
             }

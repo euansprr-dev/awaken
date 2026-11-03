@@ -227,7 +227,9 @@ final class FoundryDress extends Dress {
             double lat = Math.abs(w[0]), half = c.hw + 0.4;
             int along = (int) Math.round(w[1]);
             if ((y == W + 1 || (maze && y == W + 3)) && lat > half - 1.1 && lat <= half) {
-                if (!inDoorway(r, x, z, 4)) buf.set(x, y, z, way.alongZ() ? pipeZ : pipeX);
+                // version 9: only where the wall is right behind it, so no length of pipe stands off a wall worn back (38.16)
+                boolean against = !v9 || !buf.open(x + (int) Math.round(w[2]), y, z + (int) Math.round(w[3]));
+                if (!inDoorway(r, x, z, 4) && against) buf.set(x, y, z, way.alongZ() ? pipeZ : pipeX);
             } else if (maze && Math.floorMod(along, 9) == 4 && lat < half - 1.1 && !nearDoor(r, x + 0.5, z + 0.5, 3)) buf.set(x, y, z, steam);
         });
         grow(r, 0.02, 17, (x, y, z, len, i) -> sparks);

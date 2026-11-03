@@ -686,6 +686,8 @@ final class FloorBuilder {
                 RigRooms.finish(r);
             }
             if (friendly && area == 0 && !bossFloor) lanterns();
+            // version 9: what stands in a room of sky islands stands on an island, not over the gap (38.16)
+            if (plan.contentVersion() >= 9) for (Room r : rooms) if (r.shape == Room.Shape.ISLANDS) ashore(r);
             for (Room r : rooms) spots(r);
             if (sealEnd || (friendly && !bossFloor)) {
                 Room e = rooms.get(end);
@@ -1020,6 +1022,33 @@ final class FloorBuilder {
             for (int i = 0; i < 3 && !picks.isEmpty(); i++) {
                 Room r = rooms.get(picks.remove(rnd.nextInt(picks.size())));
                 r.features.add(new Room.Feature(Room.FeatureKind.LANTERN, r.centerX() + 2, 0, r.centerZ() - 2, i));
+            }
+        }
+
+        /**
+         * Moves a shrine, seal, cache, rune or lantern standing over the gap between sky islands to the nearest island
+         * column within 6, off the way through the doors and off another feature; left where it is if there's none.
+         */
+        void ashore(Room r) {
+            for (int i = 0; i < r.features.size(); i++) {
+                Room.Feature f = r.features.get(i);
+                boolean stands = switch (f.kind()) {
+                    case SHRINE, SEAL, CACHE, VAULT_CACHE, RUNE, LANTERN -> true;
+                    default -> false;
+                };
+                if (!stands || RoomGeometry.island(r, f.x(), f.z())) continue;
+                int[] to = null;
+                for (int d = 1; d <= 6 && to == null; d++)
+                    for (int dx = -d; dx <= d && to == null; dx++)
+                        for (int dz = -d; dz <= d && to == null; dz++) {
+                            int x = f.x() + dx, z = f.z() + dz;
+                            if (Math.max(Math.abs(dx), Math.abs(dz)) != d || !RoomGeometry.inside(r, x, z) || !RoomGeometry.island(r, x, z)
+                                    || RoomGeometry.onDoorAxis(r, x, z, 1)) continue;
+                            boolean taken = false;
+                            for (Room.Feature o : r.features) taken |= o.x() == x && o.z() == z;
+                            if (!taken) to = new int[]{x, z};
+                        }
+                if (to != null) r.features.set(i, new Room.Feature(f.kind(), to[0], f.y(), to[1], f.index()));
             }
         }
 

@@ -285,6 +285,8 @@ final class WorldPlan {
     byte[] ground;
     /** The columns of the high ledges and their stairs (SPEC §38.14, stage 4), null if none: nothing is placed there. */
     java.util.BitSet high;
+    /** The floor's shaped ground, while it's planned (null on a flat floor): {@link #finish} levels it under the features. */
+    Relief relief;
 
     /** Places that are a world of their own (a secret world reached from this one): world room id → world id. */
     final Map<Integer, String> placeWorlds = new HashMap<>(), placeBiomes = new HashMap<>();
@@ -495,6 +497,8 @@ final class WorldPlan {
                 }
             }
         }
+        // version 9: a feature stands on a whole step, never half a block up in the air over a slab or a drift (38.16)
+        if (relief != null && ctx.plan().contentVersion() >= 9) for (Room w : b.rooms) for (Room.Feature ft : w.features) relief.level(ft.x(), ft.z());
         for (int i = 0; i < host.length; i++) {
             Room L = logic.rooms.get(i);
             if (L.rig == null) continue;

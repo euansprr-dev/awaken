@@ -26,7 +26,7 @@ import java.util.UUID;
  * The Stillpoint: a calm void above a sea of clouds at dawn, a temple at the origin. Reached by meditating 20 seconds or
  * from a Stillpoint shrine; left by meditating again. Time is slow here for you: no hunger, energy comes back faster,
  * nothing hunts you. The Out door sends your spirit back into the Waking world while your body sits safe at the seat; the
- * In door only opens while you are dreaming.
+ * In door opens onto the dream you finished last, once you've finished one.
  */
 public final class Stillpoint {
     private Stillpoint() {}
@@ -142,10 +142,10 @@ public final class Stillpoint {
             }
             Projection.start(sp, false, mem.stillpointReturn.orElse(null));
         } else {
-            if (DreamHooks.isDreaming(sp)) {
-                if (!DreamHooks.replay(sp, 0)) Signal.toast(sp, Component.literal("The door opens onto nothing yet."));
-            } else {
-                Signal.toast(sp, Component.literal("The door is dark. It only opens while you sleep."));
+            // the dream you finished last, dreamt again (the Lucidium's replays, SPEC §9.6)
+            if (DreamHooks.isDreaming(sp) || !DreamHooks.replay(sp, 0)) {
+                Signal.toast(sp, Component.literal(DreamHooks.recordedCount(sp) > 0 ? "The door won't open right now."
+                        : "The door is dark. Once you've finished a dream, it opens onto it again."));
             }
         }
     }
@@ -163,7 +163,7 @@ public final class Stillpoint {
         if (food.getSaturationLevel() < sat) food.setSaturation(sat);
         if (food.getFoodLevel() > kept[0]) kept[0] = food.getFoodLevel();
         if (sp.tickCount % 40 == 0) {
-            boolean dreaming = DreamHooks.isDreaming(sp);
+            boolean dreaming = !DreamHooks.isDreaming(sp) && DreamHooks.recordedCount(sp) > 0; // the In door is open
             dev.awaken.core.AwakenNet.send(sp, new dev.awaken.veil.net.VeilPayloads.State(false, 0, 1, 0, 0, Vec3.ZERO, false, Vec3.ZERO, -1, -1,
                     false, dreaming, false, 0));
         }

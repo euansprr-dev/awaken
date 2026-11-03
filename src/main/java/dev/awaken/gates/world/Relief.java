@@ -51,6 +51,8 @@ final class Relief {
     final java.util.BitSet pinned = new java.util.BitSet(Plots.SIDE * Plots.SIDE);
     /** Places are islands (in the air, the dark or a sea): their edge is a drop, not a wall; the bridges stay flat. */
     final boolean island;
+    /** Content version 9 (38.16): nothing laid on a half step. */
+    final boolean v9;
     /** The highest ground or piece standing within 3 of each column, whole blocks (what a wall rises from: {@link CaveEngine.Cave#wall}). */
     final byte[] near = new byte[Plots.SIDE * Plots.SIDE];
     /** A high ledge's height over each of its columns and its stair's, whole blocks (0 elsewhere): nothing is placed there. */
@@ -61,6 +63,7 @@ final class Relief {
     Relief(CaveEngine.Cave c) {
         this.c = c;
         this.island = c.isles || c.sea;
+        this.v9 = c.c.plan().contentVersion() >= 9;
         // an island's ground is half as bold: hummocks, not terraces
         this.groundK = c.param("depth_ground", 1) * (island ? 0.5 : 1);
         this.thingsK = c.param("depth_things", 1);
@@ -75,6 +78,16 @@ final class Relief {
     int half(int x, int z) {
         if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return 0;
         return g[x + z * Plots.SIDE];
+    }
+
+    /**
+     * Version 9 (38.16): a half step at (x, z) made whole, where a feature (a cache, a rune) stands: on a slab or a drift
+     * it would stand half a block up in the air. Where you stand there doesn't change ({@link #stand}).
+     */
+    void level(int x, int z) {
+        if (x < 0 || z < 0 || x >= Plots.SIDE || z >= Plots.SIDE) return;
+        int i = x + z * Plots.SIDE;
+        if ((g[i] & 1) != 0) g[i]++;
     }
 
     /** Where you stand at (x, z), whole blocks above the floor line: the block your feet are in (over a slab, the next). */
@@ -189,8 +202,10 @@ final class Relief {
             for (int z = b[1]; z <= b[3]; z++) for (int x = b[0]; x <= b[2]; x++) stand[x + z * Plots.SIDE] = (byte) stand(x, z);
             c.s.op(b[0], W - 6, b[1], b[2], W - 6, b[3], (buf, x, y, z) -> column(buf, x, z));
             if (e.getValue() != CaveEngine.Kind.LINK) c.s.op(b[0], W - 5, b[1], b[2], W - 5, b[3], (buf, x, y, z) -> soften(buf, x, z));
+            if (v9) c.s.op(b[0], W - 4, b[1], b[2], W - 4, b[3], (buf, x, y, z) -> kick(buf, x, z));
         }
         c.p.ground = stand;
+        c.p.relief = this;
         java.util.BitSet hs = new java.util.BitSet(high.length);
         for (int k = 0; k < high.length; k++) if (high[k] > 0) hs.set(k);
         c.p.high = hs.isEmpty() ? null : hs;
@@ -607,6 +622,8 @@ final class Relief {
         // only over open floor (never a doorway's threshold, a pool or a wall)
         if (!clear(b, x, W, z) || !Dress.solid(b, x, W - 1, z) || b.water(x, W - 1, z)) return;
         Dress d = c.dress;
+        // version 9: where something grew on the floor line a half step is made whole, so it stands on it (38.16)
+        if (v9 && (v & 1) != 0 && !b.open(x, W, z)) v++;
         if (v == 0) {
             if (pinned.get(x + z * Plots.SIDE)) return;
             creep(b, x, W, z);
@@ -629,12 +646,16 @@ final class Relief {
                 else b.set(x, y, z, bank);
             }
             int top = W + whole;
+            boolean half = false;
             if ((v & 1) == 1 && clear(b, x, top, z)) {
                 BlockState step = step(x, z, v, top);
                 if (step != null) b.set(x, top, z, step);
+                half = step != null;
                 top++;
             }
             creep(b, x, top, z);
+            // on a half step (a slab, a stair, a drift) what grew there is lost and nothing lies on it: it would float (38.16)
+            if (half && v9) return;
             if (!regrow(b, x, top, z, grown, grown2)) over(b, x, top, z, v);
             return;
         }
@@ -642,12 +663,15 @@ final class Relief {
         for (int y = W - open; y < W; y++) b.mark(x, y, z, Sculpt.OPEN);
         for (int y = W - open - 3; y < W - open; y++) if (b.get(x, y, z) == Sculpt.UNSET) b.mark(x, y, z, Sculpt.SOLID);
         int top = W - open;
+        boolean half = false;
         if ((deep & 1) == 1) {
             BlockState slab = d.ground(SLAB, x, top, z);
             if (slab != null) b.set(x, top, z, slab);
+            half = slab != null;
             top++;
         }
         creep(b, x, top, z);
+        if (half && v9) return;
         if (!regrow(b, x, top, z, grown, grown2)) over(b, x, top, z, v);
     }
 
@@ -755,31 +779,75 @@ final class Relief {
      */
     void over(Sculpt.Buf b, int x, int y, int z, int v) {
         if (!b.open(x, y, z)) return;
+        BlockState lie = lying(x, y, z, v);
+        if (lie != null) b.set(x, y, z, lie);
+    }
+
+    /** What {@link #over} lays at (x, y, z) on ground v half blocks up, or null for nothing. */
+    BlockState lying(int x, int y, int z, int v) {
         Dress d = c.dress;
         long hs = Hash.of(seed + 41, x, z);
         double w = wild(x, z), into = inside(x, z);
         BlockState bank = d.ground(DRIFT, x, y, z);
         if (bank != null && w > 0.45 && into < 3) {
             int layers = (int) Math.round((w - 0.45) / 0.55 * (3 - into) / 3 * 7 + (Hash.unit(Hash.mix(hs + 3)) - 0.5) * 1.5);
-            if (layers >= 1) {
-                b.set(x, y, z, bank.trySetValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS, Math.min(7, layers)));
-                return;
-            }
+            if (layers >= 1) return bank.trySetValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS, Math.min(7, layers));
         }
-        if (v == 0) {
-            BlockState bits = d.ground(BITS, x, y, z);
-            if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * (0.35 + 0.65 * w) * litter(x, z)) b.set(x, y, z, bits);
-            return;
-        }
+        double gather = gather(x, z, v);
+        BlockState bits = d.ground(BITS, x, y, z);
+        boolean scatter = bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * (0.35 + 0.65 * w) * litter(x, z) * gather;
+        if (v == 0) return scatter ? bits : null;
         boolean foot = half(x + 1, z) >= v + 2 || half(x - 1, z) >= v + 2 || half(x, z + 1) >= v + 2 || half(x, z - 1) >= v + 2;
         BlockState drift = d.ground(DRIFT, x, y, z);
-        if (drift != null && (foot || v < 0) && Hash.unit(hs) < 0.55) {
-            b.set(x, y, z, drift.trySetValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS,
-                    1 + (int) (Hash.unit(Hash.mix(hs)) * 2)));
-            return;
-        }
-        BlockState bits = d.ground(BITS, x, y, z);
-        if (bits != null && Hash.unit(Hash.mix(hs + 7)) < d.bits() * (0.35 + 0.65 * w) * litter(x, z)) b.set(x, y, z, bits);
+        if (drift != null && (foot || v < 0) && Hash.unit(hs) < Math.min(0.9, 0.55 * gather))
+            return drift.trySetValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS, 1 + (int) (Hash.unit(Hash.mix(hs)) * 2));
+        return scatter ? bits : null;
+    }
+
+    /**
+     * Version 9 (38.16): litter gathers against a rise, at its foot and on its lip: half again on a whole step for each half
+     * step beside it (1 on a half step, whose litter is {@link #kick kicked} off it, and before version 9).
+     */
+    double gather(int x, int z, int v) {
+        if (!v9 || (v & 1) != 0) return 1;
+        int n = (half(x + 1, z) & 1) + (half(x - 1, z) & 1) + (half(x, z + 1) & 1) + (half(x, z - 1) & 1);
+        return 1 + 0.5 * n;
+    }
+
+    /** Where {@link #kick} looks, nearest first: the four sides, the corners, then two out. */
+    private static final int[][] KICK = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1},
+            {2, 0}, {0, 2}, {-2, 0}, {0, -2}, {2, 1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2}, {2, -1}};
+
+    /**
+     * Version 9 (38.16): what would have lain on a half step (it would float there) is kicked off onto a whole step within
+     * two, the foot of the rise first, never onto a pinned column; where none is free it's lost. Only within this chunk
+     * (the buffer can't see past it).
+     */
+    void kick(Sculpt.Buf b, int x, int z) {
+        int v = half(x, z);
+        if ((v & 1) == 0) return;
+        int y = (v > 0 ? W + (v >> 1) : W - ((1 - v) >> 1)) + 1;
+        // only where the half step was laid (not a threshold, a pool or a wall, nor made whole under what grew there)
+        if (!b.open(x, y, z) || b.open(x, y - 1, z) || full(b, x, y - 1, z)) return;
+        BlockState lie = lying(x, y, z, v);
+        if (lie == null) return;
+        int k = (int) (Hash.unit(Hash.of(seed + 51, x, z)) * 4);
+        for (int pass = 0; pass < 2; pass++)
+            for (int i = 0; i < KICK.length; i++) {
+                // turned a quarter at random, so they don't all go the same way
+                int[] o = KICK[i];
+                int ox = o[0], oz = o[1];
+                for (int t = 0; t < k; t++) {
+                    int w = ox;
+                    ox = -oz;
+                    oz = w;
+                }
+                int nx = x + ox, nz = z + oz, nv = half(nx, nz), ny = W + (nv >> 1);
+                if (nx >> 4 != x >> 4 || nz >> 4 != z >> 4 || (nv & 1) != 0 || (pass == 0) != (nv < v) || pinned.get(nx + nz * Plots.SIDE)) continue;
+                if (!b.open(nx, ny, nz) || !Dress.solid(b, nx, ny - 1, nz)) continue;
+                b.set(nx, ny, nz, lie);
+                return;
+            }
     }
 
     /**

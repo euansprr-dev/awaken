@@ -352,12 +352,14 @@ public final class GateDepthTests {
     /**
      * Where a world falls just short of a target and is held to what it measures instead (38.14, "Held to the targets"):
      * the Swarm's and the Forge Below's many small fought places stay 59% flat at most (not 55), the Forge Below's and the
-     * Stacks' detail 34.5 (not 35); Upward Rain's partial surfaces 1.4 times version 6's (its mud, a short block, counted as partial there and
-     * gives way to moss beside a half step now), the Gates' Heart's 1.95 times.
+     * Stacks' detail 33 (not 35: 35.0 at version 8, counting what lay on half steps and the Forge's crystals hung upside down
+     * in the air, which version 9 drops, 38.16); Upward Rain's partial surfaces 1.4 times version 6's (its mud, a short block,
+     * counted as partial there and gives way to moss beside a half step now), the Gates' Heart's 1.9 times (1.97 at version
+     * 8; from 9 a half step under what grew there is made whole).
      */
     static final Map<String, Double> FLAT_MOST = Map.of("awaken:hive/the_swarm", 59.0, "awaken:ember_mines/forge_below", 59.0),
-            DETAIL_LEAST = Map.of("awaken:ember_mines/forge_below", 34.5, "awaken:drowned_archive/stacks", 34.5),
-            PARTIAL_TIMES = Map.of("awaken:rare/upward_rain", 1.4, "awaken:rare/the_gates_heart", 1.95);
+            DETAIL_LEAST = Map.of("awaken:ember_mines/forge_below", 33.0, "awaken:drowned_archive/stacks", 33.0),
+            PARTIAL_TIMES = Map.of("awaken:rare/upward_rain", 1.4, "awaken:rare/the_gates_heart", 1.9);
 
     public static void register() {
         AwakenTests.register("gateworlds_depth", 6000, h -> {

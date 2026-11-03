@@ -199,11 +199,12 @@ def bells(v):
 
 
 def blizzard(v):
-    """A blizzard coming over the mountain: the wind climbing to a howl, snow driving sideways, a gust slamming past."""
+    """A blizzard coming over the mountain: the wind climbing to a howl, snow driving sideways, a gust slamming past.
+    Heard as a low rush, never hiss (SPEC 38.9, "No static"): the wind and the snow stop under 1.6 kHz."""
     n = K.ns(7.0)
-    w = wind(n, 211, 2600, 0.6) * K.swell(n, 0.55, 1.2)
+    w = wind(n, 211, 1500, 0.6) * K.swell(n, 0.55, 1.2)
     howl = norm(K.bandpass(K.noise(n, "pink", 213), 700, 4.0)) * K.swell(n, 0.6, 1.6)
-    return w * 0.65 + howl * 0.3 + snow(n, 215, 0.4) * K.swell(n, 0.6, 1.0)
+    return w * 0.65 + howl * 0.3 + K.lowpass(snow(n, 215, 0.4), 1600, 2) * K.swell(n, 0.6, 1.0)
 
 
 def icecrack(v):
@@ -262,7 +263,7 @@ def doubled(v):
     n = K.ns(4.5)
     x = steps(n, 0.1, 0.5, 4, 271, 0.85, 0.6)
     echo = steps(n, 0.28, 0.53, 4, 272, 0.8, 0.4, 1600)
-    whisper = norm(K.bandpass(K.noise(n, "pink", 273), 2600, 1.2)) * K.swell(n, 0.6, 2.0) * 0.08
+    whisper = norm(K.bandpass(K.noise(n, "pink", 273), 800, 1.2)) * K.swell(n, 0.6, 2.0) * 0.06  # a breath, not a hiss
     return wet(x + K.mono(K.chorus(echo, 8.0, 0.6, 2, 274, 0.6)) + whisper, "crypt", 0.4)
 
 

@@ -3,6 +3,11 @@
   "values": [
     "awaken:dream_cloud",
     "awaken:dream_glass",
-    "awaken:shifting_stone"
+    "awaken:shifting_stone",
+    "awaken:dream_road",
+    "awaken:dream_wall",
+    "awaken:dream_ledge",
+    "awaken:dream_ribbon",
+    "awaken:waking_door"
   ]
 }

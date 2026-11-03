@@ -279,7 +279,7 @@ public final class GateLiveTests {
                 int lanterns = 0;
                 for (Room r : f.rooms) {
                     for (Room.Feature ft : r.features(Room.FeatureKind.LANTERN)) {
-                        BlockPos lp = GateService.roomFloor(friendly, f, r, ft.x(), ft.z()).above(ft.y());
+                        BlockPos lp = GateService.feature(friendly, f, r, ft);
                         h.assertTrue(level.getBlockState(lp).is(GatesRegistry.LANTERN.get()), "a lost lantern stands at " + lp);
                         Interactions.takeLantern(p, lp);
                         lanterns++;

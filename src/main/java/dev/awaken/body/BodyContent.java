@@ -21,9 +21,10 @@ public final class BodyContent {
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
 
-    /** Saved with the player and kept through death: which unlocks were announced. */
+    /** Saved with the player and kept through death: which unlocks were announced, which moves a dream remembered (to its owner, for THE BODY). */
     public static final Supplier<AttachmentType<BodyMemory>> MEMORY = ATTACHMENTS.register("body_memory",
-            () -> AttachmentType.builder(() -> BodyMemory.EMPTY).serialize(BodyMemory.MAP_CODEC, m -> !m.isEmpty()).copyOnDeath().build());
+            () -> AttachmentType.builder(() -> BodyMemory.EMPTY).serialize(BodyMemory.MAP_CODEC, m -> !m.isEmpty()).copyOnDeath()
+                    .sync((holder, to) -> holder == to, BodyMemory.STREAM_CODEC).build());
 
     /** Moves in progress (server only, never saved). */
     static final Supplier<AttachmentType<BodyMotion>> MOTION = ATTACHMENTS.register("body_motion",

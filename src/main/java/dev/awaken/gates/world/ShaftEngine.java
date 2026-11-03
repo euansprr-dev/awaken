@@ -406,6 +406,7 @@ final class ShaftEngine implements WorldEngine {
 
         void sculpt() {
             s = new Sculpt(this::skin, c.plot().minY(), c.plot().maxY());
+            s.settle = c.plan().contentVersion() >= 9;
             int lo = (int) (CX - HALF) - 1, hi = (int) (CX + HALF);
             s.carve(lo, W, lo, hi, roof, hi, (x, y, z) -> Math.max(shaft(x, z), Math.max(W - y, y - roof)));
             // string courses of tracery round the shaft, one to a landing's height
@@ -678,7 +679,7 @@ final class ShaftEngine implements WorldEngine {
          * top one from the roof (low over the clapper bridge's stand when there is one), the lowest well over the floor.
          */
         void bellColumn() {
-            int stand = W + top, chainTo = roof - 1, y = roof - 1;
+            int stand = W + top, chainTo = c.plan().contentVersion() >= 9 ? BellPieces.UP : roof - 1, y = roof - 1;
             for (int k = 0; k < 24; k++) {
                 double R = k == 0 ? 6 : 3 + Hash.unit(seed, k, 233) * 3;
                 int H = (int) Math.round(R * 2.3);

@@ -298,11 +298,12 @@ final class PiecesSmall {
             c.set(bx, Math.min(ceil - 1, walk + 4), bz, s("minecraft:chiseled_quartz_block"));
             return true;
         }
-        int y = ceil - 3;
+        int y = Pieces.apex(c, bx, bz, dx, dz, ceil) - 3;
         double d = Math.hypot(dx, dz);
         if (d < 4.0 && y > walk + 4) {
-            if (ring(dx, dz, 3.5, 0.5)) c.set(bx, y, bz, s("minecraft:glass"));
-            if (ring(dx, dz, 2.0, 0.5)) c.set(bx, y + 1, bz, s("minecraft:glass"));
+            Pieces.spokes(c, bx, bz, dx, dz, y, 3.5, s("minecraft:glass"));
+            if (Pieces.hungRing(c, dx, dz, 3.5, 0.5)) c.set(bx, y, bz, s("minecraft:glass"));
+            if (Pieces.hungRing(c, dx, dz, 2.0, 0.5)) c.set(bx, y + 1, bz, s("minecraft:glass"));
             if (!c.lightless && ringPoint(dx, dz, 3.5, 8, 0.5, 0.5)) c.set(bx, y - 1, bz, s("minecraft:end_rod[facing=down]"));
             if (d < 1.0) {
                 for (int yy = y + 1; yy < ceil; yy++) c.set(bx, yy, bz, GatePainter.chain());

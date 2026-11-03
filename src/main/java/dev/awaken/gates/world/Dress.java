@@ -20,9 +20,12 @@ abstract class Dress {
     final WorldMats m;
     /** Whether a touchstone already keeps the theme's touch secret on this floor. */
     boolean touchKept;
+    /** A version 9 floor: everything placed rests on, hangs from or leans on something (SPEC §38.16). */
+    final boolean v9;
 
     Dress(CaveEngine.Cave c) {
         this.c = c;
+        this.v9 = c.c.plan().contentVersion() >= 9;
         this.p = c.p;
         this.W = c.W;
         this.seed = c.seed;
@@ -280,6 +283,78 @@ abstract class Dress {
     }
 
     // ---- geometry -----------------------------------------------------------------------------------------------------
+
+    /** Version 9: what ties to the rock, waiting for the ground and its walls to be solved ({@link #later}). */
+    private final List<Runnable> late = new ArrayList<>();
+
+    /**
+     * Version 9 (38.16): places something that looks at the rock round it (a string wall to wall, a flight off an edge)
+     * once the ground is solved, since the ground moves the walls' feet and a look before it would see rock that isn't
+     * there. The engine runs these after the relief ({@link #late()}).
+     */
+    void later(Runnable r) {
+        late.add(r);
+    }
+
+    /** Runs what waited for the solved ground ({@link #later}). */
+    void late() {
+        for (Runnable r : late) r.run();
+        late.clear();
+    }
+
+    /** Whether a block is open as the carve so far leaves it, worked out at plan time. */
+    boolean openAt(int x, int y, int z) {
+        return c.s.probe(x, y, z).get(x, y, z) == Sculpt.OPEN;
+    }
+
+    /** Whether a block is rock or something solid as the carve so far leaves it (not the open dark), at plan time. */
+    /** Whether a feature (a shrine, a cache, a rune) stands on column (x, z): known once the plan is finished, so at carve time. */
+    boolean featureAt(int x, int z) {
+        for (Room r : p.b.rooms) for (Room.Feature ft : r.features) if (ft.x() == x && ft.z() == z) return true;
+        return false;
+    }
+
+    boolean hardAt(int x, int y, int z) {
+        return c.s.probe(x, y, z).hard(x, y, z);
+    }
+
+    /**
+     * A string strung across the open (SPEC §38.16): from (cx, cz) both ways along (dx, dz), at height {@code y(t)} for
+     * t the signed distance out, until it meets the rock face to face. The blocks it takes, or null when the middle is
+     * shut or an end finds no rock within {@code reach}: then there's nothing to tie it to and it isn't hung.
+     */
+    List<int[]> strung(double cx, double cz, double dx, double dz, double reach, java.util.function.DoubleUnaryOperator y) {
+        List<int[]> out = new ArrayList<>();
+        int mx = (int) Math.floor(cx), mz = (int) Math.floor(cz), my = (int) Math.round(y.applyAsDouble(0));
+        if (!openAt(mx, my, mz)) return null;
+        out.add(new int[]{mx, my, mz});
+        for (int sign = -1; sign <= 1; sign += 2) {
+            int[] last = out.get(0);
+            boolean tied = false;
+            walk:
+            for (double t = 0.5; t <= reach; t += 0.5) {
+                double tt = sign * t;
+                int x = (int) Math.floor(cx + dx * tt), z = (int) Math.floor(cz + dz * tt), yy = (int) Math.round(y.applyAsDouble(tt));
+                // a step at a slant goes an axis at a time, so every block touches the next face to face
+                while (x != last[0] || yy != last[1] || z != last[2]) {
+                    int[] n = x != last[0] ? new int[]{last[0] + Integer.signum(x - last[0]), last[1], last[2]}
+                            : z != last[2] ? new int[]{last[0], last[1], last[2] + Integer.signum(z - last[2])}
+                            : new int[]{last[0], last[1] + Integer.signum(yy - last[1]), last[2]};
+                    if (!openAt(n[0], n[1], n[2])) {
+                        // tied only where rock (not the dark) meets the last block face to face
+                        for (int[] f : FACES) if (hardAt(last[0] + f[0], last[1] + f[1], last[2] + f[2])) tied = true;
+                        break walk;
+                    }
+                    last = n;
+                    out.add(last);
+                }
+            }
+            if (!tied) return null;
+        }
+        return out;
+    }
+
+    private static final int[][] FACES = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
 
     static int[] box(Room r) {
         return new int[]{r.gx * 16, r.gz * 16, (r.gx + r.gw) * 16 - 1, (r.gz + r.gh) * 16 - 1};

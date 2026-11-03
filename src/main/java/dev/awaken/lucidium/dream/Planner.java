@@ -3,27 +3,20 @@ package dev.awaken.lucidium.dream;
 import dev.awaken.Awaken;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.PlayDays;
-import dev.awaken.lucidium.LucidiumContent;
-import dev.awaken.lucidium.data.Dreamer;
 import dev.awaken.lucidium.data.Snapshot;
-import dev.awaken.lucidium.data.Vision;
 import dev.awaken.lucidium.journal.SnapshotFiles;
 import dev.awaken.lucidium.plan.DreamPlan;
-import dev.awaken.lucidium.plan.DreamPlanner;
 import dev.awaken.lucidium.plan.Fragment;
-import dev.awaken.lucidium.plan.Nightmares;
 import dev.awaken.lucidium.world.BlueprintCompiler;
 import dev.awaken.lucidium.world.Cells;
 import dev.awaken.lucidium.world.DreamBlueprint;
 import dev.awaken.lucidium.world.DreamChunkGenerator;
-import dev.awaken.progression.Progression;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Util;
 
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -96,18 +89,6 @@ public final class Planner {
         NOTHING.clear();
     }
 
-    /** Builds the inputs on the server thread. */
-    public static DreamPlanner.Input input(ServerPlayer player) {
-        MinecraftServer server = player.level().getServer();
-        long day = PlayDays.current(server);
-        Dreamer d = player.getData(LucidiumContent.DREAMER);
-        var profile = Progression.profile(player);
-        Map<Nightmares.Family, Integer> fears = Nightmares.scores(Map.copyOf(profile.counters()), d.weeklyMarks(day));
-        Optional<Vision> vision = d.pendingVision();
-        return new DreamPlanner.Input(server.overworld().getSeed(), player.getUUID(), day, d.dreams, List.copyOf(d.snapshots),
-                fears, d.intention(day), vision, profile.path());
-    }
-
     /** At most this many background dream builds per player per play-day hour (1000 ticks), whatever asks for them. */
     static final int BUILDS_PER_WINDOW = 3;
 
@@ -119,8 +100,8 @@ public final class Planner {
         if (ready(player).isPresent() || BUILDING.containsKey(id)) return;
         Long nothing = NOTHING.get(id);
         if (nothing != null && nothing == day) return;
-        DreamPlanner.Input in = input(player);
-        Optional<DreamPlan> plan = DreamPlanner.plan(in);
+        // a dream comes only when one waits (SPEC §9.2): tonight's plan is the first dream on the list
+        Optional<DreamPlan> plan = DreamOffers.plan(player);
         if (plan.isEmpty()) {
             NOTHING.put(id, day);
             return;
@@ -153,7 +134,7 @@ public final class Planner {
 
     /** Tests: tonight's plan for this player, compiled now on this thread and ready as if built at dusk. */
     static Prepared prepareNow(ServerPlayer player) {
-        DreamPlan plan = DreamPlanner.plan(input(player)).orElseThrow();
+        DreamPlan plan = DreamOffers.plan(player).orElseThrow();
         Prepared p = buildNow(player.level().getServer(), player.getUUID(), plan);
         READY.put(player.getUUID(), p);
         return p;

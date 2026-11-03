@@ -220,6 +220,8 @@ final class MobGoals {
             if (attackCooldown > 0) attackCooldown--;
             boolean ranged = mob.def().has(Trait.RANGED);
             double reach = (mob.getBbWidth() + t.getBbWidth()) * 0.5 + 1.3;
+            // it dives only down a clear line: never into the leaves after you (it waits for you to come out)
+            if (!ranged && attackCooldown <= 0 && !mob.staggered() && tellLeft < 0 && !diveClear(t, reach)) attackCooldown = 10;
             if (!ranged && attackCooldown <= 0 && !mob.staggered()) {
                 // a told dive (SPEC §24): it rears for its tell, then dives; it gives up a dive that takes too long
                 if (tellLeft < 0) {
@@ -249,10 +251,33 @@ final class MobGoals {
             }
             if (--retarget > 0) return;
             retarget = 12;
-            angle += 0.6F + mob.getRandom().nextFloat() * 0.4F;
             float r = ranged ? 7.0F : 3.5F + mob.getBbWidth();
-            double y = t.getY() + 2.0 + mob.getRandom().nextFloat() * 2.0 + (mob.getBbHeight() > 2 ? 1.5 : 0);
-            mob.getMoveControl().setWantedPosition(t.getX() + Mth.cos(angle) * r, y, t.getZ() + Mth.sin(angle) * r, 1.0);
+            double pad = FlightRoom.pad(mob);
+            for (int i = 0; i < 4; i++) {
+                angle += 0.6F + mob.getRandom().nextFloat() * 0.4F;
+                double x = t.getX() + Mth.cos(angle) * r, z = t.getZ() + Mth.sin(angle) * r;
+                double y = t.getY() + 2.0 + mob.getRandom().nextFloat() * 2.0 + (mob.getBbHeight() > 2 ? 1.5 : 0);
+                // round the target only where its body and its wings' clearance fit, and it can fly straight there
+                if (FlightRoom.passes(mob, x, y, z, pad) && FlightRoom.clearWay(mob, x, y, z, Math.min(pad, 0.3))) {
+                    mob.getMoveControl().setWantedPosition(x, y, z, 1.0);
+                    return;
+                }
+            }
+            // no room round it (it stands under the trees): a big flier hangs over the canopy above it, watching
+            Vec3 over = FlightRoom.big(mob) ? FlightRoom.roomAbove(mob, t.getX(), t.getY() + 2.0, t.getZ()) : null;
+            if (over != null && FlightRoom.clearWay(mob, over.x, over.y, over.z, 0.05)) {
+                mob.getMoveControl().setWantedPosition(over.x, over.y, over.z, 0.8);
+            } else {
+                mob.getMoveControl().setWantedPosition(mob.getX(), mob.getY(), mob.getZ(), 0.6);
+            }
+        }
+
+        /** Whether its body flies straight at the target until it is within reach, touching nothing on the way. */
+        private boolean diveClear(LivingEntity t, double reach) {
+            Vec3 eye = t.getEyePosition().subtract(0, t.getBbHeight() * 0.3, 0), d = eye.subtract(mob.position());
+            double len = d.length();
+            if (len <= reach) return true;
+            return FlightRoom.sweep(mob, mob.getBoundingBox().inflate(0.1), d.scale((len - reach) / len)) >= 1.0;
         }
 
         /**
@@ -282,7 +307,7 @@ final class MobGoals {
      * (its clearing, or over the canopy) and now and then settles on something solid for a few seconds.
      */
     static final class FlyWander extends Goal {
-        /** Picks in a row that found nowhere to go before a wedged big flier is lifted clear. */
+        /** Picks in a row that found nowhere to go before a wedged big flier works its way clear. */
         static final int WEDGED_AFTER = 3;
         private final AwakenMob mob;
         private float orbit;
@@ -299,6 +324,7 @@ final class MobGoals {
         @Override
         public boolean canUse() {
             if (mob.getTarget() != null || mob.idleHeld() || mob.getMoveControl().hasWanted()) return false;
+            if (mob.getMoveControl() instanceof FlyerMoveControl flight && flight.gettingOut()) return false;
             if (perching) {
                 // landed: rest a while, wings folding and opening
                 perching = false;
@@ -368,20 +394,16 @@ final class MobGoals {
         }
 
         /**
-         * A big flier with no room and no way out (one saved inside a canopy before fliers kept their room) shakes itself
-         * free: a burst of its dust and it is over the treetops.
+         * A big flier with no room and no way out it can fly straight (one saved inside a canopy, or boxed in under it)
+         * works its way out by moving: out the nearest open side, or up through the leaves, slowly, the leaves shaking
+         * (FlyerMoveControl, Unwedge). Never a teleport. A home with no room anywhere over it moves to where it got out.
          */
         private void unwedge() {
-            if (!FlightRoom.big(mob) || FlightRoom.free(mob) || !(mob.level() instanceof ServerLevel level)) return;
-            Vec3 up = FlightRoom.roomAbove(mob, mob.getX(), mob.getY(), mob.getZ());
-            if (up == null) return;
-            level.sendParticles(ParticleTypes.POOF, mob.getX(), mob.getY() + mob.getBbHeight() * 0.5, mob.getZ(), 14, 1.2, 0.6, 1.2, 0.02);
-            mob.snapTo(up.x, up.y, up.z);
-            mob.setDeltaMovement(Vec3.ZERO);
-            level.sendParticles(ParticleTypes.POOF, up.x, up.y + mob.getBbHeight() * 0.5, up.z, 10, 1.0, 0.4, 1.0, 0.02);
-            if (mob.hasHome() && !FlightRoom.fits(mob, mob.getHomePosition().getX() + 0.5, mob.getHomePosition().getY() + 1.5, mob.getHomePosition().getZ() + 0.5)
-                    && FlightRoom.roomAbove(mob, mob.getHomePosition().getX() + 0.5, mob.getHomePosition().getY(), mob.getHomePosition().getZ() + 0.5) == null) {
-                mob.setHomeTo(BlockPos.containing(up), mob.getHomeRadius()); // a home with no room anywhere over it: this is the new one
+            if (!FlightRoom.big(mob) || FlightRoom.free(mob) || !(mob.getMoveControl() instanceof FlyerMoveControl flight)) return;
+            flight.getClear();
+            if (mob.hasHome() && FlightRoom.roomAbove(mob, mob.getHomePosition().getX() + 0.5, mob.getHomePosition().getY(), mob.getHomePosition().getZ() + 0.5) == null) {
+                Vec3 up = FlightRoom.roomAbove(mob, mob.getX(), mob.getY(), mob.getZ());
+                if (up != null) mob.setHomeTo(BlockPos.containing(up), mob.getHomeRadius());
             }
         }
     }
