@@ -1,0 +1,207 @@
+# Dreams remade, stage 2 (SPEC 9.4, 3 Nov 2026): the four built Runs (the wall, the ledge, over and under, the climb with
+# Wall Stride) ring by ring, each finished by teleport for the prize line and the morning card (time, medal, the move
+# kept and how to do it awake); then THE BODY marking the moves and the Dream Journal's finished list.
+#   tools/tour-ci.sh tools/autopilot/dreams-runs.txt 2400
+world autopilot_dreams_runs creative 3112026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes: the dream's cards need it free
+cmd tick sprint 6200
+wait 200
+window 1440 900
+info
+camera first
+hud off
+
+# ---- each Run: arrive, take control, its pieces ring by ring, the finish ----
+cmd awaken admin power learn wall_run
+wait 20
+screen close
+cmd gamemode survival
+cmd time set 14000
+
+# ---- wall ----
+cmd awaken dream offer wall
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot dr_wall_00_arrival
+cmd awaken dream control
+wait 30
+hud off
+cmd awaken dream ring 1
+wait 60
+shot dr_wall_01_ring1
+look 0 30
+shot dr_wall_01_ring1_down
+look 0 4
+cmd awaken dream ring 2
+wait 60
+shot dr_wall_02_ring2
+look 0 30
+shot dr_wall_02_ring2_down
+look 0 4
+cmd awaken dream ring 3
+wait 60
+shot dr_wall_03_ring3
+look 0 30
+shot dr_wall_03_ring3_down
+look 0 4
+hud on
+cmd awaken dream ring 99
+wait 20
+shotnow dr_wall_09_prize
+wait 200
+shotnow dr_wall_10_card
+wait 40
+screen close
+
+# ---- ledge ----
+cmd awaken dream offer ledge
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot dr_ledge_00_arrival
+cmd awaken dream control
+wait 30
+hud off
+cmd awaken dream ring 1
+wait 60
+shot dr_ledge_01_ring1
+look 0 30
+shot dr_ledge_01_ring1_down
+look 0 4
+cmd awaken dream ring 2
+wait 60
+shot dr_ledge_02_ring2
+look 0 30
+shot dr_ledge_02_ring2_down
+look 0 4
+cmd awaken dream ring 3
+wait 60
+shot dr_ledge_03_ring3
+look 0 30
+shot dr_ledge_03_ring3_down
+look 0 4
+hud on
+cmd awaken dream ring 99
+wait 20
+shotnow dr_ledge_09_prize
+wait 200
+shotnow dr_ledge_10_card
+wait 40
+screen close
+
+# ---- vault ----
+cmd awaken dream offer vault
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot dr_vault_00_arrival
+cmd awaken dream control
+wait 30
+hud off
+cmd awaken dream ring 1
+wait 60
+shot dr_vault_01_ring1
+look 0 30
+shot dr_vault_01_ring1_down
+look 0 4
+cmd awaken dream ring 2
+wait 60
+shot dr_vault_02_ring2
+look 0 30
+shot dr_vault_02_ring2_down
+look 0 4
+cmd awaken dream ring 3
+wait 60
+shot dr_vault_03_ring3
+look 0 30
+shot dr_vault_03_ring3_down
+look 0 4
+hud on
+cmd awaken dream ring 99
+wait 20
+shotnow dr_vault_09_prize
+wait 200
+shotnow dr_vault_10_card
+wait 40
+screen close
+
+# ---- climb ----
+cmd awaken dream offer climb
+wait 60
+cmd awaken dream now
+wait 200
+hud on
+look 0 4
+shot dr_climb_00_arrival
+cmd awaken dream control
+wait 30
+hud off
+cmd awaken dream ring 1
+wait 60
+shot dr_climb_01_ring1
+look 0 30
+shot dr_climb_01_ring1_down
+look 0 4
+cmd awaken dream ring 2
+wait 60
+shot dr_climb_02_ring2
+look 0 30
+shot dr_climb_02_ring2_down
+look 0 4
+cmd awaken dream ring 3
+wait 60
+shot dr_climb_03_ring3
+look 0 30
+shot dr_climb_03_ring3_down
+look 0 4
+hud on
+cmd awaken dream ring 99
+wait 20
+shotnow dr_climb_09_prize
+wait 200
+shotnow dr_climb_10_card
+wait 40
+screen close
+
+# ---- THE BODY: the moves the dreams remembered; the Dream Journal: four Runs finished ----
+screen status
+wait 40
+shotnow dr_11_body
+screen close
+cmd item replace entity @s hotbar.0 with awaken:dream_journal
+wait 10
+use
+wait 40
+shotnow dr_12_journal
+screen close
+quit

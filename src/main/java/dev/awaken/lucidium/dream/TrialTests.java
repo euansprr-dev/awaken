@@ -35,6 +35,7 @@ public final class TrialTests {
         AwakenTests.register("dreams_catch_never_wakes", 100, TrialTests::catchNeverWakes);
         AwakenTests.register("dreams_wake_button", 60, TrialTests::wakeButton);
         AwakenTests.register("dreams_win", 200, TrialTests::win);
+        AwakenTests.register("dreams_move_remembered", 200, TrialTests::moveRemembered);
     }
 
     /** Every built trial passes its solver at its first variant, with a bell and without, and compiles into a course. */
@@ -109,10 +110,14 @@ public final class TrialTests {
 
     /** Into tonight's trial (the first dream, no bell), dreamed in the test level. */
     private static ActiveDream enter(GameTestHelper h, ServerPlayer sp) {
+        return enter(h, sp, Trial.FIRST);
+    }
+
+    private static ActiveDream enter(GameTestHelper h, ServerPlayer sp, Trial trial) {
         ServerLevel level = h.getLevel();
         sp.setNoGravity(true);
         long day = PlayDays.current(level.getServer());
-        Dreams.dreamer(sp).ledger.offer(Trial.FIRST.id, day, "test", "", true);
+        Dreams.dreamer(sp).ledger.offer(trial.id, day, "test", "", true);
         DreamPlan plan = DreamOffers.plan(sp).orElseThrow();
         Planner.Prepared p = Planner.buildNow(level.getServer(), sp.getUUID(), plan);
         ActiveDream ad = Dreams.enter(sp, p, new Dreams.Entry(false, null, level, false));
@@ -222,6 +227,35 @@ public final class TrialTests {
                     h.assertTrue(sp.getInventory().countItem(LucidiumContent.DREAM_RESIDUE.get()) >= Trials.RESIDUE, "the residue came with you");
                     h.assertTrue(d.history.getLast().summary().contains("reached the end"), "the journal wrote your time");
                     h.assertTrue(Trials.recall(d) >= 2, "a finished dream is a second more in every dream after it");
+                    done(h, sp);
+                })
+                .thenSucceed();
+    }
+
+    /** A Run finished: the body remembers its moves (THE BODY marks them), once; the morning card says how to do them awake. */
+    private static void moveRemembered(GameTestHelper h) {
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        h.assertFalse(dev.awaken.core.api.MovementHooks.remembered(sp, "wallrun"), "no dream has taught the wall-run yet");
+        ActiveDream ad = enter(h, sp, Trial.WALL);
+        Course c = ad.bp.course;
+        h.assertTrue(c.trial() == Trial.WALL, "the wall's dream");
+        h.assertTrue(Trials.prizeLine(c, Dreams.dreamer(sp)).equals("Your body remembers the wall-run."), "the prize says what the body keeps");
+        Dreams.realityCheck(sp);
+        Vec3 door = c.goal().getCenter();
+        sp.teleportTo(h.getLevel(), door.x, c.goal().minY, door.z, java.util.Set.of(), 0, 0, true);
+        h.startSequence()
+                .thenWaitUntil(() -> h.assertFalse(Dreams.isDreaming(sp), "won, and woke"))
+                .thenExecute(() -> {
+                    Dreamer d = Dreams.dreamer(sp);
+                    h.assertTrue(d.ledger.remembered.contains(Trial.WALL.id), "the ledger knows the wall was remembered");
+                    h.assertTrue(d.ledger.ghosts.containsKey(Trial.WALL.id), "the best run is kept as a ghost");
+                    int g = DreamLedger.pack(-3.25, 41.5, 160.75);
+                    h.assertTrue(DreamLedger.unpackX(g) == -3.25 && DreamLedger.unpackY(g) == 41.5 && DreamLedger.unpackZ(g) == 160.75, "a ghost's sample packs and unpacks");
+                    h.assertTrue(dev.awaken.core.api.MovementHooks.remembered(sp, "wallrun") && dev.awaken.core.api.MovementHooks.remembered(sp, "walljump"),
+                            "THE BODY marks the wall-run and the wall jump");
+                    h.assertFalse(dev.awaken.core.api.MovementHooks.remembered(sp, "hang"), "and nothing else");
+                    h.assertFalse(Trials.remember(sp, Trial.WALL, d, false, false), "a move is remembered once");
+                    h.assertTrue(Trials.prizeLine(c, d).equals("You made it to the end of the dream."), "the second time, just the end");
                     done(h, sp);
                 })
                 .thenSucceed();

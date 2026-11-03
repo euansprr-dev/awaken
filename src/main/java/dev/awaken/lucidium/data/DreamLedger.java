@@ -48,6 +48,8 @@ public final class DreamLedger {
     public final Set<String> remembered = new LinkedHashSet<>();
     /** Waiting refs already given out (a bell taken, a place shown), so the same prize never waits twice. */
     public final Set<String> given = new LinkedHashSet<>();
+    /** Each Run's best run as a ghost (SPEC §9.4): a packed sample every {@link #GHOST_EVERY} ticks from the doorway. */
+    public final Map<String, int[]> ghosts = new LinkedHashMap<>();
     public long lastDreamDay = Long.MIN_VALUE / 2;
     public long lastNewDay = Long.MIN_VALUE / 2;
     /** The Dream Journal's choice for tonight ("" the oldest waiting): a trial kind or "bell". */
@@ -126,6 +128,32 @@ public final class DreamLedger {
     }
 
     // ---- save ------------------------------------------------------------------------------------------------------
+
+    public static final Codec<Map<String, int[]>> GHOSTS = Codec.unboundedMap(Codec.STRING,
+            Codec.INT_STREAM.xmap(java.util.stream.IntStream::toArray, java.util.Arrays::stream));
+
+    /** A ghost's samples: every 4 ticks, at most 2.5 minutes of run. */
+    public static final int GHOST_EVERY = 4, GHOST_MAX = 750;
+
+    /** One ghost sample, from the course's start in quarter blocks: x in 9 bits, y in 10, z in 13 (each signed). */
+    public static int pack(double dx, double dy, double dz) {
+        int qx = Math.clamp(Math.round(dx * 4), -256, 255) & 0x1FF;
+        int qy = Math.clamp(Math.round(dy * 4), -512, 511) & 0x3FF;
+        int qz = Math.clamp(Math.round(dz * 4), -4096, 4095) & 0x1FFF;
+        return qx | qy << 9 | qz << 19;
+    }
+
+    public static double unpackX(int v) {
+        return ((v << 23) >> 23) / 4.0;
+    }
+
+    public static double unpackY(int v) {
+        return ((v << 13) >> 22) / 4.0;
+    }
+
+    public static double unpackZ(int v) {
+        return (v >> 19) / 4.0;
+    }
 
     public static final Codec<List<Waiting>> WAITING = Waiting.CODEC.listOf();
     public static final Codec<List<Finished>> FINISHED = Finished.CODEC.listOf();

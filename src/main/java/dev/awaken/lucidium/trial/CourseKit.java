@@ -1,7 +1,9 @@
 package dev.awaken.lucidium.trial;
 
+import dev.awaken.body.GripRules;
 import dev.awaken.body.RunnerRules;
 import dev.awaken.lucidium.LucidiumContent;
+import dev.awaken.lucidium.block.DreamRibbonBlock;
 import dev.awaken.lucidium.block.WakingVeilBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,7 +26,7 @@ import java.util.Map;
 /**
  * Lays a trial's course along +z, piece by piece, and proves it (SPEC §9.3, like the Gauntlet's solver): every piece
  * records what a runner does there, and {@link #solve} walks them in order with the body's own probes
- * ({@link RunnerRules#findWall}, {@link RunnerRules#findEdge}) over the course's blocks, so a wall you're meant to run
+ * ({@link RunnerRules#findWall}, {@link RunnerRules#findEdge}, the climb's and the grip's) over the course's blocks, so a wall you're meant to run
  * on really is runnable, and an edge you're meant to hang from really holds, by the same code the body moves with.
  * The time it takes is the course's par.
  *
@@ -48,6 +50,8 @@ public final class CourseKit {
     boolean layRoad;
     /** Walls slide in from the clouds as you come (the wall's twist). */
     boolean slideWalls;
+    /** The faces grow up out of the road as you come (the climb's twist: a tower that grows). */
+    boolean growFaces;
     private @Nullable AABB goal;
     private @Nullable BlockPos bell;
     private String failure = "";
@@ -57,6 +61,7 @@ public final class CourseKit {
     final BlockState ledge = LucidiumContent.DREAM_LEDGE.get().defaultBlockState();
     final BlockState cloud = LucidiumContent.DREAM_CLOUD.get().defaultBlockState();
     final BlockState doorLight = LucidiumContent.WAKING_DOOR.get().defaultBlockState();
+    final BlockState ribbonUp = LucidiumContent.DREAM_RIBBON.get().defaultBlockState().setValue(DreamRibbonBlock.FACING, Direction.NORTH);
 
     public CourseKit(int x, int y, int z) {
         this.x = x;
@@ -67,7 +72,7 @@ public final class CourseKit {
 
     // ---- what a runner does on each piece -------------------------------------------------------------------------
 
-    enum Kind { ROAD, GAP, UP, DOWN, WALLRUN, CHAIN, HANG, SHIMMY, RAIL, BEAM }
+    enum Kind { ROAD, GAP, UP, DOWN, WALLRUN, CHAIN, HANG, SHIMMY, RAIL, BEAM, CLIMB, GRIP }
 
     /** One piece as the solver sees it: its kind, its length and where it starts (feet). */
     record Step(Kind kind, int len, int x, int y, int z, int side) {}
@@ -196,6 +201,39 @@ public final class CourseKit {
         for (int k = 0; k < len; k += 2) path.add(new Vec3(x + side * 0.9 + 0.5, y + 0.5, z + k + 0.5));
         z += len;
         return this;
+    }
+
+    /**
+     * A face across the way too high to hang from a jump, {@code h} high (5 or 6) with a glowing lip: with Wall Stride,
+     * jump at it holding forward to run up it into the lip's hang, then climb out on top.
+     */
+    public CourseKit climbUp(int h, int depth) {
+        face(h, depth);
+        steps.add(new Step(Kind.CLIMB, h, x, y, z, 0));
+        for (int k = 1; k < h; k += 2) path.add(new Vec3(x + 0.5, y + k, z - 0.4));
+        y += h;
+        z += depth;
+        return this;
+    }
+
+    /** A face {@code h} high with a ribbon of light up its middle: walk into the ribbon, climb it, take the lip, climb out. */
+    public CourseKit ribbon(int h, int depth) {
+        face(h, depth);
+        for (int k = 0; k < h; k++) put(x, y + k, z - 1, ribbonUp, growFaces && k > 1);
+        steps.add(new Step(Kind.GRIP, h, x, y, z, 0));
+        for (int k = 1; k < h; k += 2) path.add(new Vec3(x + 0.5, y + k, z - 0.6));
+        y += h;
+        z += depth;
+        return this;
+    }
+
+    /** A face across the road, {@code h} high and {@code depth} deep, its top a glowing lip (growing as you come with the climb's twist). */
+    private void face(int h, int depth) {
+        for (int k = 0; k < depth; k++)
+            for (int w = -1; w <= 1; w++) {
+                for (int yy = y - 1; yy < y + h - 1; yy++) put(x + w, yy, z + k, wall, growFaces && yy > y);
+                put(x + w, y + h - 1, z + k, ledge, growFaces);
+            }
     }
 
     /** A rail across the road (a fence, or a wall on {@code onBlock}): run at it to vault it. */
@@ -370,6 +408,39 @@ public final class CourseKit {
                     }
                     if (!solid(v, s.x + s.side, s.y - 1, s.z + s.len)) return fail(s, "no road under the end of the lip");
                     t += s.len / RunnerRules.SHIMMY + 16;
+                }
+                case CLIMB -> {
+                    double px = s.x + 0.5, pz = s.z - 0.3 - 0.05;
+                    // a plain jump mustn't reach it (else it's a hang, not a climb)
+                    for (double up = 0.0; up <= 1.25; up += 0.25)
+                        if (RunnerRules.findEdge(v, ctx, m, px, s.y + up, pz, 2, 1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2) != null)
+                            return fail(s, "a jump reaches the lip at " + s.len + " high");
+                    if (RunnerRules.wallAhead(v, ctx, m, px, s.y + 0.42, pz, 0f, RunnerRules.CLIMB_REACH) == null) return fail(s, "no face to run up");
+                    // the body's climb tick by tick (RunnerMoves.tryClimb, climbTick): early in a jump, up the face into the lip's hang
+                    double fy = s.y + 0.42, vy = 0.33;
+                    vy += (RunnerRules.climbTarget(0) - vy) * 0.5;
+                    fy += vy;
+                    RunnerRules.Edge e = null;
+                    for (int age = 1; age <= RunnerRules.CLIMB_TICKS && e == null; age++) {
+                        e = RunnerRules.findEdge(v, ctx, m, px, fy, pz, 2, 1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+                        if (e != null || age == RunnerRules.CLIMB_TICKS) break;
+                        if (RunnerRules.wallOn(v, ctx, m, px, fy, pz, 2, 1, RunnerRules.CLIMB_REACH + 0.1, 0, 0) == null) return fail(s, "the face ends before the lip");
+                        vy += (RunnerRules.climbTarget(age) - vy) * 0.5;
+                        fy += vy;
+                    }
+                    if (e == null) return fail(s, "the climb doesn't reach the lip at " + s.len + " high");
+                    if (RunnerRules.climbOut(v, ctx, m, e) == null) return fail(s, "no climbing out on top");
+                    t += RunnerRules.CLIMB_TICKS + 24;
+                }
+                case GRIP -> {
+                    GripRules.Line l = GripRules.find(v, m, s.x + 0.5, s.y, s.z - 0.5, 0f);
+                    if (l == null) return fail(s, "no ribbon to grip");
+                    double top = GripRules.climbTop(v, ctx, m, l, s.y);
+                    if (top < s.y + s.len - 2.6) return fail(s, "the ribbon stops " + (s.y + s.len - top) + " under the lip");
+                    RunnerRules.Edge e = GripRules.topLip(v, ctx, m, l.x(), top, l.z(), 2, 1, 0);
+                    if (e == null) return fail(s, "no lip over the ribbon's top");
+                    if (RunnerRules.climbOut(v, ctx, m, e) == null) return fail(s, "no climbing out on top");
+                    t += (top - s.y) / GripRules.CLIMB + 24;
                 }
                 case RAIL -> t += 8;
                 case BEAM -> {

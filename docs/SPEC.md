@@ -451,9 +451,30 @@ bed sheds a few pearl motes at night (client, `DreamWaiting` payload).
   ring, a line to flash, glint) once a second and on change, `DreamWaiting` (your bed or none), `WakeUp` (C→S); the
   dream HUD's `TRIAL` flag hides the meter. Look: `TrialHud` (crescent clock, rose in the last 10 s), `TrialRings` (own
   gold bands, not end rods), `PearlMoteParticle`, the Waking Veil and dream road blocks (`tools/art/specs/dreams.py`).
-- **Tests**: `dreams_runs_solvable` (every variant of every built Run passes its own solver), `dreams_waiting_ledger`,
-  `dreams_arrival`, `dreams_clock`, `dreams_catch_never_wakes`, `dreams_wake_button`, `dreams_win`. Tour
-  `tools/autopilot/dreams-first.txt`.
+- **Tests**: `dreams_runs_solvable` (every built trial's first variant passes its own solver, with a bell and without),
+  `dreams_waiting_ledger`, `dreams_arrival`, `dreams_clock`, `dreams_catch_never_wakes`, `dreams_wake_button`,
+  `dreams_win`. Tour `tools/autopilot/dreams-first.txt` (admin `/awaken dream offer <trial>`, `control` = H, `ring <n>`;
+  past the last ring, the goal).
+
+### 9.4 Runs: what the body keeps
+
+- **Moves remembered**: the first finish of a Run remembers its moves for the body (`Trial.moves()`: the wall: wall-run
+  and wall jump; the ledge: hang, shimmy, ledge jump; over and under: vault and slide; the climb: wall climb and grip;
+  the rope, leap and wings name their Ascent tiers). `MovementHooks.remember` sets `BodyMemory.remembered` (schema 2,
+  synced to its owner) and THE BODY says "Remembered in a dream." under each. The prize line: "Your body remembers the
+  wall-run."; the morning card adds the move to "You kept" and says how to do it awake (`Trial.how`). The tip that
+  teaches it awake counts done (`ascent/freerun`, `rope`, `leaper`, `wings`).
+- **Mastery**: 50 points on the Run's Ascent track the first finish, 50 the first gold (`MovementHooks.addMastery`,
+  `AscentServer.addMastery`: no chain link).
+- **Ghosts**: the best run of each Run is kept (`DreamLedger.ghosts`: a sample every 4 ticks from the doorway, ≤ 750,
+  packed in quarter blocks from the course's start); replays show it (stage 4).
+- **The climb** (Wall Stride held): faces 5 or 6 high run up into the lip's hang (`CourseKit.climbUp`, proved by the
+  body's own climb tick by tick: `climbTarget`, `wallOn`, `findEdge`; a plain jump must not reach the lip), and faces
+  with a Dream Ribbon up their middle (`DreamRibbonBlock`, a climb line in `awaken:runner_climbs`; proved by
+  `GripRules.find`, `climbTop`, `topLip`, then `climbOut`). The tower grows: the faces rise out of the road as you come.
+  The door is at the top.
+- **Tests**: `dreams_move_remembered` (the wall remembered once, the ghost kept, a sample packs and unpacks); the climb in
+  `dreams_runs_solvable`. Tour `tools/autopilot/dreams-runs.txt`.
 
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and
@@ -783,7 +804,9 @@ of `AwakenConfig.Client`.
   at)`: where this trial's bell hangs, or null), `bellTaken(ServerPlayer)` (the bells module calls it when a managed dream
   bell is struck). `core.api.BellHooks.dreamBellNext(ServerPlayer)` — the first dream bell not held whose rank you have
   (`dreaming` at no rank), "" when none; installed by the bells module. The lucidium's `trial.CourseKit` reads the body's
-  `RunnerRules` probes (`findWall`, `findEdge`, `climbOut`, `HANG_HEADROOM`) read only, to prove its courses.
+  `RunnerRules` probes (`findWall`, `findEdge`, `climbOut`, `wallAhead`, `wallOn`, `climbTarget`) and `GripRules`
+  (`find`, `climbTop`, `topLip`) read only, to prove its courses. `core.api.MovementHooks.remember(player, moves)`,
+  `remembered(player, move)` (both sides) and `addMastery(player, track, points)` (§9.4), installed by the body.
 
 ---------------------------------------------------------------------------------------------------------------------
 

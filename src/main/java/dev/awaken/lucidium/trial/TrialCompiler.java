@@ -146,6 +146,13 @@ public final class TrialCompiler {
             case VAULT -> k.road(5).ring().road(2).rail(false).road(4).rail(true).road(3).beam().road(4).ring().road(2)
                     .road(2).rail(false).road(2).beam().road(2).rail(true).road(4).ring().road(2).beam().road(1).beam().road(3)
                     .rail(false).road(4);
+            case CLIMB -> {
+                // a tower that grows as you come: faces to run up (Wall Stride) and ribbons to climb, the door at the top
+                int high = variant == 0 ? 6 : 5, rib = Math.max(6, 10 - 2 * variant);
+                k.growFaces = true;
+                k.road(8).ring().road(2).climbUp(5, 3).road(3).ring().road(1).ribbon(rib - 2, 3).road(3).climbUp(high, 2).ring()
+                        .road(2).hangUp(3, 2).road(2).ribbon(rib, 3).ring().road(3);
+            }
             default -> k.road(12).ring().road(12);
         }
         if (bell) k.dais();

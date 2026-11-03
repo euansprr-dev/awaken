@@ -47,7 +47,7 @@ public final class DreamOffers {
     /** The level road's flag (level 12) that brings the first dream. */
     static final String FLAG = "awaken:dreams";
     /** The trials with a course built so far, in the order they come to wait. */
-    static final Set<Trial> BUILT = Set.of(Trial.FIRST, Trial.WALL, Trial.LEDGE, Trial.VAULT);
+    static final Set<Trial> BUILT = Set.of(Trial.FIRST, Trial.WALL, Trial.LEDGE, Trial.VAULT, Trial.CLIMB);
     /** A trial dream's runway: the wait for H, the longest clock with every second added, and the prize. */
     static final int DURATION = Trials.WAIT_MAX + 20 * 60 * 6;
     static final int EVERY = 100;
@@ -104,6 +104,7 @@ public final class DreamOffers {
         if (!BUILT.contains(t) || l.finished(t.id) || l.isWaiting(t.id)) return false;
         return switch (t) {
             case WALL, LEDGE, VAULT -> true; // the Runner's moves are yours from the start
+            case CLIMB -> dev.awaken.powers.Powers.owns(sp, dev.awaken.body.RunnerRules.STRIDE_POWER); // running up a face needs Wall Stride
             default -> false;
         };
     }

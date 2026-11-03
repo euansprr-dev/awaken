@@ -29,7 +29,7 @@ public final class LucidiumModule {
         dev.awaken.lucidium.dream.TrialTests.register();
         dev.awaken.core.api.Sources.neverHeld("a trial dream's course (the road, its walls and ledges, the Waking Door and its light): "
                 + "only ever in a dream, unbreakable, drops nothing (lucidium.trial.CourseKit)",
-                "dream_road", "dream_wall", "dream_ledge", "waking_door", "waking_veil");
+                "dream_road", "dream_wall", "dream_ledge", "waking_door", "waking_veil", "dream_ribbon");
         LucidiumTests.register();
         dev.awaken.lucidium.dream.TogetherDreamTests.register();
     }

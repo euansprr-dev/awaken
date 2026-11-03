@@ -147,6 +147,25 @@ def veil_frames(n=16):
     return frames
 
 
+def ribbon_frames(n=12):
+    """The climb's ribbon: a band of pearl light up the face, knotted where the hands go, a gold thread rising through it."""
+    frames = []
+    for f in range(n):
+        c = Canvas()
+        for y in range(16):
+            for x in range(4, 12):
+                edge = min(x - 4, 11 - x)          # 0 at the band's edge, 3 in its middle
+                knot = (y % 4) == 1                # a knot every four pixels: the hands' places
+                a = 150 + 30 * edge + (40 if knot else 0)
+                col = PEARL[5] if knot or edge >= 2 else PEARL[4]
+                c.set(x, y, (*col[:3], min(255, a)))
+            # the thread, climbing slowly
+            t = (y + f * 16 // n) % 16
+            c.set(7 + (1 if t % 8 < 4 else 0), y, (*GOLD[4 if t < 8 else 3][:3], 255))
+        frames.append(c)
+    return frames
+
+
 def mote():
     """The bed's pearl mote (and the course's dust): a soft point with a gold heart."""
     c = Canvas(8, 8)
@@ -170,6 +189,7 @@ def build(out):
     out.block("dream_ledge_glow", ledge_glow())
     out.block("waking_door", door_frames(), frametime=5)
     out.block("waking_veil", veil_frames(), frametime=3)
+    out.block("dream_ribbon", ribbon_frames(), frametime=4)
     out.particle("pearl_mote", mote())
 
 
@@ -226,10 +246,21 @@ def content():
                         "elements": [{"from": [0, 0, 7], "to": [16, 16, 9], "light_emission": 15,
                                       "shade_direction_override": "up",
                                       "faces": {d: {"texture": "#all"} for d in ("north", "south")}}]},
+        "dream_ribbon": {"parent": "minecraft:block/block", "ambientocclusion": False,
+                         "textures": {"particle": "awaken:block/dream_ribbon",
+                                      "all": {"sprite": "awaken:block/dream_ribbon", "force_translucent": True}},
+                         "elements": [{"from": [0, 0, 15.2], "to": [16, 16, 15.2], "light_emission": 12,
+                                       "shade_direction_override": "up",
+                                       "faces": {"north": {"uv": [0, 0, 16, 16], "texture": "#all"},
+                                                 "south": {"uv": [16, 0, 0, 16], "texture": "#all"}}}]},
     }
     for name, model in models.items():
         _write(os.path.join(ASSETS, f"models/block/{name}.json"), model)
-        if name == "waking_veil":
+        if name == "dream_ribbon":
+            _write(os.path.join(ASSETS, f"blockstates/{name}.json"), {"variants": {
+                f"facing={d}": ({"model": f"awaken:block/{name}", "y": y} if y else {"model": f"awaken:block/{name}"})
+                for d, y in (("north", 0), ("east", 90), ("south", 180), ("west", 270))}})
+        elif name == "waking_veil":
             _write(os.path.join(ASSETS, f"blockstates/{name}.json"), {"variants": {
                 "axis=x": {"model": f"awaken:block/{name}", "y": 90},
                 "axis=z": {"model": f"awaken:block/{name}"}}})
@@ -242,7 +273,10 @@ def content():
         "block.awaken.dream_ledge": "Dream Ledge",
         "block.awaken.waking_door": "Waking Door",
         "block.awaken.waking_veil": "Waking Light",
+        "block.awaken.dream_ribbon": "Dream Ribbon",
     })
+    # the ribbon is a climb line for the body's grip
+    _merge(os.path.join(MERGE, "data/awaken/tags/block/runner_climbs.json"), {"values": ["awaken:dream_ribbon"]})
     print("dreams: content written")
 
 

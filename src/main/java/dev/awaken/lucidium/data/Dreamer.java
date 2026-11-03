@@ -250,6 +250,7 @@ public final class Dreamer implements ValueIOSerializable {
         out.store("finished", DreamLedger.FINISHED, List.copyOf(ledger.finished.values()));
         out.store("remembered", Codec.STRING.listOf(), List.copyOf(ledger.remembered));
         out.store("given", Codec.STRING.listOf(), List.copyOf(ledger.given));
+        if (!ledger.ghosts.isEmpty()) out.store("ghosts", DreamLedger.GHOSTS, Map.copyOf(ledger.ghosts));
         out.putLong("last_dream_day", ledger.lastDreamDay);
         out.putLong("last_new_day", ledger.lastNewDay);
         out.putString("choice", ledger.choice);
@@ -302,6 +303,8 @@ public final class Dreamer implements ValueIOSerializable {
         // schema 1 saves have no ledger: an old world is seeded at its first login since (DreamOffers.seed)
         ledger.read(in.read("waiting", DreamLedger.WAITING).orElse(List.of()), in.read("finished", DreamLedger.FINISHED).orElse(List.of()),
                 in.read("remembered", Codec.STRING.listOf()).orElse(List.of()), in.read("given", Codec.STRING.listOf()).orElse(List.of()));
+        ledger.ghosts.clear();
+        ledger.ghosts.putAll(in.read("ghosts", DreamLedger.GHOSTS).orElse(Map.of()));
         ledger.lastDreamDay = in.getLongOr("last_dream_day", Long.MIN_VALUE / 2);
         ledger.lastNewDay = in.getLongOr("last_new_day", Long.MIN_VALUE / 2);
         ledger.choice = in.getStringOr("choice", "");

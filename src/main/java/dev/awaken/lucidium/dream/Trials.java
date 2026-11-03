@@ -2,6 +2,8 @@ package dev.awaken.lucidium.dream;
 
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.DirectorLog;
+import dev.awaken.core.api.MovementHooks;
+import dev.awaken.core.api.TipHooks;
 import dev.awaken.lucidium.LucidiumContent;
 import dev.awaken.lucidium.data.DreamLedger;
 import dev.awaken.lucidium.data.DreamRecord;
@@ -142,6 +144,9 @@ final class Trials {
                     return false;
                 }
                 if (st.runStart == 0 && sp.getZ() > doorwayZ(c) + PAST_DOORWAY) st.runStart = now;
+                // the run as a ghost, from the doorway on
+                if (st.runStart > 0 && (now - st.runStart) % DreamLedger.GHOST_EVERY == 0 && st.traceLen < DreamLedger.GHOST_MAX)
+                    st.trace[st.traceLen++] = DreamLedger.pack(sp.getX() - c.start().x, sp.getY() - c.start().y, sp.getZ() - c.start().z);
                 AABB box = sp.getBoundingBox();
                 for (int i = st.ring + 1; i < c.rings().size(); i++) {
                     if (!box.intersects(c.rings().get(i).box())) continue;
@@ -261,7 +266,7 @@ final class Trials {
     static String prizeLine(Course c, Dreamer d) {
         if (c.bell() != null) return "You're holding the bell. Wake, and it's yours.";
         Trial t = c.trial();
-        if (t.run() && !t.move.isEmpty() && !d.ledger.remembered.contains(t.id)) return "Your body will remember this.";
+        if (t.run() && !t.move.isEmpty() && !d.ledger.remembered.contains(t.id)) return "Your body remembers " + t.moveName() + ".";
         return "You made it to the end of the dream.";
     }
 
@@ -292,15 +297,21 @@ final class Trials {
             double xp = before == null ? XP_FIRST : before.day() != day ? XP_AGAIN : 0;
             if (xp > 0) Progression.worldXp(sp, "awaken:dream_trial", xp);
             DreamOffers.give(sp, new ItemStack(LucidiumContent.DREAM_RESIDUE.get(), RESIDUE));
+            boolean firstGold = medal == DreamLedger.GOLD && (before == null || before.medal() < DreamLedger.GOLD);
+            boolean learnt = remember(sp, t, d, before == null, firstGold);
             boolean best = before != null && st.wonTicks < before.best();
+            if (t.run() && (before == null || best)) d.ledger.ghosts.put(t.id, java.util.Arrays.copyOf(st.trace, st.traceLen));
             rows.add(new SignalWindow.Row(Component.literal("Time"), Component.literal(time(st.wonTicks) + (best ? ", your best" : ""))));
             if (medal > 0) rows.add(new SignalWindow.Row(Component.literal("Medal"), Component.literal(medalName(medal))));
             List<String> kept = new ArrayList<>();
+            if (learnt) kept.add(t.moveName());
             if (c.bell() != null) kept.add("a bell");
             kept.add(RESIDUE + " Dream Residue");
             rows.add(new SignalWindow.Row(Component.literal("You kept"), Component.literal(String.join(", ", kept))));
             summary = t.title + ": reached the end in " + time(st.wonTicks) + (medal > 0 ? " (" + medalName(medal).toLowerCase() + ")" : "");
-            w = new Waking("You reached the end of the dream", "", rows, "Your Dream Journal has written it down.");
+            // the move goes in the body: the card says how to do it awake
+            String body = learnt ? "Your body remembers " + t.moveName() + ". " + t.how : "";
+            w = new Waking("You reached the end of the dream", body, rows, "Your Dream Journal has written it down.");
             DirectorLog.log(sp, "dream", "trial " + t.id + " won in " + st.wonTicks + " ticks (par " + c.par() + ", medal " + medal
                     + ", catches " + st.catches + ")");
         } else {
@@ -323,6 +334,37 @@ final class Trials {
     // ---- medals ------------------------------------------------------------------------------------------------------
 
     /** A Run's medal by the Gauntlet's rule: gold within par x 1.1 + 1 s, silver within par x 1.5 + 2 s, else bronze. */
+    /** A Run's mastery: on its Ascent track the first time you finish it, and again the first time you take its gold. */
+    static final int MASTERY_FIRST = 50, MASTERY_GOLD = 50;
+
+    /**
+     * A Run finished (SPEC §9.4): the first time, the body remembers its moves (THE BODY marks them), its track gets
+     * mastery and the free-run tip counts done; the first gold, mastery again. Returns whether the moves were remembered
+     * just now.
+     */
+    static boolean remember(ServerPlayer sp, Trial t, Dreamer d, boolean first, boolean firstGold) {
+        if (!t.run() || t.move.isEmpty()) return false;
+        if (!t.track.isEmpty()) {
+            int points = (first ? MASTERY_FIRST : 0) + (firstGold ? MASTERY_GOLD : 0);
+            if (points > 0) MovementHooks.addMastery(sp, t.track, points);
+        }
+        if (!d.ledger.remembered.add(t.id)) return false;
+        MovementHooks.remember(sp, t.moves());
+        TipHooks.done(sp, tipOf(t));
+        Progression.markNewThing(sp, "dream move " + t.id);
+        return true;
+    }
+
+    /** The tip that teaches a Run's moves awake. */
+    static net.minecraft.resources.Identifier tipOf(Trial t) {
+        return dev.awaken.Awaken.id(switch (t.track) {
+            case "TETHER" -> "ascent/rope";
+            case "LEAPER" -> "ascent/leaper";
+            case "WINGS" -> "ascent/wings";
+            default -> "ascent/freerun";
+        });
+    }
+
     /** Recall entries in a trial: two for each dream finished (a second each), or what an old save wrote, if more. */
     static int recall(Dreamer d) {
         return Math.max(d.recall, 2 * d.ledger.finished.size());

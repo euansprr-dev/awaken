@@ -5,6 +5,7 @@ import dev.awaken.Awaken;
 import dev.awaken.core.CoreModule;
 import dev.awaken.lucidium.block.DreamBellBlock;
 import dev.awaken.lucidium.block.DreamCloudBlock;
+import dev.awaken.lucidium.block.DreamRibbonBlock;
 import dev.awaken.lucidium.block.WakingVeilBlock;
 import dev.awaken.lucidium.data.DreamState;
 import dev.awaken.lucidium.data.Dreamer;
@@ -70,6 +71,9 @@ public final class LucidiumContent {
             p -> p.mapColor(MapColor.QUARTZ).strength(-1f, 3600000f).noLootTable().sound(SoundType.CALCITE).lightLevel(s -> 3));
     public static final DeferredBlock<Block> DREAM_LEDGE = BLOCKS.registerSimpleBlock("dream_ledge",
             p -> p.mapColor(MapColor.QUARTZ).strength(-1f, 3600000f).noLootTable().sound(SoundType.CALCITE).lightLevel(s -> 5));
+    public static final DeferredBlock<DreamRibbonBlock> DREAM_RIBBON = BLOCKS.registerBlock("dream_ribbon", DreamRibbonBlock::new,
+            p -> p.mapColor(MapColor.QUARTZ).strength(-1f, 3600000f).noLootTable().noOcclusion().sound(SoundType.AMETHYST)
+                    .lightLevel(s -> 9).isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false));
     public static final DeferredBlock<Block> WAKING_DOOR = BLOCKS.registerSimpleBlock("waking_door",
             p -> p.mapColor(MapColor.GOLD).strength(-1f, 3600000f).noLootTable().sound(SoundType.AMETHYST).lightLevel(s -> 15));
     public static final DeferredBlock<WakingVeilBlock> WAKING_VEIL = BLOCKS.registerBlock("waking_veil", WakingVeilBlock::new,

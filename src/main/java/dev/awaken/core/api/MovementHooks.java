@@ -34,6 +34,12 @@ public final class MovementHooks {
         default boolean hanging(Player p) { return false; }
         /** Sliding down a run of stairs or slabs (a slide, so {@link #sliding} is true too; SPEC §17.22). */
         default boolean stairSliding(Player p) { return false; }
+        /** A dream remembered these moves for the body (Move keys; SPEC §9.4): THE BODY marks them. Server. */
+        default void remember(ServerPlayer p, java.util.List<String> moves) {}
+        /** Whether a dream remembered the move (server, and the client for its own player). */
+        default boolean remembered(Player p, String move) { return false; }
+        /** Mastery points on an Ascent track (RUNNER, TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN), no chain link. Server. */
+        default void addMastery(ServerPlayer p, String track, int points) {}
     }
 
     /** Client side: the local player's power key sent a cast. */
@@ -105,6 +111,20 @@ public final class MovementHooks {
 
     public static void castStarting(ServerPlayer p) {
         access.castStarting(p);
+    }
+
+    /** A dream remembered moves for the body (SPEC §9.4). */
+    public static void remember(ServerPlayer p, java.util.List<String> moves) {
+        access.remember(p, moves);
+    }
+
+    public static boolean remembered(Player p, String move) {
+        return access.remembered(p, move);
+    }
+
+    /** Mastery on an Ascent track from outside the body (a dream's finish), without a chain link. */
+    public static void addMastery(ServerPlayer p, String track, int points) {
+        access.addMastery(p, track, points);
     }
 
     public static void clientCastStarting(Player p, String powerId, String family, boolean motionPredicted) {
