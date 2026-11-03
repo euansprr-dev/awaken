@@ -187,6 +187,11 @@ public final class AnvilClient {
 
     /** A weapon forged at the anvil says how well, plainly, its flaw if it has one, and who made it. */
     private static void onTooltip(ItemTooltipEvent e) {
+        if (e.getItemStack().is(AnvilContent.ANVIL_ITEM.get())) {
+            // said once, where it's true (SPEC §46.5)
+            e.getToolTip().add(Math.min(1, e.getToolTip().size()), Component.literal("Forges weapons stronger than any crafted sword or axe.").withColor(0x9AA6B8));
+            return;
+        }
         WeaponForged f = e.getItemStack().get(AnvilContent.FORGED.get());
         if (f == null) return;
         var lines = e.getToolTip();
