@@ -65,6 +65,8 @@ public final class Life {
 
     // ---- what the layer works out ----------------------------------------------------------------------------------
     final LifeRig rig;
+    /** The entity it lives in (its id): a dev trace finds it by this ({@link LifeTrace}). */
+    final int id;
     final LifeProfile p;
     /** The feet, for a body whose motion profile has a gait; the motion profile's body features. */
     final @org.jspecify.annotations.Nullable Legs legs;
@@ -124,6 +126,7 @@ public final class Life {
 
     Life(LifeRig rig, int seed) {
         this.rig = rig;
+        this.id = seed;
         this.p = rig.p;
         this.seed = 0x9E3779B97F4A7C15L ^ (seed * 0xBF58476D1CE4E5B9L);
         legs = rig.legs != null ? new Legs(rig.legs.rig, seed) : null;
@@ -347,6 +350,7 @@ public final class Life {
         }
         // a boss on a body with no fall clip topples its whole weight (root level)
         deathFall(dead);
+        if (LifeTrace.id == id) LifeTrace.frame(this, s);
     }
 
     /**
