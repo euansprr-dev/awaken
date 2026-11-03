@@ -32,8 +32,10 @@ final class ArmsBodies {
         if (clip == null) return;
         HELD.remove(e.getId());
         ArmsChop.moved(e.getId());
-        if (PlayerClips.play(e.getId(), clip, 1)) ArmsWrist.start(e, style, move);
+        boolean played = PlayerClips.play(e.getId(), clip, 1);
+        if (played) ArmsWrist.start(e, style, move);
         else ArmsWrist.stop(e);
+        if (e == net.minecraft.client.Minecraft.getInstance().player) ArmsFilm.event("clip " + clip + (played ? "" : " (none)"));
     }
 
     static void charge(Entity e) {

@@ -248,6 +248,19 @@ final class ArmsHands {
         boolean twin = idle && hand == FpSwings.Hand.BOTH;
         if (twin) offMoves = false;
         boolean mainIdle = idle && !mainMoves, offIdle = idle && !offMoves;
+        // between moves, the style in hand's stance (SPEC §25 "Hand-keyed moves": the Daggers held forward, the points in
+        // toward the crosshair), both hands of a pair; let go as the guard comes up, and never while the weapon cuts
+        FpSwings.Style rest = inHand == null ? null : FpSwings.style(inHand.id());
+        boolean stance = !cutting && preview == null && FpSwings.stance(rest, ours, REST_D, STANCE_Q);
+        boolean offStance = stance && !ArmsOffHand.shownTwin(p).isEmpty();
+        if (stance) {
+            float k = 1F - guard(p, partial);
+            REST_D.mul(k);
+            REST_Q.identity().slerp(STANCE_Q, k);
+        } else {
+            REST_D.zero();
+            REST_Q.identity();
+        }
         // a change of source (a chained strike, a move ended or refused, the charge taken up): each hand carried from
         // where it was shown into the new one, never a jump (SwingBlend)
         float now = handsNow();
@@ -259,17 +272,18 @@ final class ArmsHands {
             shownCutting = cutting;
             Archetype.MoveDef def = m == null ? null : style.move(m);
             float ticks = cutOut ? ArmsChop.OUT : def == null ? REST_BLEND : Mth.clamp(def.windup() * 0.8F, 1F, 2.5F);
+            ArmsFilm.event("source " + (m == null ? "-" : m.key) + " at " + t + " blend " + ticks + (ArmsPredict.charging ? " charging" : ""));
             sourceMotion(st, m, t, ours, has && !tremble);
-            MAIN_B.begin(now, mainMoves ? D : mainIdle ? IDLE_D : ZERO, mainMoves ? Q : mainIdle ? IDLE_Q : ID, mainMoves ? VD : ZERO,
-                    mainMoves ? VW : ZERO, ticks);
-            OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : ID, offMoves ? VD : ZERO,
-                    offMoves ? VW : ZERO, ticks);
+            MAIN_B.begin(now, mainMoves ? D : mainIdle ? IDLE_D : REST_D, mainMoves ? Q : mainIdle ? IDLE_Q : REST_Q,
+                    mainMoves ? VD : ZERO, mainMoves ? VW : ZERO, ticks);
+            OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : offStance ? REST_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : offStance ? REST_Q : ID,
+                    offMoves ? VD : ZERO, offMoves ? VW : ZERO, ticks);
         }
-        boolean mainShown = mainMoves || mainIdle || MAIN_B.active(now), offShown = offMoves || offIdle || OFF_B.active(now);
-        if (mainMoves) MAIN_D.set(D); else if (mainIdle) MAIN_D.set(IDLE_D); else MAIN_D.zero();
-        if (mainMoves) MAIN_Q.set(Q); else if (mainIdle) MAIN_Q.set(IDLE_Q); else MAIN_Q.identity();
-        if (offMoves) OFF_D.set(D); else if (offIdle) OFF_D.set(IDLE_D); else OFF_D.zero();
-        if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else OFF_Q.identity();
+        boolean mainShown = mainMoves || mainIdle || stance || MAIN_B.active(now), offShown = offMoves || offIdle || offStance || OFF_B.active(now);
+        if (mainMoves) MAIN_D.set(D); else if (mainIdle) MAIN_D.set(IDLE_D); else MAIN_D.set(REST_D);
+        if (mainMoves) MAIN_Q.set(Q); else if (mainIdle) MAIN_Q.set(IDLE_Q); else MAIN_Q.set(REST_Q);
+        if (offMoves) OFF_D.set(D); else if (offIdle) OFF_D.set(IDLE_D); else if (offStance) OFF_D.set(REST_D); else OFF_D.zero();
+        if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else if (offStance) OFF_Q.set(REST_Q); else OFF_Q.identity();
         MAIN_B.apply(now, MAIN_D, MAIN_Q);
         OFF_B.apply(now, OFF_D, OFF_Q);
         if (!mainShown && !offShown) return false;
@@ -280,7 +294,7 @@ final class ArmsHands {
 
     /** Ticks since a move of the hands' clock (hit-stop holds pause it, the tick rate scales it). */
     private static float handsNow() {
-        return (System.nanoTime() - ArmsFeel.paused()) / ArmsPredict.nanosPerTick();
+        return (ArmsFeel.nanos() - ArmsFeel.paused()) / ArmsFeel.TICK_NANOS;
     }
 
     // each hand carried across a change of its source; what was shown last; the new source's motion (VD blocks a tick,
@@ -291,8 +305,9 @@ final class ArmsHands {
     private static long shownNanos;
     private static boolean shownCharging, shownCutting;
     private static final org.joml.Vector3f VD = new org.joml.Vector3f(), VW = new org.joml.Vector3f(), ZERO = new org.joml.Vector3f(),
-            DA = new org.joml.Vector3f(), IDLE_D = new org.joml.Vector3f();
-    private static final org.joml.Quaternionf IDLE_Q = new org.joml.Quaternionf();
+            DA = new org.joml.Vector3f(), IDLE_D = new org.joml.Vector3f(), REST_D = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf IDLE_Q = new org.joml.Quaternionf(), REST_Q = new org.joml.Quaternionf(),
+            STANCE_Q = new org.joml.Quaternionf();
     private static final org.joml.Quaternionf ID = new org.joml.Quaternionf(), QA = new org.joml.Quaternionf(), QC = new org.joml.Quaternionf();
 
     /** The new source's motion at {@code t} into VD, VW (zero for a held pose). */

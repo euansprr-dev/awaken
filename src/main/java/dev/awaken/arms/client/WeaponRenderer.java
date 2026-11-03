@@ -76,6 +76,11 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         WeaponMotes.emit(mesh, poseStack.last().pose(), state != null && state.hand(), state == null ? 0 : state.energy() / 255F);
         // a blow in the air: the blade's own ribbon, from its middle to its point
         int side = state != null && state.twin() ? 1 : 0;
+        if (ArmsFilm.on() && ArmsFilm.ours(state)) {
+            float[] line = blade(mesh);
+            ArmsFilm.blade(ArmsFilm.side(state), ArmsFilm.firstPerson(state), poseStack.last().pose(), line[9], line[10], line[11], line[3],
+                    line[4], line[5]);
+        }
         if (state != null && state.wielder() >= 0 && BladeTrail.open(state.wielder(), side)) {
             float[] line = blade(mesh);
             // first person from mid-blade (the tip's path mostly leaves the view) or the style's own root, from 78% along
