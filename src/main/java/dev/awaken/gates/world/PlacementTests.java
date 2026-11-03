@@ -215,6 +215,8 @@ public final class PlacementTests {
                     if (nx < 0 || nz < 0 || nx >= side || nz >= side || ny < 0 || ny >= h) continue;
                     int m = (nx * side + nz) * h + ny;
                     if (open.get(m)) shown = true;
+                    // water beside it: it holds the water in
+                    if (!w.at(nx, ny + w.yLo, nz).getFluidState().isEmpty()) edge = true;
                     if (!structural.get(m) || seen.get(m)) continue;
                     seen.set(m);
                     queue = push(queue, tail++, m);
@@ -399,6 +401,77 @@ public final class PlacementTests {
         out.add(new GatePlan(0x1EA9L, version, Rank.C, Theme.CLOCKWORK_FOUNDRY, Layout.LABYRINTH, List.of(), Twist.NONE, 1,
                 GatePlan.LEAPER_TRIAL, Theme.CLOCKWORK_FOUNDRY, 0));
         return out;
+    }
+
+    /**
+     * Tours (SPEC 38.16): where to stand on a world floor to see what hung in the air there at version 8, the same view at
+     * any version, so before and after compare: the k-th biggest thing not held up (a floating lump, a string tied to
+     * nothing, litter on half steps counting half), seen from 6 to 13 blocks off over ground you walk to, nothing in the
+     * way. Floor-local x, absolute y, z, yaw and pitch like {@link Interiors#view}; null if nothing failed in sight.
+     */
+    static double[] floatView(GatePlan p, int area, int floor, int k) {
+        GatePlan was = new GatePlan(p.seed(), 8, p.rank(), p.theme(), p.layout(), p.modifiers(), p.twist(), p.floors(), p.boss(),
+                p.annexTheme(), p.annexRule(), p.worlds());
+        FloorLayout f = FloorBuilder.build(was).floor(area, floor);
+        if (f == null || !f.isWorld()) return null;
+        WorldCheck w = new WorldCheck(was, f);
+        Result r = check(w, "tour");
+        // what failed, weighed by how much it shows: lumps by their blocks, strings twice, the rest in 4-block cells
+        List<double[]> things = new ArrayList<>();
+        for (List<int[]> cl : r.floating) {
+            double x = 0, y = 0, z = 0;
+            for (int[] c : cl) {
+                x += c[0];
+                y += c[1];
+                z += c[2];
+            }
+            things.add(new double[]{x / cl.size(), y / cl.size(), z / cl.size(), cl.size()});
+        }
+        Map<Long, double[]> cells = new HashMap<>();
+        for (int[] b : r.bad) {
+            double[] c = cells.computeIfAbsent(((long) (b[0] >> 2) << 40) | ((long) ((b[1] >> 2) + 4096) << 20) | (b[2] >> 2), q -> new double[5]);
+            c[0] += b[0];
+            c[1] += b[1];
+            c[2] += b[2];
+            c[3] += b[3] == STRING || b[3] == Holds.STRAND ? 2 : b[3] == Holds.STAND ? 0.5 : 1;
+            c[4]++;
+        }
+        for (double[] c : cells.values()) things.add(new double[]{c[0] / c[4], c[1] / c[4], c[2] / c[4], c[3]});
+        things.sort((a, b) -> Double.compare(b[3], a[3]));
+        List<double[]> seen = new ArrayList<>();
+        for (int i = 0; i < things.size() && i < 80; i++) {
+            double[] t = things.get(i);
+            boolean near = false;
+            for (double[] s : seen) near |= Math.hypot(s[0] - t[0], s[2] - t[2]) < 24;
+            if (near) continue;
+            double[] v = lookAt(w, t[0] + 0.5, t[1] + 0.5, t[2] + 0.5);
+            if (v == null) continue;
+            if (seen.size() == k) return v;
+            seen.add(t);
+        }
+        return null;
+    }
+
+    /** A spot 6 to 13 blocks off (x, y, z) with room for a body, over ground you walk to and a clear line to it. */
+    private static double[] lookAt(WorldCheck w, double x, double y, double z) {
+        for (int d : new int[]{9, 7, 11, 13, 6})
+            for (int dy : new int[]{-2, -4, 0, -6, 2})
+                for (int a = 0; a < 16; a++) {
+                    double ang = a * Math.PI / 8;
+                    int sx = (int) Math.floor(x + d * Math.cos(ang)), sz = (int) Math.floor(z + d * Math.sin(ang)), sy = (int) Math.floor(y) + dy;
+                    if (!w.pass(sx, sy, sz) || !w.pass(sx, sy + 1, sz)) continue;
+                    boolean over = false;
+                    for (int yy = sy; yy >= sy - 6 && !over; yy--) over = w.reached(sx, yy, sz);
+                    if (!over) continue;
+                    double ex = sx + 0.5, ey = sy + 1.62, ez = sz + 0.5, dx = x - ex, dyy = y - ey, dz = z - ez;
+                    double len = Math.sqrt(dx * dx + dyy * dyy + dz * dz);
+                    boolean clear = true;
+                    for (double t = 0.5; t < len - 1.5 && clear; t += 0.25)
+                        clear = w.pass((int) Math.floor(ex + dx * t / len), (int) Math.floor(ey + dyy * t / len), (int) Math.floor(ez + dz * t / len));
+                    if (!clear) continue;
+                    return new double[]{ex, sy, ez, Math.toDegrees(Math.atan2(-dx, dz)), -Math.toDegrees(Math.atan2(dyy, Math.hypot(dx, dz)))};
+                }
+        return null;
     }
 
     static List<FloorLayout> floors(GateLayout l) {

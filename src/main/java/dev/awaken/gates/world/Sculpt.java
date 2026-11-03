@@ -277,6 +277,8 @@ final class Sculpt {
         private boolean[] loose = new boolean[64];
         /** Per palette entry: solid or a chain, what holds rock up when it touches it ({@link #crumbs}). */
         private boolean[] hard = new boolean[64];
+        /** Per palette entry: water or another fluid, which a lump touching it holds in (so it stays). */
+        private boolean[] wet = new boolean[64];
         private final Map<BlockState, Short> index = new IdentityHashMap<>();
 
         void reset(int x0, int z0, int yLo, int yHi) {
@@ -343,10 +345,12 @@ final class Sculpt {
                     thin = java.util.Arrays.copyOf(thin, p * 2);
                     loose = java.util.Arrays.copyOf(loose, p * 2);
                     hard = java.util.Arrays.copyOf(hard, p * 2);
+                    wet = java.util.Arrays.copyOf(wet, p * 2);
                 }
                 thin[p] = !s.isSolidRender() && s.getFluidState().isEmpty();
-                loose[p] = Holds.settles(Holds.rule(s));
+                loose[p] = Holds.settles(s);
                 hard[p] = Holds.rule(s) == Holds.SOLID || Holds.rule(s) == Holds.CHAIN;
+                wet[p] = !s.getFluidState().isEmpty();
             }
             cells[i] = p;
         }
@@ -409,11 +413,20 @@ final class Sculpt {
 
         /** How many chunks round this one a crumb test carves to follow a lump over a side before it calls it held. */
         static final int NEARS = 8;
-        private static final ThreadLocal<Buf[]> NEAR = ThreadLocal.withInitial(() -> new Buf[NEARS]);
+        /** Chunks carved by their operations alone, kept per thread for the floor's next chunks (its neighbours share them). */
+        private static final ThreadLocal<Nears> NEAR = ThreadLocal.withInitial(Nears::new);
+
+        private static final class Nears {
+            static final int SIZE = 12;
+            final Buf[] bufs = new Buf[SIZE];
+            final long[] keys = new long[SIZE];
+            /** The crumb test that last used each, and how many this one has used (at most {@link #NEARS}). */
+            final int[] used = new int[SIZE];
+            Sculpt owner;
+            int n, next, test, inTest;
+        }
         private static final ThreadLocal<long[]> OUTER = ThreadLocal.withInitial(() -> new long[256]);
         private static final ThreadLocal<java.util.Set<Long>> OUTER_SEEN = ThreadLocal.withInitial(java.util.HashSet::new);
-        private final long[] nearKey = new long[NEARS];
-        private int nearN;
 
         private boolean hardCell(int i) {
             short c = cells[i];
@@ -421,13 +434,27 @@ final class Sculpt {
         }
 
         /**
-         * What holds a lump up at a block of it, besides rock: the band's ends, floating on purpose, water under it or
-         * something placed under it that's flat on top.
+         * What holds a lump up at a block of it, besides rock: the band's ends, floating on purpose, water it holds in or
+         * stands in, or something placed under it that's flat on top.
          */
         private boolean holds(int i) {
             int ly = i >> 8;
             if (ly == 0 || ly == h - 1 || floats.get(i)) return true;
-            return under(cells[i - 256]);
+            return under(cells[i - 256]) || wet(x0 + (i & 15), yLo + ly, z0 + ((i >> 4) & 15));
+        }
+
+        private boolean fluid(int x, int y, int z) {
+            short c = get(x, y, z);
+            return c > SOLID && wet[c];
+        }
+
+        /** Whether water (or another fluid) touches (x, y, z) on a face, as far as this chunk shows. */
+        private boolean wet(int x, int y, int z) {
+            for (int d = 0; d < 6; d++) {
+                int j = i(x + (d == 0 ? 1 : d == 1 ? -1 : 0), y + (d == 2 ? 1 : d == 3 ? -1 : 0), z + (d == 4 ? 1 : d == 5 ? -1 : 0));
+                if (j >= 0 && cells[j] > SOLID && wet[cells[j]]) return true;
+            }
+            return false;
         }
 
         private boolean under(short b) {
@@ -437,18 +464,32 @@ final class Sculpt {
         }
 
         /**
-         * The chunk holding (x, z), carved by its operations alone (as its own carve has it before its crumbs), once per
-         * crumb test; null when too many are carved already.
+         * The chunk holding (x, z), carved by its operations alone (as its own carve has it before its crumbs), kept for
+         * the next tests; null when this test has used too many already.
          */
         private Buf near(Sculpt s, int x, int z) {
+            Nears nr = NEAR.get();
             long k = key(x >> 4, z >> 4);
-            Buf[] nb = NEAR.get();
-            for (int i = 0; i < nearN; i++) if (nearKey[i] == k) return nb[i];
-            if (nearN == NEARS) return null;
-            if (nb[nearN] == null) nb[nearN] = new Buf();
-            s.run(x >> 4, z >> 4, nb[nearN], false);
-            nearKey[nearN] = k;
-            return nb[nearN++];
+            for (int i = 0; i < nr.n; i++) {
+                if (nr.keys[i] != k) continue;
+                if (nr.used[i] != nr.test) {
+                    if (nr.inTest == NEARS) return null;
+                    nr.used[i] = nr.test;
+                    nr.inTest++;
+                }
+                return nr.bufs[i];
+            }
+            if (nr.inTest == NEARS) return null;
+            int slot = nr.n < Nears.SIZE ? nr.n++ : -1;
+            // full: the next one round that this test isn't using
+            for (int i = 0; slot < 0; i++) if (nr.used[(nr.next + i) % Nears.SIZE] != nr.test) slot = (nr.next + i) % Nears.SIZE;
+            nr.next = (slot + 1) % Nears.SIZE;
+            if (nr.bufs[slot] == null) nr.bufs[slot] = new Buf();
+            s.run(x >> 4, z >> 4, nr.bufs[slot], false);
+            nr.keys[slot] = k;
+            nr.used[slot] = nr.test;
+            nr.inTest++;
+            return nr.bufs[slot];
         }
 
         /**
@@ -464,7 +505,15 @@ final class Sculpt {
             int[] q = QUEUE.get();
             long[] oq = OUTER.get();
             java.util.Set<Long> oseen = OUTER_SEEN.get();
-            nearN = 0;
+            Nears nr = NEAR.get();
+            // another floor's chunks are no use (a sealed floor's ops never change, so its own stay good)
+            if (nr.owner != s) {
+                nr.owner = s;
+                nr.n = 0;
+                java.util.Arrays.fill(nr.used, 0);
+            }
+            nr.test++;
+            nr.inTest = 0;
             for (int s0 = 0; s0 < n; s0++) {
                 if (!hardCell(s0) || seen.get(s0)) continue;
                 int head = 0, tail = 0, ohead = 0, otail = 0, scanned = 0;
@@ -507,7 +556,7 @@ final class Sculpt {
                             int nx = wx + (d == 0 ? 1 : d == 1 ? -1 : 0), nz = wz + (d == 2 ? 1 : d == 3 ? -1 : 0);
                             if (i(nx, wy, nz) >= 0) continue;
                             Buf o = near(s, nx, nz);
-                            if (o == null) held = true;
+                            if (o == null || o.fluid(nx, wy, nz)) held = true;
                             else if (o.hard(nx, wy, nz) && oseen.add(pack(nx, wy, nz))) {
                                 if (otail == oq.length) OUTER.set(oq = java.util.Arrays.copyOf(oq, oq.length * 2));
                                 oq[otail++] = pack(nx, wy, nz);
@@ -520,7 +569,8 @@ final class Sculpt {
                         long k = oq[ohead++];
                         int wx = (int) (k >> 40), wy = (int) (k << 24 >> 44), wz = (int) (k << 44 >> 44);
                         Buf o = near(s, wx, wz);
-                        if (o == null || wy == yLo || wy == yLo + h - 1 || o.floats.get(o.i(wx, wy, wz)) || o.under(o.get(wx, wy - 1, wz))) held = true;
+                        if (o == null || wy == yLo || wy == yLo + h - 1 || o.floats.get(o.i(wx, wy, wz)) || o.under(o.get(wx, wy - 1, wz))
+                                || o.wet(wx, wy, wz)) held = true;
                         for (int d = 0; d < 6 && !held; d++) {
                             int nx = wx + (d == 0 ? 1 : d == 1 ? -1 : 0), ny = wy + (d == 4 ? 1 : d == 5 ? -1 : 0), nz = wz + (d == 2 ? 1 : d == 3 ? -1 : 0);
                             if (ny < yLo || ny >= yLo + h) continue;
@@ -533,7 +583,7 @@ final class Sculpt {
                                 continue;
                             }
                             Buf o2 = near(s, nx, nz);
-                            if (o2 == null) held = true;
+                            if (o2 == null || o2.fluid(nx, ny, nz)) held = true;
                             else if (o2.hard(nx, ny, nz) && oseen.add(pack(nx, ny, nz))) {
                                 if (otail == oq.length) OUTER.set(oq = java.util.Arrays.copyOf(oq, oq.length * 2));
                                 oq[otail++] = pack(nx, ny, nz);

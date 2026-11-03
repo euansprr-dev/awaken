@@ -67,6 +67,10 @@ final class BellPieces {
             }
         }
         s.put(ax, top - (corner ? 3 : 2), az, lamp);
+        // version 9: the lamp hangs from the canon on a chain where the body isn't round it (a swinging bell's) (38.16)
+        if (chainTo == UP) s.op(ax, top - (corner ? 2 : 1), az, ax, top - 1, az, (b, x, y, z) -> {
+            if (!b.hard(x, y, z)) b.set(x, y, z, chain);
+        });
     }
 
     /** A bell's {@code chainTo} on a version 9 floor (SPEC §38.16): its chain rises to whatever is over it. */

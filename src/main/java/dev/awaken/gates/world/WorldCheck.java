@@ -311,7 +311,10 @@ final class WorldCheck {
                     for (; y >= yLo; y--) {
                         int c = i(x, y, z);
                         BlockState st = palette.get(cells[c]);
-                        if (cells[c] != 0 && (st.canOcclude() || st.getBlock() == Blocks.WATER)) break;
+                        // layers (snow, a drift) let the sky through as the game does: only a full layer stops it
+                        boolean layers = cells[c] != 0 && st.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS)
+                                && st.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.LAYERS) < 8;
+                        if (cells[c] != 0 && (st.canOcclude() && !layers || st.getBlock() == Blocks.WATER)) break;
                         light[c] = 15;
                     }
                     low[x * SIDE + z] = y + 1;

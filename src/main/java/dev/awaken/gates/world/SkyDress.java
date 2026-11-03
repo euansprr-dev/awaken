@@ -272,8 +272,9 @@ final class SkyDress extends Dress {
             double px = lx - Math.cos(a) * 2.0, pz = lz - Math.sin(a) * 2.0;
             int wx = (int) Math.floor(px), wz = (int) Math.floor(pz);
             if (c.d(id, px, pz) > -1.6) continue;
-            // the pool sits in the turf, rock all round it
+            // the pool sits in the turf, rock all round it (from version 9 never under a feature, which would stand on water)
             c.s.op(wx, W - 1, wz, wx, W - 1, wz, (b, x, y, z) -> {
+                if (v9 && featureAt(x, z)) return;
                 if (solid(b, x, y - 1, z) && solid(b, x + 1, y, z) && solid(b, x - 1, y, z) && solid(b, x, y, z + 1) && solid(b, x, y, z - 1))
                     b.set(x, y, z, GatePainter.state("minecraft:water"));
             });

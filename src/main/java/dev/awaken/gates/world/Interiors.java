@@ -25,10 +25,12 @@ import java.util.Set;
  * gate's id or where its rooms are:
  * <ul>
  *   <li>{@code /awaken gate interior enter}: walk into the newest standing gate (yours first);</li>
- *   <li>{@code /awaken gate interior goto <start|piece|shrine|ante|lord|rig|place|over>}: inside a gate, stand where that
- *   place reads best (the first room facing the way on, the doorway of the floor's biggest set piece, the room before the
- *   Shrine facing its blue door, the antechamber facing the arena, the arena's doorway facing the Lord's spot, the Gate
- *   Rig's room from its doorway, a world floor's biggest place from where you walk in, or hovering over there);</li>
+ *   <li>{@code /awaken gate interior goto <start|piece|shrine|ante|lord|rig|place|over|float>}: inside a gate, stand where
+ *   that place reads best (the first room facing the way on, the doorway of the floor's biggest set piece, the room before
+ *   the Shrine facing its blue door, the antechamber facing the arena, the arena's doorway facing the Lord's spot, the Gate
+ *   Rig's room from its doorway, a world floor's biggest place from where you walk in, or hovering over there), or
+ *   hovering where a world floor's biggest thing hung in the air at version 8 is in view (38.16: the same view at any
+ *   version);</li>
  *   <li>{@code /awaken gate rig <start|solve>}: on your floor, start the rig room's first track as if its trigger fired,
  *   or turn a Mirror Hall's mirrors to their solution (tours shoot the moments without playing them).</li>
  * </ul>
@@ -42,7 +44,7 @@ public final class Interiors {
                 .then(Commands.literal("enter").executes(Interiors::enter))
                 .then(Commands.literal("goto").then(Commands.argument("spot", StringArgumentType.word())
                         .suggests((c, b) -> {
-                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord", "rig", "place", "place2", "over", "over2")) b.suggest(s);
+                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord", "rig", "place", "place2", "over", "over2", "float", "float2")) b.suggest(s);
                             return b.buildFuture();
                         })
                         .executes(c -> go(c, StringArgumentType.getString(c, "spot"))))))));
@@ -207,14 +209,14 @@ public final class Interiors {
             f = o;
             break;
         }
-        double[] view = view(f, spot);
+        double[] view = spot.startsWith("float") ? PlacementTests.floatView(g.plan, f.area, f.floor, spot.equals("float") ? 0 : 1) : view(f, spot);
         if (view == null) {
             c.getSource().sendFailure(Component.literal("No " + spot + " on this floor."));
             return 0;
         }
         Vec3 at = Vec3.atLowerCornerOf(GateService.world(g, f, 0, 0, 0)).add(view[0], view[1] - f.baseY, view[2]);
         p.teleportTo(gl, at.x, at.y, at.z, Set.of(), (float) view[3], (float) view[4], true);
-        if (spot.startsWith("over") && p.getAbilities().mayfly) {
+        if ((spot.startsWith("over") || spot.startsWith("float")) && p.getAbilities().mayfly) {
             // a view from the air: hover there (creative) rather than fall before the shot
             p.getAbilities().flying = true;
             p.onUpdateAbilities();

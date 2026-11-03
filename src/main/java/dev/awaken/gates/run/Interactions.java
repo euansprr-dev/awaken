@@ -179,7 +179,7 @@ public final class Interactions {
         Where w = Where.at(p.level().getServer(), pos);
         if (w == null || w.room() == null) return;
         for (Room.Feature f : w.room().features(Room.FeatureKind.RUNE)) {
-            BlockPos fp = GateService.roomFloor(w.gate(), w.floor(), w.room(), f.x(), f.z()).above(f.y());
+            BlockPos fp = GateService.feature(w.gate(), w.floor(), w.room(), f);
             if (fp.equals(pos)) {
                 Rooms.pressRune((ServerLevel) p.level(), p, w.gate(), w.floor(), w.room(), f);
                 return;
@@ -215,7 +215,7 @@ public final class Interactions {
         Where w = Where.at(p.level().getServer(), pos);
         if (w == null || w.room() == null || Runs.gateOf(p) == null) return;
         for (Room.Feature f : w.room().features(Room.FeatureKind.LANTERN)) {
-            BlockPos fp = GateService.roomFloor(w.gate(), w.floor(), w.room(), f.x(), f.z()).above(f.y());
+            BlockPos fp = GateService.feature(w.gate(), w.floor(), w.room(), f);
             if (fp.equals(pos)) {
                 Twists.takeLantern(p, w.gate(), w.floor(), w.room(), f, pos);
                 return;

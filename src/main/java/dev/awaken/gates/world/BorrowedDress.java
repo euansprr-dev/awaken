@@ -195,6 +195,13 @@ class BorrowedDress extends Dress {
         in.secret(r);
     }
 
+    /** The theme's own placements that waited for the solved ground (its strings, its flights), then any of this one's. */
+    @Override
+    void late() {
+        in.late();
+        super.late();
+    }
+
     @Override
     BlockState screen(int lat, int rise, int side) {
         return in.screen(lat, rise, side);

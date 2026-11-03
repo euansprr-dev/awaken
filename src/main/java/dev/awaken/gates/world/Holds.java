@@ -279,6 +279,16 @@ final class Holds {
     }
 
     /**
+     * What a settle may leave out: never a gate's own pieces (a shrine, a seal, a cache, a rune, a lost lantern, an
+     * updraft), which the game looks for where the plan put them; their placers stand them where they're held.
+     */
+    static boolean settles(BlockState s) {
+        Block b = s.getBlock();
+        return settles(rule(s)) && !(b instanceof GateBlocks.Shrine || b instanceof GateBlocks.Seal || b instanceof GateBlocks.Cache
+                || b instanceof GateBlocks.Rune || b instanceof GateBlocks.Lantern || b instanceof GateBlocks.Updraft);
+    }
+
+    /**
      * Leaves out what nothing holds up among {@code n} painted things at (xs, ys, zs), listed from the bottom up
      * ({@code grid} sees the painting, {@code drop} empties a block): hung things from the top down, standing things from
      * the bottom up, twice, so a chain left out takes its lantern with it. Returns how many were left out.

@@ -240,15 +240,19 @@ final class AbyssDress extends Dress {
 
     private record Flight(int x0, int z0, int side, BlockState step, BlockState under) {}
 
-    /** Ten steps down off an island's edge into the dark, candles on every third. */
+    /**
+     * Ten steps down off an island's edge into the dark, candles on every third: from version 9 on a pale post at the
+     * step's ends, since a stair's top doesn't hold a candle (38.16).
+     */
     private void flight(int x0, int z0, int side, BlockState step, BlockState under) {
         for (int i = 0; i < 10; i++) {
             int x = x0 + GatePainter.DX[side] * i, z = z0 + GatePainter.DZ[side] * i;
             for (int w = -1; w <= 1; w++) {
                 int sx = x + (side % 2 == 0 ? w : 0), sz = z + (side % 2 == 0 ? 0 : w);
                 int y = W - 1 - i;
+                BlockState tread = v9 && i % 3 == 1 && w != 0 ? pale : step;
                 c.s.op(sx, y, sz, sx, y, sz, (b, xx, yy, zz) -> {
-                    if (b.get(xx, yy, zz) == Sculpt.UNSET) b.set(xx, yy, zz, step);
+                    if (b.get(xx, yy, zz) == Sculpt.UNSET) b.set(xx, yy, zz, tread);
                 });
                 if (v9) c.s.op(sx, y - 1, sz, sx, y - 1, sz, (b, xx, yy, zz) -> {
                     if (b.get(xx, yy, zz) == Sculpt.UNSET) b.set(xx, yy, zz, under);

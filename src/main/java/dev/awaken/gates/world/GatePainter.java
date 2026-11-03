@@ -190,7 +190,10 @@ public final class GatePainter {
                             case 4 -> ly < h - 1 ? i + 256 : -1;
                             default -> ly > 0 ? i - 256 : -1;
                         };
-                        if (j < 0 || seen.get(j) || cells[j] == null || !hard(cells[j])) continue;
+                        if (j < 0 || cells[j] == null) continue;
+                        // water beside it: it holds the water in
+                        if (!cells[j].getFluidState().isEmpty()) held = true;
+                        if (seen.get(j) || !hard(cells[j])) continue;
                         seen.set(j);
                         if (tail == queue.length) queue = java.util.Arrays.copyOf(queue, tail * 2);
                         queue[tail++] = j;
@@ -209,7 +212,7 @@ public final class GatePainter {
                 int n = 0;
                 for (int i = 0; i < cap; i++) {
                     BlockState s = cells[i];
-                    if (s == null || !Holds.settles(Holds.rule(s))) continue;
+                    if (s == null || !Holds.settles(s)) continue;
                     if (n == xs.length) {
                         xs = java.util.Arrays.copyOf(xs, n * 2);
                         ys = java.util.Arrays.copyOf(ys, n * 2);
@@ -781,7 +784,7 @@ public final class GatePainter {
             if (r.shape == Room.Shape.PIT && fo == -2 && !p.liquid().isAir() && r.piece == null) {
                 set(bx, walk - 1, bz, p.floorAlt());
                 set(bx, walk, bz, p.liquid());
-            } else if (r.shape == Room.Shape.TERRACE && fo == 1 && edgeOfDais(x, z) && r.piece == null) {
+            } else if (r.shape == Room.Shape.TERRACE && fo == 1 && edgeOfDais(x, z) && r.piece == null && !standsOn(x, z)) {
                 set(bx, walk - 2, bz, p.fill());
                 set(bx, walk - 1, bz, GatePainter.facing(p.stair(), daisFacing(x, z)));
             } else {
@@ -805,6 +808,13 @@ public final class GatePainter {
             fill(bx, bz, x, z, walk, ceil - walk);
             if (fo == 0) decorate(bx, bz, x, z, walk, ceil, edge);
             else if (fo == -2 && r.shape == Room.Shape.PIT && theme == Theme.CLOCKWORK_FOUNDRY) set(bx, walk, bz, AIR);
+        }
+
+        /** Version 9 (38.16): a feature stands at (x, z), so the dais's edge there stays a full block, not a stair. */
+        boolean standsOn(int x, int z) {
+            if (plan.contentVersion() < 9) return false;
+            for (Room.Feature ft : r.features) if (ft.x() == x && ft.z() == z && ft.kind() != Room.FeatureKind.UPDRAFT) return true;
+            return false;
         }
 
         boolean edgeOfDais(int x, int z) {
@@ -1131,8 +1141,9 @@ public final class GatePainter {
             for (Room.Feature ft : r.features) {
                 if (ft.kind() == Room.FeatureKind.INNER_GATE) innerGate(ft, x0, z0);
                 if (ft.kind() == Room.FeatureKind.RIFT_WALL) riftWall(ft, x0, z0);
-                // on a world floor's ground (38.14) a feature stands where you'd stand over its column
-                int up = f.ground(ft.x(), ft.z());
+                // on a world floor's ground (38.14) a feature stands where you'd stand over its column, and from version 9 in
+                // a built room on its floor there (38.16)
+                int up = f.ground(ft.x(), ft.z()) + RoomGeometry.featureLift(plan.contentVersion(), f, r, ft);
                 if (ft.kind() == Room.FeatureKind.VAULT_CACHE) {
                     for (int[] b : FeatureBlocks.vaultBars(ft)) put(b[0], floorY + up + b[1], b[2], x0, z0, GatesRegistry.BARS.get().defaultBlockState());
                 }

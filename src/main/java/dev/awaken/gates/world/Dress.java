@@ -308,6 +308,12 @@ abstract class Dress {
     }
 
     /** Whether a block is rock or something solid as the carve so far leaves it (not the open dark), at plan time. */
+    /** Whether a feature (a shrine, a cache, a rune) stands on column (x, z): known once the plan is finished, so at carve time. */
+    boolean featureAt(int x, int z) {
+        for (Room r : p.b.rooms) for (Room.Feature ft : r.features) if (ft.x() == x && ft.z() == z) return true;
+        return false;
+    }
+
     boolean hardAt(int x, int y, int z) {
         return c.s.probe(x, y, z).hard(x, y, z);
     }
