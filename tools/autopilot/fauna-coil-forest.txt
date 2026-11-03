@@ -81,27 +81,33 @@ wait 40
 cmd gamemode spectator
 wait 5
 # 1. saved inside the great tree's crown (no spawn check runs for a summon with data): it works its way out
-cmd tp @s 22.5 216 1.0 90 4
-look 90 4
+# (the settled shot first: on CI it can wait a minute for the terrain, and the Coil is out in two seconds)
+cmd tp @s 16.5 216.5 1.0 90 6
+look 90 6
 wait 20
-cmd summon awaken:plumed_coil 3.5 215.2 1.0 {PersistenceRequired:1b,Tags:["coil"],Rotation:[90f,0f]}
 shot coil_crown_00
-wait 12
+cmd summon awaken:plumed_coil 3.5 215.2 1.0 {PersistenceRequired:1b,Tags:["coil"],Rotation:[90f,0f]}
 shotnow coil_crown_01
-wait 12
+wait 6
 shotnow coil_crown_02
-wait 12
+wait 6
 shotnow coil_crown_03
-wait 12
+wait 6
 shotnow coil_crown_04
-wait 15
+wait 6
 shotnow coil_crown_05
-wait 20
+wait 6
 shotnow coil_crown_06
-wait 30
+wait 6
 shotnow coil_crown_07
-wait 40
+wait 10
 shotnow coil_crown_08
+wait 10
+shotnow coil_crown_09
+wait 20
+shotnow coil_crown_10
+wait 40
+shotnow coil_crown_11
 # 2. it roams the grove: a wide view over the clearing and the crowns
 cmd tp @s 6.5 226 -24.5 0 22
 look 0 22
