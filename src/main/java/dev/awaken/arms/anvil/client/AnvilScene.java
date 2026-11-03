@@ -556,7 +556,11 @@ final class AnvilScene {
     /** The grindstone the work is ground at (§46.9): the nearest within six blocks of the anvil, read once a stage. */
     private static long wheelFor = Long.MIN_VALUE;
     private static @Nullable BlockPos wheel;
-    /** The blade lies on it point to your left (its grip to your right, under the hammer hand), as you stood when the act began. */
+    /**
+     * The wheel's front or back, whichever you stood on when the act began (the view's side: the blade lies across it), and
+     * whether the blade lies turned so its grip is to your right from there, under the hammer hand.
+     */
+    private static int wheelSideX, wheelSideZ;
     private static boolean wheelTurned;
 
     static @Nullable BlockPos wheel(@Nullable Level level, BlockPos anvil, long stageStart) {
@@ -573,11 +577,14 @@ final class AnvilScene {
             }
         }
         var me = Minecraft.getInstance().player;
-        if (wheel != null && me != null) {
-            Direction axle = level.getBlockState(wheel).getValueOrElse(GrindstoneBlock.FACING, Direction.NORTH).getClockWise();
-            double tx = me.getX() - (wheel.getX() + 0.5), tz = me.getZ() - (wheel.getZ() + 0.5);
-            // your right, facing the wheel, is (tz, -tx): the point goes the other way
-            wheelTurned = axle.getStepX() * tz - axle.getStepZ() * tx > 0;
+        if (wheel != null) {
+            Direction f = level.getBlockState(wheel).getValueOrElse(GrindstoneBlock.FACING, Direction.NORTH);
+            double tx = me == null ? 0 : me.getX() - (wheel.getX() + 0.5), tz = me == null ? 0 : me.getZ() - (wheel.getZ() + 0.5);
+            int s = f.getStepX() * tx + f.getStepZ() * tz >= 0 ? 1 : -1;
+            wheelSideX = f.getStepX() * s;
+            wheelSideZ = f.getStepZ() * s;
+            // seen from the front the axle (its clockwise) runs to your left, so the point goes along it; from the back, turned
+            wheelTurned = s < 0;
         }
         return wheel;
     }
@@ -899,11 +906,15 @@ final class AnvilScene {
             }
             lookAt = kind;
             if (kind == WHEEL && wheel != null) {
-                // the wheel's own place: a little back from it toward where you stand, over it
+                // the wheel's own place: over its front or back (your side), the blade across the frame, a hand at each
+                // end; if that's walled in, a little back from it toward where you stand
                 BlockPos at = wheel;
-                var me = Minecraft.getInstance().player;
-                double dx = me == null ? 0 : me.getX() - (at.getX() + 0.5), dz = me == null ? -1 : me.getZ() - (at.getZ() + 0.5), n = Math.max(1e-3, Math.sqrt(dx * dx + dz * dz));
-                AnvilCamera.aimAt(be.getLevel(), at.getX() + 0.5 + dx / n * 0.95, at.getY() + 1.7, at.getZ() + 0.5 + dz / n * 0.95);
+                AnvilCamera.aimAt(be.getLevel(), at.getX() + 0.5 + wheelSideX * 0.95, at.getY() + 1.7, at.getZ() + 0.5 + wheelSideZ * 0.95);
+                if (!AnvilCamera.aimed()) {
+                    var me = Minecraft.getInstance().player;
+                    double dx = me == null ? 0 : me.getX() - (at.getX() + 0.5), dz = me == null ? -1 : me.getZ() - (at.getZ() + 0.5), n = Math.max(1e-3, Math.sqrt(dx * dx + dz * dz));
+                    AnvilCamera.aimAt(be.getLevel(), at.getX() + 0.5 + dx / n * 0.95, at.getY() + 1.7, at.getZ() + 0.5 + dz / n * 0.95);
+                }
             } else if (kind == GRIP) {
                 // the grip's own place: the hammer's hand comes in from the right of the frame, the tongs' from below it
                 lookPoint(be, kind, T);

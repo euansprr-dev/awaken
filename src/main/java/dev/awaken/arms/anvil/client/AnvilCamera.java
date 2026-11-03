@@ -58,6 +58,11 @@ final class AnvilCamera {
         return toOk && active();
     }
 
+    /** The last look's place can be the view (else that look stays at your eyes). */
+    static boolean aimed() {
+        return toOk;
+    }
+
     /** The view leaves your eyes (it starts where they are). */
     static void begin() {
         Minecraft mc = Minecraft.getInstance();

@@ -17362,8 +17362,8 @@ bind, the hilt's taps (attuning's too) and the balance's start the whole weapon 
 right (`AnvilScene.hiltRight`; the bind turns it round from the knap over 12 ticks): the hammer's hand comes in from the
 right, the tongs (the hilt) or the steadying hand (the bind, at 0.7 of the blade) from the left. Those two have their own
 place, the grip's (from the hilt's middle: x +0.4, y +0.66, z -0.49, over the face's middle looking down and right onto
-it). At the wheel the blade lies with its grip to your right as you stood when the grind began, its flat turned with it so
-the edge stays down, the steadying hand at 0.9 of the blade. In the twist the turning hand holds just past the bar's end
+it). At the wheel the view stands over its front or back and the blade lies with its grip to your right, its flat turned
+with it so the edge stays down, the steadying hand at 0.9 of the blade (§46.9). In the twist the turning hand holds just past the bar's end
 (7 texels on, circling 1.5) and the tongs' handles run low to your left, so neither arm crosses the bar.
 A client-only camera entity (as the armour forge's §44.4),
 first person while it runs, your own body hidden, the real player never moving; your own field of view. A place in a
@@ -17702,7 +17702,9 @@ x each act's mark). None can fail, and one left alone settles itself.
   starlight's white as it drinks it (the weapon shader's glow code 6). Payload `STAR` 17.
 - **C, the grind** (`GRIND` 7, after the quench or the starlight): the view glides to the nearest grindstone within six
   blocks of the anvil (the anvil's face while there's none: the rebuilds' gate comes with them), the blade across the
-  wheel's rim, edge down. Hold use to turn the wheel: a gold line drifts up and down a channel beside it
+  wheel's rim, edge down. The view stands over the wheel's front or back, whichever side you're on (0.95 out, 1.7 up;
+  toward you if that's walled in), so the blade lies across the frame, its grip to your right under the hammer hand
+  and your other hand at 0.9 of the blade (§46.3, 2026-11-03). Hold use to turn the wheel: a gold line drifts up and down a channel beside it
   (`AnvilSong.grindLine`, two slow waves) and the mouse's height is the edge. Every 5 ticks of turning (`GRIND_GAP`) the
   client says how far the edge is off the line, in half the channel's height, marked 1 - |off| (`AnvilSong.grind`), and
   sparks fly off the edge; 10 make a pass (`PASS`), two passes the act, its mark their mean. A touch quicker than the
