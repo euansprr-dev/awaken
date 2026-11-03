@@ -1,4 +1,4 @@
-# Dreams remade, stages 0-1 (SPEC 9.1-9.3, 3 Nov 2026): the Tasks line when a dream waits, the first dream as you arrive
+# Dreams remade, stages 0-1 (SPEC 9.1-9.3, 3 Nov 2026): the Dream Journal when a dream waits, the first dream as you arrive
 # (the line, the doorway, the road's end far off), H taking control (goal, crescent clock), H again (the path glints),
 # rings along the road, a fall caught, the end; then the wall run won by teleport (prize, morning card with time and medal).
 #   tools/tour-ci.sh tools/autopilot/dreams-first.txt 1800
@@ -34,14 +34,16 @@ info
 camera first
 hud off
 
-# ---- 1. awake: a dream is waiting (the Tasks page says so, never what it holds) ----
+# ---- 1. awake: a dream is waiting (the Dream Journal says so, never what it holds) ----
 cmd gamemode survival
 cmd time set 14000
 cmd awaken dream offer first
 wait 120
-screen tasks
+cmd item replace entity @s hotbar.0 with awaken:dream_journal
+wait 10
+use
 wait 40
-shotnow df_00_tasks_waiting
+shotnow df_00_journal_waiting
 screen close
 wait 10
 
@@ -125,8 +127,8 @@ shotnow df_19_woke_card
 wait 60
 shot df_20_woke_room
 screen close
-screen tasks
+use
 wait 40
-shotnow df_21_tasks_after
+shotnow df_21_journal_after
 screen close
 quit

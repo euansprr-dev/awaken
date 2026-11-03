@@ -124,7 +124,7 @@ public final class ActiveDream {
         if (now % 2 == 0) tickClock(players);
         if (now % 20 == 5) tickSigns(players);
         if (now % 2 == 1) tickShadowless();
-        tickSwap(now, players);
+        if (bp.course == null) tickSwap(now, players); // a trial has no islands to swap (and no nodes)
     }
 
     private boolean anyoneNear(List<ServerPlayer> players, BlockPos pos, double dist) {
