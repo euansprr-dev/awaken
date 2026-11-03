@@ -53,8 +53,8 @@ look 0 4
 shot l4_rope_00_arrival
 cmd awaken dream control
 wait 30
-walk 70
-wait 50
+walk 50
+wait 70
 shot l4_rope_00b_walked
 hud off
 cmd awaken dream ring 1
@@ -95,9 +95,9 @@ cmd awaken dream control
 wait 30
 # just past the hallway's doorway (8 blocks in, ~44 ticks' walk): the ghost starts there and walks on ahead
 walk 46
-wait 20
+wait 66
 shot l4_replay_01_ghost
-wait 16
+wait 20
 shot l4_replay_02_ghost_later
 cmd awaken dream wake
 wait 200
