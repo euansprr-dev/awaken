@@ -680,8 +680,19 @@ public class FaunaMob extends AwakenMob {
         return below.is(BlockTags.ANIMALS_SPAWNABLE_ON) || below.is(BlockTags.SAND) || below.is(BlockTags.SNOW) ? 10.0F : 0.0F;
     }
 
+    /**
+     * Our wild things live among brambles (SPEC §47.13): a berry bush neither holds nor pricks them, as for a fox or a bee.
+     * The Briar Sow's own wallow is ringed with them, and walking it she was pricked twice a second, flashing, flinching
+     * and caught at every step: from afar she shook.
+     */
+    @Override
+    public void makeStuckInBlock(BlockState state, Vec3 speedMultiplier) {
+        if (!state.is(net.minecraft.world.level.block.Blocks.SWEET_BERRY_BUSH)) super.makeStuckInBlock(state, speedMultiplier);
+    }
+
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        if (source.is(net.minecraft.world.damagesource.DamageTypes.SWEET_BERRY_BUSH)) return false; // see makeStuckInBlock
         boolean hurt = super.hurtServer(level, source, damage);
         if (hurt && talent() == FaunaTalent.VENOM) WildTalents.venom(this, source);
         if (hurt && talent() == FaunaTalent.SPORE) WildTalents.puff(this, level);

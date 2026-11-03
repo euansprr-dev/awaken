@@ -26,6 +26,9 @@ public final class LivingHooks {
         default int calm(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, int reach) { return 0; }
         default void risen(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos at, String name, net.minecraft.core.BlockPos toward) {}
         default boolean visit(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos fire) { return false; }
+
+        /** Whether this body is a hunted quarry's carcass (SPEC §41.6): it lies as at the end of its fall. Both sides. */
+        default boolean carcass(net.minecraft.world.entity.Entity e) { return false; }
     }
 
     private static Bridge bridge = new Bridge() {};
@@ -52,6 +55,11 @@ public final class LivingHooks {
     /** After the Wake: Ilse comes up the path at {@code from} to visit the fire at {@code fire}. False when she couldn't. */
     public static boolean visit(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos fire) {
         return bridge.visit(level, from, fire);
+    }
+
+    /** A quarry's carcass (SPEC §41.6, §47.12): our renderers draw it fallen, its light out, never standing. Both sides. */
+    public static boolean carcass(net.minecraft.world.entity.Entity e) {
+        return bridge.carcass(e);
     }
 
     public static boolean paysKills() {

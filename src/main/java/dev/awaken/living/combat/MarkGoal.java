@@ -130,6 +130,7 @@ final class MarkGoal extends Goal {
                 if (ticks % 3 == 1 && cur != ALPHA) Moves.tellFx(level, mob, cur, rung, aim, Math.min(1F, (float) ticks / cur.windup()));
                 if (ticks >= cur.windup()) {
                     if (cur == ALPHA) Moves.rallyKin(level, mob, target, 12);
+                    else if (Moves.shot(cur) && !mob.getSensing().hasLineOfSight(target)) Moves.held(level, mob); // ducked out of its line (SPEC §47.11)
                     else Moves.strike(level, mob, target, cur, aim, rung);
                     ticks = 0;
                     phase = cur.kind() == Kind.LUNGE || cur.kind() == Kind.CHARGE ? Phase.ACT : Phase.REST;

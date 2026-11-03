@@ -134,14 +134,15 @@ public final class AbilityRunner {
         double d = mob.distanceTo(t) - t.getBbWidth() * 0.5 - mob.getBbWidth() * 0.5;
         if (d > a.range()) return false;
         return switch (a.kind()) {
-            case BOLT, ARROWS, BEAM, CHARGE -> mob.getSensing().hasLineOfSight(t);
+            // anything aimed at you, or that takes it to you, needs to see you (SPEC §47.11)
+            case BOLT, ARROWS, BEAM, CHARGE, CLOUD, RAIN, ROOT, FANGS, LIFT, PULL, BLINK -> mob.getSensing().hasLineOfSight(t);
             case SLAM -> d <= a.radius() + 0.5;
-            case CONE -> d <= a.radius();
+            case CONE -> d <= a.radius() && mob.getSensing().hasLineOfSight(t);
             case FANGS_RING, GUARD -> d <= 5;
             case SUMMON -> Mobs.minionRoom(level, mob, a.count());
             case DECOY -> level.getEntitiesOfClass(AwakenMob.class, mob.getBoundingBox().inflate(24), AwakenMob::isDecoy).size() < 3;
             case HEAL -> Abilities.alliesHurt(level, mob, a.radius());
-            case LEAP -> mob.onGround() && d > 1.5;
+            case LEAP -> mob.onGround() && d > 1.5 && mob.getSensing().hasLineOfSight(t);
             default -> true;
         };
     }
@@ -222,6 +223,7 @@ public final class AbilityRunner {
         mob.setTelegraph(0, false);
         cooldowns[activeIndex] = a.cooldown() + mob.getRandom().nextInt(20);
         global = mob.def().tier.isBoss() ? 14 : 28;
+        if (blind(level, a, t)) return;
         boolean was = Abilities.carrying;
         Abilities.carrying = carries;
         try {
@@ -363,6 +365,7 @@ public final class AbilityRunner {
             marks.clear();
             marks.add(Abilities.blinkSpot(mob, t));
         }
+        if (blind(level, a, t)) return;
         boolean was = Abilities.carrying;
         Abilities.carrying = carries;
         cls = kind;
@@ -375,6 +378,22 @@ public final class AbilityRunner {
             this.origin = null;
             Abilities.carrying = was;
         }
+    }
+
+    /**
+     * A shot never leaves without a clear line to the one it was meant for (SPEC §47.11): ducked behind a wall or a pillar
+     * through its wind-up, it lets go with a hiss and nothing flies. True when it held its shot.
+     */
+    private boolean blind(ServerLevel level, Ability a, @Nullable LivingEntity t) {
+        boolean shot = switch (a.kind()) {
+            case BOLT, ARROWS, BEAM, CLOUD, RAIN, CONE, ROOT, FANGS, LIFT, PULL -> true;
+            default -> false;
+        };
+        if (!shot || t == null || !t.isAlive() || mob.getSensing().hasLineOfSight(t)) return false;
+        Vec3 c = Abilities.chest(mob);
+        level.sendParticles(ParticleTypes.SMOKE, c.x, c.y, c.z, 6, 0.25, 0.2, 0.25, 0.01);
+        mob.playLevelSound(net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, 0.5F, 1.6F);
+        return true;
     }
 
     /** Where a kit move's area ability centres (null: the body's feet, as abilities always have). */

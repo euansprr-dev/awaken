@@ -15549,9 +15549,9 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   fights. A pack's alpha retreats to its den with its pack (§41.4). Every quarry under a third of its health **bleeds**: a
   blood sign every 3 blocks it moves (dark red drops, seen three in-game hours), read like any sign and part of its herd's trail
   ("Blood: the wounded aurochs went north-east, only minutes ago."). It stops bleeding back over half its health.
-- **The body** (`living.hunt.Carcass`): when a quarry someone hurt dies, its fall plays out, then a still copy (same kind, size,
+- **The body** (`living.hunt.Carcass`): when a quarry someone hurt dies, its fall plays out and the falling body goes (§47.12), then a still copy (same kind, size,
   age and colour; no AI, invulnerable, silent; attachment `awaken:carcass` = the game time it goes, synced so the client lays it
-  on its side as at the end of a fall, without the red) lies there for a minute. Every hunter who hurt it carves it three times
+  on its side as at the end of a fall, without the red; our own renderers too, `LivingHooks.carcass`) lies there for a minute. Every hunter who hurt it carves it three times
   (use it): an alpha's first carve is always the land's hide, then hide 40%, its first part 25%, meat 25% (beef, pork, mutton;
   leather for goats and horses; bone for the rest), two string 10%. Someone who didn't fight it can't. Each hunter studies the
   kind for ten research. When every hunter has carved, or the minute is up, it goes in a puff and its bones stay as a sign
@@ -18160,7 +18160,11 @@ at once; stage 2 adds phrases and the payoff on the pilots.
   `Strikes.tell`.
 - **Sounds** (synthesised, `tools/art/specs/audio_fights.py`, events `mobs.fights.*` in `src/main/merge/mobs_fights`):
   shot release and hum, volley throw, fall and landing, wave roll, lock, ground run, beam fire, pull draw, field hiss,
-  growl. Each plays from where its carrier is, so one behind you is heard.
+  growl. Each plays from where its carrier is, so one behind you is heard. None is a bed of hiss (Euan's playtest
+  2026-11-03, "really loud static noise in gate"): the field's loop (`fights_field_hiss`, under a cloud while it lasts) is
+  a cloud seething low, a slow breath, wet bubbling and a soft puff now and then, nothing above about 2.5 kHz. It was
+  white noise from 2.2 to 7 kHz, static by the gates' measure (2-8 kHz level and noise-likeness at the 90th percentile
+  moment, `tools/art/gate_world_mix.py`): -27 at its 0.6, against a rule of -36; now -55.
 - **The reach model** (`tools/sim/reach_sim.py`, `--model after`): every carrier of every creature can be escaped by a
   dash at its lock or a jump (`--all`: 395 of 395 attacks; the bosses' 148 of 148, where a dash at the first cue got
   out of 66-86% before, by distance).
@@ -18928,3 +18932,69 @@ is `PROVING`, run by `LoopWarden` in the Cradle's antechamber (`hearth.trial.Ant
   causeway stays, from a quarter the Seed's door turns and opens, over the edge is a fall and you wake by the arch with
   the hall whole again, it comes again, the win opens the door with a path of light and is rank Sovereign, the hall is
   put back). `descent_rules` (the Seed waits for Sovereign), `hearth_pure_rules` (every rank's trial is a Proving).
+
+**47.11 Sight (Euan's playtest 2026-11-03: "mobs in gates should attack based on line of sight").** A creature notices,
+chases and fires at you only while it knows where you are: it sees you (eye to eye, blocks in the way), or it hears you
+close by (4 blocks, a Hunter's ear 12; heard is moving, swinging, struck or off the ground, a sneak is silent; creative
+and spectators make no sound). Its wake-up (`AwakenMob`'s player target) takes only someone it senses, never someone
+through a wall (Hunters used to notice through walls: now they hear further instead). One set on you without sensing
+you (a room its door woke) knows where you were from that. Fighting you, after 3 s (`LOSE_TICKS` 60) of neither seeing
+nor hearing you it lets you go and walks to the last place it knew you were and looks about there for 10 s
+(`SeekSound`, every creature now, was Listeners only); it notices you again the moment it sees or hears you. Listeners
+keep their own rule (they lose you 3 s after you go quiet).
+- **Shots need a clear line.** A ranged or poison ability (bolt, arrows, beam, cloud, rain, cone, roots, fangs, lift,
+  pull) starts only with you in sight, as a charge, a leap or a blink does, and checks again when it lets go: ducked out
+  of its line during the wind-up, it lets go with a puff of smoke and a hiss and nothing flies (`AbilityRunner.blind`;
+  the cooldown is spent). Kit bosses fire through the same runner, so the same holds in their arenas.
+- **Bosses** keep you while you hide (their room is the fight, `keepsTarget`), but their shots still need the line, so
+  a pillar is cover from a boss too. Melee was already line-checked (§47.3's capsules).
+- **The Wilds' forms** (`living.combat.MarkGoal`): a volley, snipe, spit or pull is held at release without a clear line
+  (`Moves.held`, the same puff), and a spit's ray stops at the first block (`Moves.rayTarget`).
+- Test: `mobs_sight` (an ink-spitter in a stone pen, you 8 off and walking: it doesn't notice you; set on you, it never
+  fires and nothing strikes you, it lets you go within 3 s and goes to where you were; the wall comes down and it
+  notices you).
+
+**47.12 Every death ends (Euan's playtest 2026-11-03: "killed a beast but the body is still there").** Each of our
+creatures (gate creatures, bosses, beasts, forms, kin) is gone within its own fall (vanilla's second; a beast's fall,
+`NamedBeast.deathTicks`, 1.8 s; a kit boss's topple up to 4 s) and its death runs its drops. The body that stayed was the
+hunt's carcass (§41.6), laid at a fixed second while a beast's longer fall still played beside it, and drawn standing:
+our renderers never read the carcass mark. Now the carcass is laid only once the falling body has gone (checked every
+tick, laid anyway after 5 s, `Carcass.FALL_MAX` 100), where and as its fall ended (a body can slide or drift as it
+falls: the Lantern Maw's did), and every renderer of ours (hero, wild, kit, the creature renderer and the forms') draws a
+carcass as at the end of its fall, its light out, without the red and without landing it again (`LivingHooks.carcass`,
+both sides; `Life.lies`). A beast is the hunt's quarry only as the world brings it (`AwakenMob.configure`, through
+`Mobs.spawn` or `/awaken fauna summon`); vanilla's `/summon` skips that, so such a beast leaves no carcass.
+- Test: `mobs_every_death` (every awaken creature, over 150, on a stone floor inside the forced ground, spawned and
+  killed by a player with no knockback, Rises spent first: each is gone within its fall plus 2 ticks, each ran its drops,
+  no carcass is laid beside its own falling body, and each hunted beast's carcass lies where it fell within 3 ticks of
+  its body going).
+
+**47.13 Beasts at range (Euan's playtest 2026-11-03: the Briar Sow, "when I saw it at a distance, it was shaking a ton
+for some reason and glitching").** Each guess was checked against film and a frame-by-frame trace: the client's smoothing
+of a tracked body against our renderers, the life layer's far step at 32 blocks (springs and idles off), and a fight over
+position between server and client. On open ground none of them shook a beast: tour `fights-beasts-far` films eight
+beasts 36 to 58 blocks off at a narrow view (fov 30, so they fill the frame at their real distance), with their AI, while
+the camera glides in across the far step, and with no AI; and `/awaken lifetrace <type> <frames>` (dev, client) logs the
+nearest of a kind each frame it's drawn (where, its turn, every way the life layer moves its body, which feet are up, a
+blow's flinch and its red), since a clip on CI runs at about 6 frames a second and can't resolve a shake. The shake was
+the brambles. Vanilla's sweet berry bush holds anything living but a fox or a bee (0.8 of its speed, its momentum gone
+each tick) and pricks it while it moves (1 damage, as often as its hurt allows: twice a second). The Briar Sow's wallow is
+ringed with ripe bushes (`LairBuilder`), as are other lairs (their ring scatter) and the kin's nooks (`KinSpawner`). Each
+prick flashed her red, flinched her life layer and cried her hurt, and the bush stopped her dead at every step, so she
+went on in little jerks: from afar a shudder for as long as she moved among them, walking her wallow or charging through
+it at you. A small wild thing (an ambient one) also bolts from a hit with no attacker (`FaunaMob.hurtServer`, 5 s), so
+among bushes it fled a new way at each prick. Now our wild things (`FaunaMob` and all its kinds: beasts, named
+beasts, cave, deep and water fauna, wild mounts) and the kin (`KinBeast`) live among brambles as a fox does: a berry bush
+neither holds them (`makeStuckInBlock`) nor pricks them (its damage turned aside). Our own Bramble (§41.2) pricks only a
+sprinter, which none of them is, and its hold stays: a thicket slows a beast as it slows you.
+- Dev: the autopilot's `opt fov <30-110>` (films far things at their real distance); `/awaken lifetrace` (client only).
+- Test: `mobs_brambles` (a Briar Sow driven straight across eight blocks of ripe berry bushes, walled in so there is no
+  way round: never pricked, and across in under 7 s; before the fix she was pricked within 2 s).
+- Nothing paths through a berry bush (26.3 marks it DAMAGING, blocked), and a beast as wide as the Sow (2.1 blocks) is
+  steered round them, so only a straight drive puts her among them: her Bramble Charge, or your blows' knockback.
+- Tour: `fights-beasts-far` (CI): the living row, the glide, the still row, the Sow charging through a belt of ripe
+  bushes 34 to 39 blocks off at a still cow beyond it that struck her, and a Sow killed at 36 lying where she fell; each
+  filmed and traced, run before and after the fix (2026-11-03, runs 41597858314 and 41597858169). Before: her charge
+  stuck on the belt's far edge for 3 s, pricked five times (red, and the life layer's dip to 1.3), inching out between
+  pricks. After: through the belt in 0.4 s at full speed, never pricked, and unpricked standing in it for 4 s after a
+  second charge. On open ground, both runs: the drawn path smooth and still bodies still, near and far.

@@ -500,7 +500,7 @@ final class MobGoals {
         @Override public boolean canContinueToUse() { return false; }
     }
 
-    /** Listeners walk to the last place they heard something. */
+    /** To the last place it heard something, or last saw the one it lost (SPEC §47.11); there it looks about. */
     static final class SeekSound extends Goal {
         private final AwakenMob mob;
         private int repath;

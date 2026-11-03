@@ -7,6 +7,7 @@ src/main/resources/assets/awaken/sounds/fights_*.ogg and registered in src/main/
 
     python3 tools/art/specs/audio_fights.py            render the files and write the JSON
     python3 tools/art/specs/audio_fights.py --json     only the JSON
+    python3 tools/art/specs/audio_fights.py NAME ...   only these files (e.g. fights_field_hiss), and the JSON
 
 - shot_release: a shot leaves the hand or mouth: a short pressured cough of air with a glassy bite gliding down.
 - shot_hum:     the shot in flight (a loop): a whirring tone with a slow beat and a thin airy edge, so you hear where it is.
@@ -18,7 +19,8 @@ src/main/resources/assets/awaken/sounds/fights_*.ogg and registered in src/main/
 - ground_run:   a ground line racing at you (a loop): crackling earth splitting, quick and dry.
 - beam_fire:    a beam fires along its locked line: a searing tear with a falling whine.
 - pull_draw:    water or wind drawn in (a loop): a rushing suction that swells inward.
-- field_hiss:   a field's edge (a loop): soft hiss and slow bubbling.
+- field_hiss:   a field's edge (a loop): a cloud seething low: a slow breath, wet bubbling, a soft puff now and then,
+                nothing above about 2.5 kHz (never a hiss: static).
 - growl:        a beast gathers for a told bite: a throat's rattle swelling for half a second, cut as it lunges.
 """
 import json
@@ -155,13 +157,20 @@ def pull_draw(seed):
 
 
 def field_hiss(seed):
-    L = 2.5
+    L = 3.0
     n = K.ns(L)
-    hiss = _norm(K.lowpass(K.highpass(K.noise(n, "white", seed), 2200, 2), 7000, 2)) * (0.7 + 0.3 * K.smooth_noise(n, 2.0, seed + 1))
-    bub = _norm(K.crackle(n, 9, seed + 2, 0.25, 0.4))
-    bub = _norm(K.lowpass(bub, 900, 2))
-    x = 0.55 * hiss + 0.35 * bub
-    return K.loop_seamless(x, 0.6)
+    t = K.tvec(n)
+    # a cloud seething low (no static: a band of hiss under a fight's sounds read as the gates' static, Euan 3 Nov): a
+    # breath that swells and settles, slow wet bubbling and a soft puff now and then, nothing above about 2.5 kHz
+    breath = _norm(K.lowpass(K.noise(n, "brown", seed), 320, 2)) * (0.6 + 0.4 * K.smooth_noise(n, 0.8, seed + 1))
+    bub = _norm(K.lowpass(K.crackle(n, 7, seed + 2, 0.25, 0.4), 700, 2))
+    puffs = np.zeros(n)
+    for at, fc in ((0.35, 900), (1.4, 650), (2.3, 1100)):
+        src = K.bandpass(K.noise(n, "pink", seed + int(fc)), fc, 1.2)
+        env = np.clip((t - at) / 0.04, 0, 1) * np.exp(-np.clip(t - at - 0.04, 0, None) / 0.18)
+        puffs += src * env
+    x = 0.55 * breath + 0.35 * bub + 0.3 * _norm(puffs)
+    return K.loop_seamless(K.lowpass(x, 2500, 2), 0.6)
 
 
 def growl(seed):
@@ -192,7 +201,7 @@ SOUNDS_SPEC = [
     ("fights_ground_run", ground_run, -20.0, "mobs.fights.ground_run", "The ground splits toward you"),
     ("fights_beam_fire", beam_fire, -18.0, "mobs.fights.beam_fire", "A beam fires"),
     ("fights_pull_draw", pull_draw, -21.0, "mobs.fights.pull_draw", "Something draws you in"),
-    ("fights_field_hiss", field_hiss, -23.0, "mobs.fights.field_hiss", "A cloud hisses"),
+    ("fights_field_hiss", field_hiss, -23.0, "mobs.fights.field_hiss", "A cloud seethes"),
     ("fights_growl", growl, -19.0, "mobs.fights.growl", "A beast growls"),
 ]
 
@@ -203,9 +212,12 @@ def build(out):  # build_all.py makes textures; audio is rendered on demand (mai
 
 def main(argv):
     tgt, tol, ceil, q = TARGETS["sfx"]
+    only = [a for a in argv if not a.startswith("--")]  # names to render (default: all)
     if "--json" not in argv:
         os.makedirs(SOUNDS, exist_ok=True)
         for name, fn, rms, *_ in SOUNDS_SPEC:
+            if only and name not in only:
+                continue
             assert abs(rms - tgt) <= tol, name
             x = K.mono(fn(sum(map(ord, name))))
             y = K.master(x, rms, ceil - 0.7)

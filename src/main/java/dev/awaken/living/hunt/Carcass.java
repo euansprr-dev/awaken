@@ -88,14 +88,29 @@ public final class Carcass {
             p.sendSystemMessage(Component.literal(line));
         }
         // the death throes play out first (the fall, the puff), then the body lies where it fell
-        double x = dead.getX(), y = dead.getY(), z = dead.getZ();
-        float yaw = dead.getYRot(), body = dead.yBodyRot;
         Mob made = make(level, dead);
         if (made == null) return;
-        Later.run(level.getServer(), 20, () -> {
-            made.snapTo(x, y, z, yaw, 0);
-            made.setYBodyRot(body);
-            made.setYHeadRot(body);
+        layWhenGone(level, dead, made, b, 0);
+    }
+
+    /** Ticks a body's fall may last before its carcass is laid anyway (a kit boss's longest is 80). */
+    static final int FALL_MAX = 100;
+
+    /**
+     * The carcass is laid once the falling body is gone (SPEC §47.12), where and as its fall ended (a body can slide or
+     * drift as it falls): a beast's fall runs longer than vanilla's second, and laid at a set time it stood beside its own
+     * falling body, then stayed standing where that one went.
+     */
+    private static void layWhenGone(ServerLevel level, LivingEntity dead, Mob made, Body b, int waited) {
+        Later.run(level.getServer(), waited == 0 ? 20 : 1, () -> {
+            int now = waited == 0 ? 20 : waited + 1;
+            if (!dead.isRemoved() && now < FALL_MAX) {
+                layWhenGone(level, dead, made, b, now);
+                return;
+            }
+            made.snapTo(dead.getX(), dead.getY(), dead.getZ(), dead.getYRot(), 0);
+            made.setYBodyRot(dead.yBodyRot);
+            made.setYHeadRot(dead.yBodyRot);
             made.setData(LivingContent.CARCASS, level.getGameTime() + LIES);
             if (level.addFreshEntity(made)) BODIES.put(made.getUUID(), b);
         });

@@ -37,6 +37,8 @@ public final class Life {
     /** Seconds since it began to die, -1 alive; with {@link #deathLength} 0 the fall is the root's (a boss's topple). */
     public float dying = -1;
     public float deathLength;
+    /** A carcass (SPEC §47.12): already lying where its fall ended, so the first frame it's drawn never lands it again. */
+    public boolean lies;
     /** 0..1 how much it walks (the gait clip's weight). */
     public float walk;
     /** Blocks a stride covers (the gait clip's), so the step's dip lands with its feet; 0: from the vanilla walk. */
@@ -65,6 +67,8 @@ public final class Life {
 
     // ---- what the layer works out ----------------------------------------------------------------------------------
     final LifeRig rig;
+    /** The entity it lives in (its id): a dev trace finds it by this ({@link LifeTrace}). */
+    final int id;
     final LifeProfile p;
     /** The feet, for a body whose motion profile has a gait; the motion profile's body features. */
     final @org.jspecify.annotations.Nullable Legs legs;
@@ -124,6 +128,7 @@ public final class Life {
 
     Life(LifeRig rig, int seed) {
         this.rig = rig;
+        this.id = seed;
         this.p = rig.p;
         this.seed = 0x9E3779B97F4A7C15L ^ (seed * 0xBF58476D1CE4E5B9L);
         legs = rig.legs != null ? new Legs(rig.legs.rig, seed) : null;
@@ -270,6 +275,7 @@ public final class Life {
         float stepWave = 0.5F - 0.5F * Mth.cos(Mth.TWO_PI * 2.0F * phase);
         // the fall lands with a thud: one bounce on its weight, and everything loose flops (see integrate)
         float impact = deathLength > 0 ? rig.impact : 0.7F;
+        if (lies) landed = true;
         if (dead && impact > 0 && lastDying < impact && dying >= impact && !landed) {
             landed = true;
             thudV = -(14.0F + 4.0F * Math.min(3.0F, p.mass()));
@@ -347,6 +353,7 @@ public final class Life {
         }
         // a boss on a body with no fall clip topples its whole weight (root level)
         deathFall(dead);
+        if (LifeTrace.id == id) LifeTrace.frame(this, s);
     }
 
     /**

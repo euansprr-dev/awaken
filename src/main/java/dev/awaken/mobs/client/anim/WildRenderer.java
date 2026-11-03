@@ -152,6 +152,12 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         s.hurt = l.hurt > 0 ? (1.0F - l.hurt) * mob.hurtDuration / 20.0F : -1;
         s.dying = mob.isDeadOrDying() ? (f.dyingTicks() + partialTicks) / 20.0F : -1;
         if (s.dying >= 0) s.hasRedOverlay = f.dyingTicks() < 8 || mob.hurtTime > 0;
+        // a hunted creature's carcass lies as its fall ended, its light out (SPEC §47.12)
+        boolean lies = dev.awaken.core.api.LivingHooks.carcass(mob);
+        if (lies) {
+            s.dying = Math.max(deathLength, NamedBeast.DEATH_TICKS / 20.0F) + 1.0F;
+            s.hasRedOverlay = false;
+        }
         live(mob, s, l, f);
     }
 
@@ -210,6 +216,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         life.roarClip = roar >= 0;
         life.busy = s.cueWeight > 0.05F || s.melee >= 0 || s.hurt >= 0;
         life.dying = s.dying;
+        life.lies = dev.awaken.core.api.LivingHooks.carcass(mob);
         life.deathLength = deathLength;
         HeroRig rig = m.rig();
         life.stride = rig.walkStride + (rig.runStride - rig.walkStride) * s.run;

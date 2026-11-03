@@ -124,6 +124,11 @@ public final class LivingModule {
             public boolean visit(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos fire) {
                 return dev.awaken.living.wayfarer.Wayfarers.visit(level, from, fire);
             }
+
+            @Override
+            public boolean carcass(net.minecraft.world.entity.Entity e) {
+                return dev.awaken.living.hunt.Carcass.is(e);
+            }
         });
         Progression.onXpGranted(XpStream::granted);
         var bus = NeoForge.EVENT_BUS;
