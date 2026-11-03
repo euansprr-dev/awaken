@@ -42,9 +42,9 @@ final class WildBestiary {
         out.add(m("bog_toad", "Bog Toad", Theme.MIRE, Tier.NORMAL, Model.FROG, "A toad the size of a dog that snaps up small slimes; strike it and its tongue drags you in").hp(20).dmg(3.5).spd(0.22).scale(1.7F).xp(6).tint(0x5E6E34).glow(0xB8FF6A).fauna(FaunaRole.NEUTRAL).talent(FaunaTalent.GULP)
                 .ab(a(PULL, "Tongue Lash").radius(6.0F).power(0.55F).range(7).cd(160), a(SLAM, "Belly Flop").radius(3.0F).power(1.1F).cd(130)).build());
         out.add(m("mire_mother", "The Mire Mother", Theme.MIRE, Tier.WARDEN, Model.MIRE_MOTHER, "A toad as big as a hut, crowned with a glowing stone; the bog moves when she does").hp(30).dmg(4.5).spd(0.24).scale(1.2F).xp(60).arena(40).tint(0xFFFFFF).glow(0xB8FF6A).bar(BossBarColor.GREEN).fauna(FaunaRole.BEAST).talent(FaunaTalent.TERRITORY)
-                .phase(1.0F, "", a(PULL, "Tongue Lash").radius(9.0F).power(0.6F).heavy().cd(140), a(SLAM, "Belly Flop").radius(4.5F).heavy().cd(120))
-                .phase(0.6F, "The Mire Mother bellows, and the bog answers.", a(CLOUD, "Bog Breath").radius(3.0F).fx(MobEffects.POISON, 80, 0), a(LEAP, "Great Leap").power(1.5F).radius(3.5F), a(PULL, "Tongue Lash").radius(9.0F).power(0.6F).cd(120))
-                .phase(0.3F, "Her crown blazes through the murk.", a(NOVA, "Toadstone Shards").n(10).bolt(BoltKind.SPORE), a(FRENZY, "Last Croak"), a(SLAM, "Belly Flop").radius(5.0F).power(1.6F).heavy().cd(100))
+                .phase(1.0F, "", a(PULL, "Tongue Lash").radius(9.0F).power(0.6F).heavy().cd(140), a(SLAM, "Belly Flop").power(1.42F).radius(4.5F).heavy().cd(120))
+                .phase(0.6F, "The Mire Mother bellows, and the bog answers.", a(CLOUD, "Bog Breath").radius(3.0F).fx(MobEffects.POISON, 80, 0), a(LEAP, "Great Leap").power(1.33F).radius(3.5F), a(PULL, "Tongue Lash").radius(9.0F).power(0.6F).cd(120))
+                .phase(0.3F, "Her crown blazes through the murk.", a(NOVA, "Toadstone Shards").n(10).bolt(BoltKind.SPORE), a(FRENZY, "Last Croak"), a(SLAM, "Belly Flop").radius(5.0F).power(1.52F).heavy().cd(100))
                 .parts(P("toadstone", "Toadstone", "moss")).build());
     }
 
@@ -67,7 +67,7 @@ final class WildBestiary {
         out.add(m("gloam_snail", "Gloam Snail", Theme.DUSKWOOD, Tier.NORMAL, Model.SNAIL, "A snail with a lantern-glow shell; where it rests in the dark it leaves glowing lichen behind").hp(6).dmg(1).spd(0.12).xp(1).tint(0xFFFFFF).glow(0x9CF0FF).fauna(FaunaRole.AMBIENT).talent(FaunaTalent.TRAIL).build());
         out.add(m("hollow_owl", "Hollow Owl", Theme.DUSKWOOD, Tier.NORMAL, Model.OWL, "A great grey owl that watches the dark for you; whatever it stares at starts to glow").hp(16).dmg(3).spd(0.3).scale(1.2F).xp(6).tint(0xFFFFFF).glow(0xFFD27A).voice(Model.Voice.OWL).fauna(FaunaRole.NEUTRAL).talent(FaunaTalent.WATCH)
                 .ab(a(LEAP, "Talon Dive").power(1.1F).radius(1.6F).wind(12).cd(100).range(7)).build());
-        out.add(m("thornling", "Thornling", Theme.DUSKWOOD, Tier.NORMAL, Model.CREAKING, "A knot of living thorns that hunts in packs after dark; one torch and it lets you be").hp(14).dmg(3.5).spd(0.3).scale(0.6F).xp(8).tint(0x5A4A3A).glow(0xFF8A3A).traits(POISON_TOUCH).fauna(FaunaRole.HUNTER).talent(FaunaTalent.STALK)
+        out.add(m("thornling", "Thornling", Theme.DUSKWOOD, Tier.NORMAL, Model.CREAKING, "A knot of living thorns that hunts in packs after dark; one torch and it lets you be").hp(14).dmg(3.2).spd(0.3).scale(0.6F).xp(8).tint(0x5A4A3A).glow(0xFF8A3A).traits(POISON_TOUCH).fauna(FaunaRole.HUNTER).talent(FaunaTalent.STALK)
                 .ab(a(LEAP, "Thorn Lunge").power(1.1F).radius(1.6F).wind(14).cd(90).range(6)).build());
         out.add(m("weaver_queen", "The Weaver Queen", Theme.DUSKWOOD, Tier.WARDEN, Model.WEAVER_QUEEN, "A spider as wide as a cart whose webs hang the old trees; she wraps you before she bites").hp(28).dmg(4.5).spd(0.3).scale(1.3F).xp(60).arena(40).tint(0xFFFFFF).glow(0xD8C8FF).bar(BossBarColor.PURPLE).fauna(FaunaRole.BEAST).talent(FaunaTalent.TERRITORY)
                 .phase(1.0F, "", a(ROOT, "Web Snare").radius(2.5F), a(LEAP, "Pounce").power(1.4F).radius(2.5F).cd(110))

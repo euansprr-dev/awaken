@@ -38,9 +38,9 @@ final class FaunaBestiary {
         out.add(m("lumen_moth", "Lumen Moth", Theme.GREENWILD, Tier.NORMAL, Model.MOTH, "Glows from dusk to dawn; flocks to torchlight and circles above buried ore").hp(4).dmg(1).spd(0.32).xp(1).tint(0xFFFFFF).glow(0xFFD27A).fauna(FaunaRole.AMBIENT).talent(FaunaTalent.DOWSE).build());
         out.add(m("bloom_sprite", "Bloom Sprite", Theme.GREENWILD, Tier.NORMAL, Model.ALLAY, "Drifts between flowers by day; crops and saplings it touches grow").hp(6).dmg(1).spd(0.4).xp(1).tint(0xF6D2E8).glow(0xFFE2F2).fauna(FaunaRole.AMBIENT).talent(FaunaTalent.TEND).build());
         out.add(m("mossback", "Mossback", Theme.GREENWILD, Tier.NORMAL, Model.TORTOISE, "A grazing tortoise with a garden on its shell; hides in it, then slams").hp(30).dmg(4).spd(0.13).armor(6).kb(0.6).scale(1.5F).xp(6).tint(0xFFFFFF).glow(0x9CFF7A).fauna(FaunaRole.NEUTRAL).talent(FaunaTalent.GRAZE)
-                .ab(a(GUARD, "Shell Up").cd(140), a(SLAM, "Shell Slam").radius(3.0F).power(1.2F).cd(120)).build());
+                .ab(a(GUARD, "Shell Up").cd(140), a(SLAM, "Shell Slam").radius(3.0F).power(1.06F).cd(120)).build());
         out.add(m("gloomstalker", "Gloomstalker", Theme.GREENWILD, Tier.NORMAL, Model.FOX, "Stalks you through the dark, low to the ground, then pounces; it never steps into torchlight").hp(16).dmg(4).spd(0.3).scale(1.35F).xp(8).tint(0x3E3550).glow(0xC08CFF).voice(Model.Voice.STALKER).fauna(FaunaRole.HUNTER).talent(FaunaTalent.STALK)
-                .ab(a(LEAP, "Pounce").power(1.2F).radius(1.8F).wind(14).cd(80).range(7)).build());
+                .ab(a(LEAP, "Pounce").power(1.06F).radius(1.8F).wind(14).cd(80).range(7)).build());
         out.add(m("briar_sow", "The Briar Sow", Theme.GREENWILD, Tier.WARDEN, Model.BRIAR_SOW, "A boar the forest grew a hedge on: she snorts once, then charges, and her thorns root you").hp(28).dmg(4.5).spd(0.24).armor(4).scale(1.15F).xp(60).arena(40).tint(0xFFFFFF).glow(0x9CFF7A).bar(BossBarColor.GREEN).voice(Model.Voice.BOAR).fauna(FaunaRole.BEAST).talent(FaunaTalent.TERRITORY)
                 .phase(1.0F, "", a(CHARGE, "Bramble Charge").power(1.5F).heavy().cd(110), a(SLAM, "Root Stomp").radius(4.0F).cd(120))
                 .phase(0.6F, "The Briar Sow tears up the earth.", a(ROOT, "Thornsnare").radius(2.5F), a(CLOUD, "Pollen Haze").fx(MobEffects.SLOWNESS, 60, 1), a(CHARGE, "Bramble Charge").power(1.5F).heavy().cd(100))
@@ -70,7 +70,7 @@ final class FaunaBestiary {
         out.add(m("old_antler", "The Old Antler", Theme.FROSTWILD, Tier.WARDEN, Model.OLD_ANTLER, "An ancient stag whose antlers carry the forest's light; it guards one valley and bellows you off it").hp(30).dmg(4.5).spd(0.28).scale(1.2F).xp(60).arena(48).tint(0xFFFFFF).glow(0x7FC3FF).bar(BossBarColor.BLUE).fauna(FaunaRole.BEAST).talent(FaunaTalent.TERRITORY)
                 .phase(1.0F, "", a(CHARGE, "Antler Rush").power(1.5F).heavy().cd(110), a(SLAM, "Hoof Quake").radius(4.5F).cd(120))
                 .phase(0.6F, "The forest holds its breath.", a(GUST, "Bellow").radius(8.0F).power(0.7F), a(ROOT, "Root Snare").radius(2.5F), a(CHARGE, "Antler Rush").power(1.5F).heavy().cd(100))
-                .phase(0.3F, "The Old Antler's crown blazes.", a(BEAM, "Crown Light").bolt(BoltKind.SPIRIT).power(1.5F).heavy(), a(BURST, "Rime Ring").radius(10.0F).inner(3.5F).bolt(BoltKind.FROST), a(FRENZY, "The Last Rut"))
+                .phase(0.3F, "The Old Antler's crown blazes.", a(BEAM, "Crown Light").bolt(BoltKind.SPIRIT).power(1.5F).heavy(), a(BURST, "Rime Ring").power(1.88F).radius(10.0F).inner(3.5F).bolt(BoltKind.FROST), a(FRENZY, "The Last Rut"))
                 .parts(P("antler_tine", "Antler Tine", "frost")).build());
     }
 }

@@ -29,6 +29,7 @@ final class MobsEvents {
         NeoForge.EVENT_BUS.addListener(MobsEvents::onServerStopped);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLogout);
         dev.awaken.mobs.entity.FightWatch.init();
+        dev.awaken.mobs.entity.FairGuard.init();
         // every kit body (rigs, move tables, fight scripts) read once while the game loads, off the main thread: read
         // when the first boss of a session appeared, it stalled that tick 91 ms (fights_tick_cost, SPEC §47.1)
         modBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent e) -> {
@@ -77,5 +78,6 @@ final class MobsEvents {
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Mobs.forget(event.getEntity());
+        dev.awaken.mobs.entity.FairGuard.forget(event.getEntity().getUUID());
     }
 }

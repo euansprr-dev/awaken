@@ -61,7 +61,7 @@ public final class WorldLive {
     public static final int RINGER_AT = 8;
     /** A fall longer than this on a drop world is caught; the catch costs this much health. */
     static final double CATCH_FALL = 9;
-    static final float CATCH_DAMAGE = 3;
+    public static final float CATCH_DAMAGE = 3;
     /** In the Tolling mood the bells ring again this often, in ticks. */
     static final int TOLL_AGAIN = 90 * 20;
     /** A hung bell hums as you pass under it, each bell at most once in this many ticks (SPEC §38.9). */

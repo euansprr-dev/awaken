@@ -243,6 +243,7 @@ final class FightRunner {
             boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_INTRO);
             if (target == null || !target.isAlive()) return;
             introduced = true;
+            boss.moment(level);
             if (fight.mirrors() && !measured && target instanceof net.minecraft.server.level.ServerPlayer sp) {
                 measured = true;
                 boss.mirrorBolt(yours(sp));

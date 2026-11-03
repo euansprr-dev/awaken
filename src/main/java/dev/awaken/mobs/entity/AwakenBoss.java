@@ -416,6 +416,13 @@ public class AwakenBoss extends AwakenMob {
         }
     }
 
+    /** Walking in never kills: everyone in its arena gets the Lord's moment as it first sees them (SPEC §47.14). */
+    void moment(ServerLevel level) {
+        double r = (hasHome() ? getHomeRadius() : def().arena) + 4.0;
+        Vec3 home = hasHome() ? Vec3.atBottomCenterOf(getHomePosition()) : position();
+        for (ServerPlayer p : level.players()) if (!p.isSpectator() && p.distanceToSqr(home) <= r * r) FairGuard.arrive(p, this);
+    }
+
     void arena(ServerLevel level) {
         MobDef d = def();
         if (!hasHome()) setHomeTo(blockPosition(), d.arena);
@@ -440,6 +447,7 @@ public class AwakenBoss extends AwakenMob {
             lonelyTicks = 0;
             if (!introduced && getTarget() != null) {
                 introduced = true;
+                moment(level);
                 if (d.intro != null) tell(level, d.intro, Component.literal(d.name + ": ").withColor(d.glow).append(Component.literal(d.intro).withColor(0xE6EAF2)), BossPlates.Line.INTRO);
                 playLevelSound(MobSounds.BOSS_INTRO.get(), 2.0F, 0.9F);
             }
