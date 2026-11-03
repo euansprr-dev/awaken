@@ -49,8 +49,9 @@ wait 200
 hud on
 cmd awaken dream control
 wait 30
-walk 40
-wait 60
+# from the hallway (doorway 8 blocks in) to ~6 blocks past it, short of the first gap: the ghost's steps
+walk 70
+wait 20
 cmd awaken dream ring 99
 wait 220
 screen close
@@ -60,14 +61,14 @@ cmd awaken dream replay 0
 wait 200
 cmd awaken dream control
 wait 30
-walk 28
-wait 38
+# just past the doorway (the ghost starts there), then stand while it walks on ahead
+walk 46
+wait 14
 shot gp_ghost_01
-wait 10
+wait 12
 shot gp_ghost_02
-look 0 20
-shot gp_ghost_03_down
-look 0 4
+wait 14
+shot gp_ghost_03
 cmd awaken dream wake
 wait 200
 screen close
