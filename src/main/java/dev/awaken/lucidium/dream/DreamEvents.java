@@ -102,6 +102,7 @@ public final class DreamEvents {
             }
         }
         Dreams.tick(server);
+        dev.awaken.lucidium.world.Cells.tick(server);
         Sleep.tick(server);
         Visions.tick(server);
     }
