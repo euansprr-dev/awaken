@@ -16,6 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
@@ -51,7 +52,10 @@ public final class DeathTests {
             NeoForge.EVENT_BUS.addListener((LivingDropsEvent e) -> DROPPED.add(e.getEntity().getUUID()));
         }
         ServerLevel level = h.getLevel();
-        var live = AwakenTests.survivalPlayer(h, "Felled", new BlockPos(0, 1, -2));
+        // a floor under the field, well inside the force-loaded chunks (32 round the origin): a body knocked off an
+        // unfloored edge fell out of the ticking ground and stopped dying there
+        for (int x = -24; x <= 24; x++) for (int z = -26; z <= 3; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE.defaultBlockState());
+        var live = AwakenTests.survivalPlayer(h, "Felled", new BlockPos(0, 1, 1));
         ServerPlayer killer = live.player();
         List<LivingEntity> bodies = new ArrayList<>();
         Map<LivingEntity, Integer> fall = new HashMap<>();
@@ -60,7 +64,7 @@ public final class DeathTests {
         for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
             var id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
             if (!dev.awaken.Awaken.MODID.equals(id.getNamespace())) continue;
-            Vec3 at = h.absoluteVec(new Vec3(-30 + (i % 21) * 3, 1, -30 + (i / 21) * 3));
+            Vec3 at = h.absoluteVec(new Vec3(-20 + (i % 21) * 2, 1, -24 + (i / 21) * 2));
             MobDef def = Bestiary.get(id.getPath());
             LivingEntity e = null;
             if (def != null && MobTypes.type(def) == type) {
@@ -82,6 +86,7 @@ public final class DeathTests {
             if (e instanceof AwakenMob m) m.setFlag(AwakenMob.F_RISEN, true);
             e.setLastHurtByPlayer(killer, 100);
             e.hurtServer(level, level.damageSources().playerAttack(killer), 1.0E6F);
+            e.setDeltaMovement(Vec3.ZERO); // no knockback: each falls where it stood
             if (e.isAlive()) e.kill(level); // one that turns a blow aside still dies
             if (e.isAlive()) {
                 e.setHealth(0);
@@ -108,7 +113,8 @@ public final class DeathTests {
             for (LivingEntity e : bodies) {
                 String name = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString();
                 Long took = gone.get(e);
-                h.assertTrue(took != null, name + "'s body is gone (it was still there " + (now - start) + " ticks after it died)");
+                h.assertTrue(took != null, name + "'s body is gone (it was still there " + (now - start) + " ticks after it died, at "
+                        + h.relativeVec(e.position()) + ", death time " + e.deathTime + (level.isPositionEntityTicking(e.blockPosition()) ? "" : ", not ticking") + ")");
                 h.assertTrue(took <= fall.get(e) + 2, name + "'s body is gone within its fall (" + fall.get(e) + " ticks; took " + took + ")");
                 h.assertTrue(DROPPED.contains(e.getUUID()), name + " dropped what it drops");
             }
