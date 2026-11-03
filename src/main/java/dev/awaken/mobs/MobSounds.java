@@ -26,6 +26,24 @@ public final class MobSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> LISTENER_HEAR = sound("mobs.listener_hear");
 
     /**
+     * The carriers (SPEC §47.2): each sounds from where it is as it comes. Synthesised by tools/art/specs/audio_fights.py;
+     * sounds.json in src/main/merge/mobs_fights. The loops play from mobs.client.CarrierView and the shot renderer.
+     */
+    public static final DeferredHolder<SoundEvent, SoundEvent> SHOT_RELEASE = sound("mobs.fights.shot_release");
+    /** A beast gathering for a told bite (SPEC §47.2). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> GROWL = sound("mobs.fights.growl");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SHOT_HUM = sound("mobs.fights.shot_hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VOLLEY_THROW = sound("mobs.fights.volley_throw");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VOLLEY_FALL = sound("mobs.fights.volley_fall");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VOLLEY_IMPACT = sound("mobs.fights.volley_hit");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WAVE_ROLL = sound("mobs.fights.wave_roll");
+    public static final DeferredHolder<SoundEvent, SoundEvent> LOCK = sound("mobs.fights.lock");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GROUND_RUN = sound("mobs.fights.ground_run");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEAM_FIRE = sound("mobs.fights.beam_fire");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PULL_DRAW = sound("mobs.fights.pull_draw");
+    public static final DeferredHolder<SoundEvent, SoundEvent> FIELD_HISS = sound("mobs.fights.field_hiss");
+
+    /**
      * The overworld creatures' own voices, {@code fauna.<id>.<kind>}: ambient, hurt, death and step for every one
      * (a flier's step is its wingbeat), and a roar for each named beast (its signature move, its phases). The files
      * come from tools/art/specs/fauna_sounds.py; sounds.json lives in src/main/merge/fauna.

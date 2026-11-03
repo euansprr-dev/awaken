@@ -52,12 +52,13 @@ ESSENCE = {
     "ELITE": (1.5, 0.08, 32),
     "WARDEN": (3.0, 0.15, 48),
     "LORD": (6.0, 0.4, 64),
+    "PROVING": (6.0, 0.4, 64),
     "GUARDIAN": (7.0, 0.45, 64),
     "SOVEREIGN": (10.0, 0.5, 64),
     "FINAL": (20.0, 0.6, 64),
     "NIGHTMARE": (1.0, 0.06, 16),
 }
-TIER_DROP_MULT = {"NORMAL": 1, "ELITE": 2, "WARDEN": 3, "LORD": 4, "GUARDIAN": 4, "SOVEREIGN": 5, "FINAL": 6, "NIGHTMARE": 1}
+TIER_DROP_MULT = {"NORMAL": 1, "ELITE": 2, "WARDEN": 3, "LORD": 4, "PROVING": 4, "GUARDIAN": 4, "SOVEREIGN": 5, "FINAL": 6, "NIGHTMARE": 1}
 
 
 def write_json(path, data):
@@ -180,7 +181,7 @@ def main():
     print(f"mobs: {len(ms)} creatures, {sum(len(m['parts']) for m in ms)} parts")
 
 
-TIER_LABEL = {"NORMAL": "normal", "ELITE": "elite", "WARDEN": "Warden", "LORD": "Gate Lord", "GUARDIAN": "stratum guardian",
+TIER_LABEL = {"NORMAL": "normal", "ELITE": "elite", "WARDEN": "Warden", "LORD": "Gate Lord", "PROVING": "Proving Warden", "GUARDIAN": "stratum guardian",
               "SOVEREIGN": "Sovereign", "FINAL": "final boss", "NIGHTMARE": "nightmare"}
 
 

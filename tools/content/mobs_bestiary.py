@@ -68,7 +68,7 @@ def mobs():
     return out
 
 
-BOSS_TIERS = {"LORD", "GUARDIAN", "SOVEREIGN", "FINAL", "NIGHTMARE"}
+BOSS_TIERS = {"LORD", "PROVING", "GUARDIAN", "SOVEREIGN", "FINAL", "NIGHTMARE"}
 
 if __name__ == "__main__":
     ms = mobs()

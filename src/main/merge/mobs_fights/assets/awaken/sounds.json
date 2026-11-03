@@ -1,0 +1,110 @@
+{
+  "mobs.fights.shot_release": {
+    "subtitle": "subtitles.awaken.mobs.fights.shot_release",
+    "sounds": [
+      {
+        "name": "awaken:fights_shot_release",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.shot_hum": {
+    "subtitle": "subtitles.awaken.mobs.fights.shot_hum",
+    "sounds": [
+      {
+        "name": "awaken:fights_shot_hum",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.volley_throw": {
+    "subtitle": "subtitles.awaken.mobs.fights.volley_throw",
+    "sounds": [
+      {
+        "name": "awaken:fights_volley_throw",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.volley_fall": {
+    "subtitle": "subtitles.awaken.mobs.fights.volley_fall",
+    "sounds": [
+      {
+        "name": "awaken:fights_volley_fall",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.volley_hit": {
+    "subtitle": "subtitles.awaken.mobs.fights.volley_hit",
+    "sounds": [
+      {
+        "name": "awaken:fights_volley_hit",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.wave_roll": {
+    "subtitle": "subtitles.awaken.mobs.fights.wave_roll",
+    "sounds": [
+      {
+        "name": "awaken:fights_wave_roll",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.lock": {
+    "subtitle": "subtitles.awaken.mobs.fights.lock",
+    "sounds": [
+      {
+        "name": "awaken:fights_lock",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.ground_run": {
+    "subtitle": "subtitles.awaken.mobs.fights.ground_run",
+    "sounds": [
+      {
+        "name": "awaken:fights_ground_run",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.beam_fire": {
+    "subtitle": "subtitles.awaken.mobs.fights.beam_fire",
+    "sounds": [
+      {
+        "name": "awaken:fights_beam_fire",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.pull_draw": {
+    "subtitle": "subtitles.awaken.mobs.fights.pull_draw",
+    "sounds": [
+      {
+        "name": "awaken:fights_pull_draw",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.field_hiss": {
+    "subtitle": "subtitles.awaken.mobs.fights.field_hiss",
+    "sounds": [
+      {
+        "name": "awaken:fights_field_hiss",
+        "stream": false
+      }
+    ]
+  },
+  "mobs.fights.growl": {
+    "subtitle": "subtitles.awaken.mobs.fights.growl",
+    "sounds": [
+      {
+        "name": "awaken:fights_growl",
+        "stream": false
+      }
+    ]
+  }
+}

@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "nightmare_undead",
  "moves": "nightmare_undead",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -26,7 +28,15 @@
     {
      "move": "crush",
      "weight": 3,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "swipe"
+      ],
+      [
+       "elbow"
+      ]
+     ]
     },
     {
      "move": "surge",
@@ -39,14 +49,15 @@
      ]
     },
     {
-     "move": "more",
-     "weight": 2,
-     "when": "FAR"
-    },
-    {
      "move": "elbow",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swipe",
+       "grab"
+      ]
+     ]
     }
    ]
   },
@@ -70,7 +81,15 @@
     {
      "move": "crush",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "swipe"
+      ],
+      [
+       "elbow"
+      ]
+     ]
     },
     {
      "move": "surge",
@@ -86,16 +105,32 @@
     {
      "move": "more",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "surge"
+      ]
+     ]
     },
     {
      "move": "all",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "swipe"
+      ]
+     ]
     },
     {
      "move": "elbow",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swipe",
+       "grab"
+      ]
+     ]
     }
    ]
   }

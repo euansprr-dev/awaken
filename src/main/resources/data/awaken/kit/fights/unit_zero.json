@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "unit_zero",
  "moves": "unit_zero",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -11,7 +13,16 @@
    "pool": [
     {
      "move": "lance",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "step",
+       "sever_a"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "step",
@@ -40,7 +51,16 @@
     {
      "move": "spin",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "sever_a",
+       "sever_b"
+      ],
+      [
+       "step"
+      ]
+     ]
     }
    ]
   },
@@ -49,7 +69,16 @@
    "pool": [
     {
      "move": "lance",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "step",
+       "sever_a"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "step",
@@ -75,11 +104,29 @@
     {
      "move": "spin",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "sever_a",
+       "sever_b"
+      ],
+      [
+       "step"
+      ]
+     ]
     },
     {
      "move": "orbital",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "step",
+       "sever_c"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "deploy",
@@ -123,15 +170,38 @@
     {
      "move": "spin",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "sever_a",
+       "sever_b"
+      ],
+      [
+       "step"
+      ]
+     ]
     },
     {
      "move": "orbital",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "step",
+       "sever_c"
+      ],
+      [
+       "lance"
+      ]
+     ]
     },
     {
      "move": "zero_point",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "spin"
+      ]
+     ]
     }
    ]
   }

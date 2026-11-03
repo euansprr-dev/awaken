@@ -1,0 +1,315 @@
+{
+ "schemaVersion": 1,
+ "id": "proving_examiner",
+ "moves": "proving_examiner",
+ "duel": true,
+ "mirrors": true,
+ "stance": 300,
+ "intro": {
+  "pose": "idle",
+  "move": "emerge"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "rule_a",
+     "weight": 3,
+     "then": [
+      [
+       "rule_b"
+      ],
+      [
+       "rule_b",
+       "rule_c"
+      ]
+     ]
+    },
+    {
+     "move": "rule_b",
+     "weight": 2,
+     "then": [
+      [
+       "rule_a"
+      ],
+      [
+       "rule_c",
+       "measure"
+      ]
+     ]
+    },
+    {
+     "move": "measure",
+     "weight": 2,
+     "then": [
+      [
+       "rule_a"
+      ]
+     ]
+    },
+    {
+     "move": "step",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "rule_a",
+       "rule_b"
+      ]
+     ]
+    },
+    {
+     "move": "reading",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "reading"
+      ],
+      [
+       "step"
+      ]
+     ]
+    },
+    {
+     "move": "turn",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "rule_a"
+      ]
+     ]
+    },
+    {
+     "move": "verdict",
+     "weight": 1,
+     "then": [
+      [
+       "step"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "wake",
+   "pool": [
+    {
+     "move": "rule_a",
+     "weight": 3,
+     "then": [
+      [
+       "rule_b",
+       "rule_c"
+      ],
+      [
+       "rule_b",
+       "rule_c",
+       "measure"
+      ]
+     ]
+    },
+    {
+     "move": "rule_b",
+     "weight": 2,
+     "then": [
+      [
+       "rule_a",
+       "rule_c"
+      ],
+      [
+       "rule_c",
+       "measure"
+      ]
+     ]
+    },
+    {
+     "move": "measure",
+     "weight": 2,
+     "then": [
+      [
+       "rule_a",
+       "rule_b"
+      ]
+     ]
+    },
+    {
+     "move": "step",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "rule_a",
+       "rule_b",
+       "rule_c"
+      ]
+     ]
+    },
+    {
+     "move": "reading",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "reading",
+       "step"
+      ],
+      [
+       "reading",
+       "verdict"
+      ]
+     ]
+    },
+    {
+     "move": "turn",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "rule_a",
+       "rule_b"
+      ]
+     ]
+    },
+    {
+     "move": "verdict",
+     "weight": 2,
+     "then": [
+      [
+       "step"
+      ],
+      [
+       "reading"
+      ]
+     ]
+    },
+    {
+     "move": "copies",
+     "weight": 1
+    }
+   ]
+  },
+  {
+   "transition": "close",
+   "pool": [
+    {
+     "move": "rule_a",
+     "weight": 3,
+     "then": [
+      [
+       "rule_b",
+       "rule_c",
+       "crosscut"
+      ],
+      [
+       "rule_b",
+       "rule_c",
+       "measure"
+      ]
+     ]
+    },
+    {
+     "move": "rule_b",
+     "weight": 2,
+     "then": [
+      [
+       "rule_a",
+       "rule_c",
+       "crosscut"
+      ]
+     ]
+    },
+    {
+     "move": "crosscut",
+     "weight": 2,
+     "then": [
+      [
+       "rule_a",
+       "rule_b"
+      ]
+     ]
+    },
+    {
+     "move": "measure",
+     "weight": 1,
+     "then": [
+      [
+       "rule_a",
+       "crosscut"
+      ]
+     ]
+    },
+    {
+     "move": "hold",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "rule_a",
+       "rule_b"
+      ]
+     ]
+    },
+    {
+     "move": "step",
+     "weight": 1,
+     "when": "FAR",
+     "then": [
+      [
+       "rule_a",
+       "rule_b",
+       "rule_c"
+      ]
+     ]
+    },
+    {
+     "move": "reading",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "reading",
+       "hold"
+      ],
+      [
+       "verdict"
+      ]
+     ]
+    },
+    {
+     "move": "turn",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "rule_a",
+       "crosscut"
+      ]
+     ]
+    },
+    {
+     "move": "verdict",
+     "weight": 2,
+     "then": [
+      [
+       "hold"
+      ],
+      [
+       "step",
+       "rule_a"
+      ]
+     ]
+    },
+    {
+     "move": "copies",
+     "weight": 1
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.12,
+  "speed": 1.2
+ }
+}

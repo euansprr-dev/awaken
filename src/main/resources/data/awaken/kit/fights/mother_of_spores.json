@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "mother_of_spores",
  "moves": "mother_of_spores",
+ "duel": true,
+ "stance": 240,
  "intro": {
   "pose": "idle",
   "move": "unfurl"
@@ -21,7 +23,16 @@
     },
     {
      "move": "lob",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "lob"
+      ],
+      [
+       "lob",
+       "swoop"
+      ]
+     ]
     },
     {
      "move": "swoop",
@@ -34,12 +45,28 @@
     },
     {
      "move": "drop",
-     "weight": 1
+     "weight": 1,
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "lash_b"
+      ]
+     ]
     },
     {
      "move": "drop",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "lash_b"
+      ]
+     ]
     },
     {
      "move": "rain",
@@ -85,7 +112,15 @@
     {
      "move": "drop",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "lash_b"
+      ]
+     ]
     },
     {
      "move": "rain",
@@ -136,12 +171,28 @@
     },
     {
      "move": "drop",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "lash_b"
+      ]
+     ]
     },
     {
      "move": "drop",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "lash"
+      ],
+      [
+       "lash_b"
+      ]
+     ]
     },
     {
      "move": "rain",

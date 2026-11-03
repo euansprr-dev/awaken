@@ -1,5 +1,6 @@
 package dev.awaken.mobs.entity;
 
+import dev.awaken.core.api.Strikes;
 import dev.awaken.Awaken;
 import dev.awaken.core.api.BossPlates;
 import dev.awaken.mobs.MobLoot;
@@ -45,8 +46,13 @@ public class AwakenBoss extends AwakenMob {
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT_AT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     public static final int KIT_POSE_INTRO = 1, KIT_POSE_BROKEN = 2;
+    /** The duel's reactions (SPEC §47.3): a deflected blow's limb thrown back, and the reel after a phrase's last one. */
+    public static final int KIT_POSE_RECOIL = 3, KIT_POSE_REEL = 4;
 
     private int phase, shieldTicks, lonelyTicks;
+    /** Its stance broken (Arms), or reeling from a deflect, for this many ticks more; open until this game time. */
+    private int breakTicks, reelTicks;
+    private long openUntil;
     private @Nullable FightRunner fight;
     private boolean fightChecked;
     private int kitSerial;
@@ -134,8 +140,38 @@ public class AwakenBoss extends AwakenMob {
     @Override
     public boolean stagger(int ticks) {
         if (!super.stagger(ticks)) return false;
+        breakTicks = Math.max(breakTicks, ticks);
         if (fight != null) fight.interrupt();
         return true;
+    }
+
+    /** Its stance broken (server): it kneels, and a heavy on it is the finisher. */
+    public boolean broken() {
+        return breakTicks > 0;
+    }
+
+    /** Reels from a phrase's last blow turned aside (SPEC §47.3): it stands open, not kneeling. */
+    void reel(int ticks) {
+        if (super.stagger(ticks)) reelTicks = Math.max(reelTicks, ticks);
+    }
+
+    boolean reeling() {
+        return reelTicks > 0;
+    }
+
+    /** It stands open for {@code ticks} (after a phrase, a reel): it starts nothing, and Arms breaks its stance faster. */
+    void openFor(int ticks) {
+        openUntil = Math.max(openUntil, level().getGameTime() + ticks);
+    }
+
+    /** Whether it stands in an opening now (server). */
+    public boolean inOpening() {
+        return level().getGameTime() < openUntil || reelTicks > 0;
+    }
+
+    /** One of its blows was deflected (Arms): its fight answers (a recoil, a reel). */
+    public void deflected(Strikes.Kind kind) {
+        if (fight != null && level() instanceof ServerLevel sl) fight.deflected(sl, kind);
     }
 
     @Override
@@ -168,6 +204,44 @@ public class AwakenBoss extends AwakenMob {
         FightRunner f = fight;
         return f != null ? f.playing() : null;
     }
+
+    /** The last attack its fight script began (title and class), or null (SPEC §47.4: the Signal names what felled you). */
+    public dev.awaken.core.api.Strikes.@Nullable Blow lastBlow() {
+        FightRunner f = fight;
+        var m = f != null ? f.lastAttack() : null;
+        if (m == null) return null;
+        String title = !m.title().isEmpty() ? m.title() : m.ability().orElse(m.id());
+        return new dev.awaken.core.api.Strikes.Blow(title, m.kind());
+    }
+
+    /** It fights as a duel (SPEC §47.3): phrases, openings, recoils; at most {@link #DUEL_ADDS} of its adds alive. */
+    public boolean duel() {
+        FightRunner f = fight();
+        return f != null && f.duel();
+    }
+
+    /** A duel is tuned on its whole scaled health, past vanilla's 1024 cap (SPEC §47.3); other Lords stop at the cap. */
+    @Override
+    public float bulk() {
+        return duel() ? dev.awaken.mobs.MobScaling.bulk(this) : 1F;
+    }
+
+    /** For a fight that reads you (SPEC §47.6): the habit it has read of you. */
+    public dev.awaken.core.api.Strikes.Habit habit() {
+        FightRunner f = fight();
+        return f != null ? f.habit() : dev.awaken.core.api.Strikes.Habit.NONE;
+    }
+
+    /** A duel's stance size (Arms' posture), or 0 for a Lord's own. */
+    public int duelStance() {
+        FightRunner f = fight();
+        return f != null ? f.stance() : 0;
+    }
+
+    /** A duel's adds alive at once (I6). */
+    public static final int DUEL_ADDS = 2;
+    /** What a duel's add hits for at most, as a share of its caller's attack (Mobs.spawnMinion). */
+    public static final double ADD_DAMAGE = 0.6;
 
     /** The fight script's runner (server), or null when it fights the old way. */
     @Nullable FightRunner fight() {
@@ -264,6 +338,8 @@ public class AwakenBoss extends AwakenMob {
 
     @Override
     protected void customServerAiStep(ServerLevel level) {
+        if (breakTicks > 0) breakTicks--;
+        if (reelTicks > 0) reelTicks--;
         if (shieldTicks > 0) {
             shieldTicks--;
             if (shieldTicks % 4 == 0) Telegraph.ring(level, position(), 1.5F + getBbWidth(), 18, def().glow, true);
@@ -272,7 +348,14 @@ public class AwakenBoss extends AwakenMob {
         abilityRunner().scripted(f != null);
         super.customServerAiStep(level);
         if (f != null) {
-            if (isAlive()) f.tick(level);
+            if (isAlive()) {
+                long t0 = System.nanoTime();
+                f.tick(level);
+                FightWatch.kit(System.nanoTime() - t0);
+                // its clock goes to whoever is near, fighting or not: a pace that stopped (a reel against a beast, the
+                // player it chased fallen) held its body still on their screen until the clock went stale
+                dev.awaken.mobs.net.MobsNet.fighting(this);
+            }
             if (!f.busy()) checkPhase(level);
         } else if (abilities != null && abilities.active() == null) checkPhase(level);
         if (tickCount % 20 == 0) arena(level);
@@ -394,7 +477,9 @@ public class AwakenBoss extends AwakenMob {
             level.sendParticles(ParticleTypes.ENCHANTED_HIT, getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.5, 0.5, 0.5, 0.1);
             return false;
         }
-        return super.hurtServer(level, source, damage);
+        boolean hurt = super.hurtServer(level, source, damage);
+        if (hurt && fight != null) fight.hurtBy(source);
+        return hurt;
     }
 
     @Override

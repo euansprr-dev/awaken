@@ -42,6 +42,10 @@ public final class ArmsModule {
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
         ArmsForge.init();
         dev.awaken.core.api.ArmsApi.install(ArmsIssue.INSTANCE);
+        // a shot sent back fills the stance it strikes (SPEC §47.3)
+        dev.awaken.core.api.Strikes.installPostures((target, amount, by) -> {
+            if (by instanceof ServerPlayer sp) ArmsServer.addPosture(target, amount, sp);
+        });
         // a weapon's tier as its rank, for enchanting's depth (SPEC §45.5); its forged quality comes with the War Anvil
         dev.awaken.core.api.ForgeHooks.reader(new dev.awaken.core.api.ForgeHooks.Reader() {
             @Override public java.util.OptionalInt quality(net.minecraft.world.item.ItemStack s) { return java.util.OptionalInt.empty(); }

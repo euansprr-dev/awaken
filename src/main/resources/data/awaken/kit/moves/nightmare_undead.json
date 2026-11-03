@@ -1022,15 +1022,14 @@
   },
   {
    "id": "surge",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
     "windup": 22,
     "active": 8,
     "recover": 22,
     "track": 5.0,
     "lock": 15,
-    "link": 6,
-    "hold": 10
+    "link": 6
    },
    "range": [
     3.0,
@@ -1663,9 +1662,8 @@
    "knock": 0,
    "title": "Closer",
    "kinds": [
-    "summon"
+    "transition"
    ],
-   "ability": "More of Them",
    "marks": {
     "peak": 16,
     "contact": 16,

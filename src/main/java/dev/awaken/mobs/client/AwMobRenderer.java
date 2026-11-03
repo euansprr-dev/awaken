@@ -57,9 +57,9 @@ class AwMobRenderer<S extends LivingEntityRenderState, M extends EntityModel<? s
         this.blink = ours ? AwRender.exists(AwRender.blink(def)) : null;
     }
 
-    /** Lords, guardians, sovereigns, the Shadow and the gate wardens: big enough that their weight must read. */
+    /** Lords, the Provings' Wardens, guardians, sovereigns, the Shadow and the gate wardens: big enough that their weight must read. */
     static boolean boss(MobDef d) {
-        return d.tier == Tier.LORD || d.tier == Tier.GUARDIAN || d.tier == Tier.SOVEREIGN || d.tier == Tier.FINAL || d.tier == Tier.WARDEN;
+        return d.tier == Tier.LORD || d.tier == Tier.PROVING || d.tier == Tier.GUARDIAN || d.tier == Tier.SOVEREIGN || d.tier == Tier.FINAL || d.tier == Tier.WARDEN;
     }
 
     AwMobRenderer<S, M> scaler(AwRender.Scaler<S> s) {

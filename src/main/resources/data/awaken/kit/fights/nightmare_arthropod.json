@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "nightmare_arthropod",
  "moves": "nightmare_arthropod",
+ "duel": true,
+ "stance": 300,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -26,7 +28,15 @@
     {
      "move": "lasso",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "bite"
+      ],
+      [
+       "lash"
+      ]
+     ]
     },
     {
      "move": "drop",
@@ -41,12 +51,26 @@
     {
      "move": "web",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "drop"
+      ],
+      [
+       "web"
+      ]
+     ]
     },
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "bite",
+       "lasso"
+      ]
+     ]
     }
    ]
   },
@@ -70,7 +94,15 @@
     {
      "move": "lasso",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "bite"
+      ],
+      [
+       "lash"
+      ]
+     ]
     },
     {
      "move": "drop",
@@ -86,7 +118,15 @@
     {
      "move": "web",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "drop"
+      ],
+      [
+       "web"
+      ]
+     ]
     },
     {
      "move": "hatch",
@@ -99,7 +139,13 @@
     {
      "move": "lash",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "bite",
+       "lasso"
+      ]
+     ]
     }
    ]
   }

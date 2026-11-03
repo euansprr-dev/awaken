@@ -7,8 +7,10 @@ import dev.awaken.mobs.boss.FightScripts;
 import dev.awaken.mobs.boss.KitMoves;
 import dev.awaken.mobs.boss.Kits;
 import dev.awaken.mobs.def.Ability;
+import dev.awaken.mobs.def.BoltKind;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.AABB;
@@ -33,9 +35,13 @@ final class FightRunner {
 
     /** The move playing (an index into the table, -1 none), its tick, and its stretched timings. */
     private int move = -1, t, windup, hold, active, recover;
+    /** The last attack begun (a move index), kept after it ends: what a fallen player was hit by. */
+    private int last = -1;
     private KitMoves.@Nullable Played played;
     private float yaw;
     private @Nullable Ability ability;
+    /** The move's told class (SPEC §47.2, I1): never NONE for a move that hurts. */
+    private Strikes.Kind cls = Strikes.Kind.NONE;
     private final ArrayDeque<String> string = new ArrayDeque<>(4);
     /** The studio's queue (/awaken bosses studio): every move once, in table order, a breath apart; then it fights. */
     private final ArrayDeque<String> studio = new ArrayDeque<>();
@@ -44,6 +50,32 @@ final class FightRunner {
     private boolean introduced;
     /** A phase waiting for its transition (the threshold was crossed mid-move), or -1. */
     private int pendingPhase = -1;
+
+    // the duel (SPEC §47.3), for a fight script that asks for it
+    /** Opening after a phrase: ticks for a phrase of one blow, each blow more, at most. */
+    static final int OPENING_MIN = 16, OPENING_PER_BLOW = 3, OPENING_MAX = 30;
+    /** A deflected blow's limb recoils this long before the phrase goes on; its last blow turned aside, it reels this long. */
+    static final int RECOIL_TICKS = 10, REEL_TICKS = 26;
+    /** Deflects in a row before it answers with a red blow (forgotten after ten seconds); weights for its answers. */
+    static final int HABIT_DEFLECTS = 2;
+    static final long HABIT_FORGET = 200;
+    static final int HABIT_RED = 4, HABIT_CLOSE = 3;
+    private int phraseBlows, deflects, recoil;
+    private long deflectAt;
+    /** The target's distance, sampled every 10 ticks (the last two), to see it backing off. */
+    private double distWas = -1, distWasWas = -1;
+
+    // a fight that reads you (SPEC §47.6, the Examiner): through its first phase it counts how you meet it (deflects,
+    // blows you got out of, ten-tick spells kept 8 blocks off, power hits), and the habit you lean on most, at least
+    // HABIT_LEAN times over the others, brings up what answers it HABIT_ANSWER times as often from its second phase
+    static final int HABIT_LEAN = 4, HABIT_ANSWER = 5;
+    /** Spells at range to one habit point (two seconds kept off is one point). */
+    static final int HABIT_FAR = 4;
+    private int guards, slips, far, casts;
+    private Strikes.Habit read = Strikes.Habit.NONE;
+    private boolean measured;
+    /** This blow: whether you stood in its reach as it struck, and whether it landed on you. */
+    private boolean inReach, struck;
 
     FightRunner(AwakenBoss boss, Kits.Kit kit) {
         this.boss = boss;
@@ -58,6 +90,15 @@ final class FightRunner {
 
     boolean busy() {
         return move >= 0;
+    }
+
+    boolean duel() {
+        return fight.duel();
+    }
+
+    /** A duel's stance size, or 0 for a Lord's own. */
+    int stance() {
+        return fight.duel() ? fight.stance() : 0;
     }
 
     /** The intro pose (until the fight starts), or none. */
@@ -80,6 +121,8 @@ final class FightRunner {
         stop();
         string.clear();
         introduced = true;
+        phraseBlows = 1;
+        recoil = 0;
         return begin(level, id, boss.getTarget());
     }
 
@@ -95,6 +138,11 @@ final class FightRunner {
         return move >= 0 ? moves.get(move).id() : null;
     }
 
+    /** The last attack begun, or null. */
+    KitMoves.@Nullable Move lastAttack() {
+        return last >= 0 ? moves.get(last) : null;
+    }
+
     /** The studio: every move in turn (with no target needed), then the fight as usual. */
     void studio() {
         stop();
@@ -107,6 +155,7 @@ final class FightRunner {
 
     /** Its stance broke or it was staggered: the move in progress ends there, and so does its string (SPEC §24). */
     void interrupt() {
+        recoil = 0;
         if (move < 0) return;
         stop();
         string.clear();
@@ -116,7 +165,65 @@ final class FightRunner {
     /** A phase threshold was crossed: its transition plays as soon as the current move ends. */
     void enterPhase(int phase) {
         pendingPhase = phase;
+        if (phase >= 1) habit(); // a fight that reads you has read you by its second phase
     }
+
+    /**
+     * The habit this fight has read of you: the one you leaned on most through its first phase, read once (at its second
+     * phase, or when first asked); NONE for a fight that doesn't read you, or when no habit stood out.
+     */
+    Strikes.Habit habit() {
+        if (!fight.mirrors() || read != Strikes.Habit.NONE || boss.phase() < 1) return read;
+        int[] n = {guards, slips, far / HABIT_FAR, casts};
+        int best = 0;
+        for (int i = 1; i < n.length; i++) if (n[i] > n[best]) best = i;
+        int next = 0;
+        for (int i = 0; i < n.length; i++) if (i != best) next = Math.max(next, n[i]);
+        if (n[best] >= HABIT_LEAN && n[best] > next) read = Strikes.Habit.values()[best + 1];
+        return read;
+    }
+
+    /** It was hurt by {@code source} (landed): a power's blow is a habit too. */
+    void hurtBy(DamageSource source) {
+        if (!fight.mirrors() || read != Strikes.Habit.NONE || !(source.getEntity() instanceof net.minecraft.world.entity.player.Player)) return;
+        for (var k : POWER_DAMAGE) {
+            if (source.is(k)) {
+                casts++;
+                return;
+            }
+        }
+    }
+
+    private static final List<net.minecraft.resources.ResourceKey<net.minecraft.world.damagesource.DamageType>> POWER_DAMAGE = List.of(
+            dev.awaken.core.Forces.HEAT, dev.awaken.core.Forces.CHARGE, dev.awaken.core.Forces.GRAVITY, dev.awaken.core.Forces.SPIRIT,
+            dev.awaken.core.Forces.FROST, dev.awaken.core.Forces.KINETIC);
+
+    /**
+     * The look of the power family you've used most, for its shots (their look only, never an effect): your own power,
+     * thrown back at you. Null when you've used none.
+     */
+    static @Nullable BoltKind yours(net.minecraft.server.level.ServerPlayer sp) {
+        String best = null;
+        long most = 0;
+        for (var en : dev.awaken.progression.Progression.profile(sp).counters().entrySet()) {
+            if (!en.getKey().startsWith(POWER_USES) || en.getValue() <= most) continue;
+            most = en.getValue();
+            best = en.getKey().substring(POWER_USES.length());
+        }
+        if (best == null) return null;
+        return switch (best) {
+            case "kinetic" -> BoltKind.GRAVITY;
+            case "velocity", "energy" -> BoltKind.CHARGE;
+            case "flight", "architect" -> BoltKind.GLASS;
+            case "shadow" -> BoltKind.VOID;
+            case "mind" -> BoltKind.DREAM;
+            case "tech" -> BoltKind.SIGNAL;
+            case "spirit" -> BoltKind.SPIRIT;
+            default -> null;
+        };
+    }
+
+    private static final String POWER_USES = "awaken:power_uses/";
 
     void tick(ServerLevel level) {
         if (move >= 0) {
@@ -136,6 +243,10 @@ final class FightRunner {
             boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_INTRO);
             if (target == null || !target.isAlive()) return;
             introduced = true;
+            if (fight.mirrors() && !measured && target instanceof net.minecraft.server.level.ServerPlayer sp) {
+                measured = true;
+                boss.mirrorBolt(yours(sp));
+            }
             boss.syncKit(-1, 0, 0);
             if (fight.intro().move().isPresent() && begin(level, fight.intro().move().get(), target)) return;
         }
@@ -144,29 +255,52 @@ final class FightRunner {
             pendingPhase = -1;
             String tr = fight.phase(p).transition().orElse(null);
             string.clear();
+            phraseBlows = 1;
             if (tr != null && begin(level, tr, target)) {
                 boss.shield(windup + active + recover);
                 return;
             }
         }
-        // a broken stance or a stagger is the opening it earned: it starts nothing (and kneels while broken)
-        boolean broken = Stances.broken(boss);
-        boss.syncKit(-1, 0, broken ? AwakenBoss.KIT_POSE_BROKEN : 0);
+        // a broken stance or a stagger is the opening it earned: it starts nothing (and kneels while broken, reels from
+        // a phrase's last blow turned aside, its limb recoils from a deflect)
+        boolean broken = boss.broken() || Stances.broken(boss);
+        int pose = broken ? AwakenBoss.KIT_POSE_BROKEN : boss.reeling() ? AwakenBoss.KIT_POSE_REEL : recoil > 0 ? AwakenBoss.KIT_POSE_RECOIL : 0;
+        boss.syncKit(-1, 0, pose);
         if (broken || boss.staggered() || boss.flag(AwakenMob.F_FALLEN) || boss.flag(AwakenMob.F_DORMANT)) {
             string.clear();
+            recoil = 0;
             return;
         }
         if (target == null || !target.isAlive()) return;
         boss.getLookControl().setLookAt(target, 30, 30);
+        if ((boss.tickCount % 10) == 0) {
+            distWasWas = distWas;
+            distWas = edgeDistance(target);
+            if (fight.mirrors() && read == Strikes.Habit.NONE && distWas >= 8) far++;
+        }
+        if (recoil > 0) { // the limb comes back; the phrase goes on after
+            recoil--;
+            boss.getNavigation().stop();
+            return;
+        }
         if (!string.isEmpty()) {
             String next = string.poll();
             int i = moves.index(next);
-            if (i >= 0 && inRange(moves.get(i), target) && begin(level, next, target)) return;
+            if (i >= 0 && inRange(moves.get(i), target) && begin(level, next, target)) {
+                phraseBlows++;
+                return;
+            }
             string.clear();
+            if (fight.duel()) { // a phrase cut short (you got out of reach) still ends in its opening
+                openUp(level, opening(phraseBlows));
+                return;
+            }
         }
         if (gap > 0) {
             gap--;
-            approach(target);
+            // an opening: it starts nothing and stands its ground, turning to keep you in front (SPEC §47.3)
+            if (boss.inOpening()) boss.getNavigation().stop();
+            else approach(target);
             return;
         }
         FightScripts.Entry e = pick(target);
@@ -174,6 +308,7 @@ final class FightRunner {
             approach(target);
             return;
         }
+        phraseBlows = 1;
         if (!e.then().isEmpty()) {
             List<String> s = e.then().get(boss.getRandom().nextInt(e.then().size()));
             string.addAll(s);
@@ -206,15 +341,99 @@ final class FightRunner {
     private FightScripts.@Nullable Entry pick(LivingEntity target) {
         List<FightScripts.Entry> pool = fight.phase(boss.phase()).pool();
         int sum = 0;
-        for (FightScripts.Entry e : pool) if (usable(e, target)) sum += Math.max(1, e.weight());
+        for (FightScripts.Entry e : pool) if (usable(e, target)) sum += weight(e, target);
         if (sum <= 0) return null;
         int r = boss.getRandom().nextInt(sum);
         for (FightScripts.Entry e : pool) {
             if (!usable(e, target)) continue;
-            r -= Math.max(1, e.weight());
-            if (r < 0) return e;
+            r -= weight(e, target);
+            if (r < 0) {
+                if (red(e)) deflects = 0; // its answer to your deflects is given
+                return e;
+            }
         }
         return null;
+    }
+
+    /**
+     * An entry's weight; in a duel it answers your habits (SPEC §47.3): after {@link #HABIT_DEFLECTS} deflects in a row
+     * its red phrases come up {@link #HABIT_RED} times as often, and when you back off its gap closers
+     * {@link #HABIT_CLOSE} times.
+     */
+    private int weight(FightScripts.Entry e, LivingEntity target) {
+        int w = Math.max(1, e.weight());
+        if (!fight.duel()) return w;
+        if (deflects >= HABIT_DEFLECTS && boss.level().getGameTime() - deflectAt <= HABIT_FORGET && red(e)) w *= HABIT_RED;
+        int i = moves.index(e.move());
+        if (i >= 0 && moves.get(i).is("gap") && backingOff()) w *= HABIT_CLOSE;
+        if (i >= 0 && read != Strikes.Habit.NONE && answers(e, moves.get(i))) w *= HABIT_ANSWER;
+        return w;
+    }
+
+    /**
+     * Whether a phrase answers the habit it read (SPEC §47.6): your guard, the blows that can't be turned aside (amber,
+     * red, a grab); your dodging, the held blows and the long strings (a dodge spent early, or on the first blow of
+     * three); your distance, its gap closers; your powers, its shots (in your power's look).
+     */
+    private boolean answers(FightScripts.Entry e, KitMoves.Move m) {
+        return switch (read) {
+            case GUARD -> {
+                Strikes.Kind k = told(m, m.ability().map(boss::ability).orElse(null));
+                yield k == Strikes.Kind.HEAVY || k == Strikes.Kind.PERILOUS || k == Strikes.Kind.GRAB;
+            }
+            case SLIP -> m.time().hold() > 0 || e.then().stream().anyMatch(t -> t.size() >= 2);
+            case DISTANCE -> m.is("gap");
+            case POWERS -> m.is("ranged");
+            case NONE -> false;
+        };
+    }
+
+    private boolean red(FightScripts.Entry e) {
+        int i = moves.index(e.move());
+        if (i < 0) return false;
+        KitMoves.Move m = moves.get(i);
+        Strikes.Kind k = told(m, m.ability().map(boss::ability).orElse(null));
+        return k == Strikes.Kind.PERILOUS || k == Strikes.Kind.GRAB;
+    }
+
+    /** The target is putting distance between you: further than 6 blocks and 1.5 further than a second ago. */
+    private boolean backingOff() {
+        return distWas >= 6 && distWasWas >= 0 && distWas - distWasWas > 1.5;
+    }
+
+    /** The opening after a phrase of {@code blows}: 0.8 s after one, longer after longer ones, at most 1.5 s. */
+    static int opening(int blows) {
+        return Math.min(OPENING_MAX, OPENING_MIN + OPENING_PER_BLOW * Math.max(0, blows - 1));
+    }
+
+    /** It stands open for {@code ticks}: it starts nothing, and blows on it break its stance faster. */
+    private void openUp(ServerLevel level, int ticks) {
+        gap = ticks;
+        boss.openFor(ticks);
+    }
+
+    /**
+     * A blow of its was deflected (Arms, SPEC §47.3): the blow is spent and its limb recoils; the phrase goes on after
+     * {@link #RECOIL_TICKS}, unless that was its last blow: then it reels, the opening a parry earns.
+     */
+    void deflected(ServerLevel level, Strikes.Kind kind) {
+        if (!fight.duel() || move < 0 || cls == Strikes.Kind.NONE) return;
+        long now = level.getGameTime();
+        if (now - deflectAt > HABIT_FORGET) deflects = 0;
+        deflects++;
+        if (fight.mirrors() && read == Strikes.Habit.NONE) guards++;
+        deflectAt = now;
+        boolean last = string.isEmpty();
+        stop();
+        if (last) {
+            // the reel is a stagger (nothing counts down through it), then half an opening more while it gathers itself
+            boss.reel(REEL_TICKS);
+            gap = OPENING_MIN / 2;
+            boss.openFor(REEL_TICKS + OPENING_MIN / 2);
+        } else {
+            recoil = RECOIL_TICKS;
+            boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_RECOIL);
+        }
     }
 
     private boolean usable(FightScripts.Entry e, LivingEntity target) {
@@ -281,8 +500,9 @@ final class FightRunner {
         int i = moves.index(id);
         if (i < 0) return false;
         KitMoves.Move m = moves.get(i);
+        cls = told(m, m.ability().map(boss::ability).orElse(null));
         // the enrage is speed, never damage: the wind-up and recovery shrink, but never under its class's tell
-        int held = m.kind() == Strikes.Kind.HEAVY && m.time().hold() > 0 && boss.getRandom().nextInt(3) == 0 ? m.time().hold() : 0;
+        int held = cls == Strikes.Kind.HEAVY && m.time().hold() > 0 && boss.getRandom().nextInt(3) == 0 ? m.time().hold() : 0;
         KitMoves.Played p = KitMoves.played(m, boss.kitSpeed(), held);
         played = p;
         windup = p.windup();
@@ -290,19 +510,20 @@ final class FightRunner {
         active = p.active();
         recover = p.recover();
         move = i;
+        if (cls != Strikes.Kind.NONE) last = i;
         t = 0;
         hits = 0;
         yaw = boss.yBodyRot;
         // an ability needs someone to aim at (the studio plays its moves with nobody there: the body only)
         ability = target != null ? m.ability().map(boss::ability).orElse(null) : null;
-        if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold);
+        if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold, cls, m.signature());
         boss.getNavigation().stop();
         boss.syncKit(i, hold, 0);
-        if (m.kind() != Strikes.Kind.NONE) {
-            boss.setTell(windup + hold, m.kind(), m.kind() == Strikes.Kind.HEAVY);
+        if (cls != Strikes.Kind.NONE) {
+            boss.setTell(windup + hold, cls, cls == Strikes.Kind.HEAVY);
             // the body's own voice for the class when it has one (the glow still tells the class), else Arms' one
-            if (!sound(m, "tell", "tell_" + m.kind().name().toLowerCase(java.util.Locale.ROOT)))
-                boss.playTell(m.kind(), m.kind() == Strikes.Kind.HEAVY, 1.0F);
+            if (!sound(m, "tell", "tell_" + cls.name().toLowerCase(java.util.Locale.ROOT)))
+                boss.playTell(cls, cls == Strikes.Kind.HEAVY, 1.0F);
         }
         if (m.signature() && !m.title().isEmpty() && boss.bar() != null) BossPlates.line(boss.bar(), m.title(), BossPlates.Line.SIGNATURE, boss.def().glow);
         return true;
@@ -314,8 +535,10 @@ final class FightRunner {
         t++;
         int wind = windup + hold;
         if (t <= wind) {
-            // the wind-up: it turns toward you until it locks, then commits
-            boolean tracking = t <= m.time().lock() && target != null && target.isAlive();
+            // the wind-up: it turns toward you until it locks, then commits; an aimed ability locks at least its lead
+            // before it can land (SPEC §47.2, I3), whatever the move's own lock says
+            int lockAt = ability != null ? Math.min(m.time().lock(), wind - Carriers.lead(ability)) : m.time().lock();
+            boolean tracking = t <= lockAt && target != null && target.isAlive();
             if (tracking && m.time().track() > 0) {
                 float want = (float) (Mth.atan2(target.getZ() - boss.getZ(), target.getX() - boss.getX()) * Mth.RAD_TO_DEG) - 90;
                 yaw = Mth.approachDegrees(yaw, want, m.time().track());
@@ -323,15 +546,17 @@ final class FightRunner {
             face();
             boss.getNavigation().stop();
             if (ability != null) boss.abilityRunner().windup(level, ability, wind - t + 1, tracking);
-            if (m.kind() != Strikes.Kind.NONE && (t & 3) == 0) boss.setTell(wind - t, m.kind(), m.kind() == Strikes.Kind.HEAVY);
+            if (cls != Strikes.Kind.NONE && (t & 3) == 0) boss.setTell(wind - t, cls, cls == Strikes.Kind.HEAVY);
             return;
         }
         int k = t - wind - 1;
         if (k < active) {
             if (k == 0) {
+                inReach = target != null && target.isAlive() && !m.hits().isEmpty() && edgeDistance(target) <= m.maxRange() + 0.5;
+                struck = false;
                 boss.setTelegraph(0, false);
                 if (ability != null) {
-                    boss.abilityRunner().fire(level, ability, world(m.origin()), m.kind() != Strikes.Kind.NONE ? m.kind() : ability.strike());
+                    boss.abilityRunner().fire(level, ability, world(m.origin()), cls != Strikes.Kind.NONE ? cls : ability.strike());
                     // a step that didn't close the gap (a wall where it would land) doesn't cut the air far from you:
                     // it ends there, string and all
                     if (ability.kind() == Ability.Kind.BLINK && !m.hits().isEmpty()) {
@@ -346,7 +571,7 @@ final class FightRunner {
                     }
                 }
                 // a roar for an intro or transition, a cast for an ability alone (a blow's whoosh plays on its mark)
-                if (m.kind() == Strikes.Kind.NONE) {
+                if (cls == Strikes.Kind.NONE) {
                     if (!sound(m, "swing", "roar")) boss.roar();
                 } else if (m.hits().isEmpty()) sound(m, "swing", "cast");
                 if (m.is("area") && firstHit(m) < 0) sound(m, "impact", "impact");
@@ -362,6 +587,9 @@ final class FightRunner {
             return;
         }
         marks(m);
+        // a blow you stood in the reach of that never landed (and wasn't turned aside: that ends it before here) you got
+        // out of: a dash, a step, a roll
+        if (k == active && inReach && !struck && fight.mirrors() && read == Strikes.Habit.NONE) slips++;
         if (t < wind + active + recover) {
             // the recovery: no turning, the opening; in a string the next move links on at the end of the
             // follow-through instead of the body going back to rest first (SPEC §35.10)
@@ -369,7 +597,10 @@ final class FightRunner {
             return;
         }
         stop();
-        gap = !studio.isEmpty() ? 30 : string.isEmpty() ? 6 + boss.getRandom().nextInt(9) : 0;
+        if (!studio.isEmpty()) gap = 30;
+        else if (!string.isEmpty()) gap = 0;
+        else if (fight.duel()) openUp(level, opening(phraseBlows)); // every phrase ends in an opening (SPEC §47.3, I8)
+        else gap = 6 + boss.getRandom().nextInt(9);
     }
 
     /**
@@ -377,11 +608,11 @@ final class FightRunner {
      * area move meeting the ground) and the steps its feet take where it doesn't travel (travel steps are the walk's).
      */
     private void marks(KitMoves.Move m) {
-        if (played == null || m.kind() == Strikes.Kind.NONE) return;
+        if (played == null || cls == Strikes.Kind.NONE) return;
         KitMoves.Time base = m.time();
         if (!m.hits().isEmpty()) {
             int whoosh = Math.max(1, Math.round(played.at(base, m.mark("whoosh", base.windup())))) + 1;
-            if (t == whoosh) sound(m, "swing", m.kind() == Strikes.Kind.LIGHT ? "swing_light" : "swing_heavy");
+            if (t == whoosh) sound(m, "swing", cls == Strikes.Kind.LIGHT ? "swing_light" : "swing_heavy");
             if (m.is("area") && firstHit(m) >= 0 && t == Math.round(played.at(base, m.mark("contact", base.windup() + firstHit(m)))) + 1)
                 sound(m, "impact", "impact"); // the blow meets the ground
         }
@@ -400,6 +631,7 @@ final class FightRunner {
         if (i < 0 || !inRange(moves.get(i), target)) return false;
         String next = string.poll();
         stop();
+        phraseBlows++;
         return begin(level, next, target);
     }
 
@@ -427,6 +659,16 @@ final class FightRunner {
         boss.setYRot(yaw);
         boss.yBodyRot = yaw;
         boss.yHeadRot = yaw;
+    }
+
+    /**
+     * A move's told class (SPEC §47.2, I1): its own, else what it does says it (an ability's class, a blow's amber), so
+     * no move that hurts goes untold. NONE only for a move that hurts nobody (a roar, a summon, a guard).
+     */
+    static Strikes.Kind told(KitMoves.Move m, @Nullable Ability a) {
+        if (m.kind() != Strikes.Kind.NONE) return m.kind();
+        if (a != null && a.strike() != Strikes.Kind.NONE) return a.strike();
+        return m.hits().isEmpty() ? Strikes.Kind.NONE : Strikes.Kind.HEAVY;
     }
 
     /** A point in the body's space (blocks: +x left, +y up, +z forward) in the world, at the locked facing. */
@@ -458,8 +700,9 @@ final class FightRunner {
             if (!touched) continue;
             if (hits < hit.length) hit[hits++] = e.getId();
             float dmg = (float) boss.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * m.damage();
-            Strikes.Kind kind = m.kind() == Strikes.Kind.NONE ? Strikes.Kind.HEAVY : m.kind();
+            Strikes.Kind kind = cls == Strikes.Kind.NONE ? Strikes.Kind.HEAVY : cls;
             boolean landed = Strikes.deliver(boss, kind, () -> e.hurtServer(level, level.damageSources().mobAttack(boss), dmg));
+            if (landed && e == boss.getTarget()) struck = true;
             if (landed && m.knock() > 0) {
                 Vec3 away = e.position().subtract(boss.position());
                 Abilities.push(e, away, m.knock(), Math.min(0.5, m.knock() * 0.4));

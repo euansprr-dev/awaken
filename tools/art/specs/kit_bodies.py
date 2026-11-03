@@ -32,7 +32,9 @@ BOSSES = ["ember_tyrant", "unit_zero", "mother_of_spores", "gearwright_colossus"
           "sky_leviathan", "hollow_herald", "guardian_rim", "guardian_gardens", "guardian_choir", "guardian_orchard", "guardian_silent",
           "guardian_foundry", "guardian_inverted", "guardian_dreaming", "guardian_court", "guardian_seed",
           "sovereign_hunger", "sovereign_silence", "sovereign_sleep", "sovereign_machines", "sovereign_mirrors", "sovereign_storms", "sovereign_roots", "sovereign_ash",
-          "signals_shadow", "nightmare_falling", "nightmare_burning", "nightmare_drowning", "nightmare_undead", "nightmare_arthropod", "nightmare_explosion", "nightmare_generic"]
+          "signals_shadow", "nightmare_falling", "nightmare_burning", "nightmare_drowning", "nightmare_undead", "nightmare_arthropod", "nightmare_explosion", "nightmare_generic",
+          "proving_ringer", "proving_examiner", "proving_unmade", "proving_sky_warden",
+          "proving_keepers_shadow", "proving_last_loop"]
 
 
 def designs(only=None):
@@ -112,11 +114,12 @@ def motion(outdir, only=None, gifs=True):
     for d in designs(only):
         skin, glow, _ = paint(d)
         rows = M.run(outdir, d, skin, glow, gifs)
-        print(f"{d['rig'].id}: {len(rows)} sequences")
+        has, lacks = M.reactions(d["rig"])
+        print(f"{d['rig'].id}: {len(rows)} sequences; reactions {', '.join(has)}" + (f" (none for {', '.join(lacks)})" if lacks else ""))
         for r in rows:
             dip = "" if r["dip"] is None else f"  dip {100 * r['dip']:.0f}%"
             print(f"  {'-'.join(r['seq']):34} {r['seconds']:5.2f} s  still {r['still_s']:4.2f} s  kinks {r['kinks']:3d} (worst {r['worst_kink']:4.1f}, strike {r['strike_snap']:4.1f})"
-                  f"  held {100 * r['held']:3.0f}%  peak {r['peak_deg_s']:5d}/s{dip}")
+                  f"  held {100 * r['held']:3.0f}%  peak {r['peak_deg_s']:5d}/s  slide {r['slide']:.3f}{' !' if r['slide'] > M.SLIDE else ''}{dip}")
 
 
 if __name__ == "__main__":

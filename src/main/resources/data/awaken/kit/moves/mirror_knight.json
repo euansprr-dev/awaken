@@ -533,7 +533,7 @@
   },
   {
    "id": "lunge",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
     "windup": 16,
     "active": 14,

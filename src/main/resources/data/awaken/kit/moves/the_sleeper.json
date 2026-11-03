@@ -1263,38 +1263,6 @@
    }
   },
   {
-   "id": "sleepwalkers",
-   "class": "NONE",
-   "time": {
-    "windup": 14,
-    "active": 24,
-    "recover": 16,
-    "track": 6.0,
-    "lock": 10,
-    "link": 4
-   },
-   "range": [
-    0,
-    99
-   ],
-   "damage": 0,
-   "knock": 0,
-   "title": "Sleepwalkers",
-   "kinds": [
-    "summon"
-   ],
-   "ability": "Sleepwalkers",
-   "marks": {
-    "peak": 14,
-    "contact": 14,
-    "whoosh": 14
-   },
-   "sounds": {
-    "swing": "cast",
-    "impact": ""
-   }
-  },
-  {
    "id": "awaken",
    "class": "PERILOUS",
    "time": {

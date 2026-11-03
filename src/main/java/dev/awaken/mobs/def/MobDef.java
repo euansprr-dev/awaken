@@ -49,6 +49,8 @@ public final class MobDef {
     public final @Nullable FaunaRole fauna;
     /** Overrides the model's borrowed voice (overworld creatures only). */
     public final Model.@Nullable Voice voice;
+    /** What a blade meets on it when its model would say otherwise (a bronze bell, a glass serpent), or null. */
+    public final @Nullable BodyMaterial body;
     /** What an overworld creature does (NONE for everything else). */
     public final FaunaTalent talent;
     /**
@@ -101,6 +103,7 @@ public final class MobDef {
         };
         this.fauna = b.fauna;
         this.voice = b.voice;
+        this.body = b.body;
         this.talent = b.talent;
         this.placed = b.placed;
         this.grounded = b.grounded;
@@ -112,6 +115,7 @@ public final class MobDef {
 
     /** What a blade meets on this body (Arms' impacts): bone, golem iron and stone, creaking wood, a spirit's nothing. */
     public BodyMaterial material() {
+        if (body != null) return body;
         if (traits.contains(Trait.HAUNTED)) return BodyMaterial.SPIRIT;
         return switch (model) {
             case SKELETON, STRAY, WITHER_SKELETON, BOGGED, WITHER -> BodyMaterial.BONE;
@@ -166,6 +170,7 @@ public final class MobDef {
         String intro;
         FaunaRole fauna;
         Model.Voice voice;
+        BodyMaterial body;
         FaunaTalent talent = FaunaTalent.NONE;
         boolean placed, grounded;
 
@@ -202,6 +207,8 @@ public final class MobDef {
         /** Marks an overworld creature (spawned by the world module's fauna layer, not by gates). */
         public B fauna(FaunaRole role) { fauna = role; return this; }
         public B voice(Model.Voice v) { voice = v; return this; }
+        /** Its blows land on this material (Arms' impact sounds, sparks), whatever its model. */
+        public B body(BodyMaterial m) { body = m; return this; }
         public B talent(FaunaTalent t) { talent = t; return this; }
         /** Spawned only from code at its own place (see {@link MobDef#placed}). */
         public B placed() { placed = true; return this; }

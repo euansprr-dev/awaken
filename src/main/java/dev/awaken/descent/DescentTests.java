@@ -275,8 +275,8 @@ final class DescentTests {
         h.assertTrue(Strata.access(Rank.B, 60, false, 8) == Strata.Access.SEALED_RANK, "Dreaming opens at A");
         h.assertTrue(Strata.access(Rank.A, 99, false, 9) == Strata.Access.SEALED_RANK, "Hollow Court opens at S");
         h.assertTrue(Strata.access(Rank.S, 100, false, 9) == Strata.Access.OPEN, "Hollow Court opens at S");
-        h.assertTrue(Strata.access(Rank.S, 120, false, 10) == Strata.Access.SEALED_LEVEL, "the Seed needs the Sovereign level");
-        h.assertTrue(Strata.access(Rank.S, 135, false, 10) == Strata.Access.OPEN, "the Seed opens at S level 135");
+        h.assertTrue(Strata.access(Rank.S, 135, false, 10) == Strata.Access.SEALED_RANK, "the Seed waits for the last Proving");
+        h.assertTrue(Strata.access(Rank.SOVEREIGN, 135, false, 10) == Strata.Access.OPEN, "the Seed opens at Sovereign");
         h.assertTrue(Strata.access(Rank.SOVEREIGN, 140, false, 11) == Strata.Access.SEALED_SEED, "the Endless needs the Seed");
         h.assertTrue(Strata.access(Rank.SOVEREIGN, 140, true, 12) == Strata.Access.OPEN, "the Endless opens after the Seed");
         // content level climbs with depth, stratum n = rank index min(6, (n+1)/2)

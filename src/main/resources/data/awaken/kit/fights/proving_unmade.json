@@ -1,0 +1,284 @@
+{
+ "schemaVersion": 1,
+ "id": "proving_unmade",
+ "moves": "proving_unmade",
+ "duel": true,
+ "stance": 340,
+ "intro": {
+  "pose": "kneel",
+  "move": "rise"
+ },
+ "phases": [
+  {
+   "pool": [
+    {
+     "move": "swat_l",
+     "weight": 3,
+     "then": [
+      [
+       "swat_r"
+      ],
+      [
+       "swat_r",
+       "keystone"
+      ]
+     ]
+    },
+    {
+     "move": "swat_r",
+     "weight": 2,
+     "then": [
+      [
+       "swat_l"
+      ],
+      [
+       "swat_l",
+       "stomp"
+      ]
+     ]
+    },
+    {
+     "move": "keystone",
+     "weight": 2,
+     "then": [
+      [
+       "swat_l"
+      ]
+     ]
+    },
+    {
+     "move": "stomp",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "swat_r"
+      ]
+     ]
+    },
+    {
+     "move": "pier_run",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swat_l",
+       "swat_r"
+      ]
+     ]
+    },
+    {
+     "move": "the_fall",
+     "weight": 1,
+     "then": [
+      [
+       "pier_run"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "give",
+   "pool": [
+    {
+     "move": "swat_l",
+     "weight": 3,
+     "then": [
+      [
+       "swat_r",
+       "keystone"
+      ],
+      [
+       "swat_r",
+       "swat_l",
+       "sweep"
+      ]
+     ]
+    },
+    {
+     "move": "swat_r",
+     "weight": 2,
+     "then": [
+      [
+       "swat_l",
+       "sweep"
+      ],
+      [
+       "swat_l",
+       "keystone"
+      ]
+     ]
+    },
+    {
+     "move": "keystone",
+     "weight": 2,
+     "then": [
+      [
+       "swat_l",
+       "swat_r"
+      ]
+     ]
+    },
+    {
+     "move": "sweep",
+     "weight": 2,
+     "then": [
+      [
+       "swat_l"
+      ],
+      [
+       "keystone"
+      ]
+     ]
+    },
+    {
+     "move": "stomp",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "sweep"
+      ]
+     ]
+    },
+    {
+     "move": "pier_run",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swat_l",
+       "swat_r",
+       "keystone"
+      ]
+     ]
+    },
+    {
+     "move": "the_fall",
+     "weight": 2,
+     "then": [
+      [
+       "pier_run"
+      ],
+      [
+       "the_fall"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "transition": "dark",
+   "pool": [
+    {
+     "move": "swat_l",
+     "weight": 3,
+     "then": [
+      [
+       "swat_r",
+       "swat_l",
+       "sweep"
+      ],
+      [
+       "swat_r",
+       "keystone",
+       "unmake"
+      ]
+     ]
+    },
+    {
+     "move": "swat_r",
+     "weight": 2,
+     "then": [
+      [
+       "swat_l",
+       "sweep",
+       "keystone"
+      ]
+     ]
+    },
+    {
+     "move": "sweep",
+     "weight": 2,
+     "then": [
+      [
+       "swat_l",
+       "swat_r"
+      ]
+     ]
+    },
+    {
+     "move": "keystone",
+     "weight": 1,
+     "then": [
+      [
+       "swat_l",
+       "sweep"
+      ]
+     ]
+    },
+    {
+     "move": "unmake",
+     "weight": 2,
+     "when": "FAR",
+     "then": [
+      [
+       "swat_l",
+       "swat_r"
+      ]
+     ]
+    },
+    {
+     "move": "stomp",
+     "weight": 2,
+     "when": "BEHIND",
+     "then": [
+      [
+       "sweep",
+       "swat_l"
+      ]
+     ]
+    },
+    {
+     "move": "pier_run",
+     "weight": 1,
+     "when": "FAR",
+     "then": [
+      [
+       "swat_l",
+       "swat_r",
+       "keystone"
+      ]
+     ]
+    },
+    {
+     "move": "the_fall",
+     "weight": 2,
+     "then": [
+      [
+       "unmake"
+      ],
+      [
+       "pier_run",
+       "swat_l"
+      ]
+     ]
+    },
+    {
+     "move": "rubble",
+     "weight": 1,
+     "then": [
+      [
+       "the_fall"
+      ]
+     ]
+    }
+   ]
+  }
+ ],
+ "enrage": {
+  "below": 0.12,
+  "speed": 1.2
+ }
+}

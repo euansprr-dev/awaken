@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "hollow_herald",
  "moves": "hollow_herald",
+ "duel": true,
+ "stance": 340,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -22,7 +24,16 @@
     {
      "move": "bolts",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "draw"
+      ],
+      [
+       "stride",
+       "swipe"
+      ]
+     ]
     },
     {
      "move": "draw",
@@ -47,7 +58,13 @@
     {
      "move": "back",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swipe",
+       "swipe_b"
+      ]
+     ]
     }
    ]
   },
@@ -66,7 +83,15 @@
     },
     {
      "move": "unlit",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "bolts"
+      ],
+      [
+       "swipe"
+      ]
+     ]
     },
     {
      "move": "summon",
@@ -75,7 +100,16 @@
     {
      "move": "bolts",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "draw"
+      ],
+      [
+       "stride",
+       "swipe"
+      ]
+     ]
     },
     {
      "move": "stride",
@@ -91,7 +125,13 @@
     {
      "move": "back",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swipe",
+       "swipe_b"
+      ]
+     ]
     }
    ]
   },
@@ -105,11 +145,26 @@
     {
      "move": "collapse",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "swipe",
+       "swipe_b"
+      ]
+     ]
     },
     {
      "move": "halo",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "bolts"
+      ],
+      [
+       "stride",
+       "swipe"
+      ]
+     ]
     },
     {
      "move": "draw",
@@ -145,7 +200,13 @@
     {
      "move": "back",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "swipe",
+       "swipe_b"
+      ]
+     ]
     }
    ]
   }

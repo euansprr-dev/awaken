@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "guardian_dreaming",
  "moves": "guardian_dreaming",
+ "duel": true,
+ "stance": 320,
  "intro": {
   "pose": "kneel",
   "move": "wake"
@@ -26,7 +28,16 @@
     {
      "move": "hammer",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "snip",
+       "crush"
+      ],
+      [
+       "heave"
+      ]
+     ]
     },
     {
      "move": "scuttle",
@@ -40,17 +51,39 @@
     },
     {
      "move": "floor",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "scuttle"
+      ],
+      [
+       "snip"
+      ]
+     ]
     },
     {
      "move": "doorstep",
      "weight": 2,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "snip",
+       "crush"
+      ]
+     ]
     },
     {
      "move": "heave",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "snip"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     }
    ]
   },
@@ -74,15 +107,37 @@
     {
      "move": "hammer",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "snip",
+       "crush"
+      ],
+      [
+       "heave"
+      ]
+     ]
     },
     {
      "move": "ceiling",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "floor"
+      ]
+     ]
     },
     {
      "move": "floor",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "scuttle"
+      ],
+      [
+       "snip"
+      ]
+     ]
     },
     {
      "move": "rooms",
@@ -111,7 +166,15 @@
     {
      "move": "heave",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "snip"
+      ],
+      [
+       "hammer"
+      ]
+     ]
     }
    ]
   }

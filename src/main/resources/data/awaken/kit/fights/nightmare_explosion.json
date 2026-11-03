@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "nightmare_explosion",
  "moves": "nightmare_explosion",
+ "duel": true,
+ "stance": 280,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -26,12 +28,22 @@
     {
      "move": "slap",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "pop"
+      ]
+     ]
     },
     {
      "move": "popgoes",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
     },
     {
      "move": "bound",
@@ -46,12 +58,25 @@
     {
      "move": "lines",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "bound"
+      ]
+     ]
     },
     {
      "move": "lid",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "pop"
+      ],
+      [
+       "slap"
+      ]
+     ]
     },
     {
      "move": "ring",
@@ -79,7 +104,12 @@
     {
      "move": "popgoes",
      "weight": 2,
-     "when": "NEAR"
+     "when": "NEAR",
+     "then": [
+      [
+       "slap"
+      ]
+     ]
     },
     {
      "move": "bound",
@@ -95,12 +125,25 @@
     {
      "move": "lines",
      "weight": 3,
-     "when": "FAR"
+     "when": "FAR",
+     "then": [
+      [
+       "bound"
+      ]
+     ]
     },
     {
      "move": "lid",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "pop"
+      ],
+      [
+       "slap"
+      ]
+     ]
     },
     {
      "move": "ring",

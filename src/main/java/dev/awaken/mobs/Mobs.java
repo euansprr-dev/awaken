@@ -8,6 +8,7 @@ import dev.awaken.mobs.def.Bestiary;
 import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.def.Rosters;
 import dev.awaken.mobs.def.Tier;
+import dev.awaken.mobs.entity.AwakenBoss;
 import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.mobs.entity.BrokerBoss;
 import dev.awaken.signal.Signal;
@@ -152,10 +153,24 @@ public final class Mobs {
         AwakenMob m = spawn(level, def, pos, r.contentLevel(), new MobRole(MobRole.Role.NORMAL, r.contentLevel(), def.theme.id, Optional.empty(), ""), EnumSet.noneOf(Forces.Tag.class));
         if (m != null) {
             m.getPersistentData().putInt("awaken_summoner", summoner.getId());
+            if (summoner instanceof AwakenBoss b && b.duel()) duelAdd(m, b);
             if (summoner.getTarget() != null) m.setTarget(summoner.getTarget());
         }
         return m;
     }
+
+    /** A duel's add hits at most {@link AwakenBoss#ADD_DAMAGE} of what its caller does: the weight is the boss's (SPEC §47.3). */
+    private static void duelAdd(AwakenMob m, AwakenBoss caller) {
+        var mine = m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        var theirs = caller.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        if (mine == null || theirs == null || mine.getValue() <= 0) return;
+        double share = AwakenBoss.ADD_DAMAGE * theirs.getValue() / mine.getValue();
+        if (share >= 1) return;
+        mine.addOrReplacePermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(DUEL_ADD, share - 1,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    }
+
+    private static final net.minecraft.resources.Identifier DUEL_ADD = dev.awaken.Awaken.id("duel_add");
 
     /** Budget check for summons: at most twice the ability's count alive per summoner, and SPEC's 60-entity ceiling. */
     public static boolean minionRoom(ServerLevel level, AwakenMob summoner, int count) {
@@ -163,7 +178,9 @@ public final class Mobs {
         if (near.size() + count > 40) return false;
         int mine = 0;
         for (AwakenMob m : near) if (m.getPersistentData().getIntOr("awaken_summoner", -1) == summoner.getId()) mine++;
-        return mine + count <= Math.max(3, count * 2);
+        // a duel keeps its adds few (SPEC §47.3, I6): the fight is with it
+        int cap = summoner instanceof AwakenBoss b && b.duel() ? AwakenBoss.DUEL_ADDS : Math.max(3, count * 2);
+        return mine + count <= cap;
     }
 
     /** Hook for AwakenMob (keeps the drop logic in MobLoot). */

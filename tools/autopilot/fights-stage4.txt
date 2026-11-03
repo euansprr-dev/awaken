@@ -1,0 +1,183 @@
+# Fights stage 4 (SPEC §47.5): the other bosses as duels, one of each body, on the duel stage facing a still stand-in,
+# seen from the side: a phrase's tell, its first blow deflected (`parried`: the limb's recoil), then a lone blow, its
+# phrase's last, deflected (the `reel`, early and low). Then a named beast in the boss's place, its stance broken: it
+# goes over onto its side, lies there open, and heaves itself up as the break ends.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-stage4.txt
+world autopilot_fights_stage4 creative 20261102
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+hud off
+
+# --- the Ember Tyrant (a figure): backhand then chop_a; then backhand alone ---
+cmd awaken bosses duel stage ember_tyrant
+wait 80
+cmd awaken bosses duel play backhand chop_a
+wait 7
+cmd tick freeze
+shot s4_01_tyrant_tell
+cmd tick unfreeze
+wait 4
+cmd awaken bosses duel deflect
+wait 4
+cmd tick freeze
+shot s4_02_tyrant_parried
+cmd tick unfreeze
+wait 80
+cmd awaken bosses duel play backhand
+wait 11
+cmd awaken bosses duel deflect
+wait 5
+cmd tick freeze
+shot s4_03_tyrant_reel
+cmd tick unfreeze
+wait 11
+cmd tick freeze
+shot s4_04_tyrant_reel_low
+cmd tick unfreeze
+wait 60
+
+# --- the Gardens' guardian (a beast): claw then claw_b; then claw alone ---
+cmd awaken bosses duel stage guardian_gardens
+wait 80
+cmd awaken bosses duel play claw claw_b
+wait 7
+cmd tick freeze
+shot s4_05_gardens_tell
+cmd tick unfreeze
+wait 4
+cmd awaken bosses duel deflect
+wait 4
+cmd tick freeze
+shot s4_06_gardens_parried
+cmd tick unfreeze
+wait 80
+cmd awaken bosses duel play claw
+wait 11
+cmd awaken bosses duel deflect
+wait 5
+cmd tick freeze
+shot s4_07_gardens_reel
+cmd tick unfreeze
+wait 11
+cmd tick freeze
+shot s4_08_gardens_reel_low
+cmd tick unfreeze
+wait 60
+
+# --- the Sovereign of Machines (a giant): punch then punch_b; then punch alone ---
+cmd awaken bosses duel stage sovereign_machines
+wait 80
+cmd awaken bosses duel play punch punch_b
+wait 7
+cmd tick freeze
+shot s4_09_machines_tell
+cmd tick unfreeze
+wait 4
+cmd awaken bosses duel deflect
+wait 4
+cmd tick freeze
+shot s4_10_machines_parried
+cmd tick unfreeze
+wait 80
+cmd awaken bosses duel play punch
+wait 11
+cmd awaken bosses duel deflect
+wait 5
+cmd tick freeze
+shot s4_11_machines_reel
+cmd tick unfreeze
+wait 11
+cmd tick freeze
+shot s4_12_machines_reel_low
+cmd tick unfreeze
+wait 60
+
+# --- the Mother of Spores (a flier): lash then lash_b; then lash alone ---
+cmd awaken bosses duel stage mother_of_spores
+wait 80
+cmd awaken bosses duel play lash lash_b
+wait 8
+cmd tick freeze
+shot s4_13_mother_tell
+cmd tick unfreeze
+wait 4
+cmd awaken bosses duel deflect
+wait 4
+cmd tick freeze
+shot s4_14_mother_parried
+cmd tick unfreeze
+wait 80
+cmd awaken bosses duel play lash
+wait 12
+cmd awaken bosses duel deflect
+wait 5
+cmd tick freeze
+shot s4_15_mother_reel
+cmd tick unfreeze
+wait 11
+cmd tick freeze
+shot s4_16_mother_reel_low
+cmd tick unfreeze
+wait 60
+
+# --- the Sky Leviathan (a serpent): slap then slap_b; then slap alone ---
+cmd awaken bosses duel stage sky_leviathan
+wait 80
+cmd awaken bosses duel play slap slap_b
+wait 7
+cmd tick freeze
+shot s4_17_leviathan_tell
+cmd tick unfreeze
+wait 4
+cmd awaken bosses duel deflect
+wait 4
+cmd tick freeze
+shot s4_18_leviathan_parried
+cmd tick unfreeze
+wait 80
+cmd awaken bosses duel play slap
+wait 11
+cmd awaken bosses duel deflect
+wait 5
+cmd tick freeze
+shot s4_19_leviathan_reel
+cmd tick unfreeze
+wait 11
+cmd tick freeze
+shot s4_20_leviathan_reel_low
+cmd tick unfreeze
+wait 60
+
+# --- the Briar Sow, a named beast: its stance broken, it topples ---
+cmd awaken bosses duel beast briar_sow
+wait 60
+cmd awaken bosses duel break
+wait 5
+cmd tick freeze
+shot s4_21_sow_going_over
+cmd tick unfreeze
+wait 12
+cmd tick freeze
+shot s4_22_sow_down
+cmd tick unfreeze
+wait 26
+cmd tick freeze
+shot s4_23_sow_getting_up
+cmd tick unfreeze
+wait 40
+hud on
+quit

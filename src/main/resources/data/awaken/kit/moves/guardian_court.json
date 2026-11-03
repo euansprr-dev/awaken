@@ -332,15 +332,14 @@
   },
   {
    "id": "reach",
-   "class": "HEAVY",
+   "class": "PERILOUS",
    "time": {
     "windup": 16,
     "active": 5,
     "recover": 20,
     "track": 6.0,
     "lock": 11,
-    "link": 5,
-    "hold": 8
+    "link": 5
    },
    "range": [
     0,
@@ -981,7 +980,8 @@
     "recover": 20,
     "track": 6.0,
     "lock": 12,
-    "link": 5
+    "link": 5,
+    "hold": 6
    },
    "range": [
     5,

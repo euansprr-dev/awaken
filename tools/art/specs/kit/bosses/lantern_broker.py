@@ -801,17 +801,18 @@ def crook(r):
 
 
 def pack(r):
-    """For whoever is behind him (LIGHT): he looks over his right shoulder, winds the other way, then twists right
-    round so the whole frame of his shop clubs across behind him, every lantern flying out."""
+    """For whoever is behind him (HEAVY, a hold: the fight's delayed blow, SPEC §47.5): he looks over his right shoulder, winds the other way, then twists right
+    round so the whole frame of his shop clubs across behind him, every lantern flying out; he sinks into the twist, so
+    its bottom bar takes you across the shoulders."""
     look = _pose(r, hips=(0, -8, 0), chest=(0, -12, 0), head=(0, 46, 0), staff="up")
     wind = _pose(r, hips=(2, -16, 0), at=(0, -2, 0), spine=(0, -14, 0), chest=(-4, -26, -4), head=(0, 58, 0), pack=(0, -6, 0), left=(14, 30, 6),
                  staff="up")
-    hit = _pose(r, hips=(2, 20, 0), at=(0, -2.5, 0), spine=(2, 30, 0), chest=(6, 54, 6), head=(0, -30, 0), pack=(0, 12, 4), left=(4, 34, -10),
+    hit = _pose(r, hips=(2, 20, 0), at=(0, -7, 0), spine=(2, 30, 0), chest=(6, 54, 6), head=(0, -30, 0), pack=(0, 12, 4), left=(4, 34, -10),
                 staff="up")
-    after = _pose(r, hips=(2, 22, 0), at=(0, -2.5, 0), spine=(2, 32, 0), chest=(6, 60, 6), head=(0, -34, 0), pack=(0, 14, 4), left=(4, 34, -10),
+    after = _pose(r, hips=(2, 22, 0), at=(0, -7, 0), spine=(2, 32, 0), chest=(6, 60, 6), head=(0, -34, 0), pack=(0, 14, 4), left=(4, 34, -10),
                   staff="up")
-    return Move("pack", "LIGHT", 12, 4, 16, track=0.0, rng=(0, 3.2), kinds=("behind",), damage=1.0, knock=1.2, plant=(),
-                hit=[("pack", (0, -40, 9), 6.0), ("pack", (13, -14, 9), 4.0)], lag=ON_TIME, through=_on(r, after, 0.06),
+    return Move("pack", "HEAVY", 12, 4, 16, hold=6, track=0.0, rng=(0, 3.2), kinds=("behind",), damage=1.0, knock=1.2, plant=(),
+                hit=[("pack", (0, -40, 9), 6.0), ("pack", (13, -14, 9), 4.0), ("pack", (0, 14, 9), 5.0), ("pack", (12, 14, 9), 4.0), ("pack", (-14, 14, 9), 4.0)], lag=ON_TIME, through=_on(r, after, 0.06),
                 stages={"windup": [(0.3, look), (1.0, wind)], "active": [(0.5, hit), (1.0, after)], "recover": _back(r, after)})
 
 
@@ -862,11 +863,12 @@ def moths(r):
 
 def paper(r):
     """Paper Lanterns: he draws in, then rises with his arms flung wide, the staff out at his right and the chain
-    flying from his left, and turns once right round on his heel; the ring of paper lanterns flies out off him."""
+    flying from his left, and turns once right round on his heel; the ring of paper lanterns flies out off him. Red (SPEC
+    §47.5): a ring of fire all round him is no blow to turn aside; step out of it or dash through."""
     draw = _pose(r, hips=(4, 0, 0), at=(0, -2, 0), chest=(6, 12, 0), head=(4, -6, 0), left=(5, 40, -8), right=(-10, 34, -6), staff="up", chain=0.2)
     wide = lambda k: _pose(r, at=(0, 1 + 0.8 * k, 0), chest=(-8 - 4 * k, 6 - 10 * k, 0), head=(-8 - 8 * k, -6 + 8 * k, 0), left=(25, 46 + 8 * k, 2 - 6 * k),
                            lhand=((1, 0.15 - 0.3 * k, 0), (0, 1, 0)), right=(-24, 44 + 8 * k, 4 - 8 * k), staff=((0.3 + 0.2 * k, 0.95, 0), 0), chain=0.8)
-    return Move("paper", "HEAVY", 16, 12, 18, title="Paper Lanterns", hold=6, track=0.0, ability="Paper Lanterns", rng=(0, 8), kinds=("area",),
+    return Move("paper", "PERILOUS", 20, 12, 18, title="Paper Lanterns", track=0.0, ability="Paper Lanterns", rng=(0, 8), kinds=("area",),
                 damage=0, knock=0, plant=(), lag=ON_TIME, through=wide(0.1),
                 stages={"windup": [(0.3, draw), (1.0, wide(0))], "active": [(0.45, wide(1)), (1.0, wide(0.3))], "recover": _back(r, wide(0.1))})
 
@@ -910,6 +912,7 @@ BOLTS_FROM = (-0.65, 4.85, 2.8)  # where the bolts leave the lantern at a pump (
 def clips(r):
     plans.biped_locomotion(r, P, weight=0.8, temper="regal")
     plans.biped_reactions(r, weight=0.8)
+    plans.biped_duel_reactions(r, weight=0.8, lead="r")  # a duel's parried and reel (SPEC §47.5)
     idle(r)
     reactions(r)
     _walk_staff(r, P)
@@ -943,30 +946,33 @@ def clips(r):
 
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 240,
     "intro": {"pose": "idle", "move": "wake"},
     "phases": [
         {"pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["crook"]]},
-            {"move": "bolts", "weight": 3},
+            {"move": "bolts", "weight": 3, "then": [["bolts"], ["step", "lash"]]},
             {"move": "step", "weight": 2, "when": "far", "then": [["lash", "crook"]]},
-            {"move": "pack", "weight": 3, "when": "behind"},
+            {"move": "pack", "weight": 3, "when": "behind", "then": [["crook"], ["lash", "crook"]]},
         ]},
         # prices go up with the second phase: the moths and the paper lanterns, as in GateBestiary
         {"transition": "moths", "pool": [
             {"move": "lash", "weight": 3, "when": "near", "then": [["crook"]]},
-            {"move": "bolts", "weight": 2},
-            {"move": "paper", "weight": 2},
+            {"move": "bolts", "weight": 2, "then": [["bolts"], ["step", "lash"]]},
+            {"move": "paper", "weight": 2, "then": [["bolts"], ["step", "lash"]]},
             {"move": "moths", "weight": 1},
             {"move": "step", "weight": 2, "when": "far", "then": [["lash", "crook"]]},
-            {"move": "pack", "weight": 3, "when": "behind"},
+            {"move": "pack", "weight": 3, "when": "behind", "then": [["crook"], ["lash", "crook"]]},
         ]},
         {"transition": "lights_out", "pool": [
             {"move": "lights_out", "weight": 1},
             {"move": "step", "weight": 3, "then": [["lash", "crook"], ["bolts"]]},
-            {"move": "bolts", "weight": 3},
+            {"move": "bolts", "weight": 3, "then": [["bolts"], ["step", "lash"]]},
             {"move": "lash", "weight": 3, "when": "near", "then": [["crook"]]},
-            {"move": "paper", "weight": 2},
-            {"move": "pack", "weight": 3, "when": "behind"},
+            {"move": "paper", "weight": 2, "then": [["bolts"], ["step", "lash"]]},
+            {"move": "pack", "weight": 3, "when": "behind", "then": [["crook"], ["lash", "crook"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

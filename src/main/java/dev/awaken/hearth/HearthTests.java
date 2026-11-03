@@ -250,7 +250,8 @@ final class HearthTests {
             h.assertTrue(TrialChunkGenerator.isDesert(1) && !TrialChunkGenerator.isDesert(2), "odd cells are desert");
             h.assertTrue(TrialChunkGenerator.arenaBlock(false, 0, TrialChunkGenerator.FLOOR + 2, 5) != null, "hall walls exist");
             h.assertTrue(TrialChunkGenerator.arenaBlock(true, 10, TrialChunkGenerator.FLOOR, 10).is(Blocks.SAND), "desert floor is sand");
-            h.assertTrue(Trials.Kind.forTarget(Rank.D) == Trials.Kind.WAVES && Trials.Kind.forTarget(Rank.A) == Trials.Kind.DESCENT, "trial per rank");
+            h.assertTrue(Trials.Kind.forTarget(Rank.D) == Trials.Kind.PROVING && Trials.Kind.forTarget(Rank.A) == Trials.Kind.PROVING
+                    && Trials.Kind.forTarget(Rank.S) == Trials.Kind.PROVING && Trials.Kind.forTarget(Rank.SOVEREIGN) == Trials.Kind.PROVING, "trial per rank");
             h.assertTrue(dev.awaken.hearth.trophy.Trophies.bonusCount(25) == 20, "trophy bonus capped");
             h.assertTrue(HearthService.restSeconds(1) == 30 && HearthService.restSeconds(5) == 14, "rest time by tier");
             h.succeed();

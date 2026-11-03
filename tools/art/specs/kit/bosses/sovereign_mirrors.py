@@ -626,7 +626,7 @@ def cut_b(r):
 
 
 def lunge(r):
-    """Mirrored Lunge (HEAVY, its gap closer): it turns side-on with the blade drawn back level beside its face, and
+    """Mirrored Lunge (PERILOUS, its gap closer; red in a duel, dashed past): it turns side-on with the blade drawn back level beside its face, and
     every mirror swings round to face you, a hall of you; it holds; then it lunges, the back leg driving straight and the
     front foot reaching far ahead, the blade arm straight out so the point arrives first; the mirrors come back round
     to its face as it lands."""
@@ -639,7 +639,7 @@ def lunge(r):
                   step={"r": (0, -3, -22), "l": (0, 0, 4)}, arms={"hand_r": (-4.0, 66.0, -40.0)}, blade=((0.0, 0.12, -1.0), (0, -1, 0)), glass=OUT)
     land = _pose(r, hips=(8, -28, 0), at=(0, -12, -11), spine=(5, -4, 0), chest=(5, -6, 0), neck=(0, 8, 0), head=(-4, 22, 0),
                  step={"r": (0, 0, -26), "l": (0, 0, 4)}, arms={"hand_r": (-4.0, 62.0, -40.0)}, blade=((0.0, 0.2, -1.0), (0, -1, 0)), glass=OUT)
-    mv = Move("lunge", "HEAVY", 18, 8, 22, title="Mirrored Lunge", hold=6, track=6.0, lock=10, advance=7.0, ability="Mirrored Lunge", rng=(5, 14),
+    mv = Move("lunge", "PERILOUS", 18, 8, 22, title="Mirrored Lunge", track=6.0, lock=10, advance=7.0, ability="Mirrored Lunge", rng=(5, 14),
               kinds=("gap",), damage=1.3, knock=1.0, plant=(), hit=[("blade", TIP, 2.4), ("hand_r", (0, 2, 0), 2.5)], lag=ON_TIME, through=land,
               stages={"windup": [(0.3, _mix(_pose(r), load, 0.3)), (0.52, _lift(_mix(_pose(r), load, 0.7), 1.2)), (0.75, load), (1.0, held)], "active": [(0.45, reach), (1.0, land)],
                       "recover": [(0.3, _mix(land, _pose(r), 0.2)), (0.7, _mix(land, _pose(r), 0.75))]})
@@ -663,14 +663,14 @@ def parry(r):
 
 def riposte(r):
     """The Reflection (after the parry): from behind the great mirror the blade drives straight out past its edge in a
-    thrust, a step behind it, the mirror swinging aside."""
+    thrust down at your chest, a step behind it, the mirror swinging aside."""
     ck = dict(hips=(-2, -14, 0), at=(0, -2, 1.5), chest=(-4, -12, 0), head=(-8, 6, 0), arms={"hand_l": (5.0, 70.0, -19.0), "hand_r": (-13.0, 64.0, -16.0)},
               blade=((0.05, 0.05, -1.0), (1, 0, 0)), glass={"glass_l": ("dir", (0.0, -0.05, -1.0))})
     cock = _pose(r, **ck)
     hit = _pose(r, hips=(4, -22, 0), at=(0, -4, -4), chest=(4, -16, 0), head=(-4, 10, 0), step={"r": (0, 0, -9)},
-                arms={"hand_l": (16.0, 70.0, -12.0), "hand_r": (-4.0, 68.0, -38.0)}, blade=((0.04, 0.06, -1.0), (1, 0, 0)))
+                arms={"hand_l": (16.0, 70.0, -12.0), "hand_r": (-4.0, 40.0, -38.0)}, blade=((0.04, 0.75, -1.0), (1, 0, 0)))
     after = _pose(r, hips=(5, -23, 0), at=(0, -4.4, -4.4), chest=(5, -17, 0), head=(-4, 10, 0), step={"r": (0, 0, -9)},
-                  arms={"hand_l": (17.0, 70.0, -11.0), "hand_r": (-4.0, 67.0, -39.0)}, blade=((0.04, 0.1, -1.0), (1, 0, 0)))
+                  arms={"hand_l": (17.0, 70.0, -11.0), "hand_r": (-4.0, 39.0, -39.0)}, blade=((0.04, 0.79, -1.0), (1, 0, 0)))
     return Move("riposte", "LIGHT", 8, 4, 14, title="The Reflection", track=10.0, rng=(0, 5.0), kinds=("near",), damage=1.1, knock=0.8, plant=(),
                 hit=[("blade", TIP, 2.2), ("blade", (0, 18, 0), 2.0)], lag=ON_TIME, through=_on(r, after, 0.04),
                 stages={"windup": _path(r, {}, ck),
@@ -678,18 +678,18 @@ def riposte(r):
 
 
 def behind(r):
-    """Over the Shoulder (for whoever is behind it): the low right mirror swings out to show it you over its shoulder,
-    its face turning down into it; without turning round it draws the blade across its body and thrusts it straight
-    back under its arm."""
+    """Over the Shoulder (for whoever is behind it; HEAVY, a hold: the fight's delayed blow, SPEC §47.5): the low right mirror swings out to show it you over its shoulder,
+    its face turning down into it; without turning round it draws the blade across its body and thrusts it back and
+    down under its arm."""
     look = dict(neck=(4, -10, 0), head=(14, -34, -6))
     show = {"hand3_r": (-17.0, 66.0, 2.0)}
     see = {"glass3_r": ("dir", (-0.3, -0.35, 0.88))}
     cock = _pose(r, hips=(0, -6, 0), chest=(0, -6, 0), arms={**show, "hand_r": (4.0, 56.0, -10.0)}, blade=((0.15, 0.05, 1.0), (0, -1, 0)), glass=see, **look)
-    hit = _pose(r, hips=(0, -12, 0), at=(0, -1.5, 2), chest=(2, -14, 2), arms={**show, "hand_r": (6.0, 55.0, 12.0)}, blade=((0.1, 0.12, 1.0), (0, -1, 0)),
+    hit = _pose(r, hips=(0, -12, 0), at=(0, -1.5, 2), chest=(2, -14, 2), arms={**show, "hand_r": (6.0, 34.0, 12.0)}, blade=((0.1, 0.9, 1.0), (0, -1, 0)),
                 glass=see, step={"r": (0, 0, 1), "l": (0, 0, 2)}, **look)
-    after = _pose(r, hips=(0, -13, 0), at=(0, -1.8, 2.3), chest=(2, -15, 2), arms={**show, "hand_r": (6.0, 54.0, 14.0)}, blade=((0.1, 0.16, 1.0), (0, -1, 0)),
+    after = _pose(r, hips=(0, -13, 0), at=(0, -1.8, 2.3), chest=(2, -15, 2), arms={**show, "hand_r": (6.0, 33.0, 14.0)}, blade=((0.1, 0.94, 1.0), (0, -1, 0)),
                   glass=see, step={"r": (0, 0, 1), "l": (0, 0, 2)}, **look)
-    return Move("behind", "LIGHT", 10, 4, 14, title="Over the Shoulder", track=0.0, rng=(0, 4.4), kinds=("behind",), damage=1.0, knock=0.6, plant=(),
+    return Move("behind", "HEAVY", 12, 4, 14, hold=6, title="Over the Shoulder", track=0.0, rng=(0, 4.4), kinds=("behind",), damage=1.0, knock=0.6, plant=(),
                 hit=[("blade", TIP, 2.0), ("blade", (0, 18, 0), 1.8)], lag=ON_TIME, through=_on(r, after, 0.04),
                 stages={"windup": [(0.3, _mix(_pose(r), cock, 0.35)), (1.0, cock)], "active": [(0.6, hit), (1.0, after)], "recover": _back(r, after)})
 
@@ -784,6 +784,7 @@ def clips(r):
     idle(r)
     gaits(r)
     reactions(r)
+    plans.biped_duel_reactions(r, weight=1.0)  # a duel's parried and reel (SPEC §47.5)
     mv = moves(r)
     by = {m.id: m for m in mv}
     for m in mv:
@@ -827,13 +828,16 @@ MOVE_SOUNDS = {"parry": {"swing": "cast", "impact": ""}, "hall": {"swing": "cast
                "shatter": {"swing": "roar"}, "preen": {"swing": "cast", "impact": ""}}
 
 FIGHT = {
+    # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
+    "duel": True,
+    "stance": 320,
     "intro": {"pose": "idle", "move": "preen"},  # it raises its mirrors round its face, one after another
     "phases": [
         {"pool": [
             {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"], ["cut_b", "lunge"]]},
             {"move": "parry", "weight": 2, "when": "near", "then": [["riposte"]]},
             {"move": "lunge", "weight": 3, "then": [["cut"]]},
-            {"move": "behind", "weight": 3, "when": "behind"},
+            {"move": "behind", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b"]]},
         ]},
         # a hall of you, as in DeepBestiary: the reflections, and it steps through its own glass
         {"transition": "hall", "pool": [
@@ -841,7 +845,7 @@ FIGHT = {
             {"move": "through", "weight": 2, "when": "far", "then": [["cut", "cut_b"]]},
             {"move": "lunge", "weight": 3, "then": [["cut"]]},
             {"move": "parry", "weight": 2, "when": "near", "then": [["riposte"]]},
-            {"move": "behind", "weight": 3, "when": "behind"},
+            {"move": "behind", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b"]]},
         ]},
         # shatter
         {"transition": "shatter", "pool": [
@@ -850,7 +854,7 @@ FIGHT = {
             {"move": "parry", "weight": 2, "when": "near", "then": [["riposte", "cut_b"]]},
             {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b", "lunge"]]},
             {"move": "through", "weight": 2, "when": "far", "then": [["cut"]]},
-            {"move": "behind", "weight": 3, "when": "behind"},
+            {"move": "behind", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b"]]},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.2},

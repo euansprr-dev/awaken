@@ -2,6 +2,8 @@
  "schemaVersion": 1,
  "id": "lantern_broker",
  "moves": "lantern_broker",
+ "duel": true,
+ "stance": 240,
  "intro": {
   "pose": "idle",
   "move": "wake"
@@ -21,7 +23,16 @@
     },
     {
      "move": "bolts",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "bolts"
+      ],
+      [
+       "step",
+       "lash"
+      ]
+     ]
     },
     {
      "move": "step",
@@ -37,7 +48,16 @@
     {
      "move": "pack",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "crook"
+      ],
+      [
+       "lash",
+       "crook"
+      ]
+     ]
     }
    ]
   },
@@ -56,11 +76,29 @@
     },
     {
      "move": "bolts",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "bolts"
+      ],
+      [
+       "step",
+       "lash"
+      ]
+     ]
     },
     {
      "move": "paper",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "bolts"
+      ],
+      [
+       "step",
+       "lash"
+      ]
+     ]
     },
     {
      "move": "moths",
@@ -80,7 +118,16 @@
     {
      "move": "pack",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "crook"
+      ],
+      [
+       "lash",
+       "crook"
+      ]
+     ]
     }
    ]
   },
@@ -106,7 +153,16 @@
     },
     {
      "move": "bolts",
-     "weight": 3
+     "weight": 3,
+     "then": [
+      [
+       "bolts"
+      ],
+      [
+       "step",
+       "lash"
+      ]
+     ]
     },
     {
      "move": "lash",
@@ -120,12 +176,30 @@
     },
     {
      "move": "paper",
-     "weight": 2
+     "weight": 2,
+     "then": [
+      [
+       "bolts"
+      ],
+      [
+       "step",
+       "lash"
+      ]
+     ]
     },
     {
      "move": "pack",
      "weight": 3,
-     "when": "BEHIND"
+     "when": "BEHIND",
+     "then": [
+      [
+       "crook"
+      ],
+      [
+       "lash",
+       "crook"
+      ]
+     ]
     }
    ]
   }
