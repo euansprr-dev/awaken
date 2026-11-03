@@ -34,9 +34,9 @@ public final class DreamLessons {
         Lessons.define(new Lesson("dreams", "awaken:dreams", p -> enabled(), List.of(
                 Step.of("reality_check", "Press H: a reality check", 58,
                                 p -> count(p, Counters.REALITY_CHECKS) > 0,
-                                "Reality check", "In a dream, H takes control of it. Awake, nothing changes.")
+                                "Reality check", "In a dream, H takes control. Awake, nothing changes.")
                         .when(p -> !Dreams.isDreaming(p)),
-                Step.of("intention", "Sleep in a bed tonight: a dream is waiting", 52,
+                Step.of("intention", "A dream is waiting: sleep in a bed", 52,
                                 p -> Lessons.answer(p, "dreams", "intention") >= 2 || hasIntention(p) || count(p, Counters.DREAMS) > 0,
                                 "", "")
                         .when(p -> !Dreams.isDreaming(p))
@@ -44,13 +44,13 @@ public final class DreamLessons {
                                 "Deciding before you sleep that you'll find the door at the end gives you ten more seconds in the dream.",
                                 "I'll find the door", "Just sleep",
                                 p -> setIntention(p, DreamPlanner.FIND_THE_DOOR), p -> {})),
-                Step.of("first_dream", "Sleep in a bed tonight: a dream is waiting", 52,
+                Step.of("first_dream", "A dream is waiting: sleep in a bed", 52,
                                 p -> count(p, Counters.DREAMS) > 0,
-                                "You dreamed", "Every dream holds something worth keeping. Get to the end before it fades.")
+                                "You dreamed", "Every dream holds a prize. Get to the end before it fades.")
                         .when(p -> !Dreams.isDreaming(p)),
                 Step.of("lucid", "In the dream, press H to take control", 55,
                         p -> count(p, Counters.LUCID_DREAMS) > 0,
-                        "You took control", "Press H again to see the way. Get to the end before the dream fades."))));
+                        "You took control", "Press H to see the way. Get to the end before the dream fades."))));
     }
 
     /** Evening in the overworld, awake, not fighting: the moment to ask about tonight. */
