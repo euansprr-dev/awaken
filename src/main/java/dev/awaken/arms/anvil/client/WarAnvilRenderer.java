@@ -41,13 +41,16 @@ import org.jspecify.annotations.Nullable;
  * the smith's hands, laid by, or on the peg), a catalyst being set in the guard while a weapon is attuned (§46.8), the
  * Deepglass weight on the grip as it's balanced and the column of starlight an S-rank weapon is quenched in (§46.9), and
  * a finished weapon standing hilt up in the slot, waking as it's set there, and from the Deepglass horn the last three
- * forged standing in the rack behind it (§46.6). Where each is: {@link AnvilScene}.
+ * forged standing in the rack behind it (§46.6). Where each is: {@link AnvilScene}; the work's corners as it's made:
+ * {@link AnvilBlank}.
  */
 public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlockEntity, WarAnvilRenderer.State> {
     public static final class State extends BlockEntityRenderState {
         final AnvilScene.Placed placed = new AnvilScene.Placed();
         @Nullable String weapon, slot;
         final AnvilScene.Lay slotLay = new AnvilScene.Lay();
+        /** The work's corners and a blade's in the slot, reshaped as made (drawn out, twisted, its guard not yet on). */
+        final AnvilBlank work = new AnvilBlank(), slotBlade = new AnvilBlank();
         int forgeLight, slotFlash, slotEnergy, slotFlaw;
         /** The catalyst being set in the guard (attuning), as vanilla draws the item. */
         final ItemStackRenderState gem = new ItemStackRenderState();
@@ -173,9 +176,9 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             WeaponMesh mesh = WeaponDraw.mesh(AnvilShape.meshId(s.weapon));
             if (mesh != null) {
                 ps.pushPose();
-                ps.mulPose(p.work.matrix(M));
+                ps.mulPose(p.work.frame(M));
                 int x = p.heat < 0 ? 0 : p.heat | p.glow, y = p.heat < 0 ? 0 : p.front | p.flags;
-                WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.weapon)), p.inForge ? s.forgeLight : s.lightCoords, x, y, p.cut);
+                WeaponDraw.draw(out, ps, texture(AnvilShape.meshId(s.weapon)), x, y, s.work.set(mesh, p.work, p.inForge ? s.forgeLight : s.lightCoords, p.cut));
                 ps.popPose();
             }
         }
@@ -202,10 +205,16 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             WeaponMesh mesh = WeaponDraw.mesh(AnvilShape.meshId(s.slot));
             if (mesh != null) {
                 ps.pushPose();
-                ps.mulPose(s.slotLay.matrix(M));
-                // a blade forged alone stands as its Longsword's blade, no hilt
-                float from = AnvilShape.blade(s.slot) ? AnvilShape.of(s.slot).cut[0] : 0F;
-                WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.slot)), LightCoordsUtil.withBlock(s.lightCoords, Math.max(LightCoordsUtil.block(s.lightCoords), 12)), s.slotEnergy, s.slotFlash | s.slotFlaw, from);
+                int light = LightCoordsUtil.withBlock(s.lightCoords, Math.max(LightCoordsUtil.block(s.lightCoords), 12));
+                Identifier texture = texture(AnvilShape.meshId(s.slot));
+                if (AnvilShape.blade(s.slot)) {
+                    // a blade forged alone stands as its Longsword's blade, no hilt (nor its guard's pieces)
+                    ps.mulPose(s.slotLay.frame(M));
+                    WeaponDraw.draw(out, ps, texture, s.slotEnergy, s.slotFlash | s.slotFlaw, s.slotBlade.set(mesh, s.slotLay, light, s.slotLay.shape.cut[0]));
+                } else {
+                    ps.mulPose(s.slotLay.matrix(M));
+                    WeaponDraw.draw(out, ps, mesh, texture, light, s.slotEnergy, s.slotFlash | s.slotFlaw, 0F);
+                }
                 ps.popPose();
             }
         }

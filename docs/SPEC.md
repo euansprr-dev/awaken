@@ -17319,8 +17319,8 @@ it; coming back restarts the stage, counted in again.
   counted in for one bar (64 ticks); then 10 strikes, each due on the next x, each on its mark (`AnvilSong.MARKS`, along
   and across the blade, the same every time). A strike scores 0.6 timing (1 within 1.5 ticks, 0 at 6) + 0.4 aim (1
   inside half a mark, 0 at two marks; the client reports the aim); 8 ticks either side is its window and a beat left
-  unstruck is a miss (0); a clean strike is 0.8. The blade draws out strike by strike, from a squat bar (half its length,
-  half again its width) to its own shape; after the fifth strike the tongs flip it over.
+  unstruck is a miss (0); a clean strike is 0.8. The blade draws out strike by strike, from a square bar (0.62 its length)
+  to its own shape (the blank, below); after the fifth strike the tongs flip it over.
 - **Quench** (stage 2): the blade is held over the trough. Hold to plunge it (PLUNGE), let go to lift it (LIFT): the dark
   line climbs from the point at 1/40 of the blade a tick and the gold notch is at 0.8, so the ideal hold is 32 ticks.
   Within 2 ticks either side is 1; early is **soft** (falling to 0.35 at 12 ticks early); late is **brittle** (a flaw,
@@ -17380,7 +17380,31 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
 `/awaken arms anvil autoplay true` (client).
 - `WarAnvilRenderer` draws the work as the weapon's own mesh: only the blade until the hilt (the hilt's parts appear tap
   by tap), drawn out by its progress, flipped at the halfway strike, carried on a short arc from the Forge to the anvil as
-  the view glides, over the trough and into it for the quench. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
+  the view glides, over the trough and into it for the quench.
+- The blank (Euan 2026-11-03, "do whatever is more AAA", after the twist showed a squashed sword with its quillons' tips
+  spinning): what lies on the anvil until the hilt is the weapon's own mesh reshaped corner by corner every frame
+  (`AnvilBlank`), read once a mesh (`AnvilShape`), so every design works with nothing made by hand.
+  - **Its guard waits for the hilt.** Cutting along the weapon leaves bits of a guard that rises (quillons' tips, wings,
+    tusks), so the guard is found by shape: a part wider than 1.25 the blade's middle width and a texel, starting in the
+    lowest 0.15 of the blade and ending below 0.45; its pieces up to 0.75 over its top that stand out more than 0.6 past
+    the blade just above it are left off while only the blade shows (the forge, the draw out, the quench, the twist, the
+    grind, the starlight; a Hunter blade standing alone in the slot) and come on with the hilt's first tap. A spear's wings
+    (halfway up) and an axe's head (its widest part) aren't a guard; gauntlets have none.
+  - **It starts as a square bar.** Its section is read at 48 heights from its foot to its point; drawn out d (0 the bar,
+    1 its own shape) a corner at height y goes from the bar's place to its own over d: across and through, its offset from
+    the section's middle pushed out to the bar's side (half side the mean of sqrt(half width x half thickness) along it,
+    1 to 3 texels) from 0.3 of the way out, a corner further in kept just inside one further out (0.9 to 1.0 of the side,
+    so no two faces meet); along, 0.62 of its length about the blade's middle. So a stepped blade, a curved one, an axe's
+    head all start as one clean square bar with flat ends, and each strike draws it out into the blade. Marks, the tongs'
+    lips and the hands follow it (the bar scaled from the blade's middle); the tongs close half a texel under the blank's foot,
+    the work's back rests on the face (the bar's half side, the blade's thickest when drawn).
+  - **The twist is real** (§46.9's A): the bar turns about its own length by a twist that's none where the tongs hold it,
+    all of it at the far end, smooth between (0.12 to 0.88 of the way); the far end turns a third as fast as your hand
+    (three turns of the hand, one of the bar: tighter reads as a screw on a bar this thick), so it spirals rather than
+    spins. While twisted it's cut into 24 slabs along its length (a cut on an edge two triangles share lands on the same
+    point in both, so no seam opens) and its normals turn with it; it rides a little higher ((sqrt2 - 1) its side) so its
+    corners clear the face. Struck out after, the twist unwinds as it's drawn out (twist x (1 - d)), the same way round as
+    you turned it; it isn't carried from the fire again. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
   x the heat, y's low byte the heat front along the blade, bit 10 the quench's side: the cooled part from the point) glows
   dull red through orange and yellow to white, dark and soot-streaked where cool, over the whole blade whatever its
   metal map (Beastbound's bone and bronze glow too). Sparks fly at each strike (on the screen, off the mark); steam
@@ -17690,8 +17714,9 @@ not a Hunter's blade forged alone, not one worked again) gets its rank's act and
 place in the song; at S: the heat, the twist, the draw out, the starlight, the grind, the hilt, the balance, the draw.
 Each act done is a tenth of the quality (the armour's rule, §44.4; `AnvilSong.withActs`: score x (1 - 0.1 an act) + 0.1
 x each act's mark). None can fail, and one left alone settles itself.
-- **A, the twist** (`AnvilSong.TWIST` 6, straight from the heat): the hot bar clamped on the face; hold use and circle
-  the mouse round the bar's end, three turns (`TWISTS`), the bar turning on its length as you go. Its mark is the bind's
+- **A, the twist** (`AnvilSong.TWIST` 6, straight from the heat): the hot square bar clamped on the face; hold use and
+  circle the mouse round the bar's end, three turns (`TWISTS`), its far end turning a third as fast as you go and its
+  middle twisting into a spiral (§46.3, "The blank"), hammered flat again as it's drawn out. Its mark is the bind's
   evenness (`AnvilSong.evenness`) x the turns made of three x how long they took over 30 ticks (`TWIST_MIN`: hurried,
   it takes less). Let go early and it's what was turned. Then the draw out. Payload `TWIST` 14 (a = 0 as the hold
   begins, then each turn), and `RELEASE`.
