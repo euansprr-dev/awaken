@@ -18980,9 +18980,10 @@ blow's flinch and its red), since a clip on CI runs at about 6 frames a second a
 the brambles. Vanilla's sweet berry bush holds anything living but a fox or a bee (0.8 of its speed, its momentum gone
 each tick) and pricks it while it moves (1 damage, as often as its hurt allows: twice a second). The Briar Sow's wallow is
 ringed with ripe bushes (`LairBuilder`), as are other lairs (their ring scatter) and the kin's nooks (`KinSpawner`). Each
-prick flashed her red and flinched her life layer, and a hit with no attacker scares a wild thing from a random spot
-beside it for 5 s (`FaunaMob.hurtServer`), so she scattered, a new way every half second, deeper into the bushes, caught at
-every step: from afar a shudder that never stopped. Now our wild things (`FaunaMob` and all its kinds: beasts, named
+prick flashed her red, flinched her life layer and cried her hurt, and the bush stopped her dead at every step, so she
+went on in little jerks: from afar a shudder for as long as she moved among them, walking her wallow or charging through
+it at you. A small wild thing (an ambient one) also bolts from a hit with no attacker (`FaunaMob.hurtServer`, 5 s), so
+among bushes it fled a new way at each prick. Now our wild things (`FaunaMob` and all its kinds: beasts, named
 beasts, cave, deep and water fauna, wild mounts) and the kin (`KinBeast`) live among brambles as a fox does: a berry bush
 neither holds them (`makeStuckInBlock`) nor pricks them (its damage turned aside). Our own Bramble (§41.2) pricks only a
 sprinter, which none of them is, and its hold stays: a thicket slows a beast as it slows you.
