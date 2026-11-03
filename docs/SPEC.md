@@ -17354,12 +17354,23 @@ across the middle of the frame; so the view leaves your eyes, as a smith bends o
 edge (anvil blocks: x 0.5, y 1.75, z 0.05, the smith's side -z) looking down on the work at about 54°, a little back for
 the heat and the draw (z -0.35, -0.4), over the trough's side for the quench (x 0.62), gliding with the turn. Your hands
 come up from the bottom of the frame to the hammer and tongs, drawn at the tools' distance but never nearer than 0.9
-(the fists at 0.75 filled the frame's sides). A client-only camera entity (as the armour forge's §44.4),
+(the fists at 0.75 filled the frame's sides). The work at the hand (Euan 2026-11-03, "go with all recommendations" after
+the second tour's shots showed the hands still over the hilt, the bind, the twist and the grind): the fists are drawn the
+size of the tools wherever the view is, so moving the view back alone shows no more of the work; what covered it was the
+arms crossing, the hammer's hand reaching left to the hilt while the tongs' hand held the blade on the right. So for the
+bind, the hilt's taps (attuning's too) and the balance's start the whole weapon lies turned end for end, its hilt to your
+right (`AnvilScene.hiltRight`; the bind turns it round from the knap over 12 ticks): the hammer's hand comes in from the
+right, the tongs (the hilt) or the steadying hand (the bind, at 0.7 of the blade) from the left. Those two have their own
+place, the grip's (from the hilt's middle: x +0.4, y +0.66, z -0.49, over the face's middle looking down and right onto
+it). At the wheel the blade lies with its grip to your right as you stood when the grind began, its flat turned with it so
+the edge stays down, the steadying hand at 0.9 of the blade. In the twist the turning hand holds just past the bar's end
+(7 texels on, circling 1.5) and the tongs' handles run low to your left, so neither arm crosses the bar.
+A client-only camera entity (as the armour forge's §44.4),
 first person while it runs, your own body hidden, the real player never moving; your own field of view. A place in a
 block, or one your eyes can't reach without the view crossing a block (eight rays, the near plane's corners), leaves
 that look at your eyes, turned, at 0.85 of your field of view as before. The HUD steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,
 `arms_anvil`, priority 200): the main hand on the hammer, the off hand on the tongs; the hammer winds up before each
-beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, your arm clear of the hilt); the
+beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, onto the hilt at your right); the
 tongs hold the work wherever it is (in the Forge only when the Forge's mouth is near enough to reach). While the hammer
 is down (the fire, the carry and the quench) the main hand holds the tongs too: the hand pass puts a held item away
 only behind a world arm (SPEC §24), so a free hand would bring it back into view. The hammer and tongs are our own voxel meshes (`assets/awaken/arms/anvil/*.mesh`,

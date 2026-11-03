@@ -35,7 +35,8 @@ final class AnvilCamera {
 
     /**
      * Each look's place, in the anvil's own blocks (the smith's side is -z): the Forge, the work, the trough, the slot; the
-     * ranks' acts (§46.9): the wheel (its own place, {@link #aimAt}, this one if there's none), the horn, the light.
+     * ranks' acts (§46.9): the wheel (its own place, {@link #aimAt}, this one if there's none), the horn, the light. The grip
+     * (the hilt's taps and the bind) has its own place too, from where the hilt lies ({@link #aimAt}).
      */
     private static final float[][] PLACES = {{0.5F, 1.7F, -0.35F}, {0.5F, 1.75F, 0.05F}, {0.62F, 1.75F, 0.05F}, {0.5F, 1.7F, -0.4F},
             {0.5F, 1.75F, 0.05F}, {0.15F, 1.75F, -0.25F}, {0.5F, 1.6F, -0.65F}};

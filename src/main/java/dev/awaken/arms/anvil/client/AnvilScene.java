@@ -159,6 +159,16 @@ final class AnvilScene {
         return out;
     }
 
+    /**
+     * The whole weapon on the face turned end for end, its hilt to your right: for the work at the hilt (the bind, the
+     * hilt's taps), so the hammer's hand and the tongs' each stay on their own side rather than crossing over it.
+     */
+    static Lay hiltRight(Quaternionf frame, AnvilShape shape, Lay out) {
+        onAnvil(frame, shape, 1F, 0F, true, out);
+        out.turn.rotateLocalY(Mth.PI);
+        return out;
+    }
+
     /** Half in the Forge's mouth, squat, its point in the fire. */
     static Lay inForge(BlockPos anvil, BlockPos forge, Direction mouth, AnvilShape shape, Lay out) {
         out.scale.set(1.5F, 0.5F, 1.5F);
@@ -390,15 +400,21 @@ final class AnvilScene {
                 } else restHammer(out.hammer);
             }
             case AnvilSong.BIND -> {
-                // the whole weapon on the face, the cord wound round its grip: each turn brings its hilt on
-                onAnvil(FRAME, sh, 1F, 0F, true, out.work);
+                // the whole weapon on the face, its hilt to your right, the cord wound round its grip: each turn brings its hilt on
+                hiltRight(FRAME, sh, out.work);
+                if (t < CARRY) {
+                    // turned round from the knap
+                    onAnvil(FRAME, sh, 1F, 0F, false, L1);
+                    L2.set(out.work);
+                    out.work.mix(L1, L2, t / CARRY, 0.15F);
+                }
                 int turns = mine && windTurns >= 0 ? windTurns : Math.max(0, w.taps.size() - 1);
                 out.cut = sh.cut[Math.min(turns, sh.cut.length - 1)];
                 pegTongs(out.tongs);
                 out.hasTongs = true;
                 restHammer(out.hammer);
                 if (mine) {
-                    out.work.point(BLADE_X, sh.root + 0.4F * (sh.tip - sh.root), FACE_Z, out.offFist);
+                    out.work.point(BLADE_X, sh.root + 0.7F * (sh.tip - sh.root), FACE_Z, out.offFist);
                     out.offW = 1F;
                     float r = HALF_W + 1F;
                     out.work.point(BLADE_X + r * Mth.cos(windAngle), sh.hands[0], r * Mth.sin(windAngle), out.mainFist);
@@ -426,10 +442,10 @@ final class AnvilScene {
                 restHammer(out.hammer);
             }
             case AnvilSong.HILT -> {
-                // back from the water onto the anvil, the whole weapon's length on the face
+                // back from the water onto the anvil, the whole weapon's length on the face, its hilt to your right
                 if (w.plunge >= 0F) inTrough(FRAME, sh, L1);
                 else overTrough(FRAME, sh, L1);
-                onAnvil(FRAME, sh, 1F, 0F, true, L2);
+                hiltRight(FRAME, sh, L2);
                 if (w.kind == AnvilWork.ATTUNE) {
                     // straight from the fire: the stone set in the guard, sinking in with each tap, the steel taking its colour
                     inForge(pos, w.forge, mouth, sh, L1);
@@ -466,11 +482,12 @@ final class AnvilScene {
                 float turned = mine && windTurns >= 0 ? windAngle : turns * Mth.TWO_PI;
                 out.work.turn.rotateY(turned * 0.25F);
                 heat(out, Math.max(0.3F, Math.max(0F, w.heat)), blade - 0.02F, false);
-                tongsAt(out, out.work, sh.root - 0.5F, dir(FRAME, 1F, 0.35F, -0.8F, T), mine, false);
+                // the tongs' handles low to your left, the turning hand just past the bar's end: neither arm over the bar
+                tongsAt(out, out.work, sh.root - 0.5F, dir(FRAME, 1F, 0.2F, -1.2F, T), mine, false);
                 restHammer(out.hammer);
                 if (mine) {
-                    float r = HALF_W + 1F;
-                    out.work.point(BLADE_X + r * Mth.cos(windAngle), sh.tip - 1.5F, r * Mth.sin(windAngle), out.mainFist);
+                    float r = 1.5F;
+                    out.work.point(BLADE_X + r * Mth.cos(windAngle), sh.tip + 7F, r * Mth.sin(windAngle), out.mainFist);
                     out.mainW = windTurns >= 0 ? 1F : 0.6F;
                 }
             }
@@ -492,13 +509,13 @@ final class AnvilScene {
                 pegHammer(out.hammer);
                 if (mine) {
                     out.work.point(0F, sh.root - 1F, 0F, out.mainFist);
-                    out.work.point(0F, sh.root + 0.7F * (sh.tip - sh.root), HALF_W * 0.5F, out.offFist);
+                    out.work.point(0F, sh.root + 0.9F * (sh.tip - sh.root), HALF_W * 0.5F, out.offFist);
                     out.mainW = out.offW = 1F;
                 }
             }
             case AnvilSong.BALANCE -> {
                 // B (§46.9): the whole weapon across the Deepglass horn, tipping to its heavy end, the weight sliding along it
-                onAnvil(FRAME, sh, 1F, 0F, true, L1);
+                hiltRight(FRAME, sh, L1);
                 onHorn(FRAME, sh, mine ? tilt : 0F, L2);
                 out.work.mix(L1, L2, Mth.clamp(t / CARRY, 0F, 1F), 0.12F);
                 out.cut = sh.cut[sh.cut.length - 1];
@@ -539,6 +556,8 @@ final class AnvilScene {
     /** The grindstone the work is ground at (§46.9): the nearest within six blocks of the anvil, read once a stage. */
     private static long wheelFor = Long.MIN_VALUE;
     private static @Nullable BlockPos wheel;
+    /** The blade lies on it point to your left (its grip to your right, under the hammer hand), as you stood when the act began. */
+    private static boolean wheelTurned;
 
     static @Nullable BlockPos wheel(@Nullable Level level, BlockPos anvil, long stageStart) {
         if (stageStart == wheelFor || level == null) return wheel;
@@ -553,6 +572,13 @@ final class AnvilScene {
                 wheel = b.immutable();
             }
         }
+        var me = Minecraft.getInstance().player;
+        if (wheel != null && me != null) {
+            Direction axle = level.getBlockState(wheel).getValueOrElse(GrindstoneBlock.FACING, Direction.NORTH).getClockWise();
+            double tx = me.getX() - (wheel.getX() + 0.5), tz = me.getZ() - (wheel.getZ() + 0.5);
+            // your right, facing the wheel, is (tz, -tx): the point goes the other way
+            wheelTurned = axle.getStepX() * tz - axle.getStepZ() * tx > 0;
+        }
         return wheel;
     }
 
@@ -566,7 +592,9 @@ final class AnvilScene {
         // the wheel's top is the block's (its middle 10/16 up, 6/16 round); the edge (design x out from the middle) on it
         float lift = 1F + (HALF_W + BLADE_X) * shape.texel + 0.005F + up;
         out.at.set(at.getX() - anvil.getX() + 0.5F + axle.getStepX() * along, at.getY() - anvil.getY() + lift, at.getZ() - anvil.getZ() + 0.5F + axle.getStepZ() * along);
-        turn(A.set(axle.getStepX(), 0F, axle.getStepZ()), U.set(-f.getStepX(), 0F, -f.getStepZ()), out.turn);
+        // turned end for end, its flat turned with it so the edge stays down
+        float s = wheelTurned ? -1F : 1F;
+        turn(A.set(axle.getStepX() * s, 0F, axle.getStepZ() * s), U.set(-f.getStepX() * s, 0F, -f.getStepZ() * s), out.turn);
         return out;
     }
 
@@ -780,8 +808,13 @@ final class AnvilScene {
     private static float glideAt, openAt, fromYaw, fromPitch;
     private static boolean started;
 
-    /** What the view looks at: 0 the Forge's mouth, 1 the anvil's face, 2 the trough, 3 the slot; the acts': 4 the wheel, 5 the horn, 6 the light. */
-    static final int WHEEL = 4, HORN = 5, LIGHT = 6;
+    /**
+     * What the view looks at: 0 the Forge's mouth, 1 the anvil's face, 2 the trough, 3 the slot; the acts': 4 the wheel, 5 the
+     * horn, 6 the light; 7 the grip (the hilt's taps and the bind, the hilt to your right).
+     */
+    static final int WHEEL = 4, HORN = 5, LIGHT = 6, GRIP = 7;
+    /** The grip's place (the anvil's own blocks, from the grip): over the face's middle, looking down and right on it. */
+    private static final float GRIP_X = 0.4F, GRIP_Y = 0.66F, GRIP_Z = -0.49F;
 
     private static int look(WarAnvilBlockEntity be) {
         AnvilWork w = be.work();
@@ -789,6 +822,7 @@ final class AnvilScene {
         return switch (w.stage) {
             case AnvilSong.HEAT -> 0;
             case AnvilSong.QUENCH -> 2;
+            case AnvilSong.HILT, AnvilSong.BIND -> GRIP;
             case AnvilSong.GRIND -> wheel(be.getLevel(), be.getBlockPos(), w.stageStart) != null ? WHEEL : 1;
             case AnvilSong.BALANCE -> HORN;
             case AnvilSong.STAR -> LIGHT;
@@ -814,6 +848,10 @@ final class AnvilScene {
             }
             case HORN -> model(FRAME, 0.1F, 1F, 9.5F / 16F, out);
             case LIGHT -> model(FRAME, 0.5F, 1.75F, 8F / 16F, out); // up the blade, into the light
+            case GRIP -> {
+                AnvilShape sh = AnvilShape.of(w == null ? null : w.weapon);
+                yield hiltRight(FRAME, sh, L3).point(0F, sh.taps[1], 0F, out);
+            }
             default -> model(FRAME, 0.55F, 1F, 9.5F / 16F, out);
         };
     }
@@ -866,6 +904,12 @@ final class AnvilScene {
                 var me = Minecraft.getInstance().player;
                 double dx = me == null ? 0 : me.getX() - (at.getX() + 0.5), dz = me == null ? -1 : me.getZ() - (at.getZ() + 0.5), n = Math.max(1e-3, Math.sqrt(dx * dx + dz * dz));
                 AnvilCamera.aimAt(be.getLevel(), at.getX() + 0.5 + dx / n * 0.95, at.getY() + 1.7, at.getZ() + 0.5 + dz / n * 0.95);
+            } else if (kind == GRIP) {
+                // the grip's own place: the hammer's hand comes in from the right of the frame, the tongs' from below it
+                lookPoint(be, kind, T);
+                dir(FRAME, GRIP_X, GRIP_Y, GRIP_Z, T2).add(T);
+                BlockPos p = be.getBlockPos();
+                AnvilCamera.aimAt(be.getLevel(), p.getX() + T2.x, p.getY() + T2.y, p.getZ() + T2.z);
             } else AnvilCamera.aim(be.getLevel(), be.getBlockPos(), frame(be.getBlockState(), FRAME), kind);
         }
         lookPoint(be, kind, T);
