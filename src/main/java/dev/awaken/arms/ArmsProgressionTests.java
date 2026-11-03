@@ -132,7 +132,9 @@ final class ArmsProgressionTests {
         ServerPlayer sp = survivor(h);
         ArmsIssue.INSTANCE.learn(sp, "daggers", "a test");
         var needs = ArmsArmoury.needs(sp, "daggers", 0);
-        h.assertTrue(needs.size() == 4 && needs.stream().allMatch(n -> n.have() == 0 || n.id().endsWith("daggers_blueprint")), "the Wildhide Daggers need a Fang, a Part, a Binding and the Blueprint: " + needs);
+        // no Blueprint goes into it (SPEC §46.7), and without a Fang the Fang's own parts are added: 3 parts, 2 bindings, an essence
+        h.assertTrue(needs.size() == 3 && needs.stream().allMatch(n -> n.have() == 0) && needs.stream().mapToInt(n -> n.need()).sum() == 6,
+                "the Wildhide Daggers, without a Fang, need its parts too: " + needs);
         sp.getInventory().add(new ItemStack(item("wildhide_blade")));
         sp.getInventory().add(new ItemStack(Items.BONE));
         sp.getInventory().add(new ItemStack(Items.STRING));
@@ -153,7 +155,7 @@ final class ArmsProgressionTests {
         ArmsArmoury.onAct(sp, new dev.awaken.arms.net.ArmsPayloads.ArmouryAct(ArmsArmoury.TRACK, "daggers", "E"));
         h.assertTrue(ArmsProgress.of(sp).tracked.equals("daggers:E"), "tracked");
         var task = ArmsTrack.task(sp);
-        h.assertTrue(task != null && task.rows().size() == 4 && task.title().contains("Wildhide Daggers"), "the task card lists the four things the weapon needs");
+        h.assertTrue(task != null && task.rows().size() == 3 && task.title().contains("Wildhide Daggers"), "the task card lists the three things the weapon needs (a Fang, a binding, a part)");
         sp.getInventory().add(new ItemStack(item("wildhide_daggers")));
         h.assertTrue(ArmsTrack.task(sp) == null && ArmsProgress.of(sp).tracked.isEmpty(), "and lets go once the weapon is in the pack");
         ArmsArmoury.onAct(sp, new dev.awaken.arms.net.ArmsPayloads.ArmouryAct(ArmsArmoury.TRACK, "katana", "E"));
@@ -284,11 +286,14 @@ final class ArmsProgressionTests {
         marked.set(ArmsContent.INSTANCE.get(), Marks.Instance.EMPTY.withMark(Marks.random(net.minecraft.util.RandomSource.create(3)).id()));
         sp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, marked);
         h.assertTrue(!ArmsRaise.raise(sp), "without the next tier's parts nothing is raised");
+        int essence = count(sp, CoreApi.ESSENCE_SHARD.get());
         giveNeeds(sp, ArmsRaise.plan(sp).needs());
         h.assertTrue(ArmsRaise.raise(sp), "with them it is");
         ItemStack up = sp.getMainHandItem();
         h.assertTrue(up.is(item("beastbound_daggers")) && Marks.of(up).marks().equals(Marks.of(marked).marks()), "a Beastbound Daggers with the same Marks");
-        h.assertTrue(ArmsArmoury.needs(sp, "daggers", 1).stream().filter(n -> !n.id().endsWith("_blueprint")).allMatch(n -> n.have() == 0), "and the parts are spent");
+        // without a Beastbound blade its own parts were asked for too (SPEC §46.7), an essence among them
+        h.assertTrue(ArmsArmoury.needs(sp, "daggers", 1).stream().allMatch(n -> n.have() == 0 || n.id().equals("awaken:essence_shard"))
+                && count(sp, CoreApi.ESSENCE_SHARD.get()) == essence, "and the parts are spent: " + ArmsArmoury.needs(sp, "daggers", 1));
 
         ItemStack lord = new ItemStack(item("hive_regent_daggers"));
         sp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, lord);

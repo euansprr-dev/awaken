@@ -1,0 +1,177 @@
+# The War Anvil, stage 2 (SPEC §46.7): every weapon at the anvil. The stage 1 smithy at y 200, level 13 and D-rank,
+# creative (no materials), the songs played by autoplay. Blueprints used to learn the Daggers, the Maul and the
+# Greatblade; the Armoury at the anvil's door; Wildhide Daggers by hand (knap and bind, no Forge, the stone hammer);
+# Beastbound Daggers, Maul and Greatblade on their own rhythms; the Beastbound blade alone; three forged Longswords in
+# hand (no flaw, a burnt tip, a brittle blade: item frames draw the flat icon, so the flaw shows only in hand); the
+# Weapons tab after.
+# ci knobs: LENS=cinematic
+world waranvil2 creative 4344
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+cmd awaken admin levels 12
+cmd awaken admin rankup
+# the smithy's chunks first: a busy runner's server can fall seconds behind the script (fills there fail unloaded)
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd fill -6 201 9 6 205 9 minecraft:spruce_planks
+cmd fill -6 201 -3 -6 205 9 minecraft:spruce_planks
+cmd fill 6 201 -3 6 205 9 minecraft:spruce_planks
+cmd fill -6 206 -3 6 206 9 minecraft:dark_oak_planks
+cmd setblock -3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 0 205 2 minecraft:lantern[hanging=true]
+cmd setblock 0 205 7 minecraft:lantern[hanging=true]
+cmd setblock 0 201 4 awaken:war_anvil[facing=north]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+wait 20
+cmd awaken arms anvil autoplay true
+hud off
+camera first
+# Blueprints teach when used (looking up at the roof: the planks take no use, so the item does)
+cmd tp @s 3.5 201 1.5 0 -60
+cmd item replace entity @s weapon.mainhand with awaken:daggers_blueprint
+wait 10
+use
+wait 10
+hud on
+shot blueprint_learned
+hud off
+cmd item replace entity @s weapon.mainhand with awaken:maul_blueprint
+wait 10
+use
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:greatblade_blueprint
+wait 10
+use
+wait 10
+cmd item replace entity @s weapon.mainhand with air
+wait 40
+# the Armoury at the anvil's door
+cmd tp @s 0.5 201 3.25 0 35
+wait 20
+use
+wait 30
+shot anvil_door
+screen close
+wait 10
+hud on
+# E by hand: knap from tick 12, a flake each 10 ticks; then the bind, a turn each 10 ticks; the card; the draw
+cmd awaken arms anvil forge wildhide_daggers
+wait 26
+shotnow e_knap_first
+wait 30
+shotnow e_knap_mid
+wait 30
+shotnow e_knap_last
+wait 30
+shotnow e_bind_hold
+wait 20
+shotnow e_bind_turns
+wait 30
+shotnow e_card
+wait 60
+shotnow e_draw
+wait 30
+shot e_drawn
+screen close
+wait 20
+# D, Daggers: their quick rhythm (step 3, fourteen strikes)
+cmd tp @s 0.5 201 3.25 0 35
+cmd awaken arms anvil forge beastbound_daggers
+wait 70
+shotnow d_daggers_heat
+wait 60
+shotnow d_daggers_countin
+wait 40
+shotnow d_daggers_strikes
+wait 40
+shotnow d_daggers_flip
+wait 120
+shotnow d_daggers_quench
+wait 60
+shotnow d_daggers_hilt
+wait 60
+shotnow d_daggers_card
+wait 80
+shot d_daggers_after
+screen close
+wait 20
+# D, Maul: the slow heavy rhythm (step 4, two blows a bar)
+cmd tp @s 0.5 201 3.25 0 35
+cmd awaken arms anvil forge beastbound_maul
+wait 150
+shotnow d_maul_strikes
+wait 70
+shotnow d_maul_strikes_mid
+wait 70
+shotnow d_maul_flip
+wait 70
+shotnow d_maul_late
+wait 140
+shotnow d_maul_card
+wait 120
+shot d_maul_after
+screen close
+wait 20
+# D, Greatblade (step 5, three blows a bar)
+cmd tp @s 0.5 201 3.25 0 35
+cmd awaken arms anvil forge beastbound_greatblade
+wait 160
+shotnow d_greatblade_strikes
+wait 80
+shotnow d_greatblade_flip
+wait 80
+shotnow d_greatblade_late
+wait 130
+shotnow d_greatblade_card
+wait 120
+shot d_greatblade_after
+screen close
+wait 20
+# the Beastbound blade alone: no hilt; drawn as the tier's Longsword blade
+cmd tp @s 0.5 201 3.25 0 35
+cmd awaken arms anvil forge beastbound_blade
+wait 160
+shotnow blade_strikes
+wait 120
+shotnow blade_quench
+wait 90
+shotnow blade_card
+wait 120
+shot blade_after
+screen close
+wait 20
+# the three flaws in hand (SPEC §46.7): plain, a burnt tip, a brittle blade, against the lit back wall
+cmd tp @s 0.5 201 6 0 -8
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword[awaken:weapon_forged={quality:2}]
+wait 30
+shot flaw_none
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword[awaken:weapon_forged={quality:1,flaw:1}]
+wait 20
+shot flaw_burnt
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword[awaken:weapon_forged={quality:1,flaw:2}]
+wait 20
+shot flaw_brittle
+cmd item replace entity @s weapon.mainhand with air
+# the Weapons tab after the first weapon: the steps gone or the rank step
+screen holo tasks
+tasks weapons
+wait 30
+shot anvil_tasks_after
+screen close
+quit

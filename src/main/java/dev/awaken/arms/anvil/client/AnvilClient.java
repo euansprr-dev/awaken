@@ -8,18 +8,23 @@ import dev.awaken.arms.anvil.WarAnvilBlockEntity;
 import dev.awaken.arms.anvil.WeaponForged;
 import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.ExtractBlockOutlineRenderStateEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
@@ -39,15 +44,30 @@ import org.jspecify.annotations.Nullable;
 public final class AnvilClient {
     private AnvilClient() {}
 
+    /** A Lord's anvil's runes and Heart (tint 0) in its Lord's colour, read from the block entity (SPEC §46.6); gold for none. */
+    private static final BlockTintSource LORD = new BlockTintSource() {
+        @Override
+        public int color(BlockState state) {
+            return ARGB.opaque(WarAnvilBlockEntity.GOLD);
+        }
+
+        @Override
+        public int colorInWorld(BlockState state, BlockAndTintGetter level, BlockPos pos) {
+            return level.getBlockEntity(pos) instanceof WarAnvilBlockEntity be && be.lord() >= 0 ? ARGB.opaque(be.lord()) : color(state);
+        }
+    };
+
     /** The song plays itself on the beat (tours and demos: {@code /awaken arms anvil autoplay true}); the server judges it as any. */
     static boolean autoplay;
 
     public static void init(IEventBus modBus) {
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerBlockEntityRenderer(AnvilContent.ANVIL_BE.get(), WarAnvilRenderer::new));
+        modBus.addListener(RegisterColorHandlersEvent.BlockTintSources.class, e -> e.register(java.util.List.of(LORD), AnvilContent.ANVIL.get()));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AnvilPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onOpen(msg)));
             e.register(AnvilPayloads.Done.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onDone(msg)));
+            e.register(AnvilPayloads.Held.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.setScreen(new AnvilHeldScreen(msg))));
         });
         FirstPerson.world("arms_anvil", 200, AnvilHands::pose);
         FirstPerson.camera(AnvilCamera::active);
@@ -65,7 +85,10 @@ public final class AnvilClient {
         });
         bus.addListener(RenderGuiLayerEvent.Pre.class, AnvilClient::hideHud);
         bus.addListener(RenderPlayerEvent.Pre.class, AnvilCamera::player);
-        bus.addListener(ClientTickEvent.Post.class, e -> tick());
+        bus.addListener(ClientTickEvent.Post.class, e -> {
+            tick();
+            AnvilBodies.tick();
+        });
         bus.addListener(ItemTooltipEvent.class, AnvilClient::onTooltip);
         bus.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(Commands.literal("awaken")
                 .then(Commands.literal("arms").then(Commands.literal("anvil").then(Commands.literal("autoplay")
@@ -73,7 +96,10 @@ public final class AnvilClient {
                             autoplay = BoolArgumentType.getBool(c, "on");
                             return 1;
                         })))))));
-        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> AnvilScene.end());
+        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            AnvilScene.end();
+            AnvilBodies.clear();
+        });
     }
 
     // ---- messages ------------------------------------------------------------------------------------------------------
@@ -128,6 +154,27 @@ public final class AnvilClient {
         }
     }
 
+    /**
+     * A breath of the bellows an Emberkit works (§46.6): the fire flares out of the Forge's mouth and sparks lift. The
+     * mouth is the Forge's front face.
+     */
+    static void puff(BlockPos forge) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        BlockState fs = mc.level.getBlockState(forge);
+        var face = fs.hasProperty(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING)
+                ? fs.getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING) : net.minecraft.core.Direction.NORTH;
+        var r = mc.level.getRandom();
+        double x = forge.getX() + 0.5 + face.getStepX() * 0.52, y = forge.getY() + 0.35, z = forge.getZ() + 0.5 + face.getStepZ() * 0.52;
+        for (int i = 0; i < 6; i++) {
+            double out = 0.03 + r.nextFloat() * 0.04;
+            mc.level.addParticle(ParticleTypes.FLAME, x + (r.nextFloat() - 0.5F) * 0.4F, y + r.nextFloat() * 0.25F, z + (r.nextFloat() - 0.5F) * 0.4F,
+                    face.getStepX() * out, 0.01 + r.nextFloat() * 0.02, face.getStepZ() * out);
+        }
+        for (int i = 0; i < 3; i++)
+            mc.level.addParticle(ParticleTypes.LAVA, x, y + 0.2, z, 0, 0, 0);
+    }
+
     /** The HUD steps aside while the scene holds the view (subtitles and chat stay). */
     private static void hideHud(RenderGuiLayerEvent.Pre e) {
         if (sceneAnvil() == null) return;
@@ -140,12 +187,17 @@ public final class AnvilClient {
 
     /** A weapon forged at the anvil says how well, plainly, its flaw if it has one, and who made it. */
     private static void onTooltip(ItemTooltipEvent e) {
+        if (e.getItemStack().is(AnvilContent.ANVIL_ITEM.get())) {
+            // said once, where it's true (SPEC §46.5)
+            e.getToolTip().add(Math.min(1, e.getToolTip().size()), Component.literal("Forges weapons stronger than any crafted sword or axe.").withColor(0x9AA6B8));
+            return;
+        }
         WeaponForged f = e.getItemStack().get(AnvilContent.FORGED.get());
         if (f == null) return;
         var lines = e.getToolTip();
         int at = Math.min(1, lines.size());
         lines.add(at++, Component.literal(f.line()).withColor(AnvilSong.Quality.of(f.quality()).colour & 0xFFFFFF));
-        if (!f.maker().isEmpty()) lines.add(at, Component.literal("Forged by " + f.maker()).withColor(0x6F8299));
+        if (!f.maker().isEmpty()) lines.add(at, Component.literal((f.reforged() ? "Reforged by " : "Forged by ") + f.maker()).withColor(0x6F8299));
     }
 
     // ---- shared ------------------------------------------------------------------------------------------------------

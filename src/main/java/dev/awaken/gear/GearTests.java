@@ -129,7 +129,7 @@ final class GearTests {
         for (HunterTier tier : HunterTier.values()) {
             for (Piece piece : Piece.values()) {
                 Item item = GearItems.get(tier, piece);
-                if (piece.isArmour()) { // forged at a Fitting Stand (SPEC §44.4), never crafted
+                if (piece.isArmour() || piece == Piece.BLADE) { // forged at a Fitting Stand or a War Anvil (SPEC §44.4, §46.7), never crafted
                     h.assertTrue(recipe(level, item).isEmpty(), tier.itemId(piece) + " has no crafting recipe");
                     continue;
                 }
@@ -171,7 +171,7 @@ final class GearTests {
         ServerLevel level = h.getLevel();
         int hide = 0, shards = 0;
         for (Piece piece : Piece.values()) {
-            if (piece.isArmour()) continue; // the armour's cost is the Forge's (ArmourTests)
+            if (piece.isArmour() || piece == Piece.BLADE) continue; // the armour's cost is the Forge's (ArmourTests), the blade's the War Anvil's
             Item item = GearItems.get(HunterTier.E, piece);
             ShapedRecipe r = recipe(level, item).orElseThrow();
             for (var family : FAMILY_DROPS.entrySet()) {
@@ -208,12 +208,12 @@ final class GearTests {
         ServerPlayer sp = h.makeMockServerPlayerInLevel();
         Progression.awaken(sp);
         sp.getInventory().add(new ItemStack(Items.BONE));
-        ResourceKey<Recipe<?>> blade = key(HunterTier.E, Piece.BLADE);
-        for (int i = 0; i < 41 && !sp.getRecipeBook().contains(blade); i++) {
+        ResourceKey<Recipe<?>> focus = key(HunterTier.E, Piece.FOCUS);
+        for (int i = 0; i < 41 && !sp.getRecipeBook().contains(focus); i++) {
             sp.tickCount++;
             NeoForge.EVENT_BUS.post(new PlayerTickEvent.Post(sp));
         }
-        h.assertTrue(sp.getRecipeBook().contains(blade), "holding a bone unlocks the Wildhide Blade");
+        h.assertTrue(sp.getRecipeBook().contains(focus), "holding a bone unlocks the Wildhide Focus");
         // the level road points at each tier and puts its whole recipe set in the book
         Map<HunterTier, Integer> want = Map.of(HunterTier.E, 3, HunterTier.D, 13, HunterTier.C, 22, HunterTier.B, 42,
                 HunterTier.A, 67, HunterTier.S, 97);
@@ -224,14 +224,14 @@ final class GearTests {
             h.assertTrue(step.def().level() == want.get(tier), id + " at level " + want.get(tier) + ", got " + step.def().level());
             List<String> ids = step.def().grants().stream().flatMap(g -> g.ids().stream()).toList();
             for (Piece piece : Piece.values()) {
-                if (piece.isArmour()) h.assertTrue(!ids.contains("awaken:" + tier.itemId(piece)), id + " grants no armour recipe (it's forged)");
+                if (piece.isArmour() || piece == Piece.BLADE) h.assertTrue(!ids.contains("awaken:" + tier.itemId(piece)), id + " grants no armour or blade recipe (they're forged)");
                 else h.assertTrue(ids.contains("awaken:" + tier.itemId(piece)), id + " grants " + tier.itemId(piece));
             }
         }
         Profile p = Progression.profile(sp);
         while (p.level() < 13) Progression.grantXp(sp, Curve.xpToNext(p.level()) + 1, Progression.XpSource.COMMAND);
         for (Piece piece : Piece.values()) {
-            if (piece.isArmour()) continue;
+            if (piece.isArmour() || piece == Piece.BLADE) continue;
             h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.E, piece)), "level 3 put E " + piece.id + " in the book");
             h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.D, piece)), "level 13 put D " + piece.id + " in the book");
             h.assertTrue(!sp.getRecipeBook().contains(key(HunterTier.C, piece)), "C waits for level 22");
@@ -632,9 +632,8 @@ final class GearTests {
         h.assertTrue(GearNow.next(sp) == null, "hide and sinew make armour, which the Fitting Stand's line suggests, not this one");
         sp.getInventory().add(new ItemStack(Items.BONE, 2));
         Item next = GearNow.next(sp);
-        h.assertTrue(next == GearItems.get(HunterTier.E, Piece.BLADE), "bone, sinew and essence: the blade first, got " + next);
-        sp.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_SWORD));
-        h.assertTrue(GearNow.next(sp) != GearItems.get(HunterTier.E, Piece.BLADE), "never suggests a step down from diamond");
+        // the blade is forged at a War Anvil (SPEC §46.7): the arms' Now line says so, never this one
+        h.assertTrue(next == GearItems.get(HunterTier.E, Piece.FOCUS), "bone, sinew and essence: the focus, not the blade, got " + next);
         var lines = GearNow.suggest(sp);
         h.assertTrue(lines.size() <= 1 && lines.stream().allMatch(s -> s.priority() == GearNow.PRIORITY), "one low-priority line at most");
         h.succeed();

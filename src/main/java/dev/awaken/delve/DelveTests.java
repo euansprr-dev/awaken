@@ -1,6 +1,5 @@
 package dev.awaken.delve;
 
-import dev.awaken.arms.ArmsData;
 import dev.awaken.arms.ArmsForge;
 import dev.awaken.core.Forces;
 import dev.awaken.core.api.HearthHooks;
@@ -224,6 +223,7 @@ final class DelveTests {
         for (HunterTier tier : HunterTier.values()) {
             for (Piece piece : Piece.values()) {
                 if (piece.isArmour()) continue; // forged at a Fitting Stand from the tier's metal (SPEC §44.4, armour_forge_rules)
+                if (piece == Piece.BLADE) continue; // forged at a War Anvil: checked with the weapons below (SPEC §46.7)
                 ShapedRecipe r = shaped(level, GearItems.get(tier, piece));
                 h.assertTrue(r != null, "recipe for " + tier.itemId(piece));
                 boolean metal = metalSlot(r, tier.metalTag());
@@ -232,17 +232,17 @@ final class DelveTests {
                 if (tier == HunterTier.B) h.assertTrue(only(r, Items.AMETHYST_SHARD), tier.itemId(piece) + " needs amethyst");
             }
         }
-        // every forged weapon from D up the same (the Lord-forged only drop)
+        // every forged weapon and Hunter blade from D up the same, in the War Anvil's cost table (SPEC §46.7; the
+        // Lord-forged only drop)
         int forged = 0;
-        for (ArmsData.Weapon w : ArmsData.WEAPONS) {
-            ShapedRecipe r = shaped(level, BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id(w.id())));
-            if (r == null) continue;
-            HunterTier tier = HunterTier.valueOf(w.tier());
-            if (tier == HunterTier.E) continue;
-            h.assertTrue(metalSlot(r, tier.metalTag()), w.id() + " needs its tier's metal");
+        for (var e : dev.awaken.arms.anvil.AnvilCosts.table().entrySet()) {
+            int t = dev.awaken.arms.anvil.AnvilWork.tierOf(e.getKey());
+            if (t <= 0) continue;
+            String metal = HunterTier.values()[t].metalTag().location().toString();
+            h.assertTrue(e.getValue().stream().anyMatch(q -> q.kind().equals("tag") && q.id().equals(metal)), e.getKey() + " needs its tier's metal");
             forged++;
         }
-        h.assertTrue(forged >= 75, "the forged weapons D-S were checked: " + forged);
+        h.assertTrue(forged >= 85, "the forged weapons and blades D-S were checked: " + forged);
         // Gatewrought matches diamond: 20 armour, 2.0 toughness a piece
         double armour = 0;
         for (Piece piece : Piece.ARMOUR) armour += attr(GearItems.stack(HunterTier.C, piece), Attributes.ARMOR, piece.slot());

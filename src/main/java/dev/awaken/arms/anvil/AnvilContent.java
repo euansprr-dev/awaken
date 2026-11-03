@@ -43,13 +43,29 @@ public final class AnvilContent {
             COMPONENTS.registerComponentType("weapon_forged", b -> b.persistent(WeaponForged.CODEC).networkSynchronized(WeaponForged.STREAM_CODEC));
 
     /**
-     * The fire and bellows under a heat, the pull, a strike on the blade and its ring when clean, a missed beat, the tongs
-     * turning it over, the plunge and the lift, the hilt's taps, the count-in, the scrape as it's drawn and the blade
-     * free. The forge kit's recordings until the anvil's own (plan stage 5).
+     * The anvil's own kit (SPEC §46.10; tools/art/specs/audio_anvil.py): a strike on each tier's metal and the blade's ring
+     * when clean (pitched to the style's true note), the tongs turning it over, the plunge's roar and the lift, the hilt's
+     * peening taps, the scrape as it's drawn from the stone and the blade free; the ranks' acts: a flake knapped, the cord
+     * wound, the wheel on the edge, the bar's twist, the Deepglass horn's hum and the starlight. The fire and bellows, the
+     * pull, the count-in and a missed beat are the Forge's (the armour forge kit's recordings).
      */
     public static final DeferredHolder<SoundEvent, SoundEvent> BELLOWS = sound("bellows"), PULL = sound("pull"), STRIKE = sound("strike"),
             RING = sound("ring"), MISS = sound("miss"), FLIP = sound("flip"), QUENCH = sound("quench"), LIFT = sound("lift"), TAP = sound("tap"),
-            COUNT = sound("count"), SCRAPE = sound("scrape"), DRAWN = sound("drawn");
+            COUNT = sound("count"), SCRAPE = sound("scrape"), DRAWN = sound("drawn"), KNAP = sound("knap"), CORD = sound("cord"),
+            WHEEL = sound("wheel"), TWIST = sound("twist"), HUM = sound("hum"), STAR = sound("star"),
+            STRIKE_GATE = sound("strike_gate"), STRIKE_VEIL = sound("strike_veil"), STRIKE_LORD = sound("strike_lord"),
+            STRIKE_STAR = sound("strike_star");
+
+    /** The hammer on a tier's metal: iron to D (and an E reforge's), then gatewrought, veilwoven, lordscale, sovereign. */
+    public static SoundEvent strike(int tier) {
+        return (switch (tier) {
+            case 2 -> STRIKE_GATE;
+            case 3 -> STRIKE_VEIL;
+            case 4 -> STRIKE_LORD;
+            case 5 -> STRIKE_STAR;
+            default -> STRIKE;
+        }).get();
+    }
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register("anvil." + name, () -> SoundEvent.createVariableRangeEvent(Awaken.id("anvil." + name)));

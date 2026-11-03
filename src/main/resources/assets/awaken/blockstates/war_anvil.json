@@ -1,18 +1,63 @@
 {
   "variants": {
-    "facing=north": {
+    "build=0,facing=north": {
       "model": "awaken:block/war_anvil"
     },
-    "facing=east": {
+    "build=0,facing=east": {
       "model": "awaken:block/war_anvil",
       "y": 90
     },
-    "facing=south": {
+    "build=0,facing=south": {
       "model": "awaken:block/war_anvil",
       "y": 180
     },
-    "facing=west": {
+    "build=0,facing=west": {
       "model": "awaken:block/war_anvil",
+      "y": 270
+    },
+    "build=1,facing=north": {
+      "model": "awaken:block/war_anvil_ironbound"
+    },
+    "build=1,facing=east": {
+      "model": "awaken:block/war_anvil_ironbound",
+      "y": 90
+    },
+    "build=1,facing=south": {
+      "model": "awaken:block/war_anvil_ironbound",
+      "y": 180
+    },
+    "build=1,facing=west": {
+      "model": "awaken:block/war_anvil_ironbound",
+      "y": 270
+    },
+    "build=2,facing=north": {
+      "model": "awaken:block/war_anvil_deepglass"
+    },
+    "build=2,facing=east": {
+      "model": "awaken:block/war_anvil_deepglass",
+      "y": 90
+    },
+    "build=2,facing=south": {
+      "model": "awaken:block/war_anvil_deepglass",
+      "y": 180
+    },
+    "build=2,facing=west": {
+      "model": "awaken:block/war_anvil_deepglass",
+      "y": 270
+    },
+    "build=3,facing=north": {
+      "model": "awaken:block/war_anvil_lord"
+    },
+    "build=3,facing=east": {
+      "model": "awaken:block/war_anvil_lord",
+      "y": 90
+    },
+    "build=3,facing=south": {
+      "model": "awaken:block/war_anvil_lord",
+      "y": 180
+    },
+    "build=3,facing=west": {
+      "model": "awaken:block/war_anvil_lord",
       "y": 270
     }
   }

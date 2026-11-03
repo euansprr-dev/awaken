@@ -33,8 +33,13 @@ import org.jspecify.annotations.Nullable;
 final class AnvilCamera {
     private AnvilCamera() {}
 
-    /** Each look's place, in the anvil's own blocks (the smith's side is -z): the Forge, the work, the trough, the slot. */
-    private static final float[][] PLACES = {{0.5F, 1.7F, -0.35F}, {0.5F, 1.75F, 0.05F}, {0.62F, 1.75F, 0.05F}, {0.5F, 1.7F, -0.4F}};
+    /**
+     * Each look's place, in the anvil's own blocks (the smith's side is -z): the Forge, the work, the trough, the slot; the
+     * ranks' acts (§46.9): the wheel (its own place, {@link #aimAt}, this one if there's none), the horn, the light. The grip
+     * (the hilt's taps and the bind) has its own place too, from where the hilt lies ({@link #aimAt}).
+     */
+    private static final float[][] PLACES = {{0.5F, 1.7F, -0.35F}, {0.5F, 1.75F, 0.05F}, {0.62F, 1.75F, 0.05F}, {0.5F, 1.7F, -0.4F},
+            {0.5F, 1.75F, 0.05F}, {0.15F, 1.75F, -0.25F}, {0.5F, 1.6F, -0.65F}};
 
     private static @Nullable Cam cam;
     private static @Nullable CameraType before;
@@ -51,6 +56,11 @@ final class AnvilCamera {
     /** The view is over the work, not at your eyes. */
     static boolean away() {
         return toOk && active();
+    }
+
+    /** The last look's place can be the view (else that look stays at your eyes). */
+    static boolean aimed() {
+        return toOk;
     }
 
     /** The view leaves your eyes (it starts where they are). */
@@ -83,6 +93,15 @@ final class AnvilCamera {
         TO[2] = pos.getZ() + P.z;
         LocalPlayer p = Minecraft.getInstance().player;
         toOk = level != null && p != null && clear(level, p, TO[0], TO[1], TO[2]);
+    }
+
+    /** A new look whose place isn't the anvil's (the grindstone's, §46.9): world x, y, z. */
+    static void aimAt(@Nullable Level level, double x, double y, double z) {
+        TO[0] = x;
+        TO[1] = y;
+        TO[2] = z;
+        LocalPlayer p = Minecraft.getInstance().player;
+        toOk = level != null && p != null && clear(level, p, x, y, z);
     }
 
     /** The eye this frame, {@code k} of the way from {@code from} to the look's place (or your eyes): out x, y, z. */

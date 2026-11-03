@@ -17322,8 +17322,8 @@ it; coming back restarts the stage, counted in again.
   counted in for one bar (64 ticks); then 10 strikes, each due on the next x, each on its mark (`AnvilSong.MARKS`, along
   and across the blade, the same every time). A strike scores 0.6 timing (1 within 1.5 ticks, 0 at 6) + 0.4 aim (1
   inside half a mark, 0 at two marks; the client reports the aim); 8 ticks either side is its window and a beat left
-  unstruck is a miss (0); a clean strike is 0.8. The blade draws out strike by strike, from a squat bar (half its length,
-  half again its width) to its own shape; after the fifth strike the tongs flip it over.
+  unstruck is a miss (0); a clean strike is 0.8. The blade draws out strike by strike, from a square bar (0.62 its length)
+  to its own shape (the blank, below); after the fifth strike the tongs flip it over.
 - **Quench** (stage 2): the blade is held over the trough. Hold to plunge it (PLUNGE), let go to lift it (LIFT): the dark
   line climbs from the point at 1/40 of the blade a tick and the gold notch is at 0.8, so the ideal hold is 32 ticks.
   Within 2 ticks either side is 1; early is **soft** (falling to 0.35 at 12 ticks early); late is **brittle** (a flaw,
@@ -17343,24 +17343,37 @@ it; coming back restarts the stage, counted in again.
   ticks to draw it out (DRAW); it goes to the main hand, what was there to the pack, else at your feet. A smith who left
   before the draw finds it waiting; anyone can sneak-use to draw it. Then the result card, and an optional first cut
   (a strike: the scene closes on the style's first blow).
-- **Sounds** (`awaken:anvil.*`, the forge kit's recordings until stage 5): bellows, pull, strike, ring (a clean strike),
+- **Sounds** (`awaken:anvil.*`; the anvil's own kit since stage 5, §46.10): bellows, pull, strike, ring (a clean strike),
   miss, flip, quench, lift, tap, scrape (the draw beginning) and drawn. The smith's client plays its own as it acts; the
   server plays them to everyone else.
 
 **46.3 The scene (stage 1, client).** `AnvilScene`: the view turns to the Forge's mouth for the heat, the anvil's face
 for the draw out and the hilt, the trough for the quench and the slot for the draw, gliding 14 ticks between
-(`ViewportEvent.ComputeCameraAngles`). The smith's view (`AnvilCamera`; Euan 2026-11-02 on the first tour's shots: "the
+(`ViewportEvent.ComputeCameraAngles`); with reduced motion (the body's comfort setting, `FirstPerson.reducedMotion`;
+stage 5) the view cuts to each look and its field of view instead (`AnvilScene.cut`), and the hands, which only follow
+the tools, keep the core's halved look-lag (§24). The smith's view (`AnvilCamera`; Euan 2026-11-02 on the first tour's shots: "the
 arms hide the view a bit too much"): from your eyes the tools' grips sat between you and the work, your arms climbing
 across the middle of the frame; so the view leaves your eyes, as a smith bends over the anvil, for a place over its front
 edge (anvil blocks: x 0.5, y 1.75, z 0.05, the smith's side -z) looking down on the work at about 54°, a little back for
 the heat and the draw (z -0.35, -0.4), over the trough's side for the quench (x 0.62), gliding with the turn. Your hands
 come up from the bottom of the frame to the hammer and tongs, drawn at the tools' distance but never nearer than 0.9
-(the fists at 0.75 filled the frame's sides). A client-only camera entity (as the armour forge's §44.4),
+(the fists at 0.75 filled the frame's sides). The work at the hand (Euan 2026-11-03, "go with all recommendations" after
+the second tour's shots showed the hands still over the hilt, the bind, the twist and the grind): the fists are drawn the
+size of the tools wherever the view is, so moving the view back alone shows no more of the work; what covered it was the
+arms crossing, the hammer's hand reaching left to the hilt while the tongs' hand held the blade on the right. So for the
+bind, the hilt's taps (attuning's too) and the balance's start the whole weapon lies turned end for end, its hilt to your
+right (`AnvilScene.hiltRight`; the bind turns it round from the knap over 12 ticks): the hammer's hand comes in from the
+right, the tongs (the hilt) or the steadying hand (the bind, at 0.7 of the blade) from the left. Those two have their own
+place, the grip's (from the hilt's middle: x +0.4, y +0.66, z -0.49, over the face's middle looking down and right onto
+it). At the wheel the view stands over its front or back and the blade lies with its grip to your right, its flat turned
+with it so the edge stays down, the steadying hand at 0.9 of the blade (§46.9). In the twist the turning hand holds just past the bar's end
+(7 texels on, circling 1.5) and the tongs' handles run low to your left, so neither arm crosses the bar.
+A client-only camera entity (as the armour forge's §44.4),
 first person while it runs, your own body hidden, the real player never moving; your own field of view. A place in a
 block, or one your eyes can't reach without the view crossing a block (eight rays, the near plane's corners), leaves
 that look at your eyes, turned, at 0.85 of your field of view as before. The HUD steps aside (subtitles and chat stay) and the block outline is hidden. `AnvilHands` (a SPEC §24 world source,
 `arms_anvil`, priority 200): the main hand on the hammer, the off hand on the tongs; the hammer winds up before each
-beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, your arm clear of the hilt); the
+beat and comes down in a tick on the click (a hilt tap's haft comes in from your right, onto the hilt at your right); the
 tongs hold the work wherever it is (in the Forge only when the Forge's mouth is near enough to reach). While the hammer
 is down (the fire, the carry and the quench) the main hand holds the tongs too: the hand pass puts a held item away
 only behind a world arm (SPEC §24), so a free hand would bring it back into view. The hammer and tongs are our own voxel meshes (`assets/awaken/arms/anvil/*.mesh`,
@@ -17370,7 +17383,31 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
 `/awaken arms anvil autoplay true` (client).
 - `WarAnvilRenderer` draws the work as the weapon's own mesh: only the blade until the hilt (the hilt's parts appear tap
   by tap), drawn out by its progress, flipped at the halfway strike, carried on a short arc from the Forge to the anvil as
-  the view glides, over the trough and into it for the quench. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
+  the view glides, over the trough and into it for the quench.
+- The blank (Euan 2026-11-03, "do whatever is more AAA", after the twist showed a squashed sword with its quillons' tips
+  spinning): what lies on the anvil until the hilt is the weapon's own mesh reshaped corner by corner every frame
+  (`AnvilBlank`), read once a mesh (`AnvilShape`), so every design works with nothing made by hand.
+  - **Its guard waits for the hilt.** Cutting along the weapon leaves bits of a guard that rises (quillons' tips, wings,
+    tusks), so the guard is found by shape: a part wider than 1.25 the blade's middle width and a texel, starting in the
+    lowest 0.15 of the blade and ending below 0.45; its pieces up to 0.75 over its top that stand out more than 0.6 past
+    the blade just above it are left off while only the blade shows (the forge, the draw out, the quench, the twist, the
+    grind, the starlight; a Hunter blade standing alone in the slot) and come on with the hilt's first tap. A spear's wings
+    (halfway up) and an axe's head (its widest part) aren't a guard; gauntlets have none.
+  - **It starts as a square bar.** Its section is read at 48 heights from its foot to its point; drawn out d (0 the bar,
+    1 its own shape) a corner at height y goes from the bar's place to its own over d: across and through, its offset from
+    the section's middle pushed out to the bar's side (half side the mean of sqrt(half width x half thickness) along it,
+    1 to 3 texels) from 0.3 of the way out, a corner further in kept just inside one further out (0.9 to 1.0 of the side,
+    so no two faces meet); along, 0.62 of its length about the blade's middle. So a stepped blade, a curved one, an axe's
+    head all start as one clean square bar with flat ends, and each strike draws it out into the blade. Marks, the tongs'
+    lips and the hands follow it (the bar scaled from the blade's middle); the tongs close half a texel under the blank's foot,
+    the work's back rests on the face (the bar's half side, the blade's thickest when drawn).
+  - **The twist is real** (§46.9's A): the bar turns about its own length by a twist that's none where the tongs hold it,
+    all of it at the far end, smooth between (0.12 to 0.88 of the way); the far end turns a third as fast as your hand
+    (three turns of the hand, one of the bar: tighter reads as a screw on a bar this thick), so it spirals rather than
+    spins. While twisted it's cut into 24 slabs along its length (a cut on an edge two triangles share lands on the same
+    point in both, so no seam opens) and its normals turn with it; it rides a little higher ((sqrt2 - 1) its side) so its
+    corners clear the face. Struck out after, the twist unwinds as it's drawn out (twist x (1 - d)), the same way round as
+    you turned it; it isn't carried from the fire again. The weapon shader's heat mode (`arms_weapon`, UV1.y bit 9:
   x the heat, y's low byte the heat front along the blade, bit 10 the quench's side: the cooled part from the point) glows
   dull red through orange and yellow to white, dark and soot-streaked where cool, over the whole blade whatever its
   metal map (Beastbound's bone and bronze glow too). Sparks fly at each strike (on the screen, off the mark); steam
@@ -17443,22 +17480,331 @@ axe). Checked on 2026-11-02 against 26.3's numbers: 60 of the 192 style-tier che
   bump alone takes Lord fights about a tenth shorter (under the recommended curve the Dodger passes 3 of 15 Lords, from
   11, and the Parrier 5, from 12) and small E and D creatures to two hits. With each Lord's health x its rank's bump (E
   x1.18, D x1.15, C x1.13, B x1.12, A x1.11, S x1.10) and normal creatures at E and D x1.15, the fights are as tuned
-  (Dodger 11, Parrier 12). So the numbers land with that health, which is the mobs module's.
+  (Dodger 11, Parrier 12). So the numbers land with that health. The health is boss-fights' (SPEC §47, commit
+  4ee1dd112 on claude/boss-fights-plan-73c5f2): it sets the bumped values in the gate bestiary's own health,
+  folded into its retune, with the Ringer at 420, the Examiner at 437 and the Abbot of Frost at 86.5. The damage bump
+  is one commit on the weapon-forge branch, merged with or right after that one, never before it.
+- **Built** (2026-11-02, the weapon-forge session): the generator's tiers run the Longsword 5.5 to 10.5 over the player's
+  1 and the eight styles' offsets carry their second point (`ArmsData` regenerated; Lord-forged follow). `Upgrades`
+  splits `isGear` (any weapon or armour piece) from `isTemperable` (gear in the `awaken` namespace only) and holds the
+  line (`Upgrades.CRAFTED`): the Forge shows it as a toast when crafted gear is used on it, Oren says it when you hold
+  some out to him (and his footer asks for "a forged weapon or armour piece"). Oren's commissions still make crafted gear
+  from what you carry but temper only forged pieces as he hands them over ("Here. Crafted work, so it stays as it is.").
+  The War Anvil's tooltip and the two lines above say it. (A first build raised health in `MobScaling` too; it came out
+  when the health went to boss-fights, so creatures are raised once.)
 
 **46.6 The smithy grows (plan §4.11, decision 15; approved with 14).** The War Anvil is rebuilt as you climb, each
 rebuild the gate for its rank's weapons and act (not a second ladder), each a Weapons tab step, shown on the block
-(`WarAnvilBlock` property `build` 0-3, kept in the block entity's save):
+(`WarAnvilBlock` state property `build` 0-3; broken, the loot table's `minecraft:copy_state` puts it on the item's
+`minecraft:block_state` component, so a carried anvil looks as it was built and is placed back at its build):
 - E: the War Anvil as built (carved stone, a copper-banded horn).
 - D: bellows by the Forge with Forge Tier II (§27); a kin beast set to the smithy works them (§43), and then the heat
-  climbs evenly and the gold band holds 10 ticks longer.
-- C, **Ironbound**: the face re-laid in iron and a grindstone set beside it (4 iron blocks, 2 diamonds); it is the C gate
-  ("a grindstone within 6 blocks").
-- B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst): the balance act happens on it; a weapon rack (the Pattern
-  Stand's rack make) goes up for what you've forged.
-- A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots), in that Lord's colour: the twist is clamped in it, and
-  at S the starlight comes down onto it.
+  climbs evenly and the gold band holds 10 ticks longer. Built as: a forging or a weapon worked (§46.8) begins with the
+  bellows worked (`AnvilWork.bellows`, schemaVersion 5; `WarAnvil.bellows`) when the smith's home's Forge is at Tier II
+  or better and an Emberkit living with them is loaded within 8 blocks of the Forge (`KinApi.loaded`). Then
+  `AnvilSong.heat(t, true)` climbs through the gold over 34 ticks instead of 24 (`BELLOWS_HOLD` 10) and is as before on
+  either side of it, on both sides of the wire; the bellows breathe every 30 ticks instead of 46, louder, and each
+  breath flares the fire out of the Forge's mouth (flame and sparks, `AnvilClient.puff`); the heat's hint says "Your
+  Emberkit is working the bellows: the heat climbs evenly and the gold lasts a little longer." An Emberkit nooks beside
+  a lit campfire (§43), so one by the Forge is a campfire beside it; a nook at the Forge itself is the kin module's.
+- C, **Ironbound** (4 iron blocks, 2 diamonds): iron bands round the stone and the waist, corner brackets, the face
+  re-laid in iron. A C weapon forged in full (not from memory, not a Hunter blade alone) also needs a grindstone within
+  6 blocks of the anvil (2 up or down), for its grind act (§46.9).
+- B, **the Deepglass horn** (4 Deepglass shards, 4 amethyst shards): the horn in glowing Deepglass (light 10); the
+  balance act happens on it. A weapon rack goes up behind the anvil (the Pattern Stand's rack make: two posts on the
+  stone's back, two bars, in its texture), where copies of the last three weapons forged on it (in full or from memory,
+  not a blade alone) stand point down, turned to the smith's left and leaning on the bar, newest at the left
+  (`WarAnvilBlockEntity.rack`, saved and synced; copies to look at, never dropped, their flaws and acts showing).
+- A, **the Lord's anvil** (a Lord's Heart, 2 netherite ingots): netherite face and bands, a waking rune band (light 9),
+  a Lord's Heart set in the front (light 12); the twist is clamped in it, and at S the starlight comes down onto it.
+  The runes and the Heart are cut pale and lit in the colour of the last Gate Lord its smith killed (that Lord's
+  Lord-forged weapon's accent; `SmithMemory` schemaVersion 3 + `lord`, set on any Lord's death by your hand), gold
+  (`WarAnvilBlockEntity.GOLD`) if none: taken at the rebuild, kept in the block entity (schemaVersion 2 + `lord`) and
+  drawn by the block's tint 0 (`AnvilClient.LORD`, a BlockTintSource reading the block entity; a new colour rebuilds
+  its section). Broken, the loot's `copy_components` from the block entity carries it as the item's
+  `minecraft:custom_model_data` colour 0, which the item model's tint reads and setting it down puts back.
+Rebuilding is at the door: when the chosen weapon's rank needs a bigger build than this anvil has and your level
+reaches it, the Armoury's "Forge it" becomes "Rebuild it" (`ArmsArmoury.REBUILD`, `WarAnvil.Status.REBUILD` and
+`REBUILD_OK`; From memory hidden), greyed until you carry the parts. It goes one build at a time, takes the parts
+(none in creative), plays the smithing table and a ring, and says plainly what the anvil now does. Until then the
+forge card's line is `WarAnvil.unbuilt`: "C-rank weapons are forged on an Ironbound anvil. Rebuild this one Ironbound,
+with 4 iron blocks and 2 diamonds." (B: "...balanced on a Deepglass horn.", A/S: "...forged on a Lord's anvil.", with
+"First rebuild this one" while it is more than one build short). Reforging (§46.8) into a rank checks the same gate.
+Missing a grindstone: "From C-rank up, a weapon's edge is ground on a grindstone. Set one within six blocks of this
+anvil." The Weapons tab (§46.4) lists the anvil's build and the grindstone among a rank's needs and adds the step
+`arms/rebuild` ("Rebuild your War Anvil Ironbound", "Give your War Anvil a Deepglass horn", "Rebuild your War Anvil on
+a Lord's Heart") with its parts and the same line, once the next rank is open to you.
 The Forge's own tiers (II at D, III at B) still set the temper limit. No quality ceiling: a perfect song is Flawless on
-any anvil. A rebuild keeps work in progress and what stands in the slot. Built in stage 4 with the ranks' acts.
+any anvil. A rebuild keeps work in progress and what stands in the slot (the block entity stays: only its state
+changes). Models and textures from `tools/art/specs/war_anvil.py` (`war_anvil`, `_ironbound`, `_deepglass`, `_lord`).
+Test `arms_anvil_rebuild` (the gates, the door's flags, the parts, the work kept, the grindstone, the drop's build; on
+to a Lord's anvil in the remembered colour, which the drop keeps). Test `arms_anvil_bellows` (none without a home; the
+gold 10 ticks longer and the curve unchanged either side; a pull late without them in the gold with them).
+
+**46.7 Every weapon at the anvil (stage 2).** Weapons are never made on the crafting grid (decision 1): the 96 forged
+weapons (16 styles, six tiers) and the six Hunter blades (the Fang to the Sovereign blade) lose their grid recipes and are
+forged at a War Anvil. The Hunter focus and mattock, vanilla gear and the Lord-forged (drops only) are unchanged.
+- **The cost table** `data/awaken/arms/anvil_costs.json` (schemaVersion 1; `AnvilCosts`), written by
+  `python3 tools/art/specs/arms_weapons.py costs` from the generator's own style shapes and the Hunter blades' (`gear.py`
+  `RECIPES`): each weapon costs exactly its old recipe minus the Blueprint (the tier's blade, its beast cores, its binding
+  at E or the tier's metal from D), each blade its old recipe. The generator no longer writes weapon recipes (it removes
+  them) and `gear.py` no longer writes the blades'. The Armoury, Track, Raise, the Weapons tab, the Now line, JEI and the
+  anvil all read this one table, and `tools/arms/sources.py` reads it for where each part comes from. A carried blade stands
+  in for its own parts; without it the blade's own cost is added (stage 1's rule, for every weapon); a blade forged alone
+  is a part to carry. Creative skips the cost.
+- **The list** (use the anvil with nothing to resume): the Armoury screen at the War Anvil's door
+  (`ArmsArmoury.ANVIL`, its position kept for three minutes): the styles you know, their six tiers, have and need for the
+  chosen tier and where each part comes from, Track, and **Forge it** on a tier you can make, with **From memory** beside
+  it when that weapon is in your memory, and **Forge the blade** for the tier's Hunter blade alone. What stands in the way
+  is one plain line under the buttons: the tier's level ("Gatewrought weapons open at level 22."), the Forge for D and up
+  ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks of this anvil."), a style you don't know yet
+  ("You don't know this pattern yet."), and the parts. A weapon standing in the slot is drawn before anything new starts.
+- **E by hand: knap and bind** (no Forge; about 20 s). Knap (stage 4): eight flake points down the bone or flint edge,
+  struck one by one at your own pace with the hammerstone (attack, aiming at the lit point; at least 6 ticks between
+  strikes; each scores its aim, the strike curve's 0.4 part alone, inside half a mark 1, two marks out 0). Bind (stage 5):
+  hold use and draw circles with the mouse to wind the cord round the grip: four turns, scored on how even they are
+  (each turn's time against their mean: within an eighth 1, half off 0; a hold under 24 ticks for the four, or a release
+  before them, scores what was wound). Quality by hand: 0.6 knap + 0.4 bind, the same bands; no flaws by hand. Then the
+  draw from the stone, as at D. The protocol: `KNAP` per flake (its aim), `WIND` a=0 when use is held and a=k as turn k
+  closes (in order, the times rising; the fifth closes the bind), `RELEASE` if use is let go first. At E the smith works
+  with a **stone hammer** (`arms/anvil/stone_hammer.mesh`: an antler haft, a sinew grip, a lashed flint head), not the
+  iron one.
+- **A blade forged alone** (Forge the blade): at E the knap alone (it scores both parts), at D and up the heat, the draw
+  and the quench, then the draw from the stone; no hilt, no bind. It's drawn on the anvil as its tier's Longsword cut at
+  the blade (blades have no mesh of their own). A blade is a part: it doesn't count toward `awaken:weapon_forged`, your
+  memory, the styles forged or the Weapons tab's steps.
+- **D and up: the base song** (heat, draw out, quench, hilt, draw; stage 1's acts and scoring) on **each style's own
+  rhythm** (`AnvilSong.SONGS`, from each style's chain), its strikes 8 to 14 by weapon, flipped after half:
+
+  ```
+  longsword   4  x...x...x.x.....  10    rapier      3  x..x.x..x..x.x..  12    glaive      5  x....x....xx....  10
+  axe         5  x.....x.....x...   8    daggers     3  x.x.x.xx          14    scythe      5  x......x.x......   8
+  maul        4  x.......x.......   8    katana      4  x.......xx.x....  10    gauntlets   3  x.x.x.x.xx......  14
+  spear       4  x..x...x........  10    twinblades  3  x.xx.x.xx.......  12    chainblade  4  x..x....x..x.x..  10
+  greatblade  5  x.....x.......x.   8    shieldblade 4  x...x.x.....x...  10    warstaff    4  x.x...x.x...x...  10
+  precursor   4  x...x...x...x...  10
+  ```
+  (step ticks, bar, strikes). The Longsword keeps its ten marks (`MARKS`); the others are laid by one rule (the first half
+  on one face from the root out, the second on the other, along 0.22-0.82, across from a fixed set). A pair (Daggers,
+  Gauntlets, Twinblades' two ends) is worked as one piece. C and up are forged on the base song until stage 4 adds
+  their rank's act. A tier opens at its level (3, 13, 22, 42, 67, 97), as today.
+- **From memory** (`SmithMemory` schemaVersion 2: `masterwork`, "style:tier" forged Masterwork or better; `forged`, the
+  styles forged; `best`, the highest tier forged, -1 none; a v1 save reads with all empty): one heat, one strike, the
+  quench and the draw (at E one flake and the draw); about 8 s; the parts as ever; always **Fine**, no flaw.
+- **A helper**: anyone else who uses the anvil while it's being drawn out strikes an off-beat (at least 2 ticks from any
+  beat the smith is due on, 6 ticks apart): each clean one adds 0.01 to the score, 0.05 at most, and three make it
+  **twin-struck**. They hear their strike; the smith hears it ring. Only during the draw-out, after the count-in, and not
+  from memory; one on a beat is a miss (a dull clank). The third clean one tells the helper "Your strikes are in the
+  blade. It will come out twin-struck."
+- **The result** (`AnvilPayloads.Done`, its `flags`: 1 twin-struck, 2 from memory, 4 forged in an Armoury room) says each
+  in a sentence under the quality.
+- **The story** (`awaken:weapon_forged` schemaVersion 2: + `twin`, + `memory`; a v1 story reads with both false). The
+  tooltip says it plainly: "Masterwork, twin-struck", "Fine, from memory", then "Forged by Euan". A weapon of ours with no
+  story (made on the grid before the War Anvil, or Hale's issue) gains a Plain one, no maker, the first time it is held; a
+  found weapon (Marked, or Lord-forged) never does.
+- **Flaws show on the weapon** (the weapon shader: UV1.y bits 11-12, 1 a burnt tip, 2 brittle; the renderer carries it
+  above the enchantment light's 7 bits in its state, so a hand, a stand or the anvil's slot show it; an item frame, the
+  inventory and the ground draw the flat icon, which doesn't): a
+  burnt tip darkens toward the point (the last third) into dull blue-grey scale (on bone or tusk, D's blades, a
+  brown-black scorch); a brittle blade is crazed mid-length with pale hairlines a texel wide (where a smooth noise over
+  its texels changes sign), so they sit in the pixel art. On the blade, metal or bone (bone a little fainter); cosmetic. `mesh_render.py` doesn't draw them (it renders weapons unforged).
+- **`core.api.ForgeHooks`** (§45.5): arms reads its quality from the story (0-3) and its rank from its tier; the War Anvil
+  fires `forged(smith, stack, quality, "war_anvil")` as the weapon goes into the slot, and the result card draws
+  `cardLines(stack)` under its words (10 px a line, counted in the card's height, colour A898FF).
+- **Patterns taught on use**: a Blueprint teaches its style when used (consumed: "You learned the Daggers pattern. Forge it
+  at a War Anvil."); used when known it stays ("You know the Daggers pattern already. Someone else could use this one.").
+  It no longer goes into anything. The five doors still teach at once and still put a copy in your pack; the Forge still
+  draws copies. Holding a Blueprint no longer counts as knowing it (old saves already learned what they held, §3.3's
+  backfill).
+- **The Hearth** (decision 11): the War Anvil is in `#minecraft:anvil` (vanilla reads that tag only for its anvil screen
+  and falling anvils), so it is the Hearth's anvil (the Forge room's) and the Fitting Stand's. A weapon forged at a War
+  Anvil standing in an Armoury room (`RoomType.FITTING`, `HearthHooks.armoury`) lasts a quarter longer (its uses x1.25,
+  as the armour's), and the card says so.
+- **The Weapons tab** (§46.4 grown): "Forge your first weapon" now offers the styles you know as choices at your best
+  reached tier, each with what it still takes (E by hand at the anvil, D and up by the Forge); after the first, "Make your
+  C-rank weapon" (`arms/rank_weapon`) shows when you've reached a tier above the best you've forged, its choices the
+  styles you know at that tier. **The Now line** (`AnvilNow`, priority 25): "You can forge Beastbound Daggers at your War
+  Anvil" when you hold every part of a weapon you know, at a tier you've reached, better than any of its style you carry;
+  the gear module's line no longer suggests blades. Its id is `arms:forge/<weapon>`, it points at your anvil when it's in
+  your dimension, and both Weapons steps cover it (`covers("arms:forge/")`) while they show. **Words**: the level road's E step says weapons are made at a War
+  Anvil, from bone and flint by hand at E; Hale adds "A crafting table makes quick tools. For a real weapon, set up a War Anvil at home." (§46.5); the
+  pattern notices say the War Anvil.
+- **JEI**: a **War Anvil** category (`Categories.WarAnvil`, `Recipes.forgings()`, the War Anvil its station) for every
+  weapon and blade, from the cost table: the parts (a tag's items cycling in one slot), the result, a rank chip in the
+  rank's colour, how it's made ("by hand, no Forge needed" at E, "in the Forge's heat" from D), the level it opens at, and
+  one plain line on the work (a blade: every forged weapon of its tier starts from one). Under the spoiler guard by its
+  result, as every Awaken category.
+- **The smith in third person**: others see the smith bent over the anvil, the hammer arm rising and falling on each
+  strike and tap (a full-body clip, `assets/awaken/player_animations/arms_anvil.json`, through `core.api.PlayerClips`;
+  without the animation library, vanilla's arm swing on each strike). The clips (`tools/art/specs/anvil_moves.py`, each
+  with its `_bent` twin): `arms_anvil` over the anvil (the draw-out, the hilt, the knap), `arms_anvil_strike` (6 ticks)
+  on each draw-out strike, `arms_anvil_tap` (4) on each hilt tap and flake, `arms_anvil_heat` at the Forge's mouth,
+  `arms_anvil_quench` in the trough, `arms_anvil_bind` winding the cord. `AnvilBodies` reads them from the anvil's synced
+  work as it is drawn (a new beat in the same stage is a blow) and lets the smith go the tick that work ends.
+- **The dev command** `/awaken arms anvil forge [weapon [memory]]` begins that weapon (the Beastbound Longsword with
+  none) at the nearest War Anvil within six blocks, or says what's missing in the anvil's own words; the tours use it.
+- **Old saves**: every weapon already made keeps working and gains its Plain story when held; Blueprints held were
+  learned by the backfill; Fangs and the other blades still stand in. The grid recipes are gone, so their recipe-book
+  entries vanish; nothing is charged twice.
+
+Tests (one per mechanism): `arms_anvil_costs` (every weapon and blade has its cost, the old recipe minus the Blueprint;
+no crafting recipe makes any of them; a carried blade stands in, else its parts are added), `arms_anvil_hand` (E knap and
+bind judged by the server: aim, evenness, quality, no Forge needed), `arms_anvil_memory` (a Masterwork goes into memory;
+from memory is one strike and always Fine), `arms_anvil_song` (as before, on the Longsword, plus a helper's off-beats
+making it twin-struck), `arms_anvil_goals` (grown: the rank step after the first weapon, and the Now line: its parts in
+the pack, nothing better of its style carried). `arms_recipe_unlock` is retired (no weapon recipes); `arms_armoury` and `arms_raise` read needs
+from the cost table.
+
+**46.8 Temper, attune and reforge at the anvil (stage 3; plan §4.6).** Use the War Anvil holding one of Arms' weapons
+(forged, Lord-forged, Marked, Hale's issue: whatever `ArmsItems.of` knows), with no work on it and nothing in its slot,
+and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three rows, each with
+what it costs (have and need), one button, and one plain line for what stands in the way. All three heat the metal, so
+each needs the Forge within reach at every tier ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks
+of this anvil."). The price is taken at the start, and the weapon goes from your hand into the work (`AnvilWork.piece`);
+both come back if the anvil is broken mid-work, and the weapon comes back through the slot, drawn as any.
+- **Temper it to IV**: one heat, as far as you can go. The target is the highest level up to the temper limit of the Forge
+  by the anvil (`HearthHooks.temperCap` at that Forge) whose prices you hold together: each level costs what it does at
+  the Forge (`Upgrades.temper(level, false)`, priced for your rank by `Costs.price`), summed. Oren's Mark lets a weapon
+  with no Temper start at its level for that level's price alone, as at the Forge. At the limit the line says why, in the
+  Forge's words ("Put an anvil and an armour stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
+  further.", "It can't take any more."). The scene (about 10 s whatever the levels): the whole weapon heats in the
+  Forge's mouth, one strike on the style's own beat for each level gained, the quench. Nothing is judged and nothing is
+  flawed: the Temper lands as paid, and the strikes ring as at the draw-out.
+- **Reforge it to C**: the next tier's parts (as Raise: the tier's cost, no Blueprint; `ArmsRaise.plan`), from the
+  tier's level. The scene (about 20 s): the whole weapon heats, the next tier's metal is folded in on the style's beat
+  (its strikes, turned over at half), the quench, the draw. Judged as a forging without the hilt
+  (`AnvilSong.reforgeScore`: 0.2 heat + 0.55 strikes + 0.15 quench, over 0.9; a burnt tip and a brittle blade as ever;
+  a helper's off-beats count). The weapon's story takes the new quality, flaw and smith, marked reforged ("Reforged by
+  Euan"); its Temper is the higher of what it had and the quality's starting Temper (held to the Forge's limit). Kept:
+  Marks, attunement, Art, name, Temper, enchantments and everything else written on it; its uses start fresh at the new
+  tier's (x1.25 in an Armoury room). A forged weapon becomes the next tier's of its style (`ArmsRaise.lift`:
+  `ItemStack.transmuteCopy`, then its damage and uses set back to the new weapon's own and its Temper put back on); a
+  Lord-forged weapon keeps its own body and Art and gains a point of damage a tier, as Raise always did, and its heat
+  glows in its Lord's colour (the weapon's accent) instead of the Forge's.
+- **Attune it to Heat** (a catalyst in the off hand): six essence, a Core Shard and the catalyst, as at the Forge
+  (`ArmsForge.attunePrice`). The scene (about 8 s): the whole weapon heats, the catalyst is set in the guard, and three
+  taps on the hilt's beat drive it home (all three at the guard), the blade glowing more in its Force's colour with each;
+  then it stands in the slot. Nothing is judged. Without a catalyst the row says which stone gives which Force; one
+  already attuned to that Force says so; attuning again replaces the old Force.
+- **The Forge points here**: a plain use of the Forge holding one of Arms' weapons says "Weapons are tempered at a War
+  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil."; the Armoury at the Forge no longer offers Raise.
+  Armour tempers at the Forge as before, and Oren still tempers anything you hand him.
+- **The Weapons tab**: two optional steps, each pointing at your anvil. "Temper your Beastbound Longsword"
+  (`arms/temper`) when the best of Arms' weapons you carry (the highest tier, then the lowest Temper) is below the limit
+  of the Forge by your War Anvil; its needs are the next level's price. "Reforge your Hive Regent's Daggers"
+  (`arms/reforge`) when you carry a found weapon (Marked or Lord-forged) below the best tier you've reached; its needs
+  are the next tier's parts.
+- **The card**: "Temper IV" ("Tempered from II to IV"), "Attuned" (what the Force now does, in a sentence), or the
+  reforged weapon's quality with "Reforged by Euan". Done flags add TEMPERED 8, ATTUNED 16, REFORGED 32.
+- **State**: `AnvilWork` schemaVersion 3 (+ `kind` TEMPER 2, ATTUNE 3, REFORGE 4; + `piece`, the weapon worked; +
+  `target`: the Temper level, the Force's ordinal, or the tier it reforges to); a v2 work reads with no piece.
+  `WeaponForged` schemaVersion 3 (+ `reforged`; a v2 story reads false). A Lord-forged weapon's tier is read from its
+  row of `ArmsData` (its name has no tier prefix).
+- **The weapon shader**: in the making (y bit 9), x bits 8-11 are the glow's colour (1 to 5 a Force, by
+  `Forces.Force` ordinal + 1; 15 the weapon's accent) and bits 12-14 how much of it; the enchantment light is off while
+  it's being worked. `mesh_render.py` doesn't draw it.
+- **The dev command** `/awaken arms anvil held <temper|reforge|attune>` begins one with the weapon in your main hand at
+  the nearest War Anvil within six blocks, or says what's missing in the window's words.
+
+Tests: `arms_anvil_temper` (one heat to the Forge's limit, the summed price taken, the levels struck, Temper applied; the
+weapon back through the slot; Oren's Mark's start; the Forge's plain use points to the anvil), `arms_anvil_attune` (the
+price and catalyst taken, attuned, Marks kept), `arms_anvil_reforge` (a Marked weapon: the next tier's, Marks, name,
+attunement and Temper kept, the story reforged with its quality; a Lord-forged: its body, Art and a point; the parts
+taken, and given back with the weapon when the anvil breaks mid-work).
+
+**46.9 Each rank's act (stage 4; plan §4.4).** A weapon forged in full at its tier (`AnvilWork.acts()`: not from memory,
+not a Hunter's blade forged alone, not one worked again) gets its rank's act and every act below it from C, each in its
+place in the song; at S: the heat, the twist, the draw out, the starlight, the grind, the hilt, the balance, the draw.
+Each act done is a tenth of the quality (the armour's rule, §44.4; `AnvilSong.withActs`: score x (1 - 0.1 an act) + 0.1
+x each act's mark). None can fail, and one left alone settles itself.
+- **A, the twist** (`AnvilSong.TWIST` 6, straight from the heat): the hot square bar clamped on the face; hold use and
+  circle the mouse round the bar's end, three turns (`TWISTS`), its far end turning a third as fast as you go and its
+  middle twisting into a spiral (§46.3, "The blank"), hammered flat again as it's drawn out. Its mark is the bind's
+  evenness (`AnvilSong.evenness`) x the turns made of three x how long they took over 30 ticks (`TWIST_MIN`: hurried,
+  it takes less). Let go early and it's what was turned. Then the draw out. Payload `TWIST` 14 (a = 0 as the hold
+  begins, then each turn), and `RELEASE`.
+- **S, the starlight** (`STAR` 9, in place of the quench): the work is held point up over the face into a column of
+  white light that comes down onto the anvil; a ring of it closes on the point, meeting it 50 ticks in (`STAR_AT`), and
+  you press as it does: 1 within 3 ticks either way, falling to 0.3 at 20 (`AnvilSong.star`). It's the quench's mark
+  too, and light leaves no brittle hairline. Left alone (110 ticks, `STAR_ALONE`) it's 0.3. The steel glows the
+  starlight's white as it drinks it (the weapon shader's glow code 6). Payload `STAR` 17.
+- **C, the grind** (`GRIND` 7, after the quench or the starlight): the view glides to the nearest grindstone within six
+  blocks of the anvil (the anvil's face while there's none: the rebuilds' gate comes with them), the blade across the
+  wheel's rim, edge down. The view stands over the wheel's front or back, whichever side you're on (0.95 out, 1.7 up;
+  toward you if that's walled in), so the blade lies across the frame, its grip to your right under the hammer hand
+  and your other hand at 0.9 of the blade (§46.3, 2026-11-03). Hold use to turn the wheel: a gold line drifts up and down a channel beside it
+  (`AnvilSong.grindLine`, two slow waves) and the mouse's height is the edge. Every 5 ticks of turning (`GRIND_GAP`) the
+  client says how far the edge is off the line, in half the channel's height, marked 1 - |off| (`AnvilSong.grind`), and
+  sparks fly off the edge; 10 make a pass (`PASS`), two passes the act, its mark their mean. A touch quicker than the
+  wheel turns isn't taken. Then the hilt. Payload `GRIND` 15 (a = the touch's index, aim = how far off).
+- **B, the balance** (`BALANCE` 8, after the hilt): the whole weapon rests across the horn's tip and tips toward its
+  heavy end; slide the Deepglass weight along the grip with the mouse (the guard to the pommel's end) until it lies
+  level (within 0.06 of its point, `LEVEL`) and hold it there a second. The point is the same on both sides for that
+  work (0.25 to 0.75 along the grip, `AnvilSong.balancePoint` from the stage's start). Settled within 60 ticks
+  (`BALANCE_QUICK`) is whole, by 200 half (`BALANCE_SLOW`), times how near the point it was (a hair off still counts;
+  at most half lost); left alone 240 ticks (`BALANCE_ALONE`) it settles itself, poorly. Then the draw. Payload
+  `BALANCE` 16 (t, the weight's distance from the point).
+- **The view**: a place over the wheel on your side of it, one at the horn's side, and one back from the face looking up
+  the blade into the light (`AnvilCamera` places 4 to 6).
+- **State**: `AnvilWork` schemaVersion 4 (+ `twist`, `grind`, `balance`, `star`, -1 until done; a v3 work reads with
+  none done). `/awaken arms anvil autoplay true` plays the acts too.
+- **What the acts leave in the steel** (cosmetic only): a twist that marks 0.5 or more (`AnvilSong.RIPPLES`) leaves its
+  ripples in an A or S blade, light and dark bands a texel wide waving across the metal from the guard up like folded
+  steel; an S blade quenched in starlight (any mark) has its runes woken: what glows of itself burns brighter and cooler
+  and wakes in turn from the hilt, even where it was still, and now and then a point of the steel catches the
+  starlight. `WeaponForged` schemaVersion 4 (+ `acts`: `RIPPLES` 1, `STARLIT` 2; a v3 story reads none); a reforge keeps
+  them. The tooltip reads "Flawless, twisted steel, quenched in starlight"; the card says "The twist shows in its steel."
+  and "It drank the starlight, and its runes woke." (`Done` flags `RIPPLED` 64, `STARLIT` 128). Drawn by the weapon
+  shader wherever the weapon is (UV1.y bits 13 and 14, beside the flaw), standing in the anvil's slot too.
+
+Tests: `arms_anvil_verbs` (the tenth rule and the twist's, balance's and starlight's curves; a C Longsword grinds after
+its quench and then takes its hilt; an S Longsword twists, draws out, takes the starlight, grinds twenty touches (one
+too quick refused), takes its hilt and balances, and a perfect song is Flawless with no flaw, rippled and starlit,
+a copy of it in its Lord's anvil's rack).
+
+**46.10 Its own sound (stage 5; plan §4.3).** Steel that rings truer: the armour's sound is a bell melody, a note per
+strike; a weapon's is the blade's own ring. `tools/art/specs/audio_anvil.py` (CC0 Kenney transients under the audio
+kit's synthesis, as the forge's; mono, mastered to the arms loudness) writes `sounds/anvil/anvil_<event>_<k>.ogg` and
+the `anvil.*` entries of arms' merged sounds.json and subtitles (`audio_arms.py` keeps them when it rewrites the file).
+- **Each style's true note** (`AnvilSong.Song.note`, semitones from the ring's A5): Maul -9, Greatblade -7, Axe and
+  Warstaff -5, Scythe and Glaive -2, Longsword, Chainblade, Shieldblade and the Precursor 0, Spear and Katana +3,
+  Gauntlets and Twinblades +5, Rapier +7, Daggers +10. A clean strike rings the blade `FLAT` 3 semitones under it at
+  first and a step nearer with each clean strike (`AnvilSong.ringPitch(song, clean so far, strikes)`; a strike that
+  isn't clean doesn't step it, so a song with misses ends a little flat); the balance's end and a helper's strike ring
+  it true, and the draw from the stone rings it whole (`anvil.drawn` at `WarAnvil.truePitch(weapon)`). Every style's
+  first ring and true note sit inside the game's 0.5-2.0 pitch range.
+- **The strike on each tier's metal** (`AnvilContent.strike(tier)`), thinner and brighter than the armour's plate (cut
+  under 90 Hz but the lordscale): iron to D (`anvil.strike`), gatewrought (C, hard and glassy, its grit),
+  veilwoven (B, a glass voice beating in it), lordscale (A, dark and heavy, its scales settling after), sovereign (S,
+  a high halo).
+- **The blade**: `ring` (A5), `flip` (the grip shifting, the blade landing on its other face), `quench` (a roar of
+  steam, the water boiling, a low rumble), `lift` (a slosh, drops falling back, the last hiss), `tap` (the hilt's
+  peening: a small hammer, a knock in the grip), `scrape` (steel on stone rising as it's drawn up), `drawn` (a last
+  chirp and the whole blade ringing, A5).
+- **The acts**: `knap` (E, a glassy crack, chips skittering), `cord` (E, rawhide rubbing tight, each turn), `wheel` (C,
+  the grind swelling with the stone's turn, sparks; every second touch), `twist` (A, hot steel groaning as it gives,
+  each turn), `hum` (B, the Deepglass horn: a glass tone at A4 with a slow beat, every 50 ticks while it balances,
+  at the style's true note and up to 6% flat the further it lies from level) and `star` (S, an airy rise into a high
+  A chord with motes of light).
+- **The Forge's own**, kept from the armour forge's kit: `bellows`, `pull`, `count` (the count-in) and `miss`.
+- **Listening**: `tools/art/anvil_listen.py` builds the page Euan judges the kit on (into build/anvil-listening: a
+  forging at each rank as the game times it, the true notes side by side, every event alone; keep / remake / cut and a
+  note on each, saved in the page's store, collection `verdicts`): https://claude.ai/artifact/JpbQKVjWDgDwiXajNmtkCP
+
+- **Reduced motion**: §46.3 (the view cuts instead of gliding). **Enchanting's card line**: the anvil's result card has
+  shown `ForgeHooks.cardLines` ("Room for three enchantments", in enchanting's `A898FF`) since stage 2; nothing more.
+- **Pacing** (checked 2026-11-03 at the game's own timings: the songs' bars, the heat pulled at 0.6, the quench's 32-tick
+  hold, the hilt's 42, the 30-tick draw, the acts' least times, and 8 ticks between stages for a practised smith or 40
+  for one reading each hint the first time): a first forging at D runs 24-34 s (Daggers quickest, the Maul slowest), C
+  31-41, B 35-45, A 39-49, S 40-50 s (plan: 25-45 s, about 45 at S); practised, D 16-26 and S 27-37 s. E by hand 11-16 s
+  (plan: about 20). From memory it ran 10-13 s practised against the plan's "about 8 s", most of it the heat and a whole
+  bar counted in, so **from memory the blank goes in warm** (`AnvilSong.KNOWN_HEAT` 36: the heat clock starts at 0.3,
+  `AnvilWork.heat`) **and the anvil counts in half a bar** (`Song.known`, the bar's first half, which always opens on a
+  strike; `AnvilWork.rhythm`): 7.5-8.9 s practised, 14-15 s the first time.
+
+Test: `arms_anvil_ring` (every style flat at first and true at the last clean strike, rising each step, inside the
+pitch range; a Maul under the Longsword under Daggers; only clean strikes step it; each tier's own strike);
+`arms_anvil_memory` checks a known weapon goes in warm and is counted in half a bar.
 
 ## 47. Fights worth winning (bosses, beasts and the Provings; plan docs/fights/PLAN.md, page https://claude.ai/artifact/3YkJKH1GwpQdZx6notb19E; Euan approved all recommendations 2026-11-02: "go ahead with all recommendations. Just do it ALL at the best of your ability AAA level, then I will test.")
 

@@ -93,8 +93,20 @@ final class ArmsTests {
             }
             checked++;
         }
-        // Hunter armour is forged at a Fitting Stand (SPEC §44.4): 18 gear pieces keep recipes
-        h.assertTrue(checked >= 114, "the gear and arms recipes were read (18 gear pieces and 96 weapons): " + checked);
+        // weapons and Hunter blades are forged at a War Anvil (SPEC §46.7): their parts are its cost table's
+        for (var e : dev.awaken.arms.anvil.AnvilCosts.table().entrySet()) {
+            for (var part : e.getValue()) {
+                java.util.List<Identifier> items = new java.util.ArrayList<>();
+                if (part.kind().equals("tag")) {
+                    BuiltInRegistries.ITEM.getTagOrEmpty(net.minecraft.tags.TagKey.create(Registries.ITEM, Identifier.parse(part.id())))
+                            .forEach(hold -> items.add(BuiltInRegistries.ITEM.getKey(hold.value())));
+                } else items.add(Identifier.parse(part.id()));
+                for (Identifier id : items) h.assertTrue(ArmsSources.isIngredient(id), id + " is a part of " + e.getKey() + " at the War Anvil but not in sources.json: run python3 tools/arms/sources.py");
+            }
+            checked++;
+        }
+        // Hunter armour is forged at a Fitting Stand (SPEC §44.4), weapons and blades at a War Anvil: 12 gear pieces keep recipes
+        h.assertTrue(checked >= 114, "the gear recipes and the War Anvil's costs were read (12 gear pieces, 96 weapons and 6 blades): " + checked);
         java.util.Set<String> lang = new java.util.HashSet<>();
         try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/lang/en_us.json")) {
             h.assertTrue(in != null, "the merged lang file is on the classpath");
@@ -148,9 +160,10 @@ final class ArmsTests {
             };
             h.assertTrue(stack.is(tag), w.id() + " is in " + tag.location() + " to vanilla (its enchantments)");
             var recipe = ResourceKey.create(Registries.RECIPE, Awaken.id(w.id()));
-            boolean crafted = h.getLevel().getServer().getRecipeManager().byKey(recipe).isPresent();
-            if (LordForged.byWeapon(w.id()) != null) h.assertTrue(!crafted, w.id() + " only drops (a Lord-forged weapon has no recipe)");
-            else h.assertTrue(crafted, w.id() + " has its recipe");
+            h.assertTrue(h.getLevel().getServer().getRecipeManager().byKey(recipe).isEmpty(), w.id() + " has no grid recipe (SPEC §46.7)");
+            boolean costed = dev.awaken.arms.anvil.AnvilCosts.of(w.id()) != null;
+            if (LordForged.byWeapon(w.id()) != null) h.assertTrue(!costed, w.id() + " only drops (a Lord-forged weapon isn't forged at the anvil)");
+            else h.assertTrue(costed, w.id() + " has its War Anvil cost");
             for (String file : new String[]{"items/" + w.id() + ".json", "models/item/" + w.id() + ".json", "models/item/" + w.id() + "_in_hand.json",
                     "textures/item/arms/" + w.id() + ".png", "textures/item/arms/" + w.id() + "_icon.png", "arms/weapons/" + w.id() + ".mesh"}) {
                 h.assertTrue(ArmsTests.class.getResource("/assets/awaken/" + file) != null, w.id() + ": " + file + " is on the classpath");
@@ -566,7 +579,7 @@ final class ArmsTests {
         for (ArmsForge.Cost c : ArmsForge.blueprintPrice()) p.getInventory().add(new ItemStack(c.item(), c.n()));
         h.assertTrue(ArmsForge.drawBlueprint(p, "glaive") && ArmsForge.owns(p, "glaive"), "a Glaive Blueprint drawn");
         Item bp = ArmsItems.BLUEPRINTS.get("glaive").get();
-        h.assertTrue(bp.getCraftingRemainder(new ItemStack(bp)) != null, "the crafting grid gives a Blueprint back");
+        h.assertTrue(bp.getCraftingRemainder(new ItemStack(bp)) == null, "a Blueprint goes into nothing now (SPEC §46.7): it teaches when used");
         h.assertTrue(!ArmsItems.BLUEPRINTS.containsKey(Arms.LONGSWORD) && ArmsItems.BLUEPRINTS.size() == 15, "every style but the Longsword has one");
         h.succeed();
     }

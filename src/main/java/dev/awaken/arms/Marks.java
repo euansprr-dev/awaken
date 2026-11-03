@@ -142,6 +142,11 @@ public final class Marks {
         return i == null ? Instance.EMPTY : i;
     }
 
+    /** Sets a weapon's Marks (a found one's; tests). */
+    public static void put(ItemStack stack, Instance inst) {
+        stack.set(ArmsContent.INSTANCE.get(), inst);
+    }
+
     /** A Mark at random (a found weapon's). */
     static Mark random(RandomSource r) {
         List<Mark> all = all();

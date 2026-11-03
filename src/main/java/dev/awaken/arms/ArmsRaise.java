@@ -25,22 +25,29 @@ import java.util.List;
  * no Blueprint), keeping its Marks, its attunement and its name. A forged weapon becomes the next tier's weapon of its
  * style; a Lord-forged one keeps its own body and its Art, and gains a point of damage a tier (a Lord-forged weapon is
  * one point over its home rank's, and Raise keeps that gap). A found weapon is never above the crafted weapon of its tier.
+ * Since the War Anvil (SPEC §46.8) it's done there as a reforging; {@link #lift} is the change itself, which keeps
+ * everything written on the weapon.
  */
-final class ArmsRaise {
+public final class ArmsRaise {
     private ArmsRaise() {}
 
     static final String RAISED = "awaken_raised";
 
     /** What raising the weapon in the main hand would do: the weapon, the tier it would reach, and what that costs. */
-    record Plan(ArmsData.Weapon weapon, int next, boolean lordForged, int raised, List<ArmsPayloads.NeedRow> needs, boolean reached) {}
+    public record Plan(ArmsData.Weapon weapon, int next, boolean lordForged, int raised, List<ArmsPayloads.NeedRow> needs, boolean reached) {}
 
-    static int raised(ItemStack s) {
+    /** How many times a Lord-forged weapon has been raised. */
+    public static int raised(ItemStack s) {
         CustomData d = s.get(DataComponents.CUSTOM_DATA);
         return d == null ? 0 : d.copyTag().getIntOr(RAISED, 0);
     }
 
     static @Nullable Plan plan(ServerPlayer p) {
-        ItemStack held = p.getMainHandItem();
+        return plan(p, p.getMainHandItem());
+    }
+
+    /** What raising this weapon would do for this player (their level, their pack), or null when it can't go higher. */
+    public static @Nullable Plan plan(ServerPlayer p, ItemStack held) {
         if (held.isEmpty()) return null;
         ArmsData.Weapon w = ArmsItems.of(held.getItem());
         if (w == null) return null;
@@ -54,25 +61,35 @@ final class ArmsRaise {
         return new Plan(w, next, forged, raised, needs, Progression.profile(p).level() >= ArmsArmoury.LEVEL[next]);
     }
 
-    /** The line the Armoury shows beside the button: "D|ready", "D|opens at level 13" or "D|needs 2 D-rank Part, 14 D-rank Metal" (empty: nothing to raise). */
-    static String status(ServerPlayer p) {
-        Plan plan = plan(p);
-        if (plan == null) return "";
-        String tier = ArmsArmoury.TIERS[plan.next()];
-        if (!plan.reached()) return tier + "|opens at level " + ArmsArmoury.LEVEL[plan.next()];
-        List<String> missing = new ArrayList<>();
-        for (ArmsPayloads.NeedRow n : plan.needs()) {
-            if (n.have() < n.need()) missing.add((n.need() - n.have()) + " " + ArmsTrack.label(n));
-        }
-        return tier + "|" + (missing.isEmpty() ? "ready" : "needs " + String.join(", ", missing));
-    }
-
     /** Pays for the next tier's parts and lifts the weapon in the hand. True when it did. */
     static boolean raise(ServerPlayer p) {
         Plan plan = plan(p);
         if (plan == null || !plan.reached()) return false;
         for (ArmsPayloads.NeedRow n : plan.needs()) if (n.have() < n.need() && !p.hasInfiniteMaterials()) return false;
-        ItemStack held = p.getMainHandItem();
+        ItemStack out = lift(p.getMainHandItem(), plan);
+        if (out == null) return false;
+        if (!p.hasInfiniteMaterials()) for (ArmsPayloads.NeedRow n : plan.needs()) ArmsArmoury.take(p, n);
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, out);
+        dev.awaken.signal.Signal.toast(p, Component.literal("RAISED · ").withColor(0xE2B450).append(out.getHoverName().copy().withColor(0xFFE3A0))
+                .append(Component.literal(" · " + ArmsArmoury.TIERS[plan.next()] + " tier").withColor(0xC8C2B0)));
+        p.level().playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.ANVIL_USE, net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, 1.3F);
+        counted(p);
+        return true;
+    }
+
+    /** Counted wherever a weapon is raised (here, or reforged at a War Anvil). */
+    public static void counted(ServerPlayer p) {
+        Progression.count(p, "awaken:weapons_raised");
+        Progression.markNewThing(p, "raise");
+    }
+
+    /**
+     * The weapon lifted to its plan's tier (nothing paid here), or null. A Lord-forged one keeps its own body and Art and
+     * gains a point of damage; a forged one becomes the next tier's of its style with everything written on it carried
+     * over (Marks, attunement, name, Temper, enchantments, its story), its damage and uses set to the new weapon's own and
+     * its Temper put back on. Either way its uses start fresh.
+     */
+    public static @Nullable ItemStack lift(ItemStack held, Plan plan) {
         ItemStack out;
         if (plan.lordForged()) {
             out = held.copy();
@@ -82,23 +99,17 @@ final class ArmsRaise {
             ItemAttributeModifiers mods = out.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
             out.set(DataComponents.ATTRIBUTE_MODIFIERS, mods.withModifierAdded(Attributes.ATTACK_DAMAGE,
                     new AttributeModifier(Awaken.id("raise_" + (plan.raised() + 1)), 1.0, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND));
-            out.setDamageValue(0);
         } else {
             Item item = ArmsItems.item(ArmsArmoury.PREFIX[plan.next()] + "_" + plan.weapon().style());
-            if (item == null) return false;
-            out = new ItemStack(item);
-            var inst = held.get(ArmsContent.INSTANCE.get());
-            if (inst != null) out.set(ArmsContent.INSTANCE.get(), inst);
-            var name = held.get(DataComponents.CUSTOM_NAME);
-            if (name != null) out.set(DataComponents.CUSTOM_NAME, name);
+            if (item == null) return null;
+            out = held.transmuteCopy(item, 1);
+            out.set(DataComponents.ATTRIBUTE_MODIFIERS, item.components().getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY));
+            Integer uses = item.components().get(DataComponents.MAX_DAMAGE);
+            if (uses != null) out.set(DataComponents.MAX_DAMAGE, uses);
+            int temper = dev.awaken.hearth.Upgrades.temperOf(held);
+            if (temper > 0) dev.awaken.hearth.Upgrades.applyTemper(out, temper);
         }
-        if (!p.hasInfiniteMaterials()) for (ArmsPayloads.NeedRow n : plan.needs()) ArmsArmoury.take(p, n);
-        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, out);
-        dev.awaken.signal.Signal.toast(p, Component.literal("RAISED · ").withColor(0xE2B450).append(out.getHoverName().copy().withColor(0xFFE3A0))
-                .append(Component.literal(" · " + ArmsArmoury.TIERS[plan.next()] + " tier").withColor(0xC8C2B0)));
-        p.level().playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.ANVIL_USE, net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, 1.3F);
-        Progression.count(p, "awaken:weapons_raised");
-        Progression.markNewThing(p, "raise");
-        return true;
+        out.setDamageValue(0);
+        return out;
     }
 }
