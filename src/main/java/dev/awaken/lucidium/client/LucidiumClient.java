@@ -73,6 +73,7 @@ public final class LucidiumClient {
         event.register(LucidiumNet.TrialStart.TYPE, (msg, ctx) -> ClientTrial.begin(msg));
         event.register(LucidiumNet.TrialHud.TYPE, (msg, ctx) -> ClientTrial.update(msg));
         event.register(LucidiumNet.TrialGoal.TYPE, (msg, ctx) -> ClientTrial.goal(msg));
+        event.register(LucidiumNet.TrialGhosts.TYPE, (msg, ctx) -> ClientTrial.ghosts(msg));
         event.register(LucidiumNet.DreamPlaces.TYPE, (msg, ctx) -> ClientTrial.places = List.copyOf(msg.places()));
         event.register(LucidiumNet.DreamWaiting.TYPE, (msg, ctx) -> ClientTrial.bed = msg.bed());
     }

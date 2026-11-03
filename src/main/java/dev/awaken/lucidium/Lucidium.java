@@ -1,8 +1,9 @@
 package dev.awaken.lucidium;
 
-import dev.awaken.lucidium.data.DreamRecord;
+import dev.awaken.lucidium.data.DreamLedger;
 import dev.awaken.lucidium.data.Dreamer;
 import dev.awaken.lucidium.dream.ActiveDream;
+import dev.awaken.lucidium.dream.DreamOffers;
 import dev.awaken.lucidium.dream.Dreams;
 import dev.awaken.lucidium.dream.Planner;
 import dev.awaken.lucidium.dream.Sleep;
@@ -45,32 +46,32 @@ public final class Lucidium {
     }
 
     /**
-     * Marks the player's current dream, or the last one they had, as recorded (Above's Dream Recorder). Returns its
-     * index for {@link #replay}, or -1 if there is nothing to record. Recorded dreams are kept longest.
+     * The Dream Recorder's button: every trial dream is kept for replay once finished (SPEC §9.6), so this only marks
+     * the latest Dream Journal entry as recorded. Returns 0, the index of the dream finished last, or -1 if none.
      */
     public static int recordDream(ServerPlayer player) {
         Dreamer d = Dreams.dreamer(player);
-        if (d.history.isEmpty()) return -1;
-        int idx = d.history.size() - 1;
-        d.history.set(idx, d.history.get(idx).withRecorded());
-        return idx;
+        if (!d.history.isEmpty()) d.history.set(d.history.size() - 1, d.history.getLast().withRecorded());
+        return DreamOffers.replays(d).isEmpty() ? -1 : 0;
     }
 
-    /** One line per remembered dream, oldest first (index = replay index). */
+    /** One line per dream you can dream again, the one finished last first (index = replay index). */
     public static List<String> dreams(ServerPlayer player) {
         List<String> out = new ArrayList<>();
-        for (DreamRecord r : Dreams.dreamer(player).history) out.add("Day " + r.day() + ": " + r.summary() + (r.recorded() ? " [recorded]" : ""));
+        for (DreamLedger.Finished f : DreamOffers.replays(Dreams.dreamer(player))) out.add(DreamOffers.replayLabel(f));
         return out;
     }
 
     /**
-     * Re-enters a remembered dream from its stored plan (the Dream Recorder). The player returns to where they are
-     * now when it ends; time doesn't skip. Places whose snapshot has been forgotten are dreamed as new places.
+     * Dreams a finished trial again (the Dream Recorder, the Stillpoint's In door; SPEC §9.6), 0 = the one finished last.
+     * Its time, medal and ghost count; nothing it gave the first time comes again. The player returns to where they are
+     * now when it ends; time doesn't skip.
      */
     public static boolean replay(ServerPlayer player, int dreamIndex) {
-        Dreamer d = Dreams.dreamer(player);
-        if (dreamIndex < 0 || dreamIndex >= d.history.size() || Dreams.isDreaming(player)) return false;
-        Planner.Prepared p = Planner.buildNow(player.level().getServer(), player.getUUID(), d.history.get(dreamIndex).plan());
+        List<DreamLedger.Finished> list = DreamOffers.replays(Dreams.dreamer(player));
+        if (dreamIndex < 0 || dreamIndex >= list.size() || Dreams.isDreaming(player) || Dreams.dreamLevel(player.level().getServer()) == null)
+            return false;
+        Planner.Prepared p = Planner.buildNow(player.level().getServer(), player.getUUID(), DreamOffers.replayPlan(player, list.get(dreamIndex).trial()));
         if (Dreams.enter(player, p, Dreams.Entry.awake()) != null) return true;
         Planner.discard(player.level().getServer(), p);
         return false;

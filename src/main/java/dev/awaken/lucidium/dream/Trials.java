@@ -55,6 +55,11 @@ final class Trials {
         return ad.bp.course != null;
     }
 
+    /** A finished trial dreamt again (SPEC §9.6): times, medals and the ghost count; nothing else it gave comes again. */
+    static boolean replay(ActiveDream ad) {
+        return DreamLedger.REPLAY.equals(ad.bp.plan.trialRef());
+    }
+
     // ---- arriving ----------------------------------------------------------------------------------------------------
 
     static void arrive(ServerPlayer sp, DreamState st, ActiveDream ad, long now) {
@@ -67,9 +72,18 @@ final class Trials {
         st.lastX = sp.getX();
         st.lastZ = sp.getZ();
         Dreamer d = Dreams.dreamer(sp);
-        if (sp.getUUID().equals(ad.host)) d.ledger.choice = ""; // the Journal's choice is spent on tonight's dream
+        String sub = sub(c);
+        if (replay(ad)) {
+            DreamLedger.Finished f = d.ledger.finished.get(c.trial().id);
+            if (f != null) sub = "Your best: " + time(f.best()) + (f.medal() > 0 ? ", " + medalName(f.medal()).toLowerCase() : "") + "."
+                    + (d.ledger.ghosts.containsKey(c.trial().id) ? " Your ghost runs it with you." : "");
+        } else {
+            // tonight's dream: one a night, and the Journal's choice is spent on it
+            d.ledger.lastDreamDay = dev.awaken.core.PlayDays.current(sp.level().getServer());
+            if (sp.getUUID().equals(ad.host)) d.ledger.choice = "";
+        }
         Vec3 end = end(c, ad);
-        AwakenNet.send(sp, new LucidiumNet.TrialStart(goal(c, ad), sub(c), ringCentres(c), end != null ? end : c.start(), bell(c, ad),
+        AwakenNet.send(sp, new LucidiumNet.TrialStart(goal(c, ad), sub, ringCentres(c), end != null ? end : c.start(), bell(c, ad),
                 c.path().size() > 512 ? c.path().subList(0, 512) : c.path(), Math.max(0, d.dreams - 1)));
         if (end == null) AwakenNet.send(sp, new LucidiumNet.TrialGoal(false, Vec3.ZERO)); // the rule shows it later
         hud(sp, st, c, now, "", false);
@@ -170,7 +184,10 @@ final class Trials {
                     Dreams.wake(sp, Dreams.Wake.SLIPPED);
                     return false;
                 }
-                if (st.runStart == 0 && sp.getZ() > doorwayZ(c) + PAST_DOORWAY) st.runStart = now;
+                if (st.runStart == 0 && sp.getZ() > doorwayZ(c) + PAST_DOORWAY) {
+                    st.runStart = now;
+                    ghosts(sp, ad, c);
+                }
                 // the run as a ghost, from the doorway on
                 if (st.runStart > 0 && (now - st.runStart) % DreamLedger.GHOST_EVERY == 0 && st.traceLen < DreamLedger.GHOST_MAX)
                     st.trace[st.traceLen++] = DreamLedger.pack(sp.getX() - c.start().x, sp.getY() - c.start().y, sp.getZ() - c.start().z);
@@ -182,7 +199,7 @@ final class Trials {
                 for (int i = st.ring + 1; i < c.rings().size(); i++) {
                     if (!box.intersects(c.rings().get(i).box())) continue;
                     st.ring = i;
-                    Dreams.playTo(sp, LucidiumContent.SIGN.get(), 0.5f, 1.5f + 0.1f * i);
+                    Dreams.playTo(sp, LucidiumContent.RING.get(), 0.6f, Math.min(1.6f, 0.9f + 0.06f * i));
                     hud(sp, st, c, now, "", false);
                     break;
                 }
@@ -255,6 +272,30 @@ final class Trials {
         hud(sp, st, c, now, "", false);
     }
 
+    /**
+     * A Run's ghosts start with you at the doorway (SPEC §9.6): your best run, and in a shared dream the best runs of
+     * the others in it (theirs in rose). Nothing to send without one.
+     */
+    static void ghosts(ServerPlayer sp, ActiveDream ad, Course c) {
+        if (!c.trial().run()) return;
+        List<LucidiumNet.Ghost> out = new ArrayList<>();
+        ghost(out, sp, true, c);
+        for (java.util.UUID id : ad.participants) {
+            if (out.size() >= 4) break;
+            ServerPlayer p = id.equals(sp.getUUID()) ? null : sp.level().getServer().getPlayerList().getPlayer(id);
+            if (p != null) ghost(out, p, false, c);
+        }
+        if (!out.isEmpty()) AwakenNet.send(sp, new LucidiumNet.TrialGhosts(c.start(), out));
+    }
+
+    private static void ghost(List<LucidiumNet.Ghost> out, ServerPlayer whose, boolean own, Course c) {
+        int[] g = Dreams.dreamer(whose).ledger.ghosts.get(c.trial().id);
+        if (g == null || g.length == 0) return;
+        List<Integer> samples = new ArrayList<>(g.length);
+        for (int v : g) samples.add(v);
+        out.add(new LucidiumNet.Ghost(whose.getGameProfile().name(), own, samples));
+    }
+
     /** A dream sign noticed: more time, or, before you've taken control, more time waiting for you. */
     static void signNoticed(ServerPlayer sp, DreamState st, ActiveDream ad, long now) {
         if (st.phase == 1) {
@@ -277,7 +318,7 @@ final class Trials {
             st.clockEnd -= CATCH_COST;
             line = "The dream caught you. 3 seconds gone.";
         }
-        Dreams.playTo(sp, LucidiumContent.ENTER.get(), 0.6f, 1.4f);
+        Dreams.playTo(sp, LucidiumContent.CATCH.get(), 0.8f, 1.0f);
         hud(sp, st, c, now, line, false);
     }
 
@@ -294,7 +335,7 @@ final class Trials {
         st.phase = 2;
         st.wonAt = now;
         st.wonTicks = (int) Math.max(1, now - (st.runStart > 0 ? st.runStart : st.lucidAt));
-        Dreams.playTo(sp, LucidiumContent.LUCID.get(), 1f, 1.25f);
+        Dreams.playTo(sp, LucidiumContent.WON.get(), 1f, 1f);
         ad.level.sendParticles(LucidiumContent.PEARL_MOTE.get(), sp.getX(), sp.getY() + 1, sp.getZ(), 40, 1.2, 1.2, 1.2, 0.05);
         hud(sp, st, c, now, prizeLine(c, ad, Dreams.dreamer(sp)), false);
     }
@@ -357,7 +398,9 @@ final class Trials {
             Progression.count(sp, FINISHED);
             double xp = before == null ? XP_FIRST : before.day() != day ? XP_AGAIN : 0;
             if (xp > 0) Progression.worldXp(sp, "awaken:dream_trial", xp);
-            DreamOffers.give(sp, new ItemStack(LucidiumContent.DREAM_RESIDUE.get(), RESIDUE));
+            boolean again = replay(ad);
+            boolean residue = !again || xp > 0; // a replay's residue comes with its day's XP, at most once a day
+            if (residue) DreamOffers.give(sp, new ItemStack(LucidiumContent.DREAM_RESIDUE.get(), RESIDUE));
             boolean firstGold = medal == DreamLedger.GOLD && (before == null || before.medal() < DreamLedger.GOLD);
             boolean learnt = remember(sp, t, d, before == null, firstGold);
             boolean best = before != null && st.wonTicks < before.best();
@@ -368,8 +411,10 @@ final class Trials {
             if (learnt) kept.add(t.moveName());
             if (bell(c, ad)) kept.add("a bell");
             // the move goes in the body: the card says how to do it awake; a Room's place, the Chase's fear, the Duel's lesson
-            String body = learnt ? "Your body remembers " + t.moveName() + ". " + t.how : t.run() ? "" : prize(sp, ad, d, day, kept);
-            kept.add(RESIDUE + " Dream Residue");
+            String body = learnt ? "Your body remembers " + t.moveName() + ". " + t.how
+                    : again ? (best ? "A new best." : "") : t.run() ? "" : prize(sp, ad, d, day, kept);
+            if (residue) kept.add(RESIDUE + " Dream Residue");
+            if (kept.isEmpty()) kept.add(again ? "your time" : "nothing new");
             rows.add(new SignalWindow.Row(Component.literal("You kept"), Component.literal(String.join(", ", kept))));
             summary = t.title + ": " + (t.run() ? "reached the end" : "won") + " in " + time(st.wonTicks)
                     + (medal > 0 ? " (" + medalName(medal).toLowerCase() + ")" : "");

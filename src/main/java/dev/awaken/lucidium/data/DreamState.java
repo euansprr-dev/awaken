@@ -87,7 +87,7 @@ public final class DreamState implements ValueIOSerializable {
         doorFound = o.doorFound; lastDoor = o.lastDoor;
         trial = o.trial; phase = o.phase; lucidAt = o.lucidAt; clockEnd = o.clockEnd; clockTotal = o.clockTotal; bonus = o.bonus;
         ring = o.ring; catches = o.catches; wonAt = o.wonAt; wonTicks = o.wonTicks; lastGlint = o.lastGlint; runStart = o.runStart;
-        traceLen = o.traceLen; lifts = o.lifts; lastX = o.lastX; lastZ = o.lastZ;
+        traceLen = o.traceLen; System.arraycopy(o.trace, 0, trace, 0, o.traceLen); lifts = o.lifts; lastX = o.lastX; lastZ = o.lastZ;
     }
 
     @Override

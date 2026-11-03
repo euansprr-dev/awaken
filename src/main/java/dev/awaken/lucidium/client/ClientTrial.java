@@ -34,6 +34,9 @@ public final class ClientTrial {
     static int arrived, phaseTicks;
     static int glint;
     static Optional<BlockPos> bed = Optional.empty();
+    /** The ghosts running this Run with you (SPEC §9.6), and the game time they started at the doorway. */
+    static LucidiumNet.@Nullable TrialGhosts ghosts;
+    static long ghostStart;
     private static final RandomSource RANDOM = RandomSource.create();
 
     static final int FLASH = 60, GLINT = 40;
@@ -53,6 +56,13 @@ public final class ClientTrial {
         arrived = 0;
         phaseTicks = 0;
         glint = 0;
+        ghosts = null;
+    }
+
+    static void ghosts(LucidiumNet.TrialGhosts g) {
+        Minecraft mc = Minecraft.getInstance();
+        ghosts = g;
+        ghostStart = mc.level != null ? mc.level.getGameTime() : 0;
     }
 
     static void goal(LucidiumNet.TrialGoal g) {
@@ -87,12 +97,31 @@ public final class ClientTrial {
         if (start == null) return;
         arrived++;
         phaseTicks++;
-        if (hud.phase() == 1 && left > 0) left--;
+        if (hud.phase() == 1 && left > 0) {
+            left--;
+            clockTick(mc);
+        }
         if (flashTicks > 0) flashTicks--;
         if (glint > 0) {
             glint--;
             if (glint % 2 == 0) glintMotes(mc);
         }
+    }
+
+    /** The clock's last ten seconds: a quiet tick that slows as the time runs out (every half second, then every second). */
+    static final int LAST = 200;
+    private static int nextTick;
+
+    private static void clockTick(Minecraft mc) {
+        if (left > LAST) {
+            nextTick = left;
+            return;
+        }
+        if (left > nextTick) return;
+        float late = 1f - left / (float) LAST;
+        nextTick = left - Math.round(10 + 10 * late);
+        mc.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(LucidiumContent.TICK.get(),
+                1.05f - 0.2f * late, 0.35f + 0.15f * late));
     }
 
     /** The true path, glinting: pearl motes along it near you. */
@@ -129,5 +158,6 @@ public final class ClientTrial {
         flash = "";
         flashTicks = 0;
         glint = 0;
+        ghosts = null;
     }
 }

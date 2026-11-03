@@ -39,6 +39,8 @@ public final class DreamLedger {
     }
 
     public static final int BRONZE = 1, SILVER = 2, GOLD = 3;
+    /** A replayed dream's ref (the Dream Recorder, the Stillpoint's In door): it counts for times and medals only. */
+    public static final String REPLAY = "replay";
     /** Old worlds: at most this many dreams wait after the first login since the update. */
     public static final int SEED_MAX = 3;
 
@@ -117,10 +119,10 @@ public final class DreamLedger {
     /**
      * Finished: off the list (its prize given), best time and medal kept. Returns the record before (null the first time).
      * {@code ref}: what the dream carried; a waiting dream carrying something else (a guest's own bell, in a host's shared
-     * dream that hid a place) stays on the list.
+     * dream that hid a place) stays on the list, and a replay ({@link #REPLAY}) takes nothing off it.
      */
     public @Nullable Finished finish(String trial, int ticks, int medal, long day, String ref) {
-        Waiting w = waitingFor(trial);
+        Waiting w = REPLAY.equals(ref) ? null : waitingFor(trial);
         if (w != null && (w.ref.isEmpty() || w.ref.equals(ref))) {
             waiting.remove(w);
             // a bell or a place is given once; a fear or a mentor may come again

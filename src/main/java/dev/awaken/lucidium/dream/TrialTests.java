@@ -36,6 +36,7 @@ public final class TrialTests {
         AwakenTests.register("dreams_wake_button", 60, TrialTests::wakeButton);
         AwakenTests.register("dreams_win", 200, TrialTests::win);
         AwakenTests.register("dreams_move_remembered", 200, TrialTests::moveRemembered);
+        AwakenTests.register("dreams_replay", 300, TrialTests::replay);
         RoomTests.register();
     }
 
@@ -263,6 +264,51 @@ public final class TrialTests {
                     h.assertFalse(dev.awaken.core.api.MovementHooks.remembered(sp, "hang"), "and nothing else");
                     h.assertFalse(Trials.remember(sp, Trial.WALL, d, false, false), "a move is remembered once");
                     h.assertTrue(Trials.prizeLine(c, ad, d).equals("You made it to the end of the dream."), "the second time, just the end");
+                    done(h, sp);
+                })
+                .thenSucceed();
+    }
+    /**
+     * Replays (SPEC §9.6): a finished trial is listed to dream again; dreamt again it carries nothing (no bell), spends
+     * neither tonight's dream nor the Journal's choice, takes nothing off the waiting list, and counts its time.
+     */
+    private static void replay(GameTestHelper h) {
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        ServerLevel level = h.getLevel();
+        long day = PlayDays.current(level.getServer());
+        Dreamer d = Dreams.dreamer(sp);
+        ActiveDream first = enter(h, sp, Trial.WALL);
+        h.assertTrue(d.ledger.lastDreamDay == day, "tonight's dream is spent on it");
+        Dreams.realityCheck(sp);
+        Vec3 door = first.bp.course.goal().getCenter();
+        sp.teleportTo(level, door.x, first.bp.course.goal().minY, door.z, java.util.Set.of(), 0, 0, true);
+        int[] before = new int[2];
+        h.startSequence()
+                .thenWaitUntil(() -> h.assertFalse(Dreams.isDreaming(sp), "won, and woke"))
+                .thenExecute(() -> {
+                    List<String> list = dev.awaken.lucidium.Lucidium.dreams(sp);
+                    h.assertTrue(list.size() == 1 && list.getFirst().startsWith("The wall: best "), "the wall is there to dream again: " + list);
+                    d.ledger.lastDreamDay = day - 5;
+                    d.ledger.choice = "run";
+                    d.ledger.choiceDay = day;
+                    d.ledger.waiting.add(new DreamLedger.Waiting(Trial.WALL.id, day, "test", "bell:test"));
+                    before[0] = sp.getInventory().countItem(LucidiumContent.DREAM_RESIDUE.get());
+                    before[1] = d.ledger.finished.get(Trial.WALL.id).times();
+                    DreamPlan plan = DreamOffers.replayPlan(sp, Trial.WALL.id);
+                    h.assertTrue(plan.trialRef().equals(DreamLedger.REPLAY), "a replay's plan says so");
+                    ActiveDream ad = Dreams.enter(sp, Planner.buildNow(level.getServer(), sp.getUUID(), plan), new Dreams.Entry(false, null, level, false));
+                    h.assertTrue(ad != null && Trials.replay(ad) && ad.bp.course.bell() == null, "dreamt again, with no bell in it");
+                    h.assertTrue(d.ledger.lastDreamDay == day - 5 && d.ledger.asked(day), "a replay spends neither tonight's dream nor the Journal's choice");
+                    h.assertFalse(dev.awaken.lucidium.Lucidium.replay(sp, 0), "no replay inside a dream");
+                    Dreams.realityCheck(sp);
+                    Vec3 end = ad.bp.course.goal().getCenter();
+                    sp.teleportTo(level, end.x, ad.bp.course.goal().minY, end.z, java.util.Set.of(), 0, 0, true);
+                })
+                .thenWaitUntil(() -> h.assertFalse(Dreams.isDreaming(sp), "the replay won, and woke"))
+                .thenExecute(() -> {
+                    h.assertTrue(d.ledger.finished.get(Trial.WALL.id).times() == before[1] + 1, "the replay's time counts");
+                    h.assertTrue(d.ledger.waitingFor(Trial.WALL.id) != null, "what waits stays waiting");
+                    h.assertTrue(sp.getInventory().countItem(LucidiumContent.DREAM_RESIDUE.get()) == before[0], "no residue twice in a day");
                     done(h, sp);
                 })
                 .thenSucceed();

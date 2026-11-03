@@ -73,6 +73,22 @@ public final class LucidiumNet {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    /** A Run's ghost (SPEC §9.6): whose, your own or a friend's, and its samples (DreamLedger.pack, every 4 ticks). */
+    public record Ghost(String name, boolean own, List<Integer> samples) {
+        public static final StreamCodec<ByteBuf, Ghost> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(64), Ghost::name, ByteBufCodecs.BOOL, Ghost::own,
+                ByteBufCodecs.INT.apply(ByteBufCodecs.list(750)), Ghost::samples, Ghost::new);
+    }
+
+    /** The ghosts that run beside you, sent the moment you pass the doorway (their samples start there): from {@code origin}. */
+    public record TrialGhosts(Vec3 origin, List<Ghost> ghosts) implements CustomPacketPayload {
+        public static final Type<TrialGhosts> TYPE = new Type<>(Awaken.id("lucidium_trial_ghosts"));
+        public static final StreamCodec<ByteBuf, TrialGhosts> STREAM_CODEC = StreamCodec.composite(
+                Vec3.STREAM_CODEC, TrialGhosts::origin, Ghost.STREAM_CODEC.apply(ByteBufCodecs.list(4)), TrialGhosts::ghosts, TrialGhosts::new);
+
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     /** A real place a dream showed you (SPEC §9.5), for the Atlas's pearl mark. */
     public record DreamPlace(BlockPos pos, String label, boolean found) {
         public static final StreamCodec<ByteBuf, DreamPlace> STREAM_CODEC = StreamCodec.composite(
@@ -199,6 +215,7 @@ public final class LucidiumNet {
         r.playToClient(TrialStart.TYPE, TrialStart.STREAM_CODEC);
         r.playToClient(TrialHud.TYPE, TrialHud.STREAM_CODEC);
         r.playToClient(TrialGoal.TYPE, TrialGoal.STREAM_CODEC);
+        r.playToClient(TrialGhosts.TYPE, TrialGhosts.STREAM_CODEC);
         r.playToClient(DreamPlaces.TYPE, DreamPlaces.STREAM_CODEC);
         r.playToClient(DreamWaiting.TYPE, DreamWaiting.STREAM_CODEC);
         r.playToServer(WakeUp.TYPE, WakeUp.STREAM_CODEC, (p, ctx) -> {

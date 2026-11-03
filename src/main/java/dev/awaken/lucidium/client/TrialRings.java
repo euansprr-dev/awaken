@@ -2,6 +2,7 @@ package dev.awaken.lucidium.client;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.Awaken;
+import dev.awaken.lucidium.data.DreamLedger;
 import dev.awaken.lucidium.net.LucidiumNet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -52,6 +53,11 @@ final class TrialRings {
                 float pulse = 0.55f + 0.2f * Mth.sin(time * 1.4f);
                 Vec3 end = ClientTrial.end;
                 if (end != null) flare(vc, end.add(0, s.bell() ? 1.2 : 2.0, 0), s.bell() ? 2.2f : 3.6f, argb(0xF6F0FF, pulse * 0.5f));
+                LucidiumNet.TrialGhosts g = ClientTrial.ghosts;
+                if (g != null) {
+                    float t = (mc.level.getGameTime() - ClientTrial.ghostStart + state.worldPartialTicks) / DreamLedger.GHOST_EVERY;
+                    for (LucidiumNet.Ghost ghost : g.ghosts()) ghost(vc, g.origin(), ghost, t, time);
+                }
             } catch (RuntimeException ex) {
                 Awaken.LOG.error("[lucidium] trial rings failed", ex);
             }
@@ -74,6 +80,44 @@ final class TrialRings {
             both(vc, c.x + c0 * r, c.y + s0 * r, c.z, c.x + c1 * r, c.y + s1 * r, c.z,
                     c.x + c1 * (r - HALO), c.y + s1 * (r - HALO), c.z, c.x + c0 * (r - HALO), c.y + s0 * (r - HALO), c.z, glow, rim);
         }
+    }
+
+    /** Pearl for your own ghost, rose for a friend's. */
+    static final int GHOST_OWN = 0xF2EEFF, GHOST_FRIEND = 0xFFC4D8;
+    /** A finished ghost waits at the end this many samples, fading. */
+    static final float GHOST_LINGER = 10;
+
+    /**
+     * A ghost: a soft standing figure of light (head and body) where the run was at this moment, a short trail of fading
+     * motes behind it. {@code t} counts samples since the doorway.
+     */
+    private static void ghost(VertexConsumer vc, Vec3 origin, LucidiumNet.Ghost g, float t, float time) {
+        int n = g.samples().size();
+        if (n == 0 || t < 0 || t > n - 1 + GHOST_LINGER) return;
+        float fade = t > n - 1 ? 1 - (t - (n - 1)) / GHOST_LINGER : Math.min(1, t / 3f);
+        int rgb = g.own() ? GHOST_OWN : GHOST_FRIEND;
+        float a = (0.42f + 0.06f * Mth.sin(time * 4f)) * fade;
+        double x = at(g, t, 0) + origin.x, y = at(g, t, 1) + origin.y, z = at(g, t, 2) + origin.z;
+        flare(vc, new Vec3(x, y + 0.45, z), 0.5f, argb(rgb, a));
+        flare(vc, new Vec3(x, y + 1.0, z), 0.48f, argb(rgb, a));
+        flare(vc, new Vec3(x, y + 1.58, z), 0.32f, argb(rgb, a * 1.2f));
+        for (int i = 1; i <= 4; i++) {
+            float back = t - i * 0.75f;
+            if (back < 0) break;
+            flare(vc, new Vec3(at(g, back, 0) + origin.x, at(g, back, 1) + origin.y + 0.9, at(g, back, 2) + origin.z),
+                    0.3f - i * 0.05f, argb(rgb, a * (0.5f - i * 0.1f)));
+        }
+    }
+
+    /** One axis of a ghost's place at {@code t} samples, between the two samples either side. */
+    private static double at(LucidiumNet.Ghost g, float t, int axis) {
+        int n = g.samples().size();
+        int i = Mth.clamp((int) Math.floor(t), 0, n - 1), j = Math.min(n - 1, i + 1);
+        float f = Mth.clamp(t - i, 0, 1);
+        int a = g.samples().get(i), b = g.samples().get(j);
+        double va = axis == 0 ? DreamLedger.unpackX(a) : axis == 1 ? DreamLedger.unpackY(a) : DreamLedger.unpackZ(a);
+        double vb = axis == 0 ? DreamLedger.unpackX(b) : axis == 1 ? DreamLedger.unpackY(b) : DreamLedger.unpackZ(b);
+        return va + (vb - va) * f;
     }
 
     /** A soft round glow facing the camera. */

@@ -267,6 +267,32 @@ public final class DreamOffers {
                 vision, Trial.WRONG.id.equals(w.trial()) ? todayPlace(d.snapshots, day) : Optional.empty()));
     }
 
+    // ---- replays (the Dream Recorder, the Stillpoint's In door) -----------------------------------------------------
+
+    /** The dreams you can dream again: every trial you've finished, the one finished last first. */
+    public static List<DreamLedger.Finished> replays(Dreamer d) {
+        List<DreamLedger.Finished> out = new ArrayList<>(d.ledger.finished.values());
+        java.util.Collections.reverse(out); // ties: the later finish first
+        out.sort(java.util.Comparator.comparingLong(DreamLedger.Finished::day).reversed());
+        out.removeIf(f -> Trial.byId(f.trial()) == null);
+        return out;
+    }
+
+    /** "The wall: best 0:42, gold". */
+    public static String replayLabel(DreamLedger.Finished f) {
+        Trial t = Trial.byId(f.trial());
+        return (t == null ? f.trial() : t.title) + ": best " + Trials.time(f.best())
+                + (f.medal() > 0 ? ", " + Trials.medalName(f.medal()).toLowerCase() : "");
+    }
+
+    /** A finished trial dreamt again (SPEC §9.6): no bell, no place, no fear to let go; your time, medal and ghost count. */
+    public static DreamPlan replayPlan(ServerPlayer sp, String trial) {
+        Dreamer d = Dreams.dreamer(sp);
+        long day = PlayDays.current(sp.level().getServer());
+        return plan(sp.level().getServer().overworld().getSeed(), sp.getUUID(), day, d.dreams, trial, DreamLedger.REPLAY, d.snapshots,
+                d.intention(day), Optional.empty(), Trial.WRONG.id.equals(trial) ? todayPlace(d.snapshots, day) : Optional.empty());
+    }
+
     public static DreamPlan plan(long worldSeed, UUID player, long day, int dreamsSoFar, String trial, String ref,
                                  List<Snapshot> journal, String intention) {
         return plan(worldSeed, player, day, dreamsSoFar, trial, ref, journal, intention, Optional.empty(), Optional.empty());

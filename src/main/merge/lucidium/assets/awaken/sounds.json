@@ -130,5 +130,37 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "dream.catch": {
+    "subtitle": "subtitles.awaken.dream.catch",
+    "sounds": [
+      {
+        "name": "awaken:dream_catch"
+      }
+    ]
+  },
+  "dream.tick": {
+    "subtitle": "subtitles.awaken.dream.tick",
+    "sounds": [
+      {
+        "name": "awaken:dream_tick"
+      }
+    ]
+  },
+  "dream.ring": {
+    "subtitle": "subtitles.awaken.dream.ring",
+    "sounds": [
+      {
+        "name": "awaken:dream_ring"
+      }
+    ]
+  },
+  "dream.won": {
+    "subtitle": "subtitles.awaken.dream.won",
+    "sounds": [
+      {
+        "name": "awaken:dream_won"
+      }
+    ]
   }
 }

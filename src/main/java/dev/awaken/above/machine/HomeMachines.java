@@ -52,10 +52,11 @@ final class HomeMachines {
         if (!bedNear(be.getLevel(), be.getBlockPos())) {
             return b.text("No bed", "The recorder only works beside a bed (within 3 blocks).", Machines.WARN).footer(t.blurb).build();
         }
+        java.util.List<String> dreams = DreamHooks.recorded(player);
         int n = DreamHooks.recordedCount(player);
-        if (n <= 0) b.text("Nothing recorded", "Sleep here. The recorder keeps what it can of your dreams.", Machines.AMBER);
+        if (n <= 0) b.text("Nothing recorded", "Sleep here. The recorder keeps every dream you finish, to dream again.", Machines.AMBER);
         for (int i = 0; i < Math.min(8, n); i++) {
-            b.button(i == 0 ? "Latest dream" : "Dream " + (i + 1), i == 0 ? "Recorded most recently" : "Recorded " + (i + 1) + " dreams ago",
+            b.button(i == 0 ? "Latest dream" : "Dream " + (i + 1), i < dreams.size() ? dreams.get(i) : "Finished " + (i + 1) + " dreams ago",
                     Machines.PALE, "replay", i, "Replay (" + REPLAY_COST + ")", stored >= REPLAY_COST);
         }
         return b.footer("Do not record nightmares. They learned that the hard way.").build();

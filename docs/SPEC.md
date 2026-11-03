@@ -467,7 +467,7 @@ bed sheds a few pearl motes at night (client, `DreamWaiting` payload).
 - **Mastery**: 50 points on the Run's Ascent track the first finish, 50 the first gold (`MovementHooks.addMastery`,
   `AscentServer.addMastery`: no chain link).
 - **Ghosts**: the best run of each Run is kept (`DreamLedger.ghosts`: a sample every 4 ticks from the doorway, ≤ 750,
-  packed in quarter blocks from the course's start); replays show it (stage 4).
+  packed in quarter blocks from the course's start); replays show it (§9.6).
 - **The climb** (Wall Stride held): faces 5 or 6 high run up into the lip's hang (`CourseKit.climbUp`, proved by the
   body's own climb tick by tick: `climbTarget`, `wallOn`, `findEdge`; a plain jump must not reach the lip), and faces
   with a Dream Ribbon up their middle (`DreamRibbonBlock`, a climb line in `awaken:runner_climbs`; proved by
@@ -539,12 +539,34 @@ may move: `ActiveDream.roomGoal`, the small Waking Door laid again where it goes
 - **Tests**: `dreams_room_rules` (each rule's mechanism, the bells' API, the Chase's door, the Duel to its morning),
   `dreams_hidden_place`, `dreams_shared`. Tour `tools/autopilot/dreams-rooms.txt`.
 
+### 9.6 Replays, ghosts and the dream's sounds (stage 4)
+
+- **Replays**: every trial you've finished can be dreamt again, the one finished last first (`DreamOffers.replays`; the
+  Dream Recorder lists eight, "The wall: best 0:42, gold", through `DreamHooks.recorded`; the Stillpoint's In door
+  opens onto index 0 and glows while one is there). A replay's plan carries the ref `replay` (`DreamLedger.REPLAY`): no
+  bell, no place, no fear's name; it spends neither tonight's dream nor the Journal's choice and takes nothing off the
+  waiting list. Its time, medal (a first gold's mastery too) and ghost count; world XP 2% and the 2 residue only on a
+  later play-day than the last finish; no fear let go or mentor's lesson again. The sub line says your best ("Your best:
+  0:42, silver. Your ghost runs it with you."). Version-1 dreams in the history are no longer replayed.
+- **One a night**: a dream that isn't a replay sets `lastDreamDay` for everyone who arrives in it (the ledger's "one a
+  night, not two running" reads it).
+- **Ghosts**: the moment you pass a Run's doorway the server sends `TrialGhosts` (the course's start and up to four
+  ghosts: your best run, and in a shared dream the best runs of the others in it). The client plays each from there,
+  a sample every 4 ticks interpolated: a soft standing figure of light with a short trail, pearl for yours and rose for
+  a friend's, lingering half a second at its end (`TrialRings.ghost`).
+- **Sounds** (`tools/art/specs/audio_dreams.py`, all mono, the dream's own): `dream.catch` (an airy swoop and two slow
+  heartbeats: the catch), `dream.tick` (the clock's last ten seconds, client side: every half second slowing to every
+  second, a little lower and louder each time), `dream.ring` (a ring passed, pitched up ring by ring), `dream.won` (the
+  end reached: a warm rising chord).
+- **Tests**: `dreams_replay` (listed, no bell, nothing spent, the time counted, nothing taken off the list, no residue
+  twice a day).
+
 Veil: sneak + G held 10 s, still, not in combat → Body (mannequin-like entity with skin + gear, chunk ticket) +
 player switched to spectator-backed spirit mode with cord radius (SPI). Awareness fog radius = PER/SPI derived. Ores and
 secrets glow within Awareness (client-only highlight, server-sent positions). Only blue-tagged `veil_interactable` things
 can be used. Body hit → Warning + snap back offered; body killed → player killed. Logout → snap back first.
 Stillpoint dimension `awaken:stillpoint`: void + cloud sea + dawn temple platform; time ×10 slower feel (no hunger, no
-mobs). Hub for stats, Truths, Codex; doors Out (Veil) and In (Lucidium, only while asleep). Hosts trial arenas.
+mobs). Hub for stats, Truths, Codex; doors Out (Veil) and In (the dream you finished last, dreamt again; §9.6). Hosts trial arenas.
 
 ---------------------------------------------------------------------------------------------------------------------
 

@@ -123,6 +123,11 @@ public final class LucidiumContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> NIGHTMARE = CoreModule.sound("dream.nightmare");
     public static final DeferredHolder<SoundEvent, SoundEvent> DOOR = CoreModule.sound("dream.door");
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL = CoreModule.sound("dream.bell");
+    /** A trial dream's own sounds (tools/art/specs/audio_dreams.py): the catch, the clock's last ticks, a ring, the end. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> CATCH = CoreModule.sound("dream.catch");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TICK = CoreModule.sound("dream.tick");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RING = CoreModule.sound("dream.ring");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WON = CoreModule.sound("dream.won");
 
     static void init(IEventBus modBus) {
         BLOCKS.register(modBus);

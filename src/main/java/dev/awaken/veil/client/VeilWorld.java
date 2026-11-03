@@ -80,7 +80,7 @@ final class VeilWorld {
                 secrets(sight.secrets(), (int) (40 + 50 * pulse), (int) (8 + 14 * pulse));
             }
             if (VeilClientState.state.dreaming() && Veil.inStillpoint(p)) {
-                // the In door wakes while you sleep
+                // the In door glows while a finished dream waits behind it
                 for (int y = 0; y < 3; y++) for (int z = -1; z <= 1; z++) {
                     BlockPos d = TempleBuilder.DOOR_IN.offset(0, y, z);
                     Gizmos.cuboid(d, 0.01F, GizmoStyle.fill(ARGB.color((int) (60 + 50 * Mth.sin(age * 0.1F)), 0xF6C6E6)));

@@ -57,5 +57,9 @@
   "block.awaken.dream_ledge": "Dream Ledge",
   "block.awaken.waking_door": "Waking Door",
   "block.awaken.waking_veil": "Waking Light",
-  "block.awaken.dream_ribbon": "Dream Ribbon"
+  "block.awaken.dream_ribbon": "Dream Ribbon",
+  "subtitles.awaken.dream.catch": "The dream catches you",
+  "subtitles.awaken.dream.tick": "The dream's clock ticks",
+  "subtitles.awaken.dream.ring": "A ring of light passes",
+  "subtitles.awaken.dream.won": "The dream opens"
 }
