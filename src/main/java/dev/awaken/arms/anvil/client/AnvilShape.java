@@ -1,6 +1,7 @@
 package dev.awaken.arms.anvil.client;
 
 import dev.awaken.Awaken;
+import dev.awaken.arms.ArmsHilts;
 import dev.awaken.arms.WeaponMesh;
 import dev.awaken.arms.anvil.AnvilSong;
 import dev.awaken.arms.anvil.AnvilWork;
@@ -18,8 +19,8 @@ import java.util.Map;
 /**
  * Where a weapon's parts lie along it at the War Anvil (SPEC §46.3), read from its own mesh, so a longer or shorter design
  * needs nothing here. Heights are the design's (texels up the weapon, 0 at its grip point); a fraction along it (0 the
- * pommel's end, 1 the point) is the mesh's own "along". Where the blade, the guard and the grip begin along it is
- * {@link AnvilSong#HILT_CUT} (the Beastbound Longsword's) until the weapon generator gives each weapon its own.
+ * pommel's end, 1 the point) is the mesh's own "along". Where the blade, the guard and the grip begin along it is the
+ * sword's own {@link ArmsHilts#CUTS}, from its design's parts; a weapon without takes {@link AnvilSong#HILT_CUT}.
  * <p>
  * Also the blank, what lies on the anvil until the hilt goes on: the blade with its guard's pieces left off, and its
  * section all along it, so any design starts as a square bar and is drawn out into its own shape ({@link AnvilBlank}).
@@ -122,7 +123,8 @@ final class AnvilShape {
         if (s == null) {
             if (READ.size() > 32) READ.clear(); // meshes are new on each resource reload
             // gauntlets have no guard: what's wide at their root is the cuff
-            s = read(mesh, AnvilSong.HILT_CUT, !meshId(weapon).endsWith("gauntlets"));
+            String id = meshId(weapon);
+            s = read(mesh, ArmsHilts.CUTS.getOrDefault(id, AnvilSong.HILT_CUT), !id.endsWith("gauntlets"));
             READ.put(mesh, s);
         }
         return s;

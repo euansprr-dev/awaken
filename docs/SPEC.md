@@ -17512,8 +17512,9 @@ counted, plain prompts for each act, the quench's notch, the draw's hold and the
   hold half a texel under the root (two thirds up the blade while the hilt goes on), the hilt's taps land at the middles
   of the guard, the grip and the pommel, your hands on the hilt at the grip's upper and lower quarters, and a weapon
   stands in the slot with its guard resting on the stone (the blade's root half a texel in). Where the blade, the guard, the grip and the pommel begin along it is
-  `AnvilSong.HILT_CUT` (the Beastbound Longsword's: 0.40, 0.24, 0.17, 0) until the weapon generator writes each weapon's
-  own; a mesh whose heights don't climb along it keeps today's hand-set layout.
+  the sword's own `ArmsHilts.CUTS` (§25 "Hilt cuts", from its design's parts; a Hunter blade forged alone takes its
+  tier's Longsword's); a weapon without (an axe, a maul, a spear, gauntlets) takes `AnvilSong.HILT_CUT` (0.40, 0.24,
+  0.17, 0, first set by hand for the Longsword). A mesh whose heights don't climb along it keeps today's hand-set layout.
 - The smith's own client plays their sounds the moment they act; the server plays them to everyone else. Observers see
   the work, the tongs on it and the hammer at rest on the heel; the smith's swing in third person is stage 2.
 - With the weapon shader unavailable the work still draws, through vanilla's entity light, without the glow.
