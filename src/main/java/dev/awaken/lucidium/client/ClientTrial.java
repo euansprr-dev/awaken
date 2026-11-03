@@ -63,6 +63,7 @@ public final class ClientTrial {
         Minecraft mc = Minecraft.getInstance();
         ghosts = g;
         ghostStart = mc.level != null ? mc.level.getGameTime() : 0;
+        dev.awaken.Awaken.LOG.debug("[lucidium] ghosts arrived: {} from {} at {}", g.ghosts().size(), g.origin(), ghostStart);
     }
 
     static void goal(LucidiumNet.TrialGoal g) {

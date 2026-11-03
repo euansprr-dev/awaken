@@ -68,6 +68,9 @@ wait 66
 shot gp_ghost_01
 wait 16
 shot gp_ghost_02
+look 180 10
+shot gp_ghost_02_behind
+look 0 4
 wait 30
 shot gp_ghost_03
 cmd awaken dream wake

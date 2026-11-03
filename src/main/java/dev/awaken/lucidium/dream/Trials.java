@@ -285,7 +285,10 @@ final class Trials {
             ServerPlayer p = id.equals(sp.getUUID()) ? null : sp.level().getServer().getPlayerList().getPlayer(id);
             if (p != null) ghost(out, p, false, c);
         }
-        if (!out.isEmpty()) AwakenNet.send(sp, new LucidiumNet.TrialGhosts(c.start(), out));
+        if (out.isEmpty()) return;
+        AwakenNet.send(sp, new LucidiumNet.TrialGhosts(c.start(), out));
+        dev.awaken.Awaken.LOG.info("[lucidium] {} runs {} with {} ghost(s), the first {} samples long",
+                sp.getGameProfile().name(), c.trial().id, out.size(), out.getFirst().samples().size());
     }
 
     private static void ghost(List<LucidiumNet.Ghost> out, ServerPlayer whose, boolean own, Course c) {
