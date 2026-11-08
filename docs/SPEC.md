@@ -19480,3 +19480,13 @@ The ring existed all along and only fires on a blow that lands, so nothing rang 
 its own sound (`arms.guard_raise`, three takes built from Kenney's CC0 cloth recording already in tools/art/sources, -16 dB, so
 you know it's up), the deflect is 1 dB louder, a deflected limb sounds at the body (its own `impact` set at 0.8), and a melee
 deflect throws sparks off the blade and jolts the hands (own view and everyone else's), which only a shot did before.
+
+**A shot's own look.** Euan: "just kind of green particles, like vanilla green particles". They were: the thorn's trail was
+vanilla's `HAPPY_VILLAGER`, and every other `BoltKind` trailed a vanilla particle too, half a block above the shot
+(vanilla's `AbstractHurtingProjectile` adds 0.5 for a 1-block fireball; ours is 0.4). Now seven shapes of our own
+(`MobParticles.Shot`: spark, ember, flake, wisp, puff, drop, sliver; sprites `tools/art/specs/shot_particles.py`, movement
+`mobs.client.ShotParticles`), tinted per kind, on the shot's centre, for the trail and the burst it breaks into. Each kind has
+a body (`BoltKind.Form`): a needle along its flight for stingers, thorns and glass, a bead with a trailing point for honey
+and water, a glow for the rest, all still in the colour of how you answer it (§47.2). `BoltKind.STINGER` (appended, kinds are saved
+by ordinal) is the Regent's Stinger Volley: venom-amber. A heal and a frenzy lost their green and red villager sparkles the
+same way. Test `fights_shots_own_look`.

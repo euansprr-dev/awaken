@@ -32,6 +32,7 @@ public final class FightReachTests {
         }
         AwakenTests.register("fights_reach_table", 20, FightReachTests::table);
         AwakenTests.registerIsolated("fights_reach_parry", 300, FightReachTests::parry);
+        AwakenTests.register("fights_shots_own_look", 20, FightReachTests::ownLook);
     }
 
     /** Every kit's every own swing against someone standing still: the share of its distances it can be aimed to reach. */
@@ -81,6 +82,15 @@ public final class FightReachTests {
     /** The share of blows that must land on someone standing still (a blow begun as a phase turns may not), and how high a flier may rise over them. */
     private static final float LANDS = 0.7F;
     private static final double HIGH = 3.5;
+
+    /** No shot is made of vanilla's particles any more. */
+    private static void ownLook(GameTestHelper h) {
+        for (dev.awaken.mobs.def.BoltKind k : dev.awaken.mobs.def.BoltKind.values()) {
+            var key = net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.getKey(k.trail().getType());
+            h.assertTrue(key != null && "awaken".equals(key.getNamespace()), k + "'s trail is " + key);
+        }
+        h.succeed();
+    }
 
     /** The Regent's cut lands if you don't answer it; a guard raised into the same cut takes no damage and throws the Regent back. */
     private static void parry(GameTestHelper h) {

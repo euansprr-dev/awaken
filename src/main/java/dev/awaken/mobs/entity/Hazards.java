@@ -106,7 +106,7 @@ public final class Hazards {
             if (sl.getGameTime() % 4 == 0) {
                 sl.sendParticles(new DustParticleOptions(h.owner != null ? h.owner.def().glow : 0x9AFF7A, 1.4F), h.pos.x, h.pos.y + 0.4, h.pos.z,
                         3, h.radius * 0.45, 0.3, h.radius * 0.45, 0.0);
-                sl.sendParticles(h.bolt.trail, h.pos.x, h.pos.y + 0.3, h.pos.z, 1, h.radius * 0.4, 0.2, h.radius * 0.4, 0.0);
+                sl.sendParticles(h.bolt.trail(), h.pos.x, h.pos.y + 0.3, h.pos.z, 1, h.radius * 0.4, 0.2, h.radius * 0.4, 0.0);
             }
             if (pulse) apply(sl, h);
         }

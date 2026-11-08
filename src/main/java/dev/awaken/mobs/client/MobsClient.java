@@ -22,6 +22,7 @@ public final class MobsClient {
         modBus.addListener(AwRenderers::renderers);
         modBus.addListener(RitualRenderers::renderers);
         modBus.addListener(SeepParticles::register);
+        modBus.addListener(ShotParticles::register);
         modBus.addListener(RegisterRenderStateModifiersEvent.class, MobsClient::looks);
         modBus.addListener(RegisterRenderStateModifiersEvent.class, ToppleView::register); // big beasts on their side (SPEC §47.5)
         modBus.addListener(net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent.class, e -> {

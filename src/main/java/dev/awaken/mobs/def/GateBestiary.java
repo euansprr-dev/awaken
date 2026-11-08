@@ -175,7 +175,7 @@ final class GateBestiary {
         out.add(m("hive_regent", "The Hive Regent", Theme.HIVE, Tier.LORD, Model.BEE, "Royal Dives and Honey Rain; at the end she feeds on royal jelly and frenzies").hp(48.4).dmg(0.67).spd(0.45).scale(2.0F).size(0.6F, 2.4F).bar(BossBarColor.YELLOW).arena(22)
                 .intro("A hum you feel in your teeth.")
                 .phase(1.0F, "The Regent rises from the comb.", a(CHARGE, "Royal Dive").heavy())
-                .phase(0.66F, "The comb weeps.", a(RAIN, "Honey Rain").n(5).bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 2), a(BOLT, "Stinger Volley").n(4).bolt(BoltKind.THORN), a(CHARGE, "Royal Dive"), a(SUMMON, "Brood").summon("drone_bee").n(2))
+                .phase(0.66F, "The comb weeps.", a(RAIN, "Honey Rain").n(5).bolt(BoltKind.HONEY).fx(MobEffects.SLOWNESS, 60, 2), a(BOLT, "Stinger Volley").n(4).bolt(BoltKind.STINGER), a(CHARGE, "Royal Dive"), a(SUMMON, "Brood").summon("drone_bee").n(2))
                 .phase(0.33F, "Royal Jelly.", a(HEAL, "Royal Jelly").power(0.15F), a(FRENZY, "Frenzy"), a(SUMMON, "Brood").summon("drone_bee").n(2), a(CHARGE, "Royal Dive").heavy())
                 .parts(P("regent_stinger", "Regent's Stinger", "amber"), P("royal_jelly", "Royal Jelly", "amber")).build());
     }

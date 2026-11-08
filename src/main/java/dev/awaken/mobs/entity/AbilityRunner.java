@@ -527,7 +527,7 @@ public final class AbilityRunner {
             case AURA -> mob.startAura(Math.max(2, a.count()), a.radius(), Abilities.damage(mob, a), Abilities.bolt(mob, a), Abilities.effect(mob, a));
             case FRENZY -> {
                 mob.startFrenzy(200);
-                level.sendParticles(ParticleTypes.ANGRY_VILLAGER, mob.getX(), mob.getY() + mob.getBbHeight(), mob.getZ(), 6, 0.5, 0.3, 0.5, 0);
+                level.sendParticles(dev.awaken.mobs.MobParticles.shot(dev.awaken.mobs.MobParticles.Shot.SPARK, 0xFF4A3A), mob.getX(), mob.getY() + mob.getBbHeight(), mob.getZ(), 6, 0.5, 0.3, 0.5, 0);
                 mob.playLevelSound(net.minecraft.sounds.SoundEvents.RAVAGER_ROAR, 1.2F, 0.8F);
             }
         }
