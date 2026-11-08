@@ -12707,8 +12707,10 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   43 of them in land he had generated) and 30 within 1 km of spawn (one every 324 m), where the city's reserve and water
   empty most of the land, yet he found one: most of the fault was that a mouth can't be seen from far off (the plume and
   the worn ground below). So the candidates are closer together, a doline takes gently tilted ground as well as flat
-  (below), a joint reaches further down for its cave, and both tests below hold the promise. A candidate tries every
-  form at up to five spots within 20 of its chunk's middle.
+  (below), a joint reaches further down for its cave, and both tests below hold the promise. At 10/3 the same census
+  has 65 within 1 km of his home and 44 of spawn: one every 220 and 267 m over the whole circle, one every 177 and 190 m
+  of the dry land left outside the city's reserve and settlements' ground. A candidate tries every form at up to five
+  spots within 20 of its chunk's middle.
 - **What keeps a mouth away**: the city's reserve (90), water or land at or below sea + 1, a biome off the list, and (from
   the seed alone, since 8 Nov) a settlement's ground: within 120 of a grid settlement's or the first hamlet's anchor, or
   in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills
@@ -12761,7 +12763,9 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
 - **Tells** (client, `CaveFx`, from the place's site in `CavePlaces.near`: lip, arch width, and turn | form << 2 |
   height << 3): the **plume**, a column of slow mist climbing 25-35 blocks over a mouth (out of a cleft's slot, off the
   arch's lip, straight up from a doline), its own particle `awaken:delve_plume` (quads 2.2-3.6 across, 12-17 s, swelling as
-  it rises, thinner close by), one every few ticks by day and thicker at dawn, drawn to 220 m (`MOUTH_NEAR` in
+  it rises, thinner close by), one every few ticks by day and thicker at dawn, half as thick again past 110 m (a quad
+  there is a few pixels and pale on a pale sky: at the near rate a column was plain at 70 m and all but gone at 130),
+  drawn to 220 m (`MOUTH_NEAR` in
   `CavePlaces`, 220, sends a mouth's site that far), so a mouth shows over the treetops from a long walk off; it needs
   only a site, so every mouth already in a world gets it too (mist, plume and breath draw on their own pipeline that
   tests depth but never writes it: Lens's depth haze otherwise fogs each whole quad in the biome's fog colour); the

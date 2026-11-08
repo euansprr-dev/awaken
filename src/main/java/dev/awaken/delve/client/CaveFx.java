@@ -173,7 +173,8 @@ final class CaveFx {
      */
     private static void plume(Minecraft mc, double x, double y, double z, double d2, float breath) {
         if (d2 > PLUME_REACH * PLUME_REACH) return;
-        float rate = (0.10F + 0.30F * breath) * (d2 < PLUME_REACH * PLUME_REACH / 4 ? 1F : 0.5F);
+        // past 110 m a quad is a few pixels: thicker, or the column is lost against a pale sky
+        float rate = (0.10F + 0.30F * breath) * (d2 < PLUME_REACH * PLUME_REACH / 4 ? 1F : 1.5F);
         if (R.nextFloat() >= rate) return;
         double a = R.nextDouble() * Math.PI * 2, o = R.nextDouble() * 1.2;
         mc.particleEngine.createParticle(CaveContent.PLUME.get(), x + Math.cos(a) * o, y, z + Math.sin(a) * o,
