@@ -65,7 +65,7 @@ public final class JadeClient {
         r.registerEntityComponent(new Creature(), AwakenMob.class);
         r.registerEntityComponent(new Townsperson(), TownNpc.class);
 
-        r.addRayTraceCallback((hit, accessor, original) -> hidden(accessor) || plated(accessor) ? null : accessor);
+        r.addRayTraceCallback((hit, accessor, original) -> hidden(accessor) || plated(accessor) || body(accessor) ? null : accessor);
         r.addBeforeTooltipCollectCallback((theme, accessor) -> {
             if (CompatClientConfig.systemStyle() && isAwaken(accessor) && IThemeHelper.get().hasTheme(THEME)) {
                 theme.setValue(IThemeHelper.get().getTheme(THEME));
@@ -101,6 +101,11 @@ public final class JadeClient {
         if (dev.awaken.kin.KinPlates.wears(e)) return dev.awaken.kin.client.KinPlate.on();
         if (e instanceof net.minecraft.world.entity.player.Player || e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame()) return false;
         return dev.awaken.living.client.LivingClient.platesOn() && dev.awaken.core.api.CreatureTag.of(e).present();
+    }
+
+    /** A body gets no card (SPEC §47.12): it wears no plate, so without this Jade read it out as a living creature. */
+    static boolean body(Accessor<?> a) {
+        return a instanceof EntityAccessor ea && dev.awaken.core.api.Aim.body(ea.getEntity());
     }
 
     static boolean isAwaken(Accessor<?> a) {

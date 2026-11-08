@@ -1,10 +1,22 @@
 package dev.awaken.aim;
 
+import dev.awaken.core.Forces;
 import dev.awaken.core.api.Aim;
+import dev.awaken.core.api.MobRole;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.living.LivingContent;
+import dev.awaken.mobs.Mobs;
+import dev.awaken.mobs.def.Bestiary;
+import dev.awaken.mobs.def.Theme;
+import dev.awaken.mobs.entity.AwakenMob;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.EnumSet;
+import java.util.Optional;
+import java.util.Set;
 
 /** Lock-on's rules held (SPEC §40): the mark's pick, the caps that keep the skill, and how far a power's aim bends. */
 final class AimTests {
@@ -14,6 +26,29 @@ final class AimTests {
         AwakenTests.register("aim_soft_pick", 20, AimTests::softPick);
         AwakenTests.register("aim_caps", 20, AimTests::caps);
         AwakenTests.register("aim_power_bend_cap", 20, AimTests::bendCap);
+        AwakenTests.register("aim_bodies", 20, AimTests::bodies);
+    }
+
+    /** A carcass or a dying body can't be meant; a creature lying fallen, about to get up, still can (SPEC §47.12). */
+    static void bodies(GameTestHelper h) {
+        var level = h.getLevel();
+        var p = AwakenTests.survivalPlayer(h, "aim-bodies", new BlockPos(1, 1, 1)).player();
+        var at = h.absoluteVec(new Vec3(1.5, 1, 3.5));
+        p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, at.add(0, 0.5, 0));
+        var role = new MobRole(MobRole.Role.NORMAL, 5, Theme.BELL.id, Optional.empty(), "");
+        AwakenMob carcass = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 5, role, Set.of());
+        h.assertTrue(Aim.meant(p, carcass, p.getYRot(), p.getXRot(), 6) && !Aim.body(carcass), "a living creature can be meant");
+        carcass.setData(LivingContent.CARCASS, 1L);
+        h.assertTrue(Aim.body(carcass) && carcass.isAlive() && !Aim.meant(p, carcass, p.getYRot(), p.getXRot(), 6), "a carcass reads as alive, and is a body");
+        carcass.discard();
+        AwakenMob faller = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 5, role, EnumSet.of(Forces.Tag.ECHO));
+        faller.hurtServer(level, level.damageSources().generic(), 10000F);
+        h.assertTrue(faller.flag(AwakenMob.F_FALLEN) && !Aim.body(faller) && Aim.meant(p, faller, p.getYRot(), p.getXRot(), 6), "one lying fallen is still a creature");
+        faller.discard();
+        AwakenMob dying = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 5, role, Set.of());
+        dying.hurtServer(level, level.damageSources().generic(), 10000F);
+        h.assertTrue(Aim.body(dying) && !Aim.meant(p, dying, p.getYRot(), p.getXRot(), 6), "a dying body is a body");
+        h.succeed();
     }
 
     /** The nearest the middle wins, a nearer creature wins a close call, the current mark holds, and the cone and range end it. */

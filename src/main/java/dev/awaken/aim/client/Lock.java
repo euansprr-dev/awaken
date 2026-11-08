@@ -124,9 +124,9 @@ final class Lock {
 
     // ---- the mark -----------------------------------------------------------------------------------------------------
 
-    /** Hostile, or hunting you (its aggression is synced), and never a person. */
+    /** Hostile, or hunting you (its aggression is synced), and never a person or a body. */
     static boolean foe(LivingEntity e) {
-        if (e instanceof Player || !e.isAlive()) return false;
+        if (e instanceof Player || !e.isAlive() || Aim.body(e)) return false;
         if (e instanceof Enemy) return true;
         if (e instanceof Mob m && m.isAggressive()) return true;
         return CreatureTag.of(e).kind().hostile();
@@ -204,7 +204,7 @@ final class Lock {
             return true;
         }
         int t = marked;
-        if (t < 0 && mc.hitResult instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity le && le.isAlive() && !(le instanceof Player)) {
+        if (t < 0 && mc.hitResult instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity le && le.isAlive() && !Aim.body(le) && !(le instanceof Player)) {
             t = le.getId();
         }
         if (t < 0) return false;

@@ -19339,6 +19339,12 @@ both sides; `Life.lies`). A beast is the hunt's quarry only as the world brings 
   killed by a player with no knockback, Rises spent first: each is gone within its fall plus 2 ticks, each ran its drops,
   no carcass is laid beside its own falling body, and each hunted beast's carcass lies where it fell within 3 ticks of
   its body going).
+- A body is no longer a creature (Euan's playtest 2026-11-08, the Briar Sow's carcass: "still shows the vanilla heart plate
+  and info, and I still get the lock-on HUD"). A carcass keeps its health, so it read as alive to everything that asks,
+  and it wears no plate, so Jade read it out in full. `Aim.body` (a carcass, or anything dying, both sides) now takes it out
+  of Jade's ray trace (`JadeClient.body`), the mark and the lock (`Lock.foe`, and the creature under the crosshair) and the
+  server's check of a press (`Aim.meant`). You can still use it to carve it. A creature lying fallen that will get up is
+  alive: it keeps its card and its lock. Test `aim_bodies`.
 
 **47.13 Beasts at range (Euan's playtest 2026-11-03: the Briar Sow, "when I saw it at a distance, it was shaking a ton
 for some reason and glitching").** Each guess was checked against film and a frame-by-frame trace: the client's smoothing
