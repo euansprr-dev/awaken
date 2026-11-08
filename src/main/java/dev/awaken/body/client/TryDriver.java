@@ -65,6 +65,12 @@ final class TryDriver {
                 set(o.keySprint, true);
                 end = 300;
             }
+            case "freeruntap" -> { // the free-run held throughout, jump tapped at 130 and 210: it stops on a ledge until asked
+                set(o.keyUp, true);
+                set(o.keySprint, true);
+                set(o.keyJump, age >= 130 && age <= 131 || age >= 210 && age <= 211);
+                end = 300;
+            }
             case "sprint" -> { // run, double-tap sprint, keep running
                 set(o.keyUp, true);
                 set(o.keySprint, age <= 2 || (age >= 5 && age <= 7));

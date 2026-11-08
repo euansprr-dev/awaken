@@ -114,5 +114,7 @@ public final class BodyPayloads {
             // the wall-run's trigger for the comparison: jump held (§16.3 as written) or a fresh press in the air; spam taps
             "runheld", "runpress", "alleyspam",
             // the one-button free-run (SPEC §17.14): forward and sprint held, nothing else
-            "freerun"};
+            "freerun",
+            // the same, with jump tapped twice part way: its stop on a ledge, and the ask that lifts it
+            "freeruntap"};
 }
