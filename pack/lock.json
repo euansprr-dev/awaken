@@ -437,6 +437,27 @@
    "why": "Thunder delayed by distance; replaces our own thunder re-voicing if the spike is clean."
   },
   {
+   "slug": "immersivevfx",
+   "title": "ImmersiveVFX",
+   "projectId": "1766116",
+   "versionId": "9508478",
+   "version": "1.7.6",
+   "channel": "release",
+   "published": "2026-11-08",
+   "file": "ImmersiveVFX-1.7.6-neoforge.jar",
+   "url": "https://mediafilez.forgecdn.net/files/9508/478/ImmersiveVFX-1.7.6-neoforge.jar",
+   "size": 3156129,
+   "sha1": "a68c1762f31b029b5d5d1e1311ef88efb65caa46",
+   "sha512": "fb184123cf7be5aa020eadf6e38ecfcac66cc2a16f42370b174356357876336674afa79885a6f1e604ae7ba7032702ee244b7f5b23c556e7c2771c0a6d9fe589",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "TEST ONLY, never merge: Euan's side-by-side against Lens (8 Nov 2026). CurseForge, All Rights Reserved: fetched at install, the jar is never committed. Hand-pinned here, so tools/pack.py lock drops it."
+  },
+  {
    "slug": "iris",
    "title": "Iris Shaders",
    "projectId": "YL57xq9U",
