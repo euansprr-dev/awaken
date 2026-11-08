@@ -80,6 +80,12 @@ final class GateAccess implements GateHooks.Access {
     }
 
     @Override
+    public int rankOf(ServerPlayer player) {
+        var g = dev.awaken.gates.run.Runs.gateOf(player);
+        return g == null ? -1 : g.plan.rank().ordinal();
+    }
+
+    @Override
     public Optional<String> openScripted(ServerPlayer player, String theme, int rank, BlockPos near, int floors) {
         Theme t = Theme.parse(theme.startsWith("awaken:") ? theme.substring("awaken:".length()) : theme);
         if (t == null) t = Theme.BELL_CRYPT;

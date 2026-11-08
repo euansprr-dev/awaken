@@ -117,13 +117,13 @@ final class DeepBestiary {
     private static void guardians(List<MobDef> out) {
         out.add(m("guardian_rim", "The Rootmother", Theme.RIM, Tier.GUARDIAN, Model.SPIDER, "Moss webs and root lances; the Rim wakes with her").hp(30).dmg(4.5).spd(0.3).scale(2.4F).size(0.85F, 1.45F).tint(0x98C878).bar(BossBarColor.GREEN).arena(22)
                 .intro("The roots under the Rim are hers.")
-                .phase(1.0F, "The Rootmother descends.", a(ROOT, "Moss Web").radius(3), a(LEAP, "Rootfall").radius(3.5F).heavy())
-                .phase(0.5F, "The Rim wakes.", a(SUMMON, "Brood").summon("rim_crawler").n(2), a(FANGS, "Root Lances").n(14), a(LEAP, "Rootfall").radius(3.5F))
+                .phase(1.0F, "The Rootmother descends.", a(ROOT, "Moss Web").radius(3), a(LEAP, "Rootfall").power(1.22F).radius(3.5F).heavy())
+                .phase(0.5F, "The Rim wakes.", a(SUMMON, "Brood").summon("rim_crawler").n(2), a(FANGS, "Root Lances").n(14), a(LEAP, "Rootfall").power(1.22F).radius(3.5F))
                 .parts(P("rootmother_silk", "Rootmother Silk", "moss")).build());
         out.add(m("guardian_gardens", "The Thornback", Theme.GARDENS, Tier.GUARDIAN, Model.RAVAGER, "Charges along the ledges and blows petals hard enough to knock you off").hp(32).dmg(5).spd(0.3).size(2.2F, 2.3F).tint(0xA0D090).bar(BossBarColor.GREEN).arena(24)
                 .intro("Something heavy moves in the hanging gardens.")
-                .phase(1.0F, "The Thornback lowers its horns.", a(CHARGE, "Thornback Charge").heavy(), a(GUST, "Gale of Petals").radius(10).power(0.8F))
-                .phase(0.5F, "The vines tighten.", a(NOVA, "Thorn Spray").n(14).bolt(BoltKind.THORN), a(SUMMON, "Lurkers").summon("vine_lurker").n(2), a(CHARGE, "Thornback Charge"))
+                .phase(1.0F, "The Thornback lowers its horns.", a(CHARGE, "Thornback Charge").power(1.17F).heavy(), a(GUST, "Gale of Petals").radius(10).power(0.8F))
+                .phase(0.5F, "The vines tighten.", a(NOVA, "Thorn Spray").n(14).bolt(BoltKind.THORN), a(SUMMON, "Lurkers").summon("vine_lurker").n(2), a(CHARGE, "Thornback Charge").power(1.17F))
                 .parts(P("thornback_horn", "Thornback Horn", "leaf")).build());
         out.add(m("guardian_choir", "The Choirmaster", Theme.CHOIR, Tier.GUARDIAN, Model.WITCH, "Hymns of salt; when the water rises, the choir sings with her").hp(30).dmg(4.5).spd(0.25).scale(2.0F).size(0.8F, 1.9F).tint(0x90C8E0).bar(BossBarColor.BLUE).arena(22)
                 .intro("The singing was coming from her all along.")
@@ -142,12 +142,12 @@ final class DeepBestiary {
                 .parts(P("listener_ear", "Great Listener's Ear", "stone")).build());
         out.add(m("guardian_foundry", "The Furnace Engine", Theme.FOUNDRY, Tier.GUARDIAN, Model.IRON_GOLEM, "Arc welds and rivet rain; the machines wake around it").hp(32).dmg(5).spd(0.24).scale(1.8F).size(1.6F, 2.3F).tint(0x98B0D0).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry's heart is still warm.")
-                .phase(1.0F, "The Furnace Engine powers up.", a(SLAM, "Engine Slam").radius(4.5F).heavy(), a(BEAM, "Arc Weld").bolt(BoltKind.CHARGE))
-                .phase(0.5F, "Machines wake.", a(SUMMON, "Wake the Drones").summon("arc_drone").n(2), a(RAIN, "Rivet Rain").n(5).bolt(BoltKind.CHARGE), a(SLAM, "Engine Slam").radius(4.5F))
+                .phase(1.0F, "The Furnace Engine powers up.", a(SLAM, "Engine Slam").power(1.28F).radius(4.5F).heavy(), a(BEAM, "Arc Weld").power(1.47F).bolt(BoltKind.CHARGE))
+                .phase(0.5F, "Machines wake.", a(SUMMON, "Wake the Drones").summon("arc_drone").n(2), a(RAIN, "Rivet Rain").n(5).bolt(BoltKind.CHARGE), a(SLAM, "Engine Slam").power(1.28F).radius(4.5F))
                 .parts(P("furnace_engine_core", "Furnace Engine Core", "precursor")).build());
         out.add(m("guardian_inverted", "The Drowned Moon", Theme.INVERTED, Tier.GUARDIAN, Model.ELDER_GUARDIAN, "Moonbeams and the tide-turn that lifts you off the floor").hp(30).dmg(5).spd(0.22).scale(1.6F).size(2.0F, 2.8F).tint(0x9CB8F0).bar(BossBarColor.BLUE).arena(26)
                 .intro("The sea above you has a moon in it.")
-                .phase(1.0F, "The Drowned Moon rises.", a(BEAM, "Moonbeam").bolt(BoltKind.WATER).power(1.8F).heavy(), a(LIFT, "Tide Turn").radius(4))
+                .phase(1.0F, "The Drowned Moon rises.", a(BEAM, "Moonbeam").bolt(BoltKind.WATER).power(1.43F).heavy(), a(LIFT, "Tide Turn").radius(4))
                 .phase(0.5F, "The tide turns.", a(PULL, "Undertow").radius(14), a(NOVA, "Tide Halo").n(14).bolt(BoltKind.WATER), a(LIFT, "Tide Turn").radius(5))
                 .parts(P("moon_scale", "Drowned Moon Scale", "water")).build());
         out.add(m("guardian_dreaming", "The Architect of Rooms", Theme.DREAMING, Tier.GUARDIAN, Model.EVOKER, "The floor shifts, doors open behind you, the ceiling falls").hp(30).dmg(5).spd(0.26).scale(1.8F).size(2.0F, 3.0F).tint(0xE0B0E0).bar(BossBarColor.PINK).arena(22)
@@ -163,7 +163,7 @@ final class DeepBestiary {
         out.add(m("guardian_seed", "The Seed Warden", Theme.SEED, Tier.GUARDIAN, Model.SHADE, "Lances of signal light around the Seed's last door").hp(34).dmg(5.5).spd(0.28).scale(1.6F).size(1.8F, 3.1F).bar(BossBarColor.WHITE).arena(24)
                 .intro("The last door. It has been waiting.")
                 .phase(1.0F, "The Seed Warden unfolds.", a(BEAM, "Signal Lance").bolt(BoltKind.SIGNAL), a(RAIN, "Signal Marks").n(4).bolt(BoltKind.SIGNAL))
-                .phase(0.5F, "The door opens a crack.", a(SUMMON, "Motes").summon("seed_mote").n(2), a(BURST, "Door Light").radius(13).inner(3.5F).bolt(BoltKind.SIGNAL).heavy())
+                .phase(0.5F, "The door opens a crack.", a(SUMMON, "Motes").summon("seed_mote").n(2), a(BURST, "Door Light").power(1.61F).radius(13).inner(3.5F).bolt(BoltKind.SIGNAL).heavy())
                 .parts(P("seed_shard", "Seed Shard", "signal")).build());
     }
 
@@ -177,20 +177,20 @@ final class DeepBestiary {
         out.add(m("sovereign_silence", "Sovereign of Silence", Theme.COURT, Tier.SOVEREIGN, Model.LISTENER, "The Veil gone wrong: hunts every sound, swallows every light").hp(34).dmg(5.5).spd(0.3).scale(1.9F).size(0.95F, 3.1F).tint(0x8890A8).glow(0xE6F0FF).traits(LISTENER).bar(BossBarColor.WHITE).arena(26)
                 .intro("It listened until there was nothing left to hear.")
                 .phase(1.0F, "The Sovereign of Silence tilts its head.", a(SLAM, "Found You").radius(4).power(1.6F).heavy(), a(DARKNESS, "No Sound At All").radius(20))
-                .phase(0.66F, "It hears your heartbeat.", a(BEAM, "Inverted Scream").bolt(BoltKind.VOID).power(2.0F).heavy(), a(SUMMON, "Ears").summon("listener").n(2))
-                .phase(0.33F, "Silence.", a(BURST, "Deafening Silence").radius(15).inner(4).bolt(BoltKind.VOID).heavy(), a(PULL, "Hush").radius(14), a(SLAM, "Found You").radius(4))
+                .phase(0.66F, "It hears your heartbeat.", a(BEAM, "Inverted Scream").bolt(BoltKind.VOID).power(1.64F).heavy(), a(SUMMON, "Ears").summon("listener").n(2))
+                .phase(0.33F, "Silence.", a(BURST, "Deafening Silence").power(1.62F).radius(15).inner(4).bolt(BoltKind.VOID).heavy(), a(PULL, "Hush").radius(14), a(SLAM, "Found You").radius(4))
                 .parts(P("silence_ear", "Ear of Silence", "stone")).build());
         out.add(m("sovereign_sleep", "Sovereign of Sleep", Theme.COURT, Tier.SOVEREIGN, Model.PHANTOM, "The Lucidium gone wrong: lullabies that make you heavy, dives from the dark").hp(32).dmg(5.5).spd(0.38).scale(3.2F).size(0.88F, 1.72F).tint(0xC898D0).glow(0xF6C6E6).bar(BossBarColor.PINK).arena(28)
                 .intro("It never let anyone wake up.")
                 .phase(1.0F, "The Sovereign of Sleep spreads its wings.", a(CHARGE, "Night Dive").heavy(), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 1))
                 .phase(0.66F, "You feel heavy.", a(SUMMON, "Lullabies").summon("lullaby_phantom").n(2), a(RAIN, "Dream Fall").n(5).bolt(BoltKind.DREAM), a(CHARGE, "Night Dive"))
-                .phase(0.33F, "Never wake.", a(BURST, "Never Wake").radius(15).inner(4).bolt(BoltKind.DREAM).heavy(), a(CHARGE, "Night Dive"), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 2))
+                .phase(0.33F, "Never wake.", a(BURST, "Never Wake").power(1.62F).radius(15).inner(4).bolt(BoltKind.DREAM).heavy(), a(CHARGE, "Night Dive"), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 2))
                 .parts(P("sleep_feather", "Feather of Sleep", "dream")).build());
         out.add(m("sovereign_machines", "Sovereign of Machines", Theme.COURT, Tier.SOVEREIGN, Model.IRON_GOLEM, "The Above gone wrong: every move calculated, every strike from orbit").hp(36).dmg(5.5).spd(0.24).scale(1.9F).size(1.2F, 3.05F).tint(0xB8C8E0).glow(0xFFD060).bar(BossBarColor.YELLOW).arena(26)
                 .intro("It built until nothing was left to build with.")
-                .phase(1.0F, "The Sovereign of Machines computes you.", a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE).power(1.8F), a(SLAM, "Hydraulic Slam").radius(4.5F).heavy())
-                .phase(0.66F, "Subroutines.", a(SUMMON, "Drones").summon("arc_drone").n(2), a(RAIN, "Orbital Strike").n(6).bolt(BoltKind.CHARGE), a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE))
-                .phase(0.33F, "Shutdown.", a(BURST, "Shutdown").radius(15).inner(4).bolt(BoltKind.CHARGE).heavy(), a(NOVA, "Spark Lattice").n(16).bolt(BoltKind.CHARGE), a(SLAM, "Hydraulic Slam").radius(5))
+                .phase(1.0F, "The Sovereign of Machines computes you.", a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE).power(1.64F), a(SLAM, "Hydraulic Slam").radius(4.5F).heavy())
+                .phase(0.66F, "Subroutines.", a(SUMMON, "Drones").summon("arc_drone").n(2), a(RAIN, "Orbital Strike").n(6).bolt(BoltKind.CHARGE), a(BEAM, "Calculated Lance").power(1.46F).bolt(BoltKind.CHARGE))
+                .phase(0.33F, "Shutdown.", a(BURST, "Shutdown").power(1.62F).radius(15).inner(4).bolt(BoltKind.CHARGE).heavy(), a(NOVA, "Spark Lattice").n(16).bolt(BoltKind.CHARGE), a(SLAM, "Hydraulic Slam").radius(5))
                 .parts(P("machine_crown", "Crown of Machines", "precursor")).build());
         out.add(m("sovereign_mirrors", "Sovereign of Mirrors", Theme.COURT, Tier.SOVEREIGN, Model.MIMIC, "The self gone wrong: your face, perfect parries, a hall of reflections").hp(32).dmg(5.5).spd(0.3).scale(1.8F).size(0.9F, 3.25F).hold(Items.DIAMOND_SWORD).traits(MIMIC, REFLECT).bar(BossBarColor.WHITE).arena(24)
                 .intro("It only ever looked at itself.")
@@ -218,9 +218,9 @@ final class DeepBestiary {
                 .parts(P("ash_heart", "Heart of Ash", "ember")).build());
         out.add(m("signals_shadow", "The Signal's Shadow", Theme.SEED, Tier.FINAL, Model.SHADE, "It has your voice: every gate, every lance, then the Seed collapses").hp(40).dmg(6).spd(0.3).scale(2.0F).size(1.15F, 1.13F).bar(BossBarColor.WHITE).arena(30)
                 .intro("It has your voice.")
-                .phase(1.0F, "The Signal's Shadow speaks.", a(BEAM, "Instruction").bolt(BoltKind.SIGNAL).power(1.8F), a(BLINK, "Signal Step"), a(BOLT, "Directive").n(5).bolt(BoltKind.SIGNAL))
+                .phase(1.0F, "The Signal's Shadow speaks.", a(BEAM, "Instruction").bolt(BoltKind.SIGNAL).power(1.48F), a(BLINK, "Signal Step"), a(BOLT, "Directive").n(5).bolt(BoltKind.SIGNAL))
                 .phase(0.66F, "It remembers every gate.", a(SUMMON, "Echoes").summon("signal_echo").n(2), a(RAIN, "Signal Marks").n(6).bolt(BoltKind.SIGNAL), a(DECOY, "Your Echoes").n(2))
-                .phase(0.33F, "It is you, from the bottom.", a(BURST, "Seed Collapse").radius(16).inner(4).bolt(BoltKind.SIGNAL).power(2.6F).heavy(), a(PULL, "Come Down").radius(18), a(NOVA, "Signal Halo").n(20).bolt(BoltKind.SIGNAL), a(FRENZY, "Last Instruction"))
+                .phase(0.33F, "It is you, from the bottom.", a(BURST, "Seed Collapse").radius(16).inner(4).bolt(BoltKind.SIGNAL).power(1.51F).heavy(), a(PULL, "Come Down").radius(18), a(NOVA, "Signal Halo").n(20).bolt(BoltKind.SIGNAL), a(FRENZY, "Last Instruction"))
                 .parts(P("signal_fragment", "Signal Fragment", "signal"), P("shadow_of_you", "Shadow of You", "obsidian")).build());
     }
 

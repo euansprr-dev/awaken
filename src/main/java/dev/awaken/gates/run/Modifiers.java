@@ -174,7 +174,7 @@ public final class Modifiers {
         }
     }
 
-    // ---- Volatile and Echoing: what happens when a gate monster dies -----------------------------------------------
+    // ---- Echoing: what happens when a gate monster dies -----------------------------------------------
 
     private record Pending(long at, Runnable run) {}
 
@@ -182,12 +182,8 @@ public final class Modifiers {
 
     static void onMobDeath(ServerLevel level, GateRecord g, LivingEntity dead, MobRole role) {
         long now = GateService.now(level.getServer());
-        if (Forces.has(dead, Forces.Tag.VOLATILE) && role.role() != MobRole.Role.BOSS) {
-            double x = dead.getX(), y = dead.getY(), z = dead.getZ();
-            level.sendParticles(ParticleTypes.SMOKE, x, y + 0.6, z, 20, 0.3, 0.4, 0.3, 0.02);
-            level.playSound(null, x, y, z, SoundEvents.CREEPER_PRIMED, SoundSource.HOSTILE, 1F, 1.2F);
-            PENDING.add(new Pending(now + 20, () -> level.explode(null, level.damageSources().explosion(null, null), null, x, y + 0.5, z, 2.2F, false, Level.ExplosionInteraction.NONE)));
-        }
+        // Volatile: the creature's own burst, once, shown on the ground first and scaled to the rank (mobs, SPEC §47.14).
+        // This burst after it, ownerless and the same at E as at S, made every Volatile death two blasts.
         // Awaken creatures rise by themselves (they fall instead of dying); this brings back anything else once.
         if (Forces.has(dead, Forces.Tag.ECHO) && !Forces.hasRisen(dead)
                 && (role.role() == MobRole.Role.NORMAL || role.role() == MobRole.Role.ELITE)) {

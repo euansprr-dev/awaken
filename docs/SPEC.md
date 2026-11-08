@@ -3881,7 +3881,7 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
       ceiling over its rows. On a loop of 48 ticks (40 from B, 56 in a gentler variant) each comes down for 16 ticks (18
       from B), alternate presses half a period apart. 12 ticks before, the floor under it glows with chevrons and a
       ratchet winds (`gate.rig.windup`); it is drawn coming down out of the ceiling for 4 ticks, then its blocks land
-      (`gate.rig.press`), and whoever is under it is hit (4 + 12% of health) and thrown back. It lifts back into the
+      (`gate.rig.press`), and whoever is under it is hit (3 + 11% of health; SPEC §47.14) and thrown back. It lifts back into the
       ceiling over 14 ticks (`gate.rig.lift`). The loop starts with the clock (a run started alone starts it fresh, so
       its beat is the one the par was set to) and stops, putting everything back, when the room empties;
     - **wall-run**: 5 rows of open pit (6 from B) in a straight stretch, with a wall (`gate_run_wall`, dark panels ruled
@@ -19369,3 +19369,72 @@ sprinter, which none of them is, and its hold stays: a thicket slows a beast as 
   stuck on the belt's far edge for 3 s, pricked five times (red, and the life layer's dip to 1.3), inching out between
   pricks. After: through the belt in 0.4 s at full speed, never pricked, and unpricked standing in it for 4 s after a
   second charge. On open ground, both runs: the drawn path smooth and still bodies still, near and far.
+
+**47.14 Fair damage (Euan's playtest 2026-11-04: in a hive gate "every single mob would explode and take out like 75% of
+my health", then "I entered the boss room, and I basically insta-died with no way to do anything").** Nobody who
+belongs in a fight loses most of their health to one thing in it; a rank gap may still be deadly. The reference player
+is the weakest who belongs: the rank's first level (E 1, D 10, C 25, B 45, A 70, S 100, Sovereign 135), a sixth of its
+points in VIT, the rank's Hunter set with its set bonus, Normal difficulty (`core.api.FairShare`; its health at a
+content level is 20 + 0.3 a level). Every number below is a share of that player's max health, after armour, VIT and
+the blow's class, poison and burn left behind counted in full (poison stops at half a heart, which is still most of you).
+- **Budgets, one blow.** A gate's normal 25% (a PERILOUS blow, drawn before it lands and answered by a dodge, 30%), an
+  elite 35% (40%), a warden 40% (45%), a Lord, guardian, Sovereign, Proving Warden or the last 40% (PERILOUS or its
+  signature 50%). Nothing takes more than half. A Lord's string (its moves one after another, §47.3) is one source:
+  50% together. The move a Lord opens the fight with, 25%.
+- **Where each is met.** A creature is fought from its theme's home rank up to S at the gate's level (a dream's at 0.8
+  of it, a Trial's at the rank's first level: both softer); a stratum's at the stratum's level (`Strata.contentLevel`;
+  the odd strata open a rank before their level, so an early diver meets the one-rank-under numbers); a Sovereign in the
+  Hollow Court at S, and the Reflection again at the Sovereign Reassessment (135); a Proving's Warden at its
+  Reassessment's first level; the last at the Seed's.
+- **The fair guard** (`mobs.entity.FairGuard`, after armour, lowest priority), the backstop under the budgets: for a
+  player at or above the rank of what hurts them (`MobLoot.rankFor` of its level, or the gate's rank for what has no
+  creature behind it in a gate: its traps, water, falling floors, `GateHooks.rankOf`), one blow takes at most half their
+  health and one source at most half in any 4 s (80 ticks: nine in ten Lord strings land inside it). A Lord and what it
+  calls are one source. The land's creatures carry the land's level (`CreatureTag`: vanilla monsters, herds, a hunt's
+  lead, a camp's) and are held by it: a vanilla creeper's blast, the same at every level, took 131% of the E reference
+  player a block and a half off and 90% of the D player; both land half now. What it holds back is what would have come off; nothing else changes (the blow still lands,
+  knocks and flashes). It doesn't hold a rank gap, the void or /kill, or anything outside a gate with no creature behind
+  it. A Glass gate's doubled blows meet it too: Glass makes small hits hurt, never one blow a death.
+- **A Lord's moment.** Walking into a boss room never kills: the moment a Lord first sees you (its intro, or its fight
+  script's first move), for 3 s everything together, the Lord, its company, the room, takes at most a quarter of you
+  (`FairGuard.arrive`, from `AwakenBoss.moment`). One moment at a time; not for a rank gap.
+- **What the audit changed** (first measured 4 Nov: 69 creature blows and 428 Lord blows over at every rank, 20 and
+  294 once each was measured only where it's met). Ability power, a creature's melee or a kit move's damage scaled to
+  fit (bestiary and `kit/moves`), then raised again from the two measured points to land 90% of the budget at the
+  worst rank, never above where they were (armour takes a bigger share of a small blow, so the first cut overshot: the
+  Herald's Collapse fell to 19%): the Hollow Herald's Collapse 2.2 to 1.18 (141% of the A reference player to 42%), the
+  Signal's Shadow's Seed Collapse 2.6 to 1.51 (128% at S to 46%), the Seed Warden's Door Light 2.2 to 1.61, the three
+  Sovereign bursts (Shutdown, Deafening Silence, Never Wake) 2.2 to 1.62 (80% to 44%), the Abbot of Frost's Glacial Vow
+  2.2 to 1.67, Moonbeam, Instruction, Inverted Scream, the Curator's Silence in the Stacks, and the E and D wardens'
+  charges and slams (the Rot's Rot Charge 60% at E to 43%, the Overgrowth, the Overseer, the Sexton), 41 blows in all;
+  the Rot's Choking Field and the Mother of Spores' Bloom keep their power but poison I, not II (poison II took 42% of
+  the E player alone). Strings are left to the guard: 131 of them would take more than half (the Hollow Herald's
+  stride, swipe, swipe 98% at A), and land 50%.
+- **Volatile bursts once.** A Volatile body (the modifier's tag, a dream room's, or a FUSE creature) bursts once, and
+  the creature owns it (`AwakenMob.burst`): its reach (blast power x 2; an elite's x 1.3 wider) is drawn on the ground in
+  the dodge colour the moment it falls, its floor filling to the edge over 1.25 s (`FairShare.BURST_FUSE`), with one
+  hiss, then one blast (carrier BURST, `Carriers.burst`, client `CarrierView.burst`). The blast is vanilla's for its push
+  and smoke, but its damage peaks at 40% of the fair health at its content level (an elite's 15% harder) and falls along
+  vanilla's curve to nothing at the reach (`Blasts`): 17% of the E reference player one block off, less at
+  every rank above. It is the body's blast, so a dodge answers it (`Strikes.of`: a blast with a cause is PERILOUS).
+  Bosses never burst. Before: the creature burst at 0.5 s with vanilla's power 2 and the gate's Modifiers burst again
+  0.5 s later, ownerless (no dodge) at 2.2, the same at E as at S; one block off they took 175% of the E reference
+  player's health, and two hisses and two blasts a death crowded the sound pool. A FUSE creature's fuse (1.5 s, held
+  still) draws the same reach and its blast is the same one; put out (you got 7 blocks away), its drawing ends. Your own
+  Gravity detonation of a Volatile pair is their burst: it untags them before the kill, so they don't burst again.
+- **Tests.** `fights_volatile_once`: the E reference player beside a Volatile creature as it dies: its reach drawn at
+  once, nothing for the fuse, one blast within 30% of their health (17%; the old two blasts replayed beside it: 175%),
+  and one standing just past the drawn edge untouched. `fights_fair_creatures`: every creature that isn't a Lord, its
+  melee, abilities and kit moves, wherever it's met, against its budget (with the one-rank-under reading logged).
+  `fights_fair_lords`: every Lord's abilities, kit moves, strings (through the guard) and opening move. `fights_fair_guard`:
+  a 90% blow takes half, the same creature again inside the window nothing more, another creature's lands, a rank under
+  takes all, past the window it lands again. `fights_fair_arrival`: three blows of twice the E player's health in a
+  Lord's moment take a quarter together. `fights_fair_gates`: each of a gate's traps (the gauntlet's pit and press, the
+  collapse's pit, a cave-in's stone, a world's catch) on every rank's reference player, 30% at most alone, under half
+  under Glass; the gauntlet's press was 55% of the E player under Glass (4 + 12% of health), now 3 + 11% (42%, 18% alone).
+  `fights_fair_wilds`: a levelled creeper's blast and a formed creeper's seed (rung 3, `Combos`) beside each rank's
+  reference player, never more than half landing (the seed takes 40% at E on its own). Not tested, by reading: a
+  herd's trample (4) and a storm cell's lightning (3) are flat, at most a fifth of the E player; the Descent's zones and
+  the holdfasts deal nothing of their own (their creatures are audited, the Descent's water is vanilla drowning); a
+  dream's Chase and Duel can't kill (a killing blow wakes you, `DreamEvents`) and their creatures are audited at the
+  dream's level.

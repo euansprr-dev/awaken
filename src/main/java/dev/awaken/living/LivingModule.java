@@ -251,6 +251,7 @@ public final class LivingModule {
         dev.awaken.living.hunt.Tracking.register();
         LivingTests.register();
         dev.awaken.living.wild.WildTests.register();
+        dev.awaken.living.combat.FairWildTests.register();
     }
 
     /** Whether this world shows the band's layer: plates, numbers, the stream, the moment (pure survival hides them). */

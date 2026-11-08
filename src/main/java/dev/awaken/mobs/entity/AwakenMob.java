@@ -115,7 +115,9 @@ public class AwakenMob extends Monster {
     /** Its shots in another's look (SPEC §47.6: the Examiner throws your own power back), never with that look's effect. */
     private @Nullable BoltKind mirrorBolt;
     private @Nullable MobEffectInstance auraEffect;
-    private boolean watched, exploded;
+    private boolean watched;
+    /** A FUSE creature's burst while its fuse runs (shown on the ground, ended if the fuse stops). */
+    private Carriers.@Nullable Carrier fuseBurst;
     @Nullable Vec3 heardPos;
     int heardTicks;
     private int quietTicks;
@@ -508,22 +510,26 @@ public class AwakenMob extends Monster {
         LivingEntity t = getTarget();
         if (fuseTicks > 0) {
             fuseTicks++;
-            setTelegraph(30 - fuseTicks, true);
-            if (fuseTicks >= 30) {
+            setTelegraph(FUSE - fuseTicks, true);
+            if (fuseTicks >= FUSE) {
+                // its burst (the carrier shown since the fuse lit) goes off where it stood
                 fuseTicks = 0;
+                fuseBurst = null;
                 setFlag(F_FUSING, false);
-                explode(level, def().blast);
                 if (def().has(Trait.DEATH_CLOUD)) deathCloud(level, 120, 0.3F);
                 discard();
             } else if (t == null || distanceToSqr(t) > 7 * 7) {
                 fuseTicks = 0;
+                Carriers.end(fuseBurst);
+                fuseBurst = null;
                 setFlag(F_FUSING, false);
                 setTelegraph(0, false);
             }
         } else if (t != null && distanceToSqr(t) < 2.6 * 2.6) {
+            // it holds still while it swells (holdsStill), so its reach is drawn where it will go off; the hiss comes with it
             fuseTicks = 1;
             setFlag(F_FUSING, true);
-            playSound(net.minecraft.sounds.SoundEvents.CREEPER_PRIMED, 1.0F, 0.6F);
+            fuseBurst = burst(level, FUSE - 1);
         }
     }
 
@@ -813,6 +819,11 @@ public class AwakenMob extends Monster {
     /** Server, once, after a real death. */
     protected void onDied(ServerLevel level, DamageSource source) {
         MobDef d = def();
+        // a Volatile body bursts once (SPEC §47.14): its reach shows where it fell and fills to the blast; a fuse that was
+        // already running keeps its own
+        boolean volatileBody = Forces.has(this, Forces.Tag.VOLATILE) || d.has(Trait.FUSE);
+        if (volatileBody && fuseBurst == null && role().role() != MobRole.Role.BOSS && !flag(F_DECOY)) burst(level, dev.awaken.core.api.FairShare.BURST_FUSE);
+        fuseBurst = null;
         if (d.has(Trait.DEATH_CLOUD)) deathCloud(level, 100, 0.25F);
         if (d.has(Trait.DEATH_SHARDS)) Abilities.nova(level, this, 8, d.theme.bolt, 0.6F, null);
         if (d.has(Trait.SPLITS) && !flag(F_SPLIT_CHILD)) split(level);
@@ -869,18 +880,17 @@ public class AwakenMob extends Monster {
         discard();
     }
 
-    @Override
-    protected void tickDeath() {
-        super.tickDeath();
-        if (!exploded && deathTime == 10 && flag(F_VOLATILE) && level() instanceof ServerLevel sl) {
-            exploded = true;
-            float power = def().blast * (role().role() == MobRole.Role.ELITE ? 1.3F : 1.0F);
-            explode(sl, power);
-        }
-    }
+    /** A FUSE creature's fuse, in ticks (vanilla's creeper's). */
+    static final int FUSE = 30;
 
-    protected void explode(ServerLevel level, float power) {
-        level.explode(this, damageSources().explosion(this, this), null, getX(), getY() + getBbHeight() * 0.4, getZ(), power, false, Level.ExplosionInteraction.NONE);
+    /**
+     * This body's burst {@code fuse} ticks from now (SPEC §47.14): its reach (its blast power x 2, an elite's wider) drawn
+     * on the ground at once, one blast scaled to its rank when it fills. Volatile bodies and FUSE creatures alike.
+     */
+    Carriers.Carrier burst(ServerLevel level, int fuse) {
+        boolean elite = role().role() == MobRole.Role.ELITE;
+        float power = def().blast * (elite ? dev.awaken.core.api.FairShare.BURST_ELITE_REACH : 1.0F);
+        return Carriers.burst(level, this, position(), getBbHeight() * 0.4F, power, dev.awaken.core.api.FairShare.burstPeak(role().contentLevel(), elite), fuse);
     }
 
     @Override

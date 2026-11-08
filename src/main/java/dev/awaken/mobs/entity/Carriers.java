@@ -48,7 +48,9 @@ public final class Carriers {
         /** A field of radius {@code width} at {@code origin} for {@code life}, harmless for {@link #FIELD_SAFE}. Shown only (Hazards hurts). */
         FIELD,
         /** Water or wind drawn into {@code origin} from {@code to} blocks for {@code life} (a wave follows it). */
-        PULL;
+        PULL,
+        /** A Volatile burst's reach on the ground, radius {@code width} at {@code origin}, filling to its blast {@code to} above it at {@code life} (SPEC §47.14). */
+        BURST;
 
         public static Kind byOrdinal(int i) {
             Kind[] v = values();
@@ -219,6 +221,21 @@ public final class Carriers {
         return add(new Carrier(Kind.RING, level, owner, cls, at, 0, 0, 0, 0, 0, radius, level.getGameTime(), Math.max(1, life), List.of()));
     }
 
+    /**
+     * A Volatile body's burst (SPEC §47.14): its reach, {@code power} x 2, drawn on the ground at {@code ground} at once and
+     * filling to one blast {@code lift} above it {@code fuse} ticks on, of {@code peak} at its centre ({@link Blasts}).
+     * Never capped: a death's burst always comes.
+     */
+    static Carrier burst(ServerLevel level, AwakenMob body, Vec3 ground, float lift, float power, float peak, int fuse) {
+        Carrier c = new Carrier(Kind.BURST, level, body, Strikes.Kind.PERILOUS, ground, 0, 0, power, lift, 0, power * 2.0F, level.getGameTime(),
+                Math.max(1, fuse), List.of());
+        c.damage = peak;
+        if (ticking) PENDING.add(c);
+        else ACTIVE.add(c);
+        send(c);
+        return c;
+    }
+
     /** A field's edge for {@code life} (its pulses are a {@link Hazards} cloud that waits {@link #FIELD_SAFE} first). */
     static @Nullable Carrier field(ServerLevel level, @Nullable AwakenMob owner, Vec3 at, float radius, int life) {
         return add(new Carrier(Kind.FIELD, level, owner, Strikes.Kind.PERILOUS, at, 0, 0, 0, 0, 0, Math.min(FIELD_MAX, radius), level.getGameTime(),
@@ -307,6 +324,9 @@ public final class Carriers {
                     }
                     case GROUND -> ground(sl, c, t);
                     case PULL -> pull(sl, c);
+                    case BURST -> {
+                        if (t == c.life && c.owner != null) Blasts.fire(sl, c.owner, c.origin.add(0, c.to, 0), c.from, c.damage);
+                    }
                     default -> { }
                 }
                 if (t >= c.life) it.remove();

@@ -45,6 +45,8 @@ public final class GateHooks {
         default boolean showsBossBar(net.minecraft.world.entity.Entity mob, ServerPlayer player) { return true; }
         /** Whether this gate's break clock waits for someone to come close (it would break, but nobody has seen it yet). */
         default boolean waiting(ServerLevel level, String id) { return false; }
+        /** The rank (ordinal) of the gate this player is running, or -1 outside one (the fair guard, SPEC §47.14). */
+        default int rankOf(ServerPlayer player) { return -1; }
     }
 
     private static Access access = new Access() {
@@ -69,4 +71,5 @@ public final class GateHooks {
     public static boolean mayTarget(net.minecraft.world.entity.LivingEntity mob, net.minecraft.world.entity.LivingEntity target) { return access.mayTarget(mob, target); }
     public static boolean showsBossBar(net.minecraft.world.entity.Entity mob, ServerPlayer player) { return access.showsBossBar(mob, player); }
     public static boolean waiting(ServerLevel level, String id) { return access.waiting(level, id); }
+    public static int rankOf(ServerPlayer player) { return access.rankOf(player); }
 }
