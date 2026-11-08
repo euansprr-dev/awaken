@@ -506,6 +506,19 @@ def charge(seed):
     return R.fade_out(b.render(), 0.1)
 
 
+def guard_raise(seed):
+    """The guard coming up (Euan 8 Nov, "no really sound when I was parring"): the grip closing and the steel sliding
+    into line, short and low so it never covers a blow. You know it's up before anything meets it."""
+    r = K.rng(seed)
+    n = K.ns(0.26)
+    scrape = R.unit(R.sweep(K.noise(n, "white", seed + 1), lambda s: 700 + 900 * min(1.0, s / 0.12), 3.0)) * R.bp(n, [(0, 0), (0.015, 1.0), (0.1, 0.5), (0.26, 0)])
+    b = R.Bus(0.34)
+    b.add(trim(rec(pick(["cloth1", "cloth2", "cloth3", "cloth4"], r)), 0.16), 0.0, 0.7)
+    b.add(scrape, 0.012, 0.3)
+    b.add(ring(r.uniform(1500, 1750), 0.22, 0.28, seed + 3, 0.6), 0.09, 0.22)
+    return R.fade_out(b.render(), 0.03)
+
+
 def glint(seed):
     """The glint: release now. One bright clean ping of steel, short so it never covers the release."""
     r = K.rng(seed)
@@ -648,7 +661,8 @@ EVENTS = OrderedDict([
     ("hit_stone", (hit_stone, 3, -13.0, 20, "Blade strikes stone", True, 12.0, 1.0)),
     ("hit_spirit", (hit_spirit, 3, -14.5, 18, "Blade shears a spirit", True, 13.0, 1.0)),
     ("hit_slime", (hit_slime, 3, -14.0, 16, "Blade splits slime", True, 12.0, 1.0)),
-    ("deflect", (deflect, 4, -13.0, 24, "Blow deflected", True, 13.5, 1.0)),
+    ("deflect", (deflect, 4, -12.0, 24, "Blow deflected", True, 13.5, 1.0)),
+    ("guard_raise", (guard_raise, 3, -16.0, 10, "Guard raised", False, 12.0, 0.45)),
     ("block", (block, 4, -12.5, 20, "Blow blocked", True, 12.0, 1.0)),
     ("guard_break", (guard_break, 2, -12.0, 24, "Guard broken", True, 12.5, 1.0)),
     ("break", (posture_break, 2, -12.0, 28, "Stance breaks", True, 13.0, 1.0)),

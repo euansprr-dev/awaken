@@ -981,6 +981,7 @@ final class ArmsServer {
         s.lockedOut = !s.raiseDeflected && now - s.loweredAt <= lockout;
         s.raisedAt = now;
         s.raiseDeflected = false;
+        soundForOthers(p, ArmsSounds.GUARD_RAISE.get(), 1.0F, 1.0F);
     }
 
     static void onUseStop(LivingEntityUseItemEvent.Stop e) {

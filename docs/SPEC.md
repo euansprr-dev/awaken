@@ -19473,3 +19473,10 @@ After: 94% of the table once aimed, and every move can reach someone. Live again
 blocks above them; Sky Leviathan 26 and 24; Glass Serpent 15 and 13; Ember Tyrant 24 and 23; Gearwright Colossus 17
 and 16. Tests `fights_reach_live_<id>` (five bodies, a real fight of 1,400 ticks through every phase) and
 `fights_reach_table`. `tools/sim/combat_sim.py` still reads a move's reach without the aim, so it undercounts these hits.
+
+**Answering it.** With blows landing, a parry has something to answer. Test `fights_reach_parry` plays the Regent's cut
+at a real guard: unanswered it lands, into a raised sword it does no damage, goes into the stance and the Regent reels.
+The ring existed all along and only fires on a blow that lands, so nothing rang on the misses. Added: a guard's raise has
+its own sound (`arms.guard_raise`, three takes built from Kenney's CC0 cloth recording already in tools/art/sources, -16 dB, so
+you know it's up), the deflect is 1 dB louder, a deflected limb sounds at the body (its own `impact` set at 0.8), and a melee
+deflect throws sparks off the blade and jolts the hands (own view and everyone else's), which only a shot did before.

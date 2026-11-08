@@ -445,6 +445,7 @@ final class FightRunner {
         deflectAt = now;
         boolean last = string.isEmpty();
         stop();
+        dev.awaken.mobs.boss.KitSounds.play(boss, moves, "impact", 0.8F); // the limb stopped dead, heard at the body
         if (last) {
             // the reel is a stagger (nothing counts down through it), then half an opening more while it gathers itself
             boss.reel(REEL_TICKS);

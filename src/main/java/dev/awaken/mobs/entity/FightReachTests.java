@@ -13,6 +13,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
@@ -28,6 +31,7 @@ public final class FightReachTests {
             AwakenTests.registerIsolated("fights_reach_live_" + id, 1400, h -> live(h, id));
         }
         AwakenTests.register("fights_reach_table", 20, FightReachTests::table);
+        AwakenTests.registerIsolated("fights_reach_parry", 300, FightReachTests::parry);
     }
 
     /** Every kit's every own swing against someone standing still: the share of its distances it can be aimed to reach. */
@@ -77,6 +81,48 @@ public final class FightReachTests {
     /** The share of blows that must land on someone standing still (a blow begun as a phase turns may not), and how high a flier may rise over them. */
     private static final float LANDS = 0.7F;
     private static final double HIGH = 3.5;
+
+    /** The Regent's cut lands if you don't answer it; a guard raised into the same cut takes no damage and throws the Regent back. */
+    private static void parry(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int x = -2; x <= 44; x++) for (int z = -2; z <= 44; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        ServerPlayer p = FairTests.reference(h, Rank.E, new BlockPos(21, 1, 21));
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+        p.setYRot(180F);
+        p.setYHeadRot(180F);
+        p.setYBodyRot(180F);
+        MobDef def = Bestiary.get("hive_regent");
+        KitMoves.Move cut = Kits.all().get("hive_regent").moves().get(Kits.all().get("hive_regent").moves().index("cut"));
+        double back = (cut.minRange() + cut.maxRange()) * 0.5 + def.width * def.scale * 0.5 + 0.3;
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(21.5, 1, 21.5 - back)), 10,
+                new MobRole(MobRole.Role.BOSS, 10, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        int[] stage = {0};
+        float[] hp = {0};
+        h.onEachTick(() -> {
+            boss.setTarget(p);
+            String now = boss.kitPlaying();
+            if (stage[0] == 0) {
+                FairTests.pool(p);
+                h.assertTrue(boss.playKitString("cut", java.util.List.of()), "the cut plays");
+                stage[0] = 1;
+            } else if (stage[0] == 1 && now == null) {
+                h.assertTrue(FairTests.share(p) > 1.0E-3F, "the cut, unanswered, lands");
+                p.setHealth(p.getMaxHealth());
+                hp[0] = p.getHealth();
+                p.startUsingItem(InteractionHand.MAIN_HAND);
+                h.assertTrue(p.isBlocking(), "the guard is up");
+                h.assertTrue(boss.playKitString("cut", java.util.List.of()), "the cut plays again");
+                stage[0] = 2;
+            } else if (stage[0] == 2 && now == null) {
+                h.assertTrue(p.getHealth() == hp[0], "the deflected cut does no damage (took " + (hp[0] - p.getHealth()) + ")");
+                h.assertTrue(dev.awaken.arms.Arms.posture(boss) > 0, "the deflect went into its stance");
+                h.assertTrue(boss.reeling(), "a lone blow turned aside: it reels");
+                boss.discard();
+                stage[0] = 3;
+                h.succeed();
+            }
+        });
+    }
 
     private static void live(GameTestHelper h, String id) {
         ServerLevel level = h.getLevel();
