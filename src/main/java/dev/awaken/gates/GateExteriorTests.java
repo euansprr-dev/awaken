@@ -374,6 +374,43 @@ final class GateExteriorTests {
             h.succeed();
         });
 
+        AwakenTests.registerIsolated("gates_trees_fall_whole", 400, h -> {
+            // every tree the game can grow, planted thick round every rank of gate: nothing of a tree the gate cut stays in the air
+            ServerLevel level = h.getLevel();
+            BlockPos ground = h.absolutePos(new BlockPos(0, UP, 0));
+            List<net.minecraft.core.Holder.Reference<net.minecraft.world.level.levelgen.feature.Feature>> trees = level.registryAccess()
+                    .lookupOrThrow(net.minecraft.core.registries.Registries.FEATURE).listElements()
+                    .filter(t -> t.value() instanceof net.minecraft.world.level.levelgen.feature.TreeFeature)
+                    .sorted(java.util.Comparator.comparing(t -> t.key().identifier().toString())).toList();
+            h.assertTrue(trees.size() >= 30, "every kind of tree is planted (" + trees.size() + ")");
+            int logs = 0, leaves = 0, plants = 0, planted = 0;
+            String first = "";
+            try {
+                treesBesideAGate(h, level, ground);
+                for (int rank = 0; rank <= 6; rank++) {
+                    for (int axis = 0; axis <= 1; axis++) {
+                        planted += grove(level, ground, trees, rank, axis);
+                        Adrift before = adrift(level, ground);
+                        GateRecord g = GateExterior.display(ground, axis, rank, false);
+                        Overworld.place(level, g, false);
+                        Adrift after = adrift(level, ground);
+                        after.logs.removeAll(before.logs);
+                        after.leaves.removeAll(before.leaves);
+                        after.plants.removeAll(before.plants);
+                        logs += after.logs.size();
+                        leaves += after.leaves.size();
+                        plants += after.plants.size();
+                        if (first.isEmpty() && after.count() > 0) first = Rank.values()[rank].label + "/" + axis + " " + after + " "
+                                + after.plants.stream().limit(4).map(q -> level.getBlockState(q).getBlock().getDescriptionId()).toList();
+                    }
+                }
+            } finally {
+                wipeGrove(level, ground);
+            }
+            Awaken.LOG.info("[gates] trees: {} planted round every rank; adrift after the gate: {} logs, {} leaves, {} plants", planted, logs, leaves, plants);
+            h.assertTrue(logs + leaves + plants == 0 && first.isEmpty(), "left in the air: " + logs + " logs, " + leaves + " leaves, " + plants + " plants; " + first);
+            h.succeed();
+        });
         AwakenTests.register("gates_vortex_frames", 40, h -> {
             int[] counts = new int[1];
             float[] bad = new float[1];
@@ -400,6 +437,156 @@ final class GateExteriorTests {
     // ---- helpers ------------------------------------------------------------------------------------------------------
 
     /** A flat meadow round the spot, clear above. */
+    private static final int GROVE = 20, GROVE_REACH = 30, GROVE_HIGH = 62;
+
+    /** Only what the gate cut comes down: a tree beside it and a hedge stay; a gate from before the fix is tidied, once. */
+    private static void treesBesideAGate(GameTestHelper h, ServerLevel level, BlockPos ground) {
+        wipeGrove(level, ground);
+        meadow(level, ground);
+        BlockState log = Blocks.OAK_LOG.defaultBlockState();
+        BlockState leaf = Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.DISTANCE, 1);
+        BlockState saved = leaf.setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true);
+        List<BlockPos> stay = new java.util.ArrayList<>();
+        for (int y = 1; y <= 6; y++) stay.add(ground.offset(13, y, 0));
+        stay.forEach(q -> level.setBlock(q, log, Block.UPDATE_CLIENTS));
+        for (BlockPos q : BlockPos.betweenClosed(ground.offset(11, 5, -2), ground.offset(15, 7, 2))) {
+            if (level.getBlockState(q).isAir()) {
+                level.setBlock(q, leaf, Block.UPDATE_CLIENTS);
+                stay.add(q.immutable());
+            }
+        }
+        for (int dx = 0; dx <= 3; dx++) {
+            BlockPos q = ground.offset(dx, 1, 13);
+            level.setBlock(q, saved, Block.UPDATE_CLIENTS);
+            stay.add(q);
+        }
+        List<BlockPos> crown = wildCrown(level, ground, GateVortex.coreTop(0) + 8);
+        GateRecord g = GateExterior.display(ground, 0, 0, false);
+        Overworld.place(level, g, false);
+        for (BlockPos q : crown) h.assertTrue(level.getBlockState(q).isAir(), "a saved crown the gate cut came down: " + q.toShortString());
+        for (BlockPos q : stay) h.assertFalse(level.getBlockState(q).isAir(), "stands beside the gate: " + q.toShortString());
+        h.assertTrue(g.treesFelled, "a gate built now has its trees down");
+        // as a gate built before this left them: nobody has looked yet, so the first loaded check takes the crown down, only once
+        g.treesFelled = false;
+        g.structurePlaced = true;
+        BlockPos left = ground.offset(0, 16, 1);
+        level.setBlock(left, leaf, Block.UPDATE_CLIENTS);
+        h.assertTrue(GateExterior.fellOld(level, g) && g.treesFelled, "an old gate looks once its ground is loaded");
+        h.assertTrue(level.getBlockState(left).isAir(), "the old gate's crown came down");
+        level.setBlock(left, leaf, Block.UPDATE_CLIENTS);
+        h.assertFalse(GateExterior.fellOld(level, g), "and it looks only once");
+        h.assertFalse(level.getBlockState(left).isAir(), "nothing fell the second time");
+        g.structurePlaced = false;
+    }
+
+    /** A meadow planted every six blocks with real trees in turn, three stalks of bamboo on the pad. Returns the trees that grew. */
+    private static int grove(ServerLevel level, BlockPos ground, List<net.minecraft.core.Holder.Reference<net.minecraft.world.level.levelgen.feature.Feature>> trees, int rank, int axis) {
+        wipeGrove(level, ground);
+        for (int dx = -GROVE_REACH; dx <= GROVE_REACH; dx++) {
+            for (int dz = -GROVE_REACH; dz <= GROVE_REACH; dz++) {
+                level.setBlock(ground.offset(dx, 0, dz), Blocks.GRASS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS);
+                level.setBlock(ground.offset(dx, -1, dz), Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
+            }
+        }
+        net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create(rank * 31L + axis);
+        var generator = level.getChunkSource().getGenerator();
+        int i = rank * 7 + axis * 3, grown = 0;
+        for (int dx = -GROVE; dx <= GROVE; dx += 6) {
+            for (int dz = -GROVE; dz <= GROVE; dz += 6) {
+                BlockPos at = ground.offset(dx + random.nextInt(3) - 1, 1, dz + random.nextInt(3) - 1);
+                if (trees.get(i++ % trees.size()).value().place(level, generator, random, at)) grown++;
+            }
+        }
+        for (int[] c : new int[][]{{3, 4}, {-4, 3}, {2, -5}}) {
+            for (int y = 1; y <= 26; y++) {
+                BlockPos q = ground.offset(c[0], y, c[1]);
+                if (level.getBlockState(q).isAir()) level.setBlock(q, Blocks.BAMBOO.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+                else break;
+            }
+        }
+        return grown;
+    }
+
+    /** A Wild Lands tree (leaves saved as persistent, SPEC 44) with its trunk on the pad and its crown over the gate's clearing. */
+    private static List<BlockPos> wildCrown(ServerLevel level, BlockPos ground, int high) {
+        List<BlockPos> out = new java.util.ArrayList<>();
+        BlockState log = Blocks.OAK_LOG.defaultBlockState();
+        BlockState leaf = Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true).setValue(net.minecraft.world.level.block.LeavesBlock.DISTANCE, 1);
+        for (int y = 1; y <= high + 1; y++) {
+            BlockPos q = ground.offset(1, y, 2);
+            level.setBlock(q, log, Block.UPDATE_CLIENTS);
+            if (y > high - 6) out.add(q);
+        }
+        for (BlockPos q : BlockPos.betweenClosed(ground.offset(-1, high + 2, 0), ground.offset(3, high + 3, 4))) {
+            level.setBlock(q, leaf, Block.UPDATE_CLIENTS);
+            out.add(q.immutable());
+        }
+        return out;
+    }
+
+    private static void wipeGrove(ServerLevel level, BlockPos ground) {
+        for (BlockPos q : BlockPos.betweenClosed(ground.offset(-GROVE_REACH - 2, -6, -GROVE_REACH - 2), ground.offset(GROVE_REACH + 2, GROVE_HIGH, GROVE_REACH + 2))) {
+            if (!level.getBlockState(q).isAir()) level.setBlock(q, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        }
+    }
+
+    private record Adrift(java.util.Set<BlockPos> logs, java.util.Set<BlockPos> leaves, java.util.Set<BlockPos> plants) {
+        int count() {
+            return logs.size() + leaves.size() + plants.size();
+        }
+
+        @Override
+        public String toString() {
+            String at = java.util.stream.Stream.of(logs, leaves, plants).flatMap(java.util.Set::stream).limit(4).map(BlockPos::toShortString).toList().toString();
+            return logs.size() + " logs, " + leaves.size() + " leaves, " + plants.size() + " plants, at " + at;
+        }
+    }
+
+    /**
+     * What hangs in the air over the grove: logs with no line of logs to the ground (the corners count), leaves further than
+     * the game's six steps from such a log (saved leaves apart, the crown test looks at those by name), plants that can't stand.
+     */
+    private static Adrift adrift(ServerLevel level, BlockPos ground) {
+        java.util.Set<BlockPos> logs = new java.util.HashSet<>(), leaves = new java.util.HashSet<>(), plants = new java.util.HashSet<>();
+        java.util.ArrayDeque<BlockPos> open = new java.util.ArrayDeque<>();
+        java.util.Set<BlockPos> rooted = new java.util.HashSet<>();
+        BlockPos.MutableBlockPos below = new BlockPos.MutableBlockPos();
+        for (BlockPos q : BlockPos.betweenClosed(ground.offset(-GROVE_REACH, -3, -GROVE_REACH), ground.offset(GROVE_REACH, GROVE_HIGH, GROVE_REACH))) {
+            BlockState s = level.getBlockState(q);
+            if (s.isAir()) continue;
+            if (s.is(net.minecraft.tags.BlockTags.LOGS)) {
+                logs.add(q.immutable());
+                BlockState under = level.getBlockState(below.setWithOffset(q, 0, -1, 0));
+                boolean ground1 = !under.isAir() && under.getFluidState().isEmpty() && !under.canBeReplaced() && !under.is(net.minecraft.tags.BlockTags.LOGS) && !under.is(net.minecraft.tags.BlockTags.LEAVES);
+                if (ground1 && rooted.add(q.immutable())) open.add(q.immutable());
+            } else if (s.is(net.minecraft.tags.BlockTags.LEAVES)) {
+                if (!s.hasProperty(net.minecraft.world.level.block.LeavesBlock.PERSISTENT) || !s.getValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT)) leaves.add(q.immutable());
+            } else if (!s.canSurvive(level, q) && !Overworld.ours(s)) plants.add(q.immutable());
+        }
+        while (!open.isEmpty()) {
+            BlockPos q = open.poll();
+            for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                BlockPos n = q.offset(dx, dy, dz);
+                if (logs.contains(n) && rooted.add(n)) open.add(n);
+            }
+        }
+        logs.removeAll(rooted);
+        java.util.Set<BlockPos> reached = new java.util.HashSet<>();
+        java.util.List<BlockPos> step = new java.util.ArrayList<>(rooted);
+        for (int d = 1; d <= 6; d++) {
+            java.util.List<BlockPos> next = new java.util.ArrayList<>();
+            for (BlockPos q : step) {
+                for (net.minecraft.core.Direction side : net.minecraft.core.Direction.values()) {
+                    BlockPos n = q.relative(side);
+                    if (leaves.contains(n) && reached.add(n)) next.add(n);
+                }
+            }
+            step = next;
+        }
+        leaves.removeAll(reached);
+        return new Adrift(logs, leaves, plants);
+    }
+
     static void meadow(ServerLevel level, BlockPos ground) {
         wipe(level, ground);
         for (int dx = -16; dx <= 16; dx++) {
