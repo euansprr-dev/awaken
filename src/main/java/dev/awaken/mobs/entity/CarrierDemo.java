@@ -65,8 +65,7 @@ public final class CarrierDemo {
                 // every kind of shot abreast, the nearest to the camera first, for its trail and its body
                 BoltKind[] all = BoltKind.values();
                 for (int i = 0; i < all.length; i++) {
-                    Vec3 from = eye.add(0, 2.4 - 0.4 * i, -2);
-                    AwBolt.shoot(level, m, from, new Vec3(0, 0, 1), all[i], 0F, null, Abilities.shotSpeed() * 0.45);
+                    AwBolt.shoot(level, m, eye.add(0, 2.4 - 0.4 * i, -2), new Vec3(0, 0, 1), all[i], 0F, null, Abilities.shotSpeed() * 0.45);
                 }
             }
             default -> {

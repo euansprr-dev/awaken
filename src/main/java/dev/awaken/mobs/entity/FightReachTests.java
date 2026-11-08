@@ -33,6 +33,7 @@ public final class FightReachTests {
         AwakenTests.register("fights_reach_table", 20, FightReachTests::table);
         AwakenTests.registerIsolated("fights_reach_parry", 300, FightReachTests::parry);
         AwakenTests.register("fights_shots_own_look", 20, FightReachTests::ownLook);
+        AwakenTests.registerIsolated("fights_reach_parry_fires", 120, FightReachTests::parryOnFire);
     }
 
     /** Every kit's every own swing against someone standing still: the share of its distances it can be aimed to reach. */
@@ -82,6 +83,29 @@ public final class FightReachTests {
     /** The share of blows that must land on someone standing still (a blow begun as a phase turns may not), and how high a flier may rise over them. */
     private static final float LANDS = 0.7F;
     private static final double HIGH = 3.5;
+
+    /** A guard that turns an ability's blow on the tick it fires ends the move there; it used to crash the server. */
+    private static void parryOnFire(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int x = -2; x <= 44; x++) for (int z = -2; z <= 44; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        ServerPlayer p = FairTests.reference(h, Rank.E, new BlockPos(21, 1, 21));
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+        p.setYRot(180F);
+        p.setYHeadRot(180F);
+        p.setYBodyRot(180F);
+        p.startUsingItem(InteractionHand.MAIN_HAND);
+        MobDef def = Bestiary.get("bell_warden");
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(21.5, 1, 21.5 - (def.width * def.scale * 0.5 + 1.5))), 10,
+                new MobRole(MobRole.Role.BOSS, 10, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        boss.setTarget(p);
+        h.assertTrue(boss.playKitString("clapper", java.util.List.of()), "the clapper plays");
+        h.onEachTick(() -> boss.setTarget(p));
+        h.succeedWhen(() -> {
+            h.assertTrue(boss.kitPlaying() == null, "the move ended");
+            h.assertTrue(boss.isAlive(), "and the fight goes on");
+            boss.discard();
+        });
+    }
 
     /** No shot is made of vanilla's particles any more. */
     private static void ownLook(GameTestHelper h) {

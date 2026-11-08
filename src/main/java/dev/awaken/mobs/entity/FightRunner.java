@@ -667,6 +667,7 @@ final class FightRunner {
                 boss.setTelegraph(0, false);
                 if (ability != null) {
                     boss.abilityRunner().fire(level, ability, world(m.origin()), cls != Strikes.Kind.NONE ? cls : ability.strike());
+                    if (move < 0) return; // turned aside as it fired: deflected() has ended the move
                     // a step that didn't close the gap (a wall where it would land) doesn't cut the air far from you:
                     // it ends there, string and all
                     if (ability.kind() == Ability.Kind.BLINK && !m.hits().isEmpty()) {

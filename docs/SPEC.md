@@ -19490,3 +19490,7 @@ a body (`BoltKind.Form`): a needle along its flight for stingers, thorns and gla
 and water, a glow for the rest, all still in the colour of how you answer it (§47.2). `BoltKind.STINGER` (appended, kinds are saved
 by ordinal) is the Regent's Stinger Volley: venom-amber. A heal and a frenzy lost their green and red villager sparkles the
 same way. Test `fights_shots_own_look`.
+
+**The fire-tick crash.** A guard that turned a kit ability's blow on the tick it fired (the Bell Warden's clapper) ended the move
+inside `abilityRunner().fire`, and the next line read the ability that had just been cleared: a ticking-entity crash that took
+the world down. `FightRunner.step` now returns if the move ended there. Test `fights_reach_parry_fires`.
