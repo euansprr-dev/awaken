@@ -4,6 +4,8 @@ import dev.awaken.delve.Lode;
 import dev.awaken.delve.LodePlans;
 import dev.awaken.delve.Ore;
 import dev.awaken.terrain.api.CityBasin;
+import dev.awaken.village.road.RoadNet;
+import dev.awaken.village.world.SettlementGrid;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -32,9 +34,9 @@ import java.util.List;
 final class CaveSites {
     private CaveSites() {}
 
-    /** How far a mouth candidate got, its forms' furthest try (the census, /awaken delve mouths; order matters). */
+    /** How far a mouth candidate got at its own ground, its forms' furthest try (the census; an adit's lode can be far off, so it isn't counted; order matters). */
     enum Why {
-        NONE("no candidate tried"), CITY("the city's reserve"), LAND("water, too low, or not land"), GROUND("no ground for any form"),
+        NONE("no candidate tried"), CITY("the city's reserve"), LAND("water, too low, or not land"), SETTLED("a settlement's ground"), GROUND("no ground for any form"),
         WET("the throat would flood"), CAVE("no natural cave air to join"), FIT("too big for its start chunk"), MOUTH("a mouth");
 
         final String words;
@@ -385,7 +387,10 @@ final class CaveSites {
         return s;
     }
 
-    /** Whether a mouth's ground is fit: land, the biome allowed, not by the city; says why not. */
+    /** How far a mouth keeps from a grid settlement's anchor: its plan's furthest ground and the mouth's own worn fan. */
+    private static final int SETTLEMENT_CLEAR = 120;
+
+    /** Whether a mouth's ground is fit: land, the biome allowed, not by the city or a settlement; says why not. */
     private static boolean mouthGround(Columns cols, int x, int y, int z) {
         if (cityNear(x, z, 90)) {
             cols.why(Why.CITY);
@@ -393,6 +398,11 @@ final class CaveSites {
         }
         if (!landBiome(cols.biome(x, y, z)) || !cols.ctx.validBiome().test(cols.biome(x, y, z))) {
             cols.why(Why.LAND);
+            return false;
+        }
+        // from the seed alone: the grid's anchors, and a town's region's heart (its own site isn't known this early)
+        if (RoadNet.nearTown(x, z) || !SettlementGrid.gridNear(cols.ctx.seed(), x, z, SETTLEMENT_CLEAR, SettlementGrid.centre()).isEmpty()) {
+            cols.why(Why.SETTLED);
             return false;
         }
         return true;
@@ -422,30 +432,20 @@ final class CaveSites {
                 // the portal L+1 back from the heart along the drift's axis
                 Frame back = new Frame(h.getX(), h.getY(), h.getZ(), rot);
                 int px = back.x(0, -(L + 1)), pz = back.z(0, -(L + 1));
-                int yp = mouthTop(cols, px, pz);
-                if (yp == Integer.MIN_VALUE) continue;
+                int yp = cols.surface(px, pz);
+                if (yp == Integer.MIN_VALUE || yp <= cols.ctx.chunkGenerator().getSeaLevel() + 1) continue;
                 int drop = yp - (h.getY() - 1);
-                if (drop < 0 || drop > L / 3) {
-                    cols.why(Why.GROUND);
-                    continue;
-                }
+                if (drop < 0 || drop > L / 3) continue;
                 Frame f = new Frame(px, yp, pz, rot);
                 // a hill over the drift, open ground in front of the portal
                 int over = cols.surface(f.x(0, L / 2), f.z(0, L / 2)), front = cols.surface(f.x(0, -5), f.z(0, -5));
-                if (over == Integer.MIN_VALUE || front == Integer.MIN_VALUE || over < yp + 6 || front > yp + 2) {
-                    cols.why(Why.GROUND);
-                    continue;
-                }
+                if (over == Integer.MIN_VALUE || front == Integer.MIN_VALUE || over < yp + 6 || front > yp + 2) continue;
                 if (!mouthGround(cols, px, yp, pz)) continue;
-                if (cols.wet(px, pz, yp - drop - 2, yp + 4) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 2, yp)) {
-                    cols.why(Why.WET);
-                    continue;
-                }
+                if (cols.wet(px, pz, yp - drop - 2, yp + 4) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 2, yp)) continue;
                 int[] j = air(cols, h.getX(), h.getY() - 1, h.getZ(), 20, 10, 10, rnd);
                 Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, j != null, j == null ? 0 : j[0], j == null ? 0 : j[1], j == null ? 0 : j[2],
-                        new int[]{Mouth.ADIT, L, drop, 3, 4, h.getX(), h.getY(), h.getZ(), l.ore().ordinal() + 1, rnd.nextInt(2)});
+                        new int[]{Mouth.ADIT, L, drop, 3, 4, h.getX(), h.getY(), h.getZ(), l.ore().ordinal() + 1, rnd.nextInt(2), 1});
                 if (fits(spec, c)) return spec;
-                cols.why(Why.FIT);
             }
         }
         return null;
@@ -484,7 +484,7 @@ final class CaveSites {
                     continue;
                 }
                 Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
-                        new int[]{Mouth.HILL, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2)});
+                        new int[]{Mouth.HILL, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2), 1});
                 if (fits(spec, c)) return spec;
                 cols.why(Why.FIT);
             }
@@ -525,7 +525,7 @@ final class CaveSites {
                     continue;
                 }
                 Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
-                        new int[]{Mouth.CLEFT, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2)});
+                        new int[]{Mouth.CLEFT, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2), 1});
                 if (fits(spec, c)) return spec;
                 cols.why(Why.FIT);
             }
@@ -533,7 +533,10 @@ final class CaveSites {
         return null;
     }
 
-    /** A doline: flat ground (within 2 all round), a hole 7-11 across and 10-25 deep, dry, cave air by its foot. */
+    /**
+     * A doline: flat or gently tilted ground (within {@link Mouth#TILT} all round, the near side level with the middle: any
+     * steeper is a hillside, the hill mouth's ground), a hole 7-11 across and 10-25 deep, dry, cave air by its foot.
+     */
     private static @Nullable Spec doline(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
         int minY = cols.ctx.heightAccessor().getMinY();
         for (int t = 0; t < 4; t++) {
@@ -545,15 +548,26 @@ final class CaveSites {
             for (int k = 0; k < 6 && flat; k++) {
                 double a = k * Math.PI / 3;
                 int top = cols.surface(Mth.floor(px + Math.cos(a) * (r + 3)), Mth.floor(pz + Math.sin(a) * (r + 3)));
-                if (top == Integer.MIN_VALUE || Math.abs(top - yp) > 2) flat = false;
+                if (top == Integer.MIN_VALUE || Math.abs(top - yp) > Mouth.TILT) flat = false;
             }
             if (!flat) {
                 cols.why(Why.GROUND);
                 continue;
             }
-            int drop = 10 + rnd.nextInt(Math.min(25, 4 * r + 5) - 9), rot = rnd.nextInt(4), L = r + 3;
+            int drop = 10 + rnd.nextInt(Math.min(25, 4 * r + 5) - 9), first = rnd.nextInt(4), L = r + 3;
             if (yp - drop - 6 < minY + 6) continue;
-            Frame f = new Frame(px, yp, pz, rot);
+            // the ledge starts on the near side, level with the ground: turn the hole so that side is a level one
+            Frame f = null;
+            for (int q = 0; q < 4 && f == null; q++) {
+                Frame turned = new Frame(px, yp, pz, (first + q) & 3);
+                int near = cols.surface(turned.x(0, -(r + 1)), turned.z(0, -(r + 1)));
+                if (near != Integer.MIN_VALUE && Math.abs(near - yp) <= 1) f = turned;
+            }
+            if (f == null) {
+                cols.why(Why.GROUND);
+                continue;
+            }
+            int rot = f.rot;
             if (cols.wet(px, pz, yp - drop - 3, yp + 1) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 3, yp - drop + 4)) {
                 cols.why(Why.WET);
                 continue;
@@ -564,7 +578,7 @@ final class CaveSites {
                 continue;
             }
             Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
-                    new int[]{Mouth.DOLINE, L, drop, 2 * r + 1, drop, 0, 0, 0, 0, rnd.nextInt(2)});
+                    new int[]{Mouth.DOLINE, L, drop, 2 * r + 1, drop, 0, 0, 0, 0, rnd.nextInt(2), 1});
             if (fits(spec, c)) return spec;
             cols.why(Why.FIT);
         }

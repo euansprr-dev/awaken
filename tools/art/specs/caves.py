@@ -287,6 +287,8 @@ def content():
     write(os.path.join(ASSETS, "models/item/delvers_pick.json"), {"parent": "minecraft:item/handheld", "textures": {"layer0": "awaken:item/delvers_pick"}})
     write(os.path.join(ASSETS, "items/delvers_pick.json"), {"model": {"type": "minecraft:model", "model": "awaken:item/delvers_pick"}})
     write(os.path.join(ASSETS, "particles/delve_mist.json"), {"textures": [f"awaken:delve_mist_{i}" for i in range(4)]})
+    # a mouth's plume (SPEC §34.1): the mist's soft lobes, drawn bigger and rising taller
+    write(os.path.join(ASSETS, "particles/delve_plume.json"), {"textures": [f"awaken:delve_mist_{i}" for i in range(4)]})
     write(os.path.join(ASSETS, "particles/delve_draught.json"), {"textures": [f"awaken:delve_draught_{i}" for i in range(4)]})
     # a grotto's drawn light (its pool's halo, the glints in its curtain): the mist's soft lobes, full bright
     write(os.path.join(ASSETS, "particles/delve_grotto_glow.json"), {"textures": [f"awaken:delve_mist_{i}" for i in range(4)]})
