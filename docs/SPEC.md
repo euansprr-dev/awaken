@@ -12702,11 +12702,13 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   its drop, arch width, height, the lode's heart (x, y, z), its ore + 1, the cairn's side, its look (index 10, 1 for
   mouths laid since 8 Nov; 0 for a saved mouth keeps the blocks it built, no worn ground, the old cairn).
 - **The promise, on the ground** (Euan's playtest 8 Nov, "I'm really struggling to find a cave entrance"): one mouth about
-  every 200 m of dry land. His New World (11) (seed 5652006211025591964; `/awaken delve mouths`, tools/autopilot/mouths-nw11.txt):
-  43 mouths within 1 km of his home at the old 12/4 (14 a km², one every 270 m) and 19 within 1 km of spawn, where the
-  city's reserve and water empty most of the land. So the candidates are closer together, a doline takes gently tilted
-  ground as well as flat (below), and both tests below hold the promise. A candidate tries every form at up to five
-  spots within 20 of its chunk's middle.
+  every 200 m of dry land. His New World (11) (seed 5652006211025591964; `/awaken delve mouths` over the whole circle, on
+  Tectonic, tools/autopilot/mouths-nw11.txt) had at the old 12/4 57 mouths within 1 km of his home (one every 235 m;
+  43 of them in land he had generated) and 30 within 1 km of spawn (one every 324 m), where the city's reserve and water
+  empty most of the land, yet he found one: most of the fault was that a mouth can't be seen from far off (the plume and
+  the worn ground below). So the candidates are closer together, a doline takes gently tilted ground as well as flat
+  (below), a joint reaches further down for its cave, and both tests below hold the promise. A candidate tries every
+  form at up to five spots within 20 of its chunk's middle.
 - **What keeps a mouth away**: the city's reserve (90), water or land at or below sea + 1, a biome off the list, and (from
   the seed alone, since 8 Nov) a settlement's ground: within 120 of a grid settlement's or the first hamlet's anchor, or
   in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills

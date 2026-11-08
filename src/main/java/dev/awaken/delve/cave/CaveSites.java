@@ -439,10 +439,12 @@ final class CaveSites {
     private static @Nullable Spec adit(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
         int x0 = c.getMiddleBlockX(), z0 = c.getMiddleBlockZ();
         int tries = 0;
+        // the portal stands on dry land over the sea, a drift falls at most a third of its 28: lower hearts can't be reached
+        int lowest = Math.max(24, cols.ctx.chunkGenerator().getSeaLevel() + 2 - 28 / 3 + 1);
         for (Lode l : lodesNear(cols.ctx.seed(), x0, z0, 72)) {
             if (l.ore() != Ore.IRON && l.ore() != Ore.COPPER) continue;
             var h = l.heartPos();
-            if (h.getY() < 24 || tries++ >= 4) continue;
+            if (h.getY() < lowest || tries++ >= 4) continue;
             int start = rnd.nextInt(4);
             for (int r = 0; r < 4; r++) {
                 int rot = (start + r) & 3;
