@@ -32,11 +32,28 @@ import java.util.List;
 final class CaveSites {
     private CaveSites() {}
 
+    /** How far a mouth candidate got, its forms' furthest try (the census, /awaken delve mouths; order matters). */
+    enum Why {
+        NONE("no candidate tried"), CITY("the city's reserve"), LAND("water, too low, or not land"), GROUND("no ground for any form"),
+        WET("the throat would flood"), CAVE("no natural cave air to join"), FIT("too big for its start chunk"), MOUTH("a mouth");
+
+        final String words;
+
+        Why(String words) {
+            this.words = words;
+        }
+    }
+
     /** The base columns sampled for one candidate, by column. */
     private static final class Columns {
         final Structure.GenerationContext ctx;
         final Long2ObjectOpenHashMap<NoiseColumn> cache = new Long2ObjectOpenHashMap<>();
         int sampled;
+        Why why = Why.NONE;
+
+        void why(Why w) {
+            if (w.ordinal() > why.ordinal()) why = w;
+        }
 
         Columns(Structure.GenerationContext ctx) {
             this.ctx = ctx;
@@ -163,6 +180,17 @@ final class CaveSites {
 
     /** Base columns the last search sampled (the cost test reads it). */
     static volatile int lastSampled;
+
+    /** A mouth search with its reason, what the census and the density test read: the spec, or why there is none. */
+    record Probe(@Nullable Spec spec, Why why) {}
+
+    static Probe probe(Structure.GenerationContext ctx) {
+        Columns cols = new Columns(ctx);
+        WorldgenRandom rnd = ctx.random();
+        long seed = rnd.nextLong();
+        Spec s = mouth(cols, ctx.chunkPos(), rnd, seed);
+        return new Probe(s, s != null ? Why.MOUTH : cols.why);
+    }
 
     private static List<Lode> lodesNear(long worldSeed, int x, int z, int reach) {
         List<Lode> out = new ArrayList<>();
@@ -357,14 +385,31 @@ final class CaveSites {
         return s;
     }
 
-    /** Whether a mouth's ground is fit: land, the biome allowed, not by the city. */
+    /** Whether a mouth's ground is fit: land, the biome allowed, not by the city; says why not. */
     private static boolean mouthGround(Columns cols, int x, int y, int z) {
-        return !cityNear(x, z, 90) && landBiome(cols.biome(x, y, z)) && cols.ctx.validBiome().test(cols.biome(x, y, z));
+        if (cityNear(x, z, 90)) {
+            cols.why(Why.CITY);
+            return false;
+        }
+        if (!landBiome(cols.biome(x, y, z)) || !cols.ctx.validBiome().test(cols.biome(x, y, z))) {
+            cols.why(Why.LAND);
+            return false;
+        }
+        return true;
+    }
+
+    /** The feet on a dry land column above the sea, or MIN_VALUE and the reason. */
+    private static int mouthTop(Columns cols, int x, int z) {
+        int yp = cols.surface(x, z);
+        if (yp == Integer.MIN_VALUE || yp <= cols.ctx.chunkGenerator().getSeaLevel() + 1) {
+            cols.why(Why.LAND);
+            return Integer.MIN_VALUE;
+        }
+        return yp;
     }
 
     private static @Nullable Spec adit(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
         int x0 = c.getMiddleBlockX(), z0 = c.getMiddleBlockZ();
-        int sea = cols.ctx.chunkGenerator().getSeaLevel();
         int tries = 0;
         for (Lode l : lodesNear(cols.ctx.seed(), x0, z0, 72)) {
             if (l.ore() != Ore.IRON && l.ore() != Ore.COPPER) continue;
@@ -377,48 +422,71 @@ final class CaveSites {
                 // the portal L+1 back from the heart along the drift's axis
                 Frame back = new Frame(h.getX(), h.getY(), h.getZ(), rot);
                 int px = back.x(0, -(L + 1)), pz = back.z(0, -(L + 1));
-                int yp = cols.surface(px, pz);
-                if (yp == Integer.MIN_VALUE || yp <= sea + 1) continue;
+                int yp = mouthTop(cols, px, pz);
+                if (yp == Integer.MIN_VALUE) continue;
                 int drop = yp - (h.getY() - 1);
-                if (drop < 0 || drop > L / 3) continue;
+                if (drop < 0 || drop > L / 3) {
+                    cols.why(Why.GROUND);
+                    continue;
+                }
                 Frame f = new Frame(px, yp, pz, rot);
                 // a hill over the drift, open ground in front of the portal
                 int over = cols.surface(f.x(0, L / 2), f.z(0, L / 2)), front = cols.surface(f.x(0, -5), f.z(0, -5));
-                if (over == Integer.MIN_VALUE || front == Integer.MIN_VALUE || over < yp + 6 || front > yp + 2) continue;
-                if (!mouthGround(cols, px, yp, pz) || cols.wet(px, pz, yp - drop - 2, yp + 4) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 2, yp)) continue;
+                if (over == Integer.MIN_VALUE || front == Integer.MIN_VALUE || over < yp + 6 || front > yp + 2) {
+                    cols.why(Why.GROUND);
+                    continue;
+                }
+                if (!mouthGround(cols, px, yp, pz)) continue;
+                if (cols.wet(px, pz, yp - drop - 2, yp + 4) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 2, yp)) {
+                    cols.why(Why.WET);
+                    continue;
+                }
                 int[] j = air(cols, h.getX(), h.getY() - 1, h.getZ(), 20, 10, 10, rnd);
                 Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, j != null, j == null ? 0 : j[0], j == null ? 0 : j[1], j == null ? 0 : j[2],
                         new int[]{Mouth.ADIT, L, drop, 3, 4, h.getX(), h.getY(), h.getZ(), l.ore().ordinal() + 1, rnd.nextInt(2)});
                 if (fits(spec, c)) return spec;
+                cols.why(Why.FIT);
             }
         }
         return null;
     }
 
     private static @Nullable Spec hillMouth(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
-        int sea = cols.ctx.chunkGenerator().getSeaLevel();
         for (int t = 0; t < 5; t++) {
             int px = c.getMiddleBlockX() + (t == 0 ? 0 : rnd.nextInt(41) - 20), pz = c.getMiddleBlockZ() + (t == 0 ? 0 : rnd.nextInt(41) - 20);
-            int yp = cols.surface(px, pz);
-            if (yp == Integer.MIN_VALUE || yp <= sea + 1 || !mouthGround(cols, px, yp, pz)) continue;
+            int yp = mouthTop(cols, px, pz);
+            if (yp == Integer.MIN_VALUE || !mouthGround(cols, px, yp, pz)) continue;
             int start = rnd.nextInt(4);
             for (int r = 0; r < 4; r++) {
                 int rot = (start + r) & 3;
                 Frame f = new Frame(px, yp, pz, rot);
                 // a slope: 8 or more of rise in 16, open in front
                 int into = cols.surface(f.x(0, 16), f.z(0, 16)), front = cols.surface(f.x(0, -6), f.z(0, -6));
-                if (into == Integer.MIN_VALUE || front == Integer.MIN_VALUE || into < yp + 8 || front > yp + 2) continue;
+                if (into == Integer.MIN_VALUE || front == Integer.MIN_VALUE || into < yp + 8 || front > yp + 2) {
+                    cols.why(Why.GROUND);
+                    continue;
+                }
                 int L = 16 + rnd.nextInt(25), w = 5 + 2 * rnd.nextInt(3), h = 6 + rnd.nextInt(6);
                 int drop = (L - Mouth.PORTAL) / 2;
                 int head = cols.surface(f.x(0, L), f.z(0, L));
-                if (head == Integer.MIN_VALUE || head < yp - drop + 10) continue;
-                if (cols.wet(f.x(0, L / 2), f.z(0, L / 2), yp - drop - 2, yp + 2) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 4, yp - drop + 4)) continue;
+                if (head == Integer.MIN_VALUE || head < yp - drop + 10) {
+                    cols.why(Why.GROUND);
+                    continue;
+                }
+                if (cols.wet(f.x(0, L / 2), f.z(0, L / 2), yp - drop - 2, yp + 2) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 4, yp - drop + 4)) {
+                    cols.why(Why.WET);
+                    continue;
+                }
                 int ex = f.x(0, L), ez = f.z(0, L);
                 int[] j = air(cols, ex, yp - drop, ez, 27, 12, 8, rnd);
-                if (j == null) continue;   // a hill mouth always leads somewhere
+                if (j == null) {   // a hill mouth always leads somewhere
+                    cols.why(Why.CAVE);
+                    continue;
+                }
                 Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
                         new int[]{Mouth.HILL, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2)});
                 if (fits(spec, c)) return spec;
+                cols.why(Why.FIT);
             }
         }
         return null;
@@ -426,29 +494,40 @@ final class CaveSites {
 
     /** A cleft: a cliff (9 of rise in 6, 14 in 14), open in front; a slot 2-4 wide, 16-28 long, ground over its end. */
     private static @Nullable Spec cleft(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
-        int sea = cols.ctx.chunkGenerator().getSeaLevel();
         for (int t = 0; t < 4; t++) {
             int px = c.getMiddleBlockX() + (t == 0 ? 0 : rnd.nextInt(41) - 20), pz = c.getMiddleBlockZ() + (t == 0 ? 0 : rnd.nextInt(41) - 20);
-            int yp = cols.surface(px, pz);
-            if (yp == Integer.MIN_VALUE || yp <= sea + 1 || !mouthGround(cols, px, yp, pz)) continue;
+            int yp = mouthTop(cols, px, pz);
+            if (yp == Integer.MIN_VALUE || !mouthGround(cols, px, yp, pz)) continue;
             int start = rnd.nextInt(4);
             for (int r = 0; r < 4; r++) {
                 int rot = (start + r) & 3;
                 Frame f = new Frame(px, yp, pz, rot);
                 int near = cols.surface(f.x(0, 6), f.z(0, 6)), far = cols.surface(f.x(0, 14), f.z(0, 14)), front = cols.surface(f.x(0, -6), f.z(0, -6));
-                if (near == Integer.MIN_VALUE || far == Integer.MIN_VALUE || front == Integer.MIN_VALUE) continue;
-                if (near < yp + 9 || far < yp + 14 || front > yp + 2) continue;
+                if (near == Integer.MIN_VALUE || far == Integer.MIN_VALUE || front == Integer.MIN_VALUE || near < yp + 9 || far < yp + 14 || front > yp + 2) {
+                    cols.why(Why.GROUND);
+                    continue;
+                }
                 int L = 16 + rnd.nextInt(13), w = 2 + rnd.nextInt(3), drop = (L - Mouth.PORTAL) / 3;
                 int shut = (int) (L * 0.65);
                 int head = cols.surface(f.x(0, L), f.z(0, L)), over = cols.surface(f.x(0, shut - 1), f.z(0, shut - 1));
-                if (head == Integer.MIN_VALUE || over == Integer.MIN_VALUE || head < yp - drop + 10) continue;
+                if (head == Integer.MIN_VALUE || over == Integer.MIN_VALUE || head < yp - drop + 10) {
+                    cols.why(Why.GROUND);
+                    continue;
+                }
                 int h = Mth.clamp(Math.max(near, over) - yp + 2, 8, 40);
-                if (cols.wet(f.x(0, L / 2), f.z(0, L / 2), yp - drop - 2, yp + 2) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 4, yp - drop + 4)) continue;
+                if (cols.wet(f.x(0, L / 2), f.z(0, L / 2), yp - drop - 2, yp + 2) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 4, yp - drop + 4)) {
+                    cols.why(Why.WET);
+                    continue;
+                }
                 int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 12, 8, rnd);
-                if (j == null) continue;   // a cleft always leads somewhere
+                if (j == null) {   // a cleft always leads somewhere
+                    cols.why(Why.CAVE);
+                    continue;
+                }
                 Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
                         new int[]{Mouth.CLEFT, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2)});
                 if (fits(spec, c)) return spec;
+                cols.why(Why.FIT);
             }
         }
         return null;
@@ -456,11 +535,11 @@ final class CaveSites {
 
     /** A doline: flat ground (within 2 all round), a hole 7-11 across and 10-25 deep, dry, cave air by its foot. */
     private static @Nullable Spec doline(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {
-        int sea = cols.ctx.chunkGenerator().getSeaLevel(), minY = cols.ctx.heightAccessor().getMinY();
+        int minY = cols.ctx.heightAccessor().getMinY();
         for (int t = 0; t < 4; t++) {
             int px = c.getMiddleBlockX() + (t == 0 ? 0 : rnd.nextInt(41) - 20), pz = c.getMiddleBlockZ() + (t == 0 ? 0 : rnd.nextInt(41) - 20);
-            int yp = cols.surface(px, pz);
-            if (yp == Integer.MIN_VALUE || yp <= sea + 1 || !mouthGround(cols, px, yp, pz)) continue;
+            int yp = mouthTop(cols, px, pz);
+            if (yp == Integer.MIN_VALUE || !mouthGround(cols, px, yp, pz)) continue;
             int r = 3 + rnd.nextInt(3);
             boolean flat = true;
             for (int k = 0; k < 6 && flat; k++) {
@@ -468,16 +547,26 @@ final class CaveSites {
                 int top = cols.surface(Mth.floor(px + Math.cos(a) * (r + 3)), Mth.floor(pz + Math.sin(a) * (r + 3)));
                 if (top == Integer.MIN_VALUE || Math.abs(top - yp) > 2) flat = false;
             }
-            if (!flat) continue;
+            if (!flat) {
+                cols.why(Why.GROUND);
+                continue;
+            }
             int drop = 10 + rnd.nextInt(Math.min(25, 4 * r + 5) - 9), rot = rnd.nextInt(4), L = r + 3;
             if (yp - drop - 6 < minY + 6) continue;
             Frame f = new Frame(px, yp, pz, rot);
-            if (cols.wet(px, pz, yp - drop - 3, yp + 1) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 3, yp - drop + 4)) continue;
+            if (cols.wet(px, pz, yp - drop - 3, yp + 1) || cols.wet(f.x(0, L), f.z(0, L), yp - drop - 3, yp - drop + 4)) {
+                cols.why(Why.WET);
+                continue;
+            }
             int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 10, 8, rnd);
-            if (j == null) continue;
+            if (j == null) {
+                cols.why(Why.CAVE);
+                continue;
+            }
             Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
                     new int[]{Mouth.DOLINE, L, drop, 2 * r + 1, drop, 0, 0, 0, 0, rnd.nextInt(2)});
             if (fits(spec, c)) return spec;
+            cols.why(Why.FIT);
         }
         return null;
     }
