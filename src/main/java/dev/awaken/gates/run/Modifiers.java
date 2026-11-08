@@ -9,6 +9,7 @@ import dev.awaken.gates.GateRecord;
 import dev.awaken.gates.GateRegistry;
 import dev.awaken.gates.GateService;
 import dev.awaken.gates.GatesRegistry;
+import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Modifier;
 import dev.awaken.gates.entity.GateShade;
 import dev.awaken.gates.world.FloorLayout;
@@ -175,6 +176,12 @@ public final class Modifiers {
     }
 
     // ---- Echoing: what happens when a gate monster dies -----------------------------------------------
+
+    /** What an Echoing gate says as you walk in, or null: a body getting up shouldn't look like a fault (SPEC §47.16). */
+    public static String entryLine(GatePlan plan) {
+        if (!plan.modifiers().contains(Modifier.ECHOING) || plan.friendly()) return null;
+        return "In this gate, the dead get up once. Hit them again while they're down and they stay down.";
+    }
 
     private record Pending(long at, Runnable run) {}
 

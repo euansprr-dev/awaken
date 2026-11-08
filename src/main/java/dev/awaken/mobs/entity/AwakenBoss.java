@@ -506,6 +506,12 @@ public class AwakenBoss extends AwakenMob {
         return hurt;
     }
 
+    /** Getting up is part of its fight: a stray tap can't end it, a real flurry can (SPEC §47.16). */
+    @Override
+    protected float fallenHealth() {
+        return getMaxHealth() * 0.1F;
+    }
+
     @Override
     protected void onDied(ServerLevel level, DamageSource source) {
         super.onDied(level, source);

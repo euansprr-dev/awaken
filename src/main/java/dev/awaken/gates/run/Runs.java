@@ -148,7 +148,13 @@ public final class Runs {
                 .row("Layout", plan.layout().displayName + " · " + plan.layout().hint);
         if (!plan.modifiers().isEmpty()) w.row("Modifiers", String.join(", ", plan.modifiers().stream().map(m -> m.displayName).toList()));
         String twistLine = Twists.entryLine(plan);
-        if (twistLine != null) w.body(Component.literal(twistLine).withStyle(plan.is(Twist.RED_GATE) ? ChatFormatting.RED : ChatFormatting.WHITE));
+        String echoLine = Modifiers.entryLine(plan);
+        if (twistLine != null || echoLine != null) {
+            var body = Component.empty();
+            if (twistLine != null) body.append(Component.literal(twistLine).withStyle(plan.is(Twist.RED_GATE) ? ChatFormatting.RED : ChatFormatting.WHITE));
+            if (echoLine != null) body.append(Component.literal((twistLine != null ? " " : "") + echoLine).withStyle(ChatFormatting.WHITE));
+            w.body(body);
+        }
         w.footer(Component.literal(plan.friendly() ? "No one here wants to fight you." : "Find the Rest Shrine."));
         Signal.send(p, w.priority(4).ttl(20 * 8).build());
         DirectorLog.log(p, "gate", "entered gate " + g.id + " (run " + run.runIndex + ")");

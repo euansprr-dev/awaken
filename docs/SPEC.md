@@ -1031,6 +1031,7 @@ Gates:
   of your last five extraction floors (2 before any). Gate interiors can't be broken or blown up.
 - Echoing (`Forces.Tag.ECHO`) means "gets up once": Awaken creatures fall and stand up by themselves (mobs), anything
   else is replaced once by the gate; `Forces.markRisen` records that it already rose (shared with the Descent).
+  Walking in, the gate says so, and a body lying fallen can be finished (§47.16).
   Player-owned Echoes are `MobRole.Role.ECHO`, never this tag.
 - A broken gate's Lord is the theme's Lord body with role BREAK (×8 health, ×1.3 damage), shown with the gates' boss bar.
   **Home bounds** (Euan 2026-10-28, Mother of Spores repeatedly snapped back while flying uphill): a Lord's saved home
@@ -19500,3 +19501,21 @@ same way. Test `fights_shots_own_look`.
 **The fire-tick crash.** A guard that turned a kit ability's blow on the tick it fired (the Bell Warden's clapper) ended the move
 inside `abilityRunner().fire`, and the next line read the ability that had just been cleared: a ticking-entity crash that took
 the world down. `FightRunner.step` now returns if the move ended there. Test `fights_reach_parry_fires`.
+
+**47.16 The dead get up once, and you can stop them** (Euan's playtest 2026-11-08, "they're fake dying": every creature in an
+Echoing gate fell, stood up with health again, and couldn't be hit while it lay, with nothing to say why).
+
+- **Say so.** Walking into an Echoing gate, the entry card reads "In this gate, the dead get up once. Hit them again while
+  they're down and they stay down." (`Modifiers.entryLine`, after any twist's line; not in a friendly gate).
+- **Finishing.** For its 2.5 seconds on the ground a fallen creature takes any blow someone struck: a player's weapon, shot or
+  power, or a tame beast's (`AwakenMob.finishes`: the source has an attacker, and that isn't another of the mobs). Fire, falls,
+  a poison's tick and the creature's own kind pass over it. The next blow lands at once (the fall clears the hurt cooldown).
+  It lies at 1 health, so a real blow ends it there, as a real death: loot, kill credit, its death effects.
+- **The rise is spent when it falls** (`Forces.markRisen` moves from the rise to the fall), so a finished body doesn't get up,
+  a gate doesn't replace it and a Descent zone doesn't raise it. Left alone it gets up at half health as before. Saved mid-fall,
+  it gets up as soon as it's loaded.
+- **Nothing turns the finishing blow:** falling ends a guard and a phase, and a fallen REFLECT creature doesn't bounce shots.
+- **A boss holds a tenth of its health while it lies** (`AwakenBoss.fallenHealth`; the RISES Guardian and Nightmare, and gate
+  Wardens under Echoing). Its getting up is part of the fight, so a stray tap can't skip it; a real flurry in the 2.5 seconds can.
+- A fallen creature is alive, so it keeps its card and its lock (§47.12's `Aim.body` is for real bodies only). Same path for
+  `Forces.Tag.ECHO` and `Trait.RISES`. Test `mobs_echo_finish`; the entry line in `gates_modifiers_live`.
