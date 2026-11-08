@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /** Regression tests for defects found in the gates review (one test per confirmed failure). */
@@ -26,6 +27,39 @@ public final class RunRegressionTests {
     private RunRegressionTests() {}
 
     public static void register() {
+        // The two blocks you click in the last room: one left in the air gets what it needs under it when you walk in, on a
+        // floor already painted (SPEC §38.16). Where the block isn't there, nothing is built.
+        AwakenTests.registerIsolated("gates_shrine_stands_on_entry", 100, h -> {
+            ServerLevel level = h.getLevel();
+            GateService.useTestLevel(level);
+            GateRecord g = null;
+            ServerPlayer p = null;
+            try {
+                GatePlan plan = GateLiveTests.plan(6161, Theme.BELL_CRYPT, Layout.LABYRINTH, Twist.NONE, 0);
+                g = GateLiveTests.standUp(h, plan, 0, 1);
+                p = GateLiveTests.player(h);
+                FloorLayout f = GateLayout.of(plan).floor(0, 1);
+                Room room = f.rooms.stream().filter(r -> r.type == Room.Type.SHRINE).findFirst().orElseThrow();
+                BlockPos shrine = GateService.feature(g, f, room, room.feature(Room.FeatureKind.SHRINE));
+                BlockPos seal = GateService.feature(g, f, room, room.feature(Room.FeatureKind.SEAL));
+                h.assertTrue(level.getBlockState(shrine).is(GatesRegistry.SHRINE.get()) && level.getBlockState(seal).is(GatesRegistry.SEAL.get()), "the floor is painted");
+                h.assertTrue(Runs.enter(p, g), "entered");
+                GateLiveTests.put(level, p, g, f, room);
+                level.setBlock(shrine.below(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                for (int d = 1; d <= 3; d++) level.setBlock(seal.below(d), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                Rooms.enter(level, p, g, f, room, room.centerX(), room.centerZ());
+                h.assertFalse(level.getBlockState(shrine.below()).isAir(), "the Shrine has a plinth");
+                for (int d = 1; d <= 3; d++) h.assertFalse(level.getBlockState(seal.below(d)).isAir(), "the Seal's plinth reaches the floor, " + d + " down");
+                level.setBlock(shrine, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                level.setBlock(shrine.below(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                Rooms.enter(level, p, g, f, room, room.centerX(), room.centerZ());
+                h.assertTrue(level.getBlockState(shrine.below()).isAir(), "no Shrine there, so no plinth");
+            } finally {
+                GateLiveTests.teardown(level, p, g);
+            }
+            h.succeed();
+        });
+
         // An arena whose waves can't take form (the gate is at its monster cap) must not seal the player in.
         AwakenTests.registerIsolated("gates_arena_never_seals_empty", 100, h -> {
             ServerLevel level = h.getLevel();

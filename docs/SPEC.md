@@ -12625,6 +12625,14 @@ a thing gets nothing. Nothing is put there to fill the gap.
     placements that wait for the ground too (`BorrowedDress.late`: the Gates' Heart's flights, borrowed strings).
   - Upside-down furniture is carried up in its own stuff to meet a roof that isn't flat (`DreamDress.shim`). The
     Nursery's mobile hangs on a chain.
+  - The Shrine and the Seal, the two blocks you click to leave or go on, always stand on something solid (Euan 8 Nov:
+    "those are still floating sometimes"). A terrace Shrine room sets them a block up, for its dais; a world floor takes
+    a room's features but not its dais, so a quarter of them stood a block in the air. There the painter sets a plinth
+    of the theme's pillar under each. A chunk already painted is never painted again, so `Rooms.enter` fills what's
+    missing under either one, down to something solid within 8, on any floor of any version, when someone walks in. The
+    Bell Crypt's wear leaves every feature's column as the engine laid it (`CryptWear.keepUnder`).
+    `gates_placement` also rolls 600 gates the Director's way and reads these two blocks' columns: its own worlds are
+    all Spiral Towers, whose Shrine room is always round.
   - Features stand on a whole step: a half step under a cache or a rune is made whole (`Relief.level`). In a built
     room a feature stands on the floor under it, up a terrace's dais or down in a pit (`RoomGeometry.featureLift`, read
     by the painter and by `GateService.feature` for every use: the rune you press, the lantern you take, the shrine's

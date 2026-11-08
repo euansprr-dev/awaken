@@ -41,6 +41,7 @@ final class CryptWear {
         this.W = W;
         this.seed = seed;
         this.keep = keep;
+        p.wear = this;
         this.floor = floor;
         this.wet = wet;
         this.tracery = tracery;
@@ -82,6 +83,11 @@ final class CryptWear {
                 bellZ = z;
             }
         }
+    }
+
+    /** A feature's column stays as the engine laid it: the stone under it never sinks (version 9, SPEC §38.16). */
+    void keepUnder(int x, int z) {
+        if (x >= 0 && z >= 0 && x < Plots.SIDE && z < Plots.SIDE) pin.set(x + z * Plots.SIDE);
     }
 
     private void box(int x0, int z0, int x1, int z1) {
