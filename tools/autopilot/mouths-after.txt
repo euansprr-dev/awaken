@@ -1,6 +1,6 @@
 # Cave mouths after the 8 Nov fix (Euan: "I can't find a single cave entrance"): his New World (11) remade from its seed
-# with the pack's terrain. The census round spawn and home, then the nearest mouth to a spot in each biome his world has,
-# from the eye of someone walking 24, 70 and 130 m out in front of it, by day; two of them again at dawn.
+# with the pack's terrain. The nearest mouth to a spot in each biome his world has, from the eye of someone walking 24, 70
+# and 130 m out in front of it, by day; two of them again at dawn; then the census round his home and spawn.
 # ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=10
 #   tools/tour-ci.sh tools/autopilot/mouths-after.txt 3000
 world mouths_after creative 5652006211025591964
@@ -30,14 +30,6 @@ camera first
 hud off
 cmd time set 6000
 cmd effect give @s minecraft:resistance 100000 4 true
-cmd tp @s -599 110 -1165
-wait 100
-cmd awaken delve mouths 1600
-wait 60
-cmd tp @s -605 176 -2323
-wait 100
-cmd awaken delve mouths 1600
-wait 60
 
 # ---- plains ----
 cmd tp @s -728 200 -1656
@@ -175,5 +167,15 @@ wait 200
 cmd execute at @s positioned ^ ^ ^-130 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
 wait 100
 shot ma_forest_dawn_130m
+
+# ---- the census last: it holds the server for two minutes, and the script's waits don't wait for the server ----
+cmd tp @s -605 176 -2323
+wait 200
+cmd awaken delve mouths 1600
+wait 6000
+cmd tp @s -599 110 -1165
+wait 200
+cmd awaken delve mouths 1600
+wait 6000
 
 quit

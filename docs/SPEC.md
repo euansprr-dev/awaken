@@ -12712,6 +12712,11 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills
   and bridges over one it crosses (2 of his 51 mouths are within 12 m of a road, 1 of them buried by its bed), the road
   stays whole. `CaveSites.Probe`'s reasons (`Why`) count a candidate's own ground, never an adit's distant lode.
+- **The joint, since 8 Nov**: a hill mouth, cleft or doline looks for its cave air on the same rings out to 27, and on the
+  wider rings further down, up to 0.8 down for every 1 out (`CaveSites.JOINT_SLOPE`; Tectonic seals the caves about 12
+  under the ground, so "no cave to join" was the biggest loss on dry land). The same columns, read further down; the
+  route test walks a staged hill mouth's joint at that slope. Slope probes read the noise's 4-block cells so the forms
+  share columns.
 - **Delver adit** (tried first): an iron or copper lode within 72 whose heart is at y 24 or above, a hill over the
   drift, an open front, dry; drift 14-28 long, falling 0 to a third of its length, timber sets every 3, rails, ends at
   the heart (left in the end face; the joint tunnel to the cave leaves from the drift's side). Mark "pick" at the drift's

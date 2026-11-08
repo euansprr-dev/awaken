@@ -88,6 +88,11 @@ final class CaveSites {
             return Integer.MIN_VALUE;
         }
 
+        /** As {@link #surface}, read on the noise's own 4-block cells: the mouth forms' slope probes then share columns, the search's cost. */
+        int coarse(int x, int z) {
+            return surface(x & ~3, z & ~3);
+        }
+
         /** Whether the column holds water or lava anywhere from y0 to y1. */
         boolean wet(int x, int z, int y0, int y1) {
             NoiseColumn c = at(x, z);
@@ -109,18 +114,28 @@ final class CaveSites {
 
     /** A floor of natural cave air near (x, y, z): feet cell with three of air over solid rock; within reach; or null. */
     static int @Nullable [] air(Columns cols, int x, int y, int z, int reach, int below, int above, WorldgenRandom rnd) {
+        return air(cols, x, y, z, reach, below, above, 0, rnd);
+    }
+
+    /**
+     * As above; {@code slope} above zero also looks further down on the wider rings, to that many blocks down for every one
+     * out (a mouth's joint: Tectonic seals the caves about 12 under the ground, so they lie deeper than the throat's end).
+     * The same columns, read further down.
+     */
+    static int @Nullable [] air(Columns cols, int x, int y, int z, int reach, int below, int above, double slope, WorldgenRandom rnd) {
         int[] best = null;
         double bestD = Double.MAX_VALUE;
         int[] rings = {8, 14, 20, 27};
         for (int ring : rings) {
             if (ring > reach) break;
             double spin = rnd.nextDouble() * Math.PI * 2;
+            int low = Math.max(below, (int) (ring * slope));
             for (int k = 0; k < 6; k++) {
                 double a = spin + k * Math.PI / 3;
                 int cx = Mth.floor(x + Math.cos(a) * ring), cz = Mth.floor(z + Math.sin(a) * ring);
                 NoiseColumn c = cols.at(cx, cz);
                 int run = 0;
-                for (int cy = y + above; cy >= y - below; cy--) {
+                for (int cy = y + above; cy >= y - low; cy--) {
                     BlockState s = c.getBlock(cy);
                     if (s.isAir()) {
                         run++;
@@ -387,6 +402,9 @@ final class CaveSites {
         return s;
     }
 
+    /** How steep a mouth's joint may run down to its cave: still a walk, a jump at a time (SPEC §34.1). */
+    static final double JOINT_SLOPE = 0.8;
+
     /** How far a mouth keeps from a grid settlement's anchor: its plan's furthest ground and the mouth's own worn fan. */
     private static final int SETTLEMENT_CLEAR = 120;
 
@@ -461,14 +479,14 @@ final class CaveSites {
                 int rot = (start + r) & 3;
                 Frame f = new Frame(px, yp, pz, rot);
                 // a slope: 8 or more of rise in 16, open in front
-                int into = cols.surface(f.x(0, 16), f.z(0, 16)), front = cols.surface(f.x(0, -6), f.z(0, -6));
+                int into = cols.coarse(f.x(0, 16), f.z(0, 16)), front = cols.coarse(f.x(0, -6), f.z(0, -6));
                 if (into == Integer.MIN_VALUE || front == Integer.MIN_VALUE || into < yp + 8 || front > yp + 2) {
                     cols.why(Why.GROUND);
                     continue;
                 }
                 int L = 16 + rnd.nextInt(25), w = 5 + 2 * rnd.nextInt(3), h = 6 + rnd.nextInt(6);
                 int drop = (L - Mouth.PORTAL) / 2;
-                int head = cols.surface(f.x(0, L), f.z(0, L));
+                int head = cols.coarse(f.x(0, L), f.z(0, L));
                 if (head == Integer.MIN_VALUE || head < yp - drop + 10) {
                     cols.why(Why.GROUND);
                     continue;
@@ -478,7 +496,7 @@ final class CaveSites {
                     continue;
                 }
                 int ex = f.x(0, L), ez = f.z(0, L);
-                int[] j = air(cols, ex, yp - drop, ez, 27, 12, 8, rnd);
+                int[] j = air(cols, ex, yp - drop, ez, 27, 12, 8, JOINT_SLOPE, rnd);
                 if (j == null) {   // a hill mouth always leads somewhere
                     cols.why(Why.CAVE);
                     continue;
@@ -502,14 +520,14 @@ final class CaveSites {
             for (int r = 0; r < 4; r++) {
                 int rot = (start + r) & 3;
                 Frame f = new Frame(px, yp, pz, rot);
-                int near = cols.surface(f.x(0, 6), f.z(0, 6)), far = cols.surface(f.x(0, 14), f.z(0, 14)), front = cols.surface(f.x(0, -6), f.z(0, -6));
+                int near = cols.coarse(f.x(0, 6), f.z(0, 6)), far = cols.coarse(f.x(0, 14), f.z(0, 14)), front = cols.coarse(f.x(0, -6), f.z(0, -6));
                 if (near == Integer.MIN_VALUE || far == Integer.MIN_VALUE || front == Integer.MIN_VALUE || near < yp + 9 || far < yp + 14 || front > yp + 2) {
                     cols.why(Why.GROUND);
                     continue;
                 }
                 int L = 16 + rnd.nextInt(13), w = 2 + rnd.nextInt(3), drop = (L - Mouth.PORTAL) / 3;
                 int shut = (int) (L * 0.65);
-                int head = cols.surface(f.x(0, L), f.z(0, L)), over = cols.surface(f.x(0, shut - 1), f.z(0, shut - 1));
+                int head = cols.coarse(f.x(0, L), f.z(0, L)), over = cols.coarse(f.x(0, shut - 1), f.z(0, shut - 1));
                 if (head == Integer.MIN_VALUE || over == Integer.MIN_VALUE || head < yp - drop + 10) {
                     cols.why(Why.GROUND);
                     continue;
@@ -519,7 +537,7 @@ final class CaveSites {
                     cols.why(Why.WET);
                     continue;
                 }
-                int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 12, 8, rnd);
+                int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 12, 8, JOINT_SLOPE, rnd);
                 if (j == null) {   // a cleft always leads somewhere
                     cols.why(Why.CAVE);
                     continue;
@@ -547,7 +565,7 @@ final class CaveSites {
             boolean flat = true;
             for (int k = 0; k < 6 && flat; k++) {
                 double a = k * Math.PI / 3;
-                int top = cols.surface(Mth.floor(px + Math.cos(a) * (r + 3)), Mth.floor(pz + Math.sin(a) * (r + 3)));
+                int top = cols.coarse(Mth.floor(px + Math.cos(a) * (r + 3)), Mth.floor(pz + Math.sin(a) * (r + 3)));
                 if (top == Integer.MIN_VALUE || Math.abs(top - yp) > Mouth.TILT) flat = false;
             }
             if (!flat) {
@@ -572,7 +590,7 @@ final class CaveSites {
                 cols.why(Why.WET);
                 continue;
             }
-            int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 10, 8, rnd);
+            int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 10, 8, JOINT_SLOPE, rnd);
             if (j == null) {
                 cols.why(Why.CAVE);
                 continue;
