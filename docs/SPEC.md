@@ -19508,7 +19508,7 @@ Echoing gate fell, stood up with health again, and couldn't be hit while it lay,
 - **Say so.** Walking into an Echoing gate, the entry card reads "In this gate, the dead get up once. Hit them again while
   they're down and they stay down." (`Modifiers.entryLine`, after any twist's line; not in a friendly gate).
 - **Finishing.** For its 2.5 seconds on the ground a fallen creature takes any blow someone struck: a player's weapon, shot or
-  power, or a tame beast's (`AwakenMob.finishes`: the source has an attacker, and that isn't another of the mobs). Fire, falls,
+  power, or a vanilla pet's (`AwakenMob.finishes`: the source has an attacker, and that isn't one of our creatures; our own tame beasts count as those). Fire, falls,
   a poison's tick and the creature's own kind pass over it. The next blow lands at once (the fall clears the hurt cooldown).
   It lies at 1 health, so a real blow ends it there, as a real death: loot, kill credit, its death effects.
 - **The rise is spent when it falls** (`Forces.markRisen` moves from the rise to the fall), so a finished body doesn't get up,
