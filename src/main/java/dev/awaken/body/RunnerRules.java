@@ -579,6 +579,52 @@ public final class RunnerRules {
         return AHEAD_LEAP;
     }
 
+    /** The free-run's stop on a ledge: how far from the landing, along and up or down, before it reads upward again. */
+    public static final double SETTLE_AWAY = 2.5, SETTLE_HEIGHT = 0.75;
+
+    /**
+     * The free-run stops on what it just climbed (SPEC §17.14). A climb that lands with the free-run held sets it: from
+     * there a ledge to mantle or a wall to jump at waits until you ask (a fresh jump press, or letting go of sprint or
+     * forward) or you've gone from the landing. A press in the climb's last few ticks has asked already. No clock runs
+     * it out, and everything else the free-run does (a vault, a leap, a fence, a climb line) goes on.
+     */
+    public static final class Settle {
+        private boolean on;
+        private double x, y, z;
+        private int jumpAt = -100;
+
+        /** Each tick, before anything is read. */
+        public void tick(boolean held, boolean jumpPressed, double px, double py, double pz, int now) {
+            if (jumpPressed) jumpAt = now;
+            if (!on) return;
+            double dx = px - x, dz = pz - z;
+            if (!held || jumpPressed || dx * dx + dz * dz > SETTLE_AWAY * SETTLE_AWAY || Math.abs(py - y) > SETTLE_HEIGHT) on = false;
+        }
+
+        /** A climb ended with the feet at (px, py, pz). */
+        public void landed(boolean held, double px, double py, double pz, int now) {
+            on = held && now - jumpAt > BUFFER;
+            x = px;
+            y = py;
+            z = pz;
+        }
+
+        public void clear() {
+            on = false;
+            jumpAt = -100;
+        }
+
+        /** Stopped here: the free-run alone mantles nothing. */
+        public boolean stopped() {
+            return on;
+        }
+
+        /** Stopped, and what {@link #ahead} read is a way up: a wall to jump at, or a "vault" of a mantle's height. */
+        public boolean holds(int what, double rise) {
+            return on && (what == AHEAD_WALL || what == AHEAD_VAULT && rise >= BodyRules.MANTLE_MIN);
+        }
+    }
+
     /** Jump magnetism: a pull of at most this many degrees a tick, this many in all, for this many ticks, and only toward
      * a target within this many degrees of the way you're going. */
     public static final double PULL_STEP = 2.5, PULL_MAX = 14, PULL_CONE = 30;

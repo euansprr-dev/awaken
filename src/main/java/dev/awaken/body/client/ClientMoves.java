@@ -122,7 +122,7 @@ public final class ClientMoves {
         boolean kit = dev.awaken.body.BodyConfig.runnersKit();
         boolean awakened = kit || Progression.profile(p).awakened();
         // the one-button free-run (SPEC §17.14): sprint held with forward reads the ground ahead
-        FreeRun.begin(p, k);
+        FreeRun.begin(p, k, jumpPressed, ticks);
         FreeRun.climb(p);
         if (!awakened && (tac || sliding || mantling || vaulting)) stopAll(p);
         if (jumpSuppressed) {
@@ -167,7 +167,9 @@ public final class ClientMoves {
                         startVault(p, in, v);
                         return;
                     }
-                    BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
+                    // (a jump pressed has already lifted the free-run's stop on the ledge just climbed)
+                    BodyRules.Ledge l = FreeRun.SETTLE.stopped() ? null
+                            : BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
                     if (l != null) {
                         startMantle(p, in, l);
                         return;
@@ -517,6 +519,7 @@ public final class ClientMoves {
             mantling = false;
             mantleEnd = ticks;
             trace("mantle done");
+            FreeRun.climbed(l.x(), l.y(), l.z(), ticks);
             double fx = l.x() - msx, fz = l.z() - msz, f = Math.sqrt(fx * fx + fz * fz);
             if (f > 1e-6) p.setDeltaMovement(fx / f * 0.12, 0, fz / f * 0.12);
             return;

@@ -4281,6 +4281,16 @@ server checks every move exactly as before (a free-run move is the same claim a 
   1.6 is **jumped at** when Wall Stride climbs it or its lip is a hang from the jump's height; with no floor 2 blocks
   down two ticks ahead (not water) the edge is **leapt from** (the sprint jump). A fence or wall (1.5) is crossed (§17.27), a
   step down of one is run down.
+- **It stops on what it climbed** (Euan, 2026-11-08: on a stair of two-high steps "you can't stay there ... it automatically
+  mantles you onto that one"; `RunnerRules.Settle`). A mantle or a climb out that lands with the free-run held leaves you
+  standing there: a ledge to mantle or a wall to jump at (a "vault" 1.1 up or more counts) is left alone, however long the
+  keys stay held. **A fresh jump press asks for the next one**, free-run on or off, and carries on with the keys held (the
+  press may come up to 4 ticks before the landing, so a stair of ledges goes up tap, tap, tap; a jump key merely held
+  never asks). Letting go of sprint or forward lifts the stop as well: holding them again mantles at once, and a wall
+  wants its usual run at it. So does going 2.5 blocks from the landing or 0.75 up or down from it, so a wide roof runs on
+  into the wall at its far end. Vaults of a block's height, leaps, fences and walls (§17.27), the hang's own climb and
+  the climb lines aren't touched; the server checks nothing new (this is what the keys ask for). Test:
+  `runner_free_run_stops` (this staircase, the mantle's 1.5 steps).
 - **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
   the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
 - **Hanging**, sprint and forward held for 6 ticks climb (the ledge jump's own climb out, or up when looking up).

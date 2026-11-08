@@ -905,7 +905,10 @@ public final class RunnerMoves {
             settleAt = now + (pathKind == GRAB || pathKind == LOWER || pathKind == EAVE ? 5 : 1);
         } else {
             state = State.NONE;
-            if (pathKind == CLIMB) sendEnd(Move.LEDGE_JUMP);
+            if (pathKind == CLIMB) {
+                sendEnd(Move.LEDGE_JUMP);
+                FreeRun.climbed(bx, by, bz, now);
+            }
             ClientMoves.trace("climbed out");
         }
     }
