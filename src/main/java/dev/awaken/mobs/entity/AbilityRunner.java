@@ -261,7 +261,7 @@ public final class AbilityRunner {
                 Vec3 d = new Vec3(aim.x - feet.x, 0, aim.z - feet.z);
                 if (d.lengthSqr() < 1.0E-4) d = mob.getLookAngle();
                 d = new Vec3(d.x, 0, d.z).normalize();
-                double reach = CHARGE_TICKS * (mob.def().flies() ? 1.0 : 0.85);
+                double reach = scripted ? Math.sqrt(feet.distanceToSqr(aim.x, feet.y, aim.z)) + CHARGE_PAST : CHARGE_TICKS * (mob.def().flies() ? 1.0 : 0.85);
                 Carriers.line(level, mob, cls, feet.add(0, 0.1, 0), feet.add(d.scale(reach)).add(0, 0.1, 0), left, mob.getBbWidth() * 0.5F + 0.4F);
             }
             case FANGS -> {
@@ -466,10 +466,12 @@ public final class AbilityRunner {
                 leapEffect = Abilities.effect(mob, a);
             }
             case CHARGE -> {
-                Vec3 d = aim.subtract(mob.position().add(0, mob.getBbHeight() * 0.5, 0));
+                // a kit charge runs at you and stops there (SPEC §47.15), at your height: a flier ends where it can be hit
+                Vec3 d = scripted && t != null ? chargeRun(t) : aim.subtract(mob.position().add(0, mob.getBbHeight() * 0.5, 0));
                 if (!mob.def().flies()) d = new Vec3(d.x, 0, d.z);
                 chargeDir = d.lengthSqr() < 1.0E-4 ? mob.getLookAngle() : d.normalize();
-                chargeTicks = CHARGE_TICKS;
+                double speed = mob.def().flies() ? 1.0 : 0.85;
+                chargeTicks = scripted && t != null ? Math.max(4, Math.min(CHARGE_TICKS + 4, Mth.ceil(d.length() / speed))) : CHARGE_TICKS;
                 chargeDamage = Abilities.damage(mob, a);
                 chargeAbility = a;
                 chargeEffect = Abilities.effect(mob, a);
@@ -556,6 +558,17 @@ public final class AbilityRunner {
         var fx = blinkEffect;
         Strikes.deliver(mob, Strikes.Kind.HEAVY, () -> Abilities.hurt(level, mob, t, Abilities.damage(mob, a), Abilities.bolt(mob, a), fx));
     }
+
+    /** A kit charge's whole run: from where the body is to just past the target, ending level with its feet. */
+    private Vec3 chargeRun(LivingEntity t) {
+        Vec3 flat = new Vec3(t.getX() - mob.getX(), 0, t.getZ() - mob.getZ());
+        double len = flat.length();
+        Vec3 ahead = len < 1.0E-3 ? Vec3.ZERO : flat.scale((len + CHARGE_PAST) / len);
+        return new Vec3(ahead.x, mob.def().flies() ? t.getY() - mob.getY() : 0, ahead.z);
+    }
+
+    /** Blocks past you a charge carries before it's spent. */
+    static final double CHARGE_PAST = 1.5;
 
     private void tickCharge(ServerLevel level) {
         chargeTicks--;

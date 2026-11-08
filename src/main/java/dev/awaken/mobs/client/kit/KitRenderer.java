@@ -145,6 +145,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         }
         s.footL = s.footR = 0;
         s.kitDrop = 0;
+        s.kitLean = 0;
         s.kitStill = 0;
         if (!(mob instanceof AwakenBoss boss)) return;
         HeroRig rig = kit.rig();
@@ -177,6 +178,8 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         float winding = -1;
         if (mv >= 0 && mv < clip.length) {
             winding = stage(s, mv, boss.kitHold(), (now - start) / 20F, speed);
+            s.kitLean = boss.kitLean() * leanShare(kit.moves().get(mv), boss.kitHold(), now - start, speed);
+            s.kitHip = boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP;
             if (KitConfig.hitFeel()) feel(boss, mv, start, now, blend);
         }
         s.prevClip = -1;
@@ -437,6 +440,21 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
     protected void setupRotations(HeroRenderState s, PoseStack pose, float bodyRot, float entityScale) {
         if (s.kitDrop < 0) pose.translate(0, s.kitDrop, 0);
         pose.rotateDegrees(Axis.YP, 180.0F - bodyRot);
+        if (s.kitLean != 0) { // into the blow, from the hips (the body's forward is -z here)
+            pose.translate(0, s.kitHip, 0);
+            pose.rotateDegrees(Axis.XP, -s.kitLean);
+            pose.translate(0, -s.kitHip, 0);
+        }
+    }
+
+    /** How far through its lean a blow is: none until the lock, all of it by contact and through the strike, then back. */
+    private static float leanShare(KitMoves.Move m, int hold, float ticks, float speed) {
+        KitMoves.Played p = KitMoves.played(m, speed, hold);
+        float wind = p.windup() + p.hold(), lock = Math.min(wind - 1, m.time().lock());
+        if (ticks <= lock) return 0;
+        if (ticks < wind) return (ticks - lock) / Math.max(1F, wind - lock);
+        if (ticks <= wind + p.active()) return 1F;
+        return Math.max(0F, 1F - (ticks - wind - p.active()) / Math.max(1F, p.recover() * 0.6F));
     }
 
     private static AwLook look(HeroRenderState s) {

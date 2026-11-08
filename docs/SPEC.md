@@ -19438,3 +19438,38 @@ the blow's class, poison and burn left behind counted in full (poison stops at h
   the holdfasts deal nothing of their own (their creatures are audited, the Descent's water is vanilla drowning); a
   dream's Chase and Duel can't kill (a killing blow wakes you, `DreamEvents`) and their creatures are audited at the
   dream's level.
+
+**47.15 Aimed blows (Euan's playtest 2026-11-08, the Hive Regent on build f7530d2d5: "sometimes the boss was literally
+swinging in midair", "it would dash and then it would be like in the middle of the air", "it was flying like super
+high", "even when I parred ... it was missing me anyways").** All one fault at the bottom: a swing was begun because
+its body was near you, not because its blade would meet you. Before: 201 own-swing moves from 1,506 start places, 46%
+landed as drawn (`fights_reach_table`); in a live fight against someone standing still the Regent began 13 melee blows
+and landed 6, the Sky Leviathan 26 and 10, the Glass Serpent 15 and 8. Range was measured flat, so height never counted;
+many clips cross the aim line over a player's head; every kit charge ran its root motion and then 14 more ticks at a
+block a tick, up to the chest and with no gravity for a flier, so it overshot by 8 blocks and hung there; a flier's hover
+followed every jump. And a deflect only ever fires on a blow that really lands (`ArmsServer.onShieldBlock`), so a miss
+is a parry that does nothing.
+
+- **The blow is aimed (`BlowAim`).** At the blow's lock tick the body takes the cheapest correction that brings the
+  sweep of its capsules onto you where you stand: a turn (to 50 degrees), a step (to 1.2 blocks, never onto you), a lean
+  about the hips (to 24 degrees, synced and drawn), for a flier a dip (to 1.5 blocks, never through the floor), for a lunge
+  a shorter or longer run (0.35 to 2 times, never past your centre). It takes that once. Move after the lock and the blow
+  misses, as it should: the lock is the moment you are read, and the wind-up after it is your window.
+- **A blow with no correction isn't begun.** `FightRunner.reaches` runs the same solve first; a move that can't land from
+  here isn't tried again for 8 ticks, the body closes instead, and a string's next blow stops the string (a duel's phrase
+  still ends in its opening). A height band (the sweep plus 1.2, plus 1.5 more for a flier) keeps a body from starting
+  anything over or under you. A body inside its own swing (edge under 0.35) makes room at 0.16 a tick.
+- **A charge stops at you.** A kit charge (ability CHARGE) has no root motion on top; it runs from where it is to 1.5
+  blocks past you (`AbilityRunner.chargeRun`), level with your feet for a flier, in as many ticks as that takes (4 to 18),
+  and its ground line draws that length.
+- **Fliers hold your floor.** `FlyHunt.scripted` holds a kit flier 0.35 over the ground under you, not over your head;
+  it follows you up only when you've been in the air 60 ticks (and then to a block under you). A wanted height at floor
+  level makes the flight control detour upward, hence the 0.35 and the dip to reach you.
+- Two moves redrawn at the cause: the Regent's Royal Dive (its capsules were 2.6 to 4.7 over its feet) and the Sovereign
+  of Sleep's Buffet (it beat its wing too high and wide to touch anyone; it now drops two blocks into the beat). A string
+  played by hand (tests, the studio) skips the gate.
+
+After: 94% of the table once aimed, and every move can reach someone. Live against someone standing still: Regent 25 begun, 24 landed, never over 1.7
+blocks above them; Sky Leviathan 26 and 24; Glass Serpent 15 and 13; Ember Tyrant 24 and 23; Gearwright Colossus 17
+and 16. Tests `fights_reach_live_<id>` (five bodies, a real fight of 1,400 ticks through every phase) and
+`fights_reach_table`. `tools/sim/combat_sim.py` still reads a move's reach without the aim, so it undercounts these hits.

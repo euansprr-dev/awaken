@@ -77,11 +77,21 @@ final class FightRunner {
     /** This blow: whether you stood in its reach as it struck, and whether it landed on you. */
     private boolean inReach, struck;
 
+    // aiming a blow (SPEC §47.15): the correction it took at its lock, and the moves it can't reach you with for a moment
+    private final BlowAim.Result aim = new BlowAim.Result(), trial = new BlowAim.Result();
+    private boolean aimDone;
+    private final long[] outOfReach;
+    /** A string played by hand (tests, the studio) plays whether or not its blows would land. */
+    private boolean byHand;
+    /** A move that can't reach you now isn't tried again for this long. */
+    static final int RETRY_TICKS = 8;
+
     FightRunner(AwakenBoss boss, Kits.Kit kit) {
         this.boss = boss;
         this.kit = kit;
         this.moves = kit.moves();
         this.fight = java.util.Objects.requireNonNull(kit.fight());
+        this.outOfReach = new long[moves.moves().size()];
     }
 
     Kits.Kit kit() {
@@ -130,6 +140,7 @@ final class FightRunner {
     boolean play(ServerLevel level, String first, java.util.List<String> then) {
         if (!play(level, first)) return false;
         string.addAll(then);
+        byHand = !then.isEmpty();
         return true;
     }
 
@@ -287,7 +298,7 @@ final class FightRunner {
         if (!string.isEmpty()) {
             String next = string.poll();
             int i = moves.index(next);
-            if (i >= 0 && inRange(moves.get(i), target) && begin(level, next, target)) {
+            if (i >= 0 && inRange(moves.get(i), target) && reaches(i, target) && begin(level, next, target)) {
                 phraseBlows++;
                 return;
             }
@@ -297,6 +308,7 @@ final class FightRunner {
                 return;
             }
         }
+        byHand = false;
         if (gap > 0) {
             gap--;
             // an opening: it starts nothing and stands its ground, turning to keep you in front (SPEC §47.3)
@@ -305,7 +317,7 @@ final class FightRunner {
             return;
         }
         FightScripts.Entry e = pick(target);
-        if (e == null || !begin(level, e.move(), target)) {
+        if (e == null || !reaches(moves.index(e.move()), target) || !begin(level, e.move(), target)) {
             approach(target);
             return;
         }
@@ -319,6 +331,13 @@ final class FightRunner {
     /** Walks toward the target when nothing in the pool reaches it (fliers keep their own flight goal). */
     private void approach(LivingEntity target) {
         if (boss.def().flies()) return;
+        if (edgeDistance(target) < TOO_CLOSE) { // inside its own swing: it makes room
+            boss.getNavigation().stop();
+            Vec3 away = boss.position().subtract(target.position());
+            double len = Math.sqrt(away.x * away.x + away.z * away.z);
+            if (len > 1.0E-3) boss.move(MoverType.SELF, new Vec3(away.x / len * STEP_BACK, 0, away.z / len * STEP_BACK));
+            return;
+        }
         if (navTicks-- > 0) return;
         navTicks = 10;
         // it stops where its close moves reach (at most 3.5 blocks out): Unit Zero's cuts reach 1.6, not 3.5
@@ -441,7 +460,7 @@ final class FightRunner {
         int i = moves.index(e.move());
         if (i < 0) return false;
         KitMoves.Move m = moves.get(i);
-        if (!inRange(m, target)) return false;
+        if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target)) return false;
         // a summon with its colony already out is no move at all: it walks in instead
         if (m.ability().isPresent()) {
             Ability a = boss.ability(m.ability().get());
@@ -458,7 +477,68 @@ final class FightRunner {
 
     private boolean inRange(KitMoves.Move m, LivingEntity target) {
         double d = edgeDistance(target);
-        return d >= m.minRange() && d <= m.maxRange();
+        return d >= m.minRange() && d <= m.maxRange() && inBand(m, target);
+    }
+
+    /** A swing's height against yours: a body whose blow passes far over or under you doesn't begin it (SPEC §47.15). */
+    private boolean inBand(KitMoves.Move m, LivingEntity target) {
+        if (byHand || !aimed(m)) return true;
+        float low = Float.MAX_VALUE, high = -Float.MAX_VALUE;
+        for (List<KitMoves.Capsule> frame : m.hits()) {
+            for (KitMoves.Capsule c : frame) {
+                low = Math.min(low, Math.min(c.ay(), c.by()) - c.r());
+                high = Math.max(high, Math.max(c.ay(), c.by()) + c.r());
+            }
+        }
+        double reach = boss.def().flies() ? BAND_SLACK + 1.5 : BAND_SLACK;
+        return target.getBoundingBox().minY - boss.getY() <= high + reach && target.getBoundingBox().maxY - boss.getY() >= low - reach;
+    }
+
+    /** Closer than this its swings pass over you; it backs off this far a tick. */
+    private static final double TOO_CLOSE = 0.35, STEP_BACK = 0.16;
+
+    /** How far past its sweep a lean carries a blow, in height. */
+    private static final double BAND_SLACK = 1.2;
+
+    /** A swing of the body's own, aimed at its lock; a move with an ability aims in its own way. */
+    private static boolean aimed(KitMoves.Move m) {
+        return !m.hits().isEmpty() && m.ability().isEmpty();
+    }
+
+    /** Whether the move can land on you where you stand; if not, it isn't tried again for {@link #RETRY_TICKS}. */
+    private boolean reaches(int i, LivingEntity target) {
+        if (i < 0) return false;
+        KitMoves.Move m = moves.get(i);
+        if (byHand || !aimed(m)) return true;
+        boolean ok = solve(m, target, boss.yBodyRot, trial);
+        if (!ok) outOfReach[i] = boss.level().getGameTime() + RETRY_TICKS;
+        return ok;
+    }
+
+    /** The correction that lands {@code m} on the target, with the body facing it (or {@code facing}, for a blow that doesn't turn). */
+    private boolean solve(KitMoves.Move m, LivingEntity target, float facing, BlowAim.Result out) {
+        boolean turns = m.time().track() > 0;
+        double dx = target.getX() - boss.getX(), dz = target.getZ() - boss.getZ();
+        float base = turns ? (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90 : facing;
+        float r = base * Mth.DEG_TO_RAD, c = Mth.cos(r), s = Mth.sin(r);
+        // the body's frame: forward (-sin, cos), left (cos, sin)
+        double lx = dx * c + dz * s, lz = -dx * s + dz * c;
+        double y0 = target.getBoundingBox().minY - boss.getY(), y1 = target.getBoundingBox().maxY - boss.getY();
+        boolean ok = BlowAim.solve(m, hip(), lx, lz, y0, y1, target.getBbWidth() * 0.5, boss.def().flies(), lowestDip(), true, Math.max(0, edgeDistance(target) - 0.1), out);
+        if (ok) out.turn = Mth.wrapDegrees(base + out.turn);
+        return ok;
+    }
+
+    /** How far a flier can drop before the floor stops it (0 to -1.5, in the dips' half blocks). */
+    private float lowestDip() {
+        if (!boss.def().flies()) return 0;
+        float d = 0;
+        while (d > -1.5F && boss.level().noBlockCollision(boss, boss.getBoundingBox().move(0, d - 0.5F, 0))) d -= 0.5F;
+        return d;
+    }
+
+    private float hip() {
+        return boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP;
     }
 
     private double edgeDistance(LivingEntity target) {
@@ -515,6 +595,8 @@ final class FightRunner {
         t = 0;
         hits = 0;
         yaw = boss.yBodyRot;
+        aim.clear();
+        aimDone = false;
         // an ability needs someone to aim at (the studio plays its moves with nobody there: the body only)
         ability = target != null ? m.ability().map(boss::ability).orElse(null) : null;
         if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold, cls, m.signature());
@@ -530,6 +612,31 @@ final class FightRunner {
         return true;
     }
 
+    /**
+     * From its lock on the blow commits to where you are: it takes its correction (SPEC §47.15) over what's left of the
+     * wind-up. If you've moved so that no correction reaches you, it swings where it was going: you got out of it.
+     */
+    private void aimBlow(KitMoves.Move m, @Nullable LivingEntity target, int lockAt, int wind) {
+        if (!aimed(m) || t < lockAt) return;
+        if (!aimDone) {
+            aimDone = true;
+            if (target != null && target.isAlive() && solve(m, target, yaw, aim)) boss.syncKitLean(Math.round(aim.lean));
+            else {
+                aim.clear();
+                aim.turn = yaw;
+            }
+        }
+        yaw = Mth.approachDegrees(yaw, aim.turn, Math.max(TURN_RATE, m.time().track()));
+        int left = Math.max(1, wind - lockAt);
+        if (aim.step != 0 || aim.dip != 0) {
+            float r = yaw * Mth.DEG_TO_RAD, per = aim.step / left;
+            boss.move(MoverType.SELF, new Vec3(-Mth.sin(r) * per, aim.dip / left, Mth.cos(r) * per));
+        }
+    }
+
+    /** How fast the body turns into its aim after the lock (degrees a tick). */
+    private static final float TURN_RATE = 14F;
+
     private void step(ServerLevel level) {
         KitMoves.Move m = moves.get(move);
         LivingEntity target = boss.getTarget();
@@ -544,6 +651,7 @@ final class FightRunner {
                 float want = (float) (Mth.atan2(target.getZ() - boss.getZ(), target.getX() - boss.getX()) * Mth.RAD_TO_DEG) - 90;
                 yaw = Mth.approachDegrees(yaw, want, m.time().track());
             }
+            aimBlow(m, target, lockAt, wind);
             face();
             boss.getNavigation().stop();
             if (ability != null) boss.abilityRunner().windup(level, ability, wind - t + 1, tracking);
@@ -578,7 +686,9 @@ final class FightRunner {
                 if (m.is("area") && firstHit(m) < 0) sound(m, "impact", "impact");
             }
             face();
-            float adv = m.motion().advance() / active, up = m.motion().rise() / active;
+            // a charge carries the body itself (it stops at you); the clip's own run would add to it
+            boolean charging = ability != null && ability.kind() == Ability.Kind.CHARGE;
+            float adv = charging ? 0 : m.motion().advance() * aim.run / active, up = m.motion().rise() / active;
             if (adv != 0 || up != 0) {
                 double r = yaw * Mth.DEG_TO_RAD;
                 boss.move(MoverType.SELF, new Vec3(-Mth.sin((float) r) * adv, up, Mth.cos((float) r) * adv));
@@ -629,7 +739,7 @@ final class FightRunner {
     private boolean link(ServerLevel level, @Nullable LivingEntity target) {
         if (string.isEmpty() || pendingPhase >= 0 || !studio.isEmpty() || target == null || !target.isAlive()) return false;
         int i = moves.index(string.peek());
-        if (i < 0 || !inRange(moves.get(i), target)) return false;
+        if (i < 0 || !inRange(moves.get(i), target) || !reaches(i, target)) return false;
         String next = string.poll();
         stop();
         phraseBlows++;
@@ -650,6 +760,8 @@ final class FightRunner {
 
     private void stop() {
         if (move >= 0) boss.setTelegraph(0, false);
+        boss.syncKitLean(0);
+        aim.clear();
         move = -1;
         played = null;
         ability = null;
@@ -679,6 +791,12 @@ final class FightRunner {
     }
 
     private Vec3 world(float x, float y, float z) {
+        if (aim.lean != 0) { // the body leans into the blow about its hips
+            float hip = hip(), cl = Mth.cos(aim.lean * Mth.DEG_TO_RAD), sl = Mth.sin(aim.lean * Mth.DEG_TO_RAD), up = y - hip;
+            float zw = up * sl + z * cl;
+            y = hip + up * cl - z * sl;
+            z = zw;
+        }
         float r = yaw * Mth.DEG_TO_RAD, c = Mth.cos(r), s = Mth.sin(r);
         // facing yaw: forward is (-sin, cos); the body's left is (cos, sin)
         return new Vec3(boss.getX() + x * c - z * s, boss.getY() + y, boss.getZ() + x * s + z * c);
