@@ -273,7 +273,7 @@ final class CaveTests {
      * SPEC §34.1's promise on real terrain: on a square of the placement grid of a real overworld's noise, biomes and
      * caves (Euan's New World (11)'s seed), the share of dry-land candidates that find a mouth stays at the promise of
      * about one every 200 m. (The test server has no pack, so this is vanilla's terrain; Tectonic's is the census,
-     * {@code /awaken delve mouths}, in the tour tools/autopilot/mouths-nw11.txt.)
+     * {@code /awaken delve mouths}, in the tour tools/autopilot/mouths-after.txt.)
      */
     private static void mouthDensity(GameTestHelper h) {
         ServerLevel level = h.getLevel();

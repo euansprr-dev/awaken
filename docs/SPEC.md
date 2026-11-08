@@ -12703,7 +12703,7 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   mouths laid since 8 Nov; 0 for a saved mouth keeps the blocks it built, no worn ground, the old cairn).
 - **The promise, on the ground** (Euan's playtest 8 Nov, "I'm really struggling to find a cave entrance"): one mouth about
   every 200 m of dry land. His New World (11) (seed 5652006211025591964; `/awaken delve mouths` over the whole circle, on
-  Tectonic, tools/autopilot/mouths-nw11.txt) had at the old 12/4 57 mouths within 1 km of his home (one every 235 m;
+  Tectonic, tools/autopilot/mouths-after.txt) had at the old 12/4 57 mouths within 1 km of his home (one every 235 m;
   43 of them in land he had generated) and 30 within 1 km of spawn (one every 324 m), where the city's reserve and water
   empty most of the land, yet he found one: most of the fault was that a mouth can't be seen from far off (the plume and
   the worn ground below). So the candidates are closer together, a doline takes gently tilted ground as well as flat
@@ -12753,7 +12753,7 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   on top, so it stands over the grass from well off.
 - **Worn ground** (since 8 Nov, p look 1, no change to a mouth already saved): what makes a mouth a mark on the land from
   afar, in every biome. In front of a hill mouth, an adit and a cleft a fan of bare ground runs 16 out from the lip,
-  widening and ragged at its end; round a doline a ragged ring out to r + 3.5..7 with a few leaning boulders. Soil
+  widening and ragged at its end, and the shelf of ground in front loses cells at its outer edge; round a doline a ragged ring out to r + 3.5..7 with a few leaning boulders. Soil
   (dirt, grass, sand, snow, clay) wears to rock or scree in soft patches (gravel, rubble, tuff, andesite, the depth's
   rock; a sand country's stays sandstone), two deep, its small plants cleared; so trees and grass can't grow there and
   a log or a build stops the wear. A hill mouth also gets a collar: soil within 3 of the arch, three blocks into the hill,
@@ -12763,7 +12763,9 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   arch's lip, straight up from a doline), its own particle `awaken:delve_plume` (quads 2.2-3.6 across, 12-17 s, swelling as
   it rises, thinner close by), one every few ticks by day and thicker at dawn, drawn to 220 m (`MOUTH_NEAR` in
   `CavePlaces`, 220, sends a mouth's site that far), so a mouth shows over the treetops from a long walk off; it needs
-  only a site, so every mouth already in a world gets it too; the **breath**, mist exhaled from the arch's upper half and
+  only a site, so every mouth already in a world gets it too (mist, plume and breath draw on their own pipeline that
+  tests depth but never writes it: Lens's depth haze otherwise fogs each whole quad in the biome's fog colour); the
+  **breath**, mist exhaled from the arch's upper half and
   drifting out, strongest at dawn (to 1500, fading to 4000), for 3 minutes after rain, 0.14 by day, 0.35 at dusk, seen
   to 160 m; the **draught**, streaks out of
   the throat within 28 m; the **cold air heard** within 32 m (the breath-of-air loop at the nearest mouth, pitch 0.78;
@@ -12785,7 +12787,7 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   doline, cleft); `delve_mouth_density` holds the promise on real terrain: the real placement grid over a real
   overworld's noise, biomes and caves (24 x 24 cells, his seed), at least one mouth every 215 m of dry land (the test
   server has no pack, so that terrain is vanilla's; on Tectonic's, run `/awaken delve mouths <radius>` in a world or the
-  tour tools/autopilot/mouths-nw11.txt: every candidate and what stopped it, nothing generated);
+  tour tools/autopilot/mouths-after.txt: every candidate and what stopped it, nothing generated);
   `delve_hearth_points` (the four forms' lines, which mouths lead to which metal, the honest line on flat land, the card's
   3/16 row).
 

@@ -6,6 +6,16 @@ import dev.awaken.delve.cave.CaveNet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.SingleQuadParticle;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.CompareOp;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import dev.awaken.Awaken;
+import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
@@ -253,6 +263,27 @@ final class CaveFx {
     }
 
     /** What a wisp is. */
+    /**
+     * Big translucent quads of mist test depth but never write it: on Cinematic, Lens fogs whatever wrote depth, so a plume
+     * written like a block drew each whole quad in the biome's fog colour (a tan patch on a savanna's sky).
+     */
+    private static final RenderPipeline MIST_PIPELINE = RenderPipeline.builder(RenderPipelines.PARTICLE_SNIPPET)
+            .withLocation(Awaken.id("pipeline/delve_mist"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build();
+    private static final SingleQuadParticle.Layer MIST_LAYER = new SingleQuadParticle.Layer(true, TextureAtlas.LOCATION_PARTICLES, MIST_PIPELINE, RenderPipelines.OIT_PARTICLE);
+    private static int mistBuilt = -1;
+
+    static void onRegisterPipelines(RegisterRenderPipelinesEvent e) {
+        e.registerOptionalPipeline(MIST_PIPELINE);
+    }
+
+    private static SingleQuadParticle.Layer mistLayer() {
+        if (mistBuilt < 0) mistBuilt = RenderSystem.getCompiledPipelineNullable(MIST_PIPELINE) != null ? 1 : 0;
+        return mistBuilt == 1 ? MIST_LAYER : SingleQuadParticle.Layer.TRANSLUCENT;
+    }
+
     enum Kind { MIST, PLUME, DRAUGHT, GLOW, GLINT }
 
     /**
@@ -310,7 +341,7 @@ final class CaveFx {
 
         @Override
         protected Layer getLayer() {
-            return Layer.TRANSLUCENT;
+            return kind == Kind.MIST || kind == Kind.PLUME ? mistLayer() : Layer.TRANSLUCENT;
         }
 
         @Override

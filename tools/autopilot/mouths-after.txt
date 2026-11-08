@@ -1,6 +1,7 @@
 # Cave mouths after the 8 Nov fix (Euan: "I can't find a single cave entrance"): his New World (11) remade from its seed
-# with the pack's terrain. The nearest mouth to a spot in each biome his world has, from the eye of someone walking 24, 70
-# and 130 m out in front of it, by day; two of them again at dawn; then the census round his home and spawn.
+# with the pack's terrain. A spectator's camera 24, 70 and 130 m out in front of the nearest mouth to a spot in each biome
+# his world has, a little above the ground so the trees don't hide it, by day; two of them again at dawn; then the census
+# round his home and spawn (last: it holds the server for two minutes, and the script's waits don't wait for the server).
 # ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=10
 #   tools/tour-ci.sh tools/autopilot/mouths-after.txt 3000
 world mouths_after creative 5652006211025591964
@@ -30,151 +31,160 @@ camera first
 hud off
 cmd time set 6000
 cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamemode spectator
+wait 40
 
 # ---- plains ----
-cmd tp @s -728 200 -1656
-wait 120
+cmd tp @s -728 220 -1656
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-24 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
 shot ma_plains_24m
-cmd execute at @s positioned ^ ^ ^-46 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
 shot ma_plains_70m
-cmd execute at @s positioned ^ ^ ^-60 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_plains_130m
-
 # ---- savanna ----
-cmd tp @s -724 200 -1450
-wait 120
+cmd tp @s -724 220 -1450
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-24 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
 shot ma_savanna_24m
-cmd execute at @s positioned ^ ^ ^-46 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
 shot ma_savanna_70m
-cmd execute at @s positioned ^ ^ ^-60 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_savanna_130m
-
 # ---- forest ----
-cmd tp @s -504 200 -2088
-wait 120
+cmd tp @s -504 220 -2088
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-24 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
 shot ma_forest_24m
-cmd execute at @s positioned ^ ^ ^-46 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
 shot ma_forest_70m
-cmd execute at @s positioned ^ ^ ^-60 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_forest_130m
-
 # ---- elderwood ----
-cmd tp @s -728 200 -2280
-wait 120
+cmd tp @s -728 220 -2280
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-24 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
 shot ma_elderwood_24m
-cmd execute at @s positioned ^ ^ ^-46 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
 shot ma_elderwood_70m
-cmd execute at @s positioned ^ ^ ^-60 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_elderwood_130m
-
 # ---- meadow ----
-cmd tp @s -520 200 -2296
-wait 120
+cmd tp @s -520 220 -2296
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-24 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
 shot ma_meadow_24m
-cmd execute at @s positioned ^ ^ ^-46 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
 shot ma_meadow_70m
-cmd execute at @s positioned ^ ^ ^-60 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_meadow_130m
-
 # ---- snowy ----
-cmd tp @s -143 200 -2000
-wait 120
+cmd tp @s -143 220 -2000
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-24 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
 shot ma_snowy_24m
-cmd execute at @s positioned ^ ^ ^-46 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
 shot ma_snowy_70m
-cmd execute at @s positioned ^ ^ ^-60 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_snowy_130m
-
 # ---- grove ----
-cmd tp @s -534 200 -2697
-wait 120
+cmd tp @s -534 220 -2697
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-24 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
 shot ma_grove_24m
-cmd execute at @s positioned ^ ^ ^-46 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
 shot ma_grove_70m
-cmd execute at @s positioned ^ ^ ^-60 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_grove_130m
-
 # ---- frost ----
-cmd tp @s -648 200 -2808
-wait 120
+cmd tp @s -648 220 -2808
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-24 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
 shot ma_frost_24m
-cmd execute at @s positioned ^ ^ ^-46 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
 shot ma_frost_70m
-cmd execute at @s positioned ^ ^ ^-60 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_frost_130m
-
-# ---- dawn: the plume at its thickest, the same two walks ----
 cmd time set 23800
-cmd tp @s -728 200 -1656
-wait 120
+# ---- plains_dawn ----
+cmd tp @s -728 220 -1656
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-130 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
+shot ma_plains_dawn_24m
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
+shot ma_plains_dawn_70m
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_plains_dawn_130m
-cmd tp @s -504 200 -2088
-wait 120
+# ---- forest_dawn ----
+cmd tp @s -504 220 -2088
+wait 160
 cmd awaken delve goto mouth
-wait 200
-cmd execute at @s positioned ^ ^ ^-130 positioned over motion_blocking_no_leaves run tp @s ~ ~2 ~ ~ -6
-wait 100
+wait 300
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-24 run tp @s ~ ~3 ~ ~ -4
+wait 140
+shot ma_forest_dawn_24m
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-46 run tp @s ~ ~12 ~ ~ -4
+wait 140
+shot ma_forest_dawn_70m
+cmd execute at @s rotated ~ 0 positioned ^ ^ ^-60 run tp @s ~ ~6 ~ ~ -4
+wait 140
 shot ma_forest_dawn_130m
 
-# ---- the census last: it holds the server for two minutes, and the script's waits don't wait for the server ----
+# ---- the census ----
+cmd gamemode creative
+cmd time set 6000
 cmd tp @s -605 176 -2323
-wait 200
+wait 300
 cmd awaken delve mouths 1600
 wait 6000
 cmd tp @s -599 110 -1165
-wait 200
+wait 300
 cmd awaken delve mouths 1600
 wait 6000
 

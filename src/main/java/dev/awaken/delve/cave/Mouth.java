@@ -118,7 +118,7 @@ final class Mouth {
         int L = s.p(LEN), w = s.p(W), h = s.p(H);
         long seed = s.seed();
         // the ground in front: open to the sky, a floor to stand on (a lip of rock where the slope fell away)
-        approach(f, k, w / 2 + 2, h);
+        approach(s, f, k, w / 2 + 2, h);
         // the arch: an ellipse, full width at the floor, its top rough
         for (int lz = 0; lz <= PORTAL; lz++) {
             double half = w / 2.0 + 0.5 - lz * 0.15;
@@ -172,7 +172,7 @@ final class Mouth {
 
     private static void adit(Spec s, Frame f, Sink k) {
         int L = s.p(LEN);
-        approach(f, k, 3, 5);
+        approach(s, f, k, 3, 5);
         // spoil heaps beside the cutting
         for (int side = -1; side <= 1; side += 2) {
             for (int i = 0; i < 3; i++) f.put(k, side * (4 + i), 0, -3 - i, i == 0 ? Blocks.GRAVEL.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState());
@@ -232,7 +232,7 @@ final class Mouth {
     private static void cleft(Spec s, Frame f, Sink k) {
         int L = s.p(LEN), w = s.p(W), h = s.p(H), shut = roofAt(s);
         long seed = s.seed();
-        approach(f, k, w / 2 + 2, 4);
+        approach(s, f, k, w / 2 + 2, 4);
         if (!f.touches(k, -w - 4, -1, w + 4, L + 1)) return;
         for (int lz = 0; lz <= L; lz++) {
             double half = Carve.lerp(lz / (double) L, w / 2.0 + 0.3, 1.0), mid = mid(s, lz);
@@ -524,12 +524,14 @@ final class Mouth {
     // ---- shared -------------------------------------------------------------------------------------------------------
 
     /** The ground in front of the mouth: open air over it, a floor where the slope fell away (half-width hw). */
-    private static void approach(Frame f, Sink k, int hw, int h) {
+    private static void approach(Spec s, Frame f, Sink k, int hw, int h) {
         for (int lz = -8; lz < 0; lz++) {
             int w = hw + (-lz) / 3;
             f.carve(k, -w, 0, lz, w, h + 1, lz);
             for (int lx = -w; lx <= w; lx++) {
                 if (!f.inside(k, lx, -1, lz)) continue;
+                // the shelf's outer edge breaks up: spoil that spilled out, not a slab laid down
+                if (s.p(LOOK) > 0 && Math.abs(lx) >= w - 1 && Carve.rand(s.seed(), lx, lz, 44) < 0.45) continue;
                 if (!f.get(k, lx, -1, lz).isSolidRender()) f.put(k, lx, -1, lz, Blocks.COARSE_DIRT.defaultBlockState());
             }
         }
