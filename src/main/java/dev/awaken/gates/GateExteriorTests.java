@@ -387,8 +387,9 @@ final class GateExteriorTests {
             String first = "";
             try {
                 treesBesideAGate(h, level, ground);
-                // these layouts each caught a piece left up: one past the cut's reach (4), a pale oak's hanging moss (the rest)
-                for (int layout : new int[]{0, 4, 7, 8, 13, 14, 23}) for (int rank = 0; rank <= 6; rank++) {
+                // these layouts each caught a piece left up: past the cut's reach (4), on a pale oak's hanging moss (7 to 23), a
+                // limb on a stalk of bamboo (16, 86)
+                for (int layout : new int[]{0, 4, 7, 8, 13, 14, 16, 23, 86}) for (int rank = 0; rank <= 6; rank++) {
                     for (int axis = 0; axis <= 1; axis++) {
                         planted += grove(level, ground, trees, rank, axis, layout);
                         Adrift before = adrift(level, ground);
@@ -401,7 +402,7 @@ final class GateExteriorTests {
                         logs += after.logs.size();
                         leaves += after.leaves.size();
                         plants += after.plants.size();
-                        if (first.isEmpty() && after.count() > 0) first = "layout " + layout + " " + Rank.values()[rank].label + "/" + axis + " " + after + " "
+                        if (first.isEmpty() && after.count() > 0) first = "ground " + ground.toShortString() + " layout " + layout + " " + Rank.values()[rank].label + "/" + axis + " " + after + " "
                                 + after.plants.stream().limit(4).map(q -> level.getBlockState(q).getBlock().getDescriptionId()).toList();
                     }
                 }

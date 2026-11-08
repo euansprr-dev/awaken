@@ -345,7 +345,7 @@ public final class Overworld {
         int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
         BlockPos pos = g.pos;
         int near = cutReach(g.plan.rank().ordinal()), reach = near + TREE_READ, floor = pos.getY() - 8;
-        LongOpenHashSet logs = new LongOpenHashSet(), leaves = new LongOpenHashSet(), held = new LongOpenHashSet();
+        LongOpenHashSet logs = new LongOpenHashSet(), leaves = new LongOpenHashSet(), nests = new LongOpenHashSet(), held = new LongOpenHashSet();
         LongArrayFIFOQueue open = new LongArrayFIFOQueue();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int a = -reach; a <= reach; a++) {
@@ -364,6 +364,7 @@ public final class Overworld {
                         if ((edge || y == floor || logStands(level, m.immutable())) && held.add(k)) open.enqueue(k);
                     } else if (leafy(s)) {
                         leaves.add(k);
+                        if (s.is(Blocks.BEE_NEST)) nests.add(k);
                         if (edge) held.add(k);
                     }
                 }
@@ -386,7 +387,8 @@ public final class Overworld {
             for (int i = 0; i < step.size(); i++) {
                 for (Direction side : Direction.values()) {
                     long n = BlockPos.offset(step.getLong(i), side);
-                    if (leaves.contains(n) && held.add(n)) next.add(n);
+                    // a nest stands with its tree but carries nothing on, as in the game's own count
+                    if (leaves.contains(n) && held.add(n) && !nests.contains(n)) next.add(n);
                 }
             }
             step = next;
@@ -462,9 +464,12 @@ public final class Overworld {
         return s.is(BlockTags.LOGS) || s.is(Blocks.CREAKING_HEART) || s.is(Blocks.MANGROVE_ROOTS) || s.is(Blocks.MUDDY_MANGROVE_ROOTS);
     }
 
-    /** Something a tree can rest on: solid (so not what grows on bark: hanging moss, cocoa), not more tree, not the gate's own rock. */
+    /**
+     * Something a tree can rest on: solid (so not what grows on bark: hanging moss, cocoa), not a stalk of bamboo (the game
+     * calls it solid, and a limb can lie on one), not more tree, not the gate's own rock.
+     */
     private static boolean firm(BlockState s) {
-        return s.isSolid() && s.getFluidState().isEmpty() && !s.canBeReplaced() && !wood(s) && !leafy(s) && !ours(s) && !spurBlock(s);
+        return s.isSolid() && !s.is(Blocks.BAMBOO) && s.getFluidState().isEmpty() && !s.canBeReplaced() && !wood(s) && !leafy(s) && !ours(s) && !spurBlock(s);
     }
 
     /** A log on the ground, or against something nature didn't make (someone's build): it isn't going anywhere. */
