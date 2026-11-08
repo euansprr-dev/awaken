@@ -387,9 +387,10 @@ final class GateExteriorTests {
             String first = "";
             try {
                 treesBesideAGate(h, level, ground);
-                for (int rank = 0; rank <= 6; rank++) {
+                // these layouts each caught a piece left up: one past the cut's reach (4), a pale oak's hanging moss (the rest)
+                for (int layout : new int[]{0, 4, 7, 8, 13, 14, 23}) for (int rank = 0; rank <= 6; rank++) {
                     for (int axis = 0; axis <= 1; axis++) {
-                        planted += grove(level, ground, trees, rank, axis);
+                        planted += grove(level, ground, trees, rank, axis, layout);
                         Adrift before = adrift(level, ground);
                         GateRecord g = GateExterior.display(ground, axis, rank, false);
                         Overworld.place(level, g, false);
@@ -400,7 +401,7 @@ final class GateExteriorTests {
                         logs += after.logs.size();
                         leaves += after.leaves.size();
                         plants += after.plants.size();
-                        if (first.isEmpty() && after.count() > 0) first = Rank.values()[rank].label + "/" + axis + " " + after + " "
+                        if (first.isEmpty() && after.count() > 0) first = "layout " + layout + " " + Rank.values()[rank].label + "/" + axis + " " + after + " "
                                 + after.plants.stream().limit(4).map(q -> level.getBlockState(q).getBlock().getDescriptionId()).toList();
                     }
                 }
@@ -480,7 +481,7 @@ final class GateExteriorTests {
     }
 
     /** A meadow planted every six blocks with real trees in turn, three stalks of bamboo on the pad. Returns the trees that grew. */
-    private static int grove(ServerLevel level, BlockPos ground, List<net.minecraft.core.Holder.Reference<net.minecraft.world.level.levelgen.feature.Feature>> trees, int rank, int axis) {
+    private static int grove(ServerLevel level, BlockPos ground, List<net.minecraft.core.Holder.Reference<net.minecraft.world.level.levelgen.feature.Feature>> trees, int rank, int axis, int layout) {
         wipeGrove(level, ground);
         for (int dx = -GROVE_REACH; dx <= GROVE_REACH; dx++) {
             for (int dz = -GROVE_REACH; dz <= GROVE_REACH; dz++) {
@@ -488,7 +489,7 @@ final class GateExteriorTests {
                 level.setBlock(ground.offset(dx, -1, dz), Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
         }
-        net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create(rank * 31L + axis);
+        net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create(rank * 31L + axis + layout * 1000L);
         var generator = level.getChunkSource().getGenerator();
         int i = rank * 7 + axis * 3, grown = 0;
         for (int dx = -GROVE; dx <= GROVE; dx += 6) {
@@ -554,7 +555,7 @@ final class GateExteriorTests {
         for (BlockPos q : BlockPos.betweenClosed(ground.offset(-GROVE_REACH, -3, -GROVE_REACH), ground.offset(GROVE_REACH, GROVE_HIGH, GROVE_REACH))) {
             BlockState s = level.getBlockState(q);
             if (s.isAir()) continue;
-            if (s.is(net.minecraft.tags.BlockTags.LOGS)) {
+            if (Overworld.wood(s)) {
                 logs.add(q.immutable());
                 BlockState under = level.getBlockState(below.setWithOffset(q, 0, -1, 0));
                 boolean ground1 = !under.isAir() && under.getFluidState().isEmpty() && !under.canBeReplaced() && !under.is(net.minecraft.tags.BlockTags.LOGS) && !under.is(net.minecraft.tags.BlockTags.LEAVES);

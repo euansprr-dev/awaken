@@ -336,7 +336,8 @@ public final class Overworld {
      * A tree the gate cut comes down whole (SPEC §7, "Trees round a gate"). The clearing takes what crosses the pad up to a
      * height and tells nothing round it, so leaves never heard their trunk had gone: crowns and trunk tops stayed in the air.
      * A log stands if a line of logs takes it to the ground or to someone's build; a leaf stands within the game's own six
-     * steps of such a log. What doesn't, in a piece the gate's cut reaches, goes, with what grew on it. Leaves saved as
+     * steps of such a log. What doesn't, anywhere in what's read, goes, with what grew on it: a crown can reach well past
+     * the cut, and a piece can have hung from a neighbour that fell. Leaves saved as
      * persistent (the Wild Lands' hawthorn, or someone's hedge) go only when their piece touches nothing. Returns the blocks
      * that fell.
      */
@@ -358,7 +359,7 @@ public final class Overworld {
                 for (int y = floor; y < top; y++) {
                     BlockState s = level.getBlockState(m.set(x, y, z));
                     long k = m.asLong();
-                    if (s.is(BlockTags.LOGS)) {
+                    if (wood(s)) {
                         logs.add(k);
                         if ((edge || y == floor || logStands(level, m.immutable())) && held.add(k)) open.enqueue(k);
                     } else if (leafy(s)) {
@@ -397,7 +398,7 @@ public final class Overworld {
         ArrayDeque<BlockPos> gone = new ArrayDeque<>();
         int felled = 0;
         for (long start : loose.toLongArray()) {
-            if (Math.abs(BlockPos.getX(start) - pos.getX()) > near || Math.abs(BlockPos.getZ(start) - pos.getZ()) > near || !seen.add(start)) continue;
+            if (!seen.add(start)) continue;
             LongArrayList piece = new LongArrayList();
             piece.add(start);
             boolean rests = false;
@@ -456,9 +457,14 @@ public final class Overworld {
         return s.is(BlockTags.LEAVES) || s.is(Blocks.BEE_NEST);
     }
 
-    /** Something a tree can rest on: not air, water or a plant, not more tree, and not the gate's own rock. */
+    /** A tree's wood: its logs, the heart in a pale oak's trunk and a mangrove's roots. */
+    static boolean wood(BlockState s) {
+        return s.is(BlockTags.LOGS) || s.is(Blocks.CREAKING_HEART) || s.is(Blocks.MANGROVE_ROOTS) || s.is(Blocks.MUDDY_MANGROVE_ROOTS);
+    }
+
+    /** Something a tree can rest on: solid (so not what grows on bark: hanging moss, cocoa), not more tree, not the gate's own rock. */
     private static boolean firm(BlockState s) {
-        return !s.isAir() && s.getFluidState().isEmpty() && !s.canBeReplaced() && !s.is(BlockTags.LOGS) && !leafy(s) && !ours(s) && !spurBlock(s);
+        return s.isSolid() && s.getFluidState().isEmpty() && !s.canBeReplaced() && !wood(s) && !leafy(s) && !ours(s) && !spurBlock(s);
     }
 
     /** A log on the ground, or against something nature didn't make (someone's build): it isn't going anywhere. */

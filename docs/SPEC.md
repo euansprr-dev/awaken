@@ -364,10 +364,11 @@ The first gate's "A gate has opened N m" waits until it stands, so a failed buil
 **Trees round a gate** (8 Nov 2026, Euan: "Trees above gates are floating"): the clearing takes what crosses the pad up to
 3 blocks over the opening and tells nothing round it, so a tree it cut kept its crown and the top of its trunk in the air.
 Now a tree the gate cut comes down whole (`Overworld.fellCut`, every rank and every tree in the game: test
-`gates_trees_fall_whole`). A log stands if a line of logs takes it to the ground or to someone's build; a leaf stands
-within the game's six steps of such a log. What doesn't, in a piece the cut reaches (the crater and 2 more blocks), goes,
-with what grew on it (vines, snow, bee nests, the top of a stalk of bamboo). A neighbouring tree is read 12 blocks past
-that and only loses what the clearing took. Leaves saved as persistent (the Wild Lands' hawthorn, someone's hedge) go only
+`gates_trees_fall_whole`). A log stands if a line of wood (logs, a pale oak's Creaking Heart, a mangrove's roots) takes it
+to the ground or to someone's build, and only something solid counts: what grows on bark (hanging moss, cocoa) doesn't. A
+leaf stands within the game's six steps of such a log. What doesn't stand, within 14 blocks past the crater, goes, with
+what grew on it (vines, snow, bee nests, the top of a stalk of bamboo). A tree that still stands only loses what the
+clearing took. Leaves saved as persistent (the Wild Lands' hawthorn, someone's hedge) go only
 when their piece touches nothing. The crater no longer burns the top of a short trunk as if it were ground. A gate built
 before this comes down the same way once, the first time all its ground is loaded (`GateExterior.fellOld`, saved as
 `trees_felled`); a gate that had already closed left no record, so a crown it left stays. The two dark blue-veined rocks
