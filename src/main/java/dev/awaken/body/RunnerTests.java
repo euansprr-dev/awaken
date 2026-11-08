@@ -482,7 +482,16 @@ final class RunnerTests {
         double[] stand = e == null ? null : RunnerRules.climbOut(s, ctx, M, e);
         h.assertTrue(stand != null && Math.abs(stand[1] - 66) < 1e-6, "climbs out onto the first step");
         settle.landed(true, stand[0], stand[1], stand[2], 100);
-        // the step behind is read as a way up (the chain Euan hit), and held keys don't take it, at the landing or pressed flat to it
+        // what chained first (the CI tour's trace): on the tick after the climb the feet aren't in contact, and from there the next step is a grab
+        RunnerRules.Edge grab = RunnerRules.findEdge(s, ctx, M, stand[0], stand[1], stand[2] + 0.1, 2, 1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+        h.assertTrue(grab != null && Math.abs(grab.top() - 68) < 1e-6, "from the landing the next step is in a hang's reach");
+        h.assertTrue(settle.onFeet(s, ctx, M, stand[0], stand[1], stand[2] + 0.1, 101), "the tick after the landing the feet are on the ledge: nothing in the air is read");
+        h.assertFalse(settle.onFeet(s, ctx, M, stand[0], stand[1] + 0.42, stand[2], 102), "a jump's first tick is in the air: its catch is yours");
+        h.assertFalse(settle.onFeet(s, ctx, M, stand[0], stand[1], stand[2], 110), "only just after a landing");
+        settle.landed(false, stand[0], stand[1], stand[2], 100);
+        h.assertTrue(settle.onFeet(s, ctx, M, stand[0], stand[1], stand[2], 101), "free-run on or off, the same");
+        settle.landed(true, stand[0], stand[1], stand[2], 100);
+        // the step behind is read as a way up, and held keys don't take it, at the landing or pressed flat to it
         int what = RunnerRules.ahead(s, ctx, M, stand[0], stand[1], stand[2], 0, 1, 0.28, out);
         h.assertTrue(what == RunnerRules.AHEAD_WALL && Math.abs(out[0] - 2) < 1e-6, "the next step reads as a wall 2 up: " + what + " " + out[0]);
         h.assertTrue(settle.holds(what, out[0]), "with the keys held the free-run stays on the step");

@@ -4288,8 +4288,10 @@ server checks every move exactly as before (a free-run move is the same claim a 
   press may come up to 4 ticks before the landing, so a stair of ledges goes up tap, tap, tap; a jump key merely held
   never asks). Letting go of sprint or forward lifts the stop as well: holding them again mantles at once, and a wall
   wants its usual run at it. So does going 2.5 blocks from the landing or 0.75 up or down from it, so a wide roof runs on
-  into the wall at its far end. Vaults of a block's height, leaps, fences and walls (§17.27), the hang's own climb and
-  the climb lines aren't touched; the server checks nothing new (this is what the keys ask for). Test:
+  into the wall at its far end. And for 3 ticks after any such landing, free-run on or off, a body with its feet within
+  0.05 of the ledge isn't in the air: vanilla calls it airborne until they touch, and forward alone caught the next step
+  as a hang from there (the trace of the CI tour `freerun-stops`), so no hang, wall climb or wall-run starts. Vaults of a
+  block's height, leaps, fences and walls (§17.27), the hang's own climb and the climb lines aren't touched; the server checks nothing new (this is what the keys ask for). Test:
   `runner_free_run_stops` (this staircase, the mantle's 1.5 steps).
 - **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
   the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.

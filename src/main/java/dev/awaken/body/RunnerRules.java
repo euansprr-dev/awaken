@@ -591,7 +591,7 @@ public final class RunnerRules {
     public static final class Settle {
         private boolean on;
         private double x, y, z;
-        private int jumpAt = -100;
+        private int jumpAt = -100, at = -100;
 
         /** Each tick, before anything is read. */
         public void tick(boolean held, boolean jumpPressed, double px, double py, double pz, int now) {
@@ -604,6 +604,7 @@ public final class RunnerRules {
         /** A climb ended with the feet at (px, py, pz). */
         public void landed(boolean held, double px, double py, double pz, int now) {
             on = held && now - jumpAt > BUFFER;
+            at = now;
             x = px;
             y = py;
             z = pz;
@@ -611,7 +612,15 @@ public final class RunnerRules {
 
         public void clear() {
             on = false;
-            jumpAt = -100;
+            jumpAt = at = -100;
+        }
+
+        /**
+         * The ticks just after any landing (free-run or not), the feet on the ledge but not yet in contact: vanilla calls
+         * that airborne, and the next step would be caught as a hang from it. This is standing, and nothing in the air is read.
+         */
+        public boolean onFeet(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, double px, double py, double pz, int now) {
+            return now - at <= 3 && groundWithin(level, ctx, m, px, py, pz, 0.05);
         }
 
         /** Stopped here: the free-run alone mantles nothing. */
