@@ -103,6 +103,29 @@ public final class ArmsRules {
         return end - now <= a.def().buffer() ? new Decision(chainMove(a, 0), 0, end, 0) : null;
     }
 
+    /** Ticks after the last chain strike that a client's word can still carry the chain on. */
+    static final int CHAIN_SLACK = 60;
+
+    /**
+     * One chain (SPEC §25 "Tap or hold"; Euan 2026-11-09: "the combo stops being the usual one"). The two sides time the
+     * windows on their own clocks, so a press on a window's edge can be "the next strike" on one and "start again" on the
+     * other. The chain the player is shown is the one that counts: the server takes the client's word for the step when it
+     * is a move the chain allows (starting again, or the strike after the last one, soon after it), and its own otherwise.
+     */
+    public static @Nullable Decision follow(Archetypes.Loaded a, @Nullable Decision d, int claimed, int lastStep, long sinceLast, int masterySteps) {
+        if (d == null || claimed < 0 || claimed == d.step() || claimed >= chainLength(a, masterySteps)) return d;
+        if (claimed != 0 && (claimed != lastStep + 1 || sinceLast > CHAIN_SLACK)) return d;
+        return new Decision(chainMove(a, claimed), claimed, d.startAt(), d.cadence());
+    }
+
+    /** A chain strike's place in its chain, mastery's strikes after it; -1 if it isn't one of this style's. */
+    public static int stepOf(Archetypes.Loaded a, Archetype.Move m) {
+        int i = a.chain().indexOf(m);
+        if (i >= 0) return i;
+        int j = a.masteryChain().indexOf(m);
+        return j < 0 ? -1 : a.chain().size() + j;
+    }
+
     static int chainLength(Archetypes.Loaded a, int masterySteps) {
         return a.chain().size() + Math.min(masterySteps, a.masteryChain().size());
     }

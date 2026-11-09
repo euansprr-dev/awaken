@@ -141,7 +141,7 @@ final class ArmsServer {
                 s.holdSeq = msg.seq();
                 s.holdFrom = now;
                 s.holdOpen = chargeable(style);
-                strike(p, s, style, now, msg.seq());
+                strike(p, s, style, now, msg.seq(), msg.step());
             }
             case ArmsPayloads.PRESS_TAP -> {
                 if (msg.seq() != s.holdSeq) return;
@@ -181,7 +181,7 @@ final class ArmsServer {
      * A tap: a riposte or a Slipcut when one is open, an Undercut out of a slide, a Plunge armed in a fall, else the
      * chain's next strike (now, or buffered for its window).
      */
-    static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq) {
+    static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq, int claimed) {
         Archetype.MoveDef riposte = style.move(Archetype.Move.RIPOSTE);
         if (riposte != null && now - s.deflectAt <= riposte.window()) {
             s.deflectAt = Long.MIN_VALUE / 2;
@@ -205,7 +205,9 @@ final class ArmsServer {
             s.plungeFall = p.fallDistance;
             return; // it strikes where it lands
         }
-        ArmsRules.Decision d = ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, ArmsMastery.strikes(mastery));
+        int strikes = ArmsMastery.strikes(mastery);
+        ArmsRules.Decision d = ArmsRules.follow(style, ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, strikes),
+                claimed, s.lastStep, now - s.lastStepAt, strikes);
         if (d == null) return; // too early: a mash far ahead of the window counts for nothing
         if (d.startAt() > now) {
             s.buffered = d;
@@ -269,6 +271,10 @@ final class ArmsServer {
         s.style = style;
         s.move = move;
         s.step = step;
+        if (step >= 0) {
+            s.lastStep = step;
+            s.lastStepAt = now;
+        }
         s.cadence = cadence;
         s.moveSeq = seq;
         s.moveStart = now;

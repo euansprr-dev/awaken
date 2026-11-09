@@ -179,7 +179,9 @@ public final class ArmsPredict {
         holdOpen = heavyDef != null && heavyDef.charge().isPresent();
         swungAt = ticks;
         if (meansFight(mc, p, st, target)) fightAt = ticks;
-        ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(s, ArmsPayloads.PRESS_STRIKE, p.getYRot(), p.getXRot(), target));
+        int steps = mastery(st);
+        ArmsRules.Decision d = ArmsRules.tap(st, style == st ? move : null, moveStart, step, cadence, ticks, ArmsMastery.strikes(steps));
+        ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(s, ArmsPayloads.PRESS_STRIKE, p.getYRot(), p.getXRot(), target, d == null ? -1 : d.step()));
         Archetype.MoveDef riposte = st.move(Archetype.Move.RIPOSTE);
         if (riposte != null && ticks - deflectAt <= riposte.window()) {
             deflectAt = -1000;
@@ -187,7 +189,6 @@ public final class ArmsPredict {
             return;
         }
         Archetype.MoveDef slip = st.move(Archetype.Move.SLIPCUT);
-        int steps = mastery(st);
         if (slip != null && ticks - dodgeAt >= 1 && ticks - dodgeAt <= st.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(steps)) {
             dodgeAt = -1000;
             begin(p, st, Archetype.Move.SLIPCUT, -1, 0, s);
@@ -207,7 +208,6 @@ public final class ArmsPredict {
             p.setDeltaMovement(v.x * 0.6, Math.min(v.y, -1.1), v.z * 0.6);
             return;
         }
-        ArmsRules.Decision d = ArmsRules.tap(st, style == st ? move : null, moveStart, step, cadence, ticks, ArmsMastery.strikes(steps));
         if (d == null) return;
         if (d.startAt() > ticks) {
             buffered = d;
@@ -897,7 +897,12 @@ public final class ArmsPredict {
                 ArmsFilm.event("server move " + (m == null ? "-" : m.key) + " seq " + r.seq() + " ours " + (move == null ? "-" : move.key)
                         + (r.seq() == seq && m != null && m != move && style != null && !charging ? " SWITCHED" : ""));
                 if (r.seq() == seq && m != null && m != move && style != null && !charging) {
-                    move = m; // the server ran another move than we guessed: take its word, keep the clock
+                    dev.awaken.Awaken.LOG.info("[arms] the server ran {} where the hands showed {} (seq {}, step {})", m.key, move == null ? "-" : move.key, r.seq(), step);
+                    // two chain strikes: the hands stay in the one they're in (swapping clips mid-swing is what read as
+                    // the combo breaking, Euan 2026-11-09) and the chain takes the server's place, so the next press agrees
+                    int at = move != null && move.strike() && m.strike() ? ArmsRules.stepOf(style, m) : -1;
+                    if (at >= 0) step = at;
+                    else move = m; // something else altogether (a riposte we didn't foresee): take its word, keep the clock
                     cadence = r.aux2();
                 }
                 if (r.seq() == seq) cadence = r.aux2();
@@ -907,6 +912,7 @@ public final class ArmsPredict {
                     dodging = false;
                 } else if (r.seq() == seq) {
                     ArmsFilm.event("refused seq " + r.seq());
+                    dev.awaken.Awaken.LOG.info("[arms] the server refused seq {} (hands on {})", r.seq(), move == null ? "-" : move.key);
                     fadeFrom = ticks;
                     move = null;
                     step = -1;

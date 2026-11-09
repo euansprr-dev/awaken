@@ -67,6 +67,7 @@ final class ArmsTests {
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
+        AwakenTests.register("arms_chain_follows", 20, ArmsTests::chainFollows);
         AwakenTests.register("arms_dagger_click", 40, ArmsTests::daggerClick);
         AwakenTests.register("arms_attack_key", 20, ArmsTests::attackKey);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
@@ -859,6 +860,21 @@ final class ArmsTests {
      * only when let go. A tap lands its strike on time, and with no word from the client at all the strike lands at the
      * charge's mark plus {@link ArmsServer#HOLD_WAIT}.
      */
+    static void chainFollows(GameTestHelper h) {
+        Archetypes.Loaded a = longsword();
+        ArmsRules.Decision restart = new ArmsRules.Decision(Archetype.Move.STRIKE_1, 0, 100, 0);
+        ArmsRules.Decision carried = ArmsRules.follow(a, restart, 1, 0, 12, 0);
+        h.assertTrue(carried.step() == 1 && carried.move() == Archetype.Move.STRIKE_2 && carried.startAt() == 100, "the client's chain counts on a window's edge");
+        h.assertTrue(ArmsRules.follow(a, restart, 2, 0, 12, 0) == restart, "but it can't skip a strike");
+        h.assertTrue(ArmsRules.follow(a, restart, 1, 0, ArmsRules.CHAIN_SLACK + 1, 0) == restart, "or carry on long after the chain ended");
+        h.assertTrue(ArmsRules.follow(a, new ArmsRules.Decision(Archetype.Move.STRIKE_2, 1, 100, 0), 0, 0, 12, 0).step() == 0, "starting again is always allowed");
+        h.assertTrue(ArmsRules.follow(a, null, 1, 0, 12, 0) == null, "a press far too early still counts for nothing");
+        h.assertTrue(ArmsRules.follow(a, restart, -1, 0, 12, 0) == restart, "no claim, the server's own");
+        for (int i = 0; i < a.chain().size(); i++) h.assertTrue(ArmsRules.stepOf(a, a.chain().get(i)) == i, "strike " + i + " knows its place");
+        h.assertTrue(ArmsRules.stepOf(a, Archetype.Move.HEAVY) == -1, "a heavy is no chain strike");
+        h.succeed();
+    }
+
     static void tapOrHold(GameTestHelper h) {
         for (Archetypes.Loaded a : Archetypes.all()) {
             if (ArmsServer.chargeable(a)) h.assertTrue(ArmsRules.waitsOnHold(a.id()), a.id() + "'s held press waits, never landing its strike first");

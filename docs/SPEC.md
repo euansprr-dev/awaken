@@ -6828,7 +6828,13 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   `ArmsServer.waitHit`), so a tap is never queued behind a decision, but it is out of sight: its clock stands at 0, and the
   hands, the view's lean, its ribbon, swish, arc, step in and body clip all wait until the press is a tap. A press landing
   in another blow lets it land first (`handsFree`): the hands leave once it has, and the mark waits for it too; one landing
-  in a recovery plays that recovery on through the grace, its strike unseen or still queued. **A tap** (let go before the mark, `PRESS_TAP`,
+  in a recovery plays that recovery on through the grace, its strike unseen or still queued. **One chain** (Euan 2026-11-09: "the combo stops being the usual one", "it just switches to something else"): the two
+  sides time the windows on their own clocks, so a press on a window's edge could be the next strike on one and the first
+  on the other; the client then swapped clips on the same clock in mid-swing and, keeping its own `step`, stayed a step out
+  for the rest of the chain. Now the press carries the client's step (`Press.step`) and the server takes it when the chain
+  allows it (`ArmsRules.follow`: starting again, or the strike after its last within 60 ticks), its own otherwise; if they
+  still differ, the hands finish the strike they're in and the chain takes the server's step for the next press. Only a
+  move outside the chain (a riposte it didn't foresee) replaces the running one. Every disagreement is logged (`[arms]`). **A tap** (let go before the mark, `PRESS_TAP`,
   read every frame by `ArmsPredict.frame`, not on the next tick) starts the strike that waited, from where the hands
   are: its clip from its first key with its wind-up at twice speed (`TAP_RATE`), the hands carried onto it by its
   hit (`launchTicks`: half the wind-up, at least a tick, so a one-tick strike's way out lasts three frames and isn't a flash, and up to a tick longer the further the draw has come, so a

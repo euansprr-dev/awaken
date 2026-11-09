@@ -28,6 +28,9 @@ final class ArmsState {
     dev.awaken.powers.PowerType.@org.jspecify.annotations.Nullable Family echoFamily, edgeFamily;
     int edgeHits;
     int step = -1, cadence, moveSeq, recovery;
+    /** The last chain strike begun and when: a client's word for the next is taken only just after it (ArmsRules.follow). */
+    int lastStep = -1;
+    long lastStepAt;
     boolean perfectHeavy;
     /** A Lord-forged Art's move has let go this move (it fires once, at the end of the wind-up). */
     boolean unleashed;

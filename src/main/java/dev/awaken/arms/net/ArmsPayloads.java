@@ -20,11 +20,16 @@ public final class ArmsPayloads {
      * Client → server: the strike key. STRIKE on the press (the move starts now; target = the creature under the
      * crosshair, -1 for none); CHARGE once the key has been held into a heavy; RELEASE when a charged key lets go.
      */
-    public record Press(int seq, int what, float yaw, float pitch, int target) implements CustomPacketPayload {
+    public record Press(int seq, int what, float yaw, float pitch, int target, int step) implements CustomPacketPayload {
+        /** A press with no claim on the chain ({@code step}: which chain strike the client began, -1 for none). */
+        public Press(int seq, int what, float yaw, float pitch, int target) {
+            this(seq, what, yaw, pitch, target, -1);
+        }
+
         public static final Type<Press> TYPE = new Type<>(Awaken.id("arms_press"));
         public static final StreamCodec<ByteBuf, Press> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Press::seq, ByteBufCodecs.VAR_INT, Press::what, ByteBufCodecs.FLOAT, Press::yaw,
-                ByteBufCodecs.FLOAT, Press::pitch, ByteBufCodecs.VAR_INT, Press::target, Press::new);
+                ByteBufCodecs.FLOAT, Press::pitch, ByteBufCodecs.VAR_INT, Press::target, ByteBufCodecs.VAR_INT, Press::step, Press::new);
         @Override public Type<Press> type() { return TYPE; }
     }
 
