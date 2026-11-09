@@ -177,7 +177,7 @@ public final class AmberReach extends Land {
                 double court = n3.get(x / 24.0, z / 24.0), wear = n1.get(x / 7.0, z / 7.0), k = rnd(x, z, 41 + seed);
                 // moss only finds a way in along the edges, or the crop grows out of the middle of the square
                 boolean rim = road ? dr > 2.6 : dc < 140 ? dc > 128 : dv > 0.82;
-                cap[0] = court > 0.42 ? m.hexstone : wear > 0.5 && k < 0.6 ? m.pale : rim && wear < -0.3 && k < 0.5 ? m.moss : k < 0.06 ? m.pale : m.flag;
+                cap[0] = court > 0.42 ? m.hexstone : wear > 0.5 && k < 0.6 ? (dc < 140 ? m.hexstone : m.pale) : rim && wear < -0.3 && k < 0.5 ? m.moss : k < 0.06 ? m.pale : m.flag;
             }
         } else {
             double soil = fbm(n9, x, z, 1 / 13.0, 2);
@@ -635,7 +635,7 @@ public final class AmberReach extends Land {
                 Hex t = hex(x, z, 2.1);
                 if (rnd(t.q(), t.r(), 112) > lerp(0.62, 0.12, (d - 7.8) / 3.7)) return;
                 int g = land.ground(x, z);
-                v.set(x, g, z, t.edge() > 0.78 ? m.worn : rnd(t.q(), t.r(), 113) < 0.5 ? m.flag : m.hexstone);
+                v.set(x, g, z, rnd(t.q(), t.r(), 113) < 0.5 ? m.flag : m.hexstone);
                 v.set(x, g + 1, z, null);
                 return;
             }
@@ -646,7 +646,7 @@ public final class AmberReach extends Land {
                 // the arrival floor: hexes with a ring of gilt let into it, six lines running out from the middle
                 v.foot(x, gy - 1, z, m.pale);
                 double ang = Math.atan2(z - cz, x - cx), spoke = Math.abs(Math.sin(3 * ang)) * d;
-                v.set(x, gy, z, d < 1.1 ? m.gold : d > 3.3 && d < 3.9 ? (chip < 0.25 ? m.worn : m.gold) : spoke < 0.55 && d > 1.1 ? m.pale : t.edge() > 0.8 ? m.worn : rnd(t.q(), t.r(), 111) < 0.5 ? m.hexstone : m.flag);
+                v.set(x, gy, z, d < 1.1 ? m.gold : d > 3.3 && d < 3.9 ? (chip < 0.25 ? m.flag : m.gold) : spoke < 0.55 && d > 1.1 ? m.pale : rnd(t.q(), t.r(), 111) < 0.5 ? m.hexstone : m.flag);
             } else if (d <= 5.4) {
                 v.foot(x, gy - 1, z, m.stoneA);
                 if (chip < 0.14) v.set(x, gy, z, null);

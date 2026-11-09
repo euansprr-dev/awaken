@@ -71,16 +71,12 @@ look -90 -16
 wait 300
 shot amber_citadel_stair
 
-cmd awaken gate realm_at MOUTH 0 182 20 96
-look -54 -10
-wait 300
-shot amber_flowers
 cmd awaken gate realm_at WAYSTONE 0 8 5 8
 look 135 22
 wait 200
 shot amber_waystone
-cmd awaken gate realm_at WAYSTONE 0 34 9 34
-look -60 18
+cmd awaken gate realm_at UPDRAFT 0 18 6 18
+look 135 14
 cmd execute at @s run summon awaken:pollen_grazer ^-3 ^ ^10
 cmd execute at @s run summon awaken:pollen_grazer ^4 ^ ^13
 cmd execute at @s run summon awaken:pollen_grazer ^ ^ ^17
@@ -126,8 +122,8 @@ shot amber_gallery
 # the living part: on normal, walk up to a den and see what wakes
 cmd difficulty normal
 hud on
-cmd awaken gate realm_at DEN 0 -30 3 0
-look -90 10
+cmd awaken gate realm_at DEN 0 -24 8 0
+look -90 16
 wait 200
 shot amber_den_wake
 cmd awaken gate realm_at MOUTH 0 -3 1 0
