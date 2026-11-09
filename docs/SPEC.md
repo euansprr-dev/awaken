@@ -15379,13 +15379,20 @@ the lesson), on purpose (`intent`), so it shows at once (§26.3).
   (`BinocularsRelay.looking`: a change still held by the relay's rate limit counts), the server casts the player's own look
   (eyes and view as it has them) against what the sources offer. Each thing's bounds are widened by `SLACK_DEG` (0.6°) at its
   distance; the nearest the look enters wins. It then needs a clear line through loaded blocks by what you see (`VISUAL` shapes:
-  glass and water hide nothing, leaves and stone do; an unloaded chunk hides it; a block inside the thing's own bounds is the
+  glass and water hide nothing, stone does; up to `Spotting.FOLIAGE` (5) blocks of leaves and bushes on the line don't, so a
+  creature through a hedge or the edge of a crown can be found, while a stand of trees still hides it (Euan 2026-11-09:
+  "not working well when a lot of bushes are here"); an unloaded chunk hides it; a block inside the thing's own bounds is the
   thing), aimed where the look meets its bounds, else at their middle. The same thing on `HOLD` (40) ticks of looks finds it;
-  one missed look is forgiven (`GRACE` 1: a leaf, the sway), a second or another thing starts over. Reach: the server's view
+  one missed look is forgiven (`GRACE` 1: the sway), a second or another thing starts over. Reach: the server's view
   distance in blocks, held to 64..512 (`REACH_MIN`/`REACH_MAX`): the loaded land, since the server can't see Far Sight's land.
   No spotting by a spectator, the dead, before awakening, or inside Carillon's walls; a thing inside the walls is never spotted
   (§26.3b). Standing things are gathered once a second (`STANDING_EVERY` 20), creatures at every look; candidates live in a
   fixed pool of 64 per player (no allocation per look beyond the sources' own gathering).
+- **Up close, without the glass** (`world.fauna.Sightings`, §26.3) uses the same sight line (`Spotting.clearLine`, to the head or
+  the middle of the body). Three looks a quarter second apart still make a study, but up to two looks in a row may miss (`GRACE`:
+  a walking creature, a shaky aim) without starting over, another of the same kind keeps the count, and the two creatures
+  nearest under the look get the rays, so a herd can't starve the one in front. Ambient wildlife stays client-only and is never
+  a discovery.
 - **The API (`core.api.Spotting`).** A module registers a `Source` (`moves()`, `gather(player, reach, Sink)`, `find(player,
   ref)`); `Sink.place(key, bounds, ref)` for a standing thing, `Sink.entity(entity, ref)` for a moving one. A source offers only
   what the player hasn't found, never loads a chunk, and re-checks in `find` (it may have gone).

@@ -416,13 +416,22 @@ final class FaunaTests {
                 // a glance that crosses it is not a study either
                 look(p, side);
                 h.assertTrue(Sightings.check(p) == null, "one look is a glance");
-                p.setYRot(0.0F);
-                p.setYHeadRot(0.0F);
-                p.setXRot(0.0F);
-                h.assertTrue(Sightings.check(p) == null, "the glance moved on");
-                // the crosshair rests on it: a study
+                Runnable away = () -> {
+                    p.setYRot(0.0F);
+                    p.setYHeadRot(0.0F);
+                    p.setXRot(0.0F);
+                };
+                away.run();
+                for (int i = 0; i <= Sightings.GRACE; i++) h.assertTrue(Sightings.check(p) == null, "the glance moved on");
+                // the crosshair rests on it: a study, and a shaky aim or a walking creature doesn't start it over
+                for (int i = 1; i < Sightings.DWELL; i++) {
+                    look(p, side);
+                    h.assertTrue(Sightings.check(p) == null, "not yet at look " + i);
+                    away.run();
+                    h.assertTrue(Sightings.check(p) == null, "a miss between looks");
+                }
                 look(p, side);
-                h.assertTrue(study(p) == moss, "resting the crosshair on it studies it");
+                h.assertTrue(Sightings.check(p) == moss, "resting the crosshair on it studies it, a miss or two along the way");
                 h.assertTrue(Progression.profile(p).counter(dev.awaken.signal.Finds.TAUGHT) == 1, "the first find taught the system");
             } finally {
                 level.getGameRules().set(FaunaModule.SPAWNING.get(), spawning, level.getServer());
