@@ -42,8 +42,9 @@ public final class FightRecorder {
 
     static final String[] BOSSES = {"hive_regent", "gearwright_colossus", "ember_tyrant", "sky_leviathan", "glass_serpent", "bell_warden"};
 
+    /** The rest of the kit bodies. Not the Lantern Broker: it trades with you and only duels if you ask. */
     static final String[] ROLLED_OUT = {
-        "unit_zero", "mother_of_spores", "root_saint", "drowned_archivist", "lantern_broker", "abbot_of_frost",
+        "unit_zero", "mother_of_spores", "root_saint", "drowned_archivist", "abbot_of_frost",
         "mirror_knight", "the_sleeper", "hollow_herald", "guardian_rim", "guardian_gardens", "guardian_choir",
         "guardian_orchard", "guardian_silent", "guardian_foundry", "guardian_inverted", "guardian_dreaming", "guardian_court",
         "guardian_seed", "sovereign_hunger", "sovereign_silence", "sovereign_sleep", "sovereign_machines", "sovereign_mirrors",

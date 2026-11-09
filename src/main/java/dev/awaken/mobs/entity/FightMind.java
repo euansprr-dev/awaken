@@ -54,6 +54,8 @@ final class FightMind {
     private final long[] nextRoll, ready;
     private int lastMove = -1;
     private long wanting = -1;
+    /** How long a blow waits before it may follow itself as a last resort (shorter when it's the only close blow this phase has). */
+    private int repeatAfter = REPEAT_AFTER;
     private int lastResorts;
     private @Nullable String chosen;
     /** Tests: every answer is given, no dice. */
@@ -201,13 +203,22 @@ final class FightMind {
     boolean allowed(int move, long now) {
         long waited = wanting < 0 ? 0 : now - wanting;
         boolean blow = moves.get(move).kind() != Strikes.Kind.NONE;
-        if (move == lastMove) return blow && waited > REPEAT_AFTER;
+        if (move == lastMove) return blow && waited > repeatAfter;
         return now >= ready[move] || (blow && waited > STALE_TICKS);
     }
 
     /** How many times this fight a blow has followed itself as the last resort: the only way it's meant to. */
     int lastResorts() {
         return lastResorts;
+    }
+
+    void repeatAfter(int ticks) {
+        repeatAfter = ticks;
+    }
+
+    /** How long it has wanted to start something and had nothing that could (0 when it isn't waiting). */
+    long waiting(long now) {
+        return wanting < 0 ? 0 : now - wanting;
     }
 
     /** Nothing it may start reaches you right now. */
@@ -221,7 +232,7 @@ final class FightMind {
     }
 
     void began(int move, long now) {
-        if (move == lastMove && wanting >= 0 && now - wanting > REPEAT_AFTER) lastResorts++;
+        if (move == lastMove && wanting >= 0 && now - wanting > repeatAfter) lastResorts++;
         lastMove = move;
         wanting = -1;
         ready[move] = now + cooldown(moves.get(move));

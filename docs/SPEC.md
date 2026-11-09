@@ -19566,7 +19566,10 @@ If you've got out of reach during those 5 ticks the normal choice takes over.
 (`mind.cooldowns`, else by class: LIGHT 0, HEAVY 30, PERILOUS and GRAB 80, a move that hurts nobody 240). If nothing it may start
 reaches you for 2 seconds its blows' rests are waived; a move that hurts nobody (a buff, a heal, a summon) always keeps its rest. It
 never makes the same move twice running by choice. The one exception is a last resort: a blow may follow itself when nothing else it
-could do has reached you for 10 seconds, so a spot only one move reaches isn't safe. Any blow may be
+could do has reached you for 10 seconds (3 seconds in a phase with only one close blow, which has nothing else to do there), so a
+spot only one move reaches isn't safe. A string doesn't repeat either: a next blow that would be the move just made is dropped (a
+fork can land on the blow that was coming anyway). And a body whose longest close blow is the one it just made steps in, after 0.75 s
+with nothing to start, until a shorter one reaches, instead of standing there. Any blow may be
 held a beat at its peak (`holdChance` 25%, `holdTicks` 6, or its own authored hold if longer), which only ever adds warning. Having
 deflected it again and again it always holds. The third dodge in a row (each within 2 seconds of the last) is caught: once it has
 seen that third dodge, the next blow holds for at least 10 ticks and keeps turning to you through the hold, so it lands where you
@@ -19598,7 +19601,7 @@ dodge. Its gap-closers rest 60 ticks. A move that fills the room or ends the fig
 reach of 40) answers nothing, and neither does a move kept for behind. A script written with its own `mind` keeps it. **An answer or a fork never reaches for
 a move its phase hasn't got yet** (`FightRunner.inPhase`), so a late phase's moves stay in the late phase; the Regent's Stinger Volley
 now answers only from her second phase on. Tempers, footwork and each boss's own trick aren't in this. `fights_mind_every_boss`
-checks they all have one; `fights_record_<boss>_guard` runs each of the others once.
+checks they all have one; `fights_record_<boss>_guard` runs each of the others once, the Lantern Broker excepted (it trades with you and only duels if you ask).
 
 **48.7 The recorder (stage 0).** `FightRecorder`: `fights_record_<boss>_<kind>`, six bosses (more as the roll-out reaches them)
 against six kinds of player (stands still, runs, circles, holds guard, keeps away, stays behind), 72 s each with fixed seeds;
