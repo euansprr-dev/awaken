@@ -582,7 +582,10 @@ public final class AbilityRunner {
             var fx = chargeEffect;
             boolean landed = Strikes.deliver(mob, chargeCls, () -> Abilities.hurt(level, mob, e, chargeDamage,
                     ca != null ? Abilities.bolt(mob, ca) : mob.def().theme.bolt, fx));
-            if (landed) Abilities.push(e, chargeDir, 1.1, 0.4);
+            Vec3 way = chargeDir;
+            Runnable push = () -> Abilities.push(e, way, 1.1, 0.4);
+            if (landed || dev.awaken.arms.Arms.guarded(e)) push.run();
+            else dev.awaken.arms.Arms.afterHeld(e, push);
         }
         if (mob.horizontalCollision && !mob.def().flies()) chargeTicks = 0;
         if (chargeTicks <= 0) {

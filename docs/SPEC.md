@@ -18658,6 +18658,18 @@ because a kick and a knock was all it had; the ring stays the deflect's alone (i
 ticks). A boss with a mind logs one `[fights] missed` line for a blow that met nobody though you stood in its reach (how far, in
 sight or not), so a playtest can say what the tests can't: whether a blow ever passes through a guard held still.
 
+**A block you can feel (Euan's playtest 2026-11-09: a block a moment too late "barely makes any sound ... it feels like nothing
+happened ... sometimes it doesn't even push you back").** His log held only 8 light blows that met nobody in a five-minute fight, so
+these blows were landing on the guard. Three causes. The sound: `arms.block` has 92 to 95% of its energy under 300 Hz, which laptop
+speakers don't play, where the deflect has none there. A block now plays three layers: that thud for weight, Minecraft's own
+shield being struck (`guard.struck`, `item/shield/block1-5` by name, pitch 0.9) and steel (`guard.steel`, `mob/irongolem/hit1-4`, quiet
+and pitched up). The ring stays the deflect's. The push: a quarter of a light blow's knock moved you about a quarter of a block, and
+it only came if the hit counted as landing, which a blow doesn't when it does no damage (the last blow's half second of immunity,
+the second blow of most strings). Now the push comes whenever a guard took the blow (`Arms.guarded`), is 70% of the knock and at
+least 0.3 (about 0.7 of a block on the ground, no lift; `fights_guard_holds_ground`), and a blow held for a laggy guard (50 ms or
+more of ping) keeps its push for when it lands (`Arms.afterHeld`). The stop: a block has a 50 ms hit-stop on the attacker and your
+hands, half a deflect's, and a harder kick of the view to the side the blow came from. Unheard and unseen in game when written.
+
 **47.4 The Provings: the Ringer (stage 3).** The D Reassessment becomes the first Proving (PLAN §4.7, GOALS part 2):
 one fight with a Warden in its own hall, never announced, the rank's gift inside the fight.
 - **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept

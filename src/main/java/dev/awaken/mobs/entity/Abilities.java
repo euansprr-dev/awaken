@@ -93,12 +93,12 @@ final class Abilities {
      */
     static boolean carrying = true;
 
-    /** What a blow's push is worth on a held guard: a step back, feet on the ground (SPEC §47.3). */
-    private static final double GUARDED_PUSH = 0.25;
+    /** What a blow's push is worth on a held guard: most of it, always at least a step, feet on the ground (SPEC §47.3). */
+    private static final double GUARDED_PUSH = 0.7, GUARDED_LEAST = 0.3;
 
     static void push(LivingEntity e, Vec3 dir, double strength, double up) {
         if (dev.awaken.arms.Arms.guarded(e)) {
-            strength *= GUARDED_PUSH;
+            strength = Math.max(GUARDED_LEAST, strength * GUARDED_PUSH);
             up = 0;
         }
         Vec3 d = new Vec3(dir.x, 0, dir.z);

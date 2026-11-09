@@ -1036,9 +1036,12 @@ final class FightRunner {
             Strikes.Kind kind = cls == Strikes.Kind.NONE ? Strikes.Kind.HEAVY : cls;
             boolean landed = Strikes.deliver(boss, kind, () -> e.hurtServer(level, level.damageSources().mobAttack(boss), dmg));
             if (landed && e == boss.getTarget()) struck = true;
-            if (landed && m.knock() > 0) {
+            if (m.knock() > 0) {
+                // a blow a guard took pushes even when it did no damage (all of it stopped, or the last blow's immunity)
                 Vec3 away = e.position().subtract(boss.position());
-                Abilities.push(e, away, m.knock(), Math.min(0.5, m.knock() * 0.4));
+                Runnable push = () -> Abilities.push(e, away, m.knock(), Math.min(0.5, m.knock() * 0.4));
+                if (landed || dev.awaken.arms.Arms.guarded(e)) push.run();
+                else dev.awaken.arms.Arms.afterHeld(e, push);
             }
         }
     }

@@ -209,7 +209,7 @@ public final class FightReachTests {
             if (tick[0] > 8 && now == null && was[0] == null && begun[0] > 0) {
                 Awaken.LOG.info("[reach] guard holds: {} begun, {} met the guard, moved {}; {}", begun[0], met[0], String.format("%.2f", moved[0]), seq);
                 h.assertTrue(begun[0] == 2 && met[0] == 2, "both blows meet the guard (" + begun[0] + " begun, " + met[0] + " met)");
-                h.assertTrue(moved[0] < 1.0, "the guard held its ground, moved " + moved[0]);
+                h.assertTrue(moved[0] > 1.0 && moved[0] < 2.6, "the guard was shoved a step a blow and held, moved " + moved[0]);
                 boss.discard();
                 h.succeed();
             }

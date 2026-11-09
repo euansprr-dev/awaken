@@ -76,6 +76,11 @@ public final class Arms {
         return s != null && s.guardedAt == ArmsServer.now(p);
     }
 
+    /** A blow on {@code e} was held for a laggy guard just now: {@code after} runs when it lands or meets the guard. */
+    public static void afterHeld(LivingEntity e, Runnable after) {
+        if (e instanceof net.minecraft.server.level.ServerPlayer p) ArmsServer.afterHeld(p, after);
+    }
+
     /** Whether Arms runs this player's melee (the world switch and a weapon with a style). */
     public static boolean fights(LivingEntity e) {
         return ArmsConfig.enabled() && styleOf(e.getMainHandItem()) != null;
