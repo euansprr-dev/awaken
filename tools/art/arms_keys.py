@@ -245,21 +245,29 @@ LD = 0.627  # the Daggers' blade from the fist to the point (Wildhide, Gatewroug
 def dagger_poses():
     """The Daggers' poses, the right hand's (a left one is its mirror): screen places of the fist and of the point."""
     b = lambda g, d, t, e=(0.3, -1.0, 0.0), r=0.0: blade(g, d, t, LD, e, r)
+    rest = b((0.50, -1.00), 0.64, (0.14, -0.32))
+    axis = unit(rest.to - rest.at)
+
+    def slide(g, d):
+        """The rest pose carried to a new place and not turned at all: a stab is a slide along a line, never a lever about
+        its point (Euan 2026-11-09: "barely moving forwards": the last keys turned the blade 26 degrees for 0.16 of reach)."""
+        at = on_screen(g[0], g[1], d)
+        return rest.moved(at=at, to=rest.to + (at - rest.at))
+
     return dict(
         # forward grip, the points angled in toward the crosshair, the fists low and in from vanilla's corner
-        rest=b((0.50, -1.00), 0.64, (0.14, -0.32)),
-        # the chain's stab: 0.3 blocks out along the fist's line, the fist still low and on its own side, the point driven
-        # in to just under the crosshair; strike 3's a touch lower so a run of stabs isn't one picture
-        stab=b((0.40, -0.84), 0.92, (0.07, -0.22)),
-        stab_low=b((0.42, -0.90), 0.92, (0.09, -0.30)),
+        rest=rest,
+        # the chain's stab: half a block out, the fist still low and on its own side; strike 3's a touch lower
+        stab=slide((0.34, -0.74), 1.14),
+        stab_low=slide((0.36, -0.80), 1.08),
         # the finisher's and the loosed heavy's: both at once, a little further
-        pair=b((0.36, -0.82), 0.98, (0.05, -0.20)),
+        pair=slide((0.33, -0.72), 1.20),
         # the riposte's: the furthest a dagger reaches
-        lunge=b((0.36, -0.80), 1.02, (0.05, -0.18)),
-        # the heavy charged: drawn back down the same line, so the release is the stab itself
-        coil=b((0.58, -1.14), 0.50, (0.22, -0.46)),
+        lunge=slide((0.31, -0.71), 1.30),
+        # the heavy charged: pulled straight back down the same line, not turned, so the release is the stab itself
+        coil=rest.moved(at=rest.at - axis * 0.20, to=rest.to - axis * 0.20),
         # out of a dodge, and low at the legs out of a slide
-        slip=b((0.42, -0.92), 0.90, (0.09, -0.28)),
+        slip=slide((0.36, -0.80), 1.08),
         under=b((0.42, -1.06), 0.88, (0.14, -0.56)),
         # pulled back out of the body, on the way home from a blow driven down
         out=b((0.44, -0.86), 0.66, (0.16, -0.24)),
