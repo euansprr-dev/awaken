@@ -7236,28 +7236,23 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   - *The stance* (schema 7, a style's `stance` [dx, dy, dz, qx, qy, qz, qw]): where the hands rest between moves,
     a pair's off hand its mirror while the twin shows; let go as the guard comes up, never while the weapon cuts. A
     keyed style's moves start and end there (arms_fp_swings: "ends in its stance").
-  - *The Daggers* (Euan 2026-11-09: "I want clean stabs", "the hands still go way too upwards", "the right arms go way
-    too much to the left side", "maybe we remove the slashes and just make it like a lot of small stabs"): a forward grip
-    in both hands, and every blow of the chain is a stab. Two pistons: each fist has one line, low at its own side of the
-    screen, and a stab is one move out along it and one move back along it: the stance slid half a block and not turned at all
-    (Euan 2026-11-09: "barely moving forwards": the first stabs turned the blade 26 degrees for 0.16 blocks of reach, a lever
-    about the point), the fist ending near (0.34, -0.74) on the screen. The point stays near where it was on the screen and
-    the blade shortens into the distance, because a line going straight away converges on the crosshair. Nothing chambers first,
-    nothing winds up or crosses over, the other hand stays where it is and the view stays level (a hit nods it 0.25
-    degrees, the finisher's 0.6), so the only thing moving on the screen is the blade that is stabbing. Strikes 1 to 3
-    are right, left, right (strike 3 a touch lower); strike 4 is both at once and a little further; strike 5 (mastery) the
-    left alone, as far. Each is home in the stance by its third tick (strikes 4 and 5 by their fifth), before the next
-    press can land, so no clip ever hands over to another halfway through a move. The slashes are gone: strike 3, strike
-    5, the slipcut (low) and the undercut (lower, at the legs) are stabs for the server too, at the stab's arc of 30
-    and the thrust's whoosh, so their old wider arcs (90, 90, 120, 160) are gone with them; an aimed blow ignores the arc.
-    The heavy charges pulled straight back 0.2 blocks down the same lines, not turned (it used to tilt 18 degrees down), and its release is both stabs; the riposte is the chain's stab at
-    full reach. The Art and the blows driven down (the Plunge, the Execution) keep their own keys. Why the old keys
-    looked as they did: they drove the fist to the crosshair, as far across and up as forward (fist at (0.24, -0.58),
-    the arm reaching up the middle of the screen), the right hand was twisted out sideways between strikes to set up the
-    slash and thrown across past the crosshair by it, and a chamber, a blow and a follow-through stopped the hand three
-    times in 1.3 ticks while the view rocked a degree the other way each stab: that was the height, the crossing and
-    the jitter. `arms_keys.py check` and the test `arms_dagger_stabs` hold the rules (no slash, the fist low and on its
-    own side at the blow, one straight line out, the other hand and the view still, home before the next press).
+  - *The Daggers* (Euan 2026-11-09, after the first stabs-only rebuild: "barely even hitting", "add the slash back in", "a similar
+    animation to before, just polished up with everything we've learned and without the glitches"): a forward grip in both hands.
+    Strike 1 the right stabs, strike 2 the left, strike 3 the right slashes, strike 4 both stab at once, strike 5 (mastery) the
+    left slashes. A stab drives the fist forward and in, the point travelling up the screen toward the crosshair, because a
+    point that stays put on the screen reads as nothing moving however far it goes (that was "barely moving forwards"). Every
+    blow is one stroke: from a stop, through the hit, to one stop a little deeper, then a slower way back. Nothing chambers
+    first: a chamber, a blow and a follow-through inside 1.3 ticks was the jitter. At every blow the fist stays low and on its
+    own side, no higher than -0.55 on the screen and no nearer the middle than 0.26 ("the hands still go way too upwards"); a
+    slash carries the fist across the middle and stops by 0.06, where the old one threw it to -0.30 ("way too much to the left
+    side"). The hand not striking draws back into its guard (0.54, -0.92) while the other drives, so each blow starts where
+    its hand already is; before the slash the right has turned its edge out and waits, cocked out to the right with the blade
+    showing its length, through the whole window a press can land in, and before the finisher both gather low at the hips. The
+    view leans a hair with a stab and rolls with a slash. The heavy charges at the hips and its release is both stabs in half
+    a tick. The riposte is the chain's stab at full reach. The slipcut (wide, a little low) and the undercut (at the legs) are the
+    slash. The server's rows are the slashes' again: strike 3 and 5 arc 90, the slipcut 120, the undercut 160, each with the light
+    whoosh. The Art and the blows driven down (the Plunge, the Execution) keep their own keys. `arms_keys.py check` and the test
+    `arms_dagger_stabs` hold the rules (which strikes slash, the fist low and on its own side at the blow, never crossing over).
   - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
     peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
     ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up
