@@ -72,7 +72,7 @@ final class SuitView extends CloseView {
     private final Component[] letter = {Stage.blackletter("E"), Stage.blackletter("D"), Stage.blackletter("C"), Stage.blackletter("B"), Stage.blackletter("A"), Stage.blackletter("S")};
 
     // the panel: rebuilt only when what it reads changes
-    private boolean dirty = true;
+    private boolean dirty = true, builtChosen;
     private ArmourPayloads.@Nullable Offers built;
     private @Nullable Component name, pieceName;
     private float nameSize = 4F;
@@ -163,9 +163,11 @@ final class SuitView extends CloseView {
 
     private void rebuild(Stage s, HallNet.Wall w) {
         ArmourPayloads.Offers o = HallClient.suits;
-        if (!dirty && o == built) return;
+        boolean chosenNow = choosing != null && choosing.chosen(set); // the server's answer to Choose arrives a moment later
+        if (!dirty && o == built && chosenNow == builtChosen) return;
         dirty = false;
         built = o;
+        builtChosen = chosenNow;
         boolean hidden = SuitState.hidden(o, set);
         modes = 0;
         for (int i = 0; i < 4; i++) {
@@ -246,7 +248,7 @@ final class SuitView extends CloseView {
             compare = "You are wearing this one.";
             compareColour = Stage.LABEL;
         } else if (worn.isEmpty()) {
-            compare = HallSpecial.n((float) here) + " armour, and you wear nothing there.";
+            compare = "+" + HallSpecial.n((float) here) + " armour. That slot is empty.";
             compareColour = Stage.GOOD;
         } else {
             double delta = here - mine;

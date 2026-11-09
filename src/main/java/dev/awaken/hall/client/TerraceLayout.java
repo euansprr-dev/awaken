@@ -102,7 +102,7 @@ final class TerraceLayout {
 
     static float letterY(int tier) {
         int[] t = TERRACE[tier];
-        return t[0] - t[1] * .56F;
+        return t[0] - t[1] * (tier == 0 ? .3F : .56F); // the front row's letter sits below the feet of the row behind
     }
 
     /** A suit's reach up and down in model space (y runs down): horns and crests go past the head, some capes past the heels. */
