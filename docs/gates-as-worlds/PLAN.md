@@ -6,6 +6,46 @@ throwaway branch `claude/gates-worlds-probe` and is never merged. The approval p
 Labels used below: **[seen]** measured or read in this repo, or in Euan's own save. **[research]** an outside source (linked).
 **[guess]** a hypothesis still to test. **[plan]** a proposal.
 
+## 0. Revision 2 (9 Nov 2026), after Euan read the first version
+
+**This section overrides anything below it that disagrees.** Euan's feedback, in his words: "I don't want to overcorrect into only
+lands and only open stuff ... some stuff should still be like underground. Some stuff can still be like temples or deserts ... I'm
+not really a fan of the comb itself. It just feels like a maze ... It would be way too long to like explore ... I really like all
+the examples ... We would really have to focus on the design quality ... on par with the actual screenshots and like the examples ...
+if we can build like a lot ... really think about the space where you fight the boss ... those [the real shots] look kind of terrible
+... way too boring and flat and vanilla ... the foot of the comb is literally just one wall ... when I go in a Gate, I want to gain a
+lot of experience and actually like massively level up or have the opportunity to do so ... it should be a mix ... we need to
+guarantee that they're going to be super immersive and extremely well detailed and built."
+
+What changed:
+
+- **Forms [plan].** A gate is one of nine forms: Land, Stronghold, The Deep, Dungeon, Sky, Desert and Ruin, Drowned, Climb, Wonder.
+  Target pool at launch: 20 / 14 / 12 / 14 / 8 / 8 / 4 / 4 / 4 = 88; 128 over time. The 15 themes carry on inside them.
+- **Acts [plan].** Today's floors become acts. A gate is one to three acts of (possibly) different forms, no loading between.
+- **Length [plan, guess].** Most gates: E 15-25 min, D 20-30, C 25-40, B 30-50, A 40-60, S 45-75. About one in six is a Great Gate
+  (E 40 ... S 2 h). Land hearts shrink: E 500 across up to S 1,300, ended by cliff, sea or storm, never an invisible wall.
+- **The Comb [plan].** Cut or rebuilt, with every world whose walking is mostly narrow corridors.
+- **Quality as a process gate [plan].** Painting first (Euan approves), fixed camera, real shot beside the painting, automatic floors
+  (no one-block flat patch over 5x5 on a hero piece; no block over 60% of a view; vanilla share at most 30%; bare ground; depth layers),
+  then Euan plays it. Seven-pass Build Kit: silhouette, relief at three scales, materials, shadow painting, things left behind,
+  growth, light and air. Each family at least 20 own blocks.
+- **Boss spaces [plan].** Today: circle radius 22, 17 high; keeper radius 14, 13 high; `FloorBuilder.java:844`; bars close [seen].
+  New: about a dozen arena shapes dressed per Lord for all 41: seen first, one enormous thing, sized for the Lord, two or three
+  heights, changes during the fight, uses the place's rule, closes the way the place would, telegraphs readable. Also usable in today's
+  gates. Tests: `arena_reach_all`, telegraph contrast, a shot per arena.
+- **Levelling [plan, sim].** Levels per full at-level gate today: E 1.15-1.87, D 0.66-1.07, C 0.43-0.67, B 1.47-2.26, A 6.17-9.21,
+  S 5.66-8.44 [seen, `Curve.floorReward` and `tools/sim/pacing_sim.py`]. Proposed multipliers on `floorReward`: E 2, D 3, C 4, B 2, A 1.25,
+  S 1.25, Sovereign 1.25; live share 60% (today 40%). Balanced player, 300 runs of the pacing sim: level 25 at 9.5 h (today 16.8), level 50 at
+  28.1 h (57.1), level 135 at 64 h (104.6); deaths per gate and push-your-luck peaks unchanged. Cutting open-world XP budgets to 0.6 or 0.4 instead
+  moves the total by about 2 hours: gates already dominate. Must move with it: mastery (main power 5 arrives at player level 84 instead of 43
+  unless retuned), gear timing, the SPEC 2 targets. Optional payouts on top (about x1.5 for someone who takes every risk): Wardens,
+  first clear of a gate, above-rank gates, Great Gates, hidden vaults, one payout moment when the Lord dies.
+- **Order [plan].** 0 repeat fix + new pay on today's gates; 1 foundation + Build Kit; 2 Amber Reach, stop; 3 boss spaces (first six also in
+  today's gates), stop; 4 a Stronghold and a Dungeon, stop; 5 a Deep and a Sky, stop; 6 E pool of 14, switch on; 7 D-S waves to 88 and every
+  Lord placed; 8 old worlds into Dungeons and acts, Far Sight, 128.
+- **New proof.** `RealmLook` on the probe branch (disposable): one land to one painting's framing and one boss hall, with a weathering pass. See
+  the page, section 5, for the shots beside the paintings and the honest verdict.
+
 ## 1. What Euan asked for
 
 Euan, 9 Nov 2026: "I really want to like push it to the maximum possible level where it feels like each gate is a world of its
