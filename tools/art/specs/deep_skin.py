@@ -273,6 +273,37 @@ def region_rock(rock, seed=0):
 
 
 # ---- wall overlays ------------------------------------------------------------------------------------------------------
+
+def uncut(c, seed):
+    """Nothing flat on a wall is sliced by its block (SPEC §42.10; Euan, 9 Nov: "literally cut in the middle... so it creates a
+    straight edge"). A tile that runs off its edge only looks right beside a neighbour that carries on, and these sit alone, so
+    each one thins out before every edge along a coast that wanders a pixel or two in, differently on each side and in each
+    cut (any further in and a wall of them turns into a grid of separate stickers). Which pixels stay depends only on the seed, so a texture and its glow layer lose the same ones."""
+    r = rng("uncut", seed)
+    w = c.w - 1
+    waves = [(r.uniform(0, 6.28), r.uniform(0, 6.28)) for _ in range(4)]
+    dither = [[r.random() for _ in range(c.w)] for _ in range(c.h)]
+
+    def coast(side, t):
+        a, b = waves[side]
+        return 1.0 + 0.45 * math.sin(t * 0.8 + a) + 0.25 * math.sin(t * 1.9 + b)
+
+    def depth(x, y):
+        return min(x - coast(0, y), w - x - coast(1, y), y - coast(2, x), w - y - coast(3, x))
+
+    for y in range(c.h):
+        for x in range(c.w):
+            d = depth(x, y)
+            if d < 0 or d < 1 and dither[y][x] > 0.5 + d * 0.5:
+                c.set(x, y, (0, 0, 0, 0))
+    # a lone pixel left out on the coast reads as a mistake, not as the growth thinning out
+    for y in range(c.h):
+        for x in range(c.w):
+            if c.get(x, y)[3] and depth(x, y) < 1.5 and not any(c.get(x + dx, y + dy)[3] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                c.set(x, y, (0, 0, 0, 0))
+    return c
+
+
 LICHEN = {
     "shallows": ["#3c4a2a", "#56683a", "#71854c", "#93a466", "#b6c48a"],
     "middle": ["#4a3a16", "#6e5620", "#94762e", "#b8983e", "#d8bc62"],
@@ -321,7 +352,7 @@ def lichen(band, seed=0):
         x, y = r.randrange(16), r.randrange(16)
         if (x, y) not in owner:
             c.set(x, y, (*L[2][:3], 200))
-    return c
+    return uncut(c, ("lichen", band, seed))
 
 
 def mineral_crust(seed=0):
@@ -342,7 +373,7 @@ def mineral_crust(seed=0):
         x, y = r.randrange(16), r.randrange(16)
         if c.get(x, y)[3]:
             c.set(x, y, H("#ffffff"))
-    return c
+    return uncut(c, ("crust", seed))
 
 
 def wet_streaks(seed=0):
@@ -1052,7 +1083,7 @@ def rime(seed=0):
                     c.set((bx + side) % 16, (by + 1) % 16, (*H("#86aac6")[:3], 200))
             x += math.cos(ang)
             y += math.sin(ang)
-    return c
+    return uncut(c, ("rime", seed))
 
 
 def glow_algae(glow=False, seed=0):
@@ -1078,7 +1109,7 @@ def glow_algae(glow=False, seed=0):
             if r.random() < 0.25:
                 col = mix(col, H("#4fb88c"), 0.5)
             c.set(x, y, (*col[:3], 150 if thin else 205))
-    return c
+    return uncut(c, ("algae", seed))
 
 
 def driftwood(end=False, seed=0):

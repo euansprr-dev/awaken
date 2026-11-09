@@ -18,6 +18,7 @@ import dev.awaken.delve.Ore;
 import dev.awaken.terrain.api.BiomeTable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -107,6 +108,7 @@ final class CavesTests {
         AwakenTests.register("caves_wall_growth", 200, CavesTests::wallGrowth);
         AwakenTests.register("caves_heart_takes_the_rock", 400, CavesTests::heartTakesTheRock);
         AwakenTests.register("caves_region_edge", 400, CavesTests::regionEdge);
+        AwakenTests.register("caves_wall_growth_whole", 100, CavesTests::wallGrowthWhole);
         AwakenTests.register("caves_region_pieces", 2400, CavesTests::regionPieces);
     }
 
@@ -1010,7 +1012,70 @@ final class CavesTests {
         h.assertTrue(edges.size() >= 4, "the edge wanders instead of running straight: " + edges);
         h.assertTrue(section.getBlockState(1, 8, 8).is(CaveSkin.OCHRE_STONE.get()), "sculk over the edge becomes the region's rock");
         h.assertTrue(section.getBlockState(14, 8, 8).is(Blocks.SCULK), "sculk outside the region stays");
+
+        // veins: stranded on the region's rock they come off, beside real sculk or on the Deep Dark's own stone they stay
+        BlockState onWest = Blocks.SCULK_VEIN.defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.WEST), true);
+        section.setBlockState(3, 4, 3, onWest, false);
+        section.setBlockState(13, 4, 3, onWest, false);
+        section.setBlockState(11, 12, 3, CaveSkin.OCHRE_STONE.get().defaultBlockState(), false);
+        section.setBlockState(12, 12, 3, onWest, false);
+        section.setBlockState(13, 12, 3, Blocks.SCULK.defaultBlockState(), false);
+        section.setBlockState(11, 12, 12, CaveSkin.OCHRE_STONE.get().defaultBlockState(), false);
+        section.setBlockState(12, 12, 12, onWest, false);
+        CaveSkinFeature.regionRock(chunk, cx, cz, tops, 100, (x, y, z) -> x < cx + 8 ? CaveRegion.OCHRE_DEEP : null, 7L);
+        h.assertTrue(section.getBlockState(3, 4, 3).isAir(), "a vein stranded on the region's rock comes off");
+        h.assertTrue(section.getBlockState(12, 12, 12).isAir(), "so does one on a block of that rock outside the region");
+        h.assertTrue(section.getBlockState(13, 4, 3).is(Blocks.SCULK_VEIN), "a vein on ordinary stone stays");
+        h.assertTrue(section.getBlockState(12, 12, 3).is(Blocks.SCULK_VEIN), "a vein beside real sculk stays, as its fringe");
         h.succeed();
+    }
+
+    /** Euan, 9 Nov: "literally cut in the middle... so it creates a straight edge". Nothing flat on a cave wall runs along its block's edge. */
+    private static void wallGrowthWhole(GameTestHelper h) {
+        List<String> textures = new ArrayList<>(List.of("/assets/minecraft/textures/block/sculk_vein.png"));
+        try {
+            for (Block b : BuiltInRegistries.BLOCK) {
+                Identifier id = BuiltInRegistries.BLOCK.getKey(b);
+                if (!(b instanceof MultifaceBlock) || !id.getNamespace().equals(Awaken.MODID)) continue;
+                for (JsonElement part : resource("/assets/awaken/blockstates/" + id.getPath() + ".json").getAsJsonArray("multipart")) {
+                    JsonElement apply = part.getAsJsonObject().get("apply");
+                    for (JsonElement use : apply.isJsonArray() ? apply.getAsJsonArray() : List.of(apply)) {
+                        Identifier model = Identifier.parse(use.getAsJsonObject().get("model").getAsString());
+                        for (var t : resource("/assets/" + model.getNamespace() + "/models/" + model.getPath() + ".json").getAsJsonObject("textures").entrySet()) {
+                            Identifier tex = Identifier.parse(t.getValue().getAsString());
+                            textures.add("/assets/" + tex.getNamespace() + "/textures/" + tex.getPath() + ".png");
+                        }
+                    }
+                }
+            }
+            h.assertTrue(textures.size() > 20, "the walls' textures were found: " + textures.size());
+            for (String file : textures) {
+                try (var in = CavesTests.class.getResourceAsStream(file)) {
+                    h.assertTrue(in != null, "no texture at " + file);
+                    var image = javax.imageio.ImageIO.read(in);
+                    int w = image.getWidth();
+                    for (int frame = 0; frame < image.getHeight() / w; frame++) {
+                        int top = frame * w, run = 0, longest = 0;
+                        for (int side = 0; side < 4; side++, run = 0) for (int i = 0; i < w; i++) {
+                            int x = side == 0 || side == 1 ? i : side == 2 ? 0 : w - 1, y = top + (side == 0 ? 0 : side == 1 ? w - 1 : i);
+                            run = image.getRGB(x, y) >>> 24 != 0 ? run + 1 : 0;
+                            longest = Math.max(longest, run);
+                        }
+                        h.assertTrue(longest <= 3, file + " runs " + longest + " pixels along its block's edge");
+                    }
+                }
+            }
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
+        h.succeed();
+    }
+
+    private static JsonObject resource(String file) throws java.io.IOException {
+        try (var in = CavesTests.class.getResourceAsStream(file)) {
+            if (in == null) throw new java.io.FileNotFoundException(file);
+            return JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        }
     }
 
     /** A vine block with its root in the floor (a connection that leads into rock, so the walk has no block to go to). */

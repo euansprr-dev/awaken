@@ -604,7 +604,48 @@ public final class CaveSkinFeature implements Feature {
                 }
             }
         }
-        return changed;
+        return changed + strandedVeins(chunk, cx, cz, regions);
+    }
+
+    /**
+     * The Deep Dark's features throw sculk veins a few blocks past its edge, and the sculk they grew from has just become the
+     * region's rock, so a face of vein on that rock comes off, unless real sculk is right beside it and it reads as that sculk's
+     * fringe (SPEC §42.7). After the rock pass, so it reads the rock as it now is. A face on a neighbouring chunk's block goes by
+     * the region here, since that block can't be read.
+     */
+    private static int strandedVeins(ChunkAccess chunk, int cx, int cz, Regions regions) {
+        int removed = 0;
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int si = 0; si < chunk.getSectionsCount(); si++) {
+            LevelChunkSection section = chunk.getSection(si);
+            if (section.hasOnlyAir() || !section.getStates().maybeHas(s -> s.is(Blocks.SCULK_VEIN))) continue;
+            int baseY = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(si));
+            for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
+                BlockState vein = section.getBlockState(x, y, z);
+                if (!vein.is(Blocks.SCULK_VEIN)) continue;
+                boolean fringe = false, stays = false;
+                BlockState left = vein;
+                for (Direction d : Direction.values()) {
+                    int nx = x + d.getStepX(), nz = z + d.getStepZ();
+                    boolean inside = (nx & ~15) == 0 && (nz & ~15) == 0;
+                    BlockState next = inside ? chunk.getBlockState(at.set(nx, baseY + y + d.getStepY(), nz)) : null;
+                    fringe |= next != null && next.is(Blocks.SCULK);
+                    var face = MultifaceBlock.getFaceProperty(d);
+                    if (!vein.getValue(face)) continue;
+                    if (next != null ? regionRock(next.getBlock()) : kitted(regions.at(cx + x, baseY + y, cz + z)) != null) left = left.setValue(face, false);
+                    else stays = true;
+                }
+                if (fringe || left == vein) continue;
+                section.setBlockState(x, y, z, stays ? left : vein.getValue(MultifaceBlock.WATERLOGGED) ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState(), false);
+                removed++;
+            }
+        }
+        return removed;
+    }
+
+    private static boolean regionRock(Block b) {
+        SkinRock r = SkinRock.of(b);
+        return r != null && r != SkinRock.STONE && r != SkinRock.DEEPSLATE && r != SkinRock.TUFF;
     }
 
     /** Does the quart at k touch a different region (or none) on any side? A neighbour in another chunk can't be read, so it doesn't count. */

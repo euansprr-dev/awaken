@@ -227,6 +227,14 @@ def skin():
         put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:item/caves/{model}'}})
         put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid, {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}))
         lang[f'block.awaken.{bid}'] = nice
+    # the game's sculk vein in our own cuts (SPEC §42.10): each face picks a cut by position; a state with no faces draws all six, as the game's does
+    veins = []
+    none = {f: 'false' for f in ('north', 'east', 'south', 'west', 'up', 'down')}
+    for face, rot in (('north', {}), ('east', {'y': 90}), ('south', {'y': 180}), ('west', {'y': 270}), ('up', {'x': 270}), ('down', {'x': 90})):
+        apply = [{'model': f'awaken:block/caves/sculk_vein_{v}', **rot, **({'uvlock': True} if rot else {})} for v in range(growth.OVERLAY_CUTS['sculk_vein'])]
+        veins.append({'when': {face: 'true'}, 'apply': apply})
+        veins.append({'when': none, 'apply': apply})
+    put(RES, 'assets/minecraft/blockstates/sculk_vein.json', {'multipart': veins})
     # the Ochre Deep's grown walls (SPEC §42.10): a run of connected tiles in several cuts, blooms laid over them; drapes in folds
     vine = []
     for f, y in facing.items():

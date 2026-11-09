@@ -16201,8 +16201,10 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
 - **A region's edge wanders** (Euan's playtest, 9 Nov: red rock ending in a hard line against the Deep Dark's sculk). Biomes come in
   4-block cells, so region rock used to stop in straight steps. In a cell that touches another region or none, each block reads
   the region at a point moved by noise, up to about **4** blocks across and **3** up or down, staying in its chunk; the two rocks
-  interlock over a band a few blocks wide. Sculk that has crept over the edge becomes the region's rock, and its veins stay as a
-  fringe on it. The Deep Dark keeps its own cells, ancient cities and all. Test `caves_region_edge`. New chunks only.
+  interlock over a band a few blocks wide. Sculk that has crept over the edge becomes the region's rock. A face of sculk vein on a region's rock comes off
+  unless real sculk is right beside the vein, so veins stay only as a fringe that hugs the sculk (Euan's playtest, 9 Nov). A vein a
+  neighbouring chunk writes after this chunk has finished can still land on the rock: not cleaned up, and the drawing below keeps
+  it from looking cut. The Deep Dark keeps its own cells, ancient cities and all. Test `caves_region_edge`. New chunks only.
 - **The Rootways' growth**: **`glowcap`** (a cluster of teal mushrooms, light **5**, on a floor, open or by a wall, at
   **0.12** where a 3D field at 5 blocks passes **0.2**: in patches, about 2% of open floor, a teal point down the gallery;
   instant break, drops itself) and **`root_curtain`** (old roots hanging through a roof at **0.14** where a 2D field at 7
@@ -16456,6 +16458,14 @@ So a wall's decoration was a strip of stamps, the same in every cave and region.
 - **Light comes from the plant.** A stem gives block light **6** and a bloom **12**, so the wall's own smooth light does the falling
   off; the planes of lit rock only warm it (emission **5** wide, **8** close, **11** round a bloom) and thin out pixel by pixel at
   their rims, since cut-out has no soft edge. A bloom's seeds are six small boxes heaped on the leaves, with no frame on them.
+- **Nothing flat on a wall is sliced by its block** (Euan's playtest, 9 Nov: "literally cut in the middle... so it creates a straight
+  edge"). A texture that runs off its edge only looks right beside a neighbour that carries on, and these often sit alone. Every wall
+  overlay thins out before each edge along a coast a pixel or two in, wandering differently per side and per cut (`uncut` in
+  `tools/art/specs/deep_skin.py`); the ember vine's tiles are the one exception, since their stems are drawn to join. Minecraft's own
+  **sculk vein is drawn again as ours** (`sculk_vein` in `deep_skin_growth.py`, none of Mojang's pixels): six cuts of whole bubbles that
+  may touch the block's edge but never cross it, so a lone one ends in a scalloped line and a wall of them closes up. It replaces
+  `minecraft:block/sculk_vein` and the blockstate, so every vein in the game changes, in the Deep Dark too. Test
+  `caves_wall_growth_whole`: no flat wall texture, on any frame, runs more than **3** pixels along an edge.
 - **Saved worlds**: caves already generated keep their blocks and take on the new art and the per-block cuts at once. Their
   placement doesn't change, and their old ember lichen keeps its old light. New chunks grow the new walls.
 - **Cost**: the Ochre Deep only; two short int arrays a chunk, one field lookup per foot of wall for each run picked. No block

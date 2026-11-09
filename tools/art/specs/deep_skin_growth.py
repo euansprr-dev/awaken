@@ -19,6 +19,7 @@ Run: python3 tools/art/build_all.py deep_skin_growth      (textures; deep_skin f
      python3 tools/art/specs/deep_skin_growth.py preview <out.png>   a wall of it, lit as a cave lights it (the look check)
 """
 import importlib.util
+import json
 import math
 import os
 import random
@@ -373,7 +374,7 @@ def rust_crust(v):
             if best > 0.86 and r.random() < 0.3:
                 k = 4
             c.set(x, y, RUST[k])
-    return c
+    return SKIN.uncut(c, ("rust", v))
 
 
 FOLDS = [H("#9a4a1e"), H("#b65e28"), H("#d07c36"), H("#e89a52"), H("#f6c48c")]
@@ -398,8 +399,59 @@ def drape_tex(v, tip=False):
     return c
 
 
+# ---- the sculk vein, drawn again ----------------------------------------------------------------------------------------------
+
+SCULK = [H("#07161b"), H("#0c272e"), H("#133c44"), H("#1c5c62"), H("#2d8f8c")]
+SPARK = [H("#1f7f7c"), H("#37c4b6"), H("#86f0dc"), H("#d8fff4")]
+
+
+def sculk_vein(v, n=4):
+    """Our own sculk vein (SPEC §42.10). The game's runs off all four edges of its block to join the next one, so one on its own
+    ends in a straight line through its bubbles. These are packs of whole bubbles: each is closed, dark at the heart with a lit
+    upper rim, and may touch the edge of its block but never cross it, so a lone one ends in a scalloped line of round bubbles,
+    while a wall of them closes up into one mass. Each cut packs more or less thickly and leaves its own corners bare, so no
+    grid of holes shows where four blocks meet; in the biggest bubbles a spark pulses."""
+    r = rng("vein", v)
+    tries = (70, 26, 110, 44, 90, 34)[v % 6]
+    bare = [r.random() < 0.45 for _ in range(4)]
+    corners = ((0, 0), (16, 0), (0, 16), (16, 16))
+    bubbles = []
+    for size in [3.4] * 2 + [2.8] * 3 + [2.2] * 6 + [1.6] * 10 + [1.1] * 14:
+        for _ in range(tries):
+            rad, wob = size * r.uniform(0.9, 1.1), r.uniform(0.05, 0.13)
+            reach = rad * (1 + wob)
+            x, y = r.uniform(reach, 16 - reach), r.uniform(reach, 16 - reach)
+            if any(off and math.hypot(x - cx, y - cy) < 5.5 + rad * 0.5 for off, (cx, cy) in zip(bare, corners)):
+                continue
+            if all(math.hypot(x - bx, y - by) > (rad + br) * 0.94 for bx, by, br, _, _ in bubbles):
+                bubbles.append((x, y, rad, r.uniform(0, 6.28), wob))
+                break
+    sparks = [(int(b[0] + r.uniform(-0.8, 0.8)), int(b[1] + r.uniform(-0.8, 0.8)), r.randrange(n)) for b in sorted(bubbles, key=lambda b: -b[2])[:3]]
+    frames = []
+    for f in range(n):
+        c = Canvas(16, 16)
+        for y in range(16):
+            for x in range(16):
+                for bx, by, br, ph, wob in bubbles:
+                    dx, dy = x + 0.5 - bx, y + 0.5 - by
+                    d = math.hypot(dx, dy) / (br * (1 + wob * math.sin(3 * math.atan2(dy, dx) + ph)))
+                    if d < 1:
+                        k = (4 if dy < -0.4 * br else 3 if dy < 0 else 2) if d > 0.7 else 1 if d > 0.4 or br < 1.6 else 0
+                        c.set(x, y, SCULK[k])
+                        break
+        for sx, sy, ph in sparks:
+            lvl = (0, 1, 3, 1)[(f + ph) % 4]
+            c.set(sx, sy, SPARK[lvl])
+            if lvl >= 2:
+                for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)):
+                    if c.get(sx + dx, sy + dy)[3]:
+                        c.set(sx + dx, sy + dy, SPARK[0])
+        frames.append(c)
+    return frames
+
+
 # per block picks; a lichen's or a crust's cuts share its art and differ by seed, so a wall of them has no grid
-OVERLAY_CUTS = {"lichen_shallows": 4, "lichen_middle": 4, "lichen_deep": 4, "mineral_crust": 3, "wet_streaks": 3, "rust_crust": 4, "rust_flowstone": 3}
+OVERLAY_CUTS = {"lichen_shallows": 4, "lichen_middle": 4, "lichen_deep": 4, "mineral_crust": 3, "wet_streaks": 3, "rust_crust": 4, "rust_flowstone": 3, "sculk_vein": 6}
 DRAPE_CUTS = 3
 
 
@@ -421,7 +473,7 @@ def soft_wet_streaks(v):
         by = y0 + n - 1
         if 0 <= by < 16 and r.random() < 0.6:
             c.set(x, by, (214, 232, 244, 120))
-    return c
+    return SKIN.uncut(c, ("wet", v))
 
 
 def soft_puddle(n=16, seed=0):
@@ -478,6 +530,8 @@ def build(out):
                 out.block(f"caves/mineral_crust_{v}", SKIN.mineral_crust(seed=v * 13 + 1))
             elif name == "rust_flowstone":
                 out.block(f"caves/rust_flowstone_{v}", soft_flowstone(v))
+            elif name == "sculk_vein":
+                out.block(f"caves/sculk_vein_{v}", sculk_vein(v), frametime=20)
             else:
                 band = name.split("_", 1)[1]
                 out.block(f"caves/{name}_{v}", SKIN.lichen(band, seed=v * 17 + 3))
@@ -485,6 +539,15 @@ def build(out):
         out.block(f"caves/rust_drape_{v}", drape_tex(v))
         out.block(f"caves/rust_drape_tip_{v}", drape_tex(v, tip=True))
     out.block("caves/puddle", soft_puddle(), frametime=4)
+    # the game's own name for it, so the break particles, the item and anything else that names the vein are ours too
+    frames = sculk_vein(0)
+    img = Image.new("RGBA", (16, 16 * len(frames)))
+    for i, f in enumerate(frames):
+        img.paste(f.image(), (0, 16 * i))
+    vanilla = os.path.join(out.root, "assets/minecraft/textures/block/sculk_vein.png")
+    img.save(vanilla)
+    with open(vanilla + ".mcmeta", "w") as m:
+        json.dump({"animation": {"frametime": 20, "interpolate": True}}, m)
     # the old single textures, redrawn so cells already placed in saved caves change with them
     out.block("caves/rust_crust", rust_crust(0))
     out.block("caves/wet_streaks", soft_wet_streaks(0))
@@ -507,7 +570,7 @@ def soft_flowstone(v):
                 if x + k < 16:
                     c.set(x + k, y, FOLDS[max(0, min(4, 1 + across - band))])
         x += w + r.choice((1, 2, 3))
-    return c
+    return SKIN.uncut(c, ("flow", v))
 
 
 # ---- models -----------------------------------------------------------------------------------------------------------------
