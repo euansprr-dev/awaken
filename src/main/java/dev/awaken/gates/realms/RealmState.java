@@ -18,6 +18,10 @@ public final class RealmState {
     /** Which sites have been woken (their monsters are in the world or dead). */
     public final Set<String> woken = new LinkedHashSet<>();
     public boolean built, heartOpen, lordWoken;
+    /** The door has closed behind whoever's fighting the Lord. */
+    public boolean doorShut;
+    /** How far the Lord's hall has changed in this fight: 0 not yet, then each stage in turn. */
+    public int heartStage;
 
     public static final Codec<RealmState> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.fieldOf("schemaVersion").forGetter(s -> SCHEMA),
@@ -28,8 +32,10 @@ public final class RealmState {
             Codec.STRING.listOf().fieldOf("woken").forGetter(s -> List.copyOf(s.woken)),
             Codec.BOOL.fieldOf("built").forGetter(s -> s.built),
             Codec.BOOL.fieldOf("heart_open").forGetter(s -> s.heartOpen),
-            Codec.BOOL.fieldOf("lord_woken").forGetter(s -> s.lordWoken)
-    ).apply(i, (v, w, d, f, ws, wk, b, h, l) -> {
+            Codec.BOOL.fieldOf("lord_woken").forGetter(s -> s.lordWoken),
+            Codec.BOOL.optionalFieldOf("door_shut", false).forGetter(s -> s.doorShut),
+            Codec.INT.optionalFieldOf("heart_stage", 0).forGetter(s -> s.heartStage)
+    ).apply(i, (v, w, d, f, ws, wk, b, h, l, ds, hs) -> {
         RealmState s = new RealmState();
         s.wardensDown.addAll(w);
         s.densCleared.addAll(d);
@@ -39,6 +45,8 @@ public final class RealmState {
         s.built = b;
         s.heartOpen = h;
         s.lordWoken = l;
+        s.doorShut = ds;
+        s.heartStage = hs;
         return s;
     }));
 }

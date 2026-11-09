@@ -19,6 +19,9 @@ public abstract class Land {
 
     public record Site(SiteKind kind, int index, int x, int y, int z, int radius, String what) {}
 
+    /** One block a moment in the place changes, in the Realm's own coordinates. */
+    public record Edit(int x, int y, int z, net.minecraft.world.level.block.state.BlockState state) {}
+
     public final Ctx ctx;
     private final List<Site> sites = new ArrayList<>();
 
@@ -55,6 +58,16 @@ public abstract class Land {
     /** How far past the land's edge a point is (positive means the wind turns you back there). */
     public double edge(int x, int z) {
         return Math.max(Math.abs(x), Math.abs(z)) - (halfSize() - 48);
+    }
+
+    /** The blocks a moment changes: the way to the Lord opening, the hall changing mid-fight. Empty for a land without them. */
+    public List<Edit> change(String moment) {
+        return List.of();
+    }
+
+    /** Whether a point is inside the place the Lord is fought in. */
+    public boolean inHeart(int x, int y, int z) {
+        return false;
     }
 
     /** Draws the chunk this volume covers, every pass, in order. */

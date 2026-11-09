@@ -62,10 +62,13 @@ public final class RealmTests {
         AwakenTests.register("realm_amber_never_floats", 1200, h -> {
             for (long seed : new long[]{1, 2}) {
                 Land land = amber(seed);
-                // from the Mouth through the village to the citadel's stair: where you'll stand and look
-                FloatCheck.Report r = FloatCheck.scan(land, -60, -130, 240, 170);
+                // the whole valley floor, the great rocks and the citadel with its hall (the second seed only where you'll walk)
+                FloatCheck.Report r = seed == 1 ? FloatCheck.scan(land, -60, -260, 520, 300) : FloatCheck.scan(land, 230, -60, 520, 240);
                 dev.awaken.Awaken.LOG.info("[realms] float check, seed {}: {} in {} ms", seed, r.summary(), r.millis());
-                if (!r.clean()) h.fail("seed " + seed + ": " + r.summary());
+                if (!r.clean()) {
+                    r.floaters().stream().limit(40).forEach(f -> dev.awaken.Awaken.LOG.info("[realms] floating: {}", f));
+                    h.fail("seed " + seed + ": " + r.summary());
+                }
             }
             h.succeed();
         });
@@ -92,6 +95,40 @@ public final class RealmTests {
             }
             h.succeed();
         });
+        // every site is really standing free: nothing meant for open ground got buried in the rock, what you came for is there
+        AwakenTests.register("realm_amber_sites_open", 400, h -> {
+            for (long seed = 1; seed <= 4; seed++) {
+                Land land = amber(seed);
+                for (Land.Site s : land.sites()) {
+                    net.minecraft.world.level.block.state.BlockState at = at(land, s.x(), s.y(), s.z()), up = at(land, s.x(), s.y() + 1, s.z());
+                    switch (s.kind()) {
+                        case WAYSTONE -> { if (!idOf(at).equals("rest_shrine")) h.fail("seed " + seed + " waystone " + s.index() + " is " + idOf(at)); }
+                        case FIND -> { if (!idOf(at).equals("gate_cache")) h.fail("seed " + seed + " find " + s.index() + " at " + s.x() + "," + s.y() + "," + s.z() + " is " + idOf(at)); }
+                        case DEN, WARDEN, MOUTH -> {
+                            if (solid(at) || solid(up)) h.fail("seed " + seed + " " + s.kind() + " " + s.index() + " at " + s.x() + "," + s.y() + "," + s.z() + " is buried: " + idOf(at) + ", " + idOf(up));
+                        }
+                        default -> {}
+                    }
+                }
+                // and one way up for each vent: the air reaches over the rock it stands beside
+                if (land.sites(Land.SiteKind.UPDRAFT).isEmpty()) h.fail("seed " + seed + " has no vents");
+            }
+            h.succeed();
+        });
+        // the door is wax until it isn't, the hall is clear to fight in, and a fight's changes leave no trace
+        AwakenTests.register("realm_amber_heart", 400, h -> {
+            Land land = amber(3);
+            for (Land.Edit e : land.change("heart_open")) if (at(land, e.x(), e.y(), e.z()) == null || at(land, e.x(), e.y(), e.z()).isAir()) {
+                h.fail("the door has a hole at " + e.x() + "," + e.y() + "," + e.z());
+            }
+            Land.Site lord = land.site(Land.SiteKind.LORD);
+            for (int a = -22; a <= 22; a += 2) for (int c = -22; c <= 22; c += 2) {
+                if (a * a + c * c > 22 * 22) continue;
+                for (int y = lord.y(); y < lord.y() + 18; y++) if (solid(at(land, lord.x() + a, y, lord.z() + c))) h.fail("the Lord's floor is blocked at " + a + "," + y + "," + c + ": " + idOf(at(land, lord.x() + a, y, lord.z() + c)));
+            }
+            if (land.change("heart_weeps").isEmpty() || land.change("heart_winds").isEmpty() || land.change("heart_still").size() < land.change("heart_weeps").size()) h.fail("the hall has nothing to change");
+            h.succeed();
+        });
         AwakenTests.register("realm_seeds_differ", 200, h -> {
             Set<Integer> seen = new HashSet<>();
             for (long seed = 1; seed <= 5; seed++) {
@@ -103,6 +140,20 @@ public final class RealmTests {
             if (seen.size() != 5) h.fail("seeds made the same land");
             h.succeed();
         });
+    }
+
+    private static net.minecraft.world.level.block.state.BlockState at(Land land, int x, int y, int z) {
+        dev.awaken.gates.realms.kit.V v = new dev.awaken.gates.realms.kit.V(Math.floorDiv(x, 16) * 16, Math.floorDiv(z, 16) * 16);
+        land.paint(v);
+        return v.get(x, y, z);
+    }
+
+    private static boolean solid(net.minecraft.world.level.block.state.BlockState s) {
+        return s != null && s.canOcclude();
+    }
+
+    private static String idOf(net.minecraft.world.level.block.state.BlockState s) {
+        return s == null ? "air" : net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(s.getBlock()).getPath();
     }
 
     /** A flood from the Mouth over walkable steps (up 1, or 2 if there's room to jump; down any): the share of the valley reached. */

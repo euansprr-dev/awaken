@@ -11,6 +11,7 @@ nothing copied. Same table as the Amber part of dev.awaken.gates.block.ThemeBloc
 from __future__ import annotations
 
 import math
+import json
 import os
 import sys
 
@@ -32,7 +33,7 @@ RAMPS = {
     "atimb": ["#3f2610", "#553316", "#6c421d", "#835225", "#9a632f", "#ae753b"],
     "aplank": ["#69441b", "#835723", "#9c6b2d", "#b47f39", "#c99346", "#dba657"],
     "agilt": ["#7a5410", "#9c6f14", "#c08c1a", "#e0ac2a", "#f6ca4a", "#ffe488"],
-    "amoss": ["#7b6a14", "#95821c", "#ad9826", "#c3ae32", "#d6c242", "#e6d458"],
+    "amoss": ["#574312", "#6b5417", "#80661d", "#957a26", "#a98d32", "#bea345"],
     "abed": ["#3d2408", "#4f300c", "#613c10", "#734914", "#855618", "#97631e"],
     "apetal": ["#a44a0c", "#c6620f", "#e27c16", "#f3982a", "#fbb548", "#ffd277"],
     "apetal2": ["#7a300a", "#94400c", "#b0520f", "#c86612", "#dc7c1a", "#ea9428"],
@@ -41,7 +42,7 @@ RAMPS = {
     "aseed": ["#2a1608", "#3b200c", "#4f2c10", "#643a16", "#7c4a1e", "#966028"],
     "astem": ["#2c3a14", "#3c4e1b", "#4f6423", "#647a2d", "#7a903a", "#92a84a"],
     "aleaf": ["#2e3f15", "#40561d", "#566f27", "#6e8832", "#86a03f", "#9fb850"],
-    "awheat": ["#8a5a10", "#a87616", "#c6921f", "#dcac2e", "#eec64a", "#fadf74"],
+    "awheat": ["#5f3f12", "#7a5418", "#966d20", "#b0872c", "#c8a040", "#dcb95e"],
     "honey": ["#b05a06", "#d27a10", "#f09a1e", "#ffbe40", "#ffdc7a", "#fff2c0"],
 }
 
@@ -372,24 +373,28 @@ def tex_leaf(P):
 
 
 def stalks(P, seed, tops=True, n=7, rows=(1, 15), stalk_lo=1):
-    """Stalks on clear; with {tops}, a heavy ear on each, drooping a little, never a bar."""
+    """Fine stalks on clear, one pixel wide, each with its own lean and a narrow bearded ear; never a bar of colour."""
     rp = P.ramp("awheat")
     rng = P.rng_for("wheat", seed)
     c = P.Canvas(16, 16)
-    xs = [2, 4, 6, 8, 10, 12, 14][:n] if n <= 7 else list(range(1, 15, 2))
-    for x in xs:
-        x = max(1, min(14, x + rng.choice((-1, 0, 0))))
-        top = rng.randrange(rows[0], rows[0] + 5) if tops else rng.randrange(0, 2)
-        lean = rng.choice((-1, 0, 0, 1))
-        for y in range(top + (5 if tops else 0), 16):
-            c.set(x, y, rp[stalk_lo + (y + x) % 3])
+    xs = sorted(rng.sample(range(1, 15), min(n + 2, 13)))
+    for x0 in xs:
+        top = rng.randrange(rows[0], rows[0] + 6) if tops else rng.randrange(0, 3)
+        lean = rng.choice((-1, 1)) * rng.choice((0, 1))
+        for y in range(top + (4 if tops else 0), 16):
+            x = x0 + (lean if y < 9 else 0)
+            if 0 <= x < 16:
+                c.set(x, y, rp[stalk_lo + (0 if y > 11 else 1 + (y & 1) % 2)])
         if tops:
-            for k in range(6):
-                xx = x + (lean if k < 3 else 0)
+            x = x0 + lean
+            for k in range(5):
                 y = top + k
-                c.set(xx, y, rp[5 if k % 2 == 0 else 3])
-                if 1 <= k <= 4:
-                    c.set(xx + (1 if lean >= 0 else -1), y, rp[4 if k % 2 else 2])
+                if 0 <= x < 16:
+                    c.set(x, y, rp[5 if k % 2 == 0 else 4])
+                # the grains stand off the ear alternately, a pixel at a time
+                sx = x + (1 if k % 2 == 0 else -1)
+                if k < 4 and 0 <= sx < 16:
+                    c.set(sx, y, rp[3])
     return c
 
 
@@ -435,12 +440,37 @@ def textures():
     }
 
 
+def P_for_honey():
+    return _P()
+
+
+def honey_frames(P, count=32):
+    """The river: thick and slow, its light moving under the surface, looping on the last frame."""
+    import math
+    rp = P.ramp("honey")
+    rng = P.rng_for("honey-flow")
+    phases = [(rng.random() * 6.283, 1 + rng.randrange(3), rng.randrange(3)) for _ in range(5)]
+    frames = []
+    for f in range(count):
+        t = f / count * 6.283
+        c = P.Canvas(16, 16)
+        for y in range(16):
+            for x in range(16):
+                a, b = x / 16 * 6.283, y / 16 * 6.283
+                v = 0.0
+                for ph, kx, ky in phases:
+                    v += math.sin(kx * a + ky * b + ph + t)
+                v = (v / 5 + 1) / 2
+                c.set(x, y, rp[min(5, max(1, int(1 + v * 5)))])
+        frames.append(c)
+    return frames
+
+
 def build(out):
     tx = textures()
     for name, c in tx.items():
-        if name.endswith("_glow"):
-            continue
-        out.block(name, c, tx.get(name + "_glow"))
+        out.block(name, c)
+    out.block("realm_honey", honey_frames(P_for_honey()), frametime=4)
 
 
 # ---- models ---------------------------------------------------------------------------------------------------------------
@@ -482,7 +512,23 @@ def states():
     return s
 
 
+def honey_block():
+    """The river's surface is a block, not water: it has to glow, and you wade through it up to the knees."""
+    res = os.path.join(K.ROOT if hasattr(K, "ROOT") else os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")), "src/main/resources/assets/awaken")
+    t = "awaken:block/realm_honey"
+    side = {"texture": "#t"}
+    top = {"texture": "#t", "cullface": "up"}
+    faces = {"up": top, "north": dict(side, cullface="north"), "south": dict(side, cullface="south"), "east": dict(side, cullface="east"), "west": dict(side, cullface="west")}
+    model = {"parent": "minecraft:block/block", "ambientocclusion": False, "textures": {"t": t, "particle": t},
+             "elements": [{"from": [0, 0, 0], "to": [16, 15, 16], "faces": faces, "light_emission": 9}]}
+    with open(os.path.join(res, "models/block/realm_honey.json"), "w") as f:
+        json.dump(model, f, indent=2)
+    with open(os.path.join(res, "blockstates/realm_honey.json"), "w") as f:
+        json.dump({"variants": {"": {"model": "awaken:block/realm_honey"}}}, f, indent=2)
+
+
 def content():
+    honey_block()
     K.content("realm_amber", BLOCKS, models(), states(), {})
     # the slabs and stairs are cut through the same machinery as every other depth block
     cut, m, s = {}, {}, {}

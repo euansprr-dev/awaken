@@ -1,0 +1,45 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "t": "awaken:block/realm_honey",
+    "particle": "awaken:block/realm_honey"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        15,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#t",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#t",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#t",
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#t",
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#t",
+          "cullface": "west"
+        }
+      },
+      "light_emission": 9
+    }
+  ]
+}

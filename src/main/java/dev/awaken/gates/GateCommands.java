@@ -88,6 +88,12 @@ final class GateCommands {
                                 p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
                                 return 1;
                             })))))));
+            gate.then(Commands.literal("realm_heart").requires(AwakenCommands.admin()).executes(c -> {
+                GateRecord g = dev.awaken.gates.run.Runs.gateOf(c.getSource().getPlayerOrException());
+                if (g == null || g.realm.isEmpty()) return 0;
+                dev.awaken.gates.realms.RealmLive.openHeart(c.getSource().getLevel(), g);
+                return 1;
+            }));
             // a Realm by name (SPEC §50.7), whatever the switch says: the next gate to form near you is that land
             gate.then(Commands.literal("realm").requires(AwakenCommands.admin())
                     .then(Commands.argument("rank", StringArgumentType.word()).then(Commands.argument("id", StringArgumentType.greedyString()).executes(c -> {

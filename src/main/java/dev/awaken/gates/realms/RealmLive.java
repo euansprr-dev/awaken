@@ -154,6 +154,7 @@ public final class RealmLive {
         RealmState st = data.state(g.id);
         Land land = plan.land();
         FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
+        heart(server, level, g, plan, ref, st, data, f);
         for (Land.Site s : land.sites()) {
             int dx = s.x() - lx, dz = s.z() - lz, d2 = dx * dx + dz * dz;
             BlockPos at = Realms.world(ref.cell(), s.x(), s.y(), s.z());
@@ -169,18 +170,86 @@ public final class RealmLive {
                     if (e != null) e.getPersistentData().putInt(SITE, s.index());
                     data.setDirty();
                 }
-                case LORD -> {
-                    if (!st.heartOpen || st.lordWoken || d2 >= LORD_WAKE * LORD_WAKE || !level.isLoaded(at)) continue;
-                    LivingEntity e = Rooms.spawn(level, g, f, -1, MobRole.Role.BOSS, at);
-                    if (e == null) continue;
-                    g.boss = Optional.of(e.getUUID());
-                    st.lordWoken = true;
-                    data.setDirty();
-                    GateRegistry.get(server).setDirty();
-                }
                 default -> {}
             }
         }
+    }
+
+    // ---- the Lord's hall (SPEC §50.8) --------------------------------------------------------------------------------------
+
+    /** Whoever comes in wakes the Lord; the way shuts behind them; the hall changes as the fight goes on; nobody left inside, it all resets. */
+    private static void heart(MinecraftServer server, ServerLevel level, GateRecord g, RealmPlan plan, RealmRef ref, RealmState st, RealmData data, FloorLayout f) {
+        Land land = plan.land();
+        Land.Site lord = land.site(Land.SiteKind.LORD);
+        boolean anyInside = false, anyAtDoor = false;
+        for (ServerPlayer p : level.players()) {
+            if (Runs.run(p).gateId != g.id) continue;
+            int x = p.getBlockX() - RealmCells.centerX(ref.cell()), z = p.getBlockZ() - RealmCells.centerZ(ref.cell());
+            boolean in = land.inHeart(x, p.getBlockY(), z);
+            anyInside |= in;
+            if (!in && Math.hypot(x - lord.x(), z - lord.z()) < LORD_WAKE + 24) anyAtDoor = true;
+            if (!st.heartOpen && !in && Math.hypot(x - lord.x(), z - lord.z()) < LORD_WAKE + 14 && st.woken.add("door_line")) {
+                Signal.toast(p, Component.literal("The wax over this door is as thick as a wall. Something out in the valley is holding it shut."));
+                data.setDirty();
+            }
+        }
+        if (st.heartOpen && !st.lordWoken && anyInside) {
+            BlockPos at = Realms.world(ref.cell(), lord.x(), lord.y(), lord.z());
+            LivingEntity e = Rooms.spawn(level, g, f, -1, MobRole.Role.BOSS, at);
+            if (e == null) return;
+            g.boss = Optional.of(e.getUUID());
+            st.lordWoken = true;
+            data.setDirty();
+            GateRegistry.get(server).setDirty();
+        }
+        if (!st.lordWoken) return;
+        LivingEntity boss = g.boss.map(level::getEntity).orElse(null) instanceof LivingEntity l && l.isAlive() ? l : null;
+        // everyone's gone (fled or fallen): it goes back to sleep and the way in is open again, so nobody's ever locked out
+        if (!anyInside && st.doorShut) {
+            if (boss != null) boss.discard();
+            g.boss = Optional.empty();
+            st.lordWoken = false;
+            st.doorShut = false;
+            st.heartStage = 0;
+            change(level, ref, land, "heart_still");
+            change(level, ref, land, "heart_open");
+            data.setDirty();
+            GateRegistry.get(server).setDirty();
+            return;
+        }
+        if (boss == null) return;
+        if (!st.doorShut && anyInside && !anyAtDoor) {
+            st.doorShut = true;
+            change(level, ref, land, "heart_shut");
+            level.playSound(null, boss.blockPosition(), SoundEvents.HONEY_BLOCK_PLACE, SoundSource.HOSTILE, 2F, 0.5F);
+            data.setDirty();
+        }
+        float hp = boss.getHealth() / boss.getMaxHealth();
+        int want = hp <= 0.33F ? 2 : hp <= 0.66F ? 1 : 0;
+        while (st.heartStage < want) {
+            st.heartStage++;
+            change(level, ref, land, st.heartStage == 1 ? "heart_weeps" : "heart_winds");
+            level.playSound(null, boss.blockPosition(), SoundEvents.DRIPSTONE_BLOCK_FALL, SoundSource.HOSTILE, 2F, 0.55F);
+            data.setDirty();
+        }
+    }
+
+    private static void change(ServerLevel level, RealmRef ref, Land land, String moment) {
+        for (Land.Edit e : land.change(moment)) level.setBlock(Realms.world(ref.cell(), e.x(), e.y(), e.z()), e.state(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+    }
+
+    /** The last Warden is down: the wax over the door breaks, whether or not anyone's there to see it. */
+    public static void openHeart(ServerLevel level, GateRecord g) {
+        RealmPlan plan = Realms.plan(g);
+        if (plan == null) return;
+        RealmData data = RealmData.get(level.getServer());
+        RealmState st = data.state(g.id);
+        st.heartOpen = true;
+        RealmRef ref = g.realm.orElseThrow();
+        change(level, ref, plan.land(), "heart_open");
+        Land.Site lord = plan.land().site(Land.SiteKind.LORD);
+        level.playSound(null, Realms.world(ref.cell(), lord.x(), lord.y(), lord.z()), SoundEvents.HONEY_BLOCK_BREAK, SoundSource.BLOCKS, 4F, 0.5F);
+        data.setDirty();
     }
 
     private static void den(ServerLevel level, GateRecord g, FloorLayout f, Land land, RealmRef ref, Land.Site s) {
@@ -209,7 +278,7 @@ public final class RealmLive {
             run.satchelXp += pool(p, g) * (1 - Curve.KILL_SHARE) * WARDEN_SHARE;
             Hud.send(p);
         }
-        if (st.wardensDown.size() >= plan.land().sites(Land.SiteKind.WARDEN).size()) st.heartOpen = true;
+        if (st.wardensDown.size() >= plan.land().sites(Land.SiteKind.WARDEN).size()) openHeart(level, g);
         data.setDirty();
     }
 
@@ -218,6 +287,13 @@ public final class RealmLive {
         RealmPlan plan = Realms.plan(g);
         if (plan == null) return;
         Land.Site s = plan.land().site(Land.SiteKind.LORD);
+        RealmData data = RealmData.get(level.getServer());
+        RealmState st = data.state(g.id);
+        change(level, g.realm.orElseThrow(), plan.land(), "heart_still");
+        change(level, g.realm.orElseThrow(), plan.land(), "heart_open");
+        st.doorShut = false;
+        st.heartStage = 0;
+        data.setDirty();
         BlockPos at = Realms.world(g.realm.orElseThrow().cell(), s.x() + 9, s.y(), s.z());
         ((GateBlocks.Portal) GatesRegistry.EXIT.get()).place(level, at, Direction.Axis.X, 3, 3, g.plan.rank().ordinal());
         BlockPos c = at.above();
