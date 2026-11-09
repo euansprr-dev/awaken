@@ -32,7 +32,9 @@ cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 0
 wait 20
 waitpassage
 wait 400
-# a throwaway visit: the first shot came out as black sky on a fresh runner
+# stand in the cave first, so its chunks are loaded when the stands are searched for (a run that skipped this never got there)
+cmd tp @s -534.50 28.00 -2337.50 -90.0 14.6
+wait 900
 cmd execute positioned -524 31 -2346 run awaken caves growth 0 9
 wait 600
 
