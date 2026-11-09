@@ -75,6 +75,7 @@ public final class Awaken {
         dev.awaken.bells.BellModule.init(modBus);
         dev.awaken.armour.ArmourModule.init(modBus);
         dev.awaken.enchant.EnchantModule.init(modBus);
+        dev.awaken.riding.RidingModule.init(modBus);
     }
 
     public static Identifier id(String path) {

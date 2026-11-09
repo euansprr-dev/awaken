@@ -76,10 +76,23 @@ public final class Runs {
 
     /** XP one floor of this gate pays this player (SPEC section 2), below-rank gates ×0.3. */
     public static double floorReward(ServerPlayer p, GateRecord g, int area, int floor) {
+        if (run(p).riding) return riderReward(p, g, area, floor);
         int depth = area == 0 ? floor : (g.plan.is(Twist.GATE_WITHIN) ? g.plan.innerGateFloor() + floor : g.plan.floors() + floor);
         double r = Curve.floorReward(g.plan.rank(), depth);
         if (g.plan.rank().ordinal() < Progression.rank(p).ordinal()) r *= Curve.BELOW_RANK_FACTOR;
         return r;
+    }
+
+    /**
+     * What a floor pays someone riding along (SPEC §55): half, and never more than a gate of their own rank would pay,
+     * so riding through a gate far above you can't carry you to the next rank.
+     */
+    private static double riderReward(ServerPlayer p, GateRecord g, int area, int floor) {
+        int depth = area == 0 ? floor : (g.plan.is(Twist.GATE_WITHIN) ? g.plan.innerGateFloor() + floor : g.plan.floors() + floor);
+        Rank own = Progression.rank(p);
+        double r = Curve.floorReward(g.plan.rank().ordinal() > own.ordinal() ? own : g.plan.rank(), depth);
+        if (g.plan.rank().ordinal() < own.ordinal()) r *= Curve.BELOW_RANK_FACTOR;
+        return r * dev.awaken.core.api.RidingHooks.XP_SHARE;
     }
 
     static String claimId(GateRecord g, RunState run, String floorLabel, ServerPlayer p) {
@@ -112,8 +125,18 @@ public final class Runs {
                 Signal.toast(p, Component.literal(refused.get()));
                 return false;
             }
+            if (dev.awaken.core.api.RidingHooks.bonded(p)) {
+                Signal.toast(p, Component.literal("This gate is one to walk on your own. Let go of the thread first."));
+                return false;
+            }
+        }
+        boolean rider = dev.awaken.core.api.RidingHooks.rider(p);
+        if (rider && dev.awaken.gates.Gates.hasRider(g.id)) {
+            Signal.toast(p, Component.literal("Someone is already riding along in this gate. It only holds one."));
+            return false;
         }
         RunState run = new RunState();
+        run.riding = rider;
         run.gateId = g.id;
         run.area = 0;
         run.floor = 1;
@@ -407,6 +430,7 @@ public final class Runs {
     /** Ends the run; {@code teleport} sends the player out of the gate mouth. */
     public static void endRun(ServerPlayer p, GateRecord g, boolean teleport) {
         MinecraftServer server = p.level().getServer();
+        dev.awaken.core.api.RidingHooks.leftRun(p); // a bond ends with the run (SPEC §55)
         Modifiers.removeFrom(p);
         Twists.leave(p, g);
         p.setData(GatesRegistry.RUN.get(), RunState.none());
@@ -501,7 +525,7 @@ public final class Runs {
             if (run.gateId != g.id || run.area != f.area || run.floor != f.floor) continue;
             claimLord(p, g, run, f, killer == p, t);
             // the Sky Leviathan's trial: the Lord fell, the sky is theirs (SPEC §17.18)
-            if (main && g.plan.skybornTrial()) dev.awaken.core.api.TrialHooks.done(p, dev.awaken.core.api.TrialHooks.SKYBORN, 0, 0);
+            if (main && g.plan.skybornTrial() && !run.riding) dev.awaken.core.api.TrialHooks.done(p, dev.awaken.core.api.TrialHooks.SKYBORN, 0, 0);
         }
         Twists.lordDefeated(level, g, f, arena);
         GateRegistry.get(server).setDirty();
@@ -526,7 +550,9 @@ public final class Runs {
             dev.awaken.core.api.ArmsApi.lordPattern(p, g.key(), plan.theme().id);
         } // the Lord's hoard carries the pattern when the bearer wasn't downed
         Progression.count(p, Counters.FLOORS_CLEARED);
-        if (main) {
+        if (main && run.riding) {
+            finishedGate(p, g, run); // a rider's clear earns no rank credit and sets no records (SPEC §55); the counters refuse them too
+        } else if (main) {
             Progression.count(p, Counters.GATES_CLEARED);
             if (run.damageFloor <= 0) Progression.count(p, Counters.BOSS_FLOORS_NO_DAMAGE);
             if (run.damageRun <= 0) Progression.count(p, Counters.GATES_NO_HIT);
@@ -543,7 +569,7 @@ public final class Runs {
                     + " in " + (t - run.startedAt) / 1200 + " min";
             if (run.damageRun <= 0 || plan.twist() != Twist.NONE || plan.rank().ordinal() > Progression.rank(p).ordinal()) Progression.bestMoment(p, moment);
             finishedGate(p, g, run);
-        } else if (plan.is(Twist.DOUBLE_GATE)) {
+        } else if (plan.is(Twist.DOUBLE_GATE) && !run.riding) {
             Progression.setCounter(p, "awaken:latent/double_gate_cleared", 1);
             Progression.bestMoment(p, "Survived a Double Gate (" + plan.theme().displayName + ")");
         }
@@ -579,6 +605,14 @@ public final class Runs {
             return;
         }
         AwakenConfig.Difficulty diff = AwakenConfig.DIFFICULTY.get();
+        if (g != null && run.riding) {
+            // past the thread's reach, so nothing caught them (SPEC §55): they go home, but riders never lose the Satchel
+            bankSatchel(p, g, run, "r" + label(run.area, run.floor), "recover", "You were too far from your partner for the thread to catch you. You kept what you carried.");
+            stashGear(p);
+            DirectorLog.log(p, "gate", "fell riding along in gate " + run.gateId + ", out of the thread's reach: no loss");
+            endRun(p, g, false);
+            return;
+        }
         if (g != null && g.scripted) {
             // the story's first gate is where you learn: dying here keeps your Satchel and leaves no Fracture
             bankSatchel(p, g, run, "f" + label(run.area, run.floor), "recover", "The first gate is forgiving. You kept what you carried.");
@@ -658,6 +692,9 @@ public final class Runs {
             GateRecord g = GateRegistry.get(server).gate(run.gateId);
             if (g == null || g.state == GateState.RELEASED || g.state == GateState.BROKEN || !GateService.inGate(p)) {
                 lost(p, run, "The gate collapsed behind you. Your Satchel came with you.");
+            } else if (run.riding) {
+                // a thread doesn't survive either of you leaving (SPEC §55): out safely rather than alone and unprotected
+                lost(p, run, "The thread let go while you were away, so you've been brought out. Your Satchel came with you.");
             } else {
                 g.inside.add(p.getUUID());
                 if (g.inside.size() > 1) company(server, g);
