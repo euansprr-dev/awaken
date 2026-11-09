@@ -46,6 +46,14 @@ What changed:
 - **New proof.** `RealmLook` on the probe branch (disposable): one land to one painting's framing and one boss hall, with a weathering pass. See
   the page, section 5, for the shots beside the paintings and the honest verdict.
 
+
+### The look proof: verdict (9 Nov)
+
+Branch `claude/gates-worlds-probe` (never merged), `RealmLook.java`, four CI look tours, last run 42595562438. Real blocks from a generator, existing blocks only, no new art.
+Reaches the paintings on composition, silhouette, scale and mood from a distance (`img/look-vista.jpg`, `img/look-hall-ring.jpg`). Does not reach them on softness or fine detail.
+Falls short up close: the village walls go dark and the paving is lumpy (`img/look-village.jpg`), crops are plain wheat, the stone king has too much moss. Chunk and frame cost of this detail was not measured.
+Euan caught broken builds in earlier rounds (flowers left floating, one planted in front of the stairs), so the automatic checks now also fail on anything big unsupported in the air, set pieces pushed through each other, and set pieces blocking a route or stair.
+
 ## 1. What Euan asked for
 
 Euan, 9 Nov 2026: "I really want to like push it to the maximum possible level where it feels like each gate is a world of its
