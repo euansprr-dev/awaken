@@ -12,7 +12,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * The Tasks page's tabs (SPEC §27.13): NOW, then one per goal, as glass across the top like the Journal's filters. Click
- * one, or Q / E. A goal with a step you haven't seen yet carries a dot; a goal with nothing open is dimmed.
+ * one, or Q / E. A goal with a step you haven't seen yet carries a dot; a goal with nothing open is dimmed; a goal that
+ * has never had anything to do isn't there yet (SPEC §53).
  */
 final class TaskTabs implements StatusSections.Section {
     private static final int H = 13, GAP = 4;
@@ -51,7 +52,7 @@ final class TaskTabs implements StatusSections.Section {
     private static int count(int t) {
         if (t == 0) return 1;
         int n = 0;
-        for (var s : TaskCache.view.steps()) if (s.goal() == TaskCache.TABS[t - 1].ordinal()) n++;
+        for (var s : TaskCache.view.steps()) if (s.shown() && s.goal() == TaskCache.TABS[t - 1].ordinal()) n++;
         return n;
     }
 
@@ -65,6 +66,7 @@ final class TaskTabs implements StatusSections.Section {
         float m = StatusSections.micro();
         int tx = x;
         for (int t = 0; t <= TaskCache.TABS.length; t++) {
+            if (!TaskCache.visible(t)) continue;
             int w = tabW(font, t);
             boolean lit = t == TaskCache.tab, empty = count(t) == 0, hover = mouseX >= tx && mouseX < tx + w && mouseY >= y && mouseY < y + H;
             g.fill(tx, y, tx + w, y + H, Glass.a(lit ? Glass.EDGE : 0x05080F, lit ? 0.22f : hover ? 0.6f : 0.45f));
@@ -94,6 +96,7 @@ final class TaskTabs implements StatusSections.Section {
         Font font = Minecraft.getInstance().font;
         int tx = x;
         for (int t = 0; t <= TaskCache.TABS.length; t++) {
+            if (!TaskCache.visible(t)) continue;
             int w = tabW(font, t);
             if (mouseX >= tx && mouseX < tx + w) {
                 pick(t);
@@ -108,7 +111,9 @@ final class TaskTabs implements StatusSections.Section {
     public boolean key(KeyEvent e) {
         int step = e.key() == InputConstants.KEY_Q ? -1 : e.key() == InputConstants.KEY_E ? 1 : 0;
         if (step == 0) return false;
-        pick(Math.floorMod(TaskCache.tab + step, TaskCache.TABS.length + 1));
+        int n = TaskCache.TABS.length + 1, t = TaskCache.tab;
+        do t = Math.floorMod(t + step, n); while (!TaskCache.visible(t)); // Now is always there, so this ends
+        pick(t);
         return true;
     }
 

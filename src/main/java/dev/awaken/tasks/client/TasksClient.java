@@ -37,6 +37,15 @@ public final class TasksClient {
             }
             return;
         }
+        if (a.equals("later")) { // tours: open this tab's Later fold
+            TaskCache.laterOpen = true;
+            return;
+        }
+        if (a.startsWith("pick ")) { // tours: tasks pick <step key> <choice id>
+            String[] p = a.split(" ");
+            TaskCache.act(TaskPayloads.CHOOSE, p[1] + "|" + p[2]);
+            return;
+        }
         for (int i = 0; i < TaskCache.TABS.length; i++) {
             String name = TaskCache.TABS[i] == dev.awaken.core.api.Goals.Goal.RANK ? "gates" : TaskCache.TABS[i].label.toLowerCase(java.util.Locale.ROOT);
             if (name.equals(a)) {

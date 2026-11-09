@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "Your Hearth",
   "area": "home",
-  "blurb": "A fire, a roof, a bed, and the town that comes with them.",
+  "blurb": "A fire, a roof, a bed, and the beasts that come to them.",
   "weight": 20,
   "opens": [
     "hearth"
@@ -52,20 +52,12 @@
       "hint": "Sleeping there heals a Fracture."
     },
     {
-      "id": "cottage",
-      "text": "Let Oren raise a cottage, or build a Sanctuary yourself.",
-      "done": [
-        "cottage|room:sanctuary"
-      ],
-      "hint": "Oren offers it once, free, a few seconds after the Anchor takes root."
-    },
-    {
       "id": "anchor",
       "text": "Turn the fire into the Anchor with a Lord's Heart.",
       "done": [
         "hearth_tier:1"
       ],
-      "hint": "The Anchor brings the town, small requests and the furniture recipes."
+      "hint": "The Anchor gives you more rooms, more nooks for beasts and the furniture recipes."
     }
   ],
   "finish": {

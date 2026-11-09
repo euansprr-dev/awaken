@@ -29,8 +29,13 @@ final class HearthNext extends UiSection {
     }
 
     private static TaskPayloads.@Nullable StepRow next() {
-        for (var s : TaskCache.view.steps()) if (s.goal() == Goal.HEARTH.ordinal() && !s.optional()) return s;
-        return null;
+        TaskPayloads.StepRow first = null;
+        for (var s : TaskCache.view.steps()) {
+            if (s.goal() != Goal.HEARTH.ordinal() || s.optional() || !s.shown()) continue;
+            if (s.path()) return s;
+            if (first == null) first = s;
+        }
+        return first;
     }
 
     @Override

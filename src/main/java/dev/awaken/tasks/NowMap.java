@@ -56,10 +56,32 @@ final class NowMap {
         return new Rule("", Goal.OUT, Goals.NO_PATH, "", false);
     }
 
+    /** The room the guide would suggest waits behind "Add to your home", which offers it among others. */
+    private static final int AFTER_ADD = 70;
+
+    /** Suggestions in one line of work show as one row (SPEC §53); anything else is a thread of its own. */
+    private static String threadOf(String id) {
+        if (id.startsWith("hearth:room/") || id.startsWith("hearth:why/")) return "hearth.build";
+        if (id.startsWith("hearth:ember") || id.startsWith("hearth:shelter") || id.startsWith("hearth:place") || id.startsWith("hearth:craft")
+                || id.startsWith("hearth:heart") || id.startsWith("hearth:guide")) return "hearth.home";
+        if (id.startsWith("progression:reassessment") || id.startsWith("progression:capability") || id.startsWith("gate:")) return "rank.next";
+        if (id.startsWith("progression:points")) return "rank.power";
+        if (id.startsWith("progression:goal/")) return "rank.road";
+        if (lesson(id)) return "out.lessons";
+        return "";
+    }
+
+    static boolean lesson(String id) {
+        return id.startsWith("lesson:");
+    }
+
     /** The suggestion as a step: its id is its key, its words its title. */
     static Goals.Step step(NowHooks.Suggestion s) {
         Rule r = rule(s.id());
-        Goals.Builder b = Goals.Step.of(s.id(), r.goal, s.text().getString()).why(r.why).path(r.path).priority(s.priority());
+        // a lesson is never urgent (SPEC §53, decision 13): it waits in the Out there slot, however fresh it is
+        int priority = lesson(s.id()) ? Math.min(s.priority(), TaskBook.URGENT - 1) : s.priority();
+        Goals.Builder b = Goals.Step.of(s.id(), r.goal, s.text().getString()).why(r.why).path(r.path).priority(priority)
+                .thread(threadOf(s.id()), s.id().startsWith("hearth:room/") ? AFTER_ADD : r.path != Goals.NO_PATH ? 0 : 100 - priority);
         s.where().ifPresent(b::at);
         if (r.optional) b.optional();
         return b.build();

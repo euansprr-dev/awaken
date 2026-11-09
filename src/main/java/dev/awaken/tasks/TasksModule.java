@@ -62,6 +62,11 @@ public final class TasksModule {
                 act(p, new TaskPayloads.Act(TaskPayloads.PIN, key));
                 return true;
             }
+
+            @Override
+            public String chosen(ServerPlayer p, String key) {
+                return TaskState.of(p).chosen(key);
+            }
         });
         // what you pinned leads the card; the step on top shows there when nothing else is on
         Checklist.registerLeading(p -> card(p, true));
@@ -94,14 +99,31 @@ public final class TasksModule {
 
     static TaskPayloads.View view(ServerPlayer p, TaskBook.Book book) {
         TaskState st = TaskState.of(p);
+        Set<String> aside = TaskBook.aside(book.steps(), st, book.pinned());
         List<TaskPayloads.StepRow> rows = new ArrayList<>();
-        for (Goals.Step s : book.steps()) {
-            List<TaskPayloads.ChoiceRow> choices = new ArrayList<>();
-            for (Goals.Choice c : s.choices()) choices.add(new TaskPayloads.ChoiceRow(c.id(), c.title(), c.sub(), c.show(), needs(c.needs())));
-            rows.add(new TaskPayloads.StepRow(s.key(), s.goal().ordinal(), s.title(), s.why(), needs(s.needs()), s.where(), s.path() != Goals.NO_PATH,
-                    s.optional(), !st.seen.contains(s.key()), choices, chosen(st, s) == null ? "" : chosen(st, s).id()));
+        // each tab's rows in their places, then what waits behind them
+        for (Goals.Goal g : Goals.Goal.values()) {
+            List<Goals.Step> shown = book.shelf(g).rows();
+            for (int i = 0; i < shown.size(); i++) rows.add(row(st, book, aside, shown.get(i), i));
         }
-        return new TaskPayloads.View(rows, book.top(), book.pinned());
+        for (Goals.Goal g : Goals.Goal.values()) {
+            for (Goals.Step s : book.shelf(g).later()) rows.add(row(st, book, aside, s, aside.contains(s.key()) ? TaskPayloads.SET_ASIDE : TaskPayloads.LATER));
+        }
+        List<String> footers = new ArrayList<>();
+        for (Goals.Goal g : Goals.Goal.values()) footers.add(book.footers().getOrDefault(g, ""));
+        int tabs = 0;
+        for (Goals.Goal g : Goals.Goal.values()) if (st.tabsSeen.contains(g.name())) tabs |= 1 << g.ordinal();
+        return new TaskPayloads.View(rows, book.top(), book.pinned(), footers, tabs, book.capped());
+    }
+
+    private static TaskPayloads.StepRow row(TaskState st, TaskBook.Book book, Set<String> aside, Goals.Step s, int place) {
+        List<TaskPayloads.ChoiceRow> choices = new ArrayList<>();
+        for (Goals.Choice c : s.choices()) choices.add(new TaskPayloads.ChoiceRow(c.id(), c.title(), c.sub(), c.show(), needs(c.needs()), c.detail()));
+        Goals.Choice picked = chosen(st, s);
+        var extra = new TaskPayloads.Extra(TaskBook.then(book, aside, s, picked != null), TaskBook.ready(st, s), s.voice().ordinal(), TaskBook.thread(s), place,
+                s.opens(), s.priority() >= TaskBook.URGENT);
+        return new TaskPayloads.StepRow(s.key(), s.goal().ordinal(), s.title(), s.why(), needs(s.needs()), s.where(), s.path() != Goals.NO_PATH,
+                s.optional(), !st.seen.contains(s.key()), choices, picked == null ? "" : picked.id(), extra);
     }
 
     private static List<TaskPayloads.NeedRow> needs(List<Goals.Need> needs) {
@@ -116,6 +138,7 @@ public final class TasksModule {
             case TaskPayloads.PIN -> {
                 if (TaskBook.of(p).get(a.key()) == null) return; // a step that's gone can't be pinned
                 st.pinned = a.key();
+                st.aside.remove(a.key()); // pinning is the opposite of setting it aside
                 dev.awaken.core.api.TrailsApi.unfollow(p); // one pin for everything (SPEC §27.13)
             }
             case TaskPayloads.UNPIN -> st.pinned = "";
@@ -137,8 +160,34 @@ public final class TasksModule {
                 if (bar < 0) return;
                 Goals.Step s = TaskBook.of(p).get(a.key().substring(0, bar));
                 String id = a.key().substring(bar + 1);
+                if (s != null && id.isEmpty()) { // Change: back to the choices
+                    st.chosen.remove(s.key());
+                    break;
+                }
                 if (s == null || s.choices().stream().noneMatch(c -> c.id().equals(id))) return;
                 st.chosen.put(s.key(), id);
+            }
+            case TaskPayloads.ASIDE -> {
+                Goals.Step s = TaskBook.of(p).get(a.key());
+                if (s == null || s.priority() >= TaskBook.URGENT) return; // what's urgent can't be put off
+                st.asidePlace.put(s.key(), st.held.getOrDefault(s.goal().name(), List.of()).indexOf(TaskBook.thread(s)));
+                st.setAside(s.key(), p.level().getGameTime());
+                if (st.pinned.equals(s.key())) st.pinned = "";
+            }
+            case TaskPayloads.PUT_BACK -> {
+                if (st.aside.remove(a.key()) == null) return;
+                Goals.Step s = TaskBook.of(p).get(a.key());
+                if (s != null) { // back where it was, or the last place if that's been forgotten
+                    List<String> held = new ArrayList<>(st.held.getOrDefault(s.goal().name(), List.of()));
+                    String thread = TaskBook.thread(s);
+                    Integer was = st.asidePlace.remove(a.key());
+                    if (!held.contains(thread)) { // its line kept the place if another of its steps came up
+                        int at = was == null || was < 0 ? Math.min(held.size(), TaskBook.TAB_CAP - 1) : Math.min(was, held.size());
+                        if (at < held.size()) held.set(at, thread); // what came up in its place goes back to waiting
+                        else held.add(thread);
+                    }
+                    st.held.put(s.goal().name(), held);
+                }
             }
             default -> {
                 return;
@@ -183,7 +232,7 @@ public final class TasksModule {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("1");
+        var r = event.registrar("2");
         r.playToServer(TaskPayloads.Act.TYPE, TaskPayloads.Act.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) act(sp, msg);
         });

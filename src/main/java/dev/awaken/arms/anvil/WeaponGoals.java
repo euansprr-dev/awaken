@@ -47,6 +47,11 @@ final class WeaponGoals {
 
     static void register() {
         Goals.register(WeaponGoals::steps);
+        Goals.registerFooter(p -> {
+            if (!Progression.profile(p).awakened()) return List.of();
+            int next = reached(p) + 1;
+            return next >= ArmsArmoury.TIERS.length ? List.of() : List.of(new Goals.Footer(Goal.WEAPONS, "At " + ArmsArmoury.TIERS[next] + "-rank your next weapon opens."));
+        });
     }
 
     static List<Goals.Step> steps(ServerPlayer p) {
@@ -64,7 +69,7 @@ final class WeaponGoals {
             if (mem.best() < 0 || tier <= mem.best()) return List.of();
             BlockPos anvil = anvil(p, mem);
             boolean near = anvil != null && forgeNear(p, mem, anvil);
-            Goals.Builder b = Goals.Step.of(RANK, Goal.WEAPONS, "Make your " + ArmsArmoury.TIERS[tier] + "-rank weapon")
+            Goals.Builder b = Goals.Step.of(RANK, Goal.WEAPONS, "Make your " + ArmsArmoury.TIERS[tier] + "-rank weapon").thread("arms.forge", 30)
                     .why("You've reached " + WarAnvil.tierName(tier) + " weapons, stronger than anything you've forged. Make one at your War Anvil.")
                     .need(Need.of("A War Anvil by the Forge", near))
                     .priority(40).covers("arms:forge/");
@@ -79,14 +84,15 @@ final class WeaponGoals {
         BlockPos anvil = anvil(p, mem);
         List<Goals.Step> out = new ArrayList<>(2);
         if (anvil == null) {
-            Goals.Builder b = Goals.Step.of(ANVIL, Goal.WEAPONS, "Set up a War Anvil")
-                    .why("It makes weapons stronger than anything from a crafting table, by hand, Plain to Flawless. Set it down within 6 blocks of the Hearth's Forge.")
+            Goals.Builder b = Goals.Step.of(ANVIL, Goal.WEAPONS, "Set up a War Anvil").thread("arms.forge", 10)
+                    .why("It makes weapons stronger than anything from a crafting table, by hand, Plain to Flawless. "
+                            + (tier == 0 ? "Your first weapons need no Forge, so set it down wherever you like." : "Set it down within 6 blocks of the Hearth's Forge."))
                     .path(d ? Goals.PATH_WAR_ANVIL : Goals.NO_PATH).priority(44);
             if (Goals.count(p.getInventory(), AnvilContent.ANVIL_ITEM.get()) > 0) b.need(Need.item(p, AnvilContent.ANVIL_ITEM.get(), 1));
             else for (NeedRow r : ArmsArmoury.needsOf(p, "war_anvil")) b.need(need(r));
             out.add(b.build());
         }
-        Goals.Builder b = Goals.Step.of(FIRST, Goal.WEAPONS, "Forge your first weapon")
+        Goals.Builder b = Goals.Step.of(FIRST, Goal.WEAPONS, "Forge your first weapon").thread("arms.forge", 20)
                 .why(tier == 0 ? "At your War Anvil, by hand: knap a bone or flint edge and bind its grip. How well you do decides its quality."
                         : "At your War Anvil: heat it in the Forge, draw it out on the beat, quench it and fit its hilt. How well you do decides its quality and Temper.")
                 .need(Need.of(tier == 0 ? "A War Anvil" : "A War Anvil by the Forge", anvil != null && (tier == 0 || forgeNear(p, mem, anvil))))
@@ -115,7 +121,7 @@ final class WeaponGoals {
     private static void rebuild(ServerPlayer p, SmithMemory mem, @org.jspecify.annotations.Nullable BlockPos anvil, int tier, List<Goals.Step> out) {
         if (anvil == null || mem.build < 0 || mem.build >= WarAnvil.buildFor(tier)) return;
         int next = mem.build + 1;
-        Goals.Builder b = Goals.Step.of(REBUILD, Goal.WEAPONS, WarAnvil.rebuildName(next))
+        Goals.Builder b = Goals.Step.of(REBUILD, Goal.WEAPONS, WarAnvil.rebuildName(next)).thread("arms.craft", 10)
                 .why(WarAnvil.unbuilt(tier, mem.build) + " Use the anvil and choose Rebuild it.")
                 .priority(41).at(anvil);
         for (NeedRow r : WarAnvil.rebuildCost(p, next)) b.need(need(r));
@@ -145,7 +151,7 @@ final class WeaponGoals {
             // its next level, as the anvil reckons it (Oren's Mark starts a fresh one higher)
             int next = bestTemper == 0 ? Math.min(mem.forgeCap, 1 + (int) Progression.perk(p, "awaken:temper_start")) : bestTemper + 1;
             String name = best.getHoverName().getString();
-            Goals.Builder b = Goals.Step.of(TEMPER, Goal.WEAPONS, "Temper your " + name)
+            Goals.Builder b = Goals.Step.of(TEMPER, Goal.WEAPONS, "Temper your " + name).thread("arms.craft", 20)
                     .why((bestTemper == 0 ? "It has no Temper yet" : "It's at Temper " + Upgrades.roman(bestTemper)) + ", and the Forge by your War Anvil can take it to "
                             + Upgrades.roman(mem.forgeCap) + ". Hold it and use the anvil: one heat, a strike for each level.")
                     .optional().priority(30).at(anvil);
@@ -154,7 +160,7 @@ final class WeaponGoals {
         }
         ArmsRaise.Plan plan = found.isEmpty() ? null : ArmsRaise.plan(p, found);
         if (plan != null && plan.reached()) {
-            Goals.Builder b = Goals.Step.of(REFORGE, Goal.WEAPONS, "Reforge your " + found.getHoverName().getString())
+            Goals.Builder b = Goals.Step.of(REFORGE, Goal.WEAPONS, "Reforge your " + found.getHoverName().getString()).thread("arms.craft", 30)
                     .why("You've reached " + WarAnvil.tierName(plan.next()) + " weapons. At your War Anvil it's reforged as one, "
                             + (plan.lordForged() ? "keeping its own form and Art and gaining a point of damage." : "keeping its Marks, its name and its Temper."))
                     .optional().priority(29).at(anvil);

@@ -455,10 +455,10 @@ final class VillageBells {
             if (v == null || Bells.has(p, d.id()) || e.getValue() == THANKED) continue;
             String name = d.name().replaceFirst("^The ", "the ");
             if (e.getValue() == HEARD)
-                out.add(Step.of("bells/village/" + d.no(), Goal.BELLS, "Find the letter about " + name + " in " + v.name)
+                out.add(Step.of("bells/village/" + d.no(), Goal.BELLS, "Find the letter about " + name + " in " + v.name).lead()
                         .why("They left it by the well before they walked to the city. It says where they hid their bell.").priority(38).at(v.well).build());
             else
-                out.add(Step.of("bells/village/" + d.no(), Goal.BELLS, "Find " + name + " where the letter says")
+                out.add(Step.of("bells/village/" + d.no(), Goal.BELLS, "Find " + name + " where the letter says").lead()
                         .why(v.words.isEmpty() ? "" : v.words.substring(0, v.words.indexOf('\n') < 0 ? v.words.length() : v.words.indexOf('\n')))
                         .priority(38).build());
         }
