@@ -1,5 +1,5 @@
 """Bakes the Hall's title type into a bitmap font: Jacquard 24 by Sarah Cadigan-Fried (SIL Open Font License 1.1; the
-licence travels beside the bitmap as assets/awaken/font/hall_title_OFL.txt). The font file itself is not in the repo:
+licence travels beside the bitmap as assets/awaken/font/hall_title_ofl.txt). The font file itself is not in the repo:
 python3 tools/art/hall/title_font.py /path/to/Jacquard24-Regular.ttf"""
 import json, os, sys
 from PIL import Image, ImageDraw, ImageFont
