@@ -56,10 +56,16 @@ final class NowMap {
         return new Rule("", Goal.OUT, Goals.NO_PATH, "", false);
     }
 
+    static boolean lesson(String id) {
+        return id.startsWith("lesson:");
+    }
+
     /** The suggestion as a step: its id is its key, its words its title. */
     static Goals.Step step(NowHooks.Suggestion s) {
         Rule r = rule(s.id());
-        Goals.Builder b = Goals.Step.of(s.id(), r.goal, s.text().getString()).why(r.why).path(r.path).priority(s.priority());
+        // a lesson is never urgent (SPEC §53, decision 13): it waits in the Out there slot, however fresh it is
+        int priority = lesson(s.id()) ? Math.min(s.priority(), TaskBook.URGENT - 1) : s.priority();
+        Goals.Builder b = Goals.Step.of(s.id(), r.goal, s.text().getString()).why(r.why).path(r.path).priority(priority);
         s.where().ifPresent(b::at);
         if (r.optional) b.optional();
         return b.build();

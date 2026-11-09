@@ -52,8 +52,9 @@ final class ArmourGoals {
                     .priority(10).build());
         }
         ArmouryMemory mem = ArmouryMemory.of(p);
+        boolean first = !any && rank == Rank.E; // nothing worn at C-rank isn't a first armour
         Goals.Builder b = Goals.Step.of("armour/" + rank.name().toLowerCase(java.util.Locale.ROOT), Goal.ARMOUR,
-                any ? "Make your " + rank.label + "-rank armour" : "Choose your first armour");
+                first ? "Choose your first armour" : "Make your " + rank.label + "-rank armour");
         int sets = 0;
         for (ArmourSet set : ArmourSet.values()) {
             if (set.rank != rank || !set.made() || !ArmourForge.known(mem, set)) continue;
@@ -65,7 +66,7 @@ final class ArmourGoals {
         if (sets == 0) return List.of();
         String where = rank == Rank.E ? "Made at a Fitting Stand with a crafting table within 6 blocks."
                 : "Forged at a Fitting Stand with an anvil and the Forge near it.";
-        return List.of(b.why(any ? where : where + " Wear it before your first gate.")
+        return List.of(b.why(first ? where + " Wear it before your first gate." : where)
                 .path(any ? Goals.NO_PATH : Goals.PATH_FIRST_ARMOUR).priority(any ? 30 : 58).covers("armour:forge/").build());
     }
 

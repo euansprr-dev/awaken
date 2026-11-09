@@ -1,8 +1,8 @@
 {
   "schema": 2,
   "level": 26,
-  "title": "The town grows",
-  "text": "A Spire Board for home. C-rank brings Teodor, and Anchor tier III.",
+  "title": "Your home grows",
+  "text": "A Spire Board for home. At C-rank your home can grow to Hall.",
   "grants": [
     {
       "type": "recipe",

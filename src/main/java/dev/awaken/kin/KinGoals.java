@@ -31,6 +31,19 @@ final class KinGoals {
         Goals.register(KinGoals::steps);
     }
 
+    /** "beasts:2": that many beasts live at your home (the Your Village trail). */
+    static void registerTrailTokens() {
+        dev.awaken.core.api.TrailsApi.condition("beasts", (p, rest) -> {
+            int want;
+            try {
+                want = Integer.parseInt(rest);
+            } catch (NumberFormatException e) {
+                return false;
+            }
+            return Hearth.home(p).map(h -> KinWorld.get(p.level().getServer()).at(h.anchor()).size() >= want).orElse(false);
+        });
+    }
+
     static List<Step> steps(ServerPlayer p) {
         if (!Progression.profile(p).awakened()) return List.of();
         Optional<Hearth.HearthInfo> h = Hearth.home(p);

@@ -125,7 +125,7 @@ public final class TaskBook {
         }
         if (best != null) return best.key();
         for (Step s : steps) {
-            if (s.optional()) continue;
+            if (s.optional() || NowMap.lesson(s.key())) continue; // a lesson you put off never holds the top (SPEC §53)
             if (best == null || s.priority() > best.priority()) best = s;
         }
         return best == null ? "" : best.key();

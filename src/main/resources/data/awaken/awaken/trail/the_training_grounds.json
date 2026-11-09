@@ -38,7 +38,9 @@
       "id": "dummy",
       "text": "Add a Target Dummy beside the course and strike it.",
       "hint": "A dummy counts when it is struck or hit by your projectile.",
-      "manual": true
+      "done": [
+        "counter:awaken:training_dummy_hits"
+      ]
     }
   ],
   "finish": {

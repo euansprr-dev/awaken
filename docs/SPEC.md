@@ -19671,3 +19671,11 @@ against six kinds of player (stands still, runs, circles, holds guard, keeps awa
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
 
+
+## 53. One short list (the Tasks page through the whole game; plan docs/tasks-progression/PLAN.md, page https://claude.ai/artifact/JqgFfTyCLV13rx6N1XupRd; Euan approved all sixteen recommendations 2026-11-09)
+
+The Tasks page (§27.13) keeps its model: steps stay derived from the world, no quest flags. This section is what it now promises.
+
+**Lessons.** A lesson (a `lesson:` Now id) is never urgent and never the step on top, however fresh it is: `NowMap` holds it under `TaskBook.URGENT` and `TaskBook.top` skips it. A hunter who skipped the Veil no longer has "Meditate 10 s" as Do this next from C-rank on.
+
+**Your Village** (trail) is told through beasts and works, since people no longer move in: `beasts:N` (Kin, how many live at your home) replaces `settlers:N` on it. The tier steps say what `TierRules` asks. "Choose your first armour" is for an E-rank hunter with nothing worn; at any other rank the step is "Make your X-rank armour". The Training Grounds' last step counts a strike on a dummy (`awaken:training_dummy_hits`).
