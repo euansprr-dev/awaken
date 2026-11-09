@@ -3,6 +3,7 @@ package dev.awaken.shaping;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -57,11 +58,15 @@ public final class ShapedBlockEntity extends BlockEntity {
         super.loadAdditional(in);
         this.base = in.read("base", BlockState.CODEC).orElse(Blocks.STONE.defaultBlockState());
         this.look = in.read("look", BlockState.CODEC).orElse(this.base);
-        if (this.level != null && this.level.isClientSide()) {
-            requestModelDataUpdate();
-            BlockState s = getBlockState();
-            this.level.sendBlockUpdated(this.worldPosition, s, s, Block.UPDATE_IMMEDIATE);
-        }
+    }
+
+    /** A change sent to the client redraws at once. Not on chunk load (handleUpdateTag): that chunk hasn't been drawn yet. */
+    @Override
+    public void onDataPacket(Connection net, ValueInput in) {
+        super.onDataPacket(net, in);
+        requestModelDataUpdate();
+        BlockState s = getBlockState();
+        if (this.level != null) this.level.sendBlockUpdated(this.worldPosition, s, s, Block.UPDATE_IMMEDIATE);
     }
 
     @Override

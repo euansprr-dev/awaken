@@ -73,7 +73,7 @@ final class LooksScreen extends Screen {
     @Override
     protected void init() {
         // opening a screen lets go of every key; stay crouched while it's open
-        this.minecraft.options.keyShift.setDown(true);
+        if (!this.minecraft.options.toggleCrouch().get()) this.minecraft.options.keyShift.setDown(true);
     }
 
     @Override

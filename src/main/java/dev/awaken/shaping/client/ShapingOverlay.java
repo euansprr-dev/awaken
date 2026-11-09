@@ -47,7 +47,13 @@ final class ShapingOverlay {
         for (BlockPos p : run) {
             RealShapes.Parts parts = RealShapes.read(level, p, level.getBlockState(p));
             if (parts == null) continue;
-            int block = level.getBrightness(LightLayer.BLOCK, p.above()), sky = level.getBrightness(LightLayer.SKY, p.above());
+            // the brightest side: the block above a wall's inner course is more wall, and dark
+            int block = 0, sky = 0;
+            for (Direction d : Direction.values()) {
+                BlockPos out = p.relative(d);
+                block = Math.max(block, level.getBrightness(LightLayer.BLOCK, out));
+                sky = Math.max(sky, level.getBrightness(LightLayer.SKY, out));
+            }
             RUN.add(new Tried(p.immutable(), parts.shape(), parts.facing(), LightCoordsUtil.pack(block, sky)));
         }
         trying = null;
