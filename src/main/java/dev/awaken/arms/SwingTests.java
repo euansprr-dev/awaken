@@ -78,6 +78,18 @@ final class SwingTests {
         late.apply(month + 2, d, q);
         h.assertTrue(d.x > 0.02F && d.x < 0.38F, "and the blend still decays frame by frame (" + d.x + ")");
 
+        // a hand that doesn't move across the change (a shield's shove leaves the sword at rest), its turn not quite a unit
+        // from rounding: no gap to carry, and no axis to carry it about. Its pose was NaN for the whole blend, so the sword
+        // left the screen for all of a held heavy's draw
+        SwingBlend same = new SwingBlend();
+        Quaternionf stance = new Quaternionf(0.3F, 0.4F, 0.5F, 0.7F), shown = new Quaternionf();
+        Vector3f restAt = new Vector3f(0.2F, -0.1F, 0.3F), shownAt = new Vector3f();
+        for (int i = 0; i <= 2; i++) same.apply(i * 0.25, shownAt.set(restAt), shown.set(stance));
+        same.begin(1, restAt, stance, zero, zero, 9F);
+        same.apply(1.5, shownAt.set(restAt), shown.set(stance));
+        h.assertTrue(Float.isFinite(shownAt.x) && Float.isFinite(shown.x) && Float.isFinite(shown.w) && shown.equals(stance, 1e-4F),
+                "a hand that stays where it is stays on the screen (" + shown + ")");
+
         SwingBlend.Vec v = new SwingBlend.Vec();
         Vector3f lean = new Vector3f(2, 4, 1);
         v.apply(0, lean);

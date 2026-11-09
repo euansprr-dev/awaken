@@ -89,8 +89,10 @@ public final class SwingBlend {
         q.conjugate(dq);
         lastQ.mul(dq, off);
         if (off.w < 0) off.set(-off.x, -off.y, -off.z, -off.w);
-        float s = (float) Math.sqrt(Math.max(0F, 1F - off.w * off.w));
-        float angle = 2F * (float) Math.acos(Math.min(1F, off.w));
+        // read from the axis itself: the same pose in and out, a turn rounded short of a unit, has a w below 1 and no axis,
+        // and a blend about no axis is NaN for its whole length (the hand leaves the screen)
+        float s = (float) Math.sqrt(off.x * off.x + off.y * off.y + off.z * off.z);
+        float angle = 2F * (float) Math.atan2(s, off.w);
         if (s > 1e-6F && angle > EPS) {
             axis.set(off.x / s, off.y / s, off.z / s);
             rot.set(angle, tmp.set(velW).sub(w).dot(axis), ticks);
@@ -135,8 +137,8 @@ public final class SwingBlend {
             lastQ.conjugate(dq);
             q.mul(dq, dq); // dq = q . last^-1, the turn over the frame
             if (dq.w < 0) dq.set(-dq.x, -dq.y, -dq.z, -dq.w);
-            float s = (float) Math.sqrt(Math.max(0F, 1F - dq.w * dq.w));
-            float angle = 2F * (float) Math.acos(Math.min(1F, dq.w));
+            float s = (float) Math.sqrt(dq.x * dq.x + dq.y * dq.y + dq.z * dq.z);
+            float angle = 2F * (float) Math.atan2(s, dq.w);
             if (s > 1e-6F) velW.set(dq.x / s, dq.y / s, dq.z / s).mul(angle / dt);
             else velW.zero();
         } else {
