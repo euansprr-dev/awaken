@@ -70,7 +70,7 @@ final class LadderFx {
         // MIN_VALUE: none yet (ticks - MIN_VALUE overflows and would read as "just now")
         if (last != Integer.MIN_VALUE && FxWorld.ticks - last < 12 && FxWorld.ticks >= last) return;
         PowerType type = PowerRegistry.byIndex(e.power() - 1);
-        if (type == null) return;
+        if (type == null || dev.awaken.powers.PowerSounds.ownPack(type.path)) return;
         if (TIER_LAST.size() > 256) TIER_LAST.clear();
         TIER_LAST.put(e.caster(), FxWorld.ticks);
         level.playLocalSound(e.x(), e.y(), e.z(), dev.awaken.powers.PowerSounds.tier(type.family, lvl).value(), net.minecraft.sounds.SoundSource.PLAYERS,

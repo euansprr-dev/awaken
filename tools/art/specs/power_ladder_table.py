@@ -307,7 +307,7 @@ P("railgun", "Railgun", "Tech", "active",
   ("Vacuum Tunnel", "Rings hang along the line of fire.", "Foes in the line are knocked back."),
   ("Quick Charge", "The coils glow white.", "Charges another 15% faster."),
   ("Gauss Lance", "The line stays as a blazing teal thread that explodes along its length half a second later.",
-   "The second blast hits everything in the line.", "Braced side-on, the recoil throwing the shoulder back."))
+   "A full shot punches a tunnel through rock, which closes up again a few seconds later. The second blast hits everything in the line.", "Braced side-on, the recoil throwing the shoulder back."))
 P("nanite_skin", "Nanite Skin", "Tech", "active",
   ("Hex Scales", "Hex scales ripple over you.", "A second longer."),
   ("Arc Shock", "The shock jumps.", "A melee hit's shock jumps to a second foe."),

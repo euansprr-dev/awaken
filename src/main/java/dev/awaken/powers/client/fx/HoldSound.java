@@ -14,7 +14,8 @@ import net.minecraft.world.entity.Entity;
  * A channel's held sound (a cast profile's {@code holdSound}; Charged Shot's charge): it plays from the cast's origin (the
  * ball between the hands) and follows it, for the caster and everyone near, and is cut on the let-go with a two-tick fade, so
  * the release's crack lands on silence. The file carries the build itself (it rises to the full charge), so a short hold
- * stops partway up. One per entity.
+ * stops partway up. A power with a {@code _loop} event moves onto it when it reaches full charge and can be held as long as you like
+ * (SPEC §50.7). One per entity.
  */
 final class HoldSound extends AbstractTickableSoundInstance {
     private static final int SLOTS = 16;
@@ -25,15 +26,17 @@ final class HoldSound extends AbstractTickableSoundInstance {
 
     private final int entity, profile;
     private final float full;
+    private final String soundId;
     private int fading = -1;
 
-    private HoldSound(SoundEvent sound, int entity, int profile, float volume) {
+    private HoldSound(SoundEvent sound, String soundId, int entity, int profile, float volume, boolean loop) {
         super(sound, SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
         this.entity = entity;
         this.profile = profile;
         this.full = volume;
+        this.soundId = soundId;
         this.volume = volume;
-        this.looping = false;
+        this.looping = loop;
         this.delay = 0;
     }
 
@@ -55,10 +58,34 @@ final class HoldSound extends AbstractTickableSoundInstance {
             if (PLAYING[i] == null && slot < 0) slot = i;
         }
         if (slot < 0) return;
-        HoldSound h = new HoldSound(ev, entityId, prof.id(), 1f);
+        HoldSound h = new HoldSound(ev, prof.holdSound(), entityId, prof.id(), 1f, false);
         h.place(e);
         PLAYING[slot] = h;
         mc.getSoundManager().play(h);
+    }
+
+    /** How much faster the climb runs at this level (a level's sooner full charge), so its top still lands on it. */
+    static void rate(int entityId, float rate) {
+        for (HoldSound h : PLAYING) if (h != null && h.entity == entityId && !h.isStopped() && !h.looping) h.pitch = Math.max(0.7f, Math.min(2f, rate));
+    }
+
+    /** The hold reached full charge: the climb gives way to the power's held loop, if it has one. */
+    static void ready(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        Entity e = mc.level == null ? null : mc.level.getEntity(entityId);
+        if (e == null) return;
+        for (int i = 0; i < SLOTS; i++) {
+            HoldSound h = PLAYING[i];
+            if (h == null || h.entity != entityId || h.isStopped() || h.looping || h.fading >= 0) continue;
+            SoundEvent loop = BuiltInRegistries.SOUND_EVENT.getValue(Identifier.parse(h.soundId + "_loop"));
+            if (loop == null) return;
+            HoldSound next = new HoldSound(loop, h.soundId, entityId, h.profile, 0.8f, true);
+            next.place(e);
+            h.stop();
+            PLAYING[i] = next;
+            mc.getSoundManager().play(next);
+            return;
+        }
     }
 
     static void reset() {

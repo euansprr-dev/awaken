@@ -89,7 +89,19 @@ public enum FxKind {
     /** A power's sound, played by every client in range at pos on the cast's release frame: colour = the sound event's registry id, scale = volume, aux = pitch. */
     SOUND,
     /** A power climbed its ladder (SPEC 36.6): a bloom on the caster; aux 0 = a fight's sting, 1 = the full moment; the level rides the flags. */
-    EVOLVE;
+    EVOLVE,
+    /** A held power reached full charge: a pulse at the hand, the held sound moves to its loop. */
+    HOLD_READY,
+    /** A clean Haymaker landed: time hitches, the target (target id) folds along d. */
+    PERFECT,
+    /** A thrown body hit a wall at pos: d = the wall's outward normal; scale = how hard (0.5 .. 1.5). */
+    WALL_CRACK,
+    /** A gravity well closes at pos; scale = radius; FULL = it ran its course (the collapse), without it just stops. */
+    WELL_END,
+    /** A shot swallowed by a well at pos. */
+    SHOT_EATEN,
+    /** A Railgun's tunnel closes from pos + d back to pos over ticks. */
+    BORE_SEAL;
 
     private static final FxKind[] VALUES = values();
 

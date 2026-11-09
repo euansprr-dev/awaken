@@ -14,7 +14,9 @@ import dev.awaken.powers.FlyingBlocks;
 import dev.awaken.powers.ForceInteractions;
 import dev.awaken.powers.Fx;
 import dev.awaken.powers.Moves;
+import dev.awaken.powers.PowerMath;
 import dev.awaken.powers.PowerSounds;
+import dev.awaken.powers.PowerStance;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.PowerType.Family;
 import dev.awaken.powers.PowerType.Result;
@@ -64,7 +66,7 @@ final class FlightPowers {
 
         PowerType.builder("gravity_well", "Gravity Well", Family.FLIGHT, Slot.ACTIVE)
                 .forces(Forces.Force.GRAVITY).cost(28).cooldown(280).damage(2).unlock(Rank.D).icon("well")
-                .desc("Open a well of gravity where you aim. It drags enemies (and your own walls) into a crushing knot for 4 s.")
+                .desc("Open a well of gravity where you aim. It drags enemies (and your own walls) into a crushing knot for 4 s, and hits harder the more of them are in it. Enemy shots bend towards it, and it swallows any that reach the middle.")
                 .variant(Variant.of("Singularity", "Smaller, pulls twice as hard, implodes at the end").radius(0.7f).dmg(1.5f))
                 .variant(Variant.of("Repulsor", "Throws everything outward instead"))
                 .cast(FlightPowers::gravityWell).register();
@@ -189,53 +191,114 @@ final class FlightPowers {
         double pull = (c.is(1) ? 0.16 : 0.09) * (1 + c.num(2, "pull", 0f));
         float dmg = c.dmg();
         float debris = dmg * c.num(3, "debris", 0f);
-        c.sound(centre, PowerSounds.GRAVITY, 1.2f, 0.7f);
+        c.sound(centre, PowerSounds.WELL_OPEN, 1.2f, 1f);
         int wellTicks = c.ticks(80);
-        // a void core with a violet rim, rings contracting into it, sparks and debris drawn in
+        // a void core with a violet rim, rings contracting into it, real loose things drawn in; the throb is the client's for its whole life
         Fx.at(c, FxKind.VORTEX, centre).scale(radius).ticks(wellTicks).flag(FxEvent.REPULSE, repulse).flag(FxEvent.REACH).send();
+        boolean lootSafe = !repulse && landsSafely(c, centre);
         Running r = Casting.start(c, wellTicks).at(centre);
         r.tick(rr -> {
             // Crush (4): its damage climbs over its length
             float now = dmg;
             if (c.kit.ramp != null) now *= 1 + c.kit.ramp.share() * Math.min(1f, rr.age / (float) Math.max(1, c.kit.ramp.ticks()));
-            for (LivingEntity e : Combat.foesAround(c.player, centre, radius)) {
+            List<LivingEntity> foes = Combat.foesAround(c.player, centre, radius);
+            // it shines on a crowd: each extra body in it makes it bite harder
+            float bunched = PowerMath.capBonus(1 + Math.min(0.4f, 0.08f * (foes.size() - 1)));
+            for (LivingEntity e : foes) {
                 Vec3 d = centre.subtract(e.position().add(0, e.getBbHeight() * 0.5, 0));
                 double len = d.length();
                 if (len < 0.1) continue;
                 Vec3 dir = d.scale(1 / len);
                 if (repulse) dir = dir.scale(-1);
-                double strength = Combat.isHeavy(e) ? pull * 0.25 : pull;
-                Vec3 v = e.getDeltaMovement().scale(0.6).add(dir.scale(strength * (repulse ? 3 : Math.min(1.0, len))));
-                Combat.push(e, v);
-                e.fallDistance = 0;
-                if (rr.age % 10 == 0 && c.hurt(e, now, Forces.Force.GRAVITY)) rr.value += now;
+                if (Combat.isBoss(e)) {
+                    // it can't pull a boss, but the boss standing in it is being pulled apart
+                    if (rr.age % 20 == 0) PowerStance.add(c.player, e, 2);
+                } else {
+                    double strength = Combat.isHeavy(e) ? pull * 0.25 : pull;
+                    Vec3 v = e.getDeltaMovement().scale(0.6).add(dir.scale(strength * (repulse ? 3 : Math.min(1.0, len))));
+                    Combat.push(e, v);
+                    e.fallDistance = 0;
+                }
+                float bite = e instanceof net.minecraft.world.entity.player.Player ? now : now * bunched;
+                if (rr.age % 10 == 0 && c.hurt(e, bite, Forces.Force.GRAVITY)) rr.value += bite;
                 // Debris Ring (3): the chunks circling the rim strike what they pass
                 if (debris > 0 && rr.age % 10 == 5 && len > radius * 0.4) {
                     Combat.hurtFrom(c.player, null, e, debris, Forces.Force.GRAVITY, true);
                     rr.value += debris;
                 }
             }
-            if (rr.age % 2 == 0) {
-                for (Projectile p : c.level.getEntitiesOfClass(Projectile.class, AABB.ofSize(centre, radius * 2, radius * 2, radius * 2),
-                        p -> p.getOwner() != c.player)) {
-                    Combat.push(p, p.getDeltaMovement().scale(0.5).add(centre.subtract(p.position()).normalize().scale(0.2)));
-                }
-            }
+            bendShots(c, centre, radius, repulse);
+            if (rr.age % 2 == 0 && lootSafe) pullLoose(c, centre, radius);
             if (rr.age % 5 == 0 && !repulse) volatileCheck(c, centre, radius);
             if (rr.age == 4 && !repulse) pullWalls(c, centre, radius);
-            if (rr.age % 20 == 0) c.sound(centre, PowerSounds.GRAVITY, 0.7f, 0.5f);
         }).end((rr, why) -> {
+            Fx.at(c, FxKind.WELL_END, centre).scale(radius).flag(FxEvent.FULL, why == Running.Why.EXPIRED).noAnim().send();
             if (why != Running.Why.EXPIRED) return;
             // Black Star (5): the well collapses into a burst worth part of everything it dealt
             float star = c.step(5) ? (float) rr.value * c.num(5, "burst", 0.3f) : 0;
             if (c.is(1) || star > 0) {
                 Moves.blast(c, centre, radius + 1, (c.is(1) ? c.dmg(8) : 0) + star, Forces.Force.GRAVITY, 1.2, 0.5);
                 Fx.at(c, FxKind.NOVA, centre).scale(radius + 1).flag(FxEvent.REPULSE).noAnim().send();
-                c.sound(centre, PowerSounds.BLAST, 1.2f, 0.6f);
+                c.sound(centre, PowerSounds.WELL_L5, 1.3f, 1f);
                 Fx.quake(c.level, centre, 16, 3f);
+            } else {
+                c.sound(centre, PowerSounds.WELL_TAIL, 1.2f, 1f);
             }
         });
         return Result.OK;
+    }
+
+    /**
+     * Shots through the well curve towards its core at their own speed and it eats the ones that get there (SPEC §50.5). The
+     * shots of mobs and of no one; a player's own arrows, the caster's included, always go where they were aimed.
+     */
+    private static void bendShots(Cast c, Vec3 centre, double radius, boolean repulse) {
+        double swallow = Math.max(1.2, radius * 0.22);
+        for (Projectile p : c.level.getEntitiesOfClass(Projectile.class, AABB.ofSize(centre, radius * 2, radius * 2, radius * 2),
+                p -> p.getOwner() == null || !Combat.isAlly(c.player, p.getOwner()))) {
+            Vec3 v = p.getDeltaMovement();
+            double speed = v.length();
+            if (speed < 0.02) continue; // stuck in a wall
+            Vec3 to = centre.subtract(p.position());
+            double d = to.length();
+            if (d > radius) continue;
+            // a boss's shot may be part of its fight, so a Well leans on it but never takes it away
+            boolean boss = p.getOwner() instanceof LivingEntity shooter && Combat.isBoss(shooter);
+            if (!repulse && d < swallow && !boss) {
+                Fx.at(c, FxKind.SHOT_EATEN, p.position()).noAnim().send();
+                c.sound(p.position(), PowerSounds.WELL_EAT, 0.9f, 0.9f + c.level.getRandom().nextFloat() * 0.25f);
+                p.discard();
+                continue;
+            }
+            Vec3 dir = (repulse ? to.reverse() : to).scale(1 / Math.max(0.1, d));
+            double lean = (0.22 + 0.7 * (1 - d / radius)) * (boss ? 0.3 : 1);
+            Combat.push(p, v.add(dir.scale(speed * lean)).normalize().scale(speed));
+        }
+    }
+
+    /** Drops and orbs drift into the well; they fall where it was when it closes, so never over lava or the void. */
+    private static void pullLoose(Cast c, Vec3 centre, double radius) {
+        int moved = 0;
+        for (net.minecraft.world.entity.Entity e : c.level.getEntitiesOfClass(net.minecraft.world.entity.Entity.class,
+                AABB.ofSize(centre, radius * 2, radius * 2, radius * 2),
+                e -> e instanceof net.minecraft.world.entity.item.ItemEntity || e instanceof net.minecraft.world.entity.ExperienceOrb)) {
+            Vec3 to = centre.subtract(e.position());
+            double d = to.length();
+            if (d < 0.6 || d > radius) continue;
+            Combat.push(e, e.getDeltaMovement().scale(0.75).add(to.scale(0.16 / d)).add(0, 0.03, 0));
+            if (++moved >= 40) return;
+        }
+    }
+
+    private static boolean landsSafely(Cast c, Vec3 centre) {
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        p.set(centre.x, centre.y, centre.z);
+        for (int i = 0; i < 48 && p.getY() >= c.level.getMinY(); i++, p.move(0, -1, 0)) {
+            BlockState s = c.level.getBlockState(p);
+            if (s.getFluidState().is(net.minecraft.tags.FluidTags.LAVA)) return false;
+            if (!s.getCollisionShape(c.level, p).isEmpty()) return true;
+        }
+        return false;
     }
 
     /** Gravity meets Volatile: two volatile foes pulled within reach of each other detonate. */

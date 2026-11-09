@@ -183,6 +183,9 @@ final class FxWorld {
         }
         liveShapes = live;
         FxDebris.tick(lvl);
+        FxGroundWave.tick(lvl);
+        FxWallCrack.tick(lvl);
+        FxFold.tick();
         FxAfterimages.tick();
     }
 
@@ -241,6 +244,9 @@ final class FxWorld {
         for (Shape s : SHAPES) s.live = false;
         liveShapes = 0;
         FxDebris.clear();
+        FxGroundWave.clear();
+        FxWallCrack.clear();
+        FxFold.reset();
         FxAfterimages.clear();
     }
 

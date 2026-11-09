@@ -19671,3 +19671,51 @@ against six kinds of player (stands still, runs, circles, holds guard, keeps awa
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
 
+
+## 50. Powers in Full Voice (plan docs/powers-aaa/PLAN.md, page https://claude.ai/artifact/G6vDNHxaMBnyHF84e51pFg, all 43 yes 9 Nov 2026)
+
+Stage 0 is the proof: Haymaker, Shockwave, Gravity Well and Railgun rebuilt to the plan's bar, and nothing else. Later stages wait for Euan to play this one.
+
+### 50.1 Standing rules
+
+A plain press does at least what it did before. The server decides damage. The 20% boss hit cap (`PowerMath.capBossHit`) beats everything; under it, all bonuses together stop at 1.6x (`PowerMath.capBonus`). Terrain changes put themselves back (`TerrainLedger`). Bonuses never apply against players, and no slam or fold is ever done to a player or a boss. A timed moment has two ticks of grace and is judged when you pressed (`PowerMath.pressedAge`: the age less your latency, at most 6 ticks forgiven). Only six powers are timed at all (Haymaker, Charged Shot, Railgun, Brace, Dash, Barrier): Euan rejected timing on every power.
+
+### 50.2 Stance
+
+`PowerStance.add` goes through `Strikes.posture` and answers to the same rules as a blade: an opening takes 1.5x, a duel body standing braced 0.5x (`ArmsRules.OPENING_POSTURE`, `GUARDED_POSTURE`). Weights: Light 3, Medium 6, Heavy 12, Massive 20. Never a player. These numbers still need agreeing with the Fights That Read You work before Stage 1.
+
+| Power | Stance |
+|---|---|
+| Haymaker | 6 at a tap, climbing to 12 at full charge; 16 when clean |
+| Shockwave | Light for each body |
+| Gravity Well | A boss standing in it is not pulled: 2 every second instead |
+| Railgun | (6 + 6 x charge + 4 x overcharge), falling to half at 48 blocks |
+| Wall slam | Medium from a Haymaker, Light from a wave |
+
+### 50.3 Haymaker
+
+Held up to 600 ticks and cast on the let-go; a long hold is just a full punch. Full charge is `chargeTicks(20)`. Reaching it sends `HOLD_READY` and the knuckle lock (`HAY_PEAK`). A let-go from two ticks before full to five (plus two grace) after it is clean: damage x1.25 through `capBonus`, stance 16, knock x1.25, a Piledriver stuns 15 ticks longer, 150 ms of hit-stop, `FxKind.PERFECT` and `FxFold`, which folds the target's model along the punch for 9 ticks. Never on a player. A clean plain punch also starts `WallSlam` for 26 ticks: a body still moving at 0.32 blocks a tick when it hits a wall takes half the punch again, 12 ticks of stun, comes off the wall and cracks it (`FxWallCrack`: real block crack stages, healing a stage every 7 ticks, and the wall's own chunks). Punching a bare wall at 40% charge or more cracks it the same way, and hurts nothing.
+
+First person: the fist draws further back through the charge and shakes harder once it's there; the let-go is a real punch across the screen (`fp_p_haymaker_end`).
+
+### 50.4 Shockwave: the ground wave
+
+The wave is the real ground. `WaveSurface` is shared by server and client so that what you see is what hit: columns are stepped at 0.7 blocks along each ray, climbing at most 2, dropping at most 4, riding fluid; anything taller stops it. No ground under the caster (or Minimal effects) falls back to the old arc. The server takes the wave's arrival from one travel speed (range / 0.9 ticks, at least 10). A body is hit only if the wave reaches its near side and it stands within 4 above or 3 below the ground there. At the crest (the far 28% of the reach, 58% on a climb of 5 or more) damage is x1.35 and it throws them up; before it, it bowls them along. `WAVE_KNOCK` for each of the first five bodies. `WallSlam` for 16 ticks at 0.6 of its damage.
+
+`FxGroundWave` lifts real baked block quads, tinted as they are in the world, with plants riding along, water and lava throwing spray, inside the debris budget (`FxBudget.debrisCap`: 160/64/0). The roll sound travels along the front.
+
+### 50.5 Gravity Well
+
+Every body in it past the first adds 8% (40% at most, through `capBonus`, not against players). Bosses aren't pulled. Items and orbs drift in (40 at most, every other tick) only if what's below the centre is solid within 48 blocks and isn't lava, and never for Repulsor. Non-ally shots within the radius bend towards the core at their own speed and are swallowed within max(1.2, radius x 0.22); a boss's shot is leaned on at 30% and never swallowed, since it may be part of the fight. A player's shots are left alone. The client spirals real surface blocks in, drawn only, and throbs the whole of its life.
+
+### 50.6 Railgun
+
+Held up to 600 ticks; nothing fires by itself. Full is `chargeTicks(24)` (12 for Coil). `RAIL_READY` one tick before it. Holding on past full for up to 60 ticks is overcharge: damage up to x1.3 through `capBonus`, a bigger line and more stance. Recoil is 0.3 + 0.35 x charge + 0.25 x overcharge, x1.4 on the ground, its vertical part kept between -0.3 and 0.45, and none on a mount. The view narrows while held (`FxScreen.zoomTo`, off with camera shake), and the let-go throws your arm back (`fp_p_railgun_end`).
+
+At level 5 a full shot bores (`Bore.through`): up to 14 blocks along the line and the four round each one, through `TerrainLedger` with no drops and no particles (`quiet`, saved schema 2). A protected or unliftable whole block stops the shot; soft things that can't be lifted (sand, fences; hardness 0 to 5, no block entity) are passed through and left. It closes 4.5 seconds later from the far end back. It never closes on a player: a tunnel with one inside waits, checked every second, with no limit.
+
+### 50.7 Sounds
+
+`tools/art/specs/audio_power_voice.py`. Each power has a charge or wind, a release, an impact, a tail and a level 5 layer, two versions of each, from CC0 recordings and air (Kenney, `tools/art/sources/ritual`). Nothing pitched or struck above the sub. The family's level-up stinger is off for these four (`PowerSounds.ownPack`), since that's where the dings came from. Loops are mastered wrapped round themselves, so there is no dropout at the join. The sound build fails any new file with a held tone in its loud part (`ding_check.py`: a line above 800 Hz, 14 dB over the third-octave around it, held 45 ms, within 14 dB of the loudest frame). It can't see below 800 Hz. Old files stay until Euan has passed the new ones.
+
+Light bending round the Well (decision 10) is not in Stage 0: nothing in the game can warp the screen around a point in the world yet, so it needs its own pass in the Lens chain.

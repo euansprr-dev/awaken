@@ -208,7 +208,11 @@ def aim_lock(a, rel):
     if not a["hold"]:
         return fist_clip(rel, [(rel * 0.5, fist(0.14, -0.40, -0.70)), (rel, AIM)],
                          [(rel * 0.5, fist(0.02, -0.46, -0.72)), (rel, AIM_OFF)])
-    return channel(rel, fist(0.14, -0.40, -0.70), fist(0.02, -0.46, -0.72), AIM, AIM_OFF, events=[(rel, "hold")])
+    s = channel(rel, fist(0.14, -0.40, -0.70), fist(0.02, -0.46, -0.72), AIM, AIM_OFF, events=[(rel, "hold")])
+    if a.get("recoil"):  # the Railgun's let-go: the arm thrown up and back by the shot, the off hand knocked away from the wrist (SPEC 50.6)
+        s["end"] = ([(0, AIM, L), (1, fist(0.35, 0.00, -0.64), EOC), (5, fist(0.32, -0.15, -0.86), EIOS), (14, REST_FIST, EIOS)],
+                    [(0, AIM_OFF, L), (1, fist(0.05, -0.52, -0.68), EOC), (6, fist(-0.08, -0.54, -0.76), EIOS), (14, OFF_OUT, EIOS)])
+    return s
 
 
 @g1
@@ -267,12 +271,14 @@ def press_down(a, rel):
 
 @g1
 def punch_hold(a, rel):
-    """Haymaker: the fist drawn back and held trembling (the release is the let-go, a punch)."""
-    m = [(0, REST_FIST, L), (2, fist(0.62, -0.50, -0.55), EOC), (6, fist(0.64, -0.50, -0.53), EIOS)]
-    s = spec(rel, m, [(0, OFF_OUT, L), (2, fist(-0.40, -0.55, -0.7), EOC), (6, fist(-0.40, -0.55, -0.7), EIOS)], length=6, to_stance=True, events=[(rel, "hold")])
-    mh = [(0, fist(0.64, -0.50, -0.53), L), (1, fist(0.645, -0.495, -0.53), EIOS), (2, fist(0.635, -0.505, -0.53), EIOS), (3, fist(0.642, -0.50, -0.53), EIOS), (4, fist(0.64, -0.50, -0.53), EIOS)]
-    oh = [(0, fist(-0.40, -0.55, -0.7), L), (4, fist(-0.40, -0.55, -0.7), L)]
-    s["hold"] = (mh, oh)
+    """Haymaker: the fist drawn further and further back as the charge builds, then held shaking; the let-go is a punch across the screen (SPEC 50.3)."""
+    drawn, guard = fist(0.68, -0.56, -0.46), fist(-0.34, -0.50, -0.80)
+    m = [(0, REST_FIST, L), (2, fist(0.60, -0.46, -0.62), EOC), (9, fist(0.63, -0.50, -0.55), EIOS), (18, drawn, EIOS)]
+    o = [(0, OFF_OUT, L), (3, fist(-0.40, -0.55, -0.7), EOC), (18, guard, EIOS)]
+    s = spec(rel, m, o, length=18, to_stance=True, events=[(18, "hold")])
+    s["hold"] = hold_clip(drawn, guard, 0.009)
+    s["end"] = ([(0, drawn, L), (1, fist(0.36, -0.28, -1.02), EOC), (2, fist(0.18, -0.15, -1.30), EOC), (5, fist(0.21, -0.18, -1.22), EIOS), (14, REST_FIST, EIOS)],
+                [(0, guard, L), (2, fist(-0.54, -0.64, -0.48), EOC), (6, fist(-0.50, -0.60, -0.54), EIOS), (14, OFF_OUT, EIOS)])
     return s
 
 

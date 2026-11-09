@@ -5,12 +5,15 @@ import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 
 import dev.awaken.core.Forces;
+import dev.awaken.powers.Bore;
 import dev.awaken.powers.Cast;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
 import dev.awaken.powers.Fx;
 import dev.awaken.powers.Moves;
+import dev.awaken.powers.PowerMath;
 import dev.awaken.powers.PowerSounds;
+import dev.awaken.powers.PowerStance;
 import dev.awaken.powers.PowerState;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.PowerType.Family;
@@ -92,8 +95,8 @@ final class TechPowers {
                 .cast(TechPowers::turret).register();
 
         PowerType.builder("railgun", "Railgun", Family.TECH, Slot.ACTIVE)
-                .forces(Forces.Force.CHARGE).cost(35).cooldown(240).damage(18).unlock(Rank.B).icon("rail").channel(0, 24)
-                .desc("Hold to charge, release to fire a hypersonic slug that pierces every enemy in a 48-block line.")
+                .forces(Forces.Force.CHARGE).cost(35).cooldown(240).damage(18).unlock(Rank.B).icon("rail").channel(0, RAIL_HOLD)
+                .desc("Hold to charge, release to fire a hypersonic slug that pierces every enemy in a 48-block line. Keep holding past full charge for a bigger shot. Up close it does more to their stance.")
                 .variant(Variant.of("Coil", "Charges twice as fast, a little weaker").dmg(0.8f))
                 .variant(Variant.of("Breach", "Heavier and staggering").dmg(1.25f))
                 .cast(TechPowers::railgun).register();
@@ -363,37 +366,61 @@ final class TechPowers {
         });
     }
 
+    /** After this long held it fires by itself (the longest a hold's pose runs). */
+    private static final int RAIL_HOLD = 600;
+    /** Ticks past full charge over which a held shot keeps growing, and by how much at the top of that. */
+    private static final int RAIL_OVER_TICKS = 60;
+    private static final float RAIL_OVER = 0.3f;
+    private static final double RAIL_RANGE = 48;
+
     static Result railgun(Cast c) {
         // Coils (2), Quick Charge (4): it charges faster
-        int full = c.chargeTicks(c.is(1) ? 12 : 24);
-        c.sound(PowerSounds.CHARGE_UP, 0.8f, 0.6f);
-        // coils spin up at the hand
-        Fx.at(c, FxKind.CHARGE, EnergyPowers.hand(c.player)).ticks(full).scale(0.9).send();
-        Running r = Casting.channel(c, full);
+        int base = c.is(1) ? 12 : 24;
+        int full = c.chargeTicks(base);
+        // coils spin up at the hand; the arc and relays are the profile's held sound (aux: how much faster its climb runs)
+        Fx.at(c, FxKind.CHARGE, EnergyPowers.hand(c.player)).ticks(c.type.maxDuration).scale(0.9).aux(base / (float) full).send();
+        Running r = Casting.channel(c, c.type.maxDuration);
         r.tick(rr -> {
-            if (rr.age == full - 1) c.sound(PowerSounds.CHARGE_UP, 0.6f, 2f);
+            if (rr.age == full - 1) {
+                Fx.at(c, FxKind.HOLD_READY, EnergyPowers.hand(c.player)).scale(0.8).noAnim().send();
+                c.sound(PowerSounds.RAIL_READY, 0.9f, 1f);
+            }
         }).end((rr, why) -> {
-            double charge = Math.min(1.0, (rr.age + 1) / (double) full);
+            int held = rr.age + 1;
+            double charge = Math.min(1.0, held / (double) full);
+            double over = Math.max(0, Math.min(1.0, (held - full) / (double) RAIL_OVER_TICKS)); // a longer hold is always a bigger shot
             Fx.at(c, FxKind.CHARGE_END, EnergyPowers.hand(c.player)).flag(FxEvent.FULL, charge >= 1).noAnim().send();
             if (why == Running.Why.CANCELLED) return;
             Vec3 eye = c.player.getEyePosition();
             Vec3 dir = c.player.getLookAngle();
-            Vec3 to = eye.add(dir.scale(48));
+            Vec3 to = eye.add(dir.scale(RAIL_RANGE));
             BlockHitResult wall = Combat.clip(c.player, eye, to);
-            Vec3 end = wall.getType() == HitResult.Type.MISS ? to : wall.getLocation();
-            float dmg = c.dmg(c.type.damage + 10f * (float) charge);
+            boolean struck = wall.getType() != HitResult.Type.MISS;
+            Vec3 end = struck ? wall.getLocation() : to;
+            // Gauss Lance (5): a full shot punches a real tunnel, and the rock comes back
+            if (struck && c.step(5) && charge >= 1) end = Bore.through(c, eye, dir, end, RAIL_RANGE, (int) c.num(5, "depth", 14));
+            float dmg = c.dmg(c.type.damage + 10f * (float) charge) * PowerMath.capBonus(1 + RAIL_OVER * (float) over);
             LivingEntity first = null;
             for (LivingEntity e : Combat.alongLine(c.player, eye, end, RAIL_WIDTH)) {
                 c.hurt(e, dmg, Forces.Force.CHARGE);
+                // the most stance you can do from range, and it falls off with distance
+                double fall = 1 - 0.5 * Math.min(1, e.distanceTo(c.player) / RAIL_RANGE);
+                PowerStance.add(c.player, e, (int) Math.round((6 + 6 * charge + 4 * over) * fall));
                 Combat.push(e, e.getDeltaMovement().add(dir.scale(c.is(2) ? 1.6 : 1.0)));
                 Combat.stun(e, c.is(2) ? 30 : 10);
                 if (first == null) first = e;
                 Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(dir).scale(1.2 + charge).noAnim().send();
             }
-            // the slug: a white-hot line wrapped in spiral rings, a muzzle flash and a burst where it stops
-            Fx.at(c, FxKind.RAIL, eye).to(end).scale(charge).aux(RAIL_WIDTH).send();
-            c.sound(PowerSounds.RAIL, 1.4f, 1f - 0.2f * (float) charge);
-            c.feel(first, first != null ? 60 : 0, 3f + 2f * (float) charge);
+            // the shot shoves you back
+            if (!c.player.isPassenger()) {
+                double shove = (0.3 + 0.35 * charge + 0.25 * over) * (c.player.onGround() ? 1.4 : 1);
+                Combat.push(c.player, c.player.getDeltaMovement().add(-dir.x * shove, Math.max(-0.3, Math.min(0.45, -dir.y * shove)), -dir.z * shove));
+            }
+            // the slug: a white-hot line wrapped in spiral rings, a muzzle flash, and the line of light it leaves behind
+            Fx.at(c, FxKind.RAIL, eye).to(end).scale(charge * (1 + 0.4 * over)).aux(RAIL_WIDTH).flag(FxEvent.FULL, charge >= 1).send();
+            c.sound(PowerSounds.RAIL_RELEASE, 1.4f, 1.04f - 0.08f * (float) charge);
+            if (struck || first != null) c.sound(end, PowerSounds.RAIL_IMPACT, 1.2f, 1f);
+            c.feel(first, first != null ? 60 : 0, 3f + 2f * (float) charge + 1.5f * (float) over);
             // Gauss Lance (5): the tunnel the slug left blasts again, hitting everything in the line
             if (c.step(5)) {
                 Vec3 line = end;
@@ -402,7 +429,7 @@ final class TechPowers {
                     if (c.player.isRemoved()) return;
                     for (LivingEntity e : Combat.alongLine(c.player, eye, line, RAIL_WIDTH * 1.6)) c.hurt(e, second, Forces.Force.CHARGE);
                     Fx.at(c, FxKind.RAIL, eye).to(line).scale(0.6).aux(RAIL_WIDTH * 1.6).noAnim().send();
-                    c.sound(eye.add(dir.scale(6)), PowerSounds.RAIL, 1.1f, 1.4f);
+                    c.sound(eye.add(dir.scale(6)), PowerSounds.RAIL_L5, 1.2f, 1f);
                 });
             }
         });

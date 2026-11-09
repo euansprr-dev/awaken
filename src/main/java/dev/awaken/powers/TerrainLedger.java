@@ -25,16 +25,18 @@ import java.util.List;
  * there in the meantime (only air and replaceable things like flowing water).
  */
 public final class TerrainLedger extends SavedData {
-    public record Entry(BlockPos pos, BlockState state, long restoreAt) {
+    /** @param quiet comes back with no burst of its own: the power that lifted it draws the return (a Railgun's tunnel) */
+    public record Entry(BlockPos pos, BlockState state, long restoreAt, boolean quiet) {
         static final Codec<Entry> CODEC = RecordCodecBuilder.create(i -> i.group(
                 BlockPos.CODEC.fieldOf("pos").forGetter(Entry::pos),
                 BlockState.CODEC.fieldOf("state").forGetter(Entry::state),
-                Codec.LONG.fieldOf("at").forGetter(Entry::restoreAt)
+                Codec.LONG.fieldOf("at").forGetter(Entry::restoreAt),
+                Codec.BOOL.optionalFieldOf("quiet", false).forGetter(Entry::quiet)
         ).apply(i, Entry::new));
     }
 
     public static final Codec<TerrainLedger> CODEC = RecordCodecBuilder.create(i -> i.group(
-            Codec.INT.optionalFieldOf("schema", 1).forGetter(l -> 1),
+            Codec.INT.optionalFieldOf("schema", 2).forGetter(l -> 2),
             Entry.CODEC.listOf().fieldOf("entries").forGetter(l -> List.copyOf(l.entries))
     ).apply(i, (schema, list) -> {
         TerrainLedger l = new TerrainLedger();
@@ -68,13 +70,29 @@ public final class TerrainLedger extends SavedData {
 
     /** Lifts a block out for {@code ticks}. Returns the original state, or null when not allowed. */
     public static BlockState lift(ServerLevel level, ServerPlayer by, BlockPos pos, int ticks) {
+        return lift(level, by, pos, ticks, false);
+    }
+
+    public static BlockState lift(ServerLevel level, ServerPlayer by, BlockPos pos, int ticks, boolean quiet) {
         if (!canLift(level, by, pos)) return null;
         BlockState s = level.getBlockState(pos);
         TerrainLedger l = of(level);
-        l.entries.add(new Entry(pos.immutable(), s, level.getGameTime() + ticks));
+        l.entries.add(new Entry(pos.immutable(), s, level.getGameTime() + ticks, quiet));
         l.setDirty();
         level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), FLAGS);
         return s;
+    }
+
+    /** Holds these holes open a while longer (a Railgun tunnel with a player still in it). */
+    public static void postpone(ServerLevel level, java.util.Set<BlockPos> holes, int ticks) {
+        TerrainLedger l = level.getDataStorage().get(TYPE);
+        if (l == null) return;
+        long now = level.getGameTime();
+        for (int i = 0; i < l.entries.size(); i++) {
+            Entry e = l.entries.get(i);
+            if (holes.contains(e.pos())) l.entries.set(i, new Entry(e.pos(), e.state(), Math.max(e.restoreAt(), now) + ticks, e.quiet()));
+        }
+        l.setDirty();
     }
 
     static void tick(ServerLevel level) {
@@ -86,7 +104,7 @@ public final class TerrainLedger extends SavedData {
             Entry e = l.entries.get(i);
             if (e.restoreAt() > now || !level.isLoaded(e.pos())) continue;
             if (!restore(level, e, now)) {
-                l.entries.set(i, new Entry(e.pos(), e.state(), now + 20));
+                l.entries.set(i, new Entry(e.pos(), e.state(), now + 20, e.quiet()));
             } else {
                 l.entries.remove(i);
             }
@@ -102,6 +120,7 @@ public final class TerrainLedger extends SavedData {
         boolean blocked = !level.getEntitiesOfClass(LivingEntity.class, new AABB(e.pos()), x -> x.isAlive()).isEmpty();
         if (blocked && now - e.restoreAt() < 600) return false;
         level.setBlock(e.pos(), e.state(), Block.UPDATE_ALL);
+        if (e.quiet()) return true;
         level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK, e.state()),
                 e.pos().getX() + 0.5, e.pos().getY() + 0.5, e.pos().getZ() + 0.5, 4, 0.3, 0.3, 0.3, 0.02);
         return true;

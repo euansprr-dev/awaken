@@ -13,6 +13,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import static dev.awaken.powers.client.fx.FxWorld.R;
 import static dev.awaken.powers.client.fx.FxWorld.alpha;
@@ -29,7 +30,7 @@ final class FxRecipes {
 
     // emitters (per-tick behaviour of a live shape)
     static final int E_CHARGE = 1, E_BEAM = 2, E_CONE = 3, E_GHOSTS = 4, E_TRAIL = 5, E_DOME = 6, E_VORTEX = 7, E_AURA = 8,
-            E_FLURRY = 9, E_HEAL = 10, E_FIRE = 11, E_EXHAUST = 12, E_CONSTRUCT = 13, E_PSI = 14, E_METEOR = 15, E_LIFT = 16, E_AURA_CHILD = 17, E_CRACKLE = 18;
+            E_FLURRY = 9, E_HEAL = 10, E_FIRE = 11, E_EXHAUST = 12, E_CONSTRUCT = 13, E_PSI = 14, E_METEOR = 15, E_LIFT = 16, E_AURA_CHILD = 17, E_CRACKLE = 18, E_SEAL = 19;
 
     private static final double[] P = new double[3];
     private static final FxKind.Aura[] AURAS = FxKind.Aura.values();
@@ -98,6 +99,12 @@ final class FxRecipes {
             case POSE -> {
                 // only the caster's cast profile began (FxClient); nothing is drawn
             }
+            case HOLD_READY -> holdReady(e, st, caster, mine);
+            case PERFECT -> perfect(e, st, mine);
+            case WALL_CRACK -> FxWallCrack.at(level, e.x(), e.y(), e.z(), e.dx(), e.dy(), e.dz(), Math.max(0.4f, e.scale()), st);
+            case WELL_END -> wellEnd(e, st);
+            case SHOT_EATEN -> shotEaten(e, st);
+            case BORE_SEAL -> boreSeal(e, st);
         }
     }
 
@@ -318,9 +325,84 @@ final class FxRecipes {
         int life = Math.max(10, e.ticks()) + 8;
         if (existing != null) {
             existing.life = Math.max(existing.life, existing.age + life);
-            return;
+        } else {
+            startCharge(caster, st, e.scale(), life, e.seed());
         }
-        startCharge(caster, st, e.scale(), life, e.seed());
+        if (e.aux() > 0) HoldSound.rate(caster.getId(), e.aux());
+    }
+
+    /** A held power has reached full charge: you can see and hear it from anywhere round the caster. */
+    private static void holdReady(FxEvent e, FxStyle st, Entity caster, boolean mine) {
+        if (caster == null) return;
+        HoldSound.ready(caster.getId());
+        Anchors.of(caster, originAnchor(caster), 1f, P);
+        float sc = Math.max(0.5f, e.scale());
+        flare(P[0], P[1], P[2], 1.2f * sc, st, 6);
+        Vec3 look = caster.getLookAngle();
+        ring(P[0], P[1], P[2], 0.15f, 1.5f * sc, 0.22f, 0.04f, 9, alpha(st.core, 0.95f), alpha(st.mid, 0), (float) look.x, (float) look.y, (float) look.z);
+        sparks(P[0], P[1], P[2], n(8), 0.28f, st, 6, 0, 0, 0, 0, 0);
+        if (mine) {
+            FxScreen.fovPunch(-0.02f, 6);
+            FxScreen.kick(-0.6f, 0, 0);
+        }
+    }
+
+    /** A clean Haymaker: the frame snaps, the target folds, a ring of force goes through it. */
+    private static void perfect(FxEvent e, FxStyle st, boolean mine) {
+        float dl = Mth.sqrt(e.dx() * e.dx() + e.dy() * e.dy() + e.dz() * e.dz());
+        float bx = dl > 1e-3f ? e.dx() / dl : 0, by = dl > 1e-3f ? e.dy() / dl : 0, bz = dl > 1e-3f ? e.dz() / dl : 0;
+        FxFold.start(e.target(), bx, bz);
+        flare(e.x(), e.y(), e.z(), 2.6f, st, 7);
+        ring(e.x(), e.y(), e.z(), 0.3f, 3.4f, 0.8f, 0.1f, 8, alpha(st.core, 1f), alpha(st.edge, 0), bx, by, bz);
+        ring(e.x() + bx, e.y() + by, e.z() + bz, 0.2f, 2.2f, 0.5f, 0.05f, 10, alpha(st.mid, 0.9f), alpha(st.edge, 0), bx, by, bz);
+        sparks(e.x(), e.y(), e.z(), n(26), 0.7f, st, 8, 0.02f, bx, by, bz, 0.85f);
+        if (mine) {
+            FxScreen.impactFrame(3);
+            FxScreen.fovPunch(-0.09f, 10);
+            FxScreen.kick(-3.2f, 0, R.chance(0.5f) ? 1.6f : -1.6f);
+            FxScreen.speedLines(8);
+            dev.awaken.lens.client.LensClient.pulse(0.7f);
+        }
+    }
+
+    /** A gravity well closes: its rings and core let go, and if it ran its course it folds in on itself. */
+    private static void wellEnd(FxEvent e, FxStyle st) {
+        double x = e.x(), y = e.y(), z = e.z();
+        for (Shape s : FxWorld.SHAPES) {
+            if (s.live && (s.x - x) * (s.x - x) + (s.y - y) * (s.y - y) + (s.z - z) * (s.z - z) < 0.04) s.life = Math.min(s.life, s.age + s.fadeOut);
+        }
+        TravellingSound.release(x, y, z);
+        if (!e.has(FxEvent.FULL)) return;
+        float r = Math.max(1f, e.scale());
+        ring(x, y, z, r, 0.2f, 0.3f, 0.5f, 7, alpha(st.mid, 0.9f), alpha(st.core, 0.7f), 0, 1, 0);
+        Shape d = disc(x, y, z, GLOW, 1.8f, 0.2f, 7, 0xF80D0A17, 0x000D0A17);
+        if (d != null) d.flags |= Shape.DARK;
+        flare(x, y, z, 1.2f, st, 4);
+        double gy = FxWorld.groundY(x, y, z);
+        if (y - gy < 4) dustRing(x, gy, z, 1.2f, n(8), st, 0.05f);
+    }
+
+    /** A shot pulled into the core and gone. */
+    private static void shotEaten(FxEvent e, FxStyle st) {
+        ring(e.x(), e.y(), e.z(), 0.9f, 0.1f, 0.12f, 0.2f, 5, alpha(st.core, 0.9f), alpha(st.mid, 0.3f), R.s() * 0.4f, 1, R.s() * 0.4f);
+        Shape d = disc(e.x(), e.y(), e.z(), GLOW, 0.6f, 0.1f, 5, 0xE00D0A17, 0x000D0A17);
+        if (d != null) d.flags |= Shape.DARK;
+    }
+
+    /** A Railgun's tunnel filling: a front of light and grit running back along it towards the mouth. */
+    private static void boreSeal(FxEvent e, FxStyle st) {
+        int life = Math.max(4, e.ticks());
+        Shape s = FxWorld.shape(Shape.EMITTER, life);
+        if (s == null) return;
+        s.x = e.x();
+        s.y = e.y();
+        s.z = e.z();
+        s.ex = e.x() + e.dx();
+        s.ey = e.y() + e.dy();
+        s.ez = e.z() + e.dz();
+        s.emitter = E_SEAL;
+        s.style = st;
+        s.seed = e.seed();
     }
 
     /** The charge orb at the hand: a pulsing core in a halo that gathers sparks; also used for local prediction. */
@@ -768,7 +850,12 @@ final class FxRecipes {
         int life = Math.max(6, e.ticks());
         float dl = Mth.sqrt(e.dx() * e.dx() + e.dz() * e.dz());
         float dx = dl > 1e-4f ? e.dx() / dl : 0, dz = dl > 1e-4f ? e.dz() / dl : 1;
-        Shape w = FxWorld.shape(Shape.ARC, life + 2);
+        // a stamp's wave runs through the real ground; the flat arc stays for what has no ground to ride
+        boolean rides = stamper != null && FxGroundWave.start(x, e.y(), z, dx, dz, range, half, life, st, dev.awaken.powers.Fx.levelOf(e));
+        if (stamper != null) {
+            TravellingSound.travel(dev.awaken.powers.PowerSounds.WAVE_ROLL.value(), x, y + 0.5, z, x + dx * range, y + 0.5, z + dz * range, life + 8, 1.3f);
+        }
+        Shape w = rides ? null : FxWorld.shape(Shape.ARC, life + 2);
         if (w != null) {
             w.x = x;
             w.y = y + 0.02;
@@ -1136,6 +1223,9 @@ final class FxRecipes {
         float r = Math.max(1f, e.scale());
         int life = Math.max(10, e.ticks());
         boolean out = e.has(FxEvent.REPULSE);
+        // the throb is felt for the well's whole life; only Gravity Well has one (a rider's little vortex doesn't)
+        var prof = dev.awaken.powers.fx.CastProfiles.byId(e.profile());
+        if (prof != null && prof.power().equals("gravity_well")) TravellingSound.hold(dev.awaken.powers.PowerSounds.WELL_LOOP.value(), x, y, z, life, 1.25f);
         Shape halo = disc(x, y, z, HALO, 1.0f, 2.8f * big, life, alpha(st.mid, 0.9f), alpha(st.mid, 0.9f));
         if (halo != null) {
             halo.flags |= Shape.PULSE;
@@ -1156,6 +1246,25 @@ final class FxRecipes {
         ring(x, y, z, out ? 0.3f : r, out ? r : 0.3f, 0.4f, 0.2f, 12, alpha(st.mid, 0.9f), alpha(st.core, 0.5f), 0, 1, 0);
         double gy = FxWorld.groundY(x, y, z);
         if (y - gy < 3) decal(x, gy, z, SCORCH, r * 0.9f, 0xB0201830, life + 20);
+    }
+
+    /** One chunk of a real block near the well, drawn in: only what would plausibly come loose. */
+    private static void looseThing(Shape s, float r) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        for (int tries = 0; tries < 4; tries++) {
+            float dx = R.s(), dy = R.s() * 0.8f, dz = R.s();
+            float l = Mth.sqrt(dx * dx + dy * dy + dz * dz) + 1e-3f;
+            float at = r * R.f(0.55f, 1.15f) / l;
+            double px = s.x + dx * at, py = s.y + dy * at, pz = s.z + dz * at;
+            MUT.set(px, py, pz);
+            BlockState b = level.getBlockState(MUT);
+            if (b.isAir() || !b.getFluidState().isEmpty()) continue;
+            boolean above = level.getBlockState(MUT.setY(MUT.getY() + 1)).isAir();
+            if (!above) continue; // the top of something: buried stone doesn't fly
+            FxDebris.pull(b, px, Math.floor(py) + 1.05, pz, s.x, s.y, s.z, R.f(0.1f, 0.22f), 34);
+            return;
+        }
     }
 
     private static void tether(FxEvent e, FxStyle st) {
@@ -1482,6 +1591,8 @@ final class FxRecipes {
         }
         double bx = e.x() + e.dx(), by = e.y() + e.dy(), bz = e.z() + e.dz();
         float charge = Math.max(0.2f, Math.min(1, e.scale()));
+        float over = Math.max(0, e.scale() - 1); // held past full, the shot is bigger
+        if (e.has(FxEvent.FULL)) railLine(ax, ay, az, bx, by, bz, st, over);
         Shape b = FxWorld.shape(Shape.BEAM, 10);
         if (b != null) {
             b.x = ax;
@@ -1490,7 +1601,7 @@ final class FxRecipes {
             b.ex = bx;
             b.ey = by;
             b.ez = bz;
-            b.a = 0.06f + 0.07f * charge;
+            b.a = 0.06f + 0.07f * charge + 0.14f * over;
             b.c0 = st.mid;
             b.c1 = 0xFFFFFFFF;
             b.fadeIn = 0;
@@ -1511,9 +1622,36 @@ final class FxRecipes {
         sparks(bx, by, bz, n(12), 0.4f, st, 6, 0.02f, -dx / len, -dy / len, -dz / len, 0.7f);
         motes(bx, by, bz, n(8), 0.4f, st, 0.1f);
         if (mine) {
-            FxScreen.kick(-3f * (0.5f + charge), 0, 0);
+            FxScreen.kick(-3f * (0.5f + charge + over), 0, 0);
             FxScreen.flash(st.mid, 0.1f + 0.08f * charge, 4);
+            if (e.has(FxEvent.FULL)) FxScreen.fovPunch(0.05f + 0.1f * over, 9); // the view snaps back out of the aim
         }
+    }
+
+    /** The line of light a full shot leaves, slow to fade, with sparks drifting off it, and the boom going away down it. */
+    private static void railLine(double ax, double ay, double az, double bx, double by, double bz, FxStyle st, float over) {
+        Shape l = FxWorld.shape(Shape.BEAM, 50);
+        if (l != null) {
+            l.x = ax;
+            l.y = ay;
+            l.z = az;
+            l.ex = bx;
+            l.ey = by;
+            l.ez = bz;
+            l.a = 0.02f + 0.03f * over;
+            l.c0 = alpha(st.mid, 0.8f);
+            l.c1 = alpha(st.core, 0.9f);
+            l.fadeIn = 0;
+            l.fadeOut = 42;
+        }
+        double dx = bx - ax, dy = by - ay, dz = bz - az;
+        for (int i = n(26); i > 0; i--) {
+            double t = R.f(0.04f, 1f);
+            int p = FxWorld.sprite(SPARK, ax + dx * t, ay + dy * t, az + dz * t, R.s() * 0.012, R.f(0.002f, 0.02f), R.s() * 0.012, 24 + R.i(26), 0.09f, 0.02f,
+                    alpha(st.core, 0.9f), alpha(st.mid, 0), FxPool.ADD);
+            FxWorld.drag(p, 0.97f);
+        }
+        TravellingSound.travel(dev.awaken.powers.PowerSounds.RAIL_TAIL.value(), ax, ay, az, bx, by, bz, 14, 1.3f);
     }
 
     private static void summon(FxEvent e, FxStyle st, float big) {
@@ -1739,14 +1877,16 @@ final class FxRecipes {
                     int p = FxWorld.sprite(SPARK, ox, oy, oz, sx + tx, sy, sz + tz, life, 0.16f, 0.06f, alpha(st.mid, 0.5f), st.core, FxPool.ADD | FxPool.STRETCH);
                     FxWorld.drag(p, 1f);
                 }
-                if (s.age % 7 == 0 && !out) {
-                    double gy = FxWorld.groundY(s.x, s.y, s.z);
-                    double a = R.f(0, 6.28f);
-                    double px = s.x + Math.cos(a) * r, pz = s.z + Math.sin(a) * r;
-                    BlockState g = groundBlock(px, gy + 0.2, pz);
-                    if (g != null) FxDebris.spawn(g, px, gy + 0.3, pz, (s.x - px) * 0.08, 0.35 + (s.y - gy) * 0.05, (s.z - pz) * 0.08, 0.16f, 22, (float) gy);
-                }
+                // real loose things tear free of whatever is near: the sand and leaves you see are the ones that were there
+                if (s.age % 2 == 0 && !out) looseThing(s, r);
                 if (st.inky() && s.age % 4 == 0) smokePuffs(s.x, s.y, s.z, 1, r * 0.5f, 0.6f, st, 0.02f, 14);
+            }
+            case E_SEAL -> {
+                float t = s.t(0);
+                double px = s.ex + (s.x - s.ex) * t, py = s.ey + (s.y - s.ey) * t, pz = s.ez + (s.z - s.ez) * t;
+                FxWorld.sprite(HALO, px, py, pz, 0, 0, 0, 5, 1.4f, 0.4f, alpha(st.mid, 0.7f), alpha(st.edge, 0), FxPool.ADD);
+                BlockState g = Minecraft.getInstance().level.getBlockState(MUT.set(px, py, pz));
+                if (!g.isAir()) FxDebris.spawn(g, px + R.s() * 0.5, py + R.s() * 0.5, pz + R.s() * 0.5, R.s() * 0.05, R.f(0.02f, 0.12f), R.s() * 0.05, R.f(0.08f, 0.16f), 16, (float) py - 2);
             }
             case E_AURA -> aura(s, st);
             case E_CRACKLE -> {
