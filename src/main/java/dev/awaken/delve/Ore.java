@@ -1,5 +1,6 @@
 package dev.awaken.delve;
 
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,7 +15,7 @@ import java.util.function.Supplier;
  * the colour the Ore Sense glass and the vein's light take, and the job it has (the line the System says when you first
  * find it). Numbers here are the source for SPEC §28.3; change them together.
  */
-public enum Ore {
+public enum Ore implements StringRepresentable {
     //       name        lodes chance  y band      size      tint
     COAL("Coal", 2, 1.0, 6, 40, 50, 110, 0xB8C2CE, () -> Blocks.COAL_ORE, () -> Blocks.DEEPSLATE_COAL_ORE),
     COPPER("Copper", 2, 1.0, 0, 40, 50, 110, 0xFFB07A, () -> Blocks.COPPER_ORE, () -> Blocks.DEEPSLATE_COPPER_ORE),
@@ -52,6 +53,11 @@ public enum Ore {
 
     public String id() {
         return name().toLowerCase(Locale.ROOT);
+    }
+
+    @Override
+    public String getSerializedName() {
+        return id();
     }
 
     /** The ore block in stone (or the deep one in deepslate, which is also what Deepglass always is). */

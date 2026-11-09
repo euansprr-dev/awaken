@@ -1,10 +1,13 @@
 package dev.awaken.delve.api;
 
+import dev.awaken.delve.LodeHeartBlock;
 import dev.awaken.delve.LodePlans;
 import dev.awaken.delve.Ore;
 import dev.awaken.delve.Veins;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
@@ -36,6 +39,20 @@ public final class Lodes {
     /** The lode whose heart is at {@code pos}, if one is planned there. */
     public static Optional<View> heart(ServerLevel level, BlockPos pos) {
         return Veins.heartAt(level, pos);
+    }
+
+    /** Whether this block is a lode's heart of any ore. */
+    public static boolean isHeart(BlockState s) {
+        return s.getBlock() instanceof LodeHeartBlock;
+    }
+
+    /**
+     * A heart's look once its rock has become {@code rock} (the caves' regions, SPEC §42.11). {@code deep}: that rock replaces
+     * deepslate too; if it doesn't, a heart in deepslate is left as it is, with deepslate still round it.
+     */
+    public static BlockState heartIn(BlockState heart, Block rock, boolean deep) {
+        if (!deep && heart.getValue(LodeHeartBlock.HOST) == LodeHeartBlock.Host.DEEPSLATE) return heart;
+        return LodeHeartBlock.in(heart, rock.defaultBlockState());
     }
 
     /**

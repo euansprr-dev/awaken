@@ -7,15 +7,28 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenCommands;
 import dev.awaken.core.api.Passage;
+import dev.awaken.delve.api.Lodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import dev.awaken.caves.skin.CaveSkin;
+import dev.awaken.caves.skin.SkinBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -43,6 +56,11 @@ final class RegionCommands {
 
     private record Spot(BlockPos at, int room, float yaw) {}
 
+    private record Stand(double x, double y, double z, float yaw, float pitch) {}
+
+    /** How many chunks round the command the growth search reads. */
+    private static final int GROWTH_CHUNKS = 7;
+
     static void register() {
         AwakenCommands.add((root, ctx) -> {
             var ids = CaveRegion.ORDER.stream().map(r -> r.id).toList();
@@ -50,7 +68,14 @@ final class RegionCommands {
                     .then(Commands.argument("region", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(ids, b))
                             .executes(c -> go(c, 0))
                             .then(Commands.argument("pick", IntegerArgumentType.integer(0, 9))
-                                    .executes(c -> go(c, IntegerArgumentType.getInteger(c, "pick")))))));
+                                    .executes(c -> go(c, IntegerArgumentType.getInteger(c, "pick"))))))
+                    .then(Commands.literal("growth").then(Commands.argument("pick", IntegerArgumentType.integer(0, 49))
+                            .executes(c -> growth(c, IntegerArgumentType.getInteger(c, "pick"), 8, false))
+                            .then(Commands.argument("distance", IntegerArgumentType.integer(2, 14))
+                                    .executes(c -> growth(c, IntegerArgumentType.getInteger(c, "pick"), IntegerArgumentType.getInteger(c, "distance"), false)))))
+                    .then(Commands.literal("heart").then(Commands.argument("pick", IntegerArgumentType.integer(0, 49))
+                            .then(Commands.argument("distance", IntegerArgumentType.integer(2, 14))
+                                    .executes(c -> growth(c, IntegerArgumentType.getInteger(c, "pick"), IntegerArgumentType.getInteger(c, "distance"), true))))));
         });
     }
 
@@ -79,6 +104,98 @@ final class RegionCommands {
         CommandSourceStack src = c.getSource();
         Passage.go(p, level, near.getX() + 0.5, near.getZ() + 0.5, () -> arrive(src, p, level, region, near, pick, t0));
         return 1;
+    }
+
+    /**
+     * {@code /awaken caves growth <pick> [distance]} (admin; for tours): to a spot on the floor looking at a bloom of a grown ember
+     * vine in the loaded land round where the command runs (SPEC §42.10), nearest first and each at least {@link #APART} from the
+     * ones before. The spot goes to the log, so another build can be shot from exactly there. {@code /awaken caves heart} is the
+     * same for lode hearts open to the air (SPEC §42.11).
+     */
+    private static int growth(CommandContext<CommandSourceStack> c, int pick, int distance, boolean hearts) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        ServerLevel level = p.level();
+        BlockPos from = BlockPos.containing(c.getSource().getPosition());
+        var vine = CaveSkin.EMBER_VINE.get();
+        List<BlockPos> blooms = new ArrayList<>();
+        int cx = from.getX() >> 4, cz = from.getZ() >> 4;
+        for (int dx = -GROWTH_CHUNKS; dx <= GROWTH_CHUNKS; dx++) {
+            for (int dz = -GROWTH_CHUNKS; dz <= GROWTH_CHUNKS; dz++) {
+                LevelChunk chunk = level.getChunkSource().getChunkNow(cx + dx, cz + dz);
+                if (chunk == null) continue;
+                LevelChunkSection[] sections = chunk.getSections();
+                for (int i = 0; i < sections.length; i++) {
+                    LevelChunkSection section = sections[i];
+                    if (section.hasOnlyAir() || !section.maybeHas(st -> hearts ? Lodes.isHeart(st) : st.is(vine))) continue;
+                    int y0 = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(i));
+                    for (int y = 0; y < 16; y++) {
+                        for (int z = 0; z < 16; z++) {
+                            for (int x = 0; x < 16; x++) {
+                                BlockState st = section.getBlockState(x, y, z);
+                                if (hearts ? Lodes.isHeart(st) : st.is(vine) && st.getValue(SkinBlocks.EmberVine.BLOOM)) blooms.add(new BlockPos((cx + dx << 4) + x, y0 + y, (cz + dz << 4) + z));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        blooms.sort(Comparator.comparingDouble(b -> b.distSqr(from)));
+        List<BlockPos> picks = new ArrayList<>();
+        Stand stand = null;
+        for (BlockPos b : blooms) {
+            if (!picks.stream().allMatch(q -> q.distSqr(b) >= APART * APART)) continue;
+            Direction wall = hearts ? openSide(level, b) : level.getBlockState(b).getValue(SkinBlocks.EmberVine.FACING);
+            Stand s = wall == null ? null : stand(level, b, wall, distance);
+            if (s == null) continue;
+            picks.add(b);
+            if (picks.size() > pick) {
+                stand = s;
+                break;
+            }
+        }
+        if (stand == null) {
+            Awaken.LOG.info("[caves] growth pick {}: only {} of {} blooms can be seen", pick, picks.size(), blooms.size());
+            c.getSource().sendFailure(Component.literal("Only " + picks.size() + " blooms in view here, of " + blooms.size() + "."));
+            return 0;
+        }
+        BlockPos bloom = picks.get(pick);
+        p.teleportTo(level, stand.x, stand.y, stand.z, Set.of(), stand.yaw, stand.pitch, true);
+        Awaken.LOG.info(String.format(Locale.ROOT, "[caves] growth pick %d, distance %d: stand %.2f %.2f %.2f %.1f %.1f, bloom at %s, of %d blooms",
+                pick, distance, stand.x, stand.y, stand.z, stand.yaw, stand.pitch, bloom.toShortString(), blooms.size()));
+        return 1;
+    }
+
+    private static boolean solidAt(ServerLevel level, BlockPos b) {
+        return Lodes.isHeart(level.getBlockState(b));
+    }
+
+    /** The way a block's open side looks back into it (the direction of the wall, seen from the air), or null if it's buried. */
+    private static @Nullable Direction openSide(ServerLevel level, BlockPos b) {
+        for (Direction d : Direction.Plane.HORIZONTAL) if (level.getBlockState(b.relative(d)).isAir()) return d.getOpposite();
+        return null;
+    }
+
+    /** Where to stand to see a bloom from about this far: on a floor, with nothing solid between, a little to one side if that's open. */
+    private static @Nullable Stand stand(ServerLevel level, BlockPos bloom, Direction wall, int distance) {
+        Direction out = wall.getOpposite();
+        // the face toward the air: for a vine that's its plane, for a heart its open side
+        Vec3 target = Vec3.atCenterOf(bloom).add(wall.getStepX() * (solidAt(level, bloom) ? -0.52 : 0.3), 0, wall.getStepZ() * (solidAt(level, bloom) ? -0.52 : 0.3));
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int d = distance; d >= 2; d--) {
+            for (int side : new int[] {d / 2, -d / 2, 0}) {
+                BlockPos column = bloom.relative(out, d).relative(out.getClockWise(), side);
+                for (int dy = 2; dy >= -8; dy--) {
+                    int x = column.getX(), y = column.getY() + dy, z = column.getZ();
+                    if (!open(level, m.set(x, y, z)) || !open(level, m.set(x, y + 1, z)) || open(level, m.set(x, y - 1, z))) continue;
+                    Vec3 eye = new Vec3(x + 0.5, y + 1.62, z + 0.5);
+                    if (level.clip(new ClipContext(eye, target, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty())).getType() != HitResult.Type.MISS) break;
+                    double dx = target.x - eye.x, dz = target.z - eye.z;
+                    float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(target.y - eye.y, Math.sqrt(dx * dx + dz * dz)));
+                    return new Stand(x + 0.5, y, z + 0.5, yaw, pitch);
+                }
+            }
+        }
+        return null;
     }
 
     /** The land round the found cell is made: the floor with the most room, and there. */

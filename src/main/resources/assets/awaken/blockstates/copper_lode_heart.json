@@ -1,7 +1,121 @@
 {
-  "variants": {
-    "": {
-      "model": "awaken:block/copper_lode_heart"
+  "multipart": [
+    {
+      "apply": {
+        "model": "awaken:block/lode_heart/copper_knot"
+      }
+    },
+    {
+      "when": {
+        "host": "deepslate"
+      },
+      "apply": {
+        "model": "minecraft:block/deepslate"
+      }
+    },
+    {
+      "when": {
+        "host": "stone"
+      },
+      "apply": {
+        "model": "minecraft:block/stone"
+      }
+    },
+    {
+      "when": {
+        "host": "andesite"
+      },
+      "apply": {
+        "model": "minecraft:block/andesite"
+      }
+    },
+    {
+      "when": {
+        "host": "diorite"
+      },
+      "apply": {
+        "model": "minecraft:block/diorite"
+      }
+    },
+    {
+      "when": {
+        "host": "granite"
+      },
+      "apply": {
+        "model": "minecraft:block/granite"
+      }
+    },
+    {
+      "when": {
+        "host": "tuff"
+      },
+      "apply": {
+        "model": "minecraft:block/tuff"
+      }
+    },
+    {
+      "when": {
+        "host": "rootstone"
+      },
+      "apply": {
+        "model": "awaken:block/caves/rootstone"
+      }
+    },
+    {
+      "when": {
+        "host": "ochre"
+      },
+      "apply": {
+        "model": "awaken:block/caves/ochre_stone"
+      }
+    },
+    {
+      "when": {
+        "host": "limestone"
+      },
+      "apply": {
+        "model": "awaken:block/caves/limestone"
+      }
+    },
+    {
+      "when": {
+        "host": "slate"
+      },
+      "apply": {
+        "model": "awaken:block/caves/banded_slate"
+      }
+    },
+    {
+      "when": {
+        "host": "siltstone"
+      },
+      "apply": {
+        "model": "awaken:block/caves/siltstone"
+      }
+    },
+    {
+      "when": {
+        "host": "glimmer"
+      },
+      "apply": {
+        "model": "awaken:block/caves/glimmerstone"
+      }
+    },
+    {
+      "when": {
+        "host": "basalt"
+      },
+      "apply": {
+        "model": "awaken:block/caves/column_basalt"
+      }
+    },
+    {
+      "when": {
+        "host": "seepstone"
+      },
+      "apply": {
+        "model": "awaken:block/caves/seepstone"
+      }
     }
-  }
+  ]
 }

@@ -1,0 +1,110 @@
+{
+  "variants": {
+    "facing=north,tip=false": [
+      {
+        "model": "awaken:block/caves/rust_drape_0"
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_1"
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_2"
+      }
+    ],
+    "facing=north,tip=true": [
+      {
+        "model": "awaken:block/caves/rust_drape_tip_0"
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_tip_1"
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_tip_2"
+      }
+    ],
+    "facing=east,tip=false": [
+      {
+        "model": "awaken:block/caves/rust_drape_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_1",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_2",
+        "y": 90
+      }
+    ],
+    "facing=east,tip=true": [
+      {
+        "model": "awaken:block/caves/rust_drape_tip_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_tip_1",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_tip_2",
+        "y": 90
+      }
+    ],
+    "facing=south,tip=false": [
+      {
+        "model": "awaken:block/caves/rust_drape_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_1",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_2",
+        "y": 180
+      }
+    ],
+    "facing=south,tip=true": [
+      {
+        "model": "awaken:block/caves/rust_drape_tip_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_tip_1",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_tip_2",
+        "y": 180
+      }
+    ],
+    "facing=west,tip=false": [
+      {
+        "model": "awaken:block/caves/rust_drape_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_1",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_2",
+        "y": 270
+      }
+    ],
+    "facing=west,tip=true": [
+      {
+        "model": "awaken:block/caves/rust_drape_tip_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_tip_1",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/caves/rust_drape_tip_2",
+        "y": 270
+      }
+    ]
+  }
+}

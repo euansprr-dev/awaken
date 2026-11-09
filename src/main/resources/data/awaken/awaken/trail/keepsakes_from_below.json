@@ -51,11 +51,11 @@
     },
     {
       "id": "ochre_deep",
-      "text": "Cut ember lichen in the Ochre Deep.",
+      "text": "Cut an ember vine in the Ochre Deep.",
       "done": [
-        "holds:awaken:ember_lichen"
+        "holds:awaken:ember_vine|holds:awaken:ember_lichen"
       ],
-      "hint": "It glows on the walls by the floor. Shears cut it free; it still glows at home."
+      "hint": "It climbs the rock and lights the walls around it. Shears cut it free, and it still glows at home."
     },
     {
       "id": "violet_deep",
