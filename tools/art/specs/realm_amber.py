@@ -372,6 +372,29 @@ def tex_leaf(P):
     return c
 
 
+def tex_canopy(P):
+    """A tree's golden leaves, with real gaps: a canopy of solid cubes reads as a pile of boxes. Small bright clusters over darker
+    ones, and about a quarter of the block open so you see into the crown."""
+    rp = P.ramp("agold")
+    rng = P.rng_for("canopy", "gold")
+    c = K.noisy(P, "agold", "leafg", scale=2, octaves=3, lo=0, span=3, jitter=0.2)
+    # leaf clusters: a light upper side and a dark underside
+    for k in range(14):
+        cx, cy = rng.randrange(16), rng.randrange(16)
+        for dx, dy, t in ((0, 0, 5), (-1, 0, 4), (1, 0, 4), (0, -1, 5), (0, 1, 2), (-1, 1, 1), (1, 1, 1)):
+            c.set((cx + dx) % 16, (cy + dy) % 16, rp[t])
+    # the gaps, in small ragged clumps so they read as spaces between leaves
+    open_ = set()
+    while len(open_) < 66:
+        x, y = rng.randrange(16), rng.randrange(16)
+        for dx, dy in ((0, 0), (1, 0), (0, 1)):
+            if rng.random() < 0.8:
+                open_.add(((x + dx) % 16, (y + dy) % 16))
+    for x, y in open_:
+        c.set(x, y, (0, 0, 0, 0))
+    return c
+
+
 def stalks(P, seed, tops=True, n=7, rows=(1, 15), stalk_lo=1):
     """Fine stalks standing well apart, one pixel wide, each with its own lean and a narrow bearded ear. Never a bar of colour: seen from inside the
     crop a pixel is as wide as your hand, so two stems side by side or one in stripes reads as a plank."""
@@ -440,7 +463,7 @@ def textures():
         "amber_plaster_band": tex_band(P), "amber_tile": scallops(P, "atile", "t"), "amber_tile_deep": scallops(P, "atile2", "d"),
         "amber_timber": K.bark(P, "atimb", "timber"), "amber_timber_end": K.rings(P, "atimb", "atimb", "timber"),
         "amber_planks": K.boards(P, "aplank", "planks"), "amber_gilt": tex_gilt(P), "amber_window": win, "amber_window_glow": win_g,
-        "amber_moss_top": tex_moss(P), "amber_moss": tex_moss_side(P), "amber_bed": tex_bed(P), "amber_petal": tex_petal(P), "amber_petal_deep": tex_petal(P, "apetal2"), "amber_petal_tip": tex_petal(P, "apetal3"), "amber_leaf_gold": K.noisy(P, "agold", "leafg", scale=2, octaves=3, lo=1, span=5, jitter=0.2), "amber_seedhead": tex_seed(P),
+        "amber_moss_top": tex_moss(P), "amber_moss": tex_moss_side(P), "amber_bed": tex_bed(P), "amber_petal": tex_petal(P), "amber_petal_deep": tex_petal(P, "apetal2"), "amber_petal_tip": tex_petal(P, "apetal3"), "amber_leaf_gold": tex_canopy(P), "amber_seedhead": tex_seed(P),
         "amber_stem": tex_stem(P), "amber_stem_end": tex_stem_end(P), "amber_leaf": tex_leaf(P),
         "amber_wheat": stalks(P, "w", n=8, rows=(0, 15)), "amber_wheat_tall": stalks(P, "tl", tops=False, n=7), "amber_wheat_tall_top": stalks(P, "tt", n=7, rows=(1, 15)),
         "amber_grass": tex_grass(P), "amber_bloom": tex_bloom(P),

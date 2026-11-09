@@ -50,7 +50,7 @@ import java.util.function.Function;
 public final class ThemeBlocks {
     private ThemeBlocks() {}
 
-    public enum Shape { CUBE, COLUMN, GLASS, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE }
+    public enum Shape { CUBE, COLUMN, GLASS, LEAF, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE }
 
     /** One block: its id, shape, map colour, sound, light and (props, touchstones) its outline in pixels. */
     public record Def(String name, Shape shape, MapColor color, SoundType sound, int light, double[] box, boolean soft) {
@@ -68,7 +68,7 @@ public final class ThemeBlocks {
     }
 
     private static final Shape C = Shape.CUBE, COL = Shape.COLUMN, G = Shape.GLASS, PL = Shape.PLANT, H = Shape.HANG, CA = Shape.CARPET,
-            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD, SK = Shape.SKETCH, CL = Shape.CLOUD, FI = Shape.FIGURE;
+            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD, SK = Shape.SKETCH, CL = Shape.CLOUD, FI = Shape.FIGURE, L = Shape.LEAF;
 
     /** Every theme's blocks, in the order of the creative tab. */
     public static final List<Def> DEFS = List.of(
@@ -93,7 +93,7 @@ public final class ThemeBlocks {
             Def.soft("amber_petal", C, MapColor.COLOR_ORANGE, SoundType.WET_GRASS, 0),
             Def.soft("amber_petal_deep", C, MapColor.TERRACOTTA_ORANGE, SoundType.WET_GRASS, 0),
             Def.soft("amber_petal_tip", C, MapColor.GOLD, SoundType.WET_GRASS, 0),
-            Def.soft("amber_leaf_gold", C, MapColor.GOLD, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("amber_leaf_gold", L, MapColor.GOLD, SoundType.AZALEA_LEAVES, 0),
             Def.soft("amber_seedhead", C, MapColor.TERRACOTTA_BROWN, SoundType.NETHER_WART, 0),
             Def.soft("amber_stem", COL, MapColor.COLOR_GREEN, SoundType.STEM, 0),
             Def.soft("amber_leaf", C, MapColor.COLOR_GREEN, SoundType.AZALEA_LEAVES, 0),
@@ -325,6 +325,7 @@ public final class ThemeBlocks {
             case CUBE -> Block::new;
             case COLUMN -> RotatedPillarBlock::new;
             case GLASS -> TransparentBlock::new;
+            case LEAF -> Block::new;
             case PLANT -> p -> new Shaped(p, Block.box(2, 0, 2, 14, 13, 14), false);
             case HANG -> p -> new Shaped(p, Block.box(2, 0, 2, 14, 16, 14), false);
             case CARPET -> p -> new Shaped(p, Block.box(0, 0, 0, 16, 1, 16), true);
@@ -354,6 +355,8 @@ public final class ThemeBlocks {
         switch (d.shape()) {
             case GLASS -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false).isRedstoneConductor((s, l, pos) -> false)
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false).strength(0.4F);
+            // a crown you can see into: every neighbour's faces still draw, as vanilla leaves do
+            case LEAF -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false).isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
             case PLANT, HANG, FALL -> p = p.noOcclusion().noCollision().instabreak().isValidSpawn((s, l, pos, t) -> false)
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
             // a cloud is a whole block you fall through (it hides its neighbours' faces, so a sea of it is cheap to draw)

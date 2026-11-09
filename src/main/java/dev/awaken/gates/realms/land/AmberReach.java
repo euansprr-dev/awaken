@@ -175,7 +175,9 @@ public final class AmberReach extends Land {
             if (cap != null) {
                 // laid flags with worn patches and a few hex-paved courts; the eye should see a street, not a grid
                 double court = n3.get(x / 24.0, z / 24.0), wear = n1.get(x / 7.0, z / 7.0), k = rnd(x, z, 41 + seed);
-                cap[0] = court > 0.42 ? m.hexstone : wear > 0.5 && k < 0.6 ? m.worn : wear < -0.55 && k < 0.5 ? m.moss : k < 0.06 ? m.pale : m.flag;
+                // moss only finds a way in along the edges, or the crop grows out of the middle of the square
+                boolean rim = road ? dr > 2.6 : dc < 140 ? dc > 128 : dv > 0.82;
+                cap[0] = court > 0.42 ? m.hexstone : wear > 0.5 && k < 0.6 ? m.pale : rim && wear < -0.3 && k < 0.5 ? m.moss : k < 0.06 ? m.pale : m.flag;
             }
         } else {
             double soil = fbm(n9, x, z, 1 / 13.0, 2);
@@ -400,7 +402,7 @@ public final class AmberReach extends Land {
             if (roadD(x, z) < 8) continue;
             place(new Boulder(x, z, 2 + r.nextInt(3), 1 + r.nextInt(3), i, this));
         }
-        if (roadD(mx + 16, mz + 30) > 9) pieces.add(new AmberTree(mx + 16, mz + 30, 22, 2, this));
+        if (roadD(mx + 34, mz + 46) > 9) pieces.add(new AmberTree(mx + 34, mz + 46, 22, 2, this));
         placeSites();
     }
 
@@ -860,7 +862,7 @@ public final class AmberReach extends Land {
                 double d = p * p + q * q * 3.2 + s * s;
                 if (d > r * r || rnd(p + (long) cx, s + (long) cz, q + seed) < 0.18) continue;
                 int X = (int) Math.floor(cx) + p, Y = (int) Math.floor(cy) + q, Z = (int) Math.floor(cz) + s;
-                if (v.get(X, Y, Z) == null) v.set(X, Y, Z, rnd(X, Z, seed + 2) < 0.3 ? m.leaf : m.leafGold);
+                if (v.get(X, Y, Z) == null) v.set(X, Y, Z, m.leafGold);
             }
         }
 

@@ -33,13 +33,13 @@ cmd awaken gate realm_at MOUTH 0 7 1 0
 look 90 -10
 wait 60
 shot amber_mouth_arch
-cmd awaken gate realm_at MOUTH 0 22 10 18
-look 129 16
+cmd awaken gate realm_at MOUTH 0 24 12 -4
+look 96 14
 wait 200
 shot amber_mouth_ring
 
-cmd awaken gate realm_at VILLAGE 0 30 26 -50
-look 31 24
+cmd awaken gate realm_at VILLAGE 0 -70 28 -30
+look -60 14
 wait 300
 shot amber_village_above
 cmd awaken gate realm_at VILLAGE 0 -18 3 -2
@@ -56,9 +56,6 @@ cmd awaken gate realm_at WAYSTONE 1 8 2 14
 look 215 -6
 wait 200
 shot amber_pavilion
-look 20 -14
-wait 60
-shot amber_pavilion_roof
 
 cmd awaken gate realm_at WAYSTONE 0 86 14 -25
 look -76 15
@@ -78,8 +75,8 @@ cmd awaken gate realm_at MOUTH 0 182 20 96
 look -54 -10
 wait 300
 shot amber_flowers
-cmd awaken gate realm_at WAYSTONE 0 16 8 -16
-look 45 18
+cmd awaken gate realm_at WAYSTONE 0 8 5 8
+look 135 22
 wait 200
 shot amber_waystone
 cmd awaken gate realm_at WAYSTONE 0 34 9 34
@@ -89,7 +86,7 @@ cmd execute at @s run summon awaken:pollen_grazer ^4 ^ ^13
 cmd execute at @s run summon awaken:pollen_grazer ^ ^ ^17
 cmd execute at @s run summon awaken:amberfly ^-1 ^1 ^4
 cmd execute at @s run summon awaken:amberfly ^2 ^ ^5
-wait 200
+wait 50
 shot amber_herd
 # the spawner's own work: a minute standing in open valley, nothing summoned
 cmd awaken gate realm_at WAYSTONE 1 -46 12 40

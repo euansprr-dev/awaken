@@ -86,6 +86,11 @@ final class GateCommands {
                                 var s = sites.get(i);
                                 var at = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), s.x() + IntegerArgumentType.getInteger(c, "dx"), s.y() + IntegerArgumentType.getInteger(c, "dy"), s.z() + IntegerArgumentType.getInteger(c, "dz"));
                                 p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
+                                // a creative camera stays where it was put, or it has fallen by the time anyone looks
+                                if (p.isCreative()) {
+                                    p.getAbilities().flying = true;
+                                    p.onUpdateAbilities();
+                                }
                                 return 1;
                             })))))));
             gate.then(Commands.literal("realm_heart").requires(AwakenCommands.admin()).executes(c -> {
