@@ -64,7 +64,7 @@
       }
     },
     "minecraft:visual/block_light_tint": "#ffa05a",
-    "minecraft:visual/ambient_light_color": "#17241a"
+    "minecraft:visual/ambient_light_color": "#332e2e"
   },
   "carvers": [],
   "features": []

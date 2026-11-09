@@ -49,7 +49,9 @@ upright plane), `shaped` (share of the view that isn't a full cube) and `contras
 contrast 130-160; Amber's halls relief 50-75, shaped 7-23; the Crypt relief 55-137, shaped 5-10. The first Vine Seat had interiors at relief 6-13, shaped 0, which is what
 Euan called blocky. Fix every flagged shot unless it's plainly deliberate (a closed door). Clearing the flags is the floor. The bar is the picture beside Amber's and the Crypt's sheet, viewed at full size.
 
-## The rest of the standard
+## **Real-game light.** The preview draws no darkness; the game does. Every biome a player will stand in sets `minecraft:visual/ambient_light_color` to at least `#2a3038` so a room is never near-black (Euan has to be able to see the thing you built), and any big room with no sky gets invisible light blocks in its air (`m.light`, every 8-10 blocks, level 9-12) as well as its fires. Check a real-game CI walk before calling a gate finished.
+
+The rest of the standard
 
 Every entry in `ROSTER.md` is one authored place: its painting first (`docs/gates-as-worlds/img/paint-<id>.jpg`), its one physical rule that
 changes how you move or fight (its own `Realm<Rule>.java`, one line in `RealmLive.wake`), its great thing, its Lord's place by the eight rules,

@@ -62,7 +62,8 @@
         "min_delay": 3600,
         "max_delay": 12000
       }
-    }
+    },
+    "minecraft:visual/ambient_light_color": "#2a3220"
   },
   "carvers": [],
   "features": []

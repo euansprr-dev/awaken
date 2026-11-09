@@ -70,3 +70,4 @@ cmd awaken gate realm_at MOUTH 0 34 70 -299
 look 90 -4
 wait 80
 shot kingsroot_gallery
+quit
