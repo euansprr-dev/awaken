@@ -1,5 +1,4 @@
-# Cave skin: the sculk veins (SPEC 42.10; Euan's 9 Nov crop, "literally cut in the middle"). The spot in his crop, then a wall built in the
-# open so a lone vein, a pair, a fringe beside sculk and a whole field can be read in daylight, on deepslate and on the Ochre Deep's rock.
+# Cave skin: the sculk veins (SPEC 42.10; Euan's 9 Nov crop, "literally cut in the middle"). The spot in his crop, and the Deep Dark's side of that edge.
 # ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
 world cave_skin creative 5652006211025591964
 waitworld
@@ -57,39 +56,5 @@ wait 120
 shot v_edge_torch
 cmd item replace entity @s weapon.offhand with minecraft:air
 wait 20
-
-# ---- a wall in the open: deepslate on the left, the Ochre Deep's rock on the right ----
-cmd time set 6000
-cmd fill -483 198 -2320 -475 206 -2320 minecraft:deepslate
-cmd fill -474 198 -2320 -466 206 -2320 awaken:ochre_stone
-cmd fill -477 199 -2329 -472 199 -2322 minecraft:stone
-# deepslate: lone, a pair, a field, real sculk with its fringe
-cmd setblock -482 204 -2321 minecraft:sculk_vein[south=true]
-cmd setblock -479 205 -2321 minecraft:sculk_vein[south=true]
-cmd setblock -478 205 -2321 minecraft:sculk_vein[south=true]
-cmd fill -482 200 -2321 -478 202 -2321 minecraft:sculk_vein[south=true]
-cmd fill -476 200 -2320 -475 203 -2320 minecraft:sculk
-cmd setblock -477 203 -2321 minecraft:sculk_vein[south=true]
-# the rock: lone, a diagonal pair as in his crop, a field, real sculk with its fringe
-cmd setblock -473 204 -2321 minecraft:sculk_vein[south=true]
-cmd setblock -470 205 -2321 minecraft:sculk_vein[south=true]
-cmd setblock -469 204 -2321 minecraft:sculk_vein[south=true]
-cmd fill -473 200 -2321 -470 202 -2321 minecraft:sculk_vein[south=true]
-cmd fill -468 200 -2320 -467 203 -2320 minecraft:sculk
-cmd setblock -469 201 -2321 minecraft:sculk_vein[south=true]
-cmd tp @s -474.50 200.00 -2328.50 0.0 -4.0
-wait 200
-shot v_wall_day
-lens off
-wait 30
-shot v_wall_lensoff
-lens cinematic
-wait 20
-cmd tp @s -479.50 200.00 -2324.50 0.0 -8.0
-wait 60
-shot v_wall_near
-cmd tp @s -470.50 200.00 -2324.50 0.0 -8.0
-wait 60
-shot v_wall_near_rock
 
 quit
