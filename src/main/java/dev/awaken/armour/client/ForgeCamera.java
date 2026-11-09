@@ -67,6 +67,7 @@ final class ForgeCamera {
             NOW[5] = mc.options.fov().get();
             cam.place(NOW[0], NOW[1], NOW[2], (float) NOW[3], (float) NOW[4]);
             mc.setCameraEntity(cam);
+            dev.awaken.core.client.InputLock.hold(HOLD, HOLD_MAX);
             last = frozen(NOW.clone());
         } else {
             last = frozen(NOW.clone());
@@ -81,7 +82,12 @@ final class ForgeCamera {
         return (t, out) -> System.arraycopy(pose, 0, out, 0, 6);
     }
 
+    /** The lock's owner and failsafe (SPEC §27.6): you stand still while the forge has the view. */
+    private static final Object HOLD = "forge camera";
+    private static final int HOLD_MAX = 20 * 600;
+
     static void end() {
+        dev.awaken.core.client.InputLock.release(HOLD);
         Minecraft mc = Minecraft.getInstance();
         if (cam != null && mc.getCameraEntity() == cam && mc.player != null) mc.setCameraEntity(mc.player);
         if (cam != null && before != null) mc.options.setCameraType(before);

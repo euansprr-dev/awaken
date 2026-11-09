@@ -51,6 +51,7 @@ final class MapCamera {
             before = mc.options.getCameraType();
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             mc.setCameraEntity(cam);
+            dev.awaken.core.client.InputLock.stop(p); // not a scene, no lock: only that you don't walk on behind the map
             return true;
         } catch (RuntimeException e) {
             Awaken.LOG.error("[atlas] map camera failed to start", e);

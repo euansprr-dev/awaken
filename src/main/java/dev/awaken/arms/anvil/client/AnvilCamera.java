@@ -74,9 +74,15 @@ final class AnvilCamera {
         Vec3 eye = p.getEyePosition(1F);
         cam.place(eye.x, eye.y, eye.z, p.getYRot(), p.getXRot());
         mc.setCameraEntity(cam);
+        dev.awaken.core.client.InputLock.hold(HOLD, HOLD_MAX);
     }
 
+    /** The lock's owner and failsafe (SPEC §27.6): you stand still while the anvil has the view. */
+    private static final Object HOLD = "anvil camera";
+    private static final int HOLD_MAX = 20 * 600;
+
     static void end() {
+        dev.awaken.core.client.InputLock.release(HOLD);
         Minecraft mc = Minecraft.getInstance();
         if (cam != null && mc.getCameraEntity() == cam && mc.player != null) mc.setCameraEntity(mc.player);
         if (cam != null && before != null) mc.options.setCameraType(before);

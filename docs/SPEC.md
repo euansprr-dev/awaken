@@ -8510,6 +8510,14 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   logout lets everything go. Ilse's scene also ends server side on walking off (18 blocks), death, logout or her being
   gone, and her hand empties. Tests: `core_input_holds`, `progression_first_scene_exits`; tour `camp-exit.txt` walks
   away after the scene.
+- **Held means held** (Euan, 9 Nov: "cinematics don't stop you so you keep walking forward or even jumping during it").
+  While the camera is on anything but the player the game doesn't read the input at all (`LocalPlayer.applyInput`), so
+  swapping the input left whatever was held as the view left latched in `xxa`/`zza`/`jumping`. The lock clears those as it
+  starts and every tick after (`InputLock.stop`; the player's momentum still runs out on its own). Scenes that take the view
+  to a camera of their own all hold through the lock: `OpeningCamera`'s shots (the opening, the High Gate's, Ilse's), the
+  Registry's, Ilse's ember from her first line, the ritual, the furnace's lowered view, the Forge Song's and the anvil's,
+  each with a deadline of its own. Binoculars, the map and combat cameras are not scenes and take no lock; the map only
+  clears the latch (`InputLock.stop`) so you don't walk on behind it. Raw key reads respect the lock (`JetBoots`, a landing's roll).
 - **The far smoke is far only**: the column (`PulseFx.campfire`) fades out within 48 blocks of the fire (gone at 48,
   whole from 96), where vanilla's campfire smoke is the real thing. Drawn up close its puffs, up to 15 blocks across and
   110 up, read as a dark dome over the camp and a pale facet in the sky (Euan, 2026-10-26).
