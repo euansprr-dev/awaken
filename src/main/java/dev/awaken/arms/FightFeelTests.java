@@ -23,7 +23,7 @@ final class FightFeelTests {
 
     /**
      * A blow pushes the way the blade went: strike 1 (right to left) throws a zombie to the fighter's left, at least 30%
-     * sideways; the thrust pushes it straight back; the overhead chop pins it (no lift); the rising heavy lifts it.
+     * sideways; the thrust pushes it straight back; the overhead chop pins it (no lift); the Maul's rising strike lifts it.
      */
     static void knockDir(GameTestHelper h) {
         Blow b = new Blow(5, true, false, true, 3, -1, 200, -5);
@@ -37,8 +37,8 @@ final class FightFeelTests {
         h.assertTrue(thrust.z > 0.3 && Math.abs(thrust.x) < 0.05 * thrust.z, "a thrust pushes it straight back (" + thrust + ")");
         Vec3 chop = struck(h, p, ls, Archetype.Move.STRIKE_3, 3);
         h.assertTrue(chop.z > 0.1 && chop.y < 0.05, "an overhead chop pins it: no lift (" + chop + ")");
-        Vec3 rise = struck(h, p, ls, Archetype.Move.HEAVY, 4);
-        h.assertTrue(rise.y > cut.y + 0.1, "the rising heavy lifts it more than a cut (" + rise.y + " against " + cut.y + ")");
+        Vec3 rise = struck(h, p, Archetypes.get(Arms.MAUL), Archetype.Move.STRIKE_4, 4);
+        h.assertTrue(rise.y > cut.y + 0.1, "the Maul's rising strike lifts it more than a cut (" + rise.y + " against " + cut.y + ")");
         // a Lord keeps vanilla's push: straight along the look, whatever the cut
         Vec3 lord = struck(h, p, ls, Archetype.Move.STRIKE_1, 5, 200);
         h.assertTrue(Math.abs(lord.x) < 0.02, "a Lord is pushed as vanilla pushes it (" + lord + ")");

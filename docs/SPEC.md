@@ -7344,6 +7344,12 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     Undercut (the low sweep out of a slide); the blade at most 0.6 px into the body, the butt 0.3 to 2.0 px by the
     belly; no wrist faster than 20 degrees a key outside the blow (arms_rig4's snapped up to 151). arms_rig4 no longer
     drives the Scythe.
+  - *A charge is held in view* (Euan 2026-11-09, of a heavy charged under the view: "you can't even see the blade anymore"):
+    a heavy's first pose is what a charge holds for as long as the press lasts, so its draw back is cut until the blade's
+    middle sits at most 0.75 of the way to the frame's edge (`swing_studio.HEAVY_SET`), an overhead's too (one that rose out
+    of the frame left a strip of haft on the screen; a filmed Longsword showed nothing at all). The Longsword's heavy, a rising
+    cut loosed from below the frame, is now a high diagonal chop in first person and pins as a chop does; third person's
+    `arms_heavy` is still the rising cut.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the

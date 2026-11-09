@@ -1,0 +1,110 @@
+# Every heavy whose charge was out of view, held and loosed in the real game (SPEC §25 "A charge is held in view"; Euan 2026-11-09:
+# "you can't even see the blade anymore"). Slowed: the charge must show the weapon and the target must react as the blade arrives.
+# ci knobs: PACK=perf,feel,comfort,world
+world armsholds creative 779
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+camera first
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film longsword_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_katana
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film katana_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_axe
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film axe_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_maul
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film maul_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_glaive
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film glaive_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+arms studio awaken:gatewrought_precursor
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film precursor_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+quit

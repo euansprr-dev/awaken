@@ -175,6 +175,14 @@ final class SwingTests {
             q.transform(at.set(st.hand())).add(d).add(0.56F, -0.52F, -0.72F);
             float f = 1F / (float) Math.tan(Math.toRadians(35)), x = at.x / -at.z * f / (16F / 9F), y = at.y / -at.z * f;
             h.assertTrue(at.z < -0.2F && Math.abs(x) < 1 && Math.abs(y) < 1, a.id() + "'s guard holds its hand in view (" + x + ", " + y + ")");
+            // a charge holds the heavy's first pose for as long as the press lasts: its hand near the frame, never far under it
+            // (Euan 2026-11-09, of a heavy charged below the view: "you can't even see the blade anymore")
+            if (FpSwings.sample(st, Archetype.Move.HEAVY, 0F, true, d, q)) {
+                q.transform(at.set(st.hand())).add(d).add(0.56F, -0.52F, -0.72F);
+                x = at.x / -at.z * f / (16F / 9F);
+                y = at.y / -at.z * f;
+                h.assertTrue(at.z < -0.2F && Math.abs(x) < 2F && Math.abs(y) < 2.2F, a.id() + "'s charge keeps its hand by the frame (" + x + ", " + y + ")");
+            }
             boolean two = TWO_HANDED.contains(a.id());
             h.assertTrue((st.offHand() != null) == two && (st.vanillaOffHand() != null) == two,
                     a.id() + (two ? " is held in both hands" : " is held in one"));
