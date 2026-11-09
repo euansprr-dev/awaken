@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  * The Forge Song's client (SPEC §44.4): the stand drawn, its list and the song's screens, the camera, the HUD stepping
  * aside while the camera holds the view, and a forged piece's quality on its tooltip.
  */
-final class ForgeClient {
+public final class ForgeClient {
     private ForgeClient() {}
 
     static void init(IEventBus modBus) {
@@ -104,7 +104,9 @@ final class ForgeClient {
             mc.gui.setScreen(new ForgeSongScreen(o.pos(), false));
         } else if (w != null && w.stage == ForgeSong.SHAPE) {
             mc.gui.setScreen(new ForgeSongScreen(o.pos(), true));
-        } else mc.gui.setScreen(new ForgeScreen(o, w == null ? null : name(w.forger)));
+        } else if (dev.awaken.hall.client.HallConfig.classic()) {
+            mc.gui.setScreen(new ForgeScreen(o, w == null ? null : name(w.forger)));
+        } else dev.awaken.hall.client.HallClient.openStand(o, w == null ? null : name(w.forger));
     }
 
     private static void onDone(ArmourPayloads.Done d) {
@@ -168,11 +170,17 @@ final class ForgeClient {
 
     // ---- shared ------------------------------------------------------------------------------------------------------
 
-    static void send(BlockPos pos, int act, int a, float t, float aim) {
+    /** Starts a piece from the Hall (SPEC §52) and hands over to the Forge Song. */
+    public static void forge(BlockPos pos, int act, int piece, int inlay) {
+        send(pos, act, piece, 0F, inlay);
+        Minecraft.getInstance().gui.setScreen(new ForgeSongScreen(pos, false));
+    }
+
+    public static void send(BlockPos pos, int act, int a, float t, float aim) {
         ClientPacketDistributor.sendToServer(new ArmourPayloads.Act(pos, act, a, t, aim));
     }
 
-    static @Nullable FittingStandBlockEntity stand(BlockPos pos) {
+    public static @Nullable FittingStandBlockEntity stand(BlockPos pos) {
         var level = Minecraft.getInstance().level;
         return level != null && level.getBlockEntity(pos) instanceof FittingStandBlockEntity be ? be : null;
     }

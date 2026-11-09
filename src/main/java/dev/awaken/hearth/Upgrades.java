@@ -2,6 +2,7 @@ package dev.awaken.hearth;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.api.CoreApi;
+import dev.awaken.core.api.ForgeHooks;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
@@ -22,6 +23,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -29,7 +31,9 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.equipment.Equippable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /** Anchor tiers I-V, Forge tiers I-III and gear tempering. All priced through {@link Costs}. */
@@ -38,6 +42,11 @@ public final class Upgrades {
 
     public static final Identifier TEMPER_ID = Awaken.id("temper");
     public static final int MAX_TEMPER = 6;
+    /** What a level of Temper adds: damage to a weapon, armour and toughness to an armour piece. Nothing else (SPEC §46.8). */
+    public static final double TEMPER_DAMAGE = 1.0, TEMPER_ARMOUR = 0.5, TEMPER_TOUGHNESS = 0.25;
+
+    /** One number an upgrade moves: what it's called, what it is now and after; best is what a Flawless forging would make it, when that's more ("" if not). */
+    public record Change(String label, String from, String to, String best) {}
 
     /** An upgrade: what it's called, the rank it belongs to (for the discount and the unlock) and its full price. */
     public record Def(String id, String name, Rank tier, List<Costs.Part> base) {}
@@ -328,10 +337,13 @@ public final class Upgrades {
                 || ho.get().roomAt(at, RoomType.ARMORY).isPresent());
         int cap = ho.map(h -> temperCap(h, armory)).orElse(1);
         int current = temperOf(stack);
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(oren ? "Oren · Tempering" : "Temper"));
-        w.row(Component.literal("Item"), stack.getHoverName());
-        w.row(Component.literal("Temper"), Component.literal(current == 0 ? "none" : roman(current)));
+        Component title = Component.literal(oren ? "Oren · Tempering" : "Temper");
         if (current >= cap) {
+            var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, title);
+            w.row(Component.literal("Item"), stack.getHoverName());
+            w.row(Component.literal("Temper"), Component.literal(current == 0 ? "none" : roman(current)));
+            if (current > 0) w.row(Component.literal("Giving it"), Component.literal(temperGives(stack)));
+            if (current < MAX_TEMPER) for (Change c : temperChanges(sp, stack, current + 1)) w.row(Component.literal(c.label() + " next"), Component.literal(c.from() + " to " + c.to()));
             w.body(Component.literal(current >= MAX_TEMPER ? "It can't take any more."
                     : armory ? "Upgrade the Forge to go further." : "Put an anvil and an armour stand in the Forge's room and it'll go further."));
             Signal.send(sp, w.ttl(20 * 8).build());
@@ -344,25 +356,35 @@ public final class Upgrades {
         Def def = temper(target, oren);
         Rank rank = Progression.rank(sp);
         List<Costs.Part> price = Costs.price(def.base(), rank, def.tier());
-        w.row(Component.literal("Next"), Component.literal(roman(target) + " · " + (armourSlot(stack) != null ? "+0.5 armour, +0.25 toughness" : "+1 damage") + " per level"));
-        for (Costs.Part p : price) w.row(p.name(), Costs.have(sp, p));
-        if (oren) w.body(Component.literal("I'll bring the essence. You bring the iron."));
-        Item item = stack.getItem();
-        if (Costs.canAfford(sp, price)) {
-            w.choice(Offers.offer(sp, "temper", 20 * 30, p -> {
-                ItemStack now = p.getItemInHand(hand);
-                if (!now.is(item) || temperOf(now) != current) return;
-                List<Costs.Part> again = Costs.price(def.base(), Progression.rank(p), def.tier());
-                if (!Costs.canAfford(p, again)) return;
-                Costs.pay(p, again);
-                applyTemper(now, target);
-                p.level().playSound(null, p.blockPosition(), HearthContent.SND_FORGE.get(), SoundSource.PLAYERS, 1f, 1.1f);
-                ((ServerLevel) p.level()).sendParticles(ParticleTypes.CRIT, p.getX(), p.getY() + 1, p.getZ(), 16, 0.4, 0.4, 0.4, 0.2);
-                Signal.toast(p, Component.literal(now.getHoverName().getString() + " tempered to " + roman(target)));
-                Progression.count(p, "awaken:gear_tempered");
-                dev.awaken.living.api.Quests.advance(p, Identifier.parse("awaken:use/temper"));
-            }), "Temper it to " + roman(target), "Not now");
+        List<Change> changes = temperChanges(sp, stack, target);
+        if (!Costs.canAfford(sp, price)) {
+            var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, title);
+            w.row(Component.literal("Item"), stack.getHoverName());
+            w.row(Component.literal("Temper"), Component.literal((current == 0 ? "none" : roman(current)) + " to " + roman(target)));
+            for (Change c : changes) w.row(Component.literal(c.label()), Component.literal(c.from() + " to " + c.to()));
+            for (Costs.Part p : price) w.row(p.name(), Costs.have(sp, p));
+            w.body(Component.literal(temperShort(stack)));
+            if (oren) w.footer(Component.literal("I'll bring the essence. You bring the iron."));
+            Signal.send(sp, w.ttl(20 * 12).build());
+            return;
         }
+        // a choice card shows its title and one short block under it: what it will do goes in the title, so the price still shows
+        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Temper " + roman(target) + ": " + inWords(changes)));
+        for (Costs.Part p : price) w.row(p.name(), Costs.have(sp, p));
+        Item item = stack.getItem();
+        w.choice(Offers.offer(sp, "temper", 20 * 30, p -> {
+            ItemStack now = p.getItemInHand(hand);
+            if (!now.is(item) || temperOf(now) != current) return;
+            List<Costs.Part> again = Costs.price(def.base(), Progression.rank(p), def.tier());
+            if (!Costs.canAfford(p, again)) return;
+            Costs.pay(p, again);
+            applyTemper(now, target);
+            p.level().playSound(null, p.blockPosition(), HearthContent.SND_FORGE.get(), SoundSource.PLAYERS, 1f, 1.1f);
+            ((ServerLevel) p.level()).sendParticles(ParticleTypes.CRIT, p.getX(), p.getY() + 1, p.getZ(), 16, 0.4, 0.4, 0.4, 0.2);
+            Signal.toast(p, Component.literal(now.getHoverName().getString() + " tempered to " + roman(target)));
+            Progression.count(p, "awaken:gear_tempered");
+            dev.awaken.living.api.Quests.advance(p, Identifier.parse("awaken:use/temper"));
+        }), "Temper it to " + roman(target), "Not now");
         Signal.send(sp, w.ttl(20 * 12).build());
     }
 
@@ -372,12 +394,92 @@ public final class Upgrades {
         EquipmentSlot armour = armourSlot(stack);
         if (armour != null) {
             EquipmentSlotGroup g = EquipmentSlotGroup.bySlot(armour);
-            mods = mods.withModifierAdded(Attributes.ARMOR, new AttributeModifier(TEMPER_ID, 0.5 * level, AttributeModifier.Operation.ADD_VALUE), g);
-            mods = mods.withModifierAdded(Attributes.ARMOR_TOUGHNESS, new AttributeModifier(TEMPER_ID, 0.25 * level, AttributeModifier.Operation.ADD_VALUE), g);
+            mods = mods.withModifierAdded(Attributes.ARMOR, new AttributeModifier(TEMPER_ID, TEMPER_ARMOUR * level, AttributeModifier.Operation.ADD_VALUE), g);
+            mods = mods.withModifierAdded(Attributes.ARMOR_TOUGHNESS, new AttributeModifier(TEMPER_ID, TEMPER_TOUGHNESS * level, AttributeModifier.Operation.ADD_VALUE), g);
         } else {
-            mods = mods.withModifierAdded(Attributes.ATTACK_DAMAGE, new AttributeModifier(TEMPER_ID, 1.0 * level, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
+            mods = mods.withModifierAdded(Attributes.ATTACK_DAMAGE, new AttributeModifier(TEMPER_ID, TEMPER_DAMAGE * level, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
         }
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, mods);
         stack.set(HearthContent.TEMPER.get(), level);
+    }
+
+    // ---- what it will do, in numbers ---------------------------------------------------------------------------------
+
+    /**
+     * The numbers a player reads on this piece, by name, as vanilla's own tooltip reckons them (a weapon's damage counts the
+     * player's base). The previews compare two of these, so a window can't say anything the change itself doesn't do.
+     */
+    public static Map<String, String> stats(Player p, ItemStack s) {
+        ItemAttributeModifiers mods = s.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
+        Map<String, String> out = new LinkedHashMap<>();
+        EquipmentSlot armour = armourSlot(s);
+        if (armour != null) {
+            out.put("Armour", number(mods.compute(Attributes.ARMOR, 0, armour)));
+            out.put("Toughness", number(mods.compute(Attributes.ARMOR_TOUGHNESS, 0, armour)));
+        } else {
+            out.put("Damage", number(mods.compute(Attributes.ATTACK_DAMAGE, p.getAttributeBaseValue(Attributes.ATTACK_DAMAGE), EquipmentSlot.MAINHAND)));
+            out.put("Swing speed", number(mods.compute(Attributes.ATTACK_SPEED, p.getAttributeBaseValue(Attributes.ATTACK_SPEED), EquipmentSlot.MAINHAND)));
+        }
+        for (ForgeHooks.Stat stat : ForgeHooks.stats(s)) out.put(stat.label(), stat.value());
+        if (s.isDamageableItem()) out.put("Uses", String.valueOf(s.getMaxDamage()));
+        return out;
+    }
+
+    /** What moves between two versions of a piece; {@code best} is the same piece at its best, or {@code after} when there's only the one outcome. */
+    public static List<Change> changes(Player p, ItemStack before, ItemStack after, ItemStack best) {
+        Map<String, String> was = stats(p, before), is = stats(p, after), top = stats(p, best);
+        List<Change> out = new ArrayList<>();
+        for (Map.Entry<String, String> e : was.entrySet()) {
+            String to = is.get(e.getKey()), most = top.get(e.getKey());
+            if (to == null || most == null || to.equals(e.getValue()) && most.equals(e.getValue())) continue;
+            out.add(new Change(e.getKey(), e.getValue(), to, most.equals(to) ? "" : most));
+        }
+        return out;
+    }
+
+    /** What tempering this piece to {@code level} would change: the real change, made on a copy and read back. */
+    public static List<Change> temperChanges(Player p, ItemStack stack, int level) {
+        ItemStack after = stack.copy();
+        applyTemper(after, level);
+        return changes(p, stack, after, after);
+    }
+
+    /** What its Temper is giving it now, read off the piece: "+2 damage", "+1 armour, +0.5 toughness". Empty with none. */
+    public static String temperGives(ItemStack stack) {
+        List<String> out = new ArrayList<>();
+        for (ItemAttributeModifiers.Entry e : stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers()) {
+            if (!e.modifier().id().equals(TEMPER_ID)) continue;
+            String what = e.attribute().value() == Attributes.ATTACK_DAMAGE.value() ? "damage"
+                    : e.attribute().value() == Attributes.ARMOR.value() ? "armour"
+                    : e.attribute().value() == Attributes.ARMOR_TOUGHNESS.value() ? "toughness" : null;
+            if (what != null) out.add("+" + number(e.modifier().amount()) + " " + what);
+        }
+        return String.join(", ", out);
+    }
+
+    /** What Temper is, for this piece, and what it isn't. */
+    public static String temperWhat(ItemStack stack) {
+        return armourSlot(stack) != null
+                ? "Each level of Temper adds " + number(TEMPER_ARMOUR) + " armour and " + number(TEMPER_TOUGHNESS) + " toughness, for good. It doesn't change how long it lasts."
+                : "Each level of Temper adds " + number(TEMPER_DAMAGE) + " damage to every blow, for good. It doesn't change how fast it swings or how long it lasts.";
+    }
+
+    /** The same, to fit two short lines of a Signal panel. */
+    private static String temperShort(ItemStack stack) {
+        return armourSlot(stack) != null ? "Each level adds " + number(TEMPER_ARMOUR) + " armour and " + number(TEMPER_TOUGHNESS) + " toughness, for good."
+                : "Each level adds " + number(TEMPER_DAMAGE) + " damage. It won't swing faster or last longer.";
+    }
+
+    /** "damage 7 to 8", "armour 6 to 6.5, toughness 0 to 0.25". */
+    public static String inWords(List<Change> changes) {
+        List<String> out = new ArrayList<>();
+        for (Change c : changes) out.add(c.label().toLowerCase(java.util.Locale.ROOT) + " " + c.from() + " to " + c.to());
+        return String.join(", ", out);
+    }
+
+    /** "7", "6.5", "0.25": no trailing zeros, no float noise. */
+    public static String number(double v) {
+        String s = String.format(java.util.Locale.ROOT, "%.2f", v).replaceAll("0+$", "");
+        return s.endsWith(".") ? s.substring(0, s.length() - 1) : s;
     }
 }

@@ -57,18 +57,30 @@ public final class ArmourForge {
     // ---- the stand's list --------------------------------------------------------------------------------------------
 
     static void open(ServerPlayer p, FittingStandBlockEntity be) {
-        AwakenNet.send(p, offers(p, be));
+        // the Hall's other wing, and the wall it hangs on, come first: the list opens the screen that draws them (SPEC §52)
+        dev.awaken.arms.ArmsArmoury.sendView(p);
+        AwakenNet.send(p, hall(p, be));
     }
 
     static ArmourPayloads.Offers offers(ServerPlayer p, FittingStandBlockEntity be) {
+        return offers(p, be, false);
+    }
+
+    /** Every set, your rank or not (the Hall shows them all, SPEC §52). No stand: you can look, and nothing can be made. */
+    public static ArmourPayloads.Offers hall(ServerPlayer p, @Nullable FittingStandBlockEntity be) {
+        return offers(p, be, true);
+    }
+
+    private static ArmourPayloads.Offers offers(ServerPlayer p, @Nullable FittingStandBlockEntity be, boolean every) {
         Rank rank = Progression.rank(p);
         ArmouryMemory mem = ArmouryMemory.of(p);
-        ServerLevel level = (ServerLevel) be.getLevel();
-        boolean metal = anvil(level, be.getBlockPos()) != null && forge(level, be.getBlockPos()) != null;
-        boolean hand = table(level, be.getBlockPos()) != null;
+        ServerLevel level = be == null ? null : (ServerLevel) be.getLevel();
+        boolean metal = be != null && anvil(level, be.getBlockPos()) != null && forge(level, be.getBlockPos()) != null;
+        boolean hand = be != null && table(level, be.getBlockPos()) != null;
         List<ArmourPayloads.Offer> out = new ArrayList<>();
         for (ArmourSet set : ArmourSet.values()) {
-            if (set.rank.ordinal() > rank.ordinal() || !set.made()) continue;
+            boolean above = set.rank.ordinal() > rank.ordinal();
+            if (above && !every || !set.made()) continue;
             boolean known = known(mem, set);
             for (ArmorType piece : ForgeSong.PIECES) {
                 List<ForgeSong.Need> cost = ForgeSong.cost(set, piece);
@@ -78,21 +90,34 @@ public final class ArmourForge {
                 for (ForgeSong.Need n : cost) {
                     int have = count(p.getInventory(), matcher(n));
                     afford &= have >= n.count() || p.isCreative();
-                    needs.add(new ArmourPayloads.Need(label(n, set), icon(n), have, n.count()));
+                    needs.add(new ArmourPayloads.Need(label(n, set), icon(n), have, n.count(), n.tag() == null ? "" : n.tag().location().toString()));
                 }
                 boolean placed = ForgeSong.byHand(set) ? hand : metal;
                 ItemStack made = make(set, piece); // worn or carried: the row says so, not "Needs more" (Euan 2026-11-03)
-                int flags = (afford && placed && known ? ArmourPayloads.CAN : 0) | (mem.fromMemory(set, piece) ? ArmourPayloads.FROM_MEMORY : 0)
+                int flags = (afford && placed && known && !above ? ArmourPayloads.CAN : 0) | (mem.fromMemory(set, piece) ? ArmourPayloads.FROM_MEMORY : 0)
+                        | (above ? ArmourPayloads.ABOVE : 0) | (afford ? ArmourPayloads.AFFORD : 0)
                         | (mem.forgedWhole(set) ? ArmourPayloads.KNOWN_WHOLE : 0) | (known ? 0 : ArmourPayloads.NO_PATTERN)
                         | (!made.isEmpty() && ArmourGoals.owns(p, made.getItem()) ? ArmourPayloads.OWNED : 0);
                 out.add(new ArmourPayloads.Offer(set.ordinal() * 4 + ForgeSong.slot(piece), needs, flags));
             }
         }
-        String place = metal ? "" : anvil(level, be.getBlockPos()) == null
+        String place = metal || be == null ? "" : anvil(level, be.getBlockPos()) == null
                 ? "Metal is shaped on an anvil. Set one within a few steps of this stand, near your Forge."
                 : "Metal is heated in a Forge. This stand needs your Hearth's Forge within a few steps.";
-        String byHand = hand ? "" : "Hide is cut and riveted at a works table. Set a crafting table within a few steps of this stand.";
-        return new ArmourPayloads.Offers(be.getBlockPos(), rank.ordinal(), out, place, byHand);
+        String byHand = hand || be == null ? "" : "Hide is cut and riveted at a works table. Set a crafting table within a few steps of this stand.";
+        return new ArmourPayloads.Offers(be == null ? BlockPos.ZERO : be.getBlockPos(), rank.ordinal(), out, place, byHand, mem.tracked, be != null);
+    }
+
+    /** Sets (or, with null, clears) the suit the Tasks page follows (SPEC §52). Only a set you know can be tracked. */
+    public static void track(ServerPlayer p, @Nullable ArmourSet set) {
+        ArmouryMemory mem = ArmouryMemory.of(p);
+        if (set == null) mem.tracked = "";
+        else if (known(mem, set)) mem.tracked = set.id;
+    }
+
+    /** Dev: learns a set's pattern, as using the item does. */
+    public static void learn(ServerPlayer p, ArmourSet set) {
+        ArmouryMemory.of(p).patterns.add(set.id);
     }
 
     /** Hunter sets come with rank and the E sets are known from the start; every other set's pattern is found in the world. */

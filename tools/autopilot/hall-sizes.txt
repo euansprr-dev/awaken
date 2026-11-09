@@ -1,0 +1,94 @@
+# The Hall of Arms (SPEC §52) at smaller windows and 4:3 (the sheet letterboxes): wall, weapon, terraces, suit, anvil.
+world hallsizes creative 4349
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1708 960
+cmd awaken admin levels 13
+cmd awaken admin rankup
+cmd awaken hall learn katana
+cmd awaken hall pattern wildhide
+cmd awaken hall pattern beastbound
+cmd awaken hall pattern sunward
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -8 200 -5 8 200 11 minecraft:polished_deepslate
+cmd fill -8 201 -5 8 206 11 minecraft:air
+cmd setblock 0 201 4 awaken:war_anvil[facing=north]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+cmd setblock -3 203 2 minecraft:lantern
+cmd setblock 3 203 5 minecraft:lantern
+cmd give @s awaken:sunshard 1
+cmd give @s copper_ingot 3
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+wait 20
+window 1280 720
+wait 40
+cmd awaken hall wall 0
+wait 80
+shot w1280_wall
+cmd awaken hall piece longsword 3
+wait 70
+shot w1280_piece
+screen close
+wait 10
+cmd awaken hall wall 0
+wait 40
+cmd awaken hall view wing 1
+wait 50
+shot w1280_terr
+cmd awaken hall suit beastbound 1
+wait 70
+shot w1280_suit
+screen close
+wait 10
+cmd tp @s 0.5 201 3.25 0 35
+wait 30
+use
+wait 70
+shot w1280_anvil
+cmd awaken hall view rite 2
+wait 40
+shot w1280_attune
+screen close
+wait 10
+window 1024 768
+wait 40
+cmd awaken hall wall 0
+wait 80
+shot w1024_wall
+cmd awaken hall piece longsword 3
+wait 70
+shot w1024_piece
+screen close
+wait 10
+cmd awaken hall wall 0
+wait 40
+cmd awaken hall view wing 1
+wait 50
+shot w1024_terr
+cmd awaken hall suit beastbound 1
+wait 70
+shot w1024_suit
+screen close
+wait 10
+cmd tp @s 0.5 201 3.25 0 35
+wait 30
+use
+wait 70
+shot w1024_anvil
+cmd awaken hall view rite 2
+wait 40
+shot w1024_attune
+screen close
+wait 10
+quit

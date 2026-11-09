@@ -34,6 +34,7 @@ final class AnvilTests {
         AwakenTests.register("arms_anvil_memory", 40, AnvilTests::memory);
         AwakenTests.register("arms_anvil_temper", 40, AnvilTests::temper);
         AwakenTests.register("arms_anvil_attune", 40, AnvilTests::attune);
+        AwakenTests.register("arms_anvil_preview", 40, AnvilTests::preview);
         AwakenTests.register("arms_anvil_reforge", 40, AnvilTests::reforge);
         AwakenTests.register("arms_anvil_verbs", 40, AnvilTests::verbs);
         AwakenTests.register("arms_anvil_rebuild", 40, AnvilTests::rebuild);
@@ -537,6 +538,77 @@ final class AnvilTests {
     }
 
     /**
+     * The window says what it will do before you pay, even a row you can't begin yet, and what it says is what happens: the
+     * numbers before and after on the Temper and Reforge pages equal the real weapon's when the real work is done (the
+     * Flawless column, this forging being Flawless); Attune names every Force and marks the catalyst in your off hand; an
+     * armour piece's Temper moves its armour and toughness.
+     */
+    private static void preview(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        WarAnvilBlockEntity be = anvilByForge(h);
+        BlockPos pos = be.getBlockPos();
+        ServerPlayer p = smith(h, pos, "anvil-preview", 13);
+        Rank rank = Progression.rank(p);
+        var hand = net.minecraft.world.InteractionHand.MAIN_HAND;
+
+        ItemStack sword = new ItemStack(WarAnvil.item(WarAnvil.WEAPON));
+        p.setItemInHand(hand, sword.copy());
+        AnvilPayloads.Option temper = AnvilHeld.options(p, level, pos, p.getMainHandItem()).get(0);
+        Upgrades.Change damage = change(temper, "Damage");
+        h.assertTrue(!temper.ready() && damage != null && temper.headline().equals("Damage " + damage.from() + " to " + damage.to())
+                && !temper.costs().isEmpty() && temper.says().getFirst().text().contains("how fast it swings"), "shown before it can be paid for: " + temper);
+        for (var part : AnvilHeld.price(1, rank)) p.getInventory().add(new ItemStack(part.item(), part.count()));
+        act(p, pos, AnvilPayloads.HELD, AnvilWork.TEMPER, 0F, 0F);
+        pullInGold(h, p, be);
+        beatOnTime(h, p, be, AnvilPayloads.STRIKE);
+        quench(h, p, be);
+        var real = Upgrades.stats(p, be.slot());
+        h.assertTrue(damage.from().equals(Upgrades.stats(p, sword).get("Damage")) && damage.to().equals(real.get("Damage")) && Upgrades.temperOf(be.slot()) == 1,
+                "Temper's numbers are the real weapon's: " + damage + " against " + real);
+        h.assertTrue(Upgrades.temperGives(be.slot()).equals("+" + Upgrades.number(Upgrades.TEMPER_DAMAGE) + " damage"), "its tooltip's words: " + Upgrades.temperGives(be.slot()));
+        act(p, pos, AnvilPayloads.DRAW, 0, 0F, 0F);
+
+        ItemStack daggers = new ItemStack(WarAnvil.item("wildhide_daggers"));
+        p.setItemInHand(hand, daggers.copy());
+        AnvilPayloads.Option reforge = AnvilHeld.options(p, level, pos, p.getMainHandItem()).get(1);
+        Upgrades.Change hit = change(reforge, "Damage"), uses = change(reforge, "Uses"), tier = change(reforge, "Tier");
+        h.assertTrue(!reforge.ready() && hit != null && uses != null && tier != null && tier.from().equals("E-rank") && tier.to().equals("D-rank"), "shown while it can't begin: " + reforge);
+        give(p, dev.awaken.arms.ArmsRaise.plan(p, p.getMainHandItem()).needs());
+        act(p, pos, AnvilPayloads.HELD, AnvilWork.REFORGE, 0F, 0F);
+        AnvilWork w = be.work();
+        pullInGold(h, p, be);
+        for (int i = 0; i < 40 && w.stage == AnvilSong.SHAPE; i++) beatOnTime(h, p, be, AnvilPayloads.STRIKE);
+        quench(h, p, be);
+        real = Upgrades.stats(p, be.slot());
+        h.assertTrue(be.slot().get(AnvilContent.FORGED.get()).quality() == AnvilSong.Quality.FLAWLESS.ordinal(), "this forging comes out Flawless");
+        // a Flawless forging leaves Temper I here, so its damage is the column past the Plain one
+        h.assertTrue(!hit.best().isEmpty() && hit.best().equals(real.get("Damage")) && hit.from().equals(Upgrades.stats(p, daggers).get("Damage")), "Reforge's damage: " + hit + " against " + real);
+        h.assertTrue(uses.to().equals(real.get("Uses")) && uses.from().equals(String.valueOf(daggers.getMaxDamage())), "Reforge's uses: " + uses + " against " + real);
+        act(p, pos, AnvilPayloads.DRAW, 0, 0F, 0F);
+
+        AnvilPayloads.Option bare = AnvilHeld.options(p, level, pos, p.getMainHandItem()).get(2);
+        h.assertTrue(!bare.ready() && bare.changes().isEmpty() && bare.says().stream().filter(s -> s.tone() == AnvilPayloads.Say.CHOSEN).count() == 0
+                && bare.says().stream().filter(s -> s.tone() == AnvilPayloads.Say.QUIET).count() == Forces.Force.values().length, "every Force is named with no catalyst held: " + bare);
+        p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, new ItemStack(dev.awaken.arms.ArmsForge.catalystItem(Forces.Force.FROST)));
+        AnvilPayloads.Option held = AnvilHeld.options(p, level, pos, p.getMainHandItem()).get(2);
+        var chosen = held.says().stream().filter(s -> s.tone() == AnvilPayloads.Say.CHOSEN).toList();
+        h.assertTrue(chosen.size() == 1 && chosen.getFirst().text().startsWith("Frost") && held.headline().equals("To Frost"), "the off hand's catalyst is the one marked: " + chosen);
+
+        ItemStack plate = new ItemStack(net.minecraft.world.item.Items.IRON_CHESTPLATE);
+        var moved = Upgrades.temperChanges(p, plate, 2);
+        Upgrades.applyTemper(plate, 2);
+        var after = Upgrades.stats(p, plate);
+        h.assertTrue(moved.size() == 2 && moved.get(0).label().equals("Armour") && moved.get(0).to().equals(after.get("Armour")) && moved.get(1).to().equals("0.5"),
+                "armour's Temper moves its armour and toughness: " + moved);
+        h.succeed();
+    }
+
+    private static Upgrades.@org.jspecify.annotations.Nullable Change change(AnvilPayloads.Option row, String label) {
+        for (Upgrades.Change c : row.changes()) if (c.label().equals(label)) return c;
+        return null;
+    }
+
+    /**
      * Attune: a catalyst in the off hand names the Force; it and the price go into the work with the weapon, the heat, then
      * three taps set the stone in the guard, and it stands in the slot attuned, its Mark kept. Held to the same Force again,
      * it says so and won't begin.
@@ -570,6 +642,15 @@ final class AnvilTests {
         p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, new ItemStack(dev.awaken.arms.ArmsForge.catalystItem(force)));
         AnvilPayloads.Option row = AnvilHeld.options(p, level, pos, p.getMainHandItem()).get(2);
         h.assertTrue(row.kind() == AnvilWork.ATTUNE && !row.ready() && row.line().startsWith("It's already attuned"), "the same Force again: " + row.line());
+        // the Hall's way (SPEC §52): any stone you carry, named by the player, the off hand empty
+        p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, ItemStack.EMPTY);
+        Forces.Force other = Forces.Force.HEAT;
+        for (dev.awaken.arms.ArmsForge.Cost c : dev.awaken.arms.ArmsForge.attunePrice(other)) p.getInventory().add(new ItemStack(c.item(), c.n()));
+        var stones = AnvilHeld.stones(p, p.getMainHandItem(), WarAnvil.forge(level, pos));
+        h.assertTrue(stones.size() == Forces.Force.values().length && stones.get(other.ordinal()).ready() && stones.get(force.ordinal()).on() && !stones.get(force.ordinal()).ready(), "every Force is offered, the one on it isn't: " + stones);
+        act(p, pos, AnvilPayloads.HELD, AnvilWork.ATTUNE | other.ordinal() + 1 << 8, 0F, 0F);
+        AnvilWork second = be.work();
+        h.assertTrue(second != null && second.kind == AnvilWork.ATTUNE && second.target == other.ordinal() && count(p, dev.awaken.arms.ArmsForge.catalystItem(other)) == 0, "the stone comes out of the pack");
         h.succeed();
     }
 

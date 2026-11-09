@@ -12,10 +12,10 @@ import java.nio.ByteOrder;
  * its normal, its texel in the albedo half of the set's texture and how far up the figure it lies (the sheen and the
  * molten pulse climb it). The weapons' glow anchors and streams, if any, are skipped.
  */
-record ArmourMesh(int accent, float[] pos, byte[] normal, float[] uv, byte[] along) {
+public record ArmourMesh(int accent, float[] pos, byte[] normal, float[] uv, byte[] along) {
     private static final int MAGIC = 'A' | 'W' << 8 | 'M' << 16 | 'S' << 24;
 
-    int vertices() {
+    public int vertices() {
         return pos.length / 3;
     }
 

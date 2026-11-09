@@ -40,7 +40,7 @@ public final class ArmsArmoury {
     public static final int BAND = 0, HALE = 1, FORGE = 2, ANVIL = 3;
     /** What the screen asks (the last four at a War Anvil's door; REBUILD the anvil a build up, SPEC §46.6). */
     public static final int DETAIL = 0, BUY = 1, DRAW = 2, TRACK = 3, UNTRACK = 4, RAISE = 5, FORGE_IT = 6, FROM_MEMORY = 7, FORGE_BLADE = 8,
-            REBUILD = 9;
+            REBUILD = 9, REFRESH = 10;
 
     /** The six tiers, their weapons' name prefixes and the level each opens at (the level road, SPEC §28.3). */
     public static final String[] TIERS = {"E", "D", "C", "B", "A", "S"};
@@ -70,12 +70,15 @@ public final class ArmsArmoury {
     private static void open(ServerPlayer p, int door, net.minecraft.core.@Nullable BlockPos pos) {
         dev.awaken.progression.Progression.count(p, "awaken:armoury_opened");
         OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), pos));
+        AwakenNet.send(p, dev.awaken.hall.HallServer.wall(p)); // before the view: the view opens the screen that draws it
+        AwakenNet.send(p, new dev.awaken.hall.HallNet.Suits(dev.awaken.armour.ArmourForge.hall(p, null))); // the Hall's other wing, to look at
         AwakenNet.send(p, view(p, door, true));
         sendDetail(p, defaultStyle(p), null);
     }
 
     /** Refreshes the client's copy (the band reads it), at the door they last opened or the band. */
     public static void sendView(ServerPlayer p) {
+        AwakenNet.send(p, dev.awaken.hall.HallServer.wall(p));
         AwakenNet.send(p, view(p, doorOf(p), false));
         String tracked = ArmsProgress.of(p).tracked;
         int colon = tracked.indexOf(':');
@@ -293,6 +296,10 @@ public final class ArmsArmoury {
                 var anvil = anvilOf(p);
                 if (anvil != null && dev.awaken.arms.anvil.WarAnvil.rebuild(p, anvil)) sendView(p);
                 sendDetail(p, st.id(), a.tier());
+            }
+            case REFRESH -> {
+                sendView(p);
+                sendDetail(p, st.id(), a.tier().isEmpty() ? null : a.tier());
             }
             case UNTRACK -> {
                 ArmsProgress g = ArmsProgress.of(p);

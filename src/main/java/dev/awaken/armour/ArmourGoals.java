@@ -36,6 +36,33 @@ final class ArmourGoals {
 
     static List<Goals.Step> steps(ServerPlayer p) {
         if (!Progression.profile(p).awakened()) return List.of();
+        List<Goals.Step> out = new ArrayList<>(rankSteps(p));
+        Goals.Step followed = tracked(p);
+        if (followed != null) out.add(followed);
+        return out;
+    }
+
+    /** The suit you chose to follow in the Hall (SPEC §52): what it still takes, until it is all made. */
+    private static Goals.@org.jspecify.annotations.Nullable Step tracked(ServerPlayer p) {
+        ArmouryMemory mem = ArmouryMemory.of(p);
+        ArmourSet set = mem.tracked.isEmpty() ? null : ArmourSet.byId(mem.tracked);
+        if (set == null) return null;
+        Goals.Choice c = choice(p, set);
+        if (c == null) return null;
+        boolean all = true;
+        for (ArmorType piece : ForgeSong.PIECES) all &= owns(p, ArmourForge.make(set, piece).getItem());
+        if (all) {
+            mem.tracked = "";
+            return null;
+        }
+        boolean above = set.rank.ordinal() > Progression.rank(p).ordinal();
+        return Goals.Step.of("armour/tracked", Goal.ARMOUR, "Make your " + set.setName + " armour")
+                .why(above ? set.rank.label + "-rank armour opens at level " + set.rank.levelRequired + ". You chose to follow this one in the Hall of Arms."
+                        : "You chose to follow this one in the Hall of Arms. It's made at a Fitting Stand.")
+                .needs(c.needs()).priority(35).build();
+    }
+
+    private static List<Goals.Step> rankSteps(ServerPlayer p) {
         Rank rank = Progression.rank(p);
         int worst = Integer.MAX_VALUE;
         boolean any = false;

@@ -66,7 +66,7 @@ final class ForgeScreen extends Screen implements dev.awaken.signal.client.Quiet
         ArmourSet[] all = ArmourSet.values();
         for (ArmourPayloads.Offer o : offers.offers()) {
             ArmourSet s = all[o.piece() / 4];
-            if (!sets.contains(s)) sets.add(s);
+            if ((o.flags() & ArmourPayloads.ABOVE) == 0 && !sets.contains(s)) sets.add(s); // the Hall shows the higher ranks too; this list never did
         }
         // open on the best set you can make something of now, else the highest you know
         set = Math.max(0, sets.size() - 1);

@@ -21,7 +21,7 @@ import java.util.Optional;
  * when the pack holds what a piece of a set your rank can forge takes, you don't own that piece or better, and it would
  * beat what you wear there. One line at most, worked out at most once a second per player.
  */
-final class ArmourNow {
+public final class ArmourNow {
     private ArmourNow() {}
 
     static final int PRIORITY = 25;
@@ -84,7 +84,15 @@ final class ArmourNow {
         return true;
     }
 
-    static double armour(ItemStack s, EquipmentSlot slot) {
+    /** The armour's toughness on a slot (the Hall's numbers). */
+    public static double toughness(ItemStack s, EquipmentSlot slot) {
+        double sum = 0;
+        for (ItemAttributeModifiers.Entry e : s.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers())
+            if (e.attribute().value() == Attributes.ARMOR_TOUGHNESS.value() && e.slot().test(slot)) sum += e.modifier().amount();
+        return sum;
+    }
+
+    public static double armour(ItemStack s, EquipmentSlot slot) {
         double sum = 0;
         for (ItemAttributeModifiers.Entry e : s.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers())
             if (e.attribute().value() == Attributes.ARMOR.value() && e.slot().test(slot)) sum += e.modifier().amount();

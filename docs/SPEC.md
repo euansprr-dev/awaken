@@ -18443,8 +18443,15 @@ from the cost table.
 
 **46.8 Temper, attune and reforge at the anvil (stage 3; plan §4.6).** Use the War Anvil holding one of Arms' weapons
 (forged, Lord-forged, Marked, Hale's issue: whatever `ArmsItems.of` knows), with no work on it and nothing in its slot,
-and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three rows, each with
-what it costs (have and need), one button, and one plain line for what stands in the way. All three heat the metal, so
+and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three cards across the top
+(Temper, Reforge, Attune, each with what it would do in a few words: "Damage 7 to 8") and one page below for the card you
+pick: the numbers before and after, what it does in plain words, what it costs (have and need), one plain line for what
+stands in the way, and its button (Euan's playtest, 9 Nov: "what does tempering something actually do?"). It all shows
+before you pay, on a card you can't begin yet too. The window opens on the first card that can begin. Every word and
+number is sent by the server, from the code that makes the change (`AnvilPayloads.Option`): `Upgrades.stats` reads what a
+piece's tooltip shows, and `Upgrades.changes` compares it on the piece and on a copy made by the real change
+(`Upgrades.applyTemper`; `AnvilHeld.reforged`, which the finished work uses too), so a preview can't drift from what
+happens. A number a piece's attributes don't show comes through `ForgeHooks.stat` (a focus's power damage). All three heat the metal, so
 each needs the Forge within reach at every tier ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks
 of this anvil."). The price is taken at the start, and the weapon goes from your hand into the work (`AnvilWork.piece`);
 both come back if the anvil is broken mid-work, and the weapon comes back through the slot, drawn as any.
@@ -18455,7 +18462,9 @@ both come back if the anvil is broken mid-work, and the weapon comes back throug
   Forge's words ("Put an anvil and an armour stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
   further.", "It can't take any more."). The scene (about 10 s whatever the levels): the whole weapon heats in the
   Forge's mouth, one strike on the style's own beat for each level gained, the quench. Nothing is judged and nothing is
-  flawed: the Temper lands as paid, and the strikes ring as at the draw-out.
+  flawed: the Temper lands as paid, and the strikes ring as at the draw-out. The page says what this heat would do (at a
+  limit, what the next level would, with its price), that a level adds damage for good and changes neither its swing nor
+  its uses, what its Temper is giving it now, and the most it could reach.
 - **Reforge it to C**: the next tier's parts (as Raise: the tier's cost, no Blueprint; `ArmsRaise.plan`), from the
   tier's level. The scene (about 20 s): the whole weapon heats, the next tier's metal is folded in on the style's beat
   (its strikes, turned over at half), the quench, the draw. Judged as a forging without the hilt
@@ -18466,15 +18475,23 @@ both come back if the anvil is broken mid-work, and the weapon comes back throug
   tier's (x1.25 in an Armoury room). A forged weapon becomes the next tier's of its style (`ArmsRaise.lift`:
   `ItemStack.transmuteCopy`, then its damage and uses set back to the new weapon's own and its Temper put back on); a
   Lord-forged weapon keeps its own body and Art and gains a point of damage a tier, as Raise always did, and its heat
-  glows in its Lord's colour (the weapon's accent) instead of the Forge's.
+  glows in its Lord's colour (the weapon's accent) instead of the Forge's. The page shows the tier, damage and uses from a
+  Plain forging (the worst it can come out), what a Flawless one would make them when that's more ("9 if Flawless"), what it
+  keeps, and the enchantment room each would leave (`ForgeHooks.cardLines`: a found weapon reforged Plain can end with less).
 - **Attune it to Heat** (a catalyst in the off hand): six essence, a Core Shard and the catalyst, as at the Forge
   (`ArmsForge.attunePrice`). The scene (about 8 s): the whole weapon heats, the catalyst is set in the guard, and three
   taps on the hilt's beat drive it home (all three at the guard), the blade glowing more in its Force's colour with each;
-  then it stands in the slot. Nothing is judged. Without a catalyst the row says which stone gives which Force; one
-  already attuned to that Force says so; attuning again replaces the old Force.
+  then it stands in the slot. Nothing is judged. The page always says what attuning does (`ArmsForge.hitWords`,
+  `powerWords`) and lists every Force with its stone and its touch (`ArmsForge.touch`, from the numbers `landed` uses), the
+  one in your off hand marked and the one on it now marked; without a catalyst the price shows with a catalyst still to find;
+  one already attuned to that Force says so; attuning again replaces the old Force.
 - **The Forge points here**: a plain use of the Forge holding one of Arms' weapons says "Weapons are tempered at a War
-  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil."; the Armoury at the Forge no longer offers Raise.
-  Armour tempers at the Forge as before, and Oren still tempers anything you hand him.
+  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil. It shows you what each Force does."; the Armoury at the Forge
+  no longer offers Raise. Armour tempers at the Forge as before, and Oren still tempers anything you hand him. The offer
+  says the same as the anvil: its card's title is what it will do ("Temper II: armour 6 to 6.5, toughness 0.5 to 0.75") with
+  the price under it, and a piece you can't pay for or that's at the limit gets a panel with the numbers.
+- **The tooltip**: a tempered piece says what its Temper gives it, read off the piece ("Tempered ✦✦ · +2 damage"); an
+  attuned weapon says what its Force does, under "Attuned · Frost".
 - **The Weapons tab**: two optional steps, each pointing at your anvil. "Temper your Beastbound Longsword"
   (`arms/temper`) when the best of Arms' weapons you carry (the highest tier, then the lowest Temper) is below the limit
   of the Forge by your War Anvil; its needs are the next level's price. "Reforge your Hive Regent's Daggers"
@@ -18496,7 +18513,9 @@ Tests: `arms_anvil_temper` (one heat to the Forge's limit, the summed price take
 weapon back through the slot; Oren's Mark's start; the Forge's plain use points to the anvil), `arms_anvil_attune` (the
 price and catalyst taken, attuned, Marks kept), `arms_anvil_reforge` (a Marked weapon: the next tier's, Marks, name,
 attunement and Temper kept, the story reforged with its quality; a Lord-forged: its body, Art and a point; the parts
-taken, and given back with the weapon when the anvil breaks mid-work).
+taken, and given back with the weapon when the anvil breaks mid-work), `arms_anvil_preview` (the numbers the window shows
+before you can pay equal the real weapon's after the real work: Temper's, Reforge's Flawless column and uses; every Force
+named and the off hand's marked; an armour piece's Temper moves armour and toughness).
 
 **46.9 Each rank's act (stage 4; plan §4.4).** A weapon forged in full at its tier (`AnvilWork.acts()`: not from memory,
 not a Hunter's blade forged alone, not one worked again) gets its rank's act and every act below it from C, each in its
@@ -19747,3 +19766,69 @@ against six kinds of player (stands still, runs, circles, holds guard, keeps awa
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
 
+
+## 52. The Hall of Arms (choosing weapons and armour; page https://claude.ai/artifact/UZX5KofQPGeXHeiPxJ9sxK)
+Euan 9 Nov: the Armoury, Fitting Stand and War Anvil windows were "just a block of text... ugly... too linear". They become one
+place you stand in. Package `dev.awaken.hall`; the old screens stay behind `classicScreens` in `awaken-hall-client.toml` for one
+build, then go.
+
+**The sheet.** Every Hall screen is laid out on one 1708 x 960 sheet (`Stage`), fitted to the window and letterboxed; text sizes
+snap to whole real pixels. Blackletter is Jacquard 24 baked to a bitmap (`tools/art/hall/title_font.py`; OFL text beside it; the TTF
+is not in the repo). Weapon meshes are the real ones, drawn live by `PicRenderer` into their own textures with the Hall's shader
+(`hall_weapon`), once when the wall changes and every frame only for the weapon brought close.
+
+**The Wall.** 16 kinds across (five bays: Blades, Heavy, Reach, Close, Strange), 6 ranks up, receding. Dark except round your lantern
+(the mouse) and below the tide (your level, the line and the words "You, level N"). `HallServer.wall` judges each niche and the client
+only draws it: `SHAPE` not found (black, no name), `OFFER` on Hale's rack at your rank (iron), `OVER` known but above your level (its
+true look), `KNOWN` known and short of parts (dimmed), `READY` (lit even in the dark), `MADE` held or remembered (lit even in the
+dark). Filters: Everything, Ready now, Tracked. 15 seals for the Lord-forged: closed until you have taken one, and one you hold opens
+close up. It never names a boss in advance.
+
+**A weapon brought close.** Clicking a niche zooms the wall away and flies that weapon to the middle of the screen, turning; drag to
+turn it. Left: the six ranks of the kind (a click changes rank). Right, in a dark panel: rank and name; blurb; damage (`damage + 1`),
+swings a second (`speed + 4`), uses and reach (the chain's longest strike); against the weapon in your hand; **what makes it
+different**, from the numbers the blows use (`HallSpecial`, never typed by hand per weapon); **what it takes**, each material as the
+real item (a tag's members in turn) with have/need and where it comes from; and what you can do here at this door. The action
+stands at the bottom and is the Armoury's own logic: at a War Anvil Hold to forge (0.6 s, Space or the mouse, or one click with
+`clickToCommit`), From memory, Forge the blade, Rebuild it; at the Forge Raise it, Draw a copy; at Hale's rack Buy; Track anywhere.
+A paragraph that won't fit is left out whole, never cut. Unfound: "Unknown", no numbers, nothing given away.
+
+**Refreshing.** Twice a second the screen hashes your pack; a change asks `ArmsArmoury.REFRESH`, so what you pick up shows without
+reopening. Test `hall_wall`: the wall says the same as the Armoury's list.
+
+**The Armour wing.** 29 suits on six terraces climbing away, ranks E (nearest) to S, kinds across; each row stands in the gaps of the
+one before it, the rows zigzagging, so a suit at the back is hidden as little as possible (`TerraceLayout`, offsets found by search).
+Lit round your lantern and below your level; unfound suits are black shapes with no name. The same filters as the wall. Clicking one
+brings it close: it stands turning, each piece named on the figure (`Helm`, `Cuirass`, `Greaves`, `Boots`, with what state it's in; a
+click or Tab picks the piece); the same kind at every rank on the left; on the right what the suit does (its two-piece and four-piece
+abilities come before the piece's own rows: that is why you'd want it; the four-piece line comes first and a full panel never drops it,
+giving up in turn where a material comes from (it moves to a tip on the material), a reason the red counts already give, then the comparison; five or six materials share one row), the armour of the whole suit, what the piece you picked does
+against what you wear, the real items it takes, an inlay of any catalyst you carry, and Hold to forge the piece. Unfound patterns
+say where patterns come from, never which creature. `Your looks` (each piece's look, one dye) moved here. Track a suit and it goes on
+K > Tasks as `armour/tracked` (one at a time). The Fitting Stand opens this wing; K's way in looks and tracks only. Test `hall_suits`.
+
+**The War Anvil.** No window: your weapon hangs turning over your own forge, which is out of focus and dim behind it, and your hand is
+empty while it does. Three rites wait underneath, each shown by a real thing from the game: the smith's hammer (Temper), the Forge
+(Reforge), the stones in turn (Attune). Never a drawn sigil (Euan 9 Nov: "need actual icons that still feel like MC"). Point at a rite
+and the steel shows it, the numbers drawn out of the weapon: heat runs down the blade for Temper, the next rank's weapon hangs over it
+for Reforge, the Force's colour fills it for Attune. Choosing a rite arms it; every cost is its real item; Hold commits, and the weapon
+lands. Attune takes any stone you carry, with the off hand's stone chosen first; a stone you don't have is still drawn in full, so you
+know it when you find it. Tests `arms_anvil_*`.
+
+**The line-up.** A step on K > Tasks that offers a choice of armour ("Choose your first armour", "Make your D-rank armour") opens the
+suits themselves, tall and side by side, instead of a list (`LineUpScreen`; `SetPreviewScreen` stays behind `classicScreens`). Each has
+its name, its kind and how close you are. A click brings it close in the same view as the Armour wing, with "Choose this one" where
+Track would be and left and right moving between the offers only. The step's choice is the Tasks page's own (`TaskPage.choose`).
+
+**The moment it's made.** When the Forge Song or the anvil's song finishes: a hit of light a quarter of a second long, then the piece's
+name in blackletter and how it came out ("Flawless", "Temper II", "Attuned") for about three seconds (`HallMoment`), over whatever
+screen finished it. The details stay on that screen's own card.
+
+**Sounds.** Minecraft's own recordings by name, nothing built (`HallSounds`): you come in, `block.furnace.fire_crackle` low; something
+brought close, `block.chain.place`; a different rank, rite, stone or wing, `item.armor.equip_iron`; back, `block.iron_trapdoor.open`;
+a held press, the fire rising in three steps; the weapon coming down, `block.anvil.land` quietly; made, `block.anvil.land` and
+`block.heavy_core.place`.
+
+**For everyone.** High Contrast brightens the quiet text. Hide Lightning Flashes takes out the hit of light. Distortion Effects under
+50% means things arrive rather than fly and nothing turns by itself (drag still does). The narrator reads what is brought close and
+which rite is picked, on a change only. On the sheet, text sizes snap to whole real pixels, rounding down unless the size is within .35 of a pixel of the next step (at 1.93 real pixels to a sheet pixel, size 2 stays 4 real pixels rather than falling to 3). A line can come out a few percent wider than laid out, so widths, fits and wraps all measure text at its snapped size.
