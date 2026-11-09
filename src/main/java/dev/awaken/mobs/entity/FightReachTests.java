@@ -31,6 +31,7 @@ public final class FightReachTests {
             AwakenTests.registerIsolated("fights_reach_live_" + id, 1400, h -> live(h, id));
         }
         AwakenTests.registerIsolated("fights_guard_holds_ground", 200, FightReachTests::holdsGround);
+        AwakenTests.registerIsolated("fights_body_keeps_up", 120, FightReachTests::bodyKeepsUp);
         AwakenTests.register("fights_reach_table", 20, FightReachTests::table);
         AwakenTests.registerIsolated("fights_reach_parry", 300, FightReachTests::parry);
         AwakenTests.register("fights_shots_own_look", 20, FightReachTests::ownLook);
@@ -210,6 +211,58 @@ public final class FightReachTests {
                 Awaken.LOG.info("[reach] guard holds: {} begun, {} met the guard, moved {}; {}", begun[0], met[0], String.format("%.2f", moved[0]), seq);
                 h.assertTrue(begun[0] == 2 && met[0] == 2, "both blows meet the guard (" + begun[0] + " begun, " + met[0] + " met)");
                 h.assertTrue(moved[0] > 1.0 && moved[0] < 2.6, "the guard was shoved a step a blow and held, moved " + moved[0]);
+                boss.discard();
+                h.succeed();
+            }
+        });
+    }
+
+    /**
+     * The body and its clip keep one clock on a move that carries it (SPEC §48.8; Euan: the Ember Tyrant's run "isn't
+     * smooth"): every kit's every such move through the client's three-step glide, fed the place sent each tick, is drawn
+     * where the server has it; then a real charge, sent ahead while it runs and not at its end.
+     */
+    private static void bodyKeepsUp(GameTestHelper h) {
+        int moves = 0;
+        for (Kits.Kit kit : Kits.all().values()) {
+            for (KitMoves.Move m : kit.moves().moves()) {
+                if (m.motion().advance() == 0) continue;
+                moves++;
+                int active = m.time().active(), left = 0;
+                float v = m.motion().advance() / active;
+                double drawn = 0, target = 0;
+                for (int k = 0; k < active; k++) {
+                    double sent = (k + 1 + FightRunner.carried(k, active)) * v;
+                    if (left == 0 || sent != target) {
+                        target = sent;
+                        left = 3;
+                    }
+                    drawn += (target - drawn) / left--;
+                    h.assertTrue(Math.abs(drawn - (k + 1) * v) < 1.0E-3F, kit.id() + "/" + m.id() + " drawn " + drawn + " at tick " + k + ", true " + (k + 1) * v);
+                }
+            }
+        }
+        h.assertTrue(moves >= 60, "the moves that carry a body: " + moves);
+        ServerLevel level = h.getLevel();
+        for (int x = -2; x <= 24; x++) for (int z = -2; z <= 24; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        MobDef def = Bestiary.get("ember_tyrant");
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(11.5, 1, 11.5)), 5,
+                new MobRole(MobRole.Role.BOSS, 5, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        h.assertTrue(boss.getType().updateInterval() == 1, "a boss is placed every tick");
+        KitMoves.Move charge = boss.kit().moves().get(boss.kit().moves().index("charge"));
+        double full = charge.motion().advance() / charge.time().active() * FightRunner.LEAD;
+        double[] most = {0};
+        boolean[] began = {false};
+        h.onEachTick(() -> {
+            if (!began[0]) {
+                began[0] = boss.playKitMove("charge");
+                return;
+            }
+            double ahead = boss.trackingPosition().distanceTo(boss.position());
+            most[0] = Math.max(most[0], ahead);
+            if (boss.kitPlaying() == null) {
+                h.assertTrue(Math.abs(most[0] - full) < 0.01, "sent ahead by two ticks of its run: " + most[0] + ", want " + full);
+                h.assertTrue(ahead == 0, "and not once it stops: " + ahead);
                 boss.discard();
                 h.succeed();
             }

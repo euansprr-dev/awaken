@@ -570,9 +570,20 @@ public final class AbilityRunner {
     /** Blocks past you a charge carries before it's spent. */
     static final double CHARGE_PAST = 1.5;
 
+    private double chargeSpeed() {
+        return mob.def().flies() ? 1.0 : 0.85;
+    }
+
+    /** How far past where it is a charge sends the body this tick, or null (SPEC §48.8). */
+    @Nullable Vec3 lead() {
+        if (chargeTicks <= 0) return null;
+        double by = chargeSpeed() * Math.min(FightRunner.LEAD, chargeTicks);
+        return new Vec3(chargeDir.x * by, mob.def().flies() ? chargeDir.y * by : 0, chargeDir.z * by);
+    }
+
     private void tickCharge(ServerLevel level) {
         chargeTicks--;
-        double speed = mob.def().flies() ? 1.0 : 0.85;
+        double speed = chargeSpeed();
         Vec3 v = mob.getDeltaMovement();
         mob.setDeltaMovement(chargeDir.x * speed, mob.def().flies() ? chargeDir.y * speed : v.y, chargeDir.z * speed);
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(0.6), e -> Abilities.isEnemy(mob, e))) {

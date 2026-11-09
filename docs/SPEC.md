@@ -19615,6 +19615,20 @@ a move its phase hasn't got yet** (`FightRunner.inPhase`), so a late phase's mov
 now answers only from her second phase on. Tempers, footwork and each boss's own trick aren't in this. `fights_mind_every_boss`
 checks they all have one; `fights_record_<boss>_guard` runs each of the others once, the Lantern Broker excepted (it trades with you and only duels if you ask).
 
+**48.8 The body keeps the clip's clock (Euan's playtest 2026-11-09: the Ember Tyrant's run "is super glitchy ... not super smooth";
+"double check all different bosses").** The clip runs on the server's clock (`ServerPace`), but the body's place reached the client
+every third tick and took three more to arrive, so a body carried by a move began to travel after its legs began to run and went
+on gliding after they stopped: on a real client (`fights-charge-trace`, CI 42601411803) the Tyrant's 12-tick run ended at 1.4 s on its
+clip and at 1.6 s on the ground, a third of the run out of step. Any late packet also stopped it dead for a tick, since the place was
+only ever three ticks ahead of what had been drawn. All 47 bodies now: are placed every tick (`updateInterval(1)`) and glide to it
+in three steps (`LinearInterpolationHandler`), which a packet one or two ticks late doesn't stop; and while a move or a charge carries
+one, it's sent ahead by two ticks of what's left of its run (`AwakenBoss.trackingPosition`, `FightRunner.lead`, `AbilityRunner.lead`),
+never further than the move still goes, and not at all if a wall is there. Two ticks is exactly what the glide lags at a steady speed:
+the client draws the body where the server has it on every tick, start and end included (`fights_body_keeps_up`, all 66 moves that
+carry a body). The server's own place, and so every reach and every hit, is unchanged. A move cut short (a deflect) can pull the drawn
+body back up to two ticks of its run. What a carried body's legs do isn't touched: the charge's stride swings about 34 degrees a tick
+where the same body's run swings about 8, the next thing to look at if the run still reads wrong.
+
 **48.7 The recorder (stage 0).** `FightRecorder`: `fights_record_<boss>_<kind>`, six bosses (more as the roll-out reaches them)
 against six kinds of player (stands still, runs, circles, holds guard, keeps away, stays behind), 72 s each with fixed seeds;
 `fights_record_pack` counts a pack of 12 winding up at once. It logs one `[record]` line a fight and asserts only that the fight

@@ -177,6 +177,22 @@ public class AwakenBoss extends AwakenMob {
         return level().getGameTime() < openUntil || reelTicks > 0;
     }
 
+    /** Glides three steps to each place it's sent, which it's sent every tick: a late packet can't stop the body (SPEC §48.8). */
+    @Override
+    protected net.minecraft.world.entity.InterpolationHandler createInterpolationHandler() {
+        return net.minecraft.world.entity.LinearInterpolationHandler.create(this);
+    }
+
+    /** Where clients are told it is: while a move carries it, ahead by what their glide lags, so the run keeps the clip's clock (SPEC §48.8). */
+    @Override
+    public Vec3 trackingPosition() {
+        FightRunner f = fight;
+        Vec3 by = f != null ? f.lead() : null;
+        if (by == null && abilities != null) by = abilities.lead();
+        // a wall in the way: it stops there, so it isn't drawn inside it first
+        return by == null || !level().noCollision(this, getBoundingBox().move(by)) ? position() : position().add(by);
+    }
+
     /** One of its blows was deflected (Arms): its fight answers (a recoil, a reel). */
     public void deflected(Strikes.Kind kind) {
         if (fight != null && level() instanceof ServerLevel sl) fight.deflected(sl, kind);

@@ -30,11 +30,11 @@ cmd awaken ascent pilot rec charge_a 70 2
 wait 2
 cmd awaken bosses duel play charge
 wait 100
-cmd awaken bosses duel stage ember_tyrant
+cmd awaken bosses duel stage guardian_gardens
 wait 80
 cmd execute as @e[type=minecraft:pig,limit=1] at @s run tp @s ~ ~ ~8
 wait 40
-cmd awaken lifetrace ember_tyrant 700
+cmd awaken lifetrace guardian_gardens 700
 wait 2
 cmd awaken bosses duel play charge
 wait 100

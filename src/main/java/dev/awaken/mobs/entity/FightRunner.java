@@ -830,6 +830,24 @@ final class FightRunner {
         }
     }
 
+    /** How many ticks ahead the body is sent while a move carries it: what the client's three-step glide lags at a steady speed (SPEC §48.8). */
+    static final int LEAD = 2;
+
+    /** Of the {@link #LEAD} ticks after active tick {@code k}, how many the move still carries the body on. */
+    static int carried(int k, int active) {
+        return k < 0 ? 0 : Math.max(0, Math.min(LEAD, active - 1 - k));
+    }
+
+    /** How far past where it is the body is sent this tick, or null: it runs on the clip's clock (SPEC §48.8). */
+    @Nullable Vec3 lead() {
+        if (move < 0 || (ability != null && ability.kind() == Ability.Kind.CHARGE)) return null; // a charge carries itself
+        int left = carried(t - windup - hold - 1, active);
+        KitMoves.Move m = moves.get(move);
+        if (left == 0 || (m.motion().advance() == 0 && m.motion().rise() == 0)) return null;
+        float r = yaw * Mth.DEG_TO_RAD, adv = m.motion().advance() * aim.run / active * left;
+        return new Vec3(-Mth.sin(r) * adv, m.motion().rise() / active * left, Mth.cos(r) * adv);
+    }
+
     /** How fast the body turns into its aim after the lock (degrees a tick). */
     private static final float TURN_RATE = 14F;
 
