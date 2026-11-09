@@ -53,6 +53,7 @@ final class RidingTests {
             } finally {
                 Bonds.clear();
                 level.getServer().setDifficulty(was, true);
+                GateLiveTests.teardown(level, null); // puts the test level back, or every later test's player counts as inside a gate
             }
             h.succeed();
         });
