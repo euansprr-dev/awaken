@@ -93,22 +93,16 @@ shot mattock_rock
 # game time slowed (the client's ticks follow it), or the half-second flip falls between two shots
 cmd tick rate 3
 wait 6
-cmd tp @s 1.0 201 7.0 -40 8
-wait 3
+# look, not tp: a cmd step waits five ticks, by which time it has landed. One tick a shot, from the toss to the catch
+look -40 8
+wait 2
 shotnow mattock_turn_1
-wait 1
 shotnow mattock_turn_2
-wait 1
 shotnow mattock_turn_3
-wait 1
 shotnow mattock_turn_4
-wait 1
 shotnow mattock_turn_5
-wait 1
 shotnow mattock_turn_6
-wait 1
 shotnow mattock_turn_7
-wait 1
 shotnow mattock_turn_8
 cmd tick rate 20
 wait 12
