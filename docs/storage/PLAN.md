@@ -207,12 +207,13 @@ Inputs: the open menu, container id, state id, which section.
 Processing, on the server: read the section's slots, skip the hotbar and pinned slots, merge stacks of identical items and
 components, sort, lay out with row breaks, check that counts per item and component match exactly and that every target slot
 accepts its stack, then write through the slots. If any check fails, nothing changes.
-Row breaks: each sort starts a new row. If that wouldn't fit, the two neighbouring sorts that waste the most slots are joined
-first, and so on, down to one continuous run. Same input, same output, and a second Tidy changes nothing.
+Row breaks: first try every sort on its own row. If that doesn't fit, a sort moves to a new row only when it doesn't fit what's
+left of the current row, is at most one row long, and the remaining stacks still fit. Otherwise it continues where the last
+sort ended. Same input, same output, and a second Tidy changes nothing.
 Response: the server sends where each slot went; the client flies ghost items over the real, already-moved slots for 180 to
 260 ms. Clicking during the flight works and skips the animation.
-Recovery: an Undo chip beside Tidy until anything in that section changes. Undo refuses if the contents differ from what Tidy
-left. It isn't saved.
+Recovery: a line under the panel says what happened and carries an Undo button, until anything in that section changes. Undo
+refuses if the contents differ from what Tidy left. It isn't saved.
 
 **Stow.** In a chest: put away what this chest already holds. In your bag: the same for chests around you, within 8 blocks, on
 land you may use, chests you could open by hand. Inside a Storehouse the reach is the whole room. Pinned slots and the hotbar
@@ -277,14 +278,17 @@ reaches the whole hall.
 
 ### Steps for the Tasks page (`tasks-progression` owns how they show)
 
-All under `Goal.HEARTH`, registered through `core.api.Goals`:
+All under `Goal.HEARTH`, in the form `claude/tasks-progression-plan-df225b` proposes (one row per thread, three voices). Euan hasn't
+answered that plan yet; if it changes, these change with it. Told to that planner 9 Nov.
 
-| Key | Title | Why it matters | Needs |
-|---|---|---|---|
-| `storage/room` | Build a room for your things | "Any shape, anywhere on your land" | a closed room |
-| `storage/drop` | Set a Drop in it | "Whatever you tip in gets put away" | `Need.item(DROP)` |
-| `storage/totter` | Bring a Totter home | "They live on woods' floors" | a Totter at home |
-| `storage/ledger` | Set up a Ledger desk | "So you can look anything up" | keystone from a granary |
+| Step | Thread, order | Voice | Opens when | Needs | Teaches, opens line |
+|---|---|---|---|---|---|
+| `storage/room` "Build a room for your things" | `hearth.build`, 40 | Plain | The home's rooms hold 6 or more chests and barrels, and there's no Storehouse. No rank gate | One Drop, and a closed room with the Drop in it, any shape, any depth under your land | `room:storehouse`, `block:awaken:storehouse_drop`. "Tip things in and they get put away" |
+| The existing `KinGoals` Totter row | `hearth.beasts` | Lead: "They live on woods' floors" | A Storehouse stands | A Totter at home | No new step; moved up once a Storehouse stands |
+| `storage/ledger` "Set up a Ledger desk" | `hearth.build`, 45 | Lead: "Every town's granary keeps one against a ground-floor wall" | A Storehouse stands | A Ledger desk in that room, which takes a keystone | `block:awaken:ledger_desk`. "Look anything up, and send a Totter for it" |
+
+"Build a room" and "Set a Drop in it" were two steps; they're one, because anyone with chests already has a closed room, so a
+room-only step would tick itself. Tidy, Stow and Pins are buttons on screens you already open, so they need no step.
 
 ### What Made by Hand owns
 
@@ -361,9 +365,12 @@ stale gets a full resync and no animation. Undo can only be used by the player w
 
 ## 9. Interaction and craft
 
-**Layout.** Bag panel unchanged, 176×166 units. Buttons sit in the free strip above the pack, on the right, at y 66 (22×11 each).
-Chest panel: same slots as vanilla; Tidy and Stow right-aligned in the chest's title row, Tidy and Pin in the bag's label row, so
-each sits by what it affects. Recipe book and JEI push the panel; buttons are positioned from it.
+**Layout.** Bag panel unchanged, 176×166 units. Buttons sit in the free strip above the pack, on the right, at y 67, 11 tall:
+Tidy x 98 (23 wide), Stow x 123 (25), Pin x 150 (19). Those widths fit the words in the game's own font with room each side.
+Chest panel: same slots as vanilla; Tidy (x 119, 23 wide) and Stow (x 144, 25) in the chest's title row at y 3; Tidy and Pin in
+the same columns in the bag's label row, 72 to 83 on a 3-row chest. Each sits by what it affects. Recipe book and JEI push the
+panel; buttons are positioned from it. The result line and Undo sit 6 units under the panel, and on a 6-row chest (which leaves
+only 9 units below at GUI 4 on 1708×960) directly under it, as a plate over the frame's corners.
 
 **Type.** Game font at GUI scale, labels in `Glass.LABEL`, buttons in `Glass.button`. Sentence case. Labels are single common
 words. Tooltip names exactly what will happen, for example "Put away what this chest already holds".
@@ -379,7 +386,7 @@ is real immediately. With reduced motion: no flight, target slots flash once. Pi
 `block.chiseled_bookshelf.insert`, quiet. Undo: `item.bundle.remove_one`. Ledger page: `item.book.page_turn`. The Drop keeps its
 `works.land_*` sounds. All audition in context before shipping, and pass `ding_check.py`.
 
-**Keys, GUI only and rebindable.** T Tidy, S Stow, Z Undo while the chip shows, Alt-click pin. Off while a text box has focus. No
+**Keys, GUI only and rebindable.** T Tidy, S Stow, Z Undo while the line shows it, Alt-click pin. Off while a text box has focus. No
 in-world key changes.
 
 **Accessibility.** Every button has a tooltip and a key. Pin has a mode as well as Alt. No meaning rests on colour alone. Works at
