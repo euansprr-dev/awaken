@@ -1942,7 +1942,7 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   tools/autopilot/lens-dh.txt (2026-10-24, OpenGL on the M4, DH Swift, render distance 16: depth read, far terrain
   intact, haze across the vanilla edge within ~0.03 of itself away from silhouettes; logs/lens-dh-sheet.jpg). Params
   texels: 13 the ritual, 14 Holo.
-- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers, and one choice
+- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers (four with ImmersiveVFX installed, below), and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
   for the rest. Opened with O (`key.awaken.look`; U went to Sovereign on 2026-10-25, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
   Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
@@ -1961,6 +1961,18 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   | DH `enableAntiAliasing` (file only) | false | true | true |
   | Iris shaders switch | off | off | off (was on; Lens 2's Ultra replaced Iris, §22) |
   | Sodium, vanilla options | none | none | none |
+
+  VFX, the fourth tier (Euan, 9 Nov: Swift, Cinematic, Ultra, VFX, "VFX only has that active"): `lens = VFX`, and Lens
+  stays off, story scenes included, while ImmersiveVFX draws. Offered only with that mod installed; a saved VFX without
+  it reads as Swift. No frame-time budget is promised. The mod has no off switch and a jar can't be unloaded, so the
+  three Lens tiers put it to sleep through its own `ModConfigSpec` (`compat.client.ImmersiveVfxLook`, found through
+  FML's `ModConfigs` by key, so no compile dependency): every on/off setting false, the choices in `Look.VFX_ASLEEP`,
+  then `spec.save()`, which writes the file and fires the reload the mod listens for, as its menu does. What the player
+  had waits in config/awaken-immersivevfx-kept.json (`schemaVersion`) and comes back with VFX. The first client tick
+  agrees the mod with the saved Look. Its 24 client mixins stay applied while it sleeps. The mod is CurseForge only and
+  All Rights Reserved: pack/lock.json pins its URL and hash (`handPinned`, kept through `pack.py lock`, left out of
+  `pack.py export`), the jar is fetched at install and never committed. Before any public pack release, get the
+  author's OK or wait for the open licence promised on its page.
 
   DH values are pack/dh/swift.json and cinematic.json (a GameTest compares them); keys the tiers agree on (threads,
   cloud layers) aren't owned. DH: the six keys its 3.3.4 config API offers are set at once

@@ -301,6 +301,11 @@ final class CompatTests {
             h.assertTrue(Tier.SWIFT.lens == LensLook.SWIFT && !Tier.SWIFT.irisShaders, "Swift: Lens Swift, no shaders");
             h.assertTrue(Tier.CINEMATIC.lens == LensLook.CINEMATIC && !Tier.CINEMATIC.irisShaders, "Cinematic: Lens Cinematic, no shaders");
             h.assertTrue(Tier.ULTRA.lens == LensLook.ULTRA && !Tier.ULTRA.irisShaders, "Ultra: Lens Ultra, no shaders (SPEC §22)");
+            h.assertTrue(Tier.VFX.lens == LensLook.VFX && !Tier.VFX.irisShaders, "VFX: ImmersiveVFX alone, no shaders");
+            h.assertTrue(Tier.values()[Tier.values().length - 1] == Tier.VFX, "VFX stays last: the screen leaves it off the end without the mod");
+            h.assertTrue(Look.current(LensLook.VFX, false) == Tier.VFX, "the VFX setting reads back as the VFX tier");
+            h.assertTrue(Look.fits(Tier.VFX, 99f, 99f) == null, "VFX promises no frame time");
+            h.assertTrue("CUSTOM".equals(Look.VFX_ASLEEP.get("preset")), "asleep is a custom preset, or the mod's values wouldn't match a named one");
             for (Tier t : Tier.values()) {
                 List<DhSetting> dh = Look.dh(t);
                 h.assertTrue(dh.size() == Look.DH_KEYS.size(), t + " sets every owned DH key");

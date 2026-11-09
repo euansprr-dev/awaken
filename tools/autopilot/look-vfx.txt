@@ -1,0 +1,53 @@
+# The VFX Look (SPEC §14, Euan 9 Nov): one world, one camera, the switch thrown live. Swift first, with ImmersiveVFX
+# asleep; then VFX, its shadows and fog awake and Lens off; then Swift again, which should match the first shot (clouds
+# included: asleep must leave the game's own sky alone); then the Look screen with its four cards.
+# ci knobs: PACK=perf,feel LENS=swift RD=8
+#   tools/tour-ci.sh tools/autopilot/look-vfx.txt 1500
+world look_vfx creative 20261109
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud off
+cmd time set 2500
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tp @s 2400 200 2400 40 18
+wait 200
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~4 ~ 40 18
+wait 200
+lookswitch swift
+wait 80
+shot vfx1_swift_before
+lookswitch vfx
+wait 200
+shot vfx2_vfx_on
+lookswitch swift
+wait 200
+shot vfx3_swift_after
+screen look
+wait 60
+shot vfx4_look_screen_four_cards
+lookswitch vfx
+wait 80
+shot vfx5_look_screen_vfx_chosen
+screen close
+wait 20
+lookswitch cinematic
+wait 200
+shot vfx6_cinematic_after
+quit

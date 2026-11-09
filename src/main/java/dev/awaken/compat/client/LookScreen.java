@@ -28,10 +28,12 @@ import java.util.Locale;
  * page (Euan, 2026-10-26). The frame-time line is the last minute's p50 and p99, green while it fits the tier's
  * budget. Drawn like the System's own cards: projected glass that scans in while the holo look is on
  * ({@link HudLook}), flat {@link Glass} otherwise. The world keeps running behind it and is never dimmed (this isn't a
- * reading screen), so a choice shows at once. Keys: 1 · 2 · 3, Esc.
+ * reading screen), so a choice shows at once. Keys: 1 · 2 · 3 · 4, Esc.
  */
 public final class LookScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
-    private static final Tier[] TIERS = Tier.values();
+    /** The tiers on offer: VFX stays last, and only with ImmersiveVFX installed. */
+    private static final Tier[] TIERS = java.util.Arrays.stream(Tier.values())
+            .filter(t -> t != Tier.VFX || Companions.immersiveVfxLoaded()).toArray(Tier[]::new);
     private static final LookPresets.Preset[] PRESETS = LookPresets.Preset.values();
     // the clickable setting rows, in order
     private static final int S_LOOK = 0, S_FAR = 1, S_DISTANCE = 2, S_SCALE = 3, S_STEADY = 4, S_TEMPORAL = 5, SETTINGS = 6;
@@ -43,6 +45,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             case SWIFT -> "Soft light · 120 fps";
             case CINEMATIC -> "Shadows · 90+ fps";
             case ULTRA -> "Finest light · 60+ fps";
+            case VFX -> "ImmersiveVFX, no Lens";
         };
     }
     private static final int TITLE = 0xFFF4F6FB, LABEL = 0xFF8FA7C4, BLURB = 0xFFA9BBD4, DIM = 0xFF6F8299;
@@ -79,7 +82,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         java.util.Arrays.fill(settingY, -1);
         pw = Math.min(396, width - 12);
         px = (width - pw) / 2;
-        cw = (pw - 2 * PAD - 2 * CARD_GAP) / TIERS.length;
+        cw = (pw - 2 * PAD - (TIERS.length - 1) * CARD_GAP) / TIERS.length;
         blurbs.clear();
         int lines = 1;
         for (Tier t : TIERS) {
@@ -329,6 +332,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             add("DISTANT HORIZONS", same ? "set for " + current.pretty() : "its own settings (changed in its menu)", Glass.TEXT);
         }
         if (Companions.irisLoaded()) add("IRIS", Companions.irisShadersEnabled() ? "shaders on (Lens steps aside)" : "shaders off", Glass.LABEL);
+        if (Companions.immersiveVfxLoaded()) add("IMMERSIVEVFX", current == Tier.VFX ? "on, and Lens is off" : "off", Glass.LABEL);
     }
 
     private void add(String label, String value, int colour) {
@@ -397,8 +401,8 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
     @Override
     public boolean keyPressed(KeyEvent event) {
         int k = event.key();
-        int i = k == InputConstants.KEY_1 ? 0 : k == InputConstants.KEY_2 ? 1 : k == InputConstants.KEY_3 ? 2 : -1;
-        if (i >= 0) {
+        int i = k == InputConstants.KEY_1 ? 0 : k == InputConstants.KEY_2 ? 1 : k == InputConstants.KEY_3 ? 2 : k == InputConstants.KEY_4 ? 3 : -1;
+        if (i >= 0 && i < TIERS.length) {
             pick(TIERS[i]);
             return true;
         }

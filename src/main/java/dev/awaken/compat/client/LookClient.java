@@ -41,6 +41,7 @@ public final class LookClient {
     }
 
     private static void tick() {
+        LookSwitch.settleVfx();
         Minecraft mc = Minecraft.getInstance();
         while (LOOK.consumeClick()) {
             if (mc.gui.screen() == null && mc.player != null) mc.gui.setScreen(new LookScreen(null));

@@ -455,7 +455,8 @@
     "feel"
    ],
    "dependencyOf": [],
-   "why": "TEST ONLY, never merge: Euan's side-by-side against Lens (8 Nov 2026). CurseForge, All Rights Reserved: fetched at install, the jar is never committed. Hand-pinned here, so tools/pack.py lock drops it."
+   "why": "The Look's VFX tier (SPEC 14). CurseForge only, All Rights Reserved: pinned here by URL and hash, fetched at install, the jar is never committed; handPinned keeps it through pack.py lock and out of pack.py export.",
+   "handPinned": true
   },
   {
    "slug": "iris",
