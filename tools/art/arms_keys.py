@@ -892,10 +892,13 @@ def shield_poses():
         # drawn back while the shield goes in, or for the guard: still standing, out at the side
         drawn=stood((0.10, -0.16, 0.05), out=0.16),
         guarded=stood((0.04, 0.14, 0.16), out=0.12),
-        # strike 1, down across the view from the upper right
-        cut_set=b((0.86, -0.50), 0.62, (0.84, 0.70), (-1.0, -0.2, 0.0)),
-        cut_hit=b((0.34, -0.50), 0.74, (-0.62, 0.10), (-0.5, -1.0, -0.3)),
-        cut_end=b((-0.06, -0.88), 0.66, (-1.00, -0.62), (-0.3, -1.0, 0.1)),
+        # strike 1, a diagonal through the crosshair on the Longsword's own line: the point travels straight from the upper
+        # right to the lower left and the blade stays square to the way it goes (Euan 2026-11-09: "it reads as just waving
+        # the swords instead of swinging it blade side": the old keys laid the blade over and the point went over the top of
+        # the frame, off to the far left, and never crossed the target)
+        cut_set=b((1.15, -1.00), 0.42, (0.66, 0.28), (-0.92, -0.10, -0.37)),
+        cut_hit=b((0.39, -0.81), 0.69, (-0.10, -0.16), (-0.78, -0.46, 0.42)),
+        cut_end=b((-0.14, -0.95), 0.69, (-0.87, -0.59), (-0.25, -0.12, 0.96)),
         # strike 3, the chop: raised over the shoulder, straight down the middle
         chop_set=b((0.58, -0.22), 0.58, (0.40, 0.92), (-0.1, 0.4, 1.0)),
         chop_hit=b((0.20, -0.62), 0.74, (0.05, 0.42), (-0.2, -0.3, -1.0)),
@@ -906,13 +909,13 @@ def shield_poses():
         stab_deep=b((0.30, -0.44), 1.04, (0.01, 0.01), thrust),
         lunge=b((0.30, -0.46), 1.06, (0.02, 0.0), thrust),
         lunge_deep=b((0.28, -0.44), 1.14, (0.01, 0.01), thrust),
-        # out of a dodge and a slide: flatter and lower than strike 1
-        sweep_set=b((0.92, -0.74), 0.54, (0.98, 0.14), (-1.0, -0.1, 0.0)),
-        sweep_hit=b((0.34, -0.62), 0.72, (-0.66, -0.06), (-0.3, -1.0, -0.2)),
-        sweep_end=b((-0.06, -0.92), 0.66, (-1.04, -0.56), (-0.2, -1.0, 0.1)),
-        low_set=b((0.92, -1.00), 0.54, (1.02, -0.30), (-1.0, 0.1, 0.0)),
-        low_hit=b((0.34, -0.84), 0.70, (-0.66, -0.36), (-0.1, -1.0, -0.2)),
-        low_end=b((-0.06, -1.02), 0.66, (-1.04, -0.84), (0.0, -1.0, 0.1)),
+        # out of a dodge and a slide: the same line through the target, flatter and lower than strike 1
+        sweep_set=b((1.20, -1.10), 0.42, (0.70, 0.05), (-0.95, -0.05, -0.30)),
+        sweep_hit=b((0.39, -0.90), 0.69, (-0.10, -0.22), (-0.85, -0.30, 0.42)),
+        sweep_end=b((-0.14, -1.00), 0.69, (-0.90, -0.50), (-0.25, -0.10, 0.96)),
+        low_set=b((1.20, -1.20), 0.42, (0.72, -0.18), (-0.95, 0.0, -0.30)),
+        low_hit=b((0.39, -1.02), 0.69, (-0.10, -0.38), (-0.85, -0.25, 0.42)),
+        low_end=b((-0.14, -1.10), 0.69, (-0.92, -0.62), (-0.25, -0.08, 0.96)),
         # held over a broken body or armed in a fall, the point down
         high=b((0.34, 0.02), 0.50, (0.12, -1.40), (0.0, 0.3, 1.0)),
         high_back=b((0.36, 0.20), 0.46, (0.14, -1.20), (0.0, 0.3, 1.0)),

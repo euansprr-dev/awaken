@@ -7298,7 +7298,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     shield with a front and a back on the other arm. The item's mesh for inventories and stands is the two together; the hands
     draw them apart (`<id>_blade`, `<id>_shield`): the shield is a copy of the stack in the free off hand with its `ITEM_MODEL` set
     (fp_swings `off.model`). With something in the off hand no shield is drawn. In first person you see the shield's inside; it has
-    its own rest and guard (`off.stance`, `off.guard`), and the sword stands as a Longsword does, edge ahead (arms_holds.STANDING). The second strike and the heavy are the shield alone (`hand: off`, form `bash`, no ribbon): gathered out to
+    its own rest and guard (`off.stance`, `off.guard`), and the sword stands as a Longsword does, edge ahead (arms_holds.STANDING). Its cuts (strike 1, the slipcut, the undercut) run on the Longsword's own line: the point travels straight through the crosshair on the hit with the blade square to the way it goes (Euan 2026-11-09: "it reads as just waving the swords instead of swinging it blade side"; the old keys laid the blade over, so the point went over the top of the frame and off to the far left and never crossed the target). The second strike and the heavy are the shield alone (`hand: off`, form `bash`, no ribbon): gathered out to
     the left with its face turned aside, driven across to the middle of the view and squared to the front, held a moment, because depth
     alone doesn't read and a shove must cover what it hits. The body lunges behind it (0.9, the heavy 1.3), it holds longer on the
     hit (85 ms, heavy 130), and a target is thrown back (`BASH_PUSH` 2.6 where a thrust is 1.15; a Lord isn't moved). The heavy is
