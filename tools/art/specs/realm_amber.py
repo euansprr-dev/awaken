@@ -452,11 +452,14 @@ def P_for_honey():
 
 
 def honey_frames(P, count=32):
-    """The river: thick and slow, its light moving under the surface, looping on the last frame."""
+    """The river: thick and slow, deep amber with wide soft bands that never show the block's edge, and a few small glints
+    drifting down it. Anything sharper repeats every sixteen blocks and reads as wallpaper. Loops on the last frame."""
     import math
     rp = P.ramp("honey")
     rng = P.rng_for("honey-flow")
-    phases = [(rng.random() * 6.283, 1 + rng.randrange(3), rng.randrange(3)) for _ in range(5)]
+    bands = [(rng.random() * 6.283, kx, ky, w) for kx, ky, w in ((1, 0, 1.0), (1, 1, 0.8), (1, -1, 0.6), (2, 1, 0.3))]
+    # glints ride the flow at their own places and pace: whole loops only, so the last frame meets the first
+    glints = [(rng.randrange(16), rng.randrange(16), 1 + rng.randrange(2), 1 + rng.randrange(3)) for _ in range(6)]
     frames = []
     for f in range(count):
         t = f / count * 6.283
@@ -464,11 +467,12 @@ def honey_frames(P, count=32):
         for y in range(16):
             for x in range(16):
                 a, b = x / 16 * 6.283, y / 16 * 6.283
-                v = 0.0
-                for ph, kx, ky in phases:
-                    v += math.sin(kx * a + ky * b + ph + t)
-                v = (v / 5 + 1) / 2
-                c.set(x, y, rp[min(5, max(1, int(1 + v * 5)))])
+                v = sum(w * math.sin(kx * a + ky * b + ph + t) for ph, kx, ky, w in bands) / 2.7
+                c.set(x, y, rp[min(3, max(2, int(2.4 + v * 1.1 + 0.5)))])
+        for gx, gy, speed, size in glints:
+            y = (gy + int(f / count * 16 * speed)) % 16
+            for k in range(size):
+                c.set((gx + k // 2) % 16, (y + k) % 16, rp[5 if k == 0 else 4])
         frames.append(c)
     return frames
 
@@ -531,7 +535,8 @@ def honey_block():
     with open(os.path.join(res, "models/block/realm_honey.json"), "w") as f:
         json.dump(model, f, indent=2)
     with open(os.path.join(res, "blockstates/realm_honey.json"), "w") as f:
-        json.dump({"variants": {"": {"model": "awaken:block/realm_honey"}}}, f, indent=2)
+        # turned at random block by block: the blotches never line up into a sixteen-block repeat
+        json.dump({"variants": {"": [{"model": "awaken:block/realm_honey", "y": a} for a in (0, 90, 180, 270)]}}, f, indent=2)
 
 
 def content():
