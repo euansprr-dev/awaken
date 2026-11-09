@@ -7207,17 +7207,26 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   - *The stance* (schema 7, a style's `stance` [dx, dy, dz, qx, qy, qz, qw]): where the hands rest between moves,
     a pair's off hand its mirror while the twin shows; let go as the guard comes up, never while the weapon cuts. A
     keyed style's moves start and end there (arms_fp_swings: "ends in its stance").
-  - *The Daggers*: a forward grip in both hands, the fists low and in from vanilla's corner, the points angled in toward
-    the crosshair. Strike 1 drives the right point first from the hip to the crosshair and back; as it drives, the left
-    draws back and up into its guard, and strike 2 fires from there; the right meanwhile is cocked out to the right for
-    strike 3's slash down across the crosshair; strike 4 drives both points in at once from the hips. Each strike's
-    hands hold where the next starts until 7 ticks after the press (about a third of a second), then go home: the hands
-    are never home between strikes of a chain, the finisher included (it pulls both back into the guard). The free
-    hand always sits in its guard, the point in toward the crosshair but a stab's length off it on screen, so a stab
-    out of it travels. A stab is fast in and slow out: the blow from the hip or the guard in half a tick, the pull back
-    straight to the guard over two and a half (the film's gate wants the blow at least 3 times its return's speed;
-    keyed, strikes 1, 2, 4 and the riposte run 5 to 7 times). The heavy charges coiled on the crosshair's line and its
-    release is the drive; the Plunge is armed raised, points down.
+  - *The Daggers* (Euan 2026-11-09: "I want clean stabs", "the hands still go way too upwards", "the right arms go way
+    too much to the left side", "maybe we remove the slashes and just make it like a lot of small stabs"): a forward grip
+    in both hands, and every blow of the chain is a stab. Two pistons: each fist has one line, low at its own side of the
+    screen, and a stab is one move out along it and one move back along it, about 0.3 blocks, the fist ending near
+    (0.40, -0.84) on the screen and the point just under the crosshair on its own side of it. Nothing chambers first,
+    nothing winds up or crosses over, the other hand stays where it is and the view stays level (a hit nods it 0.25
+    degrees, the finisher's 0.6), so the only thing moving on the screen is the blade that is stabbing. Strikes 1 to 3
+    are right, left, right (strike 3 a touch lower); strike 4 is both at once and a little further; strike 5 (mastery) the
+    left alone, as far. Each is home in the stance by its third tick (strikes 4 and 5 by their fifth), before the next
+    press can land, so no clip ever hands over to another halfway through a move. The slashes are gone: strike 3, strike
+    5, the slipcut (low) and the undercut (lower, at the legs) are stabs for the server too, at the stab's arc of 30
+    and the thrust's whoosh, so their old wider arcs (90, 90, 120, 160) are gone with them; an aimed blow ignores the arc.
+    The heavy charges drawn back down the same lines and its release is both stabs; the riposte is the chain's stab at
+    full reach. The Art and the blows driven down (the Plunge, the Execution) keep their own keys. Why the old keys
+    looked as they did: they drove the fist to the crosshair, as far across and up as forward (fist at (0.24, -0.58),
+    the arm reaching up the middle of the screen), the right hand was twisted out sideways between strikes to set up the
+    slash and thrown across past the crosshair by it, and a chamber, a blow and a follow-through stopped the hand three
+    times in 1.3 ticks while the view rocked a degree the other way each stab: that was the height, the crossing and
+    the jitter. `arms_keys.py check` and the test `arms_dagger_stabs` hold the rules (no slash, the fist low and on its
+    own side at the blow, one straight line out, the other hand and the view still, home before the next press).
   - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
     peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
     ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up

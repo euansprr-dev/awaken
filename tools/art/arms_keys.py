@@ -229,12 +229,15 @@ class View:
         return tr.at(t).at
 
 
-# ---- the Daggers (decisions 3 to 7): forward grip in both hands, points in toward the crosshair ----------------------
+# ---- the Daggers (Euan 2026-11-09: "I want clean stabs"; replaces the audit's decisions 3 to 7) ------------------------
 #
-# Every stab drives point first from the hip along a line to the crosshair and is pulled back; the hand not striking
-# draws back and up as the other drives, so it is cocked for the next press and fires while the first is still on its
-# way home (a tick of overlap at the chain's own pace, a strike every 4 ticks); the hands go home only when the presses
-# stop. The keys are authored for the right hand; a left one is its mirror unless it has its own.
+# Two pistons. Each fist has one line, low at its own side of the screen, and a stab is one move out along it and one move
+# back along it: nothing chambers first, nothing winds up or is thrown across, the other hand stays where it is and the view
+# stays level, so the only thing moving on the screen is the blade that is stabbing. Every stab leaves the stance and is back
+# in it before the next press can land, so no clip ever hands over to another halfway through a move. The old keys drove the
+# fist to the crosshair, as far across and up as forward (the arms reaching up, the right one crossing over), and a chamber,
+# a blow and a follow-through stopped the hand three times in 1.3 ticks: that was the jitter. The keys are authored for the
+# right hand; a left one is its mirror.
 
 LD = 0.627  # the Daggers' blade from the fist to the point (Wildhide, Gatewrought, Lordscale, Sovereign; 7bbc8f78)
 
@@ -245,41 +248,21 @@ def dagger_poses():
     return dict(
         # forward grip, the points angled in toward the crosshair, the fists low and in from vanilla's corner
         rest=b((0.50, -1.00), 0.64, (0.14, -0.32)),
-        # the free hand's guard: drawn back and up, the point in toward the crosshair but a stab's length off it on
-        # screen, so the stab out of it travels (a guard by the line left the left's blow barely faster than its return)
-        guard=b((0.56, -0.74), 0.46, (0.30, -0.14), (0.3, -1.0, 0.3)),
-        guard_back=b((0.66, -0.76), 0.42, (0.44, -0.14), (0.3, -1.0, 0.3)),
-        # strike 1's chamber at the hip, its stab home on the crosshair and a touch deeper as the freeze lets go
-        hip=b((0.60, -1.22), 0.56, (0.30, -0.52), (0.3, -1.0, 0.2)),
-        stab=b((0.24, -0.58), 0.80, (0.0, -0.02), (0.2, -1.0, 0.0)),
-        stab_deep=b((0.22, -0.53), 0.86, (-0.01, 0.0), (0.2, -1.0, 0.0)),
-        # strike 2's stab from the guard: level, straight in
-        stab_high=b((0.21, -0.44), 0.80, (0.0, 0.0), (0.2, -1.0, 0.0)),
-        stab_high_deep=b((0.19, -0.40), 0.86, (-0.01, 0.01), (0.2, -1.0, 0.0)),
-        # pulled back out of the body, on the way home
+        # the chain's stab: 0.3 blocks out along the fist's line, the fist still low and on its own side, the point driven
+        # in to just under the crosshair; strike 3's a touch lower so a run of stabs isn't one picture
+        stab=b((0.40, -0.84), 0.92, (0.07, -0.22)),
+        stab_low=b((0.42, -0.90), 0.92, (0.09, -0.30)),
+        # the finisher's and the loosed heavy's: both at once, a little further
+        pair=b((0.36, -0.82), 0.98, (0.05, -0.20)),
+        # the riposte's: the furthest a dagger reaches
+        lunge=b((0.36, -0.80), 1.02, (0.05, -0.18)),
+        # the heavy charged: drawn back down the same line, so the release is the stab itself
+        coil=b((0.58, -1.14), 0.50, (0.22, -0.46)),
+        # out of a dodge, and low at the legs out of a slide
+        slip=b((0.42, -0.92), 0.90, (0.09, -0.28)),
+        under=b((0.42, -1.06), 0.88, (0.14, -0.56)),
+        # pulled back out of the body, on the way home from a blow driven down
         out=b((0.44, -0.86), 0.66, (0.16, -0.24)),
-        # strike 3's slash: cocked up and out to the right, its edge leading down across the crosshair to the left
-        slash_set=b((0.80, -0.60), 0.60, (0.62, -0.02), (-1.0, -0.3, 0.0)),
-        slash_wound=b((0.88, -0.56), 0.57, (0.74, 0.04), (-1.0, -0.3, 0.0)),
-        slash_hit=b((0.22, -0.50), 0.72, (-0.16, -0.06), (-1.0, -0.3, -0.2)),
-        slash_end=b((-0.30, -0.82), 0.66, (-0.64, -0.50), (-0.7, -0.8, 0.2)),
-        # strike 4: both drawn to the hips together, both points driven in at once
-        pair=b((0.58, -1.30), 0.50, (0.32, -0.62), (0.3, -1.0, 0.2)),
-        pair_back=b((0.62, -1.36), 0.46, (0.38, -0.70), (0.3, -1.0, 0.2)),
-        pair_hit=b((0.20, -0.56), 0.82, (0.025, -0.03), (0.2, -1.0, 0.0)),
-        pair_deep=b((0.18, -0.51), 0.88, (0.02, -0.02), (0.2, -1.0, 0.0)),
-        pair_out=b((0.40, -0.92), 0.62, (0.16, -0.30)),
-        # the riposte's stab, a lunge deeper than the chain's
-        stab_lunge=b((0.20, -0.48), 0.92, (-0.01, 0.01), (0.2, -1.0, 0.0)),
-        # the heavy: both coiled on the crosshair's line while it charges, so the release is the drive itself
-        coil=b((0.36, -0.84), 0.60, (0.09, -0.14), (0.3, -1.0, 0.1)),
-        # the dodge's slash and the slide's: wider and lower than strike 3's
-        sweep_set=b((0.90, -0.84), 0.60, (0.76, -0.30), (-1.0, -0.1, 0.0)),
-        sweep_hit=b((0.24, -0.64), 0.70, (-0.18, -0.22), (-1.0, -0.1, -0.2)),
-        sweep_end=b((-0.40, -0.92), 0.64, (-0.78, -0.60), (-0.8, -0.6, 0.2)),
-        low_set=b((0.90, -1.08), 0.58, (0.78, -0.56), (-1.0, 0.1, 0.0)),
-        low_hit=b((0.22, -0.82), 0.70, (-0.22, -0.40), (-1.0, 0.2, -0.2)),
-        low_end=b((-0.45, -1.00), 0.64, (-0.80, -0.70), (-0.8, 0.0, 0.2)),
         # the Art: arms crossed before the chest, then both cut out through the middle, twice
         crossed=b((-0.18, -0.70), 0.52, (-0.62, -0.10), (1.0, -0.2, 0.0)),
         crossed_tight=b((-0.24, -0.66), 0.50, (-0.72, -0.02), (1.0, -0.2, 0.0)),
@@ -301,66 +284,37 @@ def dagger_moves():
     def view(*keys):
         return View(keys)
 
+    def still(hand=m):
+        """The hand not stabbing: where it rests, the whole move."""
+        return T([(0.0, hand["rest"], STOP), (1.0, hand["rest"], STOP)])
+
+    def piston(hand, pose, hit, home):
+        """One stab: out of the stance on one curve to the blow, held there by the freeze, back down the same line."""
+        return T([(0.0, hand["rest"], STOP), (hit, hand[pose], STOP), (home, hand["rest"], STOP)])
+
+    level = view((0, 0, 0, 0, STOP), (1.0, 0, 0, 0, STOP))
     moves = {
-        # strike 1, the right: from the hip point first to the crosshair; the left draws back and up into its guard,
-        # cocked for strike 2; the right comes home to its own guard, cocked for the slash
-        "strike_1": dict(hand="main", hit=1.0, set=0.5, swish=0.45, trail=(0.55, 1.45),
-                         keys=T([(0.0, P["rest"], STOP), (0.5, P["hip"], STOP), (1.0, P["stab"], GO), (1.3, P["stab_deep"], STOP),
-                                 (3.8, P["guard"], STOP), (7.0, P["guard"], STOP), (9.5, P["rest"], STOP)]),
-                         other=T([(0.0, m["rest"], STOP), (1.0, m["guard_back"], GO), (2.6, m["guard"], STOP), (7.0, m["guard"], STOP),
-                                  (9.5, m["rest"], STOP)]),
-                         view=view((0, 0, 0, 0, STOP), (1.0, -1.0, 0.5, -0.8, GO), (1.3, -1.2, 0.7, -1.0, STOP), (3.6, 0, 0, 0, STOP))),
-        # strike 2, the left: from its guard, level and straight in; the right, in its guard, draws back and up, then out
-        # to the right to be cocked for the slash
-        "strike_2": dict(hand="off", hit=1.0, set=0.45, swish=0.45, trail=(0.5, 1.45),
-                         keys=T([(0.0, m["guard"], STOP), (0.45, m["guard_back"], STOP), (1.0, m["stab_high"], GO),
-                                 (1.3, m["stab_high_deep"], STOP), (3.8, m["guard"], STOP), (7.0, m["guard"], STOP), (9.5, m["rest"], STOP)]),
-                         other=T([(0.0, P["guard"], STOP), (1.0, P["guard_back"], GO), (3.0, P["slash_set"], STOP),
-                                  (7.0, P["slash_set"], STOP), (9.5, P["rest"], STOP)]),
-                         view=view((0, 0, 0, 0, STOP), (1.0, 1.0, 0.4, 0.8, GO), (1.3, 1.2, 0.5, 1.0, STOP), (3.6, 0, 0, 0, STOP))),
-        # strike 3, the right's slash: wound up and out, down across the crosshair, through to the lower left; both
-        # hands then gather at the hips for the finisher
-        "strike_3": dict(hand="main", hit=1.0, set=0.4, swish=0.45, trail=(0.45, 1.5),
-                         keys=T([(0.0, P["slash_set"], STOP), (0.4, P["slash_wound"], STOP), (1.0, P["slash_hit"], GO),
-                                 (1.6, P["slash_end"], STOP), (2.8, P["pair_out"], GO), (3.8, P["pair"], STOP), (4.8, P["pair"], STOP),
-                                 (7.5, P["rest"], STOP)]),
-                         other=T([(0.0, m["guard"], STOP), (1.2, m["guard_back"], GO), (3.4, m["pair"], STOP), (4.8, m["pair"], STOP),
-                                  (7.5, m["rest"], STOP)]),
-                         view=view((0, 0, 0, 0, STOP), (0.4, 0.8, -0.3, 1.0, STOP), (1.0, -1.0, 0.4, -1.2, GO), (1.6, -1.8, 0.6, -2.0, STOP),
-                                   (4.0, 0, 0, 0, STOP))),
-        # strike 4, the finisher: both drawn back together, both points driven in at once, held deep, pulled back into
-        # the guard (a press keeps the chain going from there), home only when the presses stop
-        "strike_4": dict(hand="both", hit=2.0, set=1.2, swish=1.3, trail=(1.25, 2.5),
-                         keys=T([(0.0, P["pair"], STOP), (1.2, P["pair_back"], STOP), (2.0, P["pair_hit"], GO), (2.4, P["pair_deep"], STOP),
-                                 (4.6, P["guard"], STOP), (7.0, P["guard"], STOP), (9.5, P["rest"], STOP), (11.0, P["rest"], STOP)]),
-                         other=T([(0.0, m["pair"], STOP), (1.2, m["pair_back"], STOP), (2.0, m["pair_hit"], GO), (2.4, m["pair_deep"], STOP),
-                                  (4.6, m["guard"], STOP), (7.0, m["guard"], STOP), (9.5, m["rest"], STOP), (11.0, m["rest"], STOP)]),
-                         view=view((0, 0, 0, 0, STOP), (1.2, 0, -0.8, 0, STOP), (2.0, 0, 1.4, 0, GO), (2.4, 0, 1.8, 0, STOP),
-                                   (5.0, 0, 0, 0, STOP))),
-        # strike 5 (mastery), the left's slash out of the finisher's guard: strike 3 mirrored, wound bigger
-        "strike_5": dict(hand="off", hit=2.0, set=1.5, swish=1.45, trail=(1.45, 2.5),
-                         keys=T([(0.0, m["guard"], STOP), (1.1, m["slash_set"], STOP), (1.5, m["slash_wound"], STOP),
-                                 (2.0, m["slash_hit"], GO), (2.7, m["slash_end"], STOP), (4.4, m["guard"], STOP), (7.0, m["guard"], STOP),
-                                 (9.5, m["rest"], STOP), (11.0, m["rest"], STOP)]),
-                         other=T([(0.0, P["guard"], STOP), (2.2, P["guard_back"], GO), (3.6, P["guard"], STOP), (7.0, P["guard"], STOP),
-                                  (9.5, P["rest"], STOP), (11.0, P["rest"], STOP)]),
-                         view=view((0, 0, 0, 0, STOP), (1.5, -0.9, -0.3, -1.2, STOP), (2.0, 1.2, 0.4, 1.4, GO), (2.7, 2.2, 0.6, 2.4, STOP),
-                                   (5.0, 0, 0, 0, STOP))),
-        # the heavy: charged coiled on the line, the release drives both points in at once
-        "heavy": dict(hand="both", hit=0.3, swish=0.0, trail=(0.0, 1.0),
-                      keys=T([(0.0, P["coil"], STOP), (0.3, P["pair_hit"], GO), (0.7, P["pair_deep"], STOP), (2.2, P["pair_out"], GO),
-                              (4.5, P["rest"], STOP), (10.0, P["rest"], STOP)]),
-                      other=T([(0.0, m["coil"], STOP), (0.3, m["pair_hit"], GO), (0.7, m["pair_deep"], STOP), (2.2, m["pair_out"], GO),
-                               (4.5, m["rest"], STOP), (10.0, m["rest"], STOP)]),
-                      view=view((0, 0, -0.6, 0, STOP), (0.3, 0, 1.6, 0, GO), (0.7, 0, 2.0, 0, STOP), (3.5, 0, 0, 0, STOP))),
-        # the riposte: the right's stab with a lunge, pulled back into its guard; the left thrown back in its own
-        "riposte": dict(hand="main", hit=1.0, swish=0.45, trail=(0.5, 1.5),
-                        keys=T([(0.0, P["rest"], STOP), (0.5, P["hip"], STOP), (1.0, P["stab_lunge"], GO), (1.5, P["stab_lunge"].moved(
-                            at=P["stab_lunge"].at + [-0.01, 0.01, -0.05]), STOP), (4.0, P["guard"], STOP), (7.0, P["guard"], STOP),
-                                (9.0, P["rest"], STOP), (10.5, P["rest"], STOP)]),
-                        other=T([(0.0, m["rest"], STOP), (1.0, m["guard_back"], GO), (2.8, m["guard"], STOP), (7.0, m["guard"], STOP),
-                                 (9.0, m["rest"], STOP), (10.5, m["rest"], STOP)]),
-                        view=view((0, 0, 0, 0, STOP), (1.0, -1.2, 1.0, -1.0, GO), (1.5, -1.5, 1.4, -1.2, STOP), (4.0, 0, 0, 0, STOP))),
+        # the chain: right, left, right, then both; each is home by its third tick, before the next press can land
+        "strike_1": dict(hand="main", hit=1.0, set=0.5, swish=0.45, trail=(0.55, 1.4), nod=0.25,
+                         keys=piston(P, "stab", 1.0, 3.0), other=still(), view=level),
+        "strike_2": dict(hand="off", hit=1.0, set=0.5, swish=0.45, trail=(0.55, 1.4), nod=0.25,
+                         keys=piston(m, "stab", 1.0, 3.0), other=still(P), view=level),
+        "strike_3": dict(hand="main", form="stab", hit=1.0, set=0.5, swish=0.45, trail=(0.55, 1.4), nod=0.25,
+                         keys=piston(P, "stab_low", 1.0, 3.0), other=still(), view=level),
+        # the finisher: both points out at once, no draw first (the press's own draw is its gather)
+        "strike_4": dict(hand="both", hit=2.0, set=1.0, swish=1.4, trail=(1.5, 2.4), nod=0.6,
+                         keys=piston(P, "pair", 2.0, 5.0), other=piston(m, "pair", 2.0, 5.0), view=level),
+        # strike 5 (mastery): the left alone, as far as the finisher's
+        "strike_5": dict(hand="off", form="stab", hit=2.0, set=1.0, swish=1.4, trail=(1.5, 2.4), nod=0.6,
+                         keys=piston(m, "pair", 2.0, 5.0), other=still(P), view=level),
+        # the heavy: charged coiled on the fists' own lines, the release is both stabs
+        "heavy": dict(hand="both", hit=0.5, swish=0.0, trail=(0.0, 1.0),
+                      keys=T([(0.0, P["coil"], STOP), (0.5, P["pair"], STOP), (4.0, P["rest"], STOP)]),
+                      other=T([(0.0, m["coil"], STOP), (0.5, m["pair"], STOP), (4.0, m["rest"], STOP)]),
+                      view=view((0, 0, -0.4, 0, STOP), (0.5, 0, 0.6, 0, STOP), (3.5, 0, 0, 0, STOP))),
+        # the riposte: the chain's stab at full reach
+        "riposte": dict(hand="main", hit=1.0, swish=0.45, trail=(0.55, 1.5),
+                        keys=piston(P, "lunge", 1.0, 4.0), other=still(), view=level),
         # the Art: both blades crossed before the chest, cut out through the middle, crossed again and out once more
         "art": dict(hand="both", hit=2.0, swish=1.6, trail=(1.6, 2.5),
                     keys=T([(0.0, P["rest"], STOP), (1.2, P["crossed"], GO), (1.7, P["crossed_tight"], STOP), (2.0, P["art_hit"], GO),
@@ -371,22 +325,12 @@ def dagger_moves():
                             (4.4, P["art_hit"], GO), (5.0, P["art_open"], STOP), (7.5, P["out"], GO), (9.5, P["rest"], STOP), (17.0, P["rest"], STOP)]]),
                     view=view((0, 0, 0, 0, STOP), (1.7, 0, -1.0, 0, STOP), (2.0, 0, 0.8, 0, GO), (2.6, 0, 1.2, 0, STOP), (4.0, 0, -0.6, 0, STOP),
                               (4.4, 0, 0.8, 0, GO), (5.0, 0, 1.4, 0, STOP), (8.0, 0, 0, 0, STOP))),
-        # out of a dodge: a wide slash across, lower than strike 3
-        "slipcut": dict(hand="main", hit=1.0, swish=0.4, trail=(0.4, 1.5),
-                        keys=T([(0.0, P["sweep_set"], STOP), (0.45, P["sweep_set"].moved(at=P["sweep_set"].at + [0.04, 0.0, 0.04]), STOP),
-                                (1.0, P["sweep_hit"], GO), (1.7, P["sweep_end"], STOP), (3.4, P["out"], GO), (5.0, P["rest"], STOP), (10.0, P["rest"], STOP)]),
-                        other=T([(0.0, m["guard"], STOP), (1.2, m["guard_back"], GO), (3.0, m["guard"], STOP), (5.0, m["rest"], STOP),
-                                 (10.0, m["rest"], STOP)]),
-                        view=view((0, 0, 0, 0, STOP), (0.45, 1.0, 0, 1.2, STOP), (1.0, -1.2, 0.4, -1.4, GO), (1.7, -2.4, 0.6, -2.6, STOP),
-                                  (4.5, 0, 0, 0, STOP))),
-        # out of a slide: low across the legs
-        "undercut": dict(hand="main", hit=1.0, swish=0.4, trail=(0.4, 1.5),
-                         keys=T([(0.0, P["low_set"], STOP), (0.45, P["low_set"].moved(at=P["low_set"].at + [0.04, -0.02, 0.04]), STOP),
-                                 (1.0, P["low_hit"], GO), (1.9, P["low_end"], STOP), (3.6, P["out"], GO), (5.0, P["rest"], STOP), (11.0, P["rest"], STOP)]),
-                         other=T([(0.0, m["guard"], STOP), (1.2, m["guard_back"], GO), (3.0, m["guard"], STOP), (5.0, m["rest"], STOP),
-                                  (11.0, m["rest"], STOP)]),
-                         view=view((0, 0, 0, 0, STOP), (0.45, 0.8, 1.0, 1.0, STOP), (1.0, -1.0, 2.0, -1.2, GO), (1.9, -2.0, 2.4, -2.0, STOP),
-                                   (5.0, 0, 0, 0, STOP))),
+        # out of a dodge: a stab, low
+        "slipcut": dict(hand="main", form="stab", hit=1.0, swish=0.4, trail=(0.55, 1.5),
+                        keys=piston(P, "slip", 1.0, 4.0), other=still(), view=level),
+        # out of a slide: lower, at the legs
+        "undercut": dict(hand="main", form="stab", hit=1.0, swish=0.4, trail=(0.55, 1.5),
+                         keys=piston(P, "under", 1.0, 4.0), other=still(), view=level),
         # armed in a fall: both raised, points down; on landing driven down into what's below
         "plunge": dict(hand="both", hit=0.3, swish=0.0, trail=(0.0, 1.0),
                        keys=T([(0.0, P["high"], STOP), (0.3, P["down_hit"], GO), (0.8, P["down_deep"], STOP), (3.0, P["out"], GO),
@@ -1113,7 +1057,7 @@ def kick_of(held, mv, form):
     drives into the screen, and the old row kicked a right stab sideways); a cut kicks along the way its points travel
     on screen into the hit (+yaw to the right, +pitch down); a pair cutting out both ways at once nods like a stab."""
     if form == "stab":
-        return [0.0, NOD]
+        return [0.0, mv.get("nod", NOD)]
     hit = mv["hit"]
     t0 = max(0.0, hit - 0.25)
     hands = [("keys", mv["hand"] == "off")] + ([("other", True)] if mv["hand"] == "both" else [])
@@ -1138,7 +1082,7 @@ def baked(data, style):
     for name, mv in MOVES[style]().items():
         prev = old["moves"].get(name, {})
         keys, idle = _rows(held, mv)
-        row = {"form": prev.get("form", "stab"), "weight": prev.get("weight", "snap"), "hand": mv["hand"], "keys": keys,
+        row = {"form": mv.get("form", prev.get("form", "stab")), "weight": prev.get("weight", "snap"), "hand": mv["hand"], "keys": keys,
                "bite": [1.0, 0.0], "idle": idle, "swish": mv["swish"]}
         if "set" in mv:
             row["set"] = mv["set"]
@@ -1201,8 +1145,8 @@ def _at(rows, t, n=7):
 
 def check(styles=KEYED):
     """The rules the data alone can show, on the baked file (the GameTests hold the game to the same): the other styles
-    byte for byte as git has them; each blow keyed on the tick the server counts its hit; each stab's point on the
-    crosshair there; every move home at the stance by its end, or held still from the chain's earliest press when the
+    byte for byte as git has them; each blow keyed on the tick the server counts its hit; a dagger's stab low and on its
+    own side there, another stab's point on the crosshair; every move home at the stance by its end, or held still from the chain's earliest press when the
     other hand throws the next; each chain strike starting where its hand is; the ribbon over the stroke alone."""
     import subprocess
     data = json.loads(open(SWINGS).read())
@@ -1235,7 +1179,25 @@ def check(styles=KEYED):
             if w == 0 and hit > 0.5:
                 bad.append(f"{name}: a loosed blow lands at {hit}, more than half a tick in")
             d, R = _at(clip["keys"], hit)
-            if clip["form"] == "stab" and name not in ("plunge", "execution"):
+            if style == "daggers" and clip["form"] == "stab" and name not in ("plunge", "execution"):
+                # a clean stab (Euan 2026-11-09): the fist low and on its own side at the blow, the point not past the
+                # crosshair, one straight line out, the view level through a chain's stabs
+                side = -1.0 if mv["hand"] == "off" else 1.0
+                p = mv["keys"].at(hit).at
+                fx, fy = p[0] / (-p[2] * ASPECT * TAN), p[1] / (-p[2] * TAN)
+                tip = tip_ndc(held, d, R, left=mv["hand"] == "off")
+                if side * fx < 0.3 or fy > -0.7:
+                    bad.append(f"{name}: the fist ({fx:.2f}, {fy:.2f}) isn't low and on its own side at the blow")
+                if side * tip[0] < 0:
+                    bad.append(f"{name}: the point {tip.round(3)} crosses the crosshair")
+                start = mv["keys"].at(0.0).at
+                chord = unit(p - start)
+                off = max(np.linalg.norm((q - start) - chord * float((q - start) @ chord)) for q in (mv["keys"].at(x).at for x in np.arange(0.0, hit, 0.05)))
+                if off > 0.005:
+                    bad.append(f"{name}: the fist leaves its line by {off:.3f} on the way out")
+                if name.startswith("strike_") and any(abs(v) > 1e-3 for r in clip["keys"] for v in r[8:11]):
+                    bad.append(f"{name}: the view moves through a stab")
+            elif clip["form"] == "stab" and name not in ("plunge", "execution"):
                 tip = tip_ndc(held, d, R, left=mv["hand"] == "off")
                 if math.hypot(*tip) > 0.15:
                     bad.append(f"{name}: the point {tip.round(3)} misses the crosshair on the hit")
