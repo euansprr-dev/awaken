@@ -62,6 +62,11 @@ public final class TasksModule {
                 act(p, new TaskPayloads.Act(TaskPayloads.PIN, key));
                 return true;
             }
+
+            @Override
+            public String chosen(ServerPlayer p, String key) {
+                return TaskState.of(p).chosen(key);
+            }
         });
         // what you pinned leads the card; the step on top shows there when nothing else is on
         Checklist.registerLeading(p -> card(p, true));
@@ -113,7 +118,7 @@ public final class TasksModule {
 
     private static TaskPayloads.StepRow row(TaskState st, TaskBook.Book book, Set<String> aside, Goals.Step s, int place) {
         List<TaskPayloads.ChoiceRow> choices = new ArrayList<>();
-        for (Goals.Choice c : s.choices()) choices.add(new TaskPayloads.ChoiceRow(c.id(), c.title(), c.sub(), c.show(), needs(c.needs())));
+        for (Goals.Choice c : s.choices()) choices.add(new TaskPayloads.ChoiceRow(c.id(), c.title(), c.sub(), c.show(), needs(c.needs()), c.detail()));
         Goals.Choice picked = chosen(st, s);
         var extra = new TaskPayloads.Extra(TaskBook.then(book, aside, s, picked != null), TaskBook.ready(st, s), s.voice().ordinal(), TaskBook.thread(s), place,
                 s.opens(), s.priority() >= TaskBook.URGENT);
@@ -155,6 +160,10 @@ public final class TasksModule {
                 if (bar < 0) return;
                 Goals.Step s = TaskBook.of(p).get(a.key().substring(0, bar));
                 String id = a.key().substring(bar + 1);
+                if (s != null && id.isEmpty()) { // Change: back to the choices
+                    st.chosen.remove(s.key());
+                    break;
+                }
                 if (s == null || s.choices().stream().noneMatch(c -> c.id().equals(id))) return;
                 st.chosen.put(s.key(), id);
             }

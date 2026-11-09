@@ -37,11 +37,11 @@ public final class TaskPayloads {
 
     private static final StreamCodec<ByteBuf, List<NeedRow>> NEEDS = NeedRow.STREAM_CODEC.apply(ByteBufCodecs.list(24));
 
-    /** One pick (an armour set): its id, name, line, the items that show it, and what it needs. */
-    public record ChoiceRow(String id, String title, String sub, List<String> show, List<NeedRow> needs) {
+    /** One pick (an armour set, a room for your home): its id, name, line, the items that show it, what it needs, and what's said once picked. */
+    public record ChoiceRow(String id, String title, String sub, List<String> show, List<NeedRow> needs, String detail) {
         public static final StreamCodec<ByteBuf, ChoiceRow> STREAM_CODEC = StreamCodec.composite(
                 S, ChoiceRow::id, S, ChoiceRow::title, S, ChoiceRow::sub, S.apply(ByteBufCodecs.list(8)), ChoiceRow::show,
-                NEEDS, ChoiceRow::needs, ChoiceRow::new);
+                NEEDS, ChoiceRow::needs, S, ChoiceRow::detail, ChoiceRow::new);
     }
 
     /**

@@ -58,7 +58,9 @@ final class KinGoals {
         Kinship ks = Kinship.of(p);
         List<Step> out = new ArrayList<>();
         int needs = 0;
-        for (KinKind k : KinPage.NEEDS) {
+        List<KinKind> order = new ArrayList<>(List.of(KinPage.NEEDS));
+        order.sort(java.util.Comparator.comparing(k -> !waitedFor(level, home, k))); // stable: a room with nobody to work it first (SPEC §53)
+        for (KinKind k : order) {
             if (needs >= SHOWN) break;
             if (living.contains(k)) continue;
             String need = KinPage.need(level, info, k);
@@ -75,6 +77,18 @@ final class KinGoals {
             if (!shown) out.add(step(p, ks, k, "", home, "kin/want/" + k.id(), 28));
         }
         return out;
+    }
+
+    /** Whether a room that stands at home needs this kind to work it. */
+    private static boolean waitedFor(ServerLevel level, BlockPos home, KinKind k) {
+        dev.awaken.hearth.room.RoomType room = switch (k) {
+            case TOTTER -> dev.awaken.hearth.room.RoomType.STOREHOUSE;
+            case PEBBLEPUP -> dev.awaken.hearth.room.RoomType.MINE_HEAD;
+            case EMBERKIT -> dev.awaken.hearth.room.RoomType.SMELTERY;
+            case CHIMEWREN -> dev.awaken.hearth.room.RoomType.ROOKERY;
+            default -> null;
+        };
+        return room != null && dev.awaken.kin.works.WorkRooms.room(level, home, room) != null;
     }
 
     /** One beast's step: what it wants once you've read it, else what to do to find one, else the need itself. */
@@ -103,7 +117,7 @@ final class KinGoals {
             title = cut < 0 ? need : need.substring(0, cut + 1);
             why = cut < 0 ? "" : need.substring(cut + 2);
         }
-        Goals.Builder b = Step.of(key, Goal.HEARTH, title).why(why.trim()).priority(priority);
+        Goals.Builder b = Step.of(key, Goal.HEARTH, title).thread("hearth.beasts", 100 - priority).lead().why(why.trim()).priority(priority);
         if (at != null) b.at(KinSpawner.rough(p, k, at)); // roughly, as Track points: never the spot
         return b.build();
     }

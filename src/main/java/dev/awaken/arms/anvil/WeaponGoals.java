@@ -47,6 +47,11 @@ final class WeaponGoals {
 
     static void register() {
         Goals.register(WeaponGoals::steps);
+        Goals.registerFooter(p -> {
+            if (!Progression.profile(p).awakened()) return List.of();
+            int next = reached(p) + 1;
+            return next >= ArmsArmoury.TIERS.length ? List.of() : List.of(new Goals.Footer(Goal.WEAPONS, "At " + ArmsArmoury.TIERS[next] + "-rank your next weapon opens."));
+        });
     }
 
     static List<Goals.Step> steps(ServerPlayer p) {

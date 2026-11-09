@@ -20,6 +20,8 @@ import java.util.List;
  * step on the HUD card; Set aside takes one off the list, with Undo.
  */
 final class TaskPage extends UiSection {
+    private static final String ADD = "hearth/add";
+
     @Override
     public String title() {
         return "";
@@ -179,6 +181,13 @@ final class TaskPage extends UiSection {
         ui.text(line, Glass.a(Glass.LABEL, 0.85f));
     }
 
+    /** A row that becomes what was picked on it ("Add to your home"): the pick, or null while there isn't one. */
+    private static TaskPayloads.@Nullable ChoiceRow became(StepRow s) {
+        if (!s.key().equals(ADD)) return null;
+        for (TaskPayloads.ChoiceRow c : s.choices()) if (c.id().equals(s.chosen())) return c;
+        return null;
+    }
+
     private static void heading(Ui ui, String text) {
         ui.text(text, Glass.a(Glass.LABEL, 0.9f));
         ui.gap(1);
@@ -195,11 +204,14 @@ final class TaskPage extends UiSection {
             if (s.fresh()) tags.chip("NEW", Glass.AMBER);
             if (s.extra().ready()) tags.chip("READY", Glass.GOOD);
             tags.end();
-            b.text(s.title(), s.optional() ? Glass.TEXT : Glass.TITLE);
-            if (!s.why().isEmpty()) b.textAtMost(s.why(), Glass.a(Glass.LABEL, 0.9f), 2);
+            TaskPayloads.ChoiceRow pick = became(s);
+            b.text(pick != null ? pick.title() : s.title(), s.optional() ? Glass.TEXT : Glass.TITLE);
+            String why = pick != null ? pick.sub() : s.why();
+            if (!why.isEmpty()) b.textAtMost(why, Glass.a(Glass.LABEL, 0.9f), 2);
             Ui.Flow f = b.flow();
-            int ready = ready(s.needs());
-            if (!s.needs().isEmpty()) f.text(ready + " of " + s.needs().size() + " ready", ready == s.needs().size() ? Glass.GOOD : Glass.LABEL);
+            List<NeedRow> wanted = pick != null ? pick.needs() : s.needs();
+            int ready = ready(wanted);
+            if (!wanted.isEmpty()) f.text(ready + " of " + wanted.size() + " ready", ready == wanted.size() ? Glass.GOOD : Glass.LABEL);
             if (open && !TaskCache.out(s) && f.button("Open ›", Glass.EDGE, true)) TaskTabs.pick(tabOf(s));
             pin(f, v, s);
             f.end();
@@ -250,14 +262,17 @@ final class TaskPage extends UiSection {
             if (s.extra().ready()) tags.chip("READY", Glass.GOOD);
             if (s.optional()) tags.chip("WHEN YOU WANT", Glass.LABEL);
             tags.end();
-            b.text(s.title(), Glass.TITLE);
-            if (!s.extra().opens().isEmpty()) b.text(s.extra().opens(), Glass.TEXT);
-            if (!s.why().isEmpty()) b.text(s.why(), Glass.a(Glass.LABEL, 0.95f));
-            if (!s.needs().isEmpty()) {
+            TaskPayloads.ChoiceRow pick = became(s);
+            b.text(pick != null ? pick.title() : s.title(), Glass.TITLE);
+            String opens = pick != null ? pick.sub() : s.extra().opens(), why = pick != null ? pick.detail() : s.why();
+            if (!opens.isEmpty()) b.text(opens, Glass.TEXT);
+            if (!why.isEmpty()) b.text(why, Glass.a(Glass.LABEL, 0.95f));
+            List<NeedRow> wanted = pick != null ? pick.needs() : s.needs();
+            if (!wanted.isEmpty()) {
                 b.gap(2);
-                needs(b, s.needs());
+                needs(b, wanted);
             }
-            if (!s.choices().isEmpty()) {
+            if (!s.choices().isEmpty() && pick == null) {
                 b.gap(2);
                 choices(b, s);
             }
@@ -266,7 +281,11 @@ final class TaskPage extends UiSection {
             if (!s.extra().then().isEmpty()) b.text(s.extra().then(), Glass.a(Glass.LABEL, 0.75f));
             Ui.Flow f = b.flow();
             pin(f, v, s);
-            if (s.choices().size() > 1 && !s.key().startsWith("hearth/add") && f.button("See them worn ›", Glass.EDGE, true)) SetPreviewScreen.open(s.key());
+            if (pick != null && f.button("Change", Glass.EDGE, true)) {
+                TaskCache.act(TaskPayloads.CHOOSE, s.key() + "|");
+                StatusSections.cue(StatusSections.Cue.UNDO);
+            }
+            if (s.choices().size() > 1 && !s.key().equals(ADD) && f.button("See them worn ›", Glass.EDGE, true)) SetPreviewScreen.open(s.key());
             if (v.capped() && !pinned && !s.extra().urgent() && !s.optional() && f.button("Set aside", Glass.EDGE, true)) {
                 TaskCache.setAside(s);
                 StatusSections.cue(StatusSections.Cue.UNDO);
@@ -309,7 +328,7 @@ final class TaskPage extends UiSection {
                 }
                 Ui.Flow f = cb.flow();
                 int ready = ready(c.needs());
-                f.text(c.needs().isEmpty() ? "You have every piece." : ready + " of " + c.needs().size() + " materials ready", Glass.LABEL);
+                f.text(c.needs().isEmpty() ? "You have every piece." : ready + " of " + c.needs().size() + (s.key().equals(ADD) ? " ready" : " materials ready"), Glass.LABEL);
                 if (f.button("Choose", Glass.EDGE, true)) choose(s, c);
                 f.end();
             });

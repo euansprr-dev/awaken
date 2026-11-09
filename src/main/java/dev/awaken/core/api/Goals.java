@@ -92,8 +92,15 @@ public final class Goals {
         }
     }
 
-    /** A pick a step offers (the first armour's sets): its id, name, one line, the items that show it (a set's pieces) and what it needs. */
-    public record Choice(String id, String title, String sub, List<String> show, List<Need> needs) {}
+    /**
+     * A pick a step offers (the first armour's sets, what to add to your home): its id, name, one line, the items that show
+     * it (a set's pieces), what it needs, and what to say about it once picked ("" for nothing more).
+     */
+    public record Choice(String id, String title, String sub, List<String> show, List<Need> needs, String detail) {
+        public Choice(String id, String title, String sub, List<String> show, List<Need> needs) {
+            this(id, title, sub, show, needs, "");
+        }
+    }
 
     /**
      * One step toward a goal. {@code key} is stable for the same underlying thing ("hearth/armoury"); two sources giving
@@ -260,6 +267,11 @@ public final class Goals {
 
         /** Pins the step if it's on the page now; false when it isn't, or when {@code onlyIfFree} and another is pinned. */
         boolean pin(ServerPlayer p, String key, boolean onlyIfFree);
+
+        /** The choice this player picked on a step, or "". */
+        default String chosen(ServerPlayer p, String key) {
+            return "";
+        }
     }
 
     private static Pin pins = new Pin() {
@@ -276,6 +288,11 @@ public final class Goals {
 
     public static void installPin(Pin p) {
         pins = p;
+    }
+
+    /** The choice this player picked on a step, or "" (so a source can keep it on offer). */
+    public static String chosen(ServerPlayer p, String key) {
+        return pins.chosen(p, key);
     }
 
     /** The pinned step's key, or "". */

@@ -404,8 +404,15 @@ final class HomeTests {
                 HearthService.scanNow(level, rec);
                 Progression.topUpToLevel(sp, 7, Progression.XpSource.COMMAND);
                 capsAt(h, "Anchor and Armoury, level 7", sp);
+                var early = dev.awaken.tasks.TaskBook.fresh(sp).get("hearth/add");
+                h.assertTrue(early != null && early.choices().stream().noneMatch(c -> c.id().equals("storehouse")) && early.choices().stream().anyMatch(c -> c.id().equals("sanctuary")),
+                        "E-rank: what an early home can have, the Storehouse not yet: " + early);
                 level.setBlock(base.offset(3, 1, 6), Blocks.ANVIL.defaultBlockState(), 3);
                 level.setBlock(base.offset(3, 1, 3), net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("forge")).defaultBlockState(), 3);
+                var stand = net.minecraft.world.entity.EntityTypes.ARMOR_STAND.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+                stand.setPos(base.getX() + 4.5, base.getY() + 1, base.getZ() + 4.5);
+                level.addFreshEntity(stand);
+                AwakenTests.onEnd(h, stand::discard);
                 HearthService.scanNow(level, rec);
                 Progression.topUpToLevel(sp, 12, Progression.XpSource.COMMAND);
                 Progression.passReassessment(sp);
@@ -414,6 +421,16 @@ final class HomeTests {
                 Progression.topUpToLevel(sp, 26, Progression.XpSource.COMMAND);
                 Progression.passReassessment(sp);
                 capsAt(h, "C-rank", sp);
+                // the Storehouse is told at C-rank (no new lock), with what to do about the rare part
+                var add = dev.awaken.tasks.TaskBook.fresh(sp).get("hearth/add");
+                var store = add == null ? null : add.choices().stream().filter(c -> c.id().equals("storehouse")).findFirst().orElse(null);
+                h.assertTrue(add != null && add.choices().size() == 3 && store != null, "C-rank: Add to your home offers the Storehouse (a room already started comes first): " + add);
+                h.assertTrue(store.detail().contains("Granary Keystone") && store.needs().stream().anyMatch(n -> n.label().equals("A Totter") && !n.met()),
+                        "it says where the part is kept, and that a Totter works it: " + store);
+                var shelf = dev.awaken.tasks.TaskBook.fresh(sp).shelf(dev.awaken.core.api.Goals.Goal.HEARTH);
+                h.assertTrue(shelf.rows().stream().anyMatch(s -> s.key().equals("hearth/add")), "and it's on the Hearth tab, not in Later: " + shelf.rows());
+                h.assertTrue(dev.awaken.tasks.TaskBook.fresh(sp).footers().getOrDefault(dev.awaken.core.api.Goals.Goal.HEARTH, "").startsWith("At B-rank (level 45) your Forge can go to Tier II"),
+                        "the foot of the tab says what B-rank opens: " + dev.awaken.tasks.TaskBook.fresh(sp).footers());
                 rec.tier = 3;
                 rec.forgeTier = 2;
                 Progression.topUpToLevel(sp, 46, Progression.XpSource.COMMAND);

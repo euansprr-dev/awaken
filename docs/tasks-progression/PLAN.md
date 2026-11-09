@@ -212,7 +212,7 @@ Cap enforcement lives in `TaskBook.shown`, so no plan can exceed it, and every p
 
 | Tab | Threads |
 |---|---|
-| Hearth | `hearth.home` (tiers), `hearth.build` (rooms, works, Forge tiers), `hearth.beasts` |
+| Hearth | `hearth.home` (tiers, Forge tiers), `hearth.build` (rooms, works), `hearth.beasts` |
 | Armour | `armour.set`, `armour.enchant`, `armour.pattern` |
 | Weapons | `arms.forge`, `arms.craft`, `arms.pick`, `arms.enchant` |
 | Bells | tower, then each lead is its own thread (shows tower + 2 leads) |

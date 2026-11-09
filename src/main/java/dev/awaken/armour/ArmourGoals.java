@@ -32,6 +32,11 @@ final class ArmourGoals {
 
     static void register() {
         Goals.register(ArmourGoals::steps);
+        Goals.registerFooter(p -> {
+            if (!Progression.profile(p).awakened()) return List.of();
+            int next = Progression.rank(p).ordinal() + 1;
+            return next >= Rank.values().length ? List.of() : List.of(new Goals.Footer(Goal.ARMOUR, "At " + Rank.values()[next].label + "-rank your next armour opens."));
+        });
     }
 
     static List<Goals.Step> steps(ServerPlayer p) {
