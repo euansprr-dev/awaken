@@ -1,7 +1,16 @@
 package dev.awaken.core.api;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.VegetationBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -15,6 +24,33 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public final class Spotting {
     private Spotting() {}
+
+    /**
+     * How many blocks of leaves or bushes a look can pass through and still see what's behind (a hedge, the edge of a
+     * crown, bushes in the way). A stand of trees is more than this on any line across it, so a forest still hides things.
+     */
+    public static final int FOLIAGE = 5;
+
+    /** Leaves and bushes: you can make out a creature through them, which you can't through stone. */
+    public static boolean foliage(BlockState s) {
+        return s.is(BlockTags.LEAVES) || s.getBlock() instanceof VegetationBlock;
+    }
+
+    /**
+     * Whether the eye can see from {@code from} to {@code to} through loaded blocks: by what you see (glass and water hide
+     * nothing), with up to {@link #FOLIAGE} blocks of foliage on the way. An unloaded chunk hides it.
+     */
+    public static boolean clearLine(ServerLevel level, Vec3 from, Vec3 to) {
+        int[] leaves = {0};
+        return BlockGetter.traverseBlocks(from, to, level, (l, pos) -> {
+            if (!l.hasChunkAt(pos)) return Boolean.FALSE;
+            BlockState state = l.getBlockState(pos);
+            if (state.isAir()) return null;
+            VoxelShape shape = state.getVisualShape(l, pos, CollisionContext.empty());
+            if (shape.isEmpty() || shape.clip(from, to, pos) == null) return null;
+            return foliage(state) && ++leaves[0] <= FOLIAGE ? null : Boolean.FALSE;
+        }, l -> Boolean.TRUE);
+    }
 
     public interface Source {
         /** Whether what it offers moves (creatures: asked at every look) or stands (asked about once a second). */

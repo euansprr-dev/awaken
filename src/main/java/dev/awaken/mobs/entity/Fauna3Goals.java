@@ -366,6 +366,8 @@ final class Fauna3Goals {
         private final CaveFauna mob;
         private int cooldown, climb;
         private int ceiling;
+        /** Ticks before it tries again after a leap that didn't reach. */
+        private static final int GIVE_UP = 600;
 
         Cling(CaveFauna mob) {
             this.mob = mob;
@@ -389,7 +391,7 @@ final class Fauna3Goals {
             climb = 1;
             double h = ceiling - (mob.getY() + mob.getBbHeight());
             mob.getNavigation().stop();
-            mob.setDeltaMovement(0, 0.25 + 0.115 * h, 0);
+            mob.setDeltaMovement(0, leap(h + 0.1, mob.getGravity()), 0);
             mob.needsSync = true;
         }
 
@@ -400,16 +402,32 @@ final class Fauna3Goals {
 
         @Override
         public void stop() {
+            if (climb > 30) cooldown = Math.max(cooldown, GIVE_UP); // never got there (a lip over a corner of it): no hopping at the same roof
             climb = 0;
+        }
+
+        /** The speed that lifts a body {@code rise} blocks, as gravity and the air really take it (they cost a leap a lot). */
+        static double leap(double rise, double gravity) {
+            double v = 0.2;
+            while (climbed(v, gravity) < rise) v += 0.01;
+            return v;
+        }
+
+        private static double climbed(double v, double gravity) {
+            double up = 0;
+            while (v > 0) {
+                up += v;
+                v = (v - gravity) * 0.98;
+            }
+            return up;
         }
 
         @Override
         public void tick() {
             if (!mob.hanging()) {
                 climb++;
-                boolean there = mob.getY() + mob.getBbHeight() >= ceiling - 0.3;
-                if (there || (climb > 3 && mob.verticalCollision && mob.getDeltaMovement().y >= -0.01 && !mob.onGround())) mob.hang(ceiling);
-                else if (climb > 3 && mob.onGround()) climb = 31; // fell short
+                if (mob.getY() + mob.getBbHeight() >= ceiling - 0.3) mob.hang(ceiling);
+                else if (climb > 3 && (mob.onGround() || mob.verticalCollision)) climb = 31; // fell short, or met a lower lip
                 return;
             }
             if ((mob.tickCount + mob.getId()) % 5 != 0 || !(mob.level() instanceof ServerLevel level)) return;

@@ -166,6 +166,9 @@ dependencies {
     // the action camera drives Shoulder Surfing's over-the-shoulder view through its plugin API
     // (body.client.feel.ShoulderSurfingPlugin; version id of the build pack/lock.json pins, 26.3-5.2.0+neoforge)
     compileOnly "maven.modrinth:shoulder-surfing-reloaded:NLtlz49E"
+    // EntityCulling: stands aside for our creatures while the binoculars are up (compat.client.EntityCullingBridge;
+    // version id of the build pack/lock.json pins, 1.11.3)
+    compileOnly "maven.modrinth:entityculling:YWSFNKio"
     // the comfort profile's plugins (compat.jei, compat.jade): version ids, the exact builds pack/lock.json pins
     // (JEI 31.14.0.72, Jade 26.3.5+neoforge)
     compileOnly "maven.modrinth:jei:kLsKOFxv"

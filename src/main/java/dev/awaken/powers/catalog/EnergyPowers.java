@@ -369,7 +369,7 @@ final class EnergyPowers {
             // Overcharge (4): held past full, the orb turns white and the bolt pierces
             boolean over = c.step(4) && rr.age >= fullAt + c.num(4, "over", 10);
             Vec3 muzzle = CastPoints.ball(c.player);
-            Fx.at(c, FxKind.CHARGE_END, muzzle).flag(FxEvent.FULL, charge > 0.95).noAnim().send();
+            Fx.chargeEnd(c, muzzle).flag(FxEvent.FULL, charge > 0.95).send();
             if (why == Running.Why.CANCELLED) return;
             Fx.at(c, FxKind.CAST, muzzle).anim(CastAnim.AIM).send();
             float dmg = c.dmg(c.type.damage + 14f * (float) charge);

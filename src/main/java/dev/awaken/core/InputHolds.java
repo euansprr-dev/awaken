@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -24,21 +25,25 @@ public final class InputHolds<P, I> {
     private final Function<P, I> get;
     private final BiConsumer<P, I> set;
     private final Supplier<I> empty;
+    /** Takes the player's feet off the keys (what a camera on something else leaves latched: SPEC §27.6). */
+    private final Consumer<P> stop;
     /** Owner → the tick it lets go by itself. */
     private final Map<Object, Long> owners = new LinkedHashMap<>();
     private @Nullable P player;
     private @Nullable I saved;
 
-    public InputHolds(Function<P, I> get, BiConsumer<P, I> set, Supplier<I> empty) {
+    public InputHolds(Function<P, I> get, BiConsumer<P, I> set, Supplier<I> empty, Consumer<P> stop) {
         this.get = get;
         this.set = set;
         this.empty = empty;
+        this.stop = stop;
     }
 
     /** {@code owner} holds the player still until it lets go, or for at most {@code maxTicks}. */
     public void hold(Object owner, @Nullable P p, long now, int maxTicks) {
         owners.put(owner, now + Math.max(1, maxTicks));
         follow(p);
+        if (p != null) stop.accept(p);
     }
 
     /** {@code owner} lets go; the real input comes back when nobody holds. */
@@ -63,8 +68,12 @@ public final class InputHolds<P, I> {
             late.add(e.getKey());
             return true;
         });
-        if (owners.isEmpty()) restore();
-        else follow(p);
+        if (owners.isEmpty()) {
+            restore();
+        } else {
+            follow(p);
+            if (p != null) stop.accept(p);
+        }
         return late;
     }
 

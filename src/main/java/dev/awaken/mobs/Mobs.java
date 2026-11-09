@@ -139,6 +139,7 @@ public final class Mobs {
         BlockPos bp = BlockPos.containing(pos);
         EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(bp), EntitySpawnReason.MOB_SUMMONED, null);
         mob.configure(contentLevel, role, tags);
+        mob.settle(); // its scaled body is known now, and whoever chose this spot checked at most its type's box
         // Only creatures that matter persist; ordinary ones follow vanilla despawning (gates and the Descent manage theirs).
         if (def.tier.isBoss() || role.role() == MobRole.Role.WARDEN || role.role() == MobRole.Role.BOSS || role.role() == MobRole.Role.BREAK
                 || role.role() == MobRole.Role.NIGHTMARE || role.role() == MobRole.Role.ECHO || !role.gateId().isEmpty()) mob.setPersistenceRequired();

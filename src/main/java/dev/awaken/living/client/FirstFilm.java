@@ -81,6 +81,7 @@ final class FirstFilm {
                 offering = false;
                 taken = false;
                 Cinema.bars(true);
+                hold(p); // from the first line, whether or not her body has reached this client yet
                 Entity ilse = mc.level.getEntity(ilseId);
                 if (ilse != null) Cinema.take(new IlseShot(p, ilse, m.at()));
             }

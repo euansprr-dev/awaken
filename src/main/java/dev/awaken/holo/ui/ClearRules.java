@@ -47,14 +47,14 @@ public final class ClearRules {
     /** What the director knows this tick. */
     public static final class State {
         public HudState.Screen screen = HudState.Screen.CLEAR;
-        public boolean fighting, glancing, hurt, low, hungry, hotbarPop, powersBusy, levelNews, riding;
+        public boolean fighting, glancing, hotbarInGlance, hurt, low, hungry, hotbarPop, powersBusy, levelNews, riding;
     }
 
     /** How strongly a piece wants to show now: 0 or 1 (the director eases between them). */
     public static float want(Piece p, State s) {
         if (s.screen == HudState.Screen.CLASSIC) return p == Piece.VITALS || p == Piece.FOOD ? 0F : 1F;
         boolean on = switch (p) {
-            case HOTBAR -> s.hotbarPop || s.glancing;
+            case HOTBAR -> !s.hotbarInGlance && (s.hotbarPop || s.glancing); // the glance's panel has its own, so there is only ever one
             case VANILLA_STATUS -> false;
             case VITALS -> s.fighting || s.hurt || s.low;
             case FOOD -> s.hungry;
@@ -68,6 +68,11 @@ public final class ClearRules {
     public static float ease(float cur, float want, float dtMs) {
         if (want > cur) return Math.min(want, cur + dtMs / IN_MS);
         return Math.max(want, cur - dtMs / OUT_MS);
+    }
+
+    /** A piece handing over to something else leaves as fast as a piece comes, so the two are never both on screen. */
+    public static float easeAway(float cur, float dtMs) {
+        return Math.max(0F, cur - dtMs / IN_MS);
     }
 
     /** Counts quiet ticks since its cause last held: on while fewer than its length have passed. */

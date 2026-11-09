@@ -123,6 +123,7 @@ final class HudDirector implements HudState.Director {
         state.screen = HoloConfig.screen;
         state.fighting = fight.on();
         state.glancing = Glance.glancing();
+        state.hotbarInGlance = Glance.hotbarInPanel();
         state.hurt = p.getHealth() < max - 0.01F && !p.isCreative() && !p.isSpectator();
         state.low = p.getHealth() / max <= ClearRules.LOW;
         state.hungry = p.getFoodData().getFoodLevel() <= ClearRules.HUNGRY && !p.isCreative() && !p.isSpectator();
@@ -155,7 +156,10 @@ final class HudDirector implements HudState.Director {
     // ---- once a frame -------------------------------------------------------------------------------------------------
 
     void frame(float dtMs) {
-        for (Piece p : Piece.values()) shown[p.ordinal()] = ClearRules.ease(shown[p.ordinal()], ClearRules.want(p, state), dtMs);
+        for (Piece p : Piece.values()) {
+            int i = p.ordinal();
+            shown[i] = p == Piece.HOTBAR && state.hotbarInGlance ? ClearRules.easeAway(shown[i], dtMs) : ClearRules.ease(shown[i], ClearRules.want(p, state), dtMs);
+        }
     }
 
     /** Whether this layer needs the director's own draw (moved or scaled) even at full strength. */

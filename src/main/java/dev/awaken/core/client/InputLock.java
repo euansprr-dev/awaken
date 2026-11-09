@@ -18,12 +18,23 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class InputLock {
     private InputLock() {}
 
-    private static final InputHolds<LocalPlayer, ClientInput> HOLDS = new InputHolds<>(p -> p.input, (p, i) -> p.input = i, ClientInput::new);
+    private static final InputHolds<LocalPlayer, ClientInput> HOLDS = new InputHolds<>(p -> p.input, (p, i) -> p.input = i, ClientInput::new, InputLock::stop);
     private static long ticks;
 
     static void init() {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> HOLDS.clear());
+    }
+
+    /**
+     * Takes the feet off the keys, now. While the camera is on anything but the player the game doesn't read the input at
+     * all ({@code LocalPlayer.applyInput}), so whatever was held as the view left stays latched: you walk on, or go on
+     * jumping, behind the shot. Holding clears it; so does a view that isn't a hold (the map).
+     */
+    public static void stop(LocalPlayer p) {
+        p.xxa = 0;
+        p.zza = 0;
+        p.setJumping(false);
     }
 
     /** {@code owner} holds the player still until {@link #release}, for at most {@code maxTicks} (the failsafe). */

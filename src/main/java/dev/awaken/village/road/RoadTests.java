@@ -87,6 +87,7 @@ public final class RoadTests {
         AwakenTests.registerIsolated("village_roads", 600, RoadTests::roads);
         AwakenTests.registerIsolated("village_road_banks", 200, RoadTests::banks);
         AwakenTests.registerIsolated("village_road_viaduct", 200, RoadTests::viaduct);
+        AwakenTests.registerIsolated("village_road_spares_hero_trees", 600, RoadTests::sparesHeroTrees);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
         AwakenTests.register("village_wide_roads", 1200, RoadTests::wideRoads);
         AwakenTests.register("village_march_ranks", 20, h -> {
@@ -290,6 +291,73 @@ public final class RoadTests {
         h.assertTrue(kinds.size() >= 3, "dressed stone of a few kinds, not one: " + kinds);
         Awaken.LOG.info("[road] viaduct: {} piers, pier stone {}", piers, kinds);
         h.succeed();
+    }
+
+    /**
+     * A road straight through a Lumen Spire's trunk, chunk by chunk as worldgen paints it (Euan 2026-11-09, the floating veined
+     * logs): without the hero guard the road's felling cuts it and pieces hang in the air; with it the tree stands whole.
+     */
+    private static void sparesHeroTrees(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        int[] before = throughSpire(h, level, h.absolutePos(new BlockPos(0, 2, 0)).offset(9000, 0, 6000), false);
+        int[] after = throughSpire(h, level, h.absolutePos(new BlockPos(0, 2, 0)).offset(9400, 0, 6000), true);
+        Awaken.LOG.info("[road] a road through a Lumen Spire: unguarded {} loose blocks in {} groups, {} trunk blocks gone; guarded {} loose in {} groups, {} gone",
+                before[0], before[1], before[2], after[0], after[1], after[2]);
+        h.assertTrue(after[0] == 0 && after[2] == 0, "the tree stands whole beside the road: " + after[0] + " loose, " + after[2] + " trunk blocks gone");
+        h.assertTrue(before[2] > 0, "the case is real: an unguarded road cuts the trunk");
+        h.succeed();
+    }
+
+    /** Builds a Spire at {@code o} on level ground, paints a road through it; returns loose blocks, loose groups and trunk logs lost. */
+    private static int[] throughSpire(GameTestHelper h, ServerLevel level, BlockPos o, boolean guarded) {
+        int cx0 = o.getX() >> 4, cz0 = o.getZ() >> 4;
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) {
+            level.setChunkForced(cx0 + dx, cz0 + dz, true);
+            level.getChunk(cx0 + dx, cz0 + dz);
+        }
+        BlockState grass = net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState(), air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int x = o.getX() - 40; x <= o.getX() + 40; x++) {
+            for (int z = o.getZ() - 40; z <= o.getZ() + 40; z++) {
+                level.setBlock(at.set(x, o.getY() - 1, z), grass, 2 | 16);
+                for (int y = o.getY(); y < o.getY() + 90; y++) if (!level.getBlockState(at.set(x, y, z)).isAir()) level.setBlock(at, air, 2 | 16);
+            }
+        }
+        dev.awaken.terrain.hero.HeroPiece spire = new dev.awaken.terrain.hero.HeroPiece(dev.awaken.terrain.hero.HeroTree.LUMEN_SPIRE, o, 424242L);
+        var box = spire.getBoundingBox();
+        for (int ccx = box.minX() >> 4; ccx <= box.maxX() >> 4; ccx++)
+            for (int ccz = box.minZ() >> 4; ccz <= box.maxZ() >> 4; ccz++)
+                spire.build(level, new net.minecraft.world.level.levelgen.structure.BoundingBox(ccx << 4, level.getMinY(), ccz << 4, (ccx << 4) + 15, level.getMaxY(), (ccz << 4) + 15));
+        var trunk = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(Awaken.id("veined_lumen_log"));
+        java.util.function.IntSupplier logs = () -> {
+            int n = 0;
+            for (int x = o.getX() - 8; x <= o.getX() + 8; x++)
+                for (int z = o.getZ() - 8; z <= o.getZ() + 8; z++)
+                    for (int y = o.getY(); y < o.getY() + 62; y++) if (level.getBlockState(at.set(x, y, z)).is(trunk)) n++;
+            return n;
+        };
+        int stood = logs.getAsInt();
+        // the road: on the ground, north to south along the trunk's own line
+        int n = 16;
+        float[] xs = new float[n], zs = new float[n];
+        int[] ys = new int[n];
+        for (int i = 0; i < n; i++) {
+            xs[i] = o.getX();
+            zs[i] = o.getZ() - 32 + 4 * i;
+            ys[i] = o.getY() - 1;
+        }
+        RoadPaint p = new RoadPaint(0, xs, zs, ys, new byte[n], new byte[n], 0, n - 1, Road.HIGHROAD, List.of());
+        dev.awaken.terrain.api.HeroTrees.Cells keep = guarded ? spire::holds : null;
+        for (int cx = (p.ox + p.rx0) >> 4; cx <= (p.ox + p.rx0 + p.rw) >> 4; cx++) {
+            for (int cz = (p.oz + p.rz0) >> 4; cz <= (p.oz + p.rz0 + p.rd) >> 4; cz++) {
+                SettlementPaint.paintChunk(p, cx, cz, level.getSeed(), level.getChunk(cx, cz), null, keep);
+                SettlementPaint.sweep(level, p, cx, cz, keep);
+            }
+        }
+        int[] loose = dev.awaken.terrain.hero.HeroTests.loose(level, new net.minecraft.world.level.levelgen.structure.BoundingBox(o.getX() - 26, o.getY() - 1, o.getZ() - 26, o.getX() + 26, o.getY() + 70, o.getZ() + 26));
+        int gone = stood - logs.getAsInt();
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, false);
+        return new int[]{loose[0], loose[1], gone};
     }
 
     private static void banks(GameTestHelper h) {
