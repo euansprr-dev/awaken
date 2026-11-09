@@ -19799,6 +19799,11 @@ offers the next one you've reached, so you can walk the valley and come back. `R
 
 **The valley's edge** is a wind, not a wall: `Land.edge(x,z)` past 0 pushes you back toward the middle, harder the further you go.
 
+**Amber Reach's life and air.** `RealmLife` runs for each player every two seconds: a herd of three to five Pollen Grazers turns up 36 to 58 blocks off whenever fewer
+than five are within 64, Amberflies over the open ground, and up to nine Wax-folk near their village within 130 blocks, each kept to its own door. Laying a hand on a
+Wax-folk lets them speak and sell honey (`RealmLife.talk`), and from then on the plate over their heads says what they are. Their spawn eggs exist only for testing.
+Outdoors the land plays `realm.amber.air`, indoors `realm.amber.hall`, both built from vanilla recordings; Lens uses its own amber look for the valley and the hall.
+
 **Finds** are single caches set where you have to look: 24 around the valley and one on top of each great rock, each rock with a column of rising air
 beside it (`UpdraftBlock`, `SiteKind.UPDRAFT`; crouch to sink). The Law of Amber Reach is `updrafts`: one physical rule, per decision 14.
 
