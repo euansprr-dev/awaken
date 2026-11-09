@@ -69,6 +69,13 @@ public final class Arms {
         return styleOf(stack) != null && stack.has(DataComponents.BLOCKS_ATTACKS);
     }
 
+    /** Whether a held guard took a blow this tick (server): that blow pushes you a step at most (SPEC §47.3). */
+    public static boolean guarded(LivingEntity e) {
+        if (!(e instanceof net.minecraft.server.level.ServerPlayer p)) return false;
+        ArmsState s = p.getExistingDataOrNull(ArmsContent.STATE);
+        return s != null && s.guardedAt == ArmsServer.now(p);
+    }
+
     /** Whether Arms runs this player's melee (the world switch and a weapon with a style). */
     public static boolean fights(LivingEntity e) {
         return ArmsConfig.enabled() && styleOf(e.getMainHandItem()) != null;

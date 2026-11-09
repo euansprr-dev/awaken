@@ -853,6 +853,11 @@ final class FightRunner {
         marks(m);
         // a blow you stood in the reach of that never landed (and wasn't turned aside: that ends it before here) you got
         // out of: a dash, a step, a roll
+        // the two pilots only, one line a blow, until Euan's read them (SPEC §47.3): did it touch anyone, from how far
+        if (k == active && mind != null && !m.hits().isEmpty() && target != null) {
+            dev.awaken.Awaken.LOG.info("[fights] blow {} {} {}: {}, {} blocks off, {}", fight.id(), m.id(), cls, hits > 0 ? "touched" : "missed",
+                    String.format("%.1f", edgeDistance(target)), boss.getSensing().hasLineOfSight(target) ? "in sight" : "out of sight");
+        }
         if (k == active && inReach && !struck && fight.mirrors() && read == Strikes.Habit.NONE) slips++;
         if (t < wind + active + recover) {
             // the recovery: no turning, the opening; in a string the next move links on at the end of the

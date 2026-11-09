@@ -607,6 +607,10 @@ final class ArmsServer {
 
     /** An Arms blow pushes the way the blade went (SPEC §25 "Fight Feel"); a kill throws the body further along it. */
     static void onKnockBack(net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent e) {
+        if (Arms.guarded(e.getEntity())) {
+            e.setCanceled(true); // a held guard holds its ground: vanilla's own shove, and the guard's pull toward the blow
+            return;
+        }
         if (!pendingPush || e.getEntity().getId() != pendingTarget) return;
         // vanilla pushes against the ratio
         e.setRatioX(-PUSH[0]);
@@ -793,6 +797,7 @@ final class ArmsServer {
                     stop(p, s, src, from, false, incoming * (1F - g.reduction()), by, false);
                 } else {
                     e.setBlockedDamage(incoming * g.reduction());
+                    s.guardedAt = now; // it stops here: no knockback in this blow carries you off (SPEC §47.3)
                     soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
                     answer(p, s, ArmsPayloads.BLOCK, by);
                 }

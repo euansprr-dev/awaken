@@ -874,6 +874,11 @@ public final class ArmsPredict {
                 fightAt = ticks;
                 CombatFeedback.kick(0F, 1.2F, 0F, 5);
                 ArmsAudio.block(p);
+                // the blade takes it: its jolt and spark, lighter than a deflect's, and no freeze (SPEC §47.3)
+                int yaw = yawTo(p, Minecraft.getInstance().level.getEntity(r.entity()));
+                ArmsHands.jolt(Mth.sin(Mth.wrapDegrees(yaw - p.getYRot()) * Mth.DEG_TO_RAD), 0.7F);
+                ArmsBodies.jolt(p);
+                ArmsFx.guardSpark(p, yaw, false);
             }
             case ArmsPayloads.SHOT -> {
                 // a shot on the guard: the blade takes it (its jolt, its spark, its ring), no freeze (nothing in

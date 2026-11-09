@@ -18646,6 +18646,18 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   `break` act at once (`DuelDemo`). Tour `tools/autopilot/fights-duel.txt` (on CI): each pilot's tell, recoil, reel
   early and low, and broken stance.
 
+**A held guard holds its ground (Euan's playtest 2026-11-09: "the light attacks when I tried to block it doesn't make any
+blocking sound ... and it doesn't even hit me").** A guard that blocked a light blow (the answer past the deflect's ticks)
+let only part of the damage through, but the blow's own push, its lift and vanilla's knockback all still applied: about
+6 blocks flown from one blocked cut, so the string's next blow never came (`fights_guard_holds_ground`: before, one blow
+met the guard and you moved 5.9 blocks; after, two blows and 0.66 blocks). Now the tick a held guard takes a blow it
+cancels vanilla's knockback (`ArmsServer.onKnockBack`, `Arms.guarded`) and `Abilities.push` is a quarter as strong with no
+lift: a step back, feet on the ground, still in reach of what comes next. A deflect never pushed; a guard break and an
+unguarded blow are unchanged. A block now also jolts the blade and sparks (`ArmsPredict`, the shot's lighter treatment),
+because a kick and a knock was all it had; the ring stays the deflect's alone (its window is the guard's first 3 to 5
+ticks). The two pilots log one `[fights] blow` line a blow (touched or missed, how far, in sight) until the real game
+has confirmed what the tests can't: no blow passes through a guard held still with nothing happening.
+
 **47.4 The Provings: the Ringer (stage 3).** The D Reassessment becomes the first Proving (PLAN §4.7, GOALS part 2):
 one fight with a Warden in its own hall, never announced, the rank's gift inside the fight.
 - **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept

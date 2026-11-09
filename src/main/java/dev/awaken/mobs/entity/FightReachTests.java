@@ -30,6 +30,7 @@ public final class FightReachTests {
         for (String id : new String[]{"hive_regent", "sky_leviathan", "gearwright_colossus", "ember_tyrant", "glass_serpent"}) {
             AwakenTests.registerIsolated("fights_reach_live_" + id, 1400, h -> live(h, id));
         }
+        AwakenTests.registerIsolated("fights_guard_holds_ground", 200, FightReachTests::holdsGround);
         AwakenTests.register("fights_reach_table", 20, FightReachTests::table);
         AwakenTests.registerIsolated("fights_reach_parry", 300, FightReachTests::parry);
         AwakenTests.register("fights_shots_own_look", 20, FightReachTests::ownLook);
@@ -156,6 +157,80 @@ public final class FightReachTests {
                 h.succeed();
             }
         });
+    }
+
+    /**
+     * A held guard holds its ground (SPEC §47.3): a string of light blows meets it blow after blow, and leaves you where
+     * you stood. The player's own tick ages the guard, and its motion is walked by hand (a test player has no client).
+     */
+    private static void holdsGround(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int x = -2; x <= 44; x++) for (int z = -2; z <= 44; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        ServerPlayer p = FairTests.reference(h, Rank.E, new BlockPos(21, 1, 21));
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+        p.setYRot(180F);
+        p.setYHeadRot(180F);
+        p.setYBodyRot(180F);
+        double floor = p.getY();
+        Vec3 start = p.position();
+        MobDef def = Bestiary.get("hive_regent");
+        KitMoves.Move cut = Kits.all().get("hive_regent").moves().get(Kits.all().get("hive_regent").moves().index("cut"));
+        double back = (cut.minRange() + cut.maxRange()) * 0.5 + def.width * def.scale * 0.5 + 0.3;
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(21.5, 1, 21.5 - back)), 5,
+                new MobRole(MobRole.Role.BOSS, 5, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        p.startUsingItem(InteractionHand.MAIN_HAND);
+        FairTests.pool(p);
+        int[] tick = {0}, met = {0}, begun = {0};
+        double[] moved = {0};
+        String[] was = {null};
+        StringBuilder seq = new StringBuilder();
+        h.onEachTick(() -> {
+            tick[0]++;
+            boss.setTarget(p);
+            Vec3 v = p.getDeltaMovement();
+            p.setDeltaMovement(Vec3.ZERO); // its own tick would move it, with no client's gravity
+            p.doTick();
+            p.setPos(p.getX(), Math.max(floor, p.getY()), p.getZ());
+            p.setDeltaMovement(v);
+            walk(p, floor);
+            moved[0] = Math.max(moved[0], Math.sqrt(Math.pow(p.getX() - start.x, 2) + Math.pow(p.getZ() - start.z, 2)));
+            String now = boss.kitPlaying();
+            if (tick[0] == 8) h.assertTrue(boss.playKitString("cut", java.util.List.of("cut_b")), "the string plays");
+            if (now == null ? was[0] != null : !now.equals(was[0])) {
+                if (was[0] != null && hits(boss, was[0])) {
+                    boolean on = FairTests.share(p) > 1.0E-3F;
+                    if (on) met[0]++;
+                    seq.append(was[0]).append(on ? "+ " : "- ");
+                    FairTests.pool(p);
+                }
+                if (now != null && hits(boss, now)) begun[0]++;
+                was[0] = now;
+            }
+            if (tick[0] > 8 && now == null && was[0] == null && begun[0] > 0) {
+                Awaken.LOG.info("[reach] guard holds: {} begun, {} met the guard, moved {}; {}", begun[0], met[0], String.format("%.2f", moved[0]), seq);
+                h.assertTrue(begun[0] == 2 && met[0] == 2, "both blows meet the guard (" + begun[0] + " begun, " + met[0] + " met)");
+                h.assertTrue(moved[0] < 1.0, "the guard held its ground, moved " + moved[0]);
+                boss.discard();
+                h.succeed();
+            }
+        });
+    }
+
+    private static boolean hits(AwakenBoss boss, String move) {
+        KitMoves.Table table = boss.kit().moves();
+        return !table.get(table.index(move)).hits().isEmpty();
+    }
+
+    /** One tick of what the client does with a player's motion: air drag, gravity, ground friction, a flat floor. */
+    private static void walk(ServerPlayer p, double floor) {
+        Vec3 v = p.getDeltaMovement();
+        if (v.lengthSqr() < 1.0E-6 && p.getY() <= floor) return;
+        double y = p.getY() + v.y;
+        boolean ground = y <= floor;
+        p.setPos(p.getX() + v.x, ground ? floor : y, p.getZ() + v.z);
+        p.setOnGround(ground);
+        double drag = ground ? 0.546 : 0.91;
+        p.setDeltaMovement(v.x * drag, ground ? 0 : (v.y - 0.08) * 0.98, v.z * drag);
     }
 
     private static void live(GameTestHelper h, String id) {
