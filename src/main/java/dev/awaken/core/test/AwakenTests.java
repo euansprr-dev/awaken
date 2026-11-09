@@ -253,6 +253,26 @@ public final class AwakenTests {
         return true;
     }
 
+    /**
+     * A wider ground than {@link #register} loads, every chunk of it entity-ticking before the test goes on (absolute
+     * corners): a creature that walks onto ground that doesn't tick freezes where it stands, looking like a stuck move.
+     */
+    public static void wideArea(GameTestHelper h, BlockPos a, BlockPos b) {
+        ServerLevel level = h.getLevel();
+        int x0 = Math.min(a.getX(), b.getX()) >> 4, x1 = Math.max(a.getX(), b.getX()) >> 4, z0 = Math.min(a.getZ(), b.getZ()) >> 4, z1 = Math.max(a.getZ(), b.getZ()) >> 4;
+        for (int cx = x0; cx <= x1; cx++) for (int cz = z0; cz <= z1; cz++) {
+            level.setChunkForced(cx, cz, true);
+            level.getChunk(cx, cz);
+        }
+        h.assertTrue(settle(level, () -> {
+            BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+            for (int cx = x0; cx <= x1; cx++) for (int cz = z0; cz <= z1; cz++) {
+                if (!level.isPositionEntityTicking(m.set(cx << 4, 64, cz << 4))) return false;
+            }
+            return true;
+        }, "the wide test ground entity-ticks"), "the wide test ground entity-ticks within 30 s");
+    }
+
     private static boolean areaTicking(ServerLevel level, int cx, int cz) {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {

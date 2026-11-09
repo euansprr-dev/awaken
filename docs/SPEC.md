@@ -19519,3 +19519,19 @@ Echoing gate fell, stood up with health again, and couldn't be hit while it lay,
   Wardens under Echoing). Its getting up is part of the fight, so a stray tap can't skip it; a real flurry in the 2.5 seconds can.
 - A fallen creature is alive, so it keeps its card and its lock (§47.12's `Aim.body` is for real bodies only). Same path for
   `Forces.Tag.ECHO` and `Trait.RISES`. Test `mobs_echo_finish`; the entry line in `gates_modifiers_live`.
+
+## 48. Fights That Read You (plan docs/fights/read-you.html, page https://claude.ai/artifact/NkwLujmbiY1iF9hfnYqYn2; approved in full 2026-11-09)
+
+A boss stops rolling dice at you: it watches what you've started, answers it where you can see it notice, changes its mind
+partway through a string, and in time moves like a fighter between blows and takes turns in a pack. Built pilots first (the
+Hive Regent and the Gearwright Colossus); the other 45 wait until Euan has played those. The rules that never bend: it never
+reads input, only what has visibly started and only after its reaction time; every blow keeps its tell, colour and at least its
+minimum warning; a blow begins only if it can land; every string ends in an opening; none of this adds damage, health or speed;
+everything is decided on the server, per target.
+
+**48.7 The recorder (stage 0).** `FightRecorder`: `fights_record_<boss>_<kind>`, six bosses (more as the roll-out reaches them)
+against six kinds of player (stands still, runs, circles, holds guard, keeps away, stays behind), 72 s each with fixed seeds;
+`fights_record_pack` counts a pack of 12 winding up at once. It logs one `[record]` line a fight and asserts only that the fight
+ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
+the numbers before the mind are in docs/fights/read-you-baseline.md.
+
