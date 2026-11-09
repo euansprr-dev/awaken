@@ -117,8 +117,9 @@ public record LodeFeature() implements Feature {
             long lastKey = Long.MIN_VALUE;
             for (int i = 0; i < steps; i++) {
                 BlockPos rock = last.relative(LodeTraceBlock.side(facing, heading)), cell = rock.relative(out);
-                BlockState behind = level.getBlockState(rock);
-                if (!(behind.is(BlockTags.BASE_STONE_OVERWORLD) || behind.is(Tags.Blocks.ORES)) || !level.getBlockState(cell).isAir()) break;
+                BlockState behind = level.getBlockState(rock), there = level.getBlockState(cell);
+                // the next chunk over may already have written its share of this same vein: it mustn't stop the walk
+                if (!(behind.is(BlockTags.BASE_STONE_OVERWORLD) || behind.is(Tags.Blocks.ORES)) || !(there.isAir() || there.is(DelveContent.LODE_TRACE.get()))) break;
                 long key = cell.asLong();
                 masks.put(key, masks.get(key) | 1 << BACK[heading]);
                 reaches.put(key, Math.min(reaches.get(key), i <= 1 ? 0 : 1));

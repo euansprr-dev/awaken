@@ -16492,8 +16492,8 @@ a twin, so all 26 cells round it stayed plain stone, a grey box in the wall. Too
   rock, cracked like split rock with spurs off it, turning one step in four, each block joined to the last (connection shapes as
   the ember vine's), bright for the first two blocks (emission 8), dim and broken beyond them (5). One white
   sheet tinted by `Ore.tint`, so every ore reads by its colour. It has no shape, no item and no loot: a pick aims and strikes the
-  rock through it, and it goes when the rock behind it does. Rock and air decide its path and a hash of the seed and the heart does
-  the rest; a chunk writes the hearts within **6** blocks of it, its own cells only.
+  rock through it, and it goes when the rock behind it does. Rock and air decide its path (a piece the next chunk has already written counts as open, so the walk doesn't depend on which chunk
+  goes first) and a hash of the seed and the heart does the rest; a chunk writes the hearts within **6** blocks of it, its own cells only.
 - **Saved worlds**: a heart already generated takes the rock round it on its next random tick, which is the plain stone of its old
   pocket if it had one, and gets the new knot at once. Veins and the removal of the pocket need new chunks.
 - **Cost**: traces only round hearts open to the air, a few dozen blocks a region, no ticking; a heart's only addition is a random
