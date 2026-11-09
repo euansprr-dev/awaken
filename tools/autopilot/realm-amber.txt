@@ -25,6 +25,11 @@ wait 40
 shotnow amber_crossing
 wait 300
 shot amber_mouth_view
+cmd awaken gate realm_at MOUTH 0 16 12 -4
+look -76 10
+wait 200
+shot amber_painting
+cmd awaken gate realm_at MOUTH 0 0 0 0
 look 180 8
 wait 40
 shot amber_mouth_arch
@@ -54,7 +59,7 @@ look -80 12
 wait 300
 shot amber_river
 
-cmd awaken gate realm_at WAYSTONE 2 -26 3 0
+cmd awaken gate realm_at WAYSTONE 2 -20 3 -22
 look -90 -24
 wait 400
 shot amber_citadel_foot
@@ -67,6 +72,19 @@ cmd awaken gate realm_at WARDEN 0 -10 24 -30
 look 20 20
 wait 300
 shot amber_flowers
+
+cmd awaken gate realm_at WAYSTONE 0 6 1 6
+look 135 14
+wait 200
+shot amber_waystone
+cmd awaken gate realm_at UPDRAFT 0 9 4 9
+look 135 -12
+wait 200
+shot amber_updraft
+cmd awaken gate realm_at FIND 0 4 2 4
+look 135 24
+wait 200
+shot amber_find
 
 # the living part: on normal, walk up to a den and see what wakes
 cmd difficulty normal
