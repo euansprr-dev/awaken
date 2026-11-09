@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "signals_shadow",
  "moves": "signals_shadow",
  "duel": true,
@@ -23,6 +23,11 @@
        "grasp",
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -33,6 +38,11 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -53,6 +63,11 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -63,6 +78,11 @@
       [
        "instruction"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -80,6 +100,11 @@
       [
        "grasp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     }
    ]
@@ -99,6 +124,11 @@
        "grasp",
        "recoil"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -128,6 +158,11 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -145,6 +180,11 @@
       [
        "grasp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     }
    ]
@@ -160,6 +200,11 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -175,6 +220,11 @@
        "grasp",
        "halo"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -206,6 +256,11 @@
       [
        "grasp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     }
    ]
@@ -214,5 +269,61 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "lance": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "lance",
+     "grasp",
+     "lash"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "lance"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "grasp"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "grasp",
+     "lash"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "grasp"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "lance"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

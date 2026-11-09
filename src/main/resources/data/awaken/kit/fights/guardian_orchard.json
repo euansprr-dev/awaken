@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "guardian_orchard",
  "moves": "guardian_orchard",
  "duel": true,
@@ -23,6 +23,12 @@
        "cleave_b",
        "crush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crush",
+       "dodged": "march"
+      }
      ]
     },
     {
@@ -33,6 +39,11 @@
       [
        "cleave"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "march"
+      }
      ]
     },
     {
@@ -47,6 +58,11 @@
       [
        "cleave"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crush"
+      }
      ]
     },
     {
@@ -60,6 +76,12 @@
       [
        "cleave_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crush",
+       "dodged": "march"
+      }
      ]
     }
    ]
@@ -79,6 +101,12 @@
        "cleave_b",
        "crush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crush",
+       "dodged": "march"
+      }
      ]
     },
     {
@@ -89,6 +117,11 @@
       [
        "cleave"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "march"
+      }
      ]
     },
     {
@@ -102,6 +135,11 @@
       [
        "crush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crush"
+      }
      ]
     },
     {
@@ -123,6 +161,12 @@
       [
        "cleave_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crush",
+       "dodged": "march"
+      }
      ]
     }
    ]
@@ -131,5 +175,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "march": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "march",
+     "crush",
+     "cleave_b",
+     "cleave"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "march"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "cleave_b"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "cleave_b",
+     "cleave"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "crush"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "crush",
+     "cleave_b"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "march"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

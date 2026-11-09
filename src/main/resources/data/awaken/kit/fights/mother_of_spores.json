@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "mother_of_spores",
  "moves": "mother_of_spores",
  "duel": true,
@@ -19,6 +19,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -32,6 +37,11 @@
        "lob",
        "swoop"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -41,6 +51,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lob"
+      }
      ]
     },
     {
@@ -53,6 +68,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -66,6 +86,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -89,6 +114,11 @@
        "lash_b",
        "drop"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -98,6 +128,11 @@
       [
        "lob"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -107,6 +142,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lob"
+      }
      ]
     },
     {
@@ -120,6 +160,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -148,6 +193,11 @@
        "lash_b",
        "drop"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -158,6 +208,11 @@
        "lob",
        "lob"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -167,6 +222,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lob"
+      }
      ]
     },
     {
@@ -179,6 +239,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -192,6 +257,11 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "swoop"
+      }
      ]
     },
     {
@@ -208,5 +278,65 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "swoop": 60,
+   "bloom": 240
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "swoop",
+     "lob",
+     "lash_b",
+     "lash"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "swoop",
+     "lob"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "lash_b"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "lash_b",
+     "lash"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "lash_b"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "swoop",
+     "lob"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

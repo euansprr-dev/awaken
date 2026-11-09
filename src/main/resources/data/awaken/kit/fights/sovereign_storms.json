@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "sovereign_storms",
  "moves": "sovereign_storms",
  "duel": true,
@@ -23,6 +23,12 @@
        "rake",
        "bolt"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -37,6 +43,11 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -47,6 +58,11 @@
       [
        "snap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap"
+      }
      ]
     },
     {
@@ -59,6 +75,12 @@
       [
        "spears"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -72,6 +94,12 @@
       [
        "clap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     }
    ]
@@ -91,6 +119,12 @@
        "rake",
        "clap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -105,6 +139,12 @@
        "snap",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -116,6 +156,11 @@
        "snap",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap"
+      }
      ]
     },
     {
@@ -127,6 +172,12 @@
        "bolt",
        "snap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -139,6 +190,12 @@
       [
        "spears"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -152,6 +209,12 @@
       [
        "clap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     }
    ]
@@ -169,6 +232,12 @@
       [
        "spears"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -183,6 +252,11 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -194,6 +268,11 @@
        "snap",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap"
+      }
      ]
     },
     {
@@ -205,6 +284,12 @@
        "rake",
        "bolt"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -216,6 +301,12 @@
        "bolt",
        "snap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -230,6 +321,12 @@
        "snap",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     },
     {
@@ -247,6 +344,12 @@
       [
        "clap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clap",
+       "dodged": "bolt"
+      }
      ]
     }
    ]
@@ -255,5 +358,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.25
+ },
+ "mind": {
+  "cooldowns": {
+   "bolt": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "bolt",
+     "clap",
+     "snap",
+     "rake"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "bolt"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "snap"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "snap",
+     "rake"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "clap"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "clap",
+     "snap"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "bolt"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "nightmare_drowning",
  "moves": "nightmare_drowning",
  "duel": true,
@@ -23,6 +23,12 @@
        "rake",
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -36,6 +42,12 @@
       [
        "tail"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -46,6 +58,11 @@
       [
        "snap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way"
+      }
      ]
     },
     {
@@ -60,6 +77,12 @@
       [
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -72,6 +95,12 @@
       [
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -83,6 +112,12 @@
        "snap",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     }
    ]
@@ -102,6 +137,12 @@
        "rake",
        "undertow"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -113,6 +154,11 @@
        "snap",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way"
+      }
      ]
     },
     {
@@ -126,6 +172,12 @@
       [
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -139,6 +191,12 @@
       [
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -149,6 +207,12 @@
        "snap",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -161,6 +225,12 @@
       [
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -176,6 +246,12 @@
        "snap",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "which_way",
+       "dodged": "lunge"
+      }
      ]
     }
    ]
@@ -184,5 +260,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "lunge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "lunge",
+     "which_way",
+     "rake",
+     "snap"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "lunge"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "rake"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "rake",
+     "snap"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "which_way"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "which_way",
+     "rake"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "lunge"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

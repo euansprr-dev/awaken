@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "guardian_foundry",
  "moves": "guardian_foundry",
  "duel": true,
@@ -23,6 +23,12 @@
        "stamp_b",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -37,6 +43,11 @@
       [
        "buck"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -47,6 +58,11 @@
       [
        "stamp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam"
+      }
      ]
     },
     {
@@ -60,6 +76,12 @@
       [
        "rivets"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -73,6 +95,12 @@
       [
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -92,6 +120,12 @@
        "stamp_b",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -106,6 +140,11 @@
       [
        "buck"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -117,6 +156,11 @@
        "stamp",
        "stamp_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam"
+      }
      ]
     },
     {
@@ -127,6 +171,12 @@
        "charge",
        "stamp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -140,6 +190,12 @@
       [
        "rivets"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -157,6 +213,12 @@
       [
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -165,5 +227,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "charge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "charge",
+     "slam",
+     "stamp",
+     "stamp_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "stamp"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "stamp",
+     "stamp_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "slam"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "slam",
+     "stamp"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "guardian_rim",
  "moves": "guardian_rim",
  "duel": true,
@@ -23,6 +23,12 @@
        "stab_b",
        "scythe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe",
+       "dodged": "rootfall"
+      }
      ]
     },
     {
@@ -37,6 +43,11 @@
       [
        "kick"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "rootfall"
+      }
      ]
     },
     {
@@ -50,6 +61,12 @@
       [
        "web"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe",
+       "dodged": "rootfall"
+      }
      ]
     },
     {
@@ -60,6 +77,11 @@
       [
        "stab"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe"
+      }
      ]
     },
     {
@@ -73,6 +95,12 @@
       [
        "scythe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe",
+       "dodged": "rootfall"
+      }
      ]
     }
    ]
@@ -92,6 +120,12 @@
        "stab_b",
        "scythe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe",
+       "dodged": "rootfall"
+      }
      ]
     },
     {
@@ -106,6 +140,11 @@
       [
        "kick"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "rootfall"
+      }
      ]
     },
     {
@@ -119,6 +158,12 @@
       [
        "web"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe",
+       "dodged": "rootfall"
+      }
      ]
     },
     {
@@ -130,6 +175,11 @@
        "stab",
        "stab_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe"
+      }
      ]
     },
     {
@@ -139,6 +189,12 @@
       [
        "web"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe",
+       "dodged": "rootfall"
+      }
      ]
     },
     {
@@ -156,6 +212,12 @@
       [
        "scythe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "scythe",
+       "dodged": "rootfall"
+      }
      ]
     }
    ]
@@ -164,5 +226,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "rootfall": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "rootfall",
+     "scythe",
+     "stab",
+     "stab_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "rootfall"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "stab"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "stab",
+     "stab_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "scythe"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "scythe",
+     "stab"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "rootfall"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

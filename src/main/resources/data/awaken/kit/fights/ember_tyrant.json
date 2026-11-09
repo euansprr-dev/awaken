@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "ember_tyrant",
  "moves": "ember_tyrant",
  "duel": true,
@@ -21,6 +21,11 @@
       [
        "stomp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -35,6 +40,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -48,6 +59,12 @@
        "chop_b",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -62,6 +79,12 @@
        "backhand",
        "chop_a"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "eruption"
+      }
      ]
     },
     {
@@ -76,6 +99,12 @@
        "chop_a",
        "chop_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -88,6 +117,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -105,6 +140,11 @@
       [
        "stomp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -116,6 +156,12 @@
        "chop_a",
        "chop_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -129,6 +175,12 @@
        "chop_b",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -143,6 +195,12 @@
        "backhand",
        "chop_a"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "eruption"
+      }
      ]
     },
     {
@@ -157,6 +215,12 @@
        "chop_a",
        "chop_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -169,6 +233,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -183,6 +253,11 @@
       [
        "stomp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -194,6 +269,12 @@
        "chop_a",
        "chop_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -204,6 +285,12 @@
        "chop_b",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -214,6 +301,12 @@
       [
        "eruption"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "eruption"
+      }
      ]
     },
     {
@@ -228,6 +321,12 @@
        "chop_a",
        "chop_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -240,6 +339,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -252,5 +357,76 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.25
+ },
+ "mind": {
+  "cooldowns": {
+   "charge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "charge",
+     "eruption",
+     "hammer",
+     "chop_b",
+     "backhand"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "charge",
+     "eruption"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "chop_b"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "chop_b",
+     "backhand"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "charge",
+     "eruption",
+     "hammer"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "hammer",
+     "chop_b"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "charge",
+     "eruption"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

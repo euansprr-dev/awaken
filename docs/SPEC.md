@@ -18829,6 +18829,30 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   `break` act at once (`DuelDemo`). Tour `tools/autopilot/fights-duel.txt` (on CI): each pilot's tell, recoil, reel
   early and low, and broken stance.
 
+**A held guard holds its ground (Euan's playtest 2026-11-09: "the light attacks when I tried to block it doesn't make any
+blocking sound ... and it doesn't even hit me").** A guard that blocked a light blow (the answer past the deflect's ticks)
+let only part of the damage through, but the blow's own push, its lift and vanilla's knockback all still applied: about
+6 blocks flown from one blocked cut, so the string's next blow never came (`fights_guard_holds_ground`: before, one blow
+met the guard and you moved 5.9 blocks; after, two blows and 0.66 blocks). Now the tick a held guard takes a blow it
+cancels vanilla's knockback (`ArmsServer.onKnockBack`, `Arms.guarded`) and `Abilities.push` is a quarter as strong with no
+lift: a step back, feet on the ground, still in reach of what comes next. A deflect never pushed; a guard break and an
+unguarded blow are unchanged. A block now also jolts the blade and sparks (`ArmsPredict`, the shot's lighter treatment),
+because a kick and a knock was all it had; the ring stays the deflect's alone (its window is the guard's first 3 to 5
+ticks). A boss with a mind logs one `[fights] missed` line for a blow that met nobody though you stood in its reach (how far, in
+sight or not), so a playtest can say what the tests can't: whether a blow ever passes through a guard held still.
+
+**A block you can feel (Euan's playtest 2026-11-09: a block a moment too late "barely makes any sound ... it feels like nothing
+happened ... sometimes it doesn't even push you back").** His log held only 8 light blows that met nobody in a five-minute fight, so
+these blows were landing on the guard. Three causes. The sound: `arms.block` has 92 to 95% of its energy under 300 Hz, which laptop
+speakers don't play, where the deflect has none there. A block now plays three layers: that thud for weight, Minecraft's own
+shield being struck (`guard.struck`, `item/shield/block1-5` by name, pitch 0.9) and steel (`guard.steel`, `mob/irongolem/hit1-4`, quiet
+and pitched up). The ring stays the deflect's. The push: a quarter of a light blow's knock moved you about a quarter of a block, and
+it only came if the hit counted as landing, which a blow doesn't when it does no damage (the last blow's half second of immunity,
+the second blow of most strings). Now the push comes whenever a guard took the blow (`Arms.guarded`), is 70% of the knock and at
+least 0.3 (about 0.7 of a block on the ground, no lift; `fights_guard_holds_ground`), and a blow held for a laggy guard (50 ms or
+more of ping) keeps its push for when it lands (`Arms.afterHeld`). The stop: a block has a 50 ms hit-stop on the attacker and your
+hands, half a deflect's, and a harder kick of the view to the side the blow came from. Unheard and unseen in game when written.
+
 **47.4 The Provings: the Ringer (stage 3).** The D Reassessment becomes the first Proving (PLAN §4.7, GOALS part 2):
 one fight with a Warden in its own hall, never announced, the rank's gift inside the fight.
 - **The Ringer** (`awaken:proving_ringer`, kit `proving_ringer`): a bell-ringer that drowned at its ropes and kept
@@ -19737,7 +19761,10 @@ If you've got out of reach during those 5 ticks the normal choice takes over.
 (`mind.cooldowns`, else by class: LIGHT 0, HEAVY 30, PERILOUS and GRAB 80, a move that hurts nobody 240). If nothing it may start
 reaches you for 2 seconds its blows' rests are waived; a move that hurts nobody (a buff, a heal, a summon) always keeps its rest. It
 never makes the same move twice running by choice. The one exception is a last resort: a blow may follow itself when nothing else it
-could do has reached you for 10 seconds, so a spot only one move reaches isn't safe. Any blow may be
+could do has reached you for 10 seconds (3 seconds in a phase with only one close blow, which has nothing else to do there), so a
+spot only one move reaches isn't safe. A string doesn't repeat either: a next blow that would be the move just made is dropped (a
+fork can land on the blow that was coming anyway). And a body whose longest close blow is the one it just made steps in, after 0.75 s
+with nothing to start, until a shorter one reaches, instead of standing there. Any blow may be
 held a beat at its peak (`holdChance` 25%, `holdTicks` 6, or its own authored hold if longer), which only ever adds warning. Having
 deflected it again and again it always holds. The third dodge in a row (each within 2 seconds of the last) is caught: once it has
 seen that third dodge, the next blow holds for at least 10 ticks and keeps turning to you through the hold, so it lands where you
@@ -19759,6 +19786,33 @@ in `fights_record_*` for any fight with a mind: every repeat is that last resort
 the table holds the worst fight to 10%). In `fights_mind_drinks_<boss>`: at least 60%
 of drinks in reach get an answer that starts before the drink ends. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
 at least double what they are against someone standing.
+
+**48.6 Every boss has a mind (Euan 2026-11-09, after playing the pilots: "apply these changes ... to all bosses").** The 45 others
+get what the two pilots have, from `tools/art/specs/kit/minds.py`, made from each body's own moves and nothing new: a drink
+brings its gap-closer or shot from afar and its guard-beater, heavy or quick blow up close; a cast and a stop after a run its
+gap-closer or shot; a heavy being held its quickest blows; a guard kept up its red moves and grabs, else its heavy; a recovery its
+hardest close blow. A string's next blow forks to the guard-beater (or the heavy) on a raised guard and to the gap-closer after a
+dodge. Its gap-closers rest 60 ticks. A move that fills the room or ends the fight (a signature with no blade of its own, or a
+reach of 40) answers nothing, and neither does a move kept for behind. A script written with its own `mind` keeps it. **An answer or a fork never reaches for
+a move its phase hasn't got yet** (`FightRunner.inPhase`), so a late phase's moves stay in the late phase; the Regent's Stinger Volley
+now answers only from her second phase on. Tempers, footwork and each boss's own trick aren't in this. `fights_mind_every_boss`
+checks they all have one; `fights_record_<boss>_guard` runs each of the others once, the Lantern Broker excepted (it trades with you and only duels if you ask).
+
+**48.8 The body keeps the clip's clock (Euan's playtest 2026-11-09: the Ember Tyrant's run "is super glitchy ... not super smooth";
+"double check all different bosses").** The clip runs on the server's clock (`ServerPace`), but the body's place reached the client
+every third tick and took three more to arrive, so a body carried by a move began to travel after its legs began to run and went
+on gliding after they stopped: on a real client (`fights-charge-trace`, CI 42601411803) the Tyrant's 12-tick run ended at 1.4 s on its
+clip and at 1.6 s on the ground, a third of the run out of step. Any late packet also stopped it dead for a tick, since the place was
+only ever three ticks ahead of what had been drawn. All 47 bodies now: are placed every tick (`updateInterval(1)`) and glide to it
+in three steps (`LinearInterpolationHandler`), which a packet one or two ticks late doesn't stop; and while a move or a charge carries
+one, it's sent ahead by two ticks of what's left of its run (`AwakenBoss.trackingPosition`, `FightRunner.lead`, `AbilityRunner.lead`),
+never further than the move still goes (an ability charge brakes to a fifth on its last tick, so that tick counts for a fifth:
+CI 42603379006 showed the Guardian of the Gardens running 0.42 past its stop and sliding back; `fights_charge_stops_where_sent`),
+and not at all if a wall is there. Two ticks is exactly what the glide lags at a steady speed:
+the client draws the body where the server has it on every tick, start and end included (`fights_body_keeps_up`, all 66 moves that
+carry a body). The server's own place, and so every reach and every hit, is unchanged. A move cut short (a deflect) can pull the drawn
+body back up to two ticks of its run. What a carried body's legs do isn't touched: the charge's stride swings about 34 degrees a tick
+where the same body's run swings about 8, the next thing to look at if the run still reads wrong.
 
 **48.7 The recorder (stage 0).** `FightRecorder`: `fights_record_<boss>_<kind>`, six bosses (more as the roll-out reaches them)
 against six kinds of player (stands still, runs, circles, holds guard, keeps away, stays behind), 72 s each with fixed seeds;

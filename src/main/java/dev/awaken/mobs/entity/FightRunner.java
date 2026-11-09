@@ -369,8 +369,9 @@ final class FightRunner {
         if (!string.isEmpty()) {
             if (answer(target, level, false)) return;
             fork(target);
+            if (mind != null && !byHand) dropRepeats();
             String next = string.poll();
-            int i = moves.index(next);
+            int i = next == null ? -1 : moves.index(next);
             if (i >= 0 && inRange(moves.get(i), target) && reaches(i, target) && begin(level, next, target)) {
                 phraseBlows++;
                 return;
@@ -445,10 +446,24 @@ final class FightRunner {
         if (!a.then().isEmpty()) string.addAll(a.then().get(boss.getRandom().nextInt(a.then().size())));
     }
 
+    /** A string doesn't make the same move twice running either (SPEC §48.3): a fork can land on the blow that was coming anyway. */
+    private void dropRepeats() {
+        while (!string.isEmpty() && !mind.follows(moves.index(string.peek()))) string.poll();
+    }
+
+    /** Whether this phase's pool or strings use the move: an answer never reaches for a move its phase hasn't got yet (SPEC §48.6). */
+    private boolean inPhase(String id) {
+        for (FightScripts.Entry e : fight.phase(boss.phase()).pool()) {
+            if (e.move().equals(id)) return true;
+            for (List<String> string : e.then()) if (string.contains(id)) return true;
+        }
+        return false;
+    }
+
     /** Whether a move could begin now, as an answer or at a fork. */
     private boolean ready(int i, LivingEntity target) {
         KitMoves.Move m = moves.get(i);
-        if (mind != null && !mind.follows(i)) return false;
+        if (mind != null && (!mind.follows(i) || !inPhase(m.id()))) return false;
         if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target) || !reaches(i, target)) return false;
         if (m.ability().isEmpty()) return true;
         Ability a = boss.ability(m.ability().get());
@@ -481,9 +496,38 @@ final class FightRunner {
         navTicks = 10;
         // it stops where its close moves reach (at most 3.5 blocks out): Unit Zero's cuts reach 1.6, not 3.5
         double reach = closeReach();
+        // its longest close blow is what keeps it this far out: when that's the one it just made, it steps in until another reaches (SPEC §48.3)
+        if (mind != null && mind.waiting(boss.level().getGameTime()) > STEP_IN_AFTER) reach = shortestCloseReach(reach);
         double stop = reach > 0 ? Math.min(3.5, Math.max(0.5, reach - 0.3)) : 3.5;
         if (edgeDistance(target) > stop) boss.getNavigation().moveTo(target, 1.0);
         else boss.getNavigation().stop();
+    }
+
+    /** With only one close blow in this phase it can't change what it does; it waits this long, not the full last resort. */
+    private static final int ONE_CLOSE_BLOW_AFTER = 60;
+
+    /** How many blows in this pool can be started from close (not kept for far or behind). */
+    private int closeBlows(List<FightScripts.Entry> pool) {
+        int n = 0;
+        for (FightScripts.Entry e : pool) {
+            int i = moves.index(e.move());
+            if (i >= 0 && moves.get(i).kind() != Strikes.Kind.NONE && moves.get(i).minRange() <= 0 && e.when() != FightScripts.When.FAR && e.when() != FightScripts.When.BEHIND) n++;
+        }
+        return n;
+    }
+
+    /** How long it stands with nothing to start before it steps closer. */
+    private static final int STEP_IN_AFTER = 15;
+
+    /** The shortest reach among its close moves in this phase, for when the longest has just been used. */
+    private double shortestCloseReach(double longest) {
+        double reach = longest;
+        for (FightScripts.Entry e : fight.phase(boss.phase()).pool()) {
+            int i = moves.index(e.move());
+            if (i < 0 || moves.get(i).minRange() > 0 || moves.get(i).maxRange() <= 0 || e.when() == FightScripts.When.FAR || e.when() == FightScripts.When.BEHIND) continue;
+            reach = Math.min(reach, moves.get(i).maxRange());
+        }
+        return reach;
     }
 
     /** How far its close moves reach in this phase (those usable from 0, not kept for far or behind), or 0. */
@@ -499,6 +543,7 @@ final class FightRunner {
 
     private FightScripts.@Nullable Entry pick(LivingEntity target) {
         List<FightScripts.Entry> pool = fight.phase(boss.phase()).pool();
+        if (mind != null) mind.repeatAfter(closeBlows(pool) <= 1 ? ONE_CLOSE_BLOW_AFTER : FightMind.REPEAT_AFTER);
         int sum = 0;
         for (FightScripts.Entry e : pool) if (usable(e, target)) sum += weight(e, target);
         if (sum <= 0) return null;
@@ -785,6 +830,24 @@ final class FightRunner {
         }
     }
 
+    /** How many ticks ahead the body is sent while a move carries it: what the client's three-step glide lags at a steady speed (SPEC §48.8). */
+    static final int LEAD = 2;
+
+    /** Of the {@link #LEAD} ticks after active tick {@code k}, how many the move still carries the body on. */
+    static int carried(int k, int active) {
+        return k < 0 ? 0 : Math.max(0, Math.min(LEAD, active - 1 - k));
+    }
+
+    /** How far past where it is the body is sent this tick, or null: it runs on the clip's clock (SPEC §48.8). */
+    @Nullable Vec3 lead() {
+        if (move < 0 || (ability != null && ability.kind() == Ability.Kind.CHARGE)) return null; // a charge carries itself
+        int left = carried(t - windup - hold - 1, active);
+        KitMoves.Move m = moves.get(move);
+        if (left == 0 || (m.motion().advance() == 0 && m.motion().rise() == 0)) return null;
+        float r = yaw * Mth.DEG_TO_RAD, adv = m.motion().advance() * aim.run / active * left;
+        return new Vec3(-Mth.sin(r) * adv, m.motion().rise() / active * left, Mth.cos(r) * adv);
+    }
+
     /** How fast the body turns into its aim after the lock (degrees a tick). */
     private static final float TURN_RATE = 14F;
 
@@ -853,6 +916,11 @@ final class FightRunner {
         marks(m);
         // a blow you stood in the reach of that never landed (and wasn't turned aside: that ends it before here) you got
         // out of: a dash, a step, a roll
+        // a blow that met nobody though you stood in its reach: one line each, for the next playtest (SPEC §47.3)
+        if (k == active && mind != null && inReach && hits == 0 && !m.hits().isEmpty() && target != null) {
+            dev.awaken.Awaken.LOG.info("[fights] missed {} {} {}: {} blocks off, {}", fight.id(), m.id(), cls,
+                    String.format("%.1f", edgeDistance(target)), boss.getSensing().hasLineOfSight(target) ? "in sight" : "out of sight");
+        }
         if (k == active && inReach && !struck && fight.mirrors() && read == Strikes.Habit.NONE) slips++;
         if (t < wind + active + recover) {
             // the recovery: no turning, the opening; in a string the next move links on at the end of the
@@ -897,7 +965,11 @@ final class FightRunner {
             return false;
         }
         if (string.isEmpty()) return false;
-        if (mind != null && !byHand) fork(target);
+        if (mind != null && !byHand) {
+            fork(target);
+            dropRepeats();
+            if (string.isEmpty()) return false;
+        }
         int i = moves.index(string.peek());
         if (i < 0 || !inRange(moves.get(i), target) || !reaches(i, target)) return false;
         String next = string.poll();
@@ -982,9 +1054,12 @@ final class FightRunner {
             Strikes.Kind kind = cls == Strikes.Kind.NONE ? Strikes.Kind.HEAVY : cls;
             boolean landed = Strikes.deliver(boss, kind, () -> e.hurtServer(level, level.damageSources().mobAttack(boss), dmg));
             if (landed && e == boss.getTarget()) struck = true;
-            if (landed && m.knock() > 0) {
+            if (m.knock() > 0) {
+                // a blow a guard took pushes even when it did no damage (all of it stopped, or the last blow's immunity)
                 Vec3 away = e.position().subtract(boss.position());
-                Abilities.push(e, away, m.knock(), Math.min(0.5, m.knock() * 0.4));
+                Runnable push = () -> Abilities.push(e, away, m.knock(), Math.min(0.5, m.knock() * 0.4));
+                if (landed || dev.awaken.arms.Arms.guarded(e)) push.run();
+                else dev.awaken.arms.Arms.afterHeld(e, push);
             }
         }
     }

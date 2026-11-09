@@ -85,7 +85,25 @@ final class ArmsServer {
     private static boolean reapplying;
 
     /** A guardable blow waiting out the latency grace. */
-    private record Hold(ServerPlayer victim, DamageSource source, float amount, long at, int grace, Strikes.Kind kind) {}
+    private static final class Hold {
+        final ServerPlayer victim;
+        final DamageSource source;
+        final float amount;
+        final long at;
+        final int grace;
+        final Strikes.Kind kind;
+        /** What the blow does besides hurting (its push), once it lands or meets a guard. */
+        @Nullable Runnable after;
+
+        Hold(ServerPlayer victim, DamageSource source, float amount, long at, int grace, Strikes.Kind kind) {
+            this.victim = victim;
+            this.source = source;
+            this.amount = amount;
+            this.at = at;
+            this.grace = grace;
+            this.kind = kind;
+        }
+    }
 
     private static final List<Hold> HOLDS = new ArrayList<>();
 
@@ -607,6 +625,10 @@ final class ArmsServer {
 
     /** An Arms blow pushes the way the blade went (SPEC §25 "Fight Feel"); a kill throws the body further along it. */
     static void onKnockBack(net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent e) {
+        if (Arms.guarded(e.getEntity())) {
+            e.setCanceled(true); // a held guard holds its ground: vanilla's own shove, and the guard's pull toward the blow
+            return;
+        }
         if (!pendingPush || e.getEntity().getId() != pendingTarget) return;
         // vanilla pushes against the ratio
         e.setRatioX(-PUSH[0]);
@@ -793,7 +815,10 @@ final class ArmsServer {
                     stop(p, s, src, from, false, incoming * (1F - g.reduction()), by, false);
                 } else {
                     e.setBlockedDamage(incoming * g.reduction());
+                    s.guardedAt = now; // it stops here: no knockback in this blow carries you off (SPEC §47.3)
                     soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
+                    soundForOthers(p, ArmsSounds.BLOCK_STRUCK.get(), 1.0F, 1.0F);
+                    soundForOthers(p, ArmsSounds.BLOCK_STEEL.get(), 1.0F, 1.0F);
                     answer(p, s, ArmsPayloads.BLOCK, by);
                 }
             }
@@ -817,7 +842,10 @@ final class ArmsServer {
         // a shot sent back keeps flying: only the feel of the blade stays
         STOPPED.add(new Stopped(p, !sentBack && src.getDirectEntity() instanceof Projectile pr ? pr : null, way, deflected, through, src));
         if (deflected) soundForOthers(p, ArmsSounds.GLANCE.get(), 1.0F, 1.0F);
-        else soundForOthers(p, ArmsSounds.BLOCK.get(), ArmsSounds.SHOT_BLOCK_VOLUME, ArmsSounds.SHOT_BLOCK_PITCH);
+        else {
+            soundForOthers(p, ArmsSounds.BLOCK.get(), ArmsSounds.SHOT_BLOCK_VOLUME, ArmsSounds.SHOT_BLOCK_PITCH);
+            soundForOthers(p, ArmsSounds.BLOCK_STRUCK.get(), ArmsSounds.SHOT_BLOCK_VOLUME, ArmsSounds.SHOT_BLOCK_PITCH);
+        }
         int yaw = (int) (Mth.atan2(way.z, way.x) * Mth.RAD_TO_DEG) - 90; // HURT's convention: the world yaw it came from
         int id = by == null ? -1 : by.getId(), what = deflected ? ArmsPayloads.DEFLECT : ArmsPayloads.BLOCK;
         AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.SHOT, id, what, yaw));
@@ -904,6 +932,20 @@ final class ArmsServer {
         seen(p, new ArmsPayloads.Seen(p.getId(), what, id, 0, 0));
     }
 
+    /** Gives the blow just held for this player what it does after it lands; false if none was held this tick. */
+    static boolean afterHeld(ServerPlayer p, Runnable after) {
+        long now = now(p);
+        for (int i = HOLDS.size() - 1; i >= 0; i--) {
+            Hold h = HOLDS.get(i);
+            if (h.at != now) return false;
+            if (h.victim == p) {
+                h.after = after;
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Waits out each held blow's grace, then lands it (a guard raised in the meantime meets it). */
     static void onServerTick(ServerTickEvent.Post e) {
         LordForged.revealPending();
@@ -921,13 +963,15 @@ final class ArmsServer {
                 heldTicks = (int) (now - h.at);
                 heldKind = h.kind;
                 reapplying = true;
+                boolean landed;
                 try {
-                    h.victim.hurtServer(h.victim.level(), h.source, h.amount);
+                    landed = h.victim.hurtServer(h.victim.level(), h.source, h.amount);
                 } finally {
                     heldTicks = 0;
                     heldKind = null;
                     reapplying = false;
                 }
+                if (h.after != null && (landed || Arms.guarded(h.victim))) h.after.run();
             }
         }
         if (!SLOWED.isEmpty() && (e.getServer().getTickCount() % 20) == 0) {

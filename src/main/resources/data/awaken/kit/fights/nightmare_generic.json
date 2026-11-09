@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "nightmare_generic",
  "moves": "nightmare_generic",
  "duel": true,
@@ -19,6 +19,11 @@
       [
        "grasp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -29,6 +34,11 @@
       [
        "reach"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -39,6 +49,11 @@
       [
        "reach"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -49,6 +64,11 @@
       [
        "reach"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -58,6 +78,11 @@
       [
        "corner"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -71,6 +96,11 @@
       [
        "grasp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -94,6 +124,11 @@
        "grasp",
        "reach"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -104,6 +139,11 @@
       [
        "reach"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -115,6 +155,11 @@
        "reach",
        "grasp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -125,6 +170,11 @@
       [
        "corner"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -142,6 +192,11 @@
       [
        "grasp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hold"
+      }
      ]
     },
     {
@@ -154,5 +209,49 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.3
+ },
+ "mind": {
+  "cooldowns": {},
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "hold",
+     "fold",
+     "grasp",
+     "reach"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "grasp",
+     "reach"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "hold",
+     "fold"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "hold",
+     "grasp"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   }
+  ]
  }
 }

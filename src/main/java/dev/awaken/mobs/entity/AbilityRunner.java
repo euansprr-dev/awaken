@@ -570,9 +570,23 @@ public final class AbilityRunner {
     /** Blocks past you a charge carries before it's spent. */
     static final double CHARGE_PAST = 1.5;
 
+    /** What's left of a charge's speed on the tick it's spent. */
+    static final double CHARGE_BRAKE = 0.2;
+
+    private double chargeSpeed() {
+        return mob.def().flies() ? 1.0 : 0.85;
+    }
+
+    /** How far past where it is a charge sends the body this tick, or null (SPEC §48.8). Its last tick is only {@link #CHARGE_BRAKE} of a stride. */
+    @Nullable Vec3 lead() {
+        if (chargeTicks <= 0) return null;
+        double by = chargeSpeed() * (Math.min(FightRunner.LEAD, chargeTicks - 1) + (chargeTicks <= FightRunner.LEAD ? CHARGE_BRAKE : 0));
+        return new Vec3(chargeDir.x * by, mob.def().flies() ? chargeDir.y * by : 0, chargeDir.z * by);
+    }
+
     private void tickCharge(ServerLevel level) {
         chargeTicks--;
-        double speed = mob.def().flies() ? 1.0 : 0.85;
+        double speed = chargeSpeed();
         Vec3 v = mob.getDeltaMovement();
         mob.setDeltaMovement(chargeDir.x * speed, mob.def().flies() ? chargeDir.y * speed : v.y, chargeDir.z * speed);
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(0.6), e -> Abilities.isEnemy(mob, e))) {
@@ -582,12 +596,15 @@ public final class AbilityRunner {
             var fx = chargeEffect;
             boolean landed = Strikes.deliver(mob, chargeCls, () -> Abilities.hurt(level, mob, e, chargeDamage,
                     ca != null ? Abilities.bolt(mob, ca) : mob.def().theme.bolt, fx));
-            if (landed) Abilities.push(e, chargeDir, 1.1, 0.4);
+            Vec3 way = chargeDir;
+            Runnable push = () -> Abilities.push(e, way, 1.1, 0.4);
+            if (landed || dev.awaken.arms.Arms.guarded(e)) push.run();
+            else dev.awaken.arms.Arms.afterHeld(e, push);
         }
         if (mob.horizontalCollision && !mob.def().flies()) chargeTicks = 0;
         if (chargeTicks <= 0) {
             mob.setFlag(AwakenMob.F_CHARGING, false);
-            mob.setDeltaMovement(mob.getDeltaMovement().scale(0.2));
+            mob.setDeltaMovement(mob.getDeltaMovement().scale(CHARGE_BRAKE));
         }
     }
 

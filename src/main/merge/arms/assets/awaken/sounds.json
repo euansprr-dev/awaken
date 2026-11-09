@@ -926,5 +926,69 @@
         "attenuation_distance": 20
       }
     ]
+  },
+  "guard.struck": {
+    "subtitle": "subtitles.awaken.arms.block",
+    "sounds": [
+      {
+        "name": "minecraft:item/shield/block1",
+        "volume": 0.85,
+        "pitch": 0.9,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:item/shield/block2",
+        "volume": 0.85,
+        "pitch": 0.9,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:item/shield/block3",
+        "volume": 0.85,
+        "pitch": 0.9,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:item/shield/block4",
+        "volume": 0.85,
+        "pitch": 0.9,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:item/shield/block5",
+        "volume": 0.85,
+        "pitch": 0.9,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "guard.steel": {
+    "subtitle": "subtitles.awaken.arms.block",
+    "sounds": [
+      {
+        "name": "minecraft:mob/irongolem/hit1",
+        "volume": 0.55,
+        "pitch": 1.2,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:mob/irongolem/hit2",
+        "volume": 0.55,
+        "pitch": 1.2,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:mob/irongolem/hit3",
+        "volume": 0.55,
+        "pitch": 1.2,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:mob/irongolem/hit4",
+        "volume": 0.55,
+        "pitch": 1.2,
+        "attenuation_distance": 20
+      }
+    ]
   }
 }

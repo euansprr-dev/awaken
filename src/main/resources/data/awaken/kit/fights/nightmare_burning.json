@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "nightmare_burning",
  "moves": "nightmare_burning",
  "duel": true,
@@ -23,6 +23,12 @@
        "trample",
        "charge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -36,6 +42,12 @@
       [
        "buck"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -46,6 +58,11 @@
       [
        "strike"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire"
+      }
      ]
     },
     {
@@ -59,6 +76,12 @@
       [
        "charge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -69,6 +92,12 @@
        "strike",
        "trample"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -83,6 +112,12 @@
       [
        "pyre"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -102,6 +137,12 @@
        "trample",
        "flare"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -113,6 +154,11 @@
        "strike",
        "trample"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire"
+      }
      ]
     },
     {
@@ -125,6 +171,12 @@
       [
        "cinders"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -137,6 +189,12 @@
       [
        "charge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -150,6 +208,12 @@
       [
        "charge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -168,6 +232,12 @@
       [
        "pyre"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wildfire",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -176,5 +246,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "charge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "charge",
+     "wildfire",
+     "strike",
+     "trample"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "strike"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "strike",
+     "trample"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "wildfire"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "wildfire",
+     "strike"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }
