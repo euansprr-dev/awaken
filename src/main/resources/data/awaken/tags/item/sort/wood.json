@@ -1,0 +1,27 @@
+{
+ "values": [
+  "awaken:archive_planks",
+  "awaken:dream_boards",
+  "awaken:dream_boards_slab",
+  "awaken:dream_boards_stairs",
+  "awaken:dream_wood",
+  "awaken:dream_wood_slab",
+  "awaken:dream_wood_stairs",
+  "awaken:driftwood",
+  "awaken:frost_timber",
+  "awaken:hoist_beam",
+  "awaken:market_boards",
+  "awaken:market_boards_slab",
+  "awaken:market_boards_stairs",
+  "awaken:market_timber",
+  "awaken:mine_planks",
+  "awaken:mine_timber",
+  "awaken:sky_planks",
+  "awaken:spire_board",
+  "awaken:twigs",
+  "minecraft:bamboo_mosaic",
+  "minecraft:bamboo_mosaic_slab",
+  "minecraft:bamboo_mosaic_stairs",
+  "minecraft:bowl"
+ ]
+}

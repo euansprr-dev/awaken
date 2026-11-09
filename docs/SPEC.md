@@ -19956,4 +19956,43 @@ The Tasks page (§27.13) keeps its model: steps stay derived from the world, no 
 Picks are `HearthGoals.OPTIONS`, in the order they're offered: a room you've started comes first and the one you picked stays on offer. Each has the rank it's told at, which is not a lock: a room counts whenever it's built. Pick one and the row becomes it, with Change to go back. The Storehouse is told at C-rank, with the Granary Keystone as a Lead (every town's granary keeps one against a ground-floor wall). The Sanctuary is a pick once there's an Anchor. The Now tracker's room suggestion now covers the works too, once two of their pieces are down.
 
 The plan put Forge tiers on `hearth.build`; they're on `hearth.home` so that raising the Forge never hides Add to your home. The foot of the Hearth tab names the first tier the next rank opens, for the Forge and the home; Armour and Weapons name the next rank's set and weapon.
+## 56. A Place for Everything (storage)
+
+Plan and reasons: `docs/storage/PLAN.md`, approved in full by Euan 9 Nov 2026 (automatic "keep my bag tidy" is a no). Module
+`dev.awaken.storage`. Built in stages; this section says what exists.
+
+**The sorts (Stage 0).** One list, in this order, used by the bays, the signs and the Ledger, and by Tidy: Stone and earth, Wood,
+Building and light, Ore and metal, Gems, Food, Plants and seed, Beast and monster drops, Gate loot, Gear, Books and brews, Bells and
+leads, Odd things. It replaces §43.12's eleven bays. `Sorts` resolves every item once, the first time it's asked after tags load
+(components aren't bound when the tag event fires), so a lookup is one hash read and nothing is saved. A tag
+`awaken:sort/<key>` beats every rule, then the rules run: gear, potions, food, ores and metal, gems, plants, wood, creature drops,
+dressed blocks (glass, wool, concrete, terracotta) to Building, dug-up stone and earth, any other placeable block to Building, any
+other item of ours to Gate loot, and what's left is Odd. Items of ours from a common creature's loot table are listed in
+`sort/drops`, boss loot stays in Gate loot by that last rule. No name matching at run time.
+
+Measured on this build: 2,673 items (without spawn eggs), 68 in Odd things (2.5%, was 63%): pottery sherds, smithing templates and
+music discs. `storage_sort_golden` holds 300 hand-checked everyday items. `storage_sort_share` fails at 10% and writes every item's
+sort to `run/storage-sorts.txt`.
+
+**Bays (Stage 0).** A chest's sort is what most of its stacks are. `Storehouse.bayFor`: the chest already holding that exact item,
+else one mostly of its sort with room, else an empty one, else null. `WorkRooms.containers` counts a double chest once (either half
+opens the whole of it), counts copper chests, and follows the room's cells when it has them, so a pantry inside an L-shaped hall's
+box isn't the hall's.
+
+**Tidy, Undo and Pins (Stage 1).** Server-side, on an exact list of menus: `ChestMenu` over a real chest, barrel, minecart or ender
+chest (not someone's button panel on a `SimpleContainer`), `ShulkerBoxMenu`, `DispenserMenu`, `HopperMenu`, and the bag. `Tidy.plan`
+is pure: skip the hotbar and pinned slots, merge identical stacks, order by the sort list then family then name then biggest then
+least worn, each sort on its own row when that fits, and check every item's total before anything is written. A menu whose state id
+disagrees is refused and resynced; four requests a second a player; a slot that won't take its stack stops the whole Tidy. One step
+of Undo per player, kept in memory, dropped on close or when anything in the section changes. `BagPins` (attachment `awaken:bag_pins`,
+copied on death) is a bit per Inventory slot, and "Empty my bag" at the Drop leaves pinned slots too.
+
+The bag's keys sit right of the recipe book's button, which is where the prototype had put Tidy: Tidy and Pin at y 58, eleven tall, and
+Stow under them at y 71 when it comes. On a chest: Tidy in the title row and Tidy and Pin in the row beside "Inventory". `GlassChestScreen`
+and `GlassShulkerScreen` subclass vanilla's screens and only change the drawing, so every click, Mouse Tweaks and JEI behave as before;
+they replace only the exact vanilla classes, and only while the bag is glass. Keys T and Z work only in those screens, and after any
+text box or other mod has had the key. Alt-click (Option on a Mac) pins; the Pin key is a mode where any click does. Flights are
+220 ms ease-out, up to 40 ms staggered, over slots already holding their final contents; a click lands them at once. Sounds by name:
+`item.bundle.insert` low, `item.bundle.remove_one` for Undo, `item.bundle.insert_fail` when refused, `block.chiseled_bookshelf.insert` for a pin.
+Every line under the panel fits inside its width, beside Undo too, so nothing reaches JEI's columns. Client setting `tidy_keys` (`awaken-storage-client.toml`, default on) takes away the buttons, keys and Alt-click together; pins stay saved.
 

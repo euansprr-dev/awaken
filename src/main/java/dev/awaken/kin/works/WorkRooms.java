@@ -5,11 +5,14 @@ import dev.awaken.hearth.HearthService;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -47,7 +50,11 @@ public final class WorkRooms {
         return null;
     }
 
-    /** Every chest and barrel in a room (its walls too), nearest the room's middle first. */
+    /**
+     * Every chest and barrel in a room or set in its walls, nearest the room's middle first. A double chest comes once
+     * (its left half, which {@link #container} opens as the whole chest), and a room that's been read follows its cells,
+     * so a pantry inside an L-shaped hall's box isn't the hall's.
+     */
     public static List<BlockPos> containers(ServerLevel level, Room r) {
         List<BlockPos> out = new ArrayList<>();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
@@ -57,14 +64,33 @@ public final class WorkRooms {
                     m.set(x, y, z);
                     if (!level.isLoaded(m)) continue;
                     BlockState s = level.getBlockState(m);
-                    if ((s.is(Blocks.CHEST) || s.is(Blocks.BARREL) || s.is(Blocks.TRAPPED_CHEST)) && level.getBlockEntity(m) instanceof Container) out.add(m.immutable());
+                    if (!isBay(s) || !(level.getBlockEntity(m) instanceof Container) || !belongs(r, m)) continue;
+                    if (s.getBlock() instanceof ChestBlock && s.getValue(ChestBlock.TYPE) == ChestType.RIGHT && belongs(r, otherHalf(m, s))) continue;
+                    out.add(m.immutable());
                 }
         BlockPos c = r.centre();
         out.sort((a, b) -> Double.compare(a.distSqr(c), b.distSqr(c)));
         return out;
     }
 
+    private static boolean isBay(BlockState s) {
+        return s.getBlock() instanceof ChestBlock || s.is(Blocks.BARREL); // copper chests are ChestBlocks too
+    }
+
+    private static BlockPos otherHalf(BlockPos p, BlockState s) {
+        return p.relative(ChestBlock.getConnectedDirection(s));
+    }
+
+    private static boolean belongs(Room r, BlockPos p) {
+        if (r.cells().isEmpty() || r.cells().contains(p.asLong())) return true;
+        for (Direction d : Direction.values()) if (r.cells().contains(p.relative(d).asLong())) return true;
+        return false;
+    }
+
+    /** What's at this spot to put things in: the whole chest, for either half of a double. */
     public static @Nullable Container container(ServerLevel level, BlockPos p) {
+        BlockState s = level.getBlockState(p);
+        if (s.getBlock() instanceof ChestBlock chest) return ChestBlock.getContainer(chest, s, level, p, true);
         return level.getBlockEntity(p) instanceof Container c ? c : null;
     }
 

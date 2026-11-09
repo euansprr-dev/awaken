@@ -4,6 +4,8 @@ import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
 import dev.awaken.kin.KinApi;
 import dev.awaken.kin.KinKind;
+import dev.awaken.storage.Sort;
+import dev.awaken.storage.Sorts;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -50,44 +52,6 @@ import java.util.Optional;
 public final class Storehouse {
     private Storehouse() {}
 
-    /** The bays, in the order the Ledger lists them. */
-    public enum Bay {
-        STONE("Stone and earth"), WOOD("Wood"), METAL("Ore and metal"), GEMS("Gems"), FOOD("Food"), PLANTS("Plants and seed"),
-        DROPS("Beast and monster drops"), GATE("Gate loot"), GEAR("Gear"), BELLS("Bells and leads"), ODD("Odd things");
-
-        public final String label;
-
-        Bay(String label) {
-            this.label = label;
-        }
-
-        public static Bay of(ItemStack s) {
-            Item i = s.getItem();
-            String path = BuiltInRegistries.ITEM.getKey(i).getPath(), ns = BuiltInRegistries.ITEM.getKey(i).getNamespace();
-            if (path.contains("bell") || path.contains("clapper") || path.contains("letter")) return BELLS;
-            if (s.isDamageableItem() || s.has(DataComponents.EQUIPPABLE)) return GEAR;
-            if (s.is(Tags.Items.ORES) || s.is(Tags.Items.RAW_MATERIALS) || s.is(Tags.Items.INGOTS) || s.is(Tags.Items.NUGGETS)
-                    || s.is(Tags.Items.STORAGE_BLOCKS) || Block.byItem(i) instanceof dev.awaken.delve.LodeHeartBlock) return METAL;
-            if (s.is(Tags.Items.GEMS) || s.is(Items.AMETHYST_SHARD) || s.is(Items.QUARTZ) || s.is(Items.ECHO_SHARD) || s.is(Items.PRISMARINE_CRYSTALS)) return GEMS;
-            if (s.has(DataComponents.FOOD)) return FOOD;
-            if (s.is(Tags.Items.SEEDS) || s.is(Tags.Items.CROPS) || s.is(ItemTags.SAPLINGS) || s.is(Tags.BlockItems.FLOWERS.item()) || s.is(ItemTags.LEAVES)
-                    || s.is(Items.SUGAR_CANE) || s.is(Items.BAMBOO) || s.is(Items.KELP) || s.is(Items.CACTUS)) return PLANTS;
-            if (s.is(ItemTags.LOGS) || s.is(ItemTags.PLANKS) || s.is(Items.STICK) || s.is(ItemTags.WOODEN_SLABS) || s.is(ItemTags.WOODEN_STAIRS)
-                    || s.is(ItemTags.WOODEN_FENCES)) return WOOD;
-            if (s.is(Tags.Items.BONES) || s.is(Tags.Items.STRINGS) || s.is(Tags.Items.LEATHERS) || s.is(Tags.Items.FEATHERS) || s.is(Tags.Items.SLIME_BALLS)
-                    || s.is(Tags.Items.ENDER_PEARLS) || s.is(Tags.Items.GUNPOWDERS) || s.is(Items.ROTTEN_FLESH) || s.is(Items.SPIDER_EYE)
-                    || s.is(Items.BONE_MEAL) || s.is(Items.PHANTOM_MEMBRANE) || s.is(ItemTags.WOOL)) return DROPS;
-            if (ns.equals(dev.awaken.Awaken.MODID) && !(i instanceof BlockItem)) return GATE;
-            if (i instanceof BlockItem bi) {
-                BlockState b = bi.getBlock().defaultBlockState();
-                if (b.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD) || b.is(net.minecraft.tags.BlockTags.DIRT) || s.is(Tags.Items.COBBLESTONES)
-                        || s.is(Tags.Items.SANDS) || s.is(Tags.Items.GRAVELS) || s.is(Tags.Items.STONES) || b.is(net.minecraft.tags.BlockTags.STONE_BRICKS)
-                        || b.is(Blocks.CLAY) || b.is(Blocks.NETHERRACK) || b.is(Blocks.CALCITE) || b.is(Blocks.TUFF)) return STONE;
-            }
-            return ODD;
-        }
-    }
-
     // ---- dropping ------------------------------------------------------------------------------------------------------
 
     static void tip(ServerLevel level, ServerPlayer p, DropBlockEntity be, InteractionHand hand) {
@@ -109,7 +73,7 @@ public final class Storehouse {
         ItemStack last = ItemStack.EMPTY;
         for (int i = Inventory.getSelectionSize(); i < Inventory.INVENTORY_SIZE; i++) {
             ItemStack s = inv.getItem(i);
-            if (s.isEmpty()) continue;
+            if (s.isEmpty() || dev.awaken.storage.StorageApi.pinned(p, i)) continue;
             if (be.full()) break;
             ItemStack left = be.add(s.copy());
             if (left.getCount() == s.getCount()) continue;
@@ -140,7 +104,7 @@ public final class Storehouse {
 
     /** Each kind of thing lands with its own sound. */
     static void land(ServerLevel level, BlockPos at, ItemStack s, float pitch) {
-        Bay b = Bay.of(s);
+        Sort b = Sorts.of(s);
         SoundEvent e = switch (b) {
             case METAL, GEAR -> WorksContent.LAND_METAL.get();
             case WOOD -> WorksContent.LAND_WOOD.get();
@@ -153,10 +117,23 @@ public final class Storehouse {
 
     // ---- bays ----------------------------------------------------------------------------------------------------------
 
-    /** The bay a container is (by the first thing in it), or null while it's empty. */
-    static @Nullable Bay bayOf(Container c) {
-        for (int i = 0; i < c.getContainerSize(); i++) if (!c.getItem(i).isEmpty()) return Bay.of(c.getItem(i));
-        return null;
+    /** The sort a container has come to be: what most of its stacks are (one stray cobble can't turn it), or null while it's empty. */
+    public static @Nullable Sort bayOf(Container c) {
+        int[] n = new int[Sort.values().length];
+        Sort best = null;
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            ItemStack t = c.getItem(i);
+            if (t.isEmpty()) continue;
+            Sort k = Sorts.of(t);
+            n[k.ordinal()]++;
+            if (best == null || n[k.ordinal()] > n[best.ordinal()]) best = k;
+        }
+        return best;
+    }
+
+    private static boolean holds(Container c, ItemStack s) {
+        for (int i = 0; i < c.getContainerSize(); i++) if (ItemStack.isSameItem(c.getItem(i), s)) return true;
+        return false;
     }
 
     static boolean fits(Container c, ItemStack s) {
@@ -168,18 +145,22 @@ public final class Storehouse {
         return false;
     }
 
-    /** Where a stack goes: a bay of its sort with room, else an empty container (a new bay), else null (the hall's full). */
+    /**
+     * Where a stack goes (SPEC §56): the chest already holding that exact item, else one whose stacks are mostly its sort,
+     * else an empty one, which becomes that sort. Null: the hall's full.
+     */
     public static @Nullable BlockPos bayFor(ServerLevel level, Room store, ItemStack s) {
-        Bay want = Bay.of(s);
-        BlockPos empty = null;
+        Sort want = Sorts.of(s);
+        BlockPos sameSort = null, empty = null;
         for (BlockPos p : WorkRooms.containers(level, store)) {
             Container c = WorkRooms.container(level, p);
             if (c == null) continue;
-            Bay b = bayOf(c);
-            if (b == want && fits(c, s)) return p;
+            if (holds(c, s) && fits(c, s)) return p;
+            Sort b = bayOf(c);
+            if (b == want && sameSort == null && fits(c, s)) sameSort = p;
             if (b == null && empty == null) empty = p;
         }
-        return empty;
+        return sameSort != null ? sameSort : empty;
     }
 
     /** A Totter puts an armful away: what doesn't fit comes back. A new bay gets its sign, a bay that fills a chirp. */
@@ -189,13 +170,13 @@ public final class Storehouse {
         boolean fresh = bayOf(c) == null;
         ItemStack left = KinApi.put(c, s);
         level.playSound(null, at, WorksContent.SHELVED.get(), SoundSource.BLOCKS, 0.7F, 0.9F + level.getRandom().nextFloat() * 0.2F);
-        if (fresh) sign(level, at, Bay.of(s));
+        if (fresh) sign(level, at, Sorts.of(s));
         if (!fits(c, new ItemStack(Items.STONE))) level.playSound(null, at, WorksContent.BAY_FULL.get(), SoundSource.NEUTRAL, 0.8F, 1.1F);
         return left;
     }
 
     /** A sign over a new bay, on the wall above it, if there's a wall to hang it on. */
-    private static void sign(ServerLevel level, BlockPos container, Bay bay) {
+    private static void sign(ServerLevel level, BlockPos container, Sort bay) {
         BlockPos at = container.above();
         if (!level.getBlockState(at).isAir()) return;
         for (Direction d : Direction.Plane.HORIZONTAL) {
@@ -244,7 +225,7 @@ public final class Storehouse {
                 ItemStack s = c.getItem(i);
                 if (s.isEmpty()) continue;
                 counts.computeIfAbsent(s.getItem(), k -> new int[1])[0] += s.getCount();
-                bays.putIfAbsent(s.getItem(), Bay.of(s).label);
+                bays.putIfAbsent(s.getItem(), Sorts.of(s).label);
             }
         }
         BlockPos drop = WorkRooms.heart(level, store, DropBlock.class);
@@ -263,8 +244,8 @@ public final class Storehouse {
     }
 
     private static int bayOrder(String label) {
-        for (Bay b : Bay.values()) if (b.label.equals(label)) return b.ordinal();
-        return Bay.values().length;
+        for (Sort b : Sort.values()) if (b.label.equals(label)) return b.ordinal();
+        return Sort.values().length;
     }
 
     static void ledger(ServerLevel level, ServerPlayer p, BlockPos desk) {
@@ -300,7 +281,7 @@ public final class Storehouse {
         if (show) {
             level.sendParticles(p, ParticleTypes.END_ROD, true, false, shelf.getX() + 0.5, shelf.getY() + 1.4, shelf.getZ() + 0.5, 24, 0.15, 0.6, 0.15, 0.02);
             level.sendParticles(p, ParticleTypes.WAX_ON, true, false, shelf.getX() + 0.5, shelf.getY() + 0.8, shelf.getZ() + 0.5, 12, 0.4, 0.4, 0.4, 0.5);
-            say(p, "[It's in the " + Bay.of(new ItemStack(item)).label.toLowerCase(java.util.Locale.ROOT) + " bay, where the light is.]");
+            say(p, "[It's in the " + Sorts.of(item).label.toLowerCase(java.util.Locale.ROOT) + " bay, where the light is.]");
             return;
         }
         if (dev.awaken.kin.KinWorks.fetch(level, p, shelf, desk, item)) {

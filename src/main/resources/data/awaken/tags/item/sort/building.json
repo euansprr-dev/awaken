@@ -1,0 +1,19 @@
+{
+ "values": [
+  "#c:dyes",
+  "#minecraft:cushions",
+  "#minecraft:loom_patterns",
+  "awaken:forge",
+  "awaken:foundry_furnace",
+  "awaken:updraft_vent",
+  "awaken:well_glyph",
+  "minecraft:armor_stand",
+  "minecraft:glow_item_frame",
+  "minecraft:item_frame",
+  "minecraft:observer",
+  "minecraft:painting",
+  "minecraft:piston",
+  "minecraft:respawn_anchor",
+  "minecraft:sticky_piston"
+ ]
+}
