@@ -19709,4 +19709,5 @@ they replace only the exact vanilla classes, and only while the bag is glass. Ke
 text box or other mod has had the key. Alt-click (Option on a Mac) pins; the Pin key is a mode where any click does. Flights are
 220 ms ease-out, up to 40 ms staggered, over slots already holding their final contents; a click lands them at once. Sounds by name:
 `item.bundle.insert` low, `item.bundle.remove_one` for Undo, `item.bundle.insert_fail` when refused, `block.chiseled_bookshelf.insert` for a pin.
+Client setting `tidy_keys` (`awaken-storage-client.toml`, default on) takes away the buttons, keys and Alt-click together; pins stay saved.
 

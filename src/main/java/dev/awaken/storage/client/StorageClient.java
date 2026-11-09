@@ -43,6 +43,7 @@ public final class StorageClient {
     private static boolean pinMode;
 
     public static void init(IEventBus modBus) {
+        StorageConfig.register(modBus);
         modBus.addListener(RegisterKeyMappingsEvent.class, e -> {
             e.registerCategory(CATEGORY);
             e.register(TIDY);
@@ -81,6 +82,7 @@ public final class StorageClient {
 
     /** Only the screens we've looked at: other mods' keep their own panel. */
     private static boolean offered(AbstractContainerScreen<?> s) {
+        if (!StorageConfig.keys()) return false;
         if (bag(s)) return true;
         Class<?> c = s.getClass(), m = s.getMenu().getClass();
         return (c == ContainerScreen.class || c == GlassChestScreen.class) && m == ChestMenu.class
