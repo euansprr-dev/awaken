@@ -63,14 +63,15 @@ public final class Look {
     /**
      * ImmersiveVFX's choice settings while another tier is on (every on/off setting is simply off). Preset goes to CUSTOM
      * or the mod would see values that don't match a named preset; the rest are the choices that leave the game's own
-     * sky, fog, water and weather alone.
+     * sky, fog, water and weather alone. Clouds stay on a drawn style: the mod's OFF blanks the game's clouds too, while
+     * with its custom skies off any drawn style hands them back to the game.
      */
     public static final Map<String, String> VFX_ASLEEP = Map.of(
             "preset", "CUSTOM",
             "fogRenderingMode", "OFF",
             "skyMode", "VANILLA",
             "snowAndSandParticleStyle", "VANILLA",
-            "cloudRendering", "OFF",
+            "cloudRendering", "FANCY",
             "waterColors", "VANILLA",
             "weatherVisuals", "VANILLA",
             "gradingMode", "OFF");

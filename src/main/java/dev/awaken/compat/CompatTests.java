@@ -306,6 +306,7 @@ final class CompatTests {
             h.assertTrue(Look.current(LensLook.VFX, false) == Tier.VFX, "the VFX setting reads back as the VFX tier");
             h.assertTrue(Look.fits(Tier.VFX, 99f, 99f) == null, "VFX promises no frame time");
             h.assertTrue("CUSTOM".equals(Look.VFX_ASLEEP.get("preset")), "asleep is a custom preset, or the mod's values wouldn't match a named one");
+            h.assertFalse("OFF".equals(Look.VFX_ASLEEP.get("cloudRendering")), "asleep keeps the game's clouds: the mod's OFF blanks them");
             for (Tier t : Tier.values()) {
                 List<DhSetting> dh = Look.dh(t);
                 h.assertTrue(dh.size() == Look.DH_KEYS.size(), t + " sets every owned DH key");
