@@ -24,12 +24,18 @@ final class WeaponMeshes {
 
     static void reload(ResourceManager manager) {
         MESHES.clear();
-        for (ArmsData.Weapon w : ArmsData.WEAPONS) load(manager, w.id(), Awaken.id("arms/weapons/" + w.id() + ".mesh"));
+        for (ArmsData.Weapon w : ArmsData.WEAPONS) {
+            load(manager, w.id(), Awaken.id("arms/weapons/" + w.id() + ".mesh"));
+            if (GAUNTLETS.equals(w.style())) load(manager, w.id() + SLEEVE, Awaken.id("arms/weapons/" + w.id() + SLEEVE + ".mesh"));
+        }
         // the War Anvil's hammer and tongs (SPEC §46.3)
         for (String tool : TOOLS) load(manager, "anvil/" + tool, Awaken.id("arms/anvil/" + tool + ".mesh"));
         WeaponPipelines.recheck();
     }
 
+    /** The first-person sleeve a gauntlet runs on into (WeaponRenderer): its own mesh and texture, this suffix on the weapon's id. */
+    static final String SLEEVE = "_arm";
+    private static final String GAUNTLETS = "gauntlets";
     private static final String[] TOOLS = {"hammer", "tongs", "stone_hammer"};
 
     private static void load(ResourceManager manager, String id, Identifier file) {

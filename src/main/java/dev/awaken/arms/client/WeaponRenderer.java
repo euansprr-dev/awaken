@@ -45,12 +45,14 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
      */
     record State(int energy, int flash, boolean hand, int wielder, int arm, int holder, boolean twin, int glow) {}
 
-    private final String weapon;
-    private final Identifier texture;
+    private final String weapon, sleeve;
+    private final Identifier texture, sleeveTexture;
 
     private WeaponRenderer(String weapon) {
         this.weapon = weapon;
+        this.sleeve = weapon + WeaponMeshes.SLEEVE;
         this.texture = Awaken.id("textures/item/arms/" + weapon + ".png");
+        this.sleeveTexture = Awaken.id("textures/item/arms/" + sleeve + ".png");
     }
 
     @Override
@@ -72,6 +74,12 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         int packed = ours ? pack(state, foil) : overlay;
         collector.submitCustomGeometry(poseStack, ours ? WeaponPipelines.weapon(texture) : WeaponPipelines.fallback(texture),
                 (pose, buffer) -> emit(mesh, pose, buffer, light, packed, ours));
+        // a gauntlet in first person runs on past its cuff and out of the view: it is the arm (ArmsHands.worn draws none)
+        WeaponMesh arm = state != null && state.hand() ? WeaponMeshes.get(sleeve) : null;
+        if (arm != null) {
+            collector.submitCustomGeometry(poseStack, ours ? WeaponPipelines.weapon(sleeveTexture) : WeaponPipelines.fallback(sleeveTexture),
+                    (pose, buffer) -> emit(arm, pose, buffer, light, packed, ours));
+        }
         // its light lifting off it, from where it is drawn (the energy: a charging heavy sheds more)
         WeaponMotes.emit(mesh, poseStack.last().pose(), state != null && state.hand(), state == null ? 0 : state.energy() / 255F);
         // a blow in the air: the blade's own ribbon, from its middle to its point

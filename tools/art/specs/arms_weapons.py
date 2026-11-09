@@ -2354,6 +2354,31 @@ def gauntlets(t):
 
 
 register("gauntlets", gauntlets)
+
+
+def gauntlet_sleeve(cuff, band, x=3.5, z=3.0, top=-7.0, end=-52.0):
+    """A gauntlet's sleeve past its rim, drawn only in first person (Euan 2026-11-09: "the gauntlets actually need to replace
+    the arms and the hands"): the armour runs on from the cuff, down out of the view, however far a punch carries the fist,
+    so no arm is drawn at all. A band of metal every 8 texels so it reads as plate; never seen from outside, where the cuff
+    already runs up the forearm (arms_holds.worn_third_person)."""
+    B = [VX.box(-x, x, end, top, -z, z, cuff, "sleeve", span=(end, top))]
+    y = top - 5.0
+    while y > end + 2:
+        B.append(VX.box(-x - 0.5, x + 0.5, y - 1, y, -z - 0.5, z + 0.5, band, f"band{int(-y)}"))
+        y -= 8.0
+    return B
+
+
+def sleeve_of(row):
+    """The first-person sleeve of a gauntlet's catalog row (None: any other weapon)."""
+    wid, tier, style = row[0], row[2], row[8]
+    if style != "gauntlets":
+        return None
+    if wid == "gearwright_colossus_gauntlets":
+        return gauntlet_sleeve("bronze_back", "brass", 4.0, 3.5, -8.0)
+    return gauntlet_sleeve(KIT[tier]["cuff"], KIT[tier]["metal"])
+
+
 # worn, not held: knuckles into the view and the back of the hand up, low at the right where the fist would be (the
 # rotation turns the design's +y forward and +z up; found with fp_screen)
 HOLDS["gauntlets"] = ([-80, 15, 55], [-4.0, 5.0, -0.6], 0.4)
@@ -3297,6 +3322,11 @@ def write_all(only=None):
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}}],
             "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand", "model": {"type": "awaken:weapon", "weapon": wid}}}})
+        sleeve = sleeve_of(row)
+        if sleeve is not None:  # drawn past the cuff in first person only (WeaponRenderer), with a texture of its own
+            arm = VX.build(sleeve, painter(False), to_item, width=64)
+            MS.write(os.path.join(mesh_dir, wid + "_arm.mesh"), arm, hex_rgb(look["accent"]))
+            Image.fromarray(arm.texture(), "RGBA").save(os.path.join(tex_dir, wid + "_arm.png"))
         write_recipe(wid, style, tier)
         for stale in (wid + "_icon_glow.png",):
             if os.path.exists(os.path.join(tex_dir, stale)):

@@ -7223,6 +7223,11 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   its server row is the same chop (`archetypes.json`, form `chop`, dir [-0.3, -1]). *The Katana is held edge down in third
   person* (`arms_holds.EDGE_DOWN3`): vanilla's handheld hold puts a design's +x side up as the arm hangs, so it is turned
   half round about its length, and the rig solves each move's wrist from that hold, so the edge still leads every blow.
+  *The Gauntlets are the arm* in first person ("as if it was like your entire hand, basically like a glove"): no arm rises to
+  them (`ArmsHands.worn`), because a bare fist was showing round a smaller gauntlet, and each runs on past its rim into a sleeve
+  of its own cuff and metal, banded every 8 texels, out of the view however far a punch carries it (`<id>_arm.mesh` and
+  `.png`, drawn by `WeaponRenderer` in first person only; `arms_weapons.gauntlet_sleeve`). From outside the cuff already runs up
+  the forearm, so nothing changes there.
 - **Hand-keyed moves** (the dagger and scythe audit's rebuild, Euan 2026-11-02: "Go with all recommendations"; never
   tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' and the Scythe's moves are
   written pose by pose in `tools/art/arms_keys.py`: the fist placed on the screen at a depth, the point drawn at a

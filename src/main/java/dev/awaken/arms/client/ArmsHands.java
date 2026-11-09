@@ -347,6 +347,14 @@ final class ArmsHands {
     static float equip;
 
     /**
+     * Whether a style is worn rather than held (Euan 2026-11-09, the Gauntlets: "as if it was like your entire hand, basically
+     * like a glove"): no arm rises to it, because the weapon's own sleeve is the arm and a bare fist showed round it.
+     */
+    static boolean worn(Archetypes.@Nullable Loaded style) {
+        return style != null && "gauntlets".equals(style.id());
+    }
+
+    /**
      * The arms that hold the weapon (FirstPerson.View's grips; Euan 2026-10-26: "it feels like the weapon is just floating
      * and attacking on its own"): each hand's arm rises from the frame's corner to where it closes on the weapon, at
      * rest, through every swing's turn and the guard, the off hand's on the twin of a pair. A vanilla item's hand is on
@@ -355,7 +363,7 @@ final class ArmsHands {
     private static void grips(LocalPlayer p, FirstPerson.View v, float partial) {
         Archetypes.Loaded style = Arms.styleOf(p.getMainHandItem());
         FpSwings.Style st = style == null ? null : FpSwings.style(style.id());
-        if (st == null) return;
+        if (st == null || worn(style)) return;
         boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
         int inv = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
         float g = guard(p, partial), j = g > 0 ? jolt(partial) * g : 0;

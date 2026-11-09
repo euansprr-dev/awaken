@@ -19,6 +19,7 @@ final class SwingTests {
         AwakenTests.register("arms_chain_flow", 20, SwingTests::chainFlow);
         AwakenTests.register("arms_draw_smooth", 20, SwingTests::drawSmooth);
         AwakenTests.register("arms_dagger_stabs", 20, SwingTests::daggerStabs);
+        AwakenTests.register("arms_gauntlet_sleeves", 20, SwingTests::gauntletSleeves);
     }
 
     /**
@@ -335,6 +336,20 @@ final class SwingTests {
                 }
             }
         }
+        h.succeed();
+    }
+
+    /** Every gauntlet has the sleeve that stands in for the arm in first person (SPEC §25; no arm is drawn, so a missing one is a stump). */
+    static void gauntletSleeves(GameTestHelper h) {
+        int n = 0;
+        for (ArmsData.Weapon w : ArmsData.WEAPONS) {
+            if (!"gauntlets".equals(w.style())) continue;
+            for (String file : new String[] {"/assets/awaken/arms/weapons/" + w.id() + "_arm.mesh", "/assets/awaken/textures/item/arms/" + w.id() + "_arm.png"}) {
+                h.assertTrue(SwingTests.class.getResource(file) != null, "missing " + file);
+            }
+            n++;
+        }
+        h.assertTrue(n >= 7, "the gauntlets are checked (" + n + ")");
         h.succeed();
     }
 
