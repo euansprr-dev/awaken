@@ -165,7 +165,7 @@ final class SpiritBells {
                 case "mourner" -> "Light a candle on the grave " + k.name + " keeps";
                 default -> othersFree(p, mine) ? "Go back to " + k.name : "Let the four spirits holding bells go, then go back to " + k.name;
             };
-            out.add(Step.of("bells/spirit/" + d.no(), Goal.BELLS, title)
+            out.add(Step.of("bells/spirit/" + d.no(), Goal.BELLS, title).lead()
                     .why(k.name + " is holding " + d.name().replaceFirst("^The ", "the ") + " for you. You'll only see them in spirit, but what they stayed for can be done in body.")
                     .priority(35).at(k.pos).build());
         }

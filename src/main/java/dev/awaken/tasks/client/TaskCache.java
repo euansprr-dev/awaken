@@ -25,6 +25,12 @@ final class TaskCache {
     static volatile TaskPayloads.View view = TaskPayloads.View.EMPTY;
     /** 0 is Now; 1.. the goal tabs. */
     static int tab;
+    /** The Later fold, open or closed; it closes again on another tab. */
+    static boolean laterOpen;
+    /** How long "Set aside ... Undo" stays up (ticks). */
+    private static final int UNDO_TICKS = 200;
+    private static String undoKey = "", undoTitle = "";
+    private static long undoUntil;
 
     private static long ticks, drawnAt = -100, tabSince;
     private static boolean told;
@@ -47,8 +53,31 @@ final class TaskCache {
     static void pick(int t) {
         if (t == tab) return;
         tab = t;
+        laterOpen = false;
         tabSince = ticks;
         drawnFresh.clear(); // a glance on the way past isn't reading
+    }
+
+    /** Whether tab {@code t} (0 is Now) has opened: a tab comes when it first has something to do, and stays (SPEC §53). */
+    static boolean visible(int t) {
+        return t <= 0 || t > TABS.length || !view.capped() || (view.tabs() >> TABS[t - 1].ordinal() & 1) != 0;
+    }
+
+    static void setAside(TaskPayloads.StepRow s) {
+        act(TaskPayloads.ASIDE, s.key());
+        undoKey = s.key();
+        undoTitle = s.title();
+        undoUntil = ticks + UNDO_TICKS;
+    }
+
+    /** What was just set aside, while Undo is still offered, or "". */
+    static String undoTitle() {
+        return !undoKey.isEmpty() && ticks < undoUntil ? undoTitle : "";
+    }
+
+    static void undo() {
+        if (!undoKey.isEmpty()) act(TaskPayloads.PUT_BACK, undoKey);
+        undoKey = "";
     }
 
     static TaskPayloads.@Nullable StepRow step(String key) {
@@ -65,7 +94,7 @@ final class TaskCache {
     static int fresh(@Nullable Goal g) {
         int n = 0;
         for (var s : view.steps()) {
-            if (!s.fresh() || s.optional() || out(s) || reported.contains(s.key())) continue;
+            if (!s.fresh() || !s.shown() || s.optional() || out(s) || reported.contains(s.key())) continue;
             if (g == null || s.goal() == g.ordinal()) n++;
         }
         return n;
@@ -105,6 +134,8 @@ final class TaskCache {
     static void reset() {
         view = TaskPayloads.View.EMPTY;
         tab = 0;
+        laterOpen = false;
+        undoKey = "";
         told = false;
         drawnAt = -100;
         drawnFresh.clear();

@@ -80,7 +80,7 @@ final class HearthGoals {
                     .need(Need.item(p, CoreApi.LORD_HEART.get(), 1)).at(h.pos).path(Goals.PATH_ANCHOR).priority(64)
                     .covers("hearth:heart").build();
         }
-        Goals.Builder b = Step.of("hearth/anchor", Goal.RANK, "Clear your first gate")
+        Goals.Builder b = Step.of("hearth/anchor", Goal.RANK, "Clear your first gate").thread("rank.next", 0)
                 .why("Its Lord drops a Lord's Heart. Set it on your fire to raise the Anchor: more rooms, more nooks, your home's real start.")
                 .need(Need.item(p, CoreApi.LORD_HEART.get(), 1)).path(Goals.PATH_FIRST_GATE).priority(55).covers("gate:near:").covers("progression:directive/"); // the Registry's first floor is part of it
         BlockPos gate = nearestGate(p);

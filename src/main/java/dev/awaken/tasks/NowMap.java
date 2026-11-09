@@ -56,6 +56,15 @@ final class NowMap {
         return new Rule("", Goal.OUT, Goals.NO_PATH, "", false);
     }
 
+    /** Suggestions in one line of work show as one row (SPEC §53); anything else is a thread of its own. */
+    private static String threadOf(String id) {
+        if (id.startsWith("progression:reassessment") || id.startsWith("progression:capability") || id.startsWith("gate:")) return "rank.next";
+        if (id.startsWith("progression:points")) return "rank.power";
+        if (id.startsWith("progression:goal/")) return "rank.road";
+        if (lesson(id)) return "out.lessons";
+        return "";
+    }
+
     static boolean lesson(String id) {
         return id.startsWith("lesson:");
     }
@@ -65,7 +74,8 @@ final class NowMap {
         Rule r = rule(s.id());
         // a lesson is never urgent (SPEC §53, decision 13): it waits in the Out there slot, however fresh it is
         int priority = lesson(s.id()) ? Math.min(s.priority(), TaskBook.URGENT - 1) : s.priority();
-        Goals.Builder b = Goals.Step.of(s.id(), r.goal, s.text().getString()).why(r.why).path(r.path).priority(priority);
+        Goals.Builder b = Goals.Step.of(s.id(), r.goal, s.text().getString()).why(r.why).path(r.path).priority(priority)
+                .thread(threadOf(s.id()), r.path != Goals.NO_PATH ? 0 : 100 - priority);
         s.where().ifPresent(b::at);
         if (r.optional) b.optional();
         return b.build();

@@ -47,14 +47,14 @@ final class ArmourGoals {
         if (worst >= rank.ordinal()) {
             if (rank.ordinal() + 1 >= Rank.values().length) return List.of();
             Rank next = Rank.values()[rank.ordinal() + 1];
-            return List.of(Goals.Step.of("armour/next", Goal.ARMOUR, "Your next armour comes with " + next.label + "-rank")
+            return List.of(Goals.Step.of("armour/next", Goal.ARMOUR, "Your next armour comes with " + next.label + "-rank").thread("armour.set", 20)
                     .why(next.label + "-rank opens at level " + next.levelRequired + ". Its sets are forged at a Fitting Stand with an anvil and the Forge near it.")
                     .priority(10).build());
         }
         ArmouryMemory mem = ArmouryMemory.of(p);
         boolean first = !any && rank == Rank.E; // nothing worn at C-rank isn't a first armour
         Goals.Builder b = Goals.Step.of("armour/" + rank.name().toLowerCase(java.util.Locale.ROOT), Goal.ARMOUR,
-                first ? "Choose your first armour" : "Make your " + rank.label + "-rank armour");
+                first ? "Choose your first armour" : "Make your " + rank.label + "-rank armour").thread("armour.set", 10);
         int sets = 0;
         for (ArmourSet set : ArmourSet.values()) {
             if (set.rank != rank || !set.made() || !ArmourForge.known(mem, set)) continue;
