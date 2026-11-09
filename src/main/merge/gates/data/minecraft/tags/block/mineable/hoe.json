@@ -24,6 +24,8 @@
     "awaken:keep_leaf_lit",
     "awaken:keep_leaf_deep",
     "awaken:keep_banner",
-    "awaken:keep_vines"
+    "awaken:keep_vines",
+    "awaken:salt_moss",
+    "awaken:salt_banner"
   ]
 }

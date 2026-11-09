@@ -28,6 +28,11 @@ public final class RealmTests {
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:hour_crypt", Rank.E, seed, 1));
     }
 
+    private static dev.awaken.gates.realms.land.SaltcombFlats salt(long seed) {
+        return new dev.awaken.gates.realms.land.SaltcombFlats(new Land.Ctx(new Blueprint(1, "t", "desert_ruin", "hive", List.of("E"), new Blueprint.LandSpec("awaken:saltcomb_flats", 0, Map.of()),
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:saltcomb_flats", Rank.E, seed, 1));
+    }
+
     private static dev.awaken.gates.realms.land.KingsrootKeep keep(long seed) {
         return new dev.awaken.gates.realms.land.KingsrootKeep(new Land.Ctx(new Blueprint(1, "t", "stronghold", "overgrown_temple", List.of("E"), new Blueprint.LandSpec("awaken:kingsroot_keep", 0, Map.of()),
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:kingsroot_keep", Rank.E, seed, 1));
@@ -117,6 +122,16 @@ public final class RealmTests {
         AwakenTests.register("realm_hour_nothing_floats", 2400, h -> {
             Land land = hour(1);
             FloatCheck.Report r = FloatCheck.scan(land, -216, -216, 216, 216);
+            if (!r.clean()) h.fail(r.summary());
+            h.succeed();
+        });
+        AwakenTests.register("realm_saltcomb_walks_to_everything", 2400, h -> {
+            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(salt(1));
+            if (!bad.isEmpty()) h.fail("can't reach: " + bad);
+            h.succeed();
+        });
+        AwakenTests.register("realm_saltcomb_nothing_floats", 2400, h -> {
+            FloatCheck.Report r = FloatCheck.scan(salt(1), -436, -436, 436, 436);
             if (!r.clean()) h.fail(r.summary());
             h.succeed();
         });

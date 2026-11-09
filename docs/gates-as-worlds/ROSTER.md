@@ -32,7 +32,7 @@ The bar is `BAR.md`: read it first. Who builds what (Euan, 10 Nov: two sub-agent
 | 4 | | Glowroot Hollow | Deep | Fungal Hollow | Spore clouds carry you across gaps; breathing them slows you | A cavern with a mushroom as tall as a tower | Ring over a glowing drop |
 | 5 | | Cinder Stair | Climb | Ember Mines | The lava rises while you're on the way up | A mine dug straight up a dead volcano | Broken summit in the crater |
 | 6 | | The Quiet Barrow | Land | Bell Crypt | Sound carries: running wakes what sleeps under the mounds | A burial hill with a stone ship on top | The ship's deck |
-| 7 | next | Saltcomb Flats | Desert and Ruin | Hive | Wet ground hardens at night and melts at noon | A dry hive-city half out of the sand | Sinking court |
+| 7 | done | Saltcomb Flats | Desert and Ruin | Hive | The salt sets hard in the cool wind and goes soft when the sun comes back | A dry hive-city half out of the sand | Sinking court |
 | 8 | | The Long Shaft | Dungeon | Ember Mines | Cart rails carry you, and whatever's chasing you | A pit mine circled by a single rail | Forge floor at the bottom |
 | 9 | | Sporefall | Land | Fungal Hollow | Puffball fields burst and launch you when you run over them | A mushroom forest under a split cliff | Root bowl under the largest cap |
 | 10 | done | Kingsroot Keep | Stronghold | Overgrown Temple | Walls can be climbed where roots have broken them | A castle the jungle has eaten | Great hall with no roof left |

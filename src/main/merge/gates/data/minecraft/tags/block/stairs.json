@@ -61,6 +61,14 @@
     "awaken:keep_plaster_stairs",
     "awaken:keep_tile_stairs",
     "awaken:keep_tile_deep_stairs",
-    "awaken:keep_planks_stairs"
+    "awaken:keep_planks_stairs",
+    "awaken:salt_stone_stairs",
+    "awaken:salt_stone_pale_stairs",
+    "awaken:salt_flagstone_stairs",
+    "awaken:salt_brick_stairs",
+    "awaken:salt_plaster_stairs",
+    "awaken:salt_tile_stairs",
+    "awaken:salt_tile_deep_stairs",
+    "awaken:salt_planks_stairs"
   ]
 }

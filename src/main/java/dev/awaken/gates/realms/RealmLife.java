@@ -87,6 +87,19 @@ public final class RealmLife {
             "Two wall-hobs are arguing over who owns a bucket.",
             "Somewhere close by, someone says, \"It's your turn on the wall. It was my turn last year.\"",
             "A wall-hob sighs, \"Leak's got worse.\""), "Smoked eel to spare", Items.COOKED_SALMON, "Three smoked eels. They were in the moat, so don't ask.", "They've already sold all the eel they can spare.");
+    private static final Folk RAKERS = new Folk("A salt-raker says", List.of(
+            "You've got about a minute on the crust when it's hard. After that you'd better like swimming.",
+            "That black road was here before we were. It's the only thing out here that doesn't move.",
+            "We rake the white stuff off the top and sell it to nobody. It's something to do.",
+            "When the wind drops, get off the salt. Don't wait to see if I'm right.",
+            "All those holes in the towers? Something lived in every one of them. Some of them still do.",
+            "Don't drink the blue water. It looks lovely and it'll take the skin off your tongue.",
+            "The big drum at the foot of the city's been shut for longer than anyone's been counting.",
+            "You'll find bones out here bigger than my house. Nobody's ever told me what they were."), List.of(
+            "A salt-raker mutters, \"Wind's dropping.\"",
+            "Two salt-rakers are arguing over whose rake that is.",
+            "Somewhere close by, someone says, \"Get your feet off my pile.\"",
+            "A salt-raker sighs, \"There's sand in the salt again.\""), "Dried salt-weed to spare", Items.DRIED_KELP, "Three strips of dried salt-weed. Chew it slowly.", "They've already sold all the salt-weed they can spare.");
     private static final Folk KEEPERS = new Folk("A candle-keeper says", List.of(
             "We light them. They burn down. We light the next ones. There are a lot of candles down here.",
             "You get used to the bell. I think you do. I haven't yet.",
@@ -107,6 +120,7 @@ public final class RealmLife {
         RealmPlan plan = Realms.plan(g);
         if (plan != null && plan.bp().folk().kit().equals("moss_tenders")) return TENDERS;
         if (plan != null && plan.bp().folk().kit().equals("wall_hobs")) return HOBS;
+        if (plan != null && plan.bp().folk().kit().equals("salt_rakers")) return RAKERS;
         return plan != null && plan.bp().folk().kit().equals("candle_keepers") ? KEEPERS : WAX;
     }
 

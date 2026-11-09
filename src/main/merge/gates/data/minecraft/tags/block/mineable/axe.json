@@ -73,6 +73,11 @@
     "awaken:keep_thorn",
     "awaken:keep_climb_root",
     "awaken:keep_planks_slab",
-    "awaken:keep_planks_stairs"
+    "awaken:keep_planks_stairs",
+    "awaken:salt_timber",
+    "awaken:salt_planks",
+    "awaken:salt_window",
+    "awaken:salt_planks_slab",
+    "awaken:salt_planks_stairs"
   ]
 }

@@ -63,6 +63,14 @@
     "awaken:keep_plaster_slab",
     "awaken:keep_tile_slab",
     "awaken:keep_tile_deep_slab",
-    "awaken:keep_planks_slab"
+    "awaken:keep_planks_slab",
+    "awaken:salt_stone_slab",
+    "awaken:salt_stone_pale_slab",
+    "awaken:salt_flagstone_slab",
+    "awaken:salt_brick_slab",
+    "awaken:salt_plaster_slab",
+    "awaken:salt_tile_slab",
+    "awaken:salt_tile_deep_slab",
+    "awaken:salt_planks_slab"
   ]
 }

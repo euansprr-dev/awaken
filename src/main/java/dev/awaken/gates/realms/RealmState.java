@@ -24,6 +24,9 @@ public final class RealmState {
     public int heartStage;
     /** When the bell next tolls and when the doors lift again, in game time; not saved, a restart just starts the count over. */
     public long tollAt, tollOpenAt;
+    /** When the salt next turns, and which way it's gone; not saved, the crust is laid out hard and a restart only begins the count again. */
+    public long saltAt;
+    public boolean saltSoft, saltTold, saltHardTold;
     public long rootsAt;
     public long[] rootOpen;
     public boolean[] rootShown;
