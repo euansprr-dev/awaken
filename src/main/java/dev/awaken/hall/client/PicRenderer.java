@@ -86,11 +86,14 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
             warned = true;
             Awaken.LOG.warn("[hall] the weapon shader did not build; weapons draw with vanilla's light");
         }
-        for (Placed p : s.placed) place(ps, p, ours);
-        try (FeatureRenderDispatcher.PreparedFrame frame = features.prepareFrame(store);
-             RenderPass pass = device.createCommandEncoder().createRenderPass(() -> "Hall picture", colorView, Optional.empty(), depthView, OptionalDouble.empty())) {
-            RenderSystem.bindDefaultUniforms(pass);
-            FeatureRenderDispatcher.renderAllFeatures(pass, frame);
+        // a pass each: drawn together, a whole wall's worth, weapons came out joined to one another by long streaks
+        for (Placed p : s.placed) {
+            place(ps, p, ours);
+            try (FeatureRenderDispatcher.PreparedFrame frame = features.prepareFrame(store);
+                 RenderPass pass = device.createCommandEncoder().createRenderPass(() -> "Hall picture", colorView, Optional.empty(), depthView, OptionalDouble.empty())) {
+                RenderSystem.bindDefaultUniforms(pass);
+                FeatureRenderDispatcher.renderAllFeatures(pass, frame);
+            }
         }
         view.popMatrix();
     }

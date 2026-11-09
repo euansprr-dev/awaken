@@ -364,7 +364,7 @@ final class PieceView {
             compare = "The same damage as your " + on + ".";
             compareColour = Stage.LABEL;
         } else {
-            compare = (delta > 0F ? "+" : "") + HallSpecial.n(delta) + " damage on your " + on + ".";
+            compare = (delta > 0F ? "+" : "") + HallSpecial.n(delta) + " on your " + on;
             compareColour = delta > 0F ? Stage.GOOD : Stage.BAD;
         }
     }
@@ -447,7 +447,15 @@ final class PieceView {
                 subs.add(0, new Act(tracked ? "Stop tracking" : "Track it", tracked ? ArmsArmoury.UNTRACK : ArmsArmoury.TRACK, false, true, com.mojang.blaze3d.platform.InputConstants.KEY_T));
             }
         }
-        why = line.isEmpty() ? List.of() : s.wrap(line, TEXT_W, 3F);
+        why = line.isEmpty() ? List.of() : s.wrap(sentence(line), TEXT_W, 3F);
+    }
+
+    /** A gate's name can start a sentence ("the Fungal Hollow teaches it"). */
+    private static String sentence(String line) {
+        StringBuilder b = new StringBuilder(line);
+        b.setCharAt(0, Character.toUpperCase(b.charAt(0)));
+        for (int i = b.indexOf(". "); i >= 0 && i + 2 < b.length(); i = b.indexOf(". ", i + 2)) b.setCharAt(i + 2, Character.toUpperCase(b.charAt(i + 2)));
+        return b.toString();
     }
 
     private static boolean entry_afford(ArmsPayloads.@Nullable StyleEntry e) {
@@ -471,7 +479,7 @@ final class PieceView {
         float wide = s.titleWidth(name, nameSize);
         s.glow(X + wide / 2F, y + 12F * nameSize, wide / 2F + 40F, 22F * nameSize, Stage.RANK[rank], .22F);
         s.title(name, X, y, nameSize, Stage.TITLE);
-        y += 22F * nameSize;
+        y += 26F * nameSize + 4F;
         y = lines(s, blurb, y, 2, Stage.LABEL) + 16F;
 
         // the numbers: wide as they need, side by side
@@ -485,7 +493,7 @@ final class PieceView {
             }
             y += 72F;
             if (!compare.isEmpty()) {
-                s.text(compare, X, y, 3F, compareColour);
+                s.text(s.fit(compare, TEXT_W, 3F), X, y, 3F, compareColour);
                 y += 32F;
             }
             y += 8F;
@@ -498,7 +506,7 @@ final class PieceView {
         float actionTop = primary != null ? primaryTop : hasSubs ? subTop : bottom;
         float whyTop = actionTop - 12F - why.size() * 30F;
         int needRows = (needs.size() + NEEDS_ACROSS - 1) / NEEDS_ACROSS;
-        float needHeight = needs.isEmpty() ? 0F : 34F + NEED_H * needRows + 34F;
+        float needHeight = needs.isEmpty() ? 0F : 34F + NEED_H * needRows + 62F;
 
         if (!special.isEmpty()) {
             s.text("What makes it different", X, y, 3F, Stage.EDGE);
@@ -524,14 +532,13 @@ final class PieceView {
                 s.centre(n.count, mid, cy + 68F, 3F, n.ok ? Stage.GOOD : Stage.BAD);
                 for (int l = 0; l < Math.min(2, n.nameLines.size()); l++) {
                     FormattedCharSequence line = n.nameLines.get(l);
-                    s.text(line, mid - s.font.width(line) * s.snap(2F) / 2F, cy + 94F + l * 16F, 2F, n.ok ? Stage.LABEL : Stage.TITLE);
+                    s.text(line, mid - s.font.width(line) * s.snap(2F) / 2F, cy + 94F + l * 18F, 2F, n.ok ? Stage.LABEL : Stage.TITLE);
                 }
             }
             y = top + needRows * NEED_H;
             Need shown = hoverNeed >= 0 ? needs.get(hoverNeed) : firstShort();
             if (shown != null) {
-                String where = shown.source.isEmpty() ? shown.name : shown.source;
-                s.text(s.fit(where, TEXT_W, 3F), X, y + 2F, 3F, Stage.DIM);
+                lines(s, s.wrap(shown.source.isEmpty() ? shown.name : shown.source, TEXT_W, 3F), y + 2F, 2, Stage.DIM);
             }
         }
 
@@ -611,13 +618,13 @@ final class PieceView {
     private void drawFoot(Stage s, float slide) {
         float y = 916F + 60F * slide;
         s.text("Esc", 40F, y, 3F, Stage.EDGE);
-        s.text(closing ? "" : "Back to the wall", 100F, y, 3F, Stage.LABEL);
+        s.text("Back", 120F, y, 3F, Stage.LABEL);
         if (lord != null) {
             s.centre("Drag to turn", CX, y, 3F, Stage.DIM);
             return;
         }
-        if (!prevName.isEmpty()) s.text("< " + prevName, 400F, y, 3F, Stage.LABEL);
-        s.centre("Drag to turn", 660F, y, 3F, Stage.DIM);
+        if (!prevName.isEmpty()) s.text("< " + prevName, 250F, y, 3F, Stage.LABEL);
+        s.centre("Drag to turn", 640F, y, 3F, Stage.DIM);
         if (!nextName.isEmpty()) s.right(nextName + " >", 1000F, y, 3F, Stage.LABEL);
     }
 
@@ -626,13 +633,13 @@ final class PieceView {
     /** Runs a button's work; true if a press there started or did something. */
     boolean click(float x, float y) {
         if (fly < 1F) return false;
-        if (x >= 30F && x < 300F && y >= 906F && y < 946F) {
+        if (x >= 30F && x < 220F && y >= 906F && y < 946F) {
             closing = true;
             return true;
         }
         if (lord == null) {
             if (y >= 906F && y < 946F) {
-                if (x >= 400F && x < 620F) {
+                if (x >= 250F && x < 530F) {
                     step(-1, 0);
                     return true;
                 }

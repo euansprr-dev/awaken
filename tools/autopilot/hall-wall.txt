@@ -53,4 +53,24 @@ cmd awaken hall piece maul 1
 wait 70
 shot piece_offer
 screen close
+wait 10
+# at a War Anvil: what you can forge says Hold to forge it
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd setblock 0 201 4 awaken:war_anvil[facing=north]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+wait 20
+cmd tp @s 0.5 201 3.25 0 35
+cmd item replace entity @s weapon.mainhand with air
+wait 30
+use
+wait 60
+shot wall_anvil
+cmd awaken hall piece katana 1
+wait 70
+shot piece_anvil
+screen close
 quit

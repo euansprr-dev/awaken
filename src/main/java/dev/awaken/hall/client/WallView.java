@@ -22,7 +22,7 @@ final class WallView {
     private static final int KEY_DARK = 1, KEY_LIT = 2;
     static final int ALL = 0, READY = 1, TRACKED = 2;
     private static final String[] FILTER = {"Everything", "Ready now", "Tracked"};
-    private static final float[] FILTER_X = {1198F, 1400F, 1590F};
+    private final float[] filterX = new float[FILTER.length];
     private static final float SEAL_X = 30F, SEAL_Y = 92F;
     private static final int SEAL_W = 16, SEAL_H = 24, SEAL_STEP = 22;
 
@@ -30,7 +30,7 @@ final class WallView {
     private final Component[] letters = new Component[HallNet.ROWS];
 
     int filter = ALL;
-    float lampX = 854F, lampY = 700F;
+    float lampX = 854F, lampY = 470F;
     HallLayout.@Nullable Cell hover;
     private Placed[] dark = new Placed[0], lit = dark;
     private long version;
@@ -189,20 +189,25 @@ final class WallView {
 
     private void purse(Stage s, ArmsPayloads.@Nullable ArmouryView v) {
         if (v != null) {
-            String door = Language.getInstance().getOrDefault("awaken.armoury.door." + switch (v.door()) {
+            String door = v.door() == ArmsArmoury.BAND ? "Your patterns" : "At " + Language.getInstance().getOrDefault("awaken.armoury.door." + switch (v.door()) {
                 case ArmsArmoury.HALE -> "hale";
                 case ArmsArmoury.FORGE -> "forge";
-                case ArmsArmoury.ANVIL -> "anvil";
-                default -> "band";
+                default -> "anvil";
             });
             s.right(door, 1684F, 18F, 3F, Stage.EDGE);
             s.right(v.essence() + " essence", 1684F, 46F, 3F, Stage.LANTERN);
         }
+        float right = 1684F;
+        for (int i = FILTER.length - 1; i >= 0; i--) {
+            float w = s.width(FILTER[i], 3F);
+            filterX[i] = right - w;
+            right -= w + 32F;
+        }
         for (int i = 0; i < FILTER.length; i++) {
             boolean on = filter == i;
-            s.text(FILTER[i], FILTER_X[i], 80F, 3F, on ? Stage.TITLE : Stage.DIM);
-            if (i > 0) s.text(Integer.toString(i == READY ? ready : tracked), FILTER_X[i], 104F, 3F, on ? Stage.LANTERN : Stage.DIM);
-            if (on) s.fill(FILTER_X[i], 128F, FILTER_X[i] + s.width(FILTER[i], 3F), 130F, Stage.LANTERN);
+            s.text(FILTER[i], filterX[i], 80F, 3F, on ? Stage.TITLE : Stage.DIM);
+            if (i > 0) s.text(Integer.toString(i == READY ? ready : tracked), filterX[i], 104F, 3F, on ? Stage.LANTERN : Stage.DIM);
+            if (on) s.fill(filterX[i], 128F, filterX[i] + s.width(FILTER[i], 3F), 130F, Stage.LANTERN);
         }
     }
 
@@ -221,7 +226,7 @@ final class WallView {
     /** Which filter is under the sheet point, or -1. */
     int filterAt(float x, float y) {
         if (y < 76F || y > 132F) return -1;
-        for (int i = 0; i < FILTER.length; i++) if (x >= FILTER_X[i] - 8F && x < FILTER_X[i] + 180F) return i;
+        for (int i = 0; i < FILTER.length; i++) if (x >= filterX[i] - 8F && (i == FILTER.length - 1 || x < filterX[i + 1] - 8F)) return i;
         return -1;
     }
 
