@@ -42,7 +42,9 @@ public final class HallClient {
                 if (!m.offers().stand()) busy = null;
             });
             e.register(HallNet.Show.TYPE, (m, ctx) -> {
-                if (Minecraft.getInstance().gui.screen() instanceof HallScreen h) h.show(m.style(), m.tier());
+                var open = Minecraft.getInstance().gui.screen();
+                if (open instanceof HallScreen h) h.show(m.style(), m.tier());
+                else if (open instanceof AnvilStage a) a.show(m.style(), m.tier());
             });
         });
     }

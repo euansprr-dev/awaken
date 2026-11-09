@@ -48,7 +48,7 @@ final class AnvilHeld {
     static boolean open(ServerPlayer p, ServerLevel level, WarAnvilBlockEntity be) {
         ItemStack weapon = p.getMainHandItem();
         if (ArmsItems.of(weapon.getItem()) == null) return false;
-        AwakenNet.send(p, new AnvilPayloads.Held(be.getBlockPos(), options(p, level, be.getBlockPos(), weapon)));
+        AwakenNet.send(p, new AnvilPayloads.Held(be.getBlockPos(), options(p, level, be.getBlockPos(), weapon), stones(p, weapon, WarAnvil.forge(level, be.getBlockPos())), nextWeapon(p, weapon)));
         return true;
     }
 
@@ -113,7 +113,7 @@ final class AnvilHeld {
         int to = t.target() > t.from() ? t.target() : Math.min(Upgrades.MAX_TEMPER, t.from() + 1);
         List<Costs.Part> parts = t.price().isEmpty() && to > t.from() ? price(to, Progression.rank(p)) : t.price();
         List<AnvilPayloads.Cost> costs = new ArrayList<>();
-        for (Costs.Part part : parts) costs.add(new AnvilPayloads.Cost(name(part.item()), Costs.countOf(p, part.item()), part.count()));
+        for (Costs.Part part : parts) costs.add(new AnvilPayloads.Cost(name(part.item()), Costs.countOf(p, part.item()), part.count(), id(part.item()), false));
         List<AnvilPayloads.Say> says = new ArrayList<>();
         says.add(new AnvilPayloads.Say(AnvilPayloads.Say.PLAIN, Upgrades.temperWhat(weapon)));
         if (t.from() > 0) says.add(new AnvilPayloads.Say(AnvilPayloads.Say.NOW, "Temper " + Upgrades.roman(t.from()) + " is giving it " + Upgrades.temperGives(weapon) + " now."));
@@ -141,7 +141,7 @@ final class AnvilHeld {
         if (plan == null) return new AnvilPayloads.Option(AnvilWork.REFORGE, "Reforge", "Reforge it", false, "There's no tier above it.", List.of(), "Top tier", List.of(),
                 List.of(new AnvilPayloads.Say(AnvilPayloads.Say.PLAIN, "Reforging lifts a weapon to the next tier, and this one is already at the top.")));
         List<AnvilPayloads.Cost> costs = new ArrayList<>();
-        for (NeedRow n : plan.needs()) costs.add(new AnvilPayloads.Cost(ArmsTrack.label(n), n.have(), n.need()));
+        for (NeedRow n : plan.needs()) costs.add(new AnvilPayloads.Cost(ArmsTrack.label(n), n.have(), n.need(), n.id(), n.kind().equals("tag")));
         boolean afford = p.isCreative() || WarAnvil.afford(p, plan.needs());
         // reforged to a tier, it's that tier's work: the anvil must be built for it (§46.6)
         String unbuilt = WarAnvil.unbuilt(plan.next(), build);
@@ -210,14 +210,14 @@ final class AnvilHeld {
         List<AnvilPayloads.Cost> costs = new ArrayList<>();
         if (f == null) {
             for (ArmsForge.Cost c : ArmsForge.attunePrice(Forces.Force.HEAT)) {
-                if (c.item() != ArmsForge.catalystItem(Forces.Force.HEAT)) costs.add(new AnvilPayloads.Cost(c.label().getString(), ArmsForge.count(p, c.item()), c.n()));
+                if (c.item() != ArmsForge.catalystItem(Forces.Force.HEAT)) costs.add(new AnvilPayloads.Cost(c.label().getString(), ArmsForge.count(p, c.item()), c.n(), id(c.item()), false));
             }
-            costs.add(new AnvilPayloads.Cost("A catalyst", 0, 1));
+            costs.add(new AnvilPayloads.Cost("A catalyst", 0, 1, id(ArmsForge.catalystItem(Forces.Force.HEAT)), false));
             return new AnvilPayloads.Option(AnvilWork.ATTUNE, "Attune", "Attune it", false, "Hold one of those stones in your off hand.", costs,
                     now != null ? "Now " + ArmsForge.forceName(now) : "Needs a catalyst", List.of(), says);
         }
         List<ArmsForge.Cost> price = ArmsForge.attunePrice(f);
-        for (ArmsForge.Cost c : price) costs.add(new AnvilPayloads.Cost(c.label().getString(), ArmsForge.count(p, c.item()), c.n()));
+        for (ArmsForge.Cost c : price) costs.add(new AnvilPayloads.Cost(c.label().getString(), ArmsForge.count(p, c.item()), c.n(), id(c.item()), false));
         String name = ArmsForge.forceName(f);
         boolean afford = ArmsForge.affords(p, price);
         String line = now == f ? "It's already attuned to " + name + "."
@@ -229,10 +229,43 @@ final class AnvilHeld {
                 (now == f ? "Already " : "To ") + name, List.of(), says);
     }
 
+    /** Every Force, whichever stones you carry (SPEC §52): what each would do, what it takes, and whether it can begin. */
+    static List<AnvilPayloads.Stone> stones(ServerPlayer p, ItemStack weapon, @Nullable BlockPos fire) {
+        Forces.Force inHand = ArmsForge.catalyst(p.getOffhandItem()), now = Marks.of(weapon).attunement().orElse(null);
+        List<AnvilPayloads.Stone> out = new ArrayList<>(Forces.Force.values().length);
+        for (Forces.Force f : Forces.Force.values()) {
+            Item stone = ArmsForge.catalystItem(f);
+            List<ArmsForge.Cost> price = ArmsForge.attunePrice(f);
+            List<AnvilPayloads.Cost> costs = new ArrayList<>();
+            for (ArmsForge.Cost c : price) costs.add(new AnvilPayloads.Cost(c.label().getString(), ArmsForge.count(p, c.item()), c.n(), id(c.item()), false));
+            String name = ArmsForge.forceName(f);
+            int have = ArmsForge.count(p, stone);
+            boolean afford = ArmsForge.affords(p, price);
+            String line = now == f ? "It's already attuned to " + name + "."
+                    : fire == null ? NO_FORGE
+                    : have <= 0 && !p.hasInfiniteMaterials() ? "You have no " + name(stone) + "."
+                    : !afford ? "Not enough to attune it to " + name + " yet."
+                    : now != null ? "Its " + ArmsForge.forceName(now) + " gives way to " + name + "."
+                    : "The stone is set while the steel is hot.";
+            out.add(new AnvilPayloads.Stone(f.ordinal(), name, dev.awaken.armour.ArmourInlay.colour(f), id(stone), name(stone), have,
+                    "Cast a " + name + " power, and your next blow within " + ArmsForge.primeTime() + " hits " + ArmsForge.BLADE_PRIME + " times as hard and " + ArmsForge.touch(f) + ".",
+                    now != f && fire != null && afford, line, costs, f == inHand, f == now));
+        }
+        return out;
+    }
+
+    /** The weapon this one would reforge into: the next tier's of its style, a Lord-forged its own body; "" at the top. */
+    private static String nextWeapon(ServerPlayer p, ItemStack weapon) {
+        ArmsRaise.Plan plan = ArmsRaise.plan(p, weapon);
+        if (plan == null) return "";
+        return plan.lordForged() ? plan.weapon().id() : ArmsArmoury.PREFIX[plan.next()] + "_" + plan.weapon().style();
+    }
+
     // ---- the start ---------------------------------------------------------------------------------------------------
 
     /** The window's button: the price and the weapon go into the work and the scene opens. False if it can't begin (the window is sent again). */
-    static boolean begin(ServerPlayer p, ServerLevel level, WarAnvilBlockEntity be, int kind) {
+    static boolean begin(ServerPlayer p, ServerLevel level, WarAnvilBlockEntity be, int chosen) {
+        int kind = chosen & 0xFF, stone = (chosen >> 8) - 1;
         ItemStack weapon = p.getMainHandItem();
         ArmsData.Weapon data = ArmsItems.of(weapon.getItem());
         if (data == null || be.work() != null || !be.slot().isEmpty() || p.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())) > 10 * 10) return false;
@@ -262,7 +295,8 @@ final class AnvilHeld {
                 pay = () -> taken.addAll(WarAnvil.take(p, plan.needs()));
             }
             case AnvilWork.ATTUNE -> {
-                Forces.Force f = ArmsForge.catalyst(p.getOffhandItem());
+                // the stone you picked in the Hall, wherever you carry it; otherwise the one in your off hand
+                Forces.Force f = stone >= 0 && stone < Forces.Force.values().length ? Forces.Force.values()[stone] : ArmsForge.catalyst(p.getOffhandItem());
                 if (f == null || Marks.of(weapon).attunement().orElse(null) == f) return false;
                 List<ArmsForge.Cost> price = ArmsForge.attunePrice(f);
                 if (!ArmsForge.affords(p, price)) return false;
@@ -351,5 +385,9 @@ final class AnvilHeld {
 
     private static String name(Item item) {
         return item.getName(new ItemStack(item)).getString();
+    }
+
+    private static String id(Item item) {
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item).toString();
     }
 }

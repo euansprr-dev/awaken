@@ -1,0 +1,64 @@
+# The Hall of Arms (SPEC §52), the War Anvil with no window at Euan's window size: your weapon over your fire; the three rites;
+# the steel showing each change. Survival: some of what it takes, not all.
+world hallanvil creative 4348
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1708 960
+cmd awaken admin levels 13
+cmd awaken admin rankup
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -8 200 -5 8 200 11 minecraft:polished_deepslate
+cmd fill -8 201 -5 8 206 11 minecraft:air
+cmd setblock 0 201 4 awaken:war_anvil[facing=north]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+cmd setblock -3 203 2 minecraft:lantern
+cmd setblock 3 203 5 minecraft:lantern
+wait 20
+cmd gamemode survival
+cmd give @s awaken:toadstone 2
+cmd give @s iron_ingot 14
+cmd give @s awaken:sunshard 1
+cmd give @s copper_ingot 3
+cmd give @s awaken:essence_shard 9
+cmd give @s awaken:core_shard 2
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+cmd tp @s 0.5 201 3.25 0 35
+wait 30
+use
+wait 70
+shot anvil_arrive
+cmd awaken hall view point 0
+wait 25
+shot anvil_point_temper
+cmd awaken hall view point 1
+wait 25
+shot anvil_point_reforge
+cmd awaken hall view point 2
+wait 25
+shot anvil_point_attune
+cmd awaken hall view point 9
+cmd awaken hall view rite 0
+wait 40
+shot anvil_temper
+cmd awaken hall view rite 1
+wait 40
+shot anvil_reforge
+cmd awaken hall view rite 2
+wait 40
+shot anvil_attune
+cmd awaken hall view stone 4
+wait 30
+shot anvil_attune_none
+screen close
+quit

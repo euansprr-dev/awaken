@@ -67,7 +67,7 @@ public final class AnvilClient {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AnvilPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onOpen(msg)));
             e.register(AnvilPayloads.Done.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onDone(msg)));
-            e.register(AnvilPayloads.Held.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.setScreen(new AnvilHeldScreen(msg))));
+            e.register(AnvilPayloads.Held.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onHeld(msg)));
         });
         FirstPerson.world("arms_anvil", 200, AnvilHands::pose);
         FirstPerson.camera(AnvilCamera::active);
@@ -176,8 +176,15 @@ public final class AnvilClient {
     }
 
     /** The HUD steps aside while the scene holds the view (subtitles and chat stay). */
+    /** The weapon held to the anvil: its window, in the Hall's own form unless the old screens are on. */
+    private static void onHeld(AnvilPayloads.Held msg) {
+        Minecraft mc = Minecraft.getInstance();
+        if (dev.awaken.hall.client.HallConfig.classic()) mc.gui.setScreen(new AnvilHeldScreen(msg));
+        else dev.awaken.hall.client.AnvilStage.show(msg);
+    }
+
     private static void hideHud(RenderGuiLayerEvent.Pre e) {
-        if (sceneAnvil() == null) return;
+        if (sceneAnvil() == null && !(Minecraft.getInstance().gui.screen() instanceof dev.awaken.hall.client.AnvilStage)) return;
         String path = e.getName().getPath();
         if (path.equals("subtitle_overlay") || path.equals("chat")) return;
         e.setCanceled(true);
@@ -202,7 +209,7 @@ public final class AnvilClient {
 
     // ---- shared ------------------------------------------------------------------------------------------------------
 
-    static void send(BlockPos pos, int act, int a, float t, float aim) {
+    public static void send(BlockPos pos, int act, int a, float t, float aim) {
         ClientPacketDistributor.sendToServer(new AnvilPayloads.Act(pos, act, a, t, aim));
     }
 

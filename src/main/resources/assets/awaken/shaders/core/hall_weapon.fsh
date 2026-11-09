@@ -25,6 +25,14 @@ vec3 studio(vec3 r) {
     return base * 0.8 + STRIP * strip * 0.8;
 }
 
+// Black through deep red and orange to a white heat.
+vec3 heatColour(float h) {
+    vec3 c = vec3(0.30, 0.03, 0.01) * smoothstep(0.05, 0.25, h);
+    c = mix(c, vec3(0.95, 0.32, 0.05), smoothstep(0.25, 0.55, h));
+    c = mix(c, vec3(1.0, 0.78, 0.28), smoothstep(0.55, 0.8, h));
+    return mix(c, vec3(1.0, 0.96, 0.86), smoothstep(0.8, 1.0, h));
+}
+
 void main() {
     vec4 alb = texture(Sampler0, texCoord0);
     if (alb.a < 0.1) discard;
@@ -53,7 +61,22 @@ void main() {
     if (mode == 1) col = vec3(0.018, 0.018, 0.024) + vec3(0.34, 0.42, 0.60) * (rim * 1.5 + pow(max(r.y, 0.0), 4.0) * 0.3);
     else if (mode == 2) col *= 0.74;
     else if (mode == 3) col = vec3(0.06, 0.055, 0.052) + vec3(0.62, 0.56, 0.48) * (rim * 1.5 + pow(max(r.y, 0.0), 4.0) * 0.42);
+    int heatBits = (raw >> 4) & 31;
+    if (heatBits > 0 && mode == 0) {
+        float heat = float(heatBits) / 31.0, front = float((raw >> 9) & 31) / 31.0;
+        float hot = smoothstep(-0.04, 0.04, along - front) * heat;
+        float h = hot * (0.7 + 0.6 * dot(alb.rgb, vec3(0.3, 0.59, 0.11)));
+        vec3 g = heatColour(h);
+        if ((raw & 16384) != 0) {
+            g = accent * (0.25 + 0.85 * h);
+            col += accent * smoothstep(0.25, 0.6, metal) * (0.2 + 0.25 * diffuse);
+        }
+        col = mix(col, col * 0.25, smoothstep(0.0, 0.3, hot)) + g * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse);
+    }
+    int packed = int(state.y + 0.5);
+    float flash = float((packed >> 8) & 31) / 31.0;
+    if (flash > 0.0) col += (accent * (0.18 + 0.6 * emit + 0.35 * rim) + vec3(1.0, 0.86, 0.6) * 0.5) * flash * 1.6;
     if ((raw & 8) != 0) col += vec3(1.0, 0.81, 0.48) * pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 1.5) * (0.5 + 0.2 * sin(t * TAU * 0.35));
-    float a = state.y;
+    float a = float(packed & 255) / 255.0;
     fragColor = vec4(min(col, vec3(1.0)) * a, a);
 }

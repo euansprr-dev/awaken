@@ -57,6 +57,11 @@ final class Stage {
         }
     }
 
+    /** The end of a page that has the world behind it: nothing is letterboxed. */
+    void endBare() {
+        g.pose().popMatrix();
+    }
+
     float sx(double mouse) {
         return (float) ((mouse - ox) / k);
     }
@@ -91,6 +96,14 @@ final class Stage {
         fill(x0, y1 - t, x1, y1, colour);
         fill(x0, y0 + t, x0 + t, y1 - t, colour);
         fill(x1 - t, y0 + t, x1, y1 - t, colour);
+    }
+
+    /** A straight thin line between two sheet points, at any angle. */
+    void ray(float x0, float y0, float x1, float y1, float t, int colour) {
+        float dx = x1 - x0, dy = y1 - y0, len = (float) Math.sqrt(dx * dx + dy * dy);
+        g.pose().pushMatrix().translate(x0, y0).rotate((float) Math.atan2(dy, dx));
+        g.fill(0, Math.round(-t / 2F), Math.round(len), Math.max(1, Math.round(t / 2F)), colour);
+        g.pose().popMatrix();
     }
 
     /** A soft round light: rgb only, its strength apart. */

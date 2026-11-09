@@ -116,6 +116,10 @@ final class Panel {
 
         /** Draws the button; true on the frame the hold completes. */
         boolean draw(Stage s, float y0, float y1, String label, boolean enabled, boolean can, boolean pressed, boolean over, float dt) {
+            return draw(s, X, RIGHT, y0, y1, label, enabled, can, pressed, over, dt);
+        }
+
+        boolean draw(Stage s, float x0, float x1, float y0, float y1, String label, boolean enabled, boolean can, boolean pressed, boolean over, float dt) {
             boolean fired = false;
             if (!HallConfig.clickToCommit() && pressed && can) {
                 amount += dt / HOLD_SECONDS;
@@ -126,15 +130,15 @@ final class Panel {
             } else {
                 amount = Math.max(0F, amount - dt * 4F);
             }
-            s.fill(X, y0, RIGHT, y1, enabled ? (over ? 0xFF241A10 : 0xFF16120D) : 0xFF10141C);
+            s.fill(x0, y0, x1, y1, enabled ? (over ? 0xFF241A10 : 0xFF16120D) : 0xFF10141C);
             if (amount > 0F) {
-                float end = X + (RIGHT - X) * amount;
-                s.fill(X, y0, end, y1, 0xFFB23A08);
-                s.fill(Math.max(X, end - 40F), y0, end, y1, 0xFFFF8A28);
-                s.fill(Math.max(X, end - 6F), y0, end, y1, 0xFFFFF0C0);
+                float end = x0 + (x1 - x0) * amount;
+                s.fill(x0, y0, end, y1, 0xFFB23A08);
+                s.fill(Math.max(x0, end - 40F), y0, end, y1, 0xFFFF8A28);
+                s.fill(Math.max(x0, end - 6F), y0, end, y1, 0xFFFFF0C0);
             }
-            s.outline(X, y0, RIGHT, y1, 3, enabled ? FORGE_FIRE : 0xFF2A3446);
-            s.centre(label, (X + RIGHT) / 2F, y0 + 18F, 3F, enabled ? 0xFFFFE9C4 : Stage.DIM);
+            s.outline(x0, y0, x1, y1, 3, enabled ? FORGE_FIRE : 0xFF2A3446);
+            s.centre(label, (x0 + x1) / 2F, y0 + (y1 - y0) / 2F - 12F, 3F, enabled ? 0xFFFFE9C4 : Stage.DIM);
             return fired;
         }
     }

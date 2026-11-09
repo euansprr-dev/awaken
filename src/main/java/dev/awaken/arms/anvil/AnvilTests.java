@@ -642,6 +642,15 @@ final class AnvilTests {
         p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, new ItemStack(dev.awaken.arms.ArmsForge.catalystItem(force)));
         AnvilPayloads.Option row = AnvilHeld.options(p, level, pos, p.getMainHandItem()).get(2);
         h.assertTrue(row.kind() == AnvilWork.ATTUNE && !row.ready() && row.line().startsWith("It's already attuned"), "the same Force again: " + row.line());
+        // the Hall's way (SPEC §52): any stone you carry, named by the player, the off hand empty
+        p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, ItemStack.EMPTY);
+        Forces.Force other = Forces.Force.HEAT;
+        for (dev.awaken.arms.ArmsForge.Cost c : dev.awaken.arms.ArmsForge.attunePrice(other)) p.getInventory().add(new ItemStack(c.item(), c.n()));
+        var stones = AnvilHeld.stones(p, p.getMainHandItem(), WarAnvil.forge(level, pos));
+        h.assertTrue(stones.size() == Forces.Force.values().length && stones.get(other.ordinal()).ready() && stones.get(force.ordinal()).on() && !stones.get(force.ordinal()).ready(), "every Force is offered, the one on it isn't: " + stones);
+        act(p, pos, AnvilPayloads.HELD, AnvilWork.ATTUNE | other.ordinal() + 1 << 8, 0F, 0F);
+        AnvilWork second = be.work();
+        h.assertTrue(second != null && second.kind == AnvilWork.ATTUNE && second.target == other.ordinal() && count(p, dev.awaken.arms.ArmsForge.catalystItem(other)) == 0, "the stone comes out of the pack");
         h.succeed();
     }
 

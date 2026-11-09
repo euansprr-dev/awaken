@@ -108,7 +108,7 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
         Meshes.Up up = Meshes.up(p.id());
         if (up == null) return;
         ps.pushPose();
-        ps.translate(p.x(), p.y(), 0F);
+        ps.translate(p.x(), p.y(), -p.depth());
         ps.scale(p.scale(), p.scale(), p.scale());
         ps.rotate(Axis.XP.rotationDegrees(180F)); // the stage's y runs down, a model's up
         ps.rotate(Axis.ZP.rotationDegrees(p.roll()));
@@ -118,10 +118,14 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
         ps.rotate(Axis.ZP.rotation(up.angle()));
         ps.translate(-up.mx(), -up.my(), -up.mz());
         Identifier tex = Awaken.id("textures/item/arms/" + p.id() + ".png");
-        int overlay = ours ? p.mode() | Math.round(p.alpha() * 255F) << 16 : OverlayTexture.NO_OVERLAY;
-        boolean hidden = !ours && (p.mode() == Placed.SHAPE || p.mode() == Placed.IRON); // vanilla's light can't black it out, so a colour must
+        // UV1: x the mode, heat and front (15 bits); y the alpha and, over it, the flash
+        int overlay = ours ? p.mode() & 0x7FFF | (Math.round(p.alpha() * 255F) | (p.mode() >> 16 & 31) << 8) << 16 : OverlayTexture.NO_OVERLAY;
+        int base = p.mode() & 15;
+        boolean hidden = !ours && (base == Placed.SHAPE || base == Placed.IRON); // vanilla's light can't black it out, so a colour must
+        int accent = p.accent() == -1 ? up.mesh().accent() : p.accent();
+        WeaponMesh mesh = up.mesh();
         store.submitCustomGeometry(ps, ours ? HallPipelines.weapon(tex) : HallPipelines.fallback(tex),
-                (pose, buffer) -> emit(up.mesh(), pose, buffer, overlay, ours, hidden));
+                (pose, buffer) -> emit(accent, mesh.pos(), mesh.uv(), mesh.normal(), mesh.along(), mesh.vertices(), pose, buffer, overlay, ours, hidden));
         ps.popPose();
     }
 
@@ -153,10 +157,6 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
             }
         }
         ps.popPose();
-    }
-
-    private static void emit(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, int overlay, boolean ours, boolean hidden) {
-        emit(mesh.accent(), mesh.pos(), mesh.uv(), mesh.normal(), mesh.along(), mesh.vertices(), pose, buffer, overlay, ours, hidden);
     }
 
     private static void emit(int accent, float[] p, float[] uv, byte[] n, byte[] along, int count, PoseStack.Pose pose, VertexConsumer buffer, int overlay, boolean ours, boolean hidden) {

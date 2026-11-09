@@ -341,7 +341,7 @@ final class SuitView extends CloseView {
             float ax = CX + (a[0] * c + a[2] * sn) * scale, ay = mid + (a[1] - .5F) * scale;
             float lx = left ? zx + 6F : zx - 6F, ly = zy + 16F;
             int colour = on ? Stage.EDGE : 0x667FC3FF;
-            tether(s, lx, ly, ax, ay, on ? 2F : 1F, colour);
+            s.ray(lx, ly, ax, ay, on ? 2F : 1F, colour);
             s.fill(ax - 4F, ay - 4F, ax + 4F, ay + 4F, on ? Stage.EDGE : 0x887FC3FF);
             int title = on ? Stage.LANTERN : over ? Stage.TITLE : Stage.LABEL;
             if (left) {
@@ -353,13 +353,6 @@ final class SuitView extends CloseView {
             }
         }
         g.nextStratum();
-    }
-
-    private static void tether(Stage s, float x0, float y0, float x1, float y1, float t, int colour) {
-        float dx = x1 - x0, dy = y1 - y0, len = (float) Math.sqrt(dx * dx + dy * dy);
-        s.g.pose().pushMatrix().translate(x0, y0).rotate((float) Math.atan2(dy, dx));
-        s.g.fill(0, Math.round(-t / 2F), Math.round(len), Math.max(1, Math.round(t / 2F)), colour);
-        s.g.pose().popMatrix();
     }
 
     private int zoneAt(float x, float y) {
