@@ -19754,4 +19754,4 @@ a held press, the fire rising in three steps; the weapon coming down, `block.anv
 
 **For everyone.** High Contrast brightens the quiet text. Hide Lightning Flashes takes out the hit of light. Distortion Effects under
 50% means things arrive rather than fly and nothing turns by itself (drag still does). The narrator reads what is brought close and
-which rite is picked, on a change only. On the sheet, text sizes snap down, never up, so no window makes a line wider than laid out.
+which rite is picked, on a change only. On the sheet, text sizes snap to whole real pixels, rounding down unless the size is within .35 of a pixel of the next step (at 1.93 real pixels to a sheet pixel, size 2 stays 4 real pixels rather than falling to 3). A line can come out a few percent wider than laid out, so widths, fits and wraps all measure text at its snapped size.
