@@ -11,7 +11,10 @@ import dev.awaken.caves.skin.CaveSkin;
 import dev.awaken.caves.skin.CaveSkinFeature;
 import dev.awaken.caves.skin.SkinBlocks;
 import dev.awaken.caves.skin.SkinRock;
+import dev.awaken.caves.skin.WallGrowth;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.delve.LodeHeartBlock;
+import dev.awaken.delve.Ore;
 import dev.awaken.terrain.api.BiomeTable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -59,15 +62,18 @@ import net.neoforged.neoforge.common.Tags;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Predicate;
@@ -98,6 +104,8 @@ final class CavesTests {
         AwakenTests.register("caves_skin_census", 2400, CavesTests::skin);
         AwakenTests.register("caves_underlife_sites", 200, CavesTests::underlife);
         AwakenTests.register("caves_region_rock", 2400, CavesTests::regionRock);
+        AwakenTests.register("caves_wall_growth", 200, CavesTests::wallGrowth);
+        AwakenTests.register("caves_heart_takes_the_rock", 400, CavesTests::heartTakesTheRock);
         AwakenTests.register("caves_region_pieces", 2400, CavesTests::regionPieces);
     }
 
@@ -594,7 +602,7 @@ final class CavesTests {
      * Ochre Deep. Ores are planted first (the fill lays none): coal, copper, iron and gold, each in solid stone. Under the
      * land's last {@link CaveSkinFeature#REGION_UNDER} blocks the host rock becomes the region's, an ore with a twin there
      * becomes the twin, an ore without one keeps its stone shell; above, nothing changes. The growth is laid (glowcaps,
-     * root curtains; rust, flowstone, ember lichen), each piece where it may stand, the glow sparse, the cost in budget.
+     * root curtains; rust, drapes, ember vines), each piece where it may stand, the glow sparse, the cost in budget.
      */
     private static void regionRock(GameTestHelper h) {
         Pair p = pair(h);
@@ -734,10 +742,13 @@ final class CavesTests {
                         while (up < 7 && !(cells.get(x, y + up, z).getBlock() instanceof SkinBlocks.RootCurtain)) up++;
                         h.assertTrue(region == CaveRegion.ROOTWAYS && cells.get(x, y - 1, z).isSolidRender() && up < 7,
                                 "root amber lies on rock under a root curtain in the Rootways at " + x + " " + y + " " + z);
-                    } else if (b == CaveSkin.RUST_CRUST.get() || b == CaveSkin.RUST_FLOWSTONE.get() || b == CaveSkin.EMBER_LICHEN.get()) {
-                        h.assertTrue(region == CaveRegion.OCHRE_DEEP, b + " only in the Ochre Deep");
+                    } else if (b == CaveSkin.RUST_CRUST.get() || b == CaveSkin.RUST_DRAPE.get() || b == CaveSkin.EMBER_VINE.get()) {
+                        // grown along the rock, so judged by the rock it's on: the air cell may lie a block over the region's edge
+                        boolean onOchre = false;
+                        for (Direction d : Direction.Plane.HORIZONTAL) onOchre |= cells.get(x + d.getStepX(), y, z + d.getStepZ()).is(CaveSkin.OCHRE_STONE.get());
+                        h.assertTrue(onOchre, b + " grows only on the Ochre Deep's rock at " + x + " " + y + " " + z);
                         if (b == CaveSkin.RUST_CRUST.get()) rust++;
-                        else if (b == CaveSkin.RUST_FLOWSTONE.get()) flow++;
+                        else if (b == CaveSkin.RUST_DRAPE.get()) flow++;
                         else ember++;
                     } else if (region == CaveRegion.OCHRE_DEEP && (b == CaveSkin.MINERAL_CRUST.get() || b == CaveSkin.WET_STREAKS.get())) {
                         h.fail("the Ochre Deep's walls are rust, not " + b);
@@ -746,7 +757,7 @@ final class CavesTests {
             }
         }
         double ms = nanos / 1e6 / n, fill = fillNanos / 1e6 / n, glow = glowcaps / (double) Math.max(1, floors);
-        Awaken.LOG.info("[caves] regions on {} timed chunks of " + 2 * REGION_CHUNKS + ": {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} root amber, {} rust crust, {} rust flowstone, {} ember lichen; {} ms a chunk against {} ms to fill it",
+        Awaken.LOG.info("[caves] regions on {} timed chunks of " + 2 * REGION_CHUNKS + ": {} cells of region rock, {} glowcaps ({} of {} open floors), {} root curtain blocks, {} root amber, {} rust crust, {} rust drape, {} ember vine; {} ms a chunk against {} ms to fill it",
                 n, swapped, glowcaps, String.format(Locale.ROOT, "%.3f", glow), floors, roots, amber, rust, flow, ember, String.format(Locale.ROOT, "%.3f", ms),
                 String.format(Locale.ROOT, "%.2f", fill));
         h.assertTrue(glowcaps > 0 && roots > 0 && amber > 0 && rust > 0 && flow > 0 && ember > 0, "every region piece is laid");
@@ -903,6 +914,150 @@ final class CavesTests {
      * thread this test holds: no structure starts (the beardifier is empty for both fills alike) and the surface laid as
      * plains everywhere (an uncached biome lookup per column would cost more than the fill and hide its cost).
      */
+    /**
+     * The Ochre Deep's walls are grown, not stamped (SPEC §42.10). In a made-up room with a pillar: every vine block's connections
+     * meet the next block's (beside it, or round the rock's corner), a run is never a lone block, a chunk stays in its own cells,
+     * and a seed always grows the same wall.
+     */
+    private static void wallGrowth(GameTestHelper h) {
+        int runs = 0, longest = 0, forks = 0, blooms = 0, corners = 0, drapes = 0, crust = 0;
+        for (long seed = 1; seed <= 60; seed++) {
+            Map<BlockPos, BlockState> grown = growRoom(seed);
+            h.assertTrue(grown.equals(growRoom(seed)), "seed " + seed + " grows the same wall twice");
+            Set<BlockPos> seen = new HashSet<>();
+            for (var e : grown.entrySet()) {
+                BlockPos at = e.getKey();
+                BlockState s = e.getValue();
+                h.assertTrue(at.getX() >= 0 && at.getX() < 16 && at.getZ() >= 0 && at.getZ() < 16, "nothing leaves the chunk: " + at);
+                if (s.is(CaveSkin.RUST_CRUST.get())) crust++;
+                if (s.is(CaveSkin.RUST_DRAPE.get()) && s.getValue(SkinBlocks.RustDrape.TIP)) drapes++;
+                if (!(s.getBlock() instanceof SkinBlocks.EmberVine)) continue;
+                if (s.getValue(SkinBlocks.EmberVine.BLOOM)) blooms++;
+                if (vineLinks(h, grown, at, s).size() + (rooted(at, s) ? 1 : 0) >= 3) forks++;
+                if (!seen.add(at)) continue;
+                // walk the run this block belongs to
+                ArrayDeque<BlockPos> open = new ArrayDeque<>(List.of(at));
+                int cells = 1;
+                while (!open.isEmpty()) {
+                    BlockPos p = open.pop();
+                    for (BlockPos q : vineLinks(h, grown, p, grown.get(p))) {
+                        if (grown.get(q).getValue(SkinBlocks.EmberVine.FACING) != grown.get(p).getValue(SkinBlocks.EmberVine.FACING)) corners++;
+                        if (seen.add(q)) {
+                            open.push(q);
+                            cells++;
+                        }
+                    }
+                }
+                h.assertTrue(cells >= 3, "a run of " + cells + " at " + at + " on seed " + seed);
+                runs++;
+                longest = Math.max(longest, cells);
+            }
+        }
+        Awaken.LOG.info("[caves] wall growth on 60 rooms: {} runs, longest {}, {} forks, {} blooms, {} round a corner, {} drapes, {} crust", runs, longest, forks, blooms, corners, drapes, crust);
+        h.assertTrue(runs >= 30 && longest >= 8 && forks > 0 && blooms > 0 && corners > 0 && drapes > 0 && crust > 0,
+                "runs grow, fork, bloom, wrap corners, and the drapes and crust come with them");
+        h.succeed();
+    }
+
+    /** A lode's heart in a region is drawn in the region's rock with that rock right up to it; an ore without a twin keeps its pocket (SPEC §42.11). */
+    private static void heartTakesTheRock(GameTestHelper h) {
+        Pair p = pair(h);
+        var level = h.getLevel();
+        LevelHeightAccessor heights = LevelHeightAccessor.create(-64, 384);
+        RandomState rs = p.random(h, STUDIO_SEEDS[0], true);
+        ChunkPos pos = new ChunkPos(-40, -30);
+        ProtoChunk chunk = build(level, p.shaped(), rs, pos, heights);
+        int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
+        var section = chunk.getSection(chunk.getSectionIndex(0));
+        for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) section.setBlockState(x, y, z, Blocks.STONE.defaultBlockState(), false);
+        section.setBlockState(8, 8, 8, LodeHeartBlock.in(Ore.IRON.heart().defaultBlockState(), Blocks.STONE.defaultBlockState()), false);
+        section.setBlockState(3, 3, 3, Blocks.COAL_ORE.defaultBlockState(), false);
+        int[] tops = new int[256];
+        Arrays.fill(tops, 100);
+        CaveSkinFeature.regionRock(chunk, cx, cz, tops, 100, (x, y, z) -> CaveRegion.OCHRE_DEEP);
+        h.assertTrue(section.getBlockState(8, 8, 8).getValue(LodeHeartBlock.HOST) == LodeHeartBlock.Host.OCHRE, "the heart is drawn in the region's rock");
+        for (Direction d : Direction.values()) {
+            h.assertTrue(section.getBlockState(8 + d.getStepX(), 8 + d.getStepY(), 8 + d.getStepZ()).is(CaveSkin.OCHRE_STONE.get()), "no pocket of stone round a heart, on its " + d + " side");
+        }
+        h.assertTrue(section.getBlockState(4, 3, 3).is(Blocks.STONE), "an ore without a twin keeps its pocket");
+        h.assertTrue(section.getBlockState(12, 12, 12).is(CaveSkin.OCHRE_STONE.get()), "the rest becomes the region's rock");
+        h.succeed();
+    }
+
+    /** A vine block with its root in the floor (a connection that leads into rock, so the walk has no block to go to). */
+    private static boolean rooted(BlockPos at, BlockState s) {
+        return s.getValue(SkinBlocks.EmberVine.DOWN) && at.getY() == 1;
+    }
+
+    /** The blocks a vine connects to; fails if a connection leads nowhere, or the far block doesn't connect back. */
+    private static List<BlockPos> vineLinks(GameTestHelper h, Map<BlockPos, BlockState> grown, BlockPos at, BlockState s) {
+        Direction wall = s.getValue(SkinBlocks.EmberVine.FACING), left = wall.getCounterClockWise(), right = wall.getClockWise();
+        List<BlockPos> links = new ArrayList<>();
+        if (s.getValue(SkinBlocks.EmberVine.UP)) links.add(meet(h, grown, at.above(), at, SkinBlocks.EmberVine.DOWN, wall));
+        if (s.getValue(SkinBlocks.EmberVine.DOWN) && !rooted(at, s)) links.add(meet(h, grown, at.below(), at, SkinBlocks.EmberVine.UP, wall));
+        for (boolean isLeft : new boolean[] {true, false}) {
+            if (!s.getValue(isLeft ? SkinBlocks.EmberVine.LEFT : SkinBlocks.EmberVine.RIGHT)) continue;
+            Direction side = isLeft ? left : right;
+            var back = isLeft ? SkinBlocks.EmberVine.RIGHT : SkinBlocks.EmberVine.LEFT;
+            BlockPos beside = at.relative(side);
+            links.add(grown.containsKey(beside) ? meet(h, grown, beside, at, back, wall) : meet(h, grown, beside.relative(wall), at, back, side.getOpposite()));
+        }
+        return links;
+    }
+
+    private static BlockPos meet(GameTestHelper h, Map<BlockPos, BlockState> grown, BlockPos to, BlockPos from, net.minecraft.world.level.block.state.properties.BooleanProperty back, Direction wall) {
+        BlockState there = grown.get(to);
+        h.assertTrue(there != null && there.getBlock() instanceof SkinBlocks.EmberVine && there.getValue(SkinBlocks.EmberVine.FACING) == wall && there.getValue(back),
+                "the vine at " + from + " joins up at " + to);
+        return to;
+    }
+
+    /** One chunk of an ochre room 8 high with a pillar standing out of the north wall, grown on one seed; what the growth wrote. */
+    private static Map<BlockPos, BlockState> growRoom(long seed) {
+        BlockState ochre = CaveSkin.OCHRE_STONE.get().defaultBlockState(), air = Blocks.CAVE_AIR.defaultBlockState();
+        Map<BlockPos, BlockState> grown = new HashMap<>();
+        CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
+            private boolean open(int x, int y, int z) {
+                boolean pillar = (x == 6 || x == 7) && (z == 5 || z == 6);
+                return x >= 0 && x < 16 && y >= 1 && y <= 8 && z >= 5 && z <= 11 && !pillar;
+            }
+
+            @Override
+            public BlockState get(int x, int y, int z) {
+                BlockState made = grown.get(new BlockPos(x, y, z));
+                return made != null ? made : open(x, y, z) ? air : ochre;
+            }
+
+            @Override
+            public void set(int x, int y, int z, BlockState state) {
+                grown.put(new BlockPos(x, y, z), state);
+            }
+
+            @Override
+            public int top(int x, int z) {
+                return 30;
+            }
+
+            @Override
+            public int minY() {
+                return -64;
+            }
+        };
+        WallGrowth.Sites sites = new WallGrowth.Sites();
+        for (int x = 0; x < 16; x++) {
+            if (x != 6 && x != 7) {
+                sites.foot(x, 1, 5, 0);
+                sites.roof(x, 8, 5, 0);
+            } else {
+                sites.foot(x, 1, 7, 0);                       // the pillar's own face: a run from here goes round its corners
+            }
+            sites.foot(x, 1, 11, 2);
+            sites.roof(x, 8, 11, 2);
+        }
+        WallGrowth.dress(cells, seed, 0, 0, sites);
+        return grown;
+    }
+
     /** One filled chunk's cells for the skin (stone all round it), as the bench reads and writes them. */
     private static CaveSkinFeature.Cells benchCells(ProtoChunk chunk, int cx, int cz) {
         BlockState stone = Blocks.STONE.defaultBlockState();

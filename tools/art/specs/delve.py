@@ -139,23 +139,131 @@ def deepglass():
     return c
 
 
+def crack(rnd, a, b, rough=0.3, depth=4):
+    """A line from a to b that wanders like split rock (midpoint displacement); its ends stay put."""
+    pts = [a, b]
+    for _ in range(depth):
+        out = [pts[0]]
+        for p, q in zip(pts, pts[1:]):
+            mx, my = (p[0] + q[0]) / 2, (p[1] + q[1]) / 2
+            ln = math.hypot(q[0] - p[0], q[1] - p[1]) or 1.0
+            off = rnd.uniform(-1, 1) * ln * rough
+            out += [(mx - (q[1] - p[1]) / ln * off, my + (q[0] - p[0]) / ln * off), q]
+        pts = out
+    # even steps along it, so a caller can fade by distance
+    walk = []
+    for p, q in zip(pts, pts[1:]):
+        n = max(1, int(math.hypot(q[0] - p[0], q[1] - p[1]) * 2))
+        walk += [(p[0] + (q[0] - p[0]) * i / n, p[1] + (q[1] - p[1]) * i / n) for i in range(n)]
+    return walk + [pts[-1]]
+
+
 def heart(ore):
-    """A lode's heart: a crystallised knot of its ore bursting out of deep rock, veins of it running to every edge (so
-    the seam reads as one thing through the heart), a white-hot core."""
+    """A lode's heart (SPEC §42.11): a crystallised knot of its ore grown through the rock, drawn on nothing, because the block
+    model lays it over whichever rock the heart sits in."""
     cols = [hx(h) for h in HEART[ore]]
-    c = rock("heart_" + ore, lo=1, hi=3)
+    c = Canvas()
     rnd = rng_for("heart_veins", ore)
-    # veins to the edges
-    for edge in range(4):
-        x, y = 7.5, 7.5
-        tx, ty = [(rnd.uniform(3, 12), -1), (16, rnd.uniform(3, 12)), (rnd.uniform(3, 12), 16), (-1, rnd.uniform(3, 12))][edge]
-        steps = 14
-        for s in range(steps):
-            t = s / steps
-            px = int(round(x + (tx - x) * t + math.sin(t * 6 + edge) * 0.8))
-            py = int(round(y + (ty - y) * t + math.cos(t * 5 + edge) * 0.8))
-            c.set(px, py, cols[2 if t > 0.5 else 3])
-    facets(c, cols, "heart_" + ore, 7, spread=6, length=(3, 5.5))
+    # the mineral's stain on the rock round the knot, in flecks that thin out toward the edges
+    for y in range(16):
+        for x in range(16):
+            if rnd.random() < max(0.0, 0.62 - math.hypot(x - 7.5, y - 7.5) * 0.075):
+                c.set(x, y, cols[2] if rnd.random() < 0.7 else cols[1])
+    # a crack to the middle of each edge, where the veins on the next block pick up
+    for tx, ty in ((7.5, -0.5), (16.5, 7.5), (7.5, 16.5), (-0.5, 7.5)):
+        path = crack(rnd, (7.5, 7.5), (tx, ty), rough=0.22)
+        for i, (x, y) in enumerate(path):
+            t = i / max(1, len(path) - 1)
+            c.set(int(round(x)), int(round(y)), cols[4] if t < 0.45 else cols[3])
+            if t < 0.7 or rnd.random() < 0.5:
+                c.set(int(round(x + (ty - 7.5) / 9)), int(round(y + (tx - 7.5) / 9)), cols[3] if t < 0.6 else cols[2])
+    # the crystal mass that has broken through, nearly the width of the block
+    facets(c, cols, "heart_" + ore, 11, spread=7.5, length=(3.6, 6.2))
+    facets(c, cols, "heart2_" + ore, 6, spread=3.0, length=(2.2, 3.8))
+    # a dark edge round it, so the crystals stand in a broken hollow in the rock
+    solid = {(x, y) for y in range(16) for x in range(16) if sum(c.get(x, y)[:3]) >= sum(cols[3][:3])}
+    for x, y in solid:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < 16 and 0 <= ny < 16 and (nx, ny) not in solid and c.get(nx, ny)[3] and rnd.random() < 0.55:
+                c.set(nx, ny, cols[1])
+    return c
+
+
+def heart_shard(ore):
+    """The crystal the shards standing out of a heart are cut from: a lit edge down one side, the body in the ore's colour."""
+    cols = [hx(h) for h in HEART[ore]]
+    rnd = rng_for("heart_shard", ore)
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            i = 3 + (1 if x < 3 else 0) + (1 if y < 2 and x < 8 else 0) - (1 if x > 11 else 0)
+            c.set(x, y, cols[min(5, i + (1 if rnd.random() < 0.08 else 0))])
+    return c
+
+
+# ---- the veins on the rock round a heart (SPEC §42.11): white, so one sheet serves every ore (the game tints it) ---------------
+
+TRACE_COLS = 8
+
+
+def trace_cell(mask, reach, v):
+    return (mask - 1) * 4 + reach * 2 + v
+
+
+def trace_tile(mask, reach, v):
+    """A vein across one block's face, from each connected edge to a wandering hub, cracked like split rock with spurs off it:
+    bright and thick beside the heart (reach 0), dim and broken further out (reach 1). With one connection it's the vein's tip."""
+    rnd = rng_for("lode_trace", mask, reach, v)
+    c = Canvas()
+    hub = (7.5 + rnd.uniform(-2.4, 2.4), 7.5 + rnd.uniform(-2.4, 2.4))
+    ports = [p for bit, p in ((1, (7.5, -0.5)), (2, (7.5, 16.5)), (4, (-0.5, 7.5)), (8, (16.5, 7.5))) if mask & bit]
+    tip = len(ports) == 1
+    def grey(k):
+        k = int(k)
+        return (k, k, k, 255)
+    def draw(path, base, fade):
+        for i, (x, y) in enumerate(path):
+            t = i / max(1, len(path) - 1)
+            if reach == 1 and rnd.random() < 0.14 + (0.62 * t if fade else 0.0):
+                continue
+            if reach == 0 and fade and rnd.random() < 0.5 * t * t:
+                continue
+            ix, iy = int(round(x)), int(round(y))
+            k = base * (0.72 + rnd.random() * 0.28) * (1 - 0.35 * t if fade else 1)
+            for hxx, hyy in ((ix + 1, iy), (ix - 1, iy), (ix, iy + 1), (ix, iy - 1)):
+                if c.get(hxx, hyy)[3] == 0 and rnd.random() < (0.28 if reach == 0 else 0.1):
+                    c.set(hxx, hyy, grey(base * 0.3))
+            c.set(ix, iy, grey(k))
+            if reach == 0 and rnd.random() < 0.5:
+                c.set(ix + (1 if rnd.random() < 0.5 else 0), iy + (1 if rnd.random() < 0.5 else 0), grey(k * 0.8))
+    base = 235 if reach == 0 else 150
+    for port in ports:
+        path = crack(rnd, port, hub, rough=0.3)
+        draw(path, base, tip)
+        # a spur or two: the mineral found another crack
+        for _ in range(2 if reach == 0 else 1):
+            if len(path) < 8:
+                continue
+            sx, sy = path[rnd.randrange(3, len(path) - 3)]
+            a = rnd.uniform(0, math.tau)
+            ln = rnd.uniform(2.5, 5.5)
+            draw(crack(rnd, (sx, sy), (sx + math.cos(a) * ln, sy + math.sin(a) * ln), rough=0.3, depth=2), base * 0.62, True)
+    return c
+
+
+def trace_sheet():
+    c = Canvas(TRACE_COLS * 16, TRACE_COLS * 16)
+    for mask in range(1, 16):
+        for reach in (0, 1):
+            for v in range(2):
+                t = trace_tile(mask, reach, v)
+                cell = trace_cell(mask, reach, v)
+                ox, oy = cell % TRACE_COLS * 16, cell // TRACE_COLS * 16
+                for y in range(16):
+                    for x in range(16):
+                        if t.get(x, y)[3]:
+                            c.set(ox + x, oy + y, t.get(x, y))
     return c
 
 
@@ -666,6 +774,8 @@ def build(out):
     for o in ORES:
         out.block(o + "_lode_heart", heart_frames(o), frametime=20)
         out.block(o + "_lode_heart_glow", heart_glow_frames(o), frametime=20)
+        out.block(o + "_lode_heart_shard", heart_shard(o))
+    out.block("lode_trace", trace_sheet())
     for k in range(4):
         out.block(f"vein_cracks_{k}", vein_cracks(k))
     out.block("piton", piton_block())
@@ -713,6 +823,77 @@ def glowing_cube(name):
         "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces("#all")},
                      {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up",
                       "neoforge_data": {"ambient_occlusion": False}, "faces": faces("#glow")}]})
+
+
+# a heart's look in each rock (LodeHeartBlock.Host): the rock's own block model, so it matches the wall exactly
+HEART_HOSTS = {"deepslate": "minecraft:block/deepslate", "stone": "minecraft:block/stone", "andesite": "minecraft:block/andesite",
+               "diorite": "minecraft:block/diorite", "granite": "minecraft:block/granite", "tuff": "minecraft:block/tuff",
+               "rootstone": "awaken:block/caves/rootstone", "ochre": "awaken:block/caves/ochre_stone", "limestone": "awaken:block/caves/limestone",
+               "slate": "awaken:block/caves/banded_slate", "siltstone": "awaken:block/caves/siltstone", "glimmer": "awaken:block/caves/glimmerstone",
+               "basalt": "awaken:block/caves/column_basalt", "seepstone": "awaken:block/caves/seepstone"}
+
+
+def heart_particle(o):
+    return "awaken:block/deepglass" if o == "deepglass" else f"minecraft:block/{o}_ore"
+
+
+def heart_shards(o):
+    """Crystals standing out of each face of the heart, three to a face, so the knot has an outline of its own. Each face's shards
+    go when something solid is against that face."""
+    rnd = rng_for("heart_shards", o)
+    els = []
+    for face in ("north", "south", "east", "west", "up", "down"):
+        for w, h, dp in ((3.2, 3.6, 1.8), (2.4, 2.8, 1.2), (1.6, 2.2, 0.8)):
+            cu, cv = 8 + rnd.uniform(-3.4, 3.4), 8 + rnd.uniform(-3.4, 3.4)
+            a0, a1, b0, b1 = round(cu - w / 2, 2), round(cu + w / 2, 2), round(cv - h / 2, 2), round(cv + h / 2, 2)
+            frm, to = {"north": ([a0, b0, -dp], [a1, b1, 0]), "south": ([a0, b0, 16], [a1, b1, 16 + dp]),
+                       "west": ([-dp, b0, a0], [0, b1, a1]), "east": ([16, b0, a0], [16 + dp, b1, a1]),
+                       "down": ([a0, -dp, b0], [a1, 0, b1]), "up": ([a0, 16, b0], [a1, 16 + dp, b1])}[face]
+            faces = {d: {"uv": [1, 1, 5, 5], "texture": "#shard", "cullface": face} for d in ("north", "south", "east", "west", "up", "down")}
+            els.append({"from": frm, "to": to, "light_emission": 13, "shade_direction_override": "up", "neoforge_data": {"ambient_occlusion": False}, "faces": faces})
+    return els
+
+
+def heart_models(o):
+    """The heart: its knot of crystal as one model, over the block model of the rock it sits in. The model named for the heart is
+    the same thing in deepslate, for the item in the hand."""
+    name = o + "_lode_heart"
+    faces = lambda tex: {d: {"uv": [0, 0, 16, 16], "texture": tex, "cullface": d} for d in ("down", "up", "north", "south", "west", "east")}  # noqa: E731
+    skin = {"from": [-0.005, -0.005, -0.005], "to": [16.005, 16.005, 16.005], "faces": faces("#all")}
+    glow = {"from": [-0.01, -0.01, -0.01], "to": [16.01, 16.01, 16.01], "light_emission": 15, "shade_direction_override": "up",
+            "neoforge_data": {"ambient_occlusion": False}, "faces": faces("#glow")}
+    tex = {"all": "awaken:block/" + name, "glow": "awaken:block/" + name + "_glow", "shard": "awaken:block/" + name + "_shard", "particle": heart_particle(o)}
+    write(os.path.join(ASSETS, "models/block/lode_heart", o + "_knot.json"),
+          {"parent": "minecraft:block/block", "render_type": "minecraft:cutout", "textures": tex, "elements": [skin, glow] + heart_shards(o)})
+    write(os.path.join(ASSETS, "models/block", name + ".json"),
+          {"parent": "minecraft:block/block", "render_type": "minecraft:cutout", "textures": {**tex, "rock": "minecraft:block/deepslate"},
+           "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces("#rock")}, skin, glow]})
+    write(os.path.join(ASSETS, "blockstates", name + ".json"), {"multipart": [{"apply": {"model": f"awaken:block/lode_heart/{o}_knot"}}] + [
+        {"when": {"host": h}, "apply": {"model": m}} for h, m in HEART_HOSTS.items()]})
+
+
+def trace_models():
+    """The veins on the rock (LodeTraceBlock): one plane per connection shape, reach and cut, turned to the face it's on."""
+    turns = {"north": {}, "east": {"y": 90}, "south": {"y": 180}, "west": {"y": 270}, "down": {"x": 90}, "up": {"x": 270}}
+    size = 16 / TRACE_COLS
+    for mask in range(1, 16):
+        for reach in (0, 1):
+            for v in range(2):
+                cell = trace_cell(mask, reach, v)
+                cx, cy = cell % TRACE_COLS, cell // TRACE_COLS
+                write(os.path.join(ASSETS, "models/block/lode_trace", f"{mask}_{reach}_{v}.json"), {
+                    "ambientocclusion": False, "render_type": "minecraft:cutout",
+                    "textures": {"particle": "awaken:block/lode_trace", "t": "awaken:block/lode_trace"},
+                    "elements": [{"from": [0, 0, 0.1], "to": [16, 16, 0.1], "light_emission": 8 if reach == 0 else 5,
+                                  "faces": {"south": {"uv": [cx * size, cy * size, (cx + 1) * size, (cy + 1) * size], "texture": "#t", "tintindex": 0}}}]})
+    flag = lambda m, b: str(bool(m & b)).lower()  # noqa: E731
+    variants = {}
+    for f, rot in turns.items():
+        for mask in range(16):
+            for reach in (0, 1):
+                key = f"down={flag(mask, 2)},facing={f},left={flag(mask, 4)},reach={reach},right={flag(mask, 8)},up={flag(mask, 1)}"
+                variants[key] = [{"model": f"awaken:block/lode_trace/{mask or 1}_{reach}_{v}", **rot} for v in range(2)]
+    write(os.path.join(ASSETS, "blockstates/lode_trace.json"), {"variants": variants})
 
 
 def piton_models():
@@ -924,12 +1105,14 @@ def content():
     # the hearts
     for o in ORES:
         name = o + "_lode_heart"
-        glowing_cube(name)
-        write(os.path.join(ASSETS, "blockstates", name + ".json"), {"variants": {"": {"model": "awaken:block/" + name}}})
+        heart_models(o)
         item_block(name)
         item, lo, hi = HEART_DROP[o]
-        loot(name, [{"rolls": 1, "entries": [ore_drop(item, lo, hi)]}])
+        # the lump, and the heart itself (it builds the Ore Shed, SPEC §43.6)
+        loot(name, [{"rolls": 1, "entries": [ore_drop(item, lo, hi)]}, {"rolls": 1, "entries": [{"type": "minecraft:item", "name": "awaken:" + name}]}])
         lang["block.awaken." + name] = ORE_TITLE[o] + " Lode Heart"
+    trace_models()
+    lang["block.awaken.lode_trace"] = "Vein in the Rock"
     # piton and rope
     piton_models()
     rope_model()

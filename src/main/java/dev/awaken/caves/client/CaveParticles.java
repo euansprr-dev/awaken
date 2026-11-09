@@ -30,6 +30,8 @@ final class CaveParticles {
             return new Mote(l, x, y, z, s.get(k, 2), 0.04F, 0.006F, k == 0 ? 12 : 2, 0.9F);
         });
         e.registerSpriteSet(Drips.SEEP.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Mote(l, x, y, z, s.get(r), 0.035F, -0.005F, 8, 0.8F));
+        // a spark off an ember vine: rises, slows, and fades; full bright so it shows against the dark rock
+        e.registerSpriteSet(Drips.EMBER.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Mote(l, x, y, z, s.get(r), 0.035F, -0.012F, 15, 1F));
         e.registerSpriteSet(Drips.MICA.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Glint(l, x, y, z, s, 0.05F, 3));
         e.registerSpriteSet(Drips.GLITTER.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Glint(l, x, y, z, s, 0.045F, 5));
     }

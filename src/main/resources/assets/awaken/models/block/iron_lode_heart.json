@@ -4,7 +4,9 @@
   "textures": {
     "all": "awaken:block/iron_lode_heart",
     "glow": "awaken:block/iron_lode_heart_glow",
-    "particle": "awaken:block/iron_lode_heart"
+    "shard": "awaken:block/iron_lode_heart_shard",
+    "particle": "minecraft:block/iron_ore",
+    "rock": "minecraft:block/deepslate"
   },
   "elements": [
     {
@@ -17,6 +19,80 @@
         16,
         16,
         16
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#rock",
+          "cullface": "down"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#rock",
+          "cullface": "up"
+        },
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#rock",
+          "cullface": "north"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#rock",
+          "cullface": "south"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#rock",
+          "cullface": "west"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#rock",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        -0.005,
+        -0.005,
+        -0.005
+      ],
+      "to": [
+        16.005,
+        16.005,
+        16.005
       ],
       "faces": {
         "down": {
@@ -83,14 +159,14 @@
     },
     {
       "from": [
-        0,
-        0,
-        0
+        -0.01,
+        -0.01,
+        -0.01
       ],
       "to": [
-        16,
-        16,
-        16
+        16.01,
+        16.01,
+        16.01
       ],
       "light_emission": 15,
       "shade_direction_override": "up",

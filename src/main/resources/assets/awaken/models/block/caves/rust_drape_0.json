@@ -1,0 +1,210 @@
+{
+  "ambientocclusion": true,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "awaken:block/caves/rust_drape_0",
+    "t": "awaken:block/caves/rust_drape_0"
+  },
+  "elements": [
+    {
+      "from": [
+        0.0,
+        0.0,
+        0.05
+      ],
+      "to": [
+        3.3,
+        16,
+        1.9
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0.0,
+            0,
+            3.3,
+            16.0
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#t"
+        }
+      }
+    },
+    {
+      "from": [
+        4.9,
+        0.0,
+        0.05
+      ],
+      "to": [
+        9.5,
+        16,
+        1.8
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            4.9,
+            0,
+            9.5,
+            16.0
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#t"
+        }
+      }
+    },
+    {
+      "from": [
+        9.8,
+        0.0,
+        0.05
+      ],
+      "to": [
+        13.3,
+        16,
+        1.6
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            9.8,
+            0,
+            13.3,
+            16.0
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#t"
+        }
+      }
+    },
+    {
+      "from": [
+        14.8,
+        0.0,
+        0.05
+      ],
+      "to": [
+        16.0,
+        16,
+        1.8
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            14.8,
+            0,
+            16.0,
+            16.0
+          ],
+          "texture": "#t"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#t"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ],
+          "texture": "#t"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#t"
+        }
+      }
+    }
+  ]
+}

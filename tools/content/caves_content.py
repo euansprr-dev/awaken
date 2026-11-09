@@ -180,7 +180,9 @@ def skin():
     sys.path.insert(0, os.path.join(ROOT, 'tools/art/specs'))
     sys.path.insert(0, os.path.join(ROOT, 'tools/art'))
     import deep_skin
+    import deep_skin_growth as growth
     models = deep_skin.model_dict()
+    models.update(growth.model_dict())
     A = 'assets/awaken'
     old = os.path.join(RES, A, 'models/block/caves')
     for f in os.listdir(old) if os.path.isdir(old) else []:
@@ -215,12 +217,38 @@ def skin():
     for bid, (model, nice) in OVERLAYS.items():
         parts = []
         for face, rot in (('north', {}), ('east', {'y': 90}), ('south', {'y': 180}), ('west', {'y': 270}), ('up', {'x': 270}), ('down', {'x': 90})):
-            parts.append({'when': {face: 'true'}, 'apply': {'model': f'awaken:block/caves/{model}', **rot, **({'uvlock': True} if rot else {})}})
+            # several cuts where the spec draws them: a part picks one by the block's position, so no two neighbours need match
+            cuts = growth.OVERLAY_CUTS.get(model)
+            names = [f'{model}_{v}' for v in range(cuts)] if cuts else [model]
+            apply = [{'model': f'awaken:block/caves/{n}', **rot, **({'uvlock': True} if rot else {})} for n in names]
+            parts.append({'when': {face: 'true'}, 'apply': apply if len(apply) > 1 else apply[0]})
         put(RES, f'{A}/blockstates/{bid}.json', {'multipart': parts})
         put(RES, f'{A}/models/item/caves/{model}.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': f'awaken:block/caves/{model}'}})
         put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:item/caves/{model}'}})
         put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid, {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}))
         lang[f'block.awaken.{bid}'] = nice
+    # the Ochre Deep's grown walls (SPEC §42.10): a run of connected tiles in several cuts, blooms laid over them; drapes in folds
+    vine = []
+    for f, y in facing.items():
+        rot = {'y': y} if y else {}
+        for mask in range(16):
+            when = {'facing': f, 'up': str(bool(mask & growth.U)).lower(), 'down': str(bool(mask & growth.D)).lower(),
+                    'left': str(bool(mask & growth.L)).lower(), 'right': str(bool(mask & growth.R)).lower()}
+            vine.append({'when': when, 'apply': [{'model': f'awaken:block/caves/ember_vine_{m}_{v}', **rot} for m, v in growth.TILES if m == mask]})
+        vine.append({'when': {'facing': f, 'bloom': 'true'}, 'apply': [{'model': f'awaken:block/caves/ember_bloom_{v}', **rot} for v in range(3)]})
+    put(RES, f'{A}/blockstates/ember_vine.json', {'multipart': vine})
+    put(RES, f'{A}/blockstates/rust_drape.json', {'variants': {
+        f'facing={f},tip={str(tip).lower()}': [{'model': f"awaken:block/caves/rust_drape{'_tip' if tip else ''}_{v}", **({'y': y} if y else {})} for v in range(growth.DRAPE_CUTS)]
+        for f, y in facing.items() for tip in (False, True)}})
+    sheared = {'condition': 'minecraft:match_tool', 'predicate': {'items': 'minecraft:shears'}}
+    for bid, nice, icon in (('ember_vine', 'Ember Vine', 'ember_vine_icon'), ('rust_drape', 'Rust Drape', 'rust_drape_tip_0')):
+        put(RES, f'{A}/models/item/caves/{bid}.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': f'awaken:block/caves/{icon}'}})
+        put(RES, f'{A}/items/{bid}.json', {'model': {'type': 'minecraft:model', 'model': f'awaken:item/caves/{bid}'}})
+        put(RES, f'data/awaken/loot_table/blocks/{bid}.json', self_loot(bid, sheared))
+        lang[f'block.awaken.{bid}'] = nice
+    # lichen cut from caves generated before the vine (and any you still have) can still be grown on
+    put(RES, 'data/awaken/recipe/ember_vine.json', {'type': 'minecraft:crafting_shapeless', 'category': 'misc',
+                                                    'ingredients': ['awaken:ember_lichen', 'awaken:ember_lichen'], 'result': {'count': 1, 'id': 'awaken:ember_vine'}})
     put(RES, f'{A}/blockstates/cave_puddle.json', {'variants': {'': turns('awaken:block/caves/puddle')}})
     put(RES, f'{A}/models/item/caves/puddle.json', {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'awaken:block/caves/puddle'}})
     put(RES, f'{A}/items/cave_puddle.json', {'model': {'type': 'minecraft:model', 'model': 'awaken:item/caves/puddle',
@@ -327,8 +355,9 @@ def skin():
     put(MERGE, 'data/minecraft/tags/block/climbable.json', {'replace': False, 'values': ['awaken:old_rope']})
     for p, n in (('cave_drip', 4), ('cave_splash', 4), ('cave_spore', 3), ('cave_pollen', 3), ('cave_warm_dust', 2)):
         put(RES, f'{A}/particles/{p}.json', {'textures': [f'awaken:caves/{p[5:]}_{i}' for i in range(n)]})
+    put(RES, f'{A}/particles/cave_ember.json', {'textures': ['awaken:caves/ash_0']})          # the ash sprite that still glows
     put(MERGE, 'data/minecraft/tags/block/mineable/pickaxe.json', {'replace': False, 'values': pickaxe})
-    put(MERGE, 'data/minecraft/tags/block/mineable/hoe.json', {'replace': False, 'values': [f'awaken:{b}' for b in OVERLAYS]})
+    put(MERGE, 'data/minecraft/tags/block/mineable/hoe.json', {'replace': False, 'values': [f'awaken:{b}' for b in OVERLAYS] + ['awaken:ember_vine', 'awaken:rust_drape']})
     put(MERGE, 'data/minecraft/tags/block/sword_efficient.json', {'replace': False, 'values': ['awaken:dusty_web', 'awaken:glowcap', 'awaken:root_curtain',
                                                                                              'awaken:violet_growth', 'awaken:old_rope']})
     for rid, r in REGIONS.items():

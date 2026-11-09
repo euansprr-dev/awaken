@@ -1,0 +1,105 @@
+{
+  "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "awaken:block/caves/ember_vine",
+    "t": "awaken:block/caves/ember_vine"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0.05
+      ],
+      "to": [
+        16,
+        16,
+        0.05
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            4.0,
+            11.0,
+            5.0,
+            12.0
+          ],
+          "texture": "#t"
+        }
+      },
+      "light_emission": 6
+    },
+    {
+      "from": [
+        0,
+        0,
+        0.07
+      ],
+      "to": [
+        16,
+        16,
+        0.07
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            5.0,
+            11.0,
+            6.0,
+            12.0
+          ],
+          "texture": "#t"
+        }
+      },
+      "light_emission": 10
+    },
+    {
+      "from": [
+        0,
+        0,
+        0.1
+      ],
+      "to": [
+        16,
+        16,
+        0.1
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            6.0,
+            11.0,
+            7.0,
+            12.0
+          ],
+          "texture": "#t"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0.12
+      ],
+      "to": [
+        16,
+        16,
+        0.12
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            7.0,
+            11.0,
+            8.0,
+            12.0
+          ],
+          "texture": "#t"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

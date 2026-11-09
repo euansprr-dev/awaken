@@ -1,12 +1,17 @@
 package dev.awaken.delve.client;
 
+import dev.awaken.delve.DelveContent;
 import dev.awaken.delve.DelveNet;
+import dev.awaken.delve.LodeTraceBlock;
 import dev.awaken.delve.TrueStrikes;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
@@ -32,6 +37,18 @@ public final class DelveClient {
         HomeClient.init(modBus);
         SenseClient.init(modBus);
         modBus.addListener(RegisterParticleProvidersEvent.class, DelveParticles::register);
+        // a heart's veins on the rock are drawn once and take their ore's colour (SPEC §42.11)
+        modBus.addListener(RegisterColorHandlersEvent.BlockTintSources.class, e -> e.register(java.util.List.of(new BlockTintSource() {
+            @Override
+            public int color(BlockState s) {
+                return 0xFF000000 | s.getValue(LodeTraceBlock.ORE).tint;
+            }
+
+            @Override
+            public java.util.Set<net.minecraft.world.level.block.state.properties.Property<?>> relevantProperties() {
+                return java.util.Set.of(LodeTraceBlock.ORE);
+            }
+        }), DelveContent.LODE_TRACE.get()));
         modBus.addListener(RegisterRenderPipelinesEvent.class, DelveRender::onRegister);
         // held light reaches what stands in it: dropped items, mobs, players, your own hands (SPEC §28.3)
         modBus.addListener(net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent.class, TorchGlow::modifiers);

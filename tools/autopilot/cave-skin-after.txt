@@ -1,0 +1,245 @@
+# Cave skin, the grown walls (SPEC 42.10; Euan's 9 Nov notes): the Ochre Deep on his own world's seed, in front of the first five
+# blooming vine runs near his home. Each stands well back and then close, with no hand light under Lens Cinematic, with a torch, and
+# with Lens off. Each stand goes to the log ([caves] growth pick) so the old build can be shot from exactly the same spots.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+world cave_skin creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 18000
+cmd effect give @s minecraft:resistance 100000 4 true
+hud off
+
+# into the Ochre Deep near his home; every stand is found from the same place
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
+wait 400
+
+# ---- run 0, far ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 0 9
+wait 120
+shot g0_far_dark
+lens off
+wait 30
+shot g0_far_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g0_far_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 0, close ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 0 3
+wait 120
+shot g0_close_dark
+lens off
+wait 30
+shot g0_close_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g0_close_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 1, far ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 1 9
+wait 120
+shot g1_far_dark
+lens off
+wait 30
+shot g1_far_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g1_far_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 1, close ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 1 3
+wait 120
+shot g1_close_dark
+lens off
+wait 30
+shot g1_close_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g1_close_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 2, far ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 2 9
+wait 120
+shot g2_far_dark
+lens off
+wait 30
+shot g2_far_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g2_far_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 2, close ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 2 3
+wait 120
+shot g2_close_dark
+lens off
+wait 30
+shot g2_close_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g2_close_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 3, far ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 3 9
+wait 120
+shot g3_far_dark
+lens off
+wait 30
+shot g3_far_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g3_far_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 3, close ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 3 3
+wait 120
+shot g3_close_dark
+lens off
+wait 30
+shot g3_close_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g3_close_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 4, far ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 4 9
+wait 120
+shot g4_far_dark
+lens off
+wait 30
+shot g4_far_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g4_far_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- run 4, close ----
+cmd execute positioned -524 31 -2346 run awaken caves growth 4 3
+wait 120
+shot g4_close_dark
+lens off
+wait 30
+shot g4_close_lensoff
+lens cinematic
+wait 20
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 25
+shot g4_close_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+# ---- heart 0, far ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 0 7
+wait 100
+shot h0_far_dark
+lens off
+wait 30
+shot h0_far_lensoff
+lens cinematic
+wait 20
+
+# ---- heart 0, close ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 0 3
+wait 100
+shot h0_close_dark
+lens off
+wait 30
+shot h0_close_lensoff
+lens cinematic
+wait 20
+
+# ---- heart 1, far ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 1 7
+wait 100
+shot h1_far_dark
+lens off
+wait 30
+shot h1_far_lensoff
+lens cinematic
+wait 20
+
+# ---- heart 1, close ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 1 3
+wait 100
+shot h1_close_dark
+lens off
+wait 30
+shot h1_close_lensoff
+lens cinematic
+wait 20
+
+# ---- heart 2, far ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 2 7
+wait 100
+shot h2_far_dark
+lens off
+wait 30
+shot h2_far_lensoff
+lens cinematic
+wait 20
+
+# ---- heart 2, close ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 2 3
+wait 100
+shot h2_close_dark
+lens off
+wait 30
+shot h2_close_lensoff
+lens cinematic
+wait 20
+quit

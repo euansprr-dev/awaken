@@ -116,6 +116,14 @@ public final class CaveSkin {
     public static final DeferredBlock<MultifaceBlock> EMBER_LICHEN = SET.withItem(SET.blocks.registerBlock("ember_lichen",
             MultifaceBlock::new, p -> overlay(p, MapColor.COLOR_ORANGE, SoundType.GLOW_LICHEN).lightLevel(st -> 3)));
 
+    /** The Ochre Deep's living walls (SPEC §42.10): runs of ember vine, a real source of light, and flowstone hanging in folds. */
+    public static final DeferredBlock<SkinBlocks.EmberVine> EMBER_VINE = SET.withItem(SET.blocks.registerBlock("ember_vine",
+            SkinBlocks.EmberVine::new, p -> p.mapColor(MapColor.COLOR_ORANGE).noCollision().strength(0.2F).sound(SoundType.CAVE_VINES).noOcclusion()
+                    .lightLevel(st -> st.getValue(SkinBlocks.EmberVine.BLOOM) ? 10 : 4).pushReaction(PushReaction.POPPED)));
+    public static final DeferredBlock<SkinBlocks.RustDrape> RUST_DRAPE = SET.withItem(SET.blocks.registerBlock("rust_drape",
+            SkinBlocks.RustDrape::new, p -> p.mapColor(MapColor.TERRACOTTA_ORANGE).noCollision().strength(0.4F).sound(SoundType.CALCITE).noOcclusion()
+                    .pushReaction(PushReaction.POPPED)));
+
     // ---- P3 (SPEC §42.8): the other six regions' rock and twins -----------------------------------------------------
 
     /** The Pale Halls' rock: pale limestone in bedding planes. */

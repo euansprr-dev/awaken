@@ -1129,15 +1129,11 @@ def build(out):
         out.block(f"caves/glowcap_{v}_glow", glowcap(v, glow=True))
     out.block("caves/root_curtain", root_curtain())
     out.block("caves/root_curtain_tip", root_curtain(tip=True))
-    out.block("caves/rust_crust", rust_crust())
-    out.block("caves/rust_flowstone", rust_flowstone())
     out.block("caves/ember_lichen", ember_lichen())
     out.block("caves/ember_lichen_glow", ember_lichen(glow=True))
     for band in LICHEN:
         out.block(f"caves/lichen_{band}", lichen(band))
     out.block("caves/mineral_crust", mineral_crust())
-    out.block("caves/wet_streaks", wet_streaks())
-    out.block("caves/puddle", puddle_frames(), frametime=4)
     out.block("caves/dusty_web", dusty_web())
     for i, f in enumerate(drip_frames()):
         out.particle(f"caves/drip_{i}", f)

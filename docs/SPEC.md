@@ -16196,7 +16196,8 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   loot table, the same XP, tags and tools): **`rootstone_coal_ore`**, **`rootstone_copper_ore`** (the Rootways),
   **`ochre_iron_ore`** (the Ochre Deep: dark hematite with iron's peach rim). An ore without a twin there keeps the 26 cells
   round it as they were (within its section): it sits in a pocket of the stone it grew in, never on a background that isn't
-  its own. Lodes, Deepglass and the Hollows' veins are placed earlier and keep their own blocks the same way.
+  its own (a lode's heart has no pocket since §42.11). Lodes, Deepglass and the Hollows' veins are placed earlier and keep their
+  own blocks the same way.
 - **The Rootways' growth**: **`glowcap`** (a cluster of teal mushrooms, light **5**, on a floor, open or by a wall, at
   **0.12** where a 3D field at 5 blocks passes **0.2**: in patches, about 2% of open floor, a teal point down the gallery;
   instant break, drops itself) and **`root_curtain`** (old roots hanging through a roof at **0.14** where a 2D field at 7
@@ -16414,6 +16415,75 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   of 1,200 (1.9 times), copper 67 to 116, coal 70 to 104, Deepglass 63 to 96, diamond 56 to 72 of 330, gold 4 to 8, lapis
   5 to 7, redstone 0; all 399 to 657 of 4,867 (1.65 times). Where a lode region lies wholly outside an ore's regions its
   second roll can't reach one, so the rise is under twice for the patchier regions. 800 plans and the counting: 176 ms.
+
+### 42.10 The Ochre Deep's walls, grown (Euan's playtest, 9 Nov)
+
+He said the walls looked "very randomly placed", "repetitive, not connected", and the vine "doesn't look like a light source
+at all". The cause: `walls()` dressed every cave's walls by the cell, only in the two rows over a floor, one texture per block.
+So a wall's decoration was a strip of stamps, the same in every cave and region. The Ochre Deep now grows its walls
+(`caves/skin/WallGrowth`); the other regions and plain caves keep `walls()` until the big pass.
+
+- **Ember vine** (`awaken:ember_vine`, replaces ember lichen in new Ochre caves). A run of connected blocks on the rock: `FACING`
+  (toward the wall), `UP` `DOWN` `LEFT` `RIGHT` (which edges the run leaves by, looking at the wall) and `BLOOM`. Up to **3** runs
+  a chunk, chosen by hash among the feet of walls where a 3D field at **14** blocks passes **-0.3** (most walls, a few long stretches bare), at least **5** blocks apart.
+  A run climbs from the foot of the wall for **7-20** steps, at most **48** cells with its side shoots. Each step is scored:
+  forward 1.0, up 0.8, a turn 0.5, down 0.15, then raised by what the rock is doing there (a ledge over or under a sideways step,
+  a crease beside an upward one), times a hash. It wraps round outer corners, stops at inner ones and at the chunk's edge
+  (a tip), and never doubles back. Up to **3** side shoots, **3-8** long. Runs under **3** cells are dropped.
+  Blooms at every fork, at some tips and every 3-5 cells along a line, never two together.
+- **Its light.** Stem light level **4**, bloom **10**. Four layers on each block: a wide ring of the rock's own pixels at
+  emission 6, a close one at 10, bark unlit, sap at 15; the ring is the wall's own texture (`ochre_stone` lines up pixel for
+  pixel), so the rock looks lit around the vine instead of a darker sticker on it. A bloom is pods standing off the wall at
+  emission 15 with sparks (`awaken:cave_ember`, 1 in 5 of bloom `animateTick`s).
+- **Art**: `tools/art/specs/deep_skin_growth.py`, a 48-tile sheet (each of the 16 connection shapes has 1 to 4 cuts). Smooth stems
+  run port to port across a block, so a run reads as one line and no two blocks need match.
+- **Rust drape** (`awaken:rust_drape`, replaces flat rust flowstone in new Ochre caves). `FACING`, `TIP`; **2-5** blocks hanging
+  from a corner of roof and wall where the wet field passes **-0.15**, at most **6** a chunk, standing off the wall in real
+  folds, with the bottom block tapered.
+- **Rust crust and lichen** grow as patches on one wall, at any height the wall has, radius **2-4**, thinning to nothing at the
+  edge. One round each vine's root; up to **5** more a chunk.
+- **Per-block cuts for all overlays.** Every multiface overlay's blockstate lists **3-4** cuts (`OVERLAY_CUTS`) and the part picks
+  one by the block's position, with no block state and in every cave. `wet_streaks` is translucent now: at low alpha the cut-out
+  render type turned it into solid dark bars. Rust crust lost its near-black pits; flowstone lost its dark bars; the puddle
+  no longer reads as a black blob.
+- **Sources**: both blocks are cut with shears (`hoe` tag); two ember lichen craft an ember vine, so what's in a chest still has
+  a use. The Ochre keepsake (trail `keepsakes_from_below`, `RegionFinds`) accepts vine or lichen.
+- **Saved worlds**: caves already generated keep their blocks and take on the new art and the per-block cuts at once. Their
+  placement doesn't change, and their old ember lichen keeps its old light. New chunks grow the new walls.
+- **Cost**: the Ochre Deep only; two short int arrays a chunk, one field lookup per foot of wall for each run picked. No block
+  entities and no ticking; `animateTick` on blooms only, client side.
+- **Test**: `caves_wall_growth`. In a made-up room with a pillar, every connection meets the next block's (beside it or round a
+  corner), no run is a lone block, nothing leaves the chunk, and a seed always grows the same wall.
+
+### 42.11 Lode hearts, grown into the rock (Euan's playtest, 9 Nov)
+
+"The loads, it looks completely out of place. It doesn't at all look integrated into the wall in a premium way." Two causes: a
+heart was a cube with its own near-black rock in the texture, and the region rock rule (§42.7) counts a heart as an ore without
+a twin, so all 26 cells round it stayed plain stone, a grey box in the wall. Tool tier, hardness, loot, the lode's plan and
+`Veins` are unchanged: they go by the block, and everything here is its look.
+
+- **The rock it sits in**: `LodeHeartBlock.HOST` (deepslate first, the default; stone, andesite, diorite, granite, tuff and the eight
+  region rocks). The blockstate is a multipart: the knot of crystal over the rock's own block model, so the heart's rock is the
+  wall's rock, pixel for pixel. `LodeFeature` sets it from what it replaced; `CaveSkinFeature.regionRock` (through `Lodes.heartIn`)
+  when a region takes the rock over, with no pocket round a heart (ores without a twin keep theirs). Deepslate hearts stay in
+  deepslate unless the region's rock replaces deepslate too.
+- **The knot**: `<ore>_lode_heart` is now drawn on nothing: a stain in the ore's colour thinning out from the centre, a crack to the
+  middle of each edge, a crystal mass nearly the block's width with a dark broken edge round it, its core (the slow pulse and the full-light glow layer as before). Three crystal shards
+  (`<ore>_lode_heart_shard`, emission 13) stand 0.8-1.8 pixels out of each face, so it has an outline of its own; a face's
+  shards go when something solid is against it.
+- **Veins in the rock** (`awaken:lode_trace`, `LodeFeature.trace`): on each face of a heart open to the air, a vein leaves most of
+  its four edges (the second pair one time in three stays closed, so it never reads as a cross) and runs **2-5** blocks across the
+  rock, cracked like split rock with spurs off it, turning one step in four, each block joined to the last (connection shapes as
+  the ember vine's), bright for the first two blocks (emission 8), dim and broken beyond them (5). One white
+  sheet tinted by `Ore.tint`, so every ore reads by its colour. It has no shape, no item and no loot: a pick aims and strikes the
+  rock through it, and it goes when the rock behind it does. Rock and air decide its path and a hash of the seed and the heart does
+  the rest; a chunk writes the hearts within **6** blocks of it, its own cells only.
+- **Saved worlds**: a heart already generated takes the rock round it on its next random tick, which is the plain stone of its old
+  pocket if it had one, and gets the new knot at once. Veins and the removal of the pocket need new chunks.
+- **Cost**: traces only round hearts open to the air, a few dozen blocks a region, no ticking; a heart's only addition is a random
+  tick that reads six neighbours.
+- **Tests**: `delve_heart_in_rock`, `caves_heart_takes_the_rock`. `/awaken caves heart <pick> <distance>` (admin) stands in front of a
+  heart open to the air, for tours.
 
 ## 43. The Journey (one city and the wild, the beasts' Hearth, the bells' song, Faults; plan docs/director/JOURNEY.md, page https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D; Euan approved the entire plan 2026-10-29: "Go ahead with the entire plan")
 

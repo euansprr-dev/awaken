@@ -78,11 +78,16 @@ public final class DelveContent {
         for (Ore o : Ore.values()) {
             DeferredBlock<LodeHeartBlock> b = BLOCKS.registerBlock(o.id() + "_lode_heart", p -> new LodeHeartBlock(p, o),
                     p -> p.mapColor(MapColor.DEEPSLATE).strength(6F, 6F).requiresCorrectToolForDrops().sound(SoundType.DEEPSLATE)
-                            .lightLevel(s -> 4).pushReaction(PushReaction.IMMOVEABLE));
+                            .lightLevel(s -> 4).randomTicks().pushReaction(PushReaction.IMMOVEABLE));
             HEARTS.put(o, b);
             HEART_ITEMS.put(o, ITEMS.registerSimpleBlockItem(b, p -> p.rarity(Rarity.RARE)));
         }
     }
+
+    /** The ore showing on the rock round a heart (SPEC §42.11): looks only, no shape, no item, no loot. */
+    public static final DeferredBlock<LodeTraceBlock> LODE_TRACE = BLOCKS.registerBlock("lode_trace", LodeTraceBlock::new,
+            p -> p.mapColor(MapColor.NONE).noCollision().replaceable().instabreak().noLootTable().sound(SoundType.STONE).noOcclusion()
+                    .pushReaction(PushReaction.POPPED).lightLevel(s -> s.getValue(LodeTraceBlock.REACH) == 0 ? 2 : 0));
 
     public static final DeferredItem<Item> RAW_STARMETAL = ITEMS.registerSimpleItem("raw_starmetal", p -> p.rarity(Rarity.RARE).fireResistant());
     public static final DeferredItem<Item> STARMETAL_INGOT = ITEMS.registerSimpleItem("starmetal_ingot", p -> p.rarity(Rarity.EPIC).fireResistant());
