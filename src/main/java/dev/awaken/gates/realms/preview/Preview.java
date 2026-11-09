@@ -110,7 +110,7 @@ public final class Preview {
             else if (w.length >= 3 && w[0].equals("look")) {
                 yaw = Float.parseFloat(w[1]);
                 pitch = Float.parseFloat(w[2]);
-            } else if (w.length >= 2 && (w[0].equals("shot") || w[0].equals("shotnow")) && !w[1].equals("amber_crossing")) out.add(new Shot(w[1], x, y + 1.62, z, yaw, pitch, open));
+            } else if (w.length >= 2 && (w[0].equals("shot") || w[0].equals("shotnow")) && !w[1].endsWith("_crossing")) out.add(new Shot(w[1], x, y + 1.62, z, yaw, pitch, open));
         }
         return out;
     }
@@ -164,6 +164,7 @@ public final class Preview {
         static final class Chunk {
             final int y0, y1;
             final short[] b;
+            byte[] block, sky;
 
             Chunk(int y0, int y1, short[] b) {
                 this.y0 = y0;
@@ -226,6 +227,76 @@ public final class Preview {
             if (c != null && y >= c.y0 && y <= c.y1) c.b[((x & 15) << 4 | z & 15) * (c.y1 - c.y0 + 1) + y - c.y0] = (short) id;
         }
 
+        /** The candlelight and skylight at a cell, 0 to 15, as the game's light engine would have them. */
+        int light(int x, int y, int z, boolean skyLight) {
+            Chunk c = chunk(x >> 4, z >> 4);
+            if (c == null || y < c.y0 || y > c.y1) return skyLight ? 15 : 0;
+            byte[] l = skyLight ? c.sky : c.block;
+            return l == null ? 0 : l[((x & 15) << 4 | z & 15) * (c.y1 - c.y0 + 1) + y - c.y0];
+        }
+
+        /** Spreads a land's light through its air, block by block, for a land under a roof. */
+        void flood(boolean[] opaque, int[] emit) {
+            long[] q = new long[1 << 22];
+            int head = 0, tail = 0;
+            for (int skyPass = 0; skyPass < 2; skyPass++) {
+                boolean skyLight = skyPass == 1;
+                head = tail = 0;
+                for (int j = 0; j < n; j++) for (int i = 0; i < n; i++) {
+                    Chunk c = chunks[j * n + i];
+                    if (c == null) continue;
+                    int h = c.y1 - c.y0 + 1;
+                    byte[] l = new byte[256 * h];
+                    if (skyLight) c.sky = l;
+                    else c.block = l;
+                    int cx = i - half, cz = j - half;
+                    for (int col = 0; col < 256; col++) {
+                        int x = cx * 16 + (col >> 4), z = cz * 16 + (col & 15);
+                        if (skyLight) {
+                            for (int y = c.y1; y >= c.y0; y--) {
+                                int id = c.b[col * h + y - c.y0] & 0xFFFF;
+                                if (id != 0 && opaque[id]) break;
+                                l[col * h + y - c.y0] = 15;
+                                if (tail < q.length) q[tail++] = pack(x, y, z);
+                            }
+                        } else for (int y = c.y0; y <= c.y1; y++) {
+                            int id = c.b[col * h + y - c.y0] & 0xFFFF;
+                            if (id != 0 && emit[id] > 0) {
+                                l[col * h + y - c.y0] = (byte) emit[id];
+                                if (tail < q.length) q[tail++] = pack(x, y, z);
+                            }
+                        }
+                    }
+                }
+                int[][] dirs = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+                while (head != tail) {
+                    long p = q[head];
+                    head = (head + 1) % q.length;
+                    int x = (int) (p >> 42) - (1 << 20), y = (int) (p >> 21 & 0x1FFFFF) - (1 << 20), z = (int) (p & 0x1FFFFF) - (1 << 20);
+                    int level = light(x, y, z, skyLight);
+                    if (level <= 1) continue;
+                    for (int[] d : dirs) {
+                        int ax = x + d[0], ay = y + d[1], az = z + d[2];
+                        Chunk c = chunk(ax >> 4, az >> 4);
+                        if (c == null || ay < c.y0 || ay > c.y1) continue;
+                        int k = ((ax & 15) << 4 | az & 15) * (c.y1 - c.y0 + 1) + ay - c.y0, id = c.b[k] & 0xFFFF;
+                        byte[] l = skyLight ? c.sky : c.block;
+                        if (id != 0 && opaque[id] || l[k] >= level - 1) continue;
+                        l[k] = (byte) (level - 1);
+                        int next = (tail + 1) % q.length;
+                        if (next != head) {
+                            q[tail] = pack(ax, ay, az);
+                            tail = next;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static long pack(int x, int y, int z) {
+            return (long) (x + (1 << 20)) << 42 | (long) (y + (1 << 20)) << 21 | z + (1 << 20);
+        }
+
         int kept() {
             int k = 0;
             for (Chunk c : chunks) if (c != null) k++;
@@ -249,6 +320,7 @@ public final class Preview {
         final int w, h;
         final int[] sky, fog;
         final double fogStart, fogEnd;
+        final boolean indoors;
 
         Camera(Land land, Blueprint bp, Volume vol, Path root, Path out) throws IOException {
             this.land = land;
@@ -266,6 +338,16 @@ public final class Preview {
             fogEnd = at.has("minecraft:visual/fog_end_distance") ? at.get("minecraft:visual/fog_end_distance").getAsDouble() : 900;
             table = new Looks.Look[65536];
             for (int i = 0; i < vol.states.size(); i++) table[i + 1] = looks.of(vol.states.get(i));
+            indoors = land.indoors();
+            if (indoors) {
+                boolean[] opaque = new boolean[65536];
+                int[] emit = new int[65536];
+                for (int i = 0; i < vol.states.size(); i++) {
+                    opaque[i + 1] = table[i + 1] != null && table[i + 1].solid;
+                    emit[i + 1] = vol.states.get(i).getLightEmission();
+                }
+                vol.flood(opaque, emit);
+            }
             String size = System.getenv("AWAKEN_PREVIEW_W");
             w = size == null || size.isBlank() ? 960 : Integer.parseInt(size);
             h = w * 9 / 16;
@@ -370,6 +452,18 @@ public final class Preview {
                 light = FACE[h.face] * (0.62 + (lit ? 0.38 : 0)) * (0.55 + 0.45 * ao);
             }
             double haze = 0.8 * smooth(fogStart, fogEnd, h.t);
+            if (indoors && !(tx.glow != null && tx.glow[p] || h.look.lamp)) {
+                // candlelight is warm and skylight cool; what's left is the dark the game leaves you with
+                int[] n = h.face == 6 ? N[1] : N[h.face];
+                int bx = h.ix + n[0], by = h.iy + n[1], bz = h.iz + n[2];
+                double ao = h.face == 6 ? 1 : ao(h), f = FACE[h.face] * (0.55 + 0.45 * ao);
+                double candle = curve(vol.light(bx, by, bz, false)), moon = curve(vol.light(bx, by, bz, true));
+                double amb = 0.10;
+                r *= 1.3 * f * (amb + candle * 1.05 + moon * 0.2);
+                g *= 1.3 * f * (amb + candle * 0.74 + moon * 0.29);
+                b *= 1.3 * f * (amb * 1.3 + candle * 0.46 + moon * 0.52);
+                light = 1;
+            }
             r = r * light;
             g = g * light;
             b = b * light;
@@ -377,6 +471,11 @@ public final class Preview {
             g += (fog[1] - g) * haze;
             b += (fog[2] - b) * haze;
             return clamp(r) << 16 | clamp(g) << 8 | clamp(b);
+        }
+
+        /** The game's own way of turning a light level into brightness, more or less. */
+        private static double curve(int level) {
+            return level <= 0 ? 0 : Math.pow(0.8, 15 - level);
         }
 
         private static int clamp(double v) {

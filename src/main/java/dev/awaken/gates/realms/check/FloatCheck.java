@@ -52,7 +52,7 @@ public final class FloatCheck {
         }
     }
 
-    private static final int AIR = 0, BODY = 1, ON_GROUND = 2, HANGS = 3, BESIDE = 4;
+    private static final int AIR = 0, BODY = 1, ON_GROUND = 2, HANGS = 3, BESIDE = 4, AFLOAT = 5, WATER = 6;
 
     private static final Map<BlockState, Integer> KIND = java.util.Collections.synchronizedMap(new IdentityHashMap<>());
 
@@ -63,10 +63,13 @@ public final class FloatCheck {
 
     private static int classify(BlockState s) {
         Block b = s.getBlock();
-        if (s.isAir() || !s.getFluidState().isEmpty() && b == Blocks.WATER || b == Blocks.LIGHT || b == Blocks.BARRIER) return AIR;
+        if (b == Blocks.WATER) return WATER;
+        if (s.isAir() || b == Blocks.LIGHT || b == Blocks.BARRIER) return AIR;
         String id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b).getPath();
         if (id.endsWith("_updraft")) return AIR;
+        if (id.equals("crypt_lily_candle") || id.equals("market_boat_lamp")) return AFLOAT;
         if (b instanceof LanternBlock) return s.getValue(BlockStateProperties.HANGING) ? HANGS : ON_GROUND;
+        if (id.endsWith("_bell_rope") || id.equals("gate_bell")) return HANGS;
         if (b instanceof HangingRootsBlock || id.endsWith("_drip") || id.endsWith("_vines") || id.endsWith("_vines_plant")) return HANGS;
         if (b instanceof VineBlock) return BESIDE;
         if (b instanceof BushBlock || b instanceof DoublePlantBlock || b instanceof CarpetBlock || b instanceof net.minecraft.world.level.block.CropBlock
@@ -174,7 +177,10 @@ public final class FloatCheck {
                     out.add(floater(map, wx, y, wz));
                 } else if (k == ON_GROUND) {
                     if (held(map, wx, y - 1, wz) || below(map, wx, y - 1, wz, ON_GROUND)) continue;
-                    out.add(new Floater(wx, y, wz, 1, "a plant or small thing with nothing under it"));
+                    out.add(new Floater(wx, y, wz, 1, "a plant or small thing with nothing under it (" + named(land, wx, y, wz) + ")"));
+                } else if (k == AFLOAT) {
+                    if (below(map, wx, y - 1, wz, WATER)) continue;
+                    out.add(new Floater(wx, y, wz, 1, "something meant to float with no water under it"));
                 } else if (k == HANGS) {
                     if (held(map, wx, y + 1, wz) || below(map, wx, y + 1, wz, HANGS)) continue;
                     out.add(new Floater(wx, y, wz, 1, "a hanging thing with nothing above it"));
@@ -185,6 +191,13 @@ public final class FloatCheck {
             }
         }
         return new Report(out, blocks, map.size(), System.currentTimeMillis() - t0);
+    }
+
+    /** What a stray is and what it's standing on, read again from the land: a failure should say which block to go and fix. */
+    private static String named(Land land, int x, int y, int z) {
+        V v = new V(x >> 4 << 4, z >> 4 << 4);
+        land.paint(v);
+        return v.get(x, y, z) + " on " + v.get(x, y - 1, z);
     }
 
     private static boolean held(Map<Long, Chunk> map, int x, int y, int z) {
