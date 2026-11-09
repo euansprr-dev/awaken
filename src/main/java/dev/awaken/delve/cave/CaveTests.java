@@ -27,6 +27,7 @@ final class CaveTests {
 
     static void register() {
         AwakenTests.register("delve_cave_routes", 200, CaveTests::routes);
+        AwakenTests.register("delve_mouth_density", 200, CaveTests::mouthDensity);
         AwakenTests.registerIsolated("delve_seep", 600, CaveTests::seep);
         AwakenTests.register("delve_hearth_points", 200, CaveTests::hearthPoints);
         // its own batch: it installs a Hearth lookup, as delve_hearth_points does
@@ -267,6 +268,43 @@ final class CaveTests {
         h.assertTrue(none.isEmpty(), "every kind finds sites in a real overworld: none for " + none);
         h.succeed();
     }
+
+    /**
+     * SPEC §34.1's promise on real terrain: on a square of the placement grid of a real overworld's noise, biomes and
+     * caves (Euan's New World (11)'s seed), the share of dry-land candidates that find a mouth stays at the promise of
+     * about one every 200 m. (The test server has no pack, so this is vanilla's terrain; Tectonic's is the census,
+     * {@code /awaken delve mouths}, in the tour tools/autopilot/mouths-after.txt.)
+     */
+    private static void mouthDensity(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        var set = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE_SET).getOrThrow(CaveLocate.set(CaveKind.MOUTH)).value();
+        var rsp = (net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement) set.placement();
+        long seed = 5652006211025591964L;
+        Overworld ow = new Overworld(level, seed);
+        int[] why = new int[CaveSites.Why.values().length];
+        int total = 0;
+        long t0 = System.nanoTime();
+        for (int gx = -12; gx < 12; gx++) {
+            for (int gz = -12; gz < 12; gz++) {
+                ChunkPos c = rsp.getPotentialStructureChunk(seed, gx * rsp.spacing(), gz * rsp.spacing());
+                why[CaveSites.probe(ow.context(c)).why().ordinal()]++;
+                total++;
+            }
+        }
+        int mouths = why[CaveSites.Why.MOUTH.ordinal()], land = total - why[CaveSites.Why.LAND.ordinal()] - why[CaveSites.Why.CITY.ordinal()] - why[CaveSites.Why.SETTLED.ordinal()];
+        // a candidate per grid cell, so dry land is its candidates' cells: one mouth per so much of it, as a side of a square
+        double cell = rsp.spacing() * 16.0, every = cell * Math.sqrt(land / (double) Math.max(1, mouths));
+        StringBuilder out = new StringBuilder(String.format(Locale.ROOT, "%d candidates, %d on dry land, %d mouths: one every %.0f m of dry land (%.1f ms a candidate)", total, land, mouths, every,
+                (System.nanoTime() - t0) / (total * 1e6)));
+        for (CaveSites.Why w : CaveSites.Why.values()) if (why[w.ordinal()] > 0 && w != CaveSites.Why.MOUTH) out.append("; ").append(why[w.ordinal()]).append(' ').append(w.words);
+        dev.awaken.Awaken.LOG.info("[delve] mouth density (vanilla overworld): {}", out);
+        h.assertTrue(every <= MOUTH_EVERY, "a mouth at least every " + Math.round(MOUTH_EVERY) + " m of dry land: " + out);
+        h.succeed();
+    }
+
+    /** The share of dry-land candidates that must find a mouth (the placement grid is 192 m, so about one every 200-240 m of land). */
+    /** §34.1's promise, about one every 200 m of dry land, with a little slack: this is one square of one world. */
+    private static final double MOUTH_EVERY = 215;
 
     /** A failing place's slices round where the search stopped, for reading without the game (run/delve-routes-*.txt). */
     private static void dump(Grid g, CaveKind k, int seed, Routes.Result r) {

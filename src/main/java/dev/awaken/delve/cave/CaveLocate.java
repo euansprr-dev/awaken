@@ -93,6 +93,49 @@ final class CaveLocate {
         return null;
     }
 
+    /** Every mouth candidate within {@code radius}: what its site search found, tallied (the census, nothing generated). */
+    static String census(ServerLevel level, BlockPos at, int radius) {
+        var sets = level.registryAccess().lookupOrThrow(Registries.STRUCTURE_SET);
+        var h = sets.get(set(CaveKind.MOUTH));
+        if (h.isEmpty() || !(h.get().value().placement() instanceof RandomSpreadStructurePlacement rsp)) return "no mouth placement";
+        var state = level.getChunkSource().getGeneratorState();
+        var gen = level.getChunkSource().getGenerator();
+        var rs = level.getChunkSource().randomState();
+        int cx = at.getX() >> 4, cz = at.getZ() >> 4, r = (radius >> 4) + rsp.spacing();
+        int[] why = new int[CaveSites.Why.values().length];
+        int[] forms = new int[4];
+        int total = 0;
+        long t0 = System.nanoTime();
+        for (int gx = Math.floorDiv(cx - r, rsp.spacing()); gx <= Math.floorDiv(cx + r, rsp.spacing()); gx++) {
+            for (int gz = Math.floorDiv(cz - r, rsp.spacing()); gz <= Math.floorDiv(cz + r, rsp.spacing()); gz++) {
+                ChunkPos c = rsp.getPotentialStructureChunk(level.getSeed(), gx * rsp.spacing(), gz * rsp.spacing());
+                if (dist(c, at) > radius || !rsp.isStructureChunk(state, c.x(), c.z())) continue;
+                total++;
+                CaveSites.Probe p;
+                if (dev.awaken.terrain.api.CityBasin.reserved(c.getMinBlockX() + 8, c.getMinBlockZ() + 8)) {
+                    p = new CaveSites.Probe(null, CaveSites.Why.CITY);
+                } else {
+                    var ctx = new Structure.GenerationContext(level.registryAccess(), gen, gen.getBiomeSource(),
+                            rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build()), rs,
+                            level.getServer().getStructureTemplateManager(), level.getSeed(), c, level, s -> h.get().value().structures().getFirst().structure().value().biomes().contains(s));
+                    p = CaveSites.probe(ctx);
+                }
+                why[p.why().ordinal()]++;
+                if (p.spec() != null) forms[p.spec().p(Mouth.FORM)]++;
+                Awaken.LOG.info("[delve] census {} {} chunk {} {}{}", c.getMiddleBlockX(), c.getMiddleBlockZ(), c.x(), c.z(), " " + p.why()
+                        + (p.spec() == null ? "" : " " + p.spec().x() + " " + p.spec().y() + " " + p.spec().z() + " form " + p.spec().p(Mouth.FORM) + " rot " + p.spec().rot()
+                        + " " + level.getBiome(new BlockPos(p.spec().x(), p.spec().y(), p.spec().z())).unwrapKey().map(k -> k.identifier().getPath()).orElse("?")));
+            }
+        }
+        double spacing = rsp.spacing();
+        StringBuilder out = new StringBuilder(String.format(java.util.Locale.ROOT, "%d candidates within %d: %d mouths (%d hill, %d adit, %d doline, %d cleft), %.2f ms a chunk at %d/%d.", total, radius,
+                why[CaveSites.Why.MOUTH.ordinal()], forms[Mouth.HILL], forms[Mouth.ADIT], forms[Mouth.DOLINE], forms[Mouth.CLEFT],
+                (System.nanoTime() - t0) / 1e6 / Math.max(1, total) / (spacing * spacing), rsp.spacing(), rsp.separation()));
+        for (CaveSites.Why w : CaveSites.Why.values()) if (w != CaveSites.Why.MOUTH && why[w.ordinal()] > 0) out.append(' ').append(why[w.ordinal()]).append(" stopped by ").append(w.words).append('.');
+        Awaken.LOG.info("[delve] mouth census at {} {}: {}", at.getX(), at.getZ(), out);
+        return out.toString();
+    }
+
     private static double dist(ChunkPos c, BlockPos at) {
         double dx = c.getMiddleBlockX() - at.getX(), dz = c.getMiddleBlockZ() - at.getZ();
         return Math.sqrt(dx * dx + dz * dz);

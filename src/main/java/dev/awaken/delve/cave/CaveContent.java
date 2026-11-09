@@ -65,6 +65,8 @@ public final class CaveContent {
     /** Mist rising from a sinkhole by day; a breath of cold air at a chute's mouth. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MIST = PARTICLES.register("delve_mist", () -> new SimpleParticleType(true));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DRAUGHT = PARTICLES.register("delve_draught", () -> new SimpleParticleType(false));
+    /** A mouth's plume (SPEC §34.1): the cold breath rising high and pale off the mouth, seen across the land by day. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> PLUME = PARTICLES.register("delve_plume", () -> new SimpleParticleType(true));
     /** A grotto's own light, drawn: a soft halo over its pool and in its curtain, and the glints in the falling water. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> GLOW = PARTICLES.register("delve_grotto_glow", () -> new SimpleParticleType(true));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> GLINT = PARTICLES.register("delve_grotto_glint", () -> new SimpleParticleType(true));

@@ -12730,9 +12730,30 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
 
 ### 34.1 Mouths (built, P1d: hill mouth and adit; P4: cleft and doline)
 - **Place** `awaken:delve/mouth` (`delve.cave.Mouth`, `CaveKind.MOUTH`, appended so older kinds keep their ordinals),
-  structure set `delve/mouths`: random spread 12/4, salt 734018553, `#minecraft:is_overworld`, new land only. Spec at
-  the lip's floor, rot forward = into the hill; p: form, throat length, its drop, arch width, height, the lode's heart
-  (x, y, z), its ore + 1, the cairn's side.
+  structure set `delve/mouths`: random spread 10/3 (160 m a candidate; 12/4 before 8 Nov), salt 734018553,
+  `#minecraft:is_overworld`, new land only. Spec at the lip's floor, rot forward = into the hill; p: form, throat length,
+  its drop, arch width, height, the lode's heart (x, y, z), its ore + 1, the cairn's side, its look (index 10, 1 for
+  mouths laid since 8 Nov; 0 for a saved mouth keeps the blocks it built, no worn ground, the old cairn).
+- **The promise, on the ground** (Euan's playtest 8 Nov, "I'm really struggling to find a cave entrance"): one mouth about
+  every 200 m of dry land. His New World (11) (seed 5652006211025591964; `/awaken delve mouths` over the whole circle, on
+  Tectonic, tools/autopilot/mouths-after.txt) had at the old 12/4 57 mouths within 1 km of his home (one every 235 m;
+  43 of them in land he had generated) and 30 within 1 km of spawn (one every 324 m), where the city's reserve and water
+  empty most of the land, yet he found one: most of the fault was that a mouth can't be seen from far off (the plume and
+  the worn ground below). So the candidates are closer together, a doline takes gently tilted ground as well as flat
+  (below), a joint reaches further down for its cave, and both tests below hold the promise. At 10/3 the same census
+  has 65 within 1 km of his home and 44 of spawn: one every 220 and 267 m over the whole circle, one every 177 and 190 m
+  of the dry land left outside the city's reserve and settlements' ground. A candidate tries every form at up to five
+  spots within 20 of its chunk's middle.
+- **What keeps a mouth away**: the city's reserve (90), water or land at or below sea + 1, a biome off the list, and (from
+  the seed alone, since 8 Nov) a settlement's ground: within 120 of a grid settlement's or the first hamlet's anchor, or
+  in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills
+  and bridges over one it crosses (2 of his 51 mouths are within 12 m of a road, 1 of them buried by its bed), the road
+  stays whole. `CaveSites.Probe`'s reasons (`Why`) count a candidate's own ground, never an adit's distant lode.
+- **The joint, since 8 Nov**: a hill mouth, cleft or doline looks for its cave air on the same rings out to 27, and on the
+  wider rings further down, up to 0.8 down for every 1 out (`CaveSites.JOINT_SLOPE`; Tectonic seals the caves about 12
+  under the ground, so "no cave to join" was the biggest loss on dry land). The same columns, read further down; the
+  route test walks a staged hill mouth's joint at that slope. Slope probes read the noise's 4-block cells so the forms
+  share columns.
 - **Delver adit** (tried first): an iron or copper lode within 72 whose heart is at y 24 or above, a hill over the
   drift, an open front, dry; drift 14-28 long, falling 0 to a third of its length, timber sets every 3, rails, ends at
   the heart (left in the end face; the joint tunnel to the cave leaves from the drift's side). Mark "pick" at the drift's
@@ -12747,7 +12768,9 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   leaning apart a little upward, the slot wandering up to about a block each way once inside; vines down both walls,
   hanging roots where the rock closes over, a stone or two wedged across the slot 6-8 over the floor (only where rock
   holds it on both sides within 5), moss carpet on the floor; ground over its end, dry; a joint to cave air is required.
-- **Doline** (P4): flat ground (six points round at r + 3 within 2 of the middle), r 3-5 (p W = 2r + 1, 7-11 across),
+- **Doline** (P4; gently tilted ground too since 8 Nov): six points round at r + 3 within 4 of the middle (`Mouth.TILT`:
+  8 of rise in 16 is a hillside, the hill mouth's) and the hole turned so the near side, where its ledge starts, is within
+  1 of the middle; its air now stands 6 above the middle so the high side's ground doesn't roof it; r 3-5 (p W = 2r + 1, 7-11 across),
   10 to min(25, 4r + 5) deep (p DROP, and p H the same); spec at the middle, level with the ground, forward = the way out
   at the bottom. A round hole with a rough edge, the turf's lip overhanging by one with hanging roots under it, vines
   down the walls; the floor fallen rock, coarse dirt and moss; a ledge of fallen rock (cobble, mossy cobble, coarse
@@ -12761,10 +12784,27 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   at the bottom of it runs past iron." / "There's a narrow gorge cut into the cliff 180 m south of your home. It leads
   into a cave that runs past iron."; the map mark "The sinkhole" / "The gorge".
 - **Cairn** on the open ground in front: stacked cobble walls and an iron-bar spike; at an adit a fence post with a
-  lantern.
+  lantern. A mouth laid since 8 Nov (p look 1) heaps a 3 x 3 base of cobble and stacks the walls 4-6 high with the spike
+  on top, so it stands over the grass from well off.
+- **Worn ground** (since 8 Nov, p look 1, no change to a mouth already saved): what makes a mouth a mark on the land from
+  afar, in every biome. In front of a hill mouth, an adit and a cleft a fan of bare ground runs 16 out from the lip,
+  widening and ragged at its end, and the shelf of ground in front loses cells at its outer edge; round a doline a ragged ring out to r + 3.5..7 with a few leaning boulders. Soil
+  (dirt, grass, sand, snow, clay) wears to rock or scree in soft patches (gravel, rubble, tuff, andesite, the depth's
+  rock; a sand country's stays sandstone), two deep, its small plants cleared; so trees and grass can't grow there and
+  a log or a build stops the wear. A hill mouth also gets a collar: soil within 3 of the arch, three blocks into the hill,
+  turned to rock, and a two-course brow of rock over the arch with roots under it (a dark hole in a grey ring).
 - **Tells** (client, `CaveFx`, from the place's site in `CavePlaces.near`: lip, arch width, and turn | form << 2 |
-  height << 3): the **breath**, mist exhaled from the arch's upper half and drifting out, strongest at dawn (to 1500,
-  fading to 4000), for 3 minutes after rain, 0.14 by day, 0.35 at dusk, seen to 160 m; the **draught**, streaks out of
+  height << 3): the **plume**, a column of slow mist climbing 25-35 blocks over a mouth (out of a cleft's slot, off the
+  arch's lip, straight up from a doline), its own particle `awaken:delve_plume` (quads 2.2-3.6 across, 12-17 s, swelling as
+  it rises, thinner close by), one every few ticks by day and thicker at dawn, half as thick again past 110 m (a quad
+  there is a few pixels and pale on a pale sky: at the near rate a column was plain at 70 m and all but gone at 130),
+  drawn to 220 m (`MOUTH_NEAR` in
+  `CavePlaces`, 220, sends a mouth's site that far), so a mouth shows over the treetops from a long walk off; it needs
+  only a site, so every mouth already in a world gets it too (mist, plume and breath draw on their own pipeline that
+  tests depth but never writes it: Lens's depth haze otherwise fogs each whole quad in the biome's fog colour); the
+  **breath**, mist exhaled from the arch's upper half and
+  drifting out, strongest at dawn (to 1500, fading to 4000), for 3 minutes after rain, 0.14 by day, 0.35 at dusk, seen
+  to 160 m; the **draught**, streaks out of
   the throat within 28 m; the **cold air heard** within 32 m (the breath-of-air loop at the nearest mouth, pitch 0.78;
   to be re-voiced from a recording). Far mist goes straight to the particle engine (the level's own path drops
   particles past 32 blocks; the sinkhole's mist had the same fault and now does the same), never at Minimal particles.
@@ -12781,7 +12821,10 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   found: "I don't know of any old workings near your home. Iron shows in cave walls: find a cave and follow its walls."
   Forge and temper shortfalls don't point yet.
 - **Tests**: `delve_cave_routes` walks every kind (the mouth staged as each form in turn by its seed: adit, hill mouth,
-  doline, cleft);
+  doline, cleft); `delve_mouth_density` holds the promise on real terrain: the real placement grid over a real
+  overworld's noise, biomes and caves (24 x 24 cells, his seed), at least one mouth every 215 m of dry land (the test
+  server has no pack, so that terrain is vanilla's; on Tectonic's, run `/awaken delve mouths <radius>` in a world or the
+  tour tools/autopilot/mouths-after.txt: every candidate and what stopped it, nothing generated);
   `delve_hearth_points` (the four forms' lines, which mouths lead to which metal, the honest line on flat land, the card's
   3/16 row).
 

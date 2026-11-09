@@ -1,6 +1,7 @@
 package dev.awaken.delve.cave;
 
 import net.minecraft.core.Direction;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.LanternBlock;
@@ -30,23 +31,32 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
  * </ul>
  * Beside both, on open ground in front, a Delver cairn (stacked stones and an iron spike; at an adit a lantern on a
  * post). The mouth breathes mist at dawn and after rain and a draught comes out of it (client, from the place's site).
+ * A mouth laid since the plume (p {@link #LOOK}) also wears its ground: rock and scree in place of grass, so it reads as
+ * a grey scar on any hillside and no tree roots in front of it (SPEC §34.1). A mouth saved before it keeps what it built.
  *
  * <p>Spec: (x, y, z) the mouth's floor (feet) at the lip, {@code rot} forward = into the hill.
  */
 final class Mouth {
     private Mouth() {}
 
-    /** p: form, throat length, its drop, arch width, arch height, the lode's heart (x, y, z), its ore + 1, the cairn's side. */
-    static final int FORM = 0, LEN = 1, DROP = 2, W = 3, H = 4, HX = 5, HY = 6, HZ = 7, ORE = 8, CAIRN = 9;
+    /** p: form, throat length, its drop, arch width, arch height, the lode's heart (x, y, z), its ore + 1, the cairn's side, its look. */
+    static final int FORM = 0, LEN = 1, DROP = 2, W = 3, H = 4, HX = 5, HY = 6, HZ = 7, ORE = 8, CAIRN = 9, LOOK = 10;
     static final int HILL = 0, ADIT = 1, DOLINE = 2, CLEFT = 3;
     /** The portal's depth: the arch (or the timbered frame) before the throat begins. */
     static final int PORTAL = 4;
+    /** How far the ground round a doline may rise or fall from its middle (past that it's a hillside, a hill mouth's). */
+    static final int TILT = 4;
 
     static BoundingBox box(Spec s) {
         Frame f = new Frame(s.x(), s.y(), s.z(), s.rot());
-        int half = s.p(W) / 2 + 9;
-        int ax = f.x(-half, -10), az = f.z(-half, -10), bx = f.x(half, s.p(LEN) + 4), bz = f.z(half, s.p(LEN) + 4);
+        boolean surround = s.p(LOOK) > 0;
+        int half = s.p(W) / 2 + (surround ? 14 : 9), back = surround ? FAN + 1 : 10;
+        int ax = f.x(-half, -back), az = f.z(-half, -back), bx = f.x(half, s.p(LEN) + 4), bz = f.z(half, s.p(LEN) + 4);
         int y0 = s.y() - s.p(DROP) - 4, y1 = s.y() + Math.max(s.p(H), 5) + 4;
+        if (surround) {
+            y0 = Math.min(y0, s.y() - FAN - 4);
+            y1 += 6;
+        }
         if (s.p(FORM) == ADIT && s.p(ORE) != 0) y0 = Math.min(y0, s.p(HY) - 3);
         return new BoundingBox(Math.min(ax, bx), y0, Math.min(az, bz), Math.max(ax, bx), y1, Math.max(az, bz));
     }
@@ -80,6 +90,7 @@ final class Mouth {
             case CLEFT -> cleft(s, f, k);
             default -> hill(s, f, k);
         }
+        if (s.p(LOOK) > 0) surround(s, f, k);
         cairn(s, f, k);
         // on into the natural cave the place found
         int[] e = end(s);
@@ -107,7 +118,7 @@ final class Mouth {
         int L = s.p(LEN), w = s.p(W), h = s.p(H);
         long seed = s.seed();
         // the ground in front: open to the sky, a floor to stand on (a lip of rock where the slope fell away)
-        approach(f, k, w / 2 + 2, h);
+        approach(s, f, k, w / 2 + 2, h);
         // the arch: an ellipse, full width at the floor, its top rough
         for (int lz = 0; lz <= PORTAL; lz++) {
             double half = w / 2.0 + 0.5 - lz * 0.15;
@@ -161,7 +172,7 @@ final class Mouth {
 
     private static void adit(Spec s, Frame f, Sink k) {
         int L = s.p(LEN);
-        approach(f, k, 3, 5);
+        approach(s, f, k, 3, 5);
         // spoil heaps beside the cutting
         for (int side = -1; side <= 1; side += 2) {
             for (int i = 0; i < 3; i++) f.put(k, side * (4 + i), 0, -3 - i, i == 0 ? Blocks.GRAVEL.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState());
@@ -221,7 +232,7 @@ final class Mouth {
     private static void cleft(Spec s, Frame f, Sink k) {
         int L = s.p(LEN), w = s.p(W), h = s.p(H), shut = roofAt(s);
         long seed = s.seed();
-        approach(f, k, w / 2 + 2, 4);
+        approach(s, f, k, w / 2 + 2, 4);
         if (!f.touches(k, -w - 4, -1, w + 4, L + 1)) return;
         for (int lz = 0; lz <= L; lz++) {
             double half = Carve.lerp(lz / (double) L, w / 2.0 + 0.3, 1.0), mid = mid(s, lz);
@@ -318,7 +329,7 @@ final class Mouth {
                 // rough round the edge, the same all the way down; the turf at the top overhangs by one
                 double rr = r + 0.5 + (Carve.noise(seed, Math.cos(a) * 3, Math.sin(a) * 3, 0, 2) - 0.5) * 1.2;
                 if (d > rr) continue;
-                for (int ly = -drop; ly <= 3; ly++) {
+                for (int ly = -drop; ly <= (s.p(LOOK) > 0 ? TILT + 2 : 3); ly++) {
                     if (ly == -1 && d > rr - 0.9) continue;
                     f.air(k, lx, ly, lz);
                 }
@@ -369,15 +380,158 @@ final class Mouth {
         for (int lz = 0; lz <= L; lz++) for (int lx = -1; lx <= 1; lx++) floor(f, k, lx, -drop, lz);
     }
 
+    // ---- the worn ground (SPEC §34.1): what you notice from far ----------------------------------------------------------
+
+    /** How far out the bare ground runs in front of a mouth. */
+    static final int FAN = 16;
+
+    private static void surround(Spec s, Frame f, Sink k) {
+        if (s.p(FORM) == DOLINE) {
+            rim(s, f, k);
+            return;
+        }
+        fan(s, f, k);
+        if (s.p(FORM) == HILL) collar(s, f, k);
+    }
+
+    /** The ground worn bare in front of a mouth: rock and scree in place of grass, widening and ragged, no tree roots on it. */
+    private static void fan(Spec s, Frame f, Sink k) {
+        int w = s.p(W);
+        long seed = s.seed() + 40;
+        for (int lz = -FAN; lz < 0; lz++) {
+            double hw = w / 2.0 + 2.5 - lz * 0.45;
+            int lim = (int) Math.ceil(hw) + 1;
+            for (int lx = -lim; lx <= lim; lx++) {
+                int x = f.x(lx, lz), z = f.z(lx, lz);
+                if (!k.here(x, z)) continue;
+                double rag = (Carve.noise(seed, x, 0, z, 5) - 0.5) * 3.5;
+                if (Math.abs(lx) > hw + rag) continue;
+                // a ragged end, thinner the farther out
+                if (lz < -FAN + 5 && Carve.rand(seed, lx, lz, 3) > (FAN + lz) / 5.0) continue;
+                worn(k, x, s.y() + 10, s.y() - FAN - 2, z, seed);
+            }
+        }
+    }
+
+    /**
+     * A hill mouth's collar: the soil round the arch (within three blocks of it, the first three blocks into the hill)
+     * turned to bare rock, with a rough brow leaning out over the top of the arch. A dark hole in a grey ring.
+     */
+    private static void collar(Spec s, Frame f, Sink k) {
+        int w = s.p(W), h = s.p(H);
+        long seed = s.seed() + 41;
+        double half = w / 2.0 + 0.5;
+        for (int lz = 0; lz <= 2; lz++) {
+            for (int lx = -(w / 2 + 4); lx <= w / 2 + 4; lx++) {
+                for (int ly = -1; ly <= h + 4; ly++) {
+                    if (!f.inside(k, lx, ly, lz)) continue;
+                    double u = lx / (half + 3.2), v = ly / (double) (h + 3);
+                    if (u * u + v * v > 1) continue;
+                    double in = lx / half, up = ly / (double) h;
+                    if (in * in + up * up <= 1) continue;
+                    BlockState b = f.get(k, lx, ly, lz);
+                    if (soil(b)) f.put(k, lx, ly, lz, rockFace(seed, f.x(lx, lz), f.y(ly), f.z(lx, lz)));
+                }
+            }
+        }
+        // the brow: two courses of rock out over the arch's top, roots under it
+        for (int lx = -(w / 2 + 1); lx <= w / 2 + 1; lx++) {
+            for (int lz = -1; lz >= -2; lz--) {
+                if (lz == -2 && Carve.rand(seed, lx, lz, 5) < 0.45) continue;
+                for (int ly = h + 1; ly <= h + 2; ly++) f.put(k, lx, ly, lz, rockFace(seed, f.x(lx, lz), f.y(ly), f.z(lx, lz)));
+                Carve.roots(k, f.x(lx, lz), f.y(h), f.z(lx, lz));
+            }
+        }
+    }
+
+    /** A doline's rim: the ground fallen away round the hole worn to rock and scree, and a few boulders that didn't fall in. */
+    private static void rim(Spec s, Frame f, Sink k) {
+        int r = s.p(W) / 2, out = r + 8;
+        long seed = s.seed() + 42;
+        for (int lx = -out; lx <= out; lx++) {
+            for (int lz = -out; lz <= out; lz++) {
+                double d = Math.sqrt(lx * lx + lz * lz), a = Math.atan2(lz, lx);
+                if (d <= r + 1) continue;
+                double edge = r + 3.5 + 3.5 * Carve.noise(seed, Math.cos(a) * 4, Math.sin(a) * 4, 0, 2);
+                if (d > edge) continue;
+                int x = f.x(lx, lz), z = f.z(lx, lz);
+                if (k.here(x, z)) worn(k, x, s.y() + TILT + 2, s.y() - TILT - 2, z, seed);
+            }
+        }
+        // the boulders: leaning stones of the rock round the hole, a block or two off its edge
+        for (int i = 0; i < 5; i++) {
+            double a = Carve.rand(seed, i, 0, 7) * Math.PI * 2, d = r + 2.5 + Carve.rand(seed, i, 1, 7) * 4;
+            int lx = (int) Math.round(Math.cos(a) * d), lz = (int) Math.round(Math.sin(a) * d);
+            int x = f.x(lx, lz), z = f.z(lx, lz);
+            if (!k.here(x, z)) continue;
+            int g = ground(k, x, s.y() + TILT + 2, s.y() - TILT - 2, z);
+            if (g == Integer.MIN_VALUE) continue;
+            int tall = 1 + (int) (Carve.rand(seed, i, 2, 7) * 2.5);
+            for (int y = 0; y < tall; y++) if (k.inside(x, g + y, z)) k.set(x, g + y, z, rockFace(seed, x, g + y, z));
+        }
+    }
+
+    /** The column's top ground block over y0 to y1 turned to rock or scree (two deep), its small plants cleared; a log or a build stops it. */
+    private static void worn(Sink k, int x, int y1, int y0, int z, long seed) {
+        for (int y = Math.min(y1, k.maxY()); y >= Math.max(y0, k.minY()); y--) {
+            BlockState b = k.get(x, y, z);
+            if (b.isAir()) continue;
+            if (b.canBeReplaced()) {   // grass and the like, nothing else (a replaceable with a fluid in it stays)
+                if (b.getFluidState().isEmpty()) k.set(x, y, z, Carve.AIR);
+                continue;
+            }
+            if (!soil(b)) return;
+            // sand stays a sand country's rock; everything else wears down to the grey under it
+            boolean sand = b.is(BlockTags.SAND);
+            boolean red = b.is(Blocks.RED_SAND);
+            for (int i = 0; i < 2 && y - i >= k.minY(); i++) {
+                if (i > 0 && !soil(k.get(x, y - i, z))) break;
+                k.set(x, y - i, z, sand ? (red ? Blocks.RED_SANDSTONE : Carve.rand(seed, x, y, z) < 0.4 ? Blocks.SMOOTH_SANDSTONE : Blocks.SANDSTONE).defaultBlockState() : scree(seed, x, y - i, z));
+            }
+            return;
+        }
+    }
+
+    /** The feet's height on a column's top ground within y1..y0, or MIN_VALUE. */
+    private static int ground(Sink k, int x, int y1, int y0, int z) {
+        for (int y = Math.min(y1, k.maxY()); y >= Math.max(y0, k.minY()); y--) {
+            BlockState b = k.get(x, y, z);
+            if (b.isAir() || b.canBeReplaced()) continue;
+            return b.isSolidRender() ? y + 1 : Integer.MIN_VALUE;
+        }
+        return Integer.MIN_VALUE;
+    }
+
+    /** Soil a mouth's wear strips away, not rock or anything built. */
+    private static boolean soil(BlockState b) {
+        return b.is(BlockTags.DIRT) || b.is(BlockTags.SAND) || b.is(Blocks.GRASS_BLOCK) || b.is(Blocks.SNOW_BLOCK) || b.is(Blocks.POWDER_SNOW) || b.is(Blocks.CLAY);
+    }
+
+    /** A worn ground block: scree where the ground has been spilling out, bare rock else, in soft patches. */
+    private static BlockState scree(long seed, int x, int y, int z) {
+        double n = Carve.noise(seed, x, 0, z, 4.5), q = Carve.rand(seed, x, y, z);
+        if (n < 0.34) return q < 0.5 ? Blocks.GRAVEL.defaultBlockState() : Carve.rubble(y);
+        if (n < 0.5) return q < 0.5 ? Blocks.TUFF.defaultBlockState() : Carve.rock(y);
+        return n < 0.7 ? Carve.rock(y) : q < 0.5 ? Blocks.ANDESITE.defaultBlockState() : Carve.rock(y);
+    }
+
+    /** A cell of the rock face (the collar, the brow, a boulder), a little mossy now and then. */
+    private static BlockState rockFace(long seed, int x, int y, int z) {
+        double q = Carve.rand(seed, x, y, z);
+        return q < 0.08 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState() : q < 0.28 ? Blocks.ANDESITE.defaultBlockState() : q < 0.42 ? Blocks.TUFF.defaultBlockState() : Carve.rock(y);
+    }
+
     // ---- shared -------------------------------------------------------------------------------------------------------
 
     /** The ground in front of the mouth: open air over it, a floor where the slope fell away (half-width hw). */
-    private static void approach(Frame f, Sink k, int hw, int h) {
+    private static void approach(Spec s, Frame f, Sink k, int hw, int h) {
         for (int lz = -8; lz < 0; lz++) {
             int w = hw + (-lz) / 3;
             f.carve(k, -w, 0, lz, w, h + 1, lz);
             for (int lx = -w; lx <= w; lx++) {
                 if (!f.inside(k, lx, -1, lz)) continue;
+                // the shelf's outer edge breaks up: spoil that spilled out, not a slab laid down
+                if (s.p(LOOK) > 0 && Math.abs(lx) >= w - 1 && Carve.rand(s.seed(), lx, lz, 44) < 0.45) continue;
                 if (!f.get(k, lx, -1, lz).isSolidRender()) f.put(k, lx, -1, lz, Blocks.COARSE_DIRT.defaultBlockState());
             }
         }
@@ -393,7 +547,8 @@ final class Mouth {
     /**
      * The Delver cairn: three stones stacked on the ground to one side in front of the mouth, an iron spike on top; at an
      * adit a lantern on a post beside it (seen from far at night). Sits on whatever ground is there (the column's top
-     * solid block within four of the mouth's floor).
+     * solid block within four of the mouth's floor). The new look heaps a base of stones and stacks it taller: you see the
+     * spike over the grass from well off.
      */
     private static void cairn(Spec s, Frame f, Sink k) {
         int side = s.p(CAIRN) == 0 ? 1 : -1;
@@ -411,9 +566,23 @@ final class Mouth {
             if (!b.isAir() && !b.canBeReplaced()) return;   // a tree, a build: no cairn
         }
         if (ground == Integer.MIN_VALUE) return;
-        Carve.put(k, x, ground, z, Blocks.MOSSY_COBBLESTONE_WALL.defaultBlockState().setValue(WallBlock.UP, true));
-        Carve.put(k, x, ground + 1, z, Blocks.COBBLESTONE_WALL.defaultBlockState().setValue(WallBlock.UP, true));
-        Carve.put(k, x, ground + 2, z, Blocks.IRON_BARS.defaultBlockState());
+        if (s.p(LOOK) > 0) {
+            // the heaped base, then a tall stack on it
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (Math.abs(dx) + Math.abs(dz) == 2 && Carve.rand(s.seed(), dx, 11, dz) < 0.5) continue;
+                    if (k.inside(x + dx, ground - 1, z + dz) && k.inside(x + dx, ground, z + dz) && k.get(x + dx, ground - 1, z + dz).isSolidRender() && k.get(x + dx, ground, z + dz).isAir())
+                        Carve.put(k, x + dx, ground, z + dz, (dx == 0 && dz == 0 || Carve.rand(s.seed(), dx, 12, dz) < 0.3 ? Blocks.MOSSY_COBBLESTONE : Blocks.COBBLESTONE).defaultBlockState());
+                }
+            }
+            int tall = 4 + (int) Math.floorMod(Carve.hash(s.seed(), 0, 13, 0), 3L);
+            for (int i = 1; i <= tall; i++) Carve.put(k, x, ground + i, z, (i % 2 == 1 ? Blocks.COBBLESTONE_WALL : Blocks.MOSSY_COBBLESTONE_WALL).defaultBlockState().setValue(WallBlock.UP, true));
+            Carve.put(k, x, ground + tall + 1, z, Blocks.IRON_BARS.defaultBlockState());
+        } else {
+            Carve.put(k, x, ground, z, Blocks.MOSSY_COBBLESTONE_WALL.defaultBlockState().setValue(WallBlock.UP, true));
+            Carve.put(k, x, ground + 1, z, Blocks.COBBLESTONE_WALL.defaultBlockState().setValue(WallBlock.UP, true));
+            Carve.put(k, x, ground + 2, z, Blocks.IRON_BARS.defaultBlockState());
+        }
         if (s.p(FORM) == ADIT) {
             int px = f.x(lx + side, lz + 1), pz = f.z(lx + side, lz + 1);
             if (!k.here(px, pz) || !k.inside(px, ground - 1, pz) || !k.get(px, ground - 1, pz).isSolidRender()) return;

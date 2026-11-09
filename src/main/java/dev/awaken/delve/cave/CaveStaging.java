@@ -37,12 +37,14 @@ final class CaveStaging {
                 int L = switch (form) { case 0 -> 20; case 2 -> 7; case 3 -> 24; default -> 30; };
                 int drop = switch (form) { case 0 -> 3; case 2 -> 16; case 3 -> (L - Mouth.PORTAL) / 3; default -> 13; };
                 int[] p = switch (form) {
-                    case 0 -> new int[]{Mouth.ADIT, L, drop, 3, 4, f.x(0, L + 1), y - drop + 1, f.z(0, L + 1), 3, 0};
-                    case 2 -> new int[]{Mouth.DOLINE, L, drop, 9, drop, 0, 0, 0, 0, 1};
-                    case 3 -> new int[]{Mouth.CLEFT, L, drop, 3, 14, 0, 0, 0, 0, 0};
-                    default -> new int[]{Mouth.HILL, L, drop, 7, 9, 0, 0, 0, 0, 1};
+                    case 0 -> new int[]{Mouth.ADIT, L, drop, 3, 4, f.x(0, L + 1), y - drop + 1, f.z(0, L + 1), 3, 0, 1};
+                    case 2 -> new int[]{Mouth.DOLINE, L, drop, 9, drop, 0, 0, 0, 0, 1, 1};
+                    case 3 -> new int[]{Mouth.CLEFT, L, drop, 3, 14, 0, 0, 0, 0, 0, 1};
+                    default -> new int[]{Mouth.HILL, L, drop, 7, 9, 0, 0, 0, 0, 1, 1};
                 };
-                yield new Spec(kind, x, y, z, rot, seed, true, f.x(3, L + 10), y - drop, f.z(3, L + 10), p);
+                // the hill's joint as steep as the site search lets one run; the others level
+                int deep = form == 1 ? (int) (20 * CaveSites.JOINT_SLOPE) : 0, out = form == 1 ? 20 : 10;
+                yield new Spec(kind, x, y, z, rot, seed, true, f.x(3, L + out), y - drop - deep, f.z(3, L + out), p);
             }
             case GROTTO -> new Spec(kind, x, y, z, rot, seed, true, f.x(2, -Grotto.ROOM - 16), y, f.z(2, -Grotto.ROOM - 16), new int[0]);
         };

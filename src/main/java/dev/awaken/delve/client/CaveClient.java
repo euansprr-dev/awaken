@@ -45,6 +45,7 @@ public final class CaveClient {
             e.register(CaveNet.LodeMarks.TYPE, (m, ctx) -> marks = List.copyOf(m.marks()));
         });
         modBus.addListener(RegisterParticleProvidersEvent.class, CaveFx::register);
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, CaveFx::onRegisterPipelines);
         modBus.addListener(RegisterGuiLayersEvent.class, CaveHud::register);
         CaveItems.openLog = CaveClient::openLog;
         CodexEntries.addSource(CaveClient::codex);

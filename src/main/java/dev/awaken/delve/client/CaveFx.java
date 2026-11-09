@@ -6,6 +6,16 @@ import dev.awaken.delve.cave.CaveNet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.SingleQuadParticle;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.CompareOp;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import dev.awaken.Awaken;
+import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
@@ -18,7 +28,8 @@ import java.util.List;
  * The cave places seen from outside (PLAN 8.2): mist rising out of a sinkhole by day (thickest in the morning, gone
  * by night; soft lobes that swell and thin as they climb past the rim, lit by the sky), a breath of cold air at a
  * chute's mouth (pale streaks drifting out of it), a grotto's own light (its curtain and its pool), and a mouth's tells
- * (SPEC §34.1): its breath (mist exhaled out of the arch at dawn and after rain, seen from 100+ m), its draught (streaks
+ * (SPEC §34.1): its plume (a pale column of cold breath rising high off the mouth at every hour, what you see across the
+ * land), its breath (mist exhaled out of the arch at dawn and after rain, seen from 100+ m), its draught (streaks
  * drifting out) and the cold air heard within 32 m. Our own sprites (tools/art/specs/caves.py); a few a tick at most.
  * Far mist goes straight to the particle engine: the level's own path drops anything past 32 blocks.
  */
@@ -31,6 +42,8 @@ final class CaveFx {
     private static final SenseLoop[] DRAUGHT = new SenseLoop[2];
     /** Game time until which the ground counts as just rained on (the mouths breathe after rain). */
     private static long wetUntil;
+    /** How far off a mouth's plume is drawn (blocks); its rate halves past half of it. */
+    private static final double PLUME_REACH = 220;
 
     /** The cave places near you the server named (mouths, sinkholes, chutes...), for the shafts and the breath. */
     static List<CaveNet.Site> sites() {
@@ -52,6 +65,7 @@ final class CaveFx {
 
     static void register(RegisterParticleProvidersEvent e) {
         e.registerSpriteSet(CaveContent.MIST.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.MIST));
+        e.registerSpriteSet(CaveContent.PLUME.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.PLUME));
         e.registerSpriteSet(CaveContent.DRAUGHT.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.DRAUGHT));
         e.registerSpriteSet(CaveContent.GLOW.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.GLOW));
         e.registerSpriteSet(CaveContent.GLINT.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.GLINT));
@@ -130,10 +144,13 @@ final class CaveFx {
         int rot = s.depth() & 3, h = Math.max(4, s.depth() >> 4), w = Math.max(3, s.radius());
         double fx = rot == 1 ? -1 : rot == 3 ? 1 : 0, fz = rot == 0 ? 1 : rot == 2 ? -1 : 0;
         double cx = s.at().getX() + 0.5, cy = s.at().getY(), cz = s.at().getZ() + 0.5;
-        if ((s.depth() >> 2 & 3) == 2) {
+        int form = s.depth() >> 2 & 3;
+        if (form == 2) {
             doline(mc, s, d2, breath, far, cx, cy, cz, w, h);
             return;
         }
+        // the plume leaves the arch's top lip; a cleft's from inside the slot, over its floor
+        if (far) plume(mc, form == 3 ? cx + fx * 5 : cx - fx * 0.5, form == 3 ? cy + Math.min(h - 2, 10) : cy + h * 0.8, form == 3 ? cz + fz * 5 : cz - fz * 0.5, d2, breath);
         if (far && d2 < 160 * 160) {
             float rate = breath * (0.25F + w / 24F) * (d2 < 64 * 64 ? 1F : 0.6F);
             if (R.nextFloat() < rate) {
@@ -151,10 +168,25 @@ final class CaveFx {
     }
 
     /**
+     * A mouth's plume: a pale column of cold breath rising off (x, y, z) high enough to clear the trees, a few wisps a
+     * second at any hour (thicker at dawn and after rain), what you notice across the land before the mouth itself.
+     */
+    private static void plume(Minecraft mc, double x, double y, double z, double d2, float breath) {
+        if (d2 > PLUME_REACH * PLUME_REACH) return;
+        // past 110 m a quad is a few pixels: thicker, or the column is lost against a pale sky
+        float rate = (0.10F + 0.30F * breath) * (d2 < PLUME_REACH * PLUME_REACH / 4 ? 1F : 1.5F);
+        if (R.nextFloat() >= rate) return;
+        double a = R.nextDouble() * Math.PI * 2, o = R.nextDouble() * 1.2;
+        mc.particleEngine.createParticle(CaveContent.PLUME.get(), x + Math.cos(a) * o, y, z + Math.sin(a) * o,
+                (R.nextDouble() - 0.5) * 0.012, 0.07 + R.nextDouble() * 0.035, (R.nextDouble() - 0.5) * 0.012);
+    }
+
+    /**
      * A doline's tells: its breath rises straight up out of the hole (the hole's {@code w} across, {@code h} deep) and,
      * within 28 m, the draught's streaks climb its walls.
      */
     private static void doline(Minecraft mc, CaveNet.Site s, double d2, float breath, boolean far, double cx, double cy, double cz, int w, int h) {
+        if (far) plume(mc, cx, cy + 1, cz, d2, breath);
         if (far && d2 < 160 * 160) {
             float rate = breath * (0.25F + w / 24F) * (d2 < 64 * 64 ? 1F : 0.6F);
             if (R.nextFloat() < rate) {
@@ -232,10 +264,31 @@ final class CaveFx {
     }
 
     /** What a wisp is. */
-    enum Kind { MIST, DRAUGHT, GLOW, GLINT }
+    /**
+     * Big translucent quads of mist test depth but never write it: on Cinematic, Lens fogs whatever wrote depth, so a plume
+     * written like a block drew each whole quad in the biome's fog colour (a tan patch on a savanna's sky).
+     */
+    private static final RenderPipeline MIST_PIPELINE = RenderPipeline.builder(RenderPipelines.PARTICLE_SNIPPET)
+            .withLocation(Awaken.id("pipeline/delve_mist"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .build();
+    private static final SingleQuadParticle.Layer MIST_LAYER = new SingleQuadParticle.Layer(true, TextureAtlas.LOCATION_PARTICLES, MIST_PIPELINE, RenderPipelines.OIT_PARTICLE);
+    private static int mistBuilt = -1;
+
+    static void onRegisterPipelines(RegisterRenderPipelinesEvent e) {
+        e.registerOptionalPipeline(MIST_PIPELINE);
+    }
+
+    private static SingleQuadParticle.Layer mistLayer() {
+        if (mistBuilt < 0) mistBuilt = RenderSystem.getCompiledPipelineNullable(MIST_PIPELINE) != null ? 1 : 0;
+        return mistBuilt == 1 ? MIST_LAYER : SingleQuadParticle.Layer.TRANSLUCENT;
+    }
+
+    enum Kind { MIST, PLUME, DRAUGHT, GLOW, GLINT }
 
     /**
-     * One wisp: mist (big, slow, rising, swelling), a draught's streak (small, quick, along the air), or a grotto's drawn
+     * One wisp: mist (big, slow, rising, swelling), a plume's lobe (bigger, paler, rising tall), a draught's streak (small, quick, along the air), or a grotto's drawn
      * light: a glow (a soft halo, full bright, barely moving) or a glint (a small bright mote sliding down the curtain or
      * rising off the pool).
      */
@@ -252,6 +305,7 @@ final class CaveFx {
             this.gravity = 0F;
             this.friction = switch (kind) {
                 case MIST -> 0.995F;
+                case PLUME -> 0.997F;
                 case DRAUGHT -> 0.97F;
                 case GLOW -> 0.98F;
                 case GLINT -> 0.99F;
@@ -259,12 +313,14 @@ final class CaveFx {
             this.hasPhysics = false;
             this.lifetime = switch (kind) {
                 case MIST -> 120 + random.nextInt(80);
+                case PLUME -> 240 + random.nextInt(100);
                 case DRAUGHT -> 30 + random.nextInt(20);
                 case GLOW -> 50 + random.nextInt(40);
                 case GLINT -> 16 + random.nextInt(10);
             };
             this.quadSize = switch (kind) {
                 case MIST -> 1.3F + random.nextFloat() * 1.0F;
+                case PLUME -> 2.2F + random.nextFloat() * 1.4F;
                 case DRAUGHT -> 0.35F + random.nextFloat() * 0.25F;
                 case GLOW -> 1.4F + random.nextFloat() * 0.9F;
                 case GLINT -> 0.07F + random.nextFloat() * 0.07F;
@@ -272,30 +328,31 @@ final class CaveFx {
             this.base = quadSize;
             this.peak = switch (kind) {
                 case MIST -> 0.28F + random.nextFloat() * 0.1F;
+                case PLUME -> 0.40F + random.nextFloat() * 0.14F;
                 case DRAUGHT -> 0.32F;
                 case GLOW -> 0.2F + random.nextFloat() * 0.1F;
                 case GLINT -> 0.85F;
             };
             this.roll = random.nextFloat() * Mth.TWO_PI;
             this.oRoll = roll;
-            float c = kind == Kind.MIST ? 0.92F + random.nextFloat() * 0.06F : 0.86F;
-            setColor(c, c + 0.02F, kind == Kind.MIST ? c + 0.03F : 1F);
+            float c = kind == Kind.MIST || kind == Kind.PLUME ? 0.92F + random.nextFloat() * 0.06F : 0.86F;
+            setColor(c, c + 0.02F, kind == Kind.MIST || kind == Kind.PLUME ? c + 0.03F : 1F);
             this.alpha = 0F;
         }
 
         @Override
         protected Layer getLayer() {
-            return Layer.TRANSLUCENT;
+            return kind == Kind.MIST || kind == Kind.PLUME ? mistLayer() : Layer.TRANSLUCENT;
         }
 
         @Override
         protected int getLightCoords(float a) {
-            // mist is lit by the sky that reaches it; the draught keeps a little light of its own so it shows in the dark;
-            // a grotto's glow and glints are its light
+            // mist is lit by the sky that reaches it; the draught and the plume keep a little light of their own so they
+            // show in the dark; a grotto's glow and glints are its light
             int c = super.getLightCoords(a);
             return switch (kind) {
                 case MIST -> c;
-                case DRAUGHT -> LightCoordsUtil.pack(Math.max(LightCoordsUtil.block(c), 5), LightCoordsUtil.sky(c));
+                case PLUME, DRAUGHT -> LightCoordsUtil.pack(Math.max(LightCoordsUtil.block(c), 5), LightCoordsUtil.sky(c));
                 case GLOW, GLINT -> LightCoordsUtil.FULL_BRIGHT;
             };
         }
@@ -304,23 +361,24 @@ final class CaveFx {
         public void tick() {
             super.tick();
             float t = (float) age / lifetime;
-            float in = kind == Kind.MIST ? 4F : kind == Kind.GLOW ? 3F : 6F, out = kind == Kind.MIST ? 1.6F : kind == Kind.GLOW ? 2F : 2.5F;
+            float in = kind == Kind.MIST || kind == Kind.PLUME ? 4F : kind == Kind.GLOW ? 3F : 6F, out = kind == Kind.MIST || kind == Kind.PLUME ? 1.6F : kind == Kind.GLOW ? 2F : 2.5F;
             alpha = peak * Math.min(1F, Math.min(t * in, (1F - t) * out));
             quadSize = base * switch (kind) {
                 case MIST -> 1F + 1.2F * t;
+                case PLUME -> 1F + 1.8F * t;
                 case GLOW -> 1F + 0.3F * t;
                 case GLINT -> 1F - 0.4F * t;
                 default -> 1F + 0.5F * t;
             };
-            if (kind == Kind.MIST || kind == Kind.GLOW) {
+            if (kind == Kind.MIST || kind == Kind.PLUME || kind == Kind.GLOW) {
                 // thins to nothing round the camera: you walk out of mist (or a glow), never into a white wall
                 var cam = net.minecraft.client.Minecraft.getInstance().gameRenderer.mainCamera().position();
                 double dx = x - cam.x, dy = y - cam.y, dz = z - cam.z;
                 double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                alpha *= (float) Math.max(0, Math.min(1, (d - (kind == Kind.MIST ? 2.5 : 1.0)) / 6.0));
+                alpha *= (float) Math.max(0, Math.min(1, (d - (kind == Kind.GLOW ? 1.0 : 2.5)) / 6.0));
             }
             oRoll = roll;
-            roll += kind == Kind.MIST ? 0.004F : 0.01F;
+            roll += kind == Kind.MIST || kind == Kind.PLUME ? 0.004F : 0.01F;
         }
     }
 }

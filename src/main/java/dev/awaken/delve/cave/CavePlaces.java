@@ -48,7 +48,7 @@ public final class CavePlaces {
     /** How strongly a live seep presses at its heart and fades toward its edge (blocks). */
     static final double SEEP_FULL = 15, SEEP_FADE = 9;
     public static final int SEEP_LEVELS = 5;
-    static final int NEST_MOBS = 3, NEST_EVERY = 600, HEART_REACH = 40, NEAR = 160, GROTTO_NEAR = 64;
+    static final int NEST_MOBS = 3, NEST_EVERY = 600, HEART_REACH = 40, NEAR = 160, MOUTH_NEAR = 220, GROTTO_NEAR = 64;
 
     /** Places whose start has loaded, per id (every dimension's are overworld's: places only generate there). */
     static final Map<Long, Spec> KNOWN = new ConcurrentHashMap<>();
@@ -239,7 +239,12 @@ public final class CavePlaces {
         for (Spec s : KNOWN.values()) {
             if (s.kind() != CaveKind.SINKHOLE && s.kind() != CaveKind.CHUTE && s.kind() != CaveKind.GROTTO && s.kind() != CaveKind.MOUTH) continue;
             double dx = s.x() - p.getX(), dz = s.z() - p.getZ();
-            if (dx * dx + dz * dz > (s.kind() == CaveKind.GROTTO ? GROTTO_NEAR * GROTTO_NEAR : NEAR * NEAR)) continue;
+            int reach = switch (s.kind()) {
+                case GROTTO -> GROTTO_NEAR;
+                case MOUTH -> MOUTH_NEAR;   // the plume is seen across the land (SPEC §34.1)
+                default -> NEAR;
+            };
+            if (dx * dx + dz * dz > reach * reach) continue;
             ids.add(s.id());
             if (s.kind() == CaveKind.SINKHOLE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.p(Sinkhole.RIM), s.z()), s.p(Sinkhole.R), s.p(Sinkhole.RIM) - s.y()));
             else if (s.kind() == CaveKind.CHUTE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), 2, s.rot()));

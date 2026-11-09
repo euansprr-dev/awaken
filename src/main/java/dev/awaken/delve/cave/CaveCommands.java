@@ -53,6 +53,8 @@ final class CaveCommands {
                     .then(Commands.argument("kind", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(kinds, b))
                             .executes(CaveCommands::gotoPlace)));
             d.then(Commands.literal("places").executes(CaveCommands::places));
+            d.then(Commands.literal("mouths").requires(AwakenCommands.admin())
+                    .then(Commands.argument("radius", com.mojang.brigadier.arguments.IntegerArgumentType.integer(32, 4096)).executes(CaveCommands::mouths)));
             d.then(Commands.literal("seep").requires(AwakenCommands.admin())
                     .then(Commands.literal("quiet").executes(c -> seep(c, true)))
                     .then(Commands.literal("wake").executes(c -> seep(c, false))));
@@ -230,6 +232,14 @@ final class CaveCommands {
         if (n == 0) c.getSource().sendSuccess(() -> Component.literal("No cave place known within 1024 (they become known as their chunks load).")
                 .withColor(0xC8C2B0), false);
         return n;
+    }
+
+    /** {@code /awaken delve mouths <radius>}: the mouth census round you, on this world's own terrain, nothing generated. */
+    private static int mouths(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        String line = CaveLocate.census(p.level(), p.blockPosition(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "radius"));
+        c.getSource().sendSuccess(() -> Component.literal(line).withColor(0x9FE6D6), false);
+        return 1;
     }
 
     private static int seep(CommandContext<CommandSourceStack> c, boolean quiet) throws CommandSyntaxException {
