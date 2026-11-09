@@ -58,8 +58,8 @@ final class FairAudit {
     }
 
     /** Every string a fight can play: its pools' and its answers'. */
-    static java.util.Set<List<String>> strings(FightScripts.Fight fight) {
-        java.util.Set<List<String>> out = new java.util.LinkedHashSet<>();
+    static List<List<String>> strings(FightScripts.Fight fight) {
+        List<List<String>> out = new ArrayList<>();
         for (FightScripts.Phase ph : fight.phases()) {
             for (FightScripts.Entry e : ph.pool()) {
                 for (List<String> then : forked(e)) out.add(string(e.move(), then));
