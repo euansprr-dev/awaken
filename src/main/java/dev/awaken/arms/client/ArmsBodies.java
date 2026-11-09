@@ -38,11 +38,15 @@ final class ArmsBodies {
         if (e == net.minecraft.client.Minecraft.getInstance().player) ArmsFilm.event("clip " + clip + (played ? "" : " (none)"));
     }
 
-    static void charge(Entity e) {
-        ArmsWrist.charge(e);
+    /** Ticks another fighter's body takes into the held draw once the server says it charges (its word comes at the mark). */
+    static final int SEEN_DRAW = 5;
+
+    /** The body into the heavy's held draw, over {@code fade} ticks. */
+    static void charge(Entity e, int fade) {
+        ArmsWrist.charge(e, fade);
         Archetypes.Loaded style = e instanceof LivingEntity l ? Arms.styleOf(l.getMainHandItem()) : null;
         String clip = style == null ? ArmsClips.CHARGE : ArmsClips.charge(style.id());
-        if (PlayerClips.play(e.getId(), clip, 2)) HELD.put(e.getId(), clip);
+        if (PlayerClips.play(e.getId(), clip, fade)) HELD.put(e.getId(), clip);
     }
 
     /** The dodge's clip for a way (dx, dz in the world): back, or a step to one side, mirrored for a left hand. */

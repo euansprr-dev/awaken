@@ -286,7 +286,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
         if (p == null || k <= 0 || !mc.options.getCameraType().isFirstPerson() || !ArmsPredict.fights(p)) return;
         Archetypes.Loaded style = ArmsPredict.style;
         Archetype.Move m = ArmsPredict.move;
-        if (style == null || ArmsPredict.charging) m = null;
+        if (style == null || ArmsPredict.drawn()) m = null; // a strike waiting under the draw leans nothing
         float t = ArmsPredict.viewTime();
         boolean has = m != null && FpSwings.camera(FpSwings.style(style.id()), m, t, LEAN);
         if (!has) LEAN[0] = LEAN[1] = LEAN[2] = 0;

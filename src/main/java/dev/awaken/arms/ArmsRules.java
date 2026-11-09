@@ -50,11 +50,12 @@ public final class ArmsRules {
     /** Hit-stop in a sweep: at most one freeze per this many ticks. */
     public static final int HITSTOP_GAP = 4;
     /**
-     * Styles whose strike lands on the press even while it is still down (SPEC §25 "Hand-keyed moves"; the dagger audit,
-     * Euan 2026-11-02): a dagger stabs on the click, and a press held on charges the heavy from where the stab ended.
-     * Every other style's held press waits at its set until it is a tap or the charge.
+     * Styles whose strike lands on the press even while it is still down, its charge drawn after the blow. None since
+     * Euan 2026-11-09 ("it still sometimes attacks once before starting the charge"): the Daggers were here from the
+     * 2026-11-02 audit, and name them again to have that back (a dagger's click then lands 40 to 85 ms sooner, SPEC §25
+     * "Tap or hold"). Every other press waits unseen under the draw until it is a tap or the charge.
      */
-    private static final java.util.Set<String> STRIKE_ON_PRESS = java.util.Set.of("daggers");
+    private static final java.util.Set<String> STRIKE_ON_PRESS = java.util.Set.of();
 
     /** Whether a strike begun by a press still down waits on that press (false: it lands as it comes). */
     public static boolean waitsOnHold(String style) {

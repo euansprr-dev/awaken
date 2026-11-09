@@ -7,6 +7,7 @@ import dev.awaken.arms.ArmsConfig;
 import dev.awaken.arms.ArmsMastery;
 import dev.awaken.arms.ArmsRules;
 import dev.awaken.arms.Blow;
+import dev.awaken.arms.ChargeDraw;
 import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.body.Body;
@@ -55,15 +56,16 @@ public final class ArmsPredict {
     static boolean pressHeld, charging;
     static int heldTicks, chargeStart;
     /**
-     * The press is still down and may become a charge (holdOpen), and the strike it began waits at its hit until the
-     * press ends as a tap or becomes the charge (waitHit; the hands hold there: waitNanos of their clock): a held press
-     * never strikes once before it charges (Euan 2026-10-26), and a tap's swing still starts on the press. A dagger's
-     * strike never waits: it lands on the click and a hold charges after it (ArmsRules.waitsOnHold).
+     * The press is still down and may become a charge (holdOpen), and the strike it began waits unseen under the draw
+     * until the press ends as a tap or becomes the charge (waitHit): a held press never shows a light attack
+     * (ChargeDraw; Euan 2026-11-09), and a tap launches its strike from wherever the hands have got to.
      */
     static boolean holdOpen, waitHit;
-    static long waitNanos;
-    /** The waiting strike's swish, arc and body clip, held back until the press is a tap (a hold never shows them). */
+    /** The waiting strike's swish, arc, step in and body clip, held back until the press is a tap (a hold never shows them). */
     static boolean waitShown;
+    /** This press's draw has begun (its body clip with it), and when, on the hands' clock. */
+    private static boolean drawSeen;
+    private static long drawFrom;
     // what the server told us
     static int deflectAt = -1000, dodgeAt = -1000, resonance;
     /** Each style's mastery step, by its index (ArmsMastery; the server sends them). */
@@ -164,6 +166,7 @@ public final class ArmsPredict {
         pressHeld = true;
         heldTicks = 0;
         charging = false;
+        drawSeen = false;
         Archetype.MoveDef heavyDef = st.move(Archetype.Move.HEAVY);
         holdOpen = heavyDef != null && heavyDef.charge().isPresent();
         swungAt = ticks;
@@ -268,7 +271,6 @@ public final class ArmsPredict {
         perfectHeavy = perfect;
         waitHit = m.strike() && holdOpen && s == seq && ArmsRules.waitsOnHold(st.id());
         ArmsFilm.event("begin " + m.key + " step " + st2 + " seq " + s + (waitHit ? " waits" : ""));
-        waitNanos = 0;
         style = st;
         move = m;
         step = st2;
@@ -284,9 +286,9 @@ public final class ArmsPredict {
         waitShown = waitHit;
         swishAt = -1;
         biteAt = -1;
-        rushAt = -1;
-        stepIn(p, st, m, st2, def);
+        launchRate = launchBlend = 0;
         if (!waitHit) {
+            stepIn(p, st, m, st2, def);
             swing(p, st, m, cad);
             ArmsFx.move(p, st, m, cad, perfect);
             ArmsBodies.move(p, st, m);
@@ -321,6 +323,7 @@ public final class ArmsPredict {
             tapped(mc.player);
         }
         if (mc.player != null) {
+            drawBegins(mc.player);
             landPending(mc.player);
             predictHits(mc, mc.player);
         }
@@ -374,45 +377,52 @@ public final class ArmsPredict {
 
     /**
      * Ticks into the running move on the hands' clock (hit-stop holds pause it), with the frame's fraction: a strike
-     * waiting on its press holds at its set, and once tapped drives from there to its hit RUSH times as fast.
+     * waiting on its press stands at 0 under the draw, and a tap starts it there, its wind-up run at the launch's rate.
      */
     static float moveTime() {
-        float t = rawTime();
-        Archetype.MoveDef def = waitHit && move != null && style != null ? style.move(move) : null;
-        if (def != null) return Math.min(t, waitAt(def));
-        if (rushAt < 0 || t <= rushAt) return t;
-        float span = rushTo - rushAt, e = t - rushAt;
-        return e < span / RUSH ? rushAt + e * RUSH : t + span * (1 - 1 / RUSH);
+        if (waitHit) return 0F;
+        float t = (ArmsFeel.nanos() - moveNanos - (ArmsFeel.paused() - movePaused)) / ArmsFeel.TICK_NANOS;
+        return launchRate > 0 ? ChargeDraw.clock(t, launchTo, launchRate) : t;
     }
 
-    private static float rawTime() {
-        return (ArmsFeel.nanos() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos) / ArmsFeel.TICK_NANOS;
+    // a tapped strike's launch (ChargeDraw): its clock's rate to its hit, the hit, and the ticks the hands have to get
+    // there, which they take once (ArmsHands, on the frame the source changes)
+    private static float launchRate, launchTo, launchBlend;
+
+    /** The clock's rate now (a blend into a launching strike carries its true speed). */
+    static float launchRate() {
+        return launchRate > 0 ? launchRate : 1F;
     }
 
-    /**
-     * Where a strike waits while its press is still down (ticks of its clip): its set, where the drive begins (Swing
-     * Studio round 8), never its hit. Waiting at the hit, the blade had already struck to the eye before a charge took it
-     * (Euan 2026-10-29: "it attacks on the click when you are still loading"), and a dagger's stab froze on the target
-     * for most of every click.
-     */
-    static float waitAt(Archetype.MoveDef def) {
-        float set = style == null ? -1 : FpSwings.set(FpSwings.style(style.id()), move);
-        float hit = def.windup() - 0.05F;
-        return set < 0 ? hit : Math.min(hit, set);
+    /** The ticks a launch gives the hands to reach its strike, once; 0 when this isn't a launch. */
+    static float takeLaunch() {
+        float b = launchBlend;
+        launchBlend = 0;
+        return b;
     }
 
-    // a tapped strike that waited at its set drives to its hit RUSH times as fast (the wait given back, a loosed blow
-    // reads as one), from rushAt to rushTo on its clock
-    static final float RUSH = 1.6F;
-    private static float rushAt = -1, rushTo;
+    /** The hands are free to draw: this press's strike is unseen under them, or no blow is still landing. */
+    private static boolean handsFree() {
+        Archetype.MoveDef def = move == null || style == null ? null : style.move(move);
+        return def == null || ChargeDraw.handsFree(waitHit, true, moveTime(), def.activeEnd());
+    }
 
-    /** The waiting strike's clock pinned at its set until now: the time it held is the hands' (it never steps on). */
-    private static void settleWait() {
-        if (!waitHit || move == null || style == null) return;
-        Archetype.MoveDef def = style.move(move);
-        if (def == null) return;
-        float over = rawTime() - waitAt(def);
-        if (over > 0) waitNanos += (long) (over * ArmsFeel.TICK_NANOS);
+    /** The hands are on their way to the charge form (and not yet held there). */
+    static boolean drawing() {
+        return !charging && ChargeDraw.drawing(pressHeld, holdOpen, plunging, handsFree());
+    }
+
+    /** The hands belong to the draw or the charge after it: one source, from the press to the release. */
+    static boolean drawn() {
+        return charging || drawing();
+    }
+
+    /** The draw's first frame: when it began, and the body starting into the same form (third person). */
+    private static void drawBegins(LocalPlayer p) {
+        if (drawSeen || !drawing()) return;
+        drawSeen = true;
+        drawFrom = ArmsFeel.nanos() - ArmsFeel.paused();
+        ArmsBodies.charge(p, (int) ChargeDraw.TICKS);
     }
 
     static void tick() {
@@ -453,8 +463,6 @@ public final class ArmsPredict {
         }
         if (waitHit && move != null && style != null) {
             Archetype.MoveDef def = style.move(move);
-            // held at the set: the clock pinned there, never stepped back (a whole tick taken off made the hands twitch)
-            settleWait();
             // the chain's clock waits as the server's does (ArmsServer.moveTick: its start a tick later for each tick
             // the strike waits past its wind-up), so the next press is timed alike on both sides: unmoved here, the
             // client ran each dagger strike a tick or two ahead of the server's, cut the last one's carry short, and
@@ -472,47 +480,56 @@ public final class ArmsPredict {
         if (!mc.options.keyAttack.isDown()) attackHeld = mineHeld = false;
     }
 
-    /** The waiting strike, a tap after all: its swish now, its arc on the blade's clock from {@code at}, its body clip. */
-    private static void show(LocalPlayer p, float at) {
+    /** The waiting strike, a tap after all: its step in, its swish and arc on the blade's clock, its body clip. */
+    private static void show(LocalPlayer p) {
         waitShown = false;
         Archetype.MoveDef def = style == null || move == null ? null : style.move(move);
         if (def == null) return;
-        ArmsAudio.swing(p, style, move, cadence);
-        ArmsFilm.event("swish");
-        ArmsFx.move(p, style, move, cadence, perfectHeavy, ArmsHands.blowStart(def) - at);
+        stepIn(p, style, move, step, def);
+        swing(p, style, move, cadence);
+        ArmsFx.move(p, style, move, cadence, perfectHeavy, ArmsHands.blowStart(def) / launchRate());
         ArmsBodies.move(p, style, move);
     }
 
-    /** The press let go before its charge: a tap, the strike waiting at its set driving on to its hit now. */
+    /**
+     * The press let go before its charge: a tap. The strike that waited under the draw starts now, from wherever the
+     * hands have got to, and reaches its hit by the launch's end.
+     */
     private static void tapped(LocalPlayer p) {
         if (!holdOpen) return;
         holdOpen = false;
-        settleWait();
-        float at = moveTime();
         boolean waited = waitHit;
-        ArmsFilm.event("tap at " + at + (waited ? " waited" : ""));
         waitHit = false;
+        float drawn = drawSeen ? ChargeDraw.drawn((ArmsFeel.nanos() - ArmsFeel.paused() - drawFrom) / ArmsFeel.TICK_NANOS) : 0F;
+        ArmsFilm.event("tap drawn " + drawn + (waited ? " waited" : ""));
         Archetype.MoveDef def = waited && style != null && move != null ? style.move(move) : null;
-        if (def != null && def.windup() > at + 0.1F) { // it waited at its set: the drive given back
-            rushAt = at;
-            rushTo = def.windup();
+        if (def != null) {
+            moveNanos = ArmsFeel.nanos();
+            movePaused = ArmsFeel.paused();
+            launchTo = def.windup();
+            launchRate = ChargeDraw.launchRate(launchTo, drawn);
+            launchBlend = ChargeDraw.launchTicks(launchTo, drawn);
         }
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_TAP, p.getYRot(), p.getXRot(), -1));
-        if (waitShown) show(p, at);
+        if (waitShown) show(p);
+        else if (drawSeen) ArmsBodies.settle(p); // no strike of its own to take the body over (one still queued, or none)
     }
 
     private static void heldOrReleased(LocalPlayer p, Minecraft mc) {
         Archetypes.Loaded st = style;
         Archetype.MoveDef heavy = st == null ? null : st.move(Archetype.Move.HEAVY);
         if (heavy == null || heavy.charge().isEmpty() || !fights(p)) {
-            pressHeld = false;
+            pressHeld = charging = false; // the weapon put away mid-draw: the body doesn't stay in it
+            if (drawSeen) ArmsBodies.settle(p);
             return;
         }
         Archetype.Charge c = heavy.charge().get();
         if (mc.options.keyAttack.isDown()) {
             heldTicks++;
-            if (!charging && heldTicks >= c.min()) {
-                // held: the strike that began on the press never lands (it waited at its set); the charge takes its place
+            if (!charging && heldTicks >= c.min() && handsFree()) {
+                // held: the strike that began on the press never lands or shows; the charge takes its place, and the
+                // hands, already on their way to its form, don't notice (a blow still landing goes through first)
+                drawBegins(p);
                 holdOpen = false;
                 waitHit = false;
                 waitShown = false;
@@ -524,10 +541,10 @@ public final class ArmsPredict {
                 moveStart = ticks;
                 moveNanos = ArmsFeel.nanos();
                 movePaused = ArmsFeel.paused();
+                launchRate = 0;
                 step = -1;
                 ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_CHARGE, p.getYRot(), p.getXRot(), -1));
                 ArmsAudio.charge(p);
-                ArmsBodies.charge(p);
             }
             if (charging && c.min() + (ticks - chargeStart) == c.glint()) ArmsAudio.glint(p);
             return; // held at full charge for as long as the key is down: it goes only when let go (Euan 2026-10-26)
@@ -559,13 +576,16 @@ public final class ArmsPredict {
     private static boolean guardUp;
     static int plungeSeq;
 
-    /** How far a held heavy has charged (0..1, the glint at its mark), or -1 when not charging. */
+    /** Ticks a press must stay down before the charge's meter shows: a tap never lights it. */
+    private static final int METER_FROM = 2;
+
+    /** How far a held heavy has charged (0..1, the glint at its mark), or -1 when none is drawn: it fills from the press, so the mark is no step. */
     static float charge() {
-        if (!charging || style == null) return -1;
+        if (style == null || !(charging || drawing() && heldTicks >= METER_FROM)) return -1;
         Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
         if (heavy == null || heavy.charge().isEmpty()) return -1;
         Archetype.Charge c = heavy.charge().get();
-        return Mth.clamp((c.min() + (ticks - chargeStart)) / (float) c.glint(), 0, 1); // full at the glint
+        return Mth.clamp((charging ? c.min() + (ticks - chargeStart) : heldTicks) / (float) c.glint(), 0, 1); // full at the glint
     }
 
     /** Whether a held heavy is on its glint right now (a release would be perfect). */
@@ -841,7 +861,7 @@ public final class ArmsPredict {
                     fadeFrom = ticks;
                     move = null;
                     step = -1;
-                    charging = false;
+                    charging = pressHeld = holdOpen = waitHit = false; // nothing to draw toward: the press is void
                     ArmsBodies.settle(p);
                 }
             }
@@ -1003,7 +1023,7 @@ public final class ArmsPredict {
             }
             case ArmsPayloads.CHARGE -> {
                 Entity e = mc.level.getEntity(s.entity());
-                if (e != null) ArmsBodies.charge(e);
+                if (e != null) ArmsBodies.charge(e, ArmsBodies.SEEN_DRAW);
             }
             case ArmsPayloads.DODGE -> {
                 Entity e = mc.level.getEntity(s.entity());
@@ -1058,7 +1078,8 @@ public final class ArmsPredict {
         biteAt = -1;
         step = -1;
         buffered = null;
-        pressHeld = charging = dodging = plunging = false;
+        pressHeld = charging = dodging = plunging = holdOpen = waitHit = drawSeen = false;
+        launchRate = launchBlend = 0;
         dodgeCharges = -1;
         resonance = 0;
         BROKEN.clear();

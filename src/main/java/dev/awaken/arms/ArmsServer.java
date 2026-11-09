@@ -260,9 +260,8 @@ final class ArmsServer {
     static void begin(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.Move move, int step, int cadence, long now, int seq) {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
-        // a chain strike begun by a press still down waits at its hit for the press's end: a tap lands it, a hold
-        // becomes the charge instead (the swing starts at once either way: a tap is never late); a dagger's lands as it
-        // comes, and the hold charges after it (ArmsRules.waitsOnHold)
+        // a chain strike begun by a press still down waits at its hit for the press's end, unseen (the client's hands
+        // are on the draw, ChargeDraw): a tap lands it, a hold becomes the charge instead (ArmsRules.waitsOnHold)
         s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq && ArmsRules.waitsOnHold(style.id());
         FilmLog.server("begin " + move.key + " step " + step + " seq " + seq + " tick " + now + (s.waitHit ? " waits" : ""));
         s.swishAt = 0;

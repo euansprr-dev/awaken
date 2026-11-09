@@ -268,12 +268,6 @@ public final class FpSwings {
         return c == null ? null : c.swishSound();
     }
 
-    /** When a strike's drive begins (ticks of its clip; Clip's set), or -1 when the file doesn't say. */
-    public static float set(@Nullable Style st, Archetype.@Nullable Move m) {
-        Clip c = st == null || m == null ? null : st.moves().get(m);
-        return c == null ? -1F : c.set();
-    }
-
     /**
      * The guard (Style's guard): the hand's move into {@code d} and its turn into {@code q} with the weapon up, a vanilla
      * item turned from its own hold to the same place as {@link #sample} turns it. False without one.

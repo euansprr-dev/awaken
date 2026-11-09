@@ -30,10 +30,11 @@ import java.util.Map;
 final class ArmsWrist {
     private ArmsWrist() {}
 
-    /** A fighter's move in the air: its style's keys, the move, the tick its clip began; or a heavy's draw held. */
-    private record Going(FpSwings.Style style, Archetype.Move move, long start, boolean held) {}
+    /** A fighter's move in the air: its style's keys, the move, the tick its clip began; or a heavy's draw held, turning in over {@code fade} ticks. */
+    private record Going(FpSwings.Style style, Archetype.Move move, long start, boolean held, int fade) {}
 
     private static final Map<Integer, Going> GOING = new HashMap<>();
+    private static final Quaternionf SQUARE = new Quaternionf();
 
     /** The straight clips play (no Bendable Cuboids, so no elbows): their own wrist keys, where a rig solved them. */
     private static final boolean STRAIGHT = !net.neoforged.fml.ModList.get().isLoaded("bendable_cuboids");
@@ -48,17 +49,17 @@ final class ArmsWrist {
             GOING.remove(e.getId());
             return;
         }
-        GOING.put(e.getId(), new Going(st, move, e.level().getGameTime(), false));
+        GOING.put(e.getId(), new Going(st, move, e.level().getGameTime(), false, 0));
     }
 
-    /** A heavy's draw held (its charge clip): the wrist holds the turn the heavy is loosed with, so nothing snaps. */
-    static void charge(Entity e) {
+    /** A heavy's draw held (its charge clip, {@code fade} ticks in): the wrist comes round with it to the turn the heavy is loosed with, so nothing snaps. */
+    static void charge(Entity e, int fade) {
         GOING.remove(e.getId());
         if (!(e instanceof LivingEntity l) || l.getMainArm() == HumanoidArm.LEFT) return;
         Archetypes.Loaded style = Arms.styleOf(l.getMainHandItem());
         FpSwings.Style st = style == null ? null : FpSwings.style(style.id());
         if (st != null && FpSwings.wristLength(st, Archetype.Move.HEAVY) > 0) {
-            GOING.put(e.getId(), new Going(st, Archetype.Move.HEAVY, 0L, true));
+            GOING.put(e.getId(), new Going(st, Archetype.Move.HEAVY, e.level().getGameTime(), true, fade));
         }
     }
 
@@ -81,8 +82,11 @@ final class ArmsWrist {
         Going g = GOING.get(holder);
         Minecraft mc = Minecraft.getInstance();
         if (g == null || mc.level == null) return false;
-        float t = g.held() ? 0F : (mc.level.getGameTime() - g.start()) + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        return t <= FpSwings.wristLength(g.style(), g.move()) && FpSwings.wrist(g.style(), g.move(), left, STRAIGHT, t, out);
+        float since = (mc.level.getGameTime() - g.start()) + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        float t = g.held() ? 0F : since;
+        if (t > FpSwings.wristLength(g.style(), g.move()) || !FpSwings.wrist(g.style(), g.move(), left, STRAIGHT, t, out)) return false;
+        if (g.held() && since < g.fade()) SQUARE.slerp(out, ArmsHands.easeInOutSine(since / g.fade()), out);
+        return true;
     }
 
     /** The player's render-state modifier: while a move turns the wrist, its hand items again, marked with their arm. */

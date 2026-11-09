@@ -6804,27 +6804,45 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   arc went on filling to 24 past the ting. Now the arc is full and gold at the ting and stays so; the server counts a
   tick short as full (`ArmsServer.GLINT_GRACE`: its count starts when it hears the charge, a tick or so late). **Tap or hold**
   (Euan 2026-10-26: "when you long click to power up your attack... on the first click, before letting go, it already
-  attacks"): the press starts the chain's strike at once, so a tap is never late, but for a style whose heavy charges
-  the strike's hit waits at its wind-up's end while the key stays down (`ArmsPredict.waitHit`). The hands hold at the
-  strike's set, where its drive begins (`fp_swings.json`'s `set`, Swing Studio round 8), not at the hit (Euan
-  2026-10-29: "it attacks on the click when you are still loading": at the hit the blade had already struck, to the
-  eye, before the charge took it, and a dagger's 1-tick stab froze on the target for most of every click). Let go
-  before the charge's 6 ticks and it is a tap (`PRESS_TAP`): the strike lands then, its drive from the set to the hit
-  run 1.6 times as fast (`ArmsPredict.RUSH`), giving back some of the wait. The key's release is read every frame
-  (`ArmsPredict.frame`), not on the next tick (up to 50 ms late). While a strike waits, the client's chain clock waits
-  as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
-  time the next press alike: unmoved, the client ran each dagger strike a tick or two ahead of the server, cut the last
+  attacks"; 2026-11-09: "it should go straight into an animation... the moment you start clicking long... it brings the
+  weapon into its charge like form. But right now it just glitches into its form, or sometimes it starts an attack and
+  then cancels the animation midway"). **The draw** (`ChargeDraw`): someone drawing a weapon back doesn't begin a light
+  blow and swap to a heavy one; every press starts the same pull back, and letting go early just looses it sooner. Rounds
+  of 2026-10-26, 10-29 and Swing Studio's round 8 each moved where in the light strike a held press waited (its hit, then
+  its `set`), so every hold still showed 300 ms of a light attack and then swapped clips at the mark; the fault was showing
+  the strike at all. Now, from the frame of a press that may charge, the hands leave for the heavy's drawn pose (its clip's
+  first key, the very pose it is loosed from) on one curve over 6 ticks (`ChargeDraw.TICKS`, `SwingBlend`'s quintic: about
+  6% of the way after a 60 ms click, 21% after 100 ms, there on the charge's mark), from wherever they are. The draw and the
+  charge are one source of the hands (`ChargeDraw.source`), so the mark (6 ticks down, `PRESS_CHARGE`) moves nothing; the
+  arm's tremble grows from nothing after it, and the charge's meter fills from the press (from 2 ticks down, so a tap never
+  lights it) and doesn't jump there either. The press still begins the chain's strike on both sides (`ArmsPredict.waitHit`,
+  `ArmsServer.waitHit`), so a tap is never queued behind a decision, but it is out of sight: its clock stands at 0, and the
+  hands, the view's lean, its ribbon, swish, arc, step in and body clip all wait until the press is a tap. A press landing
+  in another blow lets it land first (`handsFree`): the hands leave once it has, and the mark waits for it too; one landing
+  in a recovery leaves at once, its strike under the draw or still queued. **A tap** (let go before the mark, `PRESS_TAP`,
+  read every frame by `ArmsPredict.frame`, not on the next tick) starts the strike that waited, from wherever the hands
+  have got to: its clip from its first key with its wind-up at twice speed (`TAP_RATE`), the hands carried onto it by its
+  hit (`launchTicks`: half the wind-up, at least half a tick, and up to a tick longer the further the draw has come, so a
+  late tap from nearly full draw doesn't snap across). That is the one trade: the blade reaches its hit 9 to 25 ms later
+  than when the wind-up played under the press on a 60 ms click, 17 to 44 ms on a 100 ms click (the Daggers, which struck on
+  the press until now, 38 and 85 ms); the server's hit is where it was. A tap with no strike of its own (one still queued,
+  or a press too early to count) hands the blade back to what was running. While a strike waits, the client's chain clock
+  waits as the server's does (its start a tick later for every tick past the wind-up, as `ArmsServer.moveTick`), so both
+  time the next press alike: unmoved, the client ran each strike a tick or two ahead of the server, cut the last
   strike's carry short, and took presses the server's buffer refused, so strikes never landed and the chain fell out
   of step (the server's MOVE then swapped the clip mid-swing). A hit's hold freezes the hands only while the strike it
-  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and
-  the strike is dropped unlanded and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is
-  dropped too). The charge holds at full for as long as the key is down, trembling, and goes only on the release (no
-  auto-release; held past full it counts as full). The server never holds a blow on the client's word alone: with no
-  tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4) ticks after the charge's mark. Until the press is a tap the
-  waiting strike shows nothing but the first-person wind-up: no swish, no arc, no third-person clip, and nobody near
-  sees the arm swing or hears it (`ArmsServer.shown`, `ArmsPredict.show`); a hold never shows it, and a tapped one is
-  shown from the release, its arc on the blade's clock. A riposte, Slipcut, Undercut or Plunge starts as it always did.
-  Test `arms_tap_or_hold`. A block under the
+  came from is still on them: a late one froze the next strike mid-swing. Still down at 6 ticks and the strike is dropped
+  unlanded and unseen and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is dropped too). The
+  charge holds at full for as long as the key is down, trembling, and goes only on the release (no auto-release; held past
+  full it counts as full); the heavy's clip begins on the pose the hands are in, so the release has nothing to carry. The
+  server never holds a blow on the client's word alone: with no tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4)
+  ticks after the charge's mark. In third person nobody near sees a waiting strike (`ArmsServer.shown`): no swing, no
+  swish, no clip. The fighter's own body starts its held draw with the hands, over the same ticks, and a tap's strike clip
+  takes it over; everyone else's copy of it starts on the server's word at the mark, over 5 ticks (`ArmsBodies.SEEN_DRAW`,
+  was 2), and the weapon's wrist comes round with the clip (`ArmsWrist`; it snapped on at once). A riposte, Slipcut,
+  Undercut or Plunge starts as it always did, and a press held on through one draws after its blow.
+  Tests `arms_tap_or_hold`, `arms_dagger_click` and `arms_draw_smooth` (every style, from rest and from each chain strike's
+  recovery: no frame steps further than the curve or the motion it came in on). A block under the
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
   apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep
@@ -7244,9 +7262,10 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     draw (`arms_keys.kick_of`): a stab nods the view in a touch (0.6, no turn; the row kicked a right stab sideways), a
     cut kicks along the way its points travel on screen into the hit, and a pair cutting out both ways nods like a stab.
     Every other style kicks along its row's from/to as before.
-  - *Strike on the click* (`ArmsRules.waitsOnHold`): a dagger's strike lands as it comes even while the press is still
-    down, and a press held on charges the heavy from where the stab ended (arms_dagger_click). Every other style's held
-    press waits at its set (arms_tap_or_hold).
+  - *Strike on the click* (`ArmsRules.waitsOnHold`, 2026-11-02 to 2026-11-09): a dagger's strike landed as it came even
+    while the press was still down, and a held press charged after the stab. Undone by Euan's 2026-11-09 "it still sometimes
+    attacks once before starting the charge": a dagger's press now waits unseen under the draw like every other
+    (**Tap or hold**, arms_dagger_click). `ArmsRules.STRIKE_ON_PRESS` is the list to name it in again.
 - **Swing Studio** (plan docs/weapon-anims/plan.html, page https://claude.ai/artifact/NZVvwxBumfRvcwRiiA45co; Euan
   approved all six decisions 2026-10-28: "go ahead with the entire plan... so that it genuinely feels extremely
   satisfying"; his notes: swings aim too far up, the katana is floaty, "each strike starts from rest... it kind of feels
@@ -7407,8 +7426,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     with most weapons hides the weapon under your view"):
     - Every chain strike's clip says where its drive begins (`set`, `swing_studio.set_of`: the last moment before the
       hit its blade's middle is near still; 0 for a quick stab driven from its start, the daggers' strikes 1, 2 and 4).
-      A press still down waits there (the tap or hold rule, §25 above), never at the hit. Test `arms_feel_rules`: every
-      strike's set is at or before its hit.
+      A press still down waited there until the draw (2026-11-09, the tap or hold rule, §25 above); nothing in play reads
+      it now but the wind-up checks. Test `arms_feel_rules`: every strike's set is at or before its hit.
     - Every style holds a guard of its own (`guard`, `swing_studio.guard_pose`), put on the item's hand transform, the
       hands' grips and a pair's twin (mirrored): the grip low on the right (ndc 0.5, -0.76, 0.62 ahead of the eye), the
       blade rising to the left at 46 degrees on the screen, its tip leant 30 degrees away along the eye's ray (which

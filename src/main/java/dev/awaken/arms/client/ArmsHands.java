@@ -5,6 +5,7 @@ import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.Arms;
 import dev.awaken.arms.ArmsItems;
+import dev.awaken.arms.ChargeDraw;
 import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.HandPose;
 import dev.awaken.arms.SwingBlend;
@@ -69,7 +70,7 @@ final class ArmsHands {
     private static void trace(LocalPlayer p) {
         Archetypes.Loaded style = ArmsPredict.style;
         Archetype.Move m = ArmsPredict.move;
-        if (style == null || m == null || ArmsPredict.charging || preview != null) return;
+        if (style == null || m == null || ArmsPredict.drawn() || preview != null) return;
         Archetype.MoveDef def = style.move(m);
         if (def == null) return;
         FpSwings.Style fs = FpSwings.style(style.id());
@@ -194,8 +195,8 @@ final class ArmsHands {
 
     /**
      * The lab's swing (FpSwings), when it has one for the move: an arc about the sword arm's pivot, the edge leading,
-     * through the target under the crosshair on the hit tick. A held heavy waits at the heavy's drawn-back start (and
-     * trembles), an armed Plunge at the Plunge's; with no move, the chop or the hack while vanilla mines with the weapon
+     * through the target under the crosshair on the hit tick. A press that may charge heads for the heavy's drawn-back
+     * start and a held heavy waits there (and trembles), an armed Plunge at the Plunge's; with no move, the chop or the hack while vanilla mines with the weapon
      * (ArmsChop). Mirrored for a left main arm. False: the row's own swing below.
      */
     private static boolean lab(LocalPlayer p, FirstPerson.View v, float partial) {
@@ -206,7 +207,7 @@ final class ArmsHands {
         if (style == null) return false;
         Archetype.Move m;
         float t;
-        boolean tremble = false;
+        boolean drawn = false, tremble = false;
         if (preview != null) {
             m = preview;
             Archetype.MoveDef def = style.move(m);
@@ -214,10 +215,11 @@ final class ArmsHands {
         } else if (ArmsPredict.plunging) {
             m = Archetype.Move.PLUNGE;
             t = 0;
-        } else if (ArmsPredict.charging) {
+        } else if (ArmsPredict.drawn()) {
             m = Archetype.Move.HEAVY;
             t = 0;
-            tremble = true;
+            drawn = true;
+            tremble = ArmsPredict.charging;
         } else {
             m = ArmsPredict.move;
             t = ArmsPredict.viewTime();
@@ -244,7 +246,7 @@ final class ArmsHands {
         // a weapon in each hand: the hand not striking draws back to the next strike's set while this one lands (Swing
         // Studio round 4; Euan 2026-10-28: "let the idle hand draw back while the other strikes"); in a both-hands
         // strike, the off hand's own way into it, from where it waited (round 9)
-        boolean idle = has && !tremble && FpSwings.idle(st, m, t, ours, IDLE_D, IDLE_Q);
+        boolean idle = has && !drawn && FpSwings.idle(st, m, t, ours, IDLE_D, IDLE_Q);
         boolean twin = idle && hand == FpSwings.Hand.BOTH;
         if (twin) offMoves = false;
         boolean mainIdle = idle && !mainMoves, offIdle = idle && !offMoves;
@@ -261,19 +263,22 @@ final class ArmsHands {
             REST_D.zero();
             REST_Q.identity();
         }
-        // a change of source (a chained strike, a move ended or refused, the charge taken up): each hand carried from
-        // where it was shown into the new one, never a jump (SwingBlend)
+        // a change of source (a chained strike, a move ended or refused, a press starting its draw, a tap's launch, the
+        // release): each hand carried from where it was shown into the new one, never a jump (SwingBlend). The draw and
+        // the charge held after it are one source, so the charge's mark changes nothing on the hands
         float now = handsNow();
-        if (m != shownMove || ArmsPredict.moveNanos != shownNanos || ArmsPredict.charging != shownCharging || cutting != shownCutting) {
+        long source = ChargeDraw.source(drawn, ArmsPredict.moveNanos);
+        if (m != shownMove || source != shownNanos || cutting != shownCutting) {
             boolean cutOut = shownCutting && !cutting;
             shownMove = m;
-            shownNanos = ArmsPredict.moveNanos;
-            shownCharging = ArmsPredict.charging;
+            shownNanos = source;
             shownCutting = cutting;
             Archetype.MoveDef def = m == null ? null : style.move(m);
-            float ticks = cutOut ? ArmsChop.OUT : def == null ? REST_BLEND : Mth.clamp(def.windup() * 0.8F, 1F, 2.5F);
-            ArmsFilm.event("source " + (m == null ? "-" : m.key) + " at " + t + " blend " + ticks + (ArmsPredict.charging ? " charging" : ""));
-            sourceMotion(st, m, t, ours, has && !tremble);
+            float launch = drawn ? 0F : ArmsPredict.takeLaunch();
+            float ticks = cutOut ? ArmsChop.OUT : drawn ? ChargeDraw.TICKS : launch > 0 ? launch : def == null ? REST_BLEND
+                    : Mth.clamp(def.windup() * 0.8F, 1F, 2.5F);
+            ArmsFilm.event("source " + (m == null ? "-" : m.key) + " at " + t + " blend " + ticks + (drawn ? " drawn" : ""));
+            sourceMotion(st, m, t, ours, has && !drawn, launch > 0 ? ArmsPredict.launchRate() : 1F);
             MAIN_B.begin(now, mainMoves ? D : mainIdle ? IDLE_D : REST_D, mainMoves ? Q : mainIdle ? IDLE_Q : REST_Q,
                     mainMoves ? VD : ZERO, mainMoves ? VW : ZERO, ticks);
             OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : offStance ? REST_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : offStance ? REST_Q : ID,
@@ -303,26 +308,26 @@ final class ArmsHands {
     private static final float REST_BLEND = 3F;
     private static Archetype.@Nullable Move shownMove;
     private static long shownNanos;
-    private static boolean shownCharging, shownCutting;
+    private static boolean shownCutting;
     private static final org.joml.Vector3f VD = new org.joml.Vector3f(), VW = new org.joml.Vector3f(), ZERO = new org.joml.Vector3f(),
             DA = new org.joml.Vector3f(), IDLE_D = new org.joml.Vector3f(), REST_D = new org.joml.Vector3f();
     private static final org.joml.Quaternionf IDLE_Q = new org.joml.Quaternionf(), REST_Q = new org.joml.Quaternionf(),
             STANCE_Q = new org.joml.Quaternionf();
     private static final org.joml.Quaternionf ID = new org.joml.Quaternionf(), QA = new org.joml.Quaternionf(), QC = new org.joml.Quaternionf();
 
-    /** The new source's motion at {@code t} into VD, VW (zero for a held pose). */
-    private static void sourceMotion(FpSwings.@Nullable Style st, Archetype.@Nullable Move m, float t, boolean ours, boolean moving) {
+    /** The new source's motion at {@code t} into VD, VW (zero for a held pose), its clock running at {@code rate}. */
+    private static void sourceMotion(FpSwings.@Nullable Style st, Archetype.@Nullable Move m, float t, boolean ours, boolean moving, float rate) {
         VD.zero();
         VW.zero();
         if (!moving || m == null) return;
         float h = 0.1F;
         if (!FpSwings.sample(st, m, t + h, ours, DA, QA)) return;
-        VD.set(DA).sub(D).div(h);
+        VD.set(DA).sub(D).mul(rate / h);
         Q.conjugate(QC);
         QA.mul(QC, QA); // the turn over h
         if (QA.w < 0) QA.set(-QA.x, -QA.y, -QA.z, -QA.w);
         float sn = (float) Math.sqrt(Math.max(0F, 1F - QA.w * QA.w));
-        if (sn > 1e-6F) VW.set(QA.x / sn, QA.y / sn, QA.z / sn).mul(2F * (float) Math.acos(Math.min(1F, QA.w)) / h);
+        if (sn > 1e-6F) VW.set(QA.x / sn, QA.y / sn, QA.z / sn).mul(2F * (float) Math.acos(Math.min(1F, QA.w)) * rate / h);
     }
 
     // each hand's move this frame (authored right-handed, before mirroring): where its grip is

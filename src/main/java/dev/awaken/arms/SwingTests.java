@@ -17,6 +17,7 @@ final class SwingTests {
         AwakenTests.register("arms_swing_reload", 20, SwingTests::reload);
         AwakenTests.register("arms_feel_rules", 20, SwingTests::feelRules);
         AwakenTests.register("arms_chain_flow", 20, SwingTests::chainFlow);
+        AwakenTests.register("arms_draw_smooth", 20, SwingTests::drawSmooth);
     }
 
     /**
@@ -109,7 +110,7 @@ final class SwingTests {
      * The baked file's feel rules: every swish starts on the press or after it and before the blow's active ticks end,
      * so the whoosh never trails the blow; every bite slows the hands without stopping them; the two-handed weapons,
      * and only they, close the off hand on the handle below the main, a hand's width or more from it. Round 8: every
-     * chain strike says where a press still down waits, at or before its hit; every style holds its guard with the hand
+     * chain strike says where its drive begins, at or before its hit; every style holds its guard with the hand
      * on the weapon in view (Euan 2026-10-29: "blocking with most weapons hides the weapon under your view").
      */
     static void feelRules(GameTestHelper h) {
@@ -125,7 +126,7 @@ final class SwingTests {
                         a.id() + " " + e.getKey().key + "'s swish starts by its hit (" + c.swish() + ")");
                 h.assertTrue(c.biteTicks() == 0 || c.biteRate() > 0 && c.biteRate() <= 1, a.id() + " " + e.getKey().key + "'s bite slows, never stops");
                 if (e.getKey().strike()) {
-                    h.assertTrue(c.set() >= 0 && c.set() <= def.windup(), a.id() + " " + e.getKey().key + " waits at its set, by its hit (" + c.set() + ")");
+                    h.assertTrue(c.set() >= 0 && c.set() <= def.windup(), a.id() + " " + e.getKey().key + "'s drive begins by its hit (" + c.set() + ")");
                 }
                 // round 14: a move's own ribbon ticks are its stroke alone, through the hit and never on into the way home
                 float hit = def.windup() > 0 ? def.windup() : def.active() * 0.5F;
@@ -205,5 +206,84 @@ final class SwingTests {
         for (int i = 0; i < 3; i++) far[i] = FpSwings.far(tw, Archetype.Move.byKey("strike_" + (i + 1)));
         h.assertTrue(tw != null && !far[0] && far[1] && !far[2], "the twin blades' ends take turns: strike 2 leads with the other end");
         h.succeed();
+    }
+
+    /** One frame at 60 fps, in ticks. */
+    private static final float FRAME = 1F / 3F;
+
+    /**
+     * The draw (SPEC §25 "Tap or hold"; Euan 2026-11-09: "it just glitches into its form"): for every style, from rest and
+     * from the earliest press out of each chain strike's recovery, the hand goes to the charge form on one curve with no
+     * frame stepping further than that curve or the motion it was already in; the draw and the charge are one source, so
+     * the mark changes nothing; and it arrives by the mark. A tap's clock meets its hit with no step. A guard against the
+     * old swap, not a measure of how it looks.
+     */
+    static void drawSmooth(GameTestHelper h) {
+        h.assertTrue(ChargeDraw.source(true, 123L) == ChargeDraw.source(true, 456L), "the charge's mark starts no new source");
+        h.assertTrue(ChargeDraw.source(false, 123L) != ChargeDraw.source(true, 123L), "a move is another source than the draw");
+        h.assertTrue(ChargeDraw.handsFree(false, true, 2F, 4) == false && ChargeDraw.handsFree(false, true, 4F, 4), "a blow still landing goes through first");
+        Vector3f form = new Vector3f(), d = new Vector3f(), was = new Vector3f(), zero = new Vector3f();
+        Quaternionf formQ = new Quaternionf(), q = new Quaternionf(), wasQ = new Quaternionf(), id = new Quaternionf();
+        int runs = 0;
+        for (Archetypes.Loaded style : Archetypes.all()) {
+            FpSwings.Style st = FpSwings.style(style.id());
+            Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
+            if (st == null || heavy == null || heavy.charge().isEmpty()) continue;
+            h.assertTrue(heavy.charge().get().min() >= ChargeDraw.TICKS, style.id() + "'s draw arrives by the charge's mark");
+            h.assertTrue(FpSwings.sample(st, Archetype.Move.HEAVY, 0, true, form, formQ), style.id() + " has a charge form");
+            java.util.List<Archetype.Move> from = new java.util.ArrayList<>(style.chain());
+            from.add(null); // from rest
+            for (Archetype.Move prev : from) {
+                Archetype.MoveDef def = prev == null ? null : style.move(prev);
+                float press = def == null ? 0F : def.hasCadence() ? def.cadence().get(0) : def.windup() + def.active() + ArmsRules.MASTERY_LINK;
+                SwingBlend b = new SwingBlend();
+                float now = 0F;
+                float carried = 0F, turned = 0F;
+                for (int i = -6; i <= 0; i++, now += FRAME) {
+                    if (prev != null) FpSwings.sample(st, prev, press + i * FRAME, true, d, q);
+                    else FpSwings.stance(st, true, d.zero(), q.identity());
+                    b.apply(now, d, q);
+                    if (i > -6) {
+                        carried = d.distance(was);
+                        turned = degrees(q, wasQ);
+                    }
+                    was.set(d);
+                    wasQ.set(q);
+                }
+                float gap = was.distance(form), turn = degrees(wasQ, formQ);
+                b.begin(now, form, formQ, zero, zero, ChargeDraw.TICKS);
+                // the curve's fastest frame, or the one the hand came in on, and a little for the blend's own rounding
+                float maxStep = Math.max(carried, 1.875F * gap / ChargeDraw.TICKS * FRAME) * 1.1F + 2e-3F;
+                float maxTurn = Math.max(turned, 1.875F * turn / ChargeDraw.TICKS * FRAME) * 1.1F + 0.3F;
+                String what = style.id() + " from " + (prev == null ? "rest" : prev.key);
+                for (float t = 0; t <= ChargeDraw.TICKS + 3F; t += FRAME, now += FRAME) {
+                    d.set(form);
+                    q.set(formQ);
+                    b.apply(now, d, q);
+                    h.assertTrue(d.distance(was) <= maxStep, what + ": no step across the draw at " + t + " (" + d.distance(was) + " > " + maxStep + ")");
+                    h.assertTrue(degrees(q, wasQ) <= maxTurn, what + ": no turn across the draw at " + t + " (" + degrees(q, wasQ) + " > " + maxTurn + ")");
+                    was.set(d);
+                    wasQ.set(q);
+                    if (t >= ChargeDraw.TICKS) {
+                        h.assertTrue(d.distance(form) < 2e-3F && degrees(q, formQ) < 0.5F, what + ": in the charge form by the mark");
+                    }
+                }
+                runs++;
+            }
+            for (float drawn = 0F; drawn <= 1F; drawn += 0.25F) {
+                for (Archetype.Move m : style.chain()) {
+                    float w = style.move(m).windup(), ticks = ChargeDraw.launchTicks(w, drawn), rate = ChargeDraw.launchRate(w, drawn);
+                    h.assertTrue(ticks >= 0.5F && Math.abs(ChargeDraw.clock(ticks, w, rate) - w) < 1e-3F
+                                    && Math.abs(ChargeDraw.clock(ticks + 1e-3F, w, rate) - w) < 2e-2F,
+                            style.id() + " " + m.key + ": a tap's clock meets its hit at the launch's end, with no step");
+                }
+            }
+        }
+        h.assertTrue(runs >= 48, "every style's draw is checked (" + runs + ")");
+        h.succeed();
+    }
+
+    private static float degrees(Quaternionf a, Quaternionf b) {
+        return (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(a.dot(b)))));
     }
 }
