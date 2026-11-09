@@ -258,6 +258,14 @@ public final class Fx {
         send(level, e, e.pos(), null, null, RANGE);
     }
 
+    /** A held charge at {@code at} is over, however it ended. Add the flags and send. */
+    public static Emit chargeEnd(Cast c, Vec3 at) {
+        Emit e = at(c, FxKind.CHARGE_END, at).noAnim();
+        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
+        if (prof != null) e.profile(prof.id(), CastProfiles.END); // what lets the caster's hands go when the key is still down
+        return e;
+    }
+
     /**
      * Ends effects attached to an entity: {@code what} 0 = a charge (and the held wind-up pose), an aura's ordinal + 1 =
      * that aura, -2 = domes and shells.

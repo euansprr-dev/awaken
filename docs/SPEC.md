@@ -11265,6 +11265,15 @@ setting (D13).
   no channel-end message to free the hands. Railgun and Telekinesis keep their held gestures until their channel ends.
   The runtime permits a hold hand-over only while a channel's held cast is live. `power_cast_profiles` checks the power
   mode, profile and first-person clip lifetime together.
+- **A held pose has an owner** (Euan, 2026-11-09: two bare fists stuck up in a fight while he swung a weapon). A hold loop runs
+  until something stops it and hides what you hold, and the record of "your cast" is one per entity, so tapping another
+  power over a held Charged Shot left letting go aimed at the wrong cast, and the loop ran for good. `powers/fx/HeldHands`
+  now owns it: each power key remembers the held cast it went down on, letting go ends that cast and no other, and one
+  loop plays at a time. It lives only while a key or a running cast of the server's holds it (checked every tick), and a
+  reset clears the keys. The server's end of a held cast always carries the END beat, on every way it can end
+  (`Fx.end`, `Fx.chargeEnd`), so a charge that runs out with the key still down lets go too. Only a held cast's `hold1p` may
+  be `loop: true` in the first-person clip files. `power_hold_pose_has_an_owner` runs every order of press, release,
+  hand-over, server end and tick; `power_held_casts_say_they_ended` checks the end on the server's real path.
 - **Hands additions**: `FpClipSet.FILES` also reads `fp_casts.json`; a clip may be `stow` (its fists are drawn even when a hand holds
   something, so a held weapon is out of view while you cast); `FirstPerson.View.stow`, `FirstPerson.LAST_FIST_MAIN/OFF`, `lastFistNanos`.
 - **Sound**: `tools/art/specs/audio_powers.py` renders `sounds/powers/power_{stomp_lift,stomp_plant,beam_gather,beam_loop,beam_end}_*.ogg`

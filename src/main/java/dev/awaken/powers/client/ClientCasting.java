@@ -110,7 +110,10 @@ final class ClientCasting {
         ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, predicted, AIM[0], AIM[1], keys));
         dev.awaken.core.api.MovementHooks.clientCastStarting(p, t.id.toString(), t.family.name(), predicted); // the body: sprint ends, a slide yields to motion
         if (!toggleOff) dev.awaken.powers.client.fx.FxClient.predictCast(p, t, o.level());
-        if (t.mode == PowerType.Mode.CHANNEL) channeling[slot] = true;
+        if (t.mode == PowerType.Mode.CHANNEL) {
+            channeling[slot] = true;
+            dev.awaken.powers.client.fx.FxClient.keyDown(slot, t, o.level());
+        }
         if (!toggleOff && t.mode == PowerType.Mode.INSTANT) {
             int cd = PowerMath.cooldown(t.cooldown, t.variant(o.variant()).cooldown(), o.level(), 0);
             cd = Math.max(1, Math.round(cd * PowerLadder.cdScale(t.path, o.level())));
@@ -131,11 +134,12 @@ final class ClientCasting {
         if (p == null) return;
         dev.awaken.core.api.Aim.bend(p.getYRot(), p.getXRot(), AIM);
         ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.RELEASE, false, AIM[0], AIM[1], 0));
-        dev.awaken.powers.client.fx.FxClient.predictRelease(p);
+        dev.awaken.powers.client.fx.FxClient.predictRelease(p, slot);
     }
 
     static void reset() {
         java.util.Arrays.fill(channeling, false);
+        dev.awaken.powers.client.fx.FxClient.keysForgotten();
         waterStand = 0;
     }
 

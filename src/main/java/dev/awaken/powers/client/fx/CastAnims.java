@@ -183,9 +183,10 @@ final class CastAnims {
         return a == null || a.profile == null || a.profile.id() != profileId ? -1 : now(pt) - a.start;
     }
 
-    static void release(int entityId) {
+    /** That cast lets go (0: a cast with no profile). A cast made since is someone else's and stays. */
+    static void release(int entityId, int profileId) {
         Anim a = find(entityId);
-        if (a != null && a.held && a.releasedAt < 0) {
+        if (a != null && a.held && a.releasedAt < 0 && (a.profile == null ? profileId <= 0 : a.profile.id() == profileId)) {
             a.releasedAt = FxWorld.ticks;
             if (a.profile != null) {
                 momentFor(entityId, a.profile.endMoment(), a.profile);
