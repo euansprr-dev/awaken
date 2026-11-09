@@ -19671,3 +19671,26 @@ against six kinds of player (stands still, runs, circles, holds guard, keeps awa
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
 
+## 56. A Place for Everything (storage)
+
+Plan and reasons: `docs/storage/PLAN.md`, approved in full by Euan 9 Nov 2026 (automatic "keep my bag tidy" is a no). Module
+`dev.awaken.storage`. Built in stages; this section says what exists.
+
+**The sorts (Stage 0).** One list, in this order, used by the bays, the signs and the Ledger, and by Tidy: Stone and earth, Wood,
+Building and light, Ore and metal, Gems, Food, Plants and seed, Beast and monster drops, Gate loot, Gear, Books and brews, Bells and
+leads, Odd things. It replaces §43.12's eleven bays. `Sorts` resolves every item once, the first time it's asked after tags load
+(components aren't bound when the tag event fires), so a lookup is one hash read and nothing is saved. A tag
+`awaken:sort/<key>` beats every rule, then the rules run: gear, potions, food, ores and metal, gems, plants, wood, creature drops,
+dressed blocks (glass, wool, concrete, terracotta) to Building, dug-up stone and earth, any other placeable block to Building, any
+other item of ours to Gate loot, and what's left is Odd. Items of ours from a common creature's loot table are listed in
+`sort/drops`, boss loot stays in Gate loot by that last rule. No name matching at run time.
+
+Measured on this build: 2,673 items (without spawn eggs), 68 in Odd things (2.5%, was 63%): pottery sherds, smithing templates and
+music discs. `storage_sort_golden` holds 300 hand-checked everyday items. `storage_sort_share` fails at 10% and writes every item's
+sort to `run/storage-sorts.txt`.
+
+**Bays (Stage 0).** A chest's sort is what most of its stacks are. `Storehouse.bayFor`: the chest already holding that exact item,
+else one mostly of its sort with room, else an empty one, else null. `WorkRooms.containers` counts a double chest once (either half
+opens the whole of it), counts copper chests, and follows the room's cells when it has them, so a pantry inside an L-shaped hall's
+box isn't the hall's.
+

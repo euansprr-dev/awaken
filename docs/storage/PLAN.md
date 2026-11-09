@@ -1,6 +1,9 @@
 # A Place for Everything: sorting, chests and the room you build for your things
 
-Plan only. Nothing in the game changes until Euan approves it. Written 9 Nov 2026 on `claude/storage-plan-f52faa`, following
+**Approved by Euan, 9 Nov 2026: "Go with all recommendations".** All eleven decisions in §12 as recommended, so there is no automatic
+"keep my bag tidy". Built in stages; SPEC §56 records what shipped.
+
+Written 9 Nov 2026 on `claude/storage-plan-f52faa`, following
 `.claude/PLANNING-PROCESS.md` and `.claude/UI-EXCELLENCE.md`. The approval page has the mock-ups and the clickable prototype:
 https://claude.ai/artifact/HJM74AUhQoZwx4TUP7BZFo (private to Euan).
 

@@ -1,6 +1,8 @@
 package dev.awaken.kin.works;
 
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.storage.Sort;
+import dev.awaken.storage.Sorts;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -63,14 +65,14 @@ final class WorksTests {
     /** Everything you drop has a bay: ore and metal, wood, gems, food, plants, drops, gear, bells, stone, and odd things. */
     static void baysSort(GameTestHelper h) {
         Object[][] cases = {
-                {Items.RAW_IRON, Storehouse.Bay.METAL}, {Items.IRON_INGOT, Storehouse.Bay.METAL}, {Items.OAK_LOG, Storehouse.Bay.WOOD},
-                {Items.STICK, Storehouse.Bay.WOOD}, {Items.DIAMOND, Storehouse.Bay.GEMS}, {Items.BREAD, Storehouse.Bay.FOOD},
-                {Items.WHEAT_SEEDS, Storehouse.Bay.PLANTS}, {Items.BONE, Storehouse.Bay.DROPS}, {Items.WOOL.white(), Storehouse.Bay.DROPS},
-                {Items.IRON_SWORD, Storehouse.Bay.GEAR}, {Items.COBBLESTONE, Storehouse.Bay.STONE}, {Items.DIRT, Storehouse.Bay.STONE},
-                {WorksContent.WOKEN_CLAPPER.get(), Storehouse.Bay.BELLS}, {Items.PAINTING, Storehouse.Bay.ODD}};
+                {Items.RAW_IRON, Sort.METAL}, {Items.IRON_INGOT, Sort.METAL}, {Items.OAK_LOG, Sort.WOOD},
+                {Items.STICK, Sort.WOOD}, {Items.DIAMOND, Sort.GEMS}, {Items.BREAD, Sort.FOOD},
+                {Items.WHEAT_SEEDS, Sort.PLANTS}, {Items.BONE, Sort.DROPS}, {Items.WOOL.white(), Sort.BUILDING},
+                {Items.IRON_SWORD, Sort.GEAR}, {Items.COBBLESTONE, Sort.STONE}, {Items.DIRT, Sort.STONE},
+                {WorksContent.WOKEN_CLAPPER.get(), Sort.BELLS}, {Items.PAINTING, Sort.BUILDING}};
         for (Object[] k : cases) {
             ItemStack s = new ItemStack((net.minecraft.world.item.Item) k[0]);
-            h.assertTrue(Storehouse.Bay.of(s) == k[1], s.getHoverName().getString() + " goes to " + k[1] + ", not " + Storehouse.Bay.of(s));
+            h.assertTrue(Sorts.of(s) == k[1], s.getHoverName().getString() + " goes to " + k[1] + ", not " + Sorts.of(s));
         }
         // a Totter's armful goes onto the shelf, and what doesn't fit comes back
         ServerLevel level = h.getLevel();
