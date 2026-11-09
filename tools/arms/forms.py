@@ -27,7 +27,7 @@ FORMS = {
     "axe": {"strike_1": ("chop", [-0.5, -1.0]), "strike_2": ("swing", L2R), "strike_3": ("chop", DOWN),
             "strike_4": ("swing", R2L), "heavy": ("chop", [0.0, -1.0])},
     "greatblade": {"strike_1": ("slash", DIAG), "strike_2": ("swing", L2R), "strike_3": ("whirl", R2L),
-                   "strike_4": ("chop", DOWN), "heavy": ("rise", None)},
+                   "strike_4": ("chop", DOWN), "heavy": ("chop", [-0.3, -1.0])},
     "spear": {"strike_1": ("stab", "line"), "strike_2": ("stab", "low"), "strike_3": ("swing", R2L),
               "strike_4": ("stab", "line"), "heavy": ("stab", "line")},
     "rapier": {"strike_1": ("stab", "line"), "strike_2": ("stab", "low"), "strike_3": ("slash", DIAG),

@@ -7213,6 +7213,16 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   within the wind-up, a stab's point within 0.15 of the crosshair and its blow three times its return, the dagger's free
   hand travelling, one ribbon a swing (the scythe), the scythe's blade in view through the wind-up, and a chain's hands
   never home between strikes.
+- **What play showed about the rigged moves** (Euan 2026-11-09). *No dip on the way home:* a move whose hand is already home
+  when its follow-through ends has nothing left to do, so `swing_studio.cut_pose` returns the rest there; the recovery's rise
+  used to run anyway, and the War-staff's strikes 1 and 3 and the Spear's strike 3 sank and came back up after settling.
+  *The Maul's uppercut* keeps its face to the front: a two-headed weapon has no reason to turn over, and the 170 degrees it
+  unwound about its haft while rising read as a spin glitch (`tools/arms/feel/maul.json`, form `rise`, `roll0` 16). *The
+  Greatblade's heavy* is a chop, not a rise: charged high in view, tip up, grip right of centre, and brought down across the
+  crosshair. The rise it shared held the blade off the bottom of the screen for the whole charge (0% on screen, now 100%);
+  its server row is the same chop (`archetypes.json`, form `chop`, dir [-0.3, -1]). *The Katana is held edge down in third
+  person* (`arms_holds.EDGE_DOWN3`): vanilla's handheld hold puts a design's +x side up as the arm hangs, so it is turned
+  half round about its length, and the rig solves each move's wrist from that hold, so the edge still leads every blow.
 - **Hand-keyed moves** (the dagger and scythe audit's rebuild, Euan 2026-11-02: "Go with all recommendations"; never
   tuned by a script, the Swing Studio's sixteen rounds read worse each time): the Daggers' and the Scythe's moves are
   written pose by pose in `tools/art/arms_keys.py`: the fist placed on the screen at a depth, the point drawn at a

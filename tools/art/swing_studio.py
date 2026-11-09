@@ -893,6 +893,10 @@ def cut_pose(sid, m, held, form, u, F, side, wt, t, kn):
     else:
         gone = _off_screen(held, low)
         up = exit_t if not cad or not gone else min(max(exit_t, cad[0] + 0.25), total - min(kn["rise"], 1.5))
+    # a strike already home, waiting there for the next press, has nothing to rise from: no dip down and back up out of
+    # the stance (Euan 2026-11-09, the war-staff: "puts into the natural stance and then dips downwards and back upwards")
+    if not twirl and float(np.linalg.norm(low[0])) < 0.03 and abs(float(L.mat_quat(low[1])[3])) > 0.9996:
+        return out(rest, spun)
     rise = min(kn["rise"], total - up)
     far = far_led(st, mv)
     seen_out = lambda q: out(q, spun)

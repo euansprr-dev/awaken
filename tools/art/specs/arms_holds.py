@@ -186,11 +186,18 @@ def flipped3(style, edge):
     return bool(edge and lead and edge != lead)
 
 
+# single-edged blades held edge down in third person (Euan 2026-11-09, the katana: "the blade is facing upwards instead of
+# downwards... he's not holding it correctly"): vanilla's handheld hold puts a design's +x side up as the arm hangs, so
+# these are turned half round about their length; the rig (arms_rig4) solves each move's wrist from this hold, so the
+# edge still leads every blow
+EDGE_DOWN3 = {"katana"}
+
+
 def third_person(style, edge):
     """The third-person holds (right, left, as written in the JSON), None keeping vanilla's handheld: turned half round
     about the weapon's length (the line through the item's centre) for a weapon turned over (flipped3), so the wrist's
     baked turn lays its edge into every blow; moved along its length so the fist closes down a haft (grip3)."""
-    flip = flipped3(style, edge)
+    flip = flipped3(style, edge) != (style in EDGE_DOWN3 and edge == 1)
     k = HAFT3.get(style, 0.0)
     if not flip and not k:
         return None
