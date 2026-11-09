@@ -379,6 +379,8 @@ final class SuitView extends CloseView {
             s.ray(lx, ly, ax, ay, on ? 2F : 1F, colour);
             s.fill(ax - 4F, ay - 4F, ax + 4F, ay + 4F, on ? Stage.EDGE : 0x887FC3FF);
             int title = on ? Stage.LANTERN : over ? Stage.TITLE : Stage.LABEL;
+            float wide = Math.max(s.width(PIECE[i], 3F), s.width(SuitState.word(states[i]), 2F)), boxX = left ? zx - wide - 8F : zx - 8F;
+            s.fill(boxX, zy - 6F, boxX + wide + 16F, zy + 54F, 0xB8060A12); // a wide pauldron can turn under the label
             if (left) {
                 s.right(PIECE[i], zx, zy, 3F, title);
                 s.right(SuitState.word(states[i]), zx, zy + 32F, 2F, SuitState.colour(states[i]));

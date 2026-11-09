@@ -53,7 +53,7 @@ final class Panel {
 
     static float needsHeight(int count) {
         int rows = (count + NEEDS_ACROSS - 1) / NEEDS_ACROSS;
-        return count == 0 ? 0F : 34F + NEED_H * rows + 94F;
+        return count == 0 ? 0F : 34F + NEED_H * rows + 106F;
     }
 
     /** Draws the row of what it takes under its heading; returns the need the pointer is on, or -1. */
@@ -75,7 +75,7 @@ final class Panel {
         }
         y = top + (needs.size() + NEEDS_ACROSS - 1) / NEEDS_ACROSS * NEED_H;
         Need shown = hover >= 0 ? needs.get(hover) : firstShort(needs);
-        if (shown != null) lines(s, s.wrap(shown.source.isEmpty() ? shown.name : shown.source, TEXT_W, 3F), y + 2F, 3, Stage.DIM);
+        if (shown != null) lines(s, s.wrap(shown.source.isEmpty() ? shown.name : shown.source, TEXT_W, 3F), y + 14F, 3, Stage.DIM);
         return hover;
     }
 
