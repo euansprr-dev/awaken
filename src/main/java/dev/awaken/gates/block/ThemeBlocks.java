@@ -72,6 +72,29 @@ public final class ThemeBlocks {
 
     /** Every theme's blocks, in the order of the creative tab. */
     public static final List<Def> DEFS = List.of(
+            // The Knell, the Bell Crypt's Realms (50.8): dark cut stone, green bronze, black oak
+            Def.of("knell_stone", C, MapColor.COLOR_GRAY, SoundType.STONE, 0),
+            Def.of("knell_stone_worn", C, MapColor.TERRACOTTA_BROWN, SoundType.STONE, 0),
+            Def.of("knell_stone_deep", C, MapColor.COLOR_BLACK, SoundType.DEEPSLATE, 0),
+            Def.of("knell_stone_pale", C, MapColor.COLOR_LIGHT_GRAY, SoundType.STONE, 0),
+            Def.of("knell_hexstone", C, MapColor.COLOR_GRAY, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("knell_flagstone", C, MapColor.COLOR_GRAY, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("knell_brick", C, MapColor.TERRACOTTA_BROWN, SoundType.MUD_BRICKS, 0),
+            Def.of("knell_plaster", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("knell_plaster_band", C, MapColor.COLOR_BLACK, SoundType.CALCITE, 0),
+            Def.of("knell_tile", C, MapColor.COLOR_GRAY, SoundType.DECORATED_POT, 0),
+            Def.of("knell_tile_deep", C, MapColor.COLOR_CYAN, SoundType.DECORATED_POT, 0),
+            Def.soft("knell_timber", COL, MapColor.COLOR_BLACK, SoundType.WOOD, 0),
+            Def.soft("knell_planks", C, MapColor.COLOR_BLACK, SoundType.WOOD, 0),
+            Def.of("knell_gilt", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.soft("knell_window", C, MapColor.COLOR_BLUE, SoundType.GLASS, 12),
+            Def.soft("knell_moss", C, MapColor.COLOR_CYAN, SoundType.MOSS, 0),
+            Def.soft("knell_bed", C, MapColor.COLOR_BLACK, SoundType.SOUL_SOIL, 0),
+            Def.of("knell_bronze", C, MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0),
+            Def.of("knell_bronze_dark", C, MapColor.TERRACOTTA_BROWN, SoundType.COPPER, 0),
+            Def.of("knell_patina", C, MapColor.COLOR_CYAN, SoundType.COPPER, 0),
+            Def.of("knell_bronze_key", C, MapColor.GOLD, SoundType.COPPER, 0),
+            Def.of("knell_iron", C, MapColor.COLOR_BLACK, SoundType.IRON, 0),
             // Amber Reach, the first Realm's own materials (50.7): the warm mid-tones of its painting
             Def.of("amber_stone", C, MapColor.COLOR_ORANGE, SoundType.STONE, 0),
             Def.of("amber_stone_worn", C, MapColor.TERRACOTTA_ORANGE, SoundType.STONE, 0),

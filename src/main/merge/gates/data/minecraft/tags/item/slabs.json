@@ -39,6 +39,14 @@
     "awaken:amber_plaster_slab",
     "awaken:amber_tile_slab",
     "awaken:amber_tile_deep_slab",
-    "awaken:amber_planks_slab"
+    "awaken:amber_planks_slab",
+    "awaken:knell_stone_slab",
+    "awaken:knell_stone_pale_slab",
+    "awaken:knell_flagstone_slab",
+    "awaken:knell_brick_slab",
+    "awaken:knell_plaster_slab",
+    "awaken:knell_tile_slab",
+    "awaken:knell_tile_deep_slab",
+    "awaken:knell_planks_slab"
   ]
 }

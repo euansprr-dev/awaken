@@ -37,6 +37,14 @@
     "awaken:amber_plaster_stairs",
     "awaken:amber_tile_stairs",
     "awaken:amber_tile_deep_stairs",
-    "awaken:amber_planks_stairs"
+    "awaken:amber_planks_stairs",
+    "awaken:knell_stone_stairs",
+    "awaken:knell_stone_pale_stairs",
+    "awaken:knell_flagstone_stairs",
+    "awaken:knell_brick_stairs",
+    "awaken:knell_plaster_stairs",
+    "awaken:knell_tile_stairs",
+    "awaken:knell_tile_deep_stairs",
+    "awaken:knell_planks_stairs"
   ]
 }

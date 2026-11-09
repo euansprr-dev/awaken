@@ -51,6 +51,11 @@
     "awaken:amber_window",
     "awaken:amber_stem",
     "awaken:amber_planks_slab",
-    "awaken:amber_planks_stairs"
+    "awaken:amber_planks_stairs",
+    "awaken:knell_timber",
+    "awaken:knell_planks",
+    "awaken:knell_window",
+    "awaken:knell_planks_slab",
+    "awaken:knell_planks_stairs"
   ]
 }

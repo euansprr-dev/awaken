@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "awaken:block/knell_brick",
+    "top": "awaken:block/knell_brick",
+    "side": "awaken:block/knell_brick"
+  }
+}

@@ -48,6 +48,23 @@ public final class DepthBlocks {
     }
 
     public static final List<Def> DEFS = List.of(
+            // The Knell (50.8)
+            slab("knell_stone", MapColor.COLOR_GRAY, SoundType.STONE),
+            stairs("knell_stone", MapColor.COLOR_GRAY, SoundType.STONE),
+            slab("knell_stone_pale", MapColor.COLOR_LIGHT_GRAY, SoundType.STONE),
+            stairs("knell_stone_pale", MapColor.COLOR_LIGHT_GRAY, SoundType.STONE),
+            slab("knell_flagstone", MapColor.COLOR_GRAY, SoundType.DEEPSLATE_TILES),
+            stairs("knell_flagstone", MapColor.COLOR_GRAY, SoundType.DEEPSLATE_TILES),
+            slab("knell_brick", MapColor.TERRACOTTA_BROWN, SoundType.MUD_BRICKS),
+            stairs("knell_brick", MapColor.TERRACOTTA_BROWN, SoundType.MUD_BRICKS),
+            slab("knell_plaster", MapColor.SAND, SoundType.CALCITE),
+            stairs("knell_plaster", MapColor.SAND, SoundType.CALCITE),
+            slab("knell_tile", MapColor.COLOR_GRAY, SoundType.DECORATED_POT),
+            stairs("knell_tile", MapColor.COLOR_GRAY, SoundType.DECORATED_POT),
+            slab("knell_tile_deep", MapColor.COLOR_CYAN, SoundType.DECORATED_POT),
+            stairs("knell_tile_deep", MapColor.COLOR_CYAN, SoundType.DECORATED_POT),
+            slab("knell_planks", MapColor.COLOR_BLACK, SoundType.WOOD),
+            stairs("knell_planks", MapColor.COLOR_BLACK, SoundType.WOOD),
             // Amber Reach (50.7)
             slab("amber_stone", MapColor.COLOR_ORANGE, SoundType.STONE),
             stairs("amber_stone", MapColor.COLOR_ORANGE, SoundType.STONE),
