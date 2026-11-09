@@ -640,5 +640,8 @@
   "subtitles.awaken.fauna.amberfly.death": "Amberfly dies",
   "subtitles.awaken.fauna.amberfly.step": "Amberfly lands",
   "subtitles.awaken.realm.amber.air": "Wind in the wheat",
-  "subtitles.awaken.realm.amber.hall": "Honey drips"
+  "subtitles.awaken.realm.amber.hall": "Honey drips",
+  "item.awaken.pollen_grazer_spawn_egg": "Pollen Grazer Spawn Egg",
+  "item.awaken.wax_folk_spawn_egg": "Wax-folk Spawn Egg",
+  "item.awaken.amberfly_spawn_egg": "Amberfly Spawn Egg"
 }

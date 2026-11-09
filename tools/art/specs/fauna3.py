@@ -3069,6 +3069,7 @@ EGG = {
     "tidesteed": ("#1a4e58", "#9ff6ff"), "lantern_maw": ("#0c1018", "#7fffe0"), "chime_cricket": ("#2e263e", "#c8a4ff"),
     "wickling": ("#1e1410", "#ff8a2a"), "drip_lurker": ("#725634", "#ff7a3a"), "hushling": ("#c8c2b8", "#1ad0c0"),
     "thousandfoot": ("#221a2c", "#e08e3a"), "seep_heart": ("#120a20", "#b48cff"),
+    "pollen_grazer": ("#3a2412", "#f0b638"), "wax_folk": ("#d8a862", "#fff0c0"), "amberfly": ("#2a1a0c", "#ffb340"),
 }
 
 MATERIALS = ["tide_scale", "tide_pelt", "tide_gel", "hollow_crystal", "hollow_chitin", "hollow_wick"]
@@ -3342,6 +3343,8 @@ def build(out):
         if blink is not None:  # the eyes shut, for the life layer's blink (SPEC §23)
             out.entity("mobs/" + rid + "_blink", blink[0])
             out.entity("mobs/" + rid + "_glow_blink", blink[1])
+    for mid in ("pollen_grazer", "wax_folk", "amberfly"):  # Amber Reach's life; their other files are written by hand
+        out.item(mid + "_spawn_egg", egg(mid, False))
     for m in creatures():
         out.item(m["id"] + "_spawn_egg", egg(m["id"], m["role"] == "BEAST"))
         for p in m["parts"]:

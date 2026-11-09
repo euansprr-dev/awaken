@@ -33,13 +33,13 @@ cmd awaken gate realm_at MOUTH 0 7 1 0
 look 90 -10
 wait 60
 shot amber_mouth_arch
-cmd awaken gate realm_at MOUTH 0 13 5 15
-look 139 12
+cmd awaken gate realm_at MOUTH 0 22 10 18
+look 129 16
 wait 200
 shot amber_mouth_ring
 
-cmd awaken gate realm_at VILLAGE 0 -70 28 -30
-look -60 14
+cmd awaken gate realm_at VILLAGE 0 30 26 -50
+look 31 24
 wait 300
 shot amber_village_above
 cmd awaken gate realm_at VILLAGE 0 -18 3 -2
@@ -69,22 +69,21 @@ cmd awaken gate realm_at WAYSTONE 2 -20 3 -22
 look -90 -24
 wait 400
 shot amber_citadel_foot
-cmd awaken gate realm_at WAYSTONE 2 0 2 0
-look -90 -40
+cmd awaken gate realm_at WAYSTONE 2 -6 10 -22
+look -90 -16
 wait 300
 shot amber_citadel_stair
 
-cmd awaken gate realm_at WARDEN 0 -10 24 -30
-look 20 20
+cmd awaken gate realm_at MOUTH 0 182 20 96
+look -54 -10
 wait 300
 shot amber_flowers
-
-cmd awaken gate realm_at WAYSTONE 0 6 3 -8
-look 37 14
+cmd awaken gate realm_at WAYSTONE 0 16 8 -16
+look 45 18
 wait 200
 shot amber_waystone
-cmd awaken gate realm_at WAYSTONE 0 34 3 34
-look -60 8
+cmd awaken gate realm_at WAYSTONE 0 34 9 34
+look -60 18
 cmd execute at @s run summon awaken:pollen_grazer ^-3 ^ ^10
 cmd execute at @s run summon awaken:pollen_grazer ^4 ^ ^13
 cmd execute at @s run summon awaken:pollen_grazer ^ ^ ^17
@@ -93,9 +92,11 @@ cmd execute at @s run summon awaken:amberfly ^2 ^ ^5
 wait 200
 shot amber_herd
 # the spawner's own work: a minute standing in open valley, nothing summoned
-cmd awaken gate realm_at WAYSTONE 1 -46 4 40
+cmd awaken gate realm_at WAYSTONE 1 -46 12 40
 look 40 6
 wait 1200
+cmd execute as @p at @s facing entity @e[type=awaken:pollen_grazer,sort=nearest,limit=1] feet run tp @s ~ ~ ~ ~ ~
+wait 60
 shot amber_life_a_minute_on
 cmd awaken gate realm_at UPDRAFT 0 8 6 8
 look 135 8

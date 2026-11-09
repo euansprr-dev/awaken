@@ -5,6 +5,7 @@ import dev.awaken.core.api.MobHooks;
 import dev.awaken.gates.GateRecord;
 import dev.awaken.gates.run.Interactions;
 import dev.awaken.mobs.entity.FaunaMob;
+import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
@@ -163,6 +164,8 @@ public final class RealmLife {
         NEXT_TALK.put(p, now + TALK_TICKS);
         f.getLookControl().setLookAt(p);
         f.getNavigation().stop();
+        // once you've spoken to one, the plate over their heads says what they are
+        Progression.setCounter(p, "awaken:discovered/creature/" + FOLK, 1);
         RealmState st = RealmData.get(level.getServer()).state(g.id);
         String line = SAY.get(Math.floorMod(target.getId() + (int) (now / 200), SAY.size()));
         var window = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal("A wax-folk says")).body(Component.literal(line));

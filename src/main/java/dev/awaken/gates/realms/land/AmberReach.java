@@ -139,7 +139,7 @@ public final class AmberReach extends Land {
         double c = Math.hypot(u - 190, v * 1.15);
         y += 78 * Math.pow(smooth(230, 520, c), 1.3) * (0.6 + 0.4 * fbm(n5, u, v, 1 / 210.0, 3));
         // the valley's wall: stepped cliffs too high to scale, with the high country lost in haze behind them
-        y += 110 * smooth(WALL - 40, WALL + 60, c);
+        y += 58 * smooth(WALL - 40, WALL + 60, c);
         y = lerp(y, VILLAGE_Y, smooth(18, -2, villageD(u, v)));
         y = lerp(y, CIT_Y, smooth(172, 128, Math.hypot(u - cu, v - cv)));
         if (d < 4) y = lerp(58.5, Math.max(y, WATER + 1.2), smooth(-5, 4, d));
@@ -182,11 +182,9 @@ public final class AmberReach extends Land {
             if (cap != null) {
                 cap[0] = m.moss;
                 if (Math.hypot(x, z) > 60) {
-                    if (soil > 0.5) cap[0] = m.coarse;
-                    else if (soil < -0.52) cap[0] = m.rooted;
+                    if (soil > 0.62) cap[0] = m.coarse;
                 }
             }
-            if (n3.get(x / 5.0, z / 5.0) > 0.5) y++;
         }
         return y;
     }
@@ -268,7 +266,7 @@ public final class AmberReach extends Land {
         best *= smooth(150, 190, Math.hypot(h.cx() - cu, h.cz() - cv));
         // the valley's wall is more of the same, and it never stops
         double c = Math.hypot(h.cx() - 190, h.cz() * 1.15);
-        double wall = 120 * smooth(WALL - 110, WALL - 10, c);
+        double wall = 66 * smooth(WALL - 110, WALL - 10, c);
         if (wall > best) best = wall;
         if (best < 3 || roadD(h.cx(), h.cz()) < 14) return -1;
         double base = heightOf(h.cx(), h.cz(), riverD(h.cx(), h.cz()));
@@ -635,7 +633,7 @@ public final class AmberReach extends Land {
                 Hex t = hex(x, z, 2.1);
                 if (rnd(t.q(), t.r(), 112) > lerp(0.62, 0.12, (d - 7.8) / 3.7)) return;
                 int g = land.ground(x, z);
-                v.set(x, g, z, t.edge() > 0.78 ? m.deep : rnd(t.q(), t.r(), 113) < 0.5 ? m.flag : m.worn);
+                v.set(x, g, z, t.edge() > 0.78 ? m.worn : rnd(t.q(), t.r(), 113) < 0.5 ? m.flag : m.hexstone);
                 v.set(x, g + 1, z, null);
                 return;
             }
@@ -646,7 +644,7 @@ public final class AmberReach extends Land {
                 // the arrival floor: hexes with a ring of gilt let into it, six lines running out from the middle
                 v.foot(x, gy - 1, z, m.pale);
                 double ang = Math.atan2(z - cz, x - cx), spoke = Math.abs(Math.sin(3 * ang)) * d;
-                v.set(x, gy, z, d < 1.1 ? m.gold : d > 3.3 && d < 3.9 ? (chip < 0.25 ? m.worn : m.gold) : spoke < 0.55 && d > 1.1 ? m.deep : t.edge() > 0.8 ? m.deep : rnd(t.q(), t.r(), 111) < 0.5 ? m.hexstone : m.worn);
+                v.set(x, gy, z, d < 1.1 ? m.gold : d > 3.3 && d < 3.9 ? (chip < 0.25 ? m.worn : m.gold) : spoke < 0.55 && d > 1.1 ? m.pale : t.edge() > 0.8 ? m.worn : rnd(t.q(), t.r(), 111) < 0.5 ? m.hexstone : m.flag);
             } else if (d <= 5.4) {
                 v.foot(x, gy - 1, z, m.stoneA);
                 if (chip < 0.14) v.set(x, gy, z, null);
