@@ -11,7 +11,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from powers_data import P, DUETS, NEWP, CUT, BAR, STATES, RECS  # noqa: E402
+from powers_data import P, DUETS, NEWP, CUT, BAR, STATES, RECS, PASSIVES, PCUT, STYLES  # noqa: E402
 import scenes  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -31,19 +31,19 @@ FAM = {
     "Kinetic": ("--kin", "Stone and sub", "The waking body. Ordinary people who found out what they could move."),
     "Velocity": ("--vel", "Air and tape", "Time. People who got somewhere early and couldn't explain how."),
     "Flight": ("--fli", "Pressure and wind", "The Above. Ascendants, and people who simply stopped coming down."),
-    "Energy": ("--ene", "Plasma, capacitor, shimmer", "The Halo and the sun. Light that learned to do as it's told."),
+    "Energy": ("--ene", "Plasma, capacitor, pressure", "The Halo and the sun. Light that learned to do as it's told."),
     "Shadow": ("--sha", "Reversed ink and breath", "The Deep. What comes back up after it has been forgotten."),
-    "Mind": ("--min", "Glass harmonics and a voice", "Partly the Lucidium. People who could tell what you'd do next."),
+    "Mind": ("--min", "Breath, pressure and a low voice", "Partly the Lucidium. People who could tell what you'd do next."),
     "Architect": ("--arc", "Wood and stone, ratchets", "The Sleepers, and one woman called Ida Rask who couldn't stop building."),
     "Tech": ("--tec", "Servo, relay, gauss", "The Above again. Things the Ascendants left running."),
-    "Spirit": ("--spi", "Bowls, temple, breath", "The Veil. A catch-all family of 14, and the one that most needs sorting."),
+    "Spirit": ("--spi", "Struck wood, low drums, breath", "The Veil. A catch-all family of 14, and the one that most needs sorting."),
 }
 VERDICT = {"KEEP": "Keep and polish", "GOOD": "Good, needs a hook", "FLAT": "Flat", "RETHINK": "Start again", "FOLD": "Fold into one"}
 COUNT = {k: sum(1 for p in P if p["verdict"] == k) for k in VERDICT}
 
 IF_NO = {
     "direction": "I'd build the small option instead: sounds, stance, dead buttons and the vanilla leftovers. Decent, but short of the bar you set.",
-    "clean": "Powers stay one press and number 12 falls away. The rest still works, but you lose the main way of getting better at a power.",
+    "shine": "Powers do the same thing wherever you use them. You'd still have the reworks, States and Duets.",
     "stance": "Blades stay the only way to break a boss, and casters keep feeling second best there.",
     "dead": "Refusals stay as they are, except the seven that charge you for nothing, which I'd fix anyway.",
     "duets": "Powers go on working side by side, and the seven existing reactions stay.",
@@ -52,21 +52,31 @@ IF_NO = {
     "move": "The eight stay as they are, next to the Ascent moves that overlap them.",
     "blueprint": "Architect keeps four of your six keys on building shapes.",
     "world": "Effects stay drawn on top of the world. Everything else in the plan still happens.",
-    "sound": "Today's sounds stay. I'd still fix Gravity Well's silent three and a half seconds and split Haymaker from Railgun.",
-    "notes": "Clean still rings, as one sound each time, with no rising phrase.",
+    "sound": "Today's sounds stay, dings included. I'd still fix Gravity Well's silent three and a half seconds and split Haymaker from Railgun.",
     "readings": "Descriptions stay as they are today.",
     "yours": "Your starter's last reading is an ordinary one.",
     "cores": "Cores stay random by rank.",
     "way": "Level 5 stays exactly as it is today, which you already like.",
     "new": "Just the reworked 63. Kinetic, Velocity and Mind players get offered Overload, Legion or Gravity Flip for their first ultimate.",
     "tasks": "Powers stay off the Tasks page, which breaks your standing rule, so I'd ask you to think again.",
-    "proof": "I'd build straight through. It's faster, but it's much harder to stop cheaply if Clean turns out to feel wrong.",
+    "proof": "I'd build straight through. It's faster, but it's much harder to stop cheaply if the reworks turn out to feel wrong.",
     "get": "A Core keeps working as it does today: right-click and it's done. A Core of a mastered power stays useless.",
     "equip": "One set of six keys, and the card stays as it is.",
     "cast": "A press made a moment early keeps getting thrown away, and you keep finding out where a big power lands by casting it.",
     "combine": "You'd have to remember your Duets yourself. The list in the Journal is still there.",
     "level": "Level-ups stay exactly as they are today.",
     "read": "Today's bar stays, and a power coming back stays silent and unmarked.",
+    "styles": "Families stay a colour and a word on the card, and you work out what they're for by playing.",
+    "styles_bonus": "The play styles are still explained, but nothing extra happens for leaning into one. Duets stay the reward for mixing.",
+    "easy": "The new powers stay where I first put them, some of them only at S rank or at the very end of the game.",
+    "always_tab": "Passives stay at the end of the power list, and you still can't tell when one has done something.",
+    "always_switch": "Passives stay on all the time, and the only way to quiet Aura is not to own it.",
+    "pas_aura": "Aura keeps today's small flash and faint motes, with a sound and a line added so you can tell it was you.",
+    "pas_danger_sense": "Danger Sense stays a red glow and a quiet ping, which is still useful.",
+    "pas_wall_run": "Wall Stride just lasts longer, with its look starting at level 1 instead of level 2.",
+    "pas_water_run": "Water Run gets a wake of its own but no hard stop and no waterfalls.",
+    "pas_shadow": "Cloak stays the only stealth in the game, and it's a press.",
+    "pas_storm": "Storms stay weather, and Storm Call stays the only power that cares about them.",
     "new_titan": "Kinetic players choose another ultimate at the D Proving.",
     "new_clock": "Velocity players choose another ultimate at the D Proving, and Flow stays the top of the time powers.",
     "new_road": "Architect still has no movement power, and the Ascent stays the only way to travel at speed.",
@@ -141,7 +151,7 @@ def flow_svg():
     def lab(x, y, t, a="start"):
         return '<text x="%d" y="%d" font-size="11" text-anchor="%s" fill="var(--ink2)">%s</text>' % (x, y, a, t)
 
-    o = ['<figure class="flow"><div class="scroll" tabindex="0"><svg viewBox="0 0 900 470" role="img" aria-label="Today a press runs straight to damage and mastery. After the plan the server checks whether the power can act before you pay, judges Clean on release, and a hit feeds stance, States, Duets and the R gauge.">']
+    o = ['<figure class="flow"><div class="scroll" tabindex="0"><svg viewBox="0 0 900 470" role="img" aria-label="Today a press runs straight to damage and mastery. After the plan the server checks whether the power can act before you pay, and a hit feeds stance, States, Duets and the R gauge.">']
     o.append('<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor" fill-opacity=".7"/></marker></defs>')
     o.append('<text x="30" y="22" font-size="12" font-weight="700" letter-spacing="2" fill="var(--ink2)">TODAY</text>')
     y = 34
@@ -150,7 +160,7 @@ def flow_svg():
         o.append(arr(xs[i] + bw, y + bh / 2, xs[i + 1], y + bh / 2))
     o.append('<text x="30" y="150" font-size="12" font-weight="700" letter-spacing="2" fill="var(--keep)">AFTER: GOLD BOXES ARE NEW</text>')
     y = 164
-    o += [box(xs[0], y, "Press", "same keys, same feel"), box(xs[1], y, "Can it act?", "picks full or small version", True), box(xs[2], y, "Energy, cooldown", "paid only if it can"), box(xs[3], y, "Wind-up", "as today"), box(xs[4], y, "Release", "server judges Clean", True)]
+    o += [box(xs[0], y, "Press", "same keys, same feel"), box(xs[1], y, "Can it act?", "picks full or small version", True), box(xs[2], y, "Energy, cooldown", "paid only if it can"), box(xs[3], y, "Wind-up", "as today"), box(xs[4], y, "Release", "at the top of the hold, if it has one", True)]
     for i in range(4):
         o.append(arr(xs[i] + bw, y + bh / 2, xs[i + 1], y + bh / 2))
     o.append(lab(xs[1] + bw / 2, y + bh + 16, "no energy or no room: says why, costs nothing", "middle"))
@@ -162,7 +172,7 @@ def flow_svg():
         o.append(arr(xs[i], y2 + bh / 2, xs[i - 1] + bw, y2 + bh / 2))
     o.append(arr(xs[0] + bw / 2, y2 + bh, xs[0] + bw / 2, y2 + bh + 34))
     o.append('<text x="%d" y="%d" font-size="12" fill="var(--ink2)">Saved in Loadout schema 4: your Way, counters, Duets found. Shown on Tasks and in the Journal.</text>' % (xs[0], y2 + bh + 52))
-    o.append('<text x="%d" y="%d" font-size="11" fill="var(--ink2)" text-anchor="end">States, Clean chains, ground pieces and sounds are never saved.</text>' % (xs[4] + bw, y2 + bh + 52))
+    o.append('<text x="%d" y="%d" font-size="11" fill="var(--ink2)" text-anchor="end">States, ground pieces and sounds are never saved.</text>' % (xs[4] + bw, y2 + bh + 52))
     o.append('</svg></div><figcaption>The cast path today and after. Every gold box is added around the existing path, and with its setting off the path behaves as it does now.</figcaption></figure>')
     return "".join(o)
 
@@ -181,19 +191,13 @@ def storyboards():
 def taster():
     with open(os.path.join(TASTER, "levels.json")) as f:
         lv = json.load(f)
-    stats = {
-        "haymaker": dict(today=(1.4, 27, 4.9), new=(1.5, 72, 5.0), clean=(2.0, 85, 2.5)),
-        "railgun": dict(today=(1.8, 7, 0.9), new=(1.8, 36, 12.7), clean=(1.8, 29, 9.7)),
-        "gravity_well": dict(today=(0.5, 63, 0.0), new=(4.8, 79, 0.9), clean=(4.8, 82, 0.8)),
-        "shadow_step": dict(today=(0.6, 27, 0.3), new=(0.9, 40, 3.6), clean=(0.8, 19, 2.2)),
-    }
     notes = {
-        "haymaker": "Today shares its rising charge with Railgun.",
-        "railgun": "Today's has almost no low end at all, and its charge is the Haymaker's.",
-        "gravity_well": "Today makes sound for half a second of a four second field. The new one keeps going for as long as the field is there.",
-        "shadow_step": "The new one takes a breath, cuts it off, leaves two frames of silence, then the slice.",
+        "haymaker": "Today shares its rising charge with Railgun. The remake is your fist and the air: leather, a settling weight, then a real fall of stone under the punch, and thunder under the tail.",
+        "railgun": "Today's has almost no low end and its charge is the Haymaker's. The remake builds on a real electric arc and heavy relays, cuts to nothing for a split second, then goes off like a far explosion.",
+        "gravity_well": "Today makes sound for half a second of a four second field. The remake keeps going for as long as the field is there, on real wind played backwards, and ends on a real fall of stone.",
+        "shadow_step": "The remake takes a breath, cuts it off, leaves two frames of silence, then the air tears.",
     }
-    labels = (("today", "Today"), ("new", "New idea"), ("clean", "New, cast Clean"))
+    labels = (("today", "Today"), ("new", "Remade, no dings"), ("out", "What I took out"))
     out = []
     for pid, d in lv.items():
         p = BY[pid]
@@ -205,19 +209,26 @@ def taster():
             n = len(c["env"])
             up = ["%.1f,%.1f" % (i * 110.0 / (n - 1), 22 - 20 * (v / top) ** .6) for i, v in enumerate(c["env"])]
             dn = ["%.1f,%.1f" % (i * 110.0 / (n - 1), 22 + 20 * (v / top) ** .6) for i, v in reversed(list(enumerate(c["env"])))]
-            a, lo, hi = stats[pid][k]
+            a, lo, hi = c["stats"]
+            dg = c["ding"]
+            dtxt = "ding at %s Hz" % format(int(dg["hz"]), ",") if dg["ding"] else "no high tone found"
             f = "%s_%s.mp3" % (pid, k)
             out.append(
                 '<div class="clip" data-src="data:audio/mpeg;base64,%s" data-file="taster/%s">'
                 '<button class="play" id="play-%s-%s" aria-pressed="false" aria-label="Play %s, %s">&#9654;</button>'
                 '<div class="cbody"><div class="clab">%s <span>%.1f s</span></div>'
                 '<div class="wave" style="width:%.1f%%"><svg viewBox="0 0 110 44" preserveAspectRatio="none" aria-hidden="true"><polygon points="%s"/></svg><i class="ph"></i></div>'
-                '<div class="cstat">sounding for %.1f s &middot; %d%% low &middot; %.1f%% high</div></div></div>' % (
-                    b64(os.path.join(TASTER, f)), f, pid, k, e(p["name"]), lab, lab, c["seconds"], 100 * c["seconds"] / longest, " ".join(up + dn), a, lo, hi))
+                '<div class="cstat">sounding for %.1f s &middot; %d%% low &middot; %.1f%% high &middot; %s</div></div></div>' % (
+                    b64(os.path.join(TASTER, f)), f, pid, k, e(p["name"]), lab, lab, c["seconds"], 100 * c["seconds"] / longest, " ".join(up + dn), a, lo, hi, dtxt))
         qid = "taster_" + pid
         out.append('</div><fieldset class="ask" id="%s" data-doc="%s"><legend>Which is closer to right?</legend>' % (qid, qid))
-        for v, lab in (("new", "The new idea"), ("today", "Today's"), ("neither", "Neither")):
+        for v, lab in (("new", "The remade one"), ("today", "Today's"), ("neither", "Neither")):
             out.append('<label><input type="radio" name="%s" id="%s-%s" value="%s"> %s</label>' % (qid, qid, v, v, lab))
+        out.append("</fieldset>")
+        did = "ding_" + pid
+        out.append('<fieldset class="ask" id="%s" data-doc="%s"><legend>Is the last clip the kind of sound you meant?</legend>' % (did, did))
+        for v, lab in (("yes", "Yes, that's it"), ("partly", "Partly"), ("no", "No, it's something else")):
+            out.append('<label><input type="radio" name="%s" id="%s-%s" value="%s"> %s</label>' % (did, did, v, v, lab))
         out.append("</fieldset></div>")
     return "".join(out)
 
@@ -236,7 +247,7 @@ def cards():
                 '<article class="card" id="p-%s" data-fam="%s" data-v="%s">'
                 '<header>%s<div class="nm"><h5>%s</h5><span class="slot">%s</span></div><span class="v v-%s">%s</span></header>'
                 '<div class="ba"><div><b>Today</b><p>%s</p></div><div class="aft"><b>After</b><p>%s</p></div></div>'
-                '<dl><dt>Right way</dt><dd>%s</dd><dt>On a boss</dt><dd>%s</dd><dt>Sound</dt><dd>%s</dd></dl>'
+                '<dl><dt>Where it shines</dt><dd>%s</dd><dt>On a boss</dt><dd>%s</dd><dt>Sound</dt><dd>%s</dd></dl>'
                 '<blockquote class="sys">[%s]</blockquote>'
                 '<div class="flag"><label><input type="checkbox" id="flag-%s" data-flag="%s"> Not this one</label><input type="text" class="note" id="flagnote-%s" data-flagnote="%s" placeholder="What would you change?" hidden></div>'
                 '</article>' % (pid, f, p["verdict"], ic(pid, False), e(p["name"]), slot, p["verdict"], VERDICT[p["verdict"]],
@@ -255,7 +266,7 @@ def duets():
 
 def recs():
     out = []
-    heads = {"direction": "The plan", "get": "The whole system", "new_titan": "The new powers, one answer each"}
+    heads = {"direction": "The plan", "get": "The whole system", "styles": "Play styles, and getting your powers", "always_tab": "Always On, one answer each", "new_titan": "The new powers, one answer each"}
     for i, (key, text) in enumerate(RECS, 1):
         qid = "rec_" + key
         if key in heads:
@@ -309,7 +320,7 @@ h1{font-size:clamp(44px,8.2vw,88px);margin:12px 0 16px;letter-spacing:-.01em}
 h1 em{font-style:normal;color:var(--keep)}
 .lede{font-size:21px;line-height:1.45;max-width:36em}
 .honest{border-left:3px solid var(--keep);padding:2px 0 2px 14px;color:var(--ink2);max-width:40em;margin-top:18px}
-.tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:28px 0}
+.tiles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:28px 0}
 .tile.new{border-color:var(--keep)}
 .tile.new b{color:var(--keep)}
 .tile{background:var(--panel);border:1px solid var(--line);padding:12px 12px 10px;border-radius:6px}
@@ -537,6 +548,63 @@ input[type=radio],input[type=checkbox]{accent-color:var(--keep);width:17px;heigh
 .savebar{position:sticky;bottom:0;background:var(--bg2);border-top:1px solid var(--line);padding:10px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;z-index:6}
 #save-state{font:13.5px var(--mono);color:var(--ink2)}
 #answered{font:700 16px var(--disp)}
+.changed{background:var(--panel);border:1px solid var(--keep);border-radius:6px;padding:14px 16px;margin:20px 0 0;max-width:46em;font-size:16px}
+.changed h3{margin:0 0 8px;font-size:19px;color:var(--keep)}
+.changed ul{margin:0;padding-left:1.15em}.changed li{margin:6px 0}
+.stylegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:10px;margin:16px 0}
+.style{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--fc);border-radius:6px;padding:13px 14px;min-width:0}
+.style h4{margin:0;font-size:21px;color:var(--fc)}
+.style .sfam{font:500 11.5px var(--mono);letter-spacing:.06em;color:var(--ink3)}
+.style .syou{font-size:16.5px;margin:6px 0 8px}
+.style .sics{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 8px}
+.style dl{margin:0;font-size:15px}
+.style dt{font:500 11px var(--mono);letter-spacing:.05em;color:var(--ink3);margin-top:9px}
+.style dd{margin:1px 0 0}
+.style .sbonus{margin-top:11px;padding-top:9px;border-top:1px solid var(--line);font-size:15px}
+.style .sbonus b{font-family:var(--disp);color:var(--fc)}
+.barsx{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:10px;margin:12px 0}
+.barx{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px}
+.barx .rowi{display:flex;gap:3px;flex-wrap:wrap;margin:6px 0}
+.barx b{font-family:var(--disp)}.barx p{margin:4px 0 0;font-size:14.5px;color:var(--ink2)}
+.tnow{width:100%}
+.rules{counter-reset:r;list-style:none;margin:12px 0;padding:0;display:grid;gap:8px}
+.rules li{counter-increment:r;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 14px 10px 46px;position:relative}
+.rules li::before{content:counter(r);position:absolute;left:14px;top:9px;font:700 22px var(--disp);color:var(--spi)}
+.rules b{font-family:var(--disp)}
+.nptag{font:700 21px/1.3 var(--disp);color:var(--ink);margin:10px 0 0}
+.ptwo{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+.ptabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:6px;font:700 15px var(--disp)}
+.ptabs span{padding:6px 14px;color:var(--ink3);border-radius:4px 4px 0 0}
+.ptabs span.on{color:var(--ink);background:var(--panel);box-shadow:inset 0 -2px 0 var(--spi)}
+.prow{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid #24263a}
+.prow h5{margin:0;font:700 16px var(--disp);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.prow h5 small{font:500 11.5px var(--mono);color:var(--keep)}
+.prow p{margin:1px 0 0;font-size:14px;color:var(--ink2)}
+.prow .now{color:var(--spi)}
+.prow.dim{opacity:.55}
+.tri{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;font:500 12px var(--mono)}
+.tri span{padding:4px 8px;color:var(--ink3)}
+.tri span.on{background:var(--spi);color:#0f1a14}
+.pprev{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px}
+.pprev svg{display:block;width:100%;height:auto;border-radius:3px}
+.pprev h5{margin:8px 0 2px;font:700 16px var(--disp)}
+.pprev p{margin:0;font-size:14px;color:var(--ink2)}
+.glance{width:min(100%,290px);background:#0a0b13;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font:500 12.5px var(--mono);color:var(--ink2)}
+.glance .gr{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+.glance .gr b{color:var(--ink);font-weight:500}
+.glance .gnew{border-top:1px solid var(--line);margin-top:5px;padding-top:7px;color:var(--spi)}
+.gics{display:flex;gap:6px;margin-top:5px}
+.gics span{display:block;line-height:0;border-radius:3px;padding:2px;border:1px solid transparent}
+.gics span.hot{border-color:var(--spi);box-shadow:0 0 10px var(--spi)}
+.gics span.dim{opacity:.32}
+.gics .ic{width:24px;height:24px}
+.twob{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start}
+.tchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.tchips .gap{width:10px}
+.tchips button{background:var(--panel);border:1px solid var(--line);color:var(--ink2);padding:5px 11px;border-radius:4px;font:500 13px var(--mono);cursor:pointer;min-height:34px}
+.tchips button[aria-pressed=true]{background:var(--spi);color:#0f1a14;border-color:var(--spi)}
+.toycap{margin:8px 0 0;font-size:14.5px;color:var(--ink2)}
+@media (max-width:760px){.ptwo,.twob{grid-template-columns:minmax(0,1fr)}.prow{grid-template-columns:36px minmax(0,1fr)}.prow .tri{grid-column:1/-1;justify-self:start}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:1020px){
   .wrap{grid-template-columns:minmax(0,1fr);gap:0}
   nav.toc{display:none}
@@ -736,6 +804,87 @@ DEMOS = r"""<script>
     draw2();
     (function waitForHistory(){if(!ghost&&hist.length>=60&&used===0)btn.disabled=false;setTimeout(waitForHistory,250);})();
   }
+  /* three: the Aura */
+  var ac=document.getElementById('auraC');
+  if(ac){
+    var g=ac.getContext('2d'),W=ac.width,H=ac.height,mode='full',lv=1,view='third',crouch=false,vis=false,last3=0,T=0,rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var touched=false,tx=W*.78,ty=H*.6,foe={x:W*.8,y:H*.6,flash:0,slow:0},tongues=[],nums=[],beads=[],next=1,rouse=0,calm=0,msg=document.getElementById('auraMsg');
+    var FX=210,FY=312,C='134,224,160';
+    var A=[],i0;
+    function seg(x0,y0,x1,y1,side,st){var n=Math.max(1,Math.round(Math.hypot(x1-x0,y1-y0)/st));for(var q=0;q<n;q++){var t=q/n;A.push([x0+(x1-x0)*t,y0+(y1-y0)*t,side,Math.random()]);}}
+    [-1,1].forEach(function(sd){seg(sd*24,-226,sd*24,-178,sd,11);seg(sd*26,-176,sd*46,-176,sd*.7,10);seg(sd*46,-176,sd*46,-102,sd,11);seg(sd*44,-102,sd*26,-102,sd*.8,12);seg(sd*23,-100,sd*23,0,sd,13);});
+    seg(-24,-228,24,-228,0,8);
+    A.forEach(function(q){if(q[2]===0)q[2]=q[0]/30;});
+    function mv(e){var r=ac.getBoundingClientRect();tx=(e.clientX-r.left)*W/r.width;ty=(e.clientY-r.top)*H/r.height;touched=true;}
+    ac.addEventListener('pointermove',mv);ac.addEventListener('pointerdown',mv);
+    function flame(x,y,side,L,lean,al,c,w,ph,spd){var life=(T*spd+ph)%1,l=life*L,fx=x+side*l*.34+lean*l*.95+Math.sin(T*6+ph*19)*l*.13,fy=y-l,a=Math.sin(Math.PI*Math.min(1,life*1.15));a=a*a;g.fillStyle='rgba('+c+','+(al*a).toFixed(3)+')';g.beginPath();g.ellipse(fx,fy,Math.max(.6,w*(1-life*.62)),Math.max(1,w*1.75*(1-life*.3)),(side*.34+lean*.95)*.8,0,6.3);g.fill();}
+    function mantle(pts,L,lean,fp){var P=fp?'160,240,190':'134,224,160';pts.forEach(function(q){for(var n=0;n<3;n++){var ph=(q[3]+n/3)%1;flame(q[0],q[1],q[2],L*(1+.28*Math.sin(q[3]*40)),lean,.17,P,fp?15:11,ph,.8+.25*q[3]);}});pts.forEach(function(q){for(var n=0;n<2;n++){var ph=(q[3]*1.7+n/2)%1;flame(q[0],q[1],q[2],L*.62*(1+.28*Math.sin(q[3]*40)),lean,.42,'205,255,222',fp?5.5:4,ph,1.05);}});}
+    function person(x,y,sc){g.save();g.translate(x,y);g.scale(sc,sc);function r(c,a,b,w,h){g.fillStyle=c;g.fillRect(a,b,w,h);}r('#1f2229',-22,-100,20,100);r('#191c22',2,-100,20,100);r('#2a2e38',-26,-176,52,76);r('#2a2e38',-46,-176,18,74);r('#23272f',28,-176,18,74);r('#c49a7a',-46,-118,18,16);r('#b48a6c',28,-118,18,16);r('#3f8f6c',-5,-176,10,76);r('#c49a7a',-24,-226,48,48);r('#20242b',-24,-226,48,20);r('#20242b',-24,-226,8,34);r('#20242b',16,-226,8,34);r('#eafff1',-13,-200,8,5);r('#eafff1',5,-200,8,5);g.restore();}
+    function mob(x,y){g.save();g.translate(x,y);var f=foe.flash>0;function r(c,a,b,w,h){g.fillStyle=f?'#ffffff':c;g.fillRect(a,b,w,h);}r('#39492f',-14,-30,12,30);r('#2f3f28',2,-30,12,30);r('#55703f',-18,-74,36,46);r('#6b8b4e',-16,-104,32,30);g.fillStyle='#14180f';g.fillRect(-9,-94,6,6);g.fillRect(3,-94,6,6);if(foe.slow>0){g.strokeStyle='rgba('+C+','+(.7*foe.slow)+')';g.lineWidth=2;for(var i=0;i<2;i++){g.beginPath();g.ellipse(0,-50+i*30,28+i*5,8,0,0,6.3);g.stroke();}}g.restore();}
+    function strand(p0,c,p1,upto,w0,fade){var n=22,up=[],dn=[];for(var i=0;i<=n;i++){var t=upto*i/n,a=(1-t)*(1-t),b=2*t*(1-t),d=t*t,x=a*p0[0]+b*c[0]+d*p1[0],y=a*p0[1]+b*c[1]+d*p1[1],w=Math.max(.5,w0*Math.pow(1-t,.8));if(fade&&Math.hypot(x-W/2,y-H/2)<70)break;up.push([x,y-w/2]);dn.push([x,y+w/2]);}if(up.length<2)return null;g.fillStyle='rgba('+C+',.82)';g.beginPath();g.moveTo(up[0][0],up[0][1]);up.forEach(function(q){g.lineTo(q[0],q[1]);});dn.reverse().forEach(function(q){g.lineTo(q[0],q[1]);});g.closePath();g.fill();g.strokeStyle='rgba(255,255,255,.75)';g.lineWidth=1;g.beginPath();up.forEach(function(q,i){var yy=q[1]+Math.max(.5,w0*Math.pow(1-(upto*i/n),.8))/2;if(i)g.lineTo(q[0],yy);else g.moveTo(q[0],yy);});g.stroke();return dn[0];}
+    function start(hx,hy){return view==='first'?[(foe.x>W/2?W-120:120),H-96]:[hx,hy];}
+    function strike(dx){var from=start(FX+dx*30,FY-132);tongues.push({t:0,from:from,hold:lv>=4?.5:.08,hit:false,bend:-70-Math.random()*50});}
+    function step(now){
+      if(!vis){last3=0;return;}
+      var dt=Math.min(.05,(now-(last3||now))/1000);last3=now;if(rm)dt*=.35;T+=dt;
+      if(!touched){tx=W*.62+Math.cos(T*.45)*W*.26;ty=H*.68+Math.sin(T*.9)*30;}
+      var sp=foe.slow>0?2.5:9;foe.x+=(tx-foe.x)*Math.min(1,dt*sp);foe.y+=(ty-foe.y)*Math.min(1,dt*sp);foe.flash=Math.max(0,foe.flash-dt);foe.slow=Math.max(0,foe.slow-dt*.7);
+      var cx=view==='first'?W/2:FX,cy=view==='first'?H+40:FY-120,dist=Math.hypot(foe.x-cx,foe.y-cy),reach=(lv>=2?200:158),near=dist<320&&mode!=='off'&&!crouch;
+      rouse+=((near?1:0)-rouse)*Math.min(1,dt*4);calm=near?0:Math.min(1,calm+dt*.8);
+      next-=dt;
+      if(next<=0){next=2;if(mode!=='off'&&!crouch&&dist<reach){var d=foe.x>cx?1:-1;strike(d);if(lv>=5&&dist<105){setTimeout(function(){strike(-d);},90);setTimeout(function(){strike(d);},180);}}}
+      // draw
+      var grd=g.createLinearGradient(0,0,0,H);grd.addColorStop(0,'#14202a');grd.addColorStop(1,'#2c3f3c');g.fillStyle=grd;g.fillRect(0,0,W,H);g.fillStyle='#39453f';g.fillRect(0,FY,W,H-FY);g.fillStyle='#4a5a46';g.fillRect(0,FY,W,4);
+      var bright=lv>=3?calm:0,lean=(foe.x>cx?1:-1)*rouse*Math.min(1,160/Math.max(40,dist))*.9,L=(52+(lv>=3?8:0))*(.5+.95*rouse)*(crouch?.3:1)*(1+.25*bright);
+      if(view==='third'){
+        mob(foe.x,foe.y+50);
+        if(mode==='full'){
+          g.save();g.globalCompositeOperation='lighter';
+          var rad=g.createRadialGradient(FX,FY-120,16,FX,FY-120,150+rouse*40);rad.addColorStop(0,'rgba('+C+','+(.2+.16*rouse+.16*bright)+')');rad.addColorStop(1,'rgba('+C+',0)');g.fillStyle=rad;g.fillRect(FX-210,FY-300,420,320);
+          g.save();g.shadowColor='rgba('+C+',.95)';g.shadowBlur=20+rouse*22;g.fillStyle='rgba('+C+','+(.1+.08*rouse+.1*bright)+')';g.fillRect(FX-46,FY-176,92,74);g.fillRect(FX-24,FY-226,48,48);g.fillRect(FX-22,FY-100,44,100);g.restore();
+          mantle(A.map(function(q){return [FX+q[0],FY+q[1],q[2],q[3]];}),L,lean,false);
+          g.restore();
+        }
+        person(FX,FY,1);
+        if(mode!=='off'){
+          g.save();g.globalCompositeOperation='lighter';
+          if(mode==='full'){mantle(A.filter(function(q,i){return i%2===0;}).map(function(q){return [FX+q[0]*.92,FY+q[1],q[2]*.6,q[3]];}),L*.5,lean,false);}
+          else{g.strokeStyle='rgba('+C+','+(.3+.3*rouse)+')';g.lineWidth=2;g.strokeRect(FX-48,FY-228,96,228);}
+          if(lv>=2&&mode==='full'&&rouse>.3){for(var w=0;w<5;w++){var an=T*1.9+w*1.257,wx=FX+Math.cos(an)*78,wy=FY-120+Math.sin(an)*18;g.fillStyle='rgba(234,255,241,.9)';g.fillRect(wx-3,wy-3,6,6);}}
+          g.restore();
+        }
+      }else{
+        mob(foe.x,foe.y+50);
+        g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(W/2-8,H/2);g.lineTo(W/2+8,H/2);g.moveTo(W/2,H/2-8);g.lineTo(W/2,H/2+8);g.stroke();
+        if(mode==='full'){g.save();g.globalCompositeOperation='lighter';var cor=[];for(var ci=0;ci<14;ci++){var cx0=26+ci*15,cr=(ci*.618)%1;cor.push([cx0,H+6-(ci%3)*6,-.3,cr]);cor.push([W-cx0,H+6-(ci%3)*6,.3,(cr+.37)%1]);}mantle(cor,L*2.2,lean*.25,true);g.restore();}
+        g.fillStyle='#c49a7a';g.save();g.translate(112,H-20);g.rotate(.32);g.fillRect(-26,-96,52,130);g.fillStyle='#2a2e38';g.fillRect(-26,-34,52,70);g.restore();g.fillStyle='#b48a6c';g.save();g.translate(W-112,H-20);g.rotate(-.32);g.fillRect(-26,-96,52,130);g.fillStyle='#23272f';g.fillRect(-26,-34,52,70);g.restore();
+      }
+      g.save();g.globalCompositeOperation='lighter';
+      for(var i=tongues.length-1;i>=0;i--){var q=tongues[i];q.t+=dt;var to=[foe.x,foe.y],mid=[(q.from[0]+to[0])/2,(q.from[1]+to[1])/2+q.bend],out=.2,hold=q.hold,back=.34,up;
+        if(q.t<out)up=q.t/out;else if(q.t<out+hold){up=1;if(!q.hit){q.hit=true;foe.flash=.14;if(lv>=4)foe.slow=1;nums.push({x:foe.x+14,y:foe.y-58,t:0,v:lv>=5&&dist<105?'2.4':'1.2'});}}else up=1-(q.t-out-hold)/back;
+        if(up<=0){beads.push({x:q.from[0],y:q.from[1],t:0});tongues.splice(i,1);continue;}
+        var fp=view==='first';strand(q.from,mid,to,Math.min(1,up),fp?5:8,fp);
+        if(q.t>out+hold){var u=Math.max(0,up),a=(1-u)*(1-u),b=2*u*(1-u),d=u*u,bx=a*q.from[0]+b*mid[0]+d*to[0],by=a*q.from[1]+b*mid[1]+d*to[1];if(!fp||Math.hypot(bx-W/2,by-H/2)>70){g.fillStyle='rgba(234,255,241,.95)';g.beginPath();g.arc(bx,by,5,0,6.3);g.fill();}}
+      }
+      for(var j=beads.length-1;j>=0;j--){var be=beads[j];be.t+=dt;var ra=be.t/.32;if(ra>=1){beads.splice(j,1);continue;}g.strokeStyle='rgba(234,255,241,'+(1-ra)+')';g.lineWidth=2.5;g.beginPath();g.arc(be.x,be.y,4+ra*26,0,6.3);g.stroke();}
+      g.restore();
+      g.textAlign='left';g.font='700 19px sans-serif';
+      for(var k=nums.length-1;k>=0;k--){var nu=nums[k];nu.t+=dt;if(nu.t>1){nums.splice(k,1);continue;}g.fillStyle='rgba('+C+','+(1-nu.t*nu.t)+')';g.fillText(nu.v,nu.x,nu.y-nu.t*30);g.fillRect(nu.x-12,nu.y-nu.t*30-11,7,7);}
+      g.font='500 13px ui-monospace,Menlo,monospace';g.fillStyle='#cdd5d0';
+      var label=mode==='off'?'Off':crouch?'Crouching: pulled in, not striking':dist<reach?'In reach: striking':rouse>.5?'Something near: it stands up and leans':(lv>=3&&calm>.8?'Out of a fight: bright and still, healing faster':'At rest: low and slow');
+      g.fillText(label,14,24);
+      requestAnimationFrame(step);
+    }
+    inView(ac,function(v){var was=vis;vis=v;if(v&&!was){last3=0;requestAnimationFrame(step);}});
+    var chips=document.getElementById('auraChips'),LV=['Level 1. It works from the very first rung.','Level 2, Wisps. Wisps break off and circle you in a fight, and its reach grows by a block.','Level 3, Calm. Move the creature far away: the mantle goes bright and still, and you heal twice as often.','Level 4, Drag. A tongue holds on for a moment and slows whatever it held.','Level 5, Soul Guard. Bring the creature right up close and the whole mantle turns on it.'];
+    chips.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+      if(b.id==='auraCrouch'){crouch=!crouch;b.setAttribute('aria-pressed',crouch?'true':'false');msg.textContent=crouch?'Crouch and it pulls in and stops striking, so it can’t start a fight you were sneaking past.':LV[lv-1];return;}
+      var key=b.dataset.mode?'mode':b.dataset.lv?'lv':'view';chips.querySelectorAll('button[data-'+key+']').forEach(function(o){o.setAttribute('aria-pressed',o===b?'true':'false');});
+      if(key==='mode'){mode=b.dataset.mode;msg.textContent=mode==='full'?LV[lv-1]:mode==='quiet'?'Quiet: the tongues and a thin edge of light, and no mantle.':'Off: no damage, no healing, nothing to see.';}
+      if(key==='lv'){lv=+b.dataset.lv;msg.textContent=LV[lv-1];}
+      if(key==='view'){view=b.dataset.view;msg.textContent=view==='first'?'From your own eyes it stays at the bottom corners and round your hands. Tongues thin out before they reach your crosshair.':'What everyone else sees, and what you see in third person.';}
+    });
+  }
 })();
 </script>
 """
@@ -746,9 +895,10 @@ def icons_css():
 
 
 TOC = [("short", "The short version", 0), ("s1", "1 What you asked for", 0), ("s2", "2 What's there today", 0), ("s3", "3 Three ways to do it", 0), ("s4", "4 How it would work", 0), ("systems", "The ten changes", 1), ("whole", "The whole system", 1), ("contract", "Rules it must keep", 1), ("failures", "What could go wrong", 1),
-       ("np", "5 Eight new powers", 0), ("toy", "Play with one", 1),
-       ("s5", "6 See it", 0), ("boards", "Storyboards", 1), ("mocks", "On screen", 1), ("taster", "Listen", 1), ("walk", "Before and after", 1), ("every", "Every power", 1), ("duets", "The 24 Duets", 1),
-       ("s6", "7 Checks and order", 0), ("s7", "8 Your decisions", 0)]
+       ("ps", "5 Play styles", 0), ("pas", "6 Always On", 0), ("auratoy", "Try the Aura", 1), ("pas-cards", "All six passives", 1),
+       ("np", "7 Eight new powers", 0), ("toy", "Play with one", 1),
+       ("s5", "8 See it", 0), ("boards", "Storyboards", 1), ("mocks", "On screen", 1), ("taster", "Listen", 1), ("walk", "Before and after", 1), ("every", "Every power", 1), ("duets", "The 24 Duets", 1),
+       ("s6", "9 Checks and order", 0), ("s7", "10 Your decisions", 0)]
 
 
 def tag(kind):
@@ -762,18 +912,18 @@ def sysblock(n, title, ev, ch, ben, keeps, cost, test):
 
 
 SYSTEMS = [
-    ("Clean casts: every press has a right way",
-     "51 of 63 powers are one press and a cooldown. Only three have a release you can time. There's nothing to get better at.",
-     "Each power gets its own right way, written by hand: a moment, an aim, a position or a move into it. It's listed on every card below. Do it and the cast lands Clean: about 25% more damage, more stance, about 40% of the energy back, and more mastery. The cue is at your crosshair. The server judges it, with two ticks of grace.",
-     "After a hundred casts you're visibly better with a power, and you can hear it.",
-     "A cast that isn't Clean does exactly what today's does. Nothing is punished, and a new player can ignore all of it.",
-     "63 timings to write and balance. The risk is that it feels like a quick-time event.",
-     "You play four powers in Stage 0 and tell me. The simulator must show no more than about 12% average gain at a 50% Clean rate."),
+    ("Where it shines: no timing to learn",
+     "51 of 63 powers are one press and a cooldown, and nothing about where you use one changes what you get.",
+     "My first draft gave every power a timing window. You said that sounds like a layer for the sake of it, and you're right, so it's gone. Each power instead has a situation where it's at its best, written by hand and listed on every card below: from high up, in a crowd, in water, on something already Charged. It happens by itself. There's no window, no cue and nothing to learn first. Six keep a moment you can time, because that's what they are: Haymaker, Charged Shot, Railgun, Brace, Dash and Barrier. Missing it still gives you the whole power.",
+     "You get better at a power by learning where to use it, and the fight rewards you for thinking about the fight.",
+     "A plain press does everything it does today. Nothing is punished, and nothing asks you to watch a meter.",
+     "63 situations to write and balance.",
+     "You play four powers in Stage 0 and tell me. The simulator must show no more than about 12% average gain with every situation met."),
     ("Powers count on bosses",
      "The powers code has zero calls to the stance system. Blades are the only thing that breaks a boss. The one link is an attuned weapon's touch, worth 6.",
-     "Every power fills stance by weight through the existing <code>Strikes.posture</code>: Light 3, Medium 6, Heavy 12, Massive 20, Clean half as much again. The same braced and opening rules apply.",
+     "Every power fills stance by weight through the existing <code>Strikes.posture</code>: Light 3, Medium 6, Heavy 12, Massive 20. The same braced and opening rules apply.",
      "Being a caster finally counts in the fights that matter.",
-     "A blade stays the main way. A longsword swung non-stop is about 8 stance a second. A Clean Haymaker every time it's ready is about 3.",
+     "A blade stays the main way. A longsword swung non-stop is about 8 stance a second. A Haymaker every time it's ready is about 3.",
      "One more stance source for the boss fights session to allow for. Ranged stance could be abused.",
      "<code>combat_sim</code>: breaks per minute no more than 20% above today, tuned on two bosses and checked on bosses it wasn't tuned on."),
     ("No dead buttons",
@@ -799,7 +949,7 @@ SYSTEMS = [
      "A test that a cast links through <code>AscentServer.link</code>, and you judge the feel."),
     ("The R key fills from how you fight",
      "Ultimates sit on a 60 second timer. There are seven, six only come from a Path, and four families have none, so R is empty for hours.",
-     "R becomes a gauge. Clean casts, Duets, finishers and kills fill it, and it creeps up on its own so nobody is ever locked out. No energy cost. Your first ultimate is the reward for the D Proving, chosen from what you've actually done.",
+     "R becomes a gauge. Your hits, Duets, finishers and kills fill it, and it creeps up on its own so nobody is ever locked out. No energy cost. Your first ultimate is the reward for the D Proving, chosen from what you've actually done.",
      "The big moment comes when you've earned it, and it comes early enough to matter.",
      "Path signatures still come from Paths.",
      "Every ultimate needs rebalancing.",
@@ -812,12 +962,12 @@ SYSTEMS = [
      "The hardest look work in the plan. Bending light round a Well would be new Lens work and is only a guess until tried.",
      "Stage 0 proves the ground wave first, with <code>FxStats</code> on the Mac."),
     ("A sound pack for every power",
-     "172 sound files, and 17 calls to one whoosh. Haymaker and Railgun share a charge. Gravity Well is silent for most of its life. You haven't heard most of them in game.",
-     "Each power gets a charge or wind, a release, an impact, a tail, a Clean layer and a level 5 layer, two versions of each. Each family gets its own instruments. A sung Choir layer comes in at level 5. A mix budget keeps your own power and the biggest threat on top.",
+     "172 sound files, and 17 calls to one whoosh. Haymaker and Railgun share a charge. Gravity Well is silent for most of its life. You told me the high dings at the launch moment sound synthetic, and I measured it: 83 of the 172 have a single high ringing tone in their loud part, most of them made by the same few generators.",
+     "Nothing gets to ring. Every attack is built from real recordings and air, and brightness comes from grit and wind, never from something struck that sings. A check fails any file with a high tone in its loud part, and all 83 get remade. On top of that each power gets a charge or wind, a release, an impact, a tail and a level 5 layer, two versions of each, and each family gets its own materials. A low Choir layer comes in at level 5. A mix budget keeps your own power and the biggest threat on top.",
      "You could close your eyes and name the power.",
      "Today's sounds. Old files stay in place until you've passed the new one.",
-     "About 340 sound events and 700 short files, about 10 MB. I can't hear any of them, so your ears are the gate.",
-     "A listening page per family: Today, New, New in the mix, Keep or Redo on each. Loudness measured to within 1.5 dB."),
+     "About 340 sound events and 700 short files, about 10 MB. We have 84 short CC0 recordings and 7 long ones, which is thin, so if it isn't enough I'll come back with a list of more before downloading anything. I can't hear any of them, so your ears are the gate.",
+     "A listening page per family: Today, New, New in the mix, Keep or Redo on each. Loudness measured to within 1.5 dB, and no file ships with a ding."),
     ("Readings: every power has a person",
      "The descriptions say things like a path's signature or a latent gift. The story already has the answer: the Choir reads people and plays back who they could be. Nothing connects that to your powers.",
      "A Power Core is a recording the Choir took of a real person. The Deep is full of people who had them, which is why Lords drop Cores. Each power has a first bearer, one line when you learn it and one more per level. The Journal keeps them in The Choir's Record. At level 5 of your starter you find a second name on the reading.",
@@ -844,7 +994,7 @@ WHOLE = [
      "GameTest: a mastered Core gives mastery and never a level, and the free press spends nothing."),
     ("Equip: your bar should be something you build",
      "One set of six keys (<code>Loadout</code>), so changing build means re-slotting by hand. The card shows cost and cooldown but no damage, and nothing says what a power is good with. Every power sits in one grid of 22-pixel icons.",
-     "Three saved sets that you name, swapped from the K page or a held key once you're out of a fight. The card gains damage (<code>PowerPreviews</code> already works it out for Cores), the right way, the Duets you've found, the Reading and a Try button that shuts the menu and gives you one free press. Sort by family, level or what a power does.",
+     "Three saved sets that you name, swapped from the K page or a held key once you're out of a fight. The card gains damage (<code>PowerPreviews</code> already works it out for Cores), where it shines, the Duets you've found, the Reading and a Try button that shuts the menu and gives you one free press. Sort by family, level or what a power does.",
      "A set for Lords, a set for travel, and a reason to own more than six powers.",
      "Click then press a key, your own bindings, and the ladder on the card.",
      "Cooldowns belong to the power and never the set, so swapping can't reset them. Loadout schema 4 carries the sets.",
@@ -877,13 +1027,122 @@ WHOLE = [
      "Frames that grow with level, the beating outline for a second press, F1 hiding it all, and the narrow-screen layout.",
      "Clutter is the risk, and you approved Clear Screen for a reason. So nothing near the crosshair shows outside a fight, and it has to fit with the aim dot (SPEC 40.5).",
      "CI tour shots at your MacBook's size, then you play."),
+    ("Always On: passives you can see, read and switch",
+     "Four passives. Every one you own runs four times a second with no way of stopping it. On the K page they come last in the list with a 3 pixel dot, and at level 1 Aura is a faint flash and Wall Stride is nothing at all.",
+     "Their own tab on the K page, one row of icons on the Tab glance, and Full, Quiet or Off on each. Every passive shows and sounds from level 1, always tells you it was you, and the System names it the first time it acts. Section 6 has all of it.",
+     "You always know what you've got, what it's doing and that it was you.",
+     "Every level and mastery point, and the name and meaning of every step on the ladder.",
+     "A new tab, one more row on the Tab panel and one more saved field. Another session is working on the Tab panel now, so that row goes in after it.",
+     "A GameTest for each state and for refusing a change in a fight. CI shots of the tab at your MacBook's size."),
 ]
+
+
+def styles_section():
+    c = ['<section class="top" id="ps">' + h2(5, "Play styles", "psh")]
+    c.append('<div class="prose"><p>You said the kinds of power should feel like they work together, and that it should be clear what it means to be a Kinetic player or a Velocity player. Today a family is a coloured edge and one word on a card. The K page sorts by it, and nothing says what it\'s for ' + tag("obs") + '. So each of the nine becomes a way of fighting you can recognise and choose. You can still mix them however you like.</p></div>')
+    c.append('<div class="stylegrid">')
+    for st in STYLES:
+        var = FAM[st["fam"]][0]
+        icons = "".join(ic(i) for i in st["icons"])
+        c.append('<article class="style" style="--fc:var(%s)"><div class="sfam">%s</div><h4>%s</h4><p class="syou">%s</p><div class="sics">%s</div><dl><dt>A FIGHT LOOKS LIKE</dt><dd>%s</dd><dt>HOW THEY WORK TOGETHER</dt><dd>%s</dd><dt>GOES WELL WITH</dt><dd>%s</dd></dl><div class="sbonus"><b>%s:</b> %s</div></article>' % (var, e(st["fam"]).upper(), e(st["title"]), e(st["you"]), icons, e(st["fight"]), e(st["together"]), e(st["goes"]), e(st["bonus"]), e(st["does"])))
+    c.append('</div>')
+    c.append('<h3>Lean in, or mix</h3><div class="prose"><p>The bonus on each card above is a <b>Style</b>. Put three powers of one family on your six keys and you get it, and a passive of that family counts as one of the three. With six keys you can hold two Styles at once. If you mix everything you get no Style, but you have the most Duets on offer. Neither is the wrong way to play. Style bonuses sit inside the same 1.6 cap as everything else ' + tag("pro") + '.</p></div>')
+    def bar(ids, name, why):
+        return '<div class="barx"><b>%s</b><div class="rowi">%s</div><p>%s</p></div>' % (e(name), "".join(ic(i) for i in ids), e(why))
+    c.append('<div class="barsx">' + bar(["haymaker", "shockwave", "ground_slam", "brace", "thunderclap", "leap"], "All in on Kinetic", "Six of one family. You get Heavy Hands, and everything you've got sets up everything else.") + bar(["haymaker", "shockwave", "thunderclap", "dash", "flow", "lightning_step"], "Three and three", "Half Kinetic, half Velocity. You get Heavy Hands and Never Still, and Sonic Stamp is right there.") + bar(["haymaker", "beam", "shadow_step", "dominate", "gravity_well", "spirit_palm"], "One of everything", "No Style at all, and the most Duets to find. Also a perfectly good way to play.") + '</div>')
+    c.append('<h3>Where the game would say this</h3>')
+    c.append(table(["Where", "What it shows"], [
+        ["The starter choice", "One plain line for each of the three on offer, so your first pick is a choice of how you want to fight."],
+        ["K, Powers", "The family's name, its one line and how many you have on your keys, at the top of each family's group. Sort or filter by family."],
+        ["Every power's card", "A Works With line: other powers in the family that set this one up, and any Duets you've already found."],
+        ["The power bar", "A small family mark at the end of the bar while a Style is active, so you can see you've got it."],
+    ]))
+    c.append('</section>')
+    return "".join(c)
+
+
+def always_section():
+    b = scenes.passive_boards()
+    c = ['<section class="top" id="pas" style="--fc:var(--spi)">' + h2(6, "Always On", "pash")]
+    c.append('<div class="prose"><p>You asked for passives to have their own tab and for every one of them to be pushed as far as it can go. And you found the real problem by playing: you had Aura on, things round you were taking damage, you couldn\'t see why, and there was nowhere to check what you owned.</p></div>')
+    c.append('<h3>What\'s there today ' + tag("obs") + '</h3>')
+    c.append(table(["Passive", "What you can see and hear at level 1", "Can you turn it off?"], [
+        ["Aura", "A small quiet flash on what it hits, and a few faint motes once a second. No sound of its own.", "No"],
+        ["Danger Sense", "A red glow and a quiet ping. It's the only one you can really read at level 1.", "No"],
+        ["Wall Stride", "Nothing. Its look only starts at level 2.", "No"],
+        ["Water Run", "The game's own splash particles.", "No"],
+    ]))
+    c.append('<div class="prose"><p>Every passive you own runs four times a second and nothing can stop it (<code>Casting</code>). On the K page they come last in the list with a 3 pixel green dot, clicking one does nothing, and the only description is the card that shows when you hover (<code>PowersSection</code>). Aura also hits anything hostile in reach, and each hit puts you in combat, so it can start a fight you were walking past.</p></div>')
+    c.append('<h3>Five rules every passive follows, from level 1</h3><ol class="rules">')
+    for t, w in (
+        ("You can see it and hear it at level 1.", "Steps on the ladder add to what it does. They never unlock the fact that you can tell it's there."),
+        ("When it acts, you know it was you.", "A line runs from you to whatever it touched. The damage number is in the family's colour with the passive's small mark on it. Its icon flares at the end of your power bar."),
+        ("The first time it ever acts, the System tells you.", "Once, in plain speech. \"[That was your Aura. It hits anything that gets too close. You can look it up under K, Always On.]\""),
+        ("You choose how much of it you want.", "Full, Quiet or Off, on the tab. Quiet keeps the part that matters and drops the show."),
+        ("It stays out of the middle of your screen.", "Nothing crosses your crosshair. Shapes are capped, and it's simpler on Swift and past about 24 blocks."),
+    ):
+        c.append('<li><b>%s</b> %s</li>' % (e(t), e(w)))
+    c.append('</ol><div class="prose"><p>And one line of lore that holds them together: a power is one moment someone had. A passive is something someone did every day.</p></div>')
+    c.append('<h3>Where you see them: both places, doing different jobs</h3><div class="prose"><p><b>K, Always On</b> is the one place with everything. <b>The Tab glance</b> is the quick look in the middle of doing something else. Mockups, with real icons and made-up numbers.</p></div>')
+    rows = [("aura", "Aura", 3, "spi", "Striking now: 2 targets in reach.", "Today: 37 hits, 214 damage, healed 18", "full"),
+            ("danger_sense", "Danger Sense", 2, "min", "Watching. Nothing is coming at you.", "Today: 41 blows shown, 12 dodged", "full"),
+            ("wall_run", "Wall Stride", 1, "vel", "Ready when you're on a wall.", "Today: 19 runs, the longest 6.2 seconds", "quiet"),
+            ("water_run", "Water Run", 1, "fli", "Off. Sprinting swims.", "Today: nothing", "off")]
+    def tri(st):
+        return '<div class="tri" aria-hidden="true">' + "".join('<span class="%s">%s</span>' % ("on" if st == k else "", lab) for k, lab in (("full", "Full"), ("quiet", "Quiet"), ("off", "Off"))) + '</div>'
+    k = ['<div class="mock"><div class="mockl">THE K PAGE: POWERS AND ALWAYS ON</div><div class="ptwo"><div><div class="ptabs"><span>Powers</span><span class="on">Always On</span></div>']
+    for pid, nm, lv, var, now, today, st in rows:
+        k.append('<div class="prow%s">%s<div><h5>%s <small>LEVEL %d</small></h5><p class="now">%s</p><p>%s</p></div>%s</div>' % (" dim" if st == "off" else "", ic(pid, False), e(nm), lv, e(now), e(today), tri(st)))
+    k.append('</div><div class="pprev">%s<h5>Aura, level 3: Calm</h5><p>Your character wearing it, live. It shows Full, Quiet or Off as you change them, and what the next step adds.</p></div></div></div>' % b["aura"]["panels"][2].svg("Your character wearing Aura"))
+    c.append("".join(k))
+    g = ['<div class="twob"><div class="glance" role="img" aria-label="The Tab panel with a new row of four passive icons. Aura is bright because it just acted, Danger Sense is lit, Wall Stride is lit, Water Run is dim because it is off.">']
+    for lab, val in (("LEVEL", "24"), ("HEALTH", "18 / 20"), ("AETHER", "62%"), ("TASK", "Clear a C gate")):
+        g.append('<div class="gr"><span>%s</span><b>%s</b></div>' % (lab, val))
+    g.append('<div class="gnew">ALWAYS ON<div class="gics"><span class="hot">%s</span><span>%s</span><span>%s</span><span class="dim">%s</span></div></div></div>' % (ic("aura", False), ic("danger_sense", False), ic("wall_run", False), ic("water_run", False)))
+    g.append('<div class="prose"><p><b>One new row on the Tab panel.</b> Lit means it\'s on. Bright means it acted in the last few seconds. Dim means Quiet or Off. You only get the row if you own a passive. Another session is working on the Tab panel right now, so the row goes in after it lands.</p></div></div>')
+    c.append("".join(g))
+    c.append('<h3>Turning them off</h3><div class="prose"><p>You asked whether they can be deactivated, and it\'s decision %d. I\'d say yes: <b>Full, Quiet or Off on each one</b>, changed on the tab. It\'s refused in a fight, so it can\'t be used as a trick. Off means off: no effect, no look and no mastery earned, and an Off passive doesn\'t count towards a Style. It saves with your powers, and an old save starts with everything on Full. A separate setting turns down other people\'s passives if a crowd gets too busy.</p></div>' % ([k_ for k_, _ in RECS].index("always_switch") + 1))
+    c.append('<h3 id="auratoy">Try the Aura</h3><div class="prose"><p>Move your pointer around: that\'s the creature. Bring it close and the mantle stands up and leans at it. Get it within reach and a tongue goes out, bites and comes back with a bright bead. Try each level, and switch to What You See for how it looks from your own eyes. It\'s silent, and it\'s a drawing of the idea, not the game.</p></div>')
+    c.append('<div class="toy"><canvas id="auraC" width="640" height="340" aria-label="A small toy of the Aura. Move the pointer to move a creature near a figure wrapped in green fire. Up close, a tongue of fire reaches out and bites it."></canvas><div class="tchips" id="auraChips">')
+    for lab, attr, val, on in (("Full", "mode", "full", 1), ("Quiet", "mode", "quiet", 0), ("Off", "mode", "off", 0)):
+        c.append('<button type="button" data-%s="%s" aria-pressed="%s">%s</button>' % (attr, val, "true" if on else "false", lab))
+    c.append('<span class="gap"></span>')
+    for i in range(1, 6):
+        c.append('<button type="button" data-lv="%d" aria-pressed="%s">Level %d</button>' % (i, "true" if i == 1 else "false", i))
+    c.append('<span class="gap"></span>')
+    c.append('<button type="button" data-view="third" aria-pressed="true">What Others See</button><button type="button" data-view="first" aria-pressed="false">What You See</button><span class="gap"></span><button type="button" id="auraCrouch" aria-pressed="false">Crouch</button></div><p class="toycap" id="auraMsg">Level 1. It works from the very first rung.</p></div>')
+    c.append('<div id="pas-cards">')
+    for pa in PASSIVES:
+        pid = pa["id"]
+        c.append('<article class="np" id="pas-%s" style="--fc:var(%s)">' % (pid, pa["color"]))
+        c.append('<header><div class="npk">%s</div><h3>%s</h3><div class="nps">%s &middot; passive%s &middot; decision %d</div></header>' % (e(pa["kind"]).upper(), e(pa["name"]), e(pa["fam"]), " &middot; new" if pa["new"] else "", [k_ for k_, _ in RECS].index("pas_" + pid) + 1))
+        c.append('<p class="nptag">%s</p><p class="npw">%s</p>' % (e(pa["tagline"]), e(pa["what"])))
+        bd = b[pid]
+        c.append('<div class="panels">')
+        for i, (pn, cap) in enumerate(zip(bd["panels"], bd["caps"])):
+            c.append('<figure>%s<figcaption><b>%d</b> %s</figcaption></figure>' % (pn.svg(html.escape(cap)), i + 1, e(cap)))
+        c.append('</div><div class="npg">')
+        rows2 = [("TODAY", "today"), ("AT REST", "rest"), ("WHEN SOMETHING COMES NEAR", "roused"), ("WHEN IT ACTS", "acts"), ("FROM YOUR OWN EYES", "fp"), ("WHAT OTHERS SEE", "others"), ("HOW IT SOUNDS", "sound"), ("HOW YOU KNOW IT WAS YOU", "you"), ("WHERE IT SHINES", "right"), ("ON A BOSS", "boss"), ("QUIET AND OFF", "states"), ("KEEPING IT FAIR", "fair")]
+        if pa.get("earn"):
+            rows2.append(("HOW YOU GET IT", "earn"))
+        for lab, key in rows2:
+            c.append('<div><b>%s</b><p>%s</p></div>' % (lab, e(pa[key])))
+        c.append('</div><div class="nsteps">')
+        for i, (nm, what) in enumerate(pa["steps"], 2):
+            c.append('<div><b>Lv %d &middot; %s</b>%s</div>' % (i, e(nm), e(what)))
+        c.append('</div><blockquote class="sys">[%s]</blockquote>' % e(pa["reading"]))
+        c.append('<div class="npb"><div>%s %s</div><div>%s %s</div><div class="nph">About %d hours, with its sound, ladder and tests.</div></div></article>' % (tag("obs"), pa["engine"], tag("hyp"), e(pa["unknown"]), pa["hours"]))
+    c.append('</div>')
+    c.append('<h3>What didn\'t make it, and why</h3><div class="prose"><p>I tried a passive for every family and cut the ones that weren\'t good enough on their own.</p></div>')
+    c.append(table(["Idea", "What it would do", "Why it's out"], [[e(a), e(b1), e(c1)] for a, b1, c1 in PCUT]))
+    c.append('</section>')
+    return "".join(c)
 
 
 def new_section():
     b = scenes.new_boards()
     c = []
-    c.append('<section class="top" id="np">' + h2(5, "Eight new powers", "nph"))
+    c.append('<section class="top" id="np">' + h2(7, "Eight new powers", "nph"))
     c.append('<div class="prose"><p>You asked for new powers pushed further than anything in the catalogue, both to use and to look at, and you said a few astonishing ones beat a long list of decent ones. I agree. So I wrote down what a new power has to do, came up with eighteen, and kept the ones that passed.</p></div>')
     c.append('<h3>The test each one had to pass</h3><div class="bar5">')
     for i, (t, w) in enumerate(BAR, 1):
@@ -894,13 +1153,13 @@ def new_section():
         c.append('<a href="#np-%s" style="--fc:var(%s)"><small>%s</small>%s</a>' % (n["id"], n["color"], e(n["kind"]), e(n["name"])))
     c.append('</div>')
     c.append('<h3>Where each one comes in</h3>')
-    ranks = [("D", "D"), ("C", "C"), ("B", "B"), ("A", "A"), ("S", "S"), ("Sovereign", "Sovereign")]
-    short = {"titan": "the D Proving, for Kinetic players", "clock": "the D Proving, or Flow or Foresight at level 5", "road": "climbing to the crown of a giant tree on foot", "back": "your first clean answer to a Lord's signature move", "body": "Dominate at level 5", "toll": "50 bells rung", "cut": "an S-rank Lord finished with Energy", "loop": "beating the Last Loop"}
+    ranks = [("D", "D"), ("C", "C"), ("B", "B"), ("A", "A")]
+    short = {"titan": "the D Proving, for Kinetic players", "clock": "the D Proving, or Flow or Foresight at level 3", "road": "reaching the crown of a giant tree", "back": "dodging or blocking a Lord's big move", "body": "25 orders with Dominate", "toll": "15 bells rung", "cut": "a B-rank Lord finished with Energy on your bar", "loop": "beating the A Proving"}
     c.append('<figure class="ladderfig"><div class="lrows">')
     for r, lab in ranks:
         chips = "".join('<div class="lchip" style="--fc:var(%s)"><b>%s</b><span>%s</span></div>' % (n["color"], e(n["name"]), e(short[n["id"]])) for n in NEWP if n["rank"] == r)
         c.append('<div class="lrow"><div class="lr">%s</div><div class="lcs">%s</div></div>' % (lab, chips))
-    c.append('</div><figcaption>Rank is roughly when most players would get there. Every one is handed over by something you did, and none of them is a menu unlock. Your first ultimate lands at D, so R isn\'t empty for hours, and the last power in the game is the one the story has been building to.</figcaption></figure>')
+    c.append('</div><figcaption>Rank is roughly when most players would get there. You asked for these not to be too hard to get, so none of them needs the endgame any more and all of them can be had by about the middle of the game. Each is handed over by something you did, and each also has a second way in: its Core drops from the gates that lean its way, guaranteed after three of them. Your first ultimate lands at D, so R isn\'t empty for hours.</figcaption></figure>')
     for n in NEWP:
         c.append('<article class="np" id="np-%s" style="--fc:var(%s)">' % (n["id"], n["color"]))
         c.append('<header><div class="npk">%s</div><h3>%s</h3><div class="nps">%s &middot; %s &middot; wave %d</div></header>' % (e(n["kind"]).upper(), e(n["name"]), e(n["fam"]), e(n["slot"]), n["wave"]))
@@ -910,7 +1169,7 @@ def new_section():
         for i, (pn, cap) in enumerate(zip(bd["panels"], bd["caps"])):
             c.append('<figure>%s<figcaption><b>%d</b> %s</figcaption></figure>' % (pn.svg(html.escape(cap)), i + 1, e(cap)))
         c.append('</div><div class="npg">')
-        for lab, key in (("WHY IT'S A THRILL", "thrill"), ("WHAT ONLY IT DOES", "only"), ("HOW IT LOOKS", "look"), ("HOW IT SOUNDS", "sound"), ("THE RIGHT WAY", "right"), ("ON A BOSS", "boss"), ("KEEPING IT FAIR", "fair"), ("HOW YOU EARN IT", "earn")):
+        for lab, key in (("WHY IT'S A THRILL", "thrill"), ("WHAT ONLY IT DOES", "only"), ("HOW IT LOOKS", "look"), ("HOW IT SOUNDS", "sound"), ("WHERE IT SHINES", "right"), ("ON A BOSS", "boss"), ("KEEPING IT FAIR", "fair"), ("HOW YOU EARN IT", "earn")):
             c.append('<div><b>%s</b><p>%s</p></div>' % (lab, e(n[key])))
         c.append('</div><div class="nsteps">')
         for i, (nm, what) in enumerate(n["steps"], 2):
@@ -919,6 +1178,7 @@ def new_section():
         c.append('<div class="npb"><div>%s %s</div><div>%s %s</div><div class="nph">About %d hours, with its sound pack, ladder, icon and tests.</div></div></article>' % (tag("obs"), n["engine"], tag("hyp"), e(n["unknown"]), n["hours"]))
     c.append('<h3 id="toy">Play with the strangest one</h3><div class="prose"><p>Last Time Round is the hardest one to picture, so here\'s a toy of it. Move around, hit the boss, then press the button. Everything you did in the last eight seconds comes back and plays beside you, so whatever you do next is on top of it. This is only a drawing of the idea. It isn\'t the game.</p></div>')
     c.append('<div class="toy"><canvas id="ltr" width="640" height="300" aria-label="A small toy. Move the pointer to move, click to hit the boss, and press the button to bring back your last eight seconds."></canvas><div class="toyb"><button class="btn" id="ltr-go" type="button">Last Time Round</button><span id="ltr-msg">Move, click at the boss, then press this (or R).</span></div></div>')
+    c.append('<h3>The older powers</h3><div class="prose"><p>The same goes for the 63 you already have. Nothing gets harder to find than it is today. Random Cores stay, and a Gate Lord still guarantees one if you\'ve gone three bosses without. On top of that, gates start leaning toward the families they\'ve swallowed, and a leaning gate\'s Core is one you don\'t have yet whenever there\'s one left in that family. Today a Core knows nothing about what you own. Your first ultimate comes at D instead of from a Path, and Paths still give their own.</p></div>')
     c.append('<h3>What didn\'t make it, and why</h3><div class="prose"><p>Two of these were in my first draft of this plan. Say if you\'d have any of them back.</p></div>')
     c.append(table(["Idea", "What it would do", "Why it's out"], [[e(a), e(b1), e(c1)] for a, b1, c1 in CUT]))
     c.append("</section>")
@@ -942,7 +1202,7 @@ def key_page_mock():
     o.append('</div><p class="kside">Your own names. Change sets here or with a held key, once you\'re out of a fight.</p></div>')
     o.append('<div class="kcard"><header>%s<div><h5>%s</h5><small>KINETIC &middot; ACTIVE &middot; LEVEL 3</small></div></header>' % (ic("haymaker", False), e(hm["name"])))
     o.append('<div class="kstats"><span>Energy <b>30</b></span><span>Cooldown <b>9 s</b></span><span>Damage <b>18</b></span></div>')
-    o.append('<dl><dt>RIGHT WAY</dt><dd>%s</dd><dt>DUET FOUND</dt><dd>%s + %s: %s</dd><dt>READING</dt><dd>%s</dd></dl>' % (e(hm["right"]), e(d[0]), e(d[1]), e(d[2]), e(hm["first"])))
+    o.append('<dl><dt>WHERE IT SHINES</dt><dd>%s</dd><dt>DUET FOUND</dt><dd>%s + %s: %s</dd><dt>READING</dt><dd>%s</dd></dl>' % (e(hm["right"]), e(d[0]), e(d[1]), e(d[2]), e(hm["first"])))
     o.append('<span class="fake">Try it</span></div></div><p class="kside">Try it shuts the menu and gives you one free press.</p></div>')
     return "".join(o)
 
@@ -969,17 +1229,19 @@ def page():
     # hero and short version
     c.append('<header class="hero"><div class="eyebrow">AWAKEN &middot; for your approval &middot; 9 November 2026</div><h1>Powers in <em>Full Voice</em></h1>')
     c.append('<p class="lede">A plan to make using powers the best thing in the game. All 63 judged one at a time: what each does today, what it would do, how it would sound and who had it first. Eight new ones held to a higher bar. And everything around them, from how you get a power to how you read it in a fight.</p>')
-    c.append('<p class="honest">Nothing here is built. I read the code and measured the sounds, but I haven\'t played a power or heard a clip. Every verdict is mine from reading, so overrule any of them. The tags say which claims come from the code, which from other games and which are my guesses.</p></header>')
+    c.append('<p class="honest">Nothing here is built. I read the code and measured the sounds, but I haven\'t played a power or heard a clip. Every verdict is mine from reading, so overrule any of them. The tags say which claims come from the code, which from other games and which are my guesses.</p>')
+    c.append('<div class="changed"><h3>What changed after your notes</h3><ul><li><b>Clean casts are gone.</b> You were right that a timing window on every power is a layer for the sake of it. Most powers now have no timing at all. Each has a situation where it shines, and that happens by itself. Six keep a moment you can time, because that\'s what they are.</li><li><b>The play styles are spelled out.</b> Section 5 says what being a Kinetic or a Velocity player means and how a family\'s powers work together. You can still mix them however you like.</li><li><b>Passives have their own tab, and all of them are reinvented.</b> Section 6, with a toy of the Aura you described and two new passives.</li><li><b>Everything is easier to get.</b> None of the new powers needs the endgame any more, and each has a second way in.</li><li><b>The dings are gone from the taster.</b> I measured what you heard. Railgun\'s launch moment was a single high tone making up over 60% of the sound. All four are remade from real recordings and air. <a href="#taster">Listen to them</a>.</li></ul></div></header>')
     c.append('<details class="tocm"><summary>Contents</summary>' + "".join('<a href="#%s">%s</a>' % (s, t) for s, t, sb in TOC if not sb) + "</details>")
     c.append('<section id="short"><div class="tiles">')
     for k in ("KEEP", "GOOD", "FLAT", "RETHINK", "FOLD"):
         c.append('<div class="tile"><b>%d</b><span>%s</span></div>' % (COUNT[k], VERDICT[k]))
     c.append('<div class="tile new"><b>%d</b><span>New powers</span></div>' % len(NEWP))
+    c.append('<div class="tile new"><b>%d</b><span>Passives reinvented</span></div>' % len(PASSIVES))
     c.append('</div><div class="prose"><p>You were right about the levels. The ladder stays exactly as it is. Three other things hold the powers back:</p>')
-    c.append('<ul class="plain"><li><b>There\'s nothing to get good at.</b> 51 of the 63 are one press and a cooldown.</li><li><b>They don\'t know about the game built since.</b> A power has never filled a boss\'s stance, and casting isn\'t part of the Ascent\'s chain.</li><li><b>They sound alike and nobody is behind them.</b> 17 calls to one whoosh, and descriptions that name a path instead of a person.</li></ul>')
-    c.append('<p>So the plan keeps the 63 and the ladder and adds ten connected changes: a right way to press every power, powers that count on bosses, combinations you find by experimenting, an R key that fills from how you fight, a ground that really moves, a sound pack per power, and a real person behind each one, ending with your own name on your starter.</p>')
-    c.append('<p>You also asked for new powers pushed further than anything there now, and for the whole system to be polished. So there are <b>eight new powers</b>, cut down from eighteen, and each one changes something none of the 63 can touch: your size, time, the road, their moves, sound, the horizon, someone else\'s body and your own past. And there are <b>six changes to the system itself</b>, covering how you get, equip, cast, combine, level and read your powers.</p>')
-    c.append('<p>It starts with a playable proof of four powers, and I stop there until you\'ve played it. The new powers come in three waves, with a stop after each.</p></div><div class="jump"><a class="btn" href="#s7">Go to your %d decisions</a><a class="btn alt" href="#np">The eight new powers</a><a class="btn alt" href="#taster">Listen to the taster</a><a class="btn alt" href="#every">See every power</a></div></section>' % len(RECS))
+    c.append('<ul class="plain"><li><b>Most are the same wherever you use them.</b> 51 of the 63 are one press and a cooldown.</li><li><b>They don\'t know about the game built since.</b> A power has never filled a boss\'s stance, and casting isn\'t part of the Ascent\'s chain.</li><li><b>They sound alike and nobody is behind them.</b> 17 calls to one whoosh, and descriptions that name a path instead of a person.</li></ul>')
+    c.append('<p>So the plan keeps the 63 and the ladder and adds ten connected changes: a place where every power shines, powers that count on bosses, combinations you find by experimenting, an R key that fills from how you fight, a ground that really moves, a sound pack per power, and a real person behind each one, ending with your own name on your starter.</p>')
+    c.append('<p>You also asked for new powers pushed further than anything there now, and for the whole system to be polished. So there are <b>eight new powers</b>, cut down from eighteen, and each one changes something none of the 63 can touch: your size, time, the road, their moves, sound, the horizon, someone else\'s body and your own past. And there are <b>seven changes to the system itself</b>, covering how you get, equip, cast, combine, level and read your powers, and how your passives show themselves.</p>')
+    c.append('<p>It starts with a playable proof of four powers, and I stop there until you\'ve played it. The new powers come in three waves, with a stop after each.</p></div><div class="jump"><a class="btn" href="#s7">Go to your %d decisions</a><a class="btn alt" href="#ps">Play styles</a><a class="btn alt" href="#pas">Always On</a><a class="btn alt" href="#np">The eight new powers</a><a class="btn alt" href="#taster">Listen to the taster</a><a class="btn alt" href="#every">See every power</a></div></section>' % len(RECS))
 
     # 1
     c.append('<section class="top" id="s1">' + h2(1, "What you asked for", "s1h"))
@@ -1003,7 +1265,7 @@ def page():
         ["Fun", "Every power has a better way to press it, and you can tell when you found it."],
         ["Truth", "A power's text says what it does. Numbers come from the simulator, not from me."],
         ["Effort", "Nothing to learn before it works. No new menu to manage. A plain cast is today's cast."],
-        ["Response", "A press answers on the same frame it does today. The Clean ring lands within one server tick, 50 ms."],
+        ["Response", "A press answers on the same frame it does today."],
         ["Control", "You choose your bar and your Way. The notes can be turned off. Nothing changes your loadout for you."],
         ["When it can't", "A power with nothing to do does something smaller, or says why and costs nothing."],
         ["Cost", "About 10 MB of sound. No more frame time than the level 5 limit we already test against."],
@@ -1045,6 +1307,7 @@ def page():
     ]))
     c.append("<h3>The system around the powers " + tag("obs") + "</h3>")
     c.append(table(["Part", "What it does today", "Evidence", "What that means", "Call"], [
+        ["Passives", "Always on with no switch. Last in the list with a 3 pixel dot. At level 1 Aura is a faint flash and Wall Stride is nothing at all", "<code>Casting</code>, <code>PowersSection</code>, <code>SpiritPowers.aura</code>, <code>StepHooks</code>", "You can't tell what you own or that it did anything", "Rebuild"],
         ["Get", "Right-click teaches it in an instant. A Core of a mastered power says so and stays in your hand", "<code>Powers.useCore</code>", "A big moment over in a frame, and late Cores are dead", "Extend"],
         ["Equip", "One set of six, re-slotted by hand. The card has cost and cooldown but no damage", "<code>Loadout</code>, <code>PowersSection</code>", "No reason to own more than six", "Extend"],
         ["Cast", "A press a moment early is refused and forgotten. Nothing shows where a power will land", "<code>ClientCasting.press</code>", "You get punished for playing fast", "Replace"],
@@ -1072,14 +1335,14 @@ def page():
     c.append("<h3>What other games teach " + tag("res") + "</h3>")
     c.append('<div class="prose"><p>Only for questions that change the design. I read reporting and guides, not the original talks, so treat these as pointers.</p></div>')
     c.append(table(["Question", "What I found", "How far it applies", "What it changes here"], [
-        ["Would a timing reward feel good or like homework?", 'Gears of War made each reload a small timing game with a prize. <a href="https://gmtk.substack.com/p/how-game-designers-solved-these-11">GMTK</a> notes beginners often ignored it. Testing for the 2026 game moved the bar to mid-screen because that\'s where people used it most (<a href="https://gamingbolt.com/?p=646835">GamingBolt</a>). Its designer later called the multiplayer damage bonus a mistake (<a href="https://www.destructoid.com/cliff-bleszinski-devs-should-feel-free-to-use-gears-of-wars-active-reload/">Destructoid headline</a>, the rest of the piece was cut off for me).', "One repeated action in a shooter. We have 63 different ones.", "The cue goes at the crosshair. A plain cast stays fully fine. The damage bonus doesn't apply against other players."],
+        ["Would a timing reward feel good or like homework?", 'Gears of War made each reload a small timing game with a prize. <a href="https://gmtk.substack.com/p/how-game-designers-solved-these-11">GMTK</a> notes beginners often ignored it. Testing for the 2026 game moved the bar to mid-screen because that\'s where people used it most (<a href="https://gamingbolt.com/?p=646835">GamingBolt</a>). Its designer later called the multiplayer damage bonus a mistake (<a href="https://www.destructoid.com/cliff-bleszinski-devs-should-feel-free-to-use-gears-of-wars-active-reload/">Destructoid headline</a>, the rest of the piece was cut off for me).', "One repeated action in a shooter. We have 63 different ones.", "It backs you up. Only six powers keep a moment you can time, and missing it costs nothing."],
         ["How many pairings are worth finding?", 'One guide counts 28 Duo Boons in Hades (see <a href="https://screenrant.com/hades-duo-boons-guide/">Screen Rant</a> and <a href="https://primagames.com/tips/hades-what-are-duo-boons-how-get-duo-boons">Prima</a>), and Hades II has 37 (<a href="https://rogueranker.com/hades-2-duo-boons/">Rogue Ranker</a>). Each needs something from both gods.', "They're rolled per run. You try ours on purpose.", "24 Duets, each needing only the two powers on your bar."],
         ["Rules or a thousand special cases?", 'Breath of the Wild runs a rule-based calculator of states between elements and materials (<a href="https://www.thumbsticks.com/gdc-17-breath-of-the-wild-science-lies">report on the GDC 2017 talk</a>).', "An open-world sandbox, and I only read coverage.", "Six States are general rules. Duets are the named special cases on top."],
         ["Can you tell things apart by ear in a busy fight?", 'Overwatch found "the loudest sound wins" and built a system that lifts the biggest threat in the mix, and gave every character its own footsteps (<a href="https://pcgamer.com/how-overwatch-uses-sound-to-pinpoint-threats-you-cant-see">PC Gamer on the GDC 2016 talk</a>).', "A competitive shooter. I found nothing on how each ability was handled.", "A mix budget, with your own power and the biggest threat on top."],
         ["Timer or meter for the big one?", 'Overwatch fills a meter from damage and healing, with slow passive charge and no timer (<a href="https://overwatch.fandom.com/wiki/Ultimate_ability">wiki</a>, <a href="https://www.dexerto.com/overwatch/overwatch-how-to-quickly-build-ultimate-charge-560754">Dexerto</a>).', "Team PvP. The numbers are community figures.", "R becomes a gauge, and a slow creep means nobody is locked out."],
         ["Fighting beside your own replay: thrilling or a mess?", 'Super Time Force is built on it. Reviewers call it brilliant and also confusing or chaotic (<a href="https://gameinformer.com/games/super_time_force/b/xboxone/archive/2014/05/13/super-time-force-review-game-informer">Game Informer</a>, <a href="https://www.denofgeek.com/?p=111033">Den of Geek</a>, <a href="https://godisageek.com/2014/05/super-time-force-review/">God is a Geek</a>, <a href="https://gamesradar.com/super-time-force-review">GamesRadar</a>).', "A 2D shooter with many copies at once.", "Last Time Round is one figure until level 5, in a look you can't mistake for anything else."],
         ["How many copied abilities are worth having?", 'Kirby Super Star\'s team started with more than 40 candidates and kept the strongest (<a href="https://primagames.com/eguides/playing-with-super-power-nintendo-snes-classics-eguide/kirby-super-star/the-evolution-of-the-inhale">Prima</a>, <a href="https://www.nintendolife.com/news/2014/04/month_of_kirby_a_series_with_rewarding_game_design">Nintendo Life</a>). I found no proper design analysis.', "A much simpler game.", "I cut hard, and the list of what I cut is on this page."],
-        ["How long should a press be kept?", 'Smash keeps a press for 9 frames (<a href="https://www.ssbwiki.com/Buffer">SmashWiki</a>). Developer blogs give 3 to 5 frames or 80 to 150 ms and warn that long ones feel sticky (<a href="https://www.wayline.io/blog/art-of-input-buffering">Wayline</a>, <a href="https://bugnet.io/blog/how-to-implement-input-buffering-for-responsive-controls">Bugnet</a>). The sources are uneven.', "Fighting and action games at 60 frames. Ours is 20 ticks a second.", "0.15 seconds, which is three ticks. You can try other lengths in section 6."],
+        ["How long should a press be kept?", 'Smash keeps a press for 9 frames (<a href="https://www.ssbwiki.com/Buffer">SmashWiki</a>). Developer blogs give 3 to 5 frames or 80 to 150 ms and warn that long ones feel sticky (<a href="https://www.wayline.io/blog/art-of-input-buffering">Wayline</a>, <a href="https://bugnet.io/blog/how-to-implement-input-buffering-for-responsive-controls">Bugnet</a>). The sources are uneven.', "Fighting and action games at 60 frames. Ours is 20 ticks a second.", "0.15 seconds, which is three ticks. You can try other lengths in section 8."],
     ]))
     c.append('<h3>What already exists to build on</h3><div class="prose"><p><code>Strikes.posture</code> for stance, the Weaves\' found-not-told pattern, <code>FxDebris</code> and <code>TerrainLedger</code> for the ground, <code>TimeSlow</code> for time, <code>PlaySoundEvent</code> for bending sounds in Flow, <code>audiokit.py</code> and the listening pages for sound, CC0 sources already in the repo so no new download is needed, <code>combat_sim.py</code> for balance, <code>FxStats</code> for frame cost, and <code>Goals</code> for the Tasks page.</p></div></section>')
 
@@ -1087,9 +1350,9 @@ def page():
     c.append('<section class="top" id="s3">' + h2(3, "Three ways to do it", "s3h"))
     c.append('<div class="alts">')
     c.append('<div class="alt"><h4>A. Repair</h4><p>New sound pack, powers fill stance, end the dead buttons, remove vanilla leftovers.</p><p class="bh">About 12 hours. Low risk. Decent to good, but the powers are still one press. It fixes what\'s wrong without reaching what you asked for.</p></div>')
-    c.append('<div class="alt pick"><span class="pk">RECOMMENDED</span><h4>B. Build underneath</h4><p>Keep the 63 and the ladder. Add the ten changes, polish the system, rework each power by hand on top of them, and add the eight new ones.</p><p class="bh">About 100 hours, or about 60 without the new powers. Each piece can be switched off. It\'s the only option that reaches the bar and keeps the part you like.</p></div>')
-    c.append('<div class="alt"><h4>C. Start over</h4><p>Cut to about 30 deep powers with a new key model.</p><p class="bh">170 hours or more. Breaks the ladder and everyone\'s saves. Rejected, though its best idea survives: folding the four Architect shapes into one.</p></div></div>')
-    c.append('<div class="prose"><p><b>What would change my mind:</b> if Stage 0 feels just as good without Clean casts, I\'d drop them and move toward A plus the world and sound work. If the ground wave can\'t hold your frame rate, I\'d cut it back to Swift-style dust and keep the rest.</p></div></section>')
+    c.append('<div class="alt pick"><span class="pk">RECOMMENDED</span><h4>B. Build underneath</h4><p>Keep the 63 and the ladder. Add the ten changes, polish the system, rework each power by hand on top of them, and add the eight new ones.</p><p class="bh">About 130 hours, or about 90 without the eight new powers. Each piece can be switched off. It\'s the only option that reaches the bar and keeps the part you like.</p></div>')
+    c.append('<div class="alt"><h4>C. Start over</h4><p>Cut to about 30 deep powers with a new key model.</p><p class="bh">200 hours or more. Breaks the ladder and everyone\'s saves. Rejected, though its best idea survives: folding the four Architect shapes into one.</p></div></div>')
+    c.append('<div class="prose"><p><b>What would change my mind:</b> if Stage 0 doesn\'t feel clearly better than today\'s powers, I\'d stop and move toward A plus the world and sound work. If the ground wave can\'t hold your frame rate, I\'d cut it back to Swift-style dust and keep the rest.</p></div></section>')
 
     # 4
     c.append('<section class="top" id="s4">' + h2(4, "How it would work", "s4h"))
@@ -1101,29 +1364,30 @@ def page():
     for name, src, what in STATES:
         c.append("<div><b>%s</b><small>from %s</small>%s</div>" % (e(name), e(src), e(what)))
     c.append("</div>")
-    c.append('<h3 id="whole">The whole system ' + tag("pro") + '</h3><div class="prose"><p>The ten changes are about what a power does. These six are about everything around it, from the moment you pick up a Core.</p></div>')
+    c.append('<h3 id="whole">The whole system ' + tag("pro") + '</h3><div class="prose"><p>The ten changes are about what a power does. These seven are about everything around it, from the moment you pick up a Core.</p></div>')
     for i, s_ in enumerate(WHOLE, len(SYSTEMS) + 1):
         c.append(sysblock(i, *s_))
     c.append('<h3 id="contract">The rules it must keep</h3>')
     c.append(table(["Step", "What happens"], [
         ["Trigger", "A key press on one of the six slots, exactly as today."],
         ["Reads", "The power, its level and variant, your aim, what's under your aim, your movement, what's already on the target, your energy and cooldown."],
-        ["Does", "Second press? Can it act, and which version? Pay. Wind up. Release and judge Clean. Hit, stance, State. Duet check. Gauge, mastery, counters."],
-        ["You see", "The effect, the Clean ring, the State on the creature, and the first time you find a Duet, a toast."],
+        ["Does", "Second press? Can it act, and which version? Pay. Wind up. Release. Hit, stance, State. Duet check. Gauge, mastery, counters."],
+        ["You see", "The effect, the State on the creature, and the first time you find a Duet, a toast."],
         ["Allowed", "Damage and stance inside the caps, temporary terrain through the ledger, short-lived summons."],
         ["Saved", "Loadout schema 4 only, with your sets. Nothing mid-fight is saved."],
         ["When it can't", "No energy, on cooldown, no room: it says why and costs nothing."],
     ]))
-    c.append('<div class="twoc"><div><h3>These are always true</h3><ul class="plain"><li>A cast that isn\'t Clean equals today\'s cast</li><li>The server decides damage and Clean, never the client</li><li>The 20% boss hit cap stands, and all bonuses together stop at about 1.6 times</li><li>Every terrain change puts itself back unless it\'s something you built</li><li>No permanent allies, only short-lived summons and decoys</li><li>No power moves, stops or controls another player</li><li>With a change\'s setting off, the game behaves as it did without it</li></ul></div>')
-    c.append('<div><h3>When two things clash</h3><ul class="plain"><li>Boss cap beats the 1.6 cap, which beats any single bonus</li><li>Two time effects: the stronger one wins, they never stack</li><li>A Duet needs both powers from you or your party</li><li>Clean is judged at release, so the wind-up can\'t be gamed by a late aim</li><li>The Ascent\'s ladder always wins over a power that overlaps it</li><li>A kept press is cleared by any other power key or a dodge</li></ul></div></div>')
+    c.append('<div class="twoc"><div><h3>These are always true</h3><ul class="plain"><li>A plain press does at least what it does today</li><li>The server decides damage, never the client</li><li>The 20% boss hit cap stands, and all bonuses together stop at about 1.6 times</li><li>Every terrain change puts itself back unless it\'s something you built</li><li>No permanent allies, only short-lived summons and decoys</li><li>No power moves, stops or controls another player</li><li>With a change\'s setting off, the game behaves as it did without it</li></ul></div>')
+    c.append('<div><h3>When two things clash</h3><ul class="plain"><li>Boss cap beats the 1.6 cap, which beats any single bonus</li><li>Two time effects: the stronger one wins, they never stack</li><li>A Duet needs both powers from you or your party</li><li>The Ascent\'s ladder always wins over a power that overlaps it</li><li>A kept press is cleared by any other power key or a dodge</li></ul></div></div>')
     c.append("<h3>Saves and data</h3>")
     c.append(table(["What", "Where", "Old saves"], [
         ["Owned powers, levels, variants", "<code>Loadout</code>, schema 3 becomes 4", "Load unchanged. Wall, Ramp, Floor and Cone become Blueprint, each shape keeping its own level and variant, and the freed slots open up."],
         ["Your Way, per power", "Loadout 4", "Empty. Offered the next time you qualify."],
-        ["Clean and Duet counts, Duets found", "Loadout 4", "Start at zero, so Your Way waits for real evidence."],
+        ["Duet counts and Duets found", "Loadout 4", "Start at zero, so Your Way waits for real evidence."],
         ["R gauge", "Loadout 4", "Starts empty. Ultimates' old cooldowns are ignored."],
         ["Readings you've seen", "Worked out from your level, not saved", "Earlier lines appear in the Journal straight away."],
-        ["States, Clean chains, ground pieces", "Memory only", "Never saved. A relog clears them."],
+        ["States, ground pieces", "Memory only", "Never saved. A relog clears them."],
+        ["Each passive's setting", "Loadout 4", "Empty means Full, so every old save starts with everything on."],
         ["Terrain changes", "The existing <code>TerrainLedger</code>", "Put back on expiry, or on restart."],
         ["Your saved sets", "Loadout 4", "Your bar today becomes set one."],
         ["New items or blocks", "None", "The <code>journey_ledger</code> test stays green. The new powers use the existing Power Core, handed over by what you did."],
@@ -1133,7 +1397,18 @@ def page():
     c.append('<div class="prose"><p><b>AI:</b> not applicable. There\'s no AI in this feature.</p></div>')
     c.append('<h3 id="failures">What could go wrong</h3>')
     c.append(table(["Failure", "Guard", "What you\'d see", "Test"], [
-        ["Clean feels like a quick-time event", "It's optional, a plain cast is fine, one tip only", "Nothing nagging you", "You, at Stage 0"],
+        ["A power's best use goes unnoticed", "It's on the card, and the power shows it when it happens", "People find them by playing", "You, at Stage 0"],
+        ["A high ringing sound gets back in", "A check runs on every sound we build and fails the file", "It can't happen by accident", "<code>ding_check.py</code> in the audio build"],
+        ["The mantle is too bright or gets in the way", "In first person it stays at the bottom corners, and Quiet and Off are one click away", "You see as much as you want", "CI shots, then you"],
+        ["The mantle costs too much with several players", "One more pass of a body already being drawn, simpler on Swift and past about 24 blocks", "It stays inside the budget", "<code>FxStats</code> with ten players"],
+        ["The mantle looks wrong under Lens or shaders", "One short test before the rest is built", "We find out early", "Short test"],
+        ["Aura starts a fight you were sneaking past", "Crouch and it pulls in and stops striking", "It never gives you away", "GameTest"],
+        ["Switching a passive off in a fight as a trick", "Refused in a fight, like changing your set", "Nothing to exploit", "GameTest"],
+        ["Too many blow lines in a crowd", "Only the nearest two are drawn", "Busy fights stay readable", "You, in a real crowd"],
+        ["Water Run grabs a waterfall you didn't mean", "Only real falling water with room above it, at a sprint", "It only happens on purpose", "GameTest"],
+        ["Second Shadow looks wrong on uneven ground", "A short test first. If it's poor, the arm and going unlit stay and the shadow goes", "The idea survives", "Short test"],
+        ["Storms are too rare for Stormborn to matter", "Count them in a normal session. If they're too rare it starts in ordinary rain", "It gets used", "A count, then you"],
+        ["Stormborn's bolts do something they shouldn't", "They're drawn, not real: no fires, no broken builds, no charged creepers, no players", "Nothing gets set off", "GameTest"],
         ["Bonuses stack into a boss-melter", "1.6 cap and the 20% hit cap", "Big numbers that stop", "Simulator's worst case"],
         ["Sniping stance from far away", "Ranged stance falls off and Light hits are small", "Bosses come to you", "Simulator with a ranged build"],
         ["Ground wave costs too much", "Existing debris cap, simpler on Swift, none at Minimal", "Fewer pieces", "<code>FxStats</code>, stage gate"],
@@ -1152,28 +1427,30 @@ def page():
         ["Toll's silence is uncomfortable", "A setting keeps it from being total, and subtitles give an answering bell's direction", "Quiet, not empty", "You listen"],
         ["Borrowed Body: your real body is hit, the creature dies, or you log out", "Any of those brings you straight back. A 48-block leash", "You're back in your body", "GameTest for each"],
         ["Last Time Round: the target has moved, or it records itself", "It repeats results against what's there now. It can't record itself, and eight seconds is a fixed-size buffer", "Your past self still hits something", "Test with four powers"],
-        ["The kept press fires something you changed your mind about", "Only 0.15 seconds, and any other power key or a dodge clears it", "It stops feeling sticky", "You, and the demo in section 6"],
+        ["The kept press fires something you changed your mind about", "Only 0.15 seconds, and any other power key or a dodge clears it", "It stops feeling sticky", "You, and the demo in section 8"],
         ["Swapping sets to dodge cooldowns", "Cooldowns belong to the power, and swapping in a fight is refused", "Nothing to exploit", "GameTest"],
-        ["Lag makes Clean feel unfair", "Two ticks of grace, judged at the moment you pressed", "It counts when it looks like it should", "Simulated lag test"],
+        ["Lag makes one of the six timed moments feel unfair", "Two ticks of grace, judged at the moment you pressed", "It counts when it looks like it should", "Simulated lag test"],
         ["Clash with the boss fights session", "Only calls <code>Strikes.posture</code>, numbers agreed first", "Nothing", "CI on both branches"],
         ["Too many systems at once", "All silent until you run into them", "No new tutorial", "You, in a fresh world"],
     ]))
-    c.append('<div class="twoc"><div><h3>Multiplayer and boundaries</h3><ul class="plain"><li>The server is in charge, and looks and sound stay on the client</li><li>Duets work across a party</li><li>Dominate, Echo Swap and time stop never touch players</li><li>The existing limit on aim-bending against people stays</li><li>Clean\'s damage bonus doesn\'t apply against players</li><li>None of the eight new powers can stop, grab or enter another player</li><li>No new data leaves the game</li></ul></div>')
-    c.append('<div><h3>Frame rate and cost</h3><ul class="plain"><li>Limit we already test against: level 5 costs at most 0.5 ms typical and 1 ms worst over level 1</li><li>Ground pieces stay inside the existing cap</li><li>About 10 MB of sound on top of the current 2.2 MB</li><li>A command prints each power\'s Clean rate, Duets found and stance dealt</li><li>Titan and the Clock add no meshes. Road Ahead is a drawn strip with no block changes. Toll uses the screen pass power impacts already have. The Long Cut is the only new power that changes many blocks</li><li>Frame tests run on your Mac when it\'s quiet, under <code>slot.sh</code></li></ul></div></div></section>')
+    c.append('<div class="twoc"><div><h3>Multiplayer and boundaries</h3><ul class="plain"><li>The server is in charge, and looks and sound stay on the client</li><li>Duets work across a party</li><li>Dominate, Echo Swap and time stop never touch players</li><li>The existing limit on aim-bending against people stays</li><li>Bonuses for where a power shines don\'t apply against players</li><li>Other people see your Aura, and a setting turns other people\'s passives down if a crowd gets busy</li><li>Stormborn\'s bolts never strike another player, and Second Shadow never hides you from one</li><li>None of the eight new powers can stop, grab or enter another player</li><li>No new data leaves the game</li></ul></div>')
+    c.append('<div><h3>Frame rate and cost</h3><ul class="plain"><li>Limit we already test against: level 5 costs at most 0.5 ms typical and 1 ms worst over level 1</li><li>Ground pieces stay inside the existing cap</li><li>About 10 MB of sound on top of the current 2.2 MB</li><li>A command prints how often each power is used, Duets found and stance dealt</li><li>Titan and the Clock add no meshes. Road Ahead is a drawn strip with no block changes. Toll uses the screen pass power impacts already have. The Long Cut is the only new power that changes many blocks</li><li>The Aura mantle is one more pass of a body that\'s already being drawn, simpler on Swift and past about 24 blocks, and tested with ten players before it\'s built out</li><li>Frame tests run on your Mac when it\'s quiet, under <code>slot.sh</code></li></ul></div></div></section>')
 
     # 5
+    c.append(styles_section())
+    c.append(always_section())
     c.append(new_section())
 
     # 6
-    c.append('<section class="top" id="s5">' + h2(6, "See it", "s5h"))
+    c.append('<section class="top" id="s5">' + h2(8, "See it", "s5h"))
     c.append('<h3 id="boards">The best moments, as storyboards</h3><div class="prose"><p>Drawn to show the idea. None of this is game footage.</p></div>')
     c.append(storyboards())
     c.append('<h3 id="mocks">On screen</h3><div class="prose"><p>Mockups. The icons are real, and the numbers are made up to show the format.</p></div>')
-    c.append('<div class="mock"><div class="mockl">THE POWER BAR, MID-FIGHT</div><div class="hud"><div class="notes" aria-hidden="true"><i style="height:12px"></i><i style="height:19px"></i><i style="height:26px"></i><i style="height:36px"></i></div>')
-    c.append('<svg class="xh" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="23" fill="none" stroke="#3a3d58" stroke-width="2"/><path d="M32 9A23 23 0 1 1 9 32" fill="none" stroke="#86E0A0" stroke-width="3"/><path d="M6.5 16A30 30 0 0 0 6.5 48" fill="none" stroke="#7FC3FF" stroke-width="2"/><path d="M57.5 25A30 30 0 0 1 57.5 48" fill="none" stroke="#F2C14E" stroke-width="2"/><path d="M32 26v12M26 32h12" stroke="#fff" stroke-width="2"/></svg>')
-    c.append('<div class="slots">' + "".join('<div class="sl%s">%s<kbd>%s</kbd></div>' % (cl, ic(i, False), k) for i, k, cl in (("shockwave", "Z", ""), ("spirit_palm", "X", " cl"), ("gravity_well", "C", ""), ("beam", "V", ""))))
+    c.append('<div class="mock"><div class="mockl">THE POWER BAR, MID-FIGHT</div><div class="hud">')
+    c.append('<svg class="xh" viewBox="0 0 64 64" aria-hidden="true"><path d="M6.5 16A30 30 0 0 0 6.5 48" fill="none" stroke="#7FC3FF" stroke-width="2"/><path d="M57.5 25A30 30 0 0 1 57.5 48" fill="none" stroke="#F2C14E" stroke-width="2"/><path d="M32 26v12M26 32h12" stroke="#fff" stroke-width="2"/></svg>')
+    c.append('<div class="slots">' + "".join('<div class="sl%s">%s<kbd>%s</kbd></div>' % (cl, ic(i, False), k) for i, k, cl in (("shockwave", "Z", ""), ("spirit_palm", "X", ""), ("gravity_well", "C", ""), ("beam", "V", ""))))
     c.append('<div class="sl ult"><div>%s</div><kbd>R</kbd></div><div class="sl mv">%s<kbd>Alt</kbd></div></div></div>' % (ic("overload", False), ic("dash", False)))
-    c.append('<div class="call"><div><b>The ring at your crosshair</b>The window closes as a ring, right where you\'re already looking.</div><div><b>The Clean flash and rising notes</b>Spirit Palm just landed Clean. Four in a row, so the note has climbed four steps.</div><div><b>R fills around its icon</b>72% full, from fighting well. No timer.</div><div><b>Two thin arcs</b>Energy on the left, R on the right. Only in a fight, and you can turn them off.</div></div></div>')
+    c.append('<div class="call"><div><b>Nothing to time</b>No ring at the crosshair and no flash to chase. The middle of your screen stays clear.</div><div><b>R fills around its icon</b>72% full, from fighting well. No timer.</div><div><b>Two thin arcs</b>Energy on the left, R on the right. Only in a fight, and you can turn them off.</div></div></div>')
     c.append(key_page_mock())
     c.append(buffer_demo())
     c.append('<div class="mock"><div class="mockl">THE JOURNAL: THE CHOIR\'S RECORD</div><div class="journal"><div class="jlist"><h5>KINETIC</h5><div class="on">Dov Harlan <small>Haymaker</small></div><div>Greta Moss <small>Shockwave</small></div><div class="un">?? <small>unread</small></div><h5>SHADOW</h5><div>Nell Aubry <small>Shadow Step</small></div><div class="un">?? <small>unread</small></div><h5>READINGS FOUND</h5><div>7 / ??</div></div>')
@@ -1181,14 +1458,14 @@ def page():
     c.append('<div class="last"><b>Level 5</b><span>[I looked at this reading again. There are two names on it. His, and under that, yours. You picked this one last time too.]</span></div></div></div></div></div>')
     c.append('<div class="prose"><p>That last line appears only on the power you chose as your starter. It agrees with what the story already says: the Signal is you, from an earlier loop.</p></div>')
     c.append('<div class="mock"><div class="mockl">LEVEL 5: YOUR WAY, FOR A HAYMAKER</div><p class="sys" style="--fc:var(--kin)">[I\'ve been watching how you use this. There are three ways it could go from here. You can change your mind later.]</p><div class="ways">')
-    c.append('<div class="way"><h5>Skybreaker</h5>Thrown from the air, it drives them into the ground and leaves a crater.<div class="ev">You threw 38% of them from the air.</div></div><div class="way"><h5>Counterpunch</h5>Thrown into a blow that\'s landing, it hits twice as hard and stops the blow.<div class="ev">71% of yours landed Clean.</div></div><div class="way"><h5>Single Combat</h5>With only one enemy near you, the charge is a third faster.<div class="ev">64% were on one target.</div></div></div></div>')
+    c.append('<div class="way"><h5>Skybreaker</h5>Thrown from the air, it drives them into the ground and leaves a crater.<div class="ev">You threw 38% of them from the air.</div></div><div class="way"><h5>Counterpunch</h5>Thrown into a blow that\'s landing, it hits twice as hard and stops the blow.<div class="ev">You threw 71% of yours at something mid-swing.</div></div><div class="way"><h5>Single Combat</h5>With only one enemy near you, the charge is a third faster.<div class="ev">64% were on one target.</div></div></div></div>')
 
-    c.append('<h3 id="taster">Listen</h3><div class="prose"><p><b>I can\'t hear these.</b> I only measured them, so you\'re the judge. Today is rebuilt from the real files, at the moments the code plays them. New and Clean are my first ideas, made from synthesis and CC0 sources already in the repo. All of them are evened out to the same loudness, so you\'re comparing the sound and not the volume. Each wave is drawn to scale. Headphones if you can.</p></div>')
+    c.append('<h3 id="taster">Listen</h3><div class="prose"><p><b>I can\'t hear these.</b> I only measured them, so you\'re the judge. You said the dings, the high sounds at the launch moment, sound super synthetic. So I built a check for exactly that, and it found them: in my first Railgun a single 2,089 Hz tone was over 60% of the sound at the moment it fired, and 83 of the game\'s 172 power sounds have the same thing.</p><p>Each power now has three clips. <b>Today</b> is rebuilt from the real files, at the moments the code plays them. <b>Remade</b> has nothing in it that rings: it\'s real recordings of an electric arc, wind, thunder, stone falling and a far explosion, plus punches and air. <b>What I took out</b> is only the layers I removed, on their own, so you can tell me if that\'s the sound you meant. My check only looks above 800 Hz, so on some clips it finds nothing high, including two of the takings-out, which are low struck tones. If you still hear a ding on a clip marked <i>no high tone found</i>, tell me: that means my check is missing what you can hear. All of them are evened out to the same loudness, so you\'re comparing the sound and not the volume. Each wave is drawn to scale. Headphones if you can.</p></div>')
     c.append(taster())
 
     c.append('<h3 id="walk">Before and after, same situation</h3>')
     c.append(table(["Situation", "Today", "After", "Why it's better"], [
-        ["Ordinary: E rank, Shockwave, a few mobs in a field", "Press, a cone of light, they fall over, wait", "The real ground ripples out. You time it so the far ones are on the crest and they go up in the air. Your next hit slams one down.", "Same keys, but something to do and something to see"],
+        ["Ordinary: E rank, Shockwave, a few mobs in a field", "Press, a cone of light, they fall over, wait", "The real ground ripples out. The far ones get caught on the crest and go up in the air. Your next hit slams one down.", "Same keys, but something to see and somewhere better to use it"],
         ["Disappointing: Telekinesis user fighting a boss", "\"Too heavy.\" You swap it out or stop pressing it", "You catch the boss's shot and send it back, or hold its limb for a beat. It takes stance.", "Your power works where it matters"],
         ["Difficult: a low cave, two players, four foes", "Terrain Rip has little to tear, and you each fight alone", "Your partner's Well pulls the pack together and your Nova makes a Collapsing Star. Titan grows only as far as the roof, so you shrink back into a very large person instead of a giant.", "Combos reward working together, and a power that doesn't fit the room still does something"],
         ["Missing data: an old save with Wall 3 and Floor 1", "Four separate slots", "One Blueprint slot, Wall still level 3, Floor still level 1, and three keys back. Your Way says it hasn't seen enough of you yet.", "Nothing lost, and no invented evidence"],
@@ -1204,12 +1481,12 @@ def page():
     c.append("</section>")
 
     # 7
-    c.append('<section class="top" id="s6">' + h2(7, "Checks and order", "s6h"))
+    c.append('<section class="top" id="s6">' + h2(9, "Checks and order", "s6h"))
     c.append("<h3>What we measure against</h3>")
     c.append(table(["What", "Today", "Must become"], [
         ["Dead presses on a boss", "32 refusal sites in the code", "Zero unexplained, in one GameTest"],
         ["Stance from powers", "0", "Breaks per minute no more than 20% above today"],
-        ["Clean's overall effect", "None", "No more than about 12% at a 50% Clean rate"],
+        ["What every power's best use adds up to", "None", "No more than about 12% with every situation met"],
         ["Level 5 power", "About 1.5 times level 1", "Stays on that curve"],
         ["Powers with their own sound", "A few", "All, each passed by you on a listening page"],
         ["Loudness", "-10 to -21 LUFS across the four I measured", "Within 1.5 dB of each power's target"],
@@ -1217,39 +1494,44 @@ def page():
         ["Old saves", "Schema 3", "Load through schema 4, tested"],
         ["Presses thrown away just before a cooldown ends", "All of them", "None within the 0.15 seconds"],
         ["What a new power does that nothing else does", "Not applicable", "Your answer on each: would you call someone over?"],
+        ["High ringing tones in a sound's loud part", "83 of 172 files", "None, on every file we build"],
+        ["Passives you can see and hear at level 1", "2 of 4, faintly", "All 6"],
     ]))
     c.append('<div class="prose"><p>Tuning uses the Hive Regent and Gearwright, then the numbers are checked on bosses they weren\'t tuned on. The fun itself can\'t be measured, so that gate is you playing it. As usual, one test per mechanism, and CI runs the full suite.</p></div>')
     c.append("<h3>The order</h3>")
     c.append(table(["Stage", "What gets built", "Hours", "Stop and check", "If it fails"], [
-        ["0 Proof", "Clean, stance and the ground wave on Haymaker, Shockwave, Gravity Well and Railgun, with full sound packs", "4", "<b>You play it. Nothing continues until you say so.</b>", "The branch is dropped and nothing was merged"],
-        ["1 Foundations", "Clean, States, stance, R gauge, chain links, no dead buttons, save schema 4, Powers tab, Readings engine, HUD", "6", "Full suite green, old saves load", "Settings off, and schema 4 reads back to defaults"],
+        ["0 Proof", "Stance, where it shines and the ground wave on Haymaker, Shockwave, Gravity Well and Railgun, with full sound packs and no dings", "4", "<b>You play it. Nothing continues until you say so.</b>", "The branch is dropped and nothing was merged"],
+        ["1 Foundations", "States, stance, R gauge, chain links, no dead buttons, save schema 4, Powers tab, Readings engine, HUD, the ding check", "6", "Full suite green, old saves load", "Settings off, and schema 4 reads back to defaults"],
         ["1b The whole system", "Cores you crack, three sets and the fuller card, the kept press, hold to aim, the Duet glint, Try It, the new bar", "8", "CI shots at your MacBook's size, then you play", "Each one has a setting or goes back alone"],
-        ["2 Short tests for new powers", "Four throwaway tests: how the road feels, driving a creature, the replay, the Cut at distance", "3", "I tell you what each one showed", "Never merged. A poor result drops or changes that power"],
-        ["3 New powers, wave 1", "Titan and Stopped Clock, so R isn't empty early", "7", "<b>You play them. Wave 2 waits for your word.</b>", "Skip the rest of the new powers"],
-        ["4 Starters, Kinetic, Energy", "Rework and sound for each", "8", "Listening page, Keep or Redo", "A power's sound goes back with one line"],
-        ["5 Velocity, Flight, Shadow", "Rework and sound for each", "7", "Listening page", "Same"],
-        ["6 Mind, Architect, Tech", "Rework, sound, Blueprint", "9", "Listening page; migration test", "Same; Blueprint can stay off"],
-        ["7 Spirit and latents", "Rework and sound for each", "6", "Listening page", "Same"],
-        ["8 Duets and party", "All 24, across players", "6", "Two-player test", "Duets switch off"],
-        ["9 Lore and earning", "Readings, Journal, Cores from places, Your Way", "5", "You read every line", "Text only, easy to change"],
-        ["10 New powers, wave 2", "Road Ahead, Say It Back, Toll, The Long Cut", "18", "<b>You play them. Wave 3 waits for your word.</b>", "Each is separate, so one can stay out"],
-        ["11 New powers, wave 3", "Borrowed Body, Last Time Round", "13", "You play them", "Same"],
+        ["1c Play styles", "The nine styles on the starter choice, the K page and every card, and the Style bonuses", "3", "You read the words", "Text can stay and the bonuses switch off"],
+        ["2 Always On, first part", "The tab, Full, Quiet and Off, the first-time lines, the Tab row, and Aura complete with its short test", "9", "<b>You play Aura.</b>", "The mantle can go and the tab stays"],
+        ["3 Short tests", "Five throwaway tests: how the road feels, driving a creature, the replay, the Cut at distance, a flat shadow on rough ground", "3", "I tell you what each one showed", "Never merged. A poor result drops or changes that power"],
+        ["4 New powers, wave 1", "Titan and Stopped Clock, so R isn't empty early", "7", "<b>You play them. Wave 2 waits for your word.</b>", "Skip the rest of the new powers"],
+        ["5 Starters, Kinetic, Energy", "Rework and sound for each", "8", "Listening page, Keep or Redo", "A power's sound goes back with one line"],
+        ["6 Velocity, Flight, Shadow", "Rework and sound for each", "7", "Listening page", "Same"],
+        ["7 Mind, Architect, Tech", "Rework, sound, Blueprint", "9", "Listening page; migration test", "Same; Blueprint can stay off"],
+        ["8 Spirit and latents", "Rework and sound for each", "6", "Listening page", "Same"],
+        ["9 Always On, second part", "Danger Sense, Wall Stride, Water Run, Second Shadow and Stormborn, each with its look and sound", "18", "You play each", "Each is separate, so one can stay as it is"],
+        ["10 Duets and party", "All 24, across players", "6", "Two-player test", "Duets switch off"],
+        ["11 Lore and earning", "Readings, Journal, Cores from places, Your Way", "5", "You read every line", "Text only, easy to change"],
+        ["12 New powers, wave 2", "Road Ahead, Say It Back, Toll, The Long Cut", "18", "<b>You play them. Wave 3 waits for your word.</b>", "Each is separate, so one can stay out"],
+        ["13 New powers, wave 3", "Borrowed Body, Last Time Round", "13", "You play them", "Same"],
     ]))
-    c.append('<div class="prose"><p><b>About 100 hours in total, one builder, no sub-agents, based on how fast the ladders and casts were really built. Could be 70 to 140. About 60 of that is everything but the new powers.</b> What could move it most: Sound rounds that come back Redo, whether the ground wave holds up on your Mac, how Clean tunes, and Borrowed Body, which is the riskiest of the eight.</p><p><b>Depends on:</b> the boss fights session, so stance numbers are agreed with it first. <b>Stops the rollout:</b> Stage 0 not feeling better, any frame gate failed, or an old save that won\'t load.</p></div>')
+    c.append('<div class="prose"><p><b>About 130 hours in total, one builder, no sub-agents, based on how fast the ladders and casts were really built. Could be 95 to 180. About 90 of that is everything but the eight new powers, and about 60 without the passive work as well.</b> What could move it most: Sound rounds that come back Redo, whether the ground wave and the Aura mantle hold up on your Mac, and Borrowed Body, which is the riskiest of the eight.</p><p><b>Depends on:</b> the boss fights session, so stance numbers are agreed with it first. <b>Stops the rollout:</b> Stage 0 not feeling better, any frame gate failed, or an old save that won\'t load.</p></div>')
     c.append('<h3>Where this plan could be wrong</h3>')
     c.append(table(["Question", "Honest answer"], [
-        ["Is this your real frustration?", "I read \"boring\" as nothing to get good at. If what bothers you is mostly how they look and sound, Clean is the part to cut. Stage 0 will show it."],
-        ["Does it just add effort?", "It adds things to learn: Clean, six States, Duets. All are silent until you run into them, and ignoring them leaves you with today's powers."],
+        ["Is this your real frustration?", "I read \"boring\" as powers that are the same wherever you use them. You've told me timing isn't the answer, so the plan answers it with what each power does and where it shines. Stage 0 will show if that's enough."],
+        ["Does it just add effort?", "It adds things to find: six States and Duets. Both are silent until you run into them, and ignoring them leaves you with today's powers. There's no timing to learn."],
         ["Could something simpler do most of it?", "Option A gets the sound and bosses. It doesn't touch the one press. Nothing simpler changes that."],
         ["What would prove me wrong?", "You play the proof and prefer today's Haymaker. I'd stop there."],
-        ["Is 100 hours too big a bet?", "Each stage stands on its own, and you can stop after any of them. Saying no to all the new powers takes off about 40 hours."],
-        ["Are eight new powers too many?", "Each one has to pass the test in section 5 on its own, and they arrive in three waves. If the first two don't make you call someone over, stop there."],
+        ["Is 130 hours too big a bet?", "Each stage stands on its own, and you can stop after any of them. Saying no to all the new powers takes off about 40 hours."],
+        ["Are eight new powers too many?", "Each one has to pass the test in section 7 on its own, and they arrive in three waves. If the first two don't make you call someone over, stop there."],
     ]))
     c.append("</section>")
 
     # 7
-    c.append('<section class="top" id="s7">' + h2(8, "Your decisions", "s7h"))
-    c.append('<div class="prose"><p>Answer yes or no. My recommendation is yes to all of them. The last eight stand alone, so you can have Titan and not Toll. You can also flag any power above, or answer the four taster questions.</p></div>')
+    c.append('<section class="top" id="s7">' + h2(10, "Your decisions", "s7h"))
+    c.append('<div class="prose"><p>Answer yes or no. My recommendation is yes to all of them. The last eight stand alone, so you can have Titan and not Toll. You can also flag any power above, or answer the questions under the taster sounds.</p></div>')
     c.append(recs())
     c.append('<h3>Anything else?</h3><textarea class="note" id="general" rows="4" style="width:100%" placeholder="Anything I missed, or got wrong"></textarea>')
     c.append('<div class="savebar"><span id="answered">0 answered</span><button class="btn alt" id="yes-all" type="button">Yes to everything unanswered</button><span id="save-state">Loading your answers…</span></div></section>')
@@ -1271,14 +1553,21 @@ def plan_md():
         for p in P:
             if p["family"] != f:
                 continue
-            o += ["**%s** (%s, %s)" % (p["name"], p["slot"], VERDICT[p["verdict"]]), "", "- Today: " + p["now"], "- After: " + p["after"], "- Right way: " + p["right"], "- Boss: " + p["boss"], "- Sound: " + p["sound"], "- Reading: [" + p["first"] + "]", ""]
+            o += ["**%s** (%s, %s)" % (p["name"], p["slot"], VERDICT[p["verdict"]]), "", "- Today: " + p["now"], "- After: " + p["after"], "- Where it shines: " + p["right"], "- Boss: " + p["boss"], "- Sound: " + p["sound"], "- Reading: [" + p["first"] + "]", ""]
     o += ["## Duets", ""] + ["- %s + %s = **%s**: %s" % d for d in DUETS] + [""]
     o += ["## The whole system", ""]
     for i, s_ in enumerate(WHOLE, len(SYSTEMS) + 1):
         o.append("%d. **%s**: %s" % (i, s_[0], s_[2].replace("<code>", "`").replace("</code>", "`")))
+    o += ["", "## Play styles", ""]
+    for st in STYLES:
+        o += ["### %s: %s" % (st["fam"], st["title"]), "", st["you"], "", "- A fight: " + st["fight"], "- Together: " + st["together"], "- Goes with: " + st["goes"], "- Style bonus, %s: %s" % (st["bonus"], st["does"]), ""]
+    o += ["## Always On", ""]
+    for pa in PASSIVES:
+        o += ["### %s (%s, about %d hours)" % (pa["name"], pa["fam"], pa["hours"]), "", pa["tagline"], "", pa["what"], "", "- Today: " + pa["today"], "- At rest: " + pa["rest"], "- Roused: " + pa["roused"], "- When it acts: " + pa["acts"], "- First person: " + pa["fp"], "- Others see: " + pa["others"], "- Sound: " + pa["sound"], "- How you know: " + pa["you"], "- Where it shines: " + pa["right"], "- Boss: " + pa["boss"], "- Quiet and Off: " + pa["states"], "- Fair: " + pa["fair"]] + (["- Earn: " + pa["earn"]] if pa.get("earn") else []) + ["- Steps: " + "; ".join("%s: %s" % x for x in pa["steps"]), "- Reading: [" + pa["reading"] + "]", ""]
+    o += ["## Passive ideas cut", ""] + ["- **%s**: %s %s" % x for x in PCUT] + [""]
     o += ["", "## Eight new powers", ""]
     for n in NEWP:
-        o += ["### %s (%s, %s, wave %d, about %d hours)" % (n["name"], n["kind"], n["slot"], n["wave"], n["hours"]), "", n["what"], "", "- Thrill: " + n["thrill"], "- Only it: " + n["only"], "- Look: " + n["look"], "- Sound: " + n["sound"], "- Right way: " + n["right"], "- Boss: " + n["boss"], "- Fair: " + n["fair"], "- Earned: " + n["earn"], "- Reading: [" + n["reading"] + "]", "- Levels: " + "; ".join("%s: %s" % st for st in n["steps"]), "- Engine: " + n["engine"].replace("<code>", "`").replace("</code>", "`"), "- Unknown: " + n["unknown"], ""]
+        o += ["### %s (%s, %s, wave %d, about %d hours)" % (n["name"], n["kind"], n["slot"], n["wave"], n["hours"]), "", n["what"], "", "- Thrill: " + n["thrill"], "- Only it: " + n["only"], "- Look: " + n["look"], "- Sound: " + n["sound"], "- Where it shines: " + n["right"], "- Boss: " + n["boss"], "- Fair: " + n["fair"], "- Earned: " + n["earn"], "- Reading: [" + n["reading"] + "]", "- Levels: " + "; ".join("%s: %s" % st for st in n["steps"]), "- Engine: " + n["engine"].replace("<code>", "`").replace("</code>", "`"), "- Unknown: " + n["unknown"], ""]
     o += ["## Ideas cut", ""] + ["- **%s**: %s %s" % x for x in CUT] + [""]
     o += ["## Recommendations", ""] + ["%d. %s (If no: %s)" % (i, t, IF_NO[k]) for i, (k, t) in enumerate(RECS, 1)] + [""]
     return "\n".join(o)

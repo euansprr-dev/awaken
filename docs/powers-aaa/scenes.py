@@ -586,6 +586,213 @@ def borrowed():
     return [p1, p2, p3, p4]
 
 
+# ---- passives: the Always On section ---------------------------------------------------------------------------------------------
+def mantle(p, x, c=JADE, h=1.0, lean=0.0, y=None, front=False):
+    """Flame licks that follow the body's outline, drawn behind the person (call before person())."""
+    y = p.gy if y is None else y
+    r = random.Random(int(x * 7 + h * 31))
+    if not front:
+        p.glow(x, y - 28, 26 + 12 * h, c, .28 + .18 * h)
+    anchors = [(-9, -6), (9, -6), (-10, -18), (10, -18), (-10, -30), (10, -30), (-11, -40), (11, -40), (-9, -50), (9, -50), (-4, -56), (4, -56), (0, -57)]
+    for ax, ay in anchors:
+        l = r.uniform(7, 20) * h
+        side = 1 if ax > 0 else -1 if ax < 0 else 0
+        tx = x + ax + side * l * .28 + lean * l
+        ty = y + ay - l
+        w = r.uniform(2.6, 4.6)
+        p.add('<path d="M%s %s Q%s %s %s %s Q%s %s %s %s Z" fill="%s" opacity="%s"/>' % (
+            n(x + ax - w), n(y + ay + 3), n(x + ax - w * .4 + lean * l * .3), n(y + ay - l * .55), n(tx), n(ty),
+            n(x + ax + w * .9 + lean * l * .3), n(y + ay - l * .45), n(x + ax + w), n(y + ay + 3), c, n(r.uniform(.45, .85))))
+    return p
+
+
+def tongue(p, x0, y0, x1, y1, c=JADE, bend=-34, w=6.5):
+    """A tapered strip from the body to a target."""
+    mx, my = (x0 + x1) / 2, (y0 + y1) / 2 + bend
+    up, down = [], []
+    for i in range(15):
+        t = i / 14
+        a, b, d = (1 - t) ** 2, 2 * t * (1 - t), t ** 2
+        x, y = a * x0 + b * mx + d * x1, a * y0 + b * my + d * y1
+        wid = w * (1 - t) ** .8 + .6
+        up.append("%s,%s" % (n(x), n(y - wid / 2)))
+        down.append("%s,%s" % (n(x), n(y + wid / 2)))
+    p.add('<polygon points="%s" fill="%s" opacity=".9"/>' % (" ".join(up + down[::-1]), c))
+    p.add('<path d="M%s %s Q%s %s %s %s" fill="none" stroke="#fff" stroke-width="1" opacity=".75"/>' % (n(x0), n(y0), n(mx), n(my), n(x1), n(y1)))
+    return p
+
+
+def _rotated(p, cx, cy, deg, fn):
+    i = len(p.o)
+    fn()
+    inner = "".join(p.o[i:])
+    del p.o[i:]
+    return p.add('<g transform="rotate(%s %s %s)">%s</g>' % (n(deg), n(cx), n(cy), inner))
+
+
+def _water(p, y, c="#1d4f6e"):
+    p.add('<rect x="0" y="%d" width="%d" height="%d" fill="%s"/>' % (y, W, H - y, c))
+    for i in range(16):
+        x, yy = p.r.randint(0, W), p.r.randint(y + 3, H - 3)
+        p.add('<rect x="%d" y="%d" width="%d" height="2" fill="#6fb6d6" opacity=".35"/>' % (x, yy, p.r.randint(10, 30)))
+    return p
+
+
+def _rain(p, count=34, c="#9cc4e4", op=.5):
+    for _ in range(count):
+        x, y = p.r.randint(0, W), p.r.randint(0, p.gy - 8)
+        p.add('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1" opacity="%s"/>' % (x, y, x - 3, y + 11, c, op))
+    return p
+
+
+def _bolt(p, x0, y0, x1, y1, c="#dff2ff", w=3.5):
+    pts, steps = [(x0, y0)], 9
+    for i in range(1, steps):
+        t = i / steps
+        pts.append((x0 + (x1 - x0) * t + p.r.uniform(-13, 13), y0 + (y1 - y0) * t))
+    pts.append((x1, y1))
+    d = " ".join("%s,%s" % (n(a), n(b)) for a, b in pts)
+    p.add('<polyline points="%s" fill="none" stroke="%s" stroke-width="%s" opacity=".35"/>' % (d, c, n(w * 3.2)))
+    return p.add('<polyline points="%s" fill="none" stroke="#fff" stroke-width="%s"/>' % (d, n(w)))
+
+
+def aura_board():
+    sky, deep, gc, cap = "#14202a", "#2c4440", "#47504e", "#566a50"
+    p1 = P(301, sky, deep).ridge("#1b2a30").ground(gc, cap)
+    mantle(p1, 160, h=.42).person(160, "stand")
+    p2 = P(302, sky, deep).ridge("#1b2a30").ground(gc, cap)
+    mantle(p2, 110, h=1.15, lean=.7).person(110, "stand").mob(266, "stand")
+    p3 = P(303, sky, "#37564a").ridge("#1b2a30").ground(gc, cap)
+    mantle(p3, 110, h=1.05, lean=.5).person(110, "stand").mob(228, "wind").mob(280, "stand", op=.85)
+    tongue(p3, 120, 112, 222, 108).glow(224, 108, 18, JADE, .8).star(224, 108, 13, "#eafff1").text(238, 86, "1.2", JADE, 15, "start", 700)
+    p4 = P(304, sky, deep).ridge("#1b2a30").ground(gc, cap)
+    mantle(p4, 110, h=.95, lean=.3).person(110, "stand").mob(232, "fold", y=132)
+    tongue(p4, 122, 112, 170, 104, bend=-14, w=4).orb(170, 104, "#eafff1", 4).glow(170, 104, 12, JADE, .9)
+    p4.ring(112, 112, 9, 9, "#eafff1", 1.5, .8)
+    return [p1, p2, p3, p4]
+
+
+def sense_board():
+    sky, deep, gc, cap, red = "#191622", "#3b2c40", "#4a4852", "#5d5b56", "#ff8a7a"
+    p1 = P(311, sky, deep).ridge("#231e2e").ground(gc, cap)
+    p1.person(92, "stand").beast(244, arm=20)
+    p2 = P(312, sky, deep).ridge("#231e2e").ground(gc, cap)
+    p2.person(92, "stand").beast(244, arm=120)
+    p2.add('<path d="M214 60 Q150 34 102 118" fill="none" stroke="%s" stroke-width="2.2" stroke-dasharray="7 5"/>' % red)
+    p2.lines(84, 92, 5, 8, 16, red, 1.4, .8, 150, 240)
+    p3 = P(313, "#15121c", "#2c2334").ridge("#231e2e").ground(gc, cap)
+    p3.person(92, "stand", op=.28).person(44, "step", face=-1).beast(244, arm=-30, lean=14)
+    p3.add('<path d="M214 72 Q160 92 110 142" fill="none" stroke="#fff" stroke-width="5" opacity=".55"/>')
+    for a, b, c, d in ((120, 64, 138, 58), (104, 88, 96, 72), (152, 54, 170, 62)):
+        p3.add('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="2"/>' % (a, b, c, d, GOLD))
+    p4 = P(314, sky, deep).ridge("#231e2e").ground(gc, cap)
+    p4.person(190, "punch").beast(250, arm=-20, lean=18, op=.92).ring(190, 110, 24, 24, GOLD, 2, .9).ring(190, 110, 40, 40, GOLD, 1.3, .5)
+    return [p1, p2, p3, p4]
+
+
+def stride_board():
+    red = "#FF6A5E"
+    def wall(seed):
+        q = P(seed, "#23202a", "#3a3340", gy=156)
+        q.bricks(0, 8, "#4e4750").ground("#3f3e46", "#4f4f4c")
+        return q
+    p1 = wall(321)
+    p1.person(150, "reach", y=156).lines(178, 118, 7, 3, 22, "#ffcf9a", 1.6, .9, 150, 230)
+    p1.add('<path d="M40 118 L176 118" stroke="#ffcf9a" stroke-width="1.5" stroke-dasharray="3 6" opacity=".7"/>')
+    p2 = wall(322)
+    for i, x in enumerate(range(30, 196, 26)):
+        p2.add('<rect x="%d" y="%d" width="11" height="5" fill="%s" opacity="%s"/>' % (x, 122 - i * 2 + (i % 2) * 7, red, n(.25 + i * .12)))
+    p2.person(222, "step", y=118)
+    p3 = wall(323)
+    p3.add('<path d="M10 118 L150 112" stroke="#f4f0e8" stroke-width="5" opacity=".85"/><path d="M150 112 L268 108" stroke="%s" stroke-width="6"/>' % red)
+    p3.glow(268, 108, 16, red, .7).person(280, "step", y=104)
+    p4 = wall(324)
+    p4.ring(100, 110, 16, 30, red, 3, .9).trail(100, 110, 178, 116, red, 8).person(190, "punch", y=156).mob(244, "fold", y=146).glow(226, 110, 26, "#ffd3b0", .8).lines(226, 110, 12, 14, 42, "#fff", 2, .9)
+    return [p1, p2, p3, p4]
+
+
+def water_board():
+    sky, deep = "#27415a", "#7fa6bc"
+    def foam(q, x0, x1, y):
+        for i in range(10):
+            t = i / 9
+            q.add('<rect x="%s" y="%s" width="%s" height="%s" fill="#eaf6fb" opacity="%s"/>' % (n(x0 + (x1 - x0) * t), n(y - 1 + (1 - t) * 5), n(18 * (1 - t) + 6), n(2 + (1 - t) * 3), n(.35 + t * .55)))
+        return q
+    p1 = P(331, sky, deep, gy=130).ridge("#3a5a70", base=130)
+    _water(p1, 130); foam(p1, 10, 176, 130).person(190, "step", y=130)
+    for rx in (10, 22):
+        p1.ring(60, 136, rx * 2, rx * .4, "#cfeaf5", 1.3, .6)
+    p2 = P(332, sky, deep, gy=130).ridge("#3a5a70", base=130)
+    _water(p2, 130); foam(p2, 10, 150, 130)
+    p2.add('<polygon points="110,130 140,72 158,130" fill="#dff1f8" opacity=".55"/><polygon points="136,130 170,58 186,130" fill="#eef8fc" opacity=".68"/>').person(198, "step", y=130).lines(150, 96, 10, 10, 32, "#fff", 1.4, .7, 200, 320)
+    p3 = P(333, sky, deep, gy=130).ridge("#3a5a70", base=130)
+    _water(p3, 130)
+    p3.person(112, "land", y=130).add('<path d="M70 132 Q120 92 182 98 Q232 104 262 132 Z" fill="#cfeaf5" opacity=".78"/><path d="M92 132 Q130 112 182 114 Q216 118 244 132 Z" fill="#fff" opacity=".55"/>')
+    p3.mob(250, "fold", y=120).mob(292, "fold", y=124)
+    p4 = P(334, sky, deep, gy=146).ridge("#3a5a70").ground("#4a5560", "#59695a")
+    for i in range(8):
+        p4.add('<rect x="%d" y="0" width="16" height="146" fill="%s"/>' % (196 + i * 16, shade("#3e6275", .86 + p4.r.random() * .3)))
+    p4.add('<rect x="176" y="0" width="30" height="146" fill="#bfe4f2" opacity=".78"/>').add('<rect x="186" y="0" width="8" height="146" fill="#fff" opacity=".55"/>')
+    _rotated(p4, 172, 92, 72, lambda: p4.person(172, "step", y=92))
+    for y in (120, 104, 136):
+        p4.ring(186, y, 16, 3, "#fff", 1.2, .6)
+    return [p1, p2, p3, p4]
+
+
+def shadow_board():
+    ink = dict(skin="#0b0a12", shirt="#0b0a12", legs="#0b0a12", eye="#0b0a12", hair="#0b0a12")
+    p1 = P(341, "#433b34", "#7a6a54", gy=150)
+    p1.bricks(0, 8, "#7c6f60").ground("#4c4a48", "#5e6050")
+    p1.person(150, "stand", -1, s=1.9, y=150, op=.74, **ink)
+    p1.person(112, "stand", 1).mob(276, "stand")
+    p2 = P(342, "#07070e", "#12121f", gy=150)
+    p2.bricks(0, 8, "#201f2c").ground("#1e1e28", "#262730")
+    p2.glow(120, 146, 30, "#2a1f55", .9).person(120, "step", op=.7).mob(262, "stand", op=.5)
+    for x, y in ((80, 142), (92, 148), (70, 148)):
+        p2.add('<circle cx="%d" cy="%d" r="2" fill="#a98fff" opacity=".5"/>' % (x, y))
+    p3 = P(343, "#07070e", "#16142a", gy=150)
+    p3.bricks(0, 8, "#201f2c").ground("#1e1e28", "#262730")
+    p3.person(190, "wind", op=.85).mob(250, "stand", op=.8)
+    p3.add('<path d="M214 150 Q206 112 234 88 L244 94 Q226 118 234 150 Z" fill="#050409"/>').glow(240, 92, 14, "#a98fff", .7)
+    p3.lines(240, 92, 8, 8, 20, "#a98fff", 1.4, .7)
+    p4 = P(344, "#07070e", "#1c1834", gy=150)
+    p4.bricks(0, 8, "#201f2c").ground("#1e1e28", "#262730")
+    p4.person(200, "punch").mob(254, "fold", y=136).glow(232, 110, 24, "#a98fff", .55).star(232, 110, 15, "#d8ccff")
+    p4.person(140, "punch", s=1.8, y=150, op=.82, **ink)
+    return [p1, p2, p3, p4]
+
+
+def storm_board():
+    sky, deep, gc, cap, blue = "#10141f", "#2a3346", "#3a3f4a", "#47544a", "#a8d8ff"
+    p1 = P(351, sky, deep).ridge("#1a2030").ground(gc, cap)
+    _rain(p1).person(150, "float")
+    for dx, dy in ((-16, -70), (10, -76), (22, -58), (-24, -48), (-4, -84), (26, -36)):
+        p1.star(150 + dx, 146 + dy, 3.4, blue, .95)
+    p2 = P(352, sky, deep).ridge("#1a2030").ground(gc, cap)
+    _rain(p2).person(150, "stand").add('<rect x="118" y="143" width="66" height="4" fill="%s"/>' % blue).glow(150, 146, 28, blue, .75)
+    p2.lines(150, 90, 8, 10, 22, blue, 1.3, .7, 200, 340)
+    p3 = P(353, "#3a4a68", "#8ea4c8").ridge("#2a3550").ground(gc, cap).flash("#dff2ff", .25)
+    _bolt(p3, 158, -4, 150, 96).person(150, "float").glow(150, 100, 56, blue, .95).lines(150, 110, 14, 22, 58, "#fff", 1.8, .9)
+    p4 = P(354, sky, deep).ridge("#1a2030").ground(gc, cap)
+    _rain(p4, 22).person(130, "punch").mob(192, "fold", y=136)
+    _bolt(p4, 200, -4, 194, 120, w=3).glow(194, 124, 34, blue, .95).star(194, 124, 14, "#fff")
+    for dx, dy in ((14, -36), (24, -44), (6, -28)):
+        p4.star(130 + dx, 146 + dy, 3, blue)
+    return [p1, p2, p3, p4]
+
+
+def passive_boards():
+    """Storyboards for the passives, by id in powers_data.PASSIVES."""
+    return {
+        "aura": dict(panels=aura_board(), caps=["At rest it's low and slow, like breathing.", "Something hostile comes near. It stands up and leans that way.", "A tongue of it goes out and bites.", "It comes back with a bright bead, and that sinks into your chest."]),
+        "danger_sense": dict(panels=sense_board(), caps=["Nothing. No glow, no sound, until something commits.", "The blow draws its path in the air. A note climbs in that ear.", "You step out late. The line snaps and the world goes quiet.", "It's left open, and you get paid for how late you moved."]),
+        "wall_run": dict(panels=stride_board(), caps=["Sprint beside a wall and your free hand drags sparks along it.", "On the wall, your footprints burn and fade.", "White for as long as anyone could hold it. Red once only the power is holding you up.", "Off the end, all of that speed goes into one hit."]),
+        "water_run": dict(panels=water_board(), caps=["A wake that lasts, so you can look back at where you've been.", "At full speed, sheets of spray stand up beside you.", "Stop dead. The whole wake catches up and breaks forward.", "Level 5: you keep running, straight up the waterfall."]),
+        "shadow": dict(panels=shadow_board(), caps=["Your shadow turns to look at it before you do.", "Two seconds in the dark and you go unlit. Your steps fall silent.", "From the dark, a black arm comes up ahead of your blow.", "The arm lands first. Then you do."]),
+        "storm": dict(panels=storm_board(), caps=["In a storm the rain turns to sparks before it reaches you.", "Half a second of warning: a hum and a line at your feet.", "It comes straight down on you and you're fine. Better than fine.", "Hit something while you're crackling and the sky finishes it."]),
+    }
+
+
 def new_boards():
     """Storyboards for the new powers, by id in powers_data.NEWP."""
     return {
@@ -605,7 +812,7 @@ def boards():
         dict(id="sb-haymaker", title="Haymaker, done right", fam="Kinetic", color=ORANGE, kind="Power", panels=haymaker(), caps=[
             "Hold. The fist gathers and the air starts to shake.",
             "A small bright window at full charge. You hear it before you see it.",
-            "Let go inside the window. Time hitches for one beat and the punch lands.",
+            "Let go at full charge. Time hitches for one beat and the punch lands.",
             "The target folds, flies and cracks the wall it hits. Its stance is gone."]),
         dict(id="sb-ground", title="The ground comes up", fam="Kinetic", color=ORANGE, kind="Shared tech", panels=ground_wave(), caps=[
             "Stamp. Your foot goes down and the surface takes it.",
@@ -626,7 +833,7 @@ def boards():
             "The boss starts a blow.",
             "A gold ghost plays the next second on the real path, and you hear the hit backwards.",
             "You step out. The real blow lands exactly where the ghost's did.",
-            "Your counter lands Clean while its arm is still in the ground."]),
+            "Your counter lands while its arm is still in the ground."]),
     ]
 
 
