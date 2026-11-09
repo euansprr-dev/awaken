@@ -19841,3 +19841,16 @@ nothing unless the script set its environment. Pictures, `sheet.png` and `report
 view, vanilla over 30%) land in `run-preview/<tour>/`. It paints the ground truth (every block the land draws) but shades it plainly:
 sun, soft corners and haze, no creatures, no Lens. It judges shapes, framing, tone and broken builds; the real look still needs a walk.
 `volume.sha` holds a hash of every block for each seed asked for: a change to the kit that shouldn't change a land must not move it.
+
+The kit is working parts, not a look. In `realms/kit`: `KitLand<M>` (the piece list, `place` with the clash rule, `waystone`, `clearSites`/`tended`,
+`jit`), `Mats` (materials by job, named `<land>_stone`, `<land>_stone_worn`... with a land's own growth and glow passed in as `Accents`; a land extends
+it for what only it has), `River`, `Road`, `Build` (`stair`, `under`, `top`, `lit`), and in `kit/piece`: `Waystone`, `Find`, `Updraft`, `Lamp`, `Boulder`,
+`Tree`, `Stall`, `Pylon`, `Hut`, `Pavilion`, `MouthRing`. `Waystone`, `Find`, `Updraft`, `Lamp` and `Boulder` can be used as they are. A land's houses, arrival
+and great build are its own shape: the rest take shape parameters as soon as a land needs them, added then and not before, and proved with `volume.sha`
+that the lands already built didn't move. Amber's own (`Flower`, `Plinth`, `Spire`, `Heart`, the hex-column cliffs) stay in `AmberReach`: used twice they
+would make two gates the same place.
+
+A new land, in order: the painting approved; materials (a copy of `tools/art/specs/realm_amber.py` with its own palette and textures, `Def` lines in
+`ThemeBlocks` with the same suffixes, the tag `blocks_motion_no_leaves`); `data/awaken/realms/<id>.json` and its biomes (their `sky_color`, `fog_color`
+and `grass_color` are also what the preview shades with); a `KitLand` subclass (land shape, one great build, `build()` placing the rest) entered in
+`LandPrograms`; a tour copied from `realm-amber.txt`; then preview, fix, preview, and only then a walk.

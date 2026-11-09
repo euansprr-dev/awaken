@@ -109,7 +109,11 @@ final class GateCommands {
                             return 0;
                         }
                         dev.awaken.gates.realms.Realms.forced = id;
-                        return open(c, bp.get().theme(), false);
+                        int gid = open(c, bp.get().theme(), false);
+                        // the same as a tour's world: it stands where it's opened, even over someone's fence, or the tour has nowhere to go
+                        GateRecord made = gid > 0 ? GateRegistry.get(c.getSource().getServer()).gate(gid) : null;
+                        if (made != null) made.anyGround = true;
+                        return gid;
                     }))));
             // a look at one instant of the crossing into a theme (SPEC §50.5), for tours: no move, the screen closes itself
             gate.then(Commands.literal("crossing").requires(AwakenCommands.admin())
