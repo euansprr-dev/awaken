@@ -88,6 +88,7 @@ public final class RoadTests {
         AwakenTests.registerIsolated("village_road_banks", 200, RoadTests::banks);
         AwakenTests.registerIsolated("village_road_viaduct", 200, RoadTests::viaduct);
         AwakenTests.registerIsolated("village_road_spares_hero_trees", 600, RoadTests::sparesHeroTrees);
+        AwakenTests.register("village_tall_things_keep_off", 20, RoadTests::tallThingsKeepOff);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
         AwakenTests.register("village_wide_roads", 1200, RoadTests::wideRoads);
         AwakenTests.register("village_march_ranks", 20, h -> {
@@ -297,6 +298,29 @@ public final class RoadTests {
      * A road straight through a Lumen Spire's trunk, chunk by chunk as worldgen paints it (Euan 2026-11-09, the floating veined
      * logs): without the hero guard the road's felling cuts it and pieces hang in the air; with it the tree stands whole.
      */
+    /** SPEC §28.9, "Tall things keep off": a straight road, a spire's reach from it and clear of it, and the packs asking. */
+    private static void tallThingsKeepOff(GameTestHelper h) {
+        int n = 40;
+        float[] x = new float[n], z = new float[n];
+        int[] y = new int[n];
+        for (int i = 0; i < n; i++) x[i] = i * 4;
+        RoadPaint road = new RoadPaint(0, x, z, y, new byte[n], new byte[n], 0, n - 1, Road.HIGHROAD, java.util.List.of());
+        int reach = 13 + ClearOfSettlements.BANKS;
+        h.assertTrue(ClearOfSettlements.touches(road, 80, 0, reach), "on the road");
+        h.assertTrue(ClearOfSettlements.touches(road, 80, reach, reach), "just within reach of it");
+        h.assertFalse(ClearOfSettlements.touches(road, 80, 80, reach), "well clear of it");
+        for (String f : java.util.List.of("awakened_lands/data/awaken/worldgen/placed_feature/lands/frost_spires", "awakened_lands/data/awaken/worldgen/placed_feature/lands/glass_shards",
+                "awakened_lands/data/awaken/worldgen/placed_feature/lands/floating_shard", "awakened_ground/data/awaken/worldgen/placed_feature/ground/highland_boulder_highland")) {
+            try (var in = RoadTests.class.getClassLoader().getResourceAsStream("datapacks/" + f + ".json")) {
+                h.assertTrue(in != null && new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).contains("awaken:clear_of_settlements"), f + " keeps off");
+            } catch (java.io.IOException e) {
+                h.fail("reading " + f + ": " + e);
+                return;
+            }
+        }
+        h.succeed();
+    }
+
     private static void sparesHeroTrees(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         int[] before = throughSpire(h, level, h.absolutePos(new BlockPos(0, 2, 0)).offset(9000, 0, 6000), false);

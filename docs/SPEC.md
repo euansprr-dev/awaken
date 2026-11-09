@@ -10149,7 +10149,12 @@ read this too, so their fields shift a little in new worlds).
 **Painting** (`RoadPiece`, `RoadPaint`, `RoadMarks`, `Waymarks`): each leg paints the chunks it touches through the
 settlement painter (fell the trees within reach, sweep what hangs over, fill to rock, `CityWriter`), pure per chunk;
 thin-beard markers under every dry point ease the land to the road's heights (the pieces themselves take no beard, so a
-bridge never dams a river). The carriageway is a two-track country road in the land's own ground: a crown grown over
+bridge never dams a river). **Tall things keep off**: a road or settlement only clears a few blocks over its ground, so a
+spire it meets lost a slice and its top hung in the air, and a neighbouring chunk's feature can land before the paint as
+well as after it, so no sweep afterwards could be safe. The placement modifier `awaken:clear_of_settlements` (`reach`, last
+in the placed feature) drops a feature whose reach, plus 8 for a road's banks, touches land a road or settlement referenced
+from its chunk or those beside it uses: frost spires and glass shards (13, small 8), floating shards (16), boulders and
+shale boulders (6). New chunks only. Test: `village_tall_things_keep_off`. The carriageway is a two-track country road in the land's own ground: a crown grown over
 between two worn wheel tracks and, on a highroad, rougher shoulders, each band mostly one ground so it reads along the
 road (grass between dirt-path tracks in the heartland, podzol in the elder woods, gravel and coarse dirt in the frost,
 gravel and stone in the highlands, sand and sandstone in the desert, mud and packed mud in the mire; cobbles and setts
