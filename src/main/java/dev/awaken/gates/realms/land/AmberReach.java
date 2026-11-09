@@ -199,6 +199,12 @@ public final class AmberReach extends Land {
         return 1024;
     }
 
+    /** The valley's wall is the edge: past its foot the wind pushes you back down into the land. */
+    @Override
+    public double edge(int x, int z) {
+        return Math.hypot(x - 190, z * 1.15) - (WALL + 80);
+    }
+
     @Override
     public float mouthYaw() {
         return (float) Math.toDegrees(Math.atan2(-(cu - 0), cv - 0));
@@ -342,7 +348,7 @@ public final class AmberReach extends Land {
         site(SiteKind.MOUTH, mx, my + 1, mz, 12, "");
         site(SiteKind.PORTAL, mx - 6, my + 1, mz, 2, "");
         pieces.add(new MouthRing(mx, my, mz));
-        site(SiteKind.WAYSTONE, mx + 12, ground(mx + 12, mz + 6) + 1, mz + 6, 4, "the Mouth");
+        waystone(mx + 15, mz + 9, "the Mouth");
         citadel();
         village();
         flowers();
@@ -377,12 +383,12 @@ public final class AmberReach extends Land {
             double a = r.nextDouble() * Math.PI * 2, rr = 30 + r.nextDouble() * 420;
             int x = (int) (190 + Math.cos(a) * rr), z = (int) (Math.sin(a) * rr);
             if (Math.hypot(x - cu, z - cv) < 150 || villageD(x, z) < 4 || riverD(x, z) < 3 || roadD(x, z) < 5) continue;
-            site(SiteKind.FIND, x, ground(x, z) + 1, z, 2, "");
+            if (place(new Find(x, z, seed + i, this))) site(SiteKind.FIND, x, ground(x, z) + 1, z, 2, "");
         }
         site(SiteKind.VILLAGE, (int) vu, VILLAGE_Y + 1, (int) vv, 62, "");
-        site(SiteKind.WAYSTONE, (int) plazaU - 18, VILLAGE_Y + 1, (int) plazaV + 12, 4, "the village");
+        waystone((int) plazaU - 24, (int) plazaV + 8, "the village");
         int cx = (int) cu, cz = (int) cv;
-        site(SiteKind.WAYSTONE, cx - 112 - 18, ground(cx - 112 - 18, cz + 22) + 1, cz + 22, 4, "the citadel's foot");
+        waystone(cx - 112 - 18, cz + 22, "the citadel's foot");
         site(SiteKind.LORD, cx, CIT_Y + 41, cz, 44, ctx.bp().heart().lord());
         // the honey wind: columns of warm air you can ride up, by the river and under the cliffs
         for (int i = 0; i < 7; i++) {
@@ -390,8 +396,15 @@ public final class AmberReach extends Land {
             int k = (int) (t * (ru.length - 1));
             int x = (int) ru[k] + (i % 2 == 0 ? 22 : -22), z = (int) rv[k] + (i % 3 == 0 ? 14 : -14);
             if (villageD(x, z) < 8) continue;
-            site(SiteKind.UPDRAFT, x, ground(x, z), z, 3, "");
+            if (place(new Updraft(x, z, this))) site(SiteKind.UPDRAFT, x, ground(x, z), z, 3, "");
         }
+    }
+
+    /** A Waystone, and the site the live game finds it by: the site's y is the stone you touch. */
+    private void waystone(int x, int z, String name) {
+        Waystone w = new Waystone(x, z, this);
+        pieces.add(w);
+        site(SiteKind.WAYSTONE, x, w.gy + 2, z, 4, name);
     }
 
     private void citadel() {
@@ -489,6 +502,7 @@ public final class AmberReach extends Land {
                 chain = Blocks.IRON_CHAIN.defaultBlockState(), lantern = Blocks.LANTERN.defaultBlockState(), hung = Blocks.LANTERN.defaultBlockState().setValue(BlockStateProperties.HANGING, true),
                 fence = Blocks.DARK_OAK_FENCE.defaultBlockState(), barrel = Blocks.BARREL.defaultBlockState(), light = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15),
                 deadBush = Blocks.DEAD_BUSH.defaultBlockState();
+        final BlockState shrine = b("rest_shrine"), cache = b("gate_cache"), updraft = b("realm_updraft");
     }
 
     private static volatile M mats;
@@ -708,6 +722,91 @@ public final class AmberReach extends Land {
                 v.foot(a, y - 3, c, m.deep);
                 if (hd <= r - 1 && hd > r - 2.2) v.set(a, top + 1, c, m.stoneSlab);
                 for (int k = top + 2; k < top + 5; k++) v.set(a, k, c, null);
+            }
+        }
+    }
+
+    /** A Waystone: a stepped hex plinth, a waist-high stone you lay a hand on, two small pillars with their candles. */
+    static final class Waystone extends P {
+        final int x, gy, z;
+
+        Waystone(int x, int z, AmberReach land) {
+            this.x = x;
+            this.z = z;
+            gy = land.ground(x, z);
+            box(x, z, 5, 5);
+            mayOverlap = true;
+        }
+
+        @Override
+        public void draw(V v, M m) {
+            for (int a = ax(v); a <= bx(v); a++) for (int c = az(v); c <= bz(v); c++) {
+                double d = hexMetric(a - x, c - z);
+                if (d > 4.4) continue;
+                v.foot(a, gy, c, m.pale);
+                v.set(a, gy, c, d > 3.2 ? m.flag : ((a + c) & 1) == 0 ? m.hexstone : m.flag);
+                if (d <= 2.2) v.set(a, gy + 1, c, d > 1.2 ? m.paleSlab : m.pale);
+                for (int y = gy + 2; y < gy + 8; y++) if (d <= 2.6 && v.get(a, y, c) != null) v.set(a, y, c, null);
+            }
+            v.set(x, gy + 2, z, m.shrine);
+            for (int s = -1; s <= 1; s += 2) {
+                int px = x + s * 3, pz = z - s;
+                v.foot(px, gy, pz, m.pale);
+                v.set(px, gy + 1, pz, m.pale);
+                v.set(px, gy + 2, pz, m.timber);
+                v.set(px, gy + 3, pz, m.gold);
+                v.set(px, gy + 4, pz, m.candle);
+            }
+        }
+    }
+
+    /** Something left out in the land: a cache on a worn stone, with what someone lit beside it long ago. */
+    static final class Find extends P {
+        final int x, gy, z;
+        final long seed;
+
+        Find(int x, int z, long seed, AmberReach land) {
+            this.x = x;
+            this.z = z;
+            this.seed = seed;
+            gy = land.ground(x, z);
+            box(x, z, 2, 2);
+        }
+
+        @Override
+        public void draw(V v, M m) {
+            for (int a = -1; a <= 1; a++) for (int c = -1; c <= 1; c++) {
+                if (rnd(a + 3, c + 3, seed) < 0.3 && (a != 0 || c != 0)) continue;
+                v.foot(x + a, gy, z + c, m.worn);
+                v.set(x + a, gy, z + c, (a == 0 && c == 0) ? m.pale : m.worn);
+                if (v.get(x + a, gy + 1, z + c) != null) v.set(x + a, gy + 1, z + c, null);
+            }
+            v.set(x, gy + 1, z, m.cache);
+            int cx = rnd(seed, 1, 2) < 0.5 ? 1 : -1, cz = rnd(seed, 2, 3) < 0.5 ? 1 : -1;
+            if (v.solid(x + cx, gy, z + cz)) v.set(x + cx, gy + 1, z + cz, m.candle);
+        }
+    }
+
+    /** A vent in the ground and the warm air that stands over it: you can ride it up the cliffs. */
+    static final class Updraft extends P {
+        final int x, gy, z;
+
+        Updraft(int x, int z, AmberReach land) {
+            this.x = x;
+            this.z = z;
+            gy = land.ground(x, z);
+            box(x, z, 4, 4);
+        }
+
+        @Override
+        public void draw(V v, M m) {
+            for (int a = ax(v); a <= bx(v); a++) for (int c = az(v); c <= bz(v); c++) {
+                double d = hexMetric(a - x, c - z);
+                if (d > 3.6) continue;
+                v.foot(a, gy, c, m.deep);
+                v.set(a, gy, c, d > 2.2 ? m.hexstone : d > 1.2 ? m.deep : m.glow);
+                v.set(a, gy + 1, c, d > 2.4 ? m.stoneSlab : null);
+                if (d <= 2.4) for (int y = gy + 1; y <= gy + 46; y++) if (v.get(a, y, c) == null) v.set(a, y, c, m.updraft);
             }
         }
     }

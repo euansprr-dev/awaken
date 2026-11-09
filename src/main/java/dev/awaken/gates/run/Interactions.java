@@ -111,9 +111,15 @@ public final class Interactions {
         }
     }
 
+    public static final String WAYSTONE = ACTION + ":waystone:";
+
     public static void useShrine(ServerPlayer p, BlockPos pos) {
         RunState run = Runs.run(p);
         GateRecord g = Runs.gateOf(p);
+        if (g != null && g.realm.isPresent()) {
+            dev.awaken.gates.realms.RealmLive.useWaystone(p, g, pos);
+            return;
+        }
         Where w = Where.at(p.level().getServer(), pos);
         if (g == null || w == null || w.gate().id != g.id || w.room() == null) return;
         if (!run.clearedFloor(w.area(), w.floorNo())) {
@@ -229,6 +235,11 @@ public final class Interactions {
         RunState run = Runs.run(p);
         GateRecord g = Runs.gateOf(p);
         if (g == null) return;
+        if (action.startsWith(WAYSTONE)) {
+            int to = Integer.parseInt(action.substring(WAYSTONE.length()));
+            queue(p, () -> dev.awaken.gates.realms.RealmLive.travel(p, g, to));
+            return;
+        }
         switch (action) {
             case ACTION + ":extract" -> {
                 Where w = Where.at(p.level().getServer(), p.blockPosition());

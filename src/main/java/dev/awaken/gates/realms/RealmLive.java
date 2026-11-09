@@ -6,6 +6,8 @@ import dev.awaken.gates.GateRegistry;
 import dev.awaken.gates.GatesRegistry;
 import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.gates.run.Hud;
+import dev.awaken.gates.run.Interactions;
+import dev.awaken.gates.run.Satchel;
 import dev.awaken.gates.run.Rooms;
 import dev.awaken.gates.run.RunState;
 import dev.awaken.gates.run.Runs;
@@ -25,6 +27,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -73,8 +76,77 @@ public final class RealmLive {
             p.teleportTo(level, e.getX() + 0.5, e.getY(), e.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
             return;
         }
+        double over = plan.land().edge(lx, lz);
+        if (over > 0) {
+            // the valley's edge: no wall, just a wind that keeps turning you back, stronger the further you push
+            double dx = -lx + 190, dz = -lz, l = Math.max(1, Math.hypot(dx, dz)), f = Math.min(1.6, 0.35 + over / 60);
+            p.push(dx / l * f, 0.08, dz / l * f);
+            p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(p)); // a player moves on their own side
+            if (t % 600 < 10) Signal.toast(p, Component.literal("The wind won't let you go any further this way."));
+        }
         wake(server, level, g, plan, ref, lx, lz);
         if (((t + p.getId()) / 10) % 2 == 0) Hud.send(p);
+    }
+
+    // ---- Waystones (SPEC §50.7) ----------------------------------------------------------------------------------------
+
+    /** Laying a hand on a Waystone: it remembers you, keeps your Satchel safe, and offers the next one you've reached. */
+    public static void useWaystone(ServerPlayer p, GateRecord g, BlockPos pos) {
+        MinecraftServer server = p.level().getServer();
+        RealmPlan plan = Realms.plan(g);
+        if (plan == null) return;
+        RealmRef ref = g.realm.orElseThrow();
+        List<Land.Site> stones = plan.land().sites(Land.SiteKind.WAYSTONE);
+        int here = -1;
+        for (Land.Site s : stones) if (Realms.world(ref.cell(), s.x(), s.y(), s.z()).equals(pos)) here = s.index();
+        if (here < 0) return;
+        RealmData data = RealmData.get(server);
+        RealmState st = data.state(g.id);
+        boolean first = st.waystonesFound.add(here);
+        if (first) data.setDirty();
+        RunState run = Runs.run(p);
+        int stacks = Satchel.count(run.satchel);
+        long xp = Math.round(run.satchelXp);
+        Runs.bankHere(p, g, "waystone" + here);
+        Hud.send(p);
+        // the next stone you've reached, going round; alone, it can only wait for you to find another
+        int next = -1;
+        for (int i = 1; i < stones.size() && next < 0; i++) {
+            int k = (here + i) % stones.size();
+            if (st.waystonesFound.contains(k)) next = k;
+        }
+        String safe = stacks > 0 || xp > 0 ? "Everything in your Satchel is safe now, whatever happens next." : "Your Satchel is empty, so there's nothing to keep safe yet.";
+        var w = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal("Waystone"))
+                .row("Here", capital(stones.get(here).what()))
+                .row("Reached", st.waystonesFound.size() + " of " + stones.size())
+                .body(Component.literal((first ? "It will remember you. " : "") + safe)).priority(5);
+        if (next >= 0) w.choice(Interactions.WAYSTONE + next, "Go to " + stones.get(next).what(), "Stay here");
+        else w.footer(Component.literal("Find another one and this stone will carry you to it.")).ttl(20 * 8);
+        Signal.send(p, w.build());
+        level(p).playSound(null, pos, GatesRegistry.SND_SHRINE.get(), SoundSource.BLOCKS, 1F, first ? 1F : 1.2F);
+    }
+
+    /** Carried to a Waystone you've reached: the land stays as you left it. */
+    public static void travel(ServerPlayer p, GateRecord g, int index) {
+        RealmPlan plan = Realms.plan(g);
+        ServerLevel level = Realms.level(p.level().getServer());
+        if (plan == null || level == null) return;
+        RealmState st = RealmData.get(p.level().getServer()).state(g.id);
+        List<Land.Site> stones = plan.land().sites(Land.SiteKind.WAYSTONE);
+        if (index < 0 || index >= stones.size() || !st.waystonesFound.contains(index)) return;
+        Land.Site s = stones.get(index);
+        BlockPos at = Realms.world(g.realm.orElseThrow().cell(), s.x() + 2, plan.land().ground(s.x() + 2, s.z() + 2) + 2, s.z() + 2);
+        level.getChunk(at); // the land there is made before you arrive
+        p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
+        level.playSound(null, at, GatesRegistry.SND_SHRINE.get(), SoundSource.BLOCKS, 1F, 0.8F);
+    }
+
+    private static ServerLevel level(ServerPlayer p) {
+        return (ServerLevel) p.level();
+    }
+
+    private static String capital(String s) {
+        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     private static void wake(MinecraftServer server, ServerLevel level, GateRecord g, RealmPlan plan, RealmRef ref, int lx, int lz) {

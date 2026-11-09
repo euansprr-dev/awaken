@@ -65,6 +65,7 @@ public final class FloatCheck {
         Block b = s.getBlock();
         if (s.isAir() || !s.getFluidState().isEmpty() && b == Blocks.WATER || b == Blocks.LIGHT || b == Blocks.BARRIER) return AIR;
         String id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b).getPath();
+        if (id.endsWith("_updraft")) return AIR;
         if (b instanceof LanternBlock) return s.getValue(BlockStateProperties.HANGING) ? HANGS : ON_GROUND;
         if (b instanceof HangingRootsBlock || id.endsWith("_drip") || id.endsWith("_vines") || id.endsWith("_vines_plant")) return HANGS;
         if (b instanceof VineBlock) return BESIDE;

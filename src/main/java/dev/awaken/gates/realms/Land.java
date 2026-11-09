@@ -52,6 +52,11 @@ public abstract class Land {
     /** The top of the ground in a column (the block you'd stand on, never a piece built over it). */
     public abstract int ground(int x, int z);
 
+    /** How far past the land's edge a point is (positive means the wind turns you back there). */
+    public double edge(int x, int z) {
+        return Math.max(Math.abs(x), Math.abs(z)) - (halfSize() - 48);
+    }
+
     /** Draws the chunk this volume covers, every pass, in order. */
     public abstract void paint(V v);
 

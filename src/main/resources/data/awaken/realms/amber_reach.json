@@ -9,7 +9,7 @@
   "sky": { "biomes": ["awaken:realm/amber_meadow", "awaken:realm/amber_citadel"], "lens": "amber_reach" },
   "life": { "herds": ["pollen_grazer"], "predators": ["drone_bee", "honey_slime"], "ambient": ["amberfly"] },
   "folk": { "kit": "wax_folk", "villages": 1 },
-  "law": { "kind": "updrafts", "params": { "honey_slows": 0.6 } },
+  "law": { "kind": "updrafts", "params": {} },
   "sites": { "wardens": 3, "delves": 0, "finds": 24 },
   "heart": { "lord": "hive_regent", "seat": "mother_comb" },
   "moods": ["late_harvest"]

@@ -17,6 +17,11 @@ public final class RealmsModule {
 
     public static final ResourceKey<Level> REALMS = ResourceKey.create(Registries.DIMENSION, Awaken.id("realms"));
 
+    /** Rising air, drawn into the land like any other block; never held. */
+    public static final net.neoforged.neoforge.registries.DeferredBlock<UpdraftBlock> UPDRAFT = dev.awaken.gates.GatesRegistry.BLOCKS.registerBlock("realm_updraft", UpdraftBlock::new,
+            p -> p.noCollision().noOcclusion().noLootTable().strength(-1.0F, 3600000.0F).replaceable()
+                    .isValidSpawn((s, l, pos, t) -> false).pushReaction(net.minecraft.world.level.material.PushReaction.POPPED));
+
     private static final DeferredRegister<MapCodec<? extends ChunkGenerator>> GENERATORS = DeferredRegister.create(Registries.CHUNK_GENERATOR, Awaken.MODID);
     private static final DeferredRegister<MapCodec<? extends BiomeSource>> SOURCES = DeferredRegister.create(Registries.BIOME_SOURCE, Awaken.MODID);
 
@@ -26,6 +31,7 @@ public final class RealmsModule {
         GENERATORS.register(modBus);
         SOURCES.register(modBus);
         NeoForge.EVENT_BUS.addListener(Blueprints::addReload);
+        dev.awaken.core.api.Sources.neverHeld("a Realm's rising air, drawn into the land", "realm_updraft");
         RealmTests.register();
     }
 }

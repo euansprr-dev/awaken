@@ -415,6 +415,12 @@ public final class Runs {
         return true;
     }
 
+    /** Keeps a Realm player's Satchel safe where they stand (a Waystone, SPEC §50.7). */
+    public static void bankHere(ServerPlayer p, GateRecord g, String where) {
+        RunState run = run(p);
+        bankSatchel(p, g, run, where + "@" + now(p.level().getServer()), "extract", "");
+    }
+
     /** A claim whose id was already used: its loot is held for you and its XP granted now, never lost with the run. */
     private static void keepRefused(ServerPlayer p, List<ItemStack> items, double xp, String kind) {
         for (ItemStack s : items) Spoils.hold(p, s);
