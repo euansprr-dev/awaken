@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVines;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A sinkhole (PLAN 8.2): a round shaft {@code 2R} across from the surface down to a cave system. Its routes:
@@ -17,19 +18,21 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
  *   stone where each drop lands lets you climb back up (step on it, grab the lip two above);</li>
  *   <li><b>the dive</b>: opposite the shelves a spring spills over the rim into a pool five deep at the bottom, under the
  *   lip you jump from;</li>
- *   <li><b>the old rope</b>: a Delver's piton under the rim, a line hanging 32 down (the pipe grip climbs it);</li>
+ *   <li><b>the old rope</b>: a Delver's piton set in the real wall just under the ground, its line hanging clear to the
+ *   floor (the pipe grip climbs it);</li>
  *   <li>the rope (the Tether) off any wall, the D route.</li>
  * </ul>
  * At the bottom a passage leads to a grotto lit with lichen and glow berries, where a lode's heart glints in a niche in
  * the wall (the site was chosen beside a planned lode: W2's {@code LodePlans}), and another to the natural caves.
  *
  * <p>Spec: (x, z) the centre, y the floor (feet); p = [R, rim y, has lode, heart x, y, z, waterfall angle, shelf
- * angle, first].
+ * angle, first, the old rope's piton x, z, y, its facing + 1 (0: no rope), the stone arm's length].
  */
 final class Sinkhole {
     private Sinkhole() {}
 
     static final int R = 0, RIM = 1, LODE = 2, HX = 3, HY = 4, HZ = 5, WATER = 6, SHELF = 7, FIRST = 8;
+    static final int ROPE_X = 9, ROPE_Z = 10, ROPE_Y = 11, ROPE_OUT = 12, ROPE_ARM = 13;
     /** Ledge rows every this many blocks (the city's climbing grid: a three-block drop is free). */
     static final int ROW = 3;
     static final int POOL_DEPTH = 5;
@@ -263,24 +266,6 @@ final class Sinkhole {
             k.mark("pool", Mth.floor(cx + Math.cos(water) * (wall(w, s, yf, water) - 4.5)), yf - 2, Mth.floor(cz + Math.sin(water) * (wall(w, s, yf, water) - 4.5)));
         }
 
-        // ---- the old rope: a Delver's piton under the rim, a quarter turn from the shelves ---------------------------
-        {
-            double a = shelf + Math.PI / 2;
-            int py = rim - 2;
-            float r = wall(w, s, py, a);
-            int px = Mth.floor(cx + Math.cos(a) * (r - 0.5)), pz = Mth.floor(cz + Math.sin(a) * (r - 0.5));
-            Direction out = inward(a);
-            if (Carve.open(k, px, py, pz) || !k.inside(px, py, pz)) {
-                Carve.solid(k, px - out.getStepX(), py, pz - out.getStepZ());
-                Carve.put(k, px, py, pz, DelveContent.PITON.get().defaultBlockState().setValue(PitonBlock.FACING, out).setValue(PitonBlock.ROPED, true));
-                for (int i = 1; i <= PitonBlock.ROPE; i++) {
-                    int y = py - i;
-                    if (y < yf || k.inside(px, y, pz) && !k.get(px, y, pz).isAir()) break;
-                    Carve.put(k, px, y, pz, DelveContent.RUNNER_LINE.get().defaultBlockState());
-                }
-            }
-        }
-
         // ---- the walls: vines where the light reaches, roots under the shelves, lichen low down -----------------------
         for (int x = x0; x <= x1; x++) {
             for (int z = z0; z <= z1; z++) {
@@ -331,6 +316,127 @@ final class Sinkhole {
             float r = wall(w, s, yf, a);
             Carve.tunnel(k, cx + Math.cos(a) * (r - 1.5), yf, cz + Math.sin(a) * (r - 1.5), s.jx() + 0.5, s.jy(), s.jz() + 0.5, 1.6, 2.5, s.seed() + 21);
         }
+        // last, so nothing above writes over the line
+        rope(s, k);
+    }
+
+    // ---- the old rope ----------------------------------------------------------------------------------------------
+
+    /** The ground as it will generate, what the rope's plan reads (at a site search: the generator's base columns). */
+    interface Ground {
+        /** The feet's height on the column's top solid block (MIN_VALUE when its top is water or lava). */
+        int surface(int x, int z);
+
+        BlockState block(int x, int y, int z);
+    }
+
+    /** Flat ground at this height, solid under it (a sinkhole laid on purpose). */
+    static Ground flat(int rim) {
+        return new Ground() {
+            @Override
+            public int surface(int x, int z) {
+                return rim;
+            }
+
+            @Override
+            public BlockState block(int x, int y, int z) {
+                return y < rim ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState();
+            }
+        };
+    }
+
+    /** Turns from the shelves tried for the rope, degrees: a quarter turn first, always clear of the shelves, the spring's sheer side and the cleft. */
+    private static final int[] ROPE_TURNS = {90, 85, 95, 80, 100, 75, 105, 70, 110};
+    /** The longest arm of stone the wall may put out to reach the rope's column. */
+    private static final int ROPE_ARM_MOST = 3;
+    /** How far under the ground the piton is set, and how much of the column over it stays open (you step in from the ground). */
+    private static final int ROPE_UNDER = 2, ROPE_HEAD = 3;
+    /** How far under the floor the line looks for ground: inside the piece's box. */
+    private static final int ROPE_UNDERFLOOR = 8;
+
+    /**
+     * This sinkhole with its old rope planned on the real ground (SPEC §28.5): of the lines round the shaft that work, the
+     * one that needs the shortest arm. None works: no rope, and the shelves and the cleft are the way down. Planned here
+     * rather than as the place is built because a chunk can only read its own blocks, and every chunk must agree.
+     */
+    static Spec roped(Spec s, Ground g) {
+        float[][] w = walls(s);
+        int[] best = null;
+        for (int turn : ROPE_TURNS) {
+            int[] plan = ropeLine(s, g, w, Math.toRadians(s.p(SHELF) + turn));
+            if (plan != null && (best == null || plan[ROPE_ARM - ROPE_X] < best[ROPE_ARM - ROPE_X])) best = plan;
+        }
+        int[] p = new int[ROPE_ARM + 1];
+        System.arraycopy(s.p(), 0, p, 0, ROPE_X);
+        if (best != null) System.arraycopy(best, 0, p, ROPE_X, best.length);
+        return new Spec(s.kind(), s.x(), s.y(), s.z(), s.rot(), s.seed(), s.joined(), s.jx(), s.jy(), s.jz(), p);
+    }
+
+    /** The rope on one line out from the centre: the column furthest out that the shaft leaves open at every height, or null. */
+    private static int @Nullable [] ropeLine(Spec s, Ground g, float[][] w, double a) {
+        double cos = Math.cos(a), sin = Math.sin(a);
+        int edge = g.surface(Mth.floor(s.x() + cos * (s.p(R) + 1.5)), Mth.floor(s.z() + sin * (s.p(R) + 1.5)));
+        if (edge == Integer.MIN_VALUE) return null;
+        float least = Float.MAX_VALUE;
+        for (int y = s.y(); y <= Math.min(edge + 1, s.p(RIM) + ABOVE); y++) least = Math.min(least, wall(w, s, y, a));
+        for (double rr = least - 0.6; rr >= least - 2.1; rr -= 0.5) {
+            int[] plan = ropeColumn(s, g, w, Mth.floor(s.x() + cos * rr), Mth.floor(s.z() + sin * rr), inward(a));
+            if (plan != null) return plan;
+        }
+        return null;
+    }
+
+    /** From the column, back toward the wall to the first cell the shaft leaves as rock at its own ground: the piton's root. */
+    private static int @Nullable [] ropeColumn(Spec s, Ground g, float[][] w, int px, int pz, Direction out) {
+        int ox = out.getStepX(), oz = out.getStepZ(), yf = s.y();
+        for (int i = 1; i <= ROPE_ARM_MOST + 1; i++) {
+            int rx = px - ox * i, rz = pz - oz * i, ground = g.surface(rx, rz);
+            if (ground == Integer.MIN_VALUE) return null;
+            int py = ground - ROPE_UNDER;
+            if (clear(s, w, rx, rz, py, py)) continue;
+            // the rope, its arm and its root share a chunk, so the chunk that builds it can see all of it
+            if ((rx >> 4) != (px >> 4) || (rz >> 4) != (pz >> 4)) return null;
+            if (py - yf < 12 || py + ROPE_HEAD > s.p(RIM) + ABOVE || !clear(s, w, px, pz, yf, py + ROPE_HEAD)) return null;
+            if (!rock(g.block(rx, py, rz)) || !rock(g.block(rx, py - 1, rz)) || !rock(g.block(rx - ox, py, rz - oz))) return null;
+            for (int y = yf - 2; y <= py + ROPE_HEAD; y++) if (!g.block(px, y, pz).getFluidState().isEmpty()) return null;
+            int y = yf - 1;
+            while (y > yf - ROPE_UNDERFLOOR && g.block(px, y, pz).isAir()) y--;
+            if (!rock(g.block(px, y, pz))) return null;
+            return new int[]{px, pz, py, out.get2DDataValue() + 1, i - 1};
+        }
+        return null;
+    }
+
+    /** Whether the shaft is open at this column at every height from y0 to y1. */
+    private static boolean clear(Spec s, float[][] w, int x, int z, int y0, int y1) {
+        double dx = x + 0.5 - s.x(), dz = z + 0.5 - s.z(), d = Math.sqrt(dx * dx + dz * dz), a = angleOf(s, x + 0.5, z + 0.5);
+        for (int y = y0; y <= y1; y++) if (d >= wall(w, s, y, a)) return false;
+        return true;
+    }
+
+    private static boolean rock(BlockState b) {
+        return !b.isAir() && b.getFluidState().isEmpty();
+    }
+
+    /** The piton on its root (out along a short arm of stone when the wall stands back there), the line down to the floor. */
+    private static void rope(Spec s, Sink k) {
+        // saved before the plan existed: planned on the rim it was laid for, and the root's check below holds it to the real rock
+        if (s.p().length <= ROPE_X) s = roped(s, flat(s.p(RIM)));
+        int face = s.p(ROPE_OUT), px = s.p(ROPE_X), pz = s.p(ROPE_Z), py = s.p(ROPE_Y), arm = s.p(ROPE_ARM), yf = s.y();
+        if (face == 0 || !k.here(px, pz)) return;
+        Direction out = Direction.from2DDataValue(face - 1);
+        int ox = out.getStepX(), oz = out.getStepZ();
+        // a cave carved since the plan may have taken the root: nothing is ever hung on the air
+        if (!Carve.solidAt(k, px - ox * (arm + 1), py, pz - oz * (arm + 1))) return;
+        for (int i = 1; i <= arm; i++) {
+            Carve.solid(k, px - ox * i, py, pz - oz * i);
+            if (i > 1) Carve.solid(k, px - ox * i, py - 1, pz - oz * i); // it thickens toward the wall
+        }
+        Carve.put(k, px, py, pz, DelveContent.PITON.get().defaultBlockState().setValue(PitonBlock.FACING, out).setValue(PitonBlock.ROPED, true));
+        BlockState line = DelveContent.RUNNER_LINE.get().defaultBlockState();
+        for (int y = py - 1; y >= yf; y--) Carve.put(k, px, y, pz, line);
+        // a cave opened under the floor: on down to the ground in it
+        for (int y = yf - 1; y > yf - ROPE_UNDERFLOOR && Carve.open(k, px, y, pz); y--) Carve.put(k, px, y, pz, line);
     }
 
     /** The lit grotto: a room off the floor, a niche in its far wall where the lode's heart glints. */

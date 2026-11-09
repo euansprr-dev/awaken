@@ -62,7 +62,7 @@ public final class RunnerLineBlock extends Block {
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState s, Player player) {
         if (!level.isClientSide()) {
             BlockPos.MutableBlockPos m = pos.mutable();
-            for (int i = 0; i < PitonBlock.ROPE + 1 && level.getBlockState(m).is(this); i++) m.move(Direction.UP);
+            for (int i = 0; i < PitonBlock.LONGEST && level.getBlockState(m).is(this); i++) m.move(Direction.UP);
             if (PitonBlock.reelIn(level, m.immutable()) && !player.hasInfiniteMaterials()) {
                 ItemStack coil = new ItemStack(DelveContent.RUNNER_ROPE.get());
                 if (!player.getInventory().add(coil)) level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, coil));
