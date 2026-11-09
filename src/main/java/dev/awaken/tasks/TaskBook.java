@@ -344,7 +344,7 @@ public final class TaskBook {
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < choices.size(); i++) {
             if (i > 0) b.append(i == choices.size() - 1 ? " or " : ", ");
-            b.append(choices.get(i).title().replaceFirst("^(Build|Make) an? ", ""));
+            b.append(choices.get(i).title().replaceFirst("^(Build|Make) (an?|your Bedroom a) ", ""));
         }
         return b.toString();
     }

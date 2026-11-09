@@ -66,7 +66,7 @@ final class TaskCache {
     static void setAside(TaskPayloads.StepRow s) {
         act(TaskPayloads.ASIDE, s.key());
         undoKey = s.key();
-        undoTitle = s.title();
+        undoTitle = dev.awaken.signal.client.KeyText.resolve(s.title());
         undoUntil = ticks + UNDO_TICKS;
     }
 

@@ -3,6 +3,7 @@ package dev.awaken.tasks.client;
 import dev.awaken.core.api.Goals.Goal;
 import dev.awaken.progression.client.StatusSections;
 import dev.awaken.signal.client.Glass;
+import dev.awaken.signal.client.KeyText;
 import dev.awaken.signal.client.Ui;
 import dev.awaken.signal.client.UiSection;
 import dev.awaken.tasks.net.TaskPayloads;
@@ -153,7 +154,7 @@ final class TaskPage extends UiSection {
         ui.gap(2);
         for (StepRow s : rows) {
             ui.card(Glass.a(Glass.LABEL, 0.5f), b -> {
-                b.text(s.title(), Glass.TEXT);
+                b.text(KeyText.resolve(s.title()), Glass.TEXT);
                 b.text(laterWhy(v, s), Glass.a(Glass.LABEL, 0.8f));
                 Ui.Flow f = b.flow();
                 if (s.aside() && f.button("Put back", Glass.EDGE, true)) {
@@ -205,7 +206,7 @@ final class TaskPage extends UiSection {
             if (s.extra().ready()) tags.chip("READY", Glass.GOOD);
             tags.end();
             TaskPayloads.ChoiceRow pick = became(s);
-            b.text(pick != null ? pick.title() : s.title(), s.optional() ? Glass.TEXT : Glass.TITLE);
+            b.text(KeyText.resolve(pick != null ? pick.title() : s.title()), s.optional() ? Glass.TEXT : Glass.TITLE);
             String why = pick != null ? pick.sub() : s.why();
             if (!why.isEmpty()) b.textAtMost(why, Glass.a(Glass.LABEL, 0.9f), 2);
             Ui.Flow f = b.flow();
@@ -263,7 +264,7 @@ final class TaskPage extends UiSection {
             if (s.optional()) tags.chip("WHEN YOU WANT", Glass.LABEL);
             tags.end();
             TaskPayloads.ChoiceRow pick = became(s);
-            b.text(pick != null ? pick.title() : s.title(), Glass.TITLE);
+            b.text(KeyText.resolve(pick != null ? pick.title() : s.title()), Glass.TITLE);
             String opens = pick != null ? pick.sub() : s.extra().opens(), why = pick != null ? pick.detail() : s.why();
             if (!opens.isEmpty()) b.text(opens, Glass.TEXT);
             if (!why.isEmpty()) b.text(why, Glass.a(Glass.LABEL, 0.95f));
@@ -278,7 +279,7 @@ final class TaskPage extends UiSection {
             }
             String dir = WhereFrom.direction(s.where().orElse(null));
             if (!dir.isEmpty()) b.text(dir, Glass.a(Glass.EDGE, 0.9f));
-            if (!s.extra().then().isEmpty()) b.text(s.extra().then(), Glass.a(Glass.LABEL, 0.75f));
+            if (!s.extra().then().isEmpty()) b.text(KeyText.resolve(s.extra().then()), Glass.a(Glass.LABEL, 0.75f));
             Ui.Flow f = b.flow();
             pin(f, v, s);
             if (pick != null && f.button("Change", Glass.EDGE, true)) {
