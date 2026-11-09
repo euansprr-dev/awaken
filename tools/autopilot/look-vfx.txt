@@ -1,6 +1,7 @@
 # The VFX Look (SPEC §14, Euan 9 Nov): one world, one camera, the switch thrown live. Swift first, with ImmersiveVFX
 # asleep; then VFX, its shadows and fog awake and Lens off; then Swift again, which should match the first shot (clouds
-# included: asleep must leave the game's own sky alone); then the Look screen with its four cards.
+# included: asleep must leave the game's own sky alone); then the Look screen with its four cards. Run it again with
+# PACK=perf for the same shots without the mod: its Swift is the baseline, VFX isn't offered and its switch does nothing.
 # ci knobs: PACK=perf,feel LENS=swift RD=8
 #   tools/tour-ci.sh tools/autopilot/look-vfx.txt 1500
 world look_vfx creative 20261109
@@ -24,30 +25,33 @@ window 1440 900
 info
 camera first
 hud off
-cmd time set 2500
+cmd time set 3000
 cmd effect give @s minecraft:resistance 100000 4 true
-cmd tp @s 2400 200 2400 40 18
-wait 200
-cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~4 ~ 40 18
+cmd execute at @s positioned over motion_blocking run tp @s ~ ~ ~ 40 12
 wait 200
 lookswitch swift
 wait 80
-shot vfx1_swift_before
+look 40 12
+shot vfx1a_swift_before_ground
+look 40 -25
+wait 10
+shot vfx1b_swift_before_sky
 lookswitch vfx
 wait 200
-shot vfx2_vfx_on
+look 40 12
+shot vfx2a_vfx_on_ground
+look 40 -25
+wait 10
+shot vfx2b_vfx_on_sky
 lookswitch swift
 wait 200
-shot vfx3_swift_after
+look 40 12
+shot vfx3a_swift_after_ground
+look 40 -25
+wait 10
+shot vfx3b_swift_after_sky
+look 40 12
 screen look
 wait 60
-shot vfx4_look_screen_four_cards
-lookswitch vfx
-wait 80
-shot vfx5_look_screen_vfx_chosen
-screen close
-wait 20
-lookswitch cinematic
-wait 200
-shot vfx6_cinematic_after
+shot vfx4_look_screen
 quit
