@@ -78,6 +78,7 @@ public final class Awaken {
         dev.awaken.hall.HallModule.init(modBus);
         dev.awaken.storage.StorageModule.init(modBus);
         dev.awaken.shaping.ShapingModule.init(modBus);
+        dev.awaken.riding.RidingModule.init(modBus);
     }
 
     public static Identifier id(String path) {

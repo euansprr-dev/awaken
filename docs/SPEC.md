@@ -860,6 +860,7 @@ of `AwakenConfig.Client`.
   sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
   extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
   townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
+- `dev.awaken.core.api.RidingHooks` (§55) — `rider(player)`, `bonded(player)`, `partner(player)`, `folded(player)`, `door(player)`, `leftRun(player)`; `RANGE`, `HIT_SHARE`, `XP_SHARE`. Gates, progression, arms, powers and trials ask here.
 - Carillon hooks (§16.9, v0): `CityHooks`, `CitizenHooks`, `RenownHooks`, `EconomyHooks`, `PartyHooks`, `OpeningHooks`,
   `AtlasHooks`. Defaults behave as a classic world with no city.
 - `dev.awaken.core.api.TipHooks` (v0, §16.0 decision 24; docs/carillon/m4/onboarding.md): just-in-time tips. Server:
@@ -20047,3 +20048,63 @@ kick of the view for whoever swung. Sound is the block's own hit under `awaken:s
 **52.8 Tests.** `ShapingTests`, prefix `shaping_`: every mesh is a closed solid facing outward, a knock steps through the cuts, a custom block
 takes a cut, no gain and no ore, real or worn, a run's kind and cap, kept blocks, undo, every look on offer can be worn. Rendering under
 Sodium and how a knock feels can't be tested: Stage 0 stops for Euan to play it.
+## 55. Riding Along (Stage A of Made by Hand; page https://claude.ai/artifact/HYetCkcLzxjB21CnH3XT88; approved 2026-11-09)
+
+A partner who isn't good at fighting comes along and is useful, without being able to go down, without making anything
+harder and without being carried to rank. Module `dev.awaken.riding`; other modules ask `core.api.RidingHooks`.
+
+**The bond.** One rider, one anchor. It's held in memory; only the run's `riding` mark is saved (`RunState` schema 3).
+- Both have to agree. **No key of its own and none taken over:** the K menu's Status page has a RIDING ALONG section
+  (`[ Ride ]`, `[ Bring ]` beside anyone within 48 blocks, `[ Let go ]` once tied), and a right click on a gate's door offers
+  to go in with the nearest free player within 12 blocks (tied, the door lets go). `/awaken riding status|with|bring|off`.
+- The answer is a 30-second Signal card. The server remembers who it asked, so a client can't answer a question it wasn't
+  asked. If both ask for the same thing it forms at once. A door card that runs out chooses nothing.
+- Letting go takes both, but silence for 30 seconds counts as yes; an explicit "Not yet" keeps it.
+- Refused, in plain words: already tied; not within 48 blocks in the same level; either in a fight (`Powers.inCombat`); in a
+  trial; not awakened; in different gates (or one in, one out); the story's own gates; a second rider in one run.
+- It ends when both let go, when either leaves the run, goes down or logs off. If it's the anchor and the rider is in a gate,
+  the rider is brought out next tick with their Satchel, alive and with no Fracture. A rider who logs off comes back outside
+  (`Runs.onLogin`): the thread doesn't survive it. If the rider leaves, the anchor carries on.
+
+**The rider.** Keeps every power and weapon.
+- Hits count for 40% (`LivingDamageEvent.Pre`, LOWEST, so after every other bonus; pets and summons with an owner too), and
+  stance damage the same (`ArmsServer.addPosture`).
+- Doesn't count towards party scaling (`Rooms.partyOnFloor`): no extra monsters, no elite, no Lord health.
+- Isn't picked first: every target goes through `LivingChangeTargetEvent`. While anyone who isn't a rider is in the monster's
+  sight (its follow range, clamped 16 to 48, and `canAttack`, `GateHooks.mayTarget`), the monster takes them instead. A
+  once-a-second sweep turns round any monster already on a rider. Alone, a rider can still be hunted, so riding off by
+  yourself is no way to walk through a gate unseen. Bosses take their target the same way and needed no change.
+
+**The catch.** A killing blow on a rider within 48 blocks of a living anchor in the same level is cancelled (HIGHEST
+`LivingDeathEvent`, before a gate counts the death or Cheat Death is spent; `/kill` stays real).
+- Back to half health at once, so a crash during the fold can't lose anyone. Fire and harmful effects go, casts end.
+- For 4 seconds they're folded: their body and name are gone for everyone, nothing can touch them, and they can't hit, use
+  anything or cast. They see through the anchor's eyes under a dark veil with a countdown. Nothing is saved.
+- They come back beside the anchor (behind first, on sturdy ground in a clear line, else on the anchor with Slow Falling) with
+  2 seconds before anything can hurt them. If the bond ended during the fold, they get up where they are.
+- They never go down and never lose the Satchel near their partner.
+
+**Out of reach.** The penalties always apply; the protection only within 48 blocks, so stepping away is never an advantage.
+A killing blow past the reach is a real death. In a gate, though, a rider still banks the whole Satchel as a claim, keeps
+their gear and takes no Fracture (`Runs.onDeath`). A toast says so once on crossing.
+
+**What it pays.** Their own loot rolls and boss pieces (`ArmsApi.lordSpoils`, `lordPattern`, the hoard) stay.
+- Half the XP. A floor's pay is halved and capped at what a gate of their own rank would pay (`Runs.riderReward`), which
+  covers the kill share, Satchel XP and bonus. HOME, WORLD, DESCENT and ANOMALY XP are halved in `Progression.grant`.
+- No rank credit: `Progression.count` ignores the gate and boss counters for a rider, and `claimLord` sets no records, best
+  moments or latent flags. Reassessments can't be ridden: a bonded player, either side, is refused at the Monolith and in
+  `Trials.start`, and left out of a Proving's party (`Provings.begin`). A Penalty trial is still a Penalty trial.
+
+**Out in the Wilds.** Everything above works anywhere, and a bond is a party of its own (`GateParty`), so kills are shared.
+
+**The look.** One thin thread of ivory light with a rose-gold halo, sagging and swaying between the two, with three beads
+travelling from rider to anchor. Past 36 blocks it pulls straight and turns amber; past 48 it frays into red dashes. A catch
+streams into the partner's feet and a ring round them burns down the four seconds; coming back is a burst of the same light.
+Drawn as world light (`RigPipelines.light()`), no particles. Sounds are Minecraft's own by name (`riding.bond`, `riding.let_go`,
+`riding.fold`, `riding.spring`: beacon power and deactivate, respawn anchor deplete and set spawn), low and without a ding.
+
+**Tasks.** `riding/together`, optional, on Gates and rank, shown only with someone within 48 blocks, until you've done it once.
+
+**Tests.** `bond_` prefix, one per mechanism: `bond_needs_both`, `bond_door`, `bond_not_mid_fight`, `bond_one_rider_per_run`,
+`bond_hits_forty`, `bond_fold_catches`, `bond_anchor_dies`, `bond_no_scaling`, `bond_no_aggro`, `bond_no_rank`, `bond_range`,
+`bond_left_on_logout`, `bond_goals_step`.

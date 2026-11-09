@@ -1137,6 +1137,7 @@ final class ArmsServer {
 
     /** Fills a stance; full, it breaks: the wind-up ends, the body sags, a heavy becomes an Execution. */
     static void addPosture(LivingEntity target, int amount, ServerPlayer by) {
+        if (amount > 0 && dev.awaken.core.api.RidingHooks.rider(by)) amount = Math.max(1, Math.round(amount * dev.awaken.core.api.RidingHooks.HIT_SHARE)); // a rider's blows move a stance as they hurt (SPEC §55)
         if (amount <= 0 || target instanceof Player) return;
         Posture p = posture(target);
         long now = now(target);
