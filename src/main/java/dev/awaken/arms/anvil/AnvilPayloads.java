@@ -22,7 +22,9 @@ public final class AnvilPayloads {
      * how far the weight was from its point), STAR the press as the light's ring closes.
      */
     public static final int RESUME = 1, LEAVE = 2, PULL = 3, STRIKE = 4, PLUNGE = 5, LIFT = 6, TAP = 7, DRAW = 8, KNAP = 9, WIND = 10, RELEASE = 11,
-            HELD = 12, LIST = 13, TWIST = 14, GRIND = 15, BALANCE = 16, STAR = 17;
+            HELD = 12, LIST = 13, TWIST = 14, GRIND = 15, BALANCE = 16, STAR = 17,
+            /** Backs out of a pick's work before the first blow: everything comes back (§49.4). */
+            CANCEL = 18;
 
     /** Client → server: an act at the anvil. */
     public record Act(BlockPos pos, int act, int a, float t, float aim) implements CustomPacketPayload {

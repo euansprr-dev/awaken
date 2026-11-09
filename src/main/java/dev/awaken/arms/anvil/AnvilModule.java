@@ -38,6 +38,7 @@ public final class AnvilModule {
         dev.awaken.core.api.Sources.declare("forged at a War Anvil (SPEC §46.7): by hand at E, in the Forge's heat from D",
                 AnvilCosts.table().keySet().toArray(String[]::new));
         AnvilTests.register();
+        PickAnvilTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

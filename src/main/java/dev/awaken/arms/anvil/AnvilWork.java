@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A weapon in the making, kept on its War Anvil (SPEC §46.2, §46.6-§46.9; schemaVersion 5): the weapon, the stage and
+ * A weapon in the making, kept on its War Anvil (SPEC §46.2, §46.6-§46.9; schemaVersion 6): the weapon, the stage and
  * the game tick it began, the beats counted when this run of the stage began (a smith who walks away picks up there,
  * counted in again), what was taken in (given back if the anvil is broken), every judgement so far, when the blade went
  * into the trough, who is making it and the Forge it heats in (at E, by hand, the anvil itself). v2 adds whether it's
@@ -26,12 +26,14 @@ import java.util.UUID;
  * to everyone near with the anvil, so they see it glow and draw out.
  */
 public final class AnvilWork {
-    public static final int SCHEMA = 5;
+    public static final int SCHEMA = 6;
     /**
      * Forged in full, or made from memory (one heat, one strike, the quench; always Fine); or a weapon worked (§46.8):
      * tempered (a strike a level), attuned (a stone set in the guard) or reforged (the next tier's metal folded in).
      */
     public static final int FORGE = 0, MEMORY = 1, TEMPER = 2, ATTUNE = 3, REFORGE = 4;
+    /** A pick's other work (§49): raised a rank, re-drawn to another form; or tended (no fire): a gift worked in, dressed, an old one remade. */
+    public static final int RAISE = 5, REDRAW = 6, WORK_IN = 7, DRESS = 8, MIGRATE = 9;
     /** A Hunter blade forged alone has no style of its own. */
     public static final String BLADE = "blade";
 
@@ -56,6 +58,8 @@ public final class AnvilWork {
     public final int target;
     /** The ranks' acts' scores (§46.9), -1 until done (or where the rank has none). */
     public float twist = -1F, grind = -1F, balance = -1F, star = -1F;
+    /** A pick's acts' scores (§49.4), -1 until done or where its rank has none; {@code colour} is a choice, not a score. */
+    public float eye = -1F, colour = -1F, hang = -1F, tips = -1F, spine = -1F, seam = -1F;
     /** The Forge's bellows worked by an Emberkit (§46.6): the heat climbs evenly through the gold, which holds longer. */
     public boolean bellows;
     /** The last helper's strike (game tick) and the last flake (ticks from the stage's start); not saved. */
@@ -67,6 +71,8 @@ public final class AnvilWork {
     public final String style;
     public final int tier;
     public final AnvilSong.Song song;
+    /** Whether it's a forged pick (§49), which has its own way through the anvil ({@link PickAnvil}). */
+    public final boolean pick;
 
     public AnvilWork(String weapon, int stage, long stageStart, int strikeBase, List<ItemStack> materials, float heat, float quench, float plunge,
                      float held, List<Float> scores, List<Float> taps, UUID forger, BlockPos forge, int kind, float bind, int help,
@@ -92,6 +98,7 @@ public final class AnvilWork {
         this.style = styleOf(weapon);
         this.tier = Math.max(0, tierOf(weapon));
         this.song = AnvilSong.song(style);
+        this.pick = dev.awaken.delve.forged.PickForm.ofStyle(style) != null;
     }
 
     /** A fresh work: by hand at E (the knap first), else the Forge's heat. */
@@ -103,6 +110,11 @@ public final class AnvilWork {
     /** A weapon worked at the anvil (§46.8): always in the Forge's heat first, whatever its tier. {@code weapon} is what it's drawn as. */
     public static AnvilWork worked(String weapon, long now, List<ItemStack> materials, ItemStack piece, UUID forger, BlockPos forge, int kind, int target) {
         return new AnvilWork(weapon, AnvilSong.HEAT, now, 0, materials, -1F, -1F, -1F, -1F, List.of(), List.of(), forger, forge, kind, -1F, 0, piece, target);
+    }
+
+    /** A pick's work other than a fresh forging: straight to its stage, the pick itself held in {@code piece}. */
+    static AnvilWork picked(String id, int stage, long now, List<ItemStack> materials, ItemStack piece, UUID forger, BlockPos forge, int kind, int target) {
+        return new AnvilWork(id, stage, now, 0, materials, -1F, -1F, -1F, -1F, List.of(), List.of(), forger, forge, kind, -1F, 0, piece, target);
     }
 
     /** A weapon's style ("daggers"), "blade" for a Hunter blade, read from its id ("beastbound_daggers"). */
@@ -123,7 +135,7 @@ public final class AnvilWork {
 
     /** At E it's made by hand: knapped and bound, no Forge (a weapon worked is always heated). */
     public boolean hand() {
-        return tier == 0 && kind <= MEMORY;
+        return tier == 0 && (kind <= MEMORY || kind == REDRAW);
     }
 
     /** A weapon forged in full at its tier gets its rank's acts (§46.9): not from memory, not a blade alone, not one worked again. */
@@ -133,12 +145,17 @@ public final class AnvilWork {
 
     /** A finished weapon worked again (tempered, attuned, reforged): it's whole on the anvil, its hilt on, never drawn out from a bar. */
     public boolean whole() {
-        return kind >= TEMPER;
+        return kind >= TEMPER && kind <= REFORGE;
     }
 
     /** Levels a temper strikes for (one a level). */
     public int gain() {
         return kind == TEMPER ? Math.max(1, target - dev.awaken.hearth.Upgrades.temperOf(piece)) : 0;
+    }
+
+    /** Quiet work on a finished pick: it comes straight back, no draw from the stone. */
+    public boolean tended() {
+        return kind >= WORK_IN;
     }
 
     public boolean memory() {
@@ -147,7 +164,10 @@ public final class AnvilWork {
 
     /** The beats this stage strikes (the draw out's strikes or the knap's flakes, the hilt's taps). */
     public List<Float> beats() {
-        return stage == AnvilSong.HILT || stage == AnvilSong.BIND || stage == AnvilSong.TWIST || stage == AnvilSong.GRIND ? taps : scores;
+        return switch (stage) {
+            case AnvilSong.HILT, AnvilSong.BIND, AnvilSong.TWIST, AnvilSong.GRIND, AnvilSong.EYE, AnvilSong.TIPS, AnvilSong.SPINE, AnvilSong.HANG, AnvilSong.TEND -> taps;
+            default -> scores;
+        };
     }
 
     public int beatsNeeded() {
@@ -158,12 +178,24 @@ public final class AnvilWork {
             case AnvilSong.TWIST -> AnvilSong.TWISTS + 1;
             case AnvilSong.GRIND -> AnvilSong.GRIND_SAMPLES;
             case AnvilSong.BALANCE, AnvilSong.STAR -> 1;
+            case AnvilSong.EYE -> AnvilSong.EYES;
+            case AnvilSong.TIPS -> AnvilSong.TIP_BLOWS;
+            case AnvilSong.SPINE -> AnvilSong.SPINE_SAMPLES;
+            case AnvilSong.HANG -> AnvilSong.HANGS;
+            case AnvilSong.TEND -> kind == MIGRATE ? AnvilSong.MIGRATE_BLOWS : AnvilSong.TEND_BLOWS;
             default -> memory() ? 1 : kind == TEMPER ? gain() : song.strikes();
         };
     }
 
     public AnvilSong.Rhythm rhythm() {
-        return stage == AnvilSong.HILT ? AnvilSong.HILT_RHYTHM : memory() ? song.known() : song.rhythm();
+        return switch (stage) {
+            case AnvilSong.HILT -> AnvilSong.HILT_RHYTHM;
+            case AnvilSong.EYE -> AnvilSong.EYE_RHYTHM;
+            case AnvilSong.TIPS -> AnvilSong.TIPS_RHYTHM;
+            case AnvilSong.HANG -> AnvilSong.HANG_RHYTHM;
+            case AnvilSong.TEND -> AnvilSong.TEND_RHYTHM;
+            default -> memory() ? song.known() : song.rhythm();
+        };
     }
 
     /** The heat {@code ticks} into the heat stage: the Emberkit's bellows hold the gold, and from memory it starts warm. */
@@ -191,12 +223,12 @@ public final class AnvilWork {
         this.strikeBase = beats().size();
         this.knapLast = -1F;
         this.grindLast = -1F;
-        if (stage == AnvilSong.QUENCH) plunge = -1F;
+        if (stage == AnvilSong.QUENCH || stage == AnvilSong.COLOURS || stage == AnvilSong.SEAM) plunge = -1F;
     }
 
-    /** v2's to v5's fields, kept beside the rest (one codec holds at most sixteen). */
+    /** v2's to v6's fields, kept beside the rest (one codec holds at most sixteen). */
     private record More(int kind, float bind, int help, ItemStack piece, int target, float twist, float grind, float balance, float star,
-                        boolean bellows) {
+                        boolean bellows, float eye, float colour, float hang, float tips, float spine, float seam) {
         static final MapCodec<More> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.INT.optionalFieldOf("kind", FORGE).forGetter(More::kind),
                 Codec.FLOAT.optionalFieldOf("bind", -1F).forGetter(More::bind),
@@ -207,7 +239,13 @@ public final class AnvilWork {
                 Codec.FLOAT.optionalFieldOf("grind", -1F).forGetter(More::grind),
                 Codec.FLOAT.optionalFieldOf("balance", -1F).forGetter(More::balance),
                 Codec.FLOAT.optionalFieldOf("star", -1F).forGetter(More::star),
-                Codec.BOOL.optionalFieldOf("bellows", false).forGetter(More::bellows)
+                Codec.BOOL.optionalFieldOf("bellows", false).forGetter(More::bellows),
+                Codec.FLOAT.optionalFieldOf("eye", -1F).forGetter(More::eye),
+                Codec.FLOAT.optionalFieldOf("colour", -1F).forGetter(More::colour),
+                Codec.FLOAT.optionalFieldOf("hang", -1F).forGetter(More::hang),
+                Codec.FLOAT.optionalFieldOf("tips", -1F).forGetter(More::tips),
+                Codec.FLOAT.optionalFieldOf("spine", -1F).forGetter(More::spine),
+                Codec.FLOAT.optionalFieldOf("seam", -1F).forGetter(More::seam)
         ).apply(i, More::new));
     }
 
@@ -226,7 +264,7 @@ public final class AnvilWork {
             Codec.FLOAT.listOf().optionalFieldOf("taps", List.of()).forGetter(w -> w.taps),
             UUIDUtil.CODEC.fieldOf("forger").forGetter(w -> w.forger),
             BlockPos.CODEC.fieldOf("forge").forGetter(w -> w.forge),
-            More.CODEC.forGetter(w -> new More(w.kind, w.bind, w.help, w.piece, w.target, w.twist, w.grind, w.balance, w.star, w.bellows))
+            More.CODEC.forGetter(w -> new More(w.kind, w.bind, w.help, w.piece, w.target, w.twist, w.grind, w.balance, w.star, w.bellows, w.eye, w.colour, w.hang, w.tips, w.spine, w.seam))
     ).apply(i, (v, weapon, stage, start, base, mats, heat, quench, plunge, held, scores, taps, forger, forge, more) -> {
         AnvilWork w = new AnvilWork(weapon, stage, start, base, mats, heat, quench, plunge, held, scores, taps, forger, forge, more.kind(), more.bind(),
                 more.help(), more.piece(), more.target());
@@ -235,6 +273,12 @@ public final class AnvilWork {
         w.balance = more.balance();
         w.star = more.star();
         w.bellows = more.bellows();
+        w.eye = more.eye();
+        w.colour = more.colour();
+        w.hang = more.hang();
+        w.tips = more.tips();
+        w.spine = more.spine();
+        w.seam = more.seam();
         return w;
     }));
 }

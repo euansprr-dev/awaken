@@ -55,6 +55,9 @@ public final class AnvilContent {
             WHEEL = sound("wheel"), TWIST = sound("twist"), HUM = sound("hum"), STAR = sound("star"),
             STRIKE_GATE = sound("strike_gate"), STRIKE_VEIL = sound("strike_veil"), STRIKE_LORD = sound("strike_lord"),
             STRIKE_STAR = sound("strike_star");
+    /** The picks' acts (§49.4): the eye punched, the colours running, the head rapped onto its haft, the tips steeled, the spine threaded, the seam poured, quiet work. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> EYE = sound("eye"), COLOURS = sound("colours"), HANG = sound("hang"), TIP = sound("tip"),
+            THREAD = sound("thread"), POUR = sound("pour"), TEND = sound("tend");
 
     /** The hammer on a tier's metal: iron to D (and an E reforge's), then gatewrought, veilwoven, lordscale, sovereign. */
     public static SoundEvent strike(int tier) {

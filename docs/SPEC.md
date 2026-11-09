@@ -19692,6 +19692,16 @@ client). Temper, the steps of quality the Forge could hold, adds 0/4/8/12% to sp
 death, and A and S are fire resistant. Efficiency is out, since rank and forging are its speed. A forged pick has no repair material: Dressing is the
 way (one metal, mends a quarter, keen for 200 blocks at +10%). Its enchantment room is quality + 1, or the old pick's room if larger.
 
+### 49.4 At the anvil (`arms.anvil.PickAnvil`)
+A pick is an `AnvilWork` with `pick` set (schema 6) and style `pick_<form>`; the server judges it as it judges a sword, and it uses no pattern, no grindstone and no quench.
+Stages by rank, first time at that rank: **E** knap, bind, hang. **D** heat, cut the eye, draw the points, run the colours, hang. **C** adds steel the tips. **B** adds thread the spine.
+**A** adds pour the seam, on a Lord's anvil. **S** adds the starlight, after the colours. A raise above D does the heat, the drawing, and only the new rank's own act, then colours and hang. From memory (after a Masterwork at that rank and form) it's the heat, the drawing and the colours, Fine at best. Knap and bind are the hand ranks' work, the Forge is never asked at E, and metal always is.
+Songs: Delver `x.x.x...` a miner's steady three, Breaker `x.....x.x.......` a long lift and a double, Mattock `x..x..x.....` a triple swung, Sounder `x.x.x...x.x.x...` light and even. Marks are on the arms, never on the eye. Run the Colours is a hold: oxide creeps from the eye toward the points at 0.05 a tick and the lift sets the colour; held past blue it goes grey and is still sound, so the colour can't fail. Quality, the 0.6 timing + 0.4 aim of §39, adds the acts as the weapon's score does; burnt caps at Masterwork.
+**Options on a pick you hold:** Raise (next rank's parts less one metal); Re-draw to another form (half cost, full scene at its rank); Work in (a deed done since: free, three taps); Dress (one metal, a quarter of its wear off, keen for 200 blocks). Raise and Re-draw keep the tally, gifts, enchantments, curses, name, lore and repair cost, take the better quality and temper, and the new colour unless none was run. Wear clears on a raise or re-draw. Dressing and working in stay in the hand: back in the hand, else the pack, else at your feet, no draw from the stone.
+**Backing out:** the Heat, or a first Knap or Tend blow not yet struck: everything comes back, the pick first so the parts can't take its hand. After the first blow the work waits like any other.
+**Make it again:** your best rank (`ForgedPicks.BEST_TIER`) at half cost, offered only when you carry no forged pick.
+The rebuild gates stay: C on an Ironbound anvil, A on a Lord's anvil. Picks never touch the Weapons tab's best or forged lists: `SmithMemory` only remembers them for the from-memory road.
+
 ### 49.5 Gifts and Sounding
 `Pick.Gift` in the order the old pick woke them: Hum, Kindle, Sounding, Wide Seam, Long Sounding, Hush, Call. Forged picks hold them as bits, and the
 player's deed opens the gift: heart Kindle (D+), lamp Sounding (C+), Deepglass Long Sounding (B+), seep Hush (A+). Wide Seam comes with C and Call with
@@ -19699,3 +19709,9 @@ S. Forged picks take deeds done before they existed; a gift earned later is work
 Sounding replaces Echo and Glass for old picks too (nothing is drawn through the rock any more): stand still, sneak and tap. 26 rays walk out to 12 (24
 with Long Sounding, x1.5 on a Sounder) and report the first roomy hollow; the client plays the answers from those sides, nearest first, shakes dust off
 that part of the wall, and a lode within reach answers last at its ore's note. 20 s rest.
+
+### 49.6 The tally and the name
+A pick counts blocks and ores, and hearts of a lode, flushed every 20 breaks, on logging out, on dying and on changing slot, so a crash loses at most 19. Lines read on the item: who made it, on what day, in what colour, how much it has dug, and which rank it began at. Three bits are story: `TWIN` struck with a friend, `MEMORY` made from memory, `ARMOURY` the Master of the Armoury's bonus; `OLD` was remade from the old pick.
+
+### 49.7 Old picks and old mattocks
+An update never changes a pick by itself. Holding the old `waking_pick` at any anvil, built or not, with no Forge, offers one free row: five taps and it's a Delver at the verse's rank (verse 0 E, 1-2 D, 3-4 C, 5 B, 6 A), holding every gift it had, its enchantments and its room, at the same share of its wear, marked `OLD`, with no maker claimed. It comes straight back to the hand. Old `<prefix>_mattock` items convert the same way, free, to the Mattock of their rank. Both old items stay registered for good; nothing makes new ones (recipes retired, §49.9).
