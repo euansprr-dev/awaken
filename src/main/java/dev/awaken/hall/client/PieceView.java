@@ -115,6 +115,7 @@ final class PieceView extends CloseView {
 
     void select(int newCol, int newTier) {
         col = Math.clamp(newCol, 0, HallNet.COLS - 1);
+        if (Math.clamp(newTier, 0, HallNet.ROWS - 1) != tier) HallSounds.rank();
         tier = Math.clamp(newTier, 0, HallNet.ROWS - 1);
         style = HallNet.COLUMNS[col];
         id = WallView.weaponId(col, tier);

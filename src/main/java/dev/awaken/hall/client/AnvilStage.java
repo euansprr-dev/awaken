@@ -101,6 +101,7 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
             open.landing = 0F;
             open.dirty = true;
         } else {
+            HallSounds.open();
             mc.gui.setScreen(new AnvilStage(msg));
         }
     }
@@ -167,7 +168,7 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
 
     private void frame(Stage s, float dt, int mouseX, int mouseY) {
         float mx = s.sx(mouseX), my = s.sy(mouseY);
-        fly = Math.min(1F, fly + dt / .5F);
+        fly = Stage.calm() ? 1F : Math.min(1F, fly + dt / .5F);
         armT += ((armed >= 0 ? 1F : 0F) - armT) * Math.min(1F, dt * 10F);
         if (landing > 0F) landing = Math.min(1F, landing + dt / .28F);
         if (armed < 0) hover = pointed >= 0 ? pointed : fly >= 1F && landing <= 0F ? sealAt(mx, my) : -1;
@@ -386,6 +387,11 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
     // ---- what the picked rite takes -----------------------------------------------------------------------------------
 
     private void arm(int rite) {
+        if (armed == rite) HallSounds.back();
+        else {
+            HallSounds.rank();
+            Stage.say(riteName(rite) + ". " + (held.options().size() > rite ? held.options().get(rite).headline() : ""));
+        }
         armed = armed == rite ? -1 : rite;
         hold.amount = 0F;
         holdKey = holdMouse = false;
@@ -394,8 +400,13 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
         dirty = true;
     }
 
+    private static String riteName(int rite) {
+        return rite == TEMPER ? "Temper" : rite == REFORGE ? "Reforge" : "Attune";
+    }
+
     private void pickStone(int n) {
         if (n < 0 || n >= held.stones().size() || n == stone) return;
+        HallSounds.rank();
         stone = n;
         hold.amount = 0F;
         dirty = true;
@@ -614,6 +625,7 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
     private void fire() {
         if (landing > 0F || armed < 0) return;
         landing = .0001F;
+        HallSounds.set();
         int kind = armed == TEMPER ? AnvilWork.TEMPER : armed == REFORGE ? AnvilWork.REFORGE : AnvilWork.ATTUNE;
         int chosen = armed == ATTUNE ? kind | stone + 1 << 8 : kind;
         AnvilClient.send(held.pos(), AnvilPayloads.HELD, chosen, 0F, 0F);

@@ -53,10 +53,12 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
     public HallScreen(int wing) {
         super(Component.translatable("screen.awaken.armoury"));
         this.wing = wing;
+        HallSounds.open();
     }
 
     /** Turns to the other wing, with a moment's dark between. */
     void wing(int to) {
+        if (to != wing) HallSounds.rank();
         if (wing == to) return;
         wing = to;
         wingFade = 0F;
@@ -153,16 +155,19 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
     }
 
     private void openPiece(int col, int tier) {
+        HallSounds.reach();
         wall.hover = null;
         close = new PieceView(col, tier, HallLayout.cell(col, tier));
     }
 
     private void openSuit(TerraceLayout.Fig f, int slot) {
+        HallSounds.reach();
         terrace.hover = null;
         close = new SuitView(f, slot, this::openLooks, null);
     }
 
     void openLooks() {
+        HallSounds.reach();
         close = new LooksView(854F, 480F);
     }
 

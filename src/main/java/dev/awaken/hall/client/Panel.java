@@ -122,7 +122,9 @@ final class Panel {
         boolean draw(Stage s, float x0, float x1, float y0, float y1, String label, boolean enabled, boolean can, boolean pressed, boolean over, float dt) {
             boolean fired = false;
             if (!HallConfig.clickToCommit() && pressed && can) {
+                int was = (int) (amount * 3F);
                 amount += dt / HOLD_SECONDS;
+                if ((int) (amount * 3F) > was && amount < 1F) HallSounds.rising((int) (amount * 3F));
                 if (amount >= 1F) {
                     amount = 0F;
                     fired = true;

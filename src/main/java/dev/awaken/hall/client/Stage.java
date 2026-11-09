@@ -19,7 +19,9 @@ import java.util.List;
  */
 final class Stage {
     static final int W = 1708, H = 960;
-    static final int EDGE = 0xFF7FC3FF, LANTERN = 0xFFFFCF7A, TITLE = 0xFFF4F6FB, LABEL = 0xFFAFC2D8, DIM = 0xFF6F8299, GOOD = 0xFF9FE6D6, BAD = 0xFFFF8A7A;
+    static final int EDGE = 0xFF7FC3FF, LANTERN = 0xFFFFCF7A, TITLE = 0xFFF4F6FB, GOOD = 0xFF9FE6D6, BAD = 0xFFFF8A7A;
+    /** The quiet text colours, brighter under the game's High Contrast option. */
+    static int LABEL = 0xFFAFC2D8, DIM = 0xFF6F8299;
     /** E, D, C, B, A, S. */
     static final int[] RANK = {0xF4F6FB, 0x5FD08F, 0x6FB3FF, 0xB48CFF, 0xF2A541, 0xFF5A6A};
     static final Identifier GLOW = Awaken.id("textures/gui/hall/glow.png");
@@ -33,7 +35,21 @@ final class Stage {
         this.font = font;
     }
 
+    /** The game's Distortion Effects slider turned down: things arrive rather than fly, and nothing turns by itself. */
+    static boolean calm() {
+        return Minecraft.getInstance().options.screenEffectScale().get() < .5D;
+    }
+
+    /** For the narrator, on a change only. */
+    static void say(String words) {
+        var narrator = Minecraft.getInstance().getNarrator();
+        if (narrator.isActive()) narrator.saySystemNow(words);
+    }
+
     void begin(GuiGraphicsExtractor g, int width, int height) {
+        boolean bright = Minecraft.getInstance().options.highContrast().get();
+        LABEL = bright ? 0xFFF0F4FA : 0xFFAFC2D8;
+        DIM = bright ? 0xFFC8D4E2 : 0xFF6F8299;
         this.g = g;
         k = Math.min(width / (float) W, height / (float) H);
         ox = (width - W * k) / 2F;
@@ -76,7 +92,7 @@ final class Stage {
     }
 
     float snap(float n) {
-        return Math.max(1, Math.round(n * rps)) / rps;
+        return Math.max(1, (int) Math.floor(n * rps + .001F)) / rps; // down, so text never comes out wider than the sheet was laid out for
     }
 
     private float grid(float v) {

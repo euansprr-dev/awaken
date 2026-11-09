@@ -70,6 +70,7 @@ public final class LineUpScreen extends Screen implements dev.awaken.signal.clie
     public static void open(String title, String why, Offer offer) {
         Minecraft mc = Minecraft.getInstance();
         ClientPacketDistributor.sendToServer(new HallNet.Ask(HallNet.PEEK, "", BlockPos.ZERO));
+        HallSounds.open();
         mc.gui.pushScreenLayer(new LineUpScreen(title, why, offer));
     }
 
@@ -166,6 +167,7 @@ public final class LineUpScreen extends Screen implements dev.awaken.signal.clie
     }
 
     private void open(int i) {
+        HallSounds.reach();
         ArmourSet set = offer.sets().get(i);
         float sc = scale(set), h = sc / .482F;
         TerraceLayout.Fig from = new TerraceLayout.Fig(set, set.rank.ordinal(), TerraceLayout.column(set.archetype), cx(i), cy(set) + sc, h);

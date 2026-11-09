@@ -33,6 +33,8 @@ public final class HallClient {
 
     public static void init(IEventBus modBus) {
         HallConfig.register();
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Render.Post.class,
+                e -> HallMoment.draw(e.getGuiGraphics(), e.getScreen().width, e.getScreen().height));
         modBus.addListener(RegisterRenderPipelinesEvent.class, HallPipelines::register);
         modBus.addListener(RegisterPictureInPictureRenderersEvent.class, e -> e.register(PicState.class, PicRenderer::new));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {

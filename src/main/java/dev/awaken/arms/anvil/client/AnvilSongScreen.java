@@ -797,6 +797,9 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         doneAt = now;
         AnvilSong.Quality q = AnvilSong.Quality.of(d.quality());
         if (q.ordinal() >= AnvilSong.Quality.MASTERWORK.ordinal()) burst(width / 2F, height * 0.5F, 1F, now, 1.6F);
+        boolean tempered = (d.flags() & WarAnvil.TEMPERED) != 0, attuned = (d.flags() & WarAnvil.ATTUNED) != 0;
+        dev.awaken.hall.client.HallMoment.show(cardItem().getHoverName().getString(), tempered ? "Temper " + numeral(d.temper()) : attuned ? "Attuned" : q.label,
+                tempered || attuned ? LANTERN : q.colour);
     }
 
     private void draw(GuiGraphicsExtractor g, WarAnvilBlockEntity be, float now) {

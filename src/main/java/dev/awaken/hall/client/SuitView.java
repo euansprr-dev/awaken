@@ -119,6 +119,7 @@ final class SuitView extends CloseView {
 
     private void select(ArmourSet to) {
         if (to == set) return;
+        HallSounds.rank();
         set = to;
         slot = firstUseful();
         dirty = true;
@@ -214,6 +215,7 @@ final class SuitView extends CloseView {
         showInlay = offer != null && o != null && o.stand() && ForgeSong.inlays(set) && (state == SuitState.READY || state == SuitState.SHORT);
         inlayLine = !showInlay ? List.of() : s.wrap(inlay == 0 ? "No inlay. Choose a catalyst to set into this piece." : ArmourInlay.line(Forces.Force.values()[inlay - 1]), TEXT_W, 3F);
         actions(s, w, o, offer, hidden, state);
+        Stage.say(name.getString() + ". " + eyebrow + ". " + (pieceName == null ? "" : pieceName.getString() + ". ") + SuitState.word(state) + ".");
         TerraceLayout.Fig f = TerraceLayout.of(set);
         prevName = neighbourName(f, -1);
         nextName = neighbourName(f, 1);
@@ -657,6 +659,7 @@ final class SuitView extends CloseView {
             }
             case CHOOSE -> {
                 if (choosing != null) {
+                    HallSounds.rank();
                     choosing.choose(set);
                     dirty = true;
                 }

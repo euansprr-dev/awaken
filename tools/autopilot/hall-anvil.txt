@@ -61,4 +61,17 @@ cmd awaken hall view stone 4
 wait 30
 shot anvil_attune_none
 screen close
+wait 10
+# the moment it's made: a hit of light, the name in blackletter, how it came out
+cmd gamemode creative
+cmd awaken arms anvil autoplay true
+cmd awaken arms anvil held temper
+wait 190
+shotnow moment_a
+wait 30
+shotnow moment_b
+wait 25
+shotnow moment_c
+wait 40
+screen close
 quit

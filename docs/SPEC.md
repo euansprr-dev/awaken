@@ -19742,3 +19742,16 @@ know it when you find it. Tests `arms_anvil_*`.
 suits themselves, tall and side by side, instead of a list (`LineUpScreen`; `SetPreviewScreen` stays behind `classicScreens`). Each has
 its name, its kind and how close you are. A click brings it close in the same view as the Armour wing, with "Choose this one" where
 Track would be and left and right moving between the offers only. The step's choice is the Tasks page's own (`TaskPage.choose`).
+
+**The moment it's made.** When the Forge Song or the anvil's song finishes: a hit of light a quarter of a second long, then the piece's
+name in blackletter and how it came out ("Flawless", "Temper II", "Attuned") for about three seconds (`HallMoment`), over whatever
+screen finished it. The details stay on that screen's own card.
+
+**Sounds.** Minecraft's own recordings by name, nothing built (`HallSounds`): you come in, `block.furnace.fire_crackle` low; something
+brought close, `block.chain.place`; a different rank, rite, stone or wing, `item.armor.equip_iron`; back, `block.iron_trapdoor.open`;
+a held press, the fire rising in three steps; the weapon coming down, `block.anvil.land` quietly; made, `block.anvil.land` and
+`block.heavy_core.place`.
+
+**For everyone.** High Contrast brightens the quiet text. Hide Lightning Flashes takes out the hit of light. Distortion Effects under
+50% means things arrive rather than fly and nothing turns by itself (drag still does). The narrator reads what is brought close and
+which rite is picked, on a change only. On the sheet, text sizes snap down, never up, so no window makes a line wider than laid out.

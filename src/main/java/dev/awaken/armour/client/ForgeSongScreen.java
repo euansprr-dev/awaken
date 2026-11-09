@@ -800,6 +800,7 @@ final class ForgeSongScreen extends Screen implements dev.awaken.signal.client.Q
         ForgeCamera.cut(ForgeShots.fit(pos), now, 22);
         ForgeSong.Quality q = ForgeSong.Quality.of(d.quality());
         if (q.ordinal() >= ForgeSong.Quality.MASTERWORK.ordinal()) burst(width / 2F, height * 0.62F, 1F, now, 1.6F);
+        dev.awaken.hall.client.HallMoment.show(ForgeScreen.item(set, ForgeSong.PIECES[d.piece() % 4]).getHoverName().getString(), q.label, q.colour);
     }
 
     private void drawDone(GuiGraphicsExtractor g, float now) {

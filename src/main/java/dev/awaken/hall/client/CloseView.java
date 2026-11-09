@@ -9,6 +9,7 @@ abstract class CloseView {
     float fly;
     boolean closing, dragging, holdKey, holdMouse;
     float yaw = -24F, vel = 20F;
+    private boolean wentBack;
 
     private static float ease(float t) {
         float u = 1F - t;
@@ -21,13 +22,18 @@ abstract class CloseView {
 
     /** True once it has flown all the way back. */
     final boolean advance(float dt) {
+        if (closing && !wentBack) {
+            wentBack = true;
+            HallSounds.back();
+        }
+        if (Stage.calm()) dt = 1F;
         fly = closing ? Math.max(0F, fly - dt / BACK_SECONDS) : Math.min(1F, fly + dt / FLY_SECONDS);
         return closing && fly <= 0F;
     }
 
     /** One turn of the slow spin, unless it is being dragged. */
     final void spin(float dt) {
-        if (!dragging) {
+        if (!dragging && !Stage.calm()) {
             vel += (12F - vel) * Math.min(1F, dt * 2.2F);
             yaw += vel * dt;
         }
