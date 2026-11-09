@@ -42,8 +42,16 @@ final class CaveStaging {
                     case 3 -> new int[]{Mouth.CLEFT, L, drop, 3, 14, 0, 0, 0, 0, 0, 1};
                     default -> new int[]{Mouth.HILL, L, drop, 7, 9, 0, 0, 0, 0, 1, 1};
                 };
-                // the hill's joint as steep as the site search lets one run; the others level
-                int deep = form == 1 ? (int) (20 * CaveSites.JOINT_SLOPE) : 0, out = form == 1 ? 20 : 10;
+                // the hill's joint far too deep to walk straight to, as the site search winds one; the others level
+                int deep = form == 1 ? 36 : 0, out = form == 1 ? 14 : 10;
+                if (form == 1) {
+                    double h = Math.hypot(3, out);
+                    int legs = 2, swing = Mouth.swing(h, deep, CaveSites.JOINT_SLOPE, legs);
+                    while (swing > Mouth.MOST_SWING) swing = Mouth.swing(h, deep, CaveSites.JOINT_SLOPE, ++legs);
+                    p = java.util.Arrays.copyOf(p, Mouth.LEGS + 1);
+                    p[Mouth.SWING] = (seed & 8) != 0 ? -swing : swing;
+                    p[Mouth.LEGS] = legs;
+                }
                 yield new Spec(kind, x, y, z, rot, seed, true, f.x(3, L + out), y - drop - deep, f.z(3, L + out), p);
             }
             case GROTTO -> new Spec(kind, x, y, z, rot, seed, true, f.x(2, -Grotto.ROOM - 16), y, f.z(2, -Grotto.ROOM - 16), new int[0]);

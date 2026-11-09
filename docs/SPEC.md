@@ -12764,11 +12764,29 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills
   and bridges over one it crosses (2 of his 51 mouths are within 12 m of a road, 1 of them buried by its bed), the road
   stays whole. `CaveSites.Probe`'s reasons (`Why`) count a candidate's own ground, never an adit's distant lode.
-- **The joint, since 8 Nov**: a hill mouth, cleft or doline looks for its cave air on the same rings out to 27, and on the
-  wider rings further down, up to 0.8 down for every 1 out (`CaveSites.JOINT_SLOPE`; Tectonic seals the caves about 12
-  under the ground, so "no cave to join" was the biggest loss on dry land). The same columns, read further down; the
-  route test walks a staged hill mouth's joint at that slope. Slope probes read the noise's 4-block cells so the forms
-  share columns.
+- **The joint, since 9 Nov** (Euan's playtest 9 Nov, "maybe 10 blocks deep, and then it just stops"): the joint must be a
+  real cave. Until then any floor with three of air over it counted, so open ground did: the tunnel of his mouth at -472
+  181 -2424 came back out on the hillside 20 blocks round, with a real cave 4 blocks under its floor. In his save 16 of
+  the 21 mouths that could be judged had a joint in the open and 1 a tiny pocket; only 4 led on. Now:
+  - **Rock over it** (every kind's search, `CaveSites.floors`): the air's top stays `ROOF` (4) under the column's ground.
+    Air under water counts: it has rock between it and the water, or it would be full.
+  - **How far a mouth looks** (hill mouth, cleft, doline; `CaveSites.joint`): rings 8, 14, 20, 27, 34 of 8 columns each,
+    down to 3 for every 1 out, to 50 under the throat's end, nearest first, 4 floors at most. Tectonic's caves lie 8-20
+    under the mouths, so a search that stayed as shallow as a straight walk found one for only 4 in 10.
+  - **Cave goes on from it** (`roomy`): 2 or more of the 8 columns 6 out hold air near its height with rock over them, and
+    none of the 8 is open ground at its level (an overhang on a hillside has rock over it too). On 420 random roofed floors
+    in his save the count of 2 keeps 89% of the real caves and halves the small ones.
+  - **The way winds** (Mouth p `SWING` 11 and `LEGS` 12, 0 on a straight way and on a saved mouth): a cave too deep to walk
+    straight to (past `JOINT_SLOPE` 0.8 down in 1 along) is reached by bends standing aside of the straight line by up to
+    12, turn about, 2 to 6 legs, the fewest that fit, every leg as steep as the rest and no steeper than 0.8. Each bend
+    opens into a small landing. The way is read every 4 blocks on the noise's cells, on both sides and then with more
+    legs, and must keep rock over its bore (3 + `ROOF`) and stay dry, or that floor is passed over. So a tunnel can't
+    break out of the hill either. The piece's box holds the bends.
+  - `delve_mouth_joint` holds this on real noise on his seed, `delve_cave_routes` walks a staged winding way both ways,
+    and `/awaken delve way` walks the last `goto`'s mouth on the world's real blocks and says how much cave lies past
+    the joint (tools/autopilot/mouths-deep.txt, the only way to see it on Tectonic).
+  - Slope probes still read the noise's 4-block cells so the forms share columns. A mouth saved before this keeps the
+    way it built.
 - **Delver adit** (tried first): an iron or copper lode within 72 whose heart is at y 24 or above, a hill over the
   drift, an open front, dry; drift 14-28 long, falling 0 to a third of its length, timber sets every 3, rails, ends at
   the heart (left in the end face; the joint tunnel to the cave leaves from the drift's side). Mark "pick" at the drift's

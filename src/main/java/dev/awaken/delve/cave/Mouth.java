@@ -41,6 +41,8 @@ final class Mouth {
 
     /** p: form, throat length, its drop, arch width, arch height, the lode's heart (x, y, z), its ore + 1, the cairn's side, its look. */
     static final int FORM = 0, LEN = 1, DROP = 2, W = 3, H = 4, HX = 5, HY = 6, HZ = 7, ORE = 8, CAIRN = 9, LOOK = 10;
+    /** p, a joint that winds down to a cave too deep to walk straight to (0 on a straight one and a saved mouth): how far each bend swings aside, signed; how many legs. */
+    static final int SWING = 11, LEGS = 12;
     static final int HILL = 0, ADIT = 1, DOLINE = 2, CLEFT = 3;
     /** The portal's depth: the arch (or the timbered frame) before the throat begins. */
     static final int PORTAL = 4;
@@ -58,7 +60,50 @@ final class Mouth {
             y1 += 6;
         }
         if (s.p(FORM) == ADIT && s.p(ORE) != 0) y0 = Math.min(y0, s.p(HY) - 3);
-        return new BoundingBox(Math.min(ax, bx), y0, Math.min(az, bz), Math.max(ax, bx), y1, Math.max(az, bz));
+        BoundingBox b = new BoundingBox(Math.min(ax, bx), y0, Math.min(az, bz), Math.max(ax, bx), y1, Math.max(az, bz));
+        if (s.p(LEGS) > 1) {
+            for (double[] q : way(s)) {
+                int x = (int) Math.floor(q[0]), y = (int) Math.floor(q[1]), z = (int) Math.floor(q[2]);
+                b = b.encapsulate(new BoundingBox(x - 6, y - 2, z - 6, x + 6, y + 6, z + 6));
+            }
+        }
+        return b;
+    }
+
+    /** The most legs a winding joint takes and the furthest a bend stands off the straight line to its cave. */
+    static final int MOST_LEGS = 6, MOST_SWING = 12;
+
+    /** How far {@code legs} legs' bends must stand aside so a fall of d over a run of h stays no steeper than the slope. */
+    static int swing(double h, double d, double slope, int legs) {
+        double want = d / slope, lo = 0, hi = 64, a = h / legs;
+        for (int i = 0; i < 40; i++) {
+            double w = (lo + hi) / 2;
+            if (2 * Math.hypot(a, w) + (legs - 2) * Math.hypot(a, 2 * w) < want) lo = w;
+            else hi = w;
+        }
+        return (int) Math.ceil(hi);
+    }
+
+    /** The joint's way, from the throat's end to the cave: its corners (x, feet, z), the two ends included. */
+    static double[][] way(Spec s) {
+        int[] e = end(s);
+        return way(e[0] + 0.5, e[1], e[2] + 0.5, s.jx() + 0.5, s.jy(), s.jz() + 0.5, s.p(SWING), Math.max(1, s.p(LEGS)));
+    }
+
+    /** As above: the bends stand off the straight line by {@code swing}, turn about, and the fall is shared by length so every leg is as steep. */
+    static double[][] way(double ax, double ay, double az, double bx, double by, double bz, int swing, int legs) {
+        double dx = bx - ax, dz = bz - az, h = Math.hypot(dx, dz);
+        double nx = h < 1e-6 ? 1 : -dz / h, nz = h < 1e-6 ? 0 : dx / h, run = 0;
+        double[][] w = new double[legs + 1][];
+        double[] along = new double[legs + 1];
+        for (int i = 0; i <= legs; i++) {
+            double t = i / (double) legs, side = i == 0 || i == legs ? 0 : (i % 2 == 1 ? swing : -swing);
+            w[i] = new double[]{ax + dx * t + nx * side, 0, az + dz * t + nz * side};
+            if (i > 0) run += Math.hypot(w[i][0] - w[i - 1][0], w[i][2] - w[i - 1][2]);
+            along[i] = run;
+        }
+        for (int i = 0; i <= legs; i++) w[i][1] = ay + (by - ay) * (run < 1e-6 ? i / (double) legs : along[i] / run);
+        return w;
     }
 
     /** The throat's floor (local, feet) at local z: level through the portal, then down one in two (adit: its own grade). */
@@ -102,8 +147,14 @@ final class Mouth {
                 Carve.tunnel(k, sx, f.y(fe), sz, s.jx() + 0.5, s.jy(), s.jz() + 0.5, 1.5, 1.5, s.seed() + 5);
                 if (s.p(ORE) != 0) Carve.solid(k, s.p(HX), s.p(HY), s.p(HZ));
             } else {
-                Carve.tunnel(k, e[0] + 0.5, e[1], e[2] + 0.5, s.jx() + 0.5, s.jy(), s.jz() + 0.5, 1.5, 1.5, s.seed() + 5);
+                double[][] w = way(s);
+                for (int i = 0; i + 1 < w.length; i++) {
+                    Carve.tunnel(k, w[i][0], w[i][1], w[i][2], w[i + 1][0], w[i + 1][1], w[i + 1][2], 1.5, 1.5, s.seed() + 5 + i);
+                    // a bend widens into a landing, so turning back on yourself is a step and not a squeeze
+                    if (i > 0) Carve.blob(k, w[i][0], w[i][1] + 1.2, w[i][2], 2.8, 2.0, 2.8, s.seed() + 40 + i, 0.2, 3.0, (int) Math.floor(w[i][1]));
+                }
             }
+            k.mark("throat", e[0], e[1], e[2]);
             k.mark("goal", s.jx(), s.jy(), s.jz());
         } else {
             k.mark("goal", e[0], e[1], e[2]);

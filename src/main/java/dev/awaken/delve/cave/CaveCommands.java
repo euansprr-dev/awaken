@@ -52,6 +52,7 @@ final class CaveCommands {
             d.then(Commands.literal("goto").requires(AwakenCommands.admin())
                     .then(Commands.argument("kind", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(kinds, b))
                             .executes(CaveCommands::gotoPlace)));
+            d.then(Commands.literal("way").requires(AwakenCommands.admin()).executes(CaveCommands::way));
             d.then(Commands.literal("places").executes(CaveCommands::places));
             d.then(Commands.literal("mouths").requires(AwakenCommands.admin())
                     .then(Commands.argument("radius", com.mojang.brigadier.arguments.IntegerArgumentType.integer(32, 4096)).executes(CaveCommands::mouths)));
@@ -121,6 +122,7 @@ final class CaveCommands {
         Map<String, BlockPos> marks = new HashMap<>();
         for (var e : g.marks.entrySet()) marks.put(e.getKey(), new BlockPos(e.getValue()[0], e.getValue()[1], e.getValue()[2]));
         lastMarks = marks;
+        lastGoto = s;
         CavePlaces.KNOWN.put(s.id(), s);
         BlockPos start = marks.getOrDefault("start", new BlockPos(s.x(), s.y(), s.z()));
         level.getChunk(start.getX() >> 4, start.getZ() >> 4);
@@ -134,6 +136,61 @@ final class CaveCommands {
         c.getSource().sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "%s \"%s\" at %d %d %d (found in %.0f ms); marks: %s",
                 kind.id, CaveNames.name(s), s.x(), s.y(), s.z(), ms, String.join(", ", marks.keySet()))).withColor(0x9FE6D6), false);
         return 1;
+    }
+
+    private static @org.jspecify.annotations.Nullable Spec lastGoto;
+
+    /**
+     * The last {@code goto}'s mouth walked on the world's real blocks, in and back out, and how much cave lies past its
+     * joint: the pack's terrain, which the tests can't reach (SPEC §34.1; a tour reads it from the log).
+     */
+    private static int way(CommandContext<CommandSourceStack> c) {
+        Spec s = lastGoto;
+        if (s == null || s.kind() != CaveKind.MOUTH) {
+            c.getSource().sendFailure(Component.literal("Go to a mouth first: /awaken delve goto mouth"));
+            return 0;
+        }
+        ServerLevel level = c.getSource().getLevel();
+        Grid built = CaveTests.grid(s);
+        s.build(built);
+        int[] lip = built.mark("mouth"), goal = built.mark("goal");
+        Grid real = new Grid(built.minX(), built.minY(), built.minZ(), built.maxX(), built.maxY(), built.maxZ());
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int x = real.minX(); x <= real.maxX(); x++) for (int z = real.minZ(); z <= real.maxZ(); z++) for (int y = real.minY(); y <= real.maxY(); y++)
+            real.set(x, y, z, level.getBlockState(m.set(x, y, z)));
+        Routes.Result in = Routes.find(real, lip, goal), out = Routes.find(real, goal, lip);
+        int cave = caveBeyond(level, built, goal);
+        String line = String.format(Locale.ROOT, "form %d at %d %d %d, joint %d %d %d, %d legs: in %s, back out %s; %d cells of cave past the joint%s",
+                s.p(Mouth.FORM), s.x(), s.y(), s.z(), s.jx(), s.jy(), s.jz(), Math.max(1, s.p(Mouth.LEGS)), in.found() ? "yes" : "NO", out.found() ? "yes" : "NO", cave,
+                in.found() && out.found() ? "" : " (" + in.why() + " " + out.why() + ")");
+        dev.awaken.Awaken.LOG.info("[delve] mouth way: {}", line);
+        c.getSource().sendSuccess(() -> Component.literal(line).withColor(0x9FE6D6), false);
+        return 1;
+    }
+
+    /** Underground air reached from the joint, not counting what the place carved itself; stops at 4,000 cells. */
+    private static int caveBeyond(ServerLevel level, Grid built, int[] goal) {
+        BlockPos from = new BlockPos(goal[0], goal[1], goal[2]);
+        java.util.ArrayDeque<BlockPos> q = new java.util.ArrayDeque<>();
+        java.util.HashSet<BlockPos> seen = new java.util.HashSet<>();
+        q.add(from);
+        seen.add(from);
+        int cave = 0;
+        while (!q.isEmpty() && cave < 4000) {
+            BlockPos p = q.poll();
+            for (Direction d : Direction.values()) {
+                BlockPos n = p.relative(d);
+                if (seen.contains(n) || Math.abs(n.getX() - goal[0]) > 64 || Math.abs(n.getZ() - goal[2]) > 64 || !level.getBlockState(n).isAir()) continue;
+                if (n.getY() >= level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, n.getX(), n.getZ())) continue;
+                boolean own = built.inside(n.getX(), n.getY(), n.getZ()) && built.get(n.getX(), n.getY(), n.getZ()).isAir();
+                // the bore is walked only at the joint, or the search would climb back up it
+                if (own && n.distManhattan(from) > 4) continue;
+                seen.add(n);
+                q.add(n);
+                if (!own) cave++;
+            }
+        }
+        return cave;
     }
 
     /**
