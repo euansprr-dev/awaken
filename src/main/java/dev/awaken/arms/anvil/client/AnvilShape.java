@@ -58,7 +58,7 @@ final class AnvilShape {
     final float barX, barZ, side;
     /** The blade itself: its middle across and half its width, its middle through and half its thickness, and its thickest. */
     final float midX, halfW, midZ, face, back;
-    /** Item space to this shape's design texels: {@link AnvilScene#ITEM}, or for a pick's head at the anvil that turned so its long axis runs up the work. */
+    /** Item space to this shape's design texels: {@link #ITEM}, or for a pick's head at the anvil that turned so its long axis runs up the work. */
     final Matrix4f item;
     /** A forged pick (SPEC §49): {@code head} is the head alone lying along the work, otherwise it's the whole tool. */
     final boolean pick, head;
@@ -66,7 +66,7 @@ final class AnvilShape {
     final float lo;
 
     private AnvilShape(float[] cut, float root, float tip, float lo, float[] taps, float[] hands, Blank b) {
-        this(cut, root, tip, lo, taps, hands, b, AnvilScene.ITEM, false, false);
+        this(cut, root, tip, lo, taps, hands, b, ITEM, false, false);
     }
 
     private AnvilShape(float[] cut, float root, float tip, float lo, float[] taps, float[] hands, Blank b, Matrix4f item, boolean pick, boolean head) {
@@ -117,6 +117,9 @@ final class AnvilShape {
     }
 
     /** The Beastbound Longsword as first set by hand: what a weapon without a mesh is laid out by. */
+    /** Lives here, not in {@link AnvilScene}: reading that class's statics from this one's would start each before the other is done (FALLBACK null, no boot). */
+    static final Matrix4f ITEM = new Matrix4f().rotateZ(Mth.PI / 4).scale(16F).translate(-3F / 16, -3F / 16, -0.5F);
+
     static final AnvilShape FALLBACK = new AnvilShape(AnvilSong.HILT_CUT, 5F, 21F, -6F, new float[]{4F, 0.5F, -3.5F}, new float[]{2F, -0.5F},
             Blank.plain(5F, AnvilSong.HILT_CUT[0]));
 
@@ -124,7 +127,7 @@ final class AnvilShape {
     /** Height of a pick's eye in its design (arms_picks.HEAD) and the mesh's "along" where its head begins. */
     private static final float EYE = 23.5F;
     private static final int HEAD_ALONG = 191;
-    private static final Matrix4f PICK_HEAD = new Matrix4f().rotateZ(-Mth.HALF_PI).translate(0F, -EYE, 0F).mul(AnvilScene.ITEM);
+    private static final Matrix4f PICK_HEAD = new Matrix4f().rotateZ(-Mth.HALF_PI).translate(0F, -EYE, 0F).mul(ITEM);
 
     static boolean isPick(@Nullable String id) {
         return id != null && id.contains("_pick_");
@@ -179,13 +182,13 @@ final class AnvilShape {
         float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
         float[] pos = mesh.pos();
         for (int i = 0; i < pos.length; i += 3) {
-            AnvilScene.ITEM.transformPosition(pos[i], pos[i + 1], pos[i + 2], v);
+            ITEM.transformPosition(pos[i], pos[i + 1], pos[i + 2], v);
             lo = Math.min(lo, v.y);
             hi = Math.max(hi, v.y);
         }
         float[] cut = {0.75F, 0.5F, 0.25F, 0F};
         float root = EYE - 4F;
-        return new AnvilShape(cut, root, hi, lo, new float[]{EYE + 3F, EYE, EYE - 5F}, new float[]{8F, -1F}, Blank.plain(root, cut[0]), AnvilScene.ITEM, true, false);
+        return new AnvilShape(cut, root, hi, lo, new float[]{EYE + 3F, EYE, EYE - 5F}, new float[]{8F, -1F}, Blank.plain(root, cut[0]), ITEM, true, false);
     }
 
     /** The mesh a thing at the anvil is drawn with: its own, or for a Hunter blade forged alone its tier's Longsword's blade. */
@@ -229,7 +232,7 @@ final class AnvilShape {
         float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
         Vector3f v = new Vector3f();
         for (int i = 0; i < along.length; i++) {
-            AnvilScene.ITEM.transformPosition(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2], v);
+            ITEM.transformPosition(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2], v);
             d[i * 3] = v.x;
             d[i * 3 + 1] = v.y;
             d[i * 3 + 2] = v.z;

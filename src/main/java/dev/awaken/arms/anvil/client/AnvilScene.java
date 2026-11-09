@@ -53,7 +53,7 @@ final class AnvilScene {
     private static final float REST = 18F, RAISED = 70F, RAISED_TAP = 35F, DOWN = 1.5F;
 
     /** Item space to design texels (arms_weapons.to_item undone: its -45° turned back, its grip at 3, 3, 8 moved home). */
-    static final Matrix4f ITEM = new Matrix4f().rotateZ(Mth.PI / 4).scale(16F).translate(-3F / 16, -3F / 16, -0.5F);
+    static final Matrix4f ITEM = AnvilShape.ITEM;
 
     // ---- the anvil's frame ------------------------------------------------------------------------------------------
 
