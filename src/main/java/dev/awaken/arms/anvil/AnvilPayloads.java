@@ -1,6 +1,7 @@
 package dev.awaken.arms.anvil;
 
 import dev.awaken.Awaken;
+import dev.awaken.hearth.Upgrades;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -46,11 +47,30 @@ public final class AnvilPayloads {
                 ByteBufCodecs.STRING_UTF8, Cost::label, ByteBufCodecs.VAR_INT, Cost::have, ByteBufCodecs.VAR_INT, Cost::need, Cost::new);
     }
 
-    /** One row of the window: its kind (AnvilWork.TEMPER, REFORGE, ATTUNE), its button, whether it can begin, one plain line, and what it costs. */
-    public record Option(int kind, String button, boolean ready, String line, List<Cost> costs) {
+    /** One number a row would change. */
+    private static final StreamCodec<ByteBuf, Upgrades.Change> CHANGE = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8, Upgrades.Change::label, ByteBufCodecs.STRING_UTF8, Upgrades.Change::from,
+            ByteBufCodecs.STRING_UTF8, Upgrades.Change::to, ByteBufCodecs.STRING_UTF8, Upgrades.Change::best, Upgrades.Change::new);
+
+    /** A plain sentence on a row's page. The tone: an ordinary line, the Force you're about to give it, what's on it now, or one that isn't yours to pick. */
+    public record Say(int tone, String text) {
+        public static final int PLAIN = 0, CHOSEN = 1, NOW = 2, QUIET = 3;
+        public static final StreamCodec<ByteBuf, Say> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Say::tone, ByteBufCodecs.STRING_UTF8, Say::text, Say::new);
+    }
+
+    /**
+     * One row of the window: its kind (AnvilWork.TEMPER, REFORGE, ATTUNE), what it's called, its button, whether it can
+     * begin, one plain line for what's in the way, what it costs; and what it would do to this weapon, whether or not it can
+     * begin yet: a short headline, the numbers before and after, and the plain words.
+     */
+    public record Option(int kind, String name, String button, boolean ready, String line, List<Cost> costs,
+                         String headline, List<Upgrades.Change> changes, List<Say> says) {
         public static final StreamCodec<ByteBuf, Option> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, Option::kind, ByteBufCodecs.STRING_UTF8, Option::button, ByteBufCodecs.BOOL, Option::ready,
-                ByteBufCodecs.STRING_UTF8, Option::line, Cost.STREAM_CODEC.apply(ByteBufCodecs.list()), Option::costs, Option::new);
+                ByteBufCodecs.VAR_INT, Option::kind, ByteBufCodecs.STRING_UTF8, Option::name, ByteBufCodecs.STRING_UTF8, Option::button,
+                ByteBufCodecs.BOOL, Option::ready, ByteBufCodecs.STRING_UTF8, Option::line, Cost.STREAM_CODEC.apply(ByteBufCodecs.list()), Option::costs,
+                ByteBufCodecs.STRING_UTF8, Option::headline, CHANGE.apply(ByteBufCodecs.list()), Option::changes,
+                Say.STREAM_CODEC.apply(ByteBufCodecs.list()), Option::says, Option::new);
     }
 
     /** Server → the smith: the anvil's window for the weapon in your hand (temper, reforge, attune; §46.8). */

@@ -18367,8 +18367,15 @@ from the cost table.
 
 **46.8 Temper, attune and reforge at the anvil (stage 3; plan §4.6).** Use the War Anvil holding one of Arms' weapons
 (forged, Lord-forged, Marked, Hale's issue: whatever `ArmsItems.of` knows), with no work on it and nothing in its slot,
-and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three rows, each with
-what it costs (have and need), one button, and one plain line for what stands in the way. All three heat the metal, so
+and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three cards across the top
+(Temper, Reforge, Attune, each with what it would do in a few words: "Damage 7 to 8") and one page below for the card you
+pick: the numbers before and after, what it does in plain words, what it costs (have and need), one plain line for what
+stands in the way, and its button (Euan's playtest, 9 Nov: "what does tempering something actually do?"). It all shows
+before you pay, on a card you can't begin yet too. The window opens on the first card that can begin. Every word and
+number is sent by the server, from the code that makes the change (`AnvilPayloads.Option`): `Upgrades.stats` reads what a
+piece's tooltip shows, and `Upgrades.changes` compares it on the piece and on a copy made by the real change
+(`Upgrades.applyTemper`; `AnvilHeld.reforged`, which the finished work uses too), so a preview can't drift from what
+happens. A number a piece's attributes don't show comes through `ForgeHooks.stat` (a focus's power damage). All three heat the metal, so
 each needs the Forge within reach at every tier ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks
 of this anvil."). The price is taken at the start, and the weapon goes from your hand into the work (`AnvilWork.piece`);
 both come back if the anvil is broken mid-work, and the weapon comes back through the slot, drawn as any.
@@ -18379,7 +18386,9 @@ both come back if the anvil is broken mid-work, and the weapon comes back throug
   Forge's words ("Put an anvil and an armour stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
   further.", "It can't take any more."). The scene (about 10 s whatever the levels): the whole weapon heats in the
   Forge's mouth, one strike on the style's own beat for each level gained, the quench. Nothing is judged and nothing is
-  flawed: the Temper lands as paid, and the strikes ring as at the draw-out.
+  flawed: the Temper lands as paid, and the strikes ring as at the draw-out. The page says what this heat would do (at a
+  limit, what the next level would, with its price), that a level adds damage for good and changes neither its swing nor
+  its uses, what its Temper is giving it now, and the most it could reach.
 - **Reforge it to C**: the next tier's parts (as Raise: the tier's cost, no Blueprint; `ArmsRaise.plan`), from the
   tier's level. The scene (about 20 s): the whole weapon heats, the next tier's metal is folded in on the style's beat
   (its strikes, turned over at half), the quench, the draw. Judged as a forging without the hilt
@@ -18390,15 +18399,23 @@ both come back if the anvil is broken mid-work, and the weapon comes back throug
   tier's (x1.25 in an Armoury room). A forged weapon becomes the next tier's of its style (`ArmsRaise.lift`:
   `ItemStack.transmuteCopy`, then its damage and uses set back to the new weapon's own and its Temper put back on); a
   Lord-forged weapon keeps its own body and Art and gains a point of damage a tier, as Raise always did, and its heat
-  glows in its Lord's colour (the weapon's accent) instead of the Forge's.
+  glows in its Lord's colour (the weapon's accent) instead of the Forge's. The page shows the tier, damage and uses from a
+  Plain forging (the worst it can come out), what a Flawless one would make them when that's more ("9 if Flawless"), what it
+  keeps, and the enchantment room each would leave (`ForgeHooks.cardLines`: a found weapon reforged Plain can end with less).
 - **Attune it to Heat** (a catalyst in the off hand): six essence, a Core Shard and the catalyst, as at the Forge
   (`ArmsForge.attunePrice`). The scene (about 8 s): the whole weapon heats, the catalyst is set in the guard, and three
   taps on the hilt's beat drive it home (all three at the guard), the blade glowing more in its Force's colour with each;
-  then it stands in the slot. Nothing is judged. Without a catalyst the row says which stone gives which Force; one
-  already attuned to that Force says so; attuning again replaces the old Force.
+  then it stands in the slot. Nothing is judged. The page always says what attuning does (`ArmsForge.hitWords`,
+  `powerWords`) and lists every Force with its stone and its touch (`ArmsForge.touch`, from the numbers `landed` uses), the
+  one in your off hand marked and the one on it now marked; without a catalyst the price shows with a catalyst still to find;
+  one already attuned to that Force says so; attuning again replaces the old Force.
 - **The Forge points here**: a plain use of the Forge holding one of Arms' weapons says "Weapons are tempered at a War
-  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil."; the Armoury at the Forge no longer offers Raise.
-  Armour tempers at the Forge as before, and Oren still tempers anything you hand him.
+  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil. It shows you what each Force does."; the Armoury at the Forge
+  no longer offers Raise. Armour tempers at the Forge as before, and Oren still tempers anything you hand him. The offer
+  says the same as the anvil: its card's title is what it will do ("Temper II: armour 6 to 6.5, toughness 0.5 to 0.75") with
+  the price under it, and a piece you can't pay for or that's at the limit gets a panel with the numbers.
+- **The tooltip**: a tempered piece says what its Temper gives it, read off the piece ("Tempered ✦✦ · +2 damage"); an
+  attuned weapon says what its Force does, under "Attuned · Frost".
 - **The Weapons tab**: two optional steps, each pointing at your anvil. "Temper your Beastbound Longsword"
   (`arms/temper`) when the best of Arms' weapons you carry (the highest tier, then the lowest Temper) is below the limit
   of the Forge by your War Anvil; its needs are the next level's price. "Reforge your Hive Regent's Daggers"
@@ -18420,7 +18437,9 @@ Tests: `arms_anvil_temper` (one heat to the Forge's limit, the summed price take
 weapon back through the slot; Oren's Mark's start; the Forge's plain use points to the anvil), `arms_anvil_attune` (the
 price and catalyst taken, attuned, Marks kept), `arms_anvil_reforge` (a Marked weapon: the next tier's, Marks, name,
 attunement and Temper kept, the story reforged with its quality; a Lord-forged: its body, Art and a point; the parts
-taken, and given back with the weapon when the anvil breaks mid-work).
+taken, and given back with the weapon when the anvil breaks mid-work), `arms_anvil_preview` (the numbers the window shows
+before you can pay equal the real weapon's after the real work: Temper's, Reforge's Flawless column and uses; every Force
+named and the off hand's marked; an armour piece's Temper moves armour and toughness).
 
 **46.9 Each rank's act (stage 4; plan §4.4).** A weapon forged in full at its tier (`AnvilWork.acts()`: not from memory,
 not a Hunter's blade forged alone, not one worked again) gets its rank's act and every act below it from C, each in its

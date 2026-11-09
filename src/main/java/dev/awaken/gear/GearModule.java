@@ -27,6 +27,9 @@ public final class GearModule {
         bus.addListener(EventPriority.LOWEST, GearCombat::afterDeath);
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> GearState.forget(e.getEntity().getUUID()));
         bus.addListener((ServerStoppedEvent e) -> GearState.clear());
+        // a focus's power damage moves with its Temper, and its attributes don't show it
+        dev.awaken.core.api.ForgeHooks.stat(s -> s.getItem() instanceof HunterGearItem g && g.piece == Piece.FOCUS
+                ? new dev.awaken.core.api.ForgeHooks.Stat("Power damage", "+" + Math.round(GearCombat.focusBonus(s) * 100) + "%") : null);
         GearNow.register();
         GearCommands.register();
         GearTests.register();

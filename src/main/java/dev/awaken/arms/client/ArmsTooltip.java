@@ -50,8 +50,13 @@ final class ArmsTooltip {
             lines.add(at++, Component.literal("   " + Marks.describe(m, inst.attunement())).withStyle(ChatFormatting.GRAY));
         }
         if (inst.attunement().isPresent()) {
-            String n = inst.attunement().get().name();
-            lines.add(at++, Component.literal("Attuned · " + n.charAt(0) + n.substring(1).toLowerCase(java.util.Locale.ROOT)).withColor(0xE2B450));
+            var force = inst.attunement().get();
+            String n = dev.awaken.arms.ArmsForge.forceName(force);
+            lines.add(at++, Component.literal("Attuned · " + n).withColor(0xE2B450));
+            lines.add(at++, Component.literal("   After a hit, your next power within " + dev.awaken.arms.ArmsForge.primeTime() + " costs "
+                    + Math.round((1 - dev.awaken.arms.ArmsForge.POWER_PRIME) * 100) + "% less energy.").withStyle(ChatFormatting.GRAY));
+            lines.add(at++, Component.literal("   After a " + n + " power, your next blow hits " + dev.awaken.arms.ArmsForge.BLADE_PRIME + " times as hard and "
+                    + dev.awaken.arms.ArmsForge.touch(force) + ".").withStyle(ChatFormatting.GRAY));
         }
         int step = ArmsPredict.mastery(style);
         if (step > 0) lines.add(at, Component.literal(style.def().name() + " mastery " + NUMERAL[Math.min(5, step)]).withColor(0xC8C2B0));

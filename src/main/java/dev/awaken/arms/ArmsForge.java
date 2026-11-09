@@ -6,6 +6,7 @@ import dev.awaken.core.api.HearthHooks;
 import dev.awaken.powers.Fx;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.signal.Signal;
+import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -67,6 +68,10 @@ public final class ArmsForge {
     public static final float POWER_PRIME = 0.85F;
     /** A power of the weapon's Force primes the next blow: times this, and the Force's touch. */
     public static final float BLADE_PRIME = 1.25F;
+    /** Each Force's touch on a primed blow; {@link #touch} says them from these. */
+    static final int HEAT_TICKS = 60, FROST_TICKS = 40, FROST_AMPLIFIER = 1, CHARGE_POSTURE = 6, GRAVITY_MAX_HEALTH = 150;
+    static final double GRAVITY_LIFT = 0.45;
+    static final float SPIRIT_HEAL = 1.5F;
 
     // ---- attunement in the fight --------------------------------------------------------------------------------------
 
@@ -100,16 +105,16 @@ public final class ArmsForge {
         s.powerPrimedUntil = now + PRIME_TICKS;
         if (!primed) return;
         switch (f) {
-            case HEAT -> t.igniteForTicks(60);
-            case FROST -> t.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 40, 1), p);
-            case CHARGE -> ArmsServer.addPosture(t, 6, p);
+            case HEAT -> t.igniteForTicks(HEAT_TICKS);
+            case FROST -> t.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, FROST_TICKS, FROST_AMPLIFIER), p);
+            case CHARGE -> ArmsServer.addPosture(t, CHARGE_POSTURE, p);
             case GRAVITY -> {
-                if (t.getMaxHealth() < 150) {
-                    t.push(0, 0.45, 0);
+                if (t.getMaxHealth() < GRAVITY_MAX_HEALTH) {
+                    t.push(0, GRAVITY_LIFT, 0);
                     t.needsSync = true;
                 }
             }
-            case SPIRIT -> p.heal(1.5F);
+            case SPIRIT -> p.heal(SPIRIT_HEAL);
         }
         Fx.at(p.level(), FxKind.IMPACT, Marks.look(f), t.position().add(0, t.getBbHeight() * 0.6, 0)).scale(1.4).send();
     }
@@ -143,8 +148,9 @@ public final class ArmsForge {
         ItemStack held = p.getMainHandItem();
         if (held.isEmpty()) return; // sneak with an empty hand is the Hearth's window; the Armoury is a plain use (below)
         if (ArmsItems.of(held.getItem()) == null) return;
-        // weapons are attuned at a War Anvil now (SPEC §46.8)
-        Signal.toast(p, Component.literal("Weapons are attuned at a War Anvil."));
+        // weapons are attuned at a War Anvil now (SPEC §46.8): its window says what each Force does
+        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Attuning"))
+                .body(Component.literal("Weapons are attuned at a War Anvil. It shows you what each Force does.")).ttl(20 * 8).build());
         e.setCanceled(true);
         e.setCancellationResult(InteractionResult.SUCCESS);
     }
@@ -175,10 +181,33 @@ public final class ArmsForge {
         Fx.at(level, FxKind.RING, Marks.look(f), p.position().add(0, 0.1, 0)).caster(p).scale(2.5).ticks(12).send();
         ArmsNotices.reward(p, "weapon/attuned/" + java.util.UUID.randomUUID(), "Weapon attuned", weapon,
                 "Its Marks now carry " + forceName(f) + ", and it works together with your " + forceName(f) + " powers.",
-                List.of("Land a hit with it, and your next power within " + ArmsNotices.seconds(PRIME_TICKS / 20.0) + " costs "
-                                + Math.round((1 - POWER_PRIME) * 100) + "% less energy.",
-                        "Cast a " + forceName(f) + " power, and your next blow within " + ArmsNotices.seconds(PRIME_TICKS / 20.0) + " hits "
-                                + BLADE_PRIME + " times as hard, with " + forceName(f) + " on it."));
+                List.of(hitWords(), "Cast a " + forceName(f) + " power, and your next blow within " + primeTime() + " hits "
+                        + BLADE_PRIME + " times as hard and " + touch(f) + "."));
+    }
+
+    /** What attuning does on a hit, as every window and the weapon's own tooltip say it. */
+    public static String hitWords() {
+        return "Land a hit, and your next power within " + primeTime() + " costs " + Math.round((1 - POWER_PRIME) * 100) + "% less energy.";
+    }
+
+    /** What a power of the weapon's Force does for its next blow; a list of {@link #touch}es follows it. */
+    public static String powerWords() {
+        return "Cast a power of its Force, and your next blow within " + primeTime() + " hits " + BLADE_PRIME + " times as hard and also:";
+    }
+
+    public static String primeTime() {
+        return ArmsNotices.seconds(PRIME_TICKS / 20.0);
+    }
+
+    /** What this Force's touch does to whatever a primed blow hits, from the numbers {@link #landed} uses. */
+    public static String touch(Forces.Force f) {
+        return switch (f) {
+            case HEAT -> "sets them on fire for " + ArmsNotices.seconds(HEAT_TICKS / 20.0);
+            case FROST -> "slows them by " + (FROST_AMPLIFIER + 1) * 15 + "% for " + ArmsNotices.seconds(FROST_TICKS / 20.0);
+            case CHARGE -> "does " + CHARGE_POSTURE + " extra posture damage";
+            case GRAVITY -> "throws them into the air, unless they're huge";
+            case SPIRIT -> "heals you for " + ArmsNotices.number(SPIRIT_HEAL) + " health";
+        };
     }
 
     static boolean drawBlueprint(ServerPlayer p, String style) {
