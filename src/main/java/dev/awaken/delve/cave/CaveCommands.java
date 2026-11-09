@@ -141,8 +141,8 @@ final class CaveCommands {
     private static @org.jspecify.annotations.Nullable Spec lastGoto;
 
     /**
-     * The last {@code goto}'s mouth walked on the world's real blocks, in and back out, and how much cave lies past its
-     * joint: the pack's terrain, which the tests can't reach (SPEC §34.1; a tour reads it from the log).
+     * The last {@code goto}'s mouth walked on the world's real blocks: how much natural cave a body reaches on foot from
+     * the lip, whether it can walk back, and how much cave lies past the joint: the pack's terrain, which the tests can't reach (SPEC §34.1; a tour reads it from the log).
      */
     private static int way(CommandContext<CommandSourceStack> c) {
         Spec s = lastGoto;
@@ -153,16 +153,38 @@ final class CaveCommands {
         ServerLevel level = c.getSource().getLevel();
         Grid built = CaveTests.grid(s);
         s.build(built);
-        int[] lip = built.mark("mouth"), goal = built.mark("goal");
+        int[] goal = built.mark("goal"), mark = built.mark(s.p(Mouth.FORM) == Mouth.DOLINE ? "start" : "mouth");
         Grid real = new Grid(built.minX(), built.minY(), built.minZ(), built.maxX(), built.maxY(), built.maxZ());
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int x = real.minX(); x <= real.maxX(); x++) for (int z = real.minZ(); z <= real.maxZ(); z++) for (int y = real.minY(); y <= real.maxY(); y++)
             real.set(x, y, z, level.getBlockState(m.set(x, y, z)));
-        Routes.Result in = Routes.find(real, lip, goal), out = Routes.find(real, goal, lip);
-        int cave = caveBeyond(level, built, goal);
-        String line = String.format(Locale.ROOT, "form %d at %d %d %d, joint %d %d %d, %d legs: in %s, back out %s; %d cells of cave past the joint%s",
-                s.p(Mouth.FORM), s.x(), s.y(), s.z(), s.jx(), s.jy(), s.jz(), Math.max(1, s.p(Mouth.LEGS)), in.found() ? "yes" : "NO", out.found() ? "yes" : "NO", cave,
-                in.found() && out.found() ? "" : " (" + in.why() + " " + out.why() + ")");
+        // the real ground by a mark can stand a little off the plan
+        int[] lip = {mark[0], mark[1], mark[2]};
+        for (int y = mark[1] + 8; y >= mark[1] - 8; y--) {
+            if (!Double.isNaN(Routes.feet(real, mark[0], y, mark[2])) && real.get(mark[0], y, mark[2]).isAir()) {
+                lip[1] = y;
+                break;
+            }
+        }
+        // a goal out of the box: the search then says everywhere a body can get to from the lip
+        Routes.Result all = Routes.find(real, lip, new int[]{real.minX() - 64, real.minY(), real.minZ() - 64});
+        int cave = 0;
+        int[] deepest = null;
+        double best = Double.MAX_VALUE;
+        for (int x = real.minX(); x <= real.maxX(); x++) for (int z = real.minZ(); z <= real.maxZ(); z++) for (int y = real.minY(); y <= real.maxY(); y++) {
+            if (!Routes.reached(real, all.seen(), x, y, z) || !real.get(x, y, z).isAir() || built.get(x, y, z).isAir() || Double.isNaN(Routes.feet(real, x, y, z))) continue;
+            if (y >= level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z)) continue;
+            cave++;
+            double d = Math.abs(x - goal[0]) + Math.abs(z - goal[2]) + Math.abs(y - goal[1]) * 1.5;
+            if (d < best) {
+                best = d;
+                deepest = new int[]{x, y, z};
+            }
+        }
+        boolean back = deepest != null && Routes.find(real, deepest, lip).found();
+        String line = String.format(Locale.ROOT, "form %d at %d %d %d, joint %d %d %d, %d legs: on foot %d floor cells of natural cave reached, nearest the joint %s, back out from there %s; %d cells of cave past the joint",
+                s.p(Mouth.FORM), s.x(), s.y(), s.z(), s.jx(), s.jy(), s.jz(), Math.max(1, s.p(Mouth.LEGS)), cave, deepest == null ? "none" : deepest[0] + " " + deepest[1] + " " + deepest[2],
+                back ? "yes" : "NO", caveBeyond(level, built, goal));
         dev.awaken.Awaken.LOG.info("[delve] mouth way: {}", line);
         c.getSource().sendSuccess(() -> Component.literal(line).withColor(0x9FE6D6), false);
         return 1;

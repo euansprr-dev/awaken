@@ -12757,8 +12757,11 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   the worn ground below). So the candidates are closer together, a doline takes gently tilted ground as well as flat
   (below), a joint reaches further down for its cave, and both tests below hold the promise. At 10/3 the same census
   has 65 within 1 km of his home and 44 of spawn: one every 220 and 267 m over the whole circle, one every 177 and 190 m
-  of the dry land left outside the city's reserve and settlements' ground. A candidate tries every form at up to five
-  spots within 20 of its chunk's middle.
+  of the dry land left outside the city's reserve and settlements' ground. Those counts took open ground for a cave (the
+  joint, below). With real joints, the census within 1,600 of his home has 122 mouths and of spawn 142, one every 182 and 175 m of
+  dry land (`mouths-deep` tour 42591161111, before the way needed ground under it and wound as a spiral; vanilla noise with
+  the final rule, `delve_mouth_density`: one every 197 m). A candidate tries every form at up to five spots within 20 of
+  its chunk's middle.
 - **What keeps a mouth away**: the city's reserve (90), water or land at or below sea + 1, a biome off the list, and (from
   the seed alone, since 8 Nov) a settlement's ground: within 120 of a grid settlement's or the first hamlet's anchor, or
   in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills
@@ -12777,12 +12780,16 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
     none of the 8 is open ground at its level (an overhang on a hillside has rock over it too). On 420 random roofed floors
     in his save the count of 2 keeps 89% of the real caves and halves the small ones.
   - **The way winds** (Mouth p `SWING` 11 and `LEGS` 12, 0 on a straight way and on a saved mouth): a cave too deep to walk
-    straight to (past `JOINT_SLOPE` 0.8 down in 1 along) is reached by bends standing aside of the straight line by up to
-    12, turn about, 2 to 6 legs, the fewest that fit, every leg as steep as the rest and no steeper than 0.8. Each bend
+    straight to (past `JOINT_SLOPE` 0.8 down in 1 along) is reached by a spiral ramp, its bends on a circle through both ends
+    (radius |`SWING`| 4 to 18, its sign the way it turns), 3 to 6 legs, the fewest legs and smallest circle that give the
+    length, every leg as steep as the rest and no steeper than 0.8, no bend turning more than 110° (a leg doubling back
+    over the last cuts away its floor, and it can't be climbed: 12 of 54 ways stuck that way). Each bend
     opens into a small landing. The way is read every 4 blocks on the noise's cells, on both sides and then with more
-    legs, and must keep rock over its bore (3 + `ROOF`) and stay dry, or that floor is passed over. So a tunnel can't
-    break out of the hill either. The piece's box holds the bends.
-  - `delve_mouth_joint` holds this on real noise on his seed, `delve_cave_routes` walks a staged winding way both ways,
+    legs, and must keep rock over its bore (3 + `ROOF`), ground under it (a drop of 2 at most, `WAY_DROP`, one a body can climb back, until the last 5 of its fall, already in the cave) and stay dry, or
+    that floor is passed over. So a tunnel can't break out of the hill or end high on the wall of a natural hall, the first
+    tour's fault (2 of 7 mouths on Tectonic). Where natural air has still eaten the rock under the bore it lays rubble (`Carve.tunnel`'s `floored`), the bore's full width, so a way is always a floor to walk on. The piece's box holds the bends.
+  - `delve_mouth_joint` holds this on real noise on his seed and walks every fifth way there and back with the real ground
+    round it (53 of 53), `delve_cave_routes` walks a staged winding way both ways,
     and `/awaken delve way` walks the last `goto`'s mouth on the world's real blocks and says how much cave lies past
     the joint (tools/autopilot/mouths-deep.txt, the only way to see it on Tectonic).
   - Slope probes still read the noise's 4-block cells so the forms share columns. A mouth saved before this keeps the
