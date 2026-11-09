@@ -19722,6 +19722,12 @@ their gear and takes no Fracture (`Runs.onDeath`). A toast says so once on cross
 
 **Out in the Wilds.** Everything above works anywhere, and a bond is a party of its own (`GateParty`), so kills are shared.
 
+**The look.** One thin thread of ivory light with a rose-gold halo, sagging and swaying between the two, with three beads
+travelling from rider to anchor. Past 36 blocks it pulls straight and turns amber; past 48 it frays into red dashes. A catch
+streams into the partner's feet and a ring round them burns down the four seconds; coming back is a burst of the same light.
+Drawn as world light (`RigPipelines.light()`), no particles. Sounds are Minecraft's own by name (`riding.bond`, `riding.let_go`,
+`riding.fold`, `riding.spring`: beacon power and deactivate, respawn anchor deplete and set spawn), low and without a ding.
+
 **Tasks.** `riding/together`, optional, on Gates and rank, shown only with someone within 48 blocks, until you've done it once.
 
 **Tests.** `bond_` prefix, one per mechanism: `bond_needs_both`, `bond_door`, `bond_not_mid_fight`, `bond_one_rider_per_run`,
