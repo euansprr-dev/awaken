@@ -6810,19 +6810,28 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   blow and swap to a heavy one; every press starts the same pull back, and letting go early just looses it sooner. Rounds
   of 2026-10-26, 10-29 and Swing Studio's round 8 each moved where in the light strike a held press waited (its hit, then
   its `set`), so every hold still showed 300 ms of a light attack and then swapped clips at the mark; the fault was showing
-  the strike at all. Now, from the frame of a press that may charge, the hands leave for the heavy's drawn pose (its clip's
-  first key, the very pose it is loosed from) on one curve over 6 ticks (`ChargeDraw.TICKS`, `SwingBlend`'s quintic: about
-  6% of the way after a 60 ms click, 21% after 100 ms, there on the charge's mark), from wherever they are. The draw and the
-  charge are one source of the hands (`ChargeDraw.source`), so the mark (6 ticks down, `PRESS_CHARGE`) moves nothing; the
-  arm's tremble grows from nothing after it, and the charge's meter fills from the press (from 2 ticks down, so a tap never
-  lights it) and doesn't jump there either. The press still begins the chain's strike on both sides (`ArmsPredict.waitHit`,
+  the strike at all. Drawing from the press's first frame (9 Nov, first try) was wrong the other way (Euan 2026-11-09: "it
+  just sometimes thinks you're going into a heavy hold or like a heavy strike when you're not, and it makes it look
+  glitchy"): every click showed the start of the heavy's pose and then snapped into the strike, by an amount that depended
+  on how long the finger happened to stay down, on every weapon. No capture saw it: at a tenth of play's speed it was a slow
+  small dip, and at real speed on the slow runner a click's ticks ran inside one frame (`tap drawn` was 0 on all 99 clicks).
+  Now **until a press has outlasted a click nothing on screen knows about it** (`ChargeDraw.GRACE`, 4 ticks, 200 ms;
+  `ArmsPredict.undecided`): the hands and the view's lean go on with what they were doing, the move that was running
+  playing on to its end (`underMove`, `underTime`) or the stance holding. After the grace it is a hold, and the hands
+  leave for the heavy's drawn pose (its clip's first key, the very pose it is loosed from) on one curve (`ChargeDraw.ticks`,
+  `SwingBlend`'s quintic: 0.6 of the weapon's glint, 7.8 ticks on the Daggers to 12 on the Maul, there before the glint),
+  from wherever they are. The draw and the charge are one source of the hands (`ChargeDraw.source`), so the mark (6 ticks
+  down, `PRESS_CHARGE`) moves nothing; the arm's strain grows from nothing after it (slow, about 3 Hz: the old 8 Hz tremble
+  read as a glitch), and the charge's meter fills from the end of the grace to the glint, so a tap never lights it and it
+  doesn't jump. **A release** gives the hands 1 tick to reach the loosed heavy from a full draw and up to 3 from one barely
+  begun (`releaseTicks`). The press still begins the chain's strike on both sides (`ArmsPredict.waitHit`,
   `ArmsServer.waitHit`), so a tap is never queued behind a decision, but it is out of sight: its clock stands at 0, and the
   hands, the view's lean, its ribbon, swish, arc, step in and body clip all wait until the press is a tap. A press landing
   in another blow lets it land first (`handsFree`): the hands leave once it has, and the mark waits for it too; one landing
-  in a recovery leaves at once, its strike under the draw or still queued. **A tap** (let go before the mark, `PRESS_TAP`,
-  read every frame by `ArmsPredict.frame`, not on the next tick) starts the strike that waited, from wherever the hands
-  have got to: its clip from its first key with its wind-up at twice speed (`TAP_RATE`), the hands carried onto it by its
-  hit (`launchTicks`: half the wind-up, at least half a tick, and up to a tick longer the further the draw has come, so a
+  in a recovery plays that recovery on through the grace, its strike unseen or still queued. **A tap** (let go before the mark, `PRESS_TAP`,
+  read every frame by `ArmsPredict.frame`, not on the next tick) starts the strike that waited, from where the hands
+  are: its clip from its first key with its wind-up at twice speed (`TAP_RATE`), the hands carried onto it by its
+  hit (`launchTicks`: half the wind-up, at least a tick, so a one-tick strike's way out lasts three frames and isn't a flash, and up to a tick longer the further the draw has come, so a
   late tap from nearly full draw doesn't snap across). That is the one trade: the blade reaches its hit 9 to 25 ms later
   than when the wind-up played under the press on a 60 ms click, 17 to 44 ms on a 100 ms click (the Daggers, which struck on
   the press until now, 38 and 85 ms); the server's hit is where it was. A tap with no strike of its own (one still queued,
@@ -7210,8 +7219,10 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   - *The Daggers* (Euan 2026-11-09: "I want clean stabs", "the hands still go way too upwards", "the right arms go way
     too much to the left side", "maybe we remove the slashes and just make it like a lot of small stabs"): a forward grip
     in both hands, and every blow of the chain is a stab. Two pistons: each fist has one line, low at its own side of the
-    screen, and a stab is one move out along it and one move back along it, about 0.3 blocks, the fist ending near
-    (0.40, -0.84) on the screen and the point just under the crosshair on its own side of it. Nothing chambers first,
+    screen, and a stab is one move out along it and one move back along it: the stance slid half a block and not turned at all
+    (Euan 2026-11-09: "barely moving forwards": the first stabs turned the blade 26 degrees for 0.16 blocks of reach, a lever
+    about the point), the fist ending near (0.34, -0.74) on the screen. The point stays near where it was on the screen and
+    the blade shortens into the distance, because a line going straight away converges on the crosshair. Nothing chambers first,
     nothing winds up or crosses over, the other hand stays where it is and the view stays level (a hit nods it 0.25
     degrees, the finisher's 0.6), so the only thing moving on the screen is the blade that is stabbing. Strikes 1 to 3
     are right, left, right (strike 3 a touch lower); strike 4 is both at once and a little further; strike 5 (mastery) the
@@ -7219,7 +7230,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     press can land, so no clip ever hands over to another halfway through a move. The slashes are gone: strike 3, strike
     5, the slipcut (low) and the undercut (lower, at the legs) are stabs for the server too, at the stab's arc of 30
     and the thrust's whoosh, so their old wider arcs (90, 90, 120, 160) are gone with them; an aimed blow ignores the arc.
-    The heavy charges drawn back down the same lines and its release is both stabs; the riposte is the chain's stab at
+    The heavy charges pulled straight back 0.2 blocks down the same lines, not turned (it used to tilt 18 degrees down), and its release is both stabs; the riposte is the chain's stab at
     full reach. The Art and the blows driven down (the Plunge, the Execution) keep their own keys. Why the old keys
     looked as they did: they drove the fist to the crosshair, as far across and up as forward (fist at (0.24, -0.58),
     the arm reaching up the middle of the screen), the right hand was twisted out sideways between strikes to set up the

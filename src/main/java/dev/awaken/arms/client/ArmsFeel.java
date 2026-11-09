@@ -285,9 +285,10 @@ final class ArmsFeel implements CombatFeedback.Sink {
         float k = ArmsComfort.kick();
         if (p == null || k <= 0 || !mc.options.getCameraType().isFirstPerson() || !ArmsPredict.fights(p)) return;
         Archetypes.Loaded style = ArmsPredict.style;
-        Archetype.Move m = ArmsPredict.move;
+        boolean undecided = ArmsPredict.undecided(); // a press not yet a tap or a hold: the view goes on with what it was doing
+        Archetype.Move m = undecided ? ArmsPredict.underMove() : ArmsPredict.move;
         if (style == null || ArmsPredict.drawn()) m = null; // a strike waiting under the draw leans nothing
-        float t = ArmsPredict.viewTime();
+        float t = undecided ? ArmsPredict.underTime() : ArmsPredict.viewTime();
         boolean has = m != null && FpSwings.camera(FpSwings.style(style.id()), m, t, LEAN);
         if (!has) LEAN[0] = LEAN[1] = LEAN[2] = 0;
         // a change of move carries the lean across (a chained strike's starts level: the view never snaps; SwingBlend)

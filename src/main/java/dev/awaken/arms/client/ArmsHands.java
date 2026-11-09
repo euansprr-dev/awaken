@@ -195,8 +195,8 @@ final class ArmsHands {
 
     /**
      * The lab's swing (FpSwings), when it has one for the move: an arc about the sword arm's pivot, the edge leading,
-     * through the target under the crosshair on the hit tick. A press that may charge heads for the heavy's drawn-back
-     * start and a held heavy waits there (and trembles), an armed Plunge at the Plunge's; with no move, the chop or the hack while vanilla mines with the weapon
+     * through the target under the crosshair on the hit tick. A press changes nothing until it has outlasted a click; then
+     * it heads for the heavy's drawn-back start and a held heavy waits there (and strains), an armed Plunge at the Plunge's; with no move, the chop or the hack while vanilla mines with the weapon
      * (ArmsChop). Mirrored for a left main arm. False: the row's own swing below.
      */
     private static boolean lab(LocalPlayer p, FirstPerson.View v, float partial) {
@@ -207,7 +207,7 @@ final class ArmsHands {
         if (style == null) return false;
         Archetype.Move m;
         float t;
-        boolean drawn = false, tremble = false;
+        boolean drawn = false, tremble = false, undecided = false;
         if (preview != null) {
             m = preview;
             Archetype.MoveDef def = style.move(m);
@@ -220,6 +220,11 @@ final class ArmsHands {
             t = 0;
             drawn = true;
             tremble = ArmsPredict.charging;
+        } else if (ArmsPredict.undecided()) {
+            // not yet a tap or a hold: the hands go on with what they were doing, as if nothing had been pressed
+            m = ArmsPredict.underMove();
+            t = ArmsPredict.underTime();
+            undecided = true;
         } else {
             m = ArmsPredict.move;
             t = ArmsPredict.viewTime();
@@ -237,8 +242,9 @@ final class ArmsHands {
         int inv = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
         if (tremble) {
             float c = ArmsPredict.moveTime();
-            float k = Mth.sin(c * 2.7F) * Math.min(1F, c / 10F);
-            D.add(k * 0.008F, k * 0.012F, 0);
+            // a slow strain: at 2.7 radians a tick this was an 8 Hz buzz that read as the weapon glitching
+            float k = Mth.sin(c * 0.9F) * Math.min(1F, c / 14F);
+            D.add(k * 0.005F, k * 0.007F, 0);
         }
         // which hand strikes: a weapon in each hand (the Daggers) strikes with the off hand too, the main's move mirrored
         FpSwings.Hand hand = !has || preview != null ? FpSwings.Hand.MAIN : FpSwings.hand(st, m);
@@ -267,7 +273,7 @@ final class ArmsHands {
         // release): each hand carried from where it was shown into the new one, never a jump (SwingBlend). The draw and
         // the charge held after it are one source, so the charge's mark changes nothing on the hands
         float now = handsNow();
-        long source = ChargeDraw.source(drawn, ArmsPredict.moveNanos);
+        long source = undecided ? ArmsPredict.underSource : ChargeDraw.source(drawn, ArmsPredict.moveNanos);
         if (m != shownMove || source != shownNanos || cutting != shownCutting) {
             boolean cutOut = shownCutting && !cutting;
             shownMove = m;
@@ -275,7 +281,7 @@ final class ArmsHands {
             shownCutting = cutting;
             Archetype.MoveDef def = m == null ? null : style.move(m);
             float launch = drawn ? 0F : ArmsPredict.takeLaunch();
-            float ticks = cutOut ? ArmsChop.OUT : drawn ? ChargeDraw.TICKS : launch > 0 ? launch : def == null ? REST_BLEND
+            float ticks = cutOut ? ArmsChop.OUT : drawn ? ArmsPredict.drawTicks() : launch > 0 ? launch : def == null ? REST_BLEND
                     : Mth.clamp(def.windup() * 0.8F, 1F, 2.5F);
             ArmsFilm.event("source " + (m == null ? "-" : m.key) + " at " + t + " blend " + ticks + (drawn ? " drawn" : ""));
             sourceMotion(st, m, t, ours, has && !drawn, launch > 0 ? ArmsPredict.launchRate() : 1F);

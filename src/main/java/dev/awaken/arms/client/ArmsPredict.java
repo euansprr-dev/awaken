@@ -66,6 +66,13 @@ public final class ArmsPredict {
     /** This press's draw has begun (its body clip with it), and when, on the hands' clock. */
     private static boolean drawSeen;
     private static long drawFrom;
+    /** When this press went down, on the hands' clock. */
+    private static long pressNanos;
+    /** What the hands were doing when a press began that may yet be a hold: they go on with it until the press has said which. */
+    private static Archetype.@Nullable Move underMove;
+    private static float underAt, underEnd;
+    private static long underFrom;
+    static long underSource;
     // what the server told us
     static int deflectAt = -1000, dodgeAt = -1000, resonance;
     /** Each style's mastery step, by its index (ArmsMastery; the server sends them). */
@@ -167,6 +174,7 @@ public final class ArmsPredict {
         heldTicks = 0;
         charging = false;
         drawSeen = false;
+        pressNanos = ArmsFeel.nanos() - ArmsFeel.paused();
         Archetype.MoveDef heavyDef = st.move(Archetype.Move.HEAVY);
         holdOpen = heavyDef != null && heavyDef.charge().isPresent();
         swungAt = ticks;
@@ -269,7 +277,16 @@ public final class ArmsPredict {
         Archetype.MoveDef def = st.move(m);
         if (def == null) return;
         perfectHeavy = perfect;
-        waitHit = m.strike() && holdOpen && s == seq && ArmsRules.waitsOnHold(st.id());
+        boolean waits = m.strike() && holdOpen && s == seq && ArmsRules.waitsOnHold(st.id());
+        if (waits) {
+            Archetype.MoveDef was = move == null || style == null ? null : style.move(move);
+            underMove = was == null ? null : move;
+            underAt = was == null ? 0F : viewTime();
+            underEnd = was == null ? 0F : was.windup() + was.active() + recovery + style.def().late();
+            underFrom = ArmsFeel.nanos() - ArmsFeel.paused();
+            underSource = moveNanos;
+        }
+        waitHit = waits;
         ArmsFilm.event("begin " + m.key + " step " + st2 + " seq " + s + (waitHit ? " waits" : ""));
         style = st;
         move = m;
@@ -409,7 +426,38 @@ public final class ArmsPredict {
 
     /** The hands are on their way to the charge form (and not yet held there). */
     static boolean drawing() {
-        return !charging && ChargeDraw.drawing(pressHeld, holdOpen, plunging, handsFree());
+        return !charging && ChargeDraw.drawing(pressHeld, holdOpen, plunging, handsFree(), heldFor());
+    }
+
+    /** Ticks this press has been down, on the hands' clock. */
+    private static float heldFor() {
+        return (ArmsFeel.nanos() - ArmsFeel.paused() - pressNanos) / ArmsFeel.TICK_NANOS;
+    }
+
+    /** A press not yet a tap or a hold (SPEC §25 "Tap or hold"): nothing on screen knows about it. */
+    static boolean undecided() {
+        return waitHit && pressHeld && holdOpen && !charging && !drawing();
+    }
+
+    /** What the hands go on with under an undecided press (null: at rest, or it has run out). */
+    static Archetype.@Nullable Move underMove() {
+        return underTime() > underEnd ? null : underMove;
+    }
+
+    /** Ticks into that move, its own clock carried on from the press. */
+    static float underTime() {
+        return underAt + (ArmsFeel.nanos() - ArmsFeel.paused() - underFrom) / ArmsFeel.TICK_NANOS;
+    }
+
+    /** This weapon's draw, in ticks, from its charge's glint. */
+    static float drawTicks() {
+        Archetype.MoveDef heavy = style == null ? null : style.move(Archetype.Move.HEAVY);
+        return ChargeDraw.ticks(heavy == null || heavy.charge().isEmpty() ? 14 : heavy.charge().get().glint());
+    }
+
+    /** How far the hands have come along this press's draw (0..1). */
+    private static float drawnNow() {
+        return drawSeen ? ChargeDraw.drawn((ArmsFeel.nanos() - ArmsFeel.paused() - drawFrom) / ArmsFeel.TICK_NANOS, drawTicks()) : 0F;
     }
 
     /** The hands belong to the draw or the charge after it: one source, from the press to the release. */
@@ -422,7 +470,7 @@ public final class ArmsPredict {
         if (drawSeen || !drawing()) return;
         drawSeen = true;
         drawFrom = ArmsFeel.nanos() - ArmsFeel.paused();
-        ArmsBodies.charge(p, (int) ChargeDraw.TICKS);
+        ArmsBodies.charge(p, (int) drawTicks());
     }
 
     static void tick() {
@@ -500,7 +548,7 @@ public final class ArmsPredict {
         holdOpen = false;
         boolean waited = waitHit;
         waitHit = false;
-        float drawn = drawSeen ? ChargeDraw.drawn((ArmsFeel.nanos() - ArmsFeel.paused() - drawFrom) / ArmsFeel.TICK_NANOS) : 0F;
+        float drawn = drawnNow();
         ArmsFilm.event("tap drawn " + drawn + (waited ? " waited" : ""));
         Archetype.MoveDef def = waited && style != null && move != null ? style.move(move) : null;
         if (def != null) {
@@ -556,16 +604,19 @@ public final class ArmsPredict {
         }
         charging = false;
         ArmsFilm.event("release");
+        float drawn = drawnNow();
         int target = pressTarget(mc);
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         if (target >= 0) aimedId = dev.awaken.core.api.Aim.meantId(p, target, p.getYRot(), p.getXRot(), ArmsRules.pressReach(st));
         int held = c.min() + (ticks - chargeStart);
         if (st.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, c, resonance, ArmsMastery.artAt(mastery(st)))) {
             begin(p, st, Archetype.Move.ART, -1, 0, seq); // held through with the meter full: the Art
+            launchBlend = ChargeDraw.releaseTicks(drawn);
             return;
         }
         boolean execution = target >= 0 && BROKEN.containsKey(target) && st.move(Archetype.Move.EXECUTION) != null;
         begin(p, st, execution ? Archetype.Move.EXECUTION : Archetype.Move.HEAVY, -1, 0, seq, !execution && c.perfect(held));
+        launchBlend = ChargeDraw.releaseTicks(drawn);
     }
 
     /** The running heavy was released on its glint (its arc burns gold). */
@@ -576,16 +627,14 @@ public final class ArmsPredict {
     private static boolean guardUp;
     static int plungeSeq;
 
-    /** Ticks a press must stay down before the charge's meter shows: a tap never lights it. */
-    private static final int METER_FROM = 2;
-
-    /** How far a held heavy has charged (0..1, the glint at its mark), or -1 when none is drawn: it fills from the press, so the mark is no step. */
+    /** How far a held heavy has charged (0..1, the glint at its mark), or -1 when none is drawn: it fills from the draw's start, so a tap never lights it and the mark is no step. */
     static float charge() {
-        if (style == null || !(charging || drawing() && heldTicks >= METER_FROM)) return -1;
+        if (style == null || !(charging || drawing())) return -1;
         Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
         if (heavy == null || heavy.charge().isEmpty()) return -1;
         Archetype.Charge c = heavy.charge().get();
-        return Mth.clamp((charging ? c.min() + (ticks - chargeStart) : heldTicks) / (float) c.glint(), 0, 1); // full at the glint
+        int held = charging ? c.min() + (ticks - chargeStart) : heldTicks;
+        return Mth.clamp((held - ChargeDraw.GRACE) / (c.glint() - ChargeDraw.GRACE), 0, 1); // full at the glint
     }
 
     /** Whether a held heavy is on its glint right now (a release would be perfect). */

@@ -223,6 +223,8 @@ final class SwingTests {
         h.assertTrue(ChargeDraw.source(true, 123L) == ChargeDraw.source(true, 456L), "the charge's mark starts no new source");
         h.assertTrue(ChargeDraw.source(false, 123L) != ChargeDraw.source(true, 123L), "a move is another source than the draw");
         h.assertTrue(ChargeDraw.handsFree(false, true, 2F, 4) == false && ChargeDraw.handsFree(false, true, 4F, 4), "a blow still landing goes through first");
+        h.assertTrue(ChargeDraw.GRACE * 50F >= 150F && !ChargeDraw.drawing(true, true, false, true, ChargeDraw.GRACE - 0.01F)
+                && ChargeDraw.drawing(true, true, false, true, ChargeDraw.GRACE), "a press moves nothing until it has outlasted a click");
         Vector3f form = new Vector3f(), d = new Vector3f(), was = new Vector3f(), zero = new Vector3f();
         Quaternionf formQ = new Quaternionf(), q = new Quaternionf(), wasQ = new Quaternionf(), id = new Quaternionf();
         int runs = 0;
@@ -230,7 +232,8 @@ final class SwingTests {
             FpSwings.Style st = FpSwings.style(style.id());
             Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
             if (st == null || heavy == null || heavy.charge().isEmpty()) continue;
-            h.assertTrue(heavy.charge().get().min() >= ChargeDraw.TICKS, style.id() + "'s draw arrives by the charge's mark");
+            float draw = ChargeDraw.ticks(heavy.charge().get().glint());
+            h.assertTrue(ChargeDraw.GRACE + draw < heavy.charge().get().glint(), style.id() + "'s draw arrives before its glint");
             h.assertTrue(FpSwings.sample(st, Archetype.Move.HEAVY, 0, true, form, formQ), style.id() + " has a charge form");
             java.util.List<Archetype.Move> from = new java.util.ArrayList<>(style.chain());
             from.add(null); // from rest
@@ -252,12 +255,12 @@ final class SwingTests {
                     wasQ.set(q);
                 }
                 float gap = was.distance(form), turn = degrees(wasQ, formQ);
-                b.begin(now, form, formQ, zero, zero, ChargeDraw.TICKS);
+                b.begin(now, form, formQ, zero, zero, draw);
                 // the curve's fastest frame, or the one the hand came in on, and a little for the blend's own rounding
-                float maxStep = Math.max(carried, 1.875F * gap / ChargeDraw.TICKS * FRAME) * 1.1F + 2e-3F;
-                float maxTurn = Math.max(turned, 1.875F * turn / ChargeDraw.TICKS * FRAME) * 1.1F + 0.3F;
+                float maxStep = Math.max(carried, 1.875F * gap / draw * FRAME) * 1.1F + 2e-3F;
+                float maxTurn = Math.max(turned, 1.875F * turn / draw * FRAME) * 1.1F + 0.3F;
                 String what = style.id() + " from " + (prev == null ? "rest" : prev.key);
-                for (float t = 0; t <= ChargeDraw.TICKS + 3F; t += FRAME, now += FRAME) {
+                for (float t = 0; t <= draw + 3F; t += FRAME, now += FRAME) {
                     d.set(form);
                     q.set(formQ);
                     b.apply(now, d, q);
@@ -265,8 +268,8 @@ final class SwingTests {
                     h.assertTrue(degrees(q, wasQ) <= maxTurn, what + ": no turn across the draw at " + t + " (" + degrees(q, wasQ) + " > " + maxTurn + ")");
                     was.set(d);
                     wasQ.set(q);
-                    if (t >= ChargeDraw.TICKS) {
-                        h.assertTrue(d.distance(form) < 2e-3F && degrees(q, formQ) < 0.5F, what + ": in the charge form by the mark");
+                    if (t >= draw) {
+                        h.assertTrue(d.distance(form) < 2e-3F && degrees(q, formQ) < 0.5F, what + ": in the charge form by the draw's end");
                     }
                 }
                 runs++;
