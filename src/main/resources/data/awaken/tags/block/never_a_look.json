@@ -1,0 +1,13 @@
+{
+  "values": [
+    "minecraft:bedrock",
+    "minecraft:barrier",
+    "minecraft:reinforced_deepslate",
+    "minecraft:budding_amethyst",
+    "minecraft:ancient_debris",
+    "minecraft:gilded_blackstone",
+    "minecraft:raw_iron_block",
+    "minecraft:raw_copper_block",
+    "minecraft:raw_gold_block"
+  ]
+}

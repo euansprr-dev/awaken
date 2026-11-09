@@ -19671,3 +19671,55 @@ against six kinds of player (stands still, runs, circles, holds guard, keeps awa
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
 
+
+## 52. Made by Hand (the chill side; plan docs/made-by-hand/PLAN.md, page https://claude.ai/artifact/HYetCkcLzxjB21CnH3XT88)
+
+Euan, 9 Nov 2026: "go ahead with all recommendations, but the keybinds need to not interfere with the current power keybinds etc".
+Nothing here automates building, adds a chore or a task list. Stages, each with a switch: 0 Proof (built; stops for Euan to play),
+1 Mallet, 2 Stock, 3 Hang, 4 Lift and Raise, 5 Boss pieces and Kin, 6 Garden, A Riding Along. Package `dev.awaken.shaping`.
+
+**52.1 The Mallet and its controls.** Two sticks and a cobblestone, stack of 1. Every control is on the mouse and only with the Mallet
+in the main hand; no key changes meaning, so powers stay on Z X C V and R with the Mallet out. Right click: what the Mallet is set
+to (Knock, or Look: put the look it carries on the block; held, a look drags from block to block, one each; Hang, Lift and Raise
+join in their stages). Sneak and scroll: change what right click does. Sneak and right click on a block: the Looks ring. Middle
+click (pick block): copy that look onto the Mallet, learn it, and set the Mallet to Look. A press that starts or ends a lock-on is
+still the lock's. Sneak and left click: undo. Right click on a block that has its own use still uses it, as with any item.
+The Mallet carries `MalletData` (mode, look id).
+
+**52.2 Knock.** One block `awaken:shaped` (no item) with state SHAPE, FACING, WATERLOGGED, GLOW (the base's light, so light never
+reads a block entity off the main thread) and a block entity holding `base` and `look` as block states (schema 1). Nine shapes, one
+outline each, pushed across the block and turned by the facing: FULL, HALF_BOTTOM, HALF_TOP, SLAB, NOTCH, BEVEL, ROUND, UNDER, COVE.
+Mesh, collision (slopes in steps of an eighth), occlusion and preview come from the same outline. Where you hit picks the cut. On a
+side: above 0.62 the top (NOTCH, BEVEL, ROUND, whole), below 0.38 under (UNDER, COVE, whole), else the middle (SLAB, whole). On the
+top or underside: within 0.25 of an edge is the top or under of that side; the centre is HALF_BOTTOM or HALF_TOP, then whole. A hit
+on a surface a cut made carries on with that cut, so knocking the same place steps through the shapes. It has its base's hardness,
+tool and blast resistance, drops its base, and sounds like its look. Whole blocks can't be waterlogged; cut ones can.
+
+**52.3 Real blocks wherever they exist.** A real slab or stair reads as its cut, and a cut writes back as the real block if one exists:
+NOTCH or UNDER facing f is a stair facing the opposite way (bottom or top), a half is a slab. A whole block wearing its own look
+is the real block again. No gain: a slab knocked whole stays a cut block of base slab and drops a slab. Refused, with one plain
+line: block entities, unbreakable blocks, ores, anything not a whole solid block, a family slab or a family stair.
+
+**52.4 Looks.** Ordinary building stone, brick, terracotta, concrete and wood (`Looks.families`) are always on offer, free and instant.
+Anything else whole and solid is learned by middle-clicking it, or by right-clicking a kept block (kept in a `LookBook` attachment,
+through death, schema 1). Never offered: block entities, ores, storage blocks, `#awaken:never_a_look`. Within a family on a whole
+real block the look makes the real block; otherwise it's worn and the base stays. The ring opens while Sneak is held, world not paused
+or dimmed: its own family first, then learned, then the rest, eight a page, scroll for more. Moving over a look shows it on every
+block it would change, only on your screen. Left click: this block. Right click: every touching block of the same look, up to 64,
+spreading out a ring a tick, each block rechecked as it's reached. Letting go of Sneak changes nothing.
+
+**52.5 Where.** The Mallet needs `player.mayBuild`, `level.mayInteract` and `Constructs.mayChange`, and outside creative no gate, no civic
+block, no `awaken:` dimension and no enforced ward. Refused there, but a right click still learns the look.
+Undo: 32 per player, in memory; an undo leaves alone anything changed since, and stops a run in progress.
+
+**52.6 Drawing.** `ShapedModel` wraps the shaped block's model and returns one part per look, shape and facing, built once from
+`LookMaterials` (the look's own baked quads: sprite and how the texture lies on each side, so a log's grain survives). Runs on Sodium's
+meshing threads. The look is read from the block entity first (never stale), then model data. Before a knock a chalk band shows the part
+that will go; the ring's preview is the real mesh a hair proud of the block. `awaken-shaping.toml`: `mallet`, `draw_shapes`.
+
+**52.7 Feel.** No particle sheet: real chips cut from the block's own texture that tumble and land, a little dust in its map colour, a 0.35°
+kick of the view for whoever swung. Sound is the block's own hit under `awaken:shaping.knock` (Minecraft's own `mob/zombie/wood` recordings, named).
+
+**52.8 Tests.** `ShapingTests`, prefix `shaping_`: every mesh is a closed solid facing outward, a knock steps through the cuts, a custom block
+takes a cut, no gain and no ore, real or worn, a run's kind and cap, kept blocks, undo, every look on offer can be worn. Rendering under
+Sodium and how a knock feels can't be tested: Stage 0 stops for Euan to play it.

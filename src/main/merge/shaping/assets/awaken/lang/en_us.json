@@ -1,0 +1,20 @@
+{
+  "item.awaken.mallet": "Mallet",
+  "block.awaken.shaped": "Cut Block",
+  "awaken.shaping.mode.knock": "Knock",
+  "awaken.shaping.mode.look": "Change the look",
+  "awaken.shaping.ring.title": "Looks",
+  "awaken.shaping.ring.point": "Point at a look to try it on",
+  "awaken.shaping.ring.how": "Left click: this block. Right click: all %s.",
+  "awaken.shaping.ring.page": "Scroll for more (%s of %s)",
+  "awaken.shaping.learned": "You've learned how %s looks. It's on your Looks ring now.",
+  "awaken.shaping.refuse.kept": "That block's being kept as it is. You can't change it here.",
+  "awaken.shaping.refuse.fixed": "That won't move, however hard you hit it.",
+  "awaken.shaping.refuse.inside": "That has something inside it, so the Mallet leaves it alone.",
+  "awaken.shaping.refuse.ore": "Ore won't take a knock. That's a job for a pick.",
+  "awaken.shaping.refuse.whole": "The Mallet only works on whole blocks, slabs and stairs.",
+  "awaken.shaping.refuse.no_look": "You're not carrying a look yet. Middle click a block to copy its look, or hold Sneak and right click to pick one.",
+  "awaken.shaping.refuse.not_a_look": "That one can't be worn as a look.",
+  "awaken.shaping.refuse.nothing_to_undo": "There's nothing left to take back.",
+  "subtitles.awaken.shaping.knock": "Mallet knocks"
+}

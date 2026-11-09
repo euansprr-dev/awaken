@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": ["minecraft:stick", "minecraft:stick", "minecraft:cobblestone"],
+  "result": {"id": "awaken:mallet"}
+}

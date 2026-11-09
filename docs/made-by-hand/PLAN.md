@@ -68,7 +68,7 @@ and gate protection, Far Sight's distant look, frame rate in existing builds.
 | `#awaken:runner_lines` | No Java outside tests reads it. The block comment says the runner catches its collision top | grep | "Climb a line" is not a real system yet | Build |
 | Ascent states | TETHER, ZIP, CARRY, GLIDE, SOAR with server checks; new ordinals only at the end | SPEC §17 | Line climbing can be one more state | Extend |
 | Terrain powers | Terrain Rip, Collapse, Architect constructs are temporary and do damage | `KineticPowers`, `Constructs` | Moves must be distinct: real, permanent, no real damage | Keep apart |
-| Power keys | Z X C V, R, read in `ClientCasting` | `core/client/AwakenKeys`, `powers/client/ClientCasting` | Can stand aside while a Mallet is held | Extend |
+| Power keys | Z X C V, R, read in `ClientCasting` | `core/client/AwakenKeys`, `powers/client/ClientCasting` | Left alone: every Mallet control is on the mouse, and powers stay live with the Mallet out | Keep |
 | Kin nooks | The game picks each kin's spot by scan | `kin/KinHome.nookFor` | Player can't choose where a kin lives | Extend |
 | Kin automation | Burrowbuns harvest and replant, Mossbacks speed crops | `kin/KinHome` | Approved in §43 for boring work; must not touch the new plants | Scope |
 | Crops | Vanilla, wild rye, blackberries, herbs read from natural plants | `ground/wild/WildBlocks`, `living/craft` | Nothing new to farm at home | Build |
@@ -124,7 +124,7 @@ like Minecraft, adds exactly the complexity he dislikes, and breaks room reading
 Sub-choices:
 - **Shapes:** a registered block per material and shape would be thousands of blocks and could never cover future or other mods' blocks. A single shaped block that reads its look from data covers everything.
 - **Lines:** blocks can't go at angles; an entity per line is heavy and fragile. Pegs (real blocks) own the lines and one client list draws them.
-- **Where the moves live:** normal power slots force a trade with attacks, a separate key adds a mode to remember. Holding the Mallet needs no slot and no key, and you can see what mode you're in. Decision 1.
+- **Where the moves live:** normal power slots force a trade with attacks, and every letter on the keyboard is already bound. Euan, 9 Nov: "the keybinds need to not interfere with the current power keybinds etc". So the moves live on the Mallet and on the mouse: right click does what the Mallet is set to, Sneak and scroll changes that. No power key changes meaning, ever. Decision 1, as changed.
 
 What would change this: if Stage 0 shows knocking by aim is fiddly, shapes fall back to a plain cycle. If shaped blocks
 cost too much when meshing, they get limited to detail work and big walls stay real blocks.
@@ -132,21 +132,28 @@ cost too much when meshing, they get limited to detail work and big walls stay r
 ## 7. Behaviour contracts
 
 ### 7.1 The Mallet
-Crafted early (two sticks and cobble) and a Hearth step on the K menu. While it's in your main hand the HUD's power icons
-swap and Z X C V R mean Lift, Raise, Looks, Hang, Undo. Change hotbar slot and your powers are back.
+Crafted early (two sticks and cobble) and a Hearth step on the K menu. Every control is on the mouse and only with the Mallet in your main hand; Z X C V and R stay your powers, with the Mallet out too.
+
+| Control | What it does |
+|---|---|
+| Right click | What the Mallet is set to: Knock, or put the look on (Hang, Lift and Raise join in their stages) |
+| Sneak and scroll | Change what right click does |
+| Sneak and right click on a block | The Looks ring, open while Sneak is held |
+| Middle click | Copy that block's look onto the Mallet and learn it |
+| Sneak and left click | Undo |
 
 **Knock (right click).** Trigger: a block in reach. Input: the block, the face and where on the face you hit. Aim picks the
 part: middle of a face takes the slab cut, an edge takes the step, then bevel, then round, then back to whole; a corner
 works the same way; under an edge gives the cove and arch. Output: the real vanilla or kit shape if one exists, otherwise
 a shaped block. Refused with one line if the block has a block entity, isn't a full cube, or the permission check fails.
 
-**Looks (hold C).** A ring of looks for that kind of block opens round the crosshair. Moving over a look shows it on the block
+**Looks (Sneak and right click).** A ring of looks for that kind of block opens round the crosshair. Moving over a look shows it on the block
 on your screen only. Left click sets it on that block. Right click sets it on every touching block of the same kind, up to the
 level's cap, rippling outward, and the preview shows exactly which ones first. Letting go changes nothing. Sneak while
-clicking changes one face (level 4). The look you set stays on the Mallet: a quick tap of C puts it on what you're aiming at,
+clicking changes one face (level 4). The look you set stays on the Mallet: with the Mallet set to Look, right click puts it on what you're aiming at,
 sneak and tap does the whole touching run. Pick block (middle click) copies a look from anything in the world.
 
-**Undo (R).** The last 32 Mallet and Lift actions, per player, kept in memory. An undo that would overwrite something changed
+**Undo (Sneak and left click).** The last 32 Mallet and Lift actions, per player, kept in memory. An undo that would overwrite something changed
 since is skipped with one line.
 
 Invariants: never changes a block the permission check refuses; preview is client-only; server re-reads the target and
@@ -161,7 +168,7 @@ refuses if it changed; a knock never loses the block's identity.
 - K menu, Journal, Looks: a grid of what you've found. A record, never orders. Members of a Hearth share theirs.
 
 ### 7.3 Stock and furniture
-One recipe: Stock, from planks and sticks. Place a Stock block, hold C, pick a piece from what you know, knock it into shape.
+One recipe: Stock, from planks and sticks. Place a Stock block, Sneak and right click it, pick a piece from what you know, knock it into shape.
 A starter set is known from the start; everything else is learned by tapping it in the world (Carillon's bench, a gate's
 lamp). Tapping a part of a piece changes that part (legs, top, back, cushion), and the ring changes its materials, in any wood or
 colour you know. About 40 new home pieces plus the freed Carillon kit. Breaking a piece returns Stock. Empty hand on a seat sits
@@ -171,9 +178,9 @@ down. The room reading counts them through tags.
 
 **First Light (Decision).** Light the first lamp in a room that has just reached Fine or better and the camera glides through it once, 5 seconds, any key skips, once per room, setting to turn off.
 
-### 7.4 Hang (V)
-Press V at one spot, press V at another, a line strings between them. Scroll picks rope, chain, lanterns, bunting or vines
-while a line is pending. Keep pressing V at more corners to make cloth (3 to 6 corners); sneak and V closes it. A real peg block goes on each
+### 7.4 Hang (Mallet set to Hang)
+Right click one spot, right click another, a line strings between them. The ring picks rope, chain, lanterns, bunting or vines
+while a line is pending. Keep clicking more corners to make cloth (3 to 6 corners); clicking the first corner again closes it. A real peg block goes on each
 end, on any solid face. Rope comes from the bag at one per 4 blocks; cloth at one per corner.
 
 Lines hang with a real sag and move with the wind. Lanterns give real light. Cloth casts real shade through invisible
@@ -185,13 +192,13 @@ on it. New Ascent state LINE (ordinal at the end), predicted, the server checkin
 
 Break a peg or its wall and the line drops as an item.
 
-### 7.5 Lift (Z)
-Hold Z and sweep the view across blocks. They light up, up to the level's count. Let go and they tear out and hang in front
-of you as one piece. Scroll turns it. Right click slams it down. Z throws it, a small hit, and it lands as real blocks. Can't take block
+### 7.5 Lift (Mallet set to Lift)
+Hold right click and sweep the view across blocks. They light up, up to the level's count. Let go and they tear out and hang in front
+of you as one piece. Scroll turns it. Right click slams it down. Left click throws it, a small hit, and it lands as real blocks. Can't take block
 entities except shaped blocks, liquids, unbreakable blocks, sealed ward blocks, ore (Decision), gate or city blocks, or anything `Constructs.mayChange` refuses.
 
-### 7.6 Raise (X)
-Aim at natural ground or stone and hold X: a column climbs, as far as your level. Sweep sideways to make a wall. Anything on top goes up
+### 7.6 Raise (Mallet set to Raise)
+Aim at natural ground or stone and hold right click: a column climbs, as far as your level. Sweep sideways to make a wall. Anything on top goes up
 with it, so raising under your own feet throws you up. Costs energy, no blocks (Decision). Sand comes up as sandstone. Refused on built things.
 
 ### 7.7 Levels
@@ -214,7 +221,7 @@ same block give nothing. A level gained is one quiet line above the hotbar, the 
 
 Numbers are a first pass, tuned by play.
 
-**In the world and in fights.** The moves work anywhere you're allowed to change blocks. In a fight you're holding a Mallet, so your attack powers are off: that's the
+**In the world and in fights.** The moves work anywhere you're allowed to change blocks. Your powers stay on their keys with the Mallet out; the trade in a fight is that your hand holds a Mallet and not your weapon, so that's the
 balance. A thrown piece never beats a same-rank power. In gates (Decision): no Mallet changes or Lift; Raise and Hang are
 temporary and crumble after 10 seconds. In wards: the existing crumble rule.
 
@@ -328,7 +335,7 @@ Total 60 to 100 agent hours, calibrated on Armour Forge (approved and merged the
 
 Rollback: every stage has a switch. With Shaping off, shaped blocks draw as full cubes of their look and nothing is lost. Go/no-go at Stage 0: if the feel isn't there, stop and rethink before building the rest.
 
-**Dependencies.** Gates as Worlds (Looks' sources, gate rules, scaling), Powers in Full Voice (Terrain Rip and Architect stay distinct; R key), Forged Pick (ore rule agreed), Fights That Read You (bosses ignore the rider). Each is coordinated at the start of its stage.
+**Dependencies.** Gates as Worlds (Looks' sources, gate rules, scaling), Powers in Full Voice (Terrain Rip and Architect stay distinct), Forged Pick (ore rule agreed), Fights That Read You (bosses ignore the rider). Each is coordinated at the start of its stage.
 
 **Risks.** Tilted blocks may look wrong against neighbours. Cloth without physics may look stiff. A ring may feel like a menu; the Stage 0 play decides. 41 boss pieces is a lot of art at a high bar. New plants have now missed twice, which is why the page has a gallery and Stage 6 starts with six.
 

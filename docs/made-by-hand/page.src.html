@@ -132,7 +132,7 @@ footer { padding-block: 40px 60px; }
 
 <h2 style="margin-top:30px">In one minute</h2>
 <ul>
-  <li><b>The Mallet</b> is the one tool. Hit the part of a block you want to knock away. Hold <kbd>C</kbd> and try other looks on it. One click sets it on every touching block of that kind.</li>
+  <li><b>The Mallet</b> is the one tool. Hit the part of a block you want to knock away. Hold Sneak and right click to try other looks on it. One click sets it on every touching block of that kind.</li>
   <li><b>Hundreds of new looks.</b> Tap any block anywhere and the Mallet learns it, even in Carillon and inside gates, whose blocks you can't normally get.</li>
   <li><b>Four moves that level up:</b> Lift, Raise, Hang and the Mallet itself. They work anywhere, including for getting around. They use no power slot.</li>
   <li><b>Hang</b> ropes, chains, lanterns and cloth between any two points, and climb them.</li>
@@ -184,7 +184,7 @@ footer { padding-block: 40px 60px; }
         <label class="check"><input type="checkbox" id="runbox" checked> Every touching block of this kind</label>
         <select id="runlv" aria-label="Level"><option value="16">Level 1: up to 16</option><option value="32">Level 2: up to 32</option><option value="64">Level 3: up to 64</option></select>
       </div>
-      <div class="row"><button class="btn" id="tapc">Tap C: same look again</button><button class="btn" id="undo">R: undo</button></div>
+      <div class="row"><button class="btn" id="tapc">Right click: same look again</button><button class="btn" id="undo">Sneak and left click: undo</button></div>
       <p class="status" id="wallsay" role="status"></p>
     </div>
   </div>
@@ -195,10 +195,10 @@ footer { padding-block: 40px 60px; }
 <p>While the Mallet is in your hand, your power icons swap to building moves. Scroll off it and your powers are back. <b>That's the answer to your slots question:</b> it uses no slot at all.</p>
 <div class="keys">
   <kbd>Right click</kbd><span><b>Knock.</b> Hit the part you want gone. Hit again for the next shape. Hit edges, corners, faces. There is no list.</span>
-  <kbd>Hold C</kbd><span><b>Looks.</b> A small ring appears. Moving over one shows it on the block, only on your screen. Click to set it, or let go and nothing changes.</span>
-  <kbd>Tap C</kbd><span><b>Same look again.</b> The look you set stays on the Mallet. Sneak and tap to do the whole touching run.</span>
+  <kbd>Sneak + right click</kbd><span><b>Looks.</b> A small ring appears while you hold Sneak. Moving over one shows it on the block, only on your screen. Click to set it, or let go of Sneak and nothing changes.</span>
+  <kbd>Sneak + scroll</kbd><span><b>Change what right click does.</b> Knock, or put the look you're carrying on the next block. Your power keys never change: Z X C V and R stay your powers with the Mallet out.</span>
   <kbd>Middle click</kbd><span>Copy the look of anything you can see.</span>
-  <kbd>R</kbd><span><b>Undo.</b> Up to 32 steps back.</span>
+  <kbd>Sneak + left click</kbd><span><b>Undo.</b> Up to 32 steps back.</span>
 </div>
 <p><b>Your "one stone into another" idea</b> is exactly that ring. Ordinary stone, wood and clay looks are free, instantly, and become the real block. Before you commit, you can see the whole run change on your screen, so a wall and the hill behind it can't surprise you.</p>
 <p><b>Custom blocks work the same as vanilla ones.</b> The Mallet reads a block's own textures, so any full block in the game works, and any you add later. A test will fail the build if a new block hasn't been sorted.</p>
@@ -210,18 +210,18 @@ footer { padding-block: 40px 60px; }
   <p class="eyebrow">The four moves, level by level</p>
   <div class="row"><span class="lv-n" id="lvn">1</span><input type="range" id="lv" min="1" max="10" value="1" style="flex:1;min-width:180px" aria-label="Shaping level"></div>
   <div class="lv-out">
-    <div><b>Mallet</b><span id="lv0"></span></div><div><b>Hang</b> <kbd>V</kbd><span id="lv1"></span></div><div><b>Lift</b> <kbd>Z</kbd><span id="lv2"></span></div><div><b>Raise</b> <kbd>X</kbd><span id="lv3"></span></div>
+    <div><b>Mallet</b><span id="lv0"></span></div><div><b>Hang</b><span id="lv1"></span></div><div><b>Lift</b><span id="lv2"></span></div><div><b>Raise</b><span id="lv3"></span></div>
   </div>
   <p class="small" style="margin-top:12px">First numbers, tuned by playing. You level up by building things, and most of all when the Hearth reads a room you made as Fine or Grand. One quiet line tells you, the way the Ascent does.</p>
 </div></div>
 
 <div class="col">
 <h3 style="margin-top:0">Lift</h3>
-<p>Hold <kbd>Z</kbd> and sweep your view across blocks. They light up. Let go and they tear out and hang in front of you as one piece, with dust and a crack of stone. Scroll to turn it. Right click slams it down. Press <kbd>Z</kbd> to throw it. You can shift a finished wall two blocks left, or rip a slab off a hill. Out in the world it works just as well.</p>
+<p>Set the Mallet to Lift, hold right click and sweep your view across blocks. They light up. Let go and they tear out and hang in front of you as one piece, with dust and a crack of stone. Scroll to turn it. Right click slams it down. Left click throws it. You can shift a finished wall two blocks left, or rip a slab off a hill. Out in the world it works just as well.</p>
 <h3>Raise</h3>
-<p>Aim at the ground and hold <kbd>X</kbd>. Stone climbs out of it for as long as you hold. Sweep sideways and you get a wall. <b>Do it under your own feet and it throws you into the air</b>, which is your movement use. Bridge a gap, get onto a roof, block a charge.</p>
+<p>Set the Mallet to Raise, aim at the ground and hold right click. Stone climbs out of it for as long as you hold. Sweep sideways and you get a wall. <b>Do it under your own feet and it throws you into the air</b>, which is your movement use. Bridge a gap, get onto a roof, block a charge.</p>
 <h3>Balance</h3>
-<p>Holding a Mallet means your attack powers are off, so using these in a fight is a real trade. Lift and Raise spend energy. Thrown blocks hit softly, and never as hard as a power of your rank. Levels keep you from being overpowered early.</p>
+<p>Your powers stay on their keys with the Mallet out. In a fight the trade is that your hand holds a Mallet and not your weapon. Lift and Raise spend energy. Thrown blocks hit softly, and never as hard as a power of your rank. Levels keep you from being overpowered early.</p>
 </div>
 
 <div class="band" id="hang"><div class="band-in">
@@ -234,7 +234,7 @@ footer { padding-block: 40px 60px; }
       <div class="chips" id="hangchips"></div>
       <div class="row"><button class="btn" id="climb">Climb it</button><button class="btn" id="night">Night</button><button class="btn" id="clearh">Clear</button></div>
       <p class="status" id="hangsay" role="status"></p>
-      <p class="small">In the game you press <kbd>V</kbd> at one spot and <kbd>V</kbd> at another. Scroll picks the kind. The ends get a small peg that can go on any solid face.</p>
+      <p class="small">In the game you set the Mallet to Hang and right click one spot and then another. The ring picks the kind. The ends get a small peg that can go on any solid face.</p>
     </div>
   </div>
 </div></div>
@@ -248,7 +248,7 @@ footer { padding-block: 40px 60px; }
 </ul>
 
 <h2 id="furn">Furniture</h2>
-<p>No forty recipes. <b>One recipe makes Stock.</b> Put a Stock block down, hold <kbd>C</kbd>, pick what it should be, and knock it into shape.</p>
+<p>No forty recipes. <b>One recipe makes Stock.</b> Put a Stock block down, Sneak and right click it, pick what it should be, and knock it into shape.</p>
 <ul>
   <li>Carillon's whole kit comes free: benches, market tables, shelves, casks, awnings, braziers. Tap one in the city to learn it.</li>
   <li>About 40 new home pieces: chairs, tables, cabinets, four-posters, lamps, chandeliers, rugs, curtains, stoves, tubs.</li>
@@ -297,7 +297,7 @@ footer { padding-block: 40px 60px; }
 <h2 id="walk">Before and after</h2>
 <div class="walk"><h3>Ordinary: "this wall should be cracked brick"</h3><div class="ba">
   <div><p class="label">Today</p><ol><li>Mine cobble</li><li>Smelt to stone</li><li>Craft to brick</li><li>Smelt to cracked</li><li>Break and replace every block</li></ol></div>
-  <div><p class="label">After</p><ol><li>Hold C on the wall</li><li>Roll over Cracked and see it</li><li>Right click</li><li>The whole wall ripples over</li></ol><p class="small">Why less work: no furnace, no replacing.</p></div>
+  <div><p class="label">After</p><ol><li>Sneak and right click the wall</li><li>Roll over Cracked and see it</li><li>Right click</li><li>The whole wall ripples over</li></ol><p class="small">Why less work: no furnace, no replacing.</p></div>
 </div></div>
 <div class="walk"><h3>The disappointing one: "I want to furnish this room"</h3><div class="ba">
   <div><p class="label">Today</p><ol><li>Place stairs and pretend they're chairs</li><li>Place a post and a carpet and pretend it's a table</li><li>See a real bench in Carillon that you can't get</li></ol></div>
@@ -448,7 +448,7 @@ const nameOf = id => (LOOKS.find(l => l.id === id) || {}).name || id;
     const now = performance.now();
     if (reduce) { list.forEach(x => x.c.look = lookId); draw(); }
     else { list.forEach(x => anims.push({ c: x.c, look: lookId, at: now + x.d * 45 })); kick(); }
-    say(`Set ${list.length} block${list.length > 1 ? 's' : ''} to ${nameOf(lookId)}. It stays on the Mallet: Tap C puts it on the next one.`);
+    say(`Set ${list.length} block${list.length > 1 ? 's' : ''} to ${nameOf(lookId)}. It stays on the Mallet: right click puts it on the next one.`);
     mark();
   }
   function mark() { document.querySelectorAll('#lookchips .chip').forEach(b => b.classList.toggle('on', b.dataset.id === setLook)); }
@@ -653,8 +653,8 @@ function drawPlant(cv, id, arch, c) {
 /* ---------- answers ---------- */
 const DECS = [
   ['The moves', [
-    ['hold', 'Holding the Mallet turns Z X C V into the building moves', 'No power slot, no new key, and you can see what mode you\'re in. Scroll off it and your powers are back.', 'Yes, the Mallet in hand', 'No, give it its own key to switch'],
-    ['where', 'The moves work anywhere, including in fights', 'As you said. Holding the Mallet turns your attack powers off, so that\'s the trade.', 'Yes, anywhere', 'Not in fights'],
+    ['hold', 'Everything on the Mallet is on the mouse', 'You told me the keys can\'t touch your powers, and every letter is taken. So: right click does what the Mallet is set to, Sneak and scroll changes it. Z X C V and R stay your powers.', 'Yes, on the mouse', 'No, give it its own key to switch'],
+    ['where', 'The moves work anywhere, including in fights', 'As you said. Your powers stay live; your hand holds a Mallet and not your weapon, so that\'s the trade.', 'Yes, anywhere', 'Not in fights'],
     ['ore', 'Ore, lode hearts and Deepglass are too heavy to Lift', 'Ripping up a hill is fine. This one exception stops Lift from replacing the pick, and keeps the Forged Pick worth having.', 'Yes, ore stays with the pick', 'No, Lift anything at a high level'],
     ['raise', 'Raise is free apart from energy', 'It pushes up the ground you aim at, and you don\'t need stone in your bag.', 'Yes, energy only', 'No, it should use stone from my bag'],
     ['gates', 'Inside gates, Raise and Hang last 10 seconds, and no Mallet or Lift', 'A gate\'s rooms are its design. You still get the movement use, and nothing tears the gate apart.', 'Yes, temporary in gates', 'Not in gates at all'],
