@@ -637,13 +637,165 @@ Source for the approval page `plan.html` (built by `build_page.py` from `powers_
 - Void Maw + Gravity Well = **Swallow**: The Maw eats the Well and spits everything in it at what you're looking at.
 - Ember Step + Frost Nova = **Fog Bank**: A wall of steam that hides you and scalds what walks through it.
 
-## New powers (optional)
+## The whole system
 
-- **Titan** (Kinetic ultimate): You grow to three times your size for ten seconds. Your steps shake the ground and your swings sweep a room. Refused under a low ceiling, and you shrink if one closes in.
-- **Stopped Clock** (Velocity ultimate): Everything but you stops for three seconds. Bosses drag at a quarter speed instead of stopping, so a fight stays a fight.
-- **Nobody Home** (Mind ultimate): For six seconds nothing near you remembers you're there, and every one of them can be hit from the blind side.
-- **Toll** (Earned from the bells): You strike the air like a bell. The Deep's creatures reel, and any sleeping bell within earshot answers faintly.
-- **Second Try** (Rank A, Velocity): You go back to where you stood four seconds ago, with the health you had then.
+11. **Get: having a power should be an event**: Hold use for a second and the Core cracks in your hand. The first Reading plays and the power goes on a free key if there is one. Your first press is free and can't be refused, so you feel it on the spot. A Core of a mastered power can be poured into another power of the same family as mastery.
+12. **Equip: your bar should be something you build**: Three saved sets that you name, swapped from the K page or a held key once you're out of a fight. The card gains damage (`PowerPreviews` already works it out for Cores), the right way, the Duets you've found, the Reading and a Try button that shuts the menu and gives you one free press. Sort by family, level or what a power does.
+13. **Cast: stop throwing presses away**: A press buffer: in the last 0.15 seconds of a cooldown or during another power's wind-up, your press is kept and fires the moment it can. Hold the key on the dozen or so powers that land somewhere to see where, with a ring in the power's own look, and let go to cast. A tap still casts at once. The reason moves to your crosshair, once a second, with a low thud that differs for no energy, not ready and no room.
+14. **Combine: help you play the Duets you've found**: When a creature has a State that one of your keys can use in a Duet you've already found, that key shows a small glint. Duets you haven't found never show. The first time you find one, the moment slows for a quarter of a second and its name goes up once, large. States sit on the creature's body and on its lock-on panel, and a party member's count too.
+15. **Level: leave it alone and add a little**: Everything stays. The window gains a Try It press: your next cast of that power is free and shows the new step. When you're a few uses from the next level, the slot's frame draws a thin line round itself. The window also carries the next line of the Reading.
+16. **Read: you should be able to fight without looking down**: A slot that comes back gives a bright glint and a quiet tick pitched to its family, and a full R gets a bigger one. The cooldown becomes a bright sweep you can catch from the corner of your eye. Family colours on every edge. A ghost on the energy bar shows what your last press cost. Two thin arcs at the crosshair for energy and R, only during a fight, with a setting to turn them off.
+
+## Eight new powers
+
+### Titan (Your size, Ultimate, on R, wave 1, about 3 hours)
+
+The R key is full. You grow, as big as the place allows, up to five times your height: nine blocks on open ground. For twelve seconds your swing sweeps a whole room, Z is a stomp that sends the ground out in a wave, and X picks up anything smaller than you and throws it.
+
+- Thrill: The fight changes scale in a second. The thing you were dodging is at your waist. You can feel your weight: every step rocks the camera and throws up real dirt, and the trees you walk through go down.
+- Only it: Nothing else in the catalogue changes your size. It's also the only power that gives your other keys new jobs while it lasts.
+- Look: You stay yourself, armour and all, only huge, with hot orange seams at the joints. The growth comes in three heaves. Your shadow falls across the ground ahead of you and mobs look up.
+- Sound: A creak like old timber taking load as you grow. Sub-bass footsteps you feel more than hear. Your own breath and your own power sounds drop about an octave while you're big, and come back up when you shrink.
+- Right way: Time your first stomp to land on the last heave of the growth. The wave goes twice as far.
+- Boss: A boss can't be picked up. X shoves it instead and takes a big bite of stance. Every hit still stops at the 20% cap.
+- Fair: Other players are never grabbed. In a cave or a gate you only grow as far as the roof allows, and if a roof closes in you shrink to fit, so you can't get stuck.
+- Earned: Offered at the D Proving if most of what you've done with powers so far is Kinetic. Anyone else can get its Core from the gates that lean Kinetic, once Cores have sources.
+- Reading: [Bram Okoye was five foot two and lifted a bus off a child outside Carillon station. He weighs a lot more in the Choir's copy than he did in life. So will you.]
+- Levels: Longer Stride: You cover ground at the speed your legs look like they should.; Uprooted: X can tear up a tree or a boulder and throw that.; Walking Earthquake: Each step ripples the ground and trips small things near your feet.; The Whole Height: Awakened. Seven times your height on open ground, and the first stomp cracks the land out to 30 blocks.
+- Engine: The game's size attribute goes up to 16 times and we already use it on mobs (`MobScaling`). Step height, reach and jump are attributes too.
+- Unknown: How the camera and first-person arms behave at five times size. One short test.
+
+### Stopped Clock (Time, Ultimate, on R, wave 1, about 4 hours)
+
+One tick of a clock, then nothing. Every creature near you stops dead, the colour drains out of the world and only you and your own powers keep theirs. For three seconds you walk around a fight that's holding its breath. Arrows hang where they were. Everything you do is held: your shots leave your hand and stop a metre out, and your hits pile up on whatever you struck. Then the clock starts again and all of it lands in the same instant.
+
+- Thrill: It's three seconds of planning inside a fight, and then one enormous payoff that you built. You walk round a frozen boss laying shots around it like a firing squad. The better you compose those three seconds, the bigger the one frame at the end.
+- Only it: Flow and Foresight slow things down. This is the only power where what you do waits, so you're stacking up a single moment instead of hitting things in turn.
+- Look: On your screen every creature freezes mid-step, animation included. Held shots stay lit and slowly turn. A thin white mark appears for each hit waiting on a target. On release: one frame of white, then full colour comes back all at once.
+- Sound: The tick. Then almost nothing: the whole mix drops to a low hum and your footsteps are the only clear thing. Each held hit adds one quiet note to a rising stack. On release the stack and every impact play as a single hit with a long tail.
+- Right way: Land your last held hit in the final half second. A full stack ends with a bigger release.
+- Boss: Bosses don't stop. They drag at a quarter speed so a fight stays a fight. All your held hits on one boss count as a single hit for the 20% cap, and the release is worth Massive stance.
+- Fair: Other players never stop. A held hit is dropped if its target has left the area. If you die or log out, nothing is held any more and the world starts again.
+- Earned: Offered at the D Proving if you mostly fight with Velocity powers. Everyone else earns it by taking Flow or Foresight to level 5: stay in slow time long enough and one day it stops.
+- Reading: [Yusra Demir mended clocks. When the Choir asked her what she wanted, she said one more minute with the shop open. She's still in it. It's still that minute.]
+- Levels: Another Second: Four seconds, and you can hold one more shot.; Pushed Aside: Slap a hanging arrow or bolt and it goes where you sent it when the clock restarts.; Everything At Once: Held hits also set off any State on the target, all together.; Noon: Awakened. Six seconds. Rain stops in the air, and for a second after the release nothing near you can cast.
+- Engine: `TimeSlow` already cancels creatures' ticks near you. The client has its own freeze switch (`TickRateManager`), and the renderer already honours it for every creature, so only you see the full stop.
+- Unknown: Vanilla particles and rain aren't covered by that switch. Our own effects can hang. The rest needs trying.
+
+### Road Ahead (The road, Movement, on Left Alt, wave 2, about 4 hours)
+
+Hold Left Alt and start running. A strip of hard light lays itself down in front of your feet, tile by tile, wherever you're looking. Run off a cliff and it carries on. Look up and it climbs. Lean into a turn and it banks. It stays behind you for ten seconds and then falls away in pieces.
+
+- Thrill: It's a line you draw across the sky with your own body. There's speed to build on the way down and speed to lose on the way up, so a long run is a real piece of driving. You can jump off it, drop, and land back on your own road further along.
+- Only it: Every other way of moving is a burst or a hover. This one is continuous and you steer it, and it leaves something behind that's still there when you look back. Other players can run on it too.
+- Look: Warm blueprint gold. The tiles snap into place with a small overlap, so it reads as something being built very fast. The edges glow where you've just been and cool as they age. At the end of its life each tile drops and rings off the next.
+- Sound: A ratchet that clicks once per tile and speeds up with you until it blurs into one rising note. Creaks on the tight bends. A wooden boom as you pass twice sprint speed.
+- Right way: Come off the end of the road with speed and land on a ledge or a creature. The speed carries into the Ascent's next move.
+- Boss: Lay it round a boss and you can stay out of reach, but a hit needs a landing. Coming off the end onto a boss is a drop attack that counts your speed.
+- Fair: It costs energy for every second you're climbing, less on the flat and none going downhill. Run out on the way up and the tiles ahead flicker for a second before you drop, so you always get a warning.
+- Earned: Reach the top of an Elder Colossus or a Lumen Spire on foot. The Core waits in the cache beside the crown.
+- Reading: [Pia Lund carried the post on foot between the hill towns. In the last winter she got tired of waiting for roads. There's a line of frost across the pass that still hasn't melted.]
+- Levels: Banking: No speed lost in the turns.; Two Lanes: Wide enough to turn round on, and a friend can keep up beside you.; Kerb: Small creatures that touch it get tripped.; The Long Road: Awakened. It stays for thirty seconds, and going downhill pays energy back.
+- Engine: Water Run already holds you up with client physics, and the Runner's hang already passes the game's floating check. A road is a list of points plus a drawn strip, with no block changes at all.
+- Unknown: Whether it feels like driving or like sliding on glass. That's the whole power, so it gets its own test.
+
+### Say It Back (Their moves, Active, on Z X C or V, wave 2, about 5 hours)
+
+When a boss or Lord throws a big move at you and you dodge it, deflect it or read it cleanly, this key takes a copy for fifteen seconds. Its icon changes to show what you've got. Press it and you do that move: its shape, its reach, its colours and its own sound, from your own hands, aimed where you're looking.
+
+- Thrill: The biggest thing in the room just tried to kill you with it, and now it's yours. Every boss gives you something different, so this power plays differently in every fight you'll ever have.
+- Only it: It's the one power whose content comes from the enemy: 497 moves across 47 bosses, 47 of them signatures. It's also the answer to Fights That Read You. They read what you've started. This lets you read them back.
+- Look: The copy is made of glass in the boss's own colours. A blow comes out as a huge glass limb the size of the boss's own, swinging from your shoulder through the real arc of the move. A ring of bolts is the boss's own bolts. A slam is its own crater, lit from inside.
+- Sound: The move's own sound, taken up three semitones and dried out, with a glass ringing on top. You recognise it instantly, and it sounds like a bad impression of the thing that scared you.
+- Right way: Say it back while the boss is still recovering from the original. It lands Clean and staggers harder.
+- Boss: The damage is yours, worked out from your own level and never the boss's. A boss hit by its own signature takes double stance and can't use that move again for 20 seconds.
+- Fair: Moves that make no sense in your hands get a translation: a summon gives you one short-lived copy of yourself, a guard gives you a perfect guard for a second, a heal heals you a little. It never copies another player.
+- Earned: The first time you cleanly answer a Lord's signature move at rank B or higher, the System offers it.
+- Reading: [Ines Okafor could repeat anything she'd heard once, in the voice she heard it in. Mostly she used it to win arguments with her mother. The Choir read her for eleven minutes, and she read it back.]
+- Levels: Long Memory: It holds a copy for thirty seconds.; Two at Once: It holds two moves on one key, and each press spends the oldest.; Word for Word: Signature moves come out at the boss's full size.; Say It First: Awakened. If a boss starts a move you've said back before, pressing now beats it to the punch, cancels its move and takes a huge bite of stance.
+- Engine: Every boss move is data (`KitMoves`): hit shapes, timing, sounds and what kind of ability it is. The 25 ability kinds are a fixed list (`Ability.Kind`), so one set of player versions covers every boss.
+- Unknown: More than half the moves (265 of 497) are body blows, so the glass limb has to look right. One boss in a test will show it.
+
+### Toll (Sound, Active, on Z X C or V, wave 2, about 4 hours)
+
+You strike the air with your open hand. Every sound in the world drops away. Half a second later a bell goes off that's bigger than anything you've heard in this game, and you can see the sound leave: a thin gold ring going out across the land, through hills, out past where you can see. The Deep's creatures reel. And any bell you haven't found that's within earshot answers, faintly, from where it is.
+
+- Thrill: The silence first. Then the size of it. You stand on a hill and watch a ring cross the valley, and then from somewhere out there you hear one small note come back.
+- Only it: It's the only power that's as much for the map as for the fight, and the only one where the sound is the weapon. It also ties straight into the game's main goal.
+- Look: A hair-thin gold ring that bends the view as it passes, shakes dust off every surface it crosses and lifts the birds. An answering bell shows as a small ring on the horizon in the right direction.
+- Sound: Built from the bell work already in the game. The silence is the existing muffle system taken nearly all the way down, so the first thing you hear is your own hand landing.
+- Right way: Strike within a beat of a real bell ringing near you and yours takes its note and goes out twice as far.
+- Boss: Deep and Hollow bosses take Massive stance and lose their next move. Everything else takes a Medium hit to stance. The Deep can't stand it, and the rest just don't like it.
+- Fair: Reach runs from 60 blocks at 50 bells up to 200 at 100. A setting keeps the silence from being total for anyone who finds it uncomfortable, and subtitles give the direction of an answering bell.
+- Earned: Ring 50 of the Hundred. It comes from the bells themselves, and its reach grows with every one you ring after that.
+- Reading: [Marta Selby rang the noon bell in Carillon for forty years and was late exactly once. She was on the stairs when the bells stopped. She's still on the stairs.]
+- Levels: Carrying: The answering bell is louder, and you can tell how far away it is.; Held Note: Hold it and the silence lasts three seconds. Nothing caught in it can cast.; Second Stroke: Press again as the ring fades to send a second one.; Full Peal: Awakened. Three strokes, and every bell you've rung within reach sounds along with them.
+- Engine: `Bells.count` gives your number. `Soundscape.muffle` already takes the world's sound down for dreams. A screen-bending pass already exists for power impacts (`FxScreen`).
+- Unknown: How far out the ring still reads. Far Sight's distant land may hide it.
+
+### The Long Cut (The horizon, Ultimate, on R, wave 2, about 5 hours)
+
+Hold R. A hair-thin white line draws itself across the ground from your feet to as far as you can see, following the land over hills and across valleys. You can sweep it left and right. Let go and for half a second nothing happens. Then the land opens along that line, from your feet to the horizon, in one travelling wave. Anything on it is cut. Trees drop in. Over the next half minute it closes again, from the far end back toward you.
+
+- Thrill: You changed the view. From a hilltop you can see the whole of what you just did, a straight line through everything for 200 blocks. The half second of nothing between letting go and the land opening is the best part.
+- Only it: The longest reach any power has today is 48 blocks. This one reaches the horizon, and its effect is the landscape.
+- Look: A cut three blocks wide and up to twenty deep. The inside walls glow like cooling steel and steam comes off any water that falls in. Near you the blocks are really gone. Far away it's drawn on the land as a dark seam with hot edges, which costs almost nothing.
+- Sound: A rising glass tone that stops dead. Half a second of nothing. Then a tearing sound that starts at your feet and travels away from you, and the far end reaches you late, the way thunder does.
+- Right way: Let go in the brief moment the line goes gold at full length.
+- Boss: One Massive hit and Massive stance, only if the line crosses it, inside the 20% cap. Worth aiming.
+- Fair: It never touches anything anyone has built, any village, or any block that can't be put back. In a gate the floor holds and you get the line of damage with no canyon. Everything comes back on its own, even after a crash.
+- Earned: The first S-rank Lord you finish with an Energy power on your bar hands you its Core.
+- Reading: [Tomasz Ilyin was told to draw a line on the map to show where the evacuation would stop. He had a Halo gun and a bad sense of humour. Nobody crossed that line for nine years.]
+- Levels: Steady Hand: A wider sweep while you hold.; Second Line: Press again to cross it with another.; Deep Cut: Creatures caught in it are stuck for two seconds.; Both Ways: Awakened. It goes out in front of you and behind you at once.
+- Engine: `TerrainLedger` takes blocks out and puts them back, even after a crash, and refuses protected ground. Real blocks only within about 40 of you, spread over a second. `Soundscape.muffle` does the silence.
+- Unknown: The frame cost of even that many block changes on your Mac. And whole trees: you told me nothing should float, so a cut tree has to go down in one piece.
+
+### Borrowed Body (Someone else's body, Ultimate, on R, wave 3, about 8 hours)
+
+Press R looking at a creature. Your body kneels where it stands with its eyes shut, and you're inside the creature. You walk on its legs at its height. Left click swings what it swings, and Z, X, C and V are its own moves. Press R at another creature and you jump across, and the one you left falls over.
+
+- Thrill: You get to be the monster. A ten-block beast rampaging through its own friends, then you hop to the thing on the roof that was about to shoot you. Chaining hops through a whole room is the skill, with your real body waiting, helpless, somewhere behind you.
+- Only it: Everything else changes what your character does. This changes who your character is. No other power hands you another creature's height, speed and moves.
+- Look: A thin pink thread runs from your kneeling body to the creature's head, tighter and brighter the further you go. The camera drops or rises to its real eye height. The creature you're wearing has a pink light where its eyes are.
+- Sound: Your own breath, small and far behind you, under the creature's heartbeat and all its real sounds right up close. When your body is hit you hear it from the wrong direction.
+- Right way: Hop in the moment the creature you're in would die. You keep the time you had left, plus two seconds.
+- Boss: You can't get into a boss. Press R at one and you reach in for a moment: it drops its next move and stumbles a step.
+- Fair: Twelve seconds at most. Your real body can be hit, and one hit pulls you back. You can't go further than 48 blocks from it. Never other players, and never anyone who lives at your Hearth. Kills count for half the mastery.
+- Earned: Take Dominate to level 5. You've been giving orders to creatures for long enough that one day you go in yourself.
+- Reading: [Ren Takeda looked after other people's dogs. He could tell you exactly what one was about to do. The Choir found out why, and then nobody could find Ren. Keep your own body somewhere safe.]
+- Levels: Better Fit: Sixteen seconds.; Quick Hands: A hop costs no time at all.; Someone Watching: Your kneeling body gets a dome that takes the first hit.; Full Occupancy: Awakened. Whatever you were last inside keeps fighting for you for ten seconds after you leave.
+- Engine: Handing the camera to another entity is already done for the opening, the Forge and the map (`setCameraEntity`). The moves of every boss-grade creature are data. Dominate already takes creatures over through `Allies`.
+- Unknown: This is the riskiest of the eight. Driving a creature by hand instead of by its brain hasn't been tried here. It gets its own test, and if that's poor I'll say so and drop it.
+
+### Last Time Round (Your own past, Ultimate, on R, wave 3, about 5 hours)
+
+Press R. The last eight seconds of your fight are pulled out of you. A white figure with gold seams and no face stands up where you were eight seconds ago and does exactly what you did: the same steps, the same powers, at the same moments, at 60% strength. Meanwhile you're free to do something else.
+
+- Thrill: You get to fight beside yourself, and you can plan for it. Set up a Well, throw a punch, press R, and spend the next eight seconds doing what your past self couldn't. When your old Well meets your new Nova, that's a Duet, and you played both halves.
+- Only it: It's the only power whose effect is whatever you just did. Play well and it's devastating. Play badly and you get to watch yourself do it again. It can't be the same twice.
+- Look: The same body as the Last Loop, at your size. Just before it stands, the path it's about to walk lights up from the far end as a thin gold line, exactly as the boss did it to you. Every power in its hands is white and gold instead of its family's colour, so you never mistake it for yourself.
+- Sound: Your own sounds, half a step lower and with a long tail, arriving very slightly late. A soft bell ticks off the eight seconds.
+- Right way: Press it the moment you land a Clean cast. The figure starts with your rhythm and its first cast is Clean too.
+- Boss: Real damage and real stance at 60%, inside every cap. Bosses can't read it, because it isn't deciding anything.
+- Fair: It repeats what your powers did. It never builds, never summons and never moves land. Only one at a time until level 5, and it can't record itself.
+- Earned: Beat the Last Loop, the final Proving. It kneels, lays its blade down, and this is what it leaves.
+- Reading: [That was you. You got further than this once, and everything you've got, you brought back with you. There's no other name on this one.]
+- Levels: Ten Seconds: Ten seconds of you instead of eight.; Step Back: Press R again while it's out and you swap places with it, wherever it's got to.; Word for Word: Full strength if you were Clean when you pressed it.; Every Time Round: Awakened. Two figures: the last eight seconds, and the eight before.
+- Engine: The Last Loop boss already keeps your path, a sample every two ticks. `EchoGhost` already walks a recorded path wearing your skin. Power hits run through one place (`Combat.hurt`) and effects through another (`Fx`), so the figure repeats the results and never has to re-run 63 powers' code.
+- Unknown: Whether repeating results looks right when the target has moved. A test with four powers will show it.
+
+## Ideas cut
+
+- **Nobody Home**: In my first draft. For six seconds nothing near you remembers you're there. Cloak already does nearly this. It's a good trick, and it isn't a new kind of thing.
+- **Second Try**: In my first draft. Go back to where you stood four seconds ago with the health you had then. Last Time Round says the same thing better, and its Step Back level gives you the best part. Rewinding health sits badly with fair damage.
+- **Under**: Swim through solid ground and come up beneath someone. The game resets a player's collision every tick, and a camera inside stone is a rendering job of its own. Lovely, and too much risk for now.
+- **Orbit**: Lock on to a boss and circle it like a moon, faster and faster, then fling off. A great feel, and better as a level 5 Way for Gravity Well than as its own power.
+- **Two Doors**: Place two linked doors and send anything through. Without seeing through them it's half the idea, and a live view through a door is too much for your frame rate.
+- **Down Is Over There**: Pick any wall and make it your floor. The game's physics knows up and down and nothing else. It would mean rebuilding how the player moves.
+- **Eclipse**: Cover the sun and fight at midnight in the middle of the day. Looks wonderful, but underneath it's a colour grade and a damage buff. Better as Legion's Awakened look.
+- **Thousand Cuts**: The world stops and you flash through everyone with camera cuts. Hundred Palms and Lightning Step already own this.
+- **Comet**: Go up out of sight and come down as a meteor. The Ascent's Judgement Fall is this, and the rule is that the Ascent's moves stay the Ascent's.
+- **Second Wind**: At zero health you get six seconds to earn it back. It muddies fair damage and the way dying already works in gates and dreams.
 
 ## Recommendations
 
@@ -663,6 +815,20 @@ Source for the approval page `plan.html` (built by `build_page.py` from `powers_
 14. At level 5 of your starter, tell the player the last reading has their own name on it. "You picked this one last time too." (If no: Your starter's last reading is an ordinary one.)
 15. Give Power Cores a source: each gate theme and Lord leans toward the families it has swallowed, so a player can go looking for one. (If no: Cores stay random by rank.)
 16. At level 5 the System reads how you actually used the power and offers up to three ways to keep it. You pick one, and can change it later. (If no: Level 5 stays exactly as it is today, which you already like.)
-17. Add the five new powers: Titan, Stopped Clock, Nobody Home, Toll and Second Try. They come last and can be skipped. (If no: Five fewer powers. Kinetic, Velocity and Mind players get offered Overload, Legion or Gravity Flip for their first ultimate.)
+17. Build new powers at all, in three waves with a stop after each so you can end it there. The last eight answers say which ones. (If no: Just the reworked 63. Kinetic, Velocity and Mind players get offered Overload, Legion or Gravity Flip for their first ultimate.)
 18. Add a Powers tab to the K menu's Tasks page and a Choir's Record page to the Journal. (If no: Powers stay off the Tasks page, which breaks your standing rule, so I'd ask you to think again.)
 19. Build a playable proof first (Haymaker, Shockwave, Gravity Well, Railgun, with Clean, stance and their sound packs) and stop for you to play it before anything else. (If no: I'd build straight through. It's faster, but it's much harder to stop cheaply if Clean turns out to feel wrong.)
+20. Make getting a power an event: hold to crack the Core, your first press is free, and a Core is never wasted. (If no: A Core keeps working as it does today: right-click and it's done. A Core of a mastered power stays useless.)
+21. Three saved sets of six keys, and a power card that shows damage, the right way, the Duets you've found and a Try button. (If no: One set of six keys, and the card stays as it is.)
+22. A press kept for 0.15 seconds so a press just before a cooldown ends still fires, hold to aim for powers that land somewhere, and refusals said at your crosshair with a sound. (If no: A press made a moment early keeps getting thrown away, and you keep finding out where a big power lands by casting it.)
+23. A small glint on a key when a Duet you've already found is on offer, and a big moment the first time you find one. (If no: You'd have to remember your Duets yourself. The list in the Journal is still there.)
+24. Keep the level-up exactly as it is, and add a free Try It press, the next Reading line, and a thin line on the slot when the next level is close. (If no: Level-ups stay exactly as they are today.)
+25. Remake the bar for fighting: a glint and a tick when a power comes back, a bright cooldown sweep, family colours on every edge, and two small arcs at the crosshair in a fight. (If no: Today's bar stays, and a power coming back stays silent and unmarked.)
+26. Titan: you grow as big as the place allows, up to nine blocks, and pick things up. (If no: Kinetic players choose another ultimate at the D Proving.)
+27. Stopped Clock: three seconds of frozen fight, and everything you did lands in one instant. (If no: Velocity players choose another ultimate at the D Proving, and Flow stays the top of the time powers.)
+28. Road Ahead: run and a road of light lays itself down wherever you look. (If no: Architect still has no movement power, and the Ascent stays the only way to travel at speed.)
+29. Say It Back: answer a boss's big move cleanly and for fifteen seconds it's yours. (If no: Mind keeps its five reworked powers, and a boss's moves stay the boss's.)
+30. Toll: silence, then a bell you can see, and every sleeping bell in earshot answers. (If no: Bells stay out of your powers, which leaves the Deep's one stated weakness unused.)
+31. The Long Cut: draw a line to the horizon, let go, and the land opens along it. (If no: Energy's biggest moment stays the Beam, and nothing reaches past 48 blocks.)
+32. Borrowed Body: leave your body kneeling and walk around in a monster's. Only if its test comes out well. (If no: Dominate stays the top of that line, with its rework.)
+33. Last Time Round: the last eight seconds of your fight stand up and do it all again beside you. (If no: The Last Loop's reward stays as it is, and the story's best idea stays out of your hands.)

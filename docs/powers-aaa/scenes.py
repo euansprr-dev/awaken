@@ -217,6 +217,52 @@ class P:
         s = ' stroke="%s" stroke-width="1.5"' % stroke if stroke else ""
         return self.add('<rect x="%s" y="%s" width="%s" height="%s" rx="3" fill="%s" opacity="%s"%s/>' % (n(x), n(y), n(w), n(h), fill, n(op), s))
 
+    def cliff(self, x_end, c="#4b4d58", cap="#62704f"):
+        """Ground that stops at x_end: a drop into the valley."""
+        for i in range(x_end // B):
+            x = i * B
+            for j in range(4):
+                k = 0.86 + self.r.random() * 0.24
+                self.add('<rect x="%d" y="%d" width="%d" height="%d" fill="%s"/>' % (x, self.gy + j * B, B, B, shade(cap, k) if j == 0 else shade(c, k)))
+        return self
+
+    def road(self, pts, c="#D9BA80", w=8, gap=13, fade=True, fall=0):
+        """A strip of hard-light tiles along a polyline; the oldest tiles are the dimmest, and the last `fall` of them are dropping."""
+        segs, total = [], 0.0
+        for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+            d = math.hypot(x1 - x0, y1 - y0)
+            segs.append((x0, y0, x1, y1, d))
+            total += d
+        at, tiles = gap / 2, []
+        while at < total:
+            rem = at
+            for x0, y0, x1, y1, d in segs:
+                if rem <= d:
+                    t = rem / d
+                    tiles.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, math.degrees(math.atan2(y1 - y0, x1 - x0)), at / total))
+                    break
+                rem -= d
+            at += gap
+        for i, (x, y, a, f) in enumerate(tiles):
+            op = (.3 + .7 * f) if fade else .95
+            dy = 0
+            if i < fall:
+                dy = (fall - i) * 7 + self.r.uniform(0, 8)
+                a += self.r.uniform(-34, 34)
+            self.add('<g transform="translate(%s %s) rotate(%s)" opacity="%s"><rect x="%s" y="%s" width="%s" height="%s" fill="%s"/><rect x="%s" y="%s" width="%s" height="2" fill="#fff4dc"/></g>' % (
+                n(x), n(y + dy), n(a), n(op), n(-gap / 2 + .5), n(-w / 2), n(gap - 1), n(w), c, n(-gap / 2 + .5), n(-w / 2), n(gap - 1)))
+        return self
+
+    def arrow(self, x, y, deg, c="#c9c9d0", l=20):
+        a = math.radians(deg)
+        x1, y1 = x + math.cos(a) * l, y + math.sin(a) * l
+        self.add('<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="2"/>' % (n(x), n(y), n(x1), n(y1), c))
+        return self.add('<circle cx="%s" cy="%s" r="2.5" fill="%s"/>' % (n(x1), n(y1), c))
+
+    def tree(self, x, y, s=1, c="#2f4230"):
+        self.add('<rect x="%s" y="%s" width="%s" height="%s" fill="#3a2c22"/>' % (n(x - 1.5 * s), n(y - 12 * s), n(3 * s), n(12 * s)))
+        return self.add('<rect x="%s" y="%s" width="%s" height="%s" fill="%s"/>' % (n(x - 7 * s), n(y - 24 * s), n(14 * s), n(14 * s), c))
+
     def svg(self, label):
         i = self.id
         defs = ('<defs><linearGradient id="%sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="%s"/><stop offset="1" stop-color="%s"/></linearGradient>'
@@ -322,6 +368,14 @@ def foresight():
     return [p1, p2, p3, p4]
 
 
+def ghost(p, x, pose="stand", face=1, y=None, op=1, s=1):
+    return p.person(x, pose, face, s, "#fff4dc", "#fff0cc", "#e8d9b4", "#F2C14E", y, op, "#F2C14E")
+
+
+def grey(p, x, pose="stand", face=-1, y=None):
+    return p.person(x, pose, face, 1, "#9a9aa2", "#6a6a72", "#4c4c54", "#d8d8e0", y, 1, "#7c7c84")
+
+
 def titan():
     gc, cap = "#4a4a54", "#5e6a52"
     p1 = P(61, "#141a30", "#33405a").ridge("#20283e").ground(gc, cap)
@@ -337,10 +391,213 @@ def titan():
     p3.person(96, "punch", s=2.6).add('<path d="M170 28 Q262 70 232 146" fill="none" stroke="#ffd08a" stroke-width="9" opacity=".65"/>')
     p3.mob(218, "fold", y=92).mob(262, "fold", y=70).mob(296, "fold", y=118).chunks(250, 126, 10, 36, cap).flash("#ffe3b0", .07)
 
-    p4 = P(64, "#10121f", "#242638", gy=146).roof(58).ground(gc, cap)
-    p4.person(120, "stand", s=1.62).ring(120, 62, 40, 7, RED, 2.5, .95).lines(120, 62, 8, 8, 22, RED, 2, .8, 20, 160)
-    p4.box(176, 76, 128, 40, "#0c0d1a", RED).text(240, 93, "NO ROOM", "#ffb3a8", 12, "middle", 700, 2).text(240, 108, "It shrinks you back", "#e9e4d8", 10, "middle")
+    p4 = P(64, "#141a30", "#33405a").ridge("#20283e").ground(gc, cap)
+    p4.person(96, "send", s=2.6).trail(150, 60, 286, 22, "#ffd08a", 8).mob(292, "fold", y=44).tree(190, 146, 1.6).beast(258, 40, s=.72)
+    p4.chunks(150, 140, 7, 24, cap)
     return [p1, p2, p3, p4]
+
+
+def last_round():
+    gc, cap = "#4a4a54", "#5e6a52"
+    p1 = P(71, "#141a30", "#33405a").ridge("#20283e").ground(gc, cap)
+    p1.add('<line x1="26" y1="144" x2="160" y2="144" stroke="%s" stroke-width="2" stroke-dasharray="4 5" opacity=".4"/>' % GOLD)
+    p1.person(178, "punch").beast(258, 60).glow(214, 100, 22, ORANGE, .6).star(214, 100, 16).bar(16, 22, 110, 1, GOLD, "LAST 8 SECONDS")
+
+    p2 = P(72, "#141a30", "#33405a").ridge("#20283e").ground(gc, cap)
+    p2.add('<line x1="36" y1="144" x2="160" y2="144" stroke="%s" stroke-width="3.5"/>' % GOLD).glow(36, 124, 34, GOLD, .85)
+    ghost(p2, 36, "land").person(178, "stand", face=-1).beast(258, 40)
+    p2.glow(32, 32, 20, GOLD, .7).ring(32, 32, 15, 15, GOLD, 4).text(32, 37, "R", "#fff", 14, "middle", 700)
+
+    p3 = P(73, "#161a34", "#3a4464").ridge("#20283e").ground(gc, cap)
+    p3.glow(190, 104, 30, GOLD, .55)
+    ghost(p3, 186, "punch").person(84, "send").trail(106, 96, 226, 86, BLUE, 11, 6).orb(232, 86, BLUE, 8).beast(264, 60)
+    p3.star(222, 100, 16, "#fff4dc")
+
+    p4 = P(74, "#2a2438", "#6a5a78").ridge("#2c2438").ground(gc, cap)
+    p4.glow(246, 92, 54, "#fff4dc", .95).lines(246, 92, 22, 24, 72, "#fff", 2.3, .9).star(246, 92, 30).beast(268, 30, lean=-13, op=.9)
+    ghost(p4, 186, "stand", op=.32).person(84, "stand").chunks(190, 92, 9, 28, GOLD, (3, 5)).bar(16, 22, 110, 1, "#ffb347", "STANCE", broken=True).flash("#fff4dc", .08)
+    return [p1, p2, p3, p4]
+
+
+def say_back():
+    gc, cap = "#40303a", "#5a4048"
+    fire = "#ff9a5a"
+    p1 = P(81, "#1a1226", "#3e2438").ridge("#26182e").ground(gc, cap)
+    p1.beast(250, 150, col="#6a2e2a", eye="#ffd27a").person(112, "stand").ring(112, 146, 46, 9, RED, 2.5, .95).ring(112, 146, 28, 6, RED, 2, .6)
+    p1.lines(208, 56, 7, 8, 24, fire, 1.5, .7).text(16, 30, "SIGNATURE MOVE", "#ffb3a8", 11, "start", 700, 2)
+
+    p2 = P(82, "#1a1226", "#3e2438").ridge("#26182e").ground(gc, cap)
+    p2.beast(250, 22, col="#6a2e2a", eye="#ffd27a").chunks(160, 136, 12, 26, "#5a4048").cracks(162, 148, 5, 28, "#0f0d14").glow(164, 142, 30, fire, .5).person(58, "step")
+    p2.box(14, 14, 118, 34, "#0c0d1a", PINK).add('<rect x="22" y="21" width="20" height="20" fill="%s"/>' % fire).text(50, 30, "COPY HELD", "#f5d9ee", 9, "start", 700, 1).text(50, 42, "15 seconds", "#e9e4d8", 10)
+
+    p3 = P(83, "#20162c", "#54304a").ridge("#26182e").ground(gc, cap)
+    p3.person(84, "send").glow(170, 104, 56, fire, .45)
+    p3.add('<g opacity=".8" transform="translate(98 92) rotate(-62)"><rect x="-13" y="0" width="26" height="118" fill="#ffc9a0"/><rect x="-13" y="0" width="6" height="118" fill="#fff0e0"/><rect x="-21" y="112" width="42" height="36" fill="#ffe2c8"/></g>')
+    p3.beast(272, 110, col="#6a2e2a", eye="#ffd27a")
+
+    p4 = P(84, "#2a1a30", "#6a3a52").ridge("#2a1c3a").ground(gc, cap)
+    p4.person(84, "stand").glow(246, 92, 46, fire, .9).lines(246, 92, 20, 22, 64, "#fff", 2.2, .9).star(246, 92, 28).beast(268, 26, col="#6a2e2a", eye="#ffd27a", lean=-13)
+    p4.bar(16, 22, 110, .84, PINK, "STANCE, DOUBLED").text(16, 52, "It can't use that for 20 s", "#f5d9ee", 10)
+    return [p1, p2, p3, p4]
+
+
+def clock():
+    t, b, r, g, cp = "#23242c", "#3a3b44", "#2b2c34", "#55565c", "#66676c"
+
+    def face(p, left):
+        p.ring(290, 30, 18, 18, "#fff", 2.5, .9).add('<line x1="290" y1="30" x2="290" y2="17" stroke="#fff" stroke-width="2"/>').text(290, 58, left, "#fff", 12, "middle", 700)
+
+    p1 = P(91, t, b).ridge(r).ground(g, cp)
+    grey(p1, 210, "float", y=118).person(92, "stand", shirt="#c23a30")
+    for x, y, d in ((140, 90, 172), (168, 72, 180), (150, 112, 190), (178, 104, 176)):
+        p1.arrow(x, y, d)
+    face(p1, "3")
+
+    p2 = P(92, t, b).ridge(r).ground(g, cp)
+    grey(p2, 218, "float", y=118).person(186, "punch", shirt="#c23a30")
+    for x, y in ((62, 84), (74, 106), (54, 118)):
+        p2.orb(x, y, "#ff8a7a", 5)
+    p2.star(222, 92, 11, "#fff").star(232, 104, 8, "#fff").star(212, 104, 7, "#fff").text(16, 30, "HELD 6", "#fff", 12, "start", 700, 2)
+    face(p2, "2")
+
+    p3 = P(93, t, b).ridge(r).ground(g, cp)
+    p3.beast(236, 60, col="#55555e", eye="#d8d8e0").person(82, "reach", shirt="#c23a30")
+    for k in range(9):
+        a = math.radians(k * 40 + 10)
+        p3.orb(236 + math.cos(a) * 58, 84 + math.sin(a) * 42, "#ff8a7a", 4.5)
+    p3.text(16, 30, "HELD 14", "#fff", 12, "start", 700, 2)
+    face(p3, "0.4")
+
+    p4 = P(94, "#3a1a18", "#a0482e").ridge("#4a2420").ground("#4b4a52", "#6f8a4a")
+    p4.glow(236, 88, 90, "#fff1d0", .95).beast(258, 20, lean=-14).lines(236, 88, 30, 26, 120, "#fff", 2.6, .95).star(236, 88, 44).person(82, "stand").flash("#fff1d0", .2)
+    return [p1, p2, p3, p4]
+
+
+def _persp(seed, a, b, hz=72):
+    p = P(seed, a, b, gy=hz).ridge("#2a3350", base=hz)
+    p.add('<rect y="%d" width="320" height="%d" fill="#4f6240"/>' % (hz, H - hz))
+    for i, y in enumerate((80, 90, 104, 124, 152)):
+        p.add('<rect y="%d" width="320" height="%d" fill="%s"/>' % (y, 3 + i * 2, "#5a6e48" if i % 2 else "#46583a"))
+    for x, y, s in ((40, 96, .6), (86, 86, .4), (232, 90, .45), (284, 110, .8), (262, 84, .3), (22, 134, 1.2), (306, 150, 1.4)):
+        p.tree(x, y, s)
+    return p
+
+
+def long_cut():
+    vx, hz = 196, 72
+
+    def cut(p, near, far, y_front, c0="#0d0a12"):
+        p.add('<polygon points="%d,%d %d,%d %s,%d %s,%d" fill="%s"/>' % (160 - near, 190, 160 + near, 190, n(vx + far), y_front, n(vx - far), y_front, c0))
+        return p
+
+    p1 = _persp(101, "#1d2c52", "#6a86b0")
+    p1.add('<line x1="160" y1="190" x2="%d" y2="%d" stroke="#fff" stroke-width="1.6"/>' % (vx, hz)).glow(160, 176, 16, BLUE, .6).person(160, "reach", y=190, s=.9)
+    p1.ring(160, 188, 62, 14, BLUE, 1.2, .5, "4 6")
+
+    p2 = _persp(102, "#141e3a", "#46587e").flash("#05060c", .42)
+    p2.add('<line x1="160" y1="190" x2="%d" y2="%d" stroke="%s" stroke-width="3"/>' % (vx, hz, GOLD)).glow(vx, hz, 16, GOLD, .9).person(160, "stand", y=190, s=.9)
+
+    p3 = _persp(103, "#1d2c52", "#6a86b0")
+    p3.add('<line x1="%d" y1="118" x2="%d" y2="%d" stroke="#fff" stroke-width="1.4"/>' % (vx - 13, vx, hz))
+    cut(p3, 38, 3, 116)
+    p3.add('<line x1="122" y1="190" x2="%d" y2="116" stroke="#ffb16a" stroke-width="3.5"/><line x1="198" y1="190" x2="%d" y2="116" stroke="#ffb16a" stroke-width="3.5"/>' % (vx - 3, vx + 3))
+    p3.glow(vx - 14, 118, 26, "#ffe7c0", .95).chunks(vx - 14, 112, 14, 26, "#5a6e48", (4, 9)).lines(vx - 14, 118, 12, 10, 34, "#fff", 2, .85, 180, 360).person(160, "stand", y=190, s=.9, op=.9)
+
+    p4 = P(104, "#1d2c52", "#7a92b8", gy=86).ridge("#2a3350", base=86)
+    p4.add('<rect y="86" width="320" height="104" fill="#4f6240"/>')
+    p4.add('<polygon points="20,190 96,190 318,88 306,88" fill="#0d0a12"/>')
+    p4.add('<line x1="20" y1="190" x2="306" y2="88" stroke="#ffb16a" stroke-width="3"/><line x1="96" y1="190" x2="318" y2="88" stroke="#ffb16a" stroke-width="3"/>')
+    for x, y in ((90, 150), (160, 122), (232, 104)):
+        p4.glow(x, y, 16, "#ffe7c0", .35)
+    p4.add('<rect x="182" y="168" width="150" height="24" fill="#3a4a30"/>').person(232, "stand", y=170, s=.55).tree(280, 170, 1.2).tree(204, 170, .9)
+    return [p1, p2, p3, p4]
+
+
+def road_ahead():
+    ARC = "#D9BA80"
+    gc, cap = "#4b4d58", "#62704f"
+    p1 = P(111, "#1a2f55", "#6f94bd", gy=118).cliff(128, gc, cap)
+    p1.add('<rect y="170" width="320" height="20" fill="#2c3e3a"/>').road([(128, 118), (170, 116), (206, 108)], ARC, fade=False).person(112, "step", y=118).glow(206, 108, 16, "#ffe6b8", .9)
+
+    p2 = P(112, "#1a2f55", "#7fa6cd", gy=176).ridge("#31465f", base=176).ground("#39483c", "#4a5e44")
+    p2.road([(0, 168), (50, 158), (100, 134), (148, 100), (196, 76), (232, 66)], ARC).person(226, "step", y=63).lines(190, 80, 6, 40, 70, "#fff", 1.6, .55, 130, 190)
+
+    p3 = P(113, "#1a2f55", "#7fa6cd", gy=176).ridge("#31465f", base=176).ground("#39483c", "#4a5e44")
+    p3.road([(10, 60), (70, 44), (140, 56), (190, 94), (178, 136), (118, 146), (84, 118)], ARC).person(92, "step", y=112, face=-1).lines(120, 130, 7, 20, 44, "#fff", 1.6, .5, 0, 90)
+    p3.add('<rect x="226" y="92" width="52" height="84" fill="#3c3a44"/>').text(252, 84, "BOOM", "#ffe6b8", 13, "middle", 700, 2)
+
+    p4 = P(114, "#241e36", "#7a5f70", gy=146).ridge("#2c2438").ground(gc, cap)
+    p4.road([(0, 34), (50, 40), (104, 58)], ARC, fall=2).person(166, "punch", y=96).trail(106, 60, 158, 88, ARC, 9).beast(236, 80).glow(198, 88, 26, "#ffe6b8", .75).star(200, 88, 16)
+    return [p1, p2, p3, p4]
+
+
+def _bell(p, x, y, s=1, c="#d9b36a"):
+    return p.add('<g transform="translate(%s %s) scale(%s)"><path d="M-7 8 Q-6 -8 0 -9 Q6 -8 7 8 L10 11 L-10 11 Z" fill="%s"/><circle cx="0" cy="13" r="2.4" fill="%s"/></g>' % (n(x), n(y), n(s), c, c))
+
+
+def toll():
+    gc, cap = "#3b3a54", "#4c4e68"
+    deep = dict(skin="#4a3f66", shirt="#2b2342", legs="#1e1930", eye="#ff5a8a", hair="#39305a")
+    p1 = P(121, "#1b2542", "#46527a").ridge("#28304e").ground(gc, cap)
+    p1.person(236, "stand", -1, **deep).person(280, "stand", -1, **deep).person(44, "stand", 1, **deep).person(146, "send").star(172, 98, 13, GOLD).glow(172, 98, 14, GOLD, .7)
+
+    p2 = P(122, "#101526", "#262d48").ridge("#1a2038").ground(gc, cap).flash("#05060c", .46)
+    p2.person(236, "stand", -1, **deep).person(280, "stand", -1, **deep).person(44, "stand", 1, **deep).person(146, "send").ring(172, 98, 8, 8, GOLD, 1.5, .95)
+
+    p3 = P(123, "#1b2542", "#5a668e").ridge("#28304e").ground(gc, cap)
+    for rx, o, w in ((206, .4, 1.6), (150, .7, 2.2), (92, 1, 3)):
+        p3.ring(172, 98, rx, rx * .72, GOLD, w, o)
+    p3.person(146, "send").person(246, "fold", -1, y=132, **deep).person(292, "fold", -1, y=126, **deep).person(40, "fold", 1, y=130, **deep).chunks(172, 150, 10, 110, cap, (3, 7))
+
+    p4 = P(124, "#2a3a62", "#7c8cb0", gy=150).ridge("#3a4668", base=150).ground("#3c4a42", "#4e6450")
+    p4.add('<polygon points="222,150 262,70 300,150" fill="#30394f"/>')
+    _bell(p4, 262, 58, 1.1).ring(262, 58, 20, 20, GOLD, 1.6, .85).ring(262, 58, 34, 34, GOLD, 1.1, .45)
+    p4.person(60, "stand", s=.8).add('<line x1="84" y1="102" x2="228" y2="66" stroke="%s" stroke-width="1.5" stroke-dasharray="5 6" opacity=".7"/>' % GOLD).text(36, 34, "A BELL ANSWERS", "#ffe9b8", 12, "start", 700, 2)
+    return [p1, p2, p3, p4]
+
+
+def borrowed():
+    gc, cap = "#3b3644", "#544a5e"
+    hot = "#ff9ad6"
+
+    def thread(p, x0, y0, x1, y1, w=2):
+        mx, my = (x0 + x1) / 2, min(y0, y1) - 26
+        p.add('<path d="M%s %s Q%s %s %s %s" fill="none" stroke="%s" stroke-width="%s"/>' % (n(x0), n(y0), n(mx), n(my), n(x1), n(y1), hot, n(w)))
+
+    p1 = P(131, "#1a1226", "#3a2a4a").ridge("#241a34").ground(gc, cap)
+    p1.person(72, "reach").beast(248, 40)
+    thread(p1, 80, 96, 244, 46)
+    p1.glow(244, 46, 16, hot, .8)
+
+    p2 = P(132, "#1a1226", "#47304e").ridge("#241a34").ground(gc, cap)
+    p2.person(56, "land").beast(190, 40, face=1, eye=hot).mob(288, "stand").mob(306, "wind")
+    thread(p2, 56, 100, 202, 46)
+
+    p3 = P(133, "#1f1430", "#553058").ridge("#241a34").ground(gc, cap)
+    p3.person(40, "land", op=.8).beast(170, 102, face=1, eye=hot, lean=9).glow(228, 96, 34, hot, .55).mob(244, "fold", y=92).mob(288, "fold", y=56).chunks(258, 126, 9, 30, cap)
+    thread(p3, 40, 100, 182, 46, 1.6)
+    p3.box(14, 14, 86, 30, "#0c0d1a", hot).text(22, 34, "8 s left", "#f5d9ee", 13, "start", 700)
+
+    p4 = P(134, "#1a1226", "#3a2a4a", gy=146).ridge("#241a34").ground(gc, cap)
+    p4.add('<rect x="238" y="82" width="82" height="64" fill="#3c3a44"/><rect x="232" y="76" width="94" height="8" fill="#4c4a54"/>')
+    p4.person(36, "land", op=.8).beast(154, 30, lean=34, op=.55).person(274, "wind", -1, skin="#6f8a5a", shirt="#3d4a36", legs="#2c3328", eye=hot, y=76, hair="#55703f")
+    thread(p4, 166, 56, 270, 30, 3)
+    p4.glow(270, 30, 20, hot, .85).text(16, 30, "HOP", "#f5d9ee", 14, "start", 700, 3)
+    return [p1, p2, p3, p4]
+
+
+def new_boards():
+    """Storyboards for the new powers, by id in powers_data.NEWP."""
+    return {
+        "titan": dict(panels=titan(), caps=["The R key is full.", "You grow in three heaves, as big as the place allows.", "One swing clears the room.", "X picks up anything smaller than you and throws it."]),
+        "clock": dict(panels=clock(), caps=["One tick, and the colour goes. Only you still move.", "Your shots hang behind you. Your hits pile up.", "You've got under a second left, and the boss is surrounded.", "The clock starts. All of it lands at once."]),
+        "road": dict(panels=road_ahead(), caps=["You run off the edge and the road carries on.", "Look up and it climbs. The oldest tiles are already fading.", "It banks where you lean. Past twice sprint speed, you hear it.", "Off the end and onto them. The road drops away behind you."]),
+        "back": dict(panels=say_back(), caps=["The boss starts the move that's been killing you.", "You get out of it cleanly, and the key takes a copy.", "You swing its own arm at it, made of glass, as big as the real one.", "A boss hit by its own signature takes double stance."]),
+        "toll": dict(panels=toll(), caps=["You strike the air with your open hand.", "Every sound in the world drops away.", "Then the bell, and you can see it leave. The Deep's creatures reel.", "Somewhere out there, one you haven't found answers."]),
+        "cut": dict(panels=long_cut(), caps=["Hold. A line draws itself to the horizon.", "Let go. Half a second of nothing.", "The land opens along it, travelling away from you.", "From up on the hill you can see all of what you did."]),
+        "body": dict(panels=borrowed(), caps=["You reach for the big one.", "Your body kneels. You're looking out of its eyes now.", "Twelve seconds of being the monster.", "It falls over and you're already in the next one."]),
+        "loop": dict(panels=last_round(), caps=["You fight for eight seconds. The game is keeping them.", "Press R. Your path lights up and something stands at the far end.", "It does what you did, while you do something new.", "Your old punch and your new shot arrive together."]),
+    }
 
 
 def boards():
@@ -370,11 +627,6 @@ def boards():
             "A gold ghost plays the next second on the real path, and you hear the hit backwards.",
             "You step out. The real blow lands exactly where the ghost's did.",
             "Your counter lands Clean while its arm is still in the ground."]),
-        dict(id="sb-titan", title="Titan", fam="Kinetic", color=GOLD, kind="New power, optional", panels=titan(), caps=[
-            "The R key is full.",
-            "You grow to three times your size. The ground shakes with each step.",
-            "One swing clears the room.",
-            "Under a low ceiling it refuses, or shrinks you back if the roof closes in, so you can't get stuck."]),
     ]
 
 
