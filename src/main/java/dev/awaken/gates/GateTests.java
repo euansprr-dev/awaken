@@ -54,8 +54,8 @@ final class GateTests {
                     int d = Math.abs(p.rank().ordinal() - player.ordinal());
                     h.assertTrue(d <= 1, "rank within one of the player's: " + p.rank() + " for " + player);
                     h.assertTrue(p.theme().fits(p.rank()), "theme " + p.theme() + " fits rank " + p.rank());
-                    for (int k = Math.max(0, themes.size() - 3); k < themes.size(); k++)
-                        h.assertTrue(!themes.get(k).equals(p.theme().id), "no theme from the last 3 (" + p.theme() + " at roll " + i + ")");
+                    for (int k = Math.max(0, themes.size() - 2); k < themes.size(); k++)
+                        h.assertTrue(!themes.get(k).equals(p.theme().id), "no theme from the last 2 entered (" + p.theme() + " at roll " + i + ")");
                     for (int k = Math.max(0, layouts.size() - 2); k < layouts.size(); k++)
                         h.assertTrue(!layouts.get(k).equals(p.layout().name()), "no layout from the last 2 (" + p.layout() + ")");
                     int cost = 0;
@@ -68,12 +68,79 @@ final class GateTests {
                     h.assertTrue(sinceTwist <= 11, "a twist at least every 12 gates");
                     h.assertTrue(p.floors() == Math.min(6, 3 + p.rank().ordinal() / 2) || p.floors() == Math.min(6, 4 + p.rank().ordinal() / 2), "floors via Curve");
                     h.assertTrue(roll.breaksInDays() >= 1 && roll.breaksInDays() <= 5, "break days via Curve");
+                    mem.sawTheme(p.theme().id); // as if you went in: only that takes a theme out of the bag
                     themes.add(p.theme().id);
                     layouts.add(p.layout().name());
                 }
             }
             Director.Roll a = Director.roll(777, Rank.C, new GateMemory(), null, null), b = Director.roll(777, Rank.C, new GateMemory(), null, null);
             h.assertTrue(a.plan().equals(b.plan()) && a.trace().equals(b.trace()), "same seed and memory → same gate and trace");
+            h.succeed();
+        });
+
+        // SPEC §50.2: 10,500 gates, none of them a theme you've been in since the bag last refilled
+        AwakenTests.register("gates_bag_no_repeat", 100, h -> {
+            for (Rank rank : Rank.values()) {
+                GateMemory mem = new GateMemory();
+                String last = null, before = null;
+                for (int i = 0; i < 1500; i++) {
+                    List<String> seenBefore = List.copyOf(mem.seenThemes);
+                    String id = Director.roll(0xBA6L + i * 7919L + rank.ordinal() * 1_000_003L, rank, mem, rank, null).plan().theme().id;
+                    h.assertTrue(!mem.seenThemes.contains(id), id + " came back from the bag at roll " + i);
+                    h.assertTrue(!id.equals(last) && !id.equals(before), id + " came back within two gates");
+                    if (mem.seenThemes.size() < seenBefore.size()) for (dev.awaken.gates.content.Theme t : dev.awaken.gates.content.Theme.values())
+                        h.assertTrue(!t.fits(rank) || t.friendly || seenBefore.contains(t.id), "the bag refilled with " + t.id + " still in it");
+                    mem.sawTheme(id);
+                    before = last;
+                    last = id;
+                }
+                // two gates standing for you at once are never the same place while another fits
+                java.util.Set<String> standing = new java.util.HashSet<>();
+                for (int i = 0; i < 4; i++) {
+                    String id = Director.roll(0x57A1L + i * 104729L, rank, new GateMemory(), rank, null, standing).plan().theme().id;
+                    h.assertTrue(standing.add(id), id + " rolled twice while it stood");
+                }
+            }
+            h.succeed();
+        });
+
+        // SPEC §50.3
+        AwakenTests.register("gates_pay", 20, h -> {
+            for (Rank r : Rank.values()) h.assertTrue(Math.abs(Curve.floorReward(r, 2) / Curve.worldReward(r, 2) - Curve.gatePay(r)) < 1e-9, "gate pay at " + r);
+            h.assertTrue(Curve.gatePay(Rank.C) == 4 && Curve.gatePay(Rank.D) == 3 && Curve.gatePay(Rank.E) == 2 && Curve.gatePay(Rank.S) == 1.25, "the table");
+            GateMemory mem = new GateMemory();
+            h.assertTrue(mem.firstClear("hive", "E") && !mem.firstClear("hive", "E") && mem.firstClear("hive", "D"), "a first clear pays once per theme and rank");
+            mem.sawTheme("hive");
+            mem.lordXp = 12.5;
+            var ops = net.minecraft.nbt.NbtOps.INSTANCE;
+            GateMemory back = GateMemory.MAP_CODEC.codec().parse(ops, GateMemory.MAP_CODEC.codec().encodeStart(ops, mem).getOrThrow()).getOrThrow();
+            h.assertTrue(back.seenThemes.equals(mem.seenThemes) && back.firstClears.equals(mem.firstClears) && back.lordXp == 12.5, "the bag saves");
+            h.succeed();
+        });
+
+        // SPEC §50.4: a level a beat, and every point of XP lands
+        AwakenTests.register("gates_lord_pay_beats", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            dev.awaken.progression.Progression.awaken(p);
+            var prof = dev.awaken.progression.Progression.profile(p);
+            double scale = (Curve.xpToNext(prof.level()) - prof.xp()) / dev.awaken.progression.Progression.rawToNextLevel(p);
+            double start = prof.xp();
+            for (int l = 1; l < prof.level(); l++) start += Curve.xpToNext(l);
+            GateMemory mem = p.getData(GatesRegistry.MEMORY.get());
+            double paid = 9000;
+            mem.lordXp = paid;
+            var beats = new dev.awaken.gates.run.LordPay.Beats();
+            int steps = 0;
+            boolean done = false;
+            while (!done && steps++ < 200) {
+                int before = prof.level();
+                done = dev.awaken.gates.run.LordPay.step(p, beats, steps);
+                h.assertTrue(prof.level() - before <= 1, "one level a beat");
+            }
+            double end = prof.xp();
+            for (int l = 1; l < prof.level(); l++) end += Curve.xpToNext(l);
+            h.assertTrue(done && mem.lordXp == 0 && beats.levels >= 3, "levels landed: " + beats.levels);
+            h.assertTrue(Math.abs(end - start - paid * scale) < 1e-3 * paid, "every point landed: " + (end - start) + " of " + paid * scale);
             h.succeed();
         });
 

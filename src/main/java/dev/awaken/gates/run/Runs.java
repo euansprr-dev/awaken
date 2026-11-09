@@ -74,12 +74,12 @@ public final class Runs {
         return GateService.now(s);
     }
 
-    /** XP one floor of this gate pays this player (SPEC section 2), below-rank gates ×0.3. */
+    /** XP one floor of this gate pays this player (SPEC section 2): below-rank gates ×0.3, above-rank more (SPEC §50.3). */
     public static double floorReward(ServerPlayer p, GateRecord g, int area, int floor) {
         int depth = area == 0 ? floor : (g.plan.is(Twist.GATE_WITHIN) ? g.plan.innerGateFloor() + floor : g.plan.floors() + floor);
         double r = Curve.floorReward(g.plan.rank(), depth);
-        if (g.plan.rank().ordinal() < Progression.rank(p).ordinal()) r *= Curve.BELOW_RANK_FACTOR;
-        return r;
+        int above = g.plan.rank().ordinal() - Progression.rank(p).ordinal();
+        return r * (above < 0 ? Curve.BELOW_RANK_FACTOR : 1 + Curve.ABOVE_RANK_PAY * above);
     }
 
     static String claimId(GateRecord g, RunState run, String floorLabel, ServerPlayer p) {
@@ -120,6 +120,7 @@ public final class Runs {
         run.startedAt = now(server);
         run.runIndex = g.entries.merge(p.getUUID(), 1, Integer::sum) - 1;
         run.scoutedAtEntry = p.getData(GatesRegistry.MEMORY.get()).scouted.contains(g.id);
+        if (!g.plan.ritual()) p.getData(GatesRegistry.MEMORY.get()).sawTheme(g.plan.theme().id); // the bag (SPEC §50.2): going in is what counts
         p.setData(GatesRegistry.RUN.get(), run);
         g.party.add(p.getUUID());
         g.inside.add(p.getUUID());
@@ -520,7 +521,16 @@ public final class Runs {
         boolean core = hoard.stream().anyMatch(Loot::isPowerCore);
         mem.bossesSinceCore = core ? 0 : mem.bossesSinceCore + 1;
         for (ItemStack s : hoard) Spoils.toSatchel(p, run, s);
+        // first clear (SPEC §50.3): half the whole gate's floors again, once for each theme and rank
+        double first = 0;
+        if (main && !g.scripted && !plan.ritual() && !plan.leaperTrial() && !plan.skybornTrial() && mem.firstClear(plan.theme().id, plan.rank().label)) {
+            for (int floor = 1; floor <= plan.floors(); floor++) first += Curve.FIRST_CLEAR * floorReward(p, g, 0, floor);
+        }
+        // the XP lands here and now, level by level (SPEC §50.4); the loot still goes home with you
+        double landing = run.satchelXp + first;
+        run.satchelXp = 0;
         bankSatchel(p, g, run, label(f.area, f.floor), "boss", "");
+        LordPay.start(p, landing);
         if (main) {
             dev.awaken.core.api.ArmsApi.lordSpoils(p, plan.rank().label, plan.theme().id); // Spoils: a weapon of the Lord's style, by rank (docs/arms-progression/PLAN.md §3.7)
             dev.awaken.core.api.ArmsApi.lordPattern(p, g.key(), plan.theme().id);
@@ -549,9 +559,12 @@ public final class Runs {
         }
         p.level().playSound(null, p.blockPosition(), GatesRegistry.SND_CLEARED.get(), SoundSource.PLAYERS, 1.2F, 1F);
         String title = main ? "Gate cleared" : plan.is(Twist.DOUBLE_GATE) ? "The second gate falls" : "The inner gate is quiet";
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(title))
+        var cleared = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(title))
                 .row("Lord", main ? Rooms.capital(plan.theme().bossName) : "the keeper")
-                .row("Claimed", "the Satchel and the hoard")
+                .row("Claimed", "the Satchel and the hoard");
+        if (landing > 0) cleared.row("XP", "+" + Math.round(landing));
+        if (first > 0) cleared.row("First time here", "+" + Math.round(first) + " of that");
+        Signal.send(p, cleared
                 .body(Component.literal(main && plan.is(Twist.DOUBLE_GATE) ? "A wall cracks open behind the Lord's throne..."
                         : main ? "The way out is open." : "A way back opens."))
                 .priority(6).ttl(20 * 9).build());

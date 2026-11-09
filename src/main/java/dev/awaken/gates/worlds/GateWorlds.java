@@ -94,7 +94,19 @@ public final class GateWorlds {
         Set<String> off = new HashSet<>(AwakenConfig.GATE_WORLDS_OFF.get());
         // open lands need the open-sky gate dimension (SPEC 38.11); a server without it never picks them
         if (!GateService.hasSky(server)) for (var e : defs.entrySet()) if (e.getValue().open()) off.add(e.getKey());
-        return dress(plan, atlas, off);
+        return dress(plan, atlas, off, owner.map(u -> standingWorlds(server, u)).orElse(Set.of()));
+    }
+
+    /** The worlds in this player's gates still standing: they count as met, so two open gates don't share one (SPEC §50.2). */
+    static Set<String> standingWorlds(MinecraftServer server, UUID owner) {
+        Set<String> out = new HashSet<>();
+        for (var g : dev.awaken.gates.GateRegistry.get(server).all())
+            if (g.state.standing() && g.owner.filter(owner::equals).isPresent()) for (FloorWorld w : g.plan.worlds()) out.add(w.world());
+        return out;
+    }
+
+    public static GatePlan dress(GatePlan plan, GateAtlas atlas, Set<String> off) {
+        return dress(plan, atlas, off, Set.of());
     }
 
     /**
@@ -103,7 +115,7 @@ public final class GateWorlds {
      * (1 / (1 + times)^2, the model in SPEC §38 "Freshness"). A floor nothing fits stays today's rooms. Plans before
      * version 6, the story's ritual and the Ascension trials are never dressed.
      */
-    public static GatePlan dress(GatePlan plan, GateAtlas atlas, Set<String> off) {
+    public static GatePlan dress(GatePlan plan, GateAtlas atlas, Set<String> off, Set<String> standing) {
         if (plan.contentVersion() < Plots.FIRST_VERSION || plan.ritual() || plan.leaperTrial() || plan.skybornTrial()) return plan;
         if (!plan.worlds().isEmpty() || defs.isEmpty()) return plan;
         SplittableRandom rng = new SplittableRandom(Hash.of(plan.seed(), 0x6A7E, 38));
@@ -132,7 +144,7 @@ public final class GateWorlds {
                 }
                 offHere = noOpen;
             }
-            String id = pickWorld(plan, theme, boss, atlas, offHere, used, prev, rng);
+            String id = pickWorld(plan, theme, boss, atlas, offHere, used, prev, standing, rng);
             if (id == null) continue;
             GateWorld w = defs.get(id);
             if (w.tall()) talls++;
@@ -154,7 +166,7 @@ public final class GateWorlds {
     }
 
     static String pickWorld(GatePlan plan, Theme theme, boolean boss, GateAtlas atlas, Set<String> off, Set<String> used, String prev,
-                            SplittableRandom rng) {
+                            Set<String> standing, SplittableRandom rng) {
         List<String> open = new ArrayList<>(), rare = new ArrayList<>();
         for (var e : defs.entrySet()) {
             if (!open(e.getValue(), e.getKey(), plan, theme, boss, atlas, off)) continue;
@@ -168,6 +180,11 @@ public final class GateWorlds {
         for (String id : pool) if (!used.contains(id) && !id.equals(prev)) fresh.add(id);
         if (fresh.isEmpty()) for (String id : pool) if (!id.equals(prev)) fresh.add(id);
         if (fresh.isEmpty()) fresh.addAll(pool);
+        // a bag over worlds too (SPEC §50.2): no everyday world comes back while another waits; rare ones keep their odds
+        int least = Integer.MAX_VALUE;
+        for (String id : fresh) if (everyday(id)) least = Math.min(least, met(id, atlas, standing));
+        final int fewest = least;
+        fresh.removeIf(id -> everyday(id) && met(id, atlas, standing) > fewest);
         double[] wt = new double[fresh.size()];
         double tot = 0;
         for (int i = 0; i < wt.length; i++) {
@@ -177,6 +194,15 @@ public final class GateWorlds {
             tot += wt[i];
         }
         return fresh.get(pick(wt, tot, rng.nextDouble()));
+    }
+
+    private static boolean everyday(String id) {
+        GateWorld.Rarity r = defs.get(id).rarity();
+        return r == GateWorld.Rarity.COMMON || r == GateWorld.Rarity.UNCOMMON;
+    }
+
+    private static int met(String id, GateAtlas atlas, Set<String> standing) {
+        return atlas.visits(id) + (standing.contains(id) ? 1 : 0);
     }
 
     static String pickMood(String id, GateWorld w, GateAtlas atlas, SplittableRandom rng) {

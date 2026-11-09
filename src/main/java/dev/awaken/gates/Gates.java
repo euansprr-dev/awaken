@@ -212,7 +212,7 @@ public final class Gates {
     public static int openWandering(ServerPlayer p, BlockPos near, int floors, int lifetimeTicks) {
         MinecraftServer s = p.level().getServer();
         long seed = Hash.mix(p.getUUID().getMostSignificantBits() ^ s.overworld().getGameTime());
-        GatePlan rolled = Director.roll(seed, Progression.rank(p), p.getData(GatesRegistry.MEMORY.get()), null, null).plan();
+        GatePlan rolled = Director.roll(seed, Progression.rank(p), p.getData(GatesRegistry.MEMORY.get()), null, null, Director.standingThemes(s, p)).plan();
         GatePlan plan = new GatePlan(rolled.seed(), rolled.contentVersion(), rolled.rank(), rolled.theme(), rolled.layout(),
                 rolled.modifiers(), Twist.NONE, Math.max(1, floors), rolled.theme().bossId(), rolled.annexTheme(), rolled.annexRule());
         GateRecord g = createNear(p, plan, near, false, "wandering");

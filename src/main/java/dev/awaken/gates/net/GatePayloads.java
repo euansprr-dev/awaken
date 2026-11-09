@@ -44,6 +44,19 @@ public final class GatePayloads {
         }
     }
 
+    /** One level of the Lord's payout landing (SPEC §50.4): the level reached, levels so far, points so far, the last one. */
+    public record LordLevel(int level, int beats, int points, boolean last) implements CustomPacketPayload {
+        public static final Type<LordLevel> TYPE = new Type<>(Awaken.id("gate_lord_level"));
+        public static final StreamCodec<ByteBuf, LordLevel> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, LordLevel::level, ByteBufCodecs.VAR_INT, LordLevel::beats, ByteBufCodecs.VAR_INT, LordLevel::points,
+                ByteBufCodecs.BOOL, LordLevel::last, LordLevel::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     public record Beacons(List<Beacon> beacons) implements CustomPacketPayload {
         public static final Type<Beacons> TYPE = new Type<>(Awaken.id("gate_beacons"));
         public static final StreamCodec<ByteBuf, Beacons> STREAM_CODEC = Beacon.CODEC.apply(ByteBufCodecs.list()).map(Beacons::new, Beacons::beacons);

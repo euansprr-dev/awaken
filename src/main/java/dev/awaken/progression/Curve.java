@@ -9,7 +9,7 @@ public final class Curve {
 
     public static final int POINTS_PER_LEVEL = 3;
     public static final double FLOOR_GROWTH = 1.4;
-    public static final double KILL_SHARE = 0.4;
+    public static final double KILL_SHARE = 0.6;
     public static final double BELOW_RANK_FACTOR = 0.3;
 
     /** XP needed to go from level L to L+1. */
@@ -24,9 +24,29 @@ public final class Curve {
      */
     public static final double WILDS_TRIM = 0.94;
 
+    /** Share of the whole gate's floor XP a Lord pays on top, once per theme and rank (SPEC §50.3). */
+    public static final double FIRST_CLEAR = 0.5;
+    /** Extra pay per rank a gate stands above you (SPEC §50.3). */
+    public static final double ABOVE_RANK_PAY = 0.5;
+
+    /** How much more gates pay than anything else at this rank (SPEC §50.3): where the climb used to stall, most. */
+    public static double gatePay(Rank gateRank) {
+        return switch (gateRank) {
+            case E, B -> 2;
+            case D -> 3;
+            case C -> 4;
+            default -> 1.25;
+        };
+    }
+
+    /** XP of the open world's gate-sized rewards (camps, stars, rifts): a floor's worth before gates got their own pay. */
+    public static double worldReward(Rank gateRank, int floor) {
+        return gateRank.share * WILDS_TRIM * xpToNext(gateRank.contentLevel) * Math.pow(FLOOR_GROWTH, floor - 1);
+    }
+
     /** Total XP one cleared floor of a gate of this rank pays (before the story-length multiplier). */
     public static double floorReward(Rank gateRank, int floor) {
-        return gateRank.share * WILDS_TRIM * xpToNext(gateRank.contentLevel) * Math.pow(FLOOR_GROWTH, floor - 1);
+        return gatePay(gateRank) * worldReward(gateRank, floor);
     }
 
     /** Mob health multiplier at content level lv (SPEC section 2). */

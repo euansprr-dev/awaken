@@ -52,6 +52,7 @@ public final class RunEvents {
         Modifiers.tickPending(server);
         Hud.flush(server);
         Spoils.tick(server);
+        LordPay.tick(server);
         if (server.getTickCount() % 100 == 30) {
             GateRegistry reg = GateRegistry.get(server);
             if (reg.pendingCount() > 0) for (ServerPlayer p : server.getPlayerList().getPlayers()) Claims.deliver(p);
@@ -61,12 +62,14 @@ public final class RunEvents {
     public static void onLogin(ServerPlayer p) {
         Spoils.remind(p);
         Runs.onLogin(p);
+        LordPay.resume(p);
     }
 
     public static void onLogout(ServerPlayer p) {
         Twists.discardGhost(p);
         Modifiers.forget(p.getUUID());
         Spoils.forget(p.getUUID());
+        LordPay.leave(p);
         RunState run = Runs.run(p);
         if (run.active()) run.leftAt = dev.awaken.gates.GateService.now(p.level().getServer()); // saved with the player
     }

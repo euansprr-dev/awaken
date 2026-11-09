@@ -29,7 +29,8 @@ SHARE = {"E": 0.28, "D": 0.16, "C": 0.065, "B": 0.22, "A": 0.6, "S": 0.55, "Sove
 # Plan v2 targets: hours of normal play to reach a level (balanced player's median).
 # Level 50 moved from 55-60 to 50-60 with the Living Wilds (SPEC §21.3): the open world now pays through the D-C
 # stretch, so the balanced player reaches 50 about 5 h sooner while level 135 (the story's length) holds.
-LEVEL_TARGETS = {5: (0.75, 1.0), 10: (3.0, 4.0), 25: (15.0, 20.0), 50: (50.0, 60.0), 135: (95.0, 105.0)}
+# Gates as Worlds (SPEC 50.3) pays far more in gates: the climb to the top fell from about 105 h to about 61 h.
+LEVEL_TARGETS = {5: (0.75, 1.0), 10: (2.0, 2.6), 25: (8.0, 10.0), 50: (23.0, 28.0), 135: (56.0, 66.0)}
 # The first-hour slice (docs/v2/BRIEF.md): level at 30 and 60 minutes.
 FIRST_HOUR = {30: (3, 4.99), 60: (5, 6.99)}
 
@@ -38,7 +39,9 @@ def xp_to_next(level):  # JAVA Curve.xpToNext (unchanged since v1)
     return 90 * level ** 1.45 + 60
 
 
-FLOOR_GROWTH, KILL_SHARE, BELOW_RANK = 1.4, 0.4, 0.3  # JAVA Curve
+FLOOR_GROWTH, KILL_SHARE, BELOW_RANK = 1.4, 0.6, 0.3  # JAVA Curve
+# JAVA Curve.gatePay (SPEC 50.3, Gates as Worlds): gates are where you level, so a whole gate is worth levels at every rank
+GATE_PAY = {"E": 2.0, "D": 3.0, "C": 4.0, "B": 2.0, "A": 1.25, "S": 1.25, "Sovereign": 1.25}
 
 
 # JAVA Curve.WILDS_TRIM: gate floor rewards (and everything priced from floor 1 of a rank: anomalies, camps) x this, because the
@@ -50,8 +53,20 @@ WILDS_TRIM = 0.94
 WILDS_RANK = {"E": 1.0, "D": 1.0, "C": 0.55, "B": 1.0, "A": 1.0, "S": 1.0, "Sovereign": 1.0}
 
 
-def gate_floor_xp(rank, floor):  # JAVA Curve.floorReward
+FIRST_CLEAR, ABOVE_RANK_PAY = 0.5, 0.5  # JAVA Curve
+THEMES_OPEN = {"E": 5, "D": 9, "C": 13, "B": 14, "A": 15, "S": 15, "Sovereign": 15}  # JAVA Theme.minRank: kinds of gate open at a rank
+
+
+def above_pay(g_rank, player_rank_i):  # JAVA Runs.floorReward: a gate above your rank pays half as much again per rank
+    return 1.0 + ABOVE_RANK_PAY * max(0, RANKS.index(g_rank) - player_rank_i)
+
+
+def world_floor_xp(rank, floor):  # JAVA Curve.worldReward: what the open world's camps, stars and rifts are measured against
     return WILDS_TRIM * SHARE[rank] * xp_to_next(RANK_MID[rank]) * FLOOR_GROWTH ** (floor - 1)
+
+
+def gate_floor_xp(rank, floor):  # JAVA Curve.floorReward
+    return GATE_PAY[rank] * world_floor_xp(rank, floor)
 
 
 FLOOR_MIN = {"E": (4, 6), "D": (5, 7), "C": (6, 8), "B": (6, 9), "A": (7, 10),
@@ -188,7 +203,7 @@ PLAYERS = {
 # ELITE_MP, bosses BOSS_MP). Energy spent at the air, out of a fight, pays nothing. A full bar levels the power up
 # exactly like a duplicate Power Core (cores stay a shortcut). The sim tracks the player's MAIN power only, from the
 # moment the first power is chosen, with no duplicate cores (a core is a random roll, rarely your main).
-MASTERY_NEED = {1: 7000, 2: 13000, 3: 32000, 4: 50000}  # JAVA Mastery.need(level): MP from level to level + 1
+MASTERY_NEED = {1: 4500, 2: 8500, 3: 15500, 4: 24000}  # JAVA Mastery.need(level): MP from level to level + 1
 FIGHT_MP = 0.5                                          # JAVA Mastery.FIGHT_SHARE
 KILL_MP, ELITE_MP, BOSS_MP = 6, 18, 60                  # JAVA Mastery.KILL / ELITE / BOSS
 # ASSUMED play style (not game code): how a main power is used in a fight.
@@ -330,6 +345,7 @@ def simulate(kind, rng):
     rank_i = 0
     rank_times = {}
     deaths = gates = 0
+    first_clears = {r: 0 for r in RANKS}
     by_rank = {}  # gate rank -> [gates, deaths, floors cleared, Lords killed]
     mastery = {"on": False, "mp": 0.0, "level": 1, "at": {1: (1, 0.0)}, "combat_min": 0.0}
     MINE_SEED[0] += 1
@@ -456,7 +472,7 @@ def simulate(kind, rng):
                 levels(QUEST_STEP * rng.uniform(0.5, 1.6))
             if rng.random() < p["camp"]:
                 st["t"] += rng.uniform(3, 6)       # a camp or nest cleared (once per cycle per camp)
-                gain(budget.pay("camp", CAMP_K * gate_floor_xp(RANKS[rank_i], 1) / xpn) * WILDS_RANK[RANKS[rank_i]] * xpn)
+                gain(budget.pay("camp", CAMP_K * world_floor_xp(RANKS[rank_i], 1) / xpn) * WILDS_RANK[RANKS[rank_i]] * xpn)
             # first sightings: a fast start, then rarer as the world gets known
             hours = st["t"] / 60
             rate = DISCOVERY_FIRST_HOUR / 60 * math.exp(-hours / 6.0)
@@ -465,7 +481,7 @@ def simulate(kind, rng):
                 levels(DISCOVERY_FRAC)
             if awake and rng.random() < p["engage"] / ANOMALY_EVERY_MIN:
                 st["t"] += 2  # a rift tear takes a couple of minutes
-                gain(ANOMALY_K * gate_floor_xp(RANKS[rank_i], 1))
+                gain(ANOMALY_K * world_floor_xp(RANKS[rank_i], 1))
                 fight(COMBAT_MIN["rift"])
 
     # 0-2 min: vanilla (a sighting may already bank), 2-6 min: the Bell Crypt prologue, banked.
@@ -564,7 +580,7 @@ def simulate(kind, rng):
                 unbanked = 0.0
                 st["t"] += 4 + DEATH_EXTRA_MIN
                 break
-            reward = gate_floor_xp(g_rank, floor) * (BELOW_RANK if below else 1.0)
+            reward = gate_floor_xp(g_rank, floor) * (BELOW_RANK if below else 1.0) * above_pay(g_rank, rank_i)
             gain(KILL_SHARE * reward)
             unbanked += (1 - KILL_SHARE) * reward
             cleared = floor
@@ -583,6 +599,10 @@ def simulate(kind, rng):
         if bell_crypt_done and cleared == (nfloors if real else floors):
             by_rank[g_rank][3] += 1
             fight(0, MAIN_SHARE * BOSS_MP)  # the Lord waiting on the last floor
+            # JAVA Runs.claimLord (SPEC 50.3): the first time you clear a kind of gate at a rank, half as much again
+            if first_clears[g_rank] < THEMES_OPEN[g_rank]:
+                first_clears[g_rank] += 1
+                gain(FIRST_CLEAR * sum(gate_floor_xp(g_rank, f) for f in range(1, nfloors + 1)) * above_pay(g_rank, rank_i))
         if not bell_crypt_done and cleared >= 2:
             bell_crypt_done = cleared == 3 or rng.random() < 0.5
         elif not bell_crypt_done:

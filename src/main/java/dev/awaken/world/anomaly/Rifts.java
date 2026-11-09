@@ -41,7 +41,7 @@ import java.util.UUID;
 /**
  * Rift tears. A crack opens 32–96 blocks from the player and spills monsters of the player's rank (a small group at
  * once, then a wave every 30 seconds while someone is within {@link #ENGAGE} blocks) for about two minutes. Breaking its
- * core takes a few hits and pays once: essence shards, {@code 0.3 × Curve.floorReward(rank, 1)} XP (what
+ * core takes a few hits and pays once: essence shards, {@code 0.3 × Curve.worldReward(rank, 1)} XP (what
  * tools/sim/pacing_sim.py assumes) and a Power Core chance. Ignored, it seals itself with nothing lost; the monsters it
  * let out are ordinary ones (no gate id) and despawn the vanilla way.
  */
@@ -70,7 +70,7 @@ final class Rifts {
     }
 
     static double xpFor(Rank rank) {
-        return 0.3 * Curve.floorReward(rank, 1);
+        return 0.3 * Curve.worldReward(rank, 1);
     }
 
     static int shardsFor(Rank rank, RandomSource r) {

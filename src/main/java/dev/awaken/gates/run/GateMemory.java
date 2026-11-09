@@ -12,11 +12,13 @@ import java.util.Set;
 /**
  * The Director's novelty memory for one player (attachment {@code awaken:gate_memory}, kept on death): the last three
  * themes and two layouts rolled, the twist pity counter, which gates were scouted, and the bits that later counters need
- * (extraction floors for "comfort", twist streak, echo pace).
+ * (extraction floors for "comfort", twist streak, echo pace). Since schema 2 also the bag of themes you've been in (a roll
+ * alone no longer counts, SPEC §50.2), the Lords you've felled for the first time, and any Lord's XP still landing.
  */
 public final class GateMemory {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
 
+    /** Not read since the bag (SPEC §50.2); the save keeps the field. */
     public final List<String> lastThemes = new ArrayList<>();
     public final List<String> lastLayouts = new ArrayList<>();
     public int sinceTwist;
@@ -29,10 +31,28 @@ public final class GateMemory {
     public int echoFloorRooms;
     public final Set<Integer> twistsCounted = new LinkedHashSet<>();
     public int gatesRolled;
+    /** Themes entered since the bag last refilled, newest first. */
+    public final List<String> seenThemes = new ArrayList<>();
+    /** "theme@rank": the first clear pays once. */
+    public final Set<String> firstClears = new LinkedHashSet<>();
+    /** A Lord's XP that hasn't landed yet: saved so a crash mid-payout loses none (SPEC §50.4). */
+    public double lordXp;
 
-    public void rememberTheme(String id) {
-        lastThemes.add(0, id);
-        while (lastThemes.size() > 3) lastThemes.remove(lastThemes.size() - 1);
+    /** You went in: this theme leaves the bag. */
+    public void sawTheme(String id) {
+        seenThemes.remove(id);
+        seenThemes.add(0, id);
+    }
+
+    /** True the first time this theme's Lord falls to you at this rank. */
+    public boolean firstClear(String theme, String rank) {
+        return firstClears.add(theme + "@" + rank);
+    }
+
+    /** The bag's empty: every theme that fits goes back in, except the last two places you went. */
+    public void refillBag(java.util.function.Predicate<String> fits) {
+        List<String> keep = List.copyOf(seenThemes.subList(0, Math.min(2, seenThemes.size())));
+        seenThemes.removeIf(id -> fits.test(id) && !keep.contains(id));
     }
 
     public void rememberLayout(String id) {
@@ -88,12 +108,22 @@ public final class GateMemory {
         ).apply(i, B::new));
     }
 
+    private record C(List<String> seen, List<String> firstClears, double lordXp) {
+        static final C EMPTY = new C(List.of(), List.of(), 0);
+        static final Codec<C> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.listOf().fieldOf("seen").forGetter(C::seen),
+                Codec.STRING.listOf().fieldOf("first_clears").forGetter(C::firstClears),
+                Codec.DOUBLE.optionalFieldOf("lord_xp", 0.0).forGetter(C::lordXp)
+        ).apply(i, C::new));
+    }
+
     public static final MapCodec<GateMemory> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             A.CODEC.fieldOf("a").forGetter(m -> new A(SCHEMA, List.copyOf(m.lastThemes), List.copyOf(m.lastLayouts), m.sinceTwist,
                     m.twistStreak, List.copyOf(m.scouted), List.copyOf(m.extractFloors))),
             B.CODEC.fieldOf("b").forGetter(m -> new B(List.copyOf(m.themesCleared), m.bossesSinceCore, m.echoFloorTicks,
-                    m.echoFloorRooms, List.copyOf(m.twistsCounted), m.gatesRolled))
-    ).apply(i, (a, b) -> {
+                    m.echoFloorRooms, List.copyOf(m.twistsCounted), m.gatesRolled)),
+            C.CODEC.optionalFieldOf("c", C.EMPTY).forGetter(m -> new C(List.copyOf(m.seenThemes), List.copyOf(m.firstClears), m.lordXp))
+    ).apply(i, (a, b, c) -> {
         GateMemory m = new GateMemory();
         m.lastThemes.addAll(a.themes);
         m.lastLayouts.addAll(a.layouts);
@@ -107,6 +137,9 @@ public final class GateMemory {
         m.echoFloorRooms = b.echoRooms;
         m.twistsCounted.addAll(b.twists);
         m.gatesRolled = b.rolled;
+        m.seenThemes.addAll(c.seen);
+        m.firstClears.addAll(c.firstClears);
+        m.lordXp = c.lordXp;
         return m;
     }));
 }

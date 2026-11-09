@@ -83,10 +83,11 @@ RANKS            = E, D, C, B, A, S, SOVEREIGN          (index 0..6)
 RANK_LEVEL       = D 10, C 25, B 45, A 70, S 100, SOVEREIGN 135   (level needed to take the Reassessment)
 RANK_MID         = E 5, D 17, C 35, B 57, A 85, S 118, SOVEREIGN 150  (gate content level)
 SHARE            = E .28, D .16, C .065, B .22, A .60, S .55, SOVEREIGN .50   (v2, see §13; v1 was .81/.39/.25/.23/.18/.12/.12)
-floorReward(r,f) = SHARE[r] * xpToNext(RANK_MID[r]) * 1.4^(f-1)
-   40% arrives as kill XP during the floor (split across the floor's spawned mobs)
-   60% is the floor bonus, carried as "Satchel XP" and banked only on extraction or boss kill
-gate below your rank pays x0.3
+floorReward(r,f) = GATE_PAY[r] * SHARE[r] * xpToNext(RANK_MID[r]) * 1.4^(f-1)   (§50.3; the open world's camps, stars and rifts use it without GATE_PAY)
+GATE_PAY         = E 2, D 3, C 4, B 2, A 1.25, S 1.25, SOVEREIGN 1.25
+   60% arrives as kill XP during the floor (split across the floor's spawned mobs)
+   40% is the floor bonus, carried as "Satchel XP" and banked only on extraction or boss kill
+gate below your rank pays x0.3; above your rank x1.5 per rank above; a Lord's first clear +50% of the whole gate's floors
 home activity XP ~ 1.2% of a level per active minute (capped per minute; see §4.3)
 Daily Regimen    = 0.25 * xpToNext(L) + 1 stat point   (gone since §27.13)
 death            = lose Satchel (items + Satchel XP), keep gear & kill XP, gain Insight, Fracture 8 min (Hunter mode)
@@ -97,7 +98,7 @@ Gate shape: floors = min(6, 3 + rank/2 + coin). Breaks in = max(1, 4 - rank/2 + 
 Modifier budget by gate rank E..S: 1,2,3,4,5,6; max count 1,1,2,2,3,3; Sovereign = S.
 Twist: 1/8 chance, guaranteed on the 12th gate without one (per player).
 Director gate rank roll: 70% player rank, 20% one below, 10% one above. Keep 1–4 open gates within 300–1500 blocks of each
-online player. No theme from the player's last 3 gates, no layout from the last 2.
+online player. Themes come from a bag per player (§50.2), no layout from the last 2.
 
 Second reward rhythm: the Director tracks minutes since the player's last *new thing* (new power, title, Truth true,
 latent, depth record, trophy, scanned machine). After 20 min it biases: next elite drop → Power Core (+50%),
@@ -1259,7 +1260,7 @@ Plan v2 · the road to 50 (details in docs/modules/road.md):
   line that stays until a real counter says it's done, then a toast; only the newest open goal shows (priority 35); met
   goals are saved as `awaken:goal/<step>`. Requirement tokens add `rank:X` and `path`.
 - Power mastery: a power gains points from casts that land on a living target (their energy cost), half the energy spent
-  in a real fight that missed, and kills; nothing from casting at the air. Levels at 7,000 / 13,000 / 32,000 / 50,000
+  in a real fight that missed, and kills; nothing from casting at the air. Levels at 4,500 / 8,500 / 15,500 / 24,000 (§50.3; 7,000 / 13,000 / 32,000 / 50,000 before gates paid more)
   points, the same effect as a duplicate core. Loadout schema 2 adds `mastery`. Sim: a main power reaches level 3 at
   player level ~20 and 5 at ~44.
 - Lessons taught in play: meditation (level 11), dreams (12), the Veil (15), each with Now lines, toasts and a choice card
@@ -19670,4 +19671,49 @@ against six kinds of player (stands still, runs, circles, holds guard, keeps awa
 `fights_record_pack` counts a pack of 12 winding up at once. It logs one `[record]` line a fight and asserts only that the fight
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
+
+## 50. Gates as Worlds (plan docs/gates-as-worlds/PLAN.md, page https://claude.ai/artifact/3hQVhu5jQKPEWDMbMenkaB)
+
+Approved by Euan on 9 Nov 2026, all 18 decisions, with two additions: a loading screen between the overworld and a gate
+that looks really cool (§50.5), and nothing may ever float (§50.6). The plan is the design; this section records what's built.
+
+Order of work, each stop waiting for him beside the gate's painting: 0 repeats and pay on today's gates. 1 foundation behind
+the `gateRealms` switch and the Build Kit. 2 Amber Reach, **stop**. 3 boss spaces, the first six also into today's gates, **stop**.
+4 a jungle Stronghold and the Hour Crypt, **stop**. 5 a Deep and a Sky, **stop**. 6 E pool to 14, switch on for new worlds.
+7 D to S waves to 88, every Lord placed. 8 old worlds into Dungeons and acts, Far Sight, 128 over time.
+
+### 50.2 The bag (no repeats)
+
+The old rule wrote a theme into memory on every roll, so gates you never walked into pushed real ones out and his first two
+gates were both Hives. Now `GateMemory.seenThemes` holds the themes you've **gone into** (`Runs.enter`), newest first.
+`Director.bag`: a new gate's theme fits its rank, isn't in the bag's seen list, and isn't standing for you (derived from the
+registry each roll, so a closed gate goes back by itself). When only friendly themes are left the bag refills with everything
+that fits the rank, except the last two places you went. If every theme left is standing somewhere, a twin beats no gate.
+Worlds get the same treatment: in `GateWorlds.pickWorld` an everyday world (common or uncommon) only comes up while none has
+been met less, and a world standing in another of your gates counts as met; rare and mythic ones keep their odds. Test
+`gates_bag_no_repeat`: 10,500 rolls.
+
+### 50.3 Gate pay
+
+`Curve.gatePay`: E 2, D 3, C 4, B 2, A, S and Sovereign 1.25, on top of the old reward (`Curve.worldReward`, which the open world's
+camps, stars and rifts still use, so the open world didn't change). `KILL_SHARE` 0.6: 60% lands as you fight, 40% rides in the
+Satchel. A gate above your rank pays half as much again per rank above. A Lord's first clear, once per theme and rank, adds half
+of the whole gate's floors (`GateMemory.firstClears`; not story gates or Ascension trials). Mastery need falls to
+4,500 / 8,500 / 15,500 / 24,000 to keep a main power's level 3 near player level 20 and level 5 near 45.
+
+Simulated, the balanced player (`tools/sim/pacing_sim.py`, 300 runs): level 5 at 0.85 h, 10 at 2.25, 25 at 8.75, 50 at 25.8, 135 at
+60.9 (was 0.89, 3.75, 16.8, 57.1, 104.6). Ranks: D 3.3 h, C 10.1, B 23.6, A 35.8, S 47.6, Sovereign 61.8. Main power level 3 at player
+21.5, level 5 at 48. Deaths per 10 gates D 1.42, C 1.87, B 2.16, all in target. The deep's metal for C now arrives a little after its
+level: median wait 0.7 h, p90 4.2 h (was 0 and 2.0).
+
+### 50.4 The Lord's payout
+
+When a Lord falls, the Satchel's XP and any first clear land there and then, not on the way out (the loot still goes home with
+you as a claim). `run/LordPay`: 30 ticks after the kill, then a level every 14 ticks (8 when many are still to come); each beat
+grants exactly enough XP for the next level (`Progression.grantXpQuietly`, so each level's own toast and sound stay out of the
+way) and strikes a bell, vanilla's `block.bell.use` walked over a low pentatonic scale (0.63 to 1.26, never higher). The last
+beat adds `block.bell.resonate`, then the usual level moment and pane once the fight is over. On screen (`client/LordLevels`): one
+number in the middle of your view, climbing with every bell, the old number rising away and the new one landing a little too
+big, a rule flaring from it, points so far beneath, a mark per level. `GateMemory.lordXp` holds what hasn't landed, saved with the
+player; logging out pays the rest at once, and after a crash it plays on the next login. Test `gates_lord_pay_beats`.
 
