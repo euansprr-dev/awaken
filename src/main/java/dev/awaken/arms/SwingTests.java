@@ -123,8 +123,7 @@ final class SwingTests {
         h.succeed();
     }
 
-    private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff",
-            "twinblades");
+    private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff");
 
     /**
      * The baked file's feel rules: every swish starts on the press or after it and before the blow's active ticks end,
@@ -219,12 +218,27 @@ final class SwingTests {
         }
         h.assertTrue(links > 30, "the chains' links are checked (" + links + ")");
         h.assertTrue(twins > 0, "a both-hands strike's off hand is checked (the daggers' strike 4)");
-        // the Twin Blades' figure-eight (round 5): the ends take turns down the light chain, so the link above from a
-        // strike to one led by the other end holds only because the first carried on round end for end by the press
+        // the Twin Blades (SPEC §25 "The Twin Blades"): one hand, and every strike whole turns about the middle of the
+        // shaft, with no flip in them (a solver flips on a full spin) and home where they set off
         FpSwings.Style tw = FpSwings.style("twinblades");
-        boolean[] far = new boolean[3];
-        for (int i = 0; i < 3; i++) far[i] = FpSwings.far(tw, Archetype.Move.byKey("strike_" + (i + 1)));
-        h.assertTrue(tw != null && !far[0] && far[1] && !far[2], "the twin blades' ends take turns: strike 2 leads with the other end");
+        h.assertTrue(tw != null && tw.offHand() == null, "the twin blades are twirled in one hand");
+        for (int s = 1; s <= 5; s++) {
+            Archetype.Move m = Archetype.Move.byKey("strike_" + s);
+            FpSwings.sample(tw, m, 0, true, a, qa);
+            Quaternionf start = new Quaternionf(qa), last = new Quaternionf(qa);
+            float turned = 0F, most = 0F;
+            for (float t = 0.25F; t < 14F; t += 0.25F) {
+                FpSwings.sample(tw, m, t, true, b, qb);
+                float turn = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(last.dot(qb)))));
+                turned += turn;
+                most = Math.max(most, turn);
+                last.set(qb);
+            }
+            float home = (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(start.dot(last)))));
+            h.assertTrue(most < 62F, "twin blades strike " + s + " has no flip in its turn (" + most + " degrees in a key)");
+            h.assertTrue(turned > 340F, "twin blades strike " + s + " turns the whole way round (" + turned + " degrees)");
+            h.assertTrue(home < 3F, "twin blades strike " + s + " ends where it set off (" + home + " degrees off)");
+        }
         h.succeed();
     }
 
@@ -288,7 +302,7 @@ final class SwingTests {
                     was.set(d);
                     wasQ.set(q);
                     if (t >= draw) {
-                        h.assertTrue(d.distance(form) < 2e-3F && degrees(q, formQ) < 0.5F, what + ": in the charge form by the draw's end");
+                        h.assertTrue(d.distance(form) < 2e-3F && degrees(q, formQ) < 0.5F, what + ": in the charge form by the draw's end (" + d.distance(form) + " off, " + degrees(q, formQ) + " degrees, " + t + " of " + draw + ")");
                     }
                 }
                 runs++;
@@ -354,6 +368,7 @@ final class SwingTests {
     }
 
     private static float degrees(Quaternionf a, Quaternionf b) {
-        return (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(a.dot(b)))));
+        // over their lengths: the baked keys are rounded to four places, so a key against itself can read half a degree off
+        return (float) Math.toDegrees(2 * Math.acos(Math.min(1F, Math.abs(a.dot(b)) / (float) Math.sqrt(a.lengthSquared() * b.lengthSquared()))));
     }
 }

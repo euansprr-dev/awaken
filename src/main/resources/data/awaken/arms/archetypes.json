@@ -2941,14 +2941,14 @@
       "late": 5,
       "moves": {
         "strike_1": {
-          "windup": 2,
+          "windup": 3,
           "active": 2,
-          "recovery": 3,
+          "recovery": 5,
           "cadence": [
-            4,
-            7
+            7,
+            10
           ],
-          "motion": 0.65,
+          "motion": 1.0,
           "posture": 3,
           "arc": 110,
           "reach": 2.9,
@@ -2973,14 +2973,14 @@
           }
         },
         "strike_2": {
-          "windup": 1,
+          "windup": 3,
           "active": 2,
-          "recovery": 4,
+          "recovery": 5,
           "cadence": [
-            4,
-            7
+            7,
+            10
           ],
-          "motion": 0.65,
+          "motion": 1.0,
           "posture": 3,
           "arc": 110,
           "reach": 2.9,
@@ -3005,14 +3005,14 @@
           }
         },
         "strike_3": {
-          "windup": 1,
+          "windup": 3,
           "active": 2,
-          "recovery": 4,
+          "recovery": 5,
           "cadence": [
-            4,
-            7
+            7,
+            10
           ],
-          "motion": 0.7,
+          "motion": 1.1,
           "posture": 3,
           "arc": 120,
           "reach": 2.9,
@@ -3037,10 +3037,10 @@
           }
         },
         "strike_4": {
-          "windup": 2,
-          "active": 3,
-          "recovery": 7,
-          "motion": 1.3,
+          "windup": 5,
+          "active": 4,
+          "recovery": 8,
+          "motion": 2.0,
           "posture": 8,
           "arc": 360,
           "reach": 3.0,
@@ -3066,10 +3066,10 @@
           }
         },
         "strike_5": {
-          "windup": 2,
-          "active": 3,
-          "recovery": 8,
-          "motion": 1.6,
+          "windup": 5,
+          "active": 4,
+          "recovery": 9,
+          "motion": 2.4,
           "posture": 10,
           "arc": 360,
           "reach": 3.1,
@@ -3132,7 +3132,7 @@
           "swish": "heavy"
         },
         "riposte": {
-          "windup": 1,
+          "windup": 2,
           "active": 2,
           "recovery": 7,
           "motion": 2.5,
@@ -3187,7 +3187,7 @@
           "swish": "art"
         },
         "slipcut": {
-          "windup": 1,
+          "windup": 2,
           "active": 2,
           "recovery": 7,
           "motion": 2.6,
@@ -3212,7 +3212,7 @@
           }
         },
         "undercut": {
-          "windup": 1,
+          "windup": 2,
           "active": 3,
           "recovery": 7,
           "motion": 1.1,

@@ -382,8 +382,8 @@ final class ArmsHands {
             FirstPerson.View.fist(v.gripOff, 1, -inv * G.x, G.y, G.z);
         } else if (both != null && p.getOffhandItem().isEmpty()) {
             // a two-handed weapon with the off hand free: the off hand closes on the handle below the main, through
-            // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe,
-            // war-staff and twin blades); a stance's own off fist still takes the hand (Hands' hideOff)
+            // every swing and the guard (SPEC §25 "Swing Studio": the katana, greatblade, maul, spear, glaive, scythe
+            // and war-staff; the twin blades are twirled in one hand); a stance's own off fist still takes the hand (Hands' hideOff)
             onMain(G.set(both), g);
             FirstPerson.View.fist(v.gripOff, 1, inv * G.x, G.y, G.z);
         }

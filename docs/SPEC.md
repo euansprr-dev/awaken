@@ -7258,6 +7258,19 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     slash. The server's rows are the slashes' again: strike 3 and 5 arc 90, the slipcut 120, the undercut 160, each with the light
     whoosh. The Art and the blows driven down (the Plunge, the Execution) keep their own keys. `arms_keys.py check` and the test
     `arms_dagger_stabs` hold the rules (which strikes slash, the fist low and on its own side at the blow, never crossing over).
+  - *The Twin Blades* (Euan 2026-11-09: "way too fast", "no spinning animation or anything that makes it look really like
+    cinematic and awesome", "too much movement, so it makes the trail ... take up too much of the screen"; replaces round 5's
+    figure-eight): one double-ended blade twirled in one hand. Every strike is whole turns about the true middle of the shaft
+    (`handGrip`, where the fist is), and the fist moves very little: the spin is the motion, so the ribbon is a thin line near
+    the tips at 60% light. A light strike is one turn: half of it arrives on the hit, with the upper blade at the crosshair,
+    and the second half brings the same blade home, the hit's speed carried through it so there is no stop inside. Strikes 1
+    and 2 turn opposite ways, strike 3 is near flat, strike 4 (and mastery's 5) are two turns with the hit after the first.
+    Slower than before, about the same damage over a combo: the chain takes 37 ticks where it took 24, and each strike's motion
+    is higher to match. The turn is written as a turn, an angle against time (`Spin` in `tools/art/arms_keys.py`) and not as
+    poses to blend between, because a turn between poses takes the short way and can't go past half. Third person's wrist
+    (`_spin_wrists`) is the same turn about the weapon's flat, leaning onto first person's plane by the hit; solving it from
+    where the blade points flips each time the blade passes the far side of its axis (179 degrees in a key). The two moves
+    that don't spin (plunge, execution) reach for whichever end is nearer.
   - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
     peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
     ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up

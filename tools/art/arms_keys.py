@@ -35,10 +35,11 @@ H = np.array([L.HX, L.HY, L.HZ])  # vanilla's resting hand
 M = np.diag([-1.0, 1.0, 1.0])  # the left hand is the right mirrored across the view's vertical plane
 DT = 0.25
 KEYED_BY = "tools/art/arms_keys.py"
-REVIEW = {"daggers": "gatewrought_daggers", "scythe": "gatewrought_scythe"}
+REVIEW = {"daggers": "gatewrought_daggers", "scythe": "gatewrought_scythe", "twinblades": "gatewrought_twinblades"}
 # where each style's hand closes, in hand space: the forged weapon's hold puts its grip there whatever the blade's length
 # (fp_swings.json's grip), so a pose's place is the fist's, not the lab's estimate from the mesh
-GRIP = {"daggers": np.array([0.0061, -0.0271, 0.0558]), "scythe": np.array([-0.0624, -0.2206, 0.1148])}
+GRIP = {"daggers": np.array([0.0061, -0.0271, 0.0558]), "scythe": np.array([-0.0624, -0.2206, 0.1148]),
+        "twinblades": np.array([-0.04, 0.02, 0.0])}  # the Twin Blades' handGrip: the middle of the shaft
 TAN = math.tan(math.radians(L.FOV) / 2)
 ASPECT = L.W / L.H
 
@@ -603,6 +604,154 @@ def tip_ndc(held, d, R, left=False):
     return np.array([tip[0] / -tip[2] * f / (L.W / L.H), tip[1] / -tip[2] * f])
 
 
+# ---- the Twin Blades (Euan 2026-11-09: "way too fast", "no spinning animation or anything that makes it look really like cinematic",
+# "too much movement", "not super smooth") ------------------------------------------------------------------------------
+#
+# Every strike is one whole turn of the weapon about its middle: the far blade comes round in view, reaches the crosshair at
+# its fastest on the hit, and the weapon carries on round and settles back where it began. One curve from a stop to a stop, so
+# nothing can snap, and it starts and ends in the same place, so a chain has nothing to hand over. A turn is whole because the
+# clip must end as it began for the third-person wrist and the stance; the plane of the turn and the way it runs are what vary
+# from strike to strike. The ribbon is only the outer part of the blade and only around the hit, so the spin is the spectacle
+# and the trail is a flick, not a sheet across the view.
+
+TL = 0.626  # the Twin Blades' blade from the middle of the shaft to the point
+
+
+def _flipped(p):
+    """The same line held the other way round: the design's far blade (the one its axis names) is the low one at rest, so the
+    one that comes round to the crosshair after half a turn is the end the ribbon and the keys call the blade."""
+    return p.moved(to=p.at - (p.to - p.at), edge=-p.edge)
+
+
+def twin_poses():
+    """The Twin Blades' poses, as the visible upper blade is seen (fist's screen place and depth, that blade's point), turned
+    so the design's own axis runs down the other end."""
+    b = lambda g, d, t, e=(-0.5, -0.6, 0.0), r=0.0: _flipped(blade(g, d, t, TL, e, r))
+    down = lambda g, d, t: blade(g, d, t, TL, (0.0, 0.3, 1.0))
+    return dict(
+        rest=b((0.72, -0.86), 0.62, (0.16, -0.12)),
+        # where the middle of the weapon is carried on a strike's hit: in toward the crosshair and out from the chest
+        hit=b((0.40, -0.60), 0.76, (0.0, 0.06)),
+        hit_low=b((0.46, -0.72), 0.76, (0.04, -0.08)),
+        hit_flat=b((0.42, -0.64), 0.74, (-0.02, 0.0)),
+        hit_wide=b((0.36, -0.56), 0.82, (-0.04, 0.08)),
+        reach=b((0.34, -0.56), 0.88, (-0.03, 0.08)),
+        skim=b((0.44, -0.86), 0.74, (0.02, -0.34)),
+        # the heavy charged: drawn back and low at the right
+        coil=b((0.80, -0.88), 0.58, (0.26, -0.20)),
+        # driven down, the design's blade to the ground: the Plunge armed in the fall and the Execution raised over the body
+        high=down((0.30, -0.14), 0.54, (0.20, -1.50)),
+        down_hit=down((0.14, -0.60), 0.70, (0.04, -1.60)),
+        down_deep=down((0.13, -0.72), 0.72, (0.04, -1.80)),
+        out=b((0.56, -0.84), 0.66, (0.12, -0.20)),
+    )
+
+
+class Spin:
+    """A weapon turned about its fist: the fist on a Track (only its places are read) and a turn about one axis through it,
+    from the rest pose's orientation, by keys (tick, degrees, degrees a tick). A cubic between keys, so a stop is a stop and the
+    speed at each key is the one written. Refused if a span would run backward, which would read as a hitch in the spin."""
+
+    def __init__(self, path, rest, axis, turn):
+        self.path, self.keys = path, path.keys
+        self.a0, self.e0 = rest.to - rest.at, rest.edge
+        self.n = unit(axis)
+        self.turn = sorted(turn, key=lambda k: k[0])
+        for (t0, a0_, v0), (t1, a1, v1) in zip(self.turn, self.turn[1:]):
+            d = a1 - a0_
+            if d != 0 and (v0 * (t1 - t0) > 3.001 * abs(d) or v1 * (t1 - t0) > 3.001 * abs(d)):
+                raise ValueError(f"the spin would run backward between ticks {t0} and {t1}")
+
+    def degrees(self, t):
+        k = self.turn
+        if t <= k[0][0]:
+            return k[0][1]
+        for (t0, a, v0), (t1, b, v1) in zip(k, k[1:]):
+            if t <= t1:
+                dt, u = t1 - t0, (t - t0) / (t1 - t0)
+                return (2 * u ** 3 - 3 * u ** 2 + 1) * a + (u ** 3 - 2 * u ** 2 + u) * dt * v0 + (-2 * u ** 3 + 3 * u ** 2) * b + (u ** 3 - u ** 2) * dt * v1
+        return k[-1][1]
+
+    def at(self, t):
+        R = L.axis_rot(self.n, self.degrees(t))
+        place = self.path.at(t).at
+        return Pose(place, place + R @ self.a0, R @ self.e0)
+
+    def end(self):
+        return max(self.path.end(), self.turn[-1][0])
+
+
+def twirl_turn(sense, hit, end, halves=1, turns=1, start=0.0):
+    """The keys of a whole-turn strike: halves half-turns up to its hit, the rest after; at its fastest on the hit, as fast as
+    the settle after can take without running backward."""
+    total, before = 360.0 * turns, 180.0 * halves
+    v = min(2 * (before - start) / hit, 3 * (total - before) / (end - hit))
+    return [(0.0, sense * start, 0.0), (hit, sense * before, v), (end, sense * total, 0.0)]
+
+
+def twin_moves():
+    P = twin_poses()
+    T = Track
+    rest = P["rest"]
+    a0 = unit(rest.to - rest.at)
+    f = unit(np.array([0.0, 0.0, 1.0]) - a0 * float(a0[2]))
+    g = np.cross(a0, f)
+
+    def plane(psi):
+        """The axis of a turn: the weapon stays in a plane holding its rest line, psi degrees from facing the eye."""
+        c, s_ = math.cos(math.radians(psi)), math.sin(math.radians(psi))
+        return f * c + g * s_
+
+    def carried(hit, end, pose="hit", tail=None):
+        """The fist in to its place on the hit and home by the end, on one curve each way."""
+        return T([(0.0, rest, STOP), (hit, P[pose], STOP), (end, rest, STOP), (tail or end + 1.0, rest, STOP)])
+
+    def lean(side, hit, end):
+        """The view rolls a little into the turn and settles; a small lean, the spin is what moves."""
+        return View([(0, 0, 0, 0, STOP), (hit, side * 0.5, 0.25, side * 0.7, GO), (hit + 0.5, side * 0.6, 0.3, side * 0.8, STOP), (end, 0, 0, 0, STOP)])
+
+    def strike(sense, psi, hit, end, pose, tail, set_=None, halves=1, turns=1, form="slash", swish=None):
+        return dict(hand="main", form=form, hit=hit, set=set_ if set_ is not None else hit - 1.0,
+                    swish=swish if swish is not None else hit - 0.55, trail=(hit - 0.8, hit + 0.4),
+                    keys=Spin(carried(hit, end, pose, tail), rest, plane(psi), twirl_turn(sense, hit, end, halves, turns)), view=lean(-sense, hit, end))
+
+    moves = {
+        # the chain's three: one whole turn each, its plane and direction its own
+        "strike_1": strike(1, 20, 3.0, 6.0, "hit", 11.0),
+        "strike_2": strike(-1, -15, 3.0, 6.5, "hit_low", 11.0),
+        "strike_3": strike(1, 72, 3.0, 6.5, "hit_flat", 11.0),
+        # the finishers: two whole turns, the second carried on past the hit and settled
+        "strike_4": strike(1, 34, 5.0, 10.5, "hit_wide", 18.0, 3.5, halves=2, turns=2, form="spin"),
+        "strike_5": strike(-1, -28, 5.0, 11.0, "hit_wide", 19.0, 3.5, halves=2, turns=2, form="spin"),
+        # the heavy: charged drawn back, the upper blade turned out to the right, and let go round through the crosshair and on
+        "heavy": dict(hand="main", form="spin", far=True, hit=0.5, swish=0.0, trail=(0.0, 1.8),
+                      keys=Spin(T([(0.0, P["coil"], STOP), (0.5, P["hit_wide"], STOP), (8.5, rest, STOP), (12.0, rest, STOP)]), rest, plane(30),
+                                [(0.0, -70.0, 0.0), (0.5, 0.0, 220.0), (3.0, 290.0, 36.0), (8.5, 360.0, 0.0)]),
+                      view=View([(0, 0, -0.4, 0, STOP), (0.5, -0.3, 0.8, -0.4, GO), (1.2, -0.4, 1.0, -0.6, STOP), (5.0, 0, 0, 0, STOP)])),
+        # the riposte: a turn on a shorter draw, further out
+        "riposte": strike(1, 26, 2.0, 7.0, "reach", 10.0, 1.2),
+        # the Art: four turns, at full speed through the whole of its active ticks
+        "art": dict(hand="main", form="spin", hit=3.0, swish=2.2, trail=(2.2, 3.4),
+                    keys=Spin(T([(0.0, rest, STOP), (3.0, P["reach"], STOP), (9.0, P["reach"], STOP), (19.0, rest, STOP), (21.0, rest, STOP)]), rest, plane(30),
+                              [(0.0, 0.0, 0.0), (3.0, 180.0, 120.0), (9.0, 900.0, 120.0), (21.0, 1440.0, 0.0)]),
+                    view=View([(0, 0, 0, 0, STOP), (3.0, -0.5, 0.3, -0.8, GO), (9.0, 0.5, 0.3, 0.8, GO), (13.0, 0, 0, 0, STOP)])),
+        # out of a dodge and out of a slide: the turn flat across, and low across the legs
+        "slipcut": strike(1, 68, 2.0, 7.0, "hit_flat", 10.0, 1.0),
+        "undercut": strike(1, 80, 2.0, 7.5, "skim", 11.0, 1.0),
+        # armed in a fall: the blade held down; on landing driven into what's below
+        "plunge": dict(hand="main", form="chop", hit=0.3, swish=0.0, trail=(0.0, 1.0),
+                       keys=T([(0.0, P["high"], STOP), (0.3, P["down_hit"], GO), (0.8, P["down_deep"], STOP), (3.0, P["out"], GO),
+                               (5.5, rest, STOP), (14.0, rest, STOP)]),
+                       view=View([(0, 0, 0, 0, STOP), (0.3, 0, 3.0, 0, GO), (0.8, 0, 3.6, 0, STOP), (4.0, 0, 0, 0, STOP)])),
+        # the Execution: raised over the broken body and driven down, held, pulled out
+        "execution": dict(hand="main", form="chop", hit=2.0, swish=1.4, trail=(1.4, 2.5),
+                          keys=T([(0.0, rest, STOP), (1.4, P["high"], STOP), (2.0, P["down_hit"], GO), (2.6, P["down_deep"], STOP), (4.0, P["down_deep"], STOP),
+                                  (5.6, P["out"], GO), (8.0, rest, STOP), (19.0, rest, STOP)]),
+                          view=View([(0, 0, 0, 0, STOP), (1.4, 0, -1.4, 0, STOP), (2.0, 0, 2.6, 0, GO), (2.6, 0, 3.2, 0, STOP), (4.0, 0, 3.0, 0, STOP), (6.5, 0, 0, 0, STOP)])),
+    }
+    return moves
+
+
 # ---- sampling a move into the game's keys --------------------------------------------------------------------------
 
 def sample_move(held, mv, t):
@@ -682,8 +831,8 @@ def chain(out, style, names, gap=4.0, step=0.5):
     return out
 
 
-MOVES = {"daggers": dagger_moves, "scythe": scythe_moves}
-POSES = {"daggers": dagger_poses, "scythe": scythe_poses}
+MOVES = {"daggers": dagger_moves, "scythe": scythe_moves, "twinblades": twin_moves}
+POSES = {"daggers": dagger_poses, "scythe": scythe_poses, "twinblades": twin_poses}
 
 # ---- third person from the same keys (decision 7): each arm follows its own blade ---------------------------------
 #
@@ -702,6 +851,7 @@ CLOSE, OUT = 2.0, 8.2  # px before the shoulders there
 DROP = 0.3  # px below the shoulder a degree the fist is seen under the eye, past 15
 CHEST = 50.0  # degrees of chest turn a block of one fist ahead of the other
 CHEST_MAX = 25.0
+TWO_ENDED = ("twinblades",)  # a blade each way: third()'s wrist reaches for the nearer end
 WRIST_STEP = 20.0  # degrees a quarter tick, at most, outside the blow (Euan's yes to decision 7)
 FLAT = np.diag([1.0, 1.0, -1.0])  # the item's flat turned over: the left's mirrored blade as a turn
 
@@ -763,6 +913,32 @@ def _limit(Ws, ts, hit, step=WRIST_STEP):
     return run(list(range(n)))  # the halfway meeting can still step past the limit: held to it once more
 
 
+def _spin_wrists(mv, ts, hand_frames, AH, R4):
+    """A spun weapon's wrist: the first-person turn itself, about the weapon's own flat, with the wheel tipped about the
+    blade's line onto first person's plane by the hit. Written as the turn and not solved from where the blade points:
+    the shortest turn to a line flips each time the blade passes the far side of it, 179 degrees in a key on a whole spin."""
+    spin = mv["keys"]
+    at = min(range(len(ts)), key=lambda i: abs(ts[i] - mv["hit"]))
+    n = hand_frames[at].T @ R4.B @ spin.n  # first person's spin axis, in the hand
+    a, f = AH.AXIS_ITEM, AH.FACE_ITEM
+    p = n - (n @ a) * a
+    tip = math.degrees(math.atan2(float(np.cross(f, p) @ a), float(f @ p)))
+    sense = 1.0
+    if abs(tip) > 90.0:  # the wheel the other way up is the same wheel turning the other way, and needs no flip of the blade
+        tip -= math.copysign(180.0, tip)
+        sense = -1.0
+    end = float(ts[-1])
+
+    def smooth(u):
+        u = min(1.0, max(0.0, u))
+        return u * u * (3 - 2 * u)
+
+    def lean(t):
+        return smooth(t / max(mv["hit"], 1.5)) * (1.0 - smooth((t - mv["hit"]) / max(1e-6, end - mv["hit"])))
+
+    return [L.axis_rot(a, tip * lean(float(t))) @ L.axis_rot(f, sense * spin.degrees(float(t))) for t in ts]
+
+
 def third(style="daggers"):
     """Each move's third person: {move: {"bent": rec, "straight": rec}} in arms_rig4's record (the arms' terms, the chest's
     twist, the right wrist) with the left wrist too ("wrist_left"), and the check numbers."""
@@ -783,41 +959,62 @@ def third(style="daggers"):
         own = f"arms_{style}_{name}"
         base = own if own in A.BASE else f"arms_{name}"
         ts = np.arange(0.0, length(mv) + 1e-6, DT)
+        spun = isinstance(mv["keys"], Spin)  # the weapon turns over and over in the fist: its wrist is the turn itself
         rec_by = {}
         for bent in (True, False):
             clip = A.BASE[base + ("_bent" if bent else "")]
             prev = {arm: R4.terms_of(clip.sample(0.0), arm, bent) for arm in ("right", "left")}
             rec = {"right": [], "left": [], "twist": [], "wrist": [], "wrist_left": [], "miss": 0.0, "depth": 0.0}
             Wr, Wl = [], []
+            hand_frames, last_line = [], AH.AXIS_ITEM
             for t in ts:
                 t = float(t)
                 b0 = clip.sample(t)
                 w = _weight(name, mv, t)
-                strike, other = mv["keys"].at(t), mv["other"].at(t)
+                strike = mv["keys"].at(t)
+                other = mv["other"].at(t) if "other" in mv else None  # one weapon in both hands: the arm that turns it is solved, the other keeps the clip
                 pr, pl = (other, strike) if mv["hand"] == "off" else (strike, other)
                 (_, Rr), (_, Rl) = sample_move(held, mv, t)
-                tw = float(np.clip(-CHEST * (pl.at[2] - pr.at[2]), -CHEST_MAX, CHEST_MAX))
+                tw = 0.0 if other is None else float(np.clip(-CHEST * (pl.at[2] - pr.at[2]), -CHEST_MAX, CHEST_MAX))
                 tw = (1 - w) * R4.twist_of(b0) + w * tw
                 b = R4.with_twist(b0, tw)
                 fr = PC.part_frames(b)
-                for arm, pose, Rv in (("right", pr, Rr @ Rh), ("left", pl, M @ Rl @ Rh @ FLAT)):
+                if other is None:
+                    rec["left"].append([round(float(x), 2) for x in R4.terms_of(b0, "left", bent)])
+                    Wl.append(np.eye(3))
+                for arm, pose, Rv in (("right", pr, Rr @ Rh), ("left", pl, None if other is None else M @ Rl @ Rh @ FLAT)):
+                    if pose is None:
+                        continue
                     turn, local = holds[arm]
                     am = R4.B @ Rv @ AH.AXIS_ITEM  # the blade's line in the model
                     target = R4.to_world(b, _fist3(pose.at))
-                    roll = lambda Mx, turn=turn, am=am: 0.02 * math.degrees(math.acos(float(np.clip((Mx @ turn @ AH.AXIS_ITEM) @ am, -1, 1))))  # noqa: E731
+                    if spun:  # a weapon that turns over and over in the fist: its arm isn't asked to follow it
+                        roll = lambda Mx, turn=turn, am=am: 0.0  # noqa: E731
+                    else:
+                        roll = lambda Mx, turn=turn, am=am: 0.02 * math.degrees(math.acos(float(np.clip((Mx @ turn @ AH.AXIS_ITEM) @ am, -1, 1))))  # noqa: E731
                     v, miss = R4.ik_arm(b, arm, bent, target, local, prev[arm], roll)
                     prev[arm] = v
                     vb = (1 - w) * R4.terms_of(b0, arm, bent) + w * v
                     b[arm + "_arm"] = R4.arm_bones(*vb, tw, arm, bent)
                     Mx, Tx, _ = R4.limb_frame(b, arm, bent)
-                    W = _arc(AH.AXIS_ITEM, (Mx @ turn).T @ am)
-                    W = L.quat_mat(L.slerp(np.array([0.0, 0.0, 0.0, 1.0]), L.mat_quat(W), w))
-                    (Wr if arm == "right" else Wl).append(W)
+                    if spun:
+                        hand_frames.append(Mx @ turn)
+                    else:
+                        here = (Mx @ turn).T @ am
+                        if style in TWO_ENDED and here @ last_line < 0:  # either end can do the job: never turn it over to bring the other one
+                            here = -here
+                        last_line = here
+                        W = _arc(AH.AXIS_ITEM, here)
+                        W = L.quat_mat(L.slerp(np.array([0.0, 0.0, 0.0, 1.0]), L.mat_quat(W), w))
+                        (Wr if arm == "right" else Wl).append(W)
                     rec[arm].append([round(float(x), 2) for x in vb])
                     if w > 0.999:
                         rec["miss"] = max(rec["miss"], round(miss, 2))
                 rec["twist"].append(round(tw, 2))
-            Wr, Wl = _limit(Wr, ts, mv["hit"]), _limit(Wl, ts, mv["hit"])
+            if spun:
+                Wr = _spin_wrists(mv, ts, hand_frames, AH, R4)
+            else:
+                Wr, Wl = _limit(Wr, ts, mv["hit"]), _limit(Wl, ts, mv["hit"])
             for i, t in enumerate(ts):  # the check: each blade as the game will draw it, into the body
                 b = R4.rigged_bones(clip, rec, i, bent)
                 frs = [PC.part_frames(b, p) for p in (0.0, 30.0)]
@@ -1130,6 +1327,8 @@ def baked(data, style):
         if "set" in mv:
             row["set"] = mv["set"]
         row["trail"] = list(mv["trail"])
+        if mv.get("far"):
+            row["far"] = True
         row["kick"] = kick_of(held, mv, row["form"])
         if "swishSound" in prev:
             row["swishSound"] = prev["swishSound"]
@@ -1148,13 +1347,21 @@ def baked(data, style):
     new = dict(old)
     new["moves"] = moves
     new["stance"] = stance_of(style)
+    if style in TRAIL_LOOK:
+        new["trail"] = list(TRAIL_LOOK[style])
     if held.nib is not None:  # the second fist on its own grip on the weapon (decision 8: two hands in both views)
         new["offHand"] = [round(float(v), 4) for v in held.nib]
+    if style in TWO_ENDED:  # twirled in one hand: a second fist would circle the first through every turn
+        new.pop("offHand", None)
+        new.pop("vanillaOffHand", None)
     new["by"] = KEYED_BY
     return new
 
 
-KEYED = ("daggers", "scythe")
+KEYED = ("daggers", "scythe", "twinblades")
+# a style's ribbon [from how far up the blade in first person, its light]: the Twin Blades lay a narrow one (Euan 2026-11-09: "it makes
+# the trail basically take up too much of the screen")
+TRAIL_LOOK = {"twinblades": [0.82, 0.6]}
 
 
 def bake(styles=KEYED):
@@ -1287,7 +1494,11 @@ def check(styles=KEYED):
                 for arm, ks in clip.get(key, {}).items():
                     for i in range(1, len(ks)):
                         a_ = angle(L.quat_mat(np.array(ks[i - 1])), L.quat_mat(np.array(ks[i])))
-                        if abs(i * DT - mv["hit"]) > 0.5 and a_ > WRIST_STEP + 0.5:
+                        # a spun weapon's wrist is its turn, so it may go as fast as the turn does, and no faster (a flip would)
+                        limit = WRIST_STEP
+                        if isinstance(mv["keys"], Spin):
+                            limit = abs(mv["keys"].degrees(i * DT) - mv["keys"].degrees((i - 1) * DT)) + 12.0
+                        if abs(i * DT - mv["hit"]) > 0.5 and a_ > limit + 0.5:
                             bad.append(f"{name} {key} {arm}: the wrist turns {a_:.0f} deg in a key at {i * DT}")
                     if abs(ks[-1][3]) < 0.9999:
                         bad.append(f"{name} {key} {arm}: the wrist isn't square at the end")
