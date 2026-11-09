@@ -19623,7 +19623,9 @@ clip and at 1.6 s on the ground, a third of the run out of step. Any late packet
 only ever three ticks ahead of what had been drawn. All 47 bodies now: are placed every tick (`updateInterval(1)`) and glide to it
 in three steps (`LinearInterpolationHandler`), which a packet one or two ticks late doesn't stop; and while a move or a charge carries
 one, it's sent ahead by two ticks of what's left of its run (`AwakenBoss.trackingPosition`, `FightRunner.lead`, `AbilityRunner.lead`),
-never further than the move still goes, and not at all if a wall is there. Two ticks is exactly what the glide lags at a steady speed:
+never further than the move still goes (an ability charge brakes to a fifth on its last tick, so that tick counts for a fifth:
+CI 42603379006 showed the Guardian of the Gardens running 0.42 past its stop and sliding back; `fights_charge_stops_where_sent`),
+and not at all if a wall is there. Two ticks is exactly what the glide lags at a steady speed:
 the client draws the body where the server has it on every tick, start and end included (`fights_body_keeps_up`, all 66 moves that
 carry a body). The server's own place, and so every reach and every hit, is unchanged. A move cut short (a deflect) can pull the drawn
 body back up to two ticks of its run. What a carried body's legs do isn't touched: the charge's stride swings about 34 degrees a tick

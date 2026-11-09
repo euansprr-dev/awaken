@@ -14,11 +14,15 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -32,6 +36,7 @@ public final class FightReachTests {
         }
         AwakenTests.registerIsolated("fights_guard_holds_ground", 200, FightReachTests::holdsGround);
         AwakenTests.registerIsolated("fights_body_keeps_up", 120, FightReachTests::bodyKeepsUp);
+        AwakenTests.registerIsolated("fights_charge_stops_where_sent", 200, FightReachTests::chargeStopsWhereSent);
         AwakenTests.register("fights_reach_table", 20, FightReachTests::table);
         AwakenTests.registerIsolated("fights_reach_parry", 300, FightReachTests::parry);
         AwakenTests.register("fights_shots_own_look", 20, FightReachTests::ownLook);
@@ -266,6 +271,39 @@ public final class FightReachTests {
                 boss.discard();
                 h.succeed();
             }
+        });
+    }
+
+    /** A charge (an ability, not a clip) brakes on its last tick: what's sent ahead must be where the body really gets to. */
+    private static void chargeStopsWhereSent(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int x = -2; x <= 24; x++) for (int z = -2; z <= 28; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        MobDef def = Bestiary.get("guardian_gardens");
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(11.5, 1, 5.5)), 5,
+                new MobRole(MobRole.Role.BOSS, 5, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        Pig stand = h.spawn(EntityTypes.PIG, new Vec3(11.5, 1, 17.5));
+        stand.setNoAi(true);
+        boss.setTarget(stand);
+        List<Vec3> sent = new ArrayList<>(), at = new ArrayList<>();
+        boolean[] began = {false};
+        h.onEachTick(() -> {
+            if (!began[0]) {
+                began[0] = boss.playKitMove("charge");
+                return;
+            }
+            sent.add(boss.trackingPosition());
+            at.add(boss.position());
+            if (boss.kitPlaying() != null) return;
+            int led = 0;
+            for (int k = 0; k + 2 < sent.size(); k++) {
+                if (sent.get(k).distanceTo(at.get(k)) == 0) continue;
+                led++;
+                double off = sent.get(k).distanceTo(at.get(k + 2));
+                h.assertTrue(off < 0.15, "tick " + k + " of the charge sent the body " + off + " from where it got to");
+            }
+            h.assertTrue(led >= 6, "ticks a charge led the body: " + led);
+            boss.discard();
+            h.succeed();
         });
     }
 
