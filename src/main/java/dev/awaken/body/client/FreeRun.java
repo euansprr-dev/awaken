@@ -32,12 +32,21 @@ final class FreeRun {
     private static double pullX, pullZ, pulled;
     private static final double[] OUT = new double[2];
     private static final BlockPos.MutableBlockPos M = new BlockPos.MutableBlockPos();
+    /** The ledge just climbed: the free-run stops on it until you ask for more. */
+    static final RunnerRules.Settle SETTLE = new RunnerRules.Settle();
 
     /** Start of the input step. */
-    static void begin(LocalPlayer p, Input k) {
+    static void begin(LocalPlayer p, Input k, boolean jumpPressed, int now) {
         held = FeelConfig.freeRun() && k.sprint() && k.forward() && !k.backward() && !k.shift()
                 && !p.isUsingItem() && Minecraft.getInstance().gui.screen() == null;
         if (!held) hangHeld = 0;
+        SETTLE.tick(held, jumpPressed, p.getX(), p.getY(), p.getZ(), now);
+    }
+
+    /** A mantle or a climb out ended with the feet here. */
+    static void climbed(double x, double y, double z, int now) {
+        SETTLE.landed(held, x, y, z, now);
+        if (SETTLE.stopped()) ClientMoves.trace("free-run: stops on the ledge");
     }
 
     /** Up a climb line (Carillon's drainpipes, trellises, hoist ropes, any ladder: #minecraft:climbable), free-running. */
@@ -72,6 +81,7 @@ final class FreeRun {
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
         if ((v.x * fx + v.z * fz) / h < 0.8) return false;
         int what = RunnerRules.ahead(level, ctx, M, p.getX(), p.getY(), p.getZ(), fx, fz, h, OUT);
+        if (SETTLE.holds(what, OUT[0])) return false;
         String why = switch (what) {
             case RunnerRules.AHEAD_VAULT -> String.format("vault %.2f", OUT[0]);
             case RunnerRules.AHEAD_LEAP -> "leap from the edge";
@@ -170,5 +180,6 @@ final class FreeRun {
         held = false;
         groundJumpAt = -100;
         hangHeld = pullLeft = 0;
+        SETTLE.clear();
     }
 }

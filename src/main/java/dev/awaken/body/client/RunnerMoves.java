@@ -206,12 +206,13 @@ public final class RunnerMoves {
             FreeRun.air(p);
             // a climb line in reach: the grip takes it (SPEC §17.28)
             if (GripMoves.tryStart(p, in, k, level, false, now)) return true;
-            if (now >= regrabAt && tryGrab(p, in, level, ctx, now)) return true;
+            boolean onFeet = FreeRun.SETTLE.onFeet(level, ctx, M, p.getX(), p.getY(), p.getZ(), now);
+            if (!onFeet && now >= regrabAt && tryGrab(p, in, level, ctx, now)) return true;
             boolean chain = now <= chainUntil && links > 0;
             // free-running, sprint held is the jump held: run along the wall beside you, climb the one ahead
             boolean intent = (airPress ? now - airJumpAt <= RunnerRules.BUFFER : k.jump()) || FreeRun.held;
-            if (intent && !chain && tryClimb(p, in, k, level, ctx, now)) return true;
-            if ((chain || intent && p.isSprinting()) && tryRun(p, in, level, ctx, chain ? links : 0, now)) return true;
+            if (!onFeet && intent && !chain && tryClimb(p, in, k, level, ctx, now)) return true;
+            if (!onFeet && (chain || intent && p.isSprinting()) && tryRun(p, in, level, ctx, chain ? links : 0, now)) return true;
             if (jumpPressed && now - groundAt <= RunnerRules.COYOTE && !jumpedOff && p.getDeltaMovement().y <= 0) {
                 p.jumpFromGround(); // coyote time: the jump you meant at the edge
                 jumpedOff = true;
@@ -905,7 +906,10 @@ public final class RunnerMoves {
             settleAt = now + (pathKind == GRAB || pathKind == LOWER || pathKind == EAVE ? 5 : 1);
         } else {
             state = State.NONE;
-            if (pathKind == CLIMB) sendEnd(Move.LEDGE_JUMP);
+            if (pathKind == CLIMB) {
+                sendEnd(Move.LEDGE_JUMP);
+                FreeRun.climbed(bx, by, bz, now);
+            }
             ClientMoves.trace("climbed out");
         }
     }

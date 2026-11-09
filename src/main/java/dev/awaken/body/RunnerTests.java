@@ -37,6 +37,7 @@ final class RunnerTests {
         AwakenTests.registerIsolated("runner_hang_no_float_kick", 400, RunnerTests::hangNoFloatKick);
         AwakenTests.registerIsolated("runner_probe_cost", 200, RunnerTests::probeCost);
         AwakenTests.register("runner_roof_climb", 20, RunnerTests::roofClimb);
+        AwakenTests.register("runner_free_run_stops", 20, RunnerTests::freeRunStops);
         AwakenTests.registerIsolated("runner_pipe_grip", 120, RunnerTests::pipeGrip);
         AwakenTests.registerIsolated("runner_pipe_cornice", 120, RunnerTests::pipeCornice);
         AwakenTests.registerIsolated("runner_ledge_drop", 120, RunnerTests::ledgeDrop);
@@ -460,6 +461,81 @@ final class RunnerTests {
         // a beam a block over the eave: a hang, but no room to stand on the step
         Scene b = new Scene(2, 1).fill(2, 6, 64, 66, stone).put(2, 67, Scene.STAIR).fill(2, 2, 69, 69, stone);
         roofCheck(h, "stair eave under a beam", b, 2, 67.5, Double.NaN);
+        h.succeed();
+    }
+
+    /**
+     * Euan's staircase of two-high steps, one block deep (SPEC §17.14): the free-run reads the next step as a wall to
+     * jump at the moment you land, and with the keys still held it waits, however long you stand there. A jump pressed,
+     * or the keys let go, is the ask; a step mantled (1.5 up) stops the same; a wide roof's far wall is a new approach.
+     */
+    static void freeRunStops(GameTestHelper h) {
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        CollisionContext ctx = CollisionContext.empty();
+        double[] out = new double[1];
+        RunnerRules.Settle settle = new RunnerRules.Settle();
+        Scene s = new Scene(2, 1);
+        for (int k = 0; k < 3; k++) s.fill(2 + k, 2 + k, 64, 65 + 2 * k, stone); // tops 66, 68, 70
+        // step one, as the free-run takes it: a wall ahead, jumped at, the lip caught, climbed out
+        h.assertTrue(RunnerRules.ahead(s, ctx, M, 1.5, 64, 1.69, 0, 1, 0.28, out) == RunnerRules.AHEAD_WALL, "the first step is a wall to jump at");
+        RunnerRules.Edge e = RunnerRules.findEdge(s, ctx, M, 1.5, 64.5, 1.66, 2, 1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+        double[] stand = e == null ? null : RunnerRules.climbOut(s, ctx, M, e);
+        h.assertTrue(stand != null && Math.abs(stand[1] - 66) < 1e-6, "climbs out onto the first step");
+        settle.landed(true, stand[0], stand[1], stand[2], 100);
+        // what chained first (the CI tour's trace): on the tick after the climb the feet aren't in contact, and from there the next step is a grab
+        RunnerRules.Edge grab = RunnerRules.findEdge(s, ctx, M, stand[0], stand[1], stand[2] + 0.1, 2, 1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+        h.assertTrue(grab != null && Math.abs(grab.top() - 68) < 1e-6, "from the landing the next step is in a hang's reach");
+        h.assertTrue(settle.onFeet(s, ctx, M, stand[0], stand[1], stand[2] + 0.1, 101), "the tick after the landing the feet are on the ledge: nothing in the air is read");
+        h.assertFalse(settle.onFeet(s, ctx, M, stand[0], stand[1] + 0.42, stand[2], 102), "a jump's first tick is in the air: its catch is yours");
+        h.assertFalse(settle.onFeet(s, ctx, M, stand[0], stand[1], stand[2], 110), "only just after a landing");
+        settle.landed(false, stand[0], stand[1], stand[2], 100);
+        h.assertTrue(settle.onFeet(s, ctx, M, stand[0], stand[1], stand[2], 101), "free-run on or off, the same");
+        settle.landed(true, stand[0], stand[1], stand[2], 100);
+        // the step behind is read as a way up, and held keys don't take it, at the landing or pressed flat to it
+        int what = RunnerRules.ahead(s, ctx, M, stand[0], stand[1], stand[2], 0, 1, 0.28, out);
+        h.assertTrue(what == RunnerRules.AHEAD_WALL && Math.abs(out[0] - 2) < 1e-6, "the next step reads as a wall 2 up: " + what + " " + out[0]);
+        h.assertTrue(settle.holds(what, out[0]), "with the keys held the free-run stays on the step");
+        for (int t = 101; t < 400; t++) settle.tick(true, false, stand[0], stand[1], 2.69, t);
+        h.assertTrue(settle.holds(what, out[0]), "no clock runs the stop out: 300 ticks pressed against the next step");
+        // a fresh jump press asks, and it reaches the next step
+        settle.tick(true, true, stand[0], stand[1], 2.69, 400);
+        h.assertFalse(settle.holds(what, out[0]), "a jump pressed lifts the stop");
+        RunnerRules.Edge next = RunnerRules.findEdge(s, ctx, M, 1.5, 66.5, 2.66, 2, 1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+        double[] up = next == null ? null : RunnerRules.climbOut(s, ctx, M, next);
+        h.assertTrue(up != null && Math.abs(up[1] - 68) < 1e-6, "the jump's catch climbs out onto the next step");
+        // letting go asks too; a press in the climb's last ticks has asked already; the free-run off never stops anything
+        settle.landed(true, up[0], up[1], up[2], 500);
+        h.assertTrue(settle.stopped(), "stops on the next step too");
+        settle.tick(false, false, up[0], up[1], up[2], 501);
+        settle.tick(true, false, up[0], up[1], up[2], 502);
+        h.assertFalse(settle.stopped(), "letting go of the keys and holding them again asks");
+        settle.tick(true, true, up[0], up[1], up[2], 600);
+        settle.landed(true, up[0], up[1], up[2], 600 + RunnerRules.BUFFER);
+        h.assertFalse(settle.stopped(), "a jump pressed just before the landing has asked");
+        settle.tick(true, true, up[0], up[1], up[2], 700);
+        settle.landed(true, up[0], up[1], up[2], 701 + RunnerRules.BUFFER);
+        h.assertTrue(settle.stopped(), "the press that started a climb is no ask");
+        settle.landed(false, up[0], up[1], up[2], 800);
+        h.assertFalse(settle.stopped(), "with the free-run not held a landing stops nothing");
+        // steps of 1.5 (the mantle's own height): the mantle would chain, and the stop is what holds it
+        BlockState slab = Blocks.STONE_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.BOTTOM);
+        Scene m = new Scene(2, 1).fill(2, 2, 64, 64, stone).fill(2, 2, 65, 65, slab).fill(3, 3, 64, 66, stone).fill(4, 4, 64, 67, stone).fill(4, 4, 68, 68, slab);
+        BodyRules.Ledge one = BodyRules.findLedge(m, ctx, 1.5, 64, 1.69, 0F, BodyRules.MANTLE_REACH);
+        h.assertTrue(one != null && Math.abs(one.y() - 65.5) < 1e-6, "the first 1.5 step is a mantle: " + one);
+        settle.landed(true, one.x(), one.y(), one.z(), 900);
+        BodyRules.Ledge two = BodyRules.findLedge(m, ctx, one.x(), one.y(), one.z(), 0F, BodyRules.MANTLE_REACH);
+        h.assertTrue(two != null && Math.abs(two.y() - 67) < 1e-6, "from it the next is a mantle in reach: " + two);
+        h.assertTrue(settle.stopped(), "and the free-run doesn't take it");
+        // what isn't a climb goes on: a vault of a block's height, an edge; and a wide roof's far wall is a new approach
+        h.assertFalse(settle.holds(RunnerRules.AHEAD_VAULT, 1.0) || settle.holds(RunnerRules.AHEAD_LEAP, Double.NaN), "a vault and a leap are left alone");
+        h.assertTrue(settle.holds(RunnerRules.AHEAD_VAULT, BodyRules.MANTLE_MIN), "a \"vault\" of a mantle's height waits like the mantle");
+        settle.tick(true, false, one.x(), one.y(), one.z() + RunnerRules.SETTLE_AWAY - 0.1, 901);
+        h.assertTrue(settle.stopped(), "a few steps along a ledge are still on it");
+        settle.tick(true, false, one.x(), one.y(), one.z() + RunnerRules.SETTLE_AWAY + 0.1, 902);
+        h.assertFalse(settle.stopped(), "run clear of the landing and the free-run reads on");
+        settle.landed(true, one.x(), one.y(), one.z(), 1000);
+        settle.tick(true, false, one.x(), one.y() - RunnerRules.SETTLE_HEIGHT - 0.1, one.z(), 1001);
+        h.assertFalse(settle.stopped(), "dropped off the ledge: it's over");
         h.succeed();
     }
 
