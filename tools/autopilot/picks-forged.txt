@@ -90,14 +90,28 @@ cmd item replace entity @s weapon.mainhand with awaken:veilwoven_pick_mattock
 cmd tp @s 1.0 201 7.0 10 8
 wait 30
 shot mattock_rock
+# game time slowed (the client's ticks follow it), or the half-second flip falls between two shots
+cmd tick rate 3
+wait 6
 cmd tp @s 1.0 201 7.0 -40 8
-wait 4
-shotnow mattock_turn_early
-wait 2
-shotnow mattock_turn_mid
-wait 2
-shotnow mattock_turn_late
-wait 8
+wait 3
+shotnow mattock_turn_1
+wait 1
+shotnow mattock_turn_2
+wait 1
+shotnow mattock_turn_3
+wait 1
+shotnow mattock_turn_4
+wait 1
+shotnow mattock_turn_5
+wait 1
+shotnow mattock_turn_6
+wait 1
+shotnow mattock_turn_7
+wait 1
+shotnow mattock_turn_8
+cmd tick rate 20
+wait 12
 shot mattock_earth
 cmd tp @s 1.0 201 7.0 10 8
 wait 16
@@ -163,11 +177,21 @@ wait 80
 shotnow forge_06
 wait 80
 shotnow forge_07
-wait 80
-shotnow forge_08
-wait 80
-shotnow forge_09
-wait 80
+wait 30
+shotnow hang_1
+wait 15
+shotnow hang_2
+wait 15
+shotnow hang_3
+wait 15
+shotnow hang_4
+wait 15
+shotnow hang_5
+wait 15
+shotnow hang_6
+wait 15
+shotnow hang_7
+wait 40
 shotnow forge_10
 wait 80
 shotnow forge_11
