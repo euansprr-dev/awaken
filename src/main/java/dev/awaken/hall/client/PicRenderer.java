@@ -13,6 +13,11 @@ import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.awaken.Awaken;
+import dev.awaken.armour.ArmourSet;
+import dev.awaken.armour.ForgeSong;
+import dev.awaken.armour.client.ArmourMesh;
+import dev.awaken.armour.client.ArmourMeshes;
+import dev.awaken.armour.client.FittingStandRenderer;
 import dev.awaken.arms.WeaponMesh;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.GuiRenderer;
@@ -34,7 +39,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 
 /**
- * Draws a {@link PicState}'s weapons into its own texture, only when they change, and blits that. The vanilla base class
+ * Draws a {@link PicState}'s weapons and suits into its own texture, only when they change, and blits that. The vanilla base class
  * keeps its texture private and draws at the state's GUI size; the Hall needs the stage's size and its own blit.
  */
 final class PicRenderer extends PictureInPictureRenderer<PicState> {
@@ -73,7 +78,7 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
 
     private void paint(PicState s, FeatureRenderDispatcher features, GpuDevice device, int w, int h) {
         device.createCommandEncoder().clearColorAndDepthTextures(color, GuiRenderer.CLEAR_COLOR, depth, 0.0);
-        projection.setupOrtho(-1000F, 1000F, w, h, true);
+        projection.setupOrtho(-4000F, 4000F, w, h, true); // a suit in the close-up reaches over a thousand texture pixels from its middle at 4K
         RenderSystem.setProjectionMatrix(projectionBuffer.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
         Matrix4fStack view = RenderSystem.getModelViewStack();
         view.pushMatrix();
@@ -88,7 +93,8 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
         }
         // a pass each: drawn together, a whole wall's worth, weapons came out joined to one another by long streaks
         for (Placed p : s.placed) {
-            place(ps, p, ours);
+            if (p.set() != null) placeSuit(ps, p, ours);
+            else place(ps, p, ours);
             try (FeatureRenderDispatcher.PreparedFrame frame = features.prepareFrame(store);
                  RenderPass pass = device.createCommandEncoder().createRenderPass(() -> "Hall picture", colorView, Optional.empty(), depthView, OptionalDouble.empty())) {
                 RenderSystem.bindDefaultUniforms(pass);
@@ -119,14 +125,45 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
         ps.popPose();
     }
 
+    /** A suit stands as on its Fitting Stand: every piece's meshes on their bones, a figure's y running down and its front at -z. */
+    private void placeSuit(PoseStack ps, Placed p, boolean ours) {
+        ArmourSet set = p.set();
+        Identifier tex = ArmourMeshes.texture(set);
+        ps.pushPose();
+        ps.translate(p.x(), p.y(), -p.depth());
+        ps.scale(p.scale(), p.scale(), p.scale());
+        ps.rotate(Axis.XP.rotationDegrees(p.pitch()));
+        ps.rotate(Axis.YP.rotationDegrees(p.yaw()));
+        ps.translate(0F, -.5F, 0F);
+        for (int slot = 0; slot < 4; slot++) {
+            int mode = p.mode() >> slot * 4 & 15;
+            if ((mode & 7) == Placed.SKIP) continue;
+            ArmourMesh[] bones = ArmourMeshes.piece(set, ForgeSong.PIECES[slot]);
+            if (bones == null) continue;
+            int overlay = ours ? mode | Math.round(p.alpha() * 255F) << 16 : OverlayTexture.NO_OVERLAY;
+            boolean hidden = !ours && (mode & 7) == Placed.SHAPE;
+            for (ArmourMeshes.Bone b : ArmourMeshes.BONES) {
+                ArmourMesh m = bones[b.ordinal()];
+                if (m == null) continue;
+                ps.pushPose();
+                FittingStandRenderer.rest(ps, b);
+                store.submitCustomGeometry(ps, ours ? HallPipelines.weapon(tex) : HallPipelines.fallback(tex),
+                        (pose, buffer) -> emit(m.accent(), m.pos(), m.uv(), m.normal(), m.along(), m.vertices(), pose, buffer, overlay, ours, hidden));
+                ps.popPose();
+            }
+        }
+        ps.popPose();
+    }
+
     private static void emit(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, int overlay, boolean ours, boolean hidden) {
-        int accent = mesh.accent();
+        emit(mesh.accent(), mesh.pos(), mesh.uv(), mesh.normal(), mesh.along(), mesh.vertices(), pose, buffer, overlay, ours, hidden);
+    }
+
+    private static void emit(int accent, float[] p, float[] uv, byte[] n, byte[] along, int count, PoseStack.Pose pose, VertexConsumer buffer, int overlay, boolean ours, boolean hidden) {
         int shade = hidden ? 14 : 255;
         int r = ours ? accent >> 16 & 255 : shade, g = ours ? accent >> 8 & 255 : shade, b = ours ? accent & 255 : shade;
-        float[] p = mesh.pos(), uv = mesh.uv();
-        byte[] n = mesh.normal(), along = mesh.along();
         int light = LightCoordsUtil.FULL_BRIGHT;
-        for (int i = 0, count = mesh.vertices(); i < count; i += 3) {
+        for (int i = 0; i < count; i += 3) {
             for (int c = i; c < i + 3; c++) corner(buffer, pose, p, uv, n, c, r, g, b, ours ? along[c] & 255 : 255, light, overlay);
             if (!ours) corner(buffer, pose, p, uv, n, i + 2, r, g, b, 255, light, overlay);
         }

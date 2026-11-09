@@ -1,0 +1,85 @@
+# The Hall of Arms (SPEC §52), the Armour wing at Euan's window size: level 14, D rank, some patterns found, one above his
+# rank. First from K's way in (looking), then at a real Fitting Stand with an anvil and a Forge, creative and survival.
+world hallsuits creative 4347
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1708 960
+cmd awaken admin levels 13
+cmd awaken admin rankup
+cmd awaken hall pattern wildhide
+cmd awaken hall pattern bellguard
+cmd awaken hall pattern amberwing
+cmd awaken hall pattern beastbound
+cmd awaken hall pattern cleftrunner
+cmd awaken hall pattern hornlord
+cmd awaken hall pattern sunward
+cmd awaken hall pattern sovereign
+cmd item replace entity @s armor.head with awaken:wildhide_helmet
+cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
+wait 30
+cmd awaken hall wall 0
+wait 80
+cmd awaken hall view wing 1
+wait 50
+shot terr_look
+cmd awaken hall suit cleftrunner 1
+wait 70
+shot suit_look
+cmd awaken hall suit sunward 0
+wait 70
+shot suit_over
+cmd awaken hall suit riftwalker 2
+wait 70
+shot suit_unfound
+screen close
+wait 10
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd fill -6 201 -3 6 206 9 minecraft:air
+cmd setblock 0 201 4 awaken:fitting_stand[facing=north]
+cmd setblock 2 201 3 minecraft:anvil[facing=east]
+cmd setblock -2 201 4 awaken:forge[facing=north]
+cmd setblock 2 201 6 minecraft:crafting_table
+wait 20
+cmd tp @s 0.5 201 1.5 0 15
+wait 30
+use
+wait 70
+shot terr_stand
+click 97 191
+wait 12
+shotnow suit_zoom
+wait 70
+shot suit_hero
+cmd awaken hall suit hornlord 0
+wait 70
+shot suit_lord
+cmd awaken hall view looks 0
+wait 60
+shot looks
+screen close
+wait 10
+cmd gamemode survival
+cmd give @s iron_ingot 3
+wait 20
+cmd tp @s 0.5 201 1.5 0 15
+wait 20
+use
+wait 70
+shot terr_survival
+cmd awaken hall suit beastbound 1
+wait 70
+shot suit_short
+screen close
+quit

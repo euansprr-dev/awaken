@@ -21,12 +21,12 @@ final class WallView {
     private static final Identifier DARK = Awaken.id("textures/gui/hall/wall_dark.png"), LIT = Awaken.id("textures/gui/hall/wall_lit.png");
     private static final int KEY_DARK = 1, KEY_LIT = 2;
     static final int ALL = 0, READY = 1, TRACKED = 2;
-    private static final String[] FILTER = {"Everything", "Ready now", "Tracked"};
-    private final float[] filterX = new float[FILTER.length];
+    static final String[] FILTERS = {"Everything", "Ready now", "Tracked"};
+    private final float[] filterX = new float[FILTERS.length];
     private static final float SEAL_X = 30F, SEAL_Y = 92F;
     private static final int SEAL_W = 16, SEAL_H = 24, SEAL_STEP = 22;
 
-    private final Component quiet = Stage.blackletter("Every weapon you could carry"), arms = Stage.blackletter("Arms");
+    private final Component quiet = Stage.blackletter("Every weapon you could carry");
     private final Component[] letters = new Component[HallNet.ROWS];
 
     int filter = ALL;
@@ -125,8 +125,6 @@ final class WallView {
     /** Everything that names the wall: tabs, caption, purse, seals, ranks and bays. */
     void ui(Stage s, HallNet.Wall w) {
         var v = ArmouryCache.view;
-        s.title(arms, 30F, 32F, 2F, Stage.LANTERN);
-        s.g.nextStratum();
         caption(s, w);
         purse(s, v);
         seals(s, w);
@@ -197,18 +195,27 @@ final class WallView {
             s.right(door, 1684F, 18F, 3F, Stage.EDGE);
             s.right(v.essence() + " essence", 1684F, 46F, 3F, Stage.LANTERN);
         }
+        filters(s, filter, filterX, ready, tracked);
+    }
+
+    /** Everything, Ready now, Tracked: laid out from the right edge, the counts beside their words. */
+    static void filters(Stage s, int on, float[] x, int ready, int tracked) {
         float right = 1684F;
-        for (int i = FILTER.length - 1; i >= 0; i--) {
-            float w = s.width(FILTER[i], 3F);
-            filterX[i] = right - w;
+        for (int i = FILTERS.length - 1; i >= 0; i--) {
+            float w = s.width(label(i, ready, tracked), 3F);
+            x[i] = right - w;
             right -= w + 32F;
         }
-        for (int i = 0; i < FILTER.length; i++) {
-            boolean on = filter == i;
-            s.text(FILTER[i], filterX[i], 80F, 3F, on ? Stage.TITLE : Stage.DIM);
-            if (i > 0) s.text(Integer.toString(i == READY ? ready : tracked), filterX[i], 104F, 3F, on ? Stage.LANTERN : Stage.DIM);
-            if (on) s.fill(filterX[i], 128F, filterX[i] + s.width(FILTER[i], 3F), 130F, Stage.LANTERN);
+        for (int i = 0; i < FILTERS.length; i++) {
+            boolean lit = on == i;
+            String word = label(i, ready, tracked);
+            s.text(word, x[i], 80F, 3F, lit ? Stage.TITLE : Stage.DIM);
+            if (lit) s.fill(x[i], 110F, x[i] + s.width(word, 3F), 112F, Stage.LANTERN);
         }
+    }
+
+    private static String label(int i, int ready, int tracked) {
+        return i == ALL ? FILTERS[i] : FILTERS[i] + " " + (i == READY ? ready : tracked);
     }
 
     private void seals(Stage s, HallNet.Wall w) {
@@ -225,8 +232,12 @@ final class WallView {
 
     /** Which filter is under the sheet point, or -1. */
     int filterAt(float x, float y) {
-        if (y < 76F || y > 132F) return -1;
-        for (int i = 0; i < FILTER.length; i++) if (x >= filterX[i] - 8F && (i == FILTER.length - 1 || x < filterX[i + 1] - 8F)) return i;
+        return filterAt(filterX, x, y);
+    }
+
+    static int filterAt(float[] filterX, float x, float y) {
+        if (y < 76F || y > 116F) return -1;
+        for (int i = 0; i < FILTERS.length; i++) if (x >= filterX[i] - 8F && (i == FILTERS.length - 1 || x < filterX[i + 1] - 8F)) return i;
         return -1;
     }
 

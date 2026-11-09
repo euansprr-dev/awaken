@@ -15,13 +15,9 @@ import dev.awaken.core.api.ForgeHooks;
 import dev.awaken.hall.HallNet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,20 +32,11 @@ import java.util.Locale;
  * One weapon, close (SPEC §52): the wall falls away, the weapon flies out of its niche and hangs turning, the six ranks of
  * its kind on the left and on the right what it does, what's special about it and what it takes to make.
  */
-final class PieceView {
+final class PieceView extends CloseView {
     private static final int KEY_HERO = 3, KEY_LADDER = 4;
     private static final float CX = 580F, CY = 486F;
     private static final int LADDER_X = 26, LADDER_TOP = 120, LADDER_BOTTOM = 848, RUNG = (LADDER_BOTTOM - LADDER_TOP) / 6, PORTRAIT = 88;
-    private static final float PANEL_X0 = 1020F, PANEL_X1 = 1684F, PANEL_Y0 = 30F, PANEL_Y1 = 930F, X = PANEL_X0 + 32F, RIGHT = PANEL_X1 - 32F, TEXT_W = RIGHT - X;
-    private static final float HOLD_SECONDS = .6F, FLY_SECONDS = .5F, BACK_SECONDS = .3F;
-    private static final int FORGE_FIRE = 0xFFF2B35F;
-    private static final int NEEDS_ACROSS = 4;
-    private static final float NEED_W = TEXT_W / NEEDS_ACROSS, NEED_H = 128F;
-
-    record Act(String label, int op, boolean hold, boolean enabled, int key) {}
-
-    /** What goes into the forge: the real item (a group's members in turn, so you know any of them when you find it), the count, its name and where to find it. */
-    private record Need(ItemStack[] icons, String count, String name, List<FormattedCharSequence> nameLines, boolean ok, String source) {}
+    private static final float PANEL_X0 = Panel.X0, PANEL_X1 = Panel.X1, PANEL_Y0 = Panel.Y0, PANEL_Y1 = Panel.Y1, X = Panel.X, RIGHT = Panel.RIGHT, TEXT_W = Panel.TEXT_W;
 
     // what's shown
     int col, tier;
@@ -60,11 +47,8 @@ final class PieceView {
     private String shownId;
     private float morph = 1F;
 
-    // the flight in and out, the turn
-    float fly;
-    boolean closing;
-    private float yaw = -24F, vel = 20F, bob;
-    boolean dragging;
+    // the turn
+    private float bob;
     private long heroVersion, ladderVersion;
     private Placed[] ladder = new Placed[0];
 
@@ -83,19 +67,17 @@ final class PieceView {
     private final List<String[]> stats = new ArrayList<>(4);
     private String compare = "";
     private int compareColour = Stage.LABEL;
-    private final List<Need> needs = new ArrayList<>(6);
+    private final List<Panel.Need> needs = new ArrayList<>(6);
     private int whyColour = Stage.LABEL;
-    private @Nullable Act primary;
-    private final List<Act> subs = new ArrayList<>(3);
+    private Panel.@Nullable Act primary;
+    private final List<Panel.Act> subs = new ArrayList<>(3);
     private String prevName = "", nextName = "";
 
     // what the last frame drew where
     private float primaryY0, primaryY1;
     private final float[] subX0 = new float[3], subX1 = new float[3];
     private float subY0, subY1;
-    private int hoverNeed = -1;
-    float hold;
-    boolean holdKey, holdMouse;
+    private final Panel.Hold hold = new Panel.Hold();
     private float pendingFor;
 
     PieceView(int col, int tier, HallLayout.Cell from) {
@@ -138,13 +120,13 @@ final class PieceView {
         id = WallView.weaponId(col, tier);
         dirty = true;
         ladderVersion++;
-        hold = 0F;
+        hold.amount = 0F;
         pendingFor = 0F;
         if (morph >= 1F) morph = 0F;
         ArmouryCache.ask(ArmsArmoury.DETAIL, style, ArmsArmoury.TIERS[tier]);
     }
 
-    void step(int dc, int dt) {
+    @Override void step(int dc, int dt) {
         if (lord != null) return;
         int c = Math.clamp(col + dc, 0, HallNet.COLS - 1), t = Math.clamp(tier + dt, 0, HallNet.ROWS - 1);
         if (c != col || t != tier) select(c, t);
@@ -155,32 +137,21 @@ final class PieceView {
         return item == Items.AIR ? weaponId : item.getName(new ItemStack(item)).getString();
     }
 
-    private static float ease(float t) {
-        float u = 1F - t;
-        return 1F - u * u * u;
-    }
-
-    float eased() {
-        return ease(fly);
-    }
-
-    /** True once it has flown all the way back. */
-    boolean advance(float dt) {
-        fly = closing ? Math.max(0F, fly - dt / BACK_SECONDS) : Math.min(1F, fly + dt / FLY_SECONDS);
-        return closing && fly <= 0F;
-    }
-
-    float zoomX() {
+    @Override float zoomX() {
         return fromX;
     }
 
-    float zoomY() {
+    @Override float zoomY() {
         return fromY;
+    }
+
+    @Override int tier() {
+        return tier;
     }
 
     // ---- drawing ------------------------------------------------------------------------------------------------------
 
-    void draw(Stage s, HallNet.Wall w, float dt, float time, double mouseX, double mouseY) {
+    @Override void draw(Stage s, HallNet.Wall w, float dt, float time, double mouseX, double mouseY) {
         rebuild(s, w);
         float e = eased();
         float mx = s.sx(mouseX), my = s.sy(mouseY);
@@ -197,12 +168,7 @@ final class PieceView {
     }
 
     private void hero(Stage s, float dt, float time) {
-        if (!dragging) {
-            vel += (12F - vel) * Math.min(1F, dt * 2.2F);
-            yaw += vel * dt;
-        }
-        if (yaw > 180F) yaw -= 360F;
-        if (yaw < -180F) yaw += 360F;
+        spin(dt);
         if (morph < 1F) {
             morph = Math.min(1F, morph + dt / .3F);
             if (morph >= .5F) shownId = id;
@@ -227,11 +193,6 @@ final class PieceView {
 
     private int modeOf() {
         return mode;
-    }
-
-    void drag(float dx) {
-        yaw += dx * .4F;
-        vel = dx * 6F;
     }
 
     private void drawLadder(Stage s, HallNet.Wall w, float dx) {
@@ -369,24 +330,8 @@ final class PieceView {
         }
     }
 
-    private static Need need(Stage s, ArmsPayloads.NeedRow n) {
-        Identifier nid = Identifier.parse(n.id());
-        List<ItemStack> icons = new ArrayList<>(1);
-        String label;
-        if (n.kind().equals("tag")) {
-            label = Component.translatable("tag.item." + nid.getNamespace() + "." + nid.getPath()).getString();
-            for (Holder<Item> h : BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, nid))) icons.add(new ItemStack(h.value()));
-        } else {
-            Item it = BuiltInRegistries.ITEM.getValue(nid);
-            ItemStack stack = new ItemStack(it);
-            icons.add(stack);
-            label = it.getName(stack).getString();
-        }
-        boolean ok = n.have() >= n.need();
-        String key = n.kind().equals("tag") ? "awaken.source.tag." + nid.getPath()
-                : nid.getPath().endsWith("_blueprint") ? "awaken.source.blueprint" : "awaken.source." + nid.getNamespace() + "." + nid.getPath();
-        String source = Language.getInstance().has(key) ? Language.getInstance().getOrDefault(key) : "";
-        return new Need(icons.toArray(new ItemStack[0]), Math.min(n.have(), n.need()) + "/" + n.need(), label, s.wrap(label, NEED_W - 8F, 2F), ok, source);
+    private static Panel.Need need(Stage s, ArmsPayloads.NeedRow n) {
+        return Panel.need(s, n.kind().equals("tag"), n.id(), "", n.have(), n.need());
     }
 
     private void actions(Stage s, HallNet.Wall w, int state, boolean hidden, ArmsPayloads.@Nullable ArmouryDetail here) {
@@ -405,7 +350,7 @@ final class PieceView {
             String tierName = ArmsArmoury.TIERS[tier];
             boolean tracked = ArmouryCache.tracked(style, tierName);
             if (state == HallNet.OFFER) {
-                if (door == ArmsArmoury.HALE && entry != null) primary = new Act("Buy pattern · " + entry.price() + " essence", ArmsArmoury.BUY, true, entry.afford(), 0);
+                if (door == ArmsArmoury.HALE && entry != null) primary = new Panel.Act("Buy pattern · " + entry.price() + " essence", ArmsArmoury.BUY, true, entry.afford(), 0);
                 else line = entry == null ? "You don't know this pattern yet." : "You don't know this pattern yet. Hale sells it for " + entry.price() + " essence.";
                 if (door != ArmsArmoury.HALE || !entry_afford(entry)) line = line.isEmpty() ? (entry == null ? "" : "You need " + entry.price() + " essence for this pattern.") : line;
                 ArmsHomes.Home home = ArmsHomes.of(style);
@@ -414,20 +359,20 @@ final class PieceView {
                 boolean anvil = here != null && (here.anvil() & WarAnvil.Status.SHOWN) != 0;
                 if (anvil) {
                     int a = here.anvil();
-                    if ((a & WarAnvil.Status.REBUILD) != 0) primary = new Act("rebuild it", ArmsArmoury.REBUILD, true, (a & WarAnvil.Status.REBUILD_OK) != 0, 0);
-                    else primary = new Act("forge it", ArmsArmoury.FORGE_IT, true, (a & WarAnvil.Status.FORGE) != 0, 0);
+                    if ((a & WarAnvil.Status.REBUILD) != 0) primary = new Panel.Act("rebuild it", ArmsArmoury.REBUILD, true, (a & WarAnvil.Status.REBUILD_OK) != 0, 0);
+                    else primary = new Panel.Act("forge it", ArmsArmoury.FORGE_IT, true, (a & WarAnvil.Status.FORGE) != 0, 0);
                     if ((a & WarAnvil.Status.MEMORY) != 0 && (a & WarAnvil.Status.REBUILD) == 0)
-                        subs.add(new Act("From memory", ArmsArmoury.FROM_MEMORY, false, (a & WarAnvil.Status.MEMORY_OK) != 0, com.mojang.blaze3d.platform.InputConstants.KEY_M));
-                    if ((a & WarAnvil.Status.BLADE) != 0) subs.add(new Act("Forge the blade", ArmsArmoury.FORGE_BLADE, false, true, 0));
+                        subs.add(new Panel.Act("From memory", ArmsArmoury.FROM_MEMORY, false, (a & WarAnvil.Status.MEMORY_OK) != 0, com.mojang.blaze3d.platform.InputConstants.KEY_M));
+                    if ((a & WarAnvil.Status.BLADE) != 0) subs.add(new Panel.Act("Forge the blade", ArmsArmoury.FORGE_BLADE, false, true, 0));
                     line = here.block();
                 } else if (door == ArmsArmoury.FORGE) {
                     if (!v.raise().isEmpty()) {
                         String[] r = v.raise().split("\\|", 2);
                         boolean ready = r.length > 1 && r[1].equals("ready");
-                        primary = new Act("raise it to " + r[0], ArmsArmoury.RAISE, true, ready, 0);
+                        primary = new Panel.Act("raise it to " + r[0], ArmsArmoury.RAISE, true, ready, 0);
                         if (!ready && r.length > 1) line = "The weapon in your hand: " + r[1];
                     }
-                    if (entry != null && entry.state() == 0 && !style.equals("longsword")) subs.add(new Act("Draw a copy", ArmsArmoury.DRAW, false, entry.afford(), 0));
+                    if (entry != null && entry.state() == 0 && !style.equals("longsword")) subs.add(new Panel.Act("Draw a copy", ArmsArmoury.DRAW, false, entry.afford(), 0));
                     if (line.isEmpty()) line = "Take this to a War Anvil to make it.";
                 } else if (door == ArmsArmoury.HALE) {
                     line = "You already know this pattern.";
@@ -444,7 +389,7 @@ final class PieceView {
                     line = "You have made this. It's yours to carry.";
                     whyColour = Stage.GOOD;
                 }
-                subs.add(0, new Act(tracked ? "Stop tracking" : "Track it", tracked ? ArmsArmoury.UNTRACK : ArmsArmoury.TRACK, false, true, com.mojang.blaze3d.platform.InputConstants.KEY_T));
+                subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? ArmsArmoury.UNTRACK : ArmsArmoury.TRACK, false, true, com.mojang.blaze3d.platform.InputConstants.KEY_T));
             }
         }
         why = line.isEmpty() ? List.of() : s.wrap(sentence(line), TEXT_W, 3F);
@@ -465,12 +410,7 @@ final class PieceView {
     private void drawPanel(Stage s, float dx, float mx, float my, float dt, float time) {
         var g = s.g;
         g.pose().pushMatrix().translate(dx, 0F);
-        s.fill(PANEL_X0, PANEL_Y0, PANEL_X1, PANEL_Y1, 0xE60A0E16);
-        s.outline(PANEL_X0, PANEL_Y0, PANEL_X1, PANEL_Y1, 2, 0x707FC3FF);
-        s.fill(PANEL_X0, PANEL_Y0, PANEL_X0 + 64F, PANEL_Y0 + 3F, Stage.EDGE);
-        s.fill(PANEL_X0, PANEL_Y0, PANEL_X0 + 3F, PANEL_Y0 + 64F, Stage.EDGE);
-        s.fill(PANEL_X1 - 64F, PANEL_Y1 - 3F, PANEL_X1, PANEL_Y1, Stage.EDGE);
-        s.fill(PANEL_X1 - 3F, PANEL_Y1 - 64F, PANEL_X1, PANEL_Y1, Stage.EDGE);
+        Panel.frame(s);
         g.nextStratum();
         int colour = 0xFF000000 | Stage.RANK[rank];
         float y = PANEL_Y0 + 22F;
@@ -505,8 +445,7 @@ final class PieceView {
         float primaryTop = (hasSubs ? subTop - 12F : bottom) - 60F;
         float actionTop = primary != null ? primaryTop : hasSubs ? subTop : bottom;
         float whyTop = actionTop - 12F - why.size() * 30F;
-        int needRows = (needs.size() + NEEDS_ACROSS - 1) / NEEDS_ACROSS;
-        float needHeight = needs.isEmpty() ? 0F : 34F + NEED_H * needRows + 62F;
+        float needHeight = Panel.needsHeight(needs.size());
 
         if (!special.isEmpty()) {
             s.text("What makes it different", X, y, 3F, Stage.EDGE);
@@ -519,64 +458,29 @@ final class PieceView {
             y += 8F;
         }
 
-        hoverNeed = -1;
-        if (!needs.isEmpty()) {
-            s.text("What it takes", X, y, 3F, Stage.EDGE);
-            y += 34F;
-            float top = y;
-            for (int i = 0; i < needs.size(); i++) {
-                Need n = needs.get(i);
-                float cx = X + (i % NEEDS_ACROSS) * NEED_W, cy = top + (i / NEEDS_ACROSS) * NEED_H, mid = cx + NEED_W / 2F;
-                if (fly >= 1F && mx >= cx && mx < cx + NEED_W && my >= cy && my < cy + NEED_H) hoverNeed = i;
-                if (n.icons.length > 0) icon(s, n.icons[(int) (time / 1.2F) % n.icons.length], mid - 32F, cy);
-                s.centre(n.count, mid, cy + 68F, 3F, n.ok ? Stage.GOOD : Stage.BAD);
-                for (int l = 0; l < Math.min(2, n.nameLines.size()); l++) {
-                    FormattedCharSequence line = n.nameLines.get(l);
-                    s.text(line, mid - s.font.width(line) * s.snap(2F) / 2F, cy + 94F + l * 18F, 2F, n.ok ? Stage.LABEL : Stage.TITLE);
-                }
-            }
-            y = top + needRows * NEED_H;
-            Need shown = hoverNeed >= 0 ? needs.get(hoverNeed) : firstShort();
-            if (shown != null) {
-                lines(s, s.wrap(shown.source.isEmpty() ? shown.name : shown.source, TEXT_W, 3F), y + 2F, 2, Stage.DIM);
-            }
-        }
+        if (!needs.isEmpty()) Panel.needs(s, "What it takes", needs, y, mx, my, fly >= 1F, time);
 
         lines(s, why, whyTop, why.size(), whyColour);
         primaryY0 = primaryTop;
         primaryY1 = primaryTop + 60F;
         if (primary != null) primaryButton(s, mx, my, dt);
-        else hold = 0F;
+        else hold.amount = 0F;
         subY0 = subTop;
         subY1 = bottom;
         float x = X;
         for (int i = 0; i < subs.size() && i < subX0.length; i++) {
-            Act a = subs.get(i);
-            float w = s.width(a.label, 3F) + 24F;
+            Panel.Act a = subs.get(i);
+            float w = s.width(a.label(), 3F) + 24F;
             subX0[i] = x;
             subX1[i] = x + w;
-            boolean over = fly >= 1F && a.enabled && mx >= x && mx < x + w && my >= subY0 && my < subY1;
+            boolean over = fly >= 1F && a.enabled() && mx >= x && mx < x + w && my >= subY0 && my < subY1;
             if (over) s.fill(x, subY0, x + w, subY1, 0x552A3A56);
-            s.outline(x, subY0, x + w, subY1, 2, a.enabled ? 0xA07FC3FF : 0x602A3446);
-            s.text(a.label, x + 12F, subY0 + 7F, 3F, a.enabled ? Stage.TITLE : Stage.DIM);
+            s.outline(x, subY0, x + w, subY1, 2, a.enabled() ? 0xA07FC3FF : 0x602A3446);
+            s.text(a.label(), x + 12F, subY0 + 7F, 3F, a.enabled() ? Stage.TITLE : Stage.DIM);
             x += w + 14F;
         }
         pendingFor = Math.max(0F, pendingFor - dt);
         g.pose().popMatrix();
-    }
-
-    private @Nullable Need firstShort() {
-        for (Need n : needs) if (!n.ok) return n;
-        return null;
-    }
-
-    /** The item itself, as your inventory draws it: 64 sheet pixels on a side. */
-    private void icon(Stage s, ItemStack icon, float x, float y) {
-        if (icon.isEmpty()) return;
-        float size = s.snap(4F);
-        s.g.pose().pushMatrix().translate(x, y).scale(size, size);
-        s.g.item(icon, 0, 0);
-        s.g.pose().popMatrix();
     }
 
     private static float lines(Stage s, List<FormattedCharSequence> text, float y, int most, int colour) {
@@ -588,31 +492,16 @@ final class PieceView {
     }
 
     private void primaryButton(Stage s, float mx, float my, float dt) {
-        Act a = primary;
+        Panel.Act a = primary;
         boolean pending = pendingFor > 0F;
-        boolean can = a.enabled && !pending && fly >= 1F;
+        boolean can = a.enabled() && !pending && fly >= 1F;
         boolean over = can && mx >= X && mx < RIGHT && my >= primaryY0 && my < primaryY1;
-        if (!HallConfig.clickToCommit() && (holdKey || holdMouse) && can) {
-            hold += dt / HOLD_SECONDS;
-            if (hold >= 1F) {
-                hold = 0F;
-                holdKey = holdMouse = false;
-                fire(a);
-            }
-        } else {
-            hold = Math.max(0F, hold - dt * 4F);
+        String label = a.label().substring(0, 1).toUpperCase(Locale.ROOT) + a.label().substring(1);
+        if (a.label().equals("forge it") || a.label().equals("rebuild it") || a.label().startsWith("raise it")) label = Panel.holdLabel(a.label());
+        if (hold.draw(s, primaryY0, primaryY1, pending ? "..." : label, a.enabled(), can, holdKey || holdMouse, over, dt)) {
+            holdKey = holdMouse = false;
+            fire(a);
         }
-        s.fill(X, primaryY0, RIGHT, primaryY1, a.enabled ? (over ? 0xFF241A10 : 0xFF16120D) : 0xFF10141C);
-        if (hold > 0F) {
-            float end = X + (RIGHT - X) * hold;
-            s.fill(X, primaryY0, end, primaryY1, 0xFFB23A08);
-            s.fill(Math.max(X, end - 40F), primaryY0, end, primaryY1, 0xFFFF8A28);
-            s.fill(Math.max(X, end - 6F), primaryY0, end, primaryY1, 0xFFFFF0C0);
-        }
-        s.outline(X, primaryY0, RIGHT, primaryY1, 3, a.enabled ? FORGE_FIRE : 0xFF2A3446);
-        String label = a.label.substring(0, 1).toUpperCase(Locale.ROOT) + a.label.substring(1);
-        if (a.label.equals("forge it") || a.label.equals("rebuild it") || a.label.startsWith("raise it")) label = (HallConfig.clickToCommit() ? "" : "Hold to ") + (HallConfig.clickToCommit() ? label : a.label);
-        s.centre(pending ? "..." : label, (X + RIGHT) / 2F, primaryY0 + 18F, 3F, a.enabled ? 0xFFFFE9C4 : Stage.DIM);
     }
 
     private void drawFoot(Stage s, float slide) {
@@ -631,7 +520,7 @@ final class PieceView {
     // ---- input --------------------------------------------------------------------------------------------------------
 
     /** Runs a button's work; true if a press there started or did something. */
-    boolean click(float x, float y) {
+    @Override boolean click(float x, float y) {
         if (fly < 1F) return false;
         if (x >= 30F && x < 220F && y >= 906F && y < 946F) {
             closing = true;
@@ -654,16 +543,16 @@ final class PieceView {
                 return true;
             }
         }
-        if (primary != null && primary.enabled && pendingFor <= 0F && x >= X && x < RIGHT && y >= primaryY0 && y < primaryY1) {
+        if (primary != null && primary.enabled() && pendingFor <= 0F && x >= X && x < RIGHT && y >= primaryY0 && y < primaryY1) {
             if (HallConfig.clickToCommit()) fire(primary);
             else holdMouse = true;
             return true;
         }
         if (y >= subY0 && y < subY1) {
             for (int i = 0; i < subs.size() && i < subX0.length; i++) {
-                Act a = subs.get(i);
+                Panel.Act a = subs.get(i);
                 if (x >= subX0[i] && x < subX1[i]) {
-                    if (a.enabled) fire(a);
+                    if (a.enabled()) fire(a);
                     return true;
                 }
             }
@@ -671,26 +560,26 @@ final class PieceView {
         return x >= PANEL_X0;
     }
 
-    boolean key(int key) {
-        for (Act a : subs) {
-            if (a.key == key) {
-                if (a.enabled) fire(a);
+    @Override boolean key(int key) {
+        for (Panel.Act a : subs) {
+            if (a.key() == key) {
+                if (a.enabled()) fire(a);
                 return true;
             }
         }
         return false;
     }
 
-    void space(boolean down) {
+    @Override void space(boolean down) {
         if (down && HallConfig.clickToCommit()) {
-            if (primary != null && primary.enabled && pendingFor <= 0F && fly >= 1F) fire(primary);
+            if (primary != null && primary.enabled() && pendingFor <= 0F && fly >= 1F) fire(primary);
             return;
         }
         holdKey = down;
     }
 
-    private void fire(Act a) {
-        ArmouryCache.ask(a.op, style, ArmsArmoury.TIERS[tier]);
+    private void fire(Panel.Act a) {
+        ArmouryCache.ask(a.op(), style, ArmsArmoury.TIERS[tier]);
         pendingFor = 5F;
     }
 }

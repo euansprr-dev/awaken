@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : require
 
 // A weapon drawn in the Hall of Arms (SPEC §52). The look is the approved prototype's, arms_weapon's in a GUI's axes.
-// UV1: x the mode (0 itself, 1 a shape you haven't found, 2 known but dim, 3 Hale's iron), y its alpha (0..255).
+// UV1: x the mode (0 itself, 1 a shape you haven't found, 2 known but dim, 3 Hale's iron; +8 the lantern's edge), y its alpha (0..255).
 
 #include <minecraft:dynamictransforms.glsl>
 #include <minecraft:projection.glsl>

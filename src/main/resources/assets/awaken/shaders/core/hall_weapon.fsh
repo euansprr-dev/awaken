@@ -48,10 +48,12 @@ void main() {
     float pulse = flow > 0.0 ? 0.55 + 0.45 * sin(t * TAU * 0.6 - flow * 12.0) : 1.0;
     col += alb.rgb * emit * pulse * 1.6;
 
-    int mode = int(state.x + 0.5);
+    int raw = int(state.x + 0.5);
+    int mode = raw & 7;
     if (mode == 1) col = vec3(0.018, 0.018, 0.024) + vec3(0.34, 0.42, 0.60) * (rim * 1.5 + pow(max(r.y, 0.0), 4.0) * 0.3);
     else if (mode == 2) col *= 0.74;
     else if (mode == 3) col = vec3(0.06, 0.055, 0.052) + vec3(0.62, 0.56, 0.48) * (rim * 1.5 + pow(max(r.y, 0.0), 4.0) * 0.42);
+    if ((raw & 8) != 0) col += vec3(1.0, 0.81, 0.48) * pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 1.5) * (0.5 + 0.2 * sin(t * TAU * 0.35));
     float a = state.y;
     fragColor = vec4(min(col, vec3(1.0)) * a, a);
 }

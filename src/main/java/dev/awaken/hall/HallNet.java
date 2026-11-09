@@ -6,7 +6,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-/** The Hall of Arms' one message of its own (SPEC §52): the whole wall at a glance, judged by the server. */
+/** The Hall of Arms' messages (SPEC §52): the whole wall at a glance, judged by the server, and the suits. */
 public final class HallNet {
     private HallNet() {}
 
@@ -29,6 +29,24 @@ public final class HallNet {
         public int at(int col, int tier) {
             return niches[col * ROWS + tier];
         }
+    }
+
+    /** Server → the fighter: the Hall's armour, kept up to date without opening anything. */
+    public record Suits(dev.awaken.armour.net.ArmourPayloads.Offers offers) implements CustomPacketPayload {
+        public static final Type<Suits> TYPE = new Type<>(Awaken.id("hall_suits"));
+        public static final StreamCodec<ByteBuf, Suits> STREAM_CODEC = StreamCodec.composite(
+                dev.awaken.armour.net.ArmourPayloads.Offers.STREAM_CODEC, Suits::offers, Suits::new);
+        @Override public Type<Suits> type() { return TYPE; }
+    }
+
+    public static final int REFRESH = 0, TRACK = 1, UNTRACK = 2;
+
+    /** The fighter → server: the suits again, optionally following one first; {@code pos} the stand the Hall was opened at, if any. */
+    public record Ask(int op, String set, net.minecraft.core.BlockPos pos) implements CustomPacketPayload {
+        public static final Type<Ask> TYPE = new Type<>(Awaken.id("hall_ask"));
+        public static final StreamCodec<ByteBuf, Ask> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Ask::op, ByteBufCodecs.STRING_UTF8, Ask::set, net.minecraft.core.BlockPos.STREAM_CODEC, Ask::pos, Ask::new);
+        @Override public Type<Ask> type() { return TYPE; }
     }
 
     /** Server → the fighter, dev only (/awaken hall piece): bring this weapon close, as a click on its niche does. */

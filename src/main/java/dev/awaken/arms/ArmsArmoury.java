@@ -71,6 +71,7 @@ public final class ArmsArmoury {
         dev.awaken.progression.Progression.count(p, "awaken:armoury_opened");
         OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), pos));
         AwakenNet.send(p, dev.awaken.hall.HallServer.wall(p)); // before the view: the view opens the screen that draws it
+        AwakenNet.send(p, new dev.awaken.hall.HallNet.Suits(dev.awaken.armour.ArmourForge.hall(p, null))); // the Hall's other wing, to look at
         AwakenNet.send(p, view(p, door, true));
         sendDetail(p, defaultStyle(p), null);
     }

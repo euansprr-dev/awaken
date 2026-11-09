@@ -16,17 +16,17 @@ import java.util.Map;
  * Every set's meshes (assets/awaken/armour/<set>/<piece>_<bone>.mesh), read with the resources and on each reload. A set
  * whose art isn't made yet has none and its pieces are left to vanilla; a Hunter set without them is an error.
  */
-final class ArmourMeshes {
+public final class ArmourMeshes {
     private ArmourMeshes() {}
 
     /** The bones a piece may ride on, in the order they are drawn (tools/art/specs/armour_sets.py BONES). */
-    enum Bone {
+    public enum Bone {
         HEAD, BODY, RIGHT_ARM, LEFT_ARM, RIGHT_LEG, LEFT_LEG, CAPE0, CAPE1, CAPE2, FRONT_CLOTH, BACK_CLOTH;
 
         final String file = name().toLowerCase(java.util.Locale.ROOT);
     }
 
-    static final Bone[] BONES = Bone.values();
+    public static final Bone[] BONES = Bone.values();
 
     /** A set's meshes: [piece ordinal][bone ordinal], null where a piece has none. */
     private static final Map<ArmourSet, ArmourMesh[][]> MESHES = new EnumMap<>(ArmourSet.class);
@@ -40,7 +40,7 @@ final class ArmourMeshes {
     }
 
     /** A piece's meshes by bone, or null where the set has none for it. */
-    static ArmourMesh @Nullable [] piece(ArmourSet set, ArmorType piece) {
+    public static ArmourMesh @Nullable [] piece(ArmourSet set, ArmorType piece) {
         ArmourMesh[][] table = MESHES.get(set);
         return table == null ? null : table[piece.ordinal()];
     }
@@ -56,7 +56,7 @@ final class ArmourMeshes {
         return RUNES.get(set);
     }
 
-    static Identifier texture(ArmourSet set) {
+    public static Identifier texture(ArmourSet set) {
         return TEXTURES.computeIfAbsent(set, s -> Awaken.id("textures/entity/armour/" + s.id + ".png"));
     }
 

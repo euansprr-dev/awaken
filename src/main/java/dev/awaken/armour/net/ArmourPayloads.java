@@ -36,15 +36,19 @@ public final class ArmourPayloads {
     }
 
     /** One thing a piece takes: what it is called, an item that shows it, how many you have and need. */
-    public record Need(String label, String icon, int have, int need) {
+    public record Need(String label, String icon, int have, int need, String group) {
+        public Need(String label, String icon, int have, int need) {
+            this(label, icon, have, need, "");
+        }
+
         public static final StreamCodec<ByteBuf, Need> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.STRING_UTF8, Need::label, ByteBufCodecs.STRING_UTF8, Need::icon, ByteBufCodecs.VAR_INT, Need::have,
-                ByteBufCodecs.VAR_INT, Need::need, Need::new);
+                ByteBufCodecs.VAR_INT, Need::need, ByteBufCodecs.STRING_UTF8, Need::group, Need::new);
     }
 
     /** {@link Offer#flags}: you can make it now; you can forge it from memory; you have made this set whole before; you
      * haven't found the set's pattern yet (the list shows it, and where patterns come from). */
-    public static final int CAN = 1, FROM_MEMORY = 2, KNOWN_WHOLE = 4, NO_PATTERN = 8, OWNED = 16;
+    public static final int CAN = 1, FROM_MEMORY = 2, KNOWN_WHOLE = 4, NO_PATTERN = 8, OWNED = 16, ABOVE = 32, AFFORD = 64;
 
     /** A piece the stand offers: set ordinal × 4 + slot, what it takes, and flags. */
     public record Offer(int piece, List<Need> needs, int flags) {
@@ -55,15 +59,21 @@ public final class ArmourPayloads {
 
     /**
      * Server → the smith: the stand's list (opens the screen). {@code place} says what the stand needs near it before
-     * metal can be worked (empty: all there); {@code hand} the same for work by hand.
+     * metal can be worked (empty: all there); {@code hand} the same for work by hand; {@code tracked} the set being tracked;
+     * {@code stand} false when this is only for looking (the Hall opened somewhere else: nothing can be made from it).
      */
-    public record Offers(BlockPos pos, int rank, List<Offer> offers, String place, String hand) implements CustomPacketPayload {
+    public record Offers(BlockPos pos, int rank, List<Offer> offers, String place, String hand, String tracked, boolean stand) implements CustomPacketPayload {
+        public Offers(BlockPos pos, int rank, List<Offer> offers, String place, String hand) {
+            this(pos, rank, offers, place, hand, "", true);
+        }
+
         /** Every set's four pieces at S (29 sets, 116 offers today), with room for more sets: a longer list can't be sent. */
         public static final int MAX = 256;
         public static final Type<Offers> TYPE = new Type<>(Awaken.id("forge_offers"));
         public static final StreamCodec<ByteBuf, Offers> STREAM_CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, Offers::pos, ByteBufCodecs.VAR_INT, Offers::rank, Offer.STREAM_CODEC.apply(ByteBufCodecs.list(MAX)), Offers::offers,
-                ByteBufCodecs.STRING_UTF8, Offers::place, ByteBufCodecs.STRING_UTF8, Offers::hand, Offers::new);
+                ByteBufCodecs.STRING_UTF8, Offers::place, ByteBufCodecs.STRING_UTF8, Offers::hand, ByteBufCodecs.STRING_UTF8, Offers::tracked,
+                ByteBufCodecs.BOOL, Offers::stand, Offers::new);
         @Override public Type<Offers> type() { return TYPE; }
     }
 

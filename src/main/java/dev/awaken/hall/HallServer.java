@@ -17,6 +17,15 @@ import net.minecraft.world.item.Items;
 public final class HallServer {
     private HallServer() {}
 
+    /** Answers an {@link HallNet.Ask}. A stand counts only if you're still at it; otherwise the suits are for looking. */
+    public static void onAsk(ServerPlayer p, HallNet.Ask a) {
+        dev.awaken.armour.FittingStandBlockEntity be = p.level().isLoaded(a.pos()) && p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(a.pos())) <= 10 * 10
+                && p.level().getBlockEntity(a.pos()) instanceof dev.awaken.armour.FittingStandBlockEntity at ? at : null;
+        if (a.op() == HallNet.TRACK) dev.awaken.armour.ArmourForge.track(p, dev.awaken.armour.ArmourSet.byId(a.set()));
+        if (a.op() == HallNet.UNTRACK) dev.awaken.armour.ArmourForge.track(p, null);
+        dev.awaken.core.AwakenNet.send(p, new HallNet.Suits(dev.awaken.armour.ArmourForge.hall(p, be)));
+    }
+
     public static HallNet.Wall wall(ServerPlayer p) {
         int level = Progression.profile(p).level(), rank = Progression.rank(p).ordinal();
         byte[] niches = new byte[HallNet.COLS * HallNet.ROWS];
