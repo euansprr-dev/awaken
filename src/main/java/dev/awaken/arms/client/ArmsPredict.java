@@ -183,7 +183,9 @@ public final class ArmsPredict {
         Archetype.Move off = offChain(p, st, steps);
         ArmsRules.Decision d = off != null ? null : ArmsRules.tap(st, style == st ? move : null, moveStart, step, cadence, ticks, ArmsMastery.strikes(steps));
         // the whole decision goes with the press: the server plays what the hands play (SPEC §25 "One chain")
-        int claim = off != null ? off.ordinal() : d == null ? ArmsPayloads.CLAIM_NOTHING : d.move().ordinal();
+        boolean again = d != null && buffered != null && buffered.step() == d.step(); // the queued strike pressed again: still one strike
+        int claim = off != null ? off.ordinal() : d == null ? ArmsPayloads.CLAIM_NOTHING : again ? ArmsPayloads.CLAIM_AGAIN : d.move().ordinal();
+        if (again) played(",");
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(s, ArmsPayloads.PRESS_STRIKE, p.getYRot(), p.getXRot(), target, claim));
         if (off == Archetype.Move.PLUNGE) {
             // armed: the blade raised, a dive to the ground, the blow where it lands
@@ -1147,6 +1149,7 @@ public final class ArmsPredict {
             com.mojang.logging.LogUtils.getLogger().info("[arms] strikes played: {}", PLAYED);
             PLAYED.setLength(0);
         }
+        ArmsBlackBox.dump();
         LEDGER.clear();
         LEDGER.predicted = LEDGER.confirmed = LEDGER.unconfirmed = 0;
         moveSeq = aimedId = focusId = pendingSeq = -1;

@@ -95,6 +95,7 @@ final class ArmsFilm {
 
     /** Something happened on the client (a press, a move begun, the server's word, an impact). */
     static void event(String what) {
+        ArmsBlackBox.event(what);
         if (name == null) return;
         events.append(String.format(Locale.ROOT, "%.2f\t%.3f\tc\t%s\n", (System.nanoTime() - startNanos) / 1e6, gameTime(), what));
     }

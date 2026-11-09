@@ -193,6 +193,11 @@ final class ArmsServer {
      */
     static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq, int claim) {
         if (claim == ArmsPayloads.CLAIM_NOTHING) return; // too early for the hands: a mash far ahead of the window
+        if (claim == ArmsPayloads.CLAIM_AGAIN) { // the strike they queued, pressed again: still one strike, and this press is its press now
+            if (s.buffered != null) s.bufferedSeq = seq;
+            else s.moveSeq = seq;
+            return;
+        }
         Archetype.Move said = Archetype.Move.byId(claim);
         int claimed = said == null ? -1 : ArmsRules.stepOf(style, said);
         int mastery = ArmsMastery.step(p, style);

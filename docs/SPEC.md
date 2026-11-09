@@ -6834,11 +6834,11 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   press carries what they did (`Press.claim`: the move they began, or `CLAIM_NOTHING` for a press too early to count) and the
   server plays that: never a strike they don't show, and never another in its place. A strike they began is kept however early
   the server's clock calls it, and waits for the server's own window (`ArmsRules.HEARD_BUFFER`), so nothing strikes faster than
-  the rules allow. A claim must still be legal (`ArmsRules.follow`: starting again, or the strike after the last within 60
+  the rules allow. A press that only repeats the strike already queued says so (`CLAIM_AGAIN`), so it can't count as another. A claim must still be legal (`ArmsRules.follow`: starting again, or the strike after the last within 60
   ticks; a move off the chain only if the server saw its deflect, dodge, slide or fall, give or take `HEARD_SLACK`). A move off
   the chain it can't grant lands no blow and starts nothing else. The server's reply never changes the strike the hands are in
   or the step they count from; only what they couldn't know (an execution on a heavy's release) takes over. Any real difference
-  is logged (`[arms]`), and each session logs what the hands played (`strikes played`). **A tap** (let go before the mark, `PRESS_TAP`,
+  is logged (`[arms]`), and each session logs what the hands played (`strikes played`). In a development run the last minute or so of the hands, every frame, is written to `logs/arms-blackbox.tsv` on leaving the world (`ArmsBlackBox`). **A tap** (let go before the mark, `PRESS_TAP`,
   read every frame by `ArmsPredict.frame`, not on the next tick) starts the strike that waited, from where the hands
   are: its clip from its first key with its wind-up at twice speed (`TAP_RATE`), the hands carried onto it by its
   hit (`launchTicks`: half the wind-up, at least a tick, so a one-tick strike's way out lasts three frames and isn't a flash, and up to a tick longer the further the draw has come, so a

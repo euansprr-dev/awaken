@@ -885,14 +885,18 @@ final class ArmsTests {
         ArmsServer.onPress(p, new ArmsPayloads.Press(3, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_2.ordinal()));
         h.assertTrue(s.buffered != null && s.buffered.move() == Archetype.Move.STRIKE_2 && s.buffered.startAt() == t0 + window,
                 "a strike the hands began isn't dropped, however early it looks here, and still waits for its window");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(4, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, ArmsPayloads.CLAIM_AGAIN));
+        h.assertTrue(s.buffered != null && s.bufferedSeq == 4 && s.buffered.step() == 1, "the queued strike pressed again stays one strike, on its newest press");
         s.buffered = null;
+        ArmsServer.onPress(p, new ArmsPayloads.Press(5, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, ArmsPayloads.CLAIM_AGAIN));
+        h.assertTrue(s.buffered == null && s.move == Archetype.Move.STRIKE_1 && s.moveSeq == 5, "and once begun here it doesn't start the strike after it");
         s.clearMove();
         s.deflectAt = ArmsServer.now(p);
-        ArmsServer.onPress(p, new ArmsPayloads.Press(4, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_1.ordinal()));
+        ArmsServer.onPress(p, new ArmsPayloads.Press(6, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_1.ordinal()));
         h.assertTrue(s.move == Archetype.Move.STRIKE_1, "a riposte the hands didn't play isn't played");
         s.clearMove();
         s.deflectAt = Long.MIN_VALUE / 2;
-        ArmsServer.onPress(p, new ArmsPayloads.Press(5, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.RIPOSTE.ordinal()));
+        ArmsServer.onPress(p, new ArmsPayloads.Press(7, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.RIPOSTE.ordinal()));
         h.assertTrue(s.move == null && s.buffered == null, "nor one the server can't grant, and no strike goes in its place");
         h.succeed();
     }

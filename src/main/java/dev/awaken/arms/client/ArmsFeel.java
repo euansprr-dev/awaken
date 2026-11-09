@@ -308,6 +308,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
         e.setYaw(e.getYaw() + LEAN_NOW.x * inv * k);
         e.setPitch(e.getPitch() + LEAN_NOW.y * k);
         e.setRoll(e.getRoll() + LEAN_NOW.z * inv * k);
+        ArmsBlackBox.lean(LEAN_NOW.x * inv * k, LEAN_NOW.y * k, LEAN_NOW.z * inv * k);
     }
 
     private static final dev.awaken.arms.SwingBlend.Vec LEAN_BLEND = new dev.awaken.arms.SwingBlend.Vec();

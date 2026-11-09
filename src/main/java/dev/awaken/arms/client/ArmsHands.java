@@ -297,6 +297,9 @@ final class ArmsHands {
         if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else if (offStance) OFF_Q.set(REST_Q); else OFF_Q.identity();
         MAIN_B.apply(now, MAIN_D, MAIN_Q);
         OFF_B.apply(now, OFF_D, OFF_Q);
+        ArmsBlackBox.frame(m, t, (undecided ? ArmsBlackBox.UNDECIDED : 0) | (drawn ? ArmsBlackBox.DRAWN : 0) | (tremble ? ArmsBlackBox.CHARGING : 0)
+                | (ArmsPredict.waitHit ? ArmsBlackBox.WAITING : 0) | (Minecraft.getInstance().options.keyAttack.isDown() ? ArmsBlackBox.KEY : 0)
+                | (has ? ArmsBlackBox.HAS : 0) | (MAIN_B.active(now) ? ArmsBlackBox.BLENDING : 0), D, Q, MAIN_D, MAIN_Q, OFF_D, OFF_Q);
         if (!mainShown && !offShown) return false;
         if (mainShown) addMove(v.main, inv, MAIN_D, MAIN_Q);
         if (offShown) addMove(v.off, -inv, OFF_D, OFF_Q);

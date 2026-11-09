@@ -15,8 +15,8 @@ public final class ArmsPayloads {
 
     /** What a {@link Press} pressed: a strike's press; the hold becoming a charge; the charge let go; the strike's press let go before it charged (a tap). */
     public static final int PRESS_STRIKE = 0, PRESS_CHARGE = 1, PRESS_RELEASE = 2, PRESS_TAP = 3;
-    /** A press's {@code claim} when it isn't a move's ordinal: no word from the hands; the hands counted it for nothing. */
-    public static final int CLAIM_OPEN = -1, CLAIM_NOTHING = -2;
+    /** A press's {@code claim} when it isn't a move's ordinal: no word from the hands; they counted it for nothing; it pressed their queued strike again. */
+    public static final int CLAIM_OPEN = -1, CLAIM_NOTHING = -2, CLAIM_AGAIN = -3;
 
     /**
      * Client → server: the strike key. STRIKE on the press (the move starts now; target = the creature under the
