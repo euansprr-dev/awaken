@@ -102,8 +102,8 @@ public final class StorageClient {
         String pinTip = "Pinned slots stay where they are. Hold " + (net.minecraft.util.Util.getPlatform() == net.minecraft.util.Util.OS.OSX ? "Option" : "Alt") + " and click a slot, or press this and click.";
         if (bag(s)) {
             // right of the recipe book's button (104 to 124, 61 to 79), the one free corner of this panel
-            e.addListener(new GlassKey(s, () -> 126, () -> 58, 23, 10, "Tidy", "Line up your bag by what things are. " + rule, () -> tidy(s, Section.BAG)));
-            e.addListener(new GlassKey(s, () -> 151, () -> 58, 19, 10, "Pin", pinTip, StorageClient::togglePinMode).lit(() -> pinMode));
+            e.addListener(new GlassKey(s, () -> 126, () -> 58, 23, 11, "Tidy", "Line up your bag by what things are. " + rule, () -> tidy(s, Section.BAG)));
+            e.addListener(new GlassKey(s, () -> 151, () -> 58, 19, 11, "Pin", pinTip, StorageClient::togglePinMode).lit(() -> pinMode));
         } else {
             e.addListener(new GlassKey(s, () -> 119, () -> 3, 23, 11, "Tidy", "Line this up by what things are.", () -> tidy(s, Section.CONTAINER)));
             int row = bagRow(s);
@@ -128,7 +128,7 @@ public final class StorageClient {
 
     private static void togglePinMode() {
         pinMode = !pinMode;
-        Tray.say(pinMode ? "Click the slots you want left alone. Click Pin again when you're done." : "Pins set.");
+        Tray.say(pinMode ? "Click slots to pin them." : "Pins set.");
     }
 
     private static void tidy(AbstractContainerScreen<?> s, Section section) {

@@ -99,8 +99,8 @@ public final class Tray {
                     say("Put back how it was.");
                 } else {
                     play(SoundEvents.BUNDLE_INSERT, 0.8f, 0.7f);
-                    line = section == Section.CONTAINER ? "Tidied this chest."
-                            : m.firstBag() ? "Tidied your bag. Pin a slot and it stays put." : "Tidied your bag. Your hotbar stayed put.";
+                    // short enough to sit beside Undo inside the panel, and clear of JEI's columns
+                    line = section == Section.CONTAINER ? "All tidied up." : m.firstBag() ? "Pinned slots stay put." : "Tidied your bag.";
                     lineUntil = Long.MAX_VALUE;
                     watch(s.getMenu(), m.containerId());
                 }
@@ -113,9 +113,9 @@ public final class Tray {
             }
             case FAILED -> {
                 play(SoundEvents.BUNDLE_INSERT_FAIL, 1f, 0.6f);
-                say("That couldn't be tidied, so nothing moved.");
+                say("That didn't work. Nothing moved.");
             }
-            case STALE -> say(m.undo() ? "Something's changed in there, so Undo is off." : "Something had just changed. Try again.");
+            case STALE -> say(m.undo() ? "Something's moved, so Undo is off." : "Something changed. Try again.");
             case LIMITED -> {}
         }
     }

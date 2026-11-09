@@ -63,8 +63,12 @@ cmd item replace entity @s inventory.22 with awaken:bell_bronze_ingot 2
 cmd item replace entity @s inventory.24 with minecraft:raw_copper 19
 cmd item replace entity @s inventory.25 with minecraft:diorite 9
 cmd item replace entity @s inventory.26 with minecraft:gold_nugget 5
+# the floor has to land: a fill on chunks still loading does nothing, and then no chest opens and the script waits forever
+cmd forceload add 0 -16 31 15
 cmd tp @s 10.5 200 0.5 0 26
 wait 80
+cmd fill 5 199 -3 22 199 9 minecraft:stone
+wait 40
 cmd fill 5 199 -3 22 199 9 minecraft:stone
 wait 20
 
@@ -73,6 +77,7 @@ holo inv open
 wait 40
 shot st_01_bag_before
 click 261 100
+wait 2
 shotnow st_02_bag_flight
 wait 40
 shot st_03_bag_tidied
@@ -147,3 +152,4 @@ wait 40
 shot st_13_shulker_glass
 screen close
 wait 10
+quit

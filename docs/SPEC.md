@@ -19702,12 +19702,12 @@ disagrees is refused and resynced; four requests a second a player; a slot that 
 of Undo per player, kept in memory, dropped on close or when anything in the section changes. `BagPins` (attachment `awaken:bag_pins`,
 copied on death) is a bit per Inventory slot, and "Empty my bag" at the Drop leaves pinned slots too.
 
-The bag's keys sit right of the recipe book's button, which is where the prototype had put Tidy: Tidy and Pin at y 58, ten tall, and
-Stow under them at y 70 when it comes. On a chest: Tidy in the title row and Tidy and Pin in the row beside "Inventory". `GlassChestScreen`
+The bag's keys sit right of the recipe book's button, which is where the prototype had put Tidy: Tidy and Pin at y 58, eleven tall, and
+Stow under them at y 71 when it comes. On a chest: Tidy in the title row and Tidy and Pin in the row beside "Inventory". `GlassChestScreen`
 and `GlassShulkerScreen` subclass vanilla's screens and only change the drawing, so every click, Mouse Tweaks and JEI behave as before;
 they replace only the exact vanilla classes, and only while the bag is glass. Keys T and Z work only in those screens, and after any
 text box or other mod has had the key. Alt-click (Option on a Mac) pins; the Pin key is a mode where any click does. Flights are
 220 ms ease-out, up to 40 ms staggered, over slots already holding their final contents; a click lands them at once. Sounds by name:
 `item.bundle.insert` low, `item.bundle.remove_one` for Undo, `item.bundle.insert_fail` when refused, `block.chiseled_bookshelf.insert` for a pin.
-Client setting `tidy_keys` (`awaken-storage-client.toml`, default on) takes away the buttons, keys and Alt-click together; pins stay saved.
+Every line under the panel fits inside its width, beside Undo too, so nothing reaches JEI's columns. Client setting `tidy_keys` (`awaken-storage-client.toml`, default on) takes away the buttons, keys and Alt-click together; pins stay saved.
 
