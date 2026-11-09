@@ -1,0 +1,28 @@
+{
+ "model": {
+  "type": "minecraft:select",
+  "property": "minecraft:display_context",
+  "cases": [
+   {
+    "when": [
+     "gui",
+     "ground",
+     "fixed",
+     "on_shelf"
+    ],
+    "model": {
+     "type": "minecraft:model",
+     "model": "awaken:item/lordscale_pick_breaker"
+    }
+   }
+  ],
+  "fallback": {
+   "type": "minecraft:special",
+   "base": "awaken:item/lordscale_pick_breaker_in_hand",
+   "model": {
+    "type": "awaken:pick",
+    "pick": "lordscale_pick_breaker"
+   }
+  }
+ }
+}

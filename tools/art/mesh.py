@@ -371,6 +371,7 @@ def build(parts, painter, density=2.0, width=128, to_item=None, anchors=()):
 
 
 STREAMS = 1  # header flag: streams follow the anchors (kind, rgb, rate, radius, then their polyline)
+GROUPS = 2  # header flag: a byte per triangle after everything else (0 always drawn; else the caller decides: a pick's rank rings)
 
 
 def write(path, built, accent):
@@ -378,9 +379,10 @@ def write(path, built, accent):
     anchors, then (flag STREAMS) the streams of light that lift off it: embers, wisps, motes."""
     n = len(built.pos)
     streams = getattr(built, "streams", [])
+    groups = getattr(built, "groups", None)  # one byte per triangle (flag GROUPS): parts drawn only sometimes
     with open(path, "wb") as fh:
         fh.write(MAGIC)
-        fh.write(struct.pack("<HHI", VERSION, STREAMS if streams else 0, n))
+        fh.write(struct.pack("<HHI", VERSION, (STREAMS if streams else 0) | (GROUPS if groups is not None else 0), n))
         fh.write(struct.pack("<BBBB", *accent, 0))
         for p, q, uv, al in zip(built.pos / 16.0, built.nrm, built.uv, built.along):
             nq = np.clip(np.round(q * 127), -127, 127).astype(int)
@@ -395,6 +397,9 @@ def write(path, built, accent):
                 fh.write(struct.pack("<BBBBBBf", kind, *rgb, int(round(rate)), len(pts), radius / 16.0))
                 for x, y, z in pts:
                     fh.write(struct.pack("<fff", x / 16.0, y / 16.0, z / 16.0))
+        if groups is not None:
+            assert len(groups) == n // 3
+            fh.write(bytes(groups))
 
 
 def read(path):
@@ -421,6 +426,7 @@ def read(path):
             pts = [struct.unpack_from("<fff", data, off + j * 12) for j in range(npts)]
             off += npts * 12
             streams.append((kind, (r, g, b), rate, radius, pts))
+    groups = list(data[off:off + n // 3]) if flags & GROUPS else None
     a = np.array(rows, dtype=float)
     return dict(version=version, accent=accent, pos=a[:, 0:3], nrm=a[:, 3:6] / 127.0, along=a[:, 6] / 255.0,
-                uv=a[:, 7:9] / 65535.0, anchors=anchors, streams=streams)
+                uv=a[:, 7:9] / 65535.0, anchors=anchors, streams=streams, groups=groups)

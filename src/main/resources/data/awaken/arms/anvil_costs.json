@@ -146,6 +146,78 @@
     1
    ]
   ],
+  "beastbound_pick_breaker": [
+   [
+    "#awaken:tier_metal_d",
+    2
+   ],
+   [
+    "#awaken:hunter_core_d",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "beastbound_pick_delver": [
+   [
+    "#awaken:tier_metal_d",
+    2
+   ],
+   [
+    "#awaken:hunter_core_d",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "beastbound_pick_mattock": [
+   [
+    "#awaken:tier_metal_d",
+    2
+   ],
+   [
+    "#awaken:hunter_core_d",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "beastbound_pick_sounder": [
+   [
+    "#awaken:tier_metal_d",
+    2
+   ],
+   [
+    "#awaken:hunter_core_d",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
   "beastbound_precursor": [
    [
     "#awaken:hunter_core_d",
@@ -381,6 +453,78 @@
    ],
    [
     "#awaken:tier_metal_c",
+    1
+   ]
+  ],
+  "gatewrought_pick_breaker": [
+   [
+    "#awaken:tier_metal_c",
+    2
+   ],
+   [
+    "#awaken:hunter_core_c",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "gatewrought_pick_delver": [
+   [
+    "#awaken:tier_metal_c",
+    2
+   ],
+   [
+    "#awaken:hunter_core_c",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "gatewrought_pick_mattock": [
+   [
+    "#awaken:tier_metal_c",
+    2
+   ],
+   [
+    "#awaken:hunter_core_c",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "gatewrought_pick_sounder": [
+   [
+    "#awaken:tier_metal_c",
+    2
+   ],
+   [
+    "#awaken:hunter_core_c",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
     1
    ]
   ],
@@ -626,6 +770,78 @@
     1
    ]
   ],
+  "lordscale_pick_breaker": [
+   [
+    "#awaken:tier_metal_a",
+    2
+   ],
+   [
+    "#awaken:hunter_core_a",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "lordscale_pick_delver": [
+   [
+    "#awaken:tier_metal_a",
+    2
+   ],
+   [
+    "#awaken:hunter_core_a",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "lordscale_pick_mattock": [
+   [
+    "#awaken:tier_metal_a",
+    2
+   ],
+   [
+    "#awaken:hunter_core_a",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "lordscale_pick_sounder": [
+   [
+    "#awaken:tier_metal_a",
+    2
+   ],
+   [
+    "#awaken:hunter_core_a",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
   "lordscale_precursor": [
    [
     "#awaken:hunter_core_a",
@@ -865,6 +1081,78 @@
    ],
    [
     "#awaken:tier_metal_s",
+    1
+   ]
+  ],
+  "sovereign_pick_breaker": [
+   [
+    "#awaken:tier_metal_s",
+    2
+   ],
+   [
+    "#awaken:hunter_core_s",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "sovereign_pick_delver": [
+   [
+    "#awaken:tier_metal_s",
+    2
+   ],
+   [
+    "#awaken:hunter_core_s",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "sovereign_pick_mattock": [
+   [
+    "#awaken:tier_metal_s",
+    2
+   ],
+   [
+    "#awaken:hunter_core_s",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "sovereign_pick_sounder": [
+   [
+    "#awaken:tier_metal_s",
+    2
+   ],
+   [
+    "#awaken:hunter_core_s",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
     1
    ]
   ],
@@ -1110,6 +1398,78 @@
     1
    ]
   ],
+  "veilwoven_pick_breaker": [
+   [
+    "#awaken:tier_metal_b",
+    2
+   ],
+   [
+    "#awaken:hunter_core_b",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "veilwoven_pick_delver": [
+   [
+    "#awaken:tier_metal_b",
+    2
+   ],
+   [
+    "#awaken:hunter_core_b",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "veilwoven_pick_mattock": [
+   [
+    "#awaken:tier_metal_b",
+    2
+   ],
+   [
+    "#awaken:hunter_core_b",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "veilwoven_pick_sounder": [
+   [
+    "#awaken:tier_metal_b",
+    2
+   ],
+   [
+    "#awaken:hunter_core_b",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
   "veilwoven_precursor": [
    [
     "#awaken:hunter_core_b",
@@ -1345,6 +1705,78 @@
    ],
    [
     "#awaken:hunter_bind_e",
+    1
+   ]
+  ],
+  "wildhide_pick_breaker": [
+   [
+    "#awaken:hunter_core_e",
+    2
+   ],
+   [
+    "#awaken:hunter_bind_e",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "wildhide_pick_delver": [
+   [
+    "#awaken:hunter_core_e",
+    2
+   ],
+   [
+    "#awaken:hunter_bind_e",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "wildhide_pick_mattock": [
+   [
+    "#awaken:hunter_core_e",
+    2
+   ],
+   [
+    "#awaken:hunter_bind_e",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
+    1
+   ]
+  ],
+  "wildhide_pick_sounder": [
+   [
+    "#awaken:hunter_core_e",
+    2
+   ],
+   [
+    "#awaken:hunter_bind_e",
+    1
+   ],
+   [
+    "awaken:essence_shard",
+    1
+   ],
+   [
+    "#minecraft:logs",
     1
    ]
   ],
