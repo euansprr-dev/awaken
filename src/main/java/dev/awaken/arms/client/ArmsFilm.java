@@ -83,7 +83,8 @@ final class ArmsFilm {
         if (old != null) for (File f : old) f.delete();
         track = new StringBuilder("frame\tpic\tgt\treal_ms\tview\traw\tmove\tstep\twait\tcharging\tkey\thold\tyaw\tpitch\tfov\tw\th\tthird"
                 + "\tm_has\tm_tx\tm_ty\tm_tz\tm_bx\tm_by\tm_bz\to_has\to_tx\to_ty\to_tz\to_bx\to_by\to_bz"
-                + "\tm3_has\tm3_tx\tm3_ty\tm3_tz\tm3_bx\tm3_by\tm3_bz\to3_has\to3_tx\to3_ty\to3_tz\to3_bx\to3_by\to3_bz\trib\n");
+                + "\tm3_has\tm3_tx\tm3_ty\tm3_tz\tm3_bx\tm3_by\tm3_bz\to3_has\to3_tx\to3_ty\to3_tz\to3_bx\to3_by\to3_bz\trib"
+                + "\tequip\ttwinequip\tdrawn\tswap\tatk\tsprint\tonground\thurt\tspeed\n");
         events = new StringBuilder("real_ms\tgt\tside\twhat\n");
         times = new StringBuilder();
         FilmLog.SERVER.clear();
@@ -171,6 +172,11 @@ final class ArmsFilm {
         // which of our blades lays its ribbon this frame (1 the main's, 2 the twin's): the reader counts a swing's ribbons
         int id = mc.player == null ? Integer.MIN_VALUE : mc.player.getId();
         track.append('\t').append((BladeTrail.open(id, 0) ? 1 : 0) | (BladeTrail.open(id, 1) ? 2 : 0));
+        // what can move the hands besides the move itself: the item's sink and rise (vanilla's), the draw, the body
+        track.append('\t').append(f(ArmsHands.equip)).append('\t').append(f(ArmsOffHand.equip())).append('\t').append(ArmsPredict.drawn() ? 1 : 0)
+                .append('\t').append(f(p.getItemSwapScale(0F))).append('\t').append(f(p.getAttackStrengthScale(0F)))
+                .append('\t').append(p.isSprinting() ? 1 : 0).append('\t').append(p.onGround() ? 1 : 0).append('\t').append(p.hurtTime)
+                .append('\t').append(f((float) p.getDeltaMovement().horizontalDistance()));
         track.append('\n');
     }
 

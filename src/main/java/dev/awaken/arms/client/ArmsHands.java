@@ -335,7 +335,7 @@ final class ArmsHands {
     private static final org.joml.Quaternionf MAIN_Q = new org.joml.Quaternionf(), OFF_Q = new org.joml.Quaternionf(),
             GUARD = new org.joml.Quaternionf();
     /** The main item's equip rise this frame (vanilla's swap: the item sinks and comes back up), from its hand transform. */
-    private static float equip;
+    static float equip;
 
     /**
      * The arms that hold the weapon (FirstPerson.View's grips; Euan 2026-10-26: "it feels like the weapon is just floating
