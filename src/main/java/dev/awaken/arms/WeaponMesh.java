@@ -1,5 +1,7 @@
 package dev.awaken.arms;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
@@ -16,10 +18,12 @@ import java.util.List;
  * flag {@link #STREAMS}) the streams of light that lift off it. Plain data, readable on either side: the client draws
  * it, the GameTests check it.
  */
-public record WeaponMesh(int accent, float[] pos, byte[] normal, float[] uv, byte[] along, List<Anchor> anchors, List<Stream> streams) {
+public record WeaponMesh(int accent, float[] pos, byte[] normal, float[] uv, byte[] along, List<Anchor> anchors, List<Stream> streams, byte @Nullable [] groups) {
     public static final int VERSION = 1;
     /** Header flag: streams follow the anchors. */
     public static final int STREAMS = 1;
+    /** Header flag: a byte per triangle after everything else (0 always drawn; else the caller decides: a pick's rank rings, SPEC §49). */
+    public static final int GROUPS = 2;
     /** Stream kinds (tools/art/specs/arms_weapons.py): embers that rise and cool, wisps that drift and curl, motes that hang. */
     public static final int EMBER = 1, WISP = 2, MOTE = 3;
     private static final int MAGIC = 'A' | 'W' << 8 | 'M' << 16 | 'S' << 24;
@@ -96,8 +100,13 @@ public record WeaponMesh(int accent, float[] pos, byte[] normal, float[] uv, byt
                     streams.add(new Stream(kind, rgb, rate, radius, pts));
                 }
             }
+            byte[] groups = null;
+            if ((flags & GROUPS) != 0) {
+                groups = new byte[n / 3];
+                b.get(groups);
+            }
             if (b.hasRemaining()) throw new IOException("weapon mesh with " + b.remaining() + " bytes left over");
-            return new WeaponMesh(accent, pos, normal, uv, along, List.copyOf(anchors), List.copyOf(streams));
+            return new WeaponMesh(accent, pos, normal, uv, along, List.copyOf(anchors), List.copyOf(streams), groups);
         } catch (BufferUnderflowException e) {
             throw new IOException("weapon mesh cut short", e);
         }

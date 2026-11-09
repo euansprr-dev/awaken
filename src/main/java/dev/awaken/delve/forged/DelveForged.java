@@ -30,6 +30,9 @@ public final class DelveForged {
     /** The tap of Sounding, and rock sounding hollow from one side. */
     public static final DeferredHolder<SoundEvent, SoundEvent> SOUNDING_TAP = sound("pick.sounding_tap"), SOUNDING_HOLLOW = sound("pick.sounding_hollow");
 
+    /** The Mattock leaving the hand, and landing back in it (§49.8). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> MATTOCK_TOSS = sound("pick.mattock_toss"), MATTOCK_CATCH = sound("pick.mattock_catch");
+
     /** The Delver's old head: what the stone gives you now, the start of your first forged pick. */
     public static final DeferredItem<Item> OLD_HEAD = ITEMS.registerSimpleItem("delver_old_head", p -> p.stacksTo(1).rarity(Rarity.UNCOMMON).fireResistant());
 

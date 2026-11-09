@@ -310,7 +310,10 @@ def write(form, rank, lang):
         "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": hold_of(built.pos / 16.0)})
     AW._write(os.path.join(RES, "assets/awaken/items", wid + ".json"), {"model": {
         "type": "minecraft:select", "property": "minecraft:display_context",
-        "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}}],
+        "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}},
+                  # the right hand's first-person hold leads with the head's +x end; every other hold with its -x end (PickRenderer)
+                  {"when": ["firstperson_righthand"], "model": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand",
+                                                               "model": {"type": "awaken:pick", "pick": wid, "plus_leads": True}}}],
         "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand", "model": {"type": "awaken:pick", "pick": wid}}}})
     lang["item.awaken." + wid] = f"{G.SET[rank].capitalize()} {FORM_NAME[form]}"
 

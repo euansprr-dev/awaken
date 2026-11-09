@@ -14,6 +14,20 @@
      "type": "minecraft:model",
      "model": "awaken:item/lordscale_pick_delver"
     }
+   },
+   {
+    "when": [
+     "firstperson_righthand"
+    ],
+    "model": {
+     "type": "minecraft:special",
+     "base": "awaken:item/lordscale_pick_delver_in_hand",
+     "model": {
+      "type": "awaken:pick",
+      "pick": "lordscale_pick_delver",
+      "plus_leads": true
+     }
+    }
    }
   ],
   "fallback": {

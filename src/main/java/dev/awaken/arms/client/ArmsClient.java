@@ -62,6 +62,7 @@ public final class ArmsClient {
         dev.awaken.progression.client.CodexEntries.addSource(ArmsCodex::entries);
         CombatFeedback.engaged = ArmsPredict::engaged;
         FirstPerson.view(ArmsHands::view);
+        FirstPerson.view(PickTurn::pose);
         Stances.install(ArmsStances.INSTANCE);
         modBus.addListener(ArmsClient::onPayloads);
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers e) ->
@@ -86,7 +87,10 @@ public final class ArmsClient {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("arms_weapons"),
                 (ResourceManagerReloadListener) WeaponMeshes::reload));
         modBus.addListener(RegisterRenderPipelinesEvent.class, WeaponPipelines::onRegister);
-        modBus.addListener(RegisterSpecialModelRendererEvent.class, e -> e.register(WeaponRenderer.TYPE, WeaponRenderer.Unbaked.MAP_CODEC));
+        modBus.addListener(RegisterSpecialModelRendererEvent.class, e -> {
+            e.register(WeaponRenderer.TYPE, WeaponRenderer.Unbaked.MAP_CODEC);
+            e.register(PickRenderer.TYPE, PickRenderer.Unbaked.MAP_CODEC);
+        });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ArmsTooltip::onTooltip);
         // the off hand's twin (a pair): after Hands' own off-hand pass (Anims registers before Arms, both LOWEST)
@@ -96,6 +100,7 @@ public final class ArmsClient {
         bus.addListener(EventPriority.HIGH, InputEvent.InteractionKeyMappingTriggered.class, ArmsPredict::onKey);
         bus.addListener(net.neoforged.neoforge.client.event.sound.PlaySoundEvent.class, ArmsChop::onSound);
         bus.addListener(ClientTickEvent.Post.class, e -> {
+            PickTurn.tick(Minecraft.getInstance());
             ArmsPredict.tick();
             ArmsAutopilot.tick();
             ArmsFilm.tick();
@@ -117,6 +122,7 @@ public final class ArmsClient {
         bus.addListener(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent.class, BladeTrail::onSubmit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ArmsPredict.reset();
+            PickTurn.reset();
             ArmsRecoil.reset();
             ArmsCodex.reset();
             ArmouryCache.reset();

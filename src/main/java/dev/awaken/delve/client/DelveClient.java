@@ -37,6 +37,12 @@ public final class DelveClient {
         modBus.addListener(net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent.class, TorchGlow::modifiers);
         // last on our bus, so a block another mod claimed keeps its own particles
         modBus.addListener(EventPriority.LOWEST, false, RegisterClientExtensionsEvent.class, StrikeFx::register);
+        modBus.addListener(RegisterClientExtensionsEvent.class, e -> {
+            var picks = dev.awaken.delve.forged.ForgedPicks.all();
+            e.registerItem(PickHands.INSTANCE, picks.toArray(net.minecraft.world.item.Item[]::new));
+        });
+        modBus.addListener((net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent e) ->
+                e.registerEntityModifier(new com.google.common.reflect.TypeToken<net.minecraft.client.renderer.entity.EntityRenderer<net.minecraft.world.entity.Entity, net.minecraft.client.renderer.entity.state.EntityRenderState>>() {}, PickHands::modify));
         DelveClientConfig.register(modBus);
         modBus.addListener(RegisterGuiLayersEvent.class, ForkSong::registerLayer);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {

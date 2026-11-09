@@ -14,6 +14,20 @@
      "type": "minecraft:model",
      "model": "awaken:item/beastbound_pick_mattock"
     }
+   },
+   {
+    "when": [
+     "firstperson_righthand"
+    ],
+    "model": {
+     "type": "minecraft:special",
+     "base": "awaken:item/beastbound_pick_mattock_in_hand",
+     "model": {
+      "type": "awaken:pick",
+      "pick": "beastbound_pick_mattock",
+      "plus_leads": true
+     }
+    }
    }
   ],
   "fallback": {

@@ -10,6 +10,8 @@
 // the blade, 1024 added while the quench cools it from the point; then x's bits 8-11 are the glow's colour instead (SPEC
 // §46.8: 1-5 a Force, 15 the accent) and 12-14 how much. Bits 11-12 of y a forged flaw (SPEC §46.7: 1 a burnt tip, 2 a
 // brittle blade), 13 a well-twisted A blade's ripples, 14 an S blade's runes woken in starlight (§46.9).
+// With y's bit 15 it is a forged pick at rest (SPEC §49): x's low byte its temper colour, y's its wear, bit 15 of x keen,
+// bits 11-14 of y its notches. x's bits 8-11 at 14 in heat mode are the colours running: the front's byte is how far.
 
 #include <minecraft:fog.glsl>
 #include <minecraft:dynamictransforms.glsl>
@@ -46,7 +48,9 @@ void main() {
     worldNormal = Normal;
     viewNormal = mat3(ModelViewMat) * Normal;
     int y = UV1.y;
+    // a forged pick at rest (SPEC §49): y's top bit; then x's low byte its temper colour, y's its wear, x's top bit keen
+    bool pick = (y & 32768) != 0;
     state = vec4(float(UV1.x & 255) / 255.0, float(y & 255) / 255.0, (y & 256) != 0 ? 1.0 : 0.0,
-            (y & 512) == 0 ? 0.0 : (y & 1024) != 0 ? 2.0 : 1.0);
+            pick ? ((UV1.x & 32768) != 0 ? -2.0 : -1.0) : (y & 512) == 0 ? 0.0 : (y & 1024) != 0 ? 2.0 : 1.0);
     script = vec3(float((UV1.x >> 8) & 15), float((UV1.x >> 12) & 7) / 7.0, float((y >> 11) & 15));
 }
