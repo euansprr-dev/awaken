@@ -73,6 +73,11 @@ public abstract class Land {
     /** Draws the chunk this volume covers, every pass, in order. */
     public abstract void paint(V v);
 
+    /** Mist layers, shafts of light, glowing lamps and still water for the client's air and Lens, in land coordinates. Fixed for the land. */
+    public dev.awaken.gates.world.FloorAir air() {
+        return dev.awaken.gates.world.FloorAir.NONE;
+    }
+
     /** Whether this land is a place under a roof: no sun reaches it, what light there is comes from its candles and a few cracks. */
     public boolean indoors() {
         return false;

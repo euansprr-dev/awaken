@@ -47,6 +47,14 @@
     "awaken:knell_plaster_slab",
     "awaken:knell_tile_slab",
     "awaken:knell_tile_deep_slab",
-    "awaken:knell_planks_slab"
+    "awaken:knell_planks_slab",
+    "awaken:fane_stone_slab",
+    "awaken:fane_stone_pale_slab",
+    "awaken:fane_flagstone_slab",
+    "awaken:fane_brick_slab",
+    "awaken:fane_plaster_slab",
+    "awaken:fane_tile_slab",
+    "awaken:fane_tile_deep_slab",
+    "awaken:fane_planks_slab"
   ]
 }

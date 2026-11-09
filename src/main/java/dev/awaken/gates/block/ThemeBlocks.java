@@ -72,6 +72,29 @@ public final class ThemeBlocks {
 
     /** Every theme's blocks, in the order of the creative tab. */
     public static final List<Def> DEFS = List.of(
+            // The Fane, the Overgrown Temple's Realms (50.8): pale cut limestone, moss, root bark as thick as a house
+            Def.of("fane_stone", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.of("fane_stone_worn", C, MapColor.COLOR_GREEN, SoundType.STONE, 0),
+            Def.of("fane_stone_deep", C, MapColor.COLOR_GREEN, SoundType.DEEPSLATE, 0),
+            Def.of("fane_stone_pale", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.of("fane_hexstone", C, MapColor.COLOR_GREEN, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("fane_flagstone", C, MapColor.COLOR_GREEN, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("fane_brick", C, MapColor.COLOR_YELLOW, SoundType.MUD_BRICKS, 0),
+            Def.of("fane_plaster", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("fane_plaster_band", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("fane_tile", C, MapColor.COLOR_GREEN, SoundType.DECORATED_POT, 0),
+            Def.of("fane_tile_deep", C, MapColor.COLOR_CYAN, SoundType.DECORATED_POT, 0),
+            Def.soft("fane_timber", COL, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
+            Def.soft("fane_planks", C, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
+            Def.of("fane_gilt", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.soft("fane_window", C, MapColor.GOLD, SoundType.GLASS, 13),
+            Def.soft("fane_moss", C, MapColor.COLOR_GREEN, SoundType.MOSS, 0),
+            Def.soft("fane_bed", C, MapColor.COLOR_BROWN, SoundType.ROOTED_DIRT, 0),
+            Def.soft("fane_bark", C, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
+            Def.soft("fane_bark_moss", C, MapColor.COLOR_GREEN, SoundType.WOOD, 0),
+            Def.soft("fane_leaf", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("fane_thorn", L, MapColor.COLOR_BROWN, SoundType.ROOTS, 0),
+            Def.of("fane_relief", C, MapColor.SAND, SoundType.STONE, 0),
             // The Knell, the Bell Crypt's Realms (50.8): dark cut stone, green bronze, black oak
             Def.of("knell_stone", C, MapColor.COLOR_GRAY, SoundType.STONE, 0),
             Def.of("knell_stone_worn", C, MapColor.TERRACOTTA_BROWN, SoundType.STONE, 0),

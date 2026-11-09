@@ -85,6 +85,7 @@ public final class RealmLive {
             if (t % 600 < 10) Signal.toast(p, Component.literal("The wind won't let you go any further this way."));
         }
         wake(server, level, g, plan, ref, lx, lz);
+        RealmAir.tick(p, g, plan, ref, t);
         RealmLife.tick(level, p, g, plan, ref, lx, lz, t);
         if (((t + p.getId()) / 10) % 2 == 0) Hud.send(p);
     }
@@ -159,6 +160,7 @@ public final class RealmLive {
         FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
         heart(server, level, g, plan, ref, st, data, f);
         RealmToll.tick(level, g, plan, ref, st);
+        RealmRoots.tick(level, g, plan, ref, st);
         for (Land.Site s : land.sites()) {
             int dx = s.x() - lx, dz = s.z() - lz, d2 = dx * dx + dz * dz;
             BlockPos at = Realms.world(ref.cell(), s.x(), s.y(), s.z());

@@ -61,6 +61,19 @@ public final class RealmLife {
     private record Folk(String says, List<String> lines, List<String> overheard, String stockRow, net.minecraft.world.item.Item stock, String sold, String soldOut) {}
 
     private static final Folk WAX = new Folk("A wax-folk says", SAY, OVERHEARD, "Honey to spare", Items.HONEY_BOTTLE, "Three bottles of honey, still warm.", "They've already sold all the honey they had to spare.");
+    private static final Folk TENDERS = new Folk("A moss-tender says", List.of(
+            "Don't stand about on the stones. The roots aren't unkind, they just don't know you're not a wall.",
+            "We've moved the village four times now. Well, the tree moved it, and we went along.",
+            "Sit if you like, but sit on something that isn't growing, and get up every so often.",
+            "The roots across the doors will pull back if you walk at them as though you mean it.",
+            "You can't get lost in there for long. It closes up behind you, so there's only ever the one way to go.",
+            "Nobody planted it. It was just there one morning, and then it was all there was.",
+            "We keep the moss off the steps. It's not for anyone. It's just that somebody ought to.",
+            "If you hear it creak, it's only growing. If you stop hearing it, I'd start walking."), List.of(
+            "A moss-tender mutters, \"That root wasn't there yesterday.\"",
+            "Two moss-tenders are arguing about which way the door used to be.",
+            "Somewhere close by, someone says, \"Keep your feet moving, I said.\"",
+            "A moss-tender sighs, \"Another whole step gone under.\""), "Bark bread to spare", Items.BREAD, "Three loaves of bark bread. It's better than it sounds.", "They've already sold all the bread they can spare.");
     private static final Folk KEEPERS = new Folk("A candle-keeper says", List.of(
             "We light them. They burn down. We light the next ones. There are a lot of candles down here.",
             "You get used to the bell. I think you do. I haven't yet.",
@@ -79,6 +92,7 @@ public final class RealmLife {
 
     private static Folk folkOf(GateRecord g) {
         RealmPlan plan = Realms.plan(g);
+        if (plan != null && plan.bp().folk().kit().equals("moss_tenders")) return TENDERS;
         return plan != null && plan.bp().folk().kit().equals("candle_keepers") ? KEEPERS : WAX;
     }
 

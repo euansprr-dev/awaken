@@ -51,6 +51,9 @@ public final class Preview {
             run(Path.of(tour), Path.of(System.getenv("AWAKEN_PREVIEW_OUT")), Path.of(System.getenv("AWAKEN_PREVIEW_ROOT")));
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new RuntimeException("the preview failed", e);
+        } catch (RuntimeException | Error e) {
+            e.printStackTrace(); // the test framework swallows the reason otherwise
+            throw e;
         }
     }
 
@@ -304,6 +307,10 @@ public final class Preview {
         }
     }
 
+    /** Thresholds the first two gates set: see docs/gates-as-worlds/BAR.md. */
+    private static final int FLAT_WALL = 25, MIN_RELIEF = 40, MIN_SHAPED = 4, MIN_BRIGHT_CONTRAST = 115;
+    private static final java.util.regex.Pattern SHAPED = java.util.regex.Pattern.compile("_stairs|_slab|_wall$|_fence|_bars|chain|lantern|candle|_trapdoor|_door|_vines|fern|grass|_carpet|_drift|_crumbs|bones|_petals|_rope|_lily|_drip|_flower|_rail|_comb_|_shelf|reed|_cap");
+
     private static final class Hit {
         double t, u, v, x, y, z;
         int face, ix, iy, iz;
@@ -384,6 +391,7 @@ public final class Preview {
             int[] px = new int[w * h];
             int[] counts = new int[vol.states.size() + 2];
             int[] near = new int[1], skyN = new int[1];
+            int[] plane = new int[w * h];
             IntStream.range(0, h).parallel().forEach(j -> {
                 Hit hit = new Hit(), shade = new Hit();
                 for (int i = 0; i < w; i++) {
@@ -395,6 +403,7 @@ public final class Preview {
                         continue;
                     }
                     px[j * w + i] = shade(hit, shade);
+                    plane[j * w + i] = planeOf(hit);
                     synchronized (counts) {
                         counts[vol.get(hit.ix, hit.iy, hit.iz)]++;
                         if (hit.t < 5) near[0]++;
@@ -418,12 +427,66 @@ public final class Preview {
                 topId = e.getKey();
             }
             int hitN = Math.max(1, total - skyN[0]);
+            int shaped = 0;
+            for (int i = 1; i < counts.length; i++) if (counts[i] > 0 && table[i] != null && SHAPED.matcher(table[i].id).find()) shaped += counts[i];
+            int[] depth = depth(plane, px, w, h);
+            int shapedPct = shaped * 100 / hitN;
             StringBuilder flags = new StringBuilder();
             if (near[0] * 100 / total > 40) flags.append(" BLOCKED");
             if (skyN[0] * 100 / total > 75) flags.append(" ALL-SKY");
             if (top * 100 / hitN > 60) flags.append(" ONE-BLOCK");
             if (vanilla * 100 / hitN > 30) flags.append(" VANILLA");
+            if (depth[1] > FLAT_WALL) flags.append(" FLAT");
+            if (depth[0] < MIN_RELIEF || shapedPct < MIN_SHAPED) flags.append(" PLAIN");
+            if (depth[3] > 60 && depth[2] < MIN_BRIGHT_CONTRAST) flags.append(" WASHED");
+            flags.insert(0, String.format(Locale.ROOT, "  relief %d wall %d shaped %d contrast %d", depth[0], depth[1], shapedPct, depth[2]));
             return String.format(Locale.ROOT, "%-26s near<5 %2d%%  sky %2d%%  top %s %d%%  vanilla %d%%%s", s.name, near[0] * 100 / total, skyN[0] * 100 / total, topId, top * 100 / hitN, vanilla * 100 / hitN, flags);
+        }
+
+        /** Which flat plane of the world a pixel lies on; 0 for sky. */
+        private static int planeOf(Hit h) {
+            int c = h.face <= 1 ? h.iy : h.face <= 3 ? h.iz : h.face <= 5 ? h.ix : h.ix * 31 + h.iz;
+            return 1 + ((h.face / 2) << 24 ^ (c & 0xFFFFF));
+        }
+
+        /**
+         * How much the view actually steps in and out. relief: of every hundred neighbouring pixels, how many cross from one
+         * plane to another. wall: the share of the view on the single biggest upright plane. contrast: the spread of brightness
+         * across what isn't sky. A view of big flat walls in even light scores low on the first and third and high on the second.
+         */
+        private static int[] depth(int[] plane, int[] px, int w, int h) {
+            long pairs = 0, steps = 0;
+            Map<Integer, Integer> upright = new java.util.HashMap<>();
+            int hits = 0;
+            int[] hist = new int[256];
+            for (int j = 0; j < h; j++) for (int i = 0; i < w; i++) {
+                int a = plane[j * w + i];
+                if (a == 0) continue;
+                hits++;
+                int c = px[j * w + i];
+                hist[(((c >> 16) & 255) * 30 + ((c >> 8) & 255) * 59 + (c & 255) * 11) / 100]++;
+                int axis = (a - 1) >> 24;
+                if (axis == 1 || axis == 2) upright.merge(a, 1, Integer::sum);
+                if (i + 1 < w && plane[j * w + i + 1] != 0) {
+                    pairs++;
+                    if (plane[j * w + i + 1] != a) steps++;
+                }
+                if (j + 1 < h && plane[(j + 1) * w + i] != 0) {
+                    pairs++;
+                    if (plane[(j + 1) * w + i] != a) steps++;
+                }
+            }
+            if (hits == 0) return new int[]{100, 0, 255, 0};
+            int big = 0;
+            for (int n : upright.values()) big = Math.max(big, n);
+            int lo = -1, hi = 0, run = 0, median = -1;
+            for (int l = 0; l < 256; l++) {
+                run += hist[l];
+                if (lo < 0 && run * 100L >= hits * 5L) lo = l;
+                if (median < 0 && run * 2L >= hits) median = l;
+                if (run * 100L <= hits * 95L) hi = l;
+            }
+            return new int[]{(int) (steps * 1000 / Math.max(1, pairs)), big * 100 / hits, hi - lo, median};
         }
 
         private int skyAt(double dy) {

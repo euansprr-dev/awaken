@@ -16,7 +16,16 @@
     "biomes": [
       "awaken:realm/knell_crypt"
     ],
-    "lens": "hour_crypt"
+    "lens": "hour_crypt",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "smoke",
+      "dust",
+      "drips",
+      "bats",
+      "rats"
+    ]
   },
   "life": {
     "herds": [],

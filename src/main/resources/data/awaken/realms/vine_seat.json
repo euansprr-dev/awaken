@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "name": "The Vine Seat",
+  "line": "The roots here close in on anything that stands still, and shut every way you've already been.",
+  "form": "stronghold",
+  "theme": "overgrown_temple",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "land": {
+    "program": "awaken:vine_seat",
+    "water": 62
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/fane_jungle",
+      "awaken:realm/fane_bowl"
+    ],
+    "lens": "vine_seat",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "fireflies",
+      "moths",
+      "petals",
+      "dust",
+      "pale_fish",
+      "drips"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "moss_tenders",
+    "villages": 1
+  },
+  "law": {
+    "kind": "roots",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 3,
+    "delves": 0,
+    "finds": 16
+  },
+  "heart": {
+    "lord": "root_saint",
+    "seat": "root_bowl"
+  },
+  "moods": [
+    "morning_mist"
+  ]
+}

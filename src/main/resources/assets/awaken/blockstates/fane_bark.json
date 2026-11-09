@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/fane_bark"
+      },
+      {
+        "model": "awaken:block/fane_bark",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/fane_bark",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/fane_bark",
+        "y": 270
+      }
+    ]
+  }
+}

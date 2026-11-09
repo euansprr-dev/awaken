@@ -48,6 +48,23 @@ public final class DepthBlocks {
     }
 
     public static final List<Def> DEFS = List.of(
+            // The Fane (50.8)
+            slab("fane_stone", MapColor.SAND, SoundType.STONE),
+            stairs("fane_stone", MapColor.SAND, SoundType.STONE),
+            slab("fane_stone_pale", MapColor.SAND, SoundType.STONE),
+            stairs("fane_stone_pale", MapColor.SAND, SoundType.STONE),
+            slab("fane_flagstone", MapColor.COLOR_GREEN, SoundType.DEEPSLATE_TILES),
+            stairs("fane_flagstone", MapColor.COLOR_GREEN, SoundType.DEEPSLATE_TILES),
+            slab("fane_brick", MapColor.COLOR_YELLOW, SoundType.MUD_BRICKS),
+            stairs("fane_brick", MapColor.COLOR_YELLOW, SoundType.MUD_BRICKS),
+            slab("fane_plaster", MapColor.SAND, SoundType.CALCITE),
+            stairs("fane_plaster", MapColor.SAND, SoundType.CALCITE),
+            slab("fane_tile", MapColor.COLOR_GREEN, SoundType.DECORATED_POT),
+            stairs("fane_tile", MapColor.COLOR_GREEN, SoundType.DECORATED_POT),
+            slab("fane_tile_deep", MapColor.COLOR_CYAN, SoundType.DECORATED_POT),
+            stairs("fane_tile_deep", MapColor.COLOR_CYAN, SoundType.DECORATED_POT),
+            slab("fane_planks", MapColor.COLOR_BROWN, SoundType.WOOD),
+            stairs("fane_planks", MapColor.COLOR_BROWN, SoundType.WOOD),
             // The Knell (50.8)
             slab("knell_stone", MapColor.COLOR_GRAY, SoundType.STONE),
             stairs("knell_stone", MapColor.COLOR_GRAY, SoundType.STONE),

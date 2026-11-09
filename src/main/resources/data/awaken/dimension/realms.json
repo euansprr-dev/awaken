@@ -7,7 +7,9 @@
       "biomes": [
         "awaken:realm/amber_meadow",
         "awaken:realm/amber_citadel",
-        "awaken:realm/knell_crypt"
+        "awaken:realm/knell_crypt",
+        "awaken:realm/fane_jungle",
+        "awaken:realm/fane_bowl"
       ]
     }
   }

@@ -56,6 +56,14 @@
     "awaken:knell_planks",
     "awaken:knell_window",
     "awaken:knell_planks_slab",
-    "awaken:knell_planks_stairs"
+    "awaken:knell_planks_stairs",
+    "awaken:fane_timber",
+    "awaken:fane_planks",
+    "awaken:fane_window",
+    "awaken:fane_bark",
+    "awaken:fane_bark_moss",
+    "awaken:fane_thorn",
+    "awaken:fane_planks_slab",
+    "awaken:fane_planks_stairs"
   ]
 }

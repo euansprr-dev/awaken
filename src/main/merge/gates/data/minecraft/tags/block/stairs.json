@@ -45,6 +45,14 @@
     "awaken:knell_plaster_stairs",
     "awaken:knell_tile_stairs",
     "awaken:knell_tile_deep_stairs",
-    "awaken:knell_planks_stairs"
+    "awaken:knell_planks_stairs",
+    "awaken:fane_stone_stairs",
+    "awaken:fane_stone_pale_stairs",
+    "awaken:fane_flagstone_stairs",
+    "awaken:fane_brick_stairs",
+    "awaken:fane_plaster_stairs",
+    "awaken:fane_tile_stairs",
+    "awaken:fane_tile_deep_stairs",
+    "awaken:fane_planks_stairs"
   ]
 }

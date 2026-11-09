@@ -19,13 +19,18 @@ public final class RealmTests {
     private RealmTests() {}
 
     private static final Blueprint AMBER = new Blueprint(1, "Amber Reach", "land", "hive", List.of("E", "D"),
-            new Blueprint.LandSpec("awaken:honey_highlands", 62, Map.of()), new Blueprint.Sky(List.of("awaken:realm/amber_meadow"), "amber_reach"),
+            new Blueprint.LandSpec("awaken:honey_highlands", 62, Map.of()), new Blueprint.Sky(List.of("awaken:realm/amber_meadow"), "amber_reach", List.of()),
             new Blueprint.Life(List.of("g"), List.of("p"), List.of("a")), new Blueprint.Folk("wax_folk", 1), new Blueprint.Law("updrafts", Map.of()),
             new Blueprint.Sites(3, 0, 24), new Blueprint.Heart("hive_regent", "mother_comb"), List.of("late_harvest"), "");
 
     private static Land hour(long seed) {
         return new dev.awaken.gates.realms.land.HourCrypt(new Land.Ctx(new Blueprint(1, "t", "dungeon", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:hour_crypt", 0, Map.of()),
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:hour_crypt", Rank.E, seed, 1));
+    }
+
+    private static dev.awaken.gates.realms.land.VineSeat vine(long seed) {
+        return new dev.awaken.gates.realms.land.VineSeat(new Land.Ctx(new Blueprint(1, "t", "stronghold", "overgrown_temple", List.of("E"), new Blueprint.LandSpec("awaken:vine_seat", 0, Map.of()),
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:vine_seat", Rank.E, seed, 1));
     }
 
     private static Land amber(long seed) {
@@ -108,6 +113,22 @@ public final class RealmTests {
             Land land = hour(1);
             FloatCheck.Report r = FloatCheck.scan(land, -216, -216, 216, 216);
             if (!r.clean()) h.fail(r.summary());
+            h.succeed();
+        });
+        AwakenTests.register("realm_vine_walks_to_everything", 2400, h -> {
+            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(vine(1));
+            if (!bad.isEmpty()) h.fail("can't reach: " + bad);
+            h.succeed();
+        });
+        AwakenTests.register("realm_vine_nothing_floats", 2400, h -> {
+            FloatCheck.Report r = FloatCheck.scan(vine(1), -416, -416, 416, 416);
+            if (!r.clean()) h.fail(r.summary());
+            h.succeed();
+        });
+        AwakenTests.register("realm_vine_curtains_part", 200, h -> {
+            dev.awaken.gates.realms.land.VineSeat land = vine(1);
+            if (land.curtainCount() < 5) h.fail("only " + land.curtainCount() + " curtains");
+            if (land.change("roots_shut_0").isEmpty() || land.change("roots_open_0").isEmpty()) h.fail("a curtain does nothing");
             h.succeed();
         });
         AwakenTests.register("realm_hour_doors_toll", 200, h -> {

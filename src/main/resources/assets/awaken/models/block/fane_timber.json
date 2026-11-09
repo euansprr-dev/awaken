@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "awaken:block/fane_timber",
+    "end": "awaken:block/fane_timber_end"
+  }
+}

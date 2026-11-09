@@ -302,6 +302,13 @@ public final class HourCrypt extends KitLand<HourCrypt.M> {
         settle(v, m);
     }
 
+    @Override
+    public dev.awaken.gates.world.FloorAir air() {
+        var air = new dev.awaken.gates.realms.kit.AirPlan().mist(F + 2, 6, 0x3a4a6a, 0.5F);
+        for (int[] c : SHAFTS) air.shaft(c[0], ROCK_TOP, c[1], c[0], c[2], c[1], c[3] + 1, 0x9fb8e8, 0.75F);
+        return air.build();
+    }
+
     /** Round walls step in and out, so now and then a candle ends up one cell past its shelf: it goes rather than hang there. */
     private void settle(V v, M m) {
         for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) for (int y = F - 14; y <= Tower.ROOF; y++) {

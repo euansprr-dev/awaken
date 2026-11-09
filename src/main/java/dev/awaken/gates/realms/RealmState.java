@@ -24,6 +24,12 @@ public final class RealmState {
     public int heartStage;
     /** When the bell next tolls and when the doors lift again, in game time; not saved, a restart just starts the count over. */
     public long tollAt, tollOpenAt;
+    public long rootsAt;
+    public long[] rootOpen;
+    public boolean[] rootShown;
+    public boolean rootsTold;
+    public final java.util.Map<java.util.UUID, net.minecraft.world.phys.Vec3> rootLast = new java.util.HashMap<>();
+    public final java.util.Map<java.util.UUID, Integer> rootStill = new java.util.HashMap<>();
     /** Whether this gate's bell has rung once yet. */
     public boolean tolled;
     /** How much honey the wax-folk have sold in this Realm: they only have so much to spare. */

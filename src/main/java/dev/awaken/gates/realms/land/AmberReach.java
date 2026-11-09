@@ -179,6 +179,11 @@ public final class AmberReach extends KitLand<AmberReach.M> {
 
     /** The valley's wall is the edge: past its foot the wind pushes you back down into the land. */
     @Override
+    public dev.awaken.gates.world.FloorAir air() {
+        return new dev.awaken.gates.realms.kit.AirPlan().mist(72, 7, 0xe9c88a, 0.32F).build();
+    }
+
+    @Override
     public double edge(int x, int z) {
         return Math.hypot(x - 190, z * 1.15) - (WALL + 80);
     }
