@@ -1,6 +1,6 @@
 # The Forged Pick (draft SPEC §49)
 
-Plan only. Nothing in production has changed. Approval page: `docs/forged-pick/page.html`.
+Plan only. Nothing in production has changed. Approval page: https://claude.ai/artifact/Smj9nEuNHbq6MZ4y2X1CaB (source `docs/forged-pick/page.html`).
 Concept meshes and mockups: `docs/forged-pick/proof/picks.py` (real voxel kit and weapon shader; writes only to `docs/forged-pick/shots`).
 
 Labels used below: **[seen]** read in the code or his saves; **[source]** an outside claim, with its link; **[guess]** a hypothesis;
