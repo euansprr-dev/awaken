@@ -2,6 +2,7 @@ package dev.awaken.caves.skin;
 
 import com.mojang.serialization.MapCodec;
 import dev.awaken.caves.CaveRegion;
+import dev.awaken.delve.api.Lodes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -45,7 +46,7 @@ import java.util.Set;
  * In a region (SPEC §42.7; the chunk's biomes say where) the rock is the region's first: the stone family and tuff turn to
  * its rock, the ores that live there to their twins in it, and any other ore keeps a shell of the stone it grew in. Then
  * the skin is cut from that rock, and the region adds its own: the Rootways' glowcaps and root curtains, the Ochre Deep's
- * rust crust, rust flowstone and ember lichen.
+ * rust crust, rust drapes and ember vines (WallGrowth, SPEC §42.10).
  */
 public final class CaveSkinFeature implements Feature {
     public static final CaveSkinFeature INSTANCE = new CaveSkinFeature();
@@ -67,7 +68,7 @@ public final class CaveSkinFeature implements Feature {
     static final int SHALLOWS_DEPTH = 43;
     /** The regions' own (SPEC §42.7): their rock stops this far under the ground; growth and glow by these chances. */
     public static final int REGION_UNDER = 10;
-    static final float GLOWCAP = 0.12F, GLOW_FIELD = 0.2F, ROOTS = 0.14F, ROOT_FIELD = 0.1F, EMBER = 0.1F, RUST = 0.2F;
+    static final float GLOWCAP = 0.12F, GLOW_FIELD = 0.2F, ROOTS = 0.14F, ROOT_FIELD = 0.1F, EMBER = 0.1F;
     /** Root amber (SPEC §42.9, the Rootways' find): under this share of root curtains, beads of it on the floor. */
     public static final float ROOT_AMBER = 0.05F;
     /**
@@ -182,8 +183,9 @@ public final class CaveSkinFeature implements Feature {
             wet[i] = field(seed, x, z, 12, 0x5EED);
             below[i] = c.get(x, minY - 1, z);
         }
-        if (regions != Regions.NONE) regionRock(chunk, cx, cz, tops, maxTop, regions);
+        if (regions != Regions.NONE) regionRock(chunk, cx, cz, tops, maxTop, regions, seed);
         Block crystal = crystal(chunk, cx, cz, maxTop + UNDER_GROUND);
+        WallGrowth.Sites sites = regions != Regions.NONE ? new WallGrowth.Sites() : null;
         for (int si = 0; si < chunk.getSectionsCount(); si++) {
             int baseY = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(si));
             if (baseY + 15 < minY) continue;
@@ -202,7 +204,7 @@ public final class CaveSkinFeature implements Feature {
                         int x = cx + (i & 15), z = cz + (i >> 4);
                         if (here.isAir()) {
                             if (rock(below[i]) != null) {
-                                placed += floor(c, seed, x, y, z, tops[i] + UNDER_GROUND, wet[i], below[i], regions.at(x, y, z), crystal);
+                                placed += floor(c, seed, x, y, z, tops[i] + UNDER_GROUND, wet[i], below[i], regions.at(x, y, z), crystal, sites);
                             } else if (below[i].is(Blocks.WATER) && regions.at(x, y, z) == CaveRegion.DROWNED_GALLERIES
                                     && chance(seed, x, y, z, 13) < ALGAE && clean(c, x, y, z)) {
                                 placed += overlay(c, x, y, z, CaveSkin.GLOW_ALGAE.get());
@@ -210,20 +212,21 @@ public final class CaveSkinFeature implements Feature {
                         } else if (here.is(Blocks.WATER) && rock(below[i]) != null) {
                             if (regions.at(x, y, z) == CaveRegion.DROWNED_GALLERIES) placed += weed(c, seed, x, y, z, here);
                         } else if (below[i].isAir() && rock(here) != null) {
-                            placed += ceiling(c, seed, x, y - 1, z, here, regions.at(x, y - 1, z), wet[i], crystal);
+                            placed += ceiling(c, seed, x, y - 1, z, here, regions.at(x, y - 1, z), wet[i], crystal, sites);
                         }
                     }
                     below[i] = here;
                 }
             }
         }
+        if (sites != null && sites.any()) placed += WallGrowth.dress(c, seed, cx, cz, sites);
         return placed;
     }
 
     // ---- floors and the walls above them -------------------------------------------------------------------------
 
     private static int floor(Cells c, long seed, int x, int y, int z, int ground, float wet, BlockState floorRock, @Nullable CaveRegion region,
-                             Block crystal) {
+                             Block crystal, WallGrowth.@Nullable Sites sites) {
         if (!clean(c, x, y, z)) return 0;
         int placed = 0;
         Direction wall = null;
@@ -249,7 +252,14 @@ public final class CaveSkinFeature implements Feature {
             c.set(x, y + 1, z, CaveSkin.DUSTY_WEB.get().defaultBlockState());
             return placed + 1;
         }
-        if (wall != null) placed += walls(c, seed, x, y, z, ground, wet, region, crystal);
+        if (wall != null) {
+            // the Ochre Deep's walls are grown, not stamped: the foot of a wall is where a run may start (SPEC §42.10)
+            if (region == CaveRegion.OCHRE_DEEP && sites != null) {
+                sites.foot(x, y, z, side(wall));
+                return placed;
+            }
+            placed += walls(c, seed, x, y, z, ground, wet, region, crystal);
+        }
         return placed;
     }
 
@@ -291,7 +301,6 @@ public final class CaveSkinFeature implements Feature {
      */
     private static int walls(Cells c, long seed, int x, int y0, int z, int ground, float wet, @Nullable CaveRegion region, Block crystal) {
         int placed = 0;
-        boolean ochre = region == CaveRegion.OCHRE_DEEP;
         for (int y = y0 + 1; y <= y0 + 2; y++) {
             if (!c.get(x, y, z).isAir()) return placed;
             if (region == CaveRegion.GLIMMER_HOLLOWS && chance(seed, x, y, z, 12) < CRYSTAL) {
@@ -306,13 +315,11 @@ public final class CaveSkinFeature implements Feature {
             if (region == CaveRegion.WINDCLEFT && field3(seed, x, y, z, 5, 0x041E) > RIME_FIELD) {
                 kind = CaveSkin.RIME.get();
             } else if (field3(seed, x, y, z, 6, 0x11C4) > LICHEN) {
-                kind = ochre && field3(seed, x, y, z, 4, 0x0E3B) > EMBER ? CaveSkin.EMBER_LICHEN.get() : lichen(y, ground);
-            } else if (ochre && field3(seed, x, y, z, 5, 0xC0A5) > RUST) {
-                kind = CaveSkin.RUST_CRUST.get();
+                kind = lichen(y, ground);
             } else if (wet < DRY && field3(seed, x, y, z, 5, 0xC0A5) > CRUST) {
                 kind = CaveSkin.MINERAL_CRUST.get();
-            } else if (wet > WET && (y == y0 + 2 || ochre) && field3(seed, x, y, z, 3, 0x57EA) > STREAKS) {
-                kind = ochre ? CaveSkin.RUST_FLOWSTONE.get() : CaveSkin.WET_STREAKS.get();
+            } else if (wet > WET && y == y0 + 2 && field3(seed, x, y, z, 3, 0x57EA) > STREAKS) {
+                kind = CaveSkin.WET_STREAKS.get();
             }
             if (kind == null || !clean(c, x, y, z)) continue;
             placed += overlay(c, x, y, z, kind);
@@ -351,7 +358,16 @@ public final class CaveSkinFeature implements Feature {
     // ---- roofs: stalactites, the stalagmites under them, the puddle where the drops land --------------------------
 
     /** What hangs from a roof cell: a region's own first (roots, ropes, crystals), else the drips where it's wet (anywhere in the Pale Halls). */
-    private static int ceiling(Cells c, long seed, int x, int y, int z, BlockState roofRock, @Nullable CaveRegion r, float wet, Block crystal) {
+    private static int ceiling(Cells c, long seed, int x, int y, int z, BlockState roofRock, @Nullable CaveRegion r, float wet, Block crystal,
+                               WallGrowth.@Nullable Sites sites) {
+        if (r == CaveRegion.OCHRE_DEEP && sites != null) {
+            for (Direction d : AROUND) {
+                if (rock(c.get(x + d.getStepX(), y, z + d.getStepZ())) != null) {
+                    sites.roof(x, y, z, side(d));
+                    break;
+                }
+            }
+        }
         float roll = chance(seed, x, y, z, 9);
         if (r == CaveRegion.ROOTWAYS && roll < ROOTS && field(seed, x, z, 7, 0x2007) > ROOT_FIELD) return roots(c, seed, x, y, z);
         if (r == CaveRegion.WINDCLEFT && roll < ROPE) return rope(c, seed, x, y, z);
@@ -390,7 +406,17 @@ public final class CaveSkinFeature implements Feature {
         return placed;
     }
 
-    private static final Direction[] AROUND = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+    static final Direction[] AROUND = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
+    /** The horizontal direction's index in {@link #AROUND}. */
+    static int side(Direction d) {
+        return switch (d) {
+            case NORTH -> 0;
+            case EAST -> 1;
+            case SOUTH -> 2;
+            default -> 3;
+        };
+    }
 
     private static int column(Cells c, int x, int from, int z, SkinRock r, Direction dir, int length) {
         if (r == null) return 0;
@@ -487,13 +513,16 @@ public final class CaveSkinFeature implements Feature {
     /**
      * The regions' rock: in every quart of the chunk a region holds (with its kit), more than {@link #REGION_UNDER} under
      * the ground, the host rock becomes the region's rock and an ore with a twin there becomes its twin. An ore without one
-     * keeps the 26 cells round it as they were (within its section), so it sits in a pocket of the stone it grew in.
+     * keeps the 26 cells round it as they were (within its section), so it sits in a pocket of the stone it grew in. A lode's
+     * heart needs no pocket: it's drawn in whatever rock it's in. Where a quart borders another region or none, each block asks
+     * at a point shifted by noise, so a region's edge wanders instead of stepping in straight 4-block lines, and sculk that
+     * has crept over the edge becomes the region's rock (SPEC §42.7).
      * Written straight to the sections: rock for rock, nothing the heightmaps or the light care about.
      */
     /** A section's states as read, one per worldgen thread (the rock rule reads each cell once). */
     private static final ThreadLocal<BlockState[]> SECTION = ThreadLocal.withInitial(() -> new BlockState[4096]);
 
-    static int regionRock(ChunkAccess chunk, int cx, int cz, int[] tops, int maxTop, Regions regions) {
+    public static int regionRock(ChunkAccess chunk, int cx, int cz, int[] tops, int maxTop, Regions regions, long seed) {
         CaveRegion[] q = new CaveRegion[64];
         long[] keep = new long[64];
         BlockState[] states = SECTION.get();
@@ -522,7 +551,7 @@ public final class CaveSkinFeature implements Feature {
                     Block sb = s.getBlock();
                     if (host(sb) || sb == Blocks.DEEPSLATE || s.isAir() || !ore(s)) continue;
                     CaveRegion r = q[(y >> 2) << 4 | (z >> 2) << 2 | x >> 2];
-                    if (r != null && CaveSkin.kit(r).twins().containsKey(s.getBlock())) continue;
+                    if (r != null && (Lodes.isHeart(s) || CaveSkin.kit(r).twins().containsKey(s.getBlock()))) continue;
                     for (int dy = Math.max(0, y - 1); dy <= Math.min(15, y + 1); dy++)
                         for (int dz = Math.max(0, z - 1); dz <= Math.min(15, z + 1); dz++)
                             for (int dx = Math.max(0, x - 1); dx <= Math.min(15, x + 1); dx++) {
@@ -533,21 +562,35 @@ public final class CaveSkinFeature implements Feature {
                 }
             }
             for (int k = 0; k < 64; k++) {
-                CaveRegion r = q[k];
-                if (r == null) continue;
-                CaveSkin.RegionKit kit = CaveSkin.kit(r);
-                BlockState rock = kit.rock().get().defaultBlockState();
+                boolean edge = regionEdge(q, k, regions, cx, cz, baseY);
+                if (q[k] == null && !edge) continue;
                 int x0 = (k & 3) * 4, z0 = (k >> 2 & 3) * 4, y0 = (k >> 4) * 4;
+                CaveRegion r = q[k];
+                CaveSkin.RegionKit kit = r != null ? CaveSkin.kit(r) : null;
+                BlockState rock = kit != null ? kit.rock().get().defaultBlockState() : null;
                 for (int y = y0; y < y0 + 4; y++) {
                     for (int z = z0; z < z0 + 4; z++) {
                         for (int x = x0; x < x0 + 4; x++) {
                             if (baseY + y >= tops[z << 4 | x] + UNDER_GROUND - REGION_UNDER) continue;
+                            if (edge) {
+                                CaveRegion here = ragged(regions, seed, cx + x, baseY + y, cz + z, cx, cz);
+                                if (here != r) {
+                                    r = here;
+                                    kit = r != null ? CaveSkin.kit(r) : null;
+                                    rock = kit != null ? kit.rock().get().defaultBlockState() : null;
+                                }
+                                if (kit == null) continue;
+                            }
                             BlockState s = read ? states[y << 8 | z << 4 | x] : section.getBlockState(x, y, z);
                             Block b = s.getBlock();
-                            if (host(b) || kit.deep() && b == Blocks.DEEPSLATE) {
+                            if (host(b) || kit.deep() && b == Blocks.DEEPSLATE || b == Blocks.SCULK) {
                                 int bit = y << 8 | z << 4 | x;
                                 if (shells && (keep[bit >> 6] & 1L << (bit & 63)) != 0) continue;
                                 section.setBlockState(x, y, z, rock, false);
+                                changed++;
+                            } else if (Lodes.isHeart(s)) {
+                                // a heart is drawn in the region's rock and has no pocket of grey round it (SPEC §42.11)
+                                section.setBlockState(x, y, z, Lodes.heartIn(s, kit.rock().get(), kit.deep()), false);
                                 changed++;
                             } else if (b != Blocks.DEEPSLATE && !s.isAir() && ore(s)) {
                                 var twin = kit.twins().get(b);
@@ -561,8 +604,75 @@ public final class CaveSkinFeature implements Feature {
                 }
             }
         }
-        return changed;
+        return changed + strandedVeins(chunk, cx, cz, regions);
     }
+
+    /**
+     * The Deep Dark's features throw sculk veins a few blocks past its edge, and the sculk they grew from has just become the
+     * region's rock, so a face of vein on that rock comes off, unless real sculk is right beside it and it reads as that sculk's
+     * fringe (SPEC §42.7). After the rock pass, so it reads the rock as it now is. A face on a neighbouring chunk's block goes by
+     * the region here, since that block can't be read.
+     */
+    private static int strandedVeins(ChunkAccess chunk, int cx, int cz, Regions regions) {
+        int removed = 0;
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int si = 0; si < chunk.getSectionsCount(); si++) {
+            LevelChunkSection section = chunk.getSection(si);
+            if (section.hasOnlyAir() || !section.getStates().maybeHas(s -> s.is(Blocks.SCULK_VEIN))) continue;
+            int baseY = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(si));
+            for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
+                BlockState vein = section.getBlockState(x, y, z);
+                if (!vein.is(Blocks.SCULK_VEIN)) continue;
+                boolean fringe = false, stays = false;
+                BlockState left = vein;
+                for (Direction d : Direction.values()) {
+                    int nx = x + d.getStepX(), nz = z + d.getStepZ();
+                    boolean inside = (nx & ~15) == 0 && (nz & ~15) == 0;
+                    BlockState next = inside ? chunk.getBlockState(at.set(nx, baseY + y + d.getStepY(), nz)) : null;
+                    fringe |= next != null && next.is(Blocks.SCULK);
+                    var face = MultifaceBlock.getFaceProperty(d);
+                    if (!vein.getValue(face)) continue;
+                    if (next != null ? regionRock(next.getBlock()) : kitted(regions.at(cx + x, baseY + y, cz + z)) != null) left = left.setValue(face, false);
+                    else stays = true;
+                }
+                if (fringe || left == vein) continue;
+                section.setBlockState(x, y, z, stays ? left : vein.getValue(MultifaceBlock.WATERLOGGED) ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState(), false);
+                removed++;
+            }
+        }
+        return removed;
+    }
+
+    private static boolean regionRock(Block b) {
+        SkinRock r = SkinRock.of(b);
+        return r != null && r != SkinRock.STONE && r != SkinRock.DEEPSLATE && r != SkinRock.TUFF;
+    }
+
+    /** Does the quart at k touch a different region (or none) on any side? A neighbour in another chunk can't be read, so it doesn't count. */
+    private static boolean regionEdge(CaveRegion[] q, int k, Regions regions, int cx, int cz, int baseY) {
+        int qx = k & 3, qz = k >> 2 & 3, qy = k >> 4;
+        CaveRegion me = q[k];
+        if (qx > 0 && q[k - 1] != me || qx < 3 && q[k + 1] != me) return true;
+        if (qz > 0 && q[k - 4] != me || qz < 3 && q[k + 4] != me) return true;
+        if (qy > 0 && q[k - 16] != me || qy < 3 && q[k + 16] != me) return true;
+        int wx = cx + qx * 4, wz = cz + qz * 4;
+        if (qy == 0 && kitted(regions.at(wx, baseY - 4, wz)) != me) return true;
+        return qy == 3 && kitted(regions.at(wx, baseY + 16, wz)) != me;
+    }
+
+    private static @Nullable CaveRegion kitted(@Nullable CaveRegion r) {
+        return r != null && CaveSkin.kit(r) != null ? r : null;
+    }
+
+    /** The region at a block on an edge, read at a point moved up to 4 blocks by noise; it stays in the chunk, the only one whose biomes can be read. */
+    private static @Nullable CaveRegion ragged(Regions regions, long seed, int x, int y, int z, int cx, int cz) {
+        float a = field3(seed, x, y, z, 5, 0x1ED6), b = field3(seed, x, y, z, 5, 0x2ED7);
+        int sx = Math.clamp(x + Math.round(a * EDGE), cx, cx + 15), sz = Math.clamp(z + Math.round(b * EDGE), cz, cz + 15);
+        return kitted(regions.at(sx, y + Math.round((a + b) * 1.5F), sz));
+    }
+
+    /** How far a region's edge can wander (a field's values rarely pass 0.8, so about 4 blocks at most). */
+    private static final float EDGE = 5F;
 
     // ---- what the skin may touch ---------------------------------------------------------------------------------
 
@@ -589,6 +699,7 @@ public final class CaveSkinFeature implements Feature {
                 || b instanceof SkinBlocks.Puddle || b instanceof SkinBlocks.Glowcap || b instanceof SkinBlocks.RootCurtain
                 || b instanceof SkinBlocks.Drift || b instanceof SkinBlocks.Driftwood || b instanceof SkinBlocks.CaveWeed
                 || b == CaveSkin.AMBER_CRYSTAL.get() || b == CaveSkin.GLACIAL_CRYSTAL.get()
+                || b instanceof SkinBlocks.EmberVine || b instanceof SkinBlocks.RustDrape
                 || b == CaveSkin.DUSTY_WEB.get() || b instanceof MultifaceBlock && b != Blocks.GLOW_LICHEN
                 && b != Blocks.SCULK_VEIN && b != Blocks.RESIN_CLUMP;
     }

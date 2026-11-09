@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "bell_warden",
  "moves": "bell_warden",
  "duel": true,
@@ -23,6 +23,12 @@
        "stab_b",
        "clapper"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -35,6 +41,12 @@
       [
        "toll"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -44,6 +56,12 @@
       [
        "echo"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -54,6 +72,12 @@
       [
        "echo"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -78,6 +102,12 @@
       [
        "stab_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -91,6 +121,12 @@
        "stab",
        "stab_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -100,6 +136,12 @@
       [
        "clapper"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -110,6 +152,12 @@
       [
        "rush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -124,6 +172,12 @@
       [
        "clapper"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "echo"
+      }
      ]
     },
     {
@@ -154,6 +208,12 @@
        "clapper",
        "toll"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -166,6 +226,12 @@
       [
        "shatter"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -175,6 +241,12 @@
       [
        "rush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clapper",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -184,6 +256,12 @@
       [
        "clapper"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -198,6 +276,12 @@
        "stab",
        "stab_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shatter",
+       "dodged": "echo"
+      }
      ]
     },
     {
@@ -215,5 +299,78 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "rush": 60,
+   "shatter": 240
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "rush",
+     "echo",
+     "shatter",
+     "clapper",
+     "stab",
+     "stab_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "rush",
+     "echo"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "stab"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "stab",
+     "stab_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "shatter",
+     "clapper",
+     "toll"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "shatter",
+     "stab"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "rush",
+     "echo"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

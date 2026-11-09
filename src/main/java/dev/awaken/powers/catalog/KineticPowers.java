@@ -10,7 +10,9 @@ import dev.awaken.powers.Fx;
 import dev.awaken.powers.ladder.Riders;
 import dev.awaken.powers.ladder.Steps;
 import dev.awaken.powers.Moves;
+import dev.awaken.powers.PowerMath;
 import dev.awaken.powers.PowerSounds;
+import dev.awaken.powers.PowerStance;
 import dev.awaken.powers.PowerState;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.PowerType.Family;
@@ -20,6 +22,8 @@ import dev.awaken.powers.PowerType.Variant;
 import dev.awaken.powers.Running;
 import dev.awaken.powers.Scheduler;
 import dev.awaken.powers.TerrainLedger;
+import dev.awaken.powers.WallSlam;
+import dev.awaken.powers.WaveSurface;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
@@ -29,8 +33,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -67,8 +73,8 @@ final class KineticPowers {
                 .cast(KineticPowers::leap).register();
 
         PowerType.builder("haymaker", "Haymaker", Family.KINETIC, Slot.ACTIVE)
-                .cost(18).cooldown(100).damage(7).unlock(Rank.E).icon("fist").channel(0, 24)
-                .desc("Hold to wind up, release to punch. A full charge launches the target across the room.")
+                .cost(18).cooldown(100).damage(7).unlock(Rank.E).icon("fist").channel(0, HAYMAKER_HOLD)
+                .desc("Hold to wind up, release to punch. A full charge launches the target across the room. Let go right as it peaks and they fold around your fist, and any wall behind them cracks and hurts them again.")
                 .variant(Variant.of("Uppercut", "Launches straight up into the sky"))
                 .variant(Variant.of("Piledriver", "Drives the target into the ground and stuns it").dmg(1.1f))
                 .cast(KineticPowers::haymaker).register();
@@ -82,7 +88,7 @@ final class KineticPowers {
 
         PowerType.builder("shockwave", "Shockwave", Family.KINETIC, Slot.ACTIVE)
                 .cost(20).cooldown(140).damage(5).unlock(Rank.D).icon("wave")
-                .desc("Stamp a rolling wave of force forward that bowls over everything in its path.")
+                .desc("Stamp a wave of force along the real ground, up slopes and over steps. It bowls over everything in its path and hits hardest at the far end. Walls stop it.")
                 .variant(Variant.of("Wide", "A broad, shorter wave").radius(0.75f))
                 .variant(Variant.of("Lance", "A narrow, long, harder wave").radius(1.5f).dmg(1.2f))
                 .cast(KineticPowers::shockwave).register();
@@ -227,38 +233,64 @@ final class KineticPowers {
         return Result.OK;
     }
 
+    /** Hold as long as you like; after this long (the longest a hold's pose runs) it throws the punch itself. */
+    private static final int HAYMAKER_HOLD = 600;
+    /** Ticks after full charge that still land clean (SPEC §50.3), before the grace. */
+    private static final int HAYMAKER_CLEAN = 5;
+
     static Result haymaker(Cast c) {
-        c.sound(PowerSounds.CHARGE_UP, 0.7f, 0.8f);
-        // wind-up: the fist cocked back over the shoulder, energy gathering at the knuckles
-        Fx.at(c, FxKind.CHARGE, c.player.getEyePosition()).ticks(c.type.maxDuration).scale(1.1).send();
-        Running r = Casting.channel(c, c.type.maxDuration);
         int full = c.chargeTicks(20); // Knuckle Shards (2): full charge sooner
+        // wind-up: the fist cocked back over the shoulder, energy gathering at the knuckles; the strain is the profile's held sound
+        // (aux: how much faster its climb runs at this level, so the top of it lands on full charge)
+        Fx.at(c, FxKind.CHARGE, c.player.getEyePosition()).ticks(c.type.maxDuration).scale(1.1).aux(20f / full).send();
+        Running r = Casting.channel(c, c.type.maxDuration);
         r.tick(rr -> {
-            if (rr.age == full) c.sound(PowerSounds.CHARGE_UP, 0.6f, 1.6f);
+            if (rr.age == full) {
+                Fx.at(c, FxKind.HOLD_READY, c.player.getEyePosition()).scale(1.1).noAnim().send();
+                c.sound(PowerSounds.HAY_PEAK, 1.1f, 1f);
+            }
         }).end((rr, why) -> {
             double charge = Math.min(1.0, rr.age / (double) full);
             Fx.end(c, c.player, 0);
             if (why == Running.Why.CANCELLED) return;
-            LivingEntity t = Combat.aimEntity(c.player, c.player.getEyePosition(), c.player.getLookAngle(), 4.5, 0.6, true);
+            Vec3 look = c.player.getLookAngle();
+            LivingEntity t = Combat.aimEntity(c.player, c.player.getEyePosition(), look, 4.5, 0.6, true);
             if (t == null) {
+                // a charged punch into a wall cracks it, whatever is or isn't standing there
+                BlockHitResult wall = charge >= 0.4 ? Combat.clip(c.player, c.player.getEyePosition(), c.player.getEyePosition().add(look.scale(3.2))) : null;
+                if (wall != null && wall.getType() != HitResult.Type.MISS) {
+                    Vec3 on = wall.getLocation();
+                    Fx.at(c, FxKind.WALL_CRACK, on).dir(Vec3.atLowerCornerOf(wall.getDirection().getUnitVec3i())).scale(0.5 + 0.8 * charge).noAnim().send();
+                    c.sound(PowerSounds.HAY_RELEASE, 0.75f, 1f);
+                    c.sound(on, PowerSounds.HAY_WALL, 0.75f + 0.45f * (float) charge, 1.08f - 0.16f * (float) charge);
+                    Fx.quake(c.level, on, 8, 0.6f + 1.2f * (float) charge);
+                    c.feel(null, 0, 1.5f + 3f * (float) charge);
+                    return;
+                }
                 // a punch into the air still throws a ring of force
-                Vec3 front = c.player.getEyePosition().add(c.player.getLookAngle().scale(1.6));
-                Fx.at(c, FxKind.IMPACT, front).dir(c.player.getLookAngle()).scale(0.5 + 0.5 * charge).send();
-                c.sound(PowerSounds.WHOOSH, 0.8f, 1.3f);
+                Vec3 front = c.player.getEyePosition().add(look.scale(1.6));
+                Fx.at(c, FxKind.IMPACT, front).dir(look).scale(0.5 + 0.5 * charge).send();
+                c.sound(PowerSounds.HAY_RELEASE, 0.85f + 0.25f * (float) charge, 1.1f - 0.2f * (float) charge);
                 return;
             }
+            int pressed = PowerMath.pressedAge(rr.age, c.player.connection.latency());
+            boolean clean = why == Running.Why.RELEASED && pressed >= full - PowerMath.GRACE_TICKS
+                    && pressed <= full + HAYMAKER_CLEAN + PowerMath.GRACE_TICKS && !(t instanceof Player);
             float dmg = c.dmg(c.type.damage + 9f * (float) charge);
+            if (clean) dmg *= PowerMath.capBonus(1.25f);
             c.hurt(t, dmg, null);
+            // the biggest stance hit of any starter: Medium for a tap, Heavy when full, more when clean
+            PowerStance.add(c.player, t, clean ? 16 : PowerStance.MEDIUM + Math.round(PowerStance.MEDIUM * (float) charge));
             Vec3 at = t.position().add(0, t.getBbHeight() * 0.6, 0);
+            double boost = clean ? 1.25 : 1;
             switch (c.variant) {
-                case 1 -> Combat.knockFrom(t, c.pos(), 0.25, 0.9 + 1.1 * charge);
+                case 1 -> Combat.knockFrom(t, c.pos(), 0.25, (0.9 + 1.1 * charge) * boost);
                 case 2 -> {
                     Combat.push(t, new Vec3(0, -1.6, 0));
-                    Combat.stun(t, 30 + (int) (20 * charge));
+                    Combat.stun(t, 30 + (int) (20 * charge) + (clean ? 15 : 0));
                 }
-                default -> Combat.knockFrom(t, c.pos(), 0.8 + 1.4 * charge, 0.45 + 0.6 * charge);
+                default -> Combat.knockFrom(t, c.pos(), (0.8 + 1.4 * charge) * boost, 0.45 + 0.6 * charge);
             }
-            Vec3 look = c.player.getLookAngle();
             if (c.step(3)) {
                 // Shockfist: a cone of force bursts out of the far side, along the punch
                 double reach = c.num(3, "reach", 3.5f);
@@ -270,10 +302,15 @@ final class KineticPowers {
             }
             // Cannonball: a fully charged target flies and hits what it crashes into
             if (c.step(4) && charge >= 1 && !c.is(2)) Steps.carry(c, t, dmg * c.num(4, "fly", 0.6f), 20);
+            // a clean one folds it, and the wall it lands against cracks and hits it again
+            if (clean && c.variant == 0) WallSlam.watch(c, t, 26, dmg * 0.5f, PowerStance.MEDIUM, 1.2f, PowerSounds.HAY_WALL);
             Fx.at(c, FxKind.IMPACT, at).target(t).dir(look).scale(1.1 + 1.6 * charge).flag(FxEvent.FULL, charge >= 1).send();
-            if (c.is(2)) Fx.at(c, FxKind.SLAM, t.position()).scale(2.2).noAnim().send();
-            c.sound(at, PowerSounds.PUNCH, 1.2f, 1.1f - 0.3f * (float) charge);
-            c.feel(t, (int) (40 + 40 * charge), 1.5f + 3f * (float) charge);
+            if (clean) Fx.at(c, FxKind.PERFECT, at).target(t).dir(look).noAnim().send();
+            if (c.is(2)) Fx.at(c, FxKind.SLAM, t.position()).scale(clean ? 3 : 2.2).noAnim().send();
+            c.sound(PowerSounds.HAY_RELEASE, 0.75f + 0.25f * (float) charge, 1.08f - 0.16f * (float) charge);
+            c.sound(at, PowerSounds.HAY_IMPACT, 1.2f, 1.1f - 0.25f * (float) charge);
+            if (charge >= 1) c.sound(at, c.step(5) ? PowerSounds.HAY_L5 : PowerSounds.HAY_TAIL, clean ? 1.2f : 0.9f, 1f);
+            c.feel(t, clean ? 150 : (int) (40 + 40 * charge), clean ? 7f : 1.5f + 3f * (float) charge);
         });
         return Result.OK;
     }
@@ -418,23 +455,39 @@ final class KineticPowers {
         Vec3 dir = c.flatLook();
         float dmg = c.dmg();
         c.sound(PowerSounds.STOMP_PLANT, 1.3f, 1f);
-        // a curved wall of force rolls out from the planted foot, tearing dust and chunks out of the ground at its front
-        Fx.at(c, FxKind.CONE, c.pos()).dir(dir).scale(range).aux(half).ticks(10).flag(FxEvent.REACH).send();
-        Running r = Casting.start(c, 10);
+        // it travels at one speed, so a long wave takes longer to arrive and you can watch it go
+        int waveTicks = Math.max(10, Math.round((float) range / 0.9f));
+        // the real ground ripples along the front (FxGroundWave), with dust and chunks thrown up where it passes
+        Fx.at(c, FxKind.CONE, c.pos()).dir(dir).scale(range).aux(half).ticks(waveTicks).flag(FxEvent.REACH).send();
+        int ground = WaveSurface.start(c.level, origin.x, c.pos().y, origin.z);
+        Running r = Casting.start(c, waveTicks);
         r.tick(rr -> {
-            double front = range * (rr.age + 1) / 10.0;
-            double back = range * rr.age / 10.0;
+            double front = range * (rr.age + 1) / waveTicks;
+            double back = range * rr.age / waveTicks;
             for (LivingEntity e : Combat.foesInCone(c.player, origin, dir, front, half)) {
                 if (rr.hit.contains(e.getId())) continue;
                 if (e.position().distanceTo(origin) < back - 1) continue;
                 rr.hit.add(e.getId());
-                c.hurt(e, dmg, null);
-                Combat.knockFrom(e, origin, 1.4, 0.35);
-                if (rr.hit.size() <= 5) Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(dir).scale(0.8).noAnim().send();
+                WaveSurface.Reach reach = reachOf(c, origin, ground, e);
+                if (!reach.reached() || !nearGround(e, reach.y())) continue; // behind a wall, over a drop, or too high for it
+                // the crest at the far edge hits hardest and throws: a slope brings the crest on sooner
+                double flat = Math.hypot(e.getX() - origin.x, e.getZ() - origin.z);
+                boolean crest = flat >= range * (0.72 - Math.min(0.3, reach.climb() * 0.06));
+                boolean player = e instanceof Player;
+                c.hurt(e, crest && !player ? dmg * PowerMath.capBonus(1.35f) : dmg, null);
+                if (crest && !player) Combat.knockFrom(e, origin, 1.0, 0.85);
+                else Combat.knockFrom(e, origin, 1.4, 0.35);
+                PowerStance.add(c.player, e, PowerStance.LIGHT);
+                if (!player) WallSlam.watch(c, e, 16, dmg * 0.6f, PowerStance.LIGHT, 0.7f, PowerSounds.WAVE_WALL);
+                if (rr.hit.size() <= 5) {
+                    Vec3 mid = e.getBoundingBox().getCenter();
+                    Fx.at(c, FxKind.IMPACT, mid).dir(dir).scale(0.8).noAnim().send();
+                    c.sound(mid, PowerSounds.WAVE_KNOCK, crest ? 1.1f : 0.9f, 0.9f + c.level.getRandom().nextFloat() * 0.2f);
+                }
                 if (rr.hit.size() == 1) c.feel(e, 50, 0f); // the first body struck freezes a beat
             }
             for (LivingEntity e : Combat.bystandersInCone(c.player, origin, dir, front, half)) {
-                if (rr.hit.add(e.getId())) Combat.knockFrom(e, origin, 0.9, 0.3);
+                if (rr.hit.add(e.getId()) && reachOf(c, origin, ground, e).reached()) Combat.knockFrom(e, origin, 0.9, 0.3);
             }
         });
         Fx.quake(c.level, origin, 10, 1.5f);
@@ -448,6 +501,20 @@ final class KineticPowers {
             for (double d = 1.5; d < range; d += 2.5) Riders.lingerAt(c, origin.add(dir.scale(d)), "burn", burn, 1.3f, dps, false);
         }
         return Result.OK;
+    }
+
+    /** Whether the wave gets to this body's near side over the real ground (no ground under the caster: it goes as it always did). */
+    private static WaveSurface.Reach reachOf(Cast c, Vec3 origin, int ground, LivingEntity e) {
+        if (ground == WaveSurface.NONE) return new WaveSurface.Reach(true, (int) e.getY() - 1, 0);
+        double dx = e.getX() - origin.x, dz = e.getZ() - origin.z, len = Math.max(1e-3, Math.sqrt(dx * dx + dz * dz));
+        double near = Math.max(0, len - e.getBbWidth() * 0.5);
+        return WaveSurface.reach(c.level, origin.x, ground, origin.z, origin.x + dx / len * near, origin.z + dz / len * near);
+    }
+
+    /** A ground wave reaches what stands on the ground: not what's flying high over it, nor down a hole beneath. */
+    private static boolean nearGround(LivingEntity e, int groundY) {
+        double above = e.getY() - (groundY + 1);
+        return above <= 4 && above >= -3;
     }
 
     static Result brace(Cast c) {

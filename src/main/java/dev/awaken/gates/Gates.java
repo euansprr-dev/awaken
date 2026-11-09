@@ -264,6 +264,33 @@ public final class Gates {
         return true;
     }
 
+    // ---- Riding Along (SPEC §55) ----------------------------------------------------------------------------------------
+
+    /** Marks the player's run as ridden or not; no run, no change. */
+    public static void setRiding(ServerPlayer p, boolean riding) {
+        RunState run = Runs.run(p);
+        if (run.active()) run.riding = riding;
+    }
+
+    /** Whether the player's run is the story's own gate, which is walked alone (false outside a run). */
+    public static boolean inScriptedGate(ServerPlayer p) {
+        GateRecord g = Runs.gateOf(p);
+        return g != null && g.scripted;
+    }
+
+    /** Whether this gate already has someone riding along in it. */
+    public static boolean hasRider(int gateId) {
+        MinecraftServer s = server();
+        if (s == null) return false;
+        GateRecord g = GateRegistry.get(s).gate(gateId);
+        return g != null && dev.awaken.gates.run.RunEvents.hasRider(s, g);
+    }
+
+    /** Brings a player out of their run now, Satchel and all. */
+    public static void pullOut(ServerPlayer p, String why) {
+        dev.awaken.gates.run.RunEvents.pullOut(p, why);
+    }
+
     /** Sends the beacon list to a player (other modules may call this after teleporting someone). */
     public static void refresh(ServerPlayer p) {
         GatePayloads.syncBeacons(p);

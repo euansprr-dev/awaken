@@ -872,8 +872,16 @@ public final class ArmsPredict {
             }
             case ArmsPayloads.BLOCK -> {
                 fightAt = ticks;
-                CombatFeedback.kick(0F, 1.2F, 0F, 5);
+                // the blow lands on the blade: you feel it stop, for half as long as a deflect (SPEC §47.3)
+                int yaw = yawTo(p, Minecraft.getInstance().level.getEntity(r.entity()));
+                float side = Mth.sin(Mth.wrapDegrees(yaw - p.getYRot()) * Mth.DEG_TO_RAD);
+                CombatFeedback.hitstop(r.entity(), 50);
+                CombatFeedback.hold(50);
+                CombatFeedback.kick(side * 1.2F, 2.2F, side * 0.8F, 6);
                 ArmsAudio.block(p);
+                ArmsHands.jolt(side, 0.85F);
+                ArmsBodies.jolt(p);
+                ArmsFx.guardSpark(p, yaw, false);
             }
             case ArmsPayloads.SHOT -> {
                 // a shot on the guard: the blade takes it (its jolt, its spark, its ring), no freeze (nothing in

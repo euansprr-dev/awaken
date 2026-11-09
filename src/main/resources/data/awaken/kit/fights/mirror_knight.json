@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "mirror_knight",
  "moves": "mirror_knight",
  "duel": true,
@@ -19,6 +19,12 @@
       [
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -33,6 +39,11 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -43,6 +54,12 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -53,6 +70,11 @@
       [
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint"
+      }
      ]
     },
     {
@@ -67,6 +89,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     }
    ]
@@ -85,6 +113,12 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -99,6 +133,11 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -109,6 +148,12 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -127,6 +172,11 @@
       [
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint"
+      }
      ]
     },
     {
@@ -141,6 +191,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     }
    ]
@@ -169,6 +225,12 @@
        "cut",
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -183,6 +245,11 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -193,6 +260,12 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -204,6 +277,11 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint"
+      }
      ]
     },
     {
@@ -218,6 +296,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "feint",
+       "dodged": "lunge"
+      }
      ]
     }
    ]
@@ -226,5 +310,72 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.25
+ },
+ "mind": {
+  "cooldowns": {
+   "lunge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "lunge",
+     "feint",
+     "riposte",
+     "thrust"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "lunge"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "riposte"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "riposte",
+     "thrust"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "lunge",
+     "feint"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "feint",
+     "riposte"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "lunge"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

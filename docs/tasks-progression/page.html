@@ -1,0 +1,832 @@
+<title>The Next Thing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&family=Pixelify+Sans:wght@500&display=swap">
+<style>
+:root {
+  --bg:#f2f4f6; --panel:#e5e9ed; --ink:#16202a; --muted:#56636f; --rule:#cfd7de; --accent:#1d6a93; --amber:#9d5c0b; --good:#2c7342; --gone:#a6422a;
+  --g-bg:#0c1420; --g-rail:#0a1019; --g-tile:#111d2c; --g-edge:#86c9f0; --g-text:#f2f6fa; --g-label:#8fa3b8; --g-dim:#4f6175; --g-amber:#f0b45a; --g-good:#8fd49a; --g-lit:#16263a; --g-line:#22344a;
+  --display:"Saira Semi Condensed","Avenir Next Condensed","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --pixel:"Pixelify Sans","Courier New",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141a;--panel:#18202a;--ink:#e2e8ee;--muted:#93a1af;--rule:#28323d;--accent:#86c9f0;--amber:#e8a64e;--good:#8cc98a;--gone:#e47f63;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f141a;--panel:#18202a;--ink:#e2e8ee;--muted:#93a1af;--rule:#28323d;--accent:#86c9f0;--amber:#e8a64e;--good:#8cc98a;--gone:#e47f63;color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 var(--body);overflow-x:hidden}
+.wrap{max-width:1060px;margin:0 auto;padding-block:36px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{max-width:70ch}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.12;margin:0;text-wrap:balance}
+h1{font-size:clamp(44px,8vw,76px);letter-spacing:-.005em}
+h2{font-size:32px;margin-top:64px;padding-top:20px;border-top:1px solid var(--rule)}
+h3{font-size:21px;margin-top:30px}
+p{margin:10px 0 0}
+a{color:var(--accent);text-underline-offset:2px}
+code{font:.86em var(--mono);color:var(--amber)}
+.eyebrow{font:500 12px/1.3 var(--mono);letter-spacing:.11em;text-transform:uppercase;color:var(--amber)}
+.lede{font-size:21px;line-height:1.42;margin-top:14px;max-width:48ch}
+.muted{color:var(--muted)}
+.small{font-size:14.5px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:28px}
+.stat{background:var(--bg);padding:14px 14px 13px}
+.stat b{display:block;font:700 30px/1.05 var(--display)}
+.stat span{display:block;font-size:14px;line-height:1.35;color:var(--muted);margin-top:4px}
+nav.jump{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:20px;font:13px var(--mono)}
+.quote{border-left:3px solid var(--amber);padding:2px 0 2px 14px;margin-top:16px;color:var(--muted);font-style:italic}
+ul.plain{margin:10px 0 0;padding-left:20px}
+ul.plain li+li{margin-top:5px}
+.tablewrap{overflow-x:auto;margin-top:14px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:15px;line-height:1.4}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--rule)}
+th{font:500 11.5px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td b{font-weight:700}
+tr.sect td{font:700 17px var(--display);padding-top:20px;border-bottom:2px solid var(--rule)}
+.v{display:inline-block;font:500 11px/1 var(--mono);letter-spacing:.04em;padding:4px 6px;border-radius:3px;white-space:nowrap;border:1px solid currentColor}
+.v.Told{color:var(--good)}.v.Thin{color:var(--amber)}.v.Silent,.v.Broken{color:var(--gone)}.v.Silent{background:color-mix(in srgb,var(--gone) 12%,transparent)}.v.Hidden,.v.NotBuilt{color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.filters button,.seg button,.ans button,.tbtn{font:500 13px var(--mono);padding:8px 12px;border-radius:4px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);cursor:pointer;min-height:36px}
+.filters button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin-top:10px}
+.flow div{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:9px 11px;font-size:14.5px;line-height:1.3;flex:1 1 150px}
+.flow div b{display:block;font:500 11.5px var(--mono);letter-spacing:.05em;margin-bottom:3px;color:var(--amber)}
+.flow i{align-self:center;font-style:normal;color:var(--muted)}
+pre{font:13.5px/1.55 var(--mono);background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:13px 15px;overflow-x:auto;margin:12px 0 0;color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.voice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.voice>div{background:var(--panel);border-radius:4px;padding:13px 14px;font-size:15px;line-height:1.42}
+.voice b{display:block;font:700 20px var(--display)}
+.voice em{display:block;margin-top:8px;color:var(--muted)}
+
+/* The Tasks page, as Glass. */
+.proto{margin-top:18px}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.seg button{display:flex;flex-direction:column;justify-content:flex-start;text-align:left;padding:10px 12px;font:15px/1.25 var(--body);min-height:58px}
+.seg button b{display:block;font:700 18px/1.1 var(--display)}
+.seg button span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.seg button[aria-pressed="true"]{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+.ctl{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;margin:10px 0}
+.view{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.view button{font:500 13px var(--mono);padding:8px 13px;background:var(--panel);color:var(--muted);border:0;cursor:pointer;min-height:36px}
+.view button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.glass{display:grid;grid-template-columns:76px minmax(0,1fr);background:var(--g-bg);color:var(--g-text);border:1px solid var(--g-line);border-radius:5px;min-height:520px;font:14.5px/1.42 var(--body)}
+.g-rail{background:var(--g-rail);padding:12px 0;border-right:1px solid var(--g-line);border-radius:5px 0 0 5px}
+.g-rail span{display:block;font:500 10.5px var(--mono);text-align:center;color:var(--g-dim);padding:11px 2px}
+.g-rail .lit{color:var(--g-text);background:var(--g-lit);box-shadow:inset 2px 0 0 var(--g-edge)}
+.g-main{min-width:0;padding:14px 18px 18px}
+.g-top{display:flex;justify-content:space-between;gap:12px;font:500 11px var(--mono);letter-spacing:.06em;color:var(--g-label);text-transform:uppercase;flex-wrap:wrap}
+.g-tabs{display:flex;gap:2px 16px;margin:12px 0 14px;border-bottom:1px solid var(--g-line);overflow-x:auto;scrollbar-width:none}
+.g-tabs::-webkit-scrollbar{display:none}
+.g-tabs button{appearance:none;background:none;border:0;color:var(--g-label);font:500 11.5px var(--mono);letter-spacing:.11em;padding:9px 0 9px;cursor:pointer;position:relative;white-space:nowrap;min-height:38px}
+.g-tabs button[aria-selected="true"]{color:var(--g-text)}
+.g-tabs button[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--g-edge)}
+.g-tabs button.dot::before{content:"• ";color:var(--g-edge)}
+.g-tabs button:focus-visible,.g-body button:focus-visible{outline:2px solid var(--g-edge);outline-offset:1px}
+.g-h{font:500 10.5px var(--mono);letter-spacing:.12em;color:var(--g-label);margin:14px 0 6px}
+.g-h:first-child{margin-top:0}
+.row{background:var(--g-tile);border-left:2px solid var(--g-edge);border-radius:0 3px 3px 0;margin-bottom:6px}
+.row.next{border-left-color:var(--g-amber);background:var(--g-lit)}
+.row.pin{border-left-color:var(--g-good)}
+.row.opt{border-left-color:var(--g-dim)}
+.row.flash{animation:flash 1.1s ease-out}
+@keyframes flash{0%{box-shadow:inset 0 0 0 1px var(--g-amber),0 0 0 2px rgba(240,180,90,.35)}100%{box-shadow:inset 0 0 0 1px transparent,0 0 0 0 transparent}}
+.r-h{appearance:none;display:flex;width:100%;gap:10px;align-items:flex-start;justify-content:space-between;background:none;border:0;color:inherit;font:inherit;text-align:left;padding:9px 12px;cursor:pointer;min-height:40px}
+.r-h .t{font:500 15.5px/1.3 var(--pixel);letter-spacing:.012em}
+.row.next .r-h .t{font-size:19px}
+.chips{display:flex;gap:4px;flex:none;align-items:center;padding-top:1px}
+.chip{font:500 9.5px/1 var(--mono);letter-spacing:.08em;padding:3px 5px;border-radius:2px;border:1px solid;white-space:nowrap}
+.chip.NEXT{color:var(--g-amber)}.chip.NEW{color:var(--g-edge);background:rgba(134,201,240,.1)}.chip.READY,.chip.PINNED{color:var(--g-good)}.chip.LEAD,.chip.WYW{color:var(--g-label);border-color:var(--g-dim)}
+.tag{font:500 10px var(--mono);letter-spacing:.09em;color:var(--g-dim);padding:2px 0 0;flex:none;min-width:58px}
+.then{padding:0 12px 9px;font-size:13px;color:var(--g-label)}
+.then b{font-weight:400;color:var(--g-text)}
+.body{padding:0 12px 12px;border-top:1px solid var(--g-line);margin-top:0}
+.why{margin:9px 0 0;color:#d7e1ea}
+.leadline{margin:8px 0 0;color:var(--g-amber)}
+.needs{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:9px;font:12.5px var(--mono);color:var(--g-label)}
+.needs .ok{color:var(--g-good)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin-top:10px}
+.opt{appearance:none;text-align:left;background:var(--g-bg);border:1px solid var(--g-line);color:var(--g-text);border-radius:3px;padding:9px 10px;cursor:pointer;font:inherit}
+.opt:hover{border-color:var(--g-edge)}
+.opt b{display:block;font:500 15px/1.2 var(--pixel)}
+.opt span{display:block;font-size:12.5px;line-height:1.3;color:var(--g-label);margin-top:3px}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.gb{appearance:none;font:500 12px var(--mono);padding:7px 10px;border-radius:3px;border:1px solid var(--g-line);background:var(--g-bg);color:var(--g-text);cursor:pointer;min-height:32px}
+.gb:hover{border-color:var(--g-edge)}
+.gb.done{border-style:dashed;border-color:var(--g-amber);color:var(--g-amber)}
+.later{margin-top:10px}
+.later>button{appearance:none;background:none;border:0;color:var(--g-label);font:500 11px var(--mono);letter-spacing:.09em;padding:8px 0;cursor:pointer;min-height:34px}
+.l-row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid var(--g-line);font-size:13.5px;color:var(--g-label)}
+.l-row small{display:block;font-size:12px;color:var(--g-dim)}
+.foot{margin-top:12px;padding-top:9px;border-top:1px solid var(--g-line);font-size:13px;color:var(--g-label)}
+.foot b{color:var(--g-text);font-weight:400}
+.empty{padding:26px 8px;text-align:center;color:var(--g-label)}
+.empty b{display:block;color:var(--g-text);font:500 16px var(--pixel);margin-bottom:4px}
+.flat{display:flex;gap:10px;background:var(--g-tile);padding:7px 10px;margin-bottom:3px;font-size:13.5px;border-left:2px solid var(--g-edge)}
+.flat.opt{border-left-color:var(--g-dim);color:var(--g-label)}
+.flat .tag{min-width:62px}
+.status{min-height:48px;margin-top:10px;padding:10px 12px;background:var(--panel);border-radius:4px;font-size:15px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.status .acts2{display:flex;gap:6px}
+.tbtn{padding:6px 10px;min-height:32px;font-size:12px}
+.cap{font-size:14px;color:var(--muted);margin-top:8px}
+
+/* Decisions */
+.tally{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--panel);padding:11px 13px;border-radius:4px;margin-top:14px;position:sticky;top:0;z-index:2}
+.card{padding:15px 0;border-bottom:1px solid var(--rule)}
+.card h3{margin:0;font-size:20px;display:flex;gap:9px}
+.card h3 small{font:500 13px var(--mono);color:var(--muted);padding-top:4px;flex:none}
+.card .rec{margin-top:5px;color:var(--muted);font-size:15.5px}
+.card .rec b{color:var(--ink)}
+.ans{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:9px}
+.ans button[aria-pressed="true"][data-v="yes"]{background:var(--good);border-color:var(--good);color:var(--bg)}
+.ans button[aria-pressed="true"][data-v="no"]{background:var(--gone);border-color:var(--gone);color:var(--bg)}
+textarea{width:100%;margin-top:8px;font:15px/1.4 var(--body);padding:8px 10px;background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:4px;resize:vertical;min-height:40px}
+.st{font:12px var(--mono);color:var(--muted)}
+
+@media (max-width:720px){
+  body{font-size:16.5px}
+  h2{font-size:27px;margin-top:48px}
+  .stats{grid-template-columns:1fr 1fr}
+  .two,.voice{grid-template-columns:1fr}
+  .seg button{padding:8px 9px;min-height:66px}
+  .seg button span{font-size:12px}
+  .glass{grid-template-columns:minmax(0,1fr);min-height:0}
+  .g-tabs{gap:2px 10px}
+  .g-tabs button{letter-spacing:.04em;font-size:11px}
+  .g-rail{display:none}
+  .g-main{padding:12px 11px 14px}
+  .r-h .t{font-size:15px}
+  .row.next .r-h .t{font-size:17px}
+  table.stack thead{display:none}
+  table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:100%}
+  table.stack tr:not(.sect){padding:10px 0;border-bottom:1px solid var(--rule)}
+  table.stack td{border:0;padding:2px 0}
+  table.stack td[data-l]::before{content:attr(data-l) " ";font:500 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-top:5px}
+  .flow i{display:none}
+  .flow div{flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){.row.flash{animation:none}html{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+
+<p class="eyebrow">For your approval · 9 November 2026 · Plan only, nothing built</p>
+<h1>The Next Thing</h1>
+<p class="lede">Open K at any point in the game and you see a short list of what you can build, add or improve next. Finish one and the next takes its place.</p>
+<p class="col">A test stops anything from going in with no way to learn about it, so the gap you found at C-rank can't come back from another plan.</p>
+
+<div class="stats">
+  <div class="stat"><b>20 → 7</b><span>rows at most on the Now page from level 12. Today's number is measured</span></div>
+  <div class="stat"><b>12 → 3</b><span>rows on the Hearth tab, which today still never names the Storehouse</span></div>
+  <div class="stat"><b id="statSilent">7</b><span>things you can unlock that nothing tells you about</span></div>
+  <div class="stat"><b>16</b><span>yes or no decisions at the bottom, each with my recommendation</span></div>
+</div>
+<nav class="jump" aria-label="On this page"><a id="j-try" href="#try">Try it</a><a id="j-gaps" href="#gaps">What's missing</a><a id="j-cap" href="#cap">Why three</a><a id="j-tell" href="#tell">Telling and finding</a><a id="j-how" href="#how">How it works</a><a id="j-build" href="#build">Building it</a><a id="j-dec" href="#decide">Your decisions</a></nav>
+
+<h2>What you asked for</h2>
+<p class="quote col">"gradually you get more and more tasks that lead to a natural progression… a maximum of a certain amount of tasks, like 1 or 2, or maybe 3 per thing… you always know what you can add or what you can build"</p>
+<div class="col">
+<p>So the job is one list that opens up as you play, and the test is simple. At any moment, a glance at K answers "what can I do next that makes my home or my kit better?" The same list keeps your rule that bosses and secrets stay yours to find.</p>
+<p class="small muted"><b>It works if</b> Now fits one screen, finishing a step puts the next in the same place, and every unlock has a way to be learned. <b>It fails if</b> the list still runs past the screen, a row can never be finished, or the page names a boss.</p>
+</div>
+
+<h2 id="try">Try it</h2>
+<div class="col"><p>This is the Tasks page at three moments in a playthrough. Click any row to open it. <b>Mark done</b> shows what comes next, and it lands in the same place, marked NEW. Switch to <b>Today</b> to see the real list for the same moment.</p></div>
+
+<div class="proto" id="proto">
+  <div class="seg" role="group" aria-label="Moment in the playthrough" id="momentBar"></div>
+  <div class="ctl">
+    <div class="view" role="group" aria-label="Today or proposed">
+      <button type="button" id="vNew" data-view="new">Proposed</button><button type="button" id="vOld" data-view="old">Today (measured)</button>
+    </div>
+    <span class="small muted" id="counts" aria-live="polite"></span>
+  </div>
+  <div class="glass">
+    <div class="g-rail" aria-hidden="true"><span>STATUS</span><span class="lit">TASKS</span><span>HEARTH</span><span>POWERS</span><span>JOURNAL</span><span>MAP</span></div>
+    <div class="g-main" id="gMain"></div>
+  </div>
+  <div class="status"><span id="note" aria-live="polite"></span><span class="acts2"><button type="button" class="tbtn" id="undo">Undo</button><button type="button" class="tbtn" id="reset">Start this moment again</button></span></div>
+  <p class="cap">A prototype on made-up progress numbers. Where the game already has a step, the words are the game's own. Rows for things with no step today (Storehouse, Foundry, Forge tiers, patterns, power levels, the sky platforms) are proposed wording. The Today view is the real row list from a GameTest on a bare player, so a real save shows more.</p>
+</div>
+
+<h2 id="gaps">What's missing today</h2>
+<div class="col"><p>I ran the real game in a test and read the list at seven points in a playthrough, on a player with an empty pack, no beasts and no bell leads. A real save would show more.</p></div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Where you are</th><th class="n">All rows</th><th class="n">Optional</th><th class="n">Hearth tab</th><th class="n">Now page</th><th class="n">Now, capped</th></tr></thead>
+<tbody>
+<tr><td>Just awakened, level 1</td><td class="n">7</td><td class="n">2</td><td class="n">0</td><td class="n">5</td><td class="n">≤ 7</td></tr>
+<tr><td>Hearthfire and a bedroom, level 3</td><td class="n">20</td><td class="n">9</td><td class="n">7</td><td class="n">14</td><td class="n">≤ 7</td></tr>
+<tr><td>Anchor and Armoury, level 7</td><td class="n">24</td><td class="n">13</td><td class="n">12</td><td class="n">17</td><td class="n">≤ 7</td></tr>
+<tr><td>D-rank, level 12, Hearth tier 1</td><td class="n">27</td><td class="n">14</td><td class="n">12</td><td class="n">20</td><td class="n">≤ 7</td></tr>
+<tr><td>C-rank, level 26, tier 2</td><td class="n">28</td><td class="n">14</td><td class="n">12</td><td class="n">20</td><td class="n">≤ 7</td></tr>
+<tr><td>B-rank, level 46, tier 3</td><td class="n">28</td><td class="n">14</td><td class="n">12</td><td class="n">20</td><td class="n">≤ 7</td></tr>
+<tr><td>A-rank, level 72, tier 4</td><td class="n">28</td><td class="n">14</td><td class="n">12</td><td class="n">20</td><td class="n">≤ 7</td></tr>
+</tbody></table></div>
+<div class="col"><p>Two things stand out. The list is full by level 12 and then stops growing, because almost nothing new is told after that. And the Hearth tab holds 12 rows, six of them trails, while the Storehouse, Foundry, Ore Shed and Forge tiers never appear at any stop.</p>
+<p>The table below is every unlock, walked from minute one to the end. "Told" means the player is told when it matters. "Thin" means it's mentioned once or only once you already have part of it. "Silent" means nothing mentions it. "Broken" means it's there but misleads or can't be finished.</p></div>
+<div class="filters" id="filters" role="group" aria-label="Filter the table"></div>
+<div class="tablewrap"><table class="stack" id="gapTable"><thead><tr><th style="width:22%">Thing</th><th style="width:22%">Opens with</th><th style="width:23%">What tells you today</th><th style="width:8%">Verdict</th><th>Fix</th></tr></thead><tbody id="gapBody"></tbody></table></div>
+
+<h2 id="cap">Why three</h2>
+<div class="col">
+<p><b>One Do this next, one row per line of work, three rows per tab.</b> Now holds at most 7: the next step, one row for each of the five tabs, and one from Out there.</p>
+<p>I looked for the number rather than picking it. Your Hearth tab has exactly three kinds of work: grow the home, add to it, bring beasts. Across all the tabs the real lines of work run from one to four. Two would hide one of the Hearth's three. Five would only be filled with padding.</p>
+<p><b>To be plain about the evidence:</b> no study names three for a quest list. Memory research puts what people hold at about four things. The games below sit between one and five. The real count of work lines is what settles it, and it's still a guess until you've played it, so Stage 2 stops for you to try it and the cap is one number to change.</p>
+</div>
+<div class="tablewrap"><table class="stack small" style="font-size:14.5px"><thead><tr><th style="width:17%">Source</th><th style="width:34%">What it does</th><th style="width:26%">What I'd take</th><th>Where it wouldn't fit</th></tr></thead><tbody id="resBody"></tbody></table></div>
+
+<h2 id="tell">Telling and finding</h2>
+<div class="col"><p>You've asked for "direction without telling" and for always knowing what's next. They don't actually fight, because they apply to different things. Your own rule in the spec already draws the line: what to do next and where each piece comes from is said plainly, and what the world holds beyond it is still found. So every step gets one of three voices.</p></div>
+<div class="voice">
+  <div><b>Plain</b>Anything you build or make at home. Every Hearth, Forge, armour and weapon step. Says the name, what it takes and where.<em>"An anvil, the Forge and an armour stand in the same room."</em></div>
+  <div><b>Lead</b>Rare parts, beasts, bells, new ways of moving. Says what kind of thing and what kind of place. Never coordinates until the game has given you a bearing.<em>"Every town's granary keeps one against a ground-floor wall."</em></div>
+  <div><b>Hidden</b>Bosses, Provings, events, gate rooms, story, Truths and Titles. They never appear on the list at all.<em>(nothing, on purpose)</em></div>
+</div>
+<div class="col"><p>The one place this needs your call is rare parts. "Every town's granary keeps one" tells you where to look, which is more than the world tells you today. I think it's right, because that silence is how the Storehouse got lost. That's decision 4.</p></div>
+
+<h2 id="how">How it works</h2>
+<div class="col"><p>Everything that's on the page today stays. The book gets a new step between "collect every system's steps" and "print them", and each step gains a line saying which line of work it belongs to.</p></div>
+<p class="small muted" style="margin-top:14px"><b>Today</b></p>
+<div class="flow"><div><b>EACH SYSTEM</b>Registers its steps</div><i>→</i><div><b>THE BOOK</b>Sorts them</div><i>→</i><div><b>THE PAGE</b>Prints all of them</div></div>
+<p class="small muted" style="margin-top:12px"><b>Proposed</b></p>
+<div class="flow"><div><b>EACH SYSTEM</b>Registers steps, each with a line of work and what it teaches</div><i>→</i><div><b>THE BOOK</b>One row per line of work, three per tab, places held</div><i>→</i><div><b>THE PAGE</b>The short list, with Then:, READY and a Later fold</div><i>→</i><div><b>THE TEST</b>Fails the build if something can be unlocked and nothing teaches it</div></div>
+
+<h3>How one task leads to the next</h3>
+<ul class="plain col">
+<li><b>Lines of work.</b> Finish a step and the next in that line takes the same place, marked NEW. Nothing else on the page moves.</li>
+<li><b>Then:</b> a quiet line under a plain row names the one step after it.</li>
+<li><b>Add to your home</b> is one row with up to three options. Pick one and the row becomes it; Change goes back.</li>
+<li><b>READY</b> shows when you've got everything. After the main path runs out, what's closest to done goes first.</li>
+<li><b>A footer</b> says what the next rank opens for you: "At B-rank your Forge can go to Tier III."</li>
+<li><b>Later</b> at the foot of each tab shows what's behind the rows, read-only, for when you want to look ahead. <b>Set aside</b> takes a row off the list for now, with Undo.</li>
+<li>A tab shows up the first time it has something on it, then stays. Trails only fill empty places, marked WHEN YOU WANT, and never sit on Now.</li>
+</ul>
+
+<h3>The one rule for every other plan</h3>
+<div class="col"><p>Forged Pick, Gates as Worlds, Powers in Full Voice, Riding Along, Made by Hand and Storage all add steps. Each adds one line, and the book holds the cap for them. No plan can go over it even by accident.</p></div>
+<pre>Goals.Step.of("hearth/storehouse", Goal.HEARTH, "Build a Storehouse")
+    .thread("hearth.build", 40)     // one row per line of work; lowest number first
+    .lead()                         // Plain unless you say otherwise
+    .teaches("room:storehouse", "block:awaken:storehouse_drop")
+    .build();</pre>
+<div class="col"><p>And one test, modelled on the Journey's <code>journey_ledger</code>, walks every room, work plan, Hearth and Forge tier, beast, armour rank, way of moving and level-road unlock. Each needs a step that teaches it or a written reason it stays quiet. If a new plan adds something and forgets, the build says exactly what:</p></div>
+<pre>tasks_ledger: 1 thing can be unlocked but nothing teaches it:
+  room:storehouse
+Add .teaches("room:storehouse") to the step that leads to it,
+or Teaches.quiet("room:storehouse", "why the player finds this alone").</pre>
+
+<h3>Four cases, before and after</h3>
+<div class="tablewrap"><table class="stack"><thead><tr><th style="width:21%">Case</th><th style="width:38%">Today</th><th>Proposed</th></tr></thead><tbody>
+<tr><td data-l="Case"><b>First hour.</b> Level 3, a fire and a bed</td><td data-l="Today">14 rows on Now, 9 of them "when you want"</td><td data-l="Proposed">Build your Armoury, then one row per tab. Finish the Armoury and the Sanctuary appears where it was</td></tr>
+<tr><td data-l="Case"><b>The Storehouse.</b> You just reached C-rank</td><td data-l="Today">Nothing</td><td data-l="Proposed">Add to your home offers it, lists The Drop, a Ledger desk and a Totter, and says where a Keystone is kept. Reaches you at C-rank, and adds no rank lock</td></tr>
+<tr><td data-l="Case"><b>You skipped the Veil</b></td><td data-l="Today">"Meditate 10 s, let go of G" holds Do this next from C-rank to A-rank</td><td data-l="Proposed">It sits in the one Out there row and Do this next follows your path</td></tr>
+<tr><td data-l="Case"><b>Every row waits on rank</b></td><td data-l="Today">A list of things you can't do yet</td><td data-l="Proposed">Each row says what it's waiting for, and the top names something you can do today. An empty tab says what fills it</td></tr>
+</tbody></table></div>
+
+<h3>What I weighed</h3>
+<div class="tablewrap"><table class="stack"><thead><tr><th style="width:24%"></th><th>What it is</th><th>Why it lost, or won</th></tr></thead><tbody>
+<tr><td data-l="Option"><b>Repair it.</b> Add the missing steps and trim the view</td><td data-l="What it is">Quick, low risk</td><td data-l="Why">Nothing stops the next plan reopening the hole. Its fixes become Stage 0</td></tr>
+<tr><td data-l="Option"><b>One short list.</b> Recommended</td><td data-l="What it is">Lines of work, a cap in the book, one test, one rule</td><td data-l="Why">Solves the length and the gaps together, and every later plan inherits it</td></tr>
+<tr><td data-l="Option"><b>A quest book tree.</b></td><td data-l="What it is">One authored tree, like FTB Quests</td><td data-l="Why">Shows what's coming, drifts from the world, can soft-lock, and it's the list you asked me not to make</td></tr>
+</tbody></table></div>
+
+<h3>What could go wrong</h3>
+<ul class="plain col">
+<li><b>A system throws an error.</b> That system's rows drop out for the moment, the rest stand.</li>
+<li><b>Your pinned step disappears.</b> It unpins itself.</li>
+<li><b>A row can never be finished.</b> The test catches it before it ships.</li>
+<li><b>An old save.</b> Loads as it is and fills its places the first time you open K.</li>
+<li><b>A friend's server.</b> The list stays per player, and Hearth rows read the shared home, so it holds up for your guild idea.</li>
+<li><b>Three turns out wrong.</b> It's one number. A config switch brings the old list back at any time.</li>
+</ul>
+
+<h2 id="build">Building it</h2>
+<div class="tablewrap"><table class="stack"><thead><tr><th style="width:7%">Stage</th><th style="width:43%">What</th><th style="width:30%">How we know</th><th>Undo</th></tr></thead><tbody>
+<tr><td data-l="Stage"><b>0</b></td><td data-l="What">The defects: Your Village trail, lessons no longer urgent, wrong and stale lines</td><td data-l="How we know">Tests</td><td data-l="Undo">Each alone</td></tr>
+<tr><td data-l="Stage"><b>1</b></td><td data-l="What">The book, the cap and the page: lines of work, Then:, Later, Set aside</td><td data-l="How we know"><code>tasks_caps</code> at the same seven stops, <code>tasks_slots_stay</code></td><td data-l="Undo">Config switch shows the old list</td></tr>
+<tr><td data-l="Stage"><b>2</b></td><td data-l="What">The Hearth: rooms, works, Storehouse, Forge tiers, beasts in the order your home needs them</td><td data-l="How we know"><b>You play it.</b> A test can't tell if three feels right</td><td data-l="Undo">Config switch</td></tr>
+<tr><td data-l="Stage"><b>3</b></td><td data-l="What">The test, every system on lines of work, the new steps: cores, power levels, Ascent, patterns, mounts</td><td data-l="How we know"><code>tasks_ledger</code> green</td><td data-l="Undo">Quiet list</td></tr>
+<tr><td data-l="Stage"><b>4</b></td><td data-l="What">The other plans plug in, final polish</td><td data-l="How we know">Each plan's own check</td><td data-l="Undo">Per plan</td></tr>
+</tbody></table></div>
+<div class="col"><p class="small muted">About one builder and 4 to 8 hours at AI pace. That's an estimate; the unknown is how many unlocks the test turns up in Stage 3. <b>Not done yet:</b> no one has played any of this, and the Storage plan hadn't said which steps it needs when I wrote this. Its steps go in the same line of work as the Storehouse. Written up in full in <code>docs/tasks-progression/PLAN.md</code>.</p></div>
+
+<h2 id="decide">Your decisions</h2>
+<div class="col"><p>Tap Yes or No on each. They save as you tap and I read them from here. Add a note to change anything. I recommend yes on all sixteen. I've said where the call is a close one.</p></div>
+<div class="tally"><span id="tallyText">Loading your answers…</span><button type="button" class="tbtn" id="allYes" hidden>Yes to all I haven't answered</button></div>
+<div id="cards"></div>
+
+</div>
+
+<script>
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MEASURED = {"B_hearthfire_bedroom_L3":{"top":"hearth/armoury","rows":[["HEARTH","hearth/armoury",false,"Build your Armoury"],["ARMOUR","armour/e",false,"Choose your first armour"],["RANK","hearth/anchor",false,"Clear your first gate"],["WEAPONS","arms:issue",false,"Talk to Hale: he has a free weapon for you"],["HEARTH","hearth:guide",false,"Right-click your campfire to see what your home needs"],["RANK","progression:points",false,"Press K to spend 6 points"],["WEAPONS","arms/war_anvil",false,"Set up a War Anvil"],["WEAPONS","arms/first_weapon",false,"Forge your first weapon"],["HEARTH","kin/need/lampwing",false,"Nothing lights your yard at night."],["HEARTH","kin/need/burrowbun",false,"Nobody's minding the fields, and there aren't any yet."],["HEARTH","trail/awaken:a_room_for_everything",true,"Make a Kitchen: a stove, a crafting table and a barrel."],["RANK","trail/awaken:moving_like_a_hunter",true,"Hold sneak as you land to roll."],["OUT","trail/awaken:the_commons",true,"Discover two new biomes."],["OUT","trail/awaken:the_delvers_pick",true,"Pull the Delver's Pick from the stone at the end of an old adit."],["OUT","trail/awaken:wayfarers_and_camps",true,"Register with the Association."],["RANK","trail/awaken:your_first_gate",true,"Clear a floor."],["WEAPONS","trail/awaken:your_first_weapon",true,"Take Hale's hunter's issue at the High Gate."],["HEARTH","trail/awaken:your_hearth",true,"Right-click your campfire to open your Hearth's guide."],["HEARTH","hearth/sanctuary",true,"Make your Bedroom a Sanctuary"],["RANK","progression:road/awaken:second_power",false,"At level 4: A Power Core"]]},"E_C_rank_L26_tier2":{"top":"lesson:veil/step_out","rows":[["ARMOUR","armour/c",false,"Choose your first armour"],["HEARTH","hearth/forge",false,"Grow your Armoury into a Forge"],["WEAPONS","arms/war_anvil",false,"Set up a War Anvil"],["WEAPONS","arms/first_weapon",false,"Forge your first weapon"],["OUT","lesson:veil/step_out",false,"Meditate 10 s, let go of G: step out"],["WEAPONS","arms:issue",false,"Talk to Hale: he has a free weapon for you"],["HEARTH","hearth:guide",false,"Right-click your Anchor to see what your home needs"],["RANK","progression:points",false,"Press K to spend 75 points"],["HEARTH","hearth/tier/3",false,"Grow your home to Hall"],["RANK","progression:goal/awaken:town_grows",false,"Hang a Lord's trophy in your Hall"],["HEARTH","kin/need/lampwing",false,"Nothing lights your yard at night."],["HEARTH","kin/need/burrowbun",false,"Nobody's minding the fields, and there aren't any yet."],["BELLS","dreams/bell",false,"A bell is waiting in a dream. Sleep in your bed tonight."],["HEARTH","trail/awaken:a_room_for_everything",true,"Make a Kitchen: a stove, a crafting table and a barrel."],["RANK","trail/awaken:moving_like_a_hunter",true,"Hold sneak as you land to roll."],["OUT","trail/awaken:the_commons",true,"Discover two new biomes."],["OUT","trail/awaken:the_delvers_pick",true,"Pull the Delver's Pick from the stone at the end of an old adit."],["HEARTH","trail/awaken:the_forge",true,"Temper a weapon or an armour piece at the Forge."],["HEARTH","trail/awaken:the_training_grounds",true,"Place a Start Gate, numbered Checkpoint Rings and a Finish Gate."],["OUT","trail/awaken:the_veil",true,"Meditate: sneak and hold G, standing still."],["HEARTH","trail/awaken:trophies",true,"Hang a boss trophy on a Trophy Mount."],["OUT","trail/awaken:wayfarers_and_camps",true,"Register with the Association."],["RANK","trail/awaken:your_first_gate",true,"Clear a floor."],["WEAPONS","trail/awaken:your_first_weapon",true,"Take Hale's hunter's issue at the High Gate."],["HEARTH","trail/awaken:your_hearth",true,"Right-click your campfire to open your Hearth's guide."],["HEARTH","trail/awaken:your_village",true,"Build a second bedroom, Snug or better."],["HEARTH","hearth/sanctuary",true,"Make your Bedroom a Sanctuary"],["RANK","progression:road/awaken:face_the_fear",false,"At level 27: Face the nightmare"]]},"G_A_rank_L72_tier4":{"top":"lesson:veil/step_out","rows":[["ARMOUR","armour/a",false,"Choose your first armour"],["HEARTH","hearth/forge",false,"Grow your Armoury into a Forge"],["WEAPONS","arms/war_anvil",false,"Set up a War Anvil"],["WEAPONS","arms/first_weapon",false,"Forge your first weapon"],["OUT","lesson:veil/step_out",false,"Meditate 10 s, let go of G: step out"],["WEAPONS","arms:issue",false,"Talk to Hale: he has a free weapon for you"],["HEARTH","hearth:guide",false,"Right-click your Anchor to see what your home needs"],["RANK","progression:points",false,"Press K to spend 213 points"],["HEARTH","hearth/tier/5",false,"Grow your home to Town"],["RANK","progression:goal/awaken:the_halo",false,"See the Halo from an Observatory"],["HEARTH","kin/need/lampwing",false,"Nothing lights your yard at night."],["HEARTH","kin/need/burrowbun",false,"Nobody's minding the fields, and there aren't any yet."],["BELLS","dreams/bell",false,"A bell is waiting in a dream. Sleep in your bed tonight."],["HEARTH","trail/awaken:a_room_for_everything",true,"Make a Kitchen: a stove, a crafting table and a barrel."],["RANK","trail/awaken:moving_like_a_hunter",true,"Hold sneak as you land to roll."],["OUT","trail/awaken:the_commons",true,"Discover two new biomes."],["OUT","trail/awaken:the_delvers_pick",true,"Pull the Delver's Pick from the stone at the end of an old adit."],["HEARTH","trail/awaken:the_forge",true,"Temper a weapon or an armour piece at the Forge."],["HEARTH","trail/awaken:the_training_grounds",true,"Place a Start Gate, numbered Checkpoint Rings and a Finish Gate."],["OUT","trail/awaken:the_veil",true,"Meditate: sneak and hold G, standing still."],["HEARTH","trail/awaken:trophies",true,"Hang a boss trophy on a Trophy Mount."],["OUT","trail/awaken:wayfarers_and_camps",true,"Register with the Association."],["RANK","trail/awaken:your_first_gate",true,"Clear a floor."],["WEAPONS","trail/awaken:your_first_weapon",true,"Take Hale's hunter's issue at the High Gate."],["HEARTH","trail/awaken:your_hearth",true,"Right-click your campfire to open your Hearth's guide."],["HEARTH","trail/awaken:your_village",true,"Build a second bedroom, Snug or better."],["HEARTH","hearth/sanctuary",true,"Make your Bedroom a Sanctuary"],["RANK","progression:road/awaken:the_open_sky",false,"At level 73: The open sky"]]}};
+const GAPS = [
+["First hour","The opening and your first power","Level 1","The starter screen and a Now row","Told","Keep"],
+["First hour","Hale's free weapon","Reach the High Gate","A Weapons row","Told","Keep"],
+["First hour","Campfire and Hearthfire","First minutes","Now row and the Hearth guide","Told","Keep"],
+["First hour","Shelter","A closed, roofed room","Hearth guide","Told","Keep"],
+["First hour","Bedroom","A bed in a room","One Now line","Thin","Goes on the build line"],
+["First hour","Armoury","Fitting Stand and crafting table","Do this next","Told","Keep"],
+["First hour","First armour","An Armoury","Armour row with previews","Told","Keep"],
+["First hour","First gate","Find one","A Gates row","Told","Keep"],
+["First hour","The Anchor","A Lord's Heart","A row once you hold one","Told","Keep"],
+["First hour","Spending points","Levels","A Gates row","Told","Keep"],
+["First hour","What each level opens","Reach the level","One \"At level N\" row","Thin","Becomes a footer"],
+["Rooms","Sanctuary","A Meditation Mat by the bed","Optional row","Told","Keep"],
+["Rooms","Forge room","Anvil, Forge, armour stand","A main row","Told","Keep"],
+["Rooms","Kitchen","Stove, table, barrel","A trail, or once two pieces are down","Thin","An option in Add to your home"],
+["Rooms","Study","Lectern and bookshelves","A trail, or once two pieces are down","Thin","An option in Add to your home"],
+["Rooms","Greenhouse","Soil under a glass roof","A trail, or once two pieces are down","Thin","An option in Add to your home"],
+["Rooms","Stable","Hay and a fence gate","A trail, or once two pieces are down","Thin","An option in Add to your home"],
+["Rooms","Hall","Six seats and a table","A trail, or once two pieces are down","Thin","An option in Add to your home"],
+["Rooms","Bell tower","A bell 8 up","A trail, or once two pieces are down","Thin","An option in Add to your home"],
+["Rooms","Lookout","12 up, glass on three sides","A trail only; code can never suggest it","Silent","An option in Add to your home"],
+["Rooms","Trophy Hall","A boss trophy","Only once you hold the trophy","Thin","Build line, when the first Lord falls"],
+["Rooms","Workshop","A Precursor machine","Only once you hold the machine","Thin","Build line, when you get one"],
+["Rooms","Hearth tiers II to V","Rank, materials, rooms","Grow your home to…","Told","Keep; shows exact needs"],
+["Rooms","Fields and pens","A tier and beasts","Tier and beast rows","Told","Keep"],
+["Rooms","Forge tiers II and III","D-rank, B-rank, materials","Last step of a trail","Silent","Own step on the build line, named in the rank footer"],
+["Rooms","Training Grounds","Start gate and rings","A trail; its last step has no finish","Thin","Fix the trail's finish"],
+["Works","Work Plan","Paper, coal, planks, sticks","Only the Thatchback's line","Thin","A build-line step when works open"],
+["Works","Ore Shed","A lode heart and a barrel","Only the Pebblepup's line","Thin","An option in Add to your home"],
+["Works","Smeltery","Vent stone and a cooker","Only the Emberkit's line","Thin","An option in Add to your home"],
+["Works","Rookery","A Chime Perch","Only the Chimewren's line, 12th of 16","Thin","An option in Add to your home"],
+["Works","Foundry","A Crucible and a barrel","Nothing","Silent","An option in Add to your home"],
+["Works","Storehouse","The Drop, a Ledger desk, a Totter","Nothing. The one you hit","Silent","Offered at C-rank; Keystone told as a Lead"],
+["Works","Hives and Loom","Their beasts","Beast lines only; no room","Thin","Beasts line"],
+["Works","Belfry and Bell Tower plans","Work Plans","Thin, on the bells tab","Thin","Tower line"],
+["Works","Great Belfry","The Heart-clapper and a relic","A row, late","Told","Keep"],
+["Works","Works, Shrine, Ringing Gate","Named in the Journey","No code yet","Not built","Their own plans"],
+["Beasts","All 16 kin","Each its own way","Two at a time in a fixed order","Thin","Order by what your home needs, so a Totter comes when the Storehouse does"],
+["Armour","E-rank sets","Fitting Stand","Choose row with previews","Told","Keep"],
+["Armour","D-rank and up sets","Rank, anvil, Forge","Make your X-rank armour","Told","Keep"],
+["Armour","Patterns for other sets","Gate creatures and Lords","Nothing on Tasks","Silent","Own line, as a Lead"],
+["Armour","Tempering","The Forge","A trail","Thin","Craft line"],
+["Armour","Enchanting","Pages and an Inscribing Table","Rows, one at a time","Told","Keep"],
+["Armour","\"Choose your first armour\" at high rank","Wearing nothing at all","Wrong words at C-rank and up","Broken","Say \"Make your X-rank armour\""],
+["Weapons","War Anvil at E-rank","Its recipe","Tells you to set it near a Forge, which E-rank doesn't need","Broken","Say so per rank"],
+["Weapons","Rank weapons","War Anvil","Make your X-rank weapon","Told","Keep"],
+["Weapons","Blueprints and marks","Found","A trail","Thin","Craft line"],
+["Weapons","Boss weapons","Bosses","Trail and journal","Thin","Stays quiet until you've got one"],
+["Weapons","Delver's Pick","Old adits","A trail","Thin","Pick line (with the Forged Pick)"],
+["Weapons","Forged Pick","Its plan","Its plan adds the steps","Told","Plug in with one line"],
+["Weapons","Hunter gear","Levels 3, 12, 26…","Gear lines on Now","Thin","Craft line"],
+["Bells","Book, leads, hanging, tower","Your first bell","Bells tab","Told","Keep; shows tower and two leads"],
+["Bells","The Hundred Peal","Every bell","A row at the end","Told","Keep"],
+["Gates and rank","Reassessment trials","Rank levels","A row","Told","Keep"],
+["Gates and rank","Power Cores","Certain levels","Only \"At level N\"","Thin","Power line"],
+["Gates and rank","Power levels","Each power's ladder","Nothing","Silent","Power line"],
+["Gates and rank","Path choice","Your mentor","Dream and level road","Thin","A row when it's due"],
+["Gates and rank","Ways of moving: Leaper, Wings, Skyborn","Rank and doing it","Nothing until you already have it","Silent","Own line, as a Lead"],
+["Gates and rank","Truths and Titles","They come true","Nothing, on purpose","Hidden","Keep hidden"],
+["Gates and rank","Provings","Found","Nothing, on purpose","Hidden","Keep hidden"],
+["Gates and rank","Bosses","Found","Nothing, on purpose","Hidden","Keep hidden"],
+["Gates and rank","Events","They happen","Nothing, on purpose","Hidden","Keep hidden"],
+["Gates and rank","Gate rooms and story","Found","Nothing, on purpose","Hidden","Keep hidden"],
+["Out there","Meditation and the Veil","Sneak and hold G","Lessons hold Do this next from C to A","Broken","Not urgent; takes the Out there row"],
+["Out there","Dreams","Sleep","A row when one waits","Told","Keep"],
+["Out there","Mounts","Near one","Only when you're near one","Thin","Lead"],
+["Out there","Hunts and named beasts","Levels","Road line and rumours","Thin","Lead"],
+["Out there","Machines: Scanner to Frames","Levels 16 to 37","A road line","Thin","Footer, plus a Lead"],
+["Out there","Above: Observatory to Halo","Levels 47 to 55","A road line","Thin","Footer, plus a row when you can start"],
+["Out there","Mining","A map mark at home","A Hearth button","Thin","Lead"],
+["Out there","Carillon's services","Find it","Citizens and signs","Thin","Lead"],
+["Out there","Troubles","They happen","A Now row","Told","Keep"],
+["Out there","Cave regions","Walk in","A trail","Thin","Lead"],
+["Trails","Your Village","A trail","Asks you to welcome settlers; nobody moves in, so it can't finish","Broken","Rewrite around beasts and works"],
+["Trails","Old words on three trails","Trails","\"Armory\", Oren's cottage, a step with no finish","Broken","Reword"],
+];
+const RES = [
+["Minecraft advancements","Shows at most two ahead of one you've completed, and some are flagged hidden","One step ahead, and a real hidden class","It's a map to browse, with no sense of what to do now",[["Minecraft Wiki","https://minecraft.fandom.com/wiki/Advancement"],["NeoForge docs","https://docs.neoforged.net/docs/resources/server/advancements"]]],
+["Final Fantasy XIV","Pins your next main quest, plus side quests that unlock features","Feature-unlocking steps stand out","Players get lost when the next quest needs more levels",[["Quest log","https://www.consolegameswiki.com/wiki/Quest"],["Forum","https://forum.square-enix.com/ffxiv/threads/367477-Lost-and-Frustrated"]]],
+["Satisfactory","Tier 0 in strict order, then you pick milestones, each listing its exact items","Strict at the start, choice after, exact needs","Assumes one goal at a time",[["Milestones","https://satisfactory.wiki.gg/wiki/Milestone"],["Tier 0","https://satisfactory.wiki.gg/wiki/Tier_0"]]],
+["Factorio","Triggers (mine, craft, launch) reveal the next research; players ask why they'd drill for oil before knowing what it does","Doing one thing reveals the next, and a step says what it's for","Too few words alone can leave you wondering",[["FFF 376","https://direct.factorio.com/blog/post/fff-376"],["Forum","https://forums.factorio.com/viewtopic.php?p=622599"]]],
+["Palworld","The Palbox lists what the next base level needs; it stalls when tech lags behind","A home tier shows what it needs, in full","It's the only goal there; ours is one line of three",[["Base wiki","https://palworld.wiki.gg/wiki/Base"],["Progression","https://ludoatlas.pages.dev/palworld/progression/"]]],
+["Animal Crossing: New Horizons","Five tasks, each replaced the moment it's done","A finished row is replaced in place","Daily churn is what you've ruled out",[["Pixelated Playground","https://www.pixelpoppers.com/2020/03/nook-miles-and-binge-playing/"]]],
+["Stardew Valley","Six rooms, thirty bundles; the scroll pulses when you hold something a bundle needs","READY when you've got it","A set list is fine for one authored game",[["Pantry","https://stardewvalleywiki.com/Pantry"]]],
+["Monster Hunter: World","Wishlist tells you when you have the materials","READY, and aim-at-it with Pin","Built around one craft at a time",[["Wishlist guide","https://news.seagm.com/how-to-use-wishlist-monster-hunter-world/"]]],
+["Valheim","Picking up a material reveals recipes; a boss drop opens the next biome","Doing one thing reveals the next","Thin on guidance when you're lost",[["GamesRadar","https://www.gamesradar.com/valheim-crafting-progression-guide"],["PC Gamer","https://www.pcgamer.com/games/survival-crafting/valheim-biome-order/"]]],
+["Elden Ring","Guidance only at some sites and only if you look; reviewers call the missing quest log understandable but cumbersome","Lead voice: optional and pointed","No log at all costs people threads they meant to follow",[["Guidance","https://eldenring.wiki.gg/wiki/Guidance_of_grace"],["Review","https://mercercluster.com/article/2022/03/review-elden-ring-is-game-design-modern-masterpiece"]]],
+["Ghost of Tsushima / Breath of the Wild","The wind points to what you've marked; towers placed to encourage sidetracking","Pin stays your own aim; the list shouldn't be a tour","Open-world maps at a much larger budget",[["Trusted Reviews","https://www.trustedreviews.com/news/gaming/new-ghost-of-tsushima-gameplay-footage-reveals-exciting-change-to-open-world-design-4032097"],["BotW lessons","https://www.gamedeveloper.com/design/5-design-lessons-learned-from-i-the-legend-of-zelda-breath-of-the-wild-i-"]]],
+["Checklist fatigue","Writers on Ubisoft-style maps and on switching off your \"gamer brain\"","No totals, no reward for clearing the list","Opinion pieces, not data",[["NME","https://www.nme.com/features/ubisofts-formula-tried-and-true-or-time-to-change-2812353"],["PC Gamer","https://www.pcgamer.com/open-world-games-are-better-if-you-can-turn-off-your-gamer-brain"]]],
+["FTB Quests","Dependency hide settings and soft-locks are recurring problems","Steps read the world, with no flags","Works when one person curates the pack",[["Mod","https://modpackindex.com/mod/171644/quests-teams-fixes"]]],
+["Cowan 2001","People hold about 4 things at once (3 to 5)","An upper bound","Lab recall of items, not game goals",[["Paper","https://www.cambridge.org/core/journals/behavioral-and-brain-sciences/article/magical-number-4-in-shortterm-memory-a-reconsideration-of-mental-storage-capacity/44023F1147D4A1D44BDC0AD226838496"]]],
+["Choice overload","Scheibehenne 2010: over 63 conditions the average effect is about zero. Chernev 2015: it appears with complex sets and unclear preferences","Tight for new players, Later for experts","Neither names a number for quests",[["Scheibehenne","https://econpapers.repec.org/RePEc:oup:jconrs:v:37:y:2010:i:3:p:409-425"],["Chernev","https://www.bohrium.com/paper-details/choice-overload-a-conceptual-review-and-meta-analysis/814702993403281408-7309"]]],
+["Motivation in games","Ryan, Rigby and Przybylski 2006: autonomy and competence predict enjoyment. Kivetz 2006: effort rises nearer the goal","One row with options; closest-to-done first","Effect sizes vary",[["Ryan et al","https://link.springer.com/content/pdf/10.1007%2Fs11031-006-9051-8.pdf"],["Kivetz","https://business.columbia.edu/faculty/research/goal-gradient-hypothesis-resurrected-purchase-acceleration-illusionary-goal"]]],
+];
+const DECISIONS = [
+["Cap the list at one Do this next, one row per line of work, three rows per tab?","Yes. Your Hearth has three real lines of work, so two hides one and five is padding. It's one number if it plays wrong."],
+["Take When you want off Now, and keep at most one Out there row?","Yes. They're 14 of today's 20 rows on Now. They're still on their tabs when there's room."],
+["Give every step one of three voices: Plain for what you build, Lead for rare things, Hidden for bosses and secrets?","Yes. It's how \"direction without telling\" and \"always know what's next\" both stay true."],
+["Tell rare parts by kind and place, with no coordinates? Like \"Every town's granary keeps one against a ground-floor wall.\"","Yes, and this is the closest call. Saying nothing is purer discovery, but silence is how the Storehouse got lost."],
+["Show \"Add to your home\" as one row with up to three options?","Yes. You choose what to build next without three rows competing for the list."],
+["Add a quiet \"Then:\" line under plain rows, naming the one step after?","Yes. That's the \"leads to the next\" part. Leads don't get one, so they keep their surprise."],
+["Add a footer saying what the next rank opens for your home and kit?","Yes. Replaces the \"At level N\" row and tells you why ranking up matters."],
+["Add a Later fold at the foot of each tab, read-only, with Pin?","Yes. Keeps the list short without taking anything away from anyone who likes to plan."],
+["Let you set a row aside for now, with Undo?","Yes, though it's the one you could drop. It helps most when you've got no interest in a line of work right now."],
+["Have a tab appear the first time it has something on it?","Yes. Bells stays out of the way until you've heard a bell."],
+["Have trails only fill empty places, and never sit on Now?","Yes. They're good content, and they were crowding out the rows that matter."],
+["Rewrite the Your Village trail around beasts and works?","Yes. Today it asks you to welcome settlers, and you decided nobody moves in, so it can never finish."],
+["Stop lessons counting as urgent?","Yes. Skip the Veil and it holds Do this next from C-rank to A-rank."],
+["Make the build fail when something can be unlocked and nothing teaches it?","Yes. It's the one thing that keeps this fixed while six other plans are adding things."],
+["Tell the Storehouse at C-rank, with no new rank lock?","Yes. Tasks raises it then, as you asked, and you can still build one earlier if you find the parts."],
+["Build in this order, with you playing it after Stage 2 before the rest goes in?","Yes. No test can tell us whether three feels right."],
+];
+
+/* ---------- prototype data ---------- */
+const s=(k,t,w,o={})=>Object.assign({k,t,w},o);
+const T=(id,tab,...steps)=>({id,tab,steps});
+const c=(id,t,sub,o={})=>Object.assign({id,t,sub},o);
+const TIER_WHY="A bigger radius, more nooks for beasts, and the Forge tempers higher. Right-click the Anchor to raise it when all of this holds.";
+const STOREHOUSE=c("storehouse","Build a Storehouse","One place to drop everything",{w:"You tip things into the Drop and your Totters shelve them in the room's chests and barrels, one bay for each sort of thing. The Ledger desk finds anything.",n:[["The Drop",0,1],["Ledger desk",0,1],["A Totter",0,1]],lead:"The Drop needs a Granary Keystone. Every town's granary keeps one against a ground-floor wall."});
+const FOUNDRY=c("foundry","Build a Foundry","Where bells are cast",{w:"A room with a Crucible, bell bronze banded round a Deepglass bowl, and a barrel.",n:[["Crucible",0,1],["Barrel",1,1]]});
+const KITCHEN=c("kitchen","Make a Kitchen","A stove, a crafting table and a barrel",{w:"All three in one closed room.",n:[["Stove",1,1],["Crafting table",1,1],["Barrel",0,1]]});
+const STUDY=c("study","Make a Study","A lectern and six bookshelves",{w:"Written there, enchantments can go deeper than II.",n:[["Lectern",0,1],["Bookshelves",2,6]]});
+const STABLE=c("stable","Make a Stable","Hay and a fence gate",{w:"A closed room for your mounts.",n:[["Hay",0,1],["Fence gate",1,1]]});
+const ORESHED=c("oreshed","Build an Ore Shed","A lode heart and a barrel",{w:"Your Pebblepups sort ore here.",n:[["Lode heart",0,1],["Barrel",1,1]],lead:"Hearts beat inside lodes, deep underground; break one free and bring it home."});
+const SMELTERY=c("smeltery","Build a Smeltery","Round a vent stone from a hot spring",{w:"An Emberkit will smelt your ore here.",n:[["Vent stone",0,1],["Stove",1,1]],lead:"Hot springs have them."});
+const ROOKERY=c("rookery","Build a Rookery","Somewhere for Chimewrens to roost",{w:"A room with a Chime Perch.",n:[["Chime Perch",0,1]],lead:"A Chime Perch is made round the clapper of a bell you've woken."});
+const LOOKOUT=c("lookout","Make a Lookout","12 or more up, with glass on three sides",{w:"You'll see the land for a long way.",n:[["Height",8,12],["Glass sides",2,3]]});
+const set=(id,t,a,n)=>c(id,t,a,{n});
+
+const MOMENTS={
+first:{name:"First hour",sub:"Level 3 · E-rank · a Hearthfire and a bedroom",stop:"B_hearthfire_bedroom_L3",rank:"E",level:3,
+ tabs:["hearth","armour","weapons","gates"],path:["armoury","armour_e","gate1","heart","forge"],
+ foot:{now:"At level 4: a Power Core, which teaches you a second power.",hearth:"At D-rank (level 10) your home can grow to Steading.",armour:"At D-rank your next armour opens.",gates:"At level 4: a Power Core, which teaches you a second power."},
+ trails:{gates:[{k:"trail_roll",t:"Hold sneak as you land to roll.",w:"Moving Like a Hunter, 0 of 5 done."}]},
+ threads:[
+ T("hearth.build","hearth",
+  s("armoury","Build your Armoury","A Fitting Stand and a crafting table in one closed room. Your first armour is made there, before your first gate.",{n:[["Fitting Stand",0,1],["Crafting table",1,1]]}),
+  s("sanctuary","Make your Bedroom a Sanctuary","Add a Meditation Mat by the bed: sleeping there heals a Fracture and you wake with Regeneration.",{n:[["Meditation Mat",0,1]]}),
+  s("forge","Grow your Armoury into a Forge","An anvil, the Forge and an armour stand in the same room: D-rank armour, weapon raises and tempering. The anvil and the Forge take about 38 iron.",{n:[["Anvil",0,1],["Forge",0,1],["Armour stand",0,1]],after:"heart"})),
+ T("hearth.home","hearth",
+  s("guide","Right-click your campfire to see what your home needs","It lists every room your home can have and what each one takes."),
+  s("heart","Set the Lord's Heart on your fire","Hold it and right-click your campfire: the fire takes it and stands as your Anchor. More rooms, more nooks, your home's real start.",{n:[["Lord's Heart",1,1]],after:"gate1"}),
+  s("tier2","Grow your home to Steading",TIER_WHY,{waits:"D-rank"})),
+ T("hearth.beasts","hearth",
+  s("lampwing","Nothing lights your yard at night.","The one that's been watching your fire, from the trees nearby.",{v:"lead"}),
+  s("burrowbun","Nobody's minding the fields, and there aren't any yet.","Tilled ground at home would be a start.",{v:"lead"})),
+ T("armour.set","armour",
+  s("armour_e","Choose your first armour","Made at a Fitting Stand with a crafting table within 6 blocks. Wear it before your first gate.",{ch:[set("wildhide","Wildhide","Strider",[["Hide",4,12],["Binding",2,4]]),set("bellguard","Bellguard","Bulwark",[["Metal",3,14],["Binding",2,4]]),set("rootwarden","Rootwarden","Channeler",[["Logs",8,8],["Wool",1,6]]),set("amberwing","Amberwing","Duelist",[["Hide",4,10],["Metal",3,6]])]}),
+  s("armour_next","Your next armour comes with D-rank","D-rank opens at level 10. Its sets are forged at a Fitting Stand with an anvil and the Forge near it.",{info:true})),
+ T("arms.forge","weapons",
+  s("hale","Talk to Hale: he has a free weapon for you","He's at the High Gate.",{at:"The High Gate"}),
+  s("anvil","Set up a War Anvil","It makes weapons stronger than anything from a crafting table, by hand, Plain to Flawless."),
+  s("first_weapon","Forge your first weapon","At your War Anvil, by hand: knap a bone or flint edge and bind its grip. How well you do decides its quality.",{n:[["A War Anvil",0,1]]})),
+ T("rank.next","gates",
+  s("gate1","Clear your first gate","Its Lord drops a Lord's Heart. Set it on your fire to raise the Anchor: more rooms, more nooks, your home's real start."),
+  s("rank_d","Your D-rank Reassessment opens at level 10","Ring the Monolith or the Spire when you're there.",{info:true})),
+ T("rank.power","gates",
+  s("points","Press K to spend 6 points","They're waiting on your Status page.")),
+ ]},
+mid:{name:"Middle",sub:"Level 26 · C-rank, just passed · Steading",stop:"E_C_rank_L26_tier2",rank:"C",level:26,
+ tabs:["hearth","armour","weapons","bells","gates"],path:["armour_c"],
+ foot:{now:"At B-rank (level 45) your Forge can go to Tier III.",hearth:"At B-rank (level 45) your Forge can go to Tier III and your home to Village.",armour:"At B-rank your next armour opens.",weapons:"At B-rank your next weapon opens.",gates:"At level 27: Face the nightmare."},
+ trails:{},
+ threads:[
+ T("hearth.home","hearth",
+  s("tier3","Grow your home to Hall",TIER_WHY,{n:[["C-rank",1,1],["Deepslate tiles",31,48],["Gold ingots",12,12],["Amethyst",5,12],["Essence",8,8],["A Grand room",0,1]]}),
+  s("tier4","Grow your home to Village",TIER_WHY,{waits:"B-rank"})),
+ T("hearth.build","hearth",
+  s("add1","Add to your home","Three things your home could have next. Pick one and this row becomes it. You can change your mind.",{ch:[STOREHOUSE,FOUNDRY,KITCHEN]}),
+  s("add2","Add to your home","Three more your home could have. Pick one and this row becomes it.",{ch:[STUDY,STABLE,ORESHED]}),
+  s("forge3","Raise your Forge to Tier III","Your Forge will temper higher.",{waits:"B-rank",n:[["B-rank",0,1],["Diamonds",0,3],["Gold blocks",0,2],["Magma blocks",0,8],["Essence",0,10]]})),
+ T("hearth.beasts","hearth",
+  s("totter","Nobody carries things between your works.","A Totter looks after a chest or barrel in one of your rooms.",{v:"lead"}),
+  s("thatch","Nobody builds your works for you.","A Work Plan pegged out at home shows a Thatchback what to build.",{v:"lead"}),
+  s("pebble","The Ore Shed needs a lode heart.","Hearts beat inside lodes, deep underground; break one free and bring it home.",{v:"lead"})),
+ T("armour.set","armour",
+  s("armour_c","Make your C-rank armour","Forged at a Fitting Stand with an anvil and the Forge near it.",{ch:[set("gatewrought","Gatewrought","Duelist",[["Metal",20,24],["Binding",6,6],["Beast core",1,2]]),set("vaultbreaker","Vaultbreaker","Bulwark",[["Metal",20,32],["Binding",6,6],["Beast core",1,2]])]}),
+  s("armour_b","Your next armour comes with B-rank","B-rank opens at level 45.",{info:true})),
+ T("armour.pattern","armour",
+  s("pat_c","Find a pattern for another C-rank set","Creatures in C-rank gates sometimes carry one, and a gate's Lord always does.",{v:"lead"})),
+ T("armour.enchant","armour",
+  s("ench_a","Find an enchantment for your armour","Wards against the five Forces are written onto armour. Every kind of gate keeps its own enchantment, and its Lord carries the page.",{v:"lead"})),
+ T("arms.forge","weapons",
+  s("weapon_c","Make your C-rank weapon","At your War Anvil: heat it in the Forge, draw it out on the beat, quench it and fit its hilt.",{n:[["Metal",8,12],["Binding",3,3]]}),
+  s("weapon_b","Your next weapon comes with B-rank","B-rank opens at level 45.",{info:true})),
+ T("arms.craft","weapons",s("temper","Temper your longsword","At the Forge.",{n:[["Whetstones",2,2]]})),
+ T("arms.enchant","weapons",s("ench_w","Find an enchantment for your weapon","Banes, Looting and Unbreaking are written onto weapons. Carillon's market sells a few pages, and gates keep the rest.",{v:"lead"})),
+ T("arms.pick","weapons",s("pick","Bring your old pick to a War Anvil","Its plan adds these steps when it lands.")),
+ T("bells.tower","bells",s("beam","Your frame's full: hang the next bell on a Bell Beam","A Bell Beam is three logs and two iron nuggets. Lay it across anything at home 8 or more blocks above your fire, and hang four bells from it.",{n:[["Logs",3,3],["Iron nuggets",2,2]]})),
+ T("bells.lead1","bells",s("lead1","Find where that bell's note came from","You heard it to the north, from somewhere high.",{v:"lead"})),
+ T("bells.dream","bells",s("dream","A bell is waiting in a dream. Sleep in your bed tonight.","You'll wake with it.")),
+ T("bells.lead2","bells",s("lead2","Find where that bell's note came from","It came from the far side of the water.",{v:"lead"})),
+ T("rank.next","gates",s("trophy","Hang a Lord's trophy in your Hall","On a Trophy Mount, in your Hall.")),
+ T("rank.power","gates",
+  s("points2","Press K to spend 75 points","They're waiting on your Status page."),
+  s("levelup","Raise a power to its next level","Each of your powers has its own ladder. Open Powers to see what the next rung wants.")),
+ T("rank.move","gates",s("sky","The old sky platforms are worth the climb","You're C-rank now, which is what they ask for. Get up to one on your own feet.",{v:"lead"})),
+ T("out.lessons","out",s("veil","Meditate 10 s, let go of G: step out","It teaches you the Veil.")),
+ T("out.hunts","out",s("hunt","Named beasts are roaming now","The Old Antler, the Briar Sow and the Dune Wyrm.",{v:"lead"})),
+ ]},
+late:{name:"Late game",sub:"Level 72 · A-rank · Village",stop:"G_A_rank_L72_tier4",rank:"A",level:72,
+ tabs:["hearth","armour","weapons","bells","gates"],path:["armour_a"],
+ foot:{now:"At level 73: The open sky.",hearth:"Town is the last size your home can reach.",armour:"At S-rank (level 100) your last armour opens.",weapons:"At S-rank (level 100) your last weapon opens.",gates:"At level 73: The open sky."},
+ trails:{},
+ threads:[
+ T("hearth.home","hearth",s("tier5","Grow your home to Town",TIER_WHY,{n:[["A-rank",1,1],["Obsidian",32,32],["Diamonds",7,12],["Amethyst blocks",8,8],["Essence",22,22],["Lord's Heart",1,1],["Rooms",9,10],["Grand rooms",2,2]]})),
+ T("hearth.build","hearth",
+  s("add_l","Add to your home","Three things your home could have next. Pick one and this row becomes it.",{ch:[SMELTERY,ROOKERY,LOOKOUT]})),
+ T("hearth.beasts","hearth",
+  s("chime","Nothing brings you word of sleeping bells.","Chimewrens roost in a Rookery: a room with a Chime Perch, made round the clapper of a bell you've woken.",{v:"lead"}),
+  s("boulder","Nobody carries stone for your works.","Whatever does would want somewhere dark at home: a room with no light and no sky.",{v:"lead"})),
+ T("armour.set","armour",
+  s("armour_a","Make your A-rank armour","Forged at a Fitting Stand with an anvil and the Forge near it.",{ch:[set("lordscale","Lordscale","Lord",[["Metal",40,40],["Beast core",4,4],["Binding",8,8]]),set("galewing","Galewing","Strider",[["Metal",22,30],["Beast core",4,4],["Binding",8,8]]),set("dreamsteel","Dreamsteel","Duelist",[["Metal",22,34],["Beast core",2,4],["Binding",8,8]])]})),
+ T("armour.enchant","armour",s("study_t","Set your Inscribing Table in your Study","Written there, enchantments can go deeper than II.")),
+ T("armour.pattern","armour",s("pat_a","Find a pattern for another A-rank set","Creatures in A-rank gates sometimes carry one, and a gate's Lord always does.",{v:"lead"})),
+ T("arms.forge","weapons",s("weapon_a","Make your A-rank weapon","At your War Anvil: heat it in the Forge, draw it out on the beat, quench it and fit its hilt.",{n:[["Metal",16,16],["Binding",4,4]]})),
+ T("arms.craft","weapons",s("reforge","Reforge your longsword","At your War Anvil.")),
+ T("arms.enchant","weapons",s("ench_w2","Inscribe your first enchantment","Looting fits your longsword.")),
+ T("bells.tower","bells",s("belfry","Raise the Great Belfry","Only a Great Belfry can lead the Hundred Peal. Set the Heart-clapper and a Sovereign's relic into your bell frame.",{n:[["Heart-clapper",1,1],["Sovereign's relic",0,1]]})),
+ T("bells.lead1","bells",s("lead1l","Find where that bell's note came from","You heard it far out over the sea.",{v:"lead"})),
+ T("bells.lead2","bells",s("lead2l","Find where that bell's note came from","It came up from under the ground.",{v:"lead"})),
+ T("rank.next","gates",s("rank_s","Your S-rank Reassessment opens at level 100","Ring the Monolith or the Spire when you're there.",{info:true})),
+ T("rank.power","gates",s("levelup_l","Raise a power to its next level","Each of your powers has its own ladder. Open Powers to see what the next rung wants.")),
+ T("rank.move","gates",s("glide","Keep using your wings until you know them well","At A-rank, the open sky asks for that.",{v:"lead"})),
+ T("out.above","out",s("ring","Build a Launch Ring","Sixteen ring frames round a core, and 2,000 essence. It takes you to the Halo.",{n:[["Ring frames",9,16],["Essence",1420,2000]]})),
+ T("out.deep","out",s("stratum","The Dreaming Stratum opens at level 80","Stratum 8.",{info:true})),
+ ]}
+};
+const TAB_NAME={now:"NOW",hearth:"HEARTH",armour:"ARMOUR",weapons:"WEAPONS",bells:"BELLS",gates:"GATES",out:"OUT THERE"};
+const GOAL_TAB={HEARTH:"hearth",ARMOUR:"armour",WEAPONS:"weapons",BELLS:"bells",RANK:"gates",OUT:"out"};
+const blank=()=>({done:{},aside:{},chosen:{},fresh:{},pin:null,tab:"now",open:null,laterOpen:false,undo:[]});
+const ST={moment:"first",view:"new",note:"",m:{first:blank(),mid:blank(),late:blank()}};
+const M=()=>MOMENTS[ST.moment], P=()=>ST.m[ST.moment];
+
+const allSteps=()=>M().threads.flatMap(t=>t.steps.map(st=>({st,th:t})));
+const find=k=>allSteps().find(x=>x.st.k===k);
+const isDone=k=>!!P().done[k];
+const canNow=st=>!isDone(st.k)&&!P().aside[st.k]&&!st.waits&&(!st.after||isDone(st.after));
+const current=th=>th.steps.find(canNow)||null;
+const chosenOf=st=>st.ch&&P().chosen[st.k]?st.ch.find(x=>x.id===P().chosen[st.k]):null;
+const titleOf=st=>{const ch=chosenOf(st);return ch?ch.t:st.t};
+const needsOf=st=>{const ch=chosenOf(st);return ch?(ch.n||[]):(st.n||[])};
+const ready=st=>{const n=needsOf(st);return n.length>0&&n.every(x=>x[1]>=x[2])};
+const ratio=st=>{const n=needsOf(st);return n.length?n.reduce((a,x)=>a+Math.min(1,x[1]/x[2]),0)/n.length:0};
+
+function thenOf(th,st){
+  if(st.v==="lead")return null;
+  const i=th.steps.indexOf(st);
+  for(let j=i+1;j<th.steps.length;j++){const n=th.steps[j];
+    if(isDone(n.k)||P().aside[n.k])continue;
+    if(n.t===st.t)return null;
+    if(n.waits)return n.t+", at "+n.waits;
+    return n.t;
+  }
+  return null;
+}
+/* The Do this next card names the next step on the main path, across tabs, once the path has one. */
+function pathThen(st,th){
+  const path=M().path,i=path.indexOf(st.k);
+  if(i>=0)for(let j=i+1;j<path.length;j++){const f=find(path[j]);if(f&&!isDone(path[j])&&!P().aside[path[j]])return titleOf(f.st);}
+  return thenOf(th,st);
+}
+function tabView(tab){
+  const shown=[],later=[];
+  for(const th of M().threads.filter(t=>t.tab===tab)){
+    const cur=current(th);
+    if(cur&&shown.length<3)shown.push({st:cur,th});
+    else if(cur)later.push({st:cur,th,why:"Waiting for a place on this tab"});
+    for(const st of th.steps){
+      if(st===cur||isDone(st.k))continue;
+      if(P().aside[st.k])later.push({st,th,why:"Set aside",aside:true});
+      else if(st.waits)later.push({st,th,why:"At "+st.waits});
+      else if(st.after&&!isDone(st.after)){const a=find(st.after);later.push({st,th,why:"Once you've done: "+(a?titleOf(a.st):"")});}
+      else later.push({st,th,why:"After the one before it"});
+    }
+  }
+  const tr=(M().trails[tab]||[]).filter(t=>!isDone(t.k));
+  for(const t of tr){if(shown.length<3)shown.push({st:t,th:{id:"trail",steps:[t]},trail:true});}
+  return {shown,later};
+}
+function pickNext(){
+  const p=P();
+  for(const k of M().path){const f=find(k);if(f&&canNow(f.st)&&k!==p.pin)return {st:f.st,th:f.th};}
+  let best=null;
+  for(const tab of M().tabs)for(const r of tabView(tab).shown){
+    if(r.trail||r.st.info||r.st.k===p.pin)continue;
+    const q=ratio(r.st); if(!best||q>best.q)best={st:r.st,th:r.th,q};
+  }
+  return best;
+}
+function nowView(){
+  const p=P(),next=pickNext(),also=[];let pin=null,later=[];
+  if(p.pin){const f=find(p.pin);if(f&&!isDone(p.pin))pin=f;else if(f===undefined){const t=Object.values(M().trails).flat().find(x=>x.k===p.pin);if(t&&!isDone(t.k))pin={st:t,th:{id:"trail",steps:[t]},trail:true};}}
+  for(const tab of M().tabs){
+    const v=tabView(tab);
+    const r=v.shown.find(x=>!x.trail&&!x.st.info&&(!next||x.st!==next.st)&&(!pin||x.st!==pin.st));
+    if(r)also.push(Object.assign({tab},r));
+  }
+  const ov=tabView("out"),out=ov.shown.filter(x=>!pin||x.st!==pin.st).slice(0,1);
+  later=ov.shown.filter(x=>!out.includes(x)&&(!pin||x.st!==pin.st)).map(x=>Object.assign({},x,{why:"Out there, when the row above is done"})).concat(ov.later);
+  return {pin,next,also,out,later};
+}
+const nowCount=v=>(v.pin?1:0)+(v.next?1:0)+v.also.length+v.out.length;
+
+/* ---------- prototype render ---------- */
+function chipsFor(st,o){
+  let h="";
+  if(o.next)h+='<span class="chip NEXT">NEXT</span>';
+  if(P().pin===st.k)h+='<span class="chip PINNED">PINNED</span>';
+  if(P().fresh[st.k])h+='<span class="chip NEW">NEW</span>';
+  if(ready(st))h+='<span class="chip READY">READY</span>';
+  if(st.v==="lead")h+='<span class="chip LEAD">LEAD</span>';
+  if(o.trail)h+='<span class="chip WYW">WHEN YOU WANT</span>';
+  return h;
+}
+function rowHtml(r,o={}){
+  const st=r.st,p=P(),open=p.open===st.k,id=st.k,ch=chosenOf(st),then=r.trail?null:o.next?pathThen(st,r.th):thenOf(r.th,st);
+  const cls=["row",o.next?"next":"",p.pin===st.k?"pin":"",r.trail?"opt":"",p.fresh[st.k]===2?"flash":""].filter(Boolean).join(" ");
+  const tag=o.tag?`<span class="tag">${esc(o.tag)}</span>`:"";
+  let body="";
+  if(open){
+    const n=needsOf(st);
+    body=`<div class="body" id="body-${id}">`;
+    body+=`<p class="why">${esc(ch?ch.w:st.w)}</p>`;
+    if(ch&&ch.lead)body+=`<p class="leadline">${esc(ch.lead)}</p>`;
+    if(st.ch&&!ch){body+='<div class="opts">'+st.ch.map(x=>`<button type="button" class="opt" id="ch-${id}-${x.id}" data-act="choose" data-k="${id}" data-c="${x.id}"><b>${esc(x.t)}</b><span>${esc(x.sub)}</span></button>`).join("")+"</div>";}
+    if(n.length)body+='<div class="needs">'+n.map(x=>`<span class="${x[1]>=x[2]?"ok":""}">${x[1]>=x[2]?"✓ ":"· "}${esc(x[0])}${x[2]>1?" "+x[1].toLocaleString()+"/"+x[2].toLocaleString():""}</span>`).join("")+"</div>";
+    if(st.at)body+=`<div class="needs"><span>↗ ${esc(st.at)}</span></div>`;
+    body+='<div class="acts">';
+    if(ch)body+=`<button type="button" class="gb" id="chg-${id}" data-act="change" data-k="${id}">Change</button>`;
+    body+=`<button type="button" class="gb" id="pin-${id}" data-act="pin" data-k="${id}">${p.pin===id?"Unpin":"Pin"}</button>`;
+    if(!st.info&&!r.trail)body+=`<button type="button" class="gb" id="aside-${id}" data-act="aside" data-k="${id}">Set aside</button>`;
+    if(!st.info)body+=`<button type="button" class="gb done" id="done-${id}" data-act="done" data-k="${id}">Mark done (prototype)</button>`;
+    body+="</div></div>";
+  }
+  return `<div class="${cls}"><button type="button" class="r-h" id="row-${id}" data-act="open" data-k="${id}" aria-expanded="${open}"><span style="display:flex;gap:8px;min-width:0">${tag}<span class="t">${esc(titleOf(st))}</span></span><span class="chips">${chipsFor(st,{next:o.next,trail:r.trail})}</span></button>${!open&&st.ch&&!ch?`<div class="then">Pick one: <b>${esc(st.ch.map(x=>x.t.replace(/^(Build|Make) an? /,"")).join(", "))}</b></div>`:then&&!open?`<div class="then">Then: <b>${esc(then)}</b></div>`:""}${body}</div>`;
+}
+function laterHtml(list){
+  if(!list.length)return "";
+  const p=P();
+  let h=`<div class="later"><button type="button" id="laterBtn" data-act="later" aria-expanded="${p.laterOpen}">LATER · ${list.length} ${p.laterOpen?"▾":"▸"}</button>`;
+  if(p.laterOpen)h+=list.map(x=>`<div class="l-row"><span>${esc(titleOf(x.st))}<small>${esc(x.why)}</small></span>${x.aside?`<button type="button" class="gb" id="back-${x.st.k}" data-act="unaside" data-k="${x.st.k}">Put back</button>`:`<button type="button" class="gb" id="lpin-${x.st.k}" data-act="pin" data-k="${x.st.k}">${p.pin===x.st.k?"Unpin":"Pin"}</button>`}</div>`).join("");
+  return h+"</div>";
+}
+function tabsHtml(){
+  const m=M(),p=P();
+  const list=ST.view==="old"?["now","hearth","armour","weapons","bells","gates"]:["now",...m.tabs];
+  return '<div class="g-tabs" role="tablist" aria-label="Tasks tabs">'+list.map(t=>{
+    const dot=ST.view==="new"&&t!=="now"&&tabView(t).shown.some(r=>p.fresh[r.st.k]);
+    return `<button type="button" role="tab" id="tab-${t}" data-act="tab" data-t="${t}" aria-selected="${p.tab===t}" class="${dot?"dot":""}">${TAB_NAME[t]}</button>`;
+  }).join("")+"</div>";
+}
+function renderOld(){
+  const m=M(),p=P(),rows=MEASURED[m.stop].rows,top=MEASURED[m.stop].top,tab=p.tab;
+  const lab={hearth:"HEARTH",armour:"ARMOUR",weapons:"WEAPONS",bells:"BELLS",gates:"GATES",out:"OUT"};
+  const flat=(r,tag)=>`<div class="flat ${r[2]?"opt":""}"><span class="tag">${tag?lab[GOAL_TAB[r[0]]]:""}</span><span>${esc(r[3])}</span></div>`;
+  let h="";
+  if(tab==="now"){
+    const t=rows.find(r=>r[1]===top);
+    if(t)h+='<div class="g-h">DO THIS NEXT</div>'+flat(t,true);
+    const also=[];for(const g of ["HEARTH","ARMOUR","WEAPONS","BELLS","RANK"]){const a=rows.find(r=>r[0]===g&&!r[2]&&r[1]!==top);if(a)also.push(a);}
+    if(also.length)h+='<div class="g-h">ALSO OPEN TO YOU</div>'+also.map(r=>flat(r,true)).join("");
+    const out=rows.filter(r=>r[0]==="OUT"&&!r[2]&&r[1]!==top);
+    if(out.length)h+='<div class="g-h">OUT THERE</div>'+out.map(r=>flat(r,true)).join("");
+    const opt=rows.filter(r=>r[2]&&r[1]!==top);
+    if(opt.length)h+='<div class="g-h">WHEN YOU WANT</div>'+opt.map(r=>flat(r,true)).join("");
+  } else {
+    const list=rows.filter(r=>GOAL_TAB[r[0]]===tab);
+    h=list.length?list.map(r=>flat(r,false)).join(""):'<div class="empty">Nothing on this tab at this point.</div>';
+  }
+  return h;
+}
+function renderNew(){
+  const p=P(),m=M(),tab=p.tab;
+  let h="";
+  if(tab==="now"){
+    const v=nowView();
+    if(v.pin)h+='<div class="g-h">PINNED</div>'+rowHtml(v.pin,{tag:TAB_NAME[v.pin.th.tab]});
+    if(v.next)h+='<div class="g-h">DO THIS NEXT</div>'+rowHtml(v.next,{next:true,tag:TAB_NAME[v.next.th.tab]});
+    if(v.also.length)h+='<div class="g-h">ALSO OPEN TO YOU</div>'+v.also.map(r=>rowHtml(r,{tag:TAB_NAME[r.tab]})).join("");
+    if(v.out.length)h+='<div class="g-h">OUT THERE</div>'+v.out.map(r=>rowHtml(r,{})).join("");
+    if(!v.pin&&!v.next&&!v.also.length&&!v.out.length)h+=`<div class="empty"><b>You've done everything you can do right now.</b>${esc(m.foot.now||"Go and see what's out there.")}</div>`;
+    h+=laterHtml(v.later);
+    if(m.foot.now)h+=`<div class="foot"><b>${esc(m.foot.now)}</b></div>`;
+  } else {
+    const v=tabView(tab);
+    if(v.shown.length)h+=v.shown.map(r=>rowHtml(r,{})).join("");
+    else h+=`<div class="empty"><b>Nothing on this tab right now.</b>${esc(m.foot[tab]||"It fills up as you play.")}</div>`;
+    h+=laterHtml(v.later);
+    if(m.foot[tab]&&v.shown.length)h+=`<div class="foot"><b>${esc(m.foot[tab])}</b></div>`;
+  }
+  return h;
+}
+function render(){
+  const m=M(),p=P(),focus=document.activeElement&&document.activeElement.id;
+  document.getElementById("momentBar").innerHTML=Object.entries(MOMENTS).map(([k,v])=>`<button type="button" id="m-${k}" data-m="${k}" aria-pressed="${ST.moment===k}"><b>${esc(v.name)}</b><span>${esc(v.sub)}</span></button>`).join("");
+  document.getElementById("vNew").setAttribute("aria-pressed",ST.view==="new");
+  document.getElementById("vOld").setAttribute("aria-pressed",ST.view==="old");
+  const old=ST.view==="old";
+  const top=`<div class="g-top"><span>Tasks</span><span>${m.rank}-rank · level ${m.level}${old?" · today":""}</span></div>`;
+  if(old&&!["now","hearth","armour","weapons","bells","gates"].includes(p.tab))p.tab="now";
+  if(!old&&p.tab!=="now"&&!m.tabs.includes(p.tab))p.tab="now";
+  document.getElementById("gMain").innerHTML=top+tabsHtml()+`<div class="g-body" id="gBody" role="tabpanel" aria-labelledby="tab-${p.tab}">${old?renderOld():renderNew()}</div>`;
+  const rows=MEASURED[m.stop].rows,topK=MEASURED[m.stop].top;
+  let msg;
+  if(old){
+    const opt=rows.filter(r=>r[2]&&r[1]!==topK).length;
+    const also=new Set(rows.filter(r=>!r[2]&&r[1]!==topK&&r[0]!=="OUT").map(r=>r[0])).size;
+    const out=rows.filter(r=>!r[2]&&r[1]!==topK&&r[0]==="OUT").length;
+    msg=`Today, measured: ${rows.length} rows in all, ${1+also+out+opt} of them on Now.`;
+  } else {
+    const n=nowCount(nowView());
+    msg=`Proposed: ${n} row${n===1?"":"s"} on Now, at most 3 on each tab.`;
+  }
+  document.getElementById("counts").textContent=msg;
+  document.getElementById("note").textContent=ST.note||(old?"This is the real list from the game for this moment. Try the tabs.":"Open a row, then try Mark done.");
+  document.getElementById("undo").disabled=!p.undo.length;
+  for(const k in p.fresh)if(p.fresh[k]===2)p.fresh[k]=1;
+  if(focus){const el=document.getElementById(focus);if(el)el.focus({preventScroll:true});}
+}
+const snap=()=>{const p=P();p.undo.push(JSON.stringify({done:p.done,aside:p.aside,chosen:p.chosen,fresh:p.fresh,pin:p.pin,open:p.open}));if(p.undo.length>40)p.undo.shift();};
+document.getElementById("proto").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  const p=P();
+  if(b.dataset.m){ST.moment=b.dataset.m;ST.note="";render();return;}
+  if(b.dataset.view){ST.view=b.dataset.view;ST.note="";render();return;}
+  if(b.id==="undo"){const u=p.undo.pop();if(u){Object.assign(p,JSON.parse(u));ST.note="Undone.";render();}return;}
+  if(b.id==="reset"){ST.m[ST.moment]=blank();ST.note="Back to the start of this moment.";render();return;}
+  const a=b.dataset.act,k=b.dataset.k;if(!a)return;
+  if(a==="tab"){p.tab=b.dataset.t;p.open=null;p.laterOpen=false;ST.note="";render();return;}
+  if(a==="open"){p.open=p.open===k?null:k;render();return;}
+  if(a==="later"){p.laterOpen=!p.laterOpen;render();return;}
+  const f=find(k),trail=Object.values(M().trails).flat().find(x=>x.k===k),st=f?f.st:trail;
+  if(a==="choose"){snap();p.chosen[k]=b.dataset.c;ST.note=`You picked "${titleOf(st)}". The row is that now. Change goes back to the options.`;render();return;}
+  if(a==="change"){snap();delete p.chosen[k];ST.note="Back to the options.";render();return;}
+  if(a==="pin"){snap();const on=p.pin===k;p.pin=on?null:k;ST.note=on?"Unpinned.":`Pinned "${titleOf(st)}". There's only ever one pin, and it sits at the top of Now.`;render();return;}
+  if(a==="aside"){snap();p.aside[k]=true;p.open=null;const c2=f?current(f.th):null;if(c2)p.fresh[c2.k]=2;ST.note=`Set aside. It's in Later if you want it back${c2?`, and "${titleOf(c2)}" took its place`:""}.`;render();return;}
+  if(a==="unaside"){snap();delete p.aside[k];ST.note="Put back.";render();return;}
+  if(a==="done"){
+    snap();const before=pickNext();p.done[k]=true;if(p.pin===k)p.pin=null;p.open=null;delete p.fresh[k];
+    const name=titleOf(st);
+    let out=`"${name}" is done.`;
+    if(f){const n=current(f.th);if(n){p.fresh[n.k]=2;out+=` "${titleOf(n)}" took its place, marked NEW.`;}else out+=" Nothing else in that line of work for now, so the next one moves up.";}
+    const after=pickNext();if(after&&(!before||before.st!==after.st))out+=` Do this next is now "${titleOf(after.st)}".`;
+    ST.note=out;render();return;
+  }
+});
+/* ---------- gap table ---------- */
+const VLAB=v=>v==="Hidden"?"Hidden on purpose":v;
+const VORDER=["Silent","Broken","Thin","Told","Hidden","Not built"];
+let gapFilter="All";
+function renderGaps(){
+  const cnt={};GAPS.forEach(g=>cnt[g[4]]=(cnt[g[4]]||0)+1);
+  document.getElementById("statSilent").textContent=cnt.Silent;
+  document.getElementById("filters").innerHTML=[["All",GAPS.length],...VORDER.map(v=>[v,cnt[v]||0])].map(([v,n])=>`<button type="button" id="f-${v.replace(/\s/g,"")}" data-f="${v}" aria-pressed="${gapFilter===v}">${VLAB(v)} · ${n}</button>`).join("");
+  let last="",h="";
+  for(const g of GAPS){
+    if(gapFilter!=="All"&&g[4]!==gapFilter)continue;
+    if(g[0]!==last){last=g[0];h+=`<tr class="sect"><td colspan="5">${esc(last)}</td></tr>`;}
+    h+=`<tr><td data-l=""><b>${esc(g[1])}</b></td><td data-l="Opens with">${esc(g[2])}</td><td data-l="Tells you today">${esc(g[3])}</td><td><span class="v ${g[4].replace(/\s/g,"")}">${VLAB(g[4])}</span></td><td data-l="Fix">${esc(g[5])}</td></tr>`;
+  }
+  document.getElementById("gapBody").innerHTML=h;
+}
+document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("button");if(b){gapFilter=b.dataset.f;const id=b.id;renderGaps();document.getElementById(id).focus({preventScroll:true});}});
+document.getElementById("resBody").innerHTML=RES.map(r=>`<tr><td data-l=""><b>${esc(r[0])}</b><br>${r[4].map(l=>`<a href="${l[1]}" target="_blank" rel="noopener" id="src-${esc(l[0]).replace(/\W/g,"")}-${Math.abs(l[1].length*7+r[0].length)}">${esc(l[0])}</a>`).join(" · ")}</td><td data-l="What it does">${esc(r[1])}</td><td data-l="What I'd take">${esc(r[2])}</td><td data-l="Where it wouldn't fit">${esc(r[3])}</td></tr>`).join("");
+
+/* ---------- decisions ---------- */
+const answers={};let db=null,canWrite=true,dbReady=false;
+const cardsEl=document.getElementById("cards"),tally=document.getElementById("tallyText"),allYes=document.getElementById("allYes");
+cardsEl.innerHTML=DECISIONS.map((d,i)=>{const id="d"+(i+1);return `<div class="card" id="card-${id}"><h3><small>${i+1}</small><span>${esc(d[0])}</span></h3><p class="rec"><b>My recommendation:</b> ${esc(d[1])}</p><div class="ans"><button type="button" id="${id}-yes" data-id="${id}" data-v="yes">Yes</button><button type="button" id="${id}-no" data-id="${id}" data-v="no">No</button><span class="st" id="${id}-st"></span></div><textarea id="${id}-note" data-id="${id}" rows="1" placeholder="Anything to change? (optional)" aria-label="Note on decision ${i+1}"></textarea></div>`}).join("");
+function renderAns(){
+  let yes=0,no=0;
+  DECISIONS.forEach((d,i)=>{const id="d"+(i+1),a=answers[id]||{};
+    if(a.answer==="yes")yes++;if(a.answer==="no")no++;
+    document.getElementById(id+"-yes").setAttribute("aria-pressed",a.answer==="yes");
+    document.getElementById(id+"-no").setAttribute("aria-pressed",a.answer==="no");
+    document.getElementById(id+"-yes").disabled=!canWrite;document.getElementById(id+"-no").disabled=!canWrite;
+    const t=document.getElementById(id+"-note");t.disabled=!canWrite;if(document.activeElement!==t&&(a.note||"")!==t.value)t.value=a.note||"";
+  });
+  const left=DECISIONS.length-yes-no;
+  tally.textContent=!db&&dbReady?"Answers can't be saved in this view. Open the page while signed in.":`${yes} yes · ${no} no · ${left} to answer`;
+  allYes.hidden=!(db&&canWrite&&left>0);
+}
+async function save(id,patch){
+  if(!db)return;
+  const st=document.getElementById(id+"-st");
+  const next=Object.assign({answer:null,note:""},answers[id],patch,{at:new Date().toISOString()});
+  answers[id]=next;renderAns();st.textContent="saving…";
+  try{await db.doc("answers/"+id).set(next);st.textContent="saved";}
+  catch(e){if(e&&(e.code==="permission_denied"||e.code==="not_granted"||e.code==="invalid_argument")){canWrite=false;st.textContent="only Euan can answer";renderAns();}else st.textContent="not saved, try again";}
+}
+cardsEl.addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b){const id=b.dataset.id,cur=answers[id]&&answers[id].answer;save(id,{answer:cur===b.dataset.v?null:b.dataset.v});}});
+cardsEl.addEventListener("change",e=>{if(e.target.matches("textarea"))save(e.target.dataset.id,{note:e.target.value.trim()});});
+allYes.addEventListener("click",async()=>{for(let i=1;i<=DECISIONS.length;i++){const id="d"+i;if(!(answers[id]&&answers[id].answer))await save(id,{answer:"yes"});}});
+renderGaps();render();renderAns();
+(async()=>{
+  try{db=await claude.use("db");}catch(e){db=null;}
+  dbReady=true;
+  if(!db){renderAns();return;}
+  try{const user=await claude.use("user");if(user&&(await user.can("data.write"))===false)canWrite=false;}catch(e){}
+  const timer=setTimeout(renderAns,10000);
+  db.collection("answers").onSnapshot(snap=>{clearTimeout(timer);for(const d of snap.docs)if(d.exists)answers[d.id]=Object.assign({},d.data());renderAns();},()=>{clearTimeout(timer);renderAns();});
+  renderAns();
+})();
+</script>

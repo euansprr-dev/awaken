@@ -30,6 +30,7 @@ final class GateParty implements PartyHooks.Access {
         GateRecord g = Runs.gateOf(sp);
         if (g != null) out.addAll(g.inside);
         out.addAll(HearthHooks.household(sp));
+        dev.awaken.core.api.RidingHooks.partner(sp).ifPresent(out::add); // a bond is a party of its own, out in the Wilds too (SPEC §55)
         return new ArrayList<>(out);
     }
 
@@ -39,6 +40,7 @@ final class GateParty implements PartyHooks.Access {
         if (!(a instanceof ServerPlayer sa) || !(b instanceof ServerPlayer sb)) return false;
         GateRecord ga = Runs.gateOf(sa);
         if (ga != null && ga.inside.contains(sb.getUUID())) return true;
+        if (dev.awaken.core.api.RidingHooks.partner(sa).filter(sb.getUUID()::equals).isPresent()) return true;
         return HearthHooks.shareHearth(sa, sb.getUUID());
     }
 }

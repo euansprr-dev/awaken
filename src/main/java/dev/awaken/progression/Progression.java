@@ -39,6 +39,13 @@ public final class Progression {
     public enum XpSource { GATE_KILL, GATE_FLOOR, GATE_BOSS, HOME, REGIMEN, DIRECTIVE, TRUTH, DESCENT, DREAM, STORY, COMMAND,
         DISCOVERY, WORLD, ANOMALY }
 
+    private static final Set<XpSource> RIDER_HALVED = java.util.EnumSet.of(XpSource.HOME, XpSource.WORLD, XpSource.DESCENT, XpSource.ANOMALY);
+
+    /** Counters that are rank credit: what you've cleared and how well. A rider's don't move (SPEC §55). */
+    private static final Set<String> RIDER_NO_CREDIT = Set.of(Counters.GATES_CLEARED, Counters.FLOORS_CLEARED, Counters.FLOOR_STREAK_NO_EARLY_EXTRACT,
+            Counters.BOSS_FLOORS_NO_DAMAGE, Counters.GATES_NO_HIT, Counters.TWISTS_SEEN, "awaken:gates_solo_no_echo", "awaken:floors_pushed_past_comfort",
+            "awaken:bosses_killed", "awaken:bosses_killed_unarmed");
+
     private static final Set<ServerPlayer> DIRTY = new HashSet<>();
     /** Counter-only changes sync less often: the client shows counters only in progress bars. */
     private static final Set<ServerPlayer> DIRTY_LAZY = new HashSet<>();
@@ -147,6 +154,8 @@ public final class Progression {
             return 0;
         }
         amount *= xpScale(player) * (1 + perk(player, Perks.XP_BONUS));
+        // gate pay is halved where it's worked out (Runs.floorReward); this is the rest of what a rider earns by fighting (SPEC §55)
+        if (RIDER_HALVED.contains(source) && dev.awaken.core.api.RidingHooks.rider(player)) amount *= dev.awaken.core.api.RidingHooks.XP_SHARE;
         xpLedger(player).add(source, worldKey, amount);
         int gained = addXp(player, p, amount);
         for (XpListener l : XP_LISTENERS) l.granted(player, amount, source, worldKey);
@@ -388,7 +397,7 @@ public final class Progression {
             "awaken:waystones_lit", Counters.NIGHTMARES_BEATEN, "awaken:gates_scouted", Counters.SECRETS_FOUND);
 
     public static void count(ServerPlayer player, String counter, long amount) {
-        if (amount == 0) return;
+        if (amount == 0 || RIDER_NO_CREDIT.contains(counter) && dev.awaken.core.api.RidingHooks.rider(player)) return;
         Profile p = profile(player);
         p.counters.merge(counter, amount, Long::sum);
         if (LOGGED.contains(counter)) dev.awaken.core.Playtest.log(player, "counter", counter, p.counter(counter));

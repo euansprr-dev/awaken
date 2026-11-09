@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "proving_last_loop",
  "moves": "proving_last_loop",
  "duel": true,
@@ -25,6 +25,12 @@
        "cut",
        "fall"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -40,6 +46,12 @@
        "thrust",
        "fall"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -51,6 +63,12 @@
        "recut",
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -67,6 +85,12 @@
        "cut",
        "recut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -79,6 +103,12 @@
        "recut",
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -91,6 +121,12 @@
        "cut",
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "taken"
+      }
      ]
     },
     {
@@ -103,6 +139,12 @@
        "recut",
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     }
    ]
@@ -125,6 +167,12 @@
        "cut",
        "push"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -142,6 +190,12 @@
        "cut",
        "fall"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -156,6 +210,12 @@
       [
        "loop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -169,6 +229,12 @@
        "signal",
        "line"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fall",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -185,6 +251,12 @@
        "cut",
        "recut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -198,6 +270,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -211,6 +289,12 @@
        "thrust",
        "fall"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -224,6 +308,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "taken"
+      }
      ]
     },
     {
@@ -236,6 +326,12 @@
        "recut",
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     }
    ]
@@ -259,6 +355,12 @@
        "thrust",
        "push"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -277,6 +379,12 @@
        "recut",
        "taken"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -289,6 +397,12 @@
        "thrust",
        "every"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -305,6 +419,12 @@
        "signal",
        "line"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fall",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -320,6 +440,12 @@
        "signal",
        "line"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -335,6 +461,12 @@
        "every",
        "loop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -346,6 +478,12 @@
        "signal",
        "signal"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -358,6 +496,12 @@
        "recut",
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -371,6 +515,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -384,6 +534,12 @@
        "thrust",
        "fall"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -397,6 +553,12 @@
        "thrust",
        "push"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "taken"
+      }
      ]
     },
     {
@@ -410,6 +572,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     }
    ]
@@ -434,6 +602,12 @@
        "cut",
        "whirl"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -453,6 +627,12 @@
        "push",
        "rush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -465,6 +645,12 @@
        "thrust",
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -480,6 +666,12 @@
       [
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -495,6 +687,12 @@
        "every",
        "signal"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -510,6 +708,12 @@
       [
        "line"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -522,6 +726,12 @@
       [
        "rush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fall",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -536,6 +746,12 @@
       [
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -547,6 +763,12 @@
        "signal",
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -560,6 +782,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -573,6 +801,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -586,6 +820,12 @@
        "thrust",
        "fall"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -599,6 +839,12 @@
        "thrust",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "push",
+       "dodged": "rush"
+      }
      ]
     }
    ]
@@ -607,5 +853,82 @@
  "enrage": {
   "below": 0.1,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "rush": 60,
+   "taken": 60,
+   "every": 240,
+   "ring": 240
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "rush",
+     "taken",
+     "signal",
+     "push",
+     "cut",
+     "recut"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "rush",
+     "taken",
+     "signal"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "cut"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "cut",
+     "recut"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "ring",
+     "rush",
+     "taken"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "push",
+     "cut"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "rush",
+     "taken",
+     "signal"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "sovereign_mirrors",
  "moves": "sovereign_mirrors",
  "duel": true,
@@ -23,6 +23,11 @@
        "cut_b",
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -33,6 +38,11 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -55,6 +65,11 @@
       [
        "cut_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     }
    ]
@@ -74,6 +89,11 @@
        "cut_b",
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -85,6 +105,11 @@
        "cut",
        "cut_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -104,6 +129,11 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -117,6 +147,11 @@
       [
        "cut_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     }
    ]
@@ -141,6 +176,11 @@
        "riposte",
        "cut_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -152,6 +192,11 @@
        "cut_b",
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -162,6 +207,11 @@
       [
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -175,6 +225,11 @@
       [
        "cut_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     }
    ]
@@ -183,5 +238,69 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "lunge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "lunge",
+     "cut_b",
+     "riposte"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "lunge"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "cut_b"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "cut_b",
+     "riposte"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "lunge"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "cut_b"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "lunge"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

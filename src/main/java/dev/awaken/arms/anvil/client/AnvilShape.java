@@ -9,6 +9,7 @@ import dev.awaken.arms.client.WeaponDraw;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
@@ -57,8 +58,22 @@ final class AnvilShape {
     final float barX, barZ, side;
     /** The blade itself: its middle across and half its width, its middle through and half its thickness, and its thickest. */
     final float midX, halfW, midZ, face, back;
+    /** Item space to this shape's design texels: {@link #ITEM}, or for a pick's head at the anvil that turned so its long axis runs up the work. */
+    final Matrix4f item;
+    /** A forged pick (SPEC §49): {@code head} is the head alone lying along the work, otherwise it's the whole tool. */
+    final boolean pick, head;
+    /** The lowest of it (design height). */
+    final float lo;
 
     private AnvilShape(float[] cut, float root, float tip, float lo, float[] taps, float[] hands, Blank b) {
+        this(cut, root, tip, lo, taps, hands, b, ITEM, false, false);
+    }
+
+    private AnvilShape(float[] cut, float root, float tip, float lo, float[] taps, float[] hands, Blank b, Matrix4f item, boolean pick, boolean head) {
+        this.item = item;
+        this.pick = pick;
+        this.head = head;
+        this.lo = lo;
         this.cut = cut;
         this.root = root;
         this.tip = tip;
@@ -102,10 +117,79 @@ final class AnvilShape {
     }
 
     /** The Beastbound Longsword as first set by hand: what a weapon without a mesh is laid out by. */
+    /** Lives here, not in {@link AnvilScene}: reading that class's statics from this one's would start each before the other is done (FALLBACK null, no boot). */
+    static final Matrix4f ITEM = new Matrix4f().rotateZ(Mth.PI / 4).scale(16F).translate(-3F / 16, -3F / 16, -0.5F);
+
     static final AnvilShape FALLBACK = new AnvilShape(AnvilSong.HILT_CUT, 5F, 21F, -6F, new float[]{4F, 0.5F, -3.5F}, new float[]{2F, -0.5F},
             Blank.plain(5F, AnvilSong.HILT_CUT[0]));
 
-    private static final Map<WeaponMesh, AnvilShape> READ = new IdentityHashMap<>();
+    private static final Map<WeaponMesh, AnvilShape> READ = new IdentityHashMap<>(), HEADS = new IdentityHashMap<>();
+    /** Height of a pick's eye in its design (arms_picks.HEAD) and the mesh's "along" where its head begins. */
+    private static final float EYE = 23.5F;
+    private static final int HEAD_ALONG = 191;
+    private static final Matrix4f PICK_HEAD = new Matrix4f().rotateZ(-Mth.HALF_PI).translate(0F, -EYE, 0F).mul(ITEM);
+
+    static boolean isPick(@Nullable String id) {
+        return id != null && id.contains("_pick_");
+    }
+
+    /** A pick's head alone, lying along the work (SPEC §49.4): what's forged on the face before it's hung. */
+    static AnvilShape head(@Nullable String id) {
+        WeaponMesh mesh = id == null ? null : WeaponDraw.mesh(id);
+        if (mesh == null) return FALLBACK;
+        AnvilShape s = HEADS.get(mesh);
+        if (s == null) {
+            if (HEADS.size() > 32) HEADS.clear();
+            s = readHead(mesh);
+            HEADS.put(mesh, s);
+        }
+        return s;
+    }
+
+    private static AnvilShape readHead(WeaponMesh mesh) {
+        float[] pos = mesh.pos();
+        byte[] along = mesh.along();
+        float[] d = new float[along.length * 3];
+        Vector3f v = new Vector3f();
+        int tris = along.length / 3;
+        boolean[] use = new boolean[tris];
+        float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
+        for (int t = 0; t < tris; t++) {
+            boolean head = true;
+            for (int i = t * 3; i < t * 3 + 3; i++) head &= (along[i] & 255) >= HEAD_ALONG;
+            use[t] = head;
+            for (int i = t * 3; i < t * 3 + 3; i++) {
+                PICK_HEAD.transformPosition(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2], v);
+                d[i * 3] = v.x;
+                d[i * 3 + 1] = v.y;
+                d[i * 3 + 2] = v.z;
+                if (head) {
+                    lo = Math.min(lo, v.y);
+                    hi = Math.max(hi, v.y);
+                }
+            }
+        }
+        if (!(hi - lo > 4F)) return FALLBACK;
+        float[] cut = {0.75F};
+        Blank b = blank(d, mesh.uv(), along, cut[0], lo, hi, false, use);
+        float mid = (lo + hi) / 2F;
+        return new AnvilShape(cut, lo, hi, lo, new float[]{mid, mid, mid}, new float[]{mid + 2F, mid - 2F}, b, PICK_HEAD, true, true);
+    }
+
+    /** A whole pick, haft and head: its cuts bring the haft on from the head down as it's bound. */
+    private static AnvilShape readWhole(WeaponMesh mesh) {
+        Vector3f v = new Vector3f();
+        float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
+        float[] pos = mesh.pos();
+        for (int i = 0; i < pos.length; i += 3) {
+            ITEM.transformPosition(pos[i], pos[i + 1], pos[i + 2], v);
+            lo = Math.min(lo, v.y);
+            hi = Math.max(hi, v.y);
+        }
+        float[] cut = {0.75F, 0.5F, 0.25F, 0F};
+        float root = EYE - 4F;
+        return new AnvilShape(cut, root, hi, lo, new float[]{EYE + 3F, EYE, EYE - 5F}, new float[]{8F, -1F}, Blank.plain(root, cut[0]), ITEM, true, false);
+    }
 
     /** The mesh a thing at the anvil is drawn with: its own, or for a Hunter blade forged alone its tier's Longsword's blade. */
     static String meshId(String id) {
@@ -124,7 +208,7 @@ final class AnvilShape {
             if (READ.size() > 32) READ.clear(); // meshes are new on each resource reload
             // gauntlets have no guard: what's wide at their root is the cuff
             String id = meshId(weapon);
-            s = read(mesh, ArmsHilts.CUTS.getOrDefault(id, AnvilSong.HILT_CUT), !id.endsWith("gauntlets"));
+            s = isPick(id) ? readWhole(mesh) : read(mesh, ArmsHilts.CUTS.getOrDefault(id, AnvilSong.HILT_CUT), !id.endsWith("gauntlets"));
             READ.put(mesh, s);
         }
         return s;
@@ -148,7 +232,7 @@ final class AnvilShape {
         float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
         Vector3f v = new Vector3f();
         for (int i = 0; i < along.length; i++) {
-            AnvilScene.ITEM.transformPosition(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2], v);
+            ITEM.transformPosition(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2], v);
             d[i * 3] = v.x;
             d[i * 3 + 1] = v.y;
             d[i * 3 + 2] = v.z;
@@ -173,7 +257,7 @@ final class AnvilShape {
         if (!(hi - lo > 4F) || !(hi - root > 2F) || !(root - lo > 1F)) return FALLBACK;
         float[] taps = {height(at, (cut[0] + cut[1]) / 2F), height(at, (cut[1] + cut[2]) / 2F), height(at, cut[2] / 2F)};
         float top = height(at, cut[1]), low = height(at, cut[2]), q = (top - low) / 4F;
-        return new AnvilShape(cut, root, hi, lo, taps, new float[]{top - q, low + q}, blank(d, mesh.uv(), along, cut[0], root, hi, guarded));
+        return new AnvilShape(cut, root, hi, lo, taps, new float[]{top - q, low + q}, blank(d, mesh.uv(), along, cut[0], root, hi, guarded, null));
     }
 
     /** The height at a fraction along it, between the bins' middles. */
@@ -194,14 +278,14 @@ final class AnvilShape {
      * spear's wings are halfway up it and an axe's head is its widest, so neither has one. Pieces reaching less than 0.75
      * over the cut that stand out past the blade above them by more than 0.6 (a guard's tips, a collar) are the hilt's too.
      */
-    private static Blank blank(float[] d, float[] uv, byte[] along, float cut, float root, float tip, boolean guarded) {
+    private static Blank blank(float[] d, float[] uv, byte[] along, float cut, float root, float tip, boolean guarded, boolean @Nullable [] given) {
         int tris = along.length / 3;
         boolean[] all = new boolean[tris], use = new boolean[tris];
         float[] high = new float[tris];
         for (int t = 0; t < tris; t++) {
             all[t] = true;
             high[t] = Math.max(d[t * 9 + 1], Math.max(d[t * 9 + 4], d[t * 9 + 7]));
-            use[t] = high[t] > root + 1e-3F;
+            use[t] = given != null ? given[t] : high[t] > root + 1e-3F;
         }
         float len = tip - root, step = len / PROFILE;
         float[][] sec = new float[PROFILE][];
@@ -226,7 +310,7 @@ final class AnvilShape {
                 from = Math.max(root, a);
             }
         }
-        for (int t = 0; t < tris; t++) use[t] = high[t] > from + 1e-3F;
+        for (int t = 0; t < tris && given == null; t++) use[t] = high[t] > from + 1e-3F;
         if (guarded) {
             // the blade's footprint just above, and what stands out past it just over the cut
             float x0 = Float.MAX_VALUE, x1 = -Float.MAX_VALUE, z0 = Float.MAX_VALUE, z1 = -Float.MAX_VALUE;

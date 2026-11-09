@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "The Delver's Pick",
   "area": "deep",
-  "blurb": "An old miner's pick waits in the stone of an adit. It hums at metal and wakes a little more each time you use it well.",
+  "blurb": "An old miner's pick head waits in the stone of an adit. Forge it into your own, and take it through the deep.",
   "weight": 118,
   "opens": [
     "hearth|counter:awaken:delve/pick_pulled"
@@ -11,66 +11,72 @@
   "steps": [
     {
       "id": "find",
-      "text": "Pull the Delver's Pick from the stone at the end of an old adit.",
+      "text": "Pull the old pick head from the stone at the end of an adit.",
       "done": [
         "counter:awaken:delve/pick_pulled"
       ],
       "where": "adit",
-      "hint": "An adit is a timbered tunnel into a hillside. With no adit near your home, your Hearth keeps a pick for you."
+      "hint": "An adit is a timbered tunnel into a hillside. If there's no adit near your home, your Hearth keeps the head for you."
+    },
+    {
+      "id": "forge",
+      "text": "Forge your first pick at a War Anvil.",
+      "done": [
+        "counter:awaken:pick_forged|counter:awaken:pick_remade"
+      ],
+      "hint": "Use the anvil and choose the Picks side. The old head, a log and some string are all it takes at first."
     },
     {
       "id": "kindle",
-      "text": "Break a lode's heart with the pick on you.",
+      "text": "Break a lode's heart.",
       "done": [
-        "count:awaken:delve/verses_woken:1"
+        "counter:awaken:delve/deed_heart"
       ],
-      "hint": "Hold the pick and it hums when its head points at metal. Follow the hum to a lode and mine into its middle."
+      "hint": "It hums when its head points at metal. Follow the hum to a lode and mine into its middle. Any anvil then works it in."
     },
     {
       "id": "echo",
-      "text": "Light a dead Delver lamp with the pick on you.",
+      "text": "Light a dead Delver lamp.",
       "done": [
-        "count:awaken:delve/verses_woken:2"
+        "counter:awaken:delve/deed_lamp"
       ],
       "hint": "Delver lamps hang on chains from cave roofs. Hit one with any pickaxe and it lights the hall round it."
     },
     {
-      "id": "tempered",
-      "text": "Bring the pick and 3 diamonds to your Forge.",
+      "id": "sound",
+      "text": "Sneak, stand still and tap the rock to listen for what's behind it.",
       "done": [
-        "count:awaken:delve/verses_woken:3"
+        "counter:awaken:delve/soundings"
       ],
-      "where": "hearth",
-      "hint": "Use the Forge with the pick in your hand. Tempered, it can cut Deepglass."
+      "hint": "A pick needs to be C-rank and worked with the lamp's deed. Turn your head as the answers come: each one comes from its own side."
+    },
+    {
+      "id": "raise",
+      "text": "Raise your pick to a higher rank at the anvil.",
+      "done": [
+        "count:awaken:pick_forged:2"
+      ],
+      "hint": "Hold the pick and use the anvil. It keeps everything it has."
     },
     {
       "id": "glass",
-      "text": "Cut Deepglass with the pick on you.",
+      "text": "Cut Deepglass.",
       "done": [
-        "count:awaken:delve/verses_woken:4"
+        "counter:awaken:delve/deed_deepglass"
       ],
       "hint": "Deepglass grows in seeps, violet halls below y 0. A Tuning Fork tuned to Deepglass points the way."
     },
     {
       "id": "hush",
-      "text": "Quiet a seep by killing its heart, with the pick on you.",
+      "text": "Quiet a seep by killing its heart.",
       "done": [
-        "count:awaken:delve/verses_woken:5"
+        "counter:awaken:delve/deed_seep"
       ],
       "hint": "The seep heart is rooted near the Deepglass. While a seep lives, the creatures in it are five levels stronger."
-    },
-    {
-      "id": "call",
-      "text": "Bring the pick and a starmetal ingot to your Forge.",
-      "done": [
-        "count:awaken:delve/verses_woken:6"
-      ],
-      "where": "hearth",
-      "hint": "Starmetal comes from fallen stars. Smelt the raw starmetal into an ingot."
     }
   ],
   "finish": {
-    "line": "The Delver's Pick is fully awake.",
+    "line": "Your pick has been through the deep with you.",
     "levels": 0.05
   }
 }

@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "sky_leviathan",
  "moves": "sky_leviathan",
  "duel": true,
@@ -23,6 +23,12 @@
        "slap_b",
        "ram"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -33,6 +39,12 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -45,6 +57,11 @@
       [
        "dive"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -55,6 +72,11 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat"
+      }
      ]
     },
     {
@@ -65,6 +87,12 @@
       [
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     }
    ]
@@ -84,6 +112,12 @@
        "slap_b",
        "ram"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -94,6 +128,12 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -108,6 +148,12 @@
       [
        "barrage"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -118,6 +164,11 @@
       [
        "ram"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat"
+      }
      ]
     },
     {
@@ -128,6 +179,12 @@
       [
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     }
    ]
@@ -146,6 +203,11 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -157,6 +219,11 @@
        "slap",
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat"
+      }
      ]
     },
     {
@@ -168,6 +235,12 @@
        "slap_b",
        "ram"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -178,6 +251,12 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     },
     {
@@ -188,6 +267,12 @@
       [
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "dive"
+      }
      ]
     }
    ]
@@ -196,5 +281,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "dive": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "dive",
+     "wingbeat",
+     "slap",
+     "slap_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "dive"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "slap"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "slap",
+     "slap_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "wingbeat"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "wingbeat",
+     "slap"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "dive"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

@@ -29,6 +29,12 @@
       "name": "AWAKEN_BINOCULARS",
       "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
       "parameters": {"class": "dev/awaken/binoculars/client/GlassOthers", "field": "POSE"}
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "AWAKEN_PICK_DIG",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {"class": "dev/awaken/delve/client/PickHands", "field": "DIG_POSE"}
     }
   ]
 }

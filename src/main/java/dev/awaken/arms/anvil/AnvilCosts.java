@@ -30,6 +30,7 @@ public final class AnvilCosts {
     public record Part(String kind, String id, int n) {}
 
     private static @Nullable Map<String, List<Part>> table;
+    private static final String HEAD_PICK = "wildhide_pick_delver", OLD_HEAD = "awaken:delver_old_head";
 
     /** Every weapon and blade with its parts (ids without the namespace: "beastbound_daggers"). */
     public static synchronized Map<String, List<Part>> table() {
@@ -72,6 +73,10 @@ public final class AnvilCosts {
      * made from its own parts instead (added in), so the anvil never asks for a blade you'd have to forge first.
      */
     public static List<NeedRow> needs(ServerPlayer p, String id) {
+        // the first pick (§49.1): the Delver's old head, if you have it, needs only a new haft
+        if (id.equals(HEAD_PICK) && ArmsArmoury.have(p, "item", OLD_HEAD) > 0)
+            return List.of(new NeedRow("item", OLD_HEAD, 1, ArmsArmoury.have(p, "item", OLD_HEAD)), new NeedRow("tag", "minecraft:logs", 1, ArmsArmoury.have(p, "tag", "minecraft:logs")),
+                    new NeedRow("item", "minecraft:string", 1, ArmsArmoury.have(p, "item", "minecraft:string")));
         List<Part> parts = of(id);
         if (parts == null) return List.of();
         Map<String, NeedRow> out = new LinkedHashMap<>();

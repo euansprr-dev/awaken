@@ -111,7 +111,7 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
      * A soft light round each stone, facing the eye: a fan whose rim fades to nothing (the falloff is in the colours),
      * breathing slowly, swelling with the blade's energy and flaring with its flash.
      */
-    private static void halos(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, float energy, float flash) {
+    static void halos(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, float energy, float flash) {
         var camera = Minecraft.getInstance().gameRenderer.mainCamera();
         float t = (Minecraft.getInstance().level == null ? 0 : Minecraft.getInstance().level.getGameTime() % 24000) / 20F;
         float scale = pose.pose().getScale(SCALE).x;
@@ -144,12 +144,18 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
 
     /** As above, only the triangles lying from {@code cut} along the weapon on (0..255 of its length, by their middle). */
     static void emit(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, int light, int overlay, boolean ours, int cut) {
+        emit(mesh, pose, buffer, light, overlay, ours, cut, 0);
+    }
+
+    /** As above, and a pick's rank rings only from the group {@code ringsFrom} up (its first rank's own and later: SPEC §49). */
+    static void emit(WeaponMesh mesh, PoseStack.Pose pose, VertexConsumer buffer, int light, int overlay, boolean ours, int cut, int ringsFrom) {
         int accent = ours ? mesh.accent() : 0xFFFFFF;
         int r = accent >> 16 & 255, g = accent >> 8 & 255, b = accent & 255;
         float[] p = mesh.pos(), uv = mesh.uv();
-        byte[] n = mesh.normal(), along = mesh.along();
+        byte[] n = mesh.normal(), along = mesh.along(), groups = mesh.groups();
         for (int i = 0, count = mesh.vertices(); i < count; i += 3) {
             if (cut > 0 && (along[i] & 255) + (along[i + 1] & 255) + (along[i + 2] & 255) < cut * 3) continue;
+            if (groups != null && groups[i / 3] != 0 && groups[i / 3] <= ringsFrom) continue;
             for (int c = i; c < i + 3; c++) corner(buffer, pose, p, uv, n, c, r, g, b, ours ? along[c] & 255 : 255, light, overlay);
             if (!ours) corner(buffer, pose, p, uv, n, i + 2, r, g, b, 255, light, overlay);
         }

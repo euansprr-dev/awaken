@@ -93,6 +93,14 @@ public final class GateBlocks {
             if (level instanceof ServerLevel sl && entity instanceof ServerPlayer sp && !state.getValue(BROKEN)) Interactions.touchCore(sl, pos, sp);
         }
 
+        /** A right click on the door, from outside: going in together (SPEC §55). Walking in is still how you enter. */
+        @Override
+        protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+            if (state.getValue(BROKEN)) return InteractionResult.PASS;
+            if (level instanceof ServerLevel sl && player instanceof ServerPlayer sp) Interactions.door(sl, pos, sp);
+            return InteractionResult.SUCCESS;
+        }
+
         @Override
         public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
             // the renderer draws the motes; the blocks only shed ash once the gate has broken

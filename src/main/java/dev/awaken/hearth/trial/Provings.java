@@ -168,6 +168,7 @@ public final class Provings {
             ServerPlayer m = server.getPlayerList().getPlayer(u);
             if (m == null || m == sp || m.level() != sp.level() || m.distanceToSqr(sp) > PARTY_RADIUS * PARTY_RADIUS) continue;
             if (Trials.inTrial(m) || GateHooks.inGate(m) || Progression.profile(m).level() < target.levelRequired) continue;
+            if (dev.awaken.core.api.RidingHooks.bonded(m)) continue; // Reassessments can't be ridden (SPEC §55)
             who.add(m);
         }
         w.before(run, sp);

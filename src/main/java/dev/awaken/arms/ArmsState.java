@@ -70,6 +70,8 @@ final class ArmsState {
     // guard
     long raisedAt = Long.MIN_VALUE / 2, loweredAt = Long.MIN_VALUE / 2;
     boolean raiseDeflected, lockedOut, guardBreak;
+    /** The tick a held guard last took a blow in: that blow can't also throw you (SPEC §47.3). */
+    long guardedAt = -1;
     long deflectAt = Long.MIN_VALUE / 2;
     int deflected = -1;
     // dodge

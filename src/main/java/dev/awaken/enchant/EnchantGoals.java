@@ -30,6 +30,11 @@ final class EnchantGoals {
 
     private static final EquipmentSlot[] ARMOUR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
 
+    /** Enchanting's line of work on the tab it's for (SPEC §53). */
+    private static String thread(Goal g) {
+        return g == Goal.ARMOUR ? "armour.enchant" : "arms.enchant";
+    }
+
     static void register() {
         Goals.register(EnchantGoals::steps);
     }
@@ -62,12 +67,12 @@ final class EnchantGoals {
             if (tab(e) == Goal.WEAPONS) knowsWeapon = true;
         }
         if (!knowsArmour && wearsArmour(p)) {
-            out.add(Goals.Step.of("enchant/page/armour", Goal.ARMOUR, "Find an enchantment for your armour")
+            out.add(Goals.Step.of("enchant/page/armour", Goal.ARMOUR, "Find an enchantment for your armour").thread("armour.enchant", 10).lead()
                     .why("Wards against the five Forces are written onto armour. Every kind of gate keeps its own enchantment, and its Lord carries the page.")
                     .need(Need.item(p, EnchantContent.PAGE.get(), 1)).optional().priority(70).build());
         }
         if (!knowsWeapon && carriesWeapon(p)) {
-            out.add(Goals.Step.of("enchant/page/weapons", Goal.WEAPONS, "Find an enchantment for your weapon")
+            out.add(Goals.Step.of("enchant/page/weapons", Goal.WEAPONS, "Find an enchantment for your weapon").thread("arms.enchant", 10).lead()
                     .why("Banes, Looting and Unbreaking are written onto weapons. Carillon's market sells a few pages, and gates keep the rest.")
                     .need(Need.item(p, EnchantContent.PAGE.get(), 1)).optional().priority(70).build());
         }
@@ -75,7 +80,7 @@ final class EnchantGoals {
         // a page in the pack you haven't read
         Inscriptions.Entry unread = unreadPage(p, k);
         if (unread != null) {
-            out.add(Goals.Step.of("enchant/read", tab(unread), "Read the page you're carrying")
+            out.add(Goals.Step.of("enchant/read", tab(unread), "Read the page you're carrying").thread(thread(tab(unread)), 20)
                     .why("Reading it teaches you " + unread.name() + " for good.")
                     .need(Need.of("Read it", false)).path(Goals.PATH_FIRST_GATE + 1).priority(80).build());
         }
@@ -83,7 +88,7 @@ final class EnchantGoals {
 
         // the table
         if (!k.hadTable()) {
-            out.add(Goals.Step.of("enchant/table", tab(firstKnown), "Make an Inscribing Table")
+            out.add(Goals.Step.of("enchant/table", tab(firstKnown), "Make an Inscribing Table").thread(thread(tab(firstKnown)), 30)
                     .why("It's where you write what you've learned onto your own gear.")
                     .need(Need.item(p, Items.BOOK, 1)).need(Need.item(p, Items.LAPIS_LAZULI, 3))
                     .need(Need.item(p, CoreApi.ESSENCE_SHARD.get(), 1))
@@ -97,7 +102,7 @@ final class EnchantGoals {
         if (k.written() == 0) {
             if (fit != null) {
                 int[] price = EnchantRules.price(fit.entry, fit.now, fit.now + 1);
-                out.add(Goals.Step.of("enchant/first", tab(fit.piece), "Inscribe your first enchantment")
+                out.add(Goals.Step.of("enchant/first", tab(fit.piece), "Inscribe your first enchantment").thread(thread(tab(fit.piece)), 40)
                         .why(fit.entry.name() + " fits your " + fit.piece.getHoverName().getString() + ".")
                         .need(Need.of("A piece it fits", true))
                         .need(new Need("", "Levels", p.experienceLevel, price[0]))
@@ -115,7 +120,7 @@ final class EnchantGoals {
                         ? "Your " + piece + " has room for " + EnchantRules.count(free) + " more, and you know " + EnchantRules.count(f.fits) + " that " + (f.fits == 1 ? "fits" : "fit") + "."
                         : f.entry.name() + " on your " + piece + " can go deeper.";
                 out.add(Goals.Step.of(g == Goal.ARMOUR ? "enchant/room/armour" : "enchant/room/weapons", g,
-                                g == Goal.ARMOUR ? "Inscribe your armour" : "Inscribe your weapon")
+                                g == Goal.ARMOUR ? "Inscribe your armour" : "Inscribe your weapon").thread(thread(g), 50)
                         .why(why)
                         .need(new Need("", "Levels", p.experienceLevel, price[0]))
                         .need(Need.item(p, Items.LAPIS_LAZULI, price[1]))
@@ -127,7 +132,7 @@ final class EnchantGoals {
         if (!k.studyTable()) {
             Fit deep = deeperInStudy(p, k, reg);
             if (deep != null) {
-                out.add(Goals.Step.of("enchant/study", tab(deep.piece), "Set your Inscribing Table in your Study")
+                out.add(Goals.Step.of("enchant/study", tab(deep.piece), "Set your Inscribing Table in your Study").thread(thread(tab(deep.piece)), 60)
                         .why("Written there, enchantments can go deeper than II. Your " + deep.piece.getHoverName().getString()
                                 + " could take " + deep.entry.name() + " deeper.")
                         .need(Need.of("A Study", dev.awaken.core.api.HearthHooks.study(p)))

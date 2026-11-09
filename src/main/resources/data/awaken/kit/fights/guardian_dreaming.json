@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "guardian_dreaming",
  "moves": "guardian_dreaming",
  "duel": true,
@@ -23,6 +23,12 @@
        "crush",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -37,6 +43,11 @@
       [
        "heave"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -47,6 +58,11 @@
       [
        "crush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer"
+      }
      ]
     },
     {
@@ -59,6 +75,12 @@
       [
        "snip"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -70,6 +92,12 @@
        "snip",
        "crush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -83,6 +111,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     }
    ]
@@ -102,6 +136,12 @@
        "crush",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -116,6 +156,11 @@
       [
        "heave"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -125,6 +170,12 @@
       [
        "floor"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -137,6 +188,12 @@
       [
        "snip"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -151,6 +208,12 @@
        "snip",
        "crush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     },
     {
@@ -161,6 +224,11 @@
       [
        "crush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer"
+      }
      ]
     },
     {
@@ -174,6 +242,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "scuttle"
+      }
      ]
     }
    ]
@@ -182,5 +256,72 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "scuttle": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "scuttle",
+     "hammer",
+     "snip",
+     "crush"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "scuttle"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "snip"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "snip",
+     "crush"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "scuttle",
+     "hammer"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "hammer",
+     "snip"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "scuttle"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

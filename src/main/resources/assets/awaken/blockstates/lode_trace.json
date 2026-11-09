@@ -1,0 +1,1860 @@
+{
+  "variants": {
+    "down=false,facing=north,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1"
+      }
+    ],
+    "down=false,facing=north,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1"
+      }
+    ],
+    "down=false,facing=north,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1"
+      }
+    ],
+    "down=false,facing=north,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1"
+      }
+    ],
+    "down=true,facing=north,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/2_0_1"
+      }
+    ],
+    "down=true,facing=north,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/2_1_1"
+      }
+    ],
+    "down=true,facing=north,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/3_0_1"
+      }
+    ],
+    "down=true,facing=north,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/3_1_1"
+      }
+    ],
+    "down=false,facing=north,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/4_0_1"
+      }
+    ],
+    "down=false,facing=north,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/4_1_1"
+      }
+    ],
+    "down=false,facing=north,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/5_0_1"
+      }
+    ],
+    "down=false,facing=north,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/5_1_1"
+      }
+    ],
+    "down=true,facing=north,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/6_0_1"
+      }
+    ],
+    "down=true,facing=north,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/6_1_1"
+      }
+    ],
+    "down=true,facing=north,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/7_0_1"
+      }
+    ],
+    "down=true,facing=north,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/7_1_1"
+      }
+    ],
+    "down=false,facing=north,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/8_0_1"
+      }
+    ],
+    "down=false,facing=north,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/8_1_1"
+      }
+    ],
+    "down=false,facing=north,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/9_0_1"
+      }
+    ],
+    "down=false,facing=north,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/9_1_1"
+      }
+    ],
+    "down=true,facing=north,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/10_0_1"
+      }
+    ],
+    "down=true,facing=north,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/10_1_1"
+      }
+    ],
+    "down=true,facing=north,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/11_0_1"
+      }
+    ],
+    "down=true,facing=north,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/11_1_1"
+      }
+    ],
+    "down=false,facing=north,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/12_0_1"
+      }
+    ],
+    "down=false,facing=north,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/12_1_1"
+      }
+    ],
+    "down=false,facing=north,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/13_0_1"
+      }
+    ],
+    "down=false,facing=north,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/13_1_1"
+      }
+    ],
+    "down=true,facing=north,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/14_0_1"
+      }
+    ],
+    "down=true,facing=north,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/14_1_1"
+      }
+    ],
+    "down=true,facing=north,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_0_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/15_0_1"
+      }
+    ],
+    "down=true,facing=north,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_1_0"
+      },
+      {
+        "model": "awaken:block/lode_trace/15_1_1"
+      }
+    ],
+    "down=false,facing=east,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/2_0_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/2_1_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/3_0_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/3_1_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/4_0_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/4_1_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/5_0_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/5_1_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/6_0_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/6_1_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/7_0_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/7_1_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/8_0_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/8_1_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/9_0_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/9_1_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/10_0_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/10_1_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/11_0_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/11_1_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/12_0_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/12_1_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/13_0_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=east,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/13_1_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/14_0_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/14_1_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_0_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/15_0_1",
+        "y": 90
+      }
+    ],
+    "down=true,facing=east,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_1_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/15_1_1",
+        "y": 90
+      }
+    ],
+    "down=false,facing=south,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/2_0_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/2_1_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/3_0_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/3_1_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/4_0_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/4_1_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/5_0_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/5_1_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/6_0_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/6_1_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/7_0_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/7_1_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/8_0_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/8_1_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/9_0_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/9_1_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/10_0_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/10_1_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/11_0_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/11_1_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/12_0_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/12_1_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/13_0_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=south,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/13_1_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/14_0_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/14_1_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_0_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/15_0_1",
+        "y": 180
+      }
+    ],
+    "down=true,facing=south,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_1_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/lode_trace/15_1_1",
+        "y": 180
+      }
+    ],
+    "down=false,facing=west,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/2_0_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/2_1_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/3_0_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/3_1_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/4_0_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/4_1_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/5_0_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/5_1_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/6_0_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/6_1_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/7_0_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/7_1_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/8_0_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/8_1_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/9_0_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/9_1_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/10_0_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/10_1_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/11_0_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/11_1_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/12_0_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/12_1_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/13_0_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=west,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/13_1_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/14_0_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/14_1_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_0_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/15_0_1",
+        "y": 270
+      }
+    ],
+    "down=true,facing=west,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_1_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/15_1_1",
+        "y": 270
+      }
+    ],
+    "down=false,facing=down,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/2_0_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/2_1_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/3_0_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/3_1_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/4_0_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/4_1_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/5_0_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/5_1_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/6_0_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/6_1_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/7_0_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/7_1_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/8_0_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/8_1_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/9_0_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/9_1_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/10_0_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/10_1_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/11_0_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/11_1_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/12_0_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/12_1_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/13_0_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=down,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/13_1_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/14_0_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/14_1_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_0_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/15_0_1",
+        "x": 90
+      }
+    ],
+    "down=true,facing=down,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_1_0",
+        "x": 90
+      },
+      {
+        "model": "awaken:block/lode_trace/15_1_1",
+        "x": 90
+      }
+    ],
+    "down=false,facing=up,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/1_0_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/1_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/1_1_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=false,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/2_0_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=false,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/2_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/2_1_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=false,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/3_0_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=false,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/3_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/3_1_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/4_0_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/4_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/4_1_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/5_0_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/5_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/5_1_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=true,reach=0,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/6_0_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=true,reach=1,right=false,up=false": [
+      {
+        "model": "awaken:block/lode_trace/6_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/6_1_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=true,reach=0,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/7_0_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=true,reach=1,right=false,up=true": [
+      {
+        "model": "awaken:block/lode_trace/7_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/7_1_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/8_0_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/8_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/8_1_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/9_0_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/9_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/9_1_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=false,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/10_0_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=false,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/10_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/10_1_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=false,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/11_0_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=false,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/11_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/11_1_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/12_0_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/12_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/12_1_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/13_0_1",
+        "x": 270
+      }
+    ],
+    "down=false,facing=up,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/13_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/13_1_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=true,reach=0,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/14_0_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=true,reach=1,right=true,up=false": [
+      {
+        "model": "awaken:block/lode_trace/14_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/14_1_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=true,reach=0,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_0_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/15_0_1",
+        "x": 270
+      }
+    ],
+    "down=true,facing=up,left=true,reach=1,right=true,up=true": [
+      {
+        "model": "awaken:block/lode_trace/15_1_0",
+        "x": 270
+      },
+      {
+        "model": "awaken:block/lode_trace/15_1_1",
+        "x": 270
+      }
+    ]
+  }
+}

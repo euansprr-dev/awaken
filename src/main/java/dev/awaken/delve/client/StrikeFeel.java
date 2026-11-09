@@ -8,12 +8,17 @@ import dev.awaken.delve.Ore;
 import dev.awaken.delve.StrikeBlocks;
 import dev.awaken.delve.TrueStrikes;
 import dev.awaken.delve.TuningForkItem;
+import dev.awaken.delve.forged.DelveForged;
+import dev.awaken.delve.forged.ForgedPickItem;
+import dev.awaken.delve.forged.ForgedPicks;
+import dev.awaken.delve.forged.PickForm;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ParticleStatus;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
@@ -54,6 +59,10 @@ final class StrikeFeel {
         Direction face = e.getFace() == null ? Direction.UP : e.getFace();
         switch (e.getAction()) {
             case START -> {
+                if (clock - lastHold > 2) {
+                    bites = -1;
+                    dugFrom = clock;
+                }
                 lastHold = clock;
                 target = pos.asLong();
                 progress = 0;
@@ -85,6 +94,7 @@ final class StrikeFeel {
     static void bite(ClientLevel level, LocalPlayer p, BlockPos pos, Direction face, BlockState s, boolean last) {
         Minecraft mc = Minecraft.getInstance();
         lastBite = clock;
+        bites++;
         RandomSource r = level.getRandom();
         boolean aimed = mc.hitResult instanceof BlockHitResult bh && bh.getType() == HitResult.Type.BLOCK && bh.getBlockPos().equals(pos);
         Vec3 at = aimed ? mc.hitResult.getLocation() : Vec3.atCenterOf(pos).add(face.getStepX() * 0.5, face.getStepY() * 0.5, face.getStepZ() * 0.5);
@@ -97,6 +107,7 @@ final class StrikeFeel {
             level.playLocalSound(at.x, at.y, at.z, DelveContent.STRIKE.get(ore).get(), SoundSource.BLOCKS, last ? 0.85F : 0.55F, pitch, false);
             if (last) level.playLocalSound(at.x, at.y, at.z, DelveContent.STRIKE_LAST.get(), SoundSource.BLOCKS, 0.7F, 0.8F + ore.ordinal() * 0.05F, false);
         }
+        voice(level, p, at, s, last, r);
         int density = density(mc);
         boolean hard = s.is(BlockTags.MINEABLE_WITH_PICKAXE) && s.getDestroySpeed(level, pos) >= 1F;
         if (density > 0 && hard && tool) {
@@ -112,6 +123,25 @@ final class StrikeFeel {
             CombatFeedback.hold(ore == Ore.DIAMOND || ore == Ore.DEEPGLASS ? 70 : 50);
             CombatFeedback.kick((r.nextFloat() - 0.5F) * 0.8F, 0.9F, (r.nextFloat() - 0.5F) * 0.6F, 5);
         }
+    }
+
+    /**
+     * A forged pick's own voice under the block's (SPEC §49.10): one of the game's own recordings, a little quieter than the
+     * block, varied a little so thousands of blows don't tire the ear. An ore already has its own strike above this.
+     */
+    private static void voice(ClientLevel level, LocalPlayer p, Vec3 at, BlockState s, boolean last, RandomSource r) {
+        var held = p.getMainHandItem();
+        ForgedPickItem item = ForgedPicks.item(held);
+        if (item == null) return;
+        boolean rock = s.is(BlockTags.MINEABLE_WITH_PICKAXE), wood = s.is(BlockTags.MINEABLE_WITH_AXE), soil = s.is(BlockTags.MINEABLE_WITH_SHOVEL);
+        float loud = last ? 0.9F : 0.6F, pitch = 0.95F + r.nextFloat() * 0.1F;
+        SoundEvent voice;
+        if (rock) {
+            voice = ForgedPicks.blunt(held) ? DelveForged.STRIKE_BLUNT.get() : DelveForged.STRIKE.get(item.form).get();
+        } else if (item.form == PickForm.MATTOCK && (wood || soil)) {
+            voice = wood ? DelveForged.STRIKE_WOOD.get() : DelveForged.STRIKE_EARTH.get();
+        } else return;
+        level.playLocalSound(at.x, at.y, at.z, voice, SoundSource.PLAYERS, loud, pitch, false);
     }
 
     /** True strikes in a row: each rises a step in pitch, up to three. */
@@ -162,6 +192,8 @@ final class StrikeFeel {
 
     // the dig motion's clock (DigMotion): client ticks, the last bite and the last tick the attack was held on a block
     static int clock, lastBite = -100, lastHold = -100;
+    /** Bites of this dig, and the tick it began (a forged pick's two-handed dig: big and small in turn, eased in from rest). */
+    static int bites, dugFrom = -100;
 
     static void tick() {
         clock++;

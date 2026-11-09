@@ -102,7 +102,6 @@
   "minecraft:quartz",
   "minecraft:rabbit_hide",
   "minecraft:shulker_shell",
-  "minecraft:stick",
   "minecraft:string",
   "minecraft:turtle_scute",
   "minecraft:wind_charge"
@@ -422,9 +421,6 @@
   ],
   "minecraft:rabbit_hide": [
    "awaken:scree_marmot"
-  ],
-  "minecraft:stick": [
-   "awaken:thornling"
   ],
   "minecraft:string": [
    "awaken:gloomstalker",

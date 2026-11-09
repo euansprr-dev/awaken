@@ -1,12 +1,17 @@
 package dev.awaken.delve.client;
 
+import dev.awaken.delve.DelveContent;
 import dev.awaken.delve.DelveNet;
+import dev.awaken.delve.LodeTraceBlock;
 import dev.awaken.delve.TrueStrikes;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
@@ -32,11 +37,29 @@ public final class DelveClient {
         HomeClient.init(modBus);
         SenseClient.init(modBus);
         modBus.addListener(RegisterParticleProvidersEvent.class, DelveParticles::register);
+        // a heart's veins on the rock are drawn once and take their ore's colour (SPEC §42.11)
+        modBus.addListener(RegisterColorHandlersEvent.BlockTintSources.class, e -> e.register(java.util.List.of(new BlockTintSource() {
+            @Override
+            public int color(BlockState s) {
+                return 0xFF000000 | s.getValue(LodeTraceBlock.ORE).tint;
+            }
+
+            @Override
+            public java.util.Set<net.minecraft.world.level.block.state.properties.Property<?>> relevantProperties() {
+                return java.util.Set.of(LodeTraceBlock.ORE);
+            }
+        }), DelveContent.LODE_TRACE.get()));
         modBus.addListener(RegisterRenderPipelinesEvent.class, DelveRender::onRegister);
         // held light reaches what stands in it: dropped items, mobs, players, your own hands (SPEC §28.3)
         modBus.addListener(net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent.class, TorchGlow::modifiers);
         // last on our bus, so a block another mod claimed keeps its own particles
         modBus.addListener(EventPriority.LOWEST, false, RegisterClientExtensionsEvent.class, StrikeFx::register);
+        modBus.addListener(RegisterClientExtensionsEvent.class, e -> {
+            var picks = dev.awaken.delve.forged.ForgedPicks.all();
+            e.registerItem(PickHands.INSTANCE, picks.toArray(net.minecraft.world.item.Item[]::new));
+        });
+        modBus.addListener((net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent e) ->
+                e.registerEntityModifier(new com.google.common.reflect.TypeToken<net.minecraft.client.renderer.entity.EntityRenderer<net.minecraft.world.entity.Entity, net.minecraft.client.renderer.entity.state.EntityRenderState>>() {}, PickHands::modify));
         DelveClientConfig.register(modBus);
         modBus.addListener(RegisterGuiLayersEvent.class, ForkSong::registerLayer);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
@@ -47,7 +70,7 @@ public final class DelveClient {
             e.register(DelveNet.ForkRing.TYPE, (m, ctx) -> ForkSong.ring(m));
             e.register(DelveNet.PickHum.TYPE, (m, ctx) -> PickSong.told(m));
             e.register(DelveNet.PickWoke.TYPE, (m, ctx) -> PickFx.woke(m));
-            e.register(DelveNet.PickSight.TYPE, (m, ctx) -> PickFx.sight(m));
+            e.register(DelveNet.PickSounding.TYPE, (m, ctx) -> SoundingFx.heard(m));
             e.register(DelveNet.Embers.TYPE, (m, ctx) -> PickFx.embers(m));
             e.register(DelveNet.CallAnswer.TYPE, (m, ctx) -> PickFx.call(m));
             e.register(DelveNet.LampLit.TYPE, (m, ctx) -> LampFx.lit(m));
@@ -75,6 +98,7 @@ public final class DelveClient {
             PickSong.tick();
             Motes.tick();
             PickFx.tick();
+            SoundingFx.tick();
             LampFx.tick();
             Depths.tick();
             Breath.tick();
@@ -87,7 +111,6 @@ public final class DelveClient {
         bus.addListener(SubmitCustomGeometryEvent.class, TorchGlow::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, VeinFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, StrikeFx::submit);
-        bus.addListener(SubmitCustomGeometryEvent.class, PickFx::submit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             VeinFx.reset();
             CaveInFx.reset();
@@ -95,6 +118,7 @@ public final class DelveClient {
             PickSong.reset();
             Motes.reset();
             PickFx.reset();
+            SoundingFx.reset();
             LampFx.reset();
             Depths.reset();
             Breath.reset();

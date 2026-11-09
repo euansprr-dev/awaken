@@ -42,7 +42,10 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GLANCE = sound("glance");
     /** A shot blocked on the guard: the block's own sound, lighter (a smaller thing struck the steel). */
     public static final float SHOT_BLOCK_VOLUME = 0.8F, SHOT_BLOCK_PITCH = 1.2F;
+    /** The thud under a block: nearly all of it is below 300 Hz, so small speakers lose it. */
     public static final DeferredHolder<SoundEvent, SoundEvent> BLOCK = sound("block");
+    /** What you hear of a block on any speakers: Minecraft's shield being struck, and steel (SPEC §47.3). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> BLOCK_STRUCK = named("guard.struck"), BLOCK_STEEL = named("guard.steel");
     public static final DeferredHolder<SoundEvent, SoundEvent> GUARD_BREAK = sound("guard_break");
     public static final DeferredHolder<SoundEvent, SoundEvent> BREAK = sound("break");
     public static final DeferredHolder<SoundEvent, SoundEvent> EXECUTION = sound("execution");
@@ -144,6 +147,11 @@ public final class ArmsSounds {
             case GRAB -> TELL_GRAB.get();
             case NONE -> null;
         };
+    }
+
+    /** An event whose sounds name other recordings: outside "arms.", which the kit's writer (audio_arms.py) replaces. */
+    private static DeferredHolder<SoundEvent, SoundEvent> named(String name) {
+        return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));
     }
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {

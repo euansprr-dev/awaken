@@ -1,0 +1,841 @@
+<title>Made by Hand</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rokkitt:wght@500;700&family=Instrument+Sans:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column, with full-width workbench bands for the things you can try. Mason's yard palette:
+   limestone ground, slate ink, oak for the Mallet, the game's Signal blue for anything you can touch. */
+:root {
+  --bg: #e9ebe6; --paper: #f7f8f4; --bench: #dfe2db; --ink: #1d2428; --ink-2: #566167; --rule: #cdd1ca;
+  --oak: #875626; --signal: #1a6aad; --moss: #41703a; --brick: #ad3f2a; --chip: #ffffff;
+  --display: "Rokkitt", "Rockwell", Georgia, serif;
+  --body: "Instrument Sans", "Avenir Next", "Segoe UI", sans-serif;
+  --mono: "DM Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13171a; --paper: #1b2125; --bench: #20272c; --ink: #e6e9e5; --ink-2: #9ca7ac; --rule: #303940;
+  --oak: #d6a66f; --signal: #7fc3ff; --moss: #82bb73; --brick: #e77f68; --chip: #262e33; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #13171a; --paper: #1b2125; --bench: #20272c; --ink: #e6e9e5; --ink-2: #9ca7ac; --rule: #303940;
+  --oak: #d6a66f; --signal: #7fc3ff; --moss: #82bb73; --brick: #e77f68; --chip: #262e33; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font: 17px/1.58 var(--body); }
+.col { max-width: 720px; margin-inline: auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+.band { background: var(--bench); border-block: 1px solid var(--rule); margin-block: 26px; }
+.band-in { max-width: 1040px; margin-inline: auto; padding-block: 22px 26px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); line-height: 1.12; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(3rem, 9vw, 5rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 2rem; font-weight: 700; margin-top: 54px; }
+h3 { font-size: 1.36rem; font-weight: 700; margin-top: 30px; }
+p { margin: 10px 0; }
+a { color: var(--signal); }
+ul { padding-left: 1.15em; margin: 10px 0; }
+li { margin: 5px 0; }
+.eyebrow { font: 500 0.74rem/1.3 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--oak); }
+.lede { font-size: 1.2rem; line-height: 1.5; }
+.small { font-size: 0.9rem; color: var(--ink-2); }
+.label { font: 500 0.72rem/1.3 var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-2); }
+header.top { padding-block: 34px 6px; }
+.nav { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px; font: 400 0.82rem/1.4 var(--mono); }
+.quote { border-left: 3px solid var(--oak); padding: 2px 0 2px 14px; color: var(--ink-2); font-style: italic; margin: 14px 0; }
+.tw { overflow-x: auto; margin: 12px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; line-height: 1.42; }
+th { text-align: left; font: 500 0.72rem/1.3 var(--mono); letter-spacing: 0.04em; color: var(--ink-2); }
+th, td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.tag { display: inline-block; font: 500 0.68rem/1.5 var(--mono); padding: 0 6px; border: 1px solid currentColor; border-radius: 3px; }
+.tag.v { color: var(--moss); } .tag.n { color: var(--brick); } .tag.p { color: var(--signal); }
+.three { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 14px 0; }
+.three > div { min-width: 0; border-top: 3px solid var(--rule); padding-top: 8px; }
+.three > div.good { border-top-color: var(--moss); } .three > div.bad { border-top-color: var(--brick); } .three > div.mid { border-top-color: var(--oak); }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; margin: 12px 0; align-items: baseline; }
+kbd { font: 500 0.82rem/1 var(--mono); border: 1px solid var(--rule); border-bottom-width: 3px; background: var(--chip); padding: 4px 8px; border-radius: 4px; white-space: nowrap; }
+
+/* workbench */
+.work { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .work { grid-template-columns: 1fr; } }
+.work h3 { margin-top: 0; }
+canvas.scene { width: 100%; height: auto; display: block; border-radius: 4px; background: var(--paper); touch-action: manipulation; cursor: crosshair; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 400 0.82rem/1 var(--body); color: var(--ink); background: var(--chip); border: 1px solid var(--rule); border-radius: 5px; padding: 5px 8px 5px 5px; cursor: pointer; }
+.chip.plain { padding-left: 9px; }
+.chip img { width: 22px; height: 22px; image-rendering: pixelated; border-radius: 2px; display: block; }
+.chip:hover, .chip:focus-visible { border-color: var(--signal); outline: none; }
+.chip.on { border-color: var(--signal); box-shadow: inset 0 0 0 1px var(--signal); }
+.row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 10px 0; }
+.status { font-size: 0.92rem; min-height: 2.8em; }
+button.btn { font: 600 0.86rem/1 var(--body); padding: 8px 12px; border-radius: 5px; border: 1px solid var(--rule); background: var(--chip); color: var(--ink); cursor: pointer; }
+button.btn:hover, button.btn:focus-visible { border-color: var(--signal); outline: none; }
+label.check { display: inline-flex; gap: 6px; align-items: center; font-size: 0.9rem; }
+select, input[type=range] { accent-color: var(--signal); }
+select { font: 400 0.88rem var(--body); padding: 5px; color: var(--ink); background: var(--chip); border: 1px solid var(--rule); border-radius: 4px; }
+
+/* levels */
+.lv-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 10px; }
+.lv-out > div { min-width: 0; background: var(--paper); padding: 10px 12px; border-radius: 4px; }
+.lv-out b { font-family: var(--display); font-size: 1.2rem; display: block; }
+.lv-n { font: 700 2.4rem/1 var(--display); color: var(--oak); font-variant-numeric: tabular-nums; }
+
+/* gallery */
+.gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(218px, 1fr)); gap: 12px; }
+.plant { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 10px; background: var(--paper); border-radius: 4px; padding: 10px; }
+.plant canvas { width: 72px; height: 96px; image-rendering: pixelated; border-radius: 3px; display: block; }
+.plant b { font-family: var(--display); font-size: 1.1rem; line-height: 1.1; display: block; }
+.plant p { font-size: 0.82rem; line-height: 1.36; margin: 3px 0 0; }
+.plant .eat { color: var(--ink-2); }
+.plant .vote { grid-column: 1 / -1; display: flex; gap: 6px; }
+.vote button { flex: 1; font: 600 0.78rem/1 var(--body); padding: 6px 4px; border: 1px solid var(--rule); background: var(--chip); color: var(--ink); border-radius: 4px; cursor: pointer; }
+.vote button.on.love { background: var(--moss); border-color: var(--moss); color: var(--paper); }
+.vote button.on.meh { background: var(--brick); border-color: var(--brick); color: var(--paper); }
+.vote button:focus-visible { outline: 2px solid var(--signal); }
+
+/* boss pieces */
+.pieces { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 4px 20px; margin: 10px 0; }
+.pieces div { border-bottom: 1px solid var(--rule); padding: 7px 0; font-size: 0.93rem; min-width: 0; }
+.pieces b { font-family: var(--display); font-size: 1.08rem; }
+
+/* walkthrough */
+.walk { margin: 16px 0; }
+.walk h3 { margin-top: 0; }
+.ba { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; margin-top: 6px; }
+.ba > div { min-width: 0; font-size: 0.94rem; }
+.ba ol { padding-left: 1.2em; margin: 6px 0; }
+
+/* decisions */
+.dec { border-top: 1px solid var(--rule); padding: 16px 0; }
+.dec h3 { margin: 0; font-size: 1.22rem; }
+.dec .rec { font-size: 0.92rem; color: var(--ink-2); }
+.dec .choose { display: flex; flex-wrap: wrap; gap: 7px; margin: 9px 0 7px; }
+.dec .choose button { font: 600 0.86rem/1.2 var(--body); text-align: left; padding: 7px 11px; border-radius: 5px; border: 1px solid var(--rule); background: var(--chip); color: var(--ink); cursor: pointer; }
+.dec .choose button:focus-visible { outline: 2px solid var(--signal); }
+.dec .choose button.on { background: var(--signal); border-color: var(--signal); color: var(--paper); }
+textarea { width: 100%; box-sizing: border-box; font: 400 0.92rem/1.4 var(--body); padding: 7px 9px; color: var(--ink); background: var(--chip); border: 1px solid var(--rule); border-radius: 5px; min-height: 38px; resize: vertical; }
+.saved { font: 400 0.76rem var(--mono); color: var(--ink-2); }
+.grp { font: 700 1.05rem/1.2 var(--display); color: var(--oak); margin-top: 22px; }
+
+details.eng { border-top: 1px solid var(--rule); padding: 9px 0; }
+details.eng summary { cursor: pointer; font: 700 1.14rem/1.3 var(--display); }
+details.eng h3 { font-size: 1.05rem; margin-top: 16px; }
+details.eng { font-size: 0.93rem; }
+footer { padding-block: 40px 60px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="col">
+<header class="top">
+  <p class="eyebrow">AWAKEN · plan for your yes · nothing built yet</p>
+  <h1>Made by Hand</h1>
+  <p class="lede">A new way to build in AWAKEN, where you do everything yourself and every hit feels as good as a fight. Rules first: nothing builds, grows or picks itself. No menus full of parts.</p>
+  <nav class="nav" aria-label="Sections">
+    <a href="#understood">What I understood</a><a href="#today">Today</a><a href="#ways">Three ways</a><a href="#mallet">Mallet</a><a href="#moves">Moves</a><a href="#hang">Hang</a><a href="#furn">Furniture</a><a href="#boss">Boss pieces</a><a href="#kin">Kin</a><a href="#garden">Garden</a><a href="#ride">Riding Along</a><a href="#walk">Before and after</a><a href="#stages">Stages</a><a href="#dec">Your decisions</a><a href="#eng">Engineering</a>
+  </nav>
+</header>
+
+<h2 style="margin-top:30px">In one minute</h2>
+<ul>
+  <li><b>The Mallet</b> is the one tool. Hit the part of a block you want to knock away. Hold Sneak and right click to try other looks on it. One click sets it on every touching block of that kind.</li>
+  <li><b>Hundreds of new looks.</b> Tap any block anywhere and the Mallet learns it, even in Carillon and inside gates, whose blocks you can't normally get.</li>
+  <li><b>Four moves that level up:</b> Lift, Raise, Hang and the Mallet itself. They work anywhere, including for getting around. They use no power slot.</li>
+  <li><b>Hang</b> ropes, chains, lanterns and cloth between any two points, and climb them.</li>
+  <li><b>Furniture from one recipe</b>, and <b>a piece from every boss</b>. <b>Kin</b> move into homes you make for them.</li>
+  <li><b>A garden full of plants Minecraft doesn't have</b>, grown exactly the way you grow wheat. You mark which ones you want.</li>
+  <li><b>Riding Along</b> lets someone who can't fight come into any gate and be useful, without being able to die.</li>
+</ul>
+<p class="small">Out, as you said: the Dressing Brush, houses that grow, Rooms That Aren't There, the Walking Hearth, crop chores, and the Home Bell.</p>
+
+<h2 id="understood">What I understood</h2>
+<p>You've made the fighting and the gates feel better than anything in Minecraft, and the other half of the game hasn't had that attention. You want to make a home that's yours, in a cinematic way, with far more options than vanilla. You want it simple, unlike architecture mods. And you want someone who isn't good at fighting to have just as good a time.</p>
+<p>The rule I took from your last two messages: <b>the fun is in doing it yourself.</b> Anything that does it for you makes it worse. So every idea here makes your own actions feel better or gives you more to choose from.</p>
+<div class="three">
+  <div class="good"><p class="label">Strong result</p><p>Ten minutes after making a Mallet you've tried three looks on a wall, knocked an arch into a doorway, strung a canopy over it and climbed the rope. You think "I made that".</p></div>
+  <div class="mid"><p class="label">Weak result</p><p>It all works but feels like operating a tool. Blocks pop into place, the dust looks vanilla, menus appear.</p></div>
+  <div class="bad"><p class="label">Unacceptable</p><p>The game builds or harvests for you. A wheel of forty options. Lost or doubled blocks. A finished house that drops frames. Griefing on a server. Skipping the mining.</p></div>
+</div>
+
+<h2 id="today">What the game does today</h2>
+<p>I read the real code. The biggest finding surprised me: <b>most of what you're asking for has already been drawn, and players just can't reach it.</b></p>
+<div class="tw"><table>
+<tr><th>Found</th><th>What it means</th></tr>
+<tr><td><span class="tag v">verified</span> Carillon has about 50 finished pieces: benches, market tables, shelves, casks, awnings, braziers, scarecrows, plaster, timber, slate. <b>Only 5 have an item.</b></td><td>The best furniture in the game can't be picked up or crafted.</td></tr>
+<tr><td><span class="tag v">verified</span> There are 224 custom full blocks. <b>101 belong to gates</b>, where only two construct blocks can be broken.</td><td>A huge set of stone, tile and wood looks exists that no survival player can use.</td></tr>
+<tr><td><span class="tag v">verified</span> The Hearth counts stairs as seats and a post with a carpet as a table.</td><td>Furniture is a workaround. You can't sit on anything.</td></tr>
+<tr><td><span class="tag v">verified</span> Cracked stone brick takes four steps and two furnace runs. Then you replace each block by hand.</td><td>Trying a look on a wall costs far too much.</td></tr>
+<tr><td><span class="tag v">verified</span> Ropes only exist as straight, block-aligned bars placed by the city. No code reads the "you can go along this line" tag.</td><td>Hanging and climbing need building properly.</td></tr>
+<tr><td><span class="tag v">verified</span> Each extra player adds 35% more monsters and 50% more Lord health. Dying costs your Satchel.</td><td>A partner who can't fight loses out and makes it harder for you.</td></tr>
+<tr><td><span class="tag v">verified</span> The shipped Sodium has the exact path a shaped block needs. Lifting and flying blocks, crash-safe terrain records and sagging lantern strings already exist.</td><td>The risky parts mostly reuse things that already ship.</td></tr>
+</table></div>
+
+<h2 id="ways">Three ways to do it</h2>
+<div class="three">
+  <div class="mid"><p class="label">Small</p><p><b>Just a Mallet and the freed kit.</b> Cheap and well worth doing, but it's vanilla with nicer parts, which you've told me isn't enough.</p></div>
+  <div class="good"><p class="label">Recommended</p><p><b>One tool, four moves.</b> Everything goes through the Mallet in your hand. Real blocks wherever one exists. Builds on what ships already. The small version is its first three stages.</p></div>
+  <div class="bad"><p class="label">Too far</p><p><b>A free-form building engine.</b> It stops feeling like Minecraft, brings back the complexity you dislike, and breaks room reading, movement and Far Sight.</p></div>
+</div>
+</div>
+
+<div class="band" id="mallet"><div class="band-in">
+  <p class="eyebrow">Try it · mockup in your browser, using the game's real textures</p>
+  <div class="work">
+    <div><canvas class="scene" id="wall" width="1240" height="860" aria-label="A stone wall you can reshape by clicking"></canvas></div>
+    <div>
+      <h3>The Mallet</h3>
+      <p class="small"><b>Click</b> the wall. Top of a block: step, bevel, round. Bottom: undercut, arch. Middle: slab. <b>Hover a look</b> below to try it on. <b>Click a look</b> to set it.</p>
+      <div class="chips" id="lookchips"></div>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="runbox" checked> Every touching block of this kind</label>
+        <select id="runlv" aria-label="Level"><option value="16">Level 1: up to 16</option><option value="32">Level 2: up to 32</option><option value="64">Level 3: up to 64</option></select>
+      </div>
+      <div class="row"><button class="btn" id="tapc">Right click: same look again</button><button class="btn" id="undo">Sneak and left click: undo</button></div>
+      <p class="status" id="wallsay" role="status"></p>
+    </div>
+  </div>
+</div></div>
+
+<div class="col">
+<h3 style="margin-top:0">How it works in the game</h3>
+<p>While the Mallet is in your hand, your power icons swap to building moves. Scroll off it and your powers are back. <b>That's the answer to your slots question:</b> it uses no slot at all.</p>
+<div class="keys">
+  <kbd>Right click</kbd><span><b>Knock.</b> Hit the part you want gone. Hit again for the next shape. Hit edges, corners, faces. There is no list.</span>
+  <kbd>Sneak + right click</kbd><span><b>Looks.</b> A small ring appears while you hold Sneak. Moving over one shows it on the block, only on your screen. Click to set it, or let go of Sneak and nothing changes.</span>
+  <kbd>Sneak + scroll</kbd><span><b>Change what right click does.</b> Knock, or put the look you're carrying on the next block. Your power keys never change: Z X C V and R stay your powers with the Mallet out.</span>
+  <kbd>Middle click</kbd><span>Copy the look of anything you can see.</span>
+  <kbd>Sneak + left click</kbd><span><b>Undo.</b> Up to 32 steps back.</span>
+</div>
+<p><b>Your "one stone into another" idea</b> is exactly that ring. Ordinary stone, wood and clay looks are free, instantly, and become the real block. Before you commit, you can see the whole run change on your screen, so a wall and the hill behind it can't surprise you.</p>
+<p><b>Custom blocks work the same as vanilla ones.</b> The Mallet reads a block's own textures, so any full block in the game works, and any you add later. A test will fail the build if a new block hasn't been sorted.</p>
+<p><b>Learning looks.</b> Tap any block in the world with the Mallet and it learns that look, without changing the block. Walk Carillon tapping the walls you like. Tap the tiles in a gate. Learned looks go on as a skin: the block stays what it was underneath, so nobody can use this to make rare materials and nothing in the economy changes. The Journal keeps a grid of what you've found, as a record.</p>
+<p class="small">At higher levels: change a single face of a block, lean a block by a few degrees, or sink it partway in.</p>
+</div>
+
+<div class="band" id="moves"><div class="band-in">
+  <p class="eyebrow">The four moves, level by level</p>
+  <div class="row"><span class="lv-n" id="lvn">1</span><input type="range" id="lv" min="1" max="10" value="1" style="flex:1;min-width:180px" aria-label="Shaping level"></div>
+  <div class="lv-out">
+    <div><b>Mallet</b><span id="lv0"></span></div><div><b>Hang</b><span id="lv1"></span></div><div><b>Lift</b><span id="lv2"></span></div><div><b>Raise</b><span id="lv3"></span></div>
+  </div>
+  <p class="small" style="margin-top:12px">First numbers, tuned by playing. You level up by building things, and most of all when the Hearth reads a room you made as Fine or Grand. One quiet line tells you, the way the Ascent does.</p>
+</div></div>
+
+<div class="col">
+<h3 style="margin-top:0">Lift</h3>
+<p>Set the Mallet to Lift, hold right click and sweep your view across blocks. They light up. Let go and they tear out and hang in front of you as one piece, with dust and a crack of stone. Scroll to turn it. Right click slams it down. Left click throws it. You can shift a finished wall two blocks left, or rip a slab off a hill. Out in the world it works just as well.</p>
+<h3>Raise</h3>
+<p>Set the Mallet to Raise, aim at the ground and hold right click. Stone climbs out of it for as long as you hold. Sweep sideways and you get a wall. <b>Do it under your own feet and it throws you into the air</b>, which is your movement use. Bridge a gap, get onto a roof, block a charge.</p>
+<h3>Balance</h3>
+<p>Your powers stay on their keys with the Mallet out. In a fight the trade is that your hand holds a Mallet and not your weapon. Lift and Raise spend energy. Thrown blocks hit softly, and never as hard as a power of your rank. Levels keep you from being overpowered early.</p>
+</div>
+
+<div class="band" id="hang"><div class="band-in">
+  <p class="eyebrow">Try it · click two pegs, or four for cloth</p>
+  <div class="work">
+    <div><canvas class="scene" id="ropes" width="1240" height="760" aria-label="A cottage with pegs you can string ropes between"></canvas></div>
+    <div>
+      <h3>Hang</h3>
+      <p class="small">Pick a kind, then click pegs. Press <b>Climb it</b> to see someone go along your last line.</p>
+      <div class="chips" id="hangchips"></div>
+      <div class="row"><button class="btn" id="climb">Climb it</button><button class="btn" id="night">Night</button><button class="btn" id="clearh">Clear</button></div>
+      <p class="status" id="hangsay" role="status"></p>
+      <p class="small">In the game you set the Mallet to Hang and right click one spot and then another. The ring picks the kind. The ends get a small peg that can go on any solid face.</p>
+    </div>
+  </div>
+</div></div>
+
+<div class="col">
+<ul>
+  <li><b>Climbing:</b> jump into a line to grab it. Go along it hand over hand. A sloped line slides you down, and sneaking brakes. A steep line climbs like a ladder. Jump to let go and fly off with your speed.</li>
+  <li><b>Cloth</b> has 3 to 6 corners, moves in the wind, gives real shade, keeps the rain off and bounces you softly if you land on it.</li>
+  <li><b>Lanterns give real light.</b> Your ropes stay where you hang them, so a cave or a gorge can get your own way across.</li>
+  <li>Later: rope bridges you can walk, hammocks, baskets hanging off a line.</li>
+</ul>
+
+<h2 id="furn">Furniture</h2>
+<p>No forty recipes. <b>One recipe makes Stock.</b> Put a Stock block down, Sneak and right click it, pick what it should be, and knock it into shape.</p>
+<ul>
+  <li>Carillon's whole kit comes free: benches, market tables, shelves, casks, awnings, braziers. Tap one in the city to learn it.</li>
+  <li>About 40 new home pieces: chairs, tables, cabinets, four-posters, lamps, chandeliers, rugs, curtains, stoves, tubs.</li>
+  <li><b>Tap a part to change that part.</b> Hit the back of a chair and it becomes a different back. Hit the legs and they change. The ring changes the wood and the cloth. Every chair ends up one you designed.</li>
+  <li>You can actually sit down, and the Hearth reads all of it.</li>
+</ul>
+
+<h2 id="boss">Boss pieces</h2>
+<p>Every boss leaves one piece of furniture the first time you kill it, cut from its real body, with one small bit of life. A home becomes the story of what you've killed. I'll make three and show you before doing the other 38.</p>
+<div class="pieces">
+  <div><b>Hive Regent</b><br>Crown chandelier. It hums, and wax motes drift under it at night.</div>
+  <div><b>Gearwright Colossus</b><br>Table with an open clockwork top, gears slowly turning.</div>
+  <div><b>Bell Warden</b><br>A seat inside a cracked bell. It rings once when you sit.</div>
+  <div><b>Glass Serpent</b><br>A coiled glass arch that bends the light through it.</div>
+  <div><b>Drowned Archivist</b><br>A bookcase that never stops dripping.</div>
+  <div><b>The Sleeper</b><br>A bed that breathes. You sleep very well in it.</div>
+  <div><b>Abbot of Frost</b><br>A font with its own tiny snowfall.</div>
+  <div><b>Sky Leviathan</b><br>Rib beams for a great hall roof.</div>
+</div>
+
+<h2 id="kin">Kin move in</h2>
+<p>A <b>Kin Door</b> goes wherever you want: a tiny door in a wall, a burrow in a bank, a perch under the eaves. When a kin comes home, it picks your door. You see a little light go on and hear it settling in. There's kin-sized furniture too: tiny beds, bowls, ladders. And <b>they use yours</b>: naps on the rug, sitting on your chairs, curled up by the fire. Old saves keep the homes they have.</p>
+</div>
+
+<div class="band" id="garden"><div class="band-in">
+  <p class="eyebrow">Your call · I've missed on farms twice, so mark each one</p>
+  <h3 style="margin-top:0">The Garden</h3>
+  <p style="max-width:68ch">You grow these exactly like wheat: plant, wait, pick. No chores and no new rules. The fun is that they're things nobody has seen in Minecraft, with shapes it doesn't have, and that <b>everything you grow does something silly or useful when you eat it</b>. Seeds come from exploring, gates and kin. One quiet rule: the more different things grow near each other, the better everything grows. No score and no list. Sketches below; Stage 6 starts with the six you like best.</p>
+  <div class="row"><button class="btn" id="gnight">Show at night</button><span class="saved" id="gcount"></span></div>
+  <div class="gal" id="gal"></div>
+  <p class="small" style="margin-top:12px">Also from Stock: raised beds, planters, hanging baskets on your lines, scarecrows you can dress in your own armour. Burrowbuns and Mossbacks keep working vanilla crops and leave all of these alone.</p>
+</div></div>
+
+<div class="col">
+<h2 id="ride">Riding Along</h2>
+<p>Both of you switch it on at the gate door or in the K menu, and off the same way, never mid-fight.</p>
+<ul>
+  <li>The rider keeps every power and weapon. Their hits count for 40%, so they help without carrying.</li>
+  <li><b>They can't go down.</b> A killing blow folds them into your shadow for 4 seconds, then they spring back out at half health.</li>
+  <li>The gate and the Lord don't get harder for having them along. Monsters don't pick them first, so they can't be used as a free shield.</li>
+  <li>They get their own loot and boss pieces, so their half of the home fills up too. Half XP, and no rank credit: Reassessments have to be done for real.</li>
+  <li>One rider per run. A thin thread of light shows the bond. Works anywhere within 48 blocks of each other, so the Wilds as well.</li>
+</ul>
+<p class="small">And everything else on this page is partner-friendly on purpose. Nothing in building or the garden needs fighting.</p>
+
+<h2 id="walk">Before and after</h2>
+<div class="walk"><h3>Ordinary: "this wall should be cracked brick"</h3><div class="ba">
+  <div><p class="label">Today</p><ol><li>Mine cobble</li><li>Smelt to stone</li><li>Craft to brick</li><li>Smelt to cracked</li><li>Break and replace every block</li></ol></div>
+  <div><p class="label">After</p><ol><li>Sneak and right click the wall</li><li>Roll over Cracked and see it</li><li>Right click</li><li>The whole wall ripples over</li></ol><p class="small">Why less work: no furnace, no replacing.</p></div>
+</div></div>
+<div class="walk"><h3>The disappointing one: "I want to furnish this room"</h3><div class="ba">
+  <div><p class="label">Today</p><ol><li>Place stairs and pretend they're chairs</li><li>Place a post and a carpet and pretend it's a table</li><li>See a real bench in Carillon that you can't get</li></ol></div>
+  <div><p class="label">After</p><ol><li>Tap the bench in Carillon</li><li>Back home, place Stock</li><li>Pick the bench, change its wood</li><li>Sit on it</li></ol></div>
+</div></div>
+<div class="walk"><h3>The hard one: "change all of this stone" on a wall built into a hillside</h3><div class="ba">
+  <div><p class="label">Today</p><p>Not possible.</p></div>
+  <div><p class="label">After</p><p>The preview shows on your screen exactly which blocks would change, up to your level's limit. If it's reaching into the hill you let go, and nothing has happened. If you set it by mistake, R brings it back.</p></div>
+</div></div>
+<div class="walk"><h3>When something's wrong: logging out mid-Lift, or a block that can't take it</h3><div class="ba">
+  <div><p class="label">The rule</p><p>Nothing is ever lost. Blocks you were carrying go back where they came from, or into your bag, or at your feet. A block that can't be shaped says so in one line. If a later update removes a look, the block shows what it really is underneath.</p></div>
+  <div><p class="label">Co-op: your partner takes a killing blow</p><p>Today they lose their Satchel and are out. After: they vanish into your shadow, you keep fighting, and four seconds later they're back.</p></div>
+</div></div>
+<p class="small">These are written walkthroughs of designed behaviour. None of this has been built or run, including the demos above, which are browser mockups.</p>
+
+<h2 id="stages">Stages</h2>
+<p>Each stage ends somewhere you can play. Everything is behind a switch, and with it off a shaped block just shows as a plain block of its look.</p>
+<div class="tw"><table>
+<tr><th>Stage</th><th>What you get</th><th>Stops for you to</th><th>Agent hours</th></tr>
+<tr><td>0 Proof</td><td>Knock and Looks, on three materials including a custom one</td><td><b>Play for ten minutes. If the feel isn't there, we stop and rethink.</b></td><td>3 to 6</td></tr>
+<tr><td>1 Mallet</td><td>Every shape, Look learning, whole runs, undo, faces, tilt, sound and feel</td><td>Restyle a real wall</td><td>8 to 12</td></tr>
+<tr><td>2 Stock</td><td>One recipe, Carillon's kit freed, starter furniture, sitting</td><td>Furnish a room</td><td>10 to 16</td></tr>
+<tr><td>3 Hang</td><td>Lines, cloth, climbing, shade</td><td>Hang a canopy and climb a rope</td><td>8 to 14</td></tr>
+<tr><td>4 Lift and Raise</td><td>The moves and levels, in the world</td><td>Use them outdoors</td><td>8 to 12</td></tr>
+<tr><td>5 Boss and Kin</td><td>Three boss pilots, then the rest; Kin Doors</td><td>Judge the three</td><td>10 to 18</td></tr>
+<tr><td>6 Garden</td><td>Six plants you liked most, then the rest you marked</td><td>Judge the six</td><td>10 to 18</td></tr>
+<tr><td>A Riding Along</td><td>The bond, in parallel any time</td><td>Play a gate with someone</td><td>4 to 8</td></tr>
+</table></div>
+<p class="small">About 60 to 100 agent hours in all, scaled from how long Armour Forge and Enchanting took. Rough. CI time, your play time and boss-piece art rounds don't compress. Frame cost isn't measured yet: tilted blocks and cloth are the ones to watch on your 4K screen, and Stage 0 measures the shaped block first.</p>
+<p class="small">Overlaps to agree when each stage starts: Gates as Worlds (gate rules and party scaling), Powers in Full Voice (Terrain Rip stays distinct), Forged Pick (ore rule), Fights That Read You (bosses ignoring the rider).</p>
+
+<h2 id="dec">Your decisions</h2>
+<p>My recommendation is first on each. Answers save as you click. If you agree with everything, just tell me in chat.</p>
+<div id="decs"></div>
+<div class="dec"><h3>Anything else?</h3><textarea id="general" aria-label="Anything else" placeholder="What's missing, what's wrong, what you'd love"></textarea><p class="saved" id="general-s"></p></div>
+
+<h2 id="eng">Engineering detail</h2>
+<p class="small">The full working: audit, root causes, research with sources, contracts, saved data, failure cases, tests. Same text as <code>docs/made-by-hand/PLAN.md</code>.</p>
+<details class="eng"><summary>1. Understanding and success contract</summary>
+<p><b>The job.</b> Spend hours making a home that is entirely yours and looks like nothing else in Minecraft, with the same moment-to-moment joy the fighting now has. A partner who doesn't try hard at games has just as good a time.</p>
+<p><b>The pain (verified, section 2).</b> Building is vanilla clicking. The game's best-looking pieces can't be had. One look can take a chain of crafting steps. Furniture means stairs as seats and a post with a carpet as a table. Nothing can be strung between two points. Farms have nothing new to grow. A partner who can't fight loses their Satchel when they die and makes the gate harder for you by coming along.</p>
+<p><b>Euan's rulings, in order given.</b></p>
+<ul><li>Nothing builds or grows on its own. "Automating it makes it less fun." The Dressing Brush and the self-growing house are out.</li><li>No architecture-mod complexity. Simple, fun, a whole new way to build, not vanilla with helpers.</li><li>Mallet: yes, must work on custom blocks, must change one stone look to another without a ten-step process, with an easy way to set that look and change many blocks of that kind at once.</li><li>Moves: yes, not limited to home, usable outside for movement, ripping out a hill is fine, levelling up so you aren't overpowered at once.</li><li>Hang: yes, canopies and ropes, and you can climb them.</li><li>Bosses give furniture: yes. Kin move in: yes.</li><li>Riding Along: yes, preferred over the Home Bell. Can be switched on and off, keeps attacking and powers, effectively can't die, must stay balanced.</li><li>Rooms That Aren't There and the Walking Hearth: no.</li><li>Farms: every idea so far missed. Hands-on chores add complexity and automatic growth takes the fun away. He wants "variation and new custom things" and more options, with prettier farms kept but never a task list.</li></ul>
+<p><b>What strong, weak and unacceptable look like.</b></p>
+<ul><li>Strong: within ten minutes of making a Mallet someone has tried three looks on a wall, set one, knocked an arch into a doorway, strung a canopy over it and climbed the rope. Their reaction is "I made that".</li><li>Weak: it all works but feels like operating a tool. Blocks pop, particles look vanilla, menus appear.</li><li>Unacceptable: the game builds or harvests for you. A wheel of forty options. Lost or duplicated blocks. Frame drops from a finished house. Grief on a shared server. Skipping the mining game.</li></ul>
+<p><b>Outcome contract.</b></p>
+<div class="tw"><table><tr><th>Area</th><th>Promise</th></tr><tr><td>Usefulness</td><td>Change a block's look in one hold and one click, against a chain of up to five crafting steps today</td></tr><tr><td>Correctness</td><td>A knock or a look lands on the block you aimed at, and what you saw in the preview is what you get</td></tr><tr><td>Effort</td><td>No crafting chains for looks, no scaffolding, no rebuilding a wall to move it, one recipe for all furniture</td></tr><tr><td>Responsiveness</td><td>Knock and look show on your screen the same tick; the server confirms within a round trip</td></tr><tr><td>Control</td><td>Nothing changes unless you did it; every Mallet and Lift action can be undone</td></tr><tr><td>Reliability</td><td>Nothing is ever lost: a failed action leaves the world as it was and tells you why in one line</td></tr><tr><td>Cost</td><td>A finished shaped house costs the same each frame as a normal one once meshed</td></tr></table></div>
+<p><b>Non-goals.</b> Rooms That Aren't There, the Walking Hearth, the Dressing Brush, schematic paste, crop mini-games, machines that farm or build, new Hearth tiers, Home Bell.</p>
+<p><b>Must not regress.</b> Mining and the Forged Pick's economy, the Hearth's room reading, Runner and Ascent movement, ward and gate protection, Far Sight's distant look, frame rate in existing builds.</p>
+</details>
+<details class="eng"><summary>2. Verified audit</summary>
+<div class="tw"><table><tr><th>Component</th><th>What it really does</th><th>Evidence</th><th>Consequence</th><th>Call</th></tr><tr><td>Carillon kit</td><td>About 50 finished pieces: bench, market table, goods shelf, cask, crate, awning, signboard, brazier, wall lantern, scarecrow, plaster, timber, ashlar, slate and clay tiles. 5 have items</td><td><code>city/kit/*</code>, <code>assets/awaken/items/</code> (wall_ivy, flower_box, drainpipe, trellis, hoist_beam)</td><td>The best furniture in the game is out of reach</td><td>Extend: release through Stock</td></tr><tr><td>Custom full blocks</td><td>224 cube blocks. 101 belong to gates, where only two construct blocks can be broken. 19 have neither loot nor recipe</td><td>Model parents counted; <code>gate_breakable.json</code>; <code>GateEvents.onBreak</code></td><td>A huge palette exists that no survival player can use</td><td>Extend: Looks</td></tr><tr><td>Hearth furniture reading</td><td>SEAT is a stair with room to sit, TABLE a post with a carpet or slab</td><td><code>hearth/room/Furniture.java</code></td><td>Furniture is a workaround today; nothing to sit on</td><td>Extend with tags</td></tr><tr><td>Hearth room reading</td><td>Reads materials per block state, cached per block</td><td><code>hearth/room/Materials.java</code></td><td>A shaped block would read as "other" unless taught</td><td>Extend</td></tr><tr><td>Power protection</td><td><code>Constructs.mayChange</code>: never inside another's Hearth, 48 blocks</td><td><code>powers/Constructs.java</code></td><td>Reuse as the one permission check</td><td>Keep</td></tr><tr><td>Temporary terrain</td><td><code>TerrainLedger</code> lifts blocks and restores them, survives crashes, never overwrites</td><td><code>powers/TerrainLedger.java</code></td><td>The safety pattern for Lift already exists</td><td>Reuse</td></tr><tr><td>Flying blocks</td><td>Server-moved block displays</td><td><code>powers/FlyingBlocks.java</code></td><td>Held pieces for Lift already have a proven body</td><td>Reuse</td></tr><tr><td>Block model wrapping</td><td><code>DelegateBlockStateModel</code> with <code>collectParts(level, pos, ...)</code>, shipped under Sodium</td><td><code>ground/client/SeamlessModel</code>, <code>terrain/client/WavingModel</code></td><td>A shaped model can use the same door</td><td>Reuse</td></tr><tr><td>Model data in Sodium</td><td>The shipped jar's <code>LevelSliceMixin</code> has <code>getModelData(BlockPos)</code></td><td><code>javap</code> on <code>sodium-neoforge-0.9.3-beta.1+mc26.3</code></td><td>Supported path for per-block data on meshing threads. Not run</td><td>Investigate in Stage 0</td></tr><tr><td>Strung lights</td><td><code>CityFestoons</code> draws sagging lantern strings with custom geometry, built once</td><td><code>citizens/client/CityFestoons.java</code></td><td>Rendering path for lines exists</td><td>Reuse</td></tr><tr><td>Hang line block</td><td>Axis-aligned bar, sag 0 to 2, no item, placed by the city and a settler routine</td><td><code>city/kit/StreetBlocks.HangLine</code>, <code>hearth/settle/Ropes</code></td><td>Can't go at an angle or be player-made</td><td>Replace for players</td></tr><tr><td><code>#awaken:runner_lines</code></td><td>No Java outside tests reads it. The block comment says the runner catches its collision top</td><td>grep</td><td>"Climb a line" is not a real system yet</td><td>Build</td></tr><tr><td>Ascent states</td><td>TETHER, ZIP, CARRY, GLIDE, SOAR with server checks; new ordinals only at the end</td><td>SPEC §17</td><td>Line climbing can be one more state</td><td>Extend</td></tr><tr><td>Terrain powers</td><td>Terrain Rip, Collapse, Architect constructs are temporary and do damage</td><td><code>KineticPowers</code>, <code>Constructs</code></td><td>Moves must be distinct: real, permanent, no real damage</td><td>Keep apart</td></tr><tr><td>Power keys</td><td>Z X C V, R, read in <code>ClientCasting</code></td><td><code>core/client/AwakenKeys</code>, <code>powers/client/ClientCasting</code></td><td>Left alone: every Mallet control is on the mouse, and powers stay live with the Mallet out</td><td>Keep</td></tr><tr><td>Kin nooks</td><td>The game picks each kin's spot by scan</td><td><code>kin/KinHome.nookFor</code></td><td>Player can't choose where a kin lives</td><td>Extend</td></tr><tr><td>Kin automation</td><td>Burrowbuns harvest and replant, Mossbacks speed crops</td><td><code>kin/KinHome</code></td><td>Approved in §43 for boring work; must not touch the new plants</td><td>Scope</td></tr><tr><td>Crops</td><td>Vanilla, wild rye, blackberries, herbs read from natural plants</td><td><code>ground/wild/WildBlocks</code>, <code>living/craft</code></td><td>Nothing new to farm at home</td><td>Build</td></tr><tr><td>Trophies</td><td>First boss kill always drops one, then 20%</td><td><code>hearth/trophy/Trophies</code></td><td>Drop hook for keepsakes exists</td><td>Extend</td></tr><tr><td>Boss bodies</td><td>41 bosses built from <code>kit/parts.py</code></td><td><code>docs/bosses/ROLLOUT.md</code></td><td>Furniture can be cut from the real bodies</td><td>Reuse</td></tr><tr><td>Gate party scaling</td><td>+35% monsters and +50% Lord health per extra player, shared rewards through <code>Parties.sharing</code></td><td>SPEC "Together"</td><td>Hook for Riding Along</td><td>Extend</td></tr><tr><td>Gate death</td><td><code>Runs.onDeath</code>, including a cheat-death path that already cancels death</td><td><code>gates/run/Runs.java</code></td><td>Clean place to add the fold</td><td>Extend</td></tr><tr><td>Goals</td><td>Every system registers its steps on the K menu</td><td><code>core/api/Goals.java</code></td><td>Light guidance has a home</td><td>Reuse</td></tr></table></div>
+</details>
+<details class="eng"><summary>3. The disappointment, traced</summary>
+<div class="tw"><table><tr><th>Case</th><th>Path today</th><th>Where it fails</th></tr><tr><td>Ordinary: cracked stone brick on a wall</td><td>Mine cobble, smelt to stone, craft to brick, smelt to cracked. Four steps and two furnace runs, then break and replace each block</td><td>The recipes are real; the cost is out of proportion to a decorative try</td></tr><tr><td>Disappointing: furnish a room</td><td>Bench, table and shelf exist as blocks with models. No item, no recipe. The room counts stairs as seats</td><td>Content exists but never reaches the player</td></tr><tr><td>Strong existing: Carillon</td><td>Authored kit, sagging festoons, laundry that moves</td><td>Proves the look is achievable; it's locked to the city generator</td></tr><tr><td>Ambiguous: "change all of this stone"</td><td>Doesn't exist. A wall and the hill behind it are the same block</td><td>Needs a preview and a cap so a hillside can't change by surprise</td></tr><tr><td>Failure: a block that can't be shaped</td><td>Doesn't exist</td><td>Needs a refusal in one plain line</td></tr><tr><td>Co-op: partner dies in a gate</td><td><code>Runs.onDeath</code> keeps half at best on Story, the party count raises monsters 35% and Lord health 50%</td><td>The non-fighter pays and makes it worse for you</td></tr></table></div>
+<p>Not reproduced in the running game: this is a reading of code, data and recipes. No play session was run for this plan.</p>
+</details>
+<details class="eng"><summary>4. Root causes</summary>
+<div class="tw"><table><tr><th>Symptom</th><th>Cause</th><th>Evidence</th><th>Against it</th><th>Smallest test</th><th>If fixed</th></tr><tr><td>Building feels vanilla</td><td>No new verbs exist</td><td>No building tool in the source</td><td>None found</td><td>Stage 0 Mallet</td><td>Biggest single gain</td></tr><tr><td>Not enough variety</td><td>Art exists but no route to it</td><td>45 kit pieces with no item, 101 gate blocks unbreakable</td><td>Some players may not want gate looks</td><td>Release through Looks</td><td>Hundreds of looks at once</td></tr><tr><td>Furniture is thin</td><td>Rooms were designed around vanilla stand-ins</td><td><code>Furniture.SEAT</code>, <code>TABLE</code></td><td>None</td><td>Stock plus chairs</td><td>High</td></tr><tr><td>Farms are dull</td><td>Nothing new to plant</td><td><code>WildBlocks</code> list</td><td>The earlier fixes added rules, and he rejected them</td><td>Gallery flags, six hero plants</td><td>Unknown until he sees them</td></tr><tr><td>Partner has a bad time</td><td>Death punishes, scaling punishes</td><td><code>Runs.onDeath</code>, SPEC "Together"</td><td>Story difficulty softens some</td><td>Riding Along</td><td>High for co-op</td></tr></table></div>
+</details>
+<details class="eng"><summary>5. Research</summary>
+<div class="tw"><table><tr><th>Question</th><th>Finding</th><th>Source</th><th>Limits</th><th>What it means here</th></tr><tr><td>Can one block wear any block's texture on NeoForge?</td><td>FramedBlocks offers more than sixty shapes that take the texture and tint of any full solid block, including modded ones</td><td><a href="https://craftdownunder.co/guides/mods/framedblocks">FramedBlocks guide</a></td><td>Doesn't say how it's built</td><td>The idea is proven in this ecosystem</td></tr><tr><td>Does the model-data route work with Sodium?</td><td>Craftmark says its retexturing uses the official NeoForge hooks Sodium-family renderers honour</td><td><a href="https://www.modpackindex.com/mod/158559/craftmark-data-driven-texture-variants">Craftmark</a></td><td>A mod's own claim</td><td>Backed by the direct <code>javap</code> check; still Not run here</td></tr><tr><td>What made the best modern building tool feel good?</td><td>Analysis of Ultrahand names simplicity among its biggest design principles</td><td><a href="https://www.zeldadungeon.net/informative-new-video-analyzes-how-nintendo-designed-ultrahand-for-tears-of-the-kingdom/">Zelda Dungeon on the GMTK analysis</a></td><td>Secondary source</td><td>No menus for the core verbs</td></tr><tr><td>Do ropes need a physics engine?</td><td>Light rope mods exist alongside full physics mods; Verlet cost depends on solver steps and collision</td><td><a href="https://www.modpackindex.com/mod/106898/leadphysics">LeadPhysics</a>, <a href="https://www.curseforge.com/minecraft/mc-mods/velthoric">Velthoric</a></td><td>None measured in AWAKEN</td><td>Start with drawn curves and wind; add simulation only if it looks dead</td></tr></table></div>
+</details>
+<details class="eng"><summary>6. Alternatives and recommendation</summary>
+<p><b>Targeted repair.</b> A Mallet item and released kit pieces, nothing else. Cheap and worthwhile, and it's Stages 0 to 2 of the recommended plan. It doesn't give the new way of building he asked for.</p>
+<p><b>Recommended: one set of hands.</b> The Mallet is the one tool and the door to every building move. Real blocks wherever a real block exists, a shaped block only where none does. Reuses protection, ledger, flying blocks, model wrapping, kit art.</p>
+<p><b>More ambitious: a free-form building engine.</b> Off-grid meshes and physics for everything. Rejected: it stops feeling like Minecraft, adds exactly the complexity he dislikes, and breaks room reading, movement and Far Sight.</p>
+<p>Sub-choices:</p>
+<ul><li><b>Shapes:</b> a registered block per material and shape would be thousands of blocks and could never cover future or other mods' blocks. A single shaped block that reads its look from data covers everything.</li><li><b>Lines:</b> blocks can't go at angles; an entity per line is heavy and fragile. Pegs (real blocks) own the lines and one client list draws them.</li><li><b>Where the moves live:</b> normal power slots force a trade with attacks, and every letter on the keyboard is already bound. Euan, 9 Nov: "the keybinds need to not interfere with the current power keybinds etc". So the moves live on the Mallet and on the mouse: right click does what the Mallet is set to, Sneak and scroll changes that. No power key changes meaning, ever. Decision 1, as changed.</li></ul>
+<p>What would change this: if Stage 0 shows knocking by aim is fiddly, shapes fall back to a plain cycle. If shaped blocks cost too much when meshing, they get limited to detail work and big walls stay real blocks.</p>
+</details>
+<details class="eng"><summary>7. Behaviour contracts</summary>
+<h3>7.1 The Mallet</h3>
+<p>Crafted early (two sticks and cobble) and a Hearth step on the K menu. Every control is on the mouse and only with the Mallet in your main hand; Z X C V and R stay your powers, with the Mallet out too.</p>
+<div class="tw"><table><tr><th>Control</th><th>What it does</th></tr><tr><td>Right click</td><td>What the Mallet is set to: Knock, or put the look on (Hang, Lift and Raise join in their stages)</td></tr><tr><td>Sneak and scroll</td><td>Change what right click does</td></tr><tr><td>Sneak and right click on a block</td><td>The Looks ring, open while Sneak is held</td></tr><tr><td>Middle click</td><td>Copy that block's look onto the Mallet and learn it</td></tr><tr><td>Sneak and left click</td><td>Undo</td></tr></table></div>
+<p><b>Knock (right click).</b> Trigger: a block in reach. Input: the block, the face and where on the face you hit. Aim picks the part: middle of a face takes the slab cut, an edge takes the step, then bevel, then round, then back to whole; a corner works the same way; under an edge gives the cove and arch. Output: the real vanilla or kit shape if one exists, otherwise a shaped block. Refused with one line if the block has a block entity, isn't a full cube, or the permission check fails.</p>
+<p><b>Looks (Sneak and right click).</b> A ring of looks for that kind of block opens round the crosshair. Moving over a look shows it on the block on your screen only. Left click sets it on that block. Right click sets it on every touching block of the same kind, up to the level's cap, rippling outward, and the preview shows exactly which ones first. Letting go changes nothing. Sneak while clicking changes one face (level 4). The look you set stays on the Mallet: with the Mallet set to Look, right click puts it on what you're aiming at, sneak and tap does the whole touching run. Pick block (middle click) copies a look from anything in the world.</p>
+<p><b>Undo (Sneak and left click).</b> The last 32 Mallet and Lift actions, per player, kept in memory. An undo that would overwrite something changed since is skipped with one line.</p>
+<p>Invariants: never changes a block the permission check refuses; preview is client-only; server re-reads the target and refuses if it changed; a knock never loses the block's identity.</p>
+<h3>7.2 Looks and the Look Book</h3>
+<ul><li><b>Ordinary looks</b> (all vanilla stone, wood, clay, concrete and colour families, from a generated table): free from the start. Swaps are real blocks.</li><li><b>Learned looks</b> (kit and custom blocks): tap any block with the Mallet, anywhere including Carillon and gates, to learn its look. The tap changes nothing there.</li><li><b>Skins:</b> a learned look goes on as a skin. The block keeps what it was underneath: it breaks and drops as its base, sounds like its look. So nobody can make rare materials, and recipes and the economy don't move.</li><li>Ore, lode hearts, Deepglass, metal blocks, gate function blocks and the like are never offered.</li><li>Every new block must be classified. A <code>looks_every_block_classified</code> test fails the build for a new full block with no decision, as <code>journey_ledger</code> does for items.</li><li>K menu, Journal, Looks: a grid of what you've found. A record, never orders. Members of a Hearth share theirs.</li></ul>
+<h3>7.3 Stock and furniture</h3>
+<p>One recipe: Stock, from planks and sticks. Place a Stock block, Sneak and right click it, pick a piece from what you know, knock it into shape. A starter set is known from the start; everything else is learned by tapping it in the world (Carillon's bench, a gate's lamp). Tapping a part of a piece changes that part (legs, top, back, cushion), and the ring changes its materials, in any wood or colour you know. About 40 new home pieces plus the freed Carillon kit. Breaking a piece returns Stock. Empty hand on a seat sits down. The room reading counts them through tags.</p>
+<p><b>Set Anything Down (Decision).</b> Sneak and right click with any item on a surface and it sits exactly there, scroll to turn. At most 4 in a block space, 64 in a chunk.</p>
+<p><b>First Light (Decision).</b> Light the first lamp in a room that has just reached Fine or better and the camera glides through it once, 5 seconds, any key skips, once per room, setting to turn off.</p>
+<h3>7.4 Hang (Mallet set to Hang)</h3>
+<p>Right click one spot, right click another, a line strings between them. The ring picks rope, chain, lanterns, bunting or vines while a line is pending. Keep clicking more corners to make cloth (3 to 6 corners); clicking the first corner again closes it. A real peg block goes on each end, on any solid face. Rope comes from the bag at one per 4 blocks; cloth at one per corner.</p>
+<p>Lines hang with a real sag and move with the wind. Lanterns give real light. Cloth casts real shade through invisible sky-blocking cells at its height, so it keeps the rain off too.</p>
+<p><b>Climbing.</b> Jump or sprint into a line to grab it. Forward and back to go along it hand over hand. A slope slides you down, sneak brakes. A steep line climbs like a ladder. Jump lets go with your momentum. Cloth gives a soft bounce when you land on it. New Ascent state LINE (ordinal at the end), predicted, the server checking the line exists. The arrival system counts it as LINE, so wards still hold.</p>
+<p>Break a peg or its wall and the line drops as an item.</p>
+<h3>7.5 Lift (Mallet set to Lift)</h3>
+<p>Hold right click and sweep the view across blocks. They light up, up to the level's count. Let go and they tear out and hang in front of you as one piece. Scroll turns it. Right click slams it down. Left click throws it, a small hit, and it lands as real blocks. Can't take block entities except shaped blocks, liquids, unbreakable blocks, sealed ward blocks, ore (Decision), gate or city blocks, or anything <code>Constructs.mayChange</code> refuses.</p>
+<h3>7.6 Raise (Mallet set to Raise)</h3>
+<p>Aim at natural ground or stone and hold right click: a column climbs, as far as your level. Sweep sideways to make a wall. Anything on top goes up with it, so raising under your own feet throws you up. Costs energy, no blocks (Decision). Sand comes up as sandstone. Refused on built things.</p>
+<h3>7.7 Levels</h3>
+<p>Shaping level 1 to 10, the same curve as Ascent mastery (level = floor(sqrt(points / 25)), level 10 at 2,500 points). Points come from new looks, new lines, moved blocks, and most of all from rooms the Hearth reads: Snug 10, Fine 25, Grand 60. Repeats on the same block give nothing. A level gained is one quiet line above the hotbar, the same as Ascent.</p>
+<div class="tw"><table><tr><th>Level</th><th>Mallet</th><th>Hang</th><th>Lift</th><th>Raise</th></tr><tr><td>1</td><td>Slab, step, bevel. Run of 16</td><td>Rope, 8 long</td><td>none</td><td>none</td></tr><tr><td>2</td><td>Round edges. Run of 32</td><td>Chain, lanterns, 12 long. Climbing</td><td>1 block</td><td>none</td></tr><tr><td>3</td><td>Cove and arch. Run of 64</td><td>Bunting, vines, 16 long. Sliding</td><td>4</td><td>Pillar 3 high</td></tr><tr><td>4</td><td>One face only. Run of 128</td><td>Cloth with 3 or 4 corners, 24 long</td><td>8, throwing</td><td>4 high, lifts you</td></tr><tr><td>5</td><td>Lean by 15 degrees. Run of 256</td><td>Rope bridges, 32 long</td><td>16</td><td>6 high, short walls</td></tr><tr><td>6</td><td>Any tilt, sink. Run of 512</td><td>Cloth with up to 6 corners, 40 long</td><td>27</td><td>8 high, walls of 8</td></tr><tr><td>7</td><td>Run of 768</td><td>48 long</td><td>48</td><td>12 high</td></tr><tr><td>8</td><td>Run of 1024</td><td>56 long</td><td>64, stand on it</td><td>16 high</td></tr><tr><td>9</td><td>Run of 1536</td><td>64 long</td><td>96</td><td>20 high</td></tr><tr><td>10</td><td>Run of 2048</td><td>80 long</td><td>128, a small building</td><td>24 high</td></tr></table></div>
+<p>Numbers are a first pass, tuned by play.</p>
+<p><b>In the world and in fights.</b> The moves work anywhere you're allowed to change blocks. Your powers stay on their keys with the Mallet out; the trade in a fight is that your hand holds a Mallet and not your weapon, so that's the balance. A thrown piece never beats a same-rank power. In gates (Decision): no Mallet changes or Lift; Raise and Hang are temporary and crumble after 10 seconds. In wards: the existing crumble rule.</p>
+<h3>7.8 Boss pieces</h3>
+<p>One signature piece per boss (41), a guaranteed first-kill drop beside the trophy, cut from that boss's real body in <code>kit/parts.py</code>. One small life each: the Hive Regent's crown chandelier hums and wax motes drift, the Gearwright's table has turning gears. Pilot three, Euan sees them, then roll out.</p>
+<h3>7.9 Kin move in</h3>
+<p>A Kin Door block you place anywhere: tiny door, burrow mouth, perch, knocked into a design with the Mallet. A kin that's coming home picks a door before it scans. Existing saves keep their nooks. Kin-sized furniture in the Stock ring. Kin use yours: nap on rugs, sit on seats, curl by fires. Count stays set by the Hearth's tier. New act <code>sit</code>, first pass on existing clips.</p>
+<h3>7.10 The Garden</h3>
+<p>Same as vanilla to grow: plant it, it grows, you pick it. No chores, no new rules, no minigames. About 24 new plants with shapes Minecraft doesn't have, from the world, gates and kin (page gallery, Euan marks each). Everything you grow does something fun when you eat it. One quiet rule: the more different things grow near each other, the faster everything grows and the more it gives, up to 1.6 times. No score, no list; a Journal page records what you've grown. Beds, planters, hanging baskets on Hang lines, scarecrows you can dress, all from Stock. Burrowbuns and Mossbacks leave new plants alone (tag).</p>
+<h3>7.11 Riding Along</h3>
+<p>Switched on at a gate door or the K menu by both players; off the same way, never mid-fight. One rider per run. Rider keeps powers and weapons, hits count for 40% (Decision). A killing blow folds them into your shadow for 4 seconds, then they spring out at half health near you. Nothing targets them first. They don't count in the party size for scaling. They get their own loot and boss pieces, half XP, and no rank credit: Reassessments can't be done riding. Works anywhere within 48 blocks of the other player (Decision). A thread of light shows the bond.</p>
+</details>
+<details class="eng"><summary>8. Data and lifecycle</summary>
+<div class="tw"><table><tr><th>Data</th><th>Where</th><th>Notes</th></tr><tr><td>Shaped block</td><td>Block state: shape, orientation, waterlogged. Block entity: base state, six face looks, tilt, sink, <code>schema</code></td><td>Shape is in the state because occlusion is read per state (<code>BlockBehaviour.getOcclusionShape(state)</code>). Not ticking</td></tr><tr><td>Client mesh cache</td><td>Bounded map keyed by shape, orientation, tilt and looks</td><td>Derived only; cleared on resource reload</td></tr><tr><td>Look Book, Level, points</td><td>Player attachment, <code>schema</code> 1</td><td>Per player, shared by reading members' at use time</td></tr><tr><td>Carried piece</td><td>Player attachment, written before the blocks leave the world</td><td>Crash-safe. On relog or death: blocks go home if the spot is air, otherwise to the bag, otherwise at the feet</td></tr><tr><td>Undo</td><td>Memory, 32 per player</td><td>Not saved</td></tr><tr><td>Lines</td><td>Peg block entities own them</td><td>Natural save, sync, unload and removal</td></tr><tr><td>Client line list, server line index</td><td>Rebuilt on block entity load</td><td>Derived only</td></tr><tr><td>Canopy shade cells</td><td>Invisible real blocks owned by the first peg</td><td>Removed with the cloth</td></tr><tr><td>Stock pieces</td><td>Kit blocks and one furniture block with parts and materials in a block entity</td><td></td></tr><tr><td>Kin Door</td><td>Block plus a claim in <code>KinWorld.Homed</code></td><td>Old <code>nook</code> values untouched</td></tr><tr><td>Plants</td><td>Normal blocks with ages, reading neighbours on random ticks only</td><td>No saved score</td></tr><tr><td>Bond</td><td>Party state, saved with the run</td><td>Dropped on either player leaving</td></tr></table></div>
+<p>Concurrency: the server re-reads each target before applying; a preview that's gone stale is refused. Lift writes to the Carried record first, then clears the world; placing sets each block and then removes it from the record, so a crash can't duplicate or lose one.</p>
+<p>Old worlds need nothing: everything new is added, nothing is migrated.</p>
+</details>
+<details class="eng"><summary>9. Failure register</summary>
+<div class="tw"><table><tr><th>Case</th><th>Detect</th><th>Contain</th><th>Player sees</th><th>Test</th></tr><tr><td>Block changed after preview</td><td>Server re-read</td><td>Refuse</td><td>"That changed."</td><td><code>shaping_stale_refused</code></td></tr><tr><td>Logout or crash while carrying</td><td>Carried record exists on join</td><td>Blocks go home, or bag, or feet</td><td>Blocks are back</td><td><code>lift_never_loses</code></td></tr><tr><td>Attempted duplication by relog or chest</td><td>Record and world written in order; block entities refused</td><td>No duplicate</td><td>Nothing</td><td><code>lift_no_dupe</code></td></tr><tr><td>Look's block missing after a mod is removed</td><td>Registry lookup fails</td><td>Keeps the id; draws the base</td><td>Looks like its base</td><td><code>shaping_missing_look</code></td></tr><tr><td>Shape model can't read sprites</td><td>Build-time check, safe fallback</td><td>Draws a plain cube of its base</td><td>Plain block, one log line</td><td><code>shaping_every_cube_model</code></td></tr><tr><td>Sodium or Iris trouble</td><td>Setting off</td><td>Full cube of its look</td><td>Plain blocks</td><td>Stage 0 proof</td></tr><tr><td>Peg's wall broken</td><td>Block update</td><td>Line drops</td><td>Item falls</td><td><code>hang_anchor_lost</code></td></tr><tr><td>Line runs into unloaded chunk</td><td>Index by chunk; drawn only when both pegs are known</td><td>Nothing changes</td><td>Line shows when near</td><td><code>hang_chunk_edge</code></td></tr><tr><td>Grab a line that's gone</td><td>Server check per tick</td><td>State ends with momentum</td><td>You drop</td><td><code>hang_line_gone</code></td></tr><tr><td>Whole run reaches a hillside</td><td>Cap and preview</td><td>Stops at the cap</td><td>Preview showed it</td><td><code>shaping_run_cap</code></td></tr><tr><td>Griefing on a server</td><td><code>Constructs.mayChange</code> for every move</td><td>Refused</td><td>One line</td><td><code>shaping_protection</code></td></tr><tr><td>Economy leak</td><td>Skins keep their base; test over recipes</td><td>Can't happen by construction</td><td>Nothing</td><td><code>shaping_no_arbitrage</code></td></tr><tr><td>Rider exploited as a tank</td><td>Mobs don't pick them first</td><td></td><td></td><td><code>bond_no_aggro</code></td></tr><tr><td>Rider used to boost rank</td><td>No rank credit, XP from own budget</td><td></td><td></td><td><code>bond_no_rank</code></td></tr><tr><td>Fold while the anchor died</td><td>Fold ends, normal run-end rules</td><td></td><td>Same as a party wipe</td><td><code>bond_anchor_dies</code></td></tr></table></div>
+</details>
+<details class="eng"><summary>10. Ownership and privacy</summary>
+<p>Server decides everything. One permission check (<code>Constructs.mayChange</code>) for every move, and Hearth membership decides who can change a home. City protection, wards and gates keep their rules. Look Books are per player and only the pair's Hearth members read each other's. No external services or personal data involved. AI and retrieval: not applicable.</p>
+</details>
+<details class="eng"><summary>11. Performance and cost</summary>
+<ul><li><b>Static shaped blocks</b> live in the chunk mesh, so they cost nothing per frame beyond their triangles. A bevel or round has more quads than a cube. <b>Not measured.</b> Target: remeshing a section full of them takes under 1.5 times a section of plain blocks.</li><li><b>Block entities</b> aren't ticking and carry a small update tag. Stage 0 measures chunk load with 5,000 in a build.</li><li><b>Lines</b> draw through one custom geometry pass within 96 blocks. Target: 200 lines and 16 cloths in view under 0.5 ms a frame on his Mac under Cinematic. <b>Not measured.</b></li><li><b>Held pieces</b> use block displays, capped by level at 128. If that's heavy, merge into one mesh, only if measured.</li><li>Perf tours stay on the Mac under <code>slot.sh</code>. Euan's 4K numbers (Cinematic 40-55 fps) make this a real budget.</li><li>Art and sound follow the visual bar: no vanilla particles for any of this. A thud, dust, chips and each material's own sound.</li><li>Cost: no paid services. Agent hours in section 13.</li></ul>
+</details>
+<details class="eng"><summary>12. Evaluation</summary>
+<p>Per-mechanism GameTests named above (<code>shaping_</code>, <code>hang_</code>, <code>lift_</code>, <code>raise_</code>, <code>bond_</code>, <code>garden_</code>), one per mechanism, then the full suite once at hand-off. CI runs the suite and CI tours provide look shots.</p>
+<p>Acceptance is Euan's, playing:</p>
+<div class="tw"><table><tr><th>Stage</th><th>Gate</th></tr><tr><td>0</td><td>He plays with the Mallet for ten minutes on three materials and says the feel is right. Shapes look correct on a vanilla and a custom block under Sodium. Chunk meshing within the target</td></tr><tr><td>1</td><td>Can restyle a real wall by hand without being told how</td></tr><tr><td>3</td><td>Strings a canopy and climbs a rope and likes it</td></tr><tr><td>4</td><td>Finds Lift and Raise fun out in the world; not overpowered</td></tr><tr><td>5</td><td>Pilot boss pieces pass; bosses showcase verdict in mind</td></tr><tr><td>6</td><td>Six hero plants pass before the rest are made</td></tr><tr><td>A</td><td>Plays a gate with a real partner</td></tr></table></div>
+<p>Regression: existing Hearth, Runner, Ascent, Far Sight and gate suites stay green.</p>
+</details>
+<details class="eng"><summary>13. Stages</summary>
+<p>Each stage stops at a playable point. Every stage is behind a config switch and adds rather than changes.</p>
+<div class="tw"><table><tr><th>Stage</th><th>What</th><th>Needs</th><th>Rough agent hours</th></tr><tr><td>0 Proof</td><td>Knock and Looks on the shaped block, three materials, Sodium</td><td>none</td><td>3 to 6</td></tr><tr><td>1 Mallet</td><td>All shapes, Look Book, whole runs, undo, faces, tilt, HUD, sound and feel</td><td>0</td><td>8 to 12</td></tr><tr><td>2 Stock</td><td>One recipe, the freed kit, starter set, parts, sitting, room reading</td><td>1</td><td>10 to 16</td></tr><tr><td>3 Hang</td><td>Pegs, lines, cloth, climbing, shade</td><td>1</td><td>8 to 14</td></tr><tr><td>4 Lift and Raise</td><td>Moves, levels, Goals step, wider rules</td><td>1</td><td>8 to 12</td></tr><tr><td>5 Boss pieces and Kin</td><td>Three pilots, roll-out, Kin Door, sit</td><td>2</td><td>10 to 18</td></tr><tr><td>6 Garden</td><td>Six hero plants, then what he marked</td><td>2, gallery answers</td><td>10 to 18</td></tr><tr><td>A Riding Along</td><td>The bond, fold, scaling, rules</td><td>Gates as Worlds' scaling agreed</td><td>4 to 8</td></tr></table></div>
+<p>Total 60 to 100 agent hours, calibrated on Armour Forge (approved and merged the same day) and Enchanting. What doesn't compress: CI time, Euan's play, boss-piece art rounds.</p>
+<p>Rollback: every stage has a switch. With Shaping off, shaped blocks draw as full cubes of their look and nothing is lost. Go/no-go at Stage 0: if the feel isn't there, stop and rethink before building the rest.</p>
+<p><b>Dependencies.</b> Gates as Worlds (Looks' sources, gate rules, scaling), Powers in Full Voice (Terrain Rip and Architect stay distinct), Forged Pick (ore rule agreed), Fights That Read You (bosses ignore the rider). Each is coordinated at the start of its stage.</p>
+<p><b>Risks.</b> Tilted blocks may look wrong against neighbours. Cloth without physics may look stiff. A ring may feel like a menu; the Stage 0 play decides. 41 boss pieces is a lot of art at a high bar. New plants have now missed twice, which is why the page has a gallery and Stage 6 starts with six.</p>
+</details>
+<details class="eng"><summary>14. What I challenged</summary>
+<ul><li>Is this still too much? The core is one tool and one ring. Everything else is optional in order.</li><li>Does it move work rather than remove it? It removes crafting chains and rebuilds and adds only choosing, which is the fun.</li><li>Can less do most of it? Stages 0 to 2 alone give a large gain, and they come first.</li><li>What would prove me wrong? Stage 0, in his hands.</li></ul>
+</details>
+</div>
+<footer class="col"><p class="small">Made by Hand · plan for Euan · 9 November 2026 · nothing in production has changed.</p></footer>
+
+<script>
+const LOOKS = [{"id":"ashlar","name":"Ashlar","from":"Carillon","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA/UlEQVR4nI1TvQ6CMBA+SSPRMED6GG5ObiY8nQnvROLmBIvODBi3BgYiYdJc8fSoV8K3XO/r/fR+uspO2SuJE5DQtA24d5zLzzkoVJA0xkC4CSfGQz9A9+wmXLSNrD1BoYJGWmtLkAMacok8nt2AAR3cCymzy9kACauRZ+eZpYDfEuBTK9WPZ85xHUEc2aviWoyheha290iBU61pIdYxoORYyqn0mIq14XRKU8Jhv7Nzd3cC9UtxG3vA5+o2C53qR/23E9QTtXRkfMloQoiAsnOSlkZycBH4ns51aQcoqP0L+A98wBdSvQSu//bAg+pezd7bJs7Nm6S0AwBreAOmXrHnFUL+UAAAAABJRU5ErkJggg=="},{"id":"city_bricks","name":"City brick","from":"Carillon","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB20lEQVR4nG1TwUobURQ9QwdJMhMxLzOoZJNKbbHYSKVIkdZFF3VX6sKNBVcuXPor/YJS6Ad01VIX3ehCXIjYYKDVEAih1pm8BJtMggsj95r7MgkeGN479565M/fc96xvm297asIF4Vcmj8ruLoJ2F76TQBy+m4CzvIJnjcpQ3KaXdbN1xzLglwmyCo6DK7xfxkArBc6ql4Z4vodadI37kEuNcV6fRMzDVheem4DdKSxxonT6G3MAtna2EQahifm+QhBoXgmkJz739DHrLPKAEkOt9FF7OI/kyaH5Iv+lO/CGitn6fwSVToFauU8ksTgP+rF8AbBFULpostPx/tjMkQKiEc/saHYeHV/BmdZwfMVB6s3xPXSCEC8+bDCP++DI3wQh7CfJHtCqQyWB3PMF1PZ+gmQ3FIutlI/SaaT+jpyD4nnVkGi6jHKfT6px/NNXQ+LV12/wY39vuMBFTDQDQLisU2rc7BuNptkLrO+fPvIYM5kJI+L+6vrOqKzi/eyjGfw5KzM3E6lrWF/WXnGB0VHRFLLv1hEVj0bTBtrNDsZoRuMm+KF4FkDcIwH5Q3hABWjOcvtoxnQeBC/7bVHfcS+EFxY9WAdfP/ekb/JB9oJuu813giDngM6E8FvQM+5RCi02DAAAAABJRU5ErkJggg=="},{"id":"plaster","name":"Rose plaster","from":"Carillon","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABOElEQVR4nHWTsU7EMAyGXSe5S6GgAyEhJph4ZGbeiP0mEEJICG6kR9uoyGn/xknBUtXEcT77d5Lq6fFhJCIKfUelGbeh/esbXe921HiX+RFvrTGzOzlhMudqpHEMROQyv0AiYAiySDSB1hDLTFxVq8qW9YBSTL2SAHA1A2QjKv45tvHPWEAlqwwsgASUOB1rt77MnDZHmJkkAKolio81LfVCAZgXCaXFJoc/jg/0+JkcIL7vLiVlDJzWrarYOE/e15nv7DTJtrphgLTHdjnrrZvOP2vcfOSxgtrXWfb980sMALgb+iw7xvKXj0vt93e3EShgCWhO6iw7Kn3/PEQ/9/80UUsSEICwm6vLvIliJezj6xAhWiLilicgV1KXOIR2yXRx3qyguhey18oEdwGN0w9MwxEntxf+X2KUg4ZIw9CqAAAAAElFTkSuQmCC"},{"id":"timber","name":"Pale timber","from":"Carillon","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABPUlEQVR4nI1TsWoCQRAdl+NOBauLhR42EeEaSREs01rmW/Ir/k5aO8UiVYSAIKKNBomKejYJb+M7x7sVfHB3y868N292bgu9t9dfEZGv+ULKxUCIsFKR2XJl162onu6vdzvZJ4nsj4nNN9g8nk42iE2SAQoyzm85CKRRfbBfQ2VdnYjC8Erke7u165LvS9H37drkWCJpkCCR5MPZCdZGJ6IabBG0PBrPXXUuDg7nRKpqJ2ij24nlfTh2uvPw0qeqE+hg8DmVl6fH2w40QMJDV6jcbtak/zG5cokcFDOazDESEHmOI0uGA7anWzZ46YNLxZJ/McQ0OQvj2oQ1Larnnm3Xc8pmpqGFdQytmFvJ9yLnAKqoxGq4PC4XAM4pJ7D62aSO+AvjcoFIMRRhjm1Bq+Jn4jXGWPVoeQ9QmTl/xAqPmZBCV1MAAAAASUVORK5CYII="},{"id":"slate_tiles","name":"Slate tiles","from":"Carillon","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABJElEQVR4nJVSu1ICQRCcO9YYD0rLhMQTBB+RhQVqmVsGEMO/kPIFVJHwB3wSmhgIJ8fxA95ZfdTA7MMCOrjb6u2Z3Z5tbzSZZotoSYzVKqHabUiSY/6ueq1x0Ch8sMlYJzEtoqLGMc9FsqmPRakUkPybxUC8/LaKAe+h9ZqZ4vOLCkXzr4PW6r3T23Zs1KvWKfs4xVfZeA9yAdanQVnj9DnsdD6TElwM3yxknm8B7jK82s1A+vsPLo26v2lT87np9CmB/ZNUUWy8kIp/5uTKApE9PJUqWid6wHzpiQHvzJvAgRKeOYNjMpA3GAzHeQOcVjxzR/jl8Wlrx8qBtPBbSJ1WIP78mFnZyHOADQmIUMjFuKoMEvMcNu+t28/k25qzcHmX3B9KzCq/m0k/FwAAAABJRU5ErkJggg=="},{"id":"clay_tiles","name":"Clay tiles","from":"Carillon","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABYElEQVR4nH1Tv0vEMBR+Qga385C2qdBJORUH0UHhcCi4CA436h+i/5uCg7c4OPijIJx34CRp0w7aW3RTXpqXS3Kl39I0H+97L1++rDxenf5x3gfE02sOG9EqEO6fJaQHEXTxjH6QpE3Cu6zhku+odVF8tfKMSFRG8my7DzxeM6LICfmr+KmoYW83gijsKX79TQLzFVGgyL+dMRFYjDwKIGRZqy/zFQmi/IGZmEM6TJQHOMlA9pzij3zeHIE2EOOXhcikqOEYEnN+xENWmvW00gKEm+wTrs+3jOuJNtYUiBouTmLFB0EAt3cZMFuRYHdc8ghita6qqvFgdBQ69+x39HNgN5gJfY32pt8xhcjhxxY/sXNAHf0c+Lw9EXrE2nKginQWfB6vkvOFKGvLARVjDgabARzuN8bRW7AnMh5QFpZyMEycY7S+BQIma6STR2fs8gAn0jlosoDJAgg7O/q38g9LXgMrWxRznQAAAABJRU5ErkJggg=="},{"id":"crypt_tracery","name":"Crypt tracery","from":"a crypt gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAr0lEQVR4nGN0cbD+z0ABYLE0N2J49fotXkViosIofJh6kDgLumYdHR28hly5cgXFIBZ0hYuXrsTrGkN9bRQ+EzG241PDhM92kG3oNqKrYWKgELBgE0S3FcY/f/EqhlomQpoJyTGhC+ALSHQ5UNQykRKNyHIgzaB0wIQsQA5ggjFApsH8iM0bMDGQGphl4KQM4yAnaZBTY6PDsTofXT04GpE1w1yBLVHB/I0MGCnNzgArUEGkrTMouwAAAABJRU5ErkJggg=="},{"id":"crypt_flagstone","name":"Wet flagstone","from":"a crypt gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABTElEQVR4nH1TTUvDQBB9WWpAmu0hEKj2UKiigifB//8X6lWwvfkBgQhNckkOytvkrWNNHQiZ3X0z8+btbLJ+vPsCreyAIg3uPM/QVk34y7Run6thg9iyw4ybyz4H/LD/cVaFdZ2kwCewurzA69s72rLD0ufAJo9JGeOY2RqDmcRnWfgY/J+5QB3AYuF/JdntX4Yi2dDG/PanssU69X041JMV6qaJSegLS5+fIwMdWGNFVlIwxZNvmTkC7YHoMeAUKxkFdsc9Kehqcx11sCYsWVPgxM6BhGJ1+rohzUO4bqMFbcZAVquTBr4fgDtUuDlf4+DHFnoMbOwM2Fuox4yxlSKd7N9WZv8hwcPqPm6ypwAaZ2NKNIsNCbZP27ip6bPVxIqaiJXFhWv8Q7FII0BB8REda6AD0TvZwjixlhWLhDnQo7EDJTYaWfu0rcDfUh6t1gM5VyYAAAAASUVORK5CYII="},{"id":"desert_tile","name":"Desert tile","from":"a desert gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAuElEQVR4nGO8sqnkPwMe8OHdBwYBIQGc8iwgImKHCZgzw2wPQ9QmFTCbT0IBTK/wOAOX//TiAVwjTJ4JJgCSBGnWsbDBUIzMR5dnQpc0UpPAUIRPnglmA0zy3K0XKIoIybPAFFw5cYSBgQGhCMJHAFzyTKBQhgUISBBZEiaOT54JFkXIipD56KGOLs94ZEHKf3zxTAiwgDTji2eS0gEIDO50UCW2gLJ00GaRgJkOQARF6QBmA7npAABd/7ZVXYOZngAAAABJRU5ErkJggg=="},{"id":"desert_brick","name":"Desert brick","from":"a desert gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA3klEQVR4nKVSwQkCMRBMQp4ikofcywJSg3VYlcVYhDVcAb4OH0HE54Ey0YFxz/jJQrLZJLvMzK4/HQ/PMl7cVB5uSKvq1fI+O7y3LGjAIlgw+m1aLxJxhxXsA4pYFNdyXxTgXcSW8s6lJsj3+y+bUSBOt1oNcODxeTyPX3qQCmKrSSAUhWnFtLRUk9CCrWLamIhhHm10HRaxKWfLHZqAMzWyPlrOLMKzdodJSiPwY0uHf/OA2HdrED9zQIjzsKmatBBBE82pc8CW8NJCZwtJValUDSw31YSJKq4OUrcGL5/bnmt4P8DqAAAAAElFTkSuQmCC"},{"id":"choir_bricks","name":"Choir brick","from":"the Descent","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAtElEQVR4nGO0rp30nwEHuDB/CoNBYg4DPnmWByeOgTm8kjJwCWF5OYa3Dx+B2TD68/MnKJq/v34OplmwmQzThE0jOmDkllHD6QViAAuyH4nxM7o8CywMYADdzyC/copKwv2Mrp4JJAGTRAfImkE0DCAHOCNVw4CsdPD24SOwf0HOgvkb2YnY0gkyYMIniS6HLU0wDnw6eIsW7+h+Rs4XIIDMBhuAHHAfrp9D0YxNA3o4UBwGAIVVd5Xr7DhTAAAAAElFTkSuQmCC"},{"id":"abyss_tiles","name":"Abyss tile","from":"an abyss gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVR4nGNkY+X8z0ABYAERaor6OBXcun8RrzwLjPHgyS24IAc7F8OPn99QFL54/QTO5uLkYfj2/QuYzYRuIjbNyABZM4YBHCRqRjGAgwzNKAb8wKMZBLBpRjGAXMA4eNLBCxzxTCidMBEb2tg0YxjARaJmFAPI0YxiAD7NIIArnVCcDgCziE9z0D1sigAAAABJRU5ErkJggg=="},{"id":"court_tile","name":"Court tile","from":"the Descent","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAuElEQVR4nGNc0az9X11VgoEc0DvzGgMLiJFQw0iWAbqyDBADQODV+wdgmouDH67g24+PYD4yDQMwdUzoAuiKYJrRAUwdC7oALoDdoK8IF+CyAZcXYIAFn20wGj1ckAETumZkDehOxhYWTNgUYHMqrjBiwaYIm024ABM2QWy24QpEJmwK8QUasjqcLmDAYTO2wMUaiMi2o6cBdDV4wwA9VmAGInsLHAu6slcZGGRBrK9IxiCzsQGIPAD3EWTywamx5gAAAABJRU5ErkJggg=="},{"id":"foundry_brick","name":"Foundry brick","from":"a foundry gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABE0lEQVR4nKVT7WrCQBCcu0ajQRskUhGhUASfwIfoI/ch+gQF/xSKUCtWkGjiJ3OwujmvUnAgzHK3sze7bMxz2jq+pE1oLDZbdBo1x7/FDvo+S+qV3AgBUCzMAr6ImOelY4t/QgTaCT/DFnAHIvanLb5Pl3gdPrn4Jy/QTeKK4G3yjXE/Pbuyof58sJBm3Ya9JZTXfdYwd88AwLln3zJfZM+ck+yGD6sF2rpvVxbrqkBxCPcWQsiB4QxYhIgtwFhYzv4Cc6LHRh1Z/IB5sXeHs7zEIE3QT2r4WKwx6lT/E+4JZ8J86qwWM+aLFE/zrROTCbLEkk9EUon4XJXOlhYJsyjxtby4odb02td7oGeh+9V3Ep8ADoyBQi66v6QAAAAASUVORK5CYII="},{"id":"foundry_brass","name":"Foundry brass","from":"a foundry gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAApUlEQVR4nGOcU2Xwn4GBgeHeo08M6EBJjo+BkBxjVYzSfzcHNTDnzr0XGApVlCRwyoEAE0xSQUUDrhgGXNwc4BqR5UDiMJcxglwAcw4+27DJgQxgQlaEzTZCckzEKsQlxwRzPrmGMJHqZGQ5kOVMsDgm1xAmcvyNNRbukGkI0+CJRhdo8kRWiCyGLIec7BlBuRHEITUjwfSwIGdV9GwL4uPK0jA5ALhCg51aA2MCAAAAAElFTkSuQmCC"},{"id":"ember_basalt","name":"Ember basalt","from":"an ember gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAr0lEQVR4nJ1Tuw4CIRBct5NHtDFXmGh3hf7/X2ksDrDUTLGGAAvnTcIGdmFmeO0O/vi5zXcKMVBMkYDn60GX8/U3Fkg+B0tHJltjaYScmBGg3ir2CDEPjf9RA5x17S2stZ+7rQjiSvsVgStsaYQlIMAymE7TUK1cDGHW9qa5yoE13CuWii0wgneetl4nIyxhGRJoDllTEKR36hINX6LZmyqH8xDBimDTZ9KKPULJfwGjnU+D+/J8OAAAAABJRU5ErkJggg=="},{"id":"archive_planks","name":"Archive planks","from":"an archive gate","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA5UlEQVR4nK1SQQ6CMBBsG1AIoAZjkMjFaMID+P9DPHjTxIseFEXURLPV4hSrHHAusMvMbmcKz6ajO2uA79psudmzqO/KOj9fme/Y8l1Q8U1ESJOQ5cWbQzVyhEkkt7xEi9VOG7zeHjQOT0K/0cIvWF7Xem53bOmtjmN5k0/imTiiOo5BnM0jKTT5V+BpPPiwgJvwBCYOb53BbNzTUo1Djx2KS9Wj+0cOIXA7FUeohoL6MBkGmghrXCDqDbxvHIz3j+B/zYAB0KdCPQ/iaL+yKQsC+ieOqolj4SZTFoT9qdQGI691Bg+a4WwqQKdztAAAAABJRU5ErkJggg=="},{"id":"bluepine_planks","name":"Bluepine","from":"the Awakened Lands","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA2klEQVR4nK2TvwrCMBDGv0IeQBCHQOiL1OfwHXRTEBzcHRwcfaFm6urWyXJwQ2lpn6BOV9M2poL+loT7R+67S0R12wEAVw2utzuO+y3G6OViYhNU9sgHBuJyEuSz9QXkYvSqP4lLFMQfk4TYaESb3ambjQwQUd12h/PF27sgGnDVTHz/0yAU5OJq8xcNVLJOEBsN4D0J39ylf3lpQQybWihJdp3jdqSwS2w0LABVEMMt4sOnj2ihbGphg+lhoix/zopIXA7acP+M8gUL7nqPfXJXofl/sxs/78ELYXJsJ8f4k5QAAAAASUVORK5CYII="},{"id":"elder_planks","name":"Elder wood","from":"the Awakened Lands","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAsElEQVR4nGN8/2DvfwY84O3Tu2B64fxVDPGJYQzC0soo8ixXT+5nIAQkZOTA9Isnj8AYxQAGJHD/HqokLnFkAxlrU1zweoEQYEQOg76WdoaimkqsYQAC6P4HARZkBTAN6P6EAXRxkFdYQILIfsSlGaYBWR11wuDO0VlwA2BxTQpgwedkZDlk5yPLsZCiCRmA5KgfBiCALa5BUYsrfDDCgNgwgRuAUzUU4MofMEBxGAAAqjRtRh33dQIAAAAASUVORK5CYII="},{"id":"dream_wallpaper","name":"Torn wallpaper","from":"a Lucid Dream","data":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABUElEQVR4nH1SPUsDQRAdj6uCSFiOQySVHJYWKUKwsA4W+QUSrKz9Can9Af4AC3+AhVhbSCoLsQohlYgsyyIilipvvbfMfeUV97Ezb/bNm9k6HZ7/ru1KiH7PyPHhWAaTRPI8E2udvN7/yO3iLuYwD0j8l5f9vIgHBMl4o9h0fBKJzDXbRhJ8oAiBw4fnhTxd20aR+dVZUMc88BISP759pTJAsn5rcmhBSoyKkRzsFZ1t0It35yTbMTE3ZfLybRUqI4hvrQDtoC3G3acXGp9Ael0Wz7pkgxyn0O+ZShC3M0jZL+tlaxzTSzWZoNM3l4+yCeCleLQVGc5yGdijhgKNyh6YcnR0lwZ2xRt74Muk3ex/abSBNE7fTEUpD/UO6PnLxMnFbBpGiVYwQoyS444K8IOgll/fQN6KPO5KLKBltW0gFon7oT0JLeBH97iJXPfiDzMl+ll4oVPmAAAAAElFTkSuQmCC"}];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const T = {};
+const ready = Promise.all(LOOKS.map(l => new Promise(res => { const i = new Image(); i.onload = res; i.onerror = res; i.src = l.data; T[l.id] = i; })));
+const $ = id => document.getElementById(id);
+const nameOf = id => (LOOKS.find(l => l.id === id) || {}).name || id;
+
+/* ---------- the wall ---------- */
+(function wall() {
+  const cv = $('wall'), ctx = cv.getContext('2d'), W = 9, H = 4, LW = 620, LH = 430, S = cv.width / LW;
+  const ox = 94, oy = 214, cx = 38, cy = 19, h = 44;
+  const P = (x, y, z) => [ox + (x - z) * cx, oy + (x + z) * cy - y * h];
+  const arc = (a, b, r, s, e, n = 6) => Array.from({ length: n + 1 }, (_, i) => { const t = (s + (e - s) * i / n) * Math.PI / 180; return [a + r * Math.cos(t), b + r * Math.sin(t)]; });
+  const PRO = {
+    full: [[1, 0], [1, 1], [0, 1]], slab: [[.5, 0], [.5, 1], [0, 1]], notch: [[1, 0], [1, .5], [.5, .5], [.5, 1], [0, 1]],
+    bevel: [[1, 0], [1, .5], [.5, 1], [0, 1]], round: [[1, 0], ...arc(.5, .5, .5, 0, 90), [0, 1]],
+    under: [[.5, 0], [.5, .5], [1, .5], [1, 1], [0, 1]], cove: [...arc(1, 0, .5, 180, 90), [1, 1], [0, 1]]
+  };
+  const CYCLE = { top: ['notch', 'bevel', 'round', 'full'], under: ['under', 'cove', 'full'], mid: ['slab', 'full'] };
+  const start = LOOKS.find(l => l.id === 'ashlar') ? 'ashlar' : (LOOKS[0] || {}).id;
+  let cells = [], undo = [], aim = null, sticky = { i: 4, j: 1, zone: 'mid' }, preview = new Map(), setLook = null, anims = [], running = false;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) cells.push({ i, j, look: start, shape: 'full', bump: 0 });
+  // a doorway-ish start so it opens as a real thing, not an empty grid
+  const at = (i, j) => cells[j * W + i];
+  at(3, 2).shape = 'cove'; at(5, 2).shape = 'cove'; at(4, 3).shape = 'bevel';
+  at(4, 0).look = at(4, 1).look = 'timber'; at(3, 3).look = at(5, 3).look = 'city_bricks';
+  const copy = () => cells.map(c => ({ ...c, bump: 0 }));
+  const say = t => $('wallsay').textContent = t;
+
+  function tex(id) { return T[id] && T[id].complete && T[id].naturalWidth ? T[id] : null; }
+  function quad(img, A, U, V, sy, sh, shade) {
+    const s = S; ctx.setTransform(s * (U[0] - A[0]) / 16, s * (U[1] - A[1]) / 16, s * (V[0] - A[0]) / 16, s * (V[1] - A[1]) / 16, s * A[0], s * A[1]);
+    if (img) ctx.drawImage(img, 0, sy, 16, Math.max(.5, sh), -.15, -.15, 16.3, 16.3);
+    if (shade > 0) { ctx.globalAlpha = shade; ctx.fillStyle = '#000'; ctx.fillRect(-.15, -.15, 16.3, 16.3); ctx.globalAlpha = 1; }
+  }
+  function block(c, look, lift, neighbourShape) {
+    const pro = PRO[c.shape], img = tex(look), x = c.i, base = c.j;
+    const Pp = (xx, y, z) => { const p = P(xx, y + base, z); return [p[0], p[1] - lift]; };
+    for (let k = 0; k < pro.length - 1; k++) {
+      const [z0, y0] = pro[k], [z1, y1] = pro[k + 1], dz = z1 - z0, dy = y1 - y0, nz = dy, ny = -dz, n = Math.hypot(nz, ny) || 1;
+      if ((nz + ny) / n <= 0.01) continue;
+      const vert = Math.abs(dy) >= Math.abs(dz);
+      let top = vert ? (y1 > y0 ? [z1, y1] : [z0, y0]) : (z1 < z0 ? [z1, y1] : [z0, y0]);
+      let bot = top[1] === y1 && top[0] === z1 ? [z0, y0] : [z1, y1];
+      const v0 = vert ? 1 - top[1] : top[0], v1 = vert ? 1 - bot[1] : bot[0];
+      const shade = .34 - .34 * (ny / n) * .95 - .1 * (nz / n);
+      quad(img, Pp(x, top[1], top[0]), Pp(x + 1, top[1], top[0]), Pp(x, bot[1], bot[0]), v0 * 16, (v1 - v0) * 16, Math.max(0, shade));
+    }
+    if (neighbourShape !== c.shape) {
+      ctx.save(); ctx.setTransform(S, 0, 0, S, 0, 0); ctx.beginPath();
+      [...pro, [0, 0]].forEach(([z, y], k) => { const p = Pp(x + 1, y, z); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
+      ctx.closePath(); ctx.clip();
+      quad(img, Pp(x + 1, 1, 1), Pp(x + 1, 1, 0), Pp(x + 1, 0, 1), 0, 16, .4); ctx.restore();
+    }
+  }
+  function draw() {
+    ctx.imageSmoothingEnabled = false; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    const ground = tex('slate_tiles');
+    for (let x = -1; x < W + 1; x++) for (let z = 1; z < 4; z++) quad(ground, P(x, 0, z), P(x + 1, 0, z), P(x, 0, z + 1), 0, 16, .12);
+    cells.slice().sort((a, b) => (a.i + a.j) - (b.i + b.j)).forEach(c => {
+      const k = c.j * W + c.i, r = c.i + 1 < W ? cells[k + 1].shape : null;
+      block(c, preview.get(k) || c.look, c.bump * 9, r);
+    });
+    const a = aim || sticky;
+    if (a) {
+      const band = { top: [.62, 1], under: [0, .38], mid: [.38, .62] }[a.zone];
+      const q = [[a.i, a.j + band[0]], [a.i + 1, a.j + band[0]], [a.i + 1, a.j + band[1]], [a.i, a.j + band[1]]].map(([x, y]) => P(x, y, 1));
+      ctx.setTransform(S, 0, 0, S, 0, 0); ctx.beginPath(); q.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+      ctx.fillStyle = 'rgba(127,195,255,.22)'; ctx.fill(); ctx.strokeStyle = '#7fc3ff'; ctx.lineWidth = 2; ctx.stroke();
+    }
+  }
+  function hit(e) {
+    const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * LW, sy = (e.clientY - r.top) / r.height * LH;
+    let x = (sx - ox) / cx + 1, y = (oy + (x + 1) * cy - sy) / h;
+    if (x >= 0 && x < W && y >= 0 && y < H) { const v = y - Math.floor(y); return { i: Math.floor(x), j: Math.floor(y), zone: v > .62 ? 'top' : v < .38 ? 'under' : 'mid' }; }
+    const a = (sx - ox) / cx, b = (sy - oy + H * h) / cy; x = (a + b) / 2; const z = (b - a) / 2;
+    if (x >= 0 && x < W && z >= 0 && z <= 1) return { i: Math.floor(x), j: H - 1, zone: 'top' };
+    return null;
+  }
+  function run(from, limit) {
+    const o = at(from.i, from.j), seen = new Set([from.j * W + from.i]), out = [{ c: o, d: 0 }];
+    for (let q = 0; q < out.length && out.length < limit; q++) {
+      const { c, d } = out[q];
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
+        const i = c.i + dx, j = c.j + dy; if (i < 0 || j < 0 || i >= W || j >= H || out.length >= limit) return;
+        const n = at(i, j), k = j * W + i; if (seen.has(k) || n.look !== o.look) return; seen.add(k); out.push({ c: n, d: d + 1 });
+      });
+    }
+    return out;
+  }
+  function loop() {
+    const now = performance.now(); let busy = false;
+    anims = anims.filter(a => {
+      if (now < a.at) { busy = true; return true; }
+      if (a.look && a.c.look !== a.look) a.c.look = a.look;
+      a.c.bump = Math.max(0, 1 - (now - a.at) / 240); if (a.c.bump > 0) { busy = true; return true; } return false;
+    });
+    draw(); if (busy) requestAnimationFrame(loop); else running = false;
+  }
+  const kick = () => { if (!running) { running = true; requestAnimationFrame(loop); } };
+  function apply(lookId) {
+    const a = sticky; if (!a) return;
+    undo.push(copy()); setLook = lookId; preview.clear();
+    const lim = +$('runlv').value, list = $('runbox').checked ? run(a, lim) : [{ c: at(a.i, a.j), d: 0 }];
+    const now = performance.now();
+    if (reduce) { list.forEach(x => x.c.look = lookId); draw(); }
+    else { list.forEach(x => anims.push({ c: x.c, look: lookId, at: now + x.d * 45 })); kick(); }
+    say(`Set ${list.length} block${list.length > 1 ? 's' : ''} to ${nameOf(lookId)}. It stays on the Mallet: right click puts it on the next one.`);
+    mark();
+  }
+  function mark() { document.querySelectorAll('#lookchips .chip').forEach(b => b.classList.toggle('on', b.dataset.id === setLook)); }
+  cv.addEventListener('pointermove', e => { const a = hit(e); aim = a; if (a) sticky = a; cv.style.cursor = a ? 'crosshair' : 'default'; if (!running) draw(); });
+  cv.addEventListener('pointerleave', () => { aim = null; if (!running) draw(); });
+  cv.addEventListener('click', e => {
+    const a = hit(e); if (!a) return; sticky = a;
+    const c = at(a.i, a.j), cyc = CYCLE[a.zone]; undo.push(copy());
+    const i = cyc.indexOf(c.shape); c.shape = cyc[(i + 1) % cyc.length]; c.bump = 1;
+    if (reduce) { c.bump = 0; draw(); } else { anims.push({ c, at: performance.now() }); kick(); }
+    say({ full: 'Back to a whole block.', slab: 'Knocked to a slab.', notch: 'A step. Hit again for a bevel.', bevel: 'A bevel. Hit again to round it.', round: 'Rounded. Hit again for a whole block.', under: 'Undercut. Hit again for an arch.', cove: 'An arch.' }[c.shape]);
+  });
+  $('undo').onclick = () => { if (!undo.length) return say('Nothing to undo.'); cells = undo.pop(); anims = []; draw(); say('Undone.'); };
+  $('tapc').onclick = () => { if (!setLook) return say('Set a look first, by clicking one above.'); apply(setLook); };
+  ready.then(() => {
+    const box = $('lookchips');
+    LOOKS.forEach(l => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.dataset.id = l.id; b.title = l.from;
+      const img = document.createElement('img'); img.src = l.data; img.alt = ''; b.append(img, l.name);
+      const pv = () => { preview.clear(); if (!sticky) return; (($('runbox').checked) ? run(sticky, +$('runlv').value) : [{ c: at(sticky.i, sticky.j) }]).forEach(x => preview.set(x.c.j * W + x.c.i, l.id)); draw(); say(`Trying on ${l.name} (from ${l.from}). Only you can see this until you click.`); };
+      const off = () => { if (preview.size) { preview.clear(); draw(); } };
+      b.onmouseenter = pv; b.onfocus = pv; b.onmouseleave = off; b.onblur = off; b.onclick = () => apply(l.id); box.append(b);
+    });
+    draw(); say('Click the wall to knock it. Hover a look to try it on.');
+  });
+})();
+
+/* ---------- levels ---------- */
+(function levels() {
+  const D = [
+    ['Slab, step, bevel. A run of 16 blocks.', 'Rope, 8 blocks long.', 'Not yet.', 'Not yet.'],
+    ['Round edges. Run of 32.', 'Chain and lanterns, 12 long. You can climb.', 'One block.', 'Not yet.'],
+    ['Coves and arches. Run of 64.', 'Bunting and vines, 16 long. Sliding.', '4 blocks.', 'A pillar 3 high.'],
+    ['One face only. Run of 128.', 'Cloth with 3 or 4 corners, 24 long.', '8 blocks. Throw it.', '4 high. It lifts you.'],
+    ['Lean a block 15°. Run of 256.', 'Rope bridges, 32 long.', '16 blocks.', '6 high. Short walls.'],
+    ['Any tilt. Sink it in. Run of 512.', 'Cloth with up to 6 corners, 40 long.', '27 blocks.', '8 high. Walls of 8.'],
+    ['Run of 768.', '48 long.', '48 blocks.', '12 high.'],
+    ['Run of 1,024.', '56 long.', '64 blocks. Stand on it and ride.', '16 high.'],
+    ['Run of 1,536.', '64 long.', '96 blocks.', '20 high.'],
+    ['Run of 2,048.', '80 long.', '128 blocks, a small building.', '24 high.']
+  ];
+  const sl = $('lv'), up = () => { $('lvn').textContent = sl.value; D[sl.value - 1].forEach((t, i) => $('lv' + i).textContent = ' ' + t); };
+  sl.oninput = up; up();
+})();
+
+/* ---------- hang ---------- */
+(function hang() {
+  const cv = $('ropes'), ctx = cv.getContext('2d'), LW = 620, LH = 380, S = cv.width / LW, G = 318;
+  const PEGS = [[92, 118], [150, 110], [244, 110], [302, 118], [344, 176], [432, 120], [540, 138], [598, 214], [432, 190], [540, 200]].map(([x, y]) => ({ x, y }));
+  let lines = [{ k: 'cloth', p: [3, 5, 6, 4] }, { k: 'lanterns', p: [8, 9] }, { k: 'rope', p: [6, 7] }], kind = 'rope', pend = [], night = false, climber = null, vis = true;
+  const KINDS = [['rope', 'Rope'], ['chain', 'Chain'], ['lanterns', 'Lanterns'], ['bunting', 'Bunting'], ['vines', 'Vines'], ['cloth', 'Cloth (4 pegs)']];
+  const say = t => $('hangsay').textContent = t;
+  const curve = (a, b, n, t) => {
+    const L = Math.hypot(b.x - a.x, b.y - a.y), sag = 12 + L * .12, out = [];
+    for (let i = 0; i <= n; i++) { const u = i / n, m = 4 * u * (1 - u); out.push({ x: a.x + (b.x - a.x) * u + Math.sin(t * .0016 + u * 5) * 1.2 * m, y: a.y + (b.y - a.y) * u + sag * m + Math.sin(t * .0022 + u * 7) * 1.6 * m, u }); }
+    return out;
+  };
+  function tile(id, x, y, w, h, b = 32, dark = 0) {
+    const img = T[id]; if (!img || !img.naturalWidth) return;
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    for (let i = 0; i * b < w; i++) for (let j = 0; j * b < h; j++) ctx.drawImage(img, x + i * b, y + j * b, b, b);
+    if (dark) { ctx.globalAlpha = dark; ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h); ctx.globalAlpha = 1; } ctx.restore();
+  }
+  function scene(t) {
+    ctx.setTransform(S, 0, 0, S, 0, 0); ctx.imageSmoothingEnabled = false;
+    const g = ctx.createLinearGradient(0, 0, 0, G); g.addColorStop(0, night ? '#0b1526' : '#9cc6e2'); g.addColorStop(1, night ? '#1c2a44' : '#dbe9ec'); ctx.fillStyle = g; ctx.fillRect(0, 0, LW, LH);
+    const d = night ? .55 : 0;
+    tile('slate_tiles', 0, G, LW, LH - G, 32, d + .1);
+    tile('plaster', 60, 118, 284, 200, 32, d);
+    tile('clay_tiles', 44, 64, 316, 54, 27, d + .08);
+    [60, 156, 248, 312].forEach(x => tile('timber', x, 118, 32, 200, 32, d + .05));
+    tile('timber', 60, 118, 284, 16, 16, d + .05);
+    ctx.fillStyle = night ? '#f6c56d' : '#3a4a55'; ctx.fillRect(112, 180, 34, 44); ctx.fillRect(258, 180, 34, 44);
+    tile('archive_planks', 188, 226, 44, 92, 22, d);
+    [[432, 120], [540, 138], [598, 214]].forEach(([x, y]) => tile('timber', x - 7, y, 14, G - y, 14, d + .08));
+  }
+  function bilinear(c, u, v, t) {
+    const x = (1 - v) * ((1 - u) * c[0].x + u * c[1].x) + v * ((1 - u) * c[3].x + u * c[2].x), y0 = (1 - v) * ((1 - u) * c[0].y + u * c[1].y) + v * ((1 - u) * c[3].y + u * c[2].y);
+    const m = Math.sin(Math.PI * u) * Math.sin(Math.PI * v);
+    return [x, y0 + m * 16 + m * Math.sin(t * .002 + u * 5 + v * 4) * 3.5];
+  }
+  function cloth(c, t) {
+    const n = 12, cols = ['#b24a33', '#e4d3b0'];
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const a = bilinear(c, i / n, j / n, t), b = bilinear(c, (i + 1) / n, j / n, t), e = bilinear(c, (i + 1) / n, (j + 1) / n, t), f = bilinear(c, i / n, (j + 1) / n, t);
+      ctx.fillStyle = cols[(Math.floor(i / 2)) % 2]; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.lineTo(...e); ctx.lineTo(...f); ctx.closePath(); ctx.fill();
+      const s = (Math.sin(t * .002 + i * .4 + j * .3) + 1) * .08 + (night ? .5 : 0);
+      ctx.fillStyle = `rgba(0,0,0,${s})`; ctx.fill(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = .6; ctx.stroke();
+    }
+  }
+  function line(l, t) {
+    const a = PEGS[l.p[0]], b = PEGS[l.p[1]], pts = curve(a, b, 24, t), stroke = (w, c, dash) => { ctx.lineWidth = w; ctx.strokeStyle = c; ctx.setLineDash(dash || []); ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke(); ctx.setLineDash([]); };
+    if (l.k === 'chain') { stroke(3.2, '#596269', [5, 2]); stroke(1, '#a7b0b7', [5, 2]); return; }
+    if (l.k === 'vines') { stroke(2.2, '#47703a'); pts.forEach((p, i) => { if (i % 2 === 0) { ctx.fillStyle = i % 4 ? '#6d9c51' : '#4f7e3e'; ctx.fillRect(p.x - 2, p.y + (i % 3) * 2, 5, 4); } }); return; }
+    stroke(2, '#8f6b3a');
+    if (l.k === 'lanterns') pts.forEach((p, i) => { if (i % 4 === 2) {
+      if (night) { const g = ctx.createRadialGradient(p.x, p.y + 8, 1, p.x, p.y + 8, 30); g.addColorStop(0, 'rgba(255,190,90,.55)'); g.addColorStop(1, 'rgba(255,190,90,0)'); ctx.fillStyle = g; ctx.fillRect(p.x - 30, p.y - 22, 60, 60); }
+      ctx.fillStyle = night ? '#ffc877' : '#c9572f'; ctx.fillRect(p.x - 4, p.y + 3, 8, 10); ctx.fillStyle = '#3c2c1c'; ctx.fillRect(p.x - 3, p.y + 2, 6, 2); } });
+    if (l.k === 'bunting') { const c = ['#c4472f', '#e0a93a', '#3d7fa8']; pts.forEach((p, i) => { if (i % 2 === 0 && i < 24) { ctx.fillStyle = c[i / 2 % 3]; ctx.beginPath(); ctx.moveTo(p.x - 5, p.y); ctx.lineTo(p.x + 5, p.y); ctx.lineTo(p.x, p.y + 11); ctx.closePath(); ctx.fill(); } }); }
+  }
+  function figure(t) {
+    if (!climber) return;
+    const l = climber.l, a = PEGS[l.p[0]], b = PEGS[l.p[1]];
+    climber.u += climber.v; if (climber.u >= 1) { climber = null; return; }
+    const p = curve(a, b, 40, t)[Math.floor(climber.u * 40)], sw = Math.sin(t * .012) * 2;
+    ctx.fillStyle = '#2f4a6b'; ctx.fillRect(p.x - 5 + sw * .3, p.y + 12, 10, 14); ctx.fillStyle = '#2a2f3a'; ctx.fillRect(p.x - 5, p.y + 26, 4, 11); ctx.fillRect(p.x + 1, p.y + 26, 4, 11);
+    ctx.fillStyle = '#d7a57a'; ctx.fillRect(p.x - 4, p.y + 4, 8, 8); ctx.fillRect(p.x - 8 + sw, p.y - 2, 3, 15); ctx.fillRect(p.x + 5 - sw, p.y - 2, 3, 15);
+  }
+  function frame(t) {
+    scene(t); lines.filter(l => l.k === 'cloth').forEach(l => cloth(l.p.map(i => PEGS[i]), t)); lines.filter(l => l.k !== 'cloth').forEach(l => line(l, t)); figure(t);
+    PEGS.forEach((p, i) => { ctx.fillStyle = pend.includes(i) ? '#7fc3ff' : '#20262b'; ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, 7); ctx.fill(); ctx.strokeStyle = '#7fc3ff'; ctx.lineWidth = 1.4; ctx.stroke(); });
+  }
+  function tick(t) { if (vis) frame(t); if (!reduce) requestAnimationFrame(tick); }
+  new IntersectionObserver(es => vis = es[0].isIntersecting).observe(cv);
+  cv.addEventListener('click', e => {
+    const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * LW, y = (e.clientY - r.top) / r.height * LH;
+    let best = -1, bd = 22; PEGS.forEach((p, i) => { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = i; } });
+    if (best < 0 || pend.includes(best)) return;
+    pend.push(best); const need = kind === 'cloth' ? 4 : 2;
+    if (pend.length >= need) { lines.push({ k: kind, p: pend.slice() }); pend = []; say(kind === 'cloth' ? 'Cloth hung. It moves with the wind and gives real shade.' : 'Strung. Press Climb it.'); }
+    else say(kind === 'cloth' ? `${pend.length} of 4 corners.` : 'One end pegged. Click another.');
+    if (reduce) frame(0);
+  });
+  const box = $('hangchips');
+  KINDS.forEach(([k, n]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip plain' + (k === kind ? ' on' : ''); b.textContent = n; b.onclick = () => { kind = k; pend = []; box.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b)); }; box.append(b); });
+  $('climb').onclick = () => { const l = [...lines].reverse().find(x => x.k !== 'cloth'); if (!l) return say('String a line first.'); climber = { l, u: 0, v: .0035 }; say('Hand over hand. On a slope you slide; sneak brakes. Jump to let go.'); if (reduce) { climber = null; say('Climbing is animated, and your device is set to reduce motion.'); } };
+  $('night').onclick = e => { night = !night; e.target.textContent = night ? 'Day' : 'Night'; if (reduce) frame(0); };
+  $('clearh').onclick = () => { lines = []; pend = []; climber = null; say('Cleared.'); if (reduce) frame(0); };
+  ready.then(() => { say('A canopy and a line of lanterns are already up. Try Night.'); if (reduce) frame(0); else requestAnimationFrame(tick); });
+})();
+
+/* ---------- gallery ---------- */
+const PLANTS = [
+  ['lanterngourd', 'Lanterngourd', 'gourd', { m: '#e9d9a4', a: '#c8a95c', g: '#ffd27a' }, 'Pale gourds that light up from inside at dusk. A patch lights your whole yard.', 'Eat one: you glow for a few minutes.'],
+  ['hearth_pumpkin', 'Hearth Pumpkin', 'bigourd', { m: '#d9792a', a: '#a8541a' }, 'Give it room and it keeps growing, up to three blocks wide. Hollow it with the Mallet and sit inside.', 'Eat it: feeds everyone for days.'],
+  ['glass_wheat', 'Glass Wheat', 'stalk', { m: '#cfe9ee', a: '#ffffff' }, 'Clear stalks that tinkle in the wind and ring when you run through them.', 'Bread: your footsteps chime.'],
+  ['bellcaps', 'Bellcaps', 'bell', { m: '#b98a2e', a: '#f0d076' }, 'Bump one and it rings its own note. Lay out a path that plays a tune as you walk it.', 'Eat one: you hum when you\'re happy.'],
+  ['cloudcotton', 'Cloudcotton', 'puff', { m: '#ffffff', a: '#dbe6ef' }, 'White tufts that float above the plant on a thread. Spins into soft cloth for your canopies.', 'Eat a tuft: you drift down slowly.'],
+  ['hopturnip', 'Hopturnips', 'root', { m: '#d9a3c9', a: '#ffffff' }, 'Ripe ones hop around the bed on tiny feet. Catch them.', 'Eat one: one enormous bounce.'],
+  ['emberchard', 'Emberchard', 'ember', { m: '#7c2b18', a: '#ff8a3c', g: '#ff8a3c' }, 'Leaves like live coals. Snow melts around the bed.', 'Eat it: you stay warm in frost gates.'],
+  ['thundercabbage', 'Thunderhead Cabbage', 'cabbage', { m: '#6a7fa8', a: '#dfe9ff', g: '#c9dcff' }, 'Crackles and flickers when a storm rolls over, then goes quiet.', 'Eat one: a burst of speed and a small zap.'],
+  ['moonrye', 'Moonrye', 'stalk', { m: '#7c8a6c', a: '#d8e4f4', g: '#cfe0ff' }, 'Plain grain by day. Silver and shining at night.', 'Bread: you can see in the dark.'],
+  ['turnsol', 'Turnsol', 'flower', { m: '#efb82d', a: '#7c4a1b' }, 'A huge flower whose head follows you round the garden.', 'Seeds: you always know where north is.'],
+  ['skygrapes', 'Skygrapes', 'hang', { m: '#5c6dc9', a: '#8d9bee' }, 'Grow along any rope you hang. A vineyard strung across your yard.', 'Eat a bunch: lighter jumps for a while.'],
+  ['starbeans', 'Starbeans', 'climb', { m: '#2d4a6e', a: '#ffe89a', g: '#ffe89a' }, 'Climb any post or rope. The pods glint like stars at night.', 'Eat them: sparkles when you land.'],
+  ['weeping_plum', 'Weeping Plum', 'hang', { m: '#7a2f63', a: '#a9558f' }, 'Fruit on long strings that drop from a canopy or a beam.', 'Eat one: heals a little over time.'],
+  ['curtain_moss', 'Curtain Moss', 'curtain', { m: '#5a8a48', a: '#7fb064' }, 'A soft green curtain you can walk through. Grow it over a doorway.', 'Not for eating. Kin love napping under it.'],
+  ['blossom_apple', 'Blossom Apple', 'tree', { m: '#e7a9c0', a: '#c8332a', t: '#6b4a2f' }, 'A proper orchard tree with real apples on it. Petals fall in spring.', 'Apples, but better.'],
+  ['ember_cherry', 'Ember Cherry', 'tree', { m: '#e8733c', a: '#ffd27a', t: '#4a2c20', g: '#ff9a5a' }, 'Burning orange leaves, faintly lit. Petals drift like sparks.', 'Eat them: fire doesn\'t bother you for a bit.'],
+  ['bellfruit', 'Bellfruit Tree', 'tree', { m: '#5f8f58', a: '#e3c05a', t: '#574134' }, 'Its fruit are tiny bells. The whole tree rings when the wind picks up.', 'Keep one: the Bell Song likes it.'],
+  ['moon_lily', 'Moon Lily', 'lily', { m: '#eef3ff', a: '#9fb6ea', g: '#cfe0ff' }, 'Opens only at night and lights the pond. Pondlings sit on the pads.', 'Tea: calm and clear.'],
+  ['stair_rice', 'Stair Rice', 'paddy', { m: '#8fae55', a: '#dcd28a' }, 'Grows in shallow water, made for terraces cut with Raise.', 'A real staple food.'],
+  ['mirror_reed', 'Mirror Reed', 'reed', { m: '#c2ccd4', a: '#ffffff' }, 'Silver reeds that flash when the sun catches them.', 'Weave it into screens and blinds.'],
+  ['frost_rose', 'Frost Rose', 'rose', { m: '#9fd5ec', a: '#ffffff', g: '#bfe6ff' }, 'From frost gates. Lays a little rime on whatever grows beside it.', 'Tea: cool head, slower heartbeat.'],
+  ['waxcomb', 'Waxcomb Thistle', 'thistle', { m: '#c6912c', a: '#f5d16a' }, 'From the Hive. Spiny heads that slowly drip honey.', 'Lick it: sticks you to walls for a moment.'],
+  ['spark_fern', 'Spark Fern', 'fern', { m: '#4a6a4a', a: '#ffbf5a', g: '#ffbf5a' }, 'From the Foundry. Spits small sparks when you brush past.', 'Dried, it lights any fire.'],
+  ['eyebloom', 'Eyebloom', 'eye', { m: '#3b2c5a', a: '#f2efe2' }, 'From the Abyss. Its buds turn to watch you. Your guests will hate it.', 'Eat one: you see through walls for a moment.'],
+  ['candleflower', 'Candleflower', 'candle', { m: '#e7dcc0', a: '#ffb54a', g: '#ffb54a' }, 'From the crypts. A wax stalk with a real small flame on top.', 'Melts into candles for your rooms.'],
+  ['dream_cotton', 'Dream Cotton', 'puff', { m: '#d8b9ef', a: '#f3e6ff' }, 'From the Lucid Dream. Plush pillows on a stalk.', 'Sleep on it: better dreams.'],
+];
+let gNight = false;
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function drawPlant(cv, id, arch, c) {
+  const g = cv.getContext('2d'), R = mulberry([...id].reduce((a, ch) => a * 31 + ch.charCodeAt(0) | 0, 7)), glows = [];
+  const px = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
+  const disc = (x, y, r, col) => { for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) if (a * a + b * b <= r * r + .5) px(x + a, y + b, col); };
+  const vl = (x, y0, y1, col) => { for (let y = y0; y <= y1; y++) px(x, y, col); };
+  const hl = (x0, x1, y, col) => { for (let x = x0; x <= x1; x++) px(x, y, col); };
+  const glow = (x, y, r) => glows.push([x, y, r]);
+  const leaf = gNight ? '#2d4a35' : '#4d8a3f', leaf2 = gNight ? '#3a5d40' : '#6aa652', stem = gNight ? '#2c4432' : '#3d6b35';
+  g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = gNight ? '#101a2c' : '#bcd9e8'; g.fillRect(0, 0, 24, 32);
+  const water = ['lily', 'paddy', 'reed'].includes(arch);
+  if (water) { g.fillStyle = gNight ? '#16304d' : '#4f8cb0'; g.fillRect(0, 25, 24, 7); for (let i = 0; i < 12; i++) px(R() * 24, 26 + R() * 6, gNight ? '#24486e' : '#7ab0cc'); }
+  else { g.fillStyle = gNight ? '#2a2019' : '#6b4a2f'; g.fillRect(0, 28, 24, 4); for (let i = 0; i < 16; i++) px(R() * 24, 28 + R() * 4, gNight ? '#3a2d24' : '#86603f'); }
+  const A = {
+    gourd() { for (let x = 2; x < 22; x++) px(x, 26 + Math.round(Math.sin(x * .8)), stem); [[5, 24], [17, 25]].forEach(([x, y]) => { disc(x, y - 3, 1, leaf); disc(x + 2, y - 5, 1, leaf2); }); [[8, 23, 4], [17, 24, 3]].forEach(([x, y, r]) => { disc(x, y, r, c.m); vl(x, y - r + 1, y + r - 1, c.a); glow(x, y, 7); }); },
+    bigourd() { disc(12, 19, 9, c.m); for (let x = 5; x <= 19; x += 3) vl(x, 12, 26, c.a); vl(12, 7, 10, stem); hl(12, 16, 8, stem); disc(4, 9, 2, leaf); },
+    stalk() { for (let i = 0; i < 6; i++) { const x = 3 + i * 3.4, t = 10 + R() * 5; vl(x, t + 5, 27, c.m); for (let y = t; y < t + 6; y++) { px(x - 1, y, c.a); px(x + 1, y + 1, c.a); } px(x, t - 1, c.a); glow(x, t + 2, 3); } },
+    bell() { [[6, 18, 3], [15, 14, 4], [19, 22, 2]].forEach(([x, y, r]) => { vl(x, y + 2, 27, '#d9cfb8'); for (let j = 0; j <= r + 2; j++) hl(x - Math.min(r, 1 + j), x + Math.min(r, 1 + j), y - r + j, c.m); hl(x - r - 1, x + r + 1, y + 3, c.a); px(x, y + 4, c.a); }); },
+    puff() { [7, 16].forEach((x, i) => { vl(x, 16, 27, stem); disc(x - 2, 22, 1, leaf); disc(x + 2, 20, 1, leaf2); vl(x, 10 - i, 15, '#9aa6ad'); disc(x, 6 - i * 2 + 2, 4, c.m); disc(x + 2, 8 - i * 2, 2, c.a); }); },
+    root() { for (let x = 6; x <= 18; x += 2) vl(x, 7 + Math.abs(x - 12) / 2, 15, x % 4 ? leaf : leaf2); disc(12, 20, 5, c.m); hl(8, 16, 16, c.a); px(10, 20, '#222'); px(14, 20, '#222'); vl(9, 25, 27, c.a); vl(15, 25, 27, c.a); },
+    ember() { for (let i = 0; i < 22; i++) { const x = 4 + R() * 16, y = 10 + R() * 16; disc(x, y, 1, R() > .4 ? c.m : c.a); if (R() > .7) glow(x, y, 3); } vl(12, 20, 27, stem); },
+    cabbage() { disc(12, 20, 8, c.m); disc(10, 17, 4, gNight ? '#566a90' : '#7f95bd'); disc(15, 21, 3, gNight ? '#566a90' : '#7f95bd'); [[5, 9], [17, 6], [12, 4]].forEach(([x, y], k) => { for (let i = 0; i < 6; i++) px(x + (i % 2 ? 1 : -1) + k, y + i, c.a); glow(x, y + 3, 4); }); },
+    flower() { vl(12, 15, 27, stem); disc(8, 22, 2, leaf); disc(16, 19, 2, leaf2); disc(12, 9, 7, c.m); disc(12, 9, 4, c.a); for (let a = 0; a < 12; a++) px(12 + Math.cos(a * .52) * 8, 9 + Math.sin(a * .52) * 8, c.m); px(11, 8, '#111'); px(14, 8, '#111'); },
+    hang() { for (let x = 0; x < 24; x++) px(x, 2 + Math.round(Math.sin(x / 24 * 3.14) * 2), '#8f6b3a'); [5, 12, 19].forEach(x => { disc(x, 6, 1, leaf); for (let j = 0; j < 4; j++) for (let k = -2 + j / 2; k <= 2 - j / 2; k += 2) disc(x + k, 9 + j * 3 + R() * 2, 1, j % 2 ? c.m : c.a); }); },
+    climb() { vl(12, 1, 27, '#8f6b3a'); for (let y = 2; y < 27; y += 2) { const s = Math.sin(y * .7) * 3; px(12 + s, y, stem); disc(12 + s * 1.6, y, 1, y % 4 ? leaf : leaf2); if (y % 6 === 2) { vl(12 + s + (s > 0 ? 3 : -3), y, y + 4, c.m); px(12 + s + (s > 0 ? 3 : -3), y + 2, c.a); glow(12 + s + (s > 0 ? 3 : -3), y + 2, 2); } } },
+    curtain() { hl(0, 23, 1, '#8f6b3a'); for (let x = 1; x < 24; x += 2) { const l = 16 + R() * 10; vl(x, 2, l, x % 4 === 1 ? c.m : c.a); px(x + 1, 6 + R() * 12, c.a); } },
+    tree() { for (let k = 10; k <= 13; k++) vl(k, 16, 27, c.t); disc(12, 10, 9, c.m); disc(8, 8, 4, c.m); disc(16, 11, 5, c.m); for (let i = 0; i < 16; i++) { const a = R() * 6.28, r = R() * 9; const x = 12 + Math.cos(a) * r, y = 10 + Math.sin(a) * r; px(x, y, c.a); if (c.g) glow(x, y, 2); } for (let i = 0; i < 5; i++) px(R() * 24, 21 + R() * 7, c.m); },
+    lily() { [[6, 26, 4], [18, 27, 3]].forEach(([x, y, r]) => { hl(x - r, x + r, y, gNight ? '#2e5a3a' : '#4d8a3f'); hl(x - r + 1, x + r - 1, y + 1, gNight ? '#2e5a3a' : '#4d8a3f'); }); const o = gNight ? 5 : 2; for (let i = 0; i < 8; i++) { const a = i * .785; disc(12 + Math.cos(a) * o, 22 + Math.sin(a) * (o * .55), 1, c.m); } disc(12, 22, 1, c.a); glow(12, 21, 9); },
+    paddy() { for (let i = 0; i < 8; i++) { const x = 2 + i * 2.8; vl(x, 11 + R() * 5, 26, c.m); px(x + 1, 11 + R() * 5, c.a); px(x - 1, 13 + R() * 5, c.a); } },
+    reed() { for (let i = 0; i < 7; i++) { const x = 3 + i * 3; vl(x, 3 + R() * 8, 26, c.m); px(x, 10 + R() * 6, c.a); disc(x, 3 + R() * 3, 1, c.a); } },
+    rose() { vl(12, 13, 27, stem); [17, 22].forEach(y => { px(11, y, '#d7eaf0'); px(13, y + 2, '#d7eaf0'); }); disc(8, 20, 2, leaf); disc(16, 23, 2, leaf2); disc(12, 9, 5, c.m); disc(12, 9, 2, c.a); px(10, 7, c.a); px(14, 11, c.a); glow(12, 9, 8); },
+    thistle() { [6, 12, 18].forEach((x, k) => { vl(x, 13 + k, 27, stem); disc(x, 10 + k, 3, c.m); for (let a = 0; a < 9; a++) px(x + Math.cos(a * .7) * 5, 10 + k + Math.sin(a * .7) * 5 - 1, c.m); vl(x + 1, 13 + k, 15 + k + 3, c.a); }); },
+    fern() { [5, 12, 19].forEach(x => { vl(x, 7, 27, stem); for (let y = 8; y < 27; y += 2) { hl(x - (27 - y) / 5, x + (27 - y) / 5, y, y % 4 ? leaf : leaf2); } }); [[8, 6], [16, 9], [3, 14], [21, 4]].forEach(([x, y]) => { px(x, y, c.a); glow(x, y, 3); }); },
+    eye() { [[6, 12], [13, 8], [19, 15]].forEach(([x, y]) => { vl(x, y + 4, 27, c.m); disc(x, y, 4, c.a); disc(x + 1, y, 2, '#6e2a8c'); disc(x + 1, y, 1, '#0b0b0f'); hl(x - 4, x + 4, y - 4, c.m); }); },
+    candle() { [[7, 12], [15, 8]].forEach(([x, y]) => { for (let k = 0; k < 3; k++) vl(x + k, y, 27, c.m); px(x, y + 5, '#fff'); px(x + 2, y + 9, '#fff'); vl(x + 1, y - 2, y - 1, '#333'); vl(x + 1, y - 5, y - 3, c.a); px(x + 1, y - 4, '#fff1b8'); glow(x + 1, y - 4, 7); }); }
+  };
+  (A[arch] || A.stalk)();
+  if (gNight && c.g) { g.globalCompositeOperation = 'lighter'; glows.forEach(([x, y, r]) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, c.g + 'cc'); gr.addColorStop(1, c.g + '00'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }); g.globalCompositeOperation = 'source-over'; }
+}
+
+/* ---------- answers ---------- */
+const DECS = [
+  ['The moves', [
+    ['hold', 'Everything on the Mallet is on the mouse', 'You told me the keys can\'t touch your powers, and every letter is taken. So: right click does what the Mallet is set to, Sneak and scroll changes it. Z X C V and R stay your powers.', 'Yes, on the mouse', 'No, give it its own key to switch'],
+    ['where', 'The moves work anywhere, including in fights', 'As you said. Your powers stay live; your hand holds a Mallet and not your weapon, so that\'s the trade.', 'Yes, anywhere', 'Not in fights'],
+    ['ore', 'Ore, lode hearts and Deepglass are too heavy to Lift', 'Ripping up a hill is fine. This one exception stops Lift from replacing the pick, and keeps the Forged Pick worth having.', 'Yes, ore stays with the pick', 'No, Lift anything at a high level'],
+    ['raise', 'Raise is free apart from energy', 'It pushes up the ground you aim at, and you don\'t need stone in your bag.', 'Yes, energy only', 'No, it should use stone from my bag'],
+    ['gates', 'Inside gates, Raise and Hang last 10 seconds, and no Mallet or Lift', 'A gate\'s rooms are its design. You still get the movement use, and nothing tears the gate apart.', 'Yes, temporary in gates', 'Not in gates at all'],
+    ['tilt', 'Leaning and sinking blocks (levels 5 and 6)', 'The most off-grid part, and the one most likely to look wrong beside straight blocks. It only ships if it looks good.', 'Yes, try it', 'Leave it out'],
+  ]],
+  ['Looks and furniture', [
+    ['free', 'Ordinary stone, wood and clay looks are free and instant', 'What you asked for: no ten-step process.', 'Yes, free', 'Small cost per block'],
+    ['learn', 'Tap any block anywhere to learn its look', 'A reason to walk Carillon and look closely at gates. The alternative gives you everything at the start.', 'Yes, you learn them', 'No, all unlocked from the start'],
+    ['skin', 'Learned looks are skins, so a block stays what it was underneath', 'Nobody can turn cobble into a rare material. Recipes and the economy don\'t change.', 'Yes, skins', 'No, make them the real block'],
+    ['stock', 'One recipe (Stock) for all furniture, chosen with the Mallet', 'Forty recipes is what you said you don\'t want.', 'Yes, Stock', 'No, a recipe for each piece'],
+    ['setdown', 'Set anything down, anywhere, at any angle', 'A sword leaning on the wall, books stacked crooked, any item you own. You didn\'t say either way. I think it\'s what makes a room look lived in.', 'Yes', 'Leave it out'],
+    ['firstlight', 'First Light: the camera glides through a finished room once', 'Lighting the first lamp in a room that\'s reached Fine. Five seconds, any key skips it, once per room.', 'Yes', 'Leave it out'],
+    ['prise', 'Prising: tear a real arch or window out of a cleared gate and carry it home', 'You didn\'t say either way. It needs Gates as Worlds to settle first, so it would come after Stage 5.', 'Yes, later', 'Leave it out'],
+  ]],
+  ['Boss pieces, kin and garden', [
+    ['boss', 'One signature piece per boss, three pilots first', 'After the bosses showcase I don\'t want to make 41 of anything until you\'ve seen three.', 'Yes, three first', 'Make more of a set per boss'],
+    ['kindoor', 'Kin Doors you place, and kin using your furniture', 'Kin choose your door over their old spot. Saves keep what they have.', 'Yes', 'Change something'],
+    ['gardenway', 'The Garden: grown like wheat, no chores, lots of new plants', 'Third try. If this still isn\'t it, tell me what a great farm looks like in your head, and I\'ll start again from that.', 'Yes, this direction', 'Still not it'],
+    ['eat', 'Everything you grow does something silly or useful when eaten', 'One action and no recipes needed. Good for two people messing around.', 'Yes', 'Keep plants as plain food'],
+    ['mix', 'One quiet rule: the more kinds grow together, the better they all grow', 'That\'s your pretty-farm idea with no list. Nothing tells you to do it.', 'Yes', 'Leave it out'],
+    ['buns', 'Burrowbuns and Mossbacks leave the new plants alone', 'They were approved for boring work, so they keep doing vanilla crops. You pick everything new yourself.', 'Yes', 'Let them tend everything'],
+  ]],
+  ['Riding Along', [
+    ['dmg', 'Rider\'s hits count for 40%, and gates don\'t scale for them', 'They help without carrying you, and don\'t make the gate harder.', 'Yes', 'Full damage, and the gate scales up'],
+    ['rank', 'Half XP, own loot, no rank credit, Reassessments can\'t be ridden', 'So a server can\'t use it to carry people to S rank.', 'Yes', 'Full XP'],
+    ['range', 'Works anywhere within 48 blocks of each other', 'The Wilds and hunts too, not only gates.', 'Yes, anywhere', 'Only in gates'],
+  ]],
+  ['Order', [
+    ['order', 'Mallet first, Riding Along in parallel with it', 'The Mallet proves the whole idea. Riding Along stands on its own and can go any time.', 'Yes', 'Do Riding Along first'],
+  ]],
+];
+const stateA = {}; let col = null;
+function setSaved(id, on) { const el = $('s_' + id); if (el) el.textContent = on; }
+function paint() {
+  DECS.forEach(([, list]) => list.forEach(([id]) => { const a = stateA['d_' + id]; document.querySelectorAll(`[data-d="${id}"]`).forEach(b => b.classList.toggle('on', !!a && a.answer === b.dataset.v)); const t = $('n_' + id); if (t && document.activeElement !== t && a && a.note != null) t.value = a.note; }));
+  PLANTS.forEach(([id]) => { const a = stateA['plant_' + id]; document.querySelectorAll(`[data-p="${id}"]`).forEach(b => b.classList.toggle('on', !!a && a.answer === b.dataset.v)); });
+  const g = stateA.general, gt = $('general'); if (g && document.activeElement !== gt) gt.value = g.note || '';
+  const love = PLANTS.filter(([id]) => (stateA['plant_' + id] || {}).answer === 'love').length, meh = PLANTS.filter(([id]) => (stateA['plant_' + id] || {}).answer === 'meh').length;
+  $('gcount').textContent = love || meh ? `${love} love, ${meh} not this` : '';
+}
+async function save(id, body, sid) {
+  stateA[id] = { ...(stateA[id] || {}), ...body, at: new Date().toISOString() }; paint();
+  try { localStorage.setItem('mbh_' + id, JSON.stringify(stateA[id])); } catch (e) { }
+  if (col) { try { await col.doc(id).set(stateA[id]); if (sid) setSaved(sid, 'Saved'); } catch (e) { if (sid) setSaved(sid, 'Could not save: tell me in chat instead'); } }
+  else if (sid) setSaved(sid, 'Saved in this browser only');
+}
+(function renderDecs() {
+  const box = $('decs'); let n = 0;
+  DECS.forEach(([grp, list]) => {
+    const g = document.createElement('p'); g.className = 'grp'; g.textContent = grp; box.append(g);
+    list.forEach(([id, q, why, yes, no]) => {
+      n++; const d = document.createElement('div'); d.className = 'dec';
+      const h = document.createElement('h3'); h.textContent = `${n}. ${q}`;
+      const p = document.createElement('p'); p.className = 'rec'; p.textContent = why;
+      const c = document.createElement('div'); c.className = 'choose';
+      [[yes, 'yes'], [no, 'other']].forEach(([label, v]) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.dataset.d = id; b.dataset.v = v; b.onclick = () => save('d_' + id, { answer: v }, id); c.append(b); });
+      const t = document.createElement('textarea'); t.id = 'n_' + id; t.placeholder = 'Note (optional)'; t.setAttribute('aria-label', 'Note on: ' + q); t.onchange = () => save('d_' + id, { note: t.value }, id);
+      const s = document.createElement('p'); s.className = 'saved'; s.id = 's_' + id;
+      d.append(h, p, c, t, s); box.append(d);
+    });
+  });
+  $('general').onchange = e => save('general', { note: e.target.value }, 'g');
+})();
+(function renderGallery() {
+  const box = $('gal');
+  const cvs = PLANTS.map(([id, name, arch, c, what, eat]) => {
+    const card = document.createElement('div'); card.className = 'plant';
+    const cv = document.createElement('canvas'); cv.width = 24; cv.height = 32; cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', 'Sketch of ' + name);
+    const tx = document.createElement('div'); tx.style.minWidth = 0; const b = document.createElement('b'); b.textContent = name; const p = document.createElement('p'); p.textContent = what; const e = document.createElement('p'); e.className = 'eat'; e.textContent = eat; tx.append(b, p, e);
+    const v = document.createElement('div'); v.className = 'vote';
+    [['Love it', 'love'], ['Not this', 'meh']].forEach(([l, k]) => { const bt = document.createElement('button'); bt.type = 'button'; bt.textContent = l; bt.className = k; bt.dataset.p = id; bt.dataset.v = k; bt.onclick = () => save('plant_' + id, { answer: (stateA['plant_' + id] || {}).answer === k ? null : k }); v.append(bt); });
+    card.append(cv, tx, v); box.append(card); return [cv, id, arch, c];
+  });
+  const all = () => cvs.forEach(a => drawPlant(...a));
+  $('gnight').onclick = e => { gNight = !gNight; e.target.textContent = gNight ? 'Show by day' : 'Show at night'; all(); };
+  all();
+})();
+try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith('mbh_')) stateA[k.slice(4)] = JSON.parse(localStorage.getItem(k)); } } catch (e) { }
+paint();
+if (window.claude && window.claude.use) window.claude.use('db').then(db => {
+  if (!db) return; col = db.collection('answers');
+  col.onSnapshot(s => { s.docs.forEach(d => { if (d.exists) stateA[d.id] = d.data(); }); paint(); }, () => { });
+}).catch(() => { });
+</script>

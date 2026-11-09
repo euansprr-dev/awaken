@@ -1,0 +1,27 @@
+{
+ "values": [
+  "awaken:amber_crystal",
+  "awaken:choir_crystal",
+  "awaken:core_shard",
+  "awaken:deepglass",
+  "awaken:deepglass_shard",
+  "awaken:desert_crystal",
+  "awaken:ember_crystal",
+  "awaken:essence_shard",
+  "awaken:frost_crystal",
+  "awaken:frostspar",
+  "awaken:frostspar_cluster",
+  "awaken:glacial_crystal",
+  "awaken:hollow_crystal",
+  "awaken:palace_crystal",
+  "awaken:sky_crystal",
+  "awaken:sunshard",
+  "awaken:sunshard_cluster",
+  "minecraft:amethyst_block",
+  "minecraft:budding_amethyst",
+  "minecraft:echo_shard",
+  "minecraft:heart_of_the_sea",
+  "minecraft:nether_star",
+  "minecraft:prismarine_shard"
+ ]
+}

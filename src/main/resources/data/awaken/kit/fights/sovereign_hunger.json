@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "sovereign_hunger",
  "moves": "sovereign_hunger",
  "duel": true,
@@ -23,6 +23,12 @@
        "slap_b",
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge",
+       "dodged": "devour"
+      }
      ]
     },
     {
@@ -33,6 +39,11 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge"
+      }
      ]
     },
     {
@@ -44,6 +55,12 @@
        "slap",
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge",
+       "dodged": "devour"
+      }
      ]
     },
     {
@@ -57,6 +74,12 @@
       [
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge",
+       "dodged": "devour"
+      }
      ]
     }
    ]
@@ -76,6 +99,12 @@
        "slap_b",
        "gorge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge",
+       "dodged": "devour"
+      }
      ]
     },
     {
@@ -86,6 +115,11 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "devour"
+      }
      ]
     },
     {
@@ -96,6 +130,11 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge"
+      }
      ]
     },
     {
@@ -106,6 +145,12 @@
       [
        "gorge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge",
+       "dodged": "devour"
+      }
      ]
     },
     {
@@ -123,6 +168,12 @@
       [
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge",
+       "dodged": "devour"
+      }
      ]
     }
    ]
@@ -147,6 +198,12 @@
        "slap_b",
        "gorge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge",
+       "dodged": "devour"
+      }
      ]
     },
     {
@@ -157,6 +214,11 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "devour"
+      }
      ]
     },
     {
@@ -168,6 +230,11 @@
        "slap",
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge"
+      }
      ]
     },
     {
@@ -181,6 +248,12 @@
       [
        "slap_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "gorge",
+       "dodged": "devour"
+      }
      ]
     }
    ]
@@ -189,5 +262,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.25
+ },
+ "mind": {
+  "cooldowns": {
+   "devour": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "devour",
+     "gorge",
+     "slap",
+     "slap_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "devour"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "slap"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "slap",
+     "slap_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "gorge"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "gorge",
+     "slap"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "devour"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

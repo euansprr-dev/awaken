@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "lantern_broker",
  "moves": "lantern_broker",
  "duel": true,
@@ -19,6 +19,12 @@
       [
        "crook"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     },
     {
@@ -32,6 +38,11 @@
        "step",
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper"
+      }
      ]
     },
     {
@@ -43,6 +54,12 @@
        "lash",
        "crook"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     },
     {
@@ -57,6 +74,12 @@
        "lash",
        "crook"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     }
    ]
@@ -72,6 +95,12 @@
       [
        "crook"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     },
     {
@@ -85,6 +114,11 @@
        "step",
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper"
+      }
      ]
     },
     {
@@ -98,6 +132,11 @@
        "step",
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "bolts"
+      }
      ]
     },
     {
@@ -113,6 +152,12 @@
        "lash",
        "crook"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     },
     {
@@ -127,6 +172,12 @@
        "lash",
        "crook"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     }
    ]
@@ -149,6 +200,12 @@
       [
        "bolts"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     },
     {
@@ -162,6 +219,11 @@
        "step",
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper"
+      }
      ]
     },
     {
@@ -172,6 +234,12 @@
       [
        "crook"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     },
     {
@@ -185,6 +253,11 @@
        "step",
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "bolts"
+      }
      ]
     },
     {
@@ -199,6 +272,12 @@
        "lash",
        "crook"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "paper",
+       "dodged": "bolts"
+      }
      ]
     }
    ]
@@ -207,5 +286,66 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "paper": 240
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "bolts",
+     "paper",
+     "crook",
+     "lash"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "bolts"
+    ],
+    "chance": 0.7,
+    "cooldown": 200
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "crook",
+     "lash"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "paper"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "paper",
+     "crook"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "bolts"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

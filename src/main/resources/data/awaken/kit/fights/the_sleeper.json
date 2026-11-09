@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "the_sleeper",
  "moves": "the_sleeper",
  "duel": true,
@@ -23,6 +23,12 @@
        "stomp_b",
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -36,6 +42,11 @@
       [
        "kick"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -49,6 +60,12 @@
        "dreamstep",
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -63,6 +80,12 @@
       [
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -73,6 +96,11 @@
       [
        "stomp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist"
+      }
      ]
     }
    ]
@@ -92,6 +120,12 @@
        "stomp_b",
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -105,6 +139,11 @@
       [
        "kick"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -118,6 +157,12 @@
        "dreamstep",
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -132,6 +177,12 @@
       [
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -142,6 +193,11 @@
       [
        "stomp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist"
+      }
      ]
     },
     {
@@ -156,6 +212,12 @@
       [
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -175,6 +237,11 @@
       [
        "stomp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -186,6 +253,12 @@
        "stomp_b",
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -196,6 +269,12 @@
       [
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -207,6 +286,11 @@
        "stomp",
        "stomp_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist"
+      }
      ]
     },
     {
@@ -220,6 +304,12 @@
        "dreamstep",
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -234,6 +324,12 @@
       [
        "fist"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "fist",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -242,5 +338,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "charge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "charge",
+     "fist",
+     "stomp",
+     "stomp_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "stomp"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "stomp",
+     "stomp_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "fist"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "fist",
+     "stomp"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

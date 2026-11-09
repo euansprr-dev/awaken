@@ -33,6 +33,7 @@ final class FxScreen {
     private static int impactTicks;
     private static Identifier activeImpact;
     private static float fov, fovDecay;
+    private static float zoom;
     private static float kickPitch, kickYaw, kickRoll;
     private static int speedTicks, speedTotal;
     /** Tours only (/awaken fx sidecam): the third-person camera swung this many degrees round the player, 0 off. */
@@ -69,6 +70,14 @@ final class FxScreen {
         fovDecay = Math.abs(fov) / Math.max(1, ticks);
     }
 
+    /** Called each tick while a held aim wants the view pulled in (negative narrows); it eases there and back. */
+    private static float zoomWanted;
+
+    static void zoomTo(float amount) {
+        if (!AwakenConfig.Client.CAMERA_SHAKE.get()) return;
+        zoomWanted = amount * (dev.awaken.core.api.FirstPerson.reducedMotion.getAsBoolean() ? 0.5f : 1f);
+    }
+
     /** A directional kick of the view (degrees), springing back. */
     static void kick(float pitch, float yaw, float roll) {
         if (!AwakenConfig.Client.CAMERA_SHAKE.get()) return;
@@ -89,6 +98,9 @@ final class FxScreen {
         flash = Math.max(0, flash - flashDecay);
         if (fov > 0) fov = Math.max(0, fov - fovDecay);
         else if (fov < 0) fov = Math.min(0, fov + fovDecay);
+        zoom += (zoomWanted - zoom) * 0.2f;
+        if (Math.abs(zoom) < 0.0005f && zoomWanted == 0) zoom = 0;
+        zoomWanted = 0;
         kickPitch *= 0.62f;
         kickYaw *= 0.62f;
         kickRoll *= 0.62f;
@@ -111,6 +123,7 @@ final class FxScreen {
         flash = 0;
         impactTicks = 0;
         fov = 0;
+        zoom = zoomWanted = 0;
         kickPitch = kickYaw = kickRoll = 0;
         speedTicks = 0;
         LocalPlayer p = Minecraft.getInstance().player;
@@ -119,7 +132,7 @@ final class FxScreen {
     }
 
     static void onFov(ViewportEvent.ComputeFov e) {
-        if (fov != 0) e.setFOV(e.getFOV() * (1 + fov));
+        if (fov != 0 || zoom != 0) e.setFOV(e.getFOV() * (1 + fov + zoom));
     }
 
     static void onAngles(ViewportEvent.ComputeCameraAngles e) {

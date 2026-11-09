@@ -36,7 +36,7 @@ public final class Casting {
     // ---- key presses ------------------------------------------------------------------------------------------------
 
     static void onPayload(ServerPlayer player, PowerPayloads.Cast msg) {
-        if (msg.slot() < 0 || msg.slot() >= Loadout.SLOTS) return;
+        if (msg.slot() < 0 || msg.slot() >= Loadout.SLOTS || dev.awaken.core.api.RidingHooks.folded(player)) return; // in a partner's shadow nothing can be cast (SPEC §55)
         String id = Powers.loadout(player).slot(msg.slot());
         PowerType type = PowerRegistry.get(id);
         if (msg.phase() == PowerPayloads.RELEASE) {

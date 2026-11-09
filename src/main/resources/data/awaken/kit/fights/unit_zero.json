@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "unit_zero",
  "moves": "unit_zero",
  "duel": true,
@@ -22,6 +22,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -33,6 +39,12 @@
        "sever_b",
        "sever_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "orbital"
+      }
      ]
     },
     {
@@ -46,6 +58,12 @@
        "sever_b",
        "sever_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -60,6 +78,12 @@
       [
        "step"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     }
    ]
@@ -78,6 +102,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -89,6 +119,12 @@
        "sever_b",
        "sever_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "orbital"
+      }
      ]
     },
     {
@@ -99,6 +135,12 @@
        "sever_b",
        "sever_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -113,6 +155,12 @@
       [
        "step"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -126,6 +174,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -145,6 +199,12 @@
       [
        "step"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -155,6 +215,12 @@
        "sever_b",
        "sever_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "orbital"
+      }
      ]
     },
     {
@@ -165,6 +231,12 @@
        "sever_b",
        "sever_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -179,6 +251,12 @@
       [
        "step"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -192,6 +270,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -201,6 +285,12 @@
       [
        "spin"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sever_c",
+       "dodged": "step"
+      }
      ]
     }
    ]
@@ -209,5 +299,81 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.25
+ },
+ "mind": {
+  "cooldowns": {
+   "step": 60,
+   "lance": 240,
+   "orbital": 240
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "step",
+     "orbital",
+     "lance",
+     "sever_c",
+     "sever_b",
+     "sever_a"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "step",
+     "orbital",
+     "lance"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "sever_b"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "sever_b",
+     "sever_a"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "orbital",
+     "lance",
+     "sever_c"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "sever_c",
+     "sever_b"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "step",
+     "orbital",
+     "lance"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

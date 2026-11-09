@@ -163,7 +163,7 @@ public final class FittingStandRenderer implements BlockEntityRenderer<FittingSt
     }
 
     /** A bone at rest on the form: the model's pivots, arms a little out, the cape hanging, the cloth still. */
-    private static void rest(PoseStack ps, Bone b) {
+    public static void rest(PoseStack ps, Bone b) {
         int i = Math.min(b.ordinal(), 5);
         if (b.ordinal() >= Bone.CAPE0.ordinal()) i = 1;
         ps.translate(PIVOT[i][0] / 16F, PIVOT[i][1] / 16F, PIVOT[i][2] / 16F);

@@ -59,6 +59,7 @@ final class DelveTests {
     static void register() {
         Progression.addPerkSource((p, perk) -> perk.equals(Crafts.RATE) && RATED.contains(p.getUUID()) ? 0.5 : 0);
         AwakenTests.registerIsolated("delve_lode_heart", 400, DelveTests::lodeHeart);
+        AwakenTests.register("delve_heart_in_rock", 40, DelveTests::heartInRock);
         AwakenTests.register("delve_tier_metals", 40, DelveTests::tierMetals);
         AwakenTests.register("delve_tuning_fork", 40, DelveTests::tuningFork);
         AwakenTests.register("delve_held_light", 20, DelveTests::heldLight);
@@ -129,6 +130,73 @@ final class DelveTests {
      * opens the two-blow window on its blocks, and only once; its roof would come down, but not over building or a
      * Hearth; brought down, the roof falls.
      */
+    /**
+     * A heart belongs to its rock (SPEC §42.11): it takes the look of what it replaced, a heart from an old world takes on what's
+     * round it, and on a face open to the air veins of its ore run off across the rock, each joined back to the heart, each chunk
+     * writing only its own, with no shape for a pick to catch on, gone when the rock behind them goes.
+     */
+    private static void heartInRock(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        // two blocks short of a chunk's edge, so veins cross it whichever slot the test runs in
+        BlockPos base = h.absolutePos(new BlockPos(0, 24, 0)), heart = base.offset(14 - (base.getX() & 15), 0, 0);
+        for (int dx = -8; dx <= 8; dx++) for (int dy = -8; dy <= 8; dy++) for (int dz = -2; dz <= 2; dz++) {
+            level.setBlock(heart.offset(dx, dy, dz), dz < 0 ? Blocks.AIR.defaultBlockState() : Blocks.STONE.defaultBlockState(), 2);
+        }
+        BlockState set = LodeHeartBlock.in(Ore.IRON.heart().defaultBlockState(), Blocks.GRANITE.defaultBlockState());
+        h.assertTrue(set.getValue(LodeHeartBlock.HOST) == LodeHeartBlock.Host.GRANITE, "a heart takes the look of the rock it replaced");
+        h.assertTrue(LodeHeartBlock.in(Ore.IRON.heart().defaultBlockState(), Blocks.DEEPSLATE_IRON_ORE.defaultBlockState()).getValue(LodeHeartBlock.HOST) == LodeHeartBlock.Host.DEEPSLATE, "in deepslate ore, deepslate");
+        level.setBlock(heart, Ore.IRON.heart().defaultBlockState(), 2);
+        level.getBlockState(heart).randomTick(level, heart, level.getRandom());
+        h.assertTrue(level.getBlockState(heart).getValue(LodeHeartBlock.HOST) == LodeHeartBlock.Host.STONE, "an old heart takes on the rock round it");
+
+        // a heart standing out of the rock is built back in, with one face left open
+        BlockPos proud = heart.offset(0, 0, -6);
+        level.setBlock(proud, Blocks.STONE.defaultBlockState(), 2);
+        level.setBlock(proud.below(), Blocks.STONE.defaultBlockState(), 2);
+        LodeFeature.seat(level, proud, Blocks.GRANITE.defaultBlockState(), proud.getX() - 8, proud.getZ() - 8);
+        int open = 0;
+        for (Direction d : Direction.values()) if (level.getBlockState(proud.relative(d)).isAir()) open++;
+        h.assertTrue(open == 1 && level.getBlockState(proud.above()).isAir(), "a heart on a floor keeps only its top open, had " + open + " open");
+        h.assertTrue(level.getBlockState(proud.north()).is(Blocks.GRANITE), "with the rock it replaced round it");
+        for (Direction d : Direction.Plane.HORIZONTAL) level.setBlock(proud.relative(d), Blocks.AIR.defaultBlockState(), 2);
+        level.setBlock(proud, Blocks.AIR.defaultBlockState(), 2);
+        level.setBlock(proud.below(), Blocks.AIR.defaultBlockState(), 2);
+
+        int x0 = heart.getX() & ~15, z0 = heart.getZ() & ~15;
+        long seed = 4242L;
+        LodeFeature.trace(level, seed, Ore.IRON, heart, x0, z0);
+        for (int dx = -8; dx <= 8; dx++) for (int dy = -8; dy <= 8; dy++) {
+            BlockPos at = heart.offset(dx, dy, -1);
+            if (level.getBlockState(at).is(DelveContent.LODE_TRACE.get())) h.assertTrue(at.getX() >= x0 && at.getX() < x0 + 16 && at.getZ() >= z0 && at.getZ() < z0 + 16, "a chunk writes only its own cells: " + at);
+        }
+        for (int cx = -16; cx <= 16; cx += 16) LodeFeature.trace(level, seed, Ore.IRON, heart, x0 + cx, z0);
+        int traces = 0;
+        BlockPos any = null;
+        for (int dx = -8; dx <= 8; dx++) for (int dy = -8; dy <= 8; dy++) {
+            BlockPos at = heart.offset(dx, dy, -1);
+            BlockState s = level.getBlockState(at);
+            if (!s.is(DelveContent.LODE_TRACE.get())) continue;
+            traces++;
+            any = at;
+            h.assertTrue(s.getShape(level, at).isEmpty() && s.getCollisionShape(level, at).isEmpty(), "a pick goes straight through a vein");
+            h.assertTrue(s.getValue(LodeTraceBlock.FACING) == Direction.SOUTH && s.getValue(LodeTraceBlock.ORE) == Ore.IRON, "on the rock, in its ore's colour");
+            for (int e = 0; e < 4; e++) {
+                if (!LodeTraceBlock.joined(s, e)) continue;
+                Direction side = LodeTraceBlock.side(Direction.SOUTH, e);
+                BlockPos next = at.relative(side);
+                BlockState there = level.getBlockState(next);
+                boolean toHeart = next.relative(Direction.SOUTH).equals(heart);
+                h.assertTrue(toHeart || there.is(DelveContent.LODE_TRACE.get()) && LodeTraceBlock.joined(there, e % 2 == 0 ? e + 1 : e - 1),
+                        "every edge of a vein meets the next piece or the heart, at " + at);
+            }
+        }
+        h.assertTrue(traces >= 6, "the heart's veins run out over the rock (" + traces + ")");
+        BlockPos behind = any.relative(Direction.SOUTH);
+        level.setBlock(behind, Blocks.AIR.defaultBlockState(), 3);
+        h.assertTrue(!level.getBlockState(any).is(DelveContent.LODE_TRACE.get()), "a vein goes with the rock behind it");
+        h.succeed();
+    }
+
     private static void lodeHeart(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         BlockPos o = h.absolutePos(new BlockPos(0, 24, 0));
@@ -224,6 +292,7 @@ final class DelveTests {
             for (Piece piece : Piece.values()) {
                 if (piece.isArmour()) continue; // forged at a Fitting Stand from the tier's metal (SPEC §44.4, armour_forge_rules)
                 if (piece == Piece.BLADE) continue; // forged at a War Anvil: checked with the weapons below (SPEC §46.7)
+                if (piece == Piece.MATTOCK) continue; // forged too, its recipes retired (SPEC §49.9)
                 ShapedRecipe r = shaped(level, GearItems.get(tier, piece));
                 h.assertTrue(r != null, "recipe for " + tier.itemId(piece));
                 boolean metal = metalSlot(r, tier.metalTag());
@@ -312,9 +381,9 @@ final class DelveTests {
     // ---- the Tuning Fork ----------------------------------------------------------------------------------------------
 
     /**
-     * The Delver's Pick (SPEC §34.4): the pick in the stone gives a player their own pick, once while they carry it (the
-     * stone stays for the next), and counts the pull; asleep it mines as a stone pick; its hum finds the nearest lode
-     * block within 16 of the eye and nothing at 20.
+     * The pick in the stone (SPEC §49.1) gives a player its old head, once (the stone stays for the next), and counts the
+     * pull; an old pick still mines as a stone pick asleep; the hum finds the nearest lode block within 16 of the eye and
+     * nothing at 20.
      */
     @SuppressWarnings("removal")
     private static void wakingPick(GameTestHelper h) {
@@ -322,9 +391,9 @@ final class DelveTests {
         BlockPos stone = h.absolutePos(new BlockPos(1, 1, 1));
         level.setBlock(stone, DelveContent.WAKING_PICK_STONE.get().defaultBlockState(), 2);
         ServerPlayer p = h.makeMockServerPlayerInLevel();
-        h.assertTrue(WakingPick.pull(p, stone), "the first pull gives the pick");
-        h.assertTrue(WakingPick.carries(p), "the player carries it");
-        h.assertFalse(WakingPick.pull(p, stone), "no second pick while you carry one");
+        h.assertTrue(WakingPick.pull(p, stone), "the first pull gives its old head");
+        h.assertTrue(p.getInventory().countItem(dev.awaken.delve.forged.DelveForged.OLD_HEAD.get()) == 1, "the player carries it");
+        h.assertFalse(WakingPick.pull(p, stone), "and only once, ever");
         h.assertTrue(level.getBlockState(stone).is(DelveContent.WAKING_PICK_STONE.get()), "the pick in the stone stays");
         h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(WakingPick.PULLED) == 1, "the pull is counted");
         ItemStack pick = new ItemStack(DelveContent.WAKING_PICK.get());
@@ -336,9 +405,9 @@ final class DelveTests {
         Lode a = LodePlans.handmade(Ore.COPPER, near.toLongArray());
         LodePlans.EXTRA.add(a);
         try {
-            var v = WakingPick.nearest(level, eye);
+            var v = WakingPick.nearest(level, eye, WakingPick.HUM_REACH);
             h.assertTrue(v.isPresent() && v.get().ore() == Ore.COPPER && v.get().nearest().equals(eye.offset(10, 0, 0)), "it hums toward copper 10 off: " + v);
-            h.assertTrue(WakingPick.nearest(level, eye.offset(-10, 0, 0)).isEmpty(), "nothing when the lode is 20 off");
+            h.assertTrue(WakingPick.nearest(level, eye.offset(-10, 0, 0), WakingPick.HUM_REACH).isEmpty(), "nothing when the lode is 20 off");
         } finally {
             LodePlans.EXTRA.remove(a);
         }

@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "proving_sky_warden",
  "moves": "proving_sky_warden",
  "duel": true,
@@ -25,6 +25,12 @@
        "thrust",
        "descent"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -40,6 +46,12 @@
        "rising",
        "descent"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -51,6 +63,12 @@
        "sweep",
        "rising"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -64,6 +82,12 @@
       [
        "stoop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "descent",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -80,6 +104,12 @@
        "thrust",
        "sweep"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -92,6 +122,12 @@
        "sweep",
        "rising"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -104,6 +140,12 @@
        "sweep",
        "rising"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     }
    ]
@@ -126,6 +168,12 @@
        "thrust",
        "wingbeat"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -143,6 +191,12 @@
        "thrust",
        "descent"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -158,6 +212,12 @@
        "wingbeat",
        "stoop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -172,6 +232,12 @@
        "stoop",
        "thrust"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "descent",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -188,6 +254,12 @@
        "thrust",
        "sweep"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -201,6 +273,12 @@
        "rising",
        "descent"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -213,6 +291,12 @@
        "sweep",
        "rising"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     }
    ]
@@ -236,6 +320,12 @@
        "rising",
        "descent"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -248,6 +338,12 @@
        "sweep",
        "ascension"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -260,6 +356,12 @@
        "rising",
        "wingbeat"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -273,6 +375,12 @@
       [
        "glass"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "descent",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -284,6 +392,12 @@
        "lance",
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "descent",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -298,6 +412,12 @@
       [
        "ascension"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -312,6 +432,12 @@
       [
        "glass"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -324,6 +450,12 @@
        "sweep",
        "rising"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "stoop"
+      }
      ]
     },
     {
@@ -337,6 +469,12 @@
        "rising",
        "halo"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -350,6 +488,12 @@
        "lance",
        "ascension"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     },
     {
@@ -362,6 +506,12 @@
        "sweep",
        "rising"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "wingbeat",
+       "dodged": "ascension"
+      }
      ]
     }
    ]
@@ -370,5 +520,81 @@
  "enrage": {
   "below": 0.12,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "ascension": 60,
+   "stoop": 60,
+   "glass": 240
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "ascension",
+     "stoop",
+     "lance",
+     "wingbeat",
+     "rising",
+     "sweep"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "ascension",
+     "stoop",
+     "lance"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "rising"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "rising",
+     "sweep"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "ascension",
+     "stoop",
+     "glass"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "wingbeat",
+     "rising"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "ascension",
+     "stoop",
+     "lance"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

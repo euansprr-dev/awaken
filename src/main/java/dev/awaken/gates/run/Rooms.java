@@ -74,14 +74,14 @@ public final class Rooms {
         return new int[]{Math.round(normals * (1 + PARTY_MOBS * extra)), elites + extra / 2};
     }
 
-    /** Players of this gate on this floor right now (1 at least, {@link #PARTY_MAX} at most). */
+    /** Players of this gate on this floor right now (1 at least, {@link #PARTY_MAX} at most); a rider doesn't count (SPEC §55). */
     public static int partyOnFloor(ServerLevel level, GateRecord g, FloorLayout f) {
         int n = 0;
         for (java.util.UUID u : g.inside) {
             ServerPlayer o = level.getServer().getPlayerList().getPlayer(u);
             if (o == null || !o.isAlive() || o.isSpectator()) continue;
             RunState run = Runs.run(o);
-            if (run.gateId == g.id && run.area == f.area && run.floor == f.floor) n++;
+            if (run.gateId == g.id && run.area == f.area && run.floor == f.floor && !run.riding) n++;
         }
         return Math.max(1, Math.min(PARTY_MAX, n));
     }

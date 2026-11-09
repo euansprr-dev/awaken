@@ -67,7 +67,7 @@ public final class AnvilClient {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AnvilPayloads.Open.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onOpen(msg)));
             e.register(AnvilPayloads.Done.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onDone(msg)));
-            e.register(AnvilPayloads.Held.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.setScreen(new AnvilHeldScreen(msg))));
+            e.register(AnvilPayloads.Held.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> onHeld(msg)));
         });
         FirstPerson.world("arms_anvil", 200, AnvilHands::pose);
         FirstPerson.camera(AnvilCamera::active);
@@ -84,6 +84,10 @@ public final class AnvilClient {
             if (sceneAnvil() != null) e.setCanceled(true);
         });
         bus.addListener(RenderGuiLayerEvent.Pre.class, AnvilClient::hideHud);
+        // the weapon has left your hand: it is the one hanging over the fire
+        bus.addListener(net.neoforged.neoforge.client.event.RenderHandEvent.class, e -> {
+            if (net.minecraft.client.Minecraft.getInstance().gui.screen() instanceof dev.awaken.hall.client.AnvilStage) e.setCanceled(true);
+        });
         bus.addListener(RenderPlayerEvent.Pre.class, AnvilCamera::player);
         bus.addListener(ClientTickEvent.Post.class, e -> {
             tick();
@@ -176,8 +180,15 @@ public final class AnvilClient {
     }
 
     /** The HUD steps aside while the scene holds the view (subtitles and chat stay). */
+    /** The weapon held to the anvil: its window, in the Hall's own form unless the old screens are on. */
+    private static void onHeld(AnvilPayloads.Held msg) {
+        Minecraft mc = Minecraft.getInstance();
+        if (dev.awaken.hall.client.HallConfig.classic() || !msg.rites()) mc.gui.setScreen(new AnvilHeldScreen(msg));
+        else dev.awaken.hall.client.AnvilStage.show(msg);
+    }
+
     private static void hideHud(RenderGuiLayerEvent.Pre e) {
-        if (sceneAnvil() == null) return;
+        if (sceneAnvil() == null && !(Minecraft.getInstance().gui.screen() instanceof dev.awaken.hall.client.AnvilStage)) return;
         String path = e.getName().getPath();
         if (path.equals("subtitle_overlay") || path.equals("chat")) return;
         e.setCanceled(true);
@@ -202,7 +213,7 @@ public final class AnvilClient {
 
     // ---- shared ------------------------------------------------------------------------------------------------------
 
-    static void send(BlockPos pos, int act, int a, float t, float aim) {
+    public static void send(BlockPos pos, int act, int a, float t, float aim) {
         ClientPacketDistributor.sendToServer(new AnvilPayloads.Act(pos, act, a, t, aim));
     }
 
@@ -218,6 +229,16 @@ public final class AnvilClient {
     }
 
     /** A sound the smith's own client plays the moment they act (the server plays it to everyone else). */
+    /** A sound that can be stopped: what a held press starts and letting go ends (the colours, the pour). */
+    static net.minecraft.client.resources.sounds.SoundInstance held(Vec3 at, SoundEvent sound, float volume, float pitch) {
+        // looped: the game's fire is shorter than a long press, and letting go stops it either way
+        var it = new net.minecraft.client.resources.sounds.SimpleSoundInstance(sound.location(), SoundSource.BLOCKS, volume, pitch,
+                net.minecraft.client.resources.sounds.SoundInstance.createUnseededRandom(), true, 0,
+                net.minecraft.client.resources.sounds.SoundInstance.Attenuation.LINEAR, at.x, at.y, at.z, false);
+        Minecraft.getInstance().getSoundManager().play(it);
+        return it;
+    }
+
     static void play(Vec3 at, SoundEvent sound, float volume, float pitch) {
         var level = Minecraft.getInstance().level;
         if (level != null) level.playLocalSound(at.x, at.y, at.z, sound, SoundSource.BLOCKS, volume, pitch, false);

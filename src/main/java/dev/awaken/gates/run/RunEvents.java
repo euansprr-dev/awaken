@@ -78,6 +78,26 @@ public final class RunEvents {
         Runs.onRespawn(p);
     }
 
+    /** Brings a player out of their run now, Satchel and all (SPEC §55: the one they rode with left). */
+    public static void pullOut(ServerPlayer p, String why) {
+        RunState run = Runs.run(p);
+        if (run.active()) Runs.lost(p, run, why);
+    }
+
+    /** Whether this gate already has someone riding along in it. */
+    public static boolean hasRider(MinecraftServer server, GateRecord g) {
+        for (java.util.UUID u : g.inside) {
+            ServerPlayer o = server.getPlayerList().getPlayer(u);
+            if (o != null && Runs.run(o).gateId == g.id && Runs.run(o).riding) return true;
+        }
+        return false;
+    }
+
+    /** A right click on a gate's door. */
+    public static void door(ServerLevel level, net.minecraft.core.BlockPos pos, ServerPlayer p) {
+        Interactions.door(level, pos, p);
+    }
+
     public static void onPlayerDeath(LivingDeathEvent e) {
         Runs.onDeath(e);
     }

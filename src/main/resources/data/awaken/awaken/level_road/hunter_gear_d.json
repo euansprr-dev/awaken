@@ -7,8 +7,7 @@
     {
       "type": "recipe",
       "ids": [
-        "awaken:beastbound_focus",
-        "awaken:beastbound_mattock"
+        "awaken:beastbound_focus"
       ]
     }
   ],

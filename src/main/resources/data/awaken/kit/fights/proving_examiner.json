@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "proving_examiner",
  "moves": "proving_examiner",
  "duel": true,
@@ -23,6 +23,12 @@
        "rule_b",
        "rule_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -36,6 +42,12 @@
        "rule_c",
        "measure"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -45,6 +57,12 @@
       [
        "rule_a"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -56,6 +74,12 @@
        "rule_a",
        "rule_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "hold"
+      }
      ]
     },
     {
@@ -69,6 +93,12 @@
       [
        "step"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -79,6 +109,12 @@
       [
        "rule_a"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -88,6 +124,12 @@
       [
        "step"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     }
    ]
@@ -108,6 +150,12 @@
        "rule_c",
        "measure"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -122,6 +170,12 @@
        "rule_c",
        "measure"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -132,6 +186,12 @@
        "rule_a",
        "rule_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -144,6 +204,12 @@
        "rule_b",
        "rule_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "hold"
+      }
      ]
     },
     {
@@ -159,6 +225,12 @@
        "reading",
        "verdict"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -170,6 +242,12 @@
        "rule_a",
        "rule_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -182,6 +260,12 @@
       [
        "reading"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -207,6 +291,12 @@
        "rule_c",
        "measure"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -218,6 +308,12 @@
        "rule_c",
        "crosscut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -228,6 +324,12 @@
        "rule_a",
        "rule_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "measure",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -238,6 +340,12 @@
        "rule_a",
        "crosscut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -249,6 +357,12 @@
        "rule_a",
        "rule_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -261,6 +375,12 @@
        "rule_b",
        "rule_c"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "hold"
+      }
      ]
     },
     {
@@ -275,6 +395,12 @@
       [
        "verdict"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -286,6 +412,12 @@
        "rule_a",
        "crosscut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -299,6 +431,12 @@
        "step",
        "rule_a"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "crosscut",
+       "dodged": "step"
+      }
      ]
     },
     {
@@ -311,5 +449,80 @@
  "enrage": {
   "below": 0.12,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "step": 60,
+   "hold": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "step",
+     "hold",
+     "reading",
+     "crosscut",
+     "rule_a",
+     "rule_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "step",
+     "hold",
+     "reading"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "rule_a"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "rule_a",
+     "rule_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "hold",
+     "crosscut",
+     "measure"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "crosscut",
+     "rule_a"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "step",
+     "hold",
+     "reading"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

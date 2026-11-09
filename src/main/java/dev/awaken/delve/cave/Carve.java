@@ -179,6 +179,14 @@ final class Carve {
      * high. Returns nothing; the floor is the rock it leaves under it.
      */
     static void tunnel(Sink s, double ax, double ay, double az, double bx, double by, double bz, double r, double wander, long seed) {
+        tunnel(s, ax, ay, az, bx, by, bz, r, wander, seed, false);
+    }
+
+    /**
+     * As above; {@code floored} lays rubble under the bore where natural air has eaten the rock it would walk on. Cut
+     * the higher end first: a later stretch clears what an earlier one laid in its way. Each chunk reads only its own columns.
+     */
+    static void tunnel(Sink s, double ax, double ay, double az, double bx, double by, double bz, double r, double wander, long seed, boolean floored) {
         double dx = bx - ax, dz = bz - az, dy = by - ay;
         double h = Math.sqrt(dx * dx + dz * dz);
         int steps = (int) Math.ceil(Math.max(h, Math.abs(dy)) * 2) + 1;
@@ -199,6 +207,7 @@ final class Carve {
                 // three high in the middle, two at the edge of the bore
                 int top = hd < r - 0.6 ? 2 : 1;
                 for (int oy = 0; oy <= top; oy++) air(s, ix + ox, iy + oy, iz + oz);
+                if (floored && s.inside(ix + ox, iy - 1, iz + oz) && s.get(ix + ox, iy - 1, iz + oz).isAir()) s.set(ix + ox, iy - 1, iz + oz, rubble(iy - 1));
             }
         }
     }

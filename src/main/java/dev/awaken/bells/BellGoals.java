@@ -50,7 +50,7 @@ final class BellGoals {
             BellBook.Lead l = e.getValue();
             String name = Bells.title(d, l);
             String title = name.endsWith("?") ? "Find " + name.substring(0, name.length() - 1) : "Find where that bell's note came from";
-            Goals.Builder s = Step.of("bell/" + d.no(), Goal.BELLS, title).why(l.lines.isEmpty() ? "" : l.lines.getLast()).priority(40 - out.size());
+            Goals.Builder s = Step.of("bell/" + d.no(), Goal.BELLS, title).lead().why(l.lines.isEmpty() ? "" : l.lines.getLast()).priority(40 - out.size());
             if (l.bearings == 2) s.at(BlockPos.containing(l.tx, 64, l.tz));
             else if (l.bearings == 1) s.at(BlockPos.containing(l.hx, 64, l.hz)); // along its one bearing, within a hum's reach
             out.add(s.build());
@@ -66,7 +66,7 @@ final class BellGoals {
         for (BellWorld.Kept k : BellWorld.get(p.level().getServer()).kept) {
             if (k.gate.isEmpty() || !k.left.contains(p.getUUID())) continue;
             String name = BellCatalog.of(k.no).name().replaceFirst("^The ", "the ");
-            return Step.of("bells/lord", Goal.BELLS, "Lift " + name + " from where the Lord fell")
+            return Step.of("bells/lord", Goal.BELLS, "Lift " + name + " from where the Lord fell").lead()
                     .why("It's lying on the floor of the Lord's room. Lift it before you leave: once the gate closes, it goes back to the gates.")
                     .priority(60).at(k.pos).build();
         }
@@ -78,7 +78,7 @@ final class BellGoals {
         String dim = p.level().dimension().identifier().toString();
         for (BellWorld.Kept k : BellWorld.get(p.level().getServer()).kept) {
             if (!k.gate.isEmpty() || !k.dim.equals(dim) || !k.left.contains(p.getUUID())) continue;
-            return Step.of("bells/lying", Goal.BELLS, "Lift " + BellCatalog.of(k.no).name().replaceFirst("^The ", "the "))
+            return Step.of("bells/lying", Goal.BELLS, "Lift " + BellCatalog.of(k.no).name().replaceFirst("^The ", "the ")).lead()
                     .why("It's lying where you won it. Lift it and take it home to hang.").priority(55).at(k.pos).build();
         }
         return null;
@@ -130,7 +130,7 @@ final class BellGoals {
             title = "Ring the Hundred Peal";
             why = "Your song is whole. Ring your bells and all hundred ring together.";
         } else return null;
-        Goals.Builder s = Step.of("bells/tower", Goal.BELLS, title).why(why).priority(45);
+        Goals.Builder s = Step.of("bells/tower", Goal.BELLS, title).thread("bells.tower", 10).why(why).priority(45);
         if (at != null) s.at(at);
         return s.build();
     }

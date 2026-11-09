@@ -1,0 +1,11 @@
+{
+  "shaping.knock": {
+    "subtitle": "subtitles.awaken.shaping.knock",
+    "sounds": [
+      {"name": "minecraft:mob/zombie/wood1", "volume": 0.22, "pitch": 1.3},
+      {"name": "minecraft:mob/zombie/wood2", "volume": 0.22, "pitch": 1.3},
+      {"name": "minecraft:mob/zombie/wood3", "volume": 0.22, "pitch": 1.3},
+      {"name": "minecraft:mob/zombie/wood4", "volume": 0.22, "pitch": 1.3}
+    ]
+  }
+}

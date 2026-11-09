@@ -48,7 +48,7 @@ public final class LifeTrace {
         id = best != null ? best.getId() : -1;
         left = frames;
         Awaken.LOG.info("[lifetrace] {} {}: {} frames", type, best != null ? "id " + id + " at " + (int) Math.sqrt(near) + " blocks" : "none near", frames);
-        Awaken.LOG.info("[lifetrace] cols: frame t dt far x y z bodyRot yRot walk speed pitch roll dip sway legsW gY gPitch gRoll gaitY vault up hurt red");
+        Awaken.LOG.info("[lifetrace] cols: frame t dt far x y z bodyRot yRot walk speed pitch roll dip sway legsW gY gPitch gRoll gaitY vault up hurt red cueTime cueWeight nanos");
     }
 
     static void frame(Life l, LivingEntityRenderState s) {
@@ -56,10 +56,11 @@ public final class LifeTrace {
         int up = 0;
         if (g != null) for (int i = 0; i < g.rig.n; i++) if (g.stepping(i)) up |= 1 << i;
         Awaken.LOG.info(String.format(java.util.Locale.ROOT,
-                "[lifetrace] %d %.3f %.4f %d %.4f %.4f %.4f %.2f %.2f %.3f %.3f %.4f %.4f %.3f %.4f %.3f %.3f %.4f %.4f %.3f %.3f %s %.2f %d",
+                "[lifetrace] %d %.3f %.4f %d %.4f %.4f %.4f %.2f %.2f %.3f %.3f %.4f %.4f %.3f %.4f %.3f %.3f %.4f %.4f %.3f %.3f %s %.2f %d %.4f %.2f %d",
                 l.frame, l.t, l.dt, l.far() ? 1 : 0, s.x, s.y, s.z, s.bodyRot, s.yRot, l.walk, l.speed, l.bodyPitch, l.bodyRoll, l.dip, l.swayRoll,
                 g != null ? g.weight : 0, g != null ? g.groundY : 0, g != null ? g.groundPitch : 0, g != null ? g.groundRoll : 0,
-                g != null ? g.gaitY : 0, g != null ? g.vault : 0, Integer.toBinaryString(up), l.hurt, s.hasRedOverlay ? 1 : 0));
+                g != null ? g.gaitY : 0, g != null ? g.vault : 0, Integer.toBinaryString(up), l.hurt, s.hasRedOverlay ? 1 : 0,
+                s instanceof dev.awaken.mobs.client.anim.HeroRenderState h ? h.cueTime : -1F, s instanceof dev.awaken.mobs.client.anim.HeroRenderState h ? h.cueWeight : 0F, System.nanoTime() / 1000));
         if (--left <= 0) {
             id = -1;
             Awaken.LOG.info("[lifetrace] done");

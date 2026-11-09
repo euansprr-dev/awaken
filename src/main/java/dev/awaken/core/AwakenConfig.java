@@ -60,6 +60,16 @@ public final class AwakenConfig {
 
     static {
         B.pop();
+        B.push("tasks");
+    }
+
+    public static final ModConfigSpec.BooleanValue TASKS_CAP = B
+            .comment("The Tasks page's short list: one row per line of work, three rows a tab, the rest under Later (SPEC 53).",
+                    "Off shows every open step, as the page did before.")
+            .define("cap", true);
+
+    static {
+        B.pop();
     }
 
     public static final ModConfigSpec SPEC = B.build();

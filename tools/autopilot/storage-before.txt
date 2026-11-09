@@ -1,0 +1,156 @@
+# Storage plan, the "before" (docs/storage/PLAN.md): a lived-in bag, a plain chest and a full double chest, then a Storehouse
+# with its heap, its bays after a Totter's morning, the Ledger, the Hearth page and the Tasks page. Changes nothing.
+# ci knobs: PACK=perf,world TECTONIC=awakened
+#   tools/tour-ci.sh tools/autopilot/storage-before.txt 2400
+world autopilot_storage_before survival 29102026
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+# a fresh world holds the notice director for its first five minutes
+cmd tick sprint 6200
+wait 200
+info
+camera first
+cmd time set 6000
+cmd clear @s
+
+# ---- 1. the bag after an evening's mining ----
+cmd item replace entity @s armor.chest with minecraft:iron_chestplate
+cmd item replace entity @s armor.head with minecraft:iron_helmet
+cmd item replace entity @s weapon.offhand with minecraft:shield
+cmd item replace entity @s hotbar.0 with minecraft:iron_sword
+cmd item replace entity @s hotbar.1 with minecraft:iron_pickaxe
+cmd item replace entity @s hotbar.2 with minecraft:torch 32
+cmd item replace entity @s hotbar.3 with minecraft:bread 12
+cmd item replace entity @s hotbar.5 with minecraft:cobblestone 41
+cmd item replace entity @s inventory.0 with minecraft:cobblestone 64
+cmd item replace entity @s inventory.1 with minecraft:dirt 11
+cmd item replace entity @s inventory.2 with minecraft:rotten_flesh 7
+cmd item replace entity @s inventory.3 with minecraft:oak_log 13
+cmd item replace entity @s inventory.4 with minecraft:cobblestone 23
+cmd item replace entity @s inventory.6 with minecraft:iron_ingot 4
+cmd item replace entity @s inventory.7 with minecraft:wheat_seeds 9
+cmd item replace entity @s inventory.8 with minecraft:bone 3
+cmd item replace entity @s inventory.9 with minecraft:andesite 31
+cmd item replace entity @s inventory.10 with minecraft:string 5
+cmd item replace entity @s inventory.11 with minecraft:oak_log 40
+cmd item replace entity @s inventory.13 with minecraft:raw_iron 12
+cmd item replace entity @s inventory.14 with minecraft:flint 3
+cmd item replace entity @s inventory.15 with minecraft:cobblestone 64
+cmd item replace entity @s inventory.16 with minecraft:coal 17
+cmd item replace entity @s inventory.18 with minecraft:arrow 22
+cmd item replace entity @s inventory.19 with minecraft:gravel 6
+cmd item replace entity @s inventory.20 with minecraft:leather 2
+cmd item replace entity @s inventory.21 with minecraft:granite 12
+cmd item replace entity @s inventory.22 with awaken:bell_bronze_ingot 2
+cmd item replace entity @s inventory.24 with minecraft:raw_copper 19
+cmd item replace entity @s inventory.25 with minecraft:diorite 9
+cmd item replace entity @s inventory.26 with minecraft:gold_nugget 5
+cmd tp @s 10.5 200 0.5 0 26
+wait 80
+cmd fill 5 199 -3 16 199 9 minecraft:stone
+wait 20
+holo inv open
+wait 40
+shot sb_01_bag
+screen close
+wait 10
+
+# ---- 2. a chest as it opens today, then a full double chest ----
+cmd setblock 10 200 3 minecraft:chest[facing=north]
+cmd data merge block 10 200 3 {Items:[{Slot:0b,id:"minecraft:dirt",count:13},{Slot:1b,id:"minecraft:cobblestone",count:64},{Slot:2b,id:"minecraft:rotten_flesh",count:4},{Slot:4b,id:"minecraft:oak_log",count:12},{Slot:5b,id:"minecraft:cobblestone",count:7},{Slot:7b,id:"minecraft:iron_ingot",count:8},{Slot:9b,id:"minecraft:bread",count:3},{Slot:10b,id:"minecraft:bone",count:6},{Slot:12b,id:"minecraft:andesite",count:44},{Slot:13b,id:"minecraft:arrow",count:9},{Slot:16b,id:"minecraft:oak_log",count:5},{Slot:18b,id:"minecraft:string",count:2},{Slot:20b,id:"minecraft:coal",count:31},{Slot:22b,id:"minecraft:gravel",count:17},{Slot:25b,id:"minecraft:cobblestone",count:64}]}
+wait 10
+use
+wait 40
+shot sb_02_chest
+screen close
+wait 10
+cmd setblock 12 200 3 minecraft:chest[facing=north,type=left]
+cmd setblock 13 200 3 minecraft:chest[facing=north,type=right]
+cmd data merge block 12 200 3 {Items:[{Slot:0b,id:"minecraft:cobblestone",count:64},{Slot:1b,id:"minecraft:cobblestone",count:64},{Slot:2b,id:"minecraft:dirt",count:64},{Slot:3b,id:"minecraft:oak_log",count:64},{Slot:4b,id:"minecraft:rotten_flesh",count:12},{Slot:5b,id:"minecraft:iron_ingot",count:17},{Slot:6b,id:"minecraft:bread",count:9},{Slot:7b,id:"minecraft:bone",count:30},{Slot:8b,id:"minecraft:andesite",count:64},{Slot:9b,id:"minecraft:coal",count:64},{Slot:10b,id:"minecraft:gravel",count:64},{Slot:11b,id:"minecraft:oak_planks",count:40},{Slot:12b,id:"minecraft:stick",count:21},{Slot:13b,id:"minecraft:raw_iron",count:33},{Slot:14b,id:"minecraft:wheat",count:18},{Slot:15b,id:"minecraft:string",count:11},{Slot:16b,id:"minecraft:cobblestone",count:64},{Slot:17b,id:"minecraft:birch_log",count:32},{Slot:18b,id:"minecraft:iron_pickaxe",count:1},{Slot:19b,id:"minecraft:diamond",count:3},{Slot:20b,id:"minecraft:granite",count:64},{Slot:21b,id:"minecraft:diorite",count:64},{Slot:22b,id:"minecraft:leather",count:7},{Slot:23b,id:"minecraft:wheat_seeds",count:44},{Slot:24b,id:"minecraft:redstone",count:26},{Slot:25b,id:"minecraft:cobblestone",count:64},{Slot:26b,id:"minecraft:oak_log",count:64}]}
+cmd data merge block 13 200 3 {Items:[{Slot:0b,id:"minecraft:torch",count:64},{Slot:1b,id:"minecraft:cooked_beef",count:6},{Slot:2b,id:"minecraft:gold_ingot",count:5},{Slot:3b,id:"minecraft:cobblestone",count:64},{Slot:4b,id:"minecraft:dirt",count:64},{Slot:5b,id:"minecraft:flint",count:9},{Slot:6b,id:"minecraft:arrow",count:64},{Slot:7b,id:"minecraft:oak_door",count:3},{Slot:8b,id:"minecraft:glass",count:32},{Slot:9b,id:"minecraft:stone_bricks",count:64},{Slot:10b,id:"minecraft:stone_bricks",count:64},{Slot:11b,id:"minecraft:spruce_log",count:28},{Slot:12b,id:"minecraft:lantern",count:12},{Slot:13b,id:"minecraft:raw_copper",count:48},{Slot:14b,id:"minecraft:clay_ball",count:16},{Slot:15b,id:"minecraft:bone_meal",count:27},{Slot:16b,id:"minecraft:sand",count:64},{Slot:17b,id:"minecraft:poppy",count:8},{Slot:18b,id:"minecraft:iron_boots",count:1},{Slot:19b,id:"minecraft:bucket",count:2},{Slot:20b,id:"minecraft:tuff",count:64},{Slot:21b,id:"minecraft:deepslate",count:64},{Slot:22b,id:"minecraft:cobbled_deepslate",count:64},{Slot:23b,id:"minecraft:emerald",count:4},{Slot:24b,id:"minecraft:painting",count:2},{Slot:25b,id:"minecraft:ladder",count:18}]}
+cmd tp @s 12.5 200 0.5 0 26
+wait 20
+use
+wait 40
+shot sb_03_double_chest
+screen close
+wait 10
+
+# one of everything, each alone in its slot with no count on it (the mock-ups' item pictures; private page only)
+cmd fill 14 199 -3 22 199 9 minecraft:stone
+cmd setblock 18 200 3 minecraft:chest[facing=north,type=left]
+cmd setblock 19 200 3 minecraft:chest[facing=north,type=right]
+cmd data merge block 18 200 3 {Items:[{Slot:0b,id:"minecraft:cobblestone",count:1},{Slot:1b,id:"minecraft:dirt",count:1},{Slot:2b,id:"minecraft:andesite",count:1},{Slot:3b,id:"minecraft:granite",count:1},{Slot:4b,id:"minecraft:diorite",count:1},{Slot:5b,id:"minecraft:gravel",count:1},{Slot:6b,id:"minecraft:sand",count:1},{Slot:7b,id:"minecraft:stone_bricks",count:1},{Slot:8b,id:"minecraft:tuff",count:1},{Slot:9b,id:"minecraft:deepslate",count:1},{Slot:10b,id:"minecraft:cobbled_deepslate",count:1},{Slot:11b,id:"minecraft:clay_ball",count:1},{Slot:12b,id:"minecraft:oak_log",count:1},{Slot:13b,id:"minecraft:birch_log",count:1},{Slot:14b,id:"minecraft:spruce_log",count:1},{Slot:15b,id:"minecraft:oak_planks",count:1},{Slot:16b,id:"minecraft:stick",count:1},{Slot:17b,id:"minecraft:raw_iron",count:1},{Slot:18b,id:"minecraft:raw_copper",count:1},{Slot:19b,id:"minecraft:iron_ingot",count:1},{Slot:20b,id:"minecraft:gold_ingot",count:1},{Slot:21b,id:"minecraft:gold_nugget",count:1},{Slot:22b,id:"minecraft:coal",count:1},{Slot:23b,id:"minecraft:redstone",count:1},{Slot:24b,id:"minecraft:diamond",count:1},{Slot:25b,id:"minecraft:emerald",count:1},{Slot:26b,id:"minecraft:bread",count:1}]}
+cmd data merge block 19 200 3 {Items:[{Slot:0b,id:"minecraft:cooked_beef",count:1},{Slot:1b,id:"minecraft:wheat",count:1},{Slot:2b,id:"minecraft:wheat_seeds",count:1},{Slot:3b,id:"minecraft:poppy",count:1},{Slot:4b,id:"minecraft:bone_meal",count:1},{Slot:5b,id:"minecraft:bone",count:1},{Slot:6b,id:"minecraft:string",count:1},{Slot:7b,id:"minecraft:leather",count:1},{Slot:8b,id:"minecraft:rotten_flesh",count:1},{Slot:9b,id:"minecraft:flint",count:1},{Slot:10b,id:"minecraft:arrow",count:1},{Slot:11b,id:"minecraft:iron_sword",count:1},{Slot:12b,id:"minecraft:iron_pickaxe",count:1},{Slot:13b,id:"minecraft:iron_boots",count:1},{Slot:14b,id:"minecraft:iron_helmet",count:1},{Slot:15b,id:"minecraft:shield",count:1},{Slot:16b,id:"minecraft:bucket",count:1},{Slot:17b,id:"minecraft:torch",count:1},{Slot:18b,id:"minecraft:lantern",count:1},{Slot:19b,id:"minecraft:glass",count:1},{Slot:20b,id:"minecraft:oak_door",count:1},{Slot:21b,id:"minecraft:ladder",count:1},{Slot:22b,id:"minecraft:painting",count:1},{Slot:23b,id:"minecraft:barrel",count:1},{Slot:24b,id:"minecraft:chest",count:1},{Slot:25b,id:"minecraft:carrot",count:1},{Slot:26b,id:"minecraft:feather",count:1}]}
+cmd tp @s 18.5 200 0.5 0 26
+wait 20
+use
+wait 40
+shot sb_icons
+screen close
+wait 10
+
+# ---- 3. a Storehouse: its heap, the bays after a Totter's morning, the Ledger ----
+cmd awaken city view square
+wait 200
+cmd spreadplayers ~-800 ~ 0 40 false @s
+wait 400
+cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
+cmd awaken admin kin yard
+wait 140
+screen close
+wait 20
+screen close
+cmd awaken admin kin works
+wait 40
+cmd awaken admin kin home totter
+wait 20
+hud off
+cmd execute at @e[type=marker,tag=yard,limit=1] align xyz run tp @s ~-4.5 ~0.3 ~-8.2 180 22
+wait 40
+shot sb_04_drop_heap
+cmd tick sprint 1800
+wait 200
+cmd execute at @e[type=marker,tag=yard,limit=1] align xyz run tp @s ~-4.5 ~0.3 ~-8.2 180 8
+wait 40
+shot sb_05_bays_after
+cmd execute at @e[type=marker,tag=yard,limit=1] align xyz run tp @s ~-4.5 ~ ~-8.5 -90 31
+wait 40
+hud on
+use
+wait 40
+shot sb_06_ledger
+screen close
+wait 10
+screen holo hearth
+wait 80
+shotnow sb_07_hearth_page
+screen close
+wait 10
+tasks hearth
+wait 60
+shotnow sb_08_tasks_hearth
+screen close
+wait 10
+quit

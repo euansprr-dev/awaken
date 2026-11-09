@@ -277,7 +277,7 @@ def build(boxes, paint, to_item, width=64, anchors=(), lo_hi=None):
     filled = np.zeros((height, width), dtype=bool)
     ys = np.concatenate([f.P[:, 1] for f in fs])
     lo, hi = (ys.min() - 0.5, ys.max() + 0.5) if lo_hi is None else lo_hi
-    P, N, UV, A = [], [], [], []
+    P, N, UV, A, PT = [], [], [], [], []
     for f in fs:
         a, m = paint(f)
         tx, ty = f.x + f.i - f.i0, f.y + f.j - f.j0
@@ -296,8 +296,11 @@ def build(boxes, paint, to_item, width=64, anchors=(), lo_hi=None):
                     N.append(f.n)
                     UV.append(((f.x + ci - f.i0) / (2 * width), (f.y + cj - f.j0) / height))
                     A.append(min(1.0, max(0.0, (p[1] - lo) / (hi - lo))))
+                    PT.append(f.box.part)
     albedo, _ = MS.dilate(albedo, filled)
     material, _ = MS.dilate(material, filled)
     P = to_item(np.array(P))
     N = to_item(np.array(N), direction=True)
-    return MS.Built(P, N, np.array(UV), np.array(A), albedo, material, list(anchors))
+    built = MS.Built(P, N, np.array(UV), np.array(A), albedo, material, list(anchors))
+    built.parts = PT  # which part each corner belongs to (the picks' head and rings, arms_picks.py)
+    return built

@@ -1,6 +1,8 @@
 package dev.awaken.kin.works;
 
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.storage.Sort;
+import dev.awaken.storage.Sorts;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -20,6 +22,7 @@ final class WorksTests {
     static void register() {
         AwakenTests.register("works_plan_builds", 40, WorksTests::planBuilds);
         AwakenTests.register("works_bays_sort", 40, WorksTests::baysSort);
+        AwakenTests.register("works_empty_bag_keeps_pins", 40, WorksTests::emptyBagKeepsPins);
     }
 
     /**
@@ -63,14 +66,14 @@ final class WorksTests {
     /** Everything you drop has a bay: ore and metal, wood, gems, food, plants, drops, gear, bells, stone, and odd things. */
     static void baysSort(GameTestHelper h) {
         Object[][] cases = {
-                {Items.RAW_IRON, Storehouse.Bay.METAL}, {Items.IRON_INGOT, Storehouse.Bay.METAL}, {Items.OAK_LOG, Storehouse.Bay.WOOD},
-                {Items.STICK, Storehouse.Bay.WOOD}, {Items.DIAMOND, Storehouse.Bay.GEMS}, {Items.BREAD, Storehouse.Bay.FOOD},
-                {Items.WHEAT_SEEDS, Storehouse.Bay.PLANTS}, {Items.BONE, Storehouse.Bay.DROPS}, {Items.WOOL.white(), Storehouse.Bay.DROPS},
-                {Items.IRON_SWORD, Storehouse.Bay.GEAR}, {Items.COBBLESTONE, Storehouse.Bay.STONE}, {Items.DIRT, Storehouse.Bay.STONE},
-                {WorksContent.WOKEN_CLAPPER.get(), Storehouse.Bay.BELLS}, {Items.PAINTING, Storehouse.Bay.ODD}};
+                {Items.RAW_IRON, Sort.METAL}, {Items.IRON_INGOT, Sort.METAL}, {Items.OAK_LOG, Sort.WOOD},
+                {Items.STICK, Sort.WOOD}, {Items.DIAMOND, Sort.GEMS}, {Items.BREAD, Sort.FOOD},
+                {Items.WHEAT_SEEDS, Sort.PLANTS}, {Items.BONE, Sort.DROPS}, {Items.WOOL.white(), Sort.BUILDING},
+                {Items.IRON_SWORD, Sort.GEAR}, {Items.COBBLESTONE, Sort.STONE}, {Items.DIRT, Sort.STONE},
+                {WorksContent.WOKEN_CLAPPER.get(), Sort.BELLS}, {Items.PAINTING, Sort.BUILDING}};
         for (Object[] k : cases) {
             ItemStack s = new ItemStack((net.minecraft.world.item.Item) k[0]);
-            h.assertTrue(Storehouse.Bay.of(s) == k[1], s.getHoverName().getString() + " goes to " + k[1] + ", not " + Storehouse.Bay.of(s));
+            h.assertTrue(Sorts.of(s) == k[1], s.getHoverName().getString() + " goes to " + k[1] + ", not " + Sorts.of(s));
         }
         // a Totter's armful goes onto the shelf, and what doesn't fit comes back
         ServerLevel level = h.getLevel();
@@ -81,6 +84,23 @@ final class WorksTests {
         ItemStack left = Storehouse.shelve(level, at, new ItemStack(Items.RAW_IRON, 70));
         h.assertTrue(left.getCount() == 6, "the last slot takes 64 and 6 come back (" + left.getCount() + ")");
         h.assertFalse(Storehouse.fits(barrel, new ItemStack(Items.RAW_IRON)), "the bay is full");
+        h.succeed();
+    }
+
+    /** "Empty my bag" leaves pinned slots where they are (SPEC §56). */
+    static void emptyBagKeepsPins(GameTestHelper h) {
+        BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));
+        h.getLevel().setBlock(at, WorksContent.DROP.get().defaultBlockState(), 3);
+        DropBlockEntity be = (DropBlockEntity) h.getLevel().getBlockEntity(at);
+        AwakenTests.Live l = AwakenTests.survivalPlayer(h, "Bag", new BlockPos(2, 2, 2));
+        AwakenTests.onEnd(h, l::leave);
+        var p = l.player();
+        p.getInventory().setItem(9, new ItemStack(Items.DIAMOND));
+        p.getInventory().setItem(10, new ItemStack(Items.COBBLESTONE));
+        dev.awaken.storage.StorageApi.setPinned(p, 9, true);
+        Storehouse.emptyBag(h.getLevel(), p, be);
+        h.assertTrue(p.getInventory().getItem(9).is(Items.DIAMOND), "the pinned diamond stays");
+        h.assertTrue(p.getInventory().getItem(10).isEmpty(), "the rest goes in the Drop");
         h.succeed();
     }
 }

@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "guardian_gardens",
  "moves": "guardian_gardens",
  "duel": true,
@@ -23,6 +23,12 @@
        "claw_b",
        "maul"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -37,6 +43,11 @@
       [
        "tail"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -47,6 +58,11 @@
       [
        "claw"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul"
+      }
      ]
     },
     {
@@ -60,6 +76,12 @@
       [
        "gale"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -73,6 +95,12 @@
       [
        "maul"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -92,6 +120,12 @@
        "claw_b",
        "maul"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -106,6 +140,11 @@
       [
        "tail"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -117,6 +156,11 @@
        "claw",
        "claw_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul"
+      }
      ]
     },
     {
@@ -130,6 +174,12 @@
       [
        "gale"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -139,6 +189,12 @@
       [
        "charge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -156,6 +212,12 @@
       [
        "maul"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "maul",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -164,5 +226,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "charge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "charge",
+     "maul",
+     "claw",
+     "claw_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "claw"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "claw",
+     "claw_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "maul"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "maul",
+     "claw"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

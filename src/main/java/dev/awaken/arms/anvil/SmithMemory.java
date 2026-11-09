@@ -86,6 +86,11 @@ public final class SmithMemory {
         return forged.contains(style);
     }
 
+    /** A pick forged here: only memory. A pick isn't a weapon, so the Weapons tab's steps never see it (§49.4). */
+    void remember(String style, int tier, AnvilSong.Quality q) {
+        if (q.ordinal() >= AnvilSong.Quality.MASTERWORK.ordinal()) masterwork.add(style + ":" + ArmsArmoury.TIERS[tier]);
+    }
+
     /** A weapon forged here (not a blade alone): its style, its tier, and into memory if Masterwork or better. */
     void forged(String style, int tier, AnvilSong.Quality q) {
         forged.add(style);

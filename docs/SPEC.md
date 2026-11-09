@@ -861,6 +861,7 @@ of `AwakenConfig.Client`.
   sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
   extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
   townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
+- `dev.awaken.core.api.RidingHooks` (§55) — `rider(player)`, `bonded(player)`, `partner(player)`, `folded(player)`, `door(player)`, `leftRun(player)`; `RANGE`, `HIT_SHARE`, `XP_SHARE`. Gates, progression, arms, powers and trials ask here.
 - Carillon hooks (§16.9, v0): `CityHooks`, `CitizenHooks`, `RenownHooks`, `EconomyHooks`, `PartyHooks`, `OpeningHooks`,
   `AtlasHooks`. Defaults behave as a classic world with no city.
 - `dev.awaken.core.api.TipHooks` (v0, §16.0 decision 24; docs/carillon/m4/onboarding.md): just-in-time tips. Server:
@@ -12819,18 +12820,42 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   the worn ground below). So the candidates are closer together, a doline takes gently tilted ground as well as flat
   (below), a joint reaches further down for its cave, and both tests below hold the promise. At 10/3 the same census
   has 65 within 1 km of his home and 44 of spawn: one every 220 and 267 m over the whole circle, one every 177 and 190 m
-  of the dry land left outside the city's reserve and settlements' ground. A candidate tries every form at up to five
-  spots within 20 of its chunk's middle.
+  of the dry land left outside the city's reserve and settlements' ground. Those counts took open ground for a cave (the
+  joint, below). With real joints, the census within 1,600 of his home has 122 mouths and of spawn 142, one every 182 and 175 m of
+  dry land (`mouths-deep` tour 42591161111, before the way needed ground under it and wound as a spiral; vanilla noise with
+  the final rule, `delve_mouth_density`: one every 197 m). A candidate tries every form at up to five spots within 20 of
+  its chunk's middle.
 - **What keeps a mouth away**: the city's reserve (90), water or land at or below sea + 1, a biome off the list, and (from
   the seed alone, since 8 Nov) a settlement's ground: within 120 of a grid settlement's or the first hamlet's anchor, or
   in the land a town's region keeps round its heart (`RoadNet.nearTown`). A road is laid after the mouth: its bed fills
   and bridges over one it crosses (2 of his 51 mouths are within 12 m of a road, 1 of them buried by its bed), the road
   stays whole. `CaveSites.Probe`'s reasons (`Why`) count a candidate's own ground, never an adit's distant lode.
-- **The joint, since 8 Nov**: a hill mouth, cleft or doline looks for its cave air on the same rings out to 27, and on the
-  wider rings further down, up to 0.8 down for every 1 out (`CaveSites.JOINT_SLOPE`; Tectonic seals the caves about 12
-  under the ground, so "no cave to join" was the biggest loss on dry land). The same columns, read further down; the
-  route test walks a staged hill mouth's joint at that slope. Slope probes read the noise's 4-block cells so the forms
-  share columns.
+- **The joint, since 9 Nov** (Euan's playtest 9 Nov, "maybe 10 blocks deep, and then it just stops"): the joint must be a
+  real cave. Until then any floor with three of air over it counted, so open ground did: the tunnel of his mouth at -472
+  181 -2424 came back out on the hillside 20 blocks round, with a real cave 4 blocks under its floor. In his save 16 of
+  the 21 mouths that could be judged had a joint in the open and 1 a tiny pocket; only 4 led on. Now:
+  - **Rock over it** (every kind's search, `CaveSites.floors`): the air's top stays `ROOF` (4) under the column's ground.
+    Air under water counts: it has rock between it and the water, or it would be full.
+  - **How far a mouth looks** (hill mouth, cleft, doline; `CaveSites.joint`): rings 8, 14, 20, 27, 34 of 8 columns each,
+    down to 3 for every 1 out, to 50 under the throat's end, nearest first, 4 floors at most. Tectonic's caves lie 8-20
+    under the mouths, so a search that stayed as shallow as a straight walk found one for only 4 in 10.
+  - **Cave goes on from it** (`roomy`): 2 or more of the 8 columns 6 out hold air near its height with rock over them, and
+    none of the 8 is open ground at its level (an overhang on a hillside has rock over it too). On 420 random roofed floors
+    in his save the count of 2 keeps 89% of the real caves and halves the small ones.
+  - **The way winds** (Mouth p `SWING` 11 and `LEGS` 12, 0 on a straight way and on a saved mouth): a cave too deep to walk
+    straight to (past `JOINT_SLOPE` 0.8 down in 1 along) is reached by a spiral ramp, its bends on a circle through both ends
+    (radius |`SWING`| 4 to 18, its sign the way it turns), 3 to 6 legs, the fewest legs and smallest circle that give the
+    length, every leg as steep as the rest and no steeper than 0.8, no bend turning more than 110° (a leg doubling back
+    over the last cuts away its floor, and it can't be climbed: 12 of 54 ways stuck that way). Each bend
+    opens into a small landing. The way is read every 4 blocks on the noise's cells, turning either way, and must keep rock over its bore (3 + `ROOF`), ground under it (a drop of 2 at most, `WAY_DROP`, one a body can climb back, until the last 5 of its fall, already in the cave) and stay dry, or
+    that floor is passed over. So a tunnel can't break out of the hill or end high on the wall of a natural hall, the first
+    tour's fault (2 of 7 mouths on Tectonic). Where natural air has still eaten the rock under the bore it lays rubble (`Carve.tunnel`'s `floored`), the bore's full width, so a way is always a floor to walk on. The piece's box holds the bends.
+  - `delve_mouth_joint` holds this on real noise on his seed and walks every fifth way there and back with the real ground
+    round it (53 of 53), `delve_cave_routes` walks a staged winding way both ways,
+    and `/awaken delve way` walks the last `goto`'s mouth on the world's real blocks and says how much cave lies past
+    the joint (tools/autopilot/mouths-deep.txt, the only way to see it on Tectonic).
+  - Slope probes still read the noise's 4-block cells so the forms share columns. A mouth saved before this keeps the
+    way it built.
 - **Delver adit** (tried first): an iron or copper lode within 72 whose heart is at y 24 or above, a hill over the
   drift, an open front, dry; drift 14-28 long, falling 0 to a third of its length, timber sets every 3, rails, ends at
   the heart (left in the end face; the joint tunnel to the cave leaves from the drift's side). Mark "pick" at the drift's
@@ -16293,7 +16318,15 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   loot table, the same XP, tags and tools): **`rootstone_coal_ore`**, **`rootstone_copper_ore`** (the Rootways),
   **`ochre_iron_ore`** (the Ochre Deep: dark hematite with iron's peach rim). An ore without a twin there keeps the 26 cells
   round it as they were (within its section): it sits in a pocket of the stone it grew in, never on a background that isn't
-  its own. Lodes, Deepglass and the Hollows' veins are placed earlier and keep their own blocks the same way.
+  its own (a lode's heart has no pocket since §42.11). Lodes, Deepglass and the Hollows' veins are placed earlier and keep their
+  own blocks the same way.
+- **A region's edge wanders** (Euan's playtest, 9 Nov: red rock ending in a hard line against the Deep Dark's sculk). Biomes come in
+  4-block cells, so region rock used to stop in straight steps. In a cell that touches another region or none, each block reads
+  the region at a point moved by noise, up to about **4** blocks across and **3** up or down, staying in its chunk; the two rocks
+  interlock over a band a few blocks wide. Sculk that has crept over the edge becomes the region's rock. A face of sculk vein on a region's rock comes off
+  unless real sculk is right beside the vein, so veins stay only as a fringe that hugs the sculk (Euan's playtest, 9 Nov). A vein a
+  neighbouring chunk writes after this chunk has finished can still land on the rock: not cleaned up, and the drawing below keeps
+  it from looking cut. The Deep Dark keeps its own cells, ancient cities and all. Test `caves_region_edge`. New chunks only.
 - **The Rootways' growth**: **`glowcap`** (a cluster of teal mushrooms, light **5**, on a floor, open or by a wall, at
   **0.12** where a 3D field at 5 blocks passes **0.2**: in patches, about 2% of open floor, a teal point down the gallery;
   instant break, drops itself) and **`root_curtain`** (old roots hanging through a roof at **0.14** where a 2D field at 7
@@ -16511,6 +16544,94 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   of 1,200 (1.9 times), copper 67 to 116, coal 70 to 104, Deepglass 63 to 96, diamond 56 to 72 of 330, gold 4 to 8, lapis
   5 to 7, redstone 0; all 399 to 657 of 4,867 (1.65 times). Where a lode region lies wholly outside an ore's regions its
   second roll can't reach one, so the rise is under twice for the patchier regions. 800 plans and the counting: 176 ms.
+
+### 42.10 The Ochre Deep's walls, grown (Euan's playtest, 9 Nov)
+
+He said the walls looked "very randomly placed", "repetitive, not connected", and the vine "doesn't look like a light source
+at all". The cause: `walls()` dressed every cave's walls by the cell, only in the two rows over a floor, one texture per block.
+So a wall's decoration was a strip of stamps, the same in every cave and region. The Ochre Deep now grows its walls
+(`caves/skin/WallGrowth`); the other regions and plain caves keep `walls()` until the big pass.
+
+- **Ember vine** (`awaken:ember_vine`, replaces ember lichen in new Ochre caves). A run of connected blocks on the rock: `FACING`
+  (toward the wall), `UP` `DOWN` `LEFT` `RIGHT` (which edges the run leaves by, looking at the wall) and `BLOOM`. Up to **3** runs
+  a chunk, chosen by hash among the feet of walls where a 3D field at **14** blocks passes **-0.3** (most walls, a few long stretches bare), at least **5** blocks apart.
+  A run climbs from the foot of the wall for **7-20** steps, at most **48** cells with its side shoots. Each step is scored:
+  forward 1.0, up 0.8, a turn 0.5, down 0.15, then raised by what the rock is doing there (a ledge over or under a sideways step,
+  a crease beside an upward one), times a hash. It wraps round outer corners, stops at inner ones and at the chunk's edge
+  (a tip), and never doubles back. Up to **3** side shoots, **3-8** long. Runs under **3** cells are dropped.
+  Blooms at every fork, at some tips and every 3-5 cells along a line, never two together.
+- **Its light.** Stem light level **4**, bloom **10**. Four layers on each block: a wide ring of the rock's own pixels at
+  emission 6, a close one at 10, bark unlit, sap at 15; the ring is the wall's own texture (`ochre_stone` lines up pixel for
+  pixel), so the rock looks lit around the vine instead of a darker sticker on it. A bloom is pods standing off the wall at
+  emission 15 with sparks (`awaken:cave_ember`, 1 in 5 of bloom `animateTick`s).
+- **Art**: `tools/art/specs/deep_skin_growth.py`, a 48-tile sheet (each of the 16 connection shapes has 1 to 4 cuts). Smooth stems
+  run port to port across a block, so a run reads as one line and no two blocks need match.
+- **Rust drape** (`awaken:rust_drape`, replaces flat rust flowstone in new Ochre caves). `FACING`, `TIP`; **2-5** blocks hanging
+  from a corner of roof and wall where the wet field passes **-0.15**, at most **6** a chunk, standing off the wall in real
+  folds, with the bottom block tapered.
+- **Rust crust and lichen** grow as patches on one wall, at any height the wall has, radius **2-4**, thinning to nothing at the
+  edge. One round each vine's root; up to **5** more a chunk.
+- **Per-block cuts for all overlays.** Every multiface overlay's blockstate lists **3-4** cuts (`OVERLAY_CUTS`) and the part picks
+  one by the block's position, with no block state and in every cave. `wet_streaks` is translucent now: at low alpha the cut-out
+  render type turned it into solid dark bars. Rust crust lost its near-black pits; flowstone lost its dark bars; the puddle
+  no longer reads as a black blob.
+- **Sources**: both blocks are cut with shears (`hoe` tag); two ember lichen craft an ember vine, so what's in a chest still has
+  a use. The Ochre keepsake (trail `keepsakes_from_below`, `RegionFinds`) accepts vine or lichen.
+- **Light comes from the plant.** A stem gives block light **6** and a bloom **12**, so the wall's own smooth light does the falling
+  off; the planes of lit rock only warm it (emission **5** wide, **8** close, **11** round a bloom) and thin out pixel by pixel at
+  their rims, since cut-out has no soft edge. A bloom's seeds are six small boxes heaped on the leaves, with no frame on them.
+- **Nothing flat on a wall is sliced by its block** (Euan's playtest, 9 Nov: "literally cut in the middle... so it creates a straight
+  edge"). A texture that runs off its edge only looks right beside a neighbour that carries on, and these often sit alone. Every wall
+  overlay thins out before each edge along a coast a pixel or two in, wandering differently per side and per cut (`uncut` in
+  `tools/art/specs/deep_skin.py`); the ember vine's tiles are the one exception, since their stems are drawn to join. Minecraft's own
+  **sculk vein is drawn again as ours** (`sculk_vein` in `deep_skin_growth.py`, none of Mojang's pixels): six cuts of whole bubbles that
+  may touch the block's edge but never cross it, so a lone one ends in a scalloped line and a wall of them closes up. It replaces
+  `minecraft:block/sculk_vein` and the blockstate, so every vein in the game changes, in the Deep Dark too. Test
+  `caves_wall_growth_whole`: no flat wall texture, on any frame, runs more than **3** pixels along an edge.
+- **Saved worlds**: caves already generated keep their blocks and take on the new art and the per-block cuts at once. Their
+  placement doesn't change, and their old ember lichen keeps its old light. New chunks grow the new walls.
+- **Cost**: the Ochre Deep only; two short int arrays a chunk, one field lookup per foot of wall for each run picked. No block
+  entities and no ticking; `animateTick` on blooms only, client side.
+- **Test**: `caves_wall_growth`. In a made-up room with a pillar, every connection meets the next block's (beside it or round a
+  corner), no run is a lone block, nothing leaves the chunk, and a seed always grows the same wall.
+
+### 42.11 Lode hearts, grown into the rock (Euan's playtest, 9 Nov)
+
+"The loads, it looks completely out of place. It doesn't at all look integrated into the wall in a premium way." Two causes: a
+heart was a cube with its own near-black rock in the texture, and the region rock rule (§42.7) counts a heart as an ore without
+a twin, so all 26 cells round it stayed plain stone, a grey box in the wall. Tool tier, hardness, loot, the lode's plan and
+`Veins` are unchanged: they go by the block, and everything here is its look.
+
+- **The rock it sits in**: `LodeHeartBlock.HOST` (deepslate first, the default; stone, andesite, diorite, granite, tuff and the eight
+  region rocks). The blockstate is a multipart: the knot of crystal over the rock's own block model, so the heart's rock is the
+  wall's rock, pixel for pixel. `LodeFeature` sets it from what it replaced; `CaveSkinFeature.regionRock` (through `Lodes.heartIn`)
+  when a region takes the rock over, with no pocket round a heart (ores without a twin keep theirs). Deepslate hearts stay in
+  deepslate unless the region's rock replaces deepslate too.
+- **The knot**: `<ore>_lode_heart` is now drawn on nothing: a stain in the ore's colour thinning out from the centre, a crack to the
+  middle of each edge, three uneven clumps of crystal off to one side with a dark broken edge round them, the drawing turned
+  differently on each face. The glow layer keeps the slow pulse but only the core stays white-hot; the crystal tips glow in the
+  ore's own colour (pale pixels at full light burn out to white under Lens). Three small crystal shards
+  (`<ore>_lode_heart_shard`, emission 9) stand 0.6-1.4 pixels out of each face, so it has an outline of its own; a face's shards
+  go when something solid is against it.
+- **A heart gives no block light of its own**, because a block that emits any light is drawn flat-lit (no smooth light, no ambient
+  occlusion: `ModelBlockRenderer`, and Sodium the same), and that showed as a pale square against the wall. The two nearest blocks
+  of each vein give **4** instead.
+- **Seated in the wall** (`LodeFeature.seat`): a heart the carvers left with three or more faces open is built back into its rock.
+  One face stays open, the one with rock right behind it, sideways before up or down; the others get the rock the heart replaced.
+  Its own chunk only.
+- **Veins in the rock** (`awaken:lode_trace`, `LodeFeature.trace`): on each face of a heart open to the air, a vein leaves most of
+  its four edges (the second pair one time in three stays closed, so it never reads as a cross) and runs **2-5** blocks across the
+  rock, cracked like split rock with spurs off it, turning one step in four, each block joined to the last (connection shapes as
+  the ember vine's), bright for the first two blocks (emission 8), dim and broken beyond them (5). One white
+  sheet tinted by `Ore.tint`, so every ore reads by its colour. It has no shape, no item and no loot: a pick aims and strikes the
+  rock through it, and it goes when the rock behind it does. Rock and air decide its path (a piece the next chunk has already written counts as open, so the walk doesn't depend on which chunk
+  goes first) and a hash of the seed and the heart does the rest; a chunk writes the hearts within **6** blocks of it, its own cells only.
+- **Saved worlds**: a heart already generated takes the rock round it on its next random tick, which is the plain stone of its old
+  pocket if it had one, and gets the new knot at once. Veins and the removal of the pocket need new chunks.
+- **Cost**: traces only round hearts open to the air, a few dozen blocks a region, no ticking; a heart's only addition is a random
+  tick that reads six neighbours.
+- **Tests**: `delve_heart_in_rock`, `caves_heart_takes_the_rock`. `/awaken caves heart <pick> <distance>` (admin) stands in front of a
+  heart open to the air, for tours.
 
 ## 43. The Journey (one city and the wild, the beasts' Hearth, the bells' song, Faults; plan docs/director/JOURNEY.md, page https://claude.ai/artifact/UZ4vpKGoSJkisZRkmoHj3D; Euan approved the entire plan 2026-10-29: "Go ahead with the entire plan")
 
@@ -18464,8 +18585,15 @@ from the cost table.
 
 **46.8 Temper, attune and reforge at the anvil (stage 3; plan §4.6).** Use the War Anvil holding one of Arms' weapons
 (forged, Lord-forged, Marked, Hale's issue: whatever `ArmsItems.of` knows), with no work on it and nothing in its slot,
-and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three rows, each with
-what it costs (have and need), one button, and one plain line for what stands in the way. All three heat the metal, so
+and the anvil's window for that weapon opens (`AnvilHeldScreen`, sent as `AnvilPayloads.Held`): three cards across the top
+(Temper, Reforge, Attune, each with what it would do in a few words: "Damage 7 to 8") and one page below for the card you
+pick: the numbers before and after, what it does in plain words, what it costs (have and need), one plain line for what
+stands in the way, and its button (Euan's playtest, 9 Nov: "what does tempering something actually do?"). It all shows
+before you pay, on a card you can't begin yet too. The window opens on the first card that can begin. Every word and
+number is sent by the server, from the code that makes the change (`AnvilPayloads.Option`): `Upgrades.stats` reads what a
+piece's tooltip shows, and `Upgrades.changes` compares it on the piece and on a copy made by the real change
+(`Upgrades.applyTemper`; `AnvilHeld.reforged`, which the finished work uses too), so a preview can't drift from what
+happens. A number a piece's attributes don't show comes through `ForgeHooks.stat` (a focus's power damage). All three heat the metal, so
 each needs the Forge within reach at every tier ("Metal is heated in a Forge. Set your Hearth's Forge within six blocks
 of this anvil."). The price is taken at the start, and the weapon goes from your hand into the work (`AnvilWork.piece`);
 both come back if the anvil is broken mid-work, and the weapon comes back through the slot, drawn as any.
@@ -18476,7 +18604,9 @@ both come back if the anvil is broken mid-work, and the weapon comes back throug
   Forge's words ("Put an anvil and an armour stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
   further.", "It can't take any more."). The scene (about 10 s whatever the levels): the whole weapon heats in the
   Forge's mouth, one strike on the style's own beat for each level gained, the quench. Nothing is judged and nothing is
-  flawed: the Temper lands as paid, and the strikes ring as at the draw-out.
+  flawed: the Temper lands as paid, and the strikes ring as at the draw-out. The page says what this heat would do (at a
+  limit, what the next level would, with its price), that a level adds damage for good and changes neither its swing nor
+  its uses, what its Temper is giving it now, and the most it could reach.
 - **Reforge it to C**: the next tier's parts (as Raise: the tier's cost, no Blueprint; `ArmsRaise.plan`), from the
   tier's level. The scene (about 20 s): the whole weapon heats, the next tier's metal is folded in on the style's beat
   (its strikes, turned over at half), the quench, the draw. Judged as a forging without the hilt
@@ -18487,15 +18617,23 @@ both come back if the anvil is broken mid-work, and the weapon comes back throug
   tier's (x1.25 in an Armoury room). A forged weapon becomes the next tier's of its style (`ArmsRaise.lift`:
   `ItemStack.transmuteCopy`, then its damage and uses set back to the new weapon's own and its Temper put back on); a
   Lord-forged weapon keeps its own body and Art and gains a point of damage a tier, as Raise always did, and its heat
-  glows in its Lord's colour (the weapon's accent) instead of the Forge's.
+  glows in its Lord's colour (the weapon's accent) instead of the Forge's. The page shows the tier, damage and uses from a
+  Plain forging (the worst it can come out), what a Flawless one would make them when that's more ("9 if Flawless"), what it
+  keeps, and the enchantment room each would leave (`ForgeHooks.cardLines`: a found weapon reforged Plain can end with less).
 - **Attune it to Heat** (a catalyst in the off hand): six essence, a Core Shard and the catalyst, as at the Forge
   (`ArmsForge.attunePrice`). The scene (about 8 s): the whole weapon heats, the catalyst is set in the guard, and three
   taps on the hilt's beat drive it home (all three at the guard), the blade glowing more in its Force's colour with each;
-  then it stands in the slot. Nothing is judged. Without a catalyst the row says which stone gives which Force; one
-  already attuned to that Force says so; attuning again replaces the old Force.
+  then it stands in the slot. Nothing is judged. The page always says what attuning does (`ArmsForge.hitWords`,
+  `powerWords`) and lists every Force with its stone and its touch (`ArmsForge.touch`, from the numbers `landed` uses), the
+  one in your off hand marked and the one on it now marked; without a catalyst the price shows with a catalyst still to find;
+  one already attuned to that Force says so; attuning again replaces the old Force.
 - **The Forge points here**: a plain use of the Forge holding one of Arms' weapons says "Weapons are tempered at a War
-  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil."; the Armoury at the Forge no longer offers Raise.
-  Armour tempers at the Forge as before, and Oren still tempers anything you hand him.
+  Anvil."; a sneak-use says "Weapons are attuned at a War Anvil. It shows you what each Force does."; the Armoury at the Forge
+  no longer offers Raise. Armour tempers at the Forge as before, and Oren still tempers anything you hand him. The offer
+  says the same as the anvil: its card's title is what it will do ("Temper II: armour 6 to 6.5, toughness 0.5 to 0.75") with
+  the price under it, and a piece you can't pay for or that's at the limit gets a panel with the numbers.
+- **The tooltip**: a tempered piece says what its Temper gives it, read off the piece ("Tempered ✦✦ · +2 damage"); an
+  attuned weapon says what its Force does, under "Attuned · Frost".
 - **The Weapons tab**: two optional steps, each pointing at your anvil. "Temper your Beastbound Longsword"
   (`arms/temper`) when the best of Arms' weapons you carry (the highest tier, then the lowest Temper) is below the limit
   of the Forge by your War Anvil; its needs are the next level's price. "Reforge your Hive Regent's Daggers"
@@ -18517,7 +18655,9 @@ Tests: `arms_anvil_temper` (one heat to the Forge's limit, the summed price take
 weapon back through the slot; Oren's Mark's start; the Forge's plain use points to the anvil), `arms_anvil_attune` (the
 price and catalyst taken, attuned, Marks kept), `arms_anvil_reforge` (a Marked weapon: the next tier's, Marks, name,
 attunement and Temper kept, the story reforged with its quality; a Lord-forged: its body, Art and a point; the parts
-taken, and given back with the weapon when the anvil breaks mid-work).
+taken, and given back with the weapon when the anvil breaks mid-work), `arms_anvil_preview` (the numbers the window shows
+before you can pay equal the real weapon's after the real work: Temper's, Reforge's Flawless column and uses; every Force
+named and the off hand's marked; an armour piece's Temper moves armour and toughness).
 
 **46.9 Each rank's act (stage 4; plan §4.4).** A weapon forged in full at its tier (`AnvilWork.acts()`: not from memory,
 not a Hunter's blade forged alone, not one worked again) gets its rank's act and every act below it from C, each in its
@@ -18830,6 +18970,30 @@ a duel. Numbers in `FightRunner` and `ArmsRules`.
   middle facing a still stand-in 4 blocks south, the camera west of them; `play <move> [then ...]`, `deflect` and
   `break` act at once (`DuelDemo`). Tour `tools/autopilot/fights-duel.txt` (on CI): each pilot's tell, recoil, reel
   early and low, and broken stance.
+
+**A held guard holds its ground (Euan's playtest 2026-11-09: "the light attacks when I tried to block it doesn't make any
+blocking sound ... and it doesn't even hit me").** A guard that blocked a light blow (the answer past the deflect's ticks)
+let only part of the damage through, but the blow's own push, its lift and vanilla's knockback all still applied: about
+6 blocks flown from one blocked cut, so the string's next blow never came (`fights_guard_holds_ground`: before, one blow
+met the guard and you moved 5.9 blocks; after, two blows and 0.66 blocks). Now the tick a held guard takes a blow it
+cancels vanilla's knockback (`ArmsServer.onKnockBack`, `Arms.guarded`) and `Abilities.push` is a quarter as strong with no
+lift: a step back, feet on the ground, still in reach of what comes next. A deflect never pushed; a guard break and an
+unguarded blow are unchanged. A block now also jolts the blade and sparks (`ArmsPredict`, the shot's lighter treatment),
+because a kick and a knock was all it had; the ring stays the deflect's alone (its window is the guard's first 3 to 5
+ticks). A boss with a mind logs one `[fights] missed` line for a blow that met nobody though you stood in its reach (how far, in
+sight or not), so a playtest can say what the tests can't: whether a blow ever passes through a guard held still.
+
+**A block you can feel (Euan's playtest 2026-11-09: a block a moment too late "barely makes any sound ... it feels like nothing
+happened ... sometimes it doesn't even push you back").** His log held only 8 light blows that met nobody in a five-minute fight, so
+these blows were landing on the guard. Three causes. The sound: `arms.block` has 92 to 95% of its energy under 300 Hz, which laptop
+speakers don't play, where the deflect has none there. A block now plays three layers: that thud for weight, Minecraft's own
+shield being struck (`guard.struck`, `item/shield/block1-5` by name, pitch 0.9) and steel (`guard.steel`, `mob/irongolem/hit1-4`, quiet
+and pitched up). The ring stays the deflect's. The push: a quarter of a light blow's knock moved you about a quarter of a block, and
+it only came if the hit counted as landing, which a blow doesn't when it does no damage (the last blow's half second of immunity,
+the second blow of most strings). Now the push comes whenever a guard took the blow (`Arms.guarded`), is 70% of the knock and at
+least 0.3 (about 0.7 of a block on the ground, no lift; `fights_guard_holds_ground`), and a blow held for a laggy guard (50 ms or
+more of ping) keeps its push for when it lands (`Arms.afterHeld`). The stop: a block has a 50 ms hit-stop on the attacker and your
+hands, half a deflect's, and a harder kick of the view to the side the blow came from. Unheard and unseen in game when written.
 
 **47.4 The Provings: the Ringer (stage 3).** The D Reassessment becomes the first Proving (PLAN §4.7, GOALS part 2):
 one fight with a Warden in its own hall, never announced, the rank's gift inside the fight.
@@ -19739,7 +19903,10 @@ If you've got out of reach during those 5 ticks the normal choice takes over.
 (`mind.cooldowns`, else by class: LIGHT 0, HEAVY 30, PERILOUS and GRAB 80, a move that hurts nobody 240). If nothing it may start
 reaches you for 2 seconds its blows' rests are waived; a move that hurts nobody (a buff, a heal, a summon) always keeps its rest. It
 never makes the same move twice running by choice. The one exception is a last resort: a blow may follow itself when nothing else it
-could do has reached you for 10 seconds, so a spot only one move reaches isn't safe. Any blow may be
+could do has reached you for 10 seconds (3 seconds in a phase with only one close blow, which has nothing else to do there), so a
+spot only one move reaches isn't safe. A string doesn't repeat either: a next blow that would be the move just made is dropped (a
+fork can land on the blow that was coming anyway). And a body whose longest close blow is the one it just made steps in, after 0.75 s
+with nothing to start, until a shorter one reaches, instead of standing there. Any blow may be
 held a beat at its peak (`holdChance` 25%, `holdTicks` 6, or its own authored hold if longer), which only ever adds warning. Having
 deflected it again and again it always holds. The third dodge in a row (each within 2 seconds of the last) is caught: once it has
 seen that third dodge, the next blow holds for at least 10 ticks and keeps turning to you through the hold, so it lands where you
@@ -19762,12 +19929,404 @@ the table holds the worst fight to 10%). In `fights_mind_drinks_<boss>`: at leas
 of drinks in reach get an answer that starts before the drink ends. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
 at least double what they are against someone standing.
 
+**48.6 Every boss has a mind (Euan 2026-11-09, after playing the pilots: "apply these changes ... to all bosses").** The 45 others
+get what the two pilots have, from `tools/art/specs/kit/minds.py`, made from each body's own moves and nothing new: a drink
+brings its gap-closer or shot from afar and its guard-beater, heavy or quick blow up close; a cast and a stop after a run its
+gap-closer or shot; a heavy being held its quickest blows; a guard kept up its red moves and grabs, else its heavy; a recovery its
+hardest close blow. A string's next blow forks to the guard-beater (or the heavy) on a raised guard and to the gap-closer after a
+dodge. Its gap-closers rest 60 ticks. A move that fills the room or ends the fight (a signature with no blade of its own, or a
+reach of 40) answers nothing, and neither does a move kept for behind. A script written with its own `mind` keeps it. **An answer or a fork never reaches for
+a move its phase hasn't got yet** (`FightRunner.inPhase`), so a late phase's moves stay in the late phase; the Regent's Stinger Volley
+now answers only from her second phase on. Tempers, footwork and each boss's own trick aren't in this. `fights_mind_every_boss`
+checks they all have one; `fights_record_<boss>_guard` runs each of the others once, the Lantern Broker excepted (it trades with you and only duels if you ask).
+
+**48.8 The body keeps the clip's clock (Euan's playtest 2026-11-09: the Ember Tyrant's run "is super glitchy ... not super smooth";
+"double check all different bosses").** The clip runs on the server's clock (`ServerPace`), but the body's place reached the client
+every third tick and took three more to arrive, so a body carried by a move began to travel after its legs began to run and went
+on gliding after they stopped: on a real client (`fights-charge-trace`, CI 42601411803) the Tyrant's 12-tick run ended at 1.4 s on its
+clip and at 1.6 s on the ground, a third of the run out of step. Any late packet also stopped it dead for a tick, since the place was
+only ever three ticks ahead of what had been drawn. All 47 bodies now: are placed every tick (`updateInterval(1)`) and glide to it
+in three steps (`LinearInterpolationHandler`), which a packet one or two ticks late doesn't stop; and while a move or a charge carries
+one, it's sent ahead by two ticks of what's left of its run (`AwakenBoss.trackingPosition`, `FightRunner.lead`, `AbilityRunner.lead`),
+never further than the move still goes (an ability charge brakes to a fifth on its last tick, so that tick counts for a fifth:
+CI 42603379006 showed the Guardian of the Gardens running 0.42 past its stop and sliding back; `fights_charge_stops_where_sent`),
+and not at all if a wall is there. Two ticks is exactly what the glide lags at a steady speed:
+the client draws the body where the server has it on every tick, start and end included (`fights_body_keeps_up`, all 66 moves that
+carry a body). The server's own place, and so every reach and every hit, is unchanged. A move cut short (a deflect) can pull the drawn
+body back up to two ticks of its run. What a carried body's legs do isn't touched: the charge's stride swings about 34 degrees a tick
+where the same body's run swings about 8, the next thing to look at if the run still reads wrong.
+
 **48.7 The recorder (stage 0).** `FightRecorder`: `fights_record_<boss>_<kind>`, six bosses (more as the roll-out reaches them)
 against six kinds of player (stands still, runs, circles, holds guard, keeps away, stays behind), 72 s each with fixed seeds;
 `fights_record_pack` counts a pack of 12 winding up at once. It logs one `[record]` line a fight and asserts only that the fight
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
 
+
+## 52. The Hall of Arms (choosing weapons and armour; page https://claude.ai/artifact/UZX5KofQPGeXHeiPxJ9sxK)
+Euan 9 Nov: the Armoury, Fitting Stand and War Anvil windows were "just a block of text... ugly... too linear". They become one
+place you stand in. Package `dev.awaken.hall`; the old screens stay behind `classicScreens` in `awaken-hall-client.toml` for one
+build, then go.
+
+**The sheet.** Every Hall screen is laid out on one 1708 x 960 sheet (`Stage`), fitted to the window and letterboxed; text sizes
+snap to whole real pixels. Blackletter is Jacquard 24 baked to a bitmap (`tools/art/hall/title_font.py`; OFL text beside it; the TTF
+is not in the repo). Weapon meshes are the real ones, drawn live by `PicRenderer` into their own textures with the Hall's shader
+(`hall_weapon`), once when the wall changes and every frame only for the weapon brought close.
+
+**The Wall.** 16 kinds across (five bays: Blades, Heavy, Reach, Close, Strange), 6 ranks up, receding. Dark except round your lantern
+(the mouse) and below the tide (your level, the line and the words "You, level N"). `HallServer.wall` judges each niche and the client
+only draws it: `SHAPE` not found (black, no name), `OFFER` on Hale's rack at your rank (iron), `OVER` known but above your level (its
+true look), `KNOWN` known and short of parts (dimmed), `READY` (lit even in the dark), `MADE` held or remembered (lit even in the
+dark). Filters: Everything, Ready now, Tracked. 15 seals for the Lord-forged: closed until you have taken one, and one you hold opens
+close up. It never names a boss in advance.
+
+**A weapon brought close.** Clicking a niche zooms the wall away and flies that weapon to the middle of the screen, turning; drag to
+turn it. Left: the six ranks of the kind (a click changes rank). Right, in a dark panel: rank and name; blurb; damage (`damage + 1`),
+swings a second (`speed + 4`), uses and reach (the chain's longest strike); against the weapon in your hand; **what makes it
+different**, from the numbers the blows use (`HallSpecial`, never typed by hand per weapon); **what it takes**, each material as the
+real item (a tag's members in turn) with have/need and where it comes from; and what you can do here at this door. The action
+stands at the bottom and is the Armoury's own logic: at a War Anvil Hold to forge (0.6 s, Space or the mouse, or one click with
+`clickToCommit`), From memory, Forge the blade, Rebuild it; at the Forge Raise it, Draw a copy; at Hale's rack Buy; Track anywhere.
+A paragraph that won't fit is left out whole, never cut. Unfound: "Unknown", no numbers, nothing given away.
+
+**Refreshing.** Twice a second the screen hashes your pack; a change asks `ArmsArmoury.REFRESH`, so what you pick up shows without
+reopening. Test `hall_wall`: the wall says the same as the Armoury's list.
+
+**The Armour wing.** 29 suits on six terraces climbing away, ranks E (nearest) to S, kinds across; each row stands in the gaps of the
+one before it, the rows zigzagging, so a suit at the back is hidden as little as possible (`TerraceLayout`, offsets found by search).
+Lit round your lantern and below your level; unfound suits are black shapes with no name. The same filters as the wall. Clicking one
+brings it close: it stands turning, each piece named on the figure (`Helm`, `Cuirass`, `Greaves`, `Boots`, with what state it's in; a
+click or Tab picks the piece); the same kind at every rank on the left; on the right what the suit does (its two-piece and four-piece
+abilities come before the piece's own rows: that is why you'd want it; the four-piece line comes first and a full panel never drops it,
+giving up in turn where a material comes from (it moves to a tip on the material), a reason the red counts already give, then the comparison; five or six materials share one row), the armour of the whole suit, what the piece you picked does
+against what you wear, the real items it takes, an inlay of any catalyst you carry, and Hold to forge the piece. Unfound patterns
+say where patterns come from, never which creature. `Your looks` (each piece's look, one dye) moved here. Track a suit and it goes on
+K > Tasks as `armour/tracked` (one at a time). The Fitting Stand opens this wing; K's way in looks and tracks only. Test `hall_suits`.
+
+**The War Anvil.** No window: your weapon hangs turning over your own forge, which is out of focus and dim behind it, and your hand is
+empty while it does. Three rites wait underneath, each shown by a real thing from the game: the smith's hammer (Temper), the Forge
+(Reforge), the stones in turn (Attune). Never a drawn sigil (Euan 9 Nov: "need actual icons that still feel like MC"). Point at a rite
+and the steel shows it, the numbers drawn out of the weapon: heat runs down the blade for Temper, the next rank's weapon hangs over it
+for Reforge, the Force's colour fills it for Attune. Choosing a rite arms it; every cost is its real item; Hold commits, and the weapon
+lands. Attune takes any stone you carry, with the off hand's stone chosen first; a stone you don't have is still drawn in full, so you
+know it when you find it. Tests `arms_anvil_*`.
+
+**The line-up.** A step on K > Tasks that offers a choice of armour ("Choose your first armour", "Make your D-rank armour") opens the
+suits themselves, tall and side by side, instead of a list (`LineUpScreen`; `SetPreviewScreen` stays behind `classicScreens`). Each has
+its name, its kind and how close you are. A click brings it close in the same view as the Armour wing, with "Choose this one" where
+Track would be and left and right moving between the offers only. The step's choice is the Tasks page's own (`TaskPage.choose`).
+
+**The moment it's made.** When the Forge Song or the anvil's song finishes: a hit of light a quarter of a second long, then the piece's
+name in blackletter and how it came out ("Flawless", "Temper II", "Attuned") for about three seconds (`HallMoment`), over whatever
+screen finished it. The details stay on that screen's own card.
+
+**Sounds.** Minecraft's own recordings by name, nothing built (`HallSounds`): you come in, `block.furnace.fire_crackle` low; something
+brought close, `block.chain.place`; a different rank, rite, stone or wing, `item.armor.equip_iron`; back, `block.iron_trapdoor.open`;
+a held press, the fire rising in three steps; the weapon coming down, `block.anvil.land` quietly; made, `block.anvil.land` and
+`block.heavy_core.place`.
+
+**For everyone.** High Contrast brightens the quiet text. Hide Lightning Flashes takes out the hit of light. Distortion Effects under
+50% means things arrive rather than fly and nothing turns by itself (drag still does). The narrator reads what is brought close and
+which rite is picked, on a change only. On the sheet, text sizes snap to whole real pixels, rounding down unless the size is within .35 of a pixel of the next step (at 1.93 real pixels to a sheet pixel, size 2 stays 4 real pixels rather than falling to 3). A line can come out a few percent wider than laid out, so widths, fits and wraps all measure text at its snapped size.
+## 50. Powers in Full Voice (plan docs/powers-aaa/PLAN.md, page https://claude.ai/artifact/G6vDNHxaMBnyHF84e51pFg, all 43 yes 9 Nov 2026)
+
+Stage 0 is the proof: Haymaker, Shockwave, Gravity Well and Railgun rebuilt to the plan's bar, and nothing else. Later stages wait for Euan to play this one.
+
+### 50.1 Standing rules
+
+A plain press does at least what it did before. The server decides damage. The 20% boss hit cap (`PowerMath.capBossHit`) beats everything; under it, all bonuses together stop at 1.6x (`PowerMath.capBonus`). Terrain changes put themselves back (`TerrainLedger`). Bonuses never apply against players, and no slam or fold is ever done to a player or a boss. A timed moment has two ticks of grace and is judged when you pressed (`PowerMath.pressedAge`: the age less your latency, at most 6 ticks forgiven). Only six powers are timed at all (Haymaker, Charged Shot, Railgun, Brace, Dash, Barrier): Euan rejected timing on every power.
+
+### 50.2 Stance
+
+`PowerStance.add` goes through `Strikes.posture` and answers to the same rules as a blade: an opening takes 1.5x, a duel body standing braced 0.5x (`ArmsRules.OPENING_POSTURE`, `GUARDED_POSTURE`). Weights: Light 3, Medium 6, Heavy 12, Massive 20. Never a player. These numbers still need agreeing with the Fights That Read You work before Stage 1.
+
+| Power | Stance |
+|---|---|
+| Haymaker | 6 at a tap, climbing to 12 at full charge; 16 when clean |
+| Shockwave | Light for each body |
+| Gravity Well | A boss standing in it is not pulled: 2 every second instead |
+| Railgun | (6 + 6 x charge + 4 x overcharge), falling to half at 48 blocks |
+| Wall slam | Medium from a Haymaker, Light from a wave |
+
+### 50.3 Haymaker
+
+Held up to 600 ticks and cast on the let-go; a long hold is just a full punch. Full charge is `chargeTicks(20)`. Reaching it sends `HOLD_READY` and the knuckle lock (`HAY_PEAK`). A let-go from two ticks before full to five (plus two grace) after it is clean: damage x1.25 through `capBonus`, stance 16, knock x1.25, a Piledriver stuns 15 ticks longer, 150 ms of hit-stop, `FxKind.PERFECT` and `FxFold`, which folds the target's model along the punch for 9 ticks. Never on a player. A clean plain punch also starts `WallSlam` for 26 ticks: a body still moving at 0.32 blocks a tick when it hits a wall takes half the punch again, 12 ticks of stun, comes off the wall and cracks it (`FxWallCrack`: real block crack stages, healing a stage every 7 ticks, and the wall's own chunks). Punching a bare wall at 40% charge or more cracks it the same way, and hurts nothing.
+
+First person: the fist draws further back through the charge and shakes harder once it's there; the let-go is a real punch across the screen (`fp_p_haymaker_end`).
+
+### 50.4 Shockwave: the ground wave
+
+The wave is the real ground. `WaveSurface` is shared by server and client so that what you see is what hit: columns are stepped at 0.7 blocks along each ray, climbing at most 2, dropping at most 4, riding fluid; anything taller stops it. No ground under the caster (or Minimal effects) falls back to the old arc. The server takes the wave's arrival from one travel speed (range / 0.9 ticks, at least 10). A body is hit only if the wave reaches its near side and it stands within 4 above or 3 below the ground there. At the crest (the far 28% of the reach, 58% on a climb of 5 or more) damage is x1.35 and it throws them up; before it, it bowls them along. `WAVE_KNOCK` for each of the first five bodies. `WallSlam` for 16 ticks at 0.6 of its damage.
+
+`FxGroundWave` lifts real baked block quads, tinted as they are in the world, with plants riding along, water and lava throwing spray, inside the debris budget (`FxBudget.debrisCap`: 160/64/0). The roll sound travels along the front.
+
+### 50.5 Gravity Well
+
+Every body in it past the first adds 8% (40% at most, through `capBonus`, not against players). Bosses aren't pulled. Items and orbs drift in (40 at most, every other tick) only if what's below the centre is solid within 48 blocks and isn't lava, and never for Repulsor. Non-ally shots within the radius bend towards the core at their own speed and are swallowed within max(1.2, radius x 0.22); a boss's shot is leaned on at 30% and never swallowed, since it may be part of the fight. A player's shots are left alone. The client spirals real surface blocks in, drawn only, and throbs the whole of its life.
+
+### 50.6 Railgun
+
+Held up to 600 ticks; nothing fires by itself. Full is `chargeTicks(24)` (12 for Coil). `RAIL_READY` one tick before it. Holding on past full for up to 60 ticks is overcharge: damage up to x1.3 through `capBonus`, a bigger line and more stance. Recoil is 0.3 + 0.35 x charge + 0.25 x overcharge, x1.4 on the ground, its vertical part kept between -0.3 and 0.45, and none on a mount. The view narrows while held (`FxScreen.zoomTo`, off with camera shake), and the let-go throws your arm back (`fp_p_railgun_end`).
+
+At level 5 a full shot bores (`Bore.through`): up to 14 blocks along the line and the four round each one, through `TerrainLedger` with no drops and no particles (`quiet`, saved schema 2). A protected or unliftable whole block stops the shot; soft things that can't be lifted (sand, fences; hardness 0 to 5, no block entity) are passed through and left. It closes 4.5 seconds later from the far end back. It never closes on a player: a tunnel with one inside waits, checked every second, with no limit.
+
+### 50.7 Sounds
+
+`tools/art/specs/audio_power_voice.py`. Each power has a charge or wind, a release, an impact, a tail and a level 5 layer, two versions of each, from CC0 recordings and air (Kenney, `tools/art/sources/ritual`). Nothing pitched or struck above the sub. The family's level-up stinger is off for these four (`PowerSounds.ownPack`), since that's where the dings came from. Loops are mastered wrapped round themselves, so there is no dropout at the join. The sound build fails any new file with a held tone in its loud part (`ding_check.py`: a line above 800 Hz, 14 dB over the third-octave around it, held 45 ms, within 14 dB of the loudest frame). It can't see below 800 Hz. Old files stay until Euan has passed the new ones.
+
+Light bending round the Well (decision 10) is not in Stage 0: nothing in the game can warp the screen around a point in the world yet, so it needs its own pass in the Lens chain.
+## 53. One short list (the Tasks page through the whole game; plan docs/tasks-progression/PLAN.md, page https://claude.ai/artifact/JqgFfTyCLV13rx6N1XupRd; Euan approved all sixteen recommendations 2026-11-09)
+
+The Tasks page (§27.13) keeps its model: steps stay derived from the world, no quest flags. This section is what it now promises.
+
+**Lessons.** A lesson (a `lesson:` Now id) is never urgent and never the step on top, however fresh it is: `NowMap` holds it under `TaskBook.URGENT` and `TaskBook.top` skips it. A hunter who skipped the Veil no longer has "Meditate 10 s" as Do this next from C-rank on.
+
+**Your Village** (trail) is told through beasts and works, since people no longer move in: `beasts:N` (Kin, how many live at your home) replaces `settlers:N` on it. The tier steps say what `TierRules` asks. "Choose your first armour" is for an E-rank hunter with nothing worn; at any other rank the step is "Make your X-rank armour". The Training Grounds' last step counts a strike on a dummy (`awaken:training_dummy_hits`).
+
+**The cap.** `TaskBook` shelves every book by goal: at most one row per thread and three rows a tab (`TAB_CAP`), one Out there row (`OUT_CAP`); the rest wait in Later, read-only with Pin. So Now is at most seven rows: the step on top, one per tab, one Out there. A source can't exceed it, because the cap is in the book. `tasks.cap=false` in the world config brings back the old list.
+
+**Threads and voices.** A step says `.thread(id, order)` (no thread makes it its own), `.lead()` for what is told by kind and place, `.hidden()` for what's never listed, `.opens(line)` and `.teaches(ids)`. Which of a thread's steps comes up: whatever is on top or pinned, then the lowest order. Priority when places conflict: urgent, the pin, the main path, a place already held, ready, closest to done.
+
+**Places hold.** `TaskState` schema 2 saves which threads hold which places per goal (`held`), what's set aside and when (`aside`) and which tabs have opened (`tabsSeen`); a schema 1 save loads with those empty. A finished row's next step comes up in the same place, marked NEW; a place whose thread has run out goes to the next waiting. Set aside takes a row off the list with Undo, which puts it back exactly where it was; pinning clears it. A row can't be set aside if it's urgent. A trail only fills a place nothing else wants and gives it up when something does, is marked WHEN YOU WANT, and is never on Now. A tab opens the first time it has something of its own to do, and stays.
+
+**The quiet line.** Under a row: "Pick one: A, B or C" for three or fewer picks not made; on the step on top, "Then:" and the main path's next; else "Then:" and the next in its thread. A Lead says nothing of what comes after it, and no line names a Lead coming up. READY shows when every need is met. The foot of a tab says what the next rank or level opens (`Goals.registerFooter`, and the road's next stop on Gates in place of a row).
+
+**Tests.** `tasks_caps` walks the seven stops of `docs/tasks-progression/proof/rows-at-each-stop.txt` (Now at most 7, a tab at most 3, one row per thread, nothing lost, a lesson never on top). `tasks_slots_stay` covers places holding, the next step taking the finished one's place, Set aside and Undo, a pin in Later, trails giving way, an old save.
+
+**The Hearth tab.** Three lines of work. `hearth.home`: the guide, the Anchor, the Forge's tiers and the home's tiers (a tier only shows once your rank opens it; until then the foot of the tab says when, because nothing on the list is out of reach). `hearth.build`: the Armoury, the Forge room, and **Add to your home** (`hearth/add`), one row with up to three picks. `hearth.beasts`: the beasts, each a Lead, a kind your standing rooms are waiting on first (a Storehouse waits on a Totter, an Ore Shed on a Pebblepup, a Smeltery on an Emberkit, a Rookery on a Chimewren).
+
+Picks are `HearthGoals.OPTIONS`, in the order they're offered: a room you've started comes first and the one you picked stays on offer. Each has the rank it's told at, which is not a lock: a room counts whenever it's built. Pick one and the row becomes it, with Change to go back. The Storehouse is told at C-rank, with the Granary Keystone as a Lead (every town's granary keeps one against a ground-floor wall). The Sanctuary is a pick once there's an Anchor. The Now tracker's room suggestion now covers the works too, once two of their pieces are down.
+
+The plan put Forge tiers on `hearth.build`; they're on `hearth.home` so that raising the Forge never hides Add to your home. The foot of the Hearth tab names the first tier the next rank opens, for the Forge and the home; Armour and Weapons name the next rank's set and weapon.
+## 56. A Place for Everything (storage)
+
+Plan and reasons: `docs/storage/PLAN.md`, approved in full by Euan 9 Nov 2026 (automatic "keep my bag tidy" is a no). Module
+`dev.awaken.storage`. Built in stages; this section says what exists.
+
+**The sorts (Stage 0).** One list, in this order, used by the bays, the signs and the Ledger, and by Tidy: Stone and earth, Wood,
+Building and light, Ore and metal, Gems, Food, Plants and seed, Beast and monster drops, Gate loot, Gear, Books and brews, Bells and
+leads, Odd things. It replaces §43.12's eleven bays. `Sorts` resolves every item once, the first time it's asked after tags load
+(components aren't bound when the tag event fires), so a lookup is one hash read and nothing is saved. A tag
+`awaken:sort/<key>` beats every rule, then the rules run: gear, potions, food, ores and metal, gems, plants, wood, creature drops,
+dressed blocks (glass, wool, concrete, terracotta) to Building, dug-up stone and earth, any other placeable block to Building, any
+other item of ours to Gate loot, and what's left is Odd. Items of ours from a common creature's loot table are listed in
+`sort/drops`, boss loot stays in Gate loot by that last rule. No name matching at run time.
+
+Measured on this build: 2,673 items (without spawn eggs), 68 in Odd things (2.5%, was 63%): pottery sherds, smithing templates and
+music discs. `storage_sort_golden` holds 300 hand-checked everyday items. `storage_sort_share` fails at 10% and writes every item's
+sort to `run/storage-sorts.txt`.
+
+**Bays (Stage 0).** A chest's sort is what most of its stacks are. `Storehouse.bayFor`: the chest already holding that exact item,
+else one mostly of its sort with room, else an empty one, else null. `WorkRooms.containers` counts a double chest once (either half
+opens the whole of it), counts copper chests, and follows the room's cells when it has them, so a pantry inside an L-shaped hall's
+box isn't the hall's.
+
+**Tidy, Undo and Pins (Stage 1).** Server-side, on an exact list of menus: `ChestMenu` over a real chest, barrel, minecart or ender
+chest (not someone's button panel on a `SimpleContainer`), `ShulkerBoxMenu`, `DispenserMenu`, `HopperMenu`, and the bag. `Tidy.plan`
+is pure: skip the hotbar and pinned slots, merge identical stacks, order by the sort list then family then name then biggest then
+least worn, each sort on its own row when that fits, and check every item's total before anything is written. A menu whose state id
+disagrees is refused and resynced; four requests a second a player; a slot that won't take its stack stops the whole Tidy. One step
+of Undo per player, kept in memory, dropped on close or when anything in the section changes. `BagPins` (attachment `awaken:bag_pins`,
+copied on death) is a bit per Inventory slot, and "Empty my bag" at the Drop leaves pinned slots too.
+
+The bag's keys sit right of the recipe book's button, which is where the prototype had put Tidy: Tidy and Pin at y 58, eleven tall, and
+Stow under them at y 71 when it comes. On a chest: Tidy in the title row and Tidy and Pin in the row beside "Inventory". `GlassChestScreen`
+and `GlassShulkerScreen` subclass vanilla's screens and only change the drawing, so every click, Mouse Tweaks and JEI behave as before;
+they replace only the exact vanilla classes, and only while the bag is glass. Keys T and Z work only in those screens, and after any
+text box or other mod has had the key. Alt-click (Option on a Mac) pins; the Pin key is a mode where any click does. Flights are
+220 ms ease-out, up to 40 ms staggered, over slots already holding their final contents; a click lands them at once. Sounds by name:
+`item.bundle.insert` low, `item.bundle.remove_one` for Undo, `item.bundle.insert_fail` when refused, `block.chiseled_bookshelf.insert` for a pin.
+Every line under the panel fits inside its width, beside Undo too, so nothing reaches JEI's columns. Client setting `tidy_keys` (`awaken-storage-client.toml`, default on) takes away the buttons, keys and Alt-click together; pins stay saved.
+
+## 52. Made by Hand (the chill side; plan docs/made-by-hand/PLAN.md, page https://claude.ai/artifact/HYetCkcLzxjB21CnH3XT88)
+
+Euan, 9 Nov 2026: "go ahead with all recommendations, but the keybinds need to not interfere with the current power keybinds etc".
+Nothing here automates building, adds a chore or a task list. Stages, each with a switch: 0 Proof (built; stops for Euan to play),
+1 Mallet, 2 Stock, 3 Hang, 4 Lift and Raise, 5 Boss pieces and Kin, 6 Garden, A Riding Along. Package `dev.awaken.shaping`.
+
+**52.1 The Mallet and its controls.** Two sticks and a cobblestone, stack of 1. Every control is on the mouse and only with the Mallet
+in the main hand; no key changes meaning, so powers stay on Z X C V and R with the Mallet out. Right click: what the Mallet is set
+to (Knock, or Look: put the look it carries on the block; held, a look drags from block to block, one each; Hang, Lift and Raise
+join in their stages). Sneak and scroll: change what right click does. Sneak and right click on a block: the Looks ring. Middle
+click (pick block): copy that look onto the Mallet, learn it, and set the Mallet to Look. A press that starts or ends a lock-on is
+still the lock's. Sneak and left click: undo. Right click on a block that has its own use still uses it, as with any item.
+The Mallet carries `MalletData` (mode, look id).
+
+**52.2 Knock.** One block `awaken:shaped` (no item) with state SHAPE, FACING, WATERLOGGED, GLOW (the base's light, so light never
+reads a block entity off the main thread) and a block entity holding `base` and `look` as block states (schema 1). Nine shapes, one
+outline each, pushed across the block and turned by the facing: FULL, HALF_BOTTOM, HALF_TOP, SLAB, NOTCH, BEVEL, ROUND, UNDER, COVE.
+Mesh, collision (slopes in steps of an eighth), occlusion and preview come from the same outline. Where you hit picks the cut. On a
+side: above 0.62 the top (NOTCH, BEVEL, ROUND, whole), below 0.38 under (UNDER, COVE, whole), else the middle (SLAB, whole). On the
+top or underside: within 0.25 of an edge is the top or under of that side; the centre is HALF_BOTTOM or HALF_TOP, then whole. A hit
+on a surface a cut made carries on with that cut, so knocking the same place steps through the shapes. It has its base's hardness,
+tool and blast resistance, drops its base, and sounds like its look. Whole blocks can't be waterlogged; cut ones can.
+
+**52.3 Real blocks wherever they exist.** A real slab or stair reads as its cut, and a cut writes back as the real block if one exists:
+NOTCH or UNDER facing f is a stair facing the opposite way (bottom or top), a half is a slab. A whole block wearing its own look
+is the real block again. No gain: a slab knocked whole stays a cut block of base slab and drops a slab. Refused, with one plain
+line: block entities, unbreakable blocks, ores, anything not a whole solid block, a family slab or a family stair.
+
+**52.4 Looks.** Ordinary building stone, brick, terracotta, concrete and wood (`Looks.families`) are always on offer, free and instant.
+Anything else whole and solid is learned by middle-clicking it, or by right-clicking a kept block (kept in a `LookBook` attachment,
+through death, schema 1). Never offered: block entities, ores, storage blocks, `#awaken:never_a_look`. Within a family on a whole
+real block the look makes the real block; otherwise it's worn and the base stays. The ring opens while Sneak is held, world not paused
+or dimmed: its own family first, then learned, then the rest, eight a page, scroll for more. Moving over a look shows it on every
+block it would change, only on your screen. Left click: this block. Right click: every touching block of the same look, up to 64,
+spreading out a ring a tick, each block rechecked as it's reached. Letting go of Sneak changes nothing.
+
+**52.5 Where.** The Mallet needs `player.mayBuild`, `level.mayInteract` and `Constructs.mayChange`, and outside creative no gate, no civic
+block, no `awaken:` dimension and no enforced ward. Refused there, but a right click still learns the look.
+Undo: 32 per player, in memory; an undo leaves alone anything changed since, and stops a run in progress.
+
+**52.6 Drawing.** `ShapedModel` wraps the shaped block's model and returns one part per look, shape and facing, built once from
+`LookMaterials` (the look's own baked quads: sprite and how the texture lies on each side, so a log's grain survives). Runs on Sodium's
+meshing threads. The look is read from the block entity first (never stale), then model data. Before a knock a chalk band shows the part
+that will go; the ring's preview is the real mesh a hair proud of the block. `awaken-shaping.toml`: `mallet`, `draw_shapes`.
+
+**52.7 Feel.** No particle sheet: real chips cut from the block's own texture that tumble and land, a little dust in its map colour, a 0.35°
+kick of the view for whoever swung. Sound is the block's own hit under `awaken:shaping.knock` (Minecraft's own `mob/zombie/wood` recordings, named).
+
+**52.8 Tests.** `ShapingTests`, prefix `shaping_`: every mesh is a closed solid facing outward, a knock steps through the cuts, a custom block
+takes a cut, no gain and no ore, real or worn, a run's kind and cap, kept blocks, undo, every look on offer can be worn. Rendering under
+Sodium and how a knock feels can't be tested: Stage 0 stops for Euan to play it.
+## 55. Riding Along (Stage A of Made by Hand; page https://claude.ai/artifact/HYetCkcLzxjB21CnH3XT88; approved 2026-11-09)
+
+A partner who isn't good at fighting comes along and is useful, without being able to go down, without making anything
+harder and without being carried to rank. Module `dev.awaken.riding`; other modules ask `core.api.RidingHooks`.
+
+**The bond.** One rider, one anchor. It's held in memory; only the run's `riding` mark is saved (`RunState` schema 3).
+- Both have to agree. **No key of its own and none taken over:** the K menu's Status page has a RIDING ALONG section
+  (`[ Ride ]`, `[ Bring ]` beside anyone within 48 blocks, `[ Let go ]` once tied), and a right click on a gate's door offers
+  to go in with the nearest free player within 12 blocks (tied, the door lets go). `/awaken riding status|with|bring|off`.
+- The answer is a 30-second Signal card. The server remembers who it asked, so a client can't answer a question it wasn't
+  asked. If both ask for the same thing it forms at once. A door card that runs out chooses nothing.
+- Letting go takes both, but silence for 30 seconds counts as yes; an explicit "Not yet" keeps it.
+- Refused, in plain words: already tied; not within 48 blocks in the same level; either in a fight (`Powers.inCombat`); in a
+  trial; not awakened; in different gates (or one in, one out); the story's own gates; a second rider in one run.
+- It ends when both let go, when either leaves the run, goes down or logs off. If it's the anchor and the rider is in a gate,
+  the rider is brought out next tick with their Satchel, alive and with no Fracture. A rider who logs off comes back outside
+  (`Runs.onLogin`): the thread doesn't survive it. If the rider leaves, the anchor carries on.
+
+**The rider.** Keeps every power and weapon.
+- Hits count for 40% (`LivingDamageEvent.Pre`, LOWEST, so after every other bonus; pets and summons with an owner too), and
+  stance damage the same (`ArmsServer.addPosture`).
+- Doesn't count towards party scaling (`Rooms.partyOnFloor`): no extra monsters, no elite, no Lord health.
+- Isn't picked first: every target goes through `LivingChangeTargetEvent`. While anyone who isn't a rider is in the monster's
+  sight (its follow range, clamped 16 to 48, and `canAttack`, `GateHooks.mayTarget`), the monster takes them instead. A
+  once-a-second sweep turns round any monster already on a rider. Alone, a rider can still be hunted, so riding off by
+  yourself is no way to walk through a gate unseen. Bosses take their target the same way and needed no change.
+
+**The catch.** A killing blow on a rider within 48 blocks of a living anchor in the same level is cancelled (HIGHEST
+`LivingDeathEvent`, before a gate counts the death or Cheat Death is spent; `/kill` stays real).
+- Back to half health at once, so a crash during the fold can't lose anyone. Fire and harmful effects go, casts end.
+- For 4 seconds they're folded: their body and name are gone for everyone, nothing can touch them, and they can't hit, use
+  anything or cast. They see through the anchor's eyes under a dark veil with a countdown. Nothing is saved.
+- They come back beside the anchor (behind first, on sturdy ground in a clear line, else on the anchor with Slow Falling) with
+  2 seconds before anything can hurt them. If the bond ended during the fold, they get up where they are.
+- They never go down and never lose the Satchel near their partner.
+
+**Out of reach.** The penalties always apply; the protection only within 48 blocks, so stepping away is never an advantage.
+A killing blow past the reach is a real death. In a gate, though, a rider still banks the whole Satchel as a claim, keeps
+their gear and takes no Fracture (`Runs.onDeath`). A toast says so once on crossing.
+
+**What it pays.** Their own loot rolls and boss pieces (`ArmsApi.lordSpoils`, `lordPattern`, the hoard) stay.
+- Half the XP. A floor's pay is halved and capped at what a gate of their own rank would pay (`Runs.riderReward`), which
+  covers the kill share, Satchel XP and bonus. HOME, WORLD, DESCENT and ANOMALY XP are halved in `Progression.grant`.
+- No rank credit: `Progression.count` ignores the gate and boss counters for a rider, and `claimLord` sets no records, best
+  moments or latent flags. Reassessments can't be ridden: a bonded player, either side, is refused at the Monolith and in
+  `Trials.start`, and left out of a Proving's party (`Provings.begin`). A Penalty trial is still a Penalty trial.
+
+**Out in the Wilds.** Everything above works anywhere, and a bond is a party of its own (`GateParty`), so kills are shared.
+
+**The look.** One thin thread of ivory light with a rose-gold halo, sagging and swaying between the two, with three beads
+travelling from rider to anchor. Past 36 blocks it pulls straight and turns amber; past 48 it frays into red dashes. A catch
+streams into the partner's feet and a ring round them burns down the four seconds; coming back is a burst of the same light.
+Drawn as world light (`RigPipelines.light()`), no particles. Sounds are Minecraft's own by name (`riding.bond`, `riding.let_go`,
+`riding.fold`, `riding.spring`: beacon power and deactivate, respawn anchor deplete and set spawn), low and without a ding.
+
+**Tasks.** `riding/together`, optional, on Gates and rank, shown only with someone within 48 blocks, until you've done it once.
+
+**Tests.** `bond_` prefix, one per mechanism: `bond_needs_both`, `bond_door`, `bond_not_mid_fight`, `bond_one_rider_per_run`,
+`bond_hits_forty`, `bond_fold_catches`, `bond_anchor_dies`, `bond_no_scaling`, `bond_no_aggro`, `bond_no_rank`, `bond_range`,
+`bond_left_on_logout`, `bond_goals_step`.
+## 49. The Forged Pick (plan docs/forged-pick/PLAN.md, page https://claude.ai/artifact/Smj9nEuNHbq6MZ4y2X1CaB; Euan approved all of it 2026-11-09)
+
+Picks are forged at the War Anvil, as weapons are. Four forms, six ranks, 24 items named `<prefix>_pick_<form>`; package
+`dev.awaken.delve.forged`, and `delve.api.Pick` answers for old and forged picks alike.
+
+### 49.1 The first pick
+The stone at the end of an adit gives the Delver's Old Head, once a player, ever (`WakingPick.PULLED`; anyone who already pulled the
+finished pick has what it would make). Where no adit is near, the Hearth hands it over. The head, a log and string hang the E Delver at
+the War Anvil. Nothing makes the old `waking_pick` now, but saves that hold one keep it: it mines as before and its verses wake as before
+until its owner brings it to an anvil (§49.7). A lost head never strands anyone: the E Delver can also be forged from the rank's parts.
+
+### 49.2 Forms
+| Form | Rock speed | Earth, wood | Uses | Damage | Way | Opens |
+|---|---|---|---|---|---|---|
+| Delver | 100% | none | 100% | +0 | hums toward a lode within 16 | at the start |
+| Breaker | 85% | none | 130% | +0 | heavy strike glints at 14 ticks, one less extra wear | break a lode's heart (`deed_heart`) |
+| Mattock | 90% | 120% | 110% | +0 | pick, axe and shovel rules; strips and flattens, sneak to till; turns in the hand (§49.8) | at the start |
+| Sounder | 90% | none | 80% | -1 | seam 0.40 wide, bonus ore 40%, hums within 24, taps 50% further | light a Delver's lamp (`deed_lamp`) |
+
+Form and rank are the item; `PickForged` (component `awaken:pick_forged`, schema 1) holds what the smith did and what the pick has been
+through: quality, temper, colour, smith, maker, day, tally (blocks, ores, hearts, keen), gifts, the rank it was first forged at, story bits, and
+enchantment room.
+
+### 49.3 Numbers (`PickStats`)
+Rank speed 5, 7, 9, 10, 11, 12.5. Uses 300, 650, 1800, 2200, 2700, 3400. Damage 2, 3, 4, 4.5, 5, 6. Each item's Tool rules are fixed by rank and
+form, so `/give` and creative stacks are whole; quality, colour, keen and blunt go through a `BreakSpeed` factor that runs on both sides, and only
+MAX_DAMAGE is per stack (a Tool rule per stack was the first plan, and a data change every Dressing would have restarted block breaking on the
+client). Temper, the steps of quality the Forge could hold, adds 0/4/8/12% to speed and uses. Colour c runs 0 (straw, +8% speed, -20% uses) to
+0.75 (blue, -6%, +30%), peacock 0.5 even. A pick never breaks: at its last use it goes blunt (30% speed, and no heavy strike, whose wear it could no longer pay) until dressed. Forged picks are kept through
+death, and A and S are fire resistant. Efficiency is out, since rank and forging are its speed. A forged pick has no repair material: Dressing is the
+way (one metal, mends a quarter, keen for 200 blocks at +10%). Its enchantment room is quality + 1, or the old pick's room if larger.
+
+### 49.4 At the anvil (`arms.anvil.PickAnvil`)
+A pick is an `AnvilWork` with `pick` set (schema 6) and style `pick_<form>`; the server judges it as it judges a sword, and it uses no pattern, no grindstone and no quench.
+Stages by rank, first time at that rank: **E** knap, bind, hang. **D** heat, cut the eye, draw the points, run the colours, hang. **C** adds steel the tips. **B** adds thread the spine.
+**A** adds pour the seam, on a Lord's anvil. **S** adds the starlight, after the colours. A raise above D does the heat, the drawing, and only the new rank's own act, then colours and hang. From memory (after a Masterwork at that rank and form) it's the heat, the drawing and the colours, Fine at best. Knap and bind are the hand ranks' work, the Forge is never asked at E, and metal always is.
+Songs: Delver `x.x.x...` a miner's steady three, Breaker `x.....x.x.......` a long lift and a double, Mattock `x..x..x.....` a triple swung, Sounder `x.x.x...x.x.x...` light and even. Marks are on the arms, never on the eye. Run the Colours is a hold: oxide creeps from the eye toward the points at 0.05 a tick and the lift sets the colour; held past blue it goes grey and is still sound, so the colour can't fail. Quality, the 0.6 timing + 0.4 aim of §39, adds the acts as the weapon's score does; burnt caps at Masterwork.
+**Options on a pick you hold:** Raise (next rank's parts less one metal); Re-draw to another form (half cost, full scene at its rank); Work in (a deed done since: free, three taps); Dress (one metal, a quarter of its wear off, keen for 200 blocks). Raise and Re-draw keep the tally, gifts, enchantments, curses, name, lore and repair cost, take the better quality and temper, and the new colour unless none was run. Wear clears on a raise or re-draw. Dressing and working in stay in the hand: back in the hand, else the pack, else at your feet, no draw from the stone.
+**Backing out:** the Heat, or a first Knap or Tend blow not yet struck: everything comes back, the pick first so the parts can't take its hand. After the first blow the work waits like any other.
+**Make it again:** your best rank (`ForgedPicks.BEST_TIER`) at half cost, offered only when you carry no forged pick.
+With the Hall of Arms the default, a pick's offers still open the cards window (`AnvilPayloads.Held.rites()` is false for them, and the Hall's anvil stage is only a weapon's three rites), and a pickaxe in hand at the anvil's door opens the Armoury with its Picks side, which the Hall doesn't have yet.
+The rebuild gates stay: C on an Ironbound anvil, A on a Lord's anvil. Picks never touch the Weapons tab's best or forged lists: `SmithMemory` only remembers them for the from-memory road.
+
+### 49.5 Gifts and Sounding
+`Pick.Gift` in the order the old pick woke them: Hum, Kindle, Sounding, Wide Seam, Long Sounding, Hush, Call. Forged picks hold them as bits, and the
+player's deed opens the gift: heart Kindle (D+), lamp Sounding (C+), Deepglass Long Sounding (B+), seep Hush (A+). Wide Seam comes with C and Call with
+S. Forged picks take deeds done before they existed; a gift earned later is worked in free at any anvil in 5 s.
+Sounding replaces Echo and Glass for old picks too (nothing is drawn through the rock any more): stand still, sneak and tap. 26 rays walk out to 12 (24
+with Long Sounding, x1.5 on a Sounder) and report the first roomy hollow; the client plays the answers from those sides, nearest first, shakes dust off
+that part of the wall, and a lode within reach answers last at its ore's note. 20 s rest.
+
+### 49.6 The tally and the name
+A pick counts blocks and ores, and hearts of a lode, flushed every 20 breaks, on logging out, on dying and on changing slot, so a crash loses at most 19. Lines read on the item: who made it, on what day, in what colour, how much it has dug, and which rank it began at. Three bits are story: `TWIN` struck with a friend, `MEMORY` made from memory, `ARMOURY` the Master of the Armoury's bonus; `OLD` was remade from the old pick.
+
+### 49.7 Old picks and old mattocks
+An update never changes a pick by itself. Holding the old `waking_pick` at any anvil, built or not, with no Forge, offers one free row: five taps and it's a Delver at the verse's rank (verse 0 E, 1-2 D, 3-4 C, 5 B, 6 A), holding every gift it had, its enchantments and its room, at the same share of its wear, marked `OLD`, with no maker claimed. It comes straight back to the hand. Old `<prefix>_mattock` items convert the same way, free, to the Mattock of their rank. Both old items stay registered for good; nothing makes new ones (recipes retired, §49.9).
+
+### 49.8 In the hand
+The picks draw as meshes (`arms.client.PickRenderer`, `awaken:pick` special model, `AWMS` with a group byte per triangle): the handle takes the rank's rings only for ranks the pick has passed; the head shows its Temper colour at its working end (the oxide it was stopped at), its wear, and a notch per ten lode hearts, up to six. Any pick is one haft and one head, so it reads from across a cave by its shape.
+
+**The dig** (`delve.client.DigMotion`, `PickHands`): a two-handed overhead blow timed to the bite clock. The off hand grips the haft while it's empty and stays where it is when not. It pulls back further for a big bite and less for a quick one, and it stops at the wall rather than passing through it. Third person uses an arm-pose transformer (`AWAKEN_PICK_DIG`), so other players see it too.
+
+**The Mattock turns in the hand** (`arms.client.PickTurn`), Euan 2026-11-09: look from rock to earth or wood and the holder tosses it a little way up the haft, spins it a half turn about the haft and catches it with the adze leading; look back at rock and it goes round again. 7 ticks a turn (3 with reduced motion), after a steady look of 2 ticks, at most one turn every 2 ticks. Purely what's seen and heard: the server isn't told, the dig is never slowed, and the block breaks at the same pace whichever end leads. It's worked out for anyone holding one within 32 blocks, from where they're looking, one ray a tick. A freshly drawn Mattock takes its side at once with no flourish. Which end leads is the item's own (`plus_leads` in the JSON per display context), since the two hands and third person mirror differently.
+
+### 49.9 Round the game
+- **Retired**: the six `<prefix>_mattock` recipes and the level road's grants of them; the Now suggestion for a mattock; the through-the-rock pipeline. The items stay, named "Old Wildhide Mattock" and so on, with a tooltip line that any War Anvil remakes them free. The ledger declares them, and the old `waking_pick`, as no longer made.
+- **Tasks** (`arms.anvil.PickGoals`, on the Weapons tab): find the old head; forge your first pick; and, off the main path and only while it applies, bring an old pick, raise yours to your rank, work in a deed, dress a blunt edge.
+- **Trail** `the_delvers_pick`: pull the head, forge it, then the four deeds, a Sounding and a raise. Steps read counters (`awaken:delve/deed_*`, `awaken:pick_forged`, `awaken:pick_remade`, `awaken:delve/soundings`), so a deed done before the trail opened is ticked at once.
+- **Armoury**: at an anvil's door there's a Weapons and a Picks side. Holding a forged pick opens on Picks, on the next rank up from the best you carry (within your level). A pick has no pattern to buy or Track, and no blade to make alone. The anvil's window for a pick in hand scrolls when its offers don't fit.
+- **Kept through death**: on the player (`awaken:kept_picks`, schema 1, copied on death) so a restart while they're on the death screen loses nothing. Only ever the old pick, a forged pick, or the head.
+
+### 49.10 What you hear
+Every forged-pick sound is one of Minecraft's own recordings, named in `merge/delve_picks` (`"minecraft:item/hoe/till1"`), so the game plays them from its own files and none of Mojang's audio is in the mod. The first set, built from CC0 impacts and matched to vanilla's loudness and brightness, sounded synthetic to Euan (9 Nov): numbers can't tell you a sound belongs. Each entry's `volume` levels it against the block's own hit, and its `pitch` sets it apart; a form never gets a sound vanilla doesn't have.
+
+- Each form bites with its own recording under the block's sound (`pick.strike_<form>`, played at 0.6, 0.9 on the last blow, varied 10% so thousands of blows don't tire the ear). An ore already has its own strike (`DelveContent.STRIKE`) and a true strike its note, so the bite isn't pitched to the ore.
+- A Mattock in soil is a hoe going into dirt (`pick.strike_earth`), in timber an axe on a log (`pick.strike_wood`); a blunt pick knocks dully (`pick.strike_blunt`).
+- The turn: `pick.mattock_toss`, `pick.mattock_catch`. Sounding: `pick.sounding_tap` (server, heard by anyone near) and `pick.sounding_hollow` (client, from the hollow's side).
+- At the anvil: `anvil.eye`, `anvil.tip`, `anvil.hang`, `anvil.tend`, `anvil.thread`, `anvil.pour`, `anvil.colours`. A held press's sound (`pour`, `colours`) loops and stops when you let go or leave.
 ## 50. Gates as Worlds (plan docs/gates-as-worlds/PLAN.md, page https://claude.ai/artifact/3hQVhu5jQKPEWDMbMenkaB)
 
 Approved by Euan on 9 Nov 2026, all 18 decisions, with two additions: a loading screen between the overworld and a gate

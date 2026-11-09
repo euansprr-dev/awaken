@@ -5,6 +5,7 @@ import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.ArmsArmoury;
 import dev.awaken.arms.anvil.WarAnvil;
 import dev.awaken.arms.net.ArmsPayloads;
+import dev.awaken.delve.forged.PickForm;
 import dev.awaken.progression.Rank;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -36,9 +37,50 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
     private @Nullable String selected;
     private final int[] tierX = new int[6];
     private int tierY, buttonY;
+    /** At an anvil: the Picks side of the list (SPEC §49.4), which is where you land with a forged pick in your hand. */
+    private boolean picks;
 
     ArmouryScreen() {
         super(Component.translatable("screen.awaken.armoury"));
+        var v = ArmouryCache.view;
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        if (v != null && v.door() == ArmsArmoury.ANVIL && player != null) {
+            var held = dev.awaken.delve.forged.ForgedPicks.item(player.getMainHandItem());
+            if (held != null) showPicks(held.form);
+            else if (isPick(player.getMainHandItem())) showPicks(PickForm.DELVER);
+        }
+    }
+
+    static boolean isPick(net.minecraft.world.item.ItemStack s) {
+        return dev.awaken.delve.forged.ForgedPicks.item(s) != null || s.is(net.minecraft.tags.ItemTags.PICKAXES);
+    }
+
+    private void showPicks(PickForm form) {
+        picks = true;
+        selected = form.style();
+        ArmouryCache.ask(ArmsArmoury.DETAIL, selected, "");
+    }
+
+    private void showWeapons(ArmsPayloads.ArmouryView v) {
+        picks = false;
+        selected = v.styles().isEmpty() ? "longsword" : v.styles().getFirst().id();
+        ArmouryCache.ask(ArmsArmoury.DETAIL, selected, "");
+    }
+
+    private static final String WEAPONS = "Weapons", PICKS = "Picks";
+
+    private int tabX() {
+        return px + 8 + font.width(title.getString() + " · " + door(ArmouryCache.view)) + 14;
+    }
+
+    private static String door(ArmsPayloads.@Nullable ArmouryView v) {
+        return v == null ? "" : Language.getInstance().getOrDefault("awaken.armoury.door." + (v.door() == ArmsArmoury.HALE ? "hale"
+                : v.door() == ArmsArmoury.FORGE ? "forge" : v.door() == ArmsArmoury.ANVIL ? "anvil" : "band"));
+    }
+
+    private void tab(GuiGraphicsExtractor g, int x, String label, boolean on) {
+        g.text(font, label, x, py + 7, on ? LANTERN : LABEL, false);
+        if (on) g.fill(x, py + 17, x + font.width(label), py + 18, LANTERN);
     }
 
     @Override
@@ -88,16 +130,28 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         g.fill(px, py, px + pw, py + ph, 0xE80F1724);
         g.outline(px, py, pw, ph, 0xB07FC3FF);
         if (v == null) return;
-        String door = Language.getInstance().getOrDefault("awaken.armoury.door." + (v.door() == ArmsArmoury.HALE ? "hale"
-                : v.door() == ArmsArmoury.FORGE ? "forge" : v.door() == ArmsArmoury.ANVIL ? "anvil" : "band"));
-        g.text(font, Component.literal(title.getString() + " · " + door), px + 8, py + 7, TITLE, false);
+        g.text(font, Component.literal(title.getString() + " · " + door(v)), px + 8, py + 7, TITLE, false);
+        if (v.door() == ArmsArmoury.ANVIL) {
+            tab(g, tabX(), WEAPONS, !picks);
+            tab(g, tabX() + font.width(WEAPONS) + 12, PICKS, picks);
+        }
         String ess = "Essence " + v.essence();
         g.text(font, ess, px + pw - 8 - font.width(ess), py + 7, LANTERN, false);
         g.fill(px + 6, py + 19, px + pw - 6, py + 20, 0x553A4A60);
 
         // the list
         int y = py + 24, row = row(v);
-        for (var e : v.styles()) {
+        if (picks) {
+            for (PickForm f : PickForm.values()) {
+                if (f.style().equals(style())) g.fill(px + 6, y - 1, px + 6 + listW, y + ROW - 1, 0xF01A2436);
+                g.text(font, f.label, px + 10, y + 1, TITLE, false);
+                y += ROW;
+            }
+            List<FormattedCharSequence> lines = font.split(Component.literal("To raise, re-draw or dress a pick you already have, hold it and use the anvil."), listW - 4);
+            y += 4;
+            for (int i = 0; i < Math.min(5, lines.size()); i++) g.text(font, lines.get(i), px + 10, y + i * 10, DIM, false);
+        }
+        for (var e : picks ? List.<ArmsPayloads.StyleEntry>of() : v.styles()) {
             boolean sel = e.id().equals(style());
             if (sel) g.fill(px + 6, y - 1, px + 6 + listW, y + row - 1, 0xF01A2436);
             Archetypes.Loaded st = Archetypes.get(e.id());
@@ -110,7 +164,7 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             if (!tag.isEmpty()) g.text(font, tag, px + 6 + listW - 4 - font.width(tag), y + 1, known ? GOOD : (e.afford() ? LANTERN : DIM), false);
             y += row;
         }
-        if (v.hidden() > 0) {
+        if (!picks && v.hidden() > 0) {
             String more = v.door() == ArmsArmoury.HALE && !v.hiddenRank().isEmpty()
                     ? "Hale keeps more patterns. He shows you more at " + v.hiddenRank() + "-rank."
                     : "More patterns wait in the world.";
@@ -123,6 +177,12 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         var d = ArmouryCache.detail;
         if (d == null) return;
         Archetypes.Loaded st = Archetypes.get(d.style());
+        PickForm form = PickForm.ofStyle(d.style());
+        if (form != null) {
+            g.text(font, "The " + form.label, dx, py + 25, TITLE, false);
+            List<FormattedCharSequence> lines = font.split(Component.literal(Language.getInstance().getOrDefault("awaken.pick." + form.id + ".blurb")), dw);
+            for (int i = 0; i < Math.min(2, lines.size()); i++) g.text(font, lines.get(i), dx, py + 36 + i * 10, LABEL, false);
+        }
         if (st != null) {
             g.text(font, st.def().name(), dx, py + 25, TITLE, false);
             String blurb = Language.getInstance().getOrDefault("awaken.style." + d.style() + ".blurb");
@@ -199,6 +259,11 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
 
         // the buttons
         buttonY = py + ph - 24;
+        if (form != null) {
+            pickButtons(g, d, mouseX, mouseY);
+            g.text(font, "Esc: close", px + pw - 8 - font.width("Esc: close"), py + ph - 12, DIM, false);
+            return;
+        }
         boolean known = ArmouryCache.known(d.style());
         boolean tracked = ArmouryCache.tracked(d.style(), d.tier());
         button(g, dx, "Track", known && !tracked, mouseX, mouseY);
@@ -242,6 +307,46 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         g.text(font, "Esc: close", px + pw - 8 - font.width("Esc: close"), py + ph - 12, DIM, false);
     }
 
+    /** A pick is made here and nowhere else: no pattern, no Track, no blade alone; Make it again when an old one's been lost. */
+    private void pickButtons(GuiGraphicsExtractor g, ArmsPayloads.ArmouryDetail d, int mx, int my) {
+        if (!d.block().isEmpty()) {
+            List<FormattedCharSequence> lines = font.split(Component.literal(d.block()), dw);
+            for (int i = 0; i < Math.min(2, lines.size()); i++) g.text(font, lines.get(i), dx, py + ph - 66 + i * 10, LANTERN, false);
+        }
+        if ((d.anvil() & WarAnvil.Status.REBUILD) != 0) button(g, dx, "Rebuild it", (d.anvil() & WarAnvil.Status.REBUILD_OK) != 0, mx, my);
+        else button(g, dx, "Forge it", (d.anvil() & WarAnvil.Status.FORGE) != 0, mx, my);
+        if ((d.anvil() & WarAnvil.Status.MEMORY) != 0 && (d.anvil() & WarAnvil.Status.REBUILD) == 0)
+            button(g, dx + bw("Forge it") + 4, "From memory", (d.anvil() & WarAnvil.Status.MEMORY_OK) != 0, mx, my);
+        if ((d.anvil() & WarAnvil.Status.AGAIN) != 0) {
+            int by = buttonY;
+            buttonY = by - 20;
+            button(g, dx, "Make it again", true, mx, my);
+            buttonY = by;
+        }
+    }
+
+    private boolean pickClick(ArmsPayloads.ArmouryDetail d, double mx, double my) {
+        if ((d.anvil() & WarAnvil.Status.REBUILD) != 0) {
+            if ((d.anvil() & WarAnvil.Status.REBUILD_OK) != 0 && buttonHit(dx, "Rebuild it", mx, my)) {
+                ArmouryCache.ask(ArmsArmoury.REBUILD, d.style(), d.tier());
+                return true;
+            }
+        } else if ((d.anvil() & WarAnvil.Status.FORGE) != 0 && buttonHit(dx, "Forge it", mx, my)) {
+            ArmouryCache.ask(ArmsArmoury.FORGE_IT, d.style(), d.tier());
+            return true;
+        }
+        if ((d.anvil() & WarAnvil.Status.MEMORY_OK) != 0 && buttonHit(dx + bw("Forge it") + 4, "From memory", mx, my)) {
+            ArmouryCache.ask(ArmsArmoury.FROM_MEMORY, d.style(), d.tier());
+            return true;
+        }
+        int by = buttonY;
+        buttonY = by - 20;
+        boolean again = (d.anvil() & WarAnvil.Status.AGAIN) != 0 && buttonHit(dx, "Make it again", mx, my);
+        buttonY = by;
+        if (again) ArmouryCache.ask(ArmsArmoury.AGAIN, d.style(), d.tier());
+        return again;
+    }
+
     private static String prefix(int tier) {
         return new String[] {"wildhide", "beastbound", "gatewrought", "veilwoven", "lordscale", "sovereign"}[Math.min(5, tier)];
     }
@@ -281,9 +386,31 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         var d = ArmouryCache.detail;
         if (event.button() != InputConstants.MOUSE_BUTTON_LEFT || v == null) return super.mouseClicked(event, doubleClick);
         double mx = event.x(), my = event.y();
+        // Weapons and Picks, at an anvil
+        if (v.door() == ArmsArmoury.ANVIL && my >= py + 4 && my < py + 19) {
+            int tx = tabX(), wide = font.width(WEAPONS);
+            if (mx >= tx - 3 && mx < tx + wide + 4) {
+                if (picks) showWeapons(v);
+                return true;
+            }
+            if (mx >= tx + wide + 8 && mx < tx + wide + 12 + font.width(PICKS) + 3) {
+                if (!picks) showPicks(PickForm.DELVER);
+                return true;
+            }
+        }
         // the list
         int y = py + 24, row = row(v);
-        for (var e : v.styles()) {
+        if (picks) {
+            for (PickForm f : PickForm.values()) {
+                if (mx >= px + 6 && mx < px + 6 + listW && my >= y - 1 && my < y + ROW - 1) {
+                    selected = f.style();
+                    ArmouryCache.ask(ArmsArmoury.DETAIL, f.style(), "");
+                    return true;
+                }
+                y += ROW;
+            }
+        }
+        for (var e : picks ? List.<ArmsPayloads.StyleEntry>of() : v.styles()) {
             if (mx >= px + 6 && mx < px + 6 + listW && my >= y - 1 && my < y + row - 1) {
                 selected = e.id();
                 ArmouryCache.ask(ArmsArmoury.DETAIL, e.id(), "");
@@ -300,6 +427,7 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
                 return true;
             }
         }
+        if (PickForm.ofStyle(d.style()) != null) return pickClick(d, mx, my) || super.mouseClicked(event, doubleClick);
         boolean known = ArmouryCache.known(d.style());
         boolean tracked = ArmouryCache.tracked(d.style(), d.tier());
         if (known && !tracked && buttonHit(dx, "Track", mx, my)) {

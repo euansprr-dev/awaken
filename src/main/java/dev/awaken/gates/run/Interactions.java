@@ -89,6 +89,18 @@ public final class Interactions {
         queue(p, () -> Runs.enter(p, g));
     }
 
+    /** A right click on a gate's door: go in together with whoever is beside you, or let go (SPEC §55). */
+    public static void door(ServerLevel level, BlockPos pos, ServerPlayer p) {
+        if (level.dimension() != Level.OVERWORLD || p.isSpectator() || !cooled(p, 10)) return;
+        GateRecord g = structureAt(level.getServer(), pos);
+        if (g == null || !g.state.enterable()) return;
+        if (g.scripted) {
+            Signal.toast(p, Component.literal("This gate is one to walk on your own."));
+            return;
+        }
+        queue(p, () -> dev.awaken.core.api.RidingHooks.door(p));
+    }
+
     /** The gate whose surface structure contains this block (big gates reach far from their foot: S stands 17 high). */
     public static GateRecord structureAt(MinecraftServer server, BlockPos pos) {
         for (GateRecord g : GateRegistry.get(server).near(pos, Overworld.REACH, false)) {

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "Your Village",
   "area": "home",
-  "blurb": "People move in, work with what you bring home, and the home grows.",
+  "blurb": "Beasts settle at your home and take on the boring work, and the home grows round them.",
   "weight": 40,
   "opens": [
     "hearth_tier:1"
@@ -10,40 +10,48 @@
   "order": "free",
   "steps": [
     {
-      "id": "beds",
-      "text": "Build a second bedroom, Snug or better.",
-      "done": [
-        "rooms:bedroom:2"
-      ],
-      "hint": "A spare bed is how someone knows there is room."
-    },
-    {
       "id": "first",
-      "text": "Welcome the first person who moves in.",
+      "text": "Bring your first beast home.",
       "done": [
-        "settlers:1"
+        "beasts:1"
       ],
-      "hint": "Someone you know arrives when a spare bedroom stands and their trade has a room."
+      "hint": "Beasts come to a home that has a use for them. The Hearth tab says what yours is missing."
     },
     {
       "id": "second",
-      "text": "Welcome a second person.",
+      "text": "Bring a second beast home.",
       "done": [
-        "settlers:2"
+        "beasts:2"
       ],
-      "hint": "Ilse wants a Greenhouse, Hettie a field or a pen, a miner a Mine head."
+      "hint": "Each one takes a nook, and your home gets more nooks as it grows."
     },
     {
       "id": "tier2",
-      "text": "Reach tier II: four rooms with a Fine one, and a field or a pen.",
+      "text": "Reach Steading: four rooms, one Fine, a field or pen, and a bell tower.",
       "done": [
         "hearth_tier:2"
       ],
-      "hint": "It needs D-rank. The upgrade is on the Your Hearth screen."
+      "hint": "It needs D-rank. The bell hangs 8 or more above your fire. The upgrade is on the Your Hearth screen."
+    },
+    {
+      "id": "mine",
+      "text": "Build an Ore Shed: a lode heart and a barrel in one room.",
+      "done": [
+        "room:mine_head"
+      ],
+      "hint": "Hearts beat inside lodes, deep underground; break one free and bring it home."
+    },
+    {
+      "id": "work",
+      "text": "Peg out a Work Plan at home and see what comes to build it.",
+      "done": [
+        "room:smeltery|room:rookery|room:foundry|room:storehouse"
+      ],
+      "hint": "Or build the room yourself: a Smeltery, a Rookery, a Foundry or a Storehouse all count."
     },
     {
       "id": "tier3",
-      "text": "Reach tier III: a Grand room.",
+      "text": "Reach Hall: a Grand room.",
       "done": [
         "hearth_tier:3"
       ],
@@ -53,16 +61,8 @@
       "hint": "It needs C-rank."
     },
     {
-      "id": "mine",
-      "text": "Build a Mine head: a hatch over 16 or more blocks of climbable shaft.",
-      "done": [
-        "room:mine_head"
-      ],
-      "hint": "Each evening the ore of its depth comes up."
-    },
-    {
       "id": "tier4",
-      "text": "Reach tier IV: a bell tower and four people.",
+      "text": "Reach Village: six rooms and thirty bells in your song.",
       "done": [
         "hearth_tier:4"
       ],
@@ -73,7 +73,7 @@
     },
     {
       "id": "tier5",
-      "text": "Reach tier V: eight people with the old ranks and materials.",
+      "text": "Reach the last tier: ten rooms, two of them Grand.",
       "done": [
         "hearth_tier:5"
       ],

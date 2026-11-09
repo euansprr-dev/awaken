@@ -120,17 +120,15 @@ public final class DelveNet {
         }
     }
 
-    /**
-     * The pick's sight (SPEC §34.4): kind 0 Echo (a ring out from the struck block), 1 Glass (the rock before you turns to
-     * glass). The client looks through its own world: the server names no block.
-     */
-    public record PickSight(int kind, long origin, int ticks) implements CustomPacketPayload {
-        public static final Type<PickSight> TYPE = new Type<>(Awaken.id("delve_pick_sight"));
-        public static final StreamCodec<ByteBuf, PickSight> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, PickSight::kind, ByteBufCodecs.LONG, PickSight::origin, ByteBufCodecs.VAR_INT, PickSight::ticks, PickSight::new);
+    /** A pick's tap (SPEC §49.5): how far along each of 26 lines the rock turned hollow, and the lode that answered (ore -1: none). */
+    public record PickSounding(long at, int face, int radius, byte[] hollow, int ore, long lode) implements CustomPacketPayload {
+        public static final Type<PickSounding> TYPE = new Type<>(Awaken.id("delve_pick_sounding"));
+        public static final StreamCodec<ByteBuf, PickSounding> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.LONG, PickSounding::at, ByteBufCodecs.VAR_INT, PickSounding::face, ByteBufCodecs.VAR_INT, PickSounding::radius,
+                ByteBufCodecs.BYTE_ARRAY, PickSounding::hollow, ByteBufCodecs.VAR_INT, PickSounding::ore, ByteBufCodecs.LONG, PickSounding::lode, PickSounding::new);
 
         @Override
-        public Type<PickSight> type() {
+        public Type<PickSounding> type() {
             return TYPE;
         }
     }
@@ -243,7 +241,7 @@ public final class DelveNet {
     }
 
     /** To one player, if their connection speaks our channel (fake players in tests don't). */
-    static void send(ServerPlayer p, CustomPacketPayload m) {
+    public static void send(ServerPlayer p, CustomPacketPayload m) {
         dev.awaken.core.AwakenNet.send(p, m);
     }
 
@@ -264,8 +262,8 @@ public final class DelveNet {
         r.playToClient(PickHum.TYPE, PickHum.STREAM_CODEC);
         r.playToClient(PickWoke.TYPE, PickWoke.STREAM_CODEC);
         r.playToClient(Embers.TYPE, Embers.STREAM_CODEC);
-        r.playToClient(PickSight.TYPE, PickSight.STREAM_CODEC);
         r.playToClient(CallAnswer.TYPE, CallAnswer.STREAM_CODEC);
+        r.playToClient(PickSounding.TYPE, PickSounding.STREAM_CODEC);
         r.playToClient(LampLit.TYPE, LampLit.STREAM_CODEC);
         r.playToClient(LampsKnown.TYPE, LampsKnown.STREAM_CODEC);
         r.playToClient(Demo.TYPE, Demo.STREAM_CODEC);

@@ -27,7 +27,8 @@ def row(power, g3=None, g1=None, a3=None, a1=None, raw3p=None, windup=0, moment=
 
 # Kinetic: heavy, low, grounded
 row("shockwave", "stomp", "stomp", windup=5, moment="thump_heavy", beginSound="awaken:power.stomp_lift")
-row("haymaker", None, "punch_hold", raw3p=("hold_kinetic", None, "cast_kinetic_release", 4), endMoment="thump_light", channel=True)
+row("haymaker", None, "punch_hold", raw3p=("hold_kinetic", None, "cast_kinetic_release", 4), endMoment="thump_heavy", channel=True,
+    holdSound="awaken:power.hay_charge")
 row("terrain_rip", "heave", "heave", windup=6, moment="thump_light")
 row("brace", "guard", "guard", windup=3, moment="thump_light")
 row("thunderclap", "clap_hard", "clap", windup=4, moment="thump_heavy")
@@ -73,7 +74,7 @@ row("grapple", None, "aim_lock", raw3p=("cast_tech", None, None, 4), moment="rec
 row("jet_burst", "kick_back", "dash", {"boots": True}, moment="push")
 row("drone", "device_tap", "wrist_raise", moment="none")
 row("turret", "kneel_place", "kneel_place", moment="thump_light")
-row("railgun", "lock_on", "aim_lock", channel=True, endMoment="thump_light")
+row("railgun", "lock_on", "aim_lock", a1={"recoil": True}, channel=True, endMoment="thump_heavy", holdSound="awaken:power.rail_charge")
 row("nanite_skin", "nano_tap", "cross_arms", {"tap": True}, moment="none")
 row("drone_swarm", "swarm_up", "wrist_raise", {"both": True}, windup=5, moment="release_big")
 # Spirit: open

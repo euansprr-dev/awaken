@@ -31,7 +31,10 @@ public class HunterGearItem extends Item {
                 out.accept(Component.literal("Powers deal +" + pct + "% damage").withColor(LIGHT));
                 out.accept(Component.literal("Held in either hand").withColor(GREY));
             }
-            case MATTOCK -> out.accept(Component.literal("Mines stone, wood and earth").withColor(LIGHT));
+            case MATTOCK -> {
+                out.accept(Component.literal("Mines stone, wood and earth").withColor(LIGHT));
+                out.accept(Component.literal("Any War Anvil will remake it free as a forged Mattock").withColor(LIGHT));
+            }
             case BLADE -> {}
             default -> {
                 for (SetBonus.Line line : SetBonus.lines(tier)) {

@@ -15,8 +15,8 @@ import java.util.Set;
  * where you were). {@code gateId < 0} means not in a gate. Mutated only on the server thread.
  */
 public final class RunState {
-    /** 2: {@code company} (someone else was inside during this run). */
-    public static final int SCHEMA = 2;
+    /** 2: {@code company} (someone else was inside during this run). 3: {@code riding} (SPEC §55). */
+    public static final int SCHEMA = 3;
 
     public int gateId = -1;
     /** 0 main dungeon, 1 annex (second gate / inner gate). */
@@ -45,6 +45,8 @@ public final class RunState {
     public long disguiseBrokenUntil;
     /** Someone else was inside this gate with you at some point of this run: it isn't a solo run. */
     public boolean company;
+    /** Riding along with someone in this run (SPEC §55): not counted in the party, half the XP, no rank credit. */
+    public boolean riding;
 
     public boolean active() {
         return gateId >= 0;
@@ -95,13 +97,15 @@ public final class RunState {
             Body.CODEC.fieldOf("body").forGetter(r -> new Body(r.satchel.stream().filter(s -> !s.isEmpty()).map(ItemStack::copy).toList(),
                     r.satchelXp, r.damageFloor, r.damageRun, r.killXpFloor, List.copyOf(r.cleared))),
             Codec.LONG.optionalFieldOf("left_at", -1L).forGetter(r -> r.leftAt),
-            Codec.BOOL.optionalFieldOf("company", false).forGetter(r -> r.company)
+            Codec.BOOL.optionalFieldOf("company", false).forGetter(r -> r.company),
+            Codec.BOOL.optionalFieldOf("riding", false).forGetter(r -> r.riding)
     ).apply(i, RunState::fromParts));
 
-    private static RunState fromParts(Head h, Body b, long leftAt, boolean company) {
+    private static RunState fromParts(Head h, Body b, long leftAt, boolean company, boolean riding) {
         RunState r = new RunState();
         r.leftAt = leftAt;
         r.company = company;
+        r.riding = riding;
         r.gateId = h.gateId;
         r.area = h.area;
         r.floor = h.floor;

@@ -105,6 +105,162 @@ public final class SkinBlocks {
         }
     }
 
+    /**
+     * Ember vine (SPEC §42.10): one block of a run of glowing runner on the Ochre Deep's rock. {@link #FACING} points at
+     * the wall it grows on; the four connections say which of the block's edges the run leaves by, as seen looking at the
+     * wall, so a run reads as one line; a {@link #BLOOM} block carries seed pods and lights more of the room. The feature
+     * lays whole runs; placed by hand a block joins the neighbours beside it.
+     */
+    public static final class EmberVine extends Block {
+        public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
+        public static final BooleanProperty UP = BlockStateProperties.UP, DOWN = BlockStateProperties.DOWN,
+                LEFT = BooleanProperty.create("left"), RIGHT = BooleanProperty.create("right"), BLOOM = BooleanProperty.create("bloom");
+        private static final java.util.Map<Direction, VoxelShape> SHAPES = new java.util.EnumMap<>(java.util.Map.of(
+                Direction.NORTH, Block.box(0, 0, 0, 16, 16, 2.5), Direction.SOUTH, Block.box(0, 0, 13.5, 16, 16, 16),
+                Direction.WEST, Block.box(0, 0, 0, 2.5, 16, 16), Direction.EAST, Block.box(13.5, 0, 0, 16, 16, 16)));
+
+        public EmberVine(Properties p) {
+            super(p);
+            registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(UP, false).setValue(DOWN, false)
+                    .setValue(LEFT, false).setValue(RIGHT, false).setValue(BLOOM, false));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(FACING, UP, DOWN, LEFT, RIGHT, BLOOM);
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return SHAPES.get(state.getValue(FACING));
+        }
+
+        @Override
+        protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return Shapes.empty();
+        }
+
+        @Override
+        protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+            Direction wall = state.getValue(FACING);
+            return level.getBlockState(pos.relative(wall)).isFaceSturdy(level, pos.relative(wall), wall.getOpposite());
+        }
+
+        /** Joined to the same vine on one side (the side named by a world direction, on this vine's wall). */
+        private static boolean joins(LevelReader level, BlockPos pos, Direction facing, Direction side) {
+            BlockState n = level.getBlockState(pos.relative(side));
+            return n.getBlock() instanceof EmberVine && n.getValue(FACING) == facing;
+        }
+
+        @Override
+        public @org.jspecify.annotations.Nullable BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext ctx) {
+            Direction face = ctx.getClickedFace();
+            if (face.getAxis() == Direction.Axis.Y) return null;
+            Direction wall = face.getOpposite();
+            BlockPos pos = ctx.getClickedPos();
+            var level = ctx.getLevel();
+            BlockState s = defaultBlockState().setValue(FACING, wall)
+                    .setValue(UP, joins(level, pos, wall, Direction.UP)).setValue(DOWN, joins(level, pos, wall, Direction.DOWN))
+                    .setValue(LEFT, joins(level, pos, wall, wall.getCounterClockWise())).setValue(RIGHT, joins(level, pos, wall, wall.getClockWise()))
+                    .setValue(BLOOM, level.getRandom().nextInt(4) == 0);
+            return canSurvive(s, level, pos) ? s : null;
+        }
+
+        @Override
+        protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks, BlockPos pos, Direction dir,
+                                         BlockPos neighbourPos, BlockState neighbour, RandomSource random) {
+            Direction wall = state.getValue(FACING);
+            if (dir == wall) return canSurvive(state, level, pos) ? state : Blocks.AIR.defaultBlockState();
+            if (dir == wall.getOpposite()) return state;
+            BooleanProperty side = dir == Direction.UP ? UP : dir == Direction.DOWN ? DOWN : dir == wall.getCounterClockWise() ? LEFT : RIGHT;
+            if (neighbour.getBlock() instanceof EmberVine) return neighbour.getValue(FACING) == wall ? state.setValue(side, true) : state;
+            if (dir == Direction.DOWN && neighbour.isFaceSturdy(level, neighbourPos, Direction.UP)) return state;      // rooted in the floor
+            if (side == LEFT || side == RIGHT) {
+                // a line that goes round the rock's corner has its next block one further on, not beside it
+                BlockState round = level.getBlockState(neighbourPos.relative(wall));
+                if (round.getBlock() instanceof EmberVine && round.getValue(FACING) == dir.getOpposite()) return state;
+            }
+            return state.setValue(side, false);                                     // the run was broken here: it ends in a tip
+        }
+
+        @Override
+        protected BlockState rotate(BlockState state, Rotation rotation) {
+            return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+        }
+
+        @Override
+        public void animateTick(BlockState state, net.minecraft.world.level.Level level, BlockPos pos, RandomSource random) {
+            if (state.getValue(BLOOM) && random.nextInt(5) == 0) Drips.ember(level, pos, state.getValue(FACING), random);
+        }
+
+        @Override
+        protected boolean isPathfindable(BlockState state, PathComputationType type) {
+            return true;
+        }
+    }
+
+    /**
+     * Rust drape (SPEC §42.10): flowstone hanging down a wall from a ledge or the roof in real folds. {@link #FACING} points
+     * at the wall; the last block of a drape is its {@link #TIP}.
+     */
+    public static final class RustDrape extends Block {
+        public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
+        public static final BooleanProperty TIP = BooleanProperty.create("tip");
+        private static final java.util.Map<Direction, VoxelShape> SHAPES = new java.util.EnumMap<>(java.util.Map.of(
+                Direction.NORTH, Block.box(0, 0, 0, 16, 16, 2.5), Direction.SOUTH, Block.box(0, 0, 13.5, 16, 16, 16),
+                Direction.WEST, Block.box(0, 0, 0, 2.5, 16, 16), Direction.EAST, Block.box(13.5, 0, 0, 16, 16, 16)));
+
+        public RustDrape(Properties p) {
+            super(p);
+            registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(TIP, true));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(FACING, TIP);
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return SHAPES.get(state.getValue(FACING));
+        }
+
+        @Override
+        protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+            return Shapes.empty();
+        }
+
+        @Override
+        protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+            Direction wall = state.getValue(FACING);
+            return level.getBlockState(pos.relative(wall)).isFaceSturdy(level, pos.relative(wall), wall.getOpposite());
+        }
+
+        @Override
+        public @org.jspecify.annotations.Nullable BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext ctx) {
+            Direction face = ctx.getClickedFace();
+            if (face.getAxis() == Direction.Axis.Y) return null;
+            BlockState s = defaultBlockState().setValue(FACING, face.getOpposite());
+            return canSurvive(s, ctx.getLevel(), ctx.getClickedPos()) ? s : null;
+        }
+
+        @Override
+        protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks, BlockPos pos, Direction dir,
+                                         BlockPos neighbourPos, BlockState neighbour, RandomSource random) {
+            return dir == state.getValue(FACING) && !canSurvive(state, level, pos) ? Blocks.AIR.defaultBlockState() : state;
+        }
+
+        @Override
+        protected BlockState rotate(BlockState state, Rotation rotation) {
+            return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+        }
+
+        @Override
+        protected boolean isPathfindable(BlockState state, PathComputationType type) {
+            return true;
+        }
+    }
+
     /** A formation's thickness along its length, tip to base (pointed dripstone's four, without its merged tip). */
     public enum Thickness implements StringRepresentable {
         TIP, FRUSTUM, MIDDLE, BASE;
