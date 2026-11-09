@@ -19552,7 +19552,9 @@ If you've got out of reach during those 5 ticks the normal choice takes over.
 
 **48.3 Cooldowns, held blows and the caught dodge.** With a mind, the dice may not pick the move just made nor one still resting
 (`mind.cooldowns`, else by class: LIGHT 0, HEAVY 30, PERILOUS and GRAB 80, a move that hurts nobody 240). If nothing it may start
-reaches you for 2 seconds the rests are waived, and after 4 it may even repeat itself: it is never left standing. Any blow may be
+reaches you for 2 seconds its blows' rests are waived; a move that hurts nobody (a buff, a heal, a summon) always keeps its rest. It
+never makes the same move twice running by choice. The one exception is a last resort: a blow may follow itself when nothing else it
+could do has reached you for 10 seconds, so a spot only one move reaches isn't safe. Any blow may be
 held a beat at its peak (`holdChance` 25%, `holdTicks` 6, or its own authored hold if longer), which only ever adds warning. Having
 deflected it again and again it always holds. The third dodge in a row (each within 2 seconds of the last) is caught: once it has
 seen that third dodge, the next blow holds for at least 10 ticks and keeps turning to you through the hold, so it lands where you
@@ -19570,7 +19572,8 @@ the Slam up close and presses on through a last blow; a guard kept up for 1.5 s 
 heavy being held is hit first with a quick one; a cast brings the gap-closer; a pause after a run brings the pounce; a recovery the
 blow that punishes it. Tests (`FightMindTests`, one per mechanism): the read waits, new targets start again, each answer gives one of its
 moves with its tell after the notice, each fork, the caught dodge, the facts themselves (`arms_watched`, `powers_watched_cast`). Gates,
-in `fights_record_*` for any fight with a mind: the same move twice at most 10% of the time. In `fights_mind_drinks_<boss>`: at least 60%
+in `fights_record_*` for any fight with a mind: every repeat is that last resort (exact, since a percentage of a dozen moves is noise;
+the table holds the worst fight to 10%). In `fights_mind_drinks_<boss>`: at least 60%
 of drinks in reach get an answer that starts before the drink ends. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
 at least double what they are against someone standing.
 

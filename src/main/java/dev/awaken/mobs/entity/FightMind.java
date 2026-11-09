@@ -30,8 +30,10 @@ final class FightMind {
     private static final double RUN_STEP = 1.5, STOP_STEP = 0.4;
     /** When a roll came up empty, or an answer was given and its cooldown is short, it isn't weighed again for this long. */
     static final int ROLL_GAP = 40;
-    /** With nothing it may start for this long, its rests are waived, and for twice this it may even repeat itself: it is never left standing. */
+    /** With nothing it may start for this long, its blows' rests are waived. */
     static final int STALE_TICKS = 40;
+    /** With nothing else for this long, a blow may follow itself: the last resort, so a spot only one move reaches isn't safe. */
+    static final int REPEAT_AFTER = 200;
 
     private final AwakenBoss boss;
     private final KitMoves.Table moves;
@@ -52,6 +54,7 @@ final class FightMind {
     private final long[] nextRoll, ready;
     private int lastMove = -1;
     private long wanting = -1;
+    private int lastResorts;
     private @Nullable String chosen;
     /** Tests: every answer is given, no dice. */
     boolean sure;
@@ -194,11 +197,17 @@ final class FightMind {
         return dodged > guard ? f.dodged().get() : f.guard().get();
     }
 
-    /** Whether the dice may pick this move: not the one it just made, and not while it rests. */
+    /** Whether the dice may pick this move: not the one it just made, and not while it rests. A move that hurts nobody always rests. */
     boolean allowed(int move, long now) {
         long waited = wanting < 0 ? 0 : now - wanting;
-        if (move == lastMove) return waited > STALE_TICKS * 2;
-        return waited > STALE_TICKS || now >= ready[move];
+        boolean blow = moves.get(move).kind() != Strikes.Kind.NONE;
+        if (move == lastMove) return blow && waited > REPEAT_AFTER;
+        return now >= ready[move] || (blow && waited > STALE_TICKS);
+    }
+
+    /** How many times this fight a blow has followed itself as the last resort: the only way it's meant to. */
+    int lastResorts() {
+        return lastResorts;
     }
 
     /** Nothing it may start reaches you right now. */
@@ -212,6 +221,7 @@ final class FightMind {
     }
 
     void began(int move, long now) {
+        if (move == lastMove && wanting >= 0 && now - wanting > REPEAT_AFTER) lastResorts++;
         lastMove = move;
         wanting = -1;
         ready[move] = now + cooldown(moves.get(move));
