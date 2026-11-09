@@ -9,6 +9,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -43,6 +44,7 @@ public record LodeFeature() implements Feature {
                 Block put = rockFor(l.ore(), s, c == l.heart());
                 if (put == null) continue;
                 level.setBlock(m, c == l.heart() ? LodeHeartBlock.in(put.defaultBlockState(), s) : put.defaultBlockState(), Block.UPDATE_CLIENTS);
+                if (c == l.heart()) seat(level, m.immutable(), s, x0, z0);
                 any = true;
             }
         }
@@ -54,6 +56,32 @@ public record LodeFeature() implements Feature {
             any |= trace(level, level.getSeed(), l.ore(), heart, x0, z0);
         }
         return any;
+    }
+
+    /**
+     * A heart the carvers left standing out (three or more faces open) is built back into its rock (SPEC §42.11): one face stays
+     * open, the one looking out of a wall if there is one, and the rest get the rock the heart replaced, so it never reads as a
+     * cube in the air and its veins have rock to run across. Only the chunk at (x0, z0) is written.
+     */
+    static void seat(WorldGenLevel level, BlockPos heart, BlockState replaced, int x0, int z0) {
+        BlockState rock = replaced.is(BlockTags.STONE_ORE_REPLACEABLES) || replaced.is(BlockTags.DEEPSLATE_ORE_REPLACEABLES) ? replaced : Blocks.STONE.defaultBlockState();
+        Direction keep = null;
+        int open = 0, best = -1;
+        for (Direction d : Direction.values()) {
+            if (!level.getBlockState(heart.relative(d)).isAir()) continue;
+            open++;
+            int score = (level.getBlockState(heart.relative(d.getOpposite())).isAir() ? 0 : 2) + (d.getAxis().isHorizontal() ? 1 : 0);
+            if (score > best) {
+                best = score;
+                keep = d;
+            }
+        }
+        if (open < 3) return;
+        for (Direction d : Direction.values()) {
+            BlockPos p = heart.relative(d);
+            if (d == keep || !level.getBlockState(p).isAir() || p.getX() < x0 || p.getX() > x0 + 15 || p.getZ() < z0 || p.getZ() > z0 + 15) continue;
+            level.setBlock(p, rock, Block.UPDATE_CLIENTS);
+        }
     }
 
     /** How far a trace can reach from its heart: a chunk writes the traces of the hearts this near it. */

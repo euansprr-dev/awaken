@@ -28,7 +28,8 @@
             16
           ],
           "texture": "#all",
-          "cullface": "down"
+          "cullface": "down",
+          "rotation": 180
         },
         "up": {
           "uv": [
@@ -38,7 +39,8 @@
             16
           ],
           "texture": "#all",
-          "cullface": "up"
+          "cullface": "up",
+          "rotation": 90
         },
         "north": {
           "uv": [
@@ -48,7 +50,8 @@
             16
           ],
           "texture": "#all",
-          "cullface": "north"
+          "cullface": "north",
+          "rotation": 0
         },
         "south": {
           "uv": [
@@ -58,7 +61,8 @@
             16
           ],
           "texture": "#all",
-          "cullface": "south"
+          "cullface": "south",
+          "rotation": 180
         },
         "west": {
           "uv": [
@@ -68,7 +72,8 @@
             16
           ],
           "texture": "#all",
-          "cullface": "west"
+          "cullface": "west",
+          "rotation": 90
         },
         "east": {
           "uv": [
@@ -78,7 +83,8 @@
             16
           ],
           "texture": "#all",
-          "cullface": "east"
+          "cullface": "east",
+          "rotation": 270
         }
       }
     },
@@ -107,7 +113,8 @@
             16
           ],
           "texture": "#glow",
-          "cullface": "down"
+          "cullface": "down",
+          "rotation": 180
         },
         "up": {
           "uv": [
@@ -117,7 +124,8 @@
             16
           ],
           "texture": "#glow",
-          "cullface": "up"
+          "cullface": "up",
+          "rotation": 90
         },
         "north": {
           "uv": [
@@ -127,7 +135,8 @@
             16
           ],
           "texture": "#glow",
-          "cullface": "north"
+          "cullface": "north",
+          "rotation": 0
         },
         "south": {
           "uv": [
@@ -137,86 +146,326 @@
             16
           ],
           "texture": "#glow",
+          "cullface": "south",
+          "rotation": 180
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#glow",
+          "cullface": "west",
+          "rotation": 90
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#glow",
+          "cullface": "east",
+          "rotation": 270
+        }
+      }
+    },
+    {
+      "from": [
+        6.93,
+        3.27,
+        -1.4
+      ],
+      "to": [
+        9.33,
+        6.07,
+        0
+      ],
+      "light_emission": 9,
+      "shade_direction_override": "up",
+      "neoforge_data": {
+        "ambient_occlusion": false
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "south": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "east": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "west": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "up": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "down": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        }
+      }
+    },
+    {
+      "from": [
+        5.96,
+        8.41,
+        -1.0
+      ],
+      "to": [
+        7.76,
+        10.61,
+        0
+      ],
+      "light_emission": 9,
+      "shade_direction_override": "up",
+      "neoforge_data": {
+        "ambient_occlusion": false
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "south": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "east": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "west": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "up": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "down": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        }
+      }
+    },
+    {
+      "from": [
+        5.63,
+        9.93,
+        -0.6
+      ],
+      "to": [
+        6.83,
+        11.53,
+        0
+      ],
+      "light_emission": 9,
+      "shade_direction_override": "up",
+      "neoforge_data": {
+        "ambient_occlusion": false
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "south": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "east": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "west": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "up": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        },
+        "down": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "north"
+        }
+      }
+    },
+    {
+      "from": [
+        5.3,
+        5.5,
+        16
+      ],
+      "to": [
+        7.7,
+        8.3,
+        17.4
+      ],
+      "light_emission": 9,
+      "shade_direction_override": "up",
+      "neoforge_data": {
+        "ambient_occlusion": false
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "south"
+        },
+        "south": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "south"
+        },
+        "east": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
           "cullface": "south"
         },
         "west": {
           "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#glow",
-          "cullface": "west"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#glow",
-          "cullface": "east"
-        }
-      }
-    },
-    {
-      "from": [
-        6.53,
-        2.87,
-        -1.8
-      ],
-      "to": [
-        9.73,
-        6.47,
-        0
-      ],
-      "light_emission": 13,
-      "shade_direction_override": "up",
-      "neoforge_data": {
-        "ambient_occlusion": false
-      },
-      "faces": {
-        "north": {
-          "uv": [
             1,
             1,
             5,
             5
           ],
           "texture": "#shard",
-          "cullface": "north"
-        },
-        "south": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "east": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "west": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
+          "cullface": "south"
         },
         "up": {
           "uv": [
@@ -226,7 +475,7 @@
             5
           ],
           "texture": "#shard",
-          "cullface": "north"
+          "cullface": "south"
         },
         "down": {
           "uv": [
@@ -236,180 +485,22 @@
             5
           ],
           "texture": "#shard",
-          "cullface": "north"
+          "cullface": "south"
         }
       }
     },
     {
       "from": [
-        5.66,
-        8.11,
-        -1.2
-      ],
-      "to": [
-        8.06,
-        10.91,
-        0
-      ],
-      "light_emission": 13,
-      "shade_direction_override": "up",
-      "neoforge_data": {
-        "ambient_occlusion": false
-      },
-      "faces": {
-        "north": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "south": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "east": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "west": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "up": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "down": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        }
-      }
-    },
-    {
-      "from": [
-        5.43,
-        9.63,
-        -0.8
-      ],
-      "to": [
-        7.03,
-        11.83,
-        0
-      ],
-      "light_emission": 13,
-      "shade_direction_override": "up",
-      "neoforge_data": {
-        "ambient_occlusion": false
-      },
-      "faces": {
-        "north": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "south": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "east": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "west": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "up": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        },
-        "down": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "north"
-        }
-      }
-    },
-    {
-      "from": [
-        4.9,
+        7.88,
         5.1,
         16
       ],
       "to": [
-        8.1,
-        8.7,
-        17.8
+        9.68,
+        7.3,
+        17.0
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -479,95 +570,16 @@
     },
     {
       "from": [
-        7.58,
-        4.8,
+        7.57,
+        8.61,
         16
       ],
       "to": [
-        9.98,
-        7.6,
-        17.2
+        8.77,
+        10.21,
+        16.6
       ],
-      "light_emission": 13,
-      "shade_direction_override": "up",
-      "neoforge_data": {
-        "ambient_occlusion": false
-      },
-      "faces": {
-        "north": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "south"
-        },
-        "south": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "south"
-        },
-        "east": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "south"
-        },
-        "west": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "south"
-        },
-        "up": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "south"
-        },
-        "down": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "south"
-        }
-      }
-    },
-    {
-      "from": [
-        7.37,
-        8.31,
-        16
-      ],
-      "to": [
-        8.97,
-        10.51,
-        16.8
-      ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -638,15 +650,15 @@
     {
       "from": [
         16,
-        4.44,
-        6.48
+        4.84,
+        6.88
       ],
       "to": [
-        17.8,
-        8.04,
-        9.68
+        17.4,
+        7.64,
+        9.28
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -717,15 +729,15 @@
     {
       "from": [
         16,
-        8.15,
-        9.68
+        8.45,
+        9.98
       ],
       "to": [
-        17.2,
-        10.95,
-        12.08
+        17.0,
+        10.65,
+        11.78
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -796,15 +808,15 @@
     {
       "from": [
         16,
-        6.52,
-        7.79
+        6.82,
+        7.99
       ],
       "to": [
-        16.8,
-        8.72,
-        9.39
+        16.6,
+        8.42,
+        9.19
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -874,95 +886,16 @@
     },
     {
       "from": [
-        -1.8,
-        3.39,
-        7.37
-      ],
-      "to": [
-        0,
-        6.99,
-        10.57
-      ],
-      "light_emission": 13,
-      "shade_direction_override": "up",
-      "neoforge_data": {
-        "ambient_occlusion": false
-      },
-      "faces": {
-        "north": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "west"
-        },
-        "south": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "west"
-        },
-        "east": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "west"
-        },
-        "west": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "west"
-        },
-        "up": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "west"
-        },
-        "down": {
-          "uv": [
-            1,
-            1,
-            5,
-            5
-          ],
-          "texture": "#shard",
-          "cullface": "west"
-        }
-      }
-    },
-    {
-      "from": [
-        -1.2,
-        6.07,
-        5.33
+        -1.4,
+        3.79,
+        7.77
       ],
       "to": [
         0,
-        8.87,
-        7.73
+        6.59,
+        10.17
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -1032,16 +965,16 @@
     },
     {
       "from": [
-        -0.8,
-        4.95,
-        4.16
+        -1.0,
+        6.37,
+        5.63
       ],
       "to": [
         0,
-        7.15,
-        5.76
+        8.57,
+        7.43
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -1111,16 +1044,95 @@
     },
     {
       "from": [
-        7.87,
+        -0.6,
+        5.25,
+        4.36
+      ],
+      "to": [
+        0,
+        6.85,
+        5.56
+      ],
+      "light_emission": 9,
+      "shade_direction_override": "up",
+      "neoforge_data": {
+        "ambient_occlusion": false
+      },
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "west"
+        },
+        "south": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "west"
+        },
+        "east": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "west"
+        },
+        "west": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "west"
+        },
+        "up": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "west"
+        },
+        "down": {
+          "uv": [
+            1,
+            1,
+            5,
+            5
+          ],
+          "texture": "#shard",
+          "cullface": "west"
+        }
+      }
+    },
+    {
+      "from": [
+        8.27,
         16,
-        5.87
+        6.27
       ],
       "to": [
-        11.07,
-        17.8,
-        9.47
+        10.67,
+        17.4,
+        9.07
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -1190,16 +1202,16 @@
     },
     {
       "from": [
-        9.5,
+        9.8,
         16,
-        4.07
+        4.37
       ],
       "to": [
-        11.9,
-        17.2,
-        6.87
+        11.6,
+        17.0,
+        6.57
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -1269,16 +1281,16 @@
     },
     {
       "from": [
-        6.34,
+        6.54,
         16,
-        3.91
+        4.21
       ],
       "to": [
-        7.94,
-        16.8,
-        6.11
+        7.74,
+        16.6,
+        5.81
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -1348,16 +1360,16 @@
     },
     {
       "from": [
-        8.11,
-        -1.8,
-        2.94
+        8.51,
+        -1.4,
+        3.34
       ],
       "to": [
-        11.31,
+        10.91,
         0,
-        6.54
+        6.14
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -1427,16 +1439,16 @@
     },
     {
       "from": [
-        6.75,
-        -1.2,
-        5.1
+        7.05,
+        -1.0,
+        5.4
       ],
       "to": [
-        9.15,
+        8.85,
         0,
-        7.9
+        7.6
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false
@@ -1506,16 +1518,16 @@
     },
     {
       "from": [
-        4.85,
-        -0.8,
-        3.96
+        5.05,
+        -0.6,
+        4.26
       ],
       "to": [
-        6.45,
+        6.25,
         0,
-        6.16
+        5.86
       ],
-      "light_emission": 13,
+      "light_emission": 9,
       "shade_direction_override": "up",
       "neoforge_data": {
         "ambient_occlusion": false

@@ -252,30 +252,32 @@ def tile(mask, v, rock):
                 limit = min(limit, 15.5 - px)
             rough = (noise[py][px] - 0.5) * 1.4
             pr, pg, pb, _ = rock[py][px]
+            # the outer part of each band thins out pixel by pixel: cut-out has no soft edge, and a solid rim reads as a sticker
+            fray = r.random()
             # the close band
             reach = 2.4 + rough * 0.7
-            if d < reach and d < limit * 1.1:
-                g = 1.24 + 0.5 * (1 - d / reach)
+            f = max(d / reach, d / (limit * 1.1))
+            if f < 1 and not (f > 0.5 and fray < (f - 0.5) / 0.5):
+                g = 1.2 + 0.5 * (1 - d / reach)
                 ring.set(px, py, (min(255, round(pr * g * 1.08)), min(255, round(pg * g * 0.98)), min(255, round(pb * g * 0.78)), 255))
             # the wide band: a shade over the rock
             reach = 6.4 + rough * 1.6
-            if d < reach and d < limit * 1.0:
-                g = 1.04 + 0.2 * (1 - d / reach)
+            f = max(d / reach, d / limit)
+            if f < 1 and not (f > 0.35 and fray < (f - 0.35) / 0.65):
+                g = 1.02 + 0.2 * (1 - d / reach)
                 wide.set(px, py, (min(255, round(pr * g * 1.05)), min(255, round(pg * g * 0.99)), min(255, round(pb * g * 0.86)), 255))
     return wide, ring, bark, sap
 
 
 def pod_cell():
-    """A pod's skin: white-hot in the middle, through gold to deep orange at its rim, with dark seams at the corners."""
+    """The seeds' skin: mottled heat with no frame. The seeds take small pieces of it at one texel to the pixel."""
     c = Canvas(16, 16)
     r = rng("pod")
+    a, b, d = r.uniform(0, 6.28), r.uniform(0, 6.28), r.uniform(0, 6.28)
     for y in range(16):
         for x in range(16):
-            d = max(abs(x - 7.5), abs(y - 7.5)) / 8
-            k = 4 if d < 0.34 else 3 if d < 0.56 else 2 if d < 0.8 else 1
-            if d > 0.74 and r.random() < 0.3:
-                k = max(0, k - 1)
-            c.set(x, y, SAP[k])
+            v = 0.55 + 0.24 * math.sin(x * 0.9 + a) * math.cos(y * 0.7 + b) + 0.22 * math.sin((x + y) * 0.5 + d) + (r.random() - 0.5) * 0.3
+            c.set(x, y, SAP[1 if v < 0.34 else 2 if v < 0.58 else 3 if v < 0.84 else 4])
     return c
 
 
@@ -286,10 +288,10 @@ def bloom_ring_cell(rock):
     for y in range(16):
         for x in range(16):
             d = math.hypot(x - 7.5, y - 7.5) + (r.random() - 0.5) * 1.2
-            if d >= 7.2:
+            if d >= 7.4 or (d > 3.2 and r.random() < (d - 3.2) / 4.2):
                 continue
-            f = 1 - d / 7.2
-            g = 1.1 + 0.8 * f
+            f = 1 - d / 7.4
+            g = 1.08 + 0.62 * f
             pr, pg, pb, _ = rock[y][x]
             c.set(x, y, (min(255, round(pr * g * 1.08)), min(255, round(pg * g * 0.98)), min(255, round(pb * g * 0.78)), 255))
     return c
@@ -318,9 +320,9 @@ def icon_cell(rock):
                     c.set(x, y, layer.get(x, y))
     for y in range(5, 11):
         for x in range(5, 11):
-            d = max(abs(x - 7.5), abs(y - 7.5))
-            if d < 2.6:
-                c.set(x, y, SAP[4 if d < 1 else 3 if d < 1.8 else 2])
+            d = math.hypot(x - 7.5, y - 7.5)
+            if d < 2.7:
+                c.set(x, y, SAP[4 if d < 1.1 else 3 if d < 2 else 2])
     return c
 
 
@@ -528,7 +530,7 @@ def _plane(z, uv, tex, glow=0):
 def vine_model(mask, v):
     cell = CELL[(mask, v)]
     return {"ambientocclusion": False, "render_type": "minecraft:cutout", "textures": {"particle": "awaken:block/caves/ember_vine", "t": "awaken:block/caves/ember_vine"},
-            "elements": [_plane(Z_WIDE, _uv(cell), "#t", glow=6), _plane(Z_RING, _uv(cell + 1), "#t", glow=10),
+            "elements": [_plane(Z_WIDE, _uv(cell), "#t", glow=5), _plane(Z_RING, _uv(cell + 1), "#t", glow=8),
                          _plane(Z_BARK, _uv(cell + 2), "#t"), _plane(Z_SAP, _uv(cell + 3), "#t", glow=15)]}
 
 
@@ -538,19 +540,23 @@ def _box(frm, to, tex_uv, glow):
 
 
 def bloom_model(v):
-    """Seed pods on a cup of leaves: small boxes that stand off the wall, centred differently each cut."""
+    """A clutch of seeds on a cup of leaves: small boxes heaped off the wall, biggest in the middle, at one texel to the pixel so
+    none of them shows a frame. Each cut heaps them differently."""
     r = rng("bloom", v)
     cx, cy = 8 + r.uniform(-1.6, 1.6), 8 + r.uniform(-1.6, 1.6)
-    pod = _uv(POD)
-    els = [_plane(0.08, _uv(BLOOM_RING), "#t", glow=13), _plane(0.14, _uv(PAD), "#t")]
+    tu, tv = POD % COLS, POD // COLS
+    els = [_plane(0.08, _uv(BLOOM_RING), "#t", glow=11), _plane(0.14, _uv(PAD), "#t")]
     made = []
-    for w, h, depth in ((3.4, 3.2, 2.4), (2.4, 2.4, 1.8), (2.0, 1.8, 1.2)):
-        for _ in range(12):
-            x, y = cx + r.uniform(-3.2, 3.2), cy + r.uniform(-3.2, 3.2)
-            if all(abs(x - mx) > (w + mw) / 2 - 0.5 or abs(y - my) > (h + mh) / 2 - 0.5 for mx, my, mw, mh in made):
+    for i, (w, h, depth) in enumerate(((2.6, 2.4, 2.2), (2.2, 2.0, 1.7), (1.8, 2.0, 1.4), (1.6, 1.4, 1.1), (1.2, 1.4, 0.8), (1.0, 1.0, 0.6))):
+        for _ in range(16):
+            a, rad = r.uniform(0, 6.283), 0.0 if i == 0 else r.uniform(1.5, 3.4)
+            x, y = cx + math.cos(a) * rad, cy + math.sin(a) * rad * 0.85
+            if all(abs(x - mx) > (w + mw) / 2 - 0.4 or abs(y - my) > (h + mh) / 2 - 0.4 for mx, my, mw, mh in made):
                 break
         made.append((x, y, w, h))
-        els.append(_box([round(x - w / 2, 2), round(y - h / 2, 2), 0.16], [round(x + w / 2, 2), round(y + h / 2, 2), round(0.16 + depth, 2)], pod, 15))
+        u, t = r.uniform(0, 16 - w), r.uniform(0, 16 - h)
+        seed = [round(tu + u / 16, 4), round(tv + t / 16, 4), round(tu + (u + w) / 16, 4), round(tv + (t + h) / 16, 4)]
+        els.append(_box([round(x - w / 2, 2), round(y - h / 2, 2), 0.16], [round(x + w / 2, 2), round(y + h / 2, 2), round(0.16 + depth, 2)], seed, 15 if i < 3 else 13))
     return {"ambientocclusion": False, "render_type": "minecraft:cutout", "textures": {"particle": "awaken:block/caves/ember_vine", "t": "awaken:block/caves/ember_vine"}, "elements": els}
 
 

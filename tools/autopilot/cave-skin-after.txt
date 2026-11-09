@@ -32,6 +32,9 @@ cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 0
 wait 20
 waitpassage
 wait 400
+# a throwaway visit: the first shot came out as black sky on a fresh runner
+cmd execute positioned -524 31 -2346 run awaken caves growth 0 9
+wait 600
 
 # ---- run 0, far ----
 cmd execute positioned -524 31 -2346 run awaken caves growth 0 9
@@ -242,4 +245,45 @@ wait 30
 shot h2_close_lensoff
 lens cinematic
 wait 20
+
+# ---- heart 3, far ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 3 7
+wait 100
+shot h3_far_dark
+lens off
+wait 30
+shot h3_far_lensoff
+lens cinematic
+wait 20
+
+# ---- heart 3, close ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 3 3
+wait 100
+shot h3_close_dark
+lens off
+wait 30
+shot h3_close_lensoff
+lens cinematic
+wait 20
+
+# ---- heart 4, far ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 4 7
+wait 100
+shot h4_far_dark
+lens off
+wait 30
+shot h4_far_lensoff
+lens cinematic
+wait 20
+
+# ---- heart 4, close ----
+cmd execute positioned -524 31 -2346 run awaken caves heart 4 3
+wait 100
+shot h4_close_dark
+lens off
+wait 30
+shot h4_close_lensoff
+lens cinematic
+wait 20
+
 quit

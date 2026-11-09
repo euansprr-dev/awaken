@@ -177,9 +177,11 @@ def heart(ore):
             c.set(int(round(x)), int(round(y)), cols[4] if t < 0.45 else cols[3])
             if t < 0.7 or rnd.random() < 0.5:
                 c.set(int(round(x + (ty - 7.5) / 9)), int(round(y + (tx - 7.5) / 9)), cols[3] if t < 0.6 else cols[2])
-    # the crystal mass that has broken through, nearly the width of the block
-    facets(c, cols, "heart_" + ore, 11, spread=7.5, length=(3.6, 6.2))
-    facets(c, cols, "heart2_" + ore, 6, spread=3.0, length=(2.2, 3.8))
+    # the crystals that have broken through: three uneven clumps off to one side, never a star round the middle
+    mx, my = 6.4 + rnd.uniform(-0.8, 0.8), 8.6 + rnd.uniform(-0.8, 0.8)
+    facets(c, cols, "heart_" + ore, 8, mx, my, spread=4.6, length=(2.8, 4.8))
+    facets(c, cols, "heart2_" + ore, 5, mx + 4.6, my - 3.4, spread=2.6, length=(1.8, 3.2), core=False)
+    facets(c, cols, "heart3_" + ore, 4, mx + 1.2, my - 5.2, spread=1.8, length=(1.4, 2.4), core=False)
     # a dark edge round it, so the crystals stand in a broken hollow in the rock
     solid = {(x, y) for y in range(16) for x in range(16) if sum(c.get(x, y)[:3]) >= sum(cols[3][:3])}
     for x, y in solid:
@@ -197,8 +199,8 @@ def heart_shard(ore):
     c = Canvas()
     for y in range(16):
         for x in range(16):
-            i = 3 + (1 if x < 3 else 0) + (1 if y < 2 and x < 8 else 0) - (1 if x > 11 else 0)
-            c.set(x, y, cols[min(5, i + (1 if rnd.random() < 0.08 else 0))])
+            i = 2 + (1 if x < 3 else 0) + (1 if y < 2 and x < 8 else 0) - (1 if x > 11 else 0)
+            c.set(x, y, cols[min(4, i + (1 if rnd.random() < 0.08 else 0))])
     return c
 
 
@@ -370,13 +372,16 @@ def vein_cracks(k):
 
 def heart_glow_frames(ore):
     cols = [hx(h) for h in HEART[ore]]
+    base = heart(ore)
     out = []
     for f in heart_frames(ore):
-        # the core and the facets' lit edges, and whatever the pulse brightened past them
+        # the core and the crystals' lit tips, and whatever the pulse brightened past them
         keep = {(x, y) for y in range(16) for x in range(16) if f.get(x, y)[3] and sum(f.get(x, y)[:3]) >= sum(cols[-2][:3]) - 6}
         g = Canvas()
         for (x, y) in keep:
-            g.set(x, y, f.get(x, y))
+            # full-bright pale pixels burn out to white under Lens: only the core keeps its heat, the tips glow in the ore's own colour
+            core = sum(base.get(x, y)[:3]) >= sum(cols[-1][:3]) - 6
+            g.set(x, y, f.get(x, y) if core else lerp(cols[3], f.get(x, y), 0.3))
         out.append(g)
     return out
 
@@ -843,14 +848,14 @@ def heart_shards(o):
     rnd = rng_for("heart_shards", o)
     els = []
     for face in ("north", "south", "east", "west", "up", "down"):
-        for w, h, dp in ((3.2, 3.6, 1.8), (2.4, 2.8, 1.2), (1.6, 2.2, 0.8)):
+        for w, h, dp in ((2.4, 2.8, 1.4), (1.8, 2.2, 1.0), (1.2, 1.6, 0.6)):
             cu, cv = 8 + rnd.uniform(-3.4, 3.4), 8 + rnd.uniform(-3.4, 3.4)
             a0, a1, b0, b1 = round(cu - w / 2, 2), round(cu + w / 2, 2), round(cv - h / 2, 2), round(cv + h / 2, 2)
             frm, to = {"north": ([a0, b0, -dp], [a1, b1, 0]), "south": ([a0, b0, 16], [a1, b1, 16 + dp]),
                        "west": ([-dp, b0, a0], [0, b1, a1]), "east": ([16, b0, a0], [16 + dp, b1, a1]),
                        "down": ([a0, -dp, b0], [a1, 0, b1]), "up": ([a0, 16, b0], [a1, 16 + dp, b1])}[face]
             faces = {d: {"uv": [1, 1, 5, 5], "texture": "#shard", "cullface": face} for d in ("north", "south", "east", "west", "up", "down")}
-            els.append({"from": frm, "to": to, "light_emission": 13, "shade_direction_override": "up", "neoforge_data": {"ambient_occlusion": False}, "faces": faces})
+            els.append({"from": frm, "to": to, "light_emission": 9, "shade_direction_override": "up", "neoforge_data": {"ambient_occlusion": False}, "faces": faces})
     return els
 
 
@@ -858,7 +863,9 @@ def heart_models(o):
     """The heart: its knot of crystal as one model, over the block model of the rock it sits in. The model named for the heart is
     the same thing in deepslate, for the item in the hand."""
     name = o + "_lode_heart"
-    faces = lambda tex: {d: {"uv": [0, 0, 16, 16], "texture": tex, "cullface": d} for d in ("down", "up", "north", "south", "west", "east")}  # noqa: E731
+    # turned differently on each face, so the same drawing doesn't repeat round the block
+    turn = {"down": 180, "up": 90, "north": 0, "south": 180, "west": 90, "east": 270}
+    faces = lambda tex: {d: {"uv": [0, 0, 16, 16], "texture": tex, "cullface": d, "rotation": turn[d]} for d in turn}  # noqa: E731
     skin = {"from": [-0.005, -0.005, -0.005], "to": [16.005, 16.005, 16.005], "faces": faces("#all")}
     glow = {"from": [-0.01, -0.01, -0.01], "to": [16.01, 16.01, 16.01], "light_emission": 15, "shade_direction_override": "up",
             "neoforge_data": {"ambient_occlusion": False}, "faces": faces("#glow")}

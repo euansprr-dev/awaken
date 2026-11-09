@@ -28,7 +28,7 @@
           "texture": "#t"
         }
       },
-      "light_emission": 6
+      "light_emission": 5
     },
     {
       "from": [
@@ -52,7 +52,7 @@
           "texture": "#t"
         }
       },
-      "light_emission": 10
+      "light_emission": 8
     },
     {
       "from": [

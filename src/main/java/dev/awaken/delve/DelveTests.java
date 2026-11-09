@@ -148,6 +148,19 @@ final class DelveTests {
         level.getBlockState(heart).randomTick(level, heart, level.getRandom());
         h.assertTrue(level.getBlockState(heart).getValue(LodeHeartBlock.HOST) == LodeHeartBlock.Host.STONE, "an old heart takes on the rock round it");
 
+        // a heart standing out of the rock is built back in, with one face left open
+        BlockPos proud = heart.offset(0, 0, -6);
+        level.setBlock(proud, Blocks.STONE.defaultBlockState(), 2);
+        level.setBlock(proud.below(), Blocks.STONE.defaultBlockState(), 2);
+        LodeFeature.seat(level, proud, Blocks.GRANITE.defaultBlockState(), proud.getX() - 8, proud.getZ() - 8);
+        int open = 0;
+        for (Direction d : Direction.values()) if (level.getBlockState(proud.relative(d)).isAir()) open++;
+        h.assertTrue(open == 1 && level.getBlockState(proud.above()).isAir(), "a heart on a floor keeps only its top open, had " + open + " open");
+        h.assertTrue(level.getBlockState(proud.north()).is(Blocks.GRANITE), "with the rock it replaced round it");
+        for (Direction d : Direction.Plane.HORIZONTAL) level.setBlock(proud.relative(d), Blocks.AIR.defaultBlockState(), 2);
+        level.setBlock(proud, Blocks.AIR.defaultBlockState(), 2);
+        level.setBlock(proud.below(), Blocks.AIR.defaultBlockState(), 2);
+
         int x0 = heart.getX() & ~15, z0 = heart.getZ() & ~15;
         long seed = 4242L;
         LodeFeature.trace(level, seed, Ore.IRON, heart, x0, z0);

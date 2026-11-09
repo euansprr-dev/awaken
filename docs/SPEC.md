@@ -16448,6 +16448,9 @@ So a wall's decoration was a strip of stamps, the same in every cave and region.
   no longer reads as a black blob.
 - **Sources**: both blocks are cut with shears (`hoe` tag); two ember lichen craft an ember vine, so what's in a chest still has
   a use. The Ochre keepsake (trail `keepsakes_from_below`, `RegionFinds`) accepts vine or lichen.
+- **Light comes from the plant.** A stem gives block light **6** and a bloom **12**, so the wall's own smooth light does the falling
+  off; the planes of lit rock only warm it (emission **5** wide, **8** close, **11** round a bloom) and thin out pixel by pixel at
+  their rims, since cut-out has no soft edge. A bloom's seeds are six small boxes heaped on the leaves, with no frame on them.
 - **Saved worlds**: caves already generated keep their blocks and take on the new art and the per-block cuts at once. Their
   placement doesn't change, and their old ember lichen keeps its old light. New chunks grow the new walls.
 - **Cost**: the Ochre Deep only; two short int arrays a chunk, one field lookup per foot of wall for each run picked. No block
@@ -16468,9 +16471,17 @@ a twin, so all 26 cells round it stayed plain stone, a grey box in the wall. Too
   when a region takes the rock over, with no pocket round a heart (ores without a twin keep theirs). Deepslate hearts stay in
   deepslate unless the region's rock replaces deepslate too.
 - **The knot**: `<ore>_lode_heart` is now drawn on nothing: a stain in the ore's colour thinning out from the centre, a crack to the
-  middle of each edge, a crystal mass nearly the block's width with a dark broken edge round it, its core (the slow pulse and the full-light glow layer as before). Three crystal shards
-  (`<ore>_lode_heart_shard`, emission 13) stand 0.8-1.8 pixels out of each face, so it has an outline of its own; a face's
-  shards go when something solid is against it.
+  middle of each edge, three uneven clumps of crystal off to one side with a dark broken edge round them, the drawing turned
+  differently on each face. The glow layer keeps the slow pulse but only the core stays white-hot; the crystal tips glow in the
+  ore's own colour (pale pixels at full light burn out to white under Lens). Three small crystal shards
+  (`<ore>_lode_heart_shard`, emission 9) stand 0.6-1.4 pixels out of each face, so it has an outline of its own; a face's shards
+  go when something solid is against it.
+- **A heart gives no block light of its own**, because a block that emits any light is drawn flat-lit (no smooth light, no ambient
+  occlusion: `ModelBlockRenderer`, and Sodium the same), and that showed as a pale square against the wall. The two nearest blocks
+  of each vein give **4** instead.
+- **Seated in the wall** (`LodeFeature.seat`): a heart the carvers left with three or more faces open is built back into its rock.
+  One face stays open, the one with rock right behind it, sideways before up or down; the others get the rock the heart replaced.
+  Its own chunk only.
 - **Veins in the rock** (`awaken:lode_trace`, `LodeFeature.trace`): on each face of a heart open to the air, a vein leaves most of
   its four edges (the second pair one time in three stays closed, so it never reads as a cross) and runs **2-5** blocks across the
   rock, cracked like split rock with spurs off it, turning one step in four, each block joined to the last (connection shapes as
