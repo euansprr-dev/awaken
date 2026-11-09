@@ -20,6 +20,7 @@ public final class CompatClient {
         modBus.addListener(FMLClientSetupEvent.class, e -> {
             if (ModList.get().isLoaded("distanthorizons")) e.enqueueWork(DistantHorizonsClient::init);
             if (ModList.get().isLoaded("jei")) e.enqueueWork(dev.awaken.compat.client.jei.JeiHooks::init);
+            if (ModList.get().isLoaded("entityculling")) e.enqueueWork(EntityCullingBridge::init);
         });
     }
 

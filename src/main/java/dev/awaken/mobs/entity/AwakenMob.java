@@ -999,7 +999,14 @@ public class AwakenMob extends Monster {
 
     @Override
     public boolean removeWhenFarAway(double distSqr) {
-        return !def().tier.isBoss() && def().tier != Tier.WARDEN && super.removeWhenFarAway(distSqr);
+        return !def().tier.isBoss() && def().tier != Tier.WARDEN && super.removeWhenFarAway(distSqr) && !Watched.now(this);
+    }
+
+    /** Through the binoculars a creature is as big on screen as one this much nearer: the distance it stops drawing at scales too. */
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        double zoom = dev.awaken.core.api.CameraHooks.zoom();
+        return super.shouldRenderAtSqrDistance(zoom > 1.0 ? distance / (zoom * zoom) : distance);
     }
 
     @Override

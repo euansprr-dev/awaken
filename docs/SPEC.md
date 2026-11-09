@@ -6313,6 +6313,7 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
 - **Clips** of a profiled body move the body over its feet, the head, the tail, the jaw, and own the legs only when the
   feet let go (hanging, leaping, dying, a wind-up's front pair). Their walk and run legs stay for anything drawn without
   a life (the clip is what shows if nothing plants the feet).
+- **Drip Lurker's leap** (Euan 9 Nov: it jittered in place): `Fauna3Goals.Cling` works out the speed that really lifts it to the roof, gravity and air drag counted (the old guess fell 0.1 to 0.5 short of every roof under 7.5 blocks, so it hopped there and back for ever). A leap that doesn't reach waits 30 s, and it never goes up through a lip over one corner of it.
 - **Drip Lurker** (`drip_lurker`; six two-bone legs, hunter): ripple-alternate, duty 0.78/0.55, steps 3/4.5 px high, feet
   10 px out from the hips fanned 42°, crouch 1 px, reach 0.55, re-grips every 3-8 s, `rear` 0.9; head level 0.6, twist
   0.2, slope 0.8, land 1, `still` with a 2.5 px creep; temperament: no step bob, sway 0.3, look/sniff/stretch/settle
@@ -15558,6 +15559,16 @@ Gate: a level-5 bench costs at most +0.5 ms p50 and +1 ms p99 over level 1.
 - Outside the powers module, the body's wall-run reads Wall Stride's level (`Body.wallStrideLevel`, `RunnerRules.runLength`,
   `runTarget`, `strideKick`; `RunnerServer` calls `StepHooks.strideTick`): Spark Steps (2), Kick-off (3), Steady (4), Street
   Runner (5). The only cross-module change; Codex's Power Core hover reads `PowerLadder.text` (their queue).
+
+### 39.11 A creature you are watching (Euan's playtest 9 Nov: a Drip Lurker, through the binoculars, jittered and then was gone)
+- **It stays.** `AwakenMob.removeWhenFarAway` (reached only once vanilla's far roll comes up) adds `Watched.now`: any non-spectator
+  player whose client tracks it, with it within 60 degrees of their look and a clear `Spotting.clearLine` to its middle or eyes,
+  keeps it. Everything else follows the normal mob cap rules: turn away or lose sight of it and it can go.
+- **It draws.** `AwakenMob.shouldRenderAtSqrDistance` divides the distance by `CameraHooks.zoom()`, so through a glass the reach grows
+  with the zoom. `Life.far` does the same: what's under the glass keeps its blinks, fidgets and eye lead. While a glass is up,
+  EntityCulling leaves our creatures alone (`compat.client.EntityCullingBridge`, soft-loaded).
+- **Its motion.** Position updates don't change with distance (every 3 ticks at any range, replayed over 3 client ticks), and the client
+  pauses a body for a tick when a server tick runs late; 12x zoom makes that a visible hitch, and no change here hides a slow server.
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 40. Clear screen and lock-on (plan docs/hud-lockon/plan.html; Euan approved all six recommendations 2026-10-28: "Go ahead with all recommendations")
