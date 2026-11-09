@@ -9,7 +9,9 @@ import org.joml.Vector3f;
  * does not jump to the new source. The gap between them, and the old motion's speed along it, decays to nothing over a
  * few ticks on a quintic that never overshoots, so the next strike leaves from wherever the blade really is (Euan
  * 2026-10-28: "each strike starts from rest... it kind of feels like it glitches or teleports"). Plain maths, so a
- * GameTest can hold it to its rules; one instance per pose it carries (each hand, the view's lean).
+ * GameTest can hold it to its rules; one instance per pose it carries (each hand, the view's lean). Its clock is a
+ * double: the hands' clock counts from the machine's boot, and as a float it moved in steps of 268 ms on a Mac up 34 days,
+ * so a blend sat frozen and then snapped, and a strike's first frame could show the pose of 200 ms before (Euan 2026-11-09).
  */
 public final class SwingBlend {
     /** Below this gap (blocks, or radians) a change of source needs no blend. */
@@ -60,16 +62,16 @@ public final class SwingBlend {
     private final Vector3f lastD = new Vector3f(), velD = new Vector3f(), velW = new Vector3f(), dir = new Vector3f(),
             axis = new Vector3f(), tmp = new Vector3f();
     private final Quaternionf lastQ = new Quaternionf(), dq = new Quaternionf(), off = new Quaternionf();
-    private float lastT = Float.NaN, start;
+    private double lastT = Double.NaN, start;
 
     /**
      * The source changed at {@code now} (ticks): its pose there is {@code d}, {@code q}, moving at {@code vd} (blocks a
      * tick) and turning at {@code w} (radians a tick about an axis). The pose last shown is carried into it over at
      * most {@code ticks}.
      */
-    public void begin(float now, Vector3f d, Quaternionf q, Vector3f vd, Vector3f w, float ticks) {
+    public void begin(double now, Vector3f d, Quaternionf q, Vector3f vd, Vector3f w, float ticks) {
         start = now;
-        if (Float.isNaN(lastT)) {
+        if (Double.isNaN(lastT)) {
             pos.off();
             rot.off();
             return;
@@ -98,8 +100,8 @@ public final class SwingBlend {
     }
 
     /** This frame's pose from the source ({@code d}, {@code q}, in place) with what is left of the blend added. */
-    public void apply(float now, Vector3f d, Quaternionf q) {
-        float t = now - start;
+    public void apply(double now, Vector3f d, Quaternionf q) {
+        float t = (float) (now - start);
         float p = pos.at(t);
         if (p != 0) d.fma(p, dir);
         float r = rot.at(t);
@@ -108,23 +110,23 @@ public final class SwingBlend {
     }
 
     /** Whether any of the blend is left at {@code now}. */
-    public boolean active(float now) {
-        float t = now - start;
+    public boolean active(double now) {
+        float t = (float) (now - start);
         return t < pos.length() || t < rot.length();
     }
 
     /** Forgets what was shown (the next change of source starts clean). */
     public void reset() {
-        lastT = Float.NaN;
+        lastT = Double.NaN;
         pos.off();
         rot.off();
         velD.zero();
         velW.zero();
     }
 
-    private void remember(float now, Vector3f d, Quaternionf q) {
-        float dt = now - lastT;
-        if (Float.isNaN(lastT) || dt > 2F || dt < 0) {
+    private void remember(double now, Vector3f d, Quaternionf q) {
+        float dt = (float) (now - lastT);
+        if (Double.isNaN(lastT) || dt > 2F || dt < 0) {
             velD.zero();
             velW.zero();
         } else if (dt > 1e-3F) {
@@ -149,11 +151,11 @@ public final class SwingBlend {
     public static final class Vec {
         private final Curve curve = new Curve();
         private final Vector3f last = new Vector3f(), vel = new Vector3f(), dir = new Vector3f(), tmp = new Vector3f();
-        private float lastT = Float.NaN, start;
+        private double lastT = Double.NaN, start;
 
-        public void begin(float now, Vector3f v, Vector3f velocity, float ticks) {
+        public void begin(double now, Vector3f v, Vector3f velocity, float ticks) {
             start = now;
-            if (Float.isNaN(lastT)) {
+            if (Double.isNaN(lastT)) {
                 curve.off();
                 return;
             }
@@ -167,19 +169,19 @@ public final class SwingBlend {
             curve.set(x, tmp.set(vel).sub(velocity).dot(dir), ticks);
         }
 
-        public void apply(float now, Vector3f v) {
-            float c = curve.at(now - start);
+        public void apply(double now, Vector3f v) {
+            float c = curve.at((float) (now - start));
             if (c != 0) v.fma(c, dir);
-            float dt = now - lastT;
-            if (Float.isNaN(lastT) || dt > 2F || dt < 0) vel.zero();
+            float dt = (float) (now - lastT);
+            if (Double.isNaN(lastT) || dt > 2F || dt < 0) vel.zero();
             else if (dt > 1e-3F) vel.set(v).sub(last).div(dt);
             else return;
             last.set(v);
             lastT = now;
         }
 
-        public boolean active(float now) {
-            return now - start < curve.length();
+        public boolean active(double now) {
+            return (float) (now - start) < curve.length();
         }
     }
 }

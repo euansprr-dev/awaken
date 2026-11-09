@@ -272,7 +272,7 @@ final class ArmsHands {
         // a change of source (a chained strike, a move ended or refused, a press starting its draw, a tap's launch, the
         // release): each hand carried from where it was shown into the new one, never a jump (SwingBlend). The draw and
         // the charge held after it are one source, so the charge's mark changes nothing on the hands
-        float now = handsNow();
+        double now = handsNow();
         long source = undecided ? ArmsPredict.underSource : ChargeDraw.source(drawn, ArmsPredict.moveNanos);
         if (m != shownMove || source != shownNanos || cutting != shownCutting) {
             boolean cutOut = shownCutting && !cutting;
@@ -307,8 +307,8 @@ final class ArmsHands {
     }
 
     /** Ticks since a move of the hands' clock (hit-stop holds pause it, the tick rate scales it). */
-    private static float handsNow() {
-        return (ArmsFeel.nanos() - ArmsFeel.paused()) / ArmsFeel.TICK_NANOS;
+    private static double handsNow() {
+        return (ArmsFeel.nanos() - ArmsFeel.paused()) / (double) ArmsFeel.TICK_NANOS; // from the machine's boot: too big for a float (SwingBlend)
     }
 
     // each hand carried across a change of its source; what was shown last; the new source's motion (VD blocks a tick,

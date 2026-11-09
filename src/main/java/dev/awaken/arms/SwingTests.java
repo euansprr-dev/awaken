@@ -58,6 +58,24 @@ final class SwingTests {
         b.apply(now + 3F, d, q);
         h.assertTrue(d.length() < 1e-5F && Math.abs(Math.abs(q.w) - 1) < 1e-5F && !b.active(now + 3F), "the new source by the end");
 
+        // a month after the machine booted (the hands' clock counts from then): the same blend, on the same frames
+        double month = 5.4E7;
+        SwingBlend late = new SwingBlend();
+        for (int i = 0; i <= 4; i++) {
+            d.set(0.4F, 0, 0);
+            q.identity();
+            late.apply(month + i * 0.25, d, q);
+        }
+        late.begin(month + 1, zero, id, zero, zero, 2F);
+        d.zero();
+        q.identity();
+        late.apply(month + 1.001, d, q);
+        h.assertTrue(Math.abs(d.x - 0.4F) < 0.01F, "a month after boot the first frame is still the last one shown (" + d.x + ")");
+        d.zero();
+        q.identity();
+        late.apply(month + 2, d, q);
+        h.assertTrue(d.x > 0.02F && d.x < 0.38F, "and the blend still decays frame by frame (" + d.x + ")");
+
         SwingBlend.Vec v = new SwingBlend.Vec();
         Vector3f lean = new Vector3f(2, 4, 1);
         v.apply(0, lean);
