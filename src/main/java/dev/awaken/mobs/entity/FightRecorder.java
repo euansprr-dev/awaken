@@ -46,8 +46,11 @@ public final class FightRecorder {
 
     /** How long a fight is recorded (72 s), and where its health is dropped so each phase is seen. */
     static final int TICKS = 1440, SECOND_PHASE = 450, THIRD_PHASE = 900;
+    /** The most moves that may follow themselves, in percent, in a fight with a mind. */
+    static final int MAX_REPEATS = 10;
     /** The floor's half width, and a pack's fight. */
-    private static final int ROOM = 22, PACK = 12, PACK_TICKS = 600;
+    static final int ROOM = 22;
+    private static final int PACK = 12, PACK_TICKS = 600;
 
     public static void register() {
         for (String id : BOSSES) {
@@ -59,7 +62,7 @@ public final class FightRecorder {
     }
 
     /** A floor wide enough for the fight, all of it ticking: a boss that walks off loaded ground freezes mid-move. */
-    private static void floor(GameTestHelper h, int size) {
+    static void floor(GameTestHelper h, int size) {
         ServerLevel level = h.getLevel();
         for (int x = -2; x <= size; x++) for (int z = -2; z <= size; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
         AwakenTests.wideArea(h, h.absolutePos(new BlockPos(-32, 0, -32)), h.absolutePos(new BlockPos(size + 32, 0, size + 32)));
@@ -72,6 +75,7 @@ public final class FightRecorder {
         if (kind == Kind.GUARD) {
             p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
             p.startUsingItem(InteractionHand.MAIN_HAND);
+            dev.awaken.core.api.Watch.stage(p, dev.awaken.core.api.Watch.GUARD); // a test player never ticks, so its raise never finishes
         }
         MobDef def = Bestiary.get(id);
         Vec3 home = h.absoluteVec(new Vec3(ROOM + 0.5, 1, ROOM + 0.5));
@@ -135,6 +139,10 @@ public final class FightRecorder {
                     id, kind.name().toLowerCase(java.util.Locale.ROOT), tick[0], begun[0], repeats[0], playing[0], opening[0], idle[0], walking[0], side[0], tags);
             h.assertTrue(frozen[0] == 0, id + " stopped ticking for " + frozen[0] + " ticks: it left the loaded ground, and the numbers mean nothing");
             h.assertTrue(begun[0] > 0, id + " began nothing in " + TICKS + " ticks");
+            // what a mind promises, however you play it (SPEC §48.5)
+            if (boss.kit().fight().mind().isPresent())
+                h.assertTrue(repeats[0] * 100 <= begun[0] * MAX_REPEATS, id + " against " + kind + " made the same move twice running " + repeats[0] + " of " + begun[0] + " times");
+            dev.awaken.core.api.Watch.stage(p, 0);
             boss.discard();
             h.succeed();
         });

@@ -138,6 +138,7 @@ public final class Casting {
             return r;
         }
         if (cost > 0) spend(player, l, cost, now);
+        st.castAt = now;
         // a ladder step's guard (SPEC 36.3): damage taken is cut for a while after the cast
         if (c.kit.guard != null) st.buff(PowerState.Buffs.GUARD, now + c.kit.guard.ticks(), c.kit.guard.share());
         Mastery.cast(player, type, cost, now);
@@ -193,6 +194,18 @@ public final class Casting {
         Loadout.Owned o = l.get(c.type.id.toString());
         if (o != null) startCooldown(c.player, l, c.type, o, st);
         Powers.markDirty(c.player);
+    }
+
+    /** How long a cast shows on the body, for anyone watching (SPEC §48.1). */
+    static final int CAST_SHOWN = 12;
+
+    /** Whether this fighter can be seen casting: the moments after a cast, or a channel held. */
+    static int watched(ServerPlayer p) {
+        PowerState st = PowerState.peek(p);
+        if (st == null) return 0;
+        if (now(p) - st.castAt <= CAST_SHOWN) return dev.awaken.core.api.Watch.CAST;
+        for (Running r : st.runningList()) if (r.channel && !r.stopping() && r.c.type.mode == PowerType.Mode.CHANNEL) return dev.awaken.core.api.Watch.CAST;
+        return 0;
     }
 
     /** A power's move counts as movement for this long after its cast (SPEC §17 "how you arrived"). */

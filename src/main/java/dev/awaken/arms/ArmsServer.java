@@ -988,6 +988,20 @@ final class ArmsServer {
         if (e.getEntity() instanceof ServerPlayer p && Arms.guards(e.getItem())) state(p).loweredAt = now(p);
     }
 
+    /** What anyone can see this fighter's blade doing (SPEC §48.1): a heavy winding up, a blow's recovery, a dodge. */
+    static int watched(ServerPlayer p) {
+        ArmsState s = state(p);
+        long now = now(p);
+        int f = s.chargeStart != ArmsState.NO_CHARGE ? dev.awaken.core.api.Watch.HEAVY : 0;
+        if (s.style == null) return f;
+        if (s.move != null && s.moving(now)) {
+            Archetype.MoveDef def = s.style.move(s.move);
+            if (def != null && now - s.moveStart >= def.activeEnd()) f |= dev.awaken.core.api.Watch.RECOVERY;
+        }
+        if (now - s.dodgeAt <= s.style.def().dodge().ticks()) f |= dev.awaken.core.api.Watch.DODGE;
+        return f;
+    }
+
     // ---- dodge --------------------------------------------------------------------------------------------------------
 
     static void onDodge(ServerPlayer p, ArmsPayloads.Dodge msg) {

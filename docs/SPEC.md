@@ -912,6 +912,8 @@ of `AwakenConfig.Client`.
   `vitalsY(guiHeight, row)` and `VITALS_HALF` (where the health, Aether and food lines sit; Ascent draws its Aether line
   there), `aether()` / `installAether` (the player's Aether 0..1, -1 before Skyborn; for the glance).
   The holo module installs the director; until then everything shows as it always has.
+- `dev.awaken.core.api.Watch` (§48.1) — what anyone could see a fighter doing, as bits: `facts(entity)`, `DRINK`, `GUARD`, `HEAVY`,
+  `RECOVERY`, `DODGE`, `CAST`; `installArms`/`installPowers` (each module's own part); `stage(entity, facts)` for tests.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
 - `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
@@ -19528,6 +19530,49 @@ Hive Regent and the Gearwright Colossus); the other 45 wait until Euan has playe
 reads input, only what has visibly started and only after its reaction time; every blow keeps its tell, colour and at least its
 minimum warning; a blow begins only if it can land; every string ends in an opening; none of this adds damage, health or speed;
 everything is decided on the server, per target.
+
+**48.1 Watching (stage 1).** `core.api.Watch.facts(entity)` says what anyone could see a fighter doing: drinking or eating and
+a raised guard (vanilla's own state), a heavy being held, a blow's recovery and a dodge (Arms' `ArmsServer.watched`), a cast
+or a channel (Powers' `Casting.watched`, for 12 ticks after a cast). Never a key press. `FightMind` keeps, for its one target,
+when each fact began, and a fact only counts once it has been true for its reaction time: 12 ticks at rank E, one less each rank,
+7 at the top (`reaction(Rank)`, the boss's home rank; a script's `react` overrides it). A new target starts the read again. Two
+facts are worked out rather than asked for: a dodge just made (16 ticks past the reaction time) and a stop after a run (three
+half-second samples running away, then standing still within a second).
+
+**48.2 Answers and the notice.** A fight script's `mind.answers` (schema 2; a script without a `mind` plays exactly as it did)
+ties a fact to a list of moves. An answer is weighed once when it comes due and then rests (`cooldown`, default 200 ticks; 40
+after a failed roll), and the newest thing you started wins. It uses the first move on its list that can land on you now, and
+never the move it just made. It can only start between blows: with nothing playing, or at a string's link, where the
+follow-through ends as it would for the string's next blow. A swing that has begun is never cancelled and an opening is never
+cut short. At a phrase's *last* blow only an answer marked `press` may start (the pilots' drink): you began that while it was
+still swinging, so it carries on, and the opening, longer for the longer phrase, comes after. An answer shows it noticed: 5
+ticks with `KIT_POSE_NOTICE` (the head turns and the body drops and leans, procedural, so it works on every rig), the palette's
+`notice` set, else `step`, else `impact` at half volume; then the answer's wind-up with its tell, colour and class as always.
+If you've got out of reach during those 5 ticks the normal choice takes over.
+
+**48.3 Cooldowns, held blows and the caught dodge.** With a mind, the dice may not pick the move just made nor one still resting
+(`mind.cooldowns`, else by class: LIGHT 0, HEAVY 30, PERILOUS and GRAB 80, a move that hurts nobody 240). If nothing it may start
+reaches you for 2 seconds the rests are waived, and after 4 it may even repeat itself: it is never left standing. Any blow may be
+held a beat at its peak (`holdChance` 25%, `holdTicks` 6, or its own authored hold if longer), which only ever adds warning. Having
+deflected it again and again it always holds. The third dodge in a row (each within 2 seconds of the last) is caught: once it has
+seen that third dodge, the next blow holds for at least 10 ticks and keeps turning to you through the hold, so it lands where you
+do. The streak is then spent. A held-blow fake is a separate promise, for top-rank duellists and Wardens only, and isn't built yet.
+
+**48.4 Forks.** A string entry's `forks` give, for the blow after each one, what to play by what you're doing at the link: `guard`
+if your guard has been up its reaction time, `dodged` if you've just dodged (the newest of the two wins), else `stayed`. Until the
+fork the branches look identical. A branch that can't land on you now is skipped and the string goes on as written. A pool entry's
+`band` keeps it to a range of edge distance. `FairAudit` reads every string a fight can play: the pools', with forks taken, and the
+answers'. The runtime's fair guard still holds any one string to half your health.
+
+**48.5 The pilots, and what a mind must hold.** The Hive Regent and the Gearwright Colossus carry schema 2 scripts
+(`tools/art/specs/kit/bosses/<id>.py`, no new art). In their answers a drink brings the dive or the stride from afar and the Sting or
+the Slam up close and presses on through a last blow; a guard kept up for 1.5 s brings the Sting, or the Grab or the Strikes; a
+heavy being held is hit first with a quick one; a cast brings the gap-closer; a pause after a run brings the pounce; a recovery the
+blow that punishes it. Tests (`FightMindTests`, one per mechanism): the read waits, new targets start again, each answer gives one of its
+moves with its tell after the notice, each fork, the caught dodge, the facts themselves (`arms_watched`, `powers_watched_cast`). Gates,
+in `fights_record_*` for any fight with a mind: the same move twice at most 10% of the time. In `fights_mind_drinks_<boss>`: at least 60%
+of drinks in reach get an answer that starts before the drink ends. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
+at least double what they are against someone standing.
 
 **48.7 The recorder (stage 0).** `FightRecorder`: `fights_record_<boss>_<kind>`, six bosses (more as the roll-out reaches them)
 against six kinds of player (stands still, runs, circles, holds guard, keeps away, stays behind), 72 s each with fixed seeds;

@@ -468,36 +468,53 @@ SOUNDS = {
 }
 MOVE_SOUNDS = {"brood": {"swing": "cast"}, "rain": {"impact": ""}, "jelly": {"swing": "cast", "impact": ""}, "frenzy": {"swing": "roar"}}
 
+# where her strings change their mind (SPEC §48.4): a raised guard brings the Sting, a dodge the dive, and otherwise the second cut
+FORK_CUT = [{"guard": "sting", "dodged": "dive", "stayed": "cut_b"}]
+FORK_DIVE = [{"guard": "sting"}]
+
 FIGHT = {
+    "schemaVersion": 2,
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
+    # it watches you and answers (SPEC §48): a drink brings the dive, a guard kept up brings the Sting
+    "mind": {
+        "cooldowns": {"rain": 240, "dive": 60},
+        "answers": [
+            {"on": "DRINK", "moves": ["dive", "volley", "sting", "cut", "cut_b"], "chance": 1.0, "cooldown": 240, "press": True},
+            {"on": "CAST", "moves": ["dive", "volley"], "chance": 0.7, "cooldown": 200, "then": [["cut_b"]]},
+            {"on": "HEAVY", "moves": ["cut", "lash"], "chance": 0.75, "cooldown": 160},
+            {"on": "GUARD", "after": 30, "moves": ["sting"], "cooldown": 160},
+            {"on": "RECOVERY", "moves": ["sting", "cut"], "chance": 0.5, "cooldown": 200},
+            {"on": "PAUSED", "moves": ["dive", "volley"], "chance": 0.9, "cooldown": 200, "then": [["cut_b"]]},
+        ],
+    },
     "stance": 240,
     "intro": {"pose": "idle", "move": "emerge"},
     "phases": [
         {"pool": [
-            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"]]},
+            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"]], "forks": FORK_CUT},
             {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
-            {"move": "dive", "weight": 3, "then": [["cut_b"]]},
-            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
+            {"move": "dive", "weight": 3, "then": [["cut_b"]], "forks": FORK_DIVE},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]], "forks": FORK_CUT},
         ]},
         # the comb weeps with the second phase: Honey Rain and the stinger volleys, as in GateBestiary
         {"transition": "rain", "pool": [
-            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"], ["cut_b", "sting"]]},
+            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"], ["cut_b", "sting"]], "forks": FORK_CUT},
             {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
-            {"move": "volley", "weight": 3, "then": [["volley"]]},
-            {"move": "dive", "weight": 2, "then": [["cut_b"]]},
+            {"move": "volley", "weight": 3, "then": [["dive"]]},
+            {"move": "dive", "weight": 2, "then": [["cut_b"]], "forks": FORK_DIVE},
             {"move": "rain", "weight": 1},
             {"move": "brood", "weight": 1},
-            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]], "forks": FORK_CUT},
         ]},
         {"transition": "jelly", "pool": [
             {"move": "frenzy", "weight": 1},
-            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b", "sting"]]},
-            {"move": "dive", "weight": 3, "then": [["cut_b"], ["cut_b", "cut"]]},
-            {"move": "volley", "weight": 2, "then": [["volley"]]},
+            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b", "sting"]], "forks": FORK_CUT},
+            {"move": "dive", "weight": 3, "then": [["cut_b"], ["cut_b", "cut"]], "forks": FORK_DIVE},
+            {"move": "volley", "weight": 2, "then": [["dive"]]},
             {"move": "brood", "weight": 1},
             {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
-            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]], "forks": FORK_CUT},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

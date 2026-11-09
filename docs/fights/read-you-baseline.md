@@ -67,3 +67,15 @@ Most winding up at once: **9**. On average 2.73 at any moment, and three or more
 | | dodger | 87% | 108 |
 | | parrier | 89% | 79 |
 | | expert | 100% | 68 |
+
+## After stage 1 (the mind on the two pilots, 2026-11-09)
+
+Same recorder, same seeds. Hive Regent / Gearwright Colossus:
+
+| | baseline | stage 1 | gate |
+|---|---|---|---|
+| same move twice, worst of the six players | 45.5% / 47.1% | 5.3% / 0% | at most 10% |
+| guard-beaters (PERILOUS, GRAB), turtling against standing | 39.3 v 13.8 / 16.7 v 7.1 | 46.2 v 18.8 / 22.2 v 11.1 | at least double |
+| drinks in reach answered before they finish (28 drinks each, near and further off) | none | 75% / 79% | at least 60% |
+| mid-move against someone standing still | 76.9% / 74.3% | 76.4% / 73.4% | 50-60%, stage 2 |
+| walking or stepping | 5.0% / 5.1% | 11.6% / 8.1% | 20%, stage 2 |

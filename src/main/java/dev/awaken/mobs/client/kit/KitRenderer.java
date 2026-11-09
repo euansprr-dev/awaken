@@ -245,6 +245,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
             s.hasRedOverlay = false;
         }
         if (hasFeet && !s.airborne && s.dying < 0 && !apart) ground(mob, s, partialTicks);
+        notice(boss, s, mv, pose, poseFor);
         live(mob, s, l, winding);
         // what it plays, as one number: a new move (or the same one again), the kneel or rise, a reaction, the fall
         int key = mv >= 0 ? (mv + 1) * 7919 + start : -1;
@@ -263,6 +264,20 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         s.kitClock = now / 20F;
         s.kitBlend = blend;
     }
+
+    /** It has noticed you (SPEC §48.2): its weight drops and it leans in, quickly, then eases back as the blow begins. */
+    private static void notice(AwakenBoss boss, HeroRenderState s, int mv, int pose, float poseFor) {
+        float share = pose == AwakenBoss.KIT_POSE_NOTICE ? Math.min(1, poseFor / NOTICE_IN)
+                : boss.kitPoseFrom() == AwakenBoss.KIT_POSE_NOTICE && poseFor < NOTICE_OUT ? 1 - poseFor / NOTICE_OUT : 0;
+        if (share <= 0) return;
+        s.kitDrop -= boss.getBbHeight() * NOTICE_DROP * share;
+        if (mv < 0 || s.kitLean == 0) {
+            s.kitLean += NOTICE_LEAN * share;
+            s.kitHip = boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP;
+        }
+    }
+
+    private static final float NOTICE_IN = 0.1F, NOTICE_OUT = 0.25F, NOTICE_DROP = 0.05F, NOTICE_LEAN = 7F;
 
     /**
      * The view shakes when a heavy or ground-striking blow lands near you, and the body's clock stops for a moment when

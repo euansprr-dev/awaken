@@ -648,36 +648,53 @@ SOUNDS = {
 }
 MOVE_SOUNDS = {"chime": {"swing": "roar"}, "strikes": {"swing": "roar"}, "drones": {"swing": "cast"}}
 
+# where its strings change their mind (SPEC §48.4): a raised guard brings the Slam, a dodge the Stride
+FORK_SWEEP = [{"guard": "slam", "dodged": "stride", "stayed": "chop"}, {"guard": "slam"}]
+FORK_CHOP = [{"guard": "slam", "dodged": "stride", "stayed": "sweep"}]
+
 FIGHT = {
+    "schemaVersion": 2,
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside hand throws it back
     "duel": True,
+    # it watches you and answers (SPEC §48): a drink brings the Stride, a guard kept up the Slam
+    "mind": {
+        "cooldowns": {"strikes": 240, "overload": 200, "slam": 50},
+        "answers": [
+            {"on": "DRINK", "moves": ["stride", "halo", "slam", "chop"], "chance": 1.0, "cooldown": 260, "press": True},
+            {"on": "CAST", "moves": ["stride", "halo"], "chance": 0.7, "cooldown": 200, "then": [["slam"]]},
+            {"on": "HEAVY", "moves": ["chop", "kick"], "chance": 0.7, "cooldown": 160},
+            {"on": "GUARD", "after": 30, "moves": ["stride", "strikes", "slam"], "cooldown": 200},
+            {"on": "RECOVERY", "moves": ["slam", "chop"], "chance": 0.5, "cooldown": 200},
+            {"on": "PAUSED", "moves": ["stride", "halo"], "chance": 0.9, "cooldown": 200},
+        ],
+    },
     "stance": 260,  # its stance size, tuned with the sim (SPEC §47.3)
     "intro": {"pose": "idle", "move": "chime"},
     "phases": [
         {"pool": [
-            {"move": "sweep", "weight": 3, "then": [["chop"], ["chop", "slam"]]},
-            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep"]]},
+            {"move": "sweep", "weight": 3, "then": [["chop"], ["chop", "slam"]], "forks": FORK_SWEEP},
+            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep"]], "forks": FORK_CHOP},
             {"move": "slam", "weight": 3, "then": [["sweep"]]},
             {"move": "stride", "weight": 2, "when": "far", "then": [["slam"]]},
             {"move": "kick", "weight": 2, "when": "behind"},
-            {"move": "halo", "weight": 2, "then": [["chop"]]},
+            {"move": "halo", "weight": 2, "then": [["chop"]], "band": [3, 14]},
         ]},
         {"transition": "drones", "pool": [
-            {"move": "sweep", "weight": 3, "then": [["chop"], ["chop", "slam"]]},
-            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep"], ["sweep", "slam"]]},
+            {"move": "sweep", "weight": 3, "then": [["chop"], ["chop", "slam"]], "forks": FORK_SWEEP},
+            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep"], ["sweep", "slam"]], "forks": FORK_CHOP},
             {"move": "slam", "weight": 3, "then": [["sweep"]]},
             {"move": "stride", "weight": 3, "when": "far", "then": [["slam"], ["sweep", "chop"]]},
             {"move": "kick", "weight": 2, "when": "behind"},
-            {"move": "halo", "weight": 2, "then": [["sweep"]]},
+            {"move": "halo", "weight": 2, "then": [["sweep"]], "band": [3, 14]},
             {"move": "drones", "weight": 1},
         ]},
         {"transition": "strikes", "pool": [
-            {"move": "sweep", "weight": 3, "then": [["chop", "slam"]]},
-            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep", "chop"]]},
+            {"move": "sweep", "weight": 3, "then": [["chop", "slam"]], "forks": FORK_SWEEP},
+            {"move": "chop", "weight": 2, "when": "near", "then": [["sweep", "chop"]], "forks": FORK_CHOP},
             {"move": "slam", "weight": 3, "then": [["kick"], ["sweep"]]},
             {"move": "stride", "weight": 2, "when": "far", "then": [["overload"]]},
             {"move": "kick", "weight": 2, "when": "behind"},
-            {"move": "halo", "weight": 2, "then": [["sweep"]]},
+            {"move": "halo", "weight": 2, "then": [["sweep"]], "band": [3, 14]},
             {"move": "overload", "weight": 2},
             {"move": "strikes", "weight": 1},
         ]},

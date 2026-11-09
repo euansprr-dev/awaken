@@ -18,6 +18,23 @@ final class MasteryTests {
     static void register() {
         // A cast at the air pays nothing; the same cast landing on a zombie pays its whole cost; a miss mid-fight pays
         // half; a kill pays a bonus; casting beside a mob that never fought you still pays nothing.
+        // What a foe can see of a power (SPEC §48.1): a cast, for a moment after it.
+        AwakenTests.register("powers_watched_cast", 80, h -> {
+            floor(h, 4);
+            ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
+            PowerType slam = PowerRegistry.get("ground_slam");
+            Powers.learn(sp, slam.id, 0);
+            h.runAfterDelay(3, () -> {
+                h.assertTrue(Casting.watched(sp) == 0, "no cast, nothing to see");
+                Powers.fillEnergy(sp);
+                h.assertTrue(Casting.cast(sp, slam, 0, false, 0, 0).ok(), "slam casts");
+                h.assertTrue(Casting.watched(sp) == dev.awaken.core.api.Watch.CAST, "a cast shows");
+                h.runAfterDelay(Casting.CAST_SHOWN + 2, () -> {
+                    h.assertTrue(Casting.watched(sp) == 0, "and stops showing");
+                    h.succeed();
+                });
+            });
+        });
         AwakenTests.register("powers_mastery_real_hits_not_air", 80, h -> {
             floor(h, 4);
             ServerPlayer sp = player(h, new BlockPos(0, 1, 0));

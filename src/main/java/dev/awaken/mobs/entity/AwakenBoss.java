@@ -53,6 +53,8 @@ public class AwakenBoss extends AwakenMob {
     public static final int KIT_POSE_INTRO = 1, KIT_POSE_BROKEN = 2;
     /** The duel's reactions (SPEC §47.3): a deflected blow's limb thrown back, and the reel after a phrase's last one. */
     public static final int KIT_POSE_RECOIL = 3, KIT_POSE_REEL = 4;
+    /** It has seen what you started (SPEC §48.2): its weight drops before it answers. */
+    public static final int KIT_POSE_NOTICE = 5;
 
     private int phase, shieldTicks, lonelyTicks;
     /** Its stance broken (Arms), or reeling from a deflect, for this many ticks more; open until this game time. */

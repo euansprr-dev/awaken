@@ -39,6 +39,49 @@ import java.util.Set;
 final class FairAudit {
     private FairAudit() {}
 
+    /** Every string an entry can become: as written, and with its forks taken (SPEC §48.4). */
+    static List<List<String>> forked(FightScripts.Entry e) {
+        List<List<String>> out = new ArrayList<>(e.then());
+        for (int f = 0; f < e.forks().size(); f++) {
+            FightScripts.Fork fork = e.forks().get(f);
+            for (List<String> then : List.copyOf(out)) {
+                if (f >= then.size()) continue;
+                for (java.util.Optional<String> pick : List.of(fork.guard(), fork.dodged(), fork.stayed())) {
+                    if (pick.isEmpty()) continue;
+                    List<String> changed = new ArrayList<>(then);
+                    changed.set(f, pick.get());
+                    if (!out.contains(changed)) out.add(changed);
+                }
+            }
+        }
+        return out;
+    }
+
+    /** Every string a fight can play: its pools' and its answers'. */
+    static java.util.Set<List<String>> strings(FightScripts.Fight fight) {
+        java.util.Set<List<String>> out = new java.util.LinkedHashSet<>();
+        for (FightScripts.Phase ph : fight.phases()) {
+            for (FightScripts.Entry e : ph.pool()) {
+                for (List<String> then : forked(e)) out.add(string(e.move(), then));
+            }
+        }
+        fight.mind().ifPresent(mind -> {
+            for (FightScripts.Answer a : mind.answers()) {
+                for (String move : a.moves()) {
+                    for (List<String> then : a.then()) out.add(string(move, then));
+                }
+            }
+        });
+        return out;
+    }
+
+    private static List<String> string(String first, List<String> then) {
+        List<String> all = new ArrayList<>();
+        all.add(first);
+        all.addAll(then);
+        return all;
+    }
+
     static final Rank[] RANKS = {Rank.E, Rank.D, Rank.C, Rank.B, Rank.A, Rank.S, Rank.SOVEREIGN};
 
     /** Where a creature is fought: the rank of the player who belongs there, and the level it is met at. */
@@ -184,26 +227,19 @@ final class FairAudit {
                     FightScripts.Fight fight = kit.fight();
                     if (fight != null) {
                         // a string is one source: all of it lands on one player, the fair guard holding it to half
-                        for (FightScripts.Phase ph : fight.phases()) {
-                            for (FightScripts.Entry e : ph.pool()) {
-                                for (List<String> then : e.then()) {
-                                    List<String> all = new ArrayList<>();
-                                    all.add(e.move());
-                                    all.addAll(then);
-                                    if (all.stream().noneMatch(lands::containsKey)) continue;
-                                    float[] raw = {0};
-                                    Blow string = p -> {
-                                        FairTests.pool(p);
-                                        for (String id : all) if (lands.containsKey(id)) lands.get(id).accept(p);
-                                        if (p == ref) raw[0] = FairTests.raw(p);
-                                        return FairTests.share(p) + after(p);
-                                    };
-                                    float on = string.on(ref);
-                                    STRINGS.add(new Reading(def.id, "string " + String.join(" > ", all), rank, raw[0], FairBudget.STRING, on));
-                                    out.add(new Reading(def.id, "string " + String.join(" > ", all), rank, on, FairBudget.STRING,
-                                            under == null ? -1 : string.on(under)));
-                                }
-                            }
+                        for (List<String> all : strings(fight)) {
+                            if (all.stream().noneMatch(lands::containsKey)) continue;
+                            float[] raw = {0};
+                            Blow string = p -> {
+                                FairTests.pool(p);
+                                for (String id : all) if (lands.containsKey(id)) lands.get(id).accept(p);
+                                if (p == ref) raw[0] = FairTests.raw(p);
+                                return FairTests.share(p) + after(p);
+                            };
+                            float on = string.on(ref);
+                            STRINGS.add(new Reading(def.id, "string " + String.join(" > ", all), rank, raw[0], FairBudget.STRING, on));
+                            out.add(new Reading(def.id, "string " + String.join(" > ", all), rank, on, FairBudget.STRING,
+                                    under == null ? -1 : string.on(under)));
                         }
                         // the move it opens with as you walk in: it may knock you about, never take much
                         fight.intro().move().ifPresent(id -> {

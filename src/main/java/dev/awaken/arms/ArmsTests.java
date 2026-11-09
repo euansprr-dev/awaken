@@ -48,6 +48,7 @@ final class ArmsTests {
         AwakenTests.register("arms_deflect", 60, ArmsTests::deflect);
         AwakenTests.register("arms_deflect_latency", 80, ArmsTests::deflectLatency);
         AwakenTests.register("arms_dodge", 60, ArmsTests::dodge);
+        AwakenTests.register("arms_watched", 60, ArmsTests::watched);
         AwakenTests.register("arms_posture_break", 60, ArmsTests::postureBreak);
         AwakenTests.register("arms_kill_switch", 40, ArmsTests::killSwitch);
         AwakenTests.register("arms_sounds", 20, ArmsTests::sounds);
@@ -1157,6 +1158,29 @@ final class ArmsTests {
             h.assertTrue(p.getHealth() < hp, "unanswered, it lands after the grace");
             done(h, p);
         });
+    }
+
+    /** What a foe can see of Arms (SPEC §48.1): a heavy being held, a blow's recovery, a dodge. Never a press on its own. */
+    static void watched(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ArmsState s = ArmsServer.state(p);
+        long now = ArmsServer.now(p);
+        s.style = longsword();
+        h.assertTrue(ArmsServer.watched(p) == 0, "nothing to see yet");
+        s.chargeStart = now;
+        h.assertTrue(ArmsServer.watched(p) == dev.awaken.core.api.Watch.HEAVY, "a heavy being held shows");
+        s.chargeStart = ArmsState.NO_CHARGE;
+        Archetype.MoveDef light = longsword().move(Archetype.Move.STRIKE_1);
+        s.move = Archetype.Move.STRIKE_1;
+        s.moveStart = now;
+        s.moveEnd = now + light.activeEnd() + 8;
+        h.assertTrue(ArmsServer.watched(p) == 0, "a blow that's still swinging isn't a recovery");
+        s.moveStart = now - light.activeEnd();
+        h.assertTrue(ArmsServer.watched(p) == dev.awaken.core.api.Watch.RECOVERY, "past its last active tick it is");
+        s.clearMove();
+        ArmsServer.onDodge(p, new ArmsPayloads.Dodge(1, -1F, 0F, p.getX(), p.getY(), p.getZ()));
+        h.assertTrue((ArmsServer.watched(p) & dev.awaken.core.api.Watch.DODGE) != 0, "a dodge shows");
+        done(h, p);
     }
 
     /** The dodge's first ticks evade a blow; the first of them are perfect and slow the attacker alone. */
