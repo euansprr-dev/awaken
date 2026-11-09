@@ -44,7 +44,7 @@ public final class KingsrootKeep extends KitLand<KingsrootKeep.M> {
         final BlockState bark = b("keep_bark"), barkMoss = b("keep_bark_moss"), leaf = b("keep_leaf"), leafLit = b("keep_leaf_lit"), leafDeep = b("keep_leaf_deep"), thorn = b("keep_thorn"), relief = b("keep_relief"),
                 vines = b("keep_vines"), climb = b("keep_climb_root"), cloth = b("keep_banner"), fall = b("keep_fall"),
                 fern = b("temple_fern"), drift = b("temple_moss_drift"), carpet = b("temple_moss"), brazier = b("temple_brazier"),
-                water = Blocks.WATER.defaultBlockState(), grass = Blocks.SHORT_GRASS.defaultBlockState();
+                water = Blocks.WATER.defaultBlockState(), grass = Blocks.SHORT_GRASS.defaultBlockState(), airLight = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 11);
 
         M() {
             super("keep", new Accents(b("keep_relief"), b("keep_relief"), b("keep_window"), b("keep_vines"), b("temple_brazier"), b("temple_moss_drift"), b("temple_idol"),
@@ -1130,6 +1130,7 @@ public final class KingsrootKeep extends KitLand<KingsrootKeep.M> {
         private void hanging(V v, M m) {
             for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
                 if (Math.abs(x) > HALL_X || z < HALL_Z0 || z > HALL_Z1) continue;
+                if (Math.floorMod(x, 9) == 0 && Math.floorMod(z, 9) == 0 && Math.abs(x) >= 24 && v.get(x, F + 6, z) == null) v.set(x, F + 6, z, m.airLight);
                 if (rnd(x, z, 93) > 0.09) continue;
                 for (int y = F + 83; y > F + 6; y--) {
                     BlockState here = v.get(x, y, z);

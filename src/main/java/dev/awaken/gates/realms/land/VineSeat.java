@@ -39,7 +39,7 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         final BlockState bark = b("fane_bark"), barkMoss = b("fane_bark_moss"), leaf = b("fane_leaf"), leafLit = b("fane_leaf_lit"), leafDeep = b("fane_leaf_deep"), thorn = b("fane_thorn"), relief = b("fane_relief"),
                 vines = b("temple_vines"), fern = b("temple_fern"), drift = b("temple_moss_drift"), carpet = b("temple_moss"), brazier = b("temple_brazier"), fall = b("fane_fall"),
                 carving = b("temple_carving"), link = Blocks.IRON_CHAIN.defaultBlockState(), water = Blocks.WATER.defaultBlockState(),
-                candlesBase = b("crypt_candles"), tallFern = Blocks.LARGE_FERN.defaultBlockState(), bush = Blocks.AZALEA.defaultBlockState(), grass = Blocks.SHORT_GRASS.defaultBlockState(), lily = Blocks.LILY_PAD.defaultBlockState();
+                candlesBase = b("crypt_candles"), tallFern = Blocks.LARGE_FERN.defaultBlockState(), bush = Blocks.AZALEA.defaultBlockState(), grass = Blocks.SHORT_GRASS.defaultBlockState(), lily = Blocks.LILY_PAD.defaultBlockState(), airLight = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 11);
 
         BlockState candles(int n) {
             return candlesBase.setValue(dev.awaken.gates.block.WorldBlocks.Candles.CANDLES, Math.max(1, Math.min(5, n)));
@@ -258,6 +258,11 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         for (int x = v.x0 - 1; x <= v.x0 + 16; x++) for (int z = v.z0 - 1; z <= v.z0 + 16; z++) column(v, m, x, z);
         drawPieces(v, m);
         settle(v, m);
+        // the game draws the dark that the preview doesn't: a room this deep needs its air lit as well as its fires
+        for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) if (Math.floorMod(x, 9) == 0 && Math.floorMod(z, 9) == 0) for (Room r : rooms) if (r.has(x, z)) {
+            int y = r.floor(x, z) + 5;
+            if (v.get(x, y, z) == null) v.set(x, y, z, m.airLight);
+        }
         for (Edit e : grille) if (v.in(e.x(), e.y(), e.z())) v.set(e.x(), e.y(), e.z(), e.state());
     }
 
