@@ -48,7 +48,10 @@ public record LodeFeature() implements Feature {
         }
         // a heart near this chunk shows on the rock round it, and this chunk writes its share
         for (Lode l : LodePlans.touching(level.getSeed(), x0 - TRACE_NEAR, z0 - TRACE_NEAR, x0 + 15 + TRACE_NEAR, z0 + 15 + TRACE_NEAR, false)) {
-            any |= trace(level, level.getSeed(), l.ore(), l.heartPos(), x0, z0);
+            // a lode that touches this window can have its heart far off: only one this near may be read from this chunk
+            BlockPos heart = l.heartPos();
+            if (heart.getX() < x0 - TRACE_NEAR || heart.getX() > x0 + 15 + TRACE_NEAR || heart.getZ() < z0 - TRACE_NEAR || heart.getZ() > z0 + 15 + TRACE_NEAR) continue;
+            any |= trace(level, level.getSeed(), l.ore(), heart, x0, z0);
         }
         return any;
     }
