@@ -399,6 +399,10 @@ public class AwakenMob extends Monster {
         return flag(F_DECOY);
     }
 
+    /** A body caught inside a block: the way it is getting out, and how many looks it has been caught. */
+    private Unwedge.@org.jspecify.annotations.Nullable Out wedgeOut;
+    private int wedged;
+
     // ---- ticking -----------------------------------------------------------------------------------------------
 
     @Override
@@ -437,6 +441,8 @@ public class AwakenMob extends Monster {
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
         MobDef d = def();
+        if (!d.flies() && (tickCount + getId()) % 10 == 7) unwedge();
+        if (wedgeOut != null && !Unwedge.step(this, wedgeOut.to(), wedgeOut.push())) wedgeOut = null;
         if (tickCount % 20 == 0) {
             syncForceTags();
             if (d.has(Trait.MIMIC)) updateMimic(level);
@@ -870,6 +876,7 @@ public class AwakenMob extends Monster {
             if (hp != null) hp.addOrReplacePermanentModifier(new AttributeModifier(Awaken.id("mobs_split_health"), -0.6, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
             child.setHealth(child.getMaxHealth());
             child.setPersistenceRequired();
+            child.settle(); // ±0.6 from the parent, and a scaled body of its own: it may not fit there
             level.addFreshEntity(child);
         }
     }
@@ -999,7 +1006,85 @@ public class AwakenMob extends Monster {
 
     @Override
     public boolean removeWhenFarAway(double distSqr) {
-        return !def().tier.isBoss() && def().tier != Tier.WARDEN && super.removeWhenFarAway(distSqr);
+        return !def().tier.isBoss() && def().tier != Tier.WARDEN && super.removeWhenFarAway(distSqr) && !Watched.now(this);
+    }
+
+    /**
+     * Before it is in the world (SPEC "Fliers find their way", §39.12): a body that doesn't fit where it was put (the scaled body
+     * of a beast placed by its type's box, an elite grown a size) moves to the nearest place it fits, a big flier to
+     * open air with room for its wings. Nobody has seen it yet, so this is no teleport.
+     */
+    public void settle() {
+        if (noPhysics || def().has(Trait.NOCLIP)) return;
+        refreshDimensions(); // the scaled body from its first tick, not the type's box
+        Vec3 at = position();
+        if (def().flies()) {
+            if (FlightRoom.big(this) && !FlightRoom.free(this)) {
+                Vec3 up = FlightRoom.roomAbove(this, at.x, at.y, at.z);
+                if (up != null) {
+                    setPos(up);
+                    return;
+                }
+            }
+            for (int lift = 0; lift <= 6; lift++) {
+                if (FlightRoom.passes(this, at.x, at.y + lift, at.z, 0.05)) {
+                    if (lift > 0) setPos(at.x, at.y + lift, at.z);
+                    return;
+                }
+            }
+            return;
+        }
+        if (fitsAt(at.x, at.y, at.z)) return;
+        // a walker: up over a carpet or a bush, else a step or three aside onto the same ground
+        for (double lift : SETTLE_LIFTS) {
+            if (fitsAt(at.x, at.y + lift, at.z)) {
+                setPos(at.x, at.y + lift, at.z);
+                return;
+            }
+        }
+        for (int r = 1; r <= 3; r++) {
+            for (int i = 0; i < 8; i++) {
+                double a = i * Mth.TWO_PI / 8, x = at.x + Mth.cos((float) a) * r, z = at.z + Mth.sin((float) a) * r;
+                for (int dy = 0; dy <= 1; dy++) {
+                    if (fitsAt(x, at.y + dy, z) && !level().noBlockCollision(this, getDimensions(getPose()).makeBoundingBox(x, at.y + dy - 0.5, z).deflate(0.05, 0, 0.05))) {
+                        setPos(x, at.y + dy, z);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    private static final double[] SETTLE_LIFTS = {0.07, 0.5, 1.0, 2.0};
+
+    private boolean fitsAt(double x, double y, double z) {
+        return level().noBlockCollision(this, getDimensions(getPose()).makeBoundingBox(x, y, z).deflate(1.0E-4));
+    }
+
+    /**
+     * A body caught inside a block (one saved there, or put there by something that didn't check its scaled body) for a
+     * second walks out, or pushes through the leaves (Unwedge). Fliers have their own way; what is held, or hung, is left be.
+     */
+    private void unwedge() {
+        if (wedgeOut != null || noPhysics || isNoGravity() || isVehicle() || isPassenger() || def().has(Trait.NOCLIP) || meantToBeInBlocks()) return;
+        if (!Unwedge.inside(this)) {
+            wedged = 0;
+            return;
+        }
+        if (++wedged < 2) return;
+        wedged = 0;
+        wedgeOut = Unwedge.wayOut(this, false, 0.05, false);
+    }
+
+    protected boolean meantToBeInBlocks() {
+        return false;
+    }
+
+    /** Through the binoculars a creature is as big on screen as one this much nearer: the distance it stops drawing at scales too. */
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        double zoom = dev.awaken.core.api.CameraHooks.zoom();
+        return super.shouldRenderAtSqrDistance(zoom > 1.0 ? distance / (zoom * zoom) : distance);
     }
 
     @Override

@@ -47,10 +47,16 @@ final class HudTests {
             h.assertTrue(fight.on() && ClearRules.FIGHT_TAIL == 80, "a fight holds 4 s");
             fight.tick(false);
             h.assertFalse(fight.on(), "and ends after");
-            // glancing brings the hotbar, the powers and the level
+            // glancing brings the powers and the level; the hotbar is on the panel, so the one at the foot steps aside
             s.glancing = true;
-            h.assertTrue(ClearRules.want(Piece.HOTBAR, s) == 1F && ClearRules.want(Piece.POWERS, s) == 1F
-                    && ClearRules.want(Piece.LEVEL, s) == 1F, "the glance shows the rest");
+            s.hotbarInGlance = true;
+            h.assertTrue(ClearRules.want(Piece.HOTBAR, s) == 0F && ClearRules.want(Piece.POWERS, s) == 1F
+                    && ClearRules.want(Piece.LEVEL, s) == 1F, "the glance shows the rest, its own hotbar instead of the bar");
+            s.hotbarPop = true;
+            h.assertTrue(ClearRules.want(Piece.HOTBAR, s) == 0F, "a slot change on the panel doesn't bring the bar back");
+            s.hotbarPop = false;
+            s.hotbarInGlance = false;
+            h.assertTrue(ClearRules.want(Piece.HOTBAR, s) == 1F, "a panel without the holo look keeps the bar, as before");
             // comes fast, leaves slowly, never past its ends
             float a = ClearRules.ease(0F, 1F, ClearRules.IN_MS);
             h.assertTrue(a == 1F, "in within " + ClearRules.IN_MS + " ms");
@@ -60,28 +66,29 @@ final class HudTests {
             h.succeed();
         });
 
-        // the Tab glance (SPEC §40.7): the rows in order, only those with something to say; hold raises the arm, a tap
-        // leaves the panel up 4 s without it
+        // the Tab glance (SPEC §40.7): the rows in order, only those with something to say; the arm and panel are up while
+        // the key is held and only then (no tap keeps it up)
         AwakenTests.register("hud_glance_rows", 20, h -> {
             var out = new dev.awaken.holo.ui.GlanceRules.Row[dev.awaken.holo.ui.GlanceRules.Row.values().length];
-            int n = dev.awaken.holo.ui.GlanceRules.rows(true, true, true, true, true, out);
-            h.assertTrue(n == 9 && java.util.Arrays.equals(java.util.Arrays.copyOf(out, n), dev.awaken.holo.ui.GlanceRules.Row.values()),
+            // Euan 9 Nov, a third hand: everything the hand pass draws goes by this, not only vanilla's hands
+            h.assertTrue(dev.awaken.holo.ui.GlanceRules.handsAway(false, 0.5F, 0F) == 0.5F && dev.awaken.holo.ui.GlanceRules.handsAway(false, 1.1F, 0F) == 1F,
+                    "the hands sink as the arm rises and are gone at its top");
+            h.assertTrue(dev.awaken.holo.ui.GlanceRules.handsAway(true, 1F, 0.3F) == 0.3F, "as it lowers they follow the re-equip, as vanilla's do");
+            int n = dev.awaken.holo.ui.GlanceRules.rows(true, true, true, true, true, true, out);
+            h.assertTrue(n == 10 && java.util.Arrays.equals(java.util.Arrays.copyOf(out, n), dev.awaken.holo.ui.GlanceRules.Row.values()),
                     "everything, in order");
-            n = dev.awaken.holo.ui.GlanceRules.rows(false, false, true, true, false, out);
+            n = dev.awaken.holo.ui.GlanceRules.rows(false, false, true, true, false, false, out);
             h.assertTrue(n == 4 && out[0] == dev.awaken.holo.ui.GlanceRules.Row.LEVEL && out[3] == dev.awaken.holo.ui.GlanceRules.Row.ARMOUR,
-                    "no Aether yet, no task, nowhere to go: the vitals alone");
+                    "no Aether yet, no task, nowhere to go, no holo look: the vitals alone");
             var key = new dev.awaken.holo.ui.GlanceRules.Key();
             key.tick(true);
             h.assertTrue(key.arm() && key.panel(), "held: arm and panel");
             key.tick(false);
-            h.assertTrue(!key.arm() && key.panel(), "a tap: the panel without the arm");
-            for (int i = 0; i < dev.awaken.holo.ui.GlanceRules.TAP_SHOW - 1; i++) key.tick(false);
-            h.assertTrue(key.panel(), "for 4 s");
-            key.tick(false);
-            h.assertFalse(key.panel(), "then gone");
+            h.assertTrue(!key.arm() && !key.panel(), "a tap leaves nothing up");
             for (int i = 0; i < 40; i++) key.tick(true);
+            h.assertTrue(key.panel(), "up for as long as it is held");
             key.tick(false);
-            h.assertFalse(key.panel(), "a long hold lowers with the key");
+            h.assertFalse(key.panel(), "and goes with the key");
             h.succeed();
         });
 

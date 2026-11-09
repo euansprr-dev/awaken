@@ -246,6 +246,9 @@ final class Hands implements FirstPerson.Player {
         b[5] = -b[5];
     }
 
+    /** How far the wrist has taken the hands away this frame (SPEC §40.7): this pass draws its arms before the wrist cancels it. */
+    private static float away;
+
     /** First for each hand: the world layer's arms hide vanilla's; the moves go on. */
     static void first(RenderHandEvent e) {
         if (broken) return;
@@ -253,6 +256,7 @@ final class Hands implements FirstPerson.Player {
         if (main) {
             WorldBody.drawNearLegs(e); // before any of the hands' moves
             mainPushed = false;
+            away = dev.awaken.core.api.FirstPerson.handsAway.of(e.getEquipProgress(), e.getPartialTick());
         }
         var pl = Minecraft.getInstance().player;
         if (pl == null) return;
@@ -265,7 +269,12 @@ final class Hands implements FirstPerson.Player {
             AvatarRenderState av = e.getPlayerState().avatarRenderState;
             boolean rightMain = av == null || av.mainArm != HumanoidArm.LEFT;
             if (main) {
-                WorldBody.drawArms(e);
+                if (away < 1F) {
+                    e.getPoseStack().pushPose();
+                    e.getPoseStack().translate(0, -FIST_DROP * away, 0);
+                    WorldBody.drawArms(e);
+                    e.getPoseStack().popPose();
+                }
                 STOW_ASKED[0] = WorldBody.armShown(rightMain);
                 STOW_ASKED[1] = WorldBody.armShown(!rightMain);
                 STOW_FIST_MAIN[3] = STOW_FIST_OFF[3] = 0; // the world's arms let go in the world
@@ -296,6 +305,7 @@ final class Hands implements FirstPerson.Player {
             stepStow(ticks + e.getPartialTick(), VIEW.stow);
             sinks(holdsMain, holdsOff);
             if (!VIEW.moved() && sinkMain == 0 && sinkOff == 0) return;
+            if (away >= 1F) return; // only the arm with the band is on screen: no fist, no grip, whatever the hands are at
             PoseStack ps = e.getPoseStack();
             float upMain = -FIST_DROP * (1 - sinkMain / ITEM_DROP), upOff = -FIST_DROP * (1 - sinkOff / ITEM_DROP);
             // fists first, before any offset: each empty hand with one has its arm drawn rising to it; a hand putting
@@ -362,7 +372,7 @@ final class Hands implements FirstPerson.Player {
     /** A fist (or a grip) at its weighted place, moved dy up the view (down when negative). */
     private static void fist(RenderHandEvent e, boolean right, float[] f, float dy) {
         float w = f[3];
-        WorldBody.drawFist(e, right, f[0] / w, f[1] / w + dy, f[2] / w, VIEW.tint, VIEW.glow);
+        WorldBody.drawFist(e, right, f[0] / w, f[1] / w + dy - FIST_DROP * away, f[2] / w, VIEW.tint, VIEW.glow);
     }
 
     private static void apply(PoseStack ps, float[] m) {
@@ -381,7 +391,7 @@ final class Hands implements FirstPerson.Player {
         ps.pushPose();
         apply(ps, VIEW.off);
         // vanilla's empty-hand arm transform (FirstPersonHandsAndItemsRenderer.renderPlayerArm), no swing, fully raised
-        ps.translate(invert * 0.64000005F, -0.6F, -0.71999997F);
+        ps.translate(invert * 0.64000005F, -0.6F - 0.6F * away, -0.71999997F);
         ps.rotateDegrees(Axis.YP, invert * 45.0F);
         ps.translate(invert * -1.0F, 3.6F, 3.5F);
         ps.rotateDegrees(Axis.ZP, invert * 120.0F);

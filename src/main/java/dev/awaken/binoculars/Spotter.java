@@ -26,8 +26,8 @@ import java.util.UUID;
  * {@link #HOLD} ticks finds it, through its owner's discovery path ({@link Spotting}). The server decides: every
  * {@link #PERIOD} ticks it casts the player's own look (their eyes and view on the server) against what the sources
  * offer, each thing's bounds widened by {@link #SLACK_DEG} degrees at its distance, takes the nearest along the look,
- * and checks a clear line to it through loaded blocks (an unloaded chunk hides it). One missed look is forgiven (a
- * leaf, a sway); a second, or another thing, starts over. The client hears only when a hold starts, ends or finds
+ * and checks a clear line to it through loaded blocks (an unloaded chunk hides it; a few blocks of foliage don't, stone
+ * or a stand of trees does). One missed look is forgiven (a sway); a second, or another thing, starts over. The client hears only when a hold starts, ends or finds
  * ({@code awaken:binoculars_spot}) and draws the glass's ring from that. No allocation per look beyond a source's own;
  * standing things are gathered about once a second.
  */
@@ -287,14 +287,14 @@ public final class Spotter {
         Vec3 from, to;
         double x0, y0, z0, x1, y1, z1;
         LevelChunk chunk;
-        int cx = Integer.MIN_VALUE, cz;
+        int cx = Integer.MIN_VALUE, cz, foliage;
     }
 
     private static final Sight SIGHT = new Sight();
 
     /**
-     * A clear line from the eyes to it through loaded blocks, by what you see (glass and water hide nothing, leaves do).
-     * Aimed into its bounds where the look meets them, else at their middle; a block inside its bounds is the thing
+     * A clear line from the eyes to it through loaded blocks, by what you see (glass and water hide nothing, nor do up to
+     * {@link Spotting#FOLIAGE} blocks of leaves and bushes). Aimed into its bounds where the look meets them, else at their middle; a block inside its bounds is the thing
      * itself, so the line got there.
      */
     static boolean visible(ServerLevel level, Vec3 eye, Vec3 dir, Candidate c) {
@@ -313,6 +313,7 @@ public final class Spotter {
         s.z1 = c.z1 + 0.5;
         s.chunk = null;
         s.cx = Integer.MIN_VALUE;
+        s.foliage = 0;
         try {
             return BlockGetter.traverseBlocks(eye, to, s, Spotter::block, x -> Boolean.TRUE);
         } finally {
@@ -334,7 +335,8 @@ public final class Spotter {
         VoxelShape shape = state.getVisualShape(s.level, pos, CollisionContext.empty());
         if (shape.isEmpty() || shape.clip(s.from, s.to, pos) == null) return null;
         double x = pos.getX() + 0.5, y = pos.getY() + 0.5, z = pos.getZ() + 0.5;
-        return x >= s.x0 && x <= s.x1 && y >= s.y0 && y <= s.y1 && z >= s.z0 && z <= s.z1;
+        if (x >= s.x0 && x <= s.x1 && y >= s.y0 && y <= s.y1 && z >= s.z0 && z <= s.z1) return Boolean.TRUE;
+        return Spotting.foliage(state) && ++s.foliage <= Spotting.FOLIAGE ? null : Boolean.FALSE;
     }
 
     // ---- for tours and testing ------------------------------------------------------------------------------------------

@@ -83,8 +83,9 @@ public class VillagePiece extends StructurePiece implements PieceBeardifierModif
         VillagePlan p = plan(level, generator);
         if (p == null) return;
         long t0 = System.nanoTime();
-        int n = SettlementPaint.paintChunk(p, chunkPos.x(), chunkPos.z(), level.getSeed(), level.getChunk(chunkPos.x(), chunkPos.z()));
-        n += SettlementPaint.sweep(level, p, chunkPos.x(), chunkPos.z());
+        var keep = dev.awaken.terrain.api.HeroTrees.near(structureManager, chunkPos);
+        int n = SettlementPaint.paintChunk(p, chunkPos.x(), chunkPos.z(), level.getSeed(), level.getChunk(chunkPos.x(), chunkPos.z()), null, keep);
+        n += SettlementPaint.sweep(level, p, chunkPos.x(), chunkPos.z(), keep);
         paintNanos += System.nanoTime() - t0;
         chunks++;
         blocks += n;

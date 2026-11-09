@@ -255,6 +255,7 @@ public final class LifeTests {
 
         AwakenTests.register("creature_motion_feet", 20, h -> {
             List<String> problems = new ArrayList<>();
+            LegBlockTrial.Tally onBlocks = new LegBlockTrial.Tally();
             int checked = 0;
             Matrix4f m = new Matrix4f(), toParent = new Matrix4f();
             Matrix3f hr = new Matrix3f(), kr = new Matrix3f(), back = new Matrix3f();
@@ -369,7 +370,10 @@ public final class LifeTests {
                 }
                 String splits = walkTrial(mp.gait(), mp.body() != null ? mp.body().twist() : 0.0F, legs, ws, rs);
                 if (splits != null) problems.add(mp.id() + ": " + splits);
+                String blocks = LegBlockTrial.run(legs, mp.gait().strideWalk() > 0 ? mp.gait().strideWalk() : ws, onBlocks);
+                if (blocks != null) problems.add(mp.id() + ": " + blocks);
             }
+            dev.awaken.Awaken.LOG.info("creature_motion_feet: feet beside blocks: {}", onBlocks);
             int handLegs = 4 + 4 + 4 + 6 + 2 + 2 + 4 + 4; // the frost stag's, mossback's, basilisk's, scarab's, shroomlet's, Listener's, mudskipper's and marmot's
             // the Mycelord's two and the otter's forelegs walk stiff beside them
             int stiffHero = 2 + 2;

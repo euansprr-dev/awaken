@@ -367,7 +367,7 @@ final class FxRecipes {
             return;
         }
         FxWorld.endAttached(caster.getId(), E_CHARGE);
-        CastAnims.release(caster.getId());
+        CastAnims.release(caster.getId(), e.profile());
         if (e.has(FxEvent.FULL)) {
             Anchors.of(caster, originAnchor(caster), 1f, P);
             flare(P[0], P[1], P[2], 1.2f, st, 5);

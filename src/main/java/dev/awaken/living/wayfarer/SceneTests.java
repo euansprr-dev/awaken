@@ -76,6 +76,42 @@ public final class SceneTests {
             h.succeed();
         });
 
+        // Euan 9 Nov: "Isle appeared in a huge hole in the ground". A pit where the camp is meant to go, level land beside it
+        AwakenTests.registerIsolated("living_camp_on_the_land", 400, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(new BlockPos(0, 1, 0));
+            int span = 72, pit = 10, deep = 14, top = o.getY();
+            for (int cx = o.getX() - span >> 4; cx <= o.getX() + span >> 4; cx++) for (int cz = o.getZ() - span >> 4; cz <= o.getZ() + span >> 4; cz++) level.getChunk(cx, cz);
+            BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+            for (int dx = -span; dx <= span; dx += 4) for (int dz = -span; dz <= span; dz += 4) {
+                top = Math.max(top, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, o.getX() + dx, o.getZ() + dz));
+            }
+            // a sheet of grass above the natural ground, holed by a shaft with a flat floor (the worst case: the floor is level)
+            int y = Math.min(top + deep + 4, level.getMaxY() - 8);
+            for (int dx = -span; dx <= span; dx++) for (int dz = -span; dz <= span; dz++) {
+                boolean hole = dx * dx + dz * dz <= pit * pit;
+                level.setBlock(m.set(o.getX() + dx, hole ? y - deep : y - 1, o.getZ() + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+                if (dx * dx + dz * dz <= (pit + 1) * (pit + 1) && !hole) for (int d = 2; d <= deep; d++) level.setBlock(m.set(o.getX() + dx, y - d, o.getZ() + dz), Blocks.STONE.defaultBlockState(), 2);
+            }
+            Scenes.Forbidden was = Scenes.forbidden;
+            Scenes.forbidden = (l, p) -> false;
+            try {
+                BlockPos nominal = new BlockPos(o.getX(), 0, o.getZ());
+                BlockPos floor = new BlockPos(o.getX(), y - deep + 1, o.getZ());
+                h.assertTrue(Scenes.offLand(level, floor) > Scenes.IN_A_HOLE, "the pit's floor reads as a hole: " + Scenes.offLand(level, floor));
+                BlockPos at = Scenes.campSite(level, nominal, Scenes.roadEnd(nominal), 40, false);
+                dev.awaken.Awaken.LOG.info("[living] camp over a pit: plain dry land {}, the camp's search {}", Scenes.dryLand(level, nominal, 40), at);
+                h.assertTrue(at != null, "level land beside the pit is found");
+                h.assertTrue(at.getY() == y, "the camp is at the height of the land (" + y + "), not in the pit: " + at);
+                int dx = at.getX() - o.getX(), dz = at.getZ() - o.getZ();
+                h.assertTrue(dx * dx + dz * dz > pit * pit, "and outside the pit's mouth: " + at);
+                h.assertTrue(Scenes.offLand(level, at) <= Scenes.OFF_LAND, "the land round it is level");
+            } finally {
+                Scenes.forbidden = was;
+            }
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("living_camp_keeps", 200, h -> {
             ServerLevel level = h.getLevel();
             var server = level.getServer();

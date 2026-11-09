@@ -42,6 +42,7 @@ final class MobsTests {
 
     static void register() {
         dev.awaken.mobs.entity.HeroTests.register(); // hero bodies, their clips and the creatures' voices
+        dev.awaken.mobs.entity.BodyInBlocksTests.register(); // no body of ours in a block (SPEC §39.12)
         dev.awaken.mobs.entity.LifeTests.register(); // the life layer's data and bindings (SPEC §23)
         dev.awaken.mobs.entity.TellTests.register(); // tells, classes and stances (SPEC §24)
         dev.awaken.mobs.entity.KitTests.register(); // the Creature Kit: tables, sync, hit volumes, phases (SPEC §35)

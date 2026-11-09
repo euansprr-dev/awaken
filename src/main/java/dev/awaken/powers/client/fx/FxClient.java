@@ -89,6 +89,10 @@ public final class FxClient {
             FxWorld.tick();
             LadderFx.tick();
             CastAnims.tick();
+            if (HANDS.loop() != null) {
+                int me = mc.player == null ? -1 : mc.player.getId();
+                HANDS.tick(c -> CastAnims.holding(me, c.id()));
+            }
             FxScreen.tick();
             CastLens.tick();
             drainDeferred();
@@ -111,6 +115,7 @@ public final class FxClient {
         head = count = 0;
         FxWorld.reset();
         LadderFx.reset();
+        HANDS.reset();
         CastAnims.reset();
         FxScreen.reset();
         CastLens.reset();
@@ -165,25 +170,38 @@ public final class FxClient {
                 }
             }
             case CastProfiles.END -> {
-                if (own) stopFirstPerson(prof);
+                if (own) HANDS.ended(prof);
             }
             default -> {
             }
         }
     }
 
-    private static void stopFirstPerson(CastProfiles.Profile prof) {
-        FirstPerson.stop(prof.begin1p());
-        if (prof.hold1p() != null) FirstPerson.stop(prof.hold1p());
-    }
+    /** Your hands' hold poses, each with the cast it belongs to. */
+    private static final dev.awaken.powers.fx.HeldHands HANDS = new dev.awaken.powers.fx.HeldHands(dev.awaken.powers.Loadout.SLOTS,
+            new dev.awaken.powers.fx.HeldHands.Clips() {
+                @Override
+                public boolean play(String clip) {
+                    return FirstPerson.play(clip);
+                }
+
+                @Override
+                public void stop(String clip) {
+                    FirstPerson.stop(clip);
+                }
+            });
 
     /** A first-person clip's keyed event: a profile's begin clip hands over to its hold loop where it ends. */
     private static void onFirstPerson(String clip, String event) {
         if (!"hold".equals(event)) return;
         var p = Minecraft.getInstance().player;
         if (p == null) return;
-        CastProfiles.Profile prof = CastAnims.profile(p.getId());
-        if (prof != null && prof.hold1p() != null && prof.begin1p().equals(clip) && CastAnims.holding(p.getId(), prof.id())) FirstPerson.play(prof.hold1p());
+        CastProfiles.Profile cast = HANDS.byBegin(clip); // the key down on it, whatever you have cast since
+        if (cast == null) { // a cast the server began alone (a command): no key holds it
+            CastProfiles.Profile prof = CastAnims.profile(p.getId());
+            if (prof != null && prof.begin1p().equals(clip) && CastAnims.holding(p.getId(), prof.id())) cast = prof;
+        }
+        if (cast != null) HANDS.reached(cast);
     }
 
     // ---- the effect waits for the body's release frame (decision D4) --------------------------------------------------
@@ -385,10 +403,19 @@ public final class FxClient {
     }
 
     /** The local player let go of a channelled power key. */
-    public static void predictRelease(LocalPlayer p) {
-        CastAnims.release(p.getId());
-        CastProfiles.Profile prof = CastAnims.profile(p.getId());
-        if (prof != null) stopFirstPerson(prof);
+    public static void predictRelease(LocalPlayer p, int slot) {
+        CastProfiles.Profile cast = HANDS.release(slot);
+        CastAnims.release(p.getId(), cast == null ? 0 : cast.id()); // that key's cast, not whatever was cast last
+    }
+
+    /** A channelled power key went down. */
+    public static void keyDown(int slot, PowerType type, int level) {
+        HANDS.press(slot, CastProfiles.at(CastProfiles.byPower(type.path), level));
+    }
+
+    /** The keys were forgotten (ClientCasting.reset): nothing is held down any more. */
+    public static void keysForgotten() {
+        HANDS.reset();
     }
 
     /** Combat feel from the server: the caster's own pose pauses for the hit-stop too. */

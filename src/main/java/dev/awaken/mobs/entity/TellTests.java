@@ -112,12 +112,13 @@ public final class TellTests {
         AwakenTests.register("mobs_told_melee", 80, h -> {
             ServerLevel level = h.getLevel();
             MobDef def = Bestiary.get("toll_ghoul");
-            AwakenMob ghoul = Mobs.spawn(level, def, h.absoluteVec(new Vec3(1.5, 1, 1.5)), 5,
+            // clear of the arena's barrier wall: a body put inside one is moved out (SPEC §39.12), away from the pig
+            AwakenMob ghoul = Mobs.spawn(level, def, h.absoluteVec(new Vec3(4.5, 1, 1.5)), 5,
                     new MobRole(MobRole.Role.NORMAL, 5, def.theme.id, Optional.empty(), ""), Set.of());
             h.assertTrue(ghoul != null, "a ghoul spawned");
             ghoul.setNoAi(true); // the test drives its goal by hand
             Pig pig = EntityTypes.PIG.create(level, EntitySpawnReason.MOB_SUMMONED);
-            pig.setPos(h.absoluteVec(new Vec3(2.6, 1, 1.5)));
+            pig.setPos(h.absoluteVec(new Vec3(5.6, 1, 1.5)));
             pig.setNoAi(true);
             level.addFreshEntity(pig);
             ghoul.setTarget(pig);

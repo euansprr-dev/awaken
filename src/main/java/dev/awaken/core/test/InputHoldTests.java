@@ -12,6 +12,8 @@ final class InputHoldTests {
     /** A player object with one input slot. */
     private static final class Body {
         String input;
+        /** What the game latched from the keys, and doesn't read again while a camera is elsewhere. */
+        float moving = 1;
 
         Body(String input) {
             this.input = input;
@@ -20,17 +22,24 @@ final class InputHoldTests {
 
     static void register() {
         AwakenTests.register("core_input_holds", 20, h -> {
-            InputHolds<Body, String> holds = new InputHolds<>(b -> b.input, (b, i) -> b.input = i, () -> "still");
+            InputHolds<Body, String> holds = new InputHolds<>(b -> b.input, (b, i) -> b.input = i, () -> "still", b -> b.moving = 0);
             Body p = new Body("keys");
             Object camera = "camera", ember = "ember", registry = "registry";
             // two scenes overlap and let go in either order: the real input comes back once, at the end
             holds.hold(camera, p, 0, 200);
             h.assertTrue(p.input.equals("still"), "held: the player stands still");
+            h.assertTrue(p.moving == 0, "the walk a camera would leave latched stops as the hold starts");
+            p.moving = 1;
+            holds.tick(p, 1);
+            h.assertTrue(p.moving == 0, "and stays stopped every tick of the hold");
             holds.hold(ember, p, 5, 900);
             holds.release(camera);
             h.assertTrue(p.input.equals("still"), "the camera let go first; the hand-over still holds");
             holds.release(ember);
             h.assertTrue(p.input.equals("keys"), "the last one let go: the player's own keys again, never a stand-in");
+            p.moving = 1;
+            holds.tick(p, 6);
+            h.assertTrue(p.moving == 1, "with nobody holding, the walk is left alone");
             // the bug Euan hit: a second holder that took over mid-shot never puts a stand-in back
             holds.hold(camera, p, 10, 200);
             holds.hold(ember, p, 11, 900);
