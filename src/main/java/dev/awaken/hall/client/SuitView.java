@@ -214,9 +214,9 @@ final class SuitView extends CloseView {
         ArmourPayloads.Offer offer = SuitState.offer(o, set, slot);
         int state = states[slot];
         boolean showNeeds = offer != null && !hidden && state != SuitState.MADE;
-        if (showNeeds) for (ArmourPayloads.Need n : offer.needs()) needs.add(Panel.need(s, !n.group().isEmpty(), n.group().isEmpty() ? n.icon() : n.group(), n.label(), n.have(), n.need()));
+        if (showNeeds) for (ArmourPayloads.Need n : offer.needs()) needs.add(Panel.need(s, !n.group().isEmpty(), n.group().isEmpty() ? n.icon() : n.group(), n.label(), n.have(), n.need(), Panel.across(offer.needs().size())));
         showInlay = offer != null && o != null && o.stand() && ForgeSong.inlays(set) && (state == SuitState.READY || state == SuitState.SHORT);
-        inlayLine = !showInlay ? List.of() : s.wrap(inlay == 0 ? "No inlay. Choose a catalyst to set into this piece." : ArmourInlay.line(Forces.Force.values()[inlay - 1]), TEXT_W, 3F);
+        inlayLine = !showInlay ? List.of() : s.wrap(inlay == 0 ? "No inlay. Pick a catalyst above." : ArmourInlay.line(Forces.Force.values()[inlay - 1]), TEXT_W, 3F);
         actions(s, w, o, offer, hidden, state);
         Stage.say(name.getString() + ". " + eyebrow + ". " + (pieceName == null ? "" : pieceName.getString() + ". ") + SuitState.word(state) + ".");
         TerraceLayout.Fig f = TerraceLayout.of(set);
@@ -475,7 +475,7 @@ final class SuitView extends CloseView {
         float last = whyTop - inlayH - needHeight - pieceH - 12F;
 
         // What the suit does is why you'd want it, so a full panel never drops its first line. It gives up other things in turn:
-        // where a material comes from (that moves to a tip on the material), the comparison, then a reason the red counts already give.
+        // where a material comes from (that moves to a tip on the material), a reason the red counts already give, then the comparison.
         float first = special.isEmpty() ? 0F : special.getFirst().size() * 30F;
         boolean hint = !needs.isEmpty(), showCompare = !compare.isEmpty(), showWhy = !why.isEmpty();
         if (hint && y + first > last) {
@@ -483,13 +483,13 @@ final class SuitView extends CloseView {
             needHeight -= Panel.SOURCE_H;
             last += Panel.SOURCE_H;
         }
-        if (showCompare && y + first > last) {
-            showCompare = false;
-            last += 40F;
-        }
         if (showWhy && states[slot] == SuitState.SHORT && y + first > last) {
             showWhy = false;
             last += why.size() * 30F;
+        }
+        if (showCompare && y + first > last) {
+            showCompare = false;
+            last += 40F;
         }
         boolean headline = true;
         for (List<FormattedCharSequence> paragraph : special) {
@@ -569,7 +569,7 @@ final class SuitView extends CloseView {
                 s.centre("-", sx + INLAY_SIZE / 2F, y + 14F, 3F, sel ? Stage.TITLE : Stage.DIM);
             } else {
                 Panel.icon(s, new ItemStack(ArmourInlay.catalyst(Forces.Force.values()[k - 1])), sx + 2F, y + 2F, 3F);
-                if (!open) s.fill(sx + 2F, y + 2F, sx + INLAY_SIZE - 2F, y + INLAY_SIZE - 2F, 0xB0080B12);
+                if (!open) s.right("0", sx + INLAY_SIZE - 3F, y + INLAY_SIZE - 22F, 2F, Stage.BAD); // drawn in full, so you know it when you find it
             }
         }
         Panel.lines(s, inlayLine, y + INLAY_SIZE + 6F, inlayLine.size(), inlay == 0 ? Stage.DIM : ArmourInlay.colour(Forces.Force.values()[inlay - 1]));

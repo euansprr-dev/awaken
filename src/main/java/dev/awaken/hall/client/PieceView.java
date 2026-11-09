@@ -292,7 +292,7 @@ final class PieceView extends CloseView {
         for (String one : sp) special.add(s.wrap(one, TEXT_W, 3F));
 
         needs.clear();
-        if (!hidden && lord == null && here != null) for (ArmsPayloads.NeedRow n : here.needs()) needs.add(need(s, n));
+        if (!hidden && lord == null && here != null) for (ArmsPayloads.NeedRow n : here.needs()) needs.add(need(s, n, Panel.across(here.needs().size())));
         actions(s, w, state, hidden, here);
         if (lord == null) {
             prevName = neighbour(w, col - 1);
@@ -331,8 +331,8 @@ final class PieceView extends CloseView {
         }
     }
 
-    private static Panel.Need need(Stage s, ArmsPayloads.NeedRow n) {
-        return Panel.need(s, n.kind().equals("tag"), n.id(), "", n.have(), n.need());
+    private static Panel.Need need(Stage s, ArmsPayloads.NeedRow n, int across) {
+        return Panel.need(s, n.kind().equals("tag"), n.id(), "", n.have(), n.need(), across);
     }
 
     private void actions(Stage s, HallNet.Wall w, int state, boolean hidden, ArmsPayloads.@Nullable ArmouryDetail here) {

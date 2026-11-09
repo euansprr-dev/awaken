@@ -32,8 +32,18 @@ final class Panel {
     /** What goes into the forge: the real item (a group's members in turn, so you know any of them when you find it), the count, its name and where to find it. */
     record Need(ItemStack[] icons, String count, String name, List<FormattedCharSequence> nameLines, boolean ok, String source) {}
 
+    /** Four to a row, but five or six share one rather than spend a second row a full panel can't afford. */
+    static int across(int count) {
+        return Math.clamp(count, NEEDS_ACROSS, 6);
+    }
+
     /** A need by item or by tag id ("namespace:path"). */
     static Need need(Stage s, boolean tag, String id, String label, int have, int need) {
+        return need(s, tag, id, label, have, need, NEEDS_ACROSS);
+    }
+
+    /** {@code across} as {@link #across} gives it for the whole row: the name wraps to its cell. */
+    static Need need(Stage s, boolean tag, String id, String label, int have, int need, int across) {
         Identifier nid = Identifier.parse(id);
         List<ItemStack> icons = new ArrayList<>(1);
         String name = label;
@@ -50,11 +60,11 @@ final class Panel {
         String key = tag ? "awaken.source.tag." + nid.getPath()
                 : nid.getPath().endsWith("_blueprint") ? "awaken.source.blueprint" : "awaken.source." + nid.getNamespace() + "." + nid.getPath();
         String source = Language.getInstance().has(key) ? Language.getInstance().getOrDefault(key) : "";
-        return new Need(icons.toArray(new ItemStack[0]), Math.min(have, need) + "/" + need, name, s.wrap(name, NEED_W - 8F, 2F), ok, source);
+        return new Need(icons.toArray(new ItemStack[0]), Math.min(have, need) + "/" + need, name, s.wrap(name, TEXT_W / across - 8F, 2F), ok, source);
     }
 
     static float needsHeight(int count) {
-        int rows = (count + NEEDS_ACROSS - 1) / NEEDS_ACROSS;
+        int across = across(count), rows = (count + across - 1) / across;
         return count == 0 ? 0F : 34F + NEED_H * rows + SOURCE_H;
     }
 
@@ -69,10 +79,12 @@ final class Panel {
         s.text(heading, X, y, 3F, Stage.EDGE);
         y += 34F;
         float top = y;
+        int across = across(needs.size());
+        float cell = TEXT_W / across;
         for (int i = 0; i < needs.size(); i++) {
             Need n = needs.get(i);
-            float cx = X + (i % NEEDS_ACROSS) * NEED_W, cy = top + (i / NEEDS_ACROSS) * NEED_H, mid = cx + NEED_W / 2F;
-            if (live && mx >= cx && mx < cx + NEED_W && my >= cy && my < cy + NEED_H) hover = i;
+            float cx = X + (i % across) * cell, cy = top + (i / across) * NEED_H, mid = cx + cell / 2F;
+            if (live && mx >= cx && mx < cx + cell && my >= cy && my < cy + NEED_H) hover = i;
             if (n.icons.length > 0) icon(s, n.icons[(int) (time / 1.2F) % n.icons.length], mid - 32F, cy, 4F);
             s.centre(n.count, mid, cy + 68F, 3F, n.ok ? Stage.GOOD : Stage.BAD);
             for (int l = 0; l < Math.min(2, n.nameLines.size()); l++) {
@@ -80,7 +92,7 @@ final class Panel {
                 s.text(line, mid - s.font.width(line) * s.snap(2F) / 2F, cy + 94F + l * 18F, 2F, n.ok ? Stage.LABEL : Stage.TITLE);
             }
         }
-        y = top + (needs.size() + NEEDS_ACROSS - 1) / NEEDS_ACROSS * NEED_H;
+        y = top + (needs.size() + across - 1) / across * NEED_H;
         Need shown = !hint ? null : hover >= 0 ? needs.get(hover) : firstShort(needs);
         if (shown != null) lines(s, s.wrap(shown.source.isEmpty() ? shown.name : shown.source, TEXT_W, 3F), y + 14F, 3, Stage.DIM);
         return hover;

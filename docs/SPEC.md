@@ -19726,7 +19726,7 @@ Lit round your lantern and below your level; unfound suits are black shapes with
 brings it close: it stands turning, each piece named on the figure (`Helm`, `Cuirass`, `Greaves`, `Boots`, with what state it's in; a
 click or Tab picks the piece); the same kind at every rank on the left; on the right what the suit does (its two-piece and four-piece
 abilities come before the piece's own rows: that is why you'd want it; the four-piece line comes first and a full panel never drops it,
-giving up in turn where a material comes from (it moves to a tip on the material), the comparison, then a reason the red counts already give), the armour of the whole suit, what the piece you picked does
+giving up in turn where a material comes from (it moves to a tip on the material), a reason the red counts already give, then the comparison; five or six materials share one row), the armour of the whole suit, what the piece you picked does
 against what you wear, the real items it takes, an inlay of any catalyst you carry, and Hold to forge the piece. Unfound patterns
 say where patterns come from, never which creature. `Your looks` (each piece's look, one dye) moved here. Track a suit and it goes on
 K > Tasks as `armour/tracked` (one at a time). The Fitting Stand opens this wing; K's way in looks and tracks only. Test `hall_suits`.
