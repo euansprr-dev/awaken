@@ -28,6 +28,9 @@ final class FxDebris {
     private static final float[] SA = new float[CAP], SB = new float[CAP], SIZE = new float[CAP], FLOOR = new float[CAP];
     private static final float[] U0 = new float[CAP], U1 = new float[CAP], V0 = new float[CAP], V1 = new float[CAP];
     private static final int[] AGE = new int[CAP], LIFE = new int[CAP], LIGHT = new int[CAP], TINT = new int[CAP];
+    /** A chunk drawn into a point instead of thrown: no gravity, spiralling in (a gravity well's sand and leaves). */
+    private static final boolean[] PULLED = new boolean[CAP];
+    private static final float[] AX = new float[CAP], AY = new float[CAP], AZ = new float[CAP];
     private static int live;
     private static RenderType type;
     private static final SubmitNodeCollector.CustomGeometryRenderer DRAW = (pose, vc) -> {
@@ -81,6 +84,27 @@ final class FxDebris {
         V1[i] = s.getV((vo + 1) / 4f);
         LIGHT[i] = FxWorld.light(x, y, z);
         TINT[i] = 0xFFFFFFFF;
+        PULLED[i] = false;
+    }
+
+    /** A chunk of a block torn loose and drawn into (ax, ay, az), where it is swallowed. */
+    static void pull(BlockState state, double x, double y, double z, double ax, double ay, double az, float size, int life) {
+        int before = live;
+        spawn(state, x, y, z, 0, 0, 0, size, life, Float.NEGATIVE_INFINITY);
+        if (live == before) return;
+        PULLED[before] = true;
+        AX[before] = (float) ax;
+        AY[before] = (float) ay;
+        AZ[before] = (float) az;
+        // a chunk's look is its block's top: grass and leaves are tinted on the block, not in the sprite
+        TINT[before] = tinted(state, x, y, z);
+    }
+
+    private static int tinted(BlockState state, double x, double y, double z) {
+        var tint = Minecraft.getInstance().getBlockColors().getTintSource(state, 0);
+        ClientLevel lvl = Minecraft.getInstance().level;
+        if (tint == null || lvl == null) return 0xFFFFFFFF;
+        return 0xFF000000 | tint.colorInWorld(state, lvl, net.minecraft.core.BlockPos.containing(x, y, z));
     }
 
     static void tick(ClientLevel level) {
@@ -95,6 +119,26 @@ final class FxDebris {
             PZ[i] = Z[i];
             PRA[i] = RA[i];
             PRB[i] = RB[i];
+            if (PULLED[i]) {
+                float dx = AX[i] - (float) X[i], dy = AY[i] - (float) Y[i], dz = AZ[i] - (float) Z[i];
+                float d = Mth.sqrt(dx * dx + dy * dy + dz * dz);
+                if (d < 0.5f) {
+                    remove(i);
+                    continue;
+                }
+                float a = 0.025f + 0.16f / (d + 0.6f), swirl = 0.035f;
+                VX[i] = (VX[i] + dx / d * a - dz / d * swirl) * 0.92f;
+                VY[i] = (VY[i] + dy / d * a) * 0.92f;
+                VZ[i] = (VZ[i] + dz / d * a + dx / d * swirl) * 0.92f;
+                X[i] += VX[i];
+                Y[i] += VY[i];
+                Z[i] += VZ[i];
+                RA[i] += SA[i];
+                RB[i] += SB[i];
+                if (AGE[i] % 5 == 0) LIGHT[i] = FxWorld.light(X[i], Y[i] + 0.2, Z[i]);
+                i++;
+                continue;
+            }
             VY[i] -= 0.045f;
             VX[i] *= 0.98f;
             VY[i] *= 0.98f;
@@ -150,6 +194,10 @@ final class FxDebris {
         LIFE[i] = LIFE[l];
         LIGHT[i] = LIGHT[l];
         TINT[i] = TINT[l];
+        PULLED[i] = PULLED[l];
+        AX[i] = AX[l];
+        AY[i] = AY[l];
+        AZ[i] = AZ[l];
     }
 
     static void submit(PoseStack ps, SubmitNodeCollector out, double camX, double camY, double camZ, float partial) {

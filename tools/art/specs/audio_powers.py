@@ -33,6 +33,8 @@ import ritual_sounds as R  # noqa: E402
 import audio_arms as AA  # noqa: E402  (helpers: rec, pick, shift, trim, cloth, sub, _blow, tame, master)
 import audio_power_kits as KITS  # noqa: E402  (a sound for every `power.*` event the catalog plays)
 import audio_power_ladder as LADDER  # noqa: E402  (the ladder's moment and the families' tier layers, SPEC 36)
+import audio_power_voice as VOICE  # noqa: E402  (whole packs per power, from recordings: SPEC 50.7)
+import ding_check as DING  # noqa: E402
 from audio_mix import TARGETS  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
@@ -140,7 +142,15 @@ for _name, (_fn, _v, _rms, _att, _crest) in LADDER.EVENTS.items():
     EVENTS["lad_" + _name] = (_fn, _v, _rms, _att, _crest)
 
 
+# a pack per power (SPEC 50.7): power.hay_*, power.wave_*, power.well_*, power.rail_*
+for _name, (_fn, _v, _rms, _att, _crest) in VOICE.EVENTS.items():
+    EVENTS["kit_" + _name] = (_fn, _v, _rms, _att, _crest)
+
+
 def seed_of(event, k):
+    if event[4:] in VOICE.EVENTS:
+        # keyed by name so that adding an event never changes another pack's sound
+        return 41000 + sum(ord(c) * (i + 3) for i, c in enumerate(event)) * 17 + k * 7
     return 9700 + list(EVENTS).index(event) * 61 + k * 7
 
 
@@ -149,6 +159,11 @@ def render(event, k):
     tgt, tol, ceil, _ = TARGETS["power"]
     assert abs(rms - tgt) <= tol, f"{event}: {rms} outside the power window"
     x = AA.tame(K.mono(fn(seed_of(event, k))), crest)
+    if event.endswith("_loop"):
+        # master() fades the ends and leads with silence, which would be a dropout at every join. Master it wrapped round itself, then keep one lap.
+        lead, wrap = K.ns(0.0015), K.ns(0.05)
+        y, took = AA.master(np.concatenate([x[-wrap:], x, x[:wrap]]), rms, ceil - 0.7)
+        return y[lead + wrap:lead + wrap + len(x)], took
     return AA.master(x, rms, ceil - 0.7)
 
 
@@ -167,8 +182,12 @@ def check(event, files):
             out.append(f"{os.path.basename(f)}: RMS {rms:.1f} (aimed {EVENTS[event][2]})")
         if tp > ceil + 0.05:
             out.append(f"{os.path.basename(f)}: true peak {tp:.1f} over {ceil}")
-        if abs(x[0]) > 0.02 or abs(x[-1]) > 0.02:
+        if not event.endswith("_loop") and (abs(x[0]) > 0.02 or abs(x[-1]) > 0.02):
             out.append(f"{os.path.basename(f)}: a click at an end")
+        if event[4:] in VOICE.EVENTS:
+            found = DING.check(DING.decode(f))
+            if found["ding"]:
+                out.append(f"{os.path.basename(f)}: a high tone at {found['hz']:.0f} Hz, {found['at']:.2f}s (no dings: SPEC 50.7)")
     return out
 
 
@@ -188,7 +207,7 @@ def write_json():
         f.write("\n")
     lpath = os.path.join(MERGE, "lang/en_us.json")
     lang = json.load(open(lpath)) if os.path.exists(lpath) else {}
-    for event, text in list(SUBTITLES.items()) + [(k, v) for k, v in LADDER.SUBTITLES.items() if v]:
+    for event, text in list(SUBTITLES.items()) + [(k, v) for k, v in LADDER.SUBTITLES.items() if v] + list(VOICE.SUBTITLES.items()):
         lang["subtitles.awaken.power." + event] = text
     with open(lpath, "w") as f:
         json.dump(lang, f, indent=2)

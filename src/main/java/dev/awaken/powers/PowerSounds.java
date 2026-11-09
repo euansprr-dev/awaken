@@ -33,6 +33,40 @@ public final class PowerSounds {
     public static DeferredHolder<SoundEvent, SoundEvent> tier(PowerType.Family family, int level) {
         return (level >= 5 ? TIER5 : TIER3).get(family.ordinal());
     }
+    // Powers in Full Voice (SPEC §50.7): each of these powers has its own pack, built from recordings
+    private static final java.util.Set<String> OWN_PACK = java.util.Set.of("haymaker", "shockwave", "gravity_well", "railgun");
+
+    /** A power with a whole pack of its own: its level 5 layer is in the pack and the family's level layers stay out of it. */
+    public static boolean ownPack(String power) {
+        return OWN_PACK.contains(power);
+    }
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAY_CHARGE = s("power.hay_charge");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAY_CHARGE_LOOP = s("power.hay_charge_loop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAIL_CHARGE = s("power.rail_charge");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAIL_CHARGE_LOOP = s("power.rail_charge_loop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAY_PEAK = s("power.hay_peak");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAY_RELEASE = s("power.hay_release");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAY_IMPACT = s("power.hay_impact");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAY_TAIL = s("power.hay_tail");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAY_WALL = s("power.hay_wall");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HAY_L5 = s("power.hay_l5");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WAVE_ROLL = s("power.wave_roll");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WAVE_KNOCK = s("power.wave_knock");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WAVE_TAIL = s("power.wave_tail");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WAVE_WALL = s("power.wave_wall");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WAVE_L5 = s("power.wave_l5");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WELL_OPEN = s("power.well_open");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WELL_LOOP = s("power.well_loop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WELL_EAT = s("power.well_eat");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WELL_TAIL = s("power.well_tail");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WELL_L5 = s("power.well_l5");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAIL_READY = s("power.rail_ready");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAIL_RELEASE = s("power.rail_release");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAIL_IMPACT = s("power.rail_impact");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAIL_TAIL = s("power.rail_tail");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAIL_L5 = s("power.rail_l5");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAIL_FILL = s("power.rail_fill");
     public static final DeferredHolder<SoundEvent, SoundEvent> SLAM = s("power.slam");
     public static final DeferredHolder<SoundEvent, SoundEvent> WHOOSH = s("power.whoosh");
     public static final DeferredHolder<SoundEvent, SoundEvent> PUNCH = s("power.punch");

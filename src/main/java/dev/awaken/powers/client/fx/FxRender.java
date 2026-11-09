@@ -111,7 +111,7 @@ final class FxRender {
 
     private static void submit(SubmitCustomGeometryEvent e) {
         boolean shapes = FxWorld.liveShapes > 0, sprites = FxWorld.POOL.live() > 0;
-        if (!shapes && !sprites && !FxDebris.any() && !FxAfterimages.any()) return;
+        if (!shapes && !sprites && !FxDebris.any() && !FxGroundWave.any() && !FxAfterimages.any()) return;
         var state = e.getLevelRenderState();
         Vec3 cam = state.cameraRenderState.pos;
         cx = cam.x;
@@ -152,6 +152,7 @@ final class FxRender {
         if (shapes || sprites) out.order(3).submitCustomGeometry(ps, addSprites, ADD_SPRITES);
         if (sprites || shapes) out.order(4).submitCustomGeometry(ps, brightSprites, BRIGHT_SPRITES);
         FxDebris.submit(ps, out, cx, cy, cz, pt);
+        FxGroundWave.submit(ps, out, cx, cy, cz, pt);
         FxAfterimages.submit(ps, out, cx, cy, cz);
     }
 

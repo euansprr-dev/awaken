@@ -54,6 +54,7 @@ public final class PowersModule {
         PowersTests.register();
         PowerPreviewTests.register();
         PowerHitTests.register();
+        PowerVoiceTests.register(); // Powers in Full Voice (SPEC 50)
         MoveTwistTests.register(); // the Awakened Body's family twists
         MasteryCommands.register();
         MasteryTests.register();

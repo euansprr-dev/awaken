@@ -64,4 +64,21 @@ public final class PowerMath {
     public static float capBossHit(float amount, float maxHealth) {
         return Math.min(amount, maxHealth * BOSS_HIT_CAP);
     }
+
+    /** The most a hit's bonuses together may multiply it by (SPEC §50.1); the boss hit cap still comes after this. */
+    public static final float MAX_BONUS = 1.6f;
+    /** Ticks either side of a timed moment that still count. */
+    public static final int GRACE_TICKS = 2;
+
+    public static float capBonus(float product) {
+        return Math.min(MAX_BONUS, product);
+    }
+
+    /**
+     * A held power's age when its key really came up: the ready cue reached the player half a round trip late and the let-go
+     * took the other half to come back, so a timed moment is judged a whole round trip earlier than the packet arrived.
+     */
+    public static int pressedAge(int age, int latencyMs) {
+        return age - Math.min(6, Math.max(0, latencyMs) / 50);
+    }
 }
