@@ -43,7 +43,7 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
     private static final float TAG_LEFT = 300F, TAG_RIGHT = 1290F, TAG_Y = 122F;
     private static final float HOLD_X0 = 554F, HOLD_X1 = 1154F, HOLD_Y0 = 812F, HOLD_Y1 = 900F;
     private static final float PLATE_W = 1040F, NEED_W = 170F, NEED_H = 128F;
-    private static final float STONES_TOP = 590F, STONE_STEP = 176F;
+    private static final float STONES_TOP = 590F, STONE_STEP = 190F;
     private static final int FORGE = 0xFFF2B35F;
 
     private AnvilPayloads.Held held;
@@ -159,6 +159,8 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
         if (stage == null) stage = new Stage(font);
         Stage s = stage;
         s.begin(g, width, height);
+        // the floor falls away into shade, so the words under the steel never fight the fire behind them
+        g.fillGradient(0, 500, Stage.W, Stage.H, 0x00000000, 0xC0050302);
         frame(s, dt, mx, my);
         s.endBare();
     }
@@ -368,7 +370,7 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
             } else {
                 float cx = sealCx(i);
                 s.titleCentre(riteTitle(i), cx, y + iconSize + 2F, 2F, titleColour);
-                s.centre(s.fit(o.headline(), SEAL_W, 3F), cx, y + iconSize + 62F, 3F, o.ready() ? Stage.GOOD : Stage.LANTERN);
+                s.centre(s.fit(o.headline(), SEAL_W + 60F, 3F), cx, y + iconSize + 62F, 3F, o.ready() ? Stage.GOOD : Stage.LANTERN);
             }
         }
     }
@@ -520,7 +522,11 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
         trackX1 = CX + w / 2F;
         trackY = y;
         boolean over = !tracked && mx >= trackX0 - 8F && mx < trackX1 + 8F && my >= y - 4F && my < y + 32F;
-        s.text(label, trackX0, y, 3F, tracked ? Stage.GOOD : over ? Stage.TITLE : Stage.LABEL);
+        if (!tracked) {
+            if (over) s.fill(trackX0 - 12F, y - 5F, trackX1 + 12F, y + 31F, 0x552A3A56);
+            s.outline(trackX0 - 12F, y - 5F, trackX1 + 12F, y + 31F, 2, 0xA07FC3FF);
+        }
+        s.text(label, trackX0, y + 1F, 3F, tracked ? Stage.GOOD : over ? Stage.TITLE : Stage.LABEL);
     }
 
     private static Panel.@Nullable Need firstShort(List<Panel.Need> list) {
@@ -557,9 +563,8 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
             if (Math.abs(mx - mid) < STONE_STEP / 2F && my >= STONES_TOP && my < STONES_TOP + 118F) over = i;
             if (on) s.glow(mid, STONES_TOP + 32F, 76F, 66F, st.colour(), .5F);
             Panel.icon(s, stoneIcons[i], mid - 32F, STONES_TOP, 4F);
-            if (!has) s.fill(mid - 32F, STONES_TOP, mid + 32F, STONES_TOP + 64F, 0xA0080604);
             s.centre(st.name(), mid, STONES_TOP + 68F, 3F, has ? 0xFF000000 | st.colour() : Stage.DIM);
-            String sub = st.on() ? "On it now" : has ? st.have() + " " + st.stone() : "No " + st.stone();
+            String sub = st.on() ? "On it now" : has ? st.have() + " " + st.stone() : st.stone(); // never dimmed: you should know it when you find it
             s.centre(s.fit(sub, STONE_STEP - 6F, 2F), mid, STONES_TOP + 96F, 2F, st.on() ? Stage.GOOD : has ? Stage.LABEL : Stage.DIM);
             if (on) s.fill(mid - 38F, STONES_TOP + 114F, mid + 38F, STONES_TOP + 117F, 0xFF000000 | st.colour());
         }

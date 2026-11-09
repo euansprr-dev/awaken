@@ -84,6 +84,10 @@ public final class AnvilClient {
             if (sceneAnvil() != null) e.setCanceled(true);
         });
         bus.addListener(RenderGuiLayerEvent.Pre.class, AnvilClient::hideHud);
+        // the weapon has left your hand: it is the one hanging over the fire
+        bus.addListener(net.neoforged.neoforge.client.event.RenderHandEvent.class, e -> {
+            if (net.minecraft.client.Minecraft.getInstance().gui.screen() instanceof dev.awaken.hall.client.AnvilStage) e.setCanceled(true);
+        });
         bus.addListener(RenderPlayerEvent.Pre.class, AnvilCamera::player);
         bus.addListener(ClientTickEvent.Post.class, e -> {
             tick();
