@@ -1,0 +1,169 @@
+# A_awakened_no_home top=armour/e level=1 rank=E
+A_awakened_no_home|ARMOUR|armour/e|main|40|58|Choose your first armour
+A_awakened_no_home|WEAPONS|arms:issue|main|-|70|Talk to Hale: he has a free weapon for you
+A_awakened_no_home|WEAPONS|arms/war_anvil|main|-|44|Set up a War Anvil
+A_awakened_no_home|WEAPONS|arms/first_weapon|main|-|43|Forge your first weapon
+A_awakened_no_home|RANK|trail/awaken:moving_like_a_hunter|opt|-|30|Hold sneak as you land to roll.
+A_awakened_no_home|WEAPONS|trail/awaken:your_first_weapon|opt|-|30|Take Hale's hunter's issue at the High Gate.
+A_awakened_no_home|RANK|progression:road/awaken:hunter_crafts|main|-|15|At level 2: Hunter crafts
+# B_hearthfire_bedroom_L3 top=hearth/armoury level=3 rank=E
+B_hearthfire_bedroom_L3|HEARTH|hearth/armoury|main|30|60|Build your Armoury
+B_hearthfire_bedroom_L3|ARMOUR|armour/e|main|40|58|Choose your first armour
+B_hearthfire_bedroom_L3|RANK|hearth/anchor|main|50|55|Clear your first gate
+B_hearthfire_bedroom_L3|WEAPONS|arms:issue|main|-|70|Talk to Hale: he has a free weapon for you
+B_hearthfire_bedroom_L3|HEARTH|hearth:guide|main|-|56|Right-click your campfire to see what your home needs
+B_hearthfire_bedroom_L3|RANK|progression:points|main|-|55|Press {key.awaken.status} to spend 6 points
+B_hearthfire_bedroom_L3|WEAPONS|arms/war_anvil|main|-|44|Set up a War Anvil
+B_hearthfire_bedroom_L3|WEAPONS|arms/first_weapon|main|-|43|Forge your first weapon
+B_hearthfire_bedroom_L3|HEARTH|kin/need/lampwing|main|-|32|Nothing lights your yard at night.
+B_hearthfire_bedroom_L3|HEARTH|kin/need/burrowbun|main|-|31|Nobody's minding the fields, and there aren't any yet.
+B_hearthfire_bedroom_L3|HEARTH|trail/awaken:a_room_for_everything|opt|-|30|Make a Kitchen: a stove, a crafting table and a barrel.
+B_hearthfire_bedroom_L3|RANK|trail/awaken:moving_like_a_hunter|opt|-|30|Hold sneak as you land to roll.
+B_hearthfire_bedroom_L3|OUT|trail/awaken:the_commons|opt|-|30|Discover two new biomes.
+B_hearthfire_bedroom_L3|OUT|trail/awaken:the_delvers_pick|opt|-|30|Pull the Delver's Pick from the stone at the end of an old adit.
+B_hearthfire_bedroom_L3|OUT|trail/awaken:wayfarers_and_camps|opt|-|30|Register with the Association.
+B_hearthfire_bedroom_L3|RANK|trail/awaken:your_first_gate|opt|-|30|Clear a floor.
+B_hearthfire_bedroom_L3|WEAPONS|trail/awaken:your_first_weapon|opt|-|30|Take Hale's hunter's issue at the High Gate.
+B_hearthfire_bedroom_L3|HEARTH|trail/awaken:your_hearth|opt|-|30|Right-click your campfire to open your Hearth's guide.
+B_hearthfire_bedroom_L3|HEARTH|hearth/sanctuary|opt|-|20|Make your Bedroom a Sanctuary
+B_hearthfire_bedroom_L3|RANK|progression:road/awaken:second_power|main|-|15|At level 4: A Power Core
+# C_anchor_armoury_E_L7 top=armour/e level=7 rank=E
+C_anchor_armoury_E_L7|ARMOUR|armour/e|main|40|58|Choose your first armour
+C_anchor_armoury_E_L7|HEARTH|hearth/forge|main|60|45|Grow your Armoury into a Forge
+C_anchor_armoury_E_L7|WEAPONS|arms:issue|main|-|70|Talk to Hale: he has a free weapon for you
+C_anchor_armoury_E_L7|HEARTH|hearth:guide|main|-|56|Right-click your Anchor to see what your home needs
+C_anchor_armoury_E_L7|RANK|progression:points|main|-|55|Press {key.awaken.status} to spend 18 points
+C_anchor_armoury_E_L7|WEAPONS|arms/war_anvil|main|-|44|Set up a War Anvil
+C_anchor_armoury_E_L7|WEAPONS|arms/first_weapon|main|-|43|Forge your first weapon
+C_anchor_armoury_E_L7|HEARTH|hearth/tier/2|main|-|35|Grow your home to Steading
+C_anchor_armoury_E_L7|HEARTH|kin/need/lampwing|main|-|32|Nothing lights your yard at night.
+C_anchor_armoury_E_L7|HEARTH|kin/need/burrowbun|main|-|31|Nobody's minding the fields, and there aren't any yet.
+C_anchor_armoury_E_L7|HEARTH|trail/awaken:a_room_for_everything|opt|-|30|Make a Kitchen: a stove, a crafting table and a barrel.
+C_anchor_armoury_E_L7|RANK|trail/awaken:moving_like_a_hunter|opt|-|30|Hold sneak as you land to roll.
+C_anchor_armoury_E_L7|OUT|trail/awaken:the_commons|opt|-|30|Discover two new biomes.
+C_anchor_armoury_E_L7|OUT|trail/awaken:the_delvers_pick|opt|-|30|Pull the Delver's Pick from the stone at the end of an old adit.
+C_anchor_armoury_E_L7|HEARTH|trail/awaken:the_forge|opt|-|30|Craft a Forge. The Anchor taught you the recipe.
+C_anchor_armoury_E_L7|HEARTH|trail/awaken:the_training_grounds|opt|-|30|Place a Start Gate, numbered Checkpoint Rings and a Finish Gate.
+C_anchor_armoury_E_L7|HEARTH|trail/awaken:trophies|opt|-|30|Hang a boss trophy on a Trophy Mount.
+C_anchor_armoury_E_L7|OUT|trail/awaken:wayfarers_and_camps|opt|-|30|Register with the Association.
+C_anchor_armoury_E_L7|RANK|trail/awaken:your_first_gate|opt|-|30|Clear a floor.
+C_anchor_armoury_E_L7|WEAPONS|trail/awaken:your_first_weapon|opt|-|30|Take Hale's hunter's issue at the High Gate.
+C_anchor_armoury_E_L7|HEARTH|trail/awaken:your_hearth|opt|-|30|Right-click your campfire to open your Hearth's guide.
+C_anchor_armoury_E_L7|HEARTH|trail/awaken:your_village|opt|-|30|Build a second bedroom, Snug or better.
+C_anchor_armoury_E_L7|HEARTH|hearth/sanctuary|opt|-|20|Make your Bedroom a Sanctuary
+C_anchor_armoury_E_L7|RANK|progression:road/awaken:essence|main|-|15|At level 8: Essence
+# D_D_rank_L12_tier1 top=lesson:meditation/meditate level=12 rank=D
+D_D_rank_L12_tier1|ARMOUR|armour/d|main|40|58|Choose your first armour
+D_D_rank_L12_tier1|HEARTH|hearth/forge|main|60|45|Grow your Armoury into a Forge
+D_D_rank_L12_tier1|WEAPONS|arms/war_anvil|main|62|44|Set up a War Anvil
+D_D_rank_L12_tier1|WEAPONS|arms/first_weapon|main|64|43|Forge your first weapon
+D_D_rank_L12_tier1|OUT|lesson:meditation/meditate|main|-|90|Meditate: sneak and hold G, keep still
+D_D_rank_L12_tier1|WEAPONS|arms:issue|main|-|70|Talk to Hale: he has a free weapon for you
+D_D_rank_L12_tier1|HEARTH|hearth:guide|main|-|56|Right-click your Anchor to see what your home needs
+D_D_rank_L12_tier1|RANK|progression:points|main|-|55|Press {key.awaken.status} to spend 33 points
+D_D_rank_L12_tier1|HEARTH|hearth/tier/2|main|-|35|Grow your home to Steading
+D_D_rank_L12_tier1|HEARTH|kin/need/lampwing|main|-|32|Nothing lights your yard at night.
+D_D_rank_L12_tier1|HEARTH|kin/need/burrowbun|main|-|31|Nobody's minding the fields, and there aren't any yet.
+D_D_rank_L12_tier1|BELLS|dreams/bell|main|-|30|A bell is waiting in a dream. Sleep in your bed tonight.
+D_D_rank_L12_tier1|HEARTH|trail/awaken:a_room_for_everything|opt|-|30|Make a Kitchen: a stove, a crafting table and a barrel.
+D_D_rank_L12_tier1|RANK|trail/awaken:moving_like_a_hunter|opt|-|30|Hold sneak as you land to roll.
+D_D_rank_L12_tier1|OUT|trail/awaken:the_commons|opt|-|30|Discover two new biomes.
+D_D_rank_L12_tier1|OUT|trail/awaken:the_delvers_pick|opt|-|30|Pull the Delver's Pick from the stone at the end of an old adit.
+D_D_rank_L12_tier1|HEARTH|trail/awaken:the_forge|opt|-|30|Temper a weapon or an armour piece at the Forge.
+D_D_rank_L12_tier1|HEARTH|trail/awaken:the_training_grounds|opt|-|30|Place a Start Gate, numbered Checkpoint Rings and a Finish Gate.
+D_D_rank_L12_tier1|OUT|trail/awaken:the_veil|opt|-|30|Meditate: sneak and hold G, standing still.
+D_D_rank_L12_tier1|HEARTH|trail/awaken:trophies|opt|-|30|Hang a boss trophy on a Trophy Mount.
+D_D_rank_L12_tier1|OUT|trail/awaken:wayfarers_and_camps|opt|-|30|Register with the Association.
+D_D_rank_L12_tier1|RANK|trail/awaken:your_first_gate|opt|-|30|Clear a floor.
+D_D_rank_L12_tier1|WEAPONS|trail/awaken:your_first_weapon|opt|-|30|Take Hale's hunter's issue at the High Gate.
+D_D_rank_L12_tier1|HEARTH|trail/awaken:your_hearth|opt|-|30|Right-click your campfire to open your Hearth's guide.
+D_D_rank_L12_tier1|HEARTH|trail/awaken:your_village|opt|-|30|Build a second bedroom, Snug or better.
+D_D_rank_L12_tier1|HEARTH|hearth/sanctuary|opt|-|20|Make your Bedroom a Sanctuary
+D_D_rank_L12_tier1|RANK|progression:road/awaken:hunter_gear_d|main|-|15|At level 13: Beastbound gear · D
+# E_C_rank_L26_tier2 top=lesson:veil/step_out level=26 rank=C
+E_C_rank_L26_tier2|ARMOUR|armour/c|main|40|58|Choose your first armour
+E_C_rank_L26_tier2|HEARTH|hearth/forge|main|60|45|Grow your Armoury into a Forge
+E_C_rank_L26_tier2|WEAPONS|arms/war_anvil|main|62|44|Set up a War Anvil
+E_C_rank_L26_tier2|WEAPONS|arms/first_weapon|main|64|43|Forge your first weapon
+E_C_rank_L26_tier2|OUT|lesson:veil/step_out|main|-|92|Meditate 10 s, let go of G: step out
+E_C_rank_L26_tier2|WEAPONS|arms:issue|main|-|70|Talk to Hale: he has a free weapon for you
+E_C_rank_L26_tier2|HEARTH|hearth:guide|main|-|56|Right-click your Anchor to see what your home needs
+E_C_rank_L26_tier2|RANK|progression:points|main|-|55|Press {key.awaken.status} to spend 75 points
+E_C_rank_L26_tier2|HEARTH|hearth/tier/3|main|-|35|Grow your home to Hall
+E_C_rank_L26_tier2|RANK|progression:goal/awaken:town_grows|main|-|35|Hang a Lord's trophy in your Hall
+E_C_rank_L26_tier2|HEARTH|kin/need/lampwing|main|-|32|Nothing lights your yard at night.
+E_C_rank_L26_tier2|HEARTH|kin/need/burrowbun|main|-|31|Nobody's minding the fields, and there aren't any yet.
+E_C_rank_L26_tier2|BELLS|dreams/bell|main|-|30|A bell is waiting in a dream. Sleep in your bed tonight.
+E_C_rank_L26_tier2|HEARTH|trail/awaken:a_room_for_everything|opt|-|30|Make a Kitchen: a stove, a crafting table and a barrel.
+E_C_rank_L26_tier2|RANK|trail/awaken:moving_like_a_hunter|opt|-|30|Hold sneak as you land to roll.
+E_C_rank_L26_tier2|OUT|trail/awaken:the_commons|opt|-|30|Discover two new biomes.
+E_C_rank_L26_tier2|OUT|trail/awaken:the_delvers_pick|opt|-|30|Pull the Delver's Pick from the stone at the end of an old adit.
+E_C_rank_L26_tier2|HEARTH|trail/awaken:the_forge|opt|-|30|Temper a weapon or an armour piece at the Forge.
+E_C_rank_L26_tier2|HEARTH|trail/awaken:the_training_grounds|opt|-|30|Place a Start Gate, numbered Checkpoint Rings and a Finish Gate.
+E_C_rank_L26_tier2|OUT|trail/awaken:the_veil|opt|-|30|Meditate: sneak and hold G, standing still.
+E_C_rank_L26_tier2|HEARTH|trail/awaken:trophies|opt|-|30|Hang a boss trophy on a Trophy Mount.
+E_C_rank_L26_tier2|OUT|trail/awaken:wayfarers_and_camps|opt|-|30|Register with the Association.
+E_C_rank_L26_tier2|RANK|trail/awaken:your_first_gate|opt|-|30|Clear a floor.
+E_C_rank_L26_tier2|WEAPONS|trail/awaken:your_first_weapon|opt|-|30|Take Hale's hunter's issue at the High Gate.
+E_C_rank_L26_tier2|HEARTH|trail/awaken:your_hearth|opt|-|30|Right-click your campfire to open your Hearth's guide.
+E_C_rank_L26_tier2|HEARTH|trail/awaken:your_village|opt|-|30|Build a second bedroom, Snug or better.
+E_C_rank_L26_tier2|HEARTH|hearth/sanctuary|opt|-|20|Make your Bedroom a Sanctuary
+E_C_rank_L26_tier2|RANK|progression:road/awaken:face_the_fear|main|-|15|At level 27: Face the nightmare
+# F_B_rank_L46_tier3 top=lesson:veil/step_out level=46 rank=B
+F_B_rank_L46_tier3|ARMOUR|armour/b|main|40|58|Choose your first armour
+F_B_rank_L46_tier3|HEARTH|hearth/forge|main|60|45|Grow your Armoury into a Forge
+F_B_rank_L46_tier3|WEAPONS|arms/war_anvil|main|62|44|Set up a War Anvil
+F_B_rank_L46_tier3|WEAPONS|arms/first_weapon|main|64|43|Forge your first weapon
+F_B_rank_L46_tier3|OUT|lesson:veil/step_out|main|-|92|Meditate 10 s, let go of G: step out
+F_B_rank_L46_tier3|WEAPONS|arms:issue|main|-|70|Talk to Hale: he has a free weapon for you
+F_B_rank_L46_tier3|HEARTH|hearth:guide|main|-|56|Right-click your Anchor to see what your home needs
+F_B_rank_L46_tier3|RANK|progression:points|main|-|55|Press {key.awaken.status} to spend 135 points
+F_B_rank_L46_tier3|HEARTH|hearth/tier/4|main|-|35|Grow your home to Village
+F_B_rank_L46_tier3|RANK|progression:goal/awaken:the_foundry|main|-|35|Descend to stratum 6 (B-rank)
+F_B_rank_L46_tier3|HEARTH|kin/need/lampwing|main|-|32|Nothing lights your yard at night.
+F_B_rank_L46_tier3|HEARTH|kin/need/burrowbun|main|-|31|Nobody's minding the fields, and there aren't any yet.
+F_B_rank_L46_tier3|BELLS|dreams/bell|main|-|30|A bell is waiting in a dream. Sleep in your bed tonight.
+F_B_rank_L46_tier3|HEARTH|trail/awaken:a_room_for_everything|opt|-|30|Make a Kitchen: a stove, a crafting table and a barrel.
+F_B_rank_L46_tier3|RANK|trail/awaken:moving_like_a_hunter|opt|-|30|Hold sneak as you land to roll.
+F_B_rank_L46_tier3|OUT|trail/awaken:the_commons|opt|-|30|Discover two new biomes.
+F_B_rank_L46_tier3|OUT|trail/awaken:the_delvers_pick|opt|-|30|Pull the Delver's Pick from the stone at the end of an old adit.
+F_B_rank_L46_tier3|HEARTH|trail/awaken:the_forge|opt|-|30|Temper a weapon or an armour piece at the Forge.
+F_B_rank_L46_tier3|HEARTH|trail/awaken:the_training_grounds|opt|-|30|Place a Start Gate, numbered Checkpoint Rings and a Finish Gate.
+F_B_rank_L46_tier3|OUT|trail/awaken:the_veil|opt|-|30|Meditate: sneak and hold G, standing still.
+F_B_rank_L46_tier3|HEARTH|trail/awaken:trophies|opt|-|30|Hang a boss trophy on a Trophy Mount.
+F_B_rank_L46_tier3|OUT|trail/awaken:wayfarers_and_camps|opt|-|30|Register with the Association.
+F_B_rank_L46_tier3|RANK|trail/awaken:your_first_gate|opt|-|30|Clear a floor.
+F_B_rank_L46_tier3|WEAPONS|trail/awaken:your_first_weapon|opt|-|30|Take Hale's hunter's issue at the High Gate.
+F_B_rank_L46_tier3|HEARTH|trail/awaken:your_hearth|opt|-|30|Right-click your campfire to open your Hearth's guide.
+F_B_rank_L46_tier3|HEARTH|trail/awaken:your_village|opt|-|30|Build a second bedroom, Snug or better.
+F_B_rank_L46_tier3|HEARTH|hearth/sanctuary|opt|-|20|Make your Bedroom a Sanctuary
+F_B_rank_L46_tier3|RANK|progression:road/awaken:the_observatory|main|-|15|At level 47: The Observatory
+# G_A_rank_L72_tier4 top=lesson:veil/step_out level=72 rank=A
+G_A_rank_L72_tier4|ARMOUR|armour/a|main|40|58|Choose your first armour
+G_A_rank_L72_tier4|HEARTH|hearth/forge|main|60|45|Grow your Armoury into a Forge
+G_A_rank_L72_tier4|WEAPONS|arms/war_anvil|main|62|44|Set up a War Anvil
+G_A_rank_L72_tier4|WEAPONS|arms/first_weapon|main|64|43|Forge your first weapon
+G_A_rank_L72_tier4|OUT|lesson:veil/step_out|main|-|92|Meditate 10 s, let go of G: step out
+G_A_rank_L72_tier4|WEAPONS|arms:issue|main|-|70|Talk to Hale: he has a free weapon for you
+G_A_rank_L72_tier4|HEARTH|hearth:guide|main|-|56|Right-click your Anchor to see what your home needs
+G_A_rank_L72_tier4|RANK|progression:points|main|-|55|Press {key.awaken.status} to spend 213 points
+G_A_rank_L72_tier4|HEARTH|hearth/tier/5|main|-|35|Grow your home to Town
+G_A_rank_L72_tier4|RANK|progression:goal/awaken:the_halo|main|-|35|See the Halo from an Observatory
+G_A_rank_L72_tier4|HEARTH|kin/need/lampwing|main|-|32|Nothing lights your yard at night.
+G_A_rank_L72_tier4|HEARTH|kin/need/burrowbun|main|-|31|Nobody's minding the fields, and there aren't any yet.
+G_A_rank_L72_tier4|BELLS|dreams/bell|main|-|30|A bell is waiting in a dream. Sleep in your bed tonight.
+G_A_rank_L72_tier4|HEARTH|trail/awaken:a_room_for_everything|opt|-|30|Make a Kitchen: a stove, a crafting table and a barrel.
+G_A_rank_L72_tier4|RANK|trail/awaken:moving_like_a_hunter|opt|-|30|Hold sneak as you land to roll.
+G_A_rank_L72_tier4|OUT|trail/awaken:the_commons|opt|-|30|Discover two new biomes.
+G_A_rank_L72_tier4|OUT|trail/awaken:the_delvers_pick|opt|-|30|Pull the Delver's Pick from the stone at the end of an old adit.
+G_A_rank_L72_tier4|HEARTH|trail/awaken:the_forge|opt|-|30|Temper a weapon or an armour piece at the Forge.
+G_A_rank_L72_tier4|HEARTH|trail/awaken:the_training_grounds|opt|-|30|Place a Start Gate, numbered Checkpoint Rings and a Finish Gate.
+G_A_rank_L72_tier4|OUT|trail/awaken:the_veil|opt|-|30|Meditate: sneak and hold G, standing still.
+G_A_rank_L72_tier4|HEARTH|trail/awaken:trophies|opt|-|30|Hang a boss trophy on a Trophy Mount.
+G_A_rank_L72_tier4|OUT|trail/awaken:wayfarers_and_camps|opt|-|30|Register with the Association.
+G_A_rank_L72_tier4|RANK|trail/awaken:your_first_gate|opt|-|30|Clear a floor.
+G_A_rank_L72_tier4|WEAPONS|trail/awaken:your_first_weapon|opt|-|30|Take Hale's hunter's issue at the High Gate.
+G_A_rank_L72_tier4|HEARTH|trail/awaken:your_hearth|opt|-|30|Right-click your campfire to open your Hearth's guide.
+G_A_rank_L72_tier4|HEARTH|trail/awaken:your_village|opt|-|30|Build a second bedroom, Snug or better.
+G_A_rank_L72_tier4|HEARTH|hearth/sanctuary|opt|-|20|Make your Bedroom a Sanctuary
+G_A_rank_L72_tier4|RANK|progression:road/awaken:the_open_sky|main|-|15|At level 73: The open sky
