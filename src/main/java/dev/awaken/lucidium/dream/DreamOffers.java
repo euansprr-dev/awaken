@@ -386,7 +386,7 @@ public final class DreamOffers {
         for (DreamLedger.Waiting w : l.waiting) bell |= w.ref().startsWith("bell:");
         List<Step> out = new ArrayList<>();
         String sneak = "Sneak as you lie down if you'd rather sleep without it.";
-        if (bell) out.add(Step.of("dreams/bell", Goal.BELLS, "A bell is waiting in a dream. Sleep in your bed tonight.")
+        if (bell) out.add(Step.of("dreams/bell", Goal.BELLS, "A bell is waiting in a dream. Sleep in your bed tonight.").lead()
                 .why("Take control with H when you arrive, and find the bell before the dream fades. " + sneak).priority(30).build());
         if (!bell || l.waiting.size() > 1)
             out.add(Step.of("dreams/waiting", Goal.OUT, "A dream is waiting. Sleep in your bed tonight.")

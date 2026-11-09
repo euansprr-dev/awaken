@@ -98,6 +98,7 @@ public final class GateService {
     }
 
     public static ServerLevel levelOf(MinecraftServer server, GateRecord g, int area, int floor) {
+        if (g.realm.isPresent()) return dev.awaken.gates.realms.Realms.level(server);
         return levelOf(server, GateLayout.of(g.plan).floor(area, floor));
     }
 
@@ -121,11 +122,11 @@ public final class GateService {
 
     /** Inside the gate world: in the gate level and inside a cell's area. */
     public static boolean inGate(net.minecraft.world.entity.Entity e) {
-        return isGateLevel(e.level()) && Cells.cellAt(e.getBlockX(), e.getBlockZ()) >= 0;
+        return isGateLevel(e.level()) && (Cells.cellAt(e.getBlockX(), e.getBlockZ()) >= 0 || dev.awaken.gates.realms.Realms.inRealm(e.getBlockX(), e.getBlockZ()));
     }
 
     public static boolean inGate(net.minecraft.world.level.Level level, BlockPos pos) {
-        return isGateLevel(level) && Cells.cellAt(pos.getX(), pos.getZ()) >= 0;
+        return isGateLevel(level) && (Cells.cellAt(pos.getX(), pos.getZ()) >= 0 || dev.awaken.gates.realms.Realms.inRealm(pos.getX(), pos.getZ()));
     }
 
     // ---- creation ---------------------------------------------------------------------------------------------------
@@ -142,6 +143,13 @@ public final class GateService {
         g.foldsOnPlayDay = day + Breaks.UNSEEN_DAYS; // until someone comes close (SPEC §7, "Seen first")
         g.trace.addAll(trace);
         g.scripted = scripted;
+        // a Realm when one is open to this rank and theme (SPEC §50.7); otherwise the floors of old
+        java.util.Set<String> seenRealms = owner.map(o -> {
+            ServerPlayer p = server.getPlayerList().getPlayer(o);
+            return p == null ? java.util.Set.<String>of() : p.getData(GatesRegistry.MEMORY.get()).realmsSeen();
+        }).orElse(java.util.Set.of());
+        final GatePlan chosen = plan;
+        dev.awaken.gates.realms.Realms.choose(server, chosen, scripted, seenRealms).ifPresent(b -> dev.awaken.gates.realms.Realms.attach(server, g, b));
         reg.put(g);
         GateCells.put(cell, plan);
         startBuild(server, g);
@@ -311,6 +319,7 @@ public final class GateService {
 
     /** Where you arrive on a floor: standing on the entrance sigil of its start room. */
     public static BlockPos entrance(GateRecord g, int area, int floor) {
+        if (g.realm.isPresent()) return dev.awaken.gates.realms.Realms.entrance(g);
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         if (f == null) return new BlockPos(Cells.originX(g.cell) + 40, Cells.FLOOR1_Y, Cells.originZ(g.cell) + 40);
         Room s = f.room(f.start);
@@ -321,6 +330,7 @@ public final class GateService {
 
     /** Facing (degrees) toward the start room's first doorway. */
     public static float entranceYaw(GateRecord g, int area, int floor) {
+        if (g.realm.isPresent()) return dev.awaken.gates.realms.Realms.entranceYaw(g);
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         if (f == null) return 0;
         if (!Float.isNaN(f.arrivalYaw)) return f.arrivalYaw;
@@ -353,6 +363,7 @@ public final class GateService {
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             // never release a cell with someone standing in it
             if (inGate(p) && Cells.cellAt(p.getBlockX(), p.getBlockZ()) == g.cell) return;
+            if (inGate(p) && g.realm.isPresent() && dev.awaken.gates.realms.RealmCells.cellAt(p.getBlockX(), p.getBlockZ()) == g.realm.get().cell()) return;
         }
         if (!g.transition(GateState.RELEASED)) {
             g.state = GateState.RELEASED;
@@ -362,6 +373,7 @@ public final class GateService {
         reg.releaseCell(g.cell);
         reg.setDirty();
         recycleWhileRunning(server, g.cell);
+        dev.awaken.gates.realms.Realms.release(server, g);
         removeStructureSoon(server, g);
         dev.awaken.gates.run.GateMobs.forgetGate(g.id);
         GatePayloads.syncBeaconsAround(server, g.pos);
@@ -434,6 +446,7 @@ public final class GateService {
         PREGEN.clear();
         REMOVALS.clear();
         GateRegistry reg = GateRegistry.get(server);
+        dev.awaken.gates.realms.Realms.onStarted(server);
         if (reg.loadedSchema() < 4) Breaks.unseeAll(server, reg);
         for (Integer cell : List.copyOf(reg.releasedCells())) {
             boolean any = false;
@@ -445,7 +458,7 @@ public final class GateService {
         }
         for (GateRecord g : reg.all()) {
             if (g.state == GateState.RELEASED) continue;
-            if (g.state == GateState.READY && g.plan.contentVersion() < GatePlan.current() && g.party.isEmpty() && reg.hasFreeCell()) {
+            if (g.realm.isEmpty() && g.state == GateState.READY && g.plan.contentVersion() < GatePlan.current() && g.party.isEmpty() && reg.hasFreeCell()) {
                 // content changed and nobody entered: rebuild on the new version in a fresh cell
                 reg.releaseCell(g.cell);
                 g.cell = reg.allocateCell();

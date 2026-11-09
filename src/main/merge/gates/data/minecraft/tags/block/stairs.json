@@ -29,6 +29,14 @@
     "awaken:fungal_rock_stairs",
     "awaken:fungal_loam_stairs",
     "awaken:crypt_limestone_stairs",
-    "awaken:crypt_flagstone_stairs"
+    "awaken:crypt_flagstone_stairs",
+    "awaken:amber_stone_stairs",
+    "awaken:amber_stone_pale_stairs",
+    "awaken:amber_flagstone_stairs",
+    "awaken:amber_brick_stairs",
+    "awaken:amber_plaster_stairs",
+    "awaken:amber_tile_stairs",
+    "awaken:amber_tile_deep_stairs",
+    "awaken:amber_planks_stairs"
   ]
 }

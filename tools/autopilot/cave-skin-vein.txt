@@ -1,0 +1,60 @@
+# Cave skin: the sculk veins (SPEC 42.10; Euan's 9 Nov crop, "literally cut in the middle"). The spot in his crop, and the Deep Dark's side of that edge.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+world cave_skin creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 18000
+cmd effect give @s minecraft:resistance 100000 4 true
+hud off
+
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
+wait 400
+cmd tp @s -534.50 28.00 -2337.50 -90.0 14.6
+wait 600
+
+# ---- the spot in his crop: far, then close, as the last tours stood ----
+cmd tp @s -489.50 31.00 -2328.50 113.3 -10.5
+wait 500
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 60
+shot v_far_torch
+cmd tp @s -495.50 31.00 -2331.50 106.9 -28.6
+wait 120
+shot v_close_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+shot v_close_dark
+lens off
+wait 30
+shot v_close_lensoff
+lens cinematic
+wait 20
+# turned to the Deep Dark's side of the edge
+cmd item replace entity @s weapon.offhand with minecraft:torch
+cmd tp @s -495.50 31.00 -2331.50 150.0 -12.0
+wait 120
+shot v_edge_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 20
+
+quit

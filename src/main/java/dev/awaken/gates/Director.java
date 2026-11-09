@@ -28,6 +28,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SplittableRandom;
 
 /**
@@ -49,6 +50,11 @@ public final class Director {
 
     /** Rolls a gate for a player and updates their novelty memory exactly as the plan's generator does. */
     public static Roll roll(long seed, Rank playerRank, GateMemory mem, Rank forceRank, Theme forceTheme) {
+        return roll(seed, playerRank, mem, forceRank, forceTheme, Set.of());
+    }
+
+    /** As above, with the themes already standing for this player, which a new gate won't repeat. */
+    public static Roll roll(long seed, Rank playerRank, GateMemory mem, Rank forceRank, Theme forceTheme, Set<String> standing) {
         SplittableRandom rng = new SplittableRandom(seed);
         List<String> tr = new ArrayList<>();
         // 1 rank: 70% yours, 20% one below, 10% one above
@@ -69,18 +75,15 @@ public final class Director {
         }
         tr.add(String.format("rank      roll %.2f → %s → %s", r, why, g.label));
 
-        // 2 theme: fits the rank, not one of the last 3 (relax the memory only if nothing fits)
-        List<Theme> eligible = new ArrayList<>();
-        int keep = 3;
-        while (eligible.isEmpty() && keep >= 0) {
-            List<String> recent = mem.lastThemes.subList(0, Math.min(keep, mem.lastThemes.size()));
-            for (Theme t : Theme.values()) if (t.fits(g) && !recent.contains(t.id)) eligible.add(t);
-            keep--;
-        }
+        // 2 theme: a bag per player (SPEC §50.2), so nothing comes back until you've been through the rest
+        int before = mem.seenThemes.size();
+        List<Theme> eligible = forceTheme != null ? List.of(forceTheme) : bag(g, mem, standing);
         Theme theme = pickTheme(eligible, rng.nextDouble());
         if (forceTheme != null) theme = forceTheme;
-        tr.add("theme     " + eligible.size() + " fit rank " + g.label
-                + (mem.lastThemes.isEmpty() ? "" : ", skipped last " + mem.lastThemes.size() + " (" + String.join(", ", names(mem.lastThemes)) + ")")
+        tr.add("theme     " + eligible.size() + " left in the bag at rank " + g.label
+                + (mem.seenThemes.size() < before ? " (bag refilled)" : "")
+                + (mem.seenThemes.isEmpty() ? "" : ", been in " + String.join(", ", names(mem.seenThemes)))
+                + (standing.isEmpty() ? "" : ", standing " + String.join(", ", names(List.copyOf(standing))))
                 + " → " + theme.displayName + (forceTheme != null ? " (forced)" : ""));
 
         // 3 layout: not one of the last 2
@@ -139,11 +142,36 @@ public final class Director {
         List<String> combos = plan.combos();
         tr.add("forces    " + (combos.isEmpty() ? "no special interactions" : String.join(" · ", combos)));
 
-        mem.rememberTheme(theme.id);
         mem.rememberLayout(layout.name());
         mem.sinceTwist = twist == Twist.NONE ? mem.sinceTwist + 1 : 0;
         mem.gatesRolled++;
         return new Roll(plan, tr, days);
+    }
+
+    /** The themes this roll may pick. A friendly theme alone doesn't hold the bag open. */
+    static List<Theme> bag(Rank g, GateMemory mem, Set<String> standing) {
+        List<Theme> pool = unseen(g, mem, standing);
+        if (pool.stream().allMatch(t -> t.friendly)) {
+            mem.refillBag(id -> Theme.byId(id).fits(g));
+            pool = unseen(g, mem, standing);
+        }
+        // every theme left already stands somewhere for you: a twin beats no gate
+        if (pool.stream().allMatch(t -> t.friendly)) pool = unseen(g, mem, Set.of());
+        if (pool.isEmpty()) for (Theme t : Theme.values()) if (t.fits(g)) pool.add(t);
+        return pool;
+    }
+
+    private static List<Theme> unseen(Rank g, GateMemory mem, Set<String> standing) {
+        List<Theme> out = new ArrayList<>();
+        for (Theme t : Theme.values()) if (t.fits(g) && !mem.seenThemes.contains(t.id) && !standing.contains(t.id)) out.add(t);
+        return out;
+    }
+
+    /** The themes of this player's gates still standing (derived, so a closed gate goes back in by itself). */
+    public static Set<String> standingThemes(MinecraftServer server, ServerPlayer p) {
+        Set<String> out = new java.util.LinkedHashSet<>();
+        for (GateRecord g : GateRegistry.get(server).all()) if (g.state.standing() && !g.scripted && ownedBy(g, p)) out.add(g.plan.theme().id);
+        return out;
     }
 
     private static Theme pickTheme(List<Theme> eligible, double r) {
@@ -352,8 +380,9 @@ public final class Director {
         GateMemory mem = p.getData(GatesRegistry.MEMORY.get());
         int id = reg.nextId();
         long seed = Hash.mix(over.getSeed() ^ Hash.of(id, mem.gatesRolled, p.getUUID().hashCode()));
-        Roll roll = roll(seed, Progression.rank(p), mem, forceRank, forceTheme);
-        for (int i = 1; wantRig && i < 256 && !hasRig(roll.plan()); i++) roll = roll(Hash.mix(seed + i), Progression.rank(p), mem, forceRank, forceTheme);
+        Set<String> standing = standingThemes(server, p);
+        Roll roll = roll(seed, Progression.rank(p), mem, forceRank, forceTheme, standing);
+        for (int i = 1; wantRig && i < 256 && !hasRig(roll.plan()); i++) roll = roll(Hash.mix(seed + i), Progression.rank(p), mem, forceRank, forceTheme, standing);
         List<String> trace = new ArrayList<>(roll.trace());
         trace.add(0, "seed      " + Long.toHexString(roll.plan().seed()) + " · rolled for " + p.getGameProfile().name());
         trace.add("place     " + dist + " m " + dir + " at " + spot.getX() + " " + spot.getY() + " " + spot.getZ()

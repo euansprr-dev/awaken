@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "nightmare_explosion",
  "moves": "nightmare_explosion",
  "duel": true,
@@ -23,6 +23,12 @@
        "slap",
        "pop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes",
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -33,6 +39,12 @@
       [
        "pop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes",
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -43,6 +55,11 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -53,6 +70,11 @@
       [
        "pop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes"
+      }
      ]
     },
     {
@@ -63,6 +85,12 @@
       [
        "bound"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes",
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -76,6 +104,12 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes",
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -99,6 +133,12 @@
        "slap",
        "pop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes",
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -109,6 +149,11 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -120,6 +165,11 @@
        "pop",
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes"
+      }
      ]
     },
     {
@@ -130,6 +180,12 @@
       [
        "bound"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes",
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -143,6 +199,12 @@
       [
        "slap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "popgoes",
+       "dodged": "bound"
+      }
      ]
     },
     {
@@ -155,5 +217,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.3
+ },
+ "mind": {
+  "cooldowns": {
+   "bound": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "bound",
+     "popgoes",
+     "pop",
+     "slap"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "bound"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "pop"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "pop",
+     "slap"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "popgoes"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "popgoes",
+     "pop"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "bound"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

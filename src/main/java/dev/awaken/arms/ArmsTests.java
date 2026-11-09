@@ -100,6 +100,8 @@ final class ArmsTests {
         for (var e : dev.awaken.arms.anvil.AnvilCosts.table().entrySet()) {
             for (var part : e.getValue()) {
                 java.util.List<Identifier> items = new java.util.ArrayList<>();
+                // a vanilla tag (a pick's #minecraft:logs) is any tree: sources.json lists only what has to be hunted for
+                if (part.kind().equals("tag") && !part.id().startsWith(Awaken.MODID + ":")) continue;
                 if (part.kind().equals("tag")) {
                     BuiltInRegistries.ITEM.getTagOrEmpty(net.minecraft.tags.TagKey.create(Registries.ITEM, Identifier.parse(part.id())))
                             .forEach(hold -> items.add(BuiltInRegistries.ITEM.getKey(hold.value())));
@@ -108,8 +110,8 @@ final class ArmsTests {
             }
             checked++;
         }
-        // Hunter armour is forged at a Fitting Stand (SPEC §44.4), weapons and blades at a War Anvil: 12 gear pieces keep recipes
-        h.assertTrue(checked >= 114, "the gear recipes and the War Anvil's costs were read (12 gear pieces, 96 weapons and 6 blades): " + checked);
+        // Hunter armour is forged at a Fitting Stand (SPEC §44.4), weapons, blades and picks at a War Anvil: 6 gear pieces keep recipes
+        h.assertTrue(checked >= 132, "the gear recipes and the War Anvil's costs were read (6 gear pieces, 96 weapons, 6 blades and 24 picks): " + checked);
         java.util.Set<String> lang = new java.util.HashSet<>();
         try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/lang/en_us.json")) {
             h.assertTrue(in != null, "the merged lang file is on the classpath");

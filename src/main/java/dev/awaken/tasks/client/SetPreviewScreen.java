@@ -39,7 +39,49 @@ final class SetPreviewScreen extends Screen implements dev.awaken.signal.client.
         TaskPayloads.StepRow s = TaskCache.step(stepKey);
         Minecraft mc = Minecraft.getInstance();
         if (s == null || mc.level == null) return;
+        if (!dev.awaken.hall.client.HallConfig.classic()) {
+            List<dev.awaken.armour.ArmourSet> sets = new ArrayList<>(s.choices().size());
+            for (TaskPayloads.ChoiceRow c : s.choices()) sets.add(dev.awaken.armour.ArmourSet.byId(c.id()));
+            if (!sets.contains(null)) {
+                dev.awaken.hall.client.LineUpScreen.open(s.title(), s.why(), new HallOffer(stepKey, List.copyOf(sets)));
+                return;
+            }
+        }
         mc.gui.pushScreenLayer(new SetPreviewScreen(stepKey, s.title()));
+    }
+
+    /** The Hall's line-up of what this step offers, read live from the band's list. */
+    private record HallOffer(String step, List<dev.awaken.armour.ArmourSet> sets) implements dev.awaken.hall.client.LineUpScreen.Offer {
+        private TaskPayloads.@org.jspecify.annotations.Nullable ChoiceRow row(int i) {
+            TaskPayloads.StepRow s = TaskCache.step(step);
+            return s == null || i >= s.choices().size() ? null : s.choices().get(i);
+        }
+
+        @Override public String sub(int i) {
+            TaskPayloads.ChoiceRow c = row(i);
+            return c == null ? "" : c.sub();
+        }
+
+        @Override public String state(int i) {
+            TaskPayloads.ChoiceRow c = row(i);
+            if (c == null) return "";
+            if (chosen(i)) return "Your choice";
+            int ready = 0;
+            for (TaskPayloads.NeedRow n : c.needs()) if (n.met()) ready++;
+            return c.needs().isEmpty() ? "Every piece is yours" : ready + " of " + c.needs().size() + " materials ready";
+        }
+
+        @Override public boolean chosen(int i) {
+            TaskPayloads.StepRow s = TaskCache.step(step);
+            TaskPayloads.ChoiceRow c = row(i);
+            return s != null && c != null && c.id().equals(s.chosen());
+        }
+
+        @Override public void choose(int i) {
+            TaskPayloads.StepRow s = TaskCache.step(step);
+            TaskPayloads.ChoiceRow c = row(i);
+            if (s != null && c != null) TaskPage.choose(s, c);
+        }
     }
 
     private List<TaskPayloads.ChoiceRow> choices() {

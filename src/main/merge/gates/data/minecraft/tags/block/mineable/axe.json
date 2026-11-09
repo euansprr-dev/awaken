@@ -45,6 +45,12 @@
     "awaken:dream_wood_slab",
     "awaken:dream_wood_stairs",
     "awaken:dream_boards_slab",
-    "awaken:dream_boards_stairs"
+    "awaken:dream_boards_stairs",
+    "awaken:amber_timber",
+    "awaken:amber_planks",
+    "awaken:amber_window",
+    "awaken:amber_stem",
+    "awaken:amber_planks_slab",
+    "awaken:amber_planks_stairs"
   ]
 }

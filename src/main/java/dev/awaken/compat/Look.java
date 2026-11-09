@@ -21,7 +21,9 @@ public final class Look {
         SWIFT("SWIFT", "Horizon and soft light. Built for 120 fps.", LensLook.SWIFT, false, 1000f / 110f, 16f),
         CINEMATIC("CINEMATIC", "Sun shadows, warm light, light shafts, a wider horizon. 90+ fps.", LensLook.CINEMATIC, false, 1000f / 90f, 20f),
         // Lens 2's Ultra (SPEC §22): AWAKEN's own light at full quality, on Vulkan and OpenGL alike; no Iris (OpenGL only)
-        ULTRA("ULTRA", "Cinematic at full quality: longer, finer shadows and light. 60+ fps.", LensLook.ULTRA, false, 1000f / 60f, 25f);
+        ULTRA("ULTRA", "Cinematic at full quality: longer, finer shadows and light. 60+ fps.", LensLook.ULTRA, false, 1000f / 60f, 25f),
+        // ImmersiveVFX alone, Lens off (SPEC §14): offered only with that mod installed; its pace is its own, so no budget
+        VFX("VFX", "ImmersiveVFX's shadows, water, fog and skies on their own, with Lens off.", LensLook.VFX, false, 0f, 0f);
 
         public final String label, blurb;
         public final LensLook lens;
@@ -39,7 +41,7 @@ public final class Look {
         }
 
         public String pretty() {
-            return label.charAt(0) + label.substring(1).toLowerCase(java.util.Locale.ROOT);
+            return this == VFX ? label : label.charAt(0) + label.substring(1).toLowerCase(java.util.Locale.ROOT);
         }
     }
 
@@ -50,9 +52,29 @@ public final class Look {
             case SWIFT -> Tier.SWIFT;
             case CINEMATIC -> Tier.CINEMATIC;
             case ULTRA -> Tier.ULTRA;
+            case VFX -> Tier.VFX;
             case OFF -> null;
         };
     }
+
+    /** ImmersiveVFX's mod id: the VFX tier's mod. */
+    public static final String VFX_MOD = "immersivevfx";
+
+    /**
+     * ImmersiveVFX's choice settings while another tier is on (every on/off setting is simply off). Preset goes to CUSTOM
+     * or the mod would see values that don't match a named preset; the rest are the choices that leave the game's own
+     * sky, fog, water and weather alone. Clouds stay on a drawn style: the mod's OFF blanks the game's clouds too, while
+     * with its custom skies off any drawn style hands them back to the game.
+     */
+    public static final Map<String, String> VFX_ASLEEP = Map.of(
+            "preset", "CUSTOM",
+            "fogRenderingMode", "OFF",
+            "skyMode", "VANILLA",
+            "snowAndSandParticleStyle", "VANILLA",
+            "cloudRendering", "FANCY",
+            "waterColors", "VANILLA",
+            "weatherVisuals", "VANILLA",
+            "gradingMode", "OFF");
 
     /** Whether measured frame times fit the tier's budget; null when the tier promises none. */
     public static @Nullable Boolean fits(Tier tier, float p50Ms, float p99Ms) {

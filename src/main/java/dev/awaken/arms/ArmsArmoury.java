@@ -40,7 +40,7 @@ public final class ArmsArmoury {
     public static final int BAND = 0, HALE = 1, FORGE = 2, ANVIL = 3;
     /** What the screen asks (the last four at a War Anvil's door; REBUILD the anvil a build up, SPEC §46.6). */
     public static final int DETAIL = 0, BUY = 1, DRAW = 2, TRACK = 3, UNTRACK = 4, RAISE = 5, FORGE_IT = 6, FROM_MEMORY = 7, FORGE_BLADE = 8,
-            REBUILD = 9;
+            REBUILD = 9, REFRESH = 10, AGAIN = 11;
 
     /** The six tiers, their weapons' name prefixes and the level each opens at (the level road, SPEC §28.3). */
     public static final String[] TIERS = {"E", "D", "C", "B", "A", "S"};
@@ -70,12 +70,15 @@ public final class ArmsArmoury {
     private static void open(ServerPlayer p, int door, net.minecraft.core.@Nullable BlockPos pos) {
         dev.awaken.progression.Progression.count(p, "awaken:armoury_opened");
         OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), pos));
+        AwakenNet.send(p, dev.awaken.hall.HallServer.wall(p)); // before the view: the view opens the screen that draws it
+        AwakenNet.send(p, new dev.awaken.hall.HallNet.Suits(dev.awaken.armour.ArmourForge.hall(p, null))); // the Hall's other wing, to look at
         AwakenNet.send(p, view(p, door, true));
         sendDetail(p, defaultStyle(p), null);
     }
 
     /** Refreshes the client's copy (the band reads it), at the door they last opened or the band. */
     public static void sendView(ServerPlayer p) {
+        AwakenNet.send(p, dev.awaken.hall.HallServer.wall(p));
         AwakenNet.send(p, view(p, doorOf(p), false));
         String tracked = ArmsProgress.of(p).tracked;
         int colon = tracked.indexOf(':');
@@ -141,21 +144,31 @@ public final class ArmsArmoury {
 
     /** The detail of one style: its tiers, and what the chosen one needs (the highest you have reached when none is named). */
     static void sendDetail(ServerPlayer p, String style, @Nullable String tier) {
-        Archetypes.Loaded st = Archetypes.get(style);
-        if (st == null) return;
+        boolean pick = dev.awaken.delve.forged.PickForm.ofStyle(style) != null;
+        if (!pick && Archetypes.get(style) == null) return;
         int level = Progression.profile(p).level();
         List<ArmsPayloads.TierRow> tiers = new ArrayList<>();
         int best = Math.max(0, ArmsTiers.best(p));
-        for (int i = 0; i < TIERS.length; i++) tiers.add(new ArmsPayloads.TierRow(TIERS[i], LEVEL[i], level >= LEVEL[i], ArmsTiers.pull(p, i, ArmsTiers.best(p))));
-        int at = tier == null ? best : Math.max(0, tierIndex(tier));
+        for (int i = 0; i < TIERS.length; i++) tiers.add(new ArmsPayloads.TierRow(TIERS[i], LEVEL[i], level >= LEVEL[i], pick ? "" : ArmsTiers.pull(p, i, ArmsTiers.best(p))));
+        int at = tier == null ? (pick ? pickTier(p) : best) : Math.max(0, tierIndex(tier));
         var anvil = anvilOf(p);
         var status = anvil == null ? null : dev.awaken.arms.anvil.WarAnvil.status(p, anvil, style, at);
         AwakenNet.send(p, new ArmsPayloads.ArmouryDetail(style, TIERS[at], tiers, needs(p, style, at),
                 status == null ? 0 : status.flags(), status == null ? "" : status.line()));
     }
 
+    /** A pick's window opens on the next step up from the best forged pick they carry, within what their level allows. */
+    private static int pickTier(ServerPlayer p) {
+        int carried = -1;
+        for (net.minecraft.world.item.ItemStack s : p.getInventory()) {
+            var it = dev.awaken.delve.forged.ForgedPicks.item(s);
+            if (it != null) carried = Math.max(carried, it.tier);
+        }
+        return Math.min(carried + 1, bestTier(p));
+    }
+
     /** The highest tier whose level the fighter has reached. */
-    static int bestTier(ServerPlayer p) {
+    public static int bestTier(ServerPlayer p) {
         int level = Progression.profile(p).level(), best = 0;
         for (int i = 0; i < LEVEL.length; i++) if (level >= LEVEL[i]) best = i;
         return best;
@@ -250,6 +263,11 @@ public final class ArmsArmoury {
     // ---- what the screen does ----------------------------------------------------------------------------------------
 
     public static void onAct(ServerPlayer p, ArmsPayloads.ArmouryAct a) {
+        // picks are forged at this door but aren't patterns: nothing to buy, draw, or track here (§49.4)
+        if (dev.awaken.delve.forged.PickForm.ofStyle(a.style()) != null) {
+            pickAct(p, a);
+            return;
+        }
         Archetypes.Loaded st = Archetypes.get(a.style());
         if (st == null) return;
         Opened o = OPEN.get(p.getUUID());
@@ -294,11 +312,35 @@ public final class ArmsArmoury {
                 if (anvil != null && dev.awaken.arms.anvil.WarAnvil.rebuild(p, anvil)) sendView(p);
                 sendDetail(p, st.id(), a.tier());
             }
+            case REFRESH -> {
+                sendView(p);
+                sendDetail(p, st.id(), a.tier().isEmpty() ? null : a.tier());
+            }
             case UNTRACK -> {
                 ArmsProgress g = ArmsProgress.of(p);
                 g.tracked = "";
                 p.setData(ArmsContent.PROGRESS, g);
                 sendView(p);
+            }
+            default -> {}
+        }
+    }
+
+    private static void pickAct(ServerPlayer p, ArmsPayloads.ArmouryAct a) {
+        var anvil = anvilOf(p);
+        switch (a.op()) {
+            case DETAIL -> sendDetail(p, a.style(), a.tier().isEmpty() ? null : a.tier());
+            case FORGE_IT, FROM_MEMORY, AGAIN -> {
+                int t = tierIndex(a.tier());
+                if (anvil == null || t < 0) return;
+                String id = recipeId(a.style(), t);
+                boolean begun = a.op() == AGAIN ? dev.awaken.arms.anvil.PickAnvil.forgeAgain(p, anvil, id)
+                        : dev.awaken.arms.anvil.WarAnvil.begin(p, anvil, id, a.op() == FROM_MEMORY);
+                if (!begun) sendDetail(p, a.style(), a.tier());
+            }
+            case REBUILD -> {
+                if (anvil != null && dev.awaken.arms.anvil.WarAnvil.rebuild(p, anvil)) sendView(p);
+                sendDetail(p, a.style(), a.tier());
             }
             default -> {}
         }

@@ -42,7 +42,16 @@ public final class ForgeHooks {
         @Nullable String line(ItemStack stack);
     }
 
+    /** A number on a piece that its attributes don't show (a focus's power damage): what it's called and what it is. */
+    public record Stat(String label, String value) {}
+
+    /** Reads one such number off a piece, or null when it hasn't got it. */
+    public interface StatReader {
+        @Nullable Stat read(ItemStack stack);
+    }
+
     private static final List<Reader> READERS = new CopyOnWriteArrayList<>();
+    private static final List<StatReader> STATS = new CopyOnWriteArrayList<>();
     private static final List<Listener> LISTENERS = new CopyOnWriteArrayList<>();
     private static final List<CardLine> CARD_LINES = new CopyOnWriteArrayList<>();
 
@@ -56,6 +65,21 @@ public final class ForgeHooks {
 
     public static void cardLine(CardLine c) {
         CARD_LINES.add(c);
+    }
+
+    public static void stat(StatReader r) {
+        STATS.add(r);
+    }
+
+    /** The numbers on this piece that its attributes don't show; the upgrade windows compare them before and after. */
+    public static List<Stat> stats(ItemStack stack) {
+        if (stack.isEmpty() || STATS.isEmpty()) return List.of();
+        List<Stat> out = new java.util.ArrayList<>(1);
+        for (StatReader r : STATS) {
+            Stat s = r.read(stack);
+            if (s != null) out.add(s);
+        }
+        return out;
     }
 
     /** How well this was forged (0-3), by the first forge that knows; empty if no forge made it. */

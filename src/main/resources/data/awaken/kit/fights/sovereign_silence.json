@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "sovereign_silence",
  "moves": "sovereign_silence",
  "duel": true,
@@ -23,6 +23,11 @@
        "rake_b",
        "found"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     },
     {
@@ -32,6 +37,11 @@
       [
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "scream"
+      }
      ]
     },
     {
@@ -49,6 +59,11 @@
       [
        "rake_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     }
    ]
@@ -68,6 +83,11 @@
        "rake_b",
        "found"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     },
     {
@@ -77,6 +97,11 @@
       [
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "scream"
+      }
      ]
     },
     {
@@ -87,6 +112,11 @@
       [
        "found"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     },
     {
@@ -108,6 +138,11 @@
       [
        "rake_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     }
    ]
@@ -127,6 +162,11 @@
       [
        "found"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     },
     {
@@ -138,6 +178,11 @@
        "rake_b",
        "found"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     },
     {
@@ -147,6 +192,11 @@
       [
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "scream"
+      }
      ]
     },
     {
@@ -157,6 +207,11 @@
       [
        "found"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     },
     {
@@ -170,6 +225,11 @@
       [
        "rake_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "found"
+      }
      ]
     }
    ]
@@ -178,5 +238,64 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.25
+ },
+ "mind": {
+  "cooldowns": {
+   "found": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "found",
+     "scream",
+     "rake",
+     "rake_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "found",
+     "scream"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "rake"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "rake",
+     "rake_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "rake"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "found",
+     "scream"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

@@ -32,6 +32,8 @@ public final class Drips {
             GLITTER = PARTICLES.register("cave_glitter", () -> new SimpleParticleType(false)),
             ASH = PARTICLES.register("cave_ash", () -> new SimpleParticleType(false)),
             SEEP = PARTICLES.register("cave_seep", () -> new SimpleParticleType(false));
+    /** A spark off an ember vine's bloom (SPEC §42.10). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> EMBER = PARTICLES.register("cave_ember", () -> new SimpleParticleType(false));
 
     /** The client's {@code cave_particles} setting (caves.client.CavesClientConfig sets it; a plain flag here). */
     public static volatile boolean enabled = true;
@@ -41,6 +43,14 @@ public final class Drips {
         // the point of the tip's model (deep_skin.py FORMATION "tip": 12 of 16 down from the top), a hair off centre
         level.addParticle(DRIP.get(), pos.getX() + 0.5 + (random.nextFloat() - 0.5) * 0.06, pos.getY() + 0.22,
                 pos.getZ() + 0.5 + (random.nextFloat() - 0.5) * 0.06, 0, 0, 0);
+    }
+
+    /** A spark drifting up off a bloom, a little out from the wall. */
+    static void ember(Level level, BlockPos pos, net.minecraft.core.Direction wall, RandomSource random) {
+        if (!enabled) return;
+        double out = 0.35 + random.nextDouble() * 0.15;
+        level.addParticle(EMBER.get(), pos.getX() + 0.5 - wall.getStepX() * out + (random.nextDouble() - 0.5) * 0.5,
+                pos.getY() + 0.4 + random.nextDouble() * 0.4, pos.getZ() + 0.5 - wall.getStepZ() * out + (random.nextDouble() - 0.5) * 0.5, 0, 0, 0);
     }
 
     public static void init(IEventBus modBus) {

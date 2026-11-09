@@ -106,6 +106,10 @@ public enum Model {
     LANTERN_MAW("", Move.SWIM, 2.0F, 1.6F, Voice.ELDER),
     CHIME_CRICKET("", Move.GROUND, 0.5F, 0.4F, Voice.SCARAB),
     WICKLING("", Move.GROUND, 0.5F, 0.35F, Voice.LIZARD),
+    // Amber Reach (SPEC §50.8): the herd, the people and the flies of a gate world
+    POLLEN_GRAZER("", Move.GROUND, 1.3F, 1.4F, Voice.GOAT),
+    WAX_FOLK("", Move.GROUND, 0.8F, 1.6F, Voice.LIZARD),
+    AMBERFLY("", Move.FLY, 0.4F, 0.35F, Voice.FIREFLY),
     DRIP_LURKER("", Move.GROUND, 0.8F, 1.1F, Voice.SPIDER),
     HUSHLING("", Move.GROUND, 0.6F, 0.75F, Voice.LISTENER),
     THOUSANDFOOT("", Move.GROUND, 2.0F, 1.1F, Voice.SPIDER),
@@ -116,7 +120,7 @@ public enum Model {
     public boolean hero() {
         return switch (this) {
             case BRIAR_SOW, DUNE_WYRM, OLD_ANTLER, MIRE_MOTHER, PLUMED_COIL, WEAVER_QUEEN, EMPRESS_MOTH, STONEHORN, MYCELORD, OWL, FIREFLY -> true;
-            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT, SEEP_HEART -> true;
+            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, POLLEN_GRAZER, WAX_FOLK, AMBERFLY, DRIP_LURKER, HUSHLING, THOUSANDFOOT, SEEP_HEART -> true;
             default -> false;
         };
     }
@@ -127,7 +131,7 @@ public enum Model {
     /** P3 bodies drawn by mobs.client.anim.WildRenderer (a hero rig with swim pitch and hold poses). */
     public boolean wild() {
         return switch (this) {
-            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT, SEEP_HEART -> true;
+            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, POLLEN_GRAZER, WAX_FOLK, AMBERFLY, DRIP_LURKER, HUSHLING, THOUSANDFOOT, SEEP_HEART -> true;
             default -> false;
         };
     }

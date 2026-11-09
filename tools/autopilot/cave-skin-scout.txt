@@ -1,0 +1,142 @@
+# Cave skin scout (Euan's 9 Nov notes): the Ochre Deep on his own world's seed, near his home, before any change: five roomy floors, each with
+# a torch in hand under Lens Cinematic, then with no light at all, then with Lens off, and a night-vision view to see the walls. Each stop's
+# position goes to the log (send_command_feedback on) so the before and after tours can stand on the same spots.
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+world cave_skin creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 18000
+cmd effect give @s minecraft:resistance 100000 4 true
+hud off
+
+# ---- pick 0 ----
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
+wait 300
+cmd data get entity @s Pos
+cmd data get entity @s Rotation
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 20
+shot p0_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 30
+shot p0_dark
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot p0_nv
+cmd effect clear @s minecraft:night_vision
+lens off
+wait 30
+shot p0_lensoff_dark
+lens cinematic
+wait 30
+
+# ---- pick 1 ----
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 1
+wait 20
+waitpassage
+wait 300
+cmd data get entity @s Pos
+cmd data get entity @s Rotation
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 20
+shot p1_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 30
+shot p1_dark
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot p1_nv
+cmd effect clear @s minecraft:night_vision
+lens off
+wait 30
+shot p1_lensoff_dark
+lens cinematic
+wait 30
+
+# ---- pick 2 ----
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 2
+wait 20
+waitpassage
+wait 300
+cmd data get entity @s Pos
+cmd data get entity @s Rotation
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 20
+shot p2_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 30
+shot p2_dark
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot p2_nv
+cmd effect clear @s minecraft:night_vision
+lens off
+wait 30
+shot p2_lensoff_dark
+lens cinematic
+wait 30
+
+# ---- pick 3 ----
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 3
+wait 20
+waitpassage
+wait 300
+cmd data get entity @s Pos
+cmd data get entity @s Rotation
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 20
+shot p3_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 30
+shot p3_dark
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot p3_nv
+cmd effect clear @s minecraft:night_vision
+lens off
+wait 30
+shot p3_lensoff_dark
+lens cinematic
+wait 30
+
+# ---- pick 4 ----
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 4
+wait 20
+waitpassage
+wait 300
+cmd data get entity @s Pos
+cmd data get entity @s Rotation
+cmd item replace entity @s weapon.offhand with minecraft:torch
+wait 20
+shot p4_torch
+cmd item replace entity @s weapon.offhand with minecraft:air
+wait 30
+shot p4_dark
+cmd effect give @s minecraft:night_vision 100000 0 true
+wait 30
+shot p4_nv
+cmd effect clear @s minecraft:night_vision
+lens off
+wait 30
+shot p4_lensoff_dark
+quit

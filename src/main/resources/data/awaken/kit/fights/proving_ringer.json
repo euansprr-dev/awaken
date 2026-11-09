@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "proving_ringer",
  "moves": "proving_ringer",
  "duel": true,
@@ -22,6 +22,12 @@
        "swing_b",
        "clang"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -31,6 +37,12 @@
       [
        "swing_a"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -42,6 +54,12 @@
        "swing_a",
        "swing_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "rope"
+      }
      ]
     },
     {
@@ -55,6 +73,12 @@
       [
        "peal"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -65,6 +89,12 @@
       [
        "swing_a"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -88,6 +118,12 @@
        "swing_b",
        "whirl"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -97,6 +133,12 @@
       [
        "swing_a"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "clang",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -108,6 +150,12 @@
        "swing_a",
        "swing_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -118,6 +166,12 @@
       [
        "clang"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "rope"
+      }
      ]
     },
     {
@@ -132,6 +186,12 @@
        "peal",
        "rope"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -143,6 +203,12 @@
        "swing_a",
        "swing_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "whirl",
+       "dodged": "lash"
+      }
      ]
     },
     {
@@ -155,5 +221,80 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "lash": 60,
+   "rope": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "lash",
+     "rope",
+     "peal",
+     "whirl",
+     "swing_a",
+     "swing_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "lash",
+     "rope",
+     "peal"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "swing_a"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "swing_a",
+     "swing_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "rope",
+     "whirl",
+     "clang"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "whirl",
+     "swing_a"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "lash",
+     "rope",
+     "peal"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

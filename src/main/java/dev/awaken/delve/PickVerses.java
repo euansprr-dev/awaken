@@ -59,11 +59,11 @@ public final class PickVerses {
         KINDLE("I · Kindle", "awaken:delve/deed_heart", BlockTags.INCORRECT_FOR_IRON_TOOL, 6F, 400, 2F,
                 "Sneak and strike bare rock: an ember sticks in the wall and lights the cave round it for five minutes (three at a time)"),
         ECHO("II · Echo", "awaken:delve/deed_lamp", BlockTags.INCORRECT_FOR_IRON_TOOL, 6.5F, 500, 2F,
-                "Stand still, sneak and use it on stone: a ring goes out through the rock, and ores and open caves within 12 glow through it for four seconds"),
+                "Stand still, sneak and tap stone: a cave sounds hollow from its side, and a lode answers from within 12"),
         TEMPERED("III · Tempered", null, BlockTags.INCORRECT_FOR_DIAMOND_TOOL, 8F, 1561, 3F,
                 "True strikes come easier: the seam is wider"),
         GLASS("IV · Glass", "awaken:delve/deed_deepglass", BlockTags.INCORRECT_FOR_DIAMOND_TOOL, 8.5F, 1800, 3F,
-                "Charge the heavy strike to its glint and let it go looking up: for five seconds the rock before you turns to glass to your eyes"),
+                "Its tap carries twice as far through the rock"),
         HUSH("V · Hush", "awaken:delve/deed_seep", BlockTags.INCORRECT_FOR_NETHERITE_TOOL, 9F, 2031, 4F,
                 "Your strikes make no sound to creatures, and you mine at full speed while sneaking, even in the air or in water"),
         CALL("VI · Call", null, BlockTags.INCORRECT_FOR_NETHERITE_TOOL, 10F, 2600, 4F,
@@ -132,9 +132,9 @@ public final class PickVerses {
 
     // ---- waking ---------------------------------------------------------------------------------------------------------
 
-    /** A verse's deed was done: remembered if the pick is on you, then whatever can wake, wakes. */
+    /** A verse's deed was done: remembered whatever you carried (§49.5), then whatever can wake, wakes. */
     public static void deed(ServerPlayer p, Verse v) {
-        if (v.deed == null || !WakingPick.carries(p)) return;
+        if (v.deed == null) return;
         if (Progression.profile(p).counter(v.deed) == 0) Progression.count(p, v.deed);
         check(p);
     }

@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "sovereign_ash",
  "moves": "sovereign_ash",
  "duel": true,
@@ -23,6 +23,12 @@
        "bite",
        "rush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -36,6 +42,12 @@
       [
        "rush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -46,6 +58,11 @@
       [
        "claw"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova"
+      }
      ]
     },
     {
@@ -60,6 +77,12 @@
        "rush",
        "claw"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -71,6 +94,12 @@
        "claw",
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -82,6 +111,12 @@
        "claw",
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     }
    ]
@@ -101,6 +136,12 @@
        "bite",
        "cloud"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -112,6 +153,11 @@
        "claw",
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova"
+      }
      ]
     },
     {
@@ -126,6 +172,12 @@
        "rush",
        "claw"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -138,6 +190,12 @@
       [
        "rush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -153,6 +211,12 @@
        "claw",
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -164,6 +228,12 @@
        "claw",
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     }
    ]
@@ -182,6 +252,11 @@
       [
        "sweep"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -193,6 +268,12 @@
        "bite",
        "nova"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -204,6 +285,11 @@
        "claw",
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova"
+      }
      ]
     },
     {
@@ -216,6 +302,12 @@
       [
        "rush"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -230,6 +322,12 @@
        "rush",
        "claw"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     },
     {
@@ -245,6 +343,12 @@
        "claw",
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "nova",
+       "dodged": "rush"
+      }
      ]
     }
    ]
@@ -253,5 +357,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "rush": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "rush",
+     "nova",
+     "bite",
+     "claw"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "rush"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "bite"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "bite",
+     "claw"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "nova"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "nova",
+     "bite"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "rush"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

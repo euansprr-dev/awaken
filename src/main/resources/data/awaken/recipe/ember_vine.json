@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "awaken:ember_lichen",
+    "awaken:ember_lichen"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:ember_vine"
+  }
+}

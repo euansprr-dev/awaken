@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/amber_stone"
+      },
+      {
+        "model": "awaken:block/amber_stone",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/amber_stone",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/amber_stone",
+        "y": 270
+      }
+    ]
+  }
+}

@@ -1,0 +1,118 @@
+# The Next Thing (SPEC §53): the short Tasks list seen for real. E-rank with a fire and a bedroom, then C-rank with an Anchor
+# and an Armoury grown into a Forge: Add to your home offers the Storehouse, the Later fold opens, the row becomes your pick.
+# Run on CI: tools/tour-ci.sh tools/autopilot/tasks-next-thing.txt 1200
+world autopilot_tasks_next creative 27132713
+waitworld
+gui 0
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin levels 6
+wait 40
+key dismiss
+wait 10
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+# ---- the fire, set on open ground ----
+# well outside the city's walls (a home can't be made inside them)
+cmd spreadplayers ~1400 ~ 0 10 false @s
+wait 200
+cmd awaken admin ember give
+wait 20
+cmd awaken admin ember set
+wait 120
+screen close
+# ---- a bedroom: timber, a door, a window, a bed, two lanterns ----
+cmd fill ~4 ~-1 ~-3 ~10 ~3 ~3 minecraft:spruce_planks hollow
+cmd setblock ~4 ~ ~ minecraft:oak_door[half=lower,facing=west]
+cmd setblock ~4 ~1 ~ minecraft:oak_door[half=upper,facing=west]
+cmd setblock ~10 ~1 ~ minecraft:glass_pane
+cmd setblock ~6 ~ ~-1 minecraft:red_bed[part=foot,facing=north]
+cmd setblock ~6 ~ ~-2 minecraft:red_bed[part=head,facing=north]
+cmd setblock ~8 ~ ~-2 minecraft:lantern
+cmd setblock ~8 ~ ~2 minecraft:lantern
+wait 20
+cmd awaken admin hearth read
+wait 200
+screen close
+screen holo tasks
+tasks now
+wait 60
+shot n01_now_e_rank
+tasks hearth
+wait 30
+shot n02_hearth_e_rank
+screen close
+wait 10
+# ---- an Anchor, then the Armoury and the Forge in the same room ----
+cmd awaken admin ember raise
+wait 120
+screen close
+cmd setblock ~5 ~ ~2 minecraft:crafting_table
+cmd setblock ~7 ~ ~2 awaken:fitting_stand
+cmd setblock ~9 ~ ~2 minecraft:anvil
+cmd setblock ~9 ~ ~-2 awaken:forge
+cmd summon minecraft:armor_stand ~7 ~ ~0
+wait 20
+cmd awaken admin hearth read
+wait 60
+screen close
+# ---- up to C-rank ----
+cmd awaken admin levels 6
+wait 20
+key dismiss
+wait 10
+cmd awaken admin rankup
+wait 80
+key dismiss
+wait 10
+screen close
+cmd awaken admin levels 14
+wait 20
+key dismiss
+wait 10
+cmd awaken admin rankup
+wait 200
+key dismiss
+wait 10
+screen close
+# ---- the same page at C-rank ----
+screen holo tasks
+tasks now
+wait 60
+shot n03_now_c_rank
+tasks hearth
+wait 30
+shot n04_hearth_c_rank
+tasks later
+wait 10
+shot n05_hearth_later_open
+scroll -6
+wait 10
+shot n06_hearth_foot
+tasks pick hearth/add storehouse
+wait 40
+shot n07_hearth_picked
+tasks armour
+wait 30
+shot n08_armour
+tasks weapons
+wait 30
+shot n09_weapons
+tasks gates
+wait 30
+shot n10_gates
+screen close
+wait 10
+quit

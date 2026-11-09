@@ -39,7 +39,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     private static final float HOLD = 1.0F, FADE = 0.3F;
     /** Held poses a clip owns (no idle fidgets on top). */
     private static final int HELD = WildPose.S_HANG | WildPose.S_CHIRP | WildPose.S_RIPEN | WildPose.S_LISTEN | WildPose.S_DEFLATE
-            | WildPose.S_CARRY | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_RIDDEN | WildPose.S_SLEEP;
+            | WildPose.S_CARRY | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_RIDDEN | WildPose.S_SLEEP | WildPose.S_GRAZE;
     /** The poses whose clips fold or lift the legs (the rest stand on their feet). */
     private static final int LEGS_HELD = WildPose.S_HANG | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_SLEEP | WildPose.S_DEFLATE;
 
@@ -120,7 +120,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         super.extractRenderState(mob, s, partialTicks);
         AwLook l = mob.look(partialTicks);
         s.setRenderData(AwModels.LOOK, l);
-        s.wild = mob instanceof WildPose w ? w.wildState() : 0;
+        s.wild = mob instanceof WildPose w ? w.wildState() : mob instanceof FaunaMob g && (g.pose() & FaunaMob.P_GRAZE) != 0 ? WildPose.S_GRAZE : 0;
         s.beat = mob instanceof WildPose w ? w.beatTime(partialTicks) : -1;
         s.pitch = (s.wild & WildPose.S_SWIM) != 0 ? Mth.clamp(mob.getXRot(partialTicks), -60.0F, 60.0F) : 0.0F;
         if (!(mob instanceof FaunaMob f)) return;

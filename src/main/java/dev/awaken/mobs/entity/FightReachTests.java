@@ -14,11 +14,15 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,6 +34,9 @@ public final class FightReachTests {
         for (String id : new String[]{"hive_regent", "sky_leviathan", "gearwright_colossus", "ember_tyrant", "glass_serpent"}) {
             AwakenTests.registerIsolated("fights_reach_live_" + id, 1400, h -> live(h, id));
         }
+        AwakenTests.registerIsolated("fights_guard_holds_ground", 200, FightReachTests::holdsGround);
+        AwakenTests.registerIsolated("fights_body_keeps_up", 120, FightReachTests::bodyKeepsUp);
+        AwakenTests.registerIsolated("fights_charge_stops_where_sent", 200, FightReachTests::chargeStopsWhereSent);
         AwakenTests.register("fights_reach_table", 20, FightReachTests::table);
         AwakenTests.registerIsolated("fights_reach_parry", 300, FightReachTests::parry);
         AwakenTests.register("fights_shots_own_look", 20, FightReachTests::ownLook);
@@ -156,6 +163,165 @@ public final class FightReachTests {
                 h.succeed();
             }
         });
+    }
+
+    /**
+     * A held guard holds its ground (SPEC §47.3): a string of light blows meets it blow after blow, and leaves you where
+     * you stood. The player's own tick ages the guard, and its motion is walked by hand (a test player has no client).
+     */
+    private static void holdsGround(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int x = -2; x <= 44; x++) for (int z = -2; z <= 44; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        ServerPlayer p = FairTests.reference(h, Rank.E, new BlockPos(21, 1, 21));
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
+        p.setYRot(180F);
+        p.setYHeadRot(180F);
+        p.setYBodyRot(180F);
+        double floor = p.getY();
+        Vec3 start = p.position();
+        MobDef def = Bestiary.get("hive_regent");
+        KitMoves.Move cut = Kits.all().get("hive_regent").moves().get(Kits.all().get("hive_regent").moves().index("cut"));
+        double back = (cut.minRange() + cut.maxRange()) * 0.5 + def.width * def.scale * 0.5 + 0.3;
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(21.5, 1, 21.5 - back)), 5,
+                new MobRole(MobRole.Role.BOSS, 5, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        p.startUsingItem(InteractionHand.MAIN_HAND);
+        FairTests.pool(p);
+        int[] tick = {0}, met = {0}, begun = {0};
+        double[] moved = {0};
+        String[] was = {null};
+        StringBuilder seq = new StringBuilder();
+        h.onEachTick(() -> {
+            tick[0]++;
+            boss.setTarget(p);
+            Vec3 v = p.getDeltaMovement();
+            p.setDeltaMovement(Vec3.ZERO); // its own tick would move it, with no client's gravity
+            p.doTick();
+            p.setPos(p.getX(), Math.max(floor, p.getY()), p.getZ());
+            p.setDeltaMovement(v);
+            walk(p, floor);
+            moved[0] = Math.max(moved[0], Math.sqrt(Math.pow(p.getX() - start.x, 2) + Math.pow(p.getZ() - start.z, 2)));
+            String now = boss.kitPlaying();
+            if (tick[0] == 8) h.assertTrue(boss.playKitString("cut", java.util.List.of("cut_b")), "the string plays");
+            if (now == null ? was[0] != null : !now.equals(was[0])) {
+                if (was[0] != null && hits(boss, was[0])) {
+                    boolean on = FairTests.share(p) > 1.0E-3F;
+                    if (on) met[0]++;
+                    seq.append(was[0]).append(on ? "+ " : "- ");
+                    FairTests.pool(p);
+                }
+                if (now != null && hits(boss, now)) begun[0]++;
+                was[0] = now;
+            }
+            if (tick[0] > 8 && now == null && was[0] == null && begun[0] > 0) {
+                Awaken.LOG.info("[reach] guard holds: {} begun, {} met the guard, moved {}; {}", begun[0], met[0], String.format("%.2f", moved[0]), seq);
+                h.assertTrue(begun[0] == 2 && met[0] == 2, "both blows meet the guard (" + begun[0] + " begun, " + met[0] + " met)");
+                h.assertTrue(moved[0] > 1.0 && moved[0] < 2.6, "the guard was shoved a step a blow and held, moved " + moved[0]);
+                boss.discard();
+                h.succeed();
+            }
+        });
+    }
+
+    /**
+     * The body and its clip keep one clock on a move that carries it (SPEC §48.8; Euan: the Ember Tyrant's run "isn't
+     * smooth"): every kit's every such move through the client's three-step glide, fed the place sent each tick, is drawn
+     * where the server has it; then a real charge, sent ahead while it runs and not at its end.
+     */
+    private static void bodyKeepsUp(GameTestHelper h) {
+        int moves = 0;
+        for (Kits.Kit kit : Kits.all().values()) {
+            for (KitMoves.Move m : kit.moves().moves()) {
+                if (m.motion().advance() == 0) continue;
+                moves++;
+                int active = m.time().active(), left = 0;
+                float v = m.motion().advance() / active;
+                double drawn = 0, target = 0;
+                for (int k = 0; k < active; k++) {
+                    double sent = (k + 1 + FightRunner.carried(k, active)) * v;
+                    if (left == 0 || sent != target) {
+                        target = sent;
+                        left = 3;
+                    }
+                    drawn += (target - drawn) / left--;
+                    h.assertTrue(Math.abs(drawn - (k + 1) * v) < 1.0E-3F, kit.id() + "/" + m.id() + " drawn " + drawn + " at tick " + k + ", true " + (k + 1) * v);
+                }
+            }
+        }
+        h.assertTrue(moves >= 60, "the moves that carry a body: " + moves);
+        ServerLevel level = h.getLevel();
+        for (int x = -2; x <= 24; x++) for (int z = -2; z <= 24; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        MobDef def = Bestiary.get("ember_tyrant");
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(11.5, 1, 11.5)), 5,
+                new MobRole(MobRole.Role.BOSS, 5, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        h.assertTrue(boss.getType().updateInterval() == 1, "a boss is placed every tick");
+        KitMoves.Move charge = boss.kit().moves().get(boss.kit().moves().index("charge"));
+        double full = charge.motion().advance() / charge.time().active() * FightRunner.LEAD;
+        double[] most = {0};
+        boolean[] began = {false};
+        h.onEachTick(() -> {
+            if (!began[0]) {
+                began[0] = boss.playKitMove("charge");
+                return;
+            }
+            double ahead = boss.trackingPosition().distanceTo(boss.position());
+            most[0] = Math.max(most[0], ahead);
+            if (boss.kitPlaying() == null) {
+                h.assertTrue(Math.abs(most[0] - full) < 0.01, "sent ahead by two ticks of its run: " + most[0] + ", want " + full);
+                h.assertTrue(ahead == 0, "and not once it stops: " + ahead);
+                boss.discard();
+                h.succeed();
+            }
+        });
+    }
+
+    /** A charge (an ability, not a clip) brakes on its last tick: what's sent ahead must be where the body really gets to. */
+    private static void chargeStopsWhereSent(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        for (int x = -2; x <= 24; x++) for (int z = -2; z <= 28; z++) level.setBlockAndUpdate(h.absolutePos(new BlockPos(x, 0, z)), Blocks.STONE.defaultBlockState());
+        MobDef def = Bestiary.get("guardian_gardens");
+        AwakenBoss boss = (AwakenBoss) Mobs.spawn(level, def, h.absoluteVec(new Vec3(11.5, 1, 5.5)), 5,
+                new MobRole(MobRole.Role.BOSS, 5, def.theme.id, Optional.of(def.bossId()), ""), Set.of());
+        Pig stand = h.spawn(EntityTypes.PIG, new Vec3(11.5, 1, 17.5));
+        stand.setNoAi(true);
+        boss.setTarget(stand);
+        List<Vec3> sent = new ArrayList<>(), at = new ArrayList<>();
+        boolean[] began = {false};
+        h.onEachTick(() -> {
+            if (!began[0]) {
+                began[0] = boss.playKitMove("charge");
+                return;
+            }
+            sent.add(boss.trackingPosition());
+            at.add(boss.position());
+            if (boss.kitPlaying() != null) return;
+            int led = 0;
+            for (int k = 0; k + 2 < sent.size(); k++) {
+                if (sent.get(k).distanceTo(at.get(k)) == 0) continue;
+                led++;
+                double off = sent.get(k).distanceTo(at.get(k + 2));
+                h.assertTrue(off < 0.15, "tick " + k + " of the charge sent the body " + off + " from where it got to");
+            }
+            h.assertTrue(led >= 6, "ticks a charge led the body: " + led);
+            boss.discard();
+            h.succeed();
+        });
+    }
+
+    private static boolean hits(AwakenBoss boss, String move) {
+        KitMoves.Table table = boss.kit().moves();
+        return !table.get(table.index(move)).hits().isEmpty();
+    }
+
+    /** One tick of what the client does with a player's motion: air drag, gravity, ground friction, a flat floor. */
+    private static void walk(ServerPlayer p, double floor) {
+        Vec3 v = p.getDeltaMovement();
+        if (v.lengthSqr() < 1.0E-6 && p.getY() <= floor) return;
+        double y = p.getY() + v.y;
+        boolean ground = y <= floor;
+        p.setPos(p.getX() + v.x, ground ? floor : y, p.getZ() + v.z);
+        p.setOnGround(ground);
+        double drag = ground ? 0.546 : 0.91;
+        p.setDeltaMovement(v.x * drag, ground ? 0 : (v.y - 0.08) * 0.98, v.z * drag);
     }
 
     private static void live(GameTestHelper h, String id) {

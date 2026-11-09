@@ -3,6 +3,7 @@ package dev.awaken.tasks.client;
 import dev.awaken.core.api.Goals.Goal;
 import dev.awaken.progression.client.StatusSections;
 import dev.awaken.signal.client.Glass;
+import dev.awaken.signal.client.KeyText;
 import dev.awaken.signal.client.Ui;
 import dev.awaken.signal.client.UiSection;
 import dev.awaken.tasks.net.TaskPayloads;
@@ -14,11 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * K, Tasks (SPEC §27.13). Now: the one step to do next with everything it needs and where each comes from, then one
- * line per goal for what else is open, what's out there, and the upgrades you can take when you want. A goal's tab: every
- * step of that goal in order, each need with its line of where-from. Pin puts a step on the HUD card.
+ * K, Tasks (SPEC §27.13, §53). Now: the one step to do next with everything it needs and where each comes from, then one
+ * line per goal for what else is open, and one thing out there. A goal's tab: its rows (one per line of work, at most
+ * three), each need with its line of where-from, then Later folded at the foot and what the next rank opens. Pin puts a
+ * step on the HUD card; Set aside takes one off the list, with Undo.
  */
 final class TaskPage extends UiSection {
+    private static final String ADD = "hearth/add";
+
     @Override
     public String title() {
         return "";
@@ -51,12 +55,48 @@ final class TaskPage extends UiSection {
     // ---- Now -------------------------------------------------------------------------------------------------------
 
     private static void now(Ui ui, TaskPayloads.View v) {
+        undo(ui);
         StepRow top = TaskCache.step(v.top());
         if (top != null) {
-            heading(ui, "DO THIS NEXT");
+            heading(ui, top.key().equals(v.pinned()) ? "PINNED" : "DO THIS NEXT");
             step(ui, v, top, true);
             ui.gap(6);
         }
+        if (!v.capped()) {
+            everything(ui, v, top);
+            return;
+        }
+        List<StepRow> also = new ArrayList<>();
+        StepRow out = null;
+        for (Goal g : TaskCache.TABS) {
+            for (StepRow s : v.steps()) {
+                if (s == top || s.goal() != g.ordinal() || s.optional() || !s.shown()) continue;
+                also.add(s); // the first row of each goal: the rest wait on its tab
+                break;
+            }
+        }
+        List<StepRow> waiting = new ArrayList<>();
+        for (StepRow s : v.steps()) {
+            if (s == top || !TaskCache.out(s)) continue;
+            if (s.shown() && !s.optional() && out == null) out = s;
+            else waiting.add(s);
+        }
+        if (!also.isEmpty()) {
+            heading(ui, "ALSO OPEN TO YOU");
+            for (StepRow s : also) brief(ui, v, s, true);
+            ui.gap(4);
+        }
+        if (out != null) {
+            heading(ui, "OUT THERE");
+            brief(ui, v, out, false);
+        }
+        later(ui, v, waiting);
+        String foot = v.footer(Goal.HEARTH.ordinal());
+        footer(ui, foot.isEmpty() ? v.footer(Goal.RANK.ordinal()) : foot);
+    }
+
+    /** With the cap off in the config: the old Now, every open step. */
+    private static void everything(Ui ui, TaskPayloads.View v, @Nullable StepRow top) {
         List<StepRow> also = new ArrayList<>(), out = new ArrayList<>(), later = new ArrayList<>();
         for (Goal g : TaskCache.TABS) {
             for (StepRow s : v.steps()) {
@@ -86,6 +126,69 @@ final class TaskPage extends UiSection {
         }
     }
 
+    /** "Set aside: X. Undo", for a few seconds after you do. */
+    private static void undo(Ui ui) {
+        String title = TaskCache.undoTitle();
+        if (title.isEmpty()) return;
+        Ui.Flow f = ui.flow();
+        f.text("Set aside: " + title, Glass.LABEL);
+        if (f.button("Undo", Glass.EDGE, true)) {
+            TaskCache.undo();
+            StatusSections.cue(StatusSections.Cue.UNDO);
+        }
+        f.end();
+        ui.gap(4);
+    }
+
+    /** The fold at the foot: everything behind the rows, read-only, with Pin. */
+    private static void later(Ui ui, TaskPayloads.View v, List<StepRow> rows) {
+        if (rows.isEmpty()) return;
+        ui.gap(4);
+        Ui.Flow fold = ui.flow();
+        if (fold.button("Later · " + rows.size() + (TaskCache.laterOpen ? "  ▾" : "  ▸"), Glass.EDGE, true)) {
+            TaskCache.laterOpen = !TaskCache.laterOpen;
+            StatusSections.cue(StatusSections.Cue.PAGE);
+        }
+        fold.end();
+        if (!TaskCache.laterOpen) return;
+        ui.gap(2);
+        for (StepRow s : rows) {
+            ui.card(Glass.a(Glass.LABEL, 0.5f), b -> {
+                b.text(KeyText.resolve(s.title()), Glass.TEXT);
+                b.text(laterWhy(v, s), Glass.a(Glass.LABEL, 0.8f));
+                Ui.Flow f = b.flow();
+                if (s.aside() && f.button("Put back", Glass.EDGE, true)) {
+                    TaskCache.act(TaskPayloads.PUT_BACK, s.key());
+                    StatusSections.cue(StatusSections.Cue.UNDO);
+                }
+                pin(f, v, s);
+                f.end();
+            });
+            ui.gap(3);
+        }
+    }
+
+    private static String laterWhy(TaskPayloads.View v, StepRow s) {
+        if (s.aside()) return "You set this aside.";
+        if (s.optional()) return "When you want.";
+        for (StepRow r : v.steps()) if (r.shown() && r.extra().thread().equals(s.extra().thread())) return "After the one before it.";
+        return "Waiting for a place on this tab.";
+    }
+
+    /** What the next rank or level opens. */
+    private static void footer(Ui ui, String line) {
+        if (line.isEmpty()) return;
+        ui.gap(6);
+        ui.text(line, Glass.a(Glass.LABEL, 0.85f));
+    }
+
+    /** A row that becomes what was picked on it ("Add to your home"): the pick, or null while there isn't one. */
+    private static TaskPayloads.@Nullable ChoiceRow became(StepRow s) {
+        if (!s.key().equals(ADD)) return null;
+        for (TaskPayloads.ChoiceRow c : s.choices()) if (c.id().equals(s.chosen())) return c;
+        return null;
+    }
+
     private static void heading(Ui ui, String text) {
         ui.text(text, Glass.a(Glass.LABEL, 0.9f));
         ui.gap(1);
@@ -100,12 +203,16 @@ final class TaskPage extends UiSection {
             tags.chip(goalName(s).toUpperCase(java.util.Locale.ROOT), Glass.LABEL);
             if (pinned) tags.chip("PINNED", Glass.GOOD);
             if (s.fresh()) tags.chip("NEW", Glass.AMBER);
+            if (s.extra().ready()) tags.chip("READY", Glass.GOOD);
             tags.end();
-            b.text(s.title(), s.optional() ? Glass.TEXT : Glass.TITLE);
-            if (!s.why().isEmpty()) b.textAtMost(s.why(), Glass.a(Glass.LABEL, 0.9f), 2);
+            TaskPayloads.ChoiceRow pick = became(s);
+            b.text(KeyText.resolve(pick != null ? pick.title() : s.title()), s.optional() ? Glass.TEXT : Glass.TITLE);
+            String why = pick != null ? pick.sub() : s.why();
+            if (!why.isEmpty()) b.textAtMost(why, Glass.a(Glass.LABEL, 0.9f), 2);
             Ui.Flow f = b.flow();
-            int ready = ready(s.needs());
-            if (!s.needs().isEmpty()) f.text(ready + " of " + s.needs().size() + " ready", ready == s.needs().size() ? Glass.GOOD : Glass.LABEL);
+            List<NeedRow> wanted = pick != null ? pick.needs() : s.needs();
+            int ready = ready(wanted);
+            if (!wanted.isEmpty()) f.text(ready + " of " + wanted.size() + " ready", ready == wanted.size() ? Glass.GOOD : Glass.LABEL);
             if (open && !TaskCache.out(s) && f.button("Open ›", Glass.EDGE, true)) TaskTabs.pick(tabOf(s));
             pin(f, v, s);
             f.end();
@@ -116,9 +223,14 @@ final class TaskPage extends UiSection {
     // ---- a goal's tab ----------------------------------------------------------------------------------------------
 
     private static void goal(Ui ui, TaskPayloads.View v, Goal g) {
-        List<StepRow> rows = new ArrayList<>(), later = new ArrayList<>();
-        for (StepRow s : v.steps()) if (s.goal() == g.ordinal()) (s.optional() ? later : rows).add(s);
-        rows.addAll(later);
+        undo(ui);
+        List<StepRow> rows = new ArrayList<>(), optional = new ArrayList<>(), waiting = new ArrayList<>();
+        for (StepRow s : v.steps()) {
+            if (s.goal() != g.ordinal()) continue;
+            if (!s.shown()) waiting.add(s);
+            else (s.optional() ? optional : rows).add(s);
+        }
+        rows.addAll(optional);
         if (rows.isEmpty()) {
             ui.text(switch (g) {
                 case HEARTH -> "Nothing to build at home right now. Your home's next steps show here as it grows.";
@@ -127,12 +239,13 @@ final class TaskPage extends UiSection {
                 case BELLS -> "No bell to find right now. When the Bell Book hears one, it shows here.";
                 default -> "Nothing open here right now.";
             }, Glass.LABEL);
-            return;
         }
         for (StepRow s : rows) {
             step(ui, v, s, false);
             ui.gap(4);
         }
+        later(ui, v, waiting);
+        footer(ui, v.footer(g.ordinal()));
     }
 
     // ---- one step in full ------------------------------------------------------------------------------------------
@@ -147,23 +260,37 @@ final class TaskPage extends UiSection {
             else if (top) tags.chip("NEXT", Glass.AMBER);
             if (pinned) tags.chip("PINNED", Glass.GOOD);
             if (s.fresh()) tags.chip("NEW", Glass.AMBER);
+            if (s.extra().ready()) tags.chip("READY", Glass.GOOD);
             if (s.optional()) tags.chip("WHEN YOU WANT", Glass.LABEL);
             tags.end();
-            b.text(s.title(), Glass.TITLE);
-            if (!s.why().isEmpty()) b.text(s.why(), Glass.a(Glass.LABEL, 0.95f));
-            if (!s.needs().isEmpty()) {
+            TaskPayloads.ChoiceRow pick = became(s);
+            b.text(KeyText.resolve(pick != null ? pick.title() : s.title()), Glass.TITLE);
+            String opens = pick != null ? pick.sub() : s.extra().opens(), why = pick != null ? pick.detail() : s.why();
+            if (!opens.isEmpty()) b.text(opens, Glass.TEXT);
+            if (!why.isEmpty()) b.text(why, Glass.a(Glass.LABEL, 0.95f));
+            List<NeedRow> wanted = pick != null ? pick.needs() : s.needs();
+            if (!wanted.isEmpty()) {
                 b.gap(2);
-                needs(b, s.needs());
+                needs(b, wanted);
             }
-            if (!s.choices().isEmpty()) {
+            if (!s.choices().isEmpty() && pick == null) {
                 b.gap(2);
                 choices(b, s);
             }
             String dir = WhereFrom.direction(s.where().orElse(null));
             if (!dir.isEmpty()) b.text(dir, Glass.a(Glass.EDGE, 0.9f));
+            if (!s.extra().then().isEmpty()) b.text(KeyText.resolve(s.extra().then()), Glass.a(Glass.LABEL, 0.75f));
             Ui.Flow f = b.flow();
             pin(f, v, s);
-            if (s.choices().size() > 1 && f.button("See them worn ›", Glass.EDGE, true)) SetPreviewScreen.open(s.key());
+            if (pick != null && f.button("Change", Glass.EDGE, true)) {
+                TaskCache.act(TaskPayloads.CHOOSE, s.key() + "|");
+                StatusSections.cue(StatusSections.Cue.UNDO);
+            }
+            if (s.choices().size() > 1 && !s.key().equals(ADD) && f.button("See them worn ›", Glass.EDGE, true)) SetPreviewScreen.open(s.key());
+            if (v.capped() && !pinned && !s.extra().urgent() && !s.optional() && f.button("Set aside", Glass.EDGE, true)) {
+                TaskCache.setAside(s);
+                StatusSections.cue(StatusSections.Cue.UNDO);
+            }
             f.end();
         });
     }
@@ -202,7 +329,7 @@ final class TaskPage extends UiSection {
                 }
                 Ui.Flow f = cb.flow();
                 int ready = ready(c.needs());
-                f.text(c.needs().isEmpty() ? "You have every piece." : ready + " of " + c.needs().size() + " materials ready", Glass.LABEL);
+                f.text(c.needs().isEmpty() ? "You have every piece." : ready + " of " + c.needs().size() + (s.key().equals(ADD) ? " ready" : " materials ready"), Glass.LABEL);
                 if (f.button("Choose", Glass.EDGE, true)) choose(s, c);
                 f.end();
             });

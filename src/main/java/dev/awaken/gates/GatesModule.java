@@ -19,6 +19,7 @@ public final class GatesModule {
         modBus.addListener(GatesModule::registerPayloads);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(dev.awaken.gates.worlds.GateWorlds::addReload);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(dev.awaken.gates.worlds.WorldThemes::chat);
+        dev.awaken.gates.realms.RealmsModule.init(modBus);
         GateEvents.register();
         GateAccess.install();
         GateParty.install();
@@ -49,6 +50,8 @@ public final class GatesModule {
         var r = e.registrar("1");
         r.playToClient(GatePayloads.Beacons.TYPE, GatePayloads.Beacons.STREAM_CODEC);
         r.playToClient(GatePayloads.RunHud.TYPE, GatePayloads.RunHud.STREAM_CODEC);
+        r.playToClient(GatePayloads.LordLevel.TYPE, GatePayloads.LordLevel.STREAM_CODEC);
+        r.playToClient(GatePayloads.Crossing.TYPE, GatePayloads.Crossing.STREAM_CODEC);
         r.playToClient(GatePayloads.SpoilsView.TYPE, GatePayloads.SpoilsView.STREAM_CODEC);
         r.playToClient(GatePayloads.SpoilsFlight.TYPE, GatePayloads.SpoilsFlight.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, dev.awaken.gates.net.WorldPayloads.Arrival.STREAM_CODEC);

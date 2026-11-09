@@ -89,6 +89,18 @@ public final class Interactions {
         queue(p, () -> Runs.enter(p, g));
     }
 
+    /** A right click on a gate's door: go in together with whoever is beside you, or let go (SPEC §55). */
+    public static void door(ServerLevel level, BlockPos pos, ServerPlayer p) {
+        if (level.dimension() != Level.OVERWORLD || p.isSpectator() || !cooled(p, 10)) return;
+        GateRecord g = structureAt(level.getServer(), pos);
+        if (g == null || !g.state.enterable()) return;
+        if (g.scripted) {
+            Signal.toast(p, Component.literal("This gate is one to walk on your own."));
+            return;
+        }
+        queue(p, () -> dev.awaken.core.api.RidingHooks.door(p));
+    }
+
     /** The gate whose surface structure contains this block (big gates reach far from their foot: S stands 17 high). */
     public static GateRecord structureAt(MinecraftServer server, BlockPos pos) {
         for (GateRecord g : GateRegistry.get(server).near(pos, Overworld.REACH, false)) {
@@ -111,9 +123,16 @@ public final class Interactions {
         }
     }
 
+    public static final String WAYSTONE = ACTION + ":waystone:";
+    public static final String WAX_TRADE = ACTION + ":wax_trade";
+
     public static void useShrine(ServerPlayer p, BlockPos pos) {
         RunState run = Runs.run(p);
         GateRecord g = Runs.gateOf(p);
+        if (g != null && g.realm.isPresent()) {
+            dev.awaken.gates.realms.RealmLive.useWaystone(p, g, pos);
+            return;
+        }
         Where w = Where.at(p.level().getServer(), pos);
         if (g == null || w == null || w.gate().id != g.id || w.room() == null) return;
         if (!run.clearedFloor(w.area(), w.floorNo())) {
@@ -229,6 +248,15 @@ public final class Interactions {
         RunState run = Runs.run(p);
         GateRecord g = Runs.gateOf(p);
         if (g == null) return;
+        if (action.startsWith(WAYSTONE)) {
+            int to = Integer.parseInt(action.substring(WAYSTONE.length()));
+            queue(p, () -> dev.awaken.gates.realms.RealmLive.travel(p, g, to));
+            return;
+        }
+        if (action.equals(WAX_TRADE)) {
+            queue(p, () -> dev.awaken.gates.realms.RealmLife.trade(p, g));
+            return;
+        }
         switch (action) {
             case ACTION + ":extract" -> {
                 Where w = Where.at(p.level().getServer(), p.blockPosition());

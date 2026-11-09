@@ -6,6 +6,13 @@
     "awaken:mycelium_threads",
     "awaken:spore_puffball",
     "awaken:temple_moss",
-    "awaken:temple_canopy"
+    "awaken:temple_canopy",
+    "awaken:amber_moss",
+    "awaken:amber_petal",
+    "awaken:amber_seedhead",
+    "awaken:amber_leaf",
+    "awaken:amber_petal_deep",
+    "awaken:amber_petal_tip",
+    "awaken:amber_leaf_gold"
   ]
 }

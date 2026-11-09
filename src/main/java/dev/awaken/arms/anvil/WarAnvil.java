@@ -96,6 +96,8 @@ public final class WarAnvil {
             Signal.send(p, n.ttl(20 * 10).build());
             return;
         }
+        // a pick in hand: its own window (§49.4)
+        if (PickAnvil.open(p, level, be)) return;
         // one of Arms' weapons in hand: its window (temper, reforge, attune; §46.8), the Armoury a button away
         if (AnvilHeld.open(p, level, be)) return;
         ArmsArmoury.openAnvil(p, be.getBlockPos());
@@ -104,7 +106,7 @@ public final class WarAnvil {
     /** What the Armoury shows at an anvil for one style's tier: which of its buttons work, and one plain line for what's in the way. */
     public record Status(int flags, String line) {
         /** REBUILD: this tier needs the anvil rebuilt (§46.6), the door's button says so; REBUILD_OK: and you have what it takes. */
-        public static final int SHOWN = 1, FORGE = 2, MEMORY = 4, MEMORY_OK = 8, BLADE = 16, REBUILD = 32, REBUILD_OK = 64;
+        public static final int SHOWN = 1, FORGE = 2, MEMORY = 4, MEMORY_OK = 8, BLADE = 16, REBUILD = 32, REBUILD_OK = 64, AGAIN = 128;
     }
 
     public static Status status(ServerPlayer p, BlockPos pos, String style, int tier) {
@@ -116,7 +118,9 @@ public final class WarAnvil {
         String line = missing(p, level, pos, ArmsArmoury.PREFIX[tier] + "_" + style, false);
         if (line == null) flags |= Status.FORGE;
         if (SmithMemory.of(p).remembers(style, tier)) flags |= Status.MEMORY | (line == null ? Status.MEMORY_OK : 0);
-        if (missing(p, level, pos, ArmsArmoury.PREFIX[tier] + "_" + AnvilWork.BLADE, false) == null) flags |= Status.BLADE;
+        if (dev.awaken.delve.forged.PickForm.ofStyle(style) != null) {
+            if (PickAnvil.again(p, level, pos, ArmsArmoury.PREFIX[tier] + "_" + style)) flags |= Status.AGAIN;
+        } else if (missing(p, level, pos, ArmsArmoury.PREFIX[tier] + "_" + AnvilWork.BLADE, false) == null) flags |= Status.BLADE;
         int build = build(be.getBlockState());
         if (build < buildFor(tier) && Progression.profile(p).level() >= ArmsArmoury.LEVEL[tier])
             flags |= Status.REBUILD | (p.isCreative() || afford(p, rebuildCost(p, build + 1)) ? Status.REBUILD_OK : 0);
@@ -129,6 +133,7 @@ public final class WarAnvil {
         int tier = AnvilWork.tierOf(id);
         String style = AnvilWork.styleOf(id);
         if (tier < 0) return "That isn't made at a War Anvil.";
+        if (dev.awaken.delve.forged.PickForm.ofStyle(style) != null) return PickAnvil.missing(p, level, anvil, id, memory, AnvilCosts.needs(p, id));
         if (Progression.profile(p).level() < ArmsArmoury.LEVEL[tier])
             return tierName(tier) + " weapons open at level " + ArmsArmoury.LEVEL[tier] + ".";
         if (tier > 0 && forge(level, anvil) == null) return "Metal is heated in a Forge. Set your Hearth's Forge within six blocks of this anvil.";
@@ -176,12 +181,17 @@ public final class WarAnvil {
 
     /** Why this anvil can't make a tier's weapons yet, in plain words, or null when it's built for them. */
     static @Nullable String unbuilt(int tier, int build) {
+        return unbuilt(tier, build, "weapons");
+    }
+
+    /** The same for what's being made: "weapons" or "picks". */
+    static @Nullable String unbuilt(int tier, int build, String what) {
         int need = buildFor(tier);
         if (build >= need) return null;
         String why = switch (need) {
-            case 1 -> "C-rank weapons are forged on an Ironbound anvil.";
-            case 2 -> "B-rank weapons are balanced on a Deepglass horn.";
-            default -> "A- and S-rank weapons are forged on a Lord's anvil.";
+            case 1 -> "C-rank " + what + " are forged on an Ironbound anvil.";
+            case 2 -> "B-rank " + what + (what.equals("picks") ? " are forged on a Deepglass horn." : " are balanced on a Deepglass horn.");
+            default -> "A- and S-rank " + what + " are forged on a Lord's anvil.";
         };
         String how = switch (build + 1) {
             case 1 -> "Ironbound, with 4 iron blocks and 2 diamonds.";
@@ -384,26 +394,34 @@ public final class WarAnvil {
                 pull(level, be, w, w.heat(clamp(a.t(), now - w.stageStart)), p);
             }
             case AnvilPayloads.STRIKE, AnvilPayloads.TAP -> {
-                int stage = a.act() == AnvilPayloads.STRIKE ? AnvilSong.SHAPE : AnvilSong.HILT;
-                if (w == null || w.stage != stage || !mine(p, w) || a.a() < w.beats().size()) return;
+                if (w == null || !mine(p, w) || a.a() < w.beats().size()) return;
+                // a pick's stages are struck the same way: the eye and the tips aimed, the hanging and quiet work tapped (§49.4)
+                boolean aimed = a.act() == AnvilPayloads.STRIKE;
+                int stage = w.stage;
+                if (aimed ? stage != AnvilSong.SHAPE && stage != AnvilSong.EYE && stage != AnvilSong.TIPS
+                        : stage != AnvilSong.HILT && stage != AnvilSong.HANG && stage != AnvilSong.TEND) return;
                 float t = clamp(a.t(), now - w.stageStart);
                 // beats the smith's clock saw pass unstruck, not yet missed here (the server waits out the lag first)
                 while (w.stage == stage && be.work() == w && w.beats().size() < a.a() && t > w.nextDue() + AnvilSong.WINDOW) beat(level, be, w, 0F, null);
                 if (be.work() != w || w.stage != stage || a.a() != w.beats().size()) return;
                 float off = t - w.nextDue();
                 if (off < -AnvilSong.WINDOW) return; // far ahead of its beat: not taken for it
-                float score = stage == AnvilSong.SHAPE ? AnvilSong.strike(off, Mth.clamp(a.aim(), 0F, 9F)) : AnvilSong.timing(off);
+                float score = aimed ? AnvilSong.strike(off, Mth.clamp(a.aim(), 0F, 9F)) : AnvilSong.timing(off);
                 beat(level, be, w, score, p);
             }
             case AnvilPayloads.PLUNGE -> {
-                if (w == null || w.stage != AnvilSong.QUENCH || !mine(p, w) || w.plunge >= 0F) return;
+                // a pick's colours and seam are held and let go, as a quench is
+                boolean held = w != null && (w.stage == AnvilSong.COLOURS || w.stage == AnvilSong.SEAM);
+                if (w == null || w.stage != AnvilSong.QUENCH && !held || !mine(p, w) || w.plunge >= 0F) return;
                 w.plunge = clamp(a.t(), now - w.stageStart);
-                level.playSound(p, a.pos(), AnvilContent.QUENCH.get(), SoundSource.BLOCKS, 1F, 1F);
+                level.playSound(p, a.pos(), held ? PickAnvil.holdSound(w) : AnvilContent.QUENCH.get(), SoundSource.BLOCKS, 1F, 1F);
                 be.changed();
             }
             case AnvilPayloads.LIFT -> {
-                if (w == null || w.stage != AnvilSong.QUENCH || !mine(p, w) || w.plunge < 0F) return;
-                lift(level, be, w, Math.max(0F, clamp(a.t(), now - w.stageStart) - w.plunge), p);
+                if (w == null || !mine(p, w) || w.plunge < 0F) return;
+                float heldFor = Math.max(0F, clamp(a.t(), now - w.stageStart) - w.plunge);
+                if (w.stage == AnvilSong.COLOURS || w.stage == AnvilSong.SEAM) PickAnvil.released(level, be, w, heldFor, p);
+                else if (w.stage == AnvilSong.QUENCH) lift(level, be, w, heldFor, p);
             }
             case AnvilPayloads.KNAP -> {
                 if (w == null || w.stage != AnvilSong.KNAP || !mine(p, w) || a.a() != w.scores.size()) return;
@@ -435,7 +453,7 @@ public final class WarAnvil {
                 else be.changed();
             }
             case AnvilPayloads.GRIND -> {
-                if (w == null || w.stage != AnvilSong.GRIND || !mine(p, w) || a.a() != w.taps.size()) return;
+                if (w == null || w.stage != AnvilSong.GRIND && w.stage != AnvilSong.SPINE || !mine(p, w) || a.a() != w.taps.size()) return;
                 float t = clamp(a.t(), now - w.stageStart);
                 if (w.grindLast >= 0F && t - w.grindLast < AnvilSong.GRIND_GAP - 1F) return; // faster than the wheel turns: not taken
                 w.grindLast = t;
@@ -451,9 +469,13 @@ public final class WarAnvil {
                 if (w == null || w.stage != AnvilSong.STAR || !mine(p, w)) return;
                 // the light is its water: no hairline from holding it too long
                 w.star = AnvilSong.star(clamp(a.t(), now - w.stageStart) - AnvilSong.STAR_AT);
+                level.playSound(p, be.getBlockPos(), AnvilContent.STAR.get(), SoundSource.BLOCKS, 1F, 1F);
+                if (w.pick) {
+                    PickAnvil.advance(level, be, w);
+                    return;
+                }
                 w.quench = w.star;
                 w.held = -1F;
-                level.playSound(p, be.getBlockPos(), AnvilContent.STAR.get(), SoundSource.BLOCKS, 1F, 1F);
                 quenched(level, be, w);
             }
             case AnvilPayloads.DRAW -> {
@@ -461,7 +483,12 @@ public final class WarAnvil {
             }
             case AnvilPayloads.HELD -> {
                 // refused, the window comes again with its lines as they are now
-                if (!AnvilHeld.begin(p, level, be, a.a()) && be.work() == null && be.slot().isEmpty()) AnvilHeld.open(p, level, be);
+                if (PickAnvil.holds(p.getMainHandItem())) {
+                    if (!PickAnvil.begin(p, level, be, a.a()) && be.work() == null && be.slot().isEmpty()) PickAnvil.open(p, level, be);
+                } else if (!AnvilHeld.begin(p, level, be, a.a()) && be.work() == null && be.slot().isEmpty()) AnvilHeld.open(p, level, be);
+            }
+            case AnvilPayloads.CANCEL -> {
+                if (w != null && mine(p, w)) PickAnvil.cancel(p, be, w);
             }
             case AnvilPayloads.LIST -> {
                 if (w == null && be.slot().isEmpty()) ArmsArmoury.openAnvil(p, a.pos());
@@ -482,6 +509,11 @@ public final class WarAnvil {
     /** The smith hears their own pull, strikes and quench as they make them (their client plays them); everyone else from here. */
     static void pull(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float heat, @Nullable ServerPlayer smith) {
         w.heat = heat;
+        if (w.pick) {
+            level.playSound(smith, w.forge, AnvilContent.PULL.get(), SoundSource.BLOCKS, 1F, 1F);
+            PickAnvil.advance(level, be, w);
+            return;
+        }
         // attuning, the hot steel goes straight to the stone's three taps in the guard; from A the bar is twisted first (§46.9)
         w.begin(w.kind == AnvilWork.ATTUNE ? AnvilSong.HILT : w.acts() && w.tier >= 4 ? AnvilSong.TWIST : AnvilSong.SHAPE, level.getGameTime());
         level.playSound(smith, w.forge, AnvilContent.PULL.get(), SoundSource.BLOCKS, 1F, 1F);
@@ -490,6 +522,10 @@ public final class WarAnvil {
 
     /** A beat struck (the draw out's strikes, the hilt's taps) or missed (0). */
     static void beat(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float score, @Nullable ServerPlayer smith) {
+        if (w.pick) {
+            PickAnvil.beat(level, be, w, score, smith);
+            return;
+        }
         List<Float> l = w.beats();
         l.add(score);
         boolean hilt = w.stage == AnvilSong.HILT;
@@ -520,6 +556,8 @@ public final class WarAnvil {
     /** Each clean strike rings the blade a step nearer its true note, by the last of all it takes (both sides use it). */
     /** A finished weapon's true note (its style's, §46.10), the pitch it rings at as it's drawn from the stone. */
     public static float truePitch(ItemStack weapon) {
+        var pick = dev.awaken.delve.forged.ForgedPicks.item(weapon);
+        if (pick != null) return AnvilSong.truePitch(AnvilSong.song(pick.form.style()));
         var data = ArmsItems.of(weapon.getItem());
         return AnvilSong.truePitch(AnvilSong.song(data == null ? "longsword" : data.style()));
     }
@@ -559,6 +597,10 @@ public final class WarAnvil {
     /** A grind sample (C): the two passes' twenty, then the hilt. */
     static void ground(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, float score, @Nullable ServerPlayer smith) {
         w.taps.add(score);
+        if (w.stage == AnvilSong.SPINE) {
+            PickAnvil.threaded(level, be, w, smith);
+            return;
+        }
         if (w.taps.size() % 2 == 0) level.playSound(smith, be.getBlockPos(), AnvilContent.WHEEL.get(), SoundSource.BLOCKS, 0.7F, 0.95F + level.getRandom().nextFloat() * 0.1F);
         if (w.taps.size() >= AnvilSong.GRIND_SAMPLES) {
             w.grind = AnvilWork.mean(w.taps);
@@ -591,6 +633,10 @@ public final class WarAnvil {
         float held = turns > 0 ? w.taps.get(turns) - w.taps.getFirst() : 0F;
         w.bind = AnvilSong.bind(AnvilSong.evenness(each, turns), turns, held);
         level.playSound(smith, be.getBlockPos(), AnvilContent.CORD.get(), SoundSource.BLOCKS, 0.8F, 1.1F);
+        if (w.pick) {
+            PickAnvil.advance(level, be, w);
+            return;
+        }
         finish(level, be, w);
     }
 
@@ -599,7 +645,7 @@ public final class WarAnvil {
      * HELP_GAP from the last) goes into the blade; on a beat it only clanks. True if it was taken as a helper's use.
      */
     static boolean help(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w, ServerPlayer helper) {
-        if (w.stage != AnvilSong.SHAPE || w.kind != AnvilWork.FORGE && w.kind != AnvilWork.REFORGE) return false;
+        if (w.stage != AnvilSong.SHAPE || w.kind != AnvilWork.FORGE && w.kind != AnvilWork.REFORGE && w.kind != AnvilWork.RAISE && w.kind != AnvilWork.REDRAW) return false;
         long now = level.getGameTime();
         if (now - w.helpLast < AnvilSong.HELP_GAP) return true;
         AnvilSong.Rhythm r = w.rhythm();
@@ -633,7 +679,7 @@ public final class WarAnvil {
             case AnvilSong.HEAT -> {
                 if (w.heat(t) > AnvilSong.BURNT) pull(level, be, w, AnvilSong.BURNT, null);
             }
-            case AnvilSong.SHAPE, AnvilSong.HILT -> {
+            case AnvilSong.SHAPE, AnvilSong.HILT, AnvilSong.EYE, AnvilSong.TIPS, AnvilSong.HANG, AnvilSong.TEND -> {
                 if (t > w.nextDue() + AnvilSong.WINDOW + AnvilSong.LAG) beat(level, be, w, 0F, null);
             }
             case AnvilSong.QUENCH -> {
@@ -653,11 +699,17 @@ public final class WarAnvil {
             }
             case AnvilSong.STAR -> {
                 if (t > AnvilSong.STAR_ALONE + AnvilSong.LAG) {
-                    w.star = w.quench = AnvilSong.star(AnvilSong.STAR_ALONE - AnvilSong.STAR_AT);
+                    w.star = AnvilSong.star(AnvilSong.STAR_ALONE - AnvilSong.STAR_AT);
+                    if (w.pick) {
+                        PickAnvil.advance(level, be, w);
+                        return;
+                    }
+                    w.quench = w.star;
                     w.held = -1F;
                     quenched(level, be, w);
                 }
             }
+            case AnvilSong.COLOURS, AnvilSong.SEAM -> PickAnvil.waited(level, be, w, t);
             default -> {}
         }
     }
@@ -672,6 +724,10 @@ public final class WarAnvil {
 
     static void finish(ServerLevel level, WarAnvilBlockEntity be, AnvilWork w) {
         ServerPlayer smith = level.getServer().getPlayerList().getPlayer(w.forger);
+        if (w.pick) {
+            PickAnvil.finish(level, be, w, smith);
+            return;
+        }
         if (w.whole()) {
             AnvilHeld.finish(level, be, w, smith);
             return;

@@ -52,6 +52,8 @@ public final class FxClient {
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, CastAnims::modify));
         modBus.addListener(EventPriority.LOWEST, RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, CastAnims::emptyHands));
+        modBus.addListener(RegisterRenderStateModifiersEvent.class,
+                e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, FxFold::modify));
         // where a cast's palm, core and foot are on a drawn body (Muzzles)
         modBus.addListener(EntityRenderersEvent.AddLayers.class, e -> {
             for (var type : e.getSkins()) {
@@ -78,6 +80,8 @@ public final class FxClient {
         bus.addListener(EventPriority.LOWEST, RenderPlayerEvent.Pre.class, CastAnims::onPlayerPre);
         bus.addListener(EventPriority.HIGHEST, RenderPlayerEvent.Post.class, CastAnims::onPlayerPost);
         bus.addListener(EventPriority.LOW, RenderHandEvent.class, CastAnims::onHand);
+        bus.addListener(EventPriority.LOWEST, net.neoforged.neoforge.client.event.RenderLivingEvent.Pre.class, FxFold::onPre);
+        bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.client.event.RenderLivingEvent.Post.class, FxFold::onPost);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> reset());
     }
@@ -93,6 +97,7 @@ public final class FxClient {
                 int me = mc.player == null ? -1 : mc.player.getId();
                 HANDS.tick(c -> CastAnims.holding(me, c.id()));
             }
+            holdZoom(mc.player);
             FxScreen.tick();
             CastLens.tick();
             drainDeferred();
@@ -110,6 +115,15 @@ public final class FxClient {
         }
     }
 
+    /** Holding the Railgun narrows your own view as the shot builds (SPEC 50.6). Eased in FxScreen, off with camera shake. */
+    private static void holdZoom(LocalPlayer p) {
+        if (p == null) return;
+        dev.awaken.powers.fx.CastProfiles.Profile prof = CastAnims.profile(p.getId());
+        if (prof == null || !"railgun".equals(prof.power()) || !CastAnims.holding(p.getId(), prof.id())) return;
+        float built = Math.min(1f, CastAnims.profileAge(p.getId(), prof.id(), 0f) / 24f);
+        FxScreen.zoomTo(-(0.05f + 0.09f * built));
+    }
+
     private static void reset() {
         java.util.Arrays.fill(DEFERRED, null);
         head = count = 0;
@@ -117,6 +131,7 @@ public final class FxClient {
         LadderFx.reset();
         HANDS.reset();
         CastAnims.reset();
+        TravellingSound.reset();
         FxScreen.reset();
         CastLens.reset();
     }

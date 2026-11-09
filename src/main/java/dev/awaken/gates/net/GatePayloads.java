@@ -44,6 +44,35 @@ public final class GatePayloads {
         }
     }
 
+    /**
+     * What's being crossed into, sent just before the move (SPEC §50.5): the painting's key, the small line, the name, one
+     * plain sentence. {@code frozenMs >= 0} is a tour's look at one instant of it, with no move.
+     */
+    public record Crossing(String key, String kicker, String title, String line, boolean entering, int frozenMs) implements CustomPacketPayload {
+        public static final Type<Crossing> TYPE = new Type<>(Awaken.id("gate_crossing"));
+        public static final StreamCodec<ByteBuf, Crossing> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(64), Crossing::key, ByteBufCodecs.stringUtf8(64), Crossing::kicker, ByteBufCodecs.stringUtf8(64), Crossing::title,
+                ByteBufCodecs.stringUtf8(200), Crossing::line, ByteBufCodecs.BOOL, Crossing::entering, ByteBufCodecs.VAR_INT, Crossing::frozenMs, Crossing::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** One level of the Lord's payout landing (SPEC §50.4): the level reached, levels so far, points so far, the last one. */
+    public record LordLevel(int level, int beats, int points, boolean last) implements CustomPacketPayload {
+        public static final Type<LordLevel> TYPE = new Type<>(Awaken.id("gate_lord_level"));
+        public static final StreamCodec<ByteBuf, LordLevel> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, LordLevel::level, ByteBufCodecs.VAR_INT, LordLevel::beats, ByteBufCodecs.VAR_INT, LordLevel::points,
+                ByteBufCodecs.BOOL, LordLevel::last, LordLevel::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     public record Beacons(List<Beacon> beacons) implements CustomPacketPayload {
         public static final Type<Beacons> TYPE = new Type<>(Awaken.id("gate_beacons"));
         public static final StreamCodec<ByteBuf, Beacons> STREAM_CODEC = Beacon.CODEC.apply(ByteBufCodecs.list()).map(Beacons::new, Beacons::beacons);

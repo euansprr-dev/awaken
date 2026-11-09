@@ -57,6 +57,24 @@ vec3 heatGlow(float h) {
     return mix(c, vec3(1.0, 0.96, 0.86), smoothstep(0.8, 1.0, h));
 }
 
+// the temper colours on steel (SPEC §49.4): straw, gold, brown, purple, blue, then grey, by how far the oxide has grown
+const float OXIDE_AT[6] = float[](0.00, 0.16, 0.34, 0.52, 0.74, 1.00);
+const vec3 OXIDE[6] = vec3[](vec3(0.969, 0.925, 0.745), vec3(0.886, 0.729, 0.408), vec3(0.659, 0.408, 0.204),
+        vec3(0.502, 0.243, 0.463), vec3(0.220, 0.298, 0.690), vec3(0.533, 0.580, 0.659));
+
+vec3 oxide(float c) {
+    for (int i = 0; i < 5; i++) {
+        if (c <= OXIDE_AT[i + 1]) return mix(OXIDE[i], OXIDE[i + 1], clamp((c - OXIDE_AT[i]) / (OXIDE_AT[i + 1] - OXIDE_AT[i]), 0.0, 1.0));
+    }
+    return OXIDE[5];
+}
+
+// the colour laid on a pick's head by the fire: the steel's own light and dark, in the oxide's hue
+vec3 temper(vec3 col, float c, float amount) {
+    float lum = dot(col, vec3(0.30, 0.59, 0.11));
+    return mix(col, oxide(c) * (lum * 1.35 + 0.04), amount);
+}
+
 float hash2(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -77,8 +95,11 @@ void main() {
     if (alb.a < 0.1) discard;
     vec4 mat = texture(Sampler0, texCoord0 + vec2(0.5, 0.0));
     float metal = mat.r, gloss = mat.g, emit = mat.b, flow = mat.a;
-    float energy = state.x, flash = state.y, foil = state.z, heat = 0.0, front = 0.0;
+    float energy = state.x, flash = state.y, foil = state.z, heat = 0.0, front = 0.0, flash0 = state.y;
     if (state.w > 0.5) { heat = energy; front = flash; energy = 0.0; flash = 0.0; } // in the making: x heat, y its front
+    bool pick = state.w < -0.5;
+    float pickColour = 0.0, wear = 0.0;
+    if (pick) { pickColour = energy; wear = flash; energy = 0.0; flash = 0.0; } // a forged pick at rest: x colour, y wear
     vec3 accent = accentAlong.rgb;
     float along = accentAlong.a;
 
@@ -105,7 +126,7 @@ void main() {
     // a forged flaw on the blade (SPEC §46.7): a burnt tip darkens toward the point, into dull blue-grey scale on metal and
     // brown-black scorch on bone or tusk (D's blades); a brittle blade is crazed mid-length with pale hairlines a texel
     // wide, so they sit in the pixel art rather than over it. Bone shows both a little less than steel, never not at all.
-    int forged = int(script.z + 0.5), flaw = forged & 3;
+    int forged = pick ? 0 : int(script.z + 0.5), flaw = forged & 3;
     if (flaw > 0) {
         float mk = smoothstep(0.25, 0.6, metal), m = 0.7 + 0.3 * mk;
         if (flaw == 1) {
@@ -131,6 +152,18 @@ void main() {
         col *= mix(1.0, mix(0.8, 1.14, b), on);
     }
 
+    // a forged pick (SPEC §49): the temper colour grows from the eye out to the points, the grip darkens with the hands
+    // on it and the points brighten where the rock wears them; a notch for every ten lodes' hearts, above the rank rings
+    float metalOnly = smoothstep(0.25, 0.6, metal), pickHead = smoothstep(0.74, 0.76, along), toPoint = clamp((along - 0.75) * 4.0, 0.0, 1.0);
+    if (pick) {
+        col = temper(col, clamp(pickColour + (1.0 - toPoint) / 1.6, 0.0, 1.0), pickHead * metalOnly * 0.6);
+        col *= 1.0 - wear * 0.45 * (1.0 - smoothstep(0.15, 0.3, along));
+        col += (0.1 + wear * 0.3) * metalOnly * smoothstep(0.95, 1.0, along) * (0.4 + 0.6 * diffuse) * vec3(1.0, 0.98, 0.94);
+        if (state.w < -1.5) col += vec3(0.5, 0.56, 0.62) * metalOnly * smoothstep(0.88, 1.0, along) * pow(1.0 - clamp(dot(nv, v), 0.0, 1.0), 2.0) * 0.5;
+        float row = (along - 0.555) / 0.051;
+        if (row > 0.0 && row < script.z + 0.1 && along < 0.74 && fract(row) < 0.45) col *= 0.58;
+    }
+
     // the world's light (sky and blocks) on everything but what glows of itself
     col *= lightMapColor.rgb;
 
@@ -146,12 +179,18 @@ void main() {
         vec3 glow = heatGlow(h);
         // worked again (SPEC §46.8) the glow can take a colour: a Force's as its stone is set, sinking into the metal even as
         // it cools, or a Lord's (the weapon's accent) as its weapon is reforged
-        if (script.x > 0.5) {
+        if (script.x > 0.5 && abs(script.x - 14.0) > 0.5) {
             vec3 tint = script.x > 14.5 ? accent : FORCE_GLOW[min(int(script.x + 0.5), 6)];
             glow = mix(glow, tint * (0.25 + 0.85 * h), script.y);
             col += tint * script.y * smoothstep(0.25, 0.6, metal) * (0.2 + 0.25 * diffuse);
         }
         col = mix(col, col * 0.25, smoothstep(0.0, 0.3, hot)) + glow * (0.6 + 0.3 * h) * (0.3 + 0.7 * diffuse);
+    }
+
+    // the colours running in the scene (SPEC §49.4): the oxide's front grows from the eye, and what it's passed keeps growing
+    if (state.w > 0.5 && abs(script.x - 14.0) < 0.5) {
+        float grown = flash0 * 2.6 - toPoint;
+        col = temper(col, clamp(grown / 1.6, 0.0, 1.0), pickHead * metalOnly * smoothstep(-0.03, 0.03, grown) * 0.75);
     }
 
     // a sheen runs hilt to tip every five seconds (GameTime is a day per 1.0: 240 a day is one per 100 ticks)

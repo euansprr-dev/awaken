@@ -74,10 +74,10 @@ public final class Mastery {
      */
     public static float need(int powerLevel) {
         return switch (powerLevel) {
-            case 1 -> 7_000f;
-            case 2 -> 13_000f;
-            case 3 -> 32_000f;
-            case 4 -> 50_000f;
+            case 1 -> 4_500f;
+            case 2 -> 8_500f;
+            case 3 -> 15_500f;
+            case 4 -> 24_000f;
             default -> 0f;
         };
     }

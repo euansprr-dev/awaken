@@ -32,10 +32,42 @@ final class ArmourGoals {
 
     static void register() {
         Goals.register(ArmourGoals::steps);
+        Goals.registerFooter(p -> {
+            if (!Progression.profile(p).awakened()) return List.of();
+            int next = Progression.rank(p).ordinal() + 1;
+            return next >= Rank.values().length ? List.of() : List.of(new Goals.Footer(Goal.ARMOUR, "At " + Rank.values()[next].label + "-rank your next armour opens."));
+        });
     }
 
     static List<Goals.Step> steps(ServerPlayer p) {
         if (!Progression.profile(p).awakened()) return List.of();
+        List<Goals.Step> out = new ArrayList<>(rankSteps(p));
+        Goals.Step followed = tracked(p);
+        if (followed != null) out.add(followed);
+        return out;
+    }
+
+    /** The suit you chose to follow in the Hall (SPEC §52): what it still takes, until it is all made. */
+    private static Goals.@org.jspecify.annotations.Nullable Step tracked(ServerPlayer p) {
+        ArmouryMemory mem = ArmouryMemory.of(p);
+        ArmourSet set = mem.tracked.isEmpty() ? null : ArmourSet.byId(mem.tracked);
+        if (set == null) return null;
+        Goals.Choice c = choice(p, set);
+        if (c == null) return null;
+        boolean all = true;
+        for (ArmorType piece : ForgeSong.PIECES) all &= owns(p, ArmourForge.make(set, piece).getItem());
+        if (all) {
+            mem.tracked = "";
+            return null;
+        }
+        boolean above = set.rank.ordinal() > Progression.rank(p).ordinal();
+        return Goals.Step.of("armour/tracked", Goal.ARMOUR, "Make your " + set.setName + " armour")
+                .why(above ? set.rank.label + "-rank armour opens at level " + set.rank.levelRequired + ". You chose to follow this one in the Hall of Arms."
+                        : "You chose to follow this one in the Hall of Arms. It's made at a Fitting Stand.")
+                .needs(c.needs()).priority(35).build();
+    }
+
+    private static List<Goals.Step> rankSteps(ServerPlayer p) {
         Rank rank = Progression.rank(p);
         int worst = Integer.MAX_VALUE;
         boolean any = false;
@@ -47,13 +79,14 @@ final class ArmourGoals {
         if (worst >= rank.ordinal()) {
             if (rank.ordinal() + 1 >= Rank.values().length) return List.of();
             Rank next = Rank.values()[rank.ordinal() + 1];
-            return List.of(Goals.Step.of("armour/next", Goal.ARMOUR, "Your next armour comes with " + next.label + "-rank")
+            return List.of(Goals.Step.of("armour/next", Goal.ARMOUR, "Your next armour comes with " + next.label + "-rank").thread("armour.set", 20)
                     .why(next.label + "-rank opens at level " + next.levelRequired + ". Its sets are forged at a Fitting Stand with an anvil and the Forge near it.")
                     .priority(10).build());
         }
         ArmouryMemory mem = ArmouryMemory.of(p);
+        boolean first = !any && rank == Rank.E; // nothing worn at C-rank isn't a first armour
         Goals.Builder b = Goals.Step.of("armour/" + rank.name().toLowerCase(java.util.Locale.ROOT), Goal.ARMOUR,
-                any ? "Make your " + rank.label + "-rank armour" : "Choose your first armour");
+                first ? "Choose your first armour" : "Make your " + rank.label + "-rank armour").thread("armour.set", 10);
         int sets = 0;
         for (ArmourSet set : ArmourSet.values()) {
             if (set.rank != rank || !set.made() || !ArmourForge.known(mem, set)) continue;
@@ -65,7 +98,7 @@ final class ArmourGoals {
         if (sets == 0) return List.of();
         String where = rank == Rank.E ? "Made at a Fitting Stand with a crafting table within 6 blocks."
                 : "Forged at a Fitting Stand with an anvil and the Forge near it.";
-        return List.of(b.why(any ? where : where + " Wear it before your first gate.")
+        return List.of(b.why(first ? where + " Wear it before your first gate." : where)
                 .path(any ? Goals.NO_PATH : Goals.PATH_FIRST_ARMOUR).priority(any ? 30 : 58).covers("armour:forge/").build());
     }
 

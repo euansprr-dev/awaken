@@ -116,47 +116,39 @@ final class CaveSites {
 
     /** A floor of natural cave air near (x, y, z): feet cell with three of air over solid rock; within reach; or null. */
     static int @Nullable [] air(Columns cols, int x, int y, int z, int reach, int below, int above, WorldgenRandom rnd) {
-        return air(cols, x, y, z, reach, below, above, 0, rnd);
+        for (int ring : RINGS) {
+            if (ring > reach) break;
+            List<int[]> found = floors(cols, x, y, z, ring, 6, below, above, rnd);
+            if (!found.isEmpty()) return found.get(0);
+        }
+        return null;
     }
 
-    /**
-     * As above; {@code slope} above zero also looks further down on the wider rings, to that many blocks down for every one
-     * out (a mouth's joint: Tectonic seals the caves about 12 under the ground, so they lie deeper than the throat's end).
-     * The same columns, read further down.
-     */
-    static int @Nullable [] air(Columns cols, int x, int y, int z, int reach, int below, int above, double slope, WorldgenRandom rnd) {
-        int[] best = null;
-        double bestD = Double.MAX_VALUE;
-        int[] rings = {8, 14, 20, 27};
-        for (int ring : rings) {
-            if (ring > reach) break;
-            double spin = rnd.nextDouble() * Math.PI * 2;
-            int low = Math.max(below, (int) (ring * slope));
-            for (int k = 0; k < 6; k++) {
-                double a = spin + k * Math.PI / 3;
-                int cx = Mth.floor(x + Math.cos(a) * ring), cz = Mth.floor(z + Math.sin(a) * ring);
-                NoiseColumn c = cols.at(cx, cz);
-                int run = 0;
-                for (int cy = y + above; cy >= y - low; cy--) {
-                    BlockState s = c.getBlock(cy);
-                    if (s.isAir()) {
-                        run++;
-                        continue;
-                    }
-                    if (run >= 3 && s.getFluidState().isEmpty()) {
-                        int feet = cy + 1;
-                        double d = Math.sqrt((cx - x) * (cx - x) + (feet - y) * (feet - y) * 2.0 + (cz - z) * (cz - z));
-                        if (d < bestD) {
-                            bestD = d;
-                            best = new int[]{cx, feet, cz};
-                        }
-                    }
-                    run = 0;
+    private static final int[] RINGS = {8, 14, 20, 27, 34};
+    /** Rock a cave keeps over its air. A hillside or a ravine's floor is air over solid ground too, and leads nowhere (SPEC §34.1). */
+    static final int ROOF = 4;
+
+    /** The floors of natural cave air on one ring round (x, z), the nearest first. Air under water has rock between it and the water, or it would be full. */
+    private static List<int[]> floors(Columns cols, int x, int y, int z, int ring, int around, int below, int above, WorldgenRandom rnd) {
+        List<int[]> out = new ArrayList<>(4);
+        double spin = rnd.nextDouble() * Math.PI * 2;
+        for (int k = 0; k < around; k++) {
+            double a = spin + k * 2 * Math.PI / around;
+            int cx = Mth.floor(x + Math.cos(a) * ring), cz = Mth.floor(z + Math.sin(a) * ring);
+            NoiseColumn c = cols.at(cx, cz);
+            int top = cols.surface(cx, cz), run = 0;
+            for (int cy = y + above; cy >= y - below; cy--) {
+                BlockState s = c.getBlock(cy);
+                if (s.isAir()) {
+                    run++;
+                    continue;
                 }
+                if (run >= 3 && s.getFluidState().isEmpty() && (top == Integer.MIN_VALUE || cy + 1 + run + ROOF <= top)) out.add(new int[]{cx, cy + 1, cz});
+                run = 0;
             }
-            if (best != null) return best;
         }
-        return best;
+        out.sort(Comparator.comparingDouble(f -> (f[0] - x) * (f[0] - x) + (f[1] - y) * (f[1] - y) * 2.0 + (f[2] - z) * (f[2] - z)));
+        return out;
     }
 
     /**
@@ -406,6 +398,85 @@ final class CaveSites {
 
     /** How steep a mouth's joint may run down to its cave: still a walk, a jump at a time (SPEC §34.1). */
     static final double JOINT_SLOPE = 0.8;
+    /** How far under a mouth's end its cave may lie: this many down for every one out, to a limit; the way winds down to it. */
+    private static final int JOINT_LOOK = 3, JOINT_DEEPEST = 50;
+    /** Columns a ring reads and floors a search weighs: past those it's cheaper to try the next spot. */
+    private static final int JOINT_AROUND = 8, JOINT_TRIES = 4;
+    /** Blocks between the points read along a way: the noise's cells are 4 across, and a river's bed can be one cell wide. */
+    private static final int WAY_STEP = 4;
+    /** The longest drop allowed under a way, one a body can also climb back (Routes.HANG); the last of its fall, already in the cave, isn't read. */
+    static final int WAY_DROP = 2, WAY_LAST = 5;
+
+    /** A mouth's joint: the cave floor it reaches and how its way winds there (Mouth p SWING, LEGS). */
+    private record Joint(int x, int y, int z, int swing, int legs) {}
+
+    /** The nearest real cave a walk can reach from (x, y, z), a mouth's end: rock over it, room round it, the way there all under the ground. */
+    private static @Nullable Joint joint(Columns cols, int x, int y, int z, WorldgenRandom rnd) {
+        int tries = 0;
+        for (int ring : RINGS) {
+            for (int[] f : floors(cols, x, y, z, ring, JOINT_AROUND, Math.min(JOINT_DEEPEST, ring * JOINT_LOOK), 8, rnd)) {
+                if (tries++ >= JOINT_TRIES) return null;
+                if (!roomy(cols, f)) continue;
+                int[] way = way(cols, x, y, z, f, rnd);
+                if (way != null) return new Joint(f[0], f[1], f[2], way[0], way[1]);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Whether cave goes on from this floor: two or more of the columns round it hold air at about its height (a tiny pocket
+     * has none or one) and none of them is open ground at its level (an overhang on a hillside has rock over it too).
+     */
+    private static boolean roomy(Columns cols, int[] f) {
+        int open = 0;
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+            if (dx == 0 && dz == 0) continue;
+            int top = cols.surface(f[0] + dx * 6, f[2] + dz * 6);
+            if (top != Integer.MIN_VALUE && top < f[1] + 3) return false;
+            NoiseColumn c = cols.at(f[0] + dx * 6, f[2] + dz * 6);
+            int air = 0;
+            for (int y = f[1] - 3; y <= f[1] + 5; y++) if (c.getBlock(y).isAir()) air++;
+            if (air >= 2 && (top == Integer.MIN_VALUE || f[1] + ROOF <= top)) open++;
+        }
+        return open >= 2;
+    }
+
+    /** How the way winds from the mouth's end to the floor, {swing, legs}: straight if that's a walk, else the fewest legs that fit; null if it can't stay underground. */
+    private static int @Nullable [] way(Columns cols, int x, int y, int z, int[] f, WorldgenRandom rnd) {
+        double ax = x + 0.5, az = z + 0.5, bx = f[0] + 0.5, bz = f[2] + 0.5, h = Math.hypot(bx - ax, bz - az), d = Math.abs(f[1] - y);
+        if (d <= h * JOINT_SLOPE) return sound(cols, Mouth.way(ax, y, az, bx, f[1], bz, 0, 1)) ? new int[]{0, 1} : null;
+        int side = rnd.nextBoolean() ? 1 : -1;
+        for (int dir : new int[]{side, -side}) {
+            int[] plan = Mouth.winding(h, d, JOINT_SLOPE, dir);
+            if (plan != null && sound(cols, Mouth.way(ax, y, az, bx, f[1], bz, plan[0], plan[1]))) return plan;
+        }
+        return null;
+    }
+
+    /**
+     * Whether a way keeps rock over its bore, ground under it and out of water, read along it on the noise's cells (the legs
+     * of a winding way share them). Without ground under it the way comes out high on the wall of a natural hall and stops there.
+     */
+    private static boolean sound(Columns cols, double[][] way) {
+        for (int i = 0; i + 1 < way.length; i++) {
+            double[] a = way[i], b = way[i + 1];
+            int steps = Math.max(1, (int) Math.ceil(Math.hypot(b[0] - a[0], b[2] - a[2]) / WAY_STEP));
+            for (int k = 0; k <= steps; k++) {
+                double t = k / (double) steps;
+                int px = Mth.floor(Mth.lerp(t, a[0], b[0])), pz = Mth.floor(Mth.lerp(t, a[2], b[2])), py = Mth.floor(Mth.lerp(t, a[1], b[1]));
+                int top = cols.coarse(px, pz);
+                if (top == Integer.MIN_VALUE || top < py + 3 + ROOF || cols.wet(px & ~3, pz & ~3, py - 2, py + 4)) return false;
+                // the last of the way is already in the cave, a short drop over its floor
+                if (py - way[way.length - 1][1] <= WAY_LAST) continue;
+                NoiseColumn c = cols.at(px & ~3, pz & ~3);
+                boolean floor = false;
+                for (int d = 1; d <= WAY_DROP + 1 && !floor; d++) floor = !c.getBlock(py - d).isAir();
+                if (!floor) return false;
+            }
+        }
+        return true;
+    }
 
     /** How far a mouth keeps from a grid settlement's anchor: its plan's furthest ground and the mouth's own worn fan. */
     private static final int SETTLEMENT_CLEAR = 120;
@@ -500,13 +571,13 @@ final class CaveSites {
                     continue;
                 }
                 int ex = f.x(0, L), ez = f.z(0, L);
-                int[] j = air(cols, ex, yp - drop, ez, 27, 12, 8, JOINT_SLOPE, rnd);
+                Joint j = joint(cols, ex, yp - drop, ez, rnd);
                 if (j == null) {   // a hill mouth always leads somewhere
                     cols.why(Why.CAVE);
                     continue;
                 }
-                Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
-                        new int[]{Mouth.HILL, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2), 1});
+                Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j.x, j.y, j.z,
+                        new int[]{Mouth.HILL, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2), 1, j.swing, j.legs});
                 if (fits(spec, c)) return spec;
                 cols.why(Why.FIT);
             }
@@ -541,13 +612,13 @@ final class CaveSites {
                     cols.why(Why.WET);
                     continue;
                 }
-                int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 12, 8, JOINT_SLOPE, rnd);
+                Joint j = joint(cols, f.x(0, L), yp - drop, f.z(0, L), rnd);
                 if (j == null) {   // a cleft always leads somewhere
                     cols.why(Why.CAVE);
                     continue;
                 }
-                Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
-                        new int[]{Mouth.CLEFT, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2), 1});
+                Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j.x, j.y, j.z,
+                        new int[]{Mouth.CLEFT, L, drop, w, h, 0, 0, 0, 0, rnd.nextInt(2), 1, j.swing, j.legs});
                 if (fits(spec, c)) return spec;
                 cols.why(Why.FIT);
             }
@@ -594,13 +665,13 @@ final class CaveSites {
                 cols.why(Why.WET);
                 continue;
             }
-            int[] j = air(cols, f.x(0, L), yp - drop, f.z(0, L), 27, 10, 8, JOINT_SLOPE, rnd);
+            Joint j = joint(cols, f.x(0, L), yp - drop, f.z(0, L), rnd);
             if (j == null) {
                 cols.why(Why.CAVE);
                 continue;
             }
-            Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j[0], j[1], j[2],
-                    new int[]{Mouth.DOLINE, L, drop, 2 * r + 1, drop, 0, 0, 0, 0, rnd.nextInt(2), 1});
+            Spec spec = new Spec(CaveKind.MOUTH, px, yp, pz, rot, seed, true, j.x, j.y, j.z,
+                    new int[]{Mouth.DOLINE, L, drop, 2 * r + 1, drop, 0, 0, 0, 0, rnd.nextInt(2), 1, j.swing, j.legs});
             if (fits(spec, c)) return spec;
             cols.why(Why.FIT);
         }

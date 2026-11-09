@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * The Tasks page's GameTests (SPEC §27.13), one per mechanism: the order and the one step on top (urgent, pinned, the
@@ -54,6 +55,74 @@ final class TasksTests {
             TaskState back = TaskState.CODEC.codec().parse(JsonOps.INSTANCE, json).getOrThrow();
             h.assertTrue(back.pinned.equals("hearth/armoury") && back.seen.contains("armour/e") && back.chosen("armour/e").equals("wildhide"),
                     "the page's state survives a save: " + json);
+            // a schema 1 save loads with no places, nothing set aside and no tabs yet
+            TaskState old = TaskState.CODEC.codec().parse(JsonOps.INSTANCE, com.google.gson.JsonParser.parseString(
+                    "{\"schemaVersion\":1,\"pinned\":\"x\",\"seen\":[\"a\"],\"chosen\":{}}")).getOrThrow();
+            h.assertTrue(old.pinned.equals("x") && old.held.isEmpty() && old.aside.isEmpty() && old.tabsSeen.isEmpty(), "an old save loads");
+            st.held.put("HEARTH", List.of("hearth.build"));
+            st.setAside("kin/need/x", 7L);
+            st.tabsSeen.add("HEARTH");
+            json = TaskState.CODEC.codec().encodeStart(JsonOps.INSTANCE, st).getOrThrow();
+            back = TaskState.CODEC.codec().parse(JsonOps.INSTANCE, json).getOrThrow();
+            h.assertTrue(back.held.equals(st.held) && back.aside.get("kin/need/x") == 7L && back.tabsSeen.contains("HEARTH"), "places, aside and tabs survive a save: " + json);
+            h.assertTrue(TaskBook.top(List.of(Step.of("lesson:veil/x", Goal.OUT, "Meditate").priority(89).build()), "").isEmpty()
+                    && TaskBook.top(List.of(Step.of("lesson:veil/x", Goal.OUT, "Meditate").priority(89).build(), loose), "").equals("arms:blade"), "a lesson never holds the top");
+            h.succeed();
+        });
+
+        AwakenTests.registerIsolated("tasks_slots_stay", 200, h -> {
+            // the rule alone: a finished row's place goes to the next; what must show takes the last place that needn't; a renamed thread falls out
+            h.assertTrue(TaskBook.place(List.of("a", "b", "c"), List.of("a", "c", "d"), Set.of(), 3).equals(List.of("a", "d", "c")), "the next one takes the finished one's place");
+            h.assertTrue(TaskBook.place(List.of("a", "b", "c"), List.of("a", "b", "c", "m"), Set.of("m"), 3).equals(List.of("a", "b", "m")), "the main path takes the last place");
+            h.assertTrue(TaskBook.place(List.of("gone"), List.of("y", "z"), Set.of(), 3).equals(List.of("y", "z")), "a thread that no longer exists gives up its place");
+            h.assertTrue(TaskBook.place(List.of(), List.of("a", "b", "c", "d"), Set.of("a", "b", "c", "d"), 3).size() == 3, "never more than the cap, however much must show");
+            // a real page: a player the game gives nothing else to, so the rows are exactly these
+            AwakenTests.Live live = AwakenTests.survivalPlayer(h, "tasks-slots", BlockPos.ZERO);
+            AwakenTests.onEnd(h, live::leave);
+            ServerPlayer sp = live.player();
+            if (SOURCE.compareAndSet(false, true)) Goals.register(p -> STEPS.getOrDefault(p.getUUID(), List.of()));
+            List<Step> mine = new java.util.ArrayList<>();
+            STEPS.put(sp.getUUID(), mine);
+            AwakenTests.onEnd(h, () -> STEPS.remove(sp.getUUID()));
+            Step a1 = row("t/a1", "a", 10), a2 = row("t/a2", "a", 20), b = row("t/b", "b", 10), c = row("t/c", "c", 10), d = row("t/d", "d", 10);
+            Step trail = Step.of("trail/x", Goal.BELLS, "Trail").optional().build(), hidden = Step.of("t/h", Goal.BELLS, "Hidden").hidden().build();
+            mine.addAll(List.of(a1, a2, b, c, d, trail, hidden));
+            TaskBook.Book book = TaskBook.fresh(sp);
+            h.assertTrue(book.get("t/h") == null, "a hidden step is never listed");
+            List<String> rows = rows(book);
+            h.assertTrue(rows.equals(List.of("t/a1", "t/b", "t/c")), "one row per thread, three rows, the trail waiting: " + rows);
+            var view = TasksModule.view(sp, book);
+            h.assertTrue(rowOf(view, "t/a1").extra().then().equals("Then: t/a2") && rowOf(view, "t/a2").extra().place() == TaskPayloads.LATER, "the next in its thread is named and waits in Later");
+            h.assertTrue((view.tabs() >> Goal.BELLS.ordinal() & 1) != 0, "a tab opens when it has something to do");
+            // finish a1: a2 comes up in its place, new; nothing else moves
+            mine.remove(a1);
+            TasksModule.act(sp, new TaskPayloads.Act(TaskPayloads.SEEN, "t/b"));
+            book = TaskBook.fresh(sp);
+            h.assertTrue(rows(book).equals(List.of("t/a2", "t/b", "t/c")), "the next step takes the finished one's place: " + rows(book));
+            view = TasksModule.view(sp, book);
+            h.assertTrue(rowOf(view, "t/a2").fresh() && !rowOf(view, "t/b").fresh(), "and it's marked new");
+            // set one aside: the next waiting comes up in its place; Undo puts it back exactly where it was
+            TasksModule.act(sp, new TaskPayloads.Act(TaskPayloads.ASIDE, "t/b"));
+            book = TaskBook.fresh(sp);
+            h.assertTrue(rows(book).equals(List.of("t/a2", "t/d", "t/c")), "set aside, the next takes its place: " + rows(book));
+            h.assertTrue(rowOf(TasksModule.view(sp, book), "t/b").aside(), "and it waits in Later, marked");
+            TasksModule.act(sp, new TaskPayloads.Act(TaskPayloads.PUT_BACK, "t/b"));
+            book = TaskBook.fresh(sp);
+            h.assertTrue(rows(book).equals(List.of("t/a2", "t/b", "t/c")), "Undo: back where it was: " + rows(book));
+            // pin what's in Later: it's on the list, in the last place, and it's the step on top
+            TasksModule.act(sp, new TaskPayloads.Act(TaskPayloads.PIN, "t/d"));
+            book = TaskBook.fresh(sp);
+            h.assertTrue(rows(book).equals(List.of("t/a2", "t/b", "t/d")) && book.top().equals("t/d"), "a pin always shows: " + rows(book));
+            TasksModule.act(sp, new TaskPayloads.Act(TaskPayloads.UNPIN, "t/d"));
+            // a trail only fills a place nothing else wants, and gives it up when something does
+            mine.removeAll(List.of(a2, c, d));
+            book = TaskBook.fresh(sp);
+            h.assertTrue(rows(book).equals(List.of("t/b", "trail/x")), "a trail fills an empty place: " + rows(book));
+            mine.add(c);
+            mine.add(a2);
+            mine.add(d);
+            book = TaskBook.fresh(sp);
+            h.assertTrue(!rows(book).contains("trail/x") && rows(book).size() == 3, "and gives it up: " + rows(book));
             h.succeed();
         });
 
@@ -89,6 +158,24 @@ final class TasksTests {
             h.assertTrue(TaskState.of(sp).seen.contains("armour/e"), "a goal's tab read: its steps are seen");
             h.succeed();
         });
+    }
+
+    private static final java.util.concurrent.atomic.AtomicBoolean SOURCE = new java.util.concurrent.atomic.AtomicBoolean();
+    private static final java.util.Map<java.util.UUID, List<Step>> STEPS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static Step row(String key, String thread, int order) {
+        return Step.of(key, Goal.BELLS, key).thread(thread, order).build();
+    }
+
+    private static List<String> rows(TaskBook.Book book) {
+        List<String> out = new java.util.ArrayList<>();
+        for (Step s : book.shelf(Goal.BELLS).rows()) out.add(s.key());
+        return out;
+    }
+
+    private static TaskPayloads.StepRow rowOf(TaskPayloads.View v, String key) {
+        for (TaskPayloads.StepRow r : v.steps()) if (r.key().equals(key)) return r;
+        throw new IllegalStateException("no row " + key);
     }
 
     static String keys(List<Step> steps) {

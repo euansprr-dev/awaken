@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "glass_serpent",
  "moves": "glass_serpent",
  "duel": true,
@@ -23,6 +23,12 @@
        "bite_b",
        "spray"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -37,6 +43,12 @@
        "bite",
        "bite_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "burrow"
+      }
      ]
     },
     {
@@ -46,6 +58,11 @@
       [
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -71,6 +88,12 @@
        "bite_b",
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -82,6 +105,12 @@
        "bite",
        "bite_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -92,6 +121,12 @@
       [
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -103,6 +138,12 @@
        "bite",
        "bite_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "burrow"
+      }
      ]
     },
     {
@@ -112,6 +153,11 @@
       [
        "bite"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -138,6 +184,12 @@
        "bite",
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -153,6 +205,12 @@
        "bite",
        "bite_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "burrow"
+      }
      ]
     },
     {
@@ -166,6 +224,12 @@
       [
        "lunge"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -178,6 +242,12 @@
        "bite_b",
        "spray"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "spray",
+       "dodged": "lunge"
+      }
      ]
     },
     {
@@ -191,5 +261,80 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "lunge": 60,
+   "burrow": 60,
+   "erupt": 240
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "lunge",
+     "burrow",
+     "erupt",
+     "spray",
+     "bite",
+     "bite_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "lunge",
+     "burrow",
+     "erupt"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "bite"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "bite",
+     "bite_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "erupt",
+     "spray"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "spray",
+     "bite"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "lunge",
+     "burrow",
+     "erupt"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

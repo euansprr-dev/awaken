@@ -1,0 +1,1505 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_0_0"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_1_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_1_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_1_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_2_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_2_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_2_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_3_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_2"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_4_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_4_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_4_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_5_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_5_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_5_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_6_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_6_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_6_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_7_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_7_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_7_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_8_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_8_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_8_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_9_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_9_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_9_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_10_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_10_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_10_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_11_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_11_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_11_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_12_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_2"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_3"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_13_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_13_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_13_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_14_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_14_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_14_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_15_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_15_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_15_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "north",
+        "bloom": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_bloom_0"
+        },
+        {
+          "model": "awaken:block/caves/ember_bloom_1"
+        },
+        {
+          "model": "awaken:block/caves/ember_bloom_2"
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_0_0",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_1_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_1_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_1_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_2_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_2_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_2_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_3_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_2",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_4_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_4_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_4_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_5_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_5_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_5_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_6_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_6_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_6_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_7_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_7_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_7_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_8_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_8_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_8_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_9_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_9_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_9_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_10_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_10_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_10_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_11_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_11_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_11_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_12_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_2",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_3",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_13_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_13_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_13_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_14_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_14_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_14_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_15_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_15_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_15_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "east",
+        "bloom": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_bloom_0",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_bloom_1",
+          "y": 90
+        },
+        {
+          "model": "awaken:block/caves/ember_bloom_2",
+          "y": 90
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_0_0",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_1_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_1_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_1_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_2_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_2_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_2_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_3_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_2",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_4_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_4_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_4_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_5_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_5_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_5_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_6_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_6_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_6_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_7_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_7_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_7_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_8_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_8_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_8_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_9_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_9_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_9_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_10_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_10_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_10_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_11_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_11_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_11_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_12_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_2",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_3",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_13_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_13_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_13_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_14_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_14_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_14_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_15_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_15_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_15_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "south",
+        "bloom": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_bloom_0",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_bloom_1",
+          "y": 180
+        },
+        {
+          "model": "awaken:block/caves/ember_bloom_2",
+          "y": 180
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_0_0",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_1_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_1_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_1_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_2_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_2_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_2_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_3_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_2",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_3_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_4_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_4_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_4_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_5_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_5_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_5_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_6_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_6_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_6_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "false"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_7_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_7_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_7_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_8_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_8_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_8_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "false",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_9_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_9_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_9_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_10_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_10_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_10_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "true",
+        "left": "false",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_11_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_11_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_11_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_12_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_2",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_12_3",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "false",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_13_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_13_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_13_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "false",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_14_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_14_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_14_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "up": "true",
+        "down": "true",
+        "left": "true",
+        "right": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_vine_15_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_15_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_vine_15_2",
+          "y": 270
+        }
+      ]
+    },
+    {
+      "when": {
+        "facing": "west",
+        "bloom": "true"
+      },
+      "apply": [
+        {
+          "model": "awaken:block/caves/ember_bloom_0",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_bloom_1",
+          "y": 270
+        },
+        {
+          "model": "awaken:block/caves/ember_bloom_2",
+          "y": 270
+        }
+      ]
+    }
+  ]
+}

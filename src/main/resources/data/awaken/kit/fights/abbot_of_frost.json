@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "abbot_of_frost",
  "moves": "abbot_of_frost",
  "duel": true,
@@ -19,6 +19,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -31,6 +37,12 @@
       [
        "avalanche"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -44,6 +56,12 @@
        "swat",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -54,6 +72,12 @@
       [
        "swat"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "hymn"
+      }
      ]
     },
     {
@@ -67,6 +91,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     }
    ]
@@ -82,6 +112,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -94,6 +130,12 @@
       [
        "avalanche"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -107,6 +149,12 @@
        "swat",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -116,6 +164,12 @@
       [
        "spikes"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -130,6 +184,12 @@
       [
        "swat"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "hymn"
+      }
      ]
     },
     {
@@ -143,6 +203,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     }
    ]
@@ -165,6 +231,12 @@
        "avalanche",
        "swat"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -178,6 +250,12 @@
        "swat",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -190,6 +268,12 @@
       [
        "avalanche"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -200,6 +284,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     },
     {
@@ -211,6 +301,12 @@
        "swat",
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "hymn"
+      }
      ]
     },
     {
@@ -224,6 +320,12 @@
       [
        "hammer"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "hammer",
+       "dodged": "avalanche"
+      }
      ]
     }
    ]
@@ -232,5 +334,72 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "avalanche": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "avalanche",
+     "hymn",
+     "hammer",
+     "swat"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "avalanche",
+     "hymn"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "swat"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "swat"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "hammer"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "hammer",
+     "swat"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "avalanche",
+     "hymn"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

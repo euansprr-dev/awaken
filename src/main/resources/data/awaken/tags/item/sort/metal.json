@@ -1,0 +1,21 @@
+{
+ "values": [
+  "awaken:coal_lode_heart",
+  "awaken:copper_lode_heart",
+  "awaken:crypt_bronze",
+  "awaken:deepglass_lode_heart",
+  "awaken:diamond_lode_heart",
+  "awaken:emerald_lode_heart",
+  "awaken:gate_ember_ore",
+  "awaken:gold_lode_heart",
+  "awaken:iron_lode_heart",
+  "awaken:lapis_lode_heart",
+  "awaken:precursor_alloy",
+  "awaken:precursor_scrap",
+  "awaken:raw_starmetal",
+  "awaken:redstone_lode_heart",
+  "awaken:starmetal_ingot",
+  "minecraft:glowstone_dust",
+  "minecraft:netherite_scrap"
+ ]
+}

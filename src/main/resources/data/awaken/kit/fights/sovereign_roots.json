@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "sovereign_roots",
  "moves": "sovereign_roots",
  "duel": true,
@@ -19,6 +19,12 @@
       [
        "gulp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -33,6 +39,11 @@
       [
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring"
+      }
      ]
     },
     {
@@ -46,6 +57,12 @@
       [
        "leap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -58,6 +75,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -72,6 +95,12 @@
       [
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     }
    ]
@@ -87,6 +116,12 @@
       [
        "gulp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -100,6 +135,11 @@
       [
        "tongue"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -113,6 +153,12 @@
       [
        "leap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -123,6 +169,11 @@
       [
        "tongue"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring"
+      }
      ]
     },
     {
@@ -139,6 +190,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -153,6 +210,12 @@
       [
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     }
    ]
@@ -170,6 +233,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -183,6 +252,11 @@
       [
        "tongue"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -193,6 +267,12 @@
       [
        "gulp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -206,6 +286,12 @@
       [
        "leap"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -217,6 +303,11 @@
        "tongue",
        "gulp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring"
+      }
      ]
     },
     {
@@ -226,6 +317,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     },
     {
@@ -240,6 +337,12 @@
       [
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "ring",
+       "dodged": "leap"
+      }
      ]
     }
    ]
@@ -248,5 +351,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "leap": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "leap",
+     "ring",
+     "gulp",
+     "tongue"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "leap"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "gulp"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "gulp",
+     "tongue"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "ring"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "ring",
+     "gulp"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "leap"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

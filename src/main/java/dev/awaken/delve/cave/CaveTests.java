@@ -33,6 +33,7 @@ final class CaveTests {
     static void register() {
         AwakenTests.register("delve_cave_routes", 200, CaveTests::routes);
         AwakenTests.register("delve_mouth_density", 200, CaveTests::mouthDensity);
+        AwakenTests.register("delve_mouth_joint", 200, CaveTests::mouthJoint);
         AwakenTests.register("delve_sinkhole_rope", 200, CaveTests::sinkholeRope);
         AwakenTests.registerIsolated("delve_seep", 600, CaveTests::seep);
         AwakenTests.register("delve_hearth_points", 200, CaveTests::hearthPoints);
@@ -83,19 +84,16 @@ final class CaveTests {
     }
 
     /**
-     * The trail "The Delver's Pick" (SPEC §34.4): one step per verse, in the verses' order, on the furthest-woken counter;
+     * The trail "The Delver's Pick" (SPEC §49.8): find the head, forge it (new or remade), then the pick's deeds and a raising;
      * its place "adit" answers once the search is done, and a home with no adit near (the flat test world) is handed the pick.
      */
     @SuppressWarnings("removal")
     private static void pickTrail(GameTestHelper h) {
         var trail = dev.awaken.trails.Trails.get("awaken:the_delvers_pick");
         h.assertTrue(trail != null && trail.linear(), "the trail ships, in order");
-        var verses = dev.awaken.delve.PickVerses.VERSES;
-        h.assertValueEqual(trail.steps().size(), verses.length, "a step to find the pick and one per verse");
+        h.assertValueEqual(trail.steps().size(), 8, "the head, the forging, the deeds and a raising");
         h.assertValueEqual(trail.steps().getFirst().done(), List.of("counter:" + dev.awaken.delve.WakingPick.PULLED), "the first step is the pull");
-        for (int i = 1; i < verses.length; i++) {
-            h.assertValueEqual(trail.steps().get(i).done(), List.of("count:" + dev.awaken.delve.PickVerses.WOKEN + ":" + i), "step " + i + " waits for " + verses[i].title);
-        }
+        h.assertValueEqual(trail.steps().get(1).done(), List.of("counter:awaken:pick_forged|counter:awaken:pick_remade"), "the second is the forging, a new pick or an old one remade");
         h.assertTrue(dev.awaken.core.api.TrailsApi.hasPlace(PickTrail.PLACE), "the place 'adit' is known");
         ServerLevel level = h.getLevel();
         BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
@@ -109,11 +107,11 @@ final class CaveTests {
                 @Override public java.util.Optional<BlockPos> hearthOf(ServerLevel l, java.util.UUID player) { return java.util.Optional.of(at); }
             });
             long until = System.currentTimeMillis() + 20_000;
-            while (!dev.awaken.delve.WakingPick.carries(p) && System.currentTimeMillis() < until) {
+            while (!(p.getInventory().countItem(dev.awaken.delve.forged.DelveForged.OLD_HEAD.get()) > 0) && System.currentTimeMillis() < until) {
                 h.assertTrue(dev.awaken.core.api.TrailsApi.placeOf(PickTrail.PLACE, p) == null, "no adit to point at");
                 Thread.onSpinWait();
             }
-            h.assertTrue(dev.awaken.delve.WakingPick.carries(p), "no adit near home: the Hearth hands the pick over");
+            h.assertTrue((p.getInventory().countItem(dev.awaken.delve.forged.DelveForged.OLD_HEAD.get()) > 0), "no adit near home: the Hearth hands the head over");
             h.assertTrue(dev.awaken.trails.Conditions.met(p, trail.steps().getFirst().done().getFirst()), "and the first step is done");
         } finally {
             dev.awaken.core.api.HearthHooks.install(before);
@@ -306,6 +304,109 @@ final class CaveTests {
         dev.awaken.Awaken.LOG.info("[delve] mouth density (vanilla overworld): {}", out);
         h.assertTrue(every <= MOUTH_EVERY, "a mouth at least every " + Math.round(MOUTH_EVERY) + " m of dry land: " + out);
         h.succeed();
+    }
+
+    /**
+     * SPEC §34.1, what a joint is (Euan's playtest 9 Nov: "maybe 10 blocks deep, and then it just stops"; the joint was the
+     * open hillside): every mouth on a square of his world's placement grid (real noise, vanilla's: the test server has no
+     * pack) ends on a floor with rock over it and cave round it, and its way there stays under the ground and walkable.
+     * The route test walks a staged winding way, block by block.
+     */
+    private static void mouthJoint(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        var set = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE_SET).getOrThrow(CaveLocate.set(CaveKind.MOUTH)).value();
+        var rsp = (net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement) set.placement();
+        long seed = 5652006211025591964L;
+        Overworld ow = new Overworld(level, seed);
+        List<String> fails = new ArrayList<>(), near = new ArrayList<>();
+        List<String> stuck = new ArrayList<>();
+        int mouths = 0, winding = 0, adits = 0, walked = 0, walkable = 0;
+        for (int gx = -12; gx < 12; gx++) {
+            for (int gz = -12; gz < 12; gz++) {
+                ChunkPos c = rsp.getPotentialStructureChunk(seed, gx * rsp.spacing(), gz * rsp.spacing());
+                Spec s = CaveSites.probe(ow.context(c)).spec();
+                if (s == null) continue;
+                if (s.p(Mouth.FORM) == Mouth.ADIT) {
+                    adits++;
+                    continue;
+                }
+                mouths++;
+                if (s.p(Mouth.LEGS) > 1) winding++;
+                CaveSites.Columns ground = new CaveSites.Columns(ow.context(c));
+                String fault = jointFault(s, ground);
+                // every few mouths, walked for real: the rock round the way is the real ground, caves and all
+                if (mouths % 5 == 0) {
+                    walked++;
+                    String why = walk(s, ground);
+                    if (why == null) walkable++;
+                    else stuck.add(s.x() + " " + s.z() + ": " + why);
+                }
+                if (fault != null) (fault.contains("out of the ground") ? near : fails).add("mouth at " + s.x() + " " + s.z() + ": " + fault);
+            }
+        }
+        dev.awaken.Awaken.LOG.info("[delve] mouth joints: {} mouths, {} of them winding, {} adits; {} of {} walked in and out on the real ground{}; ways grazing the ground: {}", mouths, winding, adits, walkable, walked, stuck, near);
+        h.assertTrue(mouths >= 40, "real terrain gave too few mouths to judge: " + mouths);
+        h.assertTrue(fails.isEmpty(), "every mouth leads into a real cave: " + String.join("; ", fails));
+        // the search reads the way on the noise's cells, so a bank steeper than a cell can slip between two reads now and then
+        h.assertTrue(near.size() * 100 <= mouths, "ways stay under the ground: " + String.join("; ", near));
+        h.assertTrue(walked >= 20 && walkable * 10 >= walked * 9, walkable + " of " + walked + " mouths walked in and back out: " + stuck);
+        h.succeed();
+    }
+
+    /** Walks a mouth's way, from its throat to its cave and back, with the real ground (caves and all) round it; why not, or null. */
+    private static @Nullable String walk(Spec s, CaveSites.Columns ground) {
+        Grid g = grid(s);
+        double[][] w = Mouth.way(s);
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet done = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        for (int i = 0; i + 1 < w.length; i++) {
+            int steps = Math.max(1, (int) Math.ceil(Math.hypot(w[i + 1][0] - w[i][0], w[i + 1][2] - w[i][2])));
+            for (int k = 0; k <= steps; k++) {
+                double t = k / (double) steps;
+                int cx = (int) Math.floor(w[i][0] + (w[i + 1][0] - w[i][0]) * t), cz = (int) Math.floor(w[i][2] + (w[i + 1][2] - w[i][2]) * t);
+                for (int x = cx - 5; x <= cx + 5; x++) for (int z = cz - 5; z <= cz + 5; z++) {
+                    if (done.add(((long) x << 32) | (z & 0xFFFFFFFFL))) natural(g, ground, x, z, 0, g.minY());
+                }
+            }
+        }
+        builtByChunk(s, g);
+        int[] throat = g.mark("throat"), goal = g.mark("goal");
+        Routes.Result in = Routes.find(g, throat, goal);
+        if (!in.found()) return "in: " + in.why();
+        Routes.Result out = Routes.find(g, goal, throat);
+        return out.found() ? null : "out: " + out.why();
+    }
+
+    /** What's wrong with a mouth's joint and its way there on the real ground; null when it's sound. */
+    private static @Nullable String jointFault(Spec s, CaveSites.Columns ground) {
+        String at = " (joint " + s.jx() + " " + s.jy() + " " + s.jz() + ")";
+        if (!s.joined()) return "not joined to anything";
+        for (int y = 0; y < 3; y++) if (!ground.block(s.jx(), s.jy() + y, s.jz()).isAir()) return "no room to stand" + at;
+        if (ground.block(s.jx(), s.jy() - 1, s.jz()).isAir()) return "no floor" + at;
+        int top = ground.surface(s.jx(), s.jz());
+        if (top != Integer.MIN_VALUE && s.jy() + 3 + CaveSites.ROOF > top) return "open to the sky, ground at " + top + at;
+        double[][] w = Mouth.way(s);
+        for (int i = 0; i + 1 < w.length; i++) {
+            double run = Math.hypot(w[i + 1][0] - w[i][0], w[i + 1][2] - w[i][2]), fall = Math.abs(w[i + 1][1] - w[i][1]);
+            if (fall > run * CaveSites.JOINT_SLOPE + 0.05) return "leg " + i + " too steep to walk, " + fall + " in " + run + at;
+            int steps = Math.max(1, (int) Math.ceil(run));
+            for (int k = 0; k <= steps; k++) {
+                double t = k / (double) steps;
+                int x = (int) Math.floor(w[i][0] + (w[i + 1][0] - w[i][0]) * t), z = (int) Math.floor(w[i][2] + (w[i + 1][2] - w[i][2]) * t);
+                int y = (int) Math.floor(w[i][1] + (w[i + 1][1] - w[i][1]) * t), bed = bed(ground, x, z);
+                if (bed < y + 3) return "leg " + i + " comes out of the ground at " + x + " " + y + " " + z + ", ground at " + bed + at;
+            }
+        }
+        return null;
+    }
+
+    /** The feet on the column's top solid block, under any lake on it: a way passing deep under water is still under the ground. */
+    private static int bed(CaveSites.Columns ground, int x, int z) {
+        var world = ground.ctx.heightAccessor();
+        for (int y = world.getMaxY(); y > world.getMinY(); y--) {
+            BlockState b = ground.block(x, y, z);
+            if (!b.isAir() && b.getFluidState().isEmpty()) return y + 1;
+        }
+        return world.getMinY();
     }
 
     /** The share of dry-land candidates that must find a mouth (the placement grid is 192 m, so about one every 200-240 m of land). */

@@ -16,6 +16,11 @@ public final class AnvilSong {
     public static final int HEAT = 0, SHAPE = 1, QUENCH = 2, HILT = 3, KNAP = 4, BIND = 5;
     /** The ranks' acts (§46.9): A's twist before the draw out, C's grind after the quench, B's balance after the hilt, S's starlight for the water. */
     public static final int TWIST = 6, GRIND = 7, BALANCE = 8, STAR = 9;
+    /**
+     * The picks' own (SPEC §49.4): the eye punched through the head, the temper colours run, the head hung on its haft, the
+     * tips steeled (C), the spine threaded (B), the seam poured (A); and TEND, a few quiet taps for work that needs no fire.
+     */
+    public static final int EYE = 10, COLOURS = 11, HANG = 12, TIPS = 13, SPINE = 14, SEAM = 15, TEND = 16;
 
     // ---- heat --------------------------------------------------------------------------------------------------------
 
@@ -157,7 +162,65 @@ public final class AnvilSong {
             Map.entry("chainblade", new Song(4, "x..x....x..x.x..", 10, 0)),
             Map.entry("shieldblade", new Song(4, "x...x.x.....x...", 10, 0)),
             Map.entry("warstaff", new Song(4, "x.x...x.x...x...", 10, -5)),
-            Map.entry("precursor", new Song(4, "x...x...x...x...", 10, 0)));
+            Map.entry("precursor", new Song(4, "x...x...x...x...", 10, 0)),
+            // the picks (§49.4): each form's beat, its head worked either side of the eye. Pitches stay within an octave (Minecraft clamps past it)
+            Map.entry("pick_delver", pick(3, "x.x.x...", 9, -2)),
+            Map.entry("pick_breaker", pick(6, "x.....x.x.......", 6, -9)),
+            Map.entry("pick_mattock", pick(4, "x..x..x.....", 9, -7)),
+            Map.entry("pick_sounder", pick(3, "x.x.x...x.x.x...", 12, 10)));
+
+    /** A pick's song: strikes go out along each arm of the head in turn and never on the eye (0.42-0.58 along). */
+    private static Song pick(int step, String bar, int strikes, int note) {
+        float[][] marks = new float[strikes][];
+        int perArm = (strikes + 1) / 2;
+        for (int k = 0; k < strikes; k++) {
+            int j = k / 2;
+            float out = 0.12F + 0.32F * (perArm <= 1 ? 0.5F : (j * 2 % perArm) / (float) (perArm - 1));
+            marks[k] = new float[]{0.5F + (k % 2 == 0 ? out : -out), ACROSS[k % ACROSS.length] * 0.6F};
+        }
+        return new Song(new Rhythm(step, bar), strikes, marks, note, new Rhythm(step, bar.substring(0, bar.length() / 2)));
+    }
+
+    // ---- the picks' acts (§49.4) --------------------------------------------------------------------------------------
+
+    /** The eye: three blows a face, the head turned over between. */
+    public static final Rhythm EYE_RHYTHM = new Rhythm(4, "x...x...x...");
+    public static final int EYES = 6;
+    /** The tips: one aimed blow on each, hard steel, slow. */
+    public static final Rhythm TIPS_RHYTHM = new Rhythm(4, "x.......x.......");
+    public static final int TIP_BLOWS = 2;
+    /** The head rapped down the haft: three, each higher as the wood takes it. */
+    public static final Rhythm HANG_RHYTHM = new Rhythm(3, "x..x..x.");
+    public static final int HANGS = 3;
+    /** Quiet work at the anvil with no fire (working a gift in, dressing, an old pick remade). */
+    public static final Rhythm TEND_RHYTHM = new Rhythm(6, "x.x.x...");
+    public static final int TEND_BLOWS = 3, MIGRATE_BLOWS = 5;
+    /** The spine's thread, samples of the line as the grind's. */
+    public static final int SPINE_SAMPLES = 12;
+
+    /** The colours run: an oxide front climbing as the heat is held, from nothing to all the way at this rate. */
+    public static final float COLOUR_RATE = 0.05F, COLOUR_END = 2.6F;
+
+    /** Where the oxide has got to after the head has been held in the heat this long. */
+    /** The seam's pour, in ticks: as long as it's held, up to this, the molten line runs on from the eye to the points. */
+    public static final float SEAM_FULL = 32F;
+
+    public static float colourFront(float held) {
+        return Mth.clamp(held * COLOUR_RATE, 0F, COLOUR_END);
+    }
+
+    /** The colour it stopped at: 0 straw, 0.25 bronze, 0.5 peacock, 0.75 and past blue. Held too short it's still straw; nothing fails. */
+    public static float colour(float held) {
+        return Mth.clamp((colourFront(held) - 1F) / 1.6F, 0F, 1F);
+    }
+
+    /** Ticks to hold for all the way, and how long it waits for you before going blue by itself. */
+    public static final float COLOUR_FULL = COLOUR_END / COLOUR_RATE, COLOUR_LATE = 160F, COLOUR_BLUE = 0.75F;
+
+    /** A mark for the pick's acts: along the head, then across. The eye's are its middle; the tips' each end. */
+    public static float[] pickMark(int stage, int k) {
+        return stage == TIPS ? new float[]{k == 0 ? 0.9F : 0.1F, 0F} : new float[]{0.5F, 0F};
+    }
 
     /** A style's song; anything else (a Hunter blade forged alone) the Longsword's. */
     public static Song song(String style) {

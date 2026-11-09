@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "drowned_archivist",
  "moves": "drowned_archivist",
  "duel": true,
@@ -19,6 +19,12 @@
       [
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -30,6 +36,11 @@
        "thrust",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -43,6 +54,12 @@
        "undertow",
        "shutting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -52,6 +69,12 @@
       [
        "volley"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "tidal"
+      }
      ]
     },
     {
@@ -66,6 +89,12 @@
       [
        "shutting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     }
    ]
@@ -85,6 +114,12 @@
        "rake",
        "shutting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -96,6 +131,11 @@
        "thrust",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -109,6 +149,12 @@
        "undertow",
        "shutting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -118,6 +164,12 @@
       [
        "volley"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "tidal"
+      }
      ]
     },
     {
@@ -130,6 +182,12 @@
       [
        "tidal"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -148,6 +206,12 @@
       [
        "shutting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     }
    ]
@@ -166,6 +230,12 @@
        "thrust",
        "rake"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -177,6 +247,12 @@
        "rake",
        "shutting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -190,6 +266,12 @@
        "undertow",
        "shutting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -199,6 +281,12 @@
       [
        "volley"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "tidal"
+      }
      ]
     },
     {
@@ -211,6 +299,12 @@
       [
        "tidal"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     },
     {
@@ -229,6 +323,12 @@
       [
        "shutting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "shutting",
+       "dodged": "volley"
+      }
      ]
     }
    ]
@@ -237,5 +337,67 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {},
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "volley",
+     "tidal",
+     "shutting",
+     "rake",
+     "thrust"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "volley",
+     "tidal"
+    ],
+    "chance": 0.7,
+    "cooldown": 200
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "rake",
+     "thrust"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "shutting"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "shutting",
+     "rake"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "volley",
+     "tidal"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

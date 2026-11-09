@@ -372,6 +372,81 @@ final class HomeTests {
             }
         });
 
+        // the seven stops of docs/tasks-progression/proof/rows-at-each-stop.txt, from a new hunter to A-rank (SPEC §53)
+        AwakenTests.registerIsolated("tasks_caps", 900, h -> {
+            ServerLevel level = h.getLevel();
+            AwakenTests.Live live = AwakenTests.survivalPlayer(h, "tasks-caps", BlockPos.ZERO);
+            AwakenTests.onEnd(h, live::leave);
+            ServerPlayer sp = live.player();
+            Progression.awaken(sp);
+            if (dev.awaken.powers.Starter.pending(sp)) {
+                dev.awaken.powers.Starter.offer(sp);
+                dev.awaken.powers.Starter.choose(sp, dev.awaken.powers.Starter.state(sp).offer().getFirst());
+            }
+            sp.getInventory().clearContent();
+            capsAt(h, "new hunter, no home", sp);
+            BlockPos origin = h.absolutePos(BlockPos.ZERO);
+            BlockPos base = new BlockPos((origin.getX() & ~15) + 4, origin.getY() + 110, (origin.getZ() & ~15) + 4);
+            HearthData data = HearthData.get(level.getServer());
+            data.remove(sp.getUUID());
+            HearthRecord rec = new HearthRecord(sp.getUUID(), "test", base.offset(4, 12, 4), HearthService.OVERWORLD);
+            rec.tier = 0;
+            data.put(rec);
+            try {
+                fineRoom(level, base);
+                HearthService.scanNow(level, rec);
+                sp.teleportTo(base.getX() + 4.5, base.getY() + 1, base.getZ() + 4.5);
+                Progression.topUpToLevel(sp, 3, Progression.XpSource.COMMAND);
+                capsAt(h, "Hearthfire and bedroom, level 3", sp);
+                rec.tier = 1;
+                level.setBlock(base.offset(5, 1, 6), Blocks.CRAFTING_TABLE.defaultBlockState(), 3);
+                level.setBlock(base.offset(6, 1, 4), dev.awaken.armour.ArmourContent.STAND.get().defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                Progression.topUpToLevel(sp, 7, Progression.XpSource.COMMAND);
+                capsAt(h, "Anchor and Armoury, level 7", sp);
+                var early = dev.awaken.tasks.TaskBook.fresh(sp).get("hearth/add");
+                h.assertTrue(early != null && early.choices().stream().noneMatch(c -> c.id().equals("storehouse")) && early.choices().stream().anyMatch(c -> c.id().equals("sanctuary")),
+                        "E-rank: what an early home can have, the Storehouse not yet: " + early);
+                level.setBlock(base.offset(3, 1, 6), Blocks.ANVIL.defaultBlockState(), 3);
+                level.setBlock(base.offset(3, 1, 3), net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("forge")).defaultBlockState(), 3);
+                var stand = net.minecraft.world.entity.EntityTypes.ARMOR_STAND.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+                stand.setPos(base.getX() + 4.5, base.getY() + 1, base.getZ() + 4.5);
+                level.addFreshEntity(stand);
+                AwakenTests.onEnd(h, stand::discard);
+                HearthService.scanNow(level, rec);
+                Progression.topUpToLevel(sp, 12, Progression.XpSource.COMMAND);
+                Progression.passReassessment(sp);
+                capsAt(h, "D-rank", sp);
+                rec.tier = 2;
+                Progression.topUpToLevel(sp, 26, Progression.XpSource.COMMAND);
+                Progression.passReassessment(sp);
+                capsAt(h, "C-rank", sp);
+                // the Storehouse is told at C-rank (no new lock), with what to do about the rare part
+                var add = dev.awaken.tasks.TaskBook.fresh(sp).get("hearth/add");
+                var store = add == null ? null : add.choices().stream().filter(c -> c.id().equals("storehouse")).findFirst().orElse(null);
+                h.assertTrue(add != null && add.choices().size() == 3 && store != null, "C-rank: Add to your home offers the Storehouse (a room already started comes first): " + add);
+                h.assertTrue(store.detail().contains("Granary Keystone") && store.needs().stream().anyMatch(n -> n.label().equals("A Totter") && !n.met()),
+                        "it says where the part is kept, and that a Totter works it: " + store);
+                var shelf = dev.awaken.tasks.TaskBook.fresh(sp).shelf(dev.awaken.core.api.Goals.Goal.HEARTH);
+                h.assertTrue(shelf.rows().stream().anyMatch(s -> s.key().equals("hearth/add")), "and it's on the Hearth tab, not in Later: " + shelf.rows());
+                h.assertTrue(dev.awaken.tasks.TaskBook.fresh(sp).footers().getOrDefault(dev.awaken.core.api.Goals.Goal.HEARTH, "").startsWith("At B-rank (level 45) your Forge can go to Tier II"),
+                        "the foot of the tab says what B-rank opens: " + dev.awaken.tasks.TaskBook.fresh(sp).footers());
+                rec.tier = 3;
+                rec.forgeTier = 2;
+                Progression.topUpToLevel(sp, 46, Progression.XpSource.COMMAND);
+                Progression.passReassessment(sp);
+                capsAt(h, "B-rank", sp);
+                rec.tier = 4;
+                Progression.topUpToLevel(sp, 72, Progression.XpSource.COMMAND);
+                Progression.passReassessment(sp);
+                capsAt(h, "A-rank", sp);
+                h.succeed();
+            } finally {
+                data.remove(sp.getUUID());
+                clear(level, base, 9, 6, 9);
+            }
+        });
+
         AwakenTests.registerIsolated("hearth_rested", 600, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
@@ -451,6 +526,29 @@ final class HomeTests {
     private static int tile(java.util.List<HearthView.Tile> tiles, RoomType t) {
         for (HearthView.Tile x : tiles) if (x.kind().equals(t.name())) return x.state();
         return -1;
+    }
+
+    /** The cap at one stop: Now at most 7 rows, a tab at most 3 and one per thread, nothing lost, a lesson never on top. */
+    private static void capsAt(net.minecraft.gametest.framework.GameTestHelper h, String stop, ServerPlayer sp) {
+        var book = dev.awaken.tasks.TaskBook.fresh(sp);
+        int now = book.topStep() == null ? 0 : 1;
+        for (var g : dev.awaken.core.api.Goals.Goal.values()) {
+            var shelf = book.shelf(g);
+            boolean out = g == dev.awaken.core.api.Goals.Goal.OUT;
+            h.assertTrue(shelf.rows().size() <= (out ? dev.awaken.tasks.TaskBook.OUT_CAP : dev.awaken.tasks.TaskBook.TAB_CAP), stop + ": too many rows on " + g + ": " + shelf.rows());
+            java.util.Set<String> threads = new java.util.HashSet<>();
+            boolean other = false;
+            for (var s : shelf.rows()) {
+                h.assertTrue(s.thread().isEmpty() || threads.add(s.thread()), stop + ": two rows of " + s.thread() + " on " + g);
+                other |= !s.optional() && !s.key().equals(book.top());
+            }
+            if (other) now++;
+            int all = 0;
+            for (var s : book.steps()) if (s.goal() == g) all++;
+            h.assertTrue(shelf.rows().size() + shelf.later().size() == all, stop + ": a step on " + g + " is in neither the rows nor Later");
+        }
+        h.assertTrue(now <= 7, stop + ": " + now + " rows on Now");
+        h.assertTrue(!book.top().startsWith("lesson:"), stop + ": a lesson on top: " + book.top());
     }
 
     private static String keys(dev.awaken.tasks.TaskBook.Book book) {

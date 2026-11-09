@@ -57,7 +57,7 @@ public final class RegionFinds {
             case OCHRE_DEEP -> new Lore("Iron country. Terraces of red ochre stone, warm and dusty, with ember lichen glowing on the walls.",
                     "Deeper under forests, plains and hills, above y 0.",
                     "Iron lodes lie here more often than anywhere else.",
-                    "Shears cut ember lichen off the walls. It still glows at home.", List.of("awaken:ember_lichen"), 0xC08050);
+                    "Shears cut ember vine off the walls. It still glows at home.", List.of("awaken:ember_vine", "awaken:ember_lichen"), 0xC08050);
             case BLACK_VAULTS -> new Lore("The great halls at the bottom of the world: columns of black basalt and drifts of ash.",
                     "Below y 0, under any land.",
                     "Diamond lodes lie here more often than elsewhere.",

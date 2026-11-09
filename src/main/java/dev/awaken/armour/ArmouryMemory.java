@@ -11,14 +11,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * What a smith knows (player attachment {@code awaken:armoury}, SPEC §44.7; schemaVersion 1, kept through death): armour
+ * What a smith knows (player attachment {@code awaken:armoury}, SPEC §44.7; schemaVersion 2, kept through death): armour
  * patterns found (the Hunter sets' come with rank and need none), sets forged whole on a Fitting Stand (the System names a
  * set the first time), and pieces made at Masterwork or better ("set:slot", which can then be forged from memory).
  */
 public final class ArmouryMemory {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
 
     final Set<String> patterns, forged, masterwork;
+    /** The suit the Tasks page is following (a set id; empty: none). Schema 2. */
+    String tracked = "";
     /** The Now line, worked out at most once a second (not saved). */
     long nowAt = Long.MIN_VALUE;
     List<dev.awaken.core.api.NowHooks.Suggestion> now = List.of();
@@ -37,8 +39,13 @@ public final class ArmouryMemory {
             Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(m -> SCHEMA),
             Codec.STRING.listOf().optionalFieldOf("patterns", List.of()).forGetter(m -> List.copyOf(m.patterns)),
             Codec.STRING.listOf().optionalFieldOf("forged", List.of()).forGetter(m -> List.copyOf(m.forged)),
-            Codec.STRING.listOf().optionalFieldOf("masterwork", List.of()).forGetter(m -> List.copyOf(m.masterwork))
-    ).apply(i, (v, p, f, m) -> new ArmouryMemory(Set.copyOf(p), Set.copyOf(f), Set.copyOf(m))));
+            Codec.STRING.listOf().optionalFieldOf("masterwork", List.of()).forGetter(m -> List.copyOf(m.masterwork)),
+            Codec.STRING.optionalFieldOf("tracked", "").forGetter(m -> m.tracked)
+    ).apply(i, (v, p, f, m, t) -> {
+        ArmouryMemory out = new ArmouryMemory(Set.copyOf(p), Set.copyOf(f), Set.copyOf(m));
+        out.tracked = t;
+        return out;
+    }));
 
     public static ArmouryMemory of(ServerPlayer p) {
         return p.getData(ArmourContent.ARMOURY);

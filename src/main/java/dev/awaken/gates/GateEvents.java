@@ -256,6 +256,12 @@ final class GateEvents {
             e.setCanceled(true);
         } else if (data.contains(Rooms.LORD_TAG)) {
             RunEvents.friendlyLord(p, data.getIntOr(Rooms.LORD_TAG, -1), target);
+        } else {
+            GateRecord g = dev.awaken.gates.run.Runs.gateOf(p);
+            if (g != null && g.realm.isPresent() && dev.awaken.gates.realms.RealmLife.talk(p, g, target)) {
+                e.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+                e.setCanceled(true);
+            }
         }
     }
 

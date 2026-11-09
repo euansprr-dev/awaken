@@ -111,6 +111,7 @@ public final class MobTypes {
 
     private static <E extends AwakenMob> EntityType.Builder<E> configure(EntityType.Builder<E> b, MobDef d) {
         b.sized(d.width, d.height).eyeHeight(d.height * 0.85F).clientTrackingRange(d.tier.isBoss() ? 10 : 8);
+        if (d.tier.isBoss()) b.updateInterval(1); // placed every tick: a body that runs at you can't wait for the third (SPEC §48.8)
         if (d.has(Trait.FIRE_IMMUNE)) b.fireImmune();
         return b;
     }

@@ -1,0 +1,169 @@
+# Do cave mouths lead anywhere? (Euan 9 Nov: "maybe 10 blocks deep, and then it just stops".) His New World (11) remade from
+# its seed with the pack's terrain: at the nearest mouth to eight spots, the way is walked on the world's real blocks (the
+# "[delve] mouth way" lines in the log: in, back out, how much cave lies past the joint) with a shot down the way and one in
+# the cave; then the census round his home and spawn (last: it holds the server for two minutes).
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=10
+#   tools/tour-ci.sh tools/autopilot/mouths-deep.txt 3000
+world mouths_deep creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+wait 20
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+hud off
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd gamemode spectator
+wait 40
+
+# ---- plains ----
+cmd tp @s -728 220 -1656
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve way
+wait 200
+shot md_plains_lip
+cmd awaken delve place go throat goal
+wait 120
+shot md_plains_way
+cmd awaken delve place go goal throat
+wait 120
+shot md_plains_cave
+
+# ---- savanna ----
+cmd tp @s -724 220 -1450
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve way
+wait 200
+shot md_savanna_lip
+cmd awaken delve place go throat goal
+wait 120
+shot md_savanna_way
+cmd awaken delve place go goal throat
+wait 120
+shot md_savanna_cave
+
+# ---- forest ----
+cmd tp @s -504 220 -2088
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve way
+wait 200
+shot md_forest_lip
+cmd awaken delve place go throat goal
+wait 120
+shot md_forest_way
+cmd awaken delve place go goal throat
+wait 120
+shot md_forest_cave
+
+# ---- meadow ----
+cmd tp @s -520 220 -2296
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve way
+wait 200
+shot md_meadow_lip
+cmd awaken delve place go throat goal
+wait 120
+shot md_meadow_way
+cmd awaken delve place go goal throat
+wait 120
+shot md_meadow_cave
+
+# ---- snow ----
+cmd tp @s -534 220 -2697
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve way
+wait 200
+shot md_snow_lip
+cmd awaken delve place go throat goal
+wait 120
+shot md_snow_way
+cmd awaken delve place go goal throat
+wait 120
+shot md_snow_cave
+
+# ---- grove ----
+cmd tp @s -143 220 -2000
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve way
+wait 200
+shot md_grove_lip
+cmd awaken delve place go throat goal
+wait 120
+shot md_grove_way
+cmd awaken delve place go goal throat
+wait 120
+shot md_grove_cave
+
+# ---- frost ----
+cmd tp @s -648 220 -2808
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve way
+wait 200
+shot md_frost_lip
+cmd awaken delve place go throat goal
+wait 120
+shot md_frost_way
+cmd awaken delve place go goal throat
+wait 120
+shot md_frost_cave
+
+# ---- elderwood ----
+cmd tp @s -728 220 -2280
+wait 160
+cmd awaken delve goto mouth
+wait 300
+cmd awaken delve way
+wait 200
+shot md_elderwood_lip
+cmd awaken delve place go throat goal
+wait 120
+shot md_elderwood_way
+cmd awaken delve place go goal throat
+wait 120
+shot md_elderwood_cave
+
+# ---- the census ----
+cmd gamemode creative
+cmd time set 6000
+cmd tp @s -605 176 -2323
+wait 300
+cmd awaken delve mouths 1600
+wait 6000
+cmd tp @s -599 110 -1165
+wait 300
+cmd awaken delve mouths 1600
+wait 6000
+
+quit

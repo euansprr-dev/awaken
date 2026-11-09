@@ -1,0 +1,76 @@
+# The Hall of Arms (SPEC §52), the wall and a weapon brought close, at Euan's window size: level 14, D rank, five patterns
+# known, Wildhide Longsword in hand. Creative first (all known at rank are "ready"), survival after (known but short).
+world hallwall creative 4346
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1708 960
+cmd awaken admin levels 13
+cmd awaken admin rankup
+cmd awaken hall learn katana
+cmd awaken hall learn axe
+cmd awaken hall learn shieldblade
+cmd awaken hall learn daggers
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 30
+cmd awaken hall wall 2
+wait 80
+shot wall_forge
+click 55 160
+wait 12
+shotnow zoom_mid
+wait 60
+shot piece_katana
+cmd awaken hall piece shieldblade 1
+wait 70
+shot piece_shieldblade
+cmd awaken hall piece scythe 1
+wait 70
+shot piece_unfound
+cmd awaken hall piece daggers 0
+wait 70
+shot piece_daggers
+cmd awaken hall piece longsword 3
+wait 70
+shot piece_over
+screen close
+wait 10
+cmd gamemode survival
+cmd give @s iron_ingot 14
+wait 20
+cmd awaken hall wall 1
+wait 60
+shot wall_hale
+cmd awaken hall piece maul 1
+wait 70
+shot piece_offer
+screen close
+wait 10
+# at a War Anvil: what you can forge says Hold to forge it
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -6 200 -3 6 200 9 minecraft:polished_deepslate
+cmd setblock 0 201 4 awaken:war_anvil[facing=north]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+wait 20
+cmd tp @s 0.5 201 3.25 0 35
+cmd item replace entity @s weapon.mainhand with air
+wait 30
+use
+wait 60
+shot wall_anvil
+cmd awaken hall piece katana 1
+wait 70
+shot piece_anvil
+screen close
+quit

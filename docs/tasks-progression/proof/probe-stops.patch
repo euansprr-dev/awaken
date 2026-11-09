@@ -1,0 +1,91 @@
+diff --git a/src/main/java/dev/awaken/hearth/HomeTests.java b/src/main/java/dev/awaken/hearth/HomeTests.java
+index 0649a9e49..e3d8c5265 100644
+--- a/src/main/java/dev/awaken/hearth/HomeTests.java
++++ b/src/main/java/dev/awaken/hearth/HomeTests.java
+@@ -310,6 +310,71 @@ final class HomeTests {
+             }
+         });
+ 
++
++        // TEMP PROBE (never committed): dumps the Tasks page's rows at each stop of a playthrough
++        AwakenTests.registerIsolated("tasks_probe_stops", 1600, h -> {
++            ServerLevel level = h.getLevel();
++            AwakenTests.Live live = AwakenTests.survivalPlayer(h, "tasks-probe", BlockPos.ZERO);
++            AwakenTests.onEnd(h, live::leave);
++            ServerPlayer sp = live.player();
++            Progression.awaken(sp);
++            if (dev.awaken.powers.Starter.pending(sp)) {
++                dev.awaken.powers.Starter.offer(sp);
++                dev.awaken.powers.Starter.choose(sp, dev.awaken.powers.Starter.state(sp).offer().getFirst());
++            }
++            sp.getInventory().clearContent();
++            StringBuilder out = new StringBuilder();
++            probeDump(out, "A_awakened_no_home", sp);
++            BlockPos origin = h.absolutePos(BlockPos.ZERO);
++            BlockPos base = new BlockPos((origin.getX() & ~15) + 4, origin.getY() + 110, (origin.getZ() & ~15) + 4);
++            HearthData data = HearthData.get(level.getServer());
++            data.remove(sp.getUUID());
++            HearthRecord rec = new HearthRecord(sp.getUUID(), "test", base.offset(4, 12, 4), HearthService.OVERWORLD);
++            rec.tier = 0;
++            data.put(rec);
++            try {
++                fineRoom(level, base);
++                HearthService.scanNow(level, rec);
++                sp.teleportTo(base.getX() + 4.5, base.getY() + 1, base.getZ() + 4.5);
++                Progression.topUpToLevel(sp, 3, Progression.XpSource.COMMAND);
++                probeDump(out, "B_hearthfire_bedroom_L3", sp);
++                rec.tier = 1;
++                level.setBlock(base.offset(5, 1, 6), Blocks.CRAFTING_TABLE.defaultBlockState(), 3);
++                level.setBlock(base.offset(6, 1, 4), dev.awaken.armour.ArmourContent.STAND.get().defaultBlockState(), 3);
++                HearthService.scanNow(level, rec);
++                Progression.topUpToLevel(sp, 7, Progression.XpSource.COMMAND);
++                probeDump(out, "C_anchor_armoury_E_L7", sp);
++                level.setBlock(base.offset(3, 1, 6), Blocks.ANVIL.defaultBlockState(), 3);
++                level.setBlock(base.offset(3, 1, 3), net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("forge")).defaultBlockState(), 3);
++                HearthService.scanNow(level, rec);
++                Progression.topUpToLevel(sp, 12, Progression.XpSource.COMMAND);
++                Progression.passReassessment(sp);
++                probeDump(out, "D_D_rank_L12_tier1", sp);
++                rec.tier = 2;
++                Progression.topUpToLevel(sp, 26, Progression.XpSource.COMMAND);
++                Progression.passReassessment(sp);
++                probeDump(out, "E_C_rank_L26_tier2", sp);
++                rec.tier = 3;
++                rec.forgeTier = 2;
++                Progression.topUpToLevel(sp, 46, Progression.XpSource.COMMAND);
++                Progression.passReassessment(sp);
++                probeDump(out, "F_B_rank_L46_tier3", sp);
++                rec.tier = 4;
++                Progression.topUpToLevel(sp, 72, Progression.XpSource.COMMAND);
++                Progression.passReassessment(sp);
++                probeDump(out, "G_A_rank_L72_tier4", sp);
++                try {
++                    java.nio.file.Files.writeString(java.nio.file.Path.of("/Volumes/MEDIA/.awaken-tasks-probe.txt"), out.toString());
++                } catch (java.io.IOException e) {
++                    throw new RuntimeException(e);
++                }
++                h.succeed();
++            } finally {
++                data.remove(sp.getUUID());
++                clear(level, base, 9, 6, 9);
++            }
++        });
++
+         // Euan, 2026-10-30: back home with the Hearthfire and a bed built, "what next?". The Armoury, then your first armour,
+         // then your first gate for the Lord's Heart; the Sanctuary is there, marked optional, never on top (SPEC §27.13).
+         AwakenTests.registerIsolated("tasks_next_step_follows_path", 900, h -> {
+@@ -419,6 +484,14 @@ final class HomeTests {
+      * all over by two lanterns, a bed, a carpet, a potted flower and a stair to sit on, and a cold stove in the wall: every
+      * reading 3 but its warmth (1).
+      */
++    static void probeDump(StringBuilder out, String stop, ServerPlayer sp) {
++        for (int i = 0; i < 4; i++) dev.awaken.trails.TrailEngine.update(sp);
++        var book = dev.awaken.tasks.TaskBook.fresh(sp);
++        out.append("# ").append(stop).append(" top=").append(book.top()).append(" level=").append(Progression.profile(sp).level()).append(" rank=").append(Progression.rank(sp)).append('\n');
++        for (var s : book.steps()) out.append(stop).append('|').append(s.goal()).append('|').append(s.key()).append('|').append(s.optional() ? "opt" : "main").append('|')
++                .append(s.path() == dev.awaken.core.api.Goals.NO_PATH ? "-" : s.path()).append('|').append(s.priority()).append('|').append(s.title()).append('\n');
++    }
++
+     static void fineRoom(ServerLevel level, BlockPos base) {
+         for (int x = 0; x < 9; x++) for (int y = 0; y < 5; y++) for (int z = 0; z < 9; z++) {
+             boolean shell = x == 0 || x == 8 || y == 0 || y == 4 || z == 0 || z == 8;

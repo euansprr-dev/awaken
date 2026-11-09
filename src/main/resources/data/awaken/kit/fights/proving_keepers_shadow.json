@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "proving_keepers_shadow",
  "moves": "proving_keepers_shadow",
  "duel": true,
@@ -25,6 +25,12 @@
        "turn",
        "lock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -40,6 +46,12 @@
        "unlock",
        "lock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -51,6 +63,11 @@
        "bar",
        "unlock"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -67,6 +84,12 @@
        "turn",
        "bar"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -79,6 +102,12 @@
        "bar",
        "unlock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -91,6 +120,12 @@
        "bar",
        "unlock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     }
    ]
@@ -113,6 +148,12 @@
        "turn",
        "unlock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -130,6 +171,12 @@
        "turn",
        "lock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -144,6 +191,11 @@
       [
        "doorway"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -160,6 +212,12 @@
        "turn",
        "bar"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -173,6 +231,12 @@
        "unlock",
        "turn"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -186,6 +250,12 @@
        "unlock",
        "lock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -198,6 +268,12 @@
        "bar",
        "unlock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     }
    ]
@@ -221,6 +297,12 @@
        "unlock",
        "kept"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -239,6 +321,12 @@
        "bar",
        "lock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -251,6 +339,11 @@
        "unlock",
        "dark"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -266,6 +359,12 @@
        "keyhole",
        "shut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -281,6 +380,12 @@
        "dark",
        "doorway"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -292,6 +397,12 @@
        "keyhole",
        "keyhole"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -304,6 +415,12 @@
        "bar",
        "unlock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "keyhole"
+      }
      ]
     },
     {
@@ -317,6 +434,12 @@
        "unlock",
        "turn"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -330,6 +453,12 @@
        "unlock",
        "lock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -343,6 +472,12 @@
        "unlock",
        "turn"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     }
    ]
@@ -367,6 +502,12 @@
        "turn",
        "turnabout"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -385,6 +526,12 @@
        "bar",
        "lock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -397,6 +544,11 @@
        "unlock",
        "eight"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -412,6 +564,12 @@
       [
        "eight"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -427,6 +585,12 @@
        "dark",
        "keyhole"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -442,6 +606,12 @@
       [
        "shut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -456,6 +626,12 @@
       [
        "eight"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -467,6 +643,12 @@
        "keyhole",
        "eight"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -480,6 +662,12 @@
        "unlock",
        "turn"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "keyhole"
+      }
      ]
     },
     {
@@ -493,6 +681,12 @@
        "unlock",
        "turn"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -506,6 +700,12 @@
        "unlock",
        "lock"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     },
     {
@@ -519,6 +719,12 @@
        "unlock",
        "turn"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "lock",
+       "dodged": "kept"
+      }
      ]
     }
    ]
@@ -527,5 +733,81 @@
  "enrage": {
   "below": 0.1,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "kept": 60,
+   "dark": 240,
+   "eight": 240
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "kept",
+     "keyhole",
+     "eight",
+     "lock",
+     "bar",
+     "turn"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "kept",
+     "keyhole",
+     "eight"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "bar"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "bar",
+     "turn"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "eight",
+     "kept",
+     "dark"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "lock",
+     "bar"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "kept",
+     "keyhole",
+     "eight"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

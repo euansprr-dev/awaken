@@ -39,6 +39,13 @@ public final class Progression {
     public enum XpSource { GATE_KILL, GATE_FLOOR, GATE_BOSS, HOME, REGIMEN, DIRECTIVE, TRUTH, DESCENT, DREAM, STORY, COMMAND,
         DISCOVERY, WORLD, ANOMALY }
 
+    private static final Set<XpSource> RIDER_HALVED = java.util.EnumSet.of(XpSource.HOME, XpSource.WORLD, XpSource.DESCENT, XpSource.ANOMALY);
+
+    /** Counters that are rank credit: what you've cleared and how well. A rider's don't move (SPEC §55). */
+    private static final Set<String> RIDER_NO_CREDIT = Set.of(Counters.GATES_CLEARED, Counters.FLOORS_CLEARED, Counters.FLOOR_STREAK_NO_EARLY_EXTRACT,
+            Counters.BOSS_FLOORS_NO_DAMAGE, Counters.GATES_NO_HIT, Counters.TWISTS_SEEN, "awaken:gates_solo_no_echo", "awaken:floors_pushed_past_comfort",
+            "awaken:bosses_killed", "awaken:bosses_killed_unarmed");
+
     private static final Set<ServerPlayer> DIRTY = new HashSet<>();
     /** Counter-only changes sync less often: the client shows counters only in progress bars. */
     private static final Set<ServerPlayer> DIRTY_LAZY = new HashSet<>();
@@ -118,6 +125,25 @@ public final class Progression {
         return grant(player, amount, source, null);
     }
 
+    /** Raw XP (before the scale and perks) that brings this player to the end of their current level. */
+    public static double rawToNextLevel(ServerPlayer player) {
+        Profile p = profile(player);
+        double s = xpScale(player) * (1 + perk(player, Perks.XP_BONUS));
+        return Math.max(0, Curve.xpToNext(p.level) - p.xp) / Math.max(1e-6, s);
+    }
+
+    private static boolean quietLevels;
+
+    /** As {@link #grantXp}, with the level's own show held back: the caller plays its own (the Lord's payout, SPEC §50.4). */
+    public static int grantXpQuietly(ServerPlayer player, double amount, XpSource source) {
+        quietLevels = true;
+        try {
+            return grant(player, amount, source, null);
+        } finally {
+            quietLevels = false;
+        }
+    }
+
     /** {@link #grantXp}, with world XP's own source key for the ledger ({@link XpLedger}). */
     private static int grant(ServerPlayer player, double amount, XpSource source, @org.jspecify.annotations.Nullable String worldKey) {
         Profile p = profile(player);
@@ -128,6 +154,8 @@ public final class Progression {
             return 0;
         }
         amount *= xpScale(player) * (1 + perk(player, Perks.XP_BONUS));
+        // gate pay is halved where it's worked out (Runs.floorReward); this is the rest of what a rider earns by fighting (SPEC §55)
+        if (RIDER_HALVED.contains(source) && dev.awaken.core.api.RidingHooks.rider(player)) amount *= dev.awaken.core.api.RidingHooks.XP_SHARE;
         xpLedger(player).add(source, worldKey, amount);
         int gained = addXp(player, p, amount);
         for (XpListener l : XP_LISTENERS) l.granted(player, amount, source, worldKey);
@@ -252,7 +280,7 @@ public final class Progression {
     private static void onLevelUp(ServerPlayer player, Profile p, int gained) {
         dev.awaken.core.Playtest.log(player, "level_up", "level", p.level);
         // the Living Wilds shows its own moment (and its own sound) when it can; otherwise the toast as ever (SPEC §21.1)
-        boolean moment = dev.awaken.core.api.LivingHooks.levelMoment(player, p.level, gained);
+        boolean moment = quietLevels || dev.awaken.core.api.LivingHooks.levelMoment(player, p.level, gained);
         if (!moment) player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
         var levelEvent = new dev.awaken.core.api.NoticeEvents.Event("level/" + p.level, "Level gained", "Level " + p.level,
                 "You have " + gained * Curve.POINTS_PER_LEVEL + " new stat points to spend on Status.",
@@ -369,7 +397,7 @@ public final class Progression {
             "awaken:waystones_lit", Counters.NIGHTMARES_BEATEN, "awaken:gates_scouted", Counters.SECRETS_FOUND);
 
     public static void count(ServerPlayer player, String counter, long amount) {
-        if (amount == 0) return;
+        if (amount == 0 || RIDER_NO_CREDIT.contains(counter) && dev.awaken.core.api.RidingHooks.rider(player)) return;
         Profile p = profile(player);
         p.counters.merge(counter, amount, Long::sum);
         if (LOGGED.contains(counter)) dev.awaken.core.Playtest.log(player, "counter", counter, p.counter(counter));

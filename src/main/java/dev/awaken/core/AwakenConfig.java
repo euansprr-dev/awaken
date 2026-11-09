@@ -47,6 +47,9 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue GATE_WORLDS = B.comment("Gate Worlds: new gates' floors become worlds of their theme (SPEC §38).",
                     "Off: new gates build rooms. Gates already made keep what they have.")
             .define("gateWorlds", true);
+    public static final ModConfigSpec.BooleanValue GATE_REALMS = B.comment("Realms: new gates can be whole places instead of floors (SPEC §50.7).",
+                    "Off: new gates are made as before. Realms already standing keep working.")
+            .define("gateRealms", false);
     public static final ModConfigSpec.BooleanValue GATE_WORLDS_DEPTH = B.comment("Gate Worlds' depth: new gates' places get ground that rises and falls,",
                     "walls and roofs that change with height, and wild growth away from the way (SPEC §38.14).",
                     "Off: new gates are made as before it (content version 6). Gates already made keep what they have.")
@@ -54,6 +57,16 @@ public final class AwakenConfig {
     public static final ModConfigSpec.ConfigValue<List<? extends String>> GATE_WORLDS_OFF = B.comment(
                     "World ids new gates never pick, e.g. \"awaken:bell_crypt/sunken_belfry\"")
             .defineListAllowEmpty("gateWorldsOff", List.of(), () -> "", o -> o instanceof String);
+
+    static {
+        B.pop();
+        B.push("tasks");
+    }
+
+    public static final ModConfigSpec.BooleanValue TASKS_CAP = B
+            .comment("The Tasks page's short list: one row per line of work, three rows a tab, the rest under Later (SPEC 53).",
+                    "Off shows every open step, as the page did before.")
+            .define("cap", true);
 
     static {
         B.pop();
@@ -121,12 +134,13 @@ public final class AwakenConfig {
          * AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom), CINEMATIC (Lens 2: sun
          * shadows, contact shadows, AO, filmic light, light shafts) or ULTRA (the same at higher quality, SPEC §22).
          */
-        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA }
+        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA, VFX }
 
         public static final ModConfigSpec.EnumValue<LensLook> LENS = C
                 .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps),",
-                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps) or ULTRA",
-                        "(the same at higher quality; 60+ fps). It steps aside while an Iris shaderpack is on.")
+                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps), ULTRA",
+                        "(the same at higher quality; 60+ fps) or VFX (Lens stays off and ImmersiveVFX draws instead; without",
+                        "that mod it reads as SWIFT). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
         public static final ModConfigSpec.BooleanValue LENS_TEMPORAL = C
                 .comment("Lens 2 (Cinematic and Ultra) spreads its clouds and light over frames: each pixel's clouds are worked out one",

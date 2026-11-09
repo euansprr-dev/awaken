@@ -1,0 +1,56 @@
+# Cave skin: the second heart, from the exact stands of the before tour (its search in the after tour depends on what is loaded).
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=8
+world cave_skin creative 5652006211025591964
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+opt gamma 100
+lookswitch cinematic
+camera first
+cmd time set 18000
+cmd effect give @s minecraft:resistance 100000 4 true
+hud off
+
+# into the Ochre Deep near his home; every stand is found from the same place
+cmd execute positioned -605 20 -2323 run awaken caves goto ochre_deep 0
+wait 20
+waitpassage
+wait 400
+cmd tp @s -610.50 33.00 -2276.50 22.0 2.6
+wait 900
+
+# ---- h1_far ----
+cmd tp @s -608.50 33.00 -2279.50 28.7 1.1
+wait 120
+shot h1_far_dark
+lens off
+wait 30
+shot h1_far_lensoff
+lens cinematic
+wait 20
+
+# ---- h1_close ----
+cmd tp @s -610.50 33.00 -2276.50 22.0 2.6
+wait 120
+shot h1_close_dark
+lens off
+wait 30
+shot h1_close_lensoff
+lens cinematic
+wait 20
+
+quit

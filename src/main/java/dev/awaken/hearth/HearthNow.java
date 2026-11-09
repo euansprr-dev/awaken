@@ -165,8 +165,7 @@ public final class HearthNow {
                 case SANCTUARY, ARMORY -> !h.hearthfire();
                 case TROPHY_HALL -> h.furniture[Furniture.TROPHY.ordinal()] > 0 || holds(p, HearthContent.TROPHY_ITEM.get());
                 case WORKSHOP -> h.furniture[Furniture.MACHINE.ordinal()] > 0;
-                case KITCHEN, STUDY, GREENHOUSE, STABLE, HALL, BELL_TOWER -> started(t, h);
-                case LOOKOUT, MINE_HEAD, SMELTERY, ROOKERY, FOUNDRY, STOREHOUSE -> false;
+                case KITCHEN, STUDY, GREENHOUSE, STABLE, HALL, BELL_TOWER, LOOKOUT, MINE_HEAD, SMELTERY, ROOKERY, FOUNDRY, STOREHOUSE -> started(t, h);
             };
             if (relevant) return t;
         }

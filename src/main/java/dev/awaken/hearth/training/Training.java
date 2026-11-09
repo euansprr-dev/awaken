@@ -46,6 +46,7 @@ public final class Training {
     public static final int MAX_TICKS = 20 * 60 * 10;
     public static final int MAX_GHOST_TICKS = 20 * 60 * 5;
     public static final String LAPS = "awaken:training_laps";
+    static final String DUMMY_HITS = "awaken:training_dummy_hits";
     public static final String RECORDS = "awaken:training_records";
 
     private static final class Run {
@@ -249,6 +250,7 @@ public final class Training {
     }
 
     public static void onDummyHit(ServerPlayer sp, ServerLevel level, BlockPos pos) {
+        Progression.count(sp, DUMMY_HITS); // the Training Grounds trail's last step
         level.sendParticles(ParticleTypes.CRIT, pos.getX() + 0.5, pos.getY() + 0.8, pos.getZ() + 0.5, 6, 0.2, 0.3, 0.2, 0.2);
         Run run = RUNS.get(sp.getUUID());
         if (run == null) return;

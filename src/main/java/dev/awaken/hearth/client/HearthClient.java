@@ -76,7 +76,10 @@ public final class HearthClient {
             e.getToolTip().add(Component.literal("Any wool colours · Details in Journal › Hearth").withStyle(ChatFormatting.DARK_GRAY));
         }
         int t = e.getItemStack().getOrDefault(HearthContent.TEMPER.get(), 0);
-        if (t > 0) e.getToolTip().add(1, Component.literal("Tempered " + "✦".repeat(t)).withStyle(ChatFormatting.GOLD));
+        if (t > 0) {
+            String gives = dev.awaken.hearth.Upgrades.temperGives(e.getItemStack());
+            e.getToolTip().add(1, Component.literal("Tempered " + "✦".repeat(t) + (gives.isEmpty() ? "" : " · " + gives)).withStyle(ChatFormatting.GOLD));
+        }
         if (Boolean.TRUE.equals(e.getItemStack().get(HearthContent.HOME_COOKED.get()))) {
             e.getToolTip().add(Math.min(1, e.getToolTip().size()), Component.literal("Home-cooked · lasts half again as long").withStyle(ChatFormatting.GOLD));
         }

@@ -61,7 +61,8 @@ public final class Gates {
         MinecraftServer s = level.getServer();
         GateRegistry reg = GateRegistry.get(s);
         if (GateService.inGate(level, pos)) {
-            GateRecord g = reg.byCell(Cells.cellAt(pos.getX(), pos.getZ()));
+            GateRecord g = dev.awaken.gates.realms.Realms.inRealm(pos.getX(), pos.getZ()) ? reg.gate(dev.awaken.gates.realms.RealmCells.gateAt(pos.getX(), pos.getZ()))
+                    : reg.byCell(Cells.cellAt(pos.getX(), pos.getZ()));
             return g == null ? Optional.empty() : Optional.of(info(s, g));
         }
         if (level.dimension() != Level.OVERWORLD) return Optional.empty();
@@ -92,6 +93,7 @@ public final class Gates {
     public static boolean isInGate(Entity e) {
         if (!GateService.isGateLevel(e.level())) return false;
         if (!(e.level() instanceof ServerLevel sl)) return true;
+        if (dev.awaken.gates.realms.Realms.inRealm(e.getBlockX(), e.getBlockZ())) return GateRegistry.get(sl.getServer()).gate(dev.awaken.gates.realms.RealmCells.gateAt(e.getBlockX(), e.getBlockZ())) != null;
         return GateRegistry.get(sl.getServer()).byCell(Cells.cellAt(e.getBlockX(), e.getBlockZ())) != null;
     }
 
@@ -212,7 +214,7 @@ public final class Gates {
     public static int openWandering(ServerPlayer p, BlockPos near, int floors, int lifetimeTicks) {
         MinecraftServer s = p.level().getServer();
         long seed = Hash.mix(p.getUUID().getMostSignificantBits() ^ s.overworld().getGameTime());
-        GatePlan rolled = Director.roll(seed, Progression.rank(p), p.getData(GatesRegistry.MEMORY.get()), null, null).plan();
+        GatePlan rolled = Director.roll(seed, Progression.rank(p), p.getData(GatesRegistry.MEMORY.get()), null, null, Director.standingThemes(s, p)).plan();
         GatePlan plan = new GatePlan(rolled.seed(), rolled.contentVersion(), rolled.rank(), rolled.theme(), rolled.layout(),
                 rolled.modifiers(), Twist.NONE, Math.max(1, floors), rolled.theme().bossId(), rolled.annexTheme(), rolled.annexRule());
         GateRecord g = createNear(p, plan, near, false, "wandering");
@@ -260,6 +262,33 @@ public final class Gates {
         }
         Runs.extract(p, true);
         return true;
+    }
+
+    // ---- Riding Along (SPEC §55) ----------------------------------------------------------------------------------------
+
+    /** Marks the player's run as ridden or not; no run, no change. */
+    public static void setRiding(ServerPlayer p, boolean riding) {
+        RunState run = Runs.run(p);
+        if (run.active()) run.riding = riding;
+    }
+
+    /** Whether the player's run is the story's own gate, which is walked alone (false outside a run). */
+    public static boolean inScriptedGate(ServerPlayer p) {
+        GateRecord g = Runs.gateOf(p);
+        return g != null && g.scripted;
+    }
+
+    /** Whether this gate already has someone riding along in it. */
+    public static boolean hasRider(int gateId) {
+        MinecraftServer s = server();
+        if (s == null) return false;
+        GateRecord g = GateRegistry.get(s).gate(gateId);
+        return g != null && dev.awaken.gates.run.RunEvents.hasRider(s, g);
+    }
+
+    /** Brings a player out of their run now, Satchel and all. */
+    public static void pullOut(ServerPlayer p, String why) {
+        dev.awaken.gates.run.RunEvents.pullOut(p, why);
     }
 
     /** Sends the beacon list to a player (other modules may call this after teleporting someone). */

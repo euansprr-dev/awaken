@@ -52,6 +52,7 @@ public final class RunEvents {
         Modifiers.tickPending(server);
         Hud.flush(server);
         Spoils.tick(server);
+        LordPay.tick(server);
         if (server.getTickCount() % 100 == 30) {
             GateRegistry reg = GateRegistry.get(server);
             if (reg.pendingCount() > 0) for (ServerPlayer p : server.getPlayerList().getPlayers()) Claims.deliver(p);
@@ -61,18 +62,40 @@ public final class RunEvents {
     public static void onLogin(ServerPlayer p) {
         Spoils.remind(p);
         Runs.onLogin(p);
+        LordPay.resume(p);
     }
 
     public static void onLogout(ServerPlayer p) {
         Twists.discardGhost(p);
         Modifiers.forget(p.getUUID());
         Spoils.forget(p.getUUID());
+        LordPay.leave(p);
         RunState run = Runs.run(p);
         if (run.active()) run.leftAt = dev.awaken.gates.GateService.now(p.level().getServer()); // saved with the player
     }
 
     public static void onRespawn(ServerPlayer p) {
         Runs.onRespawn(p);
+    }
+
+    /** Brings a player out of their run now, Satchel and all (SPEC §55: the one they rode with left). */
+    public static void pullOut(ServerPlayer p, String why) {
+        RunState run = Runs.run(p);
+        if (run.active()) Runs.lost(p, run, why);
+    }
+
+    /** Whether this gate already has someone riding along in it. */
+    public static boolean hasRider(MinecraftServer server, GateRecord g) {
+        for (java.util.UUID u : g.inside) {
+            ServerPlayer o = server.getPlayerList().getPlayer(u);
+            if (o != null && Runs.run(o).gateId == g.id && Runs.run(o).riding) return true;
+        }
+        return false;
+    }
+
+    /** A right click on a gate's door. */
+    public static void door(ServerLevel level, net.minecraft.core.BlockPos pos, ServerPlayer p) {
+        Interactions.door(level, pos, p);
     }
 
     public static void onPlayerDeath(LivingDeathEvent e) {
@@ -85,6 +108,7 @@ public final class RunEvents {
 
     public static void onGateMobDeath(ServerLevel level, GateRecord g, LivingEntity dead, ServerPlayer killer, MobRole role) {
         Modifiers.onMobDeath(level, g, dead, role);
+        if (g.realm.isPresent()) dev.awaken.gates.realms.RealmLive.mobDied(level, g, dead, role);
         GateLayout l = GateLayout.of(g.plan);
         boolean mainLord = g.boss.isPresent() && g.boss.get().equals(dead.getUUID());
         boolean annexLord = g.annexBoss.isPresent() && g.annexBoss.get().equals(dead.getUUID());

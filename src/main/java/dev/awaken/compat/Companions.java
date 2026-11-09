@@ -8,6 +8,12 @@ public final class Companions {
     private Companions() {}
 
     private static final boolean IRIS = ModList.get().isLoaded("iris");
+    private static final boolean IMMERSIVE_VFX = ModList.get().isLoaded(Look.VFX_MOD);
+
+    /** Whether ImmersiveVFX is installed: the Look's VFX tier exists only with it. */
+    public static boolean immersiveVfxLoaded() {
+        return IMMERSIVE_VFX;
+    }
 
     /** True while an Iris shaderpack draws the world (Lens then steps aside). Client side only. */
     public static boolean shaderPackActive() {

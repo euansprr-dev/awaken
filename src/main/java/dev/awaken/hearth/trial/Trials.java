@@ -205,6 +205,11 @@ public final class Trials {
             return;
         }
         if (inTrial(sp)) return;
+        if (dev.awaken.core.api.RidingHooks.bonded(sp)) {
+            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal("One at a time"))
+                    .body(Component.literal("A Reassessment measures you alone. Let go of the thread first.")).ttl(20 * 8).build());
+            return;
+        }
         Rank next = p.rank().next();
         if (next == null) {
             Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal("There is no rank above yours"))
@@ -244,6 +249,10 @@ public final class Trials {
     /** Sends the player to a fresh arena cell for this trial. */
     public static boolean start(ServerPlayer sp, Kind kind, Rank target, boolean practice) {
         if (inTrial(sp)) return false;
+        if (kind != Kind.PENALTY && dev.awaken.core.api.RidingHooks.bonded(sp)) { // Reassessments can't be ridden (SPEC §55)
+            sp.sendOverlayMessage(Component.literal("A Reassessment measures you alone. Let go of the thread first."));
+            return false;
+        }
         if (kind == Kind.PROVING) return Provings.open(sp, target, practice);
         MinecraftServer server = sp.level().getServer();
         ServerLevel trials = server.getLevel(DIMENSION);

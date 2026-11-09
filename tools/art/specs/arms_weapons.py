@@ -701,11 +701,12 @@ def blade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0,
     return B
 
 
-def chain(x, y, links, part, side=-1, back=None, stagger=0.0, **data):
+def chain(x, y, links, part, side=-1, back=None, stagger=0.0, cycle=2, **data):
     """Bars end to end from (x, y), each turned a whole angle: links (degrees from straight up, outward positive;
     length, width, depth, material). side -1 builds the left one (mirror() makes the right). Each starts `back` inside
     the last (half its width by default), so the joints stay solid. stagger lifts every other link that far off the
-    blade's plane (0.05: unseen), so links of one depth that overlap at a joint never share a plane (a curved blade)."""
+    blade's plane (0.05: unseen), so links of one depth that overlap at a joint never share a plane (a curved blade); a tight
+    curve whose links reach past their neighbours lifts them in a longer cycle."""
     out = []
     p = np.array([x, y], dtype=float)
     for k, (deg, length, width, depth, mat) in enumerate(links):
@@ -714,7 +715,7 @@ def chain(x, y, links, part, side=-1, back=None, stagger=0.0, **data):
         if k:
             p = p - d * (min(width, length) / 2 if back is None else back)
         c = p + d * length / 2
-        out.append(VX.rbox((c[0], c[1], stagger * (k % 2)), (width, length, depth), -deg * side, mat, part, base=tuple(p),
+        out.append(VX.rbox((c[0], c[1], stagger * (k % cycle)), (width, length, depth), -deg * side, mat, part, base=tuple(p),
                            length=length, **data))
         p = p + d * length
     return out
@@ -3578,9 +3579,24 @@ def counted(pattern, key):
     return [[k, n] for k, n in out.items()]
 
 
+PICK_FORMS = ("delver", "breaker", "mattock", "sounder")
+
+
+def pick_cost(tier):
+    """A forged pick at the War Anvil (SPEC §49.5): two of its rank's metal (at E, two of its core, which is all E has), one
+    core, an Essence Shard and a log for the haft."""
+    t = tier.lower()
+    if tier == "E":
+        return [["#awaken:hunter_core_e", 2], ["#awaken:hunter_bind_e", 1], ["awaken:essence_shard", 1], ["#minecraft:logs", 1]]
+    return [["#awaken:tier_metal_" + t, 2], ["#awaken:hunter_core_" + t, 1], ["awaken:essence_shard", 1], ["#minecraft:logs", 1]]
+
+
 def write_costs():
-    """data/awaken/arms/anvil_costs.json: what every forged weapon and Hunter blade takes at the War Anvil (SPEC §46.7)."""
+    """data/awaken/arms/anvil_costs.json: what every forged weapon, Hunter blade and forged pick takes at the War Anvil (SPEC §46.7, §49.5)."""
     costs = {}
+    for tier, sid, *_ in TIERS:
+        for form in PICK_FORMS:
+            costs[G.SET[tier] + "_pick_" + form] = pick_cost(tier)
     for tier, sid, *_ in TIERS:
         costs[G.SET[tier] + "_blade"] = blade_cost(tier)
         old = os.path.join(RES, "data/awaken/recipe", G.SET[tier] + "_blade.json")

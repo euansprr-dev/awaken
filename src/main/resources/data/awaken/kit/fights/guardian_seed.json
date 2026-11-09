@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "guardian_seed",
  "moves": "guardian_seed",
  "duel": true,
@@ -23,6 +23,11 @@
        "swipe_b",
        "clasp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "clasp"
+      }
      ]
     },
     {
@@ -32,6 +37,11 @@
       [
        "clasp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "clasp"
+      }
      ]
     },
     {
@@ -46,6 +56,11 @@
       [
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -59,6 +74,11 @@
       [
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "clasp"
+      }
      ]
     }
    ]
@@ -78,6 +98,11 @@
        "swipe_b",
        "clasp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "clasp"
+      }
      ]
     },
     {
@@ -87,6 +112,11 @@
       [
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "clasp"
+      }
      ]
     },
     {
@@ -101,6 +131,11 @@
       [
        "clasp"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "clasp"
+      }
      ]
     },
     {
@@ -115,6 +150,11 @@
       [
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -128,6 +168,11 @@
       [
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "clasp"
+      }
      ]
     }
    ]
@@ -136,5 +181,64 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "clasp": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "clasp",
+     "lance",
+     "swipe",
+     "swipe_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "clasp",
+     "lance"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "swipe"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "swipe",
+     "swipe_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "swipe"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "clasp",
+     "lance"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

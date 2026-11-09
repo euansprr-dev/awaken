@@ -50,7 +50,7 @@ import java.util.function.Function;
 public final class ThemeBlocks {
     private ThemeBlocks() {}
 
-    public enum Shape { CUBE, COLUMN, GLASS, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE }
+    public enum Shape { CUBE, COLUMN, GLASS, LEAF, PLANT, HANG, CARPET, FALL, TOUCH, PROP, FOLD, SKETCH, CLOUD, FIGURE }
 
     /** One block: its id, shape, map colour, sound, light and (props, touchstones) its outline in pixels. */
     public record Def(String name, Shape shape, MapColor color, SoundType sound, int light, double[] box, boolean soft) {
@@ -68,10 +68,39 @@ public final class ThemeBlocks {
     }
 
     private static final Shape C = Shape.CUBE, COL = Shape.COLUMN, G = Shape.GLASS, PL = Shape.PLANT, H = Shape.HANG, CA = Shape.CARPET,
-            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD, SK = Shape.SKETCH, CL = Shape.CLOUD, FI = Shape.FIGURE;
+            F = Shape.FALL, T = Shape.TOUCH, PR = Shape.PROP, FO = Shape.FOLD, SK = Shape.SKETCH, CL = Shape.CLOUD, FI = Shape.FIGURE, L = Shape.LEAF;
 
     /** Every theme's blocks, in the order of the creative tab. */
     public static final List<Def> DEFS = List.of(
+            // Amber Reach, the first Realm's own materials (50.7): the warm mid-tones of its painting
+            Def.of("amber_stone", C, MapColor.COLOR_ORANGE, SoundType.STONE, 0),
+            Def.of("amber_stone_worn", C, MapColor.TERRACOTTA_ORANGE, SoundType.STONE, 0),
+            Def.of("amber_stone_deep", C, MapColor.TERRACOTTA_BROWN, SoundType.STONE, 0),
+            Def.of("amber_stone_pale", C, MapColor.SAND, SoundType.STONE, 0),
+            Def.of("amber_hexstone", C, MapColor.COLOR_ORANGE, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("amber_flagstone", C, MapColor.SAND, SoundType.DEEPSLATE_TILES, 0),
+            Def.of("amber_brick", C, MapColor.TERRACOTTA_ORANGE, SoundType.MUD_BRICKS, 0),
+            Def.of("amber_plaster", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("amber_plaster_band", C, MapColor.SAND, SoundType.CALCITE, 0),
+            Def.of("amber_tile", C, MapColor.TERRACOTTA_RED, SoundType.DECORATED_POT, 0),
+            Def.of("amber_tile_deep", C, MapColor.COLOR_ORANGE, SoundType.DECORATED_POT, 0),
+            Def.soft("amber_timber", COL, MapColor.WOOD, SoundType.WOOD, 0),
+            Def.soft("amber_planks", C, MapColor.WOOD, SoundType.WOOD, 0),
+            Def.of("amber_gilt", C, MapColor.GOLD, SoundType.METAL, 0),
+            Def.soft("amber_window", C, MapColor.COLOR_ORANGE, SoundType.GLASS, 12),
+            Def.soft("amber_moss", C, MapColor.COLOR_YELLOW, SoundType.MOSS, 0),
+            Def.soft("amber_bed", C, MapColor.TERRACOTTA_BROWN, SoundType.MUD, 0),
+            Def.soft("amber_petal", C, MapColor.COLOR_ORANGE, SoundType.WET_GRASS, 0),
+            Def.soft("amber_petal_deep", C, MapColor.TERRACOTTA_ORANGE, SoundType.WET_GRASS, 0),
+            Def.soft("amber_petal_tip", C, MapColor.GOLD, SoundType.WET_GRASS, 0),
+            Def.soft("amber_leaf_gold", L, MapColor.GOLD, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("amber_seedhead", C, MapColor.TERRACOTTA_BROWN, SoundType.NETHER_WART, 0),
+            Def.soft("amber_stem", COL, MapColor.COLOR_GREEN, SoundType.STEM, 0),
+            Def.soft("amber_leaf", C, MapColor.COLOR_GREEN, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("amber_wheat", PL, MapColor.COLOR_YELLOW, SoundType.CROP, 0),
+            Def.soft("amber_wheat_tall", PL, MapColor.COLOR_YELLOW, SoundType.CROP, 0),
+            Def.soft("amber_grass", PL, MapColor.COLOR_YELLOW, SoundType.GRASS, 0),
+            Def.soft("amber_bloom", PL, MapColor.COLOR_ORANGE, SoundType.GRASS, 0),
             // Fungal Hollow (38.10)
             Def.of("fungal_rock", C, MapColor.TERRACOTTA_PURPLE, SoundType.TUFF, 0),
             Def.of("fungal_rock_veined", C, MapColor.TERRACOTTA_PURPLE, SoundType.TUFF, 6),
@@ -296,6 +325,7 @@ public final class ThemeBlocks {
             case CUBE -> Block::new;
             case COLUMN -> RotatedPillarBlock::new;
             case GLASS -> TransparentBlock::new;
+            case LEAF -> Block::new;
             case PLANT -> p -> new Shaped(p, Block.box(2, 0, 2, 14, 13, 14), false);
             case HANG -> p -> new Shaped(p, Block.box(2, 0, 2, 14, 16, 14), false);
             case CARPET -> p -> new Shaped(p, Block.box(0, 0, 0, 16, 1, 16), true);
@@ -325,6 +355,8 @@ public final class ThemeBlocks {
         switch (d.shape()) {
             case GLASS -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false).isRedstoneConductor((s, l, pos) -> false)
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false).strength(0.4F);
+            // a crown you can see into: every neighbour's faces still draw, as vanilla leaves do
+            case LEAF -> p = p.noOcclusion().isValidSpawn((s, l, pos, t) -> false).isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
             case PLANT, HANG, FALL -> p = p.noOcclusion().noCollision().instabreak().isValidSpawn((s, l, pos, t) -> false)
                     .isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false);
             // a cloud is a whole block you fall through (it hides its neighbours' faces, so a sea of it is cheap to draw)

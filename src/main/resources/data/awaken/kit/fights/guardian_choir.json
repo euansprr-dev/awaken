@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "guardian_choir",
  "moves": "guardian_choir",
  "duel": true,
@@ -23,6 +23,12 @@
        "lash_b",
        "breaker"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker",
+       "dodged": "jet"
+      }
      ]
     },
     {
@@ -33,6 +39,11 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "jet"
+      }
      ]
     },
     {
@@ -43,6 +54,12 @@
       [
        "jet"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker",
+       "dodged": "jet"
+      }
      ]
     },
     {
@@ -53,6 +70,11 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker"
+      }
      ]
     },
     {
@@ -67,6 +89,12 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker",
+       "dodged": "jet"
+      }
      ]
     }
    ]
@@ -86,6 +114,12 @@
        "lash_b",
        "breaker"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker",
+       "dodged": "jet"
+      }
      ]
     },
     {
@@ -96,6 +130,11 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "jet"
+      }
      ]
     },
     {
@@ -106,6 +145,12 @@
       [
        "jet"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker",
+       "dodged": "jet"
+      }
      ]
     },
     {
@@ -116,6 +161,12 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker",
+       "dodged": "jet"
+      }
      ]
     },
     {
@@ -126,6 +177,11 @@
       [
        "lash"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker"
+      }
      ]
     },
     {
@@ -148,6 +204,12 @@
       [
        "lash_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "breaker",
+       "dodged": "jet"
+      }
      ]
     }
    ]
@@ -156,5 +218,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "jet": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "jet",
+     "breaker",
+     "lash",
+     "lash_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "jet"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "lash"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "lash",
+     "lash_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "breaker"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "breaker",
+     "lash"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "jet"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

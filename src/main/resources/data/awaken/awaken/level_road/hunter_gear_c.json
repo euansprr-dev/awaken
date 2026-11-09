@@ -7,8 +7,7 @@
     {
       "type": "recipe",
       "ids": [
-        "awaken:gatewrought_focus",
-        "awaken:gatewrought_mattock"
+        "awaken:gatewrought_focus"
       ]
     }
   ],
