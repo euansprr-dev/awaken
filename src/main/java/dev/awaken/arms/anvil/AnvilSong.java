@@ -202,6 +202,9 @@ public final class AnvilSong {
     public static final float COLOUR_RATE = 0.05F, COLOUR_END = 2.6F;
 
     /** Where the oxide has got to after the head has been held in the heat this long. */
+    /** The seam's pour, in ticks: as long as it's held, up to this, the molten line runs on from the eye to the points. */
+    public static final float SEAM_FULL = 32F;
+
     public static float colourFront(float held) {
         return Mth.clamp(held * COLOUR_RATE, 0F, COLOUR_END);
     }

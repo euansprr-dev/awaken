@@ -31,7 +31,7 @@ final class AnvilBlank implements WeaponDraw.Corners {
     private @Nullable WeaponMesh mesh;
     private AnvilShape shape = AnvilShape.FALLBACK;
     private float mid, drawn, twist;
-    private int light, cut;
+    private int light, cut, rings;
     private boolean blade;
 
     private final float[] tri = new float[3 * V], cr = new float[4 * V], pt = new float[3 * V], ca = new float[8 * V], cb = new float[8 * V];
@@ -41,6 +41,12 @@ final class AnvilBlank implements WeaponDraw.Corners {
 
     /** This frame's work: its mesh, how it lies (drawn out, twisted), its light, and from where along it it's drawn (0..1). */
     AnvilBlank set(WeaponMesh mesh, AnvilScene.Lay lay, int light, float from) {
+        return set(mesh, lay, light, from, 0);
+    }
+
+    /** As above, and a pick's rank rings only past group {@code rings} (the first rank it was made at). */
+    AnvilBlank set(WeaponMesh mesh, AnvilScene.Lay lay, int light, float from, int rings) {
+        this.rings = rings;
         this.mesh = mesh;
         this.shape = lay.shape;
         this.mid = lay.mid;
@@ -63,7 +69,7 @@ final class AnvilBlank implements WeaponDraw.Corners {
         this.overlay = overlay;
         this.ours = ours;
         float[] pos = mesh.pos(), uv = mesh.uv();
-        byte[] n = mesh.normal(), along = mesh.along();
+        byte[] n = mesh.normal(), along = mesh.along(), groups = mesh.groups();
         // the blade alone: the blank's own triangles, cut at its foot
         boolean[] blank = blade ? shape.blank : null;
         float foot = shape.foot;
@@ -71,17 +77,20 @@ final class AnvilBlank implements WeaponDraw.Corners {
             if (blank != null) {
                 if (t >= blank.length || !blank[t]) continue;
             } else if (cut > 0 && (along[i] & 255) + (along[i + 1] & 255) + (along[i + 2] & 255) < cut * 3) continue;
+            if (groups != null && groups[t] != 0 && groups[t] <= rings) continue;
             float lo = Float.MAX_VALUE;
             for (int c = 0; c < 3; c++) {
                 int s = i + c, o = c * V;
-                AnvilScene.ITEM.transformPosition(pos[s * 3], pos[s * 3 + 1], pos[s * 3 + 2], p);
+                shape.item.transformPosition(pos[s * 3], pos[s * 3 + 1], pos[s * 3 + 2], p);
                 tri[o] = p.x;
                 tri[o + 1] = p.y;
                 tri[o + 2] = p.z;
                 // the item's -45° turned back, as ITEM does
                 float nx = n[s * 3] / 127F, ny = n[s * 3 + 1] / 127F;
-                tri[o + 3] = (nx - ny) * C45;
-                tri[o + 4] = (nx + ny) * C45;
+                float nu = (nx - ny) * C45, nv = (nx + ny) * C45;
+                // a pick's head lies turned a quarter from its design, as PICK_HEAD does
+                tri[o + 3] = shape.head ? nv : nu;
+                tri[o + 4] = shape.head ? -nu : nv;
                 tri[o + 5] = n[s * 3 + 2] / 127F;
                 tri[o + 6] = uv[s * 2];
                 tri[o + 7] = uv[s * 2 + 1];
