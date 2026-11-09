@@ -77,6 +77,12 @@ public final class ArmsRules {
      */
     public static @Nullable Decision tap(Archetypes.Loaded a, Archetype.@Nullable Move current, long start, int step, int cadence, long now,
                                          int masterySteps) {
+        return tap(a, current, start, step, cadence, now, masterySteps, a.def().buffer());
+    }
+
+    /** As above; {@code buffer}: how many ticks ahead of its window a press may come and still be kept for it. */
+    public static @Nullable Decision tap(Archetypes.Loaded a, Archetype.@Nullable Move current, long start, int step, int cadence, long now,
+                                         int masterySteps, int buffer) {
         Archetype.MoveDef cur = current == null ? null : a.move(current);
         int chainLen = chainLength(a, masterySteps);
         if (cur == null || now >= start + cur.total() + a.def().late()) return new Decision(chainMove(a, 0), 0, now, 0);
@@ -86,7 +92,7 @@ public final class ArmsRules {
         if (chainStrike && next != 0 && cur.hasCadence()) {
             int c0 = cur.cadence().get(0), c1 = cur.cadence().get(1);
             if (rel >= c0 && rel <= c1) return new Decision(chainMove(a, next), next, now, Math.min(CADENCE_MAX, cadence + 1));
-            if (rel < c0) return c0 - rel <= a.def().buffer() ? new Decision(chainMove(a, next), next, start + c0, 0) : null;
+            if (rel < c0) return c0 - rel <= buffer ? new Decision(chainMove(a, next), next, start + c0, 0) : null;
             return new Decision(chainMove(a, next), next, now, 0);
         }
         if (chainStrike && next != 0) {
@@ -95,22 +101,28 @@ public final class ArmsRules {
             long link = start + cur.windup() + cur.active() + MASTERY_LINK;
             int carried = cadence >= step ? Math.min(CADENCE_MAX, cadence + 1) : cadence;
             if (now >= link) return new Decision(chainMove(a, next), next, now, carried);
-            return link - now <= a.def().buffer() ? new Decision(chainMove(a, next), next, link, carried) : null;
+            return link - now <= buffer ? new Decision(chainMove(a, next), next, link, carried) : null;
         }
         // a finisher, a heavy, a riposte: the next tap starts the chain again once it has recovered
         long end = start + cur.total();
         if (now >= end) return new Decision(chainMove(a, 0), 0, now, 0);
-        return end - now <= a.def().buffer() ? new Decision(chainMove(a, 0), 0, end, 0) : null;
+        return end - now <= buffer ? new Decision(chainMove(a, 0), 0, end, 0) : null;
     }
 
     /** Ticks after the last chain strike that a client's word can still carry the chain on. */
     static final int CHAIN_SLACK = 60;
 
     /**
-     * One chain (SPEC §25 "Tap or hold"; Euan 2026-11-09: "the combo stops being the usual one"). The two sides time the
-     * windows on their own clocks, so a press on a window's edge can be "the next strike" on one and "start again" on the
-     * other. The chain the player is shown is the one that counts: the server takes the client's word for the step when it
-     * is a move the chain allows (starting again, or the strike after the last one, soon after it), and its own otherwise.
+     * The buffer for a strike the hands have begun: it is kept however early the server's own clock calls it. It still
+     * waits for the server's window, so nothing strikes faster than the rules allow.
+     */
+    static final int HEARD_BUFFER = Integer.MAX_VALUE;
+
+    /**
+     * One chain (SPEC §25 "Tap or hold"; Euan 2026-11-09: "the combo stops being the usual one", "two uppercuts in a row").
+     * The two sides time the windows on their own clocks, so left to decide alone they disagree on a window's edge, and one
+     * counts a strike the other never played. Only the hands decide: the server plays the strike they began (starting
+     * again, or the strike after the last one, soon after it) and falls back on its own read only for a claim no chain allows.
      */
     public static @Nullable Decision follow(Archetypes.Loaded a, @Nullable Decision d, int claimed, int lastStep, long sinceLast, int masterySteps) {
         if (d == null || claimed < 0 || claimed == d.step() || claimed >= chainLength(a, masterySteps)) return d;

@@ -15,21 +15,23 @@ public final class ArmsPayloads {
 
     /** What a {@link Press} pressed: a strike's press; the hold becoming a charge; the charge let go; the strike's press let go before it charged (a tap). */
     public static final int PRESS_STRIKE = 0, PRESS_CHARGE = 1, PRESS_RELEASE = 2, PRESS_TAP = 3;
+    /** A press's {@code claim} when it isn't a move's ordinal: no word from the hands; the hands counted it for nothing. */
+    public static final int CLAIM_OPEN = -1, CLAIM_NOTHING = -2;
 
     /**
      * Client → server: the strike key. STRIKE on the press (the move starts now; target = the creature under the
      * crosshair, -1 for none); CHARGE once the key has been held into a heavy; RELEASE when a charged key lets go.
      */
-    public record Press(int seq, int what, float yaw, float pitch, int target, int step) implements CustomPacketPayload {
-        /** A press with no claim on the chain ({@code step}: which chain strike the client began, -1 for none). */
+    public record Press(int seq, int what, float yaw, float pitch, int target, int claim) implements CustomPacketPayload {
+        /** A press with no word on what the hands did ({@code claim}: the ordinal of the move they began, or a CLAIM_ below). */
         public Press(int seq, int what, float yaw, float pitch, int target) {
-            this(seq, what, yaw, pitch, target, -1);
+            this(seq, what, yaw, pitch, target, CLAIM_OPEN);
         }
 
         public static final Type<Press> TYPE = new Type<>(Awaken.id("arms_press"));
         public static final StreamCodec<ByteBuf, Press> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Press::seq, ByteBufCodecs.VAR_INT, Press::what, ByteBufCodecs.FLOAT, Press::yaw,
-                ByteBufCodecs.FLOAT, Press::pitch, ByteBufCodecs.VAR_INT, Press::target, ByteBufCodecs.VAR_INT, Press::step, Press::new);
+                ByteBufCodecs.FLOAT, Press::pitch, ByteBufCodecs.VAR_INT, Press::target, ByteBufCodecs.VAR_INT, Press::claim, Press::new);
         @Override public Type<Press> type() { return TYPE; }
     }
 

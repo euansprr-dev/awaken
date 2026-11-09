@@ -180,25 +180,12 @@ public final class ArmsPredict {
         swungAt = ticks;
         if (meansFight(mc, p, st, target)) fightAt = ticks;
         int steps = mastery(st);
-        ArmsRules.Decision d = ArmsRules.tap(st, style == st ? move : null, moveStart, step, cadence, ticks, ArmsMastery.strikes(steps));
-        ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(s, ArmsPayloads.PRESS_STRIKE, p.getYRot(), p.getXRot(), target, d == null ? -1 : d.step()));
-        Archetype.MoveDef riposte = st.move(Archetype.Move.RIPOSTE);
-        if (riposte != null && ticks - deflectAt <= riposte.window()) {
-            deflectAt = -1000;
-            begin(p, st, Archetype.Move.RIPOSTE, -1, 0, s);
-            return;
-        }
-        Archetype.MoveDef slip = st.move(Archetype.Move.SLIPCUT);
-        if (slip != null && ticks - dodgeAt >= 1 && ticks - dodgeAt <= st.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(steps)) {
-            dodgeAt = -1000;
-            begin(p, st, Archetype.Move.SLIPCUT, -1, 0, s);
-            return;
-        }
-        if (st.move(Archetype.Move.UNDERCUT) != null && Body.isSliding(p)) {
-            begin(p, st, Archetype.Move.UNDERCUT, -1, 0, s);
-            return;
-        }
-        if (st.move(Archetype.Move.PLUNGE) != null && ArmsRules.plunges(p.onGround(), p.fallDistance, p.isInLiquid())) {
+        Archetype.Move off = offChain(p, st, steps);
+        ArmsRules.Decision d = off != null ? null : ArmsRules.tap(st, style == st ? move : null, moveStart, step, cadence, ticks, ArmsMastery.strikes(steps));
+        // the whole decision goes with the press: the server plays what the hands play (SPEC §25 "One chain")
+        int claim = off != null ? off.ordinal() : d == null ? ArmsPayloads.CLAIM_NOTHING : d.move().ordinal();
+        ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(s, ArmsPayloads.PRESS_STRIKE, p.getYRot(), p.getXRot(), target, claim));
+        if (off == Archetype.Move.PLUNGE) {
             // armed: the blade raised, a dive to the ground, the blow where it lands
             plunging = true;
             plungeSeq = s;
@@ -208,7 +195,16 @@ public final class ArmsPredict {
             p.setDeltaMovement(v.x * 0.6, Math.min(v.y, -1.1), v.z * 0.6);
             return;
         }
-        if (d == null) return;
+        if (off != null) {
+            if (off == Archetype.Move.RIPOSTE) deflectAt = -1000;
+            if (off == Archetype.Move.SLIPCUT) dodgeAt = -1000;
+            begin(p, st, off, -1, 0, s);
+            return;
+        }
+        if (d == null) {
+            played(".");
+            return;
+        }
         if (d.startAt() > ticks) {
             buffered = d;
             bufferedSeq = s;
@@ -216,6 +212,30 @@ public final class ArmsPredict {
             return;
         }
         begin(p, st, d.move(), d.step(), d.cadence(), s);
+    }
+
+    /** The move off the chain a press opens, if any: a riposte or Slipcut in its window, an Undercut out of a slide, a Plunge in a fall. */
+    private static Archetype.@Nullable Move offChain(LocalPlayer p, Archetypes.Loaded st, int steps) {
+        Archetype.MoveDef riposte = st.move(Archetype.Move.RIPOSTE);
+        if (riposte != null && ticks - deflectAt <= riposte.window()) return Archetype.Move.RIPOSTE;
+        Archetype.MoveDef slip = st.move(Archetype.Move.SLIPCUT);
+        if (slip != null && ticks - dodgeAt >= 1 && ticks - dodgeAt <= st.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(steps)) return Archetype.Move.SLIPCUT;
+        if (st.move(Archetype.Move.UNDERCUT) != null && Body.isSliding(p)) return Archetype.Move.UNDERCUT;
+        if (st.move(Archetype.Move.PLUNGE) != null && ArmsRules.plunges(p.onGround(), p.fallDistance, p.isInLiquid())) return Archetype.Move.PLUNGE;
+        return null;
+    }
+
+    /**
+     * What the hands played this session, for the log: strike numbers with the ticks since the last one, "." for a press
+     * that counted for nothing. A "sometimes" in the combo can only be read from real play (Euan 2026-11-09).
+     */
+    private static final StringBuilder PLAYED = new StringBuilder();
+    private static int playedAt;
+
+    private static void played(String what) {
+        if (PLAYED.length() > 12000) return;
+        PLAYED.append(what).append('+').append(ticks - playedAt).append(' ');
+        playedAt = ticks;
     }
 
     /** The creature a press means (SPEC §40.1): the lock, else what the crosshair is on, else the mark; the server checks it. */
@@ -288,6 +308,8 @@ public final class ArmsPredict {
         }
         waitHit = waits;
         ArmsFilm.event("begin " + m.key + " step " + st2 + " seq " + s + (waitHit ? " waits" : ""));
+        if (style != st) PLAYED.append('[').append(st.id()).append("] ");
+        played(m.strike() ? String.valueOf(m.ordinal() + 1) : m.key);
         style = st;
         move = m;
         step = st2;
@@ -583,6 +605,7 @@ public final class ArmsPredict {
                 waitShown = false;
                 if (buffered != null && bufferedSeq == seq) buffered = null; // nor will one queued mid-combo
                 charging = true;
+                played("charge");
                 ArmsFilm.event("charge");
                 chargeStart = ticks;
                 move = Archetype.Move.HEAVY;
@@ -894,16 +917,13 @@ public final class ArmsPredict {
         switch (r.what()) {
             case ArmsPayloads.MOVE -> {
                 Archetype.Move m = Archetype.Move.byId(r.aux());
-                ArmsFilm.event("server move " + (m == null ? "-" : m.key) + " seq " + r.seq() + " ours " + (move == null ? "-" : move.key)
-                        + (r.seq() == seq && m != null && m != move && style != null && !charging ? " SWITCHED" : ""));
-                if (r.seq() == seq && m != null && m != move && style != null && !charging) {
+                boolean differs = r.seq() == moveSeq && m != null && m != move && style != null && !charging;
+                ArmsFilm.event("server move " + (m == null ? "-" : m.key) + " seq " + r.seq() + " ours " + (move == null ? "-" : move.key) + (differs ? " SWITCHED" : ""));
+                if (differs) {
                     dev.awaken.Awaken.LOG.info("[arms] the server ran {} where the hands showed {} (seq {}, step {})", m.key, move == null ? "-" : move.key, r.seq(), step);
-                    // two chain strikes: the hands stay in the one they're in (swapping clips mid-swing is what read as
-                    // the combo breaking, Euan 2026-11-09) and the chain takes the server's place, so the next press agrees
-                    int at = move != null && move.strike() && m.strike() ? ArmsRules.stepOf(style, m) : -1;
-                    if (at >= 0) step = at;
-                    else move = m; // something else altogether (a riposte we didn't foresee): take its word, keep the clock
-                    cadence = r.aux2();
+                    // the chain is the hands' own: its reply never changes the strike they're in or the step they count from.
+                    // Only what the hands couldn't know takes over (an execution on a heavy's release)
+                    if (!m.strike() || move == null || !move.strike()) move = m;
                 }
                 if (r.seq() == seq) cadence = r.aux2();
             }
@@ -1122,6 +1142,10 @@ public final class ArmsPredict {
         if (LEDGER.predicted > 0) {
             com.mojang.logging.LogUtils.getLogger().info("[arms] blows played at once {}, confirmed by the server {}, shown without damage {}",
                     LEDGER.predicted, LEDGER.confirmed, LEDGER.unconfirmed);
+        }
+        if (PLAYED.length() > 0) {
+            com.mojang.logging.LogUtils.getLogger().info("[arms] strikes played: {}", PLAYED);
+            PLAYED.setLength(0);
         }
         LEDGER.clear();
         LEDGER.predicted = LEDGER.confirmed = LEDGER.unconfirmed = 0;

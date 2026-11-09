@@ -872,6 +872,28 @@ final class ArmsTests {
         h.assertTrue(ArmsRules.follow(a, restart, -1, 0, 12, 0) == restart, "no claim, the server's own");
         for (int i = 0; i < a.chain().size(); i++) h.assertTrue(ArmsRules.stepOf(a, a.chain().get(i)) == i, "strike " + i + " knows its place");
         h.assertTrue(ArmsRules.stepOf(a, Archetype.Move.HEAVY) == -1, "a heavy is no chain strike");
+        // the server plays what the hands play: never a strike they don't show, never one dropped that they do
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ArmsState s = ArmsServer.state(p);
+        long t0 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_1.ordinal()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && s.moveStart == t0 && s.buffered == null, "the hands' first strike starts");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, ArmsPayloads.CLAIM_NOTHING));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && s.moveStart == t0 && s.buffered == null, "a press the hands counted for nothing starts nothing");
+        int window = a.move(Archetype.Move.STRIKE_1).cadence().get(0);
+        h.assertTrue(window > a.def().buffer(), "this press must be too early for the server's own read");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(3, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_2.ordinal()));
+        h.assertTrue(s.buffered != null && s.buffered.move() == Archetype.Move.STRIKE_2 && s.buffered.startAt() == t0 + window,
+                "a strike the hands began isn't dropped, however early it looks here, and still waits for its window");
+        s.buffered = null;
+        s.clearMove();
+        s.deflectAt = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(4, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.STRIKE_1.ordinal()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1, "a riposte the hands didn't play isn't played");
+        s.clearMove();
+        s.deflectAt = Long.MIN_VALUE / 2;
+        ArmsServer.onPress(p, new ArmsPayloads.Press(5, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1, Archetype.Move.RIPOSTE.ordinal()));
+        h.assertTrue(s.move == null && s.buffered == null, "nor one the server can't grant, and no strike goes in its place");
         h.succeed();
     }
 
