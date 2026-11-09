@@ -1,0 +1,28 @@
+{
+ "values": [
+  "awaken:wildhide_pick_delver",
+  "awaken:wildhide_pick_breaker",
+  "awaken:wildhide_pick_mattock",
+  "awaken:wildhide_pick_sounder",
+  "awaken:beastbound_pick_delver",
+  "awaken:beastbound_pick_breaker",
+  "awaken:beastbound_pick_mattock",
+  "awaken:beastbound_pick_sounder",
+  "awaken:gatewrought_pick_delver",
+  "awaken:gatewrought_pick_breaker",
+  "awaken:gatewrought_pick_mattock",
+  "awaken:gatewrought_pick_sounder",
+  "awaken:veilwoven_pick_delver",
+  "awaken:veilwoven_pick_breaker",
+  "awaken:veilwoven_pick_mattock",
+  "awaken:veilwoven_pick_sounder",
+  "awaken:lordscale_pick_delver",
+  "awaken:lordscale_pick_breaker",
+  "awaken:lordscale_pick_mattock",
+  "awaken:lordscale_pick_sounder",
+  "awaken:sovereign_pick_delver",
+  "awaken:sovereign_pick_breaker",
+  "awaken:sovereign_pick_mattock",
+  "awaken:sovereign_pick_sounder"
+ ]
+}

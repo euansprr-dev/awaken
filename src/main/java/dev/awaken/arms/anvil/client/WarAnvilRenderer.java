@@ -51,7 +51,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         final AnvilScene.Lay slotLay = new AnvilScene.Lay();
         /** The work's corners and a blade's in the slot, reshaped as made (drawn out, twisted, its guard not yet on). */
         final AnvilBlank work = new AnvilBlank(), slotBlade = new AnvilBlank();
-        int forgeLight, slotFlash, slotEnergy, slotFlaw;
+        int forgeLight, slotFlash, slotEnergy, slotFlaw, slotRings;
         /** The catalyst being set in the guard (attuning), as vanilla draws the item. */
         final ItemStackRenderState gem = new ItemStackRenderState();
         final Quaternionf gemTurn = new Quaternionf();
@@ -61,7 +61,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
         /** The rack's weapons (§46.6): their designs (null for none), where each stands and its flaw and acts. */
         final @Nullable String[] rack = new String[WarAnvilBlockEntity.RACK];
         final AnvilScene.Lay[] rackLay = {new AnvilScene.Lay(), new AnvilScene.Lay(), new AnvilScene.Lay()};
-        final int[] rackFlaw = new int[WarAnvilBlockEntity.RACK];
+        final int[] rackFlaw = new int[WarAnvilBlockEntity.RACK], rackX = new int[WarAnvilBlockEntity.RACK], rackRings = new int[WarAnvilBlockEntity.RACK];
     }
 
     /** A soft column of starlight from high over the anvil down onto the work: a bright core in a wide fading sheath. */
@@ -156,6 +156,15 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             s.slotEnergy = Math.round(60 + 35 * Mth.sin(now * 0.09F));
             WeaponForged f = st.get(AnvilContent.FORGED.get());
             s.slotFlaw = f == null ? 0 : (f.flaw() & 3 | (f.acts() & 3) << 2) << 11; // its flaw and acts show as it stands there (SPEC §46.7, §46.9)
+            s.slotRings = 0;
+            if (dev.awaken.delve.forged.ForgedPicks.is(st)) {
+                // a pick shows what's been done to it, not the weapons' glow
+                var d = dev.awaken.delve.forged.ForgedPicks.data(st);
+                s.slotEnergy = Math.round(Mth.clamp(d.colour(), 0F, 1F) * 255);
+                s.slotFlash = st.getMaxDamage() <= 0 ? 0 : Math.min(255, st.getDamageValue() * 255 / st.getMaxDamage());
+                s.slotFlaw = Math.min(6, d.tally().hearts() / 10) << 11 | WeaponDraw.PICK;
+                s.slotRings = d.from();
+            }
         }
         var rack = be.rack();
         for (int k = 0; k < s.rack.length; k++) {
@@ -166,6 +175,14 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             AnvilScene.inRack(AnvilScene.frame(be.getBlockState(), FRAME), AnvilShape.of(s.rack[k]), k, s.rackLay[k]);
             WeaponForged f = r.get(AnvilContent.FORGED.get());
             s.rackFlaw[k] = f == null ? 0 : (f.flaw() & 3 | (f.acts() & 3) << 2) << 11;
+            s.rackX[k] = 0;
+            s.rackRings[k] = 0;
+            if (dev.awaken.delve.forged.ForgedPicks.is(r)) {
+                var d = dev.awaken.delve.forged.ForgedPicks.data(r);
+                s.rackX[k] = Math.round(Mth.clamp(d.colour(), 0F, 1F) * 255);
+                s.rackFlaw[k] = Math.min(6, d.tally().hearts() / 10) << 11 | WeaponDraw.PICK | (r.getMaxDamage() <= 0 ? 0 : Math.min(255, r.getDamageValue() * 255 / r.getMaxDamage()));
+                s.rackRings[k] = d.from();
+            }
         }
     }
 
@@ -178,7 +195,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
                 ps.pushPose();
                 ps.mulPose(p.work.frame(M));
                 int x = p.heat < 0 ? 0 : p.heat | p.glow, y = p.heat < 0 ? 0 : p.front | p.flags;
-                WeaponDraw.draw(out, ps, texture(AnvilShape.meshId(s.weapon)), x, y, s.work.set(mesh, p.work, p.inForge ? s.forgeLight : s.lightCoords, p.cut));
+                WeaponDraw.draw(out, ps, texture(AnvilShape.meshId(s.weapon)), x, y, s.work.set(mesh, p.work, p.inForge ? s.forgeLight : s.lightCoords, p.cut, p.rings));
                 ps.popPose();
             }
         }
@@ -213,7 +230,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
                     WeaponDraw.draw(out, ps, texture, s.slotEnergy, s.slotFlash | s.slotFlaw, s.slotBlade.set(mesh, s.slotLay, light, s.slotLay.shape.cut[0]));
                 } else {
                     ps.mulPose(s.slotLay.matrix(M));
-                    WeaponDraw.draw(out, ps, mesh, texture, light, s.slotEnergy, s.slotFlash | s.slotFlaw, 0F);
+                    WeaponDraw.draw(out, ps, mesh, texture, light, s.slotEnergy, s.slotFlash | s.slotFlaw, 0F, s.slotRings);
                 }
                 ps.popPose();
             }
@@ -226,7 +243,7 @@ public final class WarAnvilRenderer implements BlockEntityRenderer<WarAnvilBlock
             if (mesh == null) continue;
             ps.pushPose();
             ps.mulPose(s.rackLay[k].matrix(M));
-            WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.rack[k])), s.lightCoords, 0, s.rackFlaw[k], 0F);
+            WeaponDraw.draw(out, ps, mesh, texture(AnvilShape.meshId(s.rack[k])), s.lightCoords, s.rackX[k], s.rackFlaw[k], 0F, s.rackRings[k]);
             ps.popPose();
         }
     }

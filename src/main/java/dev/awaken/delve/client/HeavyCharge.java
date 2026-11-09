@@ -39,7 +39,7 @@ final class HeavyCharge {
     private static int demoTicks = -1;
 
     static boolean wants(LocalPlayer p) {
-        return p.isShiftKeyDown() && !p.isSpectator() && HeavyStrikes.isMiningTool(p.getMainHandItem());
+        return p.isShiftKeyDown() && !p.isSpectator() && HeavyStrikes.canStrike(p.getMainHandItem());
     }
 
     /** The attack key while sneaking with a pick: no vanilla mining, the charge instead (each tick it is asked again). */
@@ -47,6 +47,8 @@ final class HeavyCharge {
         if (!e.isAttack()) return;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
+        if (p != null && mc.gui.screen() == null && p.isShiftKeyDown() && HeavyStrikes.isMiningTool(p.getMainHandItem()) && !HeavyStrikes.canStrike(p.getMainHandItem()))
+            p.sendOverlayMessage(net.minecraft.network.chat.Component.literal("This pick's too blunt for a heavy strike. Dress it at a War Anvil.").withColor(0xE8C9A0));
         if (p == null || mc.gui.screen() != null || !wants(p)) return;
         if (!charging && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult) return;   // a sneaking swing at a creature stays a swing
         e.setCanceled(true);
@@ -76,7 +78,7 @@ final class HeavyCharge {
         charging = false;
         stopStrain(mc);
         if (held >= HeavyStrikes.MIN && wants(p)) {
-            boolean glint = Math.abs(held - HeavyStrikes.GLINT) <= 2;
+            boolean glint = Math.abs(held - HeavyStrikes.glintOf(mc.player.getMainHandItem())) <= 2;
             ClientPacketDistributor.sendToServer(new DelveNet.HeavyStrike(held, glint));
             p.swing(InteractionHand.MAIN_HAND, p.getMainHandItem().getAttackAnimation(), false);
             CombatFeedback.kick(0F, 2.4F, 0.8F, 8);
@@ -99,7 +101,7 @@ final class HeavyCharge {
             DelveParticles.spawn(level, DelveContent.GRIT.get(), 0x8A8378, 0.8F, head.x, head.y, head.z,
                     (r.nextDouble() - 0.5) * 0.02, -0.02, (r.nextDouble() - 0.5) * 0.02);
         }
-        if (t == HeavyStrikes.GLINT) {
+        if (t == HeavyStrikes.glintOf(p.getMainHandItem())) {
             level.playLocalSound(p.getX(), p.getEyeY(), p.getZ(), DelveContent.HEAVY_GLINT.get(), SoundSource.PLAYERS, 0.8F, 1.0F, false);
             for (int i = 0; i < 6; i++) {
                 DelveParticles.spawn(level, DelveContent.GLINT.get(), 0xFFE3A0, 0.35F, head.x + (r.nextDouble() - 0.5) * 0.12,

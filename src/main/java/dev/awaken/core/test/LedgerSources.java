@@ -28,7 +28,8 @@ final class LedgerSources {
         Sources.declare("a taken villager's keepsake, found on the trail (village.trouble.Keepsake)", "keepsake");
         Sources.declare("a gate's reward roll (PowerCoreHooks, powers.PowersModule)", "power_core");
         Sources.declare("a Gate Lord's trophy (hearth.trophy.Trophies)", "trophy");
-        Sources.declare("the Waking Pick's verse (delve.WakingPick)", "waking_pick");
+        Sources.declare("the Delver's Pick, for saves that already hold one; nothing makes one now (delve.WakingPick, SPEC §49.1)", "waking_pick");
+        Sources.declare("the pick in the stone, or the Hearth, gives it once (delve.WakingPick, SPEC §49.1)", "delver_old_head");
         Sources.declare("left behind by a dream (lucidium.dream.Dreams)", "dream_residue");
         Sources.declare("the Delvers' cave finds (delve.cave.CaveItems)", "delvers_log", "delvers_pick");
         Sources.declare("a stolen village bell won back (village.trouble.BellTrouble)", "village_bell");

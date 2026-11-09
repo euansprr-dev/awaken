@@ -183,7 +183,7 @@ public final class AnvilClient {
     /** The weapon held to the anvil: its window, in the Hall's own form unless the old screens are on. */
     private static void onHeld(AnvilPayloads.Held msg) {
         Minecraft mc = Minecraft.getInstance();
-        if (dev.awaken.hall.client.HallConfig.classic()) mc.gui.setScreen(new AnvilHeldScreen(msg));
+        if (dev.awaken.hall.client.HallConfig.classic() || !msg.rites()) mc.gui.setScreen(new AnvilHeldScreen(msg));
         else dev.awaken.hall.client.AnvilStage.show(msg);
     }
 
@@ -229,6 +229,16 @@ public final class AnvilClient {
     }
 
     /** A sound the smith's own client plays the moment they act (the server plays it to everyone else). */
+    /** A sound that can be stopped: what a held press starts and letting go ends (the colours, the pour). */
+    static net.minecraft.client.resources.sounds.SoundInstance held(Vec3 at, SoundEvent sound, float volume, float pitch) {
+        // looped: the game's fire is shorter than a long press, and letting go stops it either way
+        var it = new net.minecraft.client.resources.sounds.SimpleSoundInstance(sound.location(), SoundSource.BLOCKS, volume, pitch,
+                net.minecraft.client.resources.sounds.SoundInstance.createUnseededRandom(), true, 0,
+                net.minecraft.client.resources.sounds.SoundInstance.Attenuation.LINEAR, at.x, at.y, at.z, false);
+        Minecraft.getInstance().getSoundManager().play(it);
+        return it;
+    }
+
     static void play(Vec3 at, SoundEvent sound, float volume, float pitch) {
         var level = Minecraft.getInstance().level;
         if (level != null) level.playLocalSound(at.x, at.y, at.z, sound, SoundSource.BLOCKS, volume, pitch, false);

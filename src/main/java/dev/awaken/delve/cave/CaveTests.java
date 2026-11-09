@@ -83,19 +83,16 @@ final class CaveTests {
     }
 
     /**
-     * The trail "The Delver's Pick" (SPEC §34.4): one step per verse, in the verses' order, on the furthest-woken counter;
+     * The trail "The Delver's Pick" (SPEC §49.8): find the head, forge it (new or remade), then the pick's deeds and a raising;
      * its place "adit" answers once the search is done, and a home with no adit near (the flat test world) is handed the pick.
      */
     @SuppressWarnings("removal")
     private static void pickTrail(GameTestHelper h) {
         var trail = dev.awaken.trails.Trails.get("awaken:the_delvers_pick");
         h.assertTrue(trail != null && trail.linear(), "the trail ships, in order");
-        var verses = dev.awaken.delve.PickVerses.VERSES;
-        h.assertValueEqual(trail.steps().size(), verses.length, "a step to find the pick and one per verse");
+        h.assertValueEqual(trail.steps().size(), 8, "the head, the forging, the deeds and a raising");
         h.assertValueEqual(trail.steps().getFirst().done(), List.of("counter:" + dev.awaken.delve.WakingPick.PULLED), "the first step is the pull");
-        for (int i = 1; i < verses.length; i++) {
-            h.assertValueEqual(trail.steps().get(i).done(), List.of("count:" + dev.awaken.delve.PickVerses.WOKEN + ":" + i), "step " + i + " waits for " + verses[i].title);
-        }
+        h.assertValueEqual(trail.steps().get(1).done(), List.of("counter:awaken:pick_forged|counter:awaken:pick_remade"), "the second is the forging, a new pick or an old one remade");
         h.assertTrue(dev.awaken.core.api.TrailsApi.hasPlace(PickTrail.PLACE), "the place 'adit' is known");
         ServerLevel level = h.getLevel();
         BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
@@ -109,11 +106,11 @@ final class CaveTests {
                 @Override public java.util.Optional<BlockPos> hearthOf(ServerLevel l, java.util.UUID player) { return java.util.Optional.of(at); }
             });
             long until = System.currentTimeMillis() + 20_000;
-            while (!dev.awaken.delve.WakingPick.carries(p) && System.currentTimeMillis() < until) {
+            while (!(p.getInventory().countItem(dev.awaken.delve.forged.DelveForged.OLD_HEAD.get()) > 0) && System.currentTimeMillis() < until) {
                 h.assertTrue(dev.awaken.core.api.TrailsApi.placeOf(PickTrail.PLACE, p) == null, "no adit to point at");
                 Thread.onSpinWait();
             }
-            h.assertTrue(dev.awaken.delve.WakingPick.carries(p), "no adit near home: the Hearth hands the pick over");
+            h.assertTrue((p.getInventory().countItem(dev.awaken.delve.forged.DelveForged.OLD_HEAD.get()) > 0), "no adit near home: the Hearth hands the head over");
             h.assertTrue(dev.awaken.trails.Conditions.met(p, trail.steps().getFirst().done().getFirst()), "and the first step is done");
         } finally {
             dev.awaken.core.api.HearthHooks.install(before);

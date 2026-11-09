@@ -235,7 +235,7 @@ final class StrikeFx {
         Minecraft mc = Minecraft.getInstance();
         if (!DelveClientConfig.trueStrikes() || mc.player == null || mc.level == null) return null;
         if (!(mc.hitResult instanceof BlockHitResult bh) || bh.getType() != HitResult.Type.BLOCK) return null;
-        if (!HeavyStrikes.isMiningTool(mc.player.getMainHandItem())) return null;
+        if (!HeavyStrikes.canStrike(mc.player.getMainHandItem())) return null;
         BlockState s = mc.level.getBlockState(bh.getBlockPos());
         Ore ore = Ore.of(s);
         if (ore == null) return null;

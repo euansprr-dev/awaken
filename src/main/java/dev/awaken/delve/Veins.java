@@ -172,6 +172,7 @@ public final class Veins {
         if (Progression.profile(p).awakened()) Progression.grantLevels(p, lump, Progression.XpSource.HOME);
         Progression.count(p, "awaken:lodes_opened");
         PickVerses.deed(p, PickVerses.Verse.KINDLE);
+        dev.awaken.delve.forged.ForgedRules.heart(p);
         Progression.markNewThing(p, "lode/" + l.ore().id());
         String line = "LODE · " + l.ore().word() + " · " + count;
         boolean first = Progression.profile(p).counter("awaken:lodes_opened") <= 1;

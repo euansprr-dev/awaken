@@ -20108,3 +20108,81 @@ Drawn as world light (`RigPipelines.light()`), no particles. Sounds are Minecraf
 **Tests.** `bond_` prefix, one per mechanism: `bond_needs_both`, `bond_door`, `bond_not_mid_fight`, `bond_one_rider_per_run`,
 `bond_hits_forty`, `bond_fold_catches`, `bond_anchor_dies`, `bond_no_scaling`, `bond_no_aggro`, `bond_no_rank`, `bond_range`,
 `bond_left_on_logout`, `bond_goals_step`.
+## 49. The Forged Pick (plan docs/forged-pick/PLAN.md, page https://claude.ai/artifact/Smj9nEuNHbq6MZ4y2X1CaB; Euan approved all of it 2026-11-09)
+
+Picks are forged at the War Anvil, as weapons are. Four forms, six ranks, 24 items named `<prefix>_pick_<form>`; package
+`dev.awaken.delve.forged`, and `delve.api.Pick` answers for old and forged picks alike.
+
+### 49.1 The first pick
+The stone at the end of an adit gives the Delver's Old Head, once a player, ever (`WakingPick.PULLED`; anyone who already pulled the
+finished pick has what it would make). Where no adit is near, the Hearth hands it over. The head, a log and string hang the E Delver at
+the War Anvil. Nothing makes the old `waking_pick` now, but saves that hold one keep it: it mines as before and its verses wake as before
+until its owner brings it to an anvil (§49.7). A lost head never strands anyone: the E Delver can also be forged from the rank's parts.
+
+### 49.2 Forms
+| Form | Rock speed | Earth, wood | Uses | Damage | Way | Opens |
+|---|---|---|---|---|---|---|
+| Delver | 100% | none | 100% | +0 | hums toward a lode within 16 | at the start |
+| Breaker | 85% | none | 130% | +0 | heavy strike glints at 14 ticks, one less extra wear | break a lode's heart (`deed_heart`) |
+| Mattock | 90% | 120% | 110% | +0 | pick, axe and shovel rules; strips and flattens, sneak to till; turns in the hand (§49.8) | at the start |
+| Sounder | 90% | none | 80% | -1 | seam 0.40 wide, bonus ore 40%, hums within 24, taps 50% further | light a Delver's lamp (`deed_lamp`) |
+
+Form and rank are the item; `PickForged` (component `awaken:pick_forged`, schema 1) holds what the smith did and what the pick has been
+through: quality, temper, colour, smith, maker, day, tally (blocks, ores, hearts, keen), gifts, the rank it was first forged at, story bits, and
+enchantment room.
+
+### 49.3 Numbers (`PickStats`)
+Rank speed 5, 7, 9, 10, 11, 12.5. Uses 300, 650, 1800, 2200, 2700, 3400. Damage 2, 3, 4, 4.5, 5, 6. Each item's Tool rules are fixed by rank and
+form, so `/give` and creative stacks are whole; quality, colour, keen and blunt go through a `BreakSpeed` factor that runs on both sides, and only
+MAX_DAMAGE is per stack (a Tool rule per stack was the first plan, and a data change every Dressing would have restarted block breaking on the
+client). Temper, the steps of quality the Forge could hold, adds 0/4/8/12% to speed and uses. Colour c runs 0 (straw, +8% speed, -20% uses) to
+0.75 (blue, -6%, +30%), peacock 0.5 even. A pick never breaks: at its last use it goes blunt (30% speed, and no heavy strike, whose wear it could no longer pay) until dressed. Forged picks are kept through
+death, and A and S are fire resistant. Efficiency is out, since rank and forging are its speed. A forged pick has no repair material: Dressing is the
+way (one metal, mends a quarter, keen for 200 blocks at +10%). Its enchantment room is quality + 1, or the old pick's room if larger.
+
+### 49.4 At the anvil (`arms.anvil.PickAnvil`)
+A pick is an `AnvilWork` with `pick` set (schema 6) and style `pick_<form>`; the server judges it as it judges a sword, and it uses no pattern, no grindstone and no quench.
+Stages by rank, first time at that rank: **E** knap, bind, hang. **D** heat, cut the eye, draw the points, run the colours, hang. **C** adds steel the tips. **B** adds thread the spine.
+**A** adds pour the seam, on a Lord's anvil. **S** adds the starlight, after the colours. A raise above D does the heat, the drawing, and only the new rank's own act, then colours and hang. From memory (after a Masterwork at that rank and form) it's the heat, the drawing and the colours, Fine at best. Knap and bind are the hand ranks' work, the Forge is never asked at E, and metal always is.
+Songs: Delver `x.x.x...` a miner's steady three, Breaker `x.....x.x.......` a long lift and a double, Mattock `x..x..x.....` a triple swung, Sounder `x.x.x...x.x.x...` light and even. Marks are on the arms, never on the eye. Run the Colours is a hold: oxide creeps from the eye toward the points at 0.05 a tick and the lift sets the colour; held past blue it goes grey and is still sound, so the colour can't fail. Quality, the 0.6 timing + 0.4 aim of §39, adds the acts as the weapon's score does; burnt caps at Masterwork.
+**Options on a pick you hold:** Raise (next rank's parts less one metal); Re-draw to another form (half cost, full scene at its rank); Work in (a deed done since: free, three taps); Dress (one metal, a quarter of its wear off, keen for 200 blocks). Raise and Re-draw keep the tally, gifts, enchantments, curses, name, lore and repair cost, take the better quality and temper, and the new colour unless none was run. Wear clears on a raise or re-draw. Dressing and working in stay in the hand: back in the hand, else the pack, else at your feet, no draw from the stone.
+**Backing out:** the Heat, or a first Knap or Tend blow not yet struck: everything comes back, the pick first so the parts can't take its hand. After the first blow the work waits like any other.
+**Make it again:** your best rank (`ForgedPicks.BEST_TIER`) at half cost, offered only when you carry no forged pick.
+With the Hall of Arms the default, a pick's offers still open the cards window (`AnvilPayloads.Held.rites()` is false for them, and the Hall's anvil stage is only a weapon's three rites), and a pickaxe in hand at the anvil's door opens the Armoury with its Picks side, which the Hall doesn't have yet.
+The rebuild gates stay: C on an Ironbound anvil, A on a Lord's anvil. Picks never touch the Weapons tab's best or forged lists: `SmithMemory` only remembers them for the from-memory road.
+
+### 49.5 Gifts and Sounding
+`Pick.Gift` in the order the old pick woke them: Hum, Kindle, Sounding, Wide Seam, Long Sounding, Hush, Call. Forged picks hold them as bits, and the
+player's deed opens the gift: heart Kindle (D+), lamp Sounding (C+), Deepglass Long Sounding (B+), seep Hush (A+). Wide Seam comes with C and Call with
+S. Forged picks take deeds done before they existed; a gift earned later is worked in free at any anvil in 5 s.
+Sounding replaces Echo and Glass for old picks too (nothing is drawn through the rock any more): stand still, sneak and tap. 26 rays walk out to 12 (24
+with Long Sounding, x1.5 on a Sounder) and report the first roomy hollow; the client plays the answers from those sides, nearest first, shakes dust off
+that part of the wall, and a lode within reach answers last at its ore's note. 20 s rest.
+
+### 49.6 The tally and the name
+A pick counts blocks and ores, and hearts of a lode, flushed every 20 breaks, on logging out, on dying and on changing slot, so a crash loses at most 19. Lines read on the item: who made it, on what day, in what colour, how much it has dug, and which rank it began at. Three bits are story: `TWIN` struck with a friend, `MEMORY` made from memory, `ARMOURY` the Master of the Armoury's bonus; `OLD` was remade from the old pick.
+
+### 49.7 Old picks and old mattocks
+An update never changes a pick by itself. Holding the old `waking_pick` at any anvil, built or not, with no Forge, offers one free row: five taps and it's a Delver at the verse's rank (verse 0 E, 1-2 D, 3-4 C, 5 B, 6 A), holding every gift it had, its enchantments and its room, at the same share of its wear, marked `OLD`, with no maker claimed. It comes straight back to the hand. Old `<prefix>_mattock` items convert the same way, free, to the Mattock of their rank. Both old items stay registered for good; nothing makes new ones (recipes retired, §49.9).
+
+### 49.8 In the hand
+The picks draw as meshes (`arms.client.PickRenderer`, `awaken:pick` special model, `AWMS` with a group byte per triangle): the handle takes the rank's rings only for ranks the pick has passed; the head shows its Temper colour at its working end (the oxide it was stopped at), its wear, and a notch per ten lode hearts, up to six. Any pick is one haft and one head, so it reads from across a cave by its shape.
+
+**The dig** (`delve.client.DigMotion`, `PickHands`): a two-handed overhead blow timed to the bite clock. The off hand grips the haft while it's empty and stays where it is when not. It pulls back further for a big bite and less for a quick one, and it stops at the wall rather than passing through it. Third person uses an arm-pose transformer (`AWAKEN_PICK_DIG`), so other players see it too.
+
+**The Mattock turns in the hand** (`arms.client.PickTurn`), Euan 2026-11-09: look from rock to earth or wood and the holder tosses it a little way up the haft, spins it a half turn about the haft and catches it with the adze leading; look back at rock and it goes round again. 7 ticks a turn (3 with reduced motion), after a steady look of 2 ticks, at most one turn every 2 ticks. Purely what's seen and heard: the server isn't told, the dig is never slowed, and the block breaks at the same pace whichever end leads. It's worked out for anyone holding one within 32 blocks, from where they're looking, one ray a tick. A freshly drawn Mattock takes its side at once with no flourish. Which end leads is the item's own (`plus_leads` in the JSON per display context), since the two hands and third person mirror differently.
+
+### 49.9 Round the game
+- **Retired**: the six `<prefix>_mattock` recipes and the level road's grants of them; the Now suggestion for a mattock; the through-the-rock pipeline. The items stay, named "Old Wildhide Mattock" and so on, with a tooltip line that any War Anvil remakes them free. The ledger declares them, and the old `waking_pick`, as no longer made.
+- **Tasks** (`arms.anvil.PickGoals`, on the Weapons tab): find the old head; forge your first pick; and, off the main path and only while it applies, bring an old pick, raise yours to your rank, work in a deed, dress a blunt edge.
+- **Trail** `the_delvers_pick`: pull the head, forge it, then the four deeds, a Sounding and a raise. Steps read counters (`awaken:delve/deed_*`, `awaken:pick_forged`, `awaken:pick_remade`, `awaken:delve/soundings`), so a deed done before the trail opened is ticked at once.
+- **Armoury**: at an anvil's door there's a Weapons and a Picks side. Holding a forged pick opens on Picks, on the next rank up from the best you carry (within your level). A pick has no pattern to buy or Track, and no blade to make alone. The anvil's window for a pick in hand scrolls when its offers don't fit.
+- **Kept through death**: on the player (`awaken:kept_picks`, schema 1, copied on death) so a restart while they're on the death screen loses nothing. Only ever the old pick, a forged pick, or the head.
+
+### 49.10 What you hear
+Every forged-pick sound is one of Minecraft's own recordings, named in `merge/delve_picks` (`"minecraft:item/hoe/till1"`), so the game plays them from its own files and none of Mojang's audio is in the mod. The first set, built from CC0 impacts and matched to vanilla's loudness and brightness, sounded synthetic to Euan (9 Nov): numbers can't tell you a sound belongs. Each entry's `volume` levels it against the block's own hit, and its `pitch` sets it apart; a form never gets a sound vanilla doesn't have.
+
+- Each form bites with its own recording under the block's sound (`pick.strike_<form>`, played at 0.6, 0.9 on the last blow, varied 10% so thousands of blows don't tire the ear). An ore already has its own strike (`DelveContent.STRIKE`) and a true strike its note, so the bite isn't pitched to the ore.
+- A Mattock in soil is a hoe going into dirt (`pick.strike_earth`), in timber an axe on a log (`pick.strike_wood`); a blunt pick knocks dully (`pick.strike_blunt`).
+- The turn: `pick.mattock_toss`, `pick.mattock_catch`. Sounding: `pick.sounding_tap` (server, heard by anyone near) and `pick.sounding_hollow` (client, from the hollow's side).
+- At the anvil: `anvil.eye`, `anvil.tip`, `anvil.hang`, `anvil.tend`, `anvil.thread`, `anvil.pour`, `anvil.colours`. A held press's sound (`pour`, `colours`) loops and stops when you let go or leave.

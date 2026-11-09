@@ -129,7 +129,7 @@ final class GearTests {
         for (HunterTier tier : HunterTier.values()) {
             for (Piece piece : Piece.values()) {
                 Item item = GearItems.get(tier, piece);
-                if (piece.isArmour() || piece == Piece.BLADE) { // forged at a Fitting Stand or a War Anvil (SPEC §44.4, §46.7), never crafted
+                if (piece.isArmour() || piece == Piece.BLADE || piece == Piece.MATTOCK) { // forged at a Fitting Stand or a War Anvil (SPEC §44.4, §46.7, §49.9), never crafted
                     h.assertTrue(recipe(level, item).isEmpty(), tier.itemId(piece) + " has no crafting recipe");
                     continue;
                 }
@@ -171,7 +171,7 @@ final class GearTests {
         ServerLevel level = h.getLevel();
         int hide = 0, shards = 0;
         for (Piece piece : Piece.values()) {
-            if (piece.isArmour() || piece == Piece.BLADE) continue; // the armour's cost is the Forge's (ArmourTests), the blade's the War Anvil's
+            if (piece.isArmour() || piece == Piece.BLADE || piece == Piece.MATTOCK) continue; // the armour's cost is the Forge's (ArmourTests), the blade's and a pick's the War Anvil's
             Item item = GearItems.get(HunterTier.E, piece);
             ShapedRecipe r = recipe(level, item).orElseThrow();
             for (var family : FAMILY_DROPS.entrySet()) {
@@ -224,14 +224,14 @@ final class GearTests {
             h.assertTrue(step.def().level() == want.get(tier), id + " at level " + want.get(tier) + ", got " + step.def().level());
             List<String> ids = step.def().grants().stream().flatMap(g -> g.ids().stream()).toList();
             for (Piece piece : Piece.values()) {
-                if (piece.isArmour() || piece == Piece.BLADE) h.assertTrue(!ids.contains("awaken:" + tier.itemId(piece)), id + " grants no armour or blade recipe (they're forged)");
+                if (piece.isArmour() || piece == Piece.BLADE || piece == Piece.MATTOCK) h.assertTrue(!ids.contains("awaken:" + tier.itemId(piece)), id + " grants no armour, blade or mattock recipe (they're forged)");
                 else h.assertTrue(ids.contains("awaken:" + tier.itemId(piece)), id + " grants " + tier.itemId(piece));
             }
         }
         Profile p = Progression.profile(sp);
         while (p.level() < 13) Progression.grantXp(sp, Curve.xpToNext(p.level()) + 1, Progression.XpSource.COMMAND);
         for (Piece piece : Piece.values()) {
-            if (piece.isArmour() || piece == Piece.BLADE) continue;
+            if (piece.isArmour() || piece == Piece.BLADE || piece == Piece.MATTOCK) continue;
             h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.E, piece)), "level 3 put E " + piece.id + " in the book");
             h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.D, piece)), "level 13 put D " + piece.id + " in the book");
             h.assertTrue(!sp.getRecipeBook().contains(key(HunterTier.C, piece)), "C waits for level 22");

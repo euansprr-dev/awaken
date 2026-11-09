@@ -26,6 +26,7 @@ public final class DelveModule {
 
     public static void init(IEventBus modBus) {
         DelveContent.register(modBus);
+        dev.awaken.delve.forged.DelveForged.init(modBus);
         modBus.addListener(DelveNet::register);
         var bus = NeoForge.EVENT_BUS;
         // after every protection has had its say (they cancel at HIGH): a heart that really broke opens its lode
@@ -47,6 +48,7 @@ public final class DelveModule {
         bus.addListener((ServerTickEvent.Post e) -> WakingPick.tick(e.getServer()));
         bus.addListener(EventPriority.LOW, false, (net.neoforged.neoforge.event.entity.living.LivingDropsEvent e) -> WakingPick.onDrops(e));
         bus.addListener((PlayerEvent.PlayerRespawnEvent e) -> WakingPick.onRespawn(e));
+        dev.awaken.delve.forged.ForgedRules.init(bus);
         // its verses' deeds and gifts (SPEC §34.4)
         bus.addListener(EventPriority.LOW, false, (BreakBlockEvent e) -> {
             if (e.getPlayer() instanceof ServerPlayer p && e.getState().is(DelveContent.DEEPGLASS.get())) PickVerses.deed(p, PickVerses.Verse.GLASS);

@@ -33,12 +33,20 @@ public final class WeaponDraw {
      * and its front), only from {@code from} along it on (0 all of it).
      */
     public static void draw(SubmitNodeCollector out, PoseStack ps, WeaponMesh mesh, Identifier texture, int light, int x, int y, float from) {
+        draw(out, ps, mesh, texture, light, x, y, from, 0);
+    }
+
+    /** As above, and a pick's rank rings only past group {@code rings} (SPEC §49). */
+    public static void draw(SubmitNodeCollector out, PoseStack ps, WeaponMesh mesh, Identifier texture, int light, int x, int y, float from, int rings) {
         boolean ours = WeaponPipelines.ok();
         int packed = ours ? x | y << 16 : OverlayTexture.NO_OVERLAY;
         int cut = Math.round(Math.max(0F, from) * 255);
         out.submitCustomGeometry(ps, ours ? WeaponPipelines.weapon(texture) : WeaponPipelines.fallback(texture),
-                (pose, buffer) -> WeaponRenderer.emit(mesh, pose, buffer, light, packed, ours, cut));
+                (pose, buffer) -> WeaponRenderer.emit(mesh, pose, buffer, light, packed, ours, cut, rings));
     }
+
+    /** UV1's y for a forged pick at rest (x its colour): its wear and notches, in the shader's pick mode (§49). */
+    public static final int PICK = 1 << 15;
 
     /**
      * A mesh whose corners its caller writes itself (the anvil reshapes its work as it's made, SPEC §46.3): {@code overlay}

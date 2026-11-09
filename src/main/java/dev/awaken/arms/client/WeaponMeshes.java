@@ -3,6 +3,9 @@ package dev.awaken.arms.client;
 import dev.awaken.Awaken;
 import dev.awaken.arms.ArmsData;
 import dev.awaken.arms.WeaponMesh;
+import dev.awaken.delve.forged.ForgedPicks;
+import dev.awaken.delve.forged.PickForm;
+import dev.awaken.delve.forged.PickStats;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jspecify.annotations.Nullable;
@@ -25,6 +28,10 @@ final class WeaponMeshes {
     static void reload(ResourceManager manager) {
         MESHES.clear();
         for (ArmsData.Weapon w : ArmsData.WEAPONS) load(manager, w.id(), Awaken.id("arms/weapons/" + w.id() + ".mesh"));
+        for (PickForm f : PickForm.values()) for (int t = 0; t < PickStats.TIERS; t++) { // the forged picks (SPEC §49)
+            String id = ForgedPicks.id(f, t);
+            load(manager, id, Awaken.id("arms/weapons/" + id + ".mesh"));
+        }
         // the War Anvil's hammer and tongs (SPEC §46.3)
         for (String tool : TOOLS) load(manager, "anvil/" + tool, Awaken.id("arms/anvil/" + tool + ".mesh"));
         WeaponPipelines.recheck();

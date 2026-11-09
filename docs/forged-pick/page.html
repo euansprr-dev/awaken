@@ -1,0 +1,602 @@
+<title>The Forged Pick</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* One reading column, the armour and War Anvil pages' forge palette so the plans read as one game. The accent here is
+   the steel's own oxide colours, straw to blue, on the section rules. */
+:root {
+  --bg: #13120f; --panel: #1d1b17; --line: #38332b; --fg: #ece4d4; --muted: #a99f8c;
+  --ember: #ff7a2e; --heat: #ffc35a; --brass: #d8b46a; --steel: #8f9aa6;
+  --straw: #e6c079; --bronze: #a8683a; --peacock: #80417a; --blue: #4a62b8;
+  --dark-card: #111016; --yes: #6fcf8e; --no: #ef6b5b;
+  --display: "Alegreya SC", "Iowan Old Style", Georgia, serif;
+  --body: "Alegreya Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f3efe6; --panel: #e9e2d4; --line: #cfc4ae; --fg: #1d1a15; --muted: #625a4b;
+  --ember: #c4501a; --heat: #b57400; --brass: #8a6a24; --steel: #4f5a66;
+  --straw: #b98a2e; --bronze: #8d5226; --peacock: #76386f; --blue: #3a4f9e; --yes: #2f8a50; --no: #b23a2c; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #f3efe6; --panel: #e9e2d4; --line: #cfc4ae; --fg: #1d1a15; --muted: #625a4b;
+  --ember: #c4501a; --heat: #b57400; --brass: #8a6a24; --steel: #4f5a66;
+  --straw: #b98a2e; --bronze: #8d5226; --peacock: #76386f; --blue: #3a4f9e; --yes: #2f8a50; --no: #b23a2c; color-scheme: light }
+body { background: var(--bg); color: var(--fg); font: 17px/1.55 var(--body); margin: 0; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 28px 60px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(36px, 7vw, 64px); letter-spacing: .01em; }
+h2 { font-size: 28px; margin-top: 56px; padding-top: 18px; position: relative; }
+h2::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--straw), var(--bronze) 34%, var(--peacock) 58%, var(--blue)); }
+h3 { font-size: 20px; margin-top: 28px; }
+p { margin: 10px 0 0; }
+a { color: var(--brass); }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--brass); }
+.lede { font-size: 21px; margin-top: 14px; }
+.muted { color: var(--muted); }
+code { font: 14px var(--mono); color: var(--brass); overflow-wrap: anywhere; }
+.quote { border-left: 3px solid var(--ember); padding: 4px 0 4px 16px; margin-top: 16px; font-style: italic; color: var(--muted); }
+ul.plain { margin: 10px 0 0; padding-left: 20px; }
+ul.plain li + li { margin-top: 6px; }
+.tablewrap { overflow-x: auto; margin-top: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td.n, th.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+td b { color: var(--fg); }
+figure { margin: 18px 0 0; }
+figure img { display: block; width: 100%; height: auto; border-radius: 6px; background: var(--dark-card); }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.tag { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.tag.seen { color: var(--yes); border-color: var(--yes); }
+.tag.mock { color: var(--heat); border-color: var(--heat); }
+
+/* Under the hero strip, one label per rank, lined up with the six picks in the image. */
+.rankline { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: 6px; text-align: center; }
+.rankline div { font: 700 15px var(--display); }
+.rankline span { display: block; font: 12px var(--mono); color: var(--muted); }
+.formline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 6px; text-align: center; font: 700 16px var(--display); }
+
+.pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.pillar { padding: 14px 16px; background: var(--panel); border-radius: 6px; }
+.pillar h3 { margin: 0; color: var(--heat); }
+.pillar p { font-size: 15.5px; }
+
+.moments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.moments figure { margin: 0; }
+.moments b { display: block; color: var(--fg); font-family: var(--display); font-size: 17px; }
+
+/* The door, drawn after the real anvil screen. */
+.door { margin-top: 16px; border: 1px solid #5a86b8; background: #101826; color: #e8e4d8; border-radius: 3px; padding: 14px 16px; font: 14px/1.5 var(--mono); }
+.door .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; border-bottom: 1px solid #2c3f58; padding-bottom: 8px; }
+.door .tabs { display: flex; gap: 6px; margin-top: 10px; }
+.door .tabs span { padding: 2px 12px; border: 1px solid #2c3f58; color: #9aa6b4; }
+.door .tabs span.on { color: #ffd98a; border-color: #ffd98a; }
+.door .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 18px; margin-top: 10px; }
+.door .forms div { padding: 2px 6px; color: #d8d4c8; display: flex; justify-content: space-between; gap: 8px; }
+.door .forms div.on { background: #1c2c44; color: #fff; }
+.door .forms small { color: #8d97a4; font: inherit; }
+.door .ranks { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+.door .ranks div { border: 1px solid #2c3f58; text-align: center; padding: 2px 0; color: #8fd0a0; font-size: 12px; }
+.door .ranks div.on { border-color: #ffd98a; color: #ffd98a; }
+.door .ranks div.off { color: #5d6b7c; }
+.door .cost { margin-top: 8px; color: #c8c2b0; }
+.door .btns { display: flex; gap: 8px; margin-top: 10px; }
+.door .btns span { border: 1px solid #8fb6e0; padding: 3px 12px; color: #fff; }
+
+/* Rhythm lane. */
+.styles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.styles button, .play { font: 500 14px var(--mono); padding: 8px 14px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.styles button[aria-pressed="true"] { border-color: var(--ember); color: var(--ember); }
+.play { border-color: var(--ember); color: var(--ember); }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.lane { display: grid; gap: 4px; margin-top: 14px; }
+.cell { height: 34px; border-radius: 3px; background: var(--panel); border: 1px solid var(--line); position: relative; }
+.cell.hit { background: color-mix(in srgb, var(--ember) 30%, var(--panel)); border-color: var(--ember); }
+.cell.hit::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--ember); }
+.cell.big::after { inset: 4px; }
+.cell.now { outline: 2px solid var(--heat); outline-offset: 1px; }
+.cell.hit.now { background: var(--heat); }
+.laneinfo { margin-top: 10px; color: var(--muted); font-size: 15px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+
+/* The colour run. */
+.run { margin-top: 16px; padding: 14px; background: var(--dark-card); border-radius: 6px; color: #ece4d4; }
+.run canvas { display: block; width: 100%; height: auto; }
+.run .ctl { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 10px; }
+.hold { font: 500 15px var(--mono); padding: 12px 22px; border-radius: 4px; border: 1px solid #ffc35a; background: #2a1f0e; color: #ffd98a; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hold.down { background: #ffc35a; color: #1a1408; }
+.readout { font-size: 16px; min-width: 0; flex: 1 1 260px; }
+.readout b { color: #ffd98a; }
+.scale { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 10px; background: linear-gradient(90deg, #f7ecbe, #e2ba68 16%, #a86834 34%, #803e76 52%, #384cb0 74%, #8894a8); }
+
+.flow { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 10px; font-size: 15px; }
+.flow span { padding: 4px 10px; background: var(--panel); border-radius: 4px; }
+.flow i { font-style: normal; color: var(--muted); }
+.flow span.key { outline: 1px solid var(--ember); }
+.flow span.bad { outline: 1px solid var(--no); }
+
+.phases { display: grid; gap: 10px; margin-top: 14px; }
+.phase { display: grid; grid-template-columns: 54px 1fr auto; gap: 14px; padding: 12px 14px; background: var(--panel); border-radius: 6px; }
+.phase.first { outline: 1px solid var(--ember); }
+.phase .p { font: 500 15px var(--mono); color: var(--ember); }
+.phase h3 { margin: 0; font-size: 18px; }
+.phase p { font-size: 15px; margin-top: 4px; }
+.phase .h { font: 13px var(--mono); color: var(--muted); white-space: nowrap; }
+
+.decisions { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 12px; counter-reset: d; }
+.dec { border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; background: var(--panel); counter-increment: d; }
+.dec.yes { border-color: var(--yes); }
+.dec.no { border-color: var(--no); }
+.dec .q { font-weight: 700; }
+.dec .q::before { content: counter(d) ". "; color: var(--ember); font-family: var(--mono); font-weight: 500; }
+.dec .why { color: var(--muted); font-size: 15px; margin-top: 4px; }
+.dec .rec { font: 500 12px var(--mono); color: var(--brass); letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+.ans { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.ans button { font: 500 14px var(--body); padding: 7px 18px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; min-width: 64px; }
+.ans button.y[aria-pressed="true"] { background: var(--yes); border-color: var(--yes); color: #10140f; }
+.ans button.n[aria-pressed="true"] { background: var(--no); border-color: var(--no); color: #170d0b; }
+.ans button:disabled { opacity: .5; cursor: default; }
+.ans .state { font: 12px var(--mono); color: var(--muted); }
+.dec textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 8px; min-height: 40px; resize: vertical; font: 15px var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
+.tally { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; margin-top: 16px; padding: 10px 14px; border-radius: 6px; background: var(--panel); border: 1px solid var(--line); font: 14px var(--mono); display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.tally button { font: 500 13px var(--body); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--yes); color: var(--yes); background: transparent; cursor: pointer; }
+.foot { margin-top: 48px; font-size: 14px; color: var(--muted); display: grid; gap: 6px; }
+.sources { font-size: 14px; margin-top: 10px; padding-left: 20px; color: var(--muted); }
+.sources li + li { margin-top: 4px; }
+@media (max-width: 720px) { .pillars, .moments { grid-template-columns: 1fr; } .door .grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .phase { grid-template-columns: 1fr; gap: 4px; } body { font-size: 16px; } .rankline span { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="col">
+    <div class="eyebrow">Awaken · pick plan · waiting for your yes</div>
+    <h1>The Forged Pick</h1>
+    <p class="lede">You stop being handed a pick. You make one at the War Anvil, raise that same pick through six ranks, and in the end it shows everything it has been through.</p>
+    <p class="muted">Nothing here is built. Below are real 3D models made with the weapon kit, the game's own weapon lighting, and mockups on real anvil shots. Your answers are at the bottom.</p>
+  </div>
+
+  <figure>
+    <img src="shots/line_delver.png" width="2400" height="640" alt="Six pickaxes side by side, rising in rank from a flint and bone pick on the left to an ivory and gold pick on the right. Each has a lit slit at the eye and more metal rings on the haft than the last.">
+    <div class="rankline">
+      <div>E<span>flint and bone</span></div><div>D<span>iron and ash</span></div><div>C<span>diamond tips</span></div><div>B<span>Deepglass spine</span></div><div>A<span>netherite, ember</span></div><div>S<span>starmetal</span></div>
+    </div>
+    <figcaption>One pick, six ranks. Each reforge leaves a ring of the last rank's metal on the haft. <span class="tag mock">Concept model</span></figcaption>
+  </figure>
+
+  <div class="pillars">
+    <div class="pillar"><h3>You make it</h3><p>Every pick is forged at the anvil with your hands, from your first flint one to the last. The stone gives you an old head, and you hang it yourself.</p></div>
+    <div class="pillar"><h3>You keep it</h3><p>You raise the same pick up the ranks. It keeps its name and its history, comes through death with you and never snaps.</p></div>
+    <div class="pillar"><h3>It shows</h3><p>A real model in your hands, a real two-handed swing, its own ring in the rock, and wear from everywhere you've taken it.</p></div>
+  </div>
+
+  <h2>1. What you asked for</h2>
+  <p class="quote col">"I don't like the current pickaxe progression with that only that picks the pick that it gives you. I think I would much rather like some kind of forging progression for pickaxes as well, similar to how you forge weapons."</p>
+  <div class="tablewrap"><table>
+    <tr><th>Great</th><td>Your first real pick is one you made at home in about a minute. Every step up is a scene you'd watch again. In the mine it looks and rings like yours.</td></tr>
+    <tr><th>Weak</th><td>A forge screen that swaps numbers. Seven new sprites. A tier table with a better name.</td></tr>
+    <tr><th>Not allowed</th><td>An update that loses or weakens your pick. A scene that can fail and eat your materials. A forced chore. Mining made trivial. Seeing through rock.</td></tr>
+    <tr><th>Not in this plan</th><td>A new forge block. Picks as weapons. Bigger area mining. New ores. Any change to lodes, seams, caves, gate worlds or how weapons are forged.</td></tr>
+    <tr><th>Must keep working</th><td>Heavy strike, true strikes, the hum, lamps, Kindle, Hush, Call, vanilla picks, enchanting room, keeping it through death, getting a lost one back.</td></tr>
+  </table></div>
+
+  <h2>2. What's there today</h2>
+  <div class="col"><p>I read the code and your saves. Your phrase is exact: the game gives you one finished pick. You pull it from a stone at an old adit, or your Hearth hands it over in a window if no adit is near. It then wakes along one fixed line of seven verses, by deeds, and two of those steps are a single right-click at the Forge. Nothing is ever made and nothing is ever chosen.</p></div>
+  <figure>
+    <img src="shots/today_sprites.png" width="1050" height="150" alt="Seven flat pixel icons of a pickaxe, the verses from Asleep to Call.">
+    <figcaption>All seven verses, the real textures. <span class="tag seen">From the game</span> This flat picture is what you hold. Every weapon and armour piece is a sculpted model.</figcaption>
+  </figure>
+
+  <div class="tablewrap"><table>
+    <tr><th>Part</th><th>What it does now</th><th>Where</th><th>Plan</th></tr>
+    <tr><td>The stone and the Hearth</td><td>Give you a finished pick</td><td><code>WakingPick.java:66, 84, 101</code></td><td>Give an old head instead</td></tr>
+    <tr><td>Seven verses</td><td>One line, no choice</td><td><code>PickVerses.java:56-131</code></td><td>Old picks keep them; new picks are forged</td></tr>
+    <tr><td>Deeds</td><td>Break a heart, light a lamp, cut Deepglass, quiet a seep</td><td><code>PickVerses.java:136</code></td><td>Keep. They're good.</td></tr>
+    <tr><td>Rites</td><td>Right-click the Forge with 3 diamonds, or a starmetal ingot</td><td><code>PickGifts.java forge()</code></td><td>Replace with anvil acts</td></tr>
+    <tr><td>Look in hand</td><td>Flat 16-pixel sprite</td><td><code>models/item/waking_pick*.json</code></td><td>Real model</td></tr>
+    <tr><td>The dig</td><td>Small one-hand motion; third person is vanilla's</td><td><code>DigMotion.java</code></td><td>Real two-handed swing</td></tr>
+    <tr><td>Strike sound</td><td>Depends only on the ore</td><td><code>StrikeFeel.java</code></td><td>The pick gets its own ring</td></tr>
+    <tr><td>Mattocks</td><td>Six grid recipes, still craftable</td><td><code>GearItems.java:77-95</code></td><td>Retire into a form</td></tr>
+    <tr><td>Tasks page</td><td>No pick steps at all</td><td><code>Goals.java:30</code></td><td>Add a Pick tab</td></tr>
+    <tr><td>War Anvil</td><td>Heat, rhythm, acts, memory, quality, rebuilds, the draw</td><td><code>arms/anvil/</code></td><td>Reuse all of it</td></tr>
+  </table></div>
+
+  <h3>Five real cases</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Case</th><th>What happens now</th></tr>
+    <tr><td><b>Your disappointment</b></td><td><code>New World (11)</code>: level 8, 18 ores mined, the pick still Asleep at 20 of 131 wear. <code>Full test 1</code>: still Asleep, with a wooden and a stone pick doing the work. No save of yours has got past Asleep.</td></tr>
+    <tr><td><b>What good looks like</b></td><td>A Sovereign Longsword at the anvil: heat, draw out, twist, starlight, grind, hilt, balance, the card, the draw.</td></tr>
+    <tr><td><b>Ordinary</b></td><td>At rank D a vanilla iron pick takes seconds and digs at 6. The Asleep pick digs at 4, so nothing makes you hold it.</td></tr>
+    <tr><td><b>Awkward</b></td><td>A rank E player whose pick has reached Tempered (diamond level). The rank and the pick disagree, and any new system has to deal with that.</td></tr>
+    <tr><td><b>Something missing</b></td><td>No adit near, or the pick falls in lava. Today the Forge remakes it for 3 iron.</td></tr>
+  </table></div>
+  <p class="col">The want disappears at one line of code: <code>WakingPick.give</code> makes the finished item. After that, no step involves making anything.</p>
+
+  <h3>Why it disappoints, ranked</h3>
+  <div class="tablewrap"><table>
+    <tr><th>What you feel</th><th>Likely cause</th><th>For it</th><th>Against it</th><th>How we'd know</th></tr>
+    <tr><td>"The pick it gives you"</td><td>It's given, not made</td><td>Your words, the code</td><td>You may like the stone itself</td><td>The plan keeps the pull and changes what it gives</td></tr>
+    <tr><td>Lesser than the weapons</td><td>Flat sprite against sculpted models</td><td>The model files</td><td>You haven't said this</td><td>Compare the two images above</td></tr>
+    <tr><td>It never moves on</td><td>The first deed needs a lode's heart</td><td>Your saves</td><td>Your worlds are young</td><td>Forging gives a step up with no deed needed</td></tr>
+    <tr><td>Upgrades feel empty</td><td>A rite is one click</td><td><code>PickGifts.forge</code></td><td>No save reached one</td><td>Stage 2 replaces them</td></tr>
+  </table></div>
+
+  <h2>3. Three ways to do it</h2>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>A. Repair it</th><th>B. Into the War Anvil (my pick)</th><th>C. Parts, and a third forge</th></tr>
+    <tr><td><b>What</b></td><td>Keep the given pick; turn rites into scenes; give it a model</td><td>Forge picks at the anvil: four forms, six ranks, one pick raised</td><td>Choose head, haft and binding as separate parts at a new forge underground</td></tr>
+    <tr><td><b>Ends "the pick it gives you"</b></td><td>No</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td><b>Level with weapons</b></td><td>Partly</td><td>Yes, same scene and rules</td><td>Further, at a price</td></tr>
+    <tr><td><b>New decisions</b></td><td>None</td><td>One form, one colour press</td><td>Several per pick</td></tr>
+    <tr><td><b>Cost</b></td><td>Small</td><td>Medium</td><td>Large, and a third forge to maintain</td></tr>
+  </table></div>
+  <p class="col">C loses because you asked for "similar to how you forge weapons", and part systems add decisions and paperwork. Tinkers' gets criticised for exactly that, though that's forum opinion. A loses because the pick is still handed to you. If you do want to pick head and haft yourself, B can take that on later. If the first-person anvil turns out wrong for a pick, the armour forge's camera is the fallback.</p>
+
+  <h2>4. How it works</h2>
+
+  <h3>At the anvil</h3>
+  <div class="door" role="img" aria-label="Mock of the War Anvil door with a Weapons tab and a Picks tab, listing four forms and the Beastbound Delver's cost, with Track and Forge it buttons only.">
+    <div class="top"><span>The Armoury · the War Anvil</span><span style="color:#ffd98a">Essence 264</span></div>
+    <div class="tabs"><span>Weapons</span><span class="on">Picks</span></div>
+    <div class="grid">
+      <div class="forms"><div class="on"><span>Delver</span></div><div><span>Mattock</span></div><div><span>Breaker</span><small>heart</small></div><div><span>Sounder</span><small>lamp</small></div></div>
+      <div>
+        <div>Delver. The true pick. Fastest in plain rock, and it hums toward metal.</div>
+        <div class="ranks"><div>E Lv 3</div><div class="on">D Lv 13</div><div class="off">C Lv 22</div><div class="off">B Lv 42</div><div class="off">A Lv 67</div><div class="off">S Lv 97</div></div>
+        <div class="cost" style="color:#ff9a9a">Beastbound Delver</div>
+        <div class="cost">2/2 Iron ingots<br>1/1 D-rank core<br>1/1 Essence Shard<br>1/1 Any log</div>
+        <div class="btns"><span>Track</span><span>Forge it</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="muted" style="font-size:14px;margin-top:6px"><span class="tag mock">Mockup</span> Same door, a Picks tab. No separate button for a half-made part, so you can't press the wrong one.</p>
+  <p class="col">The first forged pick costs what a mattock costs today, with a log in place of the sticks: two of the rank's metal, a core and an Essence Shard. Bring the old head from the stone and all you need is a log and a string. Picks use the same levels and anvil rebuilds as weapons.</p>
+
+  <h3>Four forms</h3>
+  <figure>
+    <img src="shots/forms_C.png" width="2240" height="660" alt="Four picks of the same rank: a long two-pointed pick, a heavy pick with a hammer face behind, a pick with a broad adze blade on one side, and a slim needle pick with a tuning fork behind the head.">
+    <div class="formline"><div>Delver</div><div>Breaker</div><div>Mattock</div><div>Sounder</div></div>
+    <figcaption>All four at rank C. <span class="tag mock">Concept model</span> All 24 designs are further down.</figcaption>
+  </figure>
+  <div class="tablewrap"><table>
+    <tr><th>Form</th><th>How it digs</th><th class="n">Speed</th><th class="n">Lasts</th><th>Opens</th></tr>
+    <tr><td><b>Delver</b></td><td>The true pick. Fastest in plain rock, and it hums toward metal within 16 blocks.</td><td class="n">100%</td><td class="n">100%</td><td>From the start</td></tr>
+    <tr><td><b>Breaker</b></td><td>All weight. The heavy strike is ready sooner and wears it less. Still three blocks, never more.</td><td class="n">85%</td><td class="n">130%</td><td>After your first lode's heart</td></tr>
+    <tr><td><b>Mattock</b></td><td>One tool for stone, wood and earth. This replaces the six crafted mattocks.</td><td class="n">Stone 90%, earth 120%</td><td class="n">110%</td><td>From the start</td></tr>
+    <tr><td><b>Sounder</b></td><td>The listener. A wider seam on true strikes, more bonus ore, a longer hum, and it hears further when you tap the rock.</td><td class="n">90%</td><td class="n">80%</td><td>After your first lamp</td></tr>
+  </table></div>
+  <p class="col">Change your mind and you can re-draw a pick into another form at half the cost, so the choice is never a trap. Each form is also forged to its own beat, the way each weapon is. Try them:</p>
+  <div class="styles" id="styles"></div>
+  <div class="lane" id="lane"></div>
+  <div class="laneinfo"><button type="button" class="play" id="play">Play the beat</button><span id="laneinfo"></span></div>
+
+  <h3>Six ranks, one pick</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Rank</th><th>Forged by</th><th class="n">Delver speed / uses</th><th class="n">Vanilla for that metal</th><th>What it learns, and how</th></tr>
+    <tr><td><b>E</b> Wildhide</td><td>Hand: knap the points, bind, <b>hang the head</b></td><td class="n">5 / 300</td><td class="n">stone 4 / 131</td><td>The hum (Delver and Sounder)</td></tr>
+    <tr><td><b>D</b> Beastbound</td><td>Heat, <b>cut the eye</b>, draw the points, <b>run the colours</b>, hang</td><td class="n">7 / 650</td><td class="n">iron 6 / 250</td><td>Kindle: break a lode's heart</td></tr>
+    <tr><td><b>C</b> Gatewrought</td><td>Adds <b>steel the tips</b> with diamond</td><td class="n">9 / 1,800</td><td class="n">diamond 8 / 1,561</td><td>Sounding: light a Delver lamp. A wider seam comes with the diamond.</td></tr>
+    <tr><td><b>B</b> Veilwoven</td><td>Adds <b>thread the spine</b> with Deepglass</td><td class="n">10 / 2,200</td><td class="n">netherite 9 / 2,031</td><td>Long Sounding: cut Deepglass</td></tr>
+    <tr><td><b>A</b> Lordscale</td><td>Adds <b>pour the seam</b> on a Lord's anvil</td><td class="n">11 / 2,700</td><td class="n">none</td><td>Hush: quiet a seep</td></tr>
+    <tr><td><b>S</b> Sovereign</td><td>Adds the starlight</td><td class="n">12.5 / 3,400</td><td class="n">none</td><td>Call: the starmetal itself</td></tr>
+  </table></div>
+  <p class="col">The deeds stay what they are, things you do underground. You no longer need the pick on you, and a deed you've done is remembered by you, so any pick you forge can take that gift. If you do the deed after raising the pick, the next time you're at the anvil a five-second scene works it in. Forging well lifts speed and uses by up to 12%, and from memory you can skip scenes once you've made one Masterwork.</p>
+
+  <h3>Why these acts</h3>
+  <p class="col">The acts come from how picks are actually made. The hole for the haft is cut and driven hot from each side in turn, and the metal has to stay thick round it (<a href="https://www.fao.org/4/ah635e/AH635E15.htm">FAO forge manual</a>). A pick head goes on a tapered haft and is seated by rapping the haft's wide end on something solid until it climbs and bites (<a href="https://www.wonkeedonkeetools.co.uk/pick-axes/how-do-you-replace-a-wooden-pick-axe-handle">Wonkee Donkee</a>). Hardened points are tempered by watching colours run along the steel (<a href="https://www.polytechforum.com/blacksmithing/tempering-a-miners-pick-5463-.htm">smiths' forum</a>, hobbyist advice).</p>
+  <div class="moments">
+    <figure><img src="shots/moment_eye.jpg" width="2560" height="960" alt="A glowing orange billet on the anvil with a bright slit through its middle and the player's hands holding the tongs."><figcaption><b>Cut the eye</b> Slit it from one face, turn it, slit from the other, then drive the drift through. You watch the hole open. <span class="tag mock">Mockup</span></figcaption></figure>
+    <figure><img src="shots/moment_colours.jpg" width="2560" height="960" alt="A finished pick head on the anvil with blue, purple and straw colours running along it from the middle outward."><figcaption><b>Run the colours</b> Colours creep out from the hot middle. You choose when to stop them. <span class="tag mock">Mockup</span></figcaption></figure>
+    <figure><img src="shots/moment_hang.jpg" width="2560" height="1060" alt="A finished pick standing on its foot in front of the War Anvil, rings of sound around the head and a shock ring where the foot meets the floor."><figcaption><b>Hang the head</b> Rap the haft on the stone. The head climbs and seats, and the note rises until it rings true. <span class="tag mock">Mockup</span></figcaption></figure>
+  </div>
+  <p class="col" style="margin-top:14px">The billet and the head are shaded by the game's own shader over a real anvil shot. Scenes run 25 to 45 seconds the first time and can't fail, and the finished pick is drawn from the slot like a weapon.</p>
+
+  <h3>Try the colours</h3>
+  <p class="col">This is the new signature act. There's only one press in it, and it's a choice rather than a test. The colour on the point decides what you've made: straw cuts fastest and wears fastest, blue is slower and lasts much longer. Whichever you pick stays visible on the steel.</p>
+  <div class="run">
+    <canvas id="runc" width="760" height="280" aria-label="A pick head. Colours run along it while the button is held."></canvas>
+    <div class="scale" aria-hidden="true"></div>
+    <div class="ctl">
+      <button type="button" class="hold" id="hold">Hold to run the colours</button>
+      <div class="readout" id="readout" aria-live="polite">Hold the button and let go when the colour you want reaches the point.</div>
+    </div>
+  </div>
+  <p class="muted" style="font-size:14px;margin-top:6px"><span class="tag mock">Working demo</span> Real model. The game would draw this in its weapon shader, which already has a moving heat front.</p>
+
+  <h3>The whole table</h3>
+  <figure>
+    <img src="shots/table.png" width="1560" height="1320" alt="A grid of twenty-four pick designs: four forms down, six ranks across.">
+    <figcaption>All 24 as first designs. Forms down: Delver, Breaker, Mattock, Sounder. Ranks across: E to S. <span class="tag mock">Concept models</span> Every forged pick shows the eye you cut in it, lit from within.</figcaption>
+  </figure>
+
+  <h3>Going further than the weapons, because you swing this thousands of times</h3>
+  <div class="tablewrap"><table>
+    <tr><th>What</th><th>How</th><th>Why it's worth it</th></tr>
+    <tr><td><b>A real swing</b></td><td>Two hands, first and third person, each form its own arc: the Delver from the shoulder, the Breaker a big overhead, the Mattock a low chop, the Sounder short taps. An off-hand torch keeps it to one hand. Timing stays the game's.</td><td>You see this more than anything else in the game. I could find no good written account of how a pick is swung, so the builder works from film of real swings, and you judge one form before the rest.</td></tr>
+    <tr><td><b>Its own ring</b></td><td>Each pick has a note set at the anvil by its form, rank and how well it was made. It sounds with the ore's note and shifts slightly each blow, with several takes. All synthesised by our tools, no downloads.</td><td>The Singing Deep finally has your pick in it. Repeating one sound tires the ear, and varying it fixes that.</td></tr>
+    <tr><td><b>It shows</b></td><td>Rings of old metal on the haft. The grip darkens with your hands, the points brighten with use, a notch for every ten lodes. The tooltip tells its story: forged by you on day 12, 4,120 blocks, 18 hearts.</td><td>Real miners used one pick for a career and passed it on (<a href="https://www.tarleton.edu/the-industrious-historian/2011/03/30/mining-tools-implements-or-heirlooms/">Tarleton</a>).</td></tr>
+    <tr><td><b>Dressing</b></td><td>A 3 to 5 second scene at the anvil for one metal. It mends a quarter and leaves it keen for 200 blocks. You never have to.</td><td>Miners had their picks re-sharpened at the mine's forge (<a href="https://en.wikipedia.org/wiki/Gez%C3%A4he">Gezähe</a>). It's a treat, not upkeep.</td></tr>
+    <tr><td><b>Never snaps</b></td><td>At its last use a forged pick goes blunt and slow until it's dressed.</td><td>The tool you keep can't vanish in your hands.</td></tr>
+  </table></div>
+  <figure>
+    <img src="shots/in_hand.jpg" width="1280" height="530" alt="A rank C pick held in first person at the right of the screen, in the dim smithy.">
+    <figcaption>In hand: the real model at a Maul's first-person hold, the game's own lighting. <span class="tag mock">Concept model</span> The swing itself isn't shown here; only the game can show that.</figcaption>
+  </figure>
+
+  <h3>A rule conflict to settle</h3>
+  <p class="col">Echo and Glass, approved for the mining plan on 28 October, make ores and caves glow through the rock. The next day, about armour, you said abilities like seeing mobs, ores or blocks feel like cheats. I recommend turning them into hearing. <b>Sounding:</b> you stand still and tap the rock, and it answers. Tight rock stays quiet. A cave behind the wall sounds hollow from that direction and dust falls from that side, and a lode answers with its own note. Nothing glows. It's what miners actually do, tapping the roof and listening for tight or drummy rock (<a href="https://www.cdc.gov/NIOSH/Mining/UserFiles/works/pdfs/foulb.pdf">NIOSH</a>). Decision 8 is yours.</p>
+
+  <h3>Rules that always hold</h3>
+  <ul class="plain col">
+    <li>No update ever removes, weakens or changes a pick by itself.</li>
+    <li>The server judges every strike. One action never breaks more than three blocks, apart from Call, as today.</li>
+    <li>Every form can mine everything its rank allows, and vanilla picks stay exactly as they are.</li>
+  </ul>
+
+  <h3>What's saved, and what can go wrong</h3>
+  <p class="col">A forged pick carries a versioned record of its form, how well it was made, the colour, who made it, its tally and its gifts. Old picks keep theirs. Nothing new is stored in the world or the Hearth.</p>
+  <div class="tablewrap"><table>
+    <tr><th>What goes wrong</th><th>What happens</th><th>How you recover</th></tr>
+    <tr><td>You leave or disconnect mid-scene</td><td>The work waits, as it does for weapons</td><td>Come back</td></tr>
+    <tr><td>The pick falls in lava</td><td>The anvil remembers your best rank and form</td><td>Make it again at half cost</td></tr>
+    <tr><td>Old pick is ahead of your rank</td><td>It keeps its rank</td><td>The next raise waits for your rank</td></tr>
+    <tr><td>You did a deed after raising it</td><td>The anvil offers to work it in</td><td>Five seconds, free</td></tr>
+    <tr><td>No adit near home</td><td>Your Hearth keeps the head for you</td><td>Same path as today</td></tr>
+    <tr><td>Worn out</td><td>It goes blunt, it never breaks</td><td>Dress it</td></tr>
+  </table></div>
+  <p class="muted col" style="font-size:15px">Privacy: the maker's name on the item, same as weapons. Performance: one model per held pick, the same cost as a weapon. Cost: none beyond building it. AI: not applicable. Multiplayer: everything lives on the item, each player has their own work at the anvil, helpers make it twin-struck, and the stone stays for the next player.</p>
+
+  <h2>5. Before and after, same starting point</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Case</th><th>Today</th><th>With this plan</th><th>Why it's better</th></tr>
+    <tr><td><b>Ordinary</b>: a new player at the anvil level</td><td>Finds an adit, gets a pick, digs at stone speed, has no reason to hold it</td><td>Pulls the old head, hangs it at the anvil in about a minute, gets a Wildhide Delver at 5 / 300 that hums</td><td>First pick is theirs, better than stone, and shows what the anvil does</td></tr>
+    <tr><td><b>Yours</b>: <code>New World (11)</code></td><td>Asleep at 18 ores, nothing to do but find a heart</td><td>Bring it to the anvil, free, ten seconds: a Wildhide Delver. Raise it to D when you've got iron.</td><td>Progress is at your anvil, and doesn't wait on luck underground</td></tr>
+    <tr><td><b>Awkward</b>: rank E with a Tempered pick</td><td>Mining at diamond level with no record of why</td><td>It becomes a Gatewrought Delver with every gift it had. The next raise waits for rank B.</td><td>Nothing lost, and the rule is clear</td></tr>
+    <tr><td><b>Something missing</b>: no adit, or lost in lava</td><td>Hearth window, or 3 iron at the Forge</td><td>Hearth keeps the head, or Make it again at the anvil</td><td>You're never stuck, and it's still a forge moment</td></tr>
+  </table></div>
+  <h3>The flow</h3>
+  <p class="muted" style="margin-top:6px">Today</p>
+  <div class="flow"><span>Stone or Hearth</span><i>→</i><span class="bad">Finished pick</span><i>→</i><span>Deed or one-click rite</span><i>→</i><span>Same pick, next verse</span><i>→</i><span>Flat sprite, one-hand swing</span></div>
+  <p class="muted" style="margin-top:12px">With this plan</p>
+  <div class="flow"><span>Stone or Hearth</span><i>→</i><span>Old head</span><i>→</i><span class="key">War Anvil, Picks tab</span><i>→</i><span class="key">The scene</span><i>→</i><span>Your pick (saved on the item)</span><i>→</i><span>The mine: deeds, tally, wear</span><i>→</i><span class="key">Back to the anvil: Raise, Work in, Dress, Re-draw</span></div>
+
+  <h2>6. How we'll know, and how it gets built</h2>
+  <p class="col">Automatic tests: every form and rank forged, raising keeps history, every old verse and mattock migrated, late gifts, the three-block limit, blunt not broken, kept through death, saved data round trip, the journey ledger, then the full suite in CI. Whether it feels right is your call, and no test decides that.</p>
+  <div class="phases">
+    <div class="phase first"><div class="p">1</div><div><h3>One Beastbound Delver, whole</h3><p>The model, the Picks tab, cut the eye, draw the points, run the colours, hang the head, the card. CI shots to you. <b>Stops for you.</b></p></div><div class="h">5-7 h</div></div>
+    <div class="phase"><div class="p">2</div><div><h3>All 24, all ranks</h3><p>The designs, four beats, the C, B, A and S acts, the numbers, each form's way of digging, re-draw.</p></div><div class="h">9-12 h</div></div>
+    <div class="phase"><div class="p">3</div><div><h3>The swing and the ring</h3><p>One form, first and third person, you judge it, then the rest. At most two rounds before asking you.</p></div><div class="h">6-9 h</div></div>
+    <div class="phase"><div class="p">4</div><div><h3>The switch</h3><p>The stone gives a head. Saves, mattocks, the Pick tab on Tasks, the trail, the recipe book, enchanting.</p></div><div class="h">3-4 h</div></div>
+    <div class="phase"><div class="p">5</div><div><h3>It shows</h3><p>Rings, wear, the tally, dressing, going blunt.</p></div><div class="h">3-4 h</div></div>
+  </div>
+  <p class="col">About 26 to 36 builder hours, scaled from the War Anvil (55 commits in about 25 clock hours) and the Singing Deep (about 31). The swing is the biggest unknown, because the Swing Studio rounds passed their numbers and got worse.</p>
+  <p class="col">Stages 1 to 3 only add things and change nothing that exists. Stage 4 is the one switch, and one commit undoes it. If a save test fails or you don't like stage 1, we stop there.</p>
+  <h3>Risks</h3>
+  <ul class="plain col">
+    <li>The wide head may block your view while digging. Stage 1 checks this first.</li>
+    <li>Other sessions are in the anvil code now (the camera hold, weapon charging), so this starts after they merge.</li>
+    <li>The Sounder's fork is unusual. It may read oddly in game, and if so it gets redrawn.</li>
+    <li>24 designs need the bar held to the last one. The first pass above is the starting point, not the finish.</li>
+  </ul>
+
+  <h2>7. Decisions for you</h2>
+  <p class="col">Tap Yes or No. Your answers save as you tap and I read them from here. Add a note to change anything.</p>
+  <div class="tally" id="tally"><span id="tallytext">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to all I haven't answered</button></div>
+  <ol class="decisions" id="decisions"></ol>
+
+  <h3>Sources</h3>
+  <ul class="sources">
+    <li>Eye-making: <a href="https://www.fao.org/4/ah635e/AH635E15.htm">FAO manual</a>, <a href="https://www.fao.org/4/ah635e/AH635E17.htm">hammer section</a>, <a href="https://www.iforgeiron.com/topic/10211-slitter-geometry/page/6/">iForgeIron</a>.</li>
+    <li>Temper colours on a pick: <a href="https://www.polytechforum.com/blacksmithing/tempering-a-miners-pick-5463-.htm">hobbyist forum</a>; repliers disagree on details.</li>
+    <li>Seating the head: <a href="https://www.wonkeedonkeetools.co.uk/pick-axes/how-do-you-replace-a-wooden-pick-axe-handle">Wonkee Donkee</a>, <a href="https://www.instructables.com/Pick-Handle">Instructables</a>, <a href="https://patents.google.com/patent/US4585370">US4585370</a>.</li>
+    <li>Miners and their tools: <a href="https://www.tarleton.edu/the-industrious-historian/2011/03/30/mining-tools-implements-or-heirlooms/">Tarleton</a>, <a href="https://en.wikipedia.org/wiki/Gez%C3%A4he">Gezähe</a>.</li>
+    <li>Sounding rock: <a href="https://www.cdc.gov/NIOSH/Mining/UserFiles/works/pdfs/foulb.pdf">NIOSH</a>, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8802129/">PMC8802129</a>.</li>
+    <li>Other games, opinion only: <a href="https://www.curseforge.com/minecraft/mc-mods/tetra">Tetra</a>, <a href="https://moddex.gg/mod/tetra">Moddex</a>, <a href="https://jetamp.itch.io/lucky-dig/comments">Lucky Dig</a>, <a href="https://larsi-official.itch.io/rift-miner/devlog/1010791/rift-miner-version-001000-the-visual-identity-game-juice-update">Rift Miner</a>.</li>
+  </ul>
+
+  <div class="foot">
+    <span>The full plan: <code>docs/forged-pick/PLAN.md</code> on the branch <code>claude/forged-pick-plan-c59985</code>.</span>
+    <span>All art and sound will be ours, made by the kits in <code>tools/art</code>.</span>
+    <span>Nothing is built until you say yes.</span>
+  </div>
+</div>
+
+<script>
+// Each form's beat at the anvil: a step is a number of game ticks (50 ms); x a light blow, X a full one. The note is its ring, in Hz.
+const FORMS = [
+  ["Delver", 3, "x.x.X...", 392, "tink, tink, BANG, turning the work between blows"],
+  ["Breaker", 6, "X.....x.X.......", 147, "two slow blows with all your weight"],
+  ["Mattock", 4, "X..x..X.....", 233, "chop, pull, chop"],
+  ["Sounder", 3, "x.x.x...x.x.x...", 784, "three light taps, then listen"]
+];
+const stylesEl = document.getElementById("styles"), lane = document.getElementById("lane"),
+  laneInfo = document.getElementById("laneinfo"), playBtn = document.getElementById("play");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+let current = 0, timer = null, audio = null, cells = [];
+function stop() { if (timer) { clearInterval(timer); timer = null; } cells.forEach(c => c.classList.remove("now")); playBtn.textContent = "Play the beat"; }
+function pick(i) {
+  stop(); current = i;
+  const [name, ticks, beat, , words] = FORMS[i];
+  stylesEl.querySelectorAll("button").forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+  lane.style.gridTemplateColumns = "repeat(" + beat.length + ", minmax(0, 1fr))";
+  cells = [...beat].map(ch => { const d = document.createElement("div"); d.className = "cell" + (ch !== "." ? " hit" : "") + (ch === "X" ? " big" : ""); return d; });
+  lane.replaceChildren(...cells);
+  laneInfo.textContent = name + " · " + words;
+}
+function ring(freq, loud) {
+  if (!audio) return;
+  const t = audio.currentTime, o = audio.createOscillator(), o2 = audio.createOscillator(), g = audio.createGain();
+  o.type = "triangle"; o.frequency.value = freq; o2.type = "sine"; o2.frequency.value = freq * 2.76;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(loud ? 0.24 : 0.12, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+  o.connect(g); o2.connect(g); g.connect(audio.destination); o.start(t); o2.start(t); o.stop(t + 0.62); o2.stop(t + 0.62);
+}
+playBtn.addEventListener("click", () => {
+  if (timer) { stop(); return; }
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); } catch (e) { audio = null; }
+  const [, ticks, beat, freq] = FORMS[current];
+  let step = 0, loops = 0;
+  playBtn.textContent = "Stop";
+  const tick = () => {
+    cells.forEach(c => c.classList.remove("now"));
+    if (!reduce.matches) cells[step].classList.add("now");
+    if (beat[step] !== ".") ring(freq * (1 + (Math.random() - .5) * .03), beat[step] === "X");
+    step++;
+    if (step >= beat.length) { step = 0; loops++; if (loops >= 3) { clearInterval(timer); timer = -1; setTimeout(stop, ticks * 50); } }
+  };
+  tick(); timer = setInterval(tick, ticks * 50);
+});
+FORMS.forEach(([name], i) => {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = name;
+  b.addEventListener("click", () => pick(i)); stylesEl.append(b);
+});
+pick(0);
+
+// The colour run: the head in bare steel and how far along the head each pixel is, recoloured live.
+const OXIDE = [[0, 247, 236, 190], [.16, 226, 186, 104], [.34, 168, 104, 52], [.52, 128, 62, 118], [.74, 56, 76, 176], [1, 136, 148, 168]];
+const LUT = new Float32Array(257 * 3);
+for (let i = 0; i <= 256; i++) {
+  const t = i / 256; let a = OXIDE[0], b = OXIDE[OXIDE.length - 1];
+  for (let k = 0; k < OXIDE.length - 1; k++) if (t >= OXIDE[k][0] && t <= OXIDE[k + 1][0]) { a = OXIDE[k]; b = OXIDE[k + 1]; break; }
+  const f = b[0] === a[0] ? 0 : (t - a[0]) / (b[0] - a[0]);
+  for (let c = 0; c < 3; c++) LUT[i * 3 + c] = (a[c + 1] + (b[c + 1] - a[c + 1]) * f) / 255;
+}
+const canvas = document.getElementById("runc"), ctx = canvas.getContext("2d"), holdBtn = document.getElementById("hold"), readout = document.getElementById("readout");
+let base = null, along = null, frame = null, front = 1.0, running = false, last = 0, ready = false;
+const MAX_FRONT = 2.35, SECONDS = 5.2;
+function loadImage(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function pixels(img) { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; const x = c.getContext("2d"); x.drawImage(img, 0, 0); return x.getImageData(0, 0, img.width, img.height); }
+function draw() {
+  const d = frame.data, b = base.data, a = along.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = a[i];
+    if (b[i + 3] < 8) { d[i + 3] = 0; continue; }
+    d[i + 3] = 255;
+    const pos = v / 255;
+    if (v === 0 || pos >= front) { d[i] = b[i]; d[i + 1] = b[i + 1]; d[i + 2] = b[i + 2]; continue; }
+    const k = Math.min(256, Math.floor(Math.max(0, (front - pos) / 1.6) * 256)) * 3;
+    const lum = (b[i] + b[i + 1] + b[i + 2]) / 765, m = .42 + 1.05 * lum;
+    d[i] = Math.min(255, LUT[k] * m * 255); d[i + 1] = Math.min(255, LUT[k + 1] * m * 255); d[i + 2] = Math.min(255, LUT[k + 2] * m * 255);
+  }
+  ctx.putImageData(frame, 0, 0);
+}
+function verdict() {
+  const t = (front - 1) / 1.6;
+  if (front < .9) return "<b>You stopped early.</b> The colour hadn't reached the point, so it counts as straw, the hardest the anvil will give you. Digs 8% faster, lasts 20% less.";
+  if (t < .12) return "<b>Straw at the point.</b> Hard and fast. Digs 8% faster, lasts 20% less.";
+  if (t < .42) return "<b>Bronze at the point.</b> A little harder than even. Digs 4% faster, lasts 10% less.";
+  if (t < .62) return "<b>Peacock at the point.</b> Even. No change either way.";
+  return "<b>Blue at the point.</b> Tough. Digs 6% slower, lasts 30% longer.";
+}
+function step(now) {
+  if (!running) return;
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  front = Math.min(MAX_FRONT, front + dt * MAX_FRONT / SECONDS);
+  draw();
+  if (front >= MAX_FRONT) { finish(); return; }
+  requestAnimationFrame(step);
+}
+function begin() { if (!ready || running) return; running = true; front = 0; last = performance.now(); holdBtn.classList.add("down"); holdBtn.textContent = "Let go to stop"; readout.textContent = "The colours are running…"; requestAnimationFrame(step); }
+function finish() { if (!running) return; running = false; holdBtn.classList.remove("down"); holdBtn.textContent = "Hold to run them again"; readout.innerHTML = verdict(); }
+holdBtn.addEventListener("pointerdown", e => { e.preventDefault(); try { holdBtn.setPointerCapture(e.pointerId); } catch (_) {} begin(); });
+holdBtn.addEventListener("pointerup", finish);
+holdBtn.addEventListener("pointercancel", finish);
+holdBtn.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); begin(); } });
+holdBtn.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); finish(); } });
+holdBtn.addEventListener("blur", finish);
+Promise.all([loadImage("shots/demo_base.png"), loadImage("shots/demo_along.png")]).then(([a, b]) => {
+  canvas.width = a.width; canvas.height = a.height;
+  base = pixels(a); along = pixels(b); frame = ctx.createImageData(a.width, a.height); ready = true; draw();
+}).catch(() => { readout.textContent = "The demo picture didn't load. The colours are shown in the mockup above."; holdBtn.hidden = true; });
+
+const YES = "My recommendation: yes";
+const DECISIONS = [
+  ["Picks are forged at the War Anvil, with no third forge. The anvil's door gets a Picks tab that only has Track and Forge it, so there's no half-made part to press by mistake.", "The same hands, hammer and rhythm you know from weapons. It's the strongest thing we've got, and it's already in your home."],
+  ["The stone stops giving you a pick. It gives you the old head and you hang it on a haft at the anvil. Where there's no adit near, your Hearth keeps the head for you.", "Keeps the moment of pulling it free, and ends the pick being handed to you."],
+  ["Four forms: Delver, Breaker, Mattock and Sounder. Delver and Mattock from the start, Breaker after your first lode's heart, Sounder after your first lamp. You can re-draw a pick into another form at half cost.", "One real choice about what kind of digger you are, with no blueprints to carry and no way to get it wrong for good."],
+  ["One pick raised through six ranks, E to S. It keeps its name and history, and each raise is a scene with that rank's own act.", "This is the evolution you asked for. You keep the tool rather than replacing it."],
+  ["The acts come from how picks are really made: knap and hang at E; cut the eye, draw the points, run the colours and hang at D; steel the tips with diamond at C; thread Deepglass at B; pour the seam at A; starlight at S.", "Each rank adds something new to do, and a pick gets scenes no weapon has."],
+  ["Run the Colours: one press, a choice with no fail. Stop at straw for fast and hard, or let it run to blue for tough and long-lasting. The colour stays on the steel.", "It's the pick's signature, and the colour shows on your pick for good."],
+  ["Deeds stay and the one-click rites go. You learn each gift underground, and any pick you forge can take what you've learned. If you learn one later, a five-second scene at the anvil works it in.", "The good part of the old system survives, and the weakest part goes."],
+  ["Echo and Glass stop showing ores and caves through the rock and become hearing: you tap the rock and it answers with sound and falling dust. Say No to keep the glow you approved on 28 October.", "On 29 October you said seeing ores and blocks feels like cheats. This keeps the gift and drops the x-ray."],
+  ["The numbers in the table: every forged pick clearly beats vanilla for its metal, forging well adds up to 12%, and picks don't take weapon Temper.", "Your rule from the weapon plan, made true for picks: the quick tools stay quick, and forged is worth the trip."],
+  ["A real two-handed swing for every form, in first and third person, worked out from film of real swings. You judge one form before the rest are made.", "You'll see this more than anything else in the game, and it starts from the real tool, not from a metric."],
+  ["Each pick has its own ring, set at the anvil, sounding with the ore's note and varied so it doesn't tire. All synthesised by us.", "The Singing Deep gets your pick in it."],
+  ["It shows: rings of old metal on the haft, a lit eye, a grip that darkens, points that brighten, notches for lodes, and a tally in the tooltip.", "Goes beyond the weapons and armour, for the tool you hold longest."],
+  ["Dressing is an optional few seconds at the anvil that mends and sharpens. A forged pick never snaps: at its last use it goes blunt until dressed.", "Keeps the tool you've kept, and never becomes a chore."],
+  ["Forged picks come through death with you, as the old pick does. If one is truly lost, the anvil makes it again at half cost at your best rank.", "You're never stuck without your pick."],
+  ["Saves: your old Delver's Pick keeps working exactly as it does until you bring it to the anvil, where it's re-forged free into a Delver at a matching rank with every gift it had (verse 0 to E, 1-2 to D, 3-4 to C, 5 to B, 6 to A). The six mattock recipes retire, as the mining plan meant, and old mattocks can be brought in free too.", "Nothing is lost or changed behind your back, and every old pick comes out stronger."],
+  ["The Tasks page gets a Pick tab with real steps, and the Delver's Pick trail is rewritten to match.", "Your standing rule: every progression shows up on the K menu."],
+  ["Build in stages, starting with one Beastbound Delver forged at the anvil and shown to you in CI tour shots before anything else is built.", "You judge the look and the view while digging before 23 more designs are built on it."]
+];
+const list = document.getElementById("decisions"), tallyText = document.getElementById("tallytext"), allYes = document.getElementById("allyes");
+const answers = {};
+let db = null, canWrite = true;
+const cards = DECISIONS.map(([q, why, rec], i) => {
+  const id = "d" + String(i + 1).padStart(2, "0");
+  const li = document.createElement("li"); li.className = "dec";
+  const pq = document.createElement("div"); pq.className = "q"; pq.textContent = q;
+  const pw = document.createElement("div"); pw.className = "why"; pw.textContent = why;
+  const pr = document.createElement("div"); pr.className = "rec"; pr.textContent = rec || YES;
+  const ans = document.createElement("div"); ans.className = "ans";
+  const y = document.createElement("button"); y.type = "button"; y.className = "y"; y.textContent = "Yes"; y.id = id + "-yes";
+  const n = document.createElement("button"); n.type = "button"; n.className = "n"; n.textContent = "No"; n.id = id + "-no";
+  const st = document.createElement("span"); st.className = "state";
+  ans.append(y, n, st);
+  const note = document.createElement("textarea"); note.id = id + "-note"; note.placeholder = "A note, if you want to change something (optional)";
+  note.setAttribute("aria-label", "Note on decision " + (i + 1));
+  li.append(pq, pw, pr, ans, note); list.append(li);
+  y.addEventListener("click", () => save(id, { answer: "yes" }));
+  n.addEventListener("click", () => save(id, { answer: "no" }));
+  note.addEventListener("change", () => save(id, { note: note.value.trim() }));
+  return { id, li, y, n, st, note };
+});
+function render() {
+  let yes = 0, no = 0;
+  for (const c of cards) {
+    const a = answers[c.id] || {};
+    c.y.setAttribute("aria-pressed", String(a.answer === "yes"));
+    c.n.setAttribute("aria-pressed", String(a.answer === "no"));
+    c.li.classList.toggle("yes", a.answer === "yes"); c.li.classList.toggle("no", a.answer === "no");
+    if (document.activeElement !== c.note && typeof a.note === "string") c.note.value = a.note;
+    if (a.answer === "yes") yes++; else if (a.answer === "no") no++;
+    c.y.disabled = c.n.disabled = c.note.disabled = !db || !canWrite;
+  }
+  const left = cards.length - yes - no;
+  tallyText.textContent = !db ? "Answers can't be saved in this view. Reply in chat with the numbers you'd change."
+    : yes + " yes · " + no + " no · " + left + " to answer";
+  allYes.hidden = !db || !canWrite || left === 0;
+}
+async function save(id, patch) {
+  if (!db) return;
+  const c = cards.find(x => x.id === id);
+  const next = Object.assign({ answer: null, note: "" }, answers[id], patch, { at: new Date().toISOString() });
+  answers[id] = next; render(); c.st.textContent = "saving…";
+  try { await db.doc("decisions/" + id).set(next); c.st.textContent = "saved"; }
+  catch (e) {
+    if (e && (e.code === "not_granted" || e.code === "permission_denied" || e.code === "invalid_argument")) { canWrite = false; c.st.textContent = "only the owner can answer"; render(); }
+    else c.st.textContent = "not saved, try again";
+  }
+}
+allYes.addEventListener("click", async () => {
+  for (const c of cards) if (!(answers[c.id] && answers[c.id].answer)) await save(c.id, { answer: "yes" });
+});
+render();
+(async () => {
+  if (!window.claude) { render(); return; }
+  try { db = await claude.use("db"); } catch (e) { db = null; }
+  if (!db) { render(); return; }
+  try { const user = await claude.use("user"); if (user && (await user.can("data.write")) === false) canWrite = false; } catch (e) {}
+  const wait = setTimeout(() => { tallyText.textContent = "Still loading your answers…"; }, 10000);
+  db.collection("decisions").onSnapshot(snap => {
+    clearTimeout(wait);
+    for (const d of snap.docs) if (d.exists) answers[d.id] = Object.assign({}, d.data());
+    render();
+  }, () => { clearTimeout(wait); render(); });
+  render();
+})();
+</script>

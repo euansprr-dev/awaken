@@ -225,7 +225,10 @@ final class Categories {
             JeiLook.row(g, "Made", r.tier() == 0 ? "by hand, no Forge needed" : "in the Forge's heat", 9, 46, Glass.TEXT);
             JeiLook.row(g, "Opens", "at level " + dev.awaken.arms.ArmsArmoury.LEVEL[r.tier()], 9, 58, Glass.TEXT);
             boolean blade = r.id().getPath().endsWith("_blade");
-            String how = blade ? "A Hunter blade: every forged weapon of its tier starts from one. Without it, the anvil asks for its parts too."
+            String how = r.output().getItem() instanceof dev.awaken.delve.forged.ForgedPickItem ? (r.tier() == 0
+                    ? "Knap its head and hang it on the haft at a War Anvil. The old head from the stone will do, or these parts."
+                    : "Heat it, draw its points on the beat, run its colours and hang it at a War Anvil by the Forge. An older pick in your hand raises for less.")
+                    : blade ? "A Hunter blade: every forged weapon of its tier starts from one. Without it, the anvil asks for its parts too."
                     : r.tier() == 0 ? "Knap its edge and bind its grip at a War Anvil. You need to know its pattern."
                     : "Heat it, draw it out on the beat, quench it and fit its hilt at a War Anvil by the Forge. You need to know its pattern.";
             JeiLook.wrap(g, how, 9, 72, W - 18, Glass.LABEL, 2);

@@ -37,7 +37,7 @@ final class GearNow {
     static final int PRIORITY = 25;
     private static final int CACHE_TICKS = 20;
     /** The order pieces are suggested in when two are craftable at the same tier: what changes a fight most first. */
-    private static final Piece[] ORDER = {Piece.BLADE, Piece.CHESTPLATE, Piece.LEGGINGS, Piece.HELMET, Piece.BOOTS, Piece.FOCUS, Piece.MATTOCK};
+    private static final Piece[] ORDER = {Piece.BLADE, Piece.CHESTPLATE, Piece.LEGGINGS, Piece.HELMET, Piece.BOOTS, Piece.FOCUS};
 
     static void register() {
         NowHooks.register(GearNow::suggest);
@@ -104,10 +104,6 @@ final class GearNow {
             ItemStack s = inv.getItem(i);
             if (s.isEmpty() || s.getItem() instanceof HunterGearItem) continue;
             if (piece == Piece.BLADE && meleeOf(s) > tier.blade.damage() + 0.5) return false;
-            if (piece == Piece.MATTOCK) {
-                Tool tool = s.get(DataComponents.TOOL);
-                if (tool != null && tool.getMiningSpeed(Blocks.STONE.defaultBlockState()) >= tier.mattock.speed()) return false;
-            }
         }
         return true;
     }

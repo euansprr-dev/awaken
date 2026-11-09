@@ -40,6 +40,8 @@ public final class EnchantRules {
         if (s.isEmpty()) return 0;
         int verse = dev.awaken.delve.api.Pick.verse(s);
         if (verse >= 0) return 1 + (verse >= 2 ? 1 : 0) + (verse >= 4 ? 1 : 0) + (verse >= 6 ? 1 : 0);
+        // a forged pick by its quality, as any forged piece; one remade from an old pick keeps the room it had
+        if (dev.awaken.delve.api.Pick.forged(s)) return Math.max(dev.awaken.delve.api.Pick.quality(s) + 1, dev.awaken.delve.api.Pick.room(s));
         OptionalInt q = ForgeHooks.quality(s);
         if (q.isPresent()) return q.getAsInt() + 1;
         if (ArmsApi.found(s)) return 3;

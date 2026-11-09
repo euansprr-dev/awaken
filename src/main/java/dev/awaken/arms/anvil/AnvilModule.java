@@ -35,9 +35,13 @@ public final class AnvilModule {
         registerCommands();
         WeaponGoals.register();
         AnvilNow.register();
+        dev.awaken.core.api.Sources.declare("no longer made (SPEC §49.7): saves keep theirs, and any War Anvil remakes one free as a forged pick",
+                "waking_pick", "wildhide_mattock", "beastbound_mattock", "gatewrought_mattock", "veilwoven_mattock", "lordscale_mattock", "sovereign_mattock");
+        PickGoals.register();
         dev.awaken.core.api.Sources.declare("forged at a War Anvil (SPEC §46.7): by hand at E, in the Forge's heat from D",
                 AnvilCosts.table().keySet().toArray(String[]::new));
         AnvilTests.register();
+        PickAnvilTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

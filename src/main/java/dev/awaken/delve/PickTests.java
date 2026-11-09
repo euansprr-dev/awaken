@@ -19,7 +19,7 @@ import net.neoforged.neoforge.event.VanillaGameEvent;
 
 /**
  * The Delver's Pick's verses and gifts (SPEC §34.4), one test per mechanism: each verse wakes once, in order, from its
- * deed or its rite (a deed done early waits), and a lost pick comes back at your verse; Hush keeps a break's sound from
+ * deed or its rite (a deed done early waits); Hush keeps a break's sound from
  * creatures; Call takes only that lode's blocks near its heart, at most 24.
  */
 final class PickTests {
@@ -42,7 +42,7 @@ final class PickTests {
         var live = AwakenTests.survivalPlayer(h, "verses", new BlockPos(1, 1, 1));
         ServerPlayer p = live.player();
         try {
-            WakingPick.handOver(p);
+            p.getInventory().add(new ItemStack(DelveContent.WAKING_PICK.get()));
             ItemStack pick = carried(p);
             h.assertTrue(PickVerses.verse(pick) == 0, "it comes asleep");
             PickVerses.deed(p, PickVerses.Verse.KINDLE);
@@ -71,12 +71,6 @@ final class PickTests {
             p.getInventory().add(new ItemStack(Items.IRON_INGOT));
             PickGifts.forge(p, level, forge, pick);
             h.assertTrue(pick.getDamageValue() == 800 - pick.getMaxDamage() / 4, "an iron ingot mends a quarter: " + pick.getDamageValue());
-            // lost: the Forge makes another, at the verse you'd reached
-            p.getInventory().clearContent();
-            ItemStack iron = new ItemStack(Items.IRON_INGOT, PickGifts.REFORGE_IRON);
-            p.setItemInHand(InteractionHand.MAIN_HAND, iron);
-            h.assertTrue(PickGifts.forge(p, level, forge, iron), "the Forge re-forges a lost pick");
-            h.assertTrue(PickVerses.verse(carried(p)) == 4, "at the verse you'd reached: " + PickVerses.verse(carried(p)));
             h.assertTrue(Progression.profile(p).counter(PickVerses.WOKEN) == 4, "four verses woken, each once");
         } finally {
             live.leave();

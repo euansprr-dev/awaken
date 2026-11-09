@@ -14,7 +14,13 @@ public final class ArmouryCache {
 
     static void onView(ArmsPayloads.ArmouryView msg) {
         view = msg;
-        if (msg.open()) Minecraft.getInstance().gui.setScreen(dev.awaken.hall.client.HallConfig.classic() ? new ArmouryScreen() : new dev.awaken.hall.client.HallScreen());
+        if (msg.open()) Minecraft.getInstance().gui.setScreen(dev.awaken.hall.client.HallConfig.classic() || pickAtAnvil(msg) ? new ArmouryScreen() : new dev.awaken.hall.client.HallScreen());
+    }
+
+    /** A pickaxe in hand at a War Anvil: picks are made on the Armoury's Picks side, which the Hall doesn't have (SPEC §49.4). */
+    private static boolean pickAtAnvil(ArmsPayloads.ArmouryView msg) {
+        var player = Minecraft.getInstance().player;
+        return msg.door() == ArmsArmoury.ANVIL && player != null && ArmouryScreen.isPick(player.getMainHandItem());
     }
 
     static void onDetail(ArmsPayloads.ArmouryDetail msg) {
