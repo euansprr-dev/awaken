@@ -33,6 +33,16 @@ public final class DelveForged {
     /** The Mattock leaving the hand, and landing back in it (§49.8). */
     public static final DeferredHolder<SoundEvent, SoundEvent> MATTOCK_TOSS = sound("pick.mattock_toss"), MATTOCK_CATCH = sound("pick.mattock_catch");
 
+    /** A forged pick's bite, by form (§49.10), its ring in tune with the ore's note; the Mattock's broad end in soil and timber; a blunt pick's knock. */
+    public static final java.util.Map<PickForm, DeferredHolder<SoundEvent, SoundEvent>> STRIKE = new java.util.EnumMap<>(PickForm.class);
+
+    static {
+        for (PickForm f : PickForm.values()) STRIKE.put(f, sound("pick.strike_" + f.id));
+    }
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> STRIKE_EARTH = sound("pick.strike_earth"), STRIKE_WOOD = sound("pick.strike_wood"),
+            STRIKE_BLUNT = sound("pick.strike_blunt");
+
     /** The Delver's old head: what the stone gives you now, the start of your first forged pick. */
     public static final DeferredItem<Item> OLD_HEAD = ITEMS.registerSimpleItem("delver_old_head", p -> p.stacksTo(1).rarity(Rarity.UNCOMMON).fireResistant());
 

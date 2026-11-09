@@ -855,12 +855,26 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
                 : "Hold the mouse button (or Space) to warm the steel. The colours run out from the eye. Let go when the point shows the one you want.");
     }
 
+    /** What a held press is making, so letting go, or leaving, stops it. */
+    private net.minecraft.client.resources.sounds.@Nullable SoundInstance running;
+
+    private void stopRunning() {
+        if (running != null) minecraft.getSoundManager().stop(running);
+        running = null;
+    }
+
+    @Override
+    public void removed() {
+        stopRunning();
+        super.removed();
+    }
+
     private void startHold(AnvilWork w, float t, float now) {
         if (holding || lifted || !Float.isNaN(AnvilScene.plungeAt) || t > AnvilSong.COLOUR_LATE) return;
         holding = true;
         AnvilScene.plungeAt = now;
         AnvilClient.send(pos, AnvilPayloads.PLUNGE, 0, t, 0F);
-        AnvilClient.play(at(placed.work.at), AnvilContent.COLOURS.get(), 0.9F, 1F);
+        running = AnvilClient.held(at(placed.work.at), AnvilContent.COLOURS.get(), 0.9F, 1F);
     }
 
     private void endHold(AnvilWork w, float t, float now) {
@@ -869,6 +883,7 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         lifted = true;
         AnvilScene.liftAt = now;
         AnvilClient.send(pos, AnvilPayloads.LIFT, 0, t, 0F);
+        stopRunning();
         AnvilClient.play(at(placed.work.at), AnvilContent.QUENCH.get(), 0.75F, 1.15F);
         float c = AnvilSong.colour(now - AnvilScene.plungeAt);
         say(dev.awaken.delve.forged.PickStats.colourName(c) + " it is", LANTERN, now);
@@ -906,7 +921,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         holding = true;
         AnvilScene.plungeAt = now;
         AnvilClient.send(pos, AnvilPayloads.PLUNGE, 0, t, 0F);
-        AnvilClient.play(at(placed.work.at), w.stage == AnvilSong.SEAM ? AnvilContent.POUR.get() : AnvilContent.QUENCH.get(), 1F, 1F);
+        if (w.stage == AnvilSong.SEAM) running = AnvilClient.held(at(placed.work.at), AnvilContent.POUR.get(), 1F, 1F);
+        else AnvilClient.play(at(placed.work.at), AnvilContent.QUENCH.get(), 1F, 1F);
     }
 
     private void lift(AnvilWork w, float t, float now) {
@@ -916,7 +932,8 @@ final class AnvilSongScreen extends Screen implements dev.awaken.signal.client.Q
         AnvilScene.liftAt = now;
         float held = now - AnvilScene.plungeAt;
         AnvilClient.send(pos, AnvilPayloads.LIFT, 0, t, 0F);
-        AnvilClient.play(at(placed.work.at), AnvilContent.LIFT.get(), 0.9F, 1F);
+        stopRunning();
+        if (w.stage != AnvilSong.SEAM) AnvilClient.play(at(placed.work.at), AnvilContent.LIFT.get(), 0.9F, 1F);
         if (w.stage == AnvilSong.SEAM) {
             if (AnvilSong.quench(held) >= 1F) say("It runs true, end to end", LANTERN, now);
             else say(AnvilSong.brittle(held) ? "A little ran over" : "It stops short of the points", BAD, now);

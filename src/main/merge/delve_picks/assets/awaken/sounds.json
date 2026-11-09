@@ -1,0 +1,324 @@
+{
+  "pick.strike_delver": {
+    "subtitle": "subtitles.awaken.pick.strike_delver",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_strike_delver_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_delver_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_delver_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_delver_3",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "pick.strike_breaker": {
+    "subtitle": "subtitles.awaken.pick.strike_breaker",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_strike_breaker_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:pick/pick_strike_breaker_1",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:pick/pick_strike_breaker_2",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:pick/pick_strike_breaker_3",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "pick.strike_mattock": {
+    "subtitle": "subtitles.awaken.pick.strike_mattock",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_strike_mattock_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_mattock_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_mattock_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_mattock_3",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "pick.strike_sounder": {
+    "subtitle": "subtitles.awaken.pick.strike_sounder",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_strike_sounder_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_sounder_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_sounder_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_strike_sounder_3",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "pick.strike_earth": {
+    "subtitle": "subtitles.awaken.pick.strike_earth",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_strike_earth_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/pick_strike_earth_1",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/pick_strike_earth_2",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/pick_strike_earth_3",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "pick.strike_wood": {
+    "subtitle": "subtitles.awaken.pick.strike_wood",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_strike_wood_0",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "awaken:pick/pick_strike_wood_1",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "awaken:pick/pick_strike_wood_2",
+        "attenuation_distance": 14
+      }
+    ]
+  },
+  "pick.strike_blunt": {
+    "subtitle": "subtitles.awaken.pick.strike_blunt",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_strike_blunt_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/pick_strike_blunt_1",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/pick_strike_blunt_2",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "pick.sounding_tap": {
+    "subtitle": "subtitles.awaken.pick.sounding_tap",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_sounding_tap_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_sounding_tap_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/pick_sounding_tap_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "pick.sounding_hollow": {
+    "subtitle": "subtitles.awaken.pick.sounding_hollow",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_sounding_hollow_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:pick/pick_sounding_hollow_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:pick/pick_sounding_hollow_2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:pick/pick_sounding_hollow_3",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "pick.mattock_toss": {
+    "subtitle": "subtitles.awaken.pick.mattock_toss",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_mattock_toss_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:pick/pick_mattock_toss_1",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:pick/pick_mattock_toss_2",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "pick.mattock_catch": {
+    "subtitle": "subtitles.awaken.pick.mattock_catch",
+    "sounds": [
+      {
+        "name": "awaken:pick/pick_mattock_catch_0",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:pick/pick_mattock_catch_1",
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:pick/pick_mattock_catch_2",
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "anvil.eye": {
+    "subtitle": "subtitles.awaken.anvil.eye",
+    "sounds": [
+      {
+        "name": "awaken:pick/anvil_eye_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:pick/anvil_eye_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:pick/anvil_eye_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "anvil.tip": {
+    "subtitle": "subtitles.awaken.anvil.tip",
+    "sounds": [
+      {
+        "name": "awaken:pick/anvil_tip_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:pick/anvil_tip_1",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:pick/anvil_tip_2",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "anvil.hang": {
+    "subtitle": "subtitles.awaken.anvil.hang",
+    "sounds": [
+      {
+        "name": "awaken:pick/anvil_hang_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/anvil_hang_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/anvil_hang_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "anvil.tend": {
+    "subtitle": "subtitles.awaken.anvil.tend",
+    "sounds": [
+      {
+        "name": "awaken:pick/anvil_tend_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/anvil_tend_1",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/anvil_tend_2",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/anvil_tend_3",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "anvil.thread": {
+    "subtitle": "subtitles.awaken.anvil.thread",
+    "sounds": [
+      {
+        "name": "awaken:pick/anvil_thread_0",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/anvil_thread_1",
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:pick/anvil_thread_2",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "anvil.pour": {
+    "subtitle": "subtitles.awaken.anvil.pour",
+    "sounds": [
+      {
+        "name": "awaken:pick/anvil_pour_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:pick/anvil_pour_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "anvil.colours": {
+    "subtitle": "subtitles.awaken.anvil.colours",
+    "sounds": [
+      {
+        "name": "awaken:pick/anvil_colours_0",
+        "attenuation_distance": 12
+      }
+    ]
+  }
+}
