@@ -1,0 +1,45 @@
+# The Hall of Arms (SPEC §52): "Choose your first armour" on K > Tasks as the suits themselves, one brought close, and chosen.
+world halllineup creative 5253
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1708 960
+cmd awaken admin levels 6
+wait 40
+screen close
+cmd tick sprint 6200
+wait 240
+screen close
+screen holo tasks
+tasks now
+wait 60
+tasks armour
+wait 40
+shot lineup_band
+tasks worn
+wait 70
+shot lineup
+click 77 109
+wait 12
+shotnow lineup_zoom
+wait 70
+shot lineup_close
+click 285 215
+wait 40
+shot lineup_chosen
+click 31 224
+wait 40
+shot lineup_after
+click 31 224
+wait 30
+shot lineup_back
+screen close
+quit

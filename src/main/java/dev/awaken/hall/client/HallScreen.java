@@ -159,7 +159,7 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
 
     private void openSuit(TerraceLayout.Fig f, int slot) {
         terrace.hover = null;
-        close = new SuitView(this, f, slot);
+        close = new SuitView(f, slot, this::openLooks, null);
     }
 
     void openLooks() {

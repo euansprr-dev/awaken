@@ -19719,3 +19719,26 @@ A paragraph that won't fit is left out whole, never cut. Unfound: "Unknown", no 
 
 **Refreshing.** Twice a second the screen hashes your pack; a change asks `ArmsArmoury.REFRESH`, so what you pick up shows without
 reopening. Test `hall_wall`: the wall says the same as the Armoury's list.
+
+**The Armour wing.** 29 suits on six terraces climbing away, ranks E (nearest) to S, kinds across; each row stands in the gaps of the
+one before it, the rows zigzagging, so a suit at the back is hidden as little as possible (`TerraceLayout`, offsets found by search).
+Lit round your lantern and below your level; unfound suits are black shapes with no name. The same filters as the wall. Clicking one
+brings it close: it stands turning, each piece named on the figure (`Helm`, `Cuirass`, `Greaves`, `Boots`, with what state it's in; a
+click or Tab picks the piece); the same kind at every rank on the left; on the right what the suit does (its two-piece and four-piece
+abilities come before the piece's own rows: that is why you'd want it), the armour of the whole suit, what the piece you picked does
+against what you wear, the real items it takes, an inlay of any catalyst you carry, and Hold to forge the piece. Unfound patterns
+say where patterns come from, never which creature. `Your looks` (each piece's look, one dye) moved here. Track a suit and it goes on
+K > Tasks as `armour/tracked` (one at a time). The Fitting Stand opens this wing; K's way in looks and tracks only. Test `hall_suits`.
+
+**The War Anvil.** No window: your weapon hangs turning over your own forge, which is out of focus and dim behind it, and your hand is
+empty while it does. Three rites wait underneath, each shown by a real thing from the game: the smith's hammer (Temper), the Forge
+(Reforge), the stones in turn (Attune). Never a drawn sigil (Euan 9 Nov: "need actual icons that still feel like MC"). Point at a rite
+and the steel shows it, the numbers drawn out of the weapon: heat runs down the blade for Temper, the next rank's weapon hangs over it
+for Reforge, the Force's colour fills it for Attune. Choosing a rite arms it; every cost is its real item; Hold commits, and the weapon
+lands. Attune takes any stone you carry, with the off hand's stone chosen first; a stone you don't have is still drawn in full, so you
+know it when you find it. Tests `arms_anvil_*`.
+
+**The line-up.** A step on K > Tasks that offers a choice of armour ("Choose your first armour", "Make your D-rank armour") opens the
+suits themselves, tall and side by side, instead of a list (`LineUpScreen`; `SetPreviewScreen` stays behind `classicScreens`). Each has
+its name, its kind and how close you are. A click brings it close in the same view as the Armour wing, with "Choose this one" where
+Track would be and left and right moving between the offers only. The step's choice is the Tasks page's own (`TaskPage.choose`).

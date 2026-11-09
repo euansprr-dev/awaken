@@ -152,7 +152,7 @@ final class WallView {
         HallLayout.Cell h = hover;
         if (h == null) {
             s.titleCentre(quiet, 854F, 26F, 2F, Stage.TITLE);
-            s.centre("Click anything to bring it close.", 854F, 92F, 3F, Stage.LABEL);
+            s.centre("Click one to bring it close.", 854F, 92F, 3F, Stage.LABEL);
             return;
         }
         int state = w.at(h.col(), h.tier());

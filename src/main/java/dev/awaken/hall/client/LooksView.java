@@ -77,7 +77,7 @@ final class LooksView extends CloseView {
         float e = eased(), mx = s.sx(mouseX), my = s.sy(mouseY);
         if (intro.isEmpty()) {
             intro = s.wrap("Wear the look of any set you've forged whole. Each piece keeps its own armour, ability and mastery.", Panel.TEXT_W, 3F);
-            note = s.wrap("A dye you carry colours the glow of the suit you wear: one dye for the whole suit. The first square gives each piece its own glow back.", Panel.TEXT_W, 3F);
+            note = s.wrap("A dye you carry colours the whole suit's glow. The first square gives each piece its own glow back.", Panel.TEXT_W, 3F);
         }
         s.glow(560F, 490F, 720F, 620F, 0xFFCF7A, .24F * e);
         var player = Minecraft.getInstance().player;

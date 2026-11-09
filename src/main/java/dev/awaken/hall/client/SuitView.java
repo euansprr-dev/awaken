@@ -44,12 +44,22 @@ final class SuitView extends CloseView {
     private static final float[][] ZONE = {{838F, 196F}, {385F, 360F}, {838F, 560F}, {385F, 752F}};
     private static final float[][] ANCHOR = {{0F, -.25F, -.28F}, {0F, .32F, -.2F}, {0F, .92F, -.16F}, {0F, 1.38F, -.18F}};
     private static final float ZONE_W = 176F, ZONE_H = 64F;
-    private static final int FORGE = 0, MEMORY = 1, TRACK = 2, UNTRACK = 3, LOOKS = 4;
+    private static final int FORGE = 0, MEMORY = 1, TRACK = 2, UNTRACK = 3, LOOKS = 4, CHOOSE = 5;
     private static final float INLAY_SIZE = 52F, INLAY_STEP = 60F;
     /** The catalyst chosen to inlay (its Force + 1; 0 none), kept between visits. */
     private static int inlay;
 
-    private final HallScreen screen;
+    /** Opened from a step on K > Tasks: the suits it offers are all you can move between, and Choose stands where Track would. */
+    interface Choosing {
+        boolean chosen(ArmourSet s);
+
+        void choose(ArmourSet s);
+
+        @Nullable ArmourSet step(ArmourSet s, int d);
+    }
+
+    private final @Nullable Runnable looks;
+    private final @Nullable Choosing choosing;
     ArmourSet set;
     int slot;
     private final float fromX, fromY, fromS;
@@ -65,7 +75,7 @@ final class SuitView extends CloseView {
     private boolean dirty = true;
     private ArmourPayloads.@Nullable Offers built;
     private @Nullable Component name, pieceName;
-    private float nameSize = 5F;
+    private float nameSize = 4F;
     private String eyebrow = "", compare = "";
     private int compareColour = Stage.LABEL;
     private List<FormattedCharSequence> blurb = List.of(), why = List.of(), inlayLine = List.of();
@@ -86,8 +96,9 @@ final class SuitView extends CloseView {
     private final float[] subX0 = new float[3], subX1 = new float[3];
     private final Panel.Hold hold = new Panel.Hold();
 
-    SuitView(HallScreen screen, TerraceLayout.Fig from, int slot) {
-        this.screen = screen;
+    SuitView(TerraceLayout.Fig from, int slot, @Nullable Runnable looks, @Nullable Choosing choosing) {
+        this.looks = looks;
+        this.choosing = choosing;
         this.set = from.set();
         this.shown = set;
         this.slot = slot >= 0 ? slot : firstUseful();
@@ -123,6 +134,11 @@ final class SuitView extends CloseView {
     }
 
     @Override void step(int dc, int dt) {
+        if (choosing != null) {
+            ArmourSet to = choosing.step(set, dc);
+            if (to != null) select(to);
+            return;
+        }
         TerraceLayout.Fig f = TerraceLayout.of(set);
         int tier = Math.clamp(f.tier() + dt, 0, HallNet.ROWS - 1), col = Math.floorMod(f.col() + dc, 5);
         if (tier == 0 && col == 4) col = dc > 0 ? 0 : 3; // E has no Lord-forged suit
@@ -157,7 +173,7 @@ final class SuitView extends CloseView {
             modes |= (i == slot ? mode | Placed.MARKED : mode) << i * 4;
         }
         name = Stage.blackletter(hidden ? "Unknown" : set.setName);
-        nameSize = 5F;
+        nameSize = 4F;
         while (nameSize > 2F && s.titleWidth(name, nameSize) > TEXT_W) nameSize -= 1F;
         String rank = set.rank.label + " rank";
         eyebrow = hidden ? "Not found · " + rank : set.archetype.label + " · " + rank;
@@ -180,7 +196,7 @@ final class SuitView extends CloseView {
             stats.add(new String[] {Integer.toString((int) Math.round(armour)), "Armour, whole suit"});
             if (tough > 0) stats.add(new String[] {HallSpecial.n((float) tough), "Toughness"});
             stats.add(new String[] {SuitState.count(o, set, SuitState.MADE) + "/4", "Pieces made"});
-            compare(piece);
+            compare(s, piece);
             // the suit's own trick first, the rest as room allows
             List<String> say = new ArrayList<>(4);
             String twist = ArmourBonus.twist(set);
@@ -199,16 +215,25 @@ final class SuitView extends CloseView {
         inlayLine = !showInlay ? List.of() : s.wrap(inlay == 0 ? "No inlay. Choose a catalyst to set into this piece." : ArmourInlay.line(Forces.Force.values()[inlay - 1]), TEXT_W, 3F);
         actions(s, w, o, offer, hidden, state);
         TerraceLayout.Fig f = TerraceLayout.of(set);
-        prevName = neighbourName(o, f, -1);
-        nextName = neighbourName(o, f, 1);
+        prevName = neighbourName(f, -1);
+        nextName = neighbourName(f, 1);
     }
 
-    private static String neighbourName(ArmourPayloads.@Nullable Offers o, TerraceLayout.Fig f, int d) {
+    private String neighbourName(TerraceLayout.Fig f, int d) {
+        if (choosing != null) {
+            ArmourSet to = choosing.step(set, d);
+            return to == null ? "" : to.setName;
+        }
         int col = Math.floorMod(f.col() + d, f.tier() == 0 ? 4 : 5);
         return TerraceLayout.kind(col);
     }
 
-    private void compare(ArmorType piece) {
+    /** The long way if the line has room for it, the short way if not: a long item name must never cut the sentence off. */
+    private static String say(Stage s, String longer, String shorter) {
+        return s.width(longer, 3F) <= TEXT_W ? longer : shorter;
+    }
+
+    private void compare(Stage s, ArmorType piece) {
         var player = Minecraft.getInstance().player;
         if (player == null) return;
         EquipmentSlot equip = piece.getSlot();
@@ -216,15 +241,16 @@ final class SuitView extends CloseView {
         if (made.isEmpty()) return;
         double mine = ArmourNow.armour(worn, equip), here = ArmourNow.armour(made, equip);
         if (!worn.isEmpty() && worn.is(made.getItem())) {
-            compare = "You are wearing this " + PIECE[slot].toLowerCase(Locale.ROOT) + ".";
+            compare = "You are wearing this one.";
             compareColour = Stage.LABEL;
         } else if (worn.isEmpty()) {
-            compare = PIECE[slot] + ": " + HallSpecial.n((float) here) + " armour, and that slot is empty.";
+            compare = HallSpecial.n((float) here) + " armour, and you wear nothing there.";
             compareColour = Stage.GOOD;
         } else {
             double delta = here - mine;
             String on = worn.getHoverName().getString();
-            compare = Math.abs(delta) < .05 ? "The same armour as your " + on + "." : (delta > 0 ? "+" : "") + HallSpecial.n((float) delta) + " armour on your " + on;
+            String change = (delta > 0 ? "+" : "") + HallSpecial.n((float) delta) + " armour on ";
+            compare = Math.abs(delta) < .05 ? say(s, "The same armour as your " + on + ".", "The same armour as what you wear.") : say(s, change + "your " + on, change + "what you wear");
             compareColour = delta > .05 ? Stage.GOOD : delta < -.05 ? Stage.BAD : Stage.LABEL;
         }
     }
@@ -243,7 +269,7 @@ final class SuitView extends CloseView {
         } else if (state == SuitState.MADE) {
             line = SuitState.count(o, set, SuitState.MADE) == 4 ? "You have the whole suit." : "You have this piece.";
             whyColour = Stage.GOOD;
-            subs.add(new Panel.Act("Your looks", LOOKS, false, true, InputConstants.KEY_L));
+            if (looks != null) subs.add(new Panel.Act("Your looks", LOOKS, false, true, InputConstants.KEY_L));
         } else if (state == SuitState.OVER) {
             line = set.setName + " opens at level " + ArmsArmoury.LEVEL[set.rank.ordinal()] + ". You are level " + w.level() + ".";
         } else if (!atStand) {
@@ -259,7 +285,12 @@ final class SuitView extends CloseView {
             else if (state == SuitState.SHORT) line = stillNeeds(offer);
             else if (!place.isEmpty()) line = place;
         }
-        if (!hidden && state != SuitState.MADE) subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? UNTRACK : TRACK, false, true, InputConstants.KEY_T));
+        if (choosing != null) {
+            boolean on = choosing.chosen(set);
+            subs.add(0, new Panel.Act(on ? "Your choice" : "Choose this one", CHOOSE, false, !on, InputConstants.KEY_RETURN));
+        } else if (!hidden && state != SuitState.MADE) {
+            subs.add(0, new Panel.Act(tracked ? "Stop tracking" : "Track it", tracked ? UNTRACK : TRACK, false, true, InputConstants.KEY_T));
+        }
         why = line.isEmpty() ? List.of() : s.wrap(line, TEXT_W, 3F);
     }
 
@@ -295,7 +326,7 @@ final class SuitView extends CloseView {
         float slide = (1F - e) * (1F - e);
         s.g.nextStratum();
         drawZones(s, slide, mx, my);
-        drawLadder(s, -180F * slide);
+        if (choosing == null) drawLadder(s, -180F * slide);
         drawPanel(s, 720F * slide, mx, my, dt, time);
         drawFoot(s, slide);
     }
@@ -414,7 +445,7 @@ final class SuitView extends CloseView {
         s.glow(X + wide / 2F, y + 12F * nameSize, wide / 2F + 40F, 22F * nameSize, Stage.RANK[set.rank.ordinal()], .22F);
         s.title(name, X, y, nameSize, Stage.TITLE);
         y += 26F * nameSize + 4F;
-        y = Panel.lines(s, blurb, y, 2, Stage.LABEL) + 12F;
+        if (stats.isEmpty() || special.isEmpty()) y = Panel.lines(s, blurb, y, 2, Stage.LABEL) + 12F;
         if (!stats.isEmpty()) {
             float x = X;
             for (String[] st : stats) {
@@ -433,18 +464,15 @@ final class SuitView extends CloseView {
         float whyTop = actionTop - 8F - why.size() * 30F;
         float inlayH = showInlay ? INLAY_SIZE + 12F + inlayLine.size() * 30F : 0F;
         float needHeight = Panel.needsHeight(needs.size());
-        float pieceH = 52F + (compare.isEmpty() ? 0F : 30F);
+        float pieceH = 52F + (compare.isEmpty() ? 0F : 40F);
         float last = whyTop - inlayH - needHeight - pieceH - 12F;
 
-        if (!special.isEmpty() && y + 34F + special.get(0).size() * 30F <= last) {
-            s.text("What wearing it does", X, y, 3F, Stage.EDGE);
-            y += 32F;
-            for (List<FormattedCharSequence> paragraph : special) {
-                if (y + paragraph.size() * 30F > last) break;
-                y = Panel.lines(s, paragraph, y, paragraph.size(), Stage.TITLE) + 4F;
-            }
-            y += 6F;
+        // what the suit does is why you'd want it: it comes first, as much of it as the piece's own rows leave room for
+        for (List<FormattedCharSequence> paragraph : special) {
+            if (y + paragraph.size() * 30F > last) break;
+            y = Panel.lines(s, paragraph, y, paragraph.size(), Stage.TITLE) + 4F;
         }
+        y += 6F;
 
         // the piece you've picked, named as the thing itself
         if (!pieceIcon.isEmpty() && !SuitState.hidden(HallClient.suits, set)) Panel.icon(s, pieceIcon, X, y, 3F);
@@ -452,7 +480,7 @@ final class SuitView extends CloseView {
         y += 52F;
         if (!compare.isEmpty()) {
             s.text(s.fit(compare, TEXT_W, 3F), X, y, 3F, compareColour);
-            y += 30F;
+            y += 40F;
         }
 
         if (!needs.isEmpty()) {
@@ -535,7 +563,7 @@ final class SuitView extends CloseView {
         s.text("Esc", 40F, y, 3F, Stage.EDGE);
         s.text("Back", 120F, y, 3F, Stage.LABEL);
         s.text("< " + prevName, 250F, y, 3F, Stage.LABEL);
-        s.centre("Drag to turn · Tab: next piece", 622F, y, 3F, Stage.DIM);
+        s.centre("Drag to turn", 622F, y, 3F, Stage.DIM);
         s.right(nextName + " >", 1000F, y, 3F, Stage.LABEL);
     }
 
@@ -562,7 +590,7 @@ final class SuitView extends CloseView {
             pick(zone);
             return true;
         }
-        if (x >= 0F && x < LADDER_X + PORTRAIT + 60F && y >= LADDER_TOP && y < LADDER_BOTTOM) {
+        if (choosing == null && x >= 0F && x < LADDER_X + PORTRAIT + 60F && y >= LADDER_TOP && y < LADDER_BOTTOM) {
             int t = Math.clamp((int) ((LADDER_BOTTOM - y) / RUNG), 0, HallNet.ROWS - 1);
             ArmourSet other = TerraceLayout.set(TerraceLayout.of(set).col(), t);
             if (other != null) select(other);
@@ -624,7 +652,15 @@ final class SuitView extends CloseView {
             }
             case TRACK -> ClientPacketDistributor.sendToServer(new HallNet.Ask(HallNet.TRACK, set.id, HallClient.standPos()));
             case UNTRACK -> ClientPacketDistributor.sendToServer(new HallNet.Ask(HallNet.UNTRACK, set.id, HallClient.standPos()));
-            case LOOKS -> screen.openLooks();
+            case LOOKS -> {
+                if (looks != null) looks.run();
+            }
+            case CHOOSE -> {
+                if (choosing != null) {
+                    choosing.choose(set);
+                    dirty = true;
+                }
+            }
             default -> {}
         }
     }

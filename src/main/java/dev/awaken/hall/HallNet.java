@@ -39,7 +39,7 @@ public final class HallNet {
         @Override public Type<Suits> type() { return TYPE; }
     }
 
-    public static final int REFRESH = 0, TRACK = 1, UNTRACK = 2;
+    public static final int REFRESH = 0, TRACK = 1, UNTRACK = 2, PEEK = 3;
 
     /** The fighter → server: the suits again, optionally following one first; {@code pos} the stand the Hall was opened at, if any. */
     public record Ask(int op, String set, net.minecraft.core.BlockPos pos) implements CustomPacketPayload {

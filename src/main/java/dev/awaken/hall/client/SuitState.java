@@ -55,7 +55,7 @@ final class SuitState {
             case READY -> "Ready to forge";
             case SHORT -> "Needs more";
             case OVER -> "Opens later";
-            default -> "Pattern not found";
+            default -> "Not found yet";
         };
     }
 

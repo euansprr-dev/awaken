@@ -18,8 +18,9 @@ final class TerraceLayout {
     private TerraceLayout() {}
 
     /** Each rank's terrace, E first: where its figures' feet stand, how tall they are, how far apart. */
-    private static final int[][] TERRACE = {{940, 288, 322}, {786, 232, 272}, {646, 190, 232}, {520, 154, 198}, {408, 126, 168}, {312, 102, 142}};
-    private static final float[] FIRST_X = {371F, 310F, 441F, 414.4F, 555F, 538.8F};
+    private static final int[][] TERRACE = {{940, 265, 322}, {786, 213, 299}, {646, 175, 278}, {520, 142, 238}, {408, 116, 202}, {312, 94, 170}};
+    /** Each row's first figure: found by search so that a figure at the back is hidden by as little as possible (the rows zigzag). */
+    private static final float[] FIRST_X = {371F, 255.6F, 431F, 378.8F, 342.8F, 513.2F};
     /** Stage pixels a block of figure takes, for a figure this tall. */
     private static final float SCALE = .482F;
     private static final Archetype[] ACROSS = {Archetype.STRIDER, Archetype.BULWARK, Archetype.CHANNELER, Archetype.DUELIST, Archetype.LORD};
@@ -96,8 +97,7 @@ final class TerraceLayout {
     }
 
     static float letterX(int tier) {
-        int[] t = TERRACE[tier];
-        return Math.max(16F, 854F - (tier == 0 ? 1.5F : 2F) * t[2] - t[2] * .62F - 40F);
+        return Math.max(16F, FIRST_X[tier] - TERRACE[tier][1] * .42F - 42F);
     }
 
     static float letterY(int tier) {

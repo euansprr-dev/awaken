@@ -23,6 +23,7 @@ public final class HallServer {
                 && p.level().getBlockEntity(a.pos()) instanceof dev.awaken.armour.FittingStandBlockEntity at ? at : null;
         if (a.op() == HallNet.TRACK) dev.awaken.armour.ArmourForge.track(p, dev.awaken.armour.ArmourSet.byId(a.set()));
         if (a.op() == HallNet.UNTRACK) dev.awaken.armour.ArmourForge.track(p, null);
+        if (a.op() == HallNet.PEEK) dev.awaken.core.AwakenNet.send(p, wall(p)); // K's line-up: your level, for the close-up's words
         dev.awaken.core.AwakenNet.send(p, new HallNet.Suits(dev.awaken.armour.ArmourForge.hall(p, be)));
     }
 
