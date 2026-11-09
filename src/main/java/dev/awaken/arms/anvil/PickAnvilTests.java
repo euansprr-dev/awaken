@@ -386,6 +386,7 @@ final class PickAnvilTests {
         s.hurtAndBreak(5, p, EquipmentSlot.MAINHAND);
         h.assertTrue(p.getMainHandItem() == s && s.getDamageValue() == s.getMaxDamage() - 1, "it stops at its last use and doesn't break: " + s.getDamageValue());
         h.assertTrue(ForgedPicks.blunt(s) && Math.abs(ForgedPicks.speedFactor(s) / sharp - PickStats.BLUNT) < 1e-4F, "blunt digs at 30%");
+        h.assertFalse(dev.awaken.delve.HeavyStrikes.canStrike(s), "and takes no heavy strike, whose wear it could no longer pay");
         s.hurtAndBreak(5, p, EquipmentSlot.MAINHAND);
         h.assertTrue(p.getMainHandItem() == s, "and goes on not breaking");
         int blunted = s.getDamageValue();
@@ -395,6 +396,7 @@ final class PickAnvilTests {
         ItemStack done = p.getMainHandItem();
         h.assertTrue(done.getDamageValue() == blunted - done.getMaxDamage() / 4, "a quarter of its wear off: " + done.getDamageValue());
         h.assertTrue(ForgedPicks.data(done).tally().keen() == PickStats.KEEN_BLOCKS && !ForgedPicks.blunt(done), "and keen");
+        h.assertTrue(dev.awaken.delve.HeavyStrikes.canStrike(done), "dressed, it strikes again");
         h.assertTrue(ForgedPicks.speedFactor(done) > sharp, "keen cuts faster");
         h.assertFalse(done.supportsEnchantment(level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.EFFICIENCY)), "no Efficiency");
         h.succeed();

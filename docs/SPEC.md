@@ -19700,7 +19700,7 @@ Rank speed 5, 7, 9, 10, 11, 12.5. Uses 300, 650, 1800, 2200, 2700, 3400. Damage 
 form, so `/give` and creative stacks are whole; quality, colour, keen and blunt go through a `BreakSpeed` factor that runs on both sides, and only
 MAX_DAMAGE is per stack (a Tool rule per stack was the first plan, and a data change every Dressing would have restarted block breaking on the
 client). Temper, the steps of quality the Forge could hold, adds 0/4/8/12% to speed and uses. Colour c runs 0 (straw, +8% speed, -20% uses) to
-0.75 (blue, -6%, +30%), peacock 0.5 even. A pick never breaks: at its last use it goes blunt (30% speed) until dressed. Forged picks are kept through
+0.75 (blue, -6%, +30%), peacock 0.5 even. A pick never breaks: at its last use it goes blunt (30% speed, and no heavy strike, whose wear it could no longer pay) until dressed. Forged picks are kept through
 death, and A and S are fire resistant. Efficiency is out, since rank and forging are its speed. A forged pick has no repair material: Dressing is the
 way (one metal, mends a quarter, keen for 200 blocks at +10%). Its enchantment room is quality + 1, or the old pick's room if larger.
 

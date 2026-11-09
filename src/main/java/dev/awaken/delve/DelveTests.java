@@ -224,6 +224,7 @@ final class DelveTests {
             for (Piece piece : Piece.values()) {
                 if (piece.isArmour()) continue; // forged at a Fitting Stand from the tier's metal (SPEC §44.4, armour_forge_rules)
                 if (piece == Piece.BLADE) continue; // forged at a War Anvil: checked with the weapons below (SPEC §46.7)
+                if (piece == Piece.MATTOCK) continue; // forged too, its recipes retired (SPEC §49.9)
                 ShapedRecipe r = shaped(level, GearItems.get(tier, piece));
                 h.assertTrue(r != null, "recipe for " + tier.itemId(piece));
                 boolean metal = metalSlot(r, tier.metalTag());

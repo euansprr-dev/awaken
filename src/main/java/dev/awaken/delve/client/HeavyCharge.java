@@ -39,7 +39,7 @@ final class HeavyCharge {
     private static int demoTicks = -1;
 
     static boolean wants(LocalPlayer p) {
-        return p.isShiftKeyDown() && !p.isSpectator() && HeavyStrikes.isMiningTool(p.getMainHandItem());
+        return p.isShiftKeyDown() && !p.isSpectator() && HeavyStrikes.canStrike(p.getMainHandItem());
     }
 
     /** The attack key while sneaking with a pick: no vanilla mining, the charge instead (each tick it is asked again). */
@@ -47,6 +47,8 @@ final class HeavyCharge {
         if (!e.isAttack()) return;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
+        if (p != null && mc.gui.screen() == null && p.isShiftKeyDown() && HeavyStrikes.isMiningTool(p.getMainHandItem()) && !HeavyStrikes.canStrike(p.getMainHandItem()))
+            p.sendOverlayMessage(net.minecraft.network.chat.Component.literal("This pick's too blunt for a heavy strike. Dress it at a War Anvil.").withColor(0xE8C9A0));
         if (p == null || mc.gui.screen() != null || !wants(p)) return;
         if (!charging && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult) return;   // a sneaking swing at a creature stays a swing
         e.setCanceled(true);

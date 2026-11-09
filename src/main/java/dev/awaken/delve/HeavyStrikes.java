@@ -52,6 +52,11 @@ public final class HeavyStrikes {
         return !s.isEmpty() && s.is(DelveContent.MINING_TOOLS);
     }
 
+    /** A heavy strike wants an edge: a blunt forged pick wears no further, so without this its three blocks would come free for ever (SPEC §49.3). */
+    public static boolean canStrike(ItemStack s) {
+        return isMiningTool(s) && !dev.awaken.delve.forged.ForgedPicks.blunt(s);
+    }
+
     /** A Breaker glints sooner (SPEC §49.2). */
     public static final int BREAKER_GLINT = 14;
 
@@ -68,7 +73,7 @@ public final class HeavyStrikes {
     static List<BlockPos> release(ServerPlayer p, int charge, boolean perfect) {
         ServerLevel level = p.level();
         ItemStack tool = p.getMainHandItem();
-        if (!isMiningTool(tool) || charge < MIN || p.isSpectator()) return List.of();
+        if (!canStrike(tool) || charge < MIN || p.isSpectator()) return List.of();
         long now = level.getGameTime();
         Long last = LAST.get(p.getUUID());
         if (last != null && now - last < COOLDOWN) return List.of();
@@ -99,7 +104,7 @@ public final class HeavyStrikes {
                 if (!tool.isEmpty() && extra > 0) tool.hurtAndBreak(extra, p, EquipmentSlot.MAINHAND);
                 p.causeFoodExhaustion(EXHAUSTION_PER_BLOCK);
             }
-            if (!isMiningTool(p.getMainHandItem())) break;   // it broke on the way in
+            if (!canStrike(p.getMainHandItem())) break;   // it broke, or went blunt, on the way in
         }
         if (bored.isEmpty()) return bored;
         LongArrayList longs = new LongArrayList();
