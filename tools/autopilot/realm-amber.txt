@@ -75,7 +75,7 @@ cmd awaken gate realm_at WAYSTONE 0 8 5 8
 look 135 22
 wait 200
 shot amber_waystone
-cmd awaken gate realm_at UPDRAFT 0 18 6 18
+cmd awaken gate realm_at UPDRAFT 0 8 6 8
 look 135 14
 cmd execute at @s run summon awaken:pollen_grazer ^-3 ^ ^10
 cmd execute at @s run summon awaken:pollen_grazer ^4 ^ ^13
