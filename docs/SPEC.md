@@ -6504,6 +6504,14 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   bits every tick (`FaunaMob.tick`), so a tour's still flier shows itself aloft (the first fliers tour's owls hung
   upright in the air, perched).
 
+- **On real ground** (Euan's playtest 9 Nov: the Drip Lurker's legs ran down the face of a gravel step). A foot goes only where it can stand:
+  `LegSurface.footing` reads the surface in that foot's own column, and refuses a wall (higher than a step), a drop (more than a step
+  down) or a spot with something solid right above. `Legs.fit`, run every time a foot lifts, takes the full stance if the column will
+  take it, the leg can reach it (off flat ground, 1.05x its length) and a straight line from hip to foot clears every block; otherwise it
+  draws the foot in towards the body in steps (0.8, 0.6, 0.45, 0.3, 0.15), and that place becomes its home, so it doesn't keep re-stepping. A
+  swinging foot re-aims with the same rule, and one planted foot a frame re-checks its leg. Flat ground behaves exactly as before.
+  `creature_motion_feet` (via `LegBlockTrial`) stands every rig against a wall, a corner, a kerb, a step down and a two-block drop.
+
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 
 Euan: "right now for basically everything there is no first-person animation". One owner for everything drawn in first
@@ -15569,6 +15577,18 @@ Gate: a level-5 bench costs at most +0.5 ms p50 and +1 ms p99 over level 1.
   EntityCulling leaves our creatures alone (`compat.client.EntityCullingBridge`, soft-loaded).
 - **Its motion.** Position updates don't change with distance (every 3 ticks at any range, replayed over 3 client ticks), and the client
   pauses a body for a tick when a server tick runs late; 12x zoom makes that a visible hitch, and no change here hides a slow server.
+
+### 39.12 A creature's body and the blocks (Euan's playtest 9 Nov: "double check for all custom mobs that they can't like just go through walls")
+- **Every custom body collides** (`mob_bodies_have_physics`), except the ones meant to pass through things: `cord_eater` (hunts spirits
+  through walls), `echo_ghost`, `hollow_follower`, `veil_spirit`, and the fixed `the_seated_one` and `training_ghost`. A new one fails the test until
+  it is added to its list here.
+- **A body is only put where it fits.** `AwakenMob.settle` (it was the wild creatures' alone) runs in `Mobs.spawn` once the scaled body is known, and on a
+  split's children: up over a bush, or a step or three aside onto the same ground. A mount whistled to you or sent home is checked with the body it has,
+  not its type's box. A rescued villager set down with a wall behind the carrier lands at the carrier's feet, and a summoned minion with no room out
+  on its ring appears beside its maker.
+- **A body caught in a block walks out** (`AwakenMob.unwedge`, also the wild's alone until now), slowly and never through stone. Fliers have their own way;
+  anything hung, carried, ridden or meant to be in the ground is left be.
+- Charges, leaps and knockback all go through `Entity.move`, so they stop at walls; a blink checks the body's box.
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 40. Clear screen and lock-on (plan docs/hud-lockon/plan.html; Euan approved all six recommendations 2026-10-28: "Go ahead with all recommendations")

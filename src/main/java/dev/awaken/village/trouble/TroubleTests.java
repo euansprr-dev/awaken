@@ -38,8 +38,27 @@ import java.util.Map;
 final class TroubleTests {
     private TroubleTests() {}
 
+    /** Set down behind a carrier with their back to a wall: at their feet, not in it (SPEC §39.12). */
+    private static void setDownByAWall(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        BlockPos at = h.absolutePos(new BlockPos(5, 1, 5));
+        p.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
+        p.yBodyRot = 0.0F;
+        for (int y = 0; y < 3; y++) level.setBlockAndUpdate(at.offset(0, y, -1), Blocks.STONE.defaultBlockState());
+        Rescuee r = Rescuee.arrival(level, Vec3.atBottomCenterOf(at.offset(2, 0, 2)), Vec3.atBottomCenterOf(at), "Tess", dev.awaken.Awaken.id("test"), false, false);
+        h.assertTrue(r != null && r.climbOn(p), "they were picked up");
+        r.setDown(false);
+        boolean free = level.noBlockCollision(r, r.getBoundingBox().deflate(1.0E-4));
+        r.discard();
+        p.discard();
+        h.assertTrue(free, "they were set down inside the wall");
+        h.succeed();
+    }
+
     static void register() {
         AwakenTests.registerIsolated("village_trouble_taken", 600, TroubleTests::taken);
+        AwakenTests.register("village_rescuee_set_down_by_a_wall", 20, TroubleTests::setDownByAWall);
         AwakenTests.registerIsolated("village_burning_rebuild", 600, TroubleTests::burningRebuild);
         AwakenTests.registerIsolated("village_director_caps", 600, TroubleTests::caps);
         AwakenTests.registerIsolated("village_deep_mine", 600, TroubleTests::deepMine);

@@ -365,6 +365,7 @@ public final class Moves {
             Mob child = type.create(level, EntitySpawnReason.MOB_SUMMONED);
             if (child == null) continue;
             child.snapTo(mob.getX() + Math.cos(a) * d.radius(), mob.getY(), mob.getZ() + Math.sin(a) * d.radius(), mob.getYRot(), 0);
+            if (!level.noBlockCollision(child, child.getBoundingBox().deflate(1.0E-4))) child.snapTo(mob.getX(), mob.getY(), mob.getZ(), mob.getYRot(), 0); // no room out there: beside its maker
             if (mob.getTarget() != null) child.setTarget(mob.getTarget());
             level.addFreshEntity(child);
             level.sendParticles(ParticleTypes.POOF, child.getX(), child.getY() + 0.3, child.getZ(), 6, 0.2, 0.2, 0.2, 0.02);
