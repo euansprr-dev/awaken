@@ -151,9 +151,10 @@ public enum HeroTree implements StringRepresentable {
     /** Anything hung on the settled tree (vines from leaves that stay). */
     void finish(Blueprint bp, long seed) {}
 
-    /** The whole blueprint for a seed: shape, leaves settled (distances, loose leaves gone), finishing, sealed. */
+    /** The whole blueprint for a seed: shape, anything detached dropped, leaves settled (distances, loose leaves gone), finishing, sealed. */
     public Blueprint build(long seed) {
         Blueprint bp = shape(seed);
+        bp.dropDetached();
         bp.settleLeaves();
         finish(bp, seed);
         bp.seal();

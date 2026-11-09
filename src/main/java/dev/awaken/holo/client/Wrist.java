@@ -112,6 +112,17 @@ final class Wrist {
         M.translate(-cx / 16f, -(BAND_Y0 + BAND_Y1) / 32f, 0);
     }
 
+    /** FirstPerson.handsAway: the hand pass's other arms (a weapon's grips, a pair's twin) sink with the hands the wrist replaces. */
+    static float away(float equip, float pt) {
+        HoloPanel p = HoloClient.wristPanel();
+        boolean free = p == null || !p.timeline.active();
+        boolean boot = HoloBoot.active() && free;
+        boolean glance = !boot && free && Glance.armShown();
+        if (!boot && !glance && (free || p.anchor != HoloPanel.Anchor.WRIST) || !HoloPipelines.ok()) return 0F;
+        boolean back = boot ? HoloBoot.handsBack() : glance ? Glance.lowering() : p.timeline.closing() && closeTicks >= 1;
+        return dev.awaken.holo.ui.GlanceRules.handsAway(back, boot ? HoloBoot.arm(pt) : glance ? Glance.arm() : p.timeline.arm(), equip);
+    }
+
     /** RenderHandEvent at HIGH: replaces both hands while a holo menu is open or animating. */
     static void onHand(RenderHandEvent e) {
         HoloPanel p = HoloClient.wristPanel();

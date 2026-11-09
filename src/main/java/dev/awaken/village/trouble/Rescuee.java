@@ -210,7 +210,12 @@ public class Rescuee extends PathfinderMob implements Npc {
         if (level() instanceof ServerLevel sl && follow != null && sl.getPlayerByUUID(follow) instanceof ServerPlayer p && carried()) {
             slow(p, false);
             float yaw = p.yBodyRot * Mth.DEG_TO_RAD;
-            teleportTo(p.getX() + Mth.sin(yaw) * 0.9, p.getY(), p.getZ() - Mth.cos(yaw) * 0.9);
+            double x = p.getX() + Mth.sin(yaw) * 0.9, z = p.getZ() - Mth.cos(yaw) * 0.9;
+            if (!sl.noBlockCollision(this, getDimensions(getPose()).makeBoundingBox(x, p.getY(), z).deflate(1.0E-4))) { // a wall behind the carrier: at their feet
+                x = p.getX();
+                z = p.getZ();
+            }
+            teleportTo(x, p.getY(), z);
         }
         entityData.set(DATA_CARRIER, -1);
         noPhysics = false;

@@ -48,6 +48,14 @@ public final class Legs {
     private float lastYaw, clock, rate, still, going, nextRegrip, vx, vz, yawRate, t;
     private long seed;
     private Ground floor;
+    /** How far in a foot may be drawn, tried in turn, and how far past its length a leg is allowed off flat ground. */
+    private static final float[] PULLS = {1.0F, 0.8F, 0.6F, 0.45F, 0.3F, 0.15F};
+    private static final float MOST_STRETCH = 1.05F;
+    private final float[] pull, nextFit;
+    private final double[] landY;
+    private int checking;
+    private double poseX, poseY, poseZ;
+    private float poseYaw, poseSc = 1.0F;
 
     /** {@code floor}: where the feet find the ground, or null for the client's world. */
     public Legs(LegRig rig, int seed, Ground floor) {
@@ -58,6 +66,10 @@ public final class Legs {
     Legs(LegRig rig, int seed) {
         this.rig = rig;
         int n = rig.n;
+        pull = new float[n];
+        java.util.Arrays.fill(pull, 1.0F);
+        landY = new double[n];
+        nextFit = new float[n];
         fx = new double[n];
         fy = new double[n];
         fz = new double[n];
@@ -119,14 +131,20 @@ public final class Legs {
             lastYaw = yaw;
             vx = vz = yawRate = rate = 0;
             for (int i = 0; i < rig.n; i++) {
+                fit(i, x, y, z, yaw, sc);
                 home(i, x, z, yaw, sc);
                 fx[i] = hx;
-                fy[i] = ground(hx, y, hz);
+                fy[i] = landY[i];
                 fz[i] = hz;
                 swinging[i] = false;
             }
             init = true;
         }
+        poseX = x;
+        poseY = y;
+        poseZ = z;
+        poseYaw = yaw;
+        poseSc = sc;
         double mx = x - ex, mz = z - ez;
         float dyaw = Mth.wrapDegrees(yaw - lastYaw);
         ex = x;
@@ -203,6 +221,13 @@ public final class Legs {
             }
             prevQ[i] = q;
         }
+        // a leg something has come through (the body moved, a block was put there) steps again; one foot a frame in turn
+        int look = checking = (checking + 1) % rig.n;
+        if (!swinging[look] && pull[look] > PULLS[PULLS.length - 1] && t >= nextFit[look] && !legClear(look, x, y, z, yaw, sc, fx[look], fy[look], fz[look])) {
+            nextFit[look] = t + 0.4F;
+            lift(look, 0.2F, lift);
+            lifted++;
+        }
         // standing still: feet out of place step back under the body, the furthest first, up to half of them at once but
         // never two neighbours (after a turn, one at a time left the last leg leaning for a second and a half); a calm one
         // re-grips now and then
@@ -265,6 +290,7 @@ public final class Legs {
     }
 
     private void lift(int i, float seconds, float height) {
+        fit(i, poseX, poseY, poseZ, poseYaw, poseSc);
         swinging[i] = true;
         u[i] = 0;
         dur[i] = seconds;
@@ -277,7 +303,16 @@ public final class Legs {
     /** A foot in the air: on an arc from where it lifted to its landing (re-aimed each frame), planted at the end. */
     private void swing(int i, double x, double y, double z, float yaw, float sc, float ahead) {
         home(i, x + vx * ahead, z + vz * ahead, yaw + yawRate * ahead, sc);
-        double gy = ground(hx, y, hz);
+        double gy = surface().footing(hx, y, hz);
+        if (gy != gy) { // no place to stand out ahead: the spot under the body as it is now, or one drawn in closer
+            home(i, x, z, yaw, sc);
+            gy = surface().footing(hx, y, hz);
+            if (gy != gy) {
+                fit(i, x, y, z, yaw, sc);
+                home(i, x, z, yaw, sc);
+                gy = landY[i];
+            }
+        }
         float k = u[i];
         float e = k * k * (3.0F - 2.0F * k);
         // a rigid leg has no knee to fold: its hoof swings through a touch past its spot and settles back onto it
@@ -298,9 +333,48 @@ public final class Legs {
     /** Leg i's home in the world for a body at (x, z) turned to yaw (degrees), into hx, hz. */
     private void home(int i, double x, double z, float yaw, float sc) {
         float th = (180.0F - yaw) * Mth.DEG_TO_RAD, c = Mth.cos(th), sn = Mth.sin(th);
-        float lx = -rig.homeX[i] / 16.0F * sc, lz = rig.homeZ[i] / 16.0F * sc;
+        float lx = -rig.homeX[i] / 16.0F * sc * pull[i], lz = rig.homeZ[i] / 16.0F * sc * pull[i];
         hx = x + c * lx + sn * lz;
         hz = z - sn * lx + c * lz;
+    }
+
+    /**
+     * Chooses where foot i goes next (SPEC §23.1, "On real ground"): its full stance if the surface in that column will take
+     * it, the leg can reach it and nothing is in the way of the leg; otherwise drawn in towards the body until one will.
+     * Leaves the choice in pull[i], so its home stays there and it doesn't keep stepping, and the height in landY[i].
+     */
+    private void fit(int i, double x, double y, double z, float yaw, float sc) {
+        for (float p : PULLS) {
+            pull[i] = p;
+            home(i, x, z, yaw, sc);
+            double gy = surface().footing(hx, y, hz);
+            if (gy == gy && canStand(i, x, y, z, yaw, sc, gy)) {
+                landY[i] = gy;
+                return;
+            }
+        }
+        // nowhere is right: as tucked in as it goes, on whatever is there
+        double gy = surface().footing(hx, y, hz);
+        landY[i] = gy == gy ? gy : ground(hx, y, hz);
+    }
+
+    /** Whether the leg can get from its hip to the surface at (hx, gy, hz): the flat ground it was built for always can. */
+    private boolean canStand(int i, double x, double y, double z, float yaw, float sc, double gy) {
+        if (Math.abs(gy - y) > 0.1) {
+            float th = (180.0F - yaw) * Mth.DEG_TO_RAD, c = Mth.cos(th), sn = Mth.sin(th);
+            float lx = -rig.hipX[i] / 16.0F * sc, lz = rig.hipZ[i] / 16.0F * sc;
+            double dx = hx - (x + c * lx + sn * lz), dy = gy - (y + (24.0F - rig.hipY[i]) / 16.0F * sc), dz = hz - (z - sn * lx + c * lz);
+            double most = MOST_STRETCH * rig.reach(i) / 16.0F * sc;
+            if (dx * dx + dy * dy + dz * dz > most * most) return false;
+        }
+        return legClear(i, x, y, z, yaw, sc, hx, gy, hz);
+    }
+
+    /** Whether a straight line from leg i's hip to (px, py, pz) passes through no block. */
+    private boolean legClear(int i, double x, double y, double z, float yaw, float sc, double px, double py, double pz) {
+        float th = (180.0F - yaw) * Mth.DEG_TO_RAD, c = Mth.cos(th), sn = Mth.sin(th);
+        float lx = -rig.hipX[i] / 16.0F * sc, lz = rig.hipZ[i] / 16.0F * sc;
+        return surface().clear(x + c * lx + sn * lz, y + (24.0F - rig.hipY[i]) / 16.0F * sc, z - sn * lx + c * lz, px, py, pz);
     }
 
     /** The feet's spots in model px this frame (the inverse of the renderer's yaw, flip and lift). */
@@ -381,13 +455,40 @@ public final class Legs {
     }
 
     private double ground(double x, double y, double z) {
+        return surface().top(x, y, z);
+    }
+
+    private Ground surface() {
         if (floor == null) floor = new LegGround();
-        return floor.top(x, y, z);
+        return floor;
+    }
+
+    /** Foot i's place in the world this frame. */
+    public double footX(int i) {
+        return fx[i];
+    }
+
+    public double footY(int i) {
+        return fy[i];
+    }
+
+    public double footZ(int i) {
+        return fz[i];
     }
 
     /** Where a foot finds the ground under (x, z) for a body standing at y. */
     public interface Ground {
         double top(double x, double y, double z);
+
+        /** The surface in a foot's own column, or NaN where a foot can't stand. */
+        default double footing(double x, double y, double z) {
+            return top(x, y, z);
+        }
+
+        /** Whether a straight leg between these points passes through nothing. */
+        default boolean clear(double x0, double y0, double z0, double x1, double y1, double z1) {
+            return true;
+        }
     }
 
     private static float frac(float v) {

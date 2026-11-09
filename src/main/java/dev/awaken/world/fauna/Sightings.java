@@ -2,6 +2,7 @@ package dev.awaken.world.fauna;
 
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.Playtest;
+import dev.awaken.core.api.Spotting;
 import dev.awaken.mobs.def.Bestiary;
 import dev.awaken.mobs.def.FaunaRole;
 import dev.awaken.mobs.def.MobDef;
@@ -25,8 +26,10 @@ import java.util.UUID;
 /**
  * First sightings (SPEC §26.3: discovery is earned): the first time an awakened player studies a kind of overworld
  * creature it is a discovery (XP, the Codex, and the Finds' telling). Studying means looking at it: the crosshair on
- * its box (widened by {@value #AIM_DEG} degrees) for {@value #DWELL} looks in a row (about half a second), within
- * {@value #RANGE} blocks ({@value #BEAST_RANGE} for a named beast) and in line of sight. Hitting or touching it counts
+ * its box (widened by {@value #AIM_DEG} degrees) for {@value #DWELL} looks (about half a second), within
+ * {@value #RANGE} blocks ({@value #BEAST_RANGE} for a named beast) and in sight (a few blocks of foliage don't hide it).
+ * Up to {@value #GRACE} looks in a row may slip off a moving creature without starting over, and another of its kind
+ * keeps the count. Hitting or touching it counts
  * at once. Proximity alone never does, except for something big in plain view (a named beast, or a creature
  * {@value #BIG} blocks tall) within {@value #PLAIN} blocks and roughly in front of you. Checked four times a second per
  * player against the census (never the level), at most {@value #RAYS} line-of-sight rays per check, and only for
@@ -40,6 +43,8 @@ public final class Sightings {
     static final int PERIOD = 5;
     /** Looks in a row on the same creature that make a study (PERIOD apart: about half a second). */
     public static final int DWELL = 3;
+    /** Looks in a row that may miss without starting over (a creature walking, a shaky aim). */
+    public static final int GRACE = 2;
     /** Slack round a creature's own angular size that still counts as the crosshair on it. */
     static final double AIM_DEG = 3.0, AIM_TAN = Math.tan(Math.toRadians(AIM_DEG));
     /** A creature this tall (blocks) is big enough to notice without studying it. */
@@ -48,12 +53,17 @@ public final class Sightings {
     static final double XP = 0.1, BEAST_XP = 0.25;
 
     private static final Map<UUID, Set<String>> KNOWN = new HashMap<>();
-    /** The creature each player's crosshair rests on, and for how many looks. */
+    /** The kind each player's crosshair rests on, for how many looks, and how many since it last was. */
     private static final Map<UUID, Dwell> DWELLING = new HashMap<>();
 
     private static final class Dwell {
-        int entity = -1;
-        int looks;
+        @Nullable String kind;
+        int looks, misses;
+
+        void clear() {
+            kind = null;
+            looks = misses = 0;
+        }
     }
 
     static String key(String id) {
@@ -78,9 +88,10 @@ public final class Sightings {
         if (known.size() >= Bestiary.fauna().size()) return null;
         Vec3 eye = p.getEyePosition();
         Vec3 view = p.getViewVector(1.0F);
-        int rays = 0;
-        FaunaMob aimed = null;
-        double aimedDist = Double.MAX_VALUE;
+        // the nearest few under the look get the rays: a herd on the crosshair never starves the one in front
+        FaunaMob near = null, second = null;
+        double nearDist = Double.MAX_VALUE, secondDist = Double.MAX_VALUE;
+        boolean nearBig = false, secondBig = false;
         for (int i = 0, n = live.size(); i < n; i++) {
             FaunaMob m = live.get(i);
             if (!m.isAlive() || known.contains(m.def().id)) continue;
@@ -100,32 +111,48 @@ public final class Sightings {
                 onCrosshair = box.contains(eye) || box.clip(eye, eye.add(view.scale(len + 4))).isPresent();
             }
             if (!big && !onCrosshair) continue;
-            if (rays++ >= RAYS) break;
-            if (!p.hasLineOfSight(m)) continue;
-            if (big) {
+            if (len < nearDist) {
+                second = near;
+                secondDist = nearDist;
+                secondBig = nearBig;
+                near = m;
+                nearDist = len;
+                nearBig = big;
+            } else if (len < secondDist) {
+                second = m;
+                secondDist = len;
+                secondBig = big;
+            }
+        }
+        FaunaMob aimed = null;
+        for (int k = 0; k < RAYS && aimed == null; k++) {
+            FaunaMob m = k == 0 ? near : second;
+            if (m == null || !inSight(p, eye, m)) continue;
+            if (k == 0 ? nearBig : secondBig) {
                 discover(p, m.def());
                 return m.def();
             }
-            if (len < aimedDist) {
-                aimed = m;
-                aimedDist = len;
-            }
+            aimed = m;
         }
         Dwell d = DWELLING.computeIfAbsent(p.getUUID(), u -> new Dwell());
         if (aimed == null) {
-            d.entity = -1;
-            d.looks = 0;
+            if (d.kind != null && ++d.misses > GRACE) d.clear();
             return null;
         }
-        if (d.entity != aimed.getId()) {
-            d.entity = aimed.getId();
+        d.misses = 0;
+        if (!aimed.def().id.equals(d.kind)) {
+            d.kind = aimed.def().id;
             d.looks = 0;
         }
         if (++d.looks < DWELL) return null;
-        d.entity = -1;
-        d.looks = 0;
+        d.clear();
         discover(p, aimed.def());
         return aimed.def();
+    }
+
+    /** Its head or its middle can be seen from the eyes (its head may be behind a branch while its flank isn't). */
+    private static boolean inSight(ServerPlayer p, Vec3 eye, FaunaMob m) {
+        return Spotting.clearLine(p.level(), eye, m.getEyePosition()) || Spotting.clearLine(p.level(), eye, m.getBoundingBox().getCenter());
     }
 
     /** The player hit or touched a creature: that is studying it. */

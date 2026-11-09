@@ -89,6 +89,7 @@ public final class HoloClient {
         bus.addListener(SubmitCustomGeometryEvent.class, HoloWorld::submit);
         // HIGH: replaces both hands before Lucidium (NORMAL) and CastAnims (LOW), which then don't run
         bus.addListener(EventPriority.HIGH, RenderHandEvent.class, Wrist::onHand);
+        dev.awaken.core.api.FirstPerson.handsAway = Wrist::away;
         // push last, pop first: nothing after us can cancel the layer and strand the translate
         bus.addListener(EventPriority.LOWEST, RenderGuiLayerEvent.Pre.class, HudMotion::pre);
         // the K menu is worked with the cursor; the crosshair would only sit on the panel's edge

@@ -2039,6 +2039,12 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   the seam within 0.55; where `awaken:lands/fault_trench` passes 0.15 the fault widens (by up to 2.8 a side) and opens
   into a V trench up to 9 deep. Decisions come from the noises and the column only (continuous across chunk borders);
   never into water or down to the sea. Faultstone and the seam are in `#minecraft:cannot_support_snow_layer`.
+- A hero tree is taller and wider than anything that clears land reaches (a road or a village fells only 40 up, and sweeps
+  3x3 chunks), so nothing else cuts one (Euan 2026-11-09, the floating veined logs of a Lumen Spire a road ran through):
+  `terrain.api.HeroTrees.near` gives a road or settlement piece the cells of any hero tree here; `SettlementPaint` neither fells,
+  paints over nor sweeps those, nor fills a plate or bank under them (the road stops at the bark and goes on past it), and a gate won't form inside one's box
+  (`Overworld.goodGround`). A blueprint also drops anything not joined face to face to its foot (`Blueprint.dropDetached`: a branch stub off a thin trunk, one Lumen Spire in 40). Test: `village_road_spares_hero_trees`; `terrain_trees_whole` rolls every custom tree feature six
+  times and 40 hero blueprints of each kind and counts any log or leaf no face-to-face path takes to the ground.
 - Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift" |
   "aurora_spire"`, `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass
   Steppe; a glassed bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its
@@ -6307,6 +6313,7 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
 - **Clips** of a profiled body move the body over its feet, the head, the tail, the jaw, and own the legs only when the
   feet let go (hanging, leaping, dying, a wind-up's front pair). Their walk and run legs stay for anything drawn without
   a life (the clip is what shows if nothing plants the feet).
+- **Drip Lurker's leap** (Euan 9 Nov: it jittered in place): `Fauna3Goals.Cling` works out the speed that really lifts it to the roof, gravity and air drag counted (the old guess fell 0.1 to 0.5 short of every roof under 7.5 blocks, so it hopped there and back for ever). A leap that doesn't reach waits 30 s, and it never goes up through a lip over one corner of it.
 - **Drip Lurker** (`drip_lurker`; six two-bone legs, hunter): ripple-alternate, duty 0.78/0.55, steps 3/4.5 px high, feet
   10 px out from the hips fanned 42°, crouch 1 px, reach 0.55, re-grips every 3-8 s, `rear` 0.9; head level 0.6, twist
   0.2, slope 0.8, land 1, `still` with a 2.5 px creep; temperament: no step bob, sway 0.3, look/sniff/stretch/settle
@@ -6496,6 +6503,14 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   a parrot, a bee or a cod a little further round the same circle). A NoAI fauna creature refreshes its pose
   bits every tick (`FaunaMob.tick`), so a tour's still flier shows itself aloft (the first fliers tour's owls hung
   upright in the air, perched).
+
+- **On real ground** (Euan's playtest 9 Nov: the Drip Lurker's legs ran down the face of a gravel step). A foot goes only where it can stand:
+  `LegSurface.footing` reads the surface in that foot's own column, and refuses a wall (higher than a step), a drop (more than a step
+  down) or a spot with something solid right above. `Legs.fit`, run every time a foot lifts, takes the full stance if the column will
+  take it, the leg can reach it (off flat ground, 1.05x its length) and a straight line from hip to foot clears every block; otherwise it
+  draws the foot in towards the body in steps (0.8, 0.6, 0.45, 0.3, 0.15), and that place becomes its home, so it doesn't keep re-stepping. A
+  swinging foot re-aims with the same rule, and one planted foot a frame re-checks its leg. Flat ground behaves exactly as before.
+  `creature_motion_feet` (via `LegBlockTrial`) stands every rig against a wall, a corner, a kerb, a step down and a two-block drop.
 
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 
@@ -8604,6 +8619,23 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   logout lets everything go. Ilse's scene also ends server side on walking off (18 blocks), death, logout or her being
   gone, and her hand empties. Tests: `core_input_holds`, `progression_first_scene_exits`; tour `camp-exit.txt` walks
   away after the scene.
+- **Held means held** (Euan, 9 Nov: "cinematics don't stop you so you keep walking forward or even jumping during it").
+  While the camera is on anything but the player the game doesn't read the input at all (`LocalPlayer.applyInput`), so
+  swapping the input left whatever was held as the view left latched in `xxa`/`zza`/`jumping`. The lock clears those as it
+  starts and every tick after (`InputLock.stop`; the player's momentum still runs out on its own). Scenes that take the view
+  to a camera of their own all hold through the lock: `OpeningCamera`'s shots (the opening, the High Gate's, Ilse's), the
+  Registry's, Ilse's ember from her first line, the ritual, the furnace's lowered view, the Forge Song's and the anvil's,
+  each with a deadline of its own. Binoculars, the map and combat cameras are not scenes and take no lock; the map only
+  clears the latch (`InputLock.stop`) so you don't walk on behind it. Raw key reads respect the lock (`JetBoots`, a landing's roll).
+- **The camp's ground** (Euan, 9 Nov: "Isle appeared in a huge hole in the ground once"). `Scenes.campSite` takes the nearest
+  ground to the nominal spot, out to 160, that is dry, level, under open sky, walkable in a straight line from the road's end
+  (26 short of the spot) and seen from it, and at the height of the land round it: of 32 looks at 10, 18, 28 and 40 blocks in
+  eight directions, at most 8 may stand more than 3 above it or fall more than 5 below (`offLand`). A pit, ravine, basin or
+  cave mouth has land above it on most sides. All the land it reads must be finished chunks, which is also why nothing can
+  carve it afterwards: a chunk is finished only when its neighbours have been through features, and sinkholes and cave mouths
+  are structures built during that. With someone within 64 of the spot and nothing good enough, the dry ground that sits best
+  in its land, so Ilse is never missing. A camp founded before this and more than half surrounded by higher land (over 16 of
+  the 32) is moved once, the first time someone comes within 64: Ilse and her fire go, the old bedrolls stay in the hole.
 - **The far smoke is far only**: the column (`PulseFx.campfire`) fades out within 48 blocks of the fire (gone at 48,
   whole from 96), where vanilla's campfire smoke is the real thing. Drawn up close its puffs, up to 15 blocks across and
   110 up, read as a dark dome over the camp and a pale facet in the sky (Euan, 2026-10-26).
@@ -11345,6 +11377,15 @@ setting (D13).
   no channel-end message to free the hands. Railgun and Telekinesis keep their held gestures until their channel ends.
   The runtime permits a hold hand-over only while a channel's held cast is live. `power_cast_profiles` checks the power
   mode, profile and first-person clip lifetime together.
+- **A held pose has an owner** (Euan, 2026-11-09: two bare fists stuck up in a fight while he swung a weapon). A hold loop runs
+  until something stops it and hides what you hold, and the record of "your cast" is one per entity, so tapping another
+  power over a held Charged Shot left letting go aimed at the wrong cast, and the loop ran for good. `powers/fx/HeldHands`
+  now owns it: each power key remembers the held cast it went down on, letting go ends that cast and no other, and one
+  loop plays at a time. It lives only while a key or a running cast of the server's holds it (checked every tick), and a
+  reset clears the keys. The server's end of a held cast always carries the END beat, on every way it can end
+  (`Fx.end`, `Fx.chargeEnd`), so a charge that runs out with the key still down lets go too. Only a held cast's `hold1p` may
+  be `loop: true` in the first-person clip files. `power_hold_pose_has_an_owner` runs every order of press, release,
+  hand-over, server end and tick; `power_held_casts_say_they_ended` checks the end on the server's real path.
 - **Hands additions**: `FpClipSet.FILES` also reads `fp_casts.json`; a clip may be `stow` (its fists are drawn even when a hand holds
   something, so a held weapon is out of view while you cast); `FirstPerson.View.stow`, `FirstPerson.LAST_FIST_MAIN/OFF`, `lastFistNanos`.
 - **Sound**: `tools/art/specs/audio_powers.py` renders `sounds/powers/power_{stomp_lift,stomp_plant,beam_gather,beam_loop,beam_end}_*.ogg`
@@ -15491,13 +15532,20 @@ the lesson), on purpose (`intent`), so it shows at once (§26.3).
   (`BinocularsRelay.looking`: a change still held by the relay's rate limit counts), the server casts the player's own look
   (eyes and view as it has them) against what the sources offer. Each thing's bounds are widened by `SLACK_DEG` (0.6°) at its
   distance; the nearest the look enters wins. It then needs a clear line through loaded blocks by what you see (`VISUAL` shapes:
-  glass and water hide nothing, leaves and stone do; an unloaded chunk hides it; a block inside the thing's own bounds is the
+  glass and water hide nothing, stone does; up to `Spotting.FOLIAGE` (5) blocks of leaves and bushes on the line don't, so a
+  creature through a hedge or the edge of a crown can be found, while a stand of trees still hides it (Euan 2026-11-09:
+  "not working well when a lot of bushes are here"); an unloaded chunk hides it; a block inside the thing's own bounds is the
   thing), aimed where the look meets its bounds, else at their middle. The same thing on `HOLD` (40) ticks of looks finds it;
-  one missed look is forgiven (`GRACE` 1: a leaf, the sway), a second or another thing starts over. Reach: the server's view
+  one missed look is forgiven (`GRACE` 1: the sway), a second or another thing starts over. Reach: the server's view
   distance in blocks, held to 64..512 (`REACH_MIN`/`REACH_MAX`): the loaded land, since the server can't see Far Sight's land.
   No spotting by a spectator, the dead, before awakening, or inside Carillon's walls; a thing inside the walls is never spotted
   (§26.3b). Standing things are gathered once a second (`STANDING_EVERY` 20), creatures at every look; candidates live in a
   fixed pool of 64 per player (no allocation per look beyond the sources' own gathering).
+- **Up close, without the glass** (`world.fauna.Sightings`, §26.3) uses the same sight line (`Spotting.clearLine`, to the head or
+  the middle of the body). Three looks a quarter second apart still make a study, but up to two looks in a row may miss (`GRACE`:
+  a walking creature, a shaky aim) without starting over, another of the same kind keeps the count, and the two creatures
+  nearest under the look get the rays, so a herd can't starve the one in front. Ambient wildlife stays client-only and is never
+  a discovery.
 - **The API (`core.api.Spotting`).** A module registers a `Source` (`moves()`, `gather(player, reach, Sink)`, `find(player,
   ref)`); `Sink.place(key, bounds, ref)` for a standing thing, `Sink.entity(entity, ref)` for a moving one. A source offers only
   what the player hasn't found, never loads a chunk, and re-checks in `find` (it may have gone).
@@ -15640,6 +15688,28 @@ Gate: a level-5 bench costs at most +0.5 ms p50 and +1 ms p99 over level 1.
 - Outside the powers module, the body's wall-run reads Wall Stride's level (`Body.wallStrideLevel`, `RunnerRules.runLength`,
   `runTarget`, `strideKick`; `RunnerServer` calls `StepHooks.strideTick`): Spark Steps (2), Kick-off (3), Steady (4), Street
   Runner (5). The only cross-module change; Codex's Power Core hover reads `PowerLadder.text` (their queue).
+
+### 39.11 A creature you are watching (Euan's playtest 9 Nov: a Drip Lurker, through the binoculars, jittered and then was gone)
+- **It stays.** `AwakenMob.removeWhenFarAway` (reached only once vanilla's far roll comes up) adds `Watched.now`: any non-spectator
+  player whose client tracks it, with it within 60 degrees of their look and a clear `Spotting.clearLine` to its middle or eyes,
+  keeps it. Everything else follows the normal mob cap rules: turn away or lose sight of it and it can go.
+- **It draws.** `AwakenMob.shouldRenderAtSqrDistance` divides the distance by `CameraHooks.zoom()`, so through a glass the reach grows
+  with the zoom. `Life.far` does the same: what's under the glass keeps its blinks, fidgets and eye lead. While a glass is up,
+  EntityCulling leaves our creatures alone (`compat.client.EntityCullingBridge`, soft-loaded).
+- **Its motion.** Position updates don't change with distance (every 3 ticks at any range, replayed over 3 client ticks), and the client
+  pauses a body for a tick when a server tick runs late; 12x zoom makes that a visible hitch, and no change here hides a slow server.
+
+### 39.12 A creature's body and the blocks (Euan's playtest 9 Nov: "double check for all custom mobs that they can't like just go through walls")
+- **Every custom body collides** (`mob_bodies_have_physics`), except the ones meant to pass through things: `cord_eater` (hunts spirits
+  through walls), `echo_ghost`, `hollow_follower`, `veil_spirit`, and the fixed `the_seated_one` and `training_ghost`. A new one fails the test until
+  it is added to its list here.
+- **A body is only put where it fits.** `AwakenMob.settle` (it was the wild creatures' alone) runs in `Mobs.spawn` once the scaled body is known, and on a
+  split's children: up over a bush, or a step or three aside onto the same ground. A mount whistled to you or sent home is checked with the body it has,
+  not its type's box. A rescued villager set down with a wall behind the carrier lands at the carrier's feet, and a summoned minion with no room out
+  on its ring appears beside its maker.
+- **A body caught in a block walks out** (`AwakenMob.unwedge`, also the wild's alone until now), slowly and never through stone. Fliers have their own way;
+  anything hung, carried, ridden or meant to be in the ground is left be.
+- Charges, leaps and knockback all go through `Entity.move`, so they stop at walls; a blink checks the body's box.
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 40. Clear screen and lock-on (plan docs/hud-lockon/plan.html; Euan approved all six recommendations 2026-10-28: "Go ahead with all recommendations")
@@ -15747,8 +15817,9 @@ in reach 23% of a fight today, 49% with these rules).
   - Vanilla hearts, armour, food, XP level: hidden (the vitals and the wrist carry them). The XP strip (`contextual_info_bar`)
     shows only while riding a mount that jumps (its jump bar lives there). Air, the boss bars, effects, chat, titles, the
     selected item's name: as before.
-  - Hotbar: pops up for 2 s (40 ticks) when the selected slot changes (scroll, 1 to 9, pick block) and while glancing; it
-    slides 26 px down out of view as it goes.
+  - Hotbar: pops up for 2 s (40 ticks) when the selected slot changes (scroll, 1 to 9, pick block); it slides 26 px down
+    out of view as it goes. While the Tab panel shows it is out of the way, gone as fast as the panel comes (150 ms), since
+    the panel carries the hotbar (§40.7); without the holo look (reduced motion, no holo pipelines) it shows while glancing.
   - Vitals (`awaken:vitals`, `holo.client.Vitals`): health as a thin segmented line (124 px, one segment a heart, 20 segments
     above 40 health) low in the middle, in a fight, when hurt or at 30% or less (it breathes). A blow
     leaves its share amber for 420 ms, then it drains at 55% of the line a second; the blow flashes the line (130 ms) and
@@ -15773,15 +15844,20 @@ in reach 23% of a fight today, 49% with these rules).
 - The key is vanilla's player list (Tab), so in multiplayer its list shows with the panel. Off in Classic, while a screen is
   open, with the HUD hidden and in spectator.
 - Held: the off-hand forearm comes up with the band (`Wrist`, eased in 260 ms, down in 200 ms; the main hand sinks out of
-  view; vanilla's hands come back from below as it lowers), only in first person, with the band on, no holo menu on the
-  wrist and the holo pipelines working. A press under 250 ms (5 ticks) is a tap: the panel alone for 4 s (80 ticks).
+  view; vanilla's hands come back from below as it lowers; so do the arms the hand pass draws itself, a weapon's grips, a stance's fists, a pair's twin and the world layer's arms, through `FirstPerson.handsAway`: they sink as the wrist rises, follow the re-equip as it lowers, and at full raise only the arm with the band is on screen, whatever the hands are doing, so a swing or a charge under the panel can't bring them back up), only in first person, with the band on, no holo menu on the
+  wrist and the holo pipelines working. The panel shows while the key is held and goes with it (Euan 2026-11-09: a tap no
+  longer leaves it up; the arm's rules don't apply to it, so third person or no band shows it without the arm).
 - The panel: flat and readable in the band's glass, 184 GUI px wide, just above the wrist's place on screen (kept inside
   the screen), unfolding from its corner nearest the wrist (wide first, then tall, 220 ms) along a beam of light from the
   band, which flares as it leaves. Rows (`GlanceRules.rows`): level and rank (the rank's colour) with the XP line under them;
   health, Aether (once Skyborn; `HudState.aether()`, installed by Ascent), food and armour as labelled segmented bars with
   their values; the task's title and count, its current step (keys named as bound) and the next one (`signal.client.SignalGlance`);
-  where you're heading with its distance and a needle (up is ahead). The hotbar, power bar and level chip show while
-  glancing (§40.6), and so do the task card and the full gate panel. Texts are built once a tick while it shows.
+  where you're heading with its distance and a needle (up is ahead); last, under a hairline, the hotbar (Euan 2026-11-09:
+  "that way your eyes only need to look in one place"): nine of the holo inventory's dark wells, 18 px and 1 apart, each with
+  its item, its count in the title colour and its wear as a lit thread along the foot; the held slot has the full rim, a
+  tint and a glow. It needs the holo look (not reduced motion, the holo pipelines working); without that the panel has no
+  such row and vanilla's bar shows as it did. The power bar and level chip show while glancing (§40.6), and so do the task
+  card and the full gate panel. Texts are built once a tick while it shows; the slots are read each frame.
 - Sounds: the band's open and close (`HoloAudio`).
 
 ### 40.8 Settings (`config/awaken-aim-client.toml`)

@@ -374,7 +374,7 @@ final class TechPowers {
             if (rr.age == full - 1) c.sound(PowerSounds.CHARGE_UP, 0.6f, 2f);
         }).end((rr, why) -> {
             double charge = Math.min(1.0, (rr.age + 1) / (double) full);
-            Fx.at(c, FxKind.CHARGE_END, EnergyPowers.hand(c.player)).flag(FxEvent.FULL, charge >= 1).noAnim().send();
+            Fx.chargeEnd(c, EnergyPowers.hand(c.player)).flag(FxEvent.FULL, charge >= 1).send();
             if (why == Running.Why.CANCELLED) return;
             Vec3 eye = c.player.getEyePosition();
             Vec3 dir = c.player.getLookAngle();

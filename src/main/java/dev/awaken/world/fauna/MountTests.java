@@ -38,6 +38,27 @@ final class MountTests {
     static final int UP = FaunaTests.UP;
 
     static void register() {
+        // a whistle or a trip home checks the body the mount has grown to, not its type's box (SPEC §39.12)
+        AwakenTests.register("fauna_mount_fits_real_body", 20, h -> {
+            ServerLevel level = h.getLevel();
+            java.util.List<AwakenMob> made = new java.util.ArrayList<>();
+            WildMount m = (WildMount) Fauna3Tests.spawn(level, "frost_stag", h.absoluteVec(new Vec3(10.5, 1, 10.5)), made);
+            h.assertTrue(m != null, "the mount spawned");
+            m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.SCALE).setBaseValue(6.0);
+            m.refreshDimensions();
+            BlockPos gap = h.absolutePos(new BlockPos(5, 1, 5));
+            for (int y = 0; y < 8; y++) {
+                level.setBlockAndUpdate(gap.offset(2, y, 0), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+                level.setBlockAndUpdate(gap.offset(-2, y, 0), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+            }
+            Vec3 at = Vec3.atBottomCenterOf(gap);
+            h.assertTrue(level.noCollision(m, m.getType().getSpawnAABB(at.x, at.y, at.z).deflate(1.0E-4)), "its type's box would have fitted");
+            boolean fits = Mounts.fits(level, m, at);
+            made.forEach(AwakenMob::discard);
+            h.assertTrue(!fits, "the grown mount doesn't");
+            h.succeed();
+        });
+
         AwakenTests.register("fauna_mount_physics", 20, h -> {
             Vec3 g = MountPhysics.groundInput(1.0F, 1.0F);
             h.assertTrue(g.x == 0.5 && g.z == 1.0 && g.y == 0, "land: half speed sideways, full ahead: " + g);

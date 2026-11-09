@@ -71,10 +71,12 @@ public final class Scenes extends SavedData {
             Codec.STRING.listOf().optionalFieldOf("residents", List.of()).forGetter(s -> List.copyOf(s.residents)),
             Codec.LONG.optionalFieldOf("next_id", 1L).forGetter(s -> s.nextId),
             Codec.LONG.optionalFieldOf("camp").forGetter(s -> s.camp == NONE ? Optional.empty() : Optional.of(s.camp)),
-            Codec.BOOL.optionalFieldOf("camp_built", false).forGetter(s -> s.campBuilt)
-    ).apply(i, (schema, scenes, residents, next, camp, built) -> {
+            Codec.BOOL.optionalFieldOf("camp_built", false).forGetter(s -> s.campBuilt),
+            Codec.BOOL.optionalFieldOf("camp_checked", false).forGetter(s -> s.campChecked)
+    ).apply(i, (schema, scenes, residents, next, camp, built, checked) -> {
         Scenes s = new Scenes(scenes, residents, next, camp.orElse(NONE));
         s.campBuilt = built;
+        s.campChecked = checked;
         if (schema < 2) {
             // §43.1: the found scenes are gone and Hettie lives in the city now
             s.scenes.removeIf(sc -> !sc.kind.equals("resident"));
@@ -91,6 +93,8 @@ public final class Scenes extends SavedData {
     long nextId;
     /** The camp's ground once found (dry land nearest the nominal spot), else NONE. */
     long camp;
+    /** Whether this camp's ground has been checked for a hole (or it was founded by the search that looks for one). */
+    boolean campChecked;
     /** Whether the camp round the fire has been laid (bedrolls, logs, packs, the pot: {@link Camp#build}). */
     boolean campBuilt;
 
@@ -317,6 +321,118 @@ public final class Scenes extends SavedData {
         return dry != null ? dry : c.atY(level.getHeight(Heightmap.Types.MOTION_BLOCKING, c.getX(), c.getZ()));
     }
 
+    // ---- the camp's ground (SPEC §27.6) ---------------------------------------------------------------------------------
+
+    /** How far from its nominal spot the camp may stand. */
+    static final int CAMP_REACH = 160;
+    /** The land is read round a site at these distances, in eight directions. */
+    private static final int[] LAND_RADII = {10, 18, 28, 40};
+    private static final int LAND_LOOKS = LAND_RADII.length * 8;
+    /** How many of those looks may rise clearly above the site, or fall clearly away from it. */
+    static final int OFF_LAND = LAND_LOOKS / 4;
+    /** More than this many and an old camp is in a hole, and is moved. */
+    static final int IN_A_HOLE = LAND_LOOKS / 2;
+
+    /** The end of the road the camp is reached from: it stops 26 short of the nominal spot, on the world's centre line. */
+    static BlockPos roadEnd(BlockPos nominal) {
+        return nominal.offset(-6, 0, 26);
+    }
+
+    /**
+     * The nearest ground to {@code nominal} a camp can stand on: dry, level, at the height of the land round it, under open
+     * sky, and walkable from {@code from} and seen from there. Never a pit, a ravine, a basin or a cave mouth: from any of
+     * those the land stands clearly above you on most sides.
+     *
+     * <p>Every chunk the checks read must be finished, all the land out to 40 blocks round the site as well as its own. That
+     * also keeps a later cave out: a chunk is only finished once it and all its neighbours have been through features, and
+     * after that no sinkhole or cave mouth (they are structures, built as the chunk generates) writes into it again.
+     *
+     * <p>With {@code settle}, when nothing is good enough: the dry ground that sits best in its land. Null while the
+     * nominal spot's own land is still generating (unless settling), so a far-off founder doesn't pull the camp toward them.
+     */
+    static @Nullable BlockPos campSite(ServerLevel level, BlockPos nominal, BlockPos from, int radius, boolean settle) {
+        if (!settle && offLand(level, nominal.atY(0)) < 0) return null;
+        BlockPos best = null;
+        int bestOff = Integer.MAX_VALUE;
+        for (int r = 0; r <= radius; r += 4) {
+            int steps = r == 0 ? 1 : Math.max(8, (int) (2 * Math.PI * r / 6));
+            for (int k = 0; k < steps; k++) {
+                double a = 2 * Math.PI * k / steps;
+                int x = nominal.getX() + (int) Math.round(Math.cos(a) * r), z = nominal.getZ() + (int) Math.round(Math.sin(a) * r);
+                int y = top(level, x, z);
+                if (y == Integer.MIN_VALUE) continue;
+                BlockPos at = new BlockPos(x, y, z);
+                if (!level.getFluidState(at.below()).isEmpty() || !level.getFluidState(at).isEmpty() || !level.getBlockState(at.below()).isSolid()) continue;
+                if (drop(level, x, y, z) > 1 || forbidden.at(level, at)) continue;
+                int off = offLand(level, at);
+                if (off < 0) continue;
+                if (off <= OFF_LAND && openSky(level, at) && walkIn(level, at, from)) return at;
+                if (settle && off < bestOff) {
+                    best = at;
+                    bestOff = off;
+                }
+            }
+        }
+        return best;
+    }
+
+    /** The feet's height on a column (leaves don't count), or MIN_VALUE when its chunk isn't finished. */
+    private static int top(ServerLevel level, int x, int z) {
+        LevelChunk chunk = level.getChunkSource().getChunkNow(x >> 4, z >> 4);
+        return chunk == null ? Integer.MIN_VALUE : chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x & 15, z & 15) + 1;
+    }
+
+    /**
+     * Of the looks at the land round this ground, how many stand clearly above it or fall clearly below it (the larger
+     * count), or -1 while any of that land is still generating.
+     */
+    static int offLand(ServerLevel level, BlockPos at) {
+        int y = at.getY() == 0 ? top(level, at.getX(), at.getZ()) : at.getY();
+        if (y == Integer.MIN_VALUE) return -1;
+        int above = 0, below = 0;
+        for (int r : LAND_RADII) {
+            for (int k = 0; k < 8; k++) {
+                double a = Math.PI / 4 * k;
+                int h = top(level, at.getX() + (int) Math.round(Math.cos(a) * r), at.getZ() + (int) Math.round(Math.sin(a) * r));
+                if (h == Integer.MIN_VALUE) return -1;
+                if (h > y + 3) above++;
+                else if (h < y - 5) below++;
+            }
+        }
+        return Math.max(above, below);
+    }
+
+    /** Nothing overhead, at the camp's ground or where its fire will go (leaves count here: a canopy hides the smoke). */
+    private static boolean openSky(ServerLevel level, BlockPos at) {
+        for (BlockPos q : new BlockPos[]{at, at.offset(-3, 0, 3)}) {
+            LevelChunk chunk = level.getChunkSource().getChunkNow(q.getX() >> 4, q.getZ() >> 4);
+            if (chunk == null || chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, q.getX() & 15, q.getZ() & 15) + 1 > at.getY() + 1) return false;
+        }
+        return true;
+    }
+
+    /** You could walk here from {@code from} in a straight line, no climbs or drops or wide water, and see it on the way. */
+    private static boolean walkIn(ServerLevel level, BlockPos at, BlockPos from) {
+        int dx = from.getX() - at.getX(), dz = from.getZ() - at.getZ(), n = Math.max(Math.abs(dx), Math.abs(dz));
+        if (n == 0) return true;
+        int end = top(level, from.getX(), from.getZ());
+        if (end == Integer.MIN_VALUE) return false;
+        int prev = at.getY(), snags = 0, hidden = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int i = 1; i <= n; i++) {
+            int x = at.getX() + dx * i / n, z = at.getZ() + dz * i / n, h = top(level, x, z);
+            if (h == Integer.MIN_VALUE) return false;
+            m.set(x, h - 1, z);
+            if (level.getBlockState(m).is(net.minecraft.tags.BlockTags.LOGS)) continue; // a trunk: you walk round it
+            if (h - prev >= 4 || prev - h >= 6) return false;
+            if (h - prev > 1 || !level.getFluidState(m).isEmpty()) snags++;
+            double eye = at.getY() + 2 + (end - at.getY()) * (double) i / n;
+            if (h > eye + 1) hidden++;
+            prev = h;
+        }
+        return snags <= 2 + n / 24 && hidden <= n / 8;
+    }
+
     /**
      * The nearest dry, level, solid ground to {@code around} within {@code radius} (rings 8 blocks apart, finished chunks
      * only, never the city reserve), or null.
@@ -357,10 +473,12 @@ public final class Scenes extends SavedData {
             BlockPos nominal = campColumn(server);
             // founded while still a column of smoke in the distance (render distance 16), not when you're at its edge
             if (camp == NONE && near(level, nominal, 256)) {
-                // the camp stands on dry land: the nearest to its nominal spot (a river or a bay may sit there)
-                BlockPos found = dryLand(level, nominal, 160);
+                // the nearest good ground to its nominal spot (a river, a bay or a hole may sit there). Someone at the
+                // spot and nothing good in reach (a mountain's side): the best there is, so Ilse is never missing
+                BlockPos found = campSite(level, nominal, roadEnd(nominal), CAMP_REACH, near(level, nominal, 64));
                 if (found != null) {
                     camp = found.asLong();
+                    campChecked = true;
                     setDirty();
                 }
             }
@@ -369,6 +487,7 @@ public final class Scenes extends SavedData {
                 place(level, "ilse", c, 0, false);
             }
         }
+        if (camp != NONE && !campChecked) regroundCamp(level);
         if (camp != NONE) {
             campFire(level, BlockPos.of(camp));
             BlockPos fire = campBuilt ? null : Camp.fire(server);
@@ -411,6 +530,34 @@ public final class Scenes extends SavedData {
 
     private static boolean near(ServerLevel level, BlockPos column, int dist) {
         return level.players().stream().anyMatch(p -> p.blockPosition().distSqr(column.atY(p.getBlockY())) < (double) dist * dist);
+    }
+
+    /** A camp founded before the search knew about holes: moved once, if it's in one, the first time someone comes near. */
+    private void regroundCamp(ServerLevel level) {
+        BlockPos c = BlockPos.of(camp);
+        if (!near(level, c, 64)) return;
+        int off = offLand(level, c);
+        if (off < 0) return;
+        campChecked = true;
+        setDirty();
+        if (off <= IN_A_HOLE) return;
+        MinecraftServer server = level.getServer();
+        BlockPos nominal = campColumn(server);
+        BlockPos to = campSite(level, nominal, roadEnd(nominal), CAMP_REACH, true);
+        if (to == null || offLand(level, to) >= off) return;
+        Wayfarer ilse = resident(server, "ilse");
+        BlockPos oldFire = Camp.fire(server);
+        if (oldFire != null) level.removeBlock(oldFire, false);
+        camp = to.asLong();
+        campBuilt = false;
+        Camp.forget();
+        if (ilse != null) {
+            ilse.snapTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5, ilse.getYRot(), 0);
+            ilse.become("ilse", to, 3, 0);
+        } else {
+            residents.remove("ilse");
+        }
+        Awaken.LOG.info("[living] the camp was in a hole at {}: moved to {}", c.toShortString(), to.toShortString());
     }
 
     /** A resident at the nearest dry ground within {@code search} of {@code column}, once a player is within 96. */

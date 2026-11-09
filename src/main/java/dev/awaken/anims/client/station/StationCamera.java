@@ -22,6 +22,10 @@ final class StationCamera extends Entity {
     private static Vec3 lowered;
     private static final double[] EYE = new double[3];
 
+    /** The lock's owner and failsafe (SPEC §27.6): you stand still while the view is down at the furnace. */
+    private static final Object HOLD = "station camera";
+    private static final int HOLD_MAX = 20 * 600;
+
     private StationCamera(ClientLevel level, float eyeHeight) {
         super(EntityTypes.MARKER, level);
         dimensions = EntityDimensions.fixed(0, 0).withEyeHeight(eyeHeight);
@@ -41,6 +45,7 @@ final class StationCamera extends Entity {
         lowered = target;
         camera.place(eye, player.getYRot(), player.getXRot());
         mc.setCameraEntity(camera);
+        dev.awaken.core.client.InputLock.hold(HOLD, HOLD_MAX);
         return true;
     }
 
@@ -62,6 +67,7 @@ final class StationCamera extends Entity {
     }
 
     static void end() {
+        dev.awaken.core.client.InputLock.release(HOLD);
         Minecraft mc = Minecraft.getInstance();
         if (camera != null && mc.getCameraEntity() == camera && mc.player != null) mc.setCameraEntity(mc.player);
         camera = null;

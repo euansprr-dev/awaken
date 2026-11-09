@@ -39,6 +39,8 @@ final class PowerCastTests {
         AwakenTests.registerIsolated("power_cast_windup", 200, PowerCastTests::windup);
         AwakenTests.registerIsolated("power_cast_beats", 300, PowerCastTests::beats);
         AwakenTests.registerIsolated("power_cast_ball", 200, PowerCastTests::ball);
+        AwakenTests.register("power_hold_pose_has_an_owner", 20, PowerCastTests::holdPose);
+        AwakenTests.registerIsolated("power_held_casts_say_they_ended", 200, PowerCastTests::heldCastsEnd);
     }
 
     private static void profiles(net.minecraft.gametest.framework.GameTestHelper h) {
@@ -214,6 +216,127 @@ final class PowerCastTests {
             }
             h.succeed();
         });
+    }
+
+    /** No order of casting, swapping and letting go leaves the hands in a hold pose (Euan 9 Nov; SPEC §32). */
+    private static void holdPose(net.minecraft.gametest.framework.GameTestHelper h) {
+        CastProfiles.Profile shot = CastProfiles.byPower("charged_shot"), beam = CastProfiles.byPower("beam"), lance = CastProfiles.byPower("prism_lance");
+        h.assertTrue(shot != null && beam != null && lance != null && shot.hold1p() != null, "the held casts exist");
+        Set<String> playing = new HashSet<>();
+        HeldHands.Clips clips = new HeldHands.Clips() {
+            @Override
+            public boolean play(String clip) {
+                return playing.add(clip);
+            }
+
+            @Override
+            public void stop(String clip) {
+                playing.remove(clip);
+            }
+        };
+        // his fight: Charged Shot held to its loop, something else cast over it, then the key let go
+        HeldHands hands = new HeldHands(3, clips);
+        hands.press(0, shot);
+        hands.reached(hands.byBegin(shot.begin1p()));
+        hands.press(1, beam);
+        h.assertTrue(playing.contains(shot.hold1p()), "still held: the hands stay up");
+        hands.release(0);
+        h.assertTrue(playing.isEmpty() && hands.loop() == null, "let go with another cast made since: still up: " + playing);
+        hands.release(1);
+
+        CastProfiles.Profile[] casts = {shot, beam, lance};
+        java.util.Random r = new java.util.Random(9);
+        for (int run = 0; run < 4000; run++) {
+            playing.clear();
+            HeldHands in = new HeldHands(3, clips);
+            boolean[] down = new boolean[3], serverOnly = new boolean[3];
+            for (int step = 0; step < 40; step++) {
+                int s = r.nextInt(3);
+                switch (r.nextInt(6)) {
+                    case 0 -> {
+                        if (!down[s]) {
+                            down[s] = true;
+                            in.press(s, casts[s]);
+                        }
+                    }
+                    case 1 -> {
+                        down[s] = false;
+                        in.release(s);
+                    }
+                    case 2 -> {
+                        CastProfiles.Profile k = in.byBegin(casts[s].begin1p());
+                        if (k != null) in.reached(k);
+                    }
+                    case 3 -> {
+                        in.ended(casts[s]);
+                        down[s] = false; // the key may still be down, but it holds nothing now
+                        serverOnly[s] = false;
+                    }
+                    case 4 -> {
+                        serverOnly[s] = true;
+                        in.reached(casts[s]);
+                    }
+                    default -> in.tick(c -> java.util.Arrays.stream(casts).anyMatch(x -> x.id() == c.id() && serverOnly[java.util.Arrays.asList(casts).indexOf(x)]));
+                }
+                h.assertTrue(playing.size() <= 1, "two hold poses at once: " + playing);
+            }
+            for (int s = 0; s < 3; s++) {
+                in.release(s);
+                in.ended(casts[s]);
+            }
+            in.tick(c -> false);
+            h.assertTrue(playing.isEmpty() && in.loop() == null, "run " + run + " left the hands up: " + playing);
+        }
+        // a key down on nothing, and one that's forgotten, can't hold a pose either
+        HeldHands lost = new HeldHands(3, clips);
+        playing.clear();
+        lost.press(0, shot);
+        lost.reached(shot);
+        lost.reset();
+        h.assertTrue(playing.isEmpty(), "forgotten keys left the hands up");
+
+        // only a held cast's own loop may loop at all: any other looping clip would have no owner
+        StringBuilder errors = new StringBuilder();
+        Set<String> owned = new HashSet<>();
+        for (CastProfiles.Profile p : CastProfiles.allLevels()) if (p.hold1p() != null) owned.add(p.hold1p());
+        List<String> orphans = new ArrayList<>();
+        for (Map.Entry<String, FpClipSet.Clip> c : FpClipSet.load(errors).entrySet()) if (c.getValue().loop && !owned.contains(c.getKey())) orphans.add(c.getKey());
+        h.assertTrue(orphans.isEmpty(), "these clips loop with no cast to end them: " + orphans);
+        h.succeed();
+    }
+
+    /** Every cast that holds a pose tells the caster's client when it is over, on the server's own path (SPEC §32). */
+    private static void heldCastsEnd(net.minecraft.gametest.framework.GameTestHelper h) {
+        for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        Vec3 at = h.absoluteVec(Vec3.atBottomCenterOf(new BlockPos(0, 1, 0)));
+        sp.setGameMode(GameType.SURVIVAL);
+        List<FxEvent> seen = new ArrayList<>();
+        List<String> silent = new ArrayList<>(), tried = new ArrayList<>();
+        Fx.testSink = seen::add;
+        try {
+            for (CastProfiles.Profile prof : CastProfiles.all()) {
+                if (prof.hold1p() == null) continue;
+                PowerType t = PowerRegistry.get(prof.power());
+                if (t == null) continue;
+                Powers.learn(sp, t.id, 0);
+                sp.snapTo(at.x, at.y, at.z, 0f, 0f);
+                Powers.resetCooldowns(sp);
+                Powers.fillEnergy(sp);
+                Casting.endAll(sp, Running.Why.CANCELLED);
+                seen.clear();
+                if (!Casting.cast(sp, t, 0, false, 0f, 0f).ok()) continue; // nothing to aim at: telekinesis
+                tried.add(prof.power());
+                Fx.testTick(sp, Math.max(1, prof.windup()) + 2);
+                Casting.endAll(sp, Running.Why.RELEASED);
+                if (seen.stream().noneMatch(e -> e.kind() == FxKind.CHARGE_END && e.profile() == prof.id() && e.beat() == CastProfiles.END)) silent.add(prof.power());
+            }
+        } finally {
+            Fx.testSink = null;
+        }
+        h.assertTrue(tried.containsAll(List.of("charged_shot", "railgun", "beam")), "the held casts were tried: " + tried);
+        h.assertTrue(silent.isEmpty(), "these held casts never tell the caster they ended: " + silent);
+        h.succeed();
     }
 
     private static boolean hasKeyAt(JsonObject clip, double seconds) {

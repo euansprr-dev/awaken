@@ -110,6 +110,7 @@ public final class FaunaModule {
         WildTests.register();
         dev.awaken.mobs.entity.WildTalentTests.register();
         Fauna3Tests.register();
+        WatchTests.register();
         MountTests.register();
         TogetherFaunaTests.register();
     }
