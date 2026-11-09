@@ -370,8 +370,9 @@ stale gets a full resync and no animation. Undo can only be used by the player w
 
 ## 9. Interaction and craft
 
-**Layout.** Bag panel unchanged, 176×166 units. Buttons sit in the free strip above the pack, on the right, at y 67, 11 tall:
-Tidy x 98 (23 wide), Stow x 123 (25), Pin x 150 (19). Those widths fit the words in the game's own font with room each side.
+**Layout.** Bag panel unchanged, 176×166 units. Built: the keys sit in the corner to the right of the recipe book's button (which
+stands at x 104 to 124, y 61 to 79, where the prototype had drawn Tidy), in two rows 10 tall: Tidy x 126 (23 wide) and Pin x 151 (19)
+at y 58, Stow x 126 (25) at y 70. Those widths fit the words in the game's own font with room each side.
 Chest panel: same slots as vanilla; Tidy (x 119, 23 wide) and Stow (x 144, 25) in the chest's title row at y 3; Tidy and Pin in
 the same columns in the bag's label row, 72 to 83 on a 3-row chest. Each sits by what it affects. Recipe book and JEI push the
 panel; buttons are positioned from it. The result line and Undo sit 6 units under the panel, and on a 6-row chest (which leaves

@@ -9,13 +9,23 @@ import dev.awaken.hearth.room.RoomType;
 import dev.awaken.hearth.room.Tally;
 import dev.awaken.kin.works.Storehouse;
 import dev.awaken.kin.works.WorkRooms;
+import dev.awaken.storage.Tidying.Outcome;
+import dev.awaken.storage.Tidying.Result;
+import dev.awaken.storage.Tidying.Section;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.FurnaceMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -29,10 +39,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /** Storage's GameTests (SPEC §56). */
@@ -47,6 +59,15 @@ final class StorageTests {
         AwakenTests.register("storage_bay_double_is_one", 20, StorageTests::bayDouble);
         AwakenTests.register("storage_bay_copper", 20, StorageTests::bayCopper);
         AwakenTests.register("storage_bay_cells", 20, StorageTests::bayCells);
+        AwakenTests.register("storage_tidy_conserves", 200, StorageTests::tidyConserves);
+        AwakenTests.register("storage_tidy_rows", 20, StorageTests::tidyRows);
+        AwakenTests.register("storage_tidy_refuses_other_menus", 20, StorageTests::tidyRefuses);
+        AwakenTests.register("storage_tidy_in_a_chest", 40, StorageTests::tidyChest);
+        AwakenTests.register("storage_tidy_rate_limit", 20, StorageTests::tidyRateLimit);
+        AwakenTests.register("storage_tidy_stale_state", 20, StorageTests::tidyStale);
+        AwakenTests.register("storage_tidy_hotbar_and_pins", 20, StorageTests::tidyPins);
+        AwakenTests.register("storage_tidy_shulker", 20, StorageTests::tidyShulker);
+        AwakenTests.register("storage_undo_refuses_changed", 40, StorageTests::undoChanged);
     }
 
     /** Under a tenth of what you can get is "Odd things"; writes every item's sort beside the run for checking. */
@@ -203,5 +224,174 @@ final class StorageTests {
         put(h, new BlockPos(6, 2, 6), Blocks.BARREL.defaultBlockState()); // in the box, in the next room along
         h.assertTrue(WorkRooms.containers(h.getLevel(), r).size() == 1, "only the room's own chest counts (" + WorkRooms.containers(h.getLevel(), r).size() + ")");
         h.succeed();
+    }
+
+    // ---- Tidy --------------------------------------------------------------------------------------------------------
+
+    /** 2,000 random fills: nothing is lost or duplicated, locked slots don't move, and tidying twice changes nothing. */
+    static void tidyConserves(GameTestHelper h) {
+        Item[] pool = {Items.COBBLESTONE, Items.DIRT, Items.OAK_LOG, Items.BIRCH_LOG, Items.TORCH, Items.RAW_IRON, Items.IRON_INGOT, Items.DIAMOND, Items.BREAD,
+                Items.WHEAT_SEEDS, Items.BONE, Items.ROTTEN_FLESH, Items.IRON_SWORD, Items.IRON_PICKAXE, Items.DIAMOND_CHESTPLATE, Items.POTION, Items.BOOK, Items.MUSIC_DISC_CAT,
+                Items.ENDER_PEARL, Items.WATER_BUCKET, Items.SNOWBALL, Items.ARROW};
+        Random r = new Random(29102026L);
+        for (int round = 0; round < 2000; round++) {
+            int size = r.nextBoolean() ? 27 : r.nextBoolean() ? 54 : r.nextBoolean() ? 9 : 5;
+            ItemStack[] now = new ItemStack[size];
+            boolean[] locked = new boolean[size];
+            for (int i = 0; i < size; i++) {
+                now[i] = ItemStack.EMPTY;
+                if (r.nextInt(100) < 60) {
+                    ItemStack s = new ItemStack(pool[r.nextInt(pool.length)]);
+                    s.setCount(1 + r.nextInt(s.getMaxStackSize()));
+                    if (s.isDamageableItem()) s.setDamageValue(r.nextInt(5));
+                    now[i] = s;
+                }
+                locked[i] = size == 27 && r.nextInt(10) == 0;
+            }
+            int cols = size == 5 ? 5 : 9;
+            Tidy.Plan p = Tidy.plan(now, locked, cols, 99);
+            h.assertTrue(p != null, "round " + round + ": a fill that came from slots always fits back");
+            h.assertTrue(Tidy.sameTotals(now, p.after()), "round " + round + ": the counts changed");
+            for (int i = 0; i < size; i++) {
+                if (locked[i]) h.assertTrue(ItemStack.matches(now[i], p.after()[i]), "round " + round + ": a pinned slot moved");
+                h.assertTrue(p.after()[i].getCount() <= Math.max(1, p.after()[i].getMaxStackSize()), "round " + round + ": an overfull stack");
+            }
+            Tidy.Plan again = Tidy.plan(p.after(), locked, cols, 99);
+            h.assertTrue(again != null && !again.changed(), "round " + round + ": a second Tidy changed something");
+        }
+        h.succeed();
+    }
+
+    /** With room to spare every sort starts its own row, and part-stacks of one thing are merged. */
+    static void tidyRows(GameTestHelper h) {
+        ItemStack[] now = new ItemStack[27];
+        Arrays.fill(now, ItemStack.EMPTY);
+        now[3] = new ItemStack(Items.BREAD, 10);
+        now[20] = new ItemStack(Items.COBBLESTONE, 40);
+        now[11] = new ItemStack(Items.COBBLESTONE, 40);
+        now[25] = new ItemStack(Items.OAK_LOG, 8);
+        Tidy.Plan p = Tidy.plan(now, new boolean[27], 9, 99);
+        h.assertTrue(p != null && p.after()[0].is(Items.COBBLESTONE) && p.after()[0].getCount() == 64, "stone first, one full stack (" + (p == null ? "null" : p.after()[0]) + ")");
+        h.assertTrue(p.after()[1].is(Items.COBBLESTONE) && p.after()[1].getCount() == 16, "then what's left of it");
+        h.assertTrue(p.after()[9].is(Items.OAK_LOG), "wood starts the next row (" + p.after()[9] + ")");
+        h.assertTrue(p.after()[18].is(Items.BREAD), "food the row after (" + p.after()[18] + ")");
+        h.succeed();
+    }
+
+    private static AwakenTests.Live player(GameTestHelper h) {
+        AwakenTests.Live l = AwakenTests.survivalPlayer(h, "Tidy", new BlockPos(2, 2, 2));
+        AwakenTests.onEnd(h, l::leave);
+        return l;
+    }
+
+    /** A chest menu for this barrel, the way a click would open it. */
+    private static AbstractContainerMenu open(GameTestHelper h, ServerPlayer p, BlockPos at) {
+        put(h, at, Blocks.BARREL.defaultBlockState());
+        p.openMenu((MenuProvider) h.getLevel().getBlockEntity(h.absolutePos(at)));
+        return p.containerMenu;
+    }
+
+    private static void fill(Container c, Object... items) {
+        for (int i = 0; i < items.length; i += 2) c.setItem((Integer) items[i], (ItemStack) items[i + 1]);
+    }
+
+    /** A furnace's menu, and a chest menu that isn't really a chest, aren't ours to arrange. */
+    static void tidyRefuses(GameTestHelper h) {
+        ServerPlayer p = player(h).player();
+        p.containerMenu = new FurnaceMenu(7, p.getInventory());
+        h.assertTrue(Tidying.tidy(p, 7, p.containerMenu.getStateId(), Section.CONTAINER).result() == Result.REFUSED, "a furnace isn't offered");
+        p.containerMenu = ChestMenu.threeRows(8, p.getInventory(), new SimpleContainer(27));
+        h.assertTrue(Tidying.tidy(p, 8, p.containerMenu.getStateId(), Section.CONTAINER).result() == Result.REFUSED, "someone's button panel isn't a chest");
+        p.containerMenu = p.inventoryMenu;
+        h.succeed();
+    }
+
+    /** Tidy a real barrel through the menu, see it say "already", then undo. */
+    static void tidyChest(GameTestHelper h) {
+        ServerPlayer p = player(h).player();
+        AbstractContainerMenu m = open(h, p, new BlockPos(1, 2, 1));
+        Container c = (Container) h.getLevel().getBlockEntity(h.absolutePos(new BlockPos(1, 2, 1)));
+        fill(c, 4, new ItemStack(Items.BREAD, 3), 12, new ItemStack(Items.COBBLESTONE, 5));
+        m.broadcastChanges();
+        Outcome o = Tidying.tidy(p, m.containerId, m.getStateId(), Section.CONTAINER);
+        h.assertTrue(o.result() == Result.DONE, "tidied (" + o.result() + ")");
+        h.assertTrue(c.getItem(0).is(Items.COBBLESTONE), "stone first: " + c.getItem(0));
+        h.assertTrue(c.getItem(9).is(Items.BREAD), "food on its own row: " + c.getItem(9));
+        h.assertTrue(o.from().length == 2, "two trips: " + o.from().length);
+        h.runAfterDelay(6, () -> {
+            h.assertTrue(Tidying.tidy(p, m.containerId, m.getStateId(), Section.CONTAINER).result() == Result.ALREADY, "a second Tidy has nothing to do");
+            h.runAfterDelay(6, () -> {
+                h.assertTrue(Tidying.undo(p, m.containerId).result() == Result.DONE, "undone");
+                h.assertTrue(c.getItem(4).is(Items.BREAD) && c.getItem(12).is(Items.COBBLESTONE), "back where they were");
+                h.succeed();
+            });
+        });
+    }
+
+    static void tidyRateLimit(GameTestHelper h) {
+        ServerPlayer p = player(h).player();
+        AbstractContainerMenu m = p.inventoryMenu;
+        p.containerMenu = m;
+        p.getInventory().setItem(20, new ItemStack(Items.DIRT));
+        h.assertTrue(Tidying.tidy(p, m.containerId, m.getStateId(), Section.BAG).result() != Result.LIMITED, "the first goes through");
+        h.assertTrue(Tidying.tidy(p, m.containerId, m.getStateId(), Section.BAG).result() == Result.LIMITED, "the second, the same tick, doesn't");
+        h.succeed();
+    }
+
+    static void tidyStale(GameTestHelper h) {
+        ServerPlayer p = player(h).player();
+        AbstractContainerMenu m = p.inventoryMenu;
+        p.containerMenu = m;
+        p.getInventory().setItem(20, new ItemStack(Items.DIRT));
+        h.assertTrue(Tidying.tidy(p, m.containerId, m.getStateId() + 1, Section.BAG).result() == Result.STALE, "an out of date client is refused");
+        h.assertTrue(p.getInventory().getItem(20).is(Items.DIRT), "and nothing moved");
+        h.succeed();
+    }
+
+    /** The hotbar and a pinned slot stay where they are. */
+    static void tidyPins(GameTestHelper h) {
+        ServerPlayer p = player(h).player();
+        AbstractContainerMenu m = p.inventoryMenu;
+        p.containerMenu = m;
+        Inventory inv = p.getInventory();
+        inv.setItem(3, new ItemStack(Items.BREAD));
+        inv.setItem(9, new ItemStack(Items.DIAMOND_SWORD));
+        inv.setItem(30, new ItemStack(Items.DIRT));
+        StorageApi.setPinned(p, 9, true);
+        h.assertTrue(Tidying.tidy(p, m.containerId, m.getStateId(), Section.BAG).result() == Result.DONE, "tidied");
+        h.assertTrue(inv.getItem(3).is(Items.BREAD), "the hotbar stays");
+        h.assertTrue(inv.getItem(9).is(Items.DIAMOND_SWORD), "the pin stays");
+        h.assertTrue(inv.getItem(10).is(Items.DIRT), "and the dirt goes round it: " + inv.getItem(10));
+        h.succeed();
+    }
+
+    /** A slot that won't take the stack (a shulker inside a shulker box): the whole Tidy stops and nothing moves. */
+    static void tidyShulker(GameTestHelper h) {
+        ServerPlayer p = player(h).player();
+        BlockPos at = new BlockPos(1, 2, 1);
+        put(h, at, Blocks.SHULKER_BOX.defaultBlockState());
+        p.openMenu((MenuProvider) h.getLevel().getBlockEntity(h.absolutePos(at)));
+        AbstractContainerMenu m = p.containerMenu;
+        Container c = (Container) h.getLevel().getBlockEntity(h.absolutePos(at));
+        fill(c, 5, new ItemStack(Items.SHULKER_BOX), 2, new ItemStack(Items.DIRT));
+        m.broadcastChanges();
+        h.assertTrue(Tidying.tidy(p, m.containerId, m.getStateId(), Section.CONTAINER).result() == Result.FAILED, "stopped");
+        h.assertTrue(c.getItem(5).is(Items.SHULKER_BOX) && c.getItem(2).is(Items.DIRT), "and nothing moved");
+        h.succeed();
+    }
+
+    static void undoChanged(GameTestHelper h) {
+        ServerPlayer p = player(h).player();
+        AbstractContainerMenu m = p.inventoryMenu;
+        p.containerMenu = m;
+        Inventory inv = p.getInventory();
+        inv.setItem(30, new ItemStack(Items.DIRT));
+        h.assertTrue(Tidying.tidy(p, m.containerId, m.getStateId(), Section.BAG).result() == Result.DONE, "tidied");
+        inv.setItem(20, new ItemStack(Items.STONE));
+        h.runAfterDelay(6, () -> {
+            h.assertTrue(Tidying.undo(p, m.containerId).result() == Result.STALE, "Undo can't run over a change");
+            h.assertTrue(inv.getItem(20).is(Items.STONE), "the new stone is still there");
+            h.succeed();
+        });
     }
 }

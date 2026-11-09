@@ -19694,3 +19694,19 @@ else one mostly of its sort with room, else an empty one, else null. `WorkRooms.
 opens the whole of it), counts copper chests, and follows the room's cells when it has them, so a pantry inside an L-shaped hall's
 box isn't the hall's.
 
+**Tidy, Undo and Pins (Stage 1).** Server-side, on an exact list of menus: `ChestMenu` over a real chest, barrel, minecart or ender
+chest (not someone's button panel on a `SimpleContainer`), `ShulkerBoxMenu`, `DispenserMenu`, `HopperMenu`, and the bag. `Tidy.plan`
+is pure: skip the hotbar and pinned slots, merge identical stacks, order by the sort list then family then name then biggest then
+least worn, each sort on its own row when that fits, and check every item's total before anything is written. A menu whose state id
+disagrees is refused and resynced; four requests a second a player; a slot that won't take its stack stops the whole Tidy. One step
+of Undo per player, kept in memory, dropped on close or when anything in the section changes. `BagPins` (attachment `awaken:bag_pins`,
+copied on death) is a bit per Inventory slot, and "Empty my bag" at the Drop leaves pinned slots too.
+
+The bag's keys sit right of the recipe book's button, which is where the prototype had put Tidy: Tidy and Pin at y 58, ten tall, and
+Stow under them at y 70 when it comes. On a chest: Tidy in the title row and Tidy and Pin in the row beside "Inventory". `GlassChestScreen`
+and `GlassShulkerScreen` subclass vanilla's screens and only change the drawing, so every click, Mouse Tweaks and JEI behave as before;
+they replace only the exact vanilla classes, and only while the bag is glass. Keys T and Z work only in those screens, and after any
+text box or other mod has had the key. Alt-click (Option on a Mac) pins; the Pin key is a mode where any click does. Flights are
+220 ms ease-out, up to 40 ms staggered, over slots already holding their final contents; a click lands them at once. Sounds by name:
+`item.bundle.insert` low, `item.bundle.remove_one` for Undo, `item.bundle.insert_fail` when refused, `block.chiseled_bookshelf.insert` for a pin.
+

@@ -22,6 +22,7 @@ final class WorksTests {
     static void register() {
         AwakenTests.register("works_plan_builds", 40, WorksTests::planBuilds);
         AwakenTests.register("works_bays_sort", 40, WorksTests::baysSort);
+        AwakenTests.register("works_empty_bag_keeps_pins", 40, WorksTests::emptyBagKeepsPins);
     }
 
     /**
@@ -83,6 +84,23 @@ final class WorksTests {
         ItemStack left = Storehouse.shelve(level, at, new ItemStack(Items.RAW_IRON, 70));
         h.assertTrue(left.getCount() == 6, "the last slot takes 64 and 6 come back (" + left.getCount() + ")");
         h.assertFalse(Storehouse.fits(barrel, new ItemStack(Items.RAW_IRON)), "the bay is full");
+        h.succeed();
+    }
+
+    /** "Empty my bag" leaves pinned slots where they are (SPEC §56). */
+    static void emptyBagKeepsPins(GameTestHelper h) {
+        BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));
+        h.getLevel().setBlock(at, WorksContent.DROP.get().defaultBlockState(), 3);
+        DropBlockEntity be = (DropBlockEntity) h.getLevel().getBlockEntity(at);
+        AwakenTests.Live l = AwakenTests.survivalPlayer(h, "Bag", new BlockPos(2, 2, 2));
+        AwakenTests.onEnd(h, l::leave);
+        var p = l.player();
+        p.getInventory().setItem(9, new ItemStack(Items.DIAMOND));
+        p.getInventory().setItem(10, new ItemStack(Items.COBBLESTONE));
+        dev.awaken.storage.StorageApi.setPinned(p, 9, true);
+        Storehouse.emptyBag(h.getLevel(), p, be);
+        h.assertTrue(p.getInventory().getItem(9).is(Items.DIAMOND), "the pinned diamond stays");
+        h.assertTrue(p.getInventory().getItem(10).isEmpty(), "the rest goes in the Drop");
         h.succeed();
     }
 }

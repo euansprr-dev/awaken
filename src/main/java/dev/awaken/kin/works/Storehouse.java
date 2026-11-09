@@ -73,7 +73,7 @@ public final class Storehouse {
         ItemStack last = ItemStack.EMPTY;
         for (int i = Inventory.getSelectionSize(); i < Inventory.INVENTORY_SIZE; i++) {
             ItemStack s = inv.getItem(i);
-            if (s.isEmpty()) continue;
+            if (s.isEmpty() || dev.awaken.storage.StorageApi.pinned(p, i)) continue;
             if (be.full()) break;
             ItemStack left = be.add(s.copy());
             if (left.getCount() == s.getCount()) continue;

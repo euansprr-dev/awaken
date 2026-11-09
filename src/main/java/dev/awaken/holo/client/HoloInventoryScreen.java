@@ -142,6 +142,12 @@ final class HoloInventoryScreen extends InventoryScreen {
         if (contentShown()) super.extractSlots(g, mx, my);
     }
 
+    /** A slot's item waits for its flight to land after a Tidy (SPEC §56). */
+    @Override
+    protected void extractSlot(GuiGraphicsExtractor g, Slot slot, int mx, int my) {
+        if (!dev.awaken.storage.client.Tray.hiding(slot)) super.extractSlot(g, slot, mx, my);
+    }
+
     /** No tooltip for an item this face doesn't show yet (the cursor resting on a slot as E is pressed). */
     @Override
     protected void extractTooltip(GuiGraphicsExtractor g, int mx, int my) {
