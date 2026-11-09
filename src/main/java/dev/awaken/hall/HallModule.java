@@ -19,6 +19,7 @@ public final class HallModule {
             r.playToClient(HallNet.Wall.TYPE, HallNet.Wall.STREAM_CODEC);
             r.playToClient(HallNet.Show.TYPE, HallNet.Show.STREAM_CODEC);
         });
+        HallTests.register();
         // dev: the wall from any door, a weapon brought close (tours have no way to aim at a niche by name)
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("hall").requires(AwakenCommands.admin())
                 .then(Commands.literal("wall").then(Commands.argument("door", IntegerArgumentType.integer(0, 2)).executes(c -> {

@@ -19690,3 +19690,32 @@ against six kinds of player (stands still, runs, circles, holds guard, keeps awa
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
 
+
+## 52. The Hall of Arms (choosing weapons and armour; page https://claude.ai/artifact/UZX5KofQPGeXHeiPxJ9sxK)
+Euan 9 Nov: the Armoury, Fitting Stand and War Anvil windows were "just a block of text... ugly... too linear". They become one
+place you stand in. Package `dev.awaken.hall`; the old screens stay behind `classicScreens` in `awaken-hall-client.toml` for one
+build, then go.
+
+**The sheet.** Every Hall screen is laid out on one 1708 x 960 sheet (`Stage`), fitted to the window and letterboxed; text sizes
+snap to whole real pixels. Blackletter is Jacquard 24 baked to a bitmap (`tools/art/hall/title_font.py`; OFL text beside it; the TTF
+is not in the repo). Weapon meshes are the real ones, drawn live by `PicRenderer` into their own textures with the Hall's shader
+(`hall_weapon`), once when the wall changes and every frame only for the weapon brought close.
+
+**The Wall.** 16 kinds across (five bays: Blades, Heavy, Reach, Close, Strange), 6 ranks up, receding. Dark except round your lantern
+(the mouse) and below the tide (your level, the line and the words "You, level N"). `HallServer.wall` judges each niche and the client
+only draws it: `SHAPE` not found (black, no name), `OFFER` on Hale's rack at your rank (iron), `OVER` known but above your level (its
+true look), `KNOWN` known and short of parts (dimmed), `READY` (lit even in the dark), `MADE` held or remembered (lit even in the
+dark). Filters: Everything, Ready now, Tracked. 15 seals for the Lord-forged: closed until you have taken one, and one you hold opens
+close up. It never names a boss in advance.
+
+**A weapon brought close.** Clicking a niche zooms the wall away and flies that weapon to the middle of the screen, turning; drag to
+turn it. Left: the six ranks of the kind (a click changes rank). Right, in a dark panel: rank and name; blurb; damage (`damage + 1`),
+swings a second (`speed + 4`), uses and reach (the chain's longest strike); against the weapon in your hand; **what makes it
+different**, from the numbers the blows use (`HallSpecial`, never typed by hand per weapon); **what it takes**, each material as the
+real item (a tag's members in turn) with have/need and where it comes from; and what you can do here at this door. The action
+stands at the bottom and is the Armoury's own logic: at a War Anvil Hold to forge (0.6 s, Space or the mouse, or one click with
+`clickToCommit`), From memory, Forge the blade, Rebuild it; at the Forge Raise it, Draw a copy; at Hale's rack Buy; Track anywhere.
+A paragraph that won't fit is left out whole, never cut. Unfound: "Unknown", no numbers, nothing given away.
+
+**Refreshing.** Twice a second the screen hashes your pack; a change asks `ArmsArmoury.REFRESH`, so what you pick up shows without
+reopening. Test `hall_wall`: the wall says the same as the Armoury's list.
