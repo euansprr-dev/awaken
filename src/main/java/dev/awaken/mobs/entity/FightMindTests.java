@@ -33,7 +33,7 @@ public final class FightMindTests {
     static final String[] PILOTS = {"hive_regent", "gearwright_colossus"};
     private static final int ROOM = FightRecorder.ROOM;
     /** A potion's drink, and how far apart the drink test starts them (farther than the longest answer rests). */
-    private static final int DRINK_TICKS = 32, DRINK_EVERY = 300, DRINKS = 28;
+    private static final int DRINK_TICKS = 32, DRINK_EVERY = 300, DRINKS = 56;
     private static final int SWIG = DRINKS * (DRINK_EVERY + 40);
     /** Each pilot's answers: tests register before data loads, so the count is pinned and checked in {@link #answer}. */
     private static final int ANSWERS = 6;
@@ -46,6 +46,7 @@ public final class FightMindTests {
             h.succeed();
         });
         AwakenTests.registerIsolated("fights_mind_caught", 200, FightMindTests::caught);
+        AwakenTests.registerIsolated("fights_mind_repeats", 40, FightMindTests::repeats);
         for (String id : PILOTS) {
             for (int n = 0; n < ANSWERS; n++) {
                 int at = n;
@@ -212,6 +213,32 @@ public final class FightMindTests {
             }
             h.assertTrue(tick[0] < 100, id + " (" + how + ") never went on");
         });
+    }
+
+    /** It never picks what it just made, except a blow as the last resort; a move that hurts nobody keeps its rest whatever happens. */
+    private static void repeats(GameTestHelper h) {
+        FightMind m = scene(h, "hive_regent").mind;
+        KitMoves.Table t = Kits.all().get("hive_regent").moves();
+        int rain = t.index("rain"), frenzy = t.index("frenzy"), brood = t.index("brood"), sting = t.index("sting"), cut = t.index("cut");
+        long now = 1000;
+        m.began(frenzy, now);
+        m.nothingToStart(now);
+        h.assertTrue(!m.allowed(frenzy, now + 100_000), "a buff never follows itself");
+        m.began(brood, now);
+        m.began(rain, now + 1);
+        m.nothingToStart(now + 1);
+        h.assertTrue(!m.allowed(brood, now + 100), "a move that hurts nobody keeps its rest, however long nothing else can start");
+        h.assertTrue(!m.allowed(rain, now + 1 + FightMind.REPEAT_AFTER), "a blow doesn't follow itself early");
+        h.assertTrue(m.allowed(rain, now + 2 + FightMind.REPEAT_AFTER), "the last resort");
+        m.began(rain, now + 2 + FightMind.REPEAT_AFTER);
+        h.assertTrue(m.lastResorts() == 1, "and it's counted");
+        now += 1000;
+        m.began(sting, now);
+        m.began(cut, now + 1);
+        h.assertTrue(!m.allowed(sting, now + 2), "a blow rests");
+        m.nothingToStart(now + 2);
+        h.assertTrue(m.allowed(sting, now + 3 + FightMind.STALE_TICKS), "unless nothing else can start");
+        h.succeed();
     }
 
     /** The third dodge in a row is caught: the blow is held for a beat and turns to where you land; but only once it has seen it. */
