@@ -161,7 +161,9 @@ public final class AnvilStage extends Screen implements dev.awaken.signal.client
         Stage s = stage;
         s.begin(g, width, height);
         // the floor falls away into shade, so the words under the steel never fight the fire behind them
-        g.fillGradient(0, 500, Stage.W, Stage.H, 0x00000000, 0xC0050302);
+        int left = (int) Math.floor(-s.ox / s.k), right = (int) Math.ceil(Stage.W + s.ox / s.k), below = (int) Math.ceil(Stage.H + s.oy / s.k);
+        g.fillGradient(left, 500, right, Stage.H, 0x00000000, 0xC0050302);
+        if (below > Stage.H) g.fill(left, Stage.H, right, below, 0xC0050302); // to the window's edge, whatever its shape
         frame(s, dt, mx, my);
         s.endBare();
     }

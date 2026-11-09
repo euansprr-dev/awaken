@@ -92,7 +92,7 @@ final class Stage {
     }
 
     float snap(float n) {
-        return Math.max(1, (int) Math.floor(n * rps + .001F)) / rps; // down, so text never comes out wider than the sheet was laid out for
+        return Math.max(1, (int) Math.floor(n * rps + .35F)) / rps; // down, but a hair under a whole step still counts: a window of 1.93 real pixels a sheet pixel keeps text at 2 x 1.93 = 4, not 3
     }
 
     private float grid(float v) {

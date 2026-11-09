@@ -49,7 +49,7 @@ public final class HallMoment {
         float in = Math.min(1F, t / .14F), a = in * (t > HIT + HOLD ? 1F - (t - HIT - HOLD) / OUT : 1F);
         float size = 5F;
         while (size > 2F && s.titleWidth(name, size) > 1520F) size -= 1F;
-        float y = 150F + (1F - in) * (1F - in) * 26F, wide = s.titleWidth(name, size);
+        float y = 104F + (1F - in) * (1F - in) * 26F, wide = s.titleWidth(name, size);
         s.glow(854F, y + 13F * size, wide / 2F + 150F, 26F * size + 60F, colour, .5F * a);
         s.titleCentre(name, 854F, y, size, Stage.argb(0xF4F6FB, a));
         s.centre(line, 854F, y + 26F * size + 10F, 4F, Stage.argb(colour, a));
