@@ -86,10 +86,11 @@ wait 12
 camera first
 # the Mattock: rock, then earth, turning between, and timber
 cmd item replace entity @s weapon.mainhand with awaken:veilwoven_pick_mattock
-cmd tp @s 0.2 201 6.5 -28 8
+# from here yaw 10 meets the stone behind, yaw -40 the dirt at x=2, z=8 (the logs at z 6-7 are nearer, at yaw -75)
+cmd tp @s 1.0 201 7.0 10 8
 wait 30
 shot mattock_rock
-cmd tp @s 0.2 201 6.5 28 8
+cmd tp @s 1.0 201 7.0 -40 8
 wait 4
 shotnow mattock_turn_early
 wait 2
@@ -98,13 +99,17 @@ wait 2
 shotnow mattock_turn_late
 wait 8
 shot mattock_earth
-cmd tp @s 0.2 201 6.5 -28 8
+cmd tp @s 1.0 201 7.0 10 8
 wait 16
 shot mattock_rock_again
+cmd tp @s 1.0 201 7.0 -75 8
+wait 16
+shot mattock_wood
 camera back
-wait 8
+cmd tp @s 1.0 201 7.0 10 8
+wait 16
 shot mattock_3p_rock
-cmd tp @s 0.2 201 6.5 28 8
+cmd tp @s 1.0 201 7.0 -40 8
 wait 16
 shot mattock_3p_earth
 camera first
@@ -138,6 +143,8 @@ screen close
 wait 5
 # a whole forging, every stage a pick has
 cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd awaken admin counter "awaken:delve/deed_lamp" 1
+cmd awaken admin counter "awaken:delve/deed_heart" 1
 cmd awaken arms anvil autoplay true
 wait 10
 cmd awaken arms anvil forge sovereign_pick_sounder
@@ -171,4 +178,12 @@ shotnow forge_card
 screen close
 wait 20
 shot after_forge
+# in the world, not the hand: on the ground and in a frame
+cmd fill -3 201 -2 3 203 2 minecraft:air
+cmd setblock 0 203 -3 minecraft:polished_deepslate
+cmd summon minecraft:item_frame 0 203 -2 {Facing:3b,Item:{id:"awaken:sovereign_pick_mattock",count:1}}
+cmd summon minecraft:item 0.5 201.1 -1.5 {Item:{id:"awaken:gatewrought_pick_delver",count:1},PickupDelay:32767s}
+cmd tp @s 0.5 201 1 180 8
+wait 30
+shot world_pick
 quit
