@@ -431,8 +431,8 @@ final class ArmsTests {
                 int i = chain.indexOf(e.getKey());
                 FpSwings.Hand mine = FpSwings.hand(st, e.getKey());
                 if (e.getKey() == Archetype.Move.HEAVY) { // loosed from the hold, it still has to cross before it lands (SPEC §25 "The hit on the blade")
-                    float lands = FpSwings.lands(st, e.getKey());
-                    h.assertTrue(lands > 0 && lands <= 1F, a.id() + "'s heavy lands as its weapon crosses, within the server's first tick (" + lands + ")");
+                    float lands = FpSwings.lands(st, e.getKey(), def);
+                    h.assertTrue(lands > 0 && lands < def.activeEnd(), a.id() + "'s heavy lands as its weapon crosses, inside its active ticks (" + lands + ")");
                 }
                 FpSwings.Hand next = i >= 0 && i + 1 < chain.size() ? FpSwings.hand(st, chain.get(i + 1)) : null;
                 boolean waits = next != null && def.hasCadence() && mine != FpSwings.Hand.BOTH && next != FpSwings.Hand.BOTH && next != mine;

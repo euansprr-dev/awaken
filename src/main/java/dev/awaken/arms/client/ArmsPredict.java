@@ -775,10 +775,11 @@ public final class ArmsPredict {
     /**
      * Where the running move's blow lands on its clock. A heavy's windup is 0, the hold having been its wind-up, but the
      * weapon has still to cross: the freeze on the first frame held it wound back while the target already reeled, and
-     * only then let it swing. Its look waits for its clip's own hit, never past the server's first sweep a tick in.
+     * only then let it swing. Its look waits for the blade to cross, on every weapon; a server HIT that comes first waits
+     * with it, never more than a tick ({@link #landPending}).
      */
     private static float landsAt(Archetype.MoveDef def) {
-        return move != Archetype.Move.HEAVY || style == null ? def.windup() : Math.min(1F, FpSwings.lands(FpSwings.style(style.id()), move));
+        return move != Archetype.Move.HEAVY || style == null ? def.windup() : FpSwings.lands(FpSwings.style(style.id()), move, def);
     }
 
     /** What the server's sweep strikes unaimed, as far as a client can tell: a hostile, never one's own nor a villager. */

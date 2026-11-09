@@ -7353,8 +7353,9 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
-    hold was its wind-up) but its weapon has still to cross, so its impact waits for its clip's own `hit` (`FpSwings.lands`;
-    a clip not keyed by hand takes a tick, the server's first sweep; never later): on the first frame after the release
+    hold was its wind-up) but its weapon has still to cross, so its impact waits for the blade to cross (`FpSwings.lands`:
+    a hand-keyed clip's own `hit`, any other's halfway through its active ticks, where the lab bakes it; a server HIT that
+    comes first waits with it, never more than a tick): on the first frame after the release
     the freeze held the weapon wound back with the target already reeling, and only then let it go (seen on the
     Shieldblade's film, 2026-11-09). The Daggers' freezes
     are 50 ms on strikes 1 and 2, 60 on strike 3 and

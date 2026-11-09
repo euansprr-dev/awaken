@@ -57,7 +57,7 @@ public final class FpSwings {
      * its ribbon, the stroke alone, never the way back (traced, the way home closed each stroke into a loop).
      * {@code kick} (schema 7, a hand-keyed move; null: the row's from/to): the view's kick on a hit [yaw, pitch], a unit
      * from the blade the keys draw (SPEC §25 "Hand-keyed moves": a stab nods the view in, a cut kicks along it).
-     * {@code lands} (a hand-keyed move's own {@code hit}; else 1): the clip tick its blow reaches what it strikes.
+     * {@code lands} (a hand-keyed move's own {@code hit}; else -1): the clip tick its blow reaches what it strikes.
      */
     public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft,
                        float swish, @Nullable String swishSound, float biteRate, float biteTicks, float[] idle, boolean far, float set,
@@ -168,7 +168,7 @@ public final class FpSwings {
                         row.has("trail") ? row.getAsJsonArray("trail").get(0).getAsFloat() : -1F,
                         row.has("trail") ? row.getAsJsonArray("trail").get(1).getAsFloat() : -1F,
                         row.has("kick") ? floats(row.getAsJsonArray("kick"), 2) : null,
-                        row.has("hit") ? row.get("hit").getAsFloat() : 1F));
+                        row.has("hit") ? row.get("hit").getAsFloat() : -1F));
             }
             Vector3f grip = vec(st.getAsJsonArray("grip"));
             styles.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
@@ -339,12 +339,12 @@ public final class FpSwings {
     }
 
     /**
-     * When a move's blow reaches what it strikes on its clip (ticks). A clip not keyed by hand says nothing, and takes a
-     * tick: where the server's first sweep of a heavy falls.
+     * When a heavy's blow reaches what it strikes on its clip (ticks). A clip keyed by hand says; any other crosses the
+     * target halfway through the active ticks, where the lab bakes it (anim_lab.hit_tick).
      */
-    public static float lands(@Nullable Style st, Archetype.@Nullable Move m) {
-        Clip c = st == null || m == null ? null : st.moves().get(m);
-        return c == null ? 1F : c.lands();
+    public static float lands(@Nullable Style st, Archetype.Move m, Archetype.MoveDef def) {
+        Clip c = st == null ? null : st.moves().get(m);
+        return c == null || c.lands() < 0 ? def.active() * 0.5F : c.lands();
     }
 
     /** When a move's swish starts (ticks; 0 on the press, as before the studio). */
