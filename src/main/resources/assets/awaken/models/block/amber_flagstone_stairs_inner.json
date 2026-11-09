@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "awaken:block/amber_flagstone",
+    "top": "awaken:block/amber_flagstone",
+    "side": "awaken:block/amber_flagstone"
+  }
+}

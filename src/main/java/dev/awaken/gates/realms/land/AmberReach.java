@@ -159,24 +159,27 @@ public final class AmberReach extends Land {
         boolean road = dr < 3.4 && d > 4;
         boolean paved = (dv < 1 && d > 2) || (dc < 140 && dc > 0) || road;
         if (d < 0) {
-            if (cap != null) cap[0] = rnd(x >> 1, z >> 1, 3 + seed) < 0.34 ? m.terraO : m.honeycomb;
+            if (cap != null) cap[0] = rnd(x >> 2, z >> 2, 3 + seed) < 0.16 ? m.deep : m.bed; // dark under the honey, so it reads as deep
         } else if (d < 5) {
             Hex t = hex(x, z, 2.2);
             boolean edge = t.edge() > 0.74;
             if (edge) y--;
             else if (rnd(t.q(), t.r(), 11 + seed) < 0.3) y++;
-            if (cap != null) cap[0] = edge ? m.pollen : rnd(t.q(), t.r(), 9 + seed) < 0.5 ? m.wax : m.honeycomb;
+            if (cap != null) {
+                double k = rnd(t.q(), t.r(), 9 + seed);
+                cap[0] = edge ? m.pollen : k < 0.45 ? m.hexstone : k < 0.8 ? m.pale : m.worn;
+            }
         } else if (paved) {
             if (cap != null) {
-                Hex t = hex(x, z, 2.7);
-                double k = rnd(t.q(), t.r(), 41 + seed);
-                cap[0] = t.edge() > 0.76 ? m.wax : k < 0.34 ? m.cut : k < 0.62 ? m.sand : k < 0.86 ? m.honeycomb : m.terraY;
+                // laid flags with worn patches and a few hex-paved courts; the eye should see a street, not a grid
+                double court = n3.get(x / 24.0, z / 24.0), wear = n1.get(x / 7.0, z / 7.0), k = rnd(x, z, 41 + seed);
+                cap[0] = court > 0.42 ? m.hexstone : wear > 0.5 && k < 0.6 ? m.worn : wear < -0.55 && k < 0.5 ? m.moss : k < 0.06 ? m.pale : m.flag;
             }
         } else {
             double soil = fbm(n9, x, z, 1 / 13.0, 2);
             if (cap != null) {
-                cap[0] = m.grass;
-                if (Math.hypot(x, z) > 110) {
+                cap[0] = m.moss;
+                if (Math.hypot(x, z) > 60) {
                     if (soil > 0.5) cap[0] = m.coarse;
                     else if (soil < -0.52) cap[0] = m.rooted;
                 }
@@ -225,7 +228,7 @@ public final class AmberReach extends Land {
             boolean paved = (dv < 1 && d > 2) || (dc < 140 && dc > 0) || (roadD(x, z) < 3.4 && d > 4);
             int si = (x - v.x0 + 1) * V.W + z - v.z0 + 1;
             // the land goes all the way down, so nothing below the world's floor can be seen through a cut
-            for (int k = 1; k < y; k++) v.set(x, k, z, k < y - 22 ? m.stone : y - k < 5 ? (paved ? m.cut : m.pollen) : m.terraB);
+            for (int k = 1; k < y; k++) v.set(x, k, z, k < y - 22 ? m.rock : y - k < 5 ? (paved ? m.pale : m.worn) : m.deep);
             v.set(x, 0, z, m.bedrock);
             v.set(x, y, z, cap[0]);
             if (y < WATER) for (int k = y + 1; k <= WATER; k++) v.set(x, k, z, m.water);
@@ -255,17 +258,17 @@ public final class AmberReach extends Land {
         int top = (int) (base + best * (0.55 + 0.62 * rnd(h.q(), h.r(), 5 + seed)));
         long id = h.q() * 31L + h.r();
         double tone = rnd(id, 1, 21 + seed);
-        BlockState body = tone < 0.45 ? m.wax : tone < 0.75 ? m.honeycomb : m.cut;
+        BlockState body = tone < 0.45 ? m.stoneA : tone < 0.75 ? m.worn : m.pale;
         // the gaps between columns are shallow slots, not holes down to bedrock
         boolean slot = h.edge() > 0.97;
         int ceil = slot ? Math.min(top, ground + 2) : top;
         for (int y = Math.max(ground - 2, 1); y <= ceil; y++) {
             BlockState s = body;
             double up = (y - ground) / Math.max(1.0, top - ground);
-            if (up < 0.22) s = n5.get(x / 5.0, y / 4.0, z / 5.0) > -0.1 ? m.terraB : body;
-            else if (up > 0.86 && h.edge() > 0.7) s = m.terraY;
+            if (up < 0.22) s = n5.get(x / 5.0, y / 4.0, z / 5.0) > -0.1 ? m.deep : body;
+            else if (up > 0.86 && h.edge() > 0.7) s = m.pale;
             if (rnd(id, Math.floorDiv(y, 11), 30 + seed) < 0.09 && Math.floorMod(y, 11) == 5 && h.edge() > 0.8) s = m.glow;
-            if (y == top) s = h.edge() > 0.75 ? m.cut : m.pollen;
+            if (y == top) s = h.edge() > 0.75 ? m.pale : m.pollen;
             v.set(x, y, z, s);
         }
     }
@@ -275,12 +278,12 @@ public final class AmberReach extends Land {
         int[][] side = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) for (int y = 56; y < 345; y++) {
             BlockState s = v.get(x, y, z);
-            if (s != m.wax && s != m.honeycomb && s != m.cut && s != m.terraY) continue;
+            if (s != m.stoneA && s != m.worn && s != m.pale && s != m.pale) continue;
             for (int[] d : side) {
                 if (v.get(x + d[0], y, z + d[1]) != null) continue;
                 // only a real ledge above, two deep, darkens the wall under it
                 if (v.solid(x + d[0], y + 1, z + d[1]) && v.solid(x + d[0] * 2, y + 1, z + d[1] * 2)) {
-                    v.set(x, y, z, m.terraB);
+                    v.set(x, y, z, m.deep);
                     break;
                 }
             }
@@ -298,30 +301,28 @@ public final class AmberReach extends Land {
         for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) {
             int y = gy[(x - v.x0 + 1) * V.W + z - v.z0 + 1];
             BlockState s = v.get(x, y, z);
-            if (s != m.grass && s != m.coarse && s != m.rooted) continue;
+            if (s != m.moss && s != m.coarse && s != m.rooted) continue;
             if (v.get(x, y + 1, z) != null) continue;
             double p = fbm(n7, x, z, 1 / 11.0, 2), q = rnd(x, z, 77 + seed);
-            if (s != m.grass) {
+            if (s != m.moss) {
                 if (q < 0.08) v.set(x, y + 1, z, m.deadBush);
                 continue;
             }
             if (p > -0.05) {
                 if (q < 0.5) v.set(x, y + 1, z, m.wheat);
                 else if (q < 0.74) tall(v, x, y, z, m);
-                else if (q < 0.9) v.set(x, y + 1, z, m.tallDry);
+                else if (q < 0.9) v.set(x, y + 1, z, m.wheatTall);
             } else if (q < 0.42) {
                 tall(v, x, y, z, m);
-            } else if (q < 0.6) v.set(x, y + 1, z, m.shortDry);
-            else if (q < 0.72) v.set(x, y + 1, z, m.shortG);
-            else if (q < 0.74) v.set(x, y + 1, z, m.fernV);
+            } else if (q < 0.6) v.set(x, y + 1, z, m.amberGrass);
+            else if (q < 0.72) v.set(x, y + 1, z, m.amberGrass);
+            else if (q < 0.74) v.set(x, y + 1, z, m.bloom);
             else if (q < 0.76) v.set(x, y + 1, z, m.petals);
         }
     }
 
     private static void tall(V v, int x, int y, int z, M m) {
-        if (v.get(x, y + 2, z) != null) return;
-        v.set(x, y + 1, z, m.tallLow);
-        v.set(x, y + 2, z, m.tallUp);
+        v.set(x, y + 1, z, m.wheatTall);
     }
 
     // ---- what stands in it --------------------------------------------------------------------------------------------------
@@ -470,25 +471,24 @@ public final class AmberReach extends Land {
         return s.getBlock().getStateDefinition().getProperty("lit") instanceof BooleanProperty p ? s.setValue(p, true) : s;
     }
 
+    /** The land's palette, every block of it the place's own but for small fittings (fence rail, barrel, lantern, chain). */
     static final class M {
-        final BlockState wax = b("hive_wax"), dark = b("hive_wax_dark"), comb = b("hive_comb"), capped = b("hive_comb_capped"), glow = b("hive_honey_glow"),
-                floor = b("hive_floor"), pollen = b("hive_pollen"), royal = b("hive_royal"), drip = b("hive_drip"), candle = lit(b("hive_candle")), petals = b("hive_petals"),
-                crumbs = b("hive_wax_crumbs"), drum = b("hive_drum"), waxSlab = b("hive_wax_slab"), darkSlab = b("hive_wax_dark_slab"), floorSlab = b("hive_floor_slab"),
-                waxStairs = b("hive_wax_stairs"), floorStairs = b("hive_floor_stairs");
-        final BlockState water = Blocks.WATER.defaultBlockState(), grass = Blocks.GRASS_BLOCK.defaultBlockState(), coarse = Blocks.COARSE_DIRT.defaultBlockState(),
-                rooted = Blocks.ROOTED_DIRT.defaultBlockState(), stone = Blocks.STONE.defaultBlockState(), bedrock = Blocks.BEDROCK.defaultBlockState(),
-                mossB = Blocks.MOSS_BLOCK.defaultBlockState(), honeycomb = Blocks.HONEYCOMB_BLOCK.defaultBlockState(),
-                sand = Blocks.SMOOTH_SANDSTONE.defaultBlockState(), cut = Blocks.CUT_SANDSTONE.defaultBlockState(), sandSlab = Blocks.SMOOTH_SANDSTONE_SLAB.defaultBlockState(),
-                cutSlab = Blocks.CUT_SANDSTONE_SLAB.defaultBlockState(), sandStairs = Blocks.SMOOTH_SANDSTONE_STAIRS.defaultBlockState(),
-                gold = Blocks.GOLD_BLOCK.defaultBlockState(), ochre = Blocks.OCHRE_FROGLIGHT.defaultBlockState(), shroom = Blocks.SHROOMLIGHT.defaultBlockState(),
-                chain = Blocks.IRON_CHAIN.defaultBlockState(), lantern = Blocks.LANTERN.defaultBlockState(),
-                hung = Blocks.LANTERN.defaultBlockState().setValue(BlockStateProperties.HANGING, true), fence = Blocks.DARK_OAK_FENCE.defaultBlockState(), log = Blocks.DARK_OAK_LOG.defaultBlockState(),
-                barrel = Blocks.BARREL.defaultBlockState(), light = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15),
-                wheat = Blocks.WHEAT.defaultBlockState().setValue(BlockStateProperties.AGE_7, 7), tallDry = Blocks.TALL_DRY_GRASS.defaultBlockState(), shortDry = Blocks.SHORT_DRY_GRASS.defaultBlockState(),
-                shortG = Blocks.SHORT_GRASS.defaultBlockState(), fernV = Blocks.FERN.defaultBlockState(), deadBush = Blocks.DEAD_BUSH.defaultBlockState(),
-                tallLow = Blocks.TALL_GRASS.defaultBlockState().setValue(DoublePlantBlock.HALF, DoubleBlockHalf.LOWER), tallUp = Blocks.TALL_GRASS.defaultBlockState().setValue(DoublePlantBlock.HALF, DoubleBlockHalf.UPPER),
-                terraO = Blocks.DYED_TERRACOTTA.pick(DyeColor.ORANGE).defaultBlockState(), terraY = Blocks.DYED_TERRACOTTA.pick(DyeColor.YELLOW).defaultBlockState(), terraB = Blocks.DYED_TERRACOTTA.pick(DyeColor.BROWN).defaultBlockState(),
-                terraG = Blocks.DYED_TERRACOTTA.pick(DyeColor.GREEN).defaultBlockState(), woolO = Blocks.WOOL.pick(DyeColor.ORANGE).defaultBlockState(), woolY = Blocks.WOOL.pick(DyeColor.YELLOW).defaultBlockState();
+        final BlockState stoneA = b("amber_stone"), worn = b("amber_stone_worn"), deep = b("amber_stone_deep"), pale = b("amber_stone_pale"),
+                hexstone = b("amber_hexstone"), flag = b("amber_flagstone"), brick = b("amber_brick"), plaster = b("amber_plaster"), band = b("amber_plaster_band"),
+                tile = b("amber_tile"), tileDeep = b("amber_tile_deep"), timber = b("amber_timber"), planks = b("amber_planks"), gold = b("amber_gilt"), window = b("amber_window"),
+                moss = b("amber_moss"), bed = b("amber_bed"), petal = b("amber_petal"), petalDeep = b("amber_petal_deep"), petalTip = b("amber_petal_tip"),
+                seedhead = b("amber_seedhead"), stem = b("amber_stem"), leaf = b("amber_leaf"), leafGold = b("amber_leaf_gold");
+        final BlockState stoneSlab = b("amber_stone_slab"), stoneStairs = b("amber_stone_stairs"), paleSlab = b("amber_stone_pale_slab"), paleStairs = b("amber_stone_pale_stairs"),
+                flagSlab = b("amber_flagstone_slab"), flagStairs = b("amber_flagstone_stairs"), brickSlab = b("amber_brick_slab"), tileStairs = b("amber_tile_stairs"), tileSlab = b("amber_tile_slab"),
+                tileDeepStairs = b("amber_tile_deep_stairs"), tileDeepSlab = b("amber_tile_deep_slab"), planksSlab = b("amber_planks_slab"), planksStairs = b("amber_planks_stairs"), plasterSlab = b("amber_plaster_slab");
+        final BlockState wheat = b("amber_wheat"), wheatTall = b("amber_wheat_tall"), amberGrass = b("amber_grass"), bloom = b("amber_bloom");
+        final BlockState comb = b("hive_comb"), capped = b("hive_comb_capped"), glow = b("hive_honey_glow"), pollen = b("hive_pollen"), royal = b("hive_royal"),
+                drip = b("hive_drip"), candle = lit(b("hive_candle")), petals = b("hive_petals"), crumbs = b("hive_wax_crumbs"), drum = b("hive_drum");
+        final BlockState water = Blocks.WATER.defaultBlockState(), coarse = Blocks.COARSE_DIRT.defaultBlockState(), rooted = Blocks.ROOTED_DIRT.defaultBlockState(),
+                rock = Blocks.STONE.defaultBlockState(), bedrock = Blocks.BEDROCK.defaultBlockState(), shroom = Blocks.SHROOMLIGHT.defaultBlockState(),
+                chain = Blocks.IRON_CHAIN.defaultBlockState(), lantern = Blocks.LANTERN.defaultBlockState(), hung = Blocks.LANTERN.defaultBlockState().setValue(BlockStateProperties.HANGING, true),
+                fence = Blocks.DARK_OAK_FENCE.defaultBlockState(), barrel = Blocks.BARREL.defaultBlockState(), light = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15),
+                deadBush = Blocks.DEAD_BUSH.defaultBlockState();
     }
 
     private static volatile M mats;
@@ -522,8 +522,8 @@ public final class AmberReach extends Land {
                 if (d > 9) continue;
                 int top = gy;
                 for (int y = top + 1; y < top + 6; y++) v.set(x, y, z, null);
-                v.foot(x, top - 1, z, m.cut);
-                v.set(x, top, z, d > 7.6 ? m.wax : ((x + z) & 1) == 0 ? m.sand : m.cut);
+                v.foot(x, top - 1, z, m.pale);
+                v.set(x, top, z, d > 7.6 ? m.stoneA : ((x + z) & 1) == 0 ? m.flag : m.pale);
             }
             for (int i = 0; i < 6; i++) {
                 double a = Math.PI / 6 + i * Math.PI / 3;
@@ -531,10 +531,10 @@ public final class AmberReach extends Land {
                 if (Math.cos(a) > 0.6) continue;
                 int h = 5 + (i & 1) * 2;
                 for (int y = 1; y <= h; y++) {
-                    v.set(sx, gy + y, sz, y == h ? m.terraB : m.cut);
-                    if (y <= 2) for (int[] d : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) v.set(sx + d[0], gy + y, sz + d[1], y == 2 ? m.sandSlab : m.cut);
+                    v.set(sx, gy + y, sz, y == h ? m.deep : m.pale);
+                    if (y <= 2) for (int[] d : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) v.set(sx + d[0], gy + y, sz + d[1], y == 2 ? m.flagSlab : m.pale);
                 }
-                v.foot(sx, gy, sz, m.cut);
+                v.foot(sx, gy, sz, m.pale);
                 v.set(sx, gy + h + 1, sz, m.candle);
             }
             // the arch home, behind where you arrive; the opening itself is lit the first time someone comes through
@@ -543,12 +543,12 @@ public final class AmberReach extends Land {
                 int a = Math.abs(s);
                 boolean jamb = a >= 2 && y <= 5, lintel = y == 4 + (3 - a) && a < 3, cap = y == 5 + (3 - a) && a < 2;
                 if (a == 3 && y > 3 || !jamb && !lintel && !cap && a != 3) continue;
-                BlockState b = a == 3 ? (y == 3 ? m.terraB : m.wax) : lintel || cap ? (y >= 6 ? m.gold : m.terraB) : y == 1 || y == 5 ? m.wax : m.cut;
+                BlockState b = a == 3 ? (y == 3 ? m.deep : m.stoneA) : lintel || cap ? (y >= 6 ? m.gold : m.deep) : y == 1 || y == 5 ? m.stoneA : m.pale;
                 v.set(ax, gy + y, cz + s, b);
-                v.foot(ax, gy, cz + s, m.cut);
+                v.foot(ax, gy, cz + s, m.pale);
                 if (a >= 2 && y == 1) {
-                    v.set(ax - 1, gy + y, cz + s, m.sandSlab);
-                    v.set(ax + 1, gy + y, cz + s, m.sandSlab);
+                    v.set(ax - 1, gy + y, cz + s, m.flagSlab);
+                    v.set(ax + 1, gy + y, cz + s, m.flagSlab);
                 }
             }
             v.set(ax, gy + 8, cz, m.candle);
@@ -586,14 +586,14 @@ public final class AmberReach extends Land {
             for (int i = 0; i <= steps; i++) {
                 double t = i / (double) steps, a = (1 - t) * (1 - t), b = 2 * t * (1 - t), c = t * t;
                 double x = a * bx + b * px + c * tx, y = a * by + b * py + c * ty, z = a * bz + b * pz + c * tz;
-                ball(v, x, y, z, lerp(2.0, 1.1, t), rnd((long) y, seed, 3) < 0.3 ? m.terraG : m.mossB);
+                ball(v, x, y, z, lerp(2.0, 1.1, t), m.stem);
                 if (i % (steps / 5) == steps / 10 && t < 0.86) {
                     double dir = rnd(i, seed, 4) * 6.283;
                     double lx = Math.cos(dir), lz = Math.sin(dir), len = h * (0.2 + 0.08 * rnd(i, seed, 5));
                     for (double s = 0; s <= 1; s += 0.04) {
                         double sx = x + lx * s * len, sz = z + lz * s * len, sy = y + (s * (1 - s) * 7 - s * s * 3);
                         double w = Math.sin(s * Math.PI) * 1.9;
-                        ball(v, sx, sy, sz, 0.55 + w * 0.65, rnd((long) (s * 40), seed, 6) < 0.25 ? m.terraG : m.mossB);
+                        ball(v, sx, sy, sz, 0.55 + w * 0.65, rnd((long) (s * 40), seed, 6) < 0.3 ? m.stem : m.leaf);
                     }
                 }
             }
@@ -606,7 +606,7 @@ public final class AmberReach extends Land {
             e1z /= e1l;
             double e2x = ny * e1z, e2y = nz * e1x - nx * e1z, e2z = -ny * e1x;
             double phase = rnd(seed, 1, 2) * 6.283;
-            ball(v, tx, ty, tz, 2.4, m.terraB);
+            ball(v, tx, ty, tz, 2.4, m.seedhead);
             for (int layer = 0; layer < 2; layer++) {
                 int petals = layer == 0 ? 15 : 12;
                 double RR = layer == 0 ? R : R * 0.74, off = layer == 0 ? -1.4 : 0;
@@ -621,11 +621,11 @@ public final class AmberReach extends Land {
                         double y = ty + rho * (Math.sin(th) * e2y) + ny * bowl;
                         double z = tz + rho * (Math.cos(th) * e1z + Math.sin(th) * e2z) + nz * bowl;
                         BlockState s;
-                        if (layer == 1 && q < 0.26) s = rnd((long) (x * 3), (long) (z * 3), 7) < 0.4 ? m.dark : m.comb;
-                        else if (layer == 1 && q < 0.42) s = m.terraB;
+                        if (layer == 1 && q < 0.3) s = rnd((long) (x * 3), (long) (z * 3), 7) < 0.3 ? m.deep : m.seedhead;
+                        else if (layer == 1 && q < 0.44) s = m.petalDeep;
                         else {
                             double tone = q + 0.16 * (rnd((long) (x * 2), (long) (y * 2), 8) - 0.5);
-                            s = tone < 0.55 ? m.terraO : tone < 0.8 ? m.woolO : m.woolY;
+                            s = tone < 0.55 ? m.petalDeep : tone < 0.8 ? m.petal : m.petalTip;
                         }
                         v.set((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z), s);
                     }
@@ -656,7 +656,7 @@ public final class AmberReach extends Land {
                 double cx = lerp(ax, bx, t), cy = lerp(ay, by, t), cz = lerp(az, bz, t);
                 int a = (int) Math.ceil(r);
                 for (int p = -a; p <= a; p++) for (int q = -a; q <= a; q++) for (int s = -a; s <= a; s++)
-                    if (p * p + q * q + s * s <= r * r + 0.25) v.set((int) Math.floor(cx) + p, (int) Math.floor(cy) + q, (int) Math.floor(cz) + s, m.log);
+                    if (p * p + q * q + s * s <= r * r + 0.25) v.set((int) Math.floor(cx) + p, (int) Math.floor(cy) + q, (int) Math.floor(cz) + s, m.timber);
             }
         }
 
@@ -666,7 +666,7 @@ public final class AmberReach extends Land {
                 double d = p * p + q * q * 3.2 + s * s;
                 if (d > r * r || rnd(p + (long) cx, s + (long) cz, q + seed) < 0.18) continue;
                 int X = (int) Math.floor(cx) + p, Y = (int) Math.floor(cy) + q, Z = (int) Math.floor(cz) + s;
-                if (v.get(X, Y, Z) == null) v.set(X, Y, Z, rnd(X, Z, seed + 2) < 0.4 ? m.woolO : m.woolY);
+                if (v.get(X, Y, Z) == null) v.set(X, Y, Z, rnd(X, Z, seed + 2) < 0.34 ? m.petal : m.leafGold);
             }
         }
 
@@ -704,9 +704,9 @@ public final class AmberReach extends Land {
                 double hd = hexMetric(a - x, c - z);
                 if (hd > r) continue;
                 int top = y + h - (hd > r - 1 ? 1 : 0);
-                for (int k = y - 2; k <= top; k++) v.set(a, k, c, k == top ? (hd > r - 1.4 ? m.cut : m.wax) : k % 3 == 0 ? m.terraB : m.wax);
-                v.foot(a, y - 3, c, m.terraB);
-                if (hd <= r - 1 && hd > r - 2.2) v.set(a, top + 1, c, m.waxSlab);
+                for (int k = y - 2; k <= top; k++) v.set(a, k, c, k == top ? (hd > r - 1.4 ? m.pale : m.stoneA) : k % 3 == 0 ? m.deep : m.stoneA);
+                v.foot(a, y - 3, c, m.deep);
+                if (hd <= r - 1 && hd > r - 2.2) v.set(a, top + 1, c, m.stoneSlab);
                 for (int k = top + 2; k < top + 5; k++) v.set(a, k, c, null);
             }
         }
@@ -742,37 +742,37 @@ public final class AmberReach extends Land {
                 if (hd > r + 2.6) continue;
                 // a plinth that goes down to whatever is really under it
                 for (int y = gy + 1; y < gy + wall + dome + 6; y++) if (hd <= r + 1.3) v.set(x, y, z, null);
-                v.foot(x, gy - 1, z, m.cut);
-                v.set(x, gy, z, hd > r + 1.3 ? m.sandSlab : m.cut);
+                v.foot(x, gy - 1, z, m.pale);
+                v.set(x, gy, z, hd > r + 1.3 ? m.paleSlab : m.pale);
                 if (hd > r + 1.2) continue;
-                if (hd <= r + 1.3) v.set(x, gy + 1, z, hd > r ? m.cutSlab : m.terraB);
+                if (hd <= r + 1.3) v.set(x, gy + 1, z, hd > r ? m.paleSlab : m.planks);
                 for (int y = gy + 2; y <= gy + wall; y++) {
                     int ly = y - gy - 1;
                     if (hd > r) continue;
                     if (hd > r - 1.4) {
-                        BlockState b = corner ? m.cut : m.wax;
+                        BlockState b = corner ? m.timber : ly <= 1 ? m.brick : m.plaster;
                         boolean doorSide = Math.abs(((a - door + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.45;
                         if (doorSide && Math.abs(t) < 1.6 && ly <= 3) {
                             v.set(x, y, z, null);
                             continue;
                         }
-                        if (!corner && Math.abs(t) < 0.9 && ly >= 2 && ly <= 3) b = m.glow;
-                        else if (!corner && Math.abs(t) < 1.9 && ly >= 1 && ly <= 4) b = m.sand;
-                        else if (ly == wall - 2) b = m.terraO;
+                        if (!corner && Math.abs(t) < 0.9 && ly >= 2 && ly <= 3) b = m.window;
+                        else if (!corner && Math.abs(t) < 1.9 && ly >= 1 && ly <= 4) b = m.timber;
+                        else if (ly == wall - 2 && !corner) b = m.band;
                         v.set(x, y, z, b);
                     } else v.set(x, y, z, null);
                 }
                 int cy = gy + wall + 1;
-                if (hd <= r + 1.2) v.set(x, cy, z, hd > r ? m.cutSlab : m.terraB);
+                if (hd <= r + 1.2) v.set(x, cy, z, hd > r ? m.planksSlab : m.timber);
                 if (hd > r + 0.2) continue;
                 for (int y = cy + 1; y <= cy + dome; y++) {
                     double h = (y - cy) / (double) dome;
                     double rr = r * Math.sqrt(Math.max(0, 1 - h * h));
                     if (hd > rr) continue;
                     if (hd > rr - 1.7 || h > 0.7) {
-                        BlockState b = (y & 1) == 0 ? m.honeycomb : m.wax;
-                        if (corner && h < 0.85) b = m.terraB;
-                        if (h > 0.25 && h < 0.5 && !corner && Math.abs(t) < 1) b = m.glow;
+                        BlockState b = (y & 1) == 0 ? m.tileDeep : m.tile;
+                        if (corner && h < 0.85) b = m.pale;
+                        if (h > 0.25 && h < 0.5 && !corner && Math.abs(t) < 1) b = m.window;
                         v.set(x, y, z, b);
                     }
                 }
@@ -801,22 +801,22 @@ public final class AmberReach extends Land {
         public void draw(V v, M m) {
             for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
                 int dx = x - cx, dz = z - cz, c = Math.max(Math.abs(dx), Math.abs(dz));
-                if (c <= 15) v.foot(x, gy - 1, z, m.cut);
-                for (int k = 0; k < 3; k++) if (c <= 15 - k * 2) v.set(x, gy + k, z, k == 2 && c < 13 ? ((dx + dz) & 1) == 0 ? m.sand : m.cut : m.cut);
+                if (c <= 15) v.foot(x, gy - 1, z, m.pale);
+                for (int k = 0; k < 3; k++) if (c <= 15 - k * 2) v.set(x, gy + k, z, k == 2 && c < 11 ? c % 4 == 0 ? m.pale : m.hexstone : c == 15 - k * 2 ? m.pale : m.flag);
                 boolean post = c == 11 && Math.abs(dx) % 11 == 0 && Math.abs(dz) % 11 == 0;
                 if (post) {
-                    for (int y = gy + 3; y <= gy + 15; y++) v.set(x, y, z, y == gy + 3 || y == gy + 12 ? m.wax : m.terraB);
+                    for (int y = gy + 3; y <= gy + 15; y++) v.set(x, y, z, y == gy + 3 || y == gy + 12 ? m.pale : m.timber);
                     v.set(x, gy + 11, z, m.gold);
                 }
                 if (c == 11 && !post) {
-                    v.set(x, gy + 11, z, ((dx + dz) & 3) == 0 ? m.gold : m.terraB);
+                    v.set(x, gy + 11, z, ((dx + dz) & 3) == 0 ? m.gold : m.band);
                     // the frieze that carries the roof: a band, turned posts, a band
-                    v.set(x, gy + 12, z, m.terraB);
+                    v.set(x, gy + 12, z, m.planks);
                     if (((dx + dz) & 1) == 0) {
                         v.set(x, gy + 13, z, m.fence);
                         v.set(x, gy + 14, z, m.fence);
                     }
-                    v.set(x, gy + 15, z, m.terraB);
+                    v.set(x, gy + 15, z, m.planks);
                 }
                 for (int tier = 0; tier < 3; tier++) {
                     int base = gy + 12 + tier * 5, e = 15 - tier * 4;
@@ -825,10 +825,10 @@ public final class AmberReach extends Land {
                         if (c != er) continue;
                         boolean ridge = Math.abs(dx) == Math.abs(dz);
                         Direction f = Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? Direction.WEST : Direction.EAST) : (dz > 0 ? Direction.NORTH : Direction.SOUTH);
-                        v.set(x, y, z, ridge ? m.terraB : stair((ring & 1) == 0 ? m.waxStairs : m.sandStairs, f));
-                        if (ring == 0) v.set(x, y - 1, z, ridge ? m.gold : under(m.sandStairs, f.getOpposite()));
+                        v.set(x, y, z, ridge ? m.pale : stair((ring & 1) == 0 ? m.tileDeepStairs : m.tileStairs, f));
+                        if (ring == 0) v.set(x, y - 1, z, ridge ? m.gold : under(m.planksStairs, f.getOpposite()));
                     }
-                    if (c < e - 4) for (int y = base; y < base + 5; y++) v.set(x, y, z, y == base + 4 ? (tier == 2 ? m.wax : m.terraB) : null);
+                    if (c < e - 4) for (int y = base; y < base + 5; y++) v.set(x, y, z, y == base + 4 ? (tier == 2 ? m.tileDeep : m.planks) : null);
                 }
             }
             for (int s = -1; s <= 1; s += 2) for (int t = -1; t <= 1; t += 2) {
@@ -858,10 +858,10 @@ public final class AmberReach extends Land {
 
         @Override
         public void draw(V v, M m) {
-            v.foot(x, y, z, m.cut);
-            v.set(x, y + 1, z, m.terraB);
+            v.foot(x, y, z, m.pale);
+            v.set(x, y + 1, z, m.deep);
             for (int i = 2; i < h; i++) v.set(x, y + i, z, m.fence);
-            v.set(x, y + h, z, m.terraB);
+            v.set(x, y + h, z, m.deep);
             for (int d = -1; d <= 1; d += 2) {
                 v.set(x + d, y + h, z, m.fence);
                 v.set(x + d, y + h - 1, z, m.hung);
@@ -869,7 +869,7 @@ public final class AmberReach extends Land {
                 v.set(x, y + h - 1, z + d, m.hung);
             }
             v.set(x, y + h + 1, z, m.glow);
-            v.set(x, y + h + 2, z, m.waxSlab);
+            v.set(x, y + h + 2, z, m.stoneSlab);
         }
     }
 
@@ -887,7 +887,7 @@ public final class AmberReach extends Land {
         }
 
         private void post(V v, M m, int a, int c, int top) {
-            v.foot(x + a, y, z + c, m.cut);
+            v.foot(x + a, y, z + c, m.pale);
             for (int k = 1; k <= top; k++) v.set(x + a, y + k, z + c, m.fence);
         }
 
@@ -896,9 +896,9 @@ public final class AmberReach extends Land {
             int kind = (int) (rnd(seed, 1, 1) * 4);
             if (kind == 0) {
                 for (int a = -3; a <= 3; a += 6) for (int c = -2; c <= 2; c += 4) post(v, m, a, c, 4);
-                for (int a = -3; a <= 3; a++) for (int c = -2; c <= 2; c++) v.set(x + a, y + 5, z + c, (a & 1) == 0 ? m.woolO : m.woolY);
+                for (int a = -3; a <= 3; a++) for (int c = -2; c <= 2; c++) v.set(x + a, y + 5, z + c, (c & 2) == 0 ? (a & 1) == 0 ? m.tileSlab : m.tileDeepSlab : (a & 1) == 0 ? m.planksSlab : m.tileSlab);
                 for (int a = -2; a <= 2; a++) {
-                    v.foot(x + a, y, z, m.cut);
+                    v.foot(x + a, y, z, m.pale);
                     v.set(x + a, y + 1, z, m.barrel);
                     v.set(x + a, y + 2, z, (a & 1) == 0 ? m.drum : m.candle);
                 }
@@ -906,8 +906,8 @@ public final class AmberReach extends Land {
             } else {
                 for (int i = 0; i < 9; i++) {
                     int a = (int) (rnd(seed, i, 2) * 8) - 4, c = (int) (rnd(seed, i, 3) * 8) - 4, tall = (int) (rnd(seed, i, 4) * 3);
-                    BlockState s = rnd(seed, i, 5) < 0.4 ? m.drum : rnd(seed, i, 5) < 0.75 ? m.barrel : m.wax;
-                    v.foot(x + a, y, z + c, m.cut);
+                    BlockState s = rnd(seed, i, 5) < 0.4 ? m.drum : rnd(seed, i, 5) < 0.75 ? m.barrel : m.planks;
+                    v.foot(x + a, y, z + c, m.pale);
                     for (int k = 1; k <= tall + 1; k++) v.set(x + a, y + k, z + c, s);
                     if (rnd(seed, i, 6) < 0.5) v.set(x + a, y + tall + 2, z + c, m.candle);
                 }
@@ -943,19 +943,19 @@ public final class AmberReach extends Land {
                 double sy = CIT_Y + (PR[0] + 8 - d) / (PR[0] + 8.0 - PR[3]) * 40;
                 if (stair && d > PR[3] - 1) {
                     int y = (int) Math.floor(sy);
-                    for (int k = CIT_Y - 2; k <= y; k++) v.set(x, k, z, m.terraB);
-                    v.foot(x, CIT_Y - 3, z, m.terraB);
+                    for (int k = CIT_Y - 2; k <= y; k++) v.set(x, k, z, m.deep);
+                    v.foot(x, CIT_Y - 3, z, m.deep);
                     boolean cardinal = Math.abs(Math.abs(s) - 3) < 0.5 || Math.abs(s) < 0.5;
                     boolean nosing = Math.floor(CIT_Y + (PR[0] + 8 - (d + 1)) / (PR[0] + 8.0 - PR[3]) * 40) < y;
-                    BlockState tread = ((int) d & 1) == 0 ? m.wax : m.cut;
-                    if (nosing && cardinal) tread = stair(m.waxStairs, Math.abs(s) < 0.5 ? Direction.WEST : Direction.EAST);
+                    BlockState tread = ((int) d & 1) == 0 ? m.stoneA : m.pale;
+                    if (nosing && cardinal) tread = stair(m.stoneStairs, Math.abs(s) < 0.5 ? Direction.WEST : Direction.EAST);
                     v.set(x, y, z, tread);
                     continue;
                 }
                 if (flank && d > PR[3] - 1) {
                     int y = (int) Math.floor(sy) + 3;
-                    for (int k = Math.max(CIT_Y - 2, y - 12); k <= y; k++) v.set(x, k, z, k >= y - 1 ? m.dark : m.wax);
-                    v.foot(x, Math.max(CIT_Y - 2, y - 12) - 1, z, m.terraB);
+                    for (int k = Math.max(CIT_Y - 2, y - 12); k <= y; k++) v.set(x, k, z, k >= y - 1 ? m.deep : m.stoneA);
+                    v.foot(x, Math.max(CIT_Y - 2, y - 12) - 1, z, m.deep);
                     if (((int) d & 7) == 0) {
                         v.set(x, y + 1, z, m.fence);
                         v.set(x, y + 2, z, m.lantern);
@@ -968,7 +968,7 @@ public final class AmberReach extends Land {
                 int top = pt[level];
                 int y0 = level == 0 ? CIT_Y - 2 : pt[level - 1] - 2;
                 double face = PR[level];
-                if (d <= face + 2) v.foot(x, y0 - 1, z, m.terraB);
+                if (d <= face + 2) v.foot(x, y0 - 1, z, m.deep);
                 for (int y = y0; y <= top; y++) {
                     double prow = y >= top - 1 ? 1.6 : y == y0 + 2 ? 0.8 : 0;
                     Hex h = hex(u + level * 7.1, y * 1.0, 5.4);
@@ -991,17 +991,17 @@ public final class AmberReach extends Land {
                     if (!surface && y < top) continue;
                     BlockState b;
                     if (y == top) b = paver(m, x, z, seed);
-                    else if (y >= top - 1) b = ((int) u & 1) == 0 ? m.dark : m.gold;
+                    else if (y >= top - 1) b = ((int) u & 1) == 0 ? m.deep : m.gold;
                     else if (niche) b = m.glow;
-                    else if (e > 0.72) b = n5.get(x / 15.0, y / 11.0, z / 15.0) > 0.42 ? m.dark : (y & 3) == 0 ? m.capped : m.wax;
-                    else b = kind < 0.16 ? m.glow : kind < 0.45 ? m.comb : kind < 0.8 ? m.capped : m.honeycomb;
+                    else if (e > 0.72) b = n5.get(x / 15.0, y / 11.0, z / 15.0) > 0.42 ? m.deep : (y & 3) == 0 ? m.capped : m.stoneA;
+                    else b = kind < 0.16 ? m.glow : kind < 0.45 ? m.comb : kind < 0.8 ? m.capped : m.worn;
                     v.set(x, y, z, b);
                 }
                 if (d > face - 1.6 && d < face + 0.6 && !flank) {
                     int post = Math.floorMod((int) Math.floor(u + 400), 8);
-                    v.set(x, top + 1, z, post == 0 ? m.dark : m.darkSlab);
+                    v.set(x, top + 1, z, post == 0 ? m.deep : m.brickSlab);
                     if (post == 0) {
-                        v.set(x, top + 2, z, m.waxSlab);
+                        v.set(x, top + 2, z, m.stoneSlab);
                         if (Math.floorMod((int) Math.floor(u + 400), 24) == 0) {
                             v.set(x, top + 2, z, m.fence);
                             v.set(x, top + 3, z, m.lantern);
@@ -1013,9 +1013,9 @@ public final class AmberReach extends Land {
 
         private static BlockState paver(M m, int x, int z, long seed) {
             Hex t = hex(x, z, 3);
-            if (t.edge() > 0.76) return m.wax;
+            if (t.edge() > 0.76) return m.stoneA;
             double k = rnd(t.q(), t.r(), 71 + seed);
-            return k < 0.4 ? m.cut : k < 0.7 ? m.sand : m.honeycomb;
+            return k < 0.4 ? m.pale : k < 0.7 ? m.flag : m.worn;
         }
     }
 
@@ -1035,19 +1035,19 @@ public final class AmberReach extends Land {
         public void draw(V v, M m) {
             for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
                 int a = Math.abs(x - cx), c = Math.abs(z - cz), e = Math.max(a, c);
-                if (e <= 5) v.foot(x, y0 - 1, z, m.terraB);
+                if (e <= 5) v.foot(x, y0 - 1, z, m.deep);
                 for (int y = y0; y <= y0 + h; y++) {
                     int ly = y - y0, r = ly < 2 ? 5 : ly < 4 ? 4 : ly > h - 3 ? 5 : 3;
                     if (e > r) continue;
                     if (e < r - 1 && ly < h) continue;
                     boolean corner = a == c;
                     boolean panel = !corner && e == r && Math.min(a, c) < 2 && ly % 8 > 1 && ly % 8 < 7 && ly > 3 && ly < h - 3;
-                    v.set(x, y, z, ly >= h - 2 ? m.dark : corner ? m.gold : panel ? m.glow : (ly & 3) == 0 ? m.dark : m.wax);
+                    v.set(x, y, z, ly >= h - 2 ? m.deep : corner ? m.gold : panel ? m.glow : (ly & 3) == 0 ? m.deep : m.stoneA);
                 }
                 if (e <= 2) v.set(x, y0 + h + 1, z, e == 2 ? m.fence : m.shroom);
                 if (e == 0) v.set(x, y0 + h + 2, z, m.shroom);
                 else if (e == 2 && a == c) v.set(x, y0 + h + 2, z, m.fence);
-                if (e <= 2) v.set(x, y0 + h + 3, z, e == 2 ? m.darkSlab : m.dark);
+                if (e <= 2) v.set(x, y0 + h + 3, z, e == 2 ? m.brickSlab : m.deep);
             }
         }
     }
@@ -1087,7 +1087,7 @@ public final class AmberReach extends Land {
                     double Rb = R0 * Math.pow(1 - k / (double) tiers, 1.22), Rt = R0 * Math.pow(1 - (k + 1) / (double) tiers, 1.22) * 1.08 + 0.4;
                     double Rf = lerp(Rb, Rt, f);
                     if (Rf < 2.2) {
-                        if (rho <= Math.max(0.7, Rf)) v.set(x, y, z, y > y1 - 4 ? m.gold : (y & 3) == 0 ? m.royal : m.wax);
+                        if (rho <= Math.max(0.7, Rf)) v.set(x, y, z, y > y1 - 4 ? m.gold : (y & 3) == 0 ? m.royal : m.stoneA);
                         continue;
                     }
                     if (d > Rf + 4) continue;
@@ -1105,10 +1105,10 @@ public final class AmberReach extends Land {
                         proud = lerp(0.6, 3.2, c);
                         boolean tooth = ((int) Math.floor(u + 300) & 1) == 0;
                         if (c > 0.36 && c < 0.7 && !tooth) proud -= 1.6;
-                        b = c > 0.72 ? m.gold : c > 0.36 ? m.dark : m.wax;
+                        b = c > 0.72 ? m.gold : c > 0.36 ? m.deep : m.stoneA;
                     } else if (plinthBand) {
                         proud = 1.2;
-                        b = m.dark;
+                        b = m.deep;
                     } else {
                         int rows = tierH > 40 ? 2 : 1;
                         double rowH = (tierH - bandTop - 2.2) / rows, yy = ly - 2.2;
@@ -1120,22 +1120,22 @@ public final class AmberReach extends Land {
                         boolean rib = Math.abs(ub) > bw / 2 - 1.3;
                         if (Math.abs(u) > side / 2 - 2.2) {
                             proud = 1.8;
-                            b = (y & 3) == 0 ? m.capped : m.wax;
+                            b = (y & 3) == 0 ? m.capped : m.stoneA;
                         } else if (rib) {
                             proud = 1.6;
-                            b = (y & 7) == 0 ? m.gold : (int) (rnd(x >> 2, y >> 3, 7 + seed) * 3) == 0 ? m.dark : m.wax;
+                            b = (y & 7) == 0 ? m.gold : (int) (rnd(x >> 2, y >> 3, 7 + seed) * 3) == 0 ? m.deep : m.stoneA;
                         } else if (opening) {
                             recess = Rf > 12 ? 3.5 : 1.6;
                             boolean mullion = Math.abs(ub) < 0.55 || (int) Math.floor(yf) % 6 == 5;
                             double h = rnd(bay + 7L * k, row + 31L * (long) s, 81 + seed);
-                            b = mullion ? m.dark : h < 0.62 ? m.glow : h < 0.82 ? m.comb : m.ochre;
+                            b = mullion ? m.deep : h < 0.62 ? m.glow : h < 0.82 ? m.comb : m.window;
                         } else if (hood) {
                             proud = 0.8;
-                            b = m.cut;
+                            b = m.pale;
                         } else {
                             Hex c = hex(u + bay * 1.7, y, 2.5);
                             recess = c.edge() > 0.7 ? 0 : 0.9;
-                            b = c.edge() > 0.7 ? m.wax : rnd(c.q(), c.r(), 83 + seed) < 0.3 ? m.comb : m.capped;
+                            b = c.edge() > 0.7 ? m.stoneA : rnd(c.q(), c.r(), 83 + seed) < 0.3 ? m.comb : m.capped;
                         }
                     }
                     if (gateSide && y < y0 + 52 && !cornice) {
@@ -1147,11 +1147,11 @@ public final class AmberReach extends Land {
                             if (inside) {
                                 recess = 9;
                                 proud = 0;
-                                b = Math.abs(u) < 0.8 || (int) gy % 7 == 6 ? m.dark : m.glow;
+                                b = Math.abs(u) < 0.8 || (int) gy % 7 == 6 ? m.deep : m.glow;
                             } else {
                                 proud = 2.5 - (order & 1);
                                 recess = 0;
-                                b = (order & 1) == 0 ? m.gold : m.dark;
+                                b = (order & 1) == 0 ? m.gold : m.deep;
                             }
                         }
                     }

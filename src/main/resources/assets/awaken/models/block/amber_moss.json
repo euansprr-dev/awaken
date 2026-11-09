@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "awaken:block/amber_moss_top",
+    "bottom": "awaken:block/amber_stone",
+    "side": "awaken:block/amber_moss"
+  }
+}

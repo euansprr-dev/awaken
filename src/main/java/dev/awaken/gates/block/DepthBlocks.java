@@ -48,6 +48,23 @@ public final class DepthBlocks {
     }
 
     public static final List<Def> DEFS = List.of(
+            // Amber Reach (50.7)
+            slab("amber_stone", MapColor.COLOR_ORANGE, SoundType.STONE),
+            stairs("amber_stone", MapColor.COLOR_ORANGE, SoundType.STONE),
+            slab("amber_stone_pale", MapColor.SAND, SoundType.STONE),
+            stairs("amber_stone_pale", MapColor.SAND, SoundType.STONE),
+            slab("amber_flagstone", MapColor.SAND, SoundType.DEEPSLATE_TILES),
+            stairs("amber_flagstone", MapColor.SAND, SoundType.DEEPSLATE_TILES),
+            slab("amber_brick", MapColor.TERRACOTTA_ORANGE, SoundType.MUD_BRICKS),
+            stairs("amber_brick", MapColor.TERRACOTTA_ORANGE, SoundType.MUD_BRICKS),
+            slab("amber_plaster", MapColor.SAND, SoundType.CALCITE),
+            stairs("amber_plaster", MapColor.SAND, SoundType.CALCITE),
+            slab("amber_tile", MapColor.TERRACOTTA_RED, SoundType.DECORATED_POT),
+            stairs("amber_tile", MapColor.TERRACOTTA_RED, SoundType.DECORATED_POT),
+            slab("amber_tile_deep", MapColor.COLOR_ORANGE, SoundType.DECORATED_POT),
+            stairs("amber_tile_deep", MapColor.COLOR_ORANGE, SoundType.DECORATED_POT),
+            slab("amber_planks", MapColor.WOOD, SoundType.WOOD),
+            stairs("amber_planks", MapColor.WOOD, SoundType.WOOD),
             // Hive
             slab("hive_wax", MapColor.COLOR_YELLOW, SoundType.CANDLE),
             stairs("hive_wax", MapColor.COLOR_YELLOW, SoundType.CANDLE),
