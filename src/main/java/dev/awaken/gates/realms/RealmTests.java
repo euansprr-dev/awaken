@@ -28,6 +28,11 @@ public final class RealmTests {
     }
 
     public static void register() {
+        // does nothing unless tools/preview/preview.sh asked for it
+        AwakenTests.register("realm_preview", 12000, h -> {
+            dev.awaken.gates.realms.preview.Preview.runIfAsked();
+            h.succeed();
+        });
         AwakenTests.register("realm_blueprints_parse", 40, h -> {
             String why = AMBER.problem();
             if (!why.isEmpty()) h.fail("Amber's blueprint: " + why);

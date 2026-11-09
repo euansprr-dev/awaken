@@ -19834,3 +19834,10 @@ really there), light. `N` holds the noise and hex helpers; `Piece` knows its foo
 `realm_amber_plan_checks`, `realm_amber_all_reachable`, `realm_amber_sites_open`, `realm_amber_heart`, `realm_seeds_differ`, `realm_mouth_safe`,
 `realm_no_holes`, `realm_amber_sight` (median view 30+, 90th percentile 150+, 30% of views past 64), `realm_flag_off_rolls_floors`, `realm_party_split`,
 `realm_life_creatures`.
+
+The preview: `tools/preview/preview.sh <tour> [seeds]` draws a land's real blocks from its tour's own cameras (the same `realm_at` and
+`look` lines) with no game client, in about a minute, against 15-20 for a walk. `Preview` runs as the GameTest `realm_preview`, which does
+nothing unless the script set its environment. Pictures, `sheet.png` and `report.txt` (cameras blocked, all sky, one block over 60% of a
+view, vanilla over 30%) land in `run-preview/<tour>/`. It paints the ground truth (every block the land draws) but shades it plainly:
+sun, soft corners and haze, no creatures, no Lens. It judges shapes, framing, tone and broken builds; the real look still needs a walk.
+`volume.sha` holds a hash of every block for each seed asked for: a change to the kit that shouldn't change a land must not move it.
