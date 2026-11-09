@@ -195,10 +195,8 @@ public final class LineUpScreen extends Screen implements dev.awaken.signal.clie
         if (event.button() != InputConstants.MOUSE_BUTTON_LEFT || stage == null) return super.mouseClicked(event, doubleClick);
         float x = stage.sx(event.x()), y = stage.sy(event.y());
         SuitView c = close;
-        dev.awaken.Awaken.LOG.info("[lineup-click] x={} y={} close={} fly={} closing={}", x, y, c != null, c == null ? -1F : c.fly, c != null && c.closing);
         if (c != null) {
             if (!c.closing && !c.click(x, y)) c.dragging = c.fly >= 1F;
-            dev.awaken.Awaken.LOG.info("[lineup-click] after: closing={} dragging={}", c.closing, c.dragging);
             return true;
         }
         int i = at(x, y);
