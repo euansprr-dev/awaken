@@ -18655,8 +18655,8 @@ cancels vanilla's knockback (`ArmsServer.onKnockBack`, `Arms.guarded`) and `Abil
 lift: a step back, feet on the ground, still in reach of what comes next. A deflect never pushed; a guard break and an
 unguarded blow are unchanged. A block now also jolts the blade and sparks (`ArmsPredict`, the shot's lighter treatment),
 because a kick and a knock was all it had; the ring stays the deflect's alone (its window is the guard's first 3 to 5
-ticks). The two pilots log one `[fights] blow` line a blow (touched or missed, how far, in sight) until the real game
-has confirmed what the tests can't: no blow passes through a guard held still with nothing happening.
+ticks). A boss with a mind logs one `[fights] missed` line for a blow that met nobody though you stood in its reach (how far, in
+sight or not), so a playtest can say what the tests can't: whether a blow ever passes through a guard held still.
 
 **47.4 The Provings: the Ringer (stage 3).** The D Reassessment becomes the first Proving (PLAN §4.7, GOALS part 2):
 one fight with a Warden in its own hall, never announced, the rank's gift inside the fight.
@@ -19588,6 +19588,17 @@ in `fights_record_*` for any fight with a mind: every repeat is that last resort
 the table holds the worst fight to 10%). In `fights_mind_drinks_<boss>`: at least 60%
 of drinks in reach get an answer that starts before the drink ends. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
 at least double what they are against someone standing.
+
+**48.6 Every boss has a mind (Euan 2026-11-09, after playing the pilots: "apply these changes ... to all bosses").** The 45 others
+get what the two pilots have, from `tools/art/specs/kit/minds.py`, made from each body's own moves and nothing new: a drink
+brings its gap-closer or shot from afar and its guard-beater, heavy or quick blow up close; a cast and a stop after a run its
+gap-closer or shot; a heavy being held its quickest blows; a guard kept up its red moves and grabs, else its heavy; a recovery its
+hardest close blow. A string's next blow forks to the guard-beater (or the heavy) on a raised guard and to the gap-closer after a
+dodge. Its gap-closers rest 60 ticks. A move that fills the room or ends the fight (a signature with no blade of its own, or a
+reach of 40) answers nothing, and neither does a move kept for behind. A script written with its own `mind` keeps it. **An answer or a fork never reaches for
+a move its phase hasn't got yet** (`FightRunner.inPhase`), so a late phase's moves stay in the late phase; the Regent's Stinger Volley
+now answers only from her second phase on. Tempers, footwork and each boss's own trick aren't in this. `fights_mind_every_boss`
+checks they all have one; `fights_record_<boss>_guard` runs each of the others once.
 
 **48.7 The recorder (stage 0).** `FightRecorder`: `fights_record_<boss>_<kind>`, six bosses (more as the roll-out reaches them)
 against six kinds of player (stands still, runs, circles, holds guard, keeps away, stays behind), 72 s each with fixed seeds;

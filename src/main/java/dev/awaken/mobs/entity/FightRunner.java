@@ -445,10 +445,19 @@ final class FightRunner {
         if (!a.then().isEmpty()) string.addAll(a.then().get(boss.getRandom().nextInt(a.then().size())));
     }
 
+    /** Whether this phase's pool or strings use the move: an answer never reaches for a move its phase hasn't got yet (SPEC §48.6). */
+    private boolean inPhase(String id) {
+        for (FightScripts.Entry e : fight.phase(boss.phase()).pool()) {
+            if (e.move().equals(id)) return true;
+            for (List<String> string : e.then()) if (string.contains(id)) return true;
+        }
+        return false;
+    }
+
     /** Whether a move could begin now, as an answer or at a fork. */
     private boolean ready(int i, LivingEntity target) {
         KitMoves.Move m = moves.get(i);
-        if (mind != null && !mind.follows(i)) return false;
+        if (mind != null && (!mind.follows(i) || !inPhase(m.id()))) return false;
         if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target) || !reaches(i, target)) return false;
         if (m.ability().isEmpty()) return true;
         Ability a = boss.ability(m.ability().get());
@@ -853,9 +862,9 @@ final class FightRunner {
         marks(m);
         // a blow you stood in the reach of that never landed (and wasn't turned aside: that ends it before here) you got
         // out of: a dash, a step, a roll
-        // the two pilots only, one line a blow, until Euan's read them (SPEC §47.3): did it touch anyone, from how far
-        if (k == active && mind != null && !m.hits().isEmpty() && target != null) {
-            dev.awaken.Awaken.LOG.info("[fights] blow {} {} {}: {}, {} blocks off, {}", fight.id(), m.id(), cls, hits > 0 ? "touched" : "missed",
+        // a blow that met nobody though you stood in its reach: one line each, for the next playtest (SPEC §47.3)
+        if (k == active && mind != null && inReach && hits == 0 && !m.hits().isEmpty() && target != null) {
+            dev.awaken.Awaken.LOG.info("[fights] missed {} {} {}: {} blocks off, {}", fight.id(), m.id(), cls,
                     String.format("%.1f", edgeDistance(target)), boss.getSensing().hasLineOfSight(target) ? "in sight" : "out of sight");
         }
         if (k == active && inReach && !struck && fight.mirrors() && read == Strikes.Habit.NONE) slips++;

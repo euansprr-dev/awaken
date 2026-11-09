@@ -42,6 +42,17 @@ public final class FightRecorder {
 
     static final String[] BOSSES = {"hive_regent", "gearwright_colossus", "ember_tyrant", "sky_leviathan", "glass_serpent", "bell_warden"};
 
+    static final String[] ROLLED_OUT = {
+        "unit_zero", "mother_of_spores", "root_saint", "drowned_archivist", "lantern_broker", "abbot_of_frost",
+        "mirror_knight", "the_sleeper", "hollow_herald", "guardian_rim", "guardian_gardens", "guardian_choir",
+        "guardian_orchard", "guardian_silent", "guardian_foundry", "guardian_inverted", "guardian_dreaming", "guardian_court",
+        "guardian_seed", "sovereign_hunger", "sovereign_silence", "sovereign_sleep", "sovereign_machines", "sovereign_mirrors",
+        "sovereign_storms", "sovereign_roots", "sovereign_ash", "signals_shadow", "nightmare_falling", "nightmare_burning",
+        "nightmare_drowning", "nightmare_undead", "nightmare_arthropod", "nightmare_explosion", "nightmare_generic",
+        "proving_ringer", "proving_examiner", "proving_unmade", "proving_sky_warden", "proving_keepers_shadow",
+        "proving_last_loop"
+    };
+
     enum Kind { STAND, RETREAT, CIRCLE, GUARD, KITE, BEHIND }
 
     /** How long a fight is recorded (72 s), and where its health is dropped so each phase is seen. */
@@ -55,6 +66,10 @@ public final class FightRecorder {
             for (Kind k : Kind.values()) {
                 AwakenTests.registerIsolated("fights_record_" + id + "_" + k.name().toLowerCase(java.util.Locale.ROOT), TICKS + 60, h -> fight(h, id, k));
             }
+        }
+        // the roll-out (SPEC §48.6): the rest get one fight each, the guard held up (it stands still, and draws the guard answers and forks)
+        for (String id : ROLLED_OUT) {
+            AwakenTests.registerIsolated("fights_record_" + id + "_guard", TICKS + 60, h -> fight(h, id, Kind.GUARD));
         }
         AwakenTests.registerIsolated("fights_record_pack", PACK_TICKS + 60, FightRecorder::pack);
     }

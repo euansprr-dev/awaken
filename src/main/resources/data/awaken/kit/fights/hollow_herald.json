@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "hollow_herald",
  "moves": "hollow_herald",
  "duel": true,
@@ -19,6 +19,12 @@
       [
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -33,6 +39,12 @@
        "stride",
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -43,6 +55,12 @@
       [
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -53,6 +71,11 @@
       [
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse"
+      }
      ]
     },
     {
@@ -64,6 +87,12 @@
        "swipe",
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     }
    ]
@@ -79,6 +108,12 @@
       [
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -91,6 +126,12 @@
       [
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -109,6 +150,12 @@
        "stride",
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -120,6 +167,11 @@
        "swipe",
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse"
+      }
      ]
     },
     {
@@ -131,6 +183,12 @@
        "swipe",
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     }
    ]
@@ -151,6 +209,11 @@
        "swipe",
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -164,6 +227,12 @@
        "stride",
        "swipe"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -174,6 +243,12 @@
       [
        "collapse"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -184,6 +259,12 @@
       [
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     },
     {
@@ -195,6 +276,11 @@
        "swipe",
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse"
+      }
      ]
     },
     {
@@ -206,6 +292,12 @@
        "swipe",
        "swipe_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "collapse",
+       "dodged": "stride"
+      }
      ]
     }
    ]
@@ -214,5 +306,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "stride": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "stride",
+     "collapse",
+     "swipe",
+     "swipe_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "stride"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "swipe"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "swipe",
+     "swipe_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "collapse"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "collapse",
+     "swipe"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "stride"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

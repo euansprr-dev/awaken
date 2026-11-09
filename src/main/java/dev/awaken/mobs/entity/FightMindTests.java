@@ -45,6 +45,16 @@ public final class FightMindTests {
             h.assertTrue(FightMind.reaction(Rank.SOVEREIGN) == 7, "0.35 s at the top");
             h.succeed();
         });
+        // SPEC §48.6: every boss has a mind, each answer and fork its own moves, none of them an empty hand
+        AwakenTests.register("fights_mind_every_boss", 20, h -> {
+            for (var kit : dev.awaken.mobs.boss.Kits.all().values()) {
+                var fight = kit.fight();
+                if (fight == null) continue;
+                h.assertTrue(fight.mind().isPresent(), fight.id() + " has no mind");
+                h.assertTrue(fight.mind().get().answers().size() >= 3, fight.id() + " has only " + fight.mind().get().answers().size() + " answers");
+            }
+            h.succeed();
+        });
         AwakenTests.registerIsolated("fights_mind_caught", 200, FightMindTests::caught);
         AwakenTests.registerIsolated("fights_mind_repeats", 40, FightMindTests::repeats);
         for (String id : PILOTS) {

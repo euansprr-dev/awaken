@@ -5,6 +5,7 @@
     python3 tools/art/specs/kit_bodies.py lab DIR [ids] the Creature Lab's sheets (kit/lab.py)
     python3 tools/art/specs/kit_bodies.py motion DIR [ids]  every move and string as a GIF, and the motion meter (kit/motion.py)
     python3 tools/art/specs/kit_bodies.py silhouettes DIR [BOSS]   a boss's silhouette round (kit/silhouettes.py, kit/sil/)
+    python3 tools/art/specs/kit_bodies.py fights [ids]   the fight scripts alone, nothing repainted
 
 Each boss is a module in kit/bosses/<id>.py with design() -> {rig, plan, moves, fight, paint, scale, half} (half: its
 hitbox's half width in blocks, which the move ranges are measured from). The build is
@@ -27,6 +28,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, ART)
 import fauna_rig as R  # noqa: E402
 from kit import core  # noqa: E402
+from kit import minds  # noqa: E402
 
 BOSSES = ["ember_tyrant", "unit_zero", "mother_of_spores", "gearwright_colossus", "root_saint", "bell_warden", "glass_serpent", "hive_regent", "drowned_archivist", "lantern_broker", "abbot_of_frost", "mirror_knight", "the_sleeper",
           "sky_leviathan", "hollow_herald", "guardian_rim", "guardian_gardens", "guardian_choir", "guardian_orchard", "guardian_silent",
@@ -53,6 +55,35 @@ def paint(d):
     return skin, glow, P.blink()
 
 
+def prepare(d):
+    for m in d["moves"]:
+        m.capsules = core.capsules(d["rig"], m) if m.hit else []
+        core.fit_range(m, d["half"])
+        m.marks = core.marks(d["rig"], m)
+
+
+def write_fight(d, rows):
+    if not d.get("fight"):
+        return
+    rig = d["rig"]
+    fight = {"schemaVersion": 1, "id": rig.id, "moves": rig.id}
+    fight.update(d["fight"])
+    minds.fit(fight, rows)  # a boss written without a mind gets one from its own moves (SPEC §48.6)
+    for ph in fight["phases"]:  # the Java enums are upper case (Codecs.lenientEnum falls back silently)
+        for e in ph["pool"]:
+            if "when" in e:
+                e["when"] = e["when"].upper()
+    core.write_json(os.path.join(RES, "data/awaken/kit/fights", rig.id + ".json"), fight)
+
+
+def fights(only=None):
+    ds = designs(only)
+    for d in ds:
+        prepare(d)
+        write_fight(d, [core.move_row(m) for m in d["moves"]])
+    print(f"kit_bodies: {len(ds)} fight scripts")
+
+
 def build(out=None, only=None):
     from pixelart import Out
     out = out or Out(RES)
@@ -60,10 +91,7 @@ def build(out=None, only=None):
     failed = []
     for d in designs(only):
         rig, mv = d["rig"], d["moves"]
-        for m in mv:
-            m.capsules = core.capsules(rig, m) if m.hit else []
-            core.fit_range(m, d["half"])
-            m.marks = core.marks(rig, m)
+        prepare(d)
         problems = core.check(rig, mv)
         if problems:
             failed += problems
@@ -85,14 +113,7 @@ def build(out=None, only=None):
         if d.get("sounds"):
             table["sounds"] = {k: [{"sound": s, "volume": v, "pitch": p} for s, v, p in layers] for k, layers in d["sounds"].items()}
         core.write_json(os.path.join(RES, "data/awaken/kit/moves", rig.id + ".json"), table)
-        if d.get("fight"):
-            fight = {"schemaVersion": 1, "id": rig.id, "moves": rig.id}
-            fight.update(d["fight"])
-            for ph in fight["phases"]:  # the Java enums are upper case (Codecs.lenientEnum falls back silently)
-                for e in ph["pool"]:
-                    if "when" in e:
-                        e["when"] = e["when"].upper()
-            core.write_json(os.path.join(RES, "data/awaken/kit/fights", rig.id + ".json"), fight)
+        write_fight(d, table["moves"])
         ids.append(rig.id)
     if failed:
         raise SystemExit("kit checks failed:\n  " + "\n  ".join(failed))
@@ -131,6 +152,8 @@ if __name__ == "__main__":
     elif a and a[0] == "silhouettes":
         from kit import silhouettes as S
         S.sheet(a[1], a[2] if len(a) > 2 else "ember_tyrant")
+    elif a and a[0] == "fights":
+        fights(a[1:] or None)
     elif a and a[0] == "build":
         build(None, a[1:] or None)
     else:

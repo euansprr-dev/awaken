@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "sovereign_machines",
  "moves": "sovereign_machines",
  "duel": true,
@@ -23,6 +23,11 @@
        "punch_b",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     },
     {
@@ -32,6 +37,11 @@
       [
        "punch"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -42,6 +52,11 @@
       [
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     },
     {
@@ -55,6 +70,11 @@
       [
        "punch_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     }
    ]
@@ -74,6 +94,11 @@
        "punch_b",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     },
     {
@@ -83,6 +108,11 @@
       [
        "punch"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -93,6 +123,11 @@
       [
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     },
     {
@@ -110,6 +145,11 @@
       [
        "punch_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     }
    ]
@@ -129,6 +169,11 @@
       [
        "punch"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     },
     {
@@ -140,6 +185,11 @@
        "punch_b",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     },
     {
@@ -150,6 +200,11 @@
        "punch",
        "punch_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "lance"
+      }
      ]
     },
     {
@@ -163,6 +218,11 @@
       [
        "punch_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "slam"
+      }
      ]
     }
    ]
@@ -171,5 +231,64 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "slam": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "slam",
+     "lance",
+     "punch",
+     "punch_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "slam",
+     "lance"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "punch"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "punch",
+     "punch_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "punch"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "slam",
+     "lance"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "guardian_court",
  "moves": "guardian_court",
  "duel": true,
@@ -23,6 +23,12 @@
        "backcut",
        "reach"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -36,6 +42,11 @@
       [
        "backcut"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -46,6 +57,12 @@
       [
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -56,6 +73,12 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -66,6 +89,11 @@
       [
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach"
+      }
      ]
     },
     {
@@ -80,6 +108,12 @@
        "cut",
        "backcut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -103,6 +137,12 @@
        "rake",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -116,6 +156,11 @@
       [
        "backcut"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -126,6 +171,12 @@
       [
        "riposte"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -140,6 +191,12 @@
        "cut",
        "backcut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach",
+       "dodged": "charge"
+      }
      ]
     },
     {
@@ -154,6 +211,11 @@
       [
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach"
+      }
      ]
     },
     {
@@ -168,6 +230,12 @@
        "cut",
        "backcut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "reach",
+       "dodged": "charge"
+      }
      ]
     }
    ]
@@ -176,5 +244,71 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.25
+ },
+ "mind": {
+  "cooldowns": {
+   "charge": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "charge",
+     "reach",
+     "riposte",
+     "backcut"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "riposte"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "riposte",
+     "backcut"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "reach"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "reach",
+     "riposte"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "charge"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }

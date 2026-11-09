@@ -1,5 +1,5 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "root_saint",
  "moves": "root_saint",
  "duel": true,
@@ -23,6 +23,12 @@
        "sweep_b",
        "palm"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -36,6 +42,11 @@
        "sweep",
        "sweep_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -49,6 +60,12 @@
        "haul",
        "sweep"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -63,6 +80,12 @@
       [
        "palm"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -73,6 +96,12 @@
       [
        "sweep"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "grasp"
+      }
      ]
     }
    ]
@@ -92,6 +121,12 @@
        "sweep_b",
        "palm"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -105,6 +140,11 @@
        "sweep",
        "sweep_b"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -118,6 +158,12 @@
        "haul",
        "sweep"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -127,6 +173,12 @@
       [
        "palm"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -139,6 +191,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -153,6 +211,12 @@
       [
        "palm"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -163,6 +227,12 @@
       [
        "sweep"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "grasp"
+      }
      ]
     },
     {
@@ -183,6 +253,12 @@
        "sweep_b",
        "palm"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -192,6 +268,11 @@
       [
        "ring"
       ]
+     ],
+     "forks": [
+      {
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -201,6 +282,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -210,6 +297,12 @@
       [
        "palm"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -222,6 +315,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -236,6 +335,12 @@
       [
        "palm"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     },
     {
@@ -246,6 +351,12 @@
       [
        "grasp"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "grasp"
+      }
      ]
     },
     {
@@ -255,6 +366,12 @@
       [
        "lance"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "palm",
+       "dodged": "haul"
+      }
      ]
     }
    ]
@@ -263,5 +380,78 @@
  "enrage": {
   "below": 0.15,
   "speed": 1.2
+ },
+ "mind": {
+  "cooldowns": {
+   "haul": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "haul",
+     "grasp",
+     "lance",
+     "palm",
+     "sweep",
+     "sweep_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "haul",
+     "grasp",
+     "lance"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "sweep"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "sweep",
+     "sweep_b"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "moves": [
+     "grasp",
+     "palm"
+    ],
+    "after": 30,
+    "cooldown": 180
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "palm",
+     "sweep"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "haul",
+     "grasp",
+     "lance"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
  }
 }
