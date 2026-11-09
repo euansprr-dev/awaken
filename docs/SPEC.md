@@ -9380,8 +9380,20 @@ mine also refuse oceans, rivers and beaches at the surface). Names by seed (`Cav
   **The cleft** (the way back up): a crack cut into the wall 100° round from the shelves, vines in one straight column from
   the floor to the ground, step off the top onto it; vines and a mossy step stone at every drop too. **The dive**: opposite
   the shelves the wall falls sheer (±0.45 rad) from a smooth jutting lip beside a spring in a notch under the rim, whose
-  water falls into a pool 5 deep. **The old rope**: a roped piton under the rim a quarter turn from the shelves, its line
-  32 down (`#awaken:runner_climbs`). The way in is a stony path (cobble, mossy cobble, stone, gravel) cut down from the ground onto
+  water falls into a pool 5 deep. **The old rope** (Euan's playtest 9 Nov: the anchor floated over the grass, the line ran into rock two blocks
+  down and stopped far above the floor): a roped piton 2 under the real ground, on a line 70-110° round from the shelves (clear
+  of them, the spring's sheer side and the cleft), its line hanging to the floor (`#awaken:runner_climbs`; a coil pays out 32,
+  these run the whole depth, taking or cutting one clears up to 128). Planned at the site search on the generator's own
+  columns and saved in the spec (`Sinkhole.roped`, p 9-13), since a chunk can read only its own blocks and every chunk must
+  agree; of nine lines tried, the one needing the shortest arm. The column is the furthest out the shaft leaves open from the
+  floor to 3 over the piton, so the line hangs clear of the wall's noise and never meets rock. The piton's root is the first
+  cell back toward the wall that the shaft leaves as rock at that cell's own ground, with rock under it and behind it, in the
+  column's chunk; where the wall stands back the root puts out an arm of stone up to 3 long to reach the column (2 under the
+  ground, so also a step down to the rope). The line ends on the floor and runs on through a cave opened under it, to the
+  ground within 8. No line that works: no rope, the shelves and the cleft are the way. A root carved away after the plan: no
+  piton, never a block hung on the air. On vanilla's noise for his seed 29 of 30 sinkholes get a rope, their arms two thirds of
+  a block long on average. A sinkhole saved before 9 Nov keeps what it built; in its unbuilt chunks the rope is planned on its
+  designed rim and set only where real rock meets it. Test `delve_sinkhole_rope`. The way in is a stony path (cobble, mossy cobble, stone, gravel) cut down from the ground onto
   the top row; `goto` stands you on it at the edge of the drop. Vines hang in curtains from the lip down its first 14
   blocks, then in strands through the upper half; hanging roots under the shelves, moss on the shelves and
   floor. Mist by day and bats at dusk (below). The first sinkhole (`awaken:delve/first_sinkhole`, placement
