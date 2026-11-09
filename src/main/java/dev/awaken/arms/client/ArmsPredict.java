@@ -862,12 +862,8 @@ public final class ArmsPredict {
     /** Whether a HIT is held for the blade (the running move's own, its clock short of the hit). */
     private static boolean early(int s, int target, Blow b, int blow, int ms) {
         if (s != moveSeq || move == null || style == null || b.move() != move.ordinal()) return false;
-        Archetype.MoveDef def = style.move(move);
-        if (def == null || moveTime() >= landsAt(def) || pending == PEND_TARGET.length) return false;
-        if (pending == 0) {
-            pendingSeq = s;
-            pendingBy = System.nanoTime() + (long) nanosPerTick();
-        }
+        if (!shortOfBlade() || pending == PEND_TARGET.length) return false;
+        waitForBlade();
         PEND_TARGET[pending] = target;
         PEND_BLOW[pending] = blow;
         PEND_MS[pending] = ms;
@@ -875,9 +871,22 @@ public final class ArmsPredict {
         return true;
     }
 
+    /** Whether the running move's blade is still short of its hit. */
+    private static boolean shortOfBlade() {
+        Archetype.MoveDef def = move == null || style == null ? null : style.move(move);
+        return def != null && moveTime() < landsAt(def);
+    }
+
+    /** The one tick's wait starts with the first thing held for the blade. */
+    private static void waitForBlade() {
+        if (pending > 0 || pendingBreak >= 0) return;
+        pendingSeq = moveSeq;
+        pendingBy = System.nanoTime() + (long) nanosPerTick();
+    }
+
     /** Each frame: the held HITs land once the blade reaches the hit, a tick has gone, or another move began. */
     private static void landPending(LocalPlayer p) {
-        if (pending == 0) return;
+        if (pending == 0 && pendingBreak < 0) return;
         Archetype.MoveDef def = move == null || style == null ? null : style.move(move);
         if (def != null && moveSeq == pendingSeq && moveTime() < landsAt(def) && System.nanoTime() < pendingBy) return;
         int n = pending, broken = pendingBreak;
@@ -1032,9 +1041,13 @@ public final class ArmsPredict {
             }
             case ArmsPayloads.BREAK -> {
                 BROKEN.put(r.entity(), ticks + r.aux());
-                // the blow that broke it comes first and may be waiting for its blade: the break's freeze waits with it
-                if (pending > 0) pendingBreak = r.entity();
-                else postureBroke(r.entity());
+                // sent as the damage lands, so before the HIT of the blow that broke it: its freeze waits for the same blade
+                if (shortOfBlade()) {
+                    waitForBlade();
+                    pendingBreak = r.entity();
+                } else {
+                    postureBroke(r.entity());
+                }
             }
             case ArmsPayloads.RESONANCE -> resonance = r.aux();
             case ArmsPayloads.HURT -> hurt(p, r.aux(), r.aux2() / 10F);
