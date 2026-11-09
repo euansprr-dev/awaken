@@ -319,7 +319,8 @@ final class CaveTests {
         long seed = 5652006211025591964L;
         Overworld ow = new Overworld(level, seed);
         List<String> fails = new ArrayList<>(), near = new ArrayList<>();
-        int mouths = 0, winding = 0, adits = 0;
+        List<String> stuck = new ArrayList<>();
+        int mouths = 0, winding = 0, adits = 0, walked = 0, walkable = 0;
         for (int gx = -12; gx < 12; gx++) {
             for (int gz = -12; gz < 12; gz++) {
                 ChunkPos c = rsp.getPotentialStructureChunk(seed, gx * rsp.spacing(), gz * rsp.spacing());
@@ -333,15 +334,46 @@ final class CaveTests {
                 if (s.p(Mouth.LEGS) > 1) winding++;
                 CaveSites.Columns ground = new CaveSites.Columns(ow.context(c));
                 String fault = jointFault(s, ground);
+                // every few mouths, walked for real: the rock round the way is the real ground, caves and all
+                if (mouths % 5 == 0) {
+                    walked++;
+                    String why = walk(s, ground);
+                    if (why == null) walkable++;
+                    else stuck.add(s.x() + " " + s.z() + ": " + why);
+                }
                 if (fault != null) (fault.contains("out of the ground") ? near : fails).add("mouth at " + s.x() + " " + s.z() + ": " + fault);
             }
         }
-        dev.awaken.Awaken.LOG.info("[delve] mouth joints: {} mouths, {} of them winding, {} adits; ways grazing the ground: {}", mouths, winding, adits, near);
+        dev.awaken.Awaken.LOG.info("[delve] mouth joints: {} mouths, {} of them winding, {} adits; {} of {} walked in and out on the real ground{}; ways grazing the ground: {}", mouths, winding, adits, walkable, walked, stuck, near);
         h.assertTrue(mouths >= 40, "real terrain gave too few mouths to judge: " + mouths);
         h.assertTrue(fails.isEmpty(), "every mouth leads into a real cave: " + String.join("; ", fails));
         // the search reads the way on the noise's cells, so a bank steeper than a cell can slip between two reads now and then
         h.assertTrue(near.size() * 100 <= mouths, "ways stay under the ground: " + String.join("; ", near));
+        h.assertTrue(walked >= 20 && walkable * 10 >= walked * 9, walkable + " of " + walked + " mouths walked in and back out: " + stuck);
         h.succeed();
+    }
+
+    /** Walks a mouth's way, from its throat to its cave and back, with the real ground (caves and all) round it; why not, or null. */
+    private static @Nullable String walk(Spec s, CaveSites.Columns ground) {
+        Grid g = grid(s);
+        double[][] w = Mouth.way(s);
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet done = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        for (int i = 0; i + 1 < w.length; i++) {
+            int steps = Math.max(1, (int) Math.ceil(Math.hypot(w[i + 1][0] - w[i][0], w[i + 1][2] - w[i][2])));
+            for (int k = 0; k <= steps; k++) {
+                double t = k / (double) steps;
+                int cx = (int) Math.floor(w[i][0] + (w[i + 1][0] - w[i][0]) * t), cz = (int) Math.floor(w[i][2] + (w[i + 1][2] - w[i][2]) * t);
+                for (int x = cx - 5; x <= cx + 5; x++) for (int z = cz - 5; z <= cz + 5; z++) {
+                    if (done.add(((long) x << 32) | (z & 0xFFFFFFFFL))) natural(g, ground, x, z, 0, g.minY());
+                }
+            }
+        }
+        builtByChunk(s, g);
+        int[] throat = g.mark("throat"), goal = g.mark("goal");
+        Routes.Result in = Routes.find(g, throat, goal);
+        if (!in.found()) return "in: " + in.why();
+        Routes.Result out = Routes.find(g, goal, throat);
+        return out.found() ? null : "out: " + out.why();
     }
 
     /** What's wrong with a mouth's joint and its way there on the real ground; null when it's sound. */

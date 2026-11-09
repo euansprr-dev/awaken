@@ -404,6 +404,8 @@ final class CaveSites {
     private static final int JOINT_AROUND = 8, JOINT_TRIES = 4;
     /** Blocks between the points read along a way: the noise's cells are 4 across, and a river's bed can be one cell wide. */
     private static final int WAY_STEP = 4;
+    /** The longest drop allowed under a way, one a body can also climb back (Routes.HANG); the last of its fall, already in the cave, isn't read. */
+    static final int WAY_DROP = 2, WAY_LAST = 5;
 
     /** A mouth's joint: the cave floor it reaches and how its way winds there (Mouth p SWING, LEGS). */
     private record Joint(int x, int y, int z, int swing, int legs) {}
@@ -443,19 +445,20 @@ final class CaveSites {
     /** How the way winds from the mouth's end to the floor, {swing, legs}: straight if that's a walk, else the fewest legs that fit; null if it can't stay underground. */
     private static int @Nullable [] way(Columns cols, int x, int y, int z, int[] f, WorldgenRandom rnd) {
         double ax = x + 0.5, az = z + 0.5, bx = f[0] + 0.5, bz = f[2] + 0.5, h = Math.hypot(bx - ax, bz - az), d = Math.abs(f[1] - y);
-        if (d <= h * JOINT_SLOPE) return roofed(cols, Mouth.way(ax, y, az, bx, f[1], bz, 0, 1)) ? new int[]{0, 1} : null;
+        if (d <= h * JOINT_SLOPE) return sound(cols, Mouth.way(ax, y, az, bx, f[1], bz, 0, 1)) ? new int[]{0, 1} : null;
         int side = rnd.nextBoolean() ? 1 : -1;
-        for (int legs = 2; legs <= Mouth.MOST_LEGS; legs++) {
-            int swing = Mouth.swing(h, d, JOINT_SLOPE, legs);
-            if (swing > Mouth.MOST_SWING) continue;
-            if (roofed(cols, Mouth.way(ax, y, az, bx, f[1], bz, side * swing, legs))) return new int[]{side * swing, legs};
-            if (roofed(cols, Mouth.way(ax, y, az, bx, f[1], bz, -side * swing, legs))) return new int[]{-side * swing, legs};
+        for (int dir : new int[]{side, -side}) {
+            int[] plan = Mouth.winding(h, d, JOINT_SLOPE, dir);
+            if (plan != null && sound(cols, Mouth.way(ax, y, az, bx, f[1], bz, plan[0], plan[1]))) return plan;
         }
         return null;
     }
 
-    /** Whether a way keeps rock over its bore and out of water, read along it on the noise's cells (the legs of a winding way share them). */
-    private static boolean roofed(Columns cols, double[][] way) {
+    /**
+     * Whether a way keeps rock over its bore, ground under it and out of water, read along it on the noise's cells (the legs
+     * of a winding way share them). Without ground under it the way comes out high on the wall of a natural hall and stops there.
+     */
+    private static boolean sound(Columns cols, double[][] way) {
         for (int i = 0; i + 1 < way.length; i++) {
             double[] a = way[i], b = way[i + 1];
             int steps = Math.max(1, (int) Math.ceil(Math.hypot(b[0] - a[0], b[2] - a[2]) / WAY_STEP));
@@ -464,6 +467,12 @@ final class CaveSites {
                 int px = Mth.floor(Mth.lerp(t, a[0], b[0])), pz = Mth.floor(Mth.lerp(t, a[2], b[2])), py = Mth.floor(Mth.lerp(t, a[1], b[1]));
                 int top = cols.coarse(px, pz);
                 if (top == Integer.MIN_VALUE || top < py + 3 + ROOF || cols.wet(px & ~3, pz & ~3, py - 2, py + 4)) return false;
+                // the last of the way is already in the cave, a short drop over its floor
+                if (py - way[way.length - 1][1] <= WAY_LAST) continue;
+                NoiseColumn c = cols.at(px & ~3, pz & ~3);
+                boolean floor = false;
+                for (int d = 1; d <= WAY_DROP + 1 && !floor; d++) floor = !c.getBlock(py - d).isAir();
+                if (!floor) return false;
             }
         }
         return true;

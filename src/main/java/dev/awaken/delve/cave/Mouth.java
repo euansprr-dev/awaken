@@ -1,5 +1,6 @@
 package dev.awaken.delve.cave;
 
+import org.jspecify.annotations.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
@@ -41,7 +42,7 @@ final class Mouth {
 
     /** p: form, throat length, its drop, arch width, arch height, the lode's heart (x, y, z), its ore + 1, the cairn's side, its look. */
     static final int FORM = 0, LEN = 1, DROP = 2, W = 3, H = 4, HX = 5, HY = 6, HZ = 7, ORE = 8, CAIRN = 9, LOOK = 10;
-    /** p, a joint that winds down to a cave too deep to walk straight to (0 on a straight one and a saved mouth): how far each bend swings aside, signed; how many legs. */
+    /** p, a joint that winds down to a cave too deep to walk straight to (0 on a straight one and a saved mouth): its circle's radius, signed by the way it turns; how many legs. */
     static final int SWING = 11, LEGS = 12;
     static final int HILL = 0, ADIT = 1, DOLINE = 2, CLEFT = 3;
     /** The portal's depth: the arch (or the timbered frame) before the throat begins. */
@@ -70,18 +71,34 @@ final class Mouth {
         return b;
     }
 
-    /** The most legs a winding joint takes and the furthest a bend stands off the straight line to its cave. */
-    static final int MOST_LEGS = 6, MOST_SWING = 12;
+    /** The most legs a winding joint takes and the widest circle its bends stand on. */
+    static final int MOST_LEGS = 6, MOST_SWING = 18;
+    /** The sharpest a bend turns: a leg doubling back over the last cuts away its floor, and it can't be climbed. */
+    private static final double MOST_TURN = Math.toRadians(110);
 
-    /** How far {@code legs} legs' bends must stand aside so a fall of d over a run of h stays no steeper than the slope. */
-    static int swing(double h, double d, double slope, int legs) {
-        double want = d / slope, lo = 0, hi = 64, a = h / legs;
-        for (int i = 0; i < 40; i++) {
-            double w = (lo + hi) / 2;
-            if (2 * Math.hypot(a, w) + (legs - 2) * Math.hypot(a, 2 * w) < want) lo = w;
-            else hi = w;
+    /**
+     * How a fall of d over a run of h winds down and stays no steeper than the slope, {swing, legs}: a spiral ramp, its bends
+     * on a circle through both ends (radius |swing|, sign the way it turns), the fewest legs and the smallest circle that give
+     * the length. Null when none does.
+     */
+    static int @Nullable [] winding(double h, double d, double slope, int dir) {
+        double want = d / slope;
+        for (int legs = 3; legs <= MOST_LEGS; legs++) {
+            for (int r = Math.max(4, (int) Math.ceil(h / 2 + 0.01)); r <= MOST_SWING; r++) {
+                double turn = turned(h, r, dir, legs) / legs;
+                if (turn <= MOST_TURN && legs * 2 * r * Math.sin(turn / 2) >= want) return new int[]{dir * r, legs};
+            }
         }
-        return (int) Math.ceil(hi);
+        return null;
+    }
+
+    /** The angle the way turns through on its circle: from one end round to the other, plus whole turns while no bend passes the limit. */
+    private static double turned(double h, double r, int dir, int legs) {
+        double off = Math.sqrt(Math.max(0, r * r - h * h / 4)) * dir;
+        double a = Math.atan2(-off, -h / 2), b = Math.atan2(-off, h / 2);
+        double arc = Math.floorMod(Math.round((b - a) * dir * 1e6), Math.round(Math.PI * 2e6)) / 1e6;
+        if (arc < 1e-3) arc = Math.PI * 2;
+        return arc + Math.PI * 2 * Math.max(0, Math.floor((legs * MOST_TURN - arc) / (Math.PI * 2)));
     }
 
     /** The joint's way, from the throat's end to the cave: its corners (x, feet, z), the two ends included. */
@@ -90,15 +107,25 @@ final class Mouth {
         return way(e[0] + 0.5, e[1], e[2] + 0.5, s.jx() + 0.5, s.jy(), s.jz() + 0.5, s.p(SWING), Math.max(1, s.p(LEGS)));
     }
 
-    /** As above: the bends stand off the straight line by {@code swing}, turn about, and the fall is shared by length so every leg is as steep. */
+    /** As above: the bends on {@link #winding}'s circle, the fall shared by length so every leg is as steep; straight when {@code swing} is 0. */
     static double[][] way(double ax, double ay, double az, double bx, double by, double bz, int swing, int legs) {
         double dx = bx - ax, dz = bz - az, h = Math.hypot(dx, dz);
-        double nx = h < 1e-6 ? 1 : -dz / h, nz = h < 1e-6 ? 0 : dx / h, run = 0;
         double[][] w = new double[legs + 1][];
         double[] along = new double[legs + 1];
+        double run = 0;
+        double cx = 0, cz = 0, r = Math.max(Math.abs(swing), h / 2 + 0.01), a0 = 0, step = 0;
+        int dir = swing < 0 ? -1 : 1;
+        if (swing != 0) {
+            double off = Math.sqrt(Math.max(0, r * r - h * h / 4)) * dir, fx = h < 1e-6 ? 0 : dx / h, fz = h < 1e-6 ? 1 : dz / h;
+            cx = (ax + bx) / 2 - fz * off;
+            cz = (az + bz) / 2 + fx * off;
+            a0 = Math.atan2(az - cz, ax - cx);
+            step = dir * turned(h, r, dir, legs) / legs;
+        }
         for (int i = 0; i <= legs; i++) {
-            double t = i / (double) legs, side = i == 0 || i == legs ? 0 : (i % 2 == 1 ? swing : -swing);
-            w[i] = new double[]{ax + dx * t + nx * side, 0, az + dz * t + nz * side};
+            double t = i / (double) legs, a = a0 + step * i;
+            boolean end = i == 0 || i == legs || swing == 0;
+            w[i] = new double[]{end ? ax + dx * t : cx + Math.cos(a) * r, 0, end ? az + dz * t : cz + Math.sin(a) * r};
             if (i > 0) run += Math.hypot(w[i][0] - w[i - 1][0], w[i][2] - w[i - 1][2]);
             along[i] = run;
         }
@@ -148,8 +175,11 @@ final class Mouth {
                 if (s.p(ORE) != 0) Carve.solid(k, s.p(HX), s.p(HY), s.p(HZ));
             } else {
                 double[][] w = way(s);
-                for (int i = 0; i + 1 < w.length; i++) {
-                    Carve.tunnel(k, w[i][0], w[i][1], w[i][2], w[i + 1][0], w[i + 1][1], w[i + 1][2], 1.5, 1.5, s.seed() + 5 + i);
+                // the highest leg first (Carve.tunnel), and a saved mouth as it was
+                boolean floored = s.p(LEGS) > 0, down = w[0][1] >= w[w.length - 1][1];
+                for (int n = 0; n + 1 < w.length; n++) {
+                    int i = down ? n : w.length - 2 - n;
+                    Carve.tunnel(k, w[i][0], w[i][1], w[i][2], w[i + 1][0], w[i + 1][1], w[i + 1][2], 1.5, 1.5, s.seed() + 5 + i, floored);
                     // a bend widens into a landing, so turning back on yourself is a step and not a squeeze
                     if (i > 0) Carve.blob(k, w[i][0], w[i][1] + 1.2, w[i][2], 2.8, 2.0, 2.8, s.seed() + 40 + i, 0.2, 3.0, (int) Math.floor(w[i][1]));
                 }
