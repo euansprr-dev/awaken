@@ -41,6 +41,31 @@ The bar is `BAR.md`: read it first. Who builds what (Euan, 10 Nov: two sub-agent
 | 13 | | The Flooded Ossuary | Drowned | Bell Crypt | The water rises and falls with the bell | A drowned cathedral of bones | Ribcage nave |
 | 14 | | The Broodwarren | Dungeon | Hive | Rooms open only while their larvae are asleep | A nursery of hanging cells | Brood chamber |
 
-## D to S (74)
+## D rank (16)
+
+E left 74 to build: Land 17, Stronghold 12, Deep 10, Dungeon 11, Sky 7, Desert and Ruin 7, Drowned 3, Climb 3, Wonder 4. This wave takes Land 4, Stronghold 3, Deep 2, Dungeon 3,
+Sky 1, Desert and Ruin 1, Drowned 1, Wonder 1, and it's where the four new themes come in. Each rule uses what already works (`change(moment)` block flips like the toll and the salt,
+or a push on the player like an updraft). Check the Lord's fight exists in `data/awaken/kit/fights` before building its place.
+
+| # | Status | Gate | Form | Theme | Rule | The great thing | Lord's place |
+|---|---|---|---|---|---|---|---|
+| 15 | | The Sliding Sea | Land | Glass Desert | Glass dunes are slick: going downhill you keep your speed and can't stop | A burnt-glass sun-tower in a bowl of glass dunes | The lens floor, where the sun comes to a point (glass_serpent) |
+| 16 | | Paper Moon Fen | Land | Lantern Night Market | The mud only holds your weight where a lantern's light falls | A paper moon the size of a hill over a market on stilts | The auction barge (lantern_broker) |
+| 17 | | The Turning Valley | Land | Clockwork Foundry | The valley floor sits on great turntables that move a quarter turn every minute, so the roads line up differently | A clock face a mile across laid into the ground | On the hour hand (gearwright_colossus) |
+| 18 | | The Smoke Orchard | Land | Ember Mines | Hot smoke drifts along the ground and cooks you; the high branches are clear | A forest of iron chimney trees round one still burning | The furnace in the root bowl (ember_tyrant) |
+| 19 | | Gearhold | Stronghold | Clockwork Foundry | Everything's on counterweights: stand on a plate and something else, somewhere, rises | A fortress hung from one enormous chain | The counterweight pit (gearwright_colossus) |
+| 20 | | The Inkfall Citadel | Stronghold | Drowned Archive | Wet ink hides you from the watchers on the towers, until it dries | A citadel built like a stack of stone books, black ink falling down its sides | The top reading room (drowned_archivist) |
+| 21 | | Glasshold | Stronghold | Glass Desert | Sunlight through the glass walls burns where it falls, and the great mirrors keep turning | A fortress of black glass with mirrors on its towers | The burning court (glass_serpent) |
+| 22 | | The Undergear | Deep | Clockwork Foundry | Gear lifts rise and fall on a beat; miss it and you wait for the next | A cavern with one half-buried gear as wide as a town | On the gear itself, which turns during the fight (gearwright_colossus) |
+| 23 | | Lanternroot | Deep | Fungal Hollow | Spores stick to you and make you glow: you can see, and everything can see you, until water washes them off | A lake of light under a roof of caps | An island in the lit lake (mother_of_spores) |
+| 24 | | The Ledger Vaults | Dungeon | Drowned Archive | A sluice drains one room by flooding another | A stair of sluice gates going down through the whole vault | The drained ledger floor (drowned_archivist) |
+| 25 | | The Escapement | Dungeon | Clockwork Foundry | Passages slide along by one place on every tick of the great clock | A pendulum swinging down through every floor | The pendulum's foot (gearwright_colossus) |
+| 26 | | The Bazaar Cellars | Dungeon | Lantern Night Market | The lamps go out row by row behind you, and what lives in the dark follows | A shaft hung with a thousand lanterns | The Broker's strongroom (lantern_broker) |
+| 27 | | The Hollow Sun | Sky | Glass Desert | Bridges of light hold only while a mirror's turned on them | A ring of mirrors round a burning glass orb | The orb's rim (glass_serpent) |
+| 28 | | The Long Kiln | Desert and Ruin | Ember Mines | Ash storms blow through every few minutes: get behind a wall or be carried along | A wrecked kiln city a mile long | Inside the great kiln (ember_tyrant) |
+| 29 | | The Sunken Reading Room | Drowned | Drowned Archive | When the current runs, the shelves float up and you can ride them | A cathedral-sized library lying on its side under the sea | The reading dome (drowned_archivist) |
+| 30 | | The Upturned Market | Wonder | Lantern Night Market | Step past a railing and you fall upward, to the other market | Two markets facing each other, one hung over the other | A platform in the air between them (lantern_broker) |
+
+## C to S (58)
 
 Written wave by wave as each one starts.
