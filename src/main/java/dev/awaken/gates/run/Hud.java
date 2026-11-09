@@ -60,7 +60,8 @@ public final class Hud {
         FloorLayout f = GateLayout.of(g.plan).floor(run.area, run.floor);
         FloorState fs = g.floor(run.area, run.floor);
         long onFloor = now - run.floorStartedAt;
-        int pressure = Pressure.stage(g, onFloor);
+        boolean realm = g.realm.isPresent();
+        int pressure = realm ? 0 : Pressure.stage(g, onFloor); // no clock hangs over a Realm
         if (pressure == 3 && !fs.warden) pressure = 2;
         int collapse = g.plan.has(Modifier.COLLAPSE_TIMER) && !run.clearedFloor(run.area, run.floor)
                 ? (int) Math.max(0, (Modifiers.collapseTicks(g) - (now - (fs.entered() ? fs.enteredAt : now))) / 20) : -1;
@@ -70,7 +71,7 @@ public final class Hud {
                 | (run.clearedFloor(run.area, run.floor) ? GatePayloads.RunHud.CLEARED_FLOOR : 0)
                 | (Twists.disguised(p, g) ? GatePayloads.RunHud.DISGUISED : 0)
                 | (g.plan.has(Modifier.SILENCE) ? GatePayloads.RunHud.SILENCE : 0);
-        int floors = run.area == 0 ? g.plan.floors() : 2;
+        int floors = realm ? 0 : run.area == 0 ? g.plan.floors() : 2; // none: the client says the place, not a floor
         String hint = Twists.hint(p, g, run);
         AwakenNet.send(p, new GatePayloads.RunHud(g.id, (f == null ? g.plan.theme() : f.theme).id, g.plan.rank().ordinal(), run.area,
                 run.floor, floors, Satchel.count(run.satchel), (int) Math.round(run.satchelXp), run.kills, (int) (onFloor / 20), pressure,

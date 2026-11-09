@@ -37,6 +37,17 @@ public final class GateMemory {
     public final Set<String> firstClears = new LinkedHashSet<>();
     /** A Lord's XP that hasn't landed yet: saved so a crash mid-payout loses none (SPEC §50.4). */
     public double lordXp;
+    /** Realms entered (SPEC §50.2), newest first: none comes round again until every one open to you has been seen. */
+    public final List<String> seenRealms = new ArrayList<>();
+
+    public void sawRealm(String id) {
+        seenRealms.remove(id);
+        seenRealms.add(0, id);
+    }
+
+    public java.util.Set<String> realmsSeen() {
+        return new java.util.LinkedHashSet<>(seenRealms);
+    }
 
     /** You went in: this theme leaves the bag. */
     public void sawTheme(String id) {
@@ -108,12 +119,13 @@ public final class GateMemory {
         ).apply(i, B::new));
     }
 
-    private record C(List<String> seen, List<String> firstClears, double lordXp) {
-        static final C EMPTY = new C(List.of(), List.of(), 0);
+    private record C(List<String> seen, List<String> firstClears, double lordXp, List<String> realms) {
+        static final C EMPTY = new C(List.of(), List.of(), 0, List.of());
         static final Codec<C> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.listOf().fieldOf("seen").forGetter(C::seen),
                 Codec.STRING.listOf().fieldOf("first_clears").forGetter(C::firstClears),
-                Codec.DOUBLE.optionalFieldOf("lord_xp", 0.0).forGetter(C::lordXp)
+                Codec.DOUBLE.optionalFieldOf("lord_xp", 0.0).forGetter(C::lordXp),
+                Codec.STRING.listOf().optionalFieldOf("realms", List.of()).forGetter(C::realms)
         ).apply(i, C::new));
     }
 
@@ -122,7 +134,7 @@ public final class GateMemory {
                     m.twistStreak, List.copyOf(m.scouted), List.copyOf(m.extractFloors))),
             B.CODEC.fieldOf("b").forGetter(m -> new B(List.copyOf(m.themesCleared), m.bossesSinceCore, m.echoFloorTicks,
                     m.echoFloorRooms, List.copyOf(m.twistsCounted), m.gatesRolled)),
-            C.CODEC.optionalFieldOf("c", C.EMPTY).forGetter(m -> new C(List.copyOf(m.seenThemes), List.copyOf(m.firstClears), m.lordXp))
+            C.CODEC.optionalFieldOf("c", C.EMPTY).forGetter(m -> new C(List.copyOf(m.seenThemes), List.copyOf(m.firstClears), m.lordXp, List.copyOf(m.seenRealms)))
     ).apply(i, (a, b, c) -> {
         GateMemory m = new GateMemory();
         m.lastThemes.addAll(a.themes);
@@ -140,6 +152,7 @@ public final class GateMemory {
         m.seenThemes.addAll(c.seen);
         m.firstClears.addAll(c.firstClears);
         m.lordXp = c.lordXp;
+        m.seenRealms.addAll(c.realms);
         return m;
     }));
 }

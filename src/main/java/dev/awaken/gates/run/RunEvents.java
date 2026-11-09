@@ -88,6 +88,7 @@ public final class RunEvents {
 
     public static void onGateMobDeath(ServerLevel level, GateRecord g, LivingEntity dead, ServerPlayer killer, MobRole role) {
         Modifiers.onMobDeath(level, g, dead, role);
+        if (g.realm.isPresent()) dev.awaken.gates.realms.RealmLive.mobDied(level, g, dead, role);
         GateLayout l = GateLayout.of(g.plan);
         boolean mainLord = g.boss.isPresent() && g.boss.get().equals(dead.getUUID());
         boolean annexLord = g.annexBoss.isPresent() && g.annexBoss.get().equals(dead.getUUID());

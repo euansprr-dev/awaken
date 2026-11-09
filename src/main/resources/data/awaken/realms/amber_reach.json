@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Amber Reach",
+  "line": "A valley where the honey never stopped running.",
+  "form": "land",
+  "theme": "hive",
+  "ranks": ["E", "D"],
+  "land": { "program": "awaken:honey_highlands", "water": 62 },
+  "sky": { "biomes": ["awaken:realm/amber_meadow", "awaken:realm/amber_citadel"], "lens": "amber_reach" },
+  "life": { "herds": ["pollen_grazer"], "predators": ["drone_bee", "honey_slime"], "ambient": ["amberfly"] },
+  "folk": { "kit": "wax_folk", "villages": 1 },
+  "law": { "kind": "updrafts", "params": { "honey_slows": 0.6 } },
+  "sites": { "wardens": 3, "delves": 0, "finds": 24 },
+  "heart": { "lord": "hive_regent", "seat": "mother_comb" },
+  "moods": ["late_harvest"]
+}

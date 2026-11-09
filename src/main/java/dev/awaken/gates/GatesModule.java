@@ -19,6 +19,7 @@ public final class GatesModule {
         modBus.addListener(GatesModule::registerPayloads);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(dev.awaken.gates.worlds.GateWorlds::addReload);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(dev.awaken.gates.worlds.WorldThemes::chat);
+        dev.awaken.gates.realms.RealmsModule.init(modBus);
         GateEvents.register();
         GateAccess.install();
         GateParty.install();

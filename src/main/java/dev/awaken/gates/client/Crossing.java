@@ -54,7 +54,7 @@ public final class Crossing {
         // a gate's own floors already have the Journey: nothing may cover it
         e.registerConditionalEffect(gates, sky, Dark::new);
         e.registerConditionalEffect(sky, gates, Dark::new);
-        for (ResourceKey<Level> dim : java.util.List.of(gates, sky)) {
+        for (ResourceKey<Level> dim : java.util.List.of(gates, sky, dev.awaken.gates.realms.RealmsModule.REALMS)) {
             e.registerIncomingEffect(dim, Crossing::screen);
             e.registerOutgoingEffect(dim, Crossing::screen);
         }

@@ -56,7 +56,7 @@ public final class GatesRegistry {
 
     /** Whether a dimension is one gates are built in. */
     public static boolean isGateDim(ResourceKey<Level> dim) {
-        return dim == GATES || dim == GATES_SKY;
+        return dim == GATES || dim == GATES_SKY || dim == dev.awaken.gates.realms.RealmsModule.REALMS;
     }
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Awaken.MODID);

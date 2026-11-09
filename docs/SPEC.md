@@ -19734,3 +19734,49 @@ own. A death, a command or a teleport with no word from the server gets a plain 
 across its two dimensions shows nothing over the Journey (§38.7). Tour: `tools/autopilot/gate-crossing.txt`; `/awaken gate crossing
 <theme> <ms>` freezes one instant.
 
+### 50.6 Nothing may ever float
+
+Euan caught fence posts standing in the air beside a road in the proof, and asked that it never happen. Three rules, all checked:
+
+1. **Everything is anchored to the ground that is really there.** `Land.ground(x,z)` returns the exact top block, every per-column
+   rule included, and it is the one source of the height (`AmberReach.column`). Pieces read it, and `V.foot(x,y,z,state)` fills from
+   the piece straight down to whatever holds it up. No piece may use a guessed height.
+2. **`check/FloatCheck` walks the real result.** It draws a Realm exactly as the game does and walks out from the ground through
+   everything solid (faces and edges count as touching, a lone corner doesn't). Whatever the walk can't reach is in the air, from one
+   post to a whole roof. A plant must stand on something, a hanging thing must hang from something, a vine must be on something, and
+   a plant can't hold up a post. Only a piece that says `airborne` is let off. `realm_float_check_catches` proves the check fails on a
+   planted post, plant and lantern. `realm_amber_never_floats` runs it from the Mouth to the citadel's stair.
+3. **Pieces are placed through one door** (`check/LookChecks.clash`): none through another piece, none on a road, a stair or a door's
+   way, except a piece marked `mayOverlap` (a spire on its plinth) or `startsWay` (the ring a road starts from). The first full run
+   found what no eye had: the pavilion's roof sat four blocks above its columns, every hut's finial stood over a hole in its dome, and
+   a lamp cut the pavilion's middle post in two.
+
+### 50.7 Realms (the foundation)
+
+A Realm is a whole land generated in dimension `awaken:realms` (384 tall, sky). `data/awaken/realms/<id>.json` is the blueprint
+(`Blueprint`: form, theme, ranks, the program that draws the land, sky, life, folk, law, sites, heart, moods, one plain line for the
+crossing); `LandPrograms` maps a program to its `Land` class, so each great land is its own code with its own painting. Behind
+`AwakenConfig.gateRealms` (off) until the E wave is ready; `/awaken gate realm <rank> <id>` forms one anyway, `/awaken gate realm_at
+<kind> <index> <dx> <dy> <dz>` moves you to one of its sites.
+
+Cells sit `RealmCells.PITCH` (8,192) apart from 135,168, past the old gate grid, so `Cells.cellAt` and `Where.at` find nothing in a Realm.
+A Realm gate keeps its normal cell, `GatePlan` and `GateLayout` (only the abstract numbers are used: rewards, the Lord's id) and adds
+`GateRecord.realm` (`RealmRef`: blueprint, seed, version, cell). `RealmPlan.of` is a pure function of those, so a restart rebuilds the
+plan and nothing about the land is saved except what happened in it (`RealmData`, `RealmState`, schema 1). All drawing is in local
+coordinates, 0,0 the Realm's middle; `V` is a scratch volume per chunk with a one-block margin.
+
+Runs hands a Realm gate to `RealmLive` before the floors' code sees it: no pressure clock, no rooms, no twists yet (a gate with a twist
+stays floors until its Realm form is built). Your way home is the arch by the Mouth, any time, Satchel banked; bag per owner
+(`GateMemory.seenRealms`). Monsters wake within 56 blocks of their den or Warden. Wardens fall in any order and the last opens the way
+to the Lord, never announced (decision 12).
+
+Pay (§50.3): a Realm's pool is what the same gate's floors would pay. 60% is split kill by kill (a den about five shares, a Warden
+four); of the other 40% each Warden banks a sixth and the Lord pays what's left, plus first clear and the Lord's payout as usual.
+
+### 50.8 The Build Kit
+
+Seven passes on every land, in order: bones (ground and big masses), courses (no face one flat plane), pieces (each anchored, placed
+through the door), shade (painted darkness only under a real two-deep ledge), weathering (drips, crumbs), growth (only on ground that's
+really there), light. `N` holds the noise and hex helpers; `Piece` knows its footprint and draws into whichever chunk it touches. Tests:
+`realm_cells`, `realm_blueprints_parse`, `realm_bag_empty`, `realm_float_check_catches`, `realm_amber_never_floats`,
+`realm_amber_plan_checks`, `realm_amber_all_reachable`, `realm_seeds_differ`.

@@ -56,16 +56,16 @@ cmd awaken gate open E bell_crypt
 wait 400
 cmd awaken gate interior enter
 wait 24
-shot crossing_real_in_1s
+shotnow crossing_real_in_1s
 wait 30
-shot crossing_real_in_2s
+shotnow crossing_real_in_2s
 wait 44
-shot crossing_real_in_afterglow
+shotnow crossing_real_in_afterglow
 wait 200
-shot crossing_real_arrived
+shotnow crossing_real_arrived
 cmd awaken gate leave
 wait 20
-shot crossing_real_out_1s
+shotnow crossing_real_out_1s
 wait 200
-shot crossing_real_back
+shotnow crossing_real_back
 quit
