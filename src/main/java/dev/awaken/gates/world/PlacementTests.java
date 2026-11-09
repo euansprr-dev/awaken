@@ -2,6 +2,7 @@ package dev.awaken.gates.world;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Layout;
 import dev.awaken.gates.content.Theme;
@@ -577,6 +578,9 @@ public final class PlacementTests {
                     }
                 }
             }
+            StringBuilder ways = new StringBuilder();
+            int[] shrines = only != null ? new int[4] : shrinesStand(version, ways);
+            Awaken.LOG.info("[gates] the Shrine and the Seal, version {}: {} gates rolled, {} blocks, {} not on something solid, {} never placed\n{}", version, shrines[0], shrines[1], shrines[2], shrines[3], ways);
             StringBuilder log = new StringBuilder();
             log.append("PLACEMENT version ").append(version).append(": ").append(floors).append(" floors, ").append(checked).append(" placed things checked, ").append(bad)
                     .append(" not held up, in ").append((System.nanoTime() - t0) / 1_000_000).append(" ms\n");
@@ -594,8 +598,66 @@ public final class PlacementTests {
             Awaken.LOG.info("[gates] placement census:\n{}", log);
             Sculpt.CENSUS = false;
             h.assertTrue(bad == 0, bad + " placed blocks not held up (see the placement census in the log)");
+            h.assertTrue(shrines[2] + shrines[3] == 0, shrines[2] + " Shrines and Seals not on something solid, " + shrines[3] + " never placed (see the log)");
             h.succeed();
         });
+    }
+
+    /**
+     * The Shrine and the Seal, the two blocks you click to leave or go on (Euan 8 Nov: "those are still floating sometimes"):
+     * the census above has one seed a world, so here the gates the Director really rolls, each with the worlds it would be
+     * given, read only in the chunks these two stand in. Returns gates, blocks, those not on something solid, those missing.
+     */
+    static int[] shrinesStand(int version, StringBuilder ways) {
+        int[] out = new int[4];
+        long t0 = System.nanoTime();
+        Map<String, Integer> by = new TreeMap<>();
+        for (int i = 0; i < SHRINE_GATES; i++) {
+            Rank rank = Rank.of(i % 7);
+            GatePlan rolled = dev.awaken.gates.Director.roll(0x5EA1L + i * 7919L, rank, new dev.awaken.gates.run.GateMemory(), null, null).plan();
+            GatePlan p = rolled.rebuilt(version);
+            if (i % 5 != 0) p = dev.awaken.gates.worlds.GateWorlds.dress(p, new dev.awaken.gates.worlds.GateAtlas(), Set.of());
+            out[0]++;
+            for (FloorLayout f : floors(FloorBuilder.build(p))) {
+                for (Room r : f.rooms) {
+                    for (Room.Feature ft : r.features) {
+                        if (ft.kind() != Room.FeatureKind.SHRINE && ft.kind() != Room.FeatureKind.SEAL) continue;
+                        out[1]++;
+                        Map<Integer, BlockState> col = column(p, f, ft);
+                        Integer at = null;
+                        for (var e : col.entrySet()) if (ft.kind() == Room.FeatureKind.SHRINE ? e.getValue().getBlock() instanceof GateBlocks.Shrine : e.getValue().getBlock() instanceof GateBlocks.Seal) at = e.getKey();
+                        String what = (f.isWorld() ? f.world : "rooms " + r.shape) + " " + ft.kind();
+                        if (at == null) {
+                            out[3]++;
+                            by.merge(what + " MISSING", 1, Integer::sum);
+                        } else if (!Holds.sturdy(col.getOrDefault(at - 1, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()), net.minecraft.core.Direction.UP)) {
+                            out[2]++;
+                            by.merge(what + " over " + BuiltInRegistries.BLOCK.getKey(col.getOrDefault(at - 1, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()).getBlock()).getPath(), 1, Integer::sum);
+                        }
+                    }
+                }
+            }
+        }
+        by.forEach((k, v) -> ways.append("SHRINE ").append(k).append(" x").append(v).append('\n'));
+        ways.append("SHRINE in ").append((System.nanoTime() - t0) / 1_000_000).append(" ms\n");
+        return out;
+    }
+
+    private static final int SHRINE_GATES = 600;
+
+    /** One feature's column as the generator paints it, by height. */
+    private static Map<Integer, BlockState> column(GatePlan p, FloorLayout f, Room.Feature ft) {
+        int lx = ft.x() & 15, lz = ft.z() & 15;
+        Map<Integer, BlockState> col = new HashMap<>();
+        GatePainter.Sink sink = (x, y, z, s) -> {
+            if (x == lx && z == lz) col.put(y, s);
+        };
+        int sx = f.originSlotX + (ft.x() >> 4), sz = f.originSlotZ + (ft.z() >> 4);
+        if (f.model != null) f.model.carve(p, f, sx, sz, sink);
+        else GatePainter.paintFloor(p, f, sx, sz, (x, y, z, s) -> {
+            if (f.paints(y)) sink.set(x, y, z, s);
+        });
+        return col;
     }
 
     private static int sum(int[] v) {

@@ -39,6 +39,8 @@ public final class GateRecord {
     public Optional<UUID> announceTo = Optional.empty();
     public boolean scripted;
     public boolean structurePlaced;
+    /** The trees this gate cut have come down whole ({@link Overworld#fellCut}); an older gate's get tidied once, when loaded. */
+    public boolean treesFelled;
     public boolean interiorReady;
     public boolean warned;
     public boolean nearHearth;
@@ -178,8 +180,9 @@ public final class GateRecord {
             Codec.BOOL.optionalFieldOf("break_held", false).forGetter(g -> g.breakHeld),
             Codec.LONG.optionalFieldOf("expires_at", -1L).forGetter(g -> g.expiresAt),
             Codec.LONG.optionalFieldOf("seen_day", -1L).forGetter(g -> g.seenDay),
-            Codec.LONG.optionalFieldOf("folds_on", -1L).forGetter(g -> g.foldsOnPlayDay)
-    ).apply(i, (h, f, floors, echo, entries, paid, spill, held, expires, seen, folds) -> {
+            Codec.LONG.optionalFieldOf("folds_on", -1L).forGetter(g -> g.foldsOnPlayDay),
+            Codec.BOOL.optionalFieldOf("trees_felled", false).forGetter(g -> g.treesFelled)
+    ).apply(i, (h, f, floors, echo, entries, paid, spill, held, expires, seen, folds, felled) -> {
         GateRecord g = new GateRecord(h.id, h.plan, h.pos, h.axis, h.cell, h.createdDay, h.breaks, h.state, h.owner);
         g.party.addAll(h.party);
         g.inside.addAll(h.inside);
@@ -204,6 +207,7 @@ public final class GateRecord {
         g.expiresAt = expires;
         g.seenDay = seen;
         g.foldsOnPlayDay = folds;
+        g.treesFelled = felled;
         return g;
     }));
 }

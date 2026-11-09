@@ -23,6 +23,7 @@ import dev.awaken.gates.world.RoomGeometry;
 import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -305,9 +306,32 @@ public final class Rooms {
         GateRegistry.get(level.getServer()).setDirty();
     }
 
+    /** How far under a Shrine or Seal {@link #standShrines} looks for something solid. */
+    private static final int PLINTH_REACH = 8;
+
+    /**
+     * A Shrine or Seal with nothing solid under it gets a plinth when someone walks in, at any version: a chunk already
+     * painted is never painted again (SPEC §38.16). Only under the block that's really there, and only down to something
+     * solid within reach.
+     */
+    private static void standShrines(ServerLevel level, GateRecord g, FloorLayout f, Room r) {
+        for (Room.Feature ft : r.features) {
+            if (ft.kind() != Room.FeatureKind.SHRINE && ft.kind() != Room.FeatureKind.SEAL) continue;
+            BlockPos at = GateService.feature(g, f, r, ft);
+            if (!level.isLoaded(at)) continue;
+            Block here = level.getBlockState(at).getBlock();
+            if (!(here instanceof GateBlocks.Shrine || here instanceof GateBlocks.Seal)) continue;
+            int gap = 0;
+            while (gap < PLINTH_REACH && !level.getBlockState(at.below(gap + 1)).isFaceSturdy(level, at.below(gap + 1), Direction.UP)) gap++;
+            if (gap == PLINTH_REACH) continue;
+            for (int d = 1; d <= gap; d++) level.setBlock(at.below(d), f.theme.palette().pillar(), Block.UPDATE_ALL);
+        }
+    }
+
     /** A player stepped into room r (zone = slot index inside caverns). Preparation never seals a doorway. */
     static void enter(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r, int floorX, int floorZ) {
         prepare(level, g, f, r);
+        if (r.type == Room.Type.SHRINE) standShrines(level, g, f, r);
         FloorState fs = g.floor(f.area, f.floor);
         int key = r.type == Room.Type.CAVERN
                 ? cavernKey(r, (floorX >> 4) - r.gx + ((floorZ >> 4) - r.gz) * r.gw) : r.id;

@@ -2,6 +2,9 @@ package dev.awaken.gates;
 
 import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.gates.block.GateFissureBlock;
+import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
@@ -10,12 +13,14 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.Heightmap;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -224,6 +229,8 @@ public final class Overworld {
             if (!here.isAir() && !natural(here) && !ours(here) && !(core && yields(level, p.pos(), here))) continue;
             level.setBlock(p.pos(), p.state(), flags);
         }
+        fellCut(level, g);
+        g.treesFelled |= treesLoaded(level, g);
         if (!(level.getBlockEntity(anchor(g.pos)) instanceof GateVortexBlockEntity be)) return false;
         be.configure(g, level.getGameTime());
         return true;
@@ -295,7 +302,8 @@ public final class Overworld {
                     level.setBlock(m, fissureState(rank, broken, fissure ? crack : 0, axis), flags);
                     continue;
                 }
-                if (!here.getFluidState().isEmpty() || !natural(here) || ours(here) || here.isAir()) continue;
+                // the height map stops at a trunk's top: that's a tree standing here, not ground to burn
+                if (!here.getFluidState().isEmpty() || !natural(here) || ours(here) || here.isAir() || here.is(BlockTags.LOGS)) continue;
                 double t = (d - pad) / (ring - pad);
                 double n = smoothNoise(seed + 5, a, b, 2.2);
                 if (!fissure && n < t * 0.95 + 0.05) continue; // patchy, thinning out with distance
@@ -305,6 +313,173 @@ public final class Overworld {
                 if (!plant.isAir() && plant.canBeReplaced() && plant.getFluidState().isEmpty()) level.setBlock(m, Blocks.AIR.defaultBlockState(), flags);
             }
         }
+    }
+
+    // ---- trees the gate cut ---------------------------------------------------------------------------------------------
+
+    /** How far past the cut a tree is read: a crown's width, so the trees beside the gate are seen standing. */
+    private static final int TREE_READ = 12;
+
+    /** The furthest (blocks from the centre, along either axis) the clearing, the fangs and the crater can cut a tree. */
+    private static int cutReach(int rank) {
+        return (int) Math.ceil(GateVortex.size(rank).ringRadius()) + 2;
+    }
+
+    /** Whether all that {@link #fellCut} reads is loaded. */
+    static boolean treesLoaded(ServerLevel level, GateRecord g) {
+        int r = cutReach(g.plan.rank().ordinal()) + TREE_READ;
+        return level.hasChunkAt(g.pos.offset(r, 0, r)) && level.hasChunkAt(g.pos.offset(-r, 0, r))
+                && level.hasChunkAt(g.pos.offset(r, 0, -r)) && level.hasChunkAt(g.pos.offset(-r, 0, -r));
+    }
+
+    /**
+     * A tree the gate cut comes down whole (SPEC §7, "Trees round a gate"). The clearing takes what crosses the pad up to a
+     * height and tells nothing round it, so leaves never heard their trunk had gone: crowns and trunk tops stayed in the air.
+     * A log stands if a line of logs takes it to the ground or to someone's build; a leaf stands within the game's own six
+     * steps of such a log. What doesn't, anywhere in what's read, goes, with what grew on it: a crown can reach well past
+     * the cut, and a piece can have hung from a neighbour that fell. Leaves saved as
+     * persistent (the Wild Lands' hawthorn, or someone's hedge) go only when their piece touches nothing. Returns the blocks
+     * that fell.
+     */
+    static int fellCut(ServerLevel level, GateRecord g) {
+        int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
+        BlockPos pos = g.pos;
+        int near = cutReach(g.plan.rank().ordinal()), reach = near + TREE_READ, floor = pos.getY() - 8;
+        LongOpenHashSet logs = new LongOpenHashSet(), leaves = new LongOpenHashSet(), nests = new LongOpenHashSet(), held = new LongOpenHashSet();
+        LongArrayFIFOQueue open = new LongArrayFIFOQueue();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int a = -reach; a <= reach; a++) {
+            for (int b = -reach; b <= reach; b++) {
+                int x = pos.getX() + a, z = pos.getZ() + b;
+                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                // a tree may well go on past what's read: whatever reaches the edge counts as held
+                boolean edge = Math.abs(a) == reach || Math.abs(b) == reach || !level.hasChunk((x + 1) >> 4, z >> 4)
+                        || !level.hasChunk((x - 1) >> 4, z >> 4) || !level.hasChunk(x >> 4, (z + 1) >> 4) || !level.hasChunk(x >> 4, (z - 1) >> 4);
+                int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                for (int y = floor; y < top; y++) {
+                    BlockState s = level.getBlockState(m.set(x, y, z));
+                    long k = m.asLong();
+                    if (wood(s)) {
+                        logs.add(k);
+                        if ((edge || y == floor || logStands(level, m.immutable())) && held.add(k)) open.enqueue(k);
+                    } else if (leafy(s)) {
+                        leaves.add(k);
+                        if (s.is(Blocks.BEE_NEST)) nests.add(k);
+                        if (edge) held.add(k);
+                    }
+                }
+            }
+        }
+        while (!open.isEmpty()) {
+            long k = open.dequeueLong();
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        long n = BlockPos.offset(k, dx, dy, dz);
+                        if (logs.contains(n) && held.add(n)) open.enqueue(n);
+                    }
+                }
+            }
+        }
+        LongArrayList step = new LongArrayList(held);
+        for (int d = 0; d < LeavesBlock.DECAY_DISTANCE - 1 && !step.isEmpty(); d++) {
+            LongArrayList next = new LongArrayList();
+            for (int i = 0; i < step.size(); i++) {
+                for (Direction side : Direction.values()) {
+                    long n = BlockPos.offset(step.getLong(i), side);
+                    // a nest stands with its tree but carries nothing on, as in the game's own count
+                    if (leaves.contains(n) && held.add(n) && !nests.contains(n)) next.add(n);
+                }
+            }
+            step = next;
+        }
+        LongOpenHashSet loose = new LongOpenHashSet(logs);
+        loose.addAll(leaves);
+        loose.removeAll(held);
+        LongOpenHashSet seen = new LongOpenHashSet();
+        ArrayDeque<BlockPos> gone = new ArrayDeque<>();
+        int felled = 0;
+        for (long start : loose.toLongArray()) {
+            if (!seen.add(start)) continue;
+            LongArrayList piece = new LongArrayList();
+            piece.add(start);
+            boolean rests = false;
+            for (int i = 0; i < piece.size(); i++) {
+                long k = piece.getLong(i);
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            long n = BlockPos.offset(k, dx, dy, dz);
+                            if (loose.contains(n) && seen.add(n)) piece.add(n);
+                        }
+                    }
+                }
+                for (Direction side : Direction.values()) rests = rests || firm(level.getBlockState(m.set(BlockPos.offset(k, side))));
+            }
+            for (int i = 0; i < piece.size(); i++) {
+                BlockState s = level.getBlockState(m.set(piece.getLong(i)));
+                if (rests && s.hasProperty(LeavesBlock.PERSISTENT) && s.getValue(LeavesBlock.PERSISTENT)) continue;
+                level.setBlock(m, Blocks.AIR.defaultBlockState(), flags);
+                gone.add(m.immutable());
+                felled++;
+            }
+        }
+        // what grew on what went, and plants the clearing cut: nothing told them either (a stalk of bamboo, vines, snow)
+        for (int a = -near; a <= near; a++) {
+            for (int b = -near; b <= near; b++) {
+                int x = pos.getX() + a, z = pos.getZ() + b;
+                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+                for (int y = pos.getY() + 1; y < top; y++) {
+                    BlockState s = level.getBlockState(m.set(x, y, z));
+                    if (s.isAir() || ours(s) || s.canSurvive(level, m)) continue;
+                    level.setBlock(m, Blocks.AIR.defaultBlockState(), flags);
+                    gone.add(m.immutable());
+                }
+            }
+        }
+        while (!gone.isEmpty()) {
+            BlockPos p = gone.poll();
+            for (Direction side : Direction.values()) {
+                BlockPos q = p.relative(side);
+                if (!level.hasChunkAt(q)) continue;
+                BlockState s = level.getBlockState(q);
+                if (s.isAir() || ours(s)) continue;
+                BlockState now = !s.canSurvive(level, q) ? Blocks.AIR.defaultBlockState() : s.is(Blocks.VINE) ? Block.updateFromNeighbourShapes(s, level, q) : s;
+                if (now == s) continue;
+                level.setBlock(q, now, flags);
+                if (now.isAir()) gone.add(q);
+            }
+        }
+        return felled;
+    }
+
+    /** A tree's leafy part: its leaves and the nest that hangs in them. */
+    private static boolean leafy(BlockState s) {
+        return s.is(BlockTags.LEAVES) || s.is(Blocks.BEE_NEST);
+    }
+
+    /** A tree's wood: its logs, the heart in a pale oak's trunk and a mangrove's roots. */
+    static boolean wood(BlockState s) {
+        return s.is(BlockTags.LOGS) || s.is(Blocks.CREAKING_HEART) || s.is(Blocks.MANGROVE_ROOTS) || s.is(Blocks.MUDDY_MANGROVE_ROOTS);
+    }
+
+    /**
+     * Something a tree can rest on: solid (so not what grows on bark: hanging moss, cocoa), not a stalk of bamboo (the game
+     * calls it solid, and a limb can lie on one), not more tree, not the gate's own rock.
+     */
+    private static boolean firm(BlockState s) {
+        return s.isSolid() && !s.is(Blocks.BAMBOO) && s.getFluidState().isEmpty() && !s.canBeReplaced() && !wood(s) && !leafy(s) && !ours(s) && !spurBlock(s);
+    }
+
+    /** A log on the ground, or against something nature didn't make (someone's build): it isn't going anywhere. */
+    private static boolean logStands(ServerLevel level, BlockPos p) {
+        if (firm(level.getBlockState(p.below()))) return true;
+        for (Direction side : Direction.values()) {
+            BlockState s = level.getBlockState(p.relative(side));
+            if (firm(s) && !natural(s)) return true;
+        }
+        return false;
     }
 
     /**

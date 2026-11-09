@@ -80,8 +80,23 @@ public final class GateExterior {
     /** Repairs every loaded surface gate whose vortex doesn't stand ({@link #repair}). Returns how many it rebuilt. */
     static int upgradeLoaded(MinecraftServer server) {
         int n = 0;
-        for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) if (repair(server, g)) n++;
+        for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) {
+            if (repair(server, g)) n++;
+            if (fellOld(server.overworld(), g)) GateRegistry.get(server).setDirty();
+        }
         return n;
+    }
+
+    /**
+     * A gate built before its trees came down whole ({@link Overworld#fellCut}) still has their crowns in the air: they
+     * come down once, when all the ground it reads is next loaded. Returns whether it looked.
+     */
+    static boolean fellOld(ServerLevel over, GateRecord g) {
+        if (g.treesFelled || !g.structurePlaced || g.state == GateState.RELEASED || g.state == GateState.BUILDING || !Overworld.treesLoaded(over, g)) return false;
+        int felled = Overworld.fellCut(over, g);
+        g.treesFelled = true;
+        if (felled > 0) g.trace.add("the trees it had cut came down (" + felled + " blocks)");
+        return true;
     }
 
     /**

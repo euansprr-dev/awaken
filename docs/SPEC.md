@@ -361,6 +361,19 @@ released, not fallen: `GateExterior.shown`): the pillar and the Atlas marks (bea
 the Horizon's first gate, `GateHooks.near` (Spirit Sight, the Gate Scanner, the bells, the villages) and `Gates.near`.
 The first gate's "A gate has opened N m" waits until it stands, so a failed build never announced anything.
 
+**Trees round a gate** (8 Nov 2026, Euan: "Trees above gates are floating"): the clearing takes what crosses the pad up to
+3 blocks over the opening and tells nothing round it, so a tree it cut kept its crown and the top of its trunk in the air.
+Now a tree the gate cut comes down whole (`Overworld.fellCut`, every rank and every tree in the game: test
+`gates_trees_fall_whole`). A log stands if a line of wood (logs, a pale oak's Creaking Heart, a mangrove's roots) takes it
+to the ground or to someone's build, and only something solid counts: what grows on bark (hanging moss, cocoa) doesn't, nor
+does a stalk of bamboo. A leaf stands within the game's six steps of such a log, counted through leaves as the game does. What doesn't stand, within 14 blocks past the crater, goes, with
+what grew on it (vines, snow, bee nests, the top of a stalk of bamboo). A tree that still stands only loses what the
+clearing took. Leaves saved as persistent (the Wild Lands' hawthorn, someone's hedge) go only
+when their piece touches nothing. The crater no longer burns the top of a short trunk as if it were ground. A gate built
+before this comes down the same way once, the first time all its ground is loaded (`GateExterior.fellOld`, saved as
+`trees_felled`); a gate that had already closed left no record, so a crown it left stays. The two dark blue-veined rocks
+round a portal are the vortex's own shards (`GateVortex.emitShards`), drawn orbiting the rim on purpose.
+
 Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `docs/plan.html` gate generator.
 
 Arrivals (§28.9, 2026-10-29): leaving a gate (cleared, failed, lost, or its gate gone at login) and `/awaken gates
@@ -12613,6 +12626,14 @@ a thing gets nothing. Nothing is put there to fill the gap.
     placements that wait for the ground too (`BorrowedDress.late`: the Gates' Heart's flights, borrowed strings).
   - Upside-down furniture is carried up in its own stuff to meet a roof that isn't flat (`DreamDress.shim`). The
     Nursery's mobile hangs on a chain.
+  - The Shrine and the Seal, the two blocks you click to leave or go on, always stand on something solid (Euan 8 Nov:
+    "those are still floating sometimes"). A terrace Shrine room sets them a block up, for its dais; a world floor takes
+    a room's features but not its dais, so a quarter of them stood a block in the air. There the painter sets a plinth
+    of the theme's pillar under each. A chunk already painted is never painted again, so `Rooms.enter` fills what's
+    missing under either one, down to something solid within 8, on any floor of any version, when someone walks in. The
+    Bell Crypt's wear leaves every feature's column as the engine laid it (`CryptWear.keepUnder`).
+    `gates_placement` also rolls 600 gates the Director's way and reads these two blocks' columns: its own worlds are
+    all Spiral Towers, whose Shrine room is always round.
   - Features stand on a whole step: a half step under a cache or a rune is made whole (`Relief.level`). In a built
     room a feature stands on the floor under it, up a terrace's dais or down in a pit (`RoomGeometry.featureLift`, read
     by the painter and by `GateService.feature` for every use: the rune you press, the lantern you take, the shrine's

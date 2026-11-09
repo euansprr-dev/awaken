@@ -1150,6 +1150,10 @@ public final class GatePainter {
                 int bx = ft.x() - x0, bz = ft.z() - z0;
                 if (bx < 0 || bx > 15 || bz < 0 || bz > 15) continue;
                 int y = floorY + up + ft.y();
+                // a terrace's dais sets these two a block up and a world floor has no dais: a plinth under each (38.16)
+                if (plan.contentVersion() >= 9 && f.isWorld() && ft.y() > 0 && (ft.kind() == Room.FeatureKind.SHRINE || ft.kind() == Room.FeatureKind.SEAL)) {
+                    set(bx, y - 1, bz, p.pillar());
+                }
                 switch (ft.kind()) {
                     case SHRINE -> set(bx, y, bz, GatesRegistry.SHRINE.get().defaultBlockState());
                     case SEAL -> set(bx, y, bz, GatesRegistry.SEAL.get().defaultBlockState());
