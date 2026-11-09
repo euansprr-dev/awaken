@@ -7,8 +7,7 @@
     {
       "type": "recipe",
       "ids": [
-        "awaken:veilwoven_focus",
-        "awaken:veilwoven_mattock"
+        "awaken:veilwoven_focus"
       ]
     }
   ],

@@ -7,8 +7,7 @@
     {
       "type": "recipe",
       "ids": [
-        "awaken:lordscale_focus",
-        "awaken:lordscale_mattock"
+        "awaken:lordscale_focus"
       ]
     }
   ],

@@ -56,6 +56,7 @@ public final class WakingPick {
             out.accept(Component.literal(PickVerses.VERSES[v].title).withStyle(ChatFormatting.DARK_PURPLE));
             for (int i = 0; i <= v; i++) out.accept(Component.literal(PickVerses.VERSES[i].gift).withStyle(i == v ? ChatFormatting.GRAY : ChatFormatting.DARK_GRAY));
             if (v + 1 < PickVerses.VERSES.length) out.accept(Component.literal("Next: " + PickVerses.wakesWhen(PickVerses.VERSES[v + 1])).withStyle(ChatFormatting.DARK_AQUA));
+            out.accept(Component.literal("Any War Anvil will remake it free, and it keeps all of this").withStyle(ChatFormatting.DARK_AQUA));
         }
     }
 
@@ -100,8 +101,6 @@ public final class WakingPick {
 
     // ---- kept through death -------------------------------------------------------------------------------------------
 
-    private static final Map<UUID, List<ItemStack>> HELD = new HashMap<>();
-
     static void onDrops(LivingDropsEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         List<ItemStack> kept = new ArrayList<>();
@@ -110,7 +109,12 @@ public final class WakingPick {
             kept.add(ie.getItem().copy());
             return true;
         });
-        if (!kept.isEmpty()) HELD.computeIfAbsent(p.getUUID(), u -> new ArrayList<>()).addAll(kept);
+        if (kept.isEmpty()) return;
+        // on the player, not in a map: a restart with them on the death screen mustn't lose a career's pick
+        var had = p.getData(DelveForged.KEPT).items();
+        List<ItemStack> all = new ArrayList<>(had);
+        all.addAll(kept);
+        p.setData(DelveForged.KEPT, new DelveForged.KeptPicks(DelveForged.KeptPicks.SCHEMA, List.copyOf(all)));
     }
 
     /** A pick is yours for a career (SPEC §49.3): the old one, any forged one, and the head until it's hung. */
@@ -120,9 +124,10 @@ public final class WakingPick {
 
     static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
-        List<ItemStack> kept = HELD.remove(p.getUUID());
-        if (kept == null) return;
-        for (ItemStack st : kept) p.getInventory().placeItemBackInInventory(st, net.minecraft.util.Prediction.SERVER_ONLY);
+        List<ItemStack> kept = p.getData(DelveForged.KEPT).items();
+        if (kept.isEmpty()) return;
+        p.setData(DelveForged.KEPT, DelveForged.KeptPicks.NONE);
+        for (ItemStack st : kept) p.getInventory().placeItemBackInInventory(st.copy(), net.minecraft.util.Prediction.SERVER_ONLY);
     }
 
     // ---- the hum --------------------------------------------------------------------------------------------------------
@@ -168,6 +173,5 @@ public final class WakingPick {
 
     static void clear() {
         TOLD.clear();
-        HELD.clear();
     }
 }

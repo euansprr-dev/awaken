@@ -165,7 +165,7 @@ public final class ArmsArmoury {
     }
 
     /** The highest tier whose level the fighter has reached. */
-    static int bestTier(ServerPlayer p) {
+    public static int bestTier(ServerPlayer p) {
         int level = Progression.profile(p).level(), best = 0;
         for (int i = 0; i < LEVEL.length; i++) if (level >= LEVEL[i]) best = i;
         return best;

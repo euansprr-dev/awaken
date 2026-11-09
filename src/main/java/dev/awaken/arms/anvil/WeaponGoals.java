@@ -184,7 +184,7 @@ final class WeaponGoals {
     }
 
     /** Your anvil, if it still stands (one in a chunk that isn't loaded is taken as standing). */
-    private static @org.jspecify.annotations.Nullable BlockPos anvil(ServerPlayer p, SmithMemory mem) {
+    static @org.jspecify.annotations.Nullable BlockPos anvil(ServerPlayer p, SmithMemory mem) {
         if (mem.anvil == null) return null;
         var level = p.level().getServer().getLevel(mem.anvil.dimension());
         if (level == null) return null;
@@ -211,7 +211,7 @@ final class WeaponGoals {
         return mem.forgeNear;
     }
 
-    private static Need need(NeedRow r) {
+    static Need need(NeedRow r) {
         if (r.kind().equals("tag")) return new Need("#" + r.id(), tagLabel(r.id()), r.have(), r.need());
         var item = BuiltInRegistries.ITEM.getValue(Identifier.parse(r.id()));
         return new Need(r.id(), item.getName(new ItemStack(item)).getString(), r.have(), r.need());

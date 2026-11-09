@@ -60,6 +60,9 @@ final class PickAnvilTests {
         AwakenTests.register("pick_head", 40, PickAnvilTests::head);
         AwakenTests.register("pick_cancel_and_break", 40, PickAnvilTests::cancelAndBreak);
         AwakenTests.register("pick_gates", 40, PickAnvilTests::gates);
+        AwakenTests.register("pick_kept_on_death", 40, PickAnvilTests::keptOnDeath);
+        AwakenTests.register("pick_goals", 40, PickAnvilTests::goals);
+        AwakenTests.register("pick_sounds", 20, PickAnvilTests::sounds);
     }
 
     // ---- the bench -------------------------------------------------------------------------------------------------------
@@ -485,6 +488,74 @@ final class PickAnvilTests {
         act(p, pos, AnvilPayloads.DRAW, 0, 0F, 0F);
         h.assertTrue(p.getMainHandItem().is(ForgedPicks.get(PickForm.DELVER, 0)), "and it's a pick");
         h.assertTrue(Sources.declared().containsKey("delver_old_head"), "the ledger knows where the head comes from");
+        h.succeed();
+    }
+
+    /** A pick is yours for a career: it isn't dropped, it's held on the player (a restart can't lose it), and it's back on getting up. */
+    private static void keptOnDeath(GameTestHelper h) {
+        ServerPlayer p = smith(h, BlockPos.ZERO, "pick_dead", 30);
+        ItemStack pick = new ItemStack(ForgedPicks.get(PickForm.MATTOCK, 1));
+        pick.setDamageValue(7);
+        p.getInventory().add(pick);
+        p.getInventory().add(new ItemStack(DelveForged.OLD_HEAD.get()));
+        p.getInventory().add(new ItemStack(Items.STONE, 3));
+        List<net.minecraft.world.entity.item.ItemEntity> drops = new java.util.ArrayList<>();
+        for (ItemStack s : p.getInventory()) if (!s.isEmpty()) drops.add(new net.minecraft.world.entity.item.ItemEntity(h.getLevel(), p.getX(), p.getY(), p.getZ(), s.copy()));
+        var event = new net.neoforged.neoforge.event.entity.living.LivingDropsEvent(p, h.getLevel().damageSources().generic(), drops, false);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event);
+        h.assertTrue(event.getDrops().size() == 1 && event.getDrops().iterator().next().getItem().is(Items.STONE), "only the stone falls");
+        var saved = p.getData(DelveForged.KEPT);
+        h.assertTrue(saved.items().size() == 2, "held on the player");
+        var out = net.minecraft.world.level.storage.TagValueOutput.createWithContext(net.minecraft.util.ProblemReporter.DISCARDING, h.getLevel().registryAccess());
+        out.store("v", DelveForged.KeptPicks.CODEC, saved);
+        p.getInventory().clearContent();
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerRespawnEvent(p, false));
+        h.assertTrue(p.getInventory().countItem(ForgedPicks.get(PickForm.MATTOCK, 1)) == 1 && p.getInventory().countItem(DelveForged.OLD_HEAD.get()) == 1, "back in the pack on getting up");
+        for (ItemStack s : p.getInventory()) if (s.is(ForgedPicks.get(PickForm.MATTOCK, 1))) h.assertTrue(s.getDamageValue() == 7, "with its wear");
+        h.assertTrue(p.getData(DelveForged.KEPT).items().isEmpty(), "and only once");
+        h.succeed();
+    }
+
+    /** Tasks follow what you carry: the head, the first pick, an old one to remake, a rank to raise to, a blunt edge, a deed to work in. */
+    private static void goals(GameTestHelper h) {
+        ServerPlayer p = smith(h, BlockPos.ZERO, "pick_goals", 30);
+        java.util.function.Function<String, Boolean> shown = key -> PickGoals.steps(p).stream().anyMatch(s -> s.key().equals(key));
+        h.assertTrue(shown.apply(PickGoals.HEAD) && !shown.apply(PickGoals.FIRST), "first the head");
+        p.getInventory().add(new ItemStack(DelveForged.OLD_HEAD.get()));
+        h.assertTrue(shown.apply(PickGoals.FIRST) && !shown.apply(PickGoals.HEAD), "with it, the first pick");
+        p.getInventory().clearContent();
+        p.getInventory().add(new ItemStack(dev.awaken.delve.DelveContent.WAKING_PICK.get()));
+        h.assertTrue(shown.apply(PickGoals.REMAKE) && !shown.apply(PickGoals.FIRST), "an old pick is remade instead");
+        p.getInventory().clearContent();
+        p.getInventory().add(new ItemStack(ForgedPicks.get(PickForm.DELVER, 0)));
+        h.assertTrue(shown.apply(PickGoals.RAISE), "behind your level, raise it");
+        h.assertTrue(!shown.apply(PickGoals.DRESS), "not blunt yet");
+        for (ItemStack s : p.getInventory()) if (ForgedPicks.is(s)) s.setDamageValue(s.getMaxDamage() - 1);
+        h.assertTrue(shown.apply(PickGoals.DRESS), "blunt, dress it");
+        p.getInventory().clearContent();
+        p.getInventory().add(new ItemStack(ForgedPicks.get(PickForm.DELVER, dev.awaken.arms.ArmsArmoury.bestTier(p))));
+        h.assertTrue(!shown.apply(PickGoals.RAISE), "at your rank there's nothing to raise");
+        h.succeed();
+    }
+
+    /** Every event the picks play has an entry in the merged sounds.json, and every file it names is in the jar. */
+    private static void sounds(GameTestHelper h) {
+        try (var in = Awaken.class.getResourceAsStream("/assets/awaken/sounds.json")) {
+            h.assertTrue(in != null, "sounds.json");
+            var root = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+            List<String> events = new java.util.ArrayList<>(List.of("pick.sounding_tap", "pick.sounding_hollow", "pick.mattock_toss", "pick.mattock_catch", "pick.strike_earth", "pick.strike_wood", "pick.strike_blunt",
+                    "anvil.eye", "anvil.tip", "anvil.hang", "anvil.tend", "anvil.thread", "anvil.pour", "anvil.colours"));
+            for (PickForm f : PickForm.values()) events.add("pick.strike_" + f.id);
+            for (String e : events) {
+                h.assertTrue(root.has(e), "no sound entry for " + e);
+                for (var v : root.getAsJsonObject(e).getAsJsonArray("sounds")) {
+                    String name = v.getAsJsonObject().get("name").getAsString().substring("awaken:".length());
+                    h.assertTrue(Awaken.class.getResource("/assets/awaken/sounds/" + name + ".ogg") != null, "missing file for " + name);
+                }
+            }
+        } catch (java.io.IOException e) {
+            h.fail(e.toString());
+        }
         h.succeed();
     }
 

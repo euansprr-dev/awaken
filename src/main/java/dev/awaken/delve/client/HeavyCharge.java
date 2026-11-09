@@ -76,7 +76,7 @@ final class HeavyCharge {
         charging = false;
         stopStrain(mc);
         if (held >= HeavyStrikes.MIN && wants(p)) {
-            boolean glint = Math.abs(held - HeavyStrikes.GLINT) <= 2;
+            boolean glint = Math.abs(held - HeavyStrikes.glintOf(mc.player.getMainHandItem())) <= 2;
             ClientPacketDistributor.sendToServer(new DelveNet.HeavyStrike(held, glint));
             p.swing(InteractionHand.MAIN_HAND, p.getMainHandItem().getAttackAnimation(), false);
             CombatFeedback.kick(0F, 2.4F, 0.8F, 8);
@@ -99,7 +99,7 @@ final class HeavyCharge {
             DelveParticles.spawn(level, DelveContent.GRIT.get(), 0x8A8378, 0.8F, head.x, head.y, head.z,
                     (r.nextDouble() - 0.5) * 0.02, -0.02, (r.nextDouble() - 0.5) * 0.02);
         }
-        if (t == HeavyStrikes.GLINT) {
+        if (t == HeavyStrikes.glintOf(p.getMainHandItem())) {
             level.playLocalSound(p.getX(), p.getEyeY(), p.getZ(), DelveContent.HEAVY_GLINT.get(), SoundSource.PLAYERS, 0.8F, 1.0F, false);
             for (int i = 0; i < 6; i++) {
                 DelveParticles.spawn(level, DelveContent.GLINT.get(), 0xFFE3A0, 0.35F, head.x + (r.nextDouble() - 0.5) * 0.12,

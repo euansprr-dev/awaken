@@ -1,0 +1,174 @@
+# Forged picks (SPEC §49): the 24 in hand, the dig in first and third person, the Mattock turning for rock and earth, the
+# anvil's Picks side and a Sovereign Sounder forged in full by autoplay (every stage a pick has).
+world picks1 creative 4911
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+cmd gamemode creative
+cmd awaken admin levels 100
+cmd awaken admin rankup
+cmd awaken admin rankup
+cmd awaken admin rankup
+cmd awaken admin rankup
+cmd awaken admin rankup
+wait 40
+screen close
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -8 200 -6 8 200 9 minecraft:polished_deepslate
+cmd fill -8 201 9 8 205 9 minecraft:stone
+cmd fill -8 201 -6 -8 205 9 minecraft:spruce_planks
+cmd fill 8 201 -6 8 205 9 minecraft:spruce_planks
+cmd fill -8 206 -6 8 206 9 minecraft:dark_oak_planks
+cmd setblock -3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 3 205 4 minecraft:lantern[hanging=true]
+cmd setblock 0 205 7 minecraft:lantern[hanging=true]
+# a wall of rock beside a wall of earth, and one of logs: the Mattock's three surfaces at one look's distance
+cmd fill 2 201 8 7 204 8 minecraft:dirt
+cmd fill -7 201 8 -2 204 8 minecraft:stone
+cmd fill 2 201 6 2 204 7 minecraft:oak_log
+wait 20
+hud on
+camera first
+# the four forms, each at its rank, in hand
+cmd tp @s -4.5 201 6.5 0 8
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_delver
+wait 30
+shot held_delver
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_breaker
+wait 12
+shot held_breaker
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_mattock
+wait 12
+shot held_mattock
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_sounder
+wait 12
+shot held_sounder
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_pick_delver
+wait 12
+shot held_e_delver
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 12
+shot held_c_mattock
+# the dig, first person, then third
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_pick_delver
+look 0 12
+wait 10
+cmd awaken delve demo strike
+wait 3
+shotnow dig_1
+wait 2
+shotnow dig_2
+wait 2
+shotnow dig_3
+wait 2
+shotnow dig_4
+wait 12
+camera back
+cmd awaken delve demo strike
+wait 4
+shotnow dig_3p_1
+wait 3
+shotnow dig_3p_2
+wait 12
+camera first
+# the Mattock: rock, then earth, turning between, and timber
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_pick_mattock
+cmd tp @s 0.2 201 6.5 -28 8
+wait 30
+shot mattock_rock
+cmd tp @s 0.2 201 6.5 28 8
+wait 4
+shotnow mattock_turn_early
+wait 2
+shotnow mattock_turn_mid
+wait 2
+shotnow mattock_turn_late
+wait 8
+shot mattock_earth
+cmd tp @s 0.2 201 6.5 -28 8
+wait 16
+shot mattock_rock_again
+camera back
+wait 8
+shot mattock_3p_rock
+cmd tp @s 0.2 201 6.5 28 8
+wait 16
+shot mattock_3p_earth
+camera first
+# the smithy
+cmd fill -5 201 -6 7 204 7 minecraft:air
+cmd setblock 0 201 4 awaken:war_anvil[facing=north,build=3]
+cmd setblock -2 201 3 awaken:forge[facing=east]
+cmd setblock 2 201 4 minecraft:grindstone[face=floor,facing=north]
+wait 20
+cmd tp @s 0.5 201 3.25 0 35
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_delver
+wait 20
+# the window for a pick in hand, then the Armoury's Picks side
+use
+wait 30
+shot held_window
+screen close
+wait 10
+cmd item replace entity @s weapon.mainhand with minecraft:air
+wait 10
+use
+wait 30
+shot armoury_weapons
+screen close
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_pick_mattock
+wait 10
+use
+wait 20
+screen close
+wait 5
+# a whole forging, every stage a pick has
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd awaken arms anvil autoplay true
+wait 10
+cmd awaken arms anvil forge sovereign_pick_sounder
+# a few shots across it: the autoplay's timing moves with the stages, so these are spread, not aimed
+wait 90
+shotnow forge_01
+wait 80
+shotnow forge_02
+wait 80
+shotnow forge_03
+wait 80
+shotnow forge_04
+wait 80
+shotnow forge_05
+wait 80
+shotnow forge_06
+wait 80
+shotnow forge_07
+wait 80
+shotnow forge_08
+wait 80
+shotnow forge_09
+wait 80
+shotnow forge_10
+wait 80
+shotnow forge_11
+wait 80
+shotnow forge_12
+wait 80
+shotnow forge_card
+screen close
+wait 20
+shot after_forge
+quit

@@ -179,9 +179,9 @@ public final class PickAnvil {
     }
 
     /** What an old tool is remade as: its form and rank; null when it isn't one. */
-    private record Remade(PickForm form, int tier) {}
+    record Remade(PickForm form, int tier) {}
 
-    private static @Nullable Remade old(ItemStack s) {
+    static @Nullable Remade old(ItemStack s) {
         int v = PickVerses.verse(s);
         if (v >= 0) return new Remade(PickForm.DELVER, tierOfVerse(v));
         Identifier key = BuiltInRegistries.ITEM.getKey(s.getItem());
@@ -294,7 +294,7 @@ public final class PickAnvil {
     }
 
     /** One of its rank's first part: a little metal, worked into the edge. */
-    private static List<NeedRow> dressNeeds(ServerPlayer p, ForgedPickItem i) {
+    static List<NeedRow> dressNeeds(ServerPlayer p, ForgedPickItem i) {
         List<AnvilCosts.Part> parts = AnvilCosts.of(ForgedPicks.id(i.form, i.tier));
         if (parts == null || parts.isEmpty()) return List.of();
         AnvilCosts.Part first = parts.getFirst();

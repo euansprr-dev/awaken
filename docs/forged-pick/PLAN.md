@@ -209,3 +209,7 @@ On the page, numbered, yes or no.
 
 ## Follow-ups outside this plan
 "Forge the blade" sits directly above "Forge it" on the anvil door and probably explains the Wildhide Fang report: see the shared note `forged-pick-fang-button.md`.
+
+## Added when Euan approved the build (2026-11-09)
+- **The Mattock turns in the hand** (his words): a toss and half-turn about the haft, the pick end to rock, the adze to earth and wood. SPEC §49.8.
+- **Sounds on par with vanilla**: the page's WebAudio beeps only showed the beat. Built from recorded blows, measured against vanilla's own tool sounds, heard on [the listening page](https://claude.ai/artifact/B7BEtLnUi91vgRbHNFR6wD). SPEC §49.10.

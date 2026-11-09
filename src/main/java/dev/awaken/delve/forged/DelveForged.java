@@ -21,6 +21,20 @@ public final class DelveForged {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PickForged>> PICK_FORGED = COMPONENTS.registerComponentType("pick_forged",
             b -> b.persistent(PickForged.CODEC).networkSynchronized(PickForged.STREAM_CODEC));
 
+    static final DeferredRegister<net.neoforged.neoforge.attachment.AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.ATTACHMENT_TYPES, Awaken.MODID);
+
+    /** Picks held for their owner between dying and getting up: on the player, so a restart in between loses nothing. */
+    public record KeptPicks(int schemaVersion, java.util.List<net.minecraft.world.item.ItemStack> items) {
+        public static final int SCHEMA = 1;
+        public static final com.mojang.serialization.Codec<KeptPicks> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.create(i -> i.group(
+                com.mojang.serialization.Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(KeptPicks::schemaVersion),
+                net.minecraft.world.item.ItemStack.CODEC.listOf().optionalFieldOf("items", java.util.List.of()).forGetter(KeptPicks::items)).apply(i, KeptPicks::new));
+        public static final KeptPicks NONE = new KeptPicks(SCHEMA, java.util.List.of());
+    }
+
+    public static final java.util.function.Supplier<net.neoforged.neoforge.attachment.AttachmentType<KeptPicks>> KEPT = ATTACHMENTS.register("kept_picks",
+            () -> net.neoforged.neoforge.attachment.AttachmentType.builder(() -> KeptPicks.NONE).serialize(KeptPicks.CODEC.fieldOf("v")).copyOnDeath().build());
+
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String id) {
@@ -54,5 +68,6 @@ public final class DelveForged {
         ITEMS.register(modBus);
         COMPONENTS.register(modBus);
         SOUNDS.register(modBus);
+        ATTACHMENTS.register(modBus);
     }
 }
