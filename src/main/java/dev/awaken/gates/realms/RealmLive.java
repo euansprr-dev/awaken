@@ -85,6 +85,7 @@ public final class RealmLive {
             if (t % 600 < 10) Signal.toast(p, Component.literal("The wind won't let you go any further this way."));
         }
         wake(server, level, g, plan, ref, lx, lz);
+        RealmLife.tick(level, p, g, plan, ref, lx, lz, t);
         if (((t + p.getId()) / 10) % 2 == 0) Hud.send(p);
     }
 

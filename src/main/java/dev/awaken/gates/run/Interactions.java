@@ -112,6 +112,7 @@ public final class Interactions {
     }
 
     public static final String WAYSTONE = ACTION + ":waystone:";
+    public static final String WAX_TRADE = ACTION + ":wax_trade";
 
     public static void useShrine(ServerPlayer p, BlockPos pos) {
         RunState run = Runs.run(p);
@@ -238,6 +239,10 @@ public final class Interactions {
         if (action.startsWith(WAYSTONE)) {
             int to = Integer.parseInt(action.substring(WAYSTONE.length()));
             queue(p, () -> dev.awaken.gates.realms.RealmLive.travel(p, g, to));
+            return;
+        }
+        if (action.equals(WAX_TRADE)) {
+            queue(p, () -> dev.awaken.gates.realms.RealmLife.trade(p, g));
             return;
         }
         switch (action) {

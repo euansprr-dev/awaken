@@ -230,7 +230,12 @@ public final class Crossing {
             float scale = Mth.clamp(w / 230F, 1.6F, 3.6F);
 
             float kickerIn = Mth.clamp((t - 620) / 420F, 0, 1);
-            if (!kicker.isEmpty() && kickerIn > 0) spaced(g, kicker, cx, y - 15, 2, argb(kickerIn * 0.92F * words, GOLD));
+            // a soft shade behind the small line, so it reads on the brightest paintings as well as the darkest
+            if (!kicker.isEmpty() && kickerIn > 0) {
+                g.fillGradient(0, y - 44, w, y - 8, 0, (int) (0x70 * kickerIn * words) << 24);
+                g.fill(0, y - 8, w, y + (int) (9 * scale) + 4, (int) (0x70 * kickerIn * words) << 24);
+                spaced(g, kicker, cx, y - 15, 2, argb(kickerIn * words, PALE));
+            }
 
             // the name surfaces letter by letter from its middle
             float surf = (t - 780) / 900F;

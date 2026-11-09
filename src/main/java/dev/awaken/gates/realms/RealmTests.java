@@ -129,6 +129,140 @@ public final class RealmTests {
             if (land.change("heart_weeps").isEmpty() || land.change("heart_winds").isEmpty() || land.change("heart_still").size() < land.change("heart_weeps").size()) h.fail("the hall has nothing to change");
             h.succeed();
         });
+        // Arriving: on something that holds you, with room to stand, out of the honey, and nothing waiting for you on the doorstep.
+        AwakenTests.register("realm_mouth_safe", 400, h -> {
+            for (long seed = 1; seed <= 6; seed++) {
+                Land land = amber(seed);
+                Land.Site m = land.mouth();
+                if (!solid(at(land, m.x(), m.y() - 1, m.z()))) h.fail("seed " + seed + ": nothing under the Mouth: " + idOf(at(land, m.x(), m.y() - 1, m.z())));
+                for (int y = 0; y < 2; y++) if (solid(at(land, m.x(), m.y() + y, m.z()))) h.fail("seed " + seed + ": no room to stand at the Mouth");
+                for (Land.Site s : land.sites()) {
+                    double d = Math.hypot(s.x() - m.x(), s.z() - m.z());
+                    if (s.kind() == Land.SiteKind.DEN && d < 40) h.fail("seed " + seed + ": a den " + (int) d + " from the Mouth");
+                    if (s.kind() == Land.SiteKind.WARDEN && d < 56) h.fail("seed " + seed + ": a Warden " + (int) d + " from the Mouth");
+                }
+                Land.Site home = land.site(Land.SiteKind.PORTAL);
+                for (int y = 0; y < 3; y++) if (solid(at(land, home.x(), home.y() + y, home.z()))) h.fail("seed " + seed + ": the arch home is blocked at " + (home.y() + y));
+                if (!solid(at(land, home.x(), home.y() - 1, home.z()))) h.fail("seed " + seed + ": no floor under the arch home");
+            }
+            h.succeed();
+        });
+        // The land is whole: every column inside the valley's edge has ground under it, and it's above the bottom of the world.
+        AwakenTests.register("realm_no_holes", 600, h -> {
+            for (long seed = 1; seed <= 3; seed++) {
+                Land land = amber(seed);
+                for (int x = -320; x <= 560; x += 40) for (int z = -320; z <= 320; z += 40) {
+                    if (land.edge(x, z) > 0) continue;
+                    int g = land.ground(x, z);
+                    if (g < 40) h.fail("seed " + seed + ": ground " + g + " at " + x + "," + z);
+                    var v = new dev.awaken.gates.realms.kit.V(Math.floorDiv(x, 16) * 16, Math.floorDiv(z, 16) * 16);
+                    land.paint(v);
+                    int top = v.groundBelow(x, 340, z);
+                    if (top < g - 2) h.fail("seed " + seed + ": a hole at " + x + "," + z + ": top " + top + " for ground " + g);
+                }
+            }
+            h.succeed();
+        });
+        // The way a place feels from the ground: long views, without a wall in your face, and real height.
+        AwakenTests.register("realm_amber_sight", 1200, h -> {
+            Land land = amber(1);
+            Map<Long, int[]> columns = new java.util.HashMap<>();
+            java.util.function.BiFunction<Integer, Integer, Integer> top = (x, z) -> {
+                int cx = Math.floorDiv(x, 16), cz = Math.floorDiv(z, 16);
+                int[] c = columns.computeIfAbsent(net.minecraft.world.level.ChunkPos.pack(cx, cz), k -> {
+                    var v = new dev.awaken.gates.realms.kit.V(cx * 16, cz * 16);
+                    land.paint(v);
+                    int[] out = new int[256];
+                    for (int a = 0; a < 16; a++) for (int b = 0; b < 16; b++) out[a * 16 + b] = v.groundBelow(cx * 16 + a, 340, cz * 16 + b);
+                    return out;
+                });
+                return c[Math.floorMod(x, 16) * 16 + Math.floorMod(z, 16)];
+            };
+            java.util.List<Integer> sights = new java.util.ArrayList<>(), heights = new java.util.ArrayList<>();
+            var r = new java.util.Random(7);
+            // from where you actually walk: the road through the valley, and up to thirty blocks either side of it
+            List<double[]> way = land.ways();
+            for (int n = 0; n < 48; n++) {
+                double[] w = way.get(r.nextInt(way.size()));
+                double along = r.nextDouble();
+                int x = (int) (w[0] + (w[2] - w[0]) * along - 30 + r.nextInt(61)), z = (int) (w[1] + (w[3] - w[1]) * along - 30 + r.nextInt(61));
+                if (land.edge(x, z) > -10 || land.inHeart(x, top.apply(x, z), z)) continue;
+                int g = top.apply(x, z);
+                heights.add(g);
+                for (int k = 0; k < 16; k++) {
+                    double a = k * Math.PI / 8, eye = g + 2.6, d = 2;
+                    for (; d < 320; d += 3) {
+                        int px = (int) Math.floor(x + Math.cos(a) * d), pz = (int) Math.floor(z + Math.sin(a) * d);
+                        if (top.apply(px, pz) + 1 > eye) break;
+                    }
+                    sights.add((int) d);
+                }
+            }
+            java.util.Collections.sort(sights);
+            java.util.Collections.sort(heights);
+            int median = sights.get(sights.size() / 2), p90 = sights.get(sights.size() * 9 / 10), range = heights.get(heights.size() - 1 - heights.size() / 20) - heights.get(heights.size() / 20);
+            long past64 = sights.stream().filter(d -> d > 64).count();
+            dev.awaken.Awaken.LOG.info("[realms] sight: median {}, p90 {}, past 64 {}%, ground range {}", median, p90, past64 * 100 / sights.size(), range);
+            if (median < 30) h.fail("median sight " + median + " under 30");
+            if (p90 < 150) h.fail("90th percentile sight " + p90 + " under 150");
+            if (past64 * 100 / sights.size() < 30) h.fail("only " + past64 * 100 / sights.size() + "% of views reach past 64");
+            h.succeed();
+        });
+        // With the switch off, a gate that could have been this Realm is floors as it always was.
+        AwakenTests.register("realm_flag_off_rolls_floors", 20, h -> {
+            var server = h.getLevel().getServer();
+            boolean was = dev.awaken.core.AwakenConfig.GATE_REALMS.get();
+            try {
+                dev.awaken.core.AwakenConfig.GATE_REALMS.set(false);
+                var plan = dev.awaken.gates.GateLiveTests.plan(4242, Theme.HIVE, dev.awaken.gates.content.Layout.LABYRINTH, dev.awaken.gates.content.Twist.NONE, 0);
+                if (Realms.choose(server, plan, false, Set.of()).isPresent()) h.fail("the switch is off and a Realm was rolled");
+            } finally {
+                dev.awaken.core.AwakenConfig.GATE_REALMS.set(was);
+            }
+            h.succeed();
+        });
+        // The valley's herd, people and flies: each exists, is never rolled by a biome, and is a peaceful creature with its own voice.
+        AwakenTests.register("realm_life_creatures", 40, h -> {
+            var level = h.getLevel();
+            var at = h.absolutePos(new net.minecraft.core.BlockPos(2, 2, 2));
+            for (String id : List.of("pollen_grazer", "wax_folk", "amberfly")) {
+                var def = dev.awaken.mobs.def.Bestiary.get(id);
+                if (def == null || !def.placed) h.fail(id + " should exist and be spawned only by its Realm");
+                if (dev.awaken.mobs.def.Bestiary.fauna().contains(def)) h.fail(id + " is in the world's spawn lists");
+                if (dev.awaken.mobs.MobSounds.fauna(id, "ambient") == null) h.fail(id + " has no voice");
+                var e = dev.awaken.core.api.MobHooks.spawnCreature(level, id, at, 0, "test");
+                if (!(e instanceof dev.awaken.mobs.entity.FaunaMob f) || f.faunaRole() != dev.awaken.mobs.def.FaunaRole.AMBIENT) h.fail(id + " didn't spawn as a peaceful creature");
+                else f.discard();
+            }
+            h.succeed();
+        });
+        // One of a party leaves: the Realm stands for whoever's still in it.
+        AwakenTests.registerIsolated("realm_party_split", 200, h -> {
+            var level = h.getLevel();
+            var server = level.getServer();
+            Blueprints.replace(Map.of("awaken:amber_reach", AMBER));
+            var g = dev.awaken.gates.GateLiveTests.standUp(h, dev.awaken.gates.GateLiveTests.plan(4545, Theme.HIVE, dev.awaken.gates.content.Layout.LABYRINTH, dev.awaken.gates.content.Twist.NONE, 0));
+            var a = dev.awaken.gates.GateLiveTests.player(h);
+            var b = dev.awaken.gates.GateLiveTests.player(h);
+            try {
+                dev.awaken.gates.GateLiveTests.useLevel(level); // the test server has no gate dimensions of its own
+                Realms.attach(server, g, "awaken:amber_reach");
+                g.interiorReady = true; // a Realm's land is drawn as you walk it; this test doesn't walk
+                h.assertTrue(dev.awaken.gates.run.Runs.enter(a, g), "the first went in (" + g.state + ", ready " + g.interiorReady + ")");
+                h.assertTrue(dev.awaken.gates.run.Runs.enter(b, g), "the second went in (" + g.state + ", ready " + g.interiorReady + ", already in " + dev.awaken.gates.run.Runs.run(b).active() + ")");
+                dev.awaken.gates.run.Runs.extract(a, true);
+                h.assertFalse(dev.awaken.gates.run.Runs.run(a).active(), "the one who left is out");
+                h.assertTrue(dev.awaken.gates.run.Runs.run(b).active() && g.inside.contains(b.getUUID()), "the other is still in");
+                h.assertTrue(g.state != dev.awaken.gates.GateState.RELEASED && Realms.plan(g) != null, "the Realm stands");
+            } finally {
+                if (dev.awaken.gates.run.Runs.run(b).active()) dev.awaken.gates.Gates.forceExtract(b, false);
+                dev.awaken.gates.GateLiveTests.teardown(level, a, g);
+                dev.awaken.gates.GateLiveTests.useLevel(null);
+                server.getPlayerList().remove(a);
+                server.getPlayerList().remove(b);
+            }
+            h.succeed();
+        });
         AwakenTests.register("realm_seeds_differ", 200, h -> {
             Set<Integer> seen = new HashSet<>();
             for (long seed = 1; seed <= 5; seed++) {

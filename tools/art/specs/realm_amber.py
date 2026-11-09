@@ -373,28 +373,35 @@ def tex_leaf(P):
 
 
 def stalks(P, seed, tops=True, n=7, rows=(1, 15), stalk_lo=1):
-    """Fine stalks on clear, one pixel wide, each with its own lean and a narrow bearded ear; never a bar of colour."""
+    """Fine stalks standing well apart, one pixel wide, each with its own lean and a narrow bearded ear. Never a bar of colour: seen from inside the
+    crop a pixel is as wide as your hand, so two stems side by side or one in stripes reads as a plank."""
     rp = P.ramp("awheat")
     rng = P.rng_for("wheat", seed)
     c = P.Canvas(16, 16)
-    xs = sorted(rng.sample(range(1, 15), min(n + 2, 13)))
+    x, xs = 1 + rng.randrange(2), []
+    while x < 15:
+        xs.append(x)
+        x += 3 + rng.randrange(2)
     for x0 in xs:
         top = rng.randrange(rows[0], rows[0] + 6) if tops else rng.randrange(0, 3)
-        lean = rng.choice((-1, 1)) * rng.choice((0, 1))
-        for y in range(top + (4 if tops else 0), 16):
-            x = x0 + (lean if y < 9 else 0)
-            if 0 <= x < 16:
-                c.set(x, y, rp[stalk_lo + (0 if y > 11 else 1 + (y & 1) % 2)])
+        lean = rng.choice((-1, 0, 1))
+        tone = rng.randrange(2)
+        ear = 5 if tops else 0
+        for y in range(top + ear, 16):
+            sx = x0 + (lean if y < top + ear + 3 else 0)
+            if 0 <= sx < 16:
+                c.set(sx, y, rp[stalk_lo + tone + (0 if y > 12 else 1)])
         if tops:
-            x = x0 + lean
-            for k in range(5):
+            xe = x0 + lean
+            for k in range(ear):
                 y = top + k
-                if 0 <= x < 16:
-                    c.set(x, y, rp[5 if k % 2 == 0 else 4])
-                # the grains stand off the ear alternately, a pixel at a time
-                sx = x + (1 if k % 2 == 0 else -1)
-                if k < 4 and 0 <= sx < 16:
-                    c.set(sx, y, rp[3])
+                if 0 <= xe < 16:
+                    c.set(xe, y, rp[5 - tone] if k < ear - 1 else rp[3 + tone])
+                # one grain stands off the ear every other row, and only on alternating sides
+                if k in (1, 3):
+                    gx = xe + (1 if (k + x0) % 4 == 1 else -1)
+                    if 0 <= gx < 16:
+                        c.set(gx, y, rp[3 + tone])
     return c
 
 

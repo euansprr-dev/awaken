@@ -457,6 +457,11 @@ public final class GateLiveTests {
         GateService.testLevel = level;
     }
 
+    /** Sends every gate's floors to this level, or back to the real dimensions on null (a test server has none of its own). */
+    public static void useLevel(@org.jspecify.annotations.Nullable ServerLevel level) {
+        GateService.testLevel = level;
+    }
+
     public static ServerPlayer player(GameTestHelper h) {
         ServerPlayer p = h.makeMockServerPlayerInLevel();
         Progression.awaken(p);

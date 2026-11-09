@@ -6498,6 +6498,27 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   bits every tick (`FaunaMob.tick`), so a tour's still flier shows itself aloft (the first fliers tour's owls hung
   upright in the air, perched).
 
+- **Pollen Grazer** (`pollen_grazer`, Amber Reach, SPEC 50.7; six two-bone legs, a bee as much as a yak): ripple-alternate,
+  duty 0.74/0.52, steps 2.6/4.2 px, stride 0.8/1.2 blocks, reach 0.55, a heavy body's bob 0.45 and roll 0.035, the front
+  leading (`lag` -0.18), head level 0.45, twist 0.18, shift 0.8, nod 0.05, land 1.3. Knees stand out and up like a beetle's
+  (thigh 7 px at 55°, running a pixel past the knee to hide the joint). The rig's bones carry the life layer's names
+  (`neck`, `head`, `jaw_*`, `antenna_*`, `wing*`, `abdomen`, `tail`, `crest`, `mane_*`, `shag_*`), so the look, breath and
+  springs reach it. Its folded wings grow from a chitin knuckle inside the ruff, at any angle a clip or a spring can reach,
+  and lie within the body's width. It breathes by pumping its abdomen, chews off and on, feels the air with one antenna at a
+  time, and its old wings shiver now and then, a side at a time; when it runs they come open and buzz, no use at all.
+  Grazing, its neck and head go down to the moss, the mandibles scissor and the antennae feel the ground. A blow clenches
+  the abdomen and flares the wings; it dies on buckling knees, rolls on its side with a bounce, the legs curling in one by
+  one and twitching afterward, and the last thing it moves is the wings.
+- **Wax-folk** (`wax_folk`, no legs): the pool and skirt are a `base` of their own, flat on the ground whatever the body
+  above does. The body rocks over them in a tired waddle and each step squashes the skirt and pushes the pool toward the
+  side it leans; chest, head and hands take the rock a moment later and the flame streams back. A real sigh in the idle,
+  hands rubbed together, a look at one hand as if it were shorter today, beads of wax that swell and let go. Drips, arms
+  and the wick and flame swing on the life layer's springs (the flame carries on when the body stops). A blow all but puts
+  the flame out and it comes back too far; death is the flame going out, then a slow slump into a puddle.
+- **Amberfly** (`amberfly`): flies always (`fly`, always, glide 0, four wing bones), hanging in a slow figure of eight
+  with the bead pulsing and the head scanning; going somewhere it noses down, the bead drags on its waist and the six
+  thread legs trail on springs. A blow spins it round; it dies on its back, a small bounce, the legs curling in.
+
 ## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
 
 Euan: "right now for basically everything there is no first-person animation". One owner for everything drawn in first
@@ -19773,10 +19794,38 @@ to the Lord, never announced (decision 12).
 Pay (§50.3): a Realm's pool is what the same gate's floors would pay. 60% is split kill by kill (a den about five shares, a Warden
 four); of the other 40% each Warden banks a sixth and the Lord pays what's left, plus first clear and the Lord's payout as usual.
 
+**Waystones** replace Rest Shrines in a Realm (decision 13). Laying a hand on one marks it found, banks your Satchel and XP there and then, and
+offers the next one you've reached, so you can walk the valley and come back. `RealmLive.useWaystone`, `RealmLive.travel`, `Interactions.WAYSTONE`.
+
+**The valley's edge** is a wind, not a wall: `Land.edge(x,z)` past 0 pushes you back toward the middle, harder the further you go.
+
+**Finds** are single caches set where you have to look: 24 around the valley and one on top of each great rock, each rock with a column of rising air
+beside it (`UpdraftBlock`, `SiteKind.UPDRAFT`; crouch to sink). The Law of Amber Reach is `updrafts`: one physical rule, per decision 14.
+
+**The honey river** is its own block, `realm_honey`: light 9, 7/16 high to walk in, slows you to 62% (`HoneyFlowBlock`), animated. It replaces water
+in this land, so no block of it can ever flow.
+
+**The heart of a Realm** (`Land.inHeart`, `Land.change(moment)`, `RealmState.doorShut, heartStage`): the Lord sleeps until someone comes in. The door
+is wax as thick as a wall until the last Warden falls (`heart_open`); it shuts behind whoever's fighting once nobody's lingering at it (`heart_shut`);
+the room answers the fight at two thirds and one third of the Lord's life (`heart_weeps`, `heart_winds`), and stills when it dies (`heart_still`).
+Nobody left inside: the Lord goes, the hall resets, the door opens again. Moments are block edits sent with `Block.UPDATE_CLIENTS`, computed by the
+land so a restart redraws the same thing.
+
+**Life** (`RealmLife`, spawned from a blueprint's `life` and `folk`): kept up by density around each player, once every two seconds, always at least
+28 blocks from anyone. A herd of 3-5 where fewer than 5 are within 64; 6 flies within 40; up to 9 folk round a village once a player is within 130. All
+ambient and `placed`, so no biome ever rolls them. The folk (`wax_folk`) say one plain line about their lives when you put a hand on them, offer honey
+while they have some to spare (three bottles for two emeralds, six sales per Realm), and can be overheard (a toast, at most one every 40 s). They never
+fight beside you, set tasks or give directions. Grazers use the rig's `graze` clip through `WildPose.S_GRAZE`.
+
+**Growing things stand clear** of Waystones, Finds, vents and the arch (`clearings`), and tall wheat grows only in the heart of a patch: you can always
+see over the crop.
+
 ### 50.8 The Build Kit
 
 Seven passes on every land, in order: bones (ground and big masses), courses (no face one flat plane), pieces (each anchored, placed
 through the door), shade (painted darkness only under a real two-deep ledge), weathering (drips, crumbs), growth (only on ground that's
 really there), light. `N` holds the noise and hex helpers; `Piece` knows its footprint and draws into whichever chunk it touches. Tests:
 `realm_cells`, `realm_blueprints_parse`, `realm_bag_empty`, `realm_float_check_catches`, `realm_amber_never_floats`,
-`realm_amber_plan_checks`, `realm_amber_all_reachable`, `realm_seeds_differ`.
+`realm_amber_plan_checks`, `realm_amber_all_reachable`, `realm_amber_sites_open`, `realm_amber_heart`, `realm_seeds_differ`, `realm_mouth_safe`,
+`realm_no_holes`, `realm_amber_sight` (median view 30+, 90th percentile 150+, 30% of views past 64), `realm_flag_off_rolls_floors`, `realm_party_split`,
+`realm_life_creatures`.

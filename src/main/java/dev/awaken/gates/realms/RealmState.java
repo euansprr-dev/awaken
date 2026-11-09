@@ -22,6 +22,8 @@ public final class RealmState {
     public boolean doorShut;
     /** How far the Lord's hall has changed in this fight: 0 not yet, then each stage in turn. */
     public int heartStage;
+    /** How much honey the wax-folk have sold in this Realm: they only have so much to spare. */
+    public int folkTrades;
 
     public static final Codec<RealmState> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.fieldOf("schemaVersion").forGetter(s -> SCHEMA),
@@ -34,8 +36,9 @@ public final class RealmState {
             Codec.BOOL.fieldOf("heart_open").forGetter(s -> s.heartOpen),
             Codec.BOOL.fieldOf("lord_woken").forGetter(s -> s.lordWoken),
             Codec.BOOL.optionalFieldOf("door_shut", false).forGetter(s -> s.doorShut),
-            Codec.INT.optionalFieldOf("heart_stage", 0).forGetter(s -> s.heartStage)
-    ).apply(i, (v, w, d, f, ws, wk, b, h, l, ds, hs) -> {
+            Codec.INT.optionalFieldOf("heart_stage", 0).forGetter(s -> s.heartStage),
+            Codec.INT.optionalFieldOf("folk_trades", 0).forGetter(s -> s.folkTrades)
+    ).apply(i, (v, w, d, f, ws, wk, b, h, l, ds, hs, ft) -> {
         RealmState s = new RealmState();
         s.wardensDown.addAll(w);
         s.densCleared.addAll(d);
@@ -47,6 +50,7 @@ public final class RealmState {
         s.lordWoken = l;
         s.doorShut = ds;
         s.heartStage = hs;
+        s.folkTrades = ft;
         return s;
     }));
 }

@@ -626,6 +626,88 @@
       "fogGlow": 0.35,
       "skyGlow": 0.0,
       "glow": 0.9
+    },
+    "biome:awaken:realm/amber_meadow": {
+      "_name": "Amber Reach: late-harvest gold, a long warm light, cool brown shadows so the land keeps its shape, a low haze over the river, the citadel fading into it",
+      "exposure": 1.0,
+      "contrast": 1.14,
+      "saturation": 1.12,
+      "warmth": 0.16,
+      "shadowTint": [
+        0.42,
+        0.34,
+        0.3
+      ],
+      "highlightTint": [
+        1.0,
+        0.86,
+        0.56
+      ],
+      "splitTone": 0.2,
+      "vignette": 0.2,
+      "bloom": 0.85,
+      "bloomThreshold": 0.68,
+      "skyBloom": 0.25,
+      "shafts": 0.9,
+      "haze": 0.34,
+      "hazeStart": 0.32,
+      "hazeTint": [
+        0.96,
+        0.74,
+        0.38
+      ],
+      "hazeTintMix": 0.5,
+      "hazeDesaturate": 0.1,
+      "sunsetWarmth": 0.6,
+      "sunGlow": 0.85,
+      "light": 0.0,
+      "ao": 0.85,
+      "filmic": 1.0,
+      "mist": 0.35,
+      "mistHeight": 70.0,
+      "fogGlow": 0.6,
+      "skyGlow": 0.0
+    },
+    "biome:awaken:realm/amber_citadel": {
+      "_name": "The Lord's hall: dark wax and old timber, every lit cell glowing through a thick honey air",
+      "exposure": 0.94,
+      "contrast": 1.18,
+      "saturation": 1.16,
+      "warmth": 0.2,
+      "shadowTint": [
+        0.36,
+        0.22,
+        0.14
+      ],
+      "highlightTint": [
+        1.0,
+        0.78,
+        0.36
+      ],
+      "splitTone": 0.22,
+      "vignette": 0.36,
+      "bloom": 1.05,
+      "bloomThreshold": 0.5,
+      "skyBloom": 0.0,
+      "shafts": 0.0,
+      "haze": 0.5,
+      "hazeStart": 0.12,
+      "hazeTint": [
+        0.9,
+        0.56,
+        0.14
+      ],
+      "hazeTintMix": 0.6,
+      "hazeDesaturate": 0.05,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0,
+      "light": 0.0,
+      "ao": 0.85,
+      "filmic": 1.0,
+      "mist": 0.0,
+      "mistHeight": 48.0,
+      "fogGlow": 0.9,
+      "skyGlow": 0.0
     }
   }
 }
