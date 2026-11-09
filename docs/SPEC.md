@@ -7038,14 +7038,20 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
   Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
   and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
-  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. The Longsword
-  is turned an eighth further (roll 135, the weapon audit below), so its blade's face and its guard's spread show.
-  Longsword up and forward to the left (18 left, 52 up); Rapier en garde, the point forward at the target's height
-  (20, 18); Katana two-handed at the middle (10, 36);
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. **Standing as a
+  vanilla sword stands** (Euan 2026-11-09, of the Longsword turned to roll 135 by the weapon audit: "it looks like it's being
+  held the completely wrong way", "a vanilla sword ... actually feels like it has the sharp edge like forwards"): vanilla's
+  `item/handheld` turn stands the blade up, leaned about 20 degrees back toward the eye, edge straight ahead, flat to the
+  side, and because the hand is to the right of the eye the flat still shows. The Longsword, the Shieldblade's sword, the
+  Axe, the Katana and the Greatblade now stand that way (`arms_holds.STANDING`, `FORWARD`; yaw 180 is the lean back), the
+  Glaive keeps its line with its edge square down (roll 90). A swing's blade is solved in view terms, so a new hold moves
+  only the rest and the way to and from it, never where a blow lands (`anim_lab.py bake`).
+  Longsword standing, 72 up (size 0.85); Rapier en garde, the point forward at the target's height
+  (20, 18); Katana two-handed at the right shoulder, standing, 78 up (size 0.9);
   Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
   blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
-  across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
-  the head up (6, 58); Axe the head up, its bit down toward the foe (10, 58); Daggers short, the
+  across the body (58, 28); Greatblade two-handed, standing near the middle, 82 up (size 0.75); Maul two hands low on the haft,
+  the head up (6, 58); Axe standing, its bit ahead, 80 up (size 0.75); Daggers short, the
   point forward (14, 42); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the head forward
   on its chain (18, 38); Shieldblade a sword in the hand and the shield on the other arm ("The Shieldblade"); Precursor Arm forward like a
   drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
@@ -7277,8 +7283,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     shield with a front and a back on the other arm. The item's mesh for inventories and stands is the two together; the hands
     draw them apart (`<id>_blade`, `<id>_shield`): the shield is a copy of the stack in the free off hand with its `ITEM_MODEL` set
     (fp_swings `off.model`). With something in the off hand no shield is drawn. In first person you see the shield's inside; it has
-    its own rest and guard (`off.stance`, `off.guard`), and the sword stands up the view with its flat toward you so its whole
-    length reads. The second strike and the heavy are the shield alone (`hand: off`, form `bash`, no ribbon): gathered out to
+    its own rest and guard (`off.stance`, `off.guard`), and the sword stands as a Longsword does, edge ahead (arms_holds.STANDING). The second strike and the heavy are the shield alone (`hand: off`, form `bash`, no ribbon): gathered out to
     the left with its face turned aside, driven across to the middle of the view and squared to the front, held a moment, because depth
     alone doesn't read and a shove must cover what it hits. The body lunges behind it (0.9, the heavy 1.3), it holds longer on the
     hit (85 ms, heavy 130), and a target is thrown back (`BASH_PUSH` 2.6 where a thrust is 1.15; a Lord isn't moved). The heavy is

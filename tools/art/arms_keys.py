@@ -41,7 +41,7 @@ REVIEW = {"daggers": "gatewrought_daggers", "scythe": "gatewrought_scythe", "twi
 # (fp_swings.json's grip), so a pose's place is the fist's, not the lab's estimate from the mesh
 GRIP = {"daggers": np.array([0.0061, -0.0271, 0.0558]), "scythe": np.array([-0.0624, -0.2206, 0.1148]),
         "twinblades": np.array([-0.04, 0.02, 0.0]),  # the Twin Blades' handGrip: the middle of the shaft
-        "shieldblade": np.array([0.02, 0.0, 0.02])}
+        "shieldblade": np.array([-0.04, -0.10, 0.0])}
 TAN = math.tan(math.radians(L.FOV) / 2)
 ASPECT = L.W / L.H
 
@@ -878,12 +878,20 @@ def shield_poses():
         return p.moved(edge=np.cross(unit(face), unit(p.to - p.at)))
 
     thrust = (0.0, -1.0, 0.0)
+    # the sword stands as a vanilla sword does (arms_holds.STANDING): leaned back toward the eye, its edge ahead, its flat
+    # to the side (Euan 2026-11-09: "it looks like it's being held the completely wrong way"; it showed its flat to the eye)
+    lean = math.radians(72)
+
+    def stood(at, out=0.0):
+        a = np.array([L.HX, L.HY, L.HZ]) + np.asarray(at, dtype=float)
+        up = np.array([out, math.sin(lean), math.cos(lean)])
+        return Pose(at=a, to=a + unit(up) * 3.0, edge=(0.0, math.cos(lean), -math.sin(lean)))
+
     sword = dict(
-        # the blade stands up the view, its flat toward you, so its whole length shows
-        rest=b((0.70, -0.86), 0.66, (0.36, 0.40), (-0.9, -0.3, 0.0)),
+        rest=stood((-0.04, -0.10, 0.0)),
         # drawn back while the shield goes in, or for the guard: still standing, out at the side
-        drawn=b((0.90, -0.94), 0.52, (0.70, 0.22), (-0.9, -0.3, 0.0)),
-        guarded=b((0.86, -0.96), 0.56, (0.62, 0.02), (-0.9, -0.3, 0.0)),
+        drawn=stood((0.10, -0.16, 0.05), out=0.16),
+        guarded=stood((0.04, 0.14, 0.16), out=0.12),
         # strike 1, down across the view from the upper right
         cut_set=b((0.86, -0.50), 0.62, (0.84, 0.70), (-1.0, -0.2, 0.0)),
         cut_hit=b((0.34, -0.50), 0.74, (-0.62, 0.10), (-0.5, -1.0, -0.3)),
@@ -910,7 +918,7 @@ def shield_poses():
         high_back=b((0.36, 0.20), 0.46, (0.14, -1.20), (0.0, 0.3, 1.0)),
         down_hit=b((0.16, -0.60), 0.72, (0.04, -1.60), (0.0, 0.3, 1.0)),
         down_deep=b((0.15, -0.74), 0.74, (0.04, -1.90), (0.0, 0.3, 1.0)),
-        out=b((0.56, -0.90), 0.66, (0.30, 0.04), (-0.9, -0.3, 0.0)),
+        out=stood((-0.02, -0.14, 0.0)),
     )
     shield = dict(
         rest=sh((-0.66, -0.74), 0.60, (-0.70, -0.16), (-0.55, 0.0, -1.0)),
