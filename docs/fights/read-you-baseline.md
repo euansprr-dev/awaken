@@ -79,3 +79,11 @@ Same recorder, same seeds, from the full CI run on cfef690ca (42568231254). A ru
 | drinks in reach answered before they finish (28 drinks each, near and further off) | none | 79% / 79% | at least 60% |
 | mid-move against someone standing still | 76.9% / 74.3% | 76.1% / 73.4% | 50-60%, stage 2 |
 | walking or stepping | 5.0% / 5.1% | 12.3% / 8.1% | 20%, stage 2 |
+
+Then CI on the merged build caught the Regent repeating itself against a circling player: the rule let any move follow itself after
+4 s of nothing else, and at that distance nothing else reaches. Now it never repeats by choice, a move that hurts nobody always keeps
+its rest, and a blow follows itself only after 10 s of nothing else. All twelve pilot fights: no repeats. The recorder checks that exactly,
+since a percentage of a dozen moves is noise (2 of 13 fails 10%, 1 of 13 passes). The side effect: against someone holding that exact
+distance the Regent now starts about 8 moves in 72 s rather than 12 to 17, which stage 2's footwork is there to close. The drink test
+went from 28 drinks to 56, so that a 60% limit isn't tripped by chance. The guard-beater ratio is read from the table and moves from run
+to run (Regent 2.1x and 2.5x, one local run 1.8x; Gearwright 2.0x).

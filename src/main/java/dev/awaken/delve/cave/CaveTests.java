@@ -1,16 +1,21 @@
 package dev.awaken.delve.cave;
 
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.delve.DelveContent;
+import dev.awaken.delve.PitonBlock;
 import dev.awaken.living.api.Regions;
 import dev.awaken.mobs.SeepHearts;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +33,7 @@ final class CaveTests {
     static void register() {
         AwakenTests.register("delve_cave_routes", 200, CaveTests::routes);
         AwakenTests.register("delve_mouth_density", 200, CaveTests::mouthDensity);
+        AwakenTests.register("delve_sinkhole_rope", 200, CaveTests::sinkholeRope);
         AwakenTests.registerIsolated("delve_seep", 600, CaveTests::seep);
         AwakenTests.register("delve_hearth_points", 200, CaveTests::hearthPoints);
         // its own batch: it installs a Hearth lookup, as delve_hearth_points does
@@ -305,6 +311,126 @@ final class CaveTests {
     /** The share of dry-land candidates that must find a mouth (the placement grid is 192 m, so about one every 200-240 m of land). */
     /** §34.1's promise, about one every 200 m of dry land, with a little slack: this is one square of one world. */
     private static final double MOUTH_EVERY = 215;
+
+    /**
+     * SPEC §28.5's old rope on the ground a sinkhole really meets: every one found on a square of Euan's New World (11)'s
+     * placement grid (real noise round the rope, vanilla's: the test server has no pack) and on rough ground like
+     * Tectonic's, rolling 8 either side of the rim. The piton's in real rock under the real ground, the column's open all
+     * the way, and the line ends on something you can stand on.
+     */
+    private static void sinkholeRope(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        long seed = 5652006211025591964L;
+        Overworld ow = new Overworld(level, seed);
+        var set = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE_SET).getOrThrow(CaveLocate.set(CaveKind.SINKHOLE)).value();
+        var rsp = (net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement) set.placement();
+        List<String> fails = new ArrayList<>();
+        int found = 0, roped = 0, arms = 0;
+        for (int gx = -12; gx < 12 && found < 30; gx++) {
+            for (int gz = -12; gz < 12 && found < 30; gz++) {
+                ChunkPos c = rsp.getPotentialStructureChunk(seed, gx * rsp.spacing(), gz * rsp.spacing());
+                Spec s = CaveSites.find(ow.context(c), CaveKind.SINKHOLE, false);
+                if (s == null) continue;
+                found++;
+                if (s.p(Sinkhole.ROPE_OUT) == 0) continue;
+                roped++;
+                arms += s.p(Sinkhole.ROPE_ARM);
+                CaveSites.Columns ground = new CaveSites.Columns(ow.context(c));
+                Grid g = grid(s);
+                natural(g, ground, s.p(Sinkhole.ROPE_X), s.p(Sinkhole.ROPE_Z), 6, g.minY());
+                builtByChunk(s, g);
+                String fault = ropeFault(s, g, ground);
+                if (fault != null) fails.add("sinkhole at " + s.x() + " " + s.z() + ": " + fault);
+            }
+        }
+        h.assertTrue(found >= 8, "real terrain gave too few sinkholes to judge: " + found);
+        int rough = 0, roughRoped = 0;
+        Spec eaten = null;
+        for (int n = 1; n <= 32; n++) {
+            Rough ground = new Rough(72, n * 0.7);
+            Spec s = Sinkhole.roped(CaveStaging.spec(CaveKind.SINKHOLE, 0, 72, 0, 0, 0x5EEDL * n), ground);
+            rough++;
+            if (s.p(Sinkhole.ROPE_OUT) == 0) continue;
+            roughRoped++;
+            eaten = s;
+            Grid g = grid(s);
+            natural(g, ground, s.x(), s.z(), s.p(Sinkhole.R) + 12, 72 - 12);
+            builtByChunk(s, g);
+            String fault = ropeFault(s, g, ground);
+            if (fault != null) fails.add("rough ground " + n + ": " + fault);
+        }
+        dev.awaken.Awaken.LOG.info("[delve] sinkhole ropes: real terrain {} of {} sinkholes have one (arms {} long in all); rough ground {} of {}", roped, found, arms, roughRoped, rough);
+        h.assertTrue(fails.isEmpty(), "every old rope is hung properly: " + String.join("; ", fails));
+        h.assertTrue(roped * 10 >= found * 9 && roughRoped * 10 >= rough * 9, "nearly every sinkhole gets a rope: " + roped + " of " + found + " real, " + roughRoped + " of " + rough + " rough");
+        // a cave carved through the root after the plan: nothing is hung on the air
+        h.assertTrue(eaten != null, "no rope on rough ground at all");
+        Grid g = grid(eaten);
+        Direction out = Direction.from2DDataValue(eaten.p(Sinkhole.ROPE_OUT) - 1);
+        int px = eaten.p(Sinkhole.ROPE_X), pz = eaten.p(Sinkhole.ROPE_Z), py = eaten.p(Sinkhole.ROPE_Y), arm = eaten.p(Sinkhole.ROPE_ARM);
+        g.set(px - out.getStepX() * (arm + 1), py, pz - out.getStepZ() * (arm + 1), Blocks.AIR.defaultBlockState());
+        builtByChunk(eaten, g);
+        h.assertTrue(!g.get(px, py, pz).is(DelveContent.PITON.get()), "a piton set with no rock behind it");
+        // a sinkhole saved before the plan existed still gets its rope in the chunks it hasn't built
+        Spec saved = new Spec(eaten.kind(), eaten.x(), eaten.y(), eaten.z(), eaten.rot(), eaten.seed(), eaten.joined(), eaten.jx(), eaten.jy(), eaten.jz(),
+                java.util.Arrays.copyOf(eaten.p(), Sinkhole.ROPE_X));
+        Grid old = grid(saved);
+        builtByChunk(saved, old);
+        String fault = ropeFault(Sinkhole.roped(saved, Sinkhole.flat(saved.p(Sinkhole.RIM))), old, Sinkhole.flat(saved.p(Sinkhole.RIM)));
+        h.assertTrue(fault == null, "a sinkhole saved before the plan: " + fault);
+        h.succeed();
+    }
+
+    /** Ground rolling up to 8 either side of a rim, as Tectonic's does round a site. */
+    private record Rough(int rim, double phase) implements Sinkhole.Ground {
+        @Override
+        public int surface(int x, int z) {
+            return rim + (int) Math.round(8 * Math.sin(x * 0.17 + phase) * Math.cos(z * 0.13 - phase * 2));
+        }
+
+        @Override
+        public BlockState block(int x, int y, int z) {
+            return y < surface(x, z) ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState();
+        }
+    }
+
+    /** The real ground into the columns within r of (x0, z0), from y up. */
+    private static void natural(Grid g, Sinkhole.Ground ground, int x0, int z0, int r, int y) {
+        for (int x = Math.max(g.minX(), x0 - r); x <= Math.min(g.maxX(), x0 + r); x++) {
+            for (int z = Math.max(g.minZ(), z0 - r); z <= Math.min(g.maxZ(), z0 + r); z++) {
+                for (int cy = y; cy <= g.maxY(); cy++) g.set(x, cy, z, ground.block(x, cy, z));
+            }
+        }
+    }
+
+    /** The place built one chunk at a time, as worldgen builds it. */
+    private static void builtByChunk(Spec s, Grid g) {
+        BoundingBox b = s.box();
+        for (int cx = b.minX() >> 4; cx <= b.maxX() >> 4; cx++) for (int cz = b.minZ() >> 4; cz <= b.maxZ() >> 4; cz++) s.build(new Clip(g, cx << 4, cz << 4));
+    }
+
+    /** What's wrong with a built sinkhole's old rope, read from its blocks; null when it's hung properly. */
+    private static @Nullable String ropeFault(Spec s, Grid g, Sinkhole.Ground ground) {
+        int px = s.p(Sinkhole.ROPE_X), pz = s.p(Sinkhole.ROPE_Z), py = s.p(Sinkhole.ROPE_Y), arm = s.p(Sinkhole.ROPE_ARM), yf = s.y();
+        Direction out = Direction.from2DDataValue(s.p(Sinkhole.ROPE_OUT) - 1);
+        int ox = out.getStepX(), oz = out.getStepZ(), rx = px - ox * (arm + 1), rz = pz - oz * (arm + 1);
+        String at = " (piton " + px + " " + py + " " + pz + ", floor " + yf + ")";
+        BlockState piton = g.get(px, py, pz);
+        if (!piton.is(DelveContent.PITON.get()) || !piton.getValue(PitonBlock.ROPED)) return "no roped piton" + at;
+        if (ground.block(rx, py, rz).isAir() || py >= ground.surface(rx, rz)) return "its root isn't real rock under the real ground" + at;
+        for (int i = 1; i <= arm + 1; i++) if (!g.get(px - ox * i, py, pz - oz * i).isSolidRender()) return "a gap between the piton and its wall" + at;
+        int y = py - 1;
+        for (; y >= yf; y--) {
+            if (!g.get(px, y, pz).is(DelveContent.RUNNER_LINE.get())) return "the line stops at y " + y + at;
+            if (g.get(px + ox, y, pz + oz).isSolidRender()) return "rock on the climbing side at y " + y + at;
+        }
+        while (g.get(px, y, pz).is(DelveContent.RUNNER_LINE.get())) y--;
+        for (int drop = 0; drop <= 3; drop++) {
+            BlockState b = g.get(px, y - drop, pz);
+            if (b.isAir()) continue;
+            return b.isSolidRender() || Routes.water(b) ? null : "the line ends over " + b + at;
+        }
+        return "more than a safe drop under the line" + at;
+    }
 
     /** A failing place's slices round where the search stopped, for reading without the game (run/delve-routes-*.txt). */
     private static void dump(Grid g, CaveKind k, int seed, Routes.Result r) {

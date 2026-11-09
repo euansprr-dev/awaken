@@ -47,7 +47,7 @@ final class CaveSites {
     }
 
     /** The base columns sampled for one candidate, by column. */
-    private static final class Columns {
+    static final class Columns implements Sinkhole.Ground {
         final Structure.GenerationContext ctx;
         final Long2ObjectOpenHashMap<NoiseColumn> cache = new Long2ObjectOpenHashMap<>();
         int sampled;
@@ -72,12 +72,14 @@ final class CaveSites {
             return c;
         }
 
-        BlockState block(int x, int y, int z) {
+        @Override
+        public BlockState block(int x, int y, int z) {
             return at(x, z).getBlock(y);
         }
 
         /** The feet's height on the column's top solid block (MIN_VALUE when its top is water or lava). */
-        int surface(int x, int z) {
+        @Override
+        public int surface(int x, int z) {
             NoiseColumn c = at(x, z);
             int top = ctx.heightAccessor().getMaxY();
             for (int y = top; y > ctx.heightAccessor().getMinY(); y--) {
@@ -258,7 +260,7 @@ final class CaveSites {
             int shelf = Math.floorMod(water + 150 + rnd.nextInt(60), 360);
             Spec spec = new Spec(CaveKind.SINKHOLE, cx, floor, cz, 0, seed, j != null, j == null ? 0 : j[0], j == null ? 0 : j[1], j == null ? 0 : j[2],
                     new int[]{rad, rim, 1, h.getX(), h.getY(), h.getZ(), water, shelf, first ? 1 : 0});
-            if (fits(spec, c)) return spec;
+            if (fits(spec, c)) return Sinkhole.roped(spec, cols);
         }
         return null;
     }
