@@ -46,8 +46,6 @@ public final class FightRecorder {
 
     /** How long a fight is recorded (72 s), and where its health is dropped so each phase is seen. */
     static final int TICKS = 1440, SECOND_PHASE = 450, THIRD_PHASE = 900;
-    /** The most moves that may follow themselves, in percent, in a fight with a mind. */
-    static final int MAX_REPEATS = 10;
     /** The floor's half width, and a pack's fight. */
     static final int ROOM = 22;
     private static final int PACK = 12, PACK_TICKS = 600;
@@ -87,7 +85,7 @@ public final class FightRecorder {
         String[] was = {null}, previous = {null};
         Vec3[] prev = {boss.position()};
         double[] angle = {0};
-        TreeMap<String, Integer> tags = new TreeMap<>();
+        TreeMap<String, Integer> tags = new TreeMap<>(), twice = new TreeMap<>();
         h.onEachTick(() -> {
             tick[0]++;
             if (tick[0] > 5 && boss.tickCount == last[0]) frozen[0]++;
@@ -118,7 +116,10 @@ public final class FightRecorder {
             String now = boss.kitPlaying();
             if (now != null && !now.equals(was[0])) {
                 begun[0]++;
-                if (now.equals(previous[0])) repeats[0]++;
+                if (now.equals(previous[0])) {
+                    repeats[0]++;
+                    twice.merge(now, 1, Integer::sum);
+                }
                 previous[0] = now;
                 Kits.Kit kit = boss.kit();
                 KitMoves.Move m = kit.moves().get(kit.moves().index(now));
@@ -135,13 +136,13 @@ public final class FightRecorder {
             else walking[0]++;
         });
         h.runAfterDelay(TICKS, () -> {
-            Awaken.LOG.info("[record] boss={} player={} ticks={} begun={} repeats={} playing={} opening={} idle={} walking={} sideways={} tags={}",
-                    id, kind.name().toLowerCase(java.util.Locale.ROOT), tick[0], begun[0], repeats[0], playing[0], opening[0], idle[0], walking[0], side[0], tags);
+            Awaken.LOG.info("[record] boss={} player={} ticks={} begun={} repeats={} playing={} opening={} idle={} walking={} sideways={} tags={} twice={}",
+                    id, kind.name().toLowerCase(java.util.Locale.ROOT), tick[0], begun[0], repeats[0], playing[0], opening[0], idle[0], walking[0], side[0], tags, twice);
             h.assertTrue(frozen[0] == 0, id + " stopped ticking for " + frozen[0] + " ticks: it left the loaded ground, and the numbers mean nothing");
             h.assertTrue(begun[0] > 0, id + " began nothing in " + TICKS + " ticks");
-            // what a mind promises, however you play it (SPEC §48.5)
-            if (boss.kit().fight().mind().isPresent())
-                h.assertTrue(repeats[0] * 100 <= begun[0] * MAX_REPEATS, id + " against " + kind + " made the same move twice running " + repeats[0] + " of " + begun[0] + " times");
+            // what a mind promises, however you play it (SPEC §48.5): exact, since a percentage of a dozen moves is noise
+            FightMind mind = boss.fight().mind();
+            if (mind != null) h.assertTrue(repeats[0] <= mind.lastResorts(), id + " against " + kind + " made the same move twice running " + repeats[0] + " of " + begun[0] + " times, only " + mind.lastResorts() + " of them its last resort: " + twice);
             dev.awaken.core.api.Watch.stage(p, 0);
             boss.discard();
             h.succeed();
