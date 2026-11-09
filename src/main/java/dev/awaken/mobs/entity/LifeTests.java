@@ -204,6 +204,21 @@ public final class LifeTests {
                 } else {
                     b = bindHandBuilt(HAND_BUILT.get(d.model));
                 }
+                // a world's own creature must be one the life layer can read: bones under the names LifeBones knows, and motion data
+                if (hero && d.placed && d.isFauna() && !d.id.equals("seep_heart")) { // the heart is rooted: no gait, no head, by design
+                    if (!MotionProfile.all().containsKey(d.id)) problems.add(d.id + ": a placed creature with no entry in motion.json");
+                    if (b.head() < 0 && b.neck() < 0) problems.add(d.id + ": no bone the life layer reads as its head");
+                    HeroRig rig = HeroRig.get(d.id);
+                    boolean legs = false, wings = false;
+                    for (HeroRig.Bone bone : rig.bones) {
+                        legs |= looksLike(bone.name(), "leg");
+                        wings |= looksLike(bone.name(), "wing");
+                    }
+                    int boundLegs = 0;
+                    for (Role role : b.roles()) if (role == Role.LEG) boundLegs++;
+                    if (legs && boundLegs < 2) problems.add(d.id + ": legs the life layer can't read (" + boundLegs + " bound)");
+                    if (wings && b.springsOf(Role.WING) == 0) problems.add(d.id + ": wings the life layer can't read");
+                }
                 // a creature that blinks needs eyelids, eye bones, or the closed-eye skin tools/art paints
                 if (p.blinks() && b.lids().length == 0 && b.eyes().length == 0
                         && LifeTests.class.getResource("/assets/awaken/textures/entity/mobs/" + d.id + "_blink.png") == null) {
