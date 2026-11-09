@@ -20505,3 +20505,10 @@ headroom), every site within 4 blocks of a walked cell. `FloatCheck` now knows t
 `market_boat_lamp`: fail with no water under them), and a small stray's failure names the block and what it stands on. Tests:
 `realm_hour_walks_to_everything`, `realm_hour_nothing_floats`, `realm_hour_doors_toll`. The preview lights an `indoors()` land by flood fill on
 the volume (warm candle, cool moon) and draws candles as their real sticks. Where two halls cross, neither draws its wall across the other.
+
+**The bar (10 Nov 2026).** `docs/gates-as-worlds/BAR.md` is the standard every gate is held to: what Amber Reach and The Hour Crypt have, and the preview's `relief`, `wall`, `shaped`, `contrast` measures and FLAT, PLAIN, WASHED flags.
+
+**Air.** Realms now take part in Gate Air (SPEC 38.9). `RealmAir` tells a client on arrival and every half minute, no card: blueprint `sky.air` lists the client's air and small life, and `Land.air()` (built with `kit/AirPlan`) gives mist layers, shafts, lights and still water, which Lens reads. Amber Reach and The Hour Crypt have both.
+
+**Walking.** `WalkCheck` now swims: you can cross water and climb out where the bank is a step high.
+

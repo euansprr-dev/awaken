@@ -16,13 +16,19 @@ only how it looks. No two gates in a wave share a form and a rule.
 | next | being built |
 | | not started |
 
+The bar is `BAR.md`: read it first. Who builds what (Euan, 10 Nov: two sub-agents alongside the main session):
+
+- Main session: 3 The Vine Seat (remake to the bar), 10 Kingsroot Keep, 7 Saltcomb Flats; the arena kit; merging.
+- Builder A: 4 Glowroot Hollow, 9 Sporefall, 11 The Wax Galleries, 14 The Broodwarren.
+- Builder B: 5 Cinder Stair, 8 The Long Shaft, 12 The Ash Isles, 6 The Quiet Barrow, 13 The Flooded Ossuary.
+
 ## E rank (14)
 
 | # | Status | Gate | Form | Theme | Rule | The great thing | Lord's place |
 |---|---|---|---|---|---|---|---|
 | 1 | done | Amber Reach | Land | Hive | Warm air lifts you up the cliffs | A spired citadel at the valley's end | Comb-domed hall in the great spire |
 | 2 | done | The Hour Crypt | Dungeon | Bell Crypt | A bell tolls every minute; doors stand open only between tolls | A bell the size of a house, hung over the whole crypt | Under the bell, on the floor it shakes |
-| 3 | next | The Vine Seat | Stronghold | Overgrown Temple | Roots grow over cleared paths behind you unless you keep moving | A stepped temple split by one enormous tree | Root bowl at the tree's foot |
+| 3 | next (being remade to the bar) | The Vine Seat | Stronghold | Overgrown Temple | Roots grow over cleared paths behind you unless you keep moving | A stepped temple split by one enormous tree | Root bowl at the tree's foot |
 | 4 | | Glowroot Hollow | Deep | Fungal Hollow | Spore clouds carry you across gaps; breathing them slows you | A cavern with a mushroom as tall as a tower | Ring over a glowing drop |
 | 5 | | Cinder Stair | Climb | Ember Mines | The lava rises while you're on the way up | A mine dug straight up a dead volcano | Broken summit in the crater |
 | 6 | | The Quiet Barrow | Land | Bell Crypt | Sound carries: running wakes what sleeps under the mounds | A burial hill with a stone ship on top | The ship's deck |
