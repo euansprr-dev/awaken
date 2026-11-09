@@ -189,6 +189,8 @@ public final class TrueStrikes {
         if (!applies(e.getState()) || e.getLevel().getGameTime() - s.lastTrue > BREAK_WINDOW) return;
         if (e.getLevel().getRandom().nextFloat() >= (sounder(p.getMainHandItem()) ? SOUNDER_BONUS : BONUS)) return;
         ItemEntity first = e.getDrops().getFirst();
+        // Silk Touch drops the ore block: a spare one could be set back and struck again without end
+        if (first.getItem().is(e.getState().getBlock().asItem())) return;
         ItemStack more = first.getItem().copyWithCount(1);
         e.getDrops().add(new ItemEntity(e.getLevel(), first.getX(), first.getY(), first.getZ(), more));
     }

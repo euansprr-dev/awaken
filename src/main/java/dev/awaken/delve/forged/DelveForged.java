@@ -64,10 +64,17 @@ public final class DelveForged {
         ForgedPicks.register(ITEMS);
     }
 
+    private static void creativeTab(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
+        if (!event.getTabKey().equals(dev.awaken.core.CoreModule.TAB_KEY)) return;
+        event.accept(OLD_HEAD.get());
+        for (PickForm f : PickForm.values()) for (int t = 0; t < PickStats.TIERS; t++) event.accept(ForgedPicks.get(f, t));
+    }
+
     public static void init(IEventBus modBus) {
         ITEMS.register(modBus);
         COMPONENTS.register(modBus);
         SOUNDS.register(modBus);
         ATTACHMENTS.register(modBus);
+        modBus.addListener(DelveForged::creativeTab);
     }
 }
