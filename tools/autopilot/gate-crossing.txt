@@ -1,0 +1,71 @@
+# The crossing into a gate (SPEC 50.5): one painting at each moment of the screen (the tear, the name, held), then a real walk
+# into a gate and out again, shot while the real screen is up and just after it lifts.
+#
+# /awaken gate crossing <theme> <ms>    shows that instant of the crossing, frozen, no move; it closes itself after 8 s
+world autopilot_gate_crossing creative 20261109
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+hud off
+
+cmd awaken gate crossing bell_crypt 260
+wait 30
+shot crossing_tear_early
+wait 200
+cmd awaken gate crossing bell_crypt 620
+wait 30
+shot crossing_tear_mid
+wait 200
+cmd awaken gate crossing bell_crypt 2400
+wait 30
+shot crossing_held_crypt
+wait 200
+cmd awaken gate crossing hive 2400
+wait 30
+shot crossing_held_hive
+wait 200
+cmd awaken gate crossing ember_mines 2400
+wait 30
+shot crossing_held_ember
+wait 200
+cmd awaken gate crossing mirror_palace 2400
+wait 30
+shot crossing_held_mirror
+wait 200
+cmd awaken gate crossing fungal_hollow 2400
+wait 30
+shot crossing_held_fungal
+wait 200
+
+# the real thing
+hud on
+cmd tp @s 6000 200 6000
+wait 600
+cmd awaken gate hop
+wait 400
+cmd awaken gate open E bell_crypt
+wait 400
+cmd awaken gate interior enter
+wait 24
+shot crossing_real_in_1s
+wait 30
+shot crossing_real_in_2s
+wait 44
+shot crossing_real_in_afterglow
+wait 200
+shot crossing_real_arrived
+cmd awaken gate leave
+wait 20
+shot crossing_real_out_1s
+wait 200
+shot crossing_real_back
+quit

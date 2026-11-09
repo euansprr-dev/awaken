@@ -50,6 +50,7 @@ public final class GatesModule {
         r.playToClient(GatePayloads.Beacons.TYPE, GatePayloads.Beacons.STREAM_CODEC);
         r.playToClient(GatePayloads.RunHud.TYPE, GatePayloads.RunHud.STREAM_CODEC);
         r.playToClient(GatePayloads.LordLevel.TYPE, GatePayloads.LordLevel.STREAM_CODEC);
+        r.playToClient(GatePayloads.Crossing.TYPE, GatePayloads.Crossing.STREAM_CODEC);
         r.playToClient(GatePayloads.SpoilsView.TYPE, GatePayloads.SpoilsView.STREAM_CODEC);
         r.playToClient(GatePayloads.SpoilsFlight.TYPE, GatePayloads.SpoilsFlight.STREAM_CODEC);
         r.playToClient(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, dev.awaken.gates.net.WorldPayloads.Arrival.STREAM_CODEC);

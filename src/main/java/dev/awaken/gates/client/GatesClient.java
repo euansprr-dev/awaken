@@ -31,6 +31,8 @@ public final class GatesClient {
         modBus.addListener(GatesClient::payloads);
         modBus.addListener(GatesClient::renderers);
         modBus.addListener(GatesClient::layers);
+        modBus.addListener(Crossing::pipelines);
+        modBus.addListener(Crossing::screens);
         modBus.addListener(WorldLife::register);
         modBus.addListener(WorldAir::register);
         var bus = NeoForge.EVENT_BUS;
@@ -50,6 +52,7 @@ public final class GatesClient {
             GateWorldClient.clear();
             WorldBed.stop();
             LordLevels.reset();
+            Crossing.reset();
         });
         StatusSections.add(StatusSections.Tab.STATUS, new RunSection()); // a run's summary on the band's Status page
         StatusSections.add(StatusSections.Tab.JOURNAL, StatusSections.placed(new AtlasSection(), 620, StatusSections.Shelf.GATES)); // the Atlas of Gates (SPEC §38.7)
@@ -84,6 +87,7 @@ public final class GatesClient {
         });
         e.register(GatePayloads.SpoilsFlight.TYPE, (msg, ctx) -> SpoilsFlights.start(msg));
         e.register(GatePayloads.LordLevel.TYPE, (msg, ctx) -> LordLevels.beat(msg));
+        e.register(GatePayloads.Crossing.TYPE, (msg, ctx) -> Crossing.told(msg));
     }
 
     private static void renderers(EntityRenderersEvent.RegisterRenderers e) {
@@ -103,6 +107,7 @@ public final class GatesClient {
         e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_world_journey"), WorldJourney::render);
         e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_world_card"), WorldCard::render);
         e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_lord_levels"), LordLevels::render);
+        e.registerBelow(VanillaGuiLayers.CHAT, Awaken.id("gate_crossing_afterglow"), Crossing::afterglow);
     }
 
     static void tick(ClientTickEvent.Post e) {

@@ -90,6 +90,21 @@ public final class Runs {
         return area == 0 ? Integer.toString(floor) : "a" + floor;
     }
 
+    private static boolean storyGate(GateRecord g) {
+        return g.plan.ritual() || g.scripted;
+    }
+
+    /** Tells the client what's being crossed into (SPEC §50.5): the first floor's world if it has one, else the theme. */
+    public static void crossing(ServerPlayer p, GateRecord g, boolean entering, int frozenMs) {
+        var worlds = g.plan.worlds();
+        var w = worlds.isEmpty() ? null : dev.awaken.gates.worlds.GateWorlds.get(worlds.get(0).world());
+        String theme = g.plan.theme().displayName;
+        String name = w == null ? theme : w.name();
+        String kicker = entering ? g.plan.rank().label + "-rank " + theme : "Back to the surface";
+        String line = entering && w != null ? w.line() : "";
+        dev.awaken.core.AwakenNet.send(p, new dev.awaken.gates.net.GatePayloads.Crossing(g.plan.theme().id, kicker, name, line, entering, frozenMs));
+    }
+
     // ---- entering ---------------------------------------------------------------------------------------------------
 
     public static boolean enter(ServerPlayer p, GateRecord g) {
@@ -131,6 +146,7 @@ public final class Runs {
         // the first floor's level: the open sky's when it's an open land
         ServerLevel to = GateService.levelOf(server, g, 0, 1);
         if (to == null) to = gl;
+        if (!storyGate(g)) crossing(p, g, true, -1);
         p.teleport(new TeleportTransition(to, GateService.center(e), Vec3.ZERO, GateService.entranceYaw(g, 0, 1), 0F,
                 TeleportTransition.PLAY_PORTAL_SOUND));
         to.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 1F);
@@ -420,6 +436,7 @@ public final class Runs {
             dev.awaken.core.api.Passage.go(p, over, out.getX() + 0.5, out.getZ() + 0.5, () -> {
                 BlockPos to = g != null && g.structurePlaced ? out
                         : over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, out);
+                if (g != null && !storyGate(g)) crossing(p, g, false, -1);
                 p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, yaw, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
                 over.playSound(null, to, GatesRegistry.SND_EXIT.get(), SoundSource.PLAYERS, 1F, 1F);
                 leftGate(server, p, g);

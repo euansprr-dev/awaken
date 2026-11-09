@@ -19717,3 +19717,20 @@ number in the middle of your view, climbing with every bell, the old number risi
 big, a rule flaring from it, points so far beneath, a mark per level. `GateMemory.lordXp` holds what hasn't landed, saved with the
 player; logging out pays the rest at once, and after a crash it plays on the next login. Test `gates_lord_pay_beats`.
 
+### 50.5 The crossing (the loading screen between the overworld and a gate)
+
+Euan asked for it to look really cool. NeoForge's `RegisterDimensionTransitionScreenEvent` gives the gate dimensions their own
+`LevelLoadingScreen` (`gates/client/Crossing`). Just before the move the server sends `GatePayloads.Crossing`: which painting (today
+the theme, later each gate's own), the small line (`E-rank Hive`), the name (the first floor's world, else the theme) and the world's
+one plain line. The screen is full-screen on a shader (`core/gate_crossing.fsh`, optional pipeline; if it won't compile the painting
+just fades): a ragged tear opens down the dark, its edge bending the painting and parting its colours, light rushing out of it; the
+painting drifts in very slowly with dust hanging in front and black bars top and bottom; the name surfaces letter by letter from its
+middle, a rule draws out under it, then the plain line; the land's progress is one hair of light in the bottom bar. Held at least
+2.8 s going in and 1.5 s coming out so it can be read, and it closes when the land has loaded. The painting stays up as a layer a
+moment longer and burns away from the centre, 1.15 s, into the real place, the bars sliding off with it.
+
+Paintings: `textures/gui/crossing/<key>.png`, 1536×864, made by `tools/art/crossing_paintings.py`; `default` for anything without its
+own. A death, a command or a teleport with no word from the server gets a plain dark screen. Moving between a gate's own floors
+across its two dimensions shows nothing over the Journey (§38.7). Tour: `tools/autopilot/gate-crossing.txt`; `/awaken gate crossing
+<theme> <ms>` freezes one instant.
+

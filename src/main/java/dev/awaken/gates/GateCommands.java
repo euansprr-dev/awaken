@@ -65,6 +65,16 @@ final class GateCommands {
                                     .then(Commands.literal("world").then(Commands.argument("version", IntegerArgumentType.integer(6, GatePlan.CONTENT_VERSION))
                                             .then(Commands.argument("id", StringArgumentType.greedyString()).executes(GateCommands::openWorld)))))));
             gate.then(Commands.literal("hop").requires(AwakenCommands.admin()).executes(GateCommands::hop));
+            // a look at one instant of the crossing into a theme (SPEC §50.5), for tours: no move, the screen closes itself
+            gate.then(Commands.literal("crossing").requires(AwakenCommands.admin())
+                    .then(Commands.argument("theme", StringArgumentType.word()).then(Commands.argument("ms", IntegerArgumentType.integer(0)).executes(c -> {
+                        var p = c.getSource().getPlayerOrException();
+                        var t = dev.awaken.gates.content.Theme.parse(StringArgumentType.getString(c, "theme"));
+                        if (t == null) return 0;
+                        dev.awaken.core.AwakenNet.send(p, new dev.awaken.gates.net.GatePayloads.Crossing(t.id, "E-rank " + t.displayName, t.displayName,
+                                "A plain line about the place you're about to walk into.", true, IntegerArgumentType.getInteger(c, "ms")));
+                        return 1;
+                    }))));
             // tours: the nearest standing gate's card, wherever it formed (a card shows by itself within 24 blocks)
             gate.then(Commands.literal("card").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();

@@ -1,6 +1,6 @@
 # Gates as Worlds: the Realms plan
 
-Status: **planning only, waiting for Euan's approval (9 Nov 2026).** Nothing here is in production. The proof code lives on the
+Status: **approved by Euan in full on 9 Nov 2026, being built in the order of section 0 (SPEC §50).** The proof code lives on the
 throwaway branch `claude/gates-worlds-probe` and is never merged. The approval page is `docs/gates-as-worlds/page.html`.
 
 Labels used below: **[seen]** measured or read in this repo, or in Euan's own save. **[research]** an outside source (linked).
