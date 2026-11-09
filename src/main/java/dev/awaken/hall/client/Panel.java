@@ -24,6 +24,8 @@ final class Panel {
     static final int FORGE_FIRE = 0xFFF2B35F;
     static final int NEEDS_ACROSS = 4;
     static final float NEED_W = TEXT_W / NEEDS_ACROSS, NEED_H = 128F;
+    /** The line under the row of materials that says where one comes from. */
+    static final float SOURCE_H = 106F;
 
     record Act(String label, int op, boolean hold, boolean enabled, int key) {}
 
@@ -53,11 +55,16 @@ final class Panel {
 
     static float needsHeight(int count) {
         int rows = (count + NEEDS_ACROSS - 1) / NEEDS_ACROSS;
-        return count == 0 ? 0F : 34F + NEED_H * rows + 106F;
+        return count == 0 ? 0F : 34F + NEED_H * rows + SOURCE_H;
     }
 
     /** Draws the row of what it takes under its heading; returns the need the pointer is on, or -1. */
     static int needs(Stage s, String heading, List<Need> needs, float y, float mx, float my, boolean live, float time) {
+        return needs(s, heading, needs, y, mx, my, live, time, true);
+    }
+
+    /** {@code hint} false leaves out the line under the row, for a panel too full to keep it: see {@link #sourceTip}. */
+    static int needs(Stage s, String heading, List<Need> needs, float y, float mx, float my, boolean live, float time, boolean hint) {
         int hover = -1;
         s.text(heading, X, y, 3F, Stage.EDGE);
         y += 34F;
@@ -74,9 +81,20 @@ final class Panel {
             }
         }
         y = top + (needs.size() + NEEDS_ACROSS - 1) / NEEDS_ACROSS * NEED_H;
-        Need shown = hover >= 0 ? needs.get(hover) : firstShort(needs);
+        Need shown = !hint ? null : hover >= 0 ? needs.get(hover) : firstShort(needs);
         if (shown != null) lines(s, s.wrap(shown.source.isEmpty() ? shown.name : shown.source, TEXT_W, 3F), y + 14F, 3, Stage.DIM);
         return hover;
+    }
+
+    /** Where the material you point at comes from, over whatever is below the row. Drawn last: it takes a stratum of its own. */
+    static void sourceTip(Stage s, Need n, float y) {
+        if (n.source.isEmpty()) return;
+        List<FormattedCharSequence> text = s.wrap(n.source, TEXT_W, 3F);
+        float y1 = y + text.size() * 30F + 20F;
+        s.g.nextStratum();
+        s.fill(X - 12F, y, RIGHT + 12F, y1, 0xF80A0E16);
+        s.outline(X - 12F, y, RIGHT + 12F, y1, 2, 0x707FC3FF);
+        lines(s, text, y + 10F, text.size(), Stage.LABEL);
     }
 
     private static Need firstShort(List<Need> needs) {

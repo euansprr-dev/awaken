@@ -82,4 +82,21 @@ cmd awaken hall suit beastbound 1
 wait 70
 shot suit_short
 screen close
+wait 10
+# The fullest panel there is: C rank at a Stand (the inlay row), short of materials, and the longest ability of all.
+cmd awaken admin levels 10
+cmd awaken admin rankup
+cmd awaken hall pattern shardcrown
+wait 30
+cmd tp @s 0.5 201 1.5 0 15
+wait 20
+use
+wait 70
+cmd awaken hall suit shardcrown 1
+wait 70
+shot suit_full
+cmd awaken hall suit frostwalker 2
+wait 70
+shot suit_inlay
+screen close
 quit

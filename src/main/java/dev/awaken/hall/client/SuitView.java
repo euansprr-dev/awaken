@@ -208,6 +208,7 @@ final class SuitView extends CloseView {
                 String line = (l.pieces() == SetBonus.HALF ? "Two pieces: " : "All four: ") + l.text() + ".";
                 if (!say.contains(line)) say.add(line);
             }
+            say.sort(java.util.Comparator.comparing(line -> line.startsWith("Two pieces"))); // the whole suit's line is the one that must show
             for (String one : say) special.add(s.wrap(one, TEXT_W, 3F));
         }
         ArmourPayloads.Offer offer = SuitState.offer(o, set, slot);
@@ -473,9 +474,27 @@ final class SuitView extends CloseView {
         float pieceH = 52F + (compare.isEmpty() ? 0F : 40F);
         float last = whyTop - inlayH - needHeight - pieceH - 12F;
 
-        // what the suit does is why you'd want it: it comes first, as much of it as the piece's own rows leave room for
+        // What the suit does is why you'd want it, so a full panel never drops its first line. It gives up other things in turn:
+        // where a material comes from (that moves to a tip on the material), the comparison, then a reason the red counts already give.
+        float first = special.isEmpty() ? 0F : special.getFirst().size() * 30F;
+        boolean hint = !needs.isEmpty(), showCompare = !compare.isEmpty(), showWhy = !why.isEmpty();
+        if (hint && y + first > last) {
+            hint = false;
+            needHeight -= Panel.SOURCE_H;
+            last += Panel.SOURCE_H;
+        }
+        if (showCompare && y + first > last) {
+            showCompare = false;
+            last += 40F;
+        }
+        if (showWhy && states[slot] == SuitState.SHORT && y + first > last) {
+            showWhy = false;
+            last += why.size() * 30F;
+        }
+        boolean headline = true;
         for (List<FormattedCharSequence> paragraph : special) {
-            if (y + paragraph.size() * 30F > last) break;
+            if (!headline && y + paragraph.size() * 30F > last) break;
+            headline = false;
             y = Panel.lines(s, paragraph, y, paragraph.size(), Stage.TITLE) + 4F;
         }
         y += 6F;
@@ -484,15 +503,17 @@ final class SuitView extends CloseView {
         if (!pieceIcon.isEmpty() && !SuitState.hidden(HallClient.suits, set)) Panel.icon(s, pieceIcon, X, y, 3F);
         s.title(pieceName, X + (SuitState.hidden(HallClient.suits, set) ? 0F : 58F), y + 2F, 2F, Stage.LANTERN);
         y += 52F;
-        if (!compare.isEmpty()) {
+        if (showCompare) {
             s.text(s.fit(compare, TEXT_W, 3F), X, y, 3F, compareColour);
             y += 40F;
         }
 
+        int pointed = -1;
         if (!needs.isEmpty()) {
-            Panel.needs(s, "What it takes", needs, y, mx, my, fly >= 1F, time);
+            pointed = Panel.needs(s, "What it takes", needs, y, mx, my, fly >= 1F, time, hint);
             y += needHeight;
         }
+        float belowNeeds = y;
 
         inlayY = -1F;
         if (showInlay) {
@@ -500,7 +521,7 @@ final class SuitView extends CloseView {
             drawInlay(s, y, mx, my);
         }
 
-        Panel.lines(s, why, whyTop, why.size(), whyColour);
+        if (showWhy) Panel.lines(s, why, whyTop, why.size(), whyColour);
         primaryY0 = primaryTop;
         primaryY1 = primaryTop + 60F;
         if (primary != null) {
@@ -526,6 +547,7 @@ final class SuitView extends CloseView {
             s.text(a.label(), x + 12F, subY0 + 7F, 3F, a.enabled() ? Stage.TITLE : Stage.DIM);
             x += w + 14F;
         }
+        if (!hint && pointed >= 0) Panel.sourceTip(s, needs.get(pointed), belowNeeds);
         g.pose().popMatrix();
     }
 
