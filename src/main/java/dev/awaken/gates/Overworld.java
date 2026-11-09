@@ -712,6 +712,7 @@ public final class Overworld {
         BlockState s = level.getBlockState(ground);
         if (!s.getFluidState().isEmpty() || s.isAir()) return false;
         if (!level.getBlockState(ground.above()).getFluidState().isEmpty()) return false;
+        if (dev.awaken.terrain.api.HeroTrees.standsOver(level, ground)) return false; // too tall to fall whole: a gate would leave its top in the air
         if (groundStep(level, ground, s)) return level.getBlockState(ground.below()).isFaceSturdy(level, ground.below(), Direction.UP);
         return s.isFaceSturdy(level, ground, Direction.UP);
     }

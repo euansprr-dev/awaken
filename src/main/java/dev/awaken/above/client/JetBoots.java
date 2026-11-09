@@ -34,7 +34,7 @@ final class JetBoots {
             checkCooldown = 10;
             equipped = FrameModules.has(FrameModules.mask(p), FrameModule.JET_BOOTS) && (p.isCreative() || EssenceCellItem.carried(p) > 0);
         }
-        boolean jump = mc.options.keyJump.isDown();
+        boolean jump = mc.options.keyJump.isDown() && !dev.awaken.core.client.InputLock.held();
         if (p.onGround() || p.isInWater() || p.getAbilities().flying || p.isPassenger() || p.isFallFlying()) {
             releasedInAir = false;
             flush();

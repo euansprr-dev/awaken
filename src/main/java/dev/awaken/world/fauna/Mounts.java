@@ -256,8 +256,9 @@ public final class Mounts {
         return null;
     }
 
-    private static boolean fits(ServerLevel level, WildMount m, Vec3 at) {
-        AABB box = m.getType().getSpawnAABB(at.x, at.y, at.z).deflate(1.0E-4);
+    /** The body it really has: a grown mount doesn't go by its type's box. */
+    static boolean fits(ServerLevel level, WildMount m, Vec3 at) {
+        AABB box = m.getDimensions(m.getPose()).makeBoundingBox(at.x, at.y, at.z).deflate(1.0E-4);
         return level.noCollision(m, box);
     }
 

@@ -327,6 +327,14 @@ public final class FirstPerson {
      */
     public static volatile java.util.function.BooleanSupplier offHandShows = () -> false;
 
+    /** How far something has taken both hands away from view this frame (0 none, 1 gone), given the hand's re-equip. */
+    public interface HandsAway {
+        float of(float equip, float partialTick);
+    }
+
+    /** The holo wrist installs this (SPEC §40.7): whatever draws its own arms in the hand pass sinks by it. */
+    public static volatile HandsAway handsAway = (equip, partialTick) -> 0F;
+
     /** The comfort setting (the body's reduced motion): halves the procedural layer (look-lag) when true. */
     public static volatile java.util.function.BooleanSupplier reducedMotion = () -> false;
 

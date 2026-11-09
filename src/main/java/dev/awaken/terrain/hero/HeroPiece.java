@@ -80,6 +80,16 @@ public class HeroPiece extends StructurePiece {
         return seed;
     }
 
+    /** Whether a world position is part of this tree: a cell of its blueprint, or a trunk or root column down to the ground. */
+    public boolean holds(int x, int y, int z) {
+        Blueprint bp = HeroWorldgen.blueprint(tree, seed);
+        int bx = x - centre.getX(), by = y - centre.getY(), bz = z - centre.getZ();
+        if (bx < -bp.extent || bx > bp.extent || bz < -bp.extent || bz > bp.extent) return false;
+        if (bp.get(bx, by, bz) != Blueprint.EMPTY) return true;
+        int foot = bp.foot[bp.column(bx, bz)];
+        return foot != Blueprint.NO_FOOT && by < foot && by >= foot - FILL;
+    }
+
     @Override
     public void postProcess(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random,
                             BoundingBox chunkBB, ChunkPos chunkPos, BlockPos referencePos) {

@@ -231,7 +231,8 @@ public final class Life {
         dt = Math.min(step, 0.1F);
         t += dt;
         frame++;
-        far = s.distanceToCameraSq > 32 * 32;
+        double zoom = dev.awaken.core.api.CameraHooks.zoom(); // what's under the binoculars isn't far: it fills the screen
+        far = s.distanceToCameraSq > 32 * 32 * zoom * zoom;
         boolean reduce = reduced();
         motion(s, jump);
         // exertion: builds while it runs, falls slowly after; a blow takes its breath too

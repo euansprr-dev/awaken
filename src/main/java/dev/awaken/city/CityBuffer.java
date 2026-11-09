@@ -83,6 +83,14 @@ final class CityBuffer {
         plate[lz * w + lx] = true;
     }
 
+    /** No plate or bank is filled under this column. */
+    void noFill(int px, int pz) {
+        int lx = px - px0, lz = pz - pz0;
+        if (lx < 0 || lz < 0 || lx >= w || lz >= d) return;
+        plate[lz * w + lx] = false;
+        mounds[lz * w + lx] = null;
+    }
+
     void mound(int px, int pz, SettlementPaint.Mound m) {
         int lx = px - px0, lz = pz - pz0;
         if (lx < 0 || lz < 0 || lx >= w || lz >= d) return;

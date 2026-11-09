@@ -197,8 +197,9 @@ public class RoadPiece extends StructurePiece implements net.neoforged.neoforge.
         RoadPaint p = paint();
         var chunk = level.getChunk(chunkPos.x(), chunkPos.z());
         SettlementPaint.Land land = RoadBanks.enabled(level.enabledFeatures()) ? RoadBanks.land(this, chunk, structureManager) : null;
-        int n = SettlementPaint.paintChunk(p, chunkPos.x(), chunkPos.z(), level.getSeed(), chunk, land);
-        n += SettlementPaint.sweep(level, p, chunkPos.x(), chunkPos.z());
+        var keep = dev.awaken.terrain.api.HeroTrees.near(structureManager, chunkPos);
+        int n = SettlementPaint.paintChunk(p, chunkPos.x(), chunkPos.z(), level.getSeed(), chunk, land, keep);
+        n += SettlementPaint.sweep(level, p, chunkPos.x(), chunkPos.z(), keep);
         for (Road.Marker m : markers) RoadMarks.words(chunk, level.registryAccess(), p, m);
         paintNanos += System.nanoTime() - t0;
         chunks++;

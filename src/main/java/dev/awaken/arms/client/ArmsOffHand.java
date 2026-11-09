@@ -75,9 +75,11 @@ final class ArmsOffHand {
         return p != null && !shownTwin(p).isEmpty();
     }
 
-    /** First person: the twin in the empty off hand, after Hands has moved it (registered after Anims, LOWEST). */
+    /** First person: the twin in the empty off hand, after Hands has moved it (registered after Anims, LOWEST; cancelled too, to sink with the wrist). */
     static void onRenderHand(RenderHandEvent e) {
         if (e.getHand() != InteractionHand.OFF_HAND) return;
+        float away = dev.awaken.core.api.FirstPerson.handsAway.of(e.getEquipProgress(), e.getPartialTick());
+        if (e.isCanceled() && (away <= 0F || away >= 1F)) return; // only the wrist's rise lets a cancelled twin draw, on its way down
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
@@ -88,7 +90,7 @@ final class ArmsOffHand {
         PoseStack ps = e.getPoseStack();
         ps.pushPose();
         // vanilla's resting hand on the off side, risen as far as the main hand (a pair is drawn together)
-        ps.translate(inv * 0.56F, -0.52F + mainEquip * -0.6F, -0.72F);
+        ps.translate(inv * 0.56F, -0.52F + Math.max(mainEquip, away) * -0.6F, -0.72F);
         ArmsHands.guardOn(ps, p, t, e.getPartialTick(), inv);
         mc.getItemModelResolver().updateForLiving(FIRST, t, arm == HumanoidArm.RIGHT ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, p);

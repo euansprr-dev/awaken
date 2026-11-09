@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.nio.charset.StandardCharsets;
@@ -309,6 +310,26 @@ final class BinocularsTests {
                 t += Spotter.PERIOD;
                 h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.NOTHING, "a wall hides it");
                 for (int y = 0; y <= 2; y++) for (int x = 3; x <= 5; x++) level.setBlock(base.offset(x, y, 15), Blocks.AIR.defaultBlockState(), 2);
+                // bushes and a hedge don't hide it; a stand of trees and stone do (Spotting.FOLIAGE along any line)
+                BlockState leaves = Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true);
+                for (int z = 14; z <= 16; z++) for (int y = 0; y <= 2; y++) for (int x = 2; x <= 6; x++) level.setBlock(base.offset(x, y, z), leaves, 2);
+                t += Spotter.PERIOD;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.STARTED, "a hedge doesn't hide it");
+                Spotter.drop(p);
+                for (int z = 10; z <= 20; z++) for (int y = 0; y <= 2; y++) for (int x = 1; x <= 7; x++) level.setBlock(base.offset(x, y, z), leaves, 2);
+                t += Spotter.PERIOD;
+                h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.NOTHING, "a stand of trees does");
+                for (int z = 10; z <= 20; z++) for (int y = 0; y <= 2; y++) for (int x = 1; x <= 7; x++) level.setBlock(base.offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+                BlockPos row = base.offset(-9, 4, 2);
+                for (int x = 1; x <= 5; x++) level.setBlock(row.offset(x, 0, 0), leaves, 2);
+                Vec3 from = Vec3.atCenterOf(row), to = Vec3.atCenterOf(row.offset(9, 0, 0));
+                h.assertTrue(Spotting.clearLine(level, from, to), "five blocks of leaves can be seen through");
+                level.setBlock(row.offset(6, 0, 0), leaves, 2);
+                h.assertFalse(Spotting.clearLine(level, from, to), "six can't");
+                for (int x = 2; x <= 6; x++) level.setBlock(row.offset(x, 0, 0), Blocks.AIR.defaultBlockState(), 2);
+                level.setBlock(row.offset(1, 0, 0), Blocks.STONE.defaultBlockState(), 2);
+                h.assertFalse(Spotting.clearLine(level, from, to), "one of stone can't");
+                level.setBlock(row.offset(1, 0, 0), Blocks.AIR.defaultBlockState(), 2);
                 // one slip is forgiven, two start over
                 t += Spotter.PERIOD;
                 h.assertTrue(Spotter.look(p, t, sources) == Spotter.Result.STARTED, "the wall gone: a hold starts");

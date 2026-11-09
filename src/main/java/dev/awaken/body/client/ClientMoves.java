@@ -719,9 +719,10 @@ public final class ClientMoves {
         if (player != mc.player || !(player instanceof LocalPlayer p)) return;
         if (distance < BodyRules.ROLL_MIN_FALL || !Body.unlocked(p, Move.ROLL) || off(p)) return;
         if (ticks - lastGlide < 10 || ticks - lastFly < 140) return; // an elytra, or a power's own landing
-        boolean held = p.isSprinting() || p.isShiftKeyDown() || mc.options.keyShift.isDown();
+        boolean shift = mc.options.keyShift.isDown() && !dev.awaken.core.client.InputLock.held();
+        boolean held = p.isSprinting() || p.isShiftKeyDown() || shift;
         if (!held) return;
-        if (landSlideWanted(p, mc.options.keyShift.isDown())) return; // the slide out of it is this landing's look
+        if (landSlideWanted(p, shift)) return; // the slide out of it is this landing's look
         AttributeInstance safe = p.getAttribute(Attributes.SAFE_FALL_DISTANCE);
         double otherSafe = safe == null ? 0 : safe.getValue() - safe.getBaseValue();
         if (BodyRules.roll(distance, otherSafe, 1.0) == null) return;

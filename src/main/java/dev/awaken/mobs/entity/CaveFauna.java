@@ -257,7 +257,9 @@ public class CaveFauna extends FaunaMob implements WildPose {
         hanging = true;
         dropping = false;
         setNoGravity(true);
-        setPos(getX(), ceiling - getBbHeight(), getZ());
+        // the last hand's breadth up to the roof, unless something is in the way: it clings where it got to, never through
+        double to = ceiling - getBbHeight();
+        if (level().noCollision(this, getBoundingBox().move(0, to - getY(), 0).deflate(1.0E-4))) setPos(getX(), to, getZ());
         setDeltaMovement(Vec3.ZERO);
         getNavigation().stop();
         pose(S_HANG, true);

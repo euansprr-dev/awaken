@@ -88,6 +88,42 @@ public final class Blueprint {
         }
     }
 
+    /**
+     * Clears what isn't joined face to face to the tree's lowest row: a branch stub that starts just off a thin trunk hangs
+     * in the air (one Lumen Spire in forty). Before the leaves settle, so the leaves only it held go with it.
+     */
+    void dropDetached() {
+        int strideY = sx * sx;
+        boolean[] seen = new boolean[cells.length];
+        int[] queue = new int[Math.max(1024, woodCount + leafCount)];
+        int head = 0, tail = 0;
+        for (int i = 0; i < strideY; i++) {
+            if (cells[i] == EMPTY) continue;
+            seen[i] = true;
+            queue[tail++] = i;
+        }
+        while (head < tail) {
+            int i = queue[head++];
+            int z = i % sx, x = (i / sx) % sx, y = i / strideY;
+            for (int k = 0; k < 6; k++) {
+                int j = switch (k) {
+                    case 0 -> x + 1 < sx ? i + sx : -1;
+                    case 1 -> x > 0 ? i - sx : -1;
+                    case 2 -> z + 1 < sx ? i + 1 : -1;
+                    case 3 -> z > 0 ? i - 1 : -1;
+                    case 4 -> y + 1 < sy ? i + strideY : -1;
+                    default -> y > 0 ? i - strideY : -1;
+                };
+                if (j < 0 || seen[j] || cells[j] == EMPTY) continue;
+                seen[j] = true;
+                if (tail == queue.length) queue = Arrays.copyOf(queue, tail * 2);
+                queue[tail++] = j;
+            }
+        }
+        for (int k = 0; k < woodCount; k++) if (!seen[woodCells[k]]) cells[woodCells[k]] = EMPTY;
+        for (int k = 0; k < leafCount; k++) if (!seen[leafCells[k]]) cells[leafCells[k]] = EMPTY;
+    }
+
     static boolean wood(byte c) {
         return c >= LOG && c <= WOOD;
     }

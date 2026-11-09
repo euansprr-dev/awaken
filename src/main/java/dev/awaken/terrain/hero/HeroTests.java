@@ -108,6 +108,10 @@ public final class HeroTests {
         // Far from every other test (thousands of blocks out, its own chunks), and it waits for the light engine before it
         // ends: a Colossus is ten thousand blocks of light updates, and tests that read light levels (dark rooms,
         // torchlight) must not run in its shadow or behind its backlog.
+        // Euan 2026-11-09: "some floating blocks sometimes around custom trees". Every custom tree, rolled as worldgen rolls it:
+        // no group of logs and leaves is cut off from its trunk
+        AwakenTests.registerIsolated("terrain_trees_whole", 400, HeroTests::rollTrees);
+
         AwakenTests.registerIsolated("terrain_hero_builds_in_box", 1200, h -> {
             ServerLevel level = h.getLevel();
             StringBuilder log = new StringBuilder();
@@ -256,6 +260,130 @@ public final class HeroTests {
             return "top " + top + ", trunk " + trunkTop + ", " + width12 + " across, roots " + rootReach + ", canopy " + leafReach + ", " + leaves + " leaves ("
                     + gold + " gold, " + persistent + " persistent), " + vines + " vines, " + cells + " cells" + firstDisconnected;
         }
+    }
+
+    /** The trees the lands pack grows from features, each rolled {@link #ROLLS} times. */
+    private static final String[] TREES = {"elder", "young_elder", "lumen", "small_lumen", "glassbark", "tall_glassbark", "weepwood", "great_weepwood", "bluepine", "giant_bluepine"};
+    private static final int ROLLS = 6;
+
+    private static boolean treeBlock(BlockState s) {
+        return s.is(BlockTags.LOGS) || s.is(BlockTags.LEAVES);
+    }
+
+    /**
+     * Logs and leaves in a box that no face-to-face path of logs and leaves takes to something solid: {@code [blocks, groups]},
+     * what a player would see floating.
+     */
+    public static int[] loose(ServerLevel level, BoundingBox box) {
+        int sx = box.getXSpan(), sy = box.getYSpan(), sz = box.getZSpan();
+        byte[] c = new byte[sx * sy * sz]; // 1 a tree block, 2 reached
+        int[] queue = new int[c.length];
+        int tail = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int y = 0; y < sy; y++) {
+            for (int x = 0; x < sx; x++) {
+                for (int z = 0; z < sz; z++) {
+                    BlockState s = level.getBlockState(m.set(box.minX() + x, box.minY() + y, box.minZ() + z));
+                    if (s.isAir() || !treeBlock(s)) continue;
+                    int i = ((y * sx) + x) * sz + z;
+                    BlockState below = level.getBlockState(m.move(0, -1, 0));
+                    if (!below.isAir() && !treeBlock(below) && !below.canBeReplaced()) {
+                        c[i] = 2;
+                        queue[tail++] = i;
+                    } else c[i] = 1;
+                }
+            }
+        }
+        int[] step = {1, -1, sz, -sz, sx * sz, -sx * sz};
+        for (int head = 0; head < tail; head++) {
+            for (int k = 0; k < 6; k++) {
+                int j = queue[head] + step[k];
+                if (j >= 0 && j < c.length && adjacent(queue[head], j, sx, sz, k) && c[j] == 1) {
+                    c[j] = 2;
+                    queue[tail++] = j;
+                }
+            }
+        }
+        int blocks = 0, groups = 0;
+        for (int i = 0; i < c.length; i++) {
+            if (c[i] != 1) continue;
+            groups++;
+            c[i] = 3;
+            int head = tail = 0;
+            queue[tail++] = i;
+            while (head < tail) {
+                int at = queue[head++];
+                blocks++;
+                for (int k = 0; k < 6; k++) {
+                    int j = at + step[k];
+                    if (j >= 0 && j < c.length && adjacent(at, j, sx, sz, k) && c[j] == 1) {
+                        c[j] = 3;
+                        queue[tail++] = j;
+                    }
+                }
+            }
+        }
+        return new int[]{blocks, groups};
+    }
+
+    /** A step along z or x that stayed in its row (an index step can wrap to the next row at the box's side). */
+    private static boolean adjacent(int i, int j, int sx, int sz, int k) {
+        if (k < 2) return i / sz == j / sz;
+        if (k < 4) return i / (sx * sz) == j / (sx * sz);
+        return true;
+    }
+
+    static void rollTrees(net.minecraft.gametest.framework.GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos origin = h.absolutePos(new BlockPos(0, 2, 0)).offset(7600, 0, 6000);
+        int cx0 = origin.getX() >> 4, cz0 = origin.getZ() >> 4;
+        for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, true);
+        for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) level.getChunk(cx0 + dx, cz0 + dz);
+        ground(level, origin, 26, false);
+        var features = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.FEATURE);
+        var generator = level.getChunkSource().getGenerator();
+        BoundingBox box = new BoundingBox(origin.getX() - 24, origin.getY() - 1, origin.getZ() - 24, origin.getX() + 24, origin.getY() + 70, origin.getZ() + 24);
+        StringBuilder log = new StringBuilder();
+        int blocks = 0, groups = 0, grown = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (String id : TREES) {
+            var feature = features.getOrThrow(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.FEATURE, Awaken.id("lands/" + id)));
+            int b = 0, g = 0, n = 0;
+            for (int roll = 0; roll < ROLLS; roll++) {
+                if (feature.value().place(level, generator, net.minecraft.util.RandomSource.create(id.hashCode() * 31L + roll), origin)) n++;
+                int[] l = loose(level, box);
+                b += l[0];
+                g += l[1];
+                for (int x = box.minX(); x <= box.maxX(); x++) {
+                    for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                        for (int y = origin.getY(); y <= box.maxY(); y++) {
+                            if (!level.getBlockState(m.set(x, y, z)).isAir()) level.setBlock(m, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2 | 16);
+                        }
+                    }
+                }
+            }
+            log.append(String.format(" %s %d/%d grew, %d loose in %d groups;", id, n, ROLLS, b, g));
+            blocks += b;
+            groups += g;
+            grown += n;
+        }
+        Awaken.LOG.info("[terrain] trees whole: {} trees,{}", grown, log);
+        h.assertTrue(grown >= TREES.length * ROLLS / 2, "most rolls grew a tree: " + log);
+        h.assertTrue(blocks == 0, "every log and leaf joins its trunk:" + log);
+        // the hero trees' own shapes, many seeds
+        int seeds = 40, bad = 0;
+        for (HeroTree tree : HeroTree.values()) {
+            for (long seed = 1; seed <= seeds; seed++) {
+                Shape s = shape(tree.build(seed * 7_000_037L));
+                if (s.disconnected != 0 || s.loose != 0) {
+                    bad++;
+                    Awaken.LOG.warn("[terrain] {} seed {}: {} not joined, {} loose{}", tree, seed * 7_000_037L, s.disconnected, s.loose, s.firstDisconnected);
+                }
+            }
+        }
+        h.assertTrue(bad == 0, bad + " of " + seeds * 3 + " hero blueprints have a part not joined to the ground");
+        for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, false);
+        h.succeed();
     }
 
     static Shape shape(Blueprint bp) {
