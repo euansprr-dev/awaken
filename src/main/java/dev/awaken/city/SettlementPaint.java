@@ -208,9 +208,14 @@ public final class SettlementPaint {
     private static void spare(CityBuffer buf, Layout l, dev.awaken.terrain.api.HeroTrees.Cells keep) {
         for (int x = buf.px0; x < buf.px0 + buf.w; x++) {
             for (int z = buf.pz0; z < buf.pz0 + buf.d; z++) {
+                boolean any = false;
                 for (int ry = CityBuffer.YMIN; ry <= CityBuffer.YMAX; ry++) {
-                    if (buf.get(x, ry, z) != null && keep.at(x + l.originX(), l.baseY() + ry, z + l.originZ())) buf.set(x, ry, z, null);
+                    if (!keep.at(x + l.originX(), l.baseY() + ry, z + l.originZ())) continue;
+                    any = true;
+                    if (buf.get(x, ry, z) != null) buf.set(x, ry, z, null);
                 }
+                // the plate and the bank are filled column by column after the cells, and would bury the foot of the tree
+                if (any) buf.noFill(x, z);
             }
         }
     }

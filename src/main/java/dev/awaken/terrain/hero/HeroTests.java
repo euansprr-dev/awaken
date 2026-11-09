@@ -375,7 +375,10 @@ public final class HeroTests {
         for (HeroTree tree : HeroTree.values()) {
             for (long seed = 1; seed <= seeds; seed++) {
                 Shape s = shape(tree.build(seed * 7_000_037L));
-                if (s.disconnected != 0 || s.loose != 0) bad++;
+                if (s.disconnected != 0 || s.loose != 0) {
+                    bad++;
+                    Awaken.LOG.warn("[terrain] {} seed {}: {} not joined, {} loose{}", tree, seed * 7_000_037L, s.disconnected, s.loose, s.firstDisconnected);
+                }
             }
         }
         h.assertTrue(bad == 0, bad + " of " + seeds * 3 + " hero blueprints have a part not joined to the ground");
