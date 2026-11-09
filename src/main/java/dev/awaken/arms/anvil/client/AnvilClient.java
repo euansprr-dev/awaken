@@ -220,8 +220,10 @@ public final class AnvilClient {
     /** A sound the smith's own client plays the moment they act (the server plays it to everyone else). */
     /** A sound that can be stopped: what a held press starts and letting go ends (the colours, the pour). */
     static net.minecraft.client.resources.sounds.SoundInstance held(Vec3 at, SoundEvent sound, float volume, float pitch) {
-        var it = new net.minecraft.client.resources.sounds.SimpleSoundInstance(sound, SoundSource.BLOCKS, volume, pitch,
-                net.minecraft.client.resources.sounds.SoundInstance.createUnseededRandom(), at.x, at.y, at.z);
+        // looped: the game's fire is shorter than a long press, and letting go stops it either way
+        var it = new net.minecraft.client.resources.sounds.SimpleSoundInstance(sound.location(), SoundSource.BLOCKS, volume, pitch,
+                net.minecraft.client.resources.sounds.SoundInstance.createUnseededRandom(), true, 0,
+                net.minecraft.client.resources.sounds.SoundInstance.Attenuation.LINEAR, at.x, at.y, at.z, false);
         Minecraft.getInstance().getSoundManager().play(it);
         return it;
     }

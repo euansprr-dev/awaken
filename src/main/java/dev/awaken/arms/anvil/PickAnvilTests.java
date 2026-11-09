@@ -551,8 +551,9 @@ final class PickAnvilTests {
             for (String e : events) {
                 h.assertTrue(root.has(e), "no sound entry for " + e);
                 for (var v : root.getAsJsonObject(e).getAsJsonArray("sounds")) {
-                    String name = v.getAsJsonObject().get("name").getAsString().substring("awaken:".length());
-                    h.assertTrue(Awaken.class.getResource("/assets/awaken/sounds/" + name + ".ogg") != null, "missing file for " + name);
+                    // the game's own recordings, by name (SPEC §49.10): no file of ours, and none of Mojang's in the jar
+                    String name = v.getAsJsonObject().get("name").getAsString();
+                    h.assertTrue(name.startsWith("minecraft:"), e + " should name one of the game's sounds: " + name);
                 }
             }
         } catch (java.io.IOException e) {

@@ -1,324 +1,520 @@
 {
-  "pick.strike_delver": {
-    "subtitle": "subtitles.awaken.pick.strike_delver",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_strike_delver_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_delver_1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_delver_2",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_delver_3",
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "pick.strike_breaker": {
-    "subtitle": "subtitles.awaken.pick.strike_breaker",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_strike_breaker_0",
-        "attenuation_distance": 18
-      },
-      {
-        "name": "awaken:pick/pick_strike_breaker_1",
-        "attenuation_distance": 18
-      },
-      {
-        "name": "awaken:pick/pick_strike_breaker_2",
-        "attenuation_distance": 18
-      },
-      {
-        "name": "awaken:pick/pick_strike_breaker_3",
-        "attenuation_distance": 18
-      }
-    ]
-  },
-  "pick.strike_mattock": {
-    "subtitle": "subtitles.awaken.pick.strike_mattock",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_strike_mattock_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_mattock_1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_mattock_2",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_mattock_3",
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "pick.strike_sounder": {
-    "subtitle": "subtitles.awaken.pick.strike_sounder",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_strike_sounder_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_sounder_1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_sounder_2",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_strike_sounder_3",
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "pick.strike_earth": {
-    "subtitle": "subtitles.awaken.pick.strike_earth",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_strike_earth_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/pick_strike_earth_1",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/pick_strike_earth_2",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/pick_strike_earth_3",
-        "attenuation_distance": 12
-      }
-    ]
-  },
-  "pick.strike_wood": {
-    "subtitle": "subtitles.awaken.pick.strike_wood",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_strike_wood_0",
-        "attenuation_distance": 14
-      },
-      {
-        "name": "awaken:pick/pick_strike_wood_1",
-        "attenuation_distance": 14
-      },
-      {
-        "name": "awaken:pick/pick_strike_wood_2",
-        "attenuation_distance": 14
-      }
-    ]
-  },
-  "pick.strike_blunt": {
-    "subtitle": "subtitles.awaken.pick.strike_blunt",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_strike_blunt_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/pick_strike_blunt_1",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/pick_strike_blunt_2",
-        "attenuation_distance": 12
-      }
-    ]
-  },
-  "pick.sounding_tap": {
-    "subtitle": "subtitles.awaken.pick.sounding_tap",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_sounding_tap_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_sounding_tap_1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/pick_sounding_tap_2",
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "pick.sounding_hollow": {
-    "subtitle": "subtitles.awaken.pick.sounding_hollow",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_sounding_hollow_0",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:pick/pick_sounding_hollow_1",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:pick/pick_sounding_hollow_2",
-        "attenuation_distance": 24
-      },
-      {
-        "name": "awaken:pick/pick_sounding_hollow_3",
-        "attenuation_distance": 24
-      }
-    ]
-  },
-  "pick.mattock_toss": {
-    "subtitle": "subtitles.awaken.pick.mattock_toss",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_mattock_toss_0",
-        "attenuation_distance": 8
-      },
-      {
-        "name": "awaken:pick/pick_mattock_toss_1",
-        "attenuation_distance": 8
-      },
-      {
-        "name": "awaken:pick/pick_mattock_toss_2",
-        "attenuation_distance": 8
-      }
-    ]
-  },
-  "pick.mattock_catch": {
-    "subtitle": "subtitles.awaken.pick.mattock_catch",
-    "sounds": [
-      {
-        "name": "awaken:pick/pick_mattock_catch_0",
-        "attenuation_distance": 8
-      },
-      {
-        "name": "awaken:pick/pick_mattock_catch_1",
-        "attenuation_distance": 8
-      },
-      {
-        "name": "awaken:pick/pick_mattock_catch_2",
-        "attenuation_distance": 8
-      }
-    ]
-  },
-  "anvil.eye": {
-    "subtitle": "subtitles.awaken.anvil.eye",
-    "sounds": [
-      {
-        "name": "awaken:pick/anvil_eye_0",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:pick/anvil_eye_1",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:pick/anvil_eye_2",
-        "attenuation_distance": 20
-      }
-    ]
-  },
-  "anvil.tip": {
-    "subtitle": "subtitles.awaken.anvil.tip",
-    "sounds": [
-      {
-        "name": "awaken:pick/anvil_tip_0",
-        "attenuation_distance": 18
-      },
-      {
-        "name": "awaken:pick/anvil_tip_1",
-        "attenuation_distance": 18
-      },
-      {
-        "name": "awaken:pick/anvil_tip_2",
-        "attenuation_distance": 18
-      }
-    ]
-  },
-  "anvil.hang": {
-    "subtitle": "subtitles.awaken.anvil.hang",
-    "sounds": [
-      {
-        "name": "awaken:pick/anvil_hang_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/anvil_hang_1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/anvil_hang_2",
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "anvil.tend": {
-    "subtitle": "subtitles.awaken.anvil.tend",
-    "sounds": [
-      {
-        "name": "awaken:pick/anvil_tend_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/anvil_tend_1",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/anvil_tend_2",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/anvil_tend_3",
-        "attenuation_distance": 12
-      }
-    ]
-  },
-  "anvil.thread": {
-    "subtitle": "subtitles.awaken.anvil.thread",
-    "sounds": [
-      {
-        "name": "awaken:pick/anvil_thread_0",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/anvil_thread_1",
-        "attenuation_distance": 12
-      },
-      {
-        "name": "awaken:pick/anvil_thread_2",
-        "attenuation_distance": 12
-      }
-    ]
-  },
-  "anvil.pour": {
-    "subtitle": "subtitles.awaken.anvil.pour",
-    "sounds": [
-      {
-        "name": "awaken:pick/anvil_pour_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:pick/anvil_pour_1",
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "anvil.colours": {
-    "subtitle": "subtitles.awaken.anvil.colours",
-    "sounds": [
-      {
-        "name": "awaken:pick/anvil_colours_0",
-        "attenuation_distance": 12
-      }
-    ]
-  }
+ "anvil.colours": {
+  "subtitle": "subtitles.awaken.anvil.colours",
+  "sounds": [
+   {
+    "name": "minecraft:fire/fire",
+    "attenuation_distance": 12
+   }
+  ]
+ },
+ "anvil.eye": {
+  "subtitle": "subtitles.awaken.anvil.eye",
+  "sounds": [
+   {
+    "name": "minecraft:block/smithing_table/smithing_table1",
+    "volume": 0.66,
+    "pitch": 0.8,
+    "attenuation_distance": 20
+   },
+   {
+    "name": "minecraft:block/smithing_table/smithing_table2",
+    "volume": 0.66,
+    "pitch": 0.8,
+    "attenuation_distance": 20
+   },
+   {
+    "name": "minecraft:block/smithing_table/smithing_table3",
+    "volume": 0.66,
+    "pitch": 0.8,
+    "attenuation_distance": 20
+   }
+  ]
+ },
+ "anvil.hang": {
+  "subtitle": "subtitles.awaken.anvil.hang",
+  "sounds": [
+   {
+    "name": "minecraft:item/shield/block1",
+    "volume": 0.23,
+    "pitch": 0.8,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:item/shield/block2",
+    "volume": 0.23,
+    "pitch": 0.8,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:item/shield/block3",
+    "volume": 0.23,
+    "pitch": 0.8,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:item/shield/block4",
+    "volume": 0.23,
+    "pitch": 0.8,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:item/shield/block5",
+    "volume": 0.23,
+    "pitch": 0.8,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "anvil.pour": {
+  "subtitle": "subtitles.awaken.anvil.pour",
+  "sounds": [
+   {
+    "name": "minecraft:liquid/lava",
+    "volume": 0.51,
+    "pitch": 1.1,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "anvil.tend": {
+  "subtitle": "subtitles.awaken.anvil.tend",
+  "sounds": [
+   {
+    "name": "minecraft:item/axe/scrape1",
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:item/axe/scrape2",
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:item/axe/scrape3",
+    "attenuation_distance": 12
+   }
+  ]
+ },
+ "anvil.thread": {
+  "subtitle": "subtitles.awaken.anvil.thread",
+  "sounds": [
+   {
+    "name": "minecraft:block/amethyst/place1",
+    "volume": 0.51,
+    "pitch": 1.3,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:block/amethyst/place2",
+    "volume": 0.51,
+    "pitch": 1.3,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:block/amethyst/place3",
+    "volume": 0.51,
+    "pitch": 1.3,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:block/amethyst/place4",
+    "volume": 0.51,
+    "pitch": 1.3,
+    "attenuation_distance": 12
+   }
+  ]
+ },
+ "anvil.tip": {
+  "subtitle": "subtitles.awaken.anvil.tip",
+  "sounds": [
+   {
+    "name": "minecraft:random/anvil_use",
+    "volume": 0.23,
+    "pitch": 1.4,
+    "attenuation_distance": 18
+   }
+  ]
+ },
+ "pick.mattock_catch": {
+  "subtitle": "subtitles.awaken.pick.mattock_catch",
+  "sounds": [
+   {
+    "name": "minecraft:item/armor/equip_leather1",
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:item/armor/equip_leather2",
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:item/armor/equip_leather3",
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:item/armor/equip_leather4",
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:item/armor/equip_leather5",
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:item/armor/equip_leather6",
+    "attenuation_distance": 8
+   }
+  ]
+ },
+ "pick.mattock_toss": {
+  "subtitle": "subtitles.awaken.pick.mattock_toss",
+  "sounds": [
+   {
+    "name": "minecraft:entity/player/attack/sweep1",
+    "volume": 0.12,
+    "pitch": 1.5,
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:entity/player/attack/sweep2",
+    "volume": 0.12,
+    "pitch": 1.5,
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:entity/player/attack/sweep3",
+    "volume": 0.12,
+    "pitch": 1.5,
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:entity/player/attack/sweep4",
+    "volume": 0.12,
+    "pitch": 1.5,
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:entity/player/attack/sweep5",
+    "volume": 0.12,
+    "pitch": 1.5,
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:entity/player/attack/sweep6",
+    "volume": 0.12,
+    "pitch": 1.5,
+    "attenuation_distance": 8
+   },
+   {
+    "name": "minecraft:entity/player/attack/sweep7",
+    "volume": 0.12,
+    "pitch": 1.5,
+    "attenuation_distance": 8
+   }
+  ]
+ },
+ "pick.sounding_hollow": {
+  "subtitle": "subtitles.awaken.pick.sounding_hollow",
+  "sounds": [
+   {
+    "name": "minecraft:block/decorated_pot/insert1",
+    "volume": 0.24,
+    "pitch": 0.75,
+    "attenuation_distance": 24
+   },
+   {
+    "name": "minecraft:block/decorated_pot/insert2",
+    "volume": 0.24,
+    "pitch": 0.75,
+    "attenuation_distance": 24
+   },
+   {
+    "name": "minecraft:block/decorated_pot/insert3",
+    "volume": 0.24,
+    "pitch": 0.75,
+    "attenuation_distance": 24
+   },
+   {
+    "name": "minecraft:block/decorated_pot/insert4",
+    "volume": 0.24,
+    "pitch": 0.75,
+    "attenuation_distance": 24
+   }
+  ]
+ },
+ "pick.sounding_tap": {
+  "subtitle": "subtitles.awaken.pick.sounding_tap",
+  "sounds": [
+   {
+    "name": "minecraft:step/stone1",
+    "volume": 0.82,
+    "pitch": 1.2,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:step/stone2",
+    "volume": 0.82,
+    "pitch": 1.2,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:step/stone3",
+    "volume": 0.82,
+    "pitch": 1.2,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:step/stone4",
+    "volume": 0.82,
+    "pitch": 1.2,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:step/stone5",
+    "volume": 0.82,
+    "pitch": 1.2,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:step/stone6",
+    "volume": 0.82,
+    "pitch": 1.2,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "pick.strike_blunt": {
+  "subtitle": "subtitles.awaken.pick.strike_blunt",
+  "sounds": [
+   {
+    "name": "minecraft:block/packed_mud/step1",
+    "volume": 0.06,
+    "pitch": 0.85,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:block/packed_mud/step2",
+    "volume": 0.06,
+    "pitch": 0.85,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:block/packed_mud/step3",
+    "volume": 0.06,
+    "pitch": 0.85,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:block/packed_mud/step4",
+    "volume": 0.06,
+    "pitch": 0.85,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:block/packed_mud/step5",
+    "volume": 0.06,
+    "pitch": 0.85,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:block/packed_mud/step6",
+    "volume": 0.06,
+    "pitch": 0.85,
+    "attenuation_distance": 12
+   }
+  ]
+ },
+ "pick.strike_breaker": {
+  "subtitle": "subtitles.awaken.pick.strike_breaker",
+  "sounds": [
+   {
+    "name": "minecraft:block/deepslate/place1",
+    "volume": 0.24,
+    "pitch": 0.8,
+    "attenuation_distance": 18
+   },
+   {
+    "name": "minecraft:block/deepslate/place2",
+    "volume": 0.24,
+    "pitch": 0.8,
+    "attenuation_distance": 18
+   },
+   {
+    "name": "minecraft:block/deepslate/place3",
+    "volume": 0.24,
+    "pitch": 0.8,
+    "attenuation_distance": 18
+   },
+   {
+    "name": "minecraft:block/deepslate/place4",
+    "volume": 0.24,
+    "pitch": 0.8,
+    "attenuation_distance": 18
+   },
+   {
+    "name": "minecraft:block/deepslate/place5",
+    "volume": 0.24,
+    "pitch": 0.8,
+    "attenuation_distance": 18
+   },
+   {
+    "name": "minecraft:block/deepslate/place6",
+    "volume": 0.24,
+    "pitch": 0.8,
+    "attenuation_distance": 18
+   }
+  ]
+ },
+ "pick.strike_delver": {
+  "subtitle": "subtitles.awaken.pick.strike_delver",
+  "sounds": [
+   {
+    "name": "minecraft:dig/stone1",
+    "volume": 0.16,
+    "pitch": 1.15,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:dig/stone2",
+    "volume": 0.16,
+    "pitch": 1.15,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:dig/stone3",
+    "volume": 0.16,
+    "pitch": 1.15,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:dig/stone4",
+    "volume": 0.16,
+    "pitch": 1.15,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "pick.strike_earth": {
+  "subtitle": "subtitles.awaken.pick.strike_earth",
+  "sounds": [
+   {
+    "name": "minecraft:item/hoe/till1",
+    "volume": 0.43,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:item/hoe/till2",
+    "volume": 0.43,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:item/hoe/till3",
+    "volume": 0.43,
+    "attenuation_distance": 12
+   },
+   {
+    "name": "minecraft:item/hoe/till4",
+    "volume": 0.43,
+    "attenuation_distance": 12
+   }
+  ]
+ },
+ "pick.strike_mattock": {
+  "subtitle": "subtitles.awaken.pick.strike_mattock",
+  "sounds": [
+   {
+    "name": "minecraft:block/ancient_debris/break1",
+    "volume": 0.26,
+    "pitch": 1.05,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/ancient_debris/break2",
+    "volume": 0.26,
+    "pitch": 1.05,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/ancient_debris/break3",
+    "volume": 0.26,
+    "pitch": 1.05,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/ancient_debris/break4",
+    "volume": 0.26,
+    "pitch": 1.05,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/ancient_debris/break5",
+    "volume": 0.26,
+    "pitch": 1.05,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "pick.strike_sounder": {
+  "subtitle": "subtitles.awaken.pick.strike_sounder",
+  "sounds": [
+   {
+    "name": "minecraft:block/calcite/step1",
+    "volume": 0.36,
+    "pitch": 1.25,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/calcite/step2",
+    "volume": 0.36,
+    "pitch": 1.25,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/calcite/step3",
+    "volume": 0.36,
+    "pitch": 1.25,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/calcite/step4",
+    "volume": 0.36,
+    "pitch": 1.25,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/calcite/step5",
+    "volume": 0.36,
+    "pitch": 1.25,
+    "attenuation_distance": 16
+   },
+   {
+    "name": "minecraft:block/calcite/step6",
+    "volume": 0.36,
+    "pitch": 1.25,
+    "attenuation_distance": 16
+   }
+  ]
+ },
+ "pick.strike_wood": {
+  "subtitle": "subtitles.awaken.pick.strike_wood",
+  "sounds": [
+   {
+    "name": "minecraft:item/axe/strip1",
+    "volume": 0.36,
+    "attenuation_distance": 14
+   },
+   {
+    "name": "minecraft:item/axe/strip2",
+    "volume": 0.36,
+    "attenuation_distance": 14
+   },
+   {
+    "name": "minecraft:item/axe/strip3",
+    "volume": 0.36,
+    "attenuation_distance": 14
+   },
+   {
+    "name": "minecraft:item/axe/strip4",
+    "volume": 0.36,
+    "attenuation_distance": 14
+   }
+  ]
+ }
 }
