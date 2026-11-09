@@ -55,7 +55,7 @@ public final class RealmLive {
         if (!st.built) {
             Land.Site s = plan.land().site(Land.SiteKind.PORTAL);
             BlockPos at = Realms.world(g.realm.orElseThrow().cell(), s.x(), s.y(), s.z());
-            ((GateBlocks.Portal) GatesRegistry.EXIT.get()).place(level, at, Direction.Axis.Z, 3, 3, g.plan.rank().ordinal());
+            ((GateBlocks.Portal) GatesRegistry.EXIT.get()).place(level, at, plan.land().portalAxis(), 3, 3, g.plan.rank().ordinal());
             st.built = true;
             data.setDirty();
         }
@@ -136,7 +136,9 @@ public final class RealmLive {
         List<Land.Site> stones = plan.land().sites(Land.SiteKind.WAYSTONE);
         if (index < 0 || index >= stones.size() || !st.waystonesFound.contains(index)) return;
         Land.Site s = stones.get(index);
-        BlockPos at = Realms.world(g.realm.orElseThrow().cell(), s.x() + 2, plan.land().ground(s.x() + 2, s.z() + 2) + 2, s.z() + 2);
+        int stand = plan.land().ground(s.x() + 2, s.z() + 2) + 2;
+        if (Math.abs(stand - s.y()) > 6) stand = s.y(); // a stone high up over a lower floor: the ground under it isn't where you land
+        BlockPos at = Realms.world(g.realm.orElseThrow().cell(), s.x() + 2, stand, s.z() + 2);
         level.getChunk(at); // the land there is made before you arrive
         p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
         level.playSound(null, at, GatesRegistry.SND_SHRINE.get(), SoundSource.BLOCKS, 1F, 0.8F);
@@ -156,6 +158,7 @@ public final class RealmLive {
         Land land = plan.land();
         FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
         heart(server, level, g, plan, ref, st, data, f);
+        RealmToll.tick(level, g, plan, ref, st);
         for (Land.Site s : land.sites()) {
             int dx = s.x() - lx, dz = s.z() - lz, d2 = dx * dx + dz * dz;
             BlockPos at = Realms.world(ref.cell(), s.x(), s.y(), s.z());
@@ -190,7 +193,7 @@ public final class RealmLive {
             anyInside |= in;
             if (!in && Math.hypot(x - lord.x(), z - lord.z()) < LORD_WAKE + 24) anyAtDoor = true;
             if (!st.heartOpen && !in && Math.hypot(x - lord.x(), z - lord.z()) < LORD_WAKE + 14 && st.woken.add("door_line")) {
-                Signal.toast(p, Component.literal("The wax over this door is as thick as a wall. Something out in the valley is holding it shut."));
+                if (land.heartClosedLine() != null) Signal.toast(p, Component.literal(land.heartClosedLine()));
                 data.setDirty();
             }
         }

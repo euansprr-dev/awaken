@@ -20488,3 +20488,20 @@ A new land, in order: the painting approved; materials (a copy of `tools/art/spe
 `ThemeBlocks` with the same suffixes, the tag `blocks_motion_no_leaves`); `data/awaken/realms/<id>.json` and its biomes (their `sky_color`, `fog_color`
 and `grass_color` are also what the preview shades with); a `KitLand` subclass (land shape, one great build, `build()` placing the rest) entered in
 `LandPrograms`; a tour copied from `realm-amber.txt`; then preview, fix, preview, and only then a walk.
+
+
+**The Hour Crypt (gate 2 of 88, E and D, Dungeon, Bell Crypt).** One great drum with a bell the size of a house hung over a sunk floor; the
+stair head and nave run north, an Ossuary east, a flooded Sunk Aisle west, a bell tower south, the Candle Keepers' cloister off the nave.
+Every wall is one function (`niche`) for straight and round faces. The law is `tolls` (`RealmToll`): every 1,200 ticks the great bell rings
+and all six iron doors drop for 180 ticks; a door cell with something alive in it stays open. Land hooks added for it: `indoors()`,
+`portalAxis()`, `heartClosedLine()`. The Lord's floor is lit by low hidden light (a 7-block grid of level 13 at floor+4) because candles round
+the rim alone leave the middle black, and a fight has to be read.
+
+**One family per theme, not per gate.** Bell Crypt's lands all build in Knell (`tools/art/specs/realm_knell.py`, 22 blocks and 16 cuts), Hive's
+in Amber, so 88 lands don't mean 2,700 blocks. Under a blue moon a green patina has to be painted yellow-green or it reads as cyan.
+
+**More checks.** `WalkCheck.unreachable(land)`: breadth-first from the Mouth with `heart_open` applied (step up 1, drop up to 4, 2 cells of
+headroom), every site within 4 blocks of a walked cell. `FloatCheck` now knows things meant to float on water (`crypt_lily_candle`,
+`market_boat_lamp`: fail with no water under them), and a small stray's failure names the block and what it stands on. Tests:
+`realm_hour_walks_to_everything`, `realm_hour_nothing_floats`, `realm_hour_doors_toll`. The preview lights an `indoors()` land by flood fill on
+the volume (warm candle, cool moon) and draws candles as their real sticks. Where two halls cross, neither draws its wall across the other.

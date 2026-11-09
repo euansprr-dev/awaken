@@ -23,6 +23,11 @@ public final class RealmTests {
             new Blueprint.Life(List.of("g"), List.of("p"), List.of("a")), new Blueprint.Folk("wax_folk", 1), new Blueprint.Law("updrafts", Map.of()),
             new Blueprint.Sites(3, 0, 24), new Blueprint.Heart("hive_regent", "mother_comb"), List.of("late_harvest"), "");
 
+    private static Land hour(long seed) {
+        return new dev.awaken.gates.realms.land.HourCrypt(new Land.Ctx(new Blueprint(1, "t", "dungeon", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:hour_crypt", 0, Map.of()),
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:hour_crypt", Rank.E, seed, 1));
+    }
+
     private static Land amber(long seed) {
         return new AmberReach(new Land.Ctx(AMBER, "awaken:amber_reach", Rank.E, seed, 1));
     }
@@ -90,6 +95,27 @@ public final class RealmTests {
                 if (land.sites(Land.SiteKind.WARDEN).size() < 3) h.fail("seed " + seed + ": too few Wardens");
                 if (land.sites(Land.SiteKind.FIND).size() < 12) h.fail("seed " + seed + ": too few finds");
             }
+            h.succeed();
+        });
+        AwakenTests.register("realm_hour_walks_to_everything", 2400, h -> {
+            for (long seed : new long[]{1, 2}) {
+                List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(hour(seed));
+                if (!bad.isEmpty()) h.fail("seed " + seed + ": can't reach " + bad);
+            }
+            h.succeed();
+        });
+        AwakenTests.register("realm_hour_nothing_floats", 2400, h -> {
+            Land land = hour(1);
+            FloatCheck.Report r = FloatCheck.scan(land, -216, -216, 216, 216);
+            if (!r.clean()) h.fail(r.summary());
+            h.succeed();
+        });
+        AwakenTests.register("realm_hour_doors_toll", 200, h -> {
+            Land land = hour(1);
+            List<Land.Edit> shut = land.change("toll_shut"), open = land.change("toll_open");
+            if (shut.isEmpty() || shut.size() != open.size()) h.fail("the doors don't have one way down and one way up: " + shut.size() + ", " + open.size());
+            for (Land.Edit e : open) if (!e.state().isAir()) h.fail("a door lifted into " + e.state());
+            if (land.change("heart_open").isEmpty() || land.change("heart_shut").isEmpty()) h.fail("the iron round the Lord's floor doesn't move");
             h.succeed();
         });
         AwakenTests.register("realm_amber_all_reachable", 800, h -> {

@@ -21,7 +21,7 @@ only how it looks. No two gates in a wave share a form and a rule.
 | # | Status | Gate | Form | Theme | Rule | The great thing | Lord's place |
 |---|---|---|---|---|---|---|---|
 | 1 | done | Amber Reach | Land | Hive | Warm air lifts you up the cliffs | A spired citadel at the valley's end | Comb-domed hall in the great spire |
-| 2 | next | The Hour Crypt | Dungeon | Bell Crypt | A bell tolls every minute; doors stand open only between tolls | A bell the size of a house, hung over the whole crypt | Under the bell, on the floor it shakes |
+| 2 | done | The Hour Crypt | Dungeon | Bell Crypt | A bell tolls every minute; doors stand open only between tolls | A bell the size of a house, hung over the whole crypt | Under the bell, on the floor it shakes |
 | 3 | next | The Vine Seat | Stronghold | Overgrown Temple | Roots grow over cleared paths behind you unless you keep moving | A stepped temple split by one enormous tree | Root bowl at the tree's foot |
 | 4 | | Glowroot Hollow | Deep | Fungal Hollow | Spore clouds carry you across gaps; breathing them slows you | A cavern with a mushroom as tall as a tower | Ring over a glowing drop |
 | 5 | | Cinder Stair | Climb | Ember Mines | The lava rises while you're on the way up | A mine dug straight up a dead volcano | Broken summit in the crater |

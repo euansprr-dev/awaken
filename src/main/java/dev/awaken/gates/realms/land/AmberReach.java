@@ -172,6 +172,11 @@ public final class AmberReach extends KitLand<AmberReach.M> {
         return 1024;
     }
 
+    @Override
+    public String heartClosedLine() {
+        return "The wax over this door is as thick as a wall. Something out in the valley is holding it shut.";
+    }
+
     /** The valley's wall is the edge: past its foot the wind pushes you back down into the land. */
     @Override
     public double edge(int x, int z) {

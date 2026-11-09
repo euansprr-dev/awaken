@@ -73,6 +73,21 @@ public abstract class Land {
     /** Draws the chunk this volume covers, every pass, in order. */
     public abstract void paint(V v);
 
+    /** Whether this land is a place under a roof: no sun reaches it, what light there is comes from its candles and a few cracks. */
+    public boolean indoors() {
+        return false;
+    }
+
+    /** Which way the arch home runs: along Z (facing east and west) or along X. */
+    public net.minecraft.core.Direction.Axis portalAxis() {
+        return net.minecraft.core.Direction.Axis.Z;
+    }
+
+    /** What the System says the first time you stand at the Lord's closed door, or null to say nothing. */
+    public String heartClosedLine() {
+        return null;
+    }
+
     /** Which of the blueprint's biomes this point is. */
     public abstract int biome(int x, int y, int z);
 

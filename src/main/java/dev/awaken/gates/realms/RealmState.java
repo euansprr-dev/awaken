@@ -22,6 +22,10 @@ public final class RealmState {
     public boolean doorShut;
     /** How far the Lord's hall has changed in this fight: 0 not yet, then each stage in turn. */
     public int heartStage;
+    /** When the bell next tolls and when the doors lift again, in game time; not saved, a restart just starts the count over. */
+    public long tollAt, tollOpenAt;
+    /** Whether this gate's bell has rung once yet. */
+    public boolean tolled;
     /** How much honey the wax-folk have sold in this Realm: they only have so much to spare. */
     public int folkTrades;
 
