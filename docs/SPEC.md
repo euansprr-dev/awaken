@@ -8518,6 +8518,15 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   Registry's, Ilse's ember from her first line, the ritual, the furnace's lowered view, the Forge Song's and the anvil's,
   each with a deadline of its own. Binoculars, the map and combat cameras are not scenes and take no lock; the map only
   clears the latch (`InputLock.stop`) so you don't walk on behind it. Raw key reads respect the lock (`JetBoots`, a landing's roll).
+- **The camp's ground** (Euan, 9 Nov: "Isle appeared in a huge hole in the ground once"). `Scenes.campSite` takes the nearest
+  ground to the nominal spot, out to 160, that is dry, level, under open sky, walkable in a straight line from the road's end
+  (26 short of the spot) and seen from it, and at the height of the land round it: of 32 looks at 10, 18, 28 and 40 blocks in
+  eight directions, at most 8 may stand more than 3 above it or fall more than 5 below (`offLand`). A pit, ravine, basin or
+  cave mouth has land above it on most sides. All the land it reads must be finished chunks, which is also why nothing can
+  carve it afterwards: a chunk is finished only when its neighbours have been through features, and sinkholes and cave mouths
+  are structures built during that. With someone within 64 of the spot and nothing good enough, the dry ground that sits best
+  in its land, so Ilse is never missing. A camp founded before this and more than half surrounded by higher land (over 16 of
+  the 32) is moved once, the first time someone comes within 64: Ilse and her fire go, the old bedrolls stay in the hole.
 - **The far smoke is far only**: the column (`PulseFx.campfire`) fades out within 48 blocks of the fire (gone at 48,
   whole from 96), where vanilla's campfire smoke is the real thing. Drawn up close its puffs, up to 15 blocks across and
   110 up, read as a dark dome over the camp and a pale facet in the sky (Euan, 2026-10-26).
