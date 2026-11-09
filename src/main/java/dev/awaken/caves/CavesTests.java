@@ -106,6 +106,7 @@ final class CavesTests {
         AwakenTests.register("caves_region_rock", 2400, CavesTests::regionRock);
         AwakenTests.register("caves_wall_growth", 200, CavesTests::wallGrowth);
         AwakenTests.register("caves_heart_takes_the_rock", 400, CavesTests::heartTakesTheRock);
+        AwakenTests.register("caves_region_edge", 400, CavesTests::regionEdge);
         AwakenTests.register("caves_region_pieces", 2400, CavesTests::regionPieces);
     }
 
@@ -974,13 +975,41 @@ final class CavesTests {
         section.setBlockState(3, 3, 3, Blocks.COAL_ORE.defaultBlockState(), false);
         int[] tops = new int[256];
         Arrays.fill(tops, 100);
-        CaveSkinFeature.regionRock(chunk, cx, cz, tops, 100, (x, y, z) -> CaveRegion.OCHRE_DEEP);
+        CaveSkinFeature.regionRock(chunk, cx, cz, tops, 100, (x, y, z) -> CaveRegion.OCHRE_DEEP, 7L);
         h.assertTrue(section.getBlockState(8, 8, 8).getValue(LodeHeartBlock.HOST) == LodeHeartBlock.Host.OCHRE, "the heart is drawn in the region's rock");
         for (Direction d : Direction.values()) {
             h.assertTrue(section.getBlockState(8 + d.getStepX(), 8 + d.getStepY(), 8 + d.getStepZ()).is(CaveSkin.OCHRE_STONE.get()), "no pocket of stone round a heart, on its " + d + " side");
         }
         h.assertTrue(section.getBlockState(4, 3, 3).is(Blocks.STONE), "an ore without a twin keeps its pocket");
         h.assertTrue(section.getBlockState(12, 12, 12).is(CaveSkin.OCHRE_STONE.get()), "the rest becomes the region's rock");
+        h.succeed();
+    }
+
+    /** A region's edge wanders instead of running straight, stays near where the biome changes, and sculk over the edge becomes rock. */
+    private static void regionEdge(GameTestHelper h) {
+        Pair p = pair(h);
+        LevelHeightAccessor heights = LevelHeightAccessor.create(-64, 384);
+        ChunkPos pos = new ChunkPos(-40, -30);
+        ProtoChunk chunk = build(h.getLevel(), p.shaped(), p.random(h, STUDIO_SEEDS[0], true), pos, heights);
+        int cx = pos.getMinBlockX(), cz = pos.getMinBlockZ();
+        var section = chunk.getSection(chunk.getSectionIndex(0));
+        for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) section.setBlockState(x, y, z, Blocks.STONE.defaultBlockState(), false);
+        section.setBlockState(1, 8, 8, Blocks.SCULK.defaultBlockState(), false);
+        section.setBlockState(14, 8, 8, Blocks.SCULK.defaultBlockState(), false);
+        int[] tops = new int[256];
+        Arrays.fill(tops, 100);
+        CaveSkinFeature.regionRock(chunk, cx, cz, tops, 100, (x, y, z) -> x < cx + 8 ? CaveRegion.OCHRE_DEEP : null, 7L);
+        Set<Integer> edges = new HashSet<>();
+        for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) {
+            int last = -1;
+            for (int x = 0; x < 16; x++) if (section.getBlockState(x, y, z).is(CaveSkin.OCHRE_STONE.get())) last = x;
+            edges.add(last);
+            h.assertTrue(section.getBlockState(0, y, z).is(CaveSkin.OCHRE_STONE.get()), "the rock is whole well inside the region");
+            h.assertTrue(section.getBlockState(15, y, z).is(Blocks.STONE), "and untouched well outside it");
+        }
+        h.assertTrue(edges.size() >= 4, "the edge wanders instead of running straight: " + edges);
+        h.assertTrue(section.getBlockState(1, 8, 8).is(CaveSkin.OCHRE_STONE.get()), "sculk over the edge becomes the region's rock");
+        h.assertTrue(section.getBlockState(14, 8, 8).is(Blocks.SCULK), "sculk outside the region stays");
         h.succeed();
     }
 

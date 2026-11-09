@@ -16198,6 +16198,11 @@ way. Textures (`tools/art/specs/deep_skin.py`) go in with the skin's, after Euan
   round it as they were (within its section): it sits in a pocket of the stone it grew in, never on a background that isn't
   its own (a lode's heart has no pocket since §42.11). Lodes, Deepglass and the Hollows' veins are placed earlier and keep their
   own blocks the same way.
+- **A region's edge wanders** (Euan's playtest, 9 Nov: red rock ending in a hard line against the Deep Dark's sculk). Biomes come in
+  4-block cells, so region rock used to stop in straight steps. In a cell that touches another region or none, each block reads
+  the region at a point moved by noise, up to about **4** blocks across and **3** up or down, staying in its chunk; the two rocks
+  interlock over a band a few blocks wide. Sculk that has crept over the edge becomes the region's rock, and its veins stay as a
+  fringe on it. The Deep Dark keeps its own cells, ancient cities and all. Test `caves_region_edge`. New chunks only.
 - **The Rootways' growth**: **`glowcap`** (a cluster of teal mushrooms, light **5**, on a floor, open or by a wall, at
   **0.12** where a 3D field at 5 blocks passes **0.2**: in patches, about 2% of open floor, a teal point down the gallery;
   instant break, drops itself) and **`root_curtain`** (old roots hanging through a roof at **0.14** where a 2D field at 7

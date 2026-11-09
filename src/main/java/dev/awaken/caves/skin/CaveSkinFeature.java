@@ -183,7 +183,7 @@ public final class CaveSkinFeature implements Feature {
             wet[i] = field(seed, x, z, 12, 0x5EED);
             below[i] = c.get(x, minY - 1, z);
         }
-        if (regions != Regions.NONE) regionRock(chunk, cx, cz, tops, maxTop, regions);
+        if (regions != Regions.NONE) regionRock(chunk, cx, cz, tops, maxTop, regions, seed);
         Block crystal = crystal(chunk, cx, cz, maxTop + UNDER_GROUND);
         WallGrowth.Sites sites = regions != Regions.NONE ? new WallGrowth.Sites() : null;
         for (int si = 0; si < chunk.getSectionsCount(); si++) {
@@ -514,13 +514,15 @@ public final class CaveSkinFeature implements Feature {
      * The regions' rock: in every quart of the chunk a region holds (with its kit), more than {@link #REGION_UNDER} under
      * the ground, the host rock becomes the region's rock and an ore with a twin there becomes its twin. An ore without one
      * keeps the 26 cells round it as they were (within its section), so it sits in a pocket of the stone it grew in. A lode's
-     * heart needs no pocket: it's drawn in whatever rock it's in.
+     * heart needs no pocket: it's drawn in whatever rock it's in. Where a quart borders another region or none, each block asks
+     * at a point shifted by noise, so a region's edge wanders instead of stepping in straight 4-block lines, and sculk that
+     * has crept over the edge becomes the region's rock (SPEC §42.7).
      * Written straight to the sections: rock for rock, nothing the heightmaps or the light care about.
      */
     /** A section's states as read, one per worldgen thread (the rock rule reads each cell once). */
     private static final ThreadLocal<BlockState[]> SECTION = ThreadLocal.withInitial(() -> new BlockState[4096]);
 
-    public static int regionRock(ChunkAccess chunk, int cx, int cz, int[] tops, int maxTop, Regions regions) {
+    public static int regionRock(ChunkAccess chunk, int cx, int cz, int[] tops, int maxTop, Regions regions, long seed) {
         CaveRegion[] q = new CaveRegion[64];
         long[] keep = new long[64];
         BlockState[] states = SECTION.get();
@@ -560,18 +562,28 @@ public final class CaveSkinFeature implements Feature {
                 }
             }
             for (int k = 0; k < 64; k++) {
-                CaveRegion r = q[k];
-                if (r == null) continue;
-                CaveSkin.RegionKit kit = CaveSkin.kit(r);
-                BlockState rock = kit.rock().get().defaultBlockState();
+                boolean edge = regionEdge(q, k, regions, cx, cz, baseY);
+                if (q[k] == null && !edge) continue;
                 int x0 = (k & 3) * 4, z0 = (k >> 2 & 3) * 4, y0 = (k >> 4) * 4;
+                CaveRegion r = q[k];
+                CaveSkin.RegionKit kit = r != null ? CaveSkin.kit(r) : null;
+                BlockState rock = kit != null ? kit.rock().get().defaultBlockState() : null;
                 for (int y = y0; y < y0 + 4; y++) {
                     for (int z = z0; z < z0 + 4; z++) {
                         for (int x = x0; x < x0 + 4; x++) {
                             if (baseY + y >= tops[z << 4 | x] + UNDER_GROUND - REGION_UNDER) continue;
+                            if (edge) {
+                                CaveRegion here = ragged(regions, seed, cx + x, baseY + y, cz + z, cx, cz);
+                                if (here != r) {
+                                    r = here;
+                                    kit = r != null ? CaveSkin.kit(r) : null;
+                                    rock = kit != null ? kit.rock().get().defaultBlockState() : null;
+                                }
+                                if (kit == null) continue;
+                            }
                             BlockState s = read ? states[y << 8 | z << 4 | x] : section.getBlockState(x, y, z);
                             Block b = s.getBlock();
-                            if (host(b) || kit.deep() && b == Blocks.DEEPSLATE) {
+                            if (host(b) || kit.deep() && b == Blocks.DEEPSLATE || b == Blocks.SCULK) {
                                 int bit = y << 8 | z << 4 | x;
                                 if (shells && (keep[bit >> 6] & 1L << (bit & 63)) != 0) continue;
                                 section.setBlockState(x, y, z, rock, false);
@@ -594,6 +606,32 @@ public final class CaveSkinFeature implements Feature {
         }
         return changed;
     }
+
+    /** Does the quart at k touch a different region (or none) on any side? A neighbour in another chunk can't be read, so it doesn't count. */
+    private static boolean regionEdge(CaveRegion[] q, int k, Regions regions, int cx, int cz, int baseY) {
+        int qx = k & 3, qz = k >> 2 & 3, qy = k >> 4;
+        CaveRegion me = q[k];
+        if (qx > 0 && q[k - 1] != me || qx < 3 && q[k + 1] != me) return true;
+        if (qz > 0 && q[k - 4] != me || qz < 3 && q[k + 4] != me) return true;
+        if (qy > 0 && q[k - 16] != me || qy < 3 && q[k + 16] != me) return true;
+        int wx = cx + qx * 4, wz = cz + qz * 4;
+        if (qy == 0 && kitted(regions.at(wx, baseY - 4, wz)) != me) return true;
+        return qy == 3 && kitted(regions.at(wx, baseY + 16, wz)) != me;
+    }
+
+    private static @Nullable CaveRegion kitted(@Nullable CaveRegion r) {
+        return r != null && CaveSkin.kit(r) != null ? r : null;
+    }
+
+    /** The region at a block on an edge, read at a point moved up to 4 blocks by noise; it stays in the chunk, the only one whose biomes can be read. */
+    private static @Nullable CaveRegion ragged(Regions regions, long seed, int x, int y, int z, int cx, int cz) {
+        float a = field3(seed, x, y, z, 5, 0x1ED6), b = field3(seed, x, y, z, 5, 0x2ED7);
+        int sx = Math.clamp(x + Math.round(a * EDGE), cx, cx + 15), sz = Math.clamp(z + Math.round(b * EDGE), cz, cz + 15);
+        return kitted(regions.at(sx, y + Math.round((a + b) * 1.5F), sz));
+    }
+
+    /** How far a region's edge can wander (a field's values rarely pass 0.8, so about 4 blocks at most). */
+    private static final float EDGE = 5F;
 
     // ---- what the skin may touch ---------------------------------------------------------------------------------
 
