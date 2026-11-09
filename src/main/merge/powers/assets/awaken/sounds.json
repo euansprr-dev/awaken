@@ -1290,19 +1290,6 @@
       }
     ]
   },
-  "power.well_wind": {
-    "subtitle": "subtitles.awaken.power.well_wind",
-    "sounds": [
-      {
-        "name": "awaken:powers/power_kit_well_wind_0",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:powers/power_kit_well_wind_1",
-        "attenuation_distance": 16
-      }
-    ]
-  },
   "power.well_open": {
     "subtitle": "subtitles.awaken.power.well_open",
     "sounds": [
