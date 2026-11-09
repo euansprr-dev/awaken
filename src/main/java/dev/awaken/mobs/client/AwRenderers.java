@@ -291,7 +291,7 @@ final class AwRenderers {
             case BRIAR_SOW, DUNE_WYRM, OLD_ANTLER, MIRE_MOTHER, PLUMED_COIL, WEAVER_QUEEN, EMPRESS_MOTH, STONEHORN, MYCELORD, OWL, FIREFLY ->
                     HeroRenderer.create(ctx, d);
             // P3: the water and cave bodies (rigs from tools/art/specs/fauna3.py)
-            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT, SEEP_HEART ->
+            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, POLLEN_GRAZER, WAX_FOLK, AMBERFLY, DRIP_LURKER, HUSHLING, THOUSANDFOOT, SEEP_HEART ->
                     dev.awaken.mobs.client.anim.WildRenderer.create(ctx, d);
         };
     }

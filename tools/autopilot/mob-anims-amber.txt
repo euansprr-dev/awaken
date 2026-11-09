@@ -1,0 +1,243 @@
+# Creatures to the Fresh Animations bar (SPEC 23.1), Amber Reach's life: the Pollen Grazer after vanilla's cow, the
+# Wax-folk after a villager, both under Fresh Animations, then the amberfly circling beside a bee. Each walker filmed
+# side on at leg height by a camera riding beside it: a walk, a run, a walk, a stop and a half turn on the spot, ten
+# seconds at rest, then a blow and a death. Clips: amb_<name>, amb_<name>_idle, amb_<name>_end, amb_fly.
+# Clips: run-autopilot/clips/<name> (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet).
+# ci knobs: PACK=perf,feel
+world amberlife creative 783
+waitworld
+wait 40
+# the opening's sky flight holds the camera: skip it first
+cmd awaken opening skip
+wait 30
+# the studio's chunks first: a busy runner's server can fall seconds behind the script
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode spectator
+wait 5
+# fa_cow
+cmd summon minecraft:cow -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 200.08 -2.16 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec amb_fa_cow 270 2
+cmd awaken admin stroll @e[tag=walker] 0.05 100
+glide 0.05 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.11 50
+glide 0.11 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.05 20
+glide 0.05 0 0 20
+wait 20
+shot amb_fa_cow_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot amb_fa_cow_turned
+cmd awaken ascent pilot rec amb_fa_cow_idle 200 4
+wait 210
+cmd tp @s 1.50 200.08 -2.16 0 2
+look 0 2
+wait 10
+cmd awaken ascent pilot rec amb_fa_cow_end 100 2
+wait 10
+cmd execute as @e[tag=walker] run damage @s 2 minecraft:player_attack
+wait 3
+shot amb_fa_cow_hit
+wait 32
+cmd kill @e[tag=walker]
+wait 12
+shot amb_fa_cow_falling
+wait 20
+shot amb_fa_cow_dead
+wait 30
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# grazer
+cmd summon awaken:pollen_grazer -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 200.08 -2.16 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec amb_grazer 270 2
+cmd awaken admin stroll @e[tag=walker] 0.045 100
+glide 0.045 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.1 50
+glide 0.1 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.045 20
+glide 0.045 0 0 20
+wait 20
+shot amb_grazer_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot amb_grazer_turned
+cmd awaken ascent pilot rec amb_grazer_idle 200 4
+wait 210
+cmd tp @s 0.40 200.08 -2.16 0 2
+look 0 2
+wait 10
+cmd awaken ascent pilot rec amb_grazer_end 100 2
+wait 10
+cmd execute as @e[tag=walker] run damage @s 2 minecraft:player_attack
+wait 3
+shot amb_grazer_hit
+wait 32
+cmd kill @e[tag=walker]
+wait 12
+shot amb_grazer_falling
+wait 20
+shot amb_grazer_dead
+wait 30
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# fa_villager
+cmd summon minecraft:villager -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 200.33 -3.36 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec amb_fa_villager 270 2
+cmd awaken admin stroll @e[tag=walker] 0.04 100
+glide 0.04 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.08 50
+glide 0.08 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.04 20
+glide 0.04 0 0 20
+wait 20
+shot amb_fa_villager_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot amb_fa_villager_turned
+cmd awaken ascent pilot rec amb_fa_villager_idle 200 4
+wait 210
+cmd tp @s -1.20 200.33 -3.36 0 2
+look 0 2
+wait 10
+cmd awaken ascent pilot rec amb_fa_villager_end 100 2
+wait 10
+cmd execute as @e[tag=walker] run damage @s 2 minecraft:player_attack
+wait 3
+shot amb_fa_villager_hit
+wait 32
+cmd kill @e[tag=walker]
+wait 12
+shot amb_fa_villager_falling
+wait 20
+shot amb_fa_villager_dead
+wait 30
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+# folk
+cmd summon awaken:wax_folk -10.0 201 2.0 {NoAI:1b,OnGround:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[-90f,0f]}
+cmd tp @s -10.0 200.18 -2.64 0 2
+look 0 2
+wait 40
+cmd awaken ascent pilot rec amb_folk 270 2
+cmd awaken admin stroll @e[tag=walker] 0.03 100
+glide 0.03 0 0 100
+wait 100
+cmd awaken admin stroll @e[tag=walker] 0.07 50
+glide 0.07 0 0 50
+wait 50
+cmd awaken admin stroll @e[tag=walker] 0.03 20
+glide 0.03 0 0 20
+wait 20
+shot amb_folk_stop
+wait 30
+cmd awaken admin stroll @e[tag=walker] 0 30 6
+wait 60
+shot amb_folk_turned
+cmd awaken ascent pilot rec amb_folk_idle 200 4
+wait 210
+cmd tp @s -2.90 200.18 -2.64 0 2
+look 0 2
+wait 10
+cmd awaken ascent pilot rec amb_folk_end 100 2
+wait 10
+cmd execute as @e[tag=walker] run damage @s 2 minecraft:player_attack
+wait 3
+shot amb_folk_hit
+wait 32
+cmd kill @e[tag=walker]
+wait 12
+shot amb_folk_falling
+wait 20
+shot amb_folk_dead
+wait 30
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd summon awaken:amberfly 0.50 202.0 2.10 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[90.0f,0f]}
+cmd summon minecraft:bee -0.53 202.0 1.73 {NoAI:1b,NoGravity:1b,PersistenceRequired:1b,Tags:["flier"],Rotation:[130.0f,0f]}
+cmd tp @s 0.5 200.48 0.5 0 0
+look 0 0
+wait 30
+cmd tick rate 10
+wait 5
+cmd awaken ascent pilot rec amb_fly 202 2
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 40
+cmd awaken admin stroll @e[tag=flier] 0.090 112 3.223
+turn 3.223 112
+wait 56
+shot amb_fly_cruise
+wait 56
+cmd awaken admin stroll @e[tag=flier] 0 40
+wait 45
+cmd tick rate 20
+wait 5
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode creative
+info
+quit

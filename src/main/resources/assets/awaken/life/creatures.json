@@ -85,6 +85,9 @@
     "tier": {"NORMAL": "monster", "ELITE": "monster", "WARDEN": "beast", "LORD": "lord", "GUARDIAN": "lord", "SOVEREIGN": "lord", "FINAL": "lord", "NIGHTMARE": "spirit"}
   },
   "creatures": {
+    "pollen_grazer": {"temperament": "grazer", "blink": [0, 0], "breath": 0.22, "mass": 1.5, "headSpeed": 5.5, "springHz": 2.2, "bob": 0.2, "idles": {"look": 3, "sniff": 2, "flick": 3, "shake": 1, "stretch": 1, "perk": 2, "graze": 6}},
+    "wax_folk": {"temperament": "default", "breath": 0.14, "breathDepth": 0.6, "blink": [4.0, 9.0], "eyeLead": 0.0, "headSpeed": 3.2, "headDamping": 0.92, "springHz": 1.7, "springDamping": 0.2, "springGain": 1.5, "bob": 0.0, "sway": 0.0, "lean": 0.6, "fidget": [7.0, 14.0], "idles": {"look": 4, "settle": 2}, "arms": 0.45, "stagger": 1.2, "mass": 0.9, "neck": 0.95},
+    "amberfly": {"temperament": "insect"},
     "lumen_moth": {"temperament": "insect"},
     "petalwing": {"temperament": "insect"},
     "glass_scarab": {"temperament": "insect"},

@@ -49,6 +49,15 @@ public final class MobsSpawner implements MobHooks.Spawner {
         return Mobs.spawn(level, pick.def, Vec3.atBottomCenterOf(pos), contentLevel, mr, all);
     }
 
+    /** A Realm's own peaceful life (SPEC §50.8): no gate role, so it never counts as a monster of the gate. Gate worlds' signature creatures aren't built yet. */
+    @Override
+    public @Nullable LivingEntity spawnCreature(ServerLevel level, String creatureId, BlockPos pos, int contentLevel, String gateId) {
+        MobDef d = Bestiary.get(creatureId);
+        if (d == null || !d.placed || !d.isFauna()) return null;
+        var type = MobTypes.type(d);
+        return type == null ? null : type.spawn(level, pos, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+    }
+
     @Override
     public java.util.Optional<java.util.UUID> bondedTo(net.minecraft.world.entity.Entity e) {
         return e instanceof dev.awaken.mobs.entity.WildMount m ? java.util.Optional.ofNullable(m.owner()) : java.util.Optional.empty();

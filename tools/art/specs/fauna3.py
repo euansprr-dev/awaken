@@ -2373,6 +2373,592 @@ def paint_seep_root(r, P):
 
 
 # =====================================================================================================================
+# Amber Reach: the life of a gate world (SPEC §50.8)
+# =====================================================================================================================
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Pollen Grazer: a shaggy six-legged herd beast, as much bumblebee as yak. It carries its head low, wears the valley's
+# pollen in a ruff over its shoulders, and still has the little wings its kind stopped using.
+
+def pollen_grazer():
+    r = Rig("pollen_grazer", (128, 128))
+    # the feet are planted by the motion layer (SPEC 23.1; assets/awaken/life/motion.json), so these match its gait
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.8, 1.2, (0.1, 0.22), 0.85
+    body = r.bone("body", (0, 12, 0))
+    # one continuous back: the thorax rises to meet the ruff and the abdomen, so nothing sits in a gap
+    body.cube("gz_thorax", -6.5, -6, -8, 13, 11, 14)
+    body.cube("gz_ruff", -8, -7.5, -10, 16, 10, 8)
+    rump = body.bone("abdomen", (0, -1, 5))
+    rump.cube("gz_abdomen", -7, -5.5, 0, 14, 11, 11)
+    rump.bone("tail", (0, 0.5, 11)).cube("gz_tail", -4.5, -3.5, 0, 9, 7, 3)
+    # shag: planes that break the box's outline along the spine, under the ruff and across the chest
+    body.bone("crest", (0, -7.5, -10), (-3, 0, 0)).cube("gz_crest", 0, -3, 0, 0, 3, 8)
+    body.bone("ruff_bib", (0, 2.5, -10.1), (8, 0, 0)).cube("gz_bib", -7, 0, 0, 14, 5, 0)
+    for side, nm in ((1, "l"), (-1, "r")):
+        mir = side < 0
+        body.bone("mane_" + nm, (side * 8.1, 2.5, -10), (0, 0, side * -6)).cube("gz_fringe_" + nm, 0, 0, 0, 0, 5, 8, mirror=mir, share=None if side > 0 else "gz_fringe_l")
+        rump.bone("shag_" + nm, (side * 7.1, 4, 1), (0, 0, side * -5)).cube("gz_shag_" + nm, 0, 0, 0, 0, 3, 8, mirror=mir, share=None if side > 0 else "gz_shag_l")
+        # the wings it no longer flies with: each grows from a chitin knuckle buried in the ruff and lies folded along
+        # the back, inside the body's own width, the hind wing tucked under the fore. The root is inside the hair at any
+        # angle a clip or a spring can reach, so the wing can never come away from the body.
+        body.cube("gz_knuckle_" + nm, (side * 3.0) - 1.5, -8, -5.5, 3, 2, 4, mirror=mir, share=None if side > 0 else "gz_knuckle_l")
+        fore = body.bone("wing_" + nm, (side * 3.0, -7.0, -4), (3, side * 3, side * 2))
+        fore.cube("gz_wing_" + nm, -1.5 if side > 0 else -4.5, 0, 0, 6, 0, 18, mirror=mir, share=None if side > 0 else "gz_wing_l")
+        hind = body.bone("wing2_" + nm, (side * 4.2, -6.75, -3), (2, side * 7, side * 3))
+        hind.cube("gz_hwing_" + nm, -1 if side > 0 else -4, 0, 0, 5, 0, 13, mirror=mir, share=None if side > 0 else "gz_hwing_l")
+    # a short neck under the ruff, so the head leads and the neck follows it down to the moss
+    neck = body.bone("neck", (0, 0, -9), (10, 0, 0))
+    neck.cube("gz_neck", -4, -4, -5, 8, 8, 6)
+    head = neck.bone("head", (0, 0, -4), (12, 0, 0))
+    head.cube("gz_skull", -5, -5, -8, 10, 9, 8)
+    head.cube("gz_brow", -6, -6.5, -7, 12, 3, 6)
+    head.cube("gz_muzzle", -3.5, -0.5, -11.5, 7, 5, 4)
+    for side, nm in ((1, "l"), (-1, "r")):
+        mir = side < 0
+        head.cube("gz_eye_" + nm, 4.5 if side > 0 else -6.5, -3.5, -7, 2, 4, 4, mirror=mir, share=None if side > 0 else "gz_eye_l")
+        head.bone("jaw_" + nm, (side * 2.8, 3.6, -10), (0, side * 12, 0)).cube("gz_jaw_" + nm, -0.5, 0, -3, 1, 2, 4, mirror=mir, share=None if side > 0 else "gz_jaw_l")
+        ant = head.bone("antenna_" + nm, (side * 2.6, -6.5, -6), (-26, 0, side * -24))
+        ant.cube("gz_ant_" + nm, 0, -9, -3, 0, 9, 8, mirror=mir, share=None if side > 0 else "gz_ant_l")
+        # six legs, knees out like a beetle's so they have reach to plant: the thigh runs a pixel past the knee to hide
+        # the joint, the shin stands under it, and the rear pair carries the pollen it has packed on its shins
+        for k, (z, fan) in enumerate(((-6, -8), (0, 0), (6, 8))):
+            leg = body.bone(f"leg{k}_{nm}", (side * 5, 2.5, z), (fan, 0, side * -55))
+            leg.cube(f"gz_thigh{k}_{nm}", -2, -1, -2, 4, 9, 4, mirror=mir, share="gz_thigh0_l" if (k or side < 0) else None)
+            shin = leg.bone(f"shin{k}_{nm}", (0, 7, 0), (-fan * 0.8, 0, side * 55))
+            shin.cube(f"gz_calf{k}_{nm}", -1.5, -0.5, -1.5, 3, 4, 3, mirror=mir, share="gz_calf0_l" if (k or side < 0) else None)
+            shin.cube(f"gz_foot{k}_{nm}", -2, 2.5, -2.5, 4, 2, 5, mirror=mir, share="gz_foot0_l" if (k or side < 0) else None)
+            if k == 2:
+                shin.cube("gz_basket_" + nm, (-3.2 if side < 0 else 0.2), -0.5, -2, 3, 3, 4, mirror=mir, share=None if side > 0 else "gz_basket_l")
+    r.look = [("head", 0.6, 0.5), ("neck", 0.3, 0.3)]
+    r.pack()
+    pollen_grazer_clips(r)
+    return r
+
+
+def pollen_grazer_clips(r):
+    """On the ground its feet are planted by the motion layer (SPEC 23.1); these clips carry the body over them, and the
+    abdomen, tail, head, antennae and wings after it, and own the legs only when it dies. The walk and run legs are what
+    shows if nothing plants them."""
+    L = [(f"leg{k}_{nm}", f"shin{k}_{nm}", 1 if nm == "l" else -1, k) for nm in "lr" for k in range(3)]
+    tripod = [(leg, shin, sg, (0.5 if (k % 2 == 1) == (sg > 0) else 0.0)) for leg, shin, sg, k in L]
+    wings = (("wing_l", 1), ("wing_r", -1))
+    hinds = (("wing2_l", 1), ("wing2_r", -1))
+    ants = (("antenna_l", 1), ("antenna_r", -1))
+    jaws = (("jaw_l", 1), ("jaw_r", -1))
+
+    idle = r.clip("idle", 9.0, loop=True)
+    # bees breathe by pumping the abdomen, and this one never lost the habit: long slow telescoping, a deeper one now and then
+    idle.scale("abdomen", [(0, 1, 1, 1), (1.1, 1.03, 1.05, 1.05), (2.2, 1, 1, 1), (3.3, 1.03, 1.05, 1.05), (4.4, 1, 1, 1),
+                           (5.6, 1.07, 1.09, 1.1), (6.9, 0.99, 0.99, 0.98), (8.0, 1.02, 1.03, 1.03), (9.0, 1, 1, 1)])
+    idle.rot("abdomen", [(0, 0, 0, 0), (1.1, -1.2, 0, 0), (2.2, 0, 0, 0), (3.3, -1.2, 0, 0), (4.4, 0, 0, 0), (5.6, -3, 0, 0), (6.9, 1, 0, 0), (9.0, 0, 0, 0)])
+    idle.rot("tail", [(0, 0, 0, 0), (5.6, -5, 0, 0), (6.1, -2, 4, 0), (6.5, -2, -4, 0), (6.9, 2, 0, 0), (9.0, 0, 0, 0)])
+    idle.rot("neck", [(0, 0, 0, 0), (1.6, 1.5, 0, 0), (3.0, -1, 0, 0), (4.8, 1, 0, 0), (7.0, -1.2, 0, 0), (9.0, 0, 0, 0)])
+    # the feathered antennae never quite stop, and never together: each sweeps on its own, then both taste the air at once
+    idle.rot("antenna_l", [(0, 0, 0, 0), (0.8, 7, 0, 3), (1.7, -3, 0, -2), (2.9, 4, 0, 0), (3.2, -6, 0, 5), (3.5, 3, 0, -3), (3.9, 0, 0, 0),
+                           (6.0, 8, 0, 4), (7.5, -2, 0, 0), (9.0, 0, 0, 0)])
+    idle.rot("antenna_r", [(0, 0, 0, 0), (1.3, -4, 0, -3), (2.4, 6, 0, 2), (3.9, -3, 0, 0), (5.1, 7, 0, -3), (5.4, -5, 0, 4), (5.7, 2, 0, -2), (6.2, 0, 0, 0),
+                           (7.9, 5, 0, 2), (9.0, 0, 0, 0)])
+    # it chews a little, off and on
+    for nm, sg in jaws:
+        idle.rot(nm, [(0, 0, 0, 0), (4.1, 0, 0, 0), (4.3, 0, sg * 12, 0), (4.5, 0, sg * -5, 0), (4.7, 0, sg * 12, 0), (4.9, 0, sg * -5, 0),
+                      (5.1, 0, sg * 10, 0), (5.35, 0, 0, 0), (9.0, 0, 0, 0)])
+    # every so often the old wings shiver, as if they still remembered: one side, then the other, then both
+    def shiver(clip, wing, sg, t0, amp):
+        clip.rot(wing, [(0, 0, 0, 0), (t0, 0, 0, 0), (t0 + .07, 0, 0, sg * -amp), (t0 + .14, 0, 0, sg * amp * .25), (t0 + .21, 0, 0, sg * -amp * .85),
+                        (t0 + .28, 0, 0, sg * amp * .2), (t0 + .35, 0, 0, sg * -amp * .55), (t0 + .5, 0, 0, 0), (clip.length, 0, 0, 0)])
+    shiver(idle, "wing_l", 1, 2.2, 13)
+    shiver(idle, "wing2_l", 1, 2.26, 9)
+    shiver(idle, "wing_r", -1, 7.0, 13)
+    shiver(idle, "wing2_r", -1, 7.06, 9)
+
+    walk = r.clip("walk", 1.0, loop=True)
+    for leg, shin, sg, ph in tripod:
+        cycle(walk, leg, "rot", lambda p, ph=ph: (18 * s(p, ph), 0, 0), 12)
+        cycle(walk, shin, "rot", lambda p, ph=ph: (-10 * max(0.0, c(p, ph)), 0, 0), 12)
+    # the front end leads; each part behind it takes the same sway a little later, the way a heavy loaded body rolls
+    cycle(walk, "body", "rot", lambda p: (1.0 * c(p * 2, 0.05), 1.5 * s(p), 2.0 * s(p, 0.25)), 12)
+    cycle(walk, "abdomen", "rot", lambda p: (1.5 * c(p * 2, 0.16), -3.5 * s(p, 0.1), -2.0 * s(p, 0.34)), 12)
+    cycle(walk, "tail", "rot", lambda p: (2.5 * c(p * 2, 0.26), -6 * s(p, 0.2), 0), 12)
+    cycle(walk, "neck", "rot", lambda p: (1.5 * c(p * 2, 0.12), -1.8 * s(p, 0.04), 0), 12)
+    cycle(walk, "head", "rot", lambda p: (-1.2 * c(p * 2, 0.2), -1.2 * s(p, 0.1), -1.2 * s(p, 0.3)), 12)
+    for nm, sg, ph in (("antenna_l", 1, 0.08), ("antenna_r", -1, 0.3)):
+        cycle(walk, nm, "rot", lambda p, ph=ph, sg=sg: (7 * s(p * 2, ph), 0, sg * 3 * s(p, ph)), 12)
+    for nm, sg in wings + hinds:  # folded film trembles with each footfall
+        cycle(walk, nm, "rot", lambda p, sg=sg: (0, 0, sg * -2.2 * max(0.0, s(p * 2, 0.1))), 12)
+
+    run = r.clip("run", 0.58, loop=True)
+    for leg, shin, sg, ph in tripod:
+        cycle(run, leg, "rot", lambda p, ph=ph: (30 * s(p, ph), 0, 0), 12)
+        cycle(run, shin, "rot", lambda p, ph=ph: (-20 * max(0.0, c(p, ph)), 0, 0), 12)
+    # a bumbling lollop, nose down and the great abdomen heaving after it; the wings come open and buzz, no use at all
+    cycle(run, "body", "rot", lambda p: (3 + 2.6 * c(p * 2, 0.05), 1.5 * s(p), 2.4 * s(p, 0.25)), 12)
+    cycle(run, "abdomen", "rot", lambda p: (-2 + 5.5 * c(p * 2, 0.2), -4.5 * s(p, 0.12), -2.5 * s(p, 0.36)), 12)
+    cycle(run, "tail", "rot", lambda p: (5 * c(p * 2, 0.32), -8 * s(p, 0.25), 0), 12)
+    cycle(run, "neck", "rot", lambda p: (-4 + 3 * c(p * 2, 0.14), 0, 0), 12)
+    cycle(run, "head", "rot", lambda p: (-5 - 2.5 * c(p * 2, 0.24), 0, 0), 12)
+    for nm, sg in ants:
+        cycle(run, nm, "rot", lambda p, sg=sg: (-30 + 5 * s(p * 2, 0.2), 0, sg * 2 * s(p * 2, 0.4)), 12)
+    for nm, sg, open_ in (("wing_l", 1, 12), ("wing_r", -1, 12), ("wing2_l", 1, 18), ("wing2_r", -1, 18)):
+        cycle(run, nm, "rot", lambda p, sg=sg, o=open_: (0, sg * o, sg * (-10 + 12 * s(p * 7))), 28)
+
+    graze = r.clip("graze", 3.6, loop=True)
+    # the neck and head go right down to the moss, and it moves its mouth along as it eats: the mandibles scissor, the
+    # antennae feel the ground ahead one at a time, the rump rides up behind
+    graze.pos("body", [(0, 0, -0.9, 0), (3.6, 0, -0.9, 0)])
+    graze.rot("body", [(0, 5, 0, 0), (3.6, 5, 0, 0)])
+    graze.rot("abdomen", [(0, -4, 0, 0), (0.9, -5.5, 0, 0), (1.8, -4, 0, 0), (2.7, -5.5, 0, 0), (3.6, -4, 0, 0)])
+    cycle(graze, "neck", "rot", lambda p: (28 + 2.2 * s(p * 4), 5 * s(p), 0), 16)
+    cycle(graze, "head", "rot", lambda p: (24 + 3.2 * s(p * 4, 0.12), 3 * s(p, 0.08), 2.5 * s(p, 0.3)), 16)
+    for nm, sg in jaws:
+        cycle(graze, nm, "rot", lambda p, sg=sg: (0, sg * (9 + 13 * s(p * 8)), 0), 32)
+    cycle(graze, "antenna_l", "rot", lambda p: (32 + 10 * s(p * 2, 0.1), 0, 8 * s(p, 0.4)), 16)
+    cycle(graze, "antenna_r", "rot", lambda p: (32 + 10 * s(p * 2, 0.42), 0, -8 * s(p, 0.1)), 16)
+
+    hurt = r.clip("hurt", 0.55)
+    # it flinches up and away, the abdomen clenches and whips after, the wings flare and snap shut with an overshoot
+    hurt.rot("body", [(0, 0, 0, 0), (0.06, -10, 0, 8), (0.18, 3, 0, -3), (0.34, -1, 0, 1), (0.55, 0, 0, 0)])
+    hurt.pos("body", [(0, 0, 0, 0), (0.06, 0, 1.2, 0.6), (0.18, 0, -0.7, -0.2), (0.34, 0, 0.1, 0), (0.55, 0, 0, 0)])
+    hurt.rot("abdomen", [(0, 0, 0, 0), (0.1, -14, 7, 0), (0.24, 6, -4, 0), (0.42, -2, 1, 0), (0.55, 0, 0, 0)])
+    hurt.scale("abdomen", [(0, 1, 1, 1), (0.08, 1.08, 0.92, 0.9), (0.26, 0.98, 1.03, 1.05), (0.55, 1, 1, 1)])
+    hurt.rot("neck", [(0, 0, 0, 0), (0.08, -16, 0, 0), (0.24, 5, 0, 0), (0.55, 0, 0, 0)])
+    hurt.rot("head", [(0, 0, 0, 0), (0.1, -20, 0, 6), (0.3, 5, 0, -2), (0.55, 0, 0, 0)])
+    for nm, sg in wings + hinds:
+        hurt.rot(nm, [(0, 0, 0, 0), (0.07, 0, sg * 22, sg * -46), (0.2, 0, sg * 2, sg * 8), (0.36, 0, sg * 2, sg * -5), (0.55, 0, 0, 0)])
+    for nm, sg in ants:
+        hurt.rot(nm, [(0, 0, 0, 0), (0.07, -38, 0, 0), (0.22, 12, 0, 0), (0.4, -4, 0, 0), (0.55, 0, 0, 0)])
+
+    death = r.clip("death", 2.4)
+    # it staggers on buckling knees, sags, rolls onto its side with a bounce, the legs curl in one after another the way
+    # an insect's do, and for a moment afterward single legs still twitch
+    death.rot("body", [(0, 0, 0, 0), (0.2, -6, 0, 6), (0.42, 3, 0, -5), (0.75, 9, 0, 22), (1.02, 9, 0, 96), (1.14, 9, 0, 84), (1.28, 9, 0, 92), (2.4, 9, 0, 90)])
+    death.pos("body", [(0, 0, 0, 0), (0.2, 0, 0.8, 0), (0.42, 0, -1.6, 0), (0.75, 0, -2.8, 0), (1.02, 0, -4.4, 0), (1.14, 0, -3.3, 0), (1.28, 0, -4.2, 0), (2.4, 0, -4, 0)])
+    death.rot("abdomen", [(0, 0, 0, 0), (0.75, 4, 0, 0), (1.05, 16, 8, 0), (1.3, 11, 5, 0), (2.4, 12, 5, 0)])
+    death.rot("tail", [(0, 0, 0, 0), (1.1, 22, 0, 0), (2.4, 16, 0, 0)])
+    death.rot("neck", [(0, 0, 0, 0), (0.42, -10, 0, 0), (1.02, 20, 8, 0), (1.3, 26, 8, 0), (2.4, 26, 8, 0)])
+    death.rot("head", [(0, 0, 0, 0), (0.42, -14, 0, 0), (1.05, 24, 0, 0), (2.4, 30, 0, 0)])
+    death.scale("abdomen", [(0, 1, 1, 1), (1.3, 1.02, 0.96, 0.98), (2.4, 0.97, 0.9, 0.96)])
+    for i, (leg, shin, sg, k) in enumerate(L):
+        d = 0.05 * i + (0.1 if sg < 0 else 0)
+        twitch = 1.35 + 0.16 * ((i * 3) % 6)
+        death.rot(leg, [(0, 0, 0, 0), (0.42 + d, 8 - k * 4, 0, sg * 14), (1.05 + d, 0, 0, sg * 48), (twitch, 0, 0, sg * 48), (twitch + .06, 0, 0, sg * 36), (twitch + .15, 0, 0, sg * 50), (2.4, 0, 0, sg * 50)])
+        death.rot(shin, [(0, 0, 0, 0), (0.42 + d, 0, 0, sg * 26), (1.05 + d, 0, 0, sg * 74), (twitch + .03, 0, 0, sg * 74), (twitch + .09, 0, 0, sg * 54), (twitch + .18, 0, 0, sg * 78), (2.4, 0, 0, sg * 78)])
+    for nm, sg in ants:
+        death.rot(nm, [(0, 0, 0, 0), (0.2, -18, 0, 0), (1.05, 62, 0, sg * 12), (1.5, 58, 0, sg * 12), (1.6, 64, 0, sg * 12), (2.4, 66, 0, sg * 12)])
+    # the wings slip open and lie limp, and the last thing it does is tremble them once more
+    for nm, sg in wings + hinds:
+        death.rot(nm, [(0, 0, 0, 0), (0.75, 0, sg * 4, sg * -8), (1.1, 0, sg * 16, sg * -30), (1.8, 0, sg * 16, sg * -30), (1.86, 0, sg * 16, sg * -36), (1.94, 0, sg * 16, sg * -28), (2.02, 0, sg * 16, sg * -33), (2.2, 0, sg * 16, sg * -30), (2.4, 0, sg * 16, sg * -30)])
+
+
+def paint_pollen_grazer(r, P):
+    hide = Ramp("#22160e", "#352216", "#4a2f1c", "#633f24", "#7d522e")
+    pollen = Ramp("#7c5212", "#a97718", "#d3a226", "#efc644", "#fce58a", "#fff5c4")
+    band = Ramp("#5a3210", "#855118", "#b5791f", "#dba434")
+    muzzle = Ramp("#1e140d", "#30211a", "#463226", "#5d4635")
+    fur = combine(p_fur(depth=0.55, every=3, length=5), p_blotch("grazer", scale=7, amount=0.3))
+    # the ruff is long hair: soft locks, the tips light, and it deepens to dark amber where it meets the hide
+    def shag(f, i, j):
+        v = p_fur(depth=0.5, every=2, seed=3, length=4)(f, i, j)
+        if f.name in SIDES:
+            v -= 1.5 * (j / max(1, f.h - 1)) ** 2
+        return v
+    P.paint("gz_thorax", hide, 2.2, fur)
+    P.paint("gz_ruff", pollen, 3.4, shag, grad=0.4, rim=0.3)
+    P.paint("gz_tail", hide, 1.8, fur)
+    P.paint("gz_neck", hide, 1.9, fur)
+    # the back half carries the stripes that give away what it was once
+    def stripes(f, i, j):
+        k = j if f.name in SIDES else (f.h - 1 - j if f.name == "top" else j)
+        if f.name in SIDES:
+            k = i if f.name in ("west", "east") else None
+        if k is None:
+            return fur(f, i, j)
+        lane = (k + (_h(f.name, j // 3) % 2)) % 6
+        return band.at(2.2 + fur(f, i, j) * 0.5) if lane < 3 else fur(f, i, j)
+    P.paint("gz_abdomen", hide, 2.1, stripes)
+    for nm in ("gz_skull",):
+        P.paint(nm, hide, 2.0, combine(p_strokes(cell=2, length=2, dark=0.7, light=0.4, density=0.8), p_blotch("gzhead", scale=5, amount=0.3)))
+    P.paint("gz_brow", pollen, 2.6, shag, grad=0.4, rim=0.3)
+    P.paint("gz_muzzle", muzzle, 1.9, p_blotch("gzmuz", scale=3, amount=0.35))
+    # nostrils and a dark soft mouth line
+    f = P.face("gz_muzzle", "north")
+    for x in (1, f.w - 2):
+        f.set(x, 1, hexc("#0f0a06"))
+    for x in range(f.w):
+        f.set(x, f.h - 2, hexc("#140d08"))
+    P.paint("gz_jaw_l", Ramp("#26170c", "#452b14", "#6e4720", "#9a6c30"), 1.8)
+    # eyes: dark compound domes with a run of warm points that catch the light
+    for fname in ("top", "bottom") + SIDES:
+        f = P.face("gz_eye_l", fname)
+        g = P.face("gz_eye_l", fname, glow=True)
+        for i, j in f.each():
+            hv = _h("gzeye", fname, i, j)
+            f.set(i, j, hexc("#1d1006") if (i + j) % 2 else hexc("#3c220c"))
+            if hv % 4 == 0:
+                f.set(i, j, hexc("#c98a2e"))
+                g.set(i, j, hexc("#ffc768", 120))
+    # shag planes: hanging locks with ragged lower ends
+    for nm, fnames, down in (("gz_bib", ("north", "south"), True), ("gz_fringe_l", ("west", "east"), True), ("gz_shag_l", ("west", "east"), True), ("gz_crest", ("west", "east"), False)):
+        for fname in fnames:
+            f = P.face(nm, fname)
+            for i, j in f.each():
+                lock = _h(nm, i // 2) % 3 if down else _h(nm, i // 2) % 3
+                reach = f.h - lock if down else lock
+                if (down and j >= reach) or (not down and j < reach):
+                    f.set(i, j, (0, 0, 0, 0))
+                    continue
+                v = 3.0 + (-0.8 if i % 2 else 0.5) - (0.9 * j / max(1, f.h) if down else -0.8 * j / max(1, f.h))
+                col = (hide if nm == "gz_shag_l" else pollen).at(v)
+                f.set(i, j, col[:3] + (255,))
+    # the feathered antennae: a dark quill with soft pale barbs, thinning to the tip
+    for fname in ("west", "east"):
+        f = P.face("gz_ant_l", fname)
+        spine = 3 if fname == "west" else f.w - 4
+        for i, j in f.each():
+            d = abs(i - spine)
+            t = j / max(1, f.h - 1)  # 0 tip, 1 root
+            reach = 1 + int(3.6 * (0.25 + 0.75 * math.sin(math.pi * min(1.0, 0.1 + t * 0.9))))
+            if d == 0:
+                f.set(i, j, hexc("#2a1a10"))
+            elif d <= reach and (j + d) % 2 == 0:
+                f.set(i, j, pollen.at(4.6 - d * 0.55)[:3] + (235,))
+            else:
+                f.set(i, j, (0, 0, 0, 0))
+    # the wings: old film the colour of pale honey in a net of dark veins, narrow at the root and fullest two thirds along.
+    # Worn through in places, so the back shows through the holes (the body draws in cutout: holes read, half-alpha doesn't)
+    def leaf(nm, seed):
+        film = (hexc("#f4dc9c"), hexc("#e6c27a"), hexc("#d6a95e"))
+        for fname in ("top", "bottom"):
+            f = P.face(nm, fname)
+            w, h = f.w, f.h
+            for i, j in f.each():
+                jr = j if fname == "top" else h - 1 - j  # rows from the root
+                t = (jr + 0.5) / h
+                half = (0.3 + 0.7 * math.sin(math.pi * min(1.0, t * 0.8 + 0.08)) ** 0.75) * w / 2
+                u = i + 0.5 - w / 2
+                if abs(u) > half:
+                    f.set(i, j, (0, 0, 0, 0))
+                    continue
+                vein = i == 0 or i == w // 2 or jr % 4 == 1 + (i % 2)  # the leading edge, the midrib, cross veins stepping along
+                rim = half - abs(u) < 0.75
+                if vein or rim:
+                    f.set(i, j, hexc("#2f1a0c") if i == 0 else hexc("#5a3414"))
+                elif t > 0.28 and _h(seed, i // 2, jr // 3) % 4 == 0:
+                    f.set(i, j, (0, 0, 0, 0))
+                else:
+                    f.set(i, j, film[_h(seed, "tone", i, jr) % 3][:3] + (255,))
+    leaf("gz_wing_l", "gzwing")
+    leaf("gz_hwing_l", "gzhwing")
+    # the knuckle each wing grows from: dark polished chitin with pollen hair over its front, so it reads as part of the ruff
+    P.paint("gz_knuckle_l", Ramp("#1b1009", "#2e1b0e", "#472a12", "#6a4119"), 2.0, p_strokes(cell=2, length=2, dark=0.5, light=0.5, density=0.7), rim=0.5)
+    P.paint("gz_thigh0_l", hide, 2.0, fur)
+    P.paint("gz_calf0_l", hide, 1.5, p_blotch("gzcalf", scale=3, amount=0.3))
+    P.paint("gz_foot0_l", Ramp("#150d08", "#261810", "#3c2717", "#54381f"), 1.6)
+    # the pollen it has packed onto its hind shins: two fat yellow loads, the only clean colour on it
+    P.paint("gz_basket_l", pollen, 3.6, p_blotch("gzbasket", scale=2, amount=0.45), rim=0.5, grad=0.5)
+    # pollen dusted on its shoulders, feet of the fur catching it; these spots read warm even in shade
+    f = P.face("gz_ruff", "top")
+    g = P.face("gz_ruff", "top", glow=True)
+    for i, j in f.each():
+        if _h("gzdust", i, j) % 9 == 0:
+            f.set(i, j, hexc("#fff0a8"))
+            g.set(i, j, hexc("#ffe08a", 70))
+    return P.skin, P.glow
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Wax-folk: the Reach's people. Squat candle figures who have been burning, very slowly, for longer than they can count.
+# A pooled skirt instead of feet, a sagging cap of old drips, two hollow eyes, and a flame that says how they feel.
+
+def wax_folk():
+    r = Rig("wax_folk", (128, 64))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.9, 1.5, (0.08, 0.18), 0.5
+    # the pool it stands in stays flat on the ground whatever the body above does: it never tips into the floor
+    base = r.bone("base", (0, 24, 0))
+    base.cube("wx_pool", -6.5, -1.5, -6.5, 13, 2, 13)
+    base.cube("wx_skirt", -5.5, -4, -5.5, 11, 3, 11)
+    body = r.bone("body", (0, 20.5, 0))
+    body.cube("wx_hips", -5, -5, -5, 10, 6, 10)
+    chest = body.bone("chest", (0, -4.5, 0))
+    chest.cube("wx_torso", -4.5, -5, -4.5, 9, 5, 9)
+    head = chest.bone("head", (0, -5, 0))
+    head.cube("wx_face", -4, -6, -4, 8, 6, 8)
+    head.cube("wx_cap", -4.5, -7.5, -4.5, 9, 3, 9)
+    # old drips run down from the cap and from the shoulders, each its own length; they swing on the life layer's springs
+    for k, (x, y, z, h) in enumerate(((-4.8, -5.5, -4.6, 3), (3.6, -5.5, -4.6, 5), (4.3, -5.5, 1, 3), (-5.3, -5, 2, 4))):
+        head.bone(f"drip{k}", (x + 0.5, y, z + 0.5)).cube(f"wx_drip{k}", -0.5, 0, -0.5, 1, h, 1)
+    for k, (x, z, h) in enumerate(((-5.4, -4.9, 5), (4.2, -2.4, 6), (-1, 4.6, 4))):
+        body.bone(f"drip{k + 4}", (x + 0.5, -4.5, z + 0.5)).cube(f"wx_run{k}", -0.5, 0, -0.5, 1, h, 1)
+    for side, nm in ((1, "l"), (-1, "r")):
+        mir = side < 0
+        arm = chest.bone("arm_" + nm, (side * 4.6, -4.2, 0), (0, 0, side * -14))
+        arm.cube("wx_upper_" + nm, -1, 0, -1, 2, 4, 2, mirror=mir, share=None if side > 0 else "wx_upper_l")
+        hand = arm.bone("forearm_" + nm, (0, 4, 0), (-10, 0, 0))
+        hand.cube("wx_hand_" + nm, -1.5, 0, -1.5, 3, 3, 3, mirror=mir, share=None if side > 0 else "wx_hand_l")
+    # the wick and flame are the springy part of it: when it stops, the flame carries on and comes back
+    wick = head.bone("plume", (0, -7.5, 0), (4, 0, -4))
+    wick.cube("wx_wick", -0.5, -3, -0.5, 1, 3, 1)
+    flame = wick.bone("plume_flame", (0, -2.5, 0))
+    flame.cube("wx_flamex", 0, -7, -2.5, 0, 7, 5)
+    flame.cube("wx_flamez", -2.5, -7, 0, 5, 7, 0)
+    r.look = [("head", 0.7, 0.5)]
+    r.pack()
+    wax_folk_clips(r)
+    return r
+
+
+def wax_folk_clips(r):
+    """No legs: it moves on the pool under it. The body rocks over the pool in a tired waddle, each step squashing the skirt
+    and pushing the pool out toward the side it leans; arms, head, drips and flame all take the rock a moment later."""
+    def flicker(c0, a=1.0):
+        n = max(3, int(c0.length / 0.3))
+        keys = [(0, 1, 1, 1)]
+        tall = ((1.26, .9), (.86, 1.08), (1.14, .95), (.92, 1.05), (1.2, .92))
+        for k in range(1, n):
+            y, x = tall[_h("wxflick", c0.length, k) % 5]
+            keys.append((c0.length * k / n, 1 + (x - 1) * a, 1 + (y - 1) * a, 1 + (x - 1) * a))
+        keys.append((c0.length, 1, 1, 1))
+        c0.scale("plume_flame", keys)
+    idle = r.clip("idle", 10.0, loop=True)
+    flicker(idle, 0.9)
+    cycle(idle, "plume_flame", "rot", lambda p: (5 * s(p * 3, 0.3), 0, 7 * s(p * 5)), 24)
+    cycle(idle, "plume", "rot", lambda p: (2 * s(p * 2, 0.1), 0, 2 * s(p * 3)), 16)
+    # it breathes in the shoulders, a long way apart, and a real sigh once a loop: the flame leaps as the chest falls
+    idle.scale("body", [(0, 1, 1, 1), (1.4, 1.012, 1.02, 1.012), (2.8, 1, 1, 1), (4.2, 1.012, 1.02, 1.012), (5.6, 1, 1, 1),
+                        (7.0, 1.03, 1.05, 1.03), (7.5, .985, .96, .985), (8.8, 1, 1, 1), (10.0, 1, 1, 1)])
+    idle.rot("chest", [(0, 0, 0, 0), (1.5, -1, 0, .8), (3.2, 1, 0, -.8), (5.0, -.6, 0, .4), (7.0, -3, 0, 0), (7.5, 4, 0, 0), (8.8, 0, 0, 0), (10.0, 0, 0, 0)])
+    idle.rot("head", [(0, 0, 0, 0), (1.2, 2, 3, 0), (3.0, 1, -3, 1), (4.6, 10, 8, 3), (5.6, 11, 9, 3), (6.2, 0, 2, 0), (7.0, -5, 0, 0), (7.5, 7, 0, 0), (8.8, 0, 0, 0), (10.0, 0, 0, 0)])
+    # it rubs its hands together, warming them, then looks down at one as if it had noticed it was a little shorter today
+    idle.rot("arm_l", [(0, 0, 0, 0), (1.0, -28, -18, 12), (1.3, -30, -12, 14), (1.6, -28, -22, 12), (1.9, -30, -12, 14), (2.2, -28, -22, 12), (2.7, 0, 0, 0), (4.3, -8, 0, 0), (4.8, -34, 14, -10), (5.8, -34, 14, -10), (6.3, 0, 0, 0), (10, 0, 0, 0)])
+    idle.rot("arm_r", [(0, 0, 0, 0), (1.0, -28, 18, -12), (1.3, -30, 24, -14), (1.6, -28, 12, -12), (1.9, -30, 24, -14), (2.2, -28, 12, -12), (2.7, 0, 0, 0), (10, 0, 0, 0)])
+    idle.rot("forearm_l", [(0, 0, 0, 0), (1.0, -30, 0, 0), (2.2, -30, 0, 0), (2.7, 0, 0, 0), (4.8, -46, 0, 0), (5.8, -46, 0, 0), (6.3, 0, 0, 0), (10, 0, 0, 0)])
+    idle.rot("forearm_r", [(0, 0, 0, 0), (1.0, -30, 0, 0), (2.2, -30, 0, 0), (2.7, 0, 0, 0), (10, 0, 0, 0)])
+    # a bead of wax swells at the end of one old run, and lets go
+    idle.scale("drip1", [(0, 1, 1, 1), (3.8, 1, 1.45, 1), (3.86, 1, 1, 1), (10, 1, 1, 1)])
+    idle.scale("drip5", [(0, 1, 1, 1), (8.4, 1, 1.5, 1), (8.46, 1, 1, 1), (10, 1, 1, 1)])
+
+    walk = r.clip("walk", 1.0, loop=True)
+    # the rock leads from the hips; chest, head and hands each take it a moment later, and the flame streams back
+    cycle(walk, "body", "rot", lambda p: (2.5, 2.5 * s(p, 0.25), 7 * s(p)), 16)
+    cycle(walk, "body", "pos", lambda p: (0.7 * s(p), 0.5 * abs(s(p)), 0), 16)
+    cycle(walk, "chest", "rot", lambda p: (1.2 * c(p * 2), 3.5 * s(p, 0.1), -3.2 * s(p, 0.06)), 16)
+    cycle(walk, "head", "rot", lambda p: (1.0 * c(p * 2, 0.1), -3 * s(p, 0.1), -3.5 * s(p, 0.13)), 16)
+    cycle(walk, "arm_l", "rot", lambda p: (-14 * s(p, 0.08), 0, -4 * s(p, 0.08)), 16)
+    cycle(walk, "arm_r", "rot", lambda p: (14 * s(p, 0.08), 0, -4 * s(p, 0.08)), 16)
+    cycle(walk, "forearm_l", "rot", lambda p: (-8 - 6 * s(p, 0.16), 0, 0), 16)
+    cycle(walk, "forearm_r", "rot", lambda p: (-8 + 6 * s(p, 0.16), 0, 0), 16)
+    # the skirt squashes on each step, and the pool bulges toward the side it steps to
+    walk.scale("base", [(0, 1, 1, 1), (.25, 1.07, .8, .98), (.5, 1, 1, 1), (.75, 1.07, .8, .98), (1.0, 1, 1, 1)])
+    cycle(walk, "base", "pos", lambda p: (0.45 * s(p, -0.06), 0, 0), 16)
+    cycle(walk, "plume_flame", "rot", lambda p: (-16 + 6 * s(p * 2, 0.15), 0, -11 * s(p, 0.18)), 16)
+    flicker(walk, 1.2)
+
+    run = r.clip("run", 0.52, loop=True)
+    # as fast as it can go, which is not fast: leaning in, arms out for balance, hopping on the pool, the flame flat behind
+    cycle(run, "body", "rot", lambda p: (10, 3 * s(p, 0.25), 12 * s(p)), 12)
+    cycle(run, "body", "pos", lambda p: (0.9 * s(p), 1.3 * abs(s(p)), 0), 12)
+    cycle(run, "chest", "rot", lambda p: (2 * c(p * 2), 5 * s(p, 0.1), -6 * s(p, 0.08)), 12)
+    cycle(run, "head", "rot", lambda p: (-6, -5 * s(p, 0.1), -6 * s(p, 0.15)), 12)
+    cycle(run, "arm_l", "rot", lambda p: (-24 * s(p, 0.06), 0, -26 + 8 * s(p * 2, 0.1)), 12)
+    cycle(run, "arm_r", "rot", lambda p: (24 * s(p, 0.06), 0, 26 - 8 * s(p * 2, 0.1)), 12)
+    cycle(run, "forearm_l", "rot", lambda p: (-18 - 10 * s(p, 0.14), 0, 0), 12)
+    cycle(run, "forearm_r", "rot", lambda p: (-18 + 10 * s(p, 0.14), 0, 0), 12)
+    run.scale("base", [(0, 1.04, .86, 1.1), (.13, 1.1, .7, 1.02), (.26, 1.04, .86, 1.1), (.39, 1.1, .7, 1.02), (.52, 1.04, .86, 1.1)])
+    cycle(run, "plume_flame", "rot", lambda p: (-42 + 8 * s(p * 2, 0.15), 0, -10 * s(p, 0.2)), 12)
+    cycle(run, "plume", "rot", lambda p: (-14, 0, 0), 4)
+    flicker(run, 1.5)
+
+    hurt = r.clip("hurt", 0.6)
+    # the flame all but goes out and comes back too far; the wax takes the blow like a soft thing, and wobbles
+    hurt.rot("body", [(0, 0, 0, 0), (.07, -13, 0, 8), (.2, 5, 0, -4), (.38, -2, 0, 1.5), (.6, 0, 0, 0)])
+    hurt.pos("body", [(0, 0, 0, 0), (.07, 0, -.6, 1.0), (.3, 0, .3, 0), (.6, 0, 0, 0)])
+    hurt.scale("body", [(0, 1, 1, 1), (.07, 1.14, .82, 1.14), (.2, .94, 1.08, .94), (.38, 1.03, .97, 1.03), (.6, 1, 1, 1)])
+    hurt.rot("head", [(0, 0, 0, 0), (.09, -18, 0, 9), (.26, 7, 0, -3), (.6, 0, 0, 0)])
+    hurt.rot("chest", [(0, 0, 0, 0), (.09, -6, 0, 4), (.3, 3, 0, -2), (.6, 0, 0, 0)])
+    hurt.scale("plume_flame", [(0, 1, 1, 1), (.07, .45, .3, .45), (.2, .8, .7, .8), (.32, 1.25, 1.5, 1.25), (.6, 1, 1, 1)])
+    for nm, sg in (("arm_l", 1), ("arm_r", -1)):
+        hurt.rot(nm, [(0, 0, 0, 0), (.09, -22, 0, sg * -24), (.3, 8, 0, sg * 5), (.6, 0, 0, 0)])
+
+    death = r.clip("death", 2.2)
+    # it doesn't fall over: the flame goes out, and then it slumps, softens, and is a puddle
+    death.scale("plume_flame", [(0, 1, 1, 1), (.14, 1.2, 1.3, 1.2), (.34, .25, .18, .25), (.44, 0, 0, 0), (2.2, 0, 0, 0)])
+    death.rot("plume", [(0, 0, 0, 0), (.5, 8, 0, 8), (1.6, 40, 0, 16), (2.2, 40, 0, 16)])
+    death.rot("body", [(0, 0, 0, 0), (.5, 2, 0, 2), (1.3, 7, 0, 5), (2.2, 8, 0, 6)])
+    death.pos("body", [(0, 0, 0, 0), (.5, 0, -.2, 0), (1.5, 0, -.9, 0), (2.2, 0, -1.4, 0)])
+    death.scale("body", [(0, 1, 1, 1), (.5, 1.02, .96, 1.02), (1.6, 1.42, .3, 1.42), (2.2, 1.55, .08, 1.55)])
+    death.scale("chest", [(0, 1, 1, 1), (.5, 1, .96, 1), (1.5, 1.12, .3, 1.12), (2.2, 1.1, .1, 1.1)])
+    death.scale("head", [(0, 1, 1, 1), (.8, 1.02, .9, 1.02), (1.7, 1.1, .35, 1.1), (2.2, 1.05, .1, 1.05)])
+    death.rot("head", [(0, 0, 0, 0), (.42, 7, 0, 2), (1.1, 26, 0, 8), (2.2, 40, 0, 10)])
+    death.scale("base", [(0, 1, 1, 1), (1.0, 1.1, .96, 1.1), (1.9, 1.42, .7, 1.42), (2.2, 1.46, .55, 1.46)])
+    for nm, sg in (("arm_l", 1), ("arm_r", -1)):
+        death.rot(nm, [(0, 0, 0, 0), (.6, 6, 0, sg * -4), (1.5, 10, 0, sg * -30), (2.2, 10, 0, sg * -36)])
+        death.rot(nm.replace("arm", "forearm"), [(0, 0, 0, 0), (1.5, 20, 0, 0), (2.2, 22, 0, 0)])
+
+
+def paint_wax_folk(r, P):
+    wax = Ramp("#6d4214", "#955f1e", "#c0862e", "#deaa4e", "#f0ca7c", "#fbe6b2")
+    old = Ramp("#402610", "#5c3a16", "#7f5420", "#a4742c", "#c79443")
+    flame = Ramp("#a8300c", "#e05a14", "#ff8a2a", "#ffbe4a", "#ffe89a", "#fffbe0")
+    glaze = lambda f, i, j: (0.55 if _h(f.cube.name, f.name, i // 2, j // 3) % 7 == 0 else 0.0)  # noqa: E731
+    P.paint("wx_pool", old, 2.6, p_blotch("wxpool", scale=4, amount=0.5))
+    P.paint("wx_skirt", old, 3.0, combine(p_blotch("wxskirt", scale=4, amount=0.4), p_strokes(cell=2, length=3, dark=0.5, light=0.6, density=0.6, tops=False)))
+    P.paint("wx_hips", wax, 2.5, combine(p_blotch("wxhip", scale=5, amount=0.35), glaze))
+    P.paint("wx_torso", wax, 3.0, combine(p_blotch("wxchest", scale=4, amount=0.3), glaze))
+    P.paint("wx_face", wax, 3.5, p_blotch("wxface", scale=4, amount=0.22))
+    P.paint("wx_cap", wax, 3.9, combine(p_blotch("wxcap", scale=3, amount=0.28), glaze))
+    P.paint("wx_upper_l", wax, 2.9, glaze)
+    P.paint("wx_hand_l", wax, 3.2, glaze)
+    for k in range(4):
+        P.paint(f"wx_drip{k}", wax, 4.2, grad=1.4)
+    for k in range(3):
+        P.paint(f"wx_run{k}", wax, 3.8, grad=1.2)
+    P.paint("wx_wick", Ramp("#0e0a08", "#1e1612", "#3a2a22"), 1.5)
+    # the wax is lit from within by the flame: the crown of the head warms up in the dark
+    for nm in ("wx_cap", "wx_face"):
+        for fname in ("top",) + SIDES:
+            f = P.face(nm, fname)
+            g = P.face(nm, fname, glow=True)
+            for i, j in f.each():
+                t = 1.0 - j / max(1, f.h) if fname in SIDES else 1.0
+                a = int((110 if nm == "wx_cap" else 44) * t)
+                if a > 8:
+                    g.set(i, j, hexc("#ffd28a", a))
+    # the face: two hollow sockets, a small tired mouth, and the eyelid of wax sagging over one eye
+    f = P.face("wx_face", "north")
+    g = P.face("wx_face", "north", glow=True)
+    with P.eyes():
+        for (x, y, deep) in ((1, 2, True), (2, 2, True), (5, 2, True), (6, 2, True), (1, 3, False), (2, 3, False), (5, 3, False), (6, 3, False)):
+            f.set(x, y, hexc("#160b05") if deep else hexc("#2d1a0a"))
+            g.set(x, y, hexc("#ffb050", 110 if deep else 60))
+    # the left lid has run a little further than the right, and the whole face looks tired for it
+    f.set(1, 1, wax.at(4.8))
+    f.set(2, 1, wax.at(4.6))
+    f.set(1, 2, wax.at(4.0))
+    f.set(5, 1, wax.at(3.3))
+    f.set(6, 1, wax.at(3.1))
+    for x in (3, 4):
+        f.set(x, 4, wax.at(2.2))
+    for x in (3, 4):
+        f.set(x, 5, hexc("#4a2c10"))
+    # the flame: a candle's teardrop, white at the heart, burning on both faces
+    for nm, fnames in (("wx_flamex", ("west", "east")), ("wx_flamez", ("north", "south"))):
+        for fname in fnames:
+            f = P.face(nm, fname)
+            g = P.face(nm, fname, glow=True)
+            for i, j in f.each():
+                t = j / max(1, f.h - 1)
+                # a teardrop: narrow to a point at the top, fullest near the base
+                half = 0.5 * f.w * math.sin(math.pi * min(1.0, 0.03 + t ** 1.5 * 0.82)) ** 1.1
+                d = abs(i + 0.5 - f.w / 2)
+                if d > half:
+                    f.set(i, j, (0, 0, 0, 0))
+                    continue
+                heat = (1.0 - d / max(0.5, half)) * (0.55 + 0.45 * t)
+                col = flame.at(3.0 + heat * 2.4)
+                f.set(i, j, col[:3] + (240,))
+                g.set(i, j, col[:3] + (int(170 + 85 * heat),))
+    return P.skin, P.glow
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Amberfly: a fat little honey-coloured fly whose back end is a lit bead. They hang in the air over the river.
+
+def amberfly():
+    r = Rig("amberfly", (32, 32))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.6, 1.0, (0.1, 0.2), 0.1
+    body = r.bone("body", (0, 18, 0))
+    body.cube("af_thorax", -1.5, -1.5, -2, 3, 3, 3)
+    head = body.bone("head", (0, 0, -2))
+    head.cube("af_head", -1, -1, -1.5, 2, 2, 2)
+    bead = body.bone("abdomen", (0, 0, 1), (6, 0, 0))
+    bead.cube("af_bead", -1.5, -1.5, 0, 3, 3, 3)
+    bead.cube("af_tip", -1, -1, 3, 2, 2, 1)
+    for side, nm in ((1, "l"), (-1, "r")):
+        mir = side < 0
+        for k, (z, ry) in enumerate(((-1.5, 22), (0.5, -6))):
+            w = body.bone(f"wing{k}_{nm}", (side * 1.2, -1.5, z), (0, side * ry, side * -12))
+            w.cube(f"af_wing{k}_{nm}", 0 if side > 0 else -6, 0, -1.5, 6, 0, 4, mirror=mir, share="af_wing0_l" if (k or side < 0) else None)
+        head.bone("antenna_" + nm, (side * 0.5, -1, -1.5), (-35, side * 22, 0)).cube("af_ant_" + nm, -0.5, -3, 0, 1, 3, 0, mirror=mir, share=None if side > 0 else "af_ant_l")
+        # six threads of leg that hang under it and trail when it moves: the life layer's springs swing them
+        for k, z in enumerate((-1.2, 0, 1.2)):
+            body.bone(f"tassel{k}_{nm}", (side * 1.0, 1.5, z), (k * 8 - 8, 0, side * -14)).cube(f"af_leg{k}_{nm}", 0, 0, 0, 0, 2, 1, mirror=mir, share="af_leg0_l" if (k or side < 0) else None)
+    r.look = [("head", 0.6, 0.5)]
+    r.pack()
+    wings = (("wing0_l", 1, 0.0), ("wing1_l", 1, 0.12), ("wing0_r", -1, 0.0), ("wing1_r", -1, 0.12))
+    # hovering: a blur of wings, and a slow figure of eight in the air while the head scans and the bead pulses
+    idle = r.clip("idle", 3.0, loop=True)
+    for nm, sg, ph in wings:
+        cycle(idle, nm, "rot", lambda p, sg=sg, ph=ph: (0, 0, sg * 34 * s(p * 24, ph)), 96)
+    cycle(idle, "body", "pos", lambda p: (0.45 * s(p), 0.5 * s(p * 2, 0.1), 0.25 * s(p, 0.25)), 16)
+    cycle(idle, "body", "rot", lambda p: (2.5 * s(p * 2, 0.2), 0, 3.5 * s(p, 0.05)), 16)
+    cycle(idle, "abdomen", "rot", lambda p: (5 * s(p * 2, 0.32), 0, 0), 16)
+    idle.scale("abdomen", [(0, 1, 1, 1), (.75, 1.12, 1.12, 1.08), (1.5, 1, 1, 1), (2.25, 1.14, 1.14, 1.08), (3.0, 1, 1, 1)])
+    idle.rot("head", [(0, 0, 0, 0), (.4, 4, 16, 0), (.9, 4, 16, 0), (1.15, -2, -18, 0), (1.9, -2, -18, 0), (2.2, 3, 6, 0), (3.0, 0, 0, 0)])
+    for nm, sg in (("antenna_l", 1), ("antenna_r", -1)):
+        cycle(idle, nm, "rot", lambda p, sg=sg: (8 * s(p * 4, 0.1 if sg > 0 else 0.4), 0, sg * 4 * s(p * 3)), 24)
+    fly = r.clip("fly", 0.6, loop=True)
+    # going somewhere: nose down, bead dragging behind on its waist, wings quicker, legs swept back
+    for nm, sg, ph in wings:
+        cycle(fly, nm, "rot", lambda p, sg=sg, ph=ph: (0, 0, sg * 38 * s(p * 8, ph)), 32)
+    fly.rot("body", [(0, 14, 0, 0), (.6, 14, 0, 0)])
+    cycle(fly, "abdomen", "rot", lambda p: (-8 + 4 * s(p * 2, 0.2), 0, 0), 8)
+    cycle(fly, "body", "pos", lambda p: (0, .28 * s(p * 2), 0), 8)
+    fly.rot("head", [(0, -10, 0, 0), (.6, -10, 0, 0)])
+    for k in range(3):
+        for nm, sg in ((f"tassel{k}_l", 1), (f"tassel{k}_r", -1)):
+            fly.rot(nm, [(0, 42, 0, 0), (.6, 42, 0, 0)])
+    hurt = r.clip("hurt", 0.4)
+    # knocked out of the air and spinning, then it catches itself
+    hurt.rot("body", [(0, 0, 0, 0), (.06, 12, 80, 24), (.16, -6, 180, -16), (.28, 2, 300, 6), (.4, 0, 360, 0)])
+    hurt.pos("body", [(0, 0, 0, 0), (.08, 0, -2.4, 0), (.24, 0, -1.2, 0), (.4, 0, 0, 0)])
+    hurt.scale("abdomen", [(0, 1, 1, 1), (.06, .8, .8, .8), (.2, 1.25, 1.25, 1.25), (.4, 1, 1, 1)])
+    death = r.clip("death", 1.3)
+    # the wings stop, it falls on its back with a small bounce, the bead going dim as it shrinks, and the legs curl in
+    for nm, sg, ph in wings:
+        death.rot(nm, [(0, 0, 0, 0), (.1, 0, 0, sg * 24), (.2, 0, 0, sg * -30), (.3, 0, 0, sg * 16), (.42, 0, 0, sg * -10), (.6, 0, 0, sg * 40), (1.3, 0, 0, sg * 40)])
+    death.rot("body", [(0, 0, 0, 0), (.3, 40, 90, 0), (.72, 180, 180, 0), (1.3, 180, 180, 0)])
+    death.pos("body", [(0, 0, 0, 0), (.72, 0, -4.5, 0), (.86, 0, -3.6, 0), (1.0, 0, -4.5, 0), (1.3, 0, -4.5, 0)])
+    death.scale("abdomen", [(0, 1, 1, 1), (.3, 1.2, 1.2, 1.2), (1.3, .5, .5, .5)])
+    for k in range(3):
+        for nm, sg in ((f"tassel{k}_l", 1), (f"tassel{k}_r", -1)):
+            death.rot(nm, [(0, 0, 0, 0), (.72 + .05 * k, 0, 0, sg * 70), (1.06 + .03 * k, 0, 0, sg * 70), (1.12 + .03 * k, 0, 0, sg * 44), (1.2 + .03 * k, 0, 0, sg * 80), (1.3, 0, 0, sg * 80)])
+    return r
+
+
+def paint_amberfly(r, P):
+    shell = Ramp("#2a180a", "#472a10", "#6c4418", "#94632a")
+    P.paint("af_thorax", shell, 1.8, p_strokes(cell=2, length=2, dark=0.5, light=0.4))
+    P.paint("af_head", shell, 1.2)
+    bead = Ramp("#a65c08", "#df8c12", "#ffb92c", "#ffdb72", "#fff2bd")
+    P.paint("af_bead", bead, 2.6, lambda f, i, j: (-0.9 if j == 0 and f.name in SIDES else 0.0))
+    P.paint("af_tip", bead, 3.6)
+    for nm in ("af_bead", "af_tip"):
+        for fname in ("top", "bottom") + SIDES:
+            f = P.face(nm, fname)
+            g = P.face(nm, fname, glow=True)
+            for i, j in f.each():
+                g.set(i, j, f.get(i, j)[:3] + (235,))
+    for fname in ("top", "bottom"):
+        f = P.face("af_wing0_l", fname)
+        for i, j in f.each():
+            edge = ((i - f.w / 2) / (f.w / 2 + 0.2)) ** 2 + ((j - f.h / 2) / (f.h / 2 + 0.2)) ** 2
+            f.set(i, j, (0, 0, 0, 0) if edge > 1.0 else hexc("#ffe7a6", 95 if (i + j) % 3 else 170))
+    with P.eyes():
+        for fname in ("north", "west", "east"):
+            f = P.face("af_head", fname)
+            f.set(0, 0, hexc("#b03010"))
+            f.set(f.w - 1, 0, hexc("#b03010"))
+    for fname in ("north", "south"):
+        f = P.face("af_ant_l", fname)
+        for i, j in f.each():
+            f.set(i, j, hexc("#2a180a"))
+    for fname in ("west", "east"):
+        f = P.face("af_leg0_l", fname)
+        for i, j in f.each():
+            f.set(i, j, hexc("#1d1108") if j < f.h - 1 else hexc("#4a2c12"))
+    return P.skin, P.glow
+
+
+# =====================================================================================================================
 # Registry, Java data, previews (kept at the end: the designs above fill RIGS)
 # =====================================================================================================================
 
@@ -2382,7 +2968,7 @@ RIGS = {}
 def _register():
     RIGS.clear()
     for name in ("glimmerfin", "breathbell", "brook_otter", "tidesteed", "lantern_maw", "chime_cricket", "wickling", "drip_lurker", "hushling", "thousandfoot",
-                 "seep_heart", "seep_root"):
+                 "seep_heart", "seep_root", "pollen_grazer", "wax_folk", "amberfly"):
         design = globals().get(name)
         painter = globals().get("paint_" + name)
         if design and painter:
@@ -2393,7 +2979,7 @@ def _register():
 SCALE = {"lantern_maw": 1.3, "thousandfoot": 1.3}
 BOX = {"glimmerfin": (0.5, 0.35), "breathbell": (0.7, 0.8), "brook_otter": (0.6, 0.55), "tidesteed": (1.2, 1.3), "lantern_maw": (2.0, 1.6),
        "chime_cricket": (0.5, 0.4), "wickling": (0.5, 0.35), "drip_lurker": (0.8, 1.1), "hushling": (0.6, 0.75), "thousandfoot": (2.0, 1.1),
-       "seep_heart": (2.0, 2.6), "seep_root": (0.6, 1.3)}
+       "seep_heart": (2.0, 2.6), "seep_root": (0.6, 1.3), "pollen_grazer": (1.3, 1.4), "wax_folk": (0.8, 1.6), "amberfly": (0.4, 0.35)}
 
 
 def rigs(only=None):

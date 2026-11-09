@@ -623,5 +623,22 @@
   "block.awaken.amber_planks_stairs": "Stained Board Stairs",
   "block.awaken.amber_petal_deep": "Giant Petal Base",
   "block.awaken.amber_petal_tip": "Giant Petal Tip",
-  "block.awaken.amber_leaf_gold": "Golden Leaves"
+  "block.awaken.amber_leaf_gold": "Golden Leaves",
+  "entity.awaken.pollen_grazer": "Pollen Grazer",
+  "entity.awaken.wax_folk": "Wax-folk",
+  "entity.awaken.amberfly": "Amberfly",
+  "subtitles.awaken.fauna.pollen_grazer.ambient": "Pollen Grazer rumbles",
+  "subtitles.awaken.fauna.pollen_grazer.hurt": "Pollen Grazer grunts",
+  "subtitles.awaken.fauna.pollen_grazer.death": "Pollen Grazer dies",
+  "subtitles.awaken.fauna.pollen_grazer.step": "Heavy footsteps",
+  "subtitles.awaken.fauna.wax_folk.ambient": "Wax-folk mumbles",
+  "subtitles.awaken.fauna.wax_folk.hurt": "Wax-folk flinches",
+  "subtitles.awaken.fauna.wax_folk.death": "Wax-folk goes out",
+  "subtitles.awaken.fauna.wax_folk.step": "Wax slides",
+  "subtitles.awaken.fauna.amberfly.ambient": "Amberfly hums",
+  "subtitles.awaken.fauna.amberfly.hurt": "Amberfly buzzes",
+  "subtitles.awaken.fauna.amberfly.death": "Amberfly dies",
+  "subtitles.awaken.fauna.amberfly.step": "Amberfly lands",
+  "subtitles.awaken.realm.amber.air": "Wind in the wheat",
+  "subtitles.awaken.realm.amber.hall": "Honey drips"
 }
