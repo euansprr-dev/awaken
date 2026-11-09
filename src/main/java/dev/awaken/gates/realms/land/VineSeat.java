@@ -18,6 +18,7 @@ import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 import java.util.ArrayList;
 import java.util.List;
 
+import static dev.awaken.gates.realms.kit.Build.under;
 import static dev.awaken.gates.realms.kit.Build.stair;
 import static dev.awaken.gates.realms.kit.N.lerp;
 import static dev.awaken.gates.realms.kit.N.rnd;
@@ -35,10 +36,14 @@ public final class VineSeat extends KitLand<VineSeat.M> {
     static final int SW = 13;
 
     public static final class M extends Mats {
-        final BlockState bark = b("fane_bark"), barkMoss = b("fane_bark_moss"), leaf = b("fane_leaf"), thorn = b("fane_thorn"), relief = b("fane_relief"),
-                vines = b("temple_vines"), fern = b("temple_fern"), drift = b("temple_moss_drift"), carpet = b("temple_moss"), brazier = b("temple_brazier"), fall = b("temple_waterfall"),
+        final BlockState bark = b("fane_bark"), barkMoss = b("fane_bark_moss"), leaf = b("fane_leaf"), leafLit = b("fane_leaf_lit"), leafDeep = b("fane_leaf_deep"), thorn = b("fane_thorn"), relief = b("fane_relief"),
+                vines = b("temple_vines"), fern = b("temple_fern"), drift = b("temple_moss_drift"), carpet = b("temple_moss"), brazier = b("temple_brazier"), fall = b("fane_fall"),
                 carving = b("temple_carving"), link = Blocks.IRON_CHAIN.defaultBlockState(), water = Blocks.WATER.defaultBlockState(),
-                tallFern = Blocks.LARGE_FERN.defaultBlockState(), bush = Blocks.AZALEA.defaultBlockState(), grass = Blocks.SHORT_GRASS.defaultBlockState(), lily = Blocks.LILY_PAD.defaultBlockState();
+                candlesBase = b("crypt_candles"), tallFern = Blocks.LARGE_FERN.defaultBlockState(), bush = Blocks.AZALEA.defaultBlockState(), grass = Blocks.SHORT_GRASS.defaultBlockState(), lily = Blocks.LILY_PAD.defaultBlockState();
+
+        BlockState candles(int n) {
+            return candlesBase.setValue(dev.awaken.gates.block.WorldBlocks.Candles.CANDLES, Math.max(1, Math.min(5, n)));
+        }
 
         M() {
             super("fane", new Accents(b("temple_carving"), b("fane_relief"), b("fane_window"), b("temple_vines"), b("temple_brazier"), b("temple_moss_drift"), b("temple_idol"),
@@ -90,18 +95,17 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         pieces.add(new Face(56));
         room(new Bowl());
         room(new Gallery());
+        pieces.add(new Sanctum());
         // the arms from the balcony out to the third terrace
         room(new Arm(true, 54, 66, 0, 4, DOOR_Y, 10));
         room(new Arm(true, -66, -54, 0, 4, DOOR_Y, 10));
         room(new Arm(false, 54, 66, 0, 4, DOOR_Y, 10));
         room(new Arm(false, -66, -54, 0, 4, DOOR_Y, 10));
         // the Root Hall, inside the second tier on the west side
-        room(new Arm(true, -98, -94, 0, 3, BASE + TH, 6));
         room(new RootHall());
+        room(new Arm(true, -98, -94, 0, 3, BASE + TH, 6));
         stairs();
         arcStairs();
-        for (int x : new int[]{-92, -34, 30, 90}) pieces.add(new Falls(x, 0));
-        for (int x : new int[]{-70, 70}) pieces.add(new Falls(x, 1));
         causeway();
         islets();
         tree();
@@ -253,7 +257,49 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         M m = mats();
         for (int x = v.x0 - 1; x <= v.x0 + 16; x++) for (int z = v.z0 - 1; z <= v.z0 + 16; z++) column(v, m, x, z);
         drawPieces(v, m);
+        settle(v, m);
         for (Edit e : grille) if (v.in(e.x(), e.y(), e.z())) v.set(e.x(), e.y(), e.z(), e.state());
+    }
+
+    /** Pieces carve through each other, so now and then a plant ends up over a hole: it goes. */
+    private void settle(V v, M m) {
+        for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) for (int y = WATER; y <= 210; y++) {
+            BlockState s = v.get(x, y, z);
+            if (s == m.lily && v.get(x, y - 1, z) != m.water) v.set(x, y, z, null);
+            if (s == null || !(s == m.fern || s == m.carpet || s == m.drift || s == m.grass)) continue;
+            BlockState u = v.get(x, y - 1, z);
+            if (u == null || u == m.water || u == m.fern || u == m.carpet) v.set(x, y, z, null);
+        }
+    }
+
+    private dev.awaken.gates.world.FloorAir builtAir;
+
+    @Override
+    public dev.awaken.gates.world.FloorAir air() {
+        if (builtAir != null) return builtAir;
+        var a = new dev.awaken.gates.realms.kit.AirPlan().mist(WATER + 3, 5, 0xc4d6a8, 0.5F).mist(DOOR_Y + 6, 10, 0xb9cf9a, 0.18F).mist(BOWL + 3, 6, 0x6f9a5c, 0.45F).water(WATER, -320, -320, 320, 320);
+        a.shaft(0, 232, 0, 12, BOWL, 22, 15F, 0xffe6a0, 0.9F);
+        for (int i = 0; i < 12; i++) {
+            double t = i * 2.399963, d = 36 + i * 7;
+            int x = (int) (Math.cos(t) * d), z = (int) (Math.sin(t) * d);
+            a.shaft(x, 236, z, (int) (x * 1.12), 150 - i * 5, (int) (z * 1.12), 6F, 0xffe9b0, 0.5F);
+        }
+        a.shaft(-78, 110, 0, -78, BASE + TH, 0, 5F, 0xffe9b0, 0.85F);
+        for (int i = 0; i < 12; i++) {
+            double t = i * Math.PI / 6;
+            a.light((int) (Math.cos(t) * 35.5), BOWL + 8, (int) (Math.sin(t) * 35.5), 0xffb060, 13F, 0.9F);
+        }
+        for (int i = 0; i < 8; i++) a.light(-90 + i * 4, BASE + TH + 4, i % 2 == 0 ? 12 : -12, 0xffb060, 10F, 0.8F);
+        return builtAir = a.build();
+    }
+
+    private int[] dry(int x, int z) {
+        double a = Math.atan2(z, x);
+        for (int d = 0; d < 220; d += 4) {
+            int px = (int) (x + Math.cos(a) * d), pz = (int) (z + Math.sin(a) * d), t = terrain(px, pz);
+            if (t >= WATER + 2 && t <= WATER + 30) return new int[]{px, pz};
+        }
+        return new int[]{x, z};
     }
 
     private void column(V v, M m, int x, int z) {
@@ -275,7 +321,7 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         v.set(x, g, z, top);
         if (wet) {
             for (int y = g + 1; y <= WATER; y++) v.set(x, y, z, m.water);
-            if (g >= WATER - 3 && rnd(x, z, 2) < 0.05) v.set(x, WATER + 1, z, m.lily);
+            if (g >= WATER - 4 && moss.get(x / 11.0, z / 11.0) > 0.05 && rnd(x, z, 2) < 0.2) v.set(x, WATER + 1, z, m.lily);
             return;
         }
         if (top != m.moss && top != m.bed) return;
@@ -303,7 +349,48 @@ public final class VineSeat extends KitLand<VineSeat.M> {
 
     // ---- the temple ---------------------------------------------------------------------------------------------------------
 
-    /** Six great steps of cut stone, each face broken by buttresses and panels so no wall is ever one flat plane. */
+    /** Which way is into the building from this side of a square footprint. */
+    private static Direction inward(int ax, int az, int x, int z) {
+        return ax > az ? (x > 0 ? Direction.WEST : Direction.EAST) : (z > 0 ? Direction.NORTH : Direction.SOUTH);
+    }
+
+    /**
+     * One cell of a carved wall. Fourteen tall and five deep, stepping in and out in four planes: a sloped plinth, pilasters on a
+     * fourteen-block rhythm, recessed bays each holding a lit niche or a carved panel, a frieze, and a cornice that overhangs them all.
+     * d is how far in from the cornice plane, h how high in the course. Null is air.
+     */
+    BlockState facade(M m, int x, int y, int z, int along, int h, int d, Direction in, boolean corner) {
+        int bs = Math.floorMod(along + 7, 14), bay = Math.floorDiv(along + 7, 14);
+        boolean pil = corner || bs <= 2;
+        if (d > 5) return m.stoneA;
+        if (h >= 13) return m.pale;
+        if (h == 12) return d == 0 ? under(m.paleStairs, in) : m.pale;
+        if (h == 11) return d == 0 ? null : Math.floorMod(along, 4) < 2 ? m.relief : m.pale;
+        if (h == 0) return d == 0 ? course(m, x, y, z) : m.stoneA;
+        if (h == 1) return d == 0 ? stair(m.stoneStairs, in) : course(m, x, y, z);
+        if (pil) {
+            if (d == 0) return h == 10 ? under(m.paleStairs, in) : null;
+            return d == 1 ? (Math.floorMod(h, 4) == 0 ? m.relief : m.pale) : m.stoneA;
+        }
+        if (d == 0) return null;
+        if (d == 1) return h == 10 ? under(m.stoneStairs, in) : null;
+        boolean opening = bs >= 5 && bs <= 11 && h >= 4 && h <= 8;
+        boolean lit = Math.floorMod(bay, 2) == 0;
+        if (d == 2) {
+            if (h == 3 && bs >= 5 && bs <= 11) return stair(m.paleStairs, in);
+            if (h == 9 && bs >= 5 && bs <= 11) return under(m.paleStairs, in);
+            return opening ? null : course(m, x, y, z);
+        }
+        if (d == 3) {
+            if (!opening) return course(m, x, y, z);
+            if (lit) return bs == 8 && h == 4 ? m.brazier : null;
+            return bs == 5 || bs == 11 || h == 4 || h == 8 ? m.pale : m.relief;
+        }
+        if (d == 4 && opening && lit) return Math.abs(bs - 8) <= 1 && h >= 5 && h <= 7 ? m.window : m.worn;
+        return m.stoneA;
+    }
+
+    /** Six great steps of cut stone. No face is ever one plane: see {@link #facade}. */
     final class Temple extends Piece<M> {
         Temple() {
             box(0, 0, H0 + 6, H0 + 6);
@@ -316,65 +403,92 @@ public final class VineSeat extends KitLand<VineSeat.M> {
             for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) column(v, m, x, z);
         }
 
-        private int skirt(int h) {
-            return h < 4 ? 2 : h < 8 ? 1 : 0;
+        private boolean falls(int along, int t) {
+            return rnd(Math.floorDiv(along + 7, 14), t, 91) < 0.24 && Math.abs(Math.floorMod(along + 7, 14) - 8) <= 1;
         }
 
         private void column(V v, M m, int x, int z) {
             int ax = Math.abs(x), az = Math.abs(z), mm = Math.max(ax, az), along = ax > az ? z : x;
-            int b = Math.floorMod(along + 9, 22);
-            Direction out = ax > az ? (x > 0 ? Direction.EAST : Direction.WEST) : (z > 0 ? Direction.SOUTH : Direction.NORTH);
+            Direction in = inward(ax, az, x, z);
             if (mm <= H0 + 4) for (int y = BASE - 8; y < BASE; y++) v.set(x, y, z, course(m, x, y, z));
-            int top = -1;
-            for (int t = 0; t < TIERS; t++) for (int h = 0; h < TH; h++) {
-                int y = BASE + t * TH + h, hf = half(t) + skirt(h);
-                boolean butt = b <= 3, panel = b >= 8 && b <= 17 && h >= 4 && h <= 10;
-                if (butt) hf += 2;
+            for (int t = 0; t < TIERS; t++) {
+                int hf = half(t);
                 if (mm > hf) continue;
-                int d = hf - mm; // how far in from the face
-                if (panel && d <= 1) {
-                    v.set(x, y, z, d == 0 ? null : Math.floorMod(along, 3) == 0 ? m.pale : h == 7 ? m.relief : m.worn);
-                    continue;
+                boolean corner = hf - Math.min(ax, az) < 6;
+                for (int h = 0; h < TH; h++) {
+                    int y = BASE + t * TH + h;
+                    v.set(x, y, z, facade(m, x, y, z, along, h, hf - mm, in, corner));
                 }
-                BlockState s;
-                if (d > 3) s = m.stoneA;
-                else if (h == TH - 1) s = Math.floorMod(along, 4) < 2 ? m.relief : m.pale;
-                else if (h == 3 || h == 7) s = m.pale;
-                else if (butt && b % 3 == 0) s = m.pale;
-                else s = course(m, x, y, z);
-                v.set(x, y, z, s);
-                top = Math.max(top, y);
+                boolean front = Math.abs(x) <= SW + 4 && z > 0;
+                if (mm == hf && !corner && !front) {
+                    int b = BASE + t * TH;
+                    if (falls(along, t)) for (int h = 0; h <= 11; h++) v.set(x, b + h, z, m.fall);
+                    else if (Math.floorMod(along + 7, 14) > 2 && moss.get(along / 6.0, t * 3.0) > 0.15) {
+                        int len = 2 + (int) (rnd(x, z, 22) * 8);
+                        for (int k = 0; k < len; k++) v.set(x, b + 11 - k, z, m.vines);
+                    }
+                }
             }
-            // the top of the step you can walk on
             int t = tierAt(mm);
             if (t < 0) return;
-            int ty = tierTop(t) - 1;
-            if (top < ty) return;
-            int d = half(t) - mm;
-            v.set(x, ty, z, paving(m, x, z, along));
-            if (d <= 1 && Math.floorMod(along, 6) < 3 && !(Math.abs(x) <= SW + 4 && z > 0)) {
-                v.set(x, ty + 1, z, m.pale);
-                if (Math.floorMod(along, 12) < 3) v.set(x, ty + 2, z, m.stoneSlab);
-            } else if (d > 3) {
-                double c = rnd(x, z, 21);
-                double mo = moss.get(x / 9.0, z / 9.0);
-                if (mo > 0.35) {
+            int ty = tierTop(t) - 1, d = half(t) - mm;
+            v.set(x, ty, z, paving(m, x, z));
+            boolean front = Math.abs(x) <= SW + 4 && z > 0;
+            if (d == 0 && !front) {
+                int w = Math.floorMod(along, 7);
+                if (w == 0) {
+                    v.set(x, ty + 1, z, m.pale);
+                    if (Math.floorMod(along, 21) == 0) v.set(x, ty + 2, z, m.brazier);
+                    else v.set(x, ty + 2, z, m.stoneSlab);
+                } else if (moss.get(along / 5.0, t * 7.0) < 0.3) v.set(x, ty + 1, z, m.paleSlab);
+            } else if (d > 2) {
+                double c = rnd(x, z, 21), mo = moss.get(x / 9.0, z / 9.0);
+                if (mo > 0.2) {
                     v.set(x, ty, z, m.moss);
-                    if (c < 0.35) v.set(x, ty + 1, z, m.fern);
-                    else if (c < 0.55) v.set(x, ty + 1, z, m.carpet);
-                } else if (c < 0.06) v.set(x, ty + 1, z, m.drift);
-            }
-            // vines off a small lip at the top of the step, short enough to stop above the skirt
-            if (d == 0 && t < TIERS - 1 && b > 3 && moss.get(along / 6.0, t * 3.0) > 0.2) {
-                int p = out.getStepX(), q = out.getStepZ(), len = 2 + (int) (rnd(x, z, 22) * 4);
-                v.set(x + p, ty, z + q, m.pale);
-                for (int k = 1; k <= len; k++) v.set(x + p, ty - k, z + q, m.vines);
+                    if (c < 0.3) v.set(x, ty + 1, z, m.fern);
+                    else if (c < 0.42) v.set(x, ty + 1, z, m.grass);
+                    else if (c < 0.7) v.set(x, ty + 1, z, m.carpet);
+                } else if (c < 0.1) v.set(x, ty + 1, z, m.drift);
             }
         }
 
-        private BlockState paving(M m, int x, int z, int along) {
+        private BlockState paving(M m, int x, int z) {
             double f = rnd(x >> 1, z >> 1, 25);
             return f < 0.5 ? m.pale : f < 0.82 ? m.stoneA : f < 0.92 ? m.worn : m.hexstone;
+        }
+    }
+
+    /** The carved block that rises behind the tree: a stepped screen wall on the north half of the top step and two shoulders either side. */
+    final class Sanctum extends Piece<M> {
+        Sanctum() {
+            box(0, -8, 33, 26);
+            mayOverlap = true;
+            label = "sanctum";
+        }
+
+        @Override
+        public void draw(V v, M m) {
+            int y0 = tierTop(5);
+            for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
+                int a = Math.abs(x);
+                if (z >= -32 && z <= -24) for (int l = 0; l < 4; l++) {
+                    int hw = 31 - l * 6;
+                    if (a > hw) break;
+                    course(v, m, x, z, y0 + l * TH, hw - a, z + 32, -24 - z, x);
+                }
+                if (a >= 24 && a <= 31 && z >= -23 && z <= 8) course(v, m, x, z, y0, Math.min(a - 24, 31 - a) + 0, z + 23, 8 - z, z);
+            }
+        }
+
+        private void course(V v, M m, int x, int z, int y0, int de, int dn, int ds, int along) {
+            int d = Math.min(de, Math.min(dn, ds));
+            Direction in = d == ds ? Direction.NORTH : d == dn ? Direction.SOUTH : x > 0 ? Direction.WEST : Direction.EAST;
+            int run = d == de ? z : along;
+            for (int h = 0; h < TH; h++) v.set(x, y0 + h, z, facade(m, x, y0 + h, z, run, h, d, in, false));
+            if (d == 0 && Math.floorMod(run, 7) == 0) {
+                v.set(x, y0 + TH, z, m.pale);
+                v.set(x, y0 + TH + 1, z, Math.floorMod(run, 14) == 0 ? m.brazier : m.stoneSlab);
+            } else if (d > 0 && moss.get(x / 7.0, z / 7.0 + y0) > 0.25) v.set(x, y0 + TH, z, m.carpet);
         }
     }
 
@@ -394,7 +508,7 @@ public final class VineSeat extends KitLand<VineSeat.M> {
                 if (a <= SW) {
                     for (int y = BASE - 6; y < sy; y++) v.set(x, y, z, course(m, x, y, z));
                     boolean landing = z <= 80 || z >= 122 || Math.floorMod(z, 14) == 10;
-                    v.set(x, sy, z, landing ? m.pale : stair(a <= 5 ? m.paleStairs : m.stoneStairs, Direction.NORTH));
+                    v.set(x, sy, z, !landing ? stair(a <= 5 ? m.paleStairs : m.stoneStairs, Direction.NORTH) : z <= 80 && a == 0 && Math.floorMod(z, 2) == 0 ? m.gold : z <= 80 && a <= 5 ? (Math.floorMod(x + z, 2) == 0 ? m.hexstone : m.flag) : Math.floorMod(x + z, 3) == 0 ? m.worn : m.pale);
                     for (int y = sy + 1; y <= sy + 14; y++) v.set(x, y, z, null);
                     if (z > 80 && a > 9 && moss.get(x / 5.0, z / 5.0) > 0.4) v.set(x, sy + 1, z, m.carpet);
                 } else if (a <= SW + 4 && z > 80) {
@@ -414,10 +528,12 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         }
     }
 
-    /** The green tiled door block at the head of the stair. */
+    /** The door at the head of the stair: a splayed portal cut back through carved frames, under a stepped roof of green tile. */
     final class Gatehouse extends Piece<M> {
+        static final int FRONT = 74;
+
         Gatehouse() {
-            box(0, 66, 13, 9);
+            box(0, 66, 15, 9);
             mayOverlap = true;
             label = "gatehouse";
         }
@@ -426,17 +542,32 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         public void draw(V v, M m) {
             for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
                 int a = Math.abs(x);
-                if (a > 12 || z < 60 || z > 72) continue;
-                int top = DOOR_Y + 22 - Math.max(0, a - 6);
-                for (int y = DOOR_Y + 1; y <= top; y++) {
-                    int h = y - DOOR_Y;
-                    boolean door = a <= 4 && h <= 11 - (a == 4 ? 1 : 0);
-                    if (door) {
+                if (a > 14 || z < 58 || z > FRONT) continue;
+                int splay = Math.max(0, z - 66), w = 4 + splay / 2, tall = 11 + splay / 2;
+                int rise = Math.max(a, Math.abs(z - 66));
+                int top = DOOR_Y + 31 - rise;
+                for (int h = 1; h <= top - DOOR_Y; h++) {
+                    int y = DOOR_Y + h;
+                    if (a <= w && h <= tall) {
                         v.set(x, y, z, null);
                         continue;
                     }
-                    boolean frame = a <= 6 && h <= 13;
-                    v.set(x, y, z, frame ? (h == 13 ? m.relief : a == 6 ? m.deep : m.pale) : h % 6 == 0 ? m.relief : Math.floorMod(a + h, 5) == 0 ? m.tileDeep : m.tile);
+                    boolean jamb = a == w + 1 && h <= tall + 1, lintel = h == tall + 1 && a <= w, roof = h >= 19;
+                    BlockState s;
+                    if (jamb) s = Math.floorMod(h, 3) == 0 ? m.relief : m.pale;
+                    else if (lintel) s = under(m.paleStairs, Direction.NORTH);
+                    else if (roof) {
+                        boolean edge = y == top;
+                        Direction up = a > Math.abs(z - 66) ? (x > 0 ? Direction.WEST : Direction.EAST) : (z > 66 ? Direction.NORTH : Direction.SOUTH);
+                        s = edge ? stair(Math.floorMod(rise, 3) == 0 ? m.tileDeepStairs : m.tileStairs, up) : m.tileDeep;
+                    } else if (h == tall + 2 || h == 18) s = under(m.paleStairs, Direction.NORTH);
+                    else if (z == FRONT && h > tall + 2 && a <= 5) s = a <= 1 && h >= 14 && h <= 16 ? m.gold : m.relief;
+                    else s = Math.floorMod(a + h, 7) == 0 ? m.pale : course(m, x, y, z);
+                    v.set(x, y, z, s);
+                }
+                if (rise == 0) {
+                    v.set(x, top + 1, z, m.gold);
+                    v.set(x, top + 2, z, m.brazier);
                 }
             }
         }
@@ -454,6 +585,15 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         }
 
         private int depth(int u, int v) {
+            int d = shape(u, v);
+            if (d == -99) return d;
+            int a = Math.abs(u);
+            if (a >= 9 && v >= 2 && v <= 22 && Math.floorMod(v, 4) == 0) return d - 1;
+            if (a <= 12 && v >= 26 && v <= 30 && Math.floorMod(u, 4) == 2) return d - 1;
+            return d;
+        }
+
+        private int shape(int u, int v) {
             int a = Math.abs(u);
             if (v > 34) return a <= 8 ? -4 : -99;
             if (v > 30) return a <= 12 ? -2 : -99;
@@ -477,39 +617,27 @@ public final class VineSeat extends KitLand<VineSeat.M> {
                 int u = x - cx;
                 for (int k = 0; k <= 38; k++) {
                     int y = BASE + TH + k, d = depth(u, k), front = 110 + d;
-                    if (d == -99 || z > front || z < 96) continue;
+                    if (d == -99 || z < 96) continue;
+                    // the step down to whatever juts out below or above is cut, so nothing on the head is a bare square corner
+                    if (z == front + 1 && k > 0 && depth(u, k - 1) > d) {
+                        v.set(x, y, z, stair(m.stoneStairs, Direction.NORTH));
+                        continue;
+                    }
+                    if (z == front + 1 && k < 38 && depth(u, k + 1) > d) {
+                        v.set(x, y, z, under(m.stoneStairs, Direction.NORTH));
+                        continue;
+                    }
+                    if (z > front) continue;
                     boolean skin = z == front;
-                    v.set(x, y, z, !skin ? m.stoneA : d == -3 ? m.deep : k >= 26 && k <= 30 && Math.floorMod(u, 4) == 0 ? m.relief : course(m, x, y, z));
-                    if (skin && k > 0 && moss.get(x / 6.0, y / 6.0) > 0.5) v.set(x, y, z, m.moss);
-                }
-            }
-        }
-    }
-
-    /** Water down the front of a step, from its lip to whatever's below. */
-    final class Falls extends Piece<M> {
-        final int x;
-        final int tier;
-
-        Falls(int x, int tier) {
-            this.x = x;
-            this.tier = tier;
-            box(x, half(tier) + 3, 3, 3);
-            mayOverlap = true;
-            label = "falls";
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            int front = half(tier) + 3, top = tierTop(tier);
-            int low = tier == 0 ? 54 : tierTop(tier - 1) - 1;
-            for (int a = x - 1; a <= x + 1; a++) if (a >= v.x0 - 1 && a <= v.x0 + 16) {
-                for (int y = top; y > low; y--) {
-                    if (front >= v.z0 - 1 && front <= v.z0 + 16) v.set(a, y, front, m.fall);
-                }
-                for (int z = half(tier) - 2; z < front; z++) if (z >= v.z0 - 1 && z <= v.z0 + 16) {
-                    v.set(a, top, z, null);
-                    v.set(a, top - 1, z, m.tileDeep);
+                    boolean eye = d == -3;
+                    BlockState s = !skin ? m.stoneA : eye ? m.window : d == -2 && k >= 17 && k <= 21 ? m.deep : k >= 26 && k <= 30 && Math.floorMod(u, 4) == 0 ? m.relief : course(m, x, y, z);
+                    v.set(x, y, z, s);
+                    if (skin && !eye && k > 0 && moss.get(x / 6.0, y / 6.0) > 0.5) v.set(x, y, z, m.moss);
+                    if (skin && k == 22 && moss.get(x / 3.0, 11.0) > 0.0) {
+                        int len = 2 + (int) (rnd(x, z, 90) * 7);
+                        v.set(x, y, z + 1, under(m.stoneStairs, Direction.NORTH));
+                        for (int q = 1; q <= len; q++) v.set(x, y - q, z + 1, m.vines);
+                    }
                 }
             }
         }
@@ -553,6 +681,7 @@ public final class VineSeat extends KitLand<VineSeat.M> {
                 for (int y = fl + 1; y <= roof; y++) v.set(x, y, z, null);
                 for (int y = BOWL - 6; y < fl; y++) v.set(x, y, z, m.stoneA);
                 v.set(x, fl, z, top(m, x, z, r, th));
+                if (r >= 40 && r < 41 || r >= 42 && r < 43) v.set(x, fl, z, stair(m.stoneStairs, inward(Math.abs(x), Math.abs(z), x, z).getOpposite()));
                 pool(v, m, x, z);
                 if (r > WELL_R) v.set(x, roof + 1, z, Math.floorMod((int) Math.round(th * 12 / Math.PI), 4) == 0 ? m.bark : course(m, x, roof + 1, z));
                 furniture(v, m, x, z, r, th, fl);
@@ -585,9 +714,12 @@ public final class VineSeat extends KitLand<VineSeat.M> {
             double along = (th - sp * (Math.PI / 6)) * r;
             // short carved posts round the outer ring
             if (Math.abs(r - 35.5) < 1.6 && Math.abs(along) < 1.6 && Math.abs(z) + Math.abs(x) > 8) {
-                int h = 3 + Math.floorMod(sp * 5, 3);
-                for (int k = 1; k <= h; k++) v.set(x, fl + k, z, k == h ? m.stoneSlab : k % 2 == 0 ? m.relief : m.pale);
+                int h = 5 + Math.floorMod(sp * 5, 3);
+                for (int k = 1; k <= h; k++) v.set(x, fl + k, z, k == h ? dev.awaken.gates.realms.kit.Build.top(m.stoneSlab) : k % 2 == 0 ? m.relief : m.pale);
+                if (Math.abs(r - 35.5) < 0.7 && Math.abs(along) < 0.7) v.set(x, fl + h + 1, z, m.brazier);
             }
+            // the fire on the floor: little banks of candles round the inner rings
+            if ((Math.abs(r - 26) < 1.4 || Math.abs(r - 33) < 1.0) && rnd(x, z, 66) < 0.16) v.set(x, fl + 1, z, m.candles(1 + (int) (rnd(x, z, 67) * 4)));
             // lanterns hung from the vault on chains
             if (Math.abs(r - 31) < 0.6 && Math.abs(along) < 0.6 && Math.floorMod(sp, 2) == 0) {
                 int roof = roof(r), low = BOWL + 18 + Math.floorMod(sp * 3, 8);
@@ -607,8 +739,9 @@ public final class VineSeat extends KitLand<VineSeat.M> {
                 BlockState s;
                 if (pier) s = d <= 3 ? (Math.floorMod(u, 22) == 0 || Math.floorMod(u, 22) == 3 ? m.pale : m.relief) : m.stoneA;
                 else if (d == 0 && hh < 5 && hh > 0 && Math.floorMod(u + row * 3, 7) >= 2) s = null;
-                else if (d == 1 && hh < 5 && hh > 0 && Math.floorMod(u + row * 3, 7) >= 2) s = hh == 1 && rnd(u, row, 41) < 0.12 ? m.brazier : m.worn;
-                else if (hh == 7) s = m.pale;
+                else if (d == 1 && hh < 5 && hh > 0 && Math.floorMod(u + row * 3, 7) >= 2) s = hh == 1 ? m.brazier : m.worn;
+                else if (hh == 5 && d == 0) s = under(m.paleStairs, inward(Math.abs(x), Math.abs(z), x, z).getOpposite());
+                else if (hh == 7) s = m.relief;
                 else s = course(m, x, y, z);
                 v.set(x, y, z, s);
             }
@@ -663,7 +796,7 @@ public final class VineSeat extends KitLand<VineSeat.M> {
                     if (rnd(x, z, 51) < 0.03) v.set(x, DOOR_Y + 1, z, m.drift);
                 } else for (int y = DOOR_Y; y <= DOOR_Y + H + 1; y++) {
                     int h = y - DOOR_Y;
-                    boolean lit = h == 5 && Math.floorMod(u, 14) == 0;
+                    boolean lit = h == 4 && Math.floorMod(u, 14) == 0;
                     v.set(x, y, z, lit ? m.window : h == 8 ? m.relief : course(m, x, y, z));
                 }
             }
@@ -711,22 +844,34 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         @Override
         public void draw(V v, M m) {
             for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
-                int a = alongX ? x : z, c = Math.abs((alongX ? z : x) - cross);
-                if (c > hw + 1) continue;
-                if (c == hw + 1) {
-                    for (int y = fy; y <= fy + tall + 1; y++) v.set(x, y, z, Math.floorMod(a, 6) == 0 ? m.pale : course(m, x, y, z));
+                int a = alongX ? x : z, cc = (alongX ? z : x) - cross, c = Math.abs(cc), w = Math.floorMod(a, 6);
+                if (c > hw + 2) continue;
+                boolean pier = w <= 1;
+                Direction in = alongX ? (cc > 0 ? Direction.NORTH : Direction.SOUTH) : (cc > 0 ? Direction.WEST : Direction.EAST);
+                if (c >= hw + 1) {
+                    for (int y = fy; y <= fy + tall + 1; y++) {
+                        int h = y - fy;
+                        BlockState s;
+                        if (c == hw + 2) s = !pier && h == 4 && w == 3 ? m.window : course(m, x, y, z);
+                        else if (pier) s = h == tall - 1 ? under(m.paleStairs, in) : Math.floorMod(h, 3) == 0 ? m.relief : m.pale;
+                        else if (h == 0 || h >= tall) s = m.pale;
+                        else if (h == 1) s = w == 3 ? m.brazier : null;
+                        else s = h == tall - 1 ? under(m.stoneStairs, in) : null;
+                        v.set(x, y, z, s);
+                    }
                     continue;
                 }
-                v.set(x, fy, z, Math.floorMod(a + c, 2) == 0 ? m.flag : m.hexstone);
+                v.set(x, fy, z, c == hw ? m.pale : Math.floorMod(a + c, 2) == 0 ? m.flag : m.hexstone);
                 for (int y = fy + 1; y <= fy + tall; y++) v.set(x, y, z, null);
-                v.set(x, fy + tall + 1, z, Math.floorMod(a, 6) == 0 ? m.relief : m.stoneA);
+                if (pier) v.set(x, fy + tall, z, m.relief);
+                v.set(x, fy + tall + 1, z, m.stoneA);
             }
         }
     }
 
-    /** The second Warden's room: roots have come down through the roof and taken the middle of it. */
+    /** The second Warden's room: a nave and two aisles, a stream down the middle, and roots that have come in through the roof and taken the centre. */
     final class RootHall extends Room {
-        static final int X0 = -94, X1 = -60, Z = 22, FY = BASE + TH, TALL = 13;
+        static final int X0 = -94, X1 = -60, Z = 22, FY = BASE + TH, TALL = 13, BAY = 8;
 
         RootHall() {
             x0 = X0 - 2;
@@ -749,21 +894,48 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         @Override
         public void draw(V v, M m) {
             for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
-                boolean wall = x <= X0 - 1 || x >= X1 + 1 || Math.abs(z) >= Z + 1;
-                if (wall) {
-                    for (int y = FY; y <= FY + TALL + 1; y++) v.set(x, y, z, y == FY + 6 ? m.relief : course(m, x, y, z));
+                int az = Math.abs(z), b = Math.floorMod(x + 77, BAY);
+                boolean endWall = x <= X0 - 1 || x >= X1 + 1;
+                if (endWall || az >= Z + 1) {
+                    int along = endWall ? z : x, w = Math.floorMod(along, BAY);
+                    for (int y = FY; y <= FY + TALL + 2; y++) {
+                        int h = y - FY;
+                        boolean niche = w >= 3 && h >= 2 && h <= 6, band = h == 7;
+                        v.set(x, y, z, band ? m.relief : niche ? (h == 4 && w == 5 ? m.window : m.worn) : w <= 1 ? m.pale : course(m, x, y, z));
+                    }
                     continue;
                 }
-                v.set(x, FY, z, moss.get(x / 6.0, z / 6.0) > 0.3 ? m.moss : Math.floorMod(x + z, 2) == 0 ? m.flag : m.hexstone);
+                boolean aisle = az >= 12, arcade = az == 11;
+                int roof = aisle ? FY + 8 : FY + TALL - az * az / 26;
+                boolean rib = b <= 1;
+                // the floor: paving in the aisles, a stream with cut edges down the nave
+                if (az <= 2) {
+                    v.set(x, FY - 1, z, m.tileDeep);
+                    v.set(x, FY, z, m.water);
+                } else v.set(x, FY, z, az == 3 ? m.pale : moss.get(x / 6.0, z / 6.0) > 0.3 ? m.moss : Math.floorMod(x + z, 2) == 0 ? m.flag : m.hexstone);
                 for (int y = FY + 1; y <= FY + TALL; y++) v.set(x, y, z, null);
-                v.set(x, FY + TALL + 1, z, course(m, x, FY + TALL + 1, z));
-                boolean col = Math.floorMod(x + 77, 14) <= 2 && Math.floorMod(z + 22, 16) <= 2 && (x < -82 || x > -72 || Math.abs(z) > 8);
-                if (col) for (int y = FY + 1; y <= FY + TALL; y++) v.set(x, y, z, (y - FY) % 4 == 0 ? m.relief : m.pale);
-                if (Math.floorMod(x + 77, 14) == 7 && Math.floorMod(z + 22, 11) == 5) {
-                    for (int y = FY + TALL; y > FY + 7; y--) v.set(x, y, z, m.link);
-                    v.set(x, FY + 7, z, m.window);
-                    v.set(x, FY + 6, z, m.timber);
+                if (az <= 2 && rnd(x, z, 73) < 0.12) v.set(x, FY + 1, z, m.lily);
+                if (arcade) {
+                    if (rib) for (int y = FY + 1; y <= FY + 8; y++) v.set(x, y, z, y == FY + 8 ? m.relief : Math.floorMod(y, 3) == 0 ? m.relief : m.pale);
+                    else {
+                        v.set(x, FY + 7, z, under(m.paleStairs, z > 0 ? Direction.NORTH : Direction.SOUTH));
+                        v.set(x, FY + 8, z, m.pale);
+                    }
+                    for (int y = FY + 9; y <= FY + TALL; y++) v.set(x, y, z, Math.floorMod(x + 77, 4) == 2 && y >= FY + 10 && y <= FY + 12 ? null : course(m, x, y, z));
                 }
+                if (az == 12 && b == 4) v.set(x, FY + 1, z, m.brazier);
+                boolean beam = rib || Math.floorMod(z + 2, 5) == 0;
+                v.set(x, roof, z, beam ? m.relief : null);
+                v.set(x, roof + 1, z, beam ? m.pale : null);
+                v.set(x, roof + 2, z, b == 5 && Math.floorMod(z + 2, 5) == 3 ? m.window : course(m, x, roof + 2, z));
+                for (int y = roof + 3; y <= FY + TALL + 3; y++) v.set(x, y, z, m.stoneA);
+                if (b == 5 && az == 7) {
+                    for (int y = roof; y > FY + 8; y--) v.set(x, y, z, m.link);
+                    v.set(x, FY + 8, z, m.window);
+                    v.set(x, FY + 7, z, m.timber);
+                }
+                // where the roots came in: the roof is gone and the sun comes down with them
+                if (Math.hypot(x + 78, z) <= 5) for (int y = roof; y <= tierTop(2); y++) v.set(x, y, z, null);
             }
         }
     }
@@ -989,15 +1161,26 @@ public final class VineSeat extends KitLand<VineSeat.M> {
 
     final class Crown extends Piece<M> {
         final List<double[]> lobes = new ArrayList<>();
+        final int cx, cz, reach;
+        int lowY = 999, highY = 0, longest = 26;
 
-        Crown() {
-            box(0, 0, 150, 150);
+        Crown(int cx, int cz, int reach) {
+            this.cx = cx;
+            this.cz = cz;
+            this.reach = reach;
+            box(cx, cz, reach, reach);
             mayOverlap = true;
             label = "crown";
         }
 
         void lobe(double x, double y, double z, double r) {
             lobes.add(new double[]{x, y, z, r});
+            lowY = Math.min(lowY, (int) (y - r));
+            highY = Math.max(highY, (int) (y + r));
+        }
+
+        private boolean leaf(BlockState s, M m) {
+            return s == m.leaf || s == m.leafLit || s == m.leafDeep;
         }
 
         @Override
@@ -1010,46 +1193,88 @@ public final class VineSeat extends KitLand<VineSeat.M> {
                     for (int y = (int) (l[1] - ry); y <= (int) (l[1] + ry); y++) {
                         double dx = (x - l[0]) / r, dy = (y - l[1]) / ry, dz = (z - l[2]) / r;
                         double d = dx * dx + dy * dy * (dy < 0 ? 1.5 : 1) + dz * dz;
-                        double wob = n3.get(x / 7.0 + y / 9.0, z / 7.0 - y / 9.0) * 0.35;
+                        double wob = n3.get(x / 7.0 + y / 9.0, z / 7.0 - y / 9.0) * 0.45;
                         if (d > 1 + wob) continue;
                         if (y < l[1] - ry * 0.4 && rnd(x * 7 + y, z, 81) < 0.2) continue;
-                        if (v.get(x, y, z) == null) v.set(x, y, z, m.leaf);
+                        if (v.get(x, y, z) != null) continue;
+                        double tone = dy * 0.9 + n3.get(x / 5.0 + y / 6.0, z / 5.0 - y / 6.0) * 0.55;
+                        v.set(x, y, z, tone > 0.38 ? m.leafLit : tone < -0.32 ? m.leafDeep : m.leaf);
                     }
+            }
+            // what hangs down from the undersides: strings of vine, some of them very long
+            for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
+                if (rnd(x, z, 87) > 0.08) continue;
+                for (int y = highY; y >= lowY; y--) {
+                    if (!leaf(v.get(x, y, z), m) || v.get(x, y - 1, z) != null) continue;
+                    int len = 3 + (int) (rnd(x, z, 88) * longest);
+                    for (int k = 1; k <= len && v.get(x, y - k, z) == null; k++) v.set(x, y - k, z, m.vines);
+                    break;
+                }
             }
         }
     }
 
     private void tree() {
         // the trunk is a dozen strands twisted together, and each runs on down as a root
-        int n = 12;
+        pieces.add(new Tube(new double[][]{{0, 248, 0, 8.5}, {0, 200, 0, 9.5}, {0, 160, 0, 8}, {0, 134, 0, 3}}, 8, "heartwood"));
+        int n = 9;
         for (int i = 0; i < n; i++) {
             double a0 = i * 2 * Math.PI / n + jit(0.1);
             List<double[]> k = new ArrayList<>();
             for (int s = 0; s <= 9; s++) {
-                double y = 244 - s * 10.0, a = a0 + s * 0.62, rho = 9 + s * 0.8;
-                k.add(new double[]{Math.cos(a) * rho, y, Math.sin(a) * rho, 5.0 + s * 0.14});
+                double y = 244 - s * 10.0, a = a0 + s * 0.68, rho = 11.5 + s * 0.8;
+                k.add(new double[]{Math.cos(a) * rho, y, Math.sin(a) * rho, 4.0 + s * 0.12});
             }
-            double a1 = a0 + 9 * 0.62;
+            double a1 = a0 + 9 * 0.68;
             double sa = Math.sin(a1), ca = Math.cos(a1);
             if (sa > 0.35) southRoot(k, i, a1);
             else if (i % 3 == 0) sideRoot(k, i, a1);
             else insideRoot(k, i, a1);
             pieces.add(new Tube(k.toArray(new double[0][]), 8, "root " + i));
         }
-        Crown crown = new Crown();
+        Crown crown = new Crown(0, 0, 150);
         pieces.add(crown);
         for (int i = 0; i < 13; i++) {
             double a = i * 2 * Math.PI / 13 + jit(0.3), reach = 96 + jit(26), up = 248 + jit(18);
             double ex = Math.cos(a) * reach, ez = Math.sin(a) * reach;
-            pieces.add(new Tube(new double[][]{{Math.cos(a) * 8, 232, Math.sin(a) * 8, 7}, {Math.cos(a) * 30, 244, Math.sin(a) * 30, 5}, {ex * 0.7, up - 4, ez * 0.7, 3.4}, {ex, up, ez, 2}}, 10, "bough"));
+            pieces.add(new Tube(new double[][]{{Math.cos(a) * 8, 232, Math.sin(a) * 8, 7}, {Math.cos(a) * 30, 244, Math.sin(a) * 30, 5}, {ex * 0.7, up - 4, ez * 0.7, 3.4}, {ex, up, ez, 2}}, 36, "bough"));
             crown.lobe(ex, up + 8, ez, 30 + jit(9));
             crown.lobe(ex * 0.72, up + 18, ez * 0.72, 32);
             crown.lobe(ex * 0.42, up + 26, ez * 0.42, 30);
             double b = a + 0.6;
-            pieces.add(new Tube(new double[][]{{ex * 0.6, up - 6, ez * 0.6, 2.8}, {ex * 0.8 + Math.cos(b) * 22, up, ez * 0.8 + Math.sin(b) * 22, 1.8}}, 12, "bough"));
+            pieces.add(new Tube(new double[][]{{ex * 0.6, up - 6, ez * 0.6, 2.8}, {ex * 0.8 + Math.cos(b) * 22, up, ez * 0.8 + Math.sin(b) * 22, 1.8}}, 36, "bough"));
             crown.lobe(ex * 0.8 + Math.cos(b) * 26, up + 5, ez * 0.8 + Math.sin(b) * 26, 24);
         }
         crown.lobe(0, 286, 0, 46);
+        List<double[]> big = new ArrayList<>(crown.lobes);
+        for (double[] l : big) for (int i = 0; i < 6; i++) {
+            double a = jit(Math.PI) + i, e = l[3] * 0.92;
+            crown.lobe(l[0] + Math.cos(a) * e, l[1] + jit(l[3] * 0.45), l[2] + Math.sin(a) * e, 8 + jit(3.5));
+        }
+        // two trees on rocks either side of the road in, so the temple is seen between them as you arrive
+        frameTree(-74, 188, 1);
+        frameTree(76, 176, -1);
+        // roots coming down through the broken roof of the hall on the west side
+        for (int i = 0; i < 4; i++) {
+            double a = i * Math.PI / 2 + 0.4;
+            pieces.add(new Tube(new double[][]{{-78 + Math.cos(a) * 2, 112, Math.sin(a) * 2, 3.6}, {-78 + Math.cos(a) * 5, 92, Math.sin(a) * 4, 3}, {-78 + Math.cos(a) * 11, BASE + TH + 1, Math.sin(a) * 9, 2.2}}, 8, "hall root"));
+        }
+    }
+
+    private void frameTree(int x, int z, double lean) {
+        pieces.add(new Islet(x, z, 14, 2));
+        double gy = WATER + 6;
+        Crown c = new Crown(x, z, 62);
+        c.longest = 9;
+        pieces.add(new Tube(new double[][]{{x, gy - 4, z, 5.4}, {x, gy + 16, z, 3.8}, {x + lean * 8, gy + 44, z - 3, 2.6}}, 10, "frame trunk"));
+        for (int i = 0; i < 8; i++) {
+            double a = i * 2.399963, reach = 22 + jit(8), ex = x + Math.cos(a) * reach + lean * 10, ez = z + Math.sin(a) * reach, ey = gy + 50 + jit(8);
+            pieces.add(new Tube(new double[][]{{x + lean * 7, gy + 40, z - 2, 2.4}, {ex, ey, ez, 1.2}}, 36, "bough"));
+            c.lobe(ex, ey + 3, ez, 15 + jit(4));
+            c.lobe(ex + jit(8), ey + 6, ez + jit(8), 8 + jit(3));
+        }
+        c.lobe(x + lean * 8, gy + 60, z, 20);
+        pieces.add(c);
     }
 
     private double[] onSteps(double x, double z, double r) {
@@ -1158,20 +1383,24 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         site(SiteKind.LORD, 0, BOWL + 1, 26, 40, "");
         site(SiteKind.WARDEN, 170, WATER + 12, 0, 16, "water");
         site(SiteKind.WARDEN, -78, BASE + TH + 1, 0, 14, "roots");
-        site(SiteKind.WARDEN, 0, tierTop(5), -27, 8, "crown");
+        site(SiteKind.WARDEN, 0, tierTop(5), 27, 8, "crown");
         site(SiteKind.VILLAGE, -160, ground(-160, 214) + 1, 214, 46, "");
-        for (int[] d : new int[][]{{88, 104}, {-88, 104}, {104, 40}, {-104, 40}, {60, -90}, {-60, -90}, {150, 150}, {-180, 120}}) site(SiteKind.DEN, d[0], ground(d[0], d[1]) + 1, d[1], 10, "");
+        for (int[] d0 : new int[][]{{88, 104}, {-88, 104}, {104, 40}, {-104, 40}, {60, -90}, {-60, -90}, {150, 150}, {-180, 120}}) {
+            int[] d = Math.max(Math.abs(d0[0]), Math.abs(d0[1])) > H0 + 6 ? dry(d0[0], d0[1]) : d0;
+            site(SiteKind.DEN, d[0], ground(d[0], d[1]) + 1, d[1], 10, "");
+        }
         waystone(9, 198, "the old road");
         waystone(-68, 72, "the third step");
         waystone(90, 10, "the east terrace");
-        int[][] low = {{90, 96}, {-100, 88}, {104, -52}, {-104, -40}, {-60, 104}, {60, 72}, {-58, 72}, {60, -80}, {-40, -96}, {112, 150}, {-96, 158}, {-150, 72}, {176, 8}};
+        int[][] low = {{90, 96}, {-100, 88}, {104, -52}, {-104, -40}, {-84, 102}, {60, 72}, {-58, 72}, {60, -80}, {-40, -96}, {112, 150}, {-96, 158}, {-150, 72}, {176, 8}};
         int i = 0;
-        for (int[] f : low) {
+        for (int[] f0 : low) {
+            int[] f = Math.max(Math.abs(f0[0]), Math.abs(f0[1])) > H0 + 6 ? dry(f0[0], f0[1]) : f0;
             int gy = ground(f[0], f[1]);
             pieces.add(new Find(f[0], gy, f[1], seed + i++));
             site(SiteKind.FIND, f[0], gy + 1, f[1], 2, "");
         }
-        int[][] high = {{0, tierTop(3) - 1, -56}, {46, tierTop(4) - 1, 0}, {-46, tierTop(4) - 1, 0}, {28, tierTop(5) - 1, 0}, {42, DOOR_Y, 26}};
+        int[][] high = {{0, tierTop(3) - 1, -56}, {46, tierTop(4) - 1, 0}, {-46, tierTop(4) - 1, 0}, {22, tierTop(5) - 1, 24}, {42, DOOR_Y, 26}};
         for (int[] f : high) {
             pieces.add(new Find(f[0], f[1], f[2], seed + i++));
             site(SiteKind.FIND, f[0], f[1] + 1, f[2], 2, "high");

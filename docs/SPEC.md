@@ -20512,3 +20512,5 @@ the volume (warm candle, cool moon) and draws candles as their real sticks. Wher
 
 **Walking.** `WalkCheck` now swims: you can cross water and climb out where the bank is a step high.
 
+**The Vine Seat (gate 3, Overgrown Temple).** Fane family: pale cut stone, green tile, teak, gilt, three leaf shades (`fane_leaf`, `_lit`, `_deep`), pale water (`fane_fall`). A stepped temple of six courses on a lagoon, split by one tree, with two great faces either side of the stair and a screen wall rising behind the trunk. Every wall comes from one rule, `facade`: plinth, pilasters every fourteen, bays with a lit niche or a carved panel, frieze, overhanging cornice. Rule `roots` (`RealmRoots`): curtains of roots shut across doors you've used and part for anyone moving at them; stand still and they climb your legs. The Lord's place is the Root Bowl at the foot of the trunk, opened by three Wardens.
+

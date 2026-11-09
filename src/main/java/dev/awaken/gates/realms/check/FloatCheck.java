@@ -52,7 +52,7 @@ public final class FloatCheck {
         }
     }
 
-    private static final int AIR = 0, BODY = 1, ON_GROUND = 2, HANGS = 3, BESIDE = 4, AFLOAT = 5, WATER = 6;
+    private static final int AIR = 0, BODY = 1, ON_GROUND = 2, HANGS = 3, BESIDE = 4, AFLOAT = 5, WATER = 6, LEAF = 7;
 
     private static final Map<BlockState, Integer> KIND = java.util.Collections.synchronizedMap(new IdentityHashMap<>());
 
@@ -66,7 +66,8 @@ public final class FloatCheck {
         if (b == Blocks.WATER) return WATER;
         if (s.isAir() || b == Blocks.LIGHT || b == Blocks.BARRIER) return AIR;
         String id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b).getPath();
-        if (id.endsWith("_updraft") || id.equals("fane_leaf")) return AIR; // the boughs are checked; a crown's outer leaves don't all touch
+        if (id.endsWith("_updraft")) return AIR;
+        if (id.equals("fane_leaf") || id.equals("fane_leaf_lit") || id.equals("fane_leaf_deep")) return LEAF; // the boughs are checked; a crown's outer leaves don't all touch, but vines may hang from them
         if (b == Blocks.LILY_PAD || id.equals("crypt_lily_candle") || id.equals("market_boat_lamp")) return AFLOAT;
         if (b instanceof LanternBlock) return s.getValue(BlockStateProperties.HANGING) ? HANGS : ON_GROUND;
         if (id.endsWith("_bell_rope") || id.equals("gate_bell")) return HANGS;
@@ -174,7 +175,8 @@ public final class FloatCheck {
                 if (k == BODY) {
                     if (c.seen.get(i)) continue;
                     if (airborne.stream().anyMatch(p -> p.covers(wx, wz))) continue;
-                    out.add(floater(map, wx, y, wz));
+                    Floater fl = floater(map, wx, y, wz);
+                    if (fl != null) out.add(fl);
                 } else if (k == ON_GROUND) {
                     if (held(map, wx, y - 1, wz) || below(map, wx, y - 1, wz, ON_GROUND)) continue;
                     out.add(new Floater(wx, y, wz, 1, "a plant or small thing with nothing under it (" + named(land, wx, y, wz) + ")"));
@@ -205,7 +207,7 @@ public final class FloatCheck {
         Chunk c = map.get(key(x >> 4, z >> 4));
         if (c == null) return true; // past the drawn edge: can't tell, so it's not a finding
         int i = idx(x, y, z);
-        return c.get(i) == BODY && c.seen.get(i);
+        return c.get(i) == LEAF || c.get(i) == BODY && c.seen.get(i);
     }
 
     private static boolean below(Map<Long, Chunk> map, int x, int y, int z, int kind) {
@@ -215,11 +217,14 @@ public final class FloatCheck {
     }
 
     /** Marks a whole floating cluster seen, so one tower is one finding. */
+    private static final int MAX_TWIG = 12;
+
     private static Floater floater(Map<Long, Chunk> map, int x0, int y0, int z0) {
         ArrayDeque<int[]> q = new ArrayDeque<>();
         q.add(new int[]{x0, y0, z0});
         map.get(key(x0 >> 4, z0 >> 4)).seen.set(idx(x0, y0, z0));
         int n = 0;
+        boolean inLeaves = false;
         while (!q.isEmpty()) {
             int[] p = q.poll();
             n++;
@@ -229,11 +234,13 @@ public final class FloatCheck {
                 Chunk c = map.get(key(x >> 4, z >> 4));
                 if (c == null) continue;
                 int i = idx(x, y, z);
+                if (c.get(i) == LEAF) inLeaves = true;
                 if (c.seen.get(i) || c.get(i) != BODY) continue;
                 c.seen.set(i);
                 q.add(new int[]{x, y, z});
             }
         }
+        if (n <= MAX_TWIG && inLeaves) return null; // a branch end inside a crown is held up by the leaves round it
         return new Floater(x0, y0, z0, n, "a floating thing");
     }
 }

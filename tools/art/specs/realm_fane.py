@@ -36,8 +36,11 @@ RAMPS = {
     "abed": ["#17130c", "#231c12", "#302719", "#3e3321", "#4d402a", "#5d4e34"],
     "honey": ["#7a4d10", "#a66d16", "#d09023", "#efb23d", "#ffd369", "#fff0a8"],
     "rust": ["#27381a", "#354b22", "#45602c", "#587737", "#6d8f44", "#84a853"],
-    "bark": ["#2c2112", "#44331b", "#5f4a27", "#7c6334", "#9a7f45", "#b89d5c"],
-    "agold": ["#17401a", "#235a22", "#33752b", "#468f36", "#5eaa43", "#7cc452"],
+    "bark": ["#3d2d17", "#5a4424", "#7e6536", "#a2864c", "#c0a566", "#dcc587"],
+    "agold": ["#143a1c", "#1e4e23", "#2b652b", "#3b7d33", "#4f963d", "#68ae49"],
+    "aleaflit": ["#3a7527", "#4f8f2f", "#6aa83a", "#88c048", "#a9d55e", "#cde97d"],
+    "aleafdeep": ["#0b2417", "#10321c", "#174224", "#1f522c", "#2a6335", "#37763f"],
+    "afall": ["#7fa79c", "#9fc2b6", "#bcd8cc", "#d7ebe1", "#ecf6f0", "#ffffff"],
 }
 
 BLOCKS = {
@@ -61,6 +64,9 @@ BLOCKS = {
     "fane_bark": ("Great Root Bark", "axe"),
     "fane_bark_moss": ("Mossed Root Bark", "axe"),
     "fane_leaf": ("Temple Tree Leaves", "hoe"),
+    "fane_leaf_lit": ("Sunlit Temple Leaves", "hoe"),
+    "fane_leaf_deep": ("Shaded Temple Leaves", "hoe"),
+    "fane_fall": ("Fane Falls", None),
     "fane_thorn": ("Root Curtain", "axe"),
     "fane_relief": ("Carved Fane Stone", "pickaxe"),
 }
@@ -113,6 +119,21 @@ def tex_relief(P):
     return N.key_band(P, N.cut_block(P, "apale", "r", lo=2, span=2, chips=2), "adeep")
 
 
+class Tint:
+    """The same painter with another ramp in place of the leaf ramp, so all three leaf blocks share a shape."""
+    def __init__(self, P, ramp):
+        self.P, self.name = P, ramp
+
+    def __getattr__(self, k):
+        return getattr(self.P, k)
+
+    def ramp(self, n):
+        return self.P.ramp(self.name if n == "agold" else n)
+
+    def rng_for(self, *a):
+        return self.P.rng_for(*a, self.name)
+
+
 def textures():
     P = _P()
     win, win_g = A.tex_window(P)
@@ -123,26 +144,28 @@ def textures():
         "fane_timber": K.bark(P, "atimb", "timber"), "fane_timber_end": K.rings(P, "atimb", "atimb", "timber"),
         "fane_planks": K.boards(P, "aplank", "planks"), "fane_gilt": A.tex_gilt(P), "fane_window": win, "fane_window_glow": win_g,
         "fane_moss_top": A.tex_moss(P), "fane_moss": N.stained(P, N.tex_stone(P), "amoss", "m", runs=6), "fane_bed": A.tex_bed(P),
-        "fane_bark": K.bark(P, "bark", "root"), "fane_bark_moss": tex_bark_moss(P), "fane_bark_moss_top": A.tex_moss(P), "fane_leaf": A.tex_canopy(P),
+        "fane_bark": K.bark(P, "bark", "root"), "fane_bark_moss": tex_bark_moss(P), "fane_bark_moss_top": A.tex_moss(P), "fane_leaf": A.tex_canopy(P), "fane_leaf_lit": A.tex_canopy(Tint(P, "aleaflit")), "fane_leaf_deep": A.tex_canopy(Tint(P, "aleafdeep")),
+        "fane_fall": K.streaks(P, "afall", "fane-fall", frames=8, alpha=165),
         "fane_thorn": tex_thorn(P), "fane_relief": tex_relief(P),
     }
 
 
 def build(out):
     for name, c in textures().items():
-        out.block(name, c)
+        out.block(name, c, 3 if isinstance(c, list) else None)
 
 
 def models():
     m = {}
     for n in BLOCKS:
-        if n not in ("fane_window", "fane_moss", "fane_timber", "fane_bark_moss", "fane_leaf", "fane_thorn"):
+        if n not in ("fane_window", "fane_moss", "fane_timber", "fane_bark_moss", "fane_leaf", "fane_leaf_lit", "fane_leaf_deep", "fane_thorn", "fane_fall"):
             m[n] = K.cube_model(n)
     m["fane_window"] = K.cube_model("fane_window", glow=True)
     m["fane_moss"] = K.cube_model("fane_moss", top="fane_moss_top", bottom="fane_stone")
     m["fane_bark_moss"] = K.cube_model("fane_bark_moss", top="fane_bark_moss_top", bottom="fane_bark")
     m["fane_timber"] = K.column_model("fane_timber", "fane_timber_end")
-    for n in ("fane_leaf", "fane_thorn"):
+    m["fane_fall"] = K.fall_model("fane_fall", 6)
+    for n in ("fane_leaf", "fane_leaf_lit", "fane_leaf_deep", "fane_thorn"):
         m[n] = {"parent": "minecraft:block/cube_all", "render_type": "minecraft:cutout_mipped", "textures": {"all": B + n}}
     return m
 
@@ -150,7 +173,7 @@ def models():
 def states():
     s = {}
     for n in BLOCKS:
-        if n in ("fane_bed", "fane_bark", "fane_leaf"):
+        if n in ("fane_bed", "fane_bark", "fane_leaf", "fane_leaf_lit", "fane_leaf_deep"):
             s[n] = N.turned(n)
         elif n == "fane_timber":
             s[n] = K.axis_state(n)

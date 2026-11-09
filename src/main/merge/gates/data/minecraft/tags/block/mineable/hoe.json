@@ -16,6 +16,8 @@
     "awaken:amber_leaf_gold",
     "awaken:knell_moss",
     "awaken:fane_moss",
-    "awaken:fane_leaf"
+    "awaken:fane_leaf",
+    "awaken:fane_leaf_lit",
+    "awaken:fane_leaf_deep"
   ]
 }

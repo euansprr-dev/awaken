@@ -30,9 +30,16 @@
     ]
   },
   "life": {
-    "herds": [],
-    "predators": [],
-    "ambient": []
+    "herds": [
+      "briar_sow"
+    ],
+    "predators": [
+      "plumed_coil"
+    ],
+    "ambient": [
+      "dart_frog",
+      "lumen_moth"
+    ]
   },
   "folk": {
     "kit": "moss_tenders",

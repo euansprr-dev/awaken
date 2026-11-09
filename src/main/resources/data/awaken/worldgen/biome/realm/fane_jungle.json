@@ -3,16 +3,16 @@
   "temperature": 0.8,
   "downfall": 0.4,
   "effects": {
-    "water_color": "#3f7a64",
-    "grass_color": "#5f9a3a",
-    "foliage_color": "#4d8a32"
+    "water_color": "#2f7a60",
+    "grass_color": "#4e8a34",
+    "foliage_color": "#3f7a2e"
   },
   "attributes": {
-    "minecraft:visual/fog_color": "#bccdac",
-    "minecraft:visual/sky_color": "#d7e4c4",
-    "minecraft:visual/fog_start_distance": 120.0,
-    "minecraft:visual/fog_end_distance": 900.0,
-    "minecraft:visual/water_fog_color": "#2c5a4a",
+    "minecraft:visual/fog_color": "#a4b878",
+    "minecraft:visual/sky_color": "#c4c787",
+    "minecraft:visual/fog_start_distance": 36.0,
+    "minecraft:visual/fog_end_distance": 480.0,
+    "minecraft:visual/water_fog_color": "#1d5a48",
     "minecraft:gameplay/natural_mob_spawns": {
       "modifier": "overlay",
       "argument": {
@@ -36,12 +36,12 @@
           "particle": {
             "type": "minecraft:spore_blossom_air"
           },
-          "probability": 0.004
+          "probability": 0.012
         }
       ]
     },
     "minecraft:visual/sun_angle": 60.0,
-    "minecraft:visual/sky_light_color": "#fff0c0",
+    "minecraft:visual/sky_light_color": "#ffd890",
     "minecraft:visual/sunrise_sunset_color": "#a0ff9040",
     "minecraft:visual/sky_light_factor": 1.0,
     "minecraft:audio/ambient_sounds": {
@@ -50,6 +50,10 @@
         "tick_delay": 6000,
         "block_search_extent": 8,
         "offset": 2.0
+      },
+      "additions": {
+        "sound": "minecraft:ambient.cave",
+        "tick_chance": 0.008
       }
     },
     "minecraft:audio/background_music": {

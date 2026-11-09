@@ -93,6 +93,9 @@ public final class ThemeBlocks {
             Def.soft("fane_bark", C, MapColor.COLOR_BROWN, SoundType.WOOD, 0),
             Def.soft("fane_bark_moss", C, MapColor.COLOR_GREEN, SoundType.WOOD, 0),
             Def.soft("fane_leaf", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("fane_leaf_lit", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("fane_leaf_deep", L, MapColor.PLANT, SoundType.AZALEA_LEAVES, 0),
+            Def.soft("fane_fall", F, MapColor.WATER, SoundType.EMPTY, 3),
             Def.soft("fane_thorn", L, MapColor.COLOR_BROWN, SoundType.ROOTS, 0),
             Def.of("fane_relief", C, MapColor.SAND, SoundType.STONE, 0),
             // The Knell, the Bell Crypt's Realms (50.8): dark cut stone, green bronze, black oak

@@ -719,5 +719,8 @@
   "block.awaken.fane_tile_deep_slab": "Rain Tile Slab",
   "block.awaken.fane_tile_deep_stairs": "Rain Tile Stairs",
   "block.awaken.fane_planks_slab": "Old Teak Board Slab",
-  "block.awaken.fane_planks_stairs": "Old Teak Board Stairs"
+  "block.awaken.fane_planks_stairs": "Old Teak Board Stairs",
+  "block.awaken.fane_leaf_lit": "Sunlit Temple Leaves",
+  "block.awaken.fane_leaf_deep": "Shaded Temple Leaves",
+  "block.awaken.fane_fall": "Fane Falls"
 }

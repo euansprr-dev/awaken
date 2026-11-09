@@ -36,10 +36,6 @@ cmd awaken gate realm_at MOUTH 0 0 41 -132
 look 180 8
 wait 80
 shot vine_door
-cmd awaken gate realm_at MOUTH 0 0 43 -160
-look 180 22
-wait 80
-shot vine_balcony
 cmd awaken gate realm_heart
 cmd awaken gate realm_at LORD 0 8 2 16
 look 180 -10
@@ -53,8 +49,12 @@ cmd awaken gate realm_at LORD 0 26 1 -28
 look 90 -36
 wait 80
 shot vine_tree_up
-cmd awaken gate realm_at WARDEN 1 -10 2 -14
-look -40 -12
+cmd awaken gate realm_at LORD 0 0 38 24
+look 180 20
+wait 80
+shot vine_balcony
+cmd awaken gate realm_at WARDEN 1 -5 5 -18
+look -40 -8
 wait 80
 shot vine_root_hall
 cmd awaken gate realm_at WARDEN 0 -36 -4 34
@@ -65,8 +65,8 @@ cmd awaken gate realm_at WARDEN 2 40 4 -36
 look 130 -8
 wait 80
 shot vine_crown
-cmd awaken gate realm_at VILLAGE 0 8 6 10
-look 150 -6
+cmd awaken gate realm_at VILLAGE 0 34 14 30
+look 130 -10
 wait 80
 shot vine_village
 cmd awaken gate realm_at MOUTH 0 120 42 40

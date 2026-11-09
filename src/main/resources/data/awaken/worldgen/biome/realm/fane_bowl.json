@@ -8,10 +8,10 @@
     "foliage_color": "#44803a"
   },
   "attributes": {
-    "minecraft:visual/fog_color": "#3b5238",
-    "minecraft:visual/sky_color": "#c9d898",
-    "minecraft:visual/fog_start_distance": 24.0,
-    "minecraft:visual/fog_end_distance": 260.0,
+    "minecraft:visual/fog_color": "#1e3424",
+    "minecraft:visual/sky_color": "#8fa868",
+    "minecraft:visual/fog_start_distance": 16.0,
+    "minecraft:visual/fog_end_distance": 170.0,
     "minecraft:visual/water_fog_color": "#204a3e",
     "minecraft:gameplay/natural_mob_spawns": {
       "modifier": "overlay",
@@ -36,12 +36,12 @@
           "particle": {
             "type": "minecraft:spore_blossom_air"
           },
-          "probability": 0.004
+          "probability": 0.012
         }
       ]
     },
     "minecraft:visual/sun_angle": 60.0,
-    "minecraft:visual/sky_light_color": "#ffe9a8",
+    "minecraft:visual/sky_light_color": "#e8d088",
     "minecraft:visual/sunrise_sunset_color": "#a0ff9040",
     "minecraft:visual/sky_light_factor": 0.9,
     "minecraft:audio/ambient_sounds": {
@@ -50,6 +50,10 @@
         "tick_delay": 6000,
         "block_search_extent": 8,
         "offset": 2.0
+      },
+      "additions": {
+        "sound": "minecraft:ambient.cave",
+        "tick_chance": 0.008
       }
     },
     "minecraft:audio/background_music": {
@@ -59,8 +63,8 @@
         "max_delay": 12000
       }
     },
-    "minecraft:visual/block_light_tint": "#ffc070",
-    "minecraft:visual/ambient_light_color": "#16241a"
+    "minecraft:visual/block_light_tint": "#ffb066",
+    "minecraft:visual/ambient_light_color": "#17241a"
   },
   "carvers": [],
   "features": []
