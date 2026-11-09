@@ -147,11 +147,21 @@ public final class ArmsArmoury {
         List<ArmsPayloads.TierRow> tiers = new ArrayList<>();
         int best = Math.max(0, ArmsTiers.best(p));
         for (int i = 0; i < TIERS.length; i++) tiers.add(new ArmsPayloads.TierRow(TIERS[i], LEVEL[i], level >= LEVEL[i], pick ? "" : ArmsTiers.pull(p, i, ArmsTiers.best(p))));
-        int at = tier == null ? best : Math.max(0, tierIndex(tier));
+        int at = tier == null ? (pick ? pickTier(p) : best) : Math.max(0, tierIndex(tier));
         var anvil = anvilOf(p);
         var status = anvil == null ? null : dev.awaken.arms.anvil.WarAnvil.status(p, anvil, style, at);
         AwakenNet.send(p, new ArmsPayloads.ArmouryDetail(style, TIERS[at], tiers, needs(p, style, at),
                 status == null ? 0 : status.flags(), status == null ? "" : status.line()));
+    }
+
+    /** A pick's window opens on the next step up from the best forged pick they carry, within what their level allows. */
+    private static int pickTier(ServerPlayer p) {
+        int carried = -1;
+        for (net.minecraft.world.item.ItemStack s : p.getInventory()) {
+            var it = dev.awaken.delve.forged.ForgedPicks.item(s);
+            if (it != null) carried = Math.max(carried, it.tier);
+        }
+        return Math.min(carried + 1, bestTier(p));
     }
 
     /** The highest tier whose level the fighter has reached. */
