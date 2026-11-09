@@ -15635,8 +15635,9 @@ in reach 23% of a fight today, 49% with these rules).
   - Vanilla hearts, armour, food, XP level: hidden (the vitals and the wrist carry them). The XP strip (`contextual_info_bar`)
     shows only while riding a mount that jumps (its jump bar lives there). Air, the boss bars, effects, chat, titles, the
     selected item's name: as before.
-  - Hotbar: pops up for 2 s (40 ticks) when the selected slot changes (scroll, 1 to 9, pick block) and while glancing; it
-    slides 26 px down out of view as it goes.
+  - Hotbar: pops up for 2 s (40 ticks) when the selected slot changes (scroll, 1 to 9, pick block); it slides 26 px down
+    out of view as it goes. While the Tab panel shows it is out of the way, gone as fast as the panel comes (150 ms), since
+    the panel carries the hotbar (§40.7); without the holo look (reduced motion, no holo pipelines) it shows while glancing.
   - Vitals (`awaken:vitals`, `holo.client.Vitals`): health as a thin segmented line (124 px, one segment a heart, 20 segments
     above 40 health) low in the middle, in a fight, when hurt or at 30% or less (it breathes). A blow
     leaves its share amber for 420 ms, then it drains at 55% of the line a second; the blow flashes the line (130 ms) and
@@ -15662,14 +15663,19 @@ in reach 23% of a fight today, 49% with these rules).
   open, with the HUD hidden and in spectator.
 - Held: the off-hand forearm comes up with the band (`Wrist`, eased in 260 ms, down in 200 ms; the main hand sinks out of
   view; vanilla's hands come back from below as it lowers), only in first person, with the band on, no holo menu on the
-  wrist and the holo pipelines working. A press under 250 ms (5 ticks) is a tap: the panel alone for 4 s (80 ticks).
+  wrist and the holo pipelines working. The panel shows while the key is held and goes with it (Euan 2026-11-09: a tap no
+  longer leaves it up; the arm's rules don't apply to it, so third person or no band shows it without the arm).
 - The panel: flat and readable in the band's glass, 184 GUI px wide, just above the wrist's place on screen (kept inside
   the screen), unfolding from its corner nearest the wrist (wide first, then tall, 220 ms) along a beam of light from the
   band, which flares as it leaves. Rows (`GlanceRules.rows`): level and rank (the rank's colour) with the XP line under them;
   health, Aether (once Skyborn; `HudState.aether()`, installed by Ascent), food and armour as labelled segmented bars with
   their values; the task's title and count, its current step (keys named as bound) and the next one (`signal.client.SignalGlance`);
-  where you're heading with its distance and a needle (up is ahead). The hotbar, power bar and level chip show while
-  glancing (§40.6), and so do the task card and the full gate panel. Texts are built once a tick while it shows.
+  where you're heading with its distance and a needle (up is ahead); last, under a hairline, the hotbar (Euan 2026-11-09:
+  "that way your eyes only need to look in one place"): nine of the holo inventory's dark wells, 18 px and 1 apart, each with
+  its item, its count in the title colour and its wear as a lit thread along the foot; the held slot has the full rim, a
+  tint and a glow. It needs the holo look (not reduced motion, the holo pipelines working); without that the panel has no
+  such row and vanilla's bar shows as it did. The power bar and level chip show while glancing (§40.6), and so do the task
+  card and the full gate panel. Texts are built once a tick while it shows; the slots are read each frame.
 - Sounds: the band's open and close (`HoloAudio`).
 
 ### 40.8 Settings (`config/awaken-aim-client.toml`)

@@ -15,6 +15,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import org.joml.Vector3f;
 
 import java.util.Locale;
@@ -22,10 +23,11 @@ import java.util.Locale;
 /**
  * The Tab glance (SPEC §40.7; Metro's watch): hold the player-list key and the off-hand forearm comes up with the band, and
  * the band projects one flat, readable panel just above it: level and rank with the XP line, health, Aether, food,
- * armour, the task with its current and next step, and a needle to where you're heading. You keep walking and looking
- * while you hold it; in multiplayer vanilla's player list shows with it (the same key). A quick tap leaves the panel up
- * for 4 s without the arm. The panel unfolds from the wrist along a beam of light, in the band's own glass. Off in
- * Classic. Its texts are built once a tick while it shows; a frame only draws.
+ * armour, the task with its current and next step, a needle to where you're heading, and the hotbar, so everything is in
+ * one place (the bar at the foot of the screen steps aside while it shows). You keep walking and looking while you hold
+ * it; in multiplayer vanilla's player list shows with it (the same key). It goes when the key is let go. The panel
+ * unfolds from the wrist along a beam of light, in the band's own glass. Off in Classic. Its texts are built once a tick
+ * while it shows; a frame only draws.
  */
 final class Glance {
     private Glance() {}
@@ -33,6 +35,10 @@ final class Glance {
     static final net.minecraft.resources.Identifier LAYER = dev.awaken.Awaken.id("glance");
     /** The panel's width (GUI px), its row height, and the gap it keeps above the wrist. */
     private static final int W = 184, ROW = 11, PAD = 6;
+    /** The hotbar's wells: 18 across, 1 apart (a 16 px item with a rim), and the socket glass the holo inventory's wells use. */
+    private static final int SLOT = 18, SLOT_STEP = 19, SLOT_GLASS = 0x040A16, HOTBAR_H = SLOT + 1;
+    /** The items come in once the glass is nearly open: they can't fade, so they arrive with the words at half strength. */
+    private static final float ITEMS_FROM = 0.5F;
     private static final float ARM_IN_MS = 260F, ARM_OUT_MS = 200F, PANEL_IN_MS = 220F, PANEL_OUT_MS = 170F;
 
     private static final GlanceRules.Key KEY = new GlanceRules.Key();
@@ -50,6 +56,16 @@ final class Glance {
 
     static boolean glancing() {
         return panelWanted || panel > 0.01F;
+    }
+
+    /** Whether the panel carries the hotbar when it shows: not without the holo look (the flat fallback keeps vanilla's bar). */
+    static boolean hotbarRow() {
+        return !HudState.classic() && HoloPipelines.ok() && !HoloConfig.reducedMotion;
+    }
+
+    /** The panel is up with the hotbar on it: the one at the foot of the screen steps aside. */
+    static boolean hotbarInPanel() {
+        return glancing() && hotbarRow();
     }
 
     /** The arm is drawn by {@link Wrist} while raised or lowering. */
@@ -134,7 +150,7 @@ final class Glance {
             bearing = here ? Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-dx, dz)) - p.getYRot()) : Float.NaN;
             heading = fit(font, (destination ? "◆ " : "◇ ") + h.name(), W - 2 * PAD - 22 - font.width(distance));
         }
-        rowN = GlanceRules.rows(ae >= 0, !taskTitle.isEmpty(), !step.isEmpty(), !next.isEmpty(), h != null, ROWS);
+        rowN = GlanceRules.rows(ae >= 0, !taskTitle.isEmpty(), !step.isEmpty(), !next.isEmpty(), h != null, hotbarRow(), ROWS);
     }
 
     private static String fit(Font font, String s, int room) {
@@ -164,7 +180,7 @@ final class Glance {
         Wrist.band(1F, side, WRIST);
         float tanY = Math.max(0.1F, ViewMath.tanYHand), aspect = sw / (float) sh;
         float wx = (0.5F + 0.5F * WRIST.x / -WRIST.z / (tanY * aspect)) * sw, wy = (0.5F - 0.5F * WRIST.y / -WRIST.z / tanY) * sh;
-        int h = 2 * PAD + ROW * rowN + 4 + (hasTask() ? 3 : 0) + (hasHeading() ? 3 : 0);
+        int h = 2 * PAD + ROW * rowN + 4 + (has(Row.TASK) ? 3 : 0) + (has(Row.HEADING) ? 3 : 0) + (has(Row.HOTBAR) ? 3 + HOTBAR_H - ROW : 0);
         int x = Mth.clamp(Math.round(side < 0 ? wx - 24 : wx - W + 24), 8, sw - W - 8);
         int y = Mth.clamp(Math.round(wy - 30 - h), 8, sh - h - 8);
         float k = HoloTimeline.easeOut(panel);
@@ -183,23 +199,18 @@ final class Glance {
         int ry = y + PAD;
         for (int i = 0; i < rowN; i++) {
             Row r = ROWS[i];
-            if ((r == Row.TASK || r == Row.HEADING) && i > 0) {
+            if ((r == Row.TASK || r == Row.HEADING || r == Row.HOTBAR) && i > 0) {
                 g.fill(x + PAD, ry, x + W - PAD, ry + 1, Glass.a(Glass.EDGE, 0.25F * a));
                 ry += 3;
             }
             row(g, font, r, x, ry, a);
-            ry += r == Row.LEVEL ? ROW + 4 : ROW;
+            ry += r == Row.LEVEL ? ROW + 4 : r == Row.HOTBAR ? HOTBAR_H : ROW;
         }
         g.pose().popMatrix();
     }
 
-    private static boolean hasTask() {
-        for (int i = 0; i < rowN; i++) if (ROWS[i] == Row.TASK) return true;
-        return false;
-    }
-
-    private static boolean hasHeading() {
-        for (int i = 0; i < rowN; i++) if (ROWS[i] == Row.HEADING) return true;
+    private static boolean has(Row row) {
+        for (int i = 0; i < rowN; i++) if (ROWS[i] == row) return true;
         return false;
     }
 
@@ -233,6 +244,47 @@ final class Glance {
                 HudLook.text(g, font, heading, lx, y, Glass.a(destination ? Glass.TITLE : Glass.TEXT, a), true);
                 HudLook.text(g, font, distance, rx - font.width(distance), y, Glass.a(Glass.LABEL, a), true);
                 if (!Float.isNaN(bearing)) needle(g, rx - font.width(distance) - 10, y + 4, bearing, a);
+            }
+            case HOTBAR -> hotbar(g, font, x, y, a);
+        }
+    }
+
+    /** The nine slots as the holo inventory's wells: the items, their counts and wear in the band's own marks, the held one lit. */
+    private static void hotbar(GuiGraphicsExtractor g, Font font, int x, int y, float a) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer p = mc.player;
+        var inv = p.getInventory();
+        int sel = inv.getSelectedSlot();
+        int x0 = x + (W - (9 * SLOT_STEP - 1)) / 2;
+        float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        for (int i = 0; i < 9; i++) {
+            int sx = x0 + i * SLOT_STEP;
+            boolean held = i == sel;
+            if (held) HudLook.glow(g, sx - 2, y - 2, SLOT + 4, SLOT + 4, Glass.EDGE, 0.55F * a);
+            g.fill(sx + 1, y + 1, sx + SLOT - 1, y + SLOT - 1, Glass.a(SLOT_GLASS, 0.62F * a));
+            if (held) g.fill(sx + 1, y + 1, sx + SLOT - 1, y + SLOT - 1, Glass.a(Glass.EDGE, 0.2F * a));
+            int rim = Glass.a(Glass.EDGE, (held ? 1F : 0.28F) * a);
+            g.fill(sx, y, sx + SLOT, y + 1, rim);
+            g.fill(sx, y + SLOT - 1, sx + SLOT, y + SLOT, rim);
+            g.fill(sx, y + 1, sx + 1, y + SLOT - 1, rim);
+            g.fill(sx + SLOT - 1, y + 1, sx + SLOT, y + SLOT - 1, rim);
+            ItemStack stack = inv.getItem(i);
+            if (a < ITEMS_FROM || stack.isEmpty()) continue;
+            int ix = sx + 1, iy = y + 1;
+            g.item(p, stack, ix, iy, i + 1);
+            float cool = p.getCooldowns().getCooldownPercent(stack, partial);
+            if (cool > 0F) {
+                int top = iy + Mth.floor(16F * (1F - cool));
+                g.fill(ix, top, ix + 16, top + Mth.ceil(16F * cool), Glass.a(Glass.EDGE, 0.34F * a));
+            }
+            if (stack.isBarVisible()) { // wear: a lit thread along the well's foot, in the game's own colour for it
+                int by = y + SLOT - 3;
+                g.fill(sx + 2, by, sx + 15, by + 1, Glass.a(0x000000, 0.7F * a));
+                g.fill(sx + 2, by, sx + 2 + stack.getBarWidth(), by + 1, Glass.a(stack.getBarColor(), a));
+            }
+            if (stack.getCount() != 1) {
+                String n = String.valueOf(stack.getCount());
+                HudLook.text(g, font, n, sx + SLOT - 1 - font.width(n), y + SLOT - 9, Glass.a(Glass.TITLE, a), true);
             }
         }
     }
