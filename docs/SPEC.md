@@ -2039,6 +2039,12 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   the seam within 0.55; where `awaken:lands/fault_trench` passes 0.15 the fault widens (by up to 2.8 a side) and opens
   into a V trench up to 9 deep. Decisions come from the noises and the column only (continuous across chunk borders);
   never into water or down to the sea. Faultstone and the seam are in `#minecraft:cannot_support_snow_layer`.
+- A hero tree is taller and wider than anything that clears land reaches (a road or a village fells only 40 up, and sweeps
+  3x3 chunks), so nothing else cuts one (Euan 2026-11-09, the floating veined logs of a Lumen Spire a road ran through):
+  `terrain.api.HeroTrees.near` gives a road or settlement piece the cells of any hero tree here; `SettlementPaint` neither fells,
+  paints over nor sweeps those (the road stops at the bark and goes on past it), and a gate won't form inside one's box
+  (`Overworld.goodGround`). Test: `village_road_spares_hero_trees`; `terrain_trees_whole` rolls every custom tree feature six
+  times and 40 hero blueprints of each kind and counts any log or leaf no face-to-face path takes to the ground.
 - Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift" |
   "aurora_spire"`, `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass
   Steppe; a glassed bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its

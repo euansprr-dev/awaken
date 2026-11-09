@@ -192,9 +192,27 @@ public final class SettlementPaint {
 
     /** As above, with a caller's immutable natural heights and planned clearance (never a live surface reading). */
     public static int paintChunk(Layout l, int chunkX, int chunkZ, long worldSeed, ChunkAccess chunk, @Nullable Land land) {
-        int felled = fell(l, chunk, land);
+        return paintChunk(l, chunkX, chunkZ, worldSeed, chunk, land, null);
+    }
+
+    /** As above, leaving the blocks of any hero tree here alone: the road or the houses stop at its bark and go on past it. */
+    public static int paintChunk(Layout l, int chunkX, int chunkZ, long worldSeed, ChunkAccess chunk, @Nullable Land land,
+                                 dev.awaken.terrain.api.HeroTrees.@Nullable Cells keep) {
+        int felled = fell(l, chunk, land, keep);
         CityBuffer buf = paint(l, chunkX, chunkZ, worldSeed, LOCAL.get(), land);
+        if (keep != null) spare(buf, l, keep);
         return felled + CityWriter.toProto(chunk, buf, l.baseY());
+    }
+
+    /** Drops what the paint would write over a hero tree (a road's clear air above its surface would cut the trunk). */
+    private static void spare(CityBuffer buf, Layout l, dev.awaken.terrain.api.HeroTrees.Cells keep) {
+        for (int x = buf.px0; x < buf.px0 + buf.w; x++) {
+            for (int z = buf.pz0; z < buf.pz0 + buf.d; z++) {
+                for (int ry = CityBuffer.YMIN; ry <= CityBuffer.YMAX; ry++) {
+                    if (buf.get(x, ry, z) != null && keep.at(x + l.originX(), l.baseY() + ry, z + l.originZ())) buf.set(x, ry, z, null);
+                }
+            }
+        }
     }
 
     /** How far under and over a clearing column's ground (the plan's reading of the land) its trees are felled. */
@@ -203,13 +221,14 @@ public final class SettlementPaint {
     /**
      * Fells the land's trees in the chunk's clearing columns ({@link Layout#clears}): logs, leaves and what hangs on them,
      * never a block with a block entity or a snow layer; a felled trunk's dirt grows grass again. What the felling leaves
-     * hanging past the clearing goes in {@link #sweep}. Returns blocks removed.
+     * hanging past the clearing goes in {@link #sweep}. A hero tree's own blocks ({@code keep}) stay: nothing here reaches
+     * its top, so cutting one leaves the rest in the air. Returns blocks removed.
      */
     static int fell(Layout l, ChunkAccess chunk) {
-        return fell(l, chunk, null);
+        return fell(l, chunk, null, null);
     }
 
-    private static int fell(Layout l, ChunkAccess chunk, @Nullable Land land) {
+    private static int fell(Layout l, ChunkAccess chunk, @Nullable Land land, dev.awaken.terrain.api.HeroTrees.@Nullable Cells keep) {
         int bx = chunk.getPos().getMinBlockX(), bz = chunk.getPos().getMinBlockZ();
         int minY = chunk.getMinY(), maxY = chunk.getMaxY();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
@@ -232,6 +251,7 @@ public final class SettlementPaint {
                         int sy = net.minecraft.core.SectionPos.sectionRelative(y);
                         BlockState s = sec.getBlockState(lx, sy, lz);
                         if (s.isAir() || s.hasBlockEntity() || s.is(net.minecraft.world.level.block.Blocks.SNOW) || !CityWriter.vegetation(s)) continue;
+                        if (keep != null && keep.at(bx + lx, y, bz + lz)) continue;
                         if (held[si] == null) {
                             sec.acquire();
                             held[si] = sec;
@@ -384,6 +404,11 @@ public final class SettlementPaint {
      * group of logs and leaves round this chunk that stands on nothing. Returns blocks removed.
      */
     public static int sweep(net.minecraft.world.level.WorldGenLevel level, Layout l, int chunkX, int chunkZ) {
+        return sweep(level, l, chunkX, chunkZ, null);
+    }
+
+    /** As above, leaving a hero tree alone: it stands, and a part of it not joined to its trunk yet is waiting for the next chunk. */
+    public static int sweep(net.minecraft.world.level.WorldGenLevel level, Layout l, int chunkX, int chunkZ, dev.awaken.terrain.api.HeroTrees.@Nullable Cells keep) {
         int removed = 0;
         net.minecraft.core.BlockPos.MutableBlockPos pos = new net.minecraft.core.BlockPos.MutableBlockPos();
         BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
@@ -402,7 +427,7 @@ public final class SettlementPaint {
                         int g = l.baseY() + l.lift(px, pz);
                         for (int y = g + 1; y <= g + CLEAR; y++) {
                             BlockState s = n.getBlockState(pos.set(wx, y, wz));
-                            if (!CityWriter.vegetation(s)) continue;
+                            if (!CityWriter.vegetation(s) || keep != null && keep.at(wx, y, wz)) continue;
                             level.setBlock(pos, air, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
                             removed++;
                         }
@@ -427,7 +452,11 @@ public final class SettlementPaint {
         CityTrees.groups(blocks, loaded::contains, (cells, grounded, clipped) -> {
             if (grounded || clipped) return;
             boolean tree = false;
-            for (int i = 0; i < cells.size() && !tree; i++) tree = (blocks.get(cells.getLong(i)) & (CityTrees.WOOD | CityTrees.LEAF)) != 0;
+            for (int i = 0; i < cells.size(); i++) {
+                long c = cells.getLong(i);
+                if (keep != null && keep.at(net.minecraft.core.BlockPos.getX(c), net.minecraft.core.BlockPos.getY(c), net.minecraft.core.BlockPos.getZ(c))) return;
+                tree = tree || (blocks.get(c) & (CityTrees.WOOD | CityTrees.LEAF)) != 0;
+            }
             if (tree) doomed.addAll(cells);
         });
         for (int i = 0; i < doomed.size(); i++) {
