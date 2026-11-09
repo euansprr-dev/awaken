@@ -98,6 +98,7 @@ public final class GateLiveTests {
                         "Swarm monsters spawn with less health");
                 // Echoing: the dead get up once; Volatile: the dead burst (no block damage)
                 h.assertTrue(Forces.has(mob, Forces.Tag.ECHO) && Forces.has(mob, Forces.Tag.VOLATILE), "modifier tags reach the monster");
+                h.assertTrue(Modifiers.entryLine(g.plan) != null, "an Echoing gate says so as you walk in");
                 var key = new GateMobs.Key(g.id, 0, 1, r.id);
                 int preparedNeighbours = GateMobs.alive(key) - 1; // pre-entry preparation already populated this room
                 if (mob instanceof AwakenMob am) {

@@ -43,6 +43,10 @@ final class ArmsAudio {
         play(e, ArmsSounds.CLEAVE.get(), 1.0F, ArmsSounds.cleavePitch(bodies));
     }
 
+    static void raise(Player p) {
+        play(p, ArmsSounds.GUARD_RAISE.get(), 1.0F, 1.0F);
+    }
+
     static void deflect(Player p) {
         play(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
     }

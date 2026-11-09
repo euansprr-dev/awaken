@@ -1,0 +1,46 @@
+# A shot's own look (SPEC §47.15): every BoltKind abreast, flying south across the view, on a sky stage: the trail, the
+# needle or bead and the burst. By day, then at night (how it glows).
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-shots.txt
+world autopilot_fights_shots creative 20261108
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+cmd awaken bosses carriers stage
+hud off
+wait 60
+
+cmd awaken bosses carriers kinds
+wait 8
+cmd tick freeze
+shot shots_01_kinds_day
+cmd tick unfreeze
+wait 30
+cmd awaken bosses carriers kinds
+wait 18
+cmd tick freeze
+shot shots_02_kinds_day_later
+cmd tick unfreeze
+wait 40
+
+cmd time set 18000
+wait 20
+cmd awaken bosses carriers kinds
+wait 12
+cmd tick freeze
+shot shots_03_kinds_night
+cmd tick unfreeze
+wait 30
+quit

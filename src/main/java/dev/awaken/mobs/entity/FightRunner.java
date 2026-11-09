@@ -77,15 +77,48 @@ final class FightRunner {
     /** This blow: whether you stood in its reach as it struck, and whether it landed on you. */
     private boolean inReach, struck;
 
+    // aiming a blow (SPEC §47.15): the correction it took at its lock, and the moves it can't reach you with for a moment
+    private final BlowAim.Result aim = new BlowAim.Result(), trial = new BlowAim.Result();
+    private boolean aimDone;
+    private final long[] outOfReach;
+    /** A string played by hand (tests, the studio) plays whether or not its blows would land. */
+    private boolean byHand;
+
+    // the mind (SPEC §48), for a fight script that has one
+    private final @Nullable FightMind mind;
+    /** Ticks it shows it noticed before its answer's wind-up. */
+    static final int NOTICE_TICKS = 5;
+    private int notice;
+    private FightScripts.@Nullable Answer answering;
+    private final java.util.function.IntPredicate canAnswer;
+    private @Nullable String answerMove;
+    /** The forks of the string being played, and which blow's fork was last taken (a fork is taken once). */
+    private List<FightScripts.Fork> forks = List.of();
+    private int forkDone;
+    /** This blow is held waiting for you: it keeps turning to you through its hold, and locks as late as it always would. */
+    private boolean followsHold;
+    /** The answer waiting on its notice cuts into a phrase, which counts toward its opening. */
+    private boolean carriedOn;
+    /** A move that can't reach you now isn't tried again for this long. */
+    static final int RETRY_TICKS = 8;
+
     FightRunner(AwakenBoss boss, Kits.Kit kit) {
         this.boss = boss;
         this.kit = kit;
         this.moves = kit.moves();
         this.fight = java.util.Objects.requireNonNull(kit.fight());
+        this.outOfReach = new long[moves.moves().size()];
+        this.mind = fight.mind().map(m -> new FightMind(boss, moves, m)).orElse(null);
+        this.canAnswer = i -> ready(i, boss.getTarget());
     }
 
     Kits.Kit kit() {
         return kit;
+    }
+
+    /** The fight's mind, or null for a fight that hasn't one. */
+    @Nullable FightMind mind() {
+        return mind;
     }
 
     boolean busy() {
@@ -120,10 +153,48 @@ final class FightRunner {
     boolean play(ServerLevel level, String id) {
         stop();
         string.clear();
+        forks = List.of();
+        endNotice();
         introduced = true;
         phraseBlows = 1;
         recoil = 0;
+        byHand = true;
         return begin(level, id, boss.getTarget());
+    }
+
+    /** Plays a string as the fight itself would, forks, holds and all (tests). */
+    boolean fight(ServerLevel level, String first, java.util.List<String> then, List<FightScripts.Fork> forkAt) {
+        stop();
+        string.clear();
+        endNotice();
+        introduced = true;
+        phraseBlows = 1;
+        recoil = 0;
+        byHand = false;
+        forks = forkAt;
+        forkDone = 0;
+        if (!begin(level, first, boss.getTarget())) return false;
+        string.addAll(then);
+        return true;
+    }
+
+    /** Between blows and standing open for {@code ticks}, its intro done (tests). */
+    void idleFor(ServerLevel level, int ticks) {
+        stop();
+        string.clear();
+        forks = List.of();
+        endNotice();
+        introduced = true;
+        phraseBlows = 1;
+        recoil = 0;
+        byHand = false;
+        openUp(level, ticks);
+    }
+
+    private void endNotice() {
+        notice = 0;
+        answering = null;
+        answerMove = null;
     }
 
     /** Plays a string now: its first move, then the rest as the fight script would (tests). */
@@ -156,6 +227,7 @@ final class FightRunner {
     /** Its stance broke or it was staggered: the move in progress ends there, and so does its string (SPEC §24). */
     void interrupt() {
         recoil = 0;
+        endNotice();
         if (move < 0) return;
         stop();
         string.clear();
@@ -226,6 +298,7 @@ final class FightRunner {
     private static final String POWER_USES = "awaken:power_uses/";
 
     void tick(ServerLevel level) {
+        if (mind != null) mind.watch(boss.getTarget(), level.getGameTime());
         if (move >= 0) {
             step(level);
             return;
@@ -265,14 +338,19 @@ final class FightRunner {
         // a broken stance or a stagger is the opening it earned: it starts nothing (and kneels while broken, reels from
         // a phrase's last blow turned aside, its limb recoils from a deflect)
         boolean broken = boss.broken() || Stances.broken(boss);
-        int pose = broken ? AwakenBoss.KIT_POSE_BROKEN : boss.reeling() ? AwakenBoss.KIT_POSE_REEL : recoil > 0 ? AwakenBoss.KIT_POSE_RECOIL : 0;
+        int pose = broken ? AwakenBoss.KIT_POSE_BROKEN : boss.reeling() ? AwakenBoss.KIT_POSE_REEL : recoil > 0 ? AwakenBoss.KIT_POSE_RECOIL
+                : notice > 0 ? AwakenBoss.KIT_POSE_NOTICE : 0;
         boss.syncKit(-1, 0, pose);
         if (broken || boss.staggered() || boss.flag(AwakenMob.F_FALLEN) || boss.flag(AwakenMob.F_DORMANT)) {
             string.clear();
             recoil = 0;
+            endNotice();
             return;
         }
-        if (target == null || !target.isAlive()) return;
+        if (target == null || !target.isAlive()) {
+            endNotice();
+            return;
+        }
         boss.getLookControl().setLookAt(target, 30, 30);
         if ((boss.tickCount % 10) == 0) {
             distWasWas = distWas;
@@ -284,10 +362,16 @@ final class FightRunner {
             boss.getNavigation().stop();
             return;
         }
+        if (notice > 0) {
+            noticing(level, target);
+            return;
+        }
         if (!string.isEmpty()) {
+            if (answer(target, level, false)) return;
+            fork(target);
             String next = string.poll();
             int i = moves.index(next);
-            if (i >= 0 && inRange(moves.get(i), target) && begin(level, next, target)) {
+            if (i >= 0 && inRange(moves.get(i), target) && reaches(i, target) && begin(level, next, target)) {
                 phraseBlows++;
                 return;
             }
@@ -297,6 +381,7 @@ final class FightRunner {
                 return;
             }
         }
+        byHand = false;
         if (gap > 0) {
             gap--;
             // an opening: it starts nothing and stands its ground, turning to keep you in front (SPEC §47.3)
@@ -304,21 +389,94 @@ final class FightRunner {
             else approach(target);
             return;
         }
+        if (answer(target, level, false)) return;
         FightScripts.Entry e = pick(target);
-        if (e == null || !begin(level, e.move(), target)) {
+        if (e == null || !reaches(moves.index(e.move()), target) || !begin(level, e.move(), target)) {
+            if (mind != null) mind.nothingToStart(level.getGameTime());
             approach(target);
             return;
         }
         phraseBlows = 1;
+        forks = e.forks();
+        forkDone = 0;
         if (!e.then().isEmpty()) {
             List<String> s = e.then().get(boss.getRandom().nextInt(e.then().size()));
             string.addAll(s);
         }
     }
 
+    /**
+     * An answer is due (SPEC §48.2): what it was going to do next is off, and it shows you it noticed before it starts.
+     * Only ever between blows: at a string's link or with nothing playing, so a swing that has begun plays out.
+     */
+    private boolean answer(LivingEntity target, ServerLevel level, boolean pressOnly) {
+        if (mind == null || byHand || !studio.isEmpty()) return false;
+        FightScripts.Answer a = mind.due(canAnswer, level.getGameTime(), pressOnly);
+        if (a == null) return false;
+        carriedOn = pressOnly || !string.isEmpty();
+        answering = a;
+        answerMove = mind.chosen();
+        notice = NOTICE_TICKS;
+        string.clear();
+        forks = List.of();
+        boss.getNavigation().stop();
+        if (!dev.awaken.mobs.boss.KitSounds.play(boss, moves, "notice", 1F) && !dev.awaken.mobs.boss.KitSounds.play(boss, moves, "step", 1F))
+            dev.awaken.mobs.boss.KitSounds.play(boss, moves, "impact", 0.5F);
+        return true;
+    }
+
+    /** The beat it takes to show it noticed: its head snaps round and it drops; then the answer's wind-up, tell and all. */
+    private void noticing(ServerLevel level, LivingEntity target) {
+        boss.getNavigation().stop();
+        boss.getLookControl().setLookAt(target, 180, 180);
+        if (--notice > 0) return;
+        FightScripts.Answer a = answering;
+        String id = answerMove;
+        answering = null;
+        answerMove = null;
+        int i = id == null ? -1 : moves.index(id);
+        // you got out of its reach while it was looking: the normal choice takes over next tick
+        if (a == null || i < 0 || !inRange(moves.get(i), target) || !reaches(i, target) || !begin(level, id, target)) {
+            if (carriedOn && fight.duel()) openUp(level, opening(phraseBlows)); // a phrase it cut short still ends in its opening
+            return;
+        }
+        phraseBlows = carriedOn ? phraseBlows + 1 : 1;
+        forkDone = 0;
+        if (!a.then().isEmpty()) string.addAll(a.then().get(boss.getRandom().nextInt(a.then().size())));
+    }
+
+    /** Whether a move could begin now, as an answer or at a fork. */
+    private boolean ready(int i, LivingEntity target) {
+        KitMoves.Move m = moves.get(i);
+        if (mind != null && !mind.follows(i)) return false;
+        if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target) || !reaches(i, target)) return false;
+        if (m.ability().isEmpty()) return true;
+        Ability a = boss.ability(m.ability().get());
+        return a == null || !(boss.level() instanceof ServerLevel sl) || boss.abilityRunner().room(sl, a);
+    }
+
+    /** The string's next blow by what you're doing right now (SPEC §48.4); until the fork, the branches look the same. */
+    private void fork(LivingEntity target) {
+        if (mind == null || byHand || forkDone >= phraseBlows || phraseBlows > forks.size()) return;
+        forkDone = phraseBlows;
+        String next = mind.forked(forks.get(phraseBlows - 1), boss.level().getGameTime());
+        if (next == null || (!string.isEmpty() && next.equals(string.peek()))) return;
+        int i = moves.index(next);
+        if (i < 0 || !ready(i, target)) return;
+        if (!string.isEmpty()) string.poll();
+        string.addFirst(next);
+    }
+
     /** Walks toward the target when nothing in the pool reaches it (fliers keep their own flight goal). */
     private void approach(LivingEntity target) {
         if (boss.def().flies()) return;
+        if (edgeDistance(target) < TOO_CLOSE) { // inside its own swing: it makes room
+            boss.getNavigation().stop();
+            Vec3 away = boss.position().subtract(target.position());
+            double len = Math.sqrt(away.x * away.x + away.z * away.z);
+            if (len > 1.0E-3) boss.move(MoverType.SELF, new Vec3(away.x / len * STEP_BACK, 0, away.z / len * STEP_BACK));
+            return;
+        }
         if (navTicks-- > 0) return;
         navTicks = 10;
         // it stops where its close moves reach (at most 3.5 blocks out): Unit Zero's cuts reach 1.6, not 3.5
@@ -426,6 +584,7 @@ final class FightRunner {
         deflectAt = now;
         boolean last = string.isEmpty();
         stop();
+        dev.awaken.mobs.boss.KitSounds.play(boss, moves, "impact", 0.8F); // the limb stopped dead, heard at the body
         if (last) {
             // the reel is a stagger (nothing counts down through it), then half an opening more while it gathers itself
             boss.reel(REEL_TICKS);
@@ -441,7 +600,9 @@ final class FightRunner {
         int i = moves.index(e.move());
         if (i < 0) return false;
         KitMoves.Move m = moves.get(i);
-        if (!inRange(m, target)) return false;
+        if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target)) return false;
+        if (mind != null && !mind.allowed(i, boss.level().getGameTime())) return false;
+        if (!e.band().isEmpty() && (edgeDistance(target) < e.band().get(0) || (e.band().size() > 1 && edgeDistance(target) > e.band().get(1)))) return false;
         // a summon with its colony already out is no move at all: it walks in instead
         if (m.ability().isPresent()) {
             Ability a = boss.ability(m.ability().get());
@@ -458,7 +619,68 @@ final class FightRunner {
 
     private boolean inRange(KitMoves.Move m, LivingEntity target) {
         double d = edgeDistance(target);
-        return d >= m.minRange() && d <= m.maxRange();
+        return d >= m.minRange() && d <= m.maxRange() && inBand(m, target);
+    }
+
+    /** A swing's height against yours: a body whose blow passes far over or under you doesn't begin it (SPEC §47.15). */
+    private boolean inBand(KitMoves.Move m, LivingEntity target) {
+        if (byHand || !aimed(m)) return true;
+        float low = Float.MAX_VALUE, high = -Float.MAX_VALUE;
+        for (List<KitMoves.Capsule> frame : m.hits()) {
+            for (KitMoves.Capsule c : frame) {
+                low = Math.min(low, Math.min(c.ay(), c.by()) - c.r());
+                high = Math.max(high, Math.max(c.ay(), c.by()) + c.r());
+            }
+        }
+        double reach = boss.def().flies() ? BAND_SLACK + 1.5 : BAND_SLACK;
+        return target.getBoundingBox().minY - boss.getY() <= high + reach && target.getBoundingBox().maxY - boss.getY() >= low - reach;
+    }
+
+    /** Closer than this its swings pass over you; it backs off this far a tick. */
+    private static final double TOO_CLOSE = 0.35, STEP_BACK = 0.16;
+
+    /** How far past its sweep a lean carries a blow, in height. */
+    private static final double BAND_SLACK = 1.2;
+
+    /** A swing of the body's own, aimed at its lock; a move with an ability aims in its own way. */
+    private static boolean aimed(KitMoves.Move m) {
+        return !m.hits().isEmpty() && m.ability().isEmpty();
+    }
+
+    /** Whether the move can land on you where you stand; if not, it isn't tried again for {@link #RETRY_TICKS}. */
+    private boolean reaches(int i, LivingEntity target) {
+        if (i < 0) return false;
+        KitMoves.Move m = moves.get(i);
+        if (byHand || !aimed(m)) return true;
+        boolean ok = solve(m, target, boss.yBodyRot, trial);
+        if (!ok) outOfReach[i] = boss.level().getGameTime() + RETRY_TICKS;
+        return ok;
+    }
+
+    /** The correction that lands {@code m} on the target, with the body facing it (or {@code facing}, for a blow that doesn't turn). */
+    private boolean solve(KitMoves.Move m, LivingEntity target, float facing, BlowAim.Result out) {
+        boolean turns = m.time().track() > 0;
+        double dx = target.getX() - boss.getX(), dz = target.getZ() - boss.getZ();
+        float base = turns ? (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90 : facing;
+        float r = base * Mth.DEG_TO_RAD, c = Mth.cos(r), s = Mth.sin(r);
+        // the body's frame: forward (-sin, cos), left (cos, sin)
+        double lx = dx * c + dz * s, lz = -dx * s + dz * c;
+        double y0 = target.getBoundingBox().minY - boss.getY(), y1 = target.getBoundingBox().maxY - boss.getY();
+        boolean ok = BlowAim.solve(m, hip(), lx, lz, y0, y1, target.getBbWidth() * 0.5, boss.def().flies(), lowestDip(), true, Math.max(0, edgeDistance(target) - 0.1), out);
+        if (ok) out.turn = Mth.wrapDegrees(base + out.turn);
+        return ok;
+    }
+
+    /** How far a flier can drop before the floor stops it (0 to -1.5, in the dips' half blocks). */
+    private float lowestDip() {
+        if (!boss.def().flies()) return 0;
+        float d = 0;
+        while (d > -1.5F && boss.level().noBlockCollision(boss, boss.getBoundingBox().move(0, d - 0.5F, 0))) d -= 0.5F;
+        return d;
+    }
+
+    private float hip() {
+        return boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP;
     }
 
     private double edgeDistance(LivingEntity target) {
@@ -504,6 +726,15 @@ final class FightRunner {
         cls = told(m, m.ability().map(boss::ability).orElse(null));
         // the enrage is speed, never damage: the wind-up and recovery shrink, but never under its class's tell
         int held = cls == Strikes.Kind.HEAVY && m.time().hold() > 0 && boss.getRandom().nextInt(3) == 0 ? m.time().hold() : 0;
+        followsHold = false;
+        if (mind != null) {
+            mind.began(i, level.getGameTime());
+            if (!byHand && studio.isEmpty() && FightMind.holds(cls)) {
+                boolean wary = deflects >= HABIT_DEFLECTS && level.getGameTime() - deflectAt <= HABIT_FORGET;
+                held = mind.hold(m, wary, level.getGameTime());
+                followsHold = held > 0;
+            }
+        }
         KitMoves.Played p = KitMoves.played(m, boss.kitSpeed(), held);
         played = p;
         windup = p.windup();
@@ -515,6 +746,8 @@ final class FightRunner {
         t = 0;
         hits = 0;
         yaw = boss.yBodyRot;
+        aim.clear();
+        aimDone = false;
         // an ability needs someone to aim at (the studio plays its moves with nobody there: the body only)
         ability = target != null ? m.ability().map(boss::ability).orElse(null) : null;
         if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold, cls, m.signature());
@@ -530,6 +763,31 @@ final class FightRunner {
         return true;
     }
 
+    /**
+     * From its lock on the blow commits to where you are: it takes its correction (SPEC §47.15) over what's left of the
+     * wind-up. If you've moved so that no correction reaches you, it swings where it was going: you got out of it.
+     */
+    private void aimBlow(KitMoves.Move m, @Nullable LivingEntity target, int lockAt, int wind) {
+        if (!aimed(m) || t < lockAt) return;
+        if (!aimDone) {
+            aimDone = true;
+            if (target != null && target.isAlive() && solve(m, target, yaw, aim)) boss.syncKitLean(Math.round(aim.lean));
+            else {
+                aim.clear();
+                aim.turn = yaw;
+            }
+        }
+        yaw = Mth.approachDegrees(yaw, aim.turn, Math.max(TURN_RATE, m.time().track()));
+        int left = Math.max(1, wind - lockAt);
+        if (aim.step != 0 || aim.dip != 0) {
+            float r = yaw * Mth.DEG_TO_RAD, per = aim.step / left;
+            boss.move(MoverType.SELF, new Vec3(-Mth.sin(r) * per, aim.dip / left, Mth.cos(r) * per));
+        }
+    }
+
+    /** How fast the body turns into its aim after the lock (degrees a tick). */
+    private static final float TURN_RATE = 14F;
+
     private void step(ServerLevel level) {
         KitMoves.Move m = moves.get(move);
         LivingEntity target = boss.getTarget();
@@ -538,12 +796,14 @@ final class FightRunner {
         if (t <= wind) {
             // the wind-up: it turns toward you until it locks, then commits; an aimed ability locks at least its lead
             // before it can land (SPEC §47.2, I3), whatever the move's own lock says
-            int lockAt = ability != null ? Math.min(m.time().lock(), wind - Carriers.lead(ability)) : m.time().lock();
+            int lock = m.time().lock() + (followsHold ? hold : 0);
+            int lockAt = ability != null ? Math.min(lock, wind - Carriers.lead(ability)) : lock;
             boolean tracking = t <= lockAt && target != null && target.isAlive();
             if (tracking && m.time().track() > 0) {
                 float want = (float) (Mth.atan2(target.getZ() - boss.getZ(), target.getX() - boss.getX()) * Mth.RAD_TO_DEG) - 90;
                 yaw = Mth.approachDegrees(yaw, want, m.time().track());
             }
+            aimBlow(m, target, lockAt, wind);
             face();
             boss.getNavigation().stop();
             if (ability != null) boss.abilityRunner().windup(level, ability, wind - t + 1, tracking);
@@ -558,6 +818,7 @@ final class FightRunner {
                 boss.setTelegraph(0, false);
                 if (ability != null) {
                     boss.abilityRunner().fire(level, ability, world(m.origin()), cls != Strikes.Kind.NONE ? cls : ability.strike());
+                    if (move < 0) return; // turned aside as it fired: deflected() has ended the move
                     // a step that didn't close the gap (a wall where it would land) doesn't cut the air far from you:
                     // it ends there, string and all
                     if (ability.kind() == Ability.Kind.BLINK && !m.hits().isEmpty()) {
@@ -578,7 +839,9 @@ final class FightRunner {
                 if (m.is("area") && firstHit(m) < 0) sound(m, "impact", "impact");
             }
             face();
-            float adv = m.motion().advance() / active, up = m.motion().rise() / active;
+            // a charge carries the body itself (it stops at you); the clip's own run would add to it
+            boolean charging = ability != null && ability.kind() == Ability.Kind.CHARGE;
+            float adv = charging ? 0 : m.motion().advance() * aim.run / active, up = m.motion().rise() / active;
             if (adv != 0 || up != 0) {
                 double r = yaw * Mth.DEG_TO_RAD;
                 boss.move(MoverType.SELF, new Vec3(-Mth.sin((float) r) * adv, up, Mth.cos((float) r) * adv));
@@ -627,9 +890,16 @@ final class FightRunner {
 
     /** A string's next step begins now if it is due and in range; false leaves the recovery to play out. */
     private boolean link(ServerLevel level, @Nullable LivingEntity target) {
-        if (string.isEmpty() || pendingPhase >= 0 || !studio.isEmpty() || target == null || !target.isAlive()) return false;
+        if (pendingPhase >= 0 || !studio.isEmpty() || target == null || !target.isAlive()) return false;
+        // the follow-through ends here, as it would for the string's next blow; a phrase's last blow only for an answer that presses on
+        if (answer(target, level, string.isEmpty())) {
+            stop();
+            return false;
+        }
+        if (string.isEmpty()) return false;
+        if (mind != null && !byHand) fork(target);
         int i = moves.index(string.peek());
-        if (i < 0 || !inRange(moves.get(i), target)) return false;
+        if (i < 0 || !inRange(moves.get(i), target) || !reaches(i, target)) return false;
         String next = string.poll();
         stop();
         phraseBlows++;
@@ -650,6 +920,8 @@ final class FightRunner {
 
     private void stop() {
         if (move >= 0) boss.setTelegraph(0, false);
+        boss.syncKitLean(0);
+        aim.clear();
         move = -1;
         played = null;
         ability = null;
@@ -679,6 +951,12 @@ final class FightRunner {
     }
 
     private Vec3 world(float x, float y, float z) {
+        if (aim.lean != 0) { // the body leans into the blow about its hips
+            float hip = hip(), cl = Mth.cos(aim.lean * Mth.DEG_TO_RAD), sl = Mth.sin(aim.lean * Mth.DEG_TO_RAD), up = y - hip;
+            float zw = up * sl + z * cl;
+            y = hip + up * cl - z * sl;
+            z = zw;
+        }
         float r = yaw * Mth.DEG_TO_RAD, c = Mth.cos(r), s = Mth.sin(r);
         // facing yaw: forward is (-sin, cos); the body's left is (cos, sin)
         return new Vec3(boss.getX() + x * c - z * s, boss.getY() + y, boss.getZ() + x * s + z * c);

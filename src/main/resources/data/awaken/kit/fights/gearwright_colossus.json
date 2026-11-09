@@ -1,8 +1,80 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "gearwright_colossus",
  "moves": "gearwright_colossus",
  "duel": true,
+ "mind": {
+  "cooldowns": {
+   "strikes": 240,
+   "overload": 200,
+   "slam": 50
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "stride",
+     "halo",
+     "slam",
+     "chop"
+    ],
+    "chance": 1.0,
+    "cooldown": 260,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "stride",
+     "halo"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "slam"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "chop",
+     "kick"
+    ],
+    "chance": 0.7,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "after": 30,
+    "moves": [
+     "stride",
+     "strikes",
+     "slam"
+    ],
+    "cooldown": 200
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "slam",
+     "chop"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "stride",
+     "halo"
+    ],
+    "chance": 0.9,
+    "cooldown": 200
+   }
+  ]
+ },
  "stance": 260,
  "intro": {
   "pose": "idle",
@@ -22,6 +94,16 @@
        "chop",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "stride",
+       "stayed": "chop"
+      },
+      {
+       "guard": "slam"
+      }
      ]
     },
     {
@@ -32,6 +114,13 @@
       [
        "sweep"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "stride",
+       "stayed": "sweep"
+      }
      ]
     },
     {
@@ -65,6 +154,10 @@
       [
        "chop"
       ]
+     ],
+     "band": [
+      3,
+      14
      ]
     }
    ]
@@ -83,6 +176,16 @@
        "chop",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "stride",
+       "stayed": "chop"
+      },
+      {
+       "guard": "slam"
+      }
      ]
     },
     {
@@ -97,6 +200,13 @@
        "sweep",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "stride",
+       "stayed": "sweep"
+      }
      ]
     },
     {
@@ -134,6 +244,10 @@
       [
        "sweep"
       ]
+     ],
+     "band": [
+      3,
+      14
      ]
     },
     {
@@ -153,6 +267,16 @@
        "chop",
        "slam"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "stride",
+       "stayed": "chop"
+      },
+      {
+       "guard": "slam"
+      }
      ]
     },
     {
@@ -164,6 +288,13 @@
        "sweep",
        "chop"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "slam",
+       "dodged": "stride",
+       "stayed": "sweep"
+      }
      ]
     },
     {
@@ -200,6 +331,10 @@
       [
        "sweep"
       ]
+     ],
+     "band": [
+      3,
+      14
      ]
     },
     {

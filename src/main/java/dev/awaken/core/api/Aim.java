@@ -51,13 +51,22 @@ public final class Aim {
      * {@link #PERSON_CAP}), and seen from the eye.
      */
     public static boolean meant(LivingEntity p, @Nullable Entity t, float yaw, float pitch, double reach) {
-        if (t == null || t == p || !t.isAlive() || t.level() != p.level()) return false;
+        if (t == null || t == p || !t.isAlive() || body(t) || t.level() != p.level()) return false;
         Vec3 eye = p.getEyePosition();
         AABB b = t.getBoundingBox();
         if (gap(eye, b) > reach + PRESS_SLACK) return false;
         float cap = t instanceof Player ? PERSON_CAP : AIM_CAP;
         float off = Math.min(offEdge(eye, b, yaw, pitch), offEdge(eye, b, p.getYRot(), p.getXRot()));
         return off <= cap && sees(p, t);
+    }
+
+    /**
+     * Whether this is a body and no longer a creature: dying, or a carcass laid where it fell (SPEC §47.12; a carcass has
+     * its health, so it reads as alive). Nothing locks on to one and nothing reads it out. A creature lying fallen that
+     * will get up is alive and isn't one.
+     */
+    public static boolean body(Entity e) {
+        return LivingHooks.carcass(e) || (e instanceof LivingEntity l && l.isDeadOrDying());
     }
 
     /** The id {@link #meant} lets through, or -1. */

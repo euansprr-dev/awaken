@@ -425,6 +425,9 @@ public final class ArmsPredict {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        boolean guard = p.isUsingItem() && Arms.guards(p.getUseItem());
+        if (guard && !guardUp) ArmsAudio.raise(p);
+        guardUp = guard;
         ArmsChop.tick(mc, p);
         if (plunging) {
             Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
@@ -552,6 +555,8 @@ public final class ArmsPredict {
     static boolean perfectHeavy;
     /** A Plunge armed in a fall (the blade held high until it lands), and its press. */
     static boolean plunging;
+    /** The guard was up last tick (its raise plays once). */
+    private static boolean guardUp;
     static int plungeSeq;
 
     /** How far a held heavy has charged (0..1, the glint at its mark), or -1 when not charging. */
@@ -860,6 +865,10 @@ public final class ArmsPredict {
                 CombatFeedback.kick(0F, -1.8F, 1.2F, 7);
                 ArmsFeel.deflected();
                 ArmsAudio.deflect(p);
+                int yaw = yawTo(p, Minecraft.getInstance().level.getEntity(r.entity()));
+                ArmsHands.jolt(Mth.sin(Mth.wrapDegrees(yaw - p.getYRot()) * Mth.DEG_TO_RAD), 1F);
+                ArmsBodies.jolt(p);
+                ArmsFx.guardSpark(p, yaw, true);
             }
             case ArmsPayloads.BLOCK -> {
                 fightAt = ticks;
@@ -1010,6 +1019,13 @@ public final class ArmsPredict {
                 CombatFeedback.hitstop(s.entity(), ms);
             }
             case ArmsPayloads.BREAK -> BROKEN.put(s.entity(), ticks + s.aux());
+            case ArmsPayloads.DEFLECT -> {
+                Entity e = mc.level.getEntity(s.entity());
+                if (e != null) {
+                    ArmsBodies.jolt(e);
+                    ArmsFx.guardSpark(e, yawTo(e, mc.level.getEntity(s.other())), true);
+                }
+            }
             case ArmsPayloads.SHOT -> {
                 Entity e = mc.level.getEntity(s.entity());
                 if (e != null) {
@@ -1020,6 +1036,11 @@ public final class ArmsPredict {
             case ArmsPayloads.POSTURE -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other());
             default -> { }
         }
+    }
+
+    /** The world yaw {@code by} stands at from {@code e} (HURT's convention); ahead of it when there's no one there. */
+    private static int yawTo(Entity e, @Nullable Entity by) {
+        return by == null ? (int) e.getYRot() : (int) (Mth.atan2(by.getZ() - e.getZ(), by.getX() - e.getX()) * Mth.RAD_TO_DEG) - 90;
     }
 
     static void reset() {

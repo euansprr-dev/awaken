@@ -82,7 +82,8 @@ public class AwakenMob extends Monster {
             F_DECOY = 1 << 10, F_FUSING = 1 << 11, F_DORMANT = 1 << 12, F_DUEL = 1 << 13, F_HEAVY = 1 << 14,
             F_SPLIT_CHILD = 1 << 15;
     /** Flags that are saved with the entity (the rest are recomputed). */
-    private static final int SAVED_FLAGS = F_ECHO | F_RISEN | F_DECOY | F_DORMANT | F_SPLIT_CHILD | F_VOLATILE | F_HAUNTED;
+    // F_FALLEN: its rise is spent when it falls, so one saved mid-fall still has to get up (its ticks aren't saved: at once)
+    private static final int SAVED_FLAGS = F_ECHO | F_RISEN | F_DECOY | F_DORMANT | F_SPLIT_CHILD | F_VOLATILE | F_HAUNTED | F_FALLEN;
 
     private static final EntityDataAccessor<Integer> DATA_FLAGS = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.INT);
     /** Remaining wind-up ticks of the current telegraph (0 = none). */
@@ -702,7 +703,7 @@ public class AwakenMob extends Monster {
             poof(level);
             return true;
         }
-        if (flag(F_FALLEN) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+        if (flag(F_FALLEN) && !finishes(source) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
         if (flag(F_DORMANT)) wake(level);
         boolean spirit = source.is(Forces.SPIRIT);
         if (flag(F_PHASED) && !spirit && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
@@ -721,7 +722,7 @@ public class AwakenMob extends Monster {
             // the counter off a raised guard: the guard was its tell, and it lands as a LIGHT blow (deflect it, block it)
             if (distanceToSqr(la) < 16) Strikes.deliver(this, Strikes.Kind.LIGHT, () -> doHurtTarget(level, la));
         }
-        if (def().has(Trait.REFLECT) && source.getDirectEntity() instanceof Projectile p && p.getOwner() != this && random.nextFloat() < 0.6F) {
+        if (def().has(Trait.REFLECT) && !flag(F_FALLEN) && source.getDirectEntity() instanceof Projectile p && p.getOwner() != this && random.nextFloat() < 0.6F) {
             p.setDeltaMovement(p.getDeltaMovement().scale(-1.0));
             p.setOwner(this);
             playSound(net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME, 1.0F, 1.6F);
@@ -796,13 +797,29 @@ public class AwakenMob extends Monster {
         return flag(F_ECHO) && !flag(F_RISEN) && !flag(F_DECOY) && !Forces.hasRisen(this);
     }
 
+    /** What a body lying fallen can't shrug off: somebody's blow. Fire, a fall, a poison's tick and its own kind's blasts pass over it. */
+    private static boolean finishes(DamageSource source) {
+        return source.getEntity() instanceof LivingEntity by && !(by instanceof AwakenMob);
+    }
+
+    /** What's left in a body lying fallen: one real blow ends it. */
+    protected float fallenHealth() {
+        return 1.0F;
+    }
+
     @Override
     public void die(DamageSource source) {
         if (!isRemoved() && !dead && level() instanceof ServerLevel sl && canRise()) {
-            // Echoing: fall, then get up once at half health. No death event, no loot until the real death.
-            setHealth(1.0F);
+            // Echoing: fall, then get up once at half health. No death event, no loot until the real death, and a blow
+            // while it lies is that death (SPEC §47.16): the rise is spent now, so nothing brings it back a second way.
+            setHealth(fallenHealth());
             setFlag(F_FALLEN, true);
             fallenTicks = FALL_TICKS;
+            Forces.markRisen(this);
+            damageCooldownTime = 0; // the blow that felled it set this: the next one lands at once
+            guardTicks = 0;
+            setFlag(F_GUARDING, false);
+            setFlag(F_PHASED, false);
             setTarget(null);
             getNavigation().stop();
             sl.sendParticles(ParticleTypes.SOUL, getX(), getY() + 0.5, getZ(), 12, 0.4, 0.3, 0.4, 0.02);
@@ -860,7 +877,6 @@ public class AwakenMob extends Monster {
     private void rise(ServerLevel level) {
         setFlag(F_FALLEN, false);
         setFlag(F_RISEN, true);
-        Forces.markRisen(this);
         setHealth(getMaxHealth() * 0.5F);
         level.sendParticles(ParticleTypes.SCULK_SOUL, getX(), getY() + 1.0, getZ(), 16, 0.4, 0.6, 0.4, 0.05);
         playSound(MobSounds.RISE.get(), 1.2F, 1.1F);

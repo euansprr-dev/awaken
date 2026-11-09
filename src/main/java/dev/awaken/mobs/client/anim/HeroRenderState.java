@@ -40,6 +40,8 @@ public final class HeroRenderState extends LivingEntityRenderState {
     public float footL, footR;
     /** Kit bodies: blocks the whole body lowers to the lower foot's ground (negative), 0 none. */
     public float kitDrop;
+    /** Degrees the whole body leans forward into a blow, and its pivot's height (SPEC §47.15). */
+    public float kitLean, kitHip;
     /** Kit bodies: how much of the live graph (idle, walk, the look) lets go, 0..1: a body lying in pieces is still. */
     public float kitStill;
     /**

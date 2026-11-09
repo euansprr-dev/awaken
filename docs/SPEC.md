@@ -925,6 +925,8 @@ of `AwakenConfig.Client`.
   `vitalsY(guiHeight, row)` and `VITALS_HALF` (where the health, Aether and food lines sit; Ascent draws its Aether line
   there), `aether()` / `installAether` (the player's Aether 0..1, -1 before Skyborn; for the glance).
   The holo module installs the director; until then everything shows as it always has.
+- `dev.awaken.core.api.Watch` (§48.1) — what anyone could see a fighter doing, as bits: `facts(entity)`, `DRINK`, `GUARD`, `HEAVY`,
+  `RECOVERY`, `DODGE`, `CAST`; `installArms`/`installPowers` (each module's own part); `stage(entity, facts)` for tests.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
 - `dev.awaken.delve.api.Lodes` (§28.3, §42.9) — `nearest(level, pos, ore[, radius])`, `heart(level, pos)`; `Homes`
@@ -1044,6 +1046,7 @@ Gates:
   of your last five extraction floors (2 before any). Gate interiors can't be broken or blown up.
 - Echoing (`Forces.Tag.ECHO`) means "gets up once": Awaken creatures fall and stand up by themselves (mobs), anything
   else is replaced once by the gate; `Forces.markRisen` records that it already rose (shared with the Descent).
+  Walking in, the gate says so, and a body lying fallen can be finished (§47.16).
   Player-owned Echoes are `MobRole.Role.ECHO`, never this tag.
 - A broken gate's Lord is the theme's Lord body with role BREAK (×8 health, ×1.3 damage), shown with the gates' boss bar.
   **Home bounds** (Euan 2026-10-28, Mother of Spores repeatedly snapped back while flying uphill): a Lord's saved home
@@ -19415,6 +19418,12 @@ both sides; `Life.lies`). A beast is the hunt's quarry only as the world brings 
   killed by a player with no knockback, Rises spent first: each is gone within its fall plus 2 ticks, each ran its drops,
   no carcass is laid beside its own falling body, and each hunted beast's carcass lies where it fell within 3 ticks of
   its body going).
+- A body is no longer a creature (Euan's playtest 2026-11-08, the Briar Sow's carcass: "still shows the vanilla heart plate
+  and info, and I still get the lock-on HUD"). A carcass keeps its health, so it read as alive to everything that asks,
+  and it wears no plate, so Jade read it out in full. `Aim.body` (a carcass, or anything dying, both sides) now takes it out
+  of Jade's ray trace (`JadeClient.body`), the mark and the lock (`Lock.foe`, and the creature under the crosshair) and the
+  server's check of a press (`Aim.meant`). You can still use it to carve it. A creature lying fallen that will get up is
+  alive: it keeps its card and its lock. Test `aim_bodies`.
 
 **47.13 Beasts at range (Euan's playtest 2026-11-03: the Briar Sow, "when I saw it at a distance, it was shaking a ton
 for some reason and glitching").** Each guess was checked against film and a frame-by-frame trace: the client's smoothing
@@ -19514,3 +19523,136 @@ the blow's class, poison and burn left behind counted in full (poison stops at h
   the holdfasts deal nothing of their own (their creatures are audited, the Descent's water is vanilla drowning); a
   dream's Chase and Duel can't kill (a killing blow wakes you, `DreamEvents`) and their creatures are audited at the
   dream's level.
+
+**47.15 Aimed blows (Euan's playtest 2026-11-08, the Hive Regent on build f7530d2d5: "sometimes the boss was literally
+swinging in midair", "it would dash and then it would be like in the middle of the air", "it was flying like super
+high", "even when I parred ... it was missing me anyways").** All one fault at the bottom: a swing was begun because
+its body was near you, not because its blade would meet you. Before: 201 own-swing moves from 1,506 start places, 46%
+landed as drawn (`fights_reach_table`); in a live fight against someone standing still the Regent began 13 melee blows
+and landed 6, the Sky Leviathan 26 and 10, the Glass Serpent 15 and 8. Range was measured flat, so height never counted;
+many clips cross the aim line over a player's head; every kit charge ran its root motion and then 14 more ticks at a
+block a tick, up to the chest and with no gravity for a flier, so it overshot by 8 blocks and hung there; a flier's hover
+followed every jump. And a deflect only ever fires on a blow that really lands (`ArmsServer.onShieldBlock`), so a miss
+is a parry that does nothing.
+
+- **The blow is aimed (`BlowAim`).** At the blow's lock tick the body takes the cheapest correction that brings the
+  sweep of its capsules onto you where you stand: a turn (to 50 degrees), a step (to 1.2 blocks, never onto you), a lean
+  about the hips (to 24 degrees, synced and drawn), for a flier a dip (to 1.5 blocks, never through the floor), for a lunge
+  a shorter or longer run (0.35 to 2 times, never past your centre). It takes that once. Move after the lock and the blow
+  misses, as it should: the lock is the moment you are read, and the wind-up after it is your window.
+- **A blow with no correction isn't begun.** `FightRunner.reaches` runs the same solve first; a move that can't land from
+  here isn't tried again for 8 ticks, the body closes instead, and a string's next blow stops the string (a duel's phrase
+  still ends in its opening). A height band (the sweep plus 1.2, plus 1.5 more for a flier) keeps a body from starting
+  anything over or under you. A body inside its own swing (edge under 0.35) makes room at 0.16 a tick.
+- **A charge stops at you.** A kit charge (ability CHARGE) has no root motion on top; it runs from where it is to 1.5
+  blocks past you (`AbilityRunner.chargeRun`), level with your feet for a flier, in as many ticks as that takes (4 to 18),
+  and its ground line draws that length.
+- **Fliers hold your floor.** `FlyHunt.scripted` holds a kit flier 0.35 over the ground under you, not over your head;
+  it follows you up only when you've been in the air 60 ticks (and then to a block under you). A wanted height at floor
+  level makes the flight control detour upward, hence the 0.35 and the dip to reach you.
+- Two moves redrawn at the cause: the Regent's Royal Dive (its capsules were 2.6 to 4.7 over its feet) and the Sovereign
+  of Sleep's Buffet (it beat its wing too high and wide to touch anyone; it now drops two blocks into the beat). A string
+  played by hand (tests, the studio) skips the gate.
+
+After: 94% of the table once aimed, and every move can reach someone. Live against someone standing still: Regent 25 begun, 24 landed, never over 1.7
+blocks above them; Sky Leviathan 26 and 24; Glass Serpent 15 and 13; Ember Tyrant 24 and 23; Gearwright Colossus 17
+and 16. Tests `fights_reach_live_<id>` (five bodies, a real fight of 1,400 ticks through every phase) and
+`fights_reach_table`. `tools/sim/combat_sim.py` still reads a move's reach without the aim, so it undercounts these hits.
+
+**Answering it.** With blows landing, a parry has something to answer. Test `fights_reach_parry` plays the Regent's cut
+at a real guard: unanswered it lands, into a raised sword it does no damage, goes into the stance and the Regent reels.
+The ring existed all along and only fires on a blow that lands, so nothing rang on the misses. Added: a guard's raise has
+its own sound (`arms.guard_raise`, three takes built from Kenney's CC0 cloth recording already in tools/art/sources, -16 dB, so
+you know it's up), the deflect is 1 dB louder, a deflected limb sounds at the body (its own `impact` set at 0.8), and a melee
+deflect throws sparks off the blade and jolts the hands (own view and everyone else's), which only a shot did before.
+
+**A shot's own look.** Euan: "just kind of green particles, like vanilla green particles". They were: the thorn's trail was
+vanilla's `HAPPY_VILLAGER`, and every other `BoltKind` trailed a vanilla particle too, half a block above the shot
+(vanilla's `AbstractHurtingProjectile` adds 0.5 for a 1-block fireball; ours is 0.4). Now seven shapes of our own
+(`MobParticles.Shot`: spark, ember, flake, wisp, puff, drop, sliver; sprites `tools/art/specs/shot_particles.py`, movement
+`mobs.client.ShotParticles`), tinted per kind, on the shot's centre, for the trail and the burst it breaks into. Each kind has
+a body (`BoltKind.Form`): a needle along its flight for stingers, thorns and glass, a bead with a trailing point for honey
+and water, a glow for the rest, all still in the colour of how you answer it (§47.2). `BoltKind.STINGER` (appended, kinds are saved
+by ordinal) is the Regent's Stinger Volley: venom-amber. A heal and a frenzy lost their green and red villager sparkles the
+same way. Test `fights_shots_own_look`.
+
+**The fire-tick crash.** A guard that turned a kit ability's blow on the tick it fired (the Bell Warden's clapper) ended the move
+inside `abilityRunner().fire`, and the next line read the ability that had just been cleared: a ticking-entity crash that took
+the world down. `FightRunner.step` now returns if the move ended there. Test `fights_reach_parry_fires`.
+
+**47.16 The dead get up once, and you can stop them** (Euan's playtest 2026-11-08, "they're fake dying": every creature in an
+Echoing gate fell, stood up with health again, and couldn't be hit while it lay, with nothing to say why).
+
+- **Say so.** Walking into an Echoing gate, the entry card reads "In this gate, the dead get up once. Hit them again while
+  they're down and they stay down." (`Modifiers.entryLine`, after any twist's line; not in a friendly gate).
+- **Finishing.** For its 2.5 seconds on the ground a fallen creature takes any blow someone struck: a player's weapon, shot or
+  power, or a vanilla pet's (`AwakenMob.finishes`: the source has an attacker, and that isn't one of our creatures; our own tame beasts count as those). Fire, falls,
+  a poison's tick and the creature's own kind pass over it. The next blow lands at once (the fall clears the hurt cooldown).
+  It lies at 1 health, so a real blow ends it there, as a real death: loot, kill credit, its death effects.
+- **The rise is spent when it falls** (`Forces.markRisen` moves from the rise to the fall), so a finished body doesn't get up,
+  a gate doesn't replace it and a Descent zone doesn't raise it. Left alone it gets up at half health as before. Saved mid-fall,
+  it gets up as soon as it's loaded.
+- **Nothing turns the finishing blow:** falling ends a guard and a phase, and a fallen REFLECT creature doesn't bounce shots.
+- **A boss holds a tenth of its health while it lies** (`AwakenBoss.fallenHealth`; the RISES Guardian and Nightmare, and gate
+  Wardens under Echoing). Its getting up is part of the fight, so a stray tap can't skip it; a real flurry in the 2.5 seconds can.
+- A fallen creature is alive, so it keeps its card and its lock (§47.12's `Aim.body` is for real bodies only). Same path for
+  `Forces.Tag.ECHO` and `Trait.RISES`. Test `mobs_echo_finish`; the entry line in `gates_modifiers_live`.
+
+## 48. Fights That Read You (plan docs/fights/read-you.html, page https://claude.ai/artifact/NkwLujmbiY1iF9hfnYqYn2; approved in full 2026-11-09)
+
+A boss stops rolling dice at you: it watches what you've started, answers it where you can see it notice, changes its mind
+partway through a string, and in time moves like a fighter between blows and takes turns in a pack. Built pilots first (the
+Hive Regent and the Gearwright Colossus); the other 45 wait until Euan has played those. The rules that never bend: it never
+reads input, only what has visibly started and only after its reaction time; every blow keeps its tell, colour and at least its
+minimum warning; a blow begins only if it can land; every string ends in an opening; none of this adds damage, health or speed;
+everything is decided on the server, per target.
+
+**48.1 Watching (stage 1).** `core.api.Watch.facts(entity)` says what anyone could see a fighter doing: drinking or eating and
+a raised guard (vanilla's own state), a heavy being held, a blow's recovery and a dodge (Arms' `ArmsServer.watched`), a cast
+or a channel (Powers' `Casting.watched`, for 12 ticks after a cast). Never a key press. `FightMind` keeps, for its one target,
+when each fact began, and a fact only counts once it has been true for its reaction time: 12 ticks at rank E, one less each rank,
+7 at the top (`reaction(Rank)`, the boss's home rank; a script's `react` overrides it). A new target starts the read again. Two
+facts are worked out rather than asked for: a dodge just made (16 ticks past the reaction time) and a stop after a run (three
+half-second samples running away, then standing still within a second).
+
+**48.2 Answers and the notice.** A fight script's `mind.answers` (schema 2; a script without a `mind` plays exactly as it did)
+ties a fact to a list of moves. An answer is weighed once when it comes due and then rests (`cooldown`, default 200 ticks; 40
+after a failed roll), and the newest thing you started wins. It uses the first move on its list that can land on you now, and
+never the move it just made. It can only start between blows: with nothing playing, or at a string's link, where the
+follow-through ends as it would for the string's next blow. A swing that has begun is never cancelled and an opening is never
+cut short. At a phrase's *last* blow only an answer marked `press` may start (the pilots' drink): you began that while it was
+still swinging, so it carries on, and the opening, longer for the longer phrase, comes after. An answer shows it noticed: 5
+ticks with `KIT_POSE_NOTICE` (the head turns and the body drops and leans, procedural, so it works on every rig), the palette's
+`notice` set, else `step`, else `impact` at half volume; then the answer's wind-up with its tell, colour and class as always.
+If you've got out of reach during those 5 ticks the normal choice takes over.
+
+**48.3 Cooldowns, held blows and the caught dodge.** With a mind, the dice may not pick the move just made nor one still resting
+(`mind.cooldowns`, else by class: LIGHT 0, HEAVY 30, PERILOUS and GRAB 80, a move that hurts nobody 240). If nothing it may start
+reaches you for 2 seconds the rests are waived, and after 4 it may even repeat itself: it is never left standing. Any blow may be
+held a beat at its peak (`holdChance` 25%, `holdTicks` 6, or its own authored hold if longer), which only ever adds warning. Having
+deflected it again and again it always holds. The third dodge in a row (each within 2 seconds of the last) is caught: once it has
+seen that third dodge, the next blow holds for at least 10 ticks and keeps turning to you through the hold, so it lands where you
+do. The streak is then spent. A held-blow fake is a separate promise, for top-rank duellists and Wardens only, and isn't built yet.
+
+**48.4 Forks.** A string entry's `forks` give, for the blow after each one, what to play by what you're doing at the link: `guard`
+if your guard has been up its reaction time, `dodged` if you've just dodged (the newest of the two wins), else `stayed`. Until the
+fork the branches look identical. A branch that can't land on you now is skipped and the string goes on as written. A pool entry's
+`band` keeps it to a range of edge distance. `FairAudit` reads every string a fight can play: the pools', with forks taken, and the
+answers'. The runtime's fair guard still holds any one string to half your health.
+
+**48.5 The pilots, and what a mind must hold.** The Hive Regent and the Gearwright Colossus carry schema 2 scripts
+(`tools/art/specs/kit/bosses/<id>.py`, no new art). In their answers a drink brings the dive or the stride from afar and the Sting or
+the Slam up close and presses on through a last blow; a guard kept up for 1.5 s brings the Sting, or the Grab or the Strikes; a
+heavy being held is hit first with a quick one; a cast brings the gap-closer; a pause after a run brings the pounce; a recovery the
+blow that punishes it. Tests (`FightMindTests`, one per mechanism): the read waits, new targets start again, each answer gives one of its
+moves with its tell after the notice, each fork, the caught dodge, the facts themselves (`arms_watched`, `powers_watched_cast`). Gates,
+in `fights_record_*` for any fight with a mind: the same move twice at most 10% of the time. In `fights_mind_drinks_<boss>`: at least 60%
+of drinks in reach get an answer that starts before the drink ends. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
+at least double what they are against someone standing.
+
+**48.7 The recorder (stage 0).** `FightRecorder`: `fights_record_<boss>_<kind>`, six bosses (more as the roll-out reaches them)
+against six kinds of player (stands still, runs, circles, holds guard, keeps away, stays behind), 72 s each with fixed seeds;
+`fights_record_pack` counts a pack of 12 winding up at once. It logs one `[record]` line a fight and asserts only that the fight
+ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
+the numbers before the mind are in docs/fights/read-you-baseline.md.
+

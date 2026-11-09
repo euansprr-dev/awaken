@@ -41,6 +41,7 @@ final class ShotRenderer extends EntityRenderer<AwBolt, ShotRenderer.State> {
         int cls, theme;
         float vx, vy, vz, age;
         boolean shard;
+        BoltKind.Form form = BoltKind.Form.ROUND;
     }
 
     @Override
@@ -57,6 +58,7 @@ final class ShotRenderer extends EntityRenderer<AwBolt, ShotRenderer.State> {
     public void extractRenderState(AwBolt e, State s, float pt) {
         super.extractRenderState(e, s, pt);
         s.shard = e.kind() == BoltKind.DEEP;
+        s.form = e.kind().form;
         if (s.shard) items.updateForNonLiving(s.item, e.getItem(), ItemDisplayContext.GROUND, e);
         else s.item.clear();
         s.cls = e.shownClass().colour();
@@ -85,15 +87,16 @@ final class ShotRenderer extends EntityRenderer<AwBolt, ShotRenderer.State> {
         final int cls = s.cls, theme = s.theme;
         final float vx = s.vx, vy = s.vy, vz = s.vz, age = s.age;
         final boolean shard = s.shard;
+        final BoltKind.Form form = s.form;
         out.order(1).submitCustomGeometry(ps, CarrierPipelines.light(), (pose, vc) -> draw(pose, vc, rx, ry, rz, ux, uy, uz, ex, ey, ez, cls, theme,
-                vx, vy, vz, age, shard));
+                vx, vy, vz, age, shard, form));
         super.submit(s, ps, out, camera);
     }
 
     private static final Vector3f RIGHT = new Vector3f(), UP = new Vector3f();
 
     private static void draw(PoseStack.Pose pose, VertexConsumer vc, float rx, float ry, float rz, float ux, float uy, float uz,
-                             float ex, float ey, float ez, int cls, int theme, float vx, float vy, float vz, float age, boolean shard) {
+                             float ex, float ey, float ez, int cls, int theme, float vx, float vy, float vz, float age, boolean shard, BoltKind.Form form) {
         float breathe = 0.85F + 0.15F * Mth.sin(age * 0.9F);
         float c = shard ? 0.6F : 1F;
         // the tail: back along its flight, as long as about seven ticks of it, the class's colour into the maker's
@@ -105,6 +108,22 @@ final class ShotRenderer extends EntityRenderer<AwBolt, ShotRenderer.State> {
             ribbon(pose, vc, 0, 0, 0, mx, my, mz, 0.34F * c, 0.2F * c, ex, ey, ez, CarrierView.argb(CarrierView.hot(cls, 0.3F), 0.75F),
                     CarrierView.argb(cls, 0.45F));
             ribbon(pose, vc, mx, my, mz, tx, ty, tz, 0.2F * c, 0.02F, ex, ey, ez, CarrierView.argb(theme, 0.4F), CarrierView.argb(theme, 0F));
+        }
+        if (speed > 1.0E-3F && form != BoltKind.Form.ROUND) {
+            float fx = vx / speed, fy = vy / speed, fz = vz / speed;
+            int hot = CarrierView.argb(CarrierView.hot(cls, 0.8F), 1F), body = CarrierView.argb(cls, 0.85F), none = CarrierView.argb(cls, 0F);
+            flare(pose, vc, rx, ry, rz, ux, uy, uz, 0.6F * breathe, CarrierView.argb(cls, 0.2F));
+            if (form == BoltKind.Form.DART) {
+                // a needle along its flight: a point, a shoulder a little behind it, and the shaft thinning back
+                ribbon(pose, vc, fx * 0.62F, fy * 0.62F, fz * 0.62F, fx * 0.12F, fy * 0.12F, fz * 0.12F, 0.02F, 0.26F, ex, ey, ez, hot, hot);
+                ribbon(pose, vc, fx * 0.12F, fy * 0.12F, fz * 0.12F, -fx * 0.42F, -fy * 0.42F, -fz * 0.42F, 0.26F, 0.05F, ex, ey, ez, hot, body);
+            } else {
+                // a bead, its point trailing
+                ribbon(pose, vc, 0, 0, 0, -fx * 0.62F, -fy * 0.62F, -fz * 0.62F, 0.5F, 0.02F, ex, ey, ez, body, none);
+                flare(pose, vc, rx, ry, rz, ux, uy, uz, 0.32F, body);
+                flare(pose, vc, rx, ry, rz, ux, uy, uz, 0.16F, hot);
+            }
+            return;
         }
         flare(pose, vc, rx, ry, rz, ux, uy, uz, 1.15F * breathe * c, CarrierView.argb(cls, 0.22F));
         flare(pose, vc, rx, ry, rz, ux, uy, uz, 0.5F * c, CarrierView.argb(cls, 0.75F));

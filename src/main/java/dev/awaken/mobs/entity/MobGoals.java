@@ -187,7 +187,10 @@ final class MobGoals {
     /** Fliers: hover around the target, dive in to strike, pull back. Straight-line flight, no pathfinding. */
     static final class FlyHunt extends Goal {
         private final AwakenMob mob;
-        private int retarget, attackCooldown, tellLeft = -1, diveTicks;
+        private int retarget, attackCooldown, tellLeft = -1, diveTicks, airTicks;
+        private double groundY = Double.MIN_VALUE;
+        /** A kit flier's feet over the floor between blows: its move control flies no lower, and a dip takes it down to strike. */
+        private static final double CLEARANCE = 0.35;
         private float angle;
         private boolean far;
 
@@ -296,7 +299,14 @@ final class MobGoals {
             if (mob.getRandom().nextInt(4) == 0) far = !far;
             angle += 0.4F + mob.getRandom().nextFloat() * 0.3F;
             float r = (mob.getBbWidth() + t.getBbWidth()) * 0.5F + (far ? 6.0F : 1.0F);
-            double y = t.getY() + 0.3 + mob.getRandom().nextFloat() * 0.4;
+            // level with where you stand (its body floats in its own model), so its blows reach; through a jump it holds
+            // that height, and it follows you up only if you stay up
+            if (t.onGround()) {
+                groundY = t.getY();
+                airTicks = 0;
+            } else if (groundY == Double.MIN_VALUE) groundY = t.getY();
+            else airTicks += 12;
+            double y = (airTicks > 60 ? t.getY() - 1.0 : groundY) + CLEARANCE;
             mob.getMoveControl().setWantedPosition(t.getX() + Mth.cos(angle) * r, y, t.getZ() + Mth.sin(angle) * r, far ? 1.0 : 0.8);
         }
     }

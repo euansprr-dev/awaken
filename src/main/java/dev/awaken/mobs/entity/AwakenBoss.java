@@ -43,11 +43,18 @@ public class AwakenBoss extends AwakenMob {
      */
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+    /** The degrees a kit body leans into the blow it's making (SPEC §47.15). */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_KIT_LEAN =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.BYTE);
+    /** Where a kit body leans from, as a share of its height. */
+    public static final float KIT_LEAN_HIP = 0.45F;
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT_AT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     public static final int KIT_POSE_INTRO = 1, KIT_POSE_BROKEN = 2;
     /** The duel's reactions (SPEC §47.3): a deflected blow's limb thrown back, and the reel after a phrase's last one. */
     public static final int KIT_POSE_RECOIL = 3, KIT_POSE_REEL = 4;
+    /** It has seen what you started (SPEC §48.2): its weight drops before it answers. */
+    public static final int KIT_POSE_NOTICE = 5;
 
     private int phase, shieldTicks, lonelyTicks;
     /** Its stance broken (Arms), or reeling from a deflect, for this many ticks more; open until this game time. */
@@ -80,6 +87,7 @@ public class AwakenBoss extends AwakenMob {
         super.defineSynchedData(b);
         b.define(DATA_KIT, 0);
         b.define(DATA_KIT_AT, 0);
+        b.define(DATA_KIT_LEAN, (byte) 0);
     }
 
     /** An intro or transition with no roar of its own: the boss's voice, loud and low. */
@@ -263,6 +271,16 @@ public class AwakenBoss extends AwakenMob {
         }
         int v = (pose & 0xF) << 16 | kitSerial << 20;
         if (entityData.get(DATA_KIT) != v) entityData.set(DATA_KIT, v);
+    }
+
+    void syncKitLean(int degrees) {
+        byte b = (byte) Mth.clamp(degrees, -60, 60);
+        if (entityData.get(DATA_KIT_LEAN) != b) entityData.set(DATA_KIT_LEAN, b);
+    }
+
+    /** The degrees it leans into its blow (0 none). */
+    public int kitLean() {
+        return entityData.get(DATA_KIT_LEAN);
     }
 
     /** The synced move (an index into the kit's move table), or -1. */
@@ -488,6 +506,12 @@ public class AwakenBoss extends AwakenMob {
         boolean hurt = super.hurtServer(level, source, damage);
         if (hurt && fight != null) fight.hurtBy(source);
         return hurt;
+    }
+
+    /** Getting up is part of its fight: a stray tap can't end it, a real flurry can (SPEC §47.16). */
+    @Override
+    protected float fallenHealth() {
+        return getMaxHealth() * 0.1F;
     }
 
     @Override

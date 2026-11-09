@@ -222,7 +222,7 @@ final class Abilities {
         Vec3 d = to.subtract(from);
         for (int i = 0; i <= 10; i++) {
             Vec3 p = from.add(d.scale(i / 10.0));
-            level.sendParticles(b.trail, p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.0);
+            level.sendParticles(b.trail(), p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.0);
         }
         mob.playLevelSound(MobSounds.BEAM_FIRE.get(), a.heavy() ? 1.6F : 1.1F, a.heavy() ? 0.8F : 1.0F);
     }
@@ -238,7 +238,7 @@ final class Abilities {
             }
         } else {
             level.sendParticles(ParticleTypes.EXPLOSION, at.x, at.y + 0.4, at.z, 1, 0, 0, 0, 0);
-            level.sendParticles(b.trail, at.x, at.y + 0.5, at.z, 16, radius * 0.4, 0.5, radius * 0.4, 0.05);
+            level.sendParticles(b.trail(), at.x, at.y + 0.5, at.z, 16, radius * 0.4, 0.5, radius * 0.4, 0.05);
         }
         level.playSound(null, at.x, at.y, at.z, MobSounds.VOLLEY_IMPACT.get(), mob != null ? mob.getSoundSource() : net.minecraft.sounds.SoundSource.HOSTILE,
                 1.0F, 0.9F + level.getRandom().nextFloat() * 0.2F);
@@ -377,7 +377,7 @@ final class Abilities {
         float r = a.radius();
         for (AwakenMob ally : level.getEntitiesOfClass(AwakenMob.class, mob.getBoundingBox().inflate(r), m -> m.isAlive() && !m.isDecoy())) {
             ally.heal(ally.getMaxHealth() * a.power());
-            level.sendParticles(ParticleTypes.HAPPY_VILLAGER, ally.getX(), ally.getY() + ally.getBbHeight(), ally.getZ(), 4, 0.3, 0.3, 0.3, 0);
+            level.sendParticles(dev.awaken.mobs.MobParticles.shot(dev.awaken.mobs.MobParticles.Shot.EMBER, 0xFFE9A8), ally.getX(), ally.getY() + ally.getBbHeight(), ally.getZ(), 4, 0.3, 0.3, 0.3, 0);
         }
         mob.playLevelSound(SoundEvents.BEACON_POWER_SELECT, 0.8F, 1.6F);
     }
@@ -427,7 +427,7 @@ final class Abilities {
         }
         for (int i = 1; i <= 5; i++) {
             Vec3 p = mob.position().add(dir.scale(a.radius() * i / 5.0)).add(0, 1.0, 0);
-            level.sendParticles(b.trail, p.x, p.y, p.z, 4, i * 0.12, 0.3, i * 0.12, 0.02);
+            level.sendParticles(b.trail(), p.x, p.y, p.z, 4, i * 0.12, 0.3, i * 0.12, 0.02);
         }
         mob.playLevelSound(SoundEvents.ENDER_DRAGON_SHOOT, 0.7F, 1.4F);
     }

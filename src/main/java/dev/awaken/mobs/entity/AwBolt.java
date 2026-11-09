@@ -125,12 +125,15 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     public void tick() {
         super.tick();
         turned = false; // a turn holds only for the hit that turned it
+        if (level().isClientSide()) {
+            level().addParticle(kind() == BoltKind.DEEP ? dev.awaken.mobs.MobParticles.SEEP_MOTE.get() : kind().trail(), getX(), getY() + getBbHeight() * 0.5, getZ(), 0, 0, 0);
+        }
         if (!level().isClientSide() && ++life > 100) discard();
     }
 
     @Override
     protected @Nullable ParticleOptions getTrailParticle() {
-        return kind() == BoltKind.DEEP ? dev.awaken.mobs.MobParticles.SEEP_MOTE.get() : kind().trail;
+        return null; // vanilla's trail hangs half a block over a shot this small: ours is on it (tick)
     }
 
     @Override
@@ -212,7 +215,7 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
                 sl.sendParticles(dev.awaken.mobs.MobParticles.SEEP_SHARD.get(), getX(), getY(), getZ(), 6, 0.1, 0.1, 0.1, 0.18);
                 sl.sendParticles(dev.awaken.mobs.MobParticles.SEEP_MOTE.get(), getX(), getY(), getZ(), 4, 0.1, 0.1, 0.1, 0.06);
             } else {
-                sl.sendParticles(kind().trail, getX(), getY(), getZ(), 6, 0.15, 0.15, 0.15, 0.05);
+                sl.sendParticles(kind().trail(), getX(), getY() + getBbHeight() * 0.5, getZ(), 8, 0.12, 0.12, 0.12, 0.09);
             }
             discard();
         }

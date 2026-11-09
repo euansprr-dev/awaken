@@ -29,7 +29,7 @@ public final class CarrierDemo {
     private CarrierDemo() {}
 
     public static final List<String> KINDS = List.of("stage", "wave", "volley", "lob", "ground", "line", "wedge", "ring", "field", "pull",
-            "shot_light", "shot_heavy", "shot_red", "fan");
+            "shot_light", "shot_heavy", "shot_red", "fan", "kinds");
 
     private static @Nullable AwakenMob maker;
     private static Vec3 centre = Vec3.ZERO;
@@ -60,6 +60,13 @@ public final class CarrierDemo {
                 shoot(level, m, Strikes.Kind.LIGHT, eye.add(-1.2, 0, 0), at.add(-4, 1.2, 0));
                 shoot(level, m, Strikes.Kind.HEAVY, eye, at.add(0, 1.2, 0));
                 shoot(level, m, Strikes.Kind.PERILOUS, eye.add(1.2, 0, 0), at.add(4, 1.2, 0));
+            }
+            case "kinds" -> {
+                // every kind of shot abreast, the nearest to the camera first, for its trail and its body
+                BoltKind[] all = BoltKind.values();
+                for (int i = 0; i < all.length; i++) {
+                    AwBolt.shoot(level, m, eye.add(0, 2.4 - 0.4 * i, -2), new Vec3(0, 0, 1), all[i], 0F, null, Abilities.shotSpeed() * 0.45);
+                }
             }
             default -> {
                 return "No carrier called " + kind + ". Kinds: " + String.join(", ", KINDS);

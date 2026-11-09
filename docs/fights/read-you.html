@@ -1,0 +1,515 @@
+<title>Fights That Read You</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column (~68ch) with full-width bands for the carriers grid, the ladder table and the decisions. */
+:root {
+  --bg: #f3f1ec;
+  --panel: #fbfaf7;
+  --ink: #1d2229;
+  --muted: #5d6470;
+  --rule: #d9d4ca;
+  --bronze: #8a5a1c;
+  --bronze-soft: #efe2cc;
+  --light: #9a7a10;      /* white-gold: parry, block or dash */
+  --light-bg: #f6efcf;
+  --heavy: #b25e0c;      /* amber: parry or dash */
+  --heavy-bg: #f8e3cc;
+  --red: #b3261e;        /* red: dash or jump only */
+  --red-bg: #f7dcda;
+  --grab: #6b3fa0;       /* violet: grab, dash only */
+  --grab-bg: #e9def5;
+  --good: #2f6b3a;
+  --good-bg: #dcecdc;
+  --stalk: #2b6a8f;
+  --stalk-bg: #d6e6ef;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171c; --panel: #1b1f26; --ink: #e8e5de; --muted: #9aa1ac; --rule: #2e343d;
+    --bronze: #d6a35a; --bronze-soft: #3a2d1b;
+    --light: #e8cf6a; --light-bg: #3a3418; --heavy: #f0a058; --heavy-bg: #40291a;
+    --red: #f07a70; --red-bg: #40201e; --grab: #c3a0f0; --grab-bg: #2f2440;
+    --good: #8fd09a; --good-bg: #1d3322; --stalk: #86c4e6; --stalk-bg: #1b3342;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171c; --panel: #1b1f26; --ink: #e8e5de; --muted: #9aa1ac; --rule: #2e343d;
+  --bronze: #d6a35a; --bronze-soft: #3a2d1b;
+  --light: #e8cf6a; --light-bg: #3a3418; --heavy: #f0a058; --heavy-bg: #40291a;
+  --red: #f07a70; --red-bg: #40201e; --grab: #c3a0f0; --grab-bg: #2f2440;
+  --good: #8fd09a; --good-bg: #1d3322; --stalk: #86c4e6; --stalk-bg: #1b3342;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.1; margin: 0; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.2rem); font-weight: 700; letter-spacing: 0.01em; text-transform: uppercase; }
+h2 { font-size: 1.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+h3 { font-size: 1.3rem; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bronze); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+section { padding-top: 56px; display: grid; gap: 18px; }
+header { padding-top: 40px; display: grid; gap: 16px; border-bottom: 2px solid var(--ink); padding-bottom: 28px; }
+.status { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--mono); font-size: 0.75rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--rule); background: var(--panel); white-space: nowrap; }
+.chip.rec { background: var(--good-bg); color: var(--good); border-color: transparent; font-weight: 600; }
+blockquote { margin: 0; padding: 14px 18px; border-left: 3px solid var(--bronze); background: var(--panel); font-style: italic; }
+blockquote footer { font-style: normal; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+/* findings */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.fact { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.fact .n { font-family: var(--display); font-size: 2.3rem; font-weight: 700; line-height: 1; color: var(--bronze); font-variant-numeric: tabular-nums; }
+.fact p { font-size: 0.95rem; }
+
+/* class swatches */
+.classes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.cls { border-radius: 6px; padding: 12px 14px; display: grid; gap: 2px; border: 1px solid transparent; }
+.cls b { font-family: var(--display); font-size: 1.25rem; letter-spacing: 0.02em; text-transform: uppercase; }
+.cls.l { background: var(--light-bg); } .cls.l b { color: var(--light); }
+.cls.h { background: var(--heavy-bg); } .cls.h b { color: var(--heavy); }
+.cls.r { background: var(--red-bg); } .cls.r b { color: var(--red); }
+.cls.g { background: var(--grab-bg); } .cls.g b { color: var(--grab); }
+
+/* carriers */
+.carriers { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.car { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.car svg { width: 100%; height: auto; display: block; }
+.car h3 { font-size: 1.35rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.car .was { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+.car p { font-size: 0.92rem; }
+.car .ans { font-size: 0.88rem; border-top: 1px dashed var(--rule); padding-top: 6px; }
+svg .ground { stroke: var(--rule); stroke-width: 2; fill: none; }
+svg .boss { fill: var(--ink); }
+svg .you { fill: var(--muted); }
+svg .lt { fill: var(--light); } svg .lt-s { stroke: var(--light); fill: none; }
+svg .rd { fill: var(--red); } svg .rd-s { stroke: var(--red); fill: none; }
+svg .hv-s { stroke: var(--heavy); fill: none; }
+svg .gb-s { stroke: var(--grab); fill: none; }
+svg .trail { stroke: var(--light); stroke-width: 3; stroke-linecap: round; opacity: 0.45; fill: none; }
+svg .txt { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+svg .txt-ink { fill: var(--ink); font-family: var(--mono); font-size: 11px; }
+svg .bar-today { fill: var(--rule); }
+svg .bar-dash { fill: var(--good-bg); stroke: var(--good); stroke-width: 1; }
+svg .bar-lock { fill: var(--red); }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td b { font-family: var(--display); font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; }
+
+/* loop */
+.loop { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-family: var(--mono); font-size: 0.82rem; }
+.loop span.step { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 5px 9px; }
+.loop span.step.pay { background: var(--good-bg); color: var(--good); border-color: transparent; font-weight: 600; }
+.loop span.arrow { color: var(--muted); }
+
+ul.tight { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+
+/* before / after */
+.ba { display: grid; gap: 14px; }
+.case { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; }
+.case .row { display: grid; grid-template-columns: 74px 1fr; gap: 10px; align-items: baseline; }
+.case .row > span { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.case .row > p { min-width: 0; }
+.case .row.after > span { color: var(--good); }
+
+/* stages */
+ol.stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: st -1; }
+ol.stages li { counter-increment: st; display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+ol.stages li::before { content: counter(st); font-family: var(--display); font-size: 2rem; font-weight: 700; color: var(--bronze); line-height: 1; }
+ol.stages li > div { display: grid; gap: 4px; min-width: 0; }
+ol.stages .gate { font-size: 0.9rem; color: var(--muted); }
+
+/* decisions */
+.decisions { display: grid; gap: 12px; counter-reset: d; }
+.dec { counter-increment: d; background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--bronze); border-radius: 6px; padding: 14px 16px 14px 14px; display: grid; grid-template-columns: 40px 1fr; gap: 10px; }
+.dec::before { content: counter(d); font-family: var(--display); font-size: 1.9rem; font-weight: 700; color: var(--bronze); line-height: 1; }
+.dec > div { display: grid; gap: 6px; min-width: 0; }
+.dec .alt { font-size: 0.9rem; color: var(--muted); }
+footer.page { padding-top: 48px; font-size: 0.9rem; color: var(--muted); display: grid; gap: 8px; }
+code { font-family: var(--mono); font-size: 0.85em; background: var(--bronze-soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+@media (max-width: 520px) {
+  body { font-size: 16px; }
+  .case .row { grid-template-columns: 1fr; gap: 2px; }
+  .dec { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .car svg .fly { animation: fly 2.4s ease-in-out infinite; }
+  @keyframes fly { 0% { transform: translateX(0); } 70% { transform: translateX(86px); } 100% { transform: translateX(86px); opacity: 0; } }
+}
+
+/* fight strips */
+.stripbox { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 8px; }
+.striplabel { font-family: var(--display); font-size: 1.15rem; font-weight: 600; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tag { font-family: var(--mono); font-size: 0.68rem; font-weight: 500; padding: 1px 6px; border-radius: 3px; letter-spacing: 0.02em; white-space: nowrap; }
+.tag.real { background: var(--good-bg); color: var(--good); }
+.tag.plan { background: var(--stalk-bg); color: var(--stalk); }
+svg.strip { display: block; width: 100%; min-width: 760px; height: auto; }
+svg.strip .k-light { fill: var(--light); } svg.strip .k-heavy { fill: var(--heavy); } svg.strip .k-red { fill: var(--red); }
+svg.strip .k-grab { fill: var(--grab); } svg.strip .k-none { fill: var(--muted); } svg.strip .k-open { fill: var(--good-bg); stroke: var(--good); stroke-width: 1; }
+svg.strip .k-stalk { fill: var(--stalk-bg); stroke: var(--stalk); stroke-width: 1; } svg.strip .k-idle { fill: var(--rule); }
+svg.strip .k-hold { fill: var(--light-bg); stroke: var(--light); stroke-width: 1; stroke-dasharray: 3 2; }
+svg.strip .lab { fill: var(--bg); font-family: var(--mono); font-size: 11px; font-weight: 600; }
+svg.strip .lab2 { fill: var(--ink); font-family: var(--mono); font-size: 11px; }
+svg.strip .tk { stroke: var(--muted); stroke-width: 1; }
+svg.strip .mk { fill: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 2px; display: inline-block; }
+.legend .k-light { background: var(--light); } .legend .k-heavy { background: var(--heavy); } .legend .k-red { background: var(--red); } .legend .k-none { background: var(--muted); }
+.legend .k-open { background: var(--good-bg); border: 1px solid var(--good); } .legend .k-stalk { background: var(--stalk-bg); border: 1px solid var(--stalk); }
+b.warn { color: var(--red); }
+a.chip { color: var(--good); text-decoration: none; } a.chip:hover { text-decoration: underline; }
+a { color: var(--bronze); }
+ol.promises { margin: 0; padding-left: 1.5em; display: grid; gap: 8px; max-width: 68ch; }
+table.tri td { width: 33.33%; }
+th.pick, td.pick { background: var(--good-bg); }
+/* the six parts */
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 14px; }
+.part { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.part dl { margin: 0; display: grid; grid-template-columns: 62px 1fr; gap: 6px 10px; font-size: 0.95rem; }
+.part dt { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.part dd { margin: 0; min-width: 0; }
+.case h3 { font-size: 1.2rem; }
+.flow { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 8px; }
+.flowlabel { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.loop span.step.new { background: var(--stalk-bg); color: var(--stalk); border-color: transparent; font-weight: 600; }
+.loop em { font-style: normal; color: var(--stalk); }
+.small { font-size: 0.88rem; }
+@media (max-width: 520px) { .part dl { grid-template-columns: 1fr; gap: 0; } .part dd { margin-bottom: 8px; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">AWAKEN · plan for approval · 8 Nov 2026</div>
+  <h1>Fights That Read You</h1>
+  <p class="col">Every boss and fighting creature stops rolling dice at you. It watches what you've started, moves like a fighter
+  between blows, changes its mind halfway through a string, and takes turns in a pack. You win by reading it back. This is
+  the plan. Nothing in it is built until you say yes.</p>
+  <div class="status"><span class="chip">47 bosses</span><span class="chip">about 205 fighting creatures</span><span class="chip">34 fights measured, 973 moves</span><span class="chip">pilots: Hive Regent, Gearwright</span><a class="chip rec" href="#decisions">7 decisions at the bottom</a></div>
+</header>
+
+<section>
+  <blockquote>"It just felt like it was randomly hitting, and like even when I parred, it felt like the pars weren't even like doing anything because it was missing me anyways. We need to find a way to make the fights genuinely very much more fun and intelligent, I guess, across the board."<footer>You, 8 Nov, after the Hive Regent.</footer></blockquote>
+</section>
+
+<section>
+  <div class="eyebrow">Already done, on my branch</div>
+  <h2>The plain faults are fixed</h2>
+  <p class="col">These four needed no plan. They're committed and pushed, ready for the orchestrator to merge. You haven't played them yet, so everything below is measured against the fixed game.</p>
+  <div class="scroll"><table>
+    <tr><th>You said</th><th>What was really happening</th><th>The fix</th><th>Measured</th></tr>
+    <tr><td>"swinging in midair", "it was missing me anyways"</td><td>Blows were animated with nobody standing in front of them. Only 46% of the places a move could start from would hit someone there.</td><td>When a blow locks, the body takes the smallest turn, step, lean, dip or shorter lunge that lands it. If nothing can, it closes in first.</td><td class="num">46% → 94% land<br>Regent, 13 begun, 6 hit → 25 begun, 24 hit</td></tr>
+    <tr><td>"flying like super high", "in the middle of the air"</td><td>A charge ran a fixed length, and fliers followed you up when you jumped.</td><td>A charge stops just past you, level with your feet. Fliers hold your floor.</td><td class="num">Never more than 1.7 blocks over you at a blow</td></tr>
+    <tr><td>"no really sound when I was parring"</td><td>The parry ring only fires on a blow that lands, and most didn't.</td><td>Blows land now, so it rings. Raising your guard has its own sound, the deflect is louder, sparks fly off the blade and your hands jolt.</td><td>Tested: the same cut hurts you unanswered, and into a raised sword does nothing and makes the Regent reel. <b class="warn">I can't hear these sounds. You're the first.</b></td></tr>
+    <tr><td>"like vanilla green particles"</td><td>The thorn's trail was vanilla's happy-villager sparkle.</td><td>Seven particle shapes of our own, tinted per kind. Stingers and thorns fly as needles, honey and water as beads.</td><td>Tested, and checked on a CI tour of every shot.</td></tr>
+  </table></div>
+  <p class="col muted">While checking this I also found and fixed a world crash: parrying an ability on the exact tick it fired.</p>
+</section>
+
+<section>
+  <div class="eyebrow">What's still wrong</div>
+  <h2>Every blow lands now. It still isn't fighting you.</h2>
+  <p class="col">I put six bosses against six kinds of player (stands still, holds guard, circles, keeps away, runs, stays behind it) and recorded what the boss did every tick. Here are 30 real seconds of the Hive Regent, with its aim already fixed. The top line is someone standing still. The second is someone with their guard up the whole time.</p>
+  <div class="stripbox">
+    <div class="striplabel">Stands still <span class="tag real">measured</span></div>
+    <div class="scroll"><svg class="strip" viewBox="0 0 1000 62" role="img" aria-label="30 seconds of the fight, tick by tick"><rect class="k-idle" x="0.0" y="4" width="0.9" height="34"/><rect class="k-none" x="1.7" y="4" width="85.9" height="34"/><text class="lab" x="45.0" y="25" text-anchor="middle">emerge</text><rect class="k-open" x="88.3" y="4" width="25.9" height="34"/><rect class="k-stalk" x="115.0" y="4" width="0.9" height="34"/><rect class="k-heavy" x="116.7" y="4" width="52.5" height="34"/><text class="lab" x="143.3" y="25" text-anchor="middle">dive</text><rect class="k-light" x="170.0" y="4" width="40.9" height="34"/><text class="lab" x="190.8" y="25" text-anchor="middle">cut 2</text><rect class="k-open" x="211.7" y="4" width="30.9" height="34"/><rect class="k-stalk" x="243.3" y="4" width="9.2" height="34"/><rect class="k-heavy" x="253.3" y="4" width="52.5" height="34"/><text class="lab" x="280.0" y="25" text-anchor="middle">dive</text><rect class="k-light" x="306.7" y="4" width="40.9" height="34"/><text class="lab" x="327.5" y="25" text-anchor="middle">cut 2</text><rect class="k-open" x="348.3" y="4" width="30.9" height="34"/><rect class="k-stalk" x="380.0" y="4" width="0.9" height="34"/><rect class="k-heavy" x="381.7" y="4" width="92.5" height="34"/><text class="lab" x="428.3" y="25" text-anchor="middle">dive</text><rect class="k-idle" x="475.0" y="4" width="0.9" height="34"/><rect class="k-open" x="476.7" y="4" width="25.9" height="34"/><rect class="k-stalk" x="503.3" y="4" width="0.9" height="34"/><rect class="k-light" x="505.0" y="4" width="29.2" height="34"/><text class="lab" x="520.0" y="25" text-anchor="middle">cut</text><rect class="k-light" x="535.0" y="4" width="40.9" height="34"/><text class="lab" x="555.8" y="25" text-anchor="middle">cut 2</text><rect class="k-open" x="576.7" y="4" width="30.9" height="34"/><rect class="k-stalk" x="608.3" y="4" width="0.9" height="34"/><rect class="k-light" x="610.0" y="4" width="29.2" height="34"/><text class="lab" x="625.0" y="25" text-anchor="middle">cut</text><rect class="k-light" x="640.0" y="4" width="40.9" height="34"/><text class="lab" x="660.8" y="25" text-anchor="middle">cut 2</text><rect class="k-open" x="681.7" y="4" width="30.9" height="34"/><rect class="k-stalk" x="713.3" y="4" width="2.5" height="34"/><rect class="k-stalk" x="716.7" y="4" width="10.9" height="34"/><rect class="k-stalk" x="728.3" y="4" width="0.9" height="34"/><rect class="k-heavy" x="730.0" y="4" width="79.2" height="34"/><text class="lab" x="770.0" y="25" text-anchor="middle">dive</text><rect class="k-idle" x="810.0" y="4" width="0.9" height="34"/><rect class="k-red" x="811.7" y="4" width="92.5" height="34"/><text class="lab" x="858.3" y="25" text-anchor="middle">rain</text><rect class="k-open" x="905.0" y="4" width="25.9" height="34"/><rect class="k-stalk" x="931.7" y="4" width="0.9" height="34"/><rect class="k-red" x="933.3" y="4" width="65.9" height="34"/><text class="lab" x="966.7" y="25" text-anchor="middle">rain</text><line class="tk" x1="0.0" y1="42" x2="0.0" y2="46"/><text class="txt" x="0.0" y="57" text-anchor="start">0 s</text><line class="tk" x1="166.7" y1="42" x2="166.7" y2="46"/><text class="txt" x="166.7" y="57" text-anchor="middle">5 s</text><line class="tk" x1="333.3" y1="42" x2="333.3" y2="46"/><text class="txt" x="333.3" y="57" text-anchor="middle">10 s</text><line class="tk" x1="500.0" y1="42" x2="500.0" y2="46"/><text class="txt" x="500.0" y="57" text-anchor="middle">15 s</text><line class="tk" x1="666.7" y1="42" x2="666.7" y2="46"/><text class="txt" x="666.7" y="57" text-anchor="middle">20 s</text><line class="tk" x1="833.3" y1="42" x2="833.3" y2="46"/><text class="txt" x="833.3" y="57" text-anchor="middle">25 s</text><line class="tk" x1="1000.0" y1="42" x2="1000.0" y2="46"/><text class="txt" x="1000.0" y="57" text-anchor="end">30 s</text></svg></div>
+    <div class="striplabel">Guard held up <span class="tag real">measured</span></div>
+    <div class="scroll"><svg class="strip" viewBox="0 0 1000 62" role="img" aria-label="30 seconds of the fight, tick by tick"><rect class="k-idle" x="0.0" y="4" width="0.9" height="34"/><rect class="k-none" x="1.7" y="4" width="85.9" height="34"/><text class="lab" x="45.0" y="25" text-anchor="middle">emerge</text><rect class="k-open" x="88.3" y="4" width="25.9" height="34"/><rect class="k-stalk" x="115.0" y="4" width="0.9" height="34"/><rect class="k-heavy" x="116.7" y="4" width="52.5" height="34"/><text class="lab" x="143.3" y="25" text-anchor="middle">dive</text><rect class="k-light" x="170.0" y="4" width="40.9" height="34"/><text class="lab" x="190.8" y="25" text-anchor="middle">cut 2</text><rect class="k-open" x="211.7" y="4" width="30.9" height="34"/><rect class="k-stalk" x="243.3" y="4" width="0.9" height="34"/><rect class="k-light" x="245.0" y="4" width="29.2" height="34"/><text class="lab" x="260.0" y="25" text-anchor="middle">cut</text><rect class="k-light" x="275.0" y="4" width="40.9" height="34"/><text class="lab" x="295.8" y="25" text-anchor="middle">cut 2</text><rect class="k-open" x="316.7" y="4" width="30.9" height="34"/><rect class="k-stalk" x="348.3" y="4" width="0.9" height="34"/><rect class="k-light" x="350.0" y="4" width="24.2" height="34"/><rect class="k-idle" x="375.0" y="4" width="4.2" height="34"/><rect class="k-stalk" x="380.0" y="4" width="12.5" height="34"/><rect class="k-light" x="393.3" y="4" width="20.9" height="34"/><rect class="k-open" x="415.0" y="4" width="55.9" height="34"/><rect class="k-light" x="471.7" y="4" width="24.2" height="34"/><rect class="k-idle" x="496.7" y="4" width="12.5" height="34"/><rect class="k-stalk" x="510.0" y="4" width="4.2" height="34"/><rect class="k-light" x="515.0" y="4" width="20.9" height="34"/><rect class="k-open" x="536.7" y="4" width="55.9" height="34"/><rect class="k-light" x="593.3" y="4" width="24.2" height="34"/><rect class="k-idle" x="618.3" y="4" width="0.9" height="34"/><rect class="k-stalk" x="620.0" y="4" width="0.9" height="34"/><rect class="k-stalk" x="621.7" y="4" width="2.5" height="34"/><rect class="k-stalk" x="625.0" y="4" width="10.9" height="34"/><rect class="k-light" x="636.7" y="4" width="19.2" height="34"/><rect class="k-open" x="656.7" y="4" width="55.9" height="34"/><rect class="k-red" x="713.3" y="4" width="47.5" height="34"/><text class="lab" x="737.5" y="25" text-anchor="middle">sting</text><rect class="k-light" x="761.7" y="4" width="20.9" height="34"/><rect class="k-open" x="783.3" y="4" width="0.9" height="34"/><rect class="k-red" x="785.0" y="4" width="92.5" height="34"/><text class="lab" x="831.7" y="25" text-anchor="middle">rain</text><rect class="k-open" x="878.3" y="4" width="25.9" height="34"/><rect class="k-idle" x="905.0" y="4" width="0.9" height="34"/><rect class="k-light" x="906.7" y="4" width="24.2" height="34"/><rect class="k-idle" x="931.7" y="4" width="0.9" height="34"/><rect class="k-stalk" x="933.3" y="4" width="0.9" height="34"/><rect class="k-stalk" x="935.0" y="4" width="5.9" height="34"/><rect class="k-stalk" x="941.7" y="4" width="4.2" height="34"/><rect class="k-stalk" x="946.7" y="4" width="2.5" height="34"/><rect class="k-light" x="950.0" y="4" width="40.9" height="34"/><text class="lab" x="970.8" y="25" text-anchor="middle">cut 2</text><rect class="k-open" x="991.7" y="4" width="7.5" height="34"/><line class="tk" x1="0.0" y1="42" x2="0.0" y2="46"/><text class="txt" x="0.0" y="57" text-anchor="start">0 s</text><line class="tk" x1="166.7" y1="42" x2="166.7" y2="46"/><text class="txt" x="166.7" y="57" text-anchor="middle">5 s</text><line class="tk" x1="333.3" y1="42" x2="333.3" y2="46"/><text class="txt" x="333.3" y="57" text-anchor="middle">10 s</text><line class="tk" x1="500.0" y1="42" x2="500.0" y2="46"/><text class="txt" x="500.0" y="57" text-anchor="middle">15 s</text><line class="tk" x1="666.7" y1="42" x2="666.7" y2="46"/><text class="txt" x="666.7" y="57" text-anchor="middle">20 s</text><line class="tk" x1="833.3" y1="42" x2="833.3" y2="46"/><text class="txt" x="833.3" y="57" text-anchor="middle">25 s</text><line class="tk" x1="1000.0" y1="42" x2="1000.0" y2="46"/><text class="txt" x="1000.0" y="57" text-anchor="end">30 s</text></svg></div>
+    <div class="striplabel">What we're aiming for <span class="tag plan">drawn by hand, nothing built</span></div>
+    <div class="scroll"><svg class="strip" viewBox="0 0 1000 80" role="img" aria-label="An illustration of the fight we are aiming for"><rect class="k-stalk" x="0.0" y="22" width="75.9" height="34"/><text class="lab2" x="38.3" y="43" text-anchor="middle">circles</text><rect class="k-light" x="76.7" y="22" width="45.9" height="34"/><text class="lab" x="100.0" y="43" text-anchor="middle">cut</text><rect class="k-light" x="123.3" y="22" width="45.9" height="34"/><text class="lab" x="146.7" y="43" text-anchor="middle">cut 2</text><rect class="k-red" x="170.0" y="22" width="55.9" height="34"/><text class="lab" x="198.3" y="43" text-anchor="middle">sting</text><path class="mk" d="M193.3 12 L203.3 12 L198.3 20 Z"/><text class="txt-ink" x="198.3" y="9" text-anchor="middle">guard up: the breaker</text><rect class="k-open" x="226.7" y="22" width="65.9" height="34"/><rect class="k-stalk" x="293.3" y="22" width="115.9" height="34"/><text class="lab2" x="351.7" y="43" text-anchor="middle">watches you</text><rect class="k-stalk" x="410.0" y="22" width="25.9" height="34"/><rect class="k-heavy" x="436.7" y="22" width="55.9" height="34"/><text class="lab" x="465.0" y="43" text-anchor="middle">dive</text><path class="mk" d="M460.0 12 L470.0 12 L465.0 20 Z"/><text class="txt-ink" x="465.0" y="9" text-anchor="middle">sees you drink</text><rect class="k-open" x="493.3" y="22" width="69.2" height="34"/><rect class="k-stalk" x="563.3" y="22" width="89.2" height="34"/><text class="lab2" x="608.3" y="43" text-anchor="middle">circles</text><rect class="k-light" x="653.3" y="22" width="42.5" height="34"/><text class="lab" x="675.0" y="43" text-anchor="middle">cut</text><rect class="k-hold" x="696.7" y="22" width="29.2" height="34"/><text class="lab2" x="711.7" y="43" text-anchor="middle">hold</text><rect class="k-light" x="726.7" y="22" width="42.5" height="34"/><text class="lab" x="748.3" y="43" text-anchor="middle">cut 2</text><path class="mk" d="M743.3 12 L753.3 12 L748.3 20 Z"/><text class="txt-ink" x="748.3" y="9" text-anchor="middle">same opening, held</text><rect class="k-open" x="770.0" y="22" width="62.5" height="34"/><rect class="k-stalk" x="833.3" y="22" width="79.2" height="34"/><text class="lab2" x="873.3" y="43" text-anchor="middle">steps in</text><rect class="k-none" x="913.3" y="22" width="85.9" height="34"/><text class="lab" x="956.7" y="43" text-anchor="middle">rain</text><line class="tk" x1="0.0" y1="60" x2="0.0" y2="64"/><text class="txt" x="0.0" y="75" text-anchor="start">0 s</text><line class="tk" x1="166.7" y1="60" x2="166.7" y2="64"/><text class="txt" x="166.7" y="75" text-anchor="middle">5 s</text><line class="tk" x1="333.3" y1="60" x2="333.3" y2="64"/><text class="txt" x="333.3" y="75" text-anchor="middle">10 s</text><line class="tk" x1="500.0" y1="60" x2="500.0" y2="64"/><text class="txt" x="500.0" y="75" text-anchor="middle">15 s</text><line class="tk" x1="666.7" y1="60" x2="666.7" y2="64"/><text class="txt" x="666.7" y="75" text-anchor="middle">20 s</text><line class="tk" x1="833.3" y1="60" x2="833.3" y2="64"/><text class="txt" x="833.3" y="75" text-anchor="middle">25 s</text><line class="tk" x1="1000.0" y1="60" x2="1000.0" y2="64"/><text class="txt" x="1000.0" y="75" text-anchor="end">30 s</text></svg></div>
+    <div class="legend"><span><i class="k-light"></i>Light blow</span><span><i class="k-heavy"></i>Heavy</span><span><i class="k-red"></i>Perilous</span><span><i class="k-none"></i>Roar, summon, ability</span><span><i class="k-open"></i>Opening: your turn</span><span><i class="k-stalk"></i>Circling, watching, stepping</span></div>
+  </div>
+  <p class="col">It's one long swing with short gaps. A guard changes what happens to each blow: the Regent recoils and the gap gets longer. It doesn't change what the Regent decides to do next.</p>
+  <div class="facts">
+    <div class="fact"><div class="n">77%</div><p>of the time it's in the middle of a move, against someone standing still. Another 21% it stands in an opening. That leaves one second in fifty for anything else.</p></div>
+    <div class="fact"><div class="n">0.7%</div><p>of its time goes on moving sideways, across all six kinds of player. Bosses can walk at you and that's all. They have no footwork.</p></div>
+    <div class="fact"><div class="n">8–27%</div><p>of its moves are the move it just did. Against someone running straight away it's 65%. Nothing stops a repeat.</p></div>
+    <div class="fact"><div class="n">16% / 12%</div><p>of its moves are perilous when you stand still and when you turtle. Holding your guard up all fight doesn't bring out the moves that beat a guard.</p></div>
+    <div class="fact"><div class="n">1 of 47</div><p>looks at how you fight (the Examiner, once, at its second phase). All of them notice two parries in a row. None notice you drinking, winding up a heavy, casting or rolling.</p></div>
+    <div class="fact"><div class="n">0</div><p>of about 205 fighting creatures know what the others are doing. Each picks its own moment, which is how you get ripped apart by blazes.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">The goal</div>
+  <h2>What "smart" has to mean</h2>
+  <p class="col">It can't mean a cleverer computer. It has to be something you notice with the sword in your hand. So these are the promises, and each one is something you could point at.</p>
+  <ol class="promises">
+    <li><b>Every blow means something.</b> Aimed at you, it lands unless you answer it. Done, and waiting for your playtest.</li>
+    <li><b>It reacts to what you've already started.</b> Drink, wind up a heavy, cast, turtle or run, and about half a second later it does something about it. It never reacts to a button.</li>
+    <li><b>You can see that it noticed.</b> Its head snaps round, its weight drops, you hear it. A reaction nobody sees looks like more randomness.</li>
+    <li><b>It moves like a fighter between blows.</b> It circles, steps in, gives ground, stops and watches you. The quiet moments are when it's scariest.</li>
+    <li><b>Its rhythm can catch you out, and you can learn it.</b> Same opening, different endings. A blow held a beat too long. A slow one after a fast one.</li>
+    <li><b>It has a temper, and that changes.</b> It tests you, then hunts you, then gets desperate. You could describe it in a sentence.</li>
+    <li><b>You can use all of this against it.</b> Fake a drink to bait the dive. Step behind it and punish the turn. If it reads you, you can lie to it.</li>
+    <li><b>Packs take turns.</b> They spread out and come at you one or two at a time.</li>
+  </ol>
+  <div class="scroll"><table class="tri">
+    <tr><th>Strong</th><th>Weak</th><th>Not acceptable</th></tr>
+    <tr>
+      <td>After a fight you can say why it did what it did. "It went for me when I drank." You lose and know what to try next.</td>
+      <td>More animations on the same dice. Or it reacts, but you can't tell that it did.</td>
+      <td>It reads your button presses. It catches you with no warning. It dances around and won't attack. Five things hit you at once. Anything derpy or cheap-sounding.</td>
+    </tr>
+  </table></div>
+  <p class="col"><b>Not in this plan:</b> more health, damage or speed for bosses; more minions; learning AI; new buttons for you; anything that announces a boss before you meet it. The fair damage numbers, the tells and their colours, the five carriers and the openings all stay exactly as they are.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Why it's like this</div>
+  <h2>What I found, and what I only suspect</h2>
+  <div class="scroll"><table>
+    <tr><th>What you felt</th><th>The likely cause</th><th>Evidence for it</th><th>What argues against it</th><th>Smallest test</th></tr>
+    <tr><td>"randomly hitting"</td><td>Its choice depends only on distance and where you stand.</td><td><span class="tag real">read in code</span> Those are the only inputs. Your guard barely moves the mix.</td><td>Elden Ring rolls dice too (below). Dice alone aren't the fault.</td><td>The Regent reacting to a drink, a guard and a roll.</td></tr>
+    <tr><td>"didn't feel smart at all"</td><td>It never stops swinging and never moves around you.</td><td><span class="tag real">measured</span> 77% mid-move, 0.7% sideways.</td><td>Some great bosses are relentless as well.</td><td>Footwork on the pilots. You judge.</td></tr>
+    <tr><td>"a hit-block-hit loop", "not Elden Ring" (28 Oct)</td><td>One flat tempo, and a string is chosen at its first blow.</td><td><span class="tag real">measured</span> Median wind-ups are 10, 18 and 24 ticks by class. Only 63 of 497 moves can hold a beat, all heavies, one time in three.</td><td>You've never said delays are what's missing. That's my reading.</td><td>Forks and held blows on the pilots.</td></tr>
+    <tr><td>"too many blazes" (28 Oct)</td><td>Nothing makes them take turns.</td><td><span class="tag real">read in code</span> No creature goal shares anything with another.</td><td>It might just be the number of them. Turns won't fix too many.</td><td>A test counting attackers at once.</td></tr>
+    <tr><td>All of the above</td><td><span class="tag plan">hypothesis</span> Part 1 may already change how it feels.</td><td>Nothing yet. You haven't played it.</td><td></td><td>Your next fight. If it changes what you feel, I'll adjust this plan.</td></tr>
+  </table></div>
+  <p class="col">One more finding that decides how big this job is. Walking, running and turn steps aren't made per boss. They're generated per body plan (Brute, Duelist, Flier, Caster) from a few proportions in <code>tools/art/specs/kit/plans.py</code>. So footwork is a handful of generators, not 47 times by hand.</p>
+</section>
+
+<section>
+  <div class="eyebrow">What the best do</div>
+  <h2>Less clever than you'd think</h2>
+  <div class="scroll"><table>
+    <tr><th>Claim</th><th>Source</th><th>How far to trust it</th><th>What it means here</th></tr>
+    <tr><td>Elden Ring's enemies pick attacks by weighted dice within distance bands, with cooldowns and health checks. They also have interrupts that fire when you use an item, cast or get hit, and moves wrapped around the attacks. One boss has an 85% chance to break off and attack when you cast or use an item.</td><td><a href="https://nega.tv/posts/low-tech-ai-of-elden-ring.html">The Low-Tech AI Of Elden Ring</a> (nega.tv)</td><td>A community reading of decompiled scripts. Not from the developers.</td><td>Keep the dice. Add what we lack: cooldowns, tighter bands, interrupts, movement around attacks.</td></tr>
+    <tr><td>Elden Ring's AI watches the animation of your action, not your button.</td><td><a href="https://www.pcgamer.com/elden-ring-dataminer-explains-why-enemies-smack-you-when-you-reach-for-a-potion">PC Gamer, 26 Aug 2022</a>, reporting a dataminer</td><td>One dataminer, reported second hand.</td><td>Read only what has visibly started.</td></tr>
+    <tr><td>DOOM (2016) gives out attack tokens per attack type, and demons in front of you can take them from others.</td><td><a href="https://www.gamedeveloper.com/design/cyber-demons-the-ai-of-doom-2016-">Game Developer: The AI of DOOM (2016)</a></td><td>A shooter, so the numbers won't carry over. The idea will.</td><td>Packs take turns the same way.</td></tr>
+    <tr><td>The Halo team set out to make AI look intelligent, and used exaggerated reactions (Grunts panicking when an Elite dies) so players would notice it.</td><td><a href="https://halo.bungie.org/misc/gdc.2002.haloai/talk.html?page=19">GDC 2002 talk notes</a></td><td>A shooter from 2002, and I've only read a summary of the talk.</td><td>A reaction has to be shown. That's why promise 3 is its own promise.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="eyebrow">Three ways to do it</div>
+  <h2>I recommend the middle one</h2>
+  <div class="scroll"><table>
+    <tr><th></th><th>A. Tune the dice</th><th class="pick">B. Give each fight a mind</th><th>C. A planning or learning AI</th></tr>
+    <tr><td><b>What it is</b></td><td>Tighter bands, cooldowns, no repeats, more held blows.</td><td class="pick">Keep the moves, tells and aim. Add watching, reacting, footwork, forks, tempers and turns.</td><td>The boss plans ahead, or trains on how you play.</td></tr>
+    <tr><td><b>What it fixes</b></td><td>Stupid repeats and flat rhythm.</td><td class="pick">All eight promises.</td><td>Possibly surprise, in theory.</td></tr>
+    <tr><td><b>What it can't fix</b></td><td>It still never looks at you. It still swings 77% of the time.</td><td class="pick">The look of a body that isn't good enough already.</td><td>You can't learn a boss that keeps changing. It can't be hand-written, or checked.</td></tr>
+    <tr><td><b>Risk</b></td><td>Low. Probably not enough.</td><td class="pick">Footwork that looks derpy. Gated on your eyes.</td><td>High, and it eats the tick budget.</td></tr>
+    <tr><td><b>Size</b></td><td>Under a day.</td><td class="pick">About a week of building.</td><td>Unknown.</td></tr>
+  </table></div>
+  <p class="col">B wins because the fix for "dumb" is mostly information and body language, and the reading of Elden Ring's scripts suggests simple logic is enough if the fights are well written. A is included inside B as the cheap first step. <b>What would change my mind:</b> if the pilots react correctly and you still find them dull, the answer is hand-written fights per boss, in the Elden Ring style, rather than more systems.</p>
+</section>
+
+<section>
+  <div class="eyebrow">The plan</div>
+  <h2>Six parts</h2>
+  <div class="parts">
+    <article class="part"><h3>1. It watches what you've started</h3>
+      <dl>
+        <dt>Why</dt><dd>The server already knows when you raised your guard, dodged, began charging a heavy, or started using an item. None of that reaches the boss's choice.</dd>
+        <dt>Change</dt><dd>Each decision reads a short list about its target: drinking or eating, guard up and for how long, a heavy winding up, a power being cast, stuck in recovery, just dodged, running away, low on health. A fact counts only after it has been true for the foe's reaction time: about 0.6 s for an E-rank foe down to 0.35 s for the highest ranks, as a first guess.</dd>
+        <dt>You get</dt><dd>It only knows what someone watching you could know.</dd>
+        <dt>Keeps</dt><dd>Server decides everything. Worked out per target, so it stays right with several players.</dd>
+        <dt>Cost</dt><dd>The server has no single "is casting" fact yet, so Powers needs one small public call.</dd>
+        <dt>Test</dt><dd>Start a drink: nothing changes before the reaction time, and the boss acts after it.</dd>
+      </dl></article>
+    <article class="part"><h3>2. It answers, and you see it notice</h3>
+      <dl>
+        <dt>Why</dt><dd>Nothing connects what you do to what it does next. That's what "random" is.</dd>
+        <dt>Change</dt><dd>A short list of answers made from moves it already has (the table below), each with a cooldown and a chance. They start only between blows or at a fork, and a swing that has begun is never cancelled. Before it answers it shows you: head snaps round, weight drops, a short sound.</dd>
+        <dt>You get</dt><dd>"It went for me when I drank." And the chance to bait it.</dd>
+        <dt>Keeps</dt><dd>Every blow keeps its tell, its colour and its minimum warning.</dd>
+        <dt>Cost</dt><dd>New short sounds per body type that I can't hear. You'd be the first.</dd>
+        <dt>Test</dt><dd>One test per answer.</dd>
+      </dl></article>
+    <article class="part"><h3>3. It moves like a fighter</h3>
+      <dl>
+        <dt>Why</dt><dd>0.7% sideways. Bodies have idle, walk and run, and you said turning around looks bad.</dd>
+        <dt>Change</dt><dd>Between strings it circles either way, steps in, gives ground, or stops and watches, for half a second to three seconds, always facing you. Strafe and back-step get built where walking is built, once per body plan. Fliers drift and bob, casters glide. How long it waits depends on its temper and whether it's winning.</dd>
+        <dt>You get</dt><dd>Pauses with tension in them. Time to breathe and read it. Fewer of the big turns that look bad, since it stays facing you.</dd>
+        <dt>Keeps</dt><dd>Feet locked to the ground, by the same rule as the walk.</dd>
+        <dt>Cost</dt><dd>The biggest looks risk in the plan. Fewer blows per minute, so fights need retuning.</dd>
+        <dt>Test</dt><dd>Share of time moving sideways, close CI shots for sliding feet, then your eyes.</dd>
+      </dl></article>
+    <article class="part"><h3>4. Strings that can change their mind</h3>
+      <dl>
+        <dt>Why</dt><dd>A string is fixed at its first blow. Tempo is flat. Repeats are common.</dd>
+        <dt>Change</dt><dd>Up to two fork points in a string, where the next blow depends on what you're doing right then: guard up brings the guard-breaker, rolled away brings the lunge, still there brings the second cut, out of reach and it breaks off. Any class of blow can be held a beat. A move can't follow itself, each has a cooldown, and distance bands get tighter.</dd>
+        <dt>You get</dt><dd>Same opening, different endings. Something to learn.</dd>
+        <dt>Keeps</dt><dd>Branches look identical until the fork, so reading still works. Every string still ends in an opening.</dd>
+        <dt>Cost</dt><dd>Every fight script needs forks written, from templates with hand edits.</dd>
+        <dt>Test</dt><dd>Repeat share, a fork test, the fair-damage sweep.</dd>
+      </dl></article>
+    <article class="part"><h3>5. A temper and a plan</h3>
+      <dl>
+        <dt>Why</dt><dd>All 47 fights make decisions the same way, so they feel alike under the skin.</dd>
+        <dt>Change</dt><dd>Six tempers as data: Hunter, Duellist, Brute, Beast, Sentinel, Keeper. They set how close it likes to be, how long it waits and which answers it prefers. Each phase has a plan you can feel. Its mood moves with the fight: it presses when it's hurting you, turns wary when you keep parrying it. Each boss also gets one trick of its own.</dd>
+        <dt>You get</dt><dd>You could describe any boss in a sentence, and no two feel alike.</dd>
+        <dt>Keeps</dt><dd>Moves, numbers and phases.</dd>
+        <dt>Cost</dt><dd>Writing per boss. A trick sometimes needs a little code.</dd>
+        <dt>Test</dt><dd>Probe shows tempers behave differently. You play them.</dd>
+      </dl></article>
+    <article class="part"><h3>6. Packs take turns</h3>
+      <dl>
+        <dt>Why</dt><dd>"Too many blazes." Nothing coordinates them.</dd>
+        <dt>Change</dt><dd>Each target has a set number of attack turns, and a creature needs one to begin an attack. Those waiting spread out around you and circle at a distance. Big attacks cost more. A boss's helpers count too: while they're on you, the boss eases off.</dd>
+        <dt>You get</dt><dd>A pack that feels organised and flanks you. You don't get hit by five at once.</dd>
+        <dt>Keeps</dt><dd>Creature stats and tells. A lone creature is unchanged.</dd>
+        <dt>Cost</dt><dd>Packs deal less damage in a burst, so gate difficulty needs checking.</dd>
+        <dt>Test</dt><dd>Attackers at once never pass the limit. Tick cost.</dd>
+      </dl></article>
+  </div>
+  <p class="col"><b>On your earlier verdict.</b> Derpy and rough: footwork is built the way the walk is built, and any body whose footwork doesn't pass your eyes stays on today's behaviour rather than shipping bad. Bad sounds: I can only check these by numbers, so you hear them at each pilot. Too many blazes: part 6, and no new minions anywhere. Not Elden Ring: promises 2 to 7 are what that means in practice.</p>
+</section>
+
+<section>
+  <div class="eyebrow">In your hands</div>
+  <h2>What you do, what it does</h2>
+  <div class="scroll"><table>
+    <tr><th>You</th><th>Today</th><th>With this plan <span class="tag plan">proposed</span></th><th>Your way to beat it</th></tr>
+    <tr><td><b>Drink</b>, eat</td><td>Nothing connects.</td><td>Half a second in, if it can reach you, it comes for you with a gap-closer or a shot.</td><td>Drink far away, or fake a drink and punish the dive.</td></tr>
+    <tr><td><b>Wind up a heavy</b></td><td>Nothing connects.</td><td>Steps out of it, or beats you to it with a quick blow, by temper.</td><td>Release early, or wind up as it recovers.</td></tr>
+    <tr><td><b>Turtle</b> for two seconds</td><td>Perilous 16% → 12%.</td><td>Walks round you, or brings the blow that breaks guards.</td><td>Lower your guard and dash at the tell.</td></tr>
+    <tr><td><b>Parry</b> a lot</td><td>Red moves ×4 after two in a row.</td><td>Keeps that, and turns wary: backs off, circles, tries a held blow.</td><td>Learn the held timing.</td></tr>
+    <tr><td><b>Spam dodges</b></td><td>Nothing connects.</td><td>Holds a beat on your third, then hits where you land.</td><td>Keep your dodges for real blows.</td></tr>
+    <tr><td><b>Run</b> away</td><td>Walks after you and repeats the same move (65% repeats).</td><td>Stalks you, then pounces when you stop.</td><td>Stop on your terms and parry the pounce.</td></tr>
+    <tr><td><b>Circle</b> behind it</td><td>Its back moves, if it has one.</td><td>Keeps them, and wheels round to face you. The wheel is an opening.</td><td>Hit the turn.</td></tr>
+    <tr><td><b>Get hurt</b></td><td>Nothing connects.</td><td>Presses harder and waits less.</td><td>Get out, or parry your way back.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="eyebrow">The same fights, before and after</div>
+  <h2>Five cases</h2>
+  <p class="col muted">"Today" is read from the code and the recordings. "With this" is the behaviour we'd be building, and none of it exists yet.</p>
+  <div class="ba">
+    <div class="case"><h3>The one you complained about: the Hive Regent, you're low and you drink</h3>
+      <div class="row"><span>Today</span><p>The Regent is partway through cut, second cut, cut, second cut (that's the real recording). The drink reaches nothing. It rolls again from the same four moves.</p></div>
+      <div class="row after"><span>With this</span><p>Half a second after you start, its head snaps round and it drops. Then it dives. You saw the warning, so you can break off and dash, and its long recovery is yours.</p></div>
+      <div class="row"><span>Next</span><p>You start faking drinks to bring it down. That's a fight you're having with it.</p></div>
+    </div>
+    <div class="case"><h3>An ordinary fight: the Gearwright, you stand and trade</h3>
+      <div class="row"><span>Today</span><p>Slam, slam, slam. In the recording it does three in a row twice, and slam is 10 of its 25 moves. The opening after each string is under a second.</p></div>
+      <div class="row after"><span>With this</span><p>It's a Sentinel. It holds its ground and lets you come to it, tests you with a chop, then holds the hammer up a beat longer than you expected.</p></div>
+      <div class="row"><span>Next</span><p>You learn to wait out the hammer, and to go round it when it stops moving its feet.</p></div>
+    </div>
+    <div class="case"><h3>A hard call: you back away at the edge of its reach, half guarding</h3>
+      <div class="row"><span>Today</span><p>Distance alone decides. It may throw, or walk.</p></div>
+      <div class="row after"><span>With this</span><p>Two readings disagree, so a fixed order settles it: the newest thing you started wins, then where you are. It doesn't chase you in a straight line. It stalks you until you stop, then closes.</p></div>
+    </div>
+    <div class="case"><h3>Something's missing: no answer reaches you, or a body has no footwork clip</h3>
+      <div class="row"><span>Today</span><p>There's only one path today, so this can't come up.</p></div>
+      <div class="row after"><span>With this</span><p>It falls back to today's choice. It never stands frozen. A fight with no temper written behaves exactly as it does now, which is also how each stage can be undone.</p></div>
+    </div>
+    <div class="case"><h3>Already good, and kept: the Examiner, and parry recoil</h3>
+      <div class="row"><span>Today</span><p>The Examiner counts your habit through its first phase and answers it in the second. A parried blow makes a boss recoil.</p></div>
+      <div class="row after"><span>With this</span><p>Both stay. The Examiner's trick becomes the model for one boss's special reading, and keeps being the only boss that studies you over a whole phase.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">How it fits together</div>
+  <h2>One decision, in a fixed order</h2>
+  <div class="flow">
+    <div class="flowlabel">Today</div>
+    <div class="loop"><span class="step">distance, behind, above</span><span class="arrow">→</span><span class="step">dice over the pool</span><span class="arrow">→</span><span class="step">whole string chosen</span><span class="arrow">→</span><span class="step">blows</span><span class="arrow">→</span><span class="step">opening</span><span class="arrow">↻</span></div>
+    <div class="flowlabel">Proposed</div>
+    <div class="loop"><span class="step new">watch what you've started</span><span class="arrow">→</span><span class="step new">a turn free? (packs)</span><span class="arrow">→</span><span class="step">phase change</span><span class="arrow">→</span><span class="step new">an answer due?</span><span class="arrow">→</span><span class="step new">a fork?</span><span class="arrow">→</span><span class="step">dice <em>+ cooldowns, no repeats</em></span><span class="arrow">→</span><span class="step">aim</span><span class="arrow">→</span><span class="step">tell</span><span class="arrow">→</span><span class="step">blow</span><span class="arrow">→</span><span class="step">opening</span><span class="arrow">→</span><span class="step new">footwork</span><span class="arrow">↻</span></div>
+    <p class="muted small">New steps are marked. Everything else exists and carries on unchanged: <code>FightRunner</code>, the move tables, the aim, the tells.</p>
+  </div>
+  <h3>Rules that never bend</h3>
+  <ul class="tight col">
+    <li>It never reads input, only what has started and only after its reaction time.</li>
+    <li>Every blow keeps its tell, its colour and at least its minimum warning. A fork or a hold can only add warning.</li>
+    <li>A blow begins only if it can land (the aim from part 1 of this job).</li>
+    <li>Every string still ends in an opening.</li>
+    <li>No extra damage, health or speed comes from any of this.</li>
+    <li>Everything is decided on the server for each target, so a future guild server works the same.</li>
+  </ul>
+  <h3>What gets saved</h3>
+  <p class="col">Nothing new. What it has read about you and its mood last for the fight only, and go when it resets. Fight files gain optional <code>temper</code>, <code>forks</code> and <code>answers</code>. A file without them plays as it does today, and the schema version goes up by one. The read goes through a public call in <code>core.api</code>, so the modules stay separate.</p>
+  <h3>When something goes wrong</h3>
+  <div class="scroll"><table>
+    <tr><th>Case</th><th>What happens</th><th>Tested by</th></tr>
+    <tr><td>No answer reaches you</td><td>Skips the answer and uses the normal choice.</td><td>Answer test</td></tr>
+    <tr><td>No footwork clip for a body</td><td>Stands and watches using its idle, and steps with its walk.</td><td>Every body builds, one check per plan</td></tr>
+    <tr><td>Circling into a wall, or a small room</td><td>Turns the other way, then steps in. It stays inside its home.</td><td>Fight in a tight box</td></tr>
+    <tr><td>A creature holding a turn dies or loses you</td><td>The turn frees that tick. It can't be left held forever.</td><td>Pack test</td></tr>
+    <tr><td>Target changes in mid-read</td><td>The read restarts for the new target, with a fresh reaction time.</td><td>Read test</td></tr>
+    <tr><td>Several players</td><td>Reads and turns are per player. Its target is chosen as it is now.</td><td>Two-player test</td></tr>
+    <tr><td>Slow tick</td><td>Tick-based timing, so a stall can't shorten a warning.</td><td>Existing fight tick watch</td></tr>
+  </table></div>
+  <p class="col muted">Cost: a boss and 12 monsters take 1.7 ms of the 50 ms tick today (measured 2 Nov). The read is a few field lookups with nothing allocated per tick, and turns are one small table per target. Privacy and paid services don't apply.</p>
+</section>
+
+<section>
+  <div class="eyebrow">How we'll know</div>
+  <h2>Measured gates, and then you</h2>
+  <p class="col">The recording I used here becomes a permanent test, so every stage is checked against the same six kinds of player. These targets are proposals, and I'd adjust them after the pilots.</p>
+  <div class="scroll"><table>
+    <tr><th>Measure</th><th>Today</th><th>Gate</th></tr>
+    <tr><td>Same move twice in a row</td><td class="num">8–27%, 65% if you run</td><td class="num">≤ 10% everywhere</td></tr>
+    <tr><td>Mid-move, against someone standing still</td><td class="num">77%</td><td class="num">50–60%</td></tr>
+    <tr><td>Time spent circling or stepping</td><td class="num">about 2%</td><td class="num">≥ 20%</td></tr>
+    <tr><td>A drink inside its reach gets answered</td><td class="num">never</td><td class="num">≥ 60%, and never sooner than its reaction time</td></tr>
+    <tr><td>Guard-beating moves when you turtle</td><td class="num">12%, was 16% standing</td><td class="num">At least double the standing rate</td></tr>
+    <tr><td>Blows that can land</td><td class="num">94% of starts</td><td class="num">≥ 90%</td></tr>
+    <tr><td>Fair damage sweep, tells, openings</td><td class="num">passing</td><td class="num">unchanged</td></tr>
+    <tr><td>Fight length, by the combat sim</td><td class="num">baseline in stage 0</td><td class="num">within 15%</td></tr>
+    <tr><td>Most creatures attacking at once</td><td class="num">baseline in stage 0</td><td class="num">never above the limit</td></tr>
+    <tr><td>Server cost, boss and 12 monsters</td><td class="num">1.7 ms</td><td class="num">≤ 2.5 ms</td></tr>
+    <tr><td><b>You play the pilot and say it's fighting you</b></td><td></td><td><b>The real gate</b></td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="eyebrow">Order of work</div>
+  <h2>Pilot first, then everyone</h2>
+  <ol class="stages">
+    <li><div><h3>The recorder</h3><p>The probe becomes a test. Baselines for packs and fight length.</p><p class="gate">Gate: CI. Hours.</p></div></li>
+    <li><div><h3>The mind, on two pilots, with no new art</h3><p>Watching, answers, forks, cooldowns and held blows on the Hive Regent and the Gearwright, using the clips they already have.</p><p class="gate">Gate: tests, then you play. About a day. If this already feels right we'll know early, before spending anything on art.</p></div></li>
+    <li><div><h3>Footwork</h3><p>Strafe and back-step per body plan, the waiting and circling, on the pilots.</p><p class="gate">Gate: CI shots, then your eyes. About a day. This is the stage that could fail on looks.</p></div></li>
+    <li><div><h3>Tempers, moods and notice sounds</h3><p>Pilots get a temper, phase plans and a trick of their own. Short notice sounds rendered.</p><p class="gate">Gate: you play and listen. About a day.</p></div></li>
+    <li><div><h3>All 47 bosses</h3><p>In batches by body plan. Temper, forks, answers and a trick each.</p><p class="gate">Gate: the recorder per boss and a close CI tour per batch. Two or three days.</p></div></li>
+    <li><div><h3>The creatures</h3><p>Turns, spacing and circling for about 205 kinds, and one reaction per family.</p><p class="gate">Gate: pack test, then you play a gate. A day or two.</p></div></li>
+    <li><div><h3>Balance</h3><p>The combat sim learns the aim and the mind. The fair-damage sweep runs again, fight lengths checked.</p><p class="gate">Gate: sweep and sim. Half a day.</p></div></li>
+  </ol>
+  <p class="col muted">I build all of it myself, as with Part 1. Estimates are scaled from how long Part 1 took and could easily be off. Each stage merges on its own, and removing a boss's temper puts it back on today's behaviour. What I can't check: the feel in your hands, the sounds, and the look in a real game.</p>
+</section>
+
+<section id="decisions">
+  <div class="eyebrow">Your call</div>
+  <h2>Seven decisions</h2>
+  <div class="decisions">
+    <div class="dec"><div><h3>Give every fight a mind</h3><p>Keep the moves, tells and aim. Add the six parts above, pilots first.</p><p class="alt">The other way: only tune the dice (under a day, and it still won't look at you).</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>Drinking can get you hit</h3><p>If it can reach you, it comes for you about half a second after you start. Far away is safe.</p><p class="alt">The other way: healing is always safe.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>Dodge-spam gets caught</h3><p>On your third dodge in a row it holds a beat and hits where you land. It never reacts to the button.</p><p class="alt">The other way: it ignores dodges, and spamming stays safe.</p><div><span class="chip rec">Recommended: yes</span></div></div></div>
+    <div class="dec"><div><h3>How far feints go</h3><p>Held blows and strings that stop short, for everyone. A true fake, where a wind-up turns into nothing, only on the top-rank duellists and the Wardens.</p><p class="alt">The other way: no fakes at all, or fakes for everyone (very punishing with this many tells).</p><div><span class="chip rec">Recommended: held blows everywhere, true fakes rarely</span></div></div></div>
+    <div class="dec"><div><h3>How relentless they are</h3><p>About half the time mid-move, instead of three quarters, with circling and watching in between. Fight length stays about the same, and I'd retune health to hold it there.</p><p class="alt">The other way: keep them swinging and only add reactions. More pressure, less tension.</p><div><span class="chip rec">Recommended: about half</span></div></div></div>
+    <div class="dec"><div><h3>How many can attack you at once</h3><p>Easy gates: two close and one ranged. Hard gates: three and two. A boss's helpers: one at a time while the boss is attacking. First guesses, adjusted after you play a gate.</p><p class="alt">The other way: stricter (one at a time) or looser.</p><div><span class="chip rec">Recommended: these numbers to start</span></div></div></div>
+    <div class="dec"><div><h3>You play the pilots before the roll-out</h3><p>Hive Regent, since that's the fight you called dumb, and the Gearwright, a very different body. The other 45 bosses wait for your yes.</p><p class="alt">The other way: build it all and show you at the end. Faster, but a wrong call costs far more.</p><div><span class="chip rec">Recommended: pilots first</span></div></div></div>
+  </div>
+  <p class="col muted">Left out for now, and easy to add later: a boss remembering you between attempts. It sounds great, and it would need a very careful design to stay fair, so I'd rather see this working first.</p>
+</section>
+
+<footer class="page">
+  <p>Evidence: the fight recorder (34 of 36 fights usable, 973 moves, six bosses against six kinds of player, about 72 s each, on commit <code>3b02321ce</code>). Two fights were dropped because the test server stopped ticking the boss when it left the test's loaded ground. Code read: <code>FightRunner</code>, <code>BlowAim</code>, <code>MobGoals</code>, <code>ArmsState</code>, <code>tools/art/specs/kit/plans.py</code>, and the 47 fight scripts. Part 1 is on branch <code>claude/boss-fights-plan-73c5f2</code>, SPEC §47.15.</p>
+  <p>The measured numbers come from a headless server with a test player who doesn't play like a person. Your playtest is the real check.</p>
+</footer>
+</div>

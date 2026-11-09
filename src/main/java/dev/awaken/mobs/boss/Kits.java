@@ -101,7 +101,7 @@ public final class Kits {
         FightScripts.Fight fight = null;
         if (Kits.class.getResource(fightPath) != null) {
             fight = read(fightPath, FightScripts.Fight.CODEC);
-            if (fight.schemaVersion() != FightScripts.SCHEMA_VERSION) throw new IOException(id + " fight: schemaVersion " + fight.schemaVersion());
+            if (fight.schemaVersion() < 1 || fight.schemaVersion() > FightScripts.SCHEMA_VERSION) throw new IOException(id + " fight: schemaVersion " + fight.schemaVersion());
         }
         return new Kit(id, rig, moves, fight);
     }
@@ -157,11 +157,26 @@ public final class Kits {
                     if (!string.isEmpty()) covered.add("combo");
                     for (String s : string) need(k, s, out, covered);
                 }
+                if (e.forks().size() > 2) out.add(k.id + ": " + e.move() + " has over two forks");
+                for (FightScripts.Fork fork : e.forks()) {
+                    fork.guard().ifPresent(s -> need(k, s, out, null));
+                    fork.dodged().ifPresent(s -> need(k, s, out, null));
+                    fork.stayed().ifPresent(s -> need(k, s, out, null));
+                }
             }
             ph.transition().ifPresent(t -> need(k, t, out, null));
         }
         f.intro().move().ifPresent(t -> need(k, t, out, null));
         f.death().ifPresent(t -> need(k, t, out, null));
+        f.mind().ifPresent(mind -> {
+            for (FightScripts.Answer a : mind.answers()) {
+                if (a.on() == FightScripts.Fact.NONE) out.add(k.id + ": an answer to nothing");
+                if (a.moves().isEmpty()) out.add(k.id + ": an answer to " + a.on() + " with no moves");
+                for (String s : a.moves()) need(k, s, out, null);
+                for (List<String> string : a.then()) for (String s : string) need(k, s, out, null);
+            }
+            for (String s : mind.cooldowns().keySet()) need(k, s, out, null);
+        });
         for (String r : REQUIRED) if (!covered.contains(r)) out.add(k.id + ": its fight has no " + r + " move");
         // a duel's body shows what a deflect does to it (SPEC §47.3): its limb thrown back, and the reel
         if (f.duel()) for (String c : DUEL_CLIPS) if (k.rig.clip(c) == null) out.add(k.id + ": a duel with no " + c + " clip");

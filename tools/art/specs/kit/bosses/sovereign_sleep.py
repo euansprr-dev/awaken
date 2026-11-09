@@ -475,9 +475,9 @@ def buffet(r):
     in one heavy beat, the primaries spread like a hand."""
     cock = _pose(yaw=-34, roll=-16, pitch=-12, at=(0, 3, 3), wl=dict(lift=34, sweep=-24, curl=16, fan=1.2, twist=-8),
                  wr=dict(lift=44, sweep=62, curl=22, fan=1.8, twist=-14), head=(8, 30, 6), legs=dict(reach=24, spread=10, grip=-0.6), tail=(10, 1.4), tufts=0.8)
-    sweep = _pose(yaw=22, roll=12, pitch=6, at=(-2, -2, -4), wl=dict(lift=2, curl=0, fan=0.4), wr=dict(lift=4, sweep=-50, curl=-10, fan=1.6, twist=10),
+    sweep = _pose(yaw=22, roll=12, pitch=6, at=(-2, -32, -18), wl=dict(lift=2, curl=0, fan=0.4), wr=dict(lift=4, sweep=-50, curl=-10, fan=1.6, twist=10),
                   head=(-2, -14, 0), beak=6, legs=dict(reach=8), tail=(-2, 0.6))
-    held = _pose(yaw=28, roll=14, pitch=8, at=(-2.5, -2.5, -4.5), wl=dict(lift=2, fan=0.4), wr=dict(lift=0, sweep=-58, curl=-14, fan=1.4, twist=12),
+    held = _pose(yaw=28, roll=14, pitch=8, at=(-2.5, -32, -18), wl=dict(lift=2, fan=0.4), wr=dict(lift=0, sweep=-58, curl=-14, fan=1.4, twist=12),
                  head=(0, -18, 0), beak=4, legs=dict(reach=8), tail=(-4, 0.5))
     return Move("buffet", "LIGHT", 12, 5, 16, title="Buffet", track=6.0, rng=(0, 6.0), kinds=("combo", "near"), damage=1.1, knock=1.0, plant=(),
                 hit=[("prim_r2", (-10, 0, 0), 5.0), ("wing_r2", (-8, 0, 4), 6.0), ("wing_r1", (-9, 0, 6), 6.0)], through=_mix(held, _rest(), -0.05),

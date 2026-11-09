@@ -56,6 +56,7 @@ public final class ArmsModule {
                 return w == null ? null : w.tier();
             }
         });
+        dev.awaken.core.api.Watch.installArms(ArmsServer::watched);
         ArmsTrack.init();
         ArmsTrails.init();
         modBus.addListener(ArmsModule::registerPayloads);

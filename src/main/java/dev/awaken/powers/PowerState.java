@@ -110,6 +110,8 @@ public final class PowerState {
     int flowTickBank;
 
     long previewAt = Long.MIN_VALUE;
+    /** When its last power was cast, for those watching (SPEC §48.1). */
+    long castAt = Long.MIN_VALUE / 2;
     boolean loadoutDirty;
 
     void refreshPerks(ServerPlayer player, long now) {

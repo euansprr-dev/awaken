@@ -52,6 +52,9 @@ final class MobsTests {
         dev.awaken.mobs.entity.DeathTests.register(); // every death ends: the body gone, its drops given (SPEC §47.12)
         dev.awaken.mobs.entity.BrambleTests.register(); // berry bushes neither prick nor hold our wild things (SPEC §47.13)
         dev.awaken.mobs.entity.DuelTests.register(); // the duel: openings, recoils, reels, shots sent back (SPEC §47.3)
+        dev.awaken.mobs.entity.FightReachTests.register(); // a blow aimed at you lands
+        dev.awaken.mobs.entity.FightRecorder.register(); // what each fight did, against six kinds of player (SPEC §48.7)
+        dev.awaken.mobs.entity.FightMindTests.register(); // it reads what you've started and answers it
         dev.awaken.mobs.entity.FairTests.register(); // fair damage: nothing that belongs takes most of you at once (SPEC §47.14)
         AwakenTests.register("mobs_scaling_maths", 40, h -> {
             h.assertTrue(Math.abs(MobScaling.healthMultiplier(5) - 1.375) < 1e-9, "health multiplier at lv5");
@@ -221,6 +224,39 @@ final class MobsTests {
                 m.damageCooldownTime = 0;
                 m.hurtServer(level, level.damageSources().generic(), 10000F);
                 h.assertTrue(m.isDeadOrDying(), "second death is final");
+                h.succeed();
+            });
+        });
+
+        AwakenTests.register("mobs_echo_finish", 100, h -> {
+            ServerLevel level = h.getLevel();
+            AwakenTests.site(h, new BlockPos(-3, 0, -3), new BlockPos(3, 4, 3), Blocks.STONE.defaultBlockState());
+            var p = AwakenTests.survivalPlayer(h, "echo-finish", new BlockPos(2, 1, 0)).player();
+            var at = h.absoluteVec(new net.minecraft.world.phys.Vec3(0.5, 1, 0.5));
+            var role = new MobRole(MobRole.Role.NORMAL, 5, Theme.BELL.id, Optional.empty(), "");
+            // both ways of getting up: a gate's Echoing, and the RISES trait
+            AwakenMob echo = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 5, role, EnumSet.of(Forces.Tag.ECHO));
+            AwakenMob rises = Mobs.spawn(level, Bestiary.get("orchard_dead"), at, 5, role, Set.of());
+            for (AwakenMob m : List.of(echo, rises)) {
+                m.hurtServer(level, level.damageSources().generic(), 10000F);
+                h.assertTrue(m.isAlive() && m.flag(AwakenMob.F_FALLEN), m.def().id + " falls instead of dying");
+                h.assertFalse(m.hurtServer(level, level.damageSources().generic(), 10000F), "nobody's blow doesn't touch a fallen body");
+                h.assertTrue(m.isAlive() && m.flag(AwakenMob.F_FALLEN), "and it still lies there");
+                h.assertTrue(m.hurtServer(level, p.damageSources().playerAttack(p), 10000F), "the next blow lands at once");
+                h.assertTrue(m.isDeadOrDying(), m.def().id + " finished where it lay");
+                h.assertTrue(Forces.hasRisen(m), "the gate won't bring it back as well");
+            }
+            // a boss holds a tenth, so a tap can't skip its getting up
+            AwakenMob king = Mobs.spawn(level, Bestiary.get("guardian_orchard"), at, 5, new MobRole(MobRole.Role.BOSS, 5, Theme.ORCHARD.id, Optional.empty(), ""), Set.of());
+            king.hurtServer(level, level.damageSources().generic(), 1_000_000F);
+            h.assertTrue(king.flag(AwakenMob.F_FALLEN) && Math.abs(king.getHealth() - king.getMaxHealth() * 0.1F) < 0.01F, "a fallen boss holds a tenth, has " + king.getHealth());
+            king.hurtServer(level, p.damageSources().playerAttack(p), 1F);
+            h.assertTrue(king.isAlive() && king.flag(AwakenMob.F_FALLEN), "one tap doesn't end a boss");
+            king.damageCooldownTime = 0;
+            king.hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
+            h.assertTrue(king.isDeadOrDying(), "a real blow does");
+            h.runAfterDelay(AwakenMob.FALL_TICKS + 10, () -> {
+                h.assertTrue(echo.isRemoved() && rises.isRemoved() && !echo.flag(AwakenMob.F_RISEN), "they never got up");
                 h.succeed();
             });
         });

@@ -1,8 +1,83 @@
 {
- "schemaVersion": 1,
+ "schemaVersion": 2,
  "id": "hive_regent",
  "moves": "hive_regent",
  "duel": true,
+ "mind": {
+  "cooldowns": {
+   "rain": 240,
+   "dive": 60
+  },
+  "answers": [
+   {
+    "on": "DRINK",
+    "moves": [
+     "dive",
+     "volley",
+     "sting",
+     "cut",
+     "cut_b"
+    ],
+    "chance": 1.0,
+    "cooldown": 240,
+    "press": true
+   },
+   {
+    "on": "CAST",
+    "moves": [
+     "dive",
+     "volley"
+    ],
+    "chance": 0.7,
+    "cooldown": 200,
+    "then": [
+     [
+      "cut_b"
+     ]
+    ]
+   },
+   {
+    "on": "HEAVY",
+    "moves": [
+     "cut",
+     "lash"
+    ],
+    "chance": 0.75,
+    "cooldown": 160
+   },
+   {
+    "on": "GUARD",
+    "after": 30,
+    "moves": [
+     "sting"
+    ],
+    "cooldown": 160
+   },
+   {
+    "on": "RECOVERY",
+    "moves": [
+     "sting",
+     "cut"
+    ],
+    "chance": 0.5,
+    "cooldown": 200
+   },
+   {
+    "on": "PAUSED",
+    "moves": [
+     "dive",
+     "volley"
+    ],
+    "chance": 0.9,
+    "cooldown": 200,
+    "then": [
+     [
+      "cut_b"
+     ]
+    ]
+   }
+  ]
+ },
  "stance": 240,
  "intro": {
   "pose": "idle",
@@ -19,6 +94,13 @@
       [
        "cut_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting",
+       "dodged": "dive",
+       "stayed": "cut_b"
+      }
      ]
     },
     {
@@ -38,6 +120,11 @@
       [
        "cut_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting"
+      }
      ]
     },
     {
@@ -52,6 +139,13 @@
        "cut_b",
        "sting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting",
+       "dodged": "dive",
+       "stayed": "cut_b"
+      }
      ]
     }
    ]
@@ -71,6 +165,13 @@
        "cut_b",
        "sting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting",
+       "dodged": "dive",
+       "stayed": "cut_b"
+      }
      ]
     },
     {
@@ -88,7 +189,7 @@
      "weight": 3,
      "then": [
       [
-       "volley"
+       "dive"
       ]
      ]
     },
@@ -99,6 +200,11 @@
       [
        "cut_b"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting"
+      }
      ]
     },
     {
@@ -121,6 +227,13 @@
        "cut_b",
        "sting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting",
+       "dodged": "dive",
+       "stayed": "cut_b"
+      }
      ]
     }
    ]
@@ -141,6 +254,13 @@
        "cut_b",
        "sting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting",
+       "dodged": "dive",
+       "stayed": "cut_b"
+      }
      ]
     },
     {
@@ -154,6 +274,11 @@
        "cut_b",
        "cut"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting"
+      }
      ]
     },
     {
@@ -161,7 +286,7 @@
      "weight": 2,
      "then": [
       [
-       "volley"
+       "dive"
       ]
      ]
     },
@@ -191,6 +316,13 @@
        "cut_b",
        "sting"
       ]
+     ],
+     "forks": [
+      {
+       "guard": "sting",
+       "dodged": "dive",
+       "stayed": "cut_b"
+      }
      ]
     }
    ]

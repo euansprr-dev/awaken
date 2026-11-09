@@ -331,17 +331,17 @@ def sting():
 
 def dive():
     """Royal Dive: she climbs, rearing, both daggers drawn back past her shoulders and the wings raised high; holds at the
-    top of the climb; then pitches forward and dives at you daggers first, the wings swept flat back and the train and
-    gown streaming behind; she pulls up out of it."""
+    top of the climb; then pitches forward and dives down to you daggers first (her waist drops from over your head to
+    your chest, SPEC §47.15), the wings swept flat back and the train and gown streaming behind; she pulls up out of it."""
     climb = _pose(core=(-14, 0, 0), at=(0, 8, 3), chest=(-8, 0, 0), head=(-6, 0, 4), wings=(18, -12), arms=(40, 30, 40, -30), low=(-6, 0), train=(-20, 0))
     top = _pose(core=(-22, 0, 0), at=(0, 12, 5), chest=(-12, 0, 0), head=(-4, 0, 6), wings=(26, -18), arms=(56, 36, 50, -40), low=(-10, 0), train=(-30, 0))
     _gown(top, -6)
-    dv = _pose(core=(56, 0, 0), at=(0, -4, -10), chest=(8, 0, 0), head=(-34, 0, 0), wings=(-12, 46), arms=(-74, 10, -30, 70), low=(-14, 0), train=(-46, 0))
+    dv = _pose(core=(56, 0, 0), at=(0, -22, -10), chest=(8, 0, 0), head=(-34, 0, 0), wings=(-12, 46), arms=(-74, 10, -30, 70), low=(-14, 0), train=(-46, 0))
     _gown(dv, 50)
-    low_ = _pose(core=(50, 0, 0), at=(0, -6, -12), chest=(10, 0, 0), head=(-30, 0, 0), wings=(-14, 50), arms=(-80, 4, -34, 74), low=(-14, 0), train=(-50, 0))
+    low_ = _pose(core=(50, 0, 0), at=(0, -34, -12), chest=(10, 0, 0), head=(-30, 0, 0), wings=(-14, 50), arms=(-80, 4, -34, 74), low=(-14, 0), train=(-50, 0))
     _gown(low_, 56)
-    pull = _pose(core=(-12, 0, 0), at=(0, 2, -4), chest=(-6, 0, 0), head=(-4, 0, 0), wings=(16, -4), arms=(10, 20, 10, 0), train=(-10, 0))
-    through = _pose(core=(40, 0, 0), at=(0, -4, -10), chest=(8, 0, 0), head=(-24, 0, 0), wings=(-8, 40), arms=(-60, 12, -24, 54), low=(-10, 0), train=(-40, 0))
+    pull = _pose(core=(-12, 0, 0), at=(0, -14, -4), chest=(-6, 0, 0), head=(-4, 0, 0), wings=(16, -4), arms=(10, 20, 10, 0), train=(-10, 0))
+    through = _pose(core=(40, 0, 0), at=(0, -30, -10), chest=(8, 0, 0), head=(-24, 0, 0), wings=(-8, 40), arms=(-60, 12, -24, 54), low=(-10, 0), train=(-40, 0))
     _gown(through, 40)
     return Move("dive", "HEAVY", 16, 10, 22, title="Royal Dive", hold=8, track=6.0, lock=10, advance=8.0, ability="Royal Dive", rng=(5, 14),
                 kinds=("gap",), damage=1.2, knock=1.0, plant=(), through=through,
@@ -468,36 +468,53 @@ SOUNDS = {
 }
 MOVE_SOUNDS = {"brood": {"swing": "cast"}, "rain": {"impact": ""}, "jelly": {"swing": "cast", "impact": ""}, "frenzy": {"swing": "roar"}}
 
+# where her strings change their mind (SPEC §48.4): a raised guard brings the Sting, a dodge the dive, and otherwise the second cut
+FORK_CUT = [{"guard": "sting", "dodged": "dive", "stayed": "cut_b"}]
+FORK_DIVE = [{"guard": "sting"}]
+
 FIGHT = {
+    "schemaVersion": 2,
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
+    # it watches you and answers (SPEC §48): a drink brings the dive, a guard kept up brings the Sting
+    "mind": {
+        "cooldowns": {"rain": 240, "dive": 60},
+        "answers": [
+            {"on": "DRINK", "moves": ["dive", "volley", "sting", "cut", "cut_b"], "chance": 1.0, "cooldown": 240, "press": True},
+            {"on": "CAST", "moves": ["dive", "volley"], "chance": 0.7, "cooldown": 200, "then": [["cut_b"]]},
+            {"on": "HEAVY", "moves": ["cut", "lash"], "chance": 0.75, "cooldown": 160},
+            {"on": "GUARD", "after": 30, "moves": ["sting"], "cooldown": 160},
+            {"on": "RECOVERY", "moves": ["sting", "cut"], "chance": 0.5, "cooldown": 200},
+            {"on": "PAUSED", "moves": ["dive", "volley"], "chance": 0.9, "cooldown": 200, "then": [["cut_b"]]},
+        ],
+    },
     "stance": 240,
     "intro": {"pose": "idle", "move": "emerge"},
     "phases": [
         {"pool": [
-            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"]]},
+            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"]], "forks": FORK_CUT},
             {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
-            {"move": "dive", "weight": 3, "then": [["cut_b"]]},
-            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
+            {"move": "dive", "weight": 3, "then": [["cut_b"]], "forks": FORK_DIVE},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]], "forks": FORK_CUT},
         ]},
         # the comb weeps with the second phase: Honey Rain and the stinger volleys, as in GateBestiary
         {"transition": "rain", "pool": [
-            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"], ["cut_b", "sting"]]},
+            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b"], ["cut_b", "sting"]], "forks": FORK_CUT},
             {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
-            {"move": "volley", "weight": 3, "then": [["volley"]]},
-            {"move": "dive", "weight": 2, "then": [["cut_b"]]},
+            {"move": "volley", "weight": 3, "then": [["dive"]]},
+            {"move": "dive", "weight": 2, "then": [["cut_b"]], "forks": FORK_DIVE},
             {"move": "rain", "weight": 1},
             {"move": "brood", "weight": 1},
-            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]], "forks": FORK_CUT},
         ]},
         {"transition": "jelly", "pool": [
             {"move": "frenzy", "weight": 1},
-            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b", "sting"]]},
-            {"move": "dive", "weight": 3, "then": [["cut_b"], ["cut_b", "cut"]]},
-            {"move": "volley", "weight": 2, "then": [["volley"]]},
+            {"move": "cut", "weight": 3, "when": "near", "then": [["cut_b", "sting"]], "forks": FORK_CUT},
+            {"move": "dive", "weight": 3, "then": [["cut_b"], ["cut_b", "cut"]], "forks": FORK_DIVE},
+            {"move": "volley", "weight": 2, "then": [["dive"]]},
             {"move": "brood", "weight": 1},
             {"move": "sting", "weight": 2, "when": "near", "then": [["cut_b"]]},
-            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]]},
+            {"move": "lash", "weight": 3, "when": "behind", "then": [["cut"], ["cut_b", "sting"]], "forks": FORK_CUT},
         ]},
     ],
     "enrage": {"below": 0.15, "speed": 1.25},

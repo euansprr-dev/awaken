@@ -145,6 +145,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         }
         s.footL = s.footR = 0;
         s.kitDrop = 0;
+        s.kitLean = 0;
         s.kitStill = 0;
         if (!(mob instanceof AwakenBoss boss)) return;
         HeroRig rig = kit.rig();
@@ -177,6 +178,8 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         float winding = -1;
         if (mv >= 0 && mv < clip.length) {
             winding = stage(s, mv, boss.kitHold(), (now - start) / 20F, speed);
+            s.kitLean = boss.kitLean() * leanShare(kit.moves().get(mv), boss.kitHold(), now - start, speed);
+            s.kitHip = boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP;
             if (KitConfig.hitFeel()) feel(boss, mv, start, now, blend);
         }
         s.prevClip = -1;
@@ -242,6 +245,7 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
             s.hasRedOverlay = false;
         }
         if (hasFeet && !s.airborne && s.dying < 0 && !apart) ground(mob, s, partialTicks);
+        notice(boss, s, mv, pose, poseFor);
         live(mob, s, l, winding);
         // what it plays, as one number: a new move (or the same one again), the kneel or rise, a reaction, the fall
         int key = mv >= 0 ? (mv + 1) * 7919 + start : -1;
@@ -260,6 +264,20 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
         s.kitClock = now / 20F;
         s.kitBlend = blend;
     }
+
+    /** It has noticed you (SPEC §48.2): its weight drops and it leans in, quickly, then eases back as the blow begins. */
+    private static void notice(AwakenBoss boss, HeroRenderState s, int mv, int pose, float poseFor) {
+        float share = pose == AwakenBoss.KIT_POSE_NOTICE ? Math.min(1, poseFor / NOTICE_IN)
+                : boss.kitPoseFrom() == AwakenBoss.KIT_POSE_NOTICE && poseFor < NOTICE_OUT ? 1 - poseFor / NOTICE_OUT : 0;
+        if (share <= 0) return;
+        s.kitDrop -= boss.getBbHeight() * NOTICE_DROP * share;
+        if (mv < 0 || s.kitLean == 0) {
+            s.kitLean += NOTICE_LEAN * share;
+            s.kitHip = boss.getBbHeight() * AwakenBoss.KIT_LEAN_HIP;
+        }
+    }
+
+    private static final float NOTICE_IN = 0.1F, NOTICE_OUT = 0.25F, NOTICE_DROP = 0.05F, NOTICE_LEAN = 7F;
 
     /**
      * The view shakes when a heavy or ground-striking blow lands near you, and the body's clock stops for a moment when
@@ -437,6 +455,21 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
     protected void setupRotations(HeroRenderState s, PoseStack pose, float bodyRot, float entityScale) {
         if (s.kitDrop < 0) pose.translate(0, s.kitDrop, 0);
         pose.rotateDegrees(Axis.YP, 180.0F - bodyRot);
+        if (s.kitLean != 0) { // into the blow, from the hips (the body's forward is -z here)
+            pose.translate(0, s.kitHip, 0);
+            pose.rotateDegrees(Axis.XP, -s.kitLean);
+            pose.translate(0, -s.kitHip, 0);
+        }
+    }
+
+    /** How far through its lean a blow is: none until the lock, all of it by contact and through the strike, then back. */
+    private static float leanShare(KitMoves.Move m, int hold, float ticks, float speed) {
+        KitMoves.Played p = KitMoves.played(m, speed, hold);
+        float wind = p.windup() + p.hold(), lock = Math.min(wind - 1, m.time().lock());
+        if (ticks <= lock) return 0;
+        if (ticks < wind) return (ticks - lock) / Math.max(1F, wind - lock);
+        if (ticks <= wind + p.active()) return 1F;
+        return Math.max(0F, 1F - (ticks - wind - p.active()) / Math.max(1F, p.recover() * 0.6F));
     }
 
     private static AwLook look(HeroRenderState s) {

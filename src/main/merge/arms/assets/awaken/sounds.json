@@ -282,6 +282,26 @@
       }
     ]
   },
+  "arms.guard_raise": {
+    "subtitle": "subtitles.awaken.arms.guard_raise",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_guard_raise_0",
+        "volume": 0.45,
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:arms/arms_guard_raise_1",
+        "volume": 0.45,
+        "attenuation_distance": 10
+      },
+      {
+        "name": "awaken:arms/arms_guard_raise_2",
+        "volume": 0.45,
+        "attenuation_distance": 10
+      }
+    ]
+  },
   "arms.block": {
     "subtitle": "subtitles.awaken.arms.block",
     "sounds": [
