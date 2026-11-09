@@ -1,7 +1,8 @@
 # A Place for Everything: sorting, chests and the room you build for your things
 
 Plan only. Nothing in the game changes until Euan approves it. Written 9 Nov 2026 on `claude/storage-plan-f52faa`, following
-`.claude/PLANNING-PROCESS.md` and `.claude/UI-EXCELLENCE.md`. The approval page has the mock-ups and the clickable prototype.
+`.claude/PLANNING-PROCESS.md` and `.claude/UI-EXCELLENCE.md`. The approval page has the mock-ups and the clickable prototype:
+https://claude.ai/artifact/HJM74AUhQoZwx4TUP7BZFo (private to Euan).
 
 Labels used below: **Measured** was run in a throwaway GameTest on this Mac and then removed. **Read** comes from reading the
 code; it has not been run. **Source** is outside research. **Proposed** is new and unproven.
@@ -271,7 +272,8 @@ A Totter does the filing by itself, an armful at a time, day and night rounds as
   and the Hearth page says which bay.
 - Each bay gets Tidied when something lands in it, so your hall stays lined up.
 
-**The Ledger, remade.** Full screen. Items by sort in a grid with counts, search at the top. On the right, the plan of your own
+**The Ledger, remade.** Full screen. Items by sort in a grid with counts (the heap and a Totter's arms count too, so nothing
+seems to vanish mid-carry), search at the top. On the right, the plan of your own
 room drawn from the Hearth's real reading of it, chests coloured by sort, where you stand, where the Totters are. Click an item
 and its chests light on the plan. Fetch sends a Totter; Show me marks the chest in the world for 8 seconds. Crafting in the room
 reaches the whole hall.
