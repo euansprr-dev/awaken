@@ -1,0 +1,72 @@
+# Kingsroot Keep (SPEC 50.8), walked as a player does. Shots beside its two paintings.
+world autopilot_realm_kingsroot creative 20261115
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 13000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+cmd awaken gate realm E awaken:kingsroot_keep
+wait 100
+cmd awaken gate interior enter
+wait 200
+shot kingsroot_crossing
+cmd awaken gate realm_at MOUTH 0 -4 8 -14
+look 180 -18
+wait 80
+shot kingsroot_painting
+cmd awaken gate realm_at MOUTH 0 0 4 -60
+look 180 -20
+wait 80
+shot kingsroot_bridge
+cmd awaken gate realm_at MOUTH 0 0 3 -106
+look 180 -20
+wait 80
+shot kingsroot_gate
+cmd awaken gate realm_at MOUTH 0 -100 3 -128
+look 180 -24
+wait 80
+shot kingsroot_breach
+cmd awaken gate realm_at MOUTH 0 -40 29 -136
+look 90 -6
+wait 80
+shot kingsroot_wallwalk
+cmd awaken gate realm_at MOUTH 0 0 29 -138
+look 180 -20
+wait 80
+shot kingsroot_roof
+cmd awaken gate realm_at MOUTH 0 -112 6 -178
+look -140 -16
+wait 80
+shot kingsroot_ward
+cmd awaken gate realm_at MOUTH 0 -74 6 -200
+look 180 -40
+wait 80
+shot kingsroot_terrace
+cmd awaken gate realm_at MOUTH 0 -2 51 -220
+look 180 -26
+wait 80
+shot kingsroot_court
+cmd awaken gate realm_at MOUTH 0 50 90 -278
+look 180 -8
+wait 80
+shot kingsroot_setback
+cmd awaken gate realm_heart
+wait 40
+cmd awaken gate realm_at MOUTH 0 0 51 -254
+look 180 -8
+wait 80
+shot kingsroot_hall
+cmd awaken gate realm_at MOUTH 0 0 53 -324
+look 180 -12
+wait 80
+shot kingsroot_throne
+cmd awaken gate realm_at MOUTH 0 34 70 -299
+look 90 -4
+wait 80
+shot kingsroot_gallery

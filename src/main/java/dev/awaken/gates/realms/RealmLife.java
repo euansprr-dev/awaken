@@ -74,6 +74,19 @@ public final class RealmLife {
             "Two moss-tenders are arguing about which way the door used to be.",
             "Somewhere close by, someone says, \"Keep your feet moving, I said.\"",
             "A moss-tender sighs, \"Another whole step gone under.\""), "Bark bread to spare", Items.BREAD, "Three loaves of bark bread. It's better than it sounds.", "They've already sold all the bread they can spare.");
+    private static final Folk HOBS = new Folk("A wall-hob says", List.of(
+            "The front gate hasn't opened since before my grandmother was born. Nobody has the key and nobody's looking for it.",
+            "If you want to get up on the walls, go to where the roots came through. They did more harm than any army ever did, and they left a good ladder behind.",
+            "Mind the wet stone up top. It's a long way down on the outside.",
+            "Those fires along the walls? We keep them going. If they went out we'd have to admit nobody's coming back.",
+            "It rains. It has always rained. I've heard about the other thing, but I don't believe it.",
+            "We eat well enough. Frogs, mostly. Sometimes you get a bad frog.",
+            "The ones up at the top don't come down, and we don't go up. It's worked so far.",
+            "Those roots are still moving, you know. Slowly. We measure them against the wall every spring."), List.of(
+            "A wall-hob mutters, \"Who let that fire go out on the east side?\"",
+            "Two wall-hobs are arguing over who owns a bucket.",
+            "Somewhere close by, someone says, \"It's your turn on the wall. It was my turn last year.\"",
+            "A wall-hob sighs, \"Leak's got worse.\""), "Smoked eel to spare", Items.COOKED_SALMON, "Three smoked eels. They were in the moat, so don't ask.", "They've already sold all the eel they can spare.");
     private static final Folk KEEPERS = new Folk("A candle-keeper says", List.of(
             "We light them. They burn down. We light the next ones. There are a lot of candles down here.",
             "You get used to the bell. I think you do. I haven't yet.",
@@ -93,6 +106,7 @@ public final class RealmLife {
     private static Folk folkOf(GateRecord g) {
         RealmPlan plan = Realms.plan(g);
         if (plan != null && plan.bp().folk().kit().equals("moss_tenders")) return TENDERS;
+        if (plan != null && plan.bp().folk().kit().equals("wall_hobs")) return HOBS;
         return plan != null && plan.bp().folk().kit().equals("candle_keepers") ? KEEPERS : WAX;
     }
 

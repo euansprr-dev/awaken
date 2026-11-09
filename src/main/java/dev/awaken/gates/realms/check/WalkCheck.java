@@ -23,12 +23,22 @@ public final class WalkCheck {
     private static final int Y0 = 0, Y1 = 260;
 
     private static final class Cells {
-        final Map<Long, BitSet> body = new HashMap<>(), wet = new HashMap<>();
+        final Map<Long, BitSet> body = new HashMap<>(), wet = new HashMap<>(), rungs = new HashMap<>();
 
         boolean water(int x, int y, int z) {
             if (y < Y0 || y >= Y1) return false;
             BitSet b = wet.get(key(x >> 4, z >> 4));
             return b != null && b.get(i(x, y, z));
+        }
+
+        boolean climb(int x, int y, int z) {
+            if (y < Y0 || y >= Y1) return false;
+            BitSet b = rungs.get(key(x >> 4, z >> 4));
+            return b != null && b.get(i(x, y, z));
+        }
+
+        void rung(int x, int y, int z) {
+            rungs.computeIfAbsent(key(x >> 4, z >> 4), k -> new BitSet()).set(i(x, y, z));
         }
 
         void flood(int x, int y, int z) {
@@ -69,6 +79,7 @@ public final class WalkCheck {
             v.emit((x, y, z, s) -> {
                 if (y >= Y0 && y < Y1 && V.holds(s)) cells.put(x, y, z, true);
                 else if (y >= Y0 && y < Y1 && s.is(net.minecraft.world.level.block.Blocks.WATER)) cells.flood(x, y, z);
+                else if (y >= Y0 && y < Y1 && s.is(net.minecraft.tags.BlockTags.CLIMBABLE)) cells.rung(x, y, z);
             });
         }
         for (Land.Edit e : land.change("heart_open")) if (e.y() >= Y0 && e.y() < Y1) {
@@ -83,10 +94,12 @@ public final class WalkCheck {
         int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         while (!q.isEmpty()) {
             int[] p = q.poll();
+            if (cells.climb(p[0], p[1], p[2]) && !cells.at(p[0], p[1] + 1, p[2]) && !cells.at(p[0], p[1] + 2, p[2]) && seen.add(pack(p[0], p[1] + 1, p[2])))
+                q.add(new int[]{p[0], p[1] + 1, p[2]});
             for (int[] d : dirs) {
                 int x = p[0] + d[0], z = p[2] + d[1];
                 for (int y = p[1] + 1; y >= p[1] - 4; y--) {
-                    boolean stand = (cells.at(x, y - 1, z) || cells.water(x, y - 1, z)) && !cells.at(x, y, z) && !cells.at(x, y + 1, z);
+                    boolean stand = (cells.at(x, y - 1, z) || cells.water(x, y - 1, z) || cells.climb(x, y, z)) && !cells.at(x, y, z) && !cells.at(x, y + 1, z);
                     if (stand) {
                         if (seen.add(pack(x, y, z))) q.add(new int[]{x, y, z});
                         break;

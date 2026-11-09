@@ -12,7 +12,8 @@ public final class LandPrograms {
     private static final Map<String, Function<Land.Ctx, Land>> PROGRAMS = Map.of(
             "awaken:honey_highlands", AmberReach::new,
             "awaken:hour_crypt", dev.awaken.gates.realms.land.HourCrypt::new,
-            "awaken:vine_seat", dev.awaken.gates.realms.land.VineSeat::new);
+            "awaken:vine_seat", dev.awaken.gates.realms.land.VineSeat::new,
+            "awaken:kingsroot_keep", dev.awaken.gates.realms.land.KingsrootKeep::new);
 
     public static boolean has(String id) {
         return PROGRAMS.containsKey(id);

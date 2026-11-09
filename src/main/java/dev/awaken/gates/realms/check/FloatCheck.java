@@ -67,7 +67,8 @@ public final class FloatCheck {
         if (s.isAir() || b == Blocks.LIGHT || b == Blocks.BARRIER) return AIR;
         String id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b).getPath();
         if (id.endsWith("_updraft")) return AIR;
-        if (id.equals("fane_leaf") || id.equals("fane_leaf_lit") || id.equals("fane_leaf_deep")) return LEAF; // the boughs are checked; a crown's outer leaves don't all touch, but vines may hang from them
+        if (id.equals("keep_climb_root")) return BESIDE; // a root net holds on to the wall beside it
+        if (id.equals("fane_leaf") || id.equals("fane_leaf_lit") || id.equals("fane_leaf_deep") || id.equals("keep_leaf") || id.equals("keep_leaf_lit") || id.equals("keep_leaf_deep")) return LEAF; // the boughs are checked; a crown's outer leaves don't all touch, but vines may hang from them
         if (b == Blocks.LILY_PAD || id.equals("crypt_lily_candle") || id.equals("market_boat_lamp")) return AFLOAT;
         if (b instanceof LanternBlock) return s.getValue(BlockStateProperties.HANGING) ? HANGS : ON_GROUND;
         if (id.endsWith("_bell_rope") || id.equals("gate_bell")) return HANGS;

@@ -64,6 +64,15 @@
     "awaken:fane_bark_moss",
     "awaken:fane_thorn",
     "awaken:fane_planks_slab",
-    "awaken:fane_planks_stairs"
+    "awaken:fane_planks_stairs",
+    "awaken:keep_timber",
+    "awaken:keep_planks",
+    "awaken:keep_window",
+    "awaken:keep_bark",
+    "awaken:keep_bark_moss",
+    "awaken:keep_thorn",
+    "awaken:keep_climb_root",
+    "awaken:keep_planks_slab",
+    "awaken:keep_planks_stairs"
   ]
 }
