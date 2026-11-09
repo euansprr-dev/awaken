@@ -32,7 +32,7 @@ final class PickSong {
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         float goal = 0F, pitch = 1F;
-        if (mc.player != null && mc.level != null && !mc.isPaused() && ore >= 0 && mc.player.getMainHandItem().is(DelveContent.WAKING_PICK.get())) {
+        if (mc.player != null && mc.level != null && !mc.isPaused() && ore >= 0 && dev.awaken.delve.api.Pick.has(mc.player.getMainHandItem(), dev.awaken.delve.api.Pick.Gift.HUM)) {
             Vec3 eye = mc.player.getEyePosition(), to = Vec3.atCenterOf(target).subtract(eye);
             double d = to.length();
             if (d > 1e-3) {

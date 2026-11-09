@@ -47,7 +47,7 @@ public final class DelveClient {
             e.register(DelveNet.ForkRing.TYPE, (m, ctx) -> ForkSong.ring(m));
             e.register(DelveNet.PickHum.TYPE, (m, ctx) -> PickSong.told(m));
             e.register(DelveNet.PickWoke.TYPE, (m, ctx) -> PickFx.woke(m));
-            e.register(DelveNet.PickSight.TYPE, (m, ctx) -> PickFx.sight(m));
+            e.register(DelveNet.PickSounding.TYPE, (m, ctx) -> SoundingFx.heard(m));
             e.register(DelveNet.Embers.TYPE, (m, ctx) -> PickFx.embers(m));
             e.register(DelveNet.CallAnswer.TYPE, (m, ctx) -> PickFx.call(m));
             e.register(DelveNet.LampLit.TYPE, (m, ctx) -> LampFx.lit(m));
@@ -75,6 +75,7 @@ public final class DelveClient {
             PickSong.tick();
             Motes.tick();
             PickFx.tick();
+            SoundingFx.tick();
             LampFx.tick();
             Depths.tick();
             Breath.tick();
@@ -87,7 +88,6 @@ public final class DelveClient {
         bus.addListener(SubmitCustomGeometryEvent.class, TorchGlow::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, VeinFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, StrikeFx::submit);
-        bus.addListener(SubmitCustomGeometryEvent.class, PickFx::submit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             VeinFx.reset();
             CaveInFx.reset();
@@ -95,6 +95,7 @@ public final class DelveClient {
             PickSong.reset();
             Motes.reset();
             PickFx.reset();
+            SoundingFx.reset();
             LampFx.reset();
             Depths.reset();
             Breath.reset();

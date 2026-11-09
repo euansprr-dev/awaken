@@ -315,6 +315,23 @@ def write(form, rank, lang):
     lang["item.awaken." + wid] = f"{G.SET[rank].capitalize()} {FORM_NAME[form]}"
 
 
+def old_head():
+    """The Delver's old head: the E Delver's, off its haft, gone dull with age (the stone gives it; §49.1)."""
+    boxes, _, look = DESIGN["delver"]("E")
+    head = [b for b in boxes if is_head(b.part)]
+    built = finish(VX.build(head, AW.painter(True), AW.to_item, width=64, anchors=[]))
+    img = np.asarray(AW.icon(built, look)).astype(float)
+    on = img[..., 3] > 0
+    grey = img[on][:, :3].mean(axis=1, keepdims=True)
+    # rust over cold iron, darker in the low places
+    rust = np.clip(grey * np.array([[1.05, 0.72, 0.52]]) + np.array([[10, 2, 0]]), 0, 255)
+    img[on, :3] = rust
+    tex = os.path.join(RES, "assets/awaken/textures/item/arms/delver_old_head.png")
+    Image.fromarray(img.astype(np.uint8), "RGBA").save(tex)
+    AW._write(os.path.join(RES, "assets/awaken/models/item/delver_old_head.json"), {"parent": "minecraft:item/generated", "textures": {"layer0": "awaken:item/arms/delver_old_head"}})
+    AW._write(os.path.join(RES, "assets/awaken/items/delver_old_head.json"), {"model": {"type": "minecraft:model", "model": "awaken:item/delver_old_head"}})
+
+
 def write_shared(lang):
     ids = [ID[f, r] for r in RANKS for f in FORMS]
     AW._write(os.path.join(MERGE, "data/awaken/tags/item/forged_picks.json"), {"values": ["awaken:" + i for i in ids]})
@@ -404,6 +421,9 @@ def main(argv):
         if cmd == "build":
             write_all(argv[1:] or None)
             print("written")
+        return 0
+    if cmd == "old_head":
+        old_head()
         return 0
     if cmd == "sheet":
         print(sheet(argv[1]))

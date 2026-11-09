@@ -1,6 +1,8 @@
 package dev.awaken.delve;
 
 import dev.awaken.core.api.HearthHooks;
+import dev.awaken.delve.api.Pick;
+import dev.awaken.delve.forged.Sounding;
 import dev.awaken.progression.Progression;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.core.BlockPos;
@@ -36,29 +38,24 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * What the Delver's Pick's verses give (SPEC §34.4), server side: Kindle's embers (drawn light, saved in
- * {@link DelveData}, sent to the level's players), Echo's ring and Glass's sight (the server only says when; the client
- * looks through its own world), the Forge's rites (Tempered, Call), its mending and re-forging, Hush (no sound to
+ * What a pick's gifts do (SPEC §34.4, §49.5), server side: Kindle's embers (drawn light, saved in
+ * {@link DelveData}, sent to the level's players), the tap of Sounding ({@link Sounding}), the old pick's rites at the
+ * Forge (Tempered, Call) and its mending, Hush (no sound to
  * creatures, full speed sneaking off the ground or under water) and Call (a broken heart's open blocks answer).
  */
 public final class PickGifts {
     private PickGifts() {}
 
     public static final int EMBER_LIFE = 20 * 60 * 5, EMBERS_EACH = 3, EMBER_APART = 5;
-    public static final int ECHO_TICKS = 80, ECHO_REST = 20 * 20, GLASS_TICKS = 100, GLASS_REST = 20 * 40;
-    /** The Glass sight wants the release looking up at least this far (degrees above level). */
-    public static final float GLASS_LOOK = 30F;
     public static final int CALL_REACH = 8, CALL_MAX = 24, CALL_TICKS = 60;
-    public static final int TEMPER_DIAMONDS = 3, REFORGE_IRON = 3;
-
-    private static final Map<UUID, Long> ECHOED = new HashMap<>(), GLASSED = new HashMap<>();
+    public static final int TEMPER_DIAMONDS = 3;
 
     // ---- Kindle: embers -------------------------------------------------------------------------------------------------
 
     /** Sneak and strike bare rock with a Kindled pick: an ember sticks in the wall (none within EMBER_APART of your own). */
     static void onLeftClick(PlayerInteractEvent.LeftClickBlock e) {
         if (e.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START || !(e.getEntity() instanceof ServerPlayer p)) return;
-        if (!p.isShiftKeyDown() || e.getFace() == null || !PickVerses.has(p.getMainHandItem(), PickVerses.Verse.KINDLE)) return;
+        if (!p.isShiftKeyDown() || e.getFace() == null || !Pick.has(p.getMainHandItem(), Pick.Gift.KINDLE)) return;
         ServerLevel level = p.level();
         if (StrikeBlocks.family(level.getBlockState(e.getPos()).getBlock()) != StrikeBlocks.Family.ROCK) return;
         ember(level, p, e.getPos().relative(e.getFace()), e.getFace().getOpposite());
@@ -121,50 +118,11 @@ public final class PickGifts {
             }
             return;
         }
-        if (!p.isShiftKeyDown() || !PickVerses.has(tool, PickVerses.Verse.ECHO)) return;
+        if (!p.isShiftKeyDown() || !Pick.has(tool, Pick.Gift.SOUNDING) || e.getFace() == null) return;
         if (StrikeBlocks.family(s.getBlock()) != StrikeBlocks.Family.ROCK) return;
         e.setCanceled(true);
         e.setCancellationResult(InteractionResult.SUCCESS);
-        echo(p, e.getPos());
-    }
-
-    /** Echo: a ring through the rock from {@code at}; ores and open caves within 12 glow through it (drawn by the client). */
-    public static boolean echo(ServerPlayer p, BlockPos at) {
-        if (p.getKnownMovement().horizontalDistanceSqr() > 0.0025) {
-            p.sendOverlayMessage(Component.literal("Hold still and the rock will answer").withColor(0xC8C2B0));
-            return false;
-        }
-        if (!rested(p, ECHOED, ECHO_REST, "The rock is still ringing")) return false;
-        ServerLevel level = p.level();
-        level.playSound(null, at, DelveContent.TRUE_STRIKE.get(), SoundSource.PLAYERS, 0.9F, 0.5F);
-        level.playSound(null, at, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.6F);
-        DelveNet.send(p, new DelveNet.PickSight(0, at.asLong(), ECHO_TICKS));
-        Progression.count(p, "awaken:delve/echoes");
-        return true;
-    }
-
-    /**
-     * Glass, from the heavy strike: a glint released looking up turns the rock before you to glass for five seconds (to
-     * your eyes only: the client draws it). True when it took the release (the strike doesn't bore).
-     */
-    static boolean glass(ServerPlayer p, boolean glint) {
-        if (!glint || p.getXRot() > -GLASS_LOOK || !PickVerses.has(p.getMainHandItem(), PickVerses.Verse.GLASS)) return false;
-        if (!rested(p, GLASSED, GLASS_REST, "The glass in the rock needs time to clear")) return true;
-        p.level().playSound(null, p.blockPosition(), DelveContent.DEEPGLASS_HUM.get(), SoundSource.PLAYERS, 1.0F, 0.7F);
-        DelveNet.send(p, new DelveNet.PickSight(1, BlockPos.containing(p.getEyePosition()).asLong(), GLASS_TICKS));
-        Progression.count(p, "awaken:delve/glass_sights");
-        return true;
-    }
-
-    private static boolean rested(ServerPlayer p, Map<UUID, Long> last, int rest, String tired) {
-        long now = p.level().getGameTime();
-        Long was = last.get(p.getUUID());
-        if (was != null && now - was < rest && now >= was) {
-            p.sendOverlayMessage(Component.literal(tired + " (" + ((rest - (now - was)) / 20 + 1) + " s)").withColor(0xC8C2B0));
-            return false;
-        }
-        last.put(p.getUUID(), now);
-        return true;
+        Sounding.tap(p, e.getPos(), e.getFace());
     }
 
     // ---- the Forge's rites --------------------------------------------------------------------------------------------
@@ -176,7 +134,7 @@ public final class PickGifts {
     /**
      * Right-click your Forge (one not inside anyone else's Hearth) with the pick: the next rite if you carry what it
      * takes (3 diamonds wake Tempered, a starmetal ingot wakes Call), else a mend (an iron ingot, a quarter of its uses).
-     * With iron ingots in hand and no pick on you (one pulled before): the Forge makes you another at your verse.
+     * With iron ingots in hand and no pick on you (one pulled before): it points you to the War Anvil's Make it again.
      */
     static boolean forge(ServerPlayer p, ServerLevel level, BlockPos pos, ItemStack held) {
         if (HearthHooks.inside(level, pos)) {
@@ -186,15 +144,8 @@ public final class PickGifts {
         int v = PickVerses.verse(held);
         if (v < 0) {
             if (!held.is(Items.IRON_INGOT) || WakingPick.carries(p) || Progression.profile(p).counter(WakingPick.PULLED) == 0) return false;
-            if (held.getCount() < REFORGE_IRON) {
-                say(p, "The Forge can make you another Delver's Pick from " + REFORGE_IRON + " iron ingots");
-                return true;
-            }
-            held.shrink(REFORGE_IRON);
-            WakingPick.reforge(p);
-            level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.8F, 0.8F);
-            return true;
-        }
+            say(p, "A lost pick is made again at a War Anvil now");
+            return true;        }
         PickVerses.Verse next = v + 1 < PickVerses.VERSES.length ? PickVerses.VERSES[v + 1] : null;
         if (next == PickVerses.Verse.TEMPERED && take(p, Items.DIAMOND, TEMPER_DIAMONDS)) {
             rite(p, level, pos, held, next);
@@ -239,7 +190,7 @@ public final class PickGifts {
 
     /** Whether a player's strikes are hushed (the pick in hand has woken Hush). */
     public static boolean hushed(Player p) {
-        return PickVerses.has(p.getMainHandItem(), PickVerses.Verse.HUSH);
+        return Pick.has(p.getMainHandItem(), Pick.Gift.HUSH);
     }
 
     /** A Hushed pick's breaks make no sound to creatures (no block-destroy vibration: wardens, sculk, the Hollows' ears). */
@@ -273,7 +224,7 @@ public final class PickGifts {
      */
     public static long[] call(ServerLevel level, ServerPlayer p, Lode l, LongArrayList left) {
         ItemStack tool = p.getMainHandItem();
-        if (!PickVerses.has(tool, PickVerses.Verse.CALL) || left.isEmpty()) return new long[0];
+        if (!Pick.has(tool, Pick.Gift.CALL) || left.isEmpty()) return new long[0];
         BlockPos h = l.heartPos();
         LongArrayList near = new LongArrayList();
         for (long c : left) if (BlockPos.of(c).distSqr(h) <= CALL_REACH * CALL_REACH) near.add(c);
@@ -338,13 +289,11 @@ public final class PickGifts {
     }
 
     static void forget(UUID id) {
-        ECHOED.remove(id);
-        GLASSED.remove(id);
+        Sounding.forget(id);
     }
 
     static void clear() {
-        ECHOED.clear();
-        GLASSED.clear();
+        Sounding.clear();
         ANSWERS.clear();
     }
 }

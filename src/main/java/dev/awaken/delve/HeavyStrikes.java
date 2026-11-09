@@ -52,6 +52,18 @@ public final class HeavyStrikes {
         return !s.isEmpty() && s.is(DelveContent.MINING_TOOLS);
     }
 
+    /** A Breaker glints sooner (SPEC §49.2). */
+    public static final int BREAKER_GLINT = 14;
+
+    private static boolean breaker(ItemStack tool) {
+        return "breaker".equals(dev.awaken.delve.api.Pick.form(tool));
+    }
+
+    /** The tick this tool's heavy strike glints at. */
+    public static int glintOf(ItemStack tool) {
+        return breaker(tool) ? BREAKER_GLINT : GLINT;
+    }
+
     /** The client let go after {@code charge} ticks. Returns the blocks bored. */
     static List<BlockPos> release(ServerPlayer p, int charge, boolean perfect) {
         ServerLevel level = p.level();
@@ -66,8 +78,7 @@ public final class HeavyStrikes {
         }
         if (GateHooks.inGate(p)) return List.of();
         LAST.put(p.getUUID(), now);
-        boolean glint = perfect && Math.abs(charge - GLINT) <= 2;
-        if (PickGifts.glass(p, glint)) return List.of();   // the Delver's Pick's Glass verse takes an upward glint
+        boolean glint = perfect && Math.abs(charge - glintOf(tool)) <= 2;
         BlockHitResult hit = aim(p);
         if (hit == null) return List.of();
         Direction into = hit.getDirection().getOpposite();
@@ -83,7 +94,9 @@ public final class HeavyStrikes {
             states.add(id);
             if (!p.isCreative()) {
                 tool = p.getMainHandItem();
-                if (!tool.isEmpty()) tool.hurtAndBreak(glint ? EXTRA_WEAR_GLINT : EXTRA_WEAR, p, EquipmentSlot.MAINHAND);
+                // a Breaker takes one less of every strike's extra wear (x2 for x3, nothing extra on the glint)
+                int extra = (glint ? EXTRA_WEAR_GLINT : EXTRA_WEAR) - (breaker(tool) ? 1 : 0);
+                if (!tool.isEmpty() && extra > 0) tool.hurtAndBreak(extra, p, EquipmentSlot.MAINHAND);
                 p.causeFoodExhaustion(EXHAUSTION_PER_BLOCK);
             }
             if (!isMiningTool(p.getMainHandItem())) break;   // it broke on the way in

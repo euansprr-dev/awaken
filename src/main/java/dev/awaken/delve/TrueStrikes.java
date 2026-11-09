@@ -29,7 +29,7 @@ public final class TrueStrikes {
     private TrueStrikes() {}
 
     /** How near the seam's middle a bite must land (blocks on the face). */
-    public static final double RADIUS = 0.22, TEMPERED_RADIUS = 0.32;
+    public static final double RADIUS = 0.22, TEMPERED_RADIUS = 0.32, SOUNDER_RADIUS = 0.40;
     /** The server's extra allowance (its copy of the look is a tick behind). */
     static final double SLACK = 0.1;
     /** Half the seam's drawn length, along its angle. */
@@ -40,7 +40,7 @@ public final class TrueStrikes {
     static final int MIN_GAP = 3;
     /** The breaking blow landed true within this many ticks of the break: a chance of one more ore. */
     static final int BREAK_WINDOW = 6;
-    public static final float BONUS = 0.25F;
+    public static final float BONUS = 0.25F, SOUNDER_BONUS = 0.40F;
 
     /** One player's strikes on one block. */
     static final class Strike {
@@ -102,9 +102,14 @@ public final class TrueStrikes {
         return middle(pos, face, n).distanceToSqr(hit) <= radius * radius;
     }
 
-    /** How near a bite must land for this tool (the Delver's Pick's Tempered verse widens it, SPEC §34.4). */
+    /** How near a bite must land for this tool (a Sounder's is widest, §49.2; the wide-seam gift next, SPEC §34.4). */
     public static double radius(ItemStack tool) {
-        return PickVerses.has(tool, PickVerses.Verse.TEMPERED) ? TEMPERED_RADIUS : RADIUS;
+        if (sounder(tool)) return SOUNDER_RADIUS;
+        return dev.awaken.delve.api.Pick.has(tool, dev.awaken.delve.api.Pick.Gift.WIDE_SEAM) ? TEMPERED_RADIUS : RADIUS;
+    }
+
+    private static boolean sounder(ItemStack tool) {
+        return "sounder".equals(dev.awaken.delve.api.Pick.form(tool));
     }
 
     // ---- state ------------------------------------------------------------------------------------------------------
@@ -182,7 +187,7 @@ public final class TrueStrikes {
         if (s == null || s.pos != e.getPos().asLong()) return;
         SERVER.remove(p.getUUID());
         if (!applies(e.getState()) || e.getLevel().getGameTime() - s.lastTrue > BREAK_WINDOW) return;
-        if (e.getLevel().getRandom().nextFloat() >= BONUS) return;
+        if (e.getLevel().getRandom().nextFloat() >= (sounder(p.getMainHandItem()) ? SOUNDER_BONUS : BONUS)) return;
         ItemEntity first = e.getDrops().getFirst();
         ItemStack more = first.getItem().copyWithCount(1);
         e.getDrops().add(new ItemEntity(e.getLevel(), first.getX(), first.getY(), first.getZ(), more));

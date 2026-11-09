@@ -103,11 +103,11 @@ final class CaveTests {
                 @Override public java.util.Optional<BlockPos> hearthOf(ServerLevel l, java.util.UUID player) { return java.util.Optional.of(at); }
             });
             long until = System.currentTimeMillis() + 20_000;
-            while (!dev.awaken.delve.WakingPick.carries(p) && System.currentTimeMillis() < until) {
+            while (!(p.getInventory().countItem(dev.awaken.delve.forged.DelveForged.OLD_HEAD.get()) > 0) && System.currentTimeMillis() < until) {
                 h.assertTrue(dev.awaken.core.api.TrailsApi.placeOf(PickTrail.PLACE, p) == null, "no adit to point at");
                 Thread.onSpinWait();
             }
-            h.assertTrue(dev.awaken.delve.WakingPick.carries(p), "no adit near home: the Hearth hands the pick over");
+            h.assertTrue((p.getInventory().countItem(dev.awaken.delve.forged.DelveForged.OLD_HEAD.get()) > 0), "no adit near home: the Hearth hands the head over");
             h.assertTrue(dev.awaken.trails.Conditions.met(p, trail.steps().getFirst().done().getFirst()), "and the first step is done");
         } finally {
             dev.awaken.core.api.HearthHooks.install(before);

@@ -19659,3 +19659,43 @@ against six kinds of player (stands still, runs, circles, holds guard, keeps awa
 ran, including that the boss never left ticking ground (`AwakenTests.wideArea`). `tools/fights/record_table.py` makes the table;
 the numbers before the mind are in docs/fights/read-you-baseline.md.
 
+
+## 49. The Forged Pick (plan docs/forged-pick/PLAN.md, page https://claude.ai/artifact/Smj9nEuNHbq6MZ4y2X1CaB; Euan approved all of it 2026-11-09)
+
+Picks are forged at the War Anvil, as weapons are. Four forms, six ranks, 24 items named `<prefix>_pick_<form>`; package
+`dev.awaken.delve.forged`, and `delve.api.Pick` answers for old and forged picks alike.
+
+### 49.1 The first pick
+The stone at the end of an adit gives the Delver's Old Head, once a player, ever (`WakingPick.PULLED`; anyone who already pulled the
+finished pick has what it would make). Where no adit is near, the Hearth hands it over. The head, a log and string hang the E Delver at
+the War Anvil. Nothing makes the old `waking_pick` now, but saves that hold one keep it: it mines as before and its verses wake as before
+until its owner brings it to an anvil (§49.7). A lost head never strands anyone: the E Delver can also be forged from the rank's parts.
+
+### 49.2 Forms
+| Form | Rock speed | Earth, wood | Uses | Damage | Way | Opens |
+|---|---|---|---|---|---|---|
+| Delver | 100% | none | 100% | +0 | hums toward a lode within 16 | at the start |
+| Breaker | 85% | none | 130% | +0 | heavy strike glints at 14 ticks, one less extra wear | break a lode's heart (`deed_heart`) |
+| Mattock | 90% | 120% | 110% | +0 | pick, axe and shovel rules; strips and flattens, sneak to till; turns in the hand (§49.8) | at the start |
+| Sounder | 90% | none | 80% | -1 | seam 0.40 wide, bonus ore 40%, hums within 24, taps 50% further | light a Delver's lamp (`deed_lamp`) |
+
+Form and rank are the item; `PickForged` (component `awaken:pick_forged`, schema 1) holds what the smith did and what the pick has been
+through: quality, temper, colour, smith, maker, day, tally (blocks, ores, hearts, keen), gifts, the rank it was first forged at, story bits, and
+enchantment room.
+
+### 49.3 Numbers (`PickStats`)
+Rank speed 5, 7, 9, 10, 11, 12.5. Uses 300, 650, 1800, 2200, 2700, 3400. Damage 2, 3, 4, 4.5, 5, 6. Each item's Tool rules are fixed by rank and
+form, so `/give` and creative stacks are whole; quality, colour, keen and blunt go through a `BreakSpeed` factor that runs on both sides, and only
+MAX_DAMAGE is per stack (a Tool rule per stack was the first plan, and a data change every Dressing would have restarted block breaking on the
+client). Temper, the steps of quality the Forge could hold, adds 0/4/8/12% to speed and uses. Colour c runs 0 (straw, +8% speed, -20% uses) to
+0.75 (blue, -6%, +30%), peacock 0.5 even. A pick never breaks: at its last use it goes blunt (30% speed) until dressed. Forged picks are kept through
+death, and A and S are fire resistant. Efficiency is out, since rank and forging are its speed. A forged pick has no repair material: Dressing is the
+way (one metal, mends a quarter, keen for 200 blocks at +10%). Its enchantment room is quality + 1, or the old pick's room if larger.
+
+### 49.5 Gifts and Sounding
+`Pick.Gift` in the order the old pick woke them: Hum, Kindle, Sounding, Wide Seam, Long Sounding, Hush, Call. Forged picks hold them as bits, and the
+player's deed opens the gift: heart Kindle (D+), lamp Sounding (C+), Deepglass Long Sounding (B+), seep Hush (A+). Wide Seam comes with C and Call with
+S. Forged picks take deeds done before they existed; a gift earned later is worked in free at any anvil in 5 s.
+Sounding replaces Echo and Glass for old picks too (nothing is drawn through the rock any more): stand still, sneak and tap. 26 rays walk out to 12 (24
+with Long Sounding, x1.5 on a Sounder) and report the first roomy hollow; the client plays the answers from those sides, nearest first, shakes dust off
+that part of the wall, and a lode within reach answers last at its ore's note. 20 s rest.

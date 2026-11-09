@@ -283,7 +283,7 @@ public final class Upgrades {
 
     /** A weapon or armour piece of any make: vanilla's crafted gear among them, which stays as it is. */
     public static boolean isGear(ItemStack stack) {
-        if (stack.isEmpty() || stack.is(HearthContent.TROPHY_ITEM.get())) return false;
+        if (stack.isEmpty() || stack.is(HearthContent.TROPHY_ITEM.get()) || dev.awaken.delve.api.Pick.forged(stack)) return false;
         return armourSlot(stack) != null || isWeapon(stack);
     }
 

@@ -312,9 +312,9 @@ final class DelveTests {
     // ---- the Tuning Fork ----------------------------------------------------------------------------------------------
 
     /**
-     * The Delver's Pick (SPEC §34.4): the pick in the stone gives a player their own pick, once while they carry it (the
-     * stone stays for the next), and counts the pull; asleep it mines as a stone pick; its hum finds the nearest lode
-     * block within 16 of the eye and nothing at 20.
+     * The pick in the stone (SPEC §49.1) gives a player its old head, once (the stone stays for the next), and counts the
+     * pull; an old pick still mines as a stone pick asleep; the hum finds the nearest lode block within 16 of the eye and
+     * nothing at 20.
      */
     @SuppressWarnings("removal")
     private static void wakingPick(GameTestHelper h) {
@@ -322,9 +322,9 @@ final class DelveTests {
         BlockPos stone = h.absolutePos(new BlockPos(1, 1, 1));
         level.setBlock(stone, DelveContent.WAKING_PICK_STONE.get().defaultBlockState(), 2);
         ServerPlayer p = h.makeMockServerPlayerInLevel();
-        h.assertTrue(WakingPick.pull(p, stone), "the first pull gives the pick");
-        h.assertTrue(WakingPick.carries(p), "the player carries it");
-        h.assertFalse(WakingPick.pull(p, stone), "no second pick while you carry one");
+        h.assertTrue(WakingPick.pull(p, stone), "the first pull gives its old head");
+        h.assertTrue(p.getInventory().countItem(dev.awaken.delve.forged.DelveForged.OLD_HEAD.get()) == 1, "the player carries it");
+        h.assertFalse(WakingPick.pull(p, stone), "and only once, ever");
         h.assertTrue(level.getBlockState(stone).is(DelveContent.WAKING_PICK_STONE.get()), "the pick in the stone stays");
         h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(WakingPick.PULLED) == 1, "the pull is counted");
         ItemStack pick = new ItemStack(DelveContent.WAKING_PICK.get());
@@ -336,9 +336,9 @@ final class DelveTests {
         Lode a = LodePlans.handmade(Ore.COPPER, near.toLongArray());
         LodePlans.EXTRA.add(a);
         try {
-            var v = WakingPick.nearest(level, eye);
+            var v = WakingPick.nearest(level, eye, WakingPick.HUM_REACH);
             h.assertTrue(v.isPresent() && v.get().ore() == Ore.COPPER && v.get().nearest().equals(eye.offset(10, 0, 0)), "it hums toward copper 10 off: " + v);
-            h.assertTrue(WakingPick.nearest(level, eye.offset(-10, 0, 0)).isEmpty(), "nothing when the lode is 20 off");
+            h.assertTrue(WakingPick.nearest(level, eye.offset(-10, 0, 0), WakingPick.HUM_REACH).isEmpty(), "nothing when the lode is 20 off");
         } finally {
             LodePlans.EXTRA.remove(a);
         }
