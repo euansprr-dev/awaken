@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/amber_stem"
+    },
+    "axis=z": {
+      "model": "awaken:block/amber_stem",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/amber_stem",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

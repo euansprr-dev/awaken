@@ -56,7 +56,7 @@ public final class GatesRegistry {
 
     /** Whether a dimension is one gates are built in. */
     public static boolean isGateDim(ResourceKey<Level> dim) {
-        return dim == GATES || dim == GATES_SKY;
+        return dim == GATES || dim == GATES_SKY || dim == dev.awaken.gates.realms.RealmsModule.REALMS;
     }
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Awaken.MODID);
@@ -365,6 +365,9 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_LAB = sound("gate.ambient.lab");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_GLASS = sound("gate.ambient.glass");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WIND = sound("gate.ambient.wind");
+    // Amber Reach's air (SPEC 50.7): named by the biomes' ambient additions, so they must be in the registry
+    public static final DeferredHolder<SoundEvent, SoundEvent> REALM_AMBER_AIR = sound("realm.amber.air");
+    public static final DeferredHolder<SoundEvent, SoundEvent> REALM_AMBER_HALL = sound("realm.amber.hall");
     // gate worlds (SPEC §38.6, §38.9): each world's sound bed (the bells and the rest are above)
     public static final List<String> WORLD_SOUNDS = List.of("belfry", "ossuary", "shaft", "field", "rest");
     static {

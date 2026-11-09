@@ -100,6 +100,9 @@ public final class Encounters {
         GateMobs.Key key = GateMobs.keyOf(mob);
         if (key == null || !(mob.level() instanceof ServerLevel level) || !GateService.isGateLevel(level)) return true;
         if (target.level() != level) return false;
+        // a Realm has no rooms to keep a monster in: it fights whoever's near it in its own land
+        int realm = dev.awaken.gates.realms.RealmCells.cellAt(mob.getBlockX(), mob.getBlockZ());
+        if (realm >= 0) return dev.awaken.gates.realms.RealmCells.cellAt(target.getBlockX(), target.getBlockZ()) == realm && mob.distanceToSqr(target) <= 64 * 64;
         Where at = Where.at(level.getServer(), target.blockPosition());
         if (at == null || at.gate().id != key.gate() || at.floor() == null || at.area() != key.area() || at.floorNo() != key.floor()) return false;
         if (key.room() < 0) return mob.distanceToSqr(target) <= 32 * 32;

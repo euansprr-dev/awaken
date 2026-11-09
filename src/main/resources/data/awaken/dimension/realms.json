@@ -1,0 +1,13 @@
+{
+  "type": "awaken:realms",
+  "generator": {
+    "type": "awaken:realm",
+    "biome_source": {
+      "type": "awaken:realm",
+      "biomes": [
+        "awaken:realm/amber_meadow",
+        "awaken:realm/amber_citadel"
+      ]
+    }
+  }
+}

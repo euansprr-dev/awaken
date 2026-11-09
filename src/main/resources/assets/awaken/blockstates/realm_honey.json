@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/realm_honey",
+        "y": 0
+      },
+      {
+        "model": "awaken:block/realm_honey",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/realm_honey",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/realm_honey",
+        "y": 270
+      }
+    ]
+  }
+}

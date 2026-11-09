@@ -15,6 +15,8 @@ public interface WildPose {
     int S_SWIM = 1 << 10;
     /** Asleep: the seep heart's plates shut round its core (its "sleep" clip, eased slowly in and out). */
     int S_SLEEP = 1 << 11;
+    /** Head down in the grass (a plain grazer's "graze" clip; its FaunaMob pose says when). */
+    int S_GRAZE = 1 << 12;
 
     /** The pose bits this frame (client side). */
     int wildState();

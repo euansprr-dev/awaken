@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/outer_stairs",
+  "textures": {
+    "bottom": "awaken:block/amber_plaster",
+    "top": "awaken:block/amber_plaster",
+    "side": "awaken:block/amber_plaster"
+  }
+}

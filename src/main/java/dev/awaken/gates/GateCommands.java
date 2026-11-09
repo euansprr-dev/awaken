@@ -65,6 +65,66 @@ final class GateCommands {
                                     .then(Commands.literal("world").then(Commands.argument("version", IntegerArgumentType.integer(6, GatePlan.CONTENT_VERSION))
                                             .then(Commands.argument("id", StringArgumentType.greedyString()).executes(GateCommands::openWorld)))))));
             gate.then(Commands.literal("hop").requires(AwakenCommands.admin()).executes(GateCommands::hop));
+            // tours: to a Realm's site with an offset, wherever this seed put it
+            gate.then(Commands.literal("realm_at").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", StringArgumentType.word()).then(Commands.argument("index", IntegerArgumentType.integer(0))
+                            .then(Commands.argument("dx", IntegerArgumentType.integer()).then(Commands.argument("dy", IntegerArgumentType.integer()).then(Commands.argument("dz", IntegerArgumentType.integer()).executes(c -> {
+                                ServerPlayer p = c.getSource().getPlayerOrException();
+                                GateRecord g = dev.awaken.gates.run.Runs.gateOf(p);
+                                var plan = g == null ? null : dev.awaken.gates.realms.Realms.plan(g);
+                                if (plan == null) {
+                                    c.getSource().sendFailure(Component.literal("You're not in a Realm."));
+                                    return 0;
+                                }
+                                var kind = dev.awaken.gates.realms.Land.SiteKind.valueOf(StringArgumentType.getString(c, "kind").toUpperCase());
+                                var sites = plan.land().sites(kind);
+                                int i = IntegerArgumentType.getInteger(c, "index");
+                                if (i >= sites.size()) {
+                                    c.getSource().sendFailure(Component.literal(kind + " has only " + sites.size()));
+                                    return 0;
+                                }
+                                var s = sites.get(i);
+                                var at = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), s.x() + IntegerArgumentType.getInteger(c, "dx"), s.y() + IntegerArgumentType.getInteger(c, "dy"), s.z() + IntegerArgumentType.getInteger(c, "dz"));
+                                p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
+                                // a creative camera stays where it was put, or it has fallen by the time anyone looks
+                                if (p.isCreative()) {
+                                    p.getAbilities().flying = true;
+                                    p.onUpdateAbilities();
+                                }
+                                return 1;
+                            })))))));
+            gate.then(Commands.literal("realm_heart").requires(AwakenCommands.admin()).executes(c -> {
+                GateRecord g = dev.awaken.gates.run.Runs.gateOf(c.getSource().getPlayerOrException());
+                if (g == null || g.realm.isEmpty()) return 0;
+                dev.awaken.gates.realms.RealmLive.openHeart(c.getSource().getLevel(), g);
+                return 1;
+            }));
+            // a Realm by name (SPEC §50.7), whatever the switch says: the next gate to form near you is that land
+            gate.then(Commands.literal("realm").requires(AwakenCommands.admin())
+                    .then(Commands.argument("rank", StringArgumentType.word()).then(Commands.argument("id", StringArgumentType.greedyString()).executes(c -> {
+                        String id = StringArgumentType.getString(c, "id");
+                        var bp = dev.awaken.gates.realms.Blueprints.get(id);
+                        if (bp.isEmpty()) {
+                            c.getSource().sendFailure(Component.literal("No Realm called " + id));
+                            return 0;
+                        }
+                        dev.awaken.gates.realms.Realms.forced = id;
+                        int gid = open(c, bp.get().theme(), false);
+                        // the same as a tour's world: it stands where it's opened, even over someone's fence, or the tour has nowhere to go
+                        GateRecord made = gid > 0 ? GateRegistry.get(c.getSource().getServer()).gate(gid) : null;
+                        if (made != null) made.anyGround = true;
+                        return gid;
+                    }))));
+            // a look at one instant of the crossing into a theme (SPEC §50.5), for tours: no move, the screen closes itself
+            gate.then(Commands.literal("crossing").requires(AwakenCommands.admin())
+                    .then(Commands.argument("theme", StringArgumentType.word()).then(Commands.argument("ms", IntegerArgumentType.integer(0)).executes(c -> {
+                        var p = c.getSource().getPlayerOrException();
+                        var t = dev.awaken.gates.content.Theme.parse(StringArgumentType.getString(c, "theme"));
+                        if (t == null) return 0;
+                        dev.awaken.core.AwakenNet.send(p, new dev.awaken.gates.net.GatePayloads.Crossing(t.id, "E-rank " + t.displayName, t.displayName,
+                                "A plain line about the place you're about to walk into.", true, IntegerArgumentType.getInteger(c, "ms")));
+                        return 1;
+                    }))));
             // tours: the nearest standing gate's card, wherever it formed (a card shows by itself within 24 blocks)
             gate.then(Commands.literal("card").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();

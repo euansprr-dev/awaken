@@ -44,7 +44,7 @@ import java.util.UUID;
  * Fallen stars, mostly at night. A light streaks down 32–96 blocks from the player and leaves a small crater with a
  * glowing meteor. Come within {@link #NOTICE} blocks and a guardian of your rank rises from it (an elite from D-rank up)
  * for {@link #GUARD_LIFE} ticks; the meteor stays sealed until the guardian is slain or fades back into the light. Then
- * open it: materials from its loot table, essence shards, {@code 0.2 × Curve.floorReward(rank, 1)} XP and a 10% Power
+ * open it: materials from its loot table, essence shards, {@code 0.2 × Curve.worldReward(rank, 1)} XP and a 10% Power
  * Core roll; slaying the guardian first makes it 0.3×, two more shards and 25%. Unopened, the star burns out after a few
  * minutes; the crater stays as a mark on the land.
  */
@@ -69,7 +69,7 @@ final class Stars {
     static final String GUARD_TAG = "awaken_star_guard";
 
     static double xpFor(Rank rank, boolean slain) {
-        return (slain ? 0.3 : 0.2) * Curve.floorReward(rank, 1);
+        return (slain ? 0.3 : 0.2) * Curve.worldReward(rank, 1);
     }
 
     static int shardsFor(Rank rank, boolean slain, RandomSource r) {

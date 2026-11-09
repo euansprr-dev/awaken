@@ -74,13 +74,13 @@ public final class Runs {
         return GateService.now(s);
     }
 
-    /** XP one floor of this gate pays this player (SPEC section 2), below-rank gates ×0.3. */
+    /** XP one floor of this gate pays this player (SPEC section 2): below-rank gates ×0.3, above-rank more (SPEC §50.3). */
     public static double floorReward(ServerPlayer p, GateRecord g, int area, int floor) {
         if (run(p).riding) return riderReward(p, g, area, floor);
         int depth = area == 0 ? floor : (g.plan.is(Twist.GATE_WITHIN) ? g.plan.innerGateFloor() + floor : g.plan.floors() + floor);
         double r = Curve.floorReward(g.plan.rank(), depth);
-        if (g.plan.rank().ordinal() < Progression.rank(p).ordinal()) r *= Curve.BELOW_RANK_FACTOR;
-        return r;
+        int above = g.plan.rank().ordinal() - Progression.rank(p).ordinal();
+        return r * (above < 0 ? Curve.BELOW_RANK_FACTOR : 1 + Curve.ABOVE_RANK_PAY * above);
     }
 
     /**
@@ -101,6 +101,22 @@ public final class Runs {
 
     static String label(int area, int floor) {
         return area == 0 ? Integer.toString(floor) : "a" + floor;
+    }
+
+    private static boolean storyGate(GateRecord g) {
+        return g.plan.ritual() || g.scripted;
+    }
+
+    /** Tells the client what's being crossed into (SPEC §50.5): the first floor's world if it has one, else the theme. */
+    public static void crossing(ServerPlayer p, GateRecord g, boolean entering, int frozenMs) {
+        var worlds = g.plan.worlds();
+        var w = worlds.isEmpty() ? null : dev.awaken.gates.worlds.GateWorlds.get(worlds.get(0).world());
+        String theme = g.plan.theme().displayName;
+        var realm = dev.awaken.gates.realms.Realms.plan(g);
+        String name = realm != null ? realm.bp().name() : w == null ? theme : w.name();
+        String kicker = entering ? g.plan.rank().label + "-rank " + theme : "Back to the surface";
+        String line = !entering ? "" : realm != null ? realm.bp().line() : w != null ? w.line() : "";
+        dev.awaken.core.AwakenNet.send(p, new dev.awaken.gates.net.GatePayloads.Crossing(g.plan.theme().id, kicker, name, line, entering, frozenMs));
     }
 
     // ---- entering ---------------------------------------------------------------------------------------------------
@@ -143,6 +159,7 @@ public final class Runs {
         run.startedAt = now(server);
         run.runIndex = g.entries.merge(p.getUUID(), 1, Integer::sum) - 1;
         run.scoutedAtEntry = p.getData(GatesRegistry.MEMORY.get()).scouted.contains(g.id);
+        if (!g.plan.ritual()) p.getData(GatesRegistry.MEMORY.get()).sawTheme(g.plan.theme().id); // the bag (SPEC §50.2): going in is what counts
         p.setData(GatesRegistry.RUN.get(), run);
         g.party.add(p.getUUID());
         g.inside.add(p.getUUID());
@@ -153,10 +170,17 @@ public final class Runs {
         // the first floor's level: the open sky's when it's an open land
         ServerLevel to = GateService.levelOf(server, g, 0, 1);
         if (to == null) to = gl;
+        if (!storyGate(g)) crossing(p, g, true, -1);
         p.teleport(new TeleportTransition(to, GateService.center(e), Vec3.ZERO, GateService.entranceYaw(g, 0, 1), 0F,
                 TeleportTransition.PLAY_PORTAL_SOUND));
         to.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 1F);
         GatePlan plan = g.plan;
+        if (g.realm.isPresent()) {
+            p.getData(GatesRegistry.MEMORY.get()).sawRealm(g.realm.get().blueprint());
+            DirectorLog.log(p, "gate", "entered the Realm " + g.realm.get().blueprint() + " in gate " + g.id + " (run " + run.runIndex + ")");
+            arrive(p, g, 0, 1);
+            return true;
+        }
         if (plan.ritual()) {
             // the story's hall: no floors, no Shrine, nothing to plan for. The story speaks from here on.
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(plan.theme().displayName))
@@ -203,6 +227,12 @@ public final class Runs {
         run.damageFloor = 0;
         run.killXpFloor = 0;
         run.noise = 0;
+        if (g.realm.isPresent()) {
+            dev.awaken.gates.realms.RealmLive.arrive(p, g);
+            GateRegistry.get(server).setDirty();
+            Hud.send(p);
+            return;
+        }
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         FloorState fs = g.floor(area, floor);
         ServerLevel gl = GateService.levelOf(server, f);
@@ -250,6 +280,10 @@ public final class Runs {
             if (p.isAlive()) lost(p, run, "You were pulled out of the gate. Your Satchel came with you.");
             return;
         }
+        if (g.realm.isPresent()) {
+            dev.awaken.gates.realms.RealmLive.tickPlayer(server, p, run, g, t);
+            return;
+        }
         ServerLevel gl = (ServerLevel) p.level();
         Where w = Where.at(server, p.blockPosition());
         if (w == null || w.gate().id != g.id || w.floor() == null) {
@@ -284,6 +318,7 @@ public final class Runs {
         if (levels.isEmpty()) return;
         for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) {
             if (g.state != GateState.ACTIVE && !(g.state == GateState.CLEARED && !g.inside.isEmpty())) continue;
+            if (g.realm.isPresent()) continue; // a Realm's own life is RealmLive's; none of the floors' clocks apply
             // each level's players (an open land's are under the sky): every tick groups them by their floor
             for (ServerLevel gl : levels) {
                 Pressure.tick(gl, g);
@@ -403,6 +438,12 @@ public final class Runs {
         return true;
     }
 
+    /** Keeps a Realm player's Satchel safe where they stand (a Waystone, SPEC §50.7). */
+    public static void bankHere(ServerPlayer p, GateRecord g, String where) {
+        RunState run = run(p);
+        bankSatchel(p, g, run, where + "@" + now(p.level().getServer()), "extract", "");
+    }
+
     /** A claim whose id was already used: its loot is held for you and its XP granted now, never lost with the run. */
     private static void keepRefused(ServerPlayer p, List<ItemStack> items, double xp, String kind) {
         for (ItemStack s : items) Spoils.hold(p, s);
@@ -421,8 +462,11 @@ public final class Runs {
         RunState run = run(p);
         GateRecord g = gateOf(p);
         if (g == null) return;
-        if (!(g.bossDead || g.annexBossDead)) return;
+        // a Realm's arch is always the way home (SPEC §50.7): the Satchel comes with you whenever you take it
+        boolean realm = g.realm.isPresent();
+        if (!(g.bossDead || g.annexBossDead || realm)) return;
         bankSatchel(p, g, run, "exit", "extract", "");
+        if (realm && !g.bossDead) finishedGate(p, g, run);
         endRun(p, g, true);
         Claims.deliver(p);
     }
@@ -443,6 +487,7 @@ public final class Runs {
             dev.awaken.core.api.Passage.go(p, over, out.getX() + 0.5, out.getZ() + 0.5, () -> {
                 BlockPos to = g != null && g.structurePlaced ? out
                         : over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, out);
+                if (g != null && !storyGate(g)) crossing(p, g, false, -1);
                 p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, yaw, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
                 over.playSound(null, to, GatesRegistry.SND_EXIT.get(), SoundSource.PLAYERS, 1F, 1F);
                 leftGate(server, p, g);
@@ -517,17 +562,19 @@ public final class Runs {
             if (g.annexBossDead) return;
             g.annexBossDead = true;
         }
-        Room arena = f.room(f.end);
-        Rooms.lock(level, g, f, arena, false);
+        boolean realm = g.realm.isPresent();
+        Room arena = realm ? null : f.room(f.end);
+        if (!realm) Rooms.lock(level, g, f, arena, false);
         long t = now(server);
         for (ServerPlayer p : level.players()) {
             RunState run = run(p);
-            if (run.gateId != g.id || run.area != f.area || run.floor != f.floor) continue;
+            if (run.gateId != g.id || !realm && (run.area != f.area || run.floor != f.floor)) continue;
             claimLord(p, g, run, f, killer == p, t);
             // the Sky Leviathan's trial: the Lord fell, the sky is theirs (SPEC §17.18)
             if (main && g.plan.skybornTrial() && !run.riding) dev.awaken.core.api.TrialHooks.done(p, dev.awaken.core.api.TrialHooks.SKYBORN, 0, 0);
         }
-        Twists.lordDefeated(level, g, f, arena);
+        if (realm) dev.awaken.gates.realms.RealmLive.lordFell(level, g);
+        else Twists.lordDefeated(level, g, f, arena);
         GateRegistry.get(server).setDirty();
     }
 
@@ -535,7 +582,9 @@ public final class Runs {
         boolean main = f.area == 0;
         GatePlan plan = g.plan;
         run.cleared.add(f.area + ":" + f.floor);
-        double reward = floorReward(p, g, f.area, f.floor);
+        // a Realm has no floors to pay as you go: the Lord pays what the Wardens haven't already
+        double reward = g.realm.isPresent() ? dev.awaken.gates.realms.RealmLive.pool(p, g) * (1 - dev.awaken.gates.realms.RealmLive.banked(p.level().getServer(), g))
+                : floorReward(p, g, f.area, f.floor);
         run.satchelXp += reward * (1 - Curve.KILL_SHARE);
         GateMemory mem = p.getData(GatesRegistry.MEMORY.get());
         boolean pity = mem.bossesSinceCore >= 3;
@@ -544,7 +593,16 @@ public final class Runs {
         boolean core = hoard.stream().anyMatch(Loot::isPowerCore);
         mem.bossesSinceCore = core ? 0 : mem.bossesSinceCore + 1;
         for (ItemStack s : hoard) Spoils.toSatchel(p, run, s);
+        // first clear (SPEC §50.3): half the whole gate's floors again, once for each theme and rank
+        double first = 0;
+        if (main && !g.scripted && !plan.ritual() && !plan.leaperTrial() && !plan.skybornTrial() && mem.firstClear(plan.theme().id, plan.rank().label)) {
+            for (int floor = 1; floor <= plan.floors(); floor++) first += Curve.FIRST_CLEAR * floorReward(p, g, 0, floor);
+        }
+        // the XP lands here and now, level by level (SPEC §50.4); the loot still goes home with you
+        double landing = run.satchelXp + first;
+        run.satchelXp = 0;
         bankSatchel(p, g, run, label(f.area, f.floor), "boss", "");
+        LordPay.start(p, landing);
         if (main) {
             dev.awaken.core.api.ArmsApi.lordSpoils(p, plan.rank().label, plan.theme().id); // Spoils: a weapon of the Lord's style, by rank (docs/arms-progression/PLAN.md §3.7)
             dev.awaken.core.api.ArmsApi.lordPattern(p, g.key(), plan.theme().id);
@@ -575,9 +633,12 @@ public final class Runs {
         }
         p.level().playSound(null, p.blockPosition(), GatesRegistry.SND_CLEARED.get(), SoundSource.PLAYERS, 1.2F, 1F);
         String title = main ? "Gate cleared" : plan.is(Twist.DOUBLE_GATE) ? "The second gate falls" : "The inner gate is quiet";
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(title))
+        var cleared = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(title))
                 .row("Lord", main ? Rooms.capital(plan.theme().bossName) : "the keeper")
-                .row("Claimed", "the Satchel and the hoard")
+                .row("Claimed", "the Satchel and the hoard");
+        if (landing > 0) cleared.row("XP", "+" + Math.round(landing));
+        if (first > 0) cleared.row("First time here", "+" + Math.round(first) + " of that");
+        Signal.send(p, cleared
                 .body(Component.literal(main && plan.is(Twist.DOUBLE_GATE) ? "A wall cracks open behind the Lord's throne..."
                         : main ? "The way out is open." : "A way back opens."))
                 .priority(6).ttl(20 * 9).build());
@@ -738,8 +799,9 @@ public final class Runs {
         run.kills++;
         FloorLayout f = GateLayout.of(g.plan).floor(run.area, run.floor);
         if (f == null) return;
-        double budget = floorReward(p, g, run.area, run.floor) * Curve.KILL_SHARE;
-        int units = Math.max(1, xpUnits(f));
+        boolean realm = g.realm.isPresent();
+        double budget = (realm ? dev.awaken.gates.realms.RealmLive.pool(p, g) : floorReward(p, g, run.area, run.floor)) * Curve.KILL_SHARE;
+        int units = realm ? dev.awaken.gates.realms.RealmLive.units(g) : Math.max(1, xpUnits(f));
         int weight = switch (role.role()) {
             case ELITE -> 2;
             case WARDEN -> 4;

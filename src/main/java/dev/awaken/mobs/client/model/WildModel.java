@@ -32,8 +32,8 @@ import java.util.Map;
  */
 public final class WildModel extends EntityModel<WildRenderState> {
     private static final int[] HOLD_BITS = {WildPose.S_HANG, WildPose.S_CHIRP, WildPose.S_RIPEN, WildPose.S_LISTEN, WildPose.S_DEFLATE,
-            WildPose.S_CARRY, WildPose.S_REST, WildPose.S_BEACHED, WildPose.S_RIDDEN};
-    private static final String[] HOLD_CLIPS = {"hang", "chirp", "ripen", "listen", "deflate", "carry", "rest", "beached", "ridden"};
+            WildPose.S_CARRY, WildPose.S_REST, WildPose.S_BEACHED, WildPose.S_RIDDEN, WildPose.S_GRAZE};
+    private static final String[] HOLD_CLIPS = {"hang", "chirp", "ripen", "listen", "deflate", "carry", "rest", "beached", "ridden", "graze"};
 
     private final HeroRig rig;
     private final List<KeyframeAnimation> baked = new ArrayList<>();

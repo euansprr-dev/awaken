@@ -70,6 +70,9 @@ public final class GateRecord {
     /** An unseen gate folds away quietly on this play-day, no break and no Lord (-1: seen, or it never folds). */
     public long foldsOnPlayDay = -1;
 
+    /** Set when this gate is a Realm, a whole place (SPEC §50.7); absent means the floors of old. */
+    public Optional<dev.awaken.gates.realms.RealmRef> realm = Optional.empty();
+
     public boolean wandering() {
         return expiresAt >= 0;
     }
@@ -181,8 +184,9 @@ public final class GateRecord {
             Codec.LONG.optionalFieldOf("expires_at", -1L).forGetter(g -> g.expiresAt),
             Codec.LONG.optionalFieldOf("seen_day", -1L).forGetter(g -> g.seenDay),
             Codec.LONG.optionalFieldOf("folds_on", -1L).forGetter(g -> g.foldsOnPlayDay),
-            Codec.BOOL.optionalFieldOf("trees_felled", false).forGetter(g -> g.treesFelled)
-    ).apply(i, (h, f, floors, echo, entries, paid, spill, held, expires, seen, folds, felled) -> {
+            Codec.BOOL.optionalFieldOf("trees_felled", false).forGetter(g -> g.treesFelled),
+            dev.awaken.gates.realms.RealmRef.CODEC.optionalFieldOf("realm").forGetter(g -> g.realm)
+    ).apply(i, (h, f, floors, echo, entries, paid, spill, held, expires, seen, folds, felled, realm) -> {
         GateRecord g = new GateRecord(h.id, h.plan, h.pos, h.axis, h.cell, h.createdDay, h.breaks, h.state, h.owner);
         g.party.addAll(h.party);
         g.inside.addAll(h.inside);
@@ -208,6 +212,7 @@ public final class GateRecord {
         g.seenDay = seen;
         g.foldsOnPlayDay = folds;
         g.treesFelled = felled;
+        g.realm = realm;
         return g;
     }));
 }

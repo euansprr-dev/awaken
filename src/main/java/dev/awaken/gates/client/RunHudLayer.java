@@ -159,7 +159,7 @@ public final class RunHudLayer {
         if (was != null && was.hud == h) return was;
         String rank = ClientGates.rankLabel(h.rank());
         String name = themeName(h.theme()).toUpperCase(Locale.ROOT);
-        String floor = (h.area() == 1 ? "Deeper · " : "") + "Floor " + h.floor() + "/" + h.floors();
+        String floor = h.floors() == 0 ? "" : (h.area() == 1 ? "Deeper · " : "") + "Floor " + h.floor() + "/" + h.floors();
         boolean cleared = (h.flags() & GatePayloads.RunHud.CLEARED_FLOOR) != 0;
         String satchel = "Satchel " + h.satchelStacks() + " · " + h.satchelXp() + " XP";
         int s = h.floorSeconds();

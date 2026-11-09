@@ -125,6 +125,25 @@ public final class Progression {
         return grant(player, amount, source, null);
     }
 
+    /** Raw XP (before the scale and perks) that brings this player to the end of their current level. */
+    public static double rawToNextLevel(ServerPlayer player) {
+        Profile p = profile(player);
+        double s = xpScale(player) * (1 + perk(player, Perks.XP_BONUS));
+        return Math.max(0, Curve.xpToNext(p.level) - p.xp) / Math.max(1e-6, s);
+    }
+
+    private static boolean quietLevels;
+
+    /** As {@link #grantXp}, with the level's own show held back: the caller plays its own (the Lord's payout, SPEC §50.4). */
+    public static int grantXpQuietly(ServerPlayer player, double amount, XpSource source) {
+        quietLevels = true;
+        try {
+            return grant(player, amount, source, null);
+        } finally {
+            quietLevels = false;
+        }
+    }
+
     /** {@link #grantXp}, with world XP's own source key for the ledger ({@link XpLedger}). */
     private static int grant(ServerPlayer player, double amount, XpSource source, @org.jspecify.annotations.Nullable String worldKey) {
         Profile p = profile(player);
@@ -261,7 +280,7 @@ public final class Progression {
     private static void onLevelUp(ServerPlayer player, Profile p, int gained) {
         dev.awaken.core.Playtest.log(player, "level_up", "level", p.level);
         // the Living Wilds shows its own moment (and its own sound) when it can; otherwise the toast as ever (SPEC §21.1)
-        boolean moment = dev.awaken.core.api.LivingHooks.levelMoment(player, p.level, gained);
+        boolean moment = quietLevels || dev.awaken.core.api.LivingHooks.levelMoment(player, p.level, gained);
         if (!moment) player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
         var levelEvent = new dev.awaken.core.api.NoticeEvents.Event("level/" + p.level, "Level gained", "Level " + p.level,
                 "You have " + gained * Curve.POINTS_PER_LEVEL + " new stat points to spend on Status.",

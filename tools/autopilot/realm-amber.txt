@@ -1,0 +1,133 @@
+# Amber Reach (SPEC 50.7), the first Realm, walked as a player does: real gate, real crossing, real ground. Shots beside docs/gates-as-worlds/img/paint-amber.jpg.
+world autopilot_realm_amber creative 20261112
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+hud off
+
+cmd tp @s 6000 200 6000
+wait 600
+cmd awaken gate hop
+wait 400
+cmd awaken gate realm E awaken:amber_reach
+wait 400
+cmd awaken gate interior enter
+wait 40
+shotnow amber_crossing
+wait 300
+shot amber_mouth_view
+cmd awaken gate realm_at MOUTH 0 16 12 -4
+look -76 10
+wait 200
+shot amber_painting
+cmd awaken gate realm_at MOUTH 0 7 1 0
+look 90 -10
+wait 60
+shot amber_mouth_arch
+cmd awaken gate realm_at MOUTH 0 24 12 -4
+look 96 14
+wait 200
+shot amber_mouth_ring
+
+cmd awaken gate realm_at VILLAGE 0 -70 28 -30
+look -60 14
+wait 300
+shot amber_village_above
+cmd awaken gate realm_at VILLAGE 0 -18 3 -2
+look -70 0
+wait 200
+shot amber_village_street
+cmd execute at @s run summon awaken:wax_folk ^-2 ^ ^5
+cmd execute at @s run summon awaken:wax_folk ^2 ^ ^7
+wait 30
+look -70 12
+wait 20
+shotnow amber_folk
+cmd awaken gate realm_at WAYSTONE 1 8 2 14
+look 215 -6
+wait 200
+shot amber_pavilion
+
+cmd awaken gate realm_at WAYSTONE 0 86 14 -25
+look -76 15
+wait 300
+shot amber_river
+
+cmd awaken gate realm_at WAYSTONE 2 -20 3 -22
+look -90 -24
+wait 400
+shot amber_citadel_foot
+cmd awaken gate realm_at WAYSTONE 2 -6 10 -22
+look -90 -16
+wait 300
+shot amber_citadel_stair
+
+cmd awaken gate realm_at WAYSTONE 0 8 5 8
+look 135 22
+wait 200
+shot amber_waystone
+cmd awaken gate realm_at UPDRAFT 0 8 6 8
+look 135 14
+cmd execute at @s run summon awaken:pollen_grazer ^-3 ^ ^10
+cmd execute at @s run summon awaken:pollen_grazer ^4 ^ ^13
+cmd execute at @s run summon awaken:pollen_grazer ^ ^ ^17
+cmd execute at @s run summon awaken:amberfly ^-1 ^1 ^4
+cmd execute at @s run summon awaken:amberfly ^2 ^ ^5
+wait 50
+shot amber_herd
+# the spawner's own work: a minute standing in open valley, nothing summoned
+cmd awaken gate realm_at WAYSTONE 1 -46 12 40
+look 40 6
+wait 1200
+cmd execute as @p at @s facing entity @e[type=awaken:pollen_grazer,sort=nearest,limit=1] feet run tp @s ~ ~ ~ ~ ~
+wait 60
+shot amber_life_a_minute_on
+cmd awaken gate realm_at UPDRAFT 0 8 6 8
+look 135 8
+wait 200
+shot amber_updraft
+cmd awaken gate realm_at FIND 24 5 3 5
+look 135 24
+wait 200
+shot amber_find_high
+
+cmd awaken gate realm_at LORD 0 -58 4 0
+look -90 -6
+wait 300
+shot amber_door_shut
+cmd awaken gate realm_heart
+wait 40
+shot amber_door_open
+cmd awaken gate realm_at LORD 0 -26 9 0
+look -90 -18
+wait 200
+shot amber_hall
+look -90 -60
+wait 40
+shot amber_comb
+cmd awaken gate realm_at LORD 0 -2 22 34
+look 180 8
+wait 60
+shot amber_gallery
+
+# the living part: on normal, walk up to a den and see what wakes
+cmd difficulty normal
+hud on
+cmd awaken gate realm_at DEN 0 -24 8 0
+look -90 16
+wait 200
+shot amber_den_wake
+cmd awaken gate realm_at MOUTH 0 -3 1 0
+look 90 0
+wait 160
+shot amber_way_home
+quit

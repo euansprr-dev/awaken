@@ -83,10 +83,11 @@ RANKS            = E, D, C, B, A, S, SOVEREIGN          (index 0..6)
 RANK_LEVEL       = D 10, C 25, B 45, A 70, S 100, SOVEREIGN 135   (level needed to take the Reassessment)
 RANK_MID         = E 5, D 17, C 35, B 57, A 85, S 118, SOVEREIGN 150  (gate content level)
 SHARE            = E .28, D .16, C .065, B .22, A .60, S .55, SOVEREIGN .50   (v2, see §13; v1 was .81/.39/.25/.23/.18/.12/.12)
-floorReward(r,f) = SHARE[r] * xpToNext(RANK_MID[r]) * 1.4^(f-1)
-   40% arrives as kill XP during the floor (split across the floor's spawned mobs)
-   60% is the floor bonus, carried as "Satchel XP" and banked only on extraction or boss kill
-gate below your rank pays x0.3
+floorReward(r,f) = GATE_PAY[r] * SHARE[r] * xpToNext(RANK_MID[r]) * 1.4^(f-1)   (§50.3; the open world's camps, stars and rifts use it without GATE_PAY)
+GATE_PAY         = E 2, D 3, C 4, B 2, A 1.25, S 1.25, SOVEREIGN 1.25
+   60% arrives as kill XP during the floor (split across the floor's spawned mobs)
+   40% is the floor bonus, carried as "Satchel XP" and banked only on extraction or boss kill
+gate below your rank pays x0.3; above your rank x1.5 per rank above; a Lord's first clear +50% of the whole gate's floors
 home activity XP ~ 1.2% of a level per active minute (capped per minute; see §4.3)
 Daily Regimen    = 0.25 * xpToNext(L) + 1 stat point   (gone since §27.13)
 death            = lose Satchel (items + Satchel XP), keep gear & kill XP, gain Insight, Fracture 8 min (Hunter mode)
@@ -97,7 +98,7 @@ Gate shape: floors = min(6, 3 + rank/2 + coin). Breaks in = max(1, 4 - rank/2 + 
 Modifier budget by gate rank E..S: 1,2,3,4,5,6; max count 1,1,2,2,3,3; Sovereign = S.
 Twist: 1/8 chance, guaranteed on the 12th gate without one (per player).
 Director gate rank roll: 70% player rank, 20% one below, 10% one above. Keep 1–4 open gates within 300–1500 blocks of each
-online player. No theme from the player's last 3 gates, no layout from the last 2.
+online player. Themes come from a bag per player (§50.2), no layout from the last 2.
 
 Second reward rhythm: the Director tracks minutes since the player's last *new thing* (new power, title, Truth true,
 latent, depth record, trophy, scanned machine). After 20 min it biases: next elite drop → Power Core (+50%),
@@ -1260,7 +1261,7 @@ Plan v2 · the road to 50 (details in docs/modules/road.md):
   line that stays until a real counter says it's done, then a toast; only the newest open goal shows (priority 35); met
   goals are saved as `awaken:goal/<step>`. Requirement tokens add `rank:X` and `path`.
 - Power mastery: a power gains points from casts that land on a living target (their energy cost), half the energy spent
-  in a real fight that missed, and kills; nothing from casting at the air. Levels at 7,000 / 13,000 / 32,000 / 50,000
+  in a real fight that missed, and kills; nothing from casting at the air. Levels at 4,500 / 8,500 / 15,500 / 24,000 (§50.3; 7,000 / 13,000 / 32,000 / 50,000 before gates paid more)
   points, the same effect as a duplicate core. Loadout schema 2 adds `mastery`. Sim: a main power reaches level 3 at
   player level ~20 and 5 at ~44.
 - Lessons taught in play: meditation (level 11), dreams (12), the Veil (15), each with Now lines, toasts and a choice card
@@ -6505,6 +6506,26 @@ breath, springs, fidgets, the look, the stagger and the fall; the motion layer a
   bits every tick (`FaunaMob.tick`), so a tour's still flier shows itself aloft (the first fliers tour's owls hung
   upright in the air, perched).
 
+- **Pollen Grazer** (`pollen_grazer`, Amber Reach, SPEC 50.7; six two-bone legs, a bee as much as a yak): ripple-alternate,
+  duty 0.74/0.52, steps 2.6/4.2 px, stride 0.8/1.2 blocks, reach 0.55, a heavy body's bob 0.45 and roll 0.035, the front
+  leading (`lag` -0.18), head level 0.45, twist 0.18, shift 0.8, nod 0.05, land 1.3. Knees stand out and up like a beetle's
+  (thigh 7 px at 55°, running a pixel past the knee to hide the joint). The rig's bones carry the life layer's names
+  (`neck`, `head`, `jaw_*`, `antenna_*`, `wing*`, `abdomen`, `tail`, `crest`, `mane_*`, `shag_*`), so the look, breath and
+  springs reach it. Its folded wings grow from a chitin knuckle inside the ruff, at any angle a clip or a spring can reach,
+  and lie within the body's width. It breathes by pumping its abdomen, chews off and on, feels the air with one antenna at a
+  time, and its old wings shiver now and then, a side at a time; when it runs they come open and buzz, no use at all.
+  Grazing, its neck and head go down to the moss, the mandibles scissor and the antennae feel the ground. A blow clenches
+  the abdomen and flares the wings; it dies on buckling knees, rolls on its side with a bounce, the legs curling in one by
+  one and twitching afterward, and the last thing it moves is the wings.
+- **Wax-folk** (`wax_folk`, no legs): the pool and skirt are a `base` of their own, flat on the ground whatever the body
+  above does. The body rocks over them in a tired waddle and each step squashes the skirt and pushes the pool toward the
+  side it leans; chest, head and hands take the rock a moment later and the flame streams back. A real sigh in the idle,
+  hands rubbed together, a look at one hand as if it were shorter today, beads of wax that swell and let go. Drips, arms
+  and the wick and flame swing on the life layer's springs (the flame carries on when the body stops). A blow all but puts
+  the flame out and it comes back too far; death is the flame going out, then a slow slump into a puddle.
+- **Amberfly** (`amberfly`): flies always (`fly`, always, glide 0, four wing bones), hanging in a slow figure of eight
+  with the bead pulsing and the head scanning; going somewhere it noses down, the bead drags on its waist and the six
+  thread legs trail on springs. A blow spins it round; it dies on its back, a small bounce, the legs curling in.
 - **On real ground** (Euan's playtest 9 Nov: the Drip Lurker's legs ran down the face of a gravel step). A foot goes only where it can stand:
   `LegSurface.footing` reads the surface in that foot's own column, and refuses a wall (higher than a step), a drop (more than a step
   down) or a spot with something solid right above. `Legs.fit`, run every time a foot lifts, takes the full stance if the column will
@@ -20300,3 +20321,164 @@ Every forged-pick sound is one of Minecraft's own recordings, named in `merge/de
 - A Mattock in soil is a hoe going into dirt (`pick.strike_earth`), in timber an axe on a log (`pick.strike_wood`); a blunt pick knocks dully (`pick.strike_blunt`).
 - The turn: `pick.mattock_toss`, `pick.mattock_catch`. Sounding: `pick.sounding_tap` (server, heard by anyone near) and `pick.sounding_hollow` (client, from the hollow's side).
 - At the anvil: `anvil.eye`, `anvil.tip`, `anvil.hang`, `anvil.tend`, `anvil.thread`, `anvil.pour`, `anvil.colours`. A held press's sound (`pour`, `colours`) loops and stops when you let go or leave.
+## 50. Gates as Worlds (plan docs/gates-as-worlds/PLAN.md, page https://claude.ai/artifact/3hQVhu5jQKPEWDMbMenkaB)
+
+Approved by Euan on 9 Nov 2026, all 18 decisions, with two additions: a loading screen between the overworld and a gate
+that looks really cool (§50.5), and nothing may ever float (§50.6). The plan is the design; this section records what's built.
+
+Order of work, each stop waiting for him beside the gate's painting: 0 repeats and pay on today's gates. 1 foundation behind
+the `gateRealms` switch and the Build Kit. 2 Amber Reach, **stop**. 3 boss spaces, the first six also into today's gates, **stop**.
+4 a jungle Stronghold and the Hour Crypt, **stop**. 5 a Deep and a Sky, **stop**. 6 E pool to 14, switch on for new worlds.
+7 D to S waves to 88, every Lord placed. 8 old worlds into Dungeons and acts, Far Sight, 128 over time.
+
+### 50.2 The bag (no repeats)
+
+The old rule wrote a theme into memory on every roll, so gates you never walked into pushed real ones out and his first two
+gates were both Hives. Now `GateMemory.seenThemes` holds the themes you've **gone into** (`Runs.enter`), newest first.
+`Director.bag`: a new gate's theme fits its rank, isn't in the bag's seen list, and isn't standing for you (derived from the
+registry each roll, so a closed gate goes back by itself). When only friendly themes are left the bag refills with everything
+that fits the rank, except the last two places you went. If every theme left is standing somewhere, a twin beats no gate.
+Worlds get the same treatment: in `GateWorlds.pickWorld` an everyday world (common or uncommon) only comes up while none has
+been met less, and a world standing in another of your gates counts as met; rare and mythic ones keep their odds. Test
+`gates_bag_no_repeat`: 10,500 rolls.
+
+### 50.3 Gate pay
+
+`Curve.gatePay`: E 2, D 3, C 4, B 2, A, S and Sovereign 1.25, on top of the old reward (`Curve.worldReward`, which the open world's
+camps, stars and rifts still use, so the open world didn't change). `KILL_SHARE` 0.6: 60% lands as you fight, 40% rides in the
+Satchel. A gate above your rank pays half as much again per rank above. A Lord's first clear, once per theme and rank, adds half
+of the whole gate's floors (`GateMemory.firstClears`; not story gates or Ascension trials). Mastery need falls to
+4,500 / 8,500 / 15,500 / 24,000 to keep a main power's level 3 near player level 20 and level 5 near 45.
+
+Simulated, the balanced player (`tools/sim/pacing_sim.py`, 300 runs): level 5 at 0.85 h, 10 at 2.25, 25 at 8.75, 50 at 25.8, 135 at
+60.9 (was 0.89, 3.75, 16.8, 57.1, 104.6). Ranks: D 3.3 h, C 10.1, B 23.6, A 35.8, S 47.6, Sovereign 61.8. Main power level 3 at player
+21.5, level 5 at 48. Deaths per 10 gates D 1.42, C 1.87, B 2.16, all in target. The deep's metal for C now arrives a little after its
+level: median wait 0.7 h, p90 4.2 h (was 0 and 2.0).
+
+### 50.4 The Lord's payout
+
+When a Lord falls, the Satchel's XP and any first clear land there and then, not on the way out (the loot still goes home with
+you as a claim). `run/LordPay`: 30 ticks after the kill, then a level every 14 ticks (8 when many are still to come); each beat
+grants exactly enough XP for the next level (`Progression.grantXpQuietly`, so each level's own toast and sound stay out of the
+way) and strikes a bell, vanilla's `block.bell.use` walked over a low pentatonic scale (0.63 to 1.26, never higher). The last
+beat adds `block.bell.resonate`, then the usual level moment and pane once the fight is over. On screen (`client/LordLevels`): one
+number in the middle of your view, climbing with every bell, the old number rising away and the new one landing a little too
+big, a rule flaring from it, points so far beneath, a mark per level. `GateMemory.lordXp` holds what hasn't landed, saved with the
+player; logging out pays the rest at once, and after a crash it plays on the next login. Test `gates_lord_pay_beats`.
+
+### 50.5 The crossing (the loading screen between the overworld and a gate)
+
+Euan asked for it to look really cool. NeoForge's `RegisterDimensionTransitionScreenEvent` gives the gate dimensions their own
+`LevelLoadingScreen` (`gates/client/Crossing`). Just before the move the server sends `GatePayloads.Crossing`: which painting (today
+the theme, later each gate's own), the small line (`E-rank Hive`), the name (the first floor's world, else the theme) and the world's
+one plain line. The screen is full-screen on a shader (`core/gate_crossing.fsh`, optional pipeline; if it won't compile the painting
+just fades): a ragged tear opens down the dark, its edge bending the painting and parting its colours, light rushing out of it; the
+painting drifts in very slowly with dust hanging in front and black bars top and bottom; the name surfaces letter by letter from its
+middle, a rule draws out under it, then the plain line; the land's progress is one hair of light in the bottom bar. Held at least
+2.8 s going in and 1.5 s coming out so it can be read, and it closes when the land has loaded. The painting stays up as a layer a
+moment longer and burns away from the centre, 1.15 s, into the real place, the bars sliding off with it.
+
+Paintings: `textures/gui/crossing/<key>.png`, 1536×864, made by `tools/art/crossing_paintings.py`; `default` for anything without its
+own. A death, a command or a teleport with no word from the server gets a plain dark screen. Moving between a gate's own floors
+across its two dimensions shows nothing over the Journey (§38.7). Tour: `tools/autopilot/gate-crossing.txt`; `/awaken gate crossing
+<theme> <ms>` freezes one instant.
+
+### 50.6 Nothing may ever float
+
+Euan caught fence posts standing in the air beside a road in the proof, and asked that it never happen. Three rules, all checked:
+
+1. **Everything is anchored to the ground that is really there.** `Land.ground(x,z)` returns the exact top block, every per-column
+   rule included, and it is the one source of the height (`AmberReach.column`). Pieces read it, and `V.foot(x,y,z,state)` fills from
+   the piece straight down to whatever holds it up. No piece may use a guessed height.
+2. **`check/FloatCheck` walks the real result.** It draws a Realm exactly as the game does and walks out from the ground through
+   everything solid (faces and edges count as touching, a lone corner doesn't). Whatever the walk can't reach is in the air, from one
+   post to a whole roof. A plant must stand on something, a hanging thing must hang from something, a vine must be on something, and
+   a plant can't hold up a post. Only a piece that says `airborne` is let off. `realm_float_check_catches` proves the check fails on a
+   planted post, plant and lantern. `realm_amber_never_floats` runs it from the Mouth to the citadel's stair.
+3. **Pieces are placed through one door** (`check/LookChecks.clash`): none through another piece, none on a road, a stair or a door's
+   way, except a piece marked `mayOverlap` (a spire on its plinth) or `startsWay` (the ring a road starts from). The first full run
+   found what no eye had: the pavilion's roof sat four blocks above its columns, every hut's finial stood over a hole in its dome, and
+   a lamp cut the pavilion's middle post in two.
+
+### 50.7 Realms (the foundation)
+
+A Realm is a whole land generated in dimension `awaken:realms` (384 tall, sky). `data/awaken/realms/<id>.json` is the blueprint
+(`Blueprint`: form, theme, ranks, the program that draws the land, sky, life, folk, law, sites, heart, moods, one plain line for the
+crossing); `LandPrograms` maps a program to its `Land` class, so each great land is its own code with its own painting. Behind
+`AwakenConfig.gateRealms` (off) until the E wave is ready; `/awaken gate realm <rank> <id>` forms one anyway, `/awaken gate realm_at
+<kind> <index> <dx> <dy> <dz>` moves you to one of its sites.
+
+Cells sit `RealmCells.PITCH` (8,192) apart from 135,168, past the old gate grid, so `Cells.cellAt` and `Where.at` find nothing in a Realm.
+A Realm gate keeps its normal cell, `GatePlan` and `GateLayout` (only the abstract numbers are used: rewards, the Lord's id) and adds
+`GateRecord.realm` (`RealmRef`: blueprint, seed, version, cell). `RealmPlan.of` is a pure function of those, so a restart rebuilds the
+plan and nothing about the land is saved except what happened in it (`RealmData`, `RealmState`, schema 1). All drawing is in local
+coordinates, 0,0 the Realm's middle; `V` is a scratch volume per chunk with a one-block margin.
+
+Runs hands a Realm gate to `RealmLive` before the floors' code sees it: no pressure clock, no rooms, no twists yet (a gate with a twist
+stays floors until its Realm form is built). Your way home is the arch by the Mouth, any time, Satchel banked; bag per owner
+(`GateMemory.seenRealms`). Monsters wake within 56 blocks of their den or Warden. Wardens fall in any order and the last opens the way
+to the Lord, never announced (decision 12).
+
+Pay (§50.3): a Realm's pool is what the same gate's floors would pay. 60% is split kill by kill (a den about five shares, a Warden
+four); of the other 40% each Warden banks a sixth and the Lord pays what's left, plus first clear and the Lord's payout as usual.
+
+**Waystones** replace Rest Shrines in a Realm (decision 13). Laying a hand on one marks it found, banks your Satchel and XP there and then, and
+offers the next one you've reached, so you can walk the valley and come back. `RealmLive.useWaystone`, `RealmLive.travel`, `Interactions.WAYSTONE`.
+
+**The valley's edge** is a wind, not a wall: `Land.edge(x,z)` past 0 pushes you back toward the middle, harder the further you go.
+
+**Amber Reach's life and air.** `RealmLife` runs for each player every two seconds: a herd of three to five Pollen Grazers turns up 36 to 58 blocks off whenever fewer
+than five are within 64, Amberflies over the open ground, and up to nine Wax-folk near their village within 130 blocks, each kept to its own door. Laying a hand on a
+Wax-folk lets them speak and sell honey (`RealmLife.talk`), and from then on the plate over their heads says what they are. Their spawn eggs exist only for testing.
+Outdoors the land plays `realm.amber.air`, indoors `realm.amber.hall`, both built from vanilla recordings; Lens uses its own amber look for the valley and the hall.
+
+**Finds** are single caches set where you have to look: 24 around the valley and one on top of each great rock, each rock with a column of rising air
+beside it (`UpdraftBlock`, `SiteKind.UPDRAFT`; crouch to sink). The Law of Amber Reach is `updrafts`: one physical rule, per decision 14.
+
+**The honey river** is its own block, `realm_honey`: light 9, 7/16 high to walk in, slows you to 62% (`HoneyFlowBlock`), animated. It replaces water
+in this land, so no block of it can ever flow.
+
+**The heart of a Realm** (`Land.inHeart`, `Land.change(moment)`, `RealmState.doorShut, heartStage`): the Lord sleeps until someone comes in. The door
+is wax as thick as a wall until the last Warden falls (`heart_open`); it shuts behind whoever's fighting once nobody's lingering at it (`heart_shut`);
+the room answers the fight at two thirds and one third of the Lord's life (`heart_weeps`, `heart_winds`), and stills when it dies (`heart_still`).
+Nobody left inside: the Lord goes, the hall resets, the door opens again. Moments are block edits sent with `Block.UPDATE_CLIENTS`, computed by the
+land so a restart redraws the same thing.
+
+**Life** (`RealmLife`, spawned from a blueprint's `life` and `folk`): kept up by density around each player, once every two seconds, always at least
+28 blocks from anyone. A herd of 3-5 where fewer than 5 are within 64; 6 flies within 40; up to 9 folk round a village once a player is within 130. All
+ambient and `placed`, so no biome ever rolls them. The folk (`wax_folk`) say one plain line about their lives when you put a hand on them, offer honey
+while they have some to spare (three bottles for two emeralds, six sales per Realm), and can be overheard (a toast, at most one every 40 s). They never
+fight beside you, set tasks or give directions. Grazers use the rig's `graze` clip through `WildPose.S_GRAZE`.
+
+**Growing things stand clear** of Waystones, Finds, vents and the arch (`clearings`), and tall wheat grows only in the heart of a patch: you can always
+see over the crop.
+
+### 50.8 The Build Kit
+
+Seven passes on every land, in order: bones (ground and big masses), courses (no face one flat plane), pieces (each anchored, placed
+through the door), shade (painted darkness only under a real two-deep ledge), weathering (drips, crumbs), growth (only on ground that's
+really there), light. `N` holds the noise and hex helpers; `Piece` knows its footprint and draws into whichever chunk it touches. Tests:
+`realm_cells`, `realm_blueprints_parse`, `realm_bag_empty`, `realm_float_check_catches`, `realm_amber_never_floats`,
+`realm_amber_plan_checks`, `realm_amber_all_reachable`, `realm_amber_sites_open`, `realm_amber_heart`, `realm_seeds_differ`, `realm_mouth_safe`,
+`realm_no_holes`, `realm_amber_sight` (median view 30+, 90th percentile 150+, 30% of views past 64), `realm_flag_off_rolls_floors`, `realm_party_split`,
+`realm_life_creatures`.
+
+The preview: `tools/preview/preview.sh <tour> [seeds]` draws a land's real blocks from its tour's own cameras (the same `realm_at` and
+`look` lines) with no game client, in about a minute, against 15-20 for a walk. `Preview` runs as the GameTest `realm_preview`, which does
+nothing unless the script set its environment. Pictures, `sheet.png` and `report.txt` (cameras blocked, all sky, one block over 60% of a
+view, vanilla over 30%) land in `run-preview/<tour>/`. It paints the ground truth (every block the land draws) but shades it plainly:
+sun, soft corners and haze, no creatures, no Lens. It judges shapes, framing, tone and broken builds; the real look still needs a walk.
+`volume.sha` holds a hash of every block for each seed asked for: a change to the kit that shouldn't change a land must not move it.
+
+The kit is working parts, not a look. In `realms/kit`: `KitLand<M>` (the piece list, `place` with the clash rule, `waystone`, `clearSites`/`tended`,
+`jit`), `Mats` (materials by job, named `<land>_stone`, `<land>_stone_worn`... with a land's own growth and glow passed in as `Accents`; a land extends
+it for what only it has), `River`, `Road`, `Build` (`stair`, `under`, `top`, `lit`), and in `kit/piece`: `Waystone`, `Find`, `Updraft`, `Lamp`, `Boulder`,
+`Tree`, `Stall`, `Pylon`, `Hut`, `Pavilion`, `MouthRing`. `Waystone`, `Find`, `Updraft`, `Lamp` and `Boulder` can be used as they are. A land's houses, arrival
+and great build are its own shape: the rest take shape parameters as soon as a land needs them, added then and not before, and proved with `volume.sha`
+that the lands already built didn't move. Amber's own (`Flower`, `Plinth`, `Spire`, `Heart`, the hex-column cliffs) stay in `AmberReach`: used twice they
+would make two gates the same place.
+
+A new land, in order: the painting approved; materials (a copy of `tools/art/specs/realm_amber.py` with its own palette and textures, `Def` lines in
+`ThemeBlocks` with the same suffixes, the tag `blocks_motion_no_leaves`); `data/awaken/realms/<id>.json` and its biomes (their `sky_color`, `fog_color`
+and `grass_color` are also what the preview shades with); a `KitLand` subclass (land shape, one great build, `build()` placing the rest) entered in
+`LandPrograms`; a tour copied from `realm-amber.txt`; then preview, fix, preview, and only then a walk.

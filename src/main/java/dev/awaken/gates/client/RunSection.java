@@ -49,10 +49,10 @@ final class RunSection implements StatusSections.Section {
         g.outline(x, y, width, H, 0xFF7FC3FF);
         String rank = ClientGates.rankLabel(h.rank());
         g.text(font, rank, x + 6, y + 6, ClientGates.rankColour(h.rank()), false);
-        g.text(font, RunHudLayer.themeName(h.theme()) + " · floor " + h.floor() + " of " + h.floors(), x + 10 + font.width(rank), y + 6, 0xFFFFFFFF, false);
+        g.text(font, RunHudLayer.themeName(h.theme()) + (h.floors() == 0 ? "" : " · floor " + h.floor() + " of " + h.floors()), x + 10 + font.width(rank), y + 6, 0xFFFFFFFF, false);
         g.text(font, "Satchel " + h.satchelStacks() + (h.satchelStacks() == 1 ? " stack" : " stacks") + " · " + h.satchelXp() + " Satchel XP", x + 6, y + 20, 0xFFFFCF7A, false);
         int s = h.floorSeconds();
-        g.text(font, "Kills " + h.kills() + " · " + String.format("%d:%02d", s / 60, s % 60) + " on this floor", x + 6, y + 32, 0xFFB9C7D9, false);
+        g.text(font, "Kills " + h.kills() + " · " + String.format("%d:%02d", s / 60, s % 60) + (h.floors() == 0 ? "" : " on this floor"), x + 6, y + 32, 0xFFB9C7D9, false);
         if (!h.hint().isEmpty()) g.text(font, h.hint(), x + 6, y + 44, 0xFFE2D2FF, false);
         String btn = "[ View Satchel ]";
         satchelW = font.width(btn);
