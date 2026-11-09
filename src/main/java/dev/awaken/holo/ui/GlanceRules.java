@@ -50,4 +50,12 @@ public final class GlanceRules {
             held = false;
         }
     }
+
+    /**
+     * How far the hands are out of view (0 up, 1 gone) while the arm with the band is up or going: they sink as it rises, and
+     * as it lowers they follow the game's own re-equip, so the weapon's arms rise exactly as its hands do.
+     */
+    public static float handsAway(boolean armGoing, float raise, float equip) {
+        return armGoing ? equip : Math.max(0F, Math.min(1F, raise));
+    }
 }

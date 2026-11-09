@@ -70,6 +70,10 @@ final class HudTests {
         // the key is held and only then (no tap keeps it up)
         AwakenTests.register("hud_glance_rows", 20, h -> {
             var out = new dev.awaken.holo.ui.GlanceRules.Row[dev.awaken.holo.ui.GlanceRules.Row.values().length];
+            // Euan 9 Nov, a third hand: everything the hand pass draws goes by this, not only vanilla's hands
+            h.assertTrue(dev.awaken.holo.ui.GlanceRules.handsAway(false, 0.5F, 0F) == 0.5F && dev.awaken.holo.ui.GlanceRules.handsAway(false, 1.1F, 0F) == 1F,
+                    "the hands sink as the arm rises and are gone at its top");
+            h.assertTrue(dev.awaken.holo.ui.GlanceRules.handsAway(true, 1F, 0.3F) == 0.3F, "as it lowers they follow the re-equip, as vanilla's do");
             int n = dev.awaken.holo.ui.GlanceRules.rows(true, true, true, true, true, true, out);
             h.assertTrue(n == 10 && java.util.Arrays.equals(java.util.Arrays.copyOf(out, n), dev.awaken.holo.ui.GlanceRules.Row.values()),
                     "everything, in order");

@@ -15692,7 +15692,7 @@ in reach 23% of a fight today, 49% with these rules).
 - The key is vanilla's player list (Tab), so in multiplayer its list shows with the panel. Off in Classic, while a screen is
   open, with the HUD hidden and in spectator.
 - Held: the off-hand forearm comes up with the band (`Wrist`, eased in 260 ms, down in 200 ms; the main hand sinks out of
-  view; vanilla's hands come back from below as it lowers), only in first person, with the band on, no holo menu on the
+  view; vanilla's hands come back from below as it lowers; so do the arms the hand pass draws itself, a weapon's grips, a stance's fists, a pair's twin and the world layer's arms, through `FirstPerson.handsAway`: they sink as the wrist rises, follow the re-equip as it lowers, and at full raise only the arm with the band is on screen, whatever the hands are doing, so a swing or a charge under the panel can't bring them back up), only in first person, with the band on, no holo menu on the
   wrist and the holo pipelines working. The panel shows while the key is held and goes with it (Euan 2026-11-09: a tap no
   longer leaves it up; the arm's rules don't apply to it, so third person or no band shows it without the arm).
 - The panel: flat and readable in the band's glass, 184 GUI px wide, just above the wrist's place on screen (kept inside
