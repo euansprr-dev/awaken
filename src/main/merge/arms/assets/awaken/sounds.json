@@ -928,6 +928,7 @@
     ]
   },
   "guard.struck": {
+    "subtitle": "subtitles.awaken.arms.block",
     "sounds": [
       {
         "name": "minecraft:item/shield/block1",
@@ -962,6 +963,7 @@
     ]
   },
   "guard.steel": {
+    "subtitle": "subtitles.awaken.arms.block",
     "sounds": [
       {
         "name": "minecraft:mob/irongolem/hit1",
