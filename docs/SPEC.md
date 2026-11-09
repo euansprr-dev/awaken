@@ -7017,7 +7017,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   overhead chop, a wide swing; Longsword forehand, rising backhand, overhead chop, thrust; Greatblade a diagonal cleave,
   a level sweep, a whirl, an overhead chop; Spear and Rapier thrusts with a haft sweep or a flick cut third; Katana a
   level draw cut, a rising cut, a chop, a thrust; Glaive wide swings and a whirl; Scythe reaps, an overhead reap and a
-  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, bash,
+  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, shove,
   chop, stab; War-staff swings, a chop and spins; Precursor Arm cuts and a thrust. A stab, jab or bash strikes narrow on
   the server (arc at most 30 degrees, the thrust's whoosh; the Daggers' stabs became single-target, their rip and
   backhand 90 degrees). Weight by style (snap: Daggers, Rapier, Gauntlets; blade; heavy: Axe, Maul, Greatblade, Glaive,
@@ -7047,7 +7047,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
   the head up (6, 58); Axe the head up, its bit down toward the foe (10, 58); Daggers short, the
   point forward (14, 42); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the head forward
-  on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm forward like a
+  on its chain (18, 38); Shieldblade a sword in the hand and the shield on the other arm ("The Shieldblade"); Precursor Arm forward like a
   drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
   holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
   Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
@@ -7271,6 +7271,24 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     (`_spin_wrists`) is the same turn about the weapon's flat, leaning onto first person's plane by the hit; solving it from
     where the blade points flips each time the blade passes the far side of its axis (179 degrees in a key). The two moves
     that don't spin (plunge, execution) reach for whichever end is nearer.
+  - *The Shieldblade* (Euan 2026-11-09: "reinvent that one from scratch"; "when you push with it, it doesn't feel like a push";
+    "it feels like it's hitting the wrong side"; "the blocking with it doesn't even block with the shield side"; "it just looks
+    like a tiny dagger swung out of a shield"): one item that is two things. A sword as long as a Longsword in the main hand, a
+    shield with a front and a back on the other arm. The item's mesh for inventories and stands is the two together; the hands
+    draw them apart (`<id>_blade`, `<id>_shield`): the shield is a copy of the stack in the free off hand with its `ITEM_MODEL` set
+    (fp_swings `off.model`). With something in the off hand no shield is drawn. In first person you see the shield's inside; it has
+    its own rest and guard (`off.stance`, `off.guard`), and the sword stands up the view with its flat toward you so its whole
+    length reads. The second strike and the heavy are the shield alone (`hand: off`, form `bash`, no ribbon): gathered out to
+    the left with its face turned aside, driven across to the middle of the view and squared to the front, held a moment, because depth
+    alone doesn't read and a shove must cover what it hits. The body lunges behind it (0.9, the heavy 1.3), it holds longer on the
+    hit (85 ms, heavy 130), and a target is thrown back (`BASH_PUSH` 2.6 where a thrust is 1.15; a Lord isn't moved). The heavy is
+    charged with the shield gathered further still. The guard is the shield: raised to the middle of the view with the crosshair
+    over its rim and the sword held back at the side; in third person `arms_shieldblade_guard` lays the arm across the front and
+    `off.guard3` turns the shield square to the front (a left-handed player's isn't turned, as for every third-person wrist). Through the
+    sword's cuts in third person the shield stays on its arm's clip and no wrist turns it; it leaves the clip only when it does
+    something (`shield3`, its own weight in `_shield_weight`), and its wrist is the whole frame, never the shortest turn to a line,
+    because which way a shield's front looks is the point of it. Reaches now match the Longsword's (3.0, 2.8 for the shove, 3.2,
+    3.6).
   - *The Scythe* (decisions 8 and 9): two hands in both views, the main fist low on the snath and the off fist on its
     peg (weapon-designs' second grip, design (4, 6.5, 0); fp_swings `offHand` is that point in the main hand's frame,
     ArmsHands closes the empty off hand there). Every strike's wind-up is in view: strike 1 draws the snath back up
@@ -7878,7 +7896,8 @@ against it, so a vanilla item plays its designed tempo).
 - **Chain-blade** (1.3): lashes at 5 blocks, a thrust to 6, the heavy to 6.5; each blow landed reels the body up to 2
   blocks in.
 - **Shieldblade** (1.4): block-first, the guard taking 85% (70% of a HEAVY), 150° wide, broken for only 10 ticks; the
-  second strike a shield bash; the riposte a bash that throws (1.0).
+  second strike and the heavy a shove with the shield that throws its target back; the riposte a stab from behind the shield that
+  throws (1.0).
 - **War-staff** (1.2): sweeping two-handed blows; each blow landed gives back 3 power energy (`Powers.restoreEnergy`),
   so a staff fighter's powers come round faster.
 - **Precursor Arm** (1.5, Tech): an energy blade whose reach grows half a block with each step of the chain (2.6 to 3.6

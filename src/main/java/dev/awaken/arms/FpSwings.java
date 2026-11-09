@@ -79,7 +79,16 @@ public final class FpSwings {
      */
     public record Style(Map<Archetype.Move, Clip> moves, Quaternionf vanilla, Vector3f grip, Vector3f vanillaGrip, boolean twin,
                         Vector3f hand, @Nullable Vector3f offHand, @Nullable Vector3f vanillaOffHand, float @Nullable [] guard,
-                        float @Nullable [] trail, @Nullable Loop chop, @Nullable Loop hack, float @Nullable [] stance) {}
+                        float @Nullable [] trail, @Nullable Loop chop, @Nullable Loop hack, float @Nullable [] stance,
+                        @Nullable OffHand off) {}
+
+    /**
+     * A style whose off hand holds something other than the main hand's twin (the Shieldblade's shield): the item model that
+     * twin is drawn with (the main item's id plus {@code model}), and its own rest and guard, each [dx, dy, dz, qx, qy, qz, qw]
+     * authored right-handed like every off-hand key; and in third person its wrist while guarding, as the arm's clip
+     * can't turn a shield to face the front [bent xyzw, straight xyzw].
+     */
+    public record OffHand(String model, float[] stance, float[] guard, float[] guard3) {}
 
     /**
      * The weapon's own cutting motion while vanilla mines with it (SPEC §40 "The chop"; tools/art/swing_chop.py): the chop
@@ -166,7 +175,8 @@ public final class FpSwings {
                     st.has("vanillaOffHand") ? vec(st.getAsJsonArray("vanillaOffHand")) : null,
                     st.has("guard") ? floats(st.getAsJsonArray("guard"), 7) : null,
                     st.has("trail") ? floats(st.getAsJsonArray("trail"), 2) : null, loop(st, "chop"), loop(st, "hack"),
-                    st.has("stance") ? floats(st.getAsJsonArray("stance"), 7) : null));
+                    st.has("stance") ? floats(st.getAsJsonArray("stance"), 7) : null,
+                    st.has("off") ? offHand(st.getAsJsonObject("off")) : null));
         }
         return new Data(schema, root.has("round") ? root.get("round").getAsInt() : 0, dt, wristDt, Map.copyOf(styles),
                 java.util.Set.copyOf(flipped), Map.copyOf(grip3));
@@ -291,6 +301,38 @@ public final class FpSwings {
         d.set(s[0], s[1], s[2]);
         q.set(s[3], s[4], s[5], s[6]);
         if (!ours) toVanilla(st, d, q);
+        return true;
+    }
+
+    private static OffHand offHand(JsonObject o) {
+        return new OffHand(o.get("model").getAsString(), floats(o.getAsJsonArray("stance"), 7), floats(o.getAsJsonArray("guard"), 7),
+                floats(o.getAsJsonArray("guard3"), 8));
+    }
+
+    /** The off hand's own rest (false: it rests as the main hand's mirror). */
+    public static boolean offStance(@Nullable Style st, Vector3f d, Quaternionf q) {
+        if (st == null || st.off() == null) return false;
+        float[] s = st.off().stance();
+        d.set(s[0], s[1], s[2]);
+        q.set(s[3], s[4], s[5], s[6]);
+        return true;
+    }
+
+    /** The off hand's own guard (false: it guards as the main hand's mirror). */
+    public static boolean offGuard(@Nullable Style st, Vector3f d, Quaternionf q) {
+        if (st == null || st.off() == null) return false;
+        float[] g = st.off().guard();
+        d.set(g[0], g[1], g[2]);
+        q.set(g[3], g[4], g[5], g[6]);
+        return true;
+    }
+
+    /** Third person's left wrist while a shield is raised (false: no shield). */
+    public static boolean guard3(@Nullable Style st, boolean straight, Quaternionf q) {
+        if (st == null || st.off() == null) return false;
+        float[] w = st.off().guard3();
+        int i = straight ? 4 : 0;
+        q.set(w[i], w[i + 1], w[i + 2], w[i + 3]);
         return true;
     }
 

@@ -368,7 +368,7 @@ public final class ArmsRules {
     /** A finisher, a perfect heavy or an Execution weighs this much more. */
     public static final float STRONG_WEIGHT = 1.3F;
     /** A thrust pushes straight away this much harder; a pinning blow this much softer, with no lift. */
-    public static final float THRUST_PUSH = 1.15F, PIN_PUSH = 0.7F;
+    public static final float THRUST_PUSH = 1.15F, PIN_PUSH = 0.7F, BASH_PUSH = 2.6F;
     /** An uppercut or a rise lifts the body this much more (blocks a tick). */
     public static final float LIFT = 0.18F;
     /** A side cut's push: this share along the blade's travel, the rest away from the striker (never toward). */
@@ -428,6 +428,7 @@ public final class ArmsRules {
 
     /** How hard a move pushes against vanilla's strength. */
     public static float pushScale(Archetype.MoveDef def) {
+        if (def.swing().form().equals("bash")) return BASH_PUSH; // a shove throws its target back (Euan 2026-11-09: "it doesn't feel like a push")
         if (thrusts(def)) return THRUST_PUSH;
         return lift(def) < 0 ? PIN_PUSH : 1F;
     }

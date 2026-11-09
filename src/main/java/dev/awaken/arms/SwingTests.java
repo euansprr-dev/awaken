@@ -20,6 +20,7 @@ final class SwingTests {
         AwakenTests.register("arms_draw_smooth", 20, SwingTests::drawSmooth);
         AwakenTests.register("arms_dagger_stabs", 20, SwingTests::daggerStabs);
         AwakenTests.register("arms_gauntlet_sleeves", 20, SwingTests::gauntletSleeves);
+        AwakenTests.register("arms_shieldblade_two_parts", 20, SwingTests::shieldbladeTwoParts);
     }
 
     /**
@@ -365,6 +366,45 @@ final class SwingTests {
         }
         h.assertTrue(n >= 7, "the gauntlets are checked (" + n + ")");
         h.succeed();
+    }
+
+    /**
+     * The Shieldblade is a sword and a shield (SPEC §25 "The Shieldblade"; Euan 2026-11-09: "the blocking with it doesn't even block with the
+     * shield side"): the guard's shield shows its front to what's ahead, top up; the shove is the shield's own hand; and each weapon has both parts.
+     */
+    static void shieldbladeTwoParts(GameTestHelper h) {
+        FpSwings.Style st = FpSwings.style("shieldblade");
+        h.assertTrue(st != null && st.twin() && st.off() != null, "the off hand holds its own model");
+        h.assertTrue(FpSwings.hand(st, Archetype.Move.STRIKE_2) == FpSwings.Hand.OFF && FpSwings.hand(st, Archetype.Move.HEAVY) == FpSwings.Hand.OFF, "the shove is the shield's");
+        int n = 0;
+        for (ArmsData.Weapon w : ArmsData.WEAPONS) {
+            if (!"shieldblade".equals(w.style())) continue;
+            for (String part : new String[] {"_blade", "_shield"}) {
+                h.assertTrue(SwingTests.class.getResource("/assets/awaken/arms/weapons/" + w.id() + part + ".mesh") != null, w.id() + part + " has a mesh");
+                h.assertTrue(SwingTests.class.getResource("/assets/awaken/textures/item/arms/" + w.id() + part + ".png") != null, w.id() + part + " has a texture");
+            }
+            var shieldItem = readJson("/assets/awaken/items/" + w.id() + "_shield.json");
+            h.assertTrue(shieldItem != null, w.id() + " has the shield's item model");
+            var fp = readJson("/assets/awaken/models/item/" + w.id() + "_shield_in_hand.json").getAsJsonObject("display").getAsJsonObject("firstperson_righthand").getAsJsonArray("rotation");
+            Quaternionf hold = new Quaternionf().rotationXYZ((float) Math.toRadians(fp.get(0).getAsFloat()), (float) Math.toRadians(fp.get(1).getAsFloat()), (float) Math.toRadians(fp.get(2).getAsFloat()));
+            Vector3f d = new Vector3f();
+            Quaternionf turn = new Quaternionf();
+            h.assertTrue(FpSwings.offGuard(st, d, turn), "the shield has its own guard");
+            Vector3f front = turn.transform(hold.transform(new Vector3f(0, 0, 1))), top = turn.transform(hold.transform(new Vector3f(1, 1, 0).normalize()));
+            h.assertTrue(front.z < -0.9F, w.id() + ": the guard shows the shield's front to what's ahead (" + front.z + ")");
+            h.assertTrue(top.y > 0.8F, w.id() + ": the guard holds it top up (" + top.y + ")");
+            n++;
+        }
+        h.assertTrue(n >= 7, "the shieldblades are checked (" + n + ")");
+        h.succeed();
+    }
+
+    private static com.google.gson.JsonObject readJson(String path) {
+        try (var in = SwingTests.class.getResourceAsStream(path)) {
+            return com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     private static float degrees(Quaternionf a, Quaternionf b) {

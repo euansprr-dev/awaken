@@ -27,6 +27,9 @@ final class WeaponMeshes {
         for (ArmsData.Weapon w : ArmsData.WEAPONS) {
             load(manager, w.id(), Awaken.id("arms/weapons/" + w.id() + ".mesh"));
             if (GAUNTLETS.equals(w.style())) load(manager, w.id() + SLEEVE, Awaken.id("arms/weapons/" + w.id() + SLEEVE + ".mesh"));
+            if (SHIELDBLADE.equals(w.style())) { // the hands draw its two parts (arms_weapons.pair_of)
+                for (String part : PARTS) load(manager, w.id() + part, Awaken.id("arms/weapons/" + w.id() + part + ".mesh"));
+            }
         }
         // the War Anvil's hammer and tongs (SPEC §46.3)
         for (String tool : TOOLS) load(manager, "anvil/" + tool, Awaken.id("arms/anvil/" + tool + ".mesh"));
@@ -35,7 +38,8 @@ final class WeaponMeshes {
 
     /** The first-person sleeve a gauntlet runs on into (WeaponRenderer): its own mesh and texture, this suffix on the weapon's id. */
     static final String SLEEVE = "_arm";
-    private static final String GAUNTLETS = "gauntlets";
+    private static final String GAUNTLETS = "gauntlets", SHIELDBLADE = "shieldblade";
+    private static final String[] PARTS = {"_blade", "_shield"};
     private static final String[] TOOLS = {"hammer", "tongs", "stone_hammer"};
 
     private static void load(ResourceManager manager, String id, Identifier file) {

@@ -5,6 +5,7 @@ import dev.awaken.core.api.BodyMaterial;
 import dev.awaken.core.api.Strikes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -91,7 +92,12 @@ public final class ArmsSounds {
     /** A blow by a blunt style (the Maul) lands blunt on every body but a spirit; any other style as its blade meets the body. */
     public static SoundEvent impact(Entity target, Archetype.@Nullable Move move, Archetype.@Nullable MoveDef def, @Nullable String style) {
         if (Arms.MAUL.equals(style) && move != Archetype.Move.EXECUTION && BodyMaterial.of(target) != BodyMaterial.SPIRIT) return HIT_BLUNT.get();
+        if (shoves(def) && BodyMaterial.of(target) != BodyMaterial.SPIRIT) return SoundEvents.SHIELD_BLOCK.value(); // the shield's own recording: a shove lands on wood and iron, not an edge
         return impact(target, move, def);
+    }
+
+    private static boolean shoves(Archetype.@Nullable MoveDef def) {
+        return def != null && def.swing() != null && def.swing().form().equals("bash");
     }
 
     /** The blade landing: an Execution is a blow of its own; any other is what the body is made of. */
@@ -110,6 +116,7 @@ public final class ArmsSounds {
 
     /** A heavy blow on a body without a heavy sound of its own lands a little lower. */
     public static float impactPitch(Entity target, Archetype.@Nullable MoveDef def) {
+        if (shoves(def)) return 0.72F; // lower than a block's: the whole body's behind it
         return heavy(def) && BodyMaterial.of(target) != BodyMaterial.FLESH ? 0.9F : 1.0F;
     }
 

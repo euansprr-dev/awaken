@@ -21,7 +21,7 @@
    "base": "awaken:item/wildhide_shieldblade_in_hand",
    "model": {
     "type": "awaken:weapon",
-    "weapon": "wildhide_shieldblade"
+    "weapon": "wildhide_shieldblade_blade"
    }
   }
  }

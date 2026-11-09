@@ -296,8 +296,8 @@ HOLDS = {
     "twinblades": dict(yaw=62, pitch=34, grip=(-0.04, 0.02, 0.0)),
     # the head forward on its coiled chain
     "chainblade": dict(yaw=18, pitch=38, roll=90, grip=(0.02, 0.0, 0.02)),
-    # the shield to the front on the forearm, the blade above it
-    "shieldblade": dict(yaw=30, pitch=62, grip=(-0.02, -0.02, 0.02)),
+    # a sword held out as a Longsword is; the shield is the off hand's (arms_weapons.pair_of)
+    "shieldblade": dict(yaw=18, pitch=52, roll=135, grip=(0.02, 0.0, 0.02), cut=DOWN),
     # the energy blade forward like a drawn arm
     "precursor": dict(yaw=14, pitch=24, roll=90, grip=(0.0, 0.0, 0.0)),
     # gauntlets keep their worn hold (arms_weapons.HOLDS["gauntlets"]): they were never a blade in the hand

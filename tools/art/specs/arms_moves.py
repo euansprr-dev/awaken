@@ -225,6 +225,16 @@ GD_BACK = nudge(GD, lean=1.5, ra=(-2, -1, 0), re=-3, la=(-2, 1, 0))
 clip("arms_guard_jolt", [(0, GD, "linear"), (1, GD_HIT, "easeoutcubic"), (3, GD_BACK, "easeinoutsine"), (6, GD, "easeinoutsine")], 8,
      note="a shot strikes the guard: the blade knocked in, the body rocked back, braced again")
 
+# The Shieldblade's guard: the shield's arm across the front with its boss out, the sword held back and low beside it, knees soft
+# (Euan 2026-11-09: "the blocking with it doesn't even block with the shield side").
+GS = pose(lean=8, rl=(-14, 0, 6), rk=22, ll=(12, 0, -6), lk=18, ra=(-26, -8, 12), re=48, la=(-80, 36, -8), le=70)
+held("arms_shieldblade_guard", GS, [nudge(GS, la=(-1, 0, 0)), nudge(GS, la=(1, 0, 0))], 8,
+     "the guard: the shield up across the front, the sword back and low")
+GS_HIT = nudge(GS, lean=-7, shift=-0.6, la=(10, -6, 0), le=14, ra=(4, 0, 0), rk=4, lk=4)
+GS_BACK = nudge(GS, lean=1.5, la=(-2, 1, 0))
+clip("arms_shieldblade_guard_jolt", [(0, GS, "linear"), (1, GS_HIT, "easeoutcubic"), (3, GS_BACK, "easeinoutsine"), (6, GS, "easeinoutsine")], 8,
+     note="a shot strikes the shield: its arm knocked in, the body rocked back, braced again")
+
 # The weapon's own cutting motion while vanilla mines with it (SPEC §40 "The chop"; first person's loops in
 # tools/art/swing_chop.py): loops on the hands' clock, each clip's tick 0 where the game enters the hands' loop, so a
 # blow lands on the body as the hands' does (the chop's 5 ticks in, the hack's 3.5) and every loop after.

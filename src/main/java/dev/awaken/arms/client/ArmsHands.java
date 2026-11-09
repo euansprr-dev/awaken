@@ -107,7 +107,7 @@ final class ArmsHands {
         int inv = arm == HumanoidArm.RIGHT ? 1 : -1;
         ArmsHands.equip = equip;
         ps.translate(inv * HX, HY + equip * -0.6F, HZ);
-        guardOn(ps, p, stack, partial, inv);
+        guardOn(ps, p, stack, partial, inv, false);
         if (BladeTrail.open(p.getId()) && ArmsItems.of(stack.getItem()) == null) {
             // a vanilla blade: where its sprite's edge is drawn (our weapons sample their own mesh as they draw)
             M.set(ps.last().pose()).translate(1.13F / 16F, 3.2F / 16F, 1.13F / 16F) // both hands: as handheld.json
@@ -121,12 +121,12 @@ final class ArmsHands {
      * The guard on a hand's pose stack (at its resting place) while the guard is up: the weapon across the body, mirrored
      * for a left hand ({@code inv} -1; a pair's twin is the main's mirrored, so the two cross).
      */
-    static void guardOn(PoseStack ps, LocalPlayer p, ItemStack stack, float partial, int inv) {
+    static void guardOn(PoseStack ps, LocalPlayer p, ItemStack stack, float partial, int inv, boolean off) {
         float g = guard(p, partial);
         if (g <= 0) return;
         float j = jolt(partial) * g;
         Archetypes.Loaded style = Arms.styleOf(stack);
-        guardMove(style == null ? null : FpSwings.style(style.id()), ArmsItems.of(stack.getItem()) != null, g, j, inv, GD, GQ);
+        guardMove(style == null ? null : FpSwings.style(style.id()), ArmsItems.of(stack.getItem()) != null, g, j, inv, GD, GQ, off);
         if (inv < 0) {
             GD.x = -GD.x;
             GQ.set(GQ.x, -GQ.y, -GQ.z, GQ.w);
@@ -141,8 +141,8 @@ final class ArmsHands {
      * "blocking with most weapons hides the weapon under your view"), else vanilla 1.8's block turn.
      */
     private static void guardMove(FpSwings.@Nullable Style st, boolean ours, float g, float j, int inv, org.joml.Vector3f d,
-                                  org.joml.Quaternionf q) {
-        if (FpSwings.guard(st, ours, d, GQ2)) {
+                                  org.joml.Quaternionf q, boolean off) {
+        if (off && FpSwings.offGuard(st, d, GQ2) || FpSwings.guard(st, ours, d, GQ2)) {
             d.mul(g);
             ID.slerp(GQ2, g, q);
         } else {
@@ -154,7 +154,8 @@ final class ArmsHands {
         GQ2.rotationX(JOLT_TIP * j * Mth.DEG_TO_RAD).mul(q, q);
     }
 
-    private static final org.joml.Vector3f GD = new org.joml.Vector3f();
+    private static final org.joml.Vector3f GD = new org.joml.Vector3f(), GD_OFF = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf GUARD_OFF = new org.joml.Quaternionf();
     private static final org.joml.Quaternionf GQ = new org.joml.Quaternionf(), GQ2 = new org.joml.Quaternionf();
 
     /** The guard's blend: up over its first ticks of use. */
@@ -261,13 +262,20 @@ final class ArmsHands {
         FpSwings.Style rest = inHand == null ? null : FpSwings.style(inHand.id());
         boolean stance = !cutting && preview == null && FpSwings.stance(rest, ours, REST_D, STANCE_Q);
         boolean offStance = stance && !ArmsOffHand.shownTwin(p).isEmpty();
+        float restK = stance ? 1F - guard(p, partial) : 0F;
         if (stance) {
-            float k = 1F - guard(p, partial);
-            REST_D.mul(k);
-            REST_Q.identity().slerp(STANCE_Q, k);
+            REST_D.mul(restK);
+            REST_Q.identity().slerp(STANCE_Q, restK);
         } else {
             REST_D.zero();
             REST_Q.identity();
+        }
+        if (offStance && FpSwings.offStance(rest, OFF_REST_D, STANCE_Q)) { // a shield rests as a shield, never as the sword's mirror
+            OFF_REST_D.mul(restK);
+            OFF_REST_Q.identity().slerp(STANCE_Q, restK);
+        } else {
+            OFF_REST_D.set(REST_D);
+            OFF_REST_Q.set(REST_Q);
         }
         // a change of source (a chained strike, a move ended or refused, a press starting its draw, a tap's launch, the
         // release): each hand carried from where it was shown into the new one, never a jump (SwingBlend). The draw and
@@ -287,14 +295,14 @@ final class ArmsHands {
             sourceMotion(st, m, t, ours, has && !drawn, launch > 0 ? ArmsPredict.launchRate() : 1F);
             MAIN_B.begin(now, mainMoves ? D : mainIdle ? IDLE_D : REST_D, mainMoves ? Q : mainIdle ? IDLE_Q : REST_Q,
                     mainMoves ? VD : ZERO, mainMoves ? VW : ZERO, ticks);
-            OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : offStance ? REST_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : offStance ? REST_Q : ID,
+            OFF_B.begin(now, offMoves ? D : offIdle ? IDLE_D : offStance ? OFF_REST_D : ZERO, offMoves ? Q : offIdle ? IDLE_Q : offStance ? OFF_REST_Q : ID,
                     offMoves ? VD : ZERO, offMoves ? VW : ZERO, ticks);
         }
         boolean mainShown = mainMoves || mainIdle || stance || MAIN_B.active(now), offShown = offMoves || offIdle || offStance || OFF_B.active(now);
         if (mainMoves) MAIN_D.set(D); else if (mainIdle) MAIN_D.set(IDLE_D); else MAIN_D.set(REST_D);
         if (mainMoves) MAIN_Q.set(Q); else if (mainIdle) MAIN_Q.set(IDLE_Q); else MAIN_Q.set(REST_Q);
-        if (offMoves) OFF_D.set(D); else if (offIdle) OFF_D.set(IDLE_D); else if (offStance) OFF_D.set(REST_D); else OFF_D.zero();
-        if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else if (offStance) OFF_Q.set(REST_Q); else OFF_Q.identity();
+        if (offMoves) OFF_D.set(D); else if (offIdle) OFF_D.set(IDLE_D); else if (offStance) OFF_D.set(OFF_REST_D); else OFF_D.zero();
+        if (offMoves) OFF_Q.set(Q); else if (offIdle) OFF_Q.set(IDLE_Q); else if (offStance) OFF_Q.set(OFF_REST_Q); else OFF_Q.identity();
         MAIN_B.apply(now, MAIN_D, MAIN_Q);
         OFF_B.apply(now, OFF_D, OFF_Q);
         ArmsBlackBox.frame(m, t, (undecided ? ArmsBlackBox.UNDECIDED : 0) | (drawn ? ArmsBlackBox.DRAWN : 0) | (tremble ? ArmsBlackBox.CHARGING : 0)
@@ -319,8 +327,8 @@ final class ArmsHands {
     private static long shownNanos;
     private static boolean shownCutting;
     private static final org.joml.Vector3f VD = new org.joml.Vector3f(), VW = new org.joml.Vector3f(), ZERO = new org.joml.Vector3f(),
-            DA = new org.joml.Vector3f(), IDLE_D = new org.joml.Vector3f(), REST_D = new org.joml.Vector3f();
-    private static final org.joml.Quaternionf IDLE_Q = new org.joml.Quaternionf(), REST_Q = new org.joml.Quaternionf(),
+            DA = new org.joml.Vector3f(), IDLE_D = new org.joml.Vector3f(), REST_D = new org.joml.Vector3f(), OFF_REST_D = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf IDLE_Q = new org.joml.Quaternionf(), REST_Q = new org.joml.Quaternionf(), OFF_REST_Q = new org.joml.Quaternionf(),
             STANCE_Q = new org.joml.Quaternionf();
     private static final org.joml.Quaternionf ID = new org.joml.Quaternionf(), QA = new org.joml.Quaternionf(), QC = new org.joml.Quaternionf();
 
@@ -367,15 +375,16 @@ final class ArmsHands {
         boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
         int inv = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
         float g = guard(p, partial), j = g > 0 ? jolt(partial) * g : 0;
-        if (g > 0) guardMove(st, ours, g, j, inv, GD, GUARD);
+        if (g > 0) guardMove(st, ours, g, j, inv, GD, GUARD, false);
         onMain(G.set(ours ? st.hand() : st.vanillaGrip()), g);
         FirstPerson.View.fist(v.gripMain, 1, inv * G.x, G.y, G.z);
         org.joml.Vector3f both = ours ? st.offHand() : st.vanillaOffHand();
         if (!ArmsOffHand.shownTwin(p).isEmpty()) {
             G.set(st.hand());
-            if (g > 0) { // the twin up in guard too, mirrored: the pair crossed
-                GUARD.transform(G);
-                G.add(GD);
+            if (g > 0) { // the twin up in guard too, mirrored: the pair crossed (a shield up on its own guard)
+                guardMove(st, ours, g, j, inv, GD_OFF, GUARD_OFF, true);
+                GUARD_OFF.transform(G);
+                G.add(GD_OFF);
             }
             OFF_Q.transform(G);
             G.add(OFF_D).add(HX, HY + ArmsOffHand.equip() * -0.6F, HZ); // the twin rises with the main hand
@@ -426,7 +435,8 @@ final class ArmsHands {
     /** Whether the off hand's twin strikes in the move on the hands now, alone or with the main. */
     static boolean twinStrikes() {
         var style = ArmsPredict.style;
-        return style != null && ArmsPredict.move != null && FpSwings.hand(FpSwings.style(style.id()), ArmsPredict.move) != FpSwings.Hand.MAIN;
+        FpSwings.Style st = style == null ? null : FpSwings.style(style.id());
+        return st != null && st.off() == null && ArmsPredict.move != null && FpSwings.hand(st, ArmsPredict.move) != FpSwings.Hand.MAIN; // a shield lays no ribbon
     }
 
     /** Autopilot only: hold the hands at a fraction (0..1) through a move, for a still review frame. */

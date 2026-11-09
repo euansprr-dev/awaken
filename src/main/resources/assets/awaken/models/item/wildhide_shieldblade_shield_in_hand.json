@@ -1,0 +1,76 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "particle": "awaken:item/arms/wildhide_shieldblade_icon"
+ },
+ "display": {
+  "firstperson_righthand": {
+   "rotation": [
+    157.58,
+    51.68,
+    -152.87
+   ],
+   "translation": [
+    -0.084,
+    1.672,
+    -0.922
+   ],
+   "scale": [
+    0.3,
+    0.3,
+    0.3
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    157.58,
+    51.68,
+    117.13
+   ],
+   "translation": [
+    -0.084,
+    1.672,
+    -0.922
+   ],
+   "scale": [
+    0.3,
+    0.3,
+    0.3
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    135.0,
+    90.0,
+    0.0
+   ],
+   "translation": [
+    0.0,
+    -1.919,
+    5.928
+   ],
+   "scale": [
+    0.62,
+    0.62,
+    0.62
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    45.0,
+    90.0,
+    -0.0
+   ],
+   "translation": [
+    0.0,
+    -1.919,
+    5.928
+   ],
+   "scale": [
+    0.62,
+    0.62,
+    0.62
+   ]
+  }
+ }
+}

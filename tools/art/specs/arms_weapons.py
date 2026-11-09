@@ -2477,38 +2477,142 @@ def kite_shield(face, rim, top=14.0):
     return B
 
 
-def shieldblade(t):
-    """The Shieldblade: a shield face that fills the outline (E round, of laced hide on bone with an antler boss; D
-    round, of tusk plates in a bronze rim set with teeth; C, B, A, S kite-shaped: slate in brass with a lit circuit
-    cross; Veil-steel in mirror with a spirit cross; black scale in gold with a molten cross and two small wings; ivory
-    in gold with a crimson rune cross and a crown), a raised boss holding the stone, a short blade rising from its top
-    and the grip below it."""
+# ---- The Shieldblade (Euan 2026-11-09: "reinvent that one from scratch"; SPEC 25 "The Shieldblade"): a real sword in the
+# main hand and a real shield on the other arm, one item. The old one was a shield with a stub of blade on top: it had
+# the same face on both sides, so a push "feels like it's hitting the wrong side", and it blocked edge-on with "a tiny
+# dagger swung out of a shield". The shield has one front and one back and is built in front of the fist (the fist's
+# plane is z 0, its front toward +z), so what the arm holds is a grip on its back. The whole (sword behind shield) is
+# only for the inventory and stands; hands draw the two parts (<id>_blade, <id>_shield: pair_of). --------------------
+
+SHIELD_FP = 0.30  # the shield's scale in first person
+SHIELD_Z = 3.0  # the plate's middle, in front of the fist
+
+
+def shield_rows(kind):
+    """A shield's outline, bottom to top: (y0, y1, half width) in whole texels, the fist on its middle (y -1)."""
+    if kind == "round":
+        r, c = 10.5, -1.0
+        rows = []
+        for y in range(-11, 9, 2):
+            hw = math.sqrt(max(0.0, r * r - (y + 1 - c) ** 2))
+            if hw >= 2:
+                rows.append((float(y), y + 2.0, float(round(hw))))
+        return rows
+    rows = [(1.0 + 2 * k, 3.0 + 2 * k, 10.0) for k in range(5)]  # the flat of a heater, above the fist
+    rows += [(11.0, 12.0, 8.0)]  # its shoulders eased in
+    rows = [(-1.0, 1.0, 10.0)] + rows
+    for k, hw in enumerate((10, 9, 9, 8, 7, 5, 3, 1)):  # the long curve down to the point
+        rows.append((-3.0 - 2 * k, -1.0 - 2 * k, float(hw)))
+    return sorted(rows)
+
+
+def _layer(rows, z0, z1, mat, part, inset=0.0, **data):
+    return [VX.box(-(hw - inset), hw - inset, y0, y1, z0, z1, mat, part, f"{part}{y0}", **data) for y0, y1, hw in rows if hw - inset > 0.4]
+
+
+def shield_plate(kind, face, rim, back, wrap, strap):
+    """The plate: a rim the whole outline, a face inset on its front, a darker back inset behind it, and on the back only
+    the fist's bar across the middle on two posts and a strap for the forearm above it."""
+    r = shield_rows(kind)
+    z = SHIELD_Z
+    B = _layer(r, z - 1.0, z + 1.0, rim, "rim")
+    B += _layer(r, z, z + 2.0, face, "face", inset=1.0)
+    B += _layer(r, z - 2.0, z, back, "back", inset=1.0)
+    B += [VX.box(-4.0, 4.0, -2.0, 0.0, -1.0, 1.0, wrap, "bar", "bar"),  # what the fist closes on
+          VX.box(-5.0, -4.0, -2.0, 0.0, -1.0, z - 2.0, strap, "post", "post_l"), VX.box(4.0, 5.0, -2.0, 0.0, -1.0, z - 2.0, strap, "post", "post_r"),
+          VX.box(-7.0, 7.0, 3.0, 5.0, z - 3.0, z - 2.0, strap, "strap", "strap"),  # the forearm's strap
+          VX.box(-8.0, -7.0, 3.0, 5.0, z - 3.0, z - 2.0, wrap, "strap", "buckle_l"), VX.box(7.0, 8.0, 3.0, 5.0, z - 3.0, z - 2.0, wrap, "strap", "buckle_r")]
+    return B
+
+
+def shield_front(z):
+    return SHIELD_Z + 2.0 + z
+
+
+def moved(boxes, d, keep=lambda b: True):
+    """The same boxes shifted (design texels), those keep says to."""
+    d = np.asarray(d, dtype=float)
+    return [VX.Box(b.c + d, b.h, b.mat, b.part, b.R, b.name, **b.data) for b in boxes if keep(b)]
+
+
+def shieldblade_shield(t):
+    """The shield of each rank. E, D round: laced hide on bone with an antler boss; tusk plates in a bronze rim set with
+    teeth. C, B, A, S heaters: slate in brass with a lit circuit cross; Veil-steel in mirror with a spirit cross; black
+    scale in gold with a molten cross and wings; ivory in gold with a crimson rune cross and a crown."""
     k = KIT[t]
-    B = [grip(-4, 2, k["wrap"]), ring(-5, -4, k["metal"], part="pommel")]
-    B += blade([(14, 19, 5, 3), (19, 21, 3, 1), (21, 22, 1, 1)], k["core"], k["edge"], span=(14, 22), column=0)
-    if t in "ED":
-        B += round_shield(k["face"], "bone" if t == "E" else "bronze")
-        B += [VX.slab(-1.5, 1.5, 6.5, 9.5, 5, "antler" if t == "E" else "bronze", "boss"), stone_at(t, (0, 8, 0), 2, 7)]
-        if t == "D":
-            for a in range(0, 360, 60):
-                x, y = 7.4 * math.sin(math.radians(a)), 8 + 7.4 * math.cos(math.radians(a))
-                B.append(VX.rbox((x, y, 0), (1, 2, 1), -a, "tooth", f"tooth{a}"))
-        stone = (0, 8, 0)
+    rim = {"E": "bone", "D": "bronze", "C": "brass", "B": "mirror", "A": "gold", "S": "gold"}[t]
+    kind = "round" if t in "ED" else "heater"
+    B = shield_plate(kind, k["face"], rim, k["pole"], k["wrap"], k["bind"])
+    z = shield_front(0)
+    boss = "antler" if t == "E" else k["metal"]
+    B += [VX.box(-3.5, 3.5, -4.5, 2.5, z, z + 2.0, boss, "boss", "boss"), VX.box(-2.5, 2.5, -3.5, 1.5, z + 2.0, z + 3.0, boss, "boss", "boss_top")]
+    stone = (0.0, -1.0, z + 3.5)
+    B.append(VX.rbox(stone, (3, 3, 2), 45, k["gem"], "stone"))
+    if t == "E":
+        for sx in (-1, 1):  # the lacing: two cords from the boss out to the rim
+            B.append(VX.rbox((sx * 5.5, 2.5, z + 0.5), (6, 1, 1), sx * 35, k["bind"], f"lace{sx}"))
+            B.append(VX.rbox((sx * 5.5, -4.5, z + 0.5), (6, 1, 1), -sx * 35, k["bind"], f"lace_low{sx}"))
+    elif t == "D":
+        for a in range(0, 360, 45):
+            x, y = 9.6 * math.sin(math.radians(a)), -1.0 + 9.6 * math.cos(math.radians(a))
+            B.append(VX.rbox((x, y, SHIELD_Z), (1, 3, 3), -a, "tooth", f"tooth{a}"))
     else:
-        rim = {"C": "brass", "B": "mirror", "A": "gold", "S": "gold"}[t]
-        cross = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "ivory"}[t]
-        B += kite_shield(k["face"], rim)
-        B += [VX.slab(-0.5, 0.5, 5, 13, 6, cross, "cross", span=(4, 13), column=0), VX.slab(-4.5, 4.5, 10, 11, 6, cross, "cross_bar", span=(4, 13), column=0)]
-        B += [VX.slab(-1.5, 1.5, 9, 12, 7, rim, "boss"), stone_at(t, (0, 10.5, 0), 2, 9)]
+        cross = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "light_crimson"}[t]
+        B += [VX.box(-1.0, 1.0, -11.0, 11.0, z, z + 1.0, cross, "cross", "cross", span=(-11, 11), column=0),
+              VX.box(-8.0, 8.0, 5.0, 7.0, z, z + 1.0, cross, "cross_bar", "cross_bar", span=(-11, 11), column=0)]
         if t == "A":
-            B += both(fan(-5.0, 13.5, [(40, 4, 2, 2, "gold"), (70, 3, 1, 1, "feather")], "wing"))
+            B += moved(both(fan(-8.0, 11.5, [(40, 5, 2, 3, "gold"), (70, 4, 1, 1, "feather")], "wing")), (0.0, 0.0, SHIELD_Z))
         if t == "S":
-            for x in (-4.0, 0.0, 4.0):
-                B.append(VX.rbox((x, 14.4, 0), (2, 2, 5), 45, "gold", f"crown{x}"))
-        stone = (0, 10.5, 0)
-    anchors = [(stone, 1.6, GLOW[t], 1)]
-    line = [(0.0, y, 1.0) for y in (5.0, 8.0, 12.0)] if t in "BAS" else []
-    return B, anchors, look_of(t, (-4, 2), (0, 9), line, stone)
+            for x in (-6.0, 0.0, 6.0):
+                B.append(VX.rbox((x, 13.0, SHIELD_Z), (2, 2, 3), 45, "gold", f"crown{x}"))
+    anchors = [(stone, 1.8, GLOW[t], 1)]
+    line = [(0.0, y, z + 0.5) for y in (-6.0, 2.0, 8.0)] if t in "BAS" else []
+    return B, anchors, look_of(t, (-2, 0), (0, -1), line, stone)
+
+
+def shieldblade_blade(t):
+    """The sword: as long as a Longsword, a broad straight blade with a lit fuller from Gatewrought up, a wide guard set
+    with the rank's stone."""
+    k = KIT[t]
+    B = [grip(-4, 3, k["wrap"]), ring(-5, -4, k["metal"], part="pommel")]
+    B += blade([(5, 25, 6, 4), (25, 28, 5, 3), (28, 30, 3, 1), (30, 31, 1, 1)], k["core"], k["edge"], span=(5, 31), column=0)
+    B += [VX.slab(-6.5, 6.5, 3, 5, 4, k["metal"], "guard"), VX.slab(-1.5, 1.5, 5, 7, 5, k["metal"], "guard_top")]
+    stone = (0.0, 4.0, 0.0)
+    B.append(stone_at(t, stone, 2, 7))
+    if t == "E":
+        for sx in (-1, 1):
+            B.append(VX.rbox((sx * 7.5, 6.0, 0), (2, 5, 3), -sx * 25, "antler", f"quillon{sx}"))
+    elif t == "D":
+        for sx in (-1, 1):
+            for y in (8.0, 14.0, 20.0):
+                B.append(VX.rbox((sx * 3.3, y, 0), (1, 3, 2), sx * 20, "tooth", f"tooth{sx}{y}"))
+    else:
+        fuller = {"C": "signal_line", "B": "spirit_edge", "A": "ember_edge", "S": "light_crimson"}[t]
+        B.append(VX.slab(-0.5, 0.5, 6, 26, 4, fuller, "fuller", span=(5, 31), column=0))
+        if t == "A":
+            B += both(fan(-6.0, 5.0, [(35, 4, 2, 2, "gold"), (65, 3, 1, 1, "feather")], "guard_wing"))
+        if t == "S":
+            for sx in (-1, 1):
+                B.append(VX.rbox((sx * 7.0, 5.0, 0), (2, 2, 3), 45, "gold", f"crown{sx}"))
+    anchors = [(stone, 1.4, GLOW[t], 1)]
+    line = [(0.0, y, 2.0) for y in (10.0, 18.0, 25.0)] if t in "BAS" else []
+    return B, anchors, look_of(t, (-4, 3), (0, 15), line, stone)
+
+
+def shield_over_sword(sword, shield, anchors_s, anchors_h):
+    """The whole, for the inventory and a stand: the shield over the lower blade (none of its hardware, which would run
+    through the sword), the blade's point above it and the hilt below."""
+    d = (0.0, 9.0, 1.0)
+    keep = lambda b: b.part not in ("bar", "post", "strap")  # noqa: E731
+    return sword + moved(shield, d, keep), [(tuple(np.asarray(c) + d), r, rgb, kind) for c, r, rgb, kind in anchors_h] + list(anchors_s[:0])
+
+
+def shieldblade(t):
+    """The Shieldblade as one thing (the inventory, a stand, a frame)."""
+    sb, sa, sl = shieldblade_blade(t)
+    hb, ha, _ = shieldblade_shield(t)
+    B, anchors = shield_over_sword(sb, hb, sa, ha)
+    return B, anchors, sl
 
 
 register("shieldblade", shieldblade)
@@ -3116,18 +3220,46 @@ def abbot_of_frost_glaive():
     return B, anchors, lord_look("abbot_of_frost_glaive", (-4, 3), (0, 18))
 
 
-def mirror_knight_shieldblade():
-    """The Mirror Knight's Reflection: a kite shield whose face is a mirror, glinting, trimmed all round in silver set
-    with diamonds; a great diamond for its boss; a short blade of mirror steel above it; a silver grip."""
-    B = [grip(-4, 2, "mirror"), ring(-5, -4, "mirror", part="pommel")]
-    B += blade([(14, 19, 5, 3), (19, 21, 3, 1), (21, 22, 1, 1)], "l_mirror_face", "mirror_edge")
-    B += kite_shield("l_mirror_face", "l_diamond_rim")
-    B += [VX.slab(-2.5, 2.5, 8, 13, 7, "mirror", "boss"), VX.rbox((0, 10.5, 0), (3, 3, 9), 45, "l_diamond", "diamond")]
-    for x in (-3.0, 3.0):
-        B.append(VX.rbox((x, 6.0, 0), (1, 1, 6), 45, "l_diamond", f"diamond{x}"))
+def mirror_knight_blade():
+    """The Mirror Knight's sword: a long blade of mirror steel, a guard of silver set with diamonds."""
+    B = [grip(-4, 3, "mirror"), ring(-5, -4, "mirror", part="pommel")]
+    B += blade([(5, 25, 6, 4), (25, 28, 5, 3), (28, 30, 3, 1), (30, 31, 1, 1)], "l_mirror_face", "mirror_edge", span=(5, 31), column=0)
+    B += [VX.slab(-6.5, 6.5, 3, 5, 4, "mirror", "guard"), VX.slab(-1.5, 1.5, 5, 7, 5, "mirror", "guard_top"), VX.rbox((0, 4, 0), (3, 3, 7), 45, "l_diamond", "stone")]
+    for x in (-5.0, 5.0):
+        B.append(VX.rbox((x, 4, 0), (1, 1, 6), 45, "l_diamond", f"diamond{x}"))
     c = LORD_COLOUR["mirror_knight_shieldblade"]
-    anchors = [((0, 10.5, 0), 2.8, c, 1)]
-    return B, anchors, lord_look("mirror_knight_shieldblade", (-4, 2), (0, 9))
+    return B, [((0, 4, 0), 2.0, c, 1)], lord_look("mirror_knight_shieldblade", (-4, 3), (0, 15))
+
+
+def mirror_knight_shield():
+    """The Mirror Knight's shield: a heater whose face is a mirror, trimmed all round in silver set with diamonds, and a
+    great diamond for its boss."""
+    B = shield_plate("heater", "l_mirror_face", "l_diamond_rim", "obsidian", "mirror", "mirror")
+    z = shield_front(0)
+    B += [VX.box(-3.5, 3.5, -4.5, 2.5, z, z + 2.0, "mirror", "boss", "boss")]
+    stone = (0.0, -1.0, z + 2.5)
+    B.append(VX.rbox(stone, (4, 4, 3), 45, "l_diamond", "diamond"))
+    for x, y in ((-6.0, 7.0), (6.0, 7.0), (0.0, -9.0)):
+        B.append(VX.rbox((x, y, z + 0.5), (2, 2, 1), 45, "l_diamond", f"diamond{x}{y}"))
+    c = LORD_COLOUR["mirror_knight_shieldblade"]
+    return B, [(stone, 2.8, c, 1)], lord_look("mirror_knight_shieldblade", (-2, 0), (0, -1))
+
+
+def mirror_knight_shieldblade():
+    """The Mirror Knight's Reflection, whole (the inventory, a stand)."""
+    sb, sa, sl = mirror_knight_blade()
+    hb, ha, _ = mirror_knight_shield()
+    B, anchors = shield_over_sword(sb, hb, sa, ha)
+    return B, anchors, sl
+
+
+def pair_of(row):
+    """A weapon drawn in the hands as two things: {suffix: (boxes, anchors, look)}, else None."""
+    if row[8] != "shieldblade":
+        return None
+    if row[0] in LORD_COLOUR:
+        return {"_blade": mirror_knight_blade(), "_shield": mirror_knight_shield()}
+    return {"_blade": shieldblade_blade(row[2]), "_shield": shieldblade_shield(row[2])}
 
 
 def unit_zero_precursor():
@@ -3314,14 +3446,32 @@ def write_all(only=None):
         icon(make(row, clean=True)[0], look).save(os.path.join(tex_dir, wid + "_icon.png"))
         tex = "awaken:item/arms/" + wid
         _write(os.path.join(RES, "assets/awaken/models/item", wid + ".json"), {"parent": "minecraft:item/handheld", "textures": {"layer0": tex + "_icon"}})
+        pair, in_hand = pair_of(row), built
+        if pair is not None:  # the hands draw the parts, each its own mesh and texture
+            for suffix, (b_boxes, b_anchors, b_look) in pair.items():
+                part = VX.build(b_boxes, painter(False), to_item, width=64,
+                                anchors=[(tuple(to_item(np.array([c]))[0]), r * SCALE, hex_rgb(rgb), kind) for c, r, rgb, kind in b_anchors])
+                part.streams = [(kind, hex_rgb(rgb), rate, radius * SCALE, [tuple(q) for q in to_item(np.array(pts))])
+                                for kind, rgb, rate, radius, pts in b_look.get("streams", [])]
+                MS.write(os.path.join(mesh_dir, wid + suffix + ".mesh"), part, hex_rgb(b_look["accent"]))
+                Image.fromarray(part.texture(), "RGBA").save(os.path.join(tex_dir, wid + suffix + ".png"))
+                if suffix == "_blade":
+                    in_hand = part
         # the hands' base: a particle, no geometry of its own (the mesh draws itself), vanilla's third-person hold and
         # our own first-person one (FIRST_PERSON below)
         _write(os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json"), {
-            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": row_hold(row, built.pos / 16.0)})
+            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": row_hold(row, in_hand.pos / 16.0)})
         _write(os.path.join(RES, "assets/awaken/items", wid + ".json"), {"model": {
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}}],
-            "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand", "model": {"type": "awaken:weapon", "weapon": wid}}}})
+            "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand",
+                         "model": {"type": "awaken:weapon", "weapon": wid + ("_blade" if pair is not None else "")}}}})
+        if pair is not None:  # the shield: an item model of its own (no item: ArmsOffHand's copy of the stack names it)
+            _write(os.path.join(RES, "assets/awaken/models/item", wid + "_shield_in_hand.json"), {
+                "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": shield_hold(row_hold(row, in_hand.pos / 16.0))})
+            _write(os.path.join(RES, "assets/awaken/items", wid + "_shield.json"), {"model": {
+                "type": "minecraft:special", "base": "awaken:item/" + wid + "_shield_in_hand",
+                "model": {"type": "awaken:weapon", "weapon": wid + "_shield"}}})
         sleeve = sleeve_of(row)
         if sleeve is not None:  # drawn past the cuff in first person only (WeaponRenderer), with a texture of its own
             arm = VX.build(sleeve, painter(False), to_item, width=64)
@@ -3688,15 +3838,50 @@ def row_hold(row, pos):
     return out
 
 
+def shield_hold(hold):
+    """A shield's holds: first person as its sword's (its keys place it: arms_keys.py); third person strapped on the outside
+    of the forearm, its top up the arm toward the shoulder and its front out from the body. In ItemInHandLayer's frame a
+    held item's +z runs up the arm and its -x out from a left arm; a left hand's is written mirrored (ItemTransform)."""
+    import arms_holds as AH
+    out = {}
+    # first person: smaller than its sword's hold (at the sword's scale a shield fills the height of the screen), the fist where the sword's closes
+    fp = hold["firstperson_righthand"]
+    s0, s1 = fp["scale"][0], SHIELD_FP
+    R = MR.euler(*fp["rotation"])
+    t = np.asarray(fp["translation"], dtype=float) + 16 * (s0 - s1) * (R @ (AH.GRIP_ITEM - 0.5))
+    right = {"rotation": fp["rotation"], "translation": [round(float(v), 3) for v in t], "scale": [s1, s1, s1]}
+    lrot, ltr, _ = AH.mirror_display((tuple(fp["rotation"]), tuple(right["translation"]), s1), keep_edge=False)
+    out["firstperson_righthand"], out["firstperson_lefthand"] = right, {"rotation": lrot, "translation": ltr, "scale": [s1, s1, s1]}
+    sc = 0.62
+    (rx, ry, rz), t, s0 = AH.HANDHELD_3P
+    R0 = MR.euler(rx, ry, rz)
+    g = 16 * s0 * (R0 @ (AH.GRIP_ITEM - 0.5)) + np.asarray(t, dtype=float)  # where vanilla's handheld puts the grip (JSON px)
+    a, f = AH.AXIS_ITEM, AH.FACE_ITEM
+    for side, name in ((1.0, "thirdperson_righthand"), (-1.0, "thirdperson_lefthand")):
+        ta, tf = np.array([0.0, 0.0, 1.0]), np.array([side, 0.0, 0.0])
+        R = np.column_stack((ta, tf, np.cross(ta, tf))) @ np.column_stack((a, f, np.cross(a, f))).T
+        ex, ey, ez = AH.euler_xyz(R)
+        here = np.array([g[0] * side, g[1], g[2]]) - 16 * sc * (R @ (AH.GRIP_ITEM - 0.5))
+        out[name] = {"rotation": [round(ex, 2), round(side * ey, 2), round(side * ez, 2)],
+                     "translation": [round(float(here[0] * side), 3), round(float(here[1]), 3), round(float(here[2]), 3)],
+                     "scale": [sc, sc, sc]}
+    return out
+
+
 def write_holds():
     """Only the holds (models/item/<id>_in_hand.json), from the meshes already built: no mesh or texture is re-made."""
     for row in CATALOG:
         wid = row[0]
-        m = MS.read(os.path.join(RES, "assets/awaken/arms/weapons", wid + ".mesh"))
+        m = MS.read(os.path.join(RES, "assets/awaken/arms/weapons", wid + ("_blade" if row[8] == "shieldblade" else "") + ".mesh"))
         path = os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json")
         model = json.load(open(path))
         model["display"] = row_hold(row, m["pos"])
         _write(path, model)
+        if row[8] == "shieldblade":
+            path = os.path.join(RES, "assets/awaken/models/item", wid + "_shield_in_hand.json")
+            model = json.load(open(path))
+            model["display"] = shield_hold(row_hold(row, m["pos"]))
+            _write(path, model)
 
 
 def held_as(style):

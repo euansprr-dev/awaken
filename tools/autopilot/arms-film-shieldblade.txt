@@ -1,0 +1,105 @@
+# The Shieldblade filmed in the real game (SPEC §25 "The Shieldblade"; Euan 2026-11-09): the sword and the shield drawn apart, the shield's
+# inside toward the eye, the guard raised on the shield, the shove and the heavy. First person, then from the side (/awaken fx sidecam 90) and from
+# in front for the guard. The world at 2 ticks a second, as the Daggers' film; a picture every 0.25 ticks into clips/<take>/.
+# ci knobs: PACK=perf,feel,comfort,world
+world armsfilmshield creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+arms studio awaken:gatewrought_shieldblade
+arms waitserver 100
+camera first
+look 0 6
+wait 20
+shot shield_rest_1p
+arms guard on
+wait 14
+shot shield_guard_1p
+arms guard off
+wait 14
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film shield_1p_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film shield_1p_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+camera front
+cmd awaken fx sidecam 90
+wait 10
+shot shield_rest_side
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film shield_side_combo 44 0.25 2
+wait 3
+arms strike 2
+wait 8
+arms strike 2
+wait 8
+arms strike 2
+wait 22
+arms rate 20
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+arms rate 2
+wait 2
+arms film shield_side_heavy 40 0.25 2
+wait 3
+arms heavy 14
+wait 34
+arms rate 20
+wait 20
+arms guard on
+wait 14
+shot shield_guard_side
+arms guard off
+wait 14
+cmd awaken fx sidecam 180
+wait 10
+shot shield_rest_front
+arms guard on
+wait 14
+shot shield_guard_front
+arms guard off
+wait 14
+cmd awaken fx sidecam 0
+camera first
+wait 20
+quit

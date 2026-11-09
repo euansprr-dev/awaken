@@ -14,6 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.Level;
 import org.joml.Quaternionf;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,6 +64,25 @@ final class ArmsWrist {
         }
     }
 
+    /** A guard went up over {@code fade} ticks: a shield's wrist comes round to face the front (FpSwings.guard3). */
+    static void guard(Entity e, int fade) {
+        FpSwings.Style st = shieldOf(e);
+        if (st != null) GOING.put(e.getId(), new Going(st, null, e.level().getGameTime(), true, fade));
+    }
+
+    /** A guard came down: the shield's wrist goes back over {@code fade} ticks, as the arm does. */
+    static void guardDown(Entity e, int fade) {
+        Going g = GOING.get(e.getId());
+        if (g != null && g.move() == null) GOING.put(e.getId(), new Going(g.style(), null, e.level().getGameTime(), true, -fade));
+    }
+
+    private static FpSwings.@Nullable Style shieldOf(Entity e) {
+        if (!(e instanceof LivingEntity l) || l.getMainArm() == HumanoidArm.LEFT) return null;
+        Archetypes.Loaded style = Arms.styleOf(l.getMainHandItem());
+        FpSwings.Style st = style == null ? null : FpSwings.style(style.id());
+        return st == null || st.off() == null ? null : st;
+    }
+
     /** Another clip took over (a dodge, a charge, a settle). */
     static void stop(Entity e) {
         GOING.remove(e.getId());
@@ -83,6 +103,12 @@ final class ArmsWrist {
         Minecraft mc = Minecraft.getInstance();
         if (g == null || mc.level == null) return false;
         float since = (mc.level.getGameTime() - g.start()) + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        if (g.move() == null) { // a shield up: on its own arm, eased in as the guard rises and out as it falls
+            if (!left || !FpSwings.guard3(g.style(), STRAIGHT, out)) return false;
+            float k = g.fade() > 0 ? since / g.fade() : 1F + since / g.fade();
+            if (k < 1F) SQUARE.slerp(out, ArmsHands.easeInOutSine(Math.max(0F, k)), out);
+            return true;
+        }
         float t = g.held() ? 0F : since;
         if (t > FpSwings.wristLength(g.style(), g.move()) || !FpSwings.wrist(g.style(), g.move(), left, STRAIGHT, t, out)) return false;
         if (g.held() && since < g.fade()) SQUARE.slerp(out, ArmsHands.easeInOutSine(since / g.fade()), out);
@@ -94,6 +120,10 @@ final class ArmsWrist {
         if (!(entity instanceof Player p) || !(state instanceof ArmedEntityRenderState armed)) return;
         Going g = GOING.get(p.getId());
         if (g == null) return;
+        if (g.move() == null && g.fade() < 0 && p.level().getGameTime() - g.start() > -g.fade() + 1) {
+            GOING.remove(p.getId());
+            return;
+        }
         if (!g.held() && p.level().getGameTime() - g.start() > FpSwings.wristLength(g.style(), g.move()) + 1) {
             GOING.remove(p.getId());
             return;

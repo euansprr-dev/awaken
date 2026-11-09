@@ -35,11 +35,13 @@ H = np.array([L.HX, L.HY, L.HZ])  # vanilla's resting hand
 M = np.diag([-1.0, 1.0, 1.0])  # the left hand is the right mirrored across the view's vertical plane
 DT = 0.25
 KEYED_BY = "tools/art/arms_keys.py"
-REVIEW = {"daggers": "gatewrought_daggers", "scythe": "gatewrought_scythe", "twinblades": "gatewrought_twinblades"}
+REVIEW = {"daggers": "gatewrought_daggers", "scythe": "gatewrought_scythe", "twinblades": "gatewrought_twinblades",
+          "shieldblade": "gatewrought_shieldblade_blade"}
 # where each style's hand closes, in hand space: the forged weapon's hold puts its grip there whatever the blade's length
 # (fp_swings.json's grip), so a pose's place is the fist's, not the lab's estimate from the mesh
 GRIP = {"daggers": np.array([0.0061, -0.0271, 0.0558]), "scythe": np.array([-0.0624, -0.2206, 0.1148]),
-        "twinblades": np.array([-0.04, 0.02, 0.0])}  # the Twin Blades' handGrip: the middle of the shaft
+        "twinblades": np.array([-0.04, 0.02, 0.0]),  # the Twin Blades' handGrip: the middle of the shaft
+        "shieldblade": np.array([0.02, 0.0, 0.02])}
 TAN = math.tan(math.radians(L.FOV) / 2)
 ASPECT = L.W / L.H
 
@@ -57,6 +59,20 @@ def _overlay_load(wid):
 
 
 L.MR.load = _overlay_load
+
+# the Shieldblade's sword and shield are one item: the sword is held by the item's own hold
+_held_json, _display_3p = L.MR.held, L.display_3p
+OFF_MODEL = {"shieldblade": "_shield"}  # a style whose off hand holds something else: what (FpSwings.OffHand)
+
+
+def _item_of(wid):
+    return wid[:-len("_blade")] if wid.endswith("shieldblade_blade") else wid
+
+
+_flipped_3p = L.flipped_3p
+L.flipped_3p = lambda wid: False if wid.endswith(("shieldblade_blade", "shieldblade_shield")) else _flipped_3p(wid)
+L.MR.held = lambda wid: _held_json(_item_of(wid))
+L.display_3p = lambda wid, arm: _display_3p(_item_of(wid), arm)
 
 
 def design_item(p):
@@ -84,6 +100,12 @@ def held_of(style, wid=None):
     h = L.Held(w)
     h.grip = GRIP[style].copy()
     h.nib = None
+    h.off = None
+    if style in OFF_MODEL:  # the off hand's own model, its fist where the main's closes
+        h.off = L.Held(_item_of(w) + OFF_MODEL[style])
+        h.off.grip = GRIP[style].copy()
+        h.off.nib = None
+        h.off.length = float((h.off.tip - h.off.grip) @ h.off.axis)
     if style in TWO_HANDS:
         main, second = TWO_HANDS[style]
         h.grip, h.nib = design_point(w, main), design_point(w, second)
@@ -159,8 +181,9 @@ def right_handed(held, pose, left):
     """A pose as the game stores it, authored right-handed (a left hand mirrored onto the right): the move d from
     vanilla's rest and the turn R, about the hand's own place, that put the grip at pose.at."""
     p = pose.mirrored() if left else pose
-    R = rotation(held, p)
-    return p.at - H - R @ held.grip, R
+    h = held.off if left and getattr(held, "off", None) is not None else held
+    R = rotation(h, p)
+    return p.at - H - R @ h.grip, R
 
 
 # ---- a track: keys in time, a cubic through them ---------------------------------------------------------------------
@@ -552,21 +575,22 @@ def picture(held, right, left, size=(960, 540), hand_grip=(-0.02, 0.07, -0.02)):
     for side, (d, R) in (("r", right), ("l", left)):
         if d is None:
             continue
-        P = held.P @ R.T + H + d
-        N = held.N @ R.T
-        m = held.m
+        h = held.off if side == "l" and getattr(held, "off", None) is not None else held
+        P = h.P @ R.T + H + d
+        N = h.N @ R.T
+        m = h.m
         if side == "l":
             P = P @ M.T
             N = N @ M.T
             order = np.arange(len(P)).reshape(-1, 3)[:, [0, 2, 1]].reshape(-1)
             P, N = P[order], N[order]
-            m = dict(held.m)
+            m = dict(h.m)
             for k in ("nrm", "along", "uv"):
-                m[k] = np.asarray(held.m[k])[order]
+                m[k] = np.asarray(h.m[k])[order]
         behind = (P[:, 2] > L.NEAR).reshape(-1, 3).any(axis=1).repeat(3)
         P = np.where(behind[:, None], np.array([0.0, 0.0, -1000.0]), P)
         sx, sy = L.project(P)
-        imgs.append(L.MR._raster(m, held.tex, {"sx": sx, "sy": sy, "sz": P[:, 2], "nv": N}, (W, H_), L.MR.BG, time=0.27))
+        imgs.append(L.MR._raster(m, h.tex, {"sx": sx, "sy": sy, "sz": P[:, 2], "nv": N}, (W, H_), L.MR.BG, time=0.27))
     base = np.asarray(imgs[0]).astype(int) if imgs else np.zeros((H_, W, 3), int)
     for im in imgs[1:]:
         a = np.asarray(im).astype(int)
@@ -597,7 +621,7 @@ def picture(held, right, left, size=(960, 540), hand_grip=(-0.02, 0.07, -0.02)):
 
 
 def tip_ndc(held, d, R, left=False):
-    tip = R @ held.tip + H + d
+    tip = R @ (held.off.tip if left and getattr(held, "off", None) is not None else held.tip) + H + d
     if left:
         tip = M @ tip
     f = 1.0 / math.tan(math.radians(L.FOV) / 2)
@@ -831,8 +855,159 @@ def chain(out, style, names, gap=4.0, step=0.5):
     return out
 
 
-MOVES = {"daggers": dagger_moves, "scythe": scythe_moves, "twinblades": twin_moves}
-POSES = {"daggers": dagger_poses, "scythe": scythe_poses, "twinblades": twin_poses}
+# ---- the Shieldblade (Euan 2026-11-09: "reinvent that one from scratch"; "when you push with it, it doesn't feel like a push"; "the blocking
+# with it doesn't even block with the shield side"; "it just looks like a tiny dagger swung out of a shield") -----------------------------
+#
+# A long sword in the main hand and a shield on the other arm, one item. The shield's inside is toward you, its boss toward what you hit.
+# A shove is the one blow a shield has: gathered out to the left with its face turned aside, then driven across to the middle of the view and
+# squared to the front, the body behind it. Depth alone doesn't read, so the shield travels across the screen as much as away. Each blade or
+# shield stroke is one curve from a stop through its hit to one stop deeper, and comes home before the next press can land.
+
+def shield_poses():
+    """(the sword's, the shield's): the sword as the right hand holds it, the shield as the left does (its real place, x negative), both from
+    the screen: fist, depth, the point or the shield's top, and for the shield which way its boss faces."""
+    held = held_of("shieldblade")
+    SL, HL = held.length, held.off.length
+
+    def b(g, d, t, e=(-0.6, -0.8, 0.0), r=0.0):
+        return blade(g, d, t, SL, e, r)
+
+    def sh(g, d, top, face):
+        """The left hand's item is a turn, its mirror the hand's, so its boss comes out as a x e: for a boss toward face, e = face x a."""
+        p = blade(g, d, top, HL)
+        return p.moved(edge=np.cross(unit(face), unit(p.to - p.at)))
+
+    thrust = (0.0, -1.0, 0.0)
+    sword = dict(
+        # the blade stands up the view, its flat toward you, so its whole length shows
+        rest=b((0.70, -0.86), 0.66, (0.36, 0.40), (-0.9, -0.3, 0.0)),
+        # drawn back while the shield goes in, or for the guard: still standing, out at the side
+        drawn=b((0.90, -0.94), 0.52, (0.70, 0.22), (-0.9, -0.3, 0.0)),
+        guarded=b((0.86, -0.96), 0.56, (0.62, 0.02), (-0.9, -0.3, 0.0)),
+        # strike 1, down across the view from the upper right
+        cut_set=b((0.86, -0.50), 0.62, (0.84, 0.70), (-1.0, -0.2, 0.0)),
+        cut_hit=b((0.34, -0.50), 0.74, (-0.62, 0.10), (-0.5, -1.0, -0.3)),
+        cut_end=b((-0.06, -0.88), 0.66, (-1.00, -0.62), (-0.3, -1.0, 0.1)),
+        # strike 3, the chop: raised over the shoulder, straight down the middle
+        chop_set=b((0.58, -0.22), 0.58, (0.40, 0.92), (-0.1, 0.4, 1.0)),
+        chop_hit=b((0.20, -0.62), 0.74, (0.05, 0.42), (-0.2, -0.3, -1.0)),
+        chop_end=b((0.14, -1.00), 0.72, (0.03, -0.50), (-0.1, 0.3, -1.0)),
+        # strike 4, the stab over the shield's rim
+        stab_set=b((0.86, -0.42), 0.46, (0.34, -0.10), thrust),
+        stab_hit=b((0.32, -0.46), 0.96, (0.02, 0.0), thrust),
+        stab_deep=b((0.30, -0.44), 1.04, (0.01, 0.01), thrust),
+        lunge=b((0.30, -0.46), 1.06, (0.02, 0.0), thrust),
+        lunge_deep=b((0.28, -0.44), 1.14, (0.01, 0.01), thrust),
+        # out of a dodge and a slide: flatter and lower than strike 1
+        sweep_set=b((0.92, -0.74), 0.54, (0.98, 0.14), (-1.0, -0.1, 0.0)),
+        sweep_hit=b((0.34, -0.62), 0.72, (-0.66, -0.06), (-0.3, -1.0, -0.2)),
+        sweep_end=b((-0.06, -0.92), 0.66, (-1.04, -0.56), (-0.2, -1.0, 0.1)),
+        low_set=b((0.92, -1.00), 0.54, (1.02, -0.30), (-1.0, 0.1, 0.0)),
+        low_hit=b((0.34, -0.84), 0.70, (-0.66, -0.36), (-0.1, -1.0, -0.2)),
+        low_end=b((-0.06, -1.02), 0.66, (-1.04, -0.84), (0.0, -1.0, 0.1)),
+        # held over a broken body or armed in a fall, the point down
+        high=b((0.34, 0.02), 0.50, (0.12, -1.40), (0.0, 0.3, 1.0)),
+        high_back=b((0.36, 0.20), 0.46, (0.14, -1.20), (0.0, 0.3, 1.0)),
+        down_hit=b((0.16, -0.60), 0.72, (0.04, -1.60), (0.0, 0.3, 1.0)),
+        down_deep=b((0.15, -0.74), 0.74, (0.04, -1.90), (0.0, 0.3, 1.0)),
+        out=b((0.56, -0.90), 0.66, (0.30, 0.04), (-0.9, -0.3, 0.0)),
+    )
+    shield = dict(
+        rest=sh((-0.66, -0.74), 0.60, (-0.70, -0.16), (-0.55, 0.0, -1.0)),
+        # a touch up and in while the sword strikes
+        brace=sh((-0.56, -0.66), 0.60, (-0.59, -0.06), (-0.35, 0.0, -1.0)),
+        # raised: the whole shield in front, the view over its rim
+        guard=sh((-0.16, -0.62), 0.50, (-0.14, 0.02), (0.0, 0.05, -1.0)),
+        # gathered for the shove, out to the left and turned aside
+        chamber=sh((-0.84, -0.80), 0.44, (-0.92, -0.22), (-0.95, 0.0, -1.0)),
+        drive=sh((-0.10, -0.54), 0.50, (-0.08, 0.12), (0.0, 0.0, -1.0)),
+        deep=sh((-0.06, -0.44), 0.68, (-0.05, 0.20), (0.0, 0.06, -1.0)),
+        # the heavy: gathered further still, then all the way to the middle
+        coil=sh((-0.92, -0.84), 0.40, (-1.02, -0.26), (-1.1, 0.0, -1.0)),
+        smash=sh((-0.04, -0.50), 0.48, (-0.03, 0.18), (0.0, 0.0, -1.0)),
+        smash_deep=sh((-0.02, -0.40), 0.74, (-0.01, 0.24), (0.0, 0.08, -1.0)),
+        low=sh((-0.72, -0.94), 0.58, (-0.78, -0.36), (-0.65, 0.0, -1.0)),
+    )
+    return sword, shield
+
+
+def shield_moves():
+    P, S = shield_poses()
+    T = Track
+    rest, srest = P["rest"], S["rest"]
+
+    def view(*keys):
+        return View(keys)
+
+    def cut_view(side, at, to):
+        return view((0, 0, 0, 0, STOP), (at, side * 1.0, 0.5, side * 1.4, GO), (to, side * 1.7, 0.6, side * 2.0, STOP), (to + 2.6, 0, 0, 0, STOP))
+
+    def shove_view(at, deep, pitch=1.2, home=3.2):
+        """A shove: the view drawn back a touch as it gathers, then dropped in behind the shield."""
+        return view((0, 0, 0, 0, STOP), (at - 1.0, 0.4, -0.6, 0.5, STOP), (at, -0.2, pitch, -0.3, GO), (deep, -0.3, pitch * 1.25, -0.4, STOP), (deep + home, 0, 0, 0, STOP))
+
+    def sword_strike(set_at, hit, end, home, names, form, view_, total, trail_after=0.45, shield="brace"):
+        s, h, e = names
+        return dict(hand="main", form=form, hit=hit, set=set_at, swish=hit - 0.55, trail=(hit - 0.7, hit + trail_after),
+                    keys=T([(0.0, rest, STOP), (set_at, P[s], STOP), (hit, P[h], GO), (end, P[e], STOP), (home, rest, STOP), (total + 1.0, rest, STOP)]),
+                    other=T([(0.0, srest, STOP), (hit, S[shield], STOP), (home, srest, STOP), (total + 1.0, srest, STOP)]), view=view_)
+
+    def shove(chamber_at, hit, deep_at, home, total, chamber="chamber", drive="drive", deep="deep", start=None, pitch=1.2, swish=None):
+        return dict(hand="off", form="bash", hit=hit, set=chamber_at, swish=swish if swish is not None else hit - 0.55, trail=(hit - 0.4, hit + 0.4), nod=2.4,
+                    keys=T(([] if start is None else []) + [(0.0, srest if start is None else S[start], STOP)]
+                           + ([(chamber_at, S[chamber], STOP)] if chamber_at > 0 else [])
+                           + [(hit, S[drive], GO), (deep_at, S[deep], STOP), (deep_at + 0.9, S[deep], STOP), (home, srest, STOP), (total + 1.0, srest, STOP)]),
+                    other=T([(0.0, rest, STOP), (max(chamber_at, 1.0), P["drawn"], STOP), (deep_at + 0.9, P["drawn"], STOP), (home, rest, STOP), (total + 1.0, rest, STOP)]),
+                    view=shove_view(max(hit, 1.0), deep_at, pitch))
+
+    moves = {
+        # a cut down across the view; the shield rises a touch against it
+        "strike_1": sword_strike(1.1, 2.0, 2.7, 6.0, ("cut_set", "cut_hit", "cut_end"), "slash", cut_view(-1, 2.0, 2.7), 10.0),
+        # the shove
+        "strike_2": shove(1.8, 3.0, 3.6, 7.0, 12.0),
+        # a chop down the middle
+        "strike_3": sword_strike(1.7, 3.0, 3.8, 7.0, ("chop_set", "chop_hit", "chop_end"), "chop",
+                                 view((0, 0, 0, 0, STOP), (1.7, 0, -1.2, 0, STOP), (3.0, 0, 1.8, 0, GO), (3.8, 0, 2.4, 0, STOP), (7.0, 0, 0, 0, STOP)), 13.0),
+        # the finisher: the sword driven over the shield's rim as the shield comes up
+        "strike_4": dict(hand="main", form="stab", hit=3.0, set=1.7, swish=2.45, trail=(2.3, 3.45), nod=1.4,
+                         keys=T([(0.0, rest, STOP), (1.7, P["stab_set"], STOP), (3.0, P["stab_hit"], GO), (3.6, P["stab_deep"], STOP), (8.0, rest, STOP), (15.0, rest, STOP)]),
+                         other=T([(0.0, srest, STOP), (2.4, S["guard"], STOP), (4.2, S["guard"], STOP), (8.0, srest, STOP), (15.0, srest, STOP)]), shield3=True,
+                         view=view((0, 0, 0, 0, STOP), (1.7, 0.5, -0.5, 0.5, STOP), (3.0, -0.5, 0.7, -0.5, GO), (3.6, -0.7, 0.9, -0.7, STOP), (6.5, 0, 0, 0, STOP))),
+        # the heavy: charged gathered far out, the whole body loosed behind the shield
+        "heavy": dict(hand="off", form="bash", far=True, hit=0.5, swish=0.0, trail=(0.0, 1.8), nod=3.4, loosed=True,
+                      keys=T([(0.0, S["coil"], STOP), (0.5, S["smash"], GO), (1.2, S["smash_deep"], STOP), (2.4, S["smash_deep"], STOP), (6.5, srest, STOP), (14.0, srest, STOP)]),
+                      other=T([(0.0, rest, STOP), (1.2, P["drawn"], STOP), (2.4, P["drawn"], STOP), (6.5, rest, STOP), (14.0, rest, STOP)]),
+                      view=view((0, 0, -0.6, 0, STOP), (0.5, -0.3, 1.8, -0.4, GO), (1.2, -0.4, 2.4, -0.6, STOP), (4.6, 0, 0, 0, STOP))),
+        # the riposte: straight in from behind the shield
+        "riposte": dict(hand="main", form="stab", hit=1.0, swish=0.45, trail=(0.5, 1.45), nod=1.4,
+                        keys=T([(0.0, P["drawn"], STOP), (1.0, P["lunge"], GO), (1.6, P["lunge_deep"], STOP), (5.5, rest, STOP), (11.0, rest, STOP)]),
+                        other=T([(0.0, S["guard"], STOP), (1.6, S["guard"], STOP), (5.5, srest, STOP), (11.0, srest, STOP)]), shield3=True,
+                        view=view((0, 0, 0, 0, STOP), (1.0, -0.8, 0.8, -0.8, GO), (1.6, -1.0, 1.0, -1.0, STOP), (4.2, 0, 0, 0, STOP))),
+        # the Art: the shield shoves, and through the gap it opens the sword goes in
+        "art": dict(hand="main", form="stab", hit=3.0, swish=2.5, trail=(2.3, 3.5), nod=2.4,
+                    keys=T([(0.0, rest, STOP), (1.5, P["stab_set"], STOP), (3.0, P["lunge"], GO), (3.8, P["lunge_deep"], STOP), (7.0, P["lunge_deep"], STOP), (11.5, rest, STOP), (20.0, rest, STOP)]),
+                    other=T([(0.0, srest, STOP), (0.9, S["chamber"], STOP), (2.0, S["drive"], GO), (2.6, S["deep"], STOP), (3.8, S["low"], STOP), (8.0, S["low"], STOP), (11.5, srest, STOP), (20.0, srest, STOP)]), shield3=True,
+                    view=view((0, 0, 0, 0, STOP), (0.9, 0.4, -0.5, 0.4, STOP), (2.0, -0.2, 1.0, -0.2, GO), (3.0, -0.8, 1.6, -0.8, GO), (3.8, -1.0, 1.9, -1.0, STOP), (9.0, 0, 0, 0, STOP))),
+        # out of a dodge and out of a slide
+        "slipcut": sword_strike(0.5, 1.0, 1.8, 6.0, ("sweep_set", "sweep_hit", "sweep_end"), "slash", cut_view(-1, 1.0, 1.8), 10.0, trail_after=0.5),
+        "undercut": sword_strike(0.5, 1.0, 2.0, 6.5, ("low_set", "low_hit", "low_end"), "slash", cut_view(-1, 1.0, 2.0), 11.0, trail_after=0.5, shield="low"),
+        # armed in a fall: the sword held point down, driven into what's below
+        "plunge": dict(hand="main", form="chop", hit=0.3, swish=0.0, trail=(0.0, 1.2),
+                       keys=T([(0.0, P["high"], STOP), (0.3, P["down_hit"], GO), (0.9, P["down_deep"], STOP), (3.2, P["out"], GO), (5.5, rest, STOP), (14.0, rest, STOP)]),
+                       other=T([(0.0, S["low"], STOP), (3.2, S["low"], STOP), (5.5, srest, STOP), (14.0, srest, STOP)]),
+                       view=view((0, 0, 0, 0, STOP), (0.3, 0, 3.0, 0, GO), (0.9, 0, 3.6, 0, STOP), (4.0, 0, 0, 0, STOP))),
+        # the Execution: raised over the broken body, driven down, held, wrenched out
+        "execution": dict(hand="main", form="chop", hit=2.0, swish=1.45, trail=(1.4, 2.5),
+                          keys=T([(0.0, rest, STOP), (1.0, P["high"], GO), (1.5, P["high_back"], STOP), (2.0, P["down_hit"], GO), (2.7, P["down_deep"], STOP), (4.2, P["down_deep"], STOP),
+                                  (5.8, P["out"], GO), (8.0, rest, STOP), (19.0, rest, STOP)]),
+                          other=T([(0.0, srest, STOP), (2.0, S["low"], STOP), (5.8, S["low"], STOP), (8.0, srest, STOP), (19.0, srest, STOP)]),
+                          view=view((0, 0, 0, 0, STOP), (1.5, 0, -1.6, 0, STOP), (2.0, 0, 2.6, 0, GO), (2.7, 0, 3.2, 0, STOP), (4.2, 0, 3.0, 0, STOP), (6.5, 0, 0, 0, STOP))),
+    }
+    return moves
+
+
+MOVES = {"daggers": dagger_moves, "scythe": scythe_moves, "twinblades": twin_moves, "shieldblade": shield_moves}
+POSES = {"daggers": dagger_poses, "scythe": scythe_poses, "twinblades": twin_poses, "shieldblade": lambda: shield_poses()[0]}
 
 # ---- third person from the same keys (decision 7): each arm follows its own blade ---------------------------------
 #
@@ -884,7 +1059,7 @@ def _weight(name, mv, t):
     loosed from a draw, out over the last pair of keys (a move that holds its guard then holds at rest before that,
     so the fade never mixes a guard with the base clip's recovery: strike 5's left arm went into the chest)."""
     keys = mv["keys"].keys
-    chained = name in ("strike_2", "strike_3", "strike_4", "strike_5") or mv["hit"] < 0.5
+    chained = name in ("strike_2", "strike_3", "strike_4", "strike_5") or mv["hit"] < 0.5 or mv.get("loosed")
     rise = max(0.25, min(0.6, mv["hit"] * 0.6))
     w_in = 1.0 if chained else (3 * min(1.0, t / rise) ** 2 - 2 * min(1.0, t / rise) ** 3)
     t0, t1 = keys[-2][0], keys[-1][0]
@@ -911,6 +1086,27 @@ def _limit(Ws, ts, hit, step=WRIST_STEP):
     fw, bw = run(list(range(n))), run(list(range(n - 1, -1, -1)))
     Ws = [L.quat_mat(L.slerp(L.mat_quat(f), L.mat_quat(b), 0.5)) for f, b in zip(fw, bw)]
     return run(list(range(n)))  # the halfway meeting can still step past the limit: held to it once more
+
+
+def _smooth(u):
+    u = min(1.0, max(0.0, u))
+    return u * u * (3 - 2 * u)
+
+
+def _shield_weight(mv, t):
+    """How much of a move's shield is the keys': off the clip over its gathering (at once for one loosed from a draw) and back onto it on its way home."""
+    keys = (mv["keys"] if mv["hand"] == "off" else mv["other"]).keys
+    w_in = 1.0 if mv["hit"] <= 0.5 else _smooth(t / max(1.0, mv.get("set", 1.0)))
+    t0, t1 = keys[-3][0], keys[-2][0]
+    return w_in * (1.0 - _smooth((t - t0) / max(1e-6, t1 - t0)))
+
+
+def _left_hold(Rh, AH):
+    """The turn the left hand's first-person display gives its item (arms_holds.mirror_display): the right's length and front mirrored across the view."""
+    a, f = M @ Rh @ AH.AXIS_ITEM, M @ Rh @ AH.FACE_ITEM
+    T = np.stack([a, np.cross(a, f), f], axis=1)
+    F = np.stack([AH.AXIS_ITEM, np.cross(AH.AXIS_ITEM, AH.FACE_ITEM), AH.FACE_ITEM], axis=1)
+    return T @ F.T
 
 
 def _spin_wrists(mv, ts, hand_frames, AH, R4):
@@ -950,7 +1146,9 @@ def third(style="daggers"):
     wid = REVIEW[style]
     Rh = L.MR.euler(*L.MR.held(wid)[0])
     g3 = AH.grip3(style)
-    holds = {arm: R4.hold_of(L.display_3p(wid, arm), arm, g3) for arm in ("right", "left")}
+    shield_id = _item_of(wid) + OFF_MODEL[style] if style in OFF_MODEL else None
+    holds = {arm: R4.hold_of(L.display_3p(shield_id if arm == "left" and shield_id else wid, arm), arm, g3) for arm in ("right", "left")}
+    left_hold = _left_hold(L.MR.euler(*L.MR.held(shield_id)[0]), AH) if shield_id else None
     cloud, _ = R4.weapon_cloud(style)
     sc3 = L.display_3p(wid, "right")[2]
     rel = (cloud - g3) * sc3 * 16
@@ -979,11 +1177,13 @@ def third(style="daggers"):
                 tw = (1 - w) * R4.twist_of(b0) + w * tw
                 b = R4.with_twist(b0, tw)
                 fr = PC.part_frames(b)
-                if other is None:
+                # a shield hangs on its arm through the sword's cuts and only leaves the clip when it does something
+                free_left = other is None or shield_id is not None and mv["hand"] != "off" and not mv.get("shield3")
+                if free_left:
                     rec["left"].append([round(float(x), 2) for x in R4.terms_of(b0, "left", bent)])
                     Wl.append(np.eye(3))
                 for arm, pose, Rv in (("right", pr, Rr @ Rh), ("left", pl, None if other is None else M @ Rl @ Rh @ FLAT)):
-                    if pose is None:
+                    if pose is None or arm == "left" and free_left:
                         continue
                     turn, local = holds[arm]
                     am = R4.B @ Rv @ AH.AXIS_ITEM  # the blade's line in the model
@@ -994,11 +1194,15 @@ def third(style="daggers"):
                         roll = lambda Mx, turn=turn, am=am: 0.02 * math.degrees(math.acos(float(np.clip((Mx @ turn @ AH.AXIS_ITEM) @ am, -1, 1))))  # noqa: E731
                     v, miss = R4.ik_arm(b, arm, bent, target, local, prev[arm], roll)
                     prev[arm] = v
-                    vb = (1 - w) * R4.terms_of(b0, arm, bent) + w * v
+                    ws = _shield_weight(mv, t) if arm == "left" and shield_id else w
+                    vb = (1 - ws) * R4.terms_of(b0, arm, bent) + ws * v
                     b[arm + "_arm"] = R4.arm_bones(*vb, tw, arm, bent)
                     Mx, Tx, _ = R4.limb_frame(b, arm, bent)
                     if spun:
                         hand_frames.append(Mx @ turn)
+                    elif arm == "left" and shield_id:  # the whole frame: which way the shield's front looks is the point of it (never the shortest turn to a line)
+                        W = (Mx @ turn).T @ R4.B @ (M @ Rl @ M @ left_hold)
+                        Wl.append(L.quat_mat(L.slerp(np.array([0.0, 0.0, 0.0, 1.0]), L.mat_quat(W), ws)))
                     else:
                         here = (Mx @ turn).T @ am
                         if style in TWO_ENDED and here @ last_line < 0:  # either end can do the job: never turn it over to bring the other one
@@ -1232,12 +1436,13 @@ def sheet3(out, style, name, cw=260):
         row.append(im)
     rows.append(row)
     wr, wl = data["bent"]["wrist"], data["bent"]["wrist_left"]
+    left_id = _item_of(wid) + OFF_MODEL[style] if style in OFF_MODEL else wid
     for label, yaw, pitch in R4.VIEWS:
         b0 = PC.strip_bounds([bent], yaw, pitch)
         bounds = (b0[0] - 14, b0[1] + 14, b0[2] - 16, b0[3] + 6)
         row = []
         for t in ts:
-            hands = [(wid, "right", L.wrist_now(wr, t))] + ([] if style in TWO_HANDS else [(wid, "left", L.wrist_now(wl, t))])
+            hands = [(wid, "right", L.wrist_now(wr, t))] + ([] if style in TWO_HANDS else [(left_id, "left", L.wrist_now(wl, t))])
             im = L.figure_3p(bent, t, hands, yaw, pitch, 4.0,
                              bounds, lower=True)
             im.thumbnail((cw, cw * 2))
@@ -1296,7 +1501,7 @@ def kick_of(held, mv, form):
     """The view's kick on a hit [yaw, pitch] (decision 6): a stab punches the view in a touch (a nod, no turn: its point
     drives into the screen, and the old row kicked a right stab sideways); a cut kicks along the way its points travel
     on screen into the hit (+yaw to the right, +pitch down); a pair cutting out both ways at once nods like a stab."""
-    if form == "stab":
+    if form in ("stab", "bash"):
         return [0.0, mv.get("nod", NOD)]
     hit = mv["hit"]
     t0 = max(0.0, hit - 0.25)
@@ -1310,6 +1515,24 @@ def kick_of(held, mv, form):
         return [0.0, NOD]
     u = total / np.linalg.norm(total)
     return [round(float(u[0]), 3), round(float(-u[1]), 3)]
+
+
+def guard3_of(style):
+    """Third person's left wrist with the guard up [bent xyzw, straight xyzw]: whatever the arm's doing, the shield's front to the front and its top up."""
+    import arms_rig4 as R4
+    import arms_moves as A
+    import arms_holds as AH
+    off = _item_of(REVIEW[style]) + OFF_MODEL[style]
+    turn, _ = R4.hold_of(L.display_3p(off, "left"), "left", AH.grip3(style))
+    a, f = AH.AXIS_ITEM, AH.FACE_ITEM
+    top = unit(np.array([0.12, -1.0, -0.08]))  # the figure's +x is its left, +y down, -z its front
+    front = unit(np.array([0.12, 0.0, -1.0]) - top * float(top @ unit(np.array([0.12, 0.0, -1.0]))))
+    F, T = np.stack([a, f, np.cross(a, f)], axis=1), np.stack([top, front, np.cross(top, front)], axis=1)
+    out = []
+    for bent in (True, False):
+        Mx, _, _ = R4.limb_frame(A.CLIPS["arms_shieldblade_guard" + ("_bent" if bent else "")].sample(0.0), "left", bent)
+        out += [round(float(v), 5) for v in _quat((Mx @ turn).T @ (T @ F.T), None)]
+    return out
 
 
 def baked(data, style):
@@ -1351,6 +1574,14 @@ def baked(data, style):
         new["trail"] = list(TRAIL_LOOK[style])
     if held.nib is not None:  # the second fist on its own grip on the weapon (decision 8: two hands in both views)
         new["offHand"] = [round(float(v), 4) for v in held.nib]
+    if style in OFF_MODEL:  # another thing on the off arm: its model, its own rest and guard, its wrist while guarding
+        sword, shield = shield_poses()
+        new["twin"] = True
+        new.pop("offHand", None)
+        new.pop("vanillaOffHand", None)
+        g = lambda pose, left: (lambda d, R: [round(float(v), 4) for v in d] + [round(float(v), 5) for v in _quat(R, None)])(*right_handed(held, pose, left))
+        new["guard"] = g(sword["guarded"], False)
+        new["off"] = {"model": OFF_MODEL[style], "stance": g(shield["rest"], True), "guard": g(shield["guard"], True), "guard3": guard3_of(style)}
     if style in TWO_ENDED:  # twirled in one hand: a second fist would circle the first through every turn
         new.pop("offHand", None)
         new.pop("vanillaOffHand", None)
@@ -1358,7 +1589,7 @@ def baked(data, style):
     return new
 
 
-KEYED = ("daggers", "scythe", "twinblades")
+KEYED = ("daggers", "scythe", "twinblades", "shieldblade")
 # a style's ribbon [from how far up the blade in first person, its light]: the Twin Blades lay a narrow one (Euan 2026-11-09: "it makes
 # the trail basically take up too much of the screen")
 TRAIL_LOOK = {"twinblades": [0.82, 0.6]}
@@ -1457,8 +1688,12 @@ def check(styles=KEYED):
                 dw, Rw = _at(clip["keys"], m["cadence"][0])
                 if np.linalg.norm(dw - de) > 1e-3 or angle(Rw, Re) > 0.5:
                     bad.append(f"{name}: not still from the earliest press ({m['cadence'][0]}) to its end")
-            elif np.linalg.norm(de - sd) > 1e-3 or angle(Re, sR) > 0.5:
-                bad.append(f"{name}: ends {np.linalg.norm(de - sd):.3f} from the stance")
+            else:
+                home_d, home_R = sd, sR
+                if mv["hand"] == "off" and "off" in st:  # the off hand's own rest
+                    home_d, home_R = np.array(st["off"]["stance"][:3]), L.quat_mat(np.array(st["off"]["stance"][3:]))
+                if np.linalg.norm(de - home_d) > 1e-3 or angle(Re, home_R) > 0.5:
+                    bad.append(f"{name}: ends {np.linalg.norm(de - home_d):.3f} from the stance")
             hit_rule = w if w > 0 else a * 0.5
             t0, t1 = clip["trail"]
             if not (t0 <= hit_rule <= t1 <= hit_rule + 0.5):
