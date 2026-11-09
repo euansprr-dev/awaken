@@ -1,0 +1,42 @@
+# The Ember Tyrant's charge drawn frame by frame (SPEC §48): is the body's run smooth? On a flat stage facing a still stand-in,
+# /awaken lifetrace logs where the body is drawn each frame, and a clip films the run. Twice, so one late packet can't decide.
+# Run on CI: tools/tour-ci.sh tools/autopilot/fights-charge-trace.txt
+world autopilot_fights_charge creative 20261109
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~
+wait 20
+cmd kill @e[type=!minecraft:player,distance=..60]
+hud off
+
+cmd awaken bosses duel stage ember_tyrant
+wait 80
+cmd execute as @e[type=minecraft:pig,limit=1] at @s run tp @s ~ ~ ~8
+wait 40
+cmd awaken lifetrace ember_tyrant 700
+wait 2
+cmd awaken ascent pilot rec charge_a 70 2
+wait 2
+cmd awaken bosses duel play charge
+wait 100
+cmd awaken bosses duel stage ember_tyrant
+wait 80
+cmd execute as @e[type=minecraft:pig,limit=1] at @s run tp @s ~ ~ ~8
+wait 40
+cmd awaken lifetrace ember_tyrant 700
+wait 2
+cmd awaken bosses duel play charge
+wait 100
+shot charge_end
+quit
