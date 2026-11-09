@@ -1546,7 +1546,7 @@ def baked(data, style):
         prev = old["moves"].get(name, {})
         keys, idle = _rows(held, mv)
         row = {"form": mv.get("form", prev.get("form", "stab")), "weight": prev.get("weight", "snap"), "hand": mv["hand"], "keys": keys,
-               "bite": [1.0, 0.0], "idle": idle, "swish": mv["swish"]}
+               "bite": [1.0, 0.0], "idle": idle, "swish": mv["swish"], "hit": mv["hit"]}
         if "set" in mv:
             row["set"] = mv["set"]
         row["trail"] = list(mv["trail"])

@@ -755,7 +755,7 @@ public final class ArmsPredict {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
         float t = moveTime();
-        if (t < def.windup() || t >= def.activeEnd()) return;
+        if (t < landsAt(def) || t >= def.activeEnd()) return;
         float grow = step < 0 || !move.strike() ? 0F : style.def().traits().reachPerStep() * step;
         double reach = def.reachAt((long) t) + 0.3 + grow;
         double meantReach = reach + ((move == Archetype.Move.HEAVY || (move.strike() && step == 0)) ? dev.awaken.core.api.Aim.stepIn(style.id()) : 0F);
@@ -770,6 +770,15 @@ public final class ArmsPredict {
             if (!ArmsRules.predicts(eye, p.getY(), e.getBoundingBox(), yaw, def.arc(), aimed ? meantReach : reach, aimed, aimed)) continue;
             played(p, def, e);
         }
+    }
+
+    /**
+     * Where the running move's blow lands on its clock. A heavy's windup is 0, the hold having been its wind-up, but the
+     * weapon has still to cross: the freeze on the first frame held it wound back while the target already reeled, and
+     * only then let it swing. Its look waits for its clip's own hit, never past the server's first sweep a tick in.
+     */
+    private static float landsAt(Archetype.MoveDef def) {
+        return move != Archetype.Move.HEAVY || style == null ? def.windup() : Math.min(1F, FpSwings.lands(FpSwings.style(style.id()), move));
     }
 
     /** What the server's sweep strikes unaimed, as far as a client can tell: a hostile, never one's own nor a villager. */
@@ -852,7 +861,7 @@ public final class ArmsPredict {
     private static boolean early(int s, int target, Blow b, int blow, int ms) {
         if (s != moveSeq || move == null || style == null || b.move() != move.ordinal()) return false;
         Archetype.MoveDef def = style.move(move);
-        if (def == null || moveTime() >= def.windup() || pending == PEND_TARGET.length) return false;
+        if (def == null || moveTime() >= landsAt(def) || pending == PEND_TARGET.length) return false;
         if (pending == 0) {
             pendingSeq = s;
             pendingBy = System.nanoTime() + (long) nanosPerTick();
@@ -868,7 +877,7 @@ public final class ArmsPredict {
     private static void landPending(LocalPlayer p) {
         if (pending == 0) return;
         Archetype.MoveDef def = move == null || style == null ? null : style.move(move);
-        if (def != null && moveSeq == pendingSeq && moveTime() < def.windup() && System.nanoTime() < pendingBy) return;
+        if (def != null && moveSeq == pendingSeq && moveTime() < landsAt(def) && System.nanoTime() < pendingBy) return;
         int n = pending;
         pending = 0;
         for (int i = 0; i < n; i++) landed(p, PEND_TARGET[i], Blow.unpack(PEND_BLOW[i]), PEND_MS[i]);
