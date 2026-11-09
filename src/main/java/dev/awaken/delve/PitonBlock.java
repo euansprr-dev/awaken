@@ -38,6 +38,8 @@ import java.util.Map;
 public final class PitonBlock extends HorizontalDirectionalBlock {
     public static final BooleanProperty ROPED = BooleanProperty.create("roped");
     public static final int ROPE = 32;
+    /** The most a rope can hang: a coil pays out {@link #ROPE}, but the old ropes in the sinkholes run to the floor. */
+    static final int LONGEST = 128;
     private static final Map<Direction, VoxelShape> SHAPE = Shapes.rotateHorizontal(Block.box(6, 6, 7, 10, 11, 16));
 
     public PitonBlock(BlockBehaviour.Properties p) {
@@ -129,7 +131,7 @@ public final class PitonBlock extends HorizontalDirectionalBlock {
         if (!(s.getBlock() instanceof PitonBlock) || !s.getValue(ROPED)) return false;
         level.setBlock(piton, s.setValue(ROPED, false), Block.UPDATE_ALL);
         BlockPos.MutableBlockPos m = piton.mutable();
-        for (int i = 0; i < ROPE + 1; i++) {
+        for (int i = 0; i < LONGEST; i++) {
             m.move(Direction.DOWN);
             if (!level.getBlockState(m).is(DelveContent.RUNNER_LINE.get())) break;
             level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
@@ -142,7 +144,7 @@ public final class PitonBlock extends HorizontalDirectionalBlock {
         // the loot table gives the coil back with a roped piton; the rope below goes with it
         if (!level.isClientSide() && s.getValue(ROPED)) {
             BlockPos.MutableBlockPos m = pos.mutable();
-            for (int i = 0; i < ROPE + 1; i++) {
+            for (int i = 0; i < LONGEST; i++) {
                 m.move(Direction.DOWN);
                 if (!level.getBlockState(m).is(DelveContent.RUNNER_LINE.get())) break;
                 level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
