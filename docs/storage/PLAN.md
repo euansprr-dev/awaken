@@ -288,9 +288,17 @@ answered that plan yet; if it changes, these change with it. Told to that planne
 
 | Step | Thread, order | Voice | Opens when | Needs | Teaches, opens line |
 |---|---|---|---|---|---|
-| `storage/room` "Build a room for your things" | `hearth.build`, 40 | Plain | The home's rooms hold 6 or more chests and barrels, and there's no Storehouse. No rank gate | One Drop, and a closed room with the Drop in it, any shape, any depth under your land | `room:storehouse`, `block:awaken:storehouse_drop`. "Tip things in and they get put away" |
+| `storage/room` "Build a room for your things" | `hearth.build`, 35 | Plain | The home's rooms hold 6 or more chests and barrels, and there's no Storehouse. No rank gate | One Drop, and a closed room with the Drop in it, any shape, any depth under your land | `room:storehouse`, `block:awaken:storehouse_drop`. "Tip things in and they get put away" |
 | The existing `KinGoals` Totter row | `hearth.beasts` | Lead: "They live on woods' floors" | A Storehouse stands | A Totter at home | No new step; moved up once a Storehouse stands |
-| `storage/ledger` "Set up a Ledger desk" | `hearth.build`, 45 | Lead: "Every town's granary keeps one against a ground-floor wall" | A Storehouse stands | A Ledger desk in that room, which takes a keystone | `block:awaken:ledger_desk`. "Look anything up, and send a Totter for it" |
+| `storage/ledger` "Set up a Ledger desk" | `hearth.build`, 36 | Lead: "Every town's granary keeps one against a ground-floor wall" | A Storehouse stands | A Ledger desk in that room, which takes a keystone | `block:awaken:ledger_desk`. "Look anything up, and send a Totter for it" |
+
+Orders 35 and 36, as the Tasks planner told us 9 Nov: a thread lists only its lowest order and "Add to your home" (`hearth/add`, 40)
+stays while any pick is left, so anything at 40 or later would never show. Those two take the row, and Add waits in the Later fold until they're done.
+
+The Storehouse is already a pick in `HearthGoals.OPTIONS`, told at C-rank, with a Granary Keystone as its detail and a Need of "A Totter".
+Stage 3 changes that detail and Need to the iron Drop (decision 5, yes) and drops the pick while `storage/room` is open, so it isn't
+offered twice. The Totter row needs no change: `KinGoals` already puts a beast first when a standing room waits on it. `Goals.Builder`'s
+`.thread`, `.lead`, `.opens` and `.teaches` are on `claude/tasks-progression-plan-df225b` (52364744b), not yet in build, so Stage 3 needs that merged first.
 
 "Build a room" and "Set a Drop in it" were two steps; they're one, because anyone with chests already has a closed room, so a
 room-only step would tick itself. Tidy, Stow and Pins are buttons on screens you already open, so they need no step.
