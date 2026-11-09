@@ -1,35 +1,40 @@
 package dev.awaken.gates.realms.land;
 
 import dev.awaken.Awaken;
-import dev.awaken.gates.realms.Land;
-import dev.awaken.gates.realms.check.LookChecks;
+import dev.awaken.gates.realms.kit.KitLand;
+import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.N.Hex;
 import dev.awaken.gates.realms.kit.Piece;
+import dev.awaken.gates.realms.kit.River;
+import dev.awaken.gates.realms.kit.Road;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.kit.piece.Find;
+import dev.awaken.gates.realms.kit.piece.Boulder;
+import dev.awaken.gates.realms.kit.piece.Hut;
+import dev.awaken.gates.realms.kit.piece.Lamp;
+import dev.awaken.gates.realms.kit.piece.MouthRing;
+import dev.awaken.gates.realms.kit.piece.Pavilion;
+import dev.awaken.gates.realms.kit.piece.Pylon;
+import dev.awaken.gates.realms.kit.piece.Stall;
+import dev.awaken.gates.realms.kit.piece.Tree;
+import dev.awaken.gates.realms.kit.piece.Updraft;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DoublePlantBlock;
-import net.minecraft.world.level.block.LightBlock;
-import net.minecraft.world.level.block.SlabBlock;
-import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Half;
-import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
+import static dev.awaken.gates.realms.kit.Build.lit;
+import static dev.awaken.gates.realms.kit.Build.stair;
+import static dev.awaken.gates.realms.kit.Build.top;
+import static dev.awaken.gates.realms.kit.Build.under;
 import static dev.awaken.gates.realms.kit.N.fbm;
 import static dev.awaken.gates.realms.kit.N.hex;
-import static dev.awaken.gates.realms.kit.N.hexMetric;
 import static dev.awaken.gates.realms.kit.N.lerp;
 import static dev.awaken.gates.realms.kit.N.rnd;
 import static dev.awaken.gates.realms.kit.N.smooth;
@@ -39,25 +44,19 @@ import static dev.awaken.gates.realms.kit.N.sq;
  * Amber Reach (SPEC §50.8): a golden valley with a honey river, a wax-folk village and a citadel you can see from the moment
  * you arrive, walled in by stepped hex cliffs. Everything stands on what was really drawn under it.
  */
-public final class AmberReach extends Land {
+public final class AmberReach extends KitLand<AmberReach.M> {
     static final int VILLAGE_Y = 69, CIT_Y = 66, WATER = 62;
     /** Past this distance from the valley's middle the rock wall has risen too high to climb. */
     static final double WALL = 560;
 
     private final SimplexNoise n1, n2, n3, n4, n5, n6, n7, n9;
     final double cu, cv, vu, vv, plazaU, plazaV;
-    private final double[] ru, rv;
+    private final River river;
     private final double[][] mesas;
-    private final double[][] road;
-    final List<P> pieces = new ArrayList<>();
-    private final List<double[]> ways = new ArrayList<>();
-    private final Random r;
-    final long seed;
+    private final Road road;
 
     public AmberReach(Ctx ctx) {
-        super(ctx);
-        seed = ctx.seed();
-        r = new Random(seed ^ 0x416D626572L);
+        super(ctx, 0x416D626572L);
         n1 = N.noise(seed + 101);
         n2 = N.noise(seed + 102);
         n3 = N.noise(seed + 103);
@@ -74,15 +73,7 @@ public final class AmberReach extends Land {
         plazaV = vv - 19; // its steps come down to the road's edge, never across it
         double[][] rk = {{-40, -96 + jit(10)}, {45, -46 + jit(14)}, {95, -16 + jit(10)}, {150, 8 + jit(8)}, {205, 32 + jit(10)},
                 {258, 10 + jit(10)}, {282, 40 + jit(10)}, {292, 82 + jit(6)}};
-        int seg = 36, n = rk.length;
-        ru = new double[(n - 1) * seg + 1];
-        rv = new double[ru.length];
-        for (int i = 0; i < n - 1; i++) for (int s = 0; s <= seg; s++) {
-            double[] a = rk[Math.max(0, i - 1)], b = rk[i], c = rk[i + 1], d = rk[Math.min(n - 1, i + 2)];
-            double t = s / (double) seg, t2 = t * t, t3 = t2 * t;
-            ru[i * seg + s] = 0.5 * (2 * b[0] + (c[0] - a[0]) * t + (2 * a[0] - 5 * b[0] + 4 * c[0] - d[0]) * t2 + (3 * b[0] - a[0] - 3 * c[0] + d[0]) * t3);
-            rv[i * seg + s] = 0.5 * (2 * b[1] + (c[1] - a[1]) * t + (2 * a[1] - 5 * b[1] + 4 * c[1] - d[1]) * t2 + (3 * b[1] - a[1] - 3 * c[1] + d[1]) * t3);
-        }
+        river = new River(rk, 36, n2, 17, 6);
         double[][] base = {{196, 200, 76, 60}, {124, 180, 46, 44}, {240, -120, 68, 54}, {156, -152, 44, 36}, {322, -100, 48, 64},
                 {440, 214, 70, 90}, {78, -180, 34, 28}, {462, -60, 62, 100}, {300, 262, 56, 76}};
         mesas = new double[base.length][];
@@ -90,30 +81,16 @@ public final class AmberReach extends Land {
             double[] b = base[i];
             mesas[i] = new double[]{b[0] + jit(18), b[1] + jit(18), b[2] + jit(8), b[3] + jit(8)};
         }
-        road = new double[][]{{0, 0}, {30, 8}, {60, 24}, {vu - 22, vv - 2}, {vu + 44, vv + 4}, {cu - 138 - 44, cv}, {cu - 118, cv}};
-        for (int i = 0; i + 1 < road.length; i++) ways.add(new double[]{road[i][0], road[i][1], road[i + 1][0], road[i + 1][1], 3.0});
+        road = new Road(new double[][]{{0, 0}, {30, 8}, {60, 24}, {vu - 22, vv - 2}, {vu + 44, vv + 4}, {cu - 138 - 44, cv}, {cu - 118, cv}});
+        road.addWays(ways, 3.0);
         build();
-    }
-
-    private double jit(double d) {
-        return (r.nextDouble() - 0.5) * 2 * d;
     }
 
     // ---- the land ----------------------------------------------------------------------------------------------------------
 
     /** Distance to the river's bank, negative in the water. */
     double riverD(double u, double v) {
-        double best = 1e12;
-        int at = 0;
-        for (int i = 0; i < ru.length; i += 3) {
-            double d = sq(u - ru[i]) + sq(v - rv[i]);
-            if (d < best) {
-                best = d;
-                at = i;
-            }
-        }
-        double t = at / (double) (ru.length - 1);
-        return Math.sqrt(best) - (lerp(17, 6, t) + 2.4 * n2.get(u / 26.0, v / 26.0));
+        return river.d(u, v);
     }
 
     double villageD(double u, double v) {
@@ -121,13 +98,7 @@ public final class AmberReach extends Land {
     }
 
     double roadD(double u, double v) {
-        double best = 1e9;
-        for (int i = 0; i + 1 < road.length; i++) {
-            double ax = road[i][0], az = road[i][1], bx = road[i + 1][0], bz = road[i + 1][1];
-            double dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((u - ax) * dx + (v - az) * dz) / (dx * dx + dz * dz)));
-            best = Math.min(best, Math.hypot(u - ax - dx * t, v - az - dz * t));
-        }
-        return best;
+        return road.d(u, v);
     }
 
     double heightOf(double u, double v, double d) {
@@ -222,16 +193,6 @@ public final class AmberReach extends Land {
         return (float) Math.toDegrees(Math.atan2(-(cu - 0), cv - 0));
     }
 
-    @Override
-    public List<? extends Piece<?>> pieces() {
-        return List.copyOf(pieces);
-    }
-
-    @Override
-    public List<double[]> ways() {
-        return List.copyOf(ways);
-    }
-
     // ---- painting -----------------------------------------------------------------------------------------------------------
 
     @Override
@@ -253,7 +214,7 @@ public final class AmberReach extends Land {
             gy[si] = y;
             mesa(v, m, x, z, y);
         }
-        for (P p : pieces) if (p.hits(v)) p.draw(v, m);
+        drawPieces(v, m);
         shade(v, m);
         growth(v, m, gy);
     }
@@ -349,7 +310,7 @@ public final class AmberReach extends Land {
             int y = gy[(x - v.x0 + 1) * V.W + z - v.z0 + 1];
             BlockState s = v.get(x, y, z);
             if (s != m.moss && s != m.coarse && s != m.rooted) continue;
-            if (v.get(x, y + 1, z) != null || tended(v, x, z)) continue;
+            if (v.get(x, y + 1, z) != null || tended(x, z)) continue;
             double p = fbm(n7, x, z, 1 / 11.0, 2), q = rnd(x, z, 77 + seed);
             if (s != m.moss) {
                 if (q < 0.08) v.set(x, y + 1, z, m.deadBush);
@@ -366,25 +327,9 @@ public final class AmberReach extends Land {
         }
     }
 
-    /** Something you've come to look at or put a hand on stands clear of the crop. */
-    private boolean tended(V v, int x, int z) {
-        for (Site s : clearings) if (Math.abs(s.x() - x) <= s.radius() && Math.abs(s.z() - z) <= s.radius()) return true;
-        return false;
-    }
-
     // ---- what stands in it --------------------------------------------------------------------------------------------------
 
     static final int[] PR = {112, 96, 80, 64};
-
-    /** Everything stands where it's clear: not through another piece, not on a road, a stair or a door's way (SPEC §50.6). */
-    private boolean place(P p) {
-        if (LookChecks.clash(p, pieces, ways) != null) return false;
-        pieces.add(p);
-        return true;
-    }
-
-    /** Where nothing grows, so what's there can be seen and reached (filled once the sites are placed). */
-    private final List<Site> clearings = new ArrayList<>();
 
     private void build() {
         int mx = -6, mz = 0;
@@ -402,7 +347,7 @@ public final class AmberReach extends Land {
             if (roadD(x, z) < 8) continue;
             place(new Boulder(x, z, 2 + r.nextInt(3), 1 + r.nextInt(3), i, this));
         }
-        if (roadD(mx + 34, mz + 46) > 9) pieces.add(new AmberTree(mx + 34, mz + 46, 22, 2, this));
+        if (roadD(mx + 34, mz + 46) > 9) pieces.add(new Tree(mx + 34, mz + 46, 22, 2, this));
         placeSites();
     }
 
@@ -436,9 +381,7 @@ public final class AmberReach extends Land {
         site(SiteKind.LORD, cx, Heart.FLOOR + 1, cz, 44, ctx.bp().heart().lord());
         // the honey wind: a column of warm air at the foot of each great rock, and on top of that rock, something you can only reach by riding it
         for (int i = 0; i < mesas.length; i++) vent(i);
-        for (Site s : sites()) if (s.kind() == SiteKind.WAYSTONE || s.kind() == SiteKind.FIND || s.kind() == SiteKind.UPDRAFT || s.kind() == SiteKind.PORTAL) {
-            clearings.add(new Site(s.kind(), s.index(), s.x(), s.y(), s.z(), Math.max(s.radius(), 3), s.what()));
-        }
+        clearSites();
     }
 
     private int[] clearOf(int x, int z, int r) {
@@ -478,13 +421,6 @@ public final class AmberReach extends Land {
             site(SiteKind.FIND, fx, high + 1, fz, 2, "high");
             return;
         }
-    }
-
-    /** A Waystone, and the site the live game finds it by: the site's y is the stone you touch. */
-    private void waystone(int x, int z, String name) {
-        Waystone w = new Waystone(x, z, this);
-        pieces.add(w);
-        site(SiteKind.WAYSTONE, x, w.gy + 2, z, 4, name);
     }
 
     private void citadel() {
@@ -549,41 +485,22 @@ public final class AmberReach extends Land {
         return BuiltInRegistries.BLOCK.getValue(Awaken.id(id)).defaultBlockState();
     }
 
-    static BlockState top(BlockState slab) {
-        return slab.setValue(SlabBlock.TYPE, SlabType.TOP);
-    }
-
-    static BlockState stair(BlockState s, Direction f) {
-        return s.setValue(StairBlock.FACING, f);
-    }
-
-    static BlockState under(BlockState s, Direction f) {
-        return s.setValue(StairBlock.FACING, f).setValue(StairBlock.HALF, Half.TOP);
-    }
-
-    static BlockState lit(BlockState s) {
-        return s.getBlock().getStateDefinition().getProperty("lit") instanceof BooleanProperty p ? s.setValue(p, true) : s;
-    }
-
     /** The land's palette, every block of it the place's own but for small fittings (fence rail, barrel, lantern, chain). */
-    static final class M {
-        final BlockState stoneA = b("amber_stone"), worn = b("amber_stone_worn"), deep = b("amber_stone_deep"), pale = b("amber_stone_pale"),
-                hexstone = b("amber_hexstone"), flag = b("amber_flagstone"), brick = b("amber_brick"), plaster = b("amber_plaster"), band = b("amber_plaster_band"),
-                tile = b("amber_tile"), tileDeep = b("amber_tile_deep"), timber = b("amber_timber"), planks = b("amber_planks"), gold = b("amber_gilt"), window = b("amber_window"),
-                moss = b("amber_moss"), bed = b("amber_bed"), petal = b("amber_petal"), petalDeep = b("amber_petal_deep"), petalTip = b("amber_petal_tip"),
-                seedhead = b("amber_seedhead"), stem = b("amber_stem"), leaf = b("amber_leaf"), leafGold = b("amber_leaf_gold");
-        final BlockState stoneSlab = b("amber_stone_slab"), stoneStairs = b("amber_stone_stairs"), paleSlab = b("amber_stone_pale_slab"), paleStairs = b("amber_stone_pale_stairs"),
-                flagSlab = b("amber_flagstone_slab"), flagStairs = b("amber_flagstone_stairs"), brickSlab = b("amber_brick_slab"), tileStairs = b("amber_tile_stairs"), tileSlab = b("amber_tile_slab"),
-                tileDeepStairs = b("amber_tile_deep_stairs"), tileDeepSlab = b("amber_tile_deep_slab"), planksSlab = b("amber_planks_slab"), planksStairs = b("amber_planks_stairs"), plasterSlab = b("amber_plaster_slab");
+    static final class M extends Mats {
+        final BlockState petal = b("amber_petal"), petalDeep = b("amber_petal_deep"), petalTip = b("amber_petal_tip"), seedhead = b("amber_seedhead"), stem = b("amber_stem"), leaf = b("amber_leaf");
         final BlockState wheat = b("amber_wheat"), wheatTall = b("amber_wheat_tall"), amberGrass = b("amber_grass"), bloom = b("amber_bloom");
-        final BlockState comb = b("hive_comb"), capped = b("hive_comb_capped"), glow = b("hive_honey_glow"), pollen = b("hive_pollen"), royal = b("amber_gilt"),
-                drip = b("hive_drip"), candle = lit(b("hive_candle")), petals = b("hive_petals"), crumbs = b("hive_wax_crumbs"), drum = b("hive_drum");
-        final BlockState honey = b("realm_honey"), coarse = Blocks.COARSE_DIRT.defaultBlockState(), rooted = Blocks.ROOTED_DIRT.defaultBlockState(),
-                rock = Blocks.STONE.defaultBlockState(), bedrock = Blocks.BEDROCK.defaultBlockState(), shroom = Blocks.SHROOMLIGHT.defaultBlockState(),
-                chain = Blocks.IRON_CHAIN.defaultBlockState(), lantern = Blocks.LANTERN.defaultBlockState(), hung = Blocks.LANTERN.defaultBlockState().setValue(BlockStateProperties.HANGING, true),
-                fence = Blocks.DARK_OAK_FENCE.defaultBlockState(), barrel = Blocks.BARREL.defaultBlockState(), light = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15),
-                deadBush = Blocks.DEAD_BUSH.defaultBlockState();
-        final BlockState shrine = b("rest_shrine"), cache = b("gate_cache"), updraft = b("realm_updraft");
+        final BlockState pollen = b("hive_pollen"), royal = b("amber_gilt"), petals = b("hive_petals"), honey = b("realm_honey");
+        final BlockState coarse = Blocks.COARSE_DIRT.defaultBlockState(), rooted = Blocks.ROOTED_DIRT.defaultBlockState(), deadBush = Blocks.DEAD_BUSH.defaultBlockState();
+
+        M() {
+            super("amber", new Accents(b("hive_comb"), b("hive_comb_capped"), b("hive_honey_glow"), b("hive_drip"), lit(b("hive_candle")), b("hive_wax_crumbs"), b("hive_drum"),
+                    Blocks.DARK_OAK_FENCE.defaultBlockState(), b("amber_leaf_gold")));
+        }
+    }
+
+    @Override
+    protected M mats() {
+        return m();
     }
 
     private static volatile M mats;
@@ -598,158 +515,6 @@ public final class AmberReach extends Land {
 
     // ---- the Mouth ----------------------------------------------------------------------------------------------------------
 
-    /**
-     * Where you arrive: a stepped hexagonal dais that was fine once, six pylons broken at different heights with one lying where it fell, wheat coming
-     * back through the paving, and the arch home behind you. The side toward the citadel stays open, so the first thing you see is the valley.
-     */
-    static final class MouthRing extends P {
-        final int cx, gy, cz;
-        final AmberReach land;
-
-        MouthRing(int cx, int gy, int cz, AmberReach land) {
-            this.cx = cx;
-            this.gy = gy;
-            this.cz = cz;
-            this.land = land;
-            box(cx, cz, 14, 14);
-            startsWay = true;
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) step(v, m, x, z);
-            for (int i = 0; i < 6; i++) {
-                double a = Math.PI / 6 + i * Math.PI / 3;
-                if (Math.cos(a) > 0.6) continue; // never between you and the citadel
-                pylon(v, m, cx + (int) Math.round(Math.cos(a) * 9.5), cz + (int) Math.round(Math.sin(a) * 9.5), new int[]{4, 9, 6, 11, 3, 7}[i], i);
-            }
-            fallen(v, m);
-            arch(v, m);
-        }
-
-        /** One column of the dais: the top course, then a ring of slabs, a ring a step lower, slabs again, then what's left of the paving. */
-        private void step(V v, M m, int x, int z) {
-            double d = hexMetric(x - cx, z - cz);
-            if (d > 11.5) return;
-            if (d > 7.8) {
-                Hex t = hex(x, z, 2.1);
-                if (rnd(t.q(), t.r(), 112) > lerp(0.62, 0.12, (d - 7.8) / 3.7)) return;
-                int g = land.ground(x, z);
-                v.set(x, g, z, rnd(t.q(), t.r(), 113) < 0.5 ? m.flag : m.hexstone);
-                v.set(x, g + 1, z, null);
-                return;
-            }
-            for (int y = gy + 1; y < gy + 6; y++) v.set(x, y, z, null);
-            Hex t = hex(x, z, 1.7);
-            double chip = rnd(x, z, 114);
-            if (d <= 4.2) {
-                // the arrival floor: hexes with a ring of gilt let into it, six lines running out from the middle
-                v.foot(x, gy - 1, z, m.pale);
-                double ang = Math.atan2(z - cz, x - cx), spoke = Math.abs(Math.sin(3 * ang)) * d;
-                v.set(x, gy, z, d < 1.1 ? m.gold : d > 3.3 && d < 3.9 ? (chip < 0.25 ? m.flag : m.gold) : spoke < 0.55 && d > 1.1 ? m.pale : rnd(t.q(), t.r(), 111) < 0.5 ? m.hexstone : m.flag);
-            } else if (d <= 5.4) {
-                v.foot(x, gy - 1, z, m.stoneA);
-                if (chip < 0.14) v.set(x, gy, z, null);
-                else v.set(x, gy, z, rnd(t.q(), t.r(), 115) < 0.55 ? m.paleSlab : m.stoneSlab);
-            } else if (d <= 6.6) {
-                v.foot(x, gy - 2, z, m.stoneA);
-                v.set(x, gy - 1, z, rnd(t.q(), t.r(), 116) < 0.5 ? m.flag : m.stoneA);
-                v.set(x, gy, z, chip < 0.05 ? m.crumbs : null);
-            } else {
-                v.foot(x, gy - 2, z, m.stoneA);
-                if (chip < 0.22) v.set(x, gy - 1, z, null);
-                else v.set(x, gy - 1, z, rnd(t.q(), t.r(), 117) < 0.5 ? m.flagSlab : m.stoneSlab);
-            }
-        }
-
-        /** A carved pylon on a stepped base: flared capital, shaft in courses, and however much is left of the top. */
-        private void pylon(V v, M m, int sx, int sz, int h, int i) {
-            int g = land.ground(sx, sz);
-            Direction[] sides = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
-            for (int a = -1; a <= 1; a++) for (int b = -1; b <= 1; b++) {
-                if (a != 0 && b != 0) {
-                    if (rnd(sx + a, sz + b, 118) < 0.7) v.set(sx + a, g, sz + b, m.deep);
-                    if (rnd(sx + a, sz + b, 119) < 0.55) v.set(sx + a, g + 1, sz + b, m.stoneSlab);
-                    continue;
-                }
-                v.set(sx + a, g, sz + b, m.deep);
-            }
-            int cap = Math.max(2, h * 2 / 3);
-            for (int y = 1; y <= h; y++) {
-                v.set(sx, g + y, sz, y == 1 ? m.deep : y == cap + 1 ? m.gold : (y + i) % 3 == 0 ? m.worn : m.pale);
-            }
-            for (Direction f : sides) {
-                int fx = sx + f.getStepX(), fz = sz + f.getStepZ();
-                v.set(fx, g + 1, fz, stair(m.stoneStairs, f.getOpposite()));
-                for (int y = 2; y < Math.min(cap, h); y++) v.set(fx, g + y, fz, (y + i) % 3 == 1 ? m.stoneA : m.worn);
-                if (h > 3) v.set(fx, g + Math.min(cap, h), fz, under(m.paleStairs, f.getOpposite()));
-                // wax has run down the stone where it broke, and hangs off the capital
-                if (rnd(sx, sz + f.ordinal(), 120 + i) < 0.5 && h > 3) v.set(fx, g + Math.min(cap, h) - 1, fz, m.capped);
-            }
-            // the broken top: part of a course still sits on the shaft
-            Direction lean = sides[i % 4];
-            v.set(sx + lean.getStepX(), g + h, sz + lean.getStepZ(), h > 5 ? under(m.stoneStairs, lean.getOpposite()) : stair(m.stoneStairs, lean.getOpposite()));
-            v.set(sx, g + h + 1, sz, i % 2 == 0 ? m.candle : stair(m.paleStairs, lean));
-            v.set(sx - lean.getStepX(), g + 1 + (h > 4 ? 1 : 0), sz - lean.getStepZ(), m.capped);
-        }
-
-        /** The seventh pylon fell a long time ago: drums lying in the paving where they came to rest, half sunk. */
-        private void fallen(V v, M m) {
-            int x0 = cx - 2, z0 = cz + 12;
-            for (int k = 0; k < 9; k++) {
-                if (k == 3 || k == 6) continue; // the joints between drums
-                int x = x0 + k, z = z0 - (k > 5 ? 1 : 0), g = land.ground(x, z);
-                v.set(x, g, z, (k & 1) == 0 ? m.pale : m.worn);
-                v.set(x, g + 1, z, k == 0 ? stair(m.paleStairs, Direction.EAST) : k == 8 ? stair(m.stoneStairs, Direction.WEST) : (k & 1) == 0 ? m.worn : m.pale);
-                v.set(x, g + 1, z + 1, rnd(x, z, 121) < 0.65 ? m.stoneSlab : m.crumbs);
-                v.set(x, g + 1, z - 1, stair(m.stoneStairs, Direction.SOUTH));
-                if (rnd(x, z, 122) < 0.4 && v.get(x, g + 2, z) == null) v.set(x, g + 2, z, m.crumbs);
-            }
-        }
-
-        /** Half the arch's clear width at a height, from the floor: straight jambs, then a pointed head. */
-        private static double open(int y) {
-            return y <= 6 ? 2.5 : y >= 11 ? -1 : 2.5 - Math.pow((y - 6) / 4.4, 1.6) * 2.5;
-        }
-
-        /** The arch home behind where you arrive: three deep, a moulded reveal, gilt at the crown, and the hive starting to take it back. */
-        private void arch(V v, M m) {
-            int ax = cx - 6;
-            for (int d = -1; d <= 1; d++) for (int s = -6; s <= 6; s++) for (int y = 1; y <= 14; y++) {
-                int a = Math.abs(s);
-                double o = open(y), reveal = d == 0 ? o + 0.0 : o + 0.9, out = d == 0 ? o + 2.5 : o + 2.1;
-                if (y > 11) reveal = -1;
-                if (a < reveal + 0.5) {
-                    if (d == 0 && y <= 11 && a < o + 0.5) v.set(ax, gy + y, cz + s, null);
-                    continue;
-                }
-                double outer = y <= 6 ? 5.0 : Math.max(0, 5.0 - (y - 6) * 0.62);
-                if (a > outer + (d == 0 ? 0.5 : 0.0) || a > out + 0.5) continue;
-                boolean crown = y >= 10 && a <= 1, impost = y == 6 || y == 7 && a >= 3, plinth = y <= 1;
-                BlockState b = crown ? m.gold : plinth ? m.deep : impost ? m.deep : a < o + 1.6 && d == 0 ? ((y + a) % 2 == 0 ? m.pale : m.hexstone) : (y + d) % 3 == 0 ? m.worn : m.stoneA;
-                v.set(ax + d, gy + y, cz + s, b);
-                if (y == 1) v.foot(ax + d, gy, cz + s, m.pale);
-            }
-            // plinths, stepped out at the foot of each jamb
-            for (int side = -1; side <= 1; side += 2) for (int d = -2; d <= 2; d++) for (int a = 3; a <= 6; a++) {
-                if (Math.abs(d) < 2 && a < 6) continue;
-                int x = ax + d, z = cz + side * a;
-                v.foot(x, gy, z, m.deep);
-                v.set(x, gy + 1, z, d == -2 ? stair(m.stoneStairs, Direction.EAST) : d == 2 ? stair(m.stoneStairs, Direction.WEST) : stair(m.stoneStairs, side > 0 ? Direction.NORTH : Direction.SOUTH));
-            }
-            // a level way in, the floor carried from the dais through the arch
-            for (int x = ax - 2; x <= cx - 3; x++) for (int z = cz - 3; z <= cz + 3; z++) {
-                v.foot(x, gy - 1, z, m.pale);
-                v.set(x, gy, z, x < ax - 1 || x > ax + 1 ? (hex(x, z, 1.7).edge() > 0.8 ? m.deep : m.flag) : Math.abs(z - cz) == 3 ? m.deep : m.hexstone);
-            }
-            // wax taking the top of one jamb, and running down it
-            for (int y = 5; y <= 7; y++) v.set(ax + 1, gy + y, cz + 4, y == 6 ? m.capped : m.comb);
-            v.set(ax + 1, gy + 4, cz + 4, m.drip);
-            v.set(ax, gy + 8, cz - 2, m.drip);
-            v.set(ax, gy + 15, cz, m.candle);
-            for (int z : new int[]{-5, 5}) v.set(ax + 2, gy + 2, cz + z, m.candle);
-        }
-    }
 
     // ---- flowers, trees, stones ---------------------------------------------------------------------------------------------
 
@@ -830,372 +595,16 @@ public final class AmberReach extends Land {
         }
     }
 
-    /** A gnarled old tree, grown from the ground, that frames the view from the hill. */
-    static final class AmberTree extends P {
-        final int x, z, gy, h;
-        final long seed;
 
-        AmberTree(int x, int z, int h, long seed, AmberReach land) {
-            this.x = x;
-            this.z = z;
-            this.h = h;
-            this.seed = seed + land.seed;
-            gy = land.ground(x, z);
-            box(x, z, h, h);
-            mayOverlap = true;
-        }
 
-        private void limb(V v, M m, double ax, double ay, double az, double bx, double by, double bz, double r0, double r1) {
-            int n = (int) (Math.hypot(bx - ax, Math.hypot(by - ay, bz - az)) * 2) + 1;
-            for (int i = 0; i <= n; i++) {
-                double t = i / (double) n, r = lerp(r0, r1, t);
-                double cx = lerp(ax, bx, t), cy = lerp(ay, by, t), cz = lerp(az, bz, t);
-                int a = (int) Math.ceil(r);
-                for (int p = -a; p <= a; p++) for (int q = -a; q <= a; q++) for (int s = -a; s <= a; s++)
-                    if (p * p + q * q + s * s <= r * r + 0.25) v.set((int) Math.floor(cx) + p, (int) Math.floor(cy) + q, (int) Math.floor(cz) + s, m.timber);
-            }
-        }
 
-        private void leaves(V v, M m, double cx, double cy, double cz, double r) {
-            int a = (int) Math.ceil(r);
-            for (int p = -a; p <= a; p++) for (int q = -a / 2; q <= a / 2; q++) for (int s = -a; s <= a; s++) {
-                double d = p * p + q * q * 3.2 + s * s;
-                if (d > r * r || rnd(p + (long) cx, s + (long) cz, q + seed) < 0.18) continue;
-                int X = (int) Math.floor(cx) + p, Y = (int) Math.floor(cy) + q, Z = (int) Math.floor(cz) + s;
-                if (v.get(X, Y, Z) == null) v.set(X, Y, Z, m.leafGold);
-            }
-        }
 
-        @Override
-        public void draw(V v, M m) {
-            limb(v, m, x, gy - 2, z, x + 1, gy + h * 0.55, z - 1, 2.2, 1.2);
-            int boughs = 5;
-            for (int i = 0; i < boughs; i++) {
-                double a = i * 2.399 + rnd(seed, i, 1) * 0.8, len = h * (0.34 + 0.2 * rnd(seed, i, 2)), up = h * (0.1 + 0.22 * rnd(seed, i, 3));
-                double sx = x + 1, sy = gy + h * (0.42 + 0.12 * i / boughs), sz = z - 1, ex = sx + Math.cos(a) * len, ez = sz + Math.sin(a) * len, ey = sy + up;
-                limb(v, m, sx, sy, sz, ex, ey, ez, 1.1, 0.5);
-                leaves(v, m, ex, ey + 1, ez, 6 + 3 * rnd(seed, i, 4));
-            }
-            leaves(v, m, x + 1, gy + h * 0.72, z - 1, 8);
-        }
-    }
-
-    static final class Boulder extends P {
-        final int x, y, z, r, h;
-        final long seed;
-
-        Boulder(int x, int z, int r, int h, long seed, AmberReach land) {
-            this.x = x;
-            this.y = land.ground(x, z);
-            this.z = z;
-            this.r = r;
-            this.h = h;
-            this.seed = seed;
-            box(x, z, r + 1, r + 1);
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            for (int a = ax(v); a <= bx(v); a++) for (int c = az(v); c <= bz(v); c++) {
-                double hd = hexMetric(a - x, c - z);
-                if (hd > r) continue;
-                int top = y + h - (hd > r - 1 ? 1 : 0);
-                for (int k = y - 2; k <= top; k++) v.set(a, k, c, k == top ? (hd > r - 1.4 ? m.pale : m.stoneA) : k % 3 == 0 ? m.deep : m.stoneA);
-                v.foot(a, y - 3, c, m.deep);
-                if (hd <= r - 1 && hd > r - 2.2) v.set(a, top + 1, c, m.stoneSlab);
-                for (int k = top + 2; k < top + 5; k++) v.set(a, k, c, null);
-            }
-        }
-    }
-
-    /** A Waystone: a stepped hex plinth, a waist-high stone you lay a hand on, two small pillars with their candles. */
-    static final class Waystone extends P {
-        final int x, gy, z;
-
-        Waystone(int x, int z, AmberReach land) {
-            this.x = x;
-            this.z = z;
-            gy = land.ground(x, z);
-            box(x, z, 5, 5);
-            mayOverlap = true;
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            for (int a = ax(v); a <= bx(v); a++) for (int c = az(v); c <= bz(v); c++) {
-                double d = hexMetric(a - x, c - z);
-                if (d > 4.4) continue;
-                v.foot(a, gy, c, m.pale);
-                v.set(a, gy, c, d > 3.2 ? m.flag : ((a + c) & 1) == 0 ? m.hexstone : m.flag);
-                if (d <= 2.2) v.set(a, gy + 1, c, d > 1.2 ? m.paleSlab : m.pale);
-                for (int y = gy + 2; y < gy + 8; y++) if (d <= 2.6 && v.get(a, y, c) != null) v.set(a, y, c, null);
-            }
-            v.set(x, gy + 2, z, m.shrine);
-            for (int s = -1; s <= 1; s += 2) {
-                int px = x + s * 3, pz = z - s;
-                v.foot(px, gy, pz, m.pale);
-                v.set(px, gy + 1, pz, m.pale);
-                v.set(px, gy + 2, pz, m.timber);
-                v.set(px, gy + 3, pz, m.gold);
-                v.set(px, gy + 4, pz, m.candle);
-            }
-        }
-    }
-
-    /** Something left out in the land: a cache on a worn stone, with what someone lit beside it long ago. */
-    static final class Find extends P {
-        final int x, gy, z;
-        final long seed;
-
-        Find(int x, int gy, int z, long seed) {
-            this.x = x;
-            this.z = z;
-            this.seed = seed;
-            this.gy = gy;
-            box(x, z, 2, 2);
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            for (int a = -1; a <= 1; a++) for (int c = -1; c <= 1; c++) {
-                if (rnd(a + 3, c + 3, seed) < 0.3 && (a != 0 || c != 0)) continue;
-                v.foot(x + a, gy, z + c, m.worn);
-                v.set(x + a, gy, z + c, (a == 0 && c == 0) ? m.pale : m.worn);
-                if (v.get(x + a, gy + 1, z + c) != null) v.set(x + a, gy + 1, z + c, null);
-            }
-            v.set(x, gy + 1, z, m.cache);
-            int cx = rnd(seed, 1, 2) < 0.5 ? 1 : -1, cz = rnd(seed, 2, 3) < 0.5 ? 1 : -1;
-            if (v.solid(x + cx, gy, z + cz)) v.set(x + cx, gy + 1, z + cz, m.candle);
-        }
-    }
-
-    /** A vent in the ground and the warm air that stands over it: you can ride it up the cliffs. */
-    static final class Updraft extends P {
-        final int x, gy, z, top;
-
-        Updraft(int x, int z, int top, AmberReach land) {
-            this.x = x;
-            this.z = z;
-            this.top = top;
-            gy = land.ground(x, z);
-            box(x, z, 4, 4);
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            for (int a = ax(v); a <= bx(v); a++) for (int c = az(v); c <= bz(v); c++) {
-                double d = hexMetric(a - x, c - z);
-                if (d > 3.6) continue;
-                v.foot(a, gy, c, m.deep);
-                v.set(a, gy, c, d > 2.2 ? m.hexstone : d > 1.2 ? m.deep : m.glow);
-                v.set(a, gy + 1, c, d > 2.4 ? m.stoneSlab : null);
-                if (d <= 2.4) for (int y = gy + 1; y <= top; y++) if (v.get(a, y, c) == null) v.set(a, y, c, m.updraft);
-            }
-        }
-    }
 
     // ---- the village --------------------------------------------------------------------------------------------------------
 
-    /** A six-sided wax-folk house with a stepped dome; warm walls, small glowing windows, a real room inside. */
-    static final class Hut extends P {
-        final int cx, gy, cz, r, wall, dome;
-        final double door;
-        final long seed;
 
-        Hut(int cx, int cz, int r, double door, long seed, AmberReach land) {
-            this.cx = cx;
-            this.cz = cz;
-            this.gy = land.ground(cx, cz);
-            this.r = r;
-            this.door = door;
-            this.seed = seed;
-            wall = 4 + r / 3;
-            dome = r + 1;
-            box(cx, cz, r + 3, r + 3);
-        }
 
-        @Override
-        public void draw(V v, M m) {
-            for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
-                double dx = x - cx, dz = z - cz, hd = hexMetric(dx, dz), a = Math.atan2(dz, dx);
-                double sec = Math.PI / 3, s = Math.floor(a / sec + 0.5), phi = a - s * sec, t = Math.hypot(dx, dz) * Math.sin(phi);
-                double side = r * 1.155 / 2;
-                boolean corner = Math.abs(t) > side - 1.3;
-                if (hd > r + 2.6) continue;
-                // a plinth that goes down to whatever is really under it
-                for (int y = gy + 1; y < gy + wall + dome + 6; y++) if (hd <= r + 1.3) v.set(x, y, z, null);
-                v.foot(x, gy - 1, z, m.pale);
-                v.set(x, gy, z, hd > r + 1.3 ? m.paleSlab : m.pale);
-                if (hd > r + 1.2) continue;
-                if (hd <= r + 1.3) v.set(x, gy + 1, z, hd > r ? m.paleSlab : m.planks);
-                for (int y = gy + 2; y <= gy + wall; y++) {
-                    int ly = y - gy - 1;
-                    if (hd > r) continue;
-                    if (hd > r - 1.4) {
-                        BlockState b = corner ? m.timber : ly <= 1 ? m.brick : m.plaster;
-                        boolean doorSide = Math.abs(((a - door + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.45;
-                        if (doorSide && Math.abs(t) < 1.6 && ly <= 3) {
-                            v.set(x, y, z, null);
-                            continue;
-                        }
-                        if (!corner && Math.abs(t) < 0.9 && ly >= 2 && ly <= 3) b = m.window;
-                        else if (!corner && Math.abs(t) < 1.9 && ly >= 1 && ly <= 4) b = m.timber;
-                        else if (ly == wall - 2 && !corner) b = m.band;
-                        v.set(x, y, z, b);
-                    } else v.set(x, y, z, null);
-                }
-                int cy = gy + wall + 1;
-                if (hd <= r + 1.2) v.set(x, cy, z, hd > r ? m.planksSlab : m.timber);
-                if (hd > r + 0.2) continue;
-                for (int y = cy + 1; y <= cy + dome; y++) {
-                    double h = (y - cy) / (double) dome;
-                    double rr = r * Math.sqrt(Math.max(0, 1 - h * h));
-                    if (hd > rr) continue;
-                    if (hd > rr - 1.7 || h > 0.7) {
-                        BlockState b = (y & 1) == 0 ? m.tileDeep : m.tile;
-                        if (corner && h < 0.85) b = m.pale;
-                        if (h > 0.25 && h < 0.5 && !corner && Math.abs(t) < 1) b = m.window;
-                        v.set(x, y, z, b);
-                    }
-                }
-                if (hd < 1.2) {
-                    v.set(x, cy + dome + 1, z, m.gold);
-                    v.set(x, cy + dome + 2, z, m.candle);
-                }
-            }
-            v.set(cx, gy + 3, cz, m.light);
-            v.set(cx, gy + 2, cz, m.drum);
-            v.set(cx, gy + 3, cz, m.candle);
-        }
-    }
 
-    static final class Pavilion extends P {
-        final int cx, gy, cz;
-
-        Pavilion(int cx, int gy, int cz) {
-            this.cx = cx;
-            this.gy = gy;
-            this.cz = cz;
-            box(cx, cz, 16, 16);
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
-                int dx = x - cx, dz = z - cz, c = Math.max(Math.abs(dx), Math.abs(dz));
-                if (c <= 15) v.foot(x, gy - 1, z, m.pale);
-                for (int k = 0; k < 3; k++) if (c <= 15 - k * 2) v.set(x, gy + k, z, k == 2 && c < 11 ? c % 4 == 0 ? m.pale : m.hexstone : c == 15 - k * 2 ? m.pale : m.flag);
-                boolean post = c == 11 && Math.abs(dx) % 11 == 0 && Math.abs(dz) % 11 == 0;
-                if (post) {
-                    for (int y = gy + 3; y <= gy + 15; y++) v.set(x, y, z, y == gy + 3 || y == gy + 12 ? m.pale : m.timber);
-                    v.set(x, gy + 11, z, m.gold);
-                }
-                if (c == 11 && !post) {
-                    v.set(x, gy + 11, z, ((dx + dz) & 3) == 0 ? m.gold : m.band);
-                    // the frieze that carries the roof: a band, turned posts, a band
-                    v.set(x, gy + 12, z, m.planks);
-                    if (((dx + dz) & 1) == 0) {
-                        v.set(x, gy + 13, z, m.fence);
-                        v.set(x, gy + 14, z, m.fence);
-                    }
-                    v.set(x, gy + 15, z, m.planks);
-                }
-                for (int tier = 0; tier < 3; tier++) {
-                    int base = gy + 12 + tier * 5, e = 15 - tier * 4;
-                    for (int ring = 0; ring < 5; ring++) {
-                        int er = e - ring, y = base + ring;
-                        if (c != er) continue;
-                        boolean ridge = Math.abs(dx) == Math.abs(dz);
-                        Direction f = Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? Direction.WEST : Direction.EAST) : (dz > 0 ? Direction.NORTH : Direction.SOUTH);
-                        v.set(x, y, z, ridge ? m.pale : stair((ring & 1) == 0 ? m.tileDeepStairs : m.tileStairs, f));
-                        if (ring == 0) v.set(x, y - 1, z, ridge ? m.gold : under(m.planksStairs, f.getOpposite()));
-                    }
-                    if (c < e - 4) for (int y = base; y < base + 5; y++) v.set(x, y, z, y == base + 4 ? (tier == 2 ? m.tileDeep : m.planks) : null);
-                }
-            }
-            for (int s = -1; s <= 1; s += 2) for (int t = -1; t <= 1; t += 2) {
-                v.set(cx + s * 11, gy + 10, cz + t * 11 - t, m.chain);
-                v.set(cx + s * 11, gy + 9, cz + t * 11 - t, m.hung);
-            }
-            for (int a = -5; a <= 5; a += 2) for (int c = -5; c <= 5; c += 2) if (Math.abs(a) + Math.abs(c) < 8) {
-                v.set(cx + a, gy + 3, cz + c, m.drum);
-                if (Math.abs(a) + Math.abs(c) < 3) v.set(cx + a, gy + 4, cz + c, m.candle);
-            }
-            for (int y = gy + 9; y <= gy + 15; y++) v.set(cx, y, cz, m.chain);
-            v.set(cx, gy + 8, cz, m.hung);
-        }
-    }
-
-    /** A road or village lamp: a post on its own footing, from the real ground, wherever that turned out to be. */
-    static final class Lamp extends P {
-        final int x, y, z, h;
-
-        Lamp(int x, int z, int h, AmberReach land) {
-            this.x = x;
-            this.z = z;
-            this.h = h;
-            y = land.ground(x, z);
-            box(x, z, 1, 1);
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            v.foot(x, y, z, m.pale);
-            v.set(x, y + 1, z, m.deep);
-            for (int i = 2; i < h; i++) v.set(x, y + i, z, m.fence);
-            v.set(x, y + h, z, m.deep);
-            for (int d = -1; d <= 1; d += 2) {
-                v.set(x + d, y + h, z, m.fence);
-                v.set(x + d, y + h - 1, z, m.hung);
-                v.set(x, y + h, z + d, m.fence);
-                v.set(x, y + h - 1, z + d, m.hung);
-            }
-            v.set(x, y + h + 1, z, m.glow);
-            v.set(x, y + h + 2, z, m.stoneSlab);
-        }
-    }
-
-    /** A market stall, or a heap of a family's stores; every stack starts from the ground. */
-    static final class Stall extends P {
-        final int x, y, z;
-        final long seed;
-
-        Stall(int x, int z, long seed, AmberReach land) {
-            this.x = x;
-            this.z = z;
-            this.seed = seed;
-            y = land.ground(x, z);
-            box(x, z, 5, 5);
-        }
-
-        private void post(V v, M m, int a, int c, int top) {
-            v.foot(x + a, y, z + c, m.pale);
-            for (int k = 1; k <= top; k++) v.set(x + a, y + k, z + c, m.fence);
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            int kind = (int) (rnd(seed, 1, 1) * 4);
-            if (kind == 0) {
-                for (int a = -3; a <= 3; a += 6) for (int c = -2; c <= 2; c += 4) post(v, m, a, c, 4);
-                for (int a = -3; a <= 3; a++) for (int c = -2; c <= 2; c++) v.set(x + a, y + 5, z + c, (c & 2) == 0 ? (a & 1) == 0 ? m.tileSlab : m.tileDeepSlab : (a & 1) == 0 ? m.planksSlab : m.tileSlab);
-                for (int a = -2; a <= 2; a++) {
-                    v.foot(x + a, y, z, m.pale);
-                    v.set(x + a, y + 1, z, m.barrel);
-                    v.set(x + a, y + 2, z, (a & 1) == 0 ? m.drum : m.candle);
-                }
-                v.set(x, y + 4, z, m.hung);
-            } else {
-                for (int i = 0; i < 9; i++) {
-                    int a = (int) (rnd(seed, i, 2) * 8) - 4, c = (int) (rnd(seed, i, 3) * 8) - 4, tall = (int) (rnd(seed, i, 4) * 3);
-                    BlockState s = rnd(seed, i, 5) < 0.4 ? m.drum : rnd(seed, i, 5) < 0.75 ? m.barrel : m.planks;
-                    v.foot(x + a, y, z + c, m.pale);
-                    for (int k = 1; k <= tall + 1; k++) v.set(x + a, y + k, z + c, s);
-                    if (rnd(seed, i, 6) < 0.5) v.set(x + a, y + tall + 2, z + c, m.candle);
-                }
-            }
-        }
-    }
 
     // ---- the heart: the Lord's hall inside the great spire -------------------------------------------------------------------
 
@@ -1568,38 +977,6 @@ public final class AmberReach extends Land {
         }
     }
 
-    static final class Pylon extends P {
-        final int cx, cz, y0, h;
-
-        Pylon(int cx, int cz, int h, AmberReach land) {
-            this.cx = cx;
-            this.cz = cz;
-            this.h = h;
-            y0 = land.ground(cx, cz) + 1;
-            box(cx, cz, 6, 6);
-            mayOverlap = true;
-        }
-
-        @Override
-        public void draw(V v, M m) {
-            for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
-                int a = Math.abs(x - cx), c = Math.abs(z - cz), e = Math.max(a, c);
-                if (e <= 5) v.foot(x, y0 - 1, z, m.deep);
-                for (int y = y0; y <= y0 + h; y++) {
-                    int ly = y - y0, r = ly < 2 ? 5 : ly < 4 ? 4 : ly > h - 3 ? 5 : 3;
-                    if (e > r) continue;
-                    if (e < r - 1 && ly < h) continue;
-                    boolean corner = a == c;
-                    boolean panel = !corner && e == r && Math.min(a, c) < 2 && ly % 8 > 1 && ly % 8 < 7 && ly > 3 && ly < h - 3;
-                    v.set(x, y, z, ly >= h - 2 ? m.deep : corner ? m.gold : panel ? m.glow : (ly & 3) == 0 ? m.deep : m.stoneA);
-                }
-                if (e <= 2) v.set(x, y0 + h + 1, z, e == 2 ? m.fence : m.shroom);
-                if (e == 0) v.set(x, y0 + h + 2, z, m.shroom);
-                else if (e == 2 && a == c) v.set(x, y0 + h + 2, z, m.fence);
-                if (e <= 2) v.set(x, y0 + h + 3, z, e == 2 ? m.brickSlab : m.deep);
-            }
-        }
-    }
 
     static final class Spire extends P {
         final int cx, cz, y0, y1, sides, tiers;
