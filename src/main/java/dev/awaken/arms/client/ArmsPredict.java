@@ -856,6 +856,7 @@ public final class ArmsPredict {
     // together. Only the look waits; the server already struck.
     private static final int[] PEND_TARGET = new int[8], PEND_BLOW = new int[8], PEND_MS = new int[8];
     private static int pending, pendingSeq = -1;
+    private static int pendingBreak = -1;
     private static long pendingBy;
 
     /** Whether a HIT is held for the blade (the running move's own, its clock short of the hit). */
@@ -879,9 +880,19 @@ public final class ArmsPredict {
         if (pending == 0) return;
         Archetype.MoveDef def = move == null || style == null ? null : style.move(move);
         if (def != null && moveSeq == pendingSeq && moveTime() < landsAt(def) && System.nanoTime() < pendingBy) return;
-        int n = pending;
+        int n = pending, broken = pendingBreak;
         pending = 0;
+        pendingBreak = -1;
         for (int i = 0; i < n; i++) landed(p, PEND_TARGET[i], Blow.unpack(PEND_BLOW[i]), PEND_MS[i]);
+        if (broken >= 0) postureBroke(broken);
+    }
+
+    /** A posture broken by us, as the striker feels it: the freeze on it and on the hands, the view's drop. */
+    private static void postureBroke(int target) {
+        CombatFeedback.hitstop(target, 160);
+        CombatFeedback.hold(120);
+        CombatFeedback.kick(0F, 2.5F, 0F, 10);
+        ArmsFeel.broke();
     }
 
     /** A server HIT the client didn't play: played now, all of it. */
@@ -1013,10 +1024,9 @@ public final class ArmsPredict {
             }
             case ArmsPayloads.BREAK -> {
                 BROKEN.put(r.entity(), ticks + r.aux());
-                CombatFeedback.hitstop(r.entity(), 160);
-                CombatFeedback.hold(120);
-                CombatFeedback.kick(0F, 2.5F, 0F, 10);
-                ArmsFeel.broke();
+                // the blow that broke it comes first and may be waiting for its blade: the break's freeze waits with it
+                if (pending > 0) pendingBreak = r.entity();
+                else postureBroke(r.entity());
             }
             case ArmsPayloads.RESONANCE -> resonance = r.aux();
             case ArmsPayloads.HURT -> hurt(p, r.aux(), r.aux2() / 10F);
@@ -1164,6 +1174,7 @@ public final class ArmsPredict {
         LEDGER.predicted = LEDGER.confirmed = LEDGER.unconfirmed = 0;
         moveSeq = aimedId = focusId = pendingSeq = -1;
         pending = 0;
+        pendingBreak = -1;
         move = null;
         style = null;
         swishAt = -1;
