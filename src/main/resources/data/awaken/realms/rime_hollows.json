@@ -14,13 +14,13 @@
   },
   "sky": {
     "biomes": [
-      "awaken:gate_frost_monastery"
+      "awaken:realm/rime_hollows"
     ],
     "lens": "rime_hollows",
     "air": [
       "mist",
-      "shaft_dust",
-      "dust",
+      "snow",
+      "wind",
       "drips"
     ]
   },

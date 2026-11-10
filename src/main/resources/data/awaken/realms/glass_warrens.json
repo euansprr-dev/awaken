@@ -14,13 +14,14 @@
   },
   "sky": {
     "biomes": [
-      "awaken:gate_glass_desert"
+      "awaken:realm/glass_warrens"
     ],
     "lens": "glass_warrens",
     "air": [
-      "shaft_dust",
+      "sand",
       "dust",
-      "embers"
+      "shaft_dust",
+      "wind"
     ]
   },
   "life": {

@@ -14,17 +14,17 @@
   },
   "sky": {
     "biomes": [
-      "awaken:realm/keep_hall"
+      "awaken:realm/root_cellars"
     ],
     "lens": "root_cellars",
     "air": [
       "mist",
       "shaft_dust",
-      "smoke",
-      "dust",
+      "spores",
       "drips",
-      "bats",
-      "rats"
+      "moths",
+      "fireflies",
+      "petals"
     ]
   },
   "life": {

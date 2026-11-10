@@ -14,15 +14,16 @@
   },
   "sky": {
     "biomes": [
-      "awaken:realm/keep_hall"
+      "awaken:realm/green_dark"
     ],
     "lens": "green_dark",
     "air": [
       "mist",
-      "shaft_dust",
-      "dust",
+      "spores",
+      "fireflies",
       "drips",
-      "moths"
+      "moths",
+      "petals"
     ]
   },
   "life": {

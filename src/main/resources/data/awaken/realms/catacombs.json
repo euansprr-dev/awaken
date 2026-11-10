@@ -14,17 +14,17 @@
   },
   "sky": {
     "biomes": [
-      "awaken:realm/knell_crypt"
+      "awaken:realm/catacombs"
     ],
     "lens": "catacombs",
     "air": [
       "mist",
       "shaft_dust",
-      "smoke",
       "dust",
       "drips",
       "bats",
-      "rats"
+      "rats",
+      "far_toll"
     ]
   },
   "life": {

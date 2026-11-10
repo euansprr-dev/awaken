@@ -14,14 +14,15 @@
   },
   "sky": {
     "biomes": [
-      "awaken:gate_drowned_archive"
+      "awaken:realm/sunken_stacks"
     ],
     "lens": "sunken_stacks",
     "air": [
       "mist",
-      "shaft_dust",
+      "paper",
+      "drips",
       "dust",
-      "drips"
+      "pale_fish"
     ]
   },
   "life": {

@@ -14,13 +14,13 @@
   },
   "sky": {
     "biomes": [
-      "awaken:gate_fungal_hollow"
+      "awaken:realm/sporewells"
     ],
     "lens": "sporewells",
     "air": [
       "mist",
-      "shaft_dust",
-      "dust",
+      "spores",
+      "fireflies",
       "drips",
       "moths"
     ]

@@ -14,13 +14,13 @@
   },
   "sky": {
     "biomes": [
-      "awaken:realm/wax_hollow"
+      "awaken:realm/tallow_runs"
     ],
     "lens": "tallow_runs",
     "air": [
       "mist",
+      "smoke",
       "embers",
-      "shaft_dust",
       "dust",
       "drips",
       "moths"
