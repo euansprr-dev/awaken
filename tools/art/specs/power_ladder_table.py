@@ -393,6 +393,38 @@ P("twin_strike", "Twin Strike", "Spirit", "active",
   ("Longer", "The twin lingers.", "2 s longer."),
   ("Twin Souls", "The twin becomes a full figure beside you.", "It repeats your power casts too, at half.", "A step that splits into two."), hidden=True)
 
+# ---- Earned (docs/powers-next): given for what you did, finished by the weapon in your hand or made as a place -------
+P("brand", "Brand", "Spirit", "active",
+  ("Deep Brand", "Embers climb off your palm as you press the mark in, and it burns brighter.", "The mark lasts 3 s longer."),
+  ("Wildfire", "The burst throws burning embers wide.", "Everything the burst reaches takes 85% in place of 60%, and catches fire."),
+  ("Second Brand", "A ring of heat rolls out behind the burst.", "When a branded enemy dies of something else, the mark jumps twice in place of once."),
+  ("Forge Mark", "The burst sears your brand into the ground, glowing like the anvil it came from.", "The ground burns whatever stands on it for 4 s.",
+   "The palm pressed flat, then the fist closed and drawn back."), hidden=True)
+P("hoarfrost_lances", "Hoarfrost Lances", "Spirit", "active",
+  ("Long Winter", "Frost drifts round your head while the lances wait.", "They wait 3 s longer."),
+  ("Rime", "A lance bursts into splinters when it strikes something already frosted.", "The burst hits everything within 2.5 blocks for half."),
+  ("Fourth Lance", "A fourth lance hangs with the others, and each one breaks into shards where it lands.", "One more lance."),
+  ("Glacier Crown", "Six lances hang in a crown over you. When the last one flies, a ring of frost bursts round you.", "Two more lances, and the ring hits for 80%.",
+   "Both hands lifted to the crown, then thrown wide."), hidden=True)
+P("updraft", "Updraft", "Flight", "active",
+  ("Thermal", "The column carries dust and leaves higher.", "20% taller."),
+  ("Gust", "Enemies are spun as they're thrown.", "They're thrown higher and hang half a second longer before they drop."),
+  ("Wide Draft", "A second ring of wind rolls out as the column opens.", "25% wider, and it lasts 2 s longer."),
+  ("Skyward Gate", "A sigil of wind turns under the column and a ring opens at its top.", "It's 6 blocks taller, and the top throws you forward along your look.",
+   "A low sweep of the hand, then the arm thrown straight up."), hidden=True)
+P("backdraft", "Backdraft", "Spirit", "active",
+  ("Deep Breath", "Sparks stream to you from every fire you take.", "Draws fire in from 20% further away."),
+  ("Cinder", "The breath scatters embers that keep falling.", "The ground it crossed burns for 3 s."),
+  ("Kindle", "Embers circle your chest as it fills.", "Holds twelve fires in place of eight."),
+  ("Dragon's Breath", "The breath is one long roaring jet with rings of heat running down it.", "It reaches 60% further, and fire can't hurt you for 5 s.",
+   "The head thrown back, then the whole body driven forward behind the breath."), hidden=True)
+P("thornwake", "Thornwake", "Spirit", "active",
+  ("Deep Roots", "Soil is thrown up where every root breaks out.", "They hold a second longer."),
+  ("Briar", "Thorns show along every root.", "Held enemies are cut every half second."),
+  ("Overgrowth", "Leaves lift off the ground all round you.", "Two more roots."),
+  ("Elder Grove", "One great root rises under the strongest enemy and lifts it off the ground, leaves falling from it.", "It's hit again and held in the air for 2 s.",
+   "A palm on the ground, then the hand closing and pulled upward."), hidden=True)
+
 
 # ---- what the game runs ----------------------------------------------------------------------------------------------
 # Riders: the shared mechanics (SPEC 36.3). Shares are of the hit that started them; ticks are game ticks (20 a second).
@@ -469,7 +501,7 @@ SPRITES = {"glow", "spark", "flare", "bolt", "wisp", "ember", "ring", "rune", "h
            "smoke", "dust", "halo", "petal", "feather", "plate", "sigil"}
 KINDS = {"CAST", "CHARGE", "CHARGE_END", "IMPACT", "SLAM", "RING", "NOVA", "CONE", "BEAM", "BOLT", "LIGHTNING", "STRIKE", "DASH",
          "BLINK", "TRAIL", "AFTERIMAGE", "SMOKE", "DOME", "VORTEX", "TETHER", "AURA", "PALM", "ECHO", "FLURRY", "HEAL", "FROST",
-         "FIRE_TRAIL", "EXHAUST", "CONSTRUCT", "PILLAR", "HOLO", "RAIL", "SUMMON", "PSI", "GLYPH", "METEOR", "LIFT"}
+         "FIRE_TRAIL", "EXHAUST", "CONSTRUCT", "PILLAR", "HOLO", "RAIL", "SUMMON", "PSI", "GLYPH", "METEOR", "LIFT", "BREATH"}
 PLACES = {"origin", "end", "hand", "offhand", "body", "feet", "head", "back", "ground", "target"}
 COLS = {"core", "mid", "edge", "accent"}
 
@@ -655,8 +687,8 @@ def html_rows():
 if __name__ == "__main__":
     # run through the module itself, so the step rows (power_ladder_steps imports this module) land in the same table
     import power_ladder_table as T
-    assert len(T.L) == 63, len(T.L)
-    assert len({p["id"] for p in T.L}) == 63
+    assert len(T.L) == 68, len(T.L)  # the 63 of launch and the five earned powers (docs/powers-next)
+    assert len({p["id"] for p in T.L}) == 68
     for p in T.L:
         assert len(p["steps"]) == 4 and all(len(s) == 3 for s in p["steps"][:3]) and len(p["steps"][3]) == 4, p["id"]
     mode = sys.argv[1] if len(sys.argv) > 1 else "md"

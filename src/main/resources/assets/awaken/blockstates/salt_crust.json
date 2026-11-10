@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/salt_crust"
+      },
+      {
+        "model": "awaken:block/salt_crust",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/salt_crust",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/salt_crust",
+        "y": 270
+      }
+    ]
+  }
+}

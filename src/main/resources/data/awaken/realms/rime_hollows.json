@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "name": "The Rime Hollows",
+  "line": "These are the ice caves under the monastery, where the monks never dug and the things that live in the cold never had to move out.",
+  "form": "dungeon",
+  "theme": "frost_monastery",
+  "ranks": [
+    "C",
+    "B"
+  ],
+  "land": {
+    "program": "awaken:rime_hollows",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:gate_frost_monastery"
+    ],
+    "lens": "rime_hollows",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "dust",
+      "drips"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "abbot_of_frost",
+    "seat": "under_the_mountain"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

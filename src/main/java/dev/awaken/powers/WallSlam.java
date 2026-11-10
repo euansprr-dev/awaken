@@ -57,7 +57,7 @@ public final class WallSlam {
         Combat.stun(body, 12);
         Combat.push(body, out.scale(0.16).add(0, 0.12, 0)); // it comes off the wall and drops
         Fx.at(c, FxKind.WALL_CRACK, at).dir(out).scale(crack).noAnim().send();
-        c.sound(at, sound, 1.15f, 0.92f + c.level.getRandom().nextFloat() * 0.14f);
+        c.voice(at, dev.awaken.powers.fx.Voice.Beat.EXTRA_A, sound, 1.15f, 0.92f + c.level.getRandom().nextFloat() * 0.14f);
         Fx.quake(c.level, at, 12, 1.4f * crack);
     }
 

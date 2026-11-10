@@ -46,6 +46,10 @@ final class FxRecipes {
             sound(e, level);
             return;
         }
+        if (e.kind() == FxKind.VOICE) {
+            PowerVoice.play(e, level);
+            return;
+        }
         if (!FxWorld.begin(e.x(), e.y(), e.z(), e.seed())) return;
         FxStyle st = e.style();
         Entity caster = e.caster() >= 0 ? level.getEntity(e.caster()) : null;
@@ -105,7 +109,13 @@ final class FxRecipes {
             case WELL_END -> wellEnd(e, st);
             case SHOT_EATEN -> shotEaten(e, st);
             case BORE_SEAL -> boreSeal(e, st);
+            case FINISHER -> Signatures.finisher(e, st, caster, mine);
+            case BREATH -> {
+                // the breath is its power's own (Signatures, below): no shared recipe throws dirt under a fire
+            }
         }
+        // the power's own look on top of the shared recipe (SPEC §32, "Signatures")
+        Signatures.add(e, st, caster, mine);
     }
 
     /** A power's sound on its release frame: the registry id rides in colour (Fx.sound). */
@@ -1024,8 +1034,10 @@ final class FxRecipes {
         int life = Math.max(6, e.ticks());
         // sonic ring at the start, facing the way you go
         ring(x + dx * 0.4, y + 0.9, z + dz * 0.4, 0.3f, 1.5f, 0.32f, 0.04f, 7, alpha(st.core, 0.95f), alpha(st.mid, 0), dx, dy, dz);
-        // speed lines streaming back past the body
-        for (int i = 0; i < n(14); i++) {
+        // speed lines streaming back past the body (not in your own first person: end on, a streak is a square on your screen,
+        // and the screen's own speed lines do that job there)
+        boolean ownEyes = mine && Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        for (int i = 0; i < (ownEyes ? 0 : n(14)); i++) {
             double ox = R.s() * 0.8, oy = R.f(0.1f, 1.8f), oz = R.s() * 0.8;
             int s = FxWorld.sprite(SPARK, x + ox + dx * R.f(0, 2), y + oy, z + oz + dz * R.f(0, 2), -dx * 0.35f, -dy * 0.35f, -dz * 0.35f, 5 + R.i(4),
                     0.12f, 0.06f, alpha(st.core, 0.9f), alpha(st.mid, 0), FxPool.ADD | FxPool.STRETCH);
@@ -1225,7 +1237,9 @@ final class FxRecipes {
         boolean out = e.has(FxEvent.REPULSE);
         // the throb is felt for the well's whole life; only Gravity Well has one (a rider's little vortex doesn't)
         var prof = dev.awaken.powers.fx.CastProfiles.byId(e.profile());
-        if (prof != null && prof.power().equals("gravity_well")) TravellingSound.hold(dev.awaken.powers.PowerSounds.WELL_LOOP.value(), x, y, z, life, 1.25f);
+        // the classic voice holds a loop for the Well's life; its score (Power sounds: New) carries those seconds itself
+        if (prof != null && prof.power().equals("gravity_well") && !(PowerFxConfig.newVoice() && PowerVoice.has("gravity_well", dev.awaken.powers.fx.Voice.Beat.RELEASE)))
+            TravellingSound.hold(dev.awaken.powers.PowerSounds.WELL_LOOP.value(), x, y, z, life, 1.25f);
         Shape halo = disc(x, y, z, HALO, 1.0f, 2.8f * big, life, alpha(st.mid, 0.9f), alpha(st.mid, 0.9f));
         if (halo != null) {
             halo.flags |= Shape.PULSE;
@@ -2084,7 +2098,7 @@ final class FxRecipes {
                     FxWorld.spin(p, R.f(0, 6.28f), 0.05f);
                 }
             }
-            case MARK -> {
+            case MARK, BRAND, LANCES -> {
             }
             default -> {
                 if (s.age % 4 == 0) motes(x, y + R.f(0.1f, h), z, 1, 0.45f, st, 0.015f);

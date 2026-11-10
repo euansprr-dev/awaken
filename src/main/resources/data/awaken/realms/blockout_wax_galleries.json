@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "name": "Blockout: The Wax Galleries",
+  "form": "land",
+  "theme": "hive",
+  "ranks": [],
+  "land": {
+    "program": "awaken:blockout",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/blockout_light"
+    ]
+  },
+  "heart": {
+    "lord": "hive_regent"
+  }
+}

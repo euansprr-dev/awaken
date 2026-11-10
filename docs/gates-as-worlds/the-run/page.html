@@ -1,0 +1,269 @@
+<title>Gates You Play</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column on a dark ground; tables and the route strip break out wider; decisions in a form at the end. */
+:root {
+  --bg: #0f131b; --panel: #171d28; --panel-2: #1d2532; --line: #2b3546;
+  --fg: #e8e4da; --muted: #9ba5b5; --accent: #f0b24a; --accent-ink: #1b1406;
+  --cool: #82b3ea; --good: #7fc98f; --bad: #ec7a68;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f1f3f7; --panel: #ffffff; --panel-2: #e9edf3; --line: #d3d9e3; --fg: #19202e; --muted: #596376;
+  --accent: #9a6200; --accent-ink: #ffffff; --cool: #2b68ad; --good: #2c7a45; --bad: #b23a2b; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #f1f3f7; --panel: #ffffff; --panel-2: #e9edf3; --line: #d3d9e3; --fg: #19202e; --muted: #596376;
+  --accent: #9a6200; --accent-ink: #ffffff; --cool: #2b68ad; --good: #2c7a45; --bad: #b23a2b; color-scheme: light }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px; }
+.col { max-width: 46rem; margin-inline: auto; display: flex; flex-direction: column; gap: 1.05rem; }
+.wide { max-width: 68rem; margin-inline: auto; }
+section { display: flex; flex-direction: column; gap: 1.05rem; margin-top: 3rem; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; }
+h2 { font-size: 1.6rem; font-weight: 600; }
+h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.5rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.14rem; }
+.muted { color: var(--muted); } .small { font-size: 0.88rem; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+strong { font-weight: 600; }
+.pick { border: 1px solid var(--accent); background: var(--panel); border-radius: 10px; padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.pick h3 { margin: 0; color: var(--accent); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); font-weight: 600; font-size: 0.9rem; }
+.opt th:nth-child(3), .opt td:nth-child(3) { background: var(--panel); }
+.tag { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.tag.have { color: var(--good); border-color: var(--good); } .tag.new { color: var(--accent); border-color: var(--accent); }
+.route { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.55rem; counter-reset: leg; }
+.route div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 0.65rem 0.75rem; font-size: 0.87rem; min-width: 0; counter-increment: leg; }
+.route b { display: block; font-family: var(--display); font-size: 0.95rem; }
+.route b::before { content: counter(leg) ". "; color: var(--accent); }
+.route .k { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cool); }
+.decision { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.decision h3 { margin: 0; }
+.decision label { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.4rem 0.5rem; border-radius: 6px; cursor: pointer; }
+.decision label:hover { background: var(--panel-2); }
+.decision input { margin-top: 0.3rem; accent-color: var(--accent); }
+.decision input:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+.rec { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); border-radius: 4px; padding: 0.08rem 0.4rem; margin-left: 0.35rem; white-space: nowrap; }
+textarea { width: 100%; box-sizing: border-box; min-height: 9.5rem; background: var(--panel-2); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 0.7rem 0.8rem; font-family: var(--mono); font-size: 0.85rem; line-height: 1.5; }
+button { font-family: var(--display); font-weight: 600; font-size: 0.95rem; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 0.6rem 1.1rem; cursor: pointer; }
+.row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
+</style>
+
+<div class="col">
+  <p class="eyebrow">AWAKEN · Gates as Worlds · plan for approval · 10 Nov 2026</p>
+  <h1>Gates You Play</h1>
+  <p class="lede">You said the new gates are turning into a massive open world with no mobs, and that a gate is a place where you go from point to point, up and down, fight a lot of different mobs, get past traps and movement, beat the boss and level up a ton. This is the plan for that. Nothing here is built. It waits for your yes.</p>
+  <div class="pick">
+    <h3>What I recommend</h3>
+    <p><strong>Make every gate a run of legs, and build it mostly from what the old gates already have.</strong> The old gates hold nearly everything you described: packs that wait and wake, rooms that seal, a gauntlet with presses and a wall run, loot, pressure. The new gates use almost none of it. So the first job is connecting, then designing each gate's route in its sheet.</p>
+    <p class="muted small">Proof for you to play: The Hour Crypt turned into a full run, and one short dungeon crawl built new. About three to four hours on the clock with three builders, at today's measured pace.</p>
+  </div>
+</div>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 1</p>
+    <h2>What I found</h2>
+    <p>I read the code today. The surprise is how much is already there.</p>
+  </div>
+  <div class="wide scroll">
+    <table>
+      <tr><th>You asked for</th><th>The old gates already have</th><th>The new gates use</th></tr>
+      <tr><td>A lot of different mobs to fight</td><td>Packs that stand where you can see them, wake when you come in, turn toward you, then fight. A roster of monsters for each theme, with normal, elite and warden roles. 47 boss fights.</td><td>A den drops 3 to 5 monsters at random spots, once, when you come within 56 blocks. A warden is one monster at a point.</td></tr>
+      <tr><td>Going from one point to the next</td><td>Rooms that seal until they're cleared. Eight layouts: labyrinth, spiral tower, shaft, hub and spokes, arena chain, stealth halls, puzzle vault, open cavern.</td><td>No route at all. Sites scattered on a land.</td></tr>
+      <tr><td>Movement, a wall run</td><td>The Gauntlet: gaps to jump, a wall to run along over a drop, checkpoint rings, a clock and medals. A course kit that proves a wall can really be run using the body's own movement code.</td><td>None.</td></tr>
+      <tr><td>Traps</td><td>In the Gauntlet: presses that slam down on a beat, ledges that crack and fall. Also a Collapse Run, a Mirror Hall and Gravity Wells.</td><td>None.</td></tr>
+      <tr><td>Pressure to keep moving</td><td>After four minutes on a floor a wave arrives every 45 seconds, each bigger. At eight minutes the theme's Warden comes for you.</td><td>None.</td></tr>
+      <tr><td>Levelling up a ton</td><td>Pay by rank (double at E, triple at D, as you approved). 60% lands as you fight, 40% rides home in the Satchel.</td><td>The same pay, split evenly across dens and wardens.</td></tr>
+      <tr><td>Loot</td><td>By rank and theme: essence, cores, parts, Hearts, gear. Eight twists (Treasure, Red, Double...) and fourteen modifiers.</td><td>Hidden finds and the Satchel. No twists or modifiers.</td></tr>
+    </table>
+  </div>
+  <div class="col">
+    <p><strong>Why you've seen no mobs:</strong> every walk I ran was set to peaceful, and what a new gate spawns is thin and unplaced. Nothing waits in view, no room seals, nothing chases you.</p>
+    <p><strong>Why not just go back to the old gates:</strong> on 9 Nov you called them "linear hallways" and "a maze". The measurements agreed: two thirds of the walking was in passages seven blocks wide or less, one door in five was walked twice, and the way to the Lord changed height by three blocks. The fights were fine. The layouts were trees with dead ends. So the crawl comes back with loops, height and shortcuts.</p>
+    <p class="muted small">Not checked yet, and the first stage checks them: how many different monsters each theme really has, whether a living room such as the Gauntlet can run outside the old room grid, which traps exist beyond the Gauntlet's, and what movement a player has at E rank.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 2</p>
+    <h2>What "good" means</h2>
+    <div class="scroll"><table>
+      <tr><th>Strong</th><td>You are fighting within a minute and a half of arriving. You can see the next pack before it sees you. Three wardens, each with its own kind of pack, then the Lord. You go up and down, cross at least one movement stretch and one trap stretch, never walk the same way twice unless a shortcut opened, and never walk a full minute with nothing to do. You leave two or three levels higher with loot you want to use.</td></tr>
+      <tr><th>Weak</th><td>A beautiful place with monsters sprinkled on it.</td></tr>
+      <tr><th>Never</th><td>A boss announced ahead. A monster appearing out of thin air beside you. A dead end with nothing in it. A stretch that needs a move you don't have yet. Getting stuck.</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 3</p>
+    <h2>Three ways to do it</h2>
+  </div>
+  <div class="wide scroll">
+    <table class="opt">
+      <tr><th></th><th>A. Switch the old systems on</th><th>B. The Run</th><th>C. The Run, plus new creatures and set pieces</th></tr>
+      <tr><th>What it is</th><td>In today's new gates, dens become waiting packs, each warden gets a pack and a sealing ring, pressure turns on.</td><td>Every gate's sheet carries a route of legs. Each leg kind runs on a system that exists. Dungeon crawls are built from leg parts with loops and height. Open lands get the same route across open ground.</td><td>B, plus three to five new creatures made for each gate, new traps for each theme, and places that change mid-run.</td></tr>
+      <tr><th>You get</th><td>Mobs in the gates this afternoon.</td><td>Gates designed to be played, in a mix of crawls and lands, short to great.</td><td>The most distinct gates. Every one has things you meet nowhere else.</td></tr>
+      <tr><th>Cost to a playable proof</th><td>One builder, under an hour.</td><td>Three to four hours on the clock with three builders. About 12 to 15% of a Fable week at today's measured rates.</td><td>B's cost, then a creature plan of its own. All 41 bosses took about two days; this is more.</td></tr>
+      <tr><th>Risk</th><td>Fights happen wherever a site happens to sit. It is still a place with monsters added.</td><td>Living rooms and packs were written for the old room grid and may need work to run in a new gate. Stage 0 finds out before anything else is built.</td><td>Your verdict on the kit bosses was that they looked derpy. New creatures need to pass that bar one at a time.</td></tr>
+    </table>
+  </div>
+  <div class="col">
+    <p>I recommend <strong>B</strong>, with A's switch-on as its first stage so you have mobs in a gate within the hour. C's creatures are worth doing, as their own plan, once a run plays well with the monsters we have.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 4</p>
+    <h2>The run: legs, and what each is made of</h2>
+    <p>A gate's sheet gets a route: its legs in order, and for each one where it is, what you do, which monsters, how they wait, what it pays, and which ways lead on.</p>
+  </div>
+  <div class="wide scroll">
+    <table>
+      <tr><th>Leg</th><th>What you do</th><th>Runs on</th><th></th></tr>
+      <tr><td><strong>Fight</strong></td><td>A pack in view, waiting. Come close and it wakes. The space seals until it's cleared.</td><td>Waiting packs and sealing rooms from the old gates</td><td><span class="tag have">exists</span></td></tr>
+      <tr><td><strong>Ambush</strong></td><td>The gate's own rule springs it: the toll shuts the doors with you inside, the larvae wake, the salt gives way.</td><td>Each gate's rule, which already flips blocks on a timer or a trigger</td><td><span class="tag have">exists</span></td></tr>
+      <tr><td><strong>Movement</strong></td><td>A wall run over a drop, a climb, a swing, a row of gaps. A checkpoint so a fall costs seconds, not the run.</td><td>The Gauntlet and the trials' course kit, which proves every course can be done</td><td><span class="tag have">exists</span></td></tr>
+      <tr><td><strong>Trap stretch</strong></td><td>Presses on a beat, ledges that fall, plus two or three simple new ones per theme (darts from a wall, a floor that drops, a swinging weight).</td><td>The Gauntlet's presses and ledges; the new ones are small</td><td><span class="tag new">part new</span></td></tr>
+      <tr><td><strong>Warden</strong></td><td>A mini-boss with its own pack, in a space built for it. Three per gate, each a different kind of fight. All three open the Lord's door.</td><td>Warden monsters and the sealing arena</td><td><span class="tag have">exists</span></td></tr>
+      <tr><td><strong>Breather</strong></td><td>A quiet room: loot, a Waystone back, a look at what's ahead.</td><td>Waystones, finds, shrines</td><td><span class="tag have">exists</span></td></tr>
+      <tr><td><strong>The Lord</strong></td><td>The fight, in a place that changes as it goes.</td><td>47 fights; the Crypt's floor already breaks in stages</td><td><span class="tag have">exists</span></td></tr>
+    </table>
+  </div>
+  <div class="col">
+    <h3>Levelling and loot along the way</h3>
+    <ul>
+      <li><strong>XP arrives all the way through,</strong> not in a lump. As a starting split, to be tuned in the pacing simulator: packs 45%, wardens 25%, the Lord 20%, hidden rooms 10%. At E rank that should be two to three levels for a player at the gate's level, from the pay you already approved.</li>
+      <li><strong>Every warden drops something you keep:</strong> a part or a pattern that feeds the forge, the Armoury or the Hearth, which are already built. A hidden room in every gate holds the best find.</li>
+      <li><strong>Pressure is on.</strong> Stand still for four minutes and the gate starts sending waves.</li>
+    </ul>
+    <h3>The mix</h3>
+    <p>Form and length are separate. Form is what the run crosses: a crawl (tunnels, rooms and caves, up and down), a land (open ground with camps and one great thing), a climb, a deep, a sky. Length is how many legs.</p>
+    <div class="scroll"><table>
+      <tr><th>Length</th><th>Legs</th><th>To play</th><th>Share I'd build</th></tr>
+      <tr><td>Short</td><td>about 5</td><td>8 to 12 min</td><td>3 in 10</td></tr>
+      <tr><td>Standard</td><td>8 to 10</td><td>15 to 25 min</td><td>about half</td></tr>
+      <tr><td>Great</td><td>14 or more</td><td>40 min and up</td><td>1 in 6</td></tr>
+    </table></div>
+    <p>Crawls should be the quickest to build, because their legs come from parts (a tunnel, a stair, a cave, a trap room, an arena) that a sheet places by name. I expect 15 to 20 minutes for a standard crawl once the parts exist. That is an estimate; the proof measures it.</p>
+    <h3>What the check gains</h3>
+    <p>The bench already proves nothing floats and every site is reached, in under three seconds. For a run it also proves: every movement leg can be done with the moves an E-rank player has, every fight space is big enough for its pack, no leg is without a job, the first fight is within 90 seconds of the Mouth, no walk between legs is longer than a minute, there is at least one loop, and a crawl changes height by 20 blocks or more.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 5 · a sketch, not built</p>
+    <h2>The Hour Crypt as a run</h2>
+    <p>The place exists and its rooms already go up and down. This is how its route could read. The real sheet comes after you approve.</p>
+  </div>
+  <div class="wide route">
+    <div><span class="k">arrive</span><b>The stair head</b>The bell fills the view. It tolls once and you watch every door drop and lift.</div>
+    <div><span class="k">fight</span><b>The nave</b>The first pack kneels among the tombs, in sight from the stair. The toll can shut you in with them.</div>
+    <div><span class="k">trap stretch</span><b>The Ossuary gallery</b>Bone shelves that give way, and a door on the toll you have to time.</div>
+    <div><span class="k">warden</span><b>The round room of bones</b>The first warden and its own pack. The room seals.</div>
+    <div><span class="k">breather</span><b>The crossing</b>A Waystone, a find, and a look down into the Sunk Aisle.</div>
+    <div><span class="k">fight, down</span><b>The Sunk Aisle</b>Fourteen blocks down and flooded. A different pack, in the water.</div>
+    <div><span class="k">warden</span><b>The drowned round room</b>The second warden, fought half under water.</div>
+    <div><span class="k">movement, up</span><b>The ringers' tower</b>A wall run along the galleries, a swing on the bell ropes, sixty blocks up.</div>
+    <div><span class="k">warden</span><b>The ringing chamber</b>The third warden, among the ropes.</div>
+    <div><span class="k">shortcut</span><b>The balcony</b>A way opens back to the drum, so you never retrace the tower.</div>
+    <div><span class="k">the Lord</span><b>Under the bell</b>The floor breaks in stages while the bell swings over you.</div>
+    <div><span class="k">hidden</span><b>The reliquary</b>Behind a door that only stands open mid-toll.</div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 6</p>
+    <h2>The stages, and where each stops</h2>
+  </div>
+  <div class="wide scroll">
+    <table>
+      <tr><th>Stage</th><th>What gets built</th><th>Time, three builders</th><th>You get</th></tr>
+      <tr><td><strong>0. Switch on, and find out</strong></td><td>In the new gates: packs wait in view, wardens get packs and sealing rings, pressure runs. The four unchecked things get checked. A walk with mobs in it.</td><td>under an hour</td><td>Shots of a gate with monsters in it, and a plain answer on what the old systems can and can't do in a new gate.</td></tr>
+      <tr><td><strong>1. Legs</strong></td><td>The route in the sheet, the leg parts for crawls, living rooms and course pieces usable in a new gate, the new checks in the bench.</td><td>about an hour</td><td>A bench report on a route.</td></tr>
+      <tr><td><strong>2. Two gates to play</strong></td><td>The Hour Crypt as the run sketched above. One short dungeon crawl built new from parts, to measure how fast a crawl is.</td><td>one to two hours with look rounds</td><td><strong>Both to play. Then you say what's right and wrong before anything rolls out.</strong></td></tr>
+      <tr><td><strong>3. Roll out</strong></td><td>Every gate sheet carries a route. The three gates from today's test get theirs. Then the E wave in the mix above.</td><td>measured after stage 2</td><td>Gates in batches.</td></tr>
+    </table>
+  </div>
+  <div class="col">
+    <p><strong>Undoing it.</strong> New gates stay behind their switch, which is off. The old gates are untouched throughout. If stage 0 shows the old systems can't run in a new gate without heavy work, I stop and bring you that before building around it.</p>
+    <p><strong>What would change my mind.</strong> If the Crypt as a run still plays like a place with monsters added, the route isn't enough and the fights themselves need design, which is closer to option C.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="eyebrow">Part 7</p>
+    <h2>Decisions for you</h2>
+    <p>My pick is marked. Change any, then copy the answers into the chat. "Yes to all" works too.</p>
+    <div class="decision"><h3>1. Which way?</h3>
+      <label><input type="radio" name="d1" id="d1b" value="B, the Run, with the switch-on as its first stage" checked><span>B, the Run, with the switch-on as its first stage <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d1" id="d1a" value="A only: switch the old systems on in the new gates"><span>A only: switch the old systems on</span></label>
+      <label><input type="radio" name="d1" id="d1c" value="C: the Run plus new creatures and set pieces from the start"><span>C: the Run plus new creatures and set pieces from the start</span></label>
+    </div>
+    <div class="decision"><h3>2. What do you play as the proof?</h3>
+      <label><input type="radio" name="d2" id="d2a" value="The Hour Crypt as a run, and one short new dungeon crawl" checked><span>The Hour Crypt as a run, and one short new dungeon crawl <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d2" id="d2b" value="Only a new dungeon crawl"><span>Only a new dungeon crawl</span></label>
+      <label><input type="radio" name="d2" id="d2c" value="Only the Hour Crypt as a run"><span>Only the Hour Crypt as a run</span></label>
+    </div>
+    <div class="decision"><h3>3. The mix of lengths</h3>
+      <label><input type="radio" name="d3" id="d3a" value="3 in 10 short, about half standard, 1 in 6 great" checked><span>3 in 10 short, about half standard, 1 in 6 great <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d3" id="d3b" value="More short ones: half short, 4 in 10 standard, 1 in 10 great"><span>More short ones: half short, 4 in 10 standard, 1 in 10 great</span></label>
+      <label><input type="radio" name="d3" id="d3c" value="Decide the mix after I've played the proof"><span>Decide after I've played the proof</span></label>
+    </div>
+    <div class="decision"><h3>4. Pressure in the new gates</h3>
+      <label><input type="radio" name="d4" id="d4a" value="On, as in the old gates: waves after four idle minutes" checked><span>On, as in the old gates: waves after four idle minutes <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d4" id="d4b" value="Off in open lands, on in crawls"><span>Off in open lands, on in crawls</span></label>
+      <label><input type="radio" name="d4" id="d4c" value="Off everywhere"><span>Off everywhere</span></label>
+    </div>
+    <div class="decision"><h3>5. How hard?</h3>
+      <label><input type="radio" name="d5" id="d5a" value="As hard as the old gates at the same rank, then tune from my play" checked><span>As hard as the old gates at the same rank, then tune from your play <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d5" id="d5b" value="Harder from the start: wardens should kill a careless player"><span>Harder from the start: wardens should kill a careless player</span></label>
+    </div>
+    <div class="decision"><h3>6. New creatures</h3>
+      <label><input type="radio" name="d6" id="d6a" value="Use each theme's existing monsters now; plan new creatures separately after the proof" checked><span>Use each theme's existing monsters now. Plan new creatures separately after the proof. <span class="rec">my pick</span></span></label>
+      <label><input type="radio" name="d6" id="d6b" value="Plan new creatures now, alongside the Run"><span>Plan new creatures now, alongside the Run</span></label>
+    </div>
+    <label for="answers" class="small muted">Your answers, ready to paste</label>
+    <textarea id="answers" readonly></textarea>
+    <div class="row"><button type="button" id="copy">Copy answers</button><span id="copied" class="small muted" aria-live="polite"></span></div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var names = ['d1', 'd2', 'd3', 'd4', 'd5', 'd6'];
+  var out = document.getElementById('answers'), note = document.getElementById('copied');
+  function compose() {
+    var lines = ['Gates You Play: my answers'];
+    names.forEach(function (n, i) {
+      var el = document.querySelector('input[name="' + n + '"]:checked');
+      lines.push((i + 1) + '. ' + (el ? el.value : '(no answer)'));
+    });
+    out.value = lines.join('\n'); note.textContent = '';
+  }
+  document.querySelectorAll('.decision input').forEach(function (el) { el.addEventListener('change', compose); });
+  document.getElementById('copy').addEventListener('click', function () {
+    function fallback() { out.focus(); out.select(); note.textContent = 'Selected. Press Cmd+C to copy.'; }
+    try { navigator.clipboard.writeText(out.value).then(function () { note.textContent = 'Copied.'; }, fallback); } catch (e) { fallback(); }
+  });
+  compose();
+})();
+</script>

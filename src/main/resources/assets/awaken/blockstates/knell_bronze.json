@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/knell_bronze"
+      },
+      {
+        "model": "awaken:block/knell_bronze",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/knell_bronze",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/knell_bronze",
+        "y": 270
+      }
+    ]
+  }
+}

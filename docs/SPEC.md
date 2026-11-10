@@ -902,6 +902,10 @@ of `AwakenConfig.Client`.
   `listen(Listener)` (`on(ServerPlayer, Moment, @Nullable LivingEntity target)`), `report(player, moment, target)`
   (server). Arms reports its eight through `Marks.fire` (the same moments its marks answer), powers reports CAST from
   `Casting` after each cast. The armour module listens (set abilities).
+- `dev.awaken.anims.client.ArmLayers` (§32.N, client) — draws on the first-person arm after its skin: `add(Layer)`,
+  `Layer.draw(Arm, PoseStack, SubmitNodeCollector)` in the arm cube's own space; `Arm` gives `right`, `main`, `grip`, `x0`, `x1`,
+  `charge`, `heat`, `keyed`, `packedLight`, `partialTick`. Powers' arm light is one. `FirstPerson.View` also carries `armMain/armOff`,
+  `lightMain/lightOff` and `stowEase` (§32.N, "The arm").
 - `dev.awaken.core.api.BodyMaterial` (§24) — what a blade meets: `FLESH, ARMOR, BONE, WOOD, STONE, SPIRIT, SLIME`;
   `of(Entity)` (both sides; armour ≥ 10 over flesh or bone answers ARMOR), `install(Source)` (the mobs module answers for
   its bodies through `MobDef.material()`), vanilla defaults by type.
@@ -11999,6 +12003,76 @@ from that ball.
   pose, held sound and screen moment run; the first-person clips still follow the setting, and the boot checks the setting itself. The held sound
   starts with the charge orb (`FxRecipes.startCharge`), so Volley, which never charges, has none.
 
+### 32.N The next level (plan docs/powers-next/PLAN.md, build ledger docs/powers-next/BUILD.md, page https://claude.ai/artifact/W1U5AFoQMizBjLxbUg8VHv; Euan approved all of it 2026-11-10: "Go ahead with the full thing")
+
+The film of 10 Nov (`tools/autopilot/powers-next-before.txt`, 17 casts in first person) showed why casts read weak: the arm was one
+straight box, wind-ups happened off screen, a weapon popped out of the hand and back, and most powers ended as the same ring and flash.
+What follows replaces that. Nothing here changes what a power does to a number unless it says so.
+
+**The arm** (module `anims`; clip schema 2, `FpClipSet.SCHEMA`; schema 1 files still load).
+- A fists clip may say `"arm": true`: each fist key's three spare values are then how the arm would lie (pitch and yaw, degrees, view
+  space, 0 0 straight ahead) and the wrist's roll. **The arm drawn is still vanilla's: one straight box, its sleeve end out of sight**
+  (Euan, 10 Nov 2026, on the first film, where an elbow and a separate upper arm read as a broken arm: "keep the arms closer to vanilla
+  style and not break them"). It comes to the fist from under the frame's corner on its own side (`side * 0.48, -0.84, -0.53`), as it
+  always did; the keyed lie turns it toward itself by at most 38 degrees and never so far that the far end of the box would show; a fist
+  held too high for that is reached by drawing the same arm longer, at most 1.6 times, about its shoulder (`WorldBody.drawFist`). There
+  is no elbow joint and never a second piece. The roll turns the arm's front. Without `arm` the arm is exactly as before.
+- `"mainMoves"` / `"offMoves"`: that hand's track is offsets (it moves what the hand holds) while the other hand is fists. This is the
+  left-hand cast: the off hand acts, the main hand keeps the weapon and lowers it into a guard. A weapon's grip follows the move.
+- `"ease": true` with `"stow"`: a two-handed cast puts the weapon away over 2.5 ticks and brings it back over 3, never a pop. The weapon
+  session's draw never plays when a cast gives the weapon back.
+- `"light"`: `[tick, chargeMain, heatMain, chargeOff, heatOff, ease]` keys. `FirstPerson.View` carries `armMain/armOff` (pitch, yaw,
+  roll, weight), `lightMain/lightOff` (charge, heat, weight) and `stowEase`.
+- **Arm layers** (`anims.client.ArmLayers`, public): anything may draw on the first-person arm after its skin, in the arm cube's own
+  space (x from `x0/16` to `x1/16`, y `-2/16` at the shoulder end to `10/16` at the hand, z `±2/16`). `ArmLayers.add(Layer)`;
+  `Layer.draw(Arm, PoseStack, SubmitNodeCollector)`; `Arm` says which arm, whether it holds something, and the light keyed on it.
+  The arm's armour (§44.1, `core.client.FirstPersonDress`) is drawn first, stretched with the arm, and `Arm.dressed` says it was:
+  what a layer puts on the skin may be under a plate. The light then draws itself 0.16 nearer your eye along the line of sight (the
+  same place on the screen, on the plate in place of the skin), leaving out the faces turned away.
+- **The light** (`powers.client.fx.ArmLight`, an arm layer): the power's type shows on the skin itself. One procedural pattern a style
+  (15), drawn on the skin's own pixel grid (4 x 12 a face, 3 wide on slim arms) 0.004 above it, running toward the fist as the charge
+  climbs, with a soft halo. A cast with no light track gets one from its age against its release tick. Powers that sit on you (Barrier,
+  Mend, Brace, Nanite Skin, Cloak, Bulwark, Overload, Hoarfrost Lances) keep the arms lit for as long as they last, and hold a resting
+  fist in view when the main hand is empty. Blocky fists, no fingers.
+- Authoring: `tools/art/specs/fp_casts2.py` writes `assets/awaken/fp_clips/fp_casts2.json` (read last, so a clip there replaces the
+  older one of the same name). One-handed casts key only the left fist. Its rules are checked on build: every pose held two ticks is
+  on screen above the hotbar; no hand sits in the middle fifth of the view for more than two ticks; two hands never start on the same
+  tick; a strike overshoots and settles. 77 clips authored (207 with takes). The three held aims (Charged Shot, Prism Lance, Railgun)
+  keep the fist places their first clips gave them, because the ball, the core and the rail's line are measured from the hands; only
+  Shockwave's standing stamp is still its earlier clip (a stamp is the foot's, and its run and air ways are authored).
+
+**Takes.** Every authored cast has three takes (`_t2`, `_t3`: the same cast with its path and timing a little different, never its
+release pose). The client picks one that isn't the last one it used for that power and sends it with the cast, so everyone sees the
+same take.
+
+**Ways** (`powers.fx.Ways`: STAND 0, RUN 1, AIR 2). The client says how the body was moving at the press; the server keeps the claim
+if it was true within 5 ticks (`Casting.WAY_GRACE`). The cast payload's `keys` carries the way in bits 4-5 and the take in 6-7; an FX
+event's flags carry them in bits 12-13 and 14-15. A way picks its own clip (`base__run`, `base__air`, falling back to the base) and may
+change the power's shape, never its damage:
+- Shockwave: at a run 35% longer and 40% narrower; stamped down out of the air, a ring all round you at 60% of the range.
+- Haymaker: at a run the body is thrown 35% further and flatter; out of the air it is driven into the ground and those within 2.6
+  blocks are thrown back.
+- Spirit Palm: at a run it reaches 6 blocks (4.5) and throws 30% further; out of the air the body goes down and the print bursts under
+  it for half on everything within 2.5.
+- Nova: out of the air it goes off beneath you, 15% wider, and lifts you.
+- Frost Nova: at a run the ring lands three blocks ahead; out of the air it is 30% tighter and holds half again as long.
+- Updraft: cast in the air, the column starts at the ground beneath you and still carries its full height above you.
+There is no timing in any of this: the way is whatever you were already doing.
+
+**The press buffer.** A power key pressed within 3 ticks of its cooldown's end is kept and cast on the first tick it can be.
+
+**A moment each** (`CastFeel.POWER`): 57 powers have their own screen moment at the release (view kick with yaw, field of view,
+hold, flash) in place of the eight shared ones. Camera shake and reduced motion still scale them.
+
+**Signatures** (`powers.client.fx.Signatures`): after a power's shared recipe has drawn, its signature adds the one thing only that
+power has. Built so far: Frost Nova (rime runs out along the ground and stands up as crystals), Thunderclap (lightning along the floor),
+Telekinesis (a line of force from the palm, the ground lifting round what is held), Spirit Palm (the handprint goes through the body and
+out the far side), Barrier (a curved plate of hexes that turns with your look), Mend (petals climbing round you), Shadow Step (your shape
+left behind in ink), and the five earned powers (§50.11). The rule for the rest: no power's main effect may be only a ring, a flash and a
+number. Signatures are drawn, never real, inside the effect budget, and off at the Minimal effects level.
+
+**Open** (in the ledger): third person has no takes or ways yet; the remaining powers' signatures.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 33. Trails (optional guidance for everything; plan docs/trails/PLAN.md, page https://claude.ai/artifact/QvuzZLthjqdy1dmXFgNit4; Euan approved all ten recommendations 2026-10-27)
@@ -20851,6 +20925,119 @@ At level 5 a full shot bores (`Bore.through`): up to 14 blocks along the line an
 `tools/art/specs/audio_power_voice.py`. Each power has a charge or wind, a release, an impact, a tail and a level 5 layer, two versions of each, from CC0 recordings and air (Kenney, `tools/art/sources/ritual`). Nothing pitched or struck above the sub. The family's level-up stinger is off for these four (`PowerSounds.ownPack`), since that's where the dings came from. Loops are mastered wrapped round themselves, so there is no dropout at the join. The sound build fails any new file with a held tone in its loud part (`ding_check.py`: a line above 800 Hz, 14 dB over the third-octave around it, held 45 ms, within 14 dB of the loudest frame). It can't see below 800 Hz. Old files stay until Euan has passed the new ones.
 
 Light bending round the Well (decision 10) is not in Stage 0: nothing in the game can warp the screen around a point in the world yet, so it needs its own pass in the Lens chain.
+
+### 50.8 Scores (docs/powers-next; Euan 9 and 10 Nov 2026: built sounds read fake, "the sounds are a big one")
+
+A power's sound is a score: for each beat of its cast a few layers, and every layer is one of Minecraft's own recordings named the way
+`sounds.json` names it (`awaken:voice.<name>` → `minecraft:<file>`), at a volume, a pitch and a start tick. The game plays them from
+its own files; nothing of Mojang's is in the mod.
+- **Beats** (`powers.fx.Voice.Beat`): GATHER, PEAK, RELEASE, TRAVEL, IMPACT, TAIL, ECHO, HOLD, END, LEVEL5, EXTRA_A, EXTRA_B. The
+  server names a beat with `Cast.voice(...)` (an `FxKind.VOICE` event: the beat in `ticks`, intensity in `scale`, and the power's
+  classic sound, volume and pitch riding along). GATHER, PEAK and HOLD are never held back to the release frame.
+- **Client** (`powers.client.fx.PowerVoice`, `assets/awaken/power_voices.json`, schema 1): picks one of a beat's sets by the cast's
+  seed, wanders each layer's pitch a little, plays at most 12 layers (2 beyond 24 blocks), cuts what was gathering on a let-go, adds the
+  break sound of the block a hit lands on (`surface`), and ducks the world for a few ticks under a big release. At level 5 the LEVEL5
+  set plays under the hit (or the release when the power has no hit).
+- **Classic or New**: client setting `newPowerVoice` (and `/awaken fx voice new|classic`). Classic, or a power with no score for a
+  beat, plays the classic sound the event carries, exactly as before. An empty set is a beat meant to be silent.
+- **Subtitles**: one line a power (`subtitles.awaken.voice.<power>`, "Frost Nova freezes"), shown on GATHER, RELEASE, IMPACT and HOLD.
+  It rides an event of its own (`voice.say.<power>`) played too quietly to hear, and only while subtitles are on.
+- **Authoring**: `tools/art/specs/power_voices.py build`. It refuses a recording this Minecraft doesn't ship, any tonal source
+  (amethyst, note blocks, bells, the level-up, the experience orb), more than 12 layers, a volume above 1 or a pitch outside 0.5 to 2.
+  Today: 64 powers, 157 beats, 591 layers over 386 recordings. The ring check stays a tripwire; Euan's ear is the judge.
+- Left as plain sounds for now: bolts in flight, Force reactions, zones, the ladder's step hooks, flying blocks, the movement twists.
+
+### 50.9 Arms Duets (`powers.ArmsDuets`; Euan 10 Nov 2026: "it really feels like you're actually doing combos between the weapon and then the power")
+
+One power and one weapon style make something neither does alone. Nothing is timed: a cast opens a few seconds in which the blade's own
+moments answer it (`core.api.FightMoments`), or the power answers the weapon in your hand as it lands. The style is read from the held
+item's own name, so nothing in Arms changes. Damage goes through `Combat` under the usual caps. They are found by trying; the System
+names each the first time with how many you have found ("There are more"), and the Journal keeps it. Counters `awaken:arms_duets/<key>`.
+
+| Duet | Power + weapon | What happens |
+|---|---|---|
+| Both Barrels | Haymaker + Gauntlets | A second blow from the other fist for 60% |
+| Chain Step | Shadow Step + Daggers | A kill or finisher within 2 s brings Shadow Step straight back |
+| Icebreaker | Frost Nova + Maul | For 6 s a finisher or perfect heavy on its ground throws a row of ice spikes 7 blocks ahead |
+| Reap | Gravity Well + Scythe | A hit on anything inside your Well cuts everything else inside it (once a Well) |
+| Still Cut | Flow + Katana | Each hit during Flow hangs a cut on its target, six at most; they all land when Flow ends |
+| Mirror Guard | Barrier + Shieldblade | A deflect or guard while Barrier is up throws a blast at what struck you |
+| Crossing | Lightning Step + Twin Blades | Everything on the line is cut a second time as you arrive |
+| Long Reach | Spirit Palm + War-staff | The palm lands 3 blocks further away |
+| Edge of Light | Beam + Greatblade or Longsword | Hold Beam a second; your next finisher or perfect heavy within 3 s throws it as a crescent 11 blocks long |
+| Thunder Javelin | Charged Shot + Spear | At half charge or more the bolt goes through three more bodies |
+| Batter Up | Terrain Rip + Maul or War-staff | The rock is struck, not thrown: half again as fast, 30% wider |
+
+Not built: Recall (Telekinesis + any weapon), and the 36 Weaves performed by the weapon itself, which need Arms' swing code.
+
+### 50.10 Break finishers
+
+A cast at a body whose stance you broke within the last 2.5 seconds (`ArmsDuets.FINISH_WINDOW` 50 ticks, within 16 blocks) is a
+finisher: the power lands half again on it (at least as a 4-damage power would), an `FxKind.FINISHER` event plays the family's own
+ending on the body (nine looks in `Signatures.finisher`: Kinetic goes straight through and breaks the ground, Velocity cuts from every
+side, Flight lets the ground go, Energy comes out of its back, Shadow's shape finishes it a beat late, Mind closes rings on its head,
+Architect pins it from the floor, Tech fires from all round, Spirit's palm goes through), and the caster gets a held beat. Named by the
+System the first time for each family; counters `awaken:break_finishers/<family>`. The break gives the seconds: nothing to time.
+
+### 50.11 Earned powers (`powers.catalog.EarnedPowers`, `powers.Earned`; Euan 10 Nov 2026: "surprise me, as long as it still feels like MC"; 9 Nov: "easy unlocks")
+
+Five powers no Power Core rolls (hidden). Each is given the moment you have done enough of something you were doing anyway and hold the
+rank it asks, and each fills a hole: Heat and Frost had one power apiece while every weapon attunes to both, nothing answered the forge,
+nothing tied Flight to climbing, and nothing used the land you stand on. They level through mastery like any hidden power.
+
+| Power | Family, force | Cost, cooldown, damage | Given for | Rank |
+|---|---|---|---|---|
+| Brand | Spirit, Heat | 18, 8 s, 9 | Forging a weapon on the War Anvil | E |
+| Hoarfrost Lances | Spirit, Frost | 24, 18 s, 5 a lance | Ten kills where it is cold enough to snow | D |
+| Updraft | Flight | 20, 12 s, 3 | Six seconds off the ground in one go, on your own (no wings, mount, water, ladder, levitation or slow falling) | E |
+| Backdraft | Spirit, Heat | 30, 20 s, 6 and up | Setting off fifteen Brands | D |
+| Thornwake | Spirit | 26, 16 s, 5 | Ten kills on green ground (grass, moss, podzol, leaves, flowers, crops) | D |
+
+- **Brand**: press your palm to a body within 4.5 blocks (a quarter hit) and leave a mark for 8 s, or aim at a block within 5.5 and
+  leave it on the ground as a trap (armed after 15 ticks, goes off under the first enemy within 1.5). Three marks at most. Your next
+  melee blow of any kind on the marked body (or on anything within 2.5 of a ground mark) sets it off two ticks later: full damage to
+  the body, 60% to everything within 3.5, all set burning. A finisher or perfect heavy sets it off for half again, 30% wider. If the
+  body dies of something else first, the mark leaps to the nearest unmarked enemy within 6 with 5 s on it, once. Variants: Slow Burn
+  (twice as long, 80%), Flash Brand (40% wider, 85%). Ladder: Deep Brand (+3 s), Wildfire (the burst's share 85%, and burning),
+  Second Brand (leaps twice), Forge Mark (the burst sears the ground: 4 s of burning at a quarter a second).
+- **Hoarfrost Lances**: three lances hang over your shoulders for 12 s. Each melee blow you land looses one at what you hit (70%
+  of the power's damage, Frost, slowed and Frosted for 3 s; at most one every 6 ticks); a finisher or perfect heavy looses all that
+  are left (60% each). Pressing the key again throws the rest at what you aim at within 22 blocks, or along your look. The cooldown
+  starts when the last one flies or the time runs out. Variants: Long Winter (twice as long, 85%), Heavy Lances (two, 170%). Ladder:
+  Long Winter (+3 s), Rime (a lance into something already Frosted bursts for half within 2.5), Fourth Lance, Glacier Crown (two
+  more, and when the last flies a ring of frost bursts round you for 80% within 4).
+- **Updraft**: a column of rising air where you stand, 2.2 blocks wide and 14 tall, for 6 s. You and your allies inside it are
+  carried up by the game's own Levitation (about 9 blocks a second) with no fall damage after; enemies take the power's damage once,
+  are thrown up for a second and a half and dropped (bosses and heavy bodies are only hit); projectiles that aren't yours are swept
+  upward. Variants: Far Draft (placed where you aim, up to 14 blocks away), Tall Draft (half again as tall, 70% as long). Ladder:
+  Thermal (20% taller), Gust (thrown higher, held half a second longer), Wide Draft (25% wider, 2 s longer), Skyward Gate (6 taller,
+  and the top throws each rider forward along their look).
+- **Backdraft**: after a 7-tick breath in, every fire within 8 blocks is taken: burning bodies stop burning (yours and your friends'
+  too), fire blocks go out, your own Brands are swallowed, and up to two campfires or lava blocks feed it without going out. Eight
+  fires at most. Three ticks later it all comes back as a cone: 7 blocks and 26 degrees, +0.5 block, +1.5 degrees and +25% damage a
+  fire, setting alight. With no fire near it is a small puff. Variant: Deep Breath (draws from half again as far, 90%). Ladder: Deep
+  Breath (+20% draw), Cinder (the ground it crossed burns 3 s), Kindle (twelve fires), Dragon's Breath (a jet 60% longer and
+  narrower, and fire can't hurt you for 5 s).
+- **Thornwake**: wakes the plants within 7 blocks. Each root seizes one enemy (nearest first): the power's damage, and held still for
+  2.5 s (bosses only slowed). Two roots, plus one for every two living plants near (flowers, leaves, saplings, crops, tall grass,
+  vines, bamboo, cane, cactus) and one for every 24 blocks of turf, six at most; a root comes from the plant nearest its enemy. On
+  bare ground: one thin root for half, held 1 s. Variant: Briar Ring (60% of the reach, held 60% longer). Ladder: Deep Roots (+1 s),
+  Briar (held enemies are cut every half second), Overgrowth (two more), Elder Grove (one great root under the strongest enemy: hit
+  again for 120% and held in the air 2 s).
+
+**Tasks** (`Earned.steps`, thread `powers.earned`): nothing is announced beforehand. Once you have made a start (one cold kill, a few
+seconds of air, one Brand set off, one green kill) and hold the rank, a Lead says what kind of thing is waking and where ("Fight in
+snow country"), with the count. Brand has no such line: forging your first weapon is already on the main path. Once you own one, a
+single plain step says how it is used, until you have used it once (`awaken:brands_set_off`, `awaken:lances_loosed`,
+`awaken:updraft_rides`, `awaken:fires_breathed`, `awaken:roots_woken`). Brand and the two it leads to sit on Weapons; Updraft and
+Thornwake on Out there.
+
+**Each has** an icon and a Core crystal (a commanded Core still shows right), a ladder (§36), a cast profile with its own
+first-person clip (Brand and the Lances are left-handed so the blow can follow at once; Backdraft takes both hands), a score, a screen
+moment and a signature: the brand is one rune that keeps its shape on the side of the body you are looking at, and its burst leaves
+cooling cracks; the lances hang where the server throws them from (in your own eyes, ahead in the top corners) and one fewer hangs each
+time one flies; the column's edge is drawn in thin rising lines with curls of wind, dust and the odd leaf; the breath is big soft flame
+down the cone for as long as the lungs last; roots are still jagged lines of bark with a green heart, soil thrown up, leaves falling.
 ## 53. One short list (the Tasks page through the whole game; plan docs/tasks-progression/PLAN.md, page https://claude.ai/artifact/JqgFfTyCLV13rx6N1XupRd; Euan approved all sixteen recommendations 2026-11-09)
 
 The Tasks page (§27.13) keeps its model: steps stay derived from the world, no quest flags. This section is what it now promises.
@@ -21264,6 +21451,270 @@ A new land, in order: the painting approved; materials (a copy of `tools/art/spe
 `ThemeBlocks` with the same suffixes, the tag `blocks_motion_no_leaves`); `data/awaken/realms/<id>.json` and its biomes (their `sky_color`, `fog_color`
 and `grass_color` are also what the preview shades with); a `KitLand` subclass (land shape, one great build, `build()` placing the rest) entered in
 `LandPrograms`; a tour copied from `realm-amber.txt`; then preview, fix, preview, and only then a walk.
+
+
+**The Hour Crypt (gate 2 of 88, E and D, Dungeon, Bell Crypt).** One great drum with a bell the size of a house hung over a sunk floor; the
+stair head and nave run north, an Ossuary east, a flooded Sunk Aisle west, a bell tower south, the Candle Keepers' cloister off the nave.
+Every wall is one function (`niche`) for straight and round faces. The law is `tolls` (`RealmToll`): every 1,200 ticks the great bell rings
+and all six iron doors drop for 180 ticks; a door cell with something alive in it stays open. Land hooks added for it: `indoors()`,
+`portalAxis()`, `heartClosedLine()`. The Lord's floor is lit by low hidden light (a 7-block grid of level 13 at floor+4) because candles round
+the rim alone leave the middle black, and a fight has to be read.
+
+**One family per theme, not per gate.** Bell Crypt's lands all build in Knell (`tools/art/specs/realm_knell.py`, 22 blocks and 16 cuts), Hive's
+in Amber, so 88 lands don't mean 2,700 blocks. Under a blue moon a green patina has to be painted yellow-green or it reads as cyan.
+
+**More checks.** `WalkCheck.unreachable(land)`: breadth-first from the Mouth with `heart_open` applied (step up 1, drop up to 4, 2 cells of
+headroom), every site within 4 blocks of a walked cell. `FloatCheck` now knows things meant to float on water (`crypt_lily_candle`,
+`market_boat_lamp`: fail with no water under them), and a small stray's failure names the block and what it stands on. Tests:
+`realm_hour_walks_to_everything`, `realm_hour_nothing_floats`, `realm_hour_doors_toll`. The preview lights an `indoors()` land by flood fill on
+the volume (warm candle, cool moon) and draws candles as their real sticks. Where two halls cross, neither draws its wall across the other.
+
+**The bar (10 Nov 2026).** `docs/gates-as-worlds/BAR.md` is the standard every gate is held to: what Amber Reach and The Hour Crypt have, and the preview's `relief`, `wall`, `shaped`, `contrast` measures and FLAT, PLAIN, WASHED flags.
+
+**Air.** Realms now take part in Gate Air (SPEC 38.9). `RealmAir` tells a client on arrival and every half minute, no card: blueprint `sky.air` lists the client's air and small life, and `Land.air()` (built with `kit/AirPlan`) gives mist layers, shafts, lights and still water, which Lens reads. Amber Reach and The Hour Crypt have both.
+
+**Walking.** `WalkCheck` now swims: you can cross water and climb out where the bank is a step high.
+
+**Kingsroot Keep (gate 10, Overgrown Temple).** Keep family: cold wet ashlar, verdigris tile, black oak, pale roots, rust cloth (`tools/art/specs/realm_keep.py`). Two rings of curtain wall and a stepped keep on a hill inside a river gorge; every gate is shut. The rule: `keep_climb_root` (a root net, tagged `minecraft:climbable`) hangs on the walls where the great roots have broken them, and `WalkCheck` now climbs. The Lord waits in the great hall, nave and galleries with no roof. A shared wall profile (`wall`) makes every face step in four planes: batter, pilasters, blind arches with lit slits, corbelled parapet. Folk: wall-hobs in the outer ward.
+
+**Saltcomb Flats (gate 7, Hive, Desert and Ruin).** Salt family: bone wax, ochre stone, blue-black shade, white crust, dune sand, charcoal paving (`tools/art/specs/realm_salt.py`). A white salt pan of hexagon plates with brine pans, crossed by a road of black hexagon stones from the Mouth (0, 66, 244) to the door of the Sinking Court. A dry hive-city climbs the dunes behind it: spires of stepped comb tiers (`Spire`), comb domes, stepped blocks of cells, dark ribs. Realms can't change their sky per gate, so the rule isn't tied to a clock in the sky: law `salt` (`RealmSalt`) sets the crust over the three fords (z 188, 128, 72) hard for 60 s and soft for 40 s, a run or a slow swim, via `change("salt_soft"/"salt_hard")`; a cell with something in it stays brine until the next turn. Lord: `hive_regent` in the Sinking Court (drum at (0, -60), arena radius 42, wall inner radius 60): hex floor over brine, tiers of steps, a gallery at +30 with two stairs, lit niches, sand running down every third pilaster, a corbelled roof with a hole 22 across, a cracked comb dome in the middle. `heart_weeps` and `heart_winds` sink whole floor tiles into the brine in two sectors; the door is sealed with fresh comb. Folk: salt-rakers.
+
+**The Vine Seat (gate 3, Overgrown Temple).** Fane family: pale cut stone, green tile, teak, gilt, three leaf shades (`fane_leaf`, `_lit`, `_deep`), pale water (`fane_fall`). A stepped temple of six courses on a lagoon, split by one tree, with two great faces either side of the stair and a screen wall rising behind the trunk. Every wall comes from one rule, `facade`: plinth, pilasters every fourteen, bays with a lit niche or a carved panel, frieze, overhanging cornice. Rule `roots` (`RealmRoots`): curtains of roots shut across doors you've used and part for anyone moving at them; stand still and they climb your legs. The Lord's place is the Root Bowl at the foot of the trunk, opened by three Wardens.
+
+
+### 50.9 The Run (plan page https://claude.ai/artifact/S2hFD95MozxhM8twqcfXQ9, approved in full 10 Nov 2026; build log docs/gates-as-worlds/the-run/BUILD.md)
+
+A gate is a run, not a place to look at: you go from point to point, up and down, fight several different packs, get past
+traps and movement, beat the Wardens and the Lord. A Realm's land carries its run as data (`Land.route()`), a list of **legs**:
+
+| Leg | What happens | Runs on |
+|---|---|---|
+| ARRIVE | The Mouth. | |
+| FIGHT | A pack stands in view at a DEN site and waits; it wakes when it sees you inside 13 blocks, when you come inside 5, or when one is hurt. | `RealmPacks.den`, `Encounters.holdFree` |
+| AMBUSH | Nothing stands there. Walk inside the leg's radius and its pack comes up awake round you; the land's `ambush_<leg>` blocks change as it springs. | `RealmRun` |
+| MOVEMENT | A stretch you can fall from. Inside its box (`Land.Course`) a fall of more than 6 puts you back on the last of its ledges you stood on, for 3 + 8% of your health. | `RealmRun.course` |
+| TRAP | Presses, spitters, floor that gives way (below). | `RealmTraps` |
+| WARDEN | A Warden and its company at a WARDEN site. | `RealmPacks.warden` |
+| BREATHER | A place to stop. Pressure sends nothing after a player standing in one. | `RealmLive.pressure` |
+| SHORTCUT | A way that opens when its `when` is met ("warden2": that Warden is down; "den1": that pack is dead): the land's `shortcut_<leg>` blocks, once, with the land's line if it has one. | `RealmRun` |
+| HIDDEN | A place off the route. The first player inside it banks its share for everyone in the gate; the land's `found_<leg>` blocks change. | `RealmRun` |
+| LORD | The Lord's hall (§50.8). | `RealmLive.heart` |
+
+A leg is `id, kind, name, x y z, radius, site, pack, when, exits`. `pack` names the monsters ("hive_larva*4", "hive_guard"), from
+the mobs each theme already has, with one more of the first for every two ranks; empty rolls from the theme as before. `exits`
+are the legs you can go on to. A land nobody has designed a run for still has one, read off its sites (arrive, every den a
+fight, every Warden a Warden, the Lord), and plays exactly as it did.
+
+**Doors.** A leg whose land answers `change("seal_<leg>")` has doors. They shut while its pack is awake and a player of the gate
+stands inside it (radius + 2), and open the moment either stops being true, so nobody is ever locked in or out; a cell with
+anyone in it stays open. A Warden without doors keeps the soft ring of stage 0 (the ground past ring + 6 turns you back).
+Which legs are shut is saved with the Realm (`RealmState.sealed`).
+
+**Traps** (`Land.Trap`, in the land's own blocks, on the Realm's clock; hurt as the old Gauntlet does):
+- PRESS: a box of cells fills for 30 ticks of every `period`, after 30 ticks of dust and cracking. Whoever is in it takes
+  3 + 11% of their health and is put outside on the nearer side. It never closes on a monster.
+- SPIT: a cell lights for 20 ticks, then everything on its line takes 2 + 8% and Slowness II for 2 s, once per beat.
+- CRUMBLE: floor that goes 15 ticks after it is stood on and grows back 100 ticks later, never into anyone.
+
+**Pressure** as §7: 4 minutes with no pack woken and nothing killed and waves come (2, then up to 6, every 45 s); at 8 minutes
+the hunter (the theme's Warden kind). Not in the Lord's hall, not in a breather, not on peaceful.
+
+**Pay.** Kill pay is unchanged (60% of the land's pay, split over the run's monsters: a rolled den counts 5, a named pack what it
+names, a Warden 4 plus its company). Of the other 40%: the Wardens bank half between them (a sixth each where there are three);
+where the land has a hidden leg the Wardens bank four tenths and the hidden legs hold 15% between them, paid only to those who
+find them; the Lord pays what is left.
+
+**The check** (`RouteCheck`, in the bench and the tests) proves a designed run: every leg has its job (a den, a Warden, a trap,
+a course, blocks that open) and can be walked to, the first fight is within 150 blocks of the Mouth, no two joined legs are more
+than 260 apart, there is a loop or a shortcut, a place under a roof rises or falls 20 or more, and each fight has 12 walkable
+columns a monster. The walk (`WalkCheck`) now makes the one jump anyone can (a sprint over one to three missing cells, level or
+down) and goes through everything a land lists as `walk_open`.
+
+**The crawl kit** (`kit/crawl/CrawlLand`). A dungeon crawl is rock with a run hollowed out of it, part by part: `Cave` (an oval
+room with a wandering rim), `Arena` (a round room with a ring of pillars for cover), `Tunnel` (a way between two points that
+climbs in half steps, never steeper than one in two), `Shaft` (a ledge winding down a round shaft, breakable at its quarter
+points, over a pool it runs down into). Parts meet at the same height. The land that extends it says what the rock, floors and
+doors are made of and what grows on the walls (`adorn`), which is where a crawl gets a look of its own.
+
+**The Hour Crypt as a run** (15 legs). The nave (ghouls and archers), the walk round the pit (a breather), then three wings in
+any order. East: three rows of stone teeth come up across the Ossuary's gallery one after another (PRESS, period 100), the
+Ossuary's pack, an ambush of wisps in the north chapel, and the Warden of bones, whose door shuts on the fight. Off the cross
+aisle's south end is the reliquary (HIDDEN): its door stands open only while the bell rings, and for good once someone has been
+in. West: the Sunk Aisle's pack in the water, an ambush in the drowned bays, the Warden of water behind its door. South: the
+ringers' tower, its stair broken in three places (three cells each, a sprint clears them; a fall is caught), to the Warden
+among the ropes. Its fall lets a bell rope down from the bridge to the walk round the pit (SHORTCUT; `crypt_bell_rope` is
+climbable). Then the Lord.
+
+**The Broodwarren (gate 14, Hive, a short crawl; `land/Broodwarren`, blueprint `awaken:broodwarren`).** Brood family
+(`tools/art/specs/realm_brood.py`): nest paper in three tones laid in layers, rooted earth, resin and its slab, brood comb and
+comb with something lit in it, sacs, royal jelly, spitter cells, and the red skin that is its door. Fifty blocks down in nine
+legs: the split root (a crack of daylight behind you), the antechamber (larvae and honey slimes), the spitting gallery (five
+cells, a second apart), the nursery (a shaft of hanging comb; the ledge is broken at three quarter points and has two stretches
+of thin comb that give way), the larder (the sacs burst round you: larvae and drones), the jelly cell behind the larder's
+curtain of sacs (HIDDEN), the workers' crawl back up to the antechamber once the larder is cleared (SHORTCUT), the comb ring
+(the Swarm Mind with a guard and drones) and the brood chamber (the Hive Regent; its pillars wake as she is worn down).
+
+**Creatures with bodies of their own in the packs.** A pack can name any creature the mobs module has, not only its theme's:
+the cave hunters (§23) are gate monsters now, with the bodies and motion they already have. A name marked "~" keeps its own
+habits instead of standing and waiting (a Drip Lurker leaps up and hangs from a roof three to nine blocks over it and drops on
+whoever walks under it in the dark; a Hushling hunts by sound and leaves the light alone); such a monster counts as fighting
+only once it has a target, so a room of them does not shut its doors on someone who is sneaking through. A Warden's pack that
+starts "!name" names the Warden itself. The Broodwarren: three Drip Lurkers hang among the larder's sacs before its ambush
+springs, and the comb ring's Warden is the Thousandfoot (the ring has no pillars). The Hour Crypt: three Hushlings keep the dark
+south aisle in front of the reliquary's door, which is why you wait for the toll there quietly (16 legs).
+
+**A cache per herd.** When a fight's or an ambush's pack is all down, a gate cache appears where it stood (as a room's does in
+the old gates), with the cache sound and a burst of light.
+
+**Rolled crawls** (`kit/crawl/GeneratedCrawl`). A crawl whose run is rolled from the gate's seed, so one blueprint is a
+different dungeon every time it forms. Always: the way in, a fight in sight of it, two to five legs out of a bag (more fights,
+a gallery of spitters, a hall of three teeth, a shaft with a broken ledge and thin floor, and always one ambush), the Warden
+behind its door, the Lord behind the heart's door. Ways turn (they try up to seven headings and take the first that runs into
+nothing; galleries, halls and shafts keep to the four straight ways) and drop four to seven blocks each; a run with a shaft in
+it may climb three now and then. Every fight, ambush and Warden room has a door on each way out of it. A side cell off the first
+fight joins the way beyond it, so there is always a way round (and a find in it); a hidden cell goes off the ambush where there
+is room (two finds, and the hidden share of the pay). The same checks as a designed run prove every seed (test
+`realm_generated_crawls_play`, six seeds a skin).
+
+A **skin** is the land that extends it: rock, floors, the half step, the door, what grows on the walls (`adorn`), who lives
+there (a few herds it goes round, the ambush, the Warden's company), what its spitters, teeth and thin floor are made of, and
+how much it wanders (1 dug, 0 built). A new skin is a new kind of dungeon; its layouts come free. Skins so far:
+- **The Lower Combs** (`awaken:brood_burrow`, Hive): the Brood family, as The Broodwarren. Larvae and slimes, drones and a
+  guard, lurkers in the roof with larvae under them, slimes and drones; the Thousandfoot as Warden; the Hive Regent.
+- **The Bone Roads** (`awaken:catacombs`, Bell Crypt): the Knell family, built (clean round vaults, straight ways, coursed
+  stone with a band every six). Skulls in niches at head height, bone packed into the walls in patches, candles gathered along
+  the foot of every wall with a light over each cluster, a small bell on its rope here and there, bell ropes down every shaft.
+  Ghouls and archers, archers and wisps, Hushlings with a ghoul, wisps and a Crypt Keeper; the Sexton; the Bell Warden. Teeth of
+  pale stone, a bronze mouth that turns gilt before it spits, boards that give way.
+
+**Naming a monster** (`core.api.MobHooks.spawnNamed(level, id, pos, contentLevel, tags, gateId)`, added to the §12 API). A pack's
+names are spawned through it: any creature by its id, in the role its own tier gives it (normal, elite or Warden; never a
+Lord), scaled to the gate's content level and counted and paid as a monster of the gate. `spawnCreature` stays what it was (a
+Realm's peaceful life, no gate role), which is why a pack could not use it. A name nothing answers to gets one of the theme's
+own instead, so a typo never empties a room. Test `realm_packs_spawn_by_name`.
+
+**Herds for a den nobody designed** (`gates/run/Herds`). A land whose run is only read off its sites (Amber Reach, The Vine
+Seat, Kingsroot Keep, Saltcomb Flats, The Quiet Barrow, The Wax Galleries, until each gets its own) takes its dens' packs from
+its theme's herds, four each for the Hive, the Bell Crypt and the Overgrown Temple, gone round den by den from a start the
+seed picks, so two camps in one land are not the same fight. Under a roof a fifth herd joins the round: Drip Lurkers or
+Hushlings with one of the theme's own. A theme with no herds rolls from its roster as before.
+
+**The run on the HUD.** In a Realm the run HUD's hint line reads "Herds 2 / 5 · Wardens 1 / 3" (packs that stand and wait and
+are all down, of those the run has; a herd that keeps its own habits isn't counted), then "Every Warden is down. The way on is
+open." until the Lord falls (`RealmLive.hint`).
+
+Three more skins, each one file a builder wrote from a thirty-line brief in ten to twenty minutes (bench on three seeds, then
+the six-seed test here):
+- **The Hollow Hills** (`awaken:hollow_hills`, Bell Crypt, the Barrow family): passages under a mound, packed earth shored
+  with kerb stones, urns and shields, grave-glow low on the walls; darker than the catacombs, with pools, because Hushlings
+  live in it.
+- **The Root Cellars** (`awaken:root_cellars`, Overgrown Temple, the Fane family): a temple's undercroft half swallowed by
+  roots, moss and vines, lit leaves and braziers; the temple's hounds, archers and creakers, with Lurkers in one herd.
+- **The Tallow Runs** (`awaken:tallow_runs`, Hive, the Wax family): soot rock that pale wax has run down and set over, candle
+  banks at the foot of the walls, lit comb in the ambush and the Lord's hall; the one that glows.
+
+**Light in a rolled crawl, after the first real-game walks.** The Bone Roads and The Hollow Hills could barely be read in the
+real game. The Bone Roads: candles along half of every wall's foot (was three tenths), a light over four in ten clusters, at
+15. The Hollow Hills: grave-lights in three quarters of a room's wall cells of four and along the ways too, each with a light
+of 15 over it and, in a room, a second two higher. A skin is judged in the real game, not on the checker: the checker draws
+these two brighter than the game does.
+
+**Nothing in a Realm can be dug or built on.** The gates' protection (§17: no breaking but a power's own constructs, no placing,
+no buckets, no blast damage, creative excepted) covers a Realm as it covers a floor, so a fight's door, a trap's teeth and a
+gap in a stair can't be got round with a pickaxe or a stack of blocks. Test `realm_blocks_cannot_be_dug`.
+
+**Sizes and shapes of a rolled crawl.** A seed also rolls how long the run is and which way it goes.
+- Size: short (one or two legs between the first fight and the Warden, besides the ambush), standard (three or four), great
+  (three, then the Warden, then three more with a second ambush and a second Warden before the Lord). Three in ten, about
+  half, one in six. A great run is about fifteen legs.
+- Shape: delve (steadily down, four to seven a way), plunge (six to eight a way, two shafts first out of its bag), climb (the
+  Mouth is at the bottom and every way rises to a Lord at the top; a shaft is walked upward and has no breaks, since nobody
+  jumps a gap upward), sprawl (wide rooms, no shaft, nearly level). Forty, twenty-five, seventeen and eighteen in a hundred.
+- Legs of the same kind after the first take a number (`shaft2`, `ambush2`, `warden2`).
+
+**The chasm** (`CrawlLand.Chasm`, a MOVEMENT leg). A straight room with no floor but a pool ten blocks down, a shelf at each
+end, and a row of flat-topped pillars between them: three cells long (four before a gap of three), two or three cells apart,
+each beside the last by at most one cell and never higher than it. A fall is caught as on any course. A ramp down one wall goes
+from the first shelf into the pool, so whoever lands in it walks back up; the far end can only be reached across. The
+generator clears anything with a body out of the air over the pool and off the pillars after a skin has dressed the place.
+
+**What a skin's growths may hold on to.** `adorn` is told about a wall, floor or roof only when it is the dungeon's own rock
+(solid by the parts' shapes, and still there), never something another `adorn` call put into the air. Found the hard way: a
+shelf fungus had attached itself to a hanging glowcap that one chunk had drawn in its margin and the next chunk, which owned
+the cell, had not; the shelf was left floating. Nothing can hold on to a thing that isn't rock, so nothing can be left behind.
+
+Three more skins from builders, one per gate theme with that theme's own blocks, monsters and Lord: **The Cinder Workings**
+(`awaken:cinder_workings`, Ember Mines), **The Sunken Stacks** (`awaken:sunken_stacks`, Drowned Archive, ranks D and C),
+**The Sporewells** (`awaken:sporewells`, Fungal Hollow). The Realms dimension lists every gate theme's biome, so a skin
+takes its theme's air and sky.
+
+Three more, the same way: **The Frozen Cells** (`awaken:frozen_cells`, Frost Monastery, ranks C and B: a monastery's cells
+under ice, pale stone and ring-lamps), **The Glass Warrens** (`awaken:glass_warrens`, Glass Desert, ranks D and C: burrows in
+sandstone shot through with lit amber glass), **The Stopped Works** (`awaken:stopped_works`, Clockwork Foundry, ranks D and C:
+riveted plate, brass and furnace light, machines stopped mid-stroke).
+
+**A wall is one thing with things in it.** Seen in the real game on The Sporewells: a skin that picks each wall cell's block at
+random from four or five (rock, lit rock, moss, stalk, cap, gills) reads as a chequer and nothing else, however good each block
+is. A wall is its rock (courses or veins from noise); growths and fittings come in whole patches a few cells across (a bracket
+of fungus is a dark cap with its gills lit along the underside), and a floor is one stuff with beds of another. Light comes from
+the fittings, never from salting lit blocks through the rock. A great run's crossing over a pool is lit from its walls alone, so
+a skin lights them more than a room's (The Lower Combs' first one was near black in the game).
+
+**A climb is never dark.** Skins light rooms, and two of them lit no shaft at all. So the generator itself sets an unseen light
+(level 14) three cells over the ledge every eighth of a turn down a shaft, and over each shelf and pillar of a chasm, after the
+skin has dressed the place. A skin still dresses a climb's walls; it no longer has to make the jumps visible.
+
+Three more kinds: **The Silvered Halls** (`awaken:silvered_halls`, Mirror Palace, ranks C and B: bays of tall mirror between dark
+piers, a gilt cornice, chequered floors), **The Sealed Wing** (`awaken:sealed_wing`, Precursor Lab, ranks C and B: pale panels,
+lit strips at knee height and under the roof, tanks for pillars), **The Sleepless Ward** (`awaken:sleepless_ward`, Nightmare,
+ranks C and B: papered corridors as a dream remembers them, a rail that slips out of line, doors and windows that lead nowhere).
+The false doors are real doors set in solid wall: a player may open one and finds wall.
+
+Three more, which bring the kinds to seventeen: **The Unlit Stair** (`awaken:unlit_stair`, Abyssal Shrine, ranks A and S: black
+dressed stone with one pale band every sixth course, niches with votives, a pale line down every way, nothing on the floors),
+and two second kinds for themes that had a built one, each wild where the first is built: **The Rime Hollows**
+(`awaken:rime_hollows`, Frost Monastery: natural ice caves, stone at a wall's foot, then snow, then blue ice, sheets of it lit
+from inside, icicles in clusters) and **The Green Dark** (`awaken:green_dark`, Overgrown Temple: wet jungle caves, moss taking
+whole walls, curtains of vine and glow berries along lines in the roof). With these every theme that suits a crawl has a kind.
+Sky Archipelago (fliers, open sky) and the Lantern Night Market (neutral monsters, a Lord who trades) have none: neither suits
+a crawl as the generator stands. A layout comes from the seed alone, whatever the kind, and the test tries 104 of them.
+
+**No two alike.** Euan, 10 Nov, on the first seventeen: "they look very repetitive, just with different themes... add more
+variation in terms of the different parkour things and everything, so that they never look exactly the same." He was right:
+the generator knew one room, one Lord's hall, one shaft and one chasm, and a kind changed only the blocks. Now every leg rolls
+what it is cut like, and a kind says which cuts are its own (`GeneratedCrawl.Style`, one `style()` per kind):
+
+- **Rooms** (`Cave.Form`, eight): the oval; a long hall; a cross; a ring round a core of rock; a hall with two rows of piers; a
+  room with a terrace three up along one side and two ramps onto it; a pit with a walk two up all round it and four ramps down;
+  a rift, long and tall, whose floor steps up a block and then two more. The first fight and the ambush take only level
+  forms, because other ways lead off them.
+- **Wardens' rooms and Lords' halls** (`Arena.Plan`, six): a ring of pillars; a nave with two rows; a cross with four at the
+  crossing; a rotunda with two rings and a higher dome; a round floor with two tiers of steps round it; a square hall on four
+  great piers. The middle is always open and level, because the Lords were built for a level floor. A Warden that needs the
+  floor (no pillars) gets a plan with nothing raised.
+- **Gulfs** (`Chasm.Kind`, eight ways across): pillars; a bridge with two spans gone, on piers, what fell lying in the pool;
+  rafters one cell wide, each ending on a cross beam a block lower, the next beside it or over a gap of two; a ledge along the
+  left wall, a pillar in the middle, a ledge along the right; platforms hung from the roof by a chain; great steps down, two
+  or three lower each time (never on a climb); a ford, wall to wall in shallow water, with stones at the water's top and more
+  that lead nowhere; a deck that gives way under whoever stands on it (the crumbling floor's rule: a block goes fifteen ticks
+  after you step on it and comes back after a hundred), where a fall puts you back on a shelf, never on the deck.
+- **Shafts**: round, or square with flights along four walls for what was built.
+- **Ways**: as wide and as high as the kind says (2 to 3 each side, 4 to 6 high).
+- **How often.** From a standard run up there is always a gulf to cross (it takes the place of a second fight if the bag
+  drew none), and a great run's second stretch has a climb or a crossing of its own.
+- **A branch.** From a standard run up, where there is room: off a den after the first or a Warden's room, to one side, a way to a gulf with no
+  fall in it and a vault beyond with two caches. Nobody has to cross it; whoever does is paid for it. It is only ever a
+  crossing that is as easy to come back over as to go out on (never the great steps, never the pillars with their run-ups),
+  and the den's doors shut it with the rest.
+
+Rules these keep, so that a skin written for the oval and the pillars dresses all of them without knowing:
+`feet` is a room's lowest floor and every other level is raised from it (what a skin draws at `feet` is on the floor or
+under it, never in the air); a new room is still a `Cave`, a new hall an `Arena` with `pillar()`, a new crossing a `Chasm`;
+every jump is a sprint over one to three cells straight along or straight across, level or down, and the only way up is a
+step of one; what was built (`wild()` under a half) stands square to the compass however the way came to it; whatever a skin
+grows is cleared from over every stand; every stand has a light over it. A tour can't name a place in a rolled run, so it
+names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
+leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 

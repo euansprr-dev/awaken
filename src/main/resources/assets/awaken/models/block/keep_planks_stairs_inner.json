@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "awaken:block/keep_planks",
+    "top": "awaken:block/keep_planks",
+    "side": "awaken:block/keep_planks"
+  }
+}

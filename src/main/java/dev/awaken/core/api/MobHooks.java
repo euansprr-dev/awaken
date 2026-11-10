@@ -36,6 +36,15 @@ public final class MobHooks {
             return null;
         }
 
+        /**
+         * One creature by its id ("hive_larva", "drip_lurker", "thousandfoot") made a monster of a gate, in the role its own
+         * tier gives it (SPEC §50.9: a Realm's packs name who stands in them). Any creature with a body: a theme's own, or
+         * one of the cave and wild hunters. Null when there's no such creature or it is a Lord.
+         */
+        default LivingEntity spawnNamed(ServerLevel level, String creatureId, BlockPos pos, int contentLevel, Set<Forces.Tag> tags, String gateId) {
+            return null;
+        }
+
         /** Whether this is a peaceful overworld creature (ambient or grazing) that powers' waves shouldn't hurt unprovoked. */
         default boolean peaceful(net.minecraft.world.entity.Entity e) { return false; }
 
@@ -59,6 +68,10 @@ public final class MobHooks {
 
     public static LivingEntity spawnCreature(ServerLevel level, String creatureId, BlockPos pos, int contentLevel, String gateId) {
         return spawner.spawnCreature(level, creatureId, pos, contentLevel, gateId);
+    }
+
+    public static LivingEntity spawnNamed(ServerLevel level, String creatureId, BlockPos pos, int contentLevel, Set<Forces.Tag> tags, String gateId) {
+        return spawner.spawnNamed(level, creatureId, pos, contentLevel, tags, gateId);
     }
 
     public static boolean peaceful(net.minecraft.world.entity.Entity e) {

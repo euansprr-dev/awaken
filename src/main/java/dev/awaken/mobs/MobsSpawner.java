@@ -58,6 +58,17 @@ public final class MobsSpawner implements MobHooks.Spawner {
         return type == null ? null : type.spawn(level, pos, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
     }
 
+    /** A Realm's pack names who stands in it (SPEC §50.9): that creature, in its own tier's role, counted and paid as a monster of the gate. */
+    @Override
+    public @Nullable LivingEntity spawnNamed(ServerLevel level, String creatureId, BlockPos pos, int contentLevel, Set<Forces.Tag> tags, String gateId) {
+        MobDef d = Bestiary.get(creatureId);
+        if (d == null) return null;
+        MobRole.Role role = d.tier.role;
+        if (role != MobRole.Role.NORMAL && role != MobRole.Role.ELITE && role != MobRole.Role.WARDEN) return null;
+        MobRole mr = new MobRole(role, contentLevel, d.theme.id, Optional.empty(), gateId == null ? "" : gateId);
+        return Mobs.spawn(level, d, Vec3.atBottomCenterOf(pos), contentLevel, mr, tags);
+    }
+
     @Override
     public java.util.Optional<java.util.UUID> bondedTo(net.minecraft.world.entity.Entity e) {
         return e instanceof dev.awaken.mobs.entity.WildMount m ? java.util.Optional.ofNullable(m.owner()) : java.util.Optional.empty();
