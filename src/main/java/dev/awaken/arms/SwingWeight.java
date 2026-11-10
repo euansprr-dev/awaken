@@ -13,6 +13,7 @@ import org.joml.Vector3f;
  * <li><b>the settle</b>: where the blade stops after a cut it carries a little past and comes back once, with no bounce;</li>
  * <li><b>the living hold</b>: a held weapon breathes, a few millimetres, once in four and a half seconds;</li>
  * <li><b>the guard's ease</b>: up on a curve that seats with a small settle, down over three ticks;</li>
+ * <li><b>the lowered rest</b>: a rested Katana lowers and rises on an ease from wherever it is, never in one frame;</li>
  * <li><b>the draw</b>: a changed weapon comes up on its own clock, by its weight, with a turn of the wrist.</li>
  * </ul>
  * Each is small on purpose and by a weapon's {@link ArmsRules.Heft}. A hand at rest is never moved by more than the
@@ -174,6 +175,22 @@ public final class SwingWeight {
     public static float guardDown(float t, float from) {
         float u = Math.clamp(t / GUARD_FALL, 0F, 1F);
         return from * (1F - u * u * (3F - 2F * u));
+    }
+
+    // ---- the lowered rest ---------------------------------------------------------------------------------------------
+
+    /** Ticks a rested weapon takes to lower to its rest, and to come back up from it. */
+    public static final float LOWER_TICKS = 6F;
+
+    /**
+     * How far a weapon is lowered {@code t} ticks after it turned to go {@code down} (or back up), from {@code from}
+     * (0..1, where it was at the turn): eased both ends, there by {@link #LOWER_TICKS}, and at {@code t} 0 exactly where it
+     * was, so no turn of the rest, however sudden, moves the hand in one frame.
+     */
+    public static float lowered(float t, float from, boolean down) {
+        float u = Math.clamp(t / LOWER_TICKS, 0F, 1F);
+        u = u * u * (3F - 2F * u);
+        return down ? from + (1F - from) * u : from * (1F - u);
     }
 
     // ---- the draw -----------------------------------------------------------------------------------------------------

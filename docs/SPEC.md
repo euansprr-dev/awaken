@@ -8064,10 +8064,19 @@ recommended).
     refills (the item swap scale, cubed), a cooldown Arms never uses, so the weapon was out of view for nine ticks on film
     with the Katana and by that rule over twenty with the Maul, and a strike thrown meanwhile was drawn that far under the
     frame. A strike begun during a draw brings the weapon up within 2 ticks from where it is. A power's stow never draws.
-  - *The Katana's rest*: rested as long as its drawn cut asks (`drawIdle`, 40 ticks, on the client's own count, which is
-    never ahead of the server's), it lowers to the hip over 6 ticks with a soft click (`ArmsHands.hip`: the rest pose itself
-    moves, so the strike that draws it is carried out by the blend), and the drawn cut has its own sound over the swish
-    (a rasp and a ring) and a ribbon half again as bright. No scabbard (decision 6).
+    The hand's own transform takes the stack vanilla's hand drew last tick when it is the same item as the one held: a
+    slot the server re-sends (wear, any sync) is a new object until the next tick, and told apart by identity the weapon
+    fell back to vanilla's place and sink for those frames (the proof tour's film: out of view for 0.4 ticks mid-draw).
+  - *The Katana's rest*: rested as long as its drawn cut asks (`drawIdle`, 40 ticks from the last move's end, the count
+    the server grants the cut on: a press, a hold not yet a move and a dodge leave it be, so the hands show the cut
+    exactly when it will be given), it is lowered across the body: the hand just under the frame's edge, the blade low
+    with its point to the off side and its edge down, the guard showing (`ArmsHands.HIP_D` (-0.10, 0.15, 0), `HIP_Q` 70
+    degrees over and 15 forward; the first value, back past the hip, hid the blade and laid a forearm across the frame).
+    It lowers and rises over 6 ticks on the hands' own clock from wherever it is (`SwingWeight.lowered`, `ArmsHands.hip`:
+    the rest pose itself moves, so the strike that draws it is carried out by the blend, and nothing that starts or
+    breaks the rest moves the hand in one frame), with a soft click on the way down. A rested Katana coming to hand is
+    drawn straight up to this rest, one motion. The drawn cut has its own sound over the swish (a rasp and a ring) and a
+    ribbon half again as bright. No scabbard (decision 6).
 - **Stage 5, the world answers** (built 2026-11-10; `arms.ArmsWalls`, one set of rules for the server's sweep and the
   client's prediction; tests `arms_walls`, `arms_cut_grass`).
   - *Walls stop blows* (`wallsStopBlows`, awaken-arms.toml, on): a body is struck only when a line from the eye to its
@@ -8077,8 +8086,10 @@ recommended).
   - *The glance* (`glance`, client): a strike that has struck no body by a third of a tick past its hit, and whose blade
     meets a block within the move's reach (three lines 14 degrees either side of the look; a pinning blow one more, 25
     degrees down), glances off it: the block's own hit sound, lower and louder, with a ring over stone and metal; its
-    chips; sparks off stone, chips off wood; the blade knocked back against its cut for two and a half ticks; the view
-    kicked one degree against it; a 30 ms hold off stone and metal. Leaves, wool and what a hoe mines only rustle. The
+    chips (three); sparks off stone, chips off wood, started 0.08 blocks off the face and thrown out of it along the
+    blade's way (thrown into the wall, and with the flare in the wall's own plane, none of it was seen in the proof
+    tour); the blade knocked back against its cut for two and a half ticks; the view kicked one degree against it; a
+    30 ms hold off stone and metal. Leaves, wool and what a hoe mines only rustle. The
     block isn't harmed and the chain goes on. Those near hear the block's hit from the server on the move's last active
     tick.
   - *Grass* (`cutGrass`, awaken-arms.toml, on): each active tick cuts the plants tagged `#awaken:cut_by_sweeps` (short

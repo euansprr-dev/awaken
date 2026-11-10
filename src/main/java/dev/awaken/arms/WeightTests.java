@@ -141,6 +141,14 @@ final class WeightTests {
         }
         h.assertTrue(SwingWeight.guardDown(0F, 0.8F) == 0.8F && SwingWeight.guardDown(SwingWeight.GUARD_FALL, 0.8F) == 0F && SwingWeight.guardDown(1.5F, 1F) == 0.5F,
                 "it lowers from where it is, over three ticks");
+        // the lowered rest turns from wherever it is: a rest begun or broken mid-way never moves the hand in one frame
+        h.assertTrue(SwingWeight.lowered(0F, 0.3F, true) == 0.3F && SwingWeight.lowered(0F, 0.7F, false) == 0.7F, "the lowered rest starts each turn where it was");
+        h.assertTrue(SwingWeight.lowered(SwingWeight.LOWER_TICKS, 0.3F, true) == 1F && SwingWeight.lowered(SwingWeight.LOWER_TICKS, 0.7F, false) == 0F, "and is there in six ticks");
+        for (float t = 0F, was = 0F; t <= SwingWeight.LOWER_TICKS; t += 0.05F) {
+            float k = SwingWeight.lowered(t, 0F, true);
+            h.assertTrue(k >= was - 1e-6F && k - was < 0.02F, "it lowers smoothly, never a step (" + (k - was) + ")");
+            was = k;
+        }
         for (SwingWeight.Weight w : new SwingWeight.Weight[] {SwingWeight.SNAP, SwingWeight.BLADE, SwingWeight.HEAVY}) {
             h.assertTrue(SwingWeight.drawSink(0F, w.drawTicks()) == 1F && SwingWeight.drawSink(w.drawTicks(), w.drawTicks()) == 0F, "a draw starts under the frame and ends in place");
             for (float t = 0F; t <= w.drawTicks(); t += 0.1F) {

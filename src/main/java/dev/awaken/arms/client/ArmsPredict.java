@@ -525,7 +525,10 @@ public final class ArmsPredict {
         guardUp = guard;
         ArmsHands.tick(p);
         dev.awaken.arms.ArmsSounds.recorded = ArmsComfort.recordedSounds();
-        if (move != null || charging || pressHeld || plunging || dodging || buffered != null) restFrom = ticks;
+        // rest is counted as the server counts it for the drawn cut (from the last move's end): a press, a hold not yet a
+        // move and a dodge leave it be, so the hands show the cut exactly when the server will grant it, and a press from
+        // the lowered rest changes nothing on the screen until its move begins
+        if (move != null || plunging) restFrom = ticks;
         ArmsChop.tick(mc, p);
         if (plunging) {
             Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
@@ -667,7 +670,7 @@ public final class ArmsPredict {
     private static int restFrom;
     static boolean drawnCut;
 
-    /** Ticks the hands have rested: no move, no press, no dodge (the Katana lowers to the hip on it, ArmsHands.hip). */
+    /** Ticks the hands have rested: since the last move ended (the Katana lowers on it, ArmsHands.hip). */
     static int restedTicks() {
         return ticks - restFrom;
     }
@@ -808,6 +811,8 @@ public final class ArmsPredict {
     /** A glance's freeze on the hands (ms, off stone and metal only) and its kick against the blow (degrees). */
     private static final int GLANCE_HOLD = 30;
     private static final float GLANCE_KICK = 1F;
+    /** Chips of the block a glance knocks loose. */
+    private static final int GLANCE_CHIPS = 3;
 
     /**
      * A strike that has struck no body by a third of a tick past its hit, and whose blade meets a block inside its reach,
@@ -831,19 +836,24 @@ public final class ArmsPredict {
         Vec3 at = hit.getLocation();
         ArmsFilm.event("glance " + kind + " at " + hit.getBlockPos().toShortString());
         ArmsAudio.glance(at.x, at.y, at.z, state.getSoundType(mc.level, hit.getBlockPos(), p), kind);
-        mc.level.addBreakingBlockEffects(hit.getBlockPos(), hit.getDirection(), false);
-        ArmsFx.glance(at, at.subtract(eye).normalize(), kind);
-        if (kind == dev.awaken.arms.ArmsWalls.GLANCE_SOFT) return;
+        for (int i = 0; i < GLANCE_CHIPS; i++) mc.level.addBreakingBlockEffects(hit.getBlockPos(), hit.getDirection(), false);
+        // the way the blade was going across the screen (a thrust: straight in), right-handed
         boolean thrust = ArmsRules.thrusts(def);
         float bx = thrust ? 0F : ArmsRules.blowX(def), by = thrust ? 0F : ArmsRules.blowY(def);
         float n = (float) Math.sqrt(bx * bx + by * by);
+        float inv = p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1F : 1F;
+        // and in the world: the sparks leave the face along it (thrown into the wall they were never seen)
+        float look = p.getYRot() * Mth.DEG_TO_RAD;
+        Vec3 right = new Vec3(-Mth.cos(look), 0, -Mth.sin(look)), up = right.cross(p.getViewVector(1F));
+        Vec3 travel = n < 1e-3F ? Vec3.ZERO : right.scale(inv * bx / n).add(up.scale(by / n));
+        ArmsFx.glance(at, hit.getDirection().getUnitVec3(), travel, kind);
+        if (kind == dev.awaken.arms.ArmsWalls.GLANCE_SOFT) return;
         if (n < 1e-3F) { // a thrust meets the wall point first: it is knocked straight back
             bx = 0F;
             by = -1F;
             n = 1F;
         }
         ArmsHands.bounce(bx / n, by / n);
-        float inv = p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1F : 1F;
         CombatFeedback.kick(-inv * bx / n * GLANCE_KICK, by / n * GLANCE_KICK, 0F, 5);
         if (kind == dev.awaken.arms.ArmsWalls.GLANCE_HARD) CombatFeedback.hold(GLANCE_HOLD);
     }

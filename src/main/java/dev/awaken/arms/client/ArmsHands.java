@@ -112,7 +112,12 @@ final class ArmsHands {
     static boolean transform(PoseStack ps, HumanoidArm arm, ItemStack stack, float partial, float equip) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
-        if (p == null || stack != p.getMainHandItem() || arm != p.getMainArm() || !ArmsPredict.fights(p)) return false;
+        if (p == null || arm != p.getMainArm() || !ArmsPredict.fights(p)) return false;
+        // the stack drawn is the one vanilla's hand saw on its last tick. A slot the server re-sends in between (wear, any
+        // sync) is a new object for the same weapon: told apart by identity, the hand's place fell back to vanilla's for
+        // those frames, and with the draw's own clock the weapon blinked out of view (the proof tour's film, 10 Nov)
+        ItemStack held = p.getMainHandItem();
+        if (stack != held && !ItemStack.isSameItem(stack, held)) return false;
         int inv = arm == HumanoidArm.RIGHT ? 1 : -1;
         // the draw (SwingWeight): a changed weapon comes up on its own clock with a turn of the wrist. Vanilla raises it only
         // as fast as its attack cooldown refills, a cooldown the fighting never uses: nine ticks out of view for a Katana
@@ -328,9 +333,9 @@ final class ArmsHands {
             REST_D.zero();
             REST_Q.identity();
         }
-        // the Katana rested two seconds is lowered to the hip (its drawn cut's bonus, shown): the rest pose itself moves there
-        // on an ease, so the strike that draws it is carried out of it by the blend like any other
-        float hip = hip(p, inHand, partial) * (1F - guard(p, partial));
+        // the Katana rested two seconds is lowered (its drawn cut's bonus, shown): the rest pose itself moves there on an
+        // ease, so the strike that draws it is carried out of it by the blend like any other
+        float hip = hip(p, inHand) * (1F - guard(p, partial));
         if (hip > 0F && !cutting && preview == null) {
             REST_D.lerp(HIP_D, hip);
             REST_Q.slerp(HIP_Q, hip);
@@ -542,30 +547,43 @@ final class ArmsHands {
         drawAt = now - u * drawTicks;
     }
 
-    // the Katana's rest at the hip: its hand lowered toward the middle, the blade laid over to the off side and back past the
-    // hip so the hilt shows and the blade trails out of the frame (authored right-handed, from vanilla's resting hand)
-    private static final org.joml.Vector3f HIP_D = new org.joml.Vector3f(-0.26F, 0.05F, 0.06F);
-    private static final org.joml.Quaternionf HIP_Q = new org.joml.Quaternionf().rotateZ(104F * Mth.DEG_TO_RAD).rotateX(24F * Mth.DEG_TO_RAD);
-    /** Ticks the Katana takes to lower to the hip, and how much brighter its drawn cut's ribbon burns. */
-    private static final float HIP_TICKS = 6F, DRAWN_LIGHT = 1.5F;
-    private static boolean hipWas;
+    // the Katana's lowered rest: the hand just under the frame's edge, the blade laid low across the body with its point to
+    // the off side and its edge down, the guard showing (authored right-handed, from vanilla's resting hand). The first
+    // value hid the blade under the eye and showed a forearm across the frame (the proof tour, 10 Nov)
+    private static final org.joml.Vector3f HIP_D = new org.joml.Vector3f(-0.10F, 0.15F, 0F);
+    private static final org.joml.Quaternionf HIP_Q = new org.joml.Quaternionf().rotateZ(70F * Mth.DEG_TO_RAD).rotateX(-15F * Mth.DEG_TO_RAD);
+    /** How much brighter the drawn cut's ribbon burns, and the draw's sink above which the weapon is still under the frame. */
+    private static final float DRAWN_LIGHT = 1.5F, UNSEEN = 0.9F;
+    private static boolean hipDown;
+    private static double hipAt = -1000;
+    private static float hipFrom, hipK;
 
-    /** How far the weapon in hand has lowered to the hip (0..1): a style with a drawn cut, rested as long as the cut asks. */
-    private static float hip(LocalPlayer p, Archetypes.@Nullable Loaded inHand, float partial) {
-        if (inHand == null || !ArmsComfort.weaponDraw()) return 0F;
-        int idle = inHand.def().traits().drawIdle();
-        float rested = idle <= 0 ? -1F : ArmsPredict.restedTicks() + partial - idle;
-        boolean down = rested >= 0F && equip <= 0F;
-        if (down && !hipWas) ArmsAudio.sheath(p);
-        hipWas = down;
-        if (!down) return 0F;
-        float u = Math.min(1F, rested / HIP_TICKS);
-        return u * u * (3F - 2F * u);
+    /**
+     * How far the weapon in hand is lowered to its rest (0..1): a style with a drawn cut, rested as long as the cut asks,
+     * by the same count the server grants the cut on. It moves there and back on the hands' own clock from wherever it is
+     * (SwingWeight.lowered), so nothing that starts or stops the rest can jump the hand; a weapon still under the frame in
+     * its draw comes up straight to where it rests, one motion and not two.
+     */
+    private static float hip(LocalPlayer p, Archetypes.@Nullable Loaded inHand) {
+        int idle = inHand == null || !ArmsComfort.weaponDraw() ? 0 : inHand.def().traits().drawIdle();
+        boolean down = idle > 0 && ArmsPredict.restedTicks() >= idle;
+        boolean unseen = drawPending || equip >= UNSEEN;
+        double now = handsNow();
+        if (down != hipDown) {
+            hipDown = down;
+            hipFrom = hipK;
+            hipAt = now;
+            if (down && !unseen) ArmsAudio.sheath(p);
+        }
+        if (unseen) hipAt = now - SwingWeight.LOWER_TICKS;
+        return hipK = SwingWeight.lowered((float) (now - hipAt), hipFrom, down);
     }
 
     /** A world left: nothing is carried into the next. */
     static void reset() {
-        drawKnown = drawPending = hipWas = guardWas = false;
+        drawKnown = drawPending = hipDown = guardWas = false;
+        hipFrom = hipK = 0F;
+        hipAt = -1000;
         drawItem = null;
         drawSlot = -1;
         drawAt = bounceAt = -1000;

@@ -6,7 +6,8 @@
 #   dull    the husk made invulnerable on the server only: the hands show the blow, the server answers DULL, no ghost
 #   glance  a stone wall in the way: the blade glances off it (ring, sparks, a small recoil) and the husk behind isn't struck
 #   draw    Longsword to Katana to Maul: each comes up on its own clock by its weight, with a turn of the wrist
-#   hip     the Katana rested two seconds lowers to the hip; the strike out of it is the drawn cut
+#           (the rested Katana straight to its lowered rest), and never out of view once it is up
+#   hip     the Katana rested two seconds is lowered across the body; the strike out of it is the drawn cut
 #   guard   up on its curve, down over three ticks
 #   grass   a sweep through short grass
 # On leaving, the play log must say "[arms] blows played at once" with nothing shown without damage.
@@ -116,12 +117,15 @@ arms guard off
 wait 12
 arms rate 20
 wait 20
-cmd tp @e[type=minecraft:husk] 8.5 200 -6.5 180 0
-cmd fill -3 199 0 3 199 3 minecraft:grass_block
-cmd fill -3 200 1 3 200 3 minecraft:short_grass
-arms waitserver 20
-look 0 28
-wait 10
+# the studio stands in the city, where a sweep leaves plants alone: the grass take has a platform of its own far outside
+cmd forceload add 2992 2992 3008 3008
+arms waitserver 60
+cmd fill 2994 258 2994 3006 258 3006 minecraft:grass_block
+cmd fill 2994 259 2994 3006 263 3006 minecraft:air
+cmd fill 2996 259 2997 3004 259 3003 minecraft:short_grass
+cmd tp @s 3000.5 259 2995.5 0 30
+arms waitserver 60
+wait 20
 shot grass_before
 arms strike 2
 wait 30

@@ -157,12 +157,20 @@ final class ArmsFx {
 
     /**
      * Where a blade glanced off a block (SPEC §25 "Weight in the Hand", stage 5): sparks off stone and metal, chips off
-     * wood, back along the way the blade came. Earth and soft things only shed their own block's chips.
+     * wood, thrown out of the face and on along the blade's way ({@code travel}, in the world; zero for a thrust, whose
+     * sparks come straight back). Drawn a little off the face: on it, the flare lay in the wall's own plane and wasn't
+     * seen. Earth and soft things only shed their own block's chips.
      */
-    static void glance(Vec3 at, Vec3 fromEye, int kind) {
-        if (kind == dev.awaken.arms.ArmsWalls.GLANCE_HARD) FxClient.bladeHit(at, fromEye, 0.8F, BodyMaterial.STONE);
-        else if (kind == dev.awaken.arms.ArmsWalls.GLANCE_WOOD) FxClient.bladeHit(at, fromEye, 0.65F, BodyMaterial.WOOD);
+    static void glance(Vec3 at, Vec3 normal, Vec3 travel, int kind) {
+        if (kind != dev.awaken.arms.ArmsWalls.GLANCE_HARD && kind != dev.awaken.arms.ArmsWalls.GLANCE_WOOD) return;
+        Vec3 from = at.add(normal.scale(GLANCE_OFF));
+        Vec3 way = normal.scale(0.7).add(travel.scale(0.7)).normalize();
+        if (kind == dev.awaken.arms.ArmsWalls.GLANCE_HARD) FxClient.bladeHit(from, way, 0.8F, BodyMaterial.STONE);
+        else FxClient.bladeHit(from, way, 0.65F, BodyMaterial.WOOD);
     }
+
+    /** How far off a block's face a glance's sparks start (blocks). */
+    private static final double GLANCE_OFF = 0.08;
 
     /** Where a blade landed, along the line from the wielder. */
     static void hit(Entity target, Entity by, Archetype.MoveDef def, dev.awaken.arms.Blow b) {
