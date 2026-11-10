@@ -53,3 +53,31 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
 ## Log
 
 - 15:45 approved; starting stage 0.
+- 16:20 stage 0 written in one pass, no intermediate builds: new `gates/run/RealmPacks.java` (den, warden, notice, fighting,
+  wave); `Encounters.holdFree/releaseFree`; `RealmLive` (WAKE 80, `RealmPacks.den/warden` in `wake`, `notice` + `seal` +
+  `pressure` in `tickPlayer`, `madeHeadway` in `mobDied`, units 5 per den and 7 per warden); tour
+  `tools/autopilot/realm-hour-packs.txt` (normal difficulty, creative camera so packs stay waiting).
+  One background chain is compiling, running `realm_hour,realm_enter,realm_quiet_barrow_walks`, then committing, pushing and
+  walking the packs tour on GitHub (log: scratchpad `stage0-build.log`, `ci-packs.log`). If it says STAGE0 NOT GREEN, fix the
+  named error and rerun the same chain once.
+  Not checked: no GameTest spawns a pack (it needs a live Realm); the seal and pressure have never run. Euan's play is the test.
+
+## Stage 1 design (thought through, not built)
+
+- **Legs are data on the land.** `Land.Leg(String id, Kind kind, int x, int y, int z, int radius, int pack, List<String> exits)`,
+  kinds ARRIVE, FIGHT, AMBUSH, MOVEMENT, TRAP, WARDEN, BREATHER, SHORTCUT, LORD, HIDDEN. `Land.route()` has a default that derives
+  legs from sites (each DEN a FIGHT, each WARDEN a WARDEN, the LORD), so every land already has a route; a `SheetLand` reads
+  `"route": [...]` from its blockout JSON; `HourCrypt` overrides with the twelve legs on the approval page.
+- **What runs each kind.** FIGHT and WARDEN are today's DEN and WARDEN sites through `RealmPacks`. AMBUSH: when a gate's rule fires
+  (`RealmToll`, `RealmHush`...) and a player stands inside an AMBUSH leg, `RealmPacks.wave` there, awake. MOVEMENT and TRAP need the
+  rig (`RigDirector`, `RigGauntlet`) or `lucidium/trial/CourseKit` in a Realm: first read whether `RigDirector` needs a floor room
+  grid (`RigState` is per floor); if it does, build movement legs as plain geometry proven by `CourseKit.solve`, and traps as
+  timed block flips through `Land.change(moment)` like the toll doors (presses = a slab column that drops on a beat).
+- **Pay by leg.** Starting split: packs 45%, wardens 25%, Lord 20%, hidden 10%; today's `units` already spreads kill pay.
+- **Bench route checks** (in `realms/bench/Bench.java`): every leg reached (legs join the sites `WalkCheck` walks to); the exits
+  graph has a cycle; consecutive legs no more than 260 blocks apart; a crawl's legs span 20+ in y; each FIGHT and WARDEN leg has at
+  least 12 standable cells per monster inside its radius; no leg without a kind.
+- **Crawl parts** (kit pieces a sheet places by name): Tunnel (from, to, width, height, ribs), Stair (rise over run), CaveRoom
+  (blob with a floor), TrapRoom, Arena (round, cover ring at 0.55 of the radius as `PiecesArenas` does).
+- **The short crawl:** The Broodwarren (gate 14, Dungeon, Hive; "rooms open only while their larvae are asleep; a nursery of
+  hanging cells; brood chamber"). About five legs, 100 across, 30 down.
