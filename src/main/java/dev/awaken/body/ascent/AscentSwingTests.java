@@ -19,6 +19,39 @@ final class AscentSwingTests {
         dev.awaken.core.test.AwakenTests.register("ascent_swing_bench", 20, AscentSwingTests::bench);
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_swing_level", 40, AscentSwingTests::level);
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_sling_level", 40, AscentSwingTests::sling);
+        dev.awaken.core.test.AwakenTests.register("ascent_swing_over_nothing", 20, AscentSwingTests::overNothing);
+    }
+
+    /**
+     * The guide's early let-go over nothing (SPEC §62): the Rope dream's gaps (roads in a void, laid for a let-go at the
+     * top of the arc) are landed on with the rope held, thrown early in the jump and late; the same gap with ground
+     * under it is thrown well past (the early let-go is untouched where there is ground); and with the guide off
+     * nothing changed.
+     */
+    private static void overNothing(GameTestHelper h) {
+        AscentSwing.Tune was = AscentSwing.T;
+        boolean guide = AscentSwing.guide;
+        AscentSwing.T = AscentSwing.Tune.JAR;
+        try {
+            int[][] gaps = {{22, 14, 6, 11}, {24, 14, 8, 11}};
+            for (int[] g : gaps) for (int at : new int[] {2, 9}) {
+                AscentSwing.guide = true;
+                double held = SwingBench.gapLanding(g[0], g[1], g[2], g[3], at, false);
+                h.assertTrue(held >= 0.3 && held <= g[3] - 0.5, "a held rope over nothing lands on the far road: " + g[0] + " wide, thrown at " + at
+                        + ", " + String.format("%.1f", held) + " past its edge, the road " + g[3] + " long");
+                AscentSwing.guide = false;
+                double old = SwingBench.gapLanding(g[0], g[1], g[2], g[3], at, false);
+                h.assertTrue(old >= 0.3 && old <= g[3] - 0.3, "the rope without the guide lands there as it did: " + String.format("%.1f", old));
+            }
+            AscentSwing.guide = true;
+            double over = SwingBench.gapLanding(22, 14, 6, 11, 2, false), ground = SwingBench.gapLanding(22, 14, 6, 11, 2, true);
+            h.assertTrue(ground > over + 3, "with ground under the gap the early let-go throws on as before: " + String.format("%.1f", ground)
+                    + " past the edge, " + String.format("%.1f", over) + " over nothing");
+        } finally {
+            AscentSwing.T = was;
+            AscentSwing.guide = guide;
+        }
+        h.succeed();
     }
 
     /**
