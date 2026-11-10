@@ -1174,7 +1174,9 @@ Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - **Fliers find their way** (Euan, 2026-10-28: the Plumed Coil stuck in a tree; `mobs.entity.FlyerMoveControl`,
   `Unwedge`, test `mobs_flier_canopy`). Every flier, gate fliers included (not one ridden or passing through walls):
   - Its body for steering is its scaled hitbox plus a clearance of what its drawn wings or coils reach past it (reach
-    above minus half its width, 0.15 to 1 block; half that below, since fliers skim low). Every 4 ticks (staggered by id)
+    above minus half its width, 0.15 to 1 block; half that below, since fliers skim low, and never into the ground it is
+    already down on: 10 Nov, a Hive Regent left on the floor by a dive read the next block of floor as a wall and climbed
+    two to four blocks to go round it, then dived from up there, `FlightRoom.skimming`). Every 4 ticks (staggered by id)
     it sweeps that body along the way ahead, 3 to 10 blocks (12 ticks of its speed + 2); the last stretch to the spot
     (half its width + clearance + 0.5) is its goal's business (a dive ends at you, a perch on a branch).
   - Something in the way: it flies round it, the leg that turns least off the line to its goal (35, 70, 110, 150 degrees
@@ -20672,7 +20674,9 @@ is a parry that does nothing.
   and its ground line draws that length.
 - **Fliers hold your floor.** `FlyHunt.scripted` holds a kit flier 0.35 over the ground under you, not over your head;
   it follows you up only when you've been in the air 60 ticks (and then to a block under you). A wanted height at floor
-  level makes the flight control detour upward, hence the 0.35 and the dip to reach you.
+  level makes the flight control detour upward, hence the 0.35 and the dip to reach you. One down on the floor (a dive
+  or a charge ends level with your feet) flies off it level: its clearance under it stops at the ground it is on
+  ("Fliers find their way").
 - Two moves redrawn at the cause: the Regent's Royal Dive (its capsules were 2.6 to 4.7 over its feet) and the Sovereign
   of Sleep's Buffet (it beat its wing too high and wide to touch anyone; it now drops two blocks into the beat). A string
   played by hand (tests, the studio) skips the gate.
@@ -20776,7 +20780,12 @@ blow that punishes it. Tests (`FightMindTests`, one per mechanism): the read wai
 moves with its tell after the notice, each fork, the caught dodge, the facts themselves (`arms_watched`, `powers_watched_cast`). Gates,
 in `fights_record_*` for any fight with a mind: every repeat is that last resort (exact, since a percentage of a dozen moves is noise;
 the table holds the worst fight to 10%). In `fights_mind_drinks_<boss>`: at least 60%
-of drinks in reach get an answer that starts before the drink ends. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
+of drinks in reach (one of the answer's moves, in its phase, could land while the drink is seen) get an answer that starts
+before the drink ends, over 448 drinks (with 56, one run's own fight moved the share 6% either way, and the Regent's,
+about 70% since the Stinger Volley waits for phase 2, passed or failed on the dice; fifteen fights of 224 still ran from
+65% to 79%); every drink it was free to answer
+(between blows, a move it may answer with able to land, 3 ticks before the drink ends) is answered; at least three in
+four drinks are in reach; the player stands on the ground. By the table: guard-beating moves (PERILOUS and GRAB) when you turtle
 at least double what they are against someone standing.
 
 **48.6 Every boss has a mind (Euan 2026-11-09, after playing the pilots: "apply these changes ... to all bosses").** The 45 others
@@ -22076,7 +22085,9 @@ to OPEN and blows bite deeper (§60.3). The Empty Suit, 24.
 Dancer, slivers off the Glass Duelist, honey off the Honeypot. `Abilities.shed` throws it: where a plain blow or a move
 lets go (at the muzzle for a shot), off its body toward whoever struck it, off a front that held, where a miss left it,
 where it stepped out of and into a blink, where it calls its minions and copies, down a cone, up from a slam, and where
-its fallen body goes at the end of its fall (no white death puff). **No borrowed fangs:** a gate monster's FANGS and
+its fallen body goes at the end of its fall (no white death puff), and where a fused one goes off (`Blasts.fire`:
+vanilla's push, damage curve and sound, with the body's matter in place of the explosion's smoke; on film the Puffcap
+went off like a creeper). **No borrowed fangs:** a gate monster's FANGS and
 FANGS_RING raise no `EvokerFangs`; its matter stirs on the floor where each fang would be and eight ticks later (a
 fang's own warning) bursts up in a column and bites for the ability's own damage, as a blow of the ability's own class
 (`Hazards.rise`): the Scribe's ink, the Censer's and the Overgrowth's roots. Wherever a monster has matter the borrowed vanilla

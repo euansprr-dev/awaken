@@ -764,6 +764,12 @@ def film(per=8, shrink=2, only=None, name="pick"):
             pitch = -6 if flies else 4
             # a shooter that keeps its range backs away from anything nearer than five blocks (and out of the frame):
             # its dummy stands eight off, and the camera further back to hold them both
+            if flies:
+                # it circles its target between dives, 3.5 blocks + its width out (7 if it shoots): the camera stands
+                # outside that ring, or a big flier fills the picture with one side of itself (the Swarm Mind did)
+                # (its drawn body reaches well past its box: twice its larger side, and four blocks of air)
+                ring = (7.0 if "RANGED" in defs[m.id]["line"] else 3.5 + w) + 2.0 * max(w, h) + 4.0
+                dist = max(dist, ring)
             ranged = "RANGED" in defs[m.id]["line"] and not flies
             far = 8.5 if ranged else 4.8
             if ranged:
