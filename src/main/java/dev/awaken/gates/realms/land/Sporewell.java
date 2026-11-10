@@ -148,10 +148,13 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
             // the wall beside you: brackets of the fungus have come through it, each a dark cap with its gills glowing along
             // the underside, and a light in the air beside some of those, so the shafts and the narrow ways are lit from their
             // own walls. (The first pass set gills, stalk and cap cell by cell at random, and in the real game every wall read
-            // as a chequer of five blocks; a wall is rock now, with whole brackets in it and moss creeping up from its foot.)
+            // as a chequer of five blocks; a wall is rock now, with whole brackets in it and moss creeping up from its foot.
+            // Once rooms had lumps, piers and banked ground there was twice the wall for them to come through, and a room read
+            // as lit cubes scattered on the dark again: in a room a bracket is half as common now, and the room is lit by its
+            // roof's clusters and its well instead.)
             int ax = x + wx, az = z + wz;
             BlockState at = v.get(ax, y, az);
-            double edge = shaft || narrow ? 0.3 : 0.42;
+            double edge = shaft || narrow ? 0.3 : 0.56;
             if (at == m.stone || at == m.loam || at == m.veined) {
                 if (bracket(ax, y, az) > edge) {
                     boolean under = up <= 0 || bracket(ax, y - 1, az) <= edge;
