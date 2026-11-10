@@ -1,0 +1,457 @@
+# Monsters of the Gates (SPEC §60): every new body standing in its row, by theme (bell, hive, fungal, ember, temple, drowned, clockwork, glass), then each one close.
+# Stills of the bodies as built (NoAI: they stand and breathe). Generated; see docs/gates-as-worlds/monsters/BUILD.md.
+# ci knobs: PACK=perf,feel
+world monsterstoday creative 811
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -32 -32 32 48
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+camera first
+hud off
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:regeneration infinite 4 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd effect give @s minecraft:night_vision infinite 0 true
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd fill -24 200 -16 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -16 24 214 40 minecraft:air
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 25
+cmd kill @e[type=minecraft:item]
+cmd kill @e[type=minecraft:experience_orb]
+wait 5
+cmd gamemode spectator
+cmd time set 6000
+wait 20
+# bell
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:toll_ghoul -6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:toll_ghoul,limit=1,sort=nearest,x=-6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:crypt_archer -3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:crypt_archer,limit=1,sort=nearest,x=-3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:bell_wisp 0.0 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:bell_wisp,limit=1,sort=nearest,x=0.0,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:crypt_keeper 3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:crypt_keeper,limit=1,sort=nearest,x=3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_sexton 6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_sexton,limit=1,sort=nearest,x=6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_bell
+wait 6
+cmd tp @s -7.81 200.31 7.11 -19 4
+look -19 4
+wait 26
+shot bell_toll_ghoul
+wait 4
+cmd tp @s -4.74 200.62 6.18 -19 4
+look -19 4
+wait 26
+shot bell_crypt_archer
+wait 4
+cmd tp @s -0.91 201.58 7.40 -19 4
+look -19 4
+wait 26
+shot bell_bell_wisp
+wait 4
+cmd tp @s 2.09 200.59 6.26 -19 4
+look -19 4
+wait 26
+shot bell_crypt_keeper
+wait 4
+cmd tp @s 5.19 200.87 5.41 -19 4
+look -19 4
+wait 26
+shot bell_the_sexton
+wait 4
+# hive
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:drone_bee -6.8 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:drone_bee,limit=1,sort=nearest,x=-6.8,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:hive_larva -3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:hive_larva,limit=1,sort=nearest,x=-3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:honey_slime 0.0 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:honey_slime,limit=1,sort=nearest,x=0.0,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:hive_guard 3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:hive_guard,limit=1,sort=nearest,x=3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_swarm_mind 6.8 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_swarm_mind,limit=1,sort=nearest,x=6.8,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_hive
+wait 6
+cmd tp @s -7.71 201.42 7.40 -19 4
+look -19 4
+wait 26
+shot hive_drone_bee
+wait 4
+cmd tp @s -4.31 199.63 7.40 -19 4
+look -19 4
+wait 26
+shot hive_hive_larva
+wait 4
+cmd tp @s -0.91 199.88 7.40 -19 4
+look -19 4
+wait 26
+shot hive_honey_slime
+wait 4
+cmd tp @s 2.40 199.93 7.14 -19 4
+look -19 4
+wait 26
+shot hive_hive_guard
+wait 4
+cmd tp @s 5.57 202.08 6.48 -19 4
+look -19 4
+wait 26
+shot hive_the_swarm_mind
+wait 4
+# fungal
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:sporeling -8.5 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:sporeling,limit=1,sort=nearest,x=-8.5,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:mycelid -5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:mycelid,limit=1,sort=nearest,x=-5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:capweaver -1.7 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:capweaver,limit=1,sort=nearest,x=-1.7,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:puffcap 1.7 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:puffcap,limit=1,sort=nearest,x=1.7,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:hollow_tender 5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:hollow_tender,limit=1,sort=nearest,x=5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_rot 8.5 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_rot,limit=1,sort=nearest,x=8.5,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_fungal
+wait 6
+cmd tp @s -9.41 199.71 7.40 -19 4
+look -19 4
+wait 26
+shot fungal_sporeling
+wait 4
+cmd tp @s -6.29 200.48 6.60 -19 4
+look -19 4
+wait 26
+shot fungal_mycelid
+wait 4
+cmd tp @s -2.61 199.68 7.40 -19 4
+look -19 4
+wait 26
+shot fungal_capweaver
+wait 4
+cmd tp @s 0.79 200.20 7.40 -19 4
+look -19 4
+wait 26
+shot fungal_puffcap
+wait 4
+cmd tp @s 3.67 200.70 5.92 -19 4
+look -19 4
+wait 26
+shot fungal_hollow_tender
+wait 4
+cmd tp @s 7.27 200.20 6.48 -19 4
+look -19 4
+wait 26
+shot fungal_the_rot
+wait 4
+# ember
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:cinder_miner -8.5 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:cinder_miner,limit=1,sort=nearest,x=-8.5,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:slag_cube -5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:slag_cube,limit=1,sort=nearest,x=-5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:ember_imp -1.7 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:ember_imp,limit=1,sort=nearest,x=-1.7,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:scorch_crawler 1.7 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:scorch_crawler,limit=1,sort=nearest,x=1.7,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:slag_boar 5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:slag_boar,limit=1,sort=nearest,x=5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_overseer 8.5 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_overseer,limit=1,sort=nearest,x=8.5,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_ember
+wait 6
+cmd tp @s -9.41 200.15 7.40 -19 4
+look -19 4
+wait 26
+shot ember_cinder_miner
+wait 4
+cmd tp @s -6.01 199.88 7.40 -19 4
+look -19 4
+wait 26
+shot ember_slag_cube
+wait 4
+cmd tp @s -2.61 201.31 7.40 -19 4
+look -19 4
+wait 26
+shot ember_ember_imp
+wait 4
+cmd tp @s 0.79 199.63 7.40 -19 4
+look -19 4
+wait 26
+shot ember_scorch_crawler
+wait 4
+cmd tp @s 4.10 200.09 7.14 -19 4
+look -19 4
+wait 26
+shot ember_slag_boar
+wait 4
+cmd tp @s 6.71 201.03 4.90 -19 4
+look -19 4
+wait 26
+shot ember_the_overseer
+wait 4
+# temple
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:vine_creaker -6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:vine_creaker,limit=1,sort=nearest,x=-6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:thorn_archer -3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:thorn_archer,limit=1,sort=nearest,x=-3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:thorn_hound 0.0 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:thorn_hound,limit=1,sort=nearest,x=0.0,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:incense_priest 3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:incense_priest,limit=1,sort=nearest,x=3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_overgrowth 6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_overgrowth,limit=1,sort=nearest,x=6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_temple
+wait 6
+cmd tp @s -7.93 200.42 6.77 -19 4
+look -19 4
+wait 26
+shot temple_vine_creaker
+wait 4
+cmd tp @s -4.53 200.42 6.77 -19 4
+look -19 4
+wait 26
+shot temple_thorn_archer
+wait 4
+cmd tp @s -0.91 200.04 7.40 -19 4
+look -19 4
+wait 26
+shot temple_thorn_hound
+wait 4
+cmd tp @s 2.39 200.31 7.11 -19 4
+look -19 4
+wait 26
+shot temple_incense_priest
+wait 4
+cmd tp @s 4.96 201.09 4.73 -19 4
+look -19 4
+wait 26
+shot temple_the_overgrowth
+wait 4
+# drowned
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:ink_drowned -8.5 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:ink_drowned,limit=1,sort=nearest,x=-8.5,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:page_wraith -5.1 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:page_wraith,limit=1,sort=nearest,x=-5.1,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:archive_eye -1.7 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:archive_eye,limit=1,sort=nearest,x=-1.7,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:salt_stray 1.7 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:salt_stray,limit=1,sort=nearest,x=1.7,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:drowned_scribe 5.1 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:drowned_scribe,limit=1,sort=nearest,x=5.1,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_curator 8.5 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_curator,limit=1,sort=nearest,x=8.5,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_drowned
+wait 6
+cmd tp @s -9.51 200.31 7.11 -19 4
+look -19 4
+wait 26
+shot drowned_ink_drowned
+wait 4
+cmd tp @s -6.01 201.31 7.40 -19 4
+look -19 4
+wait 26
+shot drowned_page_wraith
+wait 4
+cmd tp @s -2.61 201.69 7.40 -19 4
+look -19 4
+wait 26
+shot drowned_archive_eye
+wait 4
+cmd tp @s 0.79 199.93 7.40 -19 4
+look -19 4
+wait 26
+shot drowned_salt_stray
+wait 4
+cmd tp @s 3.97 200.42 6.77 -19 4
+look -19 4
+wait 26
+shot drowned_drowned_scribe
+wait 4
+cmd tp @s 7.37 202.02 6.77 -19 4
+look -19 4
+wait 26
+shot drowned_the_curator
+wait 4
+# clockwork
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:cog_hound -6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:cog_hound,limit=1,sort=nearest,x=-6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:rivet_gunner -3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:rivet_gunner,limit=1,sort=nearest,x=-3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:spark_drone 0.0 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:spark_drone,limit=1,sort=nearest,x=0.0,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:foundry_marshal 3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:foundry_marshal,limit=1,sort=nearest,x=3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_regulator 6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_regulator,limit=1,sort=nearest,x=6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_clockwork
+wait 6
+cmd tp @s -7.71 200.04 7.40 -19 4
+look -19 4
+wait 26
+shot clockwork_cog_hound
+wait 4
+cmd tp @s -4.31 200.09 7.40 -19 4
+look -19 4
+wait 26
+shot clockwork_rivet_gunner
+wait 4
+cmd tp @s -0.91 201.53 7.40 -19 4
+look -19 4
+wait 26
+shot clockwork_spark_drone
+wait 4
+cmd tp @s 2.33 200.37 6.94 -19 4
+look -19 4
+wait 26
+shot clockwork_foundry_marshal
+wait 4
+cmd tp @s 5.67 200.42 6.77 -19 4
+look -19 4
+wait 26
+shot clockwork_the_regulator
+wait 4
+# glass
+cmd kill @e[tag=p]
+wait 10
+cmd summon awaken:glass_husk -6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:glass_husk,limit=1,sort=nearest,x=-6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:sand_stalker -3.4 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:sand_stalker,limit=1,sort=nearest,x=-3.4,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:heat_shimmer 0.0 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:heat_shimmer,limit=1,sort=nearest,x=0.0,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:prism_sentinel 3.4 202.6 10.0
+wait 3
+cmd data merge entity @e[type=awaken:prism_sentinel,limit=1,sort=nearest,x=3.4,y=202.6,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd summon awaken:the_mirage 6.8 201.0 10.0
+wait 3
+cmd data merge entity @e[type=awaken:the_mirage,limit=1,sort=nearest,x=6.8,y=201.0,z=10.0,distance=..3] {NoAI:1b,PersistenceRequired:1b,Silent:1b,Tags:["p"],Rotation:[160f,0f]}
+cmd tp @s 0.0 202.4 0.5 0 8
+look 0 8
+wait 80
+shot row_glass
+wait 6
+cmd tp @s -7.81 200.31 7.11 -19 4
+look -19 4
+wait 26
+shot glass_glass_husk
+wait 4
+cmd tp @s -4.32 199.66 7.36 -19 4
+look -19 4
+wait 26
+shot glass_sand_stalker
+wait 4
+cmd tp @s -0.91 201.53 7.40 -19 4
+look -19 4
+wait 26
+shot glass_heat_shimmer
+wait 4
+cmd tp @s 2.45 201.86 7.28 -19 4
+look -19 4
+wait 26
+shot glass_prism_sentinel
+wait 4
+cmd tp @s 5.61 200.48 6.60 -19 4
+look -19 4
+wait 26
+shot glass_the_mirage
+wait 4
+cmd kill @e[tag=p]
+wait 10
+cmd gamemode creative
+info
+quit

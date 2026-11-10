@@ -124,7 +124,8 @@ public final class TellTests {
             ghoul.setTarget(pig);
             MobGoals.ToldMelee goal = new MobGoals.ToldMelee(ghoul);
             int tell = MobGoals.ToldMelee.tellTicks(ghoul, Strikes.Kind.LIGHT);
-            h.assertTrue(tell == 8, "a normal creature tells a light blow for 8 ticks, was " + tell);
+            h.assertTrue(MobGoals.ToldMelee.rankTell(ghoul) == 8, "a normal creature tells a light blow for 8 ticks");
+            h.assertTrue(tell == def.blowTell && tell == 12, "the Toller has its own rhythm (SPEC §60.8): a slow swing told for 12, was " + tell);
             float hp = pig.getHealth();
             goal.checkAndPerformAttack(pig);
             h.assertTrue(ghoul.telegraphTicks() == tell && ghoul.tellKind() == Strikes.Kind.LIGHT, "the tell starts: LIGHT, " + tell + " ticks");

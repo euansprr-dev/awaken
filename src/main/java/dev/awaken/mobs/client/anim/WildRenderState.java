@@ -19,6 +19,8 @@ public final class WildRenderState extends LivingEntityRenderState {
     public float melee = -1;
     public float hurt = -1;
     public float dying = -1;
+    /** A split child (AwakenMob.F_SPLIT_CHILD): its {@code jar*} bones are not drawn (it came out of the glass its parent broke). */
+    public boolean bare;
     /** Held poses (WildPose.S_*). */
     public int wild;
     /** Body pitch while swimming (degrees, positive nose down). */
